@@ -2,7 +2,7 @@ import { Suspense, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
   AlertTriangle, ArrowRightLeft, ArrowUpRight, Bell, Building2, Check, ChevronRight, History, KeyRound, ListPlus,
-  Lock, LogOut, Mail, Plug, Plus, Receipt, Repeat, ShieldCheck, SlidersHorizontal, Tags, Trash2, UserPlus, Users, Zap,
+  Lock, LogOut, Plug, Plus, Receipt, Repeat, ShieldCheck, SlidersHorizontal, Tags, Trash2, UserPlus, Users, Zap,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -30,14 +30,11 @@ import { useT } from '@/i18n/useT';
 // ⚠️ Pas de catalogue demandé à `lazyWithRetry` : ceux de l'espace entreprise
 // sont déclarés par la ROUTE (`App.tsx`), la seule que lit
 // `lazy-namespaces.guard.test.ts`.
-const InviteFriendsToOrg = lazyWithRetry(() => import('@/components/organization/InviteFriendsToOrg'));
-const OrgJoinCodeCard = lazyWithRetry(() => import('@/components/organization/OrgJoinCodeCard'));
-const OrgInviteLinkCard = lazyWithRetry(() => import('@/components/organization/OrgInviteLinkCard'));
-const EmailInvitationsList = lazyWithRetry(() => import('@/components/organization/EmailInvitationsList'));
 const InviteByEmailDialog = lazyWithRetry(() => import('@/components/organization/InviteByEmailDialog'));
 const DeleteOrganizationDialog = lazyWithRetry(() => import('@/components/organization/DeleteOrganizationDialog'));
 const ConfirmLeaveOrgDialog = lazyWithRetry(() => import('@/components/organization/ConfirmLeaveOrgDialog'));
 const TransferOwnershipDialog = lazyWithRetry(() => import('@/components/organization/TransferOwnershipDialog'));
+const OrgInviteSection = lazyWithRetry(() => import('@/components/organization/OrgInviteSection'));
 const OrgNotificationSettingsDialog = lazyWithRetry(() => import('@/components/organization/OrgNotificationSettingsDialog'));
 const OffboardMemberDialog = lazyWithRetry(() => import('@/components/organization/OffboardMemberDialog'));
 // M13 : catégories et droits quittent l'onglet OKR et l'annuaire pour Paramètres.
@@ -114,6 +111,7 @@ const OrgSettingsSection = ({
   const navigate = useNavigate();
   const { organizations, setActiveOrgId } = useActiveOrganization();
   const [invitingByEmail, setInvitingByEmail] = useState(false);
+  const [quickEmails, setQuickEmails] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [confirmingLeave, setConfirmingLeave] = useState(false);
   const [transferring, setTransferring] = useState(false);
@@ -361,74 +359,18 @@ const OrgSettingsSection = ({
         </section>
       )}
 
-      {/* Ce qui règle une PERSONNE (droits, place, départ) vit dans
-          Personnes, les équipes dans Équipes : la barre latérale y renvoie,
-          et la rubrique Inviter le rappelle. */}
       {active === 'invite' && (
-      <section aria-labelledby="org-invite-title" className="space-y-4">
-        <Link to={buildOrgLink('members')} className={`${CARD} flex items-center gap-3 hover:bg-[rgb(var(--color-hover))] transition-colors`}>
-          <Users size={18} aria-hidden="true" className="text-[rgb(var(--color-text-muted))] shrink-0" />
-          <span className="flex-1 min-w-0">
-            <span className={`block ${TITLE}`}>{t('orgSettings.membersTitle')}</span>
-            <span className={`block ${HINT}`}>{t('orgSettings.membersHint')}</span>
-          </span>
-          <span className="sr-only">{t('orgSettings.membersLink')}</span>
-          <ChevronRight size={16} aria-hidden="true" className="text-[rgb(var(--color-text-muted))] shrink-0" />
-        </Link>
-
-        <div>
-          <h2 id="org-invite-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
-            {t('settings.inviteTitle')}
-          </h2>
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">{t('settings.inviteHint')}</p>
-        </div>
-
-        {/* M11 : l'invitation par e-mail est le canal par défaut d'une
-            entreprise. Le lien est NOMINATIF, déjà placé dans la pyramide et
-            dans des équipes. */}
-        {canInviteByEmail && (
-          <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('invites.emailTitle')}</h3>
-                <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">{t('invites.emailIntro')}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setInvitingByEmail(true)}
-                disabled={seatsFull}
-                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] disabled:opacity-60 shrink-0"
-              >
-                <Mail size={15} aria-hidden="true" /> {t('settings.inviteByEmail')}
-              </button>
-            </div>
-            <Suspense fallback={null}>
-              <EmailInvitationsList orgId={org.id} />
-            </Suspense>
-          </div>
-        )}
-
-        {/* Par code (validation admin), par lien direct, ou en faisant venir
-            ses contacts COSMO.
-
-            AUD-02 — le lien direct fait entrer quelqu'un SANS validation
-            admin. Il n'est donc proposé qu'à qui a le droit `member.invite`,
-            exactement comme la policy `org_invite_links_insert` (mig. 084).
-
-            Faire venir ses contacts reste réservé aux admins : c'est eux qui
-            décident qui entre. */}
         <Suspense fallback={null}>
-          <div
-            className={`grid gap-4 items-start ${
-              isAdmin ? 'md:grid-cols-3' : canInvite ? 'md:grid-cols-2' : ''
-            }`}
-          >
-            <OrgJoinCodeCard code={org.joinCode ?? ''} orgId={org.id} isAdmin={isAdmin} seatsFull={seatsFull} />
-            {canInvite && <OrgInviteLinkCard orgId={org.id} managerId={currentUserId} seatsFull={seatsFull} />}
-            {isAdmin && <InviteFriendsToOrg orgId={org.id} variant="card" />}
-          </div>
+          <OrgInviteSection
+            org={org}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
+            canInvite={canInvite}
+            canInviteByEmail={canInviteByEmail}
+            seatsFull={seatsFull}
+            onInviteByEmail={(emails) => { setQuickEmails(emails); setInvitingByEmail(true); }}
+          />
         </Suspense>
-      </section>
       )}
 
       {/* Journal d'audit : lisible par les admins seuls (RLS `org_audit_log`). */}
@@ -509,6 +451,7 @@ const OrgSettingsSection = ({
             members={members}
             currentUserId={currentUserId}
             isAdmin={isAdmin}
+            initialEmails={quickEmails}
             onClose={() => setInvitingByEmail(false)}
           />
         )}
