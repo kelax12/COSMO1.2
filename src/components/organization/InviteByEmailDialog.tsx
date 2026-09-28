@@ -17,6 +17,8 @@ interface InviteByEmailDialogProps {
   members: OrgMember[];
   currentUserId?: string;
   isAdmin: boolean;
+  /** Adresses déjà saisies dans le champ rapide de Paramètres. */
+  initialEmails?: string;
   onClose: () => void;
 }
 
@@ -31,12 +33,12 @@ const ACCESS_CHOICES = [null, 7, 30, 90, 180] as const;
  * prestataire, un stagiaire). Le résultat dit adresse par adresse ce qui s'est
  * passé : un lien créé dont l'e-mail n'est pas parti reste copiable.
  */
-const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }: InviteByEmailDialogProps) => {
+const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, initialEmails = '', onClose }: InviteByEmailDialogProps) => {
   const { t, tp } = useT('org');
   const { t: ta } = useT('orgAdmin');
   const invite = useInviteByEmail(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
-  const [raw, setRaw] = useState('');
+  const [raw, setRaw] = useState(initialEmails);
   // Un manager ne place que sous lui ou son sous-arbre (même règle que la
   // policy `org_invite_links_insert`) : il part donc placé sous lui-même.
   const [managerId, setManagerId] = useState(isAdmin ? '' : currentUserId ?? '');
