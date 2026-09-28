@@ -4,8 +4,11 @@
 // catégories ; la carte, la lecture d'UN objectif.
 
 import { useEffect, useState } from 'react';
-import { Target, Trash2, Pencil, Building2, CornerLeftUp, Activity } from 'lucide-react';
-import type { KRProjectLink, TeamKeyResult, TeamOKR } from '@/modules/team-okrs';
+import { Target, Trash2, Pencil, Building2, CornerLeftUp, Activity, ClipboardList } from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import type { KRProjectLink, ProjectHealth, TeamKeyResult, TeamOKR } from '@/modules/team-okrs';
 import type { TeamProjectTaskStats } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
@@ -16,6 +19,12 @@ import { useT } from '@/i18n/useT';
 import { effectiveKrRatio, krTaskProgress, krWeight, okrRatioPercent } from './okr-execution.helpers';
 import { ProjectHealthBadge } from './ProjectHealthSection';
 
+const HEALTH_DOT: Record<ProjectHealth, string> = {
+  on_track: 'bg-emerald-500',
+  at_risk: 'bg-amber-500',
+  off_track: 'bg-red-500',
+};
+
 // ─── Ligne KR : input contrôlé → la barre suit la saisie en direct ─────
 interface TeamKRRowProps {
   kr: TeamKeyResult;
@@ -23,10 +32,12 @@ interface TeamKRRowProps {
   statsById: Map<string, TeamProjectTaskStats>;
   onCommit: (value: number) => void;
   onOpenExecution: () => void;
+  /** Change l'état du KR : pose un point d'étape à la valeur courante. */
+  onSetHealth: (status: ProjectHealth, value: number) => void;
   personOf?: (userId: string) => OrgMember | undefined;
 }
 
-const TeamKRRow = ({ kr, links, statsById, onCommit, onOpenExecution, personOf }: TeamKRRowProps) => {
+const TeamKRRow = ({ kr, links, statsById, onCommit, onOpenExecution, onSetHealth, personOf }: TeamKRRowProps) => {
   const { t } = useT('org');
   const { t: pf } = useT('portfolio');
   const [value, setValue] = useState<string>(String(kr.currentValue));
@@ -90,7 +101,7 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onOpenExecution, personOf }
               : `${liveValue}/${kr.targetValue}${kr.unit ? ` ${kr.unit}` : ''}`}
           </span>
         </div>
-        <div className="mt-1 h-1.5 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden">
+        <div className="mt-2 h-2 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden">
           <div
             className={`h-full rounded-full transition-all ${done ? 'bg-green-500' : 'bg-[rgb(var(--color-accent-solid))]'}`}
             style={{ width: `${pct}%` }}
@@ -108,15 +119,41 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onOpenExecution, personOf }
           className="w-16 h-8 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500/40"
         />
       )}
-      <button
-        type="button"
-        onClick={onOpenExecution}
-        aria-label={pf('krExec.openAria', { title: kr.title })}
-        title={pf('krExec.openAria', { title: kr.title })}
-        className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-[rgb(var(--color-hover))]"
-      >
-        <Activity size={15} aria-hidden="true" />
-      </button>
+      {/* Menu d'état, même vocabulaire que le filtre « État » : changer l'état
+          pose un point d'étape à la valeur courante ; le détail reste à un clic. */}
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label={pf('krExec.openAria', { title: kr.title })}
+          title={pf('krExec.openAria', { title: kr.title })}
+          className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60"
+        >
+          {kr.health && !done
+            ? <span className={`w-2.5 h-2.5 rounded-full ${HEALTH_DOT[kr.health]}`} aria-hidden="true" />
+            : <Activity size={15} aria-hidden="true" />}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>{pf('krExec.statusLabel')}</DropdownMenuLabel>
+          {(Object.keys(HEALTH_DOT) as ProjectHealth[]).map((h) => (
+            <DropdownMenuItem key={h} onClick={() => onSetHealth(h, measured && taskProgress ? taskProgress.done : kr.currentValue)}>
+              <span className={`w-2 h-2 rounded-full ${HEALTH_DOT[h]}`} aria-hidden="true" />
+              {pf(`health.${h}`)}
+              {kr.health === h && !done && <span className="ml-auto text-xs" aria-hidden="true">✓</span>}
+            </DropdownMenuItem>
+          ))}
+          {!measured && (
+            <DropdownMenuItem disabled={done} onClick={() => onCommit(kr.targetValue)}>
+              <span className="w-2 h-2 rounded-full bg-blue-500" aria-hidden="true" />
+              {pf('okrFilters.stateDone')}
+              {done && <span className="ml-auto text-xs" aria-hidden="true">✓</span>}
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onOpenExecution}>
+            <ClipboardList size={14} aria-hidden="true" />
+            {pf('krExec.checkinTitle')}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
@@ -138,13 +175,14 @@ interface TeamOKRCardProps {
   onDelete: () => void;
   onCommitKR: (kr: TeamKeyResult, value: number) => void;
   onOpenKR: (kr: TeamKeyResult) => void;
+  onSetKRHealth: (kr: TeamKeyResult, status: ProjectHealth, value: number) => void;
   onOpenOkr: (okrId: string) => void;
   personOf?: (userId: string) => OrgMember | undefined;
 }
 
 const TeamOKRCard = ({
   okr, okrs, links, statsById, category, teamName, teamColor, editDeniedReason, deleteDeniedReason, highlighted,
-  onEdit, onDelete, onCommitKR, onOpenKR, onOpenOkr, personOf,
+  onEdit, onDelete, onCommitKR, onOpenKR, onSetKRHealth, onOpenOkr, personOf,
 }: TeamOKRCardProps) => {
   const { t } = useT('org');
   const { t: pf, tp: tpf } = useT('portfolio');
@@ -155,11 +193,11 @@ const TeamOKRCard = ({
   return (
     <section
       id={`okr-${okr.id}`}
-      className={`rounded-2xl border bg-[rgb(var(--color-surface))] p-4 scroll-mt-24 transition-shadow ${
+      className={`rounded-2xl border bg-[rgb(var(--color-surface))] p-5 sm:p-6 scroll-mt-24 transition-shadow ${
         highlighted ? 'border-indigo-500 ring-2 ring-indigo-500/30' : 'border-[rgb(var(--color-border))]'
       }`}
     >
-      <div className="flex items-start gap-3 mb-3">
+      <div className="flex items-start gap-3 pb-4 mb-4 border-b border-[rgb(var(--color-border))]">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             {category && (
@@ -174,9 +212,9 @@ const TeamOKRCard = ({
             <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">{okr.title}</h3>
           </div>
           {okr.description && (
-            <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">{okr.description}</p>
+            <p className="text-sm text-[rgb(var(--color-text-muted))] mt-1">{okr.description}</p>
           )}
-          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+          <div className="flex flex-wrap items-center gap-1.5 mt-3">
             {okr.teamIds.length === 0 ? (
               <span className="inline-flex items-center gap-1 text-caption font-medium px-2 py-0.5 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))]">
                 <Building2 size={11} aria-hidden="true" /> {t('common.orgWideBadge')}
@@ -240,7 +278,7 @@ const TeamOKRCard = ({
           <Target size={12} aria-hidden="true" /> {pf('okrCard.noKr')}
         </p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-5">
           {okr.keyResults.map((kr) => (
             <TeamKRRow
               key={kr.id}
@@ -249,6 +287,7 @@ const TeamOKRCard = ({
               statsById={statsById}
               onCommit={(v) => onCommitKR(kr, v)}
               onOpenExecution={() => onOpenKR(kr)}
+              onSetHealth={(status, value) => onSetKRHealth(kr, status, value)}
               personOf={personOf}
             />
           ))}

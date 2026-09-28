@@ -126,6 +126,7 @@ const TeamCategoryFilterBar = ({ orgId, activeCategoryIds, setActiveCategoryIds,
         createCategoryMutation={createCategory}
         canManage={canManage}
         accentAllActive
+        large={!canManage}
       />
       <DeleteTeamCategoryConfirm
         open={!!categoryToDeleteId}

@@ -4,6 +4,7 @@ import { Plus, Target } from 'lucide-react';
 import {
   useTeamOKRs,
   useUpdateTeamKR,
+  usePostKRCheckin,
   useDeleteTeamOKR,
   useKRProjects,
   type TeamOKR,
@@ -54,6 +55,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const { data: teams = [] } = useOrgTeams(orgId);
   const { data: categories = [] } = useTeamCategories(orgId);
   const updateKR = useUpdateTeamKR(orgId);
+  const postCheckin = usePostKRCheckin(orgId);
   const deleteOKR = useDeleteTeamOKR(orgId);
   // Exécution (mig. 160) : KR reliés à des projets, avancement serveur.
   const { data: krLinks = [] } = useKRProjects(orgId);
@@ -198,6 +200,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
             onDelete={() => deleteOKR.mutate(okr.id)}
             onCommitKR={setCurrent}
             onOpenKR={(kr) => setOpenKrId(kr.id)}
+            onSetKRHealth={(kr, status, value) => postCheckin.mutate({ krId: kr.id, value, status })}
             onOpenOkr={openOkr}
             personOf={(id) => memberById.get(id)}
           />
