@@ -1,4 +1,4 @@
-import { SlidersHorizontal, Download, LayoutList, SquareKanban } from 'lucide-react';
+import { SlidersHorizontal,LayoutList, SquareKanban } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -11,8 +11,6 @@ import { TASK_COLUMNS, type TaskColumnId } from './team-tasks-table.helpers';
 interface TeamTasksViewControlsProps {
   columns: readonly TaskColumnId[];
   onColumnsChange: (next: TaskColumnId[]) => void;
-  /** Absent = rien à exporter (liste vide). */
-  onExport?: () => void;
   /** Table ou Tableau (kanban). */
   view: 'table' | 'kanban';
   onViewChange: (view: 'table' | 'kanban') => void;
@@ -32,7 +30,7 @@ const btn = 'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border borde
  *  regroupement a fusionné avec le tri, il vit dans `TeamTasksToolbar`
  *  (2026-09-27) — un seul menu répond aux deux questions. */
 const TeamTasksViewControls = ({
-  columns, onColumnsChange, onExport, view, onViewChange, kanbanGroupBy, onKanbanGroupByChange,
+  columns, onColumnsChange, view, onViewChange, kanbanGroupBy, onKanbanGroupByChange,
 }: TeamTasksViewControlsProps) => {
   const { t } = useT('portfolio');
   const org = useT('org');
@@ -92,11 +90,6 @@ const TeamTasksViewControls = ({
         </DropdownMenuContent>
       </DropdownMenu>
       )}
-
-      <button type="button" onClick={onExport} disabled={!onExport} aria-label={t('taskTable.exportAria')} className={btn}>
-        <Download size={13} aria-hidden="true" />
-        {t('taskTable.export')}
-      </button>
     </div>
   );
 };

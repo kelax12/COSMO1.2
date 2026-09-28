@@ -78,7 +78,7 @@ const TeamsSection = lazyWithRetry(() => import('@/components/organization/Teams
 const TeamPage = lazyWithRetry(() => import('@/components/organization/TeamPage'));
 // Rapports d'activité (mig. 202) : un chunk à part, payé par qui l'ouvre.
 const OrgReportsSection = lazyWithRetry(() => import('@/components/organization/OrgReportsSection'));
-const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['csv', 'okr', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'tasks']);
+const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['csv', 'okr', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.

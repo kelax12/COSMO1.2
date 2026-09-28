@@ -10,7 +10,7 @@
 // Composant présentationnel : il affiche et modifie `filters`, il ne filtre rien.
 // ═══════════════════════════════════════════════════════════════════
 
-import { Search, UserRound, Users, X, CheckCircle2 } from 'lucide-react';
+import { Search, UserRound, Users, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -28,12 +28,6 @@ import TeamColorDot from './TeamColorDot';
 import type { TaskStatusFilter } from './team-projects.helpers';
 import { CLEARED_ATTRIBUTE_FILTERS, type OrgTaskFilters } from './task-filters';
 
-// « Ouvertes » est le filtre CONTRAIRE de « Terminées cette semaine » (retiré,
-// 2026-09-27) : sans pastille active, l'onglet montre déjà les tâches
-// ouvertes (défaut de l'onglet). « En retard » reste accessible, comme
-// préréglage sous la barre (`FilterPresets`), pour ne pas le montrer deux fois.
-const VISIBLE_STATUS_FILTERS: readonly Extract<TaskStatusFilter, 'doneThisWeek' | 'all'>[] = ['doneThisWeek', 'all'];
-
 interface OrgTaskFilterBarProps {
   filters: OrgTaskFilters;
   setFilters: (patch: Partial<OrgTaskFilters>) => void;
@@ -46,8 +40,6 @@ interface OrgTaskFilterBarProps {
   currentUserId?: string;
   searchPlaceholder: string;
   searchAria: string;
-  /** Compteurs affichés dans les pastilles d'état (optionnels). */
-  counts?: Partial<Record<TaskStatusFilter, number>>;
   /** « + Créer une équipe » au bas du menu d'équipe, si le droit existe. */
   onCreateTeam?: () => void;
   /** Ce que la barre trie. `projects` : onglet Projets, sans pastilles d'état
@@ -59,13 +51,9 @@ const segBase = 'h-8 px-2.5 rounded-md text-sm font-medium transition-colors foc
 const segOn = 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]';
 const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
 
-const STATUS_ICON: Record<Extract<TaskStatusFilter, 'doneThisWeek'>, typeof CheckCircle2> = {
-  doneThisWeek: CheckCircle2,
-};
-
 const OrgTaskFilterBar = ({
   filters, setFilters, defaultStatus, members, teams, projects = [], currentUserId,
-  searchPlaceholder, searchAria, counts, onCreateTeam, entity = 'tasks',
+  searchPlaceholder, searchAria, onCreateTeam, entity = 'tasks',
 }: OrgTaskFilterBarProps) => {
   // Catalogue `portfolio`, chargé avec les deux seuls onglets qui montrent cette
   // barre (Tâches, Projets) : `org` est payé par toute visite de /entreprise.
@@ -215,34 +203,8 @@ const OrgTaskFilterBar = ({
           )}
         </div>
 
-        {/* État : onglet Tâches seulement. Côté Projets, « En retard » passe
-            par les préréglages. */}
-        {entity === 'tasks' && <div className="inline-flex items-center gap-1.5 flex-wrap" role="group" aria-label={t('filters.statusAria')}>
-          {VISIBLE_STATUS_FILTERS.map((f) => {
-            const Icon = f === 'all' ? null : STATUS_ICON[f];
-            const count = counts?.[f];
-            const active = status === f;
-            return (
-              <button
-                key={f}
-                type="button"
-                // Re-cliquer la pastille active revient à « Tout » (grammaire du
-                // 2026-08-28) ; « Tout » reste une sortie explicite.
-                onClick={() => setFilters({ status: active ? 'all' : f })}
-                aria-pressed={active}
-                className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-xs font-semibold border transition-colors ${
-                  active
-                    ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))]'
-                    : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
-                }`}
-              >
-                {Icon && <Icon size={12} aria-hidden="true" />}
-                {statusLabel[f]}
-                {count !== undefined && <span className="tabular-nums opacity-80">{count}</span>}
-              </button>
-            );
-          })}
-        </div>}
+        {/* Plus de pastilles d'état ici (2026-09-28) : « Terminées cette
+            semaine » est un préréglage (`FilterPresets`), « Tout » est retiré. */}
       </div>
 
       {chips.length > 0 && (

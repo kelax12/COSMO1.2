@@ -1321,7 +1321,10 @@
     "navPlan": "Plan and billing",
     "navDanger": "Danger zone",
     "navLeave": "Leave the company",
-    "openNotifications": "Open preferences"
+    "openNotifications": "Open preferences",
+    "navExport": "Task export",
+    "exportTitle": "Export tasks",
+    "exportHint": "Download every task of the organization as a CSV file."
   },
   "setup": {
     "resume": "Resume the setup assistant"
@@ -1591,7 +1594,8 @@
     "mine": "My tasks",
     "overdue": "Overdue",
     "thisWeek": "This week",
-    "blocked": "Blocked"
+    "blocked": "Blocked",
+    "doneThisWeek": "Completed this week"
   },
   "statsScope": {
     "label": "Statistics scope",
