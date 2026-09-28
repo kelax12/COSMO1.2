@@ -2,7 +2,9 @@
 -- 200 · Retrait des cycles d'OKR, de la capacité hebdomadaire et des liens
 --       hiérarchiques secondaires (mode Entreprise, 2026-09-28)
 --
--- ⚠️ ÉCRITE LE 2026-09-28, NON APPLIQUÉE. Ordre : APRÈS 160 et 196.
+-- ✅ APPLIQUÉE le 2026-09-28, ledger `20260928071852`, relue au catalogue (0 table,
+--    0 colonne `cycle_id`, trigger sur `parent_okr_id` seul, 2 fonctions retirées).
+--    Preuve en transaction annulée jouée avant, annulation vérifiée.
 --
 -- Les trois fonctionnalités ont quitté le front le 2026-09-28 (commits
 -- ea7d47e6 et a88b7864) : elles compliquaient le produit pour peu d'apport.
