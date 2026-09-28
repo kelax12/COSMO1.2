@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { differenceInCalendarDays, parseISO, isValid } from 'date-fns';
 import { UserX } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import { useUpdateTeamTask, type TeamTask } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
-import { buildOrgLink } from './deep-link.helpers';
 import { LOAD_BUCKETS, computeTeamLoad, loadBucketOf, type LoadBucket } from './team-page.helpers';
 import { useT } from '@/i18n/useT';
 
@@ -47,6 +46,13 @@ const TeamWorkloadSection = ({ orgId, tasks, projectIds, members, currentUserId 
     [tasks, projectIds, members, now],
   );
   const updateTask = useUpdateTeamTask(orgId);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Clic sur une tâche : sa fiche s'ouvre sur place (`?task=`, OrgDeepLinkHost).
+  const openTask = (taskId: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('task', taskId);
+    setSearchParams(next);
+  };
   // Glisser-déposer : la tâche quitte la colonne source pour la colonne cible.
   const [drag, setDrag] = useState<{ taskId: string; from: string | null } | null>(null);
   const [overCol, setOverCol] = useState<string | null | undefined>(undefined);
@@ -194,13 +200,14 @@ const TeamWorkloadSection = ({ orgId, tasks, projectIds, members, currentUserId 
                       }}
                       className={`cursor-grab active:cursor-grabbing ${drag?.taskId === task.id && drag.from === row.userId ? 'opacity-50' : ''}`}
                     >
-                      <Link
-                        to={buildOrgLink('projects', { project: task.projectId })}
-                        className="flex items-center gap-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2.5 text-sm hover:border-[rgb(var(--color-accent))]"
+                      <button
+                        type="button"
+                        onClick={() => openTask(task.id)}
+                        className="w-full text-left flex items-center gap-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2.5 text-sm hover:border-[rgb(var(--color-accent))]"
                       >
                         <span className="flex-1 truncate text-[rgb(var(--color-text-primary))]">{task.name}</span>
                         {deadlineTag(task)}
-                      </Link>
+                      </button>
                     </li>
                   ))}
                 </ul>
