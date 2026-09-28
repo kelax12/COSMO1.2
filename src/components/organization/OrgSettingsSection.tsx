@@ -38,7 +38,7 @@ const OrgInviteSection = lazyWithRetry(() => import('@/components/organization/O
 const OrgNotificationSettingsDialog = lazyWithRetry(() => import('@/components/organization/OrgNotificationSettingsDialog'));
 const OffboardMemberDialog = lazyWithRetry(() => import('@/components/organization/OffboardMemberDialog'));
 // M13 : catégories et droits quittent l'onglet OKR et l'annuaire pour Paramètres.
-const TeamCategoryFilterBar = lazyWithRetry(() => import('@/components/organization/TeamCategoryFilterBar'));
+const TeamCategoryTreeManager = lazyWithRetry(() => import('@/components/organization/TeamCategoryTreeManager'));
 const OrgSettingsPermissions = lazyWithRetry(() => import('@/components/organization/OrgSettingsPermissions'));
 // Journal d'audit (mig. 162) : admins seuls, chargé à l'ouverture de Paramètres.
 // Ses textes vivent dans `orgAccount` (surfaces rares) : `org` est payé par
@@ -110,7 +110,6 @@ const OrgSettingsSection = ({
   const { can } = useMyOrgPermissions(org.id);
   const canManageCategories = isAdmin || can['category.manage'];
   // Ici la barre ne filtre rien : son état de sélection reste local.
-  const [categoryFilter, setCategoryFilter] = useState<Set<string>>(() => new Set());
   const navigate = useNavigate();
   const { organizations, setActiveOrgId } = useActiveOrganization();
   const [invitingByEmail, setInvitingByEmail] = useState(false);
@@ -258,12 +257,7 @@ const OrgSettingsSection = ({
           <h2 className={TITLE}>{t('settings.tab_categories')}</h2>
           <p className={`${HINT} mb-3`}>{t('settings.categoriesIntro')}</p>
           <Suspense fallback={null}>
-            <TeamCategoryFilterBar
-              orgId={org.id}
-              activeCategoryIds={categoryFilter}
-              setActiveCategoryIds={setCategoryFilter}
-              canManage
-            />
+            <TeamCategoryTreeManager orgId={org.id} />
           </Suspense>
         </section>
       )}
