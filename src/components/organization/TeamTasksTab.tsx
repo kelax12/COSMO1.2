@@ -9,7 +9,7 @@ import {
 import { useTeamCategories, descendantIdSet, categoryPath, formatPath } from '@/modules/team-categories';
 import { useOrgSettings, useProjectStatuses } from '@/modules/org-config';
 import { showUndoToast } from '@/lib/undo-toast';
-import { filterByStatus, useProjectsUiPrefs, STATUS_META, STATUS_ORDER, PRIORITY_META, priorityLabelOf, taskDisplayStatus } from './team-projects.helpers';
+import { filterByStatus, useProjectsUiPrefs, STATUS_META, STATUS_ORDER, PRIORITY_META, priorityLabelOf } from './team-projects.helpers';
 import TeamTaskModal from './TeamTaskModal';
 import AssignMembersDialog from './AssignMembersDialog';
 import AssignEventDialog from './AssignEventDialog';
@@ -32,7 +32,7 @@ import {
 } from './task-filters';
 import { useRememberedTaskFilters } from './remembered-task-filters';
 import {
-  readTaskColumns, writeTaskColumns, groupTasks, flattenGroups, buildTasksCsv, UNASSIGNED_GROUP, type TaskColumnId,
+  readTaskColumns, writeTaskColumns, groupTasks, flattenGroups, UNASSIGNED_GROUP, type TaskColumnId,
 } from './team-tasks-table.helpers';
 import FilterPresets from './FilterPresets';
 import { useOrgTeams } from '@/modules/org-teams';
@@ -286,27 +286,6 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
       return next;
     });
 
-  // Export : les tâches AFFICHÉES, filtres et tri appliqués. Le module CSV est
-  // chargé au clic, pas avec l'onglet.
-  const exportCsv = async () => {
-    const { downloadCSV } = await import('@/lib/csv-export');
-    const h = pf.t;
-    const { headers, rows } = buildTasksCsv(sortedTasks, {
-      headers: {
-        name: h('taskTable.exportHeaders.name'), project: h('taskTable.exportHeaders.project'),
-        status: h('taskTable.exportHeaders.status'), priority: h('taskTable.exportHeaders.priority'),
-        start: h('taskTable.exportHeaders.start'), deadline: h('taskTable.exportHeaders.deadline'),
-        duration: h('taskTable.exportHeaders.duration'), assignees: h('taskTable.exportHeaders.assignees'),
-        category: h('taskTable.exportHeaders.category'), createdAt: h('taskTable.exportHeaders.createdAt'),
-      },
-      statusOf: (task) => t(taskDisplayStatus(task).labelKey as Parameters<typeof t>[0]),
-      projectOf: (id) => projectById.get(id)?.name ?? '',
-      personOf: (id) => memberById.get(id)?.displayName ?? '',
-      categoryOf: (id) => categoryNameOf(id) ?? '',
-    });
-    downloadCSV(pf.t('taskTable.exportFile'), headers, rows);
-  };
-
   const handleSort = (field: TaskSortCriterion) => {
     if (field === sortField) {
       setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -408,7 +387,6 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         <TeamTasksViewControls
           columns={columns}
           onColumnsChange={setColumns}
-          onExport={sortedTasks.length > 0 ? () => void exportCsv() : undefined}
           view={tasksView}
           onViewChange={(v) => updateUiPrefs({ tasksView: v })}
           kanbanGroupBy={kanbanGroupBy}

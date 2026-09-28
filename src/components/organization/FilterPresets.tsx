@@ -69,6 +69,12 @@ const PRESETS: Preset[] = [
     matches: (f) => f.dueFrom === todayStr() && f.dueTo === in6Days() && !f.noDue && !f.blocked,
   },
   {
+    key: 'doneThisWeek',
+    labelKey: 'filterPresets.doneThisWeek',
+    apply: (base) => ({ ...base, status: 'doneThisWeek' }),
+    matches: (f) => f.status === 'doneThisWeek' && !f.blocked,
+  },
+  {
     key: 'blocked',
     labelKey: 'filterPresets.blocked',
     apply: (base) => ({ ...base, blocked: true }),
@@ -85,8 +91,11 @@ const FilterPresets = ({ filters, setFilters, defaultStatus, currentUserId, show
   const { t } = useT('org');
   // Côté Projets, « Moi » (dans la barre de filtres) fait déjà le même filtre
   // que « Mes projets » : le doublon est retiré (maquette du 2026-09-27).
+  // « Mes tâches » retiré le 2026-09-28 (doublon de « Moi » dans la barre) ;
+  // « Terminées cette semaine » y arrive depuis la barre, onglet Tâches seul.
   const presets = (showBlocked ? PRESETS : PRESETS.filter((p) => p.key !== 'blocked'))
-    .filter((p) => entity !== 'projects' || p.key !== 'mine');
+    .filter((p) => p.key !== 'mine')
+    .filter((p) => entity === 'tasks' || p.key !== 'doneThisWeek');
 
   const togglePreset = (preset: Preset) => {
     const base = cleanState(filters, defaultStatus);

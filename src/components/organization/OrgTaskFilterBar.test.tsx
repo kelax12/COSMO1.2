@@ -11,7 +11,7 @@
 // lui-même, sinon on retire la seule sortie explicite vers l'ensemble.
 import { beforeAll, describe, it, expect, vi } from 'vitest';
 import { ensureNamespaces } from '@/i18n/catalog';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
 import {
   readTaskFilters, writeTaskFilters, hasActiveTaskFilter, matchesScope, matchesAttributes, type OrgTaskFilters,
@@ -41,41 +41,16 @@ const renderBar = (status: TaskStatusFilter) => {
   return setFilters;
 };
 
-/** Pastilles d'état : le groupe nommé « Filtrer par état ». */
-const statusButtons = () =>
-  Array.from(screen.getByRole('group', { name: /état|state/i }).querySelectorAll('button'));
-
-describe('OrgTaskFilterBar — une seule grammaire de filtre', () => {
-  // Les libellés de la barre vivent dans `portfolio`, chargé avec les onglets.
+describe('OrgTaskFilterBar — plus de pastilles d état', () => {
   beforeAll(async () => {
     await ensureNamespaces(['portfolio'], 'fr');
   });
 
-  it('re-cliquer une pastille ACTIVE revient à « Tout »', () => {
-    // Ouvertes/En retard ne sont plus rendues ici (mig. UI 2026-09-27, En
-    // retard reste un préréglage) : la seule pastille non-« Tout » restante
-    // est « Terminées cette semaine ».
-    const setFilters = renderBar('doneThisWeek');
-    const active = statusButtons().filter((b) => b.getAttribute('aria-pressed') === 'true');
-    expect(active).toHaveLength(1);
-    fireEvent.click(active[0]);
-    expect(setFilters).toHaveBeenCalledWith({ status: 'all' });
-  });
-
-  // TÉMOIN — cf. l'en-tête.
-  it('la pastille « Tout » reste une sortie explicite et ne se désactive pas elle-même', () => {
-    const setFilters = renderBar('all');
-    const active = statusButtons().filter((b) => b.getAttribute('aria-pressed') === 'true');
-    fireEvent.click(active[0]);
-    expect(setFilters).toHaveBeenCalledWith({ status: 'all' });
-  });
-
-  it('cliquer une pastille INACTIVE applique ce filtre', () => {
-    const setFilters = renderBar('all');
-    const inactive = statusButtons().filter((b) => b.getAttribute('aria-pressed') === 'false');
-    fireEvent.click(inactive[0]);
-    expect(setFilters).toHaveBeenCalledTimes(1);
-    expect(setFilters).not.toHaveBeenCalledWith({ status: 'all' });
+  // 2026-09-28 : « Terminées cette semaine » est devenu un préréglage
+  // (`FilterPresets`) et « Tout » est retiré. La barre ne rend plus d'état.
+  it('ne rend aucun groupe d état', () => {
+    renderBar('doneThisWeek');
+    expect(screen.queryByRole('group', { name: /état|state/i })).toBeNull();
   });
 });
 

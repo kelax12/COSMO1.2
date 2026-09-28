@@ -1382,7 +1382,10 @@
     "navPlan": "Forfait et facturation",
     "navDanger": "Zone de danger",
     "navLeave": "Quitter l'entreprise",
-    "openNotifications": "Ouvrir les préférences"
+    "openNotifications": "Ouvrir les préférences",
+    "navExport": "Export des tâches",
+    "exportTitle": "Exporter les tâches",
+    "exportHint": "Télécharge toutes les tâches de l’entreprise au format CSV."
   },
   "setup": {
     "resume": "Reprendre l'assistant de démarrage"
@@ -1664,7 +1667,8 @@
     "mine": "Mes tâches",
     "overdue": "En retard",
     "thisWeek": "Cette semaine",
-    "blocked": "Bloquées"
+    "blocked": "Bloquées",
+    "doneThisWeek": "Terminées cette semaine"
   },
   "statsScope": {
     "label": "Périmètre des statistiques",

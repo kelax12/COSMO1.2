@@ -1,7 +1,7 @@
 import { Suspense, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
-  AlertTriangle, ArrowRightLeft, ArrowUpRight, Bell, Building2, Check, ChevronRight, History, KeyRound, ListPlus,
+  AlertTriangle, ArrowRightLeft, ArrowUpRight, Bell, Building2, Check, ChevronRight, Download, History, KeyRound, ListPlus,
   Lock, LogOut, Plug, Plus, Receipt, Repeat, ShieldCheck, SlidersHorizontal, Tags, Trash2, UserPlus, Users, Zap,
   type LucideIcon,
 } from 'lucide-react';
@@ -45,6 +45,8 @@ const OrgSettingsPermissions = lazyWithRetry(() => import('@/components/organiza
 // toute visite de /entreprise, pas le journal. Le catalogue est déclaré sur la
 // section, dans `OrganizationPage` (seul hôte que la garde des namespaces lit).
 const OrgAuditLogSection = lazyWithRetry(() => import('@/components/organization/OrgAuditLogSection'));
+// Export CSV des tâches : quitte la barre de l'onglet Tâches (2026-09-28).
+const OrgTasksExportSection = lazyWithRetry(() => import('@/components/organization/OrgTasksExportSection'));
 // Réglages, Sécurité, champs, automatisations, intégrations (mig. 195-199) :
 // leur catalogue `orgConfig` voyage avec eux (`org-config.lazy.ts`).
 
@@ -66,7 +68,7 @@ type ConfigPart = 'general' | 'security' | 'fields' | 'automations' | 'integrati
 type PanelId =
   | ConfigPart
   | 'profile' | 'orgs' | 'invite' | 'myRights' | 'permissions' | 'categories'
-  | 'notifications' | 'audit' | 'plan' | 'danger';
+  | 'notifications' | 'export' | 'audit' | 'plan' | 'danger';
 interface NavGroup {
   label: string;
   items: { id: PanelId; icon: LucideIcon; label: string }[];
@@ -151,6 +153,7 @@ const OrgSettingsSection = ({
     { label: t('orgSettings.groupTracking'), items: [
       { id: 'integrations', icon: Plug, label: t('orgSettings.navIntegrations') },
       { id: 'notifications', icon: Bell, label: t('orgSettings.navNotifications') },
+      { id: 'export', icon: Download, label: t('orgSettings.navExport') },
       ...(isAdmin ? [{ id: 'audit' as const, icon: History, label: t('orgSettings.navAudit') }] : []),
       ...(isOwner ? [{ id: 'plan' as const, icon: Receipt, label: t('orgSettings.navPlan') }] : []),
     ] },
@@ -370,6 +373,12 @@ const OrgSettingsSection = ({
             isOwner={isOwner}
             onInviteByEmail={(emails) => { setQuickEmails(emails); setInvitingByEmail(true); }}
           />
+        </Suspense>
+      )}
+
+      {active === 'export' && (
+        <Suspense fallback={null}>
+          <OrgTasksExportSection orgId={org.id} members={members} />
         </Suspense>
       )}
 
