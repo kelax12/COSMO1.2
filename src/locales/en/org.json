@@ -929,6 +929,7 @@
   },
   "tabs": {
     "overview": "Overview",
+    "reports": "Reports",
     "pyramid": "Pyramid",
     "projects": "Projects",
     "okr": "OKRs",
@@ -1150,6 +1151,12 @@
       "member": {
         "invite": "Invite members",
         "inviteHint": "Generate an invite link to a seat in the pyramid."
+      },
+      "report": {
+        "org": "View the company report",
+        "orgHint": "Read the activity report of the whole company, and each team's performance.",
+        "allTeams": "View every team's report",
+        "allTeamsHint": "Read the report of any team. Without this right, a team lead only reads their own team's."
       }
     },
     "intro": "These settings override the rights inferred from the pyramid. A row left on “Default” follows the member's position in the company."

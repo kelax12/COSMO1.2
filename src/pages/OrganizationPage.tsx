@@ -31,6 +31,7 @@ import {
 } from '@/components/organization/deep-link.helpers';
 import { safeRedirectPath } from '@/lib/safe-redirect';
 import { canSeeStats } from '@/components/organization/stats-scope.helpers';
+import { canSeeReports, reportAccess } from '@/components/organization/report-access.helpers';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import MyWorkTab from '@/components/organization/MyWorkTab';
 import { MyWorkSkeleton, TeamTasksSkeleton, TeamOverviewSkeleton, OrgTabSkeleton } from '@/components/organization/OrgLoadingSkeletons';
@@ -74,6 +75,8 @@ const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/
 // leur chunk.
 const TeamsSection = lazyWithRetry(() => import('@/components/organization/TeamsSection'));
 const TeamPage = lazyWithRetry(() => import('@/components/organization/TeamPage'));
+// Rapports d'activité (mig. 202) : un chunk à part, payé par qui l'ouvre.
+const OrgReportsSection = lazyWithRetry(() => import('@/components/organization/OrgReportsSection'));
 const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['csv', 'okr', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'tasks']);
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
@@ -210,13 +213,16 @@ const OrganizationPage = () => {
   // un responsable d'équipe regarde les statistiques de SON équipe.
   // Tant que les équipes chargent, un lien vers `stats` n'est pas renvoyé
   // à l'aperçu (le droit n'est pas encore connu).
+  // Rapports : droit `report.org` / `report.allTeams`, ou responsable d'une équipe.
+  const canReports = teamsLoading || myPermissions.isLoading
+    || canSeeReports(reportAccess(myPermissions.can, teams, teamMembers, user?.id));
   const canStats = teamsLoading || canSeeStats(teams, { members, teamMembers, currentUserId: user?.id, isAdmin });
   // Un membre qui arrive sur `/entreprise/billing` (lien partagé, ancien
   // favori) ou sur `pyramid` / `stats` (favori d'un ancien manager, lien
   // copié) sans en avoir le droit ne voit pas un écran vide : il retombe sur
   // l'aperçu.
   const tab: OrgTab =
-    (urlTab === 'billing' && !isOwner) || (urlTab === 'pyramid' && !isManager) || (urlTab === 'stats' && !canStats)
+    (urlTab === 'billing' && !isOwner) || (urlTab === 'pyramid' && !isManager) || (urlTab === 'stats' && !canStats) || (urlTab === 'reports' && !canReports)
       ? 'overview'
       : urlTab;
 
@@ -233,7 +239,7 @@ const OrganizationPage = () => {
     if (id === 'members') return { count: badges.members, items: badges.memberItems };
     return { count: extra?.count ?? 0, items: extraItems };
   };
-  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => (item.id === 'stats' ? canStats : !item.managerOnly || isManager)).map(
+  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => (item.id === 'stats' ? canStats : item.id === 'reports' ? canReports : !item.managerOnly || isManager)).map(
     ({ id, labelKey, Icon, group }) => {
       const { count: badgeCount, items } = badgeOf(id);
       const badgeAriaLabel = badgeCount > 0 ? tp('page.badgeCount', badgeCount) : undefined;
@@ -414,6 +420,9 @@ const OrganizationPage = () => {
       )}
       {tab === 'stats' && canStats && (
         <TeamOverviewTab orgId={myOrg.id} members={members} isAdmin={isAdmin} currentUserId={user?.id} />
+      )}
+      {tab === 'reports' && canReports && (
+        <OrgReportsSection orgId={myOrg.id} members={members} currentUserId={user?.id} />
       )}
       {tab === 'pyramid' && isManager && (
         <PyramidTab

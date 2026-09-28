@@ -977,6 +977,7 @@
   },
   "tabs": {
     "overview": "Aperçu",
+    "reports": "Rapports",
     "pyramid": "Pyramide",
     "projects": "Projets",
     "okr": "OKR",
@@ -1199,6 +1200,12 @@
       "member": {
         "invite": "Inviter des membres",
         "inviteHint": "Générer un lien d'invitation vers une place de la pyramide."
+      },
+      "report": {
+        "org": "Voir le rapport de l'entreprise",
+        "orgHint": "Lire le rapport d'activité de toute l'entreprise, et la performance de chaque équipe.",
+        "allTeams": "Voir le rapport de toutes les équipes",
+        "allTeamsHint": "Lire le rapport de n'importe quelle équipe. Sans ce droit, un responsable ne lit que celui de son équipe."
       }
     },
     "intro": "Ces réglages remplacent les droits déduits de la pyramide. Une ligne laissée sur « Par défaut » suit la position du membre dans l'entreprise."

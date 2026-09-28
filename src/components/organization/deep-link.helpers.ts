@@ -21,6 +21,8 @@ export const ORG_SECTION_SEGMENTS = [
   'projects',
   'okr',
   'stats',
+  // Rapports d'activité (mig. 202) : entreprise et équipes, figés à minuit.
+  'reports',
   'pyramid',
   // Audit Membres du 2026-09-24 : « quatre pages en une ». Personnes garde
   // l'adresse historique `members` (liens et e-mails déjà envoyés), Équipes et
