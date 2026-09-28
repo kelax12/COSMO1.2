@@ -84,8 +84,8 @@ compilait, la suite passait.
   « non appliquée » ci-dessus sont périmées. ❌ **Ne jamais réappliquer la `164`** : elle retire la
   branche « membre du projet » de la 190. `201` (action « Notifier » des automatisations) est
   appliquée, ledger `20260928071259`.
-- ⚠️ **`202`** (2026-09-28, rapports d activité) : **écrite, PROUVÉE en transaction annulée, NON
-  appliquée.** À appliquer AVANT le front : la fiche de permissions écrit ses deux colonnes.
+- ✅ **`202`** (rapports d activité) : **appliquée** le 2026-09-28, ledger `20260928081805` (inscrit à la main
+  après `db query -f`), relue au catalogue : table sous RLS, colonnes, plafond, droits, job `cosmo-activity-reports`.
   Preuve : `supabase/proofs/202.proof.sql` (7 cas acteur par acteur).
 - ⚠️ **Plages de numéros entre sessions (2026-09-24)** : `151`-`159` corbeille/équipes, `153` déjà
   prise par le portefeuille de projets (worktree `portefeuille`), `160`+ gouvernance/OKR/membres,
