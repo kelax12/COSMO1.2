@@ -119,7 +119,8 @@
     "seatsLeft_one": "{{count}} seat left",
     "seatsLeft_other": "{{count}} seats left",
     "seatsOver": "Past the free plan. Nothing changes today.",
-    "seatsFullNow": "No seats left: upgrade the plan."
+    "seatsFullNow": "No seats left: upgrade the plan.",
+    "changePlan": "Change plan"
   },
   "pyramid": {
     "undoImpact_one": "{{count}} move will be reverted.",
