@@ -418,7 +418,7 @@ const OrganizationPage = () => {
           de l'onglet Tâches ressemble à sa table, celui des Statistiques à ses
           tuiles. Un fallback générique pour tous aurait fait clignoter une
           forme qui n'est pas celle qui arrive. */}
-      {(tab === 'overview' || tab === 'settings') && canReports && !teamsLoading && !myPermissions.isLoading && (
+      {(tab === 'overview' || tab === 'settings' || (tab === 'teams' && !!teamId)) && canReports && !teamsLoading && !myPermissions.isLoading && (
         <div className="flex justify-end mb-3">
           <button
             type="button"
@@ -519,7 +519,7 @@ const OrganizationPage = () => {
               </DialogTitle>
               <DialogDescription>{t('reports.betaHint')}</DialogDescription>
             </DialogHeader>
-            {reportsOpen && <OrgReportsSection orgId={myOrg.id} members={members} currentUserId={user?.id} />}
+            {reportsOpen && <OrgReportsSection orgId={myOrg.id} members={members} currentUserId={user?.id} initialTeamId={(tab === 'teams' && teamId) || undefined} />}
           </DialogContent>
         </Dialog>
       )}
