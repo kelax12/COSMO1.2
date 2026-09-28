@@ -147,8 +147,15 @@ const MemberDirectoryToolbar = ({
           </button>
         )}
         {onExport && (
-          <button type="button" onClick={onExport} disabled={shown === 0} className={`${TOOL_BUTTON} disabled:opacity-50`}>
-            <Download size={15} aria-hidden="true" /> {t('directory.export.button')}
+          <button
+            type="button"
+            onClick={onExport}
+            disabled={shown === 0}
+            aria-label={t('directory.export.button')}
+            title={t('directory.export.button')}
+            className={`${TOOL_BUTTON} w-10 justify-center px-0 disabled:opacity-50`}
+          >
+            <Download size={15} aria-hidden="true" />
           </button>
         )}
       </div>
