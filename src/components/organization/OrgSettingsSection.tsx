@@ -58,6 +58,8 @@ interface OrgSettingsSectionProps {
   isManager: boolean;
   canInvite: boolean;
   seatsFull: boolean;
+  /** Places du forfait en vigueur (`effectiveQuota`), `null` = illimité. */
+  seatsQuota: number | null;
 }
 
 type ConfigPart = 'general' | 'security' | 'fields' | 'automations' | 'integrations';
@@ -95,6 +97,7 @@ const OrgSettingsSection = ({
   isManager,
   canInvite,
   seatsFull,
+  seatsQuota,
 }: OrgSettingsSectionProps) => {
   const { t } = useT('org');
   const { t: ta } = useT('orgAdmin');
@@ -368,6 +371,8 @@ const OrgSettingsSection = ({
             canInvite={canInvite}
             canInviteByEmail={canInviteByEmail}
             seatsFull={seatsFull}
+            seatsQuota={seatsQuota}
+            memberCount={members.length}
             onInviteByEmail={(emails) => { setQuickEmails(emails); setInvitingByEmail(true); }}
           />
         </Suspense>

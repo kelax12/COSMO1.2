@@ -20,6 +20,9 @@ interface OrgInviteSectionProps {
   /** Miroir de `create_org_email_invitations` (mig. 161). */
   canInviteByEmail: boolean;
   seatsFull: boolean;
+  /** Places du forfait en vigueur (`effectiveQuota`), `null` = illimité. */
+  seatsQuota: number | null;
+  memberCount: number;
   /** Ouvre la fenêtre d'invitation par e-mail, adresses déjà saisies. */
   onInviteByEmail: (emails: string) => void;
 }
@@ -34,17 +37,55 @@ const HINT = 'text-xs text-[rgb(var(--color-text-muted))] mt-0.5';
  * réponse. Personnes et Équipes restent atteignables par la barre latérale.
  */
 const OrgInviteSection = ({
-  org, currentUserId, isAdmin, canInvite, canInviteByEmail, seatsFull, onInviteByEmail,
+  org, currentUserId, isAdmin, canInvite, canInviteByEmail, seatsFull, seatsQuota, memberCount, onInviteByEmail,
 }: OrgInviteSectionProps) => {
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
   const [quickEmails, setQuickEmails] = useState('');
   const [showContacts, setShowContacts] = useState(false);
 
   return (
         <section aria-labelledby="org-invite-title" className="space-y-4">
-          <div>
-            <h2 id="org-invite-title" className={TITLE}>{t('settings.inviteTitle')}</h2>
-            <p className={HINT}>{t('settings.inviteHint')}</p>
+          <div className="flex flex-col lg:flex-row lg:items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <h2 id="org-invite-title" className={TITLE}>{t('settings.inviteTitle')}</h2>
+              <p className={HINT}>{t('settings.inviteHint')}</p>
+            </div>
+            {/* Places du forfait : la même règle que `org_seats_allowed()`.
+                Tant que la facturation dort, un dépassement s'annonce sans
+                rien bloquer, comme la bannière de l'en-tête. */}
+            <div className="lg:text-right shrink-0 lg:w-52 max-w-xs">
+              {seatsQuota == null ? (
+                <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+                  {tp('invite.seatsUnlimited', memberCount)}
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+                    {t('invite.seatsUsed', { used: memberCount, max: seatsQuota })}
+                  </p>
+                  <div
+                    role="meter"
+                    aria-label={t('invite.seatsUsed', { used: memberCount, max: seatsQuota })}
+                    aria-valuemin={0}
+                    aria-valuemax={seatsQuota}
+                    aria-valuenow={Math.min(memberCount, seatsQuota)}
+                    className="mt-1.5 h-1.5 rounded-full bg-[rgb(var(--color-border))] overflow-hidden"
+                  >
+                    <div
+                      className={`h-full rounded-full ${memberCount >= seatsQuota ? 'bg-amber-500' : 'bg-[rgb(var(--color-accent))]'}`}
+                      style={{ width: `${Math.min(100, (memberCount / Math.max(seatsQuota, 1)) * 100)}%` }}
+                    />
+                  </div>
+                  <p className={`text-xs mt-1 ${memberCount >= seatsQuota ? 'text-amber-600 dark:text-amber-400' : 'text-[rgb(var(--color-text-muted))]'}`}>
+                    {seatsFull
+                      ? t('invite.seatsFullNow')
+                      : memberCount >= seatsQuota
+                        ? t('invite.seatsOver')
+                        : tp('invite.seatsLeft', seatsQuota - memberCount)}
+                  </p>
+                </>
+              )}
+            </div>
           </div>
 
           {/* M11 : l'invitation par e-mail est le canal par défaut d'une
