@@ -1385,7 +1385,8 @@
     "openNotifications": "Ouvrir les préférences",
     "navExport": "Export des tâches",
     "exportTitle": "Exporter les tâches",
-    "exportHint": "Télécharge toutes les tâches de l’entreprise au format CSV."
+    "exportHint": "Télécharge toutes les tâches de l’entreprise au format CSV.",
+    "navReports": "Rapports d'activité"
   },
   "setup": {
     "resume": "Reprendre l'assistant de démarrage"
@@ -1687,7 +1688,6 @@
     "searchPerson": "Rechercher une personne"
   },
   "reports": {
-    "open": "Rapports",
     "title": "Rapports d'activité",
     "beta": "Bêta",
     "betaHint": "Fonctionnalité en bêta : ce que l'entreprise ou une équipe a fait, figé chaque nuit."

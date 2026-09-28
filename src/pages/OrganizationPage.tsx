@@ -1,8 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
-import { BookOpen, Building2, FileText, Pencil, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { BookOpen, Building2, Pencil, X } from 'lucide-react';
 import { useManagerSectionsToast, useOrgShortcuts } from '@/components/organization/org-page.hooks';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
@@ -77,7 +76,6 @@ const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/
 const TeamsSection = lazyWithRetry(() => import('@/components/organization/TeamsSection'));
 const TeamPage = lazyWithRetry(() => import('@/components/organization/TeamPage'));
 // Rapports d'activité (mig. 202) : un chunk à part, payé par qui l'ouvre.
-const OrgReportsSection = lazyWithRetry(() => import('@/components/organization/OrgReportsSection'));
 const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['csv', 'okr', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
@@ -136,9 +134,6 @@ const OrganizationPage = () => {
   // info-bulles de rôle l'ouvrent elles-mêmes, sur leur terme (`RoleTerm`).
   const [glossary, setGlossary] = useState(false);
   const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
-  // Rapports (bêta) : une fenêtre ouverte depuis Aperçu et Paramètres, pas une
-  // section. L'ancienne adresse `/entreprise/reports` ouvre l'aperçu, fenêtre ouverte.
-  const [reportsOpen, setReportsOpen] = useState(section === 'reports');
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const badges = useOrgBadges();
   const { data: orgNotifications = [] } = useOrgNotifications(myOrg?.id);
@@ -226,9 +221,9 @@ const OrganizationPage = () => {
   // copié) sans en avoir le droit ne voit pas un écran vide : il retombe sur
   // l'aperçu.
   const tab: OrgTab =
-    (urlTab === 'billing' && !isOwner) || (urlTab === 'pyramid' && !isManager) || (urlTab === 'stats' && !canStats) || urlTab === 'reports'
+    (urlTab === 'billing' && !isOwner) || (urlTab === 'pyramid' && !isManager) || (urlTab === 'stats' && !canStats)
       ? 'overview'
-      : urlTab;
+      : urlTab === 'reports' ? 'settings' : urlTab;
 
   // Entrées de navigation, partagées par le panneau desktop et le sélecteur
   // mobile. Projets (tâches nouvellement assignées) et Membres (demandes
@@ -418,21 +413,6 @@ const OrganizationPage = () => {
           de l'onglet Tâches ressemble à sa table, celui des Statistiques à ses
           tuiles. Un fallback générique pour tous aurait fait clignoter une
           forme qui n'est pas celle qui arrive. */}
-      {(tab === 'overview' || tab === 'settings' || (tab === 'teams' && !!teamId)) && canReports && !teamsLoading && !myPermissions.isLoading && (
-        <div className="flex justify-end mb-3">
-          <button
-            type="button"
-            onClick={() => setReportsOpen(true)}
-            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-          >
-            <FileText size={16} aria-hidden="true" />
-            {t('reports.open')}
-            <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]">
-              {t('reports.beta')}
-            </span>
-          </button>
-        </div>
-      )}
       <Suspense fallback={tabFallback(tab, t)}>
       {tab === 'overview' && (
         <MyWorkTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} />
@@ -498,6 +478,8 @@ const OrganizationPage = () => {
           canInvite={canInvite}
           seatsFull={seatsFull}
           seatsQuota={seatsQuota}
+          canReports={canReports && !teamsLoading && !myPermissions.isLoading}
+          initialPanel={urlTab === 'reports' ? 'reports' : undefined}
         />
       )}
       </Suspense>
@@ -507,22 +489,6 @@ const OrganizationPage = () => {
           clignoter une carte fantôme au milieu de la page pendant que le
           chunk arrive. */}
       <Suspense fallback={null}>
-      {canReports && (
-        <Dialog open={reportsOpen} onOpenChange={setReportsOpen}>
-          <DialogContent className="max-w-4xl w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto text-left">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                {t('reports.title')}
-                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]">
-                  {t('reports.beta')}
-                </span>
-              </DialogTitle>
-              <DialogDescription>{t('reports.betaHint')}</DialogDescription>
-            </DialogHeader>
-            {reportsOpen && <OrgReportsSection orgId={myOrg.id} members={members} currentUserId={user?.id} initialTeamId={(tab === 'teams' && teamId) || undefined} />}
-          </DialogContent>
-        </Dialog>
-      )}
       </Suspense>
 
       {/* Desktop : la navigation vit à DROITE, hors de la zone qui défile.
