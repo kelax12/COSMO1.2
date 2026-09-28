@@ -373,6 +373,7 @@ const OrgSettingsSection = ({
             seatsFull={seatsFull}
             seatsQuota={seatsQuota}
             memberCount={members.length}
+            isOwner={isOwner}
             onInviteByEmail={(emails) => { setQuickEmails(emails); setInvitingByEmail(true); }}
           />
         </Suspense>

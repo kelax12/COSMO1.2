@@ -1,8 +1,10 @@
 import { Suspense, useState } from 'react';
 import { Contact, Mail } from 'lucide-react';
 import type { MyOrganization } from '@/modules/organizations';
+import { Link } from 'react-router';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
+import { buildOrgLink } from './deep-link.helpers';
 
 // Même règle que dans `OrgSettingsSection` : pas de catalogue demandé ici,
 // ceux de l'espace entreprise sont déclarés par la ROUTE.
@@ -23,6 +25,8 @@ interface OrgInviteSectionProps {
   /** Places du forfait en vigueur (`effectiveQuota`), `null` = illimité. */
   seatsQuota: number | null;
   memberCount: number;
+  /** Seul le propriétaire gère le forfait (onglet Facturation). */
+  isOwner: boolean;
   /** Ouvre la fenêtre d'invitation par e-mail, adresses déjà saisies. */
   onInviteByEmail: (emails: string) => void;
 }
@@ -37,7 +41,7 @@ const HINT = 'text-xs text-[rgb(var(--color-text-muted))] mt-0.5';
  * réponse. Personnes et Équipes restent atteignables par la barre latérale.
  */
 const OrgInviteSection = ({
-  org, currentUserId, isAdmin, canInvite, canInviteByEmail, seatsFull, seatsQuota, memberCount, onInviteByEmail,
+  org, currentUserId, isAdmin, canInvite, canInviteByEmail, seatsFull, seatsQuota, memberCount, isOwner, onInviteByEmail,
 }: OrgInviteSectionProps) => {
   const { t, tp } = useT('org');
   const [quickEmails, setQuickEmails] = useState('');
@@ -84,6 +88,14 @@ const OrgInviteSection = ({
                         : tp('invite.seatsLeft', seatsQuota - memberCount)}
                   </p>
                 </>
+              )}
+              {isOwner && (
+                <Link
+                  to={buildOrgLink('billing')}
+                  className="mt-2 inline-flex items-center justify-center min-h-8 px-3 rounded-lg border border-[rgb(var(--color-border))] text-xs font-semibold text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                >
+                  {t('invite.changePlan')}
+                </Link>
               )}
             </div>
           </div>

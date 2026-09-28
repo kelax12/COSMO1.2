@@ -126,7 +126,8 @@
     "seatsLeft_many": "{{count}} de places restantes",
     "seatsLeft_other": "{{count}} places restantes",
     "seatsOver": "Au-delà de l'offre gratuite. Rien ne change aujourd'hui.",
-    "seatsFullNow": "Plus de place : faites évoluer le forfait."
+    "seatsFullNow": "Plus de place : faites évoluer le forfait.",
+    "changePlan": "Changer de forfait"
   },
   "pyramid": {
     "undoImpact_one": "{{count}} déplacement sera rétabli.",
