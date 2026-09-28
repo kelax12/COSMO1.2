@@ -46,6 +46,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface TeamCategoryTreeSelectProps {
   orgId: string;
@@ -322,7 +323,7 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
             style={{ paddingInlineStart: `${8 + (depth + 1) * 16}px` }}
             className="flex flex-wrap items-center gap-2 py-1.5 pr-2"
           >
-            <select
+            <MenuSelect
               aria-label={t('teamCategory.moveTo', { name: cat.name })}
               value={moveTarget}
               onChange={(e) => setMoveTarget(e.target.value)}
@@ -332,7 +333,7 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
               {moveTargets.map((c) => (
                 <option key={c.id} value={c.id}>{formatPath(categoryPath(c.id, categories))}</option>
               ))}
-            </select>
+            </MenuSelect>
             <button type="button" onClick={confirmMove} disabled={updateCategory.isPending} className="h-8 px-2.5 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-xs font-semibold disabled:opacity-50">
               {t('teamCategory.moveConfirm')}
             </button>

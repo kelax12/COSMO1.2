@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { OrgMember } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface TransferOwnershipDialogProps {
   orgName: string;
@@ -65,7 +66,7 @@ const TransferOwnershipDialog = ({ orgName, candidates, hasSubscription = false,
         <label className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1" htmlFor="transfer-owner-select">
           {ta('transfer.newOwner')}
         </label>
-        <select
+        <MenuSelect
           id="transfer-owner-select"
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
@@ -75,7 +76,7 @@ const TransferOwnershipDialog = ({ orgName, candidates, hasSubscription = false,
           {candidates.map((m) => (
             <option key={m.userId} value={m.userId}>{m.displayName}</option>
           ))}
-        </select>
+        </MenuSelect>
         <AlertDialogFooter className="gap-2">
           <AlertDialogCancel className="rounded-xl border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] font-semibold text-sm">
             {t('common.cancel')}

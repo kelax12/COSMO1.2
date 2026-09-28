@@ -9,6 +9,7 @@ import { projectColor, PRIORITY_META, isTaskOverdue, priorityLabelOf } from './t
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface AssignTaskSheetProps {
   /** Membre cible (null = colonne « Non assignées » → création seule). */
@@ -120,7 +121,7 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
           {(projects.length > 1 || member) && (
             <div className="flex flex-col sm:flex-row gap-2">
               {projects.length > 1 && (
-                <select
+                <MenuSelect
                   id="assign-sheet-project"
                   value={projectId}
                   onChange={(e) => setProjectId(e.target.value)}
@@ -131,7 +132,7 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
-                </select>
+                </MenuSelect>
               )}
               {member && (
                 <div className="relative flex-1">

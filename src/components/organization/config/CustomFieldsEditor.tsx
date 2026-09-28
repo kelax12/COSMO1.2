@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { useCreateCustomField, useCustomFields, useDeleteCustomField, type CustomFieldKind } from '@/modules/org-config';
 import { useT } from '@/i18n/useT';
 import { FIELD, BUTTON, ICON_BTN, LABEL } from './config-ui';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 const KINDS: CustomFieldKind[] = ['text', 'number', 'date', 'select', 'checkbox'];
 
@@ -69,9 +70,9 @@ const CustomFieldsEditor = ({ orgId, projectId, canEdit }: Props) => {
           </label>
           <label className={LABEL}>
             {t('fields.kind')}
-            <select className={FIELD} value={kind} onChange={(e) => setKind(e.target.value as CustomFieldKind)}>
+            <MenuSelect className={FIELD} value={kind} onChange={(e) => setKind(e.target.value as CustomFieldKind)}>
               {KINDS.map((k) => <option key={k} value={k}>{t(`fields.kinds.${k}` as 'fields.kinds.text')}</option>)}
-            </select>
+            </MenuSelect>
           </label>
           <button type="submit" className={BUTTON} disabled={!valid || create.isPending}>{t('fields.add')}</button>
           {kind === 'select' && (

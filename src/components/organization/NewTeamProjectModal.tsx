@@ -23,6 +23,7 @@ import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
 import { ProjectColorPicker } from './ProjectEditDialog';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 /** Tâche initiale saisie dans le popup. */
 export interface DraftTask {
@@ -240,7 +241,7 @@ const NewTeamProjectModal = ({
               <LayoutTemplate size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />
               {pf('builtIn.pickLabel')}
             </label>
-            <select
+            <MenuSelect
               id="new-project-template"
               value={templateChoice}
               onChange={(e) => pickTemplate(e.target.value)}
@@ -260,7 +261,7 @@ const NewTeamProjectModal = ({
                   <option key={b.key} value={`builtin:${b.key}`}>{pf(`builtIn.${b.key}`)}</option>
                 ))}
               </optgroup>
-            </select>
+            </MenuSelect>
           </div>
 
           <div>
@@ -294,7 +295,7 @@ const NewTeamProjectModal = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="new-project-team" className={labelClass} style={labelStyle}>{t('project.team')}</label>
-              <select
+              <MenuSelect
                 id="new-project-team"
                 value={teamId}
                 onChange={(e) => { setTeamTouched(true); setTeamId(e.target.value); }}
@@ -305,7 +306,7 @@ const NewTeamProjectModal = ({
                 {teams.map((team) => (
                   <option key={team.id} value={team.id}>{t('project.teamOption', { name: team.name })}</option>
                 ))}
-              </select>
+              </MenuSelect>
             </div>
             <MemberSelectField
               label={pf('new.owner')}

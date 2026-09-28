@@ -9,6 +9,7 @@ import { FolderKanban, Clock, ArrowUpDown, ListChecks } from 'lucide-react';
 import { formatDuration } from './team-projects.helpers';
 import type { PortfolioSort } from './portfolio.helpers';
 import { useT } from '@/i18n/useT';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 /** Skeleton de chargement au format carte projet. */
 export const ProjectsSkeleton = () => (
@@ -87,7 +88,7 @@ export const ProjectsSearchBar = ({ sort, onSortChange, onStartSelect }: {
         <label className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-muted))]">
           <ArrowUpDown size={13} aria-hidden="true" />
           <span className="sr-only sm:not-sr-only">{pf('sortLabel')}</span>
-          <select
+          <MenuSelect
             value={sort}
             onChange={(e) => onSortChange(e.target.value as PortfolioSort)}
             className="h-9 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))]"
@@ -95,7 +96,7 @@ export const ProjectsSearchBar = ({ sort, onSortChange, onStartSelect }: {
             {SORTS.map((s) => (
               <option key={s} value={s}>{pf(`sort.${s}`)}</option>
             ))}
-          </select>
+          </MenuSelect>
         </label>
       )}
     </div>

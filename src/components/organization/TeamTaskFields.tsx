@@ -35,6 +35,7 @@ import { PRIORITY_META, STATUS_META, STATUS_ORDER, projectColor } from './team-p
 import { useT } from '@/i18n/useT';
 import { useOrgCreate } from './org-create.context';
 import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
@@ -218,7 +219,7 @@ const TeamTaskFields = ({
               />
             )}
           </div>
-          <select
+          <MenuSelect
             id="team-task-project"
             value={projectId}
             onChange={(e) => onProjectChange(e.target.value)}
@@ -232,7 +233,7 @@ const TeamTaskFields = ({
             {projects.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
-          </select>
+          </MenuSelect>
           {projectId && (
             <span className="inline-flex items-center gap-1.5 mt-1.5 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
               <span className={`w-2 h-2 rounded-full ${projectColor(projects.find((p) => p.id === projectId)?.color ?? 'blue').dot}`} aria-hidden="true" />

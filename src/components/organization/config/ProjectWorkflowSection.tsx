@@ -8,6 +8,7 @@ import { STATUS_ORDER, STATUS_META } from '../team-projects.helpers';
 import CustomFieldsEditor from './CustomFieldsEditor';
 import AutomationsEditor from './AutomationsEditor';
 import { CARD, TITLE, HINT, FIELD, BUTTON, ICON_BTN, LABEL } from './config-ui';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 const COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
 
@@ -76,9 +77,9 @@ const ProjectWorkflowSection = ({ project, members, canEdit }: Props) => {
               </label>
               <label className={LABEL}>
                 {t('statuses.mapsTo')}
-                <select className={FIELD} value={mapsTo} onChange={(e) => setMapsTo(e.target.value as TeamTaskStatus)}>
+                <MenuSelect className={FIELD} value={mapsTo} onChange={(e) => setMapsTo(e.target.value as TeamTaskStatus)}>
                   {STATUS_ORDER.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
-                </select>
+                </MenuSelect>
               </label>
               <div className="flex gap-1 pb-1.5" role="radiogroup" aria-label={t('statuses.name')}>
                 {COLORS.map((c) => (

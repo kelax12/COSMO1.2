@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useTeamDeletionImpact, useDeleteOrgTeam, type OrgTeam } from '@/modules/org-teams';
 import { useT } from '@/i18n/useT';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface DeleteTeamDialogProps {
   orgId: string;
@@ -101,7 +102,7 @@ const DeleteTeamDialog = ({ orgId, team, teams, onClose }: DeleteTeamDialogProps
                 <label htmlFor="delete-team-target" className="block text-xs font-semibold mb-1.5 text-[rgb(var(--color-text-secondary))]">
                   {t('team.deleteDialog.targetLabel')}
                 </label>
-                <select
+                <MenuSelect
                   id="delete-team-target"
                   value={targetId}
                   onChange={(e) => setTargetId(e.target.value)}
@@ -111,7 +112,7 @@ const DeleteTeamDialog = ({ orgId, team, teams, onClose }: DeleteTeamDialogProps
                   {others.map((x) => (
                     <option key={x.id} value={x.id}>{x.name}</option>
                   ))}
-                </select>
+                </MenuSelect>
                 {target && (
                   <p className="mt-1.5 text-xs text-[rgb(var(--color-text-muted))]">
                     {t('team.deleteDialog.newAudience', { name: target.name })}

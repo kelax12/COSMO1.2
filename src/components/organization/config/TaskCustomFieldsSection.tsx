@@ -6,6 +6,7 @@ import {
 import { DatePicker } from '@/components/ui/date-picker';
 import { useT } from '@/i18n/useT';
 import { FIELD, LABEL } from './config-ui';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface Props {
   orgId: string;
@@ -68,11 +69,11 @@ const TaskCustomFieldsSection = ({ orgId, taskId, projectId, canEdit }: Props) =
                 <input type="checkbox" className="w-4 h-4 accent-[rgb(var(--color-accent))]" disabled={disabled}
                   checked={v === true} onChange={(e) => save(f.id, e.target.checked ? true : null)} />
               ) : f.kind === 'select' ? (
-                <select className={FIELD} disabled={disabled} value={typeof v === 'string' ? v : ''}
+                <MenuSelect className={FIELD} disabled={disabled} value={typeof v === 'string' ? v : ''}
                   onChange={(e) => save(f.id, e.target.value || null)}>
                   <option value="">{t('fields.none')}</option>
                   {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
-                </select>
+                </MenuSelect>
               ) : f.kind === 'date' ? (
                 <DatePicker value={typeof v === 'string' ? v : ''} disabled={disabled} popoverClassName="z-[10001]"
                   onChange={(d) => save(f.id, d || null)} />

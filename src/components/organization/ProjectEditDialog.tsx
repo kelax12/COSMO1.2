@@ -27,6 +27,7 @@ import { PROJECT_STATUSES } from './portfolio.helpers';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface ProjectEditDialogProps {
   project: TeamProject;
@@ -191,7 +192,7 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
             <div>
               <label htmlFor="project-edit-owner" className={labelClass}>{pf('edit.owner')}</label>
               {canChangeOwner ? (
-                <select
+                <MenuSelect
                   id="project-edit-owner"
                   value={ownerId}
                   onChange={(e) => setOwnerId(e.target.value)}
@@ -201,7 +202,7 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
                   {members.map((m) => (
                     <option key={m.userId} value={m.userId}>{m.displayName}</option>
                   ))}
-                </select>
+                </MenuSelect>
               ) : (
                 <p id="project-edit-owner" className="h-11 flex items-center text-sm text-[rgb(var(--color-text-secondary))]">
                   {owner?.displayName ?? pf('noOwner')}
@@ -210,7 +211,7 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
             </div>
             <div>
               <label htmlFor="project-edit-status" className={labelClass}>{pf('edit.status')}</label>
-              <select
+              <MenuSelect
                 id="project-edit-status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as TeamProjectStatus)}
@@ -219,7 +220,7 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
                 {PROJECT_STATUSES.map((s) => (
                   <option key={s} value={s}>{pf(`status.${s}`)}</option>
                 ))}
-              </select>
+              </MenuSelect>
             </div>
             <div>
               <label htmlFor="project-edit-start" className={labelClass}>{pf('edit.startDate')}</label>

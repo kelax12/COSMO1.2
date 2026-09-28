@@ -2,6 +2,7 @@ import { useId, useMemo, useState } from 'react';
 import type { OrgMember } from '@/modules/organizations';
 import { filterMembersByQuery, MEMBER_SEARCH_THRESHOLD } from './member-search.helpers';
 import { useT } from '@/i18n/useT';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface MemberSelectFieldProps {
   label: string;
@@ -45,7 +46,7 @@ const MemberSelectField = ({ label, members, value, onChange, emptyLabel, hint }
           className="w-full mb-1.5 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2 text-sm text-[rgb(var(--color-text-primary))]"
         />
       )}
-      <select
+      <MenuSelect
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -55,7 +56,7 @@ const MemberSelectField = ({ label, members, value, onChange, emptyLabel, hint }
         {options.map((m) => (
           <option key={m.userId} value={m.userId}>{m.displayName}</option>
         ))}
-      </select>
+      </MenuSelect>
       {hint && <p className="mt-1 text-xs text-[rgb(var(--color-text-muted))]">{hint}</p>}
     </div>
   );
