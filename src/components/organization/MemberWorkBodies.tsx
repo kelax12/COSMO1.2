@@ -51,19 +51,20 @@ export const MemberWorkBody = ({ orgId, member, teams, canSeeInsights }: WorkBod
     .sort((a, b) => Number(b.ownerId === member.userId) - Number(a.ownerId === member.userId) || a.name.localeCompare(b.name));
 
   return (
-    <div className="space-y-5">
+    // Grand format (maquette A, 2026-09-28) : équipes à gauche, projets à droite.
+    <div className="grid gap-5 sm:grid-cols-[220px_minmax(0,1fr)]">
       <section>
         <h3 className={sectionTitle}><Users2 size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />{t('popups.member.teams')}</h3>
         {teams.length === 0 ? (
           <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('popups.member.noTeam')}</p>
         ) : (
-          <ul className="flex flex-wrap gap-1.5">
+          <ul className="space-y-1.5">
             {teams.map((team) => (
-              <li key={team.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[rgb(var(--color-border))] text-xs font-semibold text-[rgb(var(--color-text-primary))]">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: team.color }} aria-hidden="true" />
-                {team.name}
+              <li key={team.id} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[rgb(var(--color-border))] text-sm text-[rgb(var(--color-text-primary))]">
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: team.color }} aria-hidden="true" />
+                <span className="flex-1 min-w-0 truncate">{team.name}</span>
                 {leadOf.has(team.id) && (
-                  <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
+                  <span className="inline-flex items-center gap-0.5 shrink-0 text-xs font-semibold text-amber-600 dark:text-amber-400">
                     <Crown size={11} aria-hidden="true" /> {t('popups.member.lead')}
                   </span>
                 )}
@@ -114,6 +115,8 @@ const FIELD_KEY: Record<TeamActivityField, `popups.history.field.${TeamActivityF
   created: 'popups.history.field.created',
 };
 
+const FIELD_ORDER: TeamActivityField[] = ['created', 'status', 'assignees', 'deadline', 'priority', 'project', 'name'];
+
 /** Fenêtre de l'historique d'une personne : trente jours, bornée côté serveur (500 lignes). */
 const HISTORY_DAYS = 30;
 
@@ -130,6 +133,7 @@ export const MemberHistoryBody = ({ orgId, member }: { orgId: string; member: Or
   const { data: tasks = [] } = useTeamTasks(orgId);
   const taskName = useMemo(() => new Map(tasks.map((task) => [task.id, task.name])), [tasks]);
   const mine = activity.filter((a) => a.actorId === member.userId).slice(0, 60);
+  const [filter, setFilter] = useState<TeamActivityField | null>(null);
 
   if (isLoading) return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{t('popups.history.loading')}</p>;
   if (mine.length === 0) {
@@ -141,29 +145,53 @@ export const MemberHistoryBody = ({ orgId, member }: { orgId: string; member: Or
     );
   }
 
+  const fields = FIELD_ORDER.filter((f) => mine.some((a) => a.field === f));
+  const shown = filter ? mine.filter((a) => a.field === filter) : mine;
+  const chip = (active: boolean) =>
+    `px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+      active
+        ? 'border-transparent bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]'
+        : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+    }`;
+
+  // Grand format (maquette B, 2026-09-28) : journal filtrable par champ, en tableau.
   return (
     <>
       <p className="text-caption text-[rgb(var(--color-text-muted))] mb-3">{t('popups.member.historyScope', { days: HISTORY_DAYS })}</p>
-      <ol className="space-y-2.5">
-        {mine.map((entry) => (
-          <li key={entry.id} className="flex gap-3">
-            <span className="mt-1.5 w-2 h-2 rounded-full bg-[rgb(var(--color-accent))] shrink-0" aria-hidden="true" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm text-[rgb(var(--color-text-primary))] break-words">
-                {entry.field === 'created'
-                  ? t('popups.member.historyCreated', { task: taskName.get(entry.taskId) ?? t('popups.member.hiddenTask') })
-                  : t('popups.member.historyEntry', {
-                    field: t(FIELD_KEY[entry.field]),
-                    task: taskName.get(entry.taskId) ?? t('popups.member.hiddenTask'),
-                  })}
-              </p>
-              <p className="text-caption text-[rgb(var(--color-text-muted))]">
+      {fields.length > 1 && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          <button type="button" aria-pressed={filter === null} onClick={() => setFilter(null)} className={chip(filter === null)}>
+            {t('popups.member.filterAll')}
+          </button>
+          {fields.map((f) => (
+            <button key={f} type="button" aria-pressed={filter === f} onClick={() => setFilter(f)} className={`${chip(filter === f)} capitalize`}>
+              {t(FIELD_KEY[f])}
+            </button>
+          ))}
+        </div>
+      )}
+      <table className="w-full text-sm table-fixed">
+        <thead>
+          <tr className="text-left text-caption uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
+            <th scope="col" className="font-semibold pb-2 w-32">{t('popups.member.colWhen')}</th>
+            <th scope="col" className="font-semibold pb-2 w-28">{t('popups.member.colField')}</th>
+            <th scope="col" className="font-semibold pb-2">{t('popups.member.colTask')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {shown.map((entry) => (
+            <tr key={entry.id} className="border-t border-[rgb(var(--color-border))]">
+              <td className="py-2.5 pr-2 text-caption text-[rgb(var(--color-text-muted))]">
                 {formatDistanceToNow(parseISO(entry.createdAt), { addSuffix: true, locale: getDateLocale() })}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ol>
+              </td>
+              <td className="py-2.5 pr-2 text-[rgb(var(--color-text-secondary))] capitalize">{t(FIELD_KEY[entry.field])}</td>
+              <td className="py-2.5 text-[rgb(var(--color-text-primary))] truncate">
+                {taskName.get(entry.taskId) ?? t('popups.member.hiddenTask')}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </>
   );
 };

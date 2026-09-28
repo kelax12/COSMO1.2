@@ -125,6 +125,8 @@ const MemberSheet = ({
   // L'agenda est un calendrier plein écran, pas une carte : FullCalendar ne
   // sait se dimensionner que dans un conteneur à hauteur DÉFINIE. Le panneau
   // s'agrandit donc pour cet onglet — sans quoi la grille se rend écrasée.
+  // Les autres onglets sont en grand format aussi (maquettes du 2026-09-28) :
+  // colonnes et tableaux, plus une colonne étroite de téléphone.
   const wide = tab === 'agenda';
 
   // C-53 — piege de focus, restitution du focus au declencheur, Echap et
@@ -142,7 +144,7 @@ const MemberSheet = ({
     >
       <div
         className={`bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] w-full shadow-2xl flex flex-col rounded-t-[24px] sm:rounded-2xl ${
-          wide ? 'h-[92dvh] sm:h-[90vh] sm:max-w-6xl' : 'max-h-[85vh] sm:max-w-md'
+          wide ? 'h-[92dvh] sm:h-[90vh] sm:max-w-6xl' : 'max-h-[88vh] sm:max-w-3xl'
         }`}
         onClick={(e) => e.stopPropagation()}
         ref={modalA11yRef}
