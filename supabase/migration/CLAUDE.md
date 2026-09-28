@@ -77,6 +77,8 @@ compilait, la suite passait.
   NON prouvées.** Réglages et sécurité, capacité et lien secondaire, statuts et champs par projet,
   automatisations, webhooks. Ordre : après `194`. Preuve prête, jamais jouée :
   `supabase/proofs/195-199.proof.sql`. 🔴 Le lien secondaire (196) ne passe par AUCUNE policy.
+- ⚠️ **`200`** (2026-09-28) retire cycles d OKR (160), capacité et liens secondaires (196), sortis
+  du front le même jour. **Écrite, NON appliquée, NON prouvée.** Tables vides en prod au 09-28.
 - ⚠️ **Plages de numéros entre sessions (2026-09-24)** : `151`-`159` corbeille/équipes, `153` déjà
   prise par le portefeuille de projets (worktree `portefeuille`), `160`+ gouvernance/OKR/membres,
   `170`+ annuaire. **Relire le ledger avant de choisir un numéro.**
