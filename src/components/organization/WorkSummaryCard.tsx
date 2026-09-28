@@ -11,8 +11,9 @@ interface WorkSummaryCardProps {
      maintenant « X terminée(s) sur N », qui se dérive de `completed` et du
      total. Garder un pourcentage en prop, c'était garder deux définitions du
      même chiffre. */
-  /** Colonne de droite : anneau OKR (Statistiques) ou prochaine échéance (Aperçu). */
-  aside: ReactNode;
+  /** Colonne de droite : anneau OKR (Statistiques). Absente sur l'Aperçu, où
+   *  la prochaine échéance est une tuile du bandeau de chiffres. */
+  aside?: ReactNode;
   /** Message affiché quand il n'y a aucune tâche. */
   emptyLabel?: string;
 }
@@ -78,7 +79,7 @@ const WorkSummaryCard = ({
   const barLabel = t('summary.barLabel', { completed, inProgress, overdue });
 
   return (
-    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-5 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-5 sm:gap-6 items-center">
+    <div className={`min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-5 grid grid-cols-1 gap-5 sm:gap-6 items-center ${aside ? 'sm:grid-cols-[1fr_auto]' : ''}`}>
       <div>
         <div className="flex items-baseline justify-between gap-3 mb-3.5">
           <span className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{title}</span>
@@ -123,9 +124,11 @@ const WorkSummaryCard = ({
         )}
       </div>
 
-      <div className="border-t sm:border-t-0 sm:border-l border-[rgb(var(--color-border))] pt-4 sm:pt-0 sm:pl-6 flex justify-center">
-        {aside}
-      </div>
+      {aside && (
+        <div className="border-t sm:border-t-0 sm:border-l border-[rgb(var(--color-border))] pt-4 sm:pt-0 sm:pl-6 flex justify-center">
+          {aside}
+        </div>
+      )}
     </div>
   );
 };
