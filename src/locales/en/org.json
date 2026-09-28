@@ -1583,5 +1583,11 @@
   },
   "lifecycle": {
     "searchPerson": "Search for a person"
+  },
+  "reports": {
+    "open": "Reports",
+    "title": "Activity reports",
+    "beta": "Beta",
+    "betaHint": "Beta feature: what the company or a team got done, frozen every night."
   }
 }
