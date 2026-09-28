@@ -36,7 +36,7 @@ const TeamProfileEditor = ({ orgId, team, onDone }: TeamProfileEditorProps) => {
   const labelClass = 'block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1';
 
   return (
-    <form onSubmit={save} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 space-y-3">
+    <form onSubmit={save} className="space-y-3">
       <div>
         <label htmlFor="team-name" className={labelClass}>{t('teamPage.nameLabel')}</label>
         <input
