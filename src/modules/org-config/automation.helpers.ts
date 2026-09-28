@@ -34,7 +34,9 @@ export function applyAutomations<T extends TaskLike>(
   for (const r of matching) {
     if (r.actionKind === 'set_priority') out.priority = Number(r.actionValue);
     else if (r.actionKind === 'set_status') out.status = r.actionValue as TeamTaskStatus;
-    else if (!out.assigneeIds.includes(r.actionValue) && (!orgMemberIds || orgMemberIds.has(r.actionValue))) {
+    // `notify_member` (mig. 201) ne touche pas la tâche : la notification est
+    // écrite par un trigger AFTER, et la démo n'en produit pas.
+    else if (r.actionKind === 'add_assignee' && !out.assigneeIds.includes(r.actionValue) && (!orgMemberIds || orgMemberIds.has(r.actionValue))) {
       out.assigneeIds.push(r.actionValue);
     }
   }

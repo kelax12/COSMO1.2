@@ -1030,6 +1030,8 @@
     "kindRoleManagerChanged": "Votre supérieur direct a changé dans la pyramide",
     "kindRoleNowManager": "Vous encadrez désormais quelqu'un : Pyramide et Statistiques vous sont ouvertes",
     "kindRoleNoLongerManager": "Vous n'encadrez plus personne : Pyramide et Statistiques ne vous sont plus ouvertes",
+    "kindAutomation": "Une automatisation vous a notifié",
+    "kindAutomationNamed": "Automatisation « {{name}} » : une tâche vous concerne",
     "settings": "Préférences de notification",
     "filterLabel": "Filtrer les notifications",
     "filterAll": "Tout",
@@ -1577,6 +1579,7 @@
       "project_archived": "Projet archivé",
       "kr_due": "Échéance d'un résultat clé",
       "event_scheduled": "Créneau ajouté à mon agenda",
+      "automation": "Notification d'une automatisation",
       "role_changed": "Changement de position dans la pyramide"
     }
   },

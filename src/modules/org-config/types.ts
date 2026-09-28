@@ -110,7 +110,7 @@ export interface TaskFieldValue {
 // ─── 198 · Automatisations ────────────────────────────────────────────
 
 export type AutomationTrigger = 'task_created' | 'status_changed';
-export type AutomationAction = 'add_assignee' | 'set_priority' | 'set_status';
+export type AutomationAction = 'add_assignee' | 'set_priority' | 'set_status' | 'notify_member';
 
 export interface Automation {
   id: string;
@@ -121,7 +121,7 @@ export interface Automation {
   /** Statut visé pour `status_changed`, null sinon. */
   triggerValue: TeamTaskStatus | null;
   actionKind: AutomationAction;
-  /** Id de membre, priorité '1'..'5' ou statut. */
+  /** Id de membre, priorité '1'..'5', statut, ou `assignees` (notify_member, mig. 201). */
   actionValue: string;
   enabled: boolean;
   position: number;

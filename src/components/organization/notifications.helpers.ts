@@ -88,7 +88,7 @@ export const groupNotifications = (
 export type NotificationFilter = 'all' | 'work' | 'mentions' | 'deadlines' | 'projects' | 'org';
 
 const FILTER_KINDS: Record<Exclude<NotificationFilter, 'all'>, readonly OrgNotificationKind[]> = {
-  work: ['task_assigned', 'status_changed', 'unblocked'],
+  work: ['task_assigned', 'status_changed', 'unblocked', 'automation'],
   mentions: ['mention', 'comment'],
   deadlines: ['task_overdue', 'kr_due', 'event_scheduled'],
   projects: ['project_at_risk', 'project_archived'],
