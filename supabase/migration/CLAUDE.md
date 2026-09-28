@@ -78,7 +78,7 @@ compilait, la suite passait.
   automatisations, webhooks. Ordre : après `194`. Preuve prête, jamais jouée :
   `supabase/proofs/195-199.proof.sql`. 🔴 Le lien secondaire (196) ne passe par AUCUNE policy.
 - ⚠️ **`200`** (2026-09-28) retire cycles d OKR (160), capacité et liens secondaires (196), sortis
-  du front le même jour. **Écrite, NON appliquée, NON prouvée.** Tables vides en prod au 09-28.
+  du front le même jour. ✅ **Appliquée le 2026-09-28**, ledger `20260928071852`, relue au catalogue.
 - 🔴 **Relu au catalogue le 2026-09-28 : `164`, `190`, `194` et `195`-`199` sont EN PROD sans ligne
   au ledger** (`can_access_team_project` porte déjà la réconciliation de la 194). Les notes
   « non appliquée » ci-dessus sont périmées. ❌ **Ne jamais réappliquer la `164`** : elle retire la
