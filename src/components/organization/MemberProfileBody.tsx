@@ -11,6 +11,9 @@ const SOURCE_KEY = {
   completion: 'directory.activity.sourceCompletion',
 } as const;
 
+const CARD = 'rounded-2xl border border-[rgb(var(--color-border))] p-4';
+const CARD_TITLE = 'text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-3';
+
 interface MemberProfileBodyProps {
   member: OrgMember;
   members: OrgMember[];
@@ -50,62 +53,72 @@ export const MemberProfileBody = ({
 
   return (
     <>
-      <dl className="space-y-3 mb-5">
-        {m.email && (
-          <div className="flex items-center gap-2.5 text-sm">
-            <Mail size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-            <dd className="text-[rgb(var(--color-text-secondary))] truncate">{m.email}</dd>
-          </div>
-        )}
-        <div className="flex items-center gap-2.5 text-sm">
-          <Network size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-          <dd className="text-[rgb(var(--color-text-secondary))]">
-            {managerMember
-              ? <>{t('member.attachedTo')} <strong className="text-[rgb(var(--color-text-primary))]">{managerMember.userId === currentUserId ? t('member.you') : managerMember.displayName}</strong></>
-              : t('member.noManager')}
-          </dd>
-        </div>
-        <div className="flex items-center gap-2.5 text-sm">
-          <Users size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-          <dd className="text-[rgb(var(--color-text-secondary))]">
-            {directs === 0
-              ? t('member.noDirectReport')
-              : tpa('pyramid.directCount', directs) + (total > directs ? ta('pyramid.totalSuffix', { count: total }) : '')}
-          </dd>
-        </div>
-        {lastActivity && (
-          <div className="flex items-center gap-2.5 text-sm">
-            <Clock size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-            <dd className="text-[rgb(var(--color-text-secondary))]">
-              {lastActivity.lastActivityAt
-                ? t('directory.activity.sheet', {
-                    when: formatDistanceToNow(new Date(lastActivity.lastActivityAt), { addSuffix: true, locale: getDateLocale() }),
-                    source: lastActivity.source ? t(SOURCE_KEY[lastActivity.source]) : '',
-                  })
-                : t('directory.activity.none')}
-            </dd>
-          </div>
-        )}
-      </dl>
+      {/* Grand format (maquette A, 2026-09-28) : coordonnées à gauche,
+          rattachement et équipes à droite ; une seule colonne sur téléphone. */}
+      <div className="grid gap-3 sm:grid-cols-2 mb-5">
+        <section className={CARD}>
+          <h3 className={CARD_TITLE}>{t('popups.member.coordinates')}</h3>
+          <dl className="space-y-3">
+            {m.email && (
+              <div className="flex items-center gap-2.5 text-sm">
+                <Mail size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+                <dd className="text-[rgb(var(--color-text-secondary))] truncate">{m.email}</dd>
+              </div>
+            )}
+            {lastActivity && (
+              <div className="flex items-center gap-2.5 text-sm">
+                <Clock size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+                <dd className="text-[rgb(var(--color-text-secondary))]">
+                  {lastActivity.lastActivityAt
+                    ? t('directory.activity.sheet', {
+                        when: formatDistanceToNow(new Date(lastActivity.lastActivityAt), { addSuffix: true, locale: getDateLocale() }),
+                        source: lastActivity.source ? t(SOURCE_KEY[lastActivity.source]) : '',
+                      })
+                    : t('directory.activity.none')}
+                </dd>
+              </div>
+            )}
+          </dl>
+        </section>
 
-      {teams.length > 0 && (
-        <div className="mb-5">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
-            {t('member.crossTeams')}
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {teams.map((team) => (
-              <span
-                key={team.id}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--color-border))] px-2.5 py-1 text-xs font-medium text-[rgb(var(--color-text-secondary))]"
-              >
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: team.color }} aria-hidden="true" />
-                {team.name}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+        <section className={CARD}>
+          <h3 className={CARD_TITLE}>{t('popups.member.attachment')}</h3>
+          <dl className="space-y-3">
+            <div className="flex items-center gap-2.5 text-sm">
+              <Network size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+              <dd className="text-[rgb(var(--color-text-secondary))]">
+                {managerMember
+                  ? <>{t('member.attachedTo')} <strong className="text-[rgb(var(--color-text-primary))]">{managerMember.userId === currentUserId ? t('member.you') : managerMember.displayName}</strong></>
+                  : t('member.noManager')}
+              </dd>
+            </div>
+            <div className="flex items-center gap-2.5 text-sm">
+              <Users size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+              <dd className="text-[rgb(var(--color-text-secondary))]">
+                {directs === 0
+                  ? t('member.noDirectReport')
+                  : tpa('pyramid.directCount', directs) + (total > directs ? ta('pyramid.totalSuffix', { count: total }) : '')}
+              </dd>
+            </div>
+          </dl>
+          {teams.length > 0 && (
+            <>
+              <h3 className={`${CARD_TITLE} mt-4`}>{t('member.crossTeams')}</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {teams.map((team) => (
+                  <span
+                    key={team.id}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--color-border))] px-2.5 py-1 text-xs font-medium text-[rgb(var(--color-text-secondary))]"
+                  >
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: team.color }} aria-hidden="true" />
+                    {team.name}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      </div>
 
       {(canMove || canAddUnder) && (
         <div className="flex gap-2">

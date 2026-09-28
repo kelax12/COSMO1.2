@@ -59,104 +59,114 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
     label: member ? t('assign.assignTo', { name: member.displayName }) : t('assign.addUnassigned'),
   });
 
+  const createButton = (
+    <button
+      type="button"
+      onClick={() => onCreateNew(projectId || null)}
+      className="w-full flex items-center gap-2.5 p-3 rounded-xl border border-dashed border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
+    >
+      <span className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0">
+        <Plus size={16} aria-hidden="true" />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+          {t('assign.createNew')}
+        </span>
+        <span className="block text-xs text-[rgb(var(--color-text-muted))] truncate">
+          {projectId
+            ? t('popups.assignSheet.inProject', { name: projects.find((p) => p.id === projectId)?.name ?? '' })
+            : t('popups.assignSheet.pickLater')}
+        </span>
+      </span>
+    </button>
+  );
+
+  // Grand format (maquette B, 2026-09-28) : filtres dans l'en-tête, tableau à
+  // colonnes, création en bas de liste. Une colonne sur téléphone.
+  const ROW = 'grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_150px_80px_80px_80px] items-center gap-x-3';
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col shadow-2xl"
+        className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-3xl max-h-[88vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         ref={modalA11yRef}
         {...modalA11yProps}
       >
-        {/* En-tête */}
-        <div className="flex items-center gap-3 p-5 pb-3 border-b border-[rgb(var(--color-border))]">
-          {member && <MemberAvatar avatar={member.avatar} name={member.displayName} size={36} />}
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">
-              {member ? t('assign.assignToShort', { name: member.displayName }) : t('assign.newUnassigned')}
-            </h2>
-            <p className="text-xs text-[rgb(var(--color-text-muted))]">
-              {member ? t('assign.pickOrCreate') : t('assign.createWithout')}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('common.close')}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0"
-          >
-            <X size={18} aria-hidden="true" />
-          </button>
-        </div>
-
-        {/* Projet : filtre les tâches existantes et range la nouvelle. */}
-        {projects.length > 1 && (
-          <div className="px-3 pt-3">
-            <label htmlFor="assign-sheet-project" className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">
-              {t('popups.assignSheet.project')}
-            </label>
-            <select
-              id="assign-sheet-project"
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              className="w-full h-10 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-[rgb(var(--color-text-primary))]"
-            >
-              <option value="">{t('popups.assignSheet.allProjects')}</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Créer une nouvelle tâche */}
-        <div className="p-3 pb-0">
-          <button
-            type="button"
-            onClick={() => onCreateNew(projectId || null)}
-            className="w-full flex items-center gap-2.5 p-3 rounded-xl border border-dashed border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
-          >
-            <span className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0">
-              <Plus size={16} aria-hidden="true" />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-                {t('assign.createNew')}
-              </span>
-              <span className="block text-xs text-[rgb(var(--color-text-muted))] truncate">
-                {projectId
-                  ? t('popups.assignSheet.inProject', { name: projects.find((p) => p.id === projectId)?.name ?? '' })
-                  : t('popups.assignSheet.pickLater')}
-              </span>
-            </span>
-          </button>
-        </div>
-
-        {/* Attribuer une existante */}
-        {member && (
-          <>
-            <div className="px-3 pt-3">
-              <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={t('assign.searchPlaceholder')}
-                  aria-label={t('assign.searchExisting')}
-                  className="w-full h-9 pl-9 pr-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                />
-              </div>
+        {/* En-tête : identité, puis projet et recherche sur la même ligne. */}
+        <div className="p-5 pb-3 border-b border-[rgb(var(--color-border))] space-y-3">
+          <div className="flex items-center gap-3">
+            {member && <MemberAvatar avatar={member.avatar} name={member.displayName} size={36} />}
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">
+                {member ? t('assign.assignToShort', { name: member.displayName }) : t('assign.newUnassigned')}
+              </h2>
+              <p className="text-xs text-[rgb(var(--color-text-muted))]">
+                {member ? t('assign.pickOrCreate') : t('assign.createWithout')}
+              </p>
             </div>
-
-            <div className="overflow-y-auto p-3 space-y-1 flex-1 min-h-[120px]">
-              {candidates.length === 0 && (
-                <p className="text-xs text-[rgb(var(--color-text-muted))] text-center py-6">
-                  {search.trim() ? t('assign.noMatch') : t('assign.noOpenTask')}
-                </p>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t('common.close')}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0"
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+          </div>
+          {(projects.length > 1 || member) && (
+            <div className="flex flex-col sm:flex-row gap-2">
+              {projects.length > 1 && (
+                <select
+                  id="assign-sheet-project"
+                  value={projectId}
+                  onChange={(e) => setProjectId(e.target.value)}
+                  aria-label={t('popups.assignSheet.project')}
+                  className="sm:w-56 h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-[rgb(var(--color-text-primary))]"
+                >
+                  <option value="">{t('popups.assignSheet.allProjects')}</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
               )}
+              {member && (
+                <div className="relative flex-1">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={t('assign.searchPlaceholder')}
+                    aria-label={t('assign.searchExisting')}
+                    className="w-full h-9 pl-9 pr-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {member ? (
+          <div className="overflow-y-auto p-3 flex-1 min-h-[120px]">
+            {candidates.length > 0 && (
+              <div className={`${ROW} hidden sm:grid px-3 pb-2 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]`} aria-hidden="true">
+                <span>{t('popups.member.colTask')}</span>
+                <span>{t('popups.member.colProject')}</span>
+                <span>{t('popups.member.colAssignees')}</span>
+                <span>{t('popups.member.colDeadline')}</span>
+                <span />
+              </div>
+            )}
+            {candidates.length === 0 && (
+              <p className="text-xs text-[rgb(var(--color-text-muted))] text-center py-6">
+                {search.trim() ? t('assign.noMatch') : t('assign.noOpenTask')}
+              </p>
+            )}
+            <div className="space-y-1">
               {candidates.map((task) => {
                 const project = projectById.get(task.projectId);
                 const pColor = project ? projectColor(project.color) : null;
@@ -168,33 +178,41 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
                     type="button"
                     onClick={() => { onAssign(task); onClose(); }}
                     aria-label={t('projects.assignTaskAria', { name: task.name })}
-                    className="w-full text-left rounded-xl border border-transparent hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] px-3 py-2 transition-colors"
+                    className={`group w-full text-left ${ROW} rounded-xl border border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] px-3 py-2.5 transition-colors`}
                   >
-                    <p className="text-sm text-[rgb(var(--color-text-primary))] truncate">{task.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
+                    <span className="flex items-center gap-2 min-w-0">
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priorityLabelOf(task.priority)} title={priorityLabelOf(task.priority)} />
+                      <span className="text-sm text-[rgb(var(--color-text-primary))] truncate">{task.name}</span>
+                    </span>
+                    <span className="hidden sm:block min-w-0">
                       {project && pColor && (
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full truncate ${pColor.soft}`}>
+                        <span className={`inline-block max-w-full text-[11px] font-semibold px-2 py-0.5 rounded-full truncate ${pColor.soft}`}>
                           {project.name}
                         </span>
                       )}
-                      {task.assigneeIds.length > 0 && (
-                        <span className="text-[10px] text-[rgb(var(--color-text-muted))]">
-                          {tp('assign.assignees', task.assigneeIds.length)}
-                        </span>
-                      )}
+                    </span>
+                    <span className="hidden sm:block text-xs text-[rgb(var(--color-text-muted))]">
+                      {task.assigneeIds.length > 0 ? tp('assign.assignees', task.assigneeIds.length) : ''}
+                    </span>
+                    <span className={`text-xs inline-flex items-center gap-1 ${overdue ? 'text-red-500 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
                       {task.deadline && (
-                        <span className={`ml-auto text-[10px] inline-flex items-center gap-0.5 shrink-0 ${overdue ? 'text-red-500 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
-                          <CalendarClock size={10} aria-hidden="true" />
+                        <>
+                          <CalendarClock size={11} aria-hidden="true" />
                           {format(parseISO(task.deadline), 'd MMM', { locale: getDateLocale() })}
-                        </span>
+                        </>
                       )}
-                    </div>
+                    </span>
+                    <span className="hidden sm:block text-right text-xs font-semibold text-[rgb(var(--color-accent))] opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
+                      {t('popups.member.assignAction')}
+                    </span>
                   </button>
                 );
               })}
             </div>
-          </>
+            <div className="pt-3">{createButton}</div>
+          </div>
+        ) : (
+          <div className="p-3">{createButton}</div>
         )}
       </div>
     </div>,

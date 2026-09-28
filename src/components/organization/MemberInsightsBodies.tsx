@@ -1,13 +1,15 @@
 import { Suspense, useMemo, useState } from 'react';
-import { isPast, isToday, parseISO } from 'date-fns';
+import { format, isPast, isToday, parseISO, subDays } from 'date-fns';
+import { getDateLocale } from '@/i18n/format';
 import { CheckCircle2, Circle, ListChecks, Plus } from 'lucide-react';
 import {
   useTeamTasks, useTeamProjects, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
-  type TeamTask,
+  type TeamTask, type TeamProject,
 } from '@/modules/team-projects';
 import { useOrgMembers, type OrgMember } from '@/modules/organizations';
 import { showUndoToast } from '@/lib/undo-toast';
 import TeamTaskModal from './TeamTaskModal';
+import { projectColor } from './team-projects.helpers';
 import TaskSelectCheckbox from './TaskSelectCheckbox';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
@@ -40,6 +42,7 @@ const useMemberTasks = (orgId: string, memberId: string) => {
   const overdue = open.filter(isOverdue);
   return {
     isLoading,
+    allTasks,
     myTasks,
     open,
     done,
@@ -92,6 +95,7 @@ export const MemberTasksBody = ({ orgId, member, canEdit = false }: MemberBodyPr
       <TasksView
         open={open}
         done={done}
+        projects={projects}
         canEdit={canEdit}
         onAddTask={() => setCreatingTask(true)}
         onEditTask={setEditingTask}
@@ -135,7 +139,13 @@ export const MemberTasksBody = ({ orgId, member, canEdit = false }: MemberBodyPr
 /** CORPS de l'onglet « Contribution » — sans overlay ni en-tête (item #18). */
 export const MemberContributionBody = ({ orgId, member }: MemberBodyProps) => {
   const { t } = useT('org');
-  const { isLoading, myTasks, open, done, overdue, completionRate } = useMemberTasks(orgId, member.userId);
+  const { isLoading, allTasks, myTasks, open, done, overdue, completionRate } = useMemberTasks(orgId, member.userId);
+  // Repère de comparaison : la complétion de toutes les tâches assignées de
+  // l'entreprise, lue dans le même cache (aucune requête de plus).
+  const orgRate = useMemo(() => {
+    const assigned = allTasks.filter((task) => task.assigneeIds.length > 0);
+    return assigned.length ? Math.round((assigned.filter((task) => task.completed).length / assigned.length) * 100) : 0;
+  }, [allTasks]);
 
   if (isLoading) {
     return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{t('insights.loading')}</p>;
@@ -148,6 +158,8 @@ export const MemberContributionBody = ({ orgId, member }: MemberBodyProps) => {
       open={open.length}
       overdue={overdue.length}
       completionRate={completionRate}
+      orgRate={orgRate}
+      doneTasks={done}
     />
   );
 };
@@ -171,8 +183,13 @@ interface RowSelection {
   onStart: () => void;
 }
 
-const TaskRow = ({ task, canEdit, onEdit, selection }: { task: TeamTask; canEdit: boolean; onEdit: (task: TeamTask) => void; selection?: RowSelection }) => {
+// Grand format (maquette B, 2026-09-28) : une ligne de tableau par tâche,
+// projet, échéance et priorité en colonnes dès que la largeur le permet.
+const ROW_GRID = 'grid grid-cols-[16px_minmax(0,1fr)_auto] sm:grid-cols-[16px_minmax(0,1fr)_150px_90px_32px] items-center gap-x-3';
+
+const TaskRow = ({ task, project, canEdit, onEdit, selection }: { task: TeamTask; project?: TeamProject; canEdit: boolean; onEdit: (task: TeamTask) => void; selection?: RowSelection }) => {
   const { t } = useT('org');
+  const overdue = !task.completed && isOverdue(task);
   if (selection?.active) {
     return (
       <li className="flex items-center gap-2.5 p-2.5 rounded-xl border border-[rgb(var(--color-border))] cursor-pointer hover:bg-[rgb(var(--color-hover))]" onClick={() => selection.onToggle(task)}>
@@ -188,20 +205,28 @@ const TaskRow = ({ task, canEdit, onEdit, selection }: { task: TeamTask; canEdit
       ) : (
         <Circle size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
       )}
-      <span className={`text-sm flex-1 truncate ${task.completed ? 'text-[rgb(var(--color-text-muted))] line-through' : 'text-[rgb(var(--color-text-primary))]'}`}>
+      <span className={`text-sm truncate ${task.completed ? 'text-[rgb(var(--color-text-muted))] line-through' : 'text-[rgb(var(--color-text-primary))]'}`}>
         {task.name}
       </span>
-      {!task.completed && isOverdue(task) && (
-        <span className="text-[10px] font-semibold text-red-500 shrink-0">{t('insights.overdue')}</span>
-      )}
-      <span className="text-[10px] font-semibold text-[rgb(var(--color-text-muted))] shrink-0">
+      <span className="hidden sm:block min-w-0">
+        {project && (
+          <span className={`inline-block max-w-full truncate text-[11px] font-semibold px-2 py-0.5 rounded-full ${projectColor(project.color).soft}`}>
+            {project.name}
+          </span>
+        )}
+      </span>
+      <span className={`hidden sm:block text-xs ${overdue ? 'text-red-500 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
+        {task.deadline ? format(parseISO(task.deadline), 'd MMM', { locale: getDateLocale() }) : ''}
+      </span>
+      <span className="text-[10px] font-semibold text-[rgb(var(--color-text-muted))] text-right whitespace-nowrap">
+        {overdue && <span className="sm:hidden text-red-500 mr-1">{t('insights.overdue')}</span>}
         {priorityLabel(task.priority)}
       </span>
     </>
   );
   if (!canEdit) {
     return (
-      <li className="flex items-center gap-2.5 p-2.5 rounded-xl border border-[rgb(var(--color-border))]">
+      <li className={`${ROW_GRID} p-2.5 rounded-xl border border-[rgb(var(--color-border))]`}>
         {content}
       </li>
     );
@@ -212,7 +237,7 @@ const TaskRow = ({ task, canEdit, onEdit, selection }: { task: TeamTask; canEdit
         type="button"
         onClick={() => onEdit(task)}
         aria-label={t('projects.editTaskAria', { name: task.name })}
-        className="w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
+        className={`w-full ${ROW_GRID} p-2.5 rounded-xl border border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-left`}
       >
         {content}
       </button>
@@ -233,13 +258,17 @@ const AddTaskButton = ({ onAddTask }: { onAddTask: () => void }) => {
   );
 };
 
+type TaskFilter = 'open' | 'done' | 'overdue';
+
 const TasksView = ({
-  open, done, canEdit, onAddTask, onEditTask, selection,
+  open, done, projects, canEdit, onAddTask, onEditTask, selection,
 }: {
-  open: TeamTask[]; done: TeamTask[]; canEdit: boolean; onAddTask: () => void; onEditTask: (t: TeamTask) => void;
+  open: TeamTask[]; done: TeamTask[]; projects: TeamProject[]; canEdit: boolean; onAddTask: () => void; onEditTask: (t: TeamTask) => void;
   selection?: RowSelection;
 }) => {
   const { t } = useT('org');
+  const [filter, setFilter] = useState<TaskFilter>('open');
+  const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
   if (open.length === 0 && done.length === 0) {
     return (
       <div className="space-y-3">
@@ -248,77 +277,130 @@ const TasksView = ({
       </div>
     );
   }
+  const overdue = open.filter(isOverdue);
+  const rows = filter === 'open' ? open : filter === 'overdue' ? overdue : done.slice(0, 20);
+  const chips: { id: TaskFilter; label: string }[] = [
+    { id: 'open', label: t('insights.inProgress', { count: open.length }) },
+    { id: 'done', label: t('insights.completed', { count: done.length }) },
+    { id: 'overdue', label: t('popups.member.overdueCount', { count: overdue.length }) },
+  ];
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="flex-1"><AddTaskButton onAddTask={onAddTask} /></div>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        {chips.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            aria-pressed={filter === c.id}
+            onClick={() => setFilter(c.id)}
+            className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+              filter === c.id
+                ? 'border-transparent bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]'
+                : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+            }`}
+          >
+            {c.label}
+          </button>
+        ))}
+        <span className="flex-1" />
         {selection && !selection.active && (
           <button
             type="button"
             onClick={selection.onStart}
             aria-label={t('projects.selectMultiple')}
-            className="shrink-0 inline-flex items-center gap-1.5 py-2 px-3 rounded-xl border border-[rgb(var(--color-border))] text-sm font-semibold text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+            className="shrink-0 inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl border border-[rgb(var(--color-border))] text-sm font-semibold text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
           >
             <ListChecks size={14} aria-hidden="true" /> {t('projects.selectMode')}
           </button>
         )}
       </div>
-      <section>
-        <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
-          {t('insights.inProgress', { count: open.length })}
-        </h3>
-        {open.length === 0 ? (
-          <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('insights.noOpenTask')}</p>
-        ) : (
-          <ul className="space-y-1.5">
-            {open.map((t) => <TaskRow key={t.id} task={t} canEdit={canEdit} onEdit={onEditTask} selection={selection} />)}
-          </ul>
-        )}
-      </section>
-      {done.length > 0 && (
-        <section>
-          <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
-            {t('insights.completed', { count: done.length })}
-          </h3>
-          <ul className="space-y-1.5">
-            {done.slice(0, 20).map((t) => <TaskRow key={t.id} task={t} canEdit={canEdit} onEdit={onEditTask} selection={selection} />)}
-          </ul>
-        </section>
+      <div className={`${ROW_GRID} hidden sm:grid px-2.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]`} aria-hidden="true">
+        <span />
+        <span>{t('popups.member.colTask')}</span>
+        <span>{t('popups.member.colProject')}</span>
+        <span>{t('popups.member.colDeadline')}</span>
+        <span className="text-right">P</span>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-xs text-[rgb(var(--color-text-muted))] py-2 text-center">{t('insights.noOpenTask')}</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {rows.map((task) => (
+            <TaskRow key={task.id} task={task} project={projectById.get(task.projectId)} canEdit={canEdit} onEdit={onEditTask} selection={selection} />
+          ))}
+        </ul>
       )}
+      <AddTaskButton onAddTask={onAddTask} />
     </div>
   );
 };
 
-const StatBlock = ({ value, label, tone }: { value: string; label: string; tone: string }) => (
-  <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4 text-center">
-    <p className={`text-2xl font-bold ${tone}`}>{value}</p>
-    <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">{label}</p>
-  </div>
-);
+/** Fenêtre du calendrier d'activité de l'onglet Contribution. */
+const HEATMAP_DAYS = 30;
+const HEAT_TONES = ['bg-[rgb(var(--color-hover))]', 'bg-indigo-500/25', 'bg-indigo-500/50', 'bg-indigo-500/75', 'bg-indigo-500'];
 
-const ContributionView = ({ total, done, open, overdue, completionRate }: {
-  total: number; done: number; open: number; overdue: number; completionRate: number;
+// Grand format (maquette C, 2026-09-28) : calendrier des 30 derniers jours,
+// puis trois indicateurs dont la complétion rapportée à l'entreprise.
+const ContributionView = ({ total, done, open, overdue, completionRate, orgRate, doneTasks }: {
+  total: number; done: number; open: number; overdue: number; completionRate: number; orgRate: number; doneTasks: TeamTask[];
 }) => {
   const { t } = useT('org');
+  const days = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const task of doneTasks) {
+      if (task.completedAt) {
+        const key = format(parseISO(task.completedAt), 'yyyy-MM-dd');
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+    }
+    const today = new Date();
+    return Array.from({ length: HEATMAP_DAYS }, (_, i) => {
+      const d = subDays(today, HEATMAP_DAYS - 1 - i);
+      return { date: d, count: counts.get(format(d, 'yyyy-MM-dd')) ?? 0 };
+    });
+  }, [doneTasks]);
+  const recent = days.reduce((sum, d) => sum + d.count, 0);
+
   if (total === 0) {
     return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{t('insights.noContribution')}</p>;
   }
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
-        <StatBlock value={`${completionRate}%`} label={t('insights.completionRate')} tone="text-emerald-500" />
-        <StatBlock value={String(done)} label={t('insights.tasksDone')} tone="text-[rgb(var(--color-text-primary))]" />
-        <StatBlock value={String(open)} label={t('insights.inProgressShort')} tone="text-indigo-500" />
-        <StatBlock value={String(overdue)} label={t('insights.overdueShort')} tone={overdue > 0 ? 'text-red-500' : 'text-[rgb(var(--color-text-primary))]'} />
-      </div>
-      {/* Barre de progression complétées / total */}
-      <div>
-        <div className="flex items-center justify-between text-xs text-[rgb(var(--color-text-muted))] mb-1.5">
-          <span>{t('insights.progress')}</span>
-          <span>{done} / {total}</span>
+      <section>
+        <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
+          {t('popups.member.heatmap', { days: HEATMAP_DAYS })}
+        </h3>
+        <ol className="grid grid-cols-10 sm:grid-cols-[repeat(15,minmax(0,1fr))] gap-1">
+          {days.map(({ date, count }) => {
+            const label = t('popups.member.heatmapDay', { date: format(date, 'd MMM', { locale: getDateLocale() }), count });
+            return (
+              <li
+                key={date.toISOString()}
+                title={label}
+                aria-label={label}
+                className={`aspect-square rounded-md ${HEAT_TONES[Math.min(count, HEAT_TONES.length - 1)]}`}
+              />
+            );
+          })}
+        </ol>
+      </section>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4">
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('insights.completionRate')}</p>
+          <p className="text-2xl font-bold text-emerald-500">{completionRate}%</p>
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('popups.member.orgAverage', { value: `${orgRate}%` })}</p>
         </div>
-        <div className="h-2.5 w-full rounded-full bg-[rgb(var(--color-hover))] overflow-hidden">
-          <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${completionRate}%` }} />
+        <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4">
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('popups.member.doneRecent', { days: HEATMAP_DAYS })}</p>
+          <p className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{recent}</p>
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">{done} / {total}</p>
+        </div>
+        <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4">
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('insights.inProgressShort')}</p>
+          <p className="text-2xl font-bold text-indigo-500">{open}</p>
+          <p className={`text-xs ${overdue > 0 ? 'text-red-500 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
+            {t('popups.member.overdueCount', { count: overdue })}
+          </p>
         </div>
       </div>
     </div>
