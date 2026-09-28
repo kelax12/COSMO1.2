@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ArrowUpFromLine, ArrowUp, ArrowDown, Copy, Check, Search } from 'lucide-react';
+import { X, ArrowUpFromLine, ArrowUp, ArrowDown, Copy, Check, Search, CheckCircle2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import {
   useActiveOrganization,
@@ -34,7 +34,7 @@ interface PyramidPlacementSheetProps {
 }
 
 /**
- * « Placer dans la pyramide », dans les DEUX sens.
+ * « Placer dans l'organigramme », dans les DEUX sens.
  *
  * Audit des popups du 2026-09-25 : trois feuilles pour un seul geste.
  * `MemberPlacementSheet` choisissait le responsable d'une personne,
@@ -90,12 +90,72 @@ const PyramidPlacementSheet = ({
 
   const list = direction === 'up' ? managers : reports;
   const searchable = list.length > MEMBER_SEARCH_THRESHOLD;
-  const shown = searchable ? filterMembersByQuery(list, query) : list;
+  const [searchOpen, setSearchOpen] = useState(false);
+  const shown = searchOpen ? filterMembersByQuery(list, query) : list;
+  const shownManagers = shown.filter((m) => isManagerOf(members, m.userId));
+  const shownMembers = shown.filter((m) => !isManagerOf(members, m.userId));
 
-  const placeTargetUnder = (managerId: string | null) =>
-    setManager.mutate({ orgId, userId: target.userId, managerId }, { onSuccess: onClose });
-  const placeUnderTarget = (m: OrgMember) =>
-    setManager.mutate({ orgId, userId: m.userId, managerId: target.userId }, { onSuccess: onClose });
+  // Design C (2026-09-28) : on SÉLECTIONNE puis on confirme, le pied de page
+  // dit l'effet avant qu'il n'ait lieu. `'detach'` = retirer son responsable.
+  const [selected, setSelected] = useState<OrgMember | 'detach' | null>(null);
+  const switchDirection = (d: PlacementDirection) => { setDirection(d); setQuery(''); setSelected(null); };
+
+  const confirm = () => {
+    if (!selected) return;
+    if (selected === 'detach') {
+      setManager.mutate({ orgId, userId: target.userId, managerId: null }, { onSuccess: onClose });
+    } else if (direction === 'up') {
+      setManager.mutate({ orgId, userId: target.userId, managerId: selected.userId }, { onSuccess: onClose });
+    } else {
+      setManager.mutate({ orgId, userId: selected.userId, managerId: target.userId }, { onSuccess: onClose });
+    }
+  };
+
+  const summary = !selected
+    ? t('popups.placement.summaryEmpty')
+    : selected === 'detach'
+      ? t('popups.placement.summaryDetach', { person: target.displayName })
+      : direction === 'up'
+        ? t('popups.placement.summary', { person: isMe ? t('common.youBadge') : target.displayName, manager: selected.displayName })
+        : t('popups.placement.summary', { person: selected.displayName, manager: name });
+
+  const renderRow = (m: OrgMember) => {
+    const on = selected !== null && selected !== 'detach' && selected.userId === m.userId;
+    return (
+      <li key={m.userId}>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={on}
+          onClick={() => setSelected(m)}
+          className={`w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-left transition-colors ${
+            on ? 'bg-indigo-50 dark:bg-indigo-500/15' : 'hover:bg-[rgb(var(--color-hover))]'
+          }`}
+        >
+          <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} />
+          <span className="flex-1 min-w-0">
+            <span className="block text-[15px] font-semibold text-[rgb(var(--color-text-primary))] truncate">
+              {/* Pas de « Vous (vous) » : en démo le nom affiché est déjà « Vous ». */}
+              {m.displayName}{m.userId === currentUserId && m.displayName !== t('common.youBadge') ? t('member.youSuffix') : ''}
+            </span>
+            <span className="block text-xs text-[rgb(var(--color-text-muted))] truncate">
+              {/* Un sommet sans responsable qui encadre des gens n'est pas « non placé ». */}
+              {isManagerOf(members, m.userId)
+                ? t('member.manager')
+                : m.managerId === null
+                  ? t('popups.placement.unplaced')
+                  : t('popups.placement.under', { name: members.find((x) => x.userId === m.managerId)?.displayName ?? '' })}
+            </span>
+          </span>
+          {on ? (
+            <CheckCircle2 size={20} className="text-indigo-500 shrink-0" aria-hidden="true" />
+          ) : (
+            <span className="w-[18px] h-[18px] rounded-full border-[1.5px] border-[rgb(var(--color-border))] shrink-0" aria-hidden="true" />
+          )}
+        </button>
+      </li>
+    );
+  };
 
   const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
     open: true,
@@ -104,9 +164,10 @@ const PyramidPlacementSheet = ({
   });
 
   const tabClass = (on: boolean) =>
-    `flex-1 inline-flex items-center justify-center gap-1.5 min-h-11 px-3 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-      on ? 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] shadow-sm' : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
+    `inline-flex items-center gap-1.5 pb-2.5 -mb-px border-b-2 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+      on ? 'border-[rgb(var(--color-text-primary))] text-[rgb(var(--color-text-primary))]' : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
     }`;
+  const groupLabel = 'text-xs font-semibold text-[rgb(var(--color-text-muted))] px-3 mb-1';
 
   return createPortal(
     <div
@@ -114,48 +175,58 @@ const PyramidPlacementSheet = ({
       onClick={onClose}
     >
       <div
-        className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col shadow-2xl"
+        className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-xl max-h-[88vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         ref={modalA11yRef}
         {...modalA11yProps}
       >
-        <div className="p-5 pb-3 shrink-0">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <MemberAvatar avatar={target.avatar} name={target.displayName} size={36} />
-              <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">
-                {title}
-              </h2>
+        <div className="px-6 pt-6 shrink-0 border-b border-[rgb(var(--color-border))]">
+          <div className="flex items-center gap-3.5">
+            <MemberAvatar avatar={target.avatar} name={target.displayName} size={48} />
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))] truncate">{title}</h2>
+              <p className="text-sm text-[rgb(var(--color-text-muted))] truncate">
+                {direction === 'up' ? t('popups.placement.upHint', { name }) : t('popups.placement.downHint', { name })}
+              </p>
             </div>
             <button
               type="button"
               onClick={onClose}
               aria-label={t('common.close')}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0"
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0 self-start"
             >
-              <X size={18} aria-hidden="true" />
+              <X size={20} aria-hidden="true" />
             </button>
           </div>
-          <div className="flex gap-1 p-1 rounded-xl bg-[rgb(var(--color-hover))]" role="tablist" aria-label={t('popups.placement.directionAria')}>
-            <button type="button" role="tab" aria-selected={direction === 'up'} disabled={!canMoveTarget} onClick={() => { setDirection('up'); setQuery(''); }} className={tabClass(direction === 'up')}>
+          <div className="flex items-end gap-5 mt-5" role="tablist" aria-label={t('popups.placement.directionAria')}>
+            <button type="button" role="tab" aria-selected={direction === 'up'} disabled={!canMoveTarget} onClick={() => switchDirection('up')} className={tabClass(direction === 'up')}>
               <ArrowUp size={14} aria-hidden="true" /> {t('popups.placement.up')}
             </button>
-            <button type="button" role="tab" aria-selected={direction === 'down'} disabled={!canPlaceUnder} onClick={() => { setDirection('down'); setQuery(''); }} className={tabClass(direction === 'down')}>
+            <button type="button" role="tab" aria-selected={direction === 'down'} disabled={!canPlaceUnder} onClick={() => switchDirection('down')} className={tabClass(direction === 'down')}>
               <ArrowDown size={14} aria-hidden="true" /> {t('popups.placement.down')}
             </button>
+            {searchable && (
+              <button
+                type="button"
+                onClick={() => { setSearchOpen((v) => !v); setQuery(''); }}
+                aria-pressed={searchOpen}
+                aria-label={t('popups.placement.searchToggle')}
+                className={`ml-auto mb-2 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[rgb(var(--color-hover))] ${searchOpen ? 'text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'}`}
+              >
+                <Search size={16} aria-hidden="true" />
+              </button>
+            )}
           </div>
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mt-2">
-            {direction === 'up' ? t('popups.placement.upHint', { name }) : t('popups.placement.downHint', { name })}
-          </p>
         </div>
 
-        <div role="tabpanel" className="overflow-y-auto px-5 pb-5 flex-1 min-h-0">
-          {searchable && (
-            <label className="relative block mb-2">
+        <div role="tabpanel" className="overflow-y-auto px-6 py-4 flex-1 min-h-0">
+          {searchOpen && (
+            <label className="relative block mb-3">
               <span className="sr-only">{t('assign.memberSearch')}</span>
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
               <input
                 type="search"
+                autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t('assign.memberSearch')}
@@ -164,56 +235,62 @@ const PyramidPlacementSheet = ({
             </label>
           )}
 
-          <ul className="space-y-1.5">
+          <div role="radiogroup" aria-label={title} className="space-y-4">
             {direction === 'up' && isAdmin && target.managerId !== null && !query.trim() && (
-              <li>
-                <button
-                  type="button"
-                  onClick={() => placeTargetUnder(null)}
-                  disabled={setManager.isPending}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-dashed border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] text-left disabled:opacity-50"
-                >
-                  <span className="w-9 h-9 rounded-full border border-dashed border-[rgb(var(--color-border))] flex items-center justify-center">
-                    <ArrowUpFromLine size={15} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-                  </span>
-                  <span className="text-sm text-[rgb(var(--color-text-secondary))]">{t('member.detach')}</span>
-                </button>
-              </li>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={selected === 'detach'}
+                onClick={() => setSelected('detach')}
+                className={`w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl border border-dashed text-left transition-colors ${
+                  selected === 'detach' ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-500/15' : 'border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]'
+                }`}
+              >
+                <span className="w-10 h-10 rounded-full border border-dashed border-[rgb(var(--color-border))] flex items-center justify-center shrink-0">
+                  <ArrowUpFromLine size={16} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+                </span>
+                <span className="flex-1 text-sm text-[rgb(var(--color-text-secondary))]">{t('member.detach')}</span>
+              </button>
             )}
-            {shown.map((m) => (
-              <li key={m.userId}>
-                <button
-                  type="button"
-                  onClick={() => (direction === 'up' ? placeTargetUnder(m.userId) : placeUnderTarget(m))}
-                  disabled={setManager.isPending}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] text-left disabled:opacity-50"
-                >
-                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={36} />
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">
-                      {/* Pas de « Vous (vous) » : en démo le nom affiché est déjà « Vous ». */}
-                      {m.displayName}{m.userId === currentUserId && m.displayName !== t('common.youBadge') ? t('member.youSuffix') : ''}
-                    </span>
-                    <span className="block text-[11px] text-[rgb(var(--color-text-muted))] truncate">
-                      {/* Un sommet sans responsable qui encadre des gens n'est pas « non placé ». */}
-                      {isManagerOf(members, m.userId)
-                        ? t('member.manager')
-                        : m.managerId === null
-                          ? t('popups.placement.unplaced')
-                          : t('popups.placement.under', { name: members.find((x) => x.userId === m.managerId)?.displayName ?? '' })}
-                    </span>
-                  </span>
-                </button>
-              </li>
-            ))}
+            {shownManagers.length > 0 && (
+              <section>
+                <h3 className={groupLabel}>{t('popups.placement.groupManagers')}</h3>
+                <ul className="space-y-0.5">{shownManagers.map(renderRow)}</ul>
+              </section>
+            )}
+            {shownMembers.length > 0 && (
+              <section>
+                <h3 className={groupLabel}>{t('popups.placement.groupMembers')}</h3>
+                <ul className="space-y-0.5">{shownMembers.map(renderRow)}</ul>
+              </section>
+            )}
             {shown.length === 0 && (
-              <li className="text-center text-xs text-[rgb(var(--color-text-muted))] py-6">
+              <p className="text-center text-sm text-[rgb(var(--color-text-muted))] py-8">
                 {direction === 'up' ? t('member.placementEmpty') : t('popups.placement.nobodyToPlace')}
-              </li>
+              </p>
             )}
-          </ul>
+          </div>
 
           {direction === 'down' && <InviteUnder orgId={orgId} under={target} name={name} />}
+        </div>
+
+        <div className="px-6 py-4 shrink-0 border-t border-[rgb(var(--color-border))] flex items-center gap-2.5">
+          <p className="flex-1 min-w-0 text-sm text-[rgb(var(--color-text-muted))] truncate" aria-live="polite">{summary}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-10 px-4 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            type="button"
+            onClick={confirm}
+            disabled={!selected || setManager.isPending}
+            className="min-h-10 px-4 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {t('popups.placement.confirm')}
+          </button>
         </div>
       </div>
     </div>,

@@ -154,17 +154,17 @@
   },
   "entreprise": {
     "title": "Enterprise mode",
-    "subtitle": "A full collaboration space: management pyramid, projects, team OKRs and fine-grained per-member permissions.",
+    "subtitle": "A full collaboration space: management org chart, projects, team OKRs and fine-grained per-member permissions.",
     "step1Title": "Create or join an organisation",
     "step1": "Click the **+** button in the sidebar, then **Create or join an organisation**. Give your organisation a name to create it, or enter the invite code a colleague sent you to join theirs.",
     "step2Title": "Invite members",
     "step2": "From the **Members** tab, generate an invite code or a direct link to share. A colleague who enters the code sends a join request, which an admin approves or declines from the directory.",
     "step3Title": "Find your way around the tabs",
-    "step3": "The enterprise space is split into several tabs: **Overview** (your assigned tasks and team activity), **Tasks**, **Projects**, **OKRs** and **Members** for everyone; **Pyramid** and **Statistics** on top of that for managers and admins.",
-    "featPyramid": "Management pyramid",
+    "step3": "The enterprise space is split into several tabs: **Overview** (your assigned tasks and team activity), **Tasks**, **Projects**, **OKRs** and **Members** for everyone; **Org chart** and **Statistics** on top of that for managers and admins.",
+    "featPyramid": "Management org chart",
     "featPyramidDesc": "Every member can have one or more managers. A manager sees the tasks and calendar of their direct and indirect reports, never those of a colleague they don't manage.",
     "featRoles": "Roles",
-    "featRolesDesc": "Three roles exist: Admin (runs the organisation), Manager (runs a team within the pyramid) and Member. The role sets default rights, which can then be fine-tuned one by one.",
+    "featRolesDesc": "Three roles exist: Admin (runs the organisation), Manager (runs a team within the org chart) and Member. The role sets default rights, which can then be fine-tuned one by one.",
     "featPermissions": "Per-member permissions",
     "featPermissionsDesc": "From the directory, a member's « ⋯ » menu opens **Edit permissions**: ten rights (create/edit/delete tasks, projects, OKRs, categories, teams, invite members), each overridable individually beyond the role's defaults.",
     "featProjects": "Team projects",
@@ -177,7 +177,7 @@
     "featStatsDesc": "For managers and admins only: an overview of team activity, velocity and completion trend over the chosen period.",
     "featInvite": "Invitations",
     "featInviteDesc": "Two ways to bring a member in: a code to enter manually (with admin approval), or a direct invite link that adds them the moment they create their account.",
-    "tip": "Place each member in the **pyramid** first (who manages whom) before fine-tuning individual permissions: the defaults already follow the role and the position in the pyramid, so the exception should stay the exception.",
+    "tip": "Place each member in the **org chart** first (who manages whom) before fine-tuning individual permissions: the defaults already follow the role and the position in the org chart, so the exception should stay the exception.",
     "note": "Enterprise mode is currently free, whatever the size of your team: no tier is billed for the time being."
   }
 }

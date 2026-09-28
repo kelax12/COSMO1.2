@@ -154,17 +154,17 @@
   },
   "entreprise": {
     "title": "Mode entreprise",
-    "subtitle": "Un espace de collaboration à part entière : pyramide managériale, projets, OKR d'équipe et permissions fines par membre.",
+    "subtitle": "Un espace de collaboration à part entière : organigramme managérial, projets, OKR d'équipe et permissions fines par membre.",
     "step1Title": "Créer ou rejoindre une entreprise",
     "step1": "Cliquez sur le bouton **+** dans la barre latérale, puis sur **Créer ou rejoindre une entreprise**. Donnez un nom à votre organisation pour la créer, ou saisissez le code d'invitation reçu d'un collègue pour la rejoindre.",
     "step2Title": "Inviter des membres",
     "step2": "Depuis l'onglet **Membres**, générez un code d'invitation ou un lien direct à partager. Un collègue qui saisit le code envoie une demande d'adhésion, qu'un admin approuve ou refuse depuis l'annuaire.",
     "step3Title": "Naviguer entre les onglets",
-    "step3": "L'espace entreprise se découpe en plusieurs onglets : **Aperçu** (vos tâches assignées et l'actualité de l'équipe), **Tâches**, **Projets**, **OKR** et **Membres** pour tout le monde ; **Pyramide** et **Statistiques** en plus pour les managers et admins.",
-    "featPyramid": "Pyramide managériale",
+    "step3": "L'espace entreprise se découpe en plusieurs onglets : **Aperçu** (vos tâches assignées et l'actualité de l'équipe), **Tâches**, **Projets**, **OKR** et **Membres** pour tout le monde ; **Organigramme** et **Statistiques** en plus pour les managers et admins.",
+    "featPyramid": "Organigramme managérial",
     "featPyramidDesc": "Chaque membre peut avoir un ou plusieurs managers. Un manager voit les tâches et l'agenda de ses subordonnés directs et indirects, jamais ceux d'un collègue qu'il ne gère pas.",
     "featRoles": "Rôles",
-    "featRolesDesc": "Trois rôles existent : Admin (gère l'organisation), Manager (gère une équipe dans la pyramide) et Membre. Le rôle détermine les droits par défaut, affinables ensuite un par un.",
+    "featRolesDesc": "Trois rôles existent : Admin (gère l'organisation), Manager (gère une équipe dans l'organigramme) et Membre. Le rôle détermine les droits par défaut, affinables ensuite un par un.",
     "featPermissions": "Permissions par membre",
     "featPermissionsDesc": "Depuis l'annuaire, le menu « ⋯ » d'un membre ouvre « Modifier les permissions » : dix droits (créer/éditer/supprimer des tâches, projets, OKR, catégories, équipes, inviter des membres) surchageables individuellement, au-delà du rôle par défaut.",
     "featProjects": "Projets d'équipe",
@@ -177,7 +177,7 @@
     "featStatsDesc": "Réservé aux managers et admins : vue d'ensemble de l'activité de l'équipe, vélocité et tendance de complétion sur la période choisie.",
     "featInvite": "Invitations",
     "featInviteDesc": "Deux façons de faire entrer un membre : un code à saisir manuellement (avec validation admin) ou un lien d'invitation direct qui l'ajoute dès qu'il crée son compte.",
-    "tip": "Placez d'abord chaque membre dans la **pyramide** (qui gère qui) avant d'ajuster des permissions individuelles : les droits par défaut suivent déjà le rôle et la position dans la pyramide, l'exception doit rester l'exception.",
+    "tip": "Placez d'abord chaque membre dans l'**organigramme** (qui gère qui) avant d'ajuster des permissions individuelles : les droits par défaut suivent déjà le rôle et la position dans l'organigramme, l'exception doit rester l'exception.",
     "note": "Le mode entreprise est actuellement gratuit, quelle que soit la taille de votre équipe : aucun palier n'est facturé pour le moment."
   }
 }

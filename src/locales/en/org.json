@@ -22,7 +22,7 @@
     "badgePreviewMore_one": "and {{count}} more",
     "badgePreviewMore_other": "and {{count}} more",
     "tabLoading": "Loading tab…",
-    "managerToast": "You now manage {{names}}: the Statistics and Pyramid sections are available.",
+    "managerToast": "You now manage {{names}}: the Statistics and Org chart sections are available.",
     "launchFree": "COSMO for companies is free",
     "launchFreeRest": " until 1 August, enjoy it with your whole team, no limits.",
     "badgePreviewSection": "Unread in this section"
@@ -85,7 +85,7 @@
     "personalLink": "Personal invitation link",
     "personalLinkHint": "Single-use, valid for 7 days. Once they create their account, the person joins the company directly, reporting to {{name}}.",
     "you": "you",
-    "permanentCodeHint": "A permanent code, to share widely. The person requests to join the company and an administrator approves it (they arrive unplaced in the pyramid).",
+    "permanentCodeHint": "A permanent code, to share widely. The person requests to join the company and an administrator approves it (they arrive unplaced in the org chart).",
     "copyLinkAria": "Copy invitation link",
     "copyCodeAria": "Copy invitation code",
     "orgCodeTitle": "Organization invitation code",
@@ -182,7 +182,7 @@
     "nextDeadline": "Next due date",
     "getStarted": "Get started",
     "stepProject": "Create a first project",
-    "stepPyramid": "Build the reporting pyramid",
+    "stepPyramid": "Build the reporting org chart",
     "stepOkr": "Set a first OKR",
     "myTasks_one": "My {{count}} assigned task",
     "myTasks_other": "My {{count}} assigned tasks",
@@ -686,7 +686,7 @@
       "joined90d": "Joined in the last 90 days",
       "joined1y": "Joined in the last year",
       "joinedOlder": "Joined more than a year ago",
-      "unplaced": "Not placed in the pyramid",
+      "unplaced": "Not placed in the org chart",
       "chipTeam": "Team: {{name}}",
       "chipRole": "Role: {{name}}",
       "chipManager": "Reports to {{name}}",
@@ -724,8 +724,8 @@
       "addedToTeam_other": "{{count}} members added to {{team}}",
       "movedUnder_one": "{{count}} member now reports to {{name}}",
       "movedUnder_other": "{{count}} members now report to {{name}}",
-      "detached_one": "{{count}} member detached from the pyramid",
-      "detached_other": "{{count}} members detached from the pyramid",
+      "detached_one": "{{count}} member detached from the org chart",
+      "detached_other": "{{count}} members detached from the org chart",
       "skipped_one": "{{count}} skipped",
       "skipped_other": "{{count}} skipped",
       "failed_one": "{{count}} failed",
@@ -759,13 +759,13 @@
     "attachedTo": "Reports to",
     "you": "you",
     "youSuffix": " (you)",
-    "noManager": "No manager (top of the pyramid or unplaced)",
+    "noManager": "No manager (top of the org chart or unplaced)",
     "noDirectReport": "No direct reports",
     "crossTeams": "Cross-functional teams",
     "move": "Move",
     "copyLink": "Copy link to this profile",
     "copyLinkDone": "Link copied",
-    "placementHint": "Pick their new direct manager in the pyramid.",
+    "placementHint": "Pick their new direct manager in the org chart.",
     "placementEmpty": "No possible destination.",
     "sheetAria": "{{name}}'s profile",
     "tabsAria": "Member profile sections",
@@ -941,7 +941,7 @@
   "tabs": {
     "overview": "Overview",
     "reports": "Reports",
-    "pyramid": "Pyramid",
+    "pyramid": "Org chart",
     "projects": "Projects",
     "okr": "OKRs",
     "stats": "Statistics",
@@ -1083,7 +1083,7 @@
     "inviteToOrg": "Invite to my company",
     "demoNotice": "Invitations are not sent in demo mode.",
     "noFriendYet": "Add a contact above first: you can only invite people you are already connected with.",
-    "inviteHint": "The invitation lands in their inbox. They join unplaced in the pyramid; an admin positions them afterwards.",
+    "inviteHint": "The invitation lands in their inbox. They join unplaced in the org chart; an admin positions them afterwards.",
     "inviteCta": "Invite",
     "joinColTitle": "Join a company",
     "codeLabel": "Company code",
@@ -1161,7 +1161,7 @@
       },
       "member": {
         "invite": "Invite members",
-        "inviteHint": "Generate an invite link to a seat in the pyramid."
+        "inviteHint": "Generate an invite link to a seat in the org chart."
       },
       "report": {
         "org": "View the company report",
@@ -1170,7 +1170,7 @@
         "allTeamsHint": "Read the report of any team. Without this right, a team lead only reads their own team's."
       }
     },
-    "intro": "These settings override the rights inferred from the pyramid. A row left on “Default” follows the member's position in the company."
+    "intro": "These settings override the rights inferred from the org chart. A row left on “Default” follows the member's position in the company."
   },
   "truncation": {
     "tasks": "Only the {{limit}} most recent tasks are loaded. Your organization has more, so what you see here covers that subset only."
@@ -1470,7 +1470,14 @@
       "under": "Under {{name}}",
       "nobodyToPlace": "Nobody you can place here.",
       "inviteTitle": "Invite someone new",
-      "titleSelf": "Place someone below you"
+      "titleSelf": "Place someone below you",
+      "groupManagers": "Managers",
+      "groupMembers": "Members",
+      "confirm": "Confirm",
+      "summary": "{{person}} will report to {{manager}}",
+      "summaryDetach": "{{person}} will be detached from the org chart",
+      "summaryEmpty": "Select a person",
+      "searchToggle": "Search"
     }
   },
   "kanban": {

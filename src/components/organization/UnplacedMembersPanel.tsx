@@ -13,7 +13,7 @@
 //
 // Extrait le 2026-09-05 (C-09).
 // ═══════════════════════════════════════════════════════════════════
-import { UserPlus, GripVertical } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
@@ -49,8 +49,8 @@ const UnplacedMembersPanel = ({
   if (variant === 'section') {
     return (
       <section className="rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4">
-        <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1 inline-flex items-center gap-1.5">
-          <UserPlus size={15} aria-hidden="true" /> {ta('pyramid.unplaced', { count: members.length })}
+        <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1">
+          {ta('pyramid.unplaced', { count: members.length })}
         </h3>
         <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
           {isAdmin ? ta('pyramid.unplacedHintAdmin') : ta('pyramid.unplacedHintMember')}
@@ -81,8 +81,8 @@ const UnplacedMembersPanel = ({
       className="w-60 shrink-0 sticky top-4 rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4"
       aria-label={ta('pyramid.toPlaceAria')}
     >
-      <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1 inline-flex items-center gap-1.5">
-        <UserPlus size={15} aria-hidden="true" /> {ta('pyramid.toPlace', { count: members.length })}
+      <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1">
+        {ta('pyramid.toPlace', { count: members.length })}
       </h3>
       <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
         {isAdmin ? ta('pyramid.dragEachHint') : ta('pyramid.unplacedHintMember')}
