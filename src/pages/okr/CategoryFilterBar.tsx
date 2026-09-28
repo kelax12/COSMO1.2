@@ -117,15 +117,15 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   // ⚠️ Vertical UNIQUEMENT : un débord horizontal ferait se chevaucher deux
   // puces voisines de la même rangée, et volerait un appui à la voisine.
   const chipCls = large
-    ? `inline-flex items-center gap-2 px-3 h-10 ${TAP_AREA_44_Y} sm:h-auto sm:gap-2 sm:px-4 sm:min-h-0 sm:py-2 rounded-full text-sm sm:text-base font-medium transition-colors`
+    ? `inline-flex items-center gap-[7px] px-[11px] h-[38px] ${TAP_AREA_44_Y} sm:h-auto sm:gap-2 sm:px-3.5 sm:min-h-0 sm:py-[7px] rounded-full text-[13px] sm:text-[15px] font-medium transition-colors`
     : `inline-flex items-center gap-1.5 px-2.5 h-9 ${TAP_AREA_44_Y} sm:h-auto sm:min-h-0 sm:py-1 rounded-full text-xs font-medium transition-colors`;
-  const dotCls = large ? 'w-3 h-3' : 'w-2 h-2';
+  const dotCls = large ? 'w-[11px] h-[11px]' : 'w-2 h-2';
   // `hidden sm:inline-flex` : sur mobile, ce déclencheur est remplacé par le
   // bouton « + » du bandeau « Catégorie : » ajouté plus bas (même formulaire
   // `showCreateCategory` en dessous, seul le déclencheur change). Desktop
   // inchangé.
   const addChipCls = `hidden sm:inline-flex items-center rounded-full font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent))] transition-colors sm:min-h-0 ${
-    large ? 'gap-1.5 px-4 sm:py-2 text-base' : 'gap-1 px-2.5 sm:py-1 text-xs'
+    large ? 'gap-1.5 px-3.5 sm:py-[7px] text-[15px]' : 'gap-1 px-2.5 sm:py-1 text-xs'
   }`;
   // `chip-accent-solid` plutot qu'un `bg-[#1f6feb]` en dur (cf. index.css) :
   // ce bleu fonce n'existait que pour rattraper le contraste AA du theme Gris,
