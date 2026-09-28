@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowLeft, Pencil, Trash2, FolderKanban, Target, Crown, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, FolderKanban, Target, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { startOfDay, subDays } from 'date-fns';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
 import { useTeamProjects, useTeamTaskWorkingSet } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
-import MemberAvatar from './MemberAvatar';
 import TeamMembersPanel from './TeamMembersPanel';
 import TeamProfileEditor from './TeamProfileEditor';
 import TeamWorkloadSection from './TeamWorkloadSection';
@@ -109,8 +108,6 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
 
   const canManage = canManageTeam(team, teamMemberships, currentUserId, isAdmin);
   const canDelete = isAdmin || team.createdBy === currentUserId;
-  const leadIds = new Set(teamMemberships.filter((m) => m.isLead).map((m) => m.userId));
-  const leads = teamMembers.filter((m) => leadIds.has(m.userId));
   const openByProject = new Map<string, number>();
   for (const task of tasks) {
     if (!task.completed) openByProject.set(task.projectId, (openByProject.get(task.projectId) ?? 0) + 1);
@@ -294,19 +291,6 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
 
         <aside className={`${cardClass} p-6`} aria-labelledby="team-people-title">
           <h3 id="team-people-title" className={headingClass}>{t('teamPage.peopleTitle')}</h3>
-          <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-[rgb(var(--color-text-secondary))]">
-            <Crown size={14} className="text-amber-500" aria-hidden="true" />
-            {leads.length === 0 ? (
-              <span className="text-[rgb(var(--color-text-muted))]">{canManage ? t('teamPage.noLeadManager') : t('teamPage.noLead')}</span>
-            ) : (
-              leads.map((m) => (
-                <span key={m.userId} className="inline-flex items-center gap-1.5">
-                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
-                  {m.userId === currentUserId ? t('common.youBadge') : m.displayName}
-                </span>
-              ))
-            )}
-          </div>
           <TeamMembersPanel
             orgId={orgId}
             team={team}
