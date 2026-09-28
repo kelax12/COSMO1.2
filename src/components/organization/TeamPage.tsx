@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { ArrowLeft, Pencil, Trash2, FolderKanban, Target, Crown, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { startOfDay, subDays } from 'date-fns';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
 import { useTeamProjects, useTeamTaskWorkingSet } from '@/modules/team-projects';
@@ -128,11 +129,6 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] items-start">
         <div className={`${cardClass} overflow-hidden`}>
-          {editing ? (
-            <div className="p-6">
-              <TeamProfileEditor orgId={orgId} team={team} onDone={() => setEditing(false)} />
-            </div>
-          ) : (
             <header className="p-6 border-b border-[rgb(var(--color-border))]">
               <div className="flex items-start gap-4">
                 <span className="mt-2.5 w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: team.color }} aria-hidden="true" />
@@ -186,7 +182,6 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
                 )}
               </section>
             </header>
-          )}
 
           <section aria-labelledby="team-projects-title">
             <h3 id="team-projects-title" className={sectionLabelClass}>
@@ -325,8 +320,15 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
       </div>
 
       {teamProjects.length > 0 && (
-        <TeamWorkloadSection tasks={tasks} projectIds={projectIds} members={teamMembers} currentUserId={currentUserId} />
+        <TeamWorkloadSection orgId={orgId} tasks={tasks} projectIds={projectIds} members={teamMembers} currentUserId={currentUserId} />
       )}
+
+      <Dialog open={editing} onOpenChange={setEditing}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogTitle>{t('teamPage.edit')}</DialogTitle>
+          {editing && <TeamProfileEditor orgId={orgId} team={team} onDone={() => setEditing(false)} />}
+        </DialogContent>
+      </Dialog>
 
       {deleting && (
         <DeleteTeamDialog orgId={orgId} team={team} teams={teams} onClose={() => setDeleting(false)} />
