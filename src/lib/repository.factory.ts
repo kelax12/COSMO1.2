@@ -75,6 +75,10 @@ import {
 } from '@/modules/team-categories/repository';
 import { SupabaseTeamCategoriesRepository } from '@/modules/team-categories/supabase.repository';
 
+// Team lists (listes d'entreprise, mig. 203 : classement partagé des tâches d'équipe)
+import { ITeamListsRepository, LocalStorageTeamListsRepository } from '@/modules/team-lists/repository';
+import { SupabaseTeamListsRepository } from '@/modules/team-lists/supabase.repository';
+
 // Stats (agrégats « temps investi » — RPC SQL en prod, calcul local en démo)
 import { IStatsRepository, LocalStatsRepository } from '@/modules/stats/repository';
 import { SupabaseStatsRepository } from '@/modules/stats/supabase.repository';
@@ -166,6 +170,7 @@ let teamProjectsRepository: ITeamProjectsRepository | null = null;
 let teamOKRsRepository: ITeamOKRsRepository | null = null;
 let orgTeamsRepository: IOrgTeamsRepository | null = null;
 let teamCategoriesRepository: ITeamCategoriesRepository | null = null;
+let teamListsRepository: ITeamListsRepository | null = null;
 let orgGovernanceRepository: IOrgGovernanceRepository | null = null;
 let okrExecutionRepository: IOkrExecutionRepository | null = null;
 let statsRepository: IStatsRepository | null = null;
@@ -187,6 +192,7 @@ appModeStore.subscribe(() => {
   teamOKRsRepository = null;
   orgTeamsRepository = null;
   teamCategoriesRepository = null;
+  teamListsRepository = null;
   orgGovernanceRepository = null;
   okrExecutionRepository = null;
   statsRepository = null;
@@ -399,6 +405,18 @@ export function getTeamCategoriesRepository(): ITeamCategoriesRepository {
 }
 
 /**
+ * Get the Team lists repository based on current mode.
+ */
+export function getTeamListsRepository(): ITeamListsRepository {
+  if (!teamListsRepository) {
+    teamListsRepository = appModeStore.isDemo
+      ? new LocalStorageTeamListsRepository()
+      : new SupabaseTeamListsRepository();
+  }
+  return teamListsRepository;
+}
+
+/**
  * Get the Stats repository based on current mode.
  * En démo, l'implémentation locale agrège via les repositories des 4 modules
  * sources (injectés ici pour éviter tout import circulaire avec la factory).
@@ -444,6 +462,7 @@ export function resetRepositories(): void {
   teamOKRsRepository = null;
   orgTeamsRepository = null;
   teamCategoriesRepository = null;
+  teamListsRepository = null;
   statsRepository = null;
 }
 

@@ -6,7 +6,7 @@ import { X, Plus, Pencil, Trash2, Sparkles, Pin, PinOff, Share2 } from 'lucide-r
 import SmartListMenu from '@/components/SmartListMenu';
 import CreateListForm from './CreateListForm';
 import CreateListSheet from './CreateListSheet';
-import { useCreateList, useDeleteList, type SmartRulePreset, type TaskList } from '@/modules/lists';
+import type { SmartRulePreset, TaskList } from '@/modules/lists';
 import { VIRTUAL_TODAY_ID } from './task-page-filter';
 import { useT } from '@/i18n/useT';
 import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
@@ -42,8 +42,13 @@ interface TaskListsBarProps {
   selectedTasksForList: string[];
   /** Déclenche la suppression (directe + toast « Annuler ») de la liste. */
   setListToDeleteId: (listId: string) => void;
-  createListMutation: ReturnType<typeof useCreateList>;
-  deleteListMutation: ReturnType<typeof useDeleteList>;
+  /**
+   * Contrats STRUCTURELS, pas les types des hooks perso : l'onglet Tâches du
+   * mode entreprise pilote la même barre avec ses listes d'organisation
+   * (mig. 203, `@/modules/team-lists`).
+   */
+  createListMutation: { mutate(input: { name: string; color: string }, options?: { onSuccess?: () => void }): void };
+  deleteListMutation: { mutate(listId: string): void };
   clearListFilter: () => void;
   handleListSelect: (listId: string) => void;
   startSelectingTasks: (listId: string) => void;
@@ -59,8 +64,11 @@ interface TaskListsBarProps {
   handleCreateSmartList: (presetKey: SmartRulePreset) => void;
   startChipLongPress: (listId: string) => void;
   cancelChipLongPress: () => void;
-  /** Ouvre le partage de la liste (bottom-sheet ShareListSheet). */
-  onShareList: (list: TaskList) => void;
+  /**
+   * Ouvre le partage de la liste (bottom-sheet ShareListSheet). Absent = pas
+   * de bouton : une liste d'entreprise est déjà partagée par toute l'organisation.
+   */
+  onShareList?: (list: TaskList) => void;
 }
 
 const TaskListsBar: React.FC<TaskListsBarProps> = ({
@@ -313,7 +321,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                     </button>
                                   )}
                                   {/* Partager — listes manuelles uniquement (les smart sont des filtres) */}
-                                  {list.type !== 'smart' && (
+                                  {list.type !== 'smart' && onShareList && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); onShareList(list); }}
                                       className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 shadow-sm transition-colors"

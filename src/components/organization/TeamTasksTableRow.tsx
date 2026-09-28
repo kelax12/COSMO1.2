@@ -1,12 +1,17 @@
 import { forwardRef, memo, useState } from 'react';
-import { Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare } from 'lucide-react';
+import { Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare, ListPlus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
+import { resolveListColor } from '@/pages/tasks/list-colors';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DateCalendarPanel, DATE_PANEL_CLASS } from '@/components/ui/date-picker';
 import type { OrgMember } from '@/modules/organizations';
@@ -34,6 +39,9 @@ export interface TeamTasksRowHandlers {
   schedule: (task: TeamTask) => void;
   remove: (task: TeamTask) => void;
   toggleSelect: (task: TeamTask) => void;
+  /** Listes MANUELLES de l'organisation (mig. 203) : « Ajouter à une liste » du menu ⋯. */
+  lists?: readonly { id: string; name: string; color: string; taskIds: string[] }[];
+  toggleList?: (task: TeamTask, listId: string, inList: boolean) => void;
   editReason: (task: TeamTask) => string | undefined;
   deleteReason: (task: TeamTask) => string | undefined;
 }
@@ -314,6 +322,29 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
             <DropdownMenuItem onClick={() => handlers.schedule(task)}>
               <CalendarPlus aria-hidden="true" /> {t('projects.tasksTabScheduleAction')}
             </DropdownMenuItem>
+            {handlers.toggleList && handlers.lists && handlers.lists.length > 0 && (
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <ListPlus aria-hidden="true" /> {t('teamLists.addToList')}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="max-h-72 overflow-y-auto">
+                  {handlers.lists.map((list) => {
+                    const inList = list.taskIds.includes(task.id);
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={list.id}
+                        checked={inList}
+                        onSelect={(e) => e.preventDefault()}
+                        onCheckedChange={() => handlers.toggleList?.(task, list.id, inList)}
+                      >
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: resolveListColor(list.color) }} aria-hidden="true" />
+                        <span className="truncate">{list.name}</span>
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            )}
             <DropdownMenuItem
               variant="destructive"
               disabled={!!deleteReason}

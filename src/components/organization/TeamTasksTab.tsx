@@ -16,7 +16,8 @@ import AssignEventDialog from './AssignEventDialog';
 import { TeamTasksSkeleton } from './OrgLoadingSkeletons';
 import TeamTasksToolbar, { TeamTasksSelectRow } from './TeamTasksToolbar';
 import TruncatedDataNotice from './TruncatedDataNotice';
-import TeamTasksProjectChips from './TeamTasksProjectChips';
+import TeamTaskListsBar from './TeamTaskListsBar';
+import { useTeamTaskLists } from './use-team-task-lists';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
 import TeamTasksTable from './TeamTasksTable';
 import TeamTasksViewControls from './TeamTasksViewControls';
@@ -58,10 +59,10 @@ const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLo
  *
  * Même langage visuel que la page Tâches personnelle (TasksPage + TaskTable) :
  * chips d'accès rapide, recherche + tri, filtres de statut, table triable.
- * Deux différences structurelles, pas cosmétiques :
- *   - les LISTES personnelles n'existent pas côté équipe ; les chips
- *     d'accès rapide portent donc les PROJETS (déjà l'unité de classement
- *     du mode entreprise), pas une liste custom à créer/renommer/partager ;
+ * L'accès rapide porte les LISTES de l'organisation (mig. 203, 2026-09-28),
+ * avec LA barre de la page personnelle (`TeamTaskListsBar`) ; il portait
+ * auparavant les projets, qui restent filtrables par la barre de filtres.
+ * Une différence structurelle, pas cosmétique :
  *   - la colonne « Catégorie » devient « Projet » — c'est la même position
  *     dans la ligne, mais la donnée qui la remplit n'est plus au même endroit
  *     du modèle (task.category → task.projectId).
@@ -75,6 +76,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const { can, canAssign } = useMyOrgPermissions(orgId);
   const hints = usePermissionHints(orgId);
   const { t, tp } = useT('org');
+  const { t: tt } = useT('tasks');
   const { user } = useAuth();
   const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
 
@@ -126,6 +128,12 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   // « Annuler » = sortir de la corbeille (mig. 152), à l'identique. L'ancien
   // « Annuler » recréait une tâche neuve avec sept champs.
   const restoreTask = useRestoreTeamTask(orgId);
+  const lists = useTeamTaskLists({
+    orgId, tasks, t: tt,
+    setDeadline: (taskId, deadline) => updateTask.mutate({ taskId, input: { deadline } }),
+  });
+  const { filterByList } = lists;
+  const manualLists = lists.lists.filter((l) => l.type !== 'smart');
 
   const projects = useMemo(() => allProjects.filter((p) => !p.archivedAt), [allProjects]);
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
@@ -197,6 +205,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const visibleTasks = useMemo(() => {
     let result = tasks.filter((task) => projectById.has(task.projectId));
     if (projectFilter) result = result.filter((task) => task.projectId === projectFilter);
+    result = filterByList(result);
     result = result.filter((task) => matchesScope(task, filters, (id) => projectById.get(id)?.teamId));
     result = filterByStatus(result, statusFilter);
     result = result.filter((task) => matchesAttributes(task, filters, { categoryIds, labelTaskIds }));
@@ -204,7 +213,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     const q = normalize(searchTerm.trim());
     if (q) result = result.filter((task) => normalize(task.name).includes(q));
     return result;
-  }, [tasks, projectById, projectFilter, statusFilter, searchTerm, filters, categoryIds, labelTaskIds, blockedTaskIds]);
+  }, [tasks, projectById, projectFilter, statusFilter, searchTerm, filters, categoryIds, labelTaskIds, blockedTaskIds, filterByList]);
 
   const sortedTasks = useMemo(() => {
     // Clé primaire = le critère choisi ; clé secondaire = l'échéance (l'ordre
@@ -361,20 +370,16 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     schedule: setSchedulingTask,
     remove: removeWithUndo,
     toggleSelect: bulk.toggleSelect,
+    lists: manualLists,
+    toggleList: (task, listId, inList) =>
+      inList ? lists.removeTaskFromList.mutate({ listId, taskId: task.id }) : lists.addTaskToList.mutate({ listId, taskId: task.id }),
     editReason: hints.taskEditReason,
     deleteReason: hints.taskDeleteReason,
   };
 
   return (
     <div className="space-y-4">
-      <TeamTasksProjectChips
-        projects={projects}
-        tasks={tasks}
-        projectFilter={projectFilter}
-        onProjectFilter={(project) => setFilters({ project })}
-        canCreateProject={can['project.create']}
-        createDeniedReason={hints.deniedReason('project.create')}
-      />
+      <TeamTaskListsBar controller={lists} selection={bulk} />
 
       <OrgTaskFilterBar
         filters={filters}
@@ -497,6 +502,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           defaultProjectId={projectFilter ?? undefined}
           defaultAssigneeIds={taskModal.assigneeIds}
           defaultStatus={taskModal.status}
+          defaultListIds={manualLists.some((l) => l.id === lists.selectedListId) ? [lists.selectedListId as string] : undefined}
           requireProjectChoice={taskModal.mode === 'create' && !projectFilter && !!taskModal.fromKanban}
           onCreate={handleCreate}
           onUpdate={handleUpdate}
@@ -507,9 +513,13 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
       )}
 
       {/* Actions groupées : la même barre que Projets (cohérence globale). */}
-      {bulk.selectMode && (
+      {/* Pendant « ajouter des tâches à une liste », la barre de la liste porte la validation. */}
+      {bulk.selectMode && !lists.selectingTasksForListId && (
         <Suspense fallback={null}>
-          <TeamTasksBulkLayer bulk={bulk} members={members} projects={projects} />
+          <TeamTasksBulkLayer
+            bulk={bulk} members={members} projects={projects} lists={manualLists}
+            onAddToList={(listId, taskIds) => taskIds.forEach((taskId) => lists.addTaskToList.mutate({ listId, taskId }))}
+          />
         </Suspense>
       )}
 

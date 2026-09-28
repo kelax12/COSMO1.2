@@ -1687,5 +1687,16 @@
     "title": "Rapports d'activité",
     "beta": "Bêta",
     "betaHint": "Fonctionnalité en bêta : ce que l'entreprise ou une équipe a fait, figé chaque nuit."
+  },
+  "teamLists": {
+    "fieldTitle": "Listes",
+    "newList": "Nouvelle liste",
+    "namePlaceholder": "Nom de la liste",
+    "color": "Couleur de la liste",
+    "create": "Créer",
+    "empty": "Aucune liste dans l'entreprise pour l'instant.",
+    "addToList": "Ajouter à une liste",
+    "addToListShort": "Liste",
+    "deleted": "Liste supprimée"
   }
 }
