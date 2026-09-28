@@ -38,9 +38,9 @@ interface MemberPermissionsSheetProps {
   onClose: () => void;
 }
 
-/** Les trois sections de droits booléens, dans l'ordre d'affichage. */
+/** Les quatre sections de droits booléens, dans l'ordre d'affichage. */
 const SECTIONS: {
-  titleKey: 'permissions.sectionCreate' | 'permissions.sectionDelete' | 'permissions.sectionOrg';
+  titleKey: 'permissions.sectionCreate' | 'permissions.sectionDelete' | 'permissions.sectionOrg' | 'permissions.sectionReports';
   keys: OrgPermissionKey[];
 }[] = [
   {
@@ -54,6 +54,10 @@ const SECTIONS: {
   {
     titleKey: 'permissions.sectionOrg',
     keys: ['member.invite', 'task.editAny'],
+  },
+  {
+    titleKey: 'permissions.sectionReports',
+    keys: ['report.org', 'report.allTeams'],
   },
 ];
 

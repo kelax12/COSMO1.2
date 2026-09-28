@@ -62,9 +62,23 @@ describe('effectivePermissions — les défauts (mig. 115, puis 152)', () => {
     expect(p['member.invite']).toBe(false);
   });
 
-  it('un manager (≥ 1 subordonné) a tout, comme is_org_manager()', () => {
+  it('un manager (≥ 1 subordonné) a tout, comme is_org_manager(), sauf les rapports', () => {
     const p = effectivePermissions({ member: ALICE, members: MEMBERS });
-    for (const key of ORG_PERMISSION_KEYS) expect(p[key]).toBe(true);
+    for (const key of ORG_PERMISSION_KEYS) {
+      expect(p[key]).toBe(!key.startsWith('report.'));
+    }
+  });
+
+  it('rapports (mig. 202) : défaut admin seulement, réglables par surcharge', () => {
+    expect(effectivePermissions({ member: CARL, members: MEMBERS })['report.org']).toBe(false);
+    expect(effectivePermissions({ member: ALICE, members: MEMBERS })['report.allTeams']).toBe(false);
+    const p = effectivePermissions({
+      member: CARL,
+      members: MEMBERS,
+      overrides: overrides('carl', { overrides: { 'report.allTeams': true } }),
+    });
+    expect(p['report.allTeams']).toBe(true);
+    expect(p['report.org']).toBe(false);
   });
 
   it('un membre non placé n’est pas manager', () => {

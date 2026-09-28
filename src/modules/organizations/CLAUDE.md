@@ -50,6 +50,11 @@ récentes, et une lecture par `ids` pour nommer le reste. Le serveur filtre AVAN
 
 ---
 
+## 📊 Rapports (mig. 202)
+
+Droits `report.org` / `report.allTeams` : défaut admin seulement.
+❌ Ni attribution, ni modification, ni création, ni événement `is_private` dans un rapport.
+
 ## 🔐 Permissions entreprise — surcharge, jamais remplacement (mig. 115)
 
 Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `is_org_manager`) et
@@ -59,7 +64,7 @@ Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `i
   `NULL` = suit le défaut dérivé, `true`/`false` = décision explicite. Une organisation sans
   aucune ligne se comporte **exactement** comme avant la mig. 115 — c'est ce qui rend le
   déploiement réversible.
-- Onze droits (`task.create` · `task.editAny` · `task.deleteAny` · `project.create` ·
+- Treize droits (`task.create` · `task.editAny` · `task.deleteAny` · `project.create` ·
   `project.edit` · `project.delete` · `okr.create` · `okr.delete` · `category.manage` · `team.create` ·
   `member.invite`) + une portée d'assignation cumulable
   (`self` · `peers` · `manager` · `subordinates` · `everyone`, `{}` = personne).

@@ -84,6 +84,9 @@ compilait, la suite passait.
   « non appliquée » ci-dessus sont périmées. ❌ **Ne jamais réappliquer la `164`** : elle retire la
   branche « membre du projet » de la 190. `201` (action « Notifier » des automatisations) est
   appliquée, ledger `20260928071259`.
+- ⚠️ **`202`** (2026-09-28, rapports d activité) : **écrite, PROUVÉE en transaction annulée, NON
+  appliquée.** À appliquer AVANT le front : la fiche de permissions écrit ses deux colonnes.
+  Preuve : `supabase/proofs/202.proof.sql` (7 cas acteur par acteur).
 - ⚠️ **Plages de numéros entre sessions (2026-09-24)** : `151`-`159` corbeille/équipes, `153` déjà
   prise par le portefeuille de projets (worktree `portefeuille`), `160`+ gouvernance/OKR/membres,
   `170`+ annuaire. **Relire le ledger avant de choisir un numéro.**

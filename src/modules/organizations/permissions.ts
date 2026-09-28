@@ -31,6 +31,9 @@ export const ORG_PERMISSION_KEYS = [
   'category.manage',
   'team.create',
   'member.invite',
+  // Rapports d'activité (mig. 202) : défaut ADMIN SEULEMENT, jamais « manager ».
+  'report.org',
+  'report.allTeams',
 ] as const;
 
 export type OrgPermissionKey = (typeof ORG_PERMISSION_KEYS)[number];
@@ -46,6 +49,14 @@ const MEMBER_DEFAULT_KEYS: ReadonlySet<string> = new Set<OrgPermissionKey>([
   'task.create',
   'task.editAny',
 ]);
+
+/**
+ * Droits dont le défaut est « personne » (hors admin). Miroir de
+ * `my_report_perm` (mig. 202) : encadrer quelqu'un ne donne pas la vue de
+ * toute l'entreprise. Un responsable d'équipe lit le rapport de SON équipe
+ * sans aucun de ces droits (cf. `reportableTeamIds`).
+ */
+const ADMIN_DEFAULT_KEYS: ReadonlySet<string> = new Set<OrgPermissionKey>(['report.org', 'report.allTeams']);
 
 /** Cibles d'assignation cumulables. Tableau vide = « personne ». */
 export const ORG_ASSIGN_TARGETS = ['self', 'peers', 'manager', 'subordinates', 'everyone'] as const;
@@ -121,7 +132,7 @@ export const effectivePermissions = ({
       continue;
     }
     const override = overrides?.overrides?.[key];
-    out[key] = override ?? (MEMBER_DEFAULT_KEYS.has(key) ? true : isManager);
+    out[key] = override ?? (MEMBER_DEFAULT_KEYS.has(key) ? true : ADMIN_DEFAULT_KEYS.has(key) ? false : isManager);
   }
   return out;
 };

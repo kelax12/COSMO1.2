@@ -1,6 +1,6 @@
 import type React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Users, UsersRound, Settings, FolderKanban, Target, Network, BarChart3, ListTodo } from 'lucide-react';
+import { LayoutDashboard, Users, UsersRound, Settings, FolderKanban, Target, Network, BarChart3, ListTodo, FileText } from 'lucide-react';
 import type { KeyOf } from '@/i18n/catalog';
 import type { OrgSectionSegment } from './deep-link.helpers';
 
@@ -43,6 +43,9 @@ export const ORG_SECTIONS: OrgSectionDef[] = [
   { id: 'okr', labelKey: 'tabs.okr', Icon: Target, group: 'steer' },
   // #13 : statistiques collectives — admin (toute l'org) / manager (son périmètre).
   { id: 'stats', labelKey: 'tabs.stats', Icon: BarChart3, group: 'steer', managerOnly: true },
+  // Rapports d'activité (mig. 202) : visibles selon les droits de rapport,
+  // filtrés par la page comme `stats`.
+  { id: 'reports', labelKey: 'tabs.reports', Icon: FileText, group: 'steer' },
   // Un membre sans subordonné n'a rien à y arbitrer.
   { id: 'pyramid', labelKey: 'tabs.pyramid', Icon: Network, group: 'steer', managerOnly: true },
   // Audit Membres du 2026-09-24 : la section tenait « quatre pages en une »

@@ -162,6 +162,7 @@
     "sectionCreate": "Create",
     "sectionDelete": "Delete and archive",
     "sectionOrg": "Organisation",
+    "sectionReports": "Activity reports",
     "sectionAssign": "Assign tasks to",
     "inherited": "Default",
     "inheritedOn": "Default: allowed",
@@ -206,6 +207,12 @@
       "member": {
         "invite": "Invite members",
         "inviteHint": "Generate an invite link to a seat in the pyramid."
+      },
+      "report": {
+        "org": "View the company report",
+        "orgHint": "Read the activity report of the whole company, and each team's performance.",
+        "allTeams": "View every team's report",
+        "allTeamsHint": "Read the report of any team. Without this right, a team lead only reads their own team's."
       }
     },
     "target": {
@@ -451,5 +458,52 @@
     "someone": "a member",
     "restore": "Restore",
     "restoreAria": "Restore the task {{name}}"
+  },
+  "reports": {
+    "scopeLabel": "Report scope",
+    "scopeOrg": "Company",
+    "scopeTeam": "Team",
+    "teamSelect": "Choose a team",
+    "periodLabel": "Period",
+    "periodDay": "Day",
+    "periodWeek": "Week",
+    "periodMonth": "Month",
+    "periodCustom": "Range",
+    "prev": "Previous period",
+    "next": "Next period",
+    "from": "From",
+    "to": "To",
+    "weekOf": "Week of {{from}} to {{to}}",
+    "rangeOf": "From {{from}} to {{to}}",
+    "kpiTasks": "Tasks completed",
+    "kpiProjects": "Projects advanced",
+    "kpiKrs": "KRs advanced",
+    "kpiEvents": "Events held",
+    "teamsTitle": "Performance by team",
+    "teamsTasks_one": "{{count}} task completed",
+    "teamsTasks_other": "{{count}} tasks completed",
+    "teamsOpen": "Open the {{name}} report",
+    "tasksTitle": "Tasks completed, by project",
+    "noProject": "No project",
+    "groupCount_one": "{{count}} task",
+    "groupCount_other": "{{count}} tasks",
+    "showAll": "Show all {{count}}",
+    "showLess": "Show less",
+    "unknownPerson": "Former member",
+    "projectsTitle": "Project progress",
+    "projectDone": "Done",
+    "projectDelta": "+{{count}} points",
+    "projectTasks": "{{done}} / {{total}} tasks",
+    "krsTitle": "Key result progress",
+    "krCompleted": "Achieved",
+    "eventsTitle": "Work events, by person",
+    "empty": "No activity in this period.",
+    "noReportYet": "No report for this period yet. Each day is generated at midnight, the first one arrives tonight.",
+    "truncated": "More than 1,000 tasks completed in one day: the list shows an excerpt.",
+    "footer": "Report frozen at midnight. Only what was done appears here: no assignment, edit, or creation.",
+    "noAccess": "No report is open to you. An admin can grant access in permissions.",
+    "loading": "Loading the report…",
+    "error": "The report couldn't be loaded.",
+    "retry": "Retry"
   }
 }

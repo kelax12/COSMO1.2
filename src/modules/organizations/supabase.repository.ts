@@ -550,6 +550,8 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     'category.manage': 'can_manage_category',
     'team.create': 'can_create_team',
     'member.invite': 'can_invite_member',
+    'report.org': 'can_view_org_report',
+    'report.allTeams': 'can_view_all_team_reports',
   };
 
   private mapPermissions(row: Record<string, unknown>): OrgMemberPermissions {
