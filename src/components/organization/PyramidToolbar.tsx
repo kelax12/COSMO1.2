@@ -13,7 +13,6 @@
 // traverser pour lire la mise en page de la pyramide elle-même.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  UserPlus,
   ChevronDown,
   Users,
   Search,
@@ -52,9 +51,6 @@ interface PyramidToolbarProps {
   onStartEdit: () => void;
   onCancelEdit: () => void;
   onFinishEdit: () => void;
-  /** `null` quand le compte n'est pas lui-même membre de l'organisation. */
-  canAddUnderSelf: boolean;
-  onAddUnderSelf: () => void;
   showWorkload: boolean;
   onToggleWorkload: () => void;
 }
@@ -75,8 +71,6 @@ const PyramidToolbar = ({
   onStartEdit,
   onCancelEdit,
   onFinishEdit,
-  canAddUnderSelf,
-  onAddUnderSelf,
   showWorkload,
   onToggleWorkload,
 }: PyramidToolbarProps) => {
@@ -176,15 +170,6 @@ const PyramidToolbar = ({
             <span className="text-xs font-semibold text-indigo-500 tabular-nums">
               {tpa('pyramid.moveCount', moveCount)}
             </span>
-          )}
-          {!editMode && canAddUnderSelf && (
-            <button
-              type="button"
-              onClick={onAddUnderSelf}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-            >
-              <UserPlus size={14} aria-hidden="true" /> {ta('pyramid.add')}
-            </button>
           )}
           {editMode && (
             <button

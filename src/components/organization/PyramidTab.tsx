@@ -327,8 +327,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             onStartEdit={startEdit}
             onCancelEdit={cancelEdit}
             onFinishEdit={finishEdit}
-            canAddUnderSelf={selfMember !== null}
-            onAddUnderSelf={() => selfMember && setAddingUnder(selfMember)}
             showWorkload={showWorkload}
             onToggleWorkload={() => setShowWorkload((v) => !v)}
           />

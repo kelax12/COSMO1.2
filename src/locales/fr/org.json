@@ -26,7 +26,7 @@
     "badgePreviewMore_other": "et {{count}} autres",
     "badgePreviewMore_many": "et {{count}} d'autres",
     "tabLoading": "Chargement de l’onglet…",
-    "managerToast": "Vous encadrez maintenant {{names}} : les sections Statistiques et Pyramide sont disponibles.",
+    "managerToast": "Vous encadrez maintenant {{names}} : les sections Statistiques et Organigramme sont disponibles.",
     "launchFree": "COSMO Entreprise est gratuit",
     "launchFreeRest": " jusqu'au 1er août, profitez-en avec toute votre équipe, sans limite.",
     "badgePreviewSection": "Non lu dans cette section"
@@ -90,7 +90,7 @@
     "personalLink": "Lien d'invitation personnalisé",
     "personalLinkHint": "Usage unique, valable 7 jours. Après création de son compte, la personne rejoint directement l'entreprise, rattachée à {{name}}.",
     "you": "vous",
-    "permanentCodeHint": "Code permanent, à partager largement. La personne demande à rejoindre l'entreprise et un administrateur valide sa demande (elle arrive non placée dans la pyramide).",
+    "permanentCodeHint": "Code permanent, à partager largement. La personne demande à rejoindre l'entreprise et un administrateur valide sa demande (elle arrive non placée dans l'organigramme).",
     "copyLinkAria": "Copier le lien d'invitation",
     "copyCodeAria": "Copier le code d'invitation",
     "orgCodeTitle": "Code d'invitation de l'entreprise",
@@ -191,7 +191,7 @@
     "nextDeadline": "Prochaine échéance",
     "getStarted": "Bien démarrer",
     "stepProject": "Créer un premier projet",
-    "stepPyramid": "Construire la pyramide hiérarchique",
+    "stepPyramid": "Construire l'organigramme hiérarchique",
     "stepOkr": "Définir un premier OKR",
     "myTasks_one": "Ma {{count}} tâche assignée",
     "myTasks_many": "Mes {{count}} de tâches assignées",
@@ -720,7 +720,7 @@
       "joined90d": "Arrivés il y a moins de 90 jours",
       "joined1y": "Arrivés il y a moins d'un an",
       "joinedOlder": "Arrivés il y a plus d'un an",
-      "unplaced": "Non placés dans la pyramide",
+      "unplaced": "Non placés dans l'organigramme",
       "chipTeam": "Équipe : {{name}}",
       "chipRole": "Rôle : {{name}}",
       "chipManager": "Sous {{name}}",
@@ -764,9 +764,9 @@
       "movedUnder_one": "{{count}} membre rattaché à {{name}}",
       "movedUnder_many": "{{count}} de membres rattachés à {{name}}",
       "movedUnder_other": "{{count}} membres rattachés à {{name}}",
-      "detached_one": "{{count}} membre détaché de la pyramide",
-      "detached_many": "{{count}} de membres détachés de la pyramide",
-      "detached_other": "{{count}} membres détachés de la pyramide",
+      "detached_one": "{{count}} membre détaché de l'organigramme",
+      "detached_many": "{{count}} de membres détachés de l'organigramme",
+      "detached_other": "{{count}} membres détachés de l'organigramme",
       "skipped_one": "{{count}} ignoré",
       "skipped_many": "{{count}} d'ignorés",
       "skipped_other": "{{count}} ignorés",
@@ -793,7 +793,7 @@
       "sourceCompletion": "tâche terminée"
     },
     "demoteTitle": "Retirer le rôle d'administrateur à {{name}} ?",
-    "demoteBody": "{{name}} ne pourra plus gérer les membres, la facturation ni les réglages de l'entreprise. Ses droits suivront à nouveau sa position dans la pyramide et ses éventuelles surcharges.",
+    "demoteBody": "{{name}} ne pourra plus gérer les membres, la facturation ni les réglages de l'entreprise. Ses droits suivront à nouveau sa position dans l'organigramme et ses éventuelles surcharges.",
     "demoteConfirm": "Retirer le rôle"
   },
   "member": {
@@ -808,7 +808,7 @@
     "move": "Déplacer",
     "copyLink": "Copier le lien vers cette fiche",
     "copyLinkDone": "Lien copié",
-    "placementHint": "Choisissez son nouveau responsable direct dans la pyramide.",
+    "placementHint": "Choisissez son nouveau responsable direct dans l'organigramme.",
     "placementEmpty": "Aucune destination possible.",
     "sheetAria": "Fiche de {{name}}",
     "tabsAria": "Sections de la fiche membre",
@@ -989,7 +989,7 @@
   "tabs": {
     "overview": "Aperçu",
     "reports": "Rapports",
-    "pyramid": "Pyramide",
+    "pyramid": "Organigramme",
     "projects": "Projets",
     "okr": "OKR",
     "stats": "Statistiques",
@@ -1049,9 +1049,9 @@
     "kindEventScheduled": "Un créneau a été ajouté à votre agenda",
     "kindProjectArchived": "Un projet où vous avez du travail a été archivé",
     "kindProjectArchivedNamed": "Le projet « {{name}} » a été archivé : ses tâches ont quitté vos listes",
-    "kindRoleManagerChanged": "Votre supérieur direct a changé dans la pyramide",
-    "kindRoleNowManager": "Vous encadrez désormais quelqu'un : Pyramide et Statistiques vous sont ouvertes",
-    "kindRoleNoLongerManager": "Vous n'encadrez plus personne : Pyramide et Statistiques ne vous sont plus ouvertes",
+    "kindRoleManagerChanged": "Votre supérieur direct a changé dans l'organigramme",
+    "kindRoleNowManager": "Vous encadrez désormais quelqu'un : Organigramme et Statistiques vous sont ouvertes",
+    "kindRoleNoLongerManager": "Vous n'encadrez plus personne : Organigramme et Statistiques ne vous sont plus ouvertes",
     "kindAutomation": "Une automatisation vous a notifié",
     "kindAutomationNamed": "Automatisation « {{name}} » : une tâche vous concerne",
     "settings": "Préférences de notification",
@@ -1132,7 +1132,7 @@
     "inviteToOrg": "Inviter dans mon entreprise",
     "demoNotice": "Les invitations ne sont pas envoyées en mode démo.",
     "noFriendYet": "Ajoutez d'abord un contact ci-dessus : on n'invite dans une entreprise que des personnes déjà en contact.",
-    "inviteHint": "L'invitation arrive dans sa boîte de réception. Il entre non placé dans la pyramide ; un administrateur le range ensuite.",
+    "inviteHint": "L'invitation arrive dans sa boîte de réception. Il entre non placé dans l'organigramme ; un administrateur le range ensuite.",
     "inviteCta": "Inviter",
     "joinColTitle": "Rejoindre une entreprise",
     "codeLabel": "Code de l'entreprise",
@@ -1210,7 +1210,7 @@
       },
       "member": {
         "invite": "Inviter des membres",
-        "inviteHint": "Générer un lien d'invitation vers une place de la pyramide."
+        "inviteHint": "Générer un lien d'invitation vers une place de l'organigramme."
       },
       "report": {
         "org": "Voir le rapport de l'entreprise",
@@ -1219,7 +1219,7 @@
         "allTeamsHint": "Lire le rapport de n'importe quelle équipe. Sans ce droit, un responsable ne lit que celui de son équipe."
       }
     },
-    "intro": "Ces réglages remplacent les droits déduits de la pyramide. Une ligne laissée sur « Par défaut » suit la position du membre dans l'entreprise."
+    "intro": "Ces réglages remplacent les droits déduits de l'organigramme. Une ligne laissée sur « Par défaut » suit la position du membre dans l'entreprise."
   },
   "truncation": {
     "tasks": "Seules les {{limit}} tâches les plus récentes sont chargées. L'organisation en compte davantage : ce qui s'affiche ici porte sur cet extrait."
@@ -1531,7 +1531,7 @@
       "assignCount_other": "Peut assigner des tâches à {{count}} personnes."
     },
     "placement": {
-      "title": "Placer {{name}} dans la pyramide",
+      "title": "Placer {{name}} dans l'organigramme",
       "directionAria": "Sens du placement",
       "up": "Son responsable",
       "down": "Sous cette personne",
@@ -1541,7 +1541,14 @@
       "under": "Sous {{name}}",
       "nobodyToPlace": "Personne que vous puissiez rattacher ici.",
       "inviteTitle": "Inviter une nouvelle personne",
-      "titleSelf": "Placer quelqu'un sous vous"
+      "titleSelf": "Placer quelqu'un sous vous",
+      "groupManagers": "Managers",
+      "groupMembers": "Membres",
+      "confirm": "Confirmer",
+      "summary": "{{person}} passera sous {{manager}}",
+      "summaryDetach": "{{person}} sera détaché(e) de l'organigramme",
+      "summaryEmpty": "Sélectionnez une personne",
+      "searchToggle": "Rechercher"
     }
   },
   "kanban": {
@@ -1608,7 +1615,7 @@
       "kr_due": "Échéance d'un résultat clé",
       "event_scheduled": "Créneau ajouté à mon agenda",
       "automation": "Notification d'une automatisation",
-      "role_changed": "Changement de position dans la pyramide"
+      "role_changed": "Changement de position dans l'organigramme"
     }
   },
   "rights": {
@@ -1649,9 +1656,9 @@
     "projects": "Projets",
     "why": "Pourquoi je vois ceci ?",
     "whyAdmin": "Vous êtes admin : vous voyez tout le travail de l'organisation.",
-    "whyManager": "Vous voyez vos propres tâches et celles des personnes que vous encadrez dans la pyramide.",
+    "whyManager": "Vous voyez vos propres tâches et celles des personnes que vous encadrez dans l'organigramme.",
     "whyTeamAdmin": "Les tâches assignées aux membres de cette équipe.",
-    "whyTeamLead": "Vous dirigez cette équipe : vous voyez les tâches assignées à ses membres, même s'ils ne dépendent pas de vous dans la pyramide.",
+    "whyTeamLead": "Vous dirigez cette équipe : vous voyez les tâches assignées à ses membres, même s'ils ne dépendent pas de vous dans l'organigramme.",
     "whyProject": "Toutes les tâches de ce projet, quels que soient leurs assignés."
   },
   "lifecycle": {
