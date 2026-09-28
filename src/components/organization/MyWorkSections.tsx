@@ -12,6 +12,8 @@ import TeamActivityFeed from './TeamActivityFeed';
 import OrgEventsTimeline from './OrgEventsTimeline';
 import { MyKeyResultsCard, MyProjectsCard, MyTasksCard, WaitingForMeCard } from './MyWorkCards';
 import { buildOrgEvents } from './org-events.helpers';
+import { KpiStrip } from './MyWorkKpiStrip';
+import { useT } from '@/i18n/useT';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
 import {
@@ -44,6 +46,10 @@ export interface MyWorkSectionsProps {
   estimated: number;
   /** Carte « Mon agenda », construite par `MyWorkTab`. */
   agenda: ReactNode;
+  /** Carte de progression (`WorkSummaryCard`), construite par `MyWorkTab`. */
+  summary: ReactNode;
+  overdueCount: number;
+  nextDeadline: TeamTask | null;
   onToggle: (task: TeamTask) => void;
   onOpenTask: (task: TeamTask) => void;
 }
@@ -65,8 +71,9 @@ export interface MyWorkSectionsProps {
 const MyWorkSections = ({
   orgId, currentUserId, open, mine, upcoming, createdInReview,
   activity, deps, notifications, okrs, projects, members, hasAny, estimated,
-  agenda, onToggle, onOpenTask,
+  agenda, summary, overdueCount, nextDeadline, onToggle, onOpenTask,
 }: MyWorkSectionsProps) => {
+  const { t } = useT('org');
   const me = currentUserId ?? '';
   const activeProjectIds = useMemo(
     () => new Set(projects.filter((p) => !p.archivedAt).map((p) => p.id)),
@@ -129,47 +136,59 @@ const MyWorkSections = ({
 
   return (
     <>
-      {/* « En attente de moi » : revue, mentions, dépendances. */}
-      <WaitingForMeCard
-        reviews={reviews}
-        mentions={mentionRows}
-        blocking={blocking}
-        members={members}
-        onOpenTask={onOpenTask}
+      {/* Maquette A (2026-09-28) : bandeau de chiffres, puis deux colonnes,
+          l'ACTION à gauche (en attente, mes tâches) et le CONTEXTE à droite
+          (progression, agenda, KR, projets), puis l'équipe en bas.
+          ⚠️ `minmax(0, …)` et `min-w-0` sur les colonnes (maquette 105) : un
+          élément de grille a `min-width: auto` et débordait en 390 px.
+          ⚠️ L'agenda est rendu HORS de toute condition : un nouvel arrivant
+          sans tâche doit aussi voir le sien. */}
+      <KpiStrip
+        waiting={reviews.length + mentionRows.length + blocking.length}
+        open={open.length}
+        overdue={overdueCount}
+        nextDeadline={nextDeadline}
+        labels={{
+          waiting: t('waiting.title'),
+          open: t('overview.openTasks'),
+          overdue: t('horizon.overdue'),
+          next: t('myWork.nextDeadline'),
+          upToDate: t('myWork.upToDate'),
+        }}
       />
 
-      {/* ⚠️ `min-w-0` sur les enfants de cette grille (maquette 105) : un
-          élément de grille a `min-width: auto`, qui lui interdit de rétrécir
-          sous son contenu. Sans lui, en 390 px, la date de la dernière tâche
-          sortait de l'écran et était COUPÉE par `overflow-x-hidden`.
-          ⚠️ L'agenda est rendu HORS de toute condition : il vivait dans la
-          branche « j'ai des tâches », donc un nouvel arrivant sans tâche ne
-          voyait pas non plus son agenda. */}
-      <div className="grid lg:grid-cols-2 gap-5 items-start">
-        <MyTasksCard
-          groups={groups}
-          openCount={open.length}
-          hasAny={hasAny}
-          estimated={estimated}
-          projectById={projectById}
-          onToggle={onToggle}
-          onOpenTask={onOpenTask}
-          selection={{
-            active: bulk.selectMode,
-            selectedIds: bulk.selectedIds,
-            onToggle: bulk.toggleSelect,
-            onStart: () => bulk.setSelectMode(true),
-          }}
-        />
-        {agenda}
-      </div>
-
-      {(myProjects.length > 0 || krs.length > 0) && (
-        <div className="grid lg:grid-cols-2 gap-5 items-start">
-          <MyProjectsCard summaries={myProjects} orgId={orgId} userId={currentUserId} />
-          <MyKeyResultsCard items={krs} />
+      <div className="grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-5 items-start">
+        <div className="min-w-0 space-y-5">
+          <WaitingForMeCard
+            reviews={reviews}
+            mentions={mentionRows}
+            blocking={blocking}
+            members={members}
+            onOpenTask={onOpenTask}
+          />
+          <MyTasksCard
+            groups={groups}
+            openCount={open.length}
+            hasAny={hasAny}
+            estimated={estimated}
+            projectById={projectById}
+            onToggle={onToggle}
+            onOpenTask={onOpenTask}
+            selection={{
+              active: bulk.selectMode,
+              selectedIds: bulk.selectedIds,
+              onToggle: bulk.toggleSelect,
+              onStart: () => bulk.setSelectMode(true),
+            }}
+          />
         </div>
-      )}
+        <div className="min-w-0 space-y-5">
+          {summary}
+          {agenda}
+          {krs.length > 0 && <MyKeyResultsCard items={krs} />}
+          {myProjects.length > 0 && <MyProjectsCard summaries={myProjects} orgId={orgId} userId={currentUserId} />}
+        </div>
+      </div>
 
       {bulk.selectMode && (
         <Suspense fallback={null}>
@@ -177,18 +196,23 @@ const MyWorkSections = ({
         </Suspense>
       )}
 
-      {/* Activité de l'équipe : lue dans le journal (mig. 094), 14 jours. */}
-      <TeamActivityFeed
-        items={activityItems}
-        taskById={taskById}
-        projects={projects}
-        members={members}
-        currentUserId={currentUserId}
-        onOpenTask={onOpenTask}
-      />
-
-      {/* Prochains événements de l'entreprise (reco #2) : visibles par tous. */}
-      <OrgEventsTimeline events={orgEvents} />
+      {/* Activité de l'équipe (journal, mig. 094, 14 jours) et prochains
+          événements de l'entreprise (reco #2), côte à côte. */}
+      <div className="grid lg:grid-cols-2 gap-5 items-start">
+        <div className="min-w-0">
+          <TeamActivityFeed
+            items={activityItems}
+            taskById={taskById}
+            projects={projects}
+            members={members}
+            currentUserId={currentUserId}
+            onOpenTask={onOpenTask}
+          />
+        </div>
+        <div className="min-w-0">
+          <OrgEventsTimeline events={orgEvents} />
+        </div>
+      </div>
     </>
   );
 };

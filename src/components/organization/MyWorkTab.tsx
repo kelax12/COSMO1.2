@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { format, parseISO, isPast, isToday, startOfDay, subDays } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import {
-  CalendarDays, CircleCheck, ChevronRight,
+  CircleCheck, ChevronRight,
 } from 'lucide-react';
 import {
   useTeamProjects,
@@ -40,44 +40,6 @@ interface MyWorkTabProps {
   isManager: boolean;
 }
 
-const isOverdue = (t: TeamTask): boolean => {
-  if (t.completed || !t.deadline) return false;
-  const d = parseISO(t.deadline);
-  return isPast(d) && !isToday(d);
-};
-
-/** Bloc latéral « prochaine échéance » de la carte de synthèse Aperçu. */
-const NextDeadline = ({ task }: { task: TeamTask | null }) => {
-  const { t } = useT('org');
-  if (!task || !task.deadline) {
-    return (
-      <div className="flex flex-col items-center text-[rgb(var(--color-text-muted))]">
-        <CalendarDays size={22} aria-hidden="true" />
-        <span className="text-xs mt-1.5">{t('myWork.upToDate')}</span>
-      </div>
-    );
-  }
-  const d = parseISO(task.deadline);
-  const late = isOverdue(task);
-  return (
-    <div className="flex flex-col items-center max-w-[130px]">
-      {/* Jour et mois sont empilés visuellement, donc collés dans le
-          `textContent` : « 25août ». Un lecteur d'écran lisait ce mot-là.
-          La date complète passe en `sr-only`, les deux fragments visuels
-          sortent de l'arbre d'accessibilité. */}
-      <time
-        dateTime={task.deadline}
-        className={`flex flex-col items-center leading-none ${late ? 'text-red-500' : 'text-[rgb(var(--color-accent))]'}`}
-      >
-        <span className="sr-only">{format(d, 'd MMMM yyyy', { locale: getDateLocale() })}</span>
-        <span className="text-xl font-bold" aria-hidden="true">{format(d, 'd', { locale: getDateLocale() })}</span>
-        <span className="text-caption uppercase mt-0.5" aria-hidden="true">{format(d, 'MMM', { locale: getDateLocale() })}</span>
-      </time>
-      <span className="text-xs text-[rgb(var(--color-text-primary))] mt-2 text-center truncate max-w-full">{task.name}</span>
-      <span className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">{t('myWork.nextDeadline')}</span>
-    </div>
-  );
-};
 
 /**
  * Onglet Aperçu (#7) — MON travail dans l'entreprise : mes tâches assignées
@@ -250,6 +212,14 @@ const loadSections = () => import('./MyWorkSections');
 const MyWorkSections = lazyWithRetry(loadSections);
 void loadSections().catch(() => { /* rejoué par lazyWithRetry au rendu */ });
 
+// Dupliqué de `isOverdue` (my-work.helpers) exprès : l'importer tirerait les
+// helpers de l'Aperçu hors du chunk paresseux `MyWorkSections`.
+const isOverdue = (t: TeamTask): boolean => {
+  if (t.completed || !t.deadline) return false;
+  const d = parseISO(t.deadline);
+  return isPast(d) && !isToday(d);
+};
+
 /** Fenêtre du fil d'activité : 14 jours, comme avant le passage au journal. */
 const ACTIVITY_DAYS = 14;
 
@@ -350,16 +320,6 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
       {showChecklist && <StartChecklist steps={startSteps} orgId={orgId} />}
       {showNewcomerHints && <NewcomerHints />}
 
-      {/* Carte de synthèse « progress-first » */}
-      <WorkSummaryCard
-        title={tp('myWork.myTasks', myTasks.length)}
-        completed={done.length}
-        inProgress={Math.max(0, open.length - overdue.length)}
-        overdue={overdue.length}
-        emptyLabel={t('myWork.emptyLabel')}
-        aside={<NextDeadline task={nextDeadline} />}
-      />
-
       <Suspense fallback={<MyWorkSkeleton label={t('myWork.loading')} />}>
         <MyWorkSections
           orgId={orgId}
@@ -377,6 +337,17 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
           hasAny={hasAnyTask}
           estimated={myEstimated}
           agenda={<AgendaEventsCard events={upcomingEvents} />}
+          summary={(
+            <WorkSummaryCard
+              title={tp('myWork.myTasks', myTasks.length)}
+              completed={done.length}
+              inProgress={Math.max(0, open.length - overdue.length)}
+              overdue={overdue.length}
+              emptyLabel={t('myWork.emptyLabel')}
+            />
+          )}
+          overdueCount={overdue.length}
+          nextDeadline={nextDeadline}
           onToggle={toggleComplete}
           onOpenTask={setEditingTask}
         />

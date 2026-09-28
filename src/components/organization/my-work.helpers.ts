@@ -6,6 +6,7 @@
 // tâches, et ne répondait pas à la première question d'un membre : « qu'est-ce
 // qui m'attend ? ». Tout ce qui se calcule ici se teste sans React ni base.
 // ═══════════════════════════════════════════════════════════════════
+import { isPast, isToday, parseISO } from 'date-fns';
 import type { TeamProject, TeamTask, TeamTaskActivity, TeamTaskDependency } from '@/modules/team-projects';
 import type { TeamOKR, TeamKeyResult } from '@/modules/team-okrs';
 import type { OrgNotification } from '@/modules/organizations';
@@ -220,4 +221,11 @@ export const buildActivityItems = (
     }
   }
   return out.sort((a, b) => (a.date > b.date ? -1 : 1)).slice(0, max);
+};
+
+/** En retard : échéance passée, aujourd'hui exclu. Partagé par `MyWorkTab` et le bandeau de chiffres. */
+export const isOverdue = (t: TeamTask): boolean => {
+  if (t.completed || !t.deadline) return false;
+  const d = parseISO(t.deadline);
+  return isPast(d) && !isToday(d);
 };
