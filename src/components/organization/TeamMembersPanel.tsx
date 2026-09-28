@@ -169,45 +169,49 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
   const hidden = teamMembers.length - shown.length;
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div>
       {teamMembers.length === 0 && (
-        <p className="text-xs text-[rgb(var(--color-text-muted))] mr-2">{t('teamPage.noMembers')}</p>
+        <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">{t('teamPage.noMembers')}</p>
       )}
+      {/* Une personne par ligne, responsables en tête (maquette du 2026-09-28). */}
+      <ul className="flex flex-col gap-1.5">
       {shown.map((m) => {
         const isLead = leadIds.has(m.userId);
         return (
-          <span
+          <li
             key={m.userId}
-            className={`inline-flex items-center gap-1.5 rounded-full border pl-1 pr-2 py-0.5 ${
+            className={`flex items-center gap-2.5 rounded-xl border px-2.5 py-2 ${
               isLead
-                ? 'border-amber-400/60 bg-amber-400/10'
-                : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))]'
+                ? 'border-amber-400 border-[1.5px] bg-amber-400/10'
+                : 'border-[rgb(var(--color-border))]'
             }`}
           >
-            <MemberAvatar avatar={m.avatar} size={20} />
-            <span className="text-xs text-[rgb(var(--color-text-primary))]">
-              {m.userId === currentUserId ? t('common.youBadge') : m.displayName}
-            </span>
-            {/* Rendu pour TOUS : savoir à qui s'adresser dans une équipe est
-                une information de lecture. */}
-            {isLead && (
-              <span
-                title={t('teams.leadHint')}
-                className="inline-flex items-center gap-0.5 text-caption font-semibold text-amber-600 dark:text-amber-400"
-              >
-                <Crown size={10} aria-hidden="true" /> <RoleTerm term="teamLead">{t('teams.leadBadge')}</RoleTerm>
+            <MemberAvatar avatar={m.avatar} name={m.displayName} size={30} />
+            <span className="flex-1 min-w-0">
+              <span className={`block truncate text-sm font-medium ${isLead ? 'text-amber-900 dark:text-amber-200' : 'text-[rgb(var(--color-text-primary))]'}`}>
+                {m.userId === currentUserId ? t('common.youBadge') : m.displayName}
               </span>
-            )}
+              {/* Rendu pour TOUS : savoir à qui s'adresser dans une équipe est
+                  une information de lecture. */}
+              {isLead && (
+                <span
+                  title={t('teams.leadHint')}
+                  className="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400"
+                >
+                  <Crown size={11} aria-hidden="true" /> <RoleTerm term="teamLead">{t('teams.leadBadge')}</RoleTerm>
+                </span>
+              )}
+            </span>
             {canManage && (
               <button
                 type="button"
                 onClick={() => toggleLeadWithUndo(m.userId, !isLead)}
                 aria-label={isLead ? t('teams.removeLead') : t('teams.makeLead')}
-                className={`transition-colors ${
+                className={`p-1 transition-colors ${
                   isLead ? 'text-amber-500 hover:text-amber-600' : 'text-[rgb(var(--color-text-muted))] hover:text-amber-500'
                 }`}
               >
-                <Crown size={11} aria-hidden="true" />
+                <Crown size={16} aria-hidden="true" />
               </button>
             )}
             {canManage && (
@@ -215,14 +219,16 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
                 type="button"
                 onClick={() => requestRemove(m, isLead)}
                 aria-label={t('team.removeMemberAria', { member: m.displayName, team: team.name })}
-                className="text-[rgb(var(--color-text-muted))] hover:text-red-500"
+                className="p-1 text-[rgb(var(--color-text-muted))] hover:text-red-500"
               >
-                <UserMinus size={11} aria-hidden="true" />
+                <UserMinus size={15} aria-hidden="true" />
               </button>
             )}
-          </span>
+          </li>
         );
       })}
+      </ul>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
       {teamMembers.length > TEAM_CHIPS_LIMIT && (
         <button
           type="button"
@@ -255,6 +261,7 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
           onCancel={() => setLeaving(null)}
         />
       )}
+      </div>
     </div>
   );
 };
