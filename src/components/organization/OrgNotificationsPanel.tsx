@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { Bell, UserPlus, AtSign, AlarmClock, MessageSquare, ArrowRightLeft, Unlock, TriangleAlert, Target, CalendarPlus, CalendarX, Archive, Network, Settings2 } from 'lucide-react';
+import { Bell, UserPlus, AtSign, AlarmClock, MessageSquare, ArrowRightLeft, Unlock, TriangleAlert, Target, CalendarPlus, CalendarX, Archive, Network, Settings2, Zap } from 'lucide-react';
 import { useDeleteEvent } from '@/modules/events';
 import type { OrgMember, OrgNotification, OrgNotificationKind } from '@/modules/organizations';
 import { buildOrgLink } from './deep-link.helpers';
@@ -39,6 +39,8 @@ const KIND_META: Record<OrgNotificationKind, { Icon: typeof Bell; labelKey: KeyO
   // Mig. 164 (audit 2026-09-24, étape 4).
   project_archived: { Icon: Archive, labelKey: 'notifications.kindProjectArchived' },
   role_changed: { Icon: Network, labelKey: 'notifications.kindRoleManagerChanged' },
+  // Mig. 201.
+  automation: { Icon: Zap, labelKey: 'notifications.kindAutomation' },
 };
 
 /** Une notification mène-t-elle quelque part ? */
@@ -146,9 +148,12 @@ const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings
               // qui passe, personne ne l'a fait.
               const actor = notification.actorId ? nameById.get(notification.actorId) : null;
               const projectName = (notification.meta as { project_name?: string } | null | undefined)?.project_name;
+              const ruleName = (notification.meta as { rule?: string } | null | undefined)?.rule;
               const label = notification.kind === 'project_archived' && projectName
                 ? t('notifications.kindProjectArchivedNamed', { name: projectName })
-                : t(notificationLabelKey(notification, labelKey));
+                : notification.kind === 'automation' && ruleName
+                  ? t('notifications.kindAutomationNamed', { name: ruleName })
+                  : t(notificationLabelKey(notification, labelKey));
               return (
                 <li key={notification.id}>
                   <button

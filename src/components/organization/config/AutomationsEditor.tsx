@@ -46,7 +46,9 @@ const AutomationsEditor = ({ orgId, members, projects, projectId, canEdit }: Pro
     const when = r.triggerKind === 'task_created' ? t('automations.triggerCreated') : t('automations.triggerStatus', { status: statusLabel(r.triggerValue ?? 'todo') });
     const then = r.actionKind === 'add_assignee'
       ? t('automations.actionAssign', { name: memberName(r.actionValue) })
-      : r.actionKind === 'set_priority' ? t('automations.actionPriority', { p: r.actionValue }) : t('automations.actionStatus', { status: statusLabel(r.actionValue) });
+      : r.actionKind === 'notify_member'
+        ? t('automations.actionNotify', { name: r.actionValue === 'assignees' ? t('automations.notifyAssignees') : memberName(r.actionValue) })
+        : r.actionKind === 'set_priority' ? t('automations.actionPriority', { p: r.actionValue }) : t('automations.actionStatus', { status: statusLabel(r.actionValue) });
     return `${t('automations.when')} ${when}, ${then}`;
   };
 
@@ -54,7 +56,7 @@ const AutomationsEditor = ({ orgId, members, projects, projectId, canEdit }: Pro
   const valid = name.trim().length > 0 && !!value && !echo;
   const changeAction = (a: AutomationAction) => {
     setAction(a);
-    setValue(a === 'set_priority' ? '2' : a === 'set_status' ? 'in_progress' : members[0]?.userId ?? '');
+    setValue(a === 'set_priority' ? '2' : a === 'set_status' ? 'in_progress' : a === 'notify_member' ? 'assignees' : members[0]?.userId ?? '');
   };
   const submit = () => {
     if (!valid) return;
@@ -128,6 +130,7 @@ const AutomationsEditor = ({ orgId, members, projects, projectId, canEdit }: Pro
               <select className={FIELD} value={action} onChange={(e) => changeAction(e.target.value as AutomationAction)}>
                 <option value="set_priority">{t('automations.kindPriority')}</option>
                 <option value="add_assignee">{t('automations.kindAssign')}</option>
+                <option value="notify_member">{t('automations.kindNotify')}</option>
                 <option value="set_status" disabled={trigger === 'status_changed'}>{t('automations.kindStatus')}</option>
               </select>
             </label>
@@ -136,7 +139,8 @@ const AutomationsEditor = ({ orgId, members, projects, projectId, canEdit }: Pro
               <select className={FIELD} value={value} aria-label={t('automations.then')} onChange={(e) => setValue(e.target.value)}>
                 {action === 'set_priority' && [1, 2, 3, 4, 5].map((p) => <option key={p} value={String(p)}>P{p}</option>)}
                 {action === 'set_status' && STATUS_ORDER.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
-                {action === 'add_assignee' && members.map((m) => <option key={m.userId} value={m.userId}>{m.displayName}</option>)}
+                {action === 'notify_member' && <option value="assignees">{t('automations.notifyAssignees')}</option>}
+                {(action === 'add_assignee' || action === 'notify_member') && members.map((m) => <option key={m.userId} value={m.userId}>{m.displayName}</option>)}
               </select>
             </label>
           </div>

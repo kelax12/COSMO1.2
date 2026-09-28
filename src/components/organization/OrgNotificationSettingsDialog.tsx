@@ -38,6 +38,7 @@ const KIND_LABEL: Record<OrgNotificationKind, KeyOf<'org'>> = {
   kr_due: 'notifSettings.kind.kr_due',
   event_scheduled: 'notifSettings.kind.event_scheduled',
   role_changed: 'notifSettings.kind.role_changed',
+  automation: 'notifSettings.kind.automation',
 };
 
 const toggle = (list: OrgNotificationKind[], kind: OrgNotificationKind, on: boolean) =>

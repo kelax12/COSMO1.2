@@ -28,6 +28,15 @@ describe('applyAutomations (miroir de la mig. 198)', () => {
     expect(out.assigneeIds).toEqual(['u1', 'u2']);
   });
 
+  it('notify_member (mig. 201) ne touche pas la tâche, ni ses assignés', () => {
+    const before = task({ assigneeIds: ['u1'] });
+    const out = applyAutomations(before, null, [
+      rule({ actionKind: 'notify_member', actionValue: 'u2' }),
+      rule({ actionKind: 'notify_member', actionValue: 'assignees' }),
+    ]);
+    expect(out).toEqual(before);
+  });
+
   it('au changement de statut, seulement vers la valeur visée', () => {
     const rules = [rule({ triggerKind: 'status_changed', triggerValue: 'review', actionKind: 'add_assignee', actionValue: 'lead' })];
     expect(applyAutomations(task({ status: 'review' }), task(), rules).assigneeIds).toEqual(['lead']);

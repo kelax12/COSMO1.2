@@ -983,6 +983,8 @@
     "kindRoleManagerChanged": "Your direct manager changed in the org chart",
     "kindRoleNowManager": "You now manage someone: Org chart and Statistics are open to you",
     "kindRoleNoLongerManager": "You no longer manage anyone: Org chart and Statistics are closed to you",
+    "kindAutomation": "An automation notified you",
+    "kindAutomationNamed": "Automation \"{{name}}\": a task needs your attention",
     "settings": "Notification preferences",
     "filterLabel": "Filter notifications",
     "filterAll": "All",
@@ -1507,6 +1509,7 @@
       "project_archived": "Project archived",
       "kr_due": "Key result due",
       "event_scheduled": "Slot added to my calendar",
+      "automation": "Automation notification",
       "role_changed": "Change of position in the org chart"
     }
   },
