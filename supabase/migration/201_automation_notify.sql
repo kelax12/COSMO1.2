@@ -1,8 +1,12 @@
 -- ═══════════════════════════════════════════════════════════════════
 -- 201 · Automatisations : action « Notifier… »
 --
--- ⚠️ ÉCRITE LE 2026-09-28, NON APPLIQUÉE, NON PROUVÉE. Ordre : APRÈS 198
---    (et après 164, dont elle reprend la liste des types de notification).
+-- ✅ APPLIQUÉE le 2026-09-28, ledger `20260928071259`, relue au catalogue
+--    (DEFINER, EXECUTE refusé à anon/authenticated, trigger, deux CHECK).
+--    Preuve en transaction annulée : 10 cas acteur par acteur, tous conformes.
+--    Dépend de 164 et 198, TROUVÉES DÉJÀ EN PROD le 2026-09-28 sans ligne au
+--    ledger (comme 195-199) : ne pas les réappliquer, la 164 écraserait la
+--    réconciliation de la 194 dans `can_access_team_project`.
 --
 -- Nouvelle action `notify_member` : `action_value` vaut l'id d'un membre, ou
 -- `assignees` (les assignés de la tâche après application des règles).
@@ -52,7 +56,10 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'project_not_in_org' USING ERRCODE = 'P0001';
   END IF;
-  IF (NEW.action_kind = 'add_assignee' OR (NEW.action_kind = 'notify_member' AND NEW.action_value <> 'assignees'))
+  -- Le trigger BEFORE passe AVANT la contrainte CHECK : sans le filtre regex,
+  -- une valeur invalide levait `22P02` au cast au lieu de `23514`.
+  IF NEW.action_kind IN ('add_assignee', 'notify_member')
+     AND NEW.action_value ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
      AND NOT EXISTS (
        SELECT 1 FROM public.organization_members m
         WHERE m.org_id = NEW.org_id AND m.user_id = NEW.action_value::uuid
