@@ -22,8 +22,8 @@ interface ListActionsSheetProps {
   onToggleDefault: (list: TaskList) => void;
   onDelete: (list: TaskList) => void;
   onPickColor: (list: TaskList, colorValue: string) => void;
-  /** Partage la liste (listes manuelles uniquement). */
-  onShare: (list: TaskList) => void;
+  /** Partage la liste (listes manuelles uniquement). Absent : liste d'entreprise, déjà partagée. */
+  onShare?: (list: TaskList) => void;
 }
 
 const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
@@ -173,7 +173,7 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
               )}
 
               {/* Partager — listes manuelles uniquement */}
-              {!isSmart && (
+              {!isSmart && onShare && (
                 <>
                   <button
                     type="button"

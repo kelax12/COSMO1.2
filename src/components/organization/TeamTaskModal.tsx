@@ -21,6 +21,7 @@ import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import PreCreateCommentComposer from './PreCreateCommentComposer';
 import { OrgCreateBoundary } from './org-create.context';
 import { usePermissionHints } from './permission-hints';
+import { useTeamLists, useSetTaskTeamLists } from '@/modules/team-lists';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
@@ -28,6 +29,7 @@ import { useModalA11y } from '@/hooks/use-modal-a11y';
 const TeamTaskTabPanels = lazyWithRetry(() => import('./TeamTaskTabPanels'));
 // Étiquettes et « Suivre » : même raison, hors du premier affichage de la fiche.
 const TeamTaskLabelsField = lazyWithRetry(() => import('./TeamTaskLabelsField'));
+const TeamTaskListsField = lazyWithRetry(() => import('./TeamTaskListsField'));
 // Suivre (mig. 162) et champs personnalisés (mig. 197) : UN chargement pour les
 // deux, catalogue compris (`TAB_GATE_HOSTS` : cette fiche déclare sa liste).
 const TaskDetailsExtras = lazyWithRetry(() => import('./TaskDetailsExtras'), ['org', 'orgConfig', 'overlays']);
@@ -47,6 +49,8 @@ interface TeamTaskModalProps {
   defaultAssigneeIds?: string[];
   /** Statut présélectionné en création (colonne du kanban par statut). */
   defaultStatus?: TeamTaskStatus;
+  /** Listes présélectionnées en création (la liste qui filtre l'onglet, mig. 203). */
+  defaultListIds?: string[];
   /**
    * N'ouvre PAS sur le premier projet : le « + » d'une colonne de kanban
    * n'a aucun projet en contexte, et y déposer la tâche en silence la
@@ -85,7 +89,7 @@ const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((
  */
 const TeamTaskModal = ({
   task, isCreating = false, projects, members,
-  defaultProjectId, defaultAssigneeIds, defaultStatus, requireProjectChoice = false,
+  defaultProjectId, defaultAssigneeIds, defaultStatus, defaultListIds, requireProjectChoice = false,
   onCreate, onUpdate, onDelete, onClose, isManager = false,
 }: TeamTaskModalProps) => {
   const { t } = useT('org');
@@ -159,6 +163,23 @@ const TeamTaskModal = ({
   const editReason = !isCreating && task ? taskEditReason(task) : undefined;
   const deleteReason = !isCreating && task ? taskDeleteReason(task) : undefined;
   const applyDraft = useApplyTeamTaskDraft(orgId);
+
+  // Listes (mig. 203) : même règle que les étiquettes, n'écrire que la
+  // différence avec ce que la tâche porte déjà.
+  const { data: teamLists } = useTeamLists(orgId);
+  const setTaskLists = useSetTaskTeamLists(orgId);
+  const [listIds, setListIds] = useState<string[]>(() => (task ? [] : defaultListIds ?? []));
+  const [baseListIds, setBaseListIds] = useState<string[] | null>(task ? null : []);
+  useEffect(() => {
+    if (baseListIds === null && task && teamLists) {
+      const ids = teamLists.filter((l) => l.taskIds.includes(task.id)).map((l) => l.id);
+      setBaseListIds(ids);
+      setListIds(ids);
+    }
+  }, [teamLists, baseListIds, task]);
+  const syncLists = (taskId: string) =>
+    sameSet(listIds, baseListIds ?? []) ? Promise.resolve()
+      : setTaskLists.mutateAsync({ taskId, before: baseListIds ?? [], after: listIds }).catch(() => undefined);
   const toggleLabel = useToggleTaskLabel();
 
   // Ouvrir une tâche EXISTANTE fait disparaître son badge « commentaires non
@@ -188,9 +209,10 @@ const TeamTaskModal = ({
       projectId !== ref.projectId ||
       categoryId !== (ref.categoryId ?? null) ||
       !sameSet(assigneeIds, ref.assigneeIds) ||
-      (baseLabelIds !== null && !sameSet(labelIds, baseLabelIds))
+      (baseLabelIds !== null && !sameSet(labelIds, baseLabelIds)) ||
+      (baseListIds !== null && !sameSet(listIds, baseListIds))
     );
-  }, [creating, liveTask, status, name, description, priority, deadline, startDate, estimatedTime, projectId, categoryId, assigneeIds, labelIds, baseLabelIds]);
+  }, [creating, liveTask, status, name, description, priority, deadline, startDate, estimatedTime, projectId, categoryId, assigneeIds, labelIds, baseLabelIds, listIds, baseListIds]);
 
   // Portée d'assignation (mig. 115) : on ne propose que les membres à portée,
   // en gardant ceux DÉJÀ assignés — le serveur ne contrôle que les ajouts.
@@ -230,6 +252,7 @@ const TeamTaskModal = ({
       // La tâche existe : un échec partiel est dit par le hook, il n'annule rien.
       await applyDraft.mutateAsync({ taskId: created.id, draft }).catch(() => undefined);
     }
+    await syncLists(created.id);
     return created;
   };
 
@@ -252,6 +275,7 @@ const TeamTaskModal = ({
       } else if (liveTask) {
         await onUpdate?.(liveTask.id, { projectId, ...buildCommon() });
         await syncLabels(liveTask.id);
+        await syncLists(liveTask.id);
       }
       onClose();
     } catch {
@@ -271,6 +295,7 @@ const TeamTaskModal = ({
         if (!created) { setPendingCommentDraft(null); return; }
         setDraftTask(created);
         setBaseLabelIds(labelIds);
+        setBaseListIds(listIds);
         setDraftSubtasks([]);
         setDraftBlockedBy([]);
       })
@@ -440,7 +465,14 @@ const TeamTaskModal = ({
                 onDescriptionChange={setDescription}
                 categoryId={categoryId}
                 onCategoryChange={setCategoryId}
-                labelsField={<Suspense fallback={null}><TeamTaskLabelsField orgId={orgId} value={labelIds} onChange={setLabelIds} canCreate={isManager} /></Suspense>}
+                labelsField={
+                  <Suspense fallback={null}>
+                    <div className="space-y-4">
+                      <TeamTaskListsField orgId={orgId} value={listIds} onChange={setListIds} />
+                      <TeamTaskLabelsField orgId={orgId} value={labelIds} onChange={setLabelIds} canCreate={isManager} />
+                    </div>
+                  </Suspense>
+                }
                 projectId={projectId}
                 onProjectChange={(v) => { setProjectId(v); setDraftBlockedBy([]); }}
                 priority={priority}

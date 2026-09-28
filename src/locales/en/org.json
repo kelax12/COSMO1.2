@@ -1614,5 +1614,16 @@
     "title": "Activity reports",
     "beta": "Beta",
     "betaHint": "Beta feature: what the company or a team got done, frozen every night."
+  },
+  "teamLists": {
+    "fieldTitle": "Lists",
+    "newList": "New list",
+    "namePlaceholder": "List name",
+    "color": "List color",
+    "create": "Create",
+    "empty": "No lists in the company yet.",
+    "addToList": "Add to a list",
+    "addToListShort": "List",
+    "deleted": "List deleted"
   }
 }
