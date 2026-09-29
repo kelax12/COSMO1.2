@@ -4,7 +4,7 @@ import { subtreeOf, useOrgNotifications, useMyOrgPermissions, unreadCommentCount
 import {
   useTeamProjects, useTeamTaskPages, TEAM_TASKS_READ_LIMIT, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
   useTeamTaskDependencies,
-  type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
+  type TeamTask, type TeamTaskStatus, type TeamProjectHealth, type CreateTeamTaskInput, type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { useTeamCategories, descendantIdSet, categoryPath, formatPath } from '@/modules/team-categories';
 import { useOrgSettings, useProjectStatuses } from '@/modules/org-config';
@@ -342,6 +342,8 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     toggleComplete,
     setStatus,
     setCustomStatus,
+    setHealth: (task: TeamTask, health: TeamProjectHealth) =>
+      updateTask.mutate({ taskId: task.id, input: { health } }),
     setPriority,
     setDeadline,
     assign: canAssignSomeone ? setAssigningTask : undefined,

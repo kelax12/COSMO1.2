@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Archive, CircleDot, Trash2, UserRound, X } from 'lucide-react';
+import { Activity, Archive, CircleDot, Trash2, UserRound, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,11 +11,12 @@ import {
 import { getTeamProjectsRepository } from '@/lib/repository.factory';
 import { showUndoToast } from '@/lib/undo-toast';
 import type { OrgMember } from '@/modules/organizations';
-import { teamProjectKeys, type TeamProject, type TeamProjectStatus } from '@/modules/team-projects';
+import { teamProjectKeys, type TeamProject, type TeamProjectHealth, type TeamProjectStatus } from '@/modules/team-projects';
 import { PROJECT_STATUSES } from './portfolio.helpers';
 import MemberAvatar from './MemberAvatar';
 import OrgConfirmDialog from './OrgConfirmDialog';
 import { useBulkRun } from './use-bulk-run';
+import { HEALTH_DOT, HEALTHS } from './health-state.helpers';
 import { useT } from '@/i18n/useT';
 
 interface ProjectBulkBarProps {
@@ -49,6 +50,10 @@ const ProjectBulkBar = ({ selected, members, canEdit, canArchive, onDone, onExit
 
   const setStatus = (status: TeamProjectStatus) =>
     void execute(selected.filter((p) => p.status !== status), (p) => repo().updateProject(p.id, { status })).then(onDone);
+
+  // État (même menu que les KR) : « Atteint » passe par le statut « Terminé ».
+  const setHealth = (health: TeamProjectHealth) =>
+    void execute(selected.filter((p) => (p.health ?? null) !== health), (p) => repo().updateProject(p.id, { health })).then(onDone);
 
   const setOwner = (ownerId: string | null) =>
     void execute(selected.filter((p) => (p.ownerId ?? null) !== ownerId), (p) => repo().updateProject(p.id, { ownerId })).then(onDone);
@@ -96,6 +101,23 @@ const ProjectBulkBar = ({ selected, members, canEdit, canArchive, onDone, onExit
               {PROJECT_STATUSES.map((st) => (
                 <DropdownMenuItem key={st} onClick={() => setStatus(st)}>{pf(`status.${st}`)}</DropdownMenuItem>
               ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger className={actionClass} disabled={pending}>
+              <Activity size={15} aria-hidden="true" /> {pf('krExec.statusLabel')}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align="center" className="w-48">
+              {HEALTHS.map((h) => (
+                <DropdownMenuItem key={h} onClick={() => setHealth(h)}>
+                  <span className={`w-2 h-2 rounded-full ${HEALTH_DOT[h]}`} aria-hidden="true" />
+                  {pf(`health.${h}`)}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuItem onClick={() => setStatus('done')}>
+                <span className="w-2 h-2 rounded-full bg-blue-500" aria-hidden="true" />
+                {pf('okrFilters.stateDone')}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>

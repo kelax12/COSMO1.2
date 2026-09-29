@@ -388,5 +388,10 @@
     "more_one": "et {{count}} autre",
     "more_many": "et {{count}} d'autres",
     "more_other": "et {{count}} autres"
+  },
+  "healthMenu": {
+    "taskAria": "État de la tâche « {{name}} »",
+    "projectAria": "État du projet « {{name}} »",
+    "denied": "Vous n'avez pas le droit de modifier ce projet."
   }
 }

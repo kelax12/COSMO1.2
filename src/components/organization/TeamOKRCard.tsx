@@ -4,10 +4,9 @@
 // catégories ; la carte, la lecture d'UN objectif.
 
 import { useEffect, useState } from 'react';
-import { Target, Trash2, Pencil, Building2, CornerLeftUp, Activity, ClipboardList } from 'lucide-react';
-import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
+import { Target, Trash2, Pencil, Building2, CornerLeftUp, ClipboardList } from 'lucide-react';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import HealthStateMenu from './HealthStateMenu';
 import type { KRProjectLink, ProjectHealth, TeamKeyResult, TeamOKR } from '@/modules/team-okrs';
 import type { TeamProjectTaskStats } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
@@ -18,12 +17,6 @@ import TeamColorDot from './TeamColorDot';
 import { useT } from '@/i18n/useT';
 import { effectiveKrRatio, krTaskProgress, krWeight, okrRatioPercent } from './okr-execution.helpers';
 import { ProjectHealthBadge } from './ProjectHealthSection';
-
-const HEALTH_DOT: Record<ProjectHealth, string> = {
-  on_track: 'bg-emerald-500',
-  at_risk: 'bg-amber-500',
-  off_track: 'bg-red-500',
-};
 
 // ─── Ligne KR : input contrôlé → la barre suit la saisie en direct ─────
 interface TeamKRRowProps {
@@ -121,39 +114,19 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onOpenExecution, onSetHealt
       )}
       {/* Menu d'état, même vocabulaire que le filtre « État » : changer l'état
           pose un point d'étape à la valeur courante ; le détail reste à un clic. */}
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          aria-label={pf('krExec.openAria', { title: kr.title })}
-          title={pf('krExec.openAria', { title: kr.title })}
-          className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60"
-        >
-          {kr.health && !done
-            ? <span className={`w-2.5 h-2.5 rounded-full ${HEALTH_DOT[kr.health]}`} aria-hidden="true" />
-            : <Activity size={15} aria-hidden="true" />}
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>{pf('krExec.statusLabel')}</DropdownMenuLabel>
-          {(Object.keys(HEALTH_DOT) as ProjectHealth[]).map((h) => (
-            <DropdownMenuItem key={h} onClick={() => onSetHealth(h, measured && taskProgress ? taskProgress.done : kr.currentValue)}>
-              <span className={`w-2 h-2 rounded-full ${HEALTH_DOT[h]}`} aria-hidden="true" />
-              {pf(`health.${h}`)}
-              {kr.health === h && !done && <span className="ml-auto text-xs" aria-hidden="true">✓</span>}
-            </DropdownMenuItem>
-          ))}
-          {!measured && (
-            <DropdownMenuItem disabled={done} onClick={() => onCommit(kr.targetValue)}>
-              <span className="w-2 h-2 rounded-full bg-blue-500" aria-hidden="true" />
-              {pf('okrFilters.stateDone')}
-              {done && <span className="ml-auto text-xs" aria-hidden="true">✓</span>}
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuSeparator />
+      <HealthStateMenu
+        health={kr.health}
+        done={done}
+        onSetHealth={(h) => onSetHealth(h, measured && taskProgress ? taskProgress.done : kr.currentValue)}
+        onMarkDone={measured ? undefined : () => onCommit(kr.targetValue)}
+        ariaLabel={pf('krExec.openAria', { title: kr.title })}
+        extra={(
           <DropdownMenuItem onClick={onOpenExecution}>
             <ClipboardList size={14} aria-hidden="true" />
             {pf('krExec.checkinTitle')}
           </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        )}
+      />
     </div>
   );
 };
