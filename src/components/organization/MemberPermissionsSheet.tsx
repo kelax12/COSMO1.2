@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ShieldCheck, RotateCcw, Globe2 } from 'lucide-react';
+import { X, ShieldCheck, RotateCcw } from 'lucide-react';
 import {
   ORG_ASSIGN_TARGETS,
   ORG_PERMISSION_KEYS,
@@ -285,14 +285,7 @@ const MemberPermissionsSheet = ({
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-4">
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">{t('permissions.intro')}</p>
-          {/* Ces droits ne se découpent pas par projet : le dire, plutôt que de
-              laisser croire qu'un interrupteur vaut pour une seule équipe. */}
-          <p className="flex items-start gap-2 text-xs rounded-lg px-3 py-2 mb-4 bg-amber-500/10 text-amber-800 dark:text-amber-300">
-            <Globe2 size={14} className="mt-px shrink-0" aria-hidden="true" />
-            {t('popups.perms.scope')}
-          </p>
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-1 pb-4">
           <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label={ta('permissions.presets')}>
             <button
               type="button"
