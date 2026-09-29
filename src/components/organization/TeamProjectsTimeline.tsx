@@ -47,7 +47,7 @@ const HOVER_OPEN_DELAY_MS = 120;
 const HOVER_CLOSE_DELAY_MS = 150;
 
 const zoomBtn = 'h-7 px-2 rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
-const zoomOn = 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] shadow-sm';
+const zoomOn = 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm';
 const zoomOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
 
 /** Ligne affichée — même gabarit qu'elle vienne d'un projet ou d'une personne. */
