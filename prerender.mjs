@@ -90,6 +90,15 @@ const CONTENT_LASTMOD = {
 let html = readFileSync(join(DIST, 'index.html'), 'utf8');
 html = html.replace(/"dateModified":\s*"[\d-]+"/g, `"dateModified": "${CONTENT_LASTMOD.site}"`);
 
+// C-116 · 2026-09-29 — coquille VIERGE de l'application, servie par le
+// rewrite SPA de vercel.json à toute URL sans fichier prérendu (/dashboard,
+// /tasks…). Avant, ce rewrite servait dist/index.html, c'est-à-dire la HOME
+// prérendue : impossible alors de peindre le prérendu sans montrer la landing
+// à un utilisateur qui rafraîchit /dashboard. Chaque page prérendue porte
+// désormais `data-prerendered` sur <html>, et SEULE elle peint son contenu
+// (cf. le <style> d'index.html) ; app.html garde le spinner.
+writeFileSync(join(DIST, 'app.html'), html, 'utf8');
+
 // ── FAQ ───────────────────────────────────────────────────────────────────
 // LUE dans le catalogue que rend l'application (`faq.q1…qN`), pas recopiée ici.
 //
@@ -829,6 +838,10 @@ function buildPage(route, locale, alternates) {
 
   // Langue du document — lue par les lecteurs d'écran et les moteurs.
   out = out.replace(/<html([^>]*)\slang="[^"]*"/, `<html$1 lang="${locale}"`);
+
+  // C-116 : marque la page comme prérendue, ce qui peint #seo-fallback à la
+  // place du spinner jusqu'au premier commit de React (LCP mobile).
+  out = out.replace(/<html(?![^>]*data-prerendered)/, '<html data-prerendered');
 
   out = out.replace(/<title>[\s\S]*?<\/title>/, `<title>${title}</title>`);
   out = out.replace(/<meta name="description" content="[\s\S]*?" \/>/, `<meta name="description" content="${esc(description)}" />`);

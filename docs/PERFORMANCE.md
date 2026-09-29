@@ -145,7 +145,11 @@ bloc prérendu ne sert qu'aux robots qui n'appliquent pas la CSS.
    premier rendu vers 2,5 s. ⚠️ Deux risques à peser : un saut visuel quand React remplace le bloc,
    et un LCP qui peut **se redéclarer** plus tard si React peint un élément plus grand. Le masquage
    actuel a une raison écrite dans `index.html` (la CSP interdit le script inline, donc tout doit
-   rester en CSS) ; peindre le prérendu reste faisable en CSS seul. **À arbitrer par Axel.**
+   rester en CSS) ; peindre le prérendu reste faisable en CSS seul. ✅ **Arbitré par Axel et fait le 2026-09-29** :
+   `html[data-prerendered]` peint `#seo-fallback` ; le rewrite SPA sert `app.html` (coquille vierge),
+   pour que `/dashboard` n'hérite pas de la home prérendue. Mesuré en local (Brotli, même bridage) :
+   FCP 4,4-4,8 → 1,7-2,6 s, LCP médian → 1,8-2,0 s. Le bandeau cookies reprend le LCP une passe
+   sur trois (4,2-4,8 s) : c'est le reste de C-116.
 2. **Supprimer la seconde vague** : précharger (`modulepreload`) le chunk de la route prérendue dans
    son HTML, et sortir `demo-seed` / `local.repository` du chemin d'une page publique. Environ un
    aller-retour et demi gagné.

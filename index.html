@@ -70,10 +70,12 @@
          - #boot-screen est peint immédiatement (overlay opaque plein écran),
            puis React l'efface tout seul, createRoot().render() vide les
            enfants de #root au premier commit. Aucun code à synchroniser.
-         - #seo-fallback (injecté par prerender.mjs dans dist/) reste dans le
-           HTML pour les crawlers qui ne lancent pas le JS (GPTBot, ClaudeBot,
-           PerplexityBot…), ils lisent le balisage, pas le CSS, mais n'est
-           jamais peint par un navigateur.
+         - #seo-fallback (injecté par prerender.mjs dans dist/) est lu par les
+           crawlers qui ne lancent pas le JS (GPTBot, ClaudeBot,
+           PerplexityBot…). Depuis C-116 (2026-09-29) il est AUSSI peint, et
+           le spinner masqué, sur les seules pages prérendues
+           (`html[data-prerendered]`) : c'est leur premier rendu. Les routes
+           de l'app reçoivent app.html, sans l'attribut, donc le spinner.
          - <noscript> ci-dessous : JS désactivé = pas de SPA possible, on rend
            donc le contenu SEO visible et on retire le spinner (sinon l'écran
            de chargement tournerait indéfiniment).
@@ -89,6 +91,22 @@
       @media (max-width:767px){#boot-screen{background:#24292e}#boot-screen .ring{border-color:rgba(255,255,255,.16);border-top-color:#58a6ff}}
       @media (prefers-reduced-motion:reduce){#boot-screen .ring{animation-duration:2.4s}}
       #seo-fallback{display:none;font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b}
+      /* C-116 · 2026-09-29 : une page PRÉRENDUE (prerender.mjs pose
+         data-prerendered sur <html>) peint son contenu au lieu du spinner,
+         jusqu'au premier commit de React. Sans ça FCP = LCP = premier rendu
+         React, 5,4 à 8,3 s en 4G lente. La coquille de l'app (app.html,
+         servie à /dashboard, /tasks…) n'a pas l'attribut et garde le spinner.
+         Styles écrits en entier : le preflight Tailwind remet h1/p à zéro, et
+         le thème mobile sombre colorerait le fond. Police système : attendre
+         la police web retarderait le rendu qu'on cherche à avancer. */
+      html[data-prerendered] #boot-screen{display:none}
+      html[data-prerendered] #seo-fallback{display:block;box-sizing:border-box;max-width:none;min-height:100vh;margin:0;padding:32px max(20px,calc((100% - 760px) / 2));background:#fff;color:#1e293b;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+      html[data-prerendered] #seo-fallback h1{font-size:2rem;line-height:1.2;font-weight:700;margin:0 0 16px}
+      html[data-prerendered] #seo-fallback h2{font-size:1.3rem;line-height:1.3;font-weight:600;margin:28px 0 8px}
+      html[data-prerendered] #seo-fallback p,html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{margin:0 0 12px}
+      html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{padding-left:24px;list-style:revert}
+      html[data-prerendered] #seo-fallback a{color:#4f46e5;text-decoration:underline}
+      html[data-prerendered] #seo-fallback img{max-width:100%;height:auto;border-radius:8px}
     </style>
     <noscript>
       <style>#boot-screen{display:none}#seo-fallback{display:block}</style>
