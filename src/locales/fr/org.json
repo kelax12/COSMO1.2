@@ -253,7 +253,11 @@
     "teamsOption": "Équipes",
     "current": "Actuel",
     "weightedProgress": "Progression pondérée · {{pct}} %",
-    "eyebrow": "Mode entreprise · OKR"
+    "eyebrow": "Mode entreprise · OKR",
+    "customOption": "Personnaliser",
+    "customPeople": "Personnes",
+    "visibilityCustom": "Visible uniquement par les équipes et personnes choisies, leur hiérarchie et les admins.",
+    "visibilityNoneChosen": "Aucune équipe choisie : seuls les admins verront cet objectif."
   },
   "projects": {
     "taskDeleted": "Tâche supprimée",

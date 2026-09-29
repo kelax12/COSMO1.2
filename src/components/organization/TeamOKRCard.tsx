@@ -179,7 +179,7 @@ const TeamOKRCard = ({
             <p className="text-sm text-[rgb(var(--color-text-muted))] mt-1">{okr.description}</p>
           )}
           <div className="flex flex-wrap items-center gap-1.5 mt-3">
-            {okr.teamIds.length === 0 ? (
+            {okr.teamIds.length === 0 && (okr.audience ?? 'org') === 'org' ? (
               <span className="inline-flex items-center gap-1 text-caption font-medium px-2 py-0.5 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))]">
                 <Building2 size={11} aria-hidden="true" /> {t('common.orgWideBadge')}
               </span>
@@ -191,7 +191,7 @@ const TeamOKRCard = ({
               ))
             )}
             {/* Qui voit cet objectif, et pourquoi (M12). */}
-            <VisibilityPill orgId={okr.orgId} teamIds={okr.teamIds} />
+            <VisibilityPill orgId={okr.orgId} teamIds={okr.teamIds} closed={(okr.audience ?? 'org') !== 'org'} namedIds={okr.memberIds} />
             {parent && (
               <button
                 type="button"

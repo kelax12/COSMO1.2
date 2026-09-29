@@ -175,7 +175,16 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
     // n'ont pas `teamIds` — on garantit un tableau ([] = objectif d'entreprise).
     return readOrSeed()
       .filter((o) => o.orgId === orgId)
-      .map((o) => ({ ...o, teamIds: Array.isArray(o.teamIds) ? o.teamIds : [] }));
+      .map((o) => {
+        const teamIds = Array.isArray(o.teamIds) ? o.teamIds : [];
+        // Seeds et stockages d'avant la mig. 205 : audience déduite des liens.
+        return {
+          ...o,
+          teamIds,
+          audience: o.audience ?? (teamIds.length > 0 ? 'teams' : 'org'),
+          memberIds: Array.isArray(o.memberIds) ? o.memberIds : [],
+        };
+      });
   }
 
   async create(orgId: string, input: CreateTeamOKRInput): Promise<TeamOKR> {
@@ -192,6 +201,8 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
       createdBy: DEMO_USER_ID,
       createdAt: new Date().toISOString(),
       teamIds: input.teamIds ?? [],
+      audience: input.audience ?? ((input.teamIds ?? []).length > 0 ? 'teams' : 'org'),
+      memberIds: input.audience === 'custom' ? input.memberIds ?? [] : [],
       keyResults: input.keyResults.map((kr) => {
         const target = kr.targetValue > 0 ? kr.targetValue : 1;
         const current = Math.max(0, Math.min(kr.currentValue ?? 0, target));
@@ -228,6 +239,8 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
     if (input.startDate !== undefined) okr.startDate = input.startDate;
     if (input.endDate !== undefined) okr.endDate = input.endDate;
     if (input.teamIds !== undefined) okr.teamIds = input.teamIds;
+    if (input.audience !== undefined) okr.audience = input.audience;
+    if (input.memberIds !== undefined) okr.memberIds = okr.audience === 'custom' ? input.memberIds : [];
     if (input.parentOkrId !== undefined) {
       // Miroir du trigger `validate_team_okr_parent` (mig. 153) : ni soi-même,
       // ni un descendant.
