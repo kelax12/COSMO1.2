@@ -9,7 +9,8 @@
     "prevPeriod": "Previous period",
     "nextPeriod": "Next period",
     "backToToday": "Back to today",
-    "today": "Today"
+    "today": "Today",
+    "calendarScroller": "Calendar grid"
   },
   "view": {
     "day": "Day",
