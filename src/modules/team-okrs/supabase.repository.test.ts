@@ -30,6 +30,7 @@ describe('SupabaseTeamOKRsRepository — getAll', () => {
     supabaseMock.queueTable('team_okrs', { data: [okrRow] });
     supabaseMock.queueTable('team_key_results', { data: [krRow] });
     supabaseMock.queueTable('team_okr_teams', { data: [{ okr_id: 'o1', team_id: 't1' }] });
+    supabaseMock.queueTable('team_okr_members', { data: [] });
 
     const result = await repo.getAll('org1');
 
@@ -45,6 +46,8 @@ describe('SupabaseTeamOKRsRepository — getAll', () => {
       id: 'o1', orgId: 'org1', title: 'Croissance', description: 'desc', categoryId: 'cat1',
       startDate: '2026-07-01', endDate: '2026-09-30', createdBy: 'u1',
       createdAt: okrRow.created_at, teamIds: ['t1'],
+      // Mig. 205 : colonne absente de la ligne, audience déduite des liens.
+      audience: 'teams', memberIds: [],
       // Mig. 160 : absent de la ligne, rendu neutre.
       parentOkrId: null,
       keyResults: [{
@@ -123,6 +126,8 @@ describe('SupabaseTeamOKRsRepository — create', () => {
       id: okrInsert.id,
       org_id: 'org1', created_by: supabaseMock.user?.id, title: 'Croissance',
       description: 'desc', category_id: 'cat1', start_date: '2026-07-01', end_date: '2026-09-30',
+      // Mig. 205 : l'audience part avec l'insertion, jamais après les liens.
+      audience: 'teams',
     });
 
     const links = supabaseMock.argsOf('team_okr_teams', 'insert')?.[0] as Record<string, unknown>[];
@@ -357,5 +362,55 @@ describe('SupabaseTeamOKRsRepository — key results', () => {
   it('syncKeyResults: normalise les erreurs DB (lecture des existants)', async () => {
     supabaseMock.queueTable('team_key_results', { data: null, error: { message: 'boom', code: '42P01' } });
     await expect(repo.syncKeyResults('o1', 'org1', [])).rejects.toBeTruthy();
+  });
+});
+
+describe('SupabaseTeamOKRsRepository — audience (mig. 205)', () => {
+  it('create « Personnaliser » : audience posée à l’insertion, personnes insérées', async () => {
+    supabaseMock.queueTable('team_okrs', { data: okrRow });
+    supabaseMock.queueTable('team_okr_members', { data: null });
+
+    await repo.create('org1', { title: 'Confidentiel', audience: 'custom', memberIds: ['u2', 'u2', 'u3'], keyResults: [] });
+
+    const okrInsert = supabaseMock.argsOf('team_okrs', 'insert')?.[0] as Record<string, unknown>;
+    expect(okrInsert.audience).toBe('custom');
+    expect(supabaseMock.argsOf('team_okr_members', 'insert')?.[0]).toEqual([
+      { okr_id: okrInsert.id, org_id: 'org1', user_id: 'u2' },
+      { okr_id: okrInsert.id, org_id: 'org1', user_id: 'u3' },
+    ]);
+  });
+
+  it('personnes ignorées hors « Personnaliser »', async () => {
+    supabaseMock.queueTable('team_okrs', { data: okrRow });
+    await repo.create('org1', { title: 'Public', audience: 'org', memberIds: ['u2'], keyResults: [] });
+    expect(supabaseMock.queries.map((q) => q.table)).toEqual(['team_okrs']);
+  });
+
+  it('🔴 fermer : l’audience part dans le PREMIER update, avant les liens', async () => {
+    supabaseMock.queueTable('team_okrs', { data: null });
+    supabaseMock.queueTable('team_okrs', { data: { org_id: 'org1' } });
+    supabaseMock.queueTable('team_okr_teams', { data: null });
+    supabaseMock.queueTable('team_okr_members', { data: null });
+    supabaseMock.queueTable('team_okr_members', { data: null });
+
+    await repo.update('o1', { title: 'x', audience: 'custom', teamIds: [], memberIds: ['u2'] });
+
+    expect(supabaseMock.queries[0].table).toBe('team_okrs');
+    expect(supabaseMock.argsOf('team_okrs', 'update')?.[0]).toEqual({ title: 'x', audience: 'custom' });
+    expect(supabaseMock.queries.at(-1)?.table).toBe('team_okr_members');
+  });
+
+  it('🔴 rouvrir à toute l’entreprise : l’audience part en DERNIER, liens déjà retirés', async () => {
+    supabaseMock.queueTable('team_okrs', { data: { org_id: 'org1' } });
+    supabaseMock.queueTable('team_okr_teams', { data: null });
+    supabaseMock.queueTable('team_okr_members', { data: null });
+    supabaseMock.queueTable('team_okrs', { data: null });
+
+    await repo.update('o1', { audience: 'org', teamIds: [], memberIds: [] });
+
+    const tables = supabaseMock.queries.map((q) => q.table);
+    expect(tables.at(-1)).toBe('team_okrs');
+    expect(tables.indexOf('team_okr_members')).toBeLessThan(tables.length - 1);
+    expect(supabaseMock.queries.at(-1)?.calls.find((c) => c.method === 'update')?.args[0]).toEqual({ audience: 'org' });
   });
 });

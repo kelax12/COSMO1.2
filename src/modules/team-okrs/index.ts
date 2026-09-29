@@ -4,6 +4,7 @@
 
 export type {
   TeamOKR,
+  TeamOKRAudience,
   TrashedTeamOKR,
   TeamKeyResult,
   CreateTeamOKRInput,
