@@ -94,7 +94,7 @@ const KRExecutionDialog = ({
                 onClick={() => updateKR.mutate({ krId: kr.id, input: { progressMode: mode } })}
                 className={`h-8 px-3 rounded-md text-sm font-medium transition-colors disabled:cursor-not-allowed ${
                   (kr.progressMode ?? 'manual') === mode
-                    ? 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] shadow-sm'
+                    ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm'
                     : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
                 }`}
               >

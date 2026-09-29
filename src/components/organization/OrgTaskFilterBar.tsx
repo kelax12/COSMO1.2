@@ -48,7 +48,7 @@ interface OrgTaskFilterBarProps {
 }
 
 const segBase = 'h-8 px-2.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
-const segOn = 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] shadow-sm';
+const segOn = 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm';
 const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
 
 const OrgTaskFilterBar = ({
