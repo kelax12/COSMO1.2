@@ -13,7 +13,7 @@
 
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { CheckSquare, Flag, Link2, UserRound } from 'lucide-react';
+import { Flag, Link2, UserRound } from 'lucide-react';
 import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
@@ -47,15 +47,17 @@ interface ProjectPortfolioViewProps {
    */
   canBulkEdit?: boolean;
   canBulkArchive?: boolean;
+  /** Sélection ouverte par la pastille « Sélectionner » des préréglages. */
+  selectMode?: boolean;
+  onExitSelect?: () => void;
 }
 
 const ProjectPortfolioView = ({
   projects, tasks, statsById, members, teams, milestones, dependencies, allProjects, onOpenProject,
-  canBulkEdit = false, canBulkArchive = false,
+  canBulkEdit = false, canBulkArchive = false, selectMode = false, onExitSelect,
 }: ProjectPortfolioViewProps) => {
   const { t } = useT('org');
   const { t: ta } = useT('orgAdmin');
-  const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const toggle = (id: string) =>
     setSelectedIds((prev) => {
@@ -64,8 +66,7 @@ const ProjectPortfolioView = ({
       else next.add(id);
       return next;
     });
-  const exitSelect = () => { setSelectMode(false); setSelectedIds(new Set()); };
-  const canBulk = canBulkEdit || canBulkArchive;
+  const exitSelect = () => { onExitSelect?.(); setSelectedIds(new Set()); };
   const { t: pf } = useT('portfolio');
   const shortDate = (d: string) => format(parseISO(d), 'd MMM yyyy', { locale: getDateLocale() });
   const memberById = new Map(members.map((m) => [m.userId, m]));
@@ -73,17 +74,6 @@ const ProjectPortfolioView = ({
 
   return (
     <>
-    {canBulk && projects.length > 1 && !selectMode && (
-      <div className="flex justify-end mb-1">
-        <button
-          type="button"
-          onClick={() => setSelectMode(true)}
-          className="inline-flex items-center gap-1.5 min-h-11 px-2 text-sm font-medium text-[rgb(var(--color-accent))] hover:underline"
-        >
-          <CheckSquare size={15} aria-hidden="true" /> {ta('bulk.selectProjects')}
-        </button>
-      </div>
-    )}
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] overflow-x-auto">
       <table className="w-full text-sm" aria-label={pf('tableAria')}>
         <thead>

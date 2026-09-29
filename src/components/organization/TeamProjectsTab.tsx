@@ -78,6 +78,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const create = useOrgCreate();
   const [editProjectId, setEditProjectId] = useState<string | null>(null);
   const [taskModal, setTaskModal] = useState<TaskModalState>(null);
+  // Sélection de PROJETS du Portefeuille : distincte de la sélection de tâches.
+  const [portfolioSelect, setPortfolioSelect] = useState(false);
   // Filtres : le MÊME état d'URL que l'onglet Tâches (task-filters.ts), mais
   // ils trient ici des PROJETS (project-filters.ts, répartition du 2026-09-27) :
   // personne, équipe, recherche, « En retard », « Cette semaine ».
@@ -361,9 +363,14 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   // Liste et le Planning (des tâches y sont visibles), jamais le Portefeuille
   // (aucune tâche affichée).
   const showSort = (view === 'list' || view === 'portfolio') && activeProjects.length > 0;
-  const onStartSelect = view !== 'portfolio' && visibleTasks.length > 0 && !selectMode
-    ? () => setSelectMode(true)
-    : undefined;
+  // Portefeuille : la pastille sélectionne des PROJETS (statut, responsable,
+  // archivage, suppression), même place que dans les autres vues.
+  const canBulkProjects = can['project.edit'] || can['project.delete'];
+  const onStartSelect = view === 'portfolio'
+    ? (canBulkProjects && shownProjects.length > 1 && !portfolioSelect ? () => setPortfolioSelect(true) : undefined)
+    : visibleTasks.length > 0 && !selectMode
+      ? () => setSelectMode(true)
+      : undefined;
 
   return (
     <div className="space-y-4">
@@ -455,6 +462,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
                 onOpenProject={openProject}
                 canBulkEdit={can['project.edit']}
                 canBulkArchive={can['project.delete']}
+                selectMode={portfolioSelect}
+                onExitSelect={() => setPortfolioSelect(false)}
               />
             )
           ) : groupedSections ? (
