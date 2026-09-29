@@ -19,7 +19,6 @@ import { getColorHex } from '@/lib/category-colors';
 import TeamCategoryFilterBar from './TeamCategoryFilterBar';
 import TeamOKRModal from './TeamOKRModal';
 import TeamOKRCard from './TeamOKRCard';
-import KRExecutionDialog from './KRExecutionDialog';
 import TeamTrashDialog from './TeamTrashDialog';
 import { filterOkrs, OKR_STATES, type OkrState } from './okr-filters.helpers';
 import OkrFilterBar from './OkrFilterBar';
@@ -68,11 +67,6 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
   const { user } = useAuth();
   const { values: okrFilters, setFilters: setOkrFilters } = useUrlFilters(OKR_FILTER_SPECS);
-  const [openKrId, setOpenKrId] = useState<string | null>(null);
-  const openKr = useMemo(
-    () => okrs.flatMap((o) => o.keyResults).find((k) => k.id === openKrId) ?? null,
-    [okrs, openKrId],
-  );
   // Lien profond `?okr=<id>` (recherche globale, mig. 191) : la carte est
   // amenée à l'écran et soulignée.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -207,7 +201,6 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
             // Corbeille (mig. 193) : 30 jours pour restaurer, sans confirmation bloquante.
             onDelete={() => deleteOKR.mutate(okr.id)}
             onCommitKR={setCurrent}
-            onOpenKR={(kr) => setOpenKrId(kr.id)}
             onSetKRHealth={(kr, status, value) => postCheckin.mutate({ krId: kr.id, value, status })}
             onOpenOkr={openOkr}
             personOf={(id) => memberById.get(id)}
@@ -221,18 +214,6 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
       )}
       {editingOKR && (
         <TeamOKRModal orgId={orgId} editingOKR={editingOKR} onClose={() => setEditingOKR(null)} />
-      )}
-      {openKr && (
-        <KRExecutionDialog
-          orgId={orgId}
-          kr={openKr}
-          links={krLinks}
-          projects={allProjects}
-          statsById={statsById}
-          members={members}
-          canEditStructure={can['okr.create']}
-          onClose={() => setOpenKrId(null)}
-        />
       )}
     </div>
   );

@@ -4,8 +4,7 @@
 // catégories ; la carte, la lecture d'UN objectif.
 
 import { useEffect, useState } from 'react';
-import { Target, Trash2, Pencil, Building2, CornerLeftUp, ClipboardList } from 'lucide-react';
-import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { Target, Trash2, Pencil, Building2, CornerLeftUp } from 'lucide-react';
 import HealthStateMenu from './HealthStateMenu';
 import type { KRProjectLink, ProjectHealth, TeamKeyResult, TeamOKR } from '@/modules/team-okrs';
 import type { TeamProjectTaskStats } from '@/modules/team-projects';
@@ -24,13 +23,12 @@ interface TeamKRRowProps {
   links: KRProjectLink[];
   statsById: Map<string, TeamProjectTaskStats>;
   onCommit: (value: number) => void;
-  onOpenExecution: () => void;
   /** Change l'état du KR : pose un point d'étape à la valeur courante. */
   onSetHealth: (status: ProjectHealth, value: number) => void;
   personOf?: (userId: string) => OrgMember | undefined;
 }
 
-const TeamKRRow = ({ kr, links, statsById, onCommit, onOpenExecution, onSetHealth, personOf }: TeamKRRowProps) => {
+const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf }: TeamKRRowProps) => {
   const { t } = useT('org');
   const { t: pf } = useT('portfolio');
   const [value, setValue] = useState<string>(String(kr.currentValue));
@@ -120,12 +118,6 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onOpenExecution, onSetHealt
         onSetHealth={(h) => onSetHealth(h, measured && taskProgress ? taskProgress.done : kr.currentValue)}
         onMarkDone={measured ? undefined : () => onCommit(kr.targetValue)}
         ariaLabel={pf('krExec.openAria', { title: kr.title })}
-        extra={(
-          <DropdownMenuItem onClick={onOpenExecution}>
-            <ClipboardList size={14} aria-hidden="true" />
-            {pf('krExec.checkinTitle')}
-          </DropdownMenuItem>
-        )}
       />
     </div>
   );
@@ -147,7 +139,6 @@ interface TeamOKRCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onCommitKR: (kr: TeamKeyResult, value: number) => void;
-  onOpenKR: (kr: TeamKeyResult) => void;
   onSetKRHealth: (kr: TeamKeyResult, status: ProjectHealth, value: number) => void;
   onOpenOkr: (okrId: string) => void;
   personOf?: (userId: string) => OrgMember | undefined;
@@ -155,7 +146,7 @@ interface TeamOKRCardProps {
 
 const TeamOKRCard = ({
   okr, okrs, links, statsById, category, teamName, teamColor, editDeniedReason, deleteDeniedReason, highlighted,
-  onEdit, onDelete, onCommitKR, onOpenKR, onSetKRHealth, onOpenOkr, personOf,
+  onEdit, onDelete, onCommitKR, onSetKRHealth, onOpenOkr, personOf,
 }: TeamOKRCardProps) => {
   const { t } = useT('org');
   const { t: pf, tp: tpf } = useT('portfolio');
@@ -259,7 +250,6 @@ const TeamOKRCard = ({
               links={links}
               statsById={statsById}
               onCommit={(v) => onCommitKR(kr, v)}
-              onOpenExecution={() => onOpenKR(kr)}
               onSetHealth={(status, value) => onSetKRHealth(kr, status, value)}
               personOf={personOf}
             />
