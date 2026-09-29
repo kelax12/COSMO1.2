@@ -25,8 +25,6 @@ import type {
   TeamTaskStatus,
   TeamTaskComment,
   TeamSubtask,
-  TeamLabel,
-  TeamTaskLabel,
   TeamTaskActivity,
   TeamTaskDependency,
   TeamActivityField,
@@ -206,23 +204,6 @@ export const DEMO_TASKS_EN: Record<string, Partial<TeamTask>> = {
 };
 
 // Commentaires seed (mig. 082) — fil de discussion réaliste sur 2 tâches.
-/**
- * Labels de démo — la fonctionnalité doit se montrer, pas se deviner. Un
- * vocabulaire vide donnerait l'impression d'un écran cassé au premier essai.
- */
-export const DEMO_LABELS: TeamLabel[] = [
-  { id: 'lbl-bug', orgId: DEMO_ORG_ID, name: 'Bug', color: '#ef4444', createdBy: DEMO_USER_ID, createdAt: '2026-01-01T00:00:00Z' },
-  { id: 'lbl-client', orgId: DEMO_ORG_ID, name: 'Client', color: '#0ea5e9', createdBy: DEMO_USER_ID, createdAt: '2026-01-01T00:00:00Z' },
-  { id: 'lbl-urgent', orgId: DEMO_ORG_ID, name: 'Urgent', color: '#f59e0b', createdBy: DEMO_USER_ID, createdAt: '2026-01-01T00:00:00Z' },
-  { id: 'lbl-tech', orgId: DEMO_ORG_ID, name: 'Technique', color: '#8b5cf6', createdBy: DEMO_USER_ID, createdAt: '2026-01-01T00:00:00Z' },
-];
-
-// Overlay anglais — cf. src/lib/seed-i18n.ts. « Bug », « Client », « Urgent »
-// s'écrivent déjà pareil en anglais.
-export const DEMO_LABELS_EN: Record<string, Partial<TeamLabel>> = {
-  'lbl-tech': { name: 'Technical' },
-};
-
 export const DEMO_COMMENTS: TeamTaskComment[] = [
   { id: 'comment-seed-1', taskId: 'ttask-1', authorId: 'friend-1', body: 'Premier jet des maquettes déposé sur Figma, retours bienvenus !', mentions: [], createdAt: iso(-4) },
   { id: 'comment-seed-2', taskId: 'ttask-1', authorId: DEMO_USER_ID, body: '@Marie Dupont super base, je préfère la variante B pour le hero.', mentions: ['friend-1'], createdAt: iso(-3) },
@@ -281,28 +262,6 @@ export const DEMO_SUBTASKS_EN: Record<string, Partial<TeamSubtask>> = {
   'sub-seed-9': { title: 'Demo dataset' },
   'sub-seed-10': { title: 'Timed rehearsal' },
 };
-
-/**
- * Associations tâche ↔ label (mig. 093).
- *
- * Le vocabulaire seul ne se voit nulle part : les labels n'apparaissent sur le
- * kanban et dans les filtres que POSÉS sur des tâches. Deux tâches en portent
- * deux, pour que le cas multi-labels soit visible sans avoir à le créer.
- */
-export const DEMO_TASK_LABELS: TeamTaskLabel[] = [
-  { taskId: 'ttask-1', labelId: 'lbl-client' },
-  { taskId: 'ttask-2', labelId: 'lbl-tech' },
-  { taskId: 'ttask-3', labelId: 'lbl-bug' },
-  { taskId: 'ttask-3', labelId: 'lbl-urgent' },
-  { taskId: 'ttask-4', labelId: 'lbl-tech' },
-  { taskId: 'ttask-5', labelId: 'lbl-client' },
-  { taskId: 'ttask-8', labelId: 'lbl-client' },
-  { taskId: 'ttask-8', labelId: 'lbl-urgent' },
-  { taskId: 'ttask-9', labelId: 'lbl-client' },
-  { taskId: 'ttask-11', labelId: 'lbl-tech' },
-  { taskId: 'ttask-12', labelId: 'lbl-client' },
-  { taskId: 'ttask-18', labelId: 'lbl-urgent' },
-];
 
 /**
  * Journal d'activité de démo (mig. 094).

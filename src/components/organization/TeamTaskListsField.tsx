@@ -16,7 +16,7 @@ interface TeamTaskListsFieldProps {
  * d'édition. Seules les listes MANUELLES se cochent : une liste intelligente
  * est un filtre, on n'y range rien.
  *
- * Même geste que les étiquettes (`TeamTaskLabelsField`) : la sélection est un
+ * La sélection est un
  * état de la fiche, elle compte dans « modifications non enregistrées ».
  * Créer une liste ici l'ajoute à l'organisation tout de suite, et la coche.
  */

@@ -7,8 +7,6 @@ export const TEAM_PROJECTS_STORAGE_KEY = 'cosmo_team_projects';
 export const TEAM_TASKS_STORAGE_KEY = 'cosmo_team_tasks';
 export const TEAM_TASK_COMMENTS_STORAGE_KEY = 'cosmo_team_task_comments';
 export const TEAM_TASK_SUBTASKS_STORAGE_KEY = 'cosmo_team_task_subtasks';
-export const TEAM_LABELS_STORAGE_KEY = 'cosmo_team_labels';
-export const TEAM_TASK_LABELS_STORAGE_KEY = 'cosmo_team_task_labels';
 export const TEAM_TASK_ACTIVITY_STORAGE_KEY = 'cosmo_team_task_activity';
 export const TEAM_TASK_DEPENDENCIES_STORAGE_KEY = 'cosmo_team_task_dependencies';
 /** Corbeille démo (mig. 152) : les tâches supprimées y attendent 30 jours. */
@@ -38,8 +36,6 @@ export const teamProjectKeys = {
   trash: (orgId: string) => [...teamProjectKeys.all, 'trash', orgId] as const,
   comments: (taskId: string) => [...teamProjectKeys.all, 'comments', taskId] as const,
   subtasks: (taskId: string) => [...teamProjectKeys.all, 'subtasks', taskId] as const,
-  labels: (orgId: string) => [...teamProjectKeys.all, 'labels', orgId] as const,
-  taskLabels: (taskId: string) => [...teamProjectKeys.all, 'task-labels', taskId] as const,
   activity: (taskId: string) => [...teamProjectKeys.all, 'activity', taskId] as const,
   dependencies: (orgId: string) => [...teamProjectKeys.all, 'dependencies', orgId] as const,
   // Portefeuille (mig. 153).

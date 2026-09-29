@@ -2,7 +2,7 @@
 // Glossaire du mode entreprise (cohérence globale, 2026-09-25)
 //
 // « Manager », « responsable d'équipe », « admin », « propriétaire » ;
-// « catégorie », « étiquette », « projet », « équipe » : des mots voisins,
+// « catégorie », « projet », « équipe » : des mots voisins,
 // employés au hasard des écrans, pour des notions différentes (un RÔLE, une
 // POSITION dans la pyramide, l'animation d'une équipe). Règle : un glossaire
 // dans le produit, et une info-bulle au premier affichage de chaque rôle.
@@ -11,7 +11,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 export const ROLE_TERMS = ['owner', 'admin', 'manager', 'teamLead', 'member'] as const;
-export const OBJECT_TERMS = ['team', 'project', 'category', 'label'] as const;
+export const OBJECT_TERMS = ['team', 'project', 'category'] as const;
 export type OrgTerm = (typeof ROLE_TERMS)[number] | (typeof OBJECT_TERMS)[number];
 
 export const termNameKey = (term: OrgTerm) => `glossary.names.${term}` as const;

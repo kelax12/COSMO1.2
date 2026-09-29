@@ -17,9 +17,6 @@ import {
   UpdateTeamSubtaskInput,
   TeamTaskDependency,
   TeamTaskActivity,
-  TeamLabel,
-  CreateTeamLabelInput,
-  TeamTaskLabel,
   TeamTrashedTask,
   DraftProjectTask,
   DraftProjectMilestone,
@@ -134,21 +131,6 @@ export interface ITeamProjectsRepository {
   createSubtask(input: CreateTeamSubtaskInput): Promise<TeamSubtask>;
   updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask>;
   deleteSubtask(subtaskId: string): Promise<void>;
-
-  // Étiquettes (mig. 093). Retirées le 2026-09-05 (C-49) faute d'écran,
-  // rebranchées le 2026-09-25 par la fiche de tâche. Pas de renommage ni de
-  // suppression d'étiquette : aucun écran ne les propose, donc aucun appelant.
-  getLabels(orgId: string): Promise<TeamLabel[]>;
-  createLabel(orgId: string, input: CreateTeamLabelInput): Promise<TeamLabel>;
-  /** Étiquettes posées sur UNE tâche (lecture indexée par la PK de la jonction). */
-  getTaskLabels(taskId: string): Promise<TeamTaskLabel[]>;
-  addTaskLabel(taskId: string, labelId: string): Promise<void>;
-  removeTaskLabel(taskId: string, labelId: string): Promise<void>;
-  /**
-   * Tâches qui portent UNE étiquette : filtre « étiquette » de l'onglet Tâches.
-   * Lecture par l'index `idx_team_task_labels_label`, bornée à 5 000 lignes.
-   */
-  getTaskIdsWithLabel(labelId: string): Promise<string[]>;
 
   // Historique (mig. 094) : lecture seule, la table est append-only, écrite par trigger.
   /** Journal d'UNE tâche, onglet Historique de la fiche (100 dernières entrées). */

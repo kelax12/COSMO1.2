@@ -86,8 +86,7 @@
       "member": "Anyone in the company. Their default rights can be widened or narrowed by an administrator (Members → Edit permissions).",
       "team": "A group of people, independent from the org chart (someone can belong to several teams). A project or objective attached to a team is visible to that team only.",
       "project": "A set of tasks with an owner, dates and a chosen colour. Every team task belongs to a project.",
-      "category": "A thematic classification shared by projects, tasks and objectives, organised as a tree. It has its own colour and does not change a project’s colour.",
-      "label": "A free marker placed on a task (“urgent”, “client”…). Unlike a category, it has no hierarchy and applies to tasks only."
+      "category": "A thematic classification shared by projects, tasks and objectives, organised as a tree. It has its own colour and does not change a project’s colour."
     },
     "names": {
       "owner": "Owner",
@@ -97,8 +96,7 @@
       "member": "Member",
       "team": "Team",
       "project": "Project",
-      "category": "Category",
-      "label": "Label"
+      "category": "Category"
     }
   },
   "audit": {

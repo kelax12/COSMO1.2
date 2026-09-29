@@ -93,8 +93,7 @@
       "member": "Toute personne de l’entreprise. Ses droits par défaut peuvent être élargis ou restreints par un administrateur (Membres → Modifier les permissions).",
       "team": "Un groupe de personnes, indépendant de l'organigramme (une personne peut être dans plusieurs équipes). Un projet ou un objectif rattaché à une équipe n’est visible que d’elle.",
       "project": "Un ensemble de tâches avec un responsable, des dates et une couleur choisie. Toute tâche d’équipe appartient à un projet.",
-      "category": "Un classement thématique, partagé par les projets, les tâches et les objectifs, organisé en arbre. Elle a sa propre couleur et ne change pas celle d’un projet.",
-      "label": "Un repère libre posé sur une tâche (« urgent », « client »…). Contrairement à la catégorie, elle ne se hiérarchise pas et ne concerne que les tâches."
+      "category": "Un classement thématique, partagé par les projets, les tâches et les objectifs, organisé en arbre. Elle a sa propre couleur et ne change pas celle d’un projet."
     },
     "names": {
       "owner": "Propriétaire",
@@ -104,8 +103,7 @@
       "member": "Membre",
       "team": "Équipe",
       "project": "Projet",
-      "category": "Catégorie",
-      "label": "Étiquette"
+      "category": "Catégorie"
     }
   },
   "audit": {

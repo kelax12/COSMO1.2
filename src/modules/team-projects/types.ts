@@ -357,35 +357,6 @@ export interface UpdateTeamSubtaskInput {
   position?: number;
 }
 
-// ─── Labels transverses (mig. 093) ───────────────────────────────────
-
-/** Label d'organisation — vocabulaire partagé, écriture réservée aux managers. */
-export interface TeamLabel {
-  id: string;
-  orgId: string;
-  name: string;
-  /** Hex `#rrggbb` (validé par CHECK côté base). */
-  color: string;
-  createdBy: string | null;
-  createdAt: string;
-}
-
-export interface CreateTeamLabelInput {
-  name: string;
-  color?: string;
-}
-
-export interface UpdateTeamLabelInput {
-  name?: string;
-  color?: string;
-}
-
-/** Ligne de jonction tâche ↔ label. */
-export interface TeamTaskLabel {
-  taskId: string;
-  labelId: string;
-}
-
 // ─── Dépendances entre tâches (mig. 108) ─────────────────────────────
 
 /**

@@ -2,7 +2,7 @@
 // TEAM-PROJECTS — sous-tâches en mode DÉMO (mig. 092)
 //
 // Séparé de `local.repository.ts` le 2026-09-26 pour le garder sous le
-// plafond de 600 lignes, sur le modèle de `local.labels.ts`.
+// plafond de 600 lignes, sur le modèle de `local.activity.ts`.
 // ═══════════════════════════════════════════════════════════════════
 
 import { localizeSeed } from '@/lib/seed-i18n';

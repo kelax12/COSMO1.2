@@ -3,7 +3,7 @@ import { startOfDay, subDays } from 'date-fns';
 import { subtreeOf, useOrgNotifications, useMyOrgPermissions, unreadCommentCountByTask, type OrgMember } from '@/modules/organizations';
 import {
   useTeamProjects, useTeamTaskPages, TEAM_TASKS_READ_LIMIT, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
-  useTaskIdsWithLabel, useTeamTaskDependencies,
+  useTeamTaskDependencies,
   type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { useTeamCategories, descendantIdSet, categoryPath, formatPath } from '@/modules/team-categories';
@@ -88,7 +88,6 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const { data: teams = [] } = useOrgTeams(orgId);
   const pf = useT('portfolio');
   const { data: categories = [] } = useTeamCategories(orgId);
-  const { data: labelTaskIds } = useTaskIdsWithLabel(filters.label);
   // Réglages de l'entreprise (mig. 195) et statuts propres des projets (mig. 197).
   const { data: orgSettings } = useOrgSettings(orgId);
   const { data: projectStatuses = [] } = useProjectStatuses(orgId);
@@ -208,12 +207,12 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     result = filterByList(result);
     result = result.filter((task) => matchesScope(task, filters, (id) => projectById.get(id)?.teamId));
     result = filterByStatus(result, statusFilter);
-    result = result.filter((task) => matchesAttributes(task, filters, { categoryIds, labelTaskIds }));
+    result = result.filter((task) => matchesAttributes(task, filters, { categoryIds }));
     if (filters.blocked) result = result.filter((task) => blockedTaskIds.has(task.id));
     const q = normalize(searchTerm.trim());
     if (q) result = result.filter((task) => normalize(task.name).includes(q));
     return result;
-  }, [tasks, projectById, projectFilter, statusFilter, searchTerm, filters, categoryIds, labelTaskIds, blockedTaskIds, filterByList]);
+  }, [tasks, projectById, projectFilter, statusFilter, searchTerm, filters, categoryIds, blockedTaskIds, filterByList]);
 
   const sortedTasks = useMemo(() => {
     // Clé primaire = le critère choisi ; clé secondaire = l'échéance (l'ordre

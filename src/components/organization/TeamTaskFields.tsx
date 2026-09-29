@@ -2,7 +2,7 @@
 // Les CHAMPS d'une tâche d'équipe
 //
 // FRONTIÈRE : ce composant ne sait ni enregistrer, ni fermer, ni commenter.
-// Il rend un formulaire (statut, nom, description, catégorie, étiquettes,
+// Il rend un formulaire (statut, nom, description, catégorie, listes,
 // projet, priorité, dates, durée, assignés) et remonte chaque saisie. `TeamTaskModal` garde
 // l'enveloppe : la sauvegarde, les commentaires, les sous-tâches, le panneau
 // latéral, et la création silencieuse déclenchée par un premier commentaire.
@@ -86,7 +86,7 @@ interface TeamTaskFieldsProps {
    * (org-create.context), puis sélectionne le projet créé. Absent = pas le droit.
    */
   onProjectCreated?: (projectId: string) => void;
-  /** Étiquettes (mig. 093), rendues sous la catégorie. */
+  /** Listes d'entreprise (mig. 203), rendues sous la catégorie. */
   labelsField?: React.ReactNode;
 
   assigneeIds: string[];
