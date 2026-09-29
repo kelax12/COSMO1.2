@@ -19,8 +19,8 @@ interface DeleteTeamOkrConfirmProps {
  * Remplace un `window.confirm` qui ne disait rien de l'impact : les résultats
  * clés et leurs points d'étape partent avec l'objectif, les liens vers des
  * projets aussi, et les objectifs qui y contribuaient perdent leur parent.
- * Un OKR supprimé ne revient pas : pas de corbeille pour lui, donc la saisie
- * du titre est exigée comme pour la suppression d'entreprise.
+ * Depuis la corbeille (mig. 193) le geste est réversible 30 jours : niveau
+ * LOURD, l'impact est affiché mais le titre n'a pas à être saisi.
  */
 const DeleteTeamOkrConfirm = ({ orgId, okr, okrs, pending, onConfirm, onCancel }: DeleteTeamOkrConfirmProps) => {
   const { t: ta, tp: tpa } = useT('orgAdmin');
@@ -42,7 +42,6 @@ const DeleteTeamOkrConfirm = ({ orgId, okr, okrs, pending, onConfirm, onCancel }
       impact={impact}
       confirmLabel={ta('okrDelete.confirm')}
       pending={pending}
-      requireName={okr.title}
       onConfirm={onConfirm}
       onCancel={onCancel}
     />
