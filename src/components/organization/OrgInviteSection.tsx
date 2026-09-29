@@ -49,55 +49,77 @@ const OrgInviteSection = ({
 
   return (
         <section aria-labelledby="org-invite-title" className="space-y-4">
-          <div className="flex flex-col lg:flex-row lg:items-start gap-3">
-            <div className="flex-1 min-w-0">
-              <h2 id="org-invite-title" className={TITLE}>{t('settings.inviteTitle')}</h2>
-              <p className={HINT}>{t('settings.inviteHint')}</p>
-            </div>
-            {/* Places du forfait : la même règle que `org_seats_allowed()`.
-                Tant que la facturation dort, un dépassement s'annonce sans
-                rien bloquer, comme la bannière de l'en-tête. */}
-            <div className="lg:text-right shrink-0 lg:w-52 max-w-xs">
-              {seatsQuota == null ? (
-                <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-                  {tp('invite.seatsUnlimited', memberCount)}
-                </p>
-              ) : (
-                <>
-                  <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-                    {t('invite.seatsUsed', { used: memberCount, max: seatsQuota })}
-                  </p>
-                  <div
-                    role="meter"
-                    aria-label={t('invite.seatsUsed', { used: memberCount, max: seatsQuota })}
-                    aria-valuemin={0}
-                    aria-valuemax={seatsQuota}
-                    aria-valuenow={Math.min(memberCount, seatsQuota)}
-                    className="mt-1.5 h-1.5 rounded-full bg-[rgb(var(--color-border))] overflow-hidden"
-                  >
-                    <div
-                      className={`h-full rounded-full ${memberCount >= seatsQuota ? 'bg-amber-500' : 'bg-[rgb(var(--color-accent))]'}`}
-                      style={{ width: `${Math.min(100, (memberCount / Math.max(seatsQuota, 1)) * 100)}%` }}
-                    />
-                  </div>
-                  <p className={`text-xs mt-1 ${memberCount >= seatsQuota ? 'text-amber-600 dark:text-amber-400' : 'text-[rgb(var(--color-text-muted))]'}`}>
-                    {seatsFull
-                      ? t('invite.seatsFullNow')
-                      : memberCount >= seatsQuota
-                        ? t('invite.seatsOver')
-                        : tp('invite.seatsLeft', seatsQuota - memberCount)}
-                  </p>
-                </>
-              )}
+          <div>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <h2 id="org-invite-title" className={TITLE}>{t('settings.inviteTitle')}</h2>
+                <p className={HINT}>{t('settings.inviteHint')}</p>
+              </div>
               {isOwner && (
                 <Link
                   to={buildOrgLink('billing')}
-                  className="mt-2 inline-flex items-center justify-center min-h-8 px-3 rounded-lg border border-[rgb(var(--color-border))] text-xs font-semibold text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                  className="shrink-0 inline-flex items-center justify-center min-h-8 px-3 rounded-lg border border-[rgb(var(--color-border))] text-xs font-semibold text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
                 >
                   {t('invite.changePlan')}
                 </Link>
               )}
             </div>
+            {/* Places du forfait : la même règle que `org_seats_allowed()`.
+                Tant que la facturation dort, un dépassement s'annonce sans
+                rien bloquer, comme la bannière de l'en-tête. La barre sépare
+                les places incluses de celles au-delà (maquette 1, 2026-09-29) :
+                « 7 / 5 » seul se lisait mal. */}
+            {seatsQuota == null ? (
+              <p className="mt-2 text-xs font-semibold text-[rgb(var(--color-text-muted))]">
+                {tp('invite.seatsUnlimited', memberCount)}
+              </p>
+            ) : (
+              <div className="mt-3">
+                <div
+                  role="meter"
+                  aria-label={t('invite.seatsUsed', { used: memberCount, max: seatsQuota })}
+                  aria-valuemin={0}
+                  aria-valuemax={seatsQuota}
+                  aria-valuenow={Math.min(memberCount, seatsQuota)}
+                  className="flex items-center gap-1"
+                >
+                  <div
+                    className="h-1.5 rounded-full bg-[rgb(var(--color-border))] overflow-hidden"
+                    style={{ flexGrow: seatsQuota, flexBasis: 0 }}
+                  >
+                    <div
+                      className={`h-full rounded-full ${memberCount >= seatsQuota ? 'bg-[rgb(var(--color-text-muted))]' : 'bg-[rgb(var(--color-accent))]'}`}
+                      style={{ width: `${Math.min(100, (memberCount / Math.max(seatsQuota, 1)) * 100)}%` }}
+                    />
+                  </div>
+                  {memberCount > seatsQuota && (
+                    <>
+                      <span aria-hidden="true" className="w-px h-3 bg-[rgb(var(--color-border))]" />
+                      <div
+                        className="h-1.5 rounded-full bg-amber-500"
+                        style={{ flexGrow: memberCount - seatsQuota, flexBasis: 0 }}
+                      />
+                    </>
+                  )}
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 text-xs">
+                  <span className="text-[rgb(var(--color-text-muted))]">
+                    {memberCount > seatsQuota
+                      ? tp('invite.seatsIncluded', seatsQuota)
+                      : t('invite.seatsUsed', { used: memberCount, max: seatsQuota })}
+                  </span>
+                  <span className={memberCount >= seatsQuota ? 'text-amber-600 dark:text-amber-400' : 'text-[rgb(var(--color-text-muted))]'}>
+                    {seatsFull
+                      ? t('invite.seatsFullNow')
+                      : memberCount > seatsQuota
+                        ? tp('invite.seatsOverBy', memberCount - seatsQuota)
+                        : memberCount === seatsQuota
+                          ? t('invite.seatsOver')
+                          : tp('invite.seatsLeft', seatsQuota - memberCount)}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* M11 : l'invitation par e-mail est le canal par défaut d'une

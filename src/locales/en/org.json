@@ -119,6 +119,10 @@
     "seatsLeft_one": "{{count}} seat left",
     "seatsLeft_other": "{{count}} seats left",
     "seatsOver": "Past the free plan. Nothing changes today.",
+    "seatsIncluded_one": "{{count}} seat included",
+    "seatsIncluded_other": "{{count}} seats included",
+    "seatsOverBy_one": "+{{count}} over, nothing changes today",
+    "seatsOverBy_other": "+{{count}} over, nothing changes today",
     "seatsFullNow": "No seats left: upgrade the plan.",
     "changePlan": "Change plan"
   },

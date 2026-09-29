@@ -126,6 +126,12 @@
     "seatsLeft_many": "{{count}} de places restantes",
     "seatsLeft_other": "{{count}} places restantes",
     "seatsOver": "Au-delà de l'offre gratuite. Rien ne change aujourd'hui.",
+    "seatsIncluded_one": "{{count}} place incluse",
+    "seatsIncluded_many": "{{count}} de places incluses",
+    "seatsIncluded_other": "{{count}} places incluses",
+    "seatsOverBy_one": "+{{count}} au-delà, rien ne change aujourd'hui",
+    "seatsOverBy_many": "+{{count}} au-delà, rien ne change aujourd'hui",
+    "seatsOverBy_other": "+{{count}} au-delà, rien ne change aujourd'hui",
     "seatsFullNow": "Plus de place : faites évoluer le forfait.",
     "changePlan": "Changer de forfait"
   },
