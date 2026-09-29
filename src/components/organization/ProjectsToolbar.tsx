@@ -7,6 +7,7 @@
 // filtres partagée avec l'onglet Tâches, et dans l'URL.
 // ═══════════════════════════════════════════════════════════════════
 
+import type { ReactNode } from 'react';
 import { Plus, LayoutList, CalendarRange, Table2 } from 'lucide-react';
 import { type ProjectsUiPrefs } from './team-projects.helpers';
 import { useT } from '@/i18n/useT';
@@ -26,6 +27,10 @@ interface ProjectsToolbarProps {
   effectiveView: ProjectsUiPrefs['view'];
   /** Utilisateur courant, pour le preset « Mes tâches ». Absent : pas de rangée de presets. */
   currentUserId?: string;
+  /** Entre en sélection multiple : pastille « Sélectionner » après les préréglages. */
+  onStartSelect?: () => void;
+  /** Tri (Liste, Portefeuille), à droite de la ligne des vues. Absent : pas de tri. */
+  sortControl?: ReactNode;
 }
 
 /** Onglet de vue — un mot, pas un carré : trois icônes de vue se ressemblent
@@ -55,15 +60,14 @@ const ViewTab = ({ active, onClick, label, Icon }: {
 );
 
 const ProjectsToolbar = ({
-  prefs, updatePrefs, canCreateProject, createDeniedReason, onNewProject, effectiveView, currentUserId,
+  prefs, updatePrefs, canCreateProject, createDeniedReason, onNewProject, effectiveView, currentUserId, onStartSelect, sortControl,
 }: ProjectsToolbarProps) => {
   // Même état que la barre de filtres de l'onglet : l'URL (task-filters.ts).
   const { filters, setFilters } = useOrgTaskFilters('all');
   const { t } = useT('org');
   const { t: pf } = useT('portfolio');
-  // La barre porte le périmètre (vue, presets) et la création, poussée à
-  // droite (maquette du 2026-09-27). « Sélectionner » est passé à côté du tri
-  // (`ProjectsSearchBar`) ; `showArchived` reste sur la bascule contextuelle
+  // Ligne 1 : la création, à droite. Ligne 2 : vue, préréglages puis
+  // « Sélectionner » (même pastille), et le tri à droite (2026-09-29) ; `showArchived` reste sur la bascule contextuelle
   // du bas de liste, qui affiche le compte et n'existe que s'il y a des archives.
   const { timelineGroupBy } = prefs;
   const view = effectiveView;
@@ -74,6 +78,24 @@ const ProjectsToolbar = ({
   const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
 
   return (
+    <div className="flex flex-col gap-2">
+      {/* La seule action créative de la page, seul bouton plein : au-dessus de
+          la ligne des vues, alignée à droite (2026-09-29).
+          `PermissionGate` ne rend son enveloppe QUE si `reason` est défini :
+          l'alignement vit donc sur un conteneur toujours présent. */}
+      <div className="flex justify-end">
+        <PermissionGate reason={canCreateProject ? undefined : createDeniedReason}>
+          <button
+            type="button"
+            onClick={onNewProject}
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
+            aria-label={t('projects.newProject')}
+          >
+            <Plus size={15} aria-hidden="true" />
+            <span className="hidden sm:inline">{t('projects.newProject')}</span>
+          </button>
+        </PermissionGate>
+      </div>
     <div className="flex items-center gap-2 flex-wrap">
       {/* ── Vue, réglages rares ──────────────────────────────────── */}
       <div
@@ -120,28 +142,11 @@ const ProjectsToolbar = ({
       {/* Préréglages appliqués aux PROJETS (project-filters.ts). Bloquées
           exclue : c'est une lecture tâche par tâche. Le Tableau (kanban) est
           passé dans l'onglet Tâches le 2026-09-27. */}
-      <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="all" currentUserId={currentUserId} showBlocked={false} entity="projects" />
+      <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="all" currentUserId={currentUserId} showBlocked={false} entity="projects" onToggleSelect={onStartSelect} />
 
-      {/* La seule action créative de la page — et donc le seul bouton plein.
-          Poussée à droite (maquette du 2026-09-27) : c'est la seule action
-          qui n'est pas un réglage de vue ou un filtre.
-          `PermissionGate` ne rend son enveloppe QUE si `reason` est défini
-          (droit refusé) — le cas courant (droit accordé) renvoie l'enfant nu,
-          où un `className` passé au Gate n'aurait aucun effet. Le `ml-auto`
-          vit donc sur un conteneur qu'on pose nous-mêmes, toujours présent. */}
-      <div className="ml-auto">
-        <PermissionGate reason={canCreateProject ? undefined : createDeniedReason}>
-          <button
-            type="button"
-            onClick={onNewProject}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
-            aria-label={t('projects.newProject')}
-          >
-            <Plus size={15} aria-hidden="true" />
-            <span className="hidden sm:inline">{t('projects.newProject')}</span>
-          </button>
-        </PermissionGate>
-      </div>
+      {/* Tri poussé à droite de la même ligne. */}
+      {sortControl && <div className="ml-auto">{sortControl}</div>}
+    </div>
     </div>
   );
 };

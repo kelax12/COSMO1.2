@@ -397,15 +397,11 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         canCreateProject={can['project.create']}
         createDeniedReason={hints.deniedReason('project.create')}
         onNewProject={() => newProject()}
+        onStartSelect={onStartSelect}
+        sortControl={showSort ? (
+          <ProjectsSearchBar sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} />
+        ) : undefined}
       />
-
-      {(showSort || onStartSelect) && (
-        <ProjectsSearchBar
-          sort={sort}
-          onSortChange={showSort ? (s) => updatePrefs({ sort: s }) : undefined}
-          onStartSelect={onStartSelect}
-        />
-      )}
       {view === 'list' && manyProjects && (
         <p className="text-xs text-[rgb(var(--color-text-muted))]">{pf('manyProjectsHint', { count: PORTFOLIO_CARD_THRESHOLD })}</p>
       )}
