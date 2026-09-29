@@ -271,7 +271,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
     <Sheet open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg md:max-w-5xl xl:max-w-6xl rounded-l-2xl border-l-0 overflow-hidden">
         <SheetHeader className="border-b border-[rgb(var(--color-border-muted))]">
-          <span className="font-data text-[10px] uppercase tracking-[0.08em] text-[rgb(var(--color-text-muted))]">{t('okrModal.eyebrow')}</span>
+          <span className="font-data text-caption uppercase tracking-[0.08em] text-[rgb(var(--color-text-muted))]">{t('okrModal.eyebrow')}</span>
           <SheetTitle>{isEdit ? t('okrModal.edit') : t('okrModal.new')}</SheetTitle>
           <SheetDescription className="sr-only">{t('okrModal.description')}</SheetDescription>
         </SheetHeader>
@@ -279,7 +279,9 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
         {/* min-h-0 : sans lui, l'enfant flex-1 garde sa hauteur de contenu et le
             viewport Radix ne scrolle jamais (flexbox min-height:auto). */}
         <ScrollArea className="flex-1 min-h-0">
-          <div className="grid md:grid-cols-[1fr_1.2fr]">
+          {/* Tous les champs sur fond surface (blanc en thème clair), y compris
+              les déclencheurs de listes (date, catégorie, objectif parent). */}
+          <div className="grid md:grid-cols-[1fr_0.78fr] [&_input]:!bg-[rgb(var(--color-surface))] [&_textarea]:!bg-[rgb(var(--color-surface))] [&_select]:!bg-[rgb(var(--color-surface))] [&_button[aria-haspopup]]:!bg-[rgb(var(--color-surface))]">
             {/* Colonne gauche : le cadre de l'objectif. */}
             <div className="grid content-start gap-4 p-4 md:border-r md:border-[rgb(var(--color-border-muted))]">
               <div className="grid gap-2">
@@ -351,7 +353,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                 )}
                 {visMode === 'custom' && (
                   <div className="grid gap-1.5">
-                    <span className="font-data text-[10px] uppercase tracking-[0.06em] text-[rgb(var(--color-text-muted))]">{t('okrModal.customPeople')}</span>
+                    <span className="font-data text-caption uppercase tracking-[0.06em] text-[rgb(var(--color-text-muted))]">{t('okrModal.customPeople')}</span>
                     <div className="max-h-56 overflow-y-auto rounded-lg border border-[rgb(var(--color-border))]">
                       <MemberPickList
                         members={members}
@@ -380,7 +382,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Label>{t('okrModal.keyResults')}</Label>
-                  <span className="font-data rounded-full bg-[rgb(var(--color-accent)/0.1)] px-2 py-px text-[10px] text-[rgb(var(--color-accent))]">
+                  <span className="font-data rounded-full bg-[rgb(var(--color-accent)/0.1)] px-2 py-px text-caption text-[rgb(var(--color-accent))]">
                     {String(keyResults.length).padStart(2, '0')}
                   </span>
                 </div>
@@ -397,12 +399,14 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
               </div>
 
               {keyResults.map((kr, idx) => {
+                // Un seul KR : tout reste ouvert. Plusieurs : les quatre valeurs et
+                // les projets se replient, et se déplient au survol ou au focus
+                // (le survol n'existe ni au clavier ni au doigt ; sans pointeur
+                // fin, toujours ouverts). Animation sur la hauteur, coupée sous
+                // mouvement réduit.
+                const compact = keyResults.length > 1;
                 const pct = kr.targetValue > 0 ? Math.min(100, Math.max(0, (kr.currentValue / kr.targetValue) * 100)) : 0;
                 return (
-                  // Détails (actuel, cible, unité, coef., projets, contributeurs)
-                  // montrés au survol ET au focus : le survol n'existe ni au
-                  // clavier ni au doigt, et un champ ne doit pas disparaître
-                  // pendant qu'on le remplit. Sans pointeur fin : toujours ouverts.
                   <div
                     key={kr.id ?? idx}
                     className="group rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3 transition-shadow hover:border-[rgb(var(--color-accent)/0.35)] hover:shadow-md focus-within:border-[rgb(var(--color-accent)/0.35)] focus-within:shadow-md"
@@ -424,22 +428,28 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                       <div className="h-full rounded-full bg-[rgb(var(--color-accent))] transition-[width]" style={{ width: `${pct}%` }} />
                     </div>
 
-                    <div className="hidden gap-3 pt-3 group-hover:grid group-focus-within:grid [@media(hover:none)]:grid">
+                    <div
+                      className={compact
+                        ? 'grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none group-hover:grid-rows-[1fr] group-hover:opacity-100 group-focus-within:grid-rows-[1fr] group-focus-within:opacity-100 [@media(hover:none)]:grid-rows-[1fr] [@media(hover:none)]:opacity-100'
+                        : 'grid grid-rows-[1fr]'}
+                    >
+                      <div className="min-h-0 overflow-hidden">
+                      <div className="grid gap-3 pt-3">
                       <div className="grid grid-cols-4 gap-2">
                         <div className="grid gap-1">
-                          <Label className="text-muted-foreground text-[10px] uppercase tracking-wide">{t('okrModal.current')}</Label>
+                          <Label className="text-muted-foreground text-caption uppercase tracking-wide">{t('okrModal.current')}</Label>
                           <Input type="number" min={0} className="h-8 font-data" value={kr.currentValue} onChange={(e) => setKR(idx, { currentValue: Number(e.target.value) })} />
                         </div>
                         <div className="grid gap-1">
-                          <Label className="text-muted-foreground text-[10px] uppercase tracking-wide">{t('okrModal.target')}</Label>
+                          <Label className="text-muted-foreground text-caption uppercase tracking-wide">{t('okrModal.target')}</Label>
                           <Input type="number" className="h-8 font-data" value={kr.targetValue} onChange={(e) => setKR(idx, { targetValue: Number(e.target.value) })} />
                         </div>
                         <div className="grid gap-1">
-                          <Label className="text-muted-foreground text-[10px] uppercase tracking-wide">{t('okrModal.unit')}</Label>
+                          <Label className="text-muted-foreground text-caption uppercase tracking-wide">{t('okrModal.unit')}</Label>
                           <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(idx, { unit: e.target.value })} />
                         </div>
                         <div className="grid gap-1">
-                          <Label className="text-muted-foreground text-[10px] uppercase tracking-wide" title={t('okrModal.weightHint')}>{t('okrModal.weight')}</Label>
+                          <Label className="text-muted-foreground text-caption uppercase tracking-wide" title={t('okrModal.weightHint')}>{t('okrModal.weight')}</Label>
                           <Input
                             type="number"
                             min={1}
@@ -458,6 +468,11 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                         byTasks={kr.byTasks}
                         onByTasksChange={(byTasks) => setKR(idx, { byTasks })}
                       />
+                      </div>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 pt-3">
                       {/* #10 : un OKR ne s'assigne pas à une personne, il se
                           rattache à des équipes. Ses KR, eux, ont des
                           contributeurs (mig. 160, audit du 2026-09-24). */}
@@ -487,7 +502,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
               {t('okrModal.needOneKr')}
             </span>
           ) : (
-            <span className="font-data mr-auto text-[11px] text-[rgb(var(--color-text-muted))]">
+            <span className="font-data mr-auto text-caption text-[rgb(var(--color-text-muted))]">
               {t('okrModal.weightedProgress', { pct: weighted })}
             </span>
           )}
