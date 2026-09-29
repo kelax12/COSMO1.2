@@ -1,4 +1,5 @@
-import { Archive, CircleDot, UserRound, X } from 'lucide-react';
+import { useState } from 'react';
+import { Archive, CircleDot, Trash2, UserRound, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,7 @@ import type { OrgMember } from '@/modules/organizations';
 import { teamProjectKeys, type TeamProject, type TeamProjectStatus } from '@/modules/team-projects';
 import { PROJECT_STATUSES } from './portfolio.helpers';
 import MemberAvatar from './MemberAvatar';
+import OrgConfirmDialog from './OrgConfirmDialog';
 import { useBulkRun } from './use-bulk-run';
 import { useT } from '@/i18n/useT';
 
@@ -21,7 +23,7 @@ interface ProjectBulkBarProps {
   members: OrgMember[];
   /** `project.edit` : statut et responsable. */
   canEdit: boolean;
-  /** `project.delete` : archiver. */
+  /** `project.delete` : archiver, et supprimer définitivement. */
   canArchive: boolean;
   onDone: () => void;
   onExit: () => void;
@@ -62,7 +64,20 @@ const ProjectBulkBar = ({ selected, members, canEdit, canArchive, onDone, onExit
     });
   };
 
+  // Suppression définitive : l'archivage d'abord (la RPC de purge refuse un
+  // projet actif), puis `purge_archived_team_project`. Irréversible, donc
+  // confirmée par saisie, jamais annulable par toast.
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const deleteForever = () => {
+    const targets = [...selected];
+    void execute(targets, async (p) => {
+      if (!p.archivedAt) await repo().updateProject(p.id, { archived: true });
+      await repo().purgeArchivedProject(p.id);
+    }).then(() => { setConfirmDelete(false); onDone(); });
+  };
+
   return (
+    <>
     <div
       role="toolbar"
       aria-label={selected.length > 0 ? tpa('bulk.projectsSelected', selected.length) : ta('bulk.projectsSelectHint')}
@@ -106,6 +121,11 @@ const ProjectBulkBar = ({ selected, members, canEdit, canArchive, onDone, onExit
           <Archive size={15} aria-hidden="true" /> {t('project.archive')}
         </button>
       )}
+      {selected.length > 0 && canArchive && (
+        <button type="button" className={`${actionClass} !text-red-500 hover:!bg-red-500/10`} disabled={pending} onClick={() => setConfirmDelete(true)}>
+          <Trash2 size={15} aria-hidden="true" /> {ta('bulk.delete')}
+        </button>
+      )}
       <button
         type="button"
         onClick={onExit}
@@ -116,6 +136,18 @@ const ProjectBulkBar = ({ selected, members, canEdit, canArchive, onDone, onExit
         <X size={16} aria-hidden="true" />
       </button>
     </div>
+    {confirmDelete && (
+      <OrgConfirmDialog
+        title={tpa('bulk.deleteProjectsTitle', selected.length)}
+        impact={[ta('projectPurge.impactMilestones'), ta('projectPurge.impactIrreversible')]}
+        confirmLabel={ta('projectPurge.confirm')}
+        pending={pending}
+        requireName={ta('bulk.deleteWord')}
+        onConfirm={deleteForever}
+        onCancel={() => setConfirmDelete(false)}
+      />
+    )}
+    </>
   );
 };
 

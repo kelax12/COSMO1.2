@@ -151,6 +151,10 @@
     "projectsSelectHint": "Tick some projects",
     "selectProjects": "Select several projects",
     "selectProject": "Select {{name}}",
+    "delete": "Delete",
+    "deleteWord": "delete",
+    "deleteProjectsTitle_one": "Permanently delete {{count}} project?",
+    "deleteProjectsTitle_other": "Permanently delete {{count}} projects?",
     "projectsArchived_one": "{{count}} project archived",
     "projectsArchived_other": "{{count}} projects archived"
   },
@@ -551,7 +555,15 @@
       "partial": "Event added to {{created}} calendars, refused for {{failed}}.",
       "errorTitle": "Give the event a title.",
       "errorPeople": "Pick at least one participant.",
-      "errorDate": "Pick a valid date and time."
+      "errorDate": "Pick a valid date and time.",
+      "stepWho": "Who",
+      "stepWhen": "When",
+      "stepDetails": "Details",
+      "stepOf": "Step {{step}} of {{total}}",
+      "next": "Continue",
+      "back": "Back",
+      "otherTime": "Other time",
+      "summary": "{{date}} at {{time}}, {{duration}}"
     },
     "audit": {
       "changeAria": "Before: {{from}}. After: {{to}}.",

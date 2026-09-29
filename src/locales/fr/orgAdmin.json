@@ -167,6 +167,11 @@
     "projectsSelectHint": "Cochez des projets",
     "selectProjects": "Sélectionner plusieurs projets",
     "selectProject": "Sélectionner {{name}}",
+    "delete": "Supprimer",
+    "deleteWord": "supprimer",
+    "deleteProjectsTitle_one": "Supprimer définitivement {{count}} projet ?",
+    "deleteProjectsTitle_many": "Supprimer définitivement {{count}} de projets ?",
+    "deleteProjectsTitle_other": "Supprimer définitivement {{count}} projets ?",
     "projectsArchived_one": "{{count}} projet archivé",
     "projectsArchived_many": "{{count}} de projets archivés",
     "projectsArchived_other": "{{count}} projets archivés"
@@ -600,7 +605,15 @@
       "partial": "Événement ajouté à {{created}} agendas, refusé pour {{failed}}.",
       "errorTitle": "Donnez un titre à l'événement.",
       "errorPeople": "Choisissez au moins un participant.",
-      "errorDate": "Choisissez une date et une heure valides."
+      "errorDate": "Choisissez une date et une heure valides.",
+      "stepWho": "Qui",
+      "stepWhen": "Quand",
+      "stepDetails": "Détails",
+      "stepOf": "Étape {{step}} sur {{total}}",
+      "next": "Continuer",
+      "back": "Retour",
+      "otherTime": "Autre heure",
+      "summary": "{{date}} à {{time}}, {{duration}}"
     },
     "audit": {
       "changeAria": "Avant : {{from}}. Après : {{to}}.",
