@@ -296,6 +296,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (input.categoryId !== undefined) patch.category_id = input.categoryId;
     // Statut propre (mig. 197) : le trigger en déduit `status`, puis `completed`.
     if (input.customStatusId !== undefined) patch.custom_status_id = input.customStatusId;
+    if (input.health !== undefined) patch.health = input.health;
     // `status` et `completed` sont synchronisés par le trigger de la mig. 091.
     // On n'envoie donc JAMAIS les deux dans le même patch : le trigger traite
     // `status` en priorité, et un `completed` contradictoire serait écrasé

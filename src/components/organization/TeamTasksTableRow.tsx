@@ -15,7 +15,8 @@ import { resolveListColor } from '@/pages/tasks/list-colors';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DateCalendarPanel, DATE_PANEL_CLASS } from '@/components/ui/date-picker';
 import type { OrgMember } from '@/modules/organizations';
-import type { TeamProject, TeamTask, TeamTaskStatus } from '@/modules/team-projects';
+import type { TeamProject, TeamProjectHealth, TeamTask, TeamTaskStatus } from '@/modules/team-projects';
+import HealthStateMenu from './HealthStateMenu';
 import type { ProjectStatus } from '@/modules/org-config';
 import { formatDeadlineSmart } from '@/components/task-table/helpers';
 import { useT } from '@/i18n/useT';
@@ -33,6 +34,8 @@ export interface TeamTasksRowHandlers {
   setStatus: (task: TeamTask, status: TeamTaskStatus) => void;
   /** Statut propre au projet (mig. 197) ; il écrit le statut COSMO correspondant. */
   setCustomStatus: (task: TeamTask, statusId: string) => void;
+  /** État déclaré (mig. 204), même menu que les KR. */
+  setHealth: (task: TeamTask, health: TeamProjectHealth) => void;
   setPriority: (task: TeamTask, priority: number) => void;
   setDeadline: (task: TeamTask, deadline: string) => void;
   assign?: (task: TeamTask) => void;
@@ -205,6 +208,16 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
               {unreadComments}
             </span>
           )}
+          <span className="ml-auto" onClick={(e) => e.stopPropagation()}>
+            <HealthStateMenu
+              health={task.health}
+              done={task.completed}
+              onSetHealth={(h) => handlers.setHealth(task, h)}
+              onMarkDone={() => handlers.toggleComplete(task)}
+              ariaLabel={pf.t('healthMenu.taskAria', { name: task.name })}
+              disabledReason={editReason}
+            />
+          </span>
         </div>
       </td>
       {show('project') && (

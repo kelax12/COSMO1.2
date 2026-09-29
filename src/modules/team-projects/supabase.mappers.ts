@@ -69,6 +69,8 @@ export interface TaskRow {
   start_date?: string | null;
   /** Mig. 197 : absente tant qu'elle n'est pas appliquée. */
   custom_status_id?: string | null;
+  /** Mig. 204 : absente tant qu'elle n'est pas appliquée. */
+  health?: string | null;
 }
 
 export const mapProject = (r: ProjectRow): TeamProject => ({
@@ -156,6 +158,7 @@ export const mapTask = (r: TaskRow): TeamTask => ({
   updatedAt: r.updated_at,
   categoryId: r.category_id,
   customStatusId: r.custom_status_id ?? null,
+  health: (r.health as TeamTask['health'] | null | undefined) ?? null,
 });
 
 

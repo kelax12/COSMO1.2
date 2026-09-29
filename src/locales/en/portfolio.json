@@ -377,5 +377,10 @@
     "reasonOrg": "company",
     "more_one": "and {{count}} more",
     "more_other": "and {{count}} more"
+  },
+  "healthMenu": {
+    "taskAria": "Status of task “{{name}}”",
+    "projectAria": "Status of project “{{name}}”",
+    "denied": "You're not allowed to edit this project."
   }
 }

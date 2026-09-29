@@ -351,6 +351,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     }
     // Statut propre (mig. 197) puis règles (mig. 198), comme les triggers.
     if (input.customStatusId !== undefined) task.customStatusId = input.customStatusId;
+    if (input.health !== undefined) task.health = input.health;
     Object.assign(task, applyDemoTaskRules(task, before));
     task.updatedAt = new Date().toISOString();
     this.saveTasks(tasks);

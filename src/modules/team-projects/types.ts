@@ -238,6 +238,8 @@ export interface TeamTask {
   categoryId?: string | null;
   /** Statut propre au projet (mig. 197) ; il écrit `status`. null = aucun. */
   customStatusId?: string | null;
+  /** État déclaré (mig. 204), même vocabulaire que les KR. null = aucun. */
+  health?: TeamProjectHealth | null;
 }
 
 export interface CreateTeamTaskInput {
@@ -268,6 +270,8 @@ export interface UpdateTeamTaskInput {
   categoryId?: string | null;
   /** Statut propre au projet (mig. 197). */
   customStatusId?: string | null;
+  /** État déclaré (mig. 204). */
+  health?: TeamProjectHealth | null;
 }
 
 /** Commentaire sur une tâche d'équipe (journal immuable, mig. 082). */

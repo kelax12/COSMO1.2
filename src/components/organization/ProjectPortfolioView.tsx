@@ -25,6 +25,8 @@ import {
 import MemberAvatar from './MemberAvatar';
 import ProjectBulkBar from './ProjectBulkBar';
 import { ProjectHealthBadge } from './ProjectHealthSection';
+import HealthStateMenu from './HealthStateMenu';
+import { useUpdateTeamProject } from '@/modules/team-projects';
 import { useT } from '@/i18n/useT';
 import TeamColorDot from './TeamColorDot';
 
@@ -68,6 +70,7 @@ const ProjectPortfolioView = ({
     });
   const exitSelect = () => { onExitSelect?.(); setSelectedIds(new Set()); };
   const { t: pf } = useT('portfolio');
+  const updateProject = useUpdateTeamProject(projects[0]?.orgId ?? '');
   const shortDate = (d: string) => format(parseISO(d), 'd MMM yyyy', { locale: getDateLocale() });
   const memberById = new Map(members.map((m) => [m.userId, m]));
   const teamById = new Map(teams.map((tm) => [tm.id, tm]));
@@ -160,6 +163,15 @@ const ProjectPortfolioView = ({
                     )}
                     {/* Santé déclarée (mig. 190) : un portefeuille se lit d'abord par ses projets à risque. */}
                     <span className="text-caption whitespace-nowrap"><ProjectHealthBadge health={project.health} /></span>
+                    {/* Même menu « État » que les KR : Atteint passe le projet en « Terminé ». */}
+                    <HealthStateMenu
+                      health={project.health}
+                      done={status === 'done'}
+                      onSetHealth={(health) => updateProject.mutate({ projectId: project.id, input: { health } })}
+                      onMarkDone={() => updateProject.mutate({ projectId: project.id, input: { status: 'done' } })}
+                      ariaLabel={pf('healthMenu.projectAria', { name: project.name })}
+                      disabledReason={canBulkEdit ? undefined : pf('healthMenu.denied')}
+                    />
                   </span>
                 </td>
                 <td className="px-3 py-2.5 hidden lg:table-cell text-xs text-[rgb(var(--color-text-secondary))] whitespace-nowrap">
