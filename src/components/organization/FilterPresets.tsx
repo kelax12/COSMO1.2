@@ -8,6 +8,8 @@
 // d'URL natif du navigateur, et jamais le premier geste attendu ici).
 // ═══════════════════════════════════════════════════════════════════
 
+import { AlertTriangle, CalendarDays, CheckCircle2, CheckSquare, Lock, type LucideIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
 import { todayStr } from '@/lib/date-presets';
 import type { TaskStatusFilter } from './team-projects.helpers';
@@ -22,7 +24,20 @@ interface FilterPresetsProps {
   showBlocked?: boolean;
   /** Onglet Projets : les préréglages y trient des projets (« Mes projets »). */
   entity?: 'tasks' | 'projects';
+  /**
+   * Entrée/sortie du mode sélection, rendue comme DERNIÈRE pastille de la
+   * rangée (même place que « Sélectionner » sur la page Tâches personnelle).
+   * Absent : pas de pastille.
+   */
+  onToggleSelect?: () => void;
+  selectMode?: boolean;
 }
+
+/** Pastilles de `TaskQuickFilters` (page Tâches perso, docs/MOBILE.md § Chips
+ *  de filtre) : pilule pleine sans bordure, accent plein quand active. */
+const CHIP = '!rounded-full !border-transparent !bg-[rgb(var(--color-chip-bg))] !text-[rgb(var(--color-text-secondary))] hover:!bg-[rgb(var(--color-hover))] shrink-0';
+const ACTIF =
+  '!rounded-full !bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-transparent';
 
 /** État nu : ce que chaque preset patch au-dessus. Le regroupement (`group`) est un
  *  choix d'affichage, il survit au changement de preset. */
@@ -43,6 +58,7 @@ const in6Days = (): string => {
 interface Preset {
   key: string;
   labelKey: string;
+  icon: LucideIcon;
   apply: (base: OrgTaskFilters, currentUserId?: string) => OrgTaskFilters;
   matches: (f: OrgTaskFilters, currentUserId?: string) => boolean;
   disabled?: (currentUserId?: string) => boolean;
@@ -52,6 +68,7 @@ const PRESETS: Preset[] = [
   {
     key: 'mine',
     labelKey: 'filterPresets.mine',
+    icon: CheckSquare,
     apply: (base, currentUserId) => ({ ...base, assignee: currentUserId ?? null }),
     matches: (f, currentUserId) => !!currentUserId && f.assignee === currentUserId && f.team === '' && !f.blocked,
     disabled: (currentUserId) => !currentUserId,
@@ -59,24 +76,28 @@ const PRESETS: Preset[] = [
   {
     key: 'overdue',
     labelKey: 'filterPresets.overdue',
+    icon: AlertTriangle,
     apply: (base) => ({ ...base, status: 'overdue' }),
     matches: (f) => f.status === 'overdue' && f.assignee === null && f.team === '' && !f.blocked,
   },
   {
     key: 'thisWeek',
     labelKey: 'filterPresets.thisWeek',
+    icon: CalendarDays,
     apply: (base) => ({ ...base, dueFrom: todayStr(), dueTo: in6Days() }),
     matches: (f) => f.dueFrom === todayStr() && f.dueTo === in6Days() && !f.noDue && !f.blocked,
   },
   {
     key: 'doneThisWeek',
     labelKey: 'filterPresets.doneThisWeek',
+    icon: CheckCircle2,
     apply: (base) => ({ ...base, status: 'doneThisWeek' }),
     matches: (f) => f.status === 'doneThisWeek' && !f.blocked,
   },
   {
     key: 'blocked',
     labelKey: 'filterPresets.blocked',
+    icon: Lock,
     apply: (base) => ({ ...base, blocked: true }),
     matches: (f) => f.blocked,
   },
@@ -87,7 +108,9 @@ const PRESETS: Preset[] = [
  * à l'état nu) ; cliquer un autre preset REMPLACE les filtres de
  * portée/attributs, pour donner un départ net à chaque fois.
  */
-const FilterPresets = ({ filters, setFilters, defaultStatus, currentUserId, showBlocked = true, entity = 'tasks' }: FilterPresetsProps) => {
+const FilterPresets = ({
+  filters, setFilters, defaultStatus, currentUserId, showBlocked = true, entity = 'tasks', onToggleSelect, selectMode = false,
+}: FilterPresetsProps) => {
   const { t } = useT('org');
   // Côté Projets, « Moi » (dans la barre de filtres) fait déjà le même filtre
   // que « Mes projets » : le doublon est retiré (maquette du 2026-09-27).
@@ -106,28 +129,41 @@ const FilterPresets = ({ filters, setFilters, defaultStatus, currentUserId, show
     setFilters(preset.apply(base, currentUserId));
   };
 
+  // UNE ligne (2026-09-28) : pastilles et « Sélectionner » défilent ensemble
+  // à l'horizontale plutôt que de passer à la ligne.
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0">
       {presets.map((preset) => {
         const active = preset.matches(filters, currentUserId);
         const isDisabled = preset.disabled?.(currentUserId) ?? false;
+        const Icon = preset.icon;
         return (
-          <button
+          <Button
             key={preset.key}
             type="button"
+            variant="outline"
             onClick={() => togglePreset(preset)}
             disabled={isDisabled}
             aria-pressed={active}
-            className={`h-9 px-3 rounded-lg text-sm font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 disabled:opacity-50 disabled:cursor-not-allowed ${
-              active
-                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300'
-                : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
-            }`}
+            className={`flex items-center gap-2 ${CHIP} ${active ? ACTIF : ''}`}
           >
-            {t(preset.labelKey as Parameters<typeof t>[0])}
-          </button>
+            <Icon size={20} data-icon="inline-start" aria-hidden="true" />
+            <span>{t(preset.labelKey as Parameters<typeof t>[0])}</span>
+          </Button>
         );
       })}
+      {onToggleSelect && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onToggleSelect}
+          aria-pressed={selectMode}
+          className={`flex items-center gap-2 ${CHIP} ${selectMode ? ACTIF : ''}`}
+        >
+          <CheckSquare size={20} data-icon="inline-start" aria-hidden="true" />
+          <span>{selectMode ? t('projects.selectExit') : t('projects.selectMode')}</span>
+        </Button>
+      )}
     </div>
   );
 };

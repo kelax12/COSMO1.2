@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { ArrowUpDown, ChevronDown, ListChecks, Plus } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { PermissionGate } from './permission-hints';
@@ -14,6 +15,12 @@ interface TeamTasksToolbarProps {
   /** Pourquoi « Nouvelle tâche » est grisée : pas de projet, ou pas le droit. */
   createDeniedReason?: string;
   onCreate: () => void;
+  /**
+   * Vue, colonnes, export : à droite, avant « Nouvelle tâche » (2026-09-28).
+   * Ils partageaient la ligne des préréglages, qui passe désormais sur UNE
+   * ligne pleine largeur, comme les filtres rapides de la page Tâches perso.
+   */
+  viewControls?: ReactNode;
 }
 
 /**
@@ -40,6 +47,7 @@ const TeamTasksToolbar = ({
   canCreate,
   createDeniedReason,
   onCreate,
+  viewControls,
 }: TeamTasksToolbarProps) => {
   const { t } = useT('org');
   const criterionLabel: Record<TaskSortCriterion, string> = {
@@ -86,17 +94,20 @@ const TeamTasksToolbar = ({
         </button>
       </div>
 
+      <div className="ml-auto flex items-center gap-2 flex-wrap justify-end">
+      {viewControls}
       <PermissionGate reason={canCreate ? undefined : createDeniedReason}>
       <button
         type="button"
         onClick={onCreate}
         disabled={!canCreate}
-        className="ml-auto inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-95 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 disabled:hover:scale-100"
+        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-95 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 disabled:hover:scale-100"
       >
         <Plus size={18} aria-hidden="true" />
         {t('projects.tasksTabNewTask')}
       </button>
       </PermissionGate>
+      </div>
     </div>
   );
 };
