@@ -344,7 +344,7 @@
     "impactProjects_other": "{{count}} projects will lose their link to this objective",
     "impactChildren_one": "{{count}} contributing objective will lose its parent",
     "impactChildren_other": "{{count}} contributing objectives will lose their parent",
-    "impactIrreversible": "A deleted objective cannot be restored.",
+    "impactIrreversible": "The objective goes to the trash: it can be restored for 30 days.",
     "confirm": "Delete the objective"
   },
   "pyramid": {

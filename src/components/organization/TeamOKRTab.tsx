@@ -18,6 +18,7 @@ import { useTeamProjects, useTeamProjectTaskStats } from '@/modules/team-project
 import { getColorHex } from '@/lib/category-colors';
 import TeamCategoryFilterBar from './TeamCategoryFilterBar';
 import TeamOKRModal from './TeamOKRModal';
+import DeleteTeamOkrConfirm from './DeleteTeamOkrConfirm';
 import TeamOKRCard from './TeamOKRCard';
 import TeamTrashDialog from './TeamTrashDialog';
 import { filterOkrs, OKR_STATES, type OkrState } from './okr-filters.helpers';
@@ -51,6 +52,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const { t } = useT('org');
   const [showCreate, setShowCreate] = useState(false);
   const [editingOKR, setEditingOKR] = useState<TeamOKR | null>(null);
+  const [deletingOKR, setDeletingOKR] = useState<TeamOKR | null>(null);
   // `live` : c'est l'écran où l'on regarde les OKR (cf. useTeamOKRs).
   const { data: okrs = [], isLoading } = useTeamOKRs(orgId, { live: true });
   const { data: teams = [] } = useOrgTeams(orgId);
@@ -198,8 +200,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
             deleteDeniedReason={hints.deniedReason('okr.delete')}
             highlighted={focusedOkrId === okr.id}
             onEdit={() => setEditingOKR(okr)}
-            // Corbeille (mig. 193) : 30 jours pour restaurer, sans confirmation bloquante.
-            onDelete={() => deleteOKR.mutate(okr.id)}
+            onDelete={() => setDeletingOKR(okr)}
             onCommitKR={setCurrent}
             onSetKRHealth={(kr, status, value) => postCheckin.mutate({ krId: kr.id, value, status })}
             onOpenOkr={openOkr}
@@ -211,6 +212,16 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
 
       {showCreate && (
         <TeamOKRModal orgId={orgId} onClose={() => setShowCreate(false)} />
+      )}
+      {deletingOKR && (
+        <DeleteTeamOkrConfirm
+          orgId={orgId}
+          okr={deletingOKR}
+          okrs={okrs}
+          pending={deleteOKR.isPending}
+          onConfirm={() => deleteOKR.mutate(deletingOKR.id, { onSuccess: () => setDeletingOKR(null) })}
+          onCancel={() => setDeletingOKR(null)}
+        />
       )}
       {editingOKR && (
         <TeamOKRModal orgId={orgId} editingOKR={editingOKR} onClose={() => setEditingOKR(null)} />

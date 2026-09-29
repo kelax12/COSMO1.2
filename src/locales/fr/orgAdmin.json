@@ -375,7 +375,7 @@
     "impactChildren_one": "{{count}} objectif qui y contribue n'aura plus d'objectif parent",
     "impactChildren_many": "{{count}} d'objectifs qui y contribuent n'auront plus d'objectif parent",
     "impactChildren_other": "{{count}} objectifs qui y contribuent n'auront plus d'objectif parent",
-    "impactIrreversible": "Un objectif supprimé ne se restaure pas.",
+    "impactIrreversible": "L'objectif part dans la corbeille : il reste restaurable pendant 30 jours.",
     "confirm": "Supprimer l'objectif"
   },
   "pyramid": {
