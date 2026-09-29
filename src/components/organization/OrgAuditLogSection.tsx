@@ -8,7 +8,7 @@
 
 import { useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Download, History } from 'lucide-react';
+import { ArrowRight, Download, History } from 'lucide-react';
 import { useAuditLogPages } from '@/modules/organizations/governance.hooks';
 import type { OrgMember } from '@/modules/organizations';
 import { useOrgTeams } from '@/modules/org-teams';
@@ -18,8 +18,8 @@ import { getDateLocale } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import MemberSelectField from './MemberSelectField';
 import {
-  AUDIT_FAMILIES, auditActionKey, auditFamilyKey, auditObjectName, auditPersonName, buildAuditCsv, isKnownAuditAction,
-  type AuditFamily, type AuditLookups,
+  AUDIT_FAMILIES, auditActionKey, auditChange, auditDayKey, auditFamilyKey, auditObjectName, auditPersonName, buildAuditCsv, isKnownAuditAction,
+  type AuditFamily, type AuditLookups, type AuditValueKind,
 } from './audit-log.helpers';
 import MenuSelect from '@/components/organization/MenuSelect';
 
@@ -48,6 +48,30 @@ const OrgAuditLogSection = ({ orgId, members }: OrgAuditLogSectionProps) => {
   }, [members, teams, projects]);
 
   const someone = t('audit.someone');
+  const { t: tOrg } = useT('org');
+  const { t: tp } = useT('portfolio');
+  const { t: ta } = useT('orgAdmin');
+
+  const days = useMemo(() => {
+    const map = new Map<string, typeof entries>();
+    for (const e of entries) {
+      const k = auditDayKey(e.createdAt);
+      map.set(k, [...(map.get(k) ?? []), e]);
+    }
+    return [...map.entries()];
+  }, [entries]);
+  const formatDay = (day: string) =>
+    format(parseISO(day), 'EEEE d MMMM yyyy', { locale: getDateLocale() });
+
+  const valueLabel = (kind: AuditValueKind, v: string): string => {
+    if (kind === 'role' && (v === 'admin' || v === 'member' || v === 'manager')) return tOrg(`roles.${v}`);
+    if (kind === 'status' && (v === 'planned' || v === 'active' || v === 'on_hold' || v === 'done')) return tp(`status.${v}`);
+    if (kind === 'health' && (v === 'on_track' || v === 'at_risk' || v === 'off_track')) return tp(`health.${v}`);
+    if (kind === 'projectRole' && (v === 'lead' || v === 'contributor' || v === 'viewer')) return tp(`members.role.${v}`);
+    return v;
+  };
+  const emptyLabel = (kind: AuditValueKind): string =>
+    kind === 'team' ? ta('ui.audit.wholeOrg') : kind === 'user' ? ta('ui.audit.nobody') : ta('ui.audit.none');
   const exportCsv = () => {
     const csv = buildAuditCsv(entries, lookups, {
       headers: [t('audit.csv.date'), t('audit.csv.actor'), t('audit.csv.action'), t('audit.csv.person'), t('audit.csv.object')],
@@ -103,28 +127,47 @@ const OrgAuditLogSection = ({ orgId, members }: OrgAuditLogSectionProps) => {
       ) : entries.length === 0 ? (
         <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('audit.empty')}</p>
       ) : (
-        <ol className="divide-y divide-[rgb(var(--color-border))] rounded-xl border border-[rgb(var(--color-border))]">
-          {entries.map((e) => {
-            const actor = e.actorId ? lookups.memberName(e.actorId) ?? someone : t('audit.system');
-            const vars = {
-              actor,
-              person: auditPersonName(e, lookups, someone),
-              object: auditObjectName(e, lookups),
-            };
-            return (
-              <li key={e.id} className="px-3 py-2 flex items-start gap-3">
-                <time dateTime={e.createdAt} className="shrink-0 w-28 text-xs tabular-nums text-[rgb(var(--color-text-muted))]">
-                  {format(parseISO(e.createdAt), 'd MMM yyyy HH:mm', { locale: getDateLocale() })}
-                </time>
-                <p className="text-sm text-[rgb(var(--color-text-primary))] min-w-0 break-words">
-                  {isKnownAuditAction(e.action)
-                    ? t(`audit.action.${auditActionKey(e.action)}`, vars)
-                    : t('audit.action.unknown', vars)}
-                </p>
-              </li>
-            );
-          })}
-        </ol>
+        <div className="space-y-3">
+          {days.map(([day, dayEntries]) => (
+            <section key={day} aria-label={formatDay(day)}>
+              {/* Groupé par jour (reco UI n° 36) : « le 12 » se lit une fois,
+                  pas sur chaque ligne. */}
+              <h3 className="px-1 pb-1 text-xs font-semibold text-[rgb(var(--color-text-muted))]">{formatDay(day)}</h3>
+              <ol className="divide-y divide-[rgb(var(--color-border))] rounded-xl border border-[rgb(var(--color-border))]">
+                {dayEntries.map((e) => {
+                  const actor = e.actorId ? lookups.memberName(e.actorId) ?? someone : t('audit.system');
+                  const vars = {
+                    actor,
+                    person: auditPersonName(e, lookups, someone),
+                    object: auditObjectName(e, lookups),
+                  };
+                  const change = auditChange(e, lookups, valueLabel, emptyLabel);
+                  return (
+                    <li key={e.id} className="px-3 py-2 flex items-start gap-3">
+                      <time dateTime={e.createdAt} className="shrink-0 w-12 text-xs tabular-nums text-[rgb(var(--color-text-muted))]">
+                        {format(parseISO(e.createdAt), 'HH:mm', { locale: getDateLocale() })}
+                      </time>
+                      <div className="min-w-0">
+                        <p className="text-sm text-[rgb(var(--color-text-primary))] break-words">
+                          {isKnownAuditAction(e.action)
+                            ? t(`audit.action.${auditActionKey(e.action)}`, vars)
+                            : t('audit.action.unknown', vars)}
+                        </p>
+                        {change && (
+                          <p className="mt-1 flex items-center flex-wrap gap-1.5 text-xs" aria-label={ta('ui.audit.changeAria', { from: change.from, to: change.to })}>
+                            <span className="px-1.5 py-0.5 rounded bg-red-500/10 text-red-700 dark:text-red-300 line-through">{change.from}</span>
+                            <ArrowRight size={12} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">{change.to}</span>
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
+          ))}
+        </div>
       )}
 
       {hasNextPage && (

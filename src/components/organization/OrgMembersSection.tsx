@@ -3,6 +3,7 @@ import { UserPlus } from 'lucide-react';
 import type { Organization, OrgMember } from '@/modules/organizations';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
+import PendingInvitesStrip from './PendingInvitesStrip';
 
 // Section Membres, `/entreprise/members`. Rendue seulement sur cette
 // section, donc jamais téléchargée par qui ne l'ouvre pas.
@@ -45,6 +46,8 @@ const OrgMembersSection = ({ org, members, currentUserId, isAdmin, isManager, ca
       <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
         {t('page.directoryTitle', { count: members.length })}
       </h2>
+
+      {canInviteByEmail && <PendingInvitesStrip orgId={org.id} />}
 
       <MemberDirectory
         orgId={org.id}

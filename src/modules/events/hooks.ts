@@ -302,3 +302,81 @@ export const useRestoreEvent = () => {
     onError: (error: Error) => reportRestoreFailure('event', error),
   });
 };
+
+// ═══════════════════════════════════════════════════════════════════
+// ÉVÉNEMENTS D'ÉQUIPE (reco UI n° 30)
+// ═══════════════════════════════════════════════════════════════════
+//
+// Il n'y a PAS de table d'événements partagés : un événement d'équipe est
+// UNE ligne par participant, posée dans son agenda. La RLS (mig. 128) ne
+// permet d'écrire que dans le sien et dans celui des personnes qu'on encadre :
+// c'est donc elle qui borne la liste des participants, pas l'écran.
+
+/**
+ * Agendas de plusieurs personnes sur une fenêtre, pour chercher un créneau
+ * commun. `selfId` lit son propre agenda par `getWindow` (le magasin démo
+ * range l'agenda perso ailleurs que celui des membres).
+ */
+export const useGroupEventsWindow = (
+  userIds: string[],
+  selfId: string | undefined,
+  startISO: string,
+  endISO: string,
+) => {
+  const repository = useEventsRepository();
+  // UNE requête pour tout le groupe, pas `useQueries` : ce dernier tire
+  // `QueriesObserver` dans le lot `vendor-query` partagé par toute l'app
+  // (+3 ko bruts mesurés le 2026-09-29), pour un seul écran qui s'en sert.
+  const ids = [...userIds].sort();
+  const query = useQuery({
+    queryKey: [...eventsKeys.all, 'group', ids.join(','), startISO, endISO] as const,
+    queryFn: async () => {
+      const results = await Promise.allSettled(ids.map((uid) => (uid === selfId
+        ? repository.getWindow(startISO, endISO)
+        : repository.getWindowForUser(uid, startISO, endISO))));
+      return {
+        eventsByUser: results.map((r) => (r.status === 'fulfilled' ? r.value : [])),
+        failed: results.filter((r) => r.status === 'rejected').length,
+      };
+    },
+    enabled: ids.length > 0,
+    placeholderData: keepPreviousData,
+  });
+  return {
+    eventsByUser: query.data?.eventsByUser ?? [],
+    isLoading: query.isLoading,
+    failed: query.data?.failed ?? 0,
+  };
+};
+
+export interface GroupEventResult { created: number; failed: number }
+
+/**
+ * Crée le même événement dans l'agenda de chaque participant. `allSettled` :
+ * un refus sur une personne (sortie de l'organisation entre-temps) ne doit
+ * pas priver les autres de leur invitation. Le compte rendu dit combien.
+ */
+export const useCreateGroupEvent = () => {
+  const queryClient = useQueryClient();
+  const repository = useEventsRepository();
+  return useMutation({
+    mutationFn: async ({ userIds, selfId, input }: { userIds: string[]; selfId?: string; input: CreateEventInput }): Promise<GroupEventResult> => {
+      const results = await Promise.allSettled(
+        userIds.map((uid) => (uid === selfId ? repository.create(input) : repository.createForUser(uid, input))),
+      );
+      const created = results.filter((r) => r.status === 'fulfilled').length;
+      if (created === 0) {
+        const first = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+        throw first?.reason instanceof Error ? first.reason : new Error(String(first?.reason));
+      }
+      return { created, failed: results.length - created };
+    },
+    onSuccess: () => {
+      invalidateAllEventQueries(queryClient);
+      queryClient.invalidateQueries({ queryKey: eventsKeys.all });
+    },
+    onError: (error: Error) => {
+      toast.error(translator('errors').t('mutation.createEvent', { message: error.message }));
+    },
+  });
+};

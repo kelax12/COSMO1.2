@@ -9,6 +9,7 @@ import {
 } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 import MemberPermissionsSheet from './MemberPermissionsSheet';
+import PermissionsMatrix from './PermissionsMatrix';
 import { filterMembersByQuery } from './member-search.helpers';
 import { useT } from '@/i18n/useT';
 
@@ -54,6 +55,7 @@ const OrgSettingsPermissions = ({ orgId, members, currentUserId, isAdmin }: OrgS
   return (
     <div className="space-y-3">
       <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('settings.permissionsIntro')}</p>
+      <PermissionsMatrix />
       <div className="flex flex-wrap items-center gap-2">
         <input
           type="search"

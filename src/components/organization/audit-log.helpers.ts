@@ -90,3 +90,58 @@ export function buildAuditCsv(
     ]),
   };
 }
+
+// ─── Avant / après (reco UI n° 36) ─────────────────────────────────────
+//
+// Les triggers qui MODIFIENT une valeur écrivent `meta.from` / `meta.to`
+// (mig. 162, 190). On les rend lisibles : un identifiant de personne ou
+// d'équipe devient un nom, une valeur de code passe par `label`.
+
+export type AuditValueKind = 'user' | 'team' | 'role' | 'status' | 'health' | 'projectRole' | 'text';
+
+const CHANGE_KINDS: Partial<Record<AuditAction, AuditValueKind>> = {
+  'member.role_changed': 'role',
+  'member.moved': 'user',
+  'team.renamed': 'text',
+  'org.renamed': 'text',
+  'project.visibility_changed': 'team',
+  'project.owner_changed': 'user',
+  'project.status_changed': 'status',
+  'project.health_changed': 'health',
+  'project.member_role_changed': 'projectRole',
+};
+
+export interface AuditChange { from: string; to: string }
+
+/**
+ * Le changement porté par l'entrée, ou null. Une valeur absente se lit
+ * `empty` (« aucun » supérieur, projet visible par « toute l'organisation »,
+ * selon le libellé fourni).
+ */
+export function auditChange(
+  entry: AuditEntry,
+  lookups: AuditLookups,
+  label: (kind: AuditValueKind, value: string) => string,
+  empty: (kind: AuditValueKind) => string,
+): AuditChange | null {
+  if (!isKnownAuditAction(entry.action)) return null;
+  const kind = CHANGE_KINDS[entry.action];
+  if (!kind || !entry.meta || !('from' in entry.meta || 'to' in entry.meta)) return null;
+  const read = (key: 'from' | 'to'): string => {
+    const v = entry.meta?.[key];
+    if (v === null || v === undefined || v === '') return empty(kind);
+    const s = String(v);
+    if (kind === 'user') return lookups.memberName(s) ?? empty(kind);
+    if (kind === 'team') return lookups.teamName(s) ?? empty(kind);
+    return label(kind, s);
+  };
+  const change = { from: read('from'), to: read('to') };
+  return change.from === change.to ? null : change;
+}
+
+/** Clé de jour LOCALE (`yyyy-mm-dd`) pour grouper le journal. */
+export const auditDayKey = (iso: string): string => {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};

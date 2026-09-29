@@ -1,6 +1,8 @@
+import { OrgEmptyState } from './OrgPagePrimitives';
+import { OrgTabSkeleton } from './OrgLoadingSkeletons';
 import { Suspense, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Plus, Trash2, Search, ChevronRight, MoreHorizontal, Pencil, Users } from 'lucide-react';
+import { Plus, Trash2, Search, ChevronRight, MoreHorizontal, Pencil, Users, UsersRound } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -58,6 +60,7 @@ const TeamTaskModal = lazyWithRetry(() => import('./TeamTaskModal'));
  */
 const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }: TeamsSectionProps) => {
   const { t, tp } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   const create = useOrgCreate();
   const hints = usePermissionHints(orgId);
 
@@ -106,10 +109,23 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
       </div>
 
 
-      {loadingTeams ? null : teams.length === 0 ? (
-        <p className="text-xs text-[rgb(var(--color-text-muted))] py-3">
-          {canCreateTeam ? t('team.emptyManager') : t('team.empty')}
-        </p>
+      {loadingTeams ? (
+        <OrgTabSkeleton label={t('page.tabLoading')} />
+      ) : teams.length === 0 ? (
+        <OrgEmptyState
+          Icon={UsersRound}
+          title={ta('ui.empty.teamsTitle')}
+          body={canCreateTeam ? t('team.emptyManager') : t('team.empty')}
+          action={canCreateTeam ? (
+            <button
+              type="button"
+              onClick={() => create.openTeam()}
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold"
+            >
+              <Plus size={15} aria-hidden="true" /> {t('team.add')}
+            </button>
+          ) : undefined}
+        />
       ) : (
         <div className="space-y-3">
           {teamsSearchable && (

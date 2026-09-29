@@ -23,6 +23,7 @@ import { PORTFOLIO_CARD_THRESHOLD, matchesProjectSearch, sortProjects } from './
 import { matchesProjectFilters } from './project-filters';
 import { readEntityParam } from './deep-link.helpers';
 import { useTeamProjectsActions } from './use-team-projects-actions';
+import { OrgEmptyState } from './OrgPagePrimitives';
 import { ProjectsSkeleton, ProjectsPulse, ProjectsSearchBar } from './ProjectsPulse';
 import TeamProjectCard from './TeamProjectCard';
 // Vues et surfaces à la demande : chargées au premier affichage (budget du chunk).
@@ -71,6 +72,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const hints = usePermissionHints(orgId);
   const { t, tp } = useT('org');
   const { t: pf, tp: tpf } = useT('portfolio');
+  const { t: ta } = useT('orgAdmin');
   const { prefs, updatePrefs } = useProjectsUiPrefs(orgId);
   // Création : LE formulaire unique de l'organisation (org-create.context).
   const create = useOrgCreate();
@@ -408,23 +410,20 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
 
       <Suspense fallback={<ProjectsSkeleton />}>
       {activeProjects.length === 0 && archivedProjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
-            <FolderKanban size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-          </div>
-          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('projects.empty')}</p>
-          {can['project.create'] ? (
+        <OrgEmptyState
+          Icon={FolderKanban}
+          title={t('projects.empty')}
+          body={can['project.create'] ? ta('ui.empty.projectsBody') : t('projects.managerMustCreate')}
+          action={can['project.create'] ? (
             <button
               type="button"
               onClick={() => newProject()}
-              className="mt-3 inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold"
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold"
             >
               <Plus size={15} aria-hidden="true" /> {t('projects.createProject')}
             </button>
-          ) : (
-            <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">{t('projects.managerMustCreate')}</p>
-          )}
-        </div>
+          ) : undefined}
+        />
       ) : view === 'timeline' ? (
         <TeamProjectsTimeline
           projects={shownProjects}

@@ -1,3 +1,5 @@
+import { OrgEmptyState } from './OrgPagePrimitives';
+import { OrgTabSkeleton } from './OrgLoadingSkeletons';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Plus, Target } from 'lucide-react';
@@ -120,7 +122,8 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   }, [focusedLoaded, focusedHidden, focusedOkrId]);
 
   if (isLoading) {
-    return <div className="py-10 text-center text-sm text-[rgb(var(--color-text-muted))]">{t('okrTab.loading')}</div>;
+    // Squelette (reco UI n° 47) : la forme de l'écran, pas une phrase.
+    return <OrgTabSkeleton label={t('okrTab.loading')} />;
   }
 
   return (
@@ -158,15 +161,20 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
       </div>
 
       {okrs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
-            <Target size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-          </div>
-          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('okrTab.empty')}</p>
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
-            {can['okr.create'] ? t('okrTab.emptyManager') : t('okrTab.emptyMember')}
-          </p>
-        </div>
+        <OrgEmptyState
+          Icon={Target}
+          title={t('okrTab.empty')}
+          body={can['okr.create'] ? t('okrTab.emptyManager') : t('okrTab.emptyMember')}
+          action={can['okr.create'] ? (
+            <button
+              type="button"
+              onClick={() => setShowCreate(true)}
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold"
+            >
+              <Plus size={15} aria-hidden="true" /> {t('okrTab.newObjective')}
+            </button>
+          ) : undefined}
+        />
       ) : visibleOKRs.length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('okrTab.emptyCategory')}</p>

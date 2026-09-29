@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { AuditEntry } from '@/modules/organizations/governance.types';
 import {
+  auditChange, auditDayKey,
   AUDIT_ACTIONS, auditActionKey, auditFamilyKey, auditObjectName, auditPersonName, buildAuditCsv, isKnownAuditAction,
   type AuditLookups,
 } from './audit-log.helpers';
@@ -50,5 +51,43 @@ describe('audit-log.helpers', () => {
     expect(csv.headers).toEqual(['D', 'A', 'Ac', 'P', 'O']);
     expect(csv.rows[0]).toEqual(['2026-09-25T10:00:00Z', 'Alice', 'project.member_added', 'Bob', 'Nom actuel']);
     expect(csv.rows[1][1]).toBe('quelqu’un');
+  });
+});
+
+describe('auditChange (reco UI n° 36)', () => {
+  const entry = (action: string, meta: Record<string, unknown> | null): AuditEntry => ({
+    id: '1', actorId: null, action, targetType: 'x', targetId: null, targetUserId: null, meta, createdAt: '2026-09-29T10:00:00Z',
+  });
+  const lookups = {
+    memberName: (id: string) => ({ u1: 'Léa', u2: 'Tom' } as Record<string, string>)[id],
+    teamName: (id: string) => ({ t1: 'Produit' } as Record<string, string>)[id],
+    projectName: () => undefined,
+  };
+  const label = (_k: string, v: string) => `L:${v}`;
+  const empty = (k: string) => `vide-${k}`;
+
+  it('nomme les personnes d un déplacement dans la pyramide', () => {
+    expect(auditChange(entry('member.moved', { from: 'u1', to: 'u2' }), lookups, label, empty)).toEqual({ from: 'Léa', to: 'Tom' });
+  });
+
+  it('lit une audience NULL comme toute l organisation', () => {
+    expect(auditChange(entry('project.visibility_changed', { from: 't1', to: null }), lookups, label, empty))
+      .toEqual({ from: 'Produit', to: 'vide-team' });
+  });
+
+  it('passe les codes par le libellé', () => {
+    expect(auditChange(entry('project.status_changed', { name: 'X', from: 'active', to: 'done' }), lookups, label, empty))
+      .toEqual({ from: 'L:active', to: 'L:done' });
+  });
+
+  it('ne rend rien sans from/to, pour une action sans changement, ou inconnue', () => {
+    expect(auditChange(entry('member.moved', null), lookups, label, empty)).toBeNull();
+    expect(auditChange(entry('member.joined', { from: 'a', to: 'b' }), lookups, label, empty)).toBeNull();
+    expect(auditChange(entry('zzz.future', { from: 'a', to: 'b' }), lookups, label, empty)).toBeNull();
+  });
+
+  it('groupe par jour LOCAL', () => {
+    const d = new Date(2026, 8, 29, 23, 30);
+    expect(auditDayKey(d.toISOString())).toBe('2026-09-29');
   });
 });

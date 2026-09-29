@@ -505,5 +505,90 @@
     "loading": "Loading the report…",
     "error": "The report couldn't be loaded.",
     "retry": "Retry"
+  },
+  "ui": {
+    "breadcrumbAria": "Breadcrumb",
+    "crumbProjects": "Projects",
+    "crumbTeams": "Teams",
+    "pyramidTitle": "Team pyramid",
+    "pyramidHelp": "The company hierarchy, limited to this team's members. Click someone to open their profile.",
+    "pyramidLead": "Lead",
+    "pendingInvites_one": "{{count}} pending invitation",
+    "pendingInvites_other": "{{count}} pending invitations",
+    "pendingInvitesManage": "Manage",
+    "event": {
+      "open": "Team event",
+      "title": "Create a team event",
+      "help": "The event is added to each participant's calendar. Pick a common slot or set the time yourself.",
+      "name": "Title",
+      "namePlaceholder": "Weekly team sync",
+      "participants_one": "{{count}} participant",
+      "participants_other": "{{count}} participants",
+      "search": "Search for someone",
+      "you": "(you)",
+      "scope": "You can invite yourself and the people you manage.",
+      "skipped_one": "{{count}} team member outside your scope isn't listed.",
+      "skipped_other": "{{count}} team members outside your scope aren't listed.",
+      "date": "Date",
+      "time": "Time",
+      "duration": "Duration",
+      "minutes": "{{count}} min",
+      "hours": "{{count}} h",
+      "slotsTitle": "Common slots",
+      "slotsNeedPeople": "Pick at least one participant.",
+      "slotsLoading": "Reading calendars…",
+      "slotsNone": "No slot free for everyone in the next {{days}} days, between 9 am and 6 pm.",
+      "slotsPrivacy": "Private events aren't visible, so a suggested slot may already be taken.",
+      "slotsUnread_one": "{{count}} calendar couldn't be read.",
+      "slotsUnread_other": "{{count}} calendars couldn't be read.",
+      "description": "Description (optional)",
+      "cancel": "Cancel",
+      "creating": "Creating…",
+      "submit_one": "Add to {{count}} calendar",
+      "submit_other": "Add to {{count}} calendars",
+      "created_one": "Event added to {{count}} calendar",
+      "created_other": "Event added to {{count}} calendars",
+      "partial": "Event added to {{created}} calendars, refused for {{failed}}.",
+      "errorTitle": "Give the event a title.",
+      "errorPeople": "Pick at least one participant.",
+      "errorDate": "Pick a valid date and time."
+    },
+    "audit": {
+      "changeAria": "Before: {{from}}. After: {{to}}.",
+      "wholeOrg": "Whole company",
+      "nobody": "Nobody",
+      "none": "None"
+    },
+    "compare": {
+      "title": "{{period}} compared with the previous period",
+      "completed": "Tasks completed",
+      "created": "Tasks created",
+      "previous": "Previous period",
+      "noBase": "new",
+      "before": "before: {{count}}"
+    },
+    "report": {
+      "export": "Export report",
+      "summary": "Summary",
+      "members": "Members",
+      "projects": "Projects",
+      "okr": "OKRs",
+      "colSection": "Section",
+      "colItem": "Item",
+      "colMeasure": "Measure",
+      "colValue": "Value"
+    },
+    "matrix": {
+      "title": "Default rights for each role",
+      "right": "Right",
+      "yes": "Allowed",
+      "no": "Not allowed",
+      "help": "These are the starting rights. You change them person by person, in the list below."
+    },
+    "confirmName": "Type “{{name}}” to confirm",
+    "empty": {
+      "projectsBody": "A project groups the tasks, people, and deadlines of one piece of work.",
+      "teamsTitle": "No teams yet"
+    }
   }
 }

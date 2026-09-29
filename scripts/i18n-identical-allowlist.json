@@ -333,6 +333,30 @@
       "categorie": "anglicisme-fr",
       "valeur": "manager"
     },
+    "orgAdmin.ui.event.date": {
+      "categorie": "mot-identique",
+      "valeur": "Date"
+    },
+    "orgAdmin.ui.event.hours": {
+      "categorie": "symbole-ou-format",
+      "valeur": "{{count}} h"
+    },
+    "orgAdmin.ui.event.minutes": {
+      "categorie": "symbole-ou-format",
+      "valeur": "{{count}} min"
+    },
+    "orgAdmin.ui.event.participants_one": {
+      "categorie": "mot-identique",
+      "valeur": "{{count}} participant"
+    },
+    "orgAdmin.ui.event.participants_other": {
+      "categorie": "mot-identique",
+      "valeur": "{{count}} participants"
+    },
+    "orgAdmin.ui.report.colSection": {
+      "categorie": "mot-identique",
+      "valeur": "Section"
+    },
     "overlays.palette.groupNavigation": {
       "categorie": "mot-identique",
       "valeur": "Navigation"

@@ -43,6 +43,10 @@ const TransferOwnershipDialog = ({ orgName, candidates, hasSubscription = false,
   const { t } = useT('org');
   const { t: ta } = useT('orgAdmin');
   const [selected, setSelected] = useState('');
+  // Saisie du nom (reco UI n° 45) : le transfert est irréversible pour qui
+  // le fait, l'ancien propriétaire perd l'accès à la facturation.
+  const [typed, setTyped] = useState('');
+  const nameOk = typed.trim() === orgName.trim();
   return (
     <AlertDialog open onOpenChange={(open) => { if (!open) onCancel(); }}>
       <AlertDialogContent className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
@@ -77,13 +81,24 @@ const TransferOwnershipDialog = ({ orgName, candidates, hasSubscription = false,
             <option key={m.userId} value={m.userId}>{m.displayName}</option>
           ))}
         </MenuSelect>
+        <label className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))]" htmlFor="transfer-owner-name">
+          {ta('ui.confirmName', { name: orgName })}
+        </label>
+        <input
+          id="transfer-owner-name"
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          autoComplete="off"
+          spellCheck={false}
+          className="w-full rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2.5 text-sm text-[rgb(var(--color-text-primary))]"
+        />
         <AlertDialogFooter className="gap-2">
           <AlertDialogCancel className="rounded-xl border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] font-semibold text-sm">
             {t('common.cancel')}
           </AlertDialogCancel>
           <AlertDialogAction
-            disabled={pending || !selected}
-            onClick={() => selected && onConfirm(selected)}
+            disabled={pending || !selected || !nameOk}
+            onClick={() => selected && nameOk && onConfirm(selected)}
             className="rounded-xl font-semibold text-sm bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))] hover:opacity-90 disabled:opacity-50"
           >
             {pending ? ta('transfer.pending') : ta('transfer.confirm')}
