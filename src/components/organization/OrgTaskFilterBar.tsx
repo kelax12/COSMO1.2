@@ -90,23 +90,58 @@ const OrgTaskFilterBar = ({
 
   // Efface aussi les filtres d'attributs (priorité, échéance, catégorie,
   // étiquette) : « Tout effacer » ne doit rien laisser filtrer en silence.
+  // Le texte cherché est déjà DANS le champ : pas de pastille pour lui.
+  const pills = chips.filter((chip) => chip.key !== 'q');
   const clearAll = () => setFilters({ team: '', assignee: null, project: null, status: defaultStatus, q: '', ...CLEARED_ATTRIBUTE_FILTERS });
 
   return (
     <div className="space-y-2" role="group" aria-label={t('filters.barAria')}>
       <div className="flex items-center gap-2 flex-wrap">
-        {/* Recherche */}
-        <label className="relative flex-1 min-w-[180px] max-w-md">
-          <span className="sr-only">{searchAria}</span>
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+        {/* Recherche, avec les filtres actifs en pastilles DANS le champ
+            (2026-09-28) : la ligne « Filtres actifs » en dessous coûtait une
+            rangée entière pour une ou deux étiquettes. Retour arrière dans un
+            champ vide retire la dernière pastille, comme un champ d'étiquettes. */}
+        <div
+          className="relative flex-1 min-w-[180px] max-w-md flex items-center flex-wrap gap-1 min-h-9 pl-8 pr-1 py-1 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] focus-within:border-[rgb(var(--color-accent-solid))] cursor-text"
+          onClick={(e) => e.currentTarget.querySelector('input')?.focus()}
+        >
+          <Search size={14} className="absolute left-3 top-[1.125rem] -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+          {pills.map((chip) => (
+            <span key={chip.key} className="inline-flex items-center gap-1 pl-2.5 pr-1 h-7 rounded-full bg-indigo-500/12 text-indigo-600 dark:text-indigo-300 text-xs font-medium whitespace-nowrap">
+              {chip.label}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setFilters(chip.clear); }}
+                aria-label={t('filters.removeFilter', { name: chip.label })}
+                className="w-4 h-4 rounded-full inline-flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-indigo-500/20 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+              >
+                <X size={11} aria-hidden="true" />
+              </button>
+            </span>
+          ))}
           <input
             type="search"
             value={q}
             onChange={(e) => setFilters({ q: e.target.value })}
-            placeholder={searchPlaceholder}
-            className="w-full h-9 pl-8 pr-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent-solid))]"
+            onKeyDown={(e) => {
+              if (e.key === 'Backspace' && q === '' && pills.length > 0) setFilters(pills[pills.length - 1].clear);
+            }}
+            placeholder={pills.length > 0 ? undefined : searchPlaceholder}
+            aria-label={searchAria}
+            className="flex-1 min-w-[6rem] h-7 px-1 no-input-chrome bg-transparent text-sm text-[rgb(var(--color-text-primary))] focus:outline-none"
           />
-        </label>
+          {chips.length > 0 && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); clearAll(); }}
+              aria-label={t('filters.clearAll')}
+              title={t('filters.clearAll')}
+              className="shrink-0 w-7 h-7 rounded-md inline-flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-secondary))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            >
+              <X size={14} aria-hidden="true" />
+            </button>
+          )}
+        </div>
 
         {/* Périmètre : tout / moi / une personne / une équipe */}
         <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5">
@@ -207,31 +242,6 @@ const OrgTaskFilterBar = ({
             semaine » est un préréglage (`FilterPresets`), « Tout » est retiré. */}
       </div>
 
-      {chips.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('filters.activeFilters')}</span>
-          {chips.map((chip) => (
-            <span key={chip.key} className="inline-flex items-center gap-1 pl-2.5 pr-1 py-0.5 rounded-full bg-indigo-500/12 text-indigo-600 dark:text-indigo-300 text-xs font-medium">
-              {chip.label}
-              <button
-                type="button"
-                onClick={() => setFilters(chip.clear)}
-                aria-label={t('filters.removeFilter', { name: chip.label })}
-                className="w-4 h-4 rounded-full inline-flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-indigo-500/20 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-              >
-                <X size={11} aria-hidden="true" />
-              </button>
-            </span>
-          ))}
-          <button
-            type="button"
-            onClick={clearAll}
-            className="text-xs text-[rgb(var(--color-text-muted))] underline underline-offset-2 hover:text-[rgb(var(--color-text-secondary))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
-          >
-            {t('filters.clearAll')}
-          </button>
-        </div>
-      )}
     </div>
   );
 };
