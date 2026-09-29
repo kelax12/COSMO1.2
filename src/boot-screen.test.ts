@@ -46,6 +46,31 @@ describe('écran de démarrage (index.html)', () => {
   });
 });
 
+describe('C-116 · peindre le prérendu, mais seulement sur une page prérendue', () => {
+  const vercel = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8')) as {
+    rewrites: { source: string; destination: string }[];
+  };
+
+  it('peint #seo-fallback et masque le spinner sous html[data-prerendered]', () => {
+    expect(indexHtml).toMatch(/html\[data-prerendered\] #boot-screen\{display:none\}/);
+    expect(indexHtml).toMatch(/html\[data-prerendered\] #seo-fallback\{display:block/);
+  });
+
+  it("n'expose pas l'attribut dans la coquille source : les routes de l'app gardent le spinner", () => {
+    expect(indexHtml).not.toMatch(/<html[^>]*data-prerendered/);
+  });
+
+  it('le prérendu pose data-prerendered et écrit une coquille vierge app.html', () => {
+    expect(prerender).toContain("'<html data-prerendered'");
+    expect(prerender).toMatch(/writeFileSync\(join\(DIST, 'app\.html'\), html/);
+  });
+
+  it("le rewrite SPA sert app.html, jamais la home prérendue (la landing s'afficherait sur /dashboard)", () => {
+    const spa = vercel.rewrites.find((r) => r.source.includes('assets/'));
+    expect(spa?.destination).toBe('/app.html');
+  });
+});
+
 describe('prerender.mjs', () => {
   it('injecte le contenu SEO dans #seo-fallback (masqué), pas en HTML nu', () => {
     expect(prerender).toContain('<div id="seo-fallback">');
