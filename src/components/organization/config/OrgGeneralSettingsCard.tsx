@@ -42,7 +42,7 @@ const OrgGeneralSettingsCard = ({ orgId, isAdmin }: Props) => {
   };
 
   return (
-    <section className={CARD} aria-labelledby="org-general-title">
+    <section className={`${CARD} sm:[zoom:1.15]`} aria-labelledby="org-general-title">
       <h2 id="org-general-title" className={TITLE}>{t('general.title')}</h2>
       <p className={HINT}>{isAdmin ? t('general.hint') : t('general.readOnly')}</p>
       <div className="grid sm:grid-cols-2 gap-3 mt-3">
