@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Search, X, ChevronDown, CheckSquare, Download } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
@@ -27,6 +28,8 @@ interface MemberDirectoryToolbarProps {
   onToggleSelectMode: () => void;
   /** Admins seulement : sinon le bouton n'est pas rendu. */
   onExport?: () => void;
+  /** Bouton Inviter, posé à gauche de Sélectionner (arbitré par le parent). */
+  inviteAction?: ReactNode;
 }
 
 const ROLE_KEY = {
@@ -100,7 +103,7 @@ const TOOL_BUTTON =
  */
 const MemberDirectoryToolbar = ({
   filters, onChange, teams, managers, shown, total,
-  canSelect, selectMode, onToggleSelectMode, onExport,
+  canSelect, selectMode, onToggleSelectMode, onExport, inviteAction,
 }: MemberDirectoryToolbarProps) => {
   const { t } = useT('org');
   const activeCount = activeFilterCount(filters);
@@ -119,7 +122,7 @@ const MemberDirectoryToolbar = ({
   return (
     <div className="mb-3 space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[12rem]">
+        <div className="relative flex-1 min-w-[12rem] max-w-md">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))] pointer-events-none" aria-hidden="true" />
           <input
             type="search"
@@ -140,6 +143,8 @@ const MemberDirectoryToolbar = ({
             </button>
           )}
         </div>
+        <div className="flex-1 hidden sm:block" aria-hidden="true" />
+        {inviteAction}
         {canSelect && (
           <button type="button" onClick={onToggleSelectMode} aria-pressed={selectMode} className={TOOL_BUTTON}>
             <CheckSquare size={15} aria-hidden="true" />
