@@ -60,7 +60,8 @@ export function filterOkrs(
   statsById: Map<string, TeamProjectTaskStats>,
 ): TeamOKR[] {
   return okrs.filter((o) => {
-    if (f.team === 'org' && o.teamIds.length > 0) return false;
+    // « Entreprise » = ouvert à tous : ni équipe, ni audience fermée (mig. 205).
+    if (f.team === 'org' && (o.teamIds.length > 0 || (o.audience ?? 'org') !== 'org')) return false;
     if (f.team && f.team !== 'org' && !o.teamIds.includes(f.team)) return false;
     if (f.person && !okrCarriers(o).has(f.person)) return false;
     if (f.state && okrState(o, links, statsById) !== f.state) return false;

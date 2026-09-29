@@ -17,6 +17,10 @@ interface VisibilityPillProps {
    * s'ajoutent à `teamIds`. Absent pour un objectif.
    */
   projectId?: string;
+  /** OKR 'teams' ou 'custom' (mig. 205) : fermé même sans équipe. */
+  closed?: boolean;
+  /** Personnes nommées d'un OKR 'custom' (mig. 205). */
+  namedIds?: string[];
 }
 
 const REASON_ORDER: VisibilityReason[] = ['team', 'direct', 'hierarchy', 'admin', 'org'];
@@ -26,7 +30,7 @@ const SHOWN = 40;
  * « Visible : équipe Produit + hiérarchie · 14 personnes » (audit 2026-09-24,
  * M12), sur un projet ou un objectif EXISTANT. Un clic dit qui, et pourquoi.
  */
-const VisibilityPill = ({ orgId, teamIds: ownTeamIds, projectId }: VisibilityPillProps) => {
+const VisibilityPill = ({ orgId, teamIds: ownTeamIds, projectId, closed = false, namedIds = [] }: VisibilityPillProps) => {
   const { t, tp } = useT('portfolio');
   const { data: members = [] } = useOrgMembers(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
@@ -44,11 +48,16 @@ const VisibilityPill = ({ orgId, teamIds: ownTeamIds, projectId }: VisibilityPil
 
   // Pas de mémo : le calcul est linéaire en membres, et les tableaux reçus
   // changent d'identité à chaque rendu du parent.
-  const vis = visibilityOf({ members, teamIds, memberships, directIds });
+  const vis = visibilityOf({ members, teamIds, memberships, directIds, closed, namedIds });
   const names = teamIds.map((id) => teams.find((x) => x.id === id)?.name).filter(Boolean).join(', ');
   const scope = vis.wholeOrg
     ? t('visibility.wholeOrg')
-    : directIds.length > 0 ? t('visibility.teamsHierarchyMembers', { teams: names }) : t('visibility.teamsHierarchy', { teams: names });
+    : namedIds.length > 0
+      // OKR « Personnaliser » (mig. 205) : personnes nommées, avec ou sans équipes.
+      ? names ? t('visibility.teamsPeopleHierarchy', { teams: names }) : t('visibility.peopleHierarchy')
+      : directIds.length > 0
+        ? t('visibility.teamsHierarchyMembers', { teams: names })
+        : names ? t('visibility.teamsHierarchy', { teams: names }) : t('visibility.adminsOnly');
   const count = vis.viewers.size;
 
   const reasonLabel: Record<VisibilityReason, string> = {

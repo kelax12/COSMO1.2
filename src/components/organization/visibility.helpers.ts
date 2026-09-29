@@ -29,13 +29,23 @@ interface VisibilityInput {
   memberships: { teamId: string; userId: string }[];
   /** Membres directs (projet seulement). */
   directIds?: string[];
+  /**
+   * Objet FERMÉ même sans équipe (OKR 'teams' ou 'custom', mig. 205) : il ne
+   * s'ouvre jamais à toute l'entreprise faute de lien.
+   */
+  closed?: boolean;
+  /**
+   * Personnes nommées d'un OKR 'custom' (mig. 205). Contrairement aux membres
+   * directs d'un projet, leur hiérarchie voit aussi, comme pour une équipe.
+   */
+  namedIds?: string[];
 }
 
-export function visibilityOf({ members, teamIds, memberships, directIds = [] }: VisibilityInput): Visibility {
+export function visibilityOf({ members, teamIds, memberships, directIds = [], closed = false, namedIds = [] }: VisibilityInput): Visibility {
   const viewers = new Map<string, VisibilityReason>();
   // Un membre suspendu ou dont l'accès a expiré ne voit rien (mig. 161).
   const active = members.filter((m) => isMemberActive(m));
-  if (teamIds.length === 0) {
+  if (teamIds.length === 0 && namedIds.length === 0 && !closed) {
     for (const m of active) viewers.set(m.userId, 'org');
     return { wholeOrg: true, viewers };
   }
@@ -43,11 +53,13 @@ export function visibilityOf({ members, teamIds, memberships, directIds = [] }: 
   const teamSet = new Set(teamIds);
   const inTeams = memberships.filter((m) => teamSet.has(m.teamId) && byId.has(m.userId)).map((m) => m.userId);
   for (const id of inTeams) viewers.set(id, 'team');
+  const named = namedIds.filter((id) => byId.has(id));
+  for (const id of named) if (!viewers.has(id)) viewers.set(id, 'direct');
   // Hiérarchie : remonter depuis chaque membre, cap à 50 comme `is_above`.
   // La chaîne se parcourt sur TOUS les membres : un manager suspendu ne coupe
   // pas l'accès de celui qui est au-dessus de lui.
   const allById = new Map(members.map((m) => [m.userId, m]));
-  for (const id of inTeams) {
+  for (const id of [...inTeams, ...named]) {
     let current = allById.get(allById.get(id)?.managerId ?? '');
     for (let depth = 0; current && depth < 50; depth++) {
       if (byId.has(current.userId) && !viewers.has(current.userId)) viewers.set(current.userId, 'hierarchy');

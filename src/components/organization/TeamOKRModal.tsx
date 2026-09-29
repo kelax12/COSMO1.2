@@ -32,6 +32,7 @@ import {
   useSetKRProjects,
   teamOkrKeys,
   type TeamOKR,
+  type TeamOKRAudience,
   type CreateTeamKRInput,
   type SyncTeamKRInput,
 } from '@/modules/team-okrs';
@@ -44,6 +45,7 @@ import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
 import { OkrParentField, KRProjectsField } from './TeamOKRLinkFields';
 import { useT } from '@/i18n/useT';
 import TeamColorDot from './TeamColorDot';
+import MemberPickList from './MemberPickList';
 
 interface TeamOKRModalProps {
   orgId: string;
@@ -191,7 +193,11 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
       title: title.trim(),
       categoryId,
       endDate: endDate || undefined,
-      teamIds,
+      // « Toute l'entreprise » ne garde aucun lien ; seules les personnes
+      // d'un OKR « Personnaliser » sont écrites (mig. 205).
+      teamIds: visMode === 'org' ? [] : teamIds,
+      audience: visMode,
+      memberIds: visMode === 'custom' ? memberIds : [],
       parentOkrId,
     };
     setSaving(true);
@@ -232,8 +238,12 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
 
   // Visibilité : « Équipes » reste ouvert même tant qu'aucune équipe n'est
   // cochée, sinon le segment se refermerait sous le premier clic.
-  const [visMode, setVisMode] = useState<'org' | 'teams'>(teamIds.length > 0 ? 'teams' : 'org');
-  const chooseVisMode = (mode: 'org' | 'teams') => {
+  const [visMode, setVisMode] = useState<TeamOKRAudience>(
+    editingOKR?.audience ?? (teamIds.length > 0 ? 'teams' : 'org'),
+  );
+  // Personnes nommées d'un OKR « Personnaliser » (mig. 205).
+  const [memberIds, setMemberIds] = useState<string[]>(editingOKR?.memberIds ?? []);
+  const chooseVisMode = (mode: TeamOKRAudience) => {
     setVisMode(mode);
     if (mode === 'org') setTeamIds([]);
   };
@@ -315,8 +325,11 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                   <button type="button" role="radio" aria-checked={visMode === 'teams'} onClick={() => chooseVisMode('teams')} className={segClass(visMode === 'teams')}>
                     {t('okrModal.teamsOption')}
                   </button>
+                  <button type="button" role="radio" aria-checked={visMode === 'custom'} onClick={() => chooseVisMode('custom')} className={segClass(visMode === 'custom')}>
+                    {t('okrModal.customOption')}
+                  </button>
                 </div>
-                {visMode === 'teams' && (
+                {visMode !== 'org' && (
                   <div className="flex flex-wrap gap-1.5">
                     {teams.map((team) => {
                       const active = teamIds.includes(team.id);
@@ -338,10 +351,28 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                     })}
                   </div>
                 )}
+                {visMode === 'custom' && (
+                  <div className="grid gap-1.5">
+                    <span className="font-data text-caption uppercase tracking-[0.06em] text-[rgb(var(--color-text-muted))]">{t('okrModal.customPeople')}</span>
+                    <div className="max-h-56 overflow-y-auto rounded-lg border border-[rgb(var(--color-border))]">
+                      <MemberPickList
+                        members={members}
+                        value={memberIds}
+                        onChange={(next) => setMemberIds(next.slice(0, 50))}
+                        currentUserId={user?.id}
+                        label={t('okrModal.customPeople')}
+                      />
+                    </div>
+                  </div>
+                )}
                 <p className="text-muted-foreground text-xs">
-                  {teamIds.length === 0
+                  {visMode === 'org'
                     ? t('okrModal.visibilityWholeOrg')
-                    : t('okrModal.visibilityTeams')}
+                    : visMode === 'custom'
+                      ? t('okrModal.visibilityCustom')
+                      : teamIds.length > 0
+                        ? t('okrModal.visibilityTeams')
+                        : t('okrModal.visibilityNoneChosen')}
                 </p>
               </div>
             </div>

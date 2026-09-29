@@ -37,4 +37,21 @@ describe('visibilityOf', () => {
     expect(v.viewers.has('mid')).toBe(false);
     expect(v.viewers.get('top')).toBe('hierarchy');
   });
+  // Mig. 205 : « Personnaliser » et OKR fermés.
+  it('OKR fermé sans aucun lien : jamais toute l’entreprise, les admins seuls', () => {
+    const v = visibilityOf({ members, teamIds: [], memberships, closed: true });
+    expect(v.wholeOrg).toBe(false);
+    expect(Object.fromEntries(v.viewers)).toEqual({ admin: 'admin' });
+  });
+
+  it('personne nommée : elle et sa hiérarchie voient, pas les autres', () => {
+    const v = visibilityOf({ members, teamIds: [], memberships, closed: true, namedIds: ['dev'] });
+    expect(Object.fromEntries(v.viewers)).toEqual({ dev: 'direct', lead: 'hierarchy', boss: 'hierarchy', admin: 'admin' });
+    expect(v.viewers.has('ext')).toBe(false);
+  });
+
+  it('une personne nommée mais suspendue ne voit pas', () => {
+    const v = visibilityOf({ members, teamIds: [], memberships, closed: true, namedIds: ['gone'] });
+    expect(v.viewers.has('gone')).toBe(false);
+  });
 });
