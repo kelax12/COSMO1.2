@@ -9,7 +9,6 @@ import { useTeamProjects, useTeamTaskWorkingSet } from '@/modules/team-projects'
 import { useTeamOKRs } from '@/modules/team-okrs';
 import { OrgBreadcrumb } from './OrgPagePrimitives';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
-import TeamPyramid from './TeamPyramid';
 import TeamMembersPanel from './TeamMembersPanel';
 import TeamProfileEditor from './TeamProfileEditor';
 import TeamWorkloadSection from './TeamWorkloadSection';
@@ -319,8 +318,6 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
           />
         </aside>
       </div>
-
-      <TeamPyramid members={members} memberships={teamMemberships} color={team.color} />
 
       {teamProjects.length > 0 && (
         <TeamWorkloadSection orgId={orgId} tasks={tasks} projectIds={projectIds} members={teamMembers} currentUserId={currentUserId} />
