@@ -380,22 +380,29 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         canCreate={projects.length > 0 && can['task.create']}
         createDeniedReason={projects.length === 0 ? t('projects.tasksTabNoProject') : hints.deniedReason('task.create')}
         onCreate={() => setTaskModal({ mode: 'create' })}
+        viewControls={
+          <TeamTasksViewControls
+            columns={columns}
+            onColumnsChange={setColumns}
+            view={tasksView}
+            onViewChange={(v) => updateUiPrefs({ tasksView: v })}
+            kanbanGroupBy={kanbanGroupBy}
+            onKanbanGroupByChange={(g) => updateUiPrefs({ kanbanGroupBy: g })}
+          />
+        }
       />
 
-      <div className="flex items-center justify-between gap-1.5 flex-wrap -mt-2">
-        <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="open" currentUserId={currentUserId ?? user?.id} />
-        <TeamTasksViewControls
-          columns={columns}
-          onColumnsChange={setColumns}
-          view={tasksView}
-          onViewChange={(v) => updateUiPrefs({ tasksView: v })}
-          kanbanGroupBy={kanbanGroupBy}
-          onKanbanGroupByChange={(g) => updateUiPrefs({ kanbanGroupBy: g })}
+      <div className="-mt-2">
+        <FilterPresets
+          filters={filters} setFilters={setFilters} defaultStatus="open" currentUserId={currentUserId ?? user?.id}
+          // « Sélectionner » sur la MÊME ligne que les préréglages, comme sur la page Tâches perso.
+          selectMode={bulk.selectMode}
+          onToggleSelect={sortedTasks.length > 0 || bulk.selectMode
+            ? () => (bulk.selectMode ? bulk.exitSelectMode() : bulk.setSelectMode(true)) : undefined}
         />
       </div>
 
       <TeamTasksSelectRow
-        onStartSelect={sortedTasks.length > 0 && !bulk.selectMode ? () => bulk.setSelectMode(true) : undefined}
         // `!isLoading` : « 0 sur 0 affichées » est un chiffre, donc une
         // affirmation. Tant que rien n'est arrivé, on n'en fait aucune.
         shownLabel={hasActiveFilter && !isLoading
