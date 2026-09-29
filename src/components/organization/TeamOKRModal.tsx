@@ -269,7 +269,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg md:max-w-5xl xl:max-w-6xl rounded-l-2xl border-l-0 overflow-hidden">
+      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg md:max-w-[863px] xl:max-w-[971px] rounded-l-2xl border-l-0 overflow-hidden">
         <SheetHeader className="border-b border-[rgb(var(--color-border-muted))]">
           <span className="font-data text-caption uppercase tracking-[0.08em] text-[rgb(var(--color-text-muted))]">{t('okrModal.eyebrow')}</span>
           <SheetTitle>{isEdit ? t('okrModal.edit') : t('okrModal.new')}</SheetTitle>
@@ -281,7 +281,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
         <ScrollArea className="flex-1 min-h-0">
           {/* Tous les champs sur fond surface (blanc en thème clair), y compris
               les déclencheurs de listes (date, catégorie, objectif parent). */}
-          <div className="grid md:grid-cols-[1fr_0.78fr] [&_input]:!bg-[rgb(var(--color-surface))] [&_textarea]:!bg-[rgb(var(--color-surface))] [&_select]:!bg-[rgb(var(--color-surface))] [&_button[aria-haspopup]]:!bg-[rgb(var(--color-surface))]">
+          <div className="grid md:grid-cols-[0.923fr_1fr] [&_input]:!bg-[rgb(var(--color-surface))] [&_textarea]:!bg-[rgb(var(--color-surface))] [&_select]:!bg-[rgb(var(--color-surface))] [&_button[aria-haspopup]]:!bg-[rgb(var(--color-surface))]">
             {/* Colonne gauche : le cadre de l'objectif. */}
             <div className="grid content-start gap-4 p-4 md:border-r md:border-[rgb(var(--color-border-muted))]">
               <div className="grid gap-2">
