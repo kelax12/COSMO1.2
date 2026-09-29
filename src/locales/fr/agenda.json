@@ -9,7 +9,8 @@
     "prevPeriod": "Période précédente",
     "nextPeriod": "Période suivante",
     "backToToday": "Revenir à aujourd'hui",
-    "today": "Aujourd'hui"
+    "today": "Aujourd'hui",
+    "calendarScroller": "Grille du calendrier"
   },
   "view": {
     "day": "Jour",

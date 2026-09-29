@@ -50,6 +50,7 @@ import { getInitialScrollTime, shiftEventsForDisplay, type FullCalendarEvent } f
 import { useTimezonePref, displayNow } from '@/lib/timezone';
 import { type MobileView, mobileCalendarStyles, MobileDayStrip } from './MobileAgenda';
 import type { MobileZoomOrder } from './useAgendaMobileView';
+import { useFocusableScrollers } from './useFocusableScrollers';
 
 /**
  * Cible du lien d'évitement du panneau des tâches. Portée par le conteneur du
@@ -285,6 +286,12 @@ const AgendaCalendarSection = ({
   const zoomPointRef = React.useRef(mobileZoom);
   zoomPointRef.current = mobileZoom;
 
+  // C-119 : défileurs FullCalendar focalisables (WebKit ne le fait pas seul).
+  const desktopShellRef = React.useRef<HTMLDivElement>(null);
+  const scrollerLabel = t('nav.calendarScroller');
+  useFocusableScrollers(mobileShellRef, scrollerLabel, isMobile);
+  useFocusableScrollers(desktopShellRef, scrollerLabel);
+
   React.useEffect(() => {
     if (!zoomToken) return;
     // 🔴 Sous `prefers-reduced-motion`, `<MotionConfig reducedMotion="user">`
@@ -430,7 +437,7 @@ const AgendaCalendarSection = ({
           tabIndex={-1}
           data-tutorial-id="agenda-calendar-grid"
           style={{ backgroundColor: 'rgb(var(--calendar-bg))', borderColor: 'rgb(var(--calendar-border))' }}>
-          <div className="p-2 lg:p-6 h-full w-full overflow-hidden">
+          <div ref={desktopShellRef} className="p-2 lg:p-6 h-full w-full overflow-hidden">
             <FullCalendar
               key={desktopKey}
               ref={desktopRef}
