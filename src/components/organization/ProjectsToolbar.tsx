@@ -45,7 +45,7 @@ const ViewTab = ({ active, onClick, label, Icon }: {
     aria-label={label}
     className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 ${
       active
-        ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
+        ? 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] shadow-sm'
         : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
     }`}
   >
@@ -70,14 +70,14 @@ const ProjectsToolbar = ({
   const chooseView = (next: ProjectsUiPrefs['view']) => updatePrefs({ view: next, viewChosen: true });
 
   const segBase = 'h-8 px-2.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
-  const segOn = 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]';
+  const segOn = 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] shadow-sm';
   const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {/* ── Vue, réglages rares ──────────────────────────────────── */}
       <div
-        className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5"
+        className="inline-flex rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5 gap-0.5"
         role="group"
         aria-label={pf('toolbar.viewLabel')}
       >
@@ -93,7 +93,7 @@ const ProjectsToolbar = ({
         <div className="inline-flex items-center gap-1.5">
           <span className="hidden md:inline text-xs text-[rgb(var(--color-text-muted))]">{pf('toolbar.rowsLabel')}</span>
           <div
-            className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5"
+            className="inline-flex rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5 gap-0.5"
             role="group"
             aria-label={pf('toolbar.rowsLabel')}
           >

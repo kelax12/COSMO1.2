@@ -83,7 +83,7 @@ const KRExecutionDialog = ({
         {/* ── Mode de progression ─────────────────────────────────── */}
         <section className="space-y-2">
           <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{pf('krExec.modeTitle')}</h3>
-          <div role="radiogroup" aria-label={pf('krExec.modeTitle')} className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5">
+          <div role="radiogroup" aria-label={pf('krExec.modeTitle')} className="inline-flex rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5 gap-0.5">
             {(['manual', 'tasks'] as const).map((mode) => (
               <button
                 key={mode}
@@ -94,7 +94,7 @@ const KRExecutionDialog = ({
                 onClick={() => updateKR.mutate({ krId: kr.id, input: { progressMode: mode } })}
                 className={`h-8 px-3 rounded-md text-sm font-medium transition-colors disabled:cursor-not-allowed ${
                   (kr.progressMode ?? 'manual') === mode
-                    ? 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]'
+                    ? 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] shadow-sm'
                     : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
                 }`}
               >
