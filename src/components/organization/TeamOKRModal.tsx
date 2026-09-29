@@ -259,7 +259,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg md:max-w-4xl rounded-l-2xl border-l-0 overflow-hidden">
+      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg md:max-w-5xl xl:max-w-6xl rounded-l-2xl border-l-0 overflow-hidden">
         <SheetHeader className="border-b border-[rgb(var(--color-border-muted))]">
           <span className="font-data text-[10px] uppercase tracking-[0.08em] text-[rgb(var(--color-text-muted))]">{t('okrModal.eyebrow')}</span>
           <SheetTitle>{isEdit ? t('okrModal.edit') : t('okrModal.new')}</SheetTitle>
