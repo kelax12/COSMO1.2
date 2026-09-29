@@ -4,7 +4,7 @@ import type { Organization, OrgMember } from '@/modules/organizations';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
 
-// Section Personnes, `/entreprise/members`. Rendue seulement sur cette
+// Section Membres, `/entreprise/members`. Rendue seulement sur cette
 // section, donc jamais téléchargée par qui ne l'ouvre pas.
 //
 // Audit Membres du 2026-09-24 : elle tenait « quatre pages en une »
@@ -42,19 +42,9 @@ const OrgMembersSection = ({ org, members, currentUserId, isAdmin, isManager, ca
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
-          {t('page.directoryTitle', { count: members.length })}
-        </h2>
-        {/* Un seul bouton : la modale montre les quatre canaux en onglets. */}
-        <button
-          type="button"
-          onClick={() => setChoosingMode(true)}
-          className="inline-flex items-center gap-1.5 min-h-9 px-3 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))]"
-        >
-          <UserPlus size={14} aria-hidden="true" /> {t('settings.inviteTitle')}
-        </button>
-      </div>
+      <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
+        {t('page.directoryTitle', { count: members.length })}
+      </h2>
 
       <MemberDirectory
         orgId={org.id}
@@ -62,6 +52,16 @@ const OrgMembersSection = ({ org, members, currentUserId, isAdmin, isManager, ca
         members={members}
         currentUserId={currentUserId}
         isAdmin={isAdmin}
+        inviteAction={
+          // Un seul bouton : la modale montre les quatre canaux en onglets.
+          <button
+            type="button"
+            onClick={() => setChoosingMode(true)}
+            className="inline-flex items-center gap-1.5 h-10 px-3 rounded-xl text-sm font-semibold whitespace-nowrap bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))]"
+          >
+            <UserPlus size={14} aria-hidden="true" /> {t('settings.inviteTitle')}
+          </button>
+        }
       />
 
       <Suspense fallback={null}>

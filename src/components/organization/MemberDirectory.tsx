@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import {
   useSetMemberRole,
@@ -57,6 +57,8 @@ interface MemberDirectoryProps {
   currentUserId?: string;
   /** L'utilisateur courant est-il admin ? */
   isAdmin: boolean;
+  /** Bouton Inviter : dans la barre, ou seul à droite quand la barre est masquée. */
+  inviteAction?: ReactNode;
 }
 
 /**
@@ -68,7 +70,7 @@ interface MemberDirectoryProps {
  * Audit « passage à l'échelle » (2026-09-23) : filtres partageables par l'URL,
  * sélection + actions groupées, export CSV (admins), dernière activité.
  */
-const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: MemberDirectoryProps) => {
+const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, inviteAction }: MemberDirectoryProps) => {
   const { t } = useT('org');
   const setRole = useSetMemberRole();
   // Un admin rétrogradé perd la main sur l'organisation : on le confirme.
@@ -225,7 +227,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
     <>
       {/* La barre n'apparaît que si l'annuaire compte quelques membres, SAUF si
           un lien arrive déjà filtré : il faut pouvoir voir et retirer le filtre. */}
-      {(members.length > 3 || filteredMembers.length !== members.length) && (
+      {(members.length > 3 || filteredMembers.length !== members.length) ? (
         <MemberDirectoryToolbar
           filters={filters}
           onChange={setFilters}
@@ -237,8 +239,11 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
           selectMode={bulk.selectMode}
           onToggleSelectMode={bulk.toggleSelectMode}
           onExport={isAdmin ? exportCsv : undefined}
+          inviteAction={inviteAction}
         />
-      )}
+      ) : inviteAction ? (
+        <div className="mb-3 flex justify-end">{inviteAction}</div>
+      ) : null}
 
       {filteredMembers.length === 0 ? (
         <p className="text-sm text-[rgb(var(--color-text-muted))] py-8 text-center">
