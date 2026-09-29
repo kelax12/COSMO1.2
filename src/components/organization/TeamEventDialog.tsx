@@ -179,7 +179,7 @@ const TeamEventDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-[39rem] max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+      <DialogContent className="sm:max-w-[39rem] max-h-[90vh] sm:max-h-[83vh] sm:[zoom:1.08] overflow-y-auto" aria-describedby={undefined}>
         <DialogTitle>{t('ui.event.title')}</DialogTitle>
 
         <ol className="flex items-center gap-2" aria-label={t('ui.event.stepOf', { step: step + 1, total: steps.length })}>
