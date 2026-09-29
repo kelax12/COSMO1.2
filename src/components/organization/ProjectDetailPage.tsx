@@ -13,7 +13,7 @@
 import { Suspense, useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import {
-  ArrowLeft, Settings2, Copy, LayoutTemplate, Archive, ArchiveRestore, Plus,
+  Settings2, Copy, LayoutTemplate, Archive, ArchiveRestore, Plus,
   CalendarRange, UsersRound, UserRound, ChevronDown, ChevronRight, ListChecks,
 } from 'lucide-react';
 import { getDateLocale } from '@/i18n/format';
@@ -33,6 +33,7 @@ import TeamTaskRow from './TeamTaskRow';
 import ProjectMilestonesSection from './ProjectMilestonesSection';
 import ProjectDependenciesSection from './ProjectDependenciesSection';
 import ProjectAudienceActions from './ProjectAudienceActions';
+import { OrgBreadcrumb } from './OrgPagePrimitives';
 import { useT } from '@/i18n/useT';
 
 interface ProjectDetailPageProps {
@@ -91,6 +92,7 @@ const ProjectDetailPage = ({
 }: ProjectDetailPageProps) => {
   const { t } = useT('org');
   const { t: pf } = useT('portfolio');
+  const { t: ta } = useT('orgAdmin');
   const [showCompleted, setShowCompleted] = useState(false);
   const color = projectColor(project.color);
   const status = project.status ?? 'active';
@@ -127,13 +129,7 @@ const ProjectDetailPage = ({
 
   return (
     <div className="space-y-4">
-      <button
-        type="button"
-        onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
-      >
-        <ArrowLeft size={15} aria-hidden="true" /> {pf('back')}
-      </button>
+      <OrgBreadcrumb items={[{ label: ta('ui.crumbProjects'), onClick: onBack }, { label: project.name }]} />
 
       <header className={`rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 sm:p-5 ${archived ? 'opacity-80' : ''}`}>
         <div className="flex items-start gap-3 flex-wrap">

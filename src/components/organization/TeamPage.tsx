@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowLeft, Pencil, Trash2, FolderKanban, Target, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { CalendarPlus, Pencil, Trash2, FolderKanban, Target, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { startOfDay, subDays } from 'date-fns';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
 import { useTeamProjects, useTeamTaskWorkingSet } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
+import { OrgBreadcrumb } from './OrgPagePrimitives';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import TeamPyramid from './TeamPyramid';
 import TeamMembersPanel from './TeamMembersPanel';
 import TeamProfileEditor from './TeamProfileEditor';
 import TeamWorkloadSection from './TeamWorkloadSection';
@@ -31,6 +34,9 @@ interface TeamPageProps {
   currentUserId?: string;
   isAdmin: boolean;
 }
+
+// Chargée à l'ouverture : la page d'équipe n'en paie rien tant qu'on ne planifie pas.
+const TeamEventDialog = lazyWithRetry(() => import('./TeamEventDialog'));
 
 const cardClass = 'rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]';
 const headingClass = 'text-base font-bold text-[rgb(var(--color-text-primary))] mb-4';
@@ -68,6 +74,7 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
   const { data: tasks = [] } = useTeamTaskWorkingSet(orgId, since);
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [planning, setPlanning] = useState(false);
   const [openKrs, setOpenKrs] = useState<ReadonlySet<string>>(new Set());
 
   const team = teams.find((tm) => tm.id === teamId);
@@ -85,13 +92,14 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
     );
   }, [members, teamMemberships]);
 
+  const { t: ta } = useT('orgAdmin');
   const backLink = (
-    <Link
-      to={orgSectionPath('teams')}
-      className="inline-flex items-center gap-1.5 text-sm font-medium text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] min-h-11"
-    >
-      <ArrowLeft size={15} aria-hidden="true" /> {t('teamPage.back')}
-    </Link>
+    <OrgBreadcrumb
+      items={[
+        { label: ta('ui.crumbTeams'), to: orgSectionPath('teams') },
+        { label: team?.name ?? t('teamPage.back') },
+      ]}
+    />
   );
 
   if (loadingTeams) return <OrgTabSkeleton label={t('page.tabLoading')} />;
@@ -143,6 +151,15 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
                   )}
                 </div>
                 <div className="flex gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setPlanning(true)}
+                    className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
+                  >
+                    <CalendarPlus size={15} aria-hidden="true" />
+                    <span className="hidden sm:inline">{ta('ui.event.open')}</span>
+                    <span className="sr-only sm:hidden">{ta('ui.event.open')}</span>
+                  </button>
                   {canManage && (
                     <button
                       type="button"
@@ -303,6 +320,8 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
         </aside>
       </div>
 
+      <TeamPyramid members={members} memberships={teamMemberships} color={team.color} />
+
       {teamProjects.length > 0 && (
         <TeamWorkloadSection orgId={orgId} tasks={tasks} projectIds={projectIds} members={teamMembers} currentUserId={currentUserId} />
       )}
@@ -313,6 +332,20 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
           {editing && <TeamProfileEditor orgId={orgId} team={team} onDone={() => setEditing(false)} />}
         </DialogContent>
       </Dialog>
+
+      {planning && (
+        <Suspense fallback={null}>
+          <TeamEventDialog
+            open
+            onClose={() => setPlanning(false)}
+            members={members}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
+            defaultParticipantIds={teamMemberships.map((m) => m.userId)}
+            color={team.color}
+          />
+        </Suspense>
+      )}
 
       {deleting && (
         <DeleteTeamDialog orgId={orgId} team={team} teams={teams} onClose={() => setDeleting(false)} />

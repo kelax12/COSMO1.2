@@ -55,6 +55,31 @@ export function OrgBillingSeats({ members, ownerId, quota }: Props) {
             : tp('seatsCount', members.length, { quota })}
         </span>
       </div>
+      {quota !== null && quota > 0 && (() => {
+        // Jauge (reco UI n° 43) : « 14 sur 20 » se lit, une barre se voit.
+        const ratio = Math.min(1, members.length / quota);
+        const left = Math.max(0, quota - members.length);
+        const tone = ratio >= 1 ? 'bg-red-500' : ratio >= 0.8 ? 'bg-amber-500' : 'bg-[rgb(var(--color-accent-solid))]';
+        return (
+          <div>
+            <div
+              className="h-2 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={quota}
+              aria-valuenow={Math.min(members.length, quota)}
+              aria-label={t('seatsGaugeAria')}
+            >
+              <div className={`h-full rounded-full ${tone}`} style={{ width: `${Math.round(ratio * 100)}%` }} />
+            </div>
+            <p className="mt-1 text-xs text-[rgb(var(--color-text-muted))]">
+              {members.length > quota
+                ? tp('seatsGaugeOver', members.length - quota)
+                : left === 0 ? t('seatsGaugeFull') : tp('seatsGaugeLeft', left)}
+            </p>
+          </div>
+        );
+      })()}
       <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('seatsRule')}</p>
 
       <ul className="divide-y divide-[rgb(var(--color-border))]">

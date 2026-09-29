@@ -2,8 +2,7 @@ import type { ReactNode } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Shield, UserCog, UserRound, MoreVertical, ShieldCheck,
-  ListTodo, CalendarDays, TrendingUp, ClipboardList,
-} from 'lucide-react';
+  ListTodo, CalendarDays, TrendingUp, ClipboardList, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -146,7 +145,12 @@ const MemberDirectoryRow = ({
             aria-label={t('directory.changeRoleAria', { name: m.displayName })}
           >
             {/* Le « ? » du terme est À CÔTÉ du bouton, jamais dedans. */}
-            <RoleBadge kind={role} help={false} />
+            {/* Chevron (reco UI n° 23) : sans lui, rien ne dit que la
+                pastille est un menu éditable sur place. */}
+            <span className="inline-flex items-center gap-0.5">
+              <RoleBadge kind={role} help={false} />
+              <ChevronDown size={12} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
+            </span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuRadioGroup

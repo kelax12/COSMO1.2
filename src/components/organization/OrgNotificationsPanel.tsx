@@ -74,6 +74,14 @@ const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings
 
   // Sections de récence, recalculées quand la liste ou le filtre change.
   const filters = useMemo(() => availableFilters(notifications), [notifications]);
+  // « Nouveau » = non lu, OU lu depuis moins de deux minutes : la cloche marque
+  // tout comme lu À L'OUVERTURE, et ce panneau (chargé à part) peut s'afficher
+  // après ce marquage. Sans cette marge, les compteurs tomberaient à zéro.
+  const [newSince] = useState(() => Date.now() - 120_000);
+  const unreadByFilter = useMemo(() => {
+    const unread = notifications.filter((n) => !n.readAt || Date.parse(n.readAt) >= newSince);
+    return Object.fromEntries(filters.map((f) => [f, filterNotifications(unread, f).length])) as Record<NotificationFilter, number>;
+  }, [notifications, filters, newSince]);
   // Un filtre devenu vide (tout marqué, liste relue) retombe sur « Tout ».
   const activeFilter = filters.includes(filter) ? filter : 'all';
   const groups = useMemo(
@@ -127,6 +135,11 @@ const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings
                   }`}
                 >
                   {t(NOTIFICATION_FILTER_LABEL[f])}
+                  {/* Non lues par type (reco UI n° 31) : on voit où se trouve
+                      le travail avant d'ouvrir le filtre. */}
+                  {unreadByFilter[f] > 0 && (
+                    <span className="ml-1 tabular-nums opacity-80">{unreadByFilter[f]}</span>
+                  )}
                 </button>
               ))}
             </div>

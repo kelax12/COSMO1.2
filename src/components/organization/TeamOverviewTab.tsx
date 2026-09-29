@@ -10,14 +10,14 @@ import { isManagerOf, type OrgMember } from '@/modules/organizations';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import { projectColor } from './team-projects.helpers';
 import { Download, ClipboardCheck } from 'lucide-react';
-import { downloadCSV } from '@/lib/csv-export';
 import {
   STATS_PERIODS, type StatsPeriod, periodStart, filterByActivity, scopeOkrs,
   summarize, overallOkrProgress, memberLoad, overdueByMember,
-  projectBreakdown, velocityByWeek, completionTrend, okrBreakdown, isOverdue,
+  projectBreakdown, velocityByWeek, comparedWindows, periodFlow, completionTrend, okrBreakdown, isOverdue,
   memberWorkload,
 } from './team-stats.helpers';
 import TeamWorkloadCard from './TeamWorkloadCard';
+import PeriodCompareCard from './PeriodCompareCard';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import WeeklyReviewSheet from './WeeklyReviewSheet';
 import { buildOrgLink } from './deep-link.helpers';
@@ -41,9 +41,6 @@ const firstName = (name: string) => name.split(' ')[0];
 const velocityColor = '#10b981';
 const trendColor = '#6366f1';
 
-// Fonctionnalité gardée telle quelle (handleExport, downloadCSV) — seul le
-// bouton est masqué. Repasser à `true` suffit à la remettre en place.
-const CSV_EXPORT_ENABLED = false;
 
 const SectionCard = ({ title, children, aside }: {
   title: string; children: React.ReactNode; aside?: React.ReactNode;
@@ -97,9 +94,13 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   // cartes (les tâches actives dans la fenêtre) : une tâche close avant la
   // fenêtre n'y figure plus. « Tout » reste une lecture complète, plafonnée,
   // et le dit par un bandeau.
+  // Comparaison de période (reco UI n° 38) : la lecture remonte à la fenêtre
+  // PRÉCÉDENTE, sinon ses complétions manqueraient et la variation serait
+  // fausse. Tout le reste filtre déjà sur `start`.
+  const windows = useMemo(() => comparedWindows(period), [period]);
   const since = useMemo(
-    () => (start ? startOfWeek(start, { weekStartsOn: 1 }).toISOString() : null),
-    [start],
+    () => (windows ? startOfWeek(windows.previous[0], { weekStartsOn: 1 }).toISOString() : null),
+    [windows],
   );
   const { data: allTasks = [], isLoading: loadingTasks } = useTeamTaskWorkingSet(orgId, since);
   const { data: projects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
@@ -172,27 +173,55 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
     : t('overview.periodDays', { count: periodDays });
   const periodHint = period === 'all' ? t('overview.sinceStart') : t('overview.activeOver', { period: periodLabel });
 
-  // Export CSV (reco #14) — membres, projets, OKR (3 fichiers espacés,
-  // Safari refuse plusieurs .click() simultanés, cf. exportAllCSV).
-  const handleExport = () => {
+  const flows = useMemo(() => {
+    if (!windows) return null;
+    return {
+      current: periodFlow(scopedTasks, windows.current[0], windows.current[1]),
+      previous: periodFlow(scopedTasks, windows.previous[0], windows.previous[1]),
+    };
+  }, [scopedTasks, windows]);
+
+  // Rapport en un clic (reco UI n° 40) : UN fichier, format « long »
+  // (section, élément, mesure, valeur), qui s'ouvre tel quel dans un tableur.
+  // Trois fichiers successifs étaient bloqués par Safari au-delà du premier.
+  // `csv-export` chargé AU CLIC : importé en dur, il devenait un lot partagé
+  // de plus dans les préchargements de `OrganizationPage` (à son plafond).
+  const handleExport = async () => {
+    const { downloadCSV } = await import('@/lib/csv-export');
+    const S = { summary: ta('ui.report.summary'), member: ta('ui.report.members'), project: ta('ui.report.projects'), okr: ta('ui.report.okr') };
+    const rows: (string | number)[][] = [
+      [S.summary, periodLabel, t('overview.csvTotal'), summary.total],
+      [S.summary, periodLabel, t('overview.csvDone'), summary.completed],
+      [S.summary, periodLabel, t('overview.csvOverdue'), summary.overdueCount],
+      [S.summary, periodLabel, t('overview.csvRate'), summary.completionRate],
+      [S.summary, periodLabel, t('overview.okrProgressLabel'), okrProgress],
+    ];
+    if (flows) {
+      rows.push(
+        [S.summary, ta('ui.compare.previous'), ta('ui.compare.created'), flows.previous.created],
+        [S.summary, ta('ui.compare.previous'), ta('ui.compare.completed'), flows.previous.completed],
+        [S.summary, periodLabel, ta('ui.compare.created'), flows.current.created],
+        [S.summary, periodLabel, ta('ui.compare.completed'), flows.current.completed],
+      );
+    }
+    for (const m of load) {
+      const overdue = overdueMembers.find((o) => o.userId === m.userId)?.count ?? 0;
+      rows.push(
+        [S.member, m.name, t('overview.csvOpen'), m.open],
+        [S.member, m.name, t('overview.csvDone'), m.done],
+        [S.member, m.name, t('overview.csvRate'), m.completionRate],
+        [S.member, m.name, t('overview.csvOverdue'), overdue],
+      );
+    }
+    for (const p of byProject) {
+      rows.push([S.project, p.name, t('overview.openShort'), p.open], [S.project, p.name, t('overview.overdueShort'), p.overdue]);
+    }
+    for (const o of okrStats) rows.push([S.okr, o.title, t('overview.csvProgress'), o.progress]);
     downloadCSV(
-      'cosmo-stats-membres',
-      [t('overview.csvMember'), t('overview.csvOpen'), t('overview.csvDone'), t('overview.csvTotal'), t('overview.csvRate'), t('overview.csvOverdue')],
-      load.map((m) => [
-        m.name, m.open, m.done, m.total, m.completionRate,
-        overdueMembers.find((o) => o.userId === m.userId)?.count ?? 0,
-      ]),
+      'cosmo-rapport-entreprise',
+      [ta('ui.report.colSection'), ta('ui.report.colItem'), ta('ui.report.colMeasure'), ta('ui.report.colValue')],
+      rows,
     );
-    setTimeout(() => downloadCSV(
-      'cosmo-stats-projets',
-      [t('overview.csvProject'), t('overview.openShort'), t('overview.overdueShort'), t('overview.csvTotal')],
-      byProject.map((p) => [p.name, p.open, p.overdue, p.total]),
-    ), 150);
-    setTimeout(() => downloadCSV(
-      'cosmo-stats-okr',
-      [t('okrModal.objective'), t('overview.csvProgress'), t('overview.csvKrCount')],
-      okrStats.map((o) => [o.title, o.progress, o.krCount]),
-    ), 300);
   };
 
   return (
@@ -234,17 +263,14 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
               <ClipboardCheck size={13} aria-hidden="true" /> {ta('weeklyReview.open')}
             </button>
           )}
-          {/* Bouton masqué (pas la fonctionnalité) — remise en place possible
-              en repassant CSV_EXPORT_ENABLED à true, cf. sa déclaration. */}
-          {CSV_EXPORT_ENABLED && (
-            <button
-              type="button"
-              onClick={handleExport}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-            >
-              <Download size={13} aria-hidden="true" /> Exporter CSV
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={isLoading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors disabled:opacity-50"
+          >
+            <Download size={13} aria-hidden="true" /> {ta('ui.report.export')}
+          </button>
         </div>
       </div>
 
@@ -266,6 +292,14 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         emptyLabel={t('overview.emptyPeriod')}
         aside={<ProgressRing value={okrProgress} label={t('overview.okrProgressLabel')} />}
       />
+
+      {flows && (
+        <PeriodCompareCard
+          periodLabel={periodLabel}
+          current={flows.current}
+          previous={flows.previous}
+        />
+      )}
 
       {/* Charge de l'équipe — placée juste sous la synthèse : c'est la question
           la plus opérationnelle de l'onglet, elle ne doit pas se mériter. */}

@@ -1,5 +1,13 @@
 {
   "seatsTitle": "Qui compte",
+  "seatsGaugeAria": "Sièges occupés",
+  "seatsGaugeFull": "Tous les sièges de ce palier sont occupés.",
+  "seatsGaugeOver_one": "{{count}} membre au-delà de ce palier",
+  "seatsGaugeOver_many": "{{count}} de membres au-delà de ce palier",
+  "seatsGaugeOver_other": "{{count}} membres au-delà de ce palier",
+  "seatsGaugeLeft_one": "{{count}} siège libre dans ce palier",
+  "seatsGaugeLeft_many": "{{count}} de sièges libres dans ce palier",
+  "seatsGaugeLeft_other": "{{count}} sièges libres dans ce palier",
   "seatsCountUnlimited_one": "{{count}} siège occupé",
   "seatsCountUnlimited_many": "{{count}} de sièges occupés",
   "seatsCountUnlimited_other": "{{count}} sièges occupés",
