@@ -236,7 +236,11 @@
     "create": "Create",
     "descPlaceholder": "Optional…",
     "wholeOrg": "Whole organization",
-    "visibilityWholeOrg": "Objective visible to every member of the company."
+    "visibilityWholeOrg": "Objective visible to every member of the company.",
+    "teamsOption": "Teams",
+    "current": "Current",
+    "weightedProgress": "Weighted progress · {{pct}}%",
+    "eyebrow": "Company mode · OKR"
   },
   "projects": {
     "taskDeleted": "Task deleted",

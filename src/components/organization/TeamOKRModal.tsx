@@ -22,9 +22,7 @@ import { Input } from '@/components/ui/input';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Slider } from '@/components/ui/slider';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useCreateTeamOKR,
@@ -232,183 +230,234 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
     }
   };
 
+  // Visibilité : « Équipes » reste ouvert même tant qu'aucune équipe n'est
+  // cochée, sinon le segment se refermerait sous le premier clic.
+  const [visMode, setVisMode] = useState<'org' | 'teams'>(teamIds.length > 0 ? 'teams' : 'org');
+  const chooseVisMode = (mode: 'org' | 'teams') => {
+    setVisMode(mode);
+    if (mode === 'org') setTeamIds([]);
+  };
+
+  // Progression pondérée des KR valides, affichée en pied de fiche.
+  const weighted = (() => {
+    const valid = keyResults.filter((k) => k.title.trim() && Number(k.targetValue) > 0);
+    const total = valid.reduce((sum, k) => sum + (Number(k.weight) || 1), 0);
+    if (total === 0) return 0;
+    const done = valid.reduce(
+      (sum, k) => sum + (Number(k.weight) || 1) * Math.min(1, Math.max(0, Number(k.currentValue) / Number(k.targetValue))),
+      0,
+    );
+    return Math.round((done / total) * 100);
+  })();
+
+  const segClass = (on: boolean) =>
+    `flex-1 rounded-lg px-2 py-1.5 text-xs transition-colors ${
+      on
+        ? 'bg-[rgb(var(--color-surface))] font-semibold text-[rgb(var(--color-text-primary))] shadow-sm'
+        : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
+    }`;
+
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg rounded-l-2xl border-l-0 overflow-hidden">
-        <SheetHeader>
+      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg md:max-w-4xl rounded-l-2xl border-l-0 overflow-hidden">
+        <SheetHeader className="border-b border-[rgb(var(--color-border-muted))]">
+          <span className="font-data text-[10px] uppercase tracking-[0.08em] text-[rgb(var(--color-text-muted))]">{t('okrModal.eyebrow')}</span>
           <SheetTitle>{isEdit ? t('okrModal.edit') : t('okrModal.new')}</SheetTitle>
-          <SheetDescription>{t('okrModal.description')}</SheetDescription>
+          <SheetDescription className="sr-only">{t('okrModal.description')}</SheetDescription>
         </SheetHeader>
 
         {/* min-h-0 : sans lui, l'enfant flex-1 garde sa hauteur de contenu et le
             viewport Radix ne scrolle jamais (flexbox min-height:auto). */}
         <ScrollArea className="flex-1 min-h-0">
-          <div className="grid gap-4 px-4 pb-4">
-            <div className="grid gap-2">
-              <Label htmlFor="tokr-title">{t('okrModal.objective')}</Label>
-              <Input id="tokr-title" value={title} autoFocus placeholder={t('okrModal.objectivePlaceholder')} onChange={(e) => setTitle(e.target.value)} />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="tokr-end">{t('okrModal.deadline')}</Label>
-              {/* Même composant que la page Tâches perso (DesktopDetailsStep) et
-                  que OKRModalSheet (OKR perso) : Popover + Calendar, pas l'input
-                  natif du navigateur — c'est LE calendrier de l'app, pas une
-                  variante entreprise. Icône teintée en accent via `[&_svg]`
-                  (le composant partagé n'expose pas de prop dédiée). */}
-              <DatePicker
-                value={endDate}
-                onChange={setEndDate}
-                className="w-full [&_svg]:text-[rgb(var(--color-accent))]"
-              />
-            </div>
-
-            {/* Objectif parent (mig. 160) : l'objectif que cet OKR sert. */}
-            <OkrParentField okrs={allOkrs} selfId={editingOKR?.id} value={parentOkrId} onChange={setParentOkrId} />
-
-            {/* Catégorie — vrai système partagé (parité mode perso, #C) */}
-            <div className="grid gap-2">
-              <Label>{t('okrModal.category')}</Label>
-              <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={setCategoryId} />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="tokr-desc">{t('okrModal.descriptionLabel')}</Label>
-              <Textarea id="tokr-desc" rows={2} value={description} placeholder={t('okrModal.descPlaceholder')} onChange={(e) => setDescription(e.target.value)} />
-            </div>
-
-            {/* Rattachement d'équipes (cloisonnement de visibilité) */}
-            <div className="grid gap-2">
-              <Label>{t('okrModal.visibility')}</Label>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTeamIds([])}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                    teamIds.length === 0
-                      ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
-                      : 'border-border text-muted-foreground hover:border-[rgb(var(--color-accent))] hover:text-blue-600 dark:hover:text-blue-400'
-                  }`}
-                >
-                  <Building2 size={13} aria-hidden="true" /> {t('okrModal.wholeOrg')}
-                </button>
-                {teams.map((team) => {
-                  const active = teamIds.includes(team.id);
-                  return (
-                    <button
-                      key={team.id}
-                      type="button"
-                      onClick={() => toggleTeam(team.id)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                        active
-                          ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
-                          : 'border-border text-muted-foreground hover:border-[rgb(var(--color-accent))] hover:text-blue-600 dark:hover:text-blue-400'
-                      }`}
-                    >
-                      <TeamColorDot color={team.color} /> {team.name}
-                    </button>
-                  );
-                })}
+          <div className="grid md:grid-cols-[1fr_1.2fr]">
+            {/* Colonne gauche : le cadre de l'objectif. */}
+            <div className="grid content-start gap-4 p-4 md:border-r md:border-[rgb(var(--color-border-muted))]">
+              <div className="grid gap-2">
+                <Label htmlFor="tokr-title">{t('okrModal.objective')}</Label>
+                <Input id="tokr-title" value={title} autoFocus placeholder={t('okrModal.objectivePlaceholder')} onChange={(e) => setTitle(e.target.value)} />
               </div>
 
-              <p className="text-muted-foreground text-xs">
-                {teamIds.length === 0
-                  ? t('okrModal.visibilityWholeOrg')
-                  : t('okrModal.visibilityTeams')}
-              </p>
-            </div>
-
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <Label>{t('okrModal.keyResults')}</Label>
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => setKeyResults((p) => (p.length < 10 ? [...p, newKR()] : p))}
-                disabled={keyResults.length >= 10}
-                className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0"
-              >
-                <Plus aria-hidden="true" /> {t('common.add')}
-              </Button>
-            </div>
-
-            <div className="grid gap-3">
-              {keyResults.map((kr, idx) => (
-                <div key={kr.id ?? idx} className="border-border grid gap-3 rounded-lg border p-3">
-                  <div className="flex items-center gap-2">
-                    <Input value={kr.title} placeholder={t('okrModal.krPlaceholder')} className="h-8" onChange={(e) => setKR(idx, { title: e.target.value })} />
-                    {keyResults.length > 1 && (
-                      <Button type="button" variant="destructive" size="icon-sm" aria-label={t('common.removeKr')} onClick={() => setKeyResults((p) => p.filter((_, i) => i !== idx))}>
-                        <Trash2 aria-hidden="true" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="grid gap-1.5">
-                    <div className="text-muted-foreground flex items-center justify-between text-xs">
-                      <span>{t('okrModal.progress')}</span>
-                      <span className="tabular-nums">{kr.currentValue} / {kr.targetValue} {kr.unit}</span>
-                    </div>
-                    <Slider
-                      min={0}
-                      max={Math.max(kr.targetValue, 1)}
-                      step={1}
-                      value={[Math.min(kr.currentValue, kr.targetValue)]}
-                      onValueChange={(v) => setKR(idx, { currentValue: v[0] })}
-                      className="[&_[data-slot=slider-track]]:bg-blue-200 dark:[&_[data-slot=slider-track]]:bg-blue-900/40 [&_[data-slot=slider-range]]:bg-blue-500 [&_[data-slot=slider-thumb]]:border-blue-500 [&_[data-slot=slider-thumb]]:bg-blue-500"
-                    />
-                  </div>
-                  {/* Durée retirée : un OKR d'équipe est à l'échelle équipe /
-                      entreprise, la notion de temps de réalisation n'a pas de sens. */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs">{t('okrModal.target')}</Label>
-                      <Input type="number" className="h-8" value={kr.targetValue} onChange={(e) => setKR(idx, { targetValue: Number(e.target.value) })} />
-                    </div>
-                    <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs">{t('okrModal.unit')}</Label>
-                      <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(idx, { unit: e.target.value })} />
-                    </div>
-                    <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs" title={t('okrModal.weightHint')}>{t('okrModal.weight')}</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={10}
-                        step={1}
-                        className="h-8"
-                        value={kr.weight}
-                        onChange={(e) => setKR(idx, { weight: Number(e.target.value) })}
-                      />
-                    </div>
-                  </div>
-                  <KRProjectsField
-                    projects={activeProjects}
-                    value={kr.projectIds}
-                    onChange={(projectIds) => setKR(idx, { projectIds })}
-                    byTasks={kr.byTasks}
-                    onByTasksChange={(byTasks) => setKR(idx, { byTasks })}
-                  />
-                  {/* #10 : un OKR ne s'assigne pas à une personne, il se
-                      rattache à des équipes. Ses KR, eux, ont des contributeurs
-                      (mig. 160, audit du 2026-09-24). */}
-                  <KRContributorsField
-                    orgId={orgId}
-                    members={members}
-                    value={kr.contributorIds}
-                    onChange={(contributorIds) => setKR(idx, { contributorIds })}
-                    currentUserId={user?.id}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="tokr-end">{t('okrModal.deadline')}</Label>
+                  {/* LE calendrier de l'app (Popover + Calendar), pas l'input
+                      natif. Icône teintée en accent via `[&_svg]`. */}
+                  <DatePicker
+                    value={endDate}
+                    onChange={setEndDate}
+                    className="w-full min-h-11 rounded-xl font-data [&_svg]:text-[rgb(var(--color-accent))]"
                   />
                 </div>
-              ))}
+                {/* Catégorie — vrai système partagé (parité mode perso, #C) */}
+                <div className="grid gap-2">
+                  <Label>{t('okrModal.category')}</Label>
+                  <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={setCategoryId} />
+                </div>
+              </div>
+
+              {/* Objectif parent (mig. 160) : l'objectif que cet OKR sert. */}
+              <OkrParentField okrs={allOkrs} selfId={editingOKR?.id} value={parentOkrId} onChange={setParentOkrId} />
+
+              <div className="grid gap-2">
+                <Label htmlFor="tokr-desc">{t('okrModal.descriptionLabel')}</Label>
+                <Textarea id="tokr-desc" rows={2} value={description} placeholder={t('okrModal.descPlaceholder')} onChange={(e) => setDescription(e.target.value)} />
+              </div>
+
+              {/* Rattachement d'équipes (cloisonnement de visibilité) */}
+              <div className="grid gap-2">
+                <Label id="tokr-vis">{t('okrModal.visibility')}</Label>
+                <div role="radiogroup" aria-labelledby="tokr-vis" className="flex gap-1 rounded-xl bg-[rgb(var(--color-border-muted))] p-1">
+                  <button type="button" role="radio" aria-checked={visMode === 'org'} onClick={() => chooseVisMode('org')} className={segClass(visMode === 'org')}>
+                    <Building2 size={12} className="mr-1 inline" aria-hidden="true" />{t('okrModal.wholeOrg')}
+                  </button>
+                  <button type="button" role="radio" aria-checked={visMode === 'teams'} onClick={() => chooseVisMode('teams')} className={segClass(visMode === 'teams')}>
+                    {t('okrModal.teamsOption')}
+                  </button>
+                </div>
+                {visMode === 'teams' && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {teams.map((team) => {
+                      const active = teamIds.includes(team.id);
+                      return (
+                        <button
+                          key={team.id}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => toggleTeam(team.id)}
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                            active
+                              ? 'border-[rgb(var(--color-accent)/0.35)] bg-[rgb(var(--color-accent)/0.1)] font-semibold text-[rgb(var(--color-accent))]'
+                              : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-accent))]'
+                          }`}
+                        >
+                          <TeamColorDot color={team.color} /> {team.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="text-muted-foreground text-xs">
+                  {teamIds.length === 0
+                    ? t('okrModal.visibilityWholeOrg')
+                    : t('okrModal.visibilityTeams')}
+                </p>
+              </div>
+            </div>
+
+            {/* Colonne droite : les résultats clés. */}
+            <div className="grid content-start gap-3 bg-[rgb(var(--color-background))] p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Label>{t('okrModal.keyResults')}</Label>
+                  <span className="font-data rounded-full bg-[rgb(var(--color-accent)/0.1)] px-2 py-px text-[10px] text-[rgb(var(--color-accent))]">
+                    {String(keyResults.length).padStart(2, '0')}
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setKeyResults((p) => (p.length < 10 ? [...p, newKR()] : p))}
+                  disabled={keyResults.length >= 10}
+                  className="h-7 border-[rgb(var(--color-accent)/0.35)] text-xs font-semibold text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent)/0.08)]"
+                >
+                  <Plus aria-hidden="true" /> {t('common.add')}
+                </Button>
+              </div>
+
+              {keyResults.map((kr, idx) => {
+                const pct = kr.targetValue > 0 ? Math.min(100, Math.max(0, (kr.currentValue / kr.targetValue) * 100)) : 0;
+                return (
+                  // Détails (actuel, cible, unité, coef., projets, contributeurs)
+                  // montrés au survol ET au focus : le survol n'existe ni au
+                  // clavier ni au doigt, et un champ ne doit pas disparaître
+                  // pendant qu'on le remplit. Sans pointeur fin : toujours ouverts.
+                  <div
+                    key={kr.id ?? idx}
+                    className="group rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3 transition-shadow hover:border-[rgb(var(--color-accent)/0.35)] hover:shadow-md focus-within:border-[rgb(var(--color-accent)/0.35)] focus-within:shadow-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={kr.title}
+                        aria-label={t('okrModal.krPlaceholder')}
+                        placeholder={t('okrModal.krPlaceholder')}
+                        className="h-8 border-transparent px-1 font-semibold shadow-none hover:border-[rgb(var(--color-border))] focus-visible:border-[rgb(var(--color-border))]"
+                        onChange={(e) => setKR(idx, { title: e.target.value })}
+                      />
+                      <span className="font-data shrink-0 text-base text-[rgb(var(--color-accent))] tabular-nums">
+                        {kr.currentValue}
+                        <span className="text-xs text-[rgb(var(--color-text-muted))]"> / {kr.targetValue}{kr.unit ? ` ${kr.unit}` : ''}</span>
+                      </span>
+                    </div>
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[rgb(var(--color-border-muted))]">
+                      <div className="h-full rounded-full bg-[rgb(var(--color-accent))] transition-[width]" style={{ width: `${pct}%` }} />
+                    </div>
+
+                    <div className="hidden gap-3 pt-3 group-hover:grid group-focus-within:grid [@media(hover:none)]:grid">
+                      <div className="grid grid-cols-4 gap-2">
+                        <div className="grid gap-1">
+                          <Label className="text-muted-foreground text-[10px] uppercase tracking-wide">{t('okrModal.current')}</Label>
+                          <Input type="number" min={0} className="h-8 font-data" value={kr.currentValue} onChange={(e) => setKR(idx, { currentValue: Number(e.target.value) })} />
+                        </div>
+                        <div className="grid gap-1">
+                          <Label className="text-muted-foreground text-[10px] uppercase tracking-wide">{t('okrModal.target')}</Label>
+                          <Input type="number" className="h-8 font-data" value={kr.targetValue} onChange={(e) => setKR(idx, { targetValue: Number(e.target.value) })} />
+                        </div>
+                        <div className="grid gap-1">
+                          <Label className="text-muted-foreground text-[10px] uppercase tracking-wide">{t('okrModal.unit')}</Label>
+                          <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(idx, { unit: e.target.value })} />
+                        </div>
+                        <div className="grid gap-1">
+                          <Label className="text-muted-foreground text-[10px] uppercase tracking-wide" title={t('okrModal.weightHint')}>{t('okrModal.weight')}</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={10}
+                            step={1}
+                            className="h-8 font-data"
+                            value={kr.weight}
+                            onChange={(e) => setKR(idx, { weight: Number(e.target.value) })}
+                          />
+                        </div>
+                      </div>
+                      <KRProjectsField
+                        projects={activeProjects}
+                        value={kr.projectIds}
+                        onChange={(projectIds) => setKR(idx, { projectIds })}
+                        byTasks={kr.byTasks}
+                        onByTasksChange={(byTasks) => setKR(idx, { byTasks })}
+                      />
+                      {/* #10 : un OKR ne s'assigne pas à une personne, il se
+                          rattache à des équipes. Ses KR, eux, ont des
+                          contributeurs (mig. 160, audit du 2026-09-24). */}
+                      <KRContributorsField
+                        orgId={orgId}
+                        members={members}
+                        value={kr.contributorIds}
+                        onChange={(contributorIds) => setKR(idx, { contributorIds })}
+                        currentUserId={user?.id}
+                      />
+                      {keyResults.length > 1 && (
+                        <Button type="button" variant="ghost" size="sm" className="justify-self-end text-destructive" onClick={() => setKeyResults((p) => p.filter((_, i) => i !== idx))}>
+                          <Trash2 aria-hidden="true" /> {t('common.removeKr')}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </ScrollArea>
 
         <SheetFooter className="flex-row items-center justify-end gap-2 border-t">
-          {!hasKeyResult && (
+          {!hasKeyResult ? (
             <span className="text-xs text-amber-600 dark:text-amber-400 mr-auto" role="status">
               {t('okrModal.needOneKr')}
+            </span>
+          ) : (
+            <span className="font-data mr-auto text-[11px] text-[rgb(var(--color-text-muted))]">
+              {t('okrModal.weightedProgress', { pct: weighted })}
             </span>
           )}
           <Button type="button" variant="outline" onClick={handleClose}>{t('okrModal.cancel')}</Button>

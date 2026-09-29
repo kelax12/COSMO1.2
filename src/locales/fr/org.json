@@ -249,7 +249,11 @@
     "create": "Créer",
     "descPlaceholder": "Facultatif…",
     "wholeOrg": "Toute l'entreprise",
-    "visibilityWholeOrg": "Objectif visible par tous les membres de l'entreprise."
+    "visibilityWholeOrg": "Objectif visible par tous les membres de l'entreprise.",
+    "teamsOption": "Équipes",
+    "current": "Actuel",
+    "weightedProgress": "Progression pondérée · {{pct}} %",
+    "eyebrow": "Mode entreprise · OKR"
   },
   "projects": {
     "taskDeleted": "Tâche supprimée",
