@@ -37,12 +37,10 @@ import {
   type SyncTeamKRInput,
 } from '@/modules/team-okrs';
 import { useOrgTeams } from '@/modules/org-teams';
-import { useTeamProjects } from '@/modules/team-projects';
 import { useOrgMembers } from '@/modules/organizations';
 import { useAuth } from '@/modules/auth/AuthContext';
-import KRContributorsField from './KRContributorsField';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
-import { OkrParentField, KRProjectsField } from './TeamOKRLinkFields';
+import { OkrParentField } from './TeamOKRLinkFields';
 import { useT } from '@/i18n/useT';
 import TeamColorDot from './TeamColorDot';
 import MemberPickList from './MemberPickList';
@@ -97,8 +95,6 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
   const createOKR = useCreateTeamOKR(orgId);
   const editOKR = useEditTeamOKR(orgId);
   const { data: allOkrs = [] } = useTeamOKRs(orgId);
-  const { data: projects = [] } = useTeamProjects(orgId);
-  const activeProjects = projects.filter((p) => !p.archivedAt);
   const { data: krLinks = [], isSuccess: krLinksLoaded } = useKRProjects(orgId);
   const setKRProjects = useSetKRProjects(orgId);
   const { data: members = [] } = useOrgMembers(orgId);
@@ -361,6 +357,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                         onChange={(next) => setMemberIds(next.slice(0, 50))}
                         currentUserId={user?.id}
                         label={t('okrModal.customPeople')}
+                        alwaysSearchable
                       />
                     </div>
                   </div>
@@ -399,17 +396,19 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
               </div>
 
               {keyResults.map((kr, idx) => {
-                // Un seul KR : tout reste ouvert. Plusieurs : les quatre valeurs et
-                // les projets se replient, et se déplient au survol ou au focus
-                // (le survol n'existe ni au clavier ni au doigt ; sans pointeur
-                // fin, toujours ouverts). Animation sur la hauteur, coupée sous
-                // mouvement réduit.
+                // Un seul KR : tout reste ouvert. Plusieurs : les quatre valeurs se
+                // replient et se déplient au SURVOL de la carte. Le focus ne garde
+                // ouvert que s'il est DANS ces valeurs (clavier, ou saisie en
+                // cours) : un clic dans le titre ne bloque plus le repli. Sans
+                // pointeur fin, toujours ouvert. Animation coupée sous mouvement
+                // réduit. Projets reliés et contributeurs ne sont plus montrés ici :
+                // la fiche les conserve tels quels à l'enregistrement.
                 const compact = keyResults.length > 1;
                 const pct = kr.targetValue > 0 ? Math.min(100, Math.max(0, (kr.currentValue / kr.targetValue) * 100)) : 0;
                 return (
                   <div
                     key={kr.id ?? idx}
-                    className="group rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3 transition-shadow hover:border-[rgb(var(--color-accent)/0.35)] hover:shadow-md focus-within:border-[rgb(var(--color-accent)/0.35)] focus-within:shadow-md"
+                    className="group rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3 transition-shadow hover:border-[rgb(var(--color-accent)/0.35)] hover:shadow-md"
                   >
                     <div className="flex items-center gap-2">
                       <Input
@@ -423,6 +422,18 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                         {kr.currentValue}
                         <span className="text-xs text-[rgb(var(--color-text-muted))]"> / {kr.targetValue}{kr.unit ? ` ${kr.unit}` : ''}</span>
                       </span>
+                      {compact && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={t('common.removeKr')}
+                          className="shrink-0 text-[rgb(var(--color-text-muted))] hover:text-destructive"
+                          onClick={() => setKeyResults((p) => p.filter((_, i) => i !== idx))}
+                        >
+                          <Trash2 aria-hidden="true" />
+                        </Button>
+                      )}
                     </div>
                     <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[rgb(var(--color-border-muted))]">
                       <div className="h-full rounded-full bg-[rgb(var(--color-accent))] transition-[width]" style={{ width: `${pct}%` }} />
@@ -430,64 +441,37 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
 
                     <div
                       className={compact
-                        ? 'grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none group-hover:grid-rows-[1fr] group-hover:opacity-100 group-focus-within:grid-rows-[1fr] group-focus-within:opacity-100 [@media(hover:none)]:grid-rows-[1fr] [@media(hover:none)]:opacity-100'
+                        ? 'grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none group-hover:grid-rows-[1fr] group-hover:opacity-100 focus-within:grid-rows-[1fr] focus-within:opacity-100 [@media(hover:none)]:grid-rows-[1fr] [@media(hover:none)]:opacity-100'
                         : 'grid grid-rows-[1fr]'}
                     >
                       <div className="min-h-0 overflow-hidden">
-                      <div className="grid gap-3 pt-3">
-                      <div className="grid grid-cols-4 gap-2">
-                        <div className="grid gap-1">
-                          <Label className="text-muted-foreground text-caption uppercase tracking-wide">{t('okrModal.current')}</Label>
-                          <Input type="number" min={0} className="h-8 font-data" value={kr.currentValue} onChange={(e) => setKR(idx, { currentValue: Number(e.target.value) })} />
-                        </div>
-                        <div className="grid gap-1">
-                          <Label className="text-muted-foreground text-caption uppercase tracking-wide">{t('okrModal.target')}</Label>
-                          <Input type="number" className="h-8 font-data" value={kr.targetValue} onChange={(e) => setKR(idx, { targetValue: Number(e.target.value) })} />
-                        </div>
-                        <div className="grid gap-1">
-                          <Label className="text-muted-foreground text-caption uppercase tracking-wide">{t('okrModal.unit')}</Label>
-                          <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(idx, { unit: e.target.value })} />
-                        </div>
-                        <div className="grid gap-1">
-                          <Label className="text-muted-foreground text-caption uppercase tracking-wide" title={t('okrModal.weightHint')}>{t('okrModal.weight')}</Label>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={10}
-                            step={1}
-                            className="h-8 font-data"
-                            value={kr.weight}
-                            onChange={(e) => setKR(idx, { weight: Number(e.target.value) })}
-                          />
+                        <div className="grid grid-cols-4 gap-2 pt-3">
+                          <div className="grid gap-1">
+                            <Label className="text-muted-foreground text-caption uppercase tracking-wide">{t('okrModal.current')}</Label>
+                            <Input type="number" min={0} className="h-8 font-data" value={kr.currentValue} onChange={(e) => setKR(idx, { currentValue: Number(e.target.value) })} />
+                          </div>
+                          <div className="grid gap-1">
+                            <Label className="text-muted-foreground text-caption uppercase tracking-wide">{t('okrModal.target')}</Label>
+                            <Input type="number" className="h-8 font-data" value={kr.targetValue} onChange={(e) => setKR(idx, { targetValue: Number(e.target.value) })} />
+                          </div>
+                          <div className="grid gap-1">
+                            <Label className="text-muted-foreground text-caption uppercase tracking-wide">{t('okrModal.unit')}</Label>
+                            <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(idx, { unit: e.target.value })} />
+                          </div>
+                          <div className="grid gap-1">
+                            <Label className="text-muted-foreground text-caption uppercase tracking-wide" title={t('okrModal.weightHint')}>{t('okrModal.weight')}</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={10}
+                              step={1}
+                              className="h-8 font-data"
+                              value={kr.weight}
+                              onChange={(e) => setKR(idx, { weight: Number(e.target.value) })}
+                            />
+                          </div>
                         </div>
                       </div>
-                      <KRProjectsField
-                        projects={activeProjects}
-                        value={kr.projectIds}
-                        onChange={(projectIds) => setKR(idx, { projectIds })}
-                        byTasks={kr.byTasks}
-                        onByTasksChange={(byTasks) => setKR(idx, { byTasks })}
-                      />
-                      </div>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-3 pt-3">
-                      {/* #10 : un OKR ne s'assigne pas à une personne, il se
-                          rattache à des équipes. Ses KR, eux, ont des
-                          contributeurs (mig. 160, audit du 2026-09-24). */}
-                      <KRContributorsField
-                        orgId={orgId}
-                        members={members}
-                        value={kr.contributorIds}
-                        onChange={(contributorIds) => setKR(idx, { contributorIds })}
-                        currentUserId={user?.id}
-                      />
-                      {keyResults.length > 1 && (
-                        <Button type="button" variant="ghost" size="sm" className="justify-self-end text-destructive" onClick={() => setKeyResults((p) => p.filter((_, i) => i !== idx))}>
-                          <Trash2 aria-hidden="true" /> {t('common.removeKr')}
-                        </Button>
-                      )}
                     </div>
                   </div>
                 );
