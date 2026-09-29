@@ -32,6 +32,9 @@ export interface TeamKeyResult {
 
 export type KRProgressMode = 'manual' | 'tasks';
 
+/** Visibilité d'un OKR d'équipe (mig. 205). */
+export type TeamOKRAudience = 'org' | 'teams' | 'custom';
+
 export interface TeamOKR {
   id: string;
   orgId: string;
@@ -49,6 +52,14 @@ export interface TeamOKR {
    * les membres de ces équipes (+ leur hiérarchie) et les admins.
    */
   teamIds: string[];
+  /**
+   * Choix de visibilité fait à l'écran (mig. 205). 'custom' ajoute des
+   * personnes nommées (`memberIds`) aux équipes. Un OKR 'teams' ou 'custom'
+   * qui perd tous ses liens se referme, il ne s'ouvre jamais à l'entreprise.
+   */
+  audience?: TeamOKRAudience;
+  /** Personnes nommées d'un OKR 'custom' (mig. 205). */
+  memberIds?: string[];
   keyResults: TeamKeyResult[];
   /** Objectif auquel celui-ci CONTRIBUE (un objectif d'entreprise, le plus souvent). */
   parentOkrId?: string | null;
@@ -80,6 +91,8 @@ export interface CreateTeamOKRInput {
   endDate?: string;
   /** [] ou absent = objectif d'entreprise (toutes équipes). */
   teamIds?: string[];
+  audience?: TeamOKRAudience;
+  memberIds?: string[];
   keyResults: CreateTeamKRInput[];
   parentOkrId?: string | null;
 }
@@ -91,6 +104,8 @@ export interface UpdateTeamOKRInput {
   startDate?: string;
   endDate?: string;
   teamIds?: string[];
+  audience?: TeamOKRAudience;
+  memberIds?: string[];
   parentOkrId?: string | null;
 }
 

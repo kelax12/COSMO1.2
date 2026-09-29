@@ -10,6 +10,7 @@ import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { ITeamOKRsRepository } from './repository';
 import {
   TeamOKR,
+  TeamOKRAudience,
   TeamKeyResult,
   CreateTeamOKRInput,
   UpdateTeamOKRInput,
@@ -29,6 +30,8 @@ interface OkrRow {
   created_by: string;
   created_at: string;
   parent_okr_id?: string | null;
+  /** Mig. 205. */
+  audience?: string | null;
 }
 
 interface KrRow {
@@ -76,6 +79,10 @@ const mapKr = (r: KrRow): TeamKeyResult => ({
   health: r.health === 'on_track' || r.health === 'at_risk' || r.health === 'off_track' ? r.health : null,
   healthUpdatedAt: r.health_updated_at ?? null,
 });
+
+/** Colonne absente (ligne d'avant la mig. 205) : on la déduit des liens. */
+const toAudience = (raw: string | null | undefined, hasTeams: boolean): TeamOKRAudience =>
+  raw === 'teams' || raw === 'custom' || raw === 'org' ? raw : hasTeams ? 'teams' : 'org';
 
 export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
   async getAll(orgId: string): Promise<TeamOKR[]> {
@@ -130,6 +137,20 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       teamsByOkr.set(l.okr_id, arr);
     }
 
+    // Personnes nommées (mig. 205). La policy ne rend que les liens des OKR
+    // que l'appelant voit : la liste d'un OKR confidentiel ne fuit pas.
+    const { data: memberRows, error: memberErr } = await supabase
+      .from('team_okr_members')
+      .select('okr_id, user_id')
+      .eq('org_id', orgId);
+    if (memberErr) throw normalizeApiError(memberErr);
+    const membersByOkr = new Map<string, string[]>();
+    for (const m of (memberRows ?? []) as { okr_id: string; user_id: string }[]) {
+      const arr = membersByOkr.get(m.okr_id) ?? [];
+      arr.push(m.user_id);
+      membersByOkr.set(m.okr_id, arr);
+    }
+
     return okrs.map((o) => ({
       id: o.id,
       orgId: o.org_id,
@@ -141,6 +162,8 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       createdBy: o.created_by,
       createdAt: o.created_at,
       teamIds: teamsByOkr.get(o.id) ?? [],
+      audience: toAudience(o.audience, teamsByOkr.has(o.id)),
+      memberIds: membersByOkr.get(o.id) ?? [],
       keyResults: krsByOkr.get(o.id) ?? [],
       parentOkrId: o.parent_okr_id ?? null,
     }));
@@ -157,6 +180,11 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
     // « new row violates row-level security » alors que l'écriture est légale
     // (bug #9 — même correctif que team_projects.createProject).
     const okrId = crypto.randomUUID();
+    const teamIds = Array.from(new Set(input.teamIds ?? [])).slice(0, 20);
+    const audience = input.audience ?? (teamIds.length > 0 ? 'teams' : 'org');
+    const memberIds = audience === 'custom' ? Array.from(new Set(input.memberIds ?? [])).slice(0, 50) : [];
+    // 🔴 L'audience est posée DÈS l'insertion : un OKR 'teams' ou 'custom'
+    // n'existe jamais, même un instant, sous l'audience 'org' sans lien.
     const { error } = await supabase
       .from('team_okrs')
       .insert({
@@ -168,17 +196,23 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
         category_id: input.categoryId ?? null,
         start_date: input.startDate || null,
         end_date: input.endDate || null,
+        audience,
         ...(input.parentOkrId ? { parent_okr_id: input.parentOkrId } : {}),
       });
     if (error) throw normalizeApiError(error);
 
     // Rattachements d'équipes (dédupliqués, cap 20).
-    const teamIds = Array.from(new Set(input.teamIds ?? [])).slice(0, 20);
     if (teamIds.length > 0) {
       const { error: linkErr } = await supabase
         .from('team_okr_teams')
         .insert(teamIds.map((teamId) => ({ okr_id: okrId, org_id: orgId, team_id: teamId })));
       if (linkErr) throw normalizeApiError(linkErr);
+    }
+    if (memberIds.length > 0) {
+      const { error: memberErr } = await supabase
+        .from('team_okr_members')
+        .insert(memberIds.map((userId) => ({ okr_id: okrId, org_id: orgId, user_id: userId })));
+      if (memberErr) throw normalizeApiError(memberErr);
     }
 
     const keyResults: TeamKeyResult[] = [];
@@ -219,6 +253,8 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       createdBy: uid,
       createdAt: new Date().toISOString(),
       teamIds,
+      audience,
+      memberIds,
       keyResults,
       parentOkrId: input.parentOkrId ?? null,
     };
@@ -233,13 +269,17 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
     if (input.startDate !== undefined) patch.start_date = input.startDate || null;
     if (input.endDate !== undefined) patch.end_date = input.endDate || null;
     if (input.parentOkrId !== undefined) patch.parent_okr_id = input.parentOkrId;
+    // 🔴 Fermer avant de toucher aux liens, ouvrir après (cf. mig. 205) :
+    // passer à 'teams'/'custom' se fait dans ce premier UPDATE, repasser à
+    // 'org' seulement une fois tous les liens retirés, en fin de méthode.
+    if (input.audience !== undefined && input.audience !== 'org') patch.audience = input.audience;
     if (Object.keys(patch).length > 0) {
       const { error } = await supabase.from('team_okrs').update(patch).eq('id', okrId);
       if (error) throw normalizeApiError(error);
     }
 
-    // Rattachements d'équipes : on remplace l'ensemble (delete + insert).
-    if (input.teamIds !== undefined) {
+    // Rattachements d'équipes et personnes : on remplace l'ensemble (delete + insert).
+    if (input.teamIds !== undefined || input.memberIds !== undefined) {
       const { data: okrRow, error: readErr } = await supabase
         .from('team_okrs')
         .select('org_id')
@@ -248,16 +288,36 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       if (readErr) throw normalizeApiError(readErr);
       const orgId = (okrRow as { org_id: string }).org_id;
 
-      const { error: delErr } = await supabase.from('team_okr_teams').delete().eq('okr_id', okrId);
-      if (delErr) throw normalizeApiError(delErr);
+      if (input.teamIds !== undefined) {
+        const { error: delErr } = await supabase.from('team_okr_teams').delete().eq('okr_id', okrId);
+        if (delErr) throw normalizeApiError(delErr);
 
-      const teamIds = Array.from(new Set(input.teamIds)).slice(0, 20);
-      if (teamIds.length > 0) {
-        const { error: insErr } = await supabase
-          .from('team_okr_teams')
-          .insert(teamIds.map((teamId) => ({ okr_id: okrId, org_id: orgId, team_id: teamId })));
-        if (insErr) throw normalizeApiError(insErr);
+        const teamIds = Array.from(new Set(input.teamIds)).slice(0, 20);
+        if (teamIds.length > 0) {
+          const { error: insErr } = await supabase
+            .from('team_okr_teams')
+            .insert(teamIds.map((teamId) => ({ okr_id: okrId, org_id: orgId, team_id: teamId })));
+          if (insErr) throw normalizeApiError(insErr);
+        }
       }
+
+      if (input.memberIds !== undefined) {
+        const { error: delErr } = await supabase.from('team_okr_members').delete().eq('okr_id', okrId);
+        if (delErr) throw normalizeApiError(delErr);
+
+        const memberIds = input.audience === 'custom' ? Array.from(new Set(input.memberIds)).slice(0, 50) : [];
+        if (memberIds.length > 0) {
+          const { error: insErr } = await supabase
+            .from('team_okr_members')
+            .insert(memberIds.map((userId) => ({ okr_id: okrId, org_id: orgId, user_id: userId })));
+          if (insErr) throw normalizeApiError(insErr);
+        }
+      }
+    }
+
+    if (input.audience === 'org') {
+      const { error } = await supabase.from('team_okrs').update({ audience: 'org' }).eq('id', okrId);
+      if (error) throw normalizeApiError(error);
     }
   }
 

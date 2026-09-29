@@ -39,7 +39,7 @@ interface ReachInput {
   /** Appartenances aux équipes de l'organisation. */
   memberships: { teamId: string; userId: string }[];
   projects: { teamId?: string | null; archivedAt?: string | null }[];
-  okrs: { teamIds: string[] }[];
+  okrs: { teamIds: string[]; audience?: 'org' | 'teams' | 'custom'; memberIds?: string[] }[];
 }
 
 /**
@@ -60,6 +60,12 @@ export function memberReach({ member, members, memberships, projects, okrs }: Re
   };
   return {
     projects: projects.filter((p) => !p.archivedAt && (!p.teamId || seesTeams([p.teamId]))).length,
-    okrs: okrs.filter((o) => o.teamIds.length === 0 || seesTeams(o.teamIds)).length,
+    okrs: okrs.filter((o) => {
+      // Mig. 205 : ouvert à tous seulement sans lien ET sous l'audience 'org'.
+      const named = o.memberIds ?? [];
+      if (o.teamIds.length === 0 && named.length === 0) return (o.audience ?? 'org') === 'org';
+      return (o.teamIds.length > 0 && seesTeams(o.teamIds))
+        || (named.length > 0 && audienceIds(members, named).has(member.userId));
+    }).length,
   };
 }
