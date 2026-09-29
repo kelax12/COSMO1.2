@@ -48,7 +48,7 @@ interface OrgTaskFilterBarProps {
 }
 
 const segBase = 'h-8 px-2.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
-const segOn = 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]';
+const segOn = 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] shadow-sm';
 const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
 
 const OrgTaskFilterBar = ({
@@ -88,8 +88,8 @@ const OrgTaskFilterBar = ({
   if (project && projectName) chips.push({ key: 'project', label: t('filters.chipProject', { name: projectName }), clear: { project: null } });
   if (status !== defaultStatus) chips.push({ key: 'status', label: statusLabel[status], clear: { status: defaultStatus } });
 
-  // Efface aussi les filtres d'attributs (priorité, échéance, catégorie,
-  // étiquette) : « Tout effacer » ne doit rien laisser filtrer en silence.
+  // Efface aussi les filtres d'attributs (priorité, échéance, catégorie)
+  // : « Tout effacer » ne doit rien laisser filtrer en silence.
   // Le texte cherché est déjà DANS le champ : pas de pastille pour lui.
   const pills = chips.filter((chip) => chip.key !== 'q');
   const clearAll = () => setFilters({ team: '', assignee: null, project: null, status: defaultStatus, q: '', ...CLEARED_ATTRIBUTE_FILTERS });
@@ -144,7 +144,7 @@ const OrgTaskFilterBar = ({
         </div>
 
         {/* Périmètre : tout / moi / une personne / une équipe */}
-        <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5">
+        <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5 gap-0.5">
           <button
             type="button"
             onClick={() => setFilters({ assignee: null, team: '' })}

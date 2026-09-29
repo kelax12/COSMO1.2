@@ -36,6 +36,7 @@ const OrgMembersSection = ({ org, members, currentUserId, isAdmin, isManager, ca
   const { t } = useT('org');
   const [choosingMode, setChoosingMode] = useState(false);
   const [invitingByEmail, setInvitingByEmail] = useState(false);
+  const [quickEmails, setQuickEmails] = useState('');
   // Miroir de `create_org_email_invitations` (mig. 161).
   const canInviteByEmail = isAdmin || (canInvite && isManager);
 
@@ -45,8 +46,7 @@ const OrgMembersSection = ({ org, members, currentUserId, isAdmin, isManager, ca
         <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
           {t('page.directoryTitle', { count: members.length })}
         </h2>
-        {/* Un seul bouton : la modale demande le canal (e-mail, ou code,
-            lien direct et contacts COSMO qui vivent dans Paramètres). */}
+        {/* Un seul bouton : la modale montre les quatre canaux en onglets. */}
         <button
           type="button"
           onClick={() => setChoosingMode(true)}
@@ -67,8 +67,12 @@ const OrgMembersSection = ({ org, members, currentUserId, isAdmin, isManager, ca
       <Suspense fallback={null}>
         {choosingMode && (
           <InviteModeDialog
-            onChooseEmail={canInviteByEmail ? () => { setChoosingMode(false); setInvitingByEmail(true); } : undefined}
-            emailDisabled={seatsFull}
+            org={org}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
+            canInvite={canInvite}
+            seatsFull={seatsFull}
+            onChooseEmail={canInviteByEmail ? (emails) => { setQuickEmails(emails); setChoosingMode(false); setInvitingByEmail(true); } : undefined}
             onClose={() => setChoosingMode(false)}
           />
         )}
@@ -78,6 +82,7 @@ const OrgMembersSection = ({ org, members, currentUserId, isAdmin, isManager, ca
             members={members}
             currentUserId={currentUserId}
             isAdmin={isAdmin}
+            initialEmails={quickEmails}
             onClose={() => setInvitingByEmail(false)}
           />
         )}

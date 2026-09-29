@@ -47,7 +47,7 @@ const HOVER_OPEN_DELAY_MS = 120;
 const HOVER_CLOSE_DELAY_MS = 150;
 
 const zoomBtn = 'h-7 px-2 rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
-const zoomOn = 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]';
+const zoomOn = 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] shadow-sm';
 const zoomOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
 
 /** Ligne affichée — même gabarit qu'elle vienne d'un projet ou d'une personne. */
@@ -252,7 +252,7 @@ const TeamProjectsTimeline = ({
             Aucun n'est actif tant que rien n'a été choisi : le défaut n'est
             littéralement aucun des trois. */}
         <div
-          className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5 shrink-0"
+          className="inline-flex rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5 gap-0.5 shrink-0"
           role="group"
           aria-label={pf('timeline.zoomLabel')}
         >
