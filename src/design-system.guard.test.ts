@@ -130,7 +130,7 @@ const EXCLUDED_DIRS = new Set(['ui', 'showcase']);
 // portent un systeme local aligne sur les metriques natives iOS (11/12/13/15/17)
 // — les migrer isolement produirait un fichier a moitie sur chaque echelle,
 // pire que le statu quo. Meme arbitrage qu'au 2026-08-07.
-const ARBITRARY_BUDGET = 192;
+const ARBITRARY_BUDGET = 191;
 
 /** `text-[10px]` → capture "10". Ignore rem/%/var — seul le px pose problème. */
 const ARBITRARY_TEXT_SIZE = /text-\[(\d+(?:\.\d+)?)px\]/g;

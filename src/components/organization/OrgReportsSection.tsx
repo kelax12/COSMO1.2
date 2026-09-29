@@ -46,7 +46,7 @@ const initials = (name: string | null) =>
 const Avatar = ({ name }: { name: string | null }) => (
   <span
     aria-hidden="true"
-    className="w-6 h-6 shrink-0 rounded-full bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))] text-[11px] font-semibold flex items-center justify-center"
+    className="w-6 h-6 shrink-0 rounded-full bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))] text-caption font-semibold flex items-center justify-center"
   >
     {initials(name)}
   </span>

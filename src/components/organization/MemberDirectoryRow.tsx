@@ -127,7 +127,7 @@ const MemberDirectoryRow = ({
         </div>
         {m.email && <p className="text-xs text-[rgb(var(--color-text-muted))] truncate">{m.email}</p>}
         {lastActivity && (
-          <p className="text-[11px] text-[rgb(var(--color-text-muted))] truncate">
+          <p className="text-caption text-[rgb(var(--color-text-muted))] truncate">
             {lastActivity.lastActivityAt
               ? t('directory.activity.rowAgo', {
                   when: formatDistanceToNow(new Date(lastActivity.lastActivityAt), { addSuffix: true, locale: getDateLocale() }),

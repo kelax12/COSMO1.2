@@ -94,7 +94,7 @@ export function OrgBillingSeats({ members, ownerId, quota }: Props) {
             </div>
             <div className="shrink-0 text-right">
               <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))]">{roleLabel(m)}</p>
-              <p className="text-[11px] text-[rgb(var(--color-text-muted))]">
+              <p className="text-caption text-[rgb(var(--color-text-muted))]">
                 {t('seatsSince', { date: formatDate(new Date(m.joinedAt)) })}
               </p>
             </div>
