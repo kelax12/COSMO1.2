@@ -563,7 +563,13 @@
       "next": "Continue",
       "back": "Back",
       "otherTime": "Other time",
-      "summary": "{{date}} at {{time}}, {{duration}}"
+      "summary": "{{date}} at {{time}}, {{duration}}",
+      "customDuration": "Custom",
+      "durationMinutes": "Duration in minutes",
+      "minutesUnit": "min",
+      "errorSlot": "Pick a slot or another time.",
+      "errorDuration": "Pick a duration between 5 min and 12 h.",
+      "me": "You"
     },
     "audit": {
       "changeAria": "Before: {{from}}. After: {{to}}.",

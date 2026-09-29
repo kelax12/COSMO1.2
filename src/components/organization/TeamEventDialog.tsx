@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { CalendarPlus, Check, Clock, Search, Sparkles } from 'lucide-react';
+import { Check, Clock, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { DatePicker } from '@/components/ui/date-picker';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useCreateGroupEvent, useGroupEventsWindow } from '@/modules/events';
 import { isMemberActive, type OrgMember } from '@/modules/organizations';
 import { toast } from '@/lib/toast';
@@ -70,6 +70,8 @@ const TeamEventDialog = ({
   const [date, setDate] = useState(() => format(new Date(), 'yyyy-MM-dd'));
   const [time, setTime] = useState('10:00');
   const [customTime, setCustomTime] = useState(false);
+  const [slotPicked, setSlotPicked] = useState(false);
+  const [customDuration, setCustomDuration] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Fenêtre de recherche figée pour la durée de la modale : une clé de cache
@@ -104,6 +106,7 @@ const TeamEventDialog = ({
     setDate(format(s.start, 'yyyy-MM-dd'));
     setTime(format(s.start, 'HH:mm'));
     setCustomTime(false);
+    setSlotPicked(true);
     setError(null);
   };
 
@@ -122,7 +125,9 @@ const TeamEventDialog = ({
   // Chaque étape valide ce qu'elle demande : l'erreur s'affiche là où elle se corrige.
   const next = () => {
     if (step === 0 && selected.size === 0) return setError(t('ui.event.errorPeople'));
+    if (step === 1 && !slotPicked && !customTime) return setError(t('ui.event.errorSlot'));
     if (step === 1 && !startDate()) return setError(t('ui.event.errorDate'));
+    if (step === 1 && !(duration >= 5 && duration <= 720)) return setError(t('ui.event.errorDuration'));
     goTo(step === 0 ? 1 : 2);
   };
 
@@ -169,16 +174,13 @@ const TeamEventDialog = ({
     { label: t('ui.event.stepDetails'), hint: null },
   ];
   const chosen = startDate();
-  // Sans créneau commun, la saisie libre est le seul chemin : on l'ouvre d'office.
-  const showCustom = customTime || (!isLoading && slots.length === 0);
+  const showCustom = customTime;
+  const chosenMembers = eligible.filter((m) => selected.has(m.userId));
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
-        <DialogTitle className="flex items-center gap-2">
-          <CalendarPlus size={18} aria-hidden="true" /> {t('ui.event.title')}
-        </DialogTitle>
-        <DialogDescription>{t('ui.event.help')}</DialogDescription>
+      <DialogContent className="sm:max-w-[39rem] max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+        <DialogTitle>{t('ui.event.title')}</DialogTitle>
 
         <ol className="flex items-center gap-2" aria-label={t('ui.event.stepOf', { step: step + 1, total: steps.length })}>
           {steps.map((s, i) => {
@@ -225,7 +227,15 @@ const TeamEventDialog = ({
                 {visible.map((m) => (
                   <li key={m.userId}>
                     <label className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-[rgb(var(--color-hover))]">
-                      <input type="checkbox" checked={selected.has(m.userId)} onChange={() => toggle(m.userId)} className="w-4 h-4 accent-indigo-600" />
+                      <span className="relative inline-flex shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(m.userId)}
+                          onChange={() => toggle(m.userId)}
+                          className="peer appearance-none w-[18px] h-[18px] rounded-full border-2 border-[rgb(var(--color-border))] checked:border-[rgb(var(--color-accent-solid))] checked:bg-[rgb(var(--color-accent-solid))] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent-solid))] cursor-pointer"
+                        />
+                        <Check size={12} strokeWidth={3} aria-hidden="true" className="pointer-events-none absolute inset-0 m-auto hidden peer-checked:block text-[rgb(var(--color-accent-solid-foreground))]" />
+                      </span>
                       <MemberAvatar avatar={m.avatar} name={m.displayName} size={24} />
                       <span className="text-sm text-[rgb(var(--color-text-primary))] truncate">
                         {m.displayName}{m.userId === currentUserId ? ` ${t('ui.event.you')}` : ''}
@@ -234,10 +244,9 @@ const TeamEventDialog = ({
                   </li>
                 ))}
               </ul>
-              <p className="mt-1.5 text-caption text-[rgb(var(--color-text-muted))]">
-                {t('ui.event.scope')}
-                {skipped > 0 ? ` ${tp('ui.event.skipped', skipped)}` : ''}
-              </p>
+              {skipped > 0 && (
+                <p className="mt-1.5 text-caption text-[rgb(var(--color-text-muted))]">{tp('ui.event.skipped', skipped)}</p>
+              )}
             </fieldset>
           )}
 
@@ -250,10 +259,10 @@ const TeamEventDialog = ({
                     <button
                       key={d}
                       type="button"
-                      aria-pressed={duration === d}
-                      onClick={() => setDuration(d)}
+                      aria-pressed={!customDuration && duration === d}
+                      onClick={() => { setCustomDuration(false); setDuration(d); setError(null); }}
                       className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${
-                        duration === d
+                        !customDuration && duration === d
                           ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
                           : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
                       }`}
@@ -261,12 +270,40 @@ const TeamEventDialog = ({
                       {durationLabel(d)}
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    aria-pressed={customDuration}
+                    onClick={() => setCustomDuration(true)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${
+                      customDuration
+                        ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
+                        : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
+                    }`}
+                  >
+                    {t('ui.event.customDuration')}
+                  </button>
                 </div>
+                {customDuration && (
+                  <label className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-secondary))]">
+                    <input
+                      type="number"
+                      min={5}
+                      max={720}
+                      step={5}
+                      value={duration}
+                      onChange={(e) => { setDuration(Number(e.target.value)); setError(null); }}
+                      aria-label={t('ui.event.durationMinutes')}
+                      className="w-20 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-2 py-1.5 text-sm text-[rgb(var(--color-text-primary))] tabular-nums"
+                      autoFocus
+                    />
+                    {t('ui.event.minutesUnit')}
+                  </label>
+                )}
               </div>
 
               <section aria-labelledby="team-event-slots">
-                <h3 id="team-event-slots" className="flex items-center gap-1.5 text-xs font-bold text-[rgb(var(--color-text-primary))] mb-2">
-                  <Sparkles size={13} aria-hidden="true" /> {t('ui.event.slotsTitle')}
+                <h3 id="team-event-slots" className="text-xs font-bold text-[rgb(var(--color-text-primary))] mb-2">
+                  {t('ui.event.slotsTitle')}
                 </h3>
                 {isLoading ? (
                   <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('ui.event.slotsLoading')}</p>
@@ -274,7 +311,7 @@ const TeamEventDialog = ({
                   <>
                     <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {slots.map((s) => {
-                        const active = !customTime && format(s.start, 'yyyy-MM-dd') === date && format(s.start, 'HH:mm') === time;
+                        const active = slotPicked && !customTime && format(s.start, 'yyyy-MM-dd') === date && format(s.start, 'HH:mm') === time;
                         return (
                           <li key={s.start.toISOString()}>
                             <button
@@ -298,7 +335,7 @@ const TeamEventDialog = ({
                       <li>
                         <button
                           type="button"
-                          onClick={() => setCustomTime(true)}
+                          onClick={() => { setCustomTime(true); setError(null); }}
                           aria-pressed={showCustom}
                           className={`w-full h-full min-h-[3rem] rounded-xl border border-dashed px-3 py-2 text-xs font-semibold inline-flex items-center justify-center gap-1.5 ${
                             showCustom
@@ -336,25 +373,32 @@ const TeamEventDialog = ({
                 </div>
               )}
 
-              <p className="text-caption text-[rgb(var(--color-text-muted))]">
-                {t('ui.event.slotsPrivacy')}
-                {failed > 0 ? ` ${tp('ui.event.slotsUnread', failed)}` : ''}
-              </p>
+              {failed > 0 && (
+                <p className="text-caption text-[rgb(var(--color-text-muted))]">{tp('ui.event.slotsUnread', failed)}</p>
+              )}
             </div>
           )}
 
           {step === 2 && (
             <div className="space-y-4">
-              {chosen && (
-                <p className="flex items-center gap-2 rounded-xl bg-[rgb(var(--color-hover))] px-3 py-2 text-xs text-[rgb(var(--color-text-secondary))]">
-                  <Clock size={13} aria-hidden="true" />
-                  {t('ui.event.summary', {
-                    date: formatDate(chosen, { weekday: 'long', day: 'numeric', month: 'long' }),
-                    time: formatTime(chosen, { hour: '2-digit', minute: '2-digit' }),
-                    duration: durationLabel(duration),
-                  })}
-                </p>
-              )}
+              <ul className="flex flex-wrap items-center gap-1.5">
+                {chosen && (
+                  <li className="inline-flex items-center gap-2 rounded-full bg-[rgb(var(--color-hover))] px-3 py-1.5 text-xs text-[rgb(var(--color-text-secondary))]">
+                    <Clock size={13} aria-hidden="true" />
+                    {t('ui.event.summary', {
+                      date: formatDate(chosen, { weekday: 'long', day: 'numeric', month: 'long' }),
+                      time: formatTime(chosen, { hour: '2-digit', minute: '2-digit' }),
+                      duration: durationLabel(duration),
+                    })}
+                  </li>
+                )}
+                {chosenMembers.map((m) => (
+                  <li key={m.userId} className="inline-flex items-center gap-1.5 rounded-full bg-[rgb(var(--color-hover))] py-1 pl-1 pr-2.5 text-xs text-[rgb(var(--color-text-secondary))]">
+                    <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
+                    {m.userId === currentUserId ? t('ui.event.me') : m.displayName}
+                  </li>
+                ))}
+              </ul>
               <label className="block">
                 <span className={labelClass}>{t('ui.event.name')}</span>
                 <input

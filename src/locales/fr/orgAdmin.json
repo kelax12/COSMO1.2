@@ -613,7 +613,13 @@
       "next": "Continuer",
       "back": "Retour",
       "otherTime": "Autre heure",
-      "summary": "{{date}} à {{time}}, {{duration}}"
+      "summary": "{{date}} à {{time}}, {{duration}}",
+      "customDuration": "Autre",
+      "durationMinutes": "Durée en minutes",
+      "minutesUnit": "min",
+      "errorSlot": "Choisissez un créneau ou une autre heure.",
+      "errorDuration": "Choisissez une durée entre 5 min et 12 h.",
+      "me": "Vous"
     },
     "audit": {
       "changeAria": "Avant : {{from}}. Après : {{to}}.",
