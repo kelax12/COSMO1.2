@@ -11,10 +11,6 @@ export type {
   TeamSubtask,
   CreateTeamSubtaskInput,
   UpdateTeamSubtaskInput,
-  TeamLabel,
-  CreateTeamLabelInput,
-  UpdateTeamLabelInput,
-  TeamTaskLabel,
   TeamTaskDependency,
   TeamTaskActivity,
   TeamActivityField,
@@ -114,16 +110,11 @@ export {
 // Restauration d'un commentaire supprime (« Annuler », C-42).
 export { useRestoreComment } from './restore-comment.hooks';
 
-// Étiquettes et historique par tâche (mig. 093, 094), fiche de tâche d'équipe.
+// Historique par tâche (mig. 094), fiche de tâche d'équipe.
 export {
-  useTeamLabels,
-  useTaskLabels,
-  useCreateTeamLabel,
-  useToggleTaskLabel,
   useTeamTaskActivity,
   useApplyTeamTaskDraft,
   type TeamTaskDraftExtras,
 } from './task-extras.hooks';
-export { useTaskIdsWithLabel } from './label-filter.hooks';
 // Suivre une tâche ou un projet (mig. 162, M14).
 export { useMyFollows, useToggleFollow, type FollowTarget, type MyFollows } from './follows.hooks';

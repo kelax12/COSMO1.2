@@ -41,8 +41,6 @@ export interface OrgTaskFilters {
   noDue: boolean;
   /** Catégorie d'entreprise (sous-catégories comprises), ou null. */
   category: string | null;
-  /** Étiquette, ou null. */
-  label: string | null;
   /** Tri ET regroupement du tableau : UN seul critère (fusion du 2026-09-27,
    *  cf. `GROUPABLE_SORT_CRITERIA`). */
   group: TaskSortCriterion;
@@ -92,7 +90,6 @@ export const TASK_FILTER_PARAMS = {
   dueTo: 'fDueTo',
   noDue: 'fNoDue',
   category: 'fCat',
-  label: 'fLabel',
   group: 'fGroup',
   blocked: 'fBlocked',
 } as const satisfies Record<keyof OrgTaskFilters, string>;
@@ -124,7 +121,6 @@ export function readTaskFilters(params: URLSearchParams, defaultStatus: TaskStat
     dueTo: dateOrEmpty(params.get(TASK_FILTER_PARAMS.dueTo)),
     noDue: params.get(TASK_FILTER_PARAMS.noDue) === '1',
     category: idOrNull(params.get(TASK_FILTER_PARAMS.category)),
-    label: idOrNull(params.get(TASK_FILTER_PARAMS.label)),
     group: (TASK_SORT_CRITERIA as readonly string[]).includes(params.get(TASK_FILTER_PARAMS.group) ?? '')
       ? (params.get(TASK_FILTER_PARAMS.group) as TaskSortCriterion)
       // Défaut ET repli d'une ancienne valeur (l'ex-'none' du regroupement
@@ -160,7 +156,6 @@ export function writeTaskFilters(
   set(TASK_FILTER_PARAMS.dueTo, filters.noDue ? null : filters.dueTo || null);
   set(TASK_FILTER_PARAMS.noDue, filters.noDue ? '1' : null);
   set(TASK_FILTER_PARAMS.category, filters.category);
-  set(TASK_FILTER_PARAMS.label, filters.label);
   set(TASK_FILTER_PARAMS.group, filters.group === 'priority' ? null : filters.group);
   set(TASK_FILTER_PARAMS.blocked, filters.blocked ? '1' : null);
   return next;
@@ -171,26 +166,23 @@ export const hasActiveTaskFilter = (f: OrgTaskFilters, defaultStatus: TaskStatus
   f.team !== '' || f.assignee !== null || f.project !== null || f.status !== defaultStatus || f.q.trim() !== ''
   || f.blocked || hasAttributeFilter(f);
 
-/** Un filtre sur les attributs de la tâche (priorité, échéance, catégorie, étiquette) est-il actif ? */
+/** Un filtre sur les attributs de la tâche (priorité, échéance, catégorie) est-il actif ? */
 export const hasAttributeFilter = (f: OrgTaskFilters): boolean =>
-  f.priorities.length > 0 || f.dueFrom !== '' || f.dueTo !== '' || f.noDue || f.category !== null || f.label !== null;
+  f.priorities.length > 0 || f.dueFrom !== '' || f.dueTo !== '' || f.noDue || f.category !== null;
 
 /** Filtres d'attributs remis à zéro : ce que « Tout effacer » rétablit. */
-export const CLEARED_ATTRIBUTE_FILTERS: Pick<OrgTaskFilters, 'priorities' | 'dueFrom' | 'dueTo' | 'noDue' | 'category' | 'label'> = {
-  priorities: [], dueFrom: '', dueTo: '', noDue: false, category: null, label: null,
+export const CLEARED_ATTRIBUTE_FILTERS: Pick<OrgTaskFilters, 'priorities' | 'dueFrom' | 'dueTo' | 'noDue' | 'category'> = {
+  priorities: [], dueFrom: '', dueTo: '', noDue: false, category: null,
 };
 
 /**
  * Tâche retenue par les filtres d'attributs. `categoryIds` : la catégorie
  * filtrée ET ses descendantes (une sous-catégorie EST dans sa mère).
- * `labelTaskIds` : tâches portant l'étiquette, `undefined` tant qu'elles ne
- * sont pas lues (on ne montre alors rien plutôt que tout : un filtre qui laisse
- * passer le temps d'une requête affirme un résultat faux).
  */
 export const matchesAttributes = (
-  task: { priority: number; deadline?: string; categoryId?: string | null; id: string },
-  f: Pick<OrgTaskFilters, 'priorities' | 'dueFrom' | 'dueTo' | 'noDue' | 'category' | 'label'>,
-  ctx: { categoryIds?: ReadonlySet<string>; labelTaskIds?: ReadonlySet<string> } = {},
+  task: { priority: number; deadline?: string; categoryId?: string | null },
+  f: Pick<OrgTaskFilters, 'priorities' | 'dueFrom' | 'dueTo' | 'noDue' | 'category'>,
+  ctx: { categoryIds?: ReadonlySet<string> } = {},
 ): boolean => {
   if (f.priorities.length && !f.priorities.includes(task.priority)) return false;
   const due = task.deadline || '';
@@ -205,7 +197,6 @@ export const matchesAttributes = (
     const ids = ctx.categoryIds ?? new Set([f.category]);
     if (!task.categoryId || !ids.has(task.categoryId)) return false;
   }
-  if (f.label && !(ctx.labelTaskIds?.has(task.id) ?? false)) return false;
   return true;
 };
 

@@ -5,8 +5,6 @@ import { Button } from '@/components/ui/button';
 import { useMarkTaskNotificationsRead, type OrgMember } from '@/modules/organizations';
 import {
   useApplyTeamTaskDraft,
-  useTaskLabels,
-  useToggleTaskLabel,
   type TeamProject,
   type TeamTask,
   type TeamTaskStatus,
@@ -27,8 +25,7 @@ import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 const TeamTaskTabPanels = lazyWithRetry(() => import('./TeamTaskTabPanels'));
-// Étiquettes et « Suivre » : même raison, hors du premier affichage de la fiche.
-const TeamTaskLabelsField = lazyWithRetry(() => import('./TeamTaskLabelsField'));
+// Listes et « Suivre » : même raison, hors du premier affichage de la fiche.
 const TeamTaskListsField = lazyWithRetry(() => import('./TeamTaskListsField'));
 // Suivre (mig. 162) et champs personnalisés (mig. 197) : UN chargement pour les
 // deux, catalogue compris (`TAB_GATE_HOSTS` : cette fiche déclare sa liste).
@@ -62,8 +59,7 @@ interface TeamTaskModalProps {
   onDelete?: (task: TeamTask) => void;
   onClose: () => void;
   /**
-   * Manager/admin — conditionne la CRÉATION d'étiquettes (policy
-   * `team_labels_insert`, mig. 093) et l'édition du graphe de dépendances.
+   * Manager/admin — conditionne l'édition du graphe de dépendances.
    * Défaut `false` : un appelant qui l'oublie masque un bouton plutôt que
    * d'exposer une action qui renverrait 403.
    */
@@ -83,7 +79,7 @@ const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((
  *     « Fermer » (plus rien à annuler) ;
  *   • onglets Détails · Sous-tâches · Dépendances · Historique, les deux
  *     premiers disponibles DÈS la création (brouillon appliqué après) ;
- *   • étiquettes (mig. 093) et historique (mig. 094) rebranchés ;
+ *   • historique (mig. 094) rebranché (étiquettes retirées le 2026-09-28) ;
  *   • plus de création de projet intégrée (troisième chemin, sans équipe) ;
  *   • assignés via `MemberPickList` (recherche, équipes, pagination).
  */
@@ -128,19 +124,6 @@ const TeamTaskModal = ({
   const [draftSubtasks, setDraftSubtasks] = useState<string[]>([]);
   const [draftBlockedBy, setDraftBlockedBy] = useState<string[]>([]);
 
-  // Étiquettes : état de la fiche, écrit à l'enregistrement. `baseLabelIds`
-  // est ce qui est en base, pour n'écrire que la différence.
-  const { data: serverLabels } = useTaskLabels(task?.id);
-  const [labelIds, setLabelIds] = useState<string[]>([]);
-  const [baseLabelIds, setBaseLabelIds] = useState<string[] | null>(task ? null : []);
-  useEffect(() => {
-    if (baseLabelIds === null && serverLabels) {
-      const ids = serverLabels.map((l) => l.labelId);
-      setBaseLabelIds(ids);
-      setLabelIds(ids);
-    }
-  }, [serverLabels, baseLabelIds]);
-
   // Bascule assignés/commentaires : panneaux latéraux dès `lg` (1024px), sinon
   // repliés dans le modal. Un SEUL point de montage, jamais un rendu CSS
   // dupliqué : un brouillon de commentaire se perdrait en changeant de largeur.
@@ -164,7 +147,7 @@ const TeamTaskModal = ({
   const deleteReason = !isCreating && task ? taskDeleteReason(task) : undefined;
   const applyDraft = useApplyTeamTaskDraft(orgId);
 
-  // Listes (mig. 203) : même règle que les étiquettes, n'écrire que la
+  // Listes (mig. 203) : n'écrire que la
   // différence avec ce que la tâche porte déjà.
   const { data: teamLists } = useTeamLists(orgId);
   const setTaskLists = useSetTaskTeamLists(orgId);
@@ -180,7 +163,6 @@ const TeamTaskModal = ({
   const syncLists = (taskId: string) =>
     sameSet(listIds, baseListIds ?? []) ? Promise.resolve()
       : setTaskLists.mutateAsync({ taskId, before: baseListIds ?? [], after: listIds }).catch(() => undefined);
-  const toggleLabel = useToggleTaskLabel();
 
   // Ouvrir une tâche EXISTANTE fait disparaître son badge « commentaires non
   // lus » (mig. 109), pas une tâche en cours de création.
@@ -209,10 +191,9 @@ const TeamTaskModal = ({
       projectId !== ref.projectId ||
       categoryId !== (ref.categoryId ?? null) ||
       !sameSet(assigneeIds, ref.assigneeIds) ||
-      (baseLabelIds !== null && !sameSet(labelIds, baseLabelIds)) ||
       (baseListIds !== null && !sameSet(listIds, baseListIds))
     );
-  }, [creating, liveTask, status, name, description, priority, deadline, startDate, estimatedTime, projectId, categoryId, assigneeIds, labelIds, baseLabelIds, listIds, baseListIds]);
+  }, [creating, liveTask, status, name, description, priority, deadline, startDate, estimatedTime, projectId, categoryId, assigneeIds, listIds, baseListIds]);
 
   // Portée d'assignation (mig. 115) : on ne propose que les membres à portée,
   // en gardant ceux DÉJÀ assignés — le serveur ne contrôle que les ajouts.
@@ -247,22 +228,13 @@ const TeamTaskModal = ({
   const createWithDraft = async (): Promise<TeamTask | null> => {
     const created = await onCreate?.({ projectId, ...buildCommon() });
     if (!created) return null;
-    const draft = { subtasks: draftSubtasks, blockedByIds: draftBlockedBy, labelIds };
-    if (draft.subtasks.length + draft.blockedByIds.length + draft.labelIds.length > 0) {
+    const draft = { subtasks: draftSubtasks, blockedByIds: draftBlockedBy };
+    if (draft.subtasks.length + draft.blockedByIds.length > 0) {
       // La tâche existe : un échec partiel est dit par le hook, il n'annule rien.
       await applyDraft.mutateAsync({ taskId: created.id, draft }).catch(() => undefined);
     }
     await syncLists(created.id);
     return created;
-  };
-
-  const syncLabels = async (taskId: string) => {
-    const base = baseLabelIds ?? [];
-    const changes = [
-      ...labelIds.filter((id) => !base.includes(id)).map((labelId) => ({ taskId, labelId, attached: false })),
-      ...base.filter((id) => !labelIds.includes(id)).map((labelId) => ({ taskId, labelId, attached: true })),
-    ];
-    await Promise.all(changes.map((c) => toggleLabel.mutateAsync(c)));
   };
 
   const handleSave = async () => {
@@ -274,7 +246,6 @@ const TeamTaskModal = ({
         await createWithDraft();
       } else if (liveTask) {
         await onUpdate?.(liveTask.id, { projectId, ...buildCommon() });
-        await syncLabels(liveTask.id);
         await syncLists(liveTask.id);
       }
       onClose();
@@ -294,7 +265,6 @@ const TeamTaskModal = ({
       .then((created) => {
         if (!created) { setPendingCommentDraft(null); return; }
         setDraftTask(created);
-        setBaseLabelIds(labelIds);
         setBaseListIds(listIds);
         setDraftSubtasks([]);
         setDraftBlockedBy([]);
@@ -467,10 +437,7 @@ const TeamTaskModal = ({
                 onCategoryChange={setCategoryId}
                 labelsField={
                   <Suspense fallback={null}>
-                    <div className="space-y-4">
-                      <TeamTaskListsField orgId={orgId} value={listIds} onChange={setListIds} />
-                      <TeamTaskLabelsField orgId={orgId} value={labelIds} onChange={setLabelIds} canCreate={isManager} />
-                    </div>
+                    <TeamTaskListsField orgId={orgId} value={listIds} onChange={setListIds} />
                   </Suspense>
                 }
                 projectId={projectId}

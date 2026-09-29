@@ -24,9 +24,6 @@ import {
   UpdateTeamSubtaskInput,
   TeamTaskActivity,
   TeamTaskDependency,
-  TeamLabel,
-  CreateTeamLabelInput,
-  TeamTaskLabel,
   TeamTrashedTask,
   DraftProjectTask,
   DraftProjectMilestone,
@@ -44,7 +41,7 @@ import * as portfolio from './supabase.portfolio';
 // Chargés à la demande : ce repository vit dans le chunk d'ENTRÉE (il sert
 // l'Aperçu), pas les étiquettes (fiche de tâche) ni les rôles et chiffres
 // serveur (Projets, OKR, Pyramide). Même règle que `audience.repository`.
-const labels = () => import('./supabase.labels');
+const activity = () => import('./supabase.activity');
 const access = () => import('./supabase.access');
 
 const audience = () => import('./audience.repository');
@@ -470,13 +467,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   }
 
   // ─── Étiquettes et historique par tâche (mig. 093, 094) ──────────
-  async getLabels(orgId: string): Promise<TeamLabel[]> { return (await labels()).getLabels(orgId); }
-  async createLabel(orgId: string, input: CreateTeamLabelInput): Promise<TeamLabel> { return (await labels()).createLabel(orgId, input); }
-  async getTaskLabels(taskId: string): Promise<TeamTaskLabel[]> { return (await labels()).getTaskLabels(taskId); }
-  async addTaskLabel(taskId: string, labelId: string): Promise<void> { return (await labels()).addTaskLabel(taskId, labelId); }
-  async removeTaskLabel(taskId: string, labelId: string): Promise<void> { return (await labels()).removeTaskLabel(taskId, labelId); }
-  async getTaskIdsWithLabel(labelId: string): Promise<string[]> { return (await labels()).getTaskIdsWithLabel(labelId); }
-  async getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> { return (await labels()).getTaskActivity(taskId); }
+  async getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> { return (await activity()).getTaskActivity(taskId); }
 
   // ─── Historique (mig. 094) — lecture seule ───────────────────────
 

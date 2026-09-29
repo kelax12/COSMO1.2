@@ -427,6 +427,10 @@ export const useDeleteTeamSubtask = (taskId: string) => {
 // fonctionnalite ENTIERE — hooks, cles de cache, methodes des deux
 // repositories — livree sans qu'aucun ecran ne la monte.
 //
+// Rebranches le 2026-09-25 (fiche de tache, filtre), puis retires DE NOUVEAU
+// du mode entreprise le 2026-09-28 a la demande d Axel. Meme regle : les tables
+// restent, seul le front part.
+//
 // ⚠️ La TABLE `team_labels` et sa jonction RESTENT en base : supprimer des
 // donnees pour du code mort serait irreversible, et la mig. 093 est appliquee
 // en prod. Le jour ou les etiquettes reviennent, le back-end est la ; c'est

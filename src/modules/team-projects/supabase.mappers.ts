@@ -18,7 +18,6 @@ import {
   TeamTask,
   TeamTaskComment,
   TeamSubtask,
-  TeamLabel,
   TeamTaskActivity,
   TeamProjectMilestone,
   TeamProjectStatus,
@@ -182,25 +181,7 @@ export const mapSubtask = (r: SubtaskRow): TeamSubtask => ({
   createdAt: r.created_at,
 });
 
-// ─── Labels & historique : lignes brutes ─────────────────────────────
-
-export interface LabelRow {
-  id: string;
-  org_id: string;
-  name: string;
-  color: string;
-  created_by: string | null;
-  created_at: string;
-}
-
-export const mapLabel = (r: LabelRow): TeamLabel => ({
-  id: r.id,
-  orgId: r.org_id,
-  name: r.name,
-  color: r.color,
-  createdBy: r.created_by,
-  createdAt: r.created_at,
-});
+// ─── Historique : lignes brutes ─────────────────────────────
 
 export interface ActivityRow {
   id: string;

@@ -5,7 +5,7 @@ import {
 
 const BASE: OrgTaskFilters = {
   team: '', assignee: null, project: null, status: 'open', q: '',
-  priorities: [], dueFrom: '', dueTo: '', noDue: false, category: null, label: null,
+  priorities: [], dueFrom: '', dueTo: '', noDue: false, category: null,
   group: 'priority', blocked: false,
 };
 
