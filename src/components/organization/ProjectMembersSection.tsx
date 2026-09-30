@@ -5,14 +5,16 @@
 // d'organisation sur CE projet seulement ; un admin n'est jamais restreint.
 
 import { useMemo, useState } from 'react';
-import { UsersRound, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import {
-  useSetProjectMember, useRemoveProjectMember,
+  useSetProjectMember, useRemoveProjectMember, useAddProjectTeam, useTeamProjectTeams,
   type TeamProject, type TeamProjectMember, type TeamProjectRole,
 } from '@/modules/team-projects';
 import { isMemberActive, type OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
+import type { OrgTeam } from '@/modules/org-teams';
 import MemberSelectField from './MemberSelectField';
+import OrgConfirmDialog from './OrgConfirmDialog';
 import { useT } from '@/i18n/useT';
 import MenuSelect from '@/components/organization/MenuSelect';
 
@@ -26,16 +28,20 @@ interface ProjectMembersSectionProps {
   /** Piloter le projet : `project.edit`, responsable, ou co-pilote. */
   canManage: boolean;
   currentUserId?: string;
+  /** Équipes de l'organisation, pour associer une équipe au projet (mig. 164). */
+  teams: OrgTeam[];
 }
 
 const selectCls = 'rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] h-9 px-3 text-sm text-[rgb(var(--color-text-primary))]';
 
-const ProjectMembersSection = ({ project, projectMembers, orgMembers, canManage, currentUserId }: ProjectMembersSectionProps) => {
+const ProjectMembersSection = ({ project, projectMembers, orgMembers, canManage, currentUserId, teams }: ProjectMembersSectionProps) => {
   const { t: pf } = useT('portfolio');
   const setMember = useSetProjectMember(project.orgId);
   const removeMember = useRemoveProjectMember(project.orgId);
-  const [candidate, setCandidate] = useState('');
-  const [role, setRole] = useState<TeamProjectRole>('contributor');
+  const { t: ta } = useT('orgAdmin');
+  const addTeam = useAddProjectTeam(project.orgId);
+  const { data: links = [] } = useTeamProjectTeams(project.orgId);
+  const [confirmTeam, setConfirmTeam] = useState<OrgTeam | null>(null);
 
   const byId = useMemo(() => new Map(orgMembers.map((m) => [m.userId, m])), [orgMembers]);
   const rows = useMemo(
@@ -50,21 +56,26 @@ const ProjectMembersSection = ({ project, projectMembers, orgMembers, canManage,
     return orgMembers.filter((m) => !inProject.has(m.userId) && m.userId !== project.ownerId && isMemberActive(m));
   }, [orgMembers, projectMembers, project.ownerId]);
 
-  const add = () => {
-    if (!candidate) return;
-    setMember.mutate({ projectId: project.id, userId: candidate, role }, { onSuccess: () => setCandidate('') });
+  // Un projet d'entreprise (`team_id` nul) est déjà lu par tous : y associer
+  // une équipe ne changerait rien, le choix n'est pas proposé.
+  const addableTeams = useMemo(() => {
+    if (!project.teamId) return [];
+    const linked = new Set(links.filter((l) => l.projectId === project.id).map((l) => l.teamId));
+    return teams.filter((tm) => tm.id !== project.teamId && !linked.has(tm.id));
+  }, [teams, links, project.id, project.teamId]);
+
+  // Ajout direct au choix, rôle contributeur : il se change ensuite dans la liste.
+  const addMember = (userId: string) => {
+    if (userId) setMember.mutate({ projectId: project.id, userId, role: 'contributor' });
   };
 
   return (
     <section aria-labelledby={`project-members-${project.id}`} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-      <h3 id={`project-members-${project.id}`} className="flex items-center gap-1.5 text-sm font-bold text-[rgb(var(--color-text-primary))] mb-1">
-        <UsersRound size={14} aria-hidden="true" /> {pf('members.title')}
+      <h3 id={`project-members-${project.id}`} className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
+        {pf('members.title')}
       </h3>
-      <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">{pf('members.help')}</p>
 
-      {rows.length === 0 ? (
-        <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">{pf('members.empty')}</p>
-      ) : (
+      {rows.length > 0 && (
         <ul className="space-y-1.5 mb-3">
           {rows.map((pm) => {
             const m = byId.get(pm.userId);
@@ -105,33 +116,45 @@ const ProjectMembersSection = ({ project, projectMembers, orgMembers, canManage,
         </ul>
       )}
 
-      {canManage && candidates.length > 0 && (
-        <div className="space-y-2 border-t border-[rgb(var(--color-border))] pt-3">
-          <MemberSelectField
-            label={pf('members.addLabel')}
-            members={candidates}
-            value={candidate}
-            onChange={setCandidate}
-            emptyLabel={pf('members.choose')}
-          />
-          <div className="flex items-center gap-2">
-            <label className="flex-1">
-              <span className="sr-only">{pf('members.roleLabel')}</span>
-              <MenuSelect value={role} onChange={(e) => setRole(e.target.value as TeamProjectRole)} className={`${selectCls} w-full`}>
-                {ROLES.map((r) => <option key={r} value={r}>{pf(`members.role.${r}`)}</option>)}
+      {canManage && (candidates.length > 0 || addableTeams.length > 0) && (
+        <div className="space-y-3">
+          {candidates.length > 0 && (
+            <MemberSelectField
+              label={pf('members.addMember')}
+              members={candidates}
+              value=""
+              onChange={addMember}
+              emptyLabel={pf('members.choose')}
+            />
+          )}
+          {addableTeams.length > 0 && (
+            <label className="block">
+              <span className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">{pf('members.addTeam')}</span>
+              <MenuSelect
+                value=""
+                onChange={(e) => setConfirmTeam(addableTeams.find((tm) => tm.id === e.target.value) ?? null)}
+                className={`${selectCls} w-full py-2`}
+              >
+                <option value="">{pf('members.choose')}</option>
+                {addableTeams.map((tm) => <option key={tm.id} value={tm.id}>{tm.name}</option>)}
               </MenuSelect>
             </label>
-            <button
-              type="button"
-              onClick={add}
-              disabled={!candidate || setMember.isPending}
-              className="h-9 px-3 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {pf('members.add')}
-            </button>
-          </div>
-          <p className="text-xs text-[rgb(var(--color-text-muted))]">{pf(`members.roleHelp.${role}`)}</p>
+          )}
         </div>
+      )}
+
+      {confirmTeam && (
+        <OrgConfirmDialog
+          title={ta('projectTeams.confirmTitle', { team: confirmTeam.name })}
+          description={ta('projectTeams.confirmBody', { team: confirmTeam.name, project: project.name })}
+          confirmLabel={ta('projectTeams.confirm')}
+          tone="accent"
+          pending={addTeam.isPending}
+          onConfirm={() =>
+            addTeam.mutate({ projectId: project.id, teamId: confirmTeam.id }, { onSettled: () => setConfirmTeam(null) })
+          }
+          onCancel={() => setConfirmTeam(null)}
+        />
       )}
     </section>
   );

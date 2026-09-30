@@ -221,13 +221,13 @@
     "statusAll": "Tout"
   },
   "health": {
-    "title": "Santé",
+    "title": "État",
     "on_track": "Dans les temps",
     "at_risk": "À risque",
     "off_track": "En difficulté",
     "declare": "Déclarer",
     "update": "Mettre à jour",
-    "none": "Pas encore déclarée. La santé dit si le projet tiendra ; l'avancement ne dit que ce qui est fait.",
+    "none": "Pas encore déclarée. L'état dit si le projet tiendra ; l'avancement ne dit que ce qui est fait.",
     "updatedBy": "Déclarée par {{name}} le {{date}}",
     "someone": "un ancien membre",
     "noteLabel": "Note sur la santé du projet",
@@ -237,27 +237,19 @@
     "save": "Enregistrer"
   },
   "members": {
-    "title": "Membres du projet",
-    "help": "Ouvrez ce projet à une personne précise, même hors de son équipe, avec un rôle.",
-    "empty": "Personne n'a encore de rôle sur ce projet.",
+    "title": "Ajouter au projet",
     "formerMember": "Ancien membre",
     "you": "vous",
     "roleOf": "Rôle de {{name}}",
     "remove": "Retirer {{name}} du projet",
     "leave": "Quitter ce projet",
-    "addLabel": "Ajouter une personne",
     "choose": "Choisir…",
-    "roleLabel": "Rôle",
-    "add": "Ajouter",
+    "addMember": "Ajouter un membre",
+    "addTeam": "Ajouter une équipe",
     "role": {
       "lead": "Co-pilote",
       "contributor": "Contributeur",
       "viewer": "Lecteur"
-    },
-    "roleHelp": {
-      "lead": "Pilote le projet comme son responsable (description, dates, santé, jalons, membres), sans en changer l'équipe ni le responsable.",
-      "contributor": "Crée et modifie les tâches de ce projet, même sans ce droit dans l'entreprise.",
-      "viewer": "Lecture seule sur ce projet ; ne peut faire avancer que les tâches qui lui sont assignées."
     },
     "yourRole": "Votre rôle : {{role}}"
   },

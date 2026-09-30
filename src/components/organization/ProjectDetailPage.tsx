@@ -10,7 +10,7 @@
 // jalons et ses dépendances.
 // ═══════════════════════════════════════════════════════════════════
 
-import { Suspense, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import {
   Settings2, Copy, LayoutTemplate, Archive, ArchiveRestore, Plus,
@@ -28,10 +28,8 @@ import ProjectHealthSection, { ProjectHealthBadge } from './ProjectHealthSection
 import ProjectMembersSection from './ProjectMembersSection';
 import MemberAvatar from './MemberAvatar';
 import VisibilityPill from './VisibilityPill';
-import { ProjectWorkflowSection } from './org-config.lazy';
 import TeamTaskRow from './TeamTaskRow';
 import ProjectMilestonesSection from './ProjectMilestonesSection';
-import ProjectDependenciesSection from './ProjectDependenciesSection';
 import ProjectAudienceActions from './ProjectAudienceActions';
 import { OrgBreadcrumb } from './OrgPagePrimitives';
 import { useT } from '@/i18n/useT';
@@ -85,9 +83,9 @@ const actionBtn =
 
 const ProjectDetailPage = ({
   project, tasks, allProjectTasks, stats, projectMembers, currentUserId, isAdmin, canCreateTask,
-  members, teams, milestones, dependencies, projects, categoryName,
+  members, teams, milestones, categoryName,
   canEdit, canArchive, canCreateProject, canManageAudience = false,
-  onBack, onOpenProject, onEdit, onDuplicate, onSaveTemplate, onArchive, onRestore, onAddTask, onStartSelect,
+  onBack, onEdit, onDuplicate, onSaveTemplate, onArchive, onRestore, onAddTask, onStartSelect,
   onToggleComplete, onReassign, onDelete, onOpenTask, selectable, selectedIds, onToggleSelect,
 }: ProjectDetailPageProps) => {
   const { t } = useT('org');
@@ -229,10 +227,6 @@ const ProjectDetailPage = ({
             </dd>
           </div>
         </dl>
-
-        <p className={`mt-4 text-sm whitespace-pre-line ${project.description ? 'text-[rgb(var(--color-text-secondary))]' : 'italic text-[rgb(var(--color-text-muted))]'}`}>
-          {project.description || pf('noDescription')}
-        </p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-4 items-start">
@@ -282,20 +276,9 @@ const ProjectDetailPage = ({
             orgMembers={members}
             canManage={canEdit && !archived}
             currentUserId={currentUserId}
+            teams={teams}
           />
           <ProjectMilestonesSection orgId={project.orgId} projectId={project.id} milestones={projectMilestones} canEdit={canEdit && !archived} />
-          <ProjectDependenciesSection
-            orgId={project.orgId}
-            project={project}
-            projects={projects}
-            dependencies={dependencies}
-            canEdit={canEdit && !archived}
-            onOpenProject={onOpenProject}
-          />
-          {/* Statuts propres, champs et règles du projet (mig. 197, 198). */}
-          <Suspense fallback={null}>
-            <ProjectWorkflowSection project={project} members={members} canEdit={canEdit && !archived} />
-          </Suspense>
         </div>
       </div>
     </div>
