@@ -108,9 +108,11 @@ const MenuSelect = ({
           <ChevronDown className="size-4 shrink-0 opacity-60" aria-hidden="true" />
         </button>
       </DropdownMenuTrigger>
+      {/* z-[10000] : les modales entreprise maison (ProjectEditDialog…) sont en
+          z-[9999] ; au z-50 par défaut, le menu s'ouvrait DERRIÈRE elles. */}
       <DropdownMenuContent
         align="start"
-        className="min-w-[var(--radix-dropdown-menu-trigger-width)] max-h-72 rounded-xl p-1.5 shadow-lg"
+        className="z-[10000] min-w-[var(--radix-dropdown-menu-trigger-width)] max-h-72 rounded-xl p-1.5 shadow-lg"
       >
         {parsed.map((p, i) =>
           p.kind === 'group' ? (
