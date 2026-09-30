@@ -56,9 +56,15 @@ export function createFileStorage(sessionPath = SESSION_PATH) {
   };
   const writeAll = (data) => {
     fs.mkdirSync(path.dirname(sessionPath), { recursive: true });
-    const existed = fs.existsSync(sessionPath);
     fs.writeFileSync(sessionPath, JSON.stringify(data, null, 2), { mode: 0o600 });
-    if (!existed) restrictToOwner(sessionPath);
+    // À CHAQUE écriture, pas seulement à la création (audit du 2026-09-30,
+    // alerte CodeQL js/file-system-race) : `mode` ne s'applique qu'à un
+    // fichier neuf, et ce fichier porte la session du VRAI compte. Un fichier
+    // préexistant aux droits trop larges les gardait indéfiniment.
+    if (process.platform !== 'win32') {
+      try { fs.chmodSync(sessionPath, 0o600); } catch { /* best-effort */ }
+    }
+    restrictToOwner(sessionPath);
   };
   return {
     getItem: (key) => {
