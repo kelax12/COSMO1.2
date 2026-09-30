@@ -21,6 +21,10 @@ on:
     - cron: '12 7 * * *'
   workflow_dispatch:
 
+# Audit de securite du 2026-09-30 (alerte CodeQL actions/missing-workflow-permissions) :
+# ce job ne fait qu un curl, il n a besoin d AUCUN droit sur le depot.
+permissions: {}
+
 jobs:
   notify:
     runs-on: ubuntu-latest
