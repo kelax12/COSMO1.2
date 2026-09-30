@@ -25,6 +25,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { slackText } from '../_shared/org-integrations.ts'
+import { checkWebhookDestination } from '../_shared/webhook-destination.ts'
+
+/** Résolveur réel ; le module partagé le reçoit injecté pour rester testable. */
+const resolveDns = (host: string, type: 'A' | 'AAAA'): Promise<string[]> =>
+  Deno.resolveDns(host, type) as Promise<string[]>
 
 const CRON_SECRET = Deno.env.get('CRON_SECRET')
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
@@ -83,6 +88,17 @@ Deno.serve(async (req) => {
       headers['X-Cosmo-Signature'] = `sha256=${await hmacHex(d.secret, `${ts}.${body}`)}`
     }
     let status: number | null = null
+    // Audit du 2026-09-30 : la contrainte SQL ne suffit pas, la destination se
+    // décide sur les adresses RÉSOLUES (cf. `_shared/webhook-destination.ts`).
+    const destination = await checkWebhookDestination(d.url, resolveDns)
+    if (!destination.ok) {
+      failed++
+      await admin.from('org_webhook_deliveries')
+        .update({ attempts: d.attempts + 1, status_code: null, delivered_at: null })
+        .eq('id', d.delivery_id)
+      outcome.set(d.webhook_id, { ok: false, status: null })
+      continue
+    }
     try {
       const res = await fetch(d.url, { method: 'POST', headers, body, redirect: 'manual', signal: AbortSignal.timeout(TIMEOUT_MS) })
       status = res.status

@@ -58,3 +58,21 @@ verify_jwt = true
 # never by a user: the secret is what authorizes it.
 [functions.org-digest]
 verify_jwt = false
+
+# org-webhook-dispatch (mig. 199) est un cron, comme org-digest : appelee par
+# .github/workflows/org-webhook-dispatch.yml avec CRON_SECRET, jamais par un
+# utilisateur. 🔴 Absente de ce fichier jusqu au 2026-09-30, elle avait ete
+# deployee avec le defaut verify_jwt = true : la passerelle repondait 401 avant
+# le code, et AUCUN webhook n etait jamais parti depuis sa creation.
+[functions.org-webhook-dispatch]
+verify_jwt = false
+
+# Les deux suivantes veulent un JWT (defaut), ecrit ici pour que ce fichier
+# decrive les douze fonctions et qu une absence se remarque.
+# verify-org-domain : l appelant doit etre admin de l organisation du domaine.
+[functions.verify-org-domain]
+verify_jwt = true
+
+# stripe-org-refund : le proprietaire de l organisation, resolu depuis le JWT.
+[functions.stripe-org-refund]
+verify_jwt = true
