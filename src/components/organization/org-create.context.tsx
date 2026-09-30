@@ -29,6 +29,10 @@ export interface OpenProjectOptions {
 }
 
 export interface OpenTeamOptions {
+  /** Membres précochés (« Créer une équipe avec ces N membres » de l'annuaire). */
+  initialMemberIds?: string[];
+  /** Nom pré-rempli (la recherche tapée dans le sélecteur d'équipe). */
+  initialName?: string;
   onCreated?: (teamId: string) => void;
 }
 

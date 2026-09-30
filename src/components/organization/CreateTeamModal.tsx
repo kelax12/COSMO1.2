@@ -28,6 +28,10 @@ interface CreateTeamModalProps {
   currentUserId?: string;
   /** Admin : peut ajouter n'importe qui ; manager : soi + son sous-arbre (miroir RLS). */
   isAdmin: boolean;
+  /** Membres précochés, en plus de l'utilisateur courant. */
+  initialMemberIds?: string[];
+  /** Nom pré-rempli. */
+  initialName?: string;
   /** Crée l'équipe, y ajoute les membres, nomme le responsable. Rejette en cas d'échec. */
   onSubmit: (input: CreateTeamFullInput) => Promise<void>;
   onClose: () => void;
@@ -47,14 +51,18 @@ const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
  * passe par `MemberPickList` : recherche et affichage par tranches, là où
  * elle rendait mille lignes d'un bloc.
  */
-export const CreateTeamForm = ({ members, currentUserId, isAdmin, onSubmit, onClose, inline = false }: CreateTeamModalProps & {
+export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberIds, initialName, onSubmit, onClose, inline = false }: CreateTeamModalProps & {
   /** Intégré dans une autre surface : pas de défilement propre, bords arrondis. */
   inline?: boolean;
 }) => {
   const { t } = useT('org');
-  const [name, setName] = useState('');
+  const [name, setName] = useState(initialName ?? '');
   const [color, setColor] = useState<string>(TEAM_COLORS[0].value);
-  const [selected, setSelected] = useState<string[]>(currentUserId ? [currentUserId] : []);
+  const [selected, setSelected] = useState<string[]>(() => {
+    const ids = currentUserId ? [currentUserId] : [];
+    for (const id of initialMemberIds ?? []) if (!ids.includes(id)) ids.push(id);
+    return ids;
+  });
   // Par défaut, celui qui crée l'équipe en répond : c'est le cas courant.
   const [leadId, setLeadId] = useState(currentUserId ?? '');
   const [error, setError] = useState<string | null>(null);
