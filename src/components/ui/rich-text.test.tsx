@@ -12,6 +12,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { RichText } from './rich-text';
+import { richTextLiteral } from './rich-text-literal';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -85,5 +86,32 @@ describe('RichText — schémas refusés', () => {
     render(<RichText>{`a [x](${url}) b`}</RichText>);
     const a = screen.getByRole('link', { name: 'x' });
     expect(a.getAttribute('href')).toBe(url);
+  });
+});
+
+describe('richTextLiteral : une valeur saisie ne devient jamais du balisage', () => {
+  // Audit de sécurité du 2026-09-30 : le nom d'une tâche partagée, interpolé
+  // dans une phrase rendue par RichText, devenait un lien cliquable chez le
+  // destinataire du lien de partage.
+  it('un nom en forme de lien reste du texte', () => {
+    const nom = richTextLiteral('[Réclamez votre prime](https://evil.example)');
+    const { container } = render(<RichText>{`Alice vous propose ${nom}`}</RichText>);
+    expect(container.querySelector('a')).toBeNull();
+    expect(container.textContent).toContain('Réclamez votre prime');
+  });
+
+  it('un nom en forme de gras reste du texte', () => {
+    const { container } = render(<RichText>{`de ${richTextLiteral('**URGENT**')}`}</RichText>);
+    expect(container.querySelector('strong')).toBeNull();
+  });
+
+  it('témoin : sans elle, le lien passerait', () => {
+    const { container } = render(<RichText>{'Alice vous propose [x](https://evil.example)'}</RichText>);
+    expect(container.querySelector('a')).not.toBeNull();
+  });
+
+  it('accepte null et undefined', () => {
+    expect(richTextLiteral(null)).toBe('');
+    expect(richTextLiteral(undefined)).toBe('');
   });
 });
