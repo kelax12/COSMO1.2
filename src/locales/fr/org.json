@@ -388,7 +388,6 @@
     "tasksTabMoreProjects_many": "+{{count}} de projets",
     "tasksTabMoreProjects_other": "+{{count}} projets",
     "tasksTabFewerProjects": "Réduire",
-    "milestoneFailed": "Jalon non enregistré : {{message}}",
     "filterAssignee": "Filtrer par assigné",
     "seeTasksOf": "Voir les tâches de",
     "everyone": "Tout le monde",

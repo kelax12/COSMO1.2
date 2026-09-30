@@ -15,10 +15,7 @@ import { dependencyErrorCode } from '@/modules/tasks/dependency-errors';
 import { teamProjectKeys } from './constants';
 import type {
   CreateTeamProjectInput,
-  CreateTeamProjectMilestoneInput,
-  DraftProjectMilestone,
   DraftProjectTask,
-  UpdateTeamProjectMilestoneInput,
 } from './types';
 
 const useRepo = () => getTeamProjectsRepository();
@@ -32,70 +29,19 @@ export const useCreateTeamProjectWithTasks = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: async ({ input, tasks, milestones }: {
+    mutationFn: async ({ input, tasks }: {
       input: CreateTeamProjectInput;
       tasks?: DraftProjectTask[];
-      milestones?: DraftProjectMilestone[];
     }) => {
       const valid = await validateAsync('teamProject.create', input);
-      return repository.createProjectWithTasks(orgId, valid as CreateTeamProjectInput, tasks, milestones);
+      return repository.createProjectWithTasks(orgId, valid as CreateTeamProjectInput, tasks);
     },
-    onSuccess: (_id, { tasks, milestones }) => {
+    onSuccess: (_id, { tasks }) => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
       if (tasks && tasks.length > 0) queryClient.invalidateQueries({ queryKey: teamProjectKeys.tasks(orgId) });
-      if (milestones && milestones.length > 0) queryClient.invalidateQueries({ queryKey: teamProjectKeys.milestones(orgId) });
     },
     onError: (error: Error) =>
       toast.error(translator('errors').t('mutation.createProject', { message: error.message })),
-  });
-};
-
-// ─── Jalons ──────────────────────────────────────────────────────────
-
-export const useTeamProjectMilestones = (orgId: string | undefined) => {
-  const repository = useRepo();
-  return useQuery({
-    queryKey: teamProjectKeys.milestones(orgId ?? ''),
-    queryFn: () => repository.getMilestones(orgId as string),
-    enabled: !!orgId,
-    staleTime: 1000 * 60,
-    refetchOnWindowFocus: true,
-  });
-};
-
-// ⚠️ `org`, pas `portfolio` : ce fichier est exporté par le baril du module,
-// importé par des pages qui ne chargent pas le catalogue du portefeuille.
-const milestoneError = (error: Error) =>
-  toast.error(translator('org').t('projects.milestoneFailed', { message: error.message }));
-
-export const useCreateProjectMilestone = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: (input: CreateTeamProjectMilestoneInput) => repository.createMilestone(orgId, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: teamProjectKeys.milestones(orgId) }),
-    onError: milestoneError,
-  });
-};
-
-export const useUpdateProjectMilestone = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: ({ milestoneId, input }: { milestoneId: string; input: UpdateTeamProjectMilestoneInput }) =>
-      repository.updateMilestone(milestoneId, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: teamProjectKeys.milestones(orgId) }),
-    onError: milestoneError,
-  });
-};
-
-export const useDeleteProjectMilestone = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: (milestoneId: string) => repository.deleteMilestone(milestoneId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: teamProjectKeys.milestones(orgId) }),
-    onError: milestoneError,
   });
 };
 
@@ -203,7 +149,7 @@ export const usePurgeArchivedProject = (orgId: string) => {
     mutationFn: (projectId: string) => repository.purgeArchivedProject(projectId),
     onSuccess: () => {
       for (const key of [
-        teamProjectKeys.projects(orgId), teamProjectKeys.tasks(orgId), teamProjectKeys.milestones(orgId),
+        teamProjectKeys.projects(orgId), teamProjectKeys.tasks(orgId),
         teamProjectKeys.projectDependencies(orgId), teamProjectKeys.projectTeams(orgId), teamProjectKeys.trash(orgId),
       ]) queryClient.invalidateQueries({ queryKey: key });
     },

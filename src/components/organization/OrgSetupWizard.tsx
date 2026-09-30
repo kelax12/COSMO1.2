@@ -302,7 +302,6 @@ const ProjectStep = ({ orgId, currentUserId, createdTeamId, templateLabel, trans
           dueDate: fromTemplate.dueDate,
         },
         tasks: fromTemplate.tasks,
-        milestones: fromTemplate.milestones,
       },
       { onSuccess: () => onDone(effectiveName) },
     );

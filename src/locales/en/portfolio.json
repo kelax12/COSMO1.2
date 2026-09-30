@@ -17,8 +17,7 @@
     "owner": "Owner",
     "status": "Status",
     "dates": "Dates",
-    "progress": "Progress",
-    "next": "Next milestone"
+    "progress": "Progress"
   },
   "status": {
     "planned": "Planned",
@@ -57,7 +56,7 @@
     "description": "Project description",
     "descriptionPlaceholder": "Goal, scope, useful links…",
     "owner": "Owner",
-    "ownerHint": "The owner runs the project: they edit it and set milestones and dependencies. They can't change its team or its owner.",
+    "ownerHint": "The owner runs the project: they edit it and set dependencies. They can't change its team or its owner.",
     "status": "Status",
     "startDate": "Start",
     "dueDate": "End",
@@ -68,19 +67,6 @@
     "saving": "Saving…",
     "cancel": "Cancel",
     "close": "Close"
-  },
-  "milestones": {
-    "title": "Milestones",
-    "empty": "No milestones. A milestone marks a checkpoint to hit, without being a task.",
-    "add": "Add milestone",
-    "namePlaceholder": "Milestone name",
-    "nameAria": "New milestone name",
-    "dateAria": "New milestone date",
-    "markDone": "Mark “{{name}}” as reached",
-    "markUndone": "Mark “{{name}}” as not reached",
-    "remove": "Delete milestone “{{name}}”",
-    "overdue": "Missed",
-    "reached": "Reached"
   },
   "deps": {
     "title": "Dependencies",
@@ -109,7 +95,7 @@
     "dueDate": "End",
     "color": "Color",
     "description": "Description (optional)",
-    "atomicHint": "The project, its tasks and its milestones are created together: if one fails, nothing is created."
+    "atomicHint": "The project and its tasks are created together: if one fails, nothing is created."
   },
   "bulk": {
     "reassigned_one": "{{count}} task reassigned",
@@ -122,10 +108,9 @@
     "selectToggleAria": "Select several tasks"
   },
   "timeline": {
-    "legend": "A bar runs from start to due date; a dot is a due date with no start. Diamonds are milestones.",
+    "legend": "A bar runs from start to due date; a dot is a due date with no start.",
     "bar": "{{name}}, from {{start}} to {{end}}",
     "projectSpan": "Project {{name}}, from {{start}} to {{end}}",
-    "milestone": "Milestone “{{name}}”, on {{date}}",
     "empty": "No upcoming deadlines. Add dates to tasks to see them here.",
     "today": "Today",
     "marker": "{{name}}, due {{date}}",
@@ -248,7 +233,7 @@
       "viewer": "Viewer"
     },
     "roleHelp": {
-      "lead": "Runs the project like its owner (description, dates, health, milestones, members), without changing its team or owner.",
+      "lead": "Runs the project like its owner (description, dates, health, members), without changing its team or owner.",
       "contributor": "Creates and edits this project's tasks, even without that permission in the company.",
       "viewer": "Read-only on this project; can only move forward the tasks assigned to them."
     },

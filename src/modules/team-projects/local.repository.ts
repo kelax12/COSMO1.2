@@ -25,10 +25,6 @@ import {
   CreateTeamTaskCommentInput,
   TeamTrashedTask,
   DraftProjectTask,
-  DraftProjectMilestone,
-  TeamProjectMilestone,
-  CreateTeamProjectMilestoneInput,
-  UpdateTeamProjectMilestoneInput,
   TeamProjectDependency,
   TeamProjectTeam,
   TeamProjectMember,
@@ -140,7 +136,6 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     orgId: string,
     input: CreateTeamProjectInput,
     drafts: DraftProjectTask[] = [],
-    milestones: DraftProjectMilestone[] = [],
   ): Promise<string> {
     for (const d of drafts) {
       if (!d.name.trim()) throw makeApiError('invalid_input');
@@ -169,19 +164,10 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       categoryId: null,
     }));
     if (created.length > 0) this.saveTasks([...created, ...this.getTasksArray()]);
-    for (const m of milestones) {
-      portfolio.createMilestone(orgId, { projectId: project.id, name: m.name, dueDate: m.dueDate }, this.getProjectsArray());
-    }
     return project.id;
   }
 
-  // ─── Jalons & dépendances entre projets (mig. 153) ─────────────────
-  async getMilestones(orgId: string): Promise<TeamProjectMilestone[]> { return portfolio.getMilestones(orgId); }
-  async createMilestone(orgId: string, input: CreateTeamProjectMilestoneInput): Promise<void> {
-    portfolio.createMilestone(orgId, input, this.getProjectsArray());
-  }
-  async updateMilestone(id: string, input: UpdateTeamProjectMilestoneInput): Promise<void> { portfolio.updateMilestone(id, input); }
-  async deleteMilestone(id: string): Promise<void> { portfolio.deleteMilestone(id); }
+  // ─── Dépendances entre projets (mig. 153) ─────────────────────────
   async getProjectDependencies(orgId: string): Promise<TeamProjectDependency[]> {
     return portfolio.getProjectDependencies(orgId, this.getProjectsArray());
   }

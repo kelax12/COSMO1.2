@@ -27,13 +27,9 @@ export type {
   TeamProjectTaskStats,
   TeamMemberWorkload,
   TeamProjectTemplatePayload,
-  TeamProjectMilestone,
-  CreateTeamProjectMilestoneInput,
-  UpdateTeamProjectMilestoneInput,
   TeamProjectDependency,
   TeamProjectTeam,
   DraftProjectTask,
-  DraftProjectMilestone,
 } from './types';
 
 export {
@@ -81,13 +77,9 @@ export {
   useDeleteTeamTaskComment,
 } from './hooks';
 
-// Portefeuille (mig. 153, M2) : création atomique, jalons, dépendances.
+// Portefeuille (mig. 153, M2) : création atomique, dépendances.
 export {
   useCreateTeamProjectWithTasks,
-  useTeamProjectMilestones,
-  useCreateProjectMilestone,
-  useUpdateProjectMilestone,
-  useDeleteProjectMilestone,
   useTeamProjectDependencies,
   useAddProjectDependency,
   useRemoveProjectDependency,

@@ -50,7 +50,7 @@ describe('schémas projet riche (mig. 153)', () => {
 
   it('createTeamProjectSchema conserve chaque champ, modèle compris', async () => {
     const { createTeamProjectSchema } = await import('./team-task.schema');
-    const payload = { tasks: [{ name: 't', deadlineOffset: 3 }], milestones: [] };
+    const payload = { tasks: [{ name: 't', deadlineOffset: 3 }] };
     const parsed = createTeamProjectSchema.parse({ name: 'P', ...rich, isTemplate: true, templatePayload: payload });
     expect(parsed).toMatchObject({ ...rich, isTemplate: true, templatePayload: payload });
   });

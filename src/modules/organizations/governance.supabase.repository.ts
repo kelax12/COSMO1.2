@@ -242,4 +242,6 @@ interface SearchRow {
   parent_id: string | null;
 }
 
-const SEARCH_KINDS: readonly OrgSearchKind[] = ['project', 'milestone', 'task', 'okr', 'kr', 'team', 'member'];
+// La RPC `search_org` (mig. 191) rend encore des lignes `milestone` : ce filtre
+// les écarte depuis le retrait des jalons (2026-09-30).
+const SEARCH_KINDS: readonly OrgSearchKind[] = ['project', 'task', 'okr', 'kr', 'team', 'member'];

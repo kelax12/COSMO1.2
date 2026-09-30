@@ -14,7 +14,7 @@ import {
   format, startOfMonth, endOfMonth, addMonths,
 } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import type { TeamTask, TeamProject, TeamProjectMilestone } from '@/modules/team-projects';
+import type { TeamTask, TeamProject } from '@/modules/team-projects';
 
 /** Fenêtre affichée par la vue chronologique. */
 export interface TimelineRange {
@@ -58,12 +58,6 @@ export interface TimelineSpan {
   endPercent: number;
 }
 
-/** Jalon de projet (mig. 153) placé sur la ligne du projet. */
-export interface TimelineMilestoneMark {
-  milestone: TeamProjectMilestone;
-  offsetPercent: number;
-}
-
 /** Une ligne = un projet, ses tâches datées et ses tâches sans date. */
 export interface TimelineRow {
   project: TeamProject;
@@ -71,7 +65,6 @@ export interface TimelineRow {
   /** Tâches ouvertes du projet sans échéance — jamais des jalons fantômes. */
   unscheduled: TeamTask[];
   span: TimelineSpan | null;
-  milestones: TimelineMilestoneMark[];
 }
 
 /** Une ligne « par personne » — mêmes jalons, groupés par assigné plutôt que par projet. */
@@ -247,7 +240,6 @@ export function timelineRows(
   projects: TeamProject[],
   range: TimelineRange,
   now: Date = new Date(),
-  milestones: TeamProjectMilestone[] = [],
 ): TimelineRow[] {
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -263,16 +255,11 @@ export function timelineRows(
         markers.push(markerOf(task, d, range, todayStart));
       }
       markers.sort((a, b) => a.offsetPercent - b.offsetPercent);
-      const marks = milestones
-        .filter((m) => m.projectId === project.id)
-        .map((m) => ({ m, d: parse(m.dueDate) }))
-        .filter((x): x is { m: TeamProjectMilestone; d: Date } => !!x.d && x.d >= range.start && x.d <= range.end)
-        .map(({ m, d }) => ({ milestone: m, offsetPercent: markerOffset(d, range) }));
-      return { project, markers, unscheduled, span: projectSpan(project, range), milestones: marks };
+      return { project, markers, unscheduled, span: projectSpan(project, range) };
     })
-    // Un projet daté ou jalonné garde sa ligne même sans tâche ouverte : c'est
+    // Un projet daté garde sa ligne même sans tâche ouverte : c'est
     // un engagement du portefeuille, pas une ligne vide.
-    .filter((row) => row.markers.length > 0 || row.unscheduled.length > 0 || row.span !== null || row.milestones.length > 0);
+    .filter((row) => row.markers.length > 0 || row.unscheduled.length > 0 || row.span !== null);
 }
 
 /**
