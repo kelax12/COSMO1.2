@@ -12,8 +12,7 @@
 //
 // Contrat complet et raison du second argument : `src/lib/restore-id.ts` (R-08).
 //
-// ⚠️ N'appeler QUE depuis un toast d'annulation. Une DUPLICATION
-//    (`HabitActionsMenu`) doit continuer de laisser la base choisir l'identifiant.
+// ⚠️ N'appeler QUE depuis un toast d'annulation.
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getHabitsRepository } from '@/lib/repository.factory';

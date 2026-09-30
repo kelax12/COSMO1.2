@@ -404,7 +404,12 @@
       "Bash(cp src/components/organization/TeamTasksToolbar.filter.test.tsx /c/Users/Axel/AppData/Local/Temp/claude/C--Users-Axel-Documents-COSMO1-1/0fb604ad-5865-4ff3-8518-295034d9bc11/scratchpad/toolbar.test.bak && git show HEAD:src/components/organization/TeamTasksToolbar.filter.test.tsx > src/components/organization/TeamTasksToolbar.filter.test.tsx && npx tsc -b 2>&1 | head -30; cp /c/Users/Axel/AppData/Local/Temp/claude/C--Users-Axel-Documents-COSMO1-1/0fb604ad-5865-4ff3-8518-295034d9bc11/scratchpad/toolbar.test.bak src/components/organization/TeamTasksToolbar.filter.test.tsx; echo RESTORED)",
       "mcp__ed959362-2652-4902-ab10-a5e8fd99f495__list_available_accounts_or_orgs",
       "PowerShell(gh secret list --repo kelax12/COSMO1.2)",
-      "PowerShell(gh issue list --repo kelax12/COSMO1.2 --state open --limit 10)"
+      "PowerShell(gh issue list --repo kelax12/COSMO1.2 --state open --limit 10)",
+      "Bash(node /tmp/scan-head.mjs --list)",
+      "Skill(impeccable)",
+      "Skill(impeccable:*)",
+      "Bash(awk '/^### C-27/,/^### C-28/' a-faire-code.md)",
+      "Bash(cd \"C:\\\\Users\\\\Axel\\\\Documents\\\\COSMO1.1\" && cat -A /dev/null; grep -n \"transform\\\\|will-change\\\\|perspective\\\\|filter:\" src/index.css | head -80)"
     ]
   },
   "enabledMcpjsonServers": [

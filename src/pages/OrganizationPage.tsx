@@ -238,7 +238,7 @@ const OrganizationPage = () => {
     if (id === 'members') return { count: badges.members, items: badges.memberItems };
     return { count: extra?.count ?? 0, items: extraItems };
   };
-  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => (item.id === 'stats' ? canStats : !item.managerOnly || isManager)).map(
+  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => !item.hidden).filter((item) => (item.id === 'stats' ? canStats : !item.managerOnly || isManager)).map(
     ({ id, labelKey, Icon, group }) => {
       const { count: badgeCount, items } = badgeOf(id);
       const badgeAriaLabel = badgeCount > 0 ? tp('page.badgeCount', badgeCount) : undefined;

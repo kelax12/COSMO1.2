@@ -10,6 +10,7 @@
 // Composant présentationnel : il affiche et modifie `filters`, il ne filtre rien.
 // ═══════════════════════════════════════════════════════════════════
 
+import type { ReactNode } from 'react';
 import { Search, UserRound, Users, X } from 'lucide-react';
 import {
   DropdownMenu,
@@ -45,6 +46,9 @@ interface OrgTaskFilterBarProps {
   /** Ce que la barre trie. `projects` : onglet Projets, sans pastilles d'état
    *  (répartition Projets / Tâches du 2026-09-27). */
   entity?: 'tasks' | 'projects';
+  /** Place le périmètre ailleurs (onglet Tâches : à côté du tri, 2026-09-30).
+   *  Reçoit le sélecteur, rend la ligne qui l'accueille sous la recherche. */
+  scopeSlot?: (scope: ReactNode) => ReactNode;
 }
 
 const segBase = 'h-8 px-2.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
@@ -53,7 +57,7 @@ const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-
 
 const OrgTaskFilterBar = ({
   filters, setFilters, defaultStatus, members, teams, projects = [], currentUserId,
-  searchPlaceholder, searchAria, onCreateTeam, entity = 'tasks',
+  searchPlaceholder, searchAria, onCreateTeam, entity = 'tasks', scopeSlot,
 }: OrgTaskFilterBarProps) => {
   // Catalogue `portfolio`, chargé avec les deux seuls onglets qui montrent cette
   // barre (Tâches, Projets) : `org` est payé par toute visite de /entreprise.
@@ -94,56 +98,7 @@ const OrgTaskFilterBar = ({
   const pills = chips.filter((chip) => chip.key !== 'q');
   const clearAll = () => setFilters({ team: '', assignee: null, project: null, status: defaultStatus, q: '', ...CLEARED_ATTRIBUTE_FILTERS });
 
-  return (
-    <div className="space-y-2" role="group" aria-label={t('filters.barAria')}>
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* Recherche, avec les filtres actifs en pastilles DANS le champ
-            (2026-09-28) : la ligne « Filtres actifs » en dessous coûtait une
-            rangée entière pour une ou deux étiquettes. Retour arrière dans un
-            champ vide retire la dernière pastille, comme un champ d'étiquettes. */}
-        <div
-          className="relative flex-1 min-w-[180px] max-w-md flex items-center flex-wrap gap-1 min-h-10 pl-9 pr-1 py-1 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] focus-within:border-[rgb(var(--color-accent-solid))] cursor-text"
-          onClick={(e) => e.currentTarget.querySelector('input')?.focus()}
-        >
-          <Search size={14} className="absolute left-3 top-5 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-          {pills.map((chip) => (
-            <span key={chip.key} className="inline-flex items-center gap-1 pl-2.5 pr-1 h-7 rounded-full bg-indigo-500/12 text-indigo-600 dark:text-indigo-300 text-xs font-medium whitespace-nowrap">
-              {chip.label}
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setFilters(chip.clear); }}
-                aria-label={t('filters.removeFilter', { name: chip.label })}
-                className="w-4 h-4 rounded-full inline-flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-indigo-500/20 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-              >
-                <X size={11} aria-hidden="true" />
-              </button>
-            </span>
-          ))}
-          <input
-            type="search"
-            value={q}
-            onChange={(e) => setFilters({ q: e.target.value })}
-            onKeyDown={(e) => {
-              if (e.key === 'Backspace' && q === '' && pills.length > 0) setFilters(pills[pills.length - 1].clear);
-            }}
-            placeholder={pills.length > 0 ? undefined : searchPlaceholder}
-            aria-label={searchAria}
-            className="flex-1 min-w-[6rem] h-7 px-1 no-input-chrome bg-transparent text-sm text-[rgb(var(--color-text-primary))] focus:outline-none"
-          />
-          {chips.length > 0 && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); clearAll(); }}
-              aria-label={t('filters.clearAll')}
-              title={t('filters.clearAll')}
-              className="shrink-0 w-7 h-7 rounded-md inline-flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-secondary))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          )}
-        </div>
-
-        {/* Périmètre : tout / moi / une personne / une équipe */}
+  const scope = (
         <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5 gap-0.5">
           <button
             type="button"
@@ -237,11 +192,63 @@ const OrgTaskFilterBar = ({
             </DropdownMenu>
           )}
         </div>
+  );
+
+  return (
+    <div className="space-y-2" role="group" aria-label={t('filters.barAria')}>
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Recherche, avec les filtres actifs en pastilles DANS le champ
+            (2026-09-28) : la ligne « Filtres actifs » en dessous coûtait une
+            rangée entière pour une ou deux étiquettes. Retour arrière dans un
+            champ vide retire la dernière pastille, comme un champ d'étiquettes. */}
+        <div
+          className="relative flex-1 min-w-[180px] max-w-md flex items-center flex-wrap gap-1 min-h-10 pl-9 pr-1 py-1 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] focus-within:border-[rgb(var(--color-accent-solid))] cursor-text"
+          onClick={(e) => e.currentTarget.querySelector('input')?.focus()}
+        >
+          <Search size={14} className="absolute left-3 top-5 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+          {pills.map((chip) => (
+            <span key={chip.key} className="inline-flex items-center gap-1 pl-2.5 pr-1 h-7 rounded-full bg-indigo-500/12 text-indigo-600 dark:text-indigo-300 text-xs font-medium whitespace-nowrap">
+              {chip.label}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setFilters(chip.clear); }}
+                aria-label={t('filters.removeFilter', { name: chip.label })}
+                className="w-4 h-4 rounded-full inline-flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-indigo-500/20 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+              >
+                <X size={11} aria-hidden="true" />
+              </button>
+            </span>
+          ))}
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setFilters({ q: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key === 'Backspace' && q === '' && pills.length > 0) setFilters(pills[pills.length - 1].clear);
+            }}
+            placeholder={pills.length > 0 ? undefined : searchPlaceholder}
+            aria-label={searchAria}
+            className="flex-1 min-w-[6rem] h-7 px-1 no-input-chrome bg-transparent text-sm text-[rgb(var(--color-text-primary))] focus:outline-none"
+          />
+          {chips.length > 0 && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); clearAll(); }}
+              aria-label={t('filters.clearAll')}
+              title={t('filters.clearAll')}
+              className="shrink-0 w-7 h-7 rounded-md inline-flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-secondary))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            >
+              <X size={14} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+
+        {!scopeSlot && scope}
 
         {/* Plus de pastilles d'état ici (2026-09-28) : « Terminées cette
             semaine » est un préréglage (`FilterPresets`), « Tout » est retiré. */}
       </div>
-
+      {scopeSlot?.(scope)}
     </div>
   );
 };

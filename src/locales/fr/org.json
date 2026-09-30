@@ -1447,14 +1447,6 @@
       "createAndComment": "Créer et commenter",
       "createAndCommentHint": "Publier ce commentaire crée la tâche avec les champs saisis."
     },
-    "labels": {
-      "title": "Étiquettes",
-      "add": "Étiquette",
-      "empty": "Aucune étiquette dans l'entreprise pour l'instant.",
-      "namePlaceholder": "Nom de l'étiquette",
-      "color": "Couleur de l'étiquette",
-      "create": "Créer"
-    },
     "draft": {
       "subtasksHint": "Les étapes seront ajoutées à la création de la tâche.",
       "depsHint": "Cochez les tâches du projet qui doivent se terminer avant celle-ci.",

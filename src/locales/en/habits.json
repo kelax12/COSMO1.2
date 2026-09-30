@@ -57,14 +57,12 @@
     "pauseHint": "Holidays, illness… streak preserved",
     "pauseKeepsStreak": "Your streak stays intact until you resume",
     "indefinite": "open-ended",
-    "duplicated": "Habit “{{name}}” duplicated",
     "scheduled": "Habit “{{name}}” scheduled",
     "taskCreated": "Task “{{name}}” created",
     "resumed": "“{{name}}” resumed",
     "paused": "“{{name}}” paused",
     "resumeHabit": "Resume habit",
-    "pauseHabit": "Pause",
-    "copyName": "{{name}} (copy)"
+    "pauseHabit": "Pause"
   },
   "tracking": {
     "averageCompletion": "Average completion per day",
@@ -95,9 +93,7 @@
     "createTask": "Create a task",
     "scheduleInAgenda": "Schedule in the calendar",
     "scheduleHint": "Event with an adjustable time",
-    "duplicateHint": "A copy with a blank history",
     "createTaskHint": "Today · {{minutes}} min",
-    "duplicate": "Duplicate the habit",
     "dueTodayDuration": "Due today · {{minutes}} min"
   },
   "globalTracking": {

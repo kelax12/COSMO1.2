@@ -17,6 +17,9 @@ interface TeamTasksViewControlsProps {
   /** Axe des colonnes du Tableau. */
   kanbanGroupBy: 'assignee' | 'status';
   onKanbanGroupByChange: (groupBy: 'assignee' | 'status') => void;
+  /** Moitié à rendre : la vue (après les préréglages) ou les colonnes (au
+   *  bout de la ligne), 2026-09-30. Absent : les deux. */
+  part?: 'view' | 'columns';
 }
 
 const segBase = 'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
@@ -30,7 +33,7 @@ const btn = 'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border borde
  *  regroupement a fusionné avec le tri, il vit dans `TeamTasksToolbar`
  *  (2026-09-27) — un seul menu répond aux deux questions. */
 const TeamTasksViewControls = ({
-  columns, onColumnsChange, view, onViewChange, kanbanGroupBy, onKanbanGroupByChange,
+  columns, onColumnsChange, view, onViewChange, kanbanGroupBy, onKanbanGroupByChange, part,
 }: TeamTasksViewControlsProps) => {
   const { t } = useT('portfolio');
   const org = useT('org');
@@ -49,6 +52,7 @@ const TeamTasksViewControls = ({
 
   return (
     <div className="inline-flex items-center gap-1.5 flex-wrap">
+      {part !== 'columns' && (
       <div className={segGroup} role="group" aria-label={t('toolbar.viewLabel')}>
         <button type="button" onClick={() => onViewChange('table')} aria-pressed={view === 'table'} className={`${segBase} ${view === 'table' ? segOn : segOff}`}>
           <LayoutList size={13} aria-hidden="true" />
@@ -59,8 +63,9 @@ const TeamTasksViewControls = ({
           {t('toolbar.viewKanban')}
         </button>
       </div>
+      )}
 
-      {view === 'kanban' ? (
+      {part === 'view' ? null : view === 'kanban' ? (
         <div className={segGroup} role="group" aria-label={t('toolbar.columnsLabel')}>
           <button type="button" onClick={() => onKanbanGroupByChange('status')} aria-pressed={kanbanGroupBy === 'status'} className={`${segBase} ${kanbanGroupBy === 'status' ? segOn : segOff}`}>
             {t('toolbar.groupByStatus')}

@@ -21,6 +21,8 @@ interface TeamTasksToolbarProps {
    * ligne pleine largeur, comme les filtres rapides de la page Tâches perso.
    */
   viewControls?: ReactNode;
+  /** Périmètre (tout / moi / une personne / équipe), à droite du tri. */
+  scope?: ReactNode;
 }
 
 /**
@@ -48,6 +50,7 @@ const TeamTasksToolbar = ({
   createDeniedReason,
   onCreate,
   viewControls,
+  scope,
 }: TeamTasksToolbarProps) => {
   const { t } = useT('org');
   const criterionLabel: Record<TaskSortCriterion, string> = {
@@ -93,6 +96,8 @@ const TeamTasksToolbar = ({
           <ArrowUpDown size={15} aria-hidden="true" />
         </button>
       </div>
+
+      {scope}
 
       <div className="ml-auto flex items-center gap-2 flex-wrap justify-end">
       {viewControls}
