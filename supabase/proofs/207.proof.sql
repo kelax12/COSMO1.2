@@ -8,7 +8,8 @@
 --     sed -n '/═ PREUVE ═/,$p' supabase/proofs/207.proof.sql; } > /tmp/207.sql
 --   puis remplacer dans /tmp/207.sql :
 --     <ORG_ID>      une organisation réelle
---     <ADMIN_ID>    un admin de cette organisation
+--     <ADMIN_ID>    un admin de cette organisation, qui n'en est PAS le propriétaire
+--     <OWNER_ID>    le propriétaire de l'organisation
 --     <MANAGER_ID>  un membre NON admin qui a au moins un subordonné direct
 --     <SUB_ID>      un subordonné direct de <MANAGER_ID>
 --     <FOREIGN_TEAM_ID> une équipe de l'org dont <MANAGER_ID> n'est PAS membre
@@ -23,6 +24,7 @@
 --   susp_activity=0 susp_okr_team=f expired_manager=f
 --   foreign_okr_seen=f foreign_member_link=refused foreign_team_link=refused
 --   own_okr_first_link=ok own_okr_seen_after=t
+--   demote_owner=refused remove_owner=refused owner_leaves=refused
 --
 -- ── Retour arrière : versions de production capturées le 2026-09-30 ──
 --   is_org_manager      : SELECT public.is_org_admin(p_org) OR public.has_subordinates(p_org, auth.uid());
@@ -115,6 +117,37 @@ INSERT INTO public.team_okr_members (okr_id, org_id, user_id)
 VALUES ('00000000-0000-4000-a000-000000000227', '<ORG_ID>', '<MANAGER_ID>');
 INSERT INTO proof_res VALUES ('own_okr_first_link', 'ok');
 INSERT INTO proof_res SELECT 'own_okr_seen_after', public.can_access_team_okr('00000000-0000-4000-a000-000000000227')::text;
+RESET ROLE;
+
+-- F. Le propriétaire : aucun admin ne le rétrograde ni ne le retire, et il
+--    ne part pas sans transférer.
+SELECT set_config('request.jwt.claim.sub', '<ADMIN_ID>', true);
+SET LOCAL ROLE authenticated;
+DO $$
+BEGIN
+  BEGIN
+    PERFORM public.set_member_role('<ORG_ID>', '<OWNER_ID>', 'member');
+    INSERT INTO proof_res VALUES ('demote_owner', 'ACCEPTED');
+  EXCEPTION WHEN OTHERS THEN
+    INSERT INTO proof_res VALUES ('demote_owner', CASE WHEN SQLERRM = 'cannot_demote_owner' THEN 'refused' ELSE SQLERRM END);
+  END;
+  BEGIN
+    PERFORM public.remove_member('<ORG_ID>', '<OWNER_ID>');
+    INSERT INTO proof_res VALUES ('remove_owner', 'ACCEPTED');
+  EXCEPTION WHEN OTHERS THEN
+    INSERT INTO proof_res VALUES ('remove_owner', CASE WHEN SQLERRM = 'cannot_remove_owner' THEN 'refused' ELSE SQLERRM END);
+  END;
+END $$;
+RESET ROLE;
+SELECT set_config('request.jwt.claim.sub', '<OWNER_ID>', true);
+SET LOCAL ROLE authenticated;
+DO $$
+BEGIN
+  PERFORM public.leave_organization('<ORG_ID>');
+  INSERT INTO proof_res VALUES ('owner_leaves', 'ACCEPTED');
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO proof_res VALUES ('owner_leaves', CASE WHEN SQLERRM = 'transfer_ownership_first' THEN 'refused' ELSE SQLERRM END);
+END $$;
 RESET ROLE;
 
 DO $$

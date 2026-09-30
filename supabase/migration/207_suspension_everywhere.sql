@@ -504,6 +504,153 @@ BEGIN
 END;
 $function$;
 
+-- ── 11. Le propriétaire ne se rétrograde, ne se retire ni ne part ─────
+--
+-- `set_member_access` refusait déjà de restreindre le propriétaire
+-- (`cannot_restrict_owner`, mig. 161). Mais n'importe quel ADMIN pouvait le
+-- rétrograder en simple membre (`set_member_role`) ou le retirer
+-- (`remove_member`, et `offboard_org_member` qui l'appelle) : la personne qui
+-- a créé l'organisation, et qui la paie, en perdait l'accès, tandis que
+-- `owner_id` désignait un non-membre. Et le propriétaire lui-même pouvait
+-- partir (`leave_organization`) sans transférer, laissant une organisation que
+-- plus personne ne peut supprimer ni facturer. Le seul chemin est désormais
+-- `transfer_org_ownership`, puis le départ. Corps repris de la production.
+
+CREATE OR REPLACE FUNCTION public.set_member_role(p_org uuid, p_user uuid, p_role text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_current_role TEXT;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+  IF NOT public.is_org_admin(p_org) THEN
+    RAISE EXCEPTION 'Only an admin can change roles';
+  END IF;
+  IF p_role NOT IN ('admin', 'member') THEN
+    RAISE EXCEPTION 'Invalid role';
+  END IF;
+
+  SELECT role INTO v_current_role
+    FROM public.organization_members
+   WHERE org_id = p_org AND user_id = p_user
+   FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Member not found';
+  END IF;
+
+  -- Mig. 207 : le propriétaire reste admin tant qu'il est propriétaire.
+  IF p_role <> 'admin'
+     AND EXISTS (SELECT 1 FROM public.organizations WHERE id = p_org AND owner_id = p_user) THEN
+    RAISE EXCEPTION 'cannot_demote_owner' USING ERRCODE = 'P0001';
+  END IF;
+
+  IF v_current_role = 'admin' AND p_role <> 'admin' AND public.org_admin_count(p_org) <= 1 THEN
+    RAISE EXCEPTION 'Cannot demote the last admin';
+  END IF;
+
+  UPDATE public.organization_members
+     SET role = p_role
+   WHERE org_id = p_org AND user_id = p_user;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.remove_member(p_org uuid, p_user uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_role TEXT;
+  v_parent UUID;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+  IF NOT public.is_org_admin(p_org) THEN
+    RAISE EXCEPTION 'Only an admin can remove members';
+  END IF;
+
+  -- Mig. 207 : le propriétaire ne se retire pas, il transfère d'abord.
+  IF EXISTS (SELECT 1 FROM public.organizations WHERE id = p_org AND owner_id = p_user) THEN
+    RAISE EXCEPTION 'cannot_remove_owner' USING ERRCODE = 'P0001';
+  END IF;
+
+  SELECT role, manager_id INTO v_role, v_parent
+    FROM public.organization_members
+   WHERE org_id = p_org AND user_id = p_user
+   FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Member not found';
+  END IF;
+  IF v_role = 'admin' AND public.org_admin_count(p_org) <= 1 THEN
+    RAISE EXCEPTION 'Cannot remove the last admin';
+  END IF;
+
+  PERFORM set_config('cosmo.departing_member', p_user::text, true);
+  UPDATE public.organization_members SET manager_id = v_parent
+   WHERE org_id = p_org AND manager_id = p_user;
+  PERFORM public.release_member_work(p_org, p_user);
+  DELETE FROM public.org_team_members WHERE org_id = p_org AND user_id = p_user;
+  INSERT INTO public.org_notifications (org_id, user_id, actor_id, kind)
+  VALUES (p_org, p_user, auth.uid(), 'org_removed');
+  DELETE FROM public.organization_members WHERE org_id = p_org AND user_id = p_user;
+
+  IF NOT EXISTS (SELECT 1 FROM public.organization_members WHERE user_id = p_user) THEN
+    UPDATE public.profiles SET account_type = 'personal' WHERE id = p_user;
+  END IF;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.leave_organization(p_org uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_role TEXT;
+  v_parent UUID;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  SELECT role, manager_id INTO v_role, v_parent
+    FROM public.organization_members
+   WHERE org_id = p_org AND user_id = auth.uid()
+   FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Not a member of this organization';
+  END IF;
+
+  -- Mig. 207 : le propriétaire transfère avant de partir.
+  IF EXISTS (SELECT 1 FROM public.organizations WHERE id = p_org AND owner_id = auth.uid()) THEN
+    RAISE EXCEPTION 'transfer_ownership_first' USING ERRCODE = 'P0001';
+  END IF;
+
+  IF v_role = 'admin' AND public.org_admin_count(p_org) <= 1 THEN
+    RAISE EXCEPTION 'Transfer the admin role before leaving';
+  END IF;
+
+  PERFORM set_config('cosmo.departing_member', auth.uid()::text, true);
+  UPDATE public.organization_members SET manager_id = v_parent
+   WHERE org_id = p_org AND manager_id = auth.uid();
+  PERFORM public.release_member_work(p_org, auth.uid());
+  DELETE FROM public.org_team_members WHERE org_id = p_org AND user_id = auth.uid();
+  DELETE FROM public.organization_members WHERE org_id = p_org AND user_id = auth.uid();
+
+  IF NOT EXISTS (SELECT 1 FROM public.organization_members WHERE user_id = auth.uid()) THEN
+    UPDATE public.profiles SET account_type = 'personal' WHERE id = auth.uid();
+  END IF;
+END;
+$function$;
+
 -- ── Vérification après application (lecture seule) ─────────────────
 --
 --   SELECT p.proname,
