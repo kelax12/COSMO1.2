@@ -391,6 +391,119 @@ CREATE POLICY "team_okr_members_delete"
     AND (public.can_access_team_okr(okr_id) OR public.i_created_team_okr(okr_id))
   );
 
+-- ── 10. claim_org_invite : le lien d'un créateur suspendu ne vaut plus ─
+--
+-- `v_creator_ok` vérifiait que le créateur du lien était admin (ou manager
+-- du bon sous-arbre) SANS regarder la suspension : un admin suspendu gardait
+-- le pouvoir de faire entrer quelqu'un par un lien déjà émis. Reprise exacte
+-- de la production (mig. 161), les deux conditions d'activité ajoutées.
+
+CREATE OR REPLACE FUNCTION public.claim_org_invite(p_token uuid)
+RETURNS TABLE(org_id uuid, org_name text)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_link public.org_invite_links;
+  v_org public.organizations;
+  v_creator_ok BOOLEAN;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  SELECT * INTO v_link FROM public.org_invite_links WHERE id = p_token FOR UPDATE;
+  IF NOT FOUND OR v_link.claimed_at IS NOT NULL OR v_link.expires_at < NOW() THEN
+    RAISE EXCEPTION 'invalid_link';
+  END IF;
+  IF v_link.created_by = auth.uid() THEN
+    RAISE EXCEPTION 'invalid_link';
+  END IF;
+  -- (mig. 161) un lien nominatif ne sert qu'à son destinataire.
+  -- Même erreur générique que les autres refus : ne pas confirmer à un tiers
+  -- que ce jeton existe.
+  IF v_link.email IS NOT NULL AND lower(COALESCE(auth.email(), '')) <> lower(v_link.email) THEN
+    RAISE EXCEPTION 'invalid_link';
+  END IF;
+
+  SELECT * INTO v_org FROM public.organizations WHERE id = v_link.org_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'invalid_link';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.organization_members
+     WHERE public.organization_members.org_id = v_link.org_id AND user_id = auth.uid()
+  ) THEN
+    RAISE EXCEPTION 'Already a member of this organization';
+  END IF;
+
+  -- Mig. 207 : le créateur doit être ACTIF (ni suspendu, ni expiré).
+  IF v_link.manager_id IS NULL THEN
+    v_creator_ok := EXISTS (
+      SELECT 1 FROM public.organization_members m
+       WHERE m.org_id = v_link.org_id AND m.user_id = v_link.created_by
+         AND m.role = 'admin'
+         AND m.suspended_at IS NULL
+         AND (m.access_expires_at IS NULL OR m.access_expires_at > now())
+    );
+  ELSE
+    v_creator_ok := EXISTS (
+      SELECT 1 FROM public.organization_members m
+       WHERE m.org_id = v_link.org_id AND m.user_id = v_link.created_by
+         AND m.suspended_at IS NULL
+         AND (m.access_expires_at IS NULL OR m.access_expires_at > now())
+         AND (
+           m.role = 'admin'
+           OR (
+             public.has_subordinates(v_link.org_id, v_link.created_by)
+             AND (
+               v_link.manager_id = v_link.created_by
+               OR v_link.manager_id IN (SELECT public.get_subtree(v_link.org_id, v_link.created_by))
+             )
+           )
+         )
+    );
+  END IF;
+  IF NOT v_creator_ok THEN
+    RAISE EXCEPTION 'invalid_link';
+  END IF;
+
+  IF NOT public.org_seats_allowed(v_link.org_id) THEN
+    RAISE EXCEPTION 'seat_limit_reached';
+  END IF;
+
+  INSERT INTO public.organization_members (org_id, user_id, role, manager_id, access_expires_at)
+  VALUES (
+    v_link.org_id,
+    auth.uid(),
+    'member',
+    CASE WHEN v_link.manager_id IS NOT NULL AND EXISTS (
+           SELECT 1 FROM public.organization_members m
+            WHERE m.org_id = v_link.org_id AND m.user_id = v_link.manager_id
+         ) THEN v_link.manager_id ELSE NULL END,
+    CASE WHEN v_link.access_days IS NULL THEN NULL
+         ELSE now() + make_interval(days => v_link.access_days) END
+  );
+
+  -- Équipes prévues par l'invitation (celles qui existent encore).
+  INSERT INTO public.org_team_members (team_id, org_id, user_id)
+  SELECT t.id, v_link.org_id, auth.uid()
+    FROM public.org_teams t
+   WHERE t.org_id = v_link.org_id AND t.id = ANY (v_link.team_ids)
+  ON CONFLICT DO NOTHING;
+
+  UPDATE public.org_invite_links
+     SET claimed_at = NOW(), claimed_by = auth.uid()
+   WHERE id = p_token;
+
+  UPDATE public.profiles SET account_type = 'business' WHERE id = auth.uid();
+
+  RETURN QUERY SELECT v_org.id, v_org.name;
+END;
+$function$;
+
 -- ── Vérification après application (lecture seule) ─────────────────
 --
 --   SELECT p.proname,
