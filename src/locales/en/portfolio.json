@@ -214,7 +214,7 @@
     "statusAll": "All"
   },
   "health": {
-    "title": "Health",
+    "title": "Status",
     "on_track": "On track",
     "at_risk": "At risk",
     "off_track": "Off track",
@@ -230,27 +230,19 @@
     "save": "Save"
   },
   "members": {
-    "title": "Project members",
-    "help": "Open this project to a specific person, even outside their team, with a role.",
-    "empty": "Nobody has a role on this project yet.",
+    "title": "Add to project",
     "formerMember": "Former member",
     "you": "you",
     "roleOf": "Role of {{name}}",
     "remove": "Remove {{name}} from the project",
     "leave": "Leave this project",
-    "addLabel": "Add a person",
     "choose": "Choose…",
-    "roleLabel": "Role",
-    "add": "Add",
+    "addMember": "Add a member",
+    "addTeam": "Add a team",
     "role": {
       "lead": "Co-lead",
       "contributor": "Contributor",
       "viewer": "Viewer"
-    },
-    "roleHelp": {
-      "lead": "Runs the project like its owner (description, dates, health, milestones, members), without changing its team or owner.",
-      "contributor": "Creates and edits this project's tasks, even without that permission in the company.",
-      "viewer": "Read-only on this project; can only move forward the tasks assigned to them."
     },
     "yourRole": "Your role: {{role}}"
   },
@@ -286,7 +278,6 @@
     "contributesTo": "Contributes to: {{title}}",
     "childrenCount_one": "{{count}} objective contributes to it",
     "childrenCount_other": "{{count}} objectives contribute to it",
-    "childrenCount_many": "{{count}} objectives contribute to it",
     "noKr": "No key result."
   },
   "okrModal": {
