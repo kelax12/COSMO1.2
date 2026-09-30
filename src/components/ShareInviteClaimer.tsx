@@ -17,6 +17,7 @@ import { ApiError } from '@/lib/normalizeApiError';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import { useT } from '@/i18n/useT';
 import { RichText } from '@/components/ui/rich-text';
+import { richTextLiteral } from '@/components/ui/rich-text-literal';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
@@ -186,7 +187,7 @@ const ShareInviteClaimer: React.FC = () => {
               <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
                 {/* Une phrase entiere : l'ordre « qui / quoi » n'est pas le
                     meme partout, et trois fragments de JSX l'auraient fige. */}
-                <RichText>{t('shareInvite.proposes', { name: invite.owner_name, task: invite.task_name })}</RichText>
+                <RichText>{t('shareInvite.proposes', { name: richTextLiteral(invite.owner_name), task: richTextLiteral(invite.task_name) })}</RichText>
               </p>
 
               <div className="flex flex-col-reverse sm:flex-row gap-2">

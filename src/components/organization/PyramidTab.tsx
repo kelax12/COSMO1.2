@@ -28,6 +28,7 @@ import { MEMBER_TAB_PARAM } from './member-sheet.helpers';
 import { useMemberLifecycle } from './MemberLifecycleActions';
 import { useT } from '@/i18n/useT';
 import RichText from '@/components/ui/rich-text';
+import { richTextLiteral } from '@/components/ui/rich-text-literal';
 import { NodeCard, PyramidSkeleton } from './PyramidNodeCard';
 
 interface PyramidTabProps {
@@ -245,7 +246,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           <p className="text-sm text-[rgb(var(--color-text-primary))] inline-flex items-center gap-2 min-w-0">
             <Move size={15} className="text-indigo-500 shrink-0" aria-hidden="true" />
             <span className="truncate">
-              <RichText strongClassName="font-semibold">{ta('pyramid.dragBanner', { name: dragging.displayName })}</RichText>
+              <RichText strongClassName="font-semibold">{ta('pyramid.dragBanner', { name: richTextLiteral(dragging.displayName) })}</RichText>
             </span>
           </p>
           <button
