@@ -208,10 +208,15 @@ export function fieldValueIsValid(field: Pick<CustomField, 'kind' | 'options'>, 
   }
 }
 
-/** Miroir du CHECK `org_webhooks_url` (mig. 199) : HTTPS, jamais une adresse locale écrite en clair. */
+/**
+ * Miroir du CHECK `org_webhooks_url` (mig. 208) : HTTPS, port 443, un NOM de
+ * domaine et jamais une adresse IP écrite en clair. Garde d'ergonomie : la
+ * décision qui fait foi est prise à l'envoi, sur les adresses RÉSOLUES
+ * (`supabase/functions/_shared/webhook-destination.ts`).
+ */
 export function webhookUrlIsAllowed(url: string): boolean {
   const u = url.trim();
   return u.length <= 500
-    && /^https:\/\/[a-zA-Z0-9.-]+(:[0-9]+)?(\/.*)?$/.test(u)
-    && !/^https:\/\/(localhost|127\.|10\.|192\.168\.|169\.254\.|0\.|\[)/i.test(u);
+    && /^https:\/\/([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](:443)?(\/.*)?$/.test(u)
+    && !/^https:\/\/[^/:]+\.(localhost|local|internal|home\.arpa|lan|intranet|corp)(:443)?(\/|$)/i.test(u);
 }
