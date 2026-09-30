@@ -20,7 +20,7 @@ import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import type {
-  TeamProject, TeamProjectDependency, TeamProjectMember, TeamProjectMilestone, TeamProjectTaskStats, TeamTask,
+  TeamProject, TeamProjectDependency, TeamProjectMember, TeamProjectTaskStats, TeamTask,
 } from '@/modules/team-projects';
 import { projectColor, sortOpenTasks, sortCompletedTasks } from './team-projects.helpers';
 import { PROJECT_STATUS_META, isProjectLate, progressFromStats, projectProgress } from './portfolio.helpers';
@@ -30,7 +30,6 @@ import MemberAvatar from './MemberAvatar';
 import VisibilityPill from './VisibilityPill';
 import { ProjectWorkflowSection } from './org-config.lazy';
 import TeamTaskRow from './TeamTaskRow';
-import ProjectMilestonesSection from './ProjectMilestonesSection';
 import ProjectDependenciesSection from './ProjectDependenciesSection';
 import ProjectAudienceActions from './ProjectAudienceActions';
 import { OrgBreadcrumb } from './OrgPagePrimitives';
@@ -53,7 +52,6 @@ interface ProjectDetailPageProps {
   canCreateTask: boolean;
   members: OrgMember[];
   teams: OrgTeam[];
-  milestones: TeamProjectMilestone[];
   dependencies: TeamProjectDependency[];
   projects: TeamProject[];
   categoryName?: string;
@@ -85,7 +83,7 @@ const actionBtn =
 
 const ProjectDetailPage = ({
   project, tasks, allProjectTasks, stats, projectMembers, currentUserId, isAdmin, canCreateTask,
-  members, teams, milestones, dependencies, projects, categoryName,
+  members, teams, dependencies, projects, categoryName,
   canEdit, canArchive, canCreateProject, canManageAudience = false,
   onBack, onOpenProject, onEdit, onDuplicate, onSaveTemplate, onArchive, onRestore, onAddTask, onStartSelect,
   onToggleComplete, onReassign, onDelete, onOpenTask, selectable, selectedIds, onToggleSelect,
@@ -110,7 +108,6 @@ const ProjectDetailPage = ({
 
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((x) => !x.completed)), [tasks]);
   const completedTasks = useMemo(() => sortCompletedTasks(tasks.filter((x) => x.completed)), [tasks]);
-  const projectMilestones = milestones.filter((m) => m.projectId === project.id);
 
   const row = (task: TeamTask) => (
     <TeamTaskRow
@@ -283,7 +280,6 @@ const ProjectDetailPage = ({
             canManage={canEdit && !archived}
             currentUserId={currentUserId}
           />
-          <ProjectMilestonesSection orgId={project.orgId} projectId={project.id} milestones={projectMilestones} canEdit={canEdit && !archived} />
           <ProjectDependenciesSection
             orgId={project.orgId}
             project={project}

@@ -366,7 +366,6 @@
     "tasksTabMoreProjects_one": "+{{count}} project",
     "tasksTabMoreProjects_other": "+{{count}} projects",
     "tasksTabFewerProjects": "Show fewer",
-    "milestoneFailed": "Milestone not saved: {{message}}",
     "filterAssignee": "Filter by assignee",
     "seeTasksOf": "See tasks from",
     "everyone": "Everyone",

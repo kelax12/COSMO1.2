@@ -136,7 +136,7 @@ export interface SaveWeeklyReviewInput {
 
 // ─── Recherche globale (mig. 191) ──────────────────────────────────
 
-export type OrgSearchKind = 'project' | 'milestone' | 'task' | 'okr' | 'kr' | 'team' | 'member';
+export type OrgSearchKind = 'project' | 'task' | 'okr' | 'kr' | 'team' | 'member';
 
 /** Un résultat de `search_org`, lu sous les droits de qui cherche. */
 export interface OrgSearchResult {

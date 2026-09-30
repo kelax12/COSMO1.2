@@ -6,7 +6,6 @@ import {
   useTeamProjects,
   useTeamProjectTemplates,
   useTeamTasks,
-  useTeamProjectMilestones,
   useTeamProjectDependencies,
   TEAM_TASKS_READ_LIMIT,
   type TeamTask,
@@ -92,7 +91,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const { data: allTasks = [] } = useTeamTasks(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
   const { data: categories = [] } = useTeamCategories(orgId);
-  const { data: milestones = [] } = useTeamProjectMilestones(orgId);
   const { data: projectDeps = [] } = useTeamProjectDependencies(orgId);
   const { projectMembers, statsById, isLeadOf } = useProjectAccess(orgId, currentUserId); // mig. 190, 191
 
@@ -119,7 +117,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
     orgId,
     currentUserId,
     allTasks,
-    milestones,
     onOpenProject: openProject,
   });
 
@@ -320,7 +317,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
             canCreateTask={can['task.create']}
             members={members}
             teams={teams}
-            milestones={milestones}
             dependencies={projectDeps}
             projects={allProjects}
             categoryName={categories.find((c) => c.id === detailProject.categoryId)?.name}
@@ -437,7 +433,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           tasks={visibleTasks}
           members={members}
           groupBy={timelineGroupBy}
-          milestones={milestones}
           onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
           selectable={selectMode}
           selectedIds={selectedIds}
@@ -456,7 +451,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
                 statsById={statsById}
                 members={members}
                 teams={teams}
-                milestones={milestones}
                 dependencies={projectDeps}
                 allProjects={allProjects}
                 onOpenProject={openProject}

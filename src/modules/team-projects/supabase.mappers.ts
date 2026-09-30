@@ -19,7 +19,6 @@ import {
   TeamTaskComment,
   TeamSubtask,
   TeamTaskActivity,
-  TeamProjectMilestone,
   TeamProjectStatus,
   TeamProjectHealth,
   TeamProjectTemplatePayload,
@@ -94,28 +93,6 @@ export const mapProject = (r: ProjectRow): TeamProject => ({
   healthNote: r.health_note ?? null,
   healthUpdatedAt: r.health_updated_at ?? null,
   healthUpdatedBy: r.health_updated_by ?? null,
-});
-
-// ─── Jalons (mig. 153) ───────────────────────────────────────────────
-
-export interface MilestoneRow {
-  id: string;
-  org_id: string;
-  project_id: string;
-  name: string;
-  due_date: string;
-  completed_at: string | null;
-  created_at: string;
-}
-
-export const mapMilestone = (r: MilestoneRow): TeamProjectMilestone => ({
-  id: r.id,
-  orgId: r.org_id,
-  projectId: r.project_id,
-  name: r.name,
-  dueDate: r.due_date,
-  completedAt: r.completed_at,
-  createdAt: r.created_at,
 });
 
 export interface CommentRow {

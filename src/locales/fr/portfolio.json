@@ -17,8 +17,7 @@
     "owner": "Responsable",
     "status": "Statut",
     "dates": "Période",
-    "progress": "Avancement",
-    "next": "Prochain jalon"
+    "progress": "Avancement"
   },
   "status": {
     "planned": "Planifié",
@@ -57,7 +56,7 @@
     "description": "Description du projet",
     "descriptionPlaceholder": "Objectif, périmètre, liens utiles…",
     "owner": "Responsable",
-    "ownerHint": "Le responsable pilote le projet : il le modifie, pose des jalons et des dépendances. Il n'en change ni l'équipe ni le responsable.",
+    "ownerHint": "Le responsable pilote le projet : il le modifie, pose des dépendances. Il n'en change ni l'équipe ni le responsable.",
     "status": "Statut",
     "startDate": "Début",
     "dueDate": "Fin",
@@ -68,19 +67,6 @@
     "saving": "Enregistrement…",
     "cancel": "Annuler",
     "close": "Fermer"
-  },
-  "milestones": {
-    "title": "Jalons",
-    "empty": "Aucun jalon. Un jalon marque une étape à tenir, sans être une tâche.",
-    "add": "Ajouter le jalon",
-    "namePlaceholder": "Nom du jalon",
-    "nameAria": "Nom du nouveau jalon",
-    "dateAria": "Date du nouveau jalon",
-    "markDone": "Marquer « {{name}} » comme atteint",
-    "markUndone": "Marquer « {{name}} » comme non atteint",
-    "remove": "Supprimer le jalon « {{name}} »",
-    "overdue": "Dépassé",
-    "reached": "Atteint"
   },
   "deps": {
     "title": "Dépendances",
@@ -111,7 +97,7 @@
     "dueDate": "Fin",
     "color": "Couleur",
     "description": "Description (optionnel)",
-    "atomicHint": "Le projet, ses tâches et ses jalons sont créés ensemble : si l'un échoue, rien n'est créé."
+    "atomicHint": "Le projet et ses tâches sont créés ensemble : si l'un échoue, rien n'est créé."
   },
   "bulk": {
     "reassigned_one": "{{count}} tâche réassignée",
@@ -127,10 +113,9 @@
     "selectToggleAria": "Sélectionner plusieurs tâches"
   },
   "timeline": {
-    "legend": "Une barre va du début à l'échéance ; un point est une échéance sans début. Les losanges sont les jalons.",
+    "legend": "Une barre va du début à l'échéance ; un point est une échéance sans début.",
     "bar": "{{name}}, du {{start}} au {{end}}",
     "projectSpan": "Projet {{name}}, du {{start}} au {{end}}",
-    "milestone": "Jalon « {{name}} », le {{date}}",
     "empty": "Aucune échéance à venir. Datez des tâches pour les voir apparaître ici.",
     "today": "Aujourd'hui",
     "marker": "{{name}}, échéance le {{date}}",
@@ -255,7 +240,7 @@
       "viewer": "Lecteur"
     },
     "roleHelp": {
-      "lead": "Pilote le projet comme son responsable (description, dates, santé, jalons, membres), sans en changer l'équipe ni le responsable.",
+      "lead": "Pilote le projet comme son responsable (description, dates, santé, membres), sans en changer l'équipe ni le responsable.",
       "contributor": "Crée et modifie les tâches de ce projet, même sans ce droit dans l'entreprise.",
       "viewer": "Lecture seule sur ce projet ; ne peut faire avancer que les tâches qui lui sont assignées."
     },

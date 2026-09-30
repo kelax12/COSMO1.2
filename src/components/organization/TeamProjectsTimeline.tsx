@@ -2,14 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import { CalendarRange, CalendarOff, CalendarClock, UserRound } from 'lucide-react';
-import type { TeamTask, TeamProject, TeamProjectMilestone } from '@/modules/team-projects';
+import type { TeamTask, TeamProject } from '@/modules/team-projects';
 import { useTeamTaskDependencies } from '@/modules/team-projects';
 import { computeCriticalPath } from './critical-path.helpers';
 import type { OrgMember } from '@/modules/organizations';
 import {
   timelineRange, timelineWindow, timelineWeeks, timelineMonths, timelineRows,
   timelineRowsByAssignee, todayOffsetPercent, inWindowOrUnscheduled, UNASSIGNED_ID,
-  type TimelineZoom, type TimelineMarker, type TimelineSpan, type TimelineMilestoneMark,
+  type TimelineZoom, type TimelineMarker, type TimelineSpan,
 } from './timeline.helpers';
 import { projectColor, PRIORITY_META, formatDuration, priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
@@ -23,8 +23,6 @@ interface TeamProjectsTimelineProps {
   /** Axe des lignes : par projet (défaut) ou par personne — cf. ProjectsToolbar. */
   groupBy: 'project' | 'assignee';
   onOpenTask: (task: TeamTask) => void;
-  /** Jalons de projet (mig. 153), dessinés en losanges sur la ligne du projet. */
-  milestones?: TeamProjectMilestone[];
   /** Mode sélection (actions groupées) : un clic coche la tâche au lieu de l'ouvrir. */
   selectable?: boolean;
   selectedIds?: Set<string>;
@@ -61,7 +59,6 @@ interface RowDescriptor {
   unscheduled: TeamTask[];
   /** Bandeau du projet (début → fin), en mode « par projet » seulement. */
   span?: TimelineSpan | null;
-  milestones?: TimelineMilestoneMark[];
 }
 
 /**
@@ -72,7 +69,7 @@ interface RowDescriptor {
  * date de début sur `TeamTask`, des barres seraient de la donnée inventée.
  */
 const TeamProjectsTimeline = ({
-  projects, tasks, members, groupBy, onOpenTask, milestones = [],
+  projects, tasks, members, groupBy, onOpenTask,
   selectable = false, selectedIds, onToggleSelect,
 }: TeamProjectsTimelineProps) => {
   const { t } = useT('org');
@@ -129,13 +126,12 @@ const TeamProjectsTimeline = ({
     setHoverTaskId(null);
   };
 
-  // « Tout » couvre aussi les dates des projets et des jalons (mig. 153).
+  // « Tout » couvre aussi les dates des projets (mig. 153).
   const fullRange = useMemo(
     () => timelineRange(tasks, new Date(), [
       ...projects.flatMap((p) => [p.startDate, p.dueDate]),
-      ...milestones.filter((m) => !m.completedAt).map((m) => m.dueDate),
     ]),
-    [tasks, projects, milestones],
+    [tasks, projects],
   );
   const range = useMemo(() => timelineWindow(fullRange, zoom), [fullRange, zoom]);
   const weeks = useMemo(() => timelineWeeks(range), [range]);
@@ -181,16 +177,15 @@ const TeamProjectsTimeline = ({
         // Charge décroissante : la personne la plus chargée se lit en premier.
         .sort((a, b) => (b.markers.length + b.unscheduled.length) - (a.markers.length + a.unscheduled.length));
     }
-    return timelineRows(windowedTasks, projects, range, new Date(), milestones).map((row) => ({
+    return timelineRows(windowedTasks, projects, range, new Date()).map((row) => ({
       key: row.project.id,
       label: row.project.name,
       dotClass: projectColor(row.project.color).dot,
       markers: row.markers,
       unscheduled: row.unscheduled,
       span: row.span,
-      milestones: row.milestones,
     }));
-  }, [groupBy, windowedTasks, projects, range, memberById, pf, milestones]);
+  }, [groupBy, windowedTasks, projects, range, memberById, pf]);
 
   const minWidthPx = Math.max(MIN_WIDTH_PX, weeks.length * PX_PER_WEEK);
 
@@ -405,20 +400,6 @@ const TeamProjectsTimeline = ({
                         })}
                       />
                     )}
-                    {/* Jalons de projet : losanges, jamais confondus avec une tâche. */}
-                    {row.milestones?.map((mark) => (
-                      <span
-                        key={mark.milestone.id}
-                        className="absolute top-0.5 -translate-x-1/2 w-2.5 h-2.5 rotate-45 bg-amber-500 border border-[rgb(var(--color-surface))]"
-                        style={{ left: `${mark.offsetPercent}%` }}
-                        role="img"
-                        aria-label={pf('timeline.milestone', {
-                          name: mark.milestone.name,
-                          date: format(parseISO(mark.milestone.dueDate), 'd MMMM', { locale: getDateLocale() }),
-                        })}
-                        title={mark.milestone.name}
-                      />
-                    ))}
                     {/* Barres (tâches avec un début) : dessinées d'abord, pour
                         que les points restent au-dessus et cliquables. */}
                     {row.markers.map((marker) => {

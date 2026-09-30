@@ -2,7 +2,7 @@
 // Vue « Portefeuille » de l'onglet Projets (M2, audit 2026-09-24)
 //
 // Une ligne par projet, aucune tâche : responsable, statut, dates,
-// avancement, prochain jalon, blocages. C'est la réponse au constat « la liste
+// avancement, blocages. C'est la réponse au constat « la liste
 // de cartes contenant les tâches devient interminable au-delà de 20 projets » :
 // on pilote un portefeuille en le lisant d'un coup d'œil, puis on ouvre la
 // page du projet pour le détail.
@@ -13,14 +13,14 @@
 
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Flag, Link2, UserRound } from 'lucide-react';
+import { Link2, UserRound } from 'lucide-react';
 import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
-import type { TeamProject, TeamProjectDependency, TeamProjectMilestone, TeamProjectTaskStats, TeamTask } from '@/modules/team-projects';
+import type { TeamProject, TeamProjectDependency, TeamProjectTaskStats, TeamTask } from '@/modules/team-projects';
 import { projectColor } from './team-projects.helpers';
 import {
-  PROJECT_STATUS_META, projectProgressOf, isProjectLate, nextMilestone, openBlockers,
+  PROJECT_STATUS_META, projectProgressOf, isProjectLate, openBlockers,
 } from './portfolio.helpers';
 import MemberAvatar from './MemberAvatar';
 import ProjectBulkBar from './ProjectBulkBar';
@@ -37,7 +37,6 @@ interface ProjectPortfolioViewProps {
   statsById?: Map<string, TeamProjectTaskStats>;
   members: OrgMember[];
   teams: OrgTeam[];
-  milestones: TeamProjectMilestone[];
   dependencies: TeamProjectDependency[];
   /** Tous les projets visibles, pour nommer un bloqueur hors du filtre courant. */
   allProjects: TeamProject[];
@@ -55,7 +54,7 @@ interface ProjectPortfolioViewProps {
 }
 
 const ProjectPortfolioView = ({
-  projects, tasks, statsById, members, teams, milestones, dependencies, allProjects, onOpenProject,
+  projects, tasks, statsById, members, teams, dependencies, allProjects, onOpenProject,
   canBulkEdit = false, canBulkArchive = false, selectMode = false, onExitSelect,
 }: ProjectPortfolioViewProps) => {
   const { t } = useT('org');
@@ -87,7 +86,6 @@ const ProjectPortfolioView = ({
             <th scope="col" className="px-3 py-2.5">{pf('col.status')}</th>
             <th scope="col" className="px-3 py-2.5 hidden lg:table-cell">{pf('col.dates')}</th>
             <th scope="col" className="px-3 py-2.5">{pf('col.progress')}</th>
-            <th scope="col" className="px-3 py-2.5 hidden xl:table-cell">{pf('col.next')}</th>
           </tr>
         </thead>
         <tbody>
@@ -96,7 +94,6 @@ const ProjectPortfolioView = ({
             const owner = project.ownerId ? memberById.get(project.ownerId) : undefined;
             const progress = projectProgressOf(project.id, tasks, statsById);
             const late = isProjectLate(project);
-            const next = nextMilestone(project.id, milestones);
             const blockers = openBlockers(project.id, dependencies, allProjects);
             const team = project.teamId ? teamById.get(project.teamId) : undefined;
             return (
@@ -190,17 +187,6 @@ const ProjectPortfolioView = ({
                     </span>
                     <span className="text-xs tabular-nums text-[rgb(var(--color-text-muted))]">{progress.percent} %</span>
                   </span>
-                </td>
-                <td className="px-3 py-2.5 hidden xl:table-cell text-xs">
-                  {next ? (
-                    <span className="inline-flex items-center gap-1 text-[rgb(var(--color-text-secondary))]">
-                      <Flag size={11} aria-hidden="true" />
-                      <span className="truncate max-w-[140px]">{next.name}</span>
-                      <span className="text-[rgb(var(--color-text-muted))]">· {shortDate(next.dueDate)}</span>
-                    </span>
-                  ) : (
-                    <span className="text-[rgb(var(--color-text-muted))]">·</span>
-                  )}
                 </td>
               </tr>
             );

@@ -28,7 +28,6 @@ import type {
   TeamTaskActivity,
   TeamTaskDependency,
   TeamActivityField,
-  TeamProjectMilestone,
   TeamProjectDependency,
 } from './types';
 
@@ -68,18 +67,6 @@ export const DEMO_PROJECTS_EN: Record<string, Partial<TeamProject>> = {
   'tproj-1': { name: 'Website redesign', description: 'New showcase site: mockups, integration, performance and audience tracking.' },
   'tproj-2': { name: 'Product launch', description: 'Bringing the new offer to market: communication, press and demos.' },
   'tproj-3': { name: 'Internal' },
-};
-
-export const DEMO_MILESTONES: TeamProjectMilestone[] = [
-  { id: 'tms-1', orgId: DEMO_ORG_ID, projectId: 'tproj-1', name: 'Maquettes validées', dueDate: dateStr(-10), completedAt: iso(-11), createdAt: iso(-30) },
-  { id: 'tms-2', orgId: DEMO_ORG_ID, projectId: 'tproj-1', name: 'Mise en ligne', dueDate: dateStr(21), completedAt: null, createdAt: iso(-30) },
-  { id: 'tms-3', orgId: DEMO_ORG_ID, projectId: 'tproj-2', name: 'Annonce publique', dueDate: dateStr(30), completedAt: null, createdAt: iso(-5) },
-];
-
-export const DEMO_MILESTONES_EN: Record<string, Partial<TeamProjectMilestone>> = {
-  'tms-1': { name: 'Mockups approved' },
-  'tms-2': { name: 'Go live' },
-  'tms-3': { name: 'Public announcement' },
 };
 
 // Le lancement attend le nouveau site : `tproj-2` est BLOQUÉ par `tproj-1`.

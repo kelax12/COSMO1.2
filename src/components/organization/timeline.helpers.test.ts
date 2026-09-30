@@ -336,14 +336,7 @@ describe('frise avec dates de début', () => {
     expect(rows[0].span).toBeNull();
   });
 
-  it('les jalons se posent sur la ligne de leur projet', () => {
-    const rows = timelineRows([], [project({})], range, NOW, [
-      { id: 'm', orgId: 'o', projectId: 'p1', name: 'J', dueDate: '2026-07-20', completedAt: null, createdAt: '' },
-    ]);
-    expect(rows[0].milestones).toHaveLength(1);
-  });
-
-  it('« Tout » couvre aussi les dates de projets et de jalons', () => {
+  it('« Tout » couvre aussi les dates de projets', () => {
     const r = timelineRange([], NOW, ['2027-03-01']);
     expect(r.end.getTime()).toBeGreaterThanOrEqual(new Date(2027, 2, 1).getTime());
   });

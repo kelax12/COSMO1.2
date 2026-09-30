@@ -10,12 +10,10 @@
 import { addDays, differenceInCalendarDays, parseISO, isValid } from 'date-fns';
 import type {
   CreateTeamProjectInput,
-  DraftProjectMilestone,
   DraftProjectTask,
   TeamProject,
   TeamProjectDependency,
   TeamProjectTaskStats,
-  TeamProjectMilestone,
   TeamProjectStatus,
   TeamProjectTemplatePayload,
   TeamTask,
@@ -109,13 +107,6 @@ export function isProjectLate(project: TeamProject, now: Date = new Date()): boo
   return differenceInCalendarDays(due, now) < 0;
 }
 
-/** Prochain jalon NON atteint d'un projet, ou `null`. */
-export function nextMilestone(projectId: string, milestones: TeamProjectMilestone[]): TeamProjectMilestone | null {
-  return milestones
-    .filter((m) => m.projectId === projectId && !m.completedAt)
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] ?? null;
-}
-
 /**
  * Projets qui bloquent encore `projectId` : ceux dont il dépend et qui ne sont
  * pas terminés. Un bloqueur archivé ou invisible ne compte pas.
@@ -157,18 +148,15 @@ export function sortProjects(
 export interface ProjectBlueprint {
   input: CreateTeamProjectInput;
   tasks: DraftProjectTask[];
-  milestones: DraftProjectMilestone[];
 }
 
 /**
  * Copie d'un projet : mêmes réglages, mêmes tâches OUVERTES remises à zéro
- * (statut « à faire », assignés conservés), mêmes jalons non atteints. Le
- * responsable devient celui qui duplique : il crée le projet, il en répond.
+ * (statut « à faire », assignés conservés). Le responsable devient celui qui duplique : il crée le projet, il en répond.
  */
 export function duplicateBlueprint(
   project: TeamProject,
   tasks: TeamTask[],
-  milestones: TeamProjectMilestone[],
   options: { name: string; ownerId: string | null },
 ): ProjectBlueprint {
   return {
@@ -194,9 +182,6 @@ export function duplicateBlueprint(
         deadline: t.deadline || undefined,
         assigneeIds: t.assigneeIds,
       })),
-    milestones: milestones
-      .filter((m) => m.projectId === project.id && !m.completedAt)
-      .map((m) => ({ name: m.name, dueDate: m.dueDate })),
   };
 }
 
@@ -216,7 +201,6 @@ const offsetFrom = (base: Date, value: string | null | undefined): number | null
 export function buildTemplatePayload(
   project: TeamProject,
   tasks: TeamTask[],
-  milestones: TeamProjectMilestone[],
 ): TeamProjectTemplatePayload {
   const base = parseDate(project.startDate) ?? parseDate(project.createdAt.slice(0, 10)) ?? new Date();
   const start = parseDate(project.startDate);
@@ -232,9 +216,6 @@ export function buildTemplatePayload(
         startOffset: offsetFrom(base, t.startDate),
         deadlineOffset: offsetFrom(base, t.deadline),
       })),
-    milestones: milestones
-      .filter((m) => m.projectId === project.id)
-      .map((m) => ({ name: m.name, offset: offsetFrom(base, m.dueDate) ?? 0 })),
     durationDays: start && due ? differenceInCalendarDays(due, start) : null,
   };
 }
@@ -243,14 +224,14 @@ const dateAt = (base: Date, offset: number | null | undefined): string | undefin
   offset === null || offset === undefined ? undefined : addDays(base, offset).toLocaleDateString('en-CA');
 
 /**
- * Modèle → tâches et jalons d'un nouveau projet qui commence le `startDate`
+ * Modèle → tâches d'un nouveau projet qui commence le `startDate`
  * donné (date locale). Un décalage négatif reste possible : une tâche prévue
  * « trois jours avant le lancement » garde son sens.
  */
 export function instantiateTemplate(
   payload: TeamProjectTemplatePayload,
   startDate: string,
-): { tasks: DraftProjectTask[]; milestones: DraftProjectMilestone[]; dueDate: string | null } {
+): { tasks: DraftProjectTask[]; dueDate: string | null } {
   const base = parseDate(startDate) ?? new Date();
   return {
     tasks: payload.tasks.map((t) => {
@@ -267,7 +248,6 @@ export function instantiateTemplate(
         deadline,
       };
     }),
-    milestones: payload.milestones.map((m) => ({ name: m.name, dueDate: dateAt(base, m.offset)! })),
     dueDate: payload.durationDays !== null && payload.durationDays !== undefined
       ? dateAt(base, payload.durationDays) ?? null
       : null,

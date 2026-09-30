@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import type { TeamProject, TeamProjectMilestone, TeamTask } from '@/modules/team-projects';
+import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import {
-  matchesProjectSearch, sortProjects, projectProgress, isProjectLate, nextMilestone,
+  matchesProjectSearch, sortProjects, projectProgress, isProjectLate,
   openBlockers, duplicateBlueprint, buildTemplatePayload, instantiateTemplate,
 } from './portfolio.helpers';
 
@@ -14,11 +14,6 @@ const task = (patch: Partial<TeamTask>): TeamTask => ({
   id: 't', orgId: 'o', projectId: 'p', name: 'Tâche', priority: 3, deadline: '', startDate: '',
   assigneeIds: [], createdBy: 'u', completed: false, status: 'todo', completedAt: null,
   createdAt: '2026-09-01T10:00:00Z', updatedAt: '2026-09-01T10:00:00Z', ...patch,
-});
-
-const milestone = (patch: Partial<TeamProjectMilestone>): TeamProjectMilestone => ({
-  id: 'm', orgId: 'o', projectId: 'p', name: 'Jalon', dueDate: '2026-10-01', completedAt: null,
-  createdAt: '2026-09-01T10:00:00Z', ...patch,
 });
 
 describe('matchesProjectSearch', () => {
@@ -65,7 +60,7 @@ describe('sortProjects', () => {
   });
 });
 
-describe('avancement, retard, jalons, blocages', () => {
+describe('avancement, retard, blocages', () => {
   it('projectProgress compte le projet seul, 0 % sans tâche', () => {
     expect(projectProgress('p', [task({ completed: true }), task({ id: 't2' }), task({ id: 'x', projectId: 'q' })]))
       .toEqual({ done: 1, total: 2, percent: 50 });
@@ -77,15 +72,6 @@ describe('avancement, retard, jalons, blocages', () => {
     expect(isProjectLate(project({ dueDate: '2026-09-20' }), now)).toBe(true);
     expect(isProjectLate(project({ dueDate: '2026-09-20', status: 'done' }), now)).toBe(false);
     expect(isProjectLate(project({ dueDate: '2026-09-24' }), now)).toBe(false);
-  });
-
-  it('nextMilestone ignore les jalons atteints', () => {
-    const ms = [
-      milestone({ id: '1', dueDate: '2026-09-01', completedAt: '2026-09-01T00:00:00Z' }),
-      milestone({ id: '2', dueDate: '2026-11-01' }),
-      milestone({ id: '3', dueDate: '2026-10-01' }),
-    ];
-    expect(nextMilestone('p', ms)?.id).toBe('3');
   });
 
   it('openBlockers : seulement les projets dont il DÉPEND et non terminés', () => {
@@ -100,18 +86,16 @@ describe('avancement, retard, jalons, blocages', () => {
 });
 
 describe('dupliquer', () => {
-  it('reprend les tâches OUVERTES et les jalons non atteints, le duplicateur en répond', () => {
+  it('reprend les tâches OUVERTES, le duplicateur en répond', () => {
     const p = project({ status: 'done', teamId: 'team', ownerId: 'autre' });
     const bp = duplicateBlueprint(
       p,
       [task({ id: '1', name: 'ouverte', assigneeIds: ['x'] }), task({ id: '2', completed: true })],
-      [milestone({ id: 'a' }), milestone({ id: 'b', completedAt: '2026-09-02T00:00:00Z' })],
       { name: 'Copie', ownerId: 'moi' },
     );
     expect(bp.input).toMatchObject({ name: 'Copie', ownerId: 'moi', teamId: 'team', status: 'active' });
     expect(bp.tasks.map((t) => t.name)).toEqual(['ouverte']);
     expect(bp.tasks[0].assigneeIds).toEqual(['x']);
-    expect(bp.milestones).toHaveLength(1);
   });
 });
 
@@ -121,27 +105,24 @@ describe('modèles', () => {
     task({ id: '1', name: 'Cadrage', startDate: '2026-10-01', deadline: '2026-10-03', assigneeIds: ['x'] }),
     task({ id: '2', name: 'Sans date' }),
   ];
-  const ms = [milestone({ name: 'Recette', dueDate: '2026-10-20' })];
 
   it('stocke des DÉCALAGES, jamais des dates ni des assignés', () => {
-    const payload = buildTemplatePayload(p, tasks, ms);
+    const payload = buildTemplatePayload(p, tasks);
     expect(payload.tasks[0]).toMatchObject({ name: 'Cadrage', startOffset: 0, deadlineOffset: 2 });
     expect(payload.tasks[0]).not.toHaveProperty('assigneeIds');
     expect(payload.tasks[1]).toMatchObject({ startOffset: null, deadlineOffset: null });
-    expect(payload.milestones).toEqual([{ name: 'Recette', offset: 19 }]);
     expect(payload.durationDays).toBe(30);
   });
 
   it('se re-date depuis le nouveau début', () => {
-    const inst = instantiateTemplate(buildTemplatePayload(p, tasks, ms), '2027-01-10');
+    const inst = instantiateTemplate(buildTemplatePayload(p, tasks), '2027-01-10');
     expect(inst.tasks[0]).toMatchObject({ startDate: '2027-01-10', deadline: '2027-01-12' });
     expect(inst.tasks[1].deadline).toBeUndefined();
-    expect(inst.milestones).toEqual([{ name: 'Recette', dueDate: '2027-01-29' }]);
     expect(inst.dueDate).toBe('2027-02-09');
   });
 
   it('ne fabrique jamais un début après l’échéance (CHECK serveur)', () => {
-    const inst = instantiateTemplate({ tasks: [{ name: 'x', startOffset: 5, deadlineOffset: 2 }], milestones: [] }, '2027-01-01');
+    const inst = instantiateTemplate({ tasks: [{ name: 'x', startOffset: 5, deadlineOffset: 2 }] }, '2027-01-01');
     expect(inst.tasks[0].startDate! <= inst.tasks[0].deadline!).toBe(true);
   });
 });

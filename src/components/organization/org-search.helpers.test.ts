@@ -14,8 +14,7 @@ describe('org-search.helpers', () => {
     expect(groups.has('member')).toBe(false);
   });
 
-  it('un jalon ouvre SON projet, un KR SON objectif', () => {
-    expect(orgSearchLink(r('milestone', { parentId: 'p9' }))).toBe('/entreprise/projects?project=p9');
+  it('un KR ouvre SON objectif', () => {
     expect(orgSearchLink(r('kr', { parentId: 'o9' }))).toBe('/entreprise/okr?okr=o9');
   });
 
