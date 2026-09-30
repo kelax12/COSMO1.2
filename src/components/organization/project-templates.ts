@@ -66,7 +66,6 @@ export function builtInPayload(
       startOffset: task.startOffset ?? null,
       deadlineOffset: task.deadlineOffset,
     })),
-    milestones: [],
     durationDays: template.durationDays,
   };
 }

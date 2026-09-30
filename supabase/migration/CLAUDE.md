@@ -87,6 +87,8 @@ compilait, la suite passait.
 - ✅ **`202`** (rapports d activité) : **appliquée** le 2026-09-28, ledger `20260928081805` (inscrit à la main
   après `db query -f`), relue au catalogue : table sous RLS, colonnes, plafond, droits, job `cosmo-activity-reports`.
   Preuve : `supabase/proofs/202.proof.sql` (7 cas acteur par acteur).
+- ⚠️ **`206`** (2026-09-30) supprime les jalons de projet (table vide en prod, relue le même jour).
+  **Écrite, NON appliquée.** À appliquer APRÈS le déploiement du front qui ne les lit plus.
 - ⚠️ **Plages de numéros entre sessions (2026-09-24)** : `151`-`159` corbeille/équipes, `153` déjà
   prise par le portefeuille de projets (worktree `portefeuille`), `160`+ gouvernance/OKR/membres,
   `170`+ annuaire. **Relire le ledger avant de choisir un numéro.**

@@ -11,7 +11,7 @@ import { useActiveOrganization, useMyOrgPermissions, useOrgMembers } from '@/mod
 import { useCreateTeamWithMembers, useOrgTeams, type CreateTeamFullInput } from '@/modules/org-teams';
 import {
   useCreateTeamProjectWithTasks, useTeamProjectTemplates,
-  type CreateTeamProjectInput, type DraftProjectMilestone, type DraftProjectTask,
+  type CreateTeamProjectInput, type DraftProjectTask,
 } from '@/modules/team-projects';
 import { useT } from '@/i18n/useT';
 import NewTeamProjectModal from './NewTeamProjectModal';
@@ -43,9 +43,8 @@ const OrgCreateForms = ({ orgId, request, onClose }: OrgCreateFormsProps) => {
     const submit = async (
       input: CreateTeamProjectInput,
       tasks: DraftProjectTask[],
-      milestones: DraftProjectMilestone[],
     ) => {
-      const projectId = await createProject.mutateAsync({ input, tasks, milestones });
+      const projectId = await createProject.mutateAsync({ input, tasks });
       toast.success(tErrors('success.projectCreated'));
       request.options.onCreated?.(projectId);
     };

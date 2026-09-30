@@ -19,10 +19,6 @@ import {
   TeamTaskActivity,
   TeamTrashedTask,
   DraftProjectTask,
-  DraftProjectMilestone,
-  TeamProjectMilestone,
-  CreateTeamProjectMilestoneInput,
-  UpdateTeamProjectMilestoneInput,
   TeamProjectDependency,
   TeamProjectTeam,
   TeamProjectMember,
@@ -48,21 +44,14 @@ export interface ITeamProjectsRepository {
   // dédiée a coexisté sans consommateur jusqu'au 2026-09-04 (C-66).
   updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject>;
   /**
-   * Projet + tâches + jalons en UNE transaction (mig. 153). Rend l'id du
+   * Projet + tâches en UNE transaction (mig. 153). Rend l'id du
    * projet. Sert aussi à dupliquer un projet et à partir d'un modèle.
    */
   createProjectWithTasks(
     orgId: string,
     input: CreateTeamProjectInput,
     tasks?: DraftProjectTask[],
-    milestones?: DraftProjectMilestone[],
   ): Promise<string>;
-
-  // Jalons de projet (mig. 153) — toute l'organisation en UNE lecture.
-  getMilestones(orgId: string): Promise<TeamProjectMilestone[]>;
-  createMilestone(orgId: string, input: CreateTeamProjectMilestoneInput): Promise<void>;
-  updateMilestone(milestoneId: string, input: UpdateTeamProjectMilestoneInput): Promise<void>;
-  deleteMilestone(milestoneId: string): Promise<void>;
 
   // Dépendances entre projets (mig. 153) — `projectId` BLOQUÉ par `dependsOnId`.
   getProjectDependencies(orgId: string): Promise<TeamProjectDependency[]>;

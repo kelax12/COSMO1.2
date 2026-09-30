@@ -8,7 +8,6 @@ import { useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
 import { useOrgSettings } from '@/modules/org-config';
 import type {
   CreateTeamProjectInput,
-  DraftProjectMilestone,
   DraftProjectTask,
   TeamProject,
   TeamProjectTemplatePayload,
@@ -50,7 +49,6 @@ interface NewTeamProjectModalProps {
   onSubmit: (
     input: CreateTeamProjectInput,
     tasks: DraftProjectTask[],
-    milestones: DraftProjectMilestone[],
   ) => Promise<void>;
   onClose: () => void;
 }
@@ -165,7 +163,7 @@ const NewTeamProjectModal = ({
     // Le modèle se DATE au moment de créer, depuis le début choisi (ou aujourd'hui).
     const fromTemplate = selectedPayload
       ? instantiateTemplate({ ...selectedPayload, tasks: templateTasks }, startDate || todayLocal())
-      : { tasks: [], milestones: [], dueDate: null };
+      : { tasks: [], dueDate: null };
     try {
       await onSubmit(
         {
@@ -179,7 +177,6 @@ const NewTeamProjectModal = ({
           dueDate: dueDate || fromTemplate.dueDate,
         },
         [...fromTemplate.tasks, ...manual.map((d) => ({ name: d.name, assigneeIds: d.assigneeIds }))],
-        fromTemplate.milestones,
       );
       onClose();
     } catch {

@@ -31,18 +31,16 @@ describe('portefeuille en démo (mig. 153)', () => {
     expect((await repo.getProjects('org-demo-1')).length).toBe(before);
   });
 
-  it('création atomique : projet, tâches et jalons ensemble', async () => {
+  it('création atomique : projet et tâches ensemble', async () => {
     const repo = new LocalStorageTeamProjectsRepository();
     const id = await repo.createProjectWithTasks(
       'org-demo-1',
       { name: 'Nouveau', ownerId: 'demo-user', startDate: '2026-10-01', dueDate: '2026-10-31' },
       [{ name: 'a', startDate: '2026-10-01', deadline: '2026-10-05' }, { name: 'b' }],
-      [{ name: 'Jalon', dueDate: '2026-10-15' }],
     );
     const tasks = await repo.getTasks('org-demo-1', { projectId: id });
     expect(tasks.map((t) => t.name).sort()).toEqual(['a', 'b']);
     expect(tasks.find((t) => t.name === 'a')?.startDate).toBe('2026-10-01');
-    expect((await repo.getMilestones('org-demo-1')).filter((m) => m.projectId === id)).toHaveLength(1);
     const project = (await repo.getProjects('org-demo-1')).find((p) => p.id === id);
     expect(project).toMatchObject({ ownerId: 'demo-user', dueDate: '2026-10-31' });
   });
@@ -50,7 +48,7 @@ describe('portefeuille en démo (mig. 153)', () => {
   it('un modèle ne crée aucune tâche réelle', async () => {
     const repo = new LocalStorageTeamProjectsRepository();
     const id = await repo.createProjectWithTasks('org-demo-1', {
-      name: 'Modèle', isTemplate: true, templatePayload: { tasks: [{ name: 't', deadlineOffset: 1 }], milestones: [] },
+      name: 'Modèle', isTemplate: true, templatePayload: { tasks: [{ name: 't', deadlineOffset: 1 }] },
     });
     expect(await repo.getTasks('org-demo-1', { projectId: id })).toHaveLength(0);
     const tpl = (await repo.getProjects('org-demo-1')).find((p) => p.id === id);

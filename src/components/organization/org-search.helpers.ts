@@ -9,7 +9,7 @@ import type { TeamProjectStatus, TeamTaskStatus } from '@/modules/team-projects'
 import { buildOrgLink, orgTeamPath } from './deep-link.helpers';
 
 /** Ordre des groupes : ce qu'on ouvre le plus souvent d'abord. */
-export const ORG_SEARCH_ORDER: readonly OrgSearchKind[] = ['project', 'task', 'milestone', 'okr', 'kr', 'member', 'team'];
+export const ORG_SEARCH_ORDER: readonly OrgSearchKind[] = ['project', 'task', 'okr', 'kr', 'member', 'team'];
 
 export function groupOrgResults(rows: OrgSearchResult[]): Map<OrgSearchKind, OrgSearchResult[]> {
   const groups = new Map<OrgSearchKind, OrgSearchResult[]>();
@@ -28,7 +28,6 @@ export function groupOrgResults(rows: OrgSearchResult[]): Map<OrgSearchKind, Org
 export function orgSearchLink(r: OrgSearchResult): string {
   switch (r.kind) {
     case 'project': return buildOrgLink('projects', { project: r.id });
-    case 'milestone': return buildOrgLink('projects', r.parentId ? { project: r.parentId } : undefined);
     case 'task': return buildOrgLink('projects', { task: r.id });
     case 'okr': return buildOrgLink('okr', { okr: r.id });
     case 'kr': return buildOrgLink('okr', r.parentId ? { okr: r.parentId } : undefined);

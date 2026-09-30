@@ -1,30 +1,25 @@
 // ═══════════════════════════════════════════════════════════════════
 // TEAM-PROJECTS — portefeuille en mode DÉMO (mig. 153, M2)
 //
-// Jalons et dépendances entre projets en localStorage. Rejoue les gardes que
-// la base applique par trigger (même organisation, pas de cycle, un jalon ne
-// change pas de projet) : sans elles, la démo laisserait construire ce que la
+// Dépendances et équipes associées des projets en localStorage. Rejoue les
+// gardes que la base applique par trigger (même organisation, pas de cycle) :
+// sans elles, la démo laisserait construire ce que la
 // production refuse.
 //
 // Séparé de `local.repository.ts` pour le garder sous le plafond de 600 lignes.
 // ═══════════════════════════════════════════════════════════════════
 
-import { localizeSeed } from '@/lib/seed-i18n';
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import { DEPENDENCY_ERRORS, makeDependencyError } from '@/modules/tasks/dependency-errors';
 import type {
-  CreateTeamProjectMilestoneInput,
   TeamProject,
   TeamProjectDependency,
-  TeamProjectMilestone,
   TeamProjectTeam,
-  UpdateTeamProjectMilestoneInput,
 } from './types';
-import { DEMO_MILESTONES, DEMO_MILESTONES_EN, DEMO_PROJECT_DEPENDENCIES } from './demo-seed';
+import { DEMO_PROJECT_DEPENDENCIES } from './demo-seed';
 
 // Préfixe `cosmo_` : balayé par `clearDemoStorage` au prochain `loginDemo()`.
-export const TEAM_PROJECT_MILESTONES_STORAGE_KEY = 'cosmo_team_project_milestones';
 export const TEAM_PROJECT_DEPENDENCIES_STORAGE_KEY = 'cosmo_team_project_dependencies';
 
 function readOrSeed<T>(key: string, seed: T): T {
@@ -37,59 +32,8 @@ function readOrSeed<T>(key: string, seed: T): T {
   return clone;
 }
 
-const readMilestones = (): TeamProjectMilestone[] =>
-  readOrSeed(TEAM_PROJECT_MILESTONES_STORAGE_KEY, localizeSeed(DEMO_MILESTONES, DEMO_MILESTONES_EN));
 const readDependencies = (): TeamProjectDependency[] =>
   readOrSeed(TEAM_PROJECT_DEPENDENCIES_STORAGE_KEY, DEMO_PROJECT_DEPENDENCIES);
-
-export function getMilestones(orgId: string): TeamProjectMilestone[] {
-  return readMilestones()
-    .filter((m) => m.orgId === orgId)
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
-}
-
-export function createMilestone(
-  orgId: string,
-  input: CreateTeamProjectMilestoneInput,
-  projects: TeamProject[],
-): void {
-  // `org_id` se déduit du projet, jamais de l'appelant (trigger de la mig. 153).
-  const project = projects.find((p) => p.id === input.projectId);
-  if (!project || project.orgId !== orgId) throw makeApiError('not_found');
-  const name = input.name.trim();
-  if (!name || name.length > 200 || !input.dueDate) throw makeApiError('invalid_input');
-  writeJsonOrThrow(TEAM_PROJECT_MILESTONES_STORAGE_KEY, [
-    ...readMilestones(),
-    {
-      id: crypto.randomUUID(),
-      orgId: project.orgId,
-      projectId: project.id,
-      name,
-      dueDate: input.dueDate,
-      completedAt: null,
-      createdAt: new Date().toISOString(),
-    } satisfies TeamProjectMilestone,
-  ]);
-}
-
-export function updateMilestone(milestoneId: string, input: UpdateTeamProjectMilestoneInput): void {
-  const all = readMilestones();
-  const m = all.find((x) => x.id === milestoneId);
-  if (!m) throw makeApiError('not_found');
-  if (input.name !== undefined) m.name = input.name.trim();
-  if (input.dueDate !== undefined) m.dueDate = input.dueDate;
-  if (input.completed !== undefined) m.completedAt = input.completed ? new Date().toISOString() : null;
-  writeJsonOrThrow(TEAM_PROJECT_MILESTONES_STORAGE_KEY, all);
-}
-
-export function deleteMilestone(milestoneId: string): void {
-  writeJsonOrThrow(TEAM_PROJECT_MILESTONES_STORAGE_KEY, readMilestones().filter((m) => m.id !== milestoneId));
-}
-
-/** Jalons d'un projet, pour la duplication (copiés sous le nouveau projet). */
-export function milestonesOf(projectId: string): TeamProjectMilestone[] {
-  return readMilestones().filter((m) => m.projectId === projectId);
-}
 
 export function getProjectDependencies(orgId: string, projects: TeamProject[]): TeamProjectDependency[] {
   const inOrg = new Set(projects.filter((p) => p.orgId === orgId).map((p) => p.id));
@@ -158,9 +102,8 @@ export function removeProjectTeam(projectId: string, teamId: string): void {
   );
 }
 
-/** CASCADE de la purge d'un projet : jalons, dépendances, équipes associées. */
+/** CASCADE de la purge d'un projet : dépendances, équipes associées. */
 export function purgeProjectPortfolio(projectId: string): void {
-  writeJsonOrThrow(TEAM_PROJECT_MILESTONES_STORAGE_KEY, readMilestones().filter((m) => m.projectId !== projectId));
   writeJsonOrThrow(
     TEAM_PROJECT_DEPENDENCIES_STORAGE_KEY,
     readDependencies().filter((d) => d.projectId !== projectId && d.dependsOnId !== projectId),

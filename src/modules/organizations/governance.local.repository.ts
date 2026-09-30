@@ -260,9 +260,8 @@ export class LocalStorageOrgGovernanceRepository implements IOrgGovernanceReposi
     if (q.length < 2) return [];
     const limit = Math.min(Math.max(limitPerKind, 1), 20);
     const has = (v: string | null | undefined) => !!v && v.toLowerCase().includes(q);
-    const [projects, milestones, tasks, okrs, teams, members] = await Promise.all([
+    const [projects, tasks, okrs, teams, members] = await Promise.all([
       this.projects.getProjects(orgId),
-      this.projects.getMilestones(orgId),
       this.projects.getTasks(orgId),
       this.okrs.getAll(orgId),
       this.teams.getTeams(orgId),
@@ -272,9 +271,6 @@ export class LocalStorageOrgGovernanceRepository implements IOrgGovernanceReposi
     return [
       ...take(projects.filter((p) => !p.isTemplate && (has(p.name) || has(p.description))), (p) => ({
         kind: 'project', id: p.id, label: p.name, detail: p.archivedAt ? 'archived' : p.status ?? 'active', parentId: null,
-      })),
-      ...take(milestones.filter((m) => has(m.name)), (m) => ({
-        kind: 'milestone', id: m.id, label: m.name, detail: m.dueDate, parentId: m.projectId,
       })),
       ...take(tasks.filter((t) => has(t.name)), (t) => ({
         kind: 'task', id: t.id, label: t.name, detail: t.completed ? 'done' : t.status, parentId: t.projectId,
