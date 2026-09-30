@@ -52,6 +52,19 @@ export const REPORT_BUG_LIMITS = {
 } as const
 
 /**
+ * Plafonds de `send-org-invite` (audit de sécurité du 2026-09-30), comptés PAR
+ * E-MAIL envoyé. Sans eux, un compte gratuit crée une organisation, génère des
+ * liens par 50 et les expédie sans fin depuis le domaine qui porte aussi les
+ * e-mails d'authentification. Assez hauts pour un vrai déploiement d'équipe
+ * (200 personnes invitées dans la journée), trop bas pour un relais de spam.
+ */
+export const ORG_INVITE_LIMITS = {
+  perAccountHour: { limit: 60, window: '1 hour' },
+  perAccountDay: { limit: 200, window: '1 day' },
+  perOrgDay: { limit: 300, window: '1 day' },
+} as const
+
+/**
  * L'adresse de l'appelant, telle que la voit le gateway Supabase.
  *
  * `x-forwarded-for` peut porter une chaîne de relais : la PREMIÈRE entrée est

@@ -17,9 +17,18 @@
 // ❌ Aucun corps de réponse du fournisseur relayé au client.
 // ⚠️ Une relance au plus par heure et par lien : au-delà, c'est du
 //    harcèlement, et la réputation du domaine d'envoi en paie le prix.
+// 🔴 Plafond de débit PAR E-MAIL, par compte et par organisation (audit du
+//    2026-09-30, `ORG_INVITE_LIMITS`) : sans lui, un compte gratuit crée une
+//    organisation et expédie sans fin depuis le domaine qui porte aussi les
+//    e-mails d'authentification.
+// 🔴 Le nom de l'organisation et celui de l'invitant sont du texte LIBRE,
+//    passé par `mailSafeText` : pas d'URL explicite dans un e-mail signé COSMO.
+// ❌ Un membre suspendu OU dont l'accès a expiré n'envoie rien.
 // ═══════════════════════════════════════════════════════════════════
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
+import { mailSafeText } from '../_shared/mail-text.ts'
+import { ORG_INVITE_LIMITS, consumeRateLimits } from '../_shared/rate-limit.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
 const MAIL_FROM = Deno.env.get('BUG_REPORT_FROM')
@@ -127,7 +136,7 @@ Deno.serve(async (req) => {
   )
 
   const [{ data: membership, error: memberError }, { data: org, error: orgError }, { data: profile }] = await Promise.all([
-    admin.from('organization_members').select('role, suspended_at')
+    admin.from('organization_members').select('role, suspended_at, access_expires_at')
       .eq('org_id', orgId).eq('user_id', caller.id).maybeSingle(),
     admin.from('organizations').select('name').eq('id', orgId).maybeSingle(),
     admin.from('profiles').select('display_name').eq('id', caller.id).maybeSingle(),
@@ -135,7 +144,8 @@ Deno.serve(async (req) => {
   // Une lecture qui décide d'une autorisation ne se devine pas : en cas de
   // panne, on refuse et on fait réessayer, jamais l'inverse.
   if (memberError || orgError) return json({ error: 'lookup_failed' }, 503, req)
-  if (!membership || membership.suspended_at || !org) return json({ error: 'forbidden' }, 403, req)
+  const expired = membership?.access_expires_at != null && Date.parse(membership.access_expires_at as string) <= Date.now()
+  if (!membership || membership.suspended_at || expired || !org) return json({ error: 'forbidden' }, 403, req)
   const isAdmin = membership.role === 'admin'
 
   const { data: rows, error: linksError } = await admin
@@ -145,24 +155,34 @@ Deno.serve(async (req) => {
     .in('id', tokens)
   if (linksError) return json({ error: 'lookup_failed' }, 503, req)
 
-  const inviterName = (profile?.display_name as string | undefined) || caller.email?.split('@')[0] || 'Un membre'
+  const inviterName = mailSafeText((profile?.display_name as string | undefined) || caller.email?.split('@')[0] || '', 60) || 'Un membre'
+  const orgName = mailSafeText(org.name as string, 80) || 'Cosmo'
   let sent = 0
   let failed = 0
+  let limited = false
   const now = Date.now()
 
   for (const link of (rows ?? []) as LinkRow[]) {
     if (!link.email || link.claimed_at) { failed++; continue }
     if (!isAdmin && link.created_by !== caller.id) { failed++; continue }
     if (link.last_sent_at && now - Date.parse(link.last_sent_at) < RESEND_COOLDOWN_MS) { failed++; continue }
+    // Un jeton PAR e-mail : c'est l'envoi qui coûte, pas l'appel.
+    const verdict = await consumeRateLimits('send-org-invite', [
+      { domain: 'org-invite-acct-h', value: caller.id, ...ORG_INVITE_LIMITS.perAccountHour },
+      { domain: 'org-invite-acct-d', value: caller.id, ...ORG_INVITE_LIMITS.perAccountDay },
+      { domain: 'org-invite-org-d', value: orgId, ...ORG_INVITE_LIMITS.perOrgDay },
+    ])
+    if (verdict.misconfigured) return json({ error: 'rate_limit_not_configured', sent }, 503, req)
+    if (!verdict.allowed) { limited = true; break }
     try {
-      const { text, html } = mailBody(org.name as string, inviterName, `${APP_URL}/org-invite/${link.id}`)
+      const { text, html } = mailBody(orgName, inviterName, `${APP_URL}/org-invite/${link.id}`)
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: MAIL_FROM,
           to: [link.email],
-          subject: `Invitation à rejoindre ${org.name} sur Cosmo`,
+          subject: `Invitation à rejoindre ${orgName} sur Cosmo`,
           text,
           html,
         }),
@@ -181,6 +201,10 @@ Deno.serve(async (req) => {
     }
   }
   failed += tokens.length - (rows?.length ?? 0)
+
+  // Plafond atteint : ce qui est parti est parti, le reste se relancera plus
+  // tard. 429 pour que l'écran le dise au lieu d'annoncer un échec d'envoi.
+  if (limited) return json({ error: 'too_many_requests', sent }, 429, req)
 
   if (failed > 0 && sent === 0) {
     await opsAlert('send-org-invite', `aucune des ${tokens.length} invitation(s) demandee(s) n est partie`)
