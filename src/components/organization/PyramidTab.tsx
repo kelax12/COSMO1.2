@@ -428,7 +428,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           aria-hidden="true"
         >
           <div className="flex items-center gap-2 rounded-xl border border-indigo-400 bg-[rgb(var(--color-surface))] px-3 py-2 shadow-2xl">
-            <MemberAvatar avatar={dragging.avatar} name={dragging.displayName} size={26} />
+            <MemberAvatar avatar={dragging.avatar} name={dragging.displayName} size={28} />
             <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{dragging.displayName}</span>
           </div>
         </div>

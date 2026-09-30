@@ -58,7 +58,7 @@ const TaskCustomFieldsSection = ({ orgId, taskId, projectId, canEdit }: Props) =
 
   return (
     <fieldset className="space-y-2">
-      <legend className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">{t('fields.inTask')}</legend>
+      <legend className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">{t('fields.inTask')}</legend>
       <div className="grid sm:grid-cols-2 gap-2">
         {applicable.map((f) => {
           const v = valueOf(f.id);

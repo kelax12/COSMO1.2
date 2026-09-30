@@ -63,7 +63,7 @@ const MemberPickList = ({ members, value, onChange, teamGroupsOrgId, currentUser
             // Entrée dans un formulaire : ne pas soumettre la fiche en cherchant.
             onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
             placeholder={t('assign.memberSearch')}
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
+            className="w-full h-10 pl-9 pr-3 text-sm rounded-xl border bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
           />
         </label>
       )}
@@ -87,7 +87,7 @@ const MemberPickList = ({ members, value, onChange, teamGroupsOrgId, currentUser
             // `min-h-11` : cible WCAG 2.5.5 (C-70), un nom long peut faire grandir la ligne.
             className="w-full flex items-center gap-2.5 px-3 py-2 min-h-11 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
           >
-            <MemberAvatar avatar={m.avatar} name={m.displayName} size={26} />
+            <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
             <span className="text-sm truncate flex-1 text-[rgb(var(--color-text-primary))]">
               {name}
               {isLead && (

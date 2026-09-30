@@ -315,7 +315,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
           {collapsed ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
         </button>
       )}
-      <MemberAvatar avatar={m.avatar} name={m.displayName} size={34} />
+      <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} />
       <div className="min-w-0">
           <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate max-w-[140px]">
             {isMe ? ta('pyramid.you') : m.displayName}
@@ -356,7 +356,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
             </span>
           )}
           <p
-            className="text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] inline-flex items-center gap-1.5"
+            className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] inline-flex items-center gap-1.5"
             title={
               totalReports > node.children.length
                 ? tpa('pyramid.directCount', node.children.length) + ta('pyramid.totalSuffix', { count: totalReports })

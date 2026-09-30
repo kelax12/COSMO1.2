@@ -379,7 +379,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Label>{t('okrModal.keyResults')}</Label>
-                  <span className="font-data rounded-full bg-[rgb(var(--color-accent)/0.1)] px-2 py-px text-caption text-[rgb(var(--color-accent))]">
+                  <span className="font-data rounded-full bg-[rgb(var(--color-accent)/0.1)] px-2 py-0.5 text-caption text-[rgb(var(--color-accent))]">
                     {String(keyResults.length).padStart(2, '0')}
                   </span>
                 </div>
@@ -415,7 +415,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                         value={kr.title}
                         aria-label={t('okrModal.krPlaceholder')}
                         placeholder={t('okrModal.krPlaceholder')}
-                        className="h-8 border-transparent px-1 font-semibold shadow-none hover:border-[rgb(var(--color-border))] focus-visible:border-[rgb(var(--color-border))]"
+                        className="h-9 border-transparent px-1 font-semibold shadow-none hover:border-[rgb(var(--color-border))] focus-visible:border-[rgb(var(--color-border))]"
                         onChange={(e) => setKR(idx, { title: e.target.value })}
                       />
                       <span className="font-data shrink-0 text-base text-[rgb(var(--color-accent))] tabular-nums">
@@ -447,25 +447,25 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                       <div className="min-h-0 overflow-hidden">
                         <div className="grid grid-cols-4 gap-2 pt-3">
                           <div className="grid gap-1">
-                            <Label className="text-muted-foreground text-caption uppercase tracking-wide">{t('okrModal.current')}</Label>
-                            <Input type="number" min={0} className="h-8 font-data" value={kr.currentValue} onChange={(e) => setKR(idx, { currentValue: Number(e.target.value) })} />
+                            <Label className="text-muted-foreground text-caption font-semibold uppercase tracking-wide">{t('okrModal.current')}</Label>
+                            <Input type="number" min={0} className="h-9 font-data" value={kr.currentValue} onChange={(e) => setKR(idx, { currentValue: Number(e.target.value) })} />
                           </div>
                           <div className="grid gap-1">
-                            <Label className="text-muted-foreground text-caption uppercase tracking-wide">{t('okrModal.target')}</Label>
-                            <Input type="number" className="h-8 font-data" value={kr.targetValue} onChange={(e) => setKR(idx, { targetValue: Number(e.target.value) })} />
+                            <Label className="text-muted-foreground text-caption font-semibold uppercase tracking-wide">{t('okrModal.target')}</Label>
+                            <Input type="number" className="h-9 font-data" value={kr.targetValue} onChange={(e) => setKR(idx, { targetValue: Number(e.target.value) })} />
                           </div>
                           <div className="grid gap-1">
-                            <Label className="text-muted-foreground text-caption uppercase tracking-wide">{t('okrModal.unit')}</Label>
-                            <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(idx, { unit: e.target.value })} />
+                            <Label className="text-muted-foreground text-caption font-semibold uppercase tracking-wide">{t('okrModal.unit')}</Label>
+                            <Input className="h-9" value={kr.unit} placeholder="%" onChange={(e) => setKR(idx, { unit: e.target.value })} />
                           </div>
                           <div className="grid gap-1">
-                            <Label className="text-muted-foreground text-caption uppercase tracking-wide" title={t('okrModal.weightHint')}>{t('okrModal.weight')}</Label>
+                            <Label className="text-muted-foreground text-caption font-semibold uppercase tracking-wide" title={t('okrModal.weightHint')}>{t('okrModal.weight')}</Label>
                             <Input
                               type="number"
                               min={1}
                               max={10}
                               step={1}
-                              className="h-8 font-data"
+                              className="h-9 font-data"
                               value={kr.weight}
                               onChange={(e) => setKR(idx, { weight: Number(e.target.value) })}
                             />

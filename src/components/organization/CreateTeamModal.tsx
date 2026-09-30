@@ -37,7 +37,7 @@ interface CreateTeamModalProps {
   onClose: () => void;
 }
 
-const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
+const labelClass = 'block text-caption font-semibold uppercase tracking-wide mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 
 /**

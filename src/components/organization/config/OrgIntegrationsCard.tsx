@@ -119,7 +119,7 @@ const OrgIntegrationsCard = ({ orgId, members, currentUserId, isAdmin }: Props) 
       <p className={HINT}>{t('integrations.hint')}</p>
 
       {isAdmin && (<>
-      <h3 className="mt-4 text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{t('integrations.webhooks')}</h3>
+      <h3 className="mt-4 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{t('integrations.webhooks')}</h3>
       {!webhooksLoaded ? null : webhooks.length === 0 ? (
         <p className="text-xs text-[rgb(var(--color-text-muted))] mt-2">{t('integrations.empty')}</p>
       ) : (

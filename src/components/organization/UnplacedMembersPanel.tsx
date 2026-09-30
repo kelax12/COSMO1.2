@@ -58,7 +58,7 @@ const UnplacedMembersPanel = ({
         <div className="flex flex-wrap gap-2">
           {members.map((m) => (
             <div key={m.userId} className="flex items-center gap-2 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2">
-              <MemberAvatar avatar={m.avatar} name={m.displayName} size={30} />
+              <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
               <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{m.displayName}</span>
               {isAdmin && (
                 <button

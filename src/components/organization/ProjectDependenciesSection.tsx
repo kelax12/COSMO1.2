@@ -85,7 +85,7 @@ const ProjectDependenciesSection = ({
 
       {waitsFor.length > 0 && (
         <>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mt-2 mb-1">{pf('deps.blockedBy')}</p>
+          <p className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mt-2 mb-1">{pf('deps.blockedBy')}</p>
           <ul className="space-y-0.5">
             {waitsFor.map((other) =>
               renderRow(other, canEdit ? () => remove.mutate({ projectId: project.id, dependsOnId: other.id }) : undefined),
@@ -96,7 +96,7 @@ const ProjectDependenciesSection = ({
 
       {blocks.length > 0 && (
         <>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mt-3 mb-1">{pf('deps.blocks')}</p>
+          <p className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mt-3 mb-1">{pf('deps.blocks')}</p>
           <ul className="space-y-0.5">
             {blocks.map((other) => renderRow(other))}
           </ul>

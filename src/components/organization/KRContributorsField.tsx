@@ -43,7 +43,7 @@ const KRContributorsField = ({ orgId, members, value, onChange, currentUserId }:
           <span className="flex -space-x-1.5" title={chosen.map((m) => m.displayName).join(', ')}>
             {chosen.slice(0, 5).map((m) => (
               <span key={m.userId} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
-                <MemberAvatar avatar={m.avatar} name={m.displayName} size={18} />
+                <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
               </span>
             ))}
           </span>

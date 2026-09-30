@@ -28,7 +28,7 @@ interface ProjectMembersSectionProps {
   currentUserId?: string;
 }
 
-const selectCls = 'rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-2 py-1.5 text-xs text-[rgb(var(--color-text-primary))]';
+const selectCls = 'rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] h-9 px-3 text-sm text-[rgb(var(--color-text-primary))]';
 
 const ProjectMembersSection = ({ project, projectMembers, orgMembers, canManage, currentUserId }: ProjectMembersSectionProps) => {
   const { t: pf } = useT('portfolio');
@@ -72,7 +72,7 @@ const ProjectMembersSection = ({ project, projectMembers, orgMembers, canManage,
             const self = pm.userId === currentUserId;
             return (
               <li key={pm.userId} className="flex items-center gap-2">
-                <MemberAvatar avatar={m?.avatar} name={name} size={22} />
+                <MemberAvatar avatar={m?.avatar} name={name} size={20} />
                 <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">
                   {name}{self && <span className="text-[rgb(var(--color-text-muted))]"> · {pf('members.you')}</span>}
                 </span>
@@ -117,7 +117,7 @@ const ProjectMembersSection = ({ project, projectMembers, orgMembers, canManage,
           <div className="flex items-center gap-2">
             <label className="flex-1">
               <span className="sr-only">{pf('members.roleLabel')}</span>
-              <MenuSelect value={role} onChange={(e) => setRole(e.target.value as TeamProjectRole)} className={`${selectCls} w-full py-2`}>
+              <MenuSelect value={role} onChange={(e) => setRole(e.target.value as TeamProjectRole)} className={`${selectCls} w-full`}>
                 {ROLES.map((r) => <option key={r} value={r}>{pf(`members.role.${r}`)}</option>)}
               </MenuSelect>
             </label>

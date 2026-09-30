@@ -207,7 +207,7 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shor
           if (groupItems.length === 0) return null;
           return (
             <div key={group.id} className="mt-2">
-              <p className="px-3 pb-1 text-caption font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))]">
+              <p className="px-3 pb-1 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
                 {t(group.labelKey)}
               </p>
               <ul className="space-y-0.5">
@@ -239,7 +239,7 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shor
 
         {shortcuts && shortcuts.items.length > 0 && (
           <div className="mt-2" data-org-shortcuts={shortcuts.kind}>
-            <p className="px-3 pb-1 text-caption font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))]">
+            <p className="px-3 pb-1 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
               {t(shortcuts.kind === 'pinned' ? 'sideNav.groupPinned' : 'sideNav.groupRecent')}
             </p>
             <ul className="space-y-0.5">

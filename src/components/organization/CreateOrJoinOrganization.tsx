@@ -19,7 +19,7 @@ interface CreateOrJoinOrganizationProps {
 const cardBase =
   'flex flex-col items-start gap-2 rounded-2xl border p-5 text-left transition-all w-full';
 const inputClasses =
-  'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-3 text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all';
+  'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] h-11 px-3.5 rounded-lg text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all';
 // `to-indigo-600` / `hover:to-indigo-500` retirés : reliquat d'un dégradé
 // supprimé. Sans utilitaire `bg-gradient-*` sur le même élément, `to-*` ne
 // fait que poser `--tw-gradient-to`, que rien ne consomme. Zéro pixel de

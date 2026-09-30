@@ -367,7 +367,7 @@ const ContributionView = ({ total, done, open, overdue, completionRate, orgRate,
   return (
     <div className="space-y-4">
       <section>
-        <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
+        <h3 className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
           {t('popups.member.heatmap', { days: HEATMAP_DAYS })}
         </h3>
         <ol className="grid grid-cols-10 sm:grid-cols-[repeat(15,minmax(0,1fr))] gap-1">

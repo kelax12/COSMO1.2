@@ -139,7 +139,7 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t('directory.searchPlaceholder')}
                   aria-label={t('directory.searchAria')}
-                  className="w-full h-9 pl-9 pr-3 rounded-lg border text-sm focus:outline-none focus:border-indigo-400 transition-colors"
+                  className="w-full h-10 pl-9 pr-3 rounded-xl border text-sm focus:outline-none focus:border-indigo-400 transition-colors"
                   style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-background))', color: 'rgb(var(--color-text-primary))' }}
                 />
               </div>
@@ -163,7 +163,7 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
                         active ? 'bg-indigo-500/10' : 'hover:bg-[rgb(var(--color-hover))]'
                       }`}
                     >
-                      <MemberAvatar avatar={m.avatar} name={m.displayName} size={30} />
+                      <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
                       <span className="min-w-0 flex-1">
                         <span
                           className="block text-sm font-medium truncate"

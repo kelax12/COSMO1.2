@@ -336,7 +336,7 @@ const TeamProjectsTimeline = ({
                             <UserRound size={10} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
                           </span>
                         ) : (
-                          <MemberAvatar avatar={row.avatar ?? undefined} name={row.label} size={18} />
+                          <MemberAvatar avatar={row.avatar ?? undefined} name={row.label} size={20} />
                         )
                       )}
                       <span className="text-xs text-[rgb(var(--color-text-primary))] truncate">

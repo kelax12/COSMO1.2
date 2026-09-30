@@ -100,7 +100,7 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
         {/* En-tête : identité, puis projet et recherche sur la même ligne. */}
         <div className="p-5 pb-3 border-b border-[rgb(var(--color-border))] space-y-3">
           <div className="flex items-center gap-3">
-            {member && <MemberAvatar avatar={member.avatar} name={member.displayName} size={36} />}
+            {member && <MemberAvatar avatar={member.avatar} name={member.displayName} size={40} />}
             <div className="min-w-0 flex-1">
               <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">
                 {member ? t('assign.assignToShort', { name: member.displayName }) : t('assign.newUnassigned')}
@@ -143,7 +143,7 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder={t('assign.searchPlaceholder')}
                     aria-label={t('assign.searchExisting')}
-                    className="w-full h-9 pl-9 pr-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                    className="w-full h-10 pl-9 pr-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
                   />
                 </div>
               )}

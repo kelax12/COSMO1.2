@@ -79,7 +79,7 @@ const AssigneesPicker = ({ members, value, onChange, disabled, canAssign, reveal
             <span className="flex -space-x-1.5">
               {assigned.slice(0, 3).map((m) => (
                 <span key={m.userId} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
-                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={26} />
+                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
                 </span>
               ))}
               {assigned.length > 3 && (
@@ -138,7 +138,7 @@ const AssigneesPicker = ({ members, value, onChange, disabled, canAssign, reveal
             // Garde le menu ouvert pour cocher plusieurs membres d'affilée.
             onSelect={(e) => e.preventDefault()}
           >
-            <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
+            <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
             <span className="truncate">{m.displayName}</span>
           </DropdownMenuCheckboxItem>
         ))}

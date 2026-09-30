@@ -140,7 +140,7 @@ const ProjectAudienceActions = ({
                     key={tm.id}
                     type="button"
                     onClick={() => setConfirmAdd(tm)}
-                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent))]"
+                    className="inline-flex items-center gap-1 min-h-9 px-2.5 text-xs rounded-full border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent))]"
                   >
                     <Plus size={11} aria-hidden="true" /> {tm.name}
                   </button>

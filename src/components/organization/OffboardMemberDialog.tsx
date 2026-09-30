@@ -119,7 +119,7 @@ const OffboardMemberDialog = ({ orgId, member, members, initialMode = 'remove', 
         </div>
 
         <section aria-labelledby="offboard-impact" className="rounded-xl bg-[rgb(var(--color-hover))] p-3">
-          <h3 id="offboard-impact" className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
+          <h3 id="offboard-impact" className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
             {ta('lifecycle.impactTitle')}
           </h3>
           {isLoading || !impact ? (

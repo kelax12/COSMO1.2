@@ -73,7 +73,7 @@ const OkrFilterBar = ({ filters, setFilters, teams, members, currentUserId }: Ok
 
       <DropdownMenu>
         <DropdownMenuTrigger aria-label={t('okrFilters.personAria')} className={`${trigger} ${filters.person ? on : off}`}>
-          {person ? <MemberAvatar avatar={person.avatar} name={person.displayName} size={18} /> : <UserRound size={13} aria-hidden="true" />}
+          {person ? <MemberAvatar avatar={person.avatar} name={person.displayName} size={20} /> : <UserRound size={13} aria-hidden="true" />}
           <span className="max-w-[140px] truncate">{person ? personName(person) : t('okrFilters.person')}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">

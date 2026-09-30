@@ -130,7 +130,7 @@ const MemberDirectoryToolbar = ({
             onChange={(e) => set({ query: e.target.value })}
             placeholder={t('directory.searchPlaceholder')}
             aria-label={t('directory.searchAria')}
-            className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400 [&::-webkit-search-cancel-button]:hidden"
+            className="w-full h-10 pl-9 pr-9 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400 [&::-webkit-search-cancel-button]:hidden"
           />
           {filters.query && (
             <button

@@ -88,7 +88,7 @@ const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClo
             onChange={(e) => setQuery(e.target.value)}
             placeholder={mode === 'team' ? t('directory.bulk.searchTeam') : t('directory.bulk.searchManager')}
             aria-label={mode === 'team' ? t('directory.bulk.searchTeam') : t('directory.bulk.searchManager')}
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400"
+            className="w-full h-10 pl-9 pr-3 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400"
           />
         </div>
 

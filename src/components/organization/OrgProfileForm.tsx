@@ -10,7 +10,7 @@ interface OrgProfileFormProps {
 }
 
 const inputClasses =
-  'w-full px-3 py-2.5 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-indigo-500/40';
+  'w-full h-11 px-3.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-indigo-500/40';
 
 /**
  * Profil d'entreprise (admin) : image (#12), nom, description, secteur.
@@ -170,7 +170,7 @@ const OrgProfileForm = ({ org }: OrgProfileFormProps) => {
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('common.descriptionPlaceholder')}
               rows={3}
-              className={`${inputClasses} resize-none`}
+              className={`${inputClasses.replace('h-11', 'py-2.5')} resize-none`}
               maxLength={500}
             />
           </div>

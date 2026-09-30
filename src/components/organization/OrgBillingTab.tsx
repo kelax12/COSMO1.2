@@ -126,7 +126,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
       </header>
 
       <section className="rounded-xl border border-[rgb(var(--color-border))] p-4 flex flex-col gap-2">
-        <span className="text-xs uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
+        <span className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
           {t('billing.currentTier')}
         </span>
         {/* Le nom du forfait est ce que la pastille de l'en-tête annonce : les
@@ -184,7 +184,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
               {/* Même badge que la landing entreprise (`PricingSection.tsx`) :
                   annoncer la nature temporaire de l'offre AVANT le premier prix
                   barré, pas seulement dans la phrase qui suit. */}
-              <span className="inline-flex w-fit items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-1 text-caption font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+              <span className="inline-flex w-fit items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-caption font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
                 {t('billing.promoBadge')}
               </span>
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">

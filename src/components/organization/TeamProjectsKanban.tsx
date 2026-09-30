@@ -180,7 +180,7 @@ const TeamProjectsKanban = ({
           >
             <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[rgb(var(--color-border))]">
               {col.member ? (
-                <MemberAvatar avatar={col.member.avatar} name={col.member.displayName} size={22} />
+                <MemberAvatar avatar={col.member.avatar} name={col.member.displayName} size={20} />
               ) : (
                 <span className="w-[22px] h-[22px] rounded-full border border-dashed border-[rgb(var(--color-border))] flex items-center justify-center">
                   <UserRound size={12} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
@@ -293,7 +293,7 @@ const TeamProjectsKanban = ({
                             const m = members.find((x) => x.userId === id);
                             return m ? (
                               <span key={id} className="rounded-full ring-1 ring-[rgb(var(--color-surface))]">
-                                <MemberAvatar avatar={m.avatar} name={m.displayName} size={16} />
+                                <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
                               </span>
                             ) : null;
                           })}

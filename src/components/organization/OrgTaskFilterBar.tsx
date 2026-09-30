@@ -102,10 +102,10 @@ const OrgTaskFilterBar = ({
             rangée entière pour une ou deux étiquettes. Retour arrière dans un
             champ vide retire la dernière pastille, comme un champ d'étiquettes. */}
         <div
-          className="relative flex-1 min-w-[180px] max-w-md flex items-center flex-wrap gap-1 min-h-9 pl-8 pr-1 py-1 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] focus-within:border-[rgb(var(--color-accent-solid))] cursor-text"
+          className="relative flex-1 min-w-[180px] max-w-md flex items-center flex-wrap gap-1 min-h-10 pl-9 pr-1 py-1 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] focus-within:border-[rgb(var(--color-accent-solid))] cursor-text"
           onClick={(e) => e.currentTarget.querySelector('input')?.focus()}
         >
-          <Search size={14} className="absolute left-3 top-[1.125rem] -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+          <Search size={14} className="absolute left-3 top-5 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
           {pills.map((chip) => (
             <span key={chip.key} className="inline-flex items-center gap-1 pl-2.5 pr-1 h-7 rounded-full bg-indigo-500/12 text-indigo-600 dark:text-indigo-300 text-xs font-medium whitespace-nowrap">
               {chip.label}
@@ -171,7 +171,7 @@ const OrgTaskFilterBar = ({
             >
               {scopeIsMember && assigneeMember ? (
                 <>
-                  <MemberAvatar avatar={assigneeMember.avatar} name={assigneeMember.displayName} size={18} />
+                  <MemberAvatar avatar={assigneeMember.avatar} name={assigneeMember.displayName} size={20} />
                   <span className="max-w-[100px] truncate">{assigneeMember.displayName}</span>
                 </>
               ) : (
@@ -189,7 +189,7 @@ const OrgTaskFilterBar = ({
               <DropdownMenuSeparator />
               {members.map((m) => (
                 <DropdownMenuItem key={m.userId} onClick={() => setFilters({ assignee: m.userId })}>
-                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
+                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
                   <span className="truncate">{m.userId === currentUserId ? t('filters.you') : m.displayName}</span>
                   {m.userId === assignee && (
                     <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
