@@ -23,6 +23,8 @@ export interface OrgSectionDef {
   group: OrgSectionGroup;
   /** Réservé à qui encadre au moins une personne (ou admin). */
   managerOnly?: boolean;
+  /** Masquée de la navigation ; la route reste servie (`/entreprise/<id>`). */
+  hidden?: boolean;
 }
 
 /**
@@ -42,7 +44,8 @@ export const ORG_SECTIONS: OrgSectionDef[] = [
   { id: 'projects', labelKey: 'tabs.projects', Icon: FolderKanban, group: 'steer' },
   { id: 'okr', labelKey: 'tabs.okr', Icon: Target, group: 'steer' },
   // #13 : statistiques collectives — admin (toute l'org) / manager (son périmètre).
-  { id: 'stats', labelKey: 'tabs.stats', Icon: BarChart3, group: 'steer', managerOnly: true },
+  { id: 'stats', labelKey: 'tabs.stats', Icon: BarChart3, group: 'steer', managerOnly: true, hidden: true },
+  // Masquée de la navigation le 2026-09-30 (code et route conservés).
   // Rapports d'activité (mig. 202) : PAS une section. Fenêtre « bêta » ouverte
   // depuis Aperçu et Paramètres (OrganizationPage).
   // Un membre sans subordonné n'a rien à y arbitrer.

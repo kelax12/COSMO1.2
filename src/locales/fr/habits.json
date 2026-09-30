@@ -57,14 +57,12 @@
     "pauseHint": "Vacances, maladie… streak conservé",
     "pauseKeepsStreak": "Le streak reste intact jusqu'à reprise",
     "indefinite": "indéfinie",
-    "duplicated": "Habitude « {{name}} » dupliquée",
     "scheduled": "Habitude « {{name}} » planifiée",
     "taskCreated": "Tâche « {{name}} » créée",
     "resumed": "« {{name}} » a repris",
     "paused": "« {{name}} » en pause",
     "resumeHabit": "Reprendre l'habitude",
-    "pauseHabit": "Mettre en pause",
-    "copyName": "{{name}} (copie)"
+    "pauseHabit": "Mettre en pause"
   },
   "tracking": {
     "averageCompletion": "Complétion moyenne par jour",
@@ -95,9 +93,7 @@
     "createTask": "Créer une tâche",
     "scheduleInAgenda": "Planifier dans l'agenda",
     "scheduleHint": "Événement avec heure ajustable",
-    "duplicateHint": "Copie avec un historique vierge",
     "createTaskHint": "Aujourd'hui · {{minutes}} min",
-    "duplicate": "Dupliquer l'habitude",
     "dueTodayDuration": "Échéance aujourd'hui · {{minutes}} min"
   },
   "globalTracking": {

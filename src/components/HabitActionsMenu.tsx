@@ -1,13 +1,13 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoreHorizontal, CalendarPlus, ListPlus, CircleSlash, CirclePlay, Copy, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, CalendarPlus, ListPlus, CircleSlash, CirclePlay, Pencil, Trash2 } from 'lucide-react';
 import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
 import { toast } from '@/lib/toast';
 import { useCreateTask } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
 import { useCreateEvent, type CreateEventInput } from '@/modules/events';
-import { type Habit, useCreateHabit } from '@/modules/habits';
+import { type Habit } from '@/modules/habits';
 import EventModal from './EventModal';
 import { useT } from '@/i18n/useT';
 
@@ -50,7 +50,6 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit, onEdit, onDe
   const { data: categories = [] } = useCategories();
   const createTaskMutation = useCreateTask();
   const createEventMutation = useCreateEvent();
-  const createHabitMutation = useCreateHabit();
   const { isPaused, pauseUntil, resume } = useHabitPauses();
   const paused = isPaused(habit.id);
 
@@ -205,33 +204,6 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit, onEdit, onDe
                   </div>
                   <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">
                     {t('actionsMenu.scheduleHint')}
-                  </p>
-                </div>
-              </button>
-            </li>
-
-            {/* Dupliquer (#3) : copie de l'habitude, historique remis à zéro */}
-            <li>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  const { id: _id, createdAt: _ca, completions: _c, ...rest } = habit;
-                  createHabitMutation.mutate(
-                    { ...rest, name: t('actions.copyName', { name: habit.name }), completions: {} },
-                    { onSuccess: () => toast.success(t('actions.duplicated', { name: habit.name })) }
-                  );
-                  setOpen(false);
-                }}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[rgb(var(--color-hover))] transition-colors text-left focus-visible:outline-none focus-visible:bg-[rgb(var(--color-hover))]"
-              >
-                <Copy size={17} strokeWidth={1.75} className="shrink-0 text-[rgb(var(--color-text-secondary))]" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm text-[rgb(var(--color-text-primary))]">
-                    {t('actionsMenu.duplicate')}
-                  </div>
-                  <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">
-                    {t('actionsMenu.duplicateHint')}
                   </p>
                 </div>
               </button>

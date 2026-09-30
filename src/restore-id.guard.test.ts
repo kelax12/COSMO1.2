@@ -23,13 +23,16 @@
 // plus rien : le motif fautif est soumis au detecteur, qui DOIT le voir. Sans
 // ca, une regex cassee rendrait une garde verte pour toujours.
 //
-// ── LES DEUX EXCEPTIONS, ET POURQUOI ────────────────────────────────
+// ── L'EXCEPTION, ET POURQUOI ─────────────────────────────────────────
 //
-// `HabitActionsMenu` et `useAgendaEventActions` ecrivent le meme motif et
-// c'est JUSTE : ce sont des DUPLICATIONS, pas des annulations. Une copie doit
-// laisser la base choisir son identifiant. Elles sont nommees ici une par une,
-// jamais couvertes par un motif de chemin : un fichier ajoute a l'avenir doit
-// echouer, pas heriter d'une dispense.
+// `useAgendaEventActions` ecrit le meme motif et c'est JUSTE : c'est une
+// DUPLICATION, pas une annulation. Une copie doit laisser la base choisir
+// son identifiant. Elle est nommee ici, jamais couverte par un motif de
+// chemin : un fichier ajoute a l'avenir doit echouer, pas heriter d'une
+// dispense.
+//
+// `HabitActionsMenu` en portait une seconde (duplication d'habitude),
+// supprimee le 2026-09-18 : la fonctionnalite n'existe plus.
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -42,7 +45,6 @@ const SRC = join(process.cwd(), 'src');
  * entrer dans cette liste : il doit rendre l'objet sous SON identifiant.
  */
 const LEGITIMATE_DUPLICATIONS = new Set([
-  'components/HabitActionsMenu.tsx',
   'pages/agenda/useAgendaEventActions.ts',
 ]);
 

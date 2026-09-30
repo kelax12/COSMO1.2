@@ -357,6 +357,15 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     deleteReason: hints.taskDeleteReason,
   };
 
+  const viewControlsProps = {
+    columns,
+    onColumnsChange: setColumns,
+    view: tasksView,
+    onViewChange: (v: 'table' | 'kanban') => updateUiPrefs({ tasksView: v }),
+    kanbanGroupBy,
+    onKanbanGroupByChange: (g: 'assignee' | 'status') => updateUiPrefs({ kanbanGroupBy: g }),
+  };
+
   return (
     <div className="space-y-4">
       <TeamTaskListsBar controller={lists} selection={bulk} />
@@ -371,29 +380,23 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         currentUserId={currentUserId}
         searchPlaceholder={t('projects.tasksTabSearchPlaceholder')}
         searchAria={t('projects.tasksTabSearchAria')}
-      />
-
-      <TeamTasksToolbar
-        sortField={sortField}
-        onSortField={(group) => setFilters({ group })}
-        sortDirection={sortDirection}
-        onToggleSortDirection={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
-        canCreate={projects.length > 0 && can['task.create']}
-        createDeniedReason={projects.length === 0 ? t('projects.tasksTabNoProject') : hints.deniedReason('task.create')}
-        onCreate={() => setTaskModal({ mode: 'create' })}
-        viewControls={
-          <TeamTasksViewControls
-            columns={columns}
-            onColumnsChange={setColumns}
-            view={tasksView}
-            onViewChange={(v) => updateUiPrefs({ tasksView: v })}
-            kanbanGroupBy={kanbanGroupBy}
-            onKanbanGroupByChange={(g) => updateUiPrefs({ kanbanGroupBy: g })}
+        // Périmètre à côté du tri (2026-09-30) : la recherche reste seule en haut.
+        scopeSlot={(scope) => (
+          <TeamTasksToolbar
+            sortField={sortField}
+            onSortField={(group) => setFilters({ group })}
+            sortDirection={sortDirection}
+            onToggleSortDirection={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
+            canCreate={projects.length > 0 && can['task.create']}
+            createDeniedReason={projects.length === 0 ? t('projects.tasksTabNoProject') : hints.deniedReason('task.create')}
+            onCreate={() => setTaskModal({ mode: 'create' })}
+            scope={scope}
           />
-        }
+        )}
       />
 
-      <div className="-mt-2">
+      {/* Préréglages, puis la vue ; les colonnes au bout de la ligne (2026-09-30). */}
+      <div className="-mt-2 flex items-center gap-2">
         <FilterPresets
           filters={filters} setFilters={setFilters} defaultStatus="open" currentUserId={currentUserId ?? user?.id}
           // « Sélectionner » sur la MÊME ligne que les préréglages, comme sur la page Tâches perso.
@@ -401,6 +404,8 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           onToggleSelect={sortedTasks.length > 0 || bulk.selectMode
             ? () => (bulk.selectMode ? bulk.exitSelectMode() : bulk.setSelectMode(true)) : undefined}
         />
+        <div className="shrink-0"><TeamTasksViewControls {...viewControlsProps} part="view" /></div>
+        <div className="ml-auto shrink-0"><TeamTasksViewControls {...viewControlsProps} part="columns" /></div>
       </div>
 
       <TeamTasksSelectRow

@@ -1381,14 +1381,6 @@
       "createAndComment": "Create and comment",
       "createAndCommentHint": "Posting this comment creates the task with the fields filled in."
     },
-    "labels": {
-      "title": "Labels",
-      "add": "Label",
-      "empty": "No labels in the company yet.",
-      "namePlaceholder": "Label name",
-      "color": "Label color",
-      "create": "Create"
-    },
     "draft": {
       "subtasksHint": "These steps will be added when the task is created.",
       "depsHint": "Tick the project tasks that must finish before this one.",

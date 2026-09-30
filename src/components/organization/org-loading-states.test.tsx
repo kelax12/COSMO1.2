@@ -59,6 +59,11 @@ describe('onglets entreprise — aucune affirmation pendant le chargement', () =
   // rend les clés brutes et les assertions porteraient sur « myWork.emptyTitle ».
   beforeAll(async () => {
     await ensureNamespaces(['org'], 'fr');
+    // Le chunk paresseux des blocs de l'Aperçu se transforme en plus d'1 s sous
+    // charge : plus que le délai par défaut de `waitFor`, qui lisait alors le
+    // squelette du Suspense et échouait sans que rien ne soit cassé. Préchargé
+    // ici, `lazy` se résout au tick suivant ; l'assertion reste la même.
+    await import('./MyWorkSections');
   });
 
   beforeEach(() => {
