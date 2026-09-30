@@ -91,8 +91,19 @@ export class SupabaseOrgGovernanceRepository implements IOrgGovernanceRepository
     if (error) {
       // 503 = fournisseur d'e-mail non configuré : les liens existent, c'est
       // l'envoi qui n'a pas eu lieu. L'écran le dit au lieu de mentir.
-      const status = (error as { context?: { status?: number } }).context?.status;
+      const context = (error as { context?: { status?: number; json?: () => Promise<unknown> } }).context;
+      const status = context?.status;
       if (status === 503) return { sent: 0, failed: tokens.length, unavailable: true };
+      // 429 = plafond d'envoi atteint (audit du 2026-09-30) : une partie a pu
+      // partir avant, la fonction le dit dans `sent`. Le reste se relance plus tard.
+      if (status === 429) {
+        let sent = 0;
+        try {
+          const body = (await context?.json?.()) as { sent?: unknown } | undefined;
+          if (typeof body?.sent === 'number') sent = body.sent;
+        } catch { /* corps illisible : on s'en tient à « rien n'est parti » */ }
+        return { sent, failed: tokens.length - sent, unavailable: true };
+      }
       throw normalizeApiError(error);
     }
     const r = (data ?? {}) as Partial<SendInvitationsResult>;
