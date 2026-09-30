@@ -22,7 +22,6 @@ import {
   UserRound,
   UsersRound,
   Building2,
-  Flag,
   Crosshair,
 } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -58,7 +57,6 @@ interface PaletteCommand {
 /** Icône de chaque groupe de la recherche d'entreprise. */
 const ORG_SEARCH_ICON: Record<OrgSearchKind, typeof CheckSquare> = {
   project: FolderKanban,
-  milestone: Flag,
   task: CheckSquare,
   okr: Target,
   kr: Crosshair,
@@ -88,7 +86,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
   // Périmètre entreprise : UNE recherche SERVEUR (mig. 191, `search_org`),
   // sous les droits de qui cherche. Projets, membres, équipes et OKR étaient
   // filtrés ici dans des caches que la palette faisait CHARGER EN ENTIER à la
-  // première frappe (jusqu'à 1 000 tâches, 500 membres, 5 000 OKR) ; jalons et
+  // première frappe (jusqu'à 1 000 tâches, 500 membres, 5 000 OKR) ; les
   // résultats clés n'étaient pas cherchables du tout. 250 ms d'attente : une
   // requête par pause de frappe, pas une par touche.
   const { activeOrg } = useActiveOrganization();
@@ -123,7 +121,6 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
   const orgDetail = (r: OrgSearchResult): string => {
     switch (r.kind) {
       case 'member': return r.detail ?? '';
-      case 'milestone':
       case 'okr': return isDayKey(r.detail) ? formatDate(parseISO(r.detail), { day: 'numeric', month: 'short' }) : '';
       case 'project': return isProjectDetail(r.detail) ? ov.t(`palette.orgSearch.projectStatus.${r.detail}`) : '';
       case 'task': return isTaskDetail(r.detail) ? ov.t(`palette.orgSearch.taskStatus.${r.detail}`) : '';

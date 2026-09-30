@@ -308,7 +308,7 @@
     "title": "Permanently delete “{{name}}”?",
     "impactTasks_one": "{{count}} task, with its comments and subtasks, will be deleted",
     "impactTasks_other": "{{count}} tasks, with their comments and subtasks, will be deleted",
-    "impactMilestones": "Its milestones, dependencies and links to key results go with it.",
+    "impactLinks": "Its dependencies and links to key results go with it.",
     "impactIrreversible": "None of this goes to the trash: it is permanent.",
     "confirm": "Delete the project"
   },

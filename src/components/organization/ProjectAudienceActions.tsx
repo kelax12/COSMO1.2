@@ -173,7 +173,7 @@ const ProjectAudienceActions = ({
           title={ta('projectPurge.title', { name: project.name })}
           impact={[
             ...(taskCount > 0 ? [tpa('projectPurge.impactTasks', taskCount)] : []),
-            ta('projectPurge.impactMilestones'),
+            ta('projectPurge.impactLinks'),
             ta('projectPurge.impactIrreversible'),
           ]}
           confirmLabel={ta('projectPurge.confirm')}

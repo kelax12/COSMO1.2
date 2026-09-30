@@ -26,10 +26,6 @@ import {
   TeamTaskDependency,
   TeamTrashedTask,
   DraftProjectTask,
-  DraftProjectMilestone,
-  TeamProjectMilestone,
-  CreateTeamProjectMilestoneInput,
-  UpdateTeamProjectMilestoneInput,
   TeamProjectDependency,
   TeamProjectTeam,
   TeamProjectMember,
@@ -152,16 +148,11 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     orgId: string,
     input: CreateTeamProjectInput,
     tasks?: DraftProjectTask[],
-    milestones?: DraftProjectMilestone[],
   ): Promise<string> {
-    return portfolio.createProjectWithTasks(orgId, input, tasks, milestones);
+    return portfolio.createProjectWithTasks(orgId, input, tasks);
   }
 
-  // ─── Jalons & dépendances entre projets (mig. 153) ─────────────────
-  getMilestones(orgId: string): Promise<TeamProjectMilestone[]> { return portfolio.getMilestones(orgId); }
-  createMilestone(orgId: string, input: CreateTeamProjectMilestoneInput): Promise<void> { return portfolio.createMilestone(orgId, input); }
-  updateMilestone(id: string, input: UpdateTeamProjectMilestoneInput): Promise<void> { return portfolio.updateMilestone(id, input); }
-  deleteMilestone(id: string): Promise<void> { return portfolio.deleteMilestone(id); }
+  // ─── Dépendances entre projets (mig. 153) ─────────────────────────
   getProjectDependencies(orgId: string): Promise<TeamProjectDependency[]> { return portfolio.getProjectDependencies(orgId); }
   addProjectDependency(projectId: string, dependsOnId: string, orgId: string): Promise<void> { return portfolio.addProjectDependency(projectId, dependsOnId, orgId); }
   removeProjectDependency(projectId: string, dependsOnId: string): Promise<void> { return portfolio.removeProjectDependency(projectId, dependsOnId); }

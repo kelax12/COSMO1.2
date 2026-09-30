@@ -161,7 +161,7 @@ const ProjectBulkBar = ({ selected, members, canEdit, canArchive, onDone, onExit
     {confirmDelete && (
       <OrgConfirmDialog
         title={tpa('bulk.deleteProjectsTitle', selected.length)}
-        impact={[ta('projectPurge.impactMilestones'), ta('projectPurge.impactIrreversible')]}
+        impact={[ta('projectPurge.impactLinks'), ta('projectPurge.impactIrreversible')]}
         confirmLabel={ta('projectPurge.confirm')}
         pending={pending}
         requireName={ta('bulk.deleteWord')}

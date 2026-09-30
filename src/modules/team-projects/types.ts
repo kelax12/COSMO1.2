@@ -97,7 +97,6 @@ export interface TeamProjectTemplatePayload {
     startOffset?: number | null;
     deadlineOffset?: number | null;
   }[];
-  milestones: { name: string; offset: number }[];
   /** Durée du projet en jours (fin - début), si le projet source en avait une. */
   durationDays?: number | null;
 }
@@ -128,12 +127,6 @@ export interface DraftProjectTask {
   assigneeIds?: string[];
 }
 
-/** Jalon initial d'une création atomique. */
-export interface DraftProjectMilestone {
-  name: string;
-  dueDate: string;
-}
-
 /**
  * Patch projet — `project.edit` (mig. 153), ou responsable du projet. Le
  * responsable ne change ni `teamId`, ni `ownerId`, ni `isTemplate` (trigger).
@@ -162,30 +155,6 @@ export interface UpdateTeamProjectInput {
 export interface TeamProjectTeam {
   projectId: string;
   teamId: string;
-}
-
-/** Jalon d'un projet (mig. 153). */
-export interface TeamProjectMilestone {
-  id: string;
-  orgId: string;
-  projectId: string;
-  name: string;
-  /** Date locale 'YYYY-MM-DD'. */
-  dueDate: string;
-  completedAt: string | null;
-  createdAt: string;
-}
-
-export interface CreateTeamProjectMilestoneInput {
-  projectId: string;
-  name: string;
-  dueDate: string;
-}
-
-export interface UpdateTeamProjectMilestoneInput {
-  name?: string;
-  dueDate?: string;
-  completed?: boolean;
 }
 
 /**

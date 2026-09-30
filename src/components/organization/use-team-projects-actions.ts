@@ -16,7 +16,6 @@ import {
   useDeleteTeamTask,
   useRestoreTeamTask,
   type TeamProject,
-  type TeamProjectMilestone,
   type TeamTask,
   type TeamTaskStatus,
   type UpdateTeamProjectInput,
@@ -28,13 +27,12 @@ interface Options {
   orgId: string;
   currentUserId?: string;
   allTasks: TeamTask[];
-  milestones: TeamProjectMilestone[];
   /** Ouvre la page d'un projet (après duplication). */
   onOpenProject: (projectId: string) => void;
 }
 
 export const useTeamProjectsActions = ({
-  orgId, currentUserId, allTasks, milestones, onOpenProject,
+  orgId, currentUserId, allTasks, onOpenProject,
 }: Options) => {
   const { t } = useT('org');
   const { t: pf } = useT('portfolio');
@@ -71,7 +69,7 @@ export const useTeamProjectsActions = ({
     updateProject.mutate({ projectId: project.id, input: { archived: false } });
 
   const duplicateProject = (project: TeamProject) => {
-    const blueprint = duplicateBlueprint(project, allTasks, milestones, {
+    const blueprint = duplicateBlueprint(project, allTasks, {
       name: pf('copyName', { name: project.name }).slice(0, 120),
       ownerId: currentUserId ?? null,
     });
@@ -96,7 +94,7 @@ export const useTeamProjectsActions = ({
           ownerId: currentUserId ?? null,
           status: 'planned',
           isTemplate: true,
-          templatePayload: buildTemplatePayload(project, allTasks, milestones),
+          templatePayload: buildTemplatePayload(project, allTasks),
         },
       },
       { onSuccess: () => toast.success(pf('templateSaved')) },

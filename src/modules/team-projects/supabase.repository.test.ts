@@ -423,7 +423,6 @@ describe('SupabaseTeamProjectsRepository — portefeuille', () => {
       'org1',
       { name: 'P', ownerId: 'u2', startDate: '2026-10-01', dueDate: '2026-10-31', orgId: 'attacker' } as never,
       [{ name: 'T', startDate: '2026-10-01', deadline: '2026-10-02', assigneeIds: ['u3'] }],
-      [{ name: 'J', dueDate: '2026-10-15' }],
     );
     expect(id).toBe('new-id');
     const args = supabaseMock.rpcCalls.find((c) => c.fn === 'create_team_project_with_tasks')?.args as Record<string, unknown>;
@@ -436,7 +435,8 @@ describe('SupabaseTeamProjectsRepository — portefeuille', () => {
       name: 'T', description: null, priority: 3, estimated_time: null,
       start_date: '2026-10-01', deadline: '2026-10-02', assignee_ids: ['u3'],
     }]);
-    expect(args.p_milestones).toEqual([{ name: 'J', due_date: '2026-10-15' }]);
+    // Jalons retirés (2026-09-30) : le paramètre a un défaut côté serveur.
+    expect(args).not.toHaveProperty('p_milestones');
     // Aucune écriture directe : tout passe par la transaction serveur.
     expect(supabaseMock.queries.filter((q) => q.table === 'team_tasks' || q.table === 'team_projects')).toHaveLength(0);
   });
@@ -446,12 +446,5 @@ describe('SupabaseTeamProjectsRepository — portefeuille', () => {
     await repo.updateProject('p1', { description: '', ownerId: 'u2', status: 'on_hold', startDate: '2026-10-01', dueDate: '' });
     const patch = supabaseMock.argsOf('team_projects', 'update')?.[0] as Record<string, unknown>;
     expect(patch).toEqual({ description: null, owner_id: 'u2', status: 'on_hold', start_date: '2026-10-01', due_date: null });
-  });
-
-  it('getMilestones: RPC indexable, jamais la table', async () => {
-    supabaseMock.queueRpc('get_my_team_project_milestones', { data: [] });
-    await repo.getMilestones('org1');
-    expect(supabaseMock.rpcCalls.find((c) => c.fn === 'get_my_team_project_milestones')?.args).toEqual({ p_org: 'org1' });
-    expect(supabaseMock.queries.filter((q) => q.table === 'team_project_milestones')).toHaveLength(0);
   });
 });

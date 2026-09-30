@@ -332,7 +332,7 @@
     "impactTasks_one": "{{count}} tâche, avec ses commentaires et sous-tâches, sera supprimée",
     "impactTasks_many": "{{count}} de tâches, avec leurs commentaires et sous-tâches, seront supprimées",
     "impactTasks_other": "{{count}} tâches, avec leurs commentaires et sous-tâches, seront supprimées",
-    "impactMilestones": "Ses jalons, ses dépendances et ses liens vers des résultats clés partent avec lui.",
+    "impactLinks": "Ses dépendances et ses liens vers des résultats clés partent avec lui.",
     "impactIrreversible": "Rien de tout cela ne passe par la corbeille : c'est définitif.",
     "confirm": "Supprimer le projet"
   },
