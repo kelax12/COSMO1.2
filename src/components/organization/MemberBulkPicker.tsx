@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Search, ArrowUpFromLine } from 'lucide-react';
+import { X, Search, ArrowUpFromLine, Plus } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { normalize } from './pyramid.helpers';
@@ -24,6 +24,11 @@ interface MemberBulkPickerProps {
   pending: boolean;
   onPick: (id: string | null) => void;
   onClose: () => void;
+  /**
+   * Mode équipe : ouvre LE formulaire « Nouvelle équipe » avec la sélection
+   * précochée et la recherche en guise de nom. Absent sans le droit `team.create`.
+   */
+  onCreateTeam?: (name: string) => void;
 }
 
 /**
@@ -32,7 +37,7 @@ interface MemberBulkPickerProps {
  * (miroir de la RLS, cf. `member-bulk.helpers.ts`) ; une option à zéro est
  * désactivée plutôt que de promettre un geste que le serveur refuserait.
  */
-const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClose }: MemberBulkPickerProps) => {
+const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClose, onCreateTeam }: MemberBulkPickerProps) => {
   const { t, tp } = useT('org');
   const [query, setQuery] = useState('');
   const shown = useMemo(() => {
@@ -88,7 +93,7 @@ const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClo
         </div>
 
         <div className="overflow-y-auto p-3 space-y-1">
-          {shown.length === 0 && (
+          {shown.length === 0 && !(mode === 'team' && onCreateTeam) && (
             <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">
               {mode === 'team' ? t('directory.bulk.noTeam') : t('directory.bulk.noManager')}
             </p>
@@ -119,6 +124,29 @@ const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClo
             </button>
           ))}
         </div>
+
+        {mode === 'team' && onCreateTeam && (
+          <div className="px-3 pb-3 pt-1 border-t border-[rgb(var(--color-border))]">
+            {shown.length === 0 && (
+              <p className="text-xs text-[rgb(var(--color-text-muted))] px-2.5 pt-2">{t('directory.bulk.noTeamMatch')}</p>
+            )}
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => onCreateTeam(query.trim())}
+              className="mt-2 w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left text-sm font-semibold text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-40 transition-colors"
+            >
+              <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-[rgb(var(--color-accent)/0.12)]">
+                <Plus size={15} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 truncate">
+                {query.trim()
+                  ? t('directory.bulk.createNamedTeam', { name: query.trim() })
+                  : tp('directory.bulk.createTeamWith', selectedCount)}
+              </span>
+            </button>
+          </div>
+        )}
 
         {pending && (
           <div className="px-5 py-3 border-t border-[rgb(var(--color-border))] text-xs text-[rgb(var(--color-text-muted))] inline-flex items-center gap-2">

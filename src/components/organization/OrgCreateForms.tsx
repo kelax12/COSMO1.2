@@ -75,6 +75,8 @@ const OrgCreateForms = ({ orgId, request, onClose }: OrgCreateFormsProps) => {
       members={members}
       currentUserId={user?.id}
       isAdmin={isAdmin}
+      initialMemberIds={request.options.initialMemberIds}
+      initialName={request.options.initialName}
       onSubmit={submitTeam}
       onClose={onClose}
     />

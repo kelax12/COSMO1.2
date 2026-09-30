@@ -48,6 +48,7 @@ import { useBulkRun } from './use-bulk-run';
 import { getOrgGovernanceRepository } from '@/lib/repository.factory';
 import { orgKeys } from '@/modules/organizations';
 import { governanceKeys } from '@/modules/organizations/governance.hooks';
+import { OrgCreateBoundary, useOrgCreate } from './org-create.context';
 
 interface MemberDirectoryProps {
   orgId: string;
@@ -223,6 +224,16 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
 
   const modalCreate = (input: CreateTeamTaskInput) => createTask.mutateAsync(input);
 
+  // « Créer une équipe avec ces N membres » : LE formulaire unique, sélection
+  // précochée, recherche du sélecteur en guise de nom.
+  const { openTeam } = useOrgCreate();
+  const canCreateTeam = myPermissions.can['team.create'];
+  const createTeamFromSelection = (name: string) => {
+    const initialMemberIds = bulk.selected.map((m) => m.userId);
+    bulk.setPicker(null);
+    openTeam({ initialMemberIds, initialName: name, onCreated: bulk.exit });
+  };
+
   return (
     <>
       {/* La barre n'apparaît que si l'annuaire compte quelques membres, SAUF si
@@ -287,7 +298,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
           count={bulk.selected.length}
           visibleCount={filteredMembers.length}
           allVisibleSelected={bulk.allVisibleSelected}
-          canAddToTeam={bulk.canAddToTeam}
+          canAddToTeam={bulk.canAddToTeam || canCreateTeam}
           canChangeManager={bulk.canChangeManager}
           onToggleAll={bulk.toggleAll}
           onAddToTeam={() => bulk.setPicker('team')}
@@ -326,6 +337,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
           pending={bulk.pending}
           onPick={bulk.pick}
           onClose={() => bulk.setPicker(null)}
+          onCreateTeam={canCreateTeam ? createTeamFromSelection : undefined}
         />
       )}
 
@@ -402,4 +414,11 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
   );
 };
 
-export default MemberDirectory;
+// Frontière du formulaire unique de création (org-create.context).
+const MemberDirectoryWithCreate = (props: MemberDirectoryProps) => (
+  <OrgCreateBoundary orgId={props.orgId}>
+    <MemberDirectory {...props} />
+  </OrgCreateBoundary>
+);
+
+export default MemberDirectoryWithCreate;
