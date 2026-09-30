@@ -164,7 +164,8 @@ const TeamEventDialog = ({
   };
 
   const selectedCount = selected.size;
-  const fieldClass = 'w-full rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2 text-sm text-[rgb(var(--color-text-primary))]';
+  const fieldBase = 'w-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))]';
+  const fieldClass = `${fieldBase} h-11 px-3.5 rounded-lg`;
   const labelClass = 'block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1';
   const accentOn = 'border-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-accent-solid)/0.1)] text-[rgb(var(--color-accent-solid))]';
   const durationLabel = (d: number) => (d < 60 ? t('ui.event.minutes', { count: d }) : t('ui.event.hours', { count: formatNumber(d / 60) }));
@@ -219,7 +220,7 @@ const TeamEventDialog = ({
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t('ui.event.search')}
                   aria-label={t('ui.event.search')}
-                  className={`${fieldClass} pl-8`}
+                  className={`${fieldBase} h-10 pl-9 pr-3 rounded-xl`}
                   autoFocus
                 />
               </div>
@@ -236,7 +237,7 @@ const TeamEventDialog = ({
                         />
                         <Check size={12} strokeWidth={3} aria-hidden="true" className="pointer-events-none absolute inset-0 m-auto hidden peer-checked:block text-[rgb(var(--color-accent-solid-foreground))]" />
                       </span>
-                      <MemberAvatar avatar={m.avatar} name={m.displayName} size={24} />
+                      <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
                       <span className="text-sm text-[rgb(var(--color-text-primary))] truncate">
                         {m.displayName}{m.userId === currentUserId ? ` ${t('ui.event.you')}` : ''}
                       </span>
@@ -412,7 +413,7 @@ const TeamEventDialog = ({
               </label>
               <label className="block">
                 <span className={labelClass}>{t('ui.event.description')}</span>
-                <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} maxLength={2000} className={fieldClass} />
+                <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} maxLength={2000} className={`${fieldBase} px-3.5 py-2.5 rounded-lg`} />
               </label>
             </div>
           )}

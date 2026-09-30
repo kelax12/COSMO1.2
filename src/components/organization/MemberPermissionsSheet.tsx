@@ -308,7 +308,7 @@ const MemberPermissionsSheet = ({
 
           {SECTIONS.map(({ titleKey, keys }) => (
             <section key={titleKey} className="mb-5">
-              <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
+              <h3 className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
                 {ta(titleKey)}
               </h3>
               {keys.map(renderRow)}
@@ -316,7 +316,7 @@ const MemberPermissionsSheet = ({
           ))}
 
           <section>
-            <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
+            <h3 className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
               {ta('permissions.sectionAssign')}
             </h3>
             {ORG_ASSIGN_TARGETS.map((target) => {

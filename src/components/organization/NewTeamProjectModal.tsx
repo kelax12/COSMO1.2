@@ -55,10 +55,10 @@ interface NewTeamProjectModalProps {
   onClose: () => void;
 }
 
-const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
+const labelClass = 'block text-caption font-semibold uppercase tracking-wide mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 const inputClass =
-  'w-full px-[0.875425rem] h-[2.626275rem] border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-[0.875425rem]';
+  'w-full px-3.5 h-11 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-sm';
 const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' };
 
 /** Valeur du sélecteur de modèle : `org:<id>`, `builtin:<clé>` ou ''. */

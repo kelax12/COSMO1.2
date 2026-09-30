@@ -137,7 +137,7 @@ const TeamWorkloadSection = ({ orgId, tasks, projectIds, members, currentUserId 
           <ul className="space-y-4 mb-6">
             {visibleRows.map((row) => (
               <li key={row.userId ?? 'unassigned'} className="flex items-center gap-3 text-[15px]">
-                {avatarOf(row.userId, 32)}
+                {avatarOf(row.userId, 28)}
                 <span
                   className={`w-32 sm:w-44 truncate font-medium shrink-0 ${row.userId ? 'text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'}`}
                 >
@@ -181,7 +181,7 @@ const TeamWorkloadSection = ({ orgId, tasks, projectIds, members, currentUserId 
                 className={`rounded-xl bg-[rgb(var(--color-hover))] p-4 flex flex-col gap-2.5 min-w-0 transition-shadow ${drag && overCol === row.userId && drag.from !== row.userId ? 'ring-2 ring-[rgb(var(--color-accent))]' : ''}`}
               >
                 <p className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-                  {avatarOf(row.userId, 24)}
+                  {avatarOf(row.userId, 28)}
                   <span className="truncate">{nameOf(row.userId)}</span>
                   <span className="text-[rgb(var(--color-text-muted))] font-normal">· {row.total}</span>
                 </p>

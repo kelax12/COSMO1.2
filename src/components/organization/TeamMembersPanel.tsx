@@ -52,7 +52,7 @@ const AddTeamMemberMenu = ({ teamName, addable, currentUserId, onAdd }: {
   return (
     <DropdownMenu onOpenChange={(open) => { if (!open) setQuery(''); }}>
       <DropdownMenuTrigger
-        className="inline-flex items-center gap-1 rounded-full border border-dashed border-[rgb(var(--color-chip-border))] px-2 py-0.5 text-xs text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors"
+        className="inline-flex items-center gap-1 rounded-full border border-dashed border-[rgb(var(--color-chip-border))] min-h-9 px-2.5 text-xs text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors"
         aria-label={t('team.addMemberAria', { team: teamName })}
       >
         <Plus size={11} aria-hidden="true" /> {t('common.add')}
@@ -186,7 +186,7 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
                 : 'border-[rgb(var(--color-border))]'
             }`}
           >
-            <MemberAvatar avatar={m.avatar} name={m.displayName} size={30} />
+            <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
             <span className="flex-1 min-w-0">
               <span className={`block truncate text-sm font-medium ${isLead ? 'text-amber-900 dark:text-amber-200' : 'text-[rgb(var(--color-text-primary))]'}`}>
                 {m.userId === currentUserId ? t('common.youBadge') : m.displayName}
@@ -234,7 +234,7 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
           type="button"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
-          className="rounded-full px-2 py-0.5 text-xs font-semibold text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+          className="rounded-full min-h-9 px-2.5 text-xs font-semibold text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
         >
           {expanded ? t('team.fewerMembers') : tp('team.moreMembers', hidden)}
         </button>

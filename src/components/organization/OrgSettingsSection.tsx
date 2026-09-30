@@ -397,7 +397,7 @@ const OrgSettingsSection = ({
           <div>
             <h2 className="flex items-center gap-2 text-base font-bold text-[rgb(var(--color-text-primary))]">
               {t('reports.title')}
-              <span className="px-1.5 py-0.5 rounded-md text-caption font-bold uppercase tracking-wide bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]">
+              <span className="px-1.5 py-0.5 rounded-md text-caption font-semibold uppercase tracking-wide bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]">
                 {t('reports.beta')}
               </span>
             </h2>

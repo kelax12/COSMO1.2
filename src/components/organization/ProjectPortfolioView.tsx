@@ -80,7 +80,7 @@ const ProjectPortfolioView = ({
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] overflow-x-auto">
       <table className="w-full text-sm" aria-label={pf('tableAria')}>
         <thead>
-          <tr className="text-left text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] border-b border-[rgb(var(--color-border))]">
+          <tr className="text-left text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] border-b border-[rgb(var(--color-border))]">
             {selectMode && <th scope="col" className="px-3 py-2.5 w-8"><span className="sr-only">{ta('bulk.selectProjects')}</span></th>}
             <th scope="col" className="px-3 py-2.5">{pf('col.project')}</th>
             <th scope="col" className="px-3 py-2.5 hidden md:table-cell">{pf('col.owner')}</th>

@@ -110,7 +110,7 @@ const TeamTaskDependenciesSection = ({ task, isManager, defaultOpen = false }: T
         className={`w-full flex items-center gap-2 text-left ${TAP_AREA_44_Y}`}
       >
         <Link2 size={13} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-        <span className="text-caption font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
+        <span className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
           {t('projects.dependenciesTitle')}
         </span>
         <span className="text-caption text-[rgb(var(--color-text-muted))]">

@@ -47,7 +47,7 @@ const OrgSecurityCard = ({ orgId }: Props) => {
       </h2>
       <p className={HINT}>{t('security.hint')}</p>
 
-      <h3 className="mt-4 text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{t('security.domains')}</h3>
+      <h3 className="mt-4 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{t('security.domains')}</h3>
       <form className="flex gap-2 mt-2" onSubmit={(e) => { e.preventDefault(); submit(); }}>
         <input
           className={`${FIELD} flex-1 min-w-0`}

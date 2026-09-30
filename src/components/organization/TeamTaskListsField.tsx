@@ -51,7 +51,7 @@ const TeamTaskListsField = ({ orgId, value, onChange }: TeamTaskListsFieldProps)
 
   return (
     <div>
-      <span className="block text-xs font-semibold uppercase tracking-wider mb-2 text-[rgb(var(--color-text-secondary))]">
+      <span className="block text-caption font-semibold uppercase tracking-wide mb-2 text-[rgb(var(--color-text-secondary))]">
         <ListChecks size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />
         {t('teamLists.fieldTitle')}
       </span>

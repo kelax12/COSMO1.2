@@ -136,7 +136,7 @@ const ProjectDetailPage = ({
           <span className={`mt-2 w-3 h-3 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
           <div className="flex-1 min-w-0">
             <h2 className="text-lg sm:text-xl font-bold text-[rgb(var(--color-text-primary))] break-words">{project.name}</h2>
-            <div className="mt-1.5 flex items-center gap-2 flex-wrap text-xs">
+            <div className="mt-1.5 flex items-center gap-2 flex-wrap text-caption">
               <span className={`font-semibold px-2 py-0.5 rounded-full ${PROJECT_STATUS_META[status].soft}`}>
                 {pf(`status.${status}`)}
               </span>
@@ -195,17 +195,17 @@ const ProjectDetailPage = ({
 
         <dl className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{pf('col.owner')}</dt>
+            <dt className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{pf('col.owner')}</dt>
             <dd className="mt-1 flex items-center gap-1.5 text-[rgb(var(--color-text-primary))]">
               {owner ? (
-                <><MemberAvatar avatar={owner.avatar} name={owner.displayName} size={22} /> {owner.displayName}</>
+                <><MemberAvatar avatar={owner.avatar} name={owner.displayName} size={20} /> {owner.displayName}</>
               ) : (
                 <span className="inline-flex items-center gap-1 italic text-[rgb(var(--color-text-muted))]"><UserRound size={13} aria-hidden="true" /> {pf('noOwner')}</span>
               )}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{pf('col.dates')}</dt>
+            <dt className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{pf('col.dates')}</dt>
             <dd className="mt-1 flex items-center gap-1.5 text-[rgb(var(--color-text-primary))]">
               <CalendarRange size={13} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
               {project.startDate && project.dueDate
@@ -218,7 +218,7 @@ const ProjectDetailPage = ({
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{pf('col.progress')}</dt>
+            <dt className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{pf('col.progress')}</dt>
             <dd className="mt-1.5 flex items-center gap-2">
               <span className="flex-1 max-w-[180px] h-2 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden" aria-hidden="true">
                 <span className={`block h-full rounded-full ${color.dot}`} style={{ width: `${progress.percent}%` }} />

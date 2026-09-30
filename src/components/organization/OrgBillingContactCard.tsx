@@ -15,7 +15,7 @@ interface Props {
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const inputClass =
-  'w-full rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] px-3 py-2 text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent)/0.4)]';
+  'w-full rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] h-11 px-3.5 text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent)/0.4)]';
 
 /**
  * Contact de facturation distinct du propriétaire (mig. 180).

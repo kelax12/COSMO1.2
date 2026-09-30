@@ -12,7 +12,7 @@ const SOURCE_KEY = {
 } as const;
 
 const CARD = 'rounded-2xl border border-[rgb(var(--color-border))] p-4';
-const CARD_TITLE = 'text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-3';
+const CARD_TITLE = 'text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-3';
 
 interface MemberProfileBodyProps {
   member: OrgMember;
@@ -108,7 +108,7 @@ export const MemberProfileBody = ({
                 {teams.map((team) => (
                   <span
                     key={team.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--color-border))] px-2.5 py-1 text-xs font-medium text-[rgb(var(--color-text-secondary))]"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--color-border))] px-2 py-0.5 text-caption font-medium text-[rgb(var(--color-text-secondary))]"
                   >
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: team.color }} aria-hidden="true" />
                     {team.name}

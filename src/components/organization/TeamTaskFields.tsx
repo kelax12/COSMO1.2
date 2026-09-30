@@ -37,7 +37,7 @@ import { useOrgCreate } from './org-create.context';
 import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 import MenuSelect from '@/components/organization/MenuSelect';
 
-const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
+const labelClass = 'block text-caption font-semibold uppercase tracking-wide mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 // Hauteur extraite pour que le groupe priorité (pas un input, mais aligné à côté) la partage.
 //
@@ -49,7 +49,7 @@ const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 // champs se verrait immédiatement.
 const inputHeightClass = 'h-11';
 const inputClass =
-  `w-full px-[0.875425rem] ${inputHeightClass} border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-[0.875425rem]`;
+  `w-full px-3.5 ${inputHeightClass} border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-sm`;
 const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' };
 
 interface TeamTaskFieldsProps {
@@ -362,7 +362,7 @@ const TeamTaskFields = ({
             <ChevronRight size={16} aria-hidden="true" className={`transition-transform ${showAssignees ? 'rotate-90' : ''}`} />
             {t('taskModal.assignTask')}
             {assigneeIds.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-xs bg-[rgb(var(--color-accent-solid))]/10 text-blue-500">
+              <span className="px-2 py-0.5 rounded-full text-caption bg-[rgb(var(--color-accent-solid))]/10 text-blue-500">
                 {assigneeIds.length}
               </span>
             )}

@@ -58,7 +58,7 @@ const TeamBulkAddDialog = ({ orgId, team, addable }: TeamBulkAddDialogProps) => 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 rounded-full border border-dashed border-[rgb(var(--color-chip-border))] px-2 py-0.5 text-xs text-[rgb(var(--color-text-muted))] hover:text-blue-500 transition-colors"
+        className="inline-flex items-center gap-1 rounded-full border border-dashed border-[rgb(var(--color-chip-border))] min-h-9 px-2.5 text-xs text-[rgb(var(--color-text-muted))] hover:text-blue-500 transition-colors"
       >
         <UsersRound size={11} aria-hidden="true" /> {ta('teamBulk.addSeveral')}
       </button>
@@ -86,7 +86,7 @@ const TeamBulkAddDialog = ({ orgId, team, addable }: TeamBulkAddDialogProps) => 
                     onChange={() => toggle(m.userId)}
                     className="w-4 h-4 accent-[rgb(var(--color-accent))]"
                   />
-                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
+                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
                   <span className="text-sm text-[rgb(var(--color-text-primary))] truncate">{m.displayName}</span>
                 </label>
               </li>

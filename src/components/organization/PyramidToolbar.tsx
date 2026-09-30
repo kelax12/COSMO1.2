@@ -91,7 +91,7 @@ const PyramidToolbar = ({
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder={ta('pyramid.searchPlaceholder')}
           aria-label={ta('pyramid.searchAria')}
-          className="w-full pl-9 pr-8 py-2 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400 [&::-webkit-search-cancel-button]:hidden"
+          className="w-full h-10 pl-9 pr-8 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400 [&::-webkit-search-cancel-button]:hidden"
         />
         {query && (
           <button

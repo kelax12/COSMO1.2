@@ -38,7 +38,7 @@ interface ProjectEditDialogProps {
   onClose: () => void;
 }
 
-const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2 text-[rgb(var(--color-text-secondary))]';
+const labelClass = 'block text-caption font-semibold uppercase tracking-wide mb-2 text-[rgb(var(--color-text-secondary))]';
 const inputClass =
   'w-full px-3.5 h-11 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-sm bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))]';
 

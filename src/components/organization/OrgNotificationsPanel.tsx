@@ -105,7 +105,7 @@ const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings
           className="absolute right-0 top-11 z-50 w-[min(22rem,calc(100vw-2rem))] max-h-[24rem] overflow-y-auto rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-2xl p-2"
         >
           <div className="flex items-center justify-between gap-2 px-2 py-1">
-            <p className="text-caption font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
+            <p className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
               {t('notifications.title')}
             </p>
             {/* Préférences (M14) : couper un type, le recevoir par e-mail. */}

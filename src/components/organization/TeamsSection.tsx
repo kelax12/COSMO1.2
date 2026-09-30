@@ -137,7 +137,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                 value={teamQuery}
                 onChange={(e) => setTeamQuery(e.target.value)}
                 placeholder={t('team.searchTeams')}
-                className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
+                className="w-full h-10 pl-9 pr-3 text-sm rounded-xl border bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
               />
             </label>
           )}
@@ -247,7 +247,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                             title={member.displayName}
                             className={`relative flex rounded-full border-2 border-[rgb(var(--color-surface))] ${i > 0 ? '-ml-1.5' : ''} ${isLead ? 'z-10 ring-2 ring-amber-400' : ''}`}
                           >
-                            <MemberAvatar avatar={member.avatar} name={member.displayName} size={22} />
+                            <MemberAvatar avatar={member.avatar} name={member.displayName} size={20} />
                           </span>
                         ))}
                         {ordered.length > AVATARS_SHOWN && (

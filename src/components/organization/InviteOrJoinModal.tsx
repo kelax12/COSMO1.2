@@ -44,7 +44,7 @@ interface InviteOrJoinModalProps {
 }
 
 const inputClasses =
-  'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-3 text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]/40 transition-all';
+  'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] h-11 px-3.5 rounded-lg text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]/40 transition-all';
 
 const primaryBtn =
   'w-full py-3 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 transition-all inline-flex items-center justify-center gap-2';

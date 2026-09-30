@@ -17,7 +17,7 @@ const OrgGlossarySheet = ({ focusTerm, onClose }: { focusTerm?: OrgTerm; onClose
 
   const section = (titleKey: 'glossary.sectionRoles' | 'glossary.sectionObjects', terms: readonly OrgTerm[]) => (
     <section>
-      <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">{ta(titleKey)}</h3>
+      <h3 className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">{ta(titleKey)}</h3>
       <dl className="space-y-3">
         {terms.map((term) => (
           <div

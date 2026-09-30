@@ -470,7 +470,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
             groupedSections.map((section) => (
               <div key={section.key} className="space-y-3">
                 {section.label && (
-                  <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] px-1 pt-1">
+                  <h3 className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] px-1 pt-1">
                     {section.color && <TeamColorDot color={section.color} />}
                     {section.label}
                   </h3>

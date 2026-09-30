@@ -26,7 +26,7 @@ interface WorkBodyProps {
   canSeeInsights: boolean;
 }
 
-const sectionTitle = 'text-caption font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2';
+const sectionTitle = 'text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2';
 
 export const MemberWorkBody = ({ orgId, member, teams, canSeeInsights }: WorkBodyProps) => {
   const { t } = useT('org');
@@ -172,7 +172,7 @@ export const MemberHistoryBody = ({ orgId, member }: { orgId: string; member: Or
       )}
       <table className="w-full text-sm table-fixed">
         <thead>
-          <tr className="text-left text-caption uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
+          <tr className="text-left text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
             <th scope="col" className="font-semibold pb-2 w-32">{t('popups.member.colWhen')}</th>
             <th scope="col" className="font-semibold pb-2 w-28">{t('popups.member.colField')}</th>
             <th scope="col" className="font-semibold pb-2">{t('popups.member.colTask')}</th>

@@ -248,7 +248,7 @@ const TeamTaskDependencyPicker = ({
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t('projects.dependencySearchPlaceholder')}
                   aria-label={t('projects.dependencySearchPlaceholder')}
-                  className="w-full pl-9 pr-3 h-10 text-sm rounded-lg border focus:outline-none focus:border-[rgb(var(--color-accent-solid))] transition-colors"
+                  className="w-full pl-9 pr-3 h-10 text-sm rounded-xl border focus:outline-none focus:border-[rgb(var(--color-accent-solid))] transition-colors"
                   style={{
                     borderColor: 'rgb(var(--color-border))',
                     backgroundColor: 'rgb(var(--color-background))',
@@ -362,7 +362,7 @@ const TeamTaskDependencyPicker = ({
               <div>
                 <label
                   htmlFor="dep-new-name"
-                  className="block text-xs font-semibold uppercase tracking-wider mb-2"
+                  className="block text-caption font-semibold uppercase tracking-wide mb-2"
                   style={{ color: 'rgb(var(--color-text-secondary))' }}
                 >
                   {t('projects.dependencyCreateName')}
@@ -392,7 +392,7 @@ const TeamTaskDependencyPicker = ({
 
               <div>
                 <span
-                  className="block text-xs font-semibold uppercase tracking-wider mb-2"
+                  className="block text-caption font-semibold uppercase tracking-wide mb-2"
                   style={{ color: 'rgb(var(--color-text-secondary))' }}
                 >
                   {t('projects.dependencyPriority')}
@@ -422,7 +422,7 @@ const TeamTaskDependencyPicker = ({
               <div>
                 <label
                   htmlFor="dep-new-deadline"
-                  className="block text-xs font-semibold uppercase tracking-wider mb-2"
+                  className="block text-caption font-semibold uppercase tracking-wide mb-2"
                   style={{ color: 'rgb(var(--color-text-secondary))' }}
                 >
                   {t('projects.dependencyDeadline')}

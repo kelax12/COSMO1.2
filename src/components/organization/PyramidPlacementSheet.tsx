@@ -182,7 +182,7 @@ const PyramidPlacementSheet = ({
       >
         <div className="px-6 pt-6 shrink-0 border-b border-[rgb(var(--color-border))]">
           <div className="flex items-center gap-3.5">
-            <MemberAvatar avatar={target.avatar} name={target.displayName} size={48} />
+            <MemberAvatar avatar={target.avatar} name={target.displayName} size={40} />
             <div className="flex-1 min-w-0">
               <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))] truncate">{title}</h2>
               <p className="text-sm text-[rgb(var(--color-text-muted))] truncate">

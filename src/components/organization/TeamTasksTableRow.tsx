@@ -94,7 +94,7 @@ const AssigneesCell = ({ task, memberById, currentUserId }: Pick<TeamTasksTableR
             const m = memberById.get(id);
             return m ? (
               <span key={id} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
-                <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
+                <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
               </span>
             ) : null;
           })}
@@ -233,7 +233,7 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
             <DropdownMenuTrigger
               disabled={!!editReason}
               title={editReason}
-              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold border transition-colors hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1.5 min-h-9 px-2.5 text-xs rounded-full font-semibold border transition-colors hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
               aria-label={t('projects.tasksTabStatusAria', { name: task.name })}
             >

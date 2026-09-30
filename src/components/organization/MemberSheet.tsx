@@ -153,12 +153,12 @@ const MemberSheet = ({
         {/* En-tête */}
         <div className="flex items-start justify-between gap-3 p-5 pb-3 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <MemberAvatar avatar={member.avatar} name={member.displayName} size={44} />
+            <MemberAvatar avatar={member.avatar} name={member.displayName} size={40} />
             <div className="min-w-0">
               <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">
                 {isMe ? ta('pyramid.you') : member.displayName}
               </h2>
-              <p className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
+              <p className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
                 {roleLabel}
               </p>
             </div>

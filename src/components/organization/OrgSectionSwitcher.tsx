@@ -147,7 +147,7 @@ const SectionSheet: React.FC<SheetProps> = ({ items, activeId, shortcuts, onClos
             if (groupItems.length === 0) return null;
             return (
               <div key={group.id}>
-                <p className="px-1 pt-1 pb-1.5 text-caption font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))]">
+                <p className="px-1 pt-1 pb-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
                   {t(group.labelKey)}
                 </p>
                 <ul className="grid grid-cols-3 gap-2">
@@ -190,7 +190,7 @@ const SectionSheet: React.FC<SheetProps> = ({ items, activeId, shortcuts, onClos
 
           {shortcuts && shortcuts.items.length > 0 && (
             <div>
-              <p className="px-1 pt-1 pb-1.5 text-caption font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))]">
+              <p className="px-1 pt-1 pb-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
                 {t(shortcuts.kind === 'pinned' ? 'sideNav.groupPinned' : 'sideNav.groupRecent')}
               </p>
               <ul className="space-y-1">

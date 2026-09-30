@@ -80,7 +80,7 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf }: Te
               <span className="flex -space-x-1.5 shrink-0" title={pf('krContrib.carriers', { names: people.map((m) => m.displayName).join(', ') })}>
                 {people.slice(0, 4).map((m) => (
                   <span key={m.userId} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
-                    <MemberAvatar avatar={m.avatar} name={m.displayName} size={18} />
+                    <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
                   </span>
                 ))}
               </span>

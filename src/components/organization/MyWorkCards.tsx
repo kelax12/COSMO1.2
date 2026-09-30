@@ -60,7 +60,7 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
       <div className="flex items-center justify-between gap-2 mb-2">
         <h3 id="waiting-for-me-title" className={TITLE}>{t('waiting.title')}</h3>
         {total > 0 && (
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]">
+          <span className="text-caption font-semibold px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]">
             {total}
           </span>
         )}

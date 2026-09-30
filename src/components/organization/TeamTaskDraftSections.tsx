@@ -14,7 +14,7 @@ import { useT } from '@/i18n/useT';
 // ═══════════════════════════════════════════════════════════════════
 
 const inputClass =
-  'flex-1 min-w-0 h-10 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent-solid))]';
+  'flex-1 min-w-0 h-11 px-3.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent-solid))]';
 
 export const DraftSubtasksEditor = ({ value, onChange }: { value: string[]; onChange: (next: string[]) => void }) => {
   const { t } = useT('org');
@@ -113,7 +113,7 @@ export const DraftDependenciesEditor = ({ orgId, projectId, value, onChange, can
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
           placeholder={t('popups.draft.depsSearch')}
-          className={`${inputClass} w-full pl-9`}
+          className={`${inputClass.replace('h-11', 'h-10').replace('rounded-lg', 'rounded-xl')} w-full pl-9`}
         />
       </label>
       {shown.length === 0 ? (

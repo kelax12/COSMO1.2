@@ -321,7 +321,7 @@ const TeamTaskModal = ({
               <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
                 {t('taskModal.assignTask')}
                 {assigneeIds.length > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-xs bg-[rgb(var(--color-accent-solid))]/10 text-blue-500">
+                  <span className="px-2 py-0.5 rounded-full text-caption bg-[rgb(var(--color-accent-solid))]/10 text-blue-500">
                     {assigneeIds.length}
                   </span>
                 )}

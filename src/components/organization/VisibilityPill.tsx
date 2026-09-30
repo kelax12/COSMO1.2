@@ -104,7 +104,7 @@ const VisibilityPill = ({ orgId, teamIds: ownTeamIds, projectId, closed = false,
         <ul className="max-h-64 overflow-y-auto py-1">
           {people.slice(0, SHOWN).map((m) => (
             <li key={m.userId} className="flex items-center gap-2 px-3 py-1.5">
-              <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
+              <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
               <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{m.displayName}</span>
               <span className="text-caption text-[rgb(var(--color-text-muted))] shrink-0">{reasonLabel[vis.viewers.get(m.userId)!]}</span>
             </li>
