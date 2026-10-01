@@ -94,14 +94,12 @@ const CONTRAT = {
       + "script IMPRIME donc l'état, ce qui est le minimum pour qu'il cesse "
       + "d'être invérifiable.",
   },
-  VITE_STORAGE_KEY: {
-    requise: false,
-    absence: 'Clé de stockage local ; une valeur par défaut est utilisée.',
-  },
-  VITE_LINKS_STORAGE_KEY: {
-    requise: false,
-    absence: 'Clé de stockage local ; une valeur par défaut est utilisée.',
-  },
+  // 🔴 Retirées le 2026-10-01 : `VITE_STORAGE_KEY` et `VITE_LINKS_STORAGE_KEY`
+  // n'ont JAMAIS été des variables d'environnement. C'étaient des morceaux de
+  // `PENDING_INVITE_STORAGE_KEY` et `ORG_INVITE_LINKS_STORAGE_KEY`, que la
+  // regex sans limite de mot lisait comme des `VITE_*` ; leur « absence » avait
+  // été écrite pour faire taire ce faux positif. Une entrée de contrat se
+  // vérifie dans le code avant d'être écrite.
   VITE_HOST_ALL: {
     requise: false,
     absence: "Réglage de développement (`vite.config.ts`), sans effet en production.",
@@ -115,7 +113,9 @@ const ARBRES = ['src', 'prerender.mjs', 'vite.config.ts'];
 export function variablesLues(racine = RACINE) {
   const vues = new Set();
   const lire = (chemin) => {
-    for (const m of readFileSync(chemin, 'utf8').matchAll(/VITE_[A-Z0-9_]+/g)) vues.add(m[0]);
+    // `\b` : sans limite de mot, la constante `INVITE_ROW` se lisait comme une
+    // variable `VITE_ROW` (faux positif du 2026-10-01, rubrique Inviter).
+    for (const m of readFileSync(chemin, 'utf8').matchAll(/\bVITE_[A-Z0-9_]+/g)) vues.add(m[0]);
   };
   const marcher = (rep) => {
     for (const entree of readdirSync(rep)) {

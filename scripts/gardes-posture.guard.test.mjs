@@ -381,6 +381,24 @@ describe('témoin — contrat d environnement (C-105)', () => {
     expect(vues.size).toBeGreaterThanOrEqual(6);
   });
 
+  it('TEMOIN : `INVITE_ROW` n est PAS une variable `VITE_ROW`', () => {
+    // 🔴 Faux positif du 2026-10-01 : la constante `INVITE_ROW` (rubrique
+    // Inviter, `f9d8c875`) contient la sous-chaîne `VITE_ROW`, et la garde
+    // réclamait au contrat deux variables qui n'existent pas.
+    const tmp = mkdtempSync(join(tmpdir(), 'env-'));
+    try {
+      mkdirSync(join(tmp, 'src'));
+      writeFileSync(join(tmp, 'src', 'a.ts'),
+        "export const INVITE_ROW = 'x';\nexport const INVITE_ICON_BTN = 'y';\nconst u = import.meta.env.VITE_VRAIE;\n");
+      const vues = variablesLues(tmp);
+      expect(vues.has('VITE_VRAIE')).toBe(true);
+      expect(vues.has('VITE_ROW')).toBe(false);
+      expect(vues.has('VITE_ICON_BTN')).toBe(false);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('`.env.example` est lu, et une variable REQUISE y figure', () => {
     const exemple = variablesDeLExemple();
     expect(exemple).not.toBeNull();
