@@ -109,12 +109,11 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                   data-tutorial-id="tasks-lists"
                 >
                   <div className="mb-2 sm:mb-4">
-                    {/* Desktop INCHANGÉ (texte + espacement) : seul le mobile perd
-                        le libellé long et le gap avant les chips. */}
-                    <div className="flex items-center justify-between mb-0 sm:mb-4">
+                    {/* Libellé court « Listes » partout, sans marge sous le titre : le
+                        `pt-*` des chips suffit (2026-10-01). */}
+                    <div className="flex items-center justify-between">
                       <h2 className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
-                        <span className="sm:hidden">{t('lists.sectionTitleShort')}</span>
-                        <span className="hidden sm:inline">{t('lists.sectionTitle')}</span>
+                        {t('lists.sectionTitleShort')}
                       </h2>
                       {!showCreateList && (
                         <button
