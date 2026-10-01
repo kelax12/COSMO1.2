@@ -1,4 +1,4 @@
-<!-- note-audit: note=86 -->
+<!-- note-audit: note=87 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **86 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **87 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
 
 # RGPD — inventaire, droits des personnes et dette
 
@@ -16,7 +16,21 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → 86 → 87 → 82 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### 🟢 2026-10-01 · +1
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du jour : CI de `main` (`43fed445` à
+> `7cd73d24`), production (catalogue, advisors), dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | AM-3 · durées de rétention | **+1** | `retention` vert en CI depuis le 2026-09-24 (`0 orpheline sur 16 couples`), et encore le 2026-10-01 : remboursable depuis la passe du 09-24, crédité ce jour |
+> | 🔴 `team_okr_members` (mig. 205) sans décision d'effacement ni d'export | **−1** | du 2026-09-29 au 10-01 : `check:erasure` puis `check:portability` ont mordu, `main` rouge. Effacement réel vérifié en base (clé `(org_id, user_id)` → `organization_members` `ON DELETE CASCADE`) |
+> | ✅ … décidée et garde étendue le jour même | **+1** | `cascadeIndirecteProuvee` : une cascade par clé composite se prouve dans le texte, et la table relais doit cascader elle-même depuis `auth.users`. Témoin à quatre pièges, sabotage vu rouge. Déclarée non exportée, même motif que `team_project_members` |
+>
+> **86 → 87.** Détail : [tableau de bord](./README.md).
 
 > ### 🟢 2026-09-22 (soir) · +4 : remesure item par item, contre la CI réelle et la production
 >

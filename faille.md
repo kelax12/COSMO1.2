@@ -12,7 +12,11 @@ et les **règles durables** tirées des audits.
   production** ce jour-là : les chiffres cités sont ceux des commits qui les ont produits.
 - Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-10-01** (mig.
   `204`, `207`-`210` appliquées et relues au catalogue, cinq Edge Functions redéployées, `Edge deploy
-  drift` vert, audit A-1 des 23 tables `160`-`207` acteur par acteur, § « Surface entreprise »).
+  drift` vert, audit A-1 des 23 tables `160`-`207` acteur par acteur, § « Surface entreprise »),
+  puis `212`. ✅ **Advisors relus par l'API le 2026-10-01 au soir : `11 / 80 / 2 / 1`** ; les deux
+  `authenticated_security_definer_function_executable` de plus que le 09-30 sont exactement
+  `can_manage_team_okr_audience` et `set_team_okr_links`, voulues par la mig. `212`. Base : **76**
+  tables, toutes sous RLS, **202** policies, ledger **161** entrées, **0** encaissement.
   Passe précédente : **2026-09-30**
   (ledger, catalogue objet par objet des migrations `164`-`204`, les 12 Edge Functions par l'API
   et par `check:edge-smoke`, alertes CodeQL et Dependabot). Passes précédentes contre la prod :

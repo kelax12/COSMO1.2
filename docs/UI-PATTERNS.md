@@ -1,4 +1,4 @@
-<!-- note-audit: note=83 -->
+<!-- note-audit: note=86 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,26 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **83 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **86 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
 
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → **83 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir)
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
+
+> ### 🟢 2026-10-01 · +3
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du jour : CI de `main` (`43fed445` à
+> `7cd73d24`), production (catalogue, advisors), dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | AM-1 · garde de régression visuelle | **+2** | `Visual` a **comparé** : rouge le 2026-09-30 sur une vraie régression, vert le 10-01 après correction, références régénérées par le chemin prévu (`bde05f5c`, deux passes vertes) |
+> | AM-2 · les quatre thèmes | **+1** | balayés dans chaque run, et le témoin « fonds différents » rendu fiable (il lisait la couleur pendant la transition CSS) |
+> | `/settings` : « Accéder » hors de la carte et de l'écran | 0 | vraie régression trouvée par `Visual` (bouton « Abonnement et factures »), corrigée le 10-01 (`OrganizationSettingsCard`), vérifiée dans le navigateur |
+> | Bruit de la garde | 0 | `/dashboard` (prochain événement selon l'HEURE du run) et `/tasks` (échéances relatives) masqués ; toasts retirés des captures |
+>
+> **83 → 86.** Détail : [tableau de bord](./README.md).
 
 > ### 🟢 2026-09-22 (soir) · +2 : remesure item par item, contre la CI réelle et la production
 >

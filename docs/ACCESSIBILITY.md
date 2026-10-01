@@ -1,4 +1,4 @@
-<!-- note-audit: note=81 -->
+<!-- note-audit: note=80 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **81 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **80 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
 
 # Accessibilité (a11y) — COSMO
 
@@ -45,7 +45,21 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → **80 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
+
+> ### 🟠 2026-10-01 · −1
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du jour : CI de `main` (`43fed445` à
+> `7cd73d24`), production (catalogue, advisors), dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | AM-5 · contraste dans un thème sur quatre | **+1** | `Visual` compare désormais les quatre thèmes, vert le 2026-10-01 |
+> | 🔴 Agenda : deux violations axe **critiques** | **−1** | `aria-required-children` et `aria-required-parent` (WCAG 1.3.1, niveau A), en chromium ET WebKit : un `role="region"` (« Grille du calendrier ») posé À L'INTÉRIEUR de la grille FullCalendar. Défaut produit, non corrigé |
+> | 🔴 Cibles tactiles sous 44 px (C-57) | **−1** | « Sélectionner plusieurs tâches » **106 × 32**, « Suivre cette tâche » **149 × 36** ; `/`, `/entreprise-presentation`, `/entreprise` et la modale de tâche d'équipe rouges. Régressions, non corrigées |
+>
+> **81 → 80.** Détail : [tableau de bord](./README.md).
 
 > ### 🟢 2026-09-22 (soir) · +1 : remesure item par item, contre la CI réelle et la production
 >

@@ -8,11 +8,25 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **93 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **93 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → **93 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → **93 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
+
+> ### ⚪ 2026-10-01 · 0 : inchangée : le correctif LCP ne se voit pas en CI
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du jour : CI de `main` (`43fed445` à
+> `7cd73d24`), production (catalogue, advisors), dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | `C-116` · peindre le prérendu (`cf1cf753`, 2026-09-29) | 0 | annoncé **1,8 à 2,0 s** en mesure locale ; **Lighthouse mobile en CI, `43fed445`** : `/guide/` 6,6 s · `/blog/` 5,9 · article 5,9 · `/pour-freelances/` 5,7 · `/entreprise-presentation/` **8,1** · `/a-propos/` 5,4 · `/en/` 3,6. L'élément LCP reste un paragraphe du hero animé (`data-hero-fade`). Déjà payé (−3), rien de remboursé |
+> | `TasksPage` au-delà de son cliquet (−1 le 09-22) | 0 | le budget est dit respecté par `af622168` (mesure locale), mais **la CI n'a plus atteint `check:bundle` depuis le 2026-09-28** : non remboursé. ⚠️ En local, `OKRPage` (17,0 / 15,0) et `vendor-query` (18,9 / 18,5) débordent, sur le travail non commité d'une autre session |
+> | AM-5 · coût serveur | 0 | `cout-db` vert le 2026-10-01 |
+>
+> **93 → 93.** Détail : [tableau de bord](./README.md).
 
 > ### 🟠 2026-09-22 (soir) · +3 : remesure item par item, contre la CI réelle et la production
 >

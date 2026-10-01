@@ -8,11 +8,29 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **92 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **92 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → **92 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → **92 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
+
+> ### ⚪ 2026-10-01 · 0 : inchangée, pas pour les mêmes raisons
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du jour : CI de `main` (`43fed445` à
+> `7cd73d24`), production (catalogue, advisors), dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | AM-1 · témoins jamais rejoués | **+1** | `Sabotages` vert les 2026-09-24 et 09-28 : les 11 sabotages vus, arbre restauré. **+1 et non +2** : 11 témoins rejoués sur 55 |
+> | Quatre gardes du 09-20 sans verdict | **+1** | les quatre ont parlé : `edge-smoke` (12/12), `retention`, `Sabotages`, et `Visual`, qui a COMPARÉ (rouge le 09-30 sur une vraie régression, vert le 10-01) |
+> | 🔴 `e2e` : la suite ne suit plus l'interface entreprise | **−1** | **60 échecs, 9 instables** sur `43fed445` (23 le 09-22), presque tous `demo-entreprise-*` en chromium ET WebKit : les tests cherchent « Personnes » là où l'écran dit « Membres ». Des tests en retard sur le produit, pas des défauts produit |
+> | 🔴 Cinq dépôts livrés sans test | **−1** | `org-config`, `org-reports`, `organizations/governance`, `team-okrs/execution` à **0 %**, `team-lists` à 11 % : le seuil `src/modules/**/supabase.repository.ts` tombe (lignes 83,5 % pour 90). **Masqué** depuis des jours par les gardes placées AVANT les tests |
+> | Gardes en chaîne : quatre rouges cachés les uns derrière les autres | 0 | nommés et réparés le jour même, avec témoin vu rouge : `check:erasure` (cascade indirecte), `check:portability`, `check:env` (lisait `INVITE_ROW` comme `VITE_ROW`, et deux entrées du contrat n'étaient pas des variables), et un test d'agenda intermittent (`Date.now()` dans la même milliseconde). Après eux, **299 fichiers, 3 284 tests, tous verts** en CI |
+>
+> 🔴 **`main` n'a pas eu de CI verte depuis le 2026-09-23** (`869fb05a`). Déjà payé le 09-22 (−2), donc rien de plus, mais c'est l'état : le prochain blocage est la couverture des cinq dépôts ci-dessus, puis le build et le budget, que la CI n'a pas atteints depuis le 09-28.
+>
+> **92 → 92.** Détail : [tableau de bord](./README.md).
 
 > ### 🟠 2026-09-22 (soir) · +1 : remesure item par item, contre la CI réelle et la production
 >

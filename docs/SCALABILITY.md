@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **90 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **90 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
 
 # Scalabilité — audit mesuré, décisions et runbook
 
@@ -21,7 +21,21 @@ s'est révélée fausse.
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
 
-## Note de scalabilité : 71 → 84 → 86 → 89 → 91 → 87 → **90 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08 → 2026-09-16 → 2026-09-22 soir) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
+## Note de scalabilité : 71 → 84 → 86 → 89 → 91 → 87 → 90 → **90 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08 → 2026-09-16 → 2026-09-22 soir → 2026-10-01) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
+
+> ### ⚪ 2026-10-01 · 0 : vérifiée inchangée
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du jour : CI de `main` (`43fed445` à
+> `7cd73d24`), production (catalogue, advisors), dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | AM-1 · charge jouée automatiquement | 0 | le premier run planifié de `scalability-volume.yml` tombe le **2026-10-03** ; dernier run, dispatch manuel du 09-08. Le second point attend ce run |
+> | AM-2, AM-3 · `check:db-cost` | 0 | `cout-db` vert le 2026-10-01 |
+> | Production | 0 | **76** tables, toutes sous RLS, **202** policies, ledger **161** entrées (relus le 2026-10-01) |
+>
+> **90 → 90.** Détail : [tableau de bord](./README.md).
 
 > ### 🟢 2026-09-22 (soir) · +3 : remesure item par item, contre la CI réelle et la production
 >
