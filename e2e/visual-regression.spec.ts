@@ -103,6 +103,10 @@ async function poserTheme(page: Page, theme: (typeof THEMES)[number]): Promise<v
  */
 const MASQUES = [
   '[data-testid="today-date"]',
+  // « Prochain événement » : dépend de l'HEURE du run, pas seulement du jour.
+  // Toute exécution après 10:00 (Paris) voyait un autre événement que la
+  // référence prise le matin (mesuré le 2026-10-01).
+  '[data-testid="dashboard-summary"]',
   '.fc-toolbar-title',
   'time',
 ];

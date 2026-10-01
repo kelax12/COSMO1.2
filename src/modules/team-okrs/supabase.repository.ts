@@ -278,41 +278,22 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       if (error) throw normalizeApiError(error);
     }
 
-    // Rattachements d'équipes et personnes : on remplace l'ensemble (delete + insert).
+    // Rattachements d'équipes et personnes : remplacés d'UN bloc par la RPC
+    // (mig. 212, E-3). Le droit est vérifié une fois, AVANT tout changement :
+    // en deux requêtes (supprimer puis réinsérer), un manager qui ne voyait
+    // l'OKR que par son audience perdait ce droit entre les deux, et l'OKR se
+    // refermait. `null` = ne pas toucher à cette liste.
     if (input.teamIds !== undefined || input.memberIds !== undefined) {
-      const { data: okrRow, error: readErr } = await supabase
-        .from('team_okrs')
-        .select('org_id')
-        .eq('id', okrId)
-        .single();
-      if (readErr) throw normalizeApiError(readErr);
-      const orgId = (okrRow as { org_id: string }).org_id;
-
-      if (input.teamIds !== undefined) {
-        const { error: delErr } = await supabase.from('team_okr_teams').delete().eq('okr_id', okrId);
-        if (delErr) throw normalizeApiError(delErr);
-
-        const teamIds = Array.from(new Set(input.teamIds)).slice(0, 20);
-        if (teamIds.length > 0) {
-          const { error: insErr } = await supabase
-            .from('team_okr_teams')
-            .insert(teamIds.map((teamId) => ({ okr_id: okrId, org_id: orgId, team_id: teamId })));
-          if (insErr) throw normalizeApiError(insErr);
-        }
-      }
-
-      if (input.memberIds !== undefined) {
-        const { error: delErr } = await supabase.from('team_okr_members').delete().eq('okr_id', okrId);
-        if (delErr) throw normalizeApiError(delErr);
-
-        const memberIds = input.audience === 'custom' ? Array.from(new Set(input.memberIds)).slice(0, 50) : [];
-        if (memberIds.length > 0) {
-          const { error: insErr } = await supabase
-            .from('team_okr_members')
-            .insert(memberIds.map((userId) => ({ okr_id: okrId, org_id: orgId, user_id: userId })));
-          if (insErr) throw normalizeApiError(insErr);
-        }
-      }
+      const teamIds = input.teamIds !== undefined ? Array.from(new Set(input.teamIds)).slice(0, 20) : null;
+      const memberIds = input.memberIds !== undefined
+        ? (input.audience === 'custom' ? Array.from(new Set(input.memberIds)).slice(0, 50) : [])
+        : null;
+      const { error: linkErr } = await supabase.rpc('set_team_okr_links', {
+        p_okr: okrId,
+        p_team_ids: teamIds,
+        p_member_ids: memberIds,
+      });
+      if (linkErr) throw normalizeApiError(linkErr);
     }
 
     if (input.audience === 'org') {

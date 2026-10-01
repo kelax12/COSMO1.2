@@ -96,7 +96,7 @@ compilait, la suite passait.
   ⏳ **`207`** (webhooks : cible publique, enfilement par trigger seul) : écrite le 2026-09-30,
   preuve `supabase/proofs/207.proof.sql` verte sur PGlite (10/10, 2026-10-01), **avant** tout redéploiement de
   `org-webhook-dispatch`. Ordre et détail : [`faille.md`](../../faille.md) § « Migrations ».
-- ✅ **État au 2026-10-01** : `204`, `207`, `208`, `209`, `210` **appliquées** par `apply_migration`,
+- ✅ **État au 2026-10-01** : `204`, `207`, `208`, `209`, `210`, `212` (ledger `20261001132108`) **appliquées** par `apply_migration`,
   ledger `20261001100113`, `…100535`, `…102420`, `…102425`, `…102453`, relues au catalogue (corps
   comparés **octet pour octet** au fichier). Chacune jouée d'abord en prod dans un bloc qui ne peut
   que s'annuler, avec une passe témoin SANS elle qui devait échouer. Détail : [`faille.md`](../../faille.md)

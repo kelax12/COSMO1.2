@@ -131,10 +131,11 @@ export function volumeIndexable(html) {
   const bloc = /<div[^>]+id="seo-fallback"[^>]*>([\s\S]*?)<\/div>\s*(?:<\/body>|<div)/i.exec(html);
   const source = bloc ? bloc[1] : html;
   return source
-    // `</script >` est une fin de balise valide (CodeQL js/bad-tag-filter,
-    // M-60) : sans `\s*`, son contenu aurait été compté comme du texte.
-    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, ' ')
-    .replace(/<style\b[\s\S]*?<\/style\s*>/gi, ' ')
+    // Une fin de balise peut porter espaces, tabulations ou attributs, et le
+    // navigateur l'accepte (CodeQL js/bad-tag-filter, M-60) : `[^>]*` les
+    // couvre toutes, sinon leur contenu compterait comme du texte.
+    .replace(/<script\b[\s\S]*?<\/script\b[^>]*>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style\b[^>]*>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&[a-z]+;/gi, ' ')
     .split(/\s+/)

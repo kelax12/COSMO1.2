@@ -46,14 +46,17 @@ const OrganizationSettingsCard = () => {
       {isLoading ? (
         <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('settingsCard.loading')}</p>
       ) : myOrg ? (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-3">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-4 mt-3">
+          {/* `sm:flex-wrap` : la carte occupe UNE colonne de la grille des Réglages.
+              Sans retour à la ligne, « Abonnement et factures » poussait « Accéder »
+              hors de la carte et hors de l'écran (garde Visual, 2026-10-01). */}
+          <div className="min-w-0">
             <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{myOrg.name}</p>
             <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">
               {t(ROLE_KEYS[myOrg.myRole as keyof typeof ROLE_KEYS] ?? 'roles.member')}
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
           {isOwner && (
             <button
               type="button"
