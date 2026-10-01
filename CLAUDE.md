@@ -147,7 +147,7 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 
 ## Scripts
 
-> ⚠️ **Cette liste ne porte que les commandes du QUOTIDIEN.** Les **36 gardes** (`check:*`,
+> ⚠️ **Cette liste ne porte que les commandes du QUOTIDIEN.** Les **34 gardes** (`check:*`,
 > `i18n:*`, `validate:*`) sont descendues dans [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) le
 > 2026-09-21, avec ce que chacune regarde et où est son détail : la racine était à 96,7 % de son
 > plafond et **24 gardes posées le 2026-09-21 n'y figuraient pas**. Cette section a pesé 281 lignes
@@ -168,9 +168,10 @@ npm run test:e2e            # Playwright (+ :ui, :report)         → e2e/CLAUDE
 npm run cosmo               # CLI données réelles (cf. plus haut)
 ```
 
-> 🛡️ **Les 36 gardes, une ligne chacune** : [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) § Inventaire.
-> Quatre d'entre elles ne mesurent rien tant qu'un geste manuel n'est pas fait (`C-88`, `C-89`,
-> `C-105`, `C-110`) — § 9 d'[`a-faire-manuel.md`](./a-faire-manuel.md).
+> 🛡️ **Les 34 gardes, une ligne chacune** (recomptées dans `package.json` le 2026-09-30 ; « 36 »
+> était faux) : [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) § Inventaire. Trois ne mesurent rien
+> tant qu'un geste manuel n'est pas fait (`C-88`, `C-89`, `C-105` ; `C-110` est tombée le
+> 2026-09-21) — § 9 d'[`a-faire-manuel.md`](./a-faire-manuel.md).
 
 > Le build prod **drope** `console.*` et `debugger` (`vite.config.ts → esbuild.pure/drop`).
 > Les erreurs remontent via Sentry (`VITE_SENTRY_DSN`).

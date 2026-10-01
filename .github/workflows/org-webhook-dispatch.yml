@@ -5,8 +5,12 @@
 # `org_webhook_deliveries` (Slack ou JSON signe). Meme mecanisme que
 # `org-digest.yml` : pg_net n est pas installe.
 #
-# ⚠️ Tant que la mig. 199 n est pas appliquee ET la fonction deployee, ce job
-#    est rouge (404) : c est un signal juste, pas du bruit (cf. check:edge).
+# 🔴 A-3 (2026-09-30) : ce job est rouge (HTTP 401) depuis sa creation. La
+#    fonction etait absente de supabase/config.toml, donc deployee en
+#    verify_jwt = true, et cet appel ne porte pas d Authorization : la
+#    passerelle refuse avant le code. Aucun webhook n est jamais parti.
+#    Correctif : config.toml (verify_jwt = false) + redeploiement, APRES la
+#    mig. 207 (A-6). Le rouge est juste tant que ce n est pas fait.
 # ⚠️ Secret absent = ECHEC, jamais un silence vert.
 # ═══════════════════════════════════════════════════════════════════
 name: org-webhook-dispatch
@@ -16,6 +20,11 @@ on:
     # Toutes les dix minutes, decale des autres crons du depot.
     - cron: '7-59/10 * * * *'
   workflow_dispatch:
+
+# Moindre privilege (A-8, CodeQL actions/missing-workflow-permissions) :
+# le job n appelle qu une URL, il ne lit ni n ecrit le depot.
+permissions:
+  contents: read
 
 jobs:
   dispatch:

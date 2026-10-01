@@ -76,6 +76,9 @@ const MESUREES: Record<string, string> = {
 const NON_MESUREES: Record<string, string> = {
   'components/organization/OrgGlossarySheet.tsx':
     'dette : glossaire de /entreprise (bouton d en-tête, 2026-09-25), jamais parcouru au clavier.',
+  'components/organization/InviteModeDialog.tsx':
+    'dette : choix du mode d invitation (/entreprise/members, « Inviter »), arrivé sans '
+    + 'déclaration ; relevé par cette garde le 2026-09-30, jamais parcouru au clavier.',
   'components/BugReportModal.tsx':
     'dette : atteignable en démo, jamais parcourue au clavier.',
   'components/CollaborativeTasks.tsx':

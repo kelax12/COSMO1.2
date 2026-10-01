@@ -26,6 +26,11 @@ on:
         required: false
         default: 'hourly'
 
+# Moindre privilege (A-8, CodeQL actions/missing-workflow-permissions) :
+# le job n appelle qu une URL, il ne lit ni n ecrit le depot.
+permissions:
+  contents: read
+
 jobs:
   send:
     runs-on: ubuntu-latest

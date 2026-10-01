@@ -15,7 +15,8 @@
 //
 // Le motif de la sonde existe déjà : il a été joué À LA MAIN pour
 // `stripe-org-refund` (un `405` puis un `401` ÉMIS PAR LE CORPS de la
-// fonction). Ce script l'automatise pour les huit.
+// fonction). Ce script l'automatise pour les douze (huit jusqu'au 2026-09-30 :
+// les quatre fonctions du mode entreprise n'étaient pas sondées, A-2).
 //
 // ── LE POINT QUI DÉCIDE DE TOUT : `401` PLATEFORME ≠ `401` FONCTION ──
 //
@@ -153,13 +154,60 @@ export const SONDES = [
     methode: 'POST',
     corps: '{}',
     statut: [401, 503],
-    marqueur: 'unauthorized|cron_secret_not_configured',
+    // Appelée par la CI SANS jeton : c'est ainsi qu'on voit un verify_jwt faux (A-3).
+    sansJeton: true,
+    marqueur: '"error":"(unauthorized|cron_secret_not_configured)"',
     prouve:
       "La garde `x-cron-secret` s'exécute et refuse. 🔴 `503 "
       + "cron_secret_not_configured` est ACCEPTÉ et c'est volontaire : il "
       + 'signifie que le secret est absent, donc que la fonction refuse TOUT — '
       + "la bonne réponse. C'est le contraire du motif « on ne se protège que "
       + 'quand on est déjà protégé », et le distinguer du 401 est utile.',
+  },
+  // ── A-2 (2026-09-30) : les quatre fonctions du mode entreprise, déployées
+  // les 2026-09-25 et 09-27, n'étaient sondées par RIEN. Mêmes règles : une
+  // branche de REFUS, jamais un envoi, jamais un e-mail, jamais un webhook.
+  {
+    fonction: 'send-org-invite',
+    methode: 'GET',
+    statut: [405],
+    marqueur: 'method_not_allowed',
+    prouve:
+      'Le module se charge. Cette fonction ENVOIE des e-mails : jamais en POST, '
+      + 'le refus de méthode précède la lecture de tout secret.',
+  },
+  {
+    fonction: 'verify-org-domain',
+    methode: 'GET',
+    statut: [405],
+    marqueur: 'method_not_allowed',
+    prouve: 'Le module se charge. Aucune lecture DNS, aucune écriture sur cette branche.',
+  },
+  {
+    fonction: 'org-digest',
+    methode: 'POST',
+    corps: '{}',
+    statut: [401, 503],
+    // Appelée par la CI SANS jeton : c'est ainsi qu'on voit un verify_jwt faux (A-3).
+    sansJeton: true,
+    marqueur: '"error":"(unauthorized|cron_secret_not_configured)"',
+    prouve:
+      "La garde `x-cron-secret` s'exécute et refuse AVANT toute lecture de la "
+      + 'file de notifications. Même lecture du 503 que pour `renewal-notice`.',
+  },
+  {
+    fonction: 'org-webhook-dispatch',
+    methode: 'POST',
+    corps: '{}',
+    statut: [401, 503],
+    // Appelée par la CI SANS jeton : c'est ainsi qu'on voit un verify_jwt faux (A-3).
+    sansJeton: true,
+    marqueur: '"error":"(unauthorized|cron_secret_not_configured)"',
+    prouve:
+      "La garde `x-cron-secret` s'exécute et refuse AVANT de vider la file. "
+      + '🔴 Ce refus vient du CORPS : un 401 de la passerelle (`verify_jwt`), celui '
+      + 'qui bloque tous les webhooks depuis leur création (A-3, vu le 2026-09-30 : '
+      + '`UNAUTHORIZED_NO_AUTH_HEADER`), ne porte pas ce marqueur. Rouge jusqu au redéploiement.',
   },
 ];
 
@@ -174,8 +222,11 @@ export async function jouer(sonde, { base, anon, fetchImpl = fetch }) {
       headers: {
         // 🔴 La clé ANON, publique. Sans elle, `verify_jwt` refuse AVANT la
         // fonction et la sonde mesurerait Supabase, pas notre code.
-        Authorization: `Bearer ${anon}`,
-        apikey: anon,
+        // Sauf `sansJeton` : une fonction appelée par la CI SANS jeton se sonde
+        // comme la CI l'appelle. Si la passerelle exige un JWT (`verify_jwt`
+        // oublié dans config.toml, A-3), son 401 ne porte pas le marqueur
+        // du corps, et la sonde échoue : c'est ce qu'elle doit voir.
+        ...(sonde.sansJeton ? {} : { Authorization: `Bearer ${anon}`, apikey: anon }),
         ...(sonde.corps ? { 'Content-Type': 'application/json' } : {}),
         ...(sonde.entetes ?? {}),
       },
@@ -271,5 +322,5 @@ if (estLanceDirectement) {
     }
     process.exit(1);
   }
-  console.log('\n✓ Les huit fonctions déployées répondent depuis leur propre corps.');
+  console.log(`\n✓ Les ${SONDES.length} fonctions sondées répondent depuis leur propre corps.`);
 }

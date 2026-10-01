@@ -208,10 +208,15 @@ export function fieldValueIsValid(field: Pick<CustomField, 'kind' | 'options'>, 
   }
 }
 
-/** Miroir du CHECK `org_webhooks_url` (mig. 199) : HTTPS, jamais une adresse locale écrite en clair. */
+/**
+ * Miroir du CHECK `org_webhooks_url` (mig. 207) : HTTPS vers un NOM DNS à TLD
+ * alphabétique, jamais une adresse écrite en clair (quelle que soit sa
+ * notation), jamais un TLD interne. Le refus des noms qui RÉSOLVENT vers une
+ * adresse privée se fait à l'envoi, dans `org-webhook-dispatch`.
+ */
 export function webhookUrlIsAllowed(url: string): boolean {
   const u = url.trim();
   return u.length <= 500
-    && /^https:\/\/[a-zA-Z0-9.-]+(:[0-9]+)?(\/.*)?$/.test(u)
-    && !/^https:\/\/(localhost|127\.|10\.|192\.168\.|169\.254\.|0\.|\[)/i.test(u);
+    && /^https:\/\/([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}(:[0-9]{1,5})?(\/.*)?$/i.test(u)
+    && !/^https:\/\/[^/:]*\.(localhost|local|internal|localdomain|lan|home|corp|intranet|private|arpa|test|invalid|example|onion)(:[0-9]{1,5})?(\/.*)?$/i.test(u);
 }

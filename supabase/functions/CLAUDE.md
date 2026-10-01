@@ -19,20 +19,34 @@
 - ❌ **Ne jamais se fier à une copie laissée sur le disque** (`.deploy-tmp/` et consorts) : elle
   périme en silence. La sienne était antérieure au correctif C-08.
 
-## 🔴 `report-bug` DOIT être redéployée (au 2026-09-21)
+## 🔴 Cinq fonctions DOIVENT être redéployées (au 2026-09-30)
 
-Sa source a changé dans `2b4c4304` (compteur de `C-110`). **Tant qu elle ne l est pas,
-`npm run check:edge` signale une dérive LÉGITIME** : le rouge est juste.
-❌ **Ne pas le lire comme un faux positif, et surtout ne pas le faire taire.** Confondre une dérive
-réelle avec du bruit est exactement ce qui use une garde jusqu à ce qu elle ne serve plus. Geste :
-`M-61` d [`a-faire-manuel.md`](../../a-faire-manuel.md).
+`report-bug` (`M-61`, depuis le 09-21), `stripe-org-checkout` et `stripe-org-portal` (source du
+09-25, `_shared/org-billing-contact.ts` absent de la prod), `send-org-invite` (plafond W-4) et
+`org-webhook-dispatch` (W-1, W-2). **Tant qu elles ne le sont pas, `npm run check:edge` signale une
+dérive LÉGITIME** : le rouge est juste.
+❌ **Ne pas le lire comme un faux positif, et surtout ne pas le faire taire.** Il est rouge chaque
+jour depuis le 09-21, et c est ainsi qu il est devenu un bruit de fond : exactement l usure qu il
+faut éviter. Ordre et gestes : [`faille.md`](../../faille.md) § « Ordre de priorité ».
+🔴 **`org-webhook-dispatch` APRÈS la mig. `207`** : ce redéploiement rend l envoi réel.
+
+## 🔴 Douze fonctions, douze sections, douze sondes (2026-09-30)
+
+- ❌ **Jamais une fonction sans sa section `[functions.<slug>]` dans `supabase/config.toml`.**
+  `org-webhook-dispatch` y manquait : déployée en `verify_jwt = true`, elle rendait 401 à la CI
+  avant son code, et **aucun webhook n est jamais parti** (W-1). `src/edge-config.guard.test.ts`
+  l exige, et exige `false` pour une fonction à `x-cron-secret`.
+- ❌ **Jamais un appel sortant vers une URL client sans résoudre le nom** et refuser toute adresse
+  non publique (`_shared/org-integrations.ts`, W-2). La contrainte SQL ne voit qu un texte.
+- ❌ **Jamais un e-mail sans plafond de débit** (`_shared/rate-limit.ts`, W-4).
 
 ## ✅ Le code déployé ≠ le comportement déployé (C-91, 2026-09-20)
 
 `check:edge` relit les **sources** en ligne et les compare au dépôt. Il ne dit rien de ce que la
-fonction **fait**. C est `npm run check:edge-smoke` qui touche les premiers mètres : **8 sondes**,
-dans `edge-deploy-drift.yml`, **vertes contre la production** le jour de leur pose.
-⚠️ Huit sondes ne sont pas huit fonctions vérifiées : elles prouvent qu une fonction répond et
+fonction **fait**. C est `npm run check:edge-smoke` qui touche les premiers mètres : **12 sondes**
+(8 jusqu au 2026-09-30, A-2), dans `edge-deploy-drift.yml`. Les fonctions cron sont sondées **sans
+jeton**, comme la CI les appelle : c est ce qui voit un `verify_jwt` faux.
+⚠️ Douze sondes ne sont pas douze fonctions vérifiées : elles prouvent qu une fonction répond et
 comment elle refuse, jamais qu elle fait son travail.
 
 ## Interdits

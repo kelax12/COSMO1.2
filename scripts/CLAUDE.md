@@ -14,6 +14,10 @@
 > ⚠️ **Cette table ne porte QUE la commande et ce qu'elle regarde.** Ses pièges et ses mesures
 > datées vivent dans le doc cité en fin de ligne. ❌ Elle ne dit pas qu'une garde est juste : la
 > section suivante existe précisément parce que quatre d'entre elles répondaient sans mesurer.
+>
+> **Compte, relu dans `package.json` le 2026-09-30** : **34** gardes `check:*` / `i18n:*` /
+> `validate:*`, plus trois outils de mesure (`analyze:entry`, `profile:landing`, `images:check`).
+> La racine a écrit « 36 » du 09-21 au 09-30. Un total se recompte, il ne se recopie pas.
 
 | Commande | Ce qu'elle regarde | Item | Détail |
 |---|---|---|---|
@@ -22,7 +26,7 @@
 | `check:drift` | dérive dépôt ↔ prod (2 étapes) | | `docs/SECURITY.md` |
 | `check:migration-coverage` | fichiers de migration ↔ ledger de PROD | | `docs/SECURITY.md` |
 | `check:edge` | code **déployé** des Edge Functions vs dépôt | `C-35` | `supabase/functions/CLAUDE.md` |
-| `check:edge-smoke` | le **comportement** en ligne, là où `check:edge` ne compare que le code | `C-91` | `supabase/functions/CLAUDE.md` |
+| `check:edge-smoke` | le **comportement** en ligne, là où `check:edge` ne compare que le code : **12 sondes**, une par fonction, les cron **sans jeton** (A-2, W-1) | `C-91` | `supabase/functions/CLAUDE.md` |
 | `check:deploy` | le commit **servi** en prod vs le dépôt | `T-8` | `docs/DEPLOYMENT.md` |
 | `check:supabase-posture` | advisors Supabase + réglages de Dashboard, lus par l'API | `C-88` | `docs/SECURITY.md` |
 | `check:env` | contrat des variables d'environnement Vercel | `C-105` | `docs/DEPLOYMENT.md` |

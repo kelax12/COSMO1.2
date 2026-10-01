@@ -16,6 +16,11 @@
 > [`archive/faille-historique.md`](./archive/faille-historique.md) = historique des corrections (archive, non maintenue).
 > Ce document = règles permanentes à respecter. Les codes `(V1)`, `(N9)`, `(M-6)`… réfèrent aux fiches `faille.md`.
 
+> 🔴 **Relu le 2026-09-30 : les chiffres ci-dessous sont PÉRIMÉS.** La base porte **76 tables**
+> dans `public` (toutes sous RLS, relevé de la session d'audit du jour) et les advisors rendent
+> `11 / 78 / 2 / 1`. Douze Edge Functions, pas huit. Surface nouvelle et findings :
+> [`../faille.md`](../faille.md) § « Surface entreprise `160`-`207` ».
+>
 > ✅ **Confronté à la production le 2026-09-14 au soir.** Les affirmations de ce document qui
 > portent sur un ÉTAT (par opposition aux règles) ont été vérifiées dans le catalogue Postgres, pas
 > relues :
@@ -64,7 +69,7 @@
 
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Les RÈGLES de sécurité ne sont notées nulle part.** La note de sécurité (88) vit dans [`../faille.md`](../faille.md), qui porte les **findings ouverts**. Ce document porte les **règles** : RLS, migrations, Edge Functions, secrets, CSP. Un finding se ferme et fait monter la note ; une règle qui se périme ici ne coûte rien à personne | `faille.md` porte la note, `SECURITY.md` n'en a aucune | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:docs-scored` (`C-109`) — 🔴 ne prouve PAS : que les notes soient **justes ni fraîches** : `non-note` OUVRE un audit, il ne le remplace pas |
+| AM-1 | 🔴 **Les RÈGLES de sécurité ne sont notées nulle part.** La note de sécurité (88) vit dans [`../faille.md`](../faille.md), qui porte les **findings ouverts**. Ce document porte les **règles** : RLS, migrations, Edge Functions, secrets, CSP. Un finding se ferme et fait monter la note ; une règle qui se périme ici ne coûte rien à personne | `faille.md` porte la note, `SECURITY.md` n'en a aucune | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:docs-scored` (`C-109`) — 🔴 ne prouve PAS : que les notes soient **justes ni fraîches** : `non-note` OUVRE un audit, il ne le remplace pas · 🔎 2026-09-30 : le « (88) » de l'énoncé est la note du matin du 09-16 ; elle valait **83** du 09-16 au 09-30, **78** depuis ([`../faille.md`](../faille.md)). Et la preuve de la limite ci-dessus : ce document n'a pas bougé du 09-24 au 09-30, pendant que le mode entreprise ajoutait 25 tables et 4 Edge Functions |
 | AM-2 | 🔴 **Les réglages du Dashboard Supabase ne sont surveillés par AUCUNE garde.** Protection des mots de passe compromis, expiration des OTP, politiques d'auth : ils se modifient **hors du dépôt**, sans commit, sans revue et sans trace. Un réglage désactivé par erreur ne se voit qu'au prochain audit manuel | aucun workflow ni script ne lit ces réglages ; seul un commentaire contient le mot « dashboard » | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · juge un **écart** à une référence commitée, jamais un absolu (`C-88`) — 🔴 ne prouve PAS : 🔴 rien pour l'instant : `reglages_auth` est à `null`, la référence exige un jeton. **La garde ÉCHOUE tant que ce n'est pas fait, exprès** — c'est **`M-58`** |
 | AM-3 | **La rotation des secrets n'a ni échéance ni rappel.** Le § « Rotation des secrets » dit comment faire, jamais quand, et rien ne mesure l'âge d'un secret | aucune date d'émission stockée, aucun job | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-54`** : le § dit *comment* faire tourner un secret, jamais *quand*, et rien ne mesure l'âge d'un secret. Tant que l'échéance n'est pas décidée, il n'y a rien à outiller — c'est une décision, pas un script — *(jugé outillable le 09-16 : oui : un job planifié qui rappelle l'âge)* |
 | AM-4 | **La checklist « avant tout commit qui touche `supabase/migration/*.sql` » est MANUELLE.** `validate:migrations` et `check:rls` en couvrent une partie ; le reste repose sur la lecture | les deux gardes vérifient des motifs nommés, pas la checklist entière | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** `validate:migrations` et `check:rls` en couvrent une partie ; le reste repose sur la lecture. ⚠️ La preuve en transaction annulée, elle, a servi le 2026-09-21 sur la mig. `150` — mais c'est une discipline, pas une garde — *(jugé outillable le 09-16 : partiellement)* |
@@ -297,8 +302,20 @@ if (params.cursor && params.cursorDate) {
 | `stripe-org-checkout` | Session Checkout d'une **organisation** | CORS allowlist, **owner-only** (`organizations.owner_id`) — org inexistante et non-propriétaire renvoient la **même** 403, pour ne pas confirmer l'existence d'une org dont on connaîtrait l'UUID. `allow_promotion_codes`, idempotency-keys `org-customer:${orgId}` + `org-checkout:${orgId}:${tier}:${day}`. Le customer porte `org_owner_uid`, **jamais** `supabase_uid` (cf. encadré ci-dessous) |
 | `stripe-org-portal` | Portail de facturation d'une organisation | Mêmes CORS et owner-only. Délègue à Stripe carte / factures / changement de palier / **résiliation** |
 | `report-bug` | Relaie le formulaire « Signaler un bug » par e-mail (Resend) | **Aucun accès base** — ni anon ni service_role pour lire ou écrire. CORS allowlist (`APP_URL` + les deux origines de dev). L'identité de l'auteur vient du JWT (`Reply-To`), **jamais** du corps de la requête. Titre et nom de fichier passent par un `singleLine()` (un CR/LF dans un `Subject` scinde les en-têtes du mail), description échappée dans la partie HTML. Pièce jointe : allowlist de types (image / PDF / texte, ni archive ni exécutable), 3 Mo, base64 validé par regex. Erreur Resend jamais relayée au client (peut contenir des détails de compte), résumée dans `opsAlert` |
+| `stripe-org-refund` | Résilie et rembourse une organisation | JWT, **propriétaire** seulement ; pré-contrôle anti-rejeu dans `_shared/refund-replay.ts` (module pur, testé). Jamais sondée en POST |
+| `renewal-notice` | Avis de reconduction tacite (Conso. L215-1), cron CI | `x-cron-secret`, échec fermé sans secret (503) ; `verify_jwt = false` |
+| `send-org-invite` | Envoie les invitations nominatives d'entreprise (Resend) | JWT ; lien créé par l'appelant ou admin ; relance 1 h ; **plafond par e-mail**, 100/jour par compte et par organisation (W-4, 2026-09-30) ; `RATE_LIMIT_SALT` absent = 503 |
+| `org-digest` | Notifications d'entreprise par e-mail, cron CI | `x-cron-secret`, échec fermé ; `verify_jwt = false` |
+| `verify-org-domain` | Vérifie un domaine par TXT `_cosmo-verify` | JWT, admin **actif** ; domaine d'autrui répond comme un absent ; seule écriture de `verified_at` (aucune policy UPDATE) |
+| `org-webhook-dispatch` | Vide la file des webhooks d'organisation, cron CI | `x-cron-secret` ; `verify_jwt = false` (W-1) ; **cible publique exigée** : nom DNS, puis chaque adresse A/AAAA publique (W-2) ; `redirect: 'manual'` ; corps de réponse jamais lu ; HMAC-SHA256 horodaté |
 
-> **`supabase/config.toml` obligatoire** (M-10) : `stripe-webhook` doit avoir `verify_jwt = false` (Stripe authentifie par signature, pas JWT). **Toutes les autres fonctions**, y compris `stripe-org-checkout` et `stripe-org-portal`, gardent `verify_jwt = true`. Ne pas déployer sans ce fichier ou Stripe recevra 401 avant la vérification signature.
+> **`supabase/config.toml` obligatoire** (M-10). Chaque fonction y a sa section, **vérifié par
+> `src/edge-config.guard.test.ts`** depuis le 2026-09-30 (W-1 : `org-webhook-dispatch` y manquait,
+> et aucun webhook n'est jamais parti). `verify_jwt = false` pour `stripe-webhook` (Stripe
+> authentifie par signature) et pour les trois fonctions **appelées par la CI** avec
+> `x-cron-secret` (`renewal-notice`, `org-digest`, `org-webhook-dispatch`) : sans cette ligne, la
+> passerelle rend 401 avant le code. **Toutes les autres** gardent `verify_jwt = true`, et la garde
+> exige `true` pour toute fonction qui identifie l'appelant par `auth.getUser()`.
 
 ### Abonnement d'organisation (mig. 101)
 
@@ -396,7 +413,10 @@ Variables sensibles **jamais côté client** : `SUPABASE_SERVICE_ROLE_KEY`, `STR
 - ❌ Interpoler un id client-contrôlé dans un `.not('in', ...)` PostgREST sans valider l'UUID — cf. `syncKRsToTable` (M-1)
 - ❌ Appeler Stripe `customers.create` ou `checkout.sessions.create` sans `idempotencyKey` (`customer:${uid}`, `checkout:${uid}:${day}`) (M-3)
 - ❌ Marquer un event Stripe comme processed (`INSERT processed_stripe_events`) **avant** que le handler n'ait réussi. Ordre obligatoire : handler → INSERT marker → 500 si INSERT échoue avec code ≠ 23505 (M-4 / M-5)
-- ❌ Déployer une Edge Function sans `supabase/config.toml` — `stripe-webhook` doit avoir `verify_jwt = false` (M-10)
+- ❌ Déployer une Edge Function sans sa section dans `supabase/config.toml` — `stripe-webhook` et les trois fonctions cron doivent avoir `verify_jwt = false` (M-10, W-1). `src/edge-config.guard.test.ts` le refuse
+- ❌ Un appel sortant vers une URL saisie par un client sans résoudre le nom et refuser toute adresse non publique (W-2, `_shared/org-integrations.ts`). Une liste noire textuelle ne suffit jamais : `https://2130706433/` est `127.0.0.1`
+- ❌ Une fonction `SECURITY DEFINER` exécutable par `authenticated` **parce qu'un trigger INVOKER l'appelle**, sans garde `pg_trigger_depth()` : elle devient une RPC (W-3, mig. `207`)
+- ❌ Une Edge Function qui envoie un e-mail sans plafond de débit (`_shared/rate-limit.ts`) : le domaine d'envoi est celui des e-mails d'authentification (C-31, W-4)
 - ❌ Rejeter une méthode HTTP avec un parsing préalable du body — `if (req.method !== 'POST') return 405` avant tout pour `stripe-webhook` (L-13)
 - ❌ Recopier `auth.users.raw_user_meta_data->>'name'` dans une table partagée sans `sanitize_display_name()` — second-order XSS (M-2)
 - ❌ `delete-account` qui `DELETE FROM shared_tasks WHERE user_id = ...` — la colonne s'appelle `friend_id` / `shared_by`. Utiliser `.or('friend_id.eq.{uid},shared_by.eq.{uid}')` (M-6)
