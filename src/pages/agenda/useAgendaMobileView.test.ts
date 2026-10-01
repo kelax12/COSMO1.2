@@ -83,6 +83,31 @@ describe('useAgendaMobileView — bascule Mois → Jour', () => {
     expect(result.current.mobileZoom?.token).not.toBe(first?.token);
   });
 
+  it('TEMOIN : deux bascules dans la MÊME milliseconde changent quand même le token', () => {
+    // 🔴 Le token venait de `Date.now()`. Sur le runner de CI, deux bascules
+    // tombaient dans la même milliseconde : même token, l'animation ne
+    // rejouait pas, et ce test échouait une fois sur quelques-unes
+    // (`main`, 2026-10-01). L'horloge figée rend le cas déterministe.
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_790_000_000_000);
+    try {
+      const { result } = setup();
+      const tap = () => act(() => {
+        result.current.handleMobileDateClick({
+          date: DAY,
+          jsEvent: { changedTouches: [{ clientX: 10, clientY: 10 }] },
+        } as unknown as DateClickArg);
+      });
+      act(() => { result.current.handleMobileSetView('dayGridMonth'); });
+      tap();
+      const first = result.current.mobileZoom?.token;
+      act(() => { result.current.handleMobileSetView('dayGridMonth'); });
+      tap();
+      expect(result.current.mobileZoom?.token).not.toBe(first);
+    } finally {
+      now.mockRestore();
+    }
+  });
+
   it("un appui maintenu (select) en vue Mois bascule aussi, sans ouvrir la carte de création", () => {
     const { result, api, onDateSelect } = setup();
     act(() => { result.current.handleMobileSetView('dayGridMonth'); });
