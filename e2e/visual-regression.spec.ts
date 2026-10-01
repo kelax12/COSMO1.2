@@ -117,6 +117,13 @@ async function capturer(page: Page, nom: string): Promise<void> {
     animations: 'disabled',
     caret: 'hide',
     mask: MASQUES.map((s) => page.locator(s)),
+    // Les TOASTS ne font pas partie de la page : le rappel d'échéances
+    // (« 1 en retard ») part sur un minuteur, donc figure dans une capture et
+    // pas dans la suivante. Vu le 2026-10-01 : la régénération elle-même a
+    // échoué, sa seconde passe ne retrouvant pas le toast de la première.
+    // Un masque ne suffit pas (une zone absente d'une capture reste une
+    // différence) : on les retire du rendu le temps de la capture.
+    style: '[data-sonner-toaster] { display: none !important; }',
     maxDiffPixelRatio: 0.002,
   });
 }
@@ -147,6 +154,14 @@ test.describe('C-95 — les quatre themes', () => {
     // garde afficherait « quatre thèmes vérifiés » en n'en ayant vu qu'un.
     await demoPage.goto('/dashboard');
     await demoPage.waitForLoadState('networkidle');
+    // 🔴 Le fond change de thème par une TRANSITION CSS. Lu juste après le
+    // repaint, il valait une couleur intermédiaire (`rgb(156, 158, 161)`, vu
+    // le 2026-10-01) : le témoin comptait 2 fonds pour 4 thèmes, une fois sur
+    // deux. Les captures, elles, figent les animations ; le témoin coupe les
+    // transitions pour lire la couleur FINALE de chaque thème.
+    await demoPage.addStyleTag({
+      content: '*, *::before, *::after { transition: none !important; animation: none !important; }',
+    });
     const fonds = new Set<string>();
     for (const theme of THEMES) {
       await poserTheme(demoPage, theme);
