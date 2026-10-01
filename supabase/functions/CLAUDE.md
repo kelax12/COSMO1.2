@@ -19,16 +19,15 @@
 - ❌ **Ne jamais se fier à une copie laissée sur le disque** (`.deploy-tmp/` et consorts) : elle
   périme en silence. La sienne était antérieure au correctif C-08.
 
-## 🔴 Cinq fonctions DOIVENT être redéployées (au 2026-09-30)
+## ✅ Plus aucune dérive (2026-10-01)
 
-`report-bug` (`M-61`, depuis le 09-21), `stripe-org-checkout` et `stripe-org-portal` (source du
-09-25, `_shared/org-billing-contact.ts` absent de la prod), `send-org-invite` (plafond W-4) et
-`org-webhook-dispatch` (W-1, W-2). **Tant qu elles ne le sont pas, `npm run check:edge` signale une
-dérive LÉGITIME** : le rouge est juste.
-❌ **Ne pas le lire comme un faux positif, et surtout ne pas le faire taire.** Il est rouge chaque
-jour depuis le 09-21, et c est ainsi qu il est devenu un bruit de fond : exactement l usure qu il
-faut éviter. Ordre et gestes : [`faille.md`](../../faille.md) § « Ordre de priorité ».
-🔴 **`org-webhook-dispatch` APRÈS la mig. `207`** : ce redéploiement rend l envoi réel.
+Les six fonctions en retard ont été redéployées depuis `main` le 2026-10-01 (`org-webhook-dispatch`
+APRÈS la mig. `207`) : `Edge deploy drift` **vert** pour la première fois depuis le 09-21, 12 fonctions
+identiques, 12 sondes. Versions : [`faille.md`](../../faille.md) § « Ordre de priorité ».
+- 🔴 **Un module `_shared/` modifié fait dériver TOUTES les fonctions qui l importent**, pas seulement
+  celle qu on visait : `verify-org-domain` embarquait l ancienne `_shared/org-integrations.ts` après W-2.
+  Avant de déployer : `grep -l "_shared/<module>" supabase/functions/*/index.ts`.
+- ✅ Déploiement sans Docker : `supabase functions deploy <slug> --use-api`, depuis la racine.
 
 ## 🔴 Douze fonctions, douze sections, douze sondes (2026-09-30)
 

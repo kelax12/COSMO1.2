@@ -56,9 +56,25 @@ export function createFileStorage(sessionPath = SESSION_PATH) {
   };
   const writeAll = (data) => {
     fs.mkdirSync(path.dirname(sessionPath), { recursive: true });
-    const existed = fs.existsSync(sessionPath);
-    fs.writeFileSync(sessionPath, JSON.stringify(data, null, 2), { mode: 0o600 });
-    if (!existed) restrictToOwner(sessionPath);
+    // Création atomique (`wx`) plutôt que `existsSync` puis écriture : entre les
+    // deux, le chemin pouvait changer, et ce fichier porte les jetons de session
+    // (CodeQL js/file-system-race, M-60). `wx` échoue si le fichier existe ;
+    // c'est ainsi qu'on sait qu'il vient d'être créé, donc qu'il faut poser l'ACL.
+    let fd;
+    let created = false;
+    try {
+      fd = fs.openSync(sessionPath, 'wx', 0o600);
+      created = true;
+    } catch (e) {
+      if (e?.code !== 'EEXIST') throw e;
+      fd = fs.openSync(sessionPath, 'w', 0o600);
+    }
+    try {
+      fs.writeFileSync(fd, JSON.stringify(data, null, 2));
+    } finally {
+      fs.closeSync(fd);
+    }
+    if (created) restrictToOwner(sessionPath);
   };
   return {
     getItem: (key) => {

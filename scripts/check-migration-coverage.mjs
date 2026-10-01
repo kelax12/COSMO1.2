@@ -177,7 +177,46 @@ function objetsCrees(sql) {
   for (const m of propre.matchAll(/add\s+constraint\s+([\w"]+)/gi)) {
     out.constraints.push(norm(m[1]));
   }
+  out.proprietaires = tablesProprietaires(propre, out);
   return out;
+}
+
+/**
+ * La TABLE a laquelle chaque objet cree est attache, quand il l'est.
+ *
+ * 🔴 Pourquoi (2026-10-01) : un `DROP TABLE` supprime aussi ses index, ses
+ * policies, ses triggers, ses colonnes et ses contraintes, SANS les nommer.
+ * La garde ne reconnaissait que les suppressions NOMMEES, et rendait donc
+ * « ABSENT DES DEUX » sur la mig. 196, appliquee puis retiree par la 200, qui
+ * fait `DROP TABLE` de ses deux tables.
+ *
+ * ⚠️ Une FONCTION n'est jamais attachee a une table : elle survit a son
+ * `DROP TABLE`, et doit etre supprimee nommement pour etre excusee.
+ *
+ * @returns {Map<string, string>} `kind:nom` -> table
+ */
+function tablesProprietaires(propre, out) {
+  const map = new Map();
+  for (const c of out.columns) map.set(`columns:${c}`, c.split('.')[0]);
+  for (const p of out.policies) map.set(`policies:${p}`, p.split('@@')[1]);
+  for (const m of propre.matchAll(
+    /create\s+(?:unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?([\w."]+)\s+on\s+(?:only\s+)?([\w."]+)/gi,
+  )) {
+    map.set(`indexes:${norm(m[1])}`, norm(m[2]));
+  }
+  for (const m of propre.matchAll(/create\s+(?:or\s+replace\s+)?trigger\s+([\w."]+)[^;]*?\son\s+([\w."]+)/gi)) {
+    map.set(`triggers:${norm(m[1])}`, norm(m[2]));
+  }
+  // `ALTER TABLE t ... ADD CONSTRAINT c` : lu instruction par instruction, pour
+  // ne jamais rattacher une contrainte a l'ALTER d'une AUTRE instruction.
+  for (const instr of propre.split(';')) {
+    const t = instr.match(/^\s*alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?([\w."]+)/i);
+    if (!t) continue;
+    for (const m of instr.matchAll(/add\s+constraint\s+([\w"]+)/gi)) {
+      map.set(`constraints:${norm(m[1])}`, norm(t[1]));
+    }
+  }
+  return map;
 }
 
 /**
@@ -341,11 +380,16 @@ export function classer(fichiers, intro) {
   }
   const ordre = new Map(fichiers.map((f, i) => [f.name, i]));
 
-  /** Le fichier ULTERIEUR a `name` qui supprime `kind: nom`, s'il existe. */
-  const supprimeApres = (name, kind, nom) => {
+  /**
+   * Le fichier ULTERIEUR a `name` qui supprime `kind: nom`, s'il existe :
+   * nommement, ou en supprimant la table a laquelle l'objet est attache.
+   */
+  const supprimeApres = (name, kind, nom, proprietaires) => {
+    const table = proprietaires?.get(`${kind}:${nom}`);
     for (const [autre, sup] of supprimeParFichier) {
       if (ordre.get(autre) <= ordre.get(name)) continue;
       if (sup[kind]?.includes(nom)) return autre;
+      if (table && sup.tables.includes(table)) return `${autre}, DROP TABLE ${table}`;
     }
     return null;
   };
@@ -364,7 +408,7 @@ export function classer(fichiers, intro) {
     for (const kind of KINDS) {
       for (const nom of objets[kind]) {
         if (catalogue[kind].has(nom)) { trouves.push(`${kind}: ${nom}`); continue; }
-        const par = supprimeApres(name, kind, nom);
+        const par = supprimeApres(name, kind, nom, objets.proprietaires);
         if (par) { retires.push(`${kind}: ${nom} (supprime par ${par})`); continue; }
         manquants.push(`${kind}: ${nom}`);
       }

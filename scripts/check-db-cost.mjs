@@ -42,7 +42,7 @@
 //    ou une policy réécrite.
 // ═══════════════════════════════════════════════════════════════════
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join, sep } from 'node:path';
 
 const RACINE = process.cwd();
@@ -216,9 +216,17 @@ if (estLanceDirectement) {
   }
 
   // ── La série, et la PENTE ────────────────────────────────────────
-  const serie = existsSync(SERIE)
-    ? JSON.parse(readFileSync(SERIE, 'utf8'))
-    : {
+  // Pas d'`existsSync` avant la lecture : vérifier puis lire le même chemin
+  // est une course (CodeQL js/file-system-race, M-60). L'absence se lit dans
+  // l'erreur de lecture elle-même.
+  let serieLue = null;
+  try {
+    serieLue = JSON.parse(readFileSync(SERIE, 'utf8'));
+  } catch (e) {
+    if (e?.code !== 'ENOENT') throw e;
+  }
+  const serie = serieLue
+    ?? {
       _comment: [
         'C-87 — série temporelle du coût serveur. Écrite par',
         '`node scripts/check-db-cost.mjs`, jamais à la main.',

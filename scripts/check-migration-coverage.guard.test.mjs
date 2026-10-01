@@ -89,6 +89,60 @@ describe('check-migration-coverage · le classeur', () => {
     expect(verdictDe(out, '002_cree.sql')).toBe(VERDICT.RETIRE);
   });
 
+  it('un DROP TABLE ULTERIEUR emporte les index, policies, triggers et contraintes de la table', () => {
+    // Cas reel de la mig. 196 (2026-10-01) : la 200 fait `DROP TABLE` de ses
+    // deux tables, et Postgres supprime avec elles tout ce qui leur est
+    // ATTACHE. Aucun de ces objets n'est nomme dans un DROP, et la garde
+    // rendait « ABSENT DES DEUX » sur une migration appliquee puis retiree.
+    const out = classer(
+      [
+        {
+          name: '002_cree.sql',
+          sql: [
+            'CREATE TABLE IF NOT EXISTS public.capacite (id uuid,',
+            '  CONSTRAINT capacite_range CHECK (true));',
+            'CREATE INDEX IF NOT EXISTS idx_capacite ON public.capacite (id);',
+            'CREATE TRIGGER trg_capacite BEFORE INSERT ON public.capacite FOR EACH ROW EXECUTE FUNCTION f();',
+            'CREATE POLICY "capacite_select" ON public.capacite FOR SELECT USING (true);',
+            'ALTER TABLE public.capacite ADD CONSTRAINT capacite_fk FOREIGN KEY (id) REFERENCES t(id);',
+          ].join('\n'),
+        },
+        { name: '003_supprime.sql', sql: 'DROP TABLE IF EXISTS public.capacite;' },
+      ],
+      CATALOGUE_PLEIN,
+    );
+    expect(verdictDe(out, '002_cree.sql')).toBe(VERDICT.RETIRE);
+  });
+
+  it("TEMOIN : un DROP TABLE n'emporte QUE les objets de CETTE table", () => {
+    const out = classer(
+      [
+        {
+          name: '002_cree.sql',
+          sql: 'CREATE TABLE public.capacite (id uuid);\nCREATE INDEX idx_capacite ON public.capacite (id);',
+        },
+        { name: '003_supprime_autre.sql', sql: 'DROP TABLE IF EXISTS public.autre_table;' },
+      ],
+      CATALOGUE_PLEIN,
+    );
+    expect(verdictDe(out, '002_cree.sql')).toBe(VERDICT.ABSENT);
+  });
+
+  it("TEMOIN : un DROP TABLE n'emporte PAS une fonction, qui ne lui est pas attachee", () => {
+    const out = classer(
+      [
+        {
+          name: '002_cree.sql',
+          sql: 'CREATE TABLE public.capacite (id uuid);\n'
+            + 'CREATE OR REPLACE FUNCTION public.capacite_avant() RETURNS trigger AS $$ $$ LANGUAGE plpgsql;',
+        },
+        { name: '003_supprime.sql', sql: 'DROP TABLE IF EXISTS public.capacite;' },
+      ],
+      CATALOGUE_PLEIN,
+    );
+    expect(verdictDe(out, '002_cree.sql')).toBe(VERDICT.ABSENT);
+  });
+
   it("TEMOIN : l'ordre compte, un DROP ANTERIEUR n'excuse rien", () => {
     // 🔴 Sans ce cas, il suffirait qu'un objet soit supprime N IMPORTE OU dans
     // le depot pour excuser son absence, y compris AVANT sa creation. La garde

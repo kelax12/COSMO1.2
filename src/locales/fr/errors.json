@@ -60,7 +60,8 @@
     "project_not_found": "Ce projet n'existe plus.",
     "project_viewer_read_only": "Vous êtes lecteur de ce projet : vous ne pouvez modifier que les tâches qui vous sont assignées.",
     "domain_taken": "Ce domaine est déjà vérifié par une autre entreprise.",
-    "email_domain_not_allowed": "Cette entreprise n'invite que des adresses de ses domaines vérifiés."
+    "email_domain_not_allowed": "Cette entreprise n'invite que des adresses de ses domaines vérifiés.",
+    "open_link_not_allowed": "Cette entreprise n'accepte que des invitations nominatives à ses domaines vérifiés : ce lien ouvert ne peut pas être utilisé."
   },
   "validation": {
     "fallback": "Données invalides",

@@ -16,6 +16,12 @@
 > [`archive/faille-historique.md`](./archive/faille-historique.md) = historique des corrections (archive, non maintenue).
 > Ce document = règles permanentes à respecter. Les codes `(V1)`, `(N9)`, `(M-6)`… réfèrent aux fiches `faille.md`.
 
+> ✅ **2026-10-01** : les douze Edge Functions sont **identiques au dépôt** (`Edge deploy drift`
+> vert), mig. `204`, `207`-`210` appliquées, les 23 tables `160`-`207` auditées acteur par acteur
+> en prod (`supabase/proofs/a1-tables-160-207.proof.sql`). Une règle en sort : une preuve de
+> migration se joue en prod dans un bloc `DO` dont la seule issue est `RAISE EXCEPTION`, avec une
+> passe témoin SANS la migration. Détail : [`../faille.md`](../faille.md).
+>
 > 🔴 **Relu le 2026-09-30 : les chiffres ci-dessous sont PÉRIMÉS.** La base porte **76 tables**
 > dans `public` (toutes sous RLS, relevé de la session d'audit du jour) et les advisors rendent
 > `11 / 78 / 2 / 1`. Douze Edge Functions, pas huit. Surface nouvelle et findings :
