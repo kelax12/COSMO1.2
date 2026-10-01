@@ -206,7 +206,10 @@ const DashboardPage: React.FC = () => {
                 )}
                 </PageHeading>
               {/* Résumé contextuel cliquable (#38) + « Journée bouclée » (#39) */}
+              {/* `data-testid` : masqué par la garde visuelle. Le « prochain
+                  événement » dépend de l'HEURE du run (avant ou après 10:00). */}
               <motion.p
+                data-testid="dashboard-summary"
                 className="text-[rgb(var(--color-text-secondary))] text-label sm:text-base lg:text-lg"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

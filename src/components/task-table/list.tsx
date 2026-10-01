@@ -440,9 +440,11 @@ export const TaskRow = React.memo(({
       </td>
       <td className={`${addToListMode ? 'px-0' : 'px-2'} py-4 whitespace-nowrap text-base font-medium`}>
         {activeQuickFilter === 'completed'
-          ? (task.completedAt ? formatDeadlineSmart(task.completedAt) : '—')
+          // `<time>` : une date relative à aujourd'hui (« dimanche », « 8 octobre »),
+          // que la garde visuelle masque (`MASQUES`, e2e/visual-regression.spec.ts).
+          ? (task.completedAt ? <time dateTime={task.completedAt}>{formatDeadlineSmart(task.completedAt)}</time> : '—')
           : (task.deadline
-              ? <span className={overdue ? 'text-red-500 font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</span>
+              ? <time dateTime={task.deadline} className={overdue ? 'text-red-500 font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</time>
               : <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('card.noDeadline')}</span>)}
       </td>
       <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatDuration(task.estimatedTime)}</td>
