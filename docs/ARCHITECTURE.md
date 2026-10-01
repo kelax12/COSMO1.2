@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **93 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **93 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
 
 # Architecture — invariants, dette et vérification
 
@@ -22,7 +22,20 @@ dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → **93 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir)
+## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → 93 → **93 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
+
+> ### ⚪ 2026-10-01 · 0 : vérifiée inchangée
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du jour : CI de `main` (`43fed445` à
+> `7cd73d24`), production (catalogue, advisors), dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | `tsc -b`, `check:cycles`, `architecture.guard` | 0 | verts en CI à `7cd73d24` (`architecture.guard` est dans la suite unitaire, verte). Le dépassement de 600 lignes vu en local (`OKRPage.tsx`, 617) est le travail NON commité d'une autre session |
+> | AM-4, `MobileShowcases` hors garde | 0 | inchangés, déjà payés |
+>
+> **93 → 93.** Détail : [tableau de bord](./README.md).
 
 > ### 🟢 2026-09-22 (soir) · +4 : remesure item par item, contre la CI réelle et la production
 >

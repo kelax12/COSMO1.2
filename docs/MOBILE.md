@@ -1,4 +1,4 @@
-<!-- note-audit: note=75 -->
+<!-- note-audit: note=74 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,24 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **75 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **74 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
 
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → **75 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir)
+## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → **74 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
+
+> ### 🟠 2026-10-01 · −1
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du jour : CI de `main` (`43fed445` à
+> `7cd73d24`), production (catalogue, advisors), dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | 🔴 Cibles tactiles sous 44 px | **−1** | « Sélectionner plusieurs tâches » 106 × 32, « Suivre cette tâche » 149 × 36 (cf. `ACCESSIBILITY.md`). Compté ici aussi : c'est un défaut au doigt |
+> | LCP mobile, parcours WebKit | 0 | déjà payés ; les échecs `mobile-safari` du jour sont ceux de chromium (suite entreprise en retard sur l'écran), comptés dans `TESTING.md` |
+>
+> **75 → 74.** Détail : [tableau de bord](./README.md).
 
 > ### 🟢 2026-09-22 (soir) · +2 : remesure item par item, contre la CI réelle et la production
 >

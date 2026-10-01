@@ -62,6 +62,58 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-01 (soir) · **passe complète : les onze audits rejoués, 943 → 945**
+
+Consigne d'Axel : « mets à jour tous les audits ». Comme le 2026-09-22, chaque item a été confronté à
+**la CI réelle** (`main`, de `43fed445` à `7cd73d24`), à **la production** (catalogue, advisors) et au
+**dépôt à `HEAD`**. Même règle : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+défaut que corrigé et vérifié.
+
+### 🔴 Ce que la passe a trouvé avant de noter : quatre rouges cachés les uns derrière les autres
+
+`lint-test-build` s'arrêtait à `check:erasure` depuis le 2026-09-29. Chaque garde réparée a révélé la
+suivante, et aucune n'avait été vue, parce que le job était déjà rouge :
+
+| Étape | Cause | Réparé le 2026-10-01 |
+|---|---|---|
+| `check:erasure` | `team_okr_members` (mig. `205`) sans décision d'effacement ; la garde ne savait pas prouver une cascade INDIRECTE | ✅ `d74d7427`, garde étendue, témoin à quatre pièges |
+| `check:portability` | même table, ni exportée ni déclarée | ✅ `7a6897fa` |
+| `check:env` | **faux positif depuis la pose de la garde** (09-21) : `INVITE_ROW` lu comme `VITE_ROW`, et deux entrées du contrat écrites pour le faire taire | ✅ `7a6897fa`, limite de mot, témoin |
+| tests unitaires | `useAgendaMobileView` intermittent : `Date.now()` dans la même milliseconde | ✅ `7cd73d24`, témoin à horloge figée |
+| **couverture** | cinq dépôts livrés sans test (`org-config`, `org-reports`, `governance`, `execution` à 0 %, `team-lists` 11 %) | 🔴 **ouvert** : `org-config` est en cours de modification par une autre session |
+
+Après les quatre premiers : **299 fichiers, 3 284 tests, tous verts** en CI. 🔴 **Dernier `CI` vert sur
+`main` : 2026-09-23** (`869fb05a`). Le build et `check:bundle` n'ont plus été atteints en CI depuis le 09-28.
+
+### Les notes
+
+| Audit | Avant | **2026-10-01** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 78 | **84** | **+6** | cf. section suivante. Advisors relus ce soir : **11 / 80 / 2 / 1**, les deux de plus sont les fonctions voulues de la mig. `212` |
+| [UI / UX](./UI-PATTERNS.md) | 83 | **86** | **+3** | `Visual` a enfin COMPARÉ : rouge sur une vraie régression (`/settings`), vert après correction. AM-1 (+2), AM-2 (+1) |
+| [RGPD](./RGPD.md) | 86 | **87** | **+1** | AM-3 `retention` vert (+1) ; `team_okr_members` sans décision (−1), décidée et garde étendue le jour même (+1) |
+| [Tests / CI](./TESTING.md) | 92 | **92** | 0 | `Sabotages` (+1), les quatre gardes muettes ont parlé (+1) ; e2e **60 échecs** (suite entreprise en retard sur l'écran, −1) ; cinq dépôts sans test (−1) |
+| [Architecture](./ARCHITECTURE.md) | 93 | **93** | 0 | `tsc`, cycles, `architecture.guard` verts en CI |
+| [Performance](./PERFORMANCE.md) | 93 | **93** | 0 | `C-116` corrigé en local (1,8 à 2,0 s) mais **LCP mobile 3,6 à 8,1 s en CI** ; budget non vérifié en CI depuis le 09-28 |
+| [Scalabilité](./SCALABILITY.md) | 90 | **90** | 0 | premier run planifié de charge le 2026-10-03 ; `cout-db` vert |
+| [i18n](./I18N.md) | 88 | **88** | 0 | quatre gardes i18n vertes en CI |
+| [SEO](./SEO.md) | 78 | **78** | 0 | SEO Lighthouse 100 sur sept URLs, 92 sur `/en/` ; LCP déjà payé |
+| [Accessibilité](./ACCESSIBILITY.md) | 81 | **80** | **−1** | AM-5 (+1) ; **Agenda : deux violations axe critiques, niveau A** (−1) ; cibles tactiles sous 44 px (−1) |
+| [Mobile / DA](./MOBILE.md) | 75 | **74** | **−1** | cibles tactiles sous 44 px (−1) |
+
+**943 → 945.** Les deux baisses sont des **défauts produit nouveaux et non corrigés**, trouvés par des
+gardes qui tournent : c'est exactement ce qu'on leur demande.
+
+### Ce qu'il faut faire, dans l'ordre
+
+1. **Tests des cinq dépôts** sans couverture : seul blocage restant avant le build et le budget en CI.
+2. **Agenda** : retirer le `role="region"` posé dans la grille FullCalendar (WCAG 1.3.1, niveau A).
+3. **Cibles tactiles** : « Sélectionner plusieurs tâches » (106 × 32), « Suivre cette tâche » (149 × 36).
+4. **Suite e2e entreprise** : la remettre au niveau de l'écran (« Personnes » → « Membres », navigation).
+5. **LCP mobile** : `C-116` à remesurer en CI ; l'élément LCP est le paragraphe animé du hero.
+
+---
+
 ## Mise à jour du 2026-10-01 · **sécurité 78 → 84 : les correctifs du 09-30 sont en production**
 
 | Domaine | Avant | Après | Δ | Pourquoi |
