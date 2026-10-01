@@ -142,29 +142,29 @@ const OrgSettingsSection = ({
   // entrée porte la MÊME garde que le bloc qu'elle ouvre : une rubrique
   // invisible n'apparaît pas non plus dans le menu.
   const allGroups: NavGroup[] = [
-    { label: t('orgSettings.groupCompany'), items: [
-      { id: 'profile', icon: Building2, label: t('orgSettings.navProfile') },
-      { id: 'general', icon: SlidersHorizontal, label: t('orgSettings.navGeneral') },
-      { id: 'orgs', icon: Repeat, label: t('orgSettings.navOrgs') },
+    { label: ta('orgSettings.groupCompany'), items: [
+      { id: 'profile', icon: Building2, label: ta('orgSettings.navProfile') },
+      { id: 'general', icon: SlidersHorizontal, label: ta('orgSettings.navGeneral') },
+      { id: 'orgs', icon: Repeat, label: ta('orgSettings.navOrgs') },
     ] },
-    { label: t('orgSettings.groupAccess'), items: [
-      { id: 'invite', icon: UserPlus, label: t('orgSettings.navInvite') },
-      { id: 'myRights', icon: ShieldCheck, label: t('orgSettings.navMyRights') },
-      ...(isAdmin ? [{ id: 'permissions' as const, icon: KeyRound, label: t('orgSettings.navPermissions') }] : []),
-      ...(isAdmin ? [{ id: 'security' as const, icon: Lock, label: t('orgSettings.navSecurity') }] : []),
+    { label: ta('orgSettings.groupAccess'), items: [
+      { id: 'invite', icon: UserPlus, label: ta('orgSettings.navInvite') },
+      { id: 'myRights', icon: ShieldCheck, label: ta('orgSettings.navMyRights') },
+      ...(isAdmin ? [{ id: 'permissions' as const, icon: KeyRound, label: ta('orgSettings.navPermissions') }] : []),
+      ...(isAdmin ? [{ id: 'security' as const, icon: Lock, label: ta('orgSettings.navSecurity') }] : []),
     ] },
-    { label: t('orgSettings.groupWork'), items: [
-      ...(canManageCategories ? [{ id: 'categories' as const, icon: Tags, label: t('orgSettings.navCategories') }] : []),
-      ...(isAdmin ? [{ id: 'fields' as const, icon: ListPlus, label: t('orgSettings.navFields') }] : []),
-      ...(isAdmin ? [{ id: 'automations' as const, icon: Zap, label: t('orgSettings.navAutomations') }] : []),
+    { label: ta('orgSettings.groupWork'), items: [
+      ...(canManageCategories ? [{ id: 'categories' as const, icon: Tags, label: ta('orgSettings.navCategories') }] : []),
+      ...(isAdmin ? [{ id: 'fields' as const, icon: ListPlus, label: ta('orgSettings.navFields') }] : []),
+      ...(isAdmin ? [{ id: 'automations' as const, icon: Zap, label: ta('orgSettings.navAutomations') }] : []),
     ] },
-    { label: t('orgSettings.groupTracking'), items: [
-      { id: 'integrations', icon: Plug, label: t('orgSettings.navIntegrations') },
-      { id: 'notifications', icon: Bell, label: t('orgSettings.navNotifications') },
-      ...(canReports ? [{ id: 'reports' as const, icon: FileText, label: t('orgSettings.navReports') }] : []),
-      { id: 'export', icon: Download, label: t('orgSettings.navExport') },
-      ...(isAdmin ? [{ id: 'audit' as const, icon: History, label: t('orgSettings.navAudit') }] : []),
-      ...(isOwner ? [{ id: 'plan' as const, icon: Receipt, label: t('orgSettings.navPlan') }] : []),
+    { label: ta('orgSettings.groupTracking'), items: [
+      { id: 'integrations', icon: Plug, label: ta('orgSettings.navIntegrations') },
+      { id: 'notifications', icon: Bell, label: ta('orgSettings.navNotifications') },
+      ...(canReports ? [{ id: 'reports' as const, icon: FileText, label: ta('orgSettings.navReports') }] : []),
+      { id: 'export', icon: Download, label: ta('orgSettings.navExport') },
+      ...(isAdmin ? [{ id: 'audit' as const, icon: History, label: ta('orgSettings.navAudit') }] : []),
+      ...(isOwner ? [{ id: 'plan' as const, icon: Receipt, label: ta('orgSettings.navPlan') }] : []),
     ] },
   ];
   const groups = allGroups.filter((g) => g.items.length > 0);
@@ -195,27 +195,27 @@ const OrgSettingsSection = ({
   return (
     <div className="max-w-5xl md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 md:items-start">
       <nav
-        aria-label={t('orgSettings.navLabel')}
+        aria-label={ta('orgSettings.navLabel')}
         className="mb-4 md:mb-0 md:sticky md:top-4 flex md:block gap-1 overflow-x-auto [scrollbar-width:none] md:overflow-visible -mx-1 px-1 pb-1 md:p-3 md:mx-0 md:rounded-2xl md:border md:border-[rgb(var(--color-border))] md:bg-[rgb(var(--color-surface))]"
       >
         {groups.map((g) => (
           <div key={g.label} className="contents md:block md:mb-3">
             <p className="hidden md:block px-2.5 mb-1 text-caption font-semibold text-[rgb(var(--color-text-muted))]">{g.label}</p>
             {g.items.map((i) => navButton(i.id, i.icon, i.label))}
-            {g.label === t('orgSettings.groupAccess') && (
+            {g.label === ta('orgSettings.groupAccess') && (
               <Link
                 to={buildOrgLink('members')}
                 className="shrink-0 md:w-full min-h-9 flex items-center gap-2 px-2.5 rounded-lg text-sm whitespace-nowrap text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
               >
                 <Users size={15} aria-hidden="true" className="shrink-0" />
-                <span className="truncate">{t('orgSettings.navPeople')}</span>
+                <span className="truncate">{ta('orgSettings.navPeople')}</span>
                 <ArrowUpRight size={13} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-text-muted))]" />
               </Link>
             )}
           </div>
         ))}
         <div className="contents md:block md:pt-2 md:border-t md:border-[rgb(var(--color-border))]">
-          {navButton('danger', isOwner ? AlertTriangle : LogOut, isOwner ? t('orgSettings.navDanger') : t('orgSettings.navLeave'), true)}
+          {navButton('danger', isOwner ? AlertTriangle : LogOut, isOwner ? ta('orgSettings.navDanger') : ta('orgSettings.navLeave'), true)}
         </div>
       </nav>
 
@@ -224,7 +224,7 @@ const OrgSettingsSection = ({
           feuille ouverte par un crayon de l'en-tête, qui mène désormais ici). */}
       {active === 'profile' && (
       <section className={CARD} id="org-profile">
-        <h2 className={TITLE}>{t('orgSettings.profileTitle')}</h2>
+        <h2 className={TITLE}>{ta('orgSettings.profileTitle')}</h2>
         {isAdmin ? (
           <div className="mt-3"><OrgProfileForm org={org} /></div>
         ) : (
@@ -242,9 +242,9 @@ const OrgSettingsSection = ({
                 {org.industry ? <span className="text-[rgb(var(--color-text-muted))]"> · {org.industry}</span> : null}
               </p>
               <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">
-                {org.description || t('orgSettings.noDescription')}
+                {org.description || ta('orgSettings.noDescription')}
               </p>
-              <p className={HINT}>{t('orgSettings.profileReadOnly')}</p>
+              <p className={HINT}>{ta('orgSettings.profileReadOnly')}</p>
             </div>
           </div>
         )}
@@ -266,8 +266,8 @@ const OrgSettingsSection = ({
           toute l'organisation ; leur gestion vivait sous l'onglet OKR. */}
       {active === 'categories' && canManageCategories && (
         <section className={CARD}>
-          <h2 className={TITLE}>{t('settings.tab_categories')}</h2>
-          <p className={`${HINT} mb-3`}>{t('settings.categoriesIntro')}</p>
+          <h2 className={TITLE}>{ta('settings.tab_categories')}</h2>
+          <p className={`${HINT} mb-3`}>{ta('settings.categoriesIntro')}</p>
           <Suspense fallback={null}>
             <TeamCategoryTreeManager orgId={org.id} />
           </Suspense>
@@ -278,7 +278,7 @@ const OrgSettingsSection = ({
           en un tableau, au lieu d'ouvrir chaque fiche de l'annuaire. */}
       {active === 'permissions' && isAdmin && (
         <section className={CARD}>
-          <h2 className={TITLE}>{t('settings.tab_permissions')}</h2>
+          <h2 className={TITLE}>{ta('settings.tab_permissions')}</h2>
           <div className="mt-2">
             <Suspense fallback={null}>
               <OrgSettingsPermissions orgId={org.id} members={members} currentUserId={currentUserId} isAdmin={isAdmin} />
@@ -306,8 +306,8 @@ const OrgSettingsSection = ({
         >
           <Bell size={18} aria-hidden="true" className="text-[rgb(var(--color-text-muted))] shrink-0" />
           <span className="flex-1 min-w-0">
-            <span className={`block ${TITLE}`}>{t('notifSettings.title')}</span>
-            <span className={`block ${HINT}`}>{t('orgSettings.notificationsHint')}</span>
+            <span className={`block ${TITLE}`}>{ta('notifSettings.title')}</span>
+            <span className={`block ${HINT}`}>{ta('orgSettings.notificationsHint')}</span>
           </span>
           <ChevronRight size={16} aria-hidden="true" className="text-[rgb(var(--color-text-muted))] shrink-0" />
         </button>
@@ -318,8 +318,8 @@ const OrgSettingsSection = ({
           l'application, et seulement quand on en avait plusieurs. */}
       {active === 'orgs' && (
       <section className={CARD}>
-        <h2 className={TITLE}>{t('orgSettings.orgsTitle')}</h2>
-        <p className={HINT}>{t('orgSettings.orgsHint')}</p>
+        <h2 className={TITLE}>{ta('orgSettings.orgsTitle')}</h2>
+        <p className={HINT}>{ta('orgSettings.orgsHint')}</p>
         <ul className="mt-3 space-y-1">
           {organizations.map((o) => {
             const current = o.id === org.id;
@@ -340,10 +340,10 @@ const OrgSettingsSection = ({
                   )}
                   {current ? (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                      <Check size={13} aria-hidden="true" /> {t('orgSettings.current')}
+                      <Check size={13} aria-hidden="true" /> {ta('orgSettings.current')}
                     </span>
                   ) : (
-                    <span className="text-xs text-[rgb(var(--color-accent))]">{t('orgSettings.open')}</span>
+                    <span className="text-xs text-[rgb(var(--color-accent))]">{ta('orgSettings.open')}</span>
                   )}
                 </button>
               </li>
@@ -362,8 +362,8 @@ const OrgSettingsSection = ({
       {/* Forfait : au seul propriétaire, comme la pastille de l'en-tête. */}
       {active === 'plan' && isOwner && (
         <section className={CARD}>
-          <h2 className={TITLE}>{t('orgSettings.planTitle')}</h2>
-          <p className={`${HINT} mb-3`}>{t('orgSettings.planHint')}</p>
+          <h2 className={TITLE}>{ta('orgSettings.planTitle')}</h2>
+          <p className={`${HINT} mb-3`}>{ta('orgSettings.planHint')}</p>
           <OrgPlanChip orgId={org.id} active={false} onOpen={() => navigate(buildOrgLink('billing'))} />
         </section>
       )}
@@ -396,12 +396,12 @@ const OrgSettingsSection = ({
         <section className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 md:p-5 space-y-4">
           <div>
             <h2 className="flex items-center gap-2 text-base font-bold text-[rgb(var(--color-text-primary))]">
-              {t('reports.title')}
+              {ta('reports.title')}
               <span className="px-1.5 py-0.5 rounded-md text-caption font-semibold uppercase tracking-wide bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]">
-                {t('reports.beta')}
+                {ta('reports.beta')}
               </span>
             </h2>
-            <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('reports.betaHint')}</p>
+            <p className="text-sm text-[rgb(var(--color-text-muted))]">{ta('reports.betaHint')}</p>
           </div>
           <Suspense fallback={null}>
             <OrgReportsSection orgId={org.id} members={members} currentUserId={currentUserId} />
@@ -436,9 +436,9 @@ const OrgSettingsSection = ({
         {isOwner ? (
           <div className="rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/40 dark:bg-red-900/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 id="org-danger-title" className="text-sm font-bold text-red-600 dark:text-red-400">{t('page.dangerZone')}</h2>
+              <h2 id="org-danger-title" className="text-sm font-bold text-red-600 dark:text-red-400">{ta('page.dangerZone')}</h2>
               <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                {t('page.dangerHint')}
+                {ta('page.dangerHint')}
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 shrink-0">
@@ -449,7 +449,7 @@ const OrgSettingsSection = ({
                   disabled={transferMutation.isPending}
                   className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-60 transition-colors"
                 >
-                  <ArrowRightLeft size={15} aria-hidden="true" /> {t('page.transferOwnership')}
+                  <ArrowRightLeft size={15} aria-hidden="true" /> {ta('page.transferOwnership')}
                 </button>
               )}
               <button
@@ -458,20 +458,20 @@ const OrgSettingsSection = ({
                 disabled={deleteFlow.isPending}
                 className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60 transition-colors"
               >
-                <Trash2 size={15} aria-hidden="true" /> {t('page.deleteOrg')}
+                <Trash2 size={15} aria-hidden="true" /> {ta('page.deleteOrg')}
               </button>
             </div>
           </div>
         ) : (
           <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <h2 id="org-danger-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('settings.leaveTitle')}</h2>
+            <h2 id="org-danger-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{ta('settings.leaveTitle')}</h2>
             <button
               type="button"
               onClick={() => setConfirmingLeave(true)}
               disabled={leaveMutation.isPending}
               className="inline-flex items-center gap-1.5 text-sm font-medium text-red-500 hover:text-red-600 transition-colors disabled:opacity-60"
             >
-              <LogOut size={15} aria-hidden="true" /> {t('page.leaveOrg')}
+              <LogOut size={15} aria-hidden="true" /> {ta('page.leaveOrg')}
             </button>
           </div>
         )}

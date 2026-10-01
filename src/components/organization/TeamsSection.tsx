@@ -110,7 +110,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
 
 
       {loadingTeams ? (
-        <OrgTabSkeleton label={t('page.tabLoading')} />
+        <OrgTabSkeleton label={ta('page.tabLoading')} />
       ) : teams.length === 0 ? (
         <OrgEmptyState
           Icon={UsersRound}

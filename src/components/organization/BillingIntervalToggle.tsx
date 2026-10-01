@@ -23,12 +23,12 @@ const INTERVALS: OrgBillingInterval[] = ['monthly', 'yearly'];
  * être annoncé, pas seulement peint.
  */
 export function BillingIntervalToggle({ value, onChange, disabled }: Props) {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
 
   return (
     <div
       role="radiogroup"
-      aria-label={t('billing.intervalLegend')}
+      aria-label={tOrgAdmin('billing.intervalLegend')}
       className="inline-flex items-center gap-1 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-1"
     >
       {INTERVALS.map((interval) => {
@@ -47,7 +47,7 @@ export function BillingIntervalToggle({ value, onChange, disabled }: Props) {
                 : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
             }`}
           >
-            {interval === 'monthly' ? t('billing.intervalMonthly') : t('billing.intervalYearly')}
+            {interval === 'monthly' ? tOrgAdmin('billing.intervalMonthly') : tOrgAdmin('billing.intervalYearly')}
             {/* La remise reste visible même quand l'annuel est déjà coché : elle
                 explique le prix affiché, ce n'est pas seulement un appât. */}
             {interval === 'yearly' && (
@@ -58,7 +58,7 @@ export function BillingIntervalToggle({ value, onChange, disabled }: Props) {
                     : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
                 }`}
               >
-                {t('billing.intervalSave')}
+                {tOrgAdmin('billing.intervalSave')}
               </span>
             )}
           </button>

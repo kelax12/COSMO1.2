@@ -2,6 +2,7 @@ import React from 'react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { useT } from '@/i18n/useT';
 import LegalDocument, { type LegalSection } from './legal/LegalDocument';
+import type { KeyOf } from '@/i18n/catalog';
 
 /**
  * Conditions Générales d'Utilisation.
@@ -16,7 +17,7 @@ import LegalDocument, { type LegalSection } from './legal/LegalDocument';
  *   - l'article 11 prévoit un préavis de 30 jours par e-mail pour toute
  *     modification substantielle.
  */
-const SECTIONS: LegalSection[] = [
+const SECTIONS: LegalSection<KeyOf<'legalTerms'>>[] = [
   {
     title: 'terms.s1.title',
     blocks: [{ kind: 'p', key: 'terms.s1.p1' }, { kind: 'p', key: 'terms.s1.p2' }],
@@ -129,7 +130,7 @@ const SECTIONS: LegalSection[] = [
 ];
 
 const CGUPage: React.FC = () => {
-  const { t } = useT('legal');
+  const { t } = useT('legalTerms');
   useSeoMeta({
     title: t('terms.seoTitle'),
     description: t('terms.seoDescription'),
@@ -138,6 +139,7 @@ const CGUPage: React.FC = () => {
 
   return (
     <LegalDocument
+      text={t}
       titleKey="terms.title"
       updatedAtKey="terms.updatedAt"
       sections={SECTIONS}

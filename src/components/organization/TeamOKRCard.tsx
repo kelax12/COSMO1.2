@@ -29,7 +29,7 @@ interface TeamKRRowProps {
 }
 
 const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf }: TeamKRRowProps) => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const { t: pf } = useT('portfolio');
   const [value, setValue] = useState<string>(String(kr.currentValue));
 
@@ -106,7 +106,7 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf }: Te
           onChange={(e) => setValue(e.target.value)}
           onBlur={commit}
           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-          aria-label={t('okrTab.currentValueAria', { title: kr.title })}
+          aria-label={tOrgAdmin('okrTab.currentValueAria', { title: kr.title })}
           className="w-16 h-8 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500/40"
         />
       )}

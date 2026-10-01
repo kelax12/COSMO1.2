@@ -12,7 +12,6 @@ import {
   type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { priorityLabelOf } from './team-projects.helpers';
-import TaskCommentsSection from './TaskCommentsSection';
 import MemberPickList from './MemberPickList';
 import TeamTaskFields from './TeamTaskFields';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
@@ -30,6 +29,11 @@ const TeamTaskListsField = lazyWithRetry(() => import('./TeamTaskListsField'));
 // Suivre (mig. 162) et champs personnalisés (mig. 197) : UN chargement pour les
 // deux, catalogue compris (`TAB_GATE_HOSTS` : cette fiche déclare sa liste).
 const TaskDetailsExtras = lazyWithRetry(() => import('./TaskDetailsExtras'), ['org', 'orgConfig', 'overlays']);
+// Commentaires (2026-10-01) : panneau latéral, sous le premier affichage. Sortis
+// du chunk pour le ramener sous son plafond (16,0 ko pour 14,5). Le brouillon
+// « Créer et commenter » part toujours au MONTAGE de la section, qui attend
+// simplement son module.
+const TaskCommentsSection = lazyWithRetry(() => import('./TaskCommentsSection'));
 
 
 type TaskTab = 'details' | 'subtasks' | 'dependencies' | 'history';
@@ -278,13 +282,15 @@ const TeamTaskModal = ({
   const sidePanelStyle = { backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' };
 
   const comments = liveTask ? (
-    <TaskCommentsSection
-      taskId={liveTask.id}
-      members={members}
-      currentUserId={user?.id}
-      autoSubmitDraft={pendingCommentDraft}
-      onAutoSubmitted={() => setPendingCommentDraft(null)}
-    />
+    <Suspense fallback={null}>
+      <TaskCommentsSection
+        taskId={liveTask.id}
+        members={members}
+        currentUserId={user?.id}
+        autoSubmitDraft={pendingCommentDraft}
+        onAutoSubmitted={() => setPendingCommentDraft(null)}
+      />
+    </Suspense>
   ) : (
     <PreCreateCommentComposer onSubmit={createAndComment} pending={pending} canSubmit={!!name.trim() && !!projectId} />
   );

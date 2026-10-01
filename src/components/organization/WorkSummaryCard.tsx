@@ -74,9 +74,9 @@ export const ProgressRing = ({ value, label }: { value: number; label: string })
 const WorkSummaryCard = ({
   title, completed, inProgress, overdue, aside, emptyLabel,
 }: WorkSummaryCardProps) => {
-  const { t, tp } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const total = completed + inProgress + overdue;
-  const barLabel = t('summary.barLabel', { completed, inProgress, overdue });
+  const barLabel = tOrgAdmin('summary.barLabel', { completed, inProgress, overdue });
 
   return (
     <div className={`min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-5 grid grid-cols-1 gap-5 sm:gap-6 items-center ${aside ? 'sm:grid-cols-[1fr_auto]' : ''}`}>
@@ -87,12 +87,12 @@ const WorkSummaryCard = ({
               éléments, le pourcentage est une précision que personne n'a
               demandée, et il efface le nombre qu'on cherchait. */}
           {total > 0 && (
-            <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0 tabular-nums">{tp('summary.completedOf', completed, { total })}</span>
+            <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0 tabular-nums">{tpOrgAdmin('summary.completedOf', completed, { total })}</span>
           )}
         </div>
 
         {total === 0 ? (
-          <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{emptyLabel ?? t('summary.empty')}</p>
+          <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{emptyLabel ?? tOrgAdmin('summary.empty')}</p>
         ) : (
           <>
             {/* ── Maquette 106 : une barre d'avancement montre l'avancement ──
@@ -116,9 +116,9 @@ const WorkSummaryCard = ({
               <Segment ratio={completed / total} colorClass="bg-emerald-500" />
             </div>
             <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3.5">
-              <LegendDot colorClass="bg-emerald-500" label={t('summary.legendCompleted')} value={completed} />
-              <LegendDot colorClass="bg-[rgb(var(--color-text-muted))]" label={t('summary.legendInProgress')} value={inProgress} />
-              <LegendDot colorClass="bg-red-500" label={t('summary.legendOverdue')} value={overdue} valueClass="text-red-500" />
+              <LegendDot colorClass="bg-emerald-500" label={tOrgAdmin('summary.legendCompleted')} value={completed} />
+              <LegendDot colorClass="bg-[rgb(var(--color-text-muted))]" label={tOrgAdmin('summary.legendInProgress')} value={inProgress} />
+              <LegendDot colorClass="bg-red-500" label={tOrgAdmin('summary.legendOverdue')} value={overdue} valueClass="text-red-500" />
             </div>
           </>
         )}

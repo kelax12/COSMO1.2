@@ -31,7 +31,7 @@ interface Props {
  * `useModalA11y` (piège de focus, Échap, C-53).
  */
 const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId, shortcuts, onSearch }) => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const active = items.find((item) => item.id === activeId);
@@ -44,7 +44,7 @@ const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId, shortcuts, onSea
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={t('sideNav.switchSection', { section: active?.label ?? '' })}
+        aria-label={tOrgAdmin('sideNav.switchSection', { section: active?.label ?? '' })}
         data-org-section-switcher=""
         className="w-full flex items-center gap-2.5 px-4 min-h-touch rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-left active:bg-[rgb(var(--color-hover))] transition-colors"
       >
@@ -99,13 +99,13 @@ interface SheetProps {
 }
 
 const SectionSheet: React.FC<SheetProps> = ({ items, activeId, shortcuts, onClose, onSelect, onGo, onSearch }) => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const sheetMotion = useSheetMotion();
   const { sheetRef, backdropOpacity, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const { ref: panelRef, dialogProps } = useModalA11y<HTMLDivElement>({
     open: true,
     onClose,
-    label: t('sideNav.label'),
+    label: tOrgAdmin('sideNav.label'),
   });
 
   return (
@@ -139,7 +139,7 @@ const SectionSheet: React.FC<SheetProps> = ({ items, activeId, shortcuts, onClos
               className="w-full flex items-center gap-2.5 px-4 min-h-touch rounded-2xl bg-[rgb(var(--color-surface))] text-body text-[rgb(var(--color-text-muted))] active:bg-[rgb(var(--color-hover))]"
             >
               <Search size={18} aria-hidden="true" />
-              {t('sideNav.search')}
+              {tOrgAdmin('sideNav.search')}
             </button>
           )}
           {ORG_SECTION_GROUPS.map((group) => {
@@ -148,7 +148,7 @@ const SectionSheet: React.FC<SheetProps> = ({ items, activeId, shortcuts, onClos
             return (
               <div key={group.id}>
                 <p className="px-1 pt-1 pb-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
-                  {t(group.labelKey)}
+                  {tOrgAdmin(group.labelKey)}
                 </p>
                 <ul className="grid grid-cols-3 gap-2">
                   {groupItems.map(({ id, label, Icon, badgeCount, badgeAriaLabel }) => {
@@ -191,7 +191,7 @@ const SectionSheet: React.FC<SheetProps> = ({ items, activeId, shortcuts, onClos
           {shortcuts && shortcuts.items.length > 0 && (
             <div>
               <p className="px-1 pt-1 pb-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
-                {t(shortcuts.kind === 'pinned' ? 'sideNav.groupPinned' : 'sideNav.groupRecent')}
+                {tOrgAdmin(shortcuts.kind === 'pinned' ? 'sideNav.groupPinned' : 'sideNav.groupRecent')}
               </p>
               <ul className="space-y-1">
                 {shortcuts.items.map((item) => (

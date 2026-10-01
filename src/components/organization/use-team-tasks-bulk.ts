@@ -18,6 +18,7 @@ import { useTeamTasksSelection } from './use-team-tasks-selection';
 export const useTeamTasksBulk = (orgId: string, visibleTasks: TeamTask[]) => {
   const { canAssign } = useMyOrgPermissions(orgId);
   const { tp } = useT('org');
+  const { tp: tpOrgAdmin } = useT('orgAdmin');
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
   const restoreTask = useRestoreTeamTask(orgId);
@@ -33,9 +34,9 @@ export const useTeamTasksBulk = (orgId: string, visibleTasks: TeamTask[]) => {
       // sinon ce catalogue (cf. lazy-namespaces.guard).
       // Un seul libellé pour les trois gestes : le toast dit ce qui s'annule
       // (« 3 tâches mises à jour »), le geste vient d'être fait sous les yeux.
-      reassigned: (count) => tp('bulkUndo.updated', count),
-      moved: (count) => tp('bulkUndo.updated', count),
-      statusChanged: (count) => tp('bulkUndo.updated', count),
+      reassigned: (count) => tpOrgAdmin('bulkUndo.updated', count),
+      moved: (count) => tpOrgAdmin('bulkUndo.updated', count),
+      statusChanged: (count) => tpOrgAdmin('bulkUndo.updated', count),
     },
     canAssign,
   });

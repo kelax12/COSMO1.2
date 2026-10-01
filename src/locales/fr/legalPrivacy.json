@@ -1,0 +1,117 @@
+{
+  "privacy": {
+    "seoTitle": "Politique de confidentialité – Cosmo App",
+    "seoDescription": "Politique de confidentialité de Cosmo : données collectées, stockage sécurisé Supabase, Row Level Security, droits RGPD et contact.",
+    "title": "Politique de confidentialité",
+    "updatedAt": "24 septembre 2026",
+    "s1": {
+      "title": "1. Responsable du traitement",
+      "p1": "Le responsable du traitement des données personnelles collectées via l'application Cosmo est l'équipe Cosmo, joignable à [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com)."
+    },
+    "s2": {
+      "title": "2. Données collectées",
+      "intro": "Lors de votre utilisation de Cosmo, nous collectons uniquement les données nécessaires au fonctionnement du service :",
+      "li1": "**Données d'identification :** nom d'affichage, adresse e-mail, mot de passe chiffré (inscription classique) ou photo de profil et identifiant Google (connexion via Google OAuth)",
+      "li2": "**Données de productivité :** tâches, catégories, listes, habitudes et leur historique de complétion, événements agenda, OKR (objectifs et résultats clés) et leurs progressions",
+      "li3": "**Données sociales :** liste d'amis, demandes d'amitié, tâches partagées avec d'autres utilisateurs",
+      "li4": "**Données d'abonnement (espace entreprise) :** forfait, statut et dates de l'abonnement de l'organisation, identifiants techniques Stripe. Les données bancaires sont gérées exclusivement par Stripe, Cosmo n'y a pas accès",
+      "li5": "**Données techniques :** informations de session Supabase (token d'authentification, date de dernière connexion)",
+      "p1": "**Mesure d'audience :** Cosmo utilise Vesk, un outil de mesure d'audience, chargé uniquement si vous l'acceptez. Il enregistre, à chaque page consultée, l'adresse de la page, la page d'où vous venez, votre adresse IP, votre navigateur, ainsi que des indicateurs d'engagement (profondeur de défilement, temps passé, clics sur les liens et boutons). Il ne construit aucun profil publicitaire.",
+      "p2": "**Identifiant de mesure :** Vesk enregistre sur votre appareil, dans le stockage local du navigateur, un identifiant aléatoire qui permet de reconnaître une même visite d'une page à l'autre. Ce n'est pas un cookie, mais c'est bien une information déposée sur votre équipement : elle n'est donc écrite qu'après votre acceptation, et vous pouvez l'effacer à tout moment en vidant les données de site de votre navigateur. L'adresse IP, le navigateur et cet identifiant sont des données personnelles. Ces données ne sont pas rattachées à votre compte Cosmo et ne sont jamais recoupées avec vos tâches, habitudes ou OKR.",
+      "p3": "**Pages exclues de la mesure :** la mesure d'audience n'est jamais chargée sur les pages où vous saisissez des identifiants (création de compte, connexion, réinitialisation de mot de passe, acceptation d'une invitation), ni sur aucun écran de l'application une fois connecté.",
+      "note": "Aucun autre outil de tracking tiers (Google Analytics, Mixpanel, Hotjar, etc.) n'est utilisé, et aucune donnée comportementale n'est collectée à l'intérieur de l'application au-delà de cette mesure d'audience.",
+      "li6": "**Données de l'espace entreprise :** appartenance à une organisation, rôle, tâches et projets d'équipe, commentaires, historique d'activité et notifications. Pour ces données, l'organisation est responsable de traitement et Cosmo agit pour son compte, comme le prévoit la section 6 des CGU",
+      "li7": "**Signalements de bug :** le message et les captures que vous joignez, l'adresse e-mail de votre compte si vous êtes connecté, et le contexte technique de la page, transmis par e-mail à l'équipe"
+    },
+    "s3": {
+      "title": "3. Méthodes d'authentification",
+      "intro": "Cosmo propose deux modes de connexion :",
+      "li1": "**Email / mot de passe :** votre mot de passe est haché côté serveur par Supabase Auth et n'est jamais stocké en clair",
+      "li2": "**Google OAuth :** en vous connectant via Google, vous autorisez Cosmo à récupérer votre nom, adresse e-mail et photo de profil depuis votre compte Google. Aucun accès à votre agenda ou autres services Google n'est demandé"
+    },
+    "s4": {
+      "title": "4. Finalités du traitement",
+      "intro": "Vos données sont utilisées exclusivement pour :",
+      "li1": "Créer et authentifier votre compte utilisateur",
+      "li2": "Stocker et synchroniser vos données de productivité (tâches, habitudes, agenda, OKR)",
+      "li3": "Permettre la collaboration : partage de tâches, gestion des amis et espace entreprise",
+      "li4": "Traiter les paiements et gérer l'abonnement de l'espace entreprise",
+      "li5": "Assurer la sécurité et le bon fonctionnement de l'application"
+    },
+    "s5": {
+      "title": "5. Base légale",
+      "intro": "Le traitement de vos données repose sur :",
+      "li1": "**Exécution du contrat** pour toutes les données nécessaires au fonctionnement du service",
+      "li2": "**Intérêt légitime** pour la sécurité et la continuité de l'application",
+      "li3": "**Consentement** pour la mesure d'audience (Vesk et Vercel Analytics) et pour tout dépôt d'information sur votre appareil qui n'est pas strictement nécessaire au service. Rien n'est chargé tant que vous n'avez pas accepté, et un refus ne charge jamais rien. Vous pouvez revenir sur ce choix à tout moment",
+      "note": "Cosmo s'adresse aux personnes d'au moins 15 ans. En dessous de cet âge, la mesure d'audience ne peut être acceptée qu'avec l'accord conjoint d'un titulaire de l'autorité parentale (article 45 de la loi Informatique et Libertés)."
+    },
+    "s6": {
+      "title": "6. Durée de conservation",
+      "li1": "Données de compte et de contenu : conservées pendant toute la durée d'activité du compte, puis supprimées définitivement sous 90 jours après clôture",
+      "li2": "Tokens de session : expiration automatique selon la configuration Supabase",
+      "li3": "**Visite de la démonstration** (identifiant d'appareil, posé avant toute création de compte) : **90 jours** si la visite ne débouche pas sur une inscription, **400 jours** si elle y aboutit",
+      "li4": "**Jours d'activité** (dates de connexion, utilisées pour les statistiques d'usage) : **400 jours**",
+      "li5": "**Marqueurs techniques de paiement** (identifiants d'événements Stripe déjà traités, servant à ne pas facturer deux fois) : **90 jours**",
+      "li6": "Données de paiement : conservées selon les obligations légales (10 ans pour la comptabilité)",
+      "note": "Ces durées sont appliquées automatiquement par la base de données, sans intervention manuelle. Le journal d'encaissement fait exception : la loi fiscale impose sa conservation **et son inaltérabilité**, il ne peut donc être ni effacé ni modifié, pas même à la suite d'une demande de suppression de compte. Ses lignes ne contiennent ni votre nom ni votre adresse e-mail : elles ne portent qu'un identifiant technique, qui cesse de désigner qui que ce soit dès que votre compte est supprimé."
+    },
+    "s7": {
+      "title": "7. Partage des données",
+      "intro": "Vos données peuvent transiter via les sous-traitants suivants :",
+      "li1": "**Supabase** : base de données et authentification. Vos données sont hébergées dans la région **eu-west-1 (Irlande)**, donc dans l'Union européenne",
+      "li2": "**Vercel** : hébergement du site. Traite les données de connexion (adresse IP, journaux techniques)",
+      "li3": "**Vercel Analytics** : mesure d'audience sans cookie, chargée uniquement si vous l'acceptez",
+      "li4": "**Sentry** : détection des erreurs techniques. Les adresses email et les identifiants sont retirés automatiquement avant l'envoi",
+      "li5": "**Stripe** : traitement sécurisé des paiements",
+      "li6": "**Google** : uniquement si vous utilisez la connexion Google OAuth",
+      "li7": "**Vesk** : mesure d'audience (adresse de la page, page référente, adresse IP, navigateur, indicateurs d'engagement, et un identifiant aléatoire déposé dans le stockage local du navigateur), chargée uniquement si vous l'acceptez et jamais sur les pages de saisie d'identifiants",
+      "outro": "Aucune donnée n'est vendue à des tiers. Aucun partage à des fins publicitaires ou marketing.",
+      "li8": "**Resend** : envoi des e-mails de service (signalements de bug, avis avant la reconduction d'un abonnement)",
+      "li9": "**Cloudflare Turnstile** : protection anti-robot des formulaires de connexion et d'inscription, lorsqu'elle est activée. Traite votre adresse IP et des signaux techniques du navigateur, sans finalité publicitaire"
+    },
+    "s7bis": {
+      "title": "7 bis. Transferts hors de l'Union européenne",
+      "p1": "Votre base de données est hébergée en Irlande, donc au sein de l'Union européenne, et n'en sort pas.",
+      "p2": "En revanche, **Vercel**, **Sentry**, **Resend** et **Cloudflare** sont des sociétés établies aux États-Unis. Les données qu'elles traitent pour notre compte (adresse IP, journaux de connexion, rapports d'erreur expurgés, e-mails de service) peuvent donc faire l'objet d'un transfert hors de l'Union. Ces transferts sont encadrés par les clauses contractuelles types de la Commission européenne ou par un mécanisme d'adéquation équivalent, prévus aux articles 45 et 46 du RGPD.",
+      "p3": "Vous pouvez nous demander une copie des garanties applicables à l'adresse indiquée ci-dessous."
+    },
+    "s8": {
+      "title": "8. Vos droits (RGPD)",
+      "intro": "Conformément au Règlement Général sur la Protection des Données (RGPD), vous disposez des droits suivants :",
+      "li1": "**Droit d'accès** : obtenir une copie de vos données personnelles",
+      "li2": "**Droit de rectification** : corriger des informations inexactes depuis les paramètres",
+      "li3": "**Droit à l'effacement** : supprimer votre compte et toutes vos données",
+      "li4": "**Droit à la portabilité** : exporter vos données dans un format lisible",
+      "li5": "**Droit d'opposition** : s'opposer à certains traitements",
+      "li6": "**Droit à la limitation** : restreindre le traitement dans certains cas",
+      "p1": "La portabilité s'exerce directement depuis **Paramètres, onglet Mes données** : l'export couvre vos tâches, habitudes, événements, OKR, catégories, listes et votre profil, au format CSV.",
+      "p2": "Pour tout autre droit : [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com). Nous répondons dans un délai d'**un mois** à compter de la réception de votre demande, conformément à l'article 12 du RGPD. Ce délai peut être prolongé de deux mois en cas de demande complexe, auquel cas nous vous en informons dans le mois.",
+      "p3": "Vous pouvez également saisir la **CNIL** : [www.cnil.fr](https://www.cnil.fr)",
+      "li7": "**Directives post mortem** : définir des directives relatives à la conservation, à l'effacement et à la communication de vos données après votre décès (article 85 de la loi Informatique et Libertés)"
+    },
+    "s9": {
+      "title": "9. Sécurité",
+      "p1": "Toutes les communications entre votre navigateur et nos serveurs sont chiffrées via HTTPS/TLS. Les mots de passe sont stockés sous forme hachée (bcrypt via Supabase Auth). L'accès aux données est protégé par des politiques Row Level Security (RLS) côté base de données : chaque utilisateur n'accède qu'à ses propres données."
+    },
+    "s10": {
+      "title": "10. Cookies et informations stockées sur votre appareil",
+      "intro": "Les éléments suivants sont **strictement nécessaires** au fonctionnement, et déposés sans votre consentement parce que le service ne peut pas s'en passer :",
+      "li1": "Cookie de session Supabase (authentification)",
+      "li2": "Préférences de l'interface stockées en localStorage (thème, filtres)",
+      "li3": "Choix du consentement stocké en localStorage — c'est lui qui nous permet de respecter votre refus",
+      "consentIntro": "Les éléments suivants ne sont déposés **qu'après votre acceptation** :",
+      "consentLi1": "Un identifiant aléatoire déposé par Vesk dans le stockage local du navigateur, pour reconnaître une même visite d'une page à l'autre",
+      "note1": "Aucun cookie publicitaire n'est déposé sur votre appareil, et aucune donnée n'est utilisée à des fins publicitaires.",
+      "note2": "Nos deux outils de mesure d'audience (Vesk et Vercel Analytics) sont soumis à votre consentement : **ils ne sont chargés que si vous cliquez sur « Accepter »** dans le bandeau. Tant que vous n'avez pas répondu, rien n'est chargé, et si vous refusez, ils ne le sont jamais. Votre choix est conservé six mois sur votre appareil, puis la question vous est reposée. Vous pouvez le modifier à tout moment avec le bouton ci-dessous ou le lien « Gérer les cookies » en bas de page : si vous retirez votre accord, l'identifiant de mesure est effacé de votre appareil."
+    },
+    "s11": {
+      "title": "11. Modifications",
+      "p1": "Cette politique peut être mise à jour. En cas de modification substantielle, vous serez informé par e-mail ou via une notification dans l'application. La date de dernière mise à jour est indiquée en haut de cette page."
+    },
+    "s12": {
+      "title": "12. Langue de ce document",
+      "p1": "Ce document est disponible en français et en anglais. **En cas de divergence entre les deux versions, la version française prévaut** : c'est la version d'origine."
+    }
+  }
+}

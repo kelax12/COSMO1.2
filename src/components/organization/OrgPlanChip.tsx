@@ -23,7 +23,7 @@ interface Props {
  * exactement comme le serveur le traite.
  */
 export function OrgPlanChip({ orgId, active, onOpen }: Props) {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const { t: tc } = useT('common');
   const { data: subscription } = useOrgSubscription(orgId);
   const sub = subscription ?? null;
@@ -31,15 +31,15 @@ export function OrgPlanChip({ orgId, active, onOpen }: Props) {
 
   // « Plan Équipe » plutôt que « Équipe » seul : dans un en-tête d'entreprise,
   // le mot nu se lirait comme le nom d'une équipe.
-  const name = t('billing.planNamed', { name: tc(ORG_TIER_LABEL_KEYS[effectiveTierKey(sub)]) });
+  const name = tOrgAdmin('billing.planNamed', { name: tc(ORG_TIER_LABEL_KEYS[effectiveTierKey(sub)]) });
 
   return (
     <button
       type="button"
       onClick={onOpen}
       aria-current={active ? 'page' : undefined}
-      aria-label={t('billing.planAria', { plan: name })}
-      title={t('billing.planHint')}
+      aria-label={tOrgAdmin('billing.planAria', { plan: name })}
+      title={tOrgAdmin('billing.planHint')}
       className={`group shrink-0 inline-flex items-center gap-2 h-11 px-2.5 sm:pr-2 rounded-xl border text-sm font-medium transition-colors ${
         active
           ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-text-primary))]'

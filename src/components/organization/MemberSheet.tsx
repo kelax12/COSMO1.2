@@ -43,13 +43,15 @@ interface MemberSheetProps {
   onAddUnder: (m: OrgMember) => void;
 }
 
-const TAB_META: Record<MemberTab, { labelKey: KeyOf<'org'>; Icon: typeof UserRound }> = {
-  profile: { labelKey: 'member.tabProfile', Icon: UserRound },
-  work: { labelKey: 'popups.member.tabWork', Icon: Briefcase },
-  tasks: { labelKey: 'member.tabTasks', Icon: ListTodo },
-  contribution: { labelKey: 'member.tabContribution', Icon: TrendingUp },
-  history: { labelKey: 'popups.member.tabHistory', Icon: History },
-  agenda: { labelKey: 'member.tabAgenda', Icon: CalendarDays },
+// Libellés venus de deux catalogues (2026-10-01 : `member.*` est passé dans `orgAdmin`).
+type TabLabel = { ns: 'org'; key: KeyOf<'org'> } | { ns: 'orgAdmin'; key: KeyOf<'orgAdmin'> };
+const TAB_META: Record<MemberTab, { label: TabLabel; Icon: typeof UserRound }> = {
+  profile: { label: { ns: 'orgAdmin', key: 'member.tabProfile' }, Icon: UserRound },
+  work: { label: { ns: 'org', key: 'popups.member.tabWork' }, Icon: Briefcase },
+  tasks: { label: { ns: 'orgAdmin', key: 'member.tabTasks' }, Icon: ListTodo },
+  contribution: { label: { ns: 'orgAdmin', key: 'member.tabContribution' }, Icon: TrendingUp },
+  history: { label: { ns: 'org', key: 'popups.member.tabHistory' }, Icon: History },
+  agenda: { label: { ns: 'orgAdmin', key: 'member.tabAgenda' }, Icon: CalendarDays },
 };
 
 /**
@@ -111,9 +113,9 @@ const MemberSheet = ({
     const path = buildOrgLink('pyramid', { member: member.userId }, { [MEMBER_TAB_PARAM]: tab });
     try {
       await navigator.clipboard.writeText(`${window.location.origin}${path}`);
-      toast.success(t('member.copyLinkDone'));
+      toast.success(ta('member.copyLinkDone'));
     } catch {
-      toast.error(t('member.copyLink'));
+      toast.error(ta('member.copyLink'));
     }
   };
 
@@ -134,7 +136,7 @@ const MemberSheet = ({
   const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
     open: true,
     onClose: onClose,
-    label: t('member.sheetAria', { name: member.displayName }),
+    label: ta('member.sheetAria', { name: member.displayName }),
   });
 
   return createPortal(
@@ -167,8 +169,8 @@ const MemberSheet = ({
             <button
               type="button"
               onClick={copyProfileLink}
-              aria-label={t('member.copyLink')}
-              title={t('member.copyLink')}
+              aria-label={ta('member.copyLink')}
+              title={ta('member.copyLink')}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
             >
               <LinkIcon size={16} aria-hidden="true" />
@@ -188,11 +190,11 @@ const MemberSheet = ({
         {tabs.length > 1 && (
           <div
             role="tablist"
-            aria-label={t('member.tabsAria')}
+            aria-label={ta('member.tabsAria')}
             className="flex gap-1 px-3 overflow-x-auto border-b border-[rgb(var(--color-border))] shrink-0"
           >
             {tabs.map((id) => {
-              const { labelKey, Icon } = TAB_META[id];
+              const { label, Icon } = TAB_META[id];
               const active = tab === id;
               return (
                 <button
@@ -207,7 +209,7 @@ const MemberSheet = ({
                       : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
                   }`}
                 >
-                  <Icon size={15} aria-hidden="true" /> {t(labelKey)}
+                  <Icon size={15} aria-hidden="true" /> {label.ns === 'org' ? t(label.key) : ta(label.key)}
                 </button>
               );
             })}

@@ -103,6 +103,7 @@ const CategoryDraft = ({ onSubmit, onCancel, initialName = '', initialColor = TE
 
 const TeamCategoryTreeManager = ({ orgId }: { orgId: string }) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const { data: categories = [] } = useTeamCategories(orgId);
   const createCategory = useCreateTeamCategory(orgId);
   const updateCategory = useUpdateTeamCategory(orgId);
@@ -289,7 +290,7 @@ const TeamCategoryTreeManager = ({ orgId }: { orgId: string }) => {
   return (
     <>
       {tree.length > 0 ? (
-        <ul role="tree" aria-label={t('settings.tab_categories')} className="flex flex-col">
+        <ul role="tree" aria-label={tOrgAdmin('settings.tab_categories')} className="flex flex-col">
           {tree.map((node) => renderNode(node, 1))}
         </ul>
       ) : (

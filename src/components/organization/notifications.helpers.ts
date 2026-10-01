@@ -16,11 +16,11 @@ export type NotificationPeriod = 'today' | 'week' | 'earlier';
 export interface NotificationGroup {
   period: NotificationPeriod;
   /** Clé de catalogue du titre de section. */
-  labelKey: KeyOf<'org'>;
+  labelKey: KeyOf<'orgAdmin'>;
   items: OrgNotification[];
 }
 
-const PERIOD_LABEL: Record<NotificationPeriod, KeyOf<'org'>> = {
+const PERIOD_LABEL: Record<NotificationPeriod, KeyOf<'orgAdmin'>> = {
   today: 'notifications.periodToday',
   week: 'notifications.periodWeek',
   earlier: 'notifications.periodEarlier',
@@ -97,7 +97,7 @@ const FILTER_KINDS: Record<Exclude<NotificationFilter, 'all'>, readonly OrgNotif
 
 export const NOTIFICATION_FILTERS: readonly NotificationFilter[] = ['all', 'work', 'mentions', 'deadlines', 'projects', 'org'];
 
-export const NOTIFICATION_FILTER_LABEL: Record<NotificationFilter, KeyOf<'org'>> = {
+export const NOTIFICATION_FILTER_LABEL: Record<NotificationFilter, KeyOf<'orgAdmin'>> = {
   all: 'notifications.filterAll',
   work: 'notifications.filterWork',
   mentions: 'notifications.filterMentions',
@@ -122,7 +122,7 @@ export const availableFilters = (notifications: OrgNotification[]): Notification
  * `meta.change` : sans cette distinction, « votre position a changé » ne dit
  * pas si l'on gagne ou perd la vue sur une équipe.
  */
-export const notificationLabelKey = (n: OrgNotification, fallback: KeyOf<'org'>): KeyOf<'org'> => {
+export const notificationLabelKey = (n: OrgNotification, fallback: KeyOf<'orgAdmin'>): KeyOf<'orgAdmin'> => {
   if (n.kind !== 'role_changed') return fallback;
   const change = (n.meta as { change?: string } | null | undefined)?.change;
   if (change === 'now_manager') return 'notifications.kindRoleNowManager';

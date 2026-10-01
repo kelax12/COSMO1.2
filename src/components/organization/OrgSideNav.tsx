@@ -78,7 +78,7 @@ const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
  */
 const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shortcuts, onTogglePin, onSearch }) => {
   const collapsed = mode === 'collapsed';
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const card = useRef<HTMLDivElement>(null);
   // L'emplacement est posé par `Layout` dans le même commit que cette page :
   // il n'existe pas encore pendant le premier rendu, on le cherche après.
@@ -132,7 +132,7 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shor
 
   return createPortal(
     <nav
-      aria-label={t('sideNav.label')}
+      aria-label={tOrgAdmin('sideNav.label')}
       data-org-side-nav=""
       data-collapsed={collapsed}
       className="hidden md:flex fixed inset-y-0 right-0 z-30 items-center pointer-events-none"
@@ -143,9 +143,9 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shor
           type="button"
           onClick={open}
           onPointerEnter={open}
-          aria-label={hasNews ? `${t('sideNav.expand')} · ${t('sideNav.hasNews')}` : t('sideNav.expand')}
+          aria-label={hasNews ? `${tOrgAdmin('sideNav.expand')} · ${tOrgAdmin('sideNav.hasNews')}` : tOrgAdmin('sideNav.expand')}
           aria-expanded={false}
-          title={`${t('sideNav.expand')} (])`}
+          title={`${tOrgAdmin('sideNav.expand')} (])`}
           className="pointer-events-auto absolute inset-y-0 right-0 w-5 focus-visible:outline-none focus-visible:bg-[rgb(var(--color-accent)/0.2)]"
         />
       )}
@@ -172,14 +172,14 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shor
 
         <div className="flex items-center justify-between gap-2 pl-3 pr-1 pb-1">
           <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">
-            {t('sideNav.title')}
+            {tOrgAdmin('sideNav.title')}
           </span>
           <button
             type="button"
             onClick={() => onModeChange('collapsed')}
-            aria-label={t('sideNav.collapse')}
+            aria-label={tOrgAdmin('sideNav.collapse')}
             aria-expanded={true}
-            title={`${t('sideNav.collapse')} (])`}
+            title={`${tOrgAdmin('sideNav.collapse')} (])`}
             className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
           >
             <ChevronsRight size={16} aria-hidden="true" />
@@ -197,7 +197,7 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shor
             className="mx-1 mt-1 flex items-center gap-2 px-3 min-h-11 rounded-xl border border-[rgb(var(--color-border))] text-sm text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
           >
             <Search size={15} aria-hidden="true" className="shrink-0" />
-            <span className="flex-1 text-left">{t('sideNav.search')}</span>
+            <span className="flex-1 text-left">{tOrgAdmin('sideNav.search')}</span>
             <kbd className="text-caption px-1.5 py-0.5 rounded border border-[rgb(var(--color-border))]">Ctrl K</kbd>
           </button>
         )}
@@ -208,7 +208,7 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shor
           return (
             <div key={group.id} className="mt-2">
               <p className="px-3 pb-1 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
-                {t(group.labelKey)}
+                {tOrgAdmin(group.labelKey)}
               </p>
               <ul className="space-y-0.5">
                 {groupItems.map(({ id, label, Icon, badge }) => {
@@ -240,7 +240,7 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shor
         {shortcuts && shortcuts.items.length > 0 && (
           <div className="mt-2" data-org-shortcuts={shortcuts.kind}>
             <p className="px-3 pb-1 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
-              {t(shortcuts.kind === 'pinned' ? 'sideNav.groupPinned' : 'sideNav.groupRecent')}
+              {tOrgAdmin(shortcuts.kind === 'pinned' ? 'sideNav.groupPinned' : 'sideNav.groupRecent')}
             </p>
             <ul className="space-y-0.5">
               {shortcuts.items.map((item) => (
@@ -256,8 +256,8 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shor
                     <button
                       type="button"
                       onClick={() => onTogglePin(item.id)}
-                      aria-label={t(item.pinned ? 'sideNav.unpin' : 'sideNav.pin', { name: item.label })}
-                      title={t(item.pinned ? 'sideNav.unpin' : 'sideNav.pin', { name: item.label })}
+                      aria-label={tOrgAdmin(item.pinned ? 'sideNav.unpin' : 'sideNav.pin', { name: item.label })}
+                      title={tOrgAdmin(item.pinned ? 'sideNav.unpin' : 'sideNav.pin', { name: item.label })}
                       className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] opacity-60 group-hover:opacity-100 focus-visible:opacity-100 hover:text-[rgb(var(--color-text-primary))] transition-opacity"
                     >
                       {item.pinned ? <PinOff size={14} aria-hidden="true" /> : <Pin size={14} aria-hidden="true" />}

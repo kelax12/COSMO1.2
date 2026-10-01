@@ -42,20 +42,43 @@ import { join, sep } from 'node:path';
 const RACINE = process.cwd();
 const JOURNAL = join(RACINE, 'docs', 'LEGAL-JOURNAL.md');
 
-/** Les catalogues qui portent un engagement contractuel. */
-export const CATALOGUES = ['src/locales/fr/legal.json', 'src/locales/en/legal.json'];
+/**
+ * Les documents qui portent un engagement contractuel, UN par langue.
+ *
+ * 🔴 Depuis le 2026-10-01, le texte d'une langue vit dans TROIS catalogues
+ * (`legal` : mentions et libellés communs, `legalTerms` : CGU,
+ * `legalPrivacy` : confidentialité), chargés chacun par sa page pour tenir le
+ * budget de bundle. L'empreinte porte sur leur RÉUNION : un découpage ou un
+ * déplacement de clé entre eux ne la change pas, une modification de texte la
+ * change toujours. C'est ce qui a permis le découpage sans recaler le journal,
+ * et le témoin `scripts/check-legal-journal.guard.test.mjs` le vérifie.
+ */
+export const DOCUMENTS = Object.fromEntries(['fr', 'en'].map((locale) => [
+  `src/locales/${locale}/{legal,legalTerms,legalPrivacy}.json`,
+  ['legal', 'legalTerms', 'legalPrivacy'].map((ns) => `src/locales/${locale}/${ns}.json`),
+]));
 
 /**
- * L'empreinte d'un catalogue.
+ * L'empreinte d'un document (un ou plusieurs catalogues, réunis).
  *
  * ⚠️ Calculée sur le JSON RE-SÉRIALISÉ avec des clés triées, pas sur les
  * octets du fichier. Un reformatage (indentation, ordre des clés, fin de
  * ligne CRLF/LF) ne change alors pas l'empreinte : la garde rougit sur le
  * CONTENU, jamais sur la mise en forme. Sans ça, elle crierait au loup à
  * chaque passage d'un éditeur, et une garde qui crie au loup finit désarmée.
+ *
+ * ❌ Deux catalogues d'un même document qui portent la même section de tête
+ *    font échouer le calcul : la réunion masquerait l'une des deux.
  */
-export function empreinte(chemin) {
-  const j = JSON.parse(readFileSync(chemin, 'utf8'));
+export function empreinte(chemins) {
+  const j = {};
+  for (const chemin of [chemins].flat()) {
+    const part = JSON.parse(readFileSync(chemin, 'utf8'));
+    for (const [k, v] of Object.entries(part)) {
+      if (k in j) throw new Error(`Section « ${k} » présente deux fois dans le document (${chemin})`);
+      j[k] = v;
+    }
+  }
   const trier = (v) => {
     if (Array.isArray(v)) return v.map(trier);
     if (v && typeof v === 'object') {
@@ -67,7 +90,9 @@ export function empreinte(chemin) {
 }
 
 export function empreintesActuelles(racine = RACINE) {
-  return Object.fromEntries(CATALOGUES.map((c) => [c, empreinte(join(racine, c))]));
+  return Object.fromEntries(
+    Object.entries(DOCUMENTS).map(([nom, chemins]) => [nom, empreinte(chemins.map((c) => join(racine, c)))]),
+  );
 }
 
 /** Les empreintes citées par le journal, quelle que soit leur position. */

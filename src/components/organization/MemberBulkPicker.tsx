@@ -38,7 +38,8 @@ interface MemberBulkPickerProps {
  * désactivée plutôt que de promettre un geste que le serveur refuserait.
  */
 const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClose, onCreateTeam }: MemberBulkPickerProps) => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const [query, setQuery] = useState('');
   const shown = useMemo(() => {
     const q = normalize(query.trim());
@@ -46,8 +47,8 @@ const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClo
   }, [options, query]);
 
   const title = mode === 'team'
-    ? tp('directory.bulk.pickTeamTitle', selectedCount)
-    : tp('directory.bulk.pickManagerTitle', selectedCount);
+    ? tpOrgAdmin('directory.bulk.pickTeamTitle', selectedCount)
+    : tpOrgAdmin('directory.bulk.pickManagerTitle', selectedCount);
 
   const { ref, dialogProps } = useModalA11y<HTMLDivElement>({
     open: true,
@@ -86,8 +87,8 @@ const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClo
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={mode === 'team' ? t('directory.bulk.searchTeam') : t('directory.bulk.searchManager')}
-            aria-label={mode === 'team' ? t('directory.bulk.searchTeam') : t('directory.bulk.searchManager')}
+            placeholder={mode === 'team' ? tOrgAdmin('directory.bulk.searchTeam') : tOrgAdmin('directory.bulk.searchManager')}
+            aria-label={mode === 'team' ? tOrgAdmin('directory.bulk.searchTeam') : tOrgAdmin('directory.bulk.searchManager')}
             className="w-full h-10 pl-9 pr-3 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400"
           />
         </div>
@@ -95,7 +96,7 @@ const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClo
         <div className="overflow-y-auto p-3 space-y-1">
           {shown.length === 0 && !(mode === 'team' && onCreateTeam) && (
             <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">
-              {mode === 'team' ? t('directory.bulk.noTeam') : t('directory.bulk.noManager')}
+              {mode === 'team' ? tOrgAdmin('directory.bulk.noTeam') : tOrgAdmin('directory.bulk.noManager')}
             </p>
           )}
           {shown.map((o) => (
@@ -119,7 +120,7 @@ const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClo
               )}
               <span className="min-w-0 flex-1 text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">{o.label}</span>
               <span className="text-xs text-[rgb(var(--color-text-muted))] whitespace-nowrap tabular-nums">
-                {tp('directory.bulk.eligible', o.eligible)}
+                {tpOrgAdmin('directory.bulk.eligible', o.eligible)}
               </span>
             </button>
           ))}
@@ -128,7 +129,7 @@ const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClo
         {mode === 'team' && onCreateTeam && (
           <div className="px-3 pb-3 pt-1 border-t border-[rgb(var(--color-border))]">
             {shown.length === 0 && (
-              <p className="text-xs text-[rgb(var(--color-text-muted))] px-2.5 pt-2">{t('directory.bulk.noTeamMatch')}</p>
+              <p className="text-xs text-[rgb(var(--color-text-muted))] px-2.5 pt-2">{tOrgAdmin('directory.bulk.noTeamMatch')}</p>
             )}
             <button
               type="button"
@@ -141,8 +142,8 @@ const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClo
               </span>
               <span className="min-w-0 truncate">
                 {query.trim()
-                  ? t('directory.bulk.createNamedTeam', { name: query.trim() })
-                  : tp('directory.bulk.createTeamWith', selectedCount)}
+                  ? tOrgAdmin('directory.bulk.createNamedTeam', { name: query.trim() })
+                  : tpOrgAdmin('directory.bulk.createTeamWith', selectedCount)}
               </span>
             </button>
           </div>
@@ -151,7 +152,7 @@ const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClo
         {pending && (
           <div className="px-5 py-3 border-t border-[rgb(var(--color-border))] text-xs text-[rgb(var(--color-text-muted))] inline-flex items-center gap-2">
             <span className="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-b-2 border-indigo-500" />
-            {t('directory.bulk.applying')}
+            {tOrgAdmin('directory.bulk.applying')}
           </div>
         )}
       </div>

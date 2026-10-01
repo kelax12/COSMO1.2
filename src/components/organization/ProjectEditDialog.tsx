@@ -48,7 +48,7 @@ export const ProjectColorPicker = ({ value, onChange, label }: {
   onChange: (color: string) => void;
   label: string;
 }) => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   return (
   <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
     {PROJECT_COLOR_NAMES.map((name) => (
@@ -57,8 +57,8 @@ export const ProjectColorPicker = ({ value, onChange, label }: {
         type="button"
         role="radio"
         aria-checked={value === name}
-        aria-label={t(`colors.${name}` as 'colors.blue')}
-        title={t(`colors.${name}` as 'colors.blue')}
+        aria-label={tOrgAdmin(`colors.${name}` as 'colors.blue')}
+        title={tOrgAdmin(`colors.${name}` as 'colors.blue')}
         onClick={() => onChange(name)}
         className={`w-8 h-8 rounded-full ${projectColor(name).dot} transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[rgb(var(--color-accent))] ring-offset-[rgb(var(--color-background))] ${
           value === name ? 'ring-2 ring-offset-2 ring-[rgb(var(--color-text-primary))] scale-110' : 'hover:scale-110'

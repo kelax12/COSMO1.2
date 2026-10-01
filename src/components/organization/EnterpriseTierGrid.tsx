@@ -49,7 +49,7 @@ export function EnterpriseTierGrid({
   dormant,
   interval = 'monthly',
 }: Props) {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const { t: tc } = useT('common');
 
   return (
@@ -67,8 +67,8 @@ export function EnterpriseTierGrid({
         const monthlyShown = displayedMonthlyEur(tier.priceEurPerMonth, interval);
         const range =
           tier.maxMembers === null
-            ? t('billing.rangeFrom', { min: tier.minMembers })
-            : t('billing.rangeUpTo', {
+            ? tOrgAdmin('billing.rangeFrom', { min: tier.minMembers })
+            : tOrgAdmin('billing.rangeUpTo', {
                 min: tier.minMembers,
                 max: tier.maxMembers,
               });
@@ -110,7 +110,7 @@ export function EnterpriseTierGrid({
                   onClick={() => onSelect(tier.key)}
                   className="shrink-0 rounded-lg bg-[rgb(var(--color-accent-solid))] px-3 py-1.5 text-xs font-medium text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-60"
                 >
-                  {t('billing.subscribe')}
+                  {tOrgAdmin('billing.subscribe')}
                 </button>
               )}
             </div>
@@ -118,14 +118,14 @@ export function EnterpriseTierGrid({
             {isFree || isPromo ? (
               <>
                 <div className="text-2xl font-semibold text-amber-600 dark:text-amber-400">
-                  {t('billing.free')}
+                  {tOrgAdmin('billing.free')}
                 </div>
                 {/* Rien sous le palier gratuit de base (aucun tarif payant à
                     comparer) — seulement sous les paliers rendus gratuits par
                     l'offre de lancement, comme sur la landing. */}
                 {isPromo && (
                   <s className="text-xs text-[rgb(var(--color-text-muted))] decoration-[rgb(var(--color-border-strong))]">
-                    {t('billing.insteadOf', { price: monthlyShown })}
+                    {tOrgAdmin('billing.insteadOf', { price: monthlyShown })}
                   </s>
                 )}
               </>
@@ -143,16 +143,16 @@ export function EnterpriseTierGrid({
                       te fait gagner ». */}
                   {interval === 'yearly' && (
                     <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-                      {t('billing.intervalSave')}
+                      {tOrgAdmin('billing.intervalSave')}
                     </span>
                   )}
                 </div>
                 <div className="text-xs text-[rgb(var(--color-text-secondary))]">
                   {interval === 'yearly'
-                    ? t('billing.perMonthBilledYearly', {
+                    ? tOrgAdmin('billing.perMonthBilledYearly', {
                         total: formatCurrency(yearlyTotalEur(tier.priceEurPerMonth)),
                       })
-                    : t('billing.perMonth')}
+                    : tOrgAdmin('billing.perMonth')}
                 </div>
               </>
             )}

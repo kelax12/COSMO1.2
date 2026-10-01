@@ -45,6 +45,7 @@ export const MemberProfileBody = ({
   member, members, teams, currentUserId, lastActivity, canMove, canAddUnder, onClose, onMove, onAddUnder,
 }: MemberProfileBodyProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const { t: ta, tp: tpa } = useT('orgAdmin');
   const m = member;
   const managerMember = m.managerId ? members.find((x) => x.userId === m.managerId) : null;
@@ -70,11 +71,11 @@ export const MemberProfileBody = ({
                 <Clock size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
                 <dd className="text-[rgb(var(--color-text-secondary))]">
                   {lastActivity.lastActivityAt
-                    ? t('directory.activity.sheet', {
+                    ? ta('directory.activity.sheet', {
                         when: formatDistanceToNow(new Date(lastActivity.lastActivityAt), { addSuffix: true, locale: getDateLocale() }),
-                        source: lastActivity.source ? t(SOURCE_KEY[lastActivity.source]) : '',
+                        source: lastActivity.source ? tOrgAdmin(SOURCE_KEY[lastActivity.source]) : '',
                       })
-                    : t('directory.activity.none')}
+                    : ta('directory.activity.none')}
                 </dd>
               </div>
             )}
@@ -88,22 +89,22 @@ export const MemberProfileBody = ({
               <Network size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
               <dd className="text-[rgb(var(--color-text-secondary))]">
                 {managerMember
-                  ? <>{t('member.attachedTo')} <strong className="text-[rgb(var(--color-text-primary))]">{managerMember.userId === currentUserId ? t('member.you') : managerMember.displayName}</strong></>
-                  : t('member.noManager')}
+                  ? <>{ta('member.attachedTo')} <strong className="text-[rgb(var(--color-text-primary))]">{managerMember.userId === currentUserId ? ta('member.you') : managerMember.displayName}</strong></>
+                  : ta('member.noManager')}
               </dd>
             </div>
             <div className="flex items-center gap-2.5 text-sm">
               <Users size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
               <dd className="text-[rgb(var(--color-text-secondary))]">
                 {directs === 0
-                  ? t('member.noDirectReport')
+                  ? ta('member.noDirectReport')
                   : tpa('pyramid.directCount', directs) + (total > directs ? ta('pyramid.totalSuffix', { count: total }) : '')}
               </dd>
             </div>
           </dl>
           {teams.length > 0 && (
             <>
-              <h3 className={`${CARD_TITLE} mt-4`}>{t('member.crossTeams')}</h3>
+              <h3 className={`${CARD_TITLE} mt-4`}>{ta('member.crossTeams')}</h3>
               <div className="flex flex-wrap gap-1.5">
                 {teams.map((team) => (
                   <span
@@ -143,7 +144,7 @@ export const MemberProfileBody = ({
               }}
               className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
             >
-              <Move size={15} aria-hidden="true" /> {t('member.move')}
+              <Move size={15} aria-hidden="true" /> {ta('member.move')}
             </button>
           )}
         </div>

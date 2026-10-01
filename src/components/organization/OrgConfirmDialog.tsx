@@ -66,6 +66,7 @@ const OrgConfirmDialog = ({
   pending = false, tone = 'danger', secondaryAction, children, onConfirm, onCancel,
 }: OrgConfirmDialogProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const [typed, setTyped] = useState('');
   const nameOk = requireName === undefined || typed.trim() === requireName.trim();
   const canConfirm = nameOk && !pending;
@@ -91,7 +92,7 @@ const OrgConfirmDialog = ({
             }`}
           >
             <p className="text-xs font-semibold text-[rgb(var(--color-text-primary))] mb-1">
-              {impactTitle ?? t('confirm.impactTitle')}
+              {impactTitle ?? tOrgAdmin('confirm.impactTitle')}
             </p>
             <ul className="text-xs text-[rgb(var(--color-text-secondary))] space-y-1 list-disc pl-4">
               {impact.map((line) => <li key={line}>{line}</li>)}
@@ -104,7 +105,7 @@ const OrgConfirmDialog = ({
         {requireName !== undefined && (
           <div>
             <label htmlFor="org-confirm-name" className="block text-xs font-semibold mb-1.5 text-[rgb(var(--color-text-secondary))]">
-              {t('confirm.typeName', { name: requireName })}
+              {tOrgAdmin('confirm.typeName', { name: requireName })}
             </label>
             <input
               id="org-confirm-name"

@@ -8,7 +8,7 @@
 ## i18n — catalogues maison (fr + en)
 
 L'app est **bilingue fr/en**, sans framework i18n (pas d'i18next). Socle dans `src/i18n/`,
-catalogues JSON par namespace dans `src/locales/{fr,en}/*.json` (**23 namespaces** : `common`,
+catalogues JSON par namespace dans `src/locales/{fr,en}/*.json` (**29 namespaces** au 2026-10-01, `npm run i18n:check` les compte : `common`,
 `tasks`, `org`, `landing`, `seo`, `settings`…). ⚠️ Ce fichier a écrit « 19 » jusqu'au 2026-09-14 :
 le chiffre datait du levier de chargement paresseux du 2026-08-25 et n'a jamais été recompté
 pendant que quatre catalogues entraient. Il se relit en une commande, `npm run i18n:check` l'annonce
@@ -59,16 +59,18 @@ t('project.name')                // clé plate dans le namespace
   navigateur le 2026-09-02 : les quatre liens vers les pages contractuelles (bandeau cookies + pied
   de landing) tombaient tous sur une 404 en anglais. Passer par `useLocalizedPath()`
   (`src/i18n/useLocalizedPath.ts`).
-- 📄 **Les trois pages contractuelles vivent dans le namespace `legal`**, en français et en anglais
-  (CGU, confidentialité, mentions légales). Les pages ne portent plus que la STRUCTURE du document
+- 📄 **Les trois pages contractuelles vivent dans TROIS catalogues** depuis le 2026-10-01 : `legalTerms`
+  (CGU), `legalPrivacy` (confidentialité) et `legal` (mentions légales, libellés communs), chacun
+  chargé par sa seule page (budget de bundle), en français et en anglais. Les pages ne portent plus que la STRUCTURE du document
   (`src/pages/legal/LegalDocument.tsx`) ; le gras et les liens sont dans le catalogue, en
   `**gras**` et `[libellé](url)`, rendus par `RichText`.
   🔴 **Le français fait foi** : chaque document porte une clause de langue disant que la version
   française prévaut. Modifier le fond d'un de ces documents n'est pas une tâche de traduction —
   c'est modifier un contrat, avec le préavis de 30 jours prévu à son article 11.
   ✅ **Et ça laisse désormais une trace obligatoire** : `npm run check:legal-journal` (`C-107`,
-  2026-09-20) exige qu'une empreinte de `src/locales/{fr,en}/legal.json` soit inscrite et **datée**
-  dans [`docs/LEGAL-JOURNAL.md`](../../docs/LEGAL-JOURNAL.md). Modifier un de ces deux catalogues
+  2026-09-20) exige qu'une empreinte de chaque langue, calculée sur la RÉUNION de ses trois catalogues légaux
+  (un découpage ne la change pas, un mot changé si), soit inscrite et **datée**
+  dans [`docs/LEGAL-JOURNAL.md`](../../docs/LEGAL-JOURNAL.md). Modifier un de ces catalogues
   sans journaliser fait échouer la CI. ⚠️ Elle vérifie la **traçabilité**, jamais la conformité :
   une ligne fausse **et datée** reste verte.
 - ❌ **Ne jamais identifier une erreur par son message en français** — il est traduit.

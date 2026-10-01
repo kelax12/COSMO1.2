@@ -35,6 +35,7 @@ interface DeleteTeamDialogProps {
  */
 const DeleteTeamDialog = ({ orgId, team, teams, onClose }: DeleteTeamDialogProps) => {
   const { t, tp } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const { data: impact, isLoading, isError } = useTeamDeletionImpact(team.id);
   const deleteTeam = useDeleteOrgTeam(orgId);
   const others = teams.filter((x) => x.id !== team.id);
@@ -136,7 +137,7 @@ const DeleteTeamDialog = ({ orgId, team, teams, onClose }: DeleteTeamDialogProps
 
         <div>
           <label htmlFor="delete-team-name" className="block text-xs font-semibold mb-1.5 text-[rgb(var(--color-text-secondary))]">
-            {t('confirm.typeName', { name: team.name })}
+            {tOrgAdmin('confirm.typeName', { name: team.name })}
           </label>
           <input
             id="delete-team-name"

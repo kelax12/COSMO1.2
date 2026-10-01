@@ -11,6 +11,7 @@
 import { AlertTriangle, CalendarDays, CheckCircle2, CheckSquare, Lock, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
+import type { KeyOf } from '@/i18n/catalog';
 import { todayStr } from '@/lib/date-presets';
 import type { TaskStatusFilter } from './team-projects.helpers';
 import { CLEARED_ATTRIBUTE_FILTERS, type OrgTaskFilters } from './task-filters';
@@ -57,7 +58,7 @@ const in6Days = (): string => {
 
 interface Preset {
   key: string;
-  labelKey: string;
+  labelKey: KeyOf<'orgAdmin'>;
   icon: LucideIcon;
   apply: (base: OrgTaskFilters, currentUserId?: string) => OrgTaskFilters;
   matches: (f: OrgTaskFilters, currentUserId?: string) => boolean;
@@ -112,6 +113,7 @@ const FilterPresets = ({
   filters, setFilters, defaultStatus, currentUserId, showBlocked = true, entity = 'tasks', onToggleSelect, selectMode = false,
 }: FilterPresetsProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   // Côté Projets, « Moi » (dans la barre de filtres) fait déjà le même filtre
   // que « Mes projets » : le doublon est retiré (maquette du 2026-09-27).
   // « Mes tâches » retiré le 2026-09-28 (doublon de « Moi » dans la barre) ;
@@ -148,7 +150,7 @@ const FilterPresets = ({
             className={`flex items-center gap-2 ${CHIP} ${active ? ACTIF : ''}`}
           >
             <Icon size={20} data-icon="inline-start" aria-hidden="true" />
-            <span>{t(preset.labelKey as Parameters<typeof t>[0])}</span>
+            <span>{tOrgAdmin(preset.labelKey)}</span>
           </Button>
         );
       })}

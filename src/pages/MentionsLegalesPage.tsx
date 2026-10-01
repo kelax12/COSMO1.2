@@ -2,6 +2,7 @@ import React from 'react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { useT } from '@/i18n/useT';
 import LegalDocument, { type LegalSection } from './legal/LegalDocument';
+import type { KeyOf } from '@/i18n/catalog';
 
 /**
  * Mentions légales.
@@ -14,7 +15,7 @@ import LegalDocument, { type LegalSection } from './legal/LegalDocument';
  * librement : une adresse d'hébergeur inexacte est un défaut de mention légale,
  * pas une maladresse de rédaction.
  */
-const SECTIONS: LegalSection[] = [
+const SECTIONS: LegalSection<KeyOf<'legal'>>[] = [
   {
     title: 'notice.s1.title',
     blocks: [
@@ -62,6 +63,7 @@ const MentionsLegalesPage: React.FC = () => {
 
   return (
     <LegalDocument
+      text={t}
       titleKey="notice.title"
       updatedAtKey="notice.updatedAt"
       sections={SECTIONS}

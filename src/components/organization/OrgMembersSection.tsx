@@ -34,7 +34,7 @@ interface OrgMembersSectionProps {
 }
 
 const OrgMembersSection = ({ org, members, currentUserId, isAdmin, isManager, canInvite, seatsFull }: OrgMembersSectionProps) => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const [choosingMode, setChoosingMode] = useState(false);
   const [invitingByEmail, setInvitingByEmail] = useState(false);
   const [quickEmails, setQuickEmails] = useState('');
@@ -44,7 +44,7 @@ const OrgMembersSection = ({ org, members, currentUserId, isAdmin, isManager, ca
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
-        {t('page.directoryTitle', { count: members.length })}
+        {tOrgAdmin('page.directoryTitle', { count: members.length })}
       </h2>
 
       {canInviteByEmail && <PendingInvitesStrip orgId={org.id} />}
@@ -62,7 +62,7 @@ const OrgMembersSection = ({ org, members, currentUserId, isAdmin, isManager, ca
             onClick={() => setChoosingMode(true)}
             className="inline-flex items-center gap-1.5 h-10 px-3 rounded-xl text-sm font-semibold whitespace-nowrap bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))]"
           >
-            <UserPlus size={14} aria-hidden="true" /> {t('settings.inviteTitle')}
+            <UserPlus size={14} aria-hidden="true" /> {tOrgAdmin('settings.inviteTitle')}
           </button>
         }
       />

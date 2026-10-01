@@ -37,7 +37,8 @@ table qui est une **preuve**, et qu'on ne purge jamais.
 
 ## Comment écrire une entrée
 
-1. Modifier `legal.json`.
+1. Modifier le catalogue du document : `legalTerms.json` (CGU), `legalPrivacy.json`
+   (confidentialité) ou `legal.json` (mentions légales, libellés communs), en `fr` et en `en`.
 2. Relever la nouvelle empreinte : `npm run check:legal-journal` la nomme dans son message.
 3. Écrire l'entrée ci-dessous : la **date**, ce qui a changé, **FOND ou FORME**, et si le
    **préavis est dû**.
@@ -77,6 +78,20 @@ ligne `A2` du tableau de [`LEGAL.md`](./LEGAL.md) — et elle se vérifie à la 
 🔴 **Les empreintes ci-dessus ne sont pas à recopier d'un tableau.** Elles viennent de
 `node scripts/check-legal-journal.mjs`, exécuté le 2026-09-20. C'est la règle du dépôt : un
 « avant » se reconstruit à sa source, jamais depuis un tableau plus ancien.
+
+### 2026-10-01 · découpage des catalogues · **aucun changement de contenu** · aucun préavis
+
+| Document | Empreinte |
+|---|---|
+| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `40a849b623af87e4` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `477a96cee124c558` |
+
+**Ce qui a changé : l'emplacement, pas un mot.** Les CGU et la politique de confidentialité
+quittent `legal.json` pour `legalTerms.json` et `legalPrivacy.json`, chacune chargée par sa seule
+page (budget de bundle : le catalogue unique faisait 18,5 ko gzip pour un plafond de 15,5).
+L'empreinte porte désormais sur la RÉUNION des trois catalogues d'une langue, et elle est
+**identique** à celle du 2026-09-24 : c'est la preuve qu'aucune clause n'a bougé. Relevée par
+`node scripts/check-legal-journal.mjs` le 2026-10-01, témoin `scripts/check-legal-journal.guard.test.mjs`.
 
 ### 2026-09-24 · passe de conformité · **FOND** · préavis **dû pour trois clauses**
 

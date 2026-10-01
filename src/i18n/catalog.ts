@@ -78,6 +78,8 @@ interface FrModules {
   invite: typeof import('@/locales/fr/invite.json');
   landing: typeof import('@/locales/fr/landing.json');
   legal: typeof import('@/locales/fr/legal.json');
+  legalTerms: typeof import('@/locales/fr/legalTerms.json');
+  legalPrivacy: typeof import('@/locales/fr/legalPrivacy.json');
   okr: typeof import('@/locales/fr/okr.json');
   overlays: typeof import('@/locales/fr/overlays.json');
   org: typeof import('@/locales/fr/org.json');
@@ -152,8 +154,23 @@ interface CatalogShapes {
   premium: Shape<'premium'>;
   /** Landing publique + pages marketing (à propos, cas d'usage, blog). */
   landing: Shape<'landing'>;
-  /** Pages contractuelles : CGU, confidentialité, mentions légales. */
+  /**
+   * Pages contractuelles : libellés communs (retour, date de mise à jour) et
+   * mentions légales.
+   *
+   * 🔴 Les CGU et la politique de confidentialité vivent À PART depuis le
+   * 2026-10-01 (`legalTerms`, `legalPrivacy`), chacune chargée par SA page :
+   * ensemble dans ce catalogue, elles faisaient 18,5 ko gzip (fr + en) pour un
+   * plafond de 15,5, et chaque page légale téléchargeait les deux autres
+   * documents. ⚠️ Les trois fichiers d'une langue forment UN document au sens
+   * de `npm run check:legal-journal` : leur empreinte est calculée sur leur
+   * réunion, un découpage ne la change donc pas, une modification de texte si.
+   */
   legal: Shape<'legal'>;
+  /** Conditions générales d'utilisation (`/cgu`). */
+  legalTerms: Shape<'legalTerms'>;
+  /** Politique de confidentialité (`/politique-confidentialite`). */
+  legalPrivacy: Shape<'legalPrivacy'>;
   /** Mode entreprise — pyramide, équipes, projets, OKR d'équipe, invitations. */
   org: Shape<'org'>;
   /**
@@ -187,6 +204,16 @@ interface CatalogShapes {
    * à 41,3 ko gzip pour un plafond de 30. Chargé par les SEULES sections et
    * dialogues qui s'en servent (`lazyWithRetry(…, [..., 'orgAdmin'])` dans
    * `OrganizationPage`), jamais par l'Aperçu.
+   *
+   * 🔴 ÉLARGI le 2026-10-01 : la ROUTE /entreprise le charge pour toute visite,
+   * il porte donc aussi les textes que SEUL /entreprise affiche (annuaire,
+   * aperçu, notifications, réglages, facturation, navigation de la section,
+   * corbeille…, 34 sections). `org`, lui, est chargé par `Layout`, donc par
+   * TOUT compte connecté, entreprise ou non : il remontait à 40,6 ko gzip pour
+   * un plafond de 30, et il n'en garde que ce que le reste de l'app affiche
+   * (fiche de tâche d'équipe dans /tasks, invitations, pastilles…), 23,7 ko.
+   * ❌ Ne rien remettre dans `org` qu'un écran hors /entreprise n'affiche pas :
+   *    `lazy-namespaces.guard.test.ts` dira où chaque section est rendue.
    */
   orgAdmin: Shape<'orgAdmin'>;
   /**
@@ -287,7 +314,7 @@ registry[DEFAULT_LOCALE] = {
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
-  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgConfig', 'portfolio', 'premium', 'seo',
+  'habits', 'invite', 'landing', 'legal', 'legalPrivacy', 'legalTerms', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgConfig', 'portfolio', 'premium', 'seo',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];

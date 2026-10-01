@@ -34,6 +34,7 @@ interface AssignEventDialogProps {
  */
 const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEventDialogProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -137,8 +138,8 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t('directory.searchPlaceholder')}
-                  aria-label={t('directory.searchAria')}
+                  placeholder={tOrgAdmin('directory.searchPlaceholder')}
+                  aria-label={tOrgAdmin('directory.searchAria')}
                   className="w-full h-10 pl-9 pr-3 rounded-xl border text-sm focus:outline-none focus:border-indigo-400 transition-colors"
                   style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-background))', color: 'rgb(var(--color-text-primary))' }}
                 />
@@ -147,7 +148,7 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
             <div className="flex-1 overflow-y-auto p-2 space-y-1 min-h-0">
               {filtered.length === 0 ? (
                 <p className="text-xs text-center py-6" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  {t('directory.noMatch', { query })}
+                  {tOrgAdmin('directory.noMatch', { query })}
                 </p>
               ) : (
                 filtered.map((m) => {

@@ -65,16 +65,16 @@ const Caption = ({ event }: { event: PlacedOrgEvent }) => {
  * change rien au rendu (cf. garde-fou « position finale d'une animation »).
  */
 const OrgEventsTimeline = ({ events }: OrgEventsTimelineProps) => {
-  const { t, tp } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const placed = placeOrgEvents(events);
   if (placed.length === 0) return null;
 
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <div className="flex items-baseline justify-between gap-3 mb-1">
-        <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('myWork.orgEvents')}</h3>
+        <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('myWork.orgEvents')}</h3>
         <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
-          {tp('myWork.orgEventsCount', placed.length)}
+          {tpOrgAdmin('myWork.orgEventsCount', placed.length)}
         </span>
       </div>
 

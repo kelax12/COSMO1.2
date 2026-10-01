@@ -101,7 +101,7 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
     />
   );
 
-  if (loadingTeams) return <OrgTabSkeleton label={t('page.tabLoading')} />;
+  if (loadingTeams) return <OrgTabSkeleton label={ta('page.tabLoading')} />;
   if (!team) {
     // Id inconnu, équipe supprimée, ou lien venu d'une autre organisation :
     // la RLS rend la même absence dans les trois cas, l'écran aussi.

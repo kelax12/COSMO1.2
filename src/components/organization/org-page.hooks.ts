@@ -32,6 +32,7 @@ export const useManagerSectionsToast = (
   isAdmin: boolean,
 ) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const reports = useMemo(
     () => (userId ? members.filter((m) => m.managerId === userId) : []),
     [members, userId],
@@ -47,9 +48,9 @@ export const useManagerSectionsToast = (
     try { localStorage.setItem(key, now); } catch { /* sans stockage : pas de toast */ return; }
     if (previous === '0' && managesSomeone) {
       const names = reports.slice(0, 2).map((m) => m.displayName).join(', ');
-      toast.info(t('page.managerToast', { names: reports.length > 2 ? `${names}…` : names }));
+      toast.info(tOrgAdmin('page.managerToast', { names: reports.length > 2 ? `${names}…` : names }));
     }
-  }, [orgId, userId, membersLoaded, isAdmin, managesSomeone, reports, t]);
+  }, [orgId, userId, membersLoaded, isAdmin, managesSomeone, reports, t, tOrgAdmin]);
 };
 
 /**

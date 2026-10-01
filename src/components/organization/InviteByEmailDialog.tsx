@@ -35,8 +35,8 @@ const ACCESS_CHOICES = [null, 7, 30, 90, 180] as const;
  * passé : un lien créé dont l'e-mail n'est pas parti reste copiable.
  */
 const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, initialEmails = '', onClose }: InviteByEmailDialogProps) => {
-  const { t, tp } = useT('org');
-  const { t: ta } = useT('orgAdmin');
+  const { t } = useT('org');
+  const { t: ta, tp: tpOrgAdmin } = useT('orgAdmin');
   const invite = useInviteByEmail(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
   const [raw, setRaw] = useState(initialEmails);
@@ -169,7 +169,7 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, initialEm
                 className="w-full rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2 text-sm text-[rgb(var(--color-text-primary))]"
               />
               <p className="mt-1 text-xs text-[rgb(var(--color-text-muted))]">
-                {tp('invites.emailsCount', emails.length, { max: 50 })}
+                {tpOrgAdmin('invites.emailsCount', emails.length, { max: 50 })}
               </p>
             </div>
 

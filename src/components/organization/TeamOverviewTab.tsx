@@ -76,12 +76,11 @@ const MiniBar = ({ ratio, colorClass }: { ratio: number; colorClass: string }) =
  * direct » (jauge de l'état courant, pas une activité datée).
  */
 const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOverviewTabProps) => {
-  const { t, tp } = useT('org');
-  const { t: ta } = useT('orgAdmin');
+  const { t: ta, tp: tpOrgAdmin } = useT('orgAdmin');
   // Configs de graphique construites au RENDU : elles portent des libellés
   // traduits, une constante de module les figerait au premier import.
-  const velocityConfig = { completed: { label: t('overview.completed'), color: velocityColor } } satisfies ChartConfig;
-  const trendConfig = { rate: { label: t('overview.completionRate'), color: trendColor } } satisfies ChartConfig;
+  const velocityConfig = { completed: { label: ta('overview.completed'), color: velocityColor } } satisfies ChartConfig;
+  const trendConfig = { rate: { label: ta('overview.completionRate'), color: trendColor } } satisfies ChartConfig;
   const [period, setPeriod] = useState<StatsPeriod>('30');
   const start = useMemo(() => periodStart(period), [period]);
   // Lecture ciblée sur la période (audit du 2026-09-24) : les tâches OUVERTES,
@@ -169,9 +168,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
 
   const periodDays = STATS_PERIODS.find((p) => p.id === period)?.days ?? null;
   const periodLabel = periodDays === null
-    ? t('overview.periodAll')
-    : t('overview.periodDays', { count: periodDays });
-  const periodHint = period === 'all' ? t('overview.sinceStart') : t('overview.activeOver', { period: periodLabel });
+    ? ta('overview.periodAll')
+    : ta('overview.periodDays', { count: periodDays });
+  const periodHint = period === 'all' ? ta('overview.sinceStart') : ta('overview.activeOver', { period: periodLabel });
 
   const flows = useMemo(() => {
     if (!windows) return null;
@@ -190,11 +189,11 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
     const { downloadCSV } = await import('@/lib/csv-export');
     const S = { summary: ta('ui.report.summary'), member: ta('ui.report.members'), project: ta('ui.report.projects'), okr: ta('ui.report.okr') };
     const rows: (string | number)[][] = [
-      [S.summary, periodLabel, t('overview.csvTotal'), summary.total],
-      [S.summary, periodLabel, t('overview.csvDone'), summary.completed],
-      [S.summary, periodLabel, t('overview.csvOverdue'), summary.overdueCount],
-      [S.summary, periodLabel, t('overview.csvRate'), summary.completionRate],
-      [S.summary, periodLabel, t('overview.okrProgressLabel'), okrProgress],
+      [S.summary, periodLabel, ta('overview.csvTotal'), summary.total],
+      [S.summary, periodLabel, ta('overview.csvDone'), summary.completed],
+      [S.summary, periodLabel, ta('overview.csvOverdue'), summary.overdueCount],
+      [S.summary, periodLabel, ta('overview.csvRate'), summary.completionRate],
+      [S.summary, periodLabel, ta('overview.okrProgressLabel'), okrProgress],
     ];
     if (flows) {
       rows.push(
@@ -207,16 +206,16 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
     for (const m of load) {
       const overdue = overdueMembers.find((o) => o.userId === m.userId)?.count ?? 0;
       rows.push(
-        [S.member, m.name, t('overview.csvOpen'), m.open],
-        [S.member, m.name, t('overview.csvDone'), m.done],
-        [S.member, m.name, t('overview.csvRate'), m.completionRate],
-        [S.member, m.name, t('overview.csvOverdue'), overdue],
+        [S.member, m.name, ta('overview.csvOpen'), m.open],
+        [S.member, m.name, ta('overview.csvDone'), m.done],
+        [S.member, m.name, ta('overview.csvRate'), m.completionRate],
+        [S.member, m.name, ta('overview.csvOverdue'), overdue],
       );
     }
     for (const p of byProject) {
-      rows.push([S.project, p.name, t('overview.openShort'), p.open], [S.project, p.name, t('overview.overdueShort'), p.overdue]);
+      rows.push([S.project, p.name, ta('overview.openShort'), p.open], [S.project, p.name, ta('overview.overdueShort'), p.overdue]);
     }
-    for (const o of okrStats) rows.push([S.okr, o.title, t('overview.csvProgress'), o.progress]);
+    for (const o of okrStats) rows.push([S.okr, o.title, ta('overview.csvProgress'), o.progress]);
     downloadCSV(
       'cosmo-rapport-entreprise',
       [ta('ui.report.colSection'), ta('ui.report.colItem'), ta('ui.report.colMeasure'), ta('ui.report.colValue')],
@@ -236,7 +235,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
           ctx={scopeCtx}
         />
         <div className="flex items-center gap-2">
-          <div className="inline-flex items-center rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5" role="tablist" aria-label={t('overview.period')}>
+          <div className="inline-flex items-center rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5" role="tablist" aria-label={ta('overview.period')}>
             {STATS_PERIODS.map((p) => (
               <button
                 key={p.id}
@@ -250,7 +249,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                     : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
                 }`}
               >
-                {p.days === null ? t('overview.periodAll') : t('overview.periodDays', { count: p.days })}
+                {p.days === null ? ta('overview.periodAll') : ta('overview.periodDays', { count: p.days })}
               </button>
             ))}
           </div>
@@ -279,18 +278,18 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
           le plus cher : un manager y voyait son équipe à 0 tâche / 0 % avant de
           la voir à ses vrais chiffres. */}
       {isLoading ? (
-        <TeamOverviewSkeleton label={t('overview.loading')} />
+        <TeamOverviewSkeleton label={ta('overview.loading')} />
       ) : (
       <>
       {truncated && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
       {/* Carte de synthèse « progress-first » */}
       <WorkSummaryCard
-        title={tp('summary.taskTotal', summary.total, { period: periodHint })}
+        title={tpOrgAdmin('summary.taskTotal', summary.total, { period: periodHint })}
         completed={summary.completed}
         inProgress={Math.max(0, summary.total - summary.completed - summary.overdueCount)}
         overdue={summary.overdueCount}
-        emptyLabel={t('overview.emptyPeriod')}
-        aside={<ProgressRing value={okrProgress} label={t('overview.okrProgressLabel')} />}
+        emptyLabel={ta('overview.emptyPeriod')}
+        aside={<ProgressRing value={okrProgress} label={ta('overview.okrProgressLabel')} />}
       />
 
       {flows && (
@@ -307,23 +306,23 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
 
       {/* Par membre + Par projet */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
-        <SectionCard title={t('overview.byMember')}>
+        <SectionCard title={ta('overview.byMember')}>
           {load.every((m) => m.total === 0) ? (
-            <EmptyRow>{t('overview.emptyAssigned')}</EmptyRow>
+            <EmptyRow>{ta('overview.emptyAssigned')}</EmptyRow>
           ) : (
             <ul className="space-y-2.5">
               {load.filter((m) => m.total > 0).map((m) => (
                 <li key={m.userId} className="flex items-center gap-3">
                   <span className="w-20 shrink-0 text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{m.name}</span>
                   <MiniBar ratio={m.open / maxOpen} colorClass="bg-[rgb(var(--color-accent-solid))]" />
-                  <span className="w-9 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title={t('overview.openTasks')}>
+                  <span className="w-9 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title={ta('overview.openTasks')}>
                     {m.open}
                   </span>
                   <span
                     className={`w-11 shrink-0 text-right text-xs font-semibold tabular-nums ${
                       m.completionRate >= 66 ? 'text-emerald-500' : m.completionRate >= 33 ? 'text-amber-500' : 'text-[rgb(var(--color-text-muted))]'
                     }`}
-                    title={t('overview.doneRatio', { done: m.done, total: m.total })}
+                    title={ta('overview.doneRatio', { done: m.done, total: m.total })}
                   >
                     {m.completionRate}%
                   </span>
@@ -333,9 +332,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
           )}
         </SectionCard>
 
-        <SectionCard title={t('overview.byProject')}>
+        <SectionCard title={ta('overview.byProject')}>
           {byProject.length === 0 ? (
-            <EmptyRow>{t('overview.emptyByProject')}</EmptyRow>
+            <EmptyRow>{ta('overview.emptyByProject')}</EmptyRow>
           ) : (
             <ul className="space-y-2.5">
               {byProject.map((p) => (
@@ -343,9 +342,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                   <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${projectColor(p.color).dot}`} aria-hidden="true" />
                   <span className="w-24 shrink-0 text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{p.name}</span>
                   <MiniBar ratio={p.open / maxProjectOpen} colorClass={projectColor(p.color).dot} />
-                  <span className="w-8 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title={t('overview.openShort')}>{p.open}</span>
+                  <span className="w-8 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title={ta('overview.openShort')}>{p.open}</span>
                   {p.overdue > 0 ? (
-                    <span className="w-14 shrink-0 text-right text-[10px] font-semibold text-red-500" title={t('overview.overdueShort')}>{p.overdue} retard</span>
+                    <span className="w-14 shrink-0 text-right text-[10px] font-semibold text-red-500" title={ta('overview.overdueShort')}>{p.overdue} retard</span>
                   ) : (
                     <span className="w-14 shrink-0" />
                   )}
@@ -358,9 +357,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
 
       {/* Vélocité + Tendance */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
-        <SectionCard title={t('overview.velocity')}>
+        <SectionCard title={ta('overview.velocity')}>
           {!hasVelocity ? (
-            <EmptyRow>{t('overview.emptyVelocity')}</EmptyRow>
+            <EmptyRow>{ta('overview.emptyVelocity')}</EmptyRow>
           ) : (
             <ChartContainer config={velocityConfig} className="h-[200px] w-full">
               <BarChart data={velocity} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -374,9 +373,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
           )}
         </SectionCard>
 
-        <SectionCard title={t('overview.trend')}>
+        <SectionCard title={ta('overview.trend')}>
           {!hasTrend ? (
-            <EmptyRow>{t('overview.emptyTrend')}</EmptyRow>
+            <EmptyRow>{ta('overview.emptyTrend')}</EmptyRow>
           ) : (
             <ChartContainer config={trendConfig} className="h-[200px] w-full">
               <LineChart data={trend} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -392,9 +391,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       </div>
 
       {/* Avancement OKR détaillé */}
-      <SectionCard title={t('overview.okrProgressTitle')}>
+      <SectionCard title={ta('overview.okrProgressTitle')}>
         {okrStats.length === 0 ? (
-          <EmptyRow>{t('overview.emptyOkr')}</EmptyRow>
+          <EmptyRow>{ta('overview.emptyOkr')}</EmptyRow>
         ) : (
           <ul className="space-y-3">
             {okrStats.map((o) => (
@@ -420,7 +419,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       {/* Retards par membre + liste des tâches en retard */}
       {summary.overdueCount > 0 && (
         <div className="grid lg:grid-cols-2 gap-5 items-start">
-          <SectionCard title={t('overview.overdueByMember')}>
+          <SectionCard title={ta('overview.overdueByMember')}>
             <ul className="space-y-2.5">
               {overdueMembers.map((m) => (
                 <li key={m.userId} className="flex items-center gap-3">
@@ -434,7 +433,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
 
           <div className="rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/50 dark:bg-red-900/10 p-4 sm:p-5">
             <h3 className="text-sm font-bold text-red-600 dark:text-red-400 mb-3">
-              {t('summary.overdueTasks', { count: overdueTasks.length })}
+              {ta('summary.overdueTasks', { count: overdueTasks.length })}
             </h3>
             <ul className="space-y-1.5">
               {overdueTasks.slice(0, 6).map((t) => {

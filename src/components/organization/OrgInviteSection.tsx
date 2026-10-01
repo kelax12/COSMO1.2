@@ -44,6 +44,7 @@ const OrgInviteSection = ({
   org, currentUserId, isAdmin, canInvite, canInviteByEmail, seatsFull, seatsQuota, memberCount, isOwner, onInviteByEmail,
 }: OrgInviteSectionProps) => {
   const { t, tp } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const [quickEmails, setQuickEmails] = useState('');
   const [showContacts, setShowContacts] = useState(false);
 
@@ -52,8 +53,8 @@ const OrgInviteSection = ({
           <div>
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <h2 id="org-invite-title" className={TITLE}>{t('settings.inviteTitle')}</h2>
-                <p className={HINT}>{t('settings.inviteHint')}</p>
+                <h2 id="org-invite-title" className={TITLE}>{tOrgAdmin('settings.inviteTitle')}</h2>
+                <p className={HINT}>{tOrgAdmin('settings.inviteHint')}</p>
               </div>
               {isOwner && (
                 <Link
@@ -132,13 +133,13 @@ const OrgInviteSection = ({
               onSubmit={(e) => { e.preventDefault(); onInviteByEmail(quickEmails); setQuickEmails(''); }}
             >
               <h3 className="flex items-center gap-2 text-sm font-bold text-[rgb(var(--color-text-primary))]">
-                <Mail size={15} aria-hidden="true" /> {t('invites.emailTitle')}
+                <Mail size={15} aria-hidden="true" /> {tOrgAdmin('invites.emailTitle')}
                 <span className="text-caption font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
                   {t('invite.recommended')}
                 </span>
               </h3>
               <div className="flex flex-col sm:flex-row gap-2">
-                <label htmlFor="invite-quick-emails" className="sr-only">{t('invites.emailTitle')}</label>
+                <label htmlFor="invite-quick-emails" className="sr-only">{tOrgAdmin('invites.emailTitle')}</label>
                 <input
                   id="invite-quick-emails"
                   type="text"
@@ -158,7 +159,7 @@ const OrgInviteSection = ({
                 </button>
               </div>
               <p className="text-xs text-[rgb(var(--color-text-muted))]">
-                {t('invites.emailIntro')}{' '}
+                {tOrgAdmin('invites.emailIntro')}{' '}
                 <button type="button" onClick={() => { onInviteByEmail(quickEmails); setQuickEmails(''); }} className="text-[rgb(var(--color-accent))] hover:underline">
                   {t('invite.moreOptions')}
                 </button>

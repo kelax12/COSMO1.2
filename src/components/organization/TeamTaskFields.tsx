@@ -21,14 +21,18 @@
 //
 // Extrait le 2026-09-05 (C-09).
 // ═══════════════════════════════════════════════════════════════════
-import React from 'react';
+import React, { Suspense } from 'react';
 import { ChevronRight, Minus, Plus } from 'lucide-react';
 import type { TeamProject, TeamTaskStatus } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 import { DatePicker } from '@/components/ui/date-picker';
 import DescriptionField from '@/components/DescriptionField';
 import AddCategoryButton from '@/components/AddCategoryButton';
-import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+// Arbre de catégories (2026-10-01) : 21 ko bruts, chargés à la demande pour
+// ramener le chunk de la fiche de tâche sous son plafond. L'emplacement réservé
+// a les dimensions du bouton du sélecteur : rien ne saute à son arrivée.
+const TeamCategoryTreeSelect = lazyWithRetry(() => import('./TeamCategoryTreeSelect'));
 import MemberPickList from './MemberPickList';
 import { PRIORITY_META, STATUS_META, STATUS_ORDER, projectColor } from './team-projects.helpers';
 
@@ -201,7 +205,9 @@ const TeamTaskFields = ({
           lui : une tâche porte sa propre catégorie. */}
       <div>
         <span className={labelClass} style={labelStyle}>{t('project.category')}</span>
-        <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={onCategoryChange} />
+        <Suspense fallback={<div aria-hidden="true" className="w-full min-h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]" />}>
+          <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={onCategoryChange} />
+        </Suspense>
       </div>
 
       {labelsField}

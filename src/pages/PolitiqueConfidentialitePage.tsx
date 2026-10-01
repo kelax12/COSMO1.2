@@ -2,6 +2,7 @@ import React from 'react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { useT } from '@/i18n/useT';
 import LegalDocument, { type LegalSection } from './legal/LegalDocument';
+import type { KeyOf } from '@/i18n/catalog';
 
 /**
  * Politique de confidentialité.
@@ -15,7 +16,7 @@ import LegalDocument, { type LegalSection } from './legal/LegalDocument';
  * modifier ce texte transforme une politique en fausse déclaration. Le registre
  * de l'article 30 (`docs/RGPD-REGISTRE.md`) est l'autre moitié de la paire.
  */
-const SECTIONS: LegalSection[] = [
+const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
   { title: 'privacy.s1.title', blocks: [{ kind: 'p', key: 'privacy.s1.p1' }] },
   {
     title: 'privacy.s2.title',
@@ -133,7 +134,7 @@ const SECTIONS: LegalSection[] = [
 ];
 
 const PolitiqueConfidentialitePage: React.FC = () => {
-  const { t } = useT('legal');
+  const { t } = useT('legalPrivacy');
   useSeoMeta({
     title: t('privacy.seoTitle'),
     description: t('privacy.seoDescription'),
@@ -142,6 +143,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
 
   return (
     <LegalDocument
+      text={t}
       titleKey="privacy.title"
       updatedAtKey="privacy.updatedAt"
       sections={SECTIONS}

@@ -24,7 +24,7 @@ const barWidth = (minutes: number, max: number): string =>
  * tâches induit.
  */
 const TeamWorkloadCard = ({ rows, members }: TeamWorkloadCardProps) => {
-  const { t, tp } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const memberById = new Map(members.map((m) => [m.userId, m]));
 
   // Personnes réellement concernées : sans tâche ouverte, on n'occupe pas une
@@ -37,16 +37,16 @@ const TeamWorkloadCard = ({ rows, members }: TeamWorkloadCardProps) => {
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <div className="mb-1">
         <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
-          {t('overview.workloadTitle')}
+          {tOrgAdmin('overview.workloadTitle')}
         </h3>
         <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-          {t('overview.workloadHint')}
+          {tOrgAdmin('overview.workloadHint')}
         </p>
       </div>
 
       {active.length === 0 || !anyEstimate ? (
         <p className="text-xs text-[rgb(var(--color-text-muted))] py-6 text-center max-w-sm mx-auto">
-          {t('overview.workloadEmpty')}
+          {tOrgAdmin('overview.workloadEmpty')}
         </p>
       ) : (
         <ul className="space-y-2.5 mt-3">
@@ -61,10 +61,10 @@ const TeamWorkloadCard = ({ rows, members }: TeamWorkloadCardProps) => {
                   : 'bg-[rgb(var(--color-accent))]';
             const toneLabel =
               tone === 'over'
-                ? t('overview.workloadOver')
+                ? tOrgAdmin('overview.workloadOver')
                 : tone === 'under'
-                  ? t('overview.workloadUnder')
-                  : t('overview.workloadNormal');
+                  ? tOrgAdmin('overview.workloadUnder')
+                  : tOrgAdmin('overview.workloadNormal');
             return (
               <li key={row.userId} className="flex items-center gap-3">
                 {member && (
@@ -83,13 +83,13 @@ const TeamWorkloadCard = ({ rows, members }: TeamWorkloadCardProps) => {
                     <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))] shrink-0 tabular-nums">
                       {row.estimatedMinutes > 0
                         ? formatDuration(row.estimatedMinutes)
-                        : t('overview.workloadNoEstimate')}
+                        : tOrgAdmin('overview.workloadNoEstimate')}
                     </span>
                   </div>
                   <div
                     className="mt-1 h-1.5 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden"
                     role="img"
-                    aria-label={`${row.name} : ${toneLabel}, ${tp('overview.workloadOpen', row.open)}`}
+                    aria-label={`${row.name} : ${toneLabel}, ${tpOrgAdmin('overview.workloadOpen', row.open)}`}
                   >
                     <div
                       className={`h-full rounded-full ${barClass} transition-all`}
@@ -98,11 +98,11 @@ const TeamWorkloadCard = ({ rows, members }: TeamWorkloadCardProps) => {
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-caption text-[rgb(var(--color-text-muted))]">
-                      {tp('overview.workloadOpen', row.open)}
+                      {tpOrgAdmin('overview.workloadOpen', row.open)}
                     </span>
                     {row.overdue > 0 && (
                       <span className="text-caption font-semibold text-red-500">
-                        {t('overview.workloadOverdue', { count: row.overdue })}
+                        {tOrgAdmin('overview.workloadOverdue', { count: row.overdue })}
                       </span>
                     )}
                   </div>

@@ -64,7 +64,7 @@ const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/Te
 const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'), ['csv', 'eventModal', 'org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
 const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'), ['okr', 'org', 'orgAdmin', 'overlays', 'portfolio']);
 const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
-const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgAccount', 'overlays']);
+const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgAccount', 'orgAdmin', 'overlays']);
 // Section Membres : sortie de la page le 2026-09-24, et LAZY pour la même
 // raison que les onglets ci-dessus. Importée en dur, elle restait dans ce
 // chunk, qui dépassait son cliquet (18,3 ko pour 18,0) : seul qui ouvre
@@ -101,11 +101,11 @@ type OrgTab = OrgSection;
  * on réutilise le même ici, pour que l'attente du CODE et celle de la donnée
  * se ressemblent au lieu de s'enchaîner en deux formes différentes.
  */
-const tabFallback = (tab: OrgTab, t: (key: KeyOf<'org'>) => string) => {
-  if (tab === 'overview') return <MyWorkSkeleton label={t('myWork.loading')} />;
-  if (tab === 'tasks') return <TeamTasksSkeleton label={t('projects.tasksTabLoading')} />;
-  if (tab === 'stats') return <TeamOverviewSkeleton label={t('overview.loading')} />;
-  return <OrgTabSkeleton label={t('page.tabLoading')} />;
+const tabFallback = (tab: OrgTab, tOrgAdmin: (key: KeyOf<'orgAdmin'>) => string) => {
+  if (tab === 'overview') return <MyWorkSkeleton label={tOrgAdmin('myWork.loading')} />;
+  if (tab === 'tasks') return <TeamTasksSkeleton label={tOrgAdmin('page.tasksTabLoading')} />;
+  if (tab === 'stats') return <TeamOverviewSkeleton label={tOrgAdmin('overview.loading')} />;
+  return <OrgTabSkeleton label={tOrgAdmin('page.tabLoading')} />;
 };
 
 /** Bannière sièges : dismiss persistant par org (informative, freemium dormant). */
@@ -118,7 +118,8 @@ const seatsBannerKey = (orgId: string) => `cosmo_org_seats_banner_dismissed_${or
 const openSearch = () => window.dispatchEvent(new CustomEvent('open-command-palette'));
 
 const OrganizationPage = () => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const { user } = useAuth();
   // Section active = segment de chemin. `billing` en fait partie : c'est une
   // route sans entrée de navigation, où Stripe renvoie après un paiement.
@@ -233,7 +234,7 @@ const OrganizationPage = () => {
   const sectionBadges = sectionNotificationBadges(orgNotifications);
   const badgeOf = (id: OrgSection): { count: number; items: string[] } => {
     const extra = (id in sectionBadges) ? sectionBadges[id as BadgeSection] : null;
-    const extraItems = extra ? extra.kinds.map((k) => t(`notifSettings.kind.${k}` as KeyOf<'org'>)) : [];
+    const extraItems = extra ? extra.kinds.map((k) => tOrgAdmin(`notifSettings.kind.${k}` as KeyOf<'orgAdmin'>)) : [];
     if (id === 'projects') return { count: badges.projects + (extra?.count ?? 0), items: [...badges.projectItems, ...extraItems] };
     if (id === 'members') return { count: badges.members, items: badges.memberItems };
     return { count: extra?.count ?? 0, items: extraItems };
@@ -241,7 +242,7 @@ const OrganizationPage = () => {
   const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => !item.hidden).filter((item) => (item.id === 'stats' ? canStats : !item.managerOnly || isManager)).map(
     ({ id, labelKey, Icon, group }) => {
       const { count: badgeCount, items } = badgeOf(id);
-      const badgeAriaLabel = badgeCount > 0 ? tp('page.badgeCount', badgeCount) : undefined;
+      const badgeAriaLabel = badgeCount > 0 ? tpOrgAdmin('page.badgeCount', badgeCount) : undefined;
       return {
         id,
         label: t(labelKey),
@@ -253,7 +254,7 @@ const OrganizationPage = () => {
           <OrgTabBadge
             count={badgeCount}
             items={items}
-            title={t(id === 'members' ? 'page.badgePreviewMembers' : id === 'projects' ? 'page.badgePreviewProjects' : 'page.badgePreviewSection')}
+            title={tOrgAdmin(id === 'members' ? 'page.badgePreviewMembers' : id === 'projects' ? 'page.badgePreviewProjects' : 'page.badgePreviewSection')}
             ariaLabel={badgeAriaLabel ?? ''}
             side="left"
             onAccent={tab === id}
@@ -317,14 +318,14 @@ const OrganizationPage = () => {
           sur mobile, juste en dessous. */}
       <MobileHeader
         title={myOrg.name}
-        subtitle={`${tp('page.memberCount', members.length)}${myOrg.industry ? ` · ${myOrg.industry}` : ''}`}
+        subtitle={`${tpOrgAdmin('page.memberCount', members.length)}${myOrg.industry ? ` · ${myOrg.industry}` : ''}`}
         actions={
           <>
             {isAdmin && (
               <button
                 type="button"
                 onClick={() => setTab('settings')}
-                aria-label={t('page.editProfile')}
+                aria-label={tOrgAdmin('page.editProfile')}
                 className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
               >
                 <Pencil size={18} aria-hidden="true" />
@@ -352,7 +353,7 @@ const OrganizationPage = () => {
               <button
                 type="button"
                 onClick={() => setTab('settings')}
-                aria-label={t('page.editProfile')}
+                aria-label={tOrgAdmin('page.editProfile')}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
               >
                 <Pencil size={14} aria-hidden="true" />
@@ -360,7 +361,7 @@ const OrganizationPage = () => {
             )}
           </div>
           <p className="text-sm text-[rgb(var(--color-text-muted))] truncate">
-            {tp('page.memberCount', members.length)}
+            {tpOrgAdmin('page.memberCount', members.length)}
             {myOrg.industry ? ` · ${myOrg.industry}` : ''}
           </p>
           {myOrg.description && (
@@ -385,16 +386,16 @@ const OrganizationPage = () => {
       {members.length >= (seatsQuota ?? Infinity) && (ENTERPRISE_BILLING_ENFORCED || !bannerDismissed) && (
         <div className="mb-5 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] px-4 py-3 flex items-start justify-between gap-3">
           <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-            <span className="font-semibold text-[rgb(var(--color-text-primary))]">{tp('page.memberCountDot', members.length)}</span>{' '}
+            <span className="font-semibold text-[rgb(var(--color-text-primary))]">{tpOrgAdmin('page.memberCountDot', members.length)}</span>{' '}
             {ENTERPRISE_BILLING_ENFORCED
-              ? t('page.freemiumOver')
-              : t('page.freemiumInfo')}
+              ? tOrgAdmin('page.freemiumOver')
+              : tOrgAdmin('page.freemiumInfo')}
           </p>
           {!ENTERPRISE_BILLING_ENFORCED && (
             <button
               type="button"
               onClick={dismissSeatsBanner}
-              aria-label={t('page.hideInfo')}
+              aria-label={tOrgAdmin('page.hideInfo')}
               className="shrink-0 w-11 h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
             >
               <X size={14} aria-hidden="true" />
@@ -413,7 +414,7 @@ const OrganizationPage = () => {
           de l'onglet Tâches ressemble à sa table, celui des Statistiques à ses
           tuiles. Un fallback générique pour tous aurait fait clignoter une
           forme qui n'est pas celle qui arrive. */}
-      <Suspense fallback={tabFallback(tab, t)}>
+      <Suspense fallback={tabFallback(tab, tOrgAdmin)}>
       {tab === 'overview' && (
         <MyWorkTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} />
       )}

@@ -58,17 +58,17 @@ interface StartStep { id: string; label: string; done: boolean; tab: string; }
  * objectifs.
  */
 const NewcomerHints = () => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const navigate = useNavigate();
   const hints: { id: string; label: string; tab: string }[] = [
-    { id: 'projects', label: t('myWork.hintProjects'), tab: 'projects' },
-    { id: 'members', label: t('myWork.hintMembers'), tab: 'members' },
-    { id: 'okr', label: t('myWork.hintOkr'), tab: 'okr' },
+    { id: 'projects', label: tOrgAdmin('myWork.hintProjects'), tab: 'projects' },
+    { id: 'members', label: tOrgAdmin('myWork.hintMembers'), tab: 'members' },
+    { id: 'okr', label: tOrgAdmin('myWork.hintOkr'), tab: 'okr' },
   ];
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('myWork.welcomeTitle')}</h3>
-      <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1 mb-3">{t('myWork.welcomeIntro')}</p>
+      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('myWork.welcomeTitle')}</h3>
+      <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1 mb-3">{tOrgAdmin('myWork.welcomeIntro')}</p>
       <ul className="space-y-1">
         {hints.map((h) => (
           <li key={h.id}>
@@ -99,17 +99,17 @@ const NewcomerHints = () => {
  * liste plate précédente ne distinguait pas visuellement.
  */
 const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const groups = groupEventsByDay(events);
   return (
     // `min-w-0` : second enfant de la même grille que « Mes tâches », donc
     // même borne `min-width: auto` à lever (cf. maquette 105 juste en dessous).
     <div className="min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-        {t('myWork.agendaSection')}
+        {tOrgAdmin('myWork.agendaSection')}
       </h3>
       {groups.length === 0 ? (
-        <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{t('myWork.agendaEmpty')}</p>
+        <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{tOrgAdmin('myWork.agendaEmpty')}</p>
       ) : (
         <div className="space-y-3">
           {groups.map((group) => (
@@ -119,7 +119,7 @@ const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
               }`}
               >
                 {group.isToday ? (
-                  t('myWork.agendaToday')
+                  tOrgAdmin('myWork.agendaToday')
                 ) : (
                   <span className="capitalize">{format(group.date, 'EEEE d MMM', { locale: getDateLocale() })}</span>
                 )}
@@ -156,6 +156,7 @@ const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
 // d'ENTRÉE (mesuré le 2026-09-25). Même forme que `orgSetupPath`, testée là-bas.
 const StartChecklist = ({ steps, orgId }: { steps: StartStep[]; orgId: string }) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const navigate = useNavigate();
   const doneCount = steps.filter((s) => s.done).length;
   // L'assistant couvre les trois premières étapes (inviter, équipe, projet) :
@@ -164,7 +165,7 @@ const StartChecklist = ({ steps, orgId }: { steps: StartStep[]; orgId: string })
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <div className="flex items-center justify-between gap-2 mb-3">
-        <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('myWork.getStarted')}</h3>
+        <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('myWork.getStarted')}</h3>
         <span className="text-xs text-[rgb(var(--color-text-muted))]">{doneCount}/{steps.length}</span>
       </div>
       <ul className="space-y-1">
@@ -224,7 +225,7 @@ const isOverdue = (t: TeamTask): boolean => {
 const ACTIVITY_DAYS = 14;
 
 const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps) => {
-  const { t, tp } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const me = currentUserId ?? '';
   const { data: projects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
   const { data: okrs = [], isLoading: loadingOkrs } = useTeamOKRs(orgId);
@@ -290,12 +291,12 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
   // un projet » : c'est le rattachement qui porte le cloisonnement.
   const isAdmin = members.find((m) => m.userId === currentUserId)?.role === 'admin';
   const startSteps = useMemo<StartStep[]>(() => [
-    { id: 'invite', label: t('myWork.stepInvite'), done: members.length > 1, tab: 'members' },
-    { id: 'team', label: t('myWork.stepTeam'), done: teams.length > 0, tab: 'members' },
-    { id: 'project', label: t('myWork.stepProject'), done: activeProjects.length > 0, tab: 'projects' },
-    { id: 'pyramid', label: t('myWork.stepPyramid'), done: members.some((m) => !!m.managerId), tab: 'pyramid' },
-    { id: 'okr', label: t('myWork.stepOkr'), done: okrs.length > 0, tab: 'okr' },
-  ], [activeProjects.length, members, okrs.length, teams.length, t]);
+    { id: 'invite', label: tOrgAdmin('myWork.stepInvite'), done: members.length > 1, tab: 'members' },
+    { id: 'team', label: tOrgAdmin('myWork.stepTeam'), done: teams.length > 0, tab: 'members' },
+    { id: 'project', label: tOrgAdmin('myWork.stepProject'), done: activeProjects.length > 0, tab: 'projects' },
+    { id: 'pyramid', label: tOrgAdmin('myWork.stepPyramid'), done: members.some((m) => !!m.managerId), tab: 'pyramid' },
+    { id: 'okr', label: tOrgAdmin('myWork.stepOkr'), done: okrs.length > 0, tab: 'okr' },
+  ], [activeProjects.length, members, okrs.length, teams.length, tOrgAdmin]);
   const showChecklist = isAdmin && startSteps.some((s) => !s.done);
   // Un membre non-admin sans tâche arrive sur un écran vide : on lui dit au
   // moins où regarder (la checklist ci-dessus lui est fermée).
@@ -311,7 +312,7 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
   // « Aucune tâche » et une synthèse à 0 % le temps du fetch, et la checklist
   // montrait ses 5 étapes non faites à un admin qui les avait toutes faites.
   if (loadingProjects || (loadingMine && !!me) || loadingOkrs || loadingTeams) {
-    return <MyWorkSkeleton label={t('myWork.loading')} />;
+    return <MyWorkSkeleton label={tOrgAdmin('myWork.loading')} />;
   }
 
   return (
@@ -320,7 +321,7 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
       {showChecklist && <StartChecklist steps={startSteps} orgId={orgId} />}
       {showNewcomerHints && <NewcomerHints />}
 
-      <Suspense fallback={<MyWorkSkeleton label={t('myWork.loading')} />}>
+      <Suspense fallback={<MyWorkSkeleton label={tOrgAdmin('myWork.loading')} />}>
         <MyWorkSections
           orgId={orgId}
           currentUserId={currentUserId}
@@ -339,11 +340,11 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
           agenda={<AgendaEventsCard events={upcomingEvents} />}
           summary={(
             <WorkSummaryCard
-              title={tp('myWork.myTasks', myTasks.length)}
+              title={tpOrgAdmin('myWork.myTasks', myTasks.length)}
               completed={done.length}
               inProgress={Math.max(0, open.length - overdue.length)}
               overdue={overdue.length}
-              emptyLabel={t('myWork.emptyLabel')}
+              emptyLabel={tOrgAdmin('myWork.emptyLabel')}
             />
           )}
           overdueCount={overdue.length}

@@ -18,6 +18,7 @@ interface OrgTasksExportSectionProps {
  */
 const OrgTasksExportSection = ({ orgId, members }: OrgTasksExportSectionProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const pf = useT('portfolio');
   const { data: projects = [] } = useTeamProjects(orgId);
   const { data: categories = [] } = useTeamCategories(orgId);
@@ -47,8 +48,8 @@ const OrgTasksExportSection = ({ orgId, members }: OrgTasksExportSectionProps) =
 
   return (
     <section className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-      <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('orgSettings.exportTitle')}</h2>
-      <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5 mb-3">{t('orgSettings.exportHint')}</p>
+      <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('orgSettings.exportTitle')}</h2>
+      <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5 mb-3">{tOrgAdmin('orgSettings.exportHint')}</p>
       <button
         type="button"
         onClick={() => void exportCsv()}

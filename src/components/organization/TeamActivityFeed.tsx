@@ -42,6 +42,7 @@ const ICONS: Record<ActivityKind, { Icon: typeof PlusCircle; className: string }
  */
 const TeamActivityFeed = ({ items, taskById, projects, members, onOpenTask, currentUserId }: TeamActivityFeedProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const memberById = new Map(members.map((m) => [m.userId, m]));
   const projectById = new Map(projects.map((p) => [p.id, p]));
   const visible = items.filter((item) => taskById.has(item.taskId));
@@ -54,40 +55,40 @@ const TeamActivityFeed = ({ items, taskById, projects, members, onOpenTask, curr
 
   const verb = (item: ActivityItem): string => {
     switch (item.kind) {
-      case 'created': return t('activity.created');
-      case 'completed': return t('activity.completed');
-      case 'reopened': return t('activity.reopened');
-      case 'assigned': return t('activity.assigned');
-      case 'postponed': return t('activity.postponed');
-      case 'advanced': return t('activity.advanced');
-      case 'status': return t('activity.moved');
+      case 'created': return tOrgAdmin('activity.created');
+      case 'completed': return tOrgAdmin('activity.completed');
+      case 'reopened': return tOrgAdmin('activity.reopened');
+      case 'assigned': return tOrgAdmin('activity.assigned');
+      case 'postponed': return tOrgAdmin('activity.postponed');
+      case 'advanced': return tOrgAdmin('activity.advanced');
+      case 'status': return tOrgAdmin('activity.moved');
     }
   };
 
   // « Vous a créé » n'est pas du français : ma propre action a son verbe.
   const selfVerb = (item: ActivityItem): string => {
     switch (item.kind) {
-      case 'created': return t('activity.selfCreated');
-      case 'completed': return t('activity.selfCompleted');
-      case 'reopened': return t('activity.selfReopened');
-      case 'assigned': return t('activity.selfAssigned');
-      case 'postponed': return t('activity.selfPostponed');
-      case 'advanced': return t('activity.selfAdvanced');
-      case 'status': return t('activity.selfMoved');
+      case 'created': return tOrgAdmin('activity.selfCreated');
+      case 'completed': return tOrgAdmin('activity.selfCompleted');
+      case 'reopened': return tOrgAdmin('activity.selfReopened');
+      case 'assigned': return tOrgAdmin('activity.selfAssigned');
+      case 'postponed': return tOrgAdmin('activity.selfPostponed');
+      case 'advanced': return tOrgAdmin('activity.selfAdvanced');
+      case 'status': return tOrgAdmin('activity.selfMoved');
     }
   };
 
   const suffix = (item: ActivityItem): string | null => {
     if (item.kind === 'assigned') {
       const names = (item.addedIds ?? []).map(nameOf).filter((n): n is string => !!n);
-      return names.length > 0 ? t('activity.assignedTo', { names: names.slice(0, 2).join(', ') }) : null;
+      return names.length > 0 ? tOrgAdmin('activity.assignedTo', { names: names.slice(0, 2).join(', ') }) : null;
     }
     if ((item.kind === 'postponed' || item.kind === 'advanced') && item.detail) {
-      return t('activity.toDate', { date: format(parseISO(item.detail), 'd MMM', { locale: getDateLocale() }) });
+      return tOrgAdmin('activity.toDate', { date: format(parseISO(item.detail), 'd MMM', { locale: getDateLocale() }) });
     }
     if (item.kind === 'status' && item.detail && item.detail in STATUS_META) {
       const key = STATUS_META[item.detail as TeamTaskStatus].labelKey as Parameters<typeof t>[0];
-      return t('activity.toStatus', { status: t(key) });
+      return tOrgAdmin('activity.toStatus', { status: t(key) });
     }
     return null;
   };
@@ -95,7 +96,7 @@ const TeamActivityFeed = ({ items, taskById, projects, members, onOpenTask, curr
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-        {t('activity.title')}
+        {tOrgAdmin('activity.title')}
       </h3>
       <ul className="space-y-2">
         {visible.map((item) => {
@@ -112,7 +113,7 @@ const TeamActivityFeed = ({ items, taskById, projects, members, onOpenTask, curr
                 ) : (
                   <>
                     <span className="font-semibold text-[rgb(var(--color-text-primary))]">
-                      {nameOf(item.actorId) ?? t('activity.someMember')}
+                      {nameOf(item.actorId) ?? tOrgAdmin('activity.someMember')}
                     </span>
                     {verb(item)}
                   </>
