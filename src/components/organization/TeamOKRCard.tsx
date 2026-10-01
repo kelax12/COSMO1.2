@@ -180,29 +180,29 @@ const TeamOKRCard = ({
           )}
           <div className="flex flex-wrap items-center gap-1.5 mt-3">
             {okr.teamIds.length === 0 && (okr.audience ?? 'org') === 'org' ? (
-              <span className="inline-flex items-center gap-1 text-caption font-medium px-2 py-0.5 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))]">
-                <Building2 size={11} aria-hidden="true" /> {t('common.orgWideBadge')}
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))]">
+                <Building2 size={13} aria-hidden="true" /> {t('common.orgWideBadge')}
               </span>
             ) : (
               okr.teamIds.map((tid) => (
-                <span key={tid} className="inline-flex items-center gap-1.5 text-caption font-medium px-2 py-0.5 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
-                  <TeamColorDot color={teamColor(tid)} size={7} /> {teamName(tid)}
+                <span key={tid} className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
+                  <TeamColorDot color={teamColor(tid)} size={8} /> {teamName(tid)}
                 </span>
               ))
             )}
             {/* Qui voit cet objectif, et pourquoi (M12). */}
-            <VisibilityPill orgId={okr.orgId} teamIds={okr.teamIds} closed={(okr.audience ?? 'org') !== 'org'} namedIds={okr.memberIds} />
+            <VisibilityPill orgId={okr.orgId} teamIds={okr.teamIds} closed={(okr.audience ?? 'org') !== 'org'} namedIds={okr.memberIds} size="md" />
             {parent && (
               <button
                 type="button"
                 onClick={() => onOpenOkr(parent.id)}
-                className="inline-flex items-center gap-1 text-caption font-medium px-2 py-0.5 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
               >
-                <CornerLeftUp size={11} aria-hidden="true" /> {pf('okrCard.contributesTo', { title: parent.title })}
+                <CornerLeftUp size={13} aria-hidden="true" /> {pf('okrCard.contributesTo', { title: parent.title })}
               </button>
             )}
             {children.length > 0 && (
-              <span className="text-caption text-[rgb(var(--color-text-muted))]">
+              <span className="text-xs text-[rgb(var(--color-text-muted))]">
                 {tpf('okrCard.childrenCount', children.length)}
               </span>
             )}

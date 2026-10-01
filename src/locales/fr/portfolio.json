@@ -316,6 +316,9 @@
   },
   "okrFilters": {
     "barAria": "Filtrer les objectifs",
+    "category": "Catégorie",
+    "categoryAria": "Filtrer par catégorie",
+    "allCategories": "Toutes les catégories",
     "team": "Équipe",
     "teamAria": "Filtrer par équipe",
     "allTeams": "Toutes les équipes",

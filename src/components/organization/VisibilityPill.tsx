@@ -21,6 +21,8 @@ interface VisibilityPillProps {
   closed?: boolean;
   /** Personnes nommées d'un OKR 'custom' (mig. 205). */
   namedIds?: string[];
+  /** `md` : pastille agrandie (ligne de pastilles d'une carte d'objectif). */
+  size?: 'sm' | 'md';
 }
 
 const REASON_ORDER: VisibilityReason[] = ['team', 'direct', 'hierarchy', 'admin', 'org'];
@@ -30,7 +32,7 @@ const SHOWN = 40;
  * « Visible : équipe Produit + hiérarchie · 14 personnes » (audit 2026-09-24,
  * M12), sur un projet ou un objectif EXISTANT. Un clic dit qui, et pourquoi.
  */
-const VisibilityPill = ({ orgId, teamIds: ownTeamIds, projectId, closed = false, namedIds = [] }: VisibilityPillProps) => {
+const VisibilityPill = ({ orgId, teamIds: ownTeamIds, projectId, closed = false, namedIds = [], size = 'sm' }: VisibilityPillProps) => {
   const { t, tp } = useT('portfolio');
   const { data: members = [] } = useOrgMembers(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
@@ -78,9 +80,9 @@ const VisibilityPill = ({ orgId, teamIds: ownTeamIds, projectId, closed = false,
     <Popover>
       <PopoverTrigger
         aria-label={t('visibility.aria', { scope, count })}
-        className="inline-flex items-center gap-1 text-caption font-medium px-2 py-0.5 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+        className={`inline-flex items-center ${size === 'md' ? 'gap-1.5 text-xs px-2.5 py-1' : 'gap-1 text-caption px-2 py-0.5'} font-medium rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]`}
       >
-        <Eye size={11} aria-hidden="true" />
+        <Eye size={size === 'md' ? 13 : 11} aria-hidden="true" />
         <span className="truncate max-w-[260px]">{t('visibility.pill', { scope })}</span>
         <span className="tabular-nums">· {tp('visibility.people', count)}</span>
       </PopoverTrigger>
