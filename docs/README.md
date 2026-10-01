@@ -82,7 +82,7 @@ premier geste d'Axel ([`../a-faire-manuel.md`](../a-faire-manuel.md) § 8).
 |---|---|
 | Ledger | **155** entrées. Treize fichiers sans entrée : onze appliqués hors ledger (relus objet par objet), `196` retirée par la `200`, **`204` absente** |
 | Edge Functions | **12** en prod, 8 citées par la doc. `check:edge-smoke` porté à **12 sondes** : 11 vertes, `org-webhook-dispatch` **rouge** sur le 401 de la passerelle (W-1) |
-| Dependabot | 8 alertes (1 `high`, `undici`), toutes `development` : **refermées** par le lockfile (`undici` 7.30.0, `brace-expansion` 1.1.21 / 5.0.12) |
+| Dependabot | 8 alertes (1 `high`, `undici`), toutes `development` : **refermées** par le lockfile (`undici` 7.30.0, `brace-expansion` 1.1.21 / 5.0.12). 2026-10-01 : alerte #13 (`ip-address` ≤ 10.5.0, `moderate`, dev via `shadcn`) refermée par le lockfile, `ip-address` 10.7.2 |
 | CodeQL | 11 alertes : les 3 `missing-workflow-permissions` corrigées, et une garde refuse désormais tout workflow sans `permissions` |
 | Gardes | **34** `check:*` / `i18n:*` / `validate:*` (la racine disait 36) ; **55** témoins `*.guard.test.*` (`faille.md` disait 39) |
 

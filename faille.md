@@ -46,7 +46,7 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 > | 🟠 **W-4** · `send-org-invite` sans plafond de débit (A-10) | **−1** | 50 e-mails par appel, en boucle, depuis le domaine des e-mails d'auth |
 > | 🔴 A-4 · code facturation en prod ≠ dépôt | **−1** | `stripe-org-checkout` v15 et `stripe-org-portal` v12 déployées le 2026-09-08, source modifiée le 09-25 |
 > | A-5 · treize migrations sans ledger | 0 | angle mort **D-1**, déjà payé. Relu objet par objet : douze appliquées, **la `204` manquait** (§ Migrations) |
-> | A-8 · CodeQL 11 alertes, Dependabot 8 | 0 | `M-60` déjà payé ; Dependabot : dev seulement, **refermé ce jour** par le lockfile |
+> | A-8 · CodeQL 11 alertes, Dependabot 8 | 0 | `M-60` déjà payé ; Dependabot : dev seulement, **refermé ce jour** par le lockfile. Alerte #13 apparue après (2026-10-01, `ip-address` ≤ 10.5.0, SSRF NAT64, `moderate`, transitive via `shadcn`, dev seulement) : refermée par le lockfile (`ip-address` 10.7.2, `530b01f4`) |
 >
 > **83 + 2 − 7 = 78.** ✅ **Corrigés dans le dépôt le 2026-09-30** : W-1 (`config.toml`), W-2 et
 > W-3 (mig. `207` + `org-webhook-dispatch`), W-4 (`send-org-invite`), et trois gardes nouvelles
