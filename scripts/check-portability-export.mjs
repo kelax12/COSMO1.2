@@ -222,6 +222,7 @@ const TABLES_NON_EXPORTEES = {
   team_project_followers: "Abonnements aux notifications d'un projet d'équipe : même raison que `team_task_followers`.",
   org_notification_settings: "Préférences de notification par organisation (types coupés, e-mail, résumé) : réglage d'interface, pas une donnée fournie au sens de l'art. 20. ⚠️ Discutable : à rouvrir si l'export doit restituer les réglages.",
   team_project_members: "Rôle sur un projet, décidé par qui pilote le projet (mig. 190), pas fourni par la personne.",
+  team_okr_members: "Audience nommée d'un OKR d'équipe (mig. 205) : la personne y est inscrite par un manager, une décision de l'organisation sur la visibilité d'un objectif, pas une donnée fournie par la personne. Même raison que `team_project_members` (déclaré le 2026-10-01).",
   org_saved_views: "Combinaisons de filtres nommées (mig. 192) : un réglage d'interface, sans contenu de travail.",
   org_member_capacity: "Capacité hebdomadaire déclarée pour la personne, le plus souvent PAR son responsable (mig. 196) : une donnée de planification de l'organisation. ⚠️ Discutable quand la personne l'a saisie elle-même : à rouvrir si l'export doit restituer les réglages.",
   org_member_secondary_managers: "Lien hiérarchique secondaire décidé par l'organisation (mig. 196), qui désigne une AUTRE personne.",
