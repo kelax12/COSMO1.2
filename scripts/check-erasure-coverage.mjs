@@ -107,6 +107,11 @@ const DECISIONS = {
   // hebdomadaire et liens hiérarchiques secondaires. Rien à garder.
   org_member_capacity: { decision: 'cascade' },
   org_member_secondary_managers: { decision: 'cascade' },
+  // Audience « Personnaliser » d'un OKR (mig. 205, 2026-09-29), décidée le
+  // 2026-10-01 : `user_id` est nu, la ligne part par sa clé composite vers
+  // `organization_members`, qui part avec le compte. Vérifié en base le même
+  // jour (`team_okr_members_member_fkey`). Rien à garder une fois le compte parti.
+  team_okr_members: { decision: 'cascade', via: 'organization_members' },
 
   // ── Conservées, par obligation légale ───────────────────────────
   payment_records: {
@@ -149,7 +154,7 @@ export function tablesAvecUserId(dossier = MIGRATIONS) {
     )) {
       const [, nom, corps] = m;
       const ligne = corps.split('\n').find((l) => /^\s*user_id\b/i.test(l));
-      if (ligne) out.set(nom, { fichier: f, ligne: ligne.trim() });
+      if (ligne) out.set(nom, { fichier: f, ligne: ligne.trim(), corps });
     }
     for (const m of sql.matchAll(
       /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:public\.)?([a-z_0-9]+)\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?(user_id\b[^;]*)/gi,
@@ -163,6 +168,30 @@ export function tablesAvecUserId(dossier = MIGRATIONS) {
 /** La clause de cascade est-elle présente sur cette définition de colonne ? */
 export function cascadeProuvee(ligne) {
   return /REFERENCES\s+auth\.users\s*\(\s*id\s*\)\s+ON\s+DELETE\s+CASCADE/i.test(ligne);
+}
+
+/**
+ * La cascade INDIRECTE est-elle écrite dans le corps de la table ?
+ *
+ * 🔴 Ajouté le 2026-10-01 pour `team_okr_members` (mig. 205), dont `user_id`
+ * est nu : la ligne part par la clé `(org_id, user_id) → organization_members
+ * ON DELETE CASCADE`, et `organization_members` part elle-même avec le compte.
+ * `cascadeProuvee`, qui ne lit que la colonne, ne pouvait pas le voir : `main`
+ * était rouge sur une table bel et bien effacée.
+ *
+ * ❌ Ce n'est PAS une dispense : il faut une clé qui PORTE `user_id`, vers la
+ * table `via`, en `ON DELETE CASCADE`. Et l'appelant vérifie en plus que
+ * `via` cascade elle-même, directement, depuis `auth.users`.
+ */
+export function cascadeIndirecteProuvee(corps, via) {
+  const re = new RegExp(
+    String.raw`FOREIGN\s+KEY\s*\(([^)]*)\)\s*REFERENCES\s+(?:public\.)?${via}\s*\([^)]*\)\s*ON\s+DELETE\s+CASCADE`,
+    'gi',
+  );
+  for (const m of corps.matchAll(re)) {
+    if (/\buser_id\b/i.test(m[1])) return true;
+  }
+  return false;
 }
 
 /** Les tables vidées explicitement par `delete-account`. */
@@ -200,7 +229,7 @@ if (estLanceDirectement) {
     );
   }
 
-  for (const [table, { fichier, ligne }] of [...tables].sort()) {
+  for (const [table, { fichier, ligne, corps }] of [...tables].sort()) {
     const d = DECISIONS[table];
     if (!d) {
       erreurs.push(
@@ -212,7 +241,21 @@ if (estLanceDirectement) {
       );
       continue;
     }
-    if (d.decision === 'cascade' && !cascadeProuvee(ligne)) {
+    if (d.decision === 'cascade' && d.via) {
+      // Cascade indirecte : la clé vers `via` ET la cascade directe de `via`.
+      const relais = tables.get(d.via);
+      if (!cascadeIndirecteProuvee(corps ?? '', d.via)) {
+        erreurs.push(
+          `\`${table}\` est déclarée \`cascade\` via \`${d.via}\`, mais aucune clé étrangère\n`
+            + `    portant \`user_id\` vers \`${d.via}\` en \`ON DELETE CASCADE\` n'est écrite (${fichier}).`,
+        );
+      } else if (!relais || DECISIONS[d.via]?.decision !== 'cascade' || !cascadeProuvee(relais.ligne)) {
+        erreurs.push(
+          `\`${table}\` cascade via \`${d.via}\`, mais \`${d.via}\` ne cascade pas elle-même\n`
+            + '    DIRECTEMENT depuis `auth.users` : la chaîne est rompue.',
+        );
+      }
+    } else if (d.decision === 'cascade' && !cascadeProuvee(ligne)) {
       erreurs.push(
         `\`${table}\` est déclarée \`cascade\` mais sa colonne ne porte PAS\n`
           + `    \`REFERENCES auth.users(id) ON DELETE CASCADE\` (${fichier}) :\n`

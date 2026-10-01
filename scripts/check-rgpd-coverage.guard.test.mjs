@@ -17,7 +17,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { tablesAvecUserId, cascadeProuvee, tablesPurgees } from './check-erasure-coverage.mjs';
+import { tablesAvecUserId, cascadeProuvee, cascadeIndirecteProuvee, tablesPurgees } from './check-erasure-coverage.mjs';
 import { colonnesParTable, entetesDeclarees } from './check-portability-export.mjs';
 
 const LF = String.fromCharCode(10);
@@ -69,6 +69,35 @@ describe('témoin — effacement dérivé du schéma (C-92)', () => {
     expect(cascadeProuvee('user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,')).toBe(false);
     expect(cascadeProuvee('user_id UUID,')).toBe(false);
     expect(cascadeProuvee('user_id UUID NOT NULL,')).toBe(false);
+  });
+
+  it('`cascadeIndirecteProuvee` : une clé composite vers une table qui, elle, cascade', () => {
+    // Cas réel de `team_okr_members` (mig. 205, 2026-10-01) : `user_id` nu,
+    // et la clé `(org_id, user_id) → organization_members ON DELETE CASCADE`.
+    // Supprimer le compte supprime le membre, qui supprime la ligne.
+    const corps205 = [
+      '  okr_id   UUID NOT NULL,',
+      '  user_id  UUID NOT NULL,',
+      '  CONSTRAINT team_okr_members_member_fkey',
+      '    FOREIGN KEY (org_id, user_id) REFERENCES public.organization_members(org_id, user_id) ON DELETE CASCADE',
+    ].join('\n');
+    expect(cascadeIndirecteProuvee(corps205, 'organization_members')).toBe(true);
+    // Les pièges : une autre table, une clé SANS cascade, une clé qui ne
+    // porte pas `user_id`, et une cascade sur `added_by` qui ne dit rien de
+    // `user_id`.
+    expect(cascadeIndirecteProuvee(corps205, 'team_okrs')).toBe(false);
+    expect(cascadeIndirecteProuvee(
+      'user_id UUID,\n FOREIGN KEY (org_id, user_id) REFERENCES public.organization_members(org_id, user_id)',
+      'organization_members',
+    )).toBe(false);
+    expect(cascadeIndirecteProuvee(
+      'user_id UUID,\n FOREIGN KEY (okr_id, org_id) REFERENCES public.organization_members(id, org_id) ON DELETE CASCADE',
+      'organization_members',
+    )).toBe(false);
+    expect(cascadeIndirecteProuvee(
+      'user_id UUID,\n added_by UUID REFERENCES public.organization_members(user_id) ON DELETE CASCADE',
+      'organization_members',
+    )).toBe(false);
   });
 
   it('`tablesPurgees` lit le bloc de delete-account', () => {
