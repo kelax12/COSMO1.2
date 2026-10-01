@@ -308,6 +308,9 @@
   },
   "okrFilters": {
     "barAria": "Filter objectives",
+    "category": "Category",
+    "categoryAria": "Filter by category",
+    "allCategories": "All categories",
     "team": "Team",
     "teamAria": "Filter by team",
     "allTeams": "All teams",

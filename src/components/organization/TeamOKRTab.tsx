@@ -16,7 +16,6 @@ import { useOrgTeams } from '@/modules/org-teams';
 import { useTeamCategories } from '@/modules/team-categories';
 import { useTeamProjects, useTeamProjectTaskStats } from '@/modules/team-projects';
 import { getColorHex } from '@/lib/category-colors';
-import TeamCategoryFilterBar from './TeamCategoryFilterBar';
 import TeamOKRModal from './TeamOKRModal';
 import DeleteTeamOkrConfirm from './DeleteTeamOkrConfirm';
 import TeamOKRCard from './TeamOKRCard';
@@ -82,7 +81,30 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   // ── Filtre + gestion des catégories (UI identique au mode perso) ────
   // `team_categories` est hiérarchique depuis la mig. 148 : le filtre cascade
   // désormais réellement sur les sous-catégories (cf. CategoryFilterBar).
-  const [activeCategoryIds, setActiveCategoryIds] = useState<Set<string>>(new Set());
+  // Une seule catégorie choisie dans la pastille de filtre ; le filtre couvre
+  // aussi ses sous-catégories.
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const categoryOptions = useMemo(() => {
+    const out: { id: string; name: string; color: string; depth: number }[] = [];
+    const walk = (parentId: string | null, depth: number) => {
+      for (const c of categories.filter((x) => (x.parentId ?? null) === parentId)) {
+        out.push({ id: c.id, name: c.name, color: resolveColor(c.color), depth });
+        walk(c.id, depth + 1);
+      }
+    };
+    walk(null, 0);
+    return out;
+  }, [categories]);
+  const activeCategoryIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!categoryFilter) return ids;
+    const add = (id: string) => {
+      ids.add(id);
+      for (const c of categories) if (c.parentId === id && !ids.has(c.id)) add(c.id);
+    };
+    add(categoryFilter);
+    return ids;
+  }, [categoryFilter, categories]);
 
   const teamName = (id: string) => teams.find((x) => x.id === id)?.name ?? tOrgAdmin('okrTab.fallbackTeam');
   const teamColor = (id: string) => teams.find((x) => x.id === id)?.color;
@@ -109,7 +131,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const focusedHidden = focusedLoaded && !visibleOKRs.some((o) => o.id === focusedOkrId);
   useEffect(() => {
     if (!focusedHidden) return;
-    setActiveCategoryIds(new Set());
+    setCategoryFilter('');
     setOkrFilters({ team: '', person: '', state: '' });
   }, [focusedHidden, setOkrFilters]);
   useEffect(() => {
@@ -124,21 +146,9 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Filtre par catégorie — UI identique à la page OKR perso.
-          Les actions de gestion (créer/éditer/supprimer) sont réservées aux
-          managers ; un simple membre ne voit que « Tous » + les chips.
-          Toujours rendu (même sans catégorie) pour que la barre occupe sa place
-          normale : sinon les boutons/cartes en dessous remontaient (#4). */}
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        {/* Filtre seulement : créer, renommer ou supprimer une catégorie se
-            fait dans Paramètres → Catégories (M13). Elles classent aussi
-            projets et tâches, leur gestion n'avait rien à faire ici. */}
-        <TeamCategoryFilterBar
-          orgId={orgId}
-          activeCategoryIds={activeCategoryIds}
-          setActiveCategoryIds={setActiveCategoryIds}
-          canManage={false}
-        />
+      {/* La catégorie se filtre dans la barre de pastilles ci-dessous ;
+          sa gestion vit dans Paramètres → Catégories (M13). */}
+      <div className="flex items-start justify-end gap-3 flex-wrap">
         <PermissionGate reason={hints.deniedReason('okr.create')}>
           <button
             type="button"
@@ -152,7 +162,16 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
 
       {/* Filtres et corbeille des objectifs (mig. 193). */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <OkrFilterBar filters={okrFilters} setFilters={setOkrFilters} teams={teams} members={members} currentUserId={user?.id} />
+        <OkrFilterBar
+          filters={okrFilters}
+          setFilters={setOkrFilters}
+          teams={teams}
+          members={members}
+          currentUserId={user?.id}
+          categories={categoryOptions}
+          category={categoryFilter}
+          setCategory={setCategoryFilter}
+        />
         <TeamTrashDialog orgId={orgId} projects={allProjects} members={members} />
       </div>
 
@@ -177,7 +196,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
           <button
             type="button"
             onClick={() => {
-              setActiveCategoryIds(new Set());
+              setCategoryFilter('');
               setOkrFilters({ team: '', person: '', state: '' });
             }}
             className="mt-2 text-xs font-semibold text-blue-500 hover:text-blue-600"
