@@ -44,8 +44,8 @@
     "notFoundYet": "Record not found yet. DNS propagation can take up to an hour.",
     "remove": "Remove {{domain}}",
     "noDomain": "No domain declared.",
-    "inviteDomainOnly": "Only invite addresses from these domains by e-mail",
-    "inviteDomainOnlyHint": "Named invitations outside a verified domain are refused. The join code and open links carry no address: turn them off to close everything.",
+    "inviteDomainOnly": "Only invite addresses from these domains",
+    "inviteDomainOnlyHint": "Named invitations outside a verified domain are refused, and open links can no longer be created or used while this is on. The join code stays available: each request waits for an admin's approval.",
     "needVerified": "Verify at least one domain to turn this rule on.",
     "sessions": "Two-factor authentication is set by each person in their Settings; it protects sign-in, not the company."
   },

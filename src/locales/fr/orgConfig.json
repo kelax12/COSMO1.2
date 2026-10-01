@@ -45,8 +45,8 @@
     "notFoundYet": "Enregistrement introuvable pour l'instant. La propagation DNS peut prendre jusqu'à une heure.",
     "remove": "Retirer {{domain}}",
     "noDomain": "Aucun domaine déclaré.",
-    "inviteDomainOnly": "N'inviter par e-mail que des adresses de ces domaines",
-    "inviteDomainOnlyHint": "Les invitations nominatives hors domaine vérifié sont refusées. Le code d'accès et les liens ouverts ne portent pas d'adresse : désactivez-les si vous voulez tout fermer.",
+    "inviteDomainOnly": "N'inviter que des adresses de ces domaines",
+    "inviteDomainOnlyHint": "Les invitations nominatives hors domaine vérifié sont refusées, et les liens ouverts ne peuvent plus être créés ni utilisés tant que l'option est active. Le code d'accès reste disponible : chaque demande attend la validation d'un admin.",
     "needVerified": "Vérifiez au moins un domaine pour activer cette règle.",
     "sessions": "La double authentification se règle par chaque personne dans ses Réglages ; elle protège la connexion, pas l'entreprise."
   },

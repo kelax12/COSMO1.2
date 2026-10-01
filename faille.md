@@ -10,7 +10,10 @@ et les **règles durables** tirées des audits.
   portée à **86**, et les deux tableaux d'actions relus ligne par ligne (A-9 et les réglages de
   console : **trois lignes sur cinq étaient périmées**). ⚠️ **Aucune mesure nouvelle contre la
   production** ce jour-là : les chiffres cités sont ceux des commits qui les ont produits.
-- Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-09-30**
+- Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-10-01** (mig.
+  `204`, `207`-`210` appliquées et relues au catalogue, cinq Edge Functions redéployées, `Edge deploy
+  drift` vert, audit A-1 des 23 tables `160`-`207` acteur par acteur, § « Surface entreprise »).
+  Passe précédente : **2026-09-30**
   (ledger, catalogue objet par objet des migrations `164`-`204`, les 12 Edge Functions par l'API
   et par `check:edge-smoke`, alertes CodeQL et Dependabot). Passes précédentes contre la prod :
   2026-09-22 (advisors, RLS, `C-77`), 2026-09-14 (gardes et isolation), 2026-09-02 (Edge
@@ -21,7 +24,28 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → **78 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → **2026-09-30**)
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → **82 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → **2026-10-01**)
+
+> ### 🟢 2026-10-01 · +4 : les correctifs du 09-30 sont EN PRODUCTION, et un défaut de plus
+>
+> **Même barème, même règle** : un défaut rembourse son point le jour où il est corrigé **en
+> production et vérifié**, jamais sur un commit. Tout ce qui suit a été relu en base ou en ligne
+> après le geste, et chaque migration a d'abord été jouée **en production dans un bloc qui ne peut
+> que s'annuler**, avec une passe témoin SANS le correctif qui devait échouer, et a échoué.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | ✅ **W-1** webhooks jamais délivrés | **+1** | `org-webhook-dispatch` **v2**, `verify_jwt = false` ; `org-webhook-dispatch.yml` rend **HTTP 200** (run `36847104980`), le premier depuis la création |
+> | ✅ **W-2** SSRF | **+1** | mig. `207`, ledger `20261001100535` : `2130706433`, `0x7f000001`, `172.16.0.1`, `intranet.corp` **acceptées en prod avant**, refusées après ; résolution DNS dans la v2 déployée, identique au dépôt (`check:edge`) |
+> | ✅ **W-3** enfilement forgeable | **+1** | même migration : appel RPC d'un membre, **2 enfilements avant, 0 après** ; le trigger enfile toujours (2) |
+> | ✅ **W-4** `send-org-invite` sans plafond | **+1** | **v2** déployée, identique au dépôt ; `RATE_LIMIT_SALT` présent |
+> | ✅ **A-4** facturation prod ≠ dépôt | **+1** | `stripe-org-checkout` **v16**, `stripe-org-portal` **v13**, `report-bug` **v13** ; `Edge deploy drift` **vert** (`36849106222`), 12 fonctions identiques, 12 sondes vertes, pour la première fois depuis le 2026-09-21 |
+> | 🟠 **E-3** un manager s'ajoute à l'audience d'un OKR confidentiel (nouveau, audit A-1) | **−1** | prouvé en prod, transaction annulée : un manager qui ne voit pas l'OKR (`false`) s'y inscrit, puis le voit (`true`) ; il peut aussi en retirer tous les autres |
+> | E-1, E-2, G-3 | 0 | **corrigés en prod** (mig. `209`, `208`, `210`), mais ils étaient compris dans le −2 d'AM-6, pas comptés à part : rien à rembourser séparément |
+> | AM-6 · surface `160`-`207` jamais auditée | 0 | **relue ce jour** (23 tables × 6 acteurs, 25 fonctions DEFINER), mais aucune garde ne rejoue cette preuve en CI : non remboursé (règle du 2026-09-22) |
+> | A-8 · 5 alertes CodeQL `high` (`M-60`) | 0 | **corrigées à la source** dans `scripts/`, pas rejetées ; le point se rembourse quand CodeQL les **ferme** après le push, pas avant |
+>
+> **78 + 5 − 1 = 82.**
 
 > ### 🔴 2026-09-30 · −5 : la note décrivait un produit qui n'existait plus
 >
@@ -147,7 +171,7 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 | AM-1 | 🔴 **Les advisors Supabase ne sont lus qu'à LA MAIN.** Ils sont la seule source qui voit une policy manquante ou une fonction `SECURITY DEFINER` exposée après coup, et aucun workflow ne les interroge | le mot « advisor » dans `ci.yml` désigne **`npm audit`**, pas les advisors de la base. `9 / 52 / 2 / 1` au 2026-09-14, relevé manuellement | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · advisors lus par l'API Management (`C-88`) — 🔴 ne prouve PAS : 🔴 rien pour l'instant : **elle échoue exprès** tant que la référence des réglages d'auth n'est pas posée **et commitée** — **`M-58`** |
 | AM-2 | **`check:edge` compare le CODE déployé, jamais le COMPORTEMENT.** Une fonction identique au dépôt mais dont un **secret** a changé de valeur, ou dont une dépendance distante a bougé, rend la garde verte | `scripts/check-edge-deploy.mjs` compare des sources | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:edge-smoke` · **8 sondes**, dans `edge-deploy-drift.yml`, **vertes contre la production** le jour de leur pose (`C-91`) — 🔴 ne prouve PAS : que la fonction fasse son travail : on touche ses premiers mètres, on ne parcourt pas le chemin · 🔎 🔴 **2026-09-22 : jamais joué en CI.** `VITE_SUPABASE_ANON_KEY` n'est pas passé au job, la sonde s'arrête avant de sonder. → `C-114` · 🔎 ✅ **2026-09-24 : premier verdict en CI, 8 sondes sur 8 vertes** (`35967773021`). Le secret attendu n'a jamais existé au dépôt : la clé anon, publique, est lue par l'API Management avec `SUPABASE_ACCESS_TOKEN`. Le job reste rouge sur la dérive de `report-bug` (`M-61`), pas sur les sondes · 🔎 🔴 **2026-09-30 : huit sondes pour DOUZE fonctions.** Les quatre du mode entreprise n'étaient sondées par rien (A-2). **12 sondes** depuis, les fonctions cron sondées **sans jeton**, comme la CI les appelle : jouées contre la prod, **11 vertes**, `org-webhook-dispatch` **rouge** sur le 401 de la passerelle (W-1), et c'est juste |
 | AM-3 | **`npm audit` ne couvre que les dépendances de PRODUCTION** (`--omit=dev`). Une vulnérabilité dans la chaîne de build n'est vue par rien | `ci.yml:148` : `npm audit --omit=dev --audit-level=high` | ✅ **OUTILLÉ le 2026-09-20** · second `npm audit` sur la chaîne de build, **non bloquant mais LU** (compte par sévérité au résumé) (`C-90`) — 🔴 ne prouve PAS : rien, et c'est assumé : c'est un **arbitrage** écrit comme tel, pas une garde |
-| AM-4 | **Aucune analyse statique de sécurité (SAST) sur le code du dépôt.** Les gardes existantes vérifient des invariants nommés, jamais des motifs inconnus | aucun CodeQL, Semgrep ou équivalent dans `.github/workflows/` | ✅ **OUTILLÉ le 2026-09-20** · `codeql.yml`, `security-extended`, JS/TS **et** `actions` (`C-89`) — 🔴 ne prouve PAS : 🔴 un job vert. Fini quand **chaque alerte ouverte porte une décision** — **`M-60`** · 🔎 🟠 **2026-09-22 : 9 alertes ouvertes** (5 `high`, 4 `medium`), aucune triée · 🔎 🟠 **2026-09-30 : 11** (5 `high`, 6 `medium`). Les deux nouvelles, `actions/missing-workflow-permissions` sur `org-digest.yml` et `org-webhook-dispatch.yml`, sont **corrigées dans le dépôt** avec celle de `renewal-notice.yml`, et `src/workflow-permissions.guard.test.ts` refuse désormais tout workflow sans `permissions` : l'alerte triée à la main ne protégeait pas le workflow suivant. Les 5 `high` (`scripts/`) restent à trier (`M-60`) |
+| AM-4 | **Aucune analyse statique de sécurité (SAST) sur le code du dépôt.** Les gardes existantes vérifient des invariants nommés, jamais des motifs inconnus | aucun CodeQL, Semgrep ou équivalent dans `.github/workflows/` | ✅ **OUTILLÉ le 2026-09-20** · `codeql.yml`, `security-extended`, JS/TS **et** `actions` (`C-89`) — 🔴 ne prouve PAS : 🔴 un job vert. Fini quand **chaque alerte ouverte porte une décision** — **`M-60`** · 🔎 🟠 **2026-09-22 : 9 alertes ouvertes** (5 `high`, 4 `medium`), aucune triée · 🔎 🟠 **2026-09-30 : 11** (5 `high`, 6 `medium`). Les deux nouvelles, `actions/missing-workflow-permissions` sur `org-digest.yml` et `org-webhook-dispatch.yml`, sont **corrigées dans le dépôt** avec celle de `renewal-notice.yml`, et `src/workflow-permissions.guard.test.ts` refuse désormais tout workflow sans `permissions` : l'alerte triée à la main ne protégeait pas le workflow suivant. Les 5 `high` (`scripts/`) restent à trier (`M-60`) · 🔎 ✅ **2026-10-01 : les 5 `high` sont CORRIGÉES à la source, aucune rejetée.** Décision par alerte : `js/file-system-race` #5 (`check-db-cost.mjs`) et #7 (`check-i18n-pages.mjs`) : `existsSync` puis lecture du même chemin remplacés par une lecture qui traite `ENOENT` ; #6 : `statSync` séparé remplacé par `readdirSync({ withFileTypes })` ; #8 (`scripts/cosmo/client.mjs`, le fichier qui porte les **jetons de session** du CLI) : création atomique `wx` au lieu de `existsSync` puis écriture ; #2 `js/bad-tag-filter` : `</script >` est une fin de balise valide, le compteur de mots la reconnaît désormais (vérifié : 2 mots, pas 5). ⏳ Fini quand CodeQL les **ferme** après le push. Les 3 `medium` restantes, **rejet motivé, non encore posé dans GitHub** (geste d'Axel, `M-60`) : #9 `js/file-access-to-http` (`check-edge-deploy.mjs`) envoie à l'API Management l'identifiant de projet lu dans `.github/edge-deploy.json`, fichier **versionné** qui désigne précisément la cible ; #3 et #4 `js/http-to-file-access` écrivent une réponse de l'API Supabase dans `GITHUB_STEP_SUMMARY` (résumé de CI) ou, sur `--update` **explicite**, dans la référence versionnée de `check:supabase-posture`, relue en revue avant commit. C'est la fonction de ces deux scripts, pas un détournement |
 | AM-5 | **Les 39 témoins ne sont jamais rejoués** (cf. [`docs/TESTING.md`](./docs/TESTING.md) AM-1). Plusieurs gardent des frontières de sécurité : `csp.guard`, `rgpd-erasure.guard`, `refund.guard`, `org-deletion.guard` | **39** fichiers `*.guard.test.*` (`git ls-files`, **recomptés le 2026-09-20** ; « 36 » datait du 09-16 et n'avait pas suivi les trois ajouts), aucun mutation testing | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:sabotages` · 11 sabotages rejoués, restauration octet pour octet vérifiée (`C-81`) — 🔴 ne prouve PAS : que les **39** témoins détectent : le rapport couvert / total est imprimé exprès · 🔎 🔴 **2026-09-22 : job rouge.** Les 11 sabotages sont vus, mais le contrôle « arbre restauré » échoue sur le `sabotages.log` du workflow. → `C-113` · 🔎 ✅ **2026-09-24 : premier run VERT** (cf. [`docs/TESTING.md`](./docs/TESTING.md) AM-1) · 🔎 🟠 **2026-09-30 : les « 39 » de l'énoncé sont 55** (`git ls-files '*.guard.test.*'` : 53, plus les deux témoins posés ce jour). Le rapport couvert / total de `check:sabotages` se lit donc **11 sur 55**, pas 11 sur 39 |
 
 
@@ -724,7 +748,22 @@ séparent pas.
 > qui se vérifie, et la racine ne bouge pas — `check:mail` contrôle les deux, précisément pour
 > attraper cette erreur-là.
 
-### 🟠 G-3 · G-2 croisé avec les mécanismes de septembre (2026-09-30)
+### ✅ G-3 · G-2 croisé avec les mécanismes de septembre (2026-09-30) · REFERMÉ le 2026-10-01
+
+> ✅ **Décision d'Axel du 2026-10-01 : refuser les liens ouverts quand `invite_domain_only` est
+> actif.** Mig. `210`, ledger `20261001102453`, corps vivants relus **octet pour octet** contre le
+> fichier : le trigger refuse la **création** d'un lien ouvert, `claim_org_invite` refuse la
+> **réclamation** d'un lien ouvert créé avant l'activation ; retirer l'option les rend à nouveau
+> utilisables. Preuve en prod, transaction annulée (`supabase/proofs/208-210.proof.sql`, cas 10 à
+> 13) : **avant**, lien créé et réclamé sous l'option ; **après**, refusés, puis réclamé une fois
+> l'option retirée. Texte d'écran (`orgConfig.inviteDomainOnlyHint`, fr et en) et message
+> d'erreur (`errors.open_link_not_allowed`) à jour ; témoin : `src/lib/normalizeApiError.test.ts`,
+> vu rouge sans l'entrée de catalogue.
+> 🔴 **Trouvé en route** : un refus levé en `42501` n'affiche jamais son message (le code SQL connu
+> gagne, l'écran dit « droits insuffisants »). `email_domain_not_allowed` (mig. `195`) n'a donc
+> **jamais été lu par personne**. Les deux refus du trigger passent en `P0001` dans la `210`.
+> ⚠️ **Reste ouvert, et c'est G-2** : sans confirmation d'adresse, un lien NOMINATIF transféré ou
+> fuité reste réclamable par qui inscrit l'adresse avant son propriétaire.
 
 G-2 a été évalué **seul** le 2026-08-27. Deux mécanismes nés depuis supposent une adresse prouvée :
 
@@ -744,7 +783,11 @@ Arbitrage produit ouvert : refuser les liens ouverts quand `invite_domain_only` 
 
 ---
 
-## 🟠 Surface entreprise `160`-`207` · relecture du 2026-09-30 (A-1)
+## 🟠 Surface entreprise `160`-`207` · relecture du 2026-09-30, audit du 2026-10-01 (A-1)
+
+> ✅ **2026-10-01** : la relecture partielle ci-dessous est complétée par un audit **joué en
+> production** (tables acteur par acteur, sept fonctions DEFINER de plus). Résultat : § « Audit A-1
+> des tables » plus bas. Un défaut nouveau, **E-3**, ouvert et soumis à l'arbitrage d'Axel.
 
 🔴 **Aucun audit n'avait relu cette surface** avant le 2026-09-30 : c'est l'angle mort **AM-6**
 de la note. La relecture de ce jour est **partielle**, et c'est dit : elle couvre les fonctions
@@ -757,16 +800,57 @@ pas audit** : ni preuve acteur par acteur en base, ni revue des 25 tables et de 
 | `create_org_email_invitations` | admin, ou manager avec `member.invite` sous son sous-arbre ; 50 adresses par appel | ✅ rien trouvé (le débit d'ENVOI est W-4) |
 | `get_org_billing_history` | propriétaire de l'organisation seulement | ✅ rien trouvé |
 | `purge_archived_team_project` | `SECURITY INVOKER`, la policy DELETE décide | ✅ rien trouvé |
-| `enqueue_team_task_webhook` | `can_access_team_task`, mais **appelable en RPC** | 🟠 **W-3**, corrigé mig. `207` |
-| `insert_kr_checkin_row` | `can_access_team_okr` (le commentaire dit « peut MODIFIER » : c'est la même règle, la policy UPDATE de `team_key_results` est `can_access_team_okr`) | 🟡 **E-1** : appelée directement, elle écrit un point d'étape **sans** changer la valeur du KR. Pas d'élévation, un historique qui peut mentir |
-| `get_org_member_last_activity` | membre de l'org, admin ou sous-arbre | 🟡 **E-2** : ne regarde pas `suspended_at` / `access_expires_at`. Un admin suspendu relit encore les dates d'activité de toute l'organisation |
-| `send-org-invite` | JWT, lien créé par l'appelant ou admin, relance 1 h | 🟠 **W-4**, plafond ajouté le 2026-09-30 |
-| `verify-org-domain` | JWT, admin actif, domaine d'autrui = introuvable | ✅ rien trouvé |
+| `enqueue_team_task_webhook` | `can_access_team_task`, mais **appelable en RPC** | ✅ **W-3**, mig. `207` **appliquée** le 2026-10-01 (ledger `20261001100535`) |
+| `insert_kr_checkin_row` | `can_access_team_okr` (le commentaire dit « peut MODIFIER » : c'est la même règle, la policy UPDATE de `team_key_results` est `can_access_team_okr`) | ✅ **E-1** (appelée seule, elle écrivait un point d'étape **sans** changer la valeur du KR) : mig. `209` **appliquée** (ledger `20261001102425`), la ligne n'est acceptée que si le KR porte cette valeur et cet état posés **dans la même transaction**. En prod : appel direct **accepté avant** (2 points pour 1), **refusé après** (42501), `post_kr_checkin` intact |
+| `get_org_member_last_activity` | membre de l'org, admin ou sous-arbre | ✅ **E-2** (un admin suspendu ou expiré relisait toute l'organisation) : mig. `208` **appliquée** (ledger `20261001102420`), même règle que `is_org_member`. En prod : admin suspendu **5 lignes avant, 0 après**, admin expiré idem ; admin actif 5, manager 1 (son sous-arbre), membre 0, autre organisation 0 |
+| `send-org-invite` | JWT, lien créé par l'appelant ou admin, relance 1 h | ✅ **W-4**, plafond **déployé** (v2, 2026-10-01) |
+| `verify-org-domain` | JWT, admin actif, domaine d'autrui = introuvable | ✅ rien trouvé ; **redéployée** (v2) le 2026-10-01 : elle embarquait l'ancienne `_shared/org-integrations.ts` |
 | `org-digest` | `x-cron-secret`, échec fermé | ✅ rien trouvé |
-| `org-webhook-dispatch` | `x-cron-secret`, `redirect: 'manual'` | 🔴 **W-1** et 🟠 **W-2**, corrigés dans le dépôt |
+| `org-webhook-dispatch` | `x-cron-secret`, `redirect: 'manual'` | ✅ **W-1** et **W-2**, **déployée** v2 (`verify_jwt = false`) après la `207`, HTTP 200 en CI |
+| `get_my_team_kr_projects`, `get_my_team_project_members`, `get_my_team_project_progress`, `get_team_okr_trash`, `leave_organization`, `remove_member`, `my_project_role` (relues le 2026-10-01) | `my_team_project_ids` (passe par `is_org_member`, qui écarte suspendu et expiré), `can_access_team_okr`, `can_restore_team_okr`, `is_org_admin` | ✅ rien trouvé |
 | 13 fonctions de trigger en `SECURITY DEFINER` (`validate:migrations` : **19** avertissements, contre 6 au 2026-09-14) | toutes écrivent un journal ou une notification au-delà des droits de l'appelant | ✅ légitimes au sens de la règle B-3, **à relire une par une** au prochain audit |
 
-### 🔴 W-1 · aucun webhook d'entreprise n'a jamais été délivré (A-3)
+### ✅ Audit A-1 des tables `160`-`207` · 2026-10-01, en production
+
+**Ce qui a été joué**, et pas seulement lu : `supabase/proofs/a1-tables-160-207.proof.sql`, un
+bloc dont la seule issue est une exception (rien ne reste, vérifié après coup). Les **23 tables**
+encore présentes créées par ces migrations (26 moins les trois retirées par la `200`), une ligne
+de chaque, lues par six acteurs : admin, manager, membre, **membre suspendu chef d'équipe**,
+**ex-membre retiré créateur d'équipe**, **admin d'une autre organisation**.
+
+- ✅ **Lecture : rien trouvé.** Suspendu, retiré et autre organisation lisent **0 ligne dans les
+  23 tables**. Les tables personnelles (`org_saved_views`, abonnements, réglages de notification)
+  ne se lisent que par leur auteur ; `org_webhooks`, `org_billing_contacts`, `org_audit_log` par
+  l'admin seul. Témoin positif joué (un chef d'équipe ACTIF lit le rapport de son équipe) : le
+  0 du suspendu n'est pas celui d'une branche morte.
+- ✅ RLS active sur les 23 ; policies relues commande par commande ; aucune policy en double.
+  `TRUNCATE` est accordé à `anon` et `authenticated` sur ces tables : ce sont les privilèges par
+  défaut de Supabase, que PostgREST n'expose pas. Noté, pas un finding.
+- 🟠 **E-3, ci-dessous**, trouvé en relisant les policies d'écriture.
+
+### 🟠 E-3 · un manager s'ajoute à l'audience d'un OKR confidentiel (2026-10-01)
+
+`team_okr_members` (mig. `205`) : INSERT et DELETE exigent `is_org_manager(org_id)`, c'est-à-dire
+**admin, ou n'importe qui ayant au moins un subordonné**, sans regarder l'OKR. Les clés étrangères
+interdisent tout croisement d'organisation, mais pas ceci : **prouvé en prod, transaction
+annulée**, un manager sans aucun lien avec l'audience d'un OKR `custom` ne le voit pas
+(`can_access_team_okr` = `false`), s'y inscrit lui-même (insertion acceptée), et le voit
+(`true`), donc le lit et peut modifier ses KR (la policy UPDATE de `team_key_results` est
+`can_access_team_okr`). Il peut aussi retirer les autres personnes : l'OKR se referme alors sur
+les admins.
+⚠️ La règle est **héritée** de `team_okr_teams` (mig. `073`), qui l'applique aux équipes : un
+manager rattache son équipe et obtient le même accès. Les deux tables sont à corriger ensemble.
+**Pas d'élévation hors de l'organisation.** Proposition, **à arbitrer par Axel** : n'autoriser
+l'ajout et le retrait que pour un admin, ou pour qui **voit déjà** l'OKR et peut le modifier
+(`can_access_team_okr(okr_id)` en plus de `is_org_manager`).
+
+### ✅ W-1 · aucun webhook d'entreprise n'a jamais été délivré (A-3)
+
+✅ **REFERMÉ EN PRODUCTION le 2026-10-01** : `org-webhook-dispatch` **v2**, `verify_jwt = false`,
+redéployée depuis `main` **après** la mig. `207` ; `org-webhook-dispatch.yml` en
+`workflow_dispatch` rend **HTTP 200** (run `36847104980`), et la sonde répond `401` **depuis le
+corps de la fonction** (`{"error":"unauthorized"}`), plus depuis la passerelle.
+
 
 `org-webhook-dispatch` était **absente de `supabase/config.toml`**, donc déployée (v1, 2026-09-27)
 avec le défaut `verify_jwt = true`. `.github/workflows/org-webhook-dispatch.yml` n'envoie que
@@ -777,9 +861,13 @@ un client qui configure un webhook ne reçoit rien, et la file grossit (purge à
 `stripe-org-refund` et `verify-org-domain` qui manquaient aussi. **Garde** :
 `src/edge-config.guard.test.ts` (chaque fonction déclarée, une fonction cron en `false`, une
 fonction qui lit le JWT en `true`), **vue rouge** sur le `config.toml` d'avant.
-🔴 **Production** : redéploiement à faire, **après** la mig. `207`.
+### ✅ W-2 · SSRF sur les webhooks sortants (A-6) · en production le 2026-10-01
 
-### 🟠 W-2 · SSRF sur les webhooks sortants (A-6)
+✅ Mig. `207` appliquée (ledger `20261001100535`), contrainte relue (`[a-z]{2,63}`, `NOT VALID`)
+et rejouée en prod, transaction annulée : les quatre adresses internes ci-dessous étaient
+**acceptées avant** et sont **refusées après**. La résolution DNS (second étage) est dans
+`org-webhook-dispatch` v2, identique au dépôt selon `check:edge`. ⚠️ Ce second étage n'a pas été
+exercé en prod : aucune organisation n'a de webhook (0 ligne), il l'est par ses témoins.
 
 La contrainte `org_webhooks_url` (mig. `199`) était une liste noire textuelle. Non couverts :
 `172.16.0.0/12`, `100.64.0.0/10`, l'IPv4 entière ou hexadécimale (`https://2130706433/`,
@@ -794,7 +882,11 @@ vu rouge en retirant la plage `172.16/12`. ⚠️ **Résiduel assumé** : entre 
 corps de réponse n'est ni lu ni stocké ; seul le **code HTTP** l'est (`last_status`, visible de
 l'admin) : c'est un oracle d'un octet sur une cible interne, pas une lecture.
 
-### 🟠 W-3 · enfilement de webhook forgeable (relecture A-1)
+### ✅ W-3 · enfilement de webhook forgeable (relecture A-1) · en production le 2026-10-01
+
+✅ Corps vivant relu (`pg_trigger_depth() = 0` en tête), et rejoué en prod : un membre qui
+appelle la RPC enfilait **2** livraisons avant la `207`, **0** après ; le trigger en enfile
+toujours 2 au passage à `done`.
 
 `enqueue_team_task_webhook` est `SECURITY DEFINER` et `EXECUTE` à `authenticated`, parce que le
 trigger INVOKER qui l'appelle en a besoin. Elle était donc aussi appelable **en RPC** par tout
@@ -805,7 +897,11 @@ passage), donc retarder les webhooks de tous les autres clients.
 change. Prouvé sur PGlite (cas 07 et 08 de `207.proof.sql`) : l'appel direct n'enfile rien, le
 trigger enfile toujours ; garde retirée, le cas 07 tombe.
 
-### 🟠 W-4 · `send-org-invite` sans plafond de débit (A-10)
+### ✅ W-4 · `send-org-invite` sans plafond de débit (A-10) · déployé le 2026-10-01
+
+✅ **v2** déployée depuis `main`, identique au dépôt (`check:edge`), `RATE_LIMIT_SALT` posé
+(`supabase secrets list`). Le plafond lui-même n'a pas été atteint en prod : ses témoins le
+prouvent, pas un envoi réel.
 
 50 envois par appel, aucun appel à `_shared/rate-limit.ts`. Un compte gratuit crée une
 organisation et appelle en boucle : quota Resend brûlé, et réputation de `send.thecosmo.app`, qui
@@ -1254,9 +1350,10 @@ pas qu'une migration manque, exactement ce que dit l'angle mort **D-1**. Seul
 | 1septies | **Migration `135`** (S-6 · preuve de renonciation au droit de rétractation) | 🟠 preuve juridique | ~~Axel applique~~ appliquée par agent | ✅ **APPLIQUÉE le 2026-09-02**, donc AVANT tout déploiement des fonctions · append-only vérifiée : UPDATE et DELETE refusés même au rôle privilégié |
 | 2 | **Réglages de console Supabase** : A-10 (leaked password protection), MFA sur le compte admin, allowlist de redirection OAuth, secure email change | 🟠 clics Dashboard | **Axel** | 🟡 **reste A-10 seul** (relu le 2026-09-30 contre le tableau « réglages de console » plus haut) : MFA ✅, allowlist OAuth ✅, secure email change ✅ déclaré. « Leaked password protection » exige le plan Pro |
 | 3 | **A-9 — plan Pro + PITR** | 🔴 résilience, seul bloquant | **Axel** (compte, non scriptable) | 🟡 **reste le PITR, par décision** du 2026-08-29. Le drill de restauration est ✅ **fait le 2026-09-01** (RTO 163 s), et le dump quotidien tourne |
-| **3bis** | 🔴 **Mig. `204`** (`team_tasks.health`) : **absente de la prod** alors que le front de `main` l'écrit, et que son commit (`7a9b3db0`) la dit « appliquée ». Le menu « État » d'une tâche pro échoue en production | 🔴 régression visible | **Axel** (application refusée à l'agent le 2026-09-30) | ⏳ **à appliquer d'abord** : additive, une colonne nullable et un `CHECK` |
-| **3ter** | 🔴 **Mig. `207`** (W-2 SSRF + W-3 enfilement forgeable), puis **redéployer `org-webhook-dispatch`** (W-1, `verify_jwt = false` lu dans `config.toml`) | 🔴 sécurité, dans CET ordre | **Axel** | ⏳ preuve [`supabase/proofs/207.proof.sql`](./supabase/proofs/207.proof.sql) **jouée sur PGlite le 2026-10-01 : 10/10**, deux sabotages vus rouges ; la preuve en prod (transaction annulée) reste à faire. 🔴 **Jamais le redéploiement avant la 207** : c'est lui qui rend l'envoi réel |
-| **3quater** | 🔴 **Redéployer `stripe-org-checkout`, `stripe-org-portal`, `report-bug` et `send-org-invite`** depuis `main` (A-4, `M-61`, W-4) | 🔴 le code en prod n'est pas celui du dépôt | **Axel** | ⏳ `Edge deploy drift` rouge chaque jour depuis le 09-21 ; `_shared/org-billing-contact.ts` absent de la prod |
+| **3bis** | 🔴 **Mig. `204`** (`team_tasks.health`) : **absente de la prod** alors que le front de `main` l'écrit, et que son commit (`7a9b3db0`) la dit « appliquée ». Le menu « État » d'une tâche pro échoue en production | 🔴 régression visible | appliquée par agent, accord d'Axel | ✅ **APPLIQUÉE le 2026-10-01**, ledger `20261001100113`, colonne et `CHECK` relus ; rejouée en prod sous le rôle d'un membre réel (transaction annulée) : `UPDATE` accepté sous RLS, relu par `get_my_team_tasks`, valeur hors liste refusée en 23514 |
+| **3ter** | 🔴 **Mig. `207`** (W-2 SSRF + W-3 enfilement forgeable), puis **redéployer `org-webhook-dispatch`** (W-1, `verify_jwt = false` lu dans `config.toml`) | 🔴 sécurité, dans CET ordre | agent, accord d'Axel geste par geste | ✅ **FAIT le 2026-10-01, dans cet ordre** : preuve jouée **en prod** (passe témoin sans la 207 : failles reproduites ; passe avec : vert), mig. `207` appliquée (ledger `20261001100535`), relue au catalogue, **puis** `org-webhook-dispatch` v2 ; `org-webhook-dispatch.yml` **HTTP 200** |
+| **3quater** | 🔴 **Redéployer `stripe-org-checkout`, `stripe-org-portal`, `report-bug` et `send-org-invite`** depuis `main` (A-4, `M-61`, W-4) | 🔴 le code en prod n'est pas celui du dépôt | agent, accord d'Axel | ✅ **DÉPLOYÉES le 2026-10-01** depuis `main` (`af622168`) : `stripe-org-checkout` v16, `stripe-org-portal` v13, `report-bug` v13, `send-org-invite` v2, plus `verify-org-domain` v2 (sa copie de `_shared/org-integrations.ts` avait vieilli avec W-2). `Edge deploy drift` **vert** (`36849106222`) : 12 identiques, 12 sondes |
+| **3quinquies** | 🟠 **E-3** : un manager s'ajoute à l'audience d'un OKR confidentiel (`team_okr_members`, et `team_okr_teams` par héritage) | 🟠 élévation dans l'organisation | **Axel** (arbitrage produit) | ⏳ prouvé en prod le 2026-10-01, correctif proposé au § E-3 |
 | 4 | Test de bout en bout de l'attribution `?ref=` (cf. [`docs/ACQUISITION.md`](./docs/ACQUISITION.md) §3) | 🟡 exige une vraie inscription | **Axel** | ⏳ **en attente** |
 | — | Garde `check:rls` « fonction citée par une policy exécutable par `authenticated` » | prévention (aurait attrapé B-1) | — | ✅ **livrée**, testée |
 | — | Garde `validate:migrations` « fonction de trigger révoquée + `SECURITY DEFINER` signalé » | prévention (aurait attrapé B-3) | — | ✅ **livrée**, testée |
@@ -1343,7 +1440,30 @@ npm run check:rls             # invariants RLS (CI)
 npm run check:drift           # dérive repo ↔ prod, 2 étapes (cf. docs/DEPLOYMENT.md)
 ```
 
-### État au 2026-09-30 (relu au ledger ET au catalogue)
+### État au 2026-10-01 (relu au ledger ET au catalogue)
+
+Dépôt : **186 fichiers**, dernière `210_invite_domain_only_closes_open_links.sql`. Ledger : **160
+entrées**, cinq de plus que la veille, toutes posées par `apply_migration` le 2026-10-01 :
+
+| Migration | Ledger | Vérifié au catalogue |
+|---|---|---|
+| `204_team_task_health` | `20261001100113` | colonne `text` nullable, `CHECK` sur trois valeurs |
+| `207_org_webhooks_hardening` | `20261001100535` | contrainte `NOT VALID` à TLD alphabétique ; garde `pg_trigger_depth()` en tête du corps |
+| `208_member_last_activity_respects_suspension` | `20261001102420` | corps vivant **identique octet pour octet** au fichier (comparateur vu rouge sur un corps différent) |
+| `209_kr_checkin_row_same_transaction` | `20261001102425` | idem |
+| `210_invite_domain_only_closes_open_links` | `20261001102453` | idem, pour les deux fonctions |
+
+✅ `npm run check:migration-coverage` contre la prod : **0 « absent des deux »** sur 186 fichiers.
+La `196` y était rouge à tort : la `200` fait `DROP TABLE` de ses deux tables, ce qui emporte
+index, policies, triggers et contraintes sans les nommer, et la garde ne savait pas le lire.
+Corrigé dans la garde, avec trois témoins dont deux qui refusent d'en faire trop (un `DROP
+TABLE` d'une autre table n'excuse rien, et une fonction survit à sa table).
+⚠️ Les onze migrations hors ledger (`164`, `181`, `190`-`195`, `197`-`199`) **n'ont pas été
+inscrites**, par décision d'Axel : une ligne écrite après coup, à une date fausse, ne prouve rien
+que le catalogue n'ait déjà prouvé, et la garde les range déjà en « objet en base ».
+⏳ `206` (jalons) reste **non appliquée, délibérément**.
+
+### État au 2026-09-30 (relu au ledger ET au catalogue) · *conservé à sa date*
 
 Dépôt : **183 fichiers**, dernière `207_org_webhooks_hardening.sql`. Ledger : **155 entrées** (141 au
 2026-09-22, plus quatorze : `151`-`153`, `160`-`163`, `170`, `180`, `200`-`203`, `205`), dernière

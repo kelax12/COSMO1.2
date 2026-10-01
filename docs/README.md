@@ -62,6 +62,15 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-01 · **sécurité 78 → 82 : les correctifs du 09-30 sont en production**
+
+| Domaine | Avant | Après | Δ | Pourquoi |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 78 | **82** | **+4** | W-1 à W-4 et A-4 corrigés **en production et vérifiés** (+5) : mig. `207` appliquée après une preuve jouée en prod, six Edge Functions redéployées, `Edge deploy drift` vert (12/12) pour la première fois depuis le 09-21, webhooks délivrés (HTTP 200). Un défaut nouveau trouvé par l'audit A-1 joué en prod, **E-3** (un manager s'inscrit à l'audience d'un OKR confidentiel) (−1). E-1, E-2, G-3 corrigés en prod (mig. `208`-`210`), sans effet propre : ils étaient dans le −2 d'AM-6, qui reste dû faute de garde en CI. CodeQL `high` corrigées à la source, remboursées à leur fermeture |
+
+Les autres domaines ne bougent pas. ✅ `Migration coverage` passe au vert contre la prod (0 absent
+sur 186) : la garde ne reconnaissait pas les objets emportés par un `DROP TABLE` (mig. `196`).
+
 ## Mise à jour du 2026-09-30 · **sécurité 83 → 78 : la note couvrait deux tiers de la surface**
 
 Une session d'audit a mesuré, en lecture seule, dix écarts entre les `.md` de sécurité et la réalité

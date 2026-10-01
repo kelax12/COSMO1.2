@@ -37,7 +37,7 @@
 //    éditoriale se recale explicitement, par `--update`.
 // ═══════════════════════════════════════════════════════════════════
 
-import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 const RACINE = process.cwd();
@@ -75,6 +75,20 @@ export function aplatir(objet, prefixe = '') {
     else out[cle] = v;
   }
   return out;
+}
+
+/**
+ * Lit un JSON, ou rend `null` s'il n'existe pas. Pas d'`existsSync` avant la
+ * lecture : vérifier puis lire le même chemin est une course (CodeQL
+ * js/file-system-race, M-60), et l'absence se lit dans l'erreur elle-même.
+ */
+function lireJsonOuNull(chemin) {
+  try {
+    return JSON.parse(readFileSync(chemin, 'utf8'));
+  } catch (e) {
+    if (e?.code === 'ENOENT') return null;
+    throw e;
+  }
 }
 
 /** Tous les catalogues d'une locale, aplatis et préfixés par leur namespace. */
@@ -117,8 +131,10 @@ export function volumeIndexable(html) {
   const bloc = /<div[^>]+id="seo-fallback"[^>]*>([\s\S]*?)<\/div>\s*(?:<\/body>|<div)/i.exec(html);
   const source = bloc ? bloc[1] : html;
   return source
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    // `</script >` est une fin de balise valide (CodeQL js/bad-tag-filter,
+    // M-60) : sans `\s*`, son contenu aurait été compté comme du texte.
+    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style\s*>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&[a-z]+;/gi, ' ')
     .split(/\s+/)
@@ -129,10 +145,13 @@ export function volumeIndexable(html) {
 export function volumesParPage(dist = DIST) {
   const out = new Map();
   const marcher = (rep) => {
-    for (const entree of readdirSync(rep)) {
+    // `withFileTypes` : le type vient de la même lecture que le nom, sans
+    // `statSync` séparé entre les deux (CodeQL js/file-system-race, M-60).
+    for (const d of readdirSync(rep, { withFileTypes: true })) {
+      const entree = d.name;
       if (['assets', 'fonts', 'screenshots', 'downloads'].includes(entree)) continue;
       const chemin = join(rep, entree);
-      if (statSync(chemin).isDirectory()) marcher(chemin);
+      if (d.isDirectory()) marcher(chemin);
       else if (entree === 'index.html') {
         const rel = relative(dist, chemin).split(sep).join('/');
         const url = `/${rel.replace(/index\.html$/, '')}`.replace(/\/+$/, '/') || '/';
@@ -298,7 +317,7 @@ if (estLanceDirectement) {
       parNu.get(nu)[locale] = mots;
     }
 
-    const planchers = existsSync(PLANCHERS) ? JSON.parse(readFileSync(PLANCHERS, 'utf8')) : null;
+    const planchers = lireJsonOuNull(PLANCHERS);
 
     if (process.argv.includes('--update')) {
       const contenu = {

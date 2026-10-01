@@ -237,7 +237,15 @@ un correctif committé, testé et vert peut ne pas exister pour les utilisateurs
 > **sans jamais avoir comparé quoi que ce soit** — 14 fois. Un tableau tenu à la main aurait
 > continué à vieillir en silence.
 
-> 🔴 **2026-09-30 · CINQ gestes, dans CET ordre** (détail : [`faille.md`](./faille.md) § « Ordre de
+> ✅ **2026-10-01 · LES CINQ GESTES CI-DESSOUS SONT FAITS**, par l'agent, avec ton accord geste par
+> geste, dans l'ordre : mig. `204` et `207` appliquées (preuve jouée en prod avant), puis
+> `org-webhook-dispatch` v2, puis les quatre autres, plus `verify-org-domain` ; `Edge deploy drift`
+> **vert** (12/12), `org-webhook-dispatch.yml` **HTTP 200**. Les mig. `208`, `209`, `210` (E-2, E-1,
+> G-3) sont appliquées aussi. Versions et ledger : [`faille.md`](./faille.md) § « Ordre de priorité ».
+> **Il te reste** : arbitrer **E-3** (§ du même nom dans `faille.md`), et poser dans GitHub le rejet
+> motivé des 3 alertes CodeQL `medium` (`M-60`, motifs écrits au § AM-4).
+>
+> *Conservé à sa date :* 🔴 **2026-09-30 · CINQ gestes, dans CET ordre** (détail : [`faille.md`](./faille.md) § « Ordre de
 > priorité », lignes 3bis à 3quater). L'agent a préparé chacun ; l'application et le déploiement
 > en prod lui ont été refusés.
 >

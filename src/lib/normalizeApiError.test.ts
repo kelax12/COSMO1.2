@@ -66,6 +66,10 @@ describe("normalizeApiError - erreurs metier des fonctions SQL (RAISE EXCEPTION)
     ["invalid_link", "valide"],
     ["own_link", "propre lien"],
     ["not_org_admin", "administrateurs"],
+    // Mig. 210 (G-3) : levés en P0001 exprès. En 42501, le code SQL déjà
+    // connu gagnait et l'écran disait « droits insuffisants » (cas suivant).
+    ["email_domain_not_allowed", "domaines vérifiés"],
+    ["open_link_not_allowed", "lien ouvert"],
   ])("promeut %s en code metier", (identifier, fragment) => {
     const out = normalizeApiError({ code: "P0001", message: identifier });
     expect(out.code).toBe(identifier);
@@ -87,6 +91,15 @@ describe("normalizeApiError - erreurs metier des fonctions SQL (RAISE EXCEPTION)
     expect(out.message).toBe("Une erreur inattendue est survenue.");
     expect(out.message).not.toContain("org_members_pkey");
     expect(out.originalMessage).toBe(raw);
+  });
+
+  // Pourquoi la mig. 210 lève ses refus en P0001 : un identifiant métier levé
+  // avec ERRCODE 42501 ne s'affiche JAMAIS (mesuré le 2026-10-01 sur
+  // `email_domain_not_allowed`, mig. 195). Si ce cas change, relire la 210.
+  it("un identifiant leve en 42501 tombe sur le message de droits, pas sur le sien", () => {
+    const out = normalizeApiError({ code: "42501", message: "open_link_not_allowed" });
+    expect(out.code).toBe("42501");
+    expect(out.message).not.toContain("lien ouvert");
   });
 
   it("laisse gagner un code deja whiteliste sur le contenu du message", () => {

@@ -96,6 +96,15 @@ compilait, la suite passait.
   ⏳ **`207`** (webhooks : cible publique, enfilement par trigger seul) : écrite le 2026-09-30,
   preuve `supabase/proofs/207.proof.sql` verte sur PGlite (10/10, 2026-10-01), **avant** tout redéploiement de
   `org-webhook-dispatch`. Ordre et détail : [`faille.md`](../../faille.md) § « Migrations ».
+- ✅ **État au 2026-10-01** : `204`, `207`, `208`, `209`, `210` **appliquées** par `apply_migration`,
+  ledger `20261001100113`, `…100535`, `…102420`, `…102425`, `…102453`, relues au catalogue (corps
+  comparés **octet pour octet** au fichier). Chacune jouée d'abord en prod dans un bloc qui ne peut
+  que s'annuler, avec une passe témoin SANS elle qui devait échouer. Détail : [`faille.md`](../../faille.md)
+  § « Migrations ». ⏳ `206` reste non appliquée, délibérément.
+- ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
+  (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
+  seule issue, et le verdict est le texte de l'exception. ⚠️ En PL/pgSQL `N` et `n`, `OK` et `ok`
+  sont le MÊME identifiant : « duplicate declaration ».
 - ⚠️ **Plages de numéros entre sessions (2026-09-24)** : `151`-`159` corbeille/équipes, `153` déjà
   prise par le portefeuille de projets (worktree `portefeuille`), `160`+ gouvernance/OKR/membres,
   `170`+ annuaire. **Relire le ledger avant de choisir un numéro.**
