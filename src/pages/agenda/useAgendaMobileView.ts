@@ -54,6 +54,10 @@ export function useAgendaMobileView({ onDateSelect, applyVisibleRange }: Params)
   const [mobileCalendarKey, setMobileCalendarKey] = useState(0);
   const [mobileViewMode, setMobileViewMode] = useState<MobileView>('timeGridDay');
   const [mobileZoom, setMobileZoom] = useState<MobileZoomOrder | null>(null);
+  // Compteur, et non `Date.now()` : deux bascules dans la même milliseconde
+  // donnaient le même token, et l'animation ne rejouait pas (vu en CI le
+  // 2026-10-01, témoin dans le test).
+  const zoomSeq = useRef(0);
 
   // Miroir SYNCHRONE de `mobileViewMode`. À la souris, `select` ET `dateClick`
   // partent tous les deux sur le même clic ; `mobileViewMode` n'est pas encore
@@ -100,7 +104,8 @@ export function useAgendaMobileView({ onDateSelect, applyVisibleRange }: Params)
   const enterDayView = (date: Date, jsEvent: UIEvent | MouseEvent | null) => {
     if (viewModeRef.current !== 'dayGridMonth') return;
     const point = pointerOf(jsEvent);
-    setMobileZoom({ token: Date.now(), x: point.x, y: point.y });
+    zoomSeq.current += 1;
+    setMobileZoom({ token: zoomSeq.current, x: point.x, y: point.y });
     mobileCalendarRef.current?.getApi().unselect();
     handleMobileSelectDate(date);
   };
