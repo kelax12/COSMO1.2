@@ -25,7 +25,7 @@ interface OrgNotificationsPanelProps {
 }
 
 /** Icône et libellé par type — le trigger n'écrit que ceux-là. */
-const KIND_META: Record<OrgNotificationKind, { Icon: typeof Bell; labelKey: KeyOf<'org'> }> = {
+const KIND_META: Record<OrgNotificationKind, { Icon: typeof Bell; labelKey: KeyOf<'orgAdmin'> }> = {
   task_assigned: { Icon: UserPlus, labelKey: 'notifications.kindAssigned' },
   mention: { Icon: AtSign, labelKey: 'notifications.kindMention' },
   task_overdue: { Icon: AlarmClock, labelKey: 'notifications.kindOverdue' },
@@ -57,6 +57,7 @@ const hasTarget = (n: OrgNotification): boolean =>
  */
 const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings }: OrgNotificationsPanelProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const navigate = useNavigate();
   const [filter, setFilter] = useState<NotificationFilter>('all');
   // Refuser un créneau posé par quelqu'un d'autre (mig. 162) : la personne
@@ -101,19 +102,19 @@ const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings
   return (
         <div
           role="dialog"
-          aria-label={t('notifications.title')}
+          aria-label={tOrgAdmin('notifications.title')}
           className="absolute right-0 top-11 z-50 w-[min(22rem,calc(100vw-2rem))] max-h-[24rem] overflow-y-auto rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-2xl p-2"
         >
           <div className="flex items-center justify-between gap-2 px-2 py-1">
             <p className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
-              {t('notifications.title')}
+              {tOrgAdmin('notifications.title')}
             </p>
             {/* Préférences (M14) : couper un type, le recevoir par e-mail. */}
             <button
               type="button"
               onClick={onOpenSettings}
-              aria-label={t('notifications.settings')}
-              title={t('notifications.settings')}
+              aria-label={tOrgAdmin('notifications.settings')}
+              title={tOrgAdmin('notifications.settings')}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
             >
               <Settings2 size={15} aria-hidden="true" />
@@ -121,7 +122,7 @@ const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings
           </div>
           {/* Filtre par type (M14) : seulement ceux qui ont quelque chose. */}
           {filters.length > 2 && (
-            <div role="group" aria-label={t('notifications.filterLabel')} className="flex flex-wrap gap-1 px-2 pb-1">
+            <div role="group" aria-label={tOrgAdmin('notifications.filterLabel')} className="flex flex-wrap gap-1 px-2 pb-1">
               {filters.map((f) => (
                 <button
                   key={f}
@@ -134,7 +135,7 @@ const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings
                       : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
                   }`}
                 >
-                  {t(NOTIFICATION_FILTER_LABEL[f])}
+                  {tOrgAdmin(NOTIFICATION_FILTER_LABEL[f])}
                   {/* Non lues par type (reco UI n° 31) : on voit où se trouve
                       le travail avant d'ouvrir le filtre. */}
                   {unreadByFilter[f] > 0 && (
@@ -145,11 +146,11 @@ const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings
             </div>
           )}
           {groups.map((group) => (
-          <section key={group.period} aria-label={t(group.labelKey)}>
+          <section key={group.period} aria-label={tOrgAdmin(group.labelKey)}>
             {/* Un flux plat ne dit pas si « il y a 2 jours » est récent ou
                 vieux pour cette organisation. Les sections donnent l'échelle. */}
             <p className="px-2 pt-2 pb-1 text-caption font-semibold text-[rgb(var(--color-text-muted))]">
-              {t(group.labelKey)}
+              {tOrgAdmin(group.labelKey)}
             </p>
             <ul className="space-y-1">
             {group.items.map((notification) => {
@@ -163,10 +164,10 @@ const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings
               const projectName = (notification.meta as { project_name?: string } | null | undefined)?.project_name;
               const ruleName = (notification.meta as { rule?: string } | null | undefined)?.rule;
               const label = notification.kind === 'project_archived' && projectName
-                ? t('notifications.kindProjectArchivedNamed', { name: projectName })
+                ? tOrgAdmin('notifications.kindProjectArchivedNamed', { name: projectName })
                 : notification.kind === 'automation' && ruleName
-                  ? t('notifications.kindAutomationNamed', { name: ruleName })
-                  : t(notificationLabelKey(notification, labelKey));
+                  ? tOrgAdmin('notifications.kindAutomationNamed', { name: ruleName })
+                  : tOrgAdmin(notificationLabelKey(notification, labelKey));
               return (
                 <li key={notification.id}>
                   <button
@@ -180,7 +181,7 @@ const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings
                     <Icon size={15} className="mt-0.5 shrink-0 text-[rgb(var(--color-accent))]" aria-hidden="true" />
                     <span className="min-w-0 flex-1">
                       <span className="block text-label text-[rgb(var(--color-text-primary))]">
-                        {actor ? t('notifications.byActor', { actor, label }) : label}
+                        {actor ? tOrgAdmin('notifications.byActor', { actor, label }) : label}
                       </span>
                       {notification.kind === 'event_scheduled' && typeof notification.meta?.title === 'string' && (
                         <span className="block text-caption text-[rgb(var(--color-text-secondary))] truncate">

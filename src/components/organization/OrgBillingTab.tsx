@@ -7,7 +7,8 @@ import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
 import type { OrgBillingInterval } from '@/modules/billing/premium-config';
-import { useOrgSubscription, useStartOrgCheckout, useOpenOrgPortal, useCancelAndRefundOrg, orgBillingKeys } from '@/modules/billing/org-billing.hooks';
+import { useOrgSubscription, orgBillingKeys } from '@/modules/billing/org-billing.hooks';
+import { useStartOrgCheckout, useOpenOrgPortal, useCancelAndRefundOrg } from '@/modules/billing/org-billing.mutations';
 import { effectiveQuota, effectiveTierKey } from '@/modules/billing/org-billing.logic';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { EnterpriseTierGrid } from './EnterpriseTierGrid';
@@ -44,6 +45,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
   const { activeOrg } = useActiveOrganization();
   const ownerId = activeOrg?.ownerId ?? '';
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const { t: tc } = useT('common');
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: subscription } = useOrgSubscription(orgId);
@@ -93,15 +95,15 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
   const checkoutResult = searchParams.get('checkout');
   useEffect(() => {
     if (!checkoutResult) return;
-    if (checkoutResult === 'success') toast.success(t('billing.checkoutSuccess'));
-    if (checkoutResult === 'cancelled') toast.info(t('billing.checkoutCancelled'));
+    if (checkoutResult === 'success') toast.success(tOrgAdmin('billing.checkoutSuccess'));
+    if (checkoutResult === 'cancelled') toast.info(tOrgAdmin('billing.checkoutCancelled'));
     const next = new URLSearchParams(searchParams);
     next.delete('checkout');
     setSearchParams(next, { replace: true });
-  }, [checkoutResult, searchParams, setSearchParams, t]);
+  }, [checkoutResult, searchParams, setSearchParams, t, tOrgAdmin]);
 
   const quota = effectiveQuota(subscription ?? null);
-  const planName = t('billing.planNamed', {
+  const planName = tOrgAdmin('billing.planNamed', {
     name: tc(ORG_TIER_LABEL_KEYS[effectiveTierKey(subscription ?? null)]),
   });
   const canPay = ENTERPRISE_BILLING_ENFORCED && isOwner;
@@ -115,19 +117,19 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
             onClick={onBack}
             className="self-start -ml-1 mb-1 inline-flex items-center gap-1.5 rounded-lg px-1 py-1 text-sm text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
           >
-            <ArrowLeft size={15} aria-hidden /> {t('billing.back')}
+            <ArrowLeft size={15} aria-hidden /> {tOrgAdmin('billing.back')}
           </button>
         )}
         <h2 className="flex items-center gap-2 text-lg font-semibold text-[rgb(var(--color-text-primary))]">
           <CreditCard size={18} aria-hidden />
-          {t('billing.title')}
+          {tOrgAdmin('billing.title')}
         </h2>
-        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('billing.subtitle')}</p>
+        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('billing.subtitle')}</p>
       </header>
 
       <section className="rounded-xl border border-[rgb(var(--color-border))] p-4 flex flex-col gap-2">
         <span className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
-          {t('billing.currentTier')}
+          {tOrgAdmin('billing.currentTier')}
         </span>
         {/* Le nom du forfait est ce que la pastille de l'en-tête annonce : les
             deux doivent dire le même mot, sinon le clic donne l'impression
@@ -135,12 +137,12 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
         <p className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">{planName}</p>
         <p className="text-sm text-[rgb(var(--color-text-primary))]">
           {quota === null
-            ? t('billing.seatsUnlimited', { count: memberCount })
-            : t('billing.seatsUsed', { count: memberCount, quota })}
+            ? tOrgAdmin('billing.seatsUnlimited', { count: memberCount })
+            : tOrgAdmin('billing.seatsUsed', { count: memberCount, quota })}
         </p>
         {subscription?.status === 'active' && subscription.currentPeriodEnd && (
           <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-            {t('billing.renewsOn', { date: formatDate(new Date(subscription.currentPeriodEnd)) })}
+            {tOrgAdmin('billing.renewsOn', { date: formatDate(new Date(subscription.currentPeriodEnd)) })}
           </p>
         )}
         {/* La périodicité est dite explicitement : « Renouvellement le 12
@@ -151,19 +153,19 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
         {subscription?.status === 'active' && subscription.tierKey !== 'free' && (
           <p className="text-sm text-[rgb(var(--color-text-secondary))]">
             {subscription.billingInterval === 'yearly'
-              ? t('billing.billedYearly')
-              : t('billing.billedMonthly')}
+              ? tOrgAdmin('billing.billedYearly')
+              : tOrgAdmin('billing.billedMonthly')}
           </p>
         )}
         {subscription?.status === 'past_due' && (
-          <p className="text-sm text-[rgb(var(--color-text-primary))]">{t('billing.statusPastDue')}</p>
+          <p className="text-sm text-[rgb(var(--color-text-primary))]">{tOrgAdmin('billing.statusPastDue')}</p>
         )}
         {subscription?.status === 'cancelled' && (
-          <p className="text-sm text-[rgb(var(--color-text-primary))]">{t('billing.statusCancelled')}</p>
+          <p className="text-sm text-[rgb(var(--color-text-primary))]">{tOrgAdmin('billing.statusCancelled')}</p>
         )}
         {subscription?.discountCode && (
           <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-            {t('billing.discountApplied', { code: subscription.discountCode })}
+            {tOrgAdmin('billing.discountApplied', { code: subscription.discountCode })}
           </p>
         )}
       </section>
@@ -185,16 +187,16 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
                   annoncer la nature temporaire de l'offre AVANT le premier prix
                   barré, pas seulement dans la phrase qui suit. */}
               <span className="inline-flex w-fit items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-caption font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                {t('billing.promoBadge')}
+                {tOrgAdmin('billing.promoBadge')}
               </span>
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-                {t('billing.dormant')}
+                {tOrgAdmin('billing.dormant')}
               </p>
             </>
           )}
           {ENTERPRISE_BILLING_ENFORCED && !isOwner && (
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-              {t('billing.ownerOnly')}
+              {tOrgAdmin('billing.ownerOnly')}
             </p>
           )}
         </div>
@@ -216,7 +218,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
 
       {ENTERPRISE_BILLING_ENFORCED && billingInterval === 'yearly' && (
         <p className="-mt-3 text-xs text-[rgb(var(--color-text-secondary))]">
-          {t('billing.intervalYearlyHint')}
+          {tOrgAdmin('billing.intervalYearlyHint')}
         </p>
       )}
 
@@ -225,7 +227,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
       {canPay && (
         <fieldset className="flex flex-col gap-2 rounded-lg border border-[rgb(var(--color-border))] p-3">
           <legend className="px-1 text-xs font-semibold text-[rgb(var(--color-text-secondary))]">
-            {t('billing.withdrawalLegend')}
+            {tOrgAdmin('billing.withdrawalLegend')}
           </legend>
           {/* Information precontractuelle (Conso. art. L111-1) — les
               caracteristiques essentielles doivent etre portees a la
@@ -236,7 +238,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
               motif. Le montant exact, lui, est affiche par la carte que
               l utilisateur choisit juste en dessous. */}
           <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-            {t('billing.precontractual')}
+            {tOrgAdmin('billing.precontractual')}
           </p>
           <label className="flex items-start gap-2 text-xs text-[rgb(var(--color-text-secondary))]">
             <input
@@ -245,7 +247,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
               onChange={(e) => setImmediateExecution(e.target.checked)}
               className="mt-0.5 shrink-0"
             />
-            <span>{t('billing.withdrawalImmediate')}</span>
+            <span>{tOrgAdmin('billing.withdrawalImmediate')}</span>
           </label>
           <label className="flex items-start gap-2 text-xs text-[rgb(var(--color-text-secondary))]">
             <input
@@ -254,11 +256,11 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
               onChange={(e) => setWaivesWithdrawal(e.target.checked)}
               className="mt-0.5 shrink-0"
             />
-            <span>{t('billing.withdrawalWaiver')}</span>
+            <span>{tOrgAdmin('billing.withdrawalWaiver')}</span>
           </label>
           {!withdrawalConsentGiven && (
             <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-              {t('billing.withdrawalHint')}
+              {tOrgAdmin('billing.withdrawalHint')}
             </p>
           )}
         </fieldset>
@@ -305,7 +307,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
           carte, et la grille est un conteneur de mise en page dont la racine ne
           doit pas gagner de frère. Voir docs/LEGAL.md ligne E7. */}
       <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-        {t('billing.vatIncluded')}
+        {tOrgAdmin('billing.vatIncluded')}
       </p>
 
       {canPay && subscription && (
@@ -316,9 +318,9 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
             onClick={() => portal.mutate({ orgId })}
             className="self-start rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm disabled:opacity-60"
           >
-            {t('billing.manage')}
+            {tOrgAdmin('billing.manage')}
           </button>
-          <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('billing.manageHint')}</p>
+          <p className="text-xs text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('billing.manageHint')}</p>
         </div>
       )}
 
@@ -347,10 +349,10 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
       {canPay && subscription && effectiveTierKey(subscription) !== 'free' && (
         <div className="flex flex-col gap-2 rounded-lg border border-[rgb(var(--color-border))] p-3">
           <h3 className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-            {t('billing.refundTitle')}
+            {tOrgAdmin('billing.refundTitle')}
           </h3>
           <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-            {t('billing.refundExplain')}
+            {tOrgAdmin('billing.refundExplain')}
           </p>
           <button
             type="button"
@@ -358,7 +360,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
             onClick={() => refund.mutate({ orgId })}
             className="self-start rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm disabled:opacity-60 hover:border-red-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
           >
-            {refund.isPending ? t('billing.refundPending') : t('billing.refundCta')}
+            {refund.isPending ? tOrgAdmin('billing.refundPending') : tOrgAdmin('billing.refundCta')}
           </button>
         </div>
       )}

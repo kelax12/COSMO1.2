@@ -11,7 +11,9 @@ export {
 } from './constants';
 
 export type { IOrgTeamsRepository } from './repository';
-export { LocalStorageOrgTeamsRepository } from './local.repository';
+// Dépôt de démo NON réexporté (2026-10-01) : le baril est importé par le shell,
+// la réexportation ramenait le dépôt dans le chunk d'ENTRÉE alors que la fabrique
+// le charge à la demande (`src/lib/demo-repositories.ts`).
 export { SupabaseOrgTeamsRepository } from './supabase.repository';
 
 export {

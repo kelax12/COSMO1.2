@@ -26,7 +26,7 @@ interface OrgNotificationSettingsDialogProps {
 }
 
 /** Libellé court par type, pour la grille des préférences. */
-const KIND_LABEL: Record<OrgNotificationKind, KeyOf<'org'>> = {
+const KIND_LABEL: Record<OrgNotificationKind, KeyOf<'orgAdmin'>> = {
   task_assigned: 'notifSettings.kind.task_assigned',
   mention: 'notifSettings.kind.mention',
   comment: 'notifSettings.kind.comment',
@@ -55,6 +55,7 @@ const toggle = (list: OrgNotificationKind[], kind: OrgNotificationKind, on: bool
  */
 const OrgNotificationSettingsDialog = ({ orgId, open, onOpenChange }: OrgNotificationSettingsDialogProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const { data } = useNotificationSettings(open ? orgId : undefined);
   const save = useSaveNotificationSettings(orgId);
   const [draft, setDraft] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
@@ -68,23 +69,23 @@ const OrgNotificationSettingsDialog = ({ orgId, open, onOpenChange }: OrgNotific
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t('notifSettings.title')}</DialogTitle>
-          <DialogDescription>{t('notifSettings.description')}</DialogDescription>
+          <DialogTitle>{tOrgAdmin('notifSettings.title')}</DialogTitle>
+          <DialogDescription>{tOrgAdmin('notifSettings.description')}</DialogDescription>
         </DialogHeader>
 
         <table className="w-full text-sm">
           <thead>
             <tr className="text-caption text-[rgb(var(--color-text-muted))]">
-              <th scope="col" className="text-left font-semibold pb-2">{t('notifSettings.colType')}</th>
-              <th scope="col" className="font-semibold pb-2 w-20">{t('notifSettings.colApp')}</th>
-              <th scope="col" className="font-semibold pb-2 w-20">{t('notifSettings.colEmail')}</th>
+              <th scope="col" className="text-left font-semibold pb-2">{tOrgAdmin('notifSettings.colType')}</th>
+              <th scope="col" className="font-semibold pb-2 w-20">{tOrgAdmin('notifSettings.colApp')}</th>
+              <th scope="col" className="font-semibold pb-2 w-20">{tOrgAdmin('notifSettings.colEmail')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[rgb(var(--color-border))]">
             {ORG_NOTIFICATION_KINDS.map((kind) => {
               const inApp = !draft.mutedKinds.includes(kind);
               const byEmail = draft.emailKinds.includes(kind);
-              const label = t(KIND_LABEL[kind]);
+              const label = tOrgAdmin(KIND_LABEL[kind]);
               return (
                 <tr key={kind}>
                   <th scope="row" className="text-left font-normal py-2 pr-2 text-[rgb(var(--color-text-primary))]">{label}</th>
@@ -92,7 +93,7 @@ const OrgNotificationSettingsDialog = ({ orgId, open, onOpenChange }: OrgNotific
                     <input
                       type="checkbox"
                       checked={inApp}
-                      aria-label={t('notifSettings.appFor', { type: label })}
+                      aria-label={tOrgAdmin('notifSettings.appFor', { type: label })}
                       onChange={(e) => setDraft((d) => ({
                         ...d,
                         mutedKinds: toggle(d.mutedKinds, kind, !e.target.checked),
@@ -107,7 +108,7 @@ const OrgNotificationSettingsDialog = ({ orgId, open, onOpenChange }: OrgNotific
                       type="checkbox"
                       checked={byEmail}
                       disabled={!inApp}
-                      aria-label={t('notifSettings.emailFor', { type: label })}
+                      aria-label={tOrgAdmin('notifSettings.emailFor', { type: label })}
                       onChange={(e) => setDraft((d) => ({ ...d, emailKinds: toggle(d.emailKinds, kind, e.target.checked) }))}
                       className="w-4 h-4 accent-[rgb(var(--color-accent))] disabled:opacity-40"
                     />
@@ -120,8 +121,8 @@ const OrgNotificationSettingsDialog = ({ orgId, open, onOpenChange }: OrgNotific
 
         <label className="flex items-center justify-between gap-3 rounded-xl border border-[rgb(var(--color-border))] p-3">
           <span className="text-sm">
-            <span className="block font-semibold text-[rgb(var(--color-text-primary))]">{t('notifSettings.digest')}</span>
-            <span className="block text-xs text-[rgb(var(--color-text-muted))]">{t('notifSettings.digestHint')}</span>
+            <span className="block font-semibold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('notifSettings.digest')}</span>
+            <span className="block text-xs text-[rgb(var(--color-text-muted))]">{tOrgAdmin('notifSettings.digestHint')}</span>
           </span>
           <input
             type="checkbox"

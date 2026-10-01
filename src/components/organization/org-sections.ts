@@ -10,7 +10,7 @@ export type OrgSection = 'overview' | OrgSectionSegment;
 /** Trois familles, dans l'ordre du panneau : ce que je fais, ce qu'on pilote, qui on est. */
 export type OrgSectionGroup = 'mine' | 'steer' | 'org';
 
-export const ORG_SECTION_GROUPS: { id: OrgSectionGroup; labelKey: KeyOf<'org'> }[] = [
+export const ORG_SECTION_GROUPS: { id: OrgSectionGroup; labelKey: KeyOf<'orgAdmin'> }[] = [
   { id: 'mine', labelKey: 'sideNav.groupMine' },
   { id: 'steer', labelKey: 'sideNav.groupSteer' },
   { id: 'org', labelKey: 'sideNav.groupOrg' },

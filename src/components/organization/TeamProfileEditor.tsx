@@ -17,6 +17,7 @@ interface TeamProfileEditorProps {
  */
 const TeamProfileEditor = ({ orgId, team, onDone }: TeamProfileEditorProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const update = useUpdateOrgTeam(orgId);
   const [name, setName] = useState(team.name);
   const [color, setColor] = useState(team.color);
@@ -57,7 +58,7 @@ const TeamProfileEditor = ({ orgId, team, onDone }: TeamProfileEditorProps) => {
               type="button"
               role="radio"
               aria-checked={color === c.value}
-              aria-label={t('team.colorNamed', { name: t(c.labelKey) })}
+              aria-label={t('team.colorNamed', { name: tOrgAdmin(c.labelKey) })}
               onClick={() => setColor(c.value)}
               className={`w-7 h-7 rounded-full transition-transform ${
                 color === c.value ? 'ring-2 ring-offset-2 ring-offset-[rgb(var(--color-surface))] ring-[rgb(var(--color-text-primary))] scale-110' : ''

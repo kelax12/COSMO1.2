@@ -6,12 +6,10 @@ import { appModeStore } from './app-mode.store';
 
 // Tasks
 import { ITasksRepository } from '@/modules/tasks/repository';
-import { LocalStorageTasksRepository } from '@/modules/tasks/local.repository';
 import { SupabaseTasksRepository } from '@/modules/tasks/supabase.repository';
 
 // Habits
 import { IHabitsRepository } from '@/modules/habits/repository';
-import { LocalStorageHabitsRepository } from '@/modules/habits/local.repository';
 import { SupabaseHabitsRepository } from '@/modules/habits/supabase.repository';
 
 // Events
@@ -208,7 +206,8 @@ appModeStore.subscribe(() => {
 export function getTasksRepository(): ITasksRepository {
   if (!tasksRepository) {
     tasksRepository = appModeStore.isDemo
-      ? new LocalStorageTasksRepository()
+      ? lazyDemoRepository<ITasksRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoTasksRepository()))
       : new SupabaseTasksRepository();
   }
   return tasksRepository;
@@ -220,7 +219,8 @@ export function getTasksRepository(): ITasksRepository {
 export function getHabitsRepository(): IHabitsRepository {
   if (!habitsRepository) {
     habitsRepository = appModeStore.isDemo
-      ? new LocalStorageHabitsRepository()
+      ? lazyDemoRepository<IHabitsRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoHabitsRepository()))
       : new SupabaseHabitsRepository();
   }
   return habitsRepository;

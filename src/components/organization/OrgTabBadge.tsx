@@ -33,7 +33,7 @@ interface OrgTabBadgeProps {
  * compteur pour les lecteurs d'écran, qui n'ont pas besoin du survol.
  */
 const OrgTabBadge = ({ count, items, title, ariaLabel, side = 'bottom', onAccent = false }: OrgTabBadgeProps) => {
-  const { tp } = useT('org');
+  const { tp: tpOrgAdmin } = useT('orgAdmin');
   // Les notifications serveur donnent le compte sans les libellés : dans ce
   // cas on n'affiche aucun aperçu plutôt qu'un « et 3 autres » sans rien avant.
   const hidden = Math.max(0, count - items.length);
@@ -60,7 +60,7 @@ const OrgTabBadge = ({ count, items, title, ariaLabel, side = 'bottom', onAccent
           ))}
         </ul>
         {hidden > 0 && (
-          <p className="mt-1 opacity-70">{tp('page.badgePreviewMore', hidden)}</p>
+          <p className="mt-1 opacity-70">{tpOrgAdmin('page.badgePreviewMore', hidden)}</p>
         )}
       </TooltipContent>
     </Tooltip>

@@ -365,7 +365,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
           >
             <span>
               <RoleTerm term={m.role === 'admin' ? 'admin' : manager ? 'manager' : 'member'}>
-                {m.role === 'admin' ? t('pyramid.badgeAdmin') : manager ? t('pyramid.badgeManager') : t('pyramid.badgeMember')}
+                {m.role === 'admin' ? ta('pyramid.badgeAdmin') : manager ? ta('pyramid.badgeManager') : ta('pyramid.badgeMember')}
               </RoleTerm>
               {node.children.length > 0 ? ` · ${node.children.length}` : ''}
               {totalReports > node.children.length ? ta('pyramid.totalSuffix', { count: totalReports }) : ''}

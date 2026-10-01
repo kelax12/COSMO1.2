@@ -33,7 +33,7 @@ interface OrgNotificationsBellProps {
  * cloche est donc masquée plutôt qu'affichée à zéro.
  */
 const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => {
-  const { t, tp } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const [open, setOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -79,7 +79,7 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
         type="button"
         onClick={toggle}
         aria-expanded={open}
-        aria-label={unread > 0 ? tp('notifications.bellUnread', unread) : t('notifications.bell')}
+        aria-label={unread > 0 ? tpOrgAdmin('notifications.bellUnread', unread) : tOrgAdmin('notifications.bell')}
         className="relative w-11 h-11 rounded-xl flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
       >
         <Bell size={18} aria-hidden="true" />

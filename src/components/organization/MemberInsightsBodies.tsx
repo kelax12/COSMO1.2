@@ -59,7 +59,7 @@ const useMemberTasks = (orgId: string, memberId: string) => {
  * connaître.
  */
 export const MemberTasksBody = ({ orgId, member, canEdit = false }: MemberBodyProps) => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const { isLoading, open, done } = useMemberTasks(orgId, member.userId);
   const { data: projects = [] } = useTeamProjects(orgId);
   const { data: orgMembers = [] } = useOrgMembers(orgId);
@@ -80,14 +80,14 @@ export const MemberTasksBody = ({ orgId, member, canEdit = false }: MemberBodyPr
   const removeWithUndo = (task: TeamTask) =>
     deleteTask.mutate(task.id, {
       onSuccess: () => {
-        showUndoToast(t('insights.taskDeleted'), () =>
+        showUndoToast(tOrgAdmin('insights.taskDeleted'), () =>
           restoreTask.mutate(task.id),
         );
       },
     });
 
   if (isLoading) {
-    return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{t('insights.loading')}</p>;
+    return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{tOrgAdmin('insights.loading')}</p>;
   }
 
   return (
@@ -138,7 +138,7 @@ export const MemberTasksBody = ({ orgId, member, canEdit = false }: MemberBodyPr
 
 /** CORPS de l'onglet « Contribution » — sans overlay ni en-tête (item #18). */
 export const MemberContributionBody = ({ orgId, member }: MemberBodyProps) => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const { isLoading, allTasks, myTasks, open, done, overdue, completionRate } = useMemberTasks(orgId, member.userId);
   // Repère de comparaison : la complétion de toutes les tâches assignées de
   // l'entreprise, lue dans le même cache (aucune requête de plus).
@@ -148,7 +148,7 @@ export const MemberContributionBody = ({ orgId, member }: MemberBodyProps) => {
   }, [allTasks]);
 
   if (isLoading) {
-    return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{t('insights.loading')}</p>;
+    return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{tOrgAdmin('insights.loading')}</p>;
   }
 
   return (
@@ -189,6 +189,7 @@ const ROW_GRID = 'grid grid-cols-[16px_minmax(0,1fr)_auto] sm:grid-cols-[16px_mi
 
 const TaskRow = ({ task, project, canEdit, onEdit, selection }: { task: TeamTask; project?: TeamProject; canEdit: boolean; onEdit: (task: TeamTask) => void; selection?: RowSelection }) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const overdue = !task.completed && isOverdue(task);
   if (selection?.active) {
     return (
@@ -219,7 +220,7 @@ const TaskRow = ({ task, project, canEdit, onEdit, selection }: { task: TeamTask
         {task.deadline ? format(parseISO(task.deadline), 'd MMM', { locale: getDateLocale() }) : ''}
       </span>
       <span className="text-[10px] font-semibold text-[rgb(var(--color-text-muted))] text-right whitespace-nowrap">
-        {overdue && <span className="sm:hidden text-red-500 mr-1">{t('insights.overdue')}</span>}
+        {overdue && <span className="sm:hidden text-red-500 mr-1">{tOrgAdmin('insights.overdue')}</span>}
         {priorityLabel(task.priority)}
       </span>
     </>
@@ -246,14 +247,14 @@ const TaskRow = ({ task, project, canEdit, onEdit, selection }: { task: TeamTask
 };
 
 const AddTaskButton = ({ onAddTask }: { onAddTask: () => void }) => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   return (
     <button
       type="button"
       onClick={onAddTask}
       className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-sm font-semibold text-[rgb(var(--color-text-secondary))]"
     >
-      <Plus size={14} aria-hidden="true" /> {t('insights.addTask')}
+      <Plus size={14} aria-hidden="true" /> {tOrgAdmin('insights.addTask')}
     </button>
   );
 };
@@ -267,12 +268,13 @@ const TasksView = ({
   selection?: RowSelection;
 }) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const [filter, setFilter] = useState<TaskFilter>('open');
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
   if (open.length === 0 && done.length === 0) {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-[rgb(var(--color-text-muted))] py-2 text-center">{t('insights.noTeamTask')}</p>
+        <p className="text-sm text-[rgb(var(--color-text-muted))] py-2 text-center">{tOrgAdmin('insights.noTeamTask')}</p>
         <AddTaskButton onAddTask={onAddTask} />
       </div>
     );
@@ -280,8 +282,8 @@ const TasksView = ({
   const overdue = open.filter(isOverdue);
   const rows = filter === 'open' ? open : filter === 'overdue' ? overdue : done.slice(0, 20);
   const chips: { id: TaskFilter; label: string }[] = [
-    { id: 'open', label: t('insights.inProgress', { count: open.length }) },
-    { id: 'done', label: t('insights.completed', { count: done.length }) },
+    { id: 'open', label: tOrgAdmin('insights.inProgress', { count: open.length }) },
+    { id: 'done', label: tOrgAdmin('insights.completed', { count: done.length }) },
     { id: 'overdue', label: t('popups.member.overdueCount', { count: overdue.length }) },
   ];
   return (
@@ -322,7 +324,7 @@ const TasksView = ({
         <span className="text-right">P</span>
       </div>
       {rows.length === 0 ? (
-        <p className="text-xs text-[rgb(var(--color-text-muted))] py-2 text-center">{t('insights.noOpenTask')}</p>
+        <p className="text-xs text-[rgb(var(--color-text-muted))] py-2 text-center">{tOrgAdmin('insights.noOpenTask')}</p>
       ) : (
         <ul className="space-y-1.5">
           {rows.map((task) => (
@@ -345,6 +347,7 @@ const ContributionView = ({ total, done, open, overdue, completionRate, orgRate,
   total: number; done: number; open: number; overdue: number; completionRate: number; orgRate: number; doneTasks: TeamTask[];
 }) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const days = useMemo(() => {
     const counts = new Map<string, number>();
     for (const task of doneTasks) {
@@ -362,7 +365,7 @@ const ContributionView = ({ total, done, open, overdue, completionRate, orgRate,
   const recent = days.reduce((sum, d) => sum + d.count, 0);
 
   if (total === 0) {
-    return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{t('insights.noContribution')}</p>;
+    return <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">{tOrgAdmin('insights.noContribution')}</p>;
   }
   return (
     <div className="space-y-4">
@@ -386,7 +389,7 @@ const ContributionView = ({ total, done, open, overdue, completionRate, orgRate,
       </section>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4">
-          <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('insights.completionRate')}</p>
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">{tOrgAdmin('insights.completionRate')}</p>
           <p className="text-2xl font-bold text-emerald-500">{completionRate}%</p>
           <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('popups.member.orgAverage', { value: `${orgRate}%` })}</p>
         </div>
@@ -396,7 +399,7 @@ const ContributionView = ({ total, done, open, overdue, completionRate, orgRate,
           <p className="text-xs text-[rgb(var(--color-text-muted))]">{done} / {total}</p>
         </div>
         <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4">
-          <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('insights.inProgressShort')}</p>
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">{tOrgAdmin('insights.inProgressShort')}</p>
           <p className="text-2xl font-bold text-indigo-500">{open}</p>
           <p className={`text-xs ${overdue > 0 ? 'text-red-500 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
             {t('popups.member.overdueCount', { count: overdue })}

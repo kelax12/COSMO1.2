@@ -106,16 +106,17 @@ const MemberDirectoryToolbar = ({
   canSelect, selectMode, onToggleSelectMode, onExport, inviteAction,
 }: MemberDirectoryToolbarProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const activeCount = activeFilterCount(filters);
   const set = (patch: Partial<DirectoryFilters>) => onChange({ ...filters, ...patch });
 
   const teamName = teams.find((x) => x.id === filters.teamId)?.name;
   const managerName = managers.find((x) => x.userId === filters.managerId)?.displayName;
-  const teamActive = filters.teamId && teamName ? t('directory.filters.chipTeam', { name: teamName }) : null;
-  const roleActive = filters.role ? t('directory.filters.chipRole', { name: t(ROLE_KEY[filters.role]) }) : null;
-  const managerActive = filters.managerId && managerName ? t('directory.filters.chipManager', { name: managerName }) : null;
-  const joinedActive = filters.joined ? t(JOINED_KEY[filters.joined]) : null;
-  const clearAria = (name: string) => t('directory.filters.removeChip', { name });
+  const teamActive = filters.teamId && teamName ? tOrgAdmin('directory.filters.chipTeam', { name: teamName }) : null;
+  const roleActive = filters.role ? tOrgAdmin('directory.filters.chipRole', { name: t(ROLE_KEY[filters.role]) }) : null;
+  const managerActive = filters.managerId && managerName ? tOrgAdmin('directory.filters.chipManager', { name: managerName }) : null;
+  const joinedActive = filters.joined ? tOrgAdmin(JOINED_KEY[filters.joined]) : null;
+  const clearAria = (name: string) => tOrgAdmin('directory.filters.removeChip', { name });
 
   const narrowed = activeCount > 0 || filters.query.trim() !== '';
 
@@ -128,15 +129,15 @@ const MemberDirectoryToolbar = ({
             type="search"
             value={filters.query}
             onChange={(e) => set({ query: e.target.value })}
-            placeholder={t('directory.searchPlaceholder')}
-            aria-label={t('directory.searchAria')}
+            placeholder={tOrgAdmin('directory.searchPlaceholder')}
+            aria-label={tOrgAdmin('directory.searchAria')}
             className="w-full h-10 pl-9 pr-9 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400 [&::-webkit-search-cancel-button]:hidden"
           />
           {filters.query && (
             <button
               type="button"
               onClick={() => set({ query: '' })}
-              aria-label={t('directory.clearSearch')}
+              aria-label={tOrgAdmin('directory.clearSearch')}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
             >
               <X size={14} aria-hidden="true" />
@@ -148,7 +149,7 @@ const MemberDirectoryToolbar = ({
         {canSelect && (
           <button type="button" onClick={onToggleSelectMode} aria-pressed={selectMode} className={TOOL_BUTTON}>
             <CheckSquare size={15} aria-hidden="true" />
-            {selectMode ? t('directory.select.exit') : t('directory.select.enter')}
+            {selectMode ? tOrgAdmin('directory.select.exit') : tOrgAdmin('directory.select.enter')}
           </button>
         )}
         {onExport && (
@@ -156,8 +157,8 @@ const MemberDirectoryToolbar = ({
             type="button"
             onClick={onExport}
             disabled={shown === 0}
-            aria-label={t('directory.export.button')}
-            title={t('directory.export.button')}
+            aria-label={tOrgAdmin('directory.export.button')}
+            title={tOrgAdmin('directory.export.button')}
             className={`${TOOL_BUTTON} w-10 justify-center px-0 disabled:opacity-50`}
           >
             <Download size={15} aria-hidden="true" />
@@ -167,48 +168,48 @@ const MemberDirectoryToolbar = ({
 
       <div
         role="group"
-        aria-label={t('directory.filters.panelAria')}
+        aria-label={tOrgAdmin('directory.filters.panelAria')}
         className="flex flex-wrap items-center gap-1.5"
       >
         <FilterPill
-          label={t('directory.filters.team')}
+          label={tOrgAdmin('directory.filters.team')}
           activeLabel={teamActive}
           value={filters.teamId ?? ''}
           onSelect={(v) => set({ teamId: v || null })}
           onClear={() => set({ teamId: null })}
           clearAria={clearAria(teamActive ?? '')}
           options={teams.map((team) => ({ value: team.id, label: team.name }))}
-          anyLabel={t('directory.filters.any')}
+          anyLabel={tOrgAdmin('directory.filters.any')}
         />
         <FilterPill
-          label={t('directory.filters.role')}
+          label={tOrgAdmin('directory.filters.role')}
           activeLabel={roleActive}
           value={filters.role ?? ''}
           onSelect={(v) => set({ role: (v || null) as DirectoryRole | null })}
           onClear={() => set({ role: null })}
           clearAria={clearAria(roleActive ?? '')}
           options={DIRECTORY_ROLES.map((r) => ({ value: r, label: t(ROLE_KEY[r]) }))}
-          anyLabel={t('directory.filters.any')}
+          anyLabel={tOrgAdmin('directory.filters.any')}
         />
         <FilterPill
-          label={t('directory.filters.manager')}
+          label={tOrgAdmin('directory.filters.manager')}
           activeLabel={managerActive}
           value={filters.managerId ?? ''}
           onSelect={(v) => set({ managerId: v || null })}
           onClear={() => set({ managerId: null })}
           clearAria={clearAria(managerActive ?? '')}
           options={managers.map((m) => ({ value: m.userId, label: m.displayName }))}
-          anyLabel={t('directory.filters.any')}
+          anyLabel={tOrgAdmin('directory.filters.any')}
         />
         <FilterPill
-          label={t('directory.filters.joined')}
+          label={tOrgAdmin('directory.filters.joined')}
           activeLabel={joinedActive}
           value={filters.joined ?? ''}
           onSelect={(v) => set({ joined: (v || null) as JoinedPeriod | null })}
           onClear={() => set({ joined: null })}
           clearAria={clearAria(joinedActive ?? '')}
-          options={JOINED_PERIODS.map((p) => ({ value: p, label: t(JOINED_KEY[p]) }))}
-          anyLabel={t('directory.filters.any')}
+          options={JOINED_PERIODS.map((p) => ({ value: p, label: tOrgAdmin(JOINED_KEY[p]) }))}
+          anyLabel={tOrgAdmin('directory.filters.any')}
         />
         <button
           type="button"
@@ -216,19 +217,19 @@ const MemberDirectoryToolbar = ({
           aria-pressed={filters.unplaced}
           className={`${PILL} pr-3 ${filters.unplaced ? PILL_ON : PILL_IDLE}`}
         >
-          {t('directory.filters.unplaced')}
+          {tOrgAdmin('directory.filters.unplaced')}
         </button>
         {narrowed && (
           <>
             <span className="text-xs text-[rgb(var(--color-text-muted))] tabular-nums ml-1" aria-live="polite">
-              {t('directory.filters.count', { shown, total })}
+              {tOrgAdmin('directory.filters.count', { shown, total })}
             </span>
             <button
               type="button"
               onClick={() => onChange(EMPTY_DIRECTORY_FILTERS)}
               className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline px-1"
             >
-              {t('directory.filters.clearAll')}
+              {tOrgAdmin('directory.filters.clearAll')}
             </button>
           </>
         )}

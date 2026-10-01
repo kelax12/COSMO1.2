@@ -85,6 +85,8 @@ premier geste d'Axel ([`../a-faire-manuel.md`](../a-faire-manuel.md) § 8).
 | Dependabot | 8 alertes (1 `high`, `undici`), toutes `development` : **refermées** par le lockfile (`undici` 7.30.0, `brace-expansion` 1.1.21 / 5.0.12). 2026-10-01 : alerte #13 (`ip-address` ≤ 10.5.0, `moderate`, dev via `shadcn`) refermée par le lockfile, `ip-address` 10.7.2 |
 | CodeQL | 11 alertes : les 3 `missing-workflow-permissions` corrigées, et une garde refuse désormais tout workflow sans `permissions` |
 | Gardes | **34** `check:*` / `i18n:*` / `validate:*` (la racine disait 36) ; **55** témoins `*.guard.test.*` (`faille.md` disait 39) |
+| `check:bundle` (2026-10-01) | rouge sur `main` depuis le 09-24 (entrée, `org`, `legal`, `TeamTaskModal`, mesurés identiques sur un build de `HEAD`) : ✅ **respecté**, aucun plafond relevé, quatre abaissés. Entrée 73,2 → 67,1 ko, chemin critique 315,3 → 309,3 ko. Détail : [`PERFORMANCE.md`](./PERFORMANCE.md) § « Budget bundle » |
+| `Visual` | 🔴 rouge depuis au moins le 2026-09-30 : `/settings` diffère dans les quatre thèmes (6 428 px). Changement d'interface d'une autre session, **à arbitrer sur l'artefact `visual-report`**, pas à corriger à l'aveugle |
 
 ---
 

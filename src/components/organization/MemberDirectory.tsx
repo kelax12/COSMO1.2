@@ -73,6 +73,7 @@ interface MemberDirectoryProps {
  */
 const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, inviteAction }: MemberDirectoryProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const setRole = useSetMemberRole();
   // Un admin rétrogradé perd la main sur l'organisation : on le confirme.
   const [demoting, setDemoting] = useState<OrgMember | null>(null);
@@ -187,16 +188,16 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
   const exportCsv = () => {
     const { headers, rows } = buildDirectoryCsv(filteredMembers, members, teamsByUser, {
       headers: {
-        name: t('directory.export.colName'),
-        email: t('directory.export.colEmail'),
-        role: t('directory.export.colRole'),
-        manager: t('directory.export.colManager'),
-        teams: t('directory.export.colTeams'),
-        joinedAt: t('directory.export.colJoinedAt'),
+        name: tOrgAdmin('directory.export.colName'),
+        email: tOrgAdmin('directory.export.colEmail'),
+        role: tOrgAdmin('directory.export.colRole'),
+        manager: tOrgAdmin('directory.export.colManager'),
+        teams: tOrgAdmin('directory.export.colTeams'),
+        joinedAt: tOrgAdmin('directory.export.colJoinedAt'),
       },
       roles: { admin: t('roles.admin'), manager: t('roles.manager'), member: t('roles.member') },
     });
-    downloadCSV(t('directory.export.fileName'), headers, rows);
+    downloadCSV(tOrgAdmin('directory.export.fileName'), headers, rows);
   };
 
   const activeProjects = projects.filter((p) => !p.archivedAt);
@@ -259,8 +260,8 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
       {filteredMembers.length === 0 ? (
         <p className="text-sm text-[rgb(var(--color-text-muted))] py-8 text-center">
           {filters.query.trim()
-            ? t('directory.noMatch', { query: filters.query.trim() })
-            : t('directory.filters.noMatch')}
+            ? tOrgAdmin('directory.noMatch', { query: filters.query.trim() })
+            : tOrgAdmin('directory.filters.noMatch')}
         </p>
       ) : (
         <ul className={`space-y-2 ${bulk.selectMode ? 'pb-24' : ''}`}>
@@ -314,9 +315,9 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
       {/* Un admin rétrogradé perd la main sur l'organisation : niveau LOURD. */}
       {demoting && (
         <OrgConfirmDialog
-          title={t('directory.demoteTitle', { name: demoting.displayName })}
-          description={t('directory.demoteBody', { name: demoting.displayName })}
-          confirmLabel={t('directory.demoteConfirm')}
+          title={tOrgAdmin('directory.demoteTitle', { name: demoting.displayName })}
+          description={tOrgAdmin('directory.demoteBody', { name: demoting.displayName })}
+          confirmLabel={tOrgAdmin('directory.demoteConfirm')}
           tone="warning"
           pending={setRole.isPending}
           onConfirm={() =>

@@ -116,7 +116,14 @@ const BUDGETS = {
   // n'avait pas été refaite depuis, et l'entrée avait REPRIS 2 051 o entre
   // temps — marge réelle au 2026-09-11 avant coupe : **1,34 %**. Un budget
   // qu'on ne remesure pas dérive dans le sens qui arrange.
-  entry: 71_000,
+  // 2026-10-01 : 73 159 → **67 141 o**, plafond de 71 000 à 70 500. Cause de
+  // la dérive : les barils `tasks`, `habits`, `organizations`, `team-projects`,
+  // `team-okrs` et `org-teams` RÉEXPORTAIENT leur dépôt de démo ; importés par
+  // le shell, ils le ramenaient dans l'entrée alors que la fabrique le charge à
+  // la demande. Réexportations retirées, tâches et habitudes passées par
+  // `demo-repositories.ts`. `critique` a baissé d'autant (315,3 → 309,3 ko) :
+  // une coupe, pas un déplacement.
+  entry: 70_500,
 
   // Le plus gros chunk de page. `OrganizationPage` mesure ~64 ko.
   page: 70_000,
@@ -169,7 +176,7 @@ const PLAFONDS_PAR_CHUNK = {
   'vendor-animation': 52_000, // 49 245 o — framer-motion
   TasksPage: 37_000, // 35 039 o — la plus grosse page du produit
   'vendor-utils': 33_000, // 31 053 o
-  org: 30_000, // 28 494 o sur 2 chunks
+  org: 25_000, // 23 722 o sur 2 chunks (2026-10-01 : 40 6xx → 23 722, sections de /entreprise passées dans `orgAdmin`)
   TaskModal: 29_000, // 27 183 o
   landing: 24_000, // 22 853 o sur 2 chunks
   'dropdown-menu': 22_000, // 20 526 o
@@ -181,10 +188,12 @@ const PLAFONDS_PAR_CHUNK = {
   OrganizationPage: 18_000, // 16 686 o
   TeamProjectsTab: 17_000, // 15 992 o
   UseCasePage: 16_500, // 15 591 o
-  legal: 15_500, // 14 593 o sur 2 chunks
+  legal: 3_000, // 2 693 o sur 2 chunks (2026-10-01 : CGU et confidentialité dans leur propre catalogue)
+  legalPrivacy: 9_900, // 9 378 o sur 2 chunks — chargé par la seule page confidentialité
+  legalTerms: 9_700, // 9 221 o sur 2 chunks — chargé par la seule page CGU
   OKRPage: 15_000, // 14 192 o
   'vendor-router': 14_500, // 13 729 o
-  TeamTaskModal: 14_500, // 13 345 o
+  TeamTaskModal: 12_000, // 11 437 o (2026-10-01 : commentaires et arbre de catégories chargés à la demande)
   EnterpriseTrack: 13_500, // 12 790 o
   'vendor-ogl': 13_500, // 12 643 o
   types: 13_000, // 12 304 o

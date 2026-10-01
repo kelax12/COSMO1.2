@@ -21,6 +21,7 @@ const inputClasses =
  */
 const OrgProfileForm = ({ org }: OrgProfileFormProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const [name, setName] = useState(org.name);
   const [description, setDescription] = useState(org.description ?? '');
   const [industry, setIndustry] = useState(org.industry ?? '');
@@ -51,14 +52,14 @@ const OrgProfileForm = ({ org }: OrgProfileFormProps) => {
     if (!file) return;
     const verdict = validateAvatarFile(file);
     if (!verdict.ok) {
-      toast.error(verdict.reason === 'type' ? t('profile.unsupportedFormat') : t('profile.tooLarge'));
+      toast.error(verdict.reason === 'type' ? tOrgAdmin('profile.unsupportedFormat') : tOrgAdmin('profile.tooLarge'));
       e.target.value = '';
       return;
     }
     const reader = new FileReader();
     reader.onloadend = () => {
       const result = typeof reader.result === 'string' ? reader.result : '';
-      if (!result.startsWith('data:image/')) { toast.error(t('profile.fileInvalid')); return; }
+      if (!result.startsWith('data:image/')) { toast.error(tOrgAdmin('profile.fileInvalid')); return; }
       const img = new Image();
       img.onload = () => {
         const dims = computeAvatarDimensions(img.width, img.height);
@@ -72,7 +73,7 @@ const OrgProfileForm = ({ org }: OrgProfileFormProps) => {
             : result,
         );
       };
-      img.onerror = () => toast.error(t('profile.imageUnreadable'));
+      img.onerror = () => toast.error(tOrgAdmin('profile.imageUnreadable'));
       img.src = result;
     };
     reader.readAsDataURL(file);
@@ -101,7 +102,7 @@ const OrgProfileForm = ({ org }: OrgProfileFormProps) => {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              aria-label={t('profile.avatarChange')}
+              aria-label={tOrgAdmin('profile.avatarChange')}
               className="relative group/av w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-indigo-600 flex items-center justify-center text-[rgb(var(--color-accent-solid-foreground))] shrink-0"
             >
               {shownAvatar ? (
@@ -119,7 +120,7 @@ const OrgProfileForm = ({ org }: OrgProfileFormProps) => {
                 onClick={() => fileInputRef.current?.click()}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
               >
-                <Camera size={12} aria-hidden="true" /> {t('profile.changeImage')}
+                <Camera size={12} aria-hidden="true" /> {tOrgAdmin('profile.changeImage')}
               </button>
               {shownAvatar && (
                 <button
@@ -148,21 +149,21 @@ const OrgProfileForm = ({ org }: OrgProfileFormProps) => {
           </div>
           <div>
             <label htmlFor="org-profile-industry" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-              {t('profile.sector')}
+              {tOrgAdmin('profile.sector')}
             </label>
             <input
               id="org-profile-industry"
               type="text"
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
-              placeholder={t('profile.sectorPlaceholder')}
+              placeholder={tOrgAdmin('profile.sectorPlaceholder')}
               className={inputClasses}
               maxLength={80}
             />
           </div>
           <div>
             <label htmlFor="org-profile-description" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-              {t('profile.description')}
+              {tOrgAdmin('profile.description')}
             </label>
             <textarea
               id="org-profile-description"

@@ -35,7 +35,8 @@ const countOverrides = (row: { overrides?: Record<string, boolean | null | undef
  * Les droits eux-mêmes se règlent dans la même feuille que depuis l'annuaire.
  */
 const OrgSettingsPermissions = ({ orgId, members, currentUserId, isAdmin }: OrgSettingsPermissionsProps) => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const myPermissions = useMyOrgPermissions(orgId);
   const { data: overrides = [], isLoading } = useOrgMemberPermissions(orgId);
   const setPermissions = useSetMemberPermissions();
@@ -54,15 +55,15 @@ const OrgSettingsPermissions = ({ orgId, members, currentUserId, isAdmin }: OrgS
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('settings.permissionsIntro')}</p>
+      <p className="text-sm text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('settings.permissionsIntro')}</p>
       <PermissionsMatrix />
       <div className="flex flex-wrap items-center gap-2">
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={t('lifecycle.searchPerson')}
-          aria-label={t('settings.permissionsSearch')}
+          placeholder={tOrgAdmin('lifecycle.searchPerson')}
+          aria-label={tOrgAdmin('settings.permissionsSearch')}
           className="flex-1 min-w-[180px] h-9 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 text-sm text-[rgb(var(--color-text-primary))]"
         />
         <button
@@ -75,14 +76,14 @@ const OrgSettingsPermissions = ({ orgId, members, currentUserId, isAdmin }: OrgS
               : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
           }`}
         >
-          {t('settings.permissionsOnlyCustom')}
+          {tOrgAdmin('settings.permissionsOnlyCustom')}
         </button>
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('settings.loading')}</p>
+        <p className="text-sm text-[rgb(var(--color-text-muted))]">{tOrgAdmin('settings.loading')}</p>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('settings.permissionsEmpty')}</p>
+        <p className="text-sm text-[rgb(var(--color-text-muted))]">{tOrgAdmin('settings.permissionsEmpty')}</p>
       ) : (
         <ul className="divide-y divide-[rgb(var(--color-border))] rounded-2xl border border-[rgb(var(--color-border))]">
           {rows.map((m) => {
@@ -101,7 +102,7 @@ const OrgSettingsPermissions = ({ orgId, members, currentUserId, isAdmin }: OrgS
                     <span className="block text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">{m.displayName}</span>
                     <span className="block text-xs text-[rgb(var(--color-text-muted))]">
                       {roleLabel(m)}
-                      {m.role === 'admin' ? ` · ${t('settings.permissionsAdminAll')}` : custom > 0 ? ` · ${tp('settings.permissionsCustom', custom)}` : ` · ${t('settings.permissionsDefault')}`}
+                      {m.role === 'admin' ? ` · ${tOrgAdmin('settings.permissionsAdminAll')}` : custom > 0 ? ` · ${tpOrgAdmin('settings.permissionsCustom', custom)}` : ` · ${tOrgAdmin('settings.permissionsDefault')}`}
                     </span>
                   </span>
                   {editable && <ChevronRight size={16} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />}

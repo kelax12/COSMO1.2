@@ -49,7 +49,7 @@ const resolveColor = (color: string) => (color.startsWith('#') ? color : getColo
 const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const { can } = useMyOrgPermissions(orgId);
   const hints = usePermissionHints(orgId);
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const [showCreate, setShowCreate] = useState(false);
   const [editingOKR, setEditingOKR] = useState<TeamOKR | null>(null);
   const [deletingOKR, setDeletingOKR] = useState<TeamOKR | null>(null);
@@ -84,7 +84,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   // désormais réellement sur les sous-catégories (cf. CategoryFilterBar).
   const [activeCategoryIds, setActiveCategoryIds] = useState<Set<string>>(new Set());
 
-  const teamName = (id: string) => teams.find((x) => x.id === id)?.name ?? t('okrTab.fallbackTeam');
+  const teamName = (id: string) => teams.find((x) => x.id === id)?.name ?? tOrgAdmin('okrTab.fallbackTeam');
   const teamColor = (id: string) => teams.find((x) => x.id === id)?.color;
   // Couleur d'une catégorie par son id (badge coloré, parité mode perso).
   const colorById = useMemo(() => {
@@ -119,7 +119,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
 
   if (isLoading) {
     // Squelette (reco UI n° 47) : la forme de l'écran, pas une phrase.
-    return <OrgTabSkeleton label={t('okrTab.loading')} />;
+    return <OrgTabSkeleton label={tOrgAdmin('okrTab.loading')} />;
   }
 
   return (
@@ -145,7 +145,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
             onClick={() => setShowCreate(true)}
             className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] shadow-sm transition-colors"
           >
-            <Plus size={15} aria-hidden="true" /> {t('okrTab.newObjective')}
+            <Plus size={15} aria-hidden="true" /> {tOrgAdmin('okrTab.newObjective')}
           </button>
         </PermissionGate>
       </div>
@@ -159,21 +159,21 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
       {okrs.length === 0 ? (
         <OrgEmptyState
           Icon={Target}
-          title={t('okrTab.empty')}
-          body={can['okr.create'] ? t('okrTab.emptyManager') : t('okrTab.emptyMember')}
+          title={tOrgAdmin('okrTab.empty')}
+          body={can['okr.create'] ? tOrgAdmin('okrTab.emptyManager') : tOrgAdmin('okrTab.emptyMember')}
           action={can['okr.create'] ? (
             <button
               type="button"
               onClick={() => setShowCreate(true)}
               className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold"
             >
-              <Plus size={15} aria-hidden="true" /> {t('okrTab.newObjective')}
+              <Plus size={15} aria-hidden="true" /> {tOrgAdmin('okrTab.newObjective')}
             </button>
           ) : undefined}
         />
       ) : visibleOKRs.length === 0 ? (
         <div className="py-12 text-center">
-          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('okrTab.emptyCategory')}</p>
+          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('okrTab.emptyCategory')}</p>
           <button
             type="button"
             onClick={() => {
@@ -182,7 +182,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
             }}
             className="mt-2 text-xs font-semibold text-blue-500 hover:text-blue-600"
           >
-            {t('okrTab.seeAll')}
+            {tOrgAdmin('okrTab.seeAll')}
           </button>
         </div>
       ) : (

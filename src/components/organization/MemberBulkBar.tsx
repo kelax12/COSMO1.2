@@ -33,9 +33,8 @@ const MemberBulkBar = ({
   onToggleAll, onAddToTeam, onChangeManager, canRestrictAccess = false, accessPending = false,
   onSuspend, onReactivate, onExit,
 }: MemberBulkBarProps) => {
-  const { t, tp } = useT('org');
-  const { t: ta } = useT('orgAdmin');
-  const label = count > 0 ? tp('directory.select.selected', count) : t('directory.select.hint');
+  const { t: ta, tp: tpOrgAdmin } = useT('orgAdmin');
+  const label = count > 0 ? tpOrgAdmin('directory.select.selected', count) : ta('directory.select.hint');
 
   return (
     <div
@@ -55,17 +54,17 @@ const MemberBulkBar = ({
 
       <button type="button" onClick={onToggleAll} disabled={visibleCount === 0} className={ACTION}>
         <ListChecks size={15} aria-hidden="true" />
-        {allVisibleSelected ? t('directory.select.none') : t('directory.select.all', { count: visibleCount })}
+        {allVisibleSelected ? ta('directory.select.none') : ta('directory.select.all', { count: visibleCount })}
       </button>
 
       {canAddToTeam && (
         <button type="button" onClick={onAddToTeam} disabled={count === 0} className={ACTION}>
-          <Users size={15} aria-hidden="true" /> {t('directory.bulk.addToTeam')}
+          <Users size={15} aria-hidden="true" /> {ta('directory.bulk.addToTeam')}
         </button>
       )}
       {canChangeManager && (
         <button type="button" onClick={onChangeManager} disabled={count === 0} className={ACTION}>
-          <Network size={15} aria-hidden="true" /> {t('directory.bulk.changeManager')}
+          <Network size={15} aria-hidden="true" /> {ta('directory.bulk.changeManager')}
         </button>
       )}
 
@@ -83,8 +82,8 @@ const MemberBulkBar = ({
       <button
         type="button"
         onClick={onExit}
-        aria-label={t('directory.select.exit')}
-        title={t('directory.select.exit')}
+        aria-label={ta('directory.select.exit')}
+        title={ta('directory.select.exit')}
         className="w-9 h-9 rounded-xl flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
       >
         <X size={16} aria-hidden="true" />

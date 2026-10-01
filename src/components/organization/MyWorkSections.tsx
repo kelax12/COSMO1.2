@@ -73,7 +73,7 @@ const MyWorkSections = ({
   activity, deps, notifications, okrs, projects, members, hasAny, estimated,
   agenda, summary, overdueCount, nextDeadline, onToggle, onOpenTask,
 }: MyWorkSectionsProps) => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const me = currentUserId ?? '';
   const activeProjectIds = useMemo(
     () => new Set(projects.filter((p) => !p.archivedAt).map((p) => p.id)),
@@ -149,11 +149,11 @@ const MyWorkSections = ({
         overdue={overdueCount}
         nextDeadline={nextDeadline}
         labels={{
-          waiting: t('waiting.title'),
-          open: t('overview.openTasks'),
-          overdue: t('horizon.overdue'),
-          next: t('myWork.nextDeadline'),
-          upToDate: t('myWork.upToDate'),
+          waiting: tOrgAdmin('waiting.title'),
+          open: tOrgAdmin('overview.openTasks'),
+          overdue: tOrgAdmin('horizon.overdue'),
+          next: tOrgAdmin('myWork.nextDeadline'),
+          upToDate: tOrgAdmin('myWork.upToDate'),
         }}
       />
 

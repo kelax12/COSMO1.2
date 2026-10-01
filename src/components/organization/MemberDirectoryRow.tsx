@@ -83,6 +83,7 @@ const MemberDirectoryRow = ({
   onToggleSelect, onOpen, onSetRole, onAssign, onEditPermissions, lifecycleItems,
 }: MemberDirectoryRowProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const primary = () => (selectMode ? onToggleSelect() : onOpen('profile'));
 
   return (
@@ -99,7 +100,7 @@ const MemberDirectoryRow = ({
           primary();
         }
       }}
-      aria-label={selectMode ? t('directory.select.rowAria', { name: m.displayName }) : t('common.seeProfileOf', { name: m.displayName })}
+      aria-label={selectMode ? tOrgAdmin('directory.select.rowAria', { name: m.displayName }) : t('common.seeProfileOf', { name: m.displayName })}
       aria-pressed={selectMode ? selected : undefined}
       className={`flex items-center gap-3 p-3 rounded-xl border bg-[rgb(var(--color-surface))] cursor-pointer hover:border-indigo-400/60 hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
         selected ? 'border-indigo-500' : 'border-[rgb(var(--color-border))]'
@@ -110,7 +111,7 @@ const MemberDirectoryRow = ({
           type="checkbox"
           checked={selected}
           onChange={onToggleSelect}
-          aria-label={t('directory.select.rowAria', { name: m.displayName })}
+          aria-label={tOrgAdmin('directory.select.rowAria', { name: m.displayName })}
           className="w-4 h-4 shrink-0 accent-indigo-600"
         />
       )}
@@ -129,10 +130,10 @@ const MemberDirectoryRow = ({
         {lastActivity && (
           <p className="text-caption text-[rgb(var(--color-text-muted))] truncate">
             {lastActivity.lastActivityAt
-              ? t('directory.activity.rowAgo', {
+              ? tOrgAdmin('directory.activity.rowAgo', {
                   when: formatDistanceToNow(new Date(lastActivity.lastActivityAt), { addSuffix: true, locale: getDateLocale() }),
                 })
-              : t('directory.activity.none')}
+              : tOrgAdmin('directory.activity.none')}
           </p>
         )}
       </div>
@@ -142,7 +143,7 @@ const MemberDirectoryRow = ({
         <DropdownMenu>
           <DropdownMenuTrigger
             className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-            aria-label={t('directory.changeRoleAria', { name: m.displayName })}
+            aria-label={tOrgAdmin('directory.changeRoleAria', { name: m.displayName })}
           >
             {/* Le « ? » du terme est À CÔTÉ du bouton, jamais dedans. */}
             {/* Chevron (reco UI n° 23) : sans lui, rien ne dit que la
@@ -167,7 +168,7 @@ const MemberDirectoryRow = ({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onEditPermissions}>
                   <ShieldCheck size={14} aria-hidden="true" />
-                  {t('directory.customizeRole')}
+                  {tOrgAdmin('directory.customizeRole')}
                 </DropdownMenuItem>
               </>
             )}
@@ -196,22 +197,22 @@ const MemberDirectoryRow = ({
               <>
                 <DropdownMenuItem onClick={onAssign}>
                   <ClipboardList size={14} aria-hidden="true" />
-                  {t('directory.assignTask')}
+                  {tOrgAdmin('directory.assignTask')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
               </>
             )}
             <DropdownMenuItem onClick={() => onOpen('tasks')}>
               <ListTodo size={14} aria-hidden="true" />
-              {t('directory.seeTasks')}
+              {tOrgAdmin('directory.seeTasks')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onOpen('agenda')}>
               <CalendarDays size={14} aria-hidden="true" />
-              {t('directory.seeAgenda')}
+              {tOrgAdmin('directory.seeAgenda')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onOpen('contribution')}>
               <TrendingUp size={14} aria-hidden="true" />
-              {t('directory.seeContribution')}
+              {tOrgAdmin('directory.seeContribution')}
             </DropdownMenuItem>
             {rights.canEditPermissions && (
               <>

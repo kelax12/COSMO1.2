@@ -34,7 +34,7 @@
 //    Un contrôle qui ne vit que dans l'écran n'est pas un contrôle — la RPC
 //    est la seule porte vers un DELETE sur `organizations`.
 
-import { useCancelAndRefundOrg } from '@/modules/billing/org-billing.hooks';
+import { useCancelAndRefundOrg } from '@/modules/billing/org-billing.mutations';
 import { useDeleteOrganization } from '@/modules/organizations';
 
 export interface DeleteOrgFlow {

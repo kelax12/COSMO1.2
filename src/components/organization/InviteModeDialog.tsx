@@ -33,14 +33,15 @@ interface InviteModeDialogProps {
  */
 const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, onChooseEmail, onClose }: InviteModeDialogProps) => {
   const { t } = useT('org');
-  const { ref, dialogProps } = useModalA11y<HTMLDivElement>({ open: true, onClose, label: t('settings.inviteTitle') });
+  const { t: tOrgAdmin } = useT('orgAdmin');
+  const { ref, dialogProps } = useModalA11y<HTMLDivElement>({ open: true, onClose, label: tOrgAdmin('settings.inviteTitle') });
   const [emails, setEmails] = useState('');
 
   const modes: { id: Mode; icon: LucideIcon; label: string }[] = [
-    ...(onChooseEmail ? [{ id: 'email' as const, icon: Mail, label: t('settings.tabEmail') }] : []),
-    { id: 'code', icon: Hash, label: t('settings.tabCode') },
-    ...(canInvite ? [{ id: 'link' as const, icon: Link2, label: t('settings.tabLink') }] : []),
-    ...(isAdmin ? [{ id: 'contacts' as const, icon: Contact, label: t('settings.tabContacts') }] : []),
+    ...(onChooseEmail ? [{ id: 'email' as const, icon: Mail, label: tOrgAdmin('settings.tabEmail') }] : []),
+    { id: 'code', icon: Hash, label: tOrgAdmin('settings.tabCode') },
+    ...(canInvite ? [{ id: 'link' as const, icon: Link2, label: tOrgAdmin('settings.tabLink') }] : []),
+    ...(isAdmin ? [{ id: 'contacts' as const, icon: Contact, label: tOrgAdmin('settings.tabContacts') }] : []),
   ];
   const [mode, setMode] = useState<Mode>(modes[0].id);
 
@@ -57,8 +58,8 @@ const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, o
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{t('settings.inviteTitle')}</h2>
-            <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">{t('settings.inviteHint')}</p>
+            <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('settings.inviteTitle')}</h2>
+            <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">{tOrgAdmin('settings.inviteHint')}</p>
           </div>
           <button
             type="button"
@@ -72,7 +73,7 @@ const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, o
 
         <div
           role="tablist"
-          aria-label={t('settings.inviteTitle')}
+          aria-label={tOrgAdmin('settings.inviteTitle')}
           className="grid gap-1 p-1 rounded-xl bg-[rgb(var(--color-hover))]"
           style={{ gridTemplateColumns: `repeat(${modes.length}, minmax(0, 1fr))` }}
         >
@@ -107,7 +108,7 @@ const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, o
               onSubmit={(e) => { e.preventDefault(); onChooseEmail(emails); }}
             >
               <label htmlFor="invite-mode-emails" className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))]">
-                {t('invites.emailTitle')}
+                {tOrgAdmin('invites.emailTitle')}
               </label>
               <textarea
                 id="invite-mode-emails"
@@ -117,7 +118,7 @@ const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, o
                 placeholder={t('invite.emailPlaceholder')}
                 className="w-full rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2 text-sm text-[rgb(var(--color-text-primary))]"
               />
-              <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('invites.emailIntro')}</p>
+              <p className="text-xs text-[rgb(var(--color-text-muted))]">{tOrgAdmin('invites.emailIntro')}</p>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('invite.moreOptions')}</span>
                 <button
@@ -125,7 +126,7 @@ const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, o
                   disabled={seatsFull}
                   className="shrink-0 min-h-11 px-4 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50"
                 >
-                  {t('settings.emailContinue')}
+                  {tOrgAdmin('settings.emailContinue')}
                 </button>
               </div>
             </form>

@@ -51,6 +51,7 @@ const PyramidPlacementSheet = ({
   orgId, target, members, currentUserId, isAdmin, initialDirection, canMoveTarget, canPlaceUnder, onClose,
 }: PyramidPlacementSheetProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const setManager = useSetMemberManager();
   const [direction, setDirection] = useState<PlacementDirection>(
     initialDirection === 'up' && !canMoveTarget ? 'down' : initialDirection === 'down' && !canPlaceUnder ? 'up' : initialDirection,
@@ -136,12 +137,12 @@ const PyramidPlacementSheet = ({
           <span className="flex-1 min-w-0">
             <span className="block text-[15px] font-semibold text-[rgb(var(--color-text-primary))] truncate">
               {/* Pas de « Vous (vous) » : en démo le nom affiché est déjà « Vous ». */}
-              {m.displayName}{m.userId === currentUserId && m.displayName !== t('common.youBadge') ? t('member.youSuffix') : ''}
+              {m.displayName}{m.userId === currentUserId && m.displayName !== t('common.youBadge') ? tOrgAdmin('member.youSuffix') : ''}
             </span>
             <span className="block text-xs text-[rgb(var(--color-text-muted))] truncate">
               {/* Un sommet sans responsable qui encadre des gens n'est pas « non placé ». */}
               {isManagerOf(members, m.userId)
-                ? t('member.manager')
+                ? tOrgAdmin('member.manager')
                 : m.managerId === null
                   ? t('popups.placement.unplaced')
                   : t('popups.placement.under', { name: members.find((x) => x.userId === m.managerId)?.displayName ?? '' })}
@@ -249,7 +250,7 @@ const PyramidPlacementSheet = ({
                 <span className="w-10 h-10 rounded-full border border-dashed border-[rgb(var(--color-border))] flex items-center justify-center shrink-0">
                   <ArrowUpFromLine size={16} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
                 </span>
-                <span className="flex-1 text-sm text-[rgb(var(--color-text-secondary))]">{t('member.detach')}</span>
+                <span className="flex-1 text-sm text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('member.detach')}</span>
               </button>
             )}
             {shownManagers.length > 0 && (
@@ -266,7 +267,7 @@ const PyramidPlacementSheet = ({
             )}
             {shown.length === 0 && (
               <p className="text-center text-sm text-[rgb(var(--color-text-muted))] py-8">
-                {direction === 'up' ? t('member.placementEmpty') : t('popups.placement.nobodyToPlace')}
+                {direction === 'up' ? tOrgAdmin('member.placementEmpty') : t('popups.placement.nobodyToPlace')}
               </p>
             )}
           </div>

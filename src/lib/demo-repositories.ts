@@ -59,6 +59,19 @@ import type { IOrgTeamsRepository } from '@/modules/org-teams/repository';
 import type { ICategoriesRepository } from '@/modules/categories/repository';
 import { LocalStorageCategoriesRepository } from '@/modules/categories/local.repository';
 
+import type { ITasksRepository } from '@/modules/tasks/repository';
+import { LocalStorageTasksRepository } from '@/modules/tasks/local.repository';
+import type { IHabitsRepository } from '@/modules/habits/repository';
+import { LocalStorageHabitsRepository } from '@/modules/habits/local.repository';
+
+// Tâches et habitudes (2026-10-01) : interfaces 100 % asynchrones, vérifiées
+// avant la coupe. 19 ko bruts de démo de moins dans le chunk d'entrée.
+export const createDemoTasksRepository = (): ITasksRepository =>
+  new LocalStorageTasksRepository();
+
+export const createDemoHabitsRepository = (): IHabitsRepository =>
+  new LocalStorageHabitsRepository();
+
 export const createDemoCategoriesRepository = (): ICategoriesRepository =>
   new LocalStorageCategoriesRepository();
 

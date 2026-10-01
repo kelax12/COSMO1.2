@@ -15,7 +15,9 @@ export { taskKeys, TASKS_STORAGE_KEY, TASK_DEPENDENCIES_STORAGE_KEY } from './co
 export type { ITasksRepository } from './repository';
 
 // Repository implementations
-export { LocalStorageTasksRepository } from './local.repository';
+// Dépôt de démo NON réexporté (2026-10-01) : le baril est importé par le shell,
+// la réexportation ramenait le dépôt dans le chunk d'ENTRÉE alors que la fabrique
+// le charge à la demande (`src/lib/demo-repositories.ts`).
 export { SupabaseTasksRepository } from './supabase.repository';
 
 // ═══════════════════════════════════════════════════════════════════

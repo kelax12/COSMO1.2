@@ -41,7 +41,7 @@ export type BulkPickerMode = 'team' | 'manager';
 export const useMemberBulkActions = ({
   orgId, members, visibleMembers, teams, memberships, currentUserId, isAdmin,
 }: Options) => {
-  const { t, tp } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const addMember = useAddTeamMember(orgId);
   const removeMember = useRemoveTeamMember(orgId);
   const setManager = useSetMemberManager();
@@ -100,18 +100,18 @@ export const useMemberBulkActions = ({
         eligible: partitionForManager(selected, m.userId, members, actor).eligible.length,
       }));
       if (isAdmin) {
-        opts.unshift({ id: null, label: t('member.detach'), eligible: partitionForManager(selected, null, members, actor).eligible.length });
+        opts.unshift({ id: null, label: tOrgAdmin('member.detach'), eligible: partitionForManager(selected, null, members, actor).eligible.length });
       }
       return opts;
     }
     return [];
-  }, [picker, teamsICanManage, destinations, selected, memberships, members, actor, isAdmin, t]);
+  }, [picker, teamsICanManage, destinations, selected, memberships, members, actor, isAdmin, tOrgAdmin]);
 
   /** « · 2 ignorés · 1 échec » — ce que le toast doit dire en plus du résultat. */
   const suffix = (p: Partition, failed: number) => {
     const skipped = p.unchanged.length + p.outOfScope.length;
-    return (skipped > 0 ? ` · ${tp('directory.bulk.skipped', skipped)}` : '')
-      + (failed > 0 ? ` · ${tp('directory.bulk.failed', failed)}` : '');
+    return (skipped > 0 ? ` · ${tpOrgAdmin('directory.bulk.skipped', skipped)}` : '')
+      + (failed > 0 ? ` · ${tpOrgAdmin('directory.bulk.failed', failed)}` : '');
   };
 
   const settle = async <T,>(items: T[], run: (item: T) => Promise<unknown>) => {
@@ -124,7 +124,7 @@ export const useMemberBulkActions = ({
     if (!team) return;
     const p = partitionForTeam(selected, team, memberships, members, actor);
     if (p.eligible.length === 0) {
-      toast.info(t('directory.bulk.nothingToDo'));
+      toast.info(tOrgAdmin('directory.bulk.nothingToDo'));
       return;
     }
     setPending(true);
@@ -133,7 +133,7 @@ export const useMemberBulkActions = ({
     setPicker(null);
     setSelectedIds(new Set());
     const failed = p.eligible.length - done.length;
-    const message = tp('directory.bulk.addedToTeam', done.length, { team: team.name }) + suffix(p, failed);
+    const message = tpOrgAdmin('directory.bulk.addedToTeam', done.length, { team: team.name }) + suffix(p, failed);
     if (done.length === 0) {
       toast.error(message);
       return;
@@ -146,7 +146,7 @@ export const useMemberBulkActions = ({
   const moveUnder = async (destId: string | null) => {
     const p = partitionForManager(selected, destId, members, actor);
     if (p.eligible.length === 0) {
-      toast.info(t('directory.bulk.nothingToDo'));
+      toast.info(tOrgAdmin('directory.bulk.nothingToDo'));
       return;
     }
     // L'annulation remet CHACUN sous son ancien manager : on le note avant.
@@ -161,8 +161,8 @@ export const useMemberBulkActions = ({
     const failed = p.eligible.length - done.length;
     const destName = destId ? members.find((m) => m.userId === destId)?.displayName ?? '' : '';
     const message = (destId
-      ? tp('directory.bulk.movedUnder', done.length, { name: destName })
-      : tp('directory.bulk.detached', done.length)) + suffix(p, failed);
+      ? tpOrgAdmin('directory.bulk.movedUnder', done.length, { name: destName })
+      : tpOrgAdmin('directory.bulk.detached', done.length)) + suffix(p, failed);
     if (done.length === 0) {
       toast.error(message);
       return;

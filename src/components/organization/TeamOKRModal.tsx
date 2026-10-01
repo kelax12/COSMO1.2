@@ -90,6 +90,7 @@ const newKR = (): KRDraft => ({
 
 export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModalProps) {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const isEdit = !!editingOKR;
   const { data: teams = [] } = useOrgTeams(orgId);
   const createOKR = useCreateTeamOKR(orgId);
@@ -267,9 +268,9 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
     <Sheet open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg md:max-w-[863px] xl:max-w-[971px] rounded-l-2xl border-l-0 overflow-hidden">
         <SheetHeader className="border-b border-[rgb(var(--color-border-muted))]">
-          <span className="font-data text-caption uppercase tracking-[0.08em] text-[rgb(var(--color-text-muted))]">{t('okrModal.eyebrow')}</span>
-          <SheetTitle>{isEdit ? t('okrModal.edit') : t('okrModal.new')}</SheetTitle>
-          <SheetDescription className="sr-only">{t('okrModal.description')}</SheetDescription>
+          <span className="font-data text-caption uppercase tracking-[0.08em] text-[rgb(var(--color-text-muted))]">{tOrgAdmin('okrModal.eyebrow')}</span>
+          <SheetTitle>{isEdit ? tOrgAdmin('okrModal.edit') : tOrgAdmin('okrModal.new')}</SheetTitle>
+          <SheetDescription className="sr-only">{tOrgAdmin('okrModal.description')}</SheetDescription>
         </SheetHeader>
 
         {/* min-h-0 : sans lui, l'enfant flex-1 garde sa hauteur de contenu et le
@@ -281,13 +282,13 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
             {/* Colonne gauche : le cadre de l'objectif. */}
             <div className="grid content-start gap-4 p-4 md:border-r md:border-[rgb(var(--color-border-muted))]">
               <div className="grid gap-2">
-                <Label htmlFor="tokr-title">{t('okrModal.objective')}</Label>
-                <Input id="tokr-title" value={title} autoFocus placeholder={t('okrModal.objectivePlaceholder')} onChange={(e) => setTitle(e.target.value)} />
+                <Label htmlFor="tokr-title">{tOrgAdmin('okrModal.objective')}</Label>
+                <Input id="tokr-title" value={title} autoFocus placeholder={tOrgAdmin('okrModal.objectivePlaceholder')} onChange={(e) => setTitle(e.target.value)} />
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="tokr-end">{t('okrModal.deadline')}</Label>
+                  <Label htmlFor="tokr-end">{tOrgAdmin('okrModal.deadline')}</Label>
                   {/* LE calendrier de l'app (Popover + Calendar), pas l'input
                       natif. Icône teintée en accent via `[&_svg]`. */}
                   <DatePicker
@@ -298,7 +299,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                 </div>
                 {/* Catégorie — vrai système partagé (parité mode perso, #C) */}
                 <div className="grid gap-2">
-                  <Label>{t('okrModal.category')}</Label>
+                  <Label>{tOrgAdmin('okrModal.category')}</Label>
                   <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={setCategoryId} />
                 </div>
               </div>
@@ -307,22 +308,22 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
               <OkrParentField okrs={allOkrs} selfId={editingOKR?.id} value={parentOkrId} onChange={setParentOkrId} />
 
               <div className="grid gap-2">
-                <Label htmlFor="tokr-desc">{t('okrModal.descriptionLabel')}</Label>
-                <Textarea id="tokr-desc" rows={2} value={description} placeholder={t('okrModal.descPlaceholder')} onChange={(e) => setDescription(e.target.value)} />
+                <Label htmlFor="tokr-desc">{tOrgAdmin('okrModal.descriptionLabel')}</Label>
+                <Textarea id="tokr-desc" rows={2} value={description} placeholder={tOrgAdmin('okrModal.descPlaceholder')} onChange={(e) => setDescription(e.target.value)} />
               </div>
 
               {/* Rattachement d'équipes (cloisonnement de visibilité) */}
               <div className="grid gap-2">
-                <Label id="tokr-vis">{t('okrModal.visibility')}</Label>
+                <Label id="tokr-vis">{tOrgAdmin('okrModal.visibility')}</Label>
                 <div role="radiogroup" aria-labelledby="tokr-vis" className="flex gap-1 rounded-xl bg-[rgb(var(--color-border-muted))] p-1">
                   <button type="button" role="radio" aria-checked={visMode === 'org'} onClick={() => chooseVisMode('org')} className={segClass(visMode === 'org')}>
-                    <Building2 size={12} className="mr-1 inline" aria-hidden="true" />{t('okrModal.wholeOrg')}
+                    <Building2 size={12} className="mr-1 inline" aria-hidden="true" />{tOrgAdmin('okrModal.wholeOrg')}
                   </button>
                   <button type="button" role="radio" aria-checked={visMode === 'teams'} onClick={() => chooseVisMode('teams')} className={segClass(visMode === 'teams')}>
-                    {t('okrModal.teamsOption')}
+                    {tOrgAdmin('okrModal.teamsOption')}
                   </button>
                   <button type="button" role="radio" aria-checked={visMode === 'custom'} onClick={() => chooseVisMode('custom')} className={segClass(visMode === 'custom')}>
-                    {t('okrModal.customOption')}
+                    {tOrgAdmin('okrModal.customOption')}
                   </button>
                 </div>
                 {visMode !== 'org' && (
@@ -349,14 +350,14 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                 )}
                 {visMode === 'custom' && (
                   <div className="grid gap-1.5">
-                    <span className="font-data text-caption uppercase tracking-[0.06em] text-[rgb(var(--color-text-muted))]">{t('okrModal.customPeople')}</span>
+                    <span className="font-data text-caption uppercase tracking-[0.06em] text-[rgb(var(--color-text-muted))]">{tOrgAdmin('okrModal.customPeople')}</span>
                     <div className="max-h-56 overflow-y-auto rounded-lg border border-[rgb(var(--color-border))]">
                       <MemberPickList
                         members={members}
                         value={memberIds}
                         onChange={(next) => setMemberIds(next.slice(0, 50))}
                         currentUserId={user?.id}
-                        label={t('okrModal.customPeople')}
+                        label={tOrgAdmin('okrModal.customPeople')}
                         alwaysSearchable
                       />
                     </div>
@@ -364,12 +365,12 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                 )}
                 <p className="text-muted-foreground text-xs">
                   {visMode === 'org'
-                    ? t('okrModal.visibilityWholeOrg')
+                    ? tOrgAdmin('okrModal.visibilityWholeOrg')
                     : visMode === 'custom'
-                      ? t('okrModal.visibilityCustom')
+                      ? tOrgAdmin('okrModal.visibilityCustom')
                       : teamIds.length > 0
-                        ? t('okrModal.visibilityTeams')
-                        : t('okrModal.visibilityNoneChosen')}
+                        ? tOrgAdmin('okrModal.visibilityTeams')
+                        : tOrgAdmin('okrModal.visibilityNoneChosen')}
                 </p>
               </div>
             </div>
@@ -378,7 +379,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
             <div className="grid content-start gap-3 bg-[rgb(var(--color-background))] p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Label>{t('okrModal.keyResults')}</Label>
+                  <Label>{tOrgAdmin('okrModal.keyResults')}</Label>
                   <span className="font-data rounded-full bg-[rgb(var(--color-accent)/0.1)] px-2 py-0.5 text-caption text-[rgb(var(--color-accent))]">
                     {String(keyResults.length).padStart(2, '0')}
                   </span>
@@ -413,8 +414,8 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                     <div className="flex items-center gap-2">
                       <Input
                         value={kr.title}
-                        aria-label={t('okrModal.krPlaceholder')}
-                        placeholder={t('okrModal.krPlaceholder')}
+                        aria-label={tOrgAdmin('okrModal.krPlaceholder')}
+                        placeholder={tOrgAdmin('okrModal.krPlaceholder')}
                         className="h-9 border-transparent px-1 font-semibold shadow-none hover:border-[rgb(var(--color-border))] focus-visible:border-[rgb(var(--color-border))]"
                         onChange={(e) => setKR(idx, { title: e.target.value })}
                       />
@@ -447,19 +448,19 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                       <div className="min-h-0 overflow-hidden">
                         <div className="grid grid-cols-4 gap-2 pt-3">
                           <div className="grid gap-1">
-                            <Label className="text-muted-foreground text-caption font-semibold uppercase tracking-wide">{t('okrModal.current')}</Label>
+                            <Label className="text-muted-foreground text-caption font-semibold uppercase tracking-wide">{tOrgAdmin('okrModal.current')}</Label>
                             <Input type="number" min={0} className="h-9 font-data" value={kr.currentValue} onChange={(e) => setKR(idx, { currentValue: Number(e.target.value) })} />
                           </div>
                           <div className="grid gap-1">
-                            <Label className="text-muted-foreground text-caption font-semibold uppercase tracking-wide">{t('okrModal.target')}</Label>
+                            <Label className="text-muted-foreground text-caption font-semibold uppercase tracking-wide">{tOrgAdmin('okrModal.target')}</Label>
                             <Input type="number" className="h-9 font-data" value={kr.targetValue} onChange={(e) => setKR(idx, { targetValue: Number(e.target.value) })} />
                           </div>
                           <div className="grid gap-1">
-                            <Label className="text-muted-foreground text-caption font-semibold uppercase tracking-wide">{t('okrModal.unit')}</Label>
+                            <Label className="text-muted-foreground text-caption font-semibold uppercase tracking-wide">{tOrgAdmin('okrModal.unit')}</Label>
                             <Input className="h-9" value={kr.unit} placeholder="%" onChange={(e) => setKR(idx, { unit: e.target.value })} />
                           </div>
                           <div className="grid gap-1">
-                            <Label className="text-muted-foreground text-caption font-semibold uppercase tracking-wide" title={t('okrModal.weightHint')}>{t('okrModal.weight')}</Label>
+                            <Label className="text-muted-foreground text-caption font-semibold uppercase tracking-wide" title={tOrgAdmin('okrModal.weightHint')}>{tOrgAdmin('okrModal.weight')}</Label>
                             <Input
                               type="number"
                               min={1}
@@ -483,14 +484,14 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
         <SheetFooter className="flex-row items-center justify-end gap-2 border-t">
           {!hasKeyResult ? (
             <span className="text-xs text-amber-600 dark:text-amber-400 mr-auto" role="status">
-              {t('okrModal.needOneKr')}
+              {tOrgAdmin('okrModal.needOneKr')}
             </span>
           ) : (
             <span className="font-data mr-auto text-caption text-[rgb(var(--color-text-muted))]">
-              {t('okrModal.weightedProgress', { pct: weighted })}
+              {tOrgAdmin('okrModal.weightedProgress', { pct: weighted })}
             </span>
           )}
-          <Button type="button" variant="outline" onClick={handleClose}>{t('okrModal.cancel')}</Button>
+          <Button type="button" variant="outline" onClick={handleClose}>{tOrgAdmin('okrModal.cancel')}</Button>
           <Button
             type="button"
             disabled={!canSave || isPending}
@@ -501,7 +502,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                 : '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))]'
             }`}
           >
-            {isPending ? t('okrModal.saving') : isEdit ? t('okrModal.save') : t('okrModal.create')}
+            {isPending ? tOrgAdmin('okrModal.saving') : isEdit ? tOrgAdmin('okrModal.save') : tOrgAdmin('okrModal.create')}
           </Button>
         </SheetFooter>
       </SheetContent>

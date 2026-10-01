@@ -21,7 +21,7 @@ export const TEAM_COLORS = [
   { value: '#ef4444', labelKey: 'colors.red' },
   { value: '#ec4899', labelKey: 'colors.pink' },
   { value: '#8b5cf6', labelKey: 'colors.violet' },
-] as const satisfies readonly { value: string; labelKey: KeyOf<'org'> }[];
+] as const satisfies readonly { value: string; labelKey: KeyOf<'orgAdmin'> }[];
 
 interface CreateTeamModalProps {
   members: OrgMember[];
@@ -56,6 +56,7 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberI
   inline?: boolean;
 }) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const [name, setName] = useState(initialName ?? '');
   const [color, setColor] = useState<string>(TEAM_COLORS[0].value);
   const [selected, setSelected] = useState<string[]>(() => {
@@ -137,7 +138,7 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberI
                   type="button"
                   role="radio"
                   aria-checked={color === c.value}
-                  aria-label={t('team.colorNamed', { name: t(c.labelKey) })}
+                  aria-label={t('team.colorNamed', { name: tOrgAdmin(c.labelKey) })}
                   onClick={() => setColor(c.value)}
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${color === c.value ? 'ring-2 ring-offset-2 ring-offset-[rgb(var(--color-background))] ring-blue-500' : ''}`}
                 >

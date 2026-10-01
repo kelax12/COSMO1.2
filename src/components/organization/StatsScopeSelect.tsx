@@ -28,7 +28,7 @@ interface StatsScopeSelectProps {
  * un responsable d'équipe rien. Elle est désormais choisie ET expliquée.
  */
 const StatsScopeSelect = ({ orgId, scope, onScope, teams, ctx }: StatsScopeSelectProps) => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const [explain, setExplain] = useState(false);
   const { data: projects = [] } = useTeamProjects(orgId);
   const hierarchy = canUseHierarchy(ctx);
@@ -36,15 +36,15 @@ const StatsScopeSelect = ({ orgId, scope, onScope, teams, ctx }: StatsScopeSelec
   const activeProjects = projects.filter((p) => !p.archivedAt);
 
   const why = scope.kind === 'hierarchy'
-    ? (ctx.isAdmin ? t('statsScope.whyAdmin') : t('statsScope.whyManager'))
+    ? (ctx.isAdmin ? tOrgAdmin('statsScope.whyAdmin') : tOrgAdmin('statsScope.whyManager'))
     : scope.kind === 'team'
-      ? (ctx.isAdmin ? t('statsScope.whyTeamAdmin') : t('statsScope.whyTeamLead'))
-      : t('statsScope.whyProject');
+      ? (ctx.isAdmin ? tOrgAdmin('statsScope.whyTeamAdmin') : tOrgAdmin('statsScope.whyTeamLead'))
+      : tOrgAdmin('statsScope.whyProject');
 
   return (
     <div className="min-w-0">
       <div className="flex items-center gap-1.5">
-        <label htmlFor="stats-scope" className="sr-only">{t('statsScope.label')}</label>
+        <label htmlFor="stats-scope" className="sr-only">{tOrgAdmin('statsScope.label')}</label>
         <MenuSelect
           id="stats-scope"
           value={scopeKey(scope)}
@@ -52,15 +52,15 @@ const StatsScopeSelect = ({ orgId, scope, onScope, teams, ctx }: StatsScopeSelec
           className="h-9 max-w-[16rem] rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-2 text-sm text-[rgb(var(--color-text-primary))]"
         >
           {hierarchy && (
-            <option value="hierarchy">{ctx.isAdmin ? t('statsScope.wholeOrg') : t('statsScope.mySubtree')}</option>
+            <option value="hierarchy">{ctx.isAdmin ? tOrgAdmin('statsScope.wholeOrg') : tOrgAdmin('statsScope.mySubtree')}</option>
           )}
           {myTeams.length > 0 && (
-            <optgroup label={t('statsScope.teams')}>
+            <optgroup label={tOrgAdmin('statsScope.teams')}>
               {myTeams.map((team) => <option key={team.id} value={`team:${team.id}`}>{team.name}</option>)}
             </optgroup>
           )}
           {hierarchy && activeProjects.length > 0 && (
-            <optgroup label={t('statsScope.projects')}>
+            <optgroup label={tOrgAdmin('statsScope.projects')}>
               {activeProjects.map((p) => <option key={p.id} value={`project:${p.id}`}>{p.name}</option>)}
             </optgroup>
           )}
@@ -69,7 +69,7 @@ const StatsScopeSelect = ({ orgId, scope, onScope, teams, ctx }: StatsScopeSelec
           type="button"
           onClick={() => setExplain((v) => !v)}
           aria-expanded={explain}
-          aria-label={t('statsScope.why')}
+          aria-label={tOrgAdmin('statsScope.why')}
           className="min-w-9 min-h-9 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
         >
           <HelpCircle size={16} aria-hidden="true" />

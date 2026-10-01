@@ -684,13 +684,34 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
   78 000 / 370 000. Une branche entière (`feat/react-19`) a été arbitrée contre un plafond qui
   n'existait nulle part, et trois commits `fix(build)` d'autres sessions sont revenus à `sonner`
   faute de trouver la façade dans le dépôt. **Un plafond se relit dans le fichier commité.**
-- **Cliquet** : `npm run check:bundle` refuse un chunk d'entrée au-dessus de **71 000 o gzip** et
+- **Cliquet** : `npm run check:bundle` refuse un chunk d'entrée au-dessus de **70 500 o gzip** et
   un chemin critique au-dessus de **323 000 o gzip**. Bloquant dans le job CI `lint-test-build`,
   juste après le build.
 - 🔴 **Le plafond d'entrée est passé de 92 à 112 kB le 2026-08-26**, seule remontée de plafond du
   dépôt, justifiée en commentaire dans `scripts/check-bundle-budget.mjs`. Une seconde remontée
   ferait du budget une formalité : la marge se regagne en descendant la mesure. Depuis, il n'a
-  fait que descendre : 112 000 → 79 000 → 78 000 → **71 000**.
+  fait que descendre : 112 000 → 79 000 → 78 000 → 71 000 → **70 500** (2026-10-01).
+
+### 🔴 2026-10-01 : `main` rouge sur le budget depuis le 2026-09-24, quatre chunks ramenés
+
+`check:bundle` échouait sur `main` depuis une semaine, sur quatre chunks à la fois, mesurés
+identiques sur un build de `HEAD` (`af4e885b`) en worktree avant toute retouche. Aucun plafond
+n'a été relevé ; quatre ont été **abaissés** derrière la mesure.
+
+| Chunk | Avant | Après | Plafond | Levier |
+|---|---|---|---|---|
+| Entrée | 73,2 ko | **67,1 ko** | 71 000 → 70 500 | Six barils (`tasks`, `habits`, `organizations`, `team-projects`, `team-okrs`, `org-teams`) **réexportaient** leur dépôt de démo : importés par le shell, ils le ramenaient dans l'entrée alors que la fabrique le charge à la demande. Réexportations retirées ; tâches et habitudes passent aussi par `demo-repositories.ts` |
+| Chemin critique | 315,3 ko | **309,3 ko** | 323 000 | même coupe : c'est ce qui prouve que l'entrée a maigri, et pas déplacé |
+| `org` (fr + en) | 40,6 ko | **23,7 ko** | 30 000 → 25 000 | `org` est chargé par `Layout`, donc par **tout** compte connecté. 34 sections que seul `/entreprise` affiche passent dans `orgAdmin`, que la route `/entreprise` charge déjà |
+| `legal` (fr + en) | 18,5 ko | **2,7 ko** | 15 500 → 3 000 | CGU et confidentialité dans `legalTerms` / `legalPrivacy` (9,2 et 9,4 ko), chacune chargée par sa seule page |
+| `TeamTaskModal` | 16,0 ko | **11,4 ko** | 14 500 → 12 000 | commentaires et arbre de catégories chargés à la demande |
+| `OrganizationPage` | 18,0 ko | **17,5 ko** | 18 000 | les mutations de facturation sortent dans `org-billing.mutations.ts` |
+
+⚠️ **Le piège de la première coupe, et il resservira.** Une réexportation dans un baril que le
+shell importe annule n'importe quel `import()` dynamique du même module : Rollup le place dans
+l'ancêtre commun, c'est-à-dire l'entrée. `demo-repositories.ts` chargeait le dépôt de démo des
+organisations à la demande depuis le 2026-09-02, et ses 17 ko bruts étaient pourtant dans
+l'entrée, par `export { LocalStorageOrganizationsRepository } from './local.repository'`.
 
 ### 🔴 Le levier du 2026-09-11 : `sonner` sort du chemin critique (−10,1 ko pour tout le monde)
 

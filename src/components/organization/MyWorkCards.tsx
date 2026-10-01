@@ -48,17 +48,17 @@ interface WaitingProps {
  * valider, là où l'on m'a cité, et les tâches d'autres qui attendent la mienne.
  */
 export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenTask }: WaitingProps) => {
-  const { t, tp } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const memberName = (id: string) => {
     const m = members.find((x) => x.userId === id);
-    return m ? firstName(m.displayName) : t('activity.someMember');
+    return m ? firstName(m.displayName) : tOrgAdmin('activity.someMember');
   };
   const total = reviews.length + mentions.length + blocking.length;
 
   return (
     <section className={CARD} aria-labelledby="waiting-for-me-title">
       <div className="flex items-center justify-between gap-2 mb-2">
-        <h3 id="waiting-for-me-title" className={TITLE}>{t('waiting.title')}</h3>
+        <h3 id="waiting-for-me-title" className={TITLE}>{tOrgAdmin('waiting.title')}</h3>
         {total > 0 && (
           <span className="text-caption font-semibold px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]">
             {total}
@@ -69,14 +69,14 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
       {total === 0 ? (
         <p className="flex items-center gap-2 text-xs text-[rgb(var(--color-text-muted))] py-2">
           <CircleCheckBig size={15} className="text-emerald-500" aria-hidden="true" />
-          {t('waiting.empty')}
+          {tOrgAdmin('waiting.empty')}
         </p>
       ) : (
         <div className="space-y-3">
           {reviews.length > 0 && (
             <div>
               <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
-                <Eye size={13} aria-hidden="true" /> {tp('waiting.reviews', reviews.length)}
+                <Eye size={13} aria-hidden="true" /> {tpOrgAdmin('waiting.reviews', reviews.length)}
               </p>
               <ul>
                 {reviews.map((task) => (
@@ -96,7 +96,7 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
           {mentions.length > 0 && (
             <div>
               <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
-                <AtSign size={13} aria-hidden="true" /> {tp('waiting.mentions', mentions.length)}
+                <AtSign size={13} aria-hidden="true" /> {tpOrgAdmin('waiting.mentions', mentions.length)}
               </p>
               <ul>
                 {mentions.map(({ notification, task }) => (
@@ -105,7 +105,7 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
                       <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{task.name}</span>
                       {notification.actorId && (
                         <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
-                          {t('waiting.mentionedBy', { name: memberName(notification.actorId) })}
+                          {tOrgAdmin('waiting.mentionedBy', { name: memberName(notification.actorId) })}
                         </span>
                       )}
                     </TaskLink>
@@ -118,7 +118,7 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
           {blocking.length > 0 && (
             <div>
               <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
-                <Hourglass size={13} aria-hidden="true" /> {tp('waiting.blocking', blocking.length)}
+                <Hourglass size={13} aria-hidden="true" /> {tpOrgAdmin('waiting.blocking', blocking.length)}
               </p>
               <ul>
                 {blocking.map(({ mine, waiting }) => {
@@ -129,8 +129,8 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
                         <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{mine.name}</span>
                         <span className="text-xs text-amber-600 dark:text-amber-400 shrink-0 truncate max-w-[45%]">
                           {people.length > 0
-                            ? t('waiting.blockingPeople', { names: people.slice(0, 2).join(', ') })
-                            : tp('waiting.blockingTasks', waiting.length)}
+                            ? tOrgAdmin('waiting.blockingPeople', { names: people.slice(0, 2).join(', ') })
+                            : tpOrgAdmin('waiting.blockingTasks', waiting.length)}
                         </span>
                       </TaskLink>
                     </li>
@@ -180,11 +180,12 @@ interface MyTasksProps {
 export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById, onToggle, onOpenTask, selection }: MyTasksProps) => {
   const selecting = !!selection?.active;
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   return (
     <div className={CARD}>
       <div className="flex items-start justify-between gap-2 mb-3">
       <h3 className={TITLE}>
-        {t('myWork.myTasksSection', { count: openCount })}
+        {tOrgAdmin('myWork.myTasksSection', { count: openCount })}
         {estimated > 0 && (
           // `{' '}` : le `ml-2` sépare visuellement mais pas dans le
           // `textContent`, qui donnait « Mes tâches (3)· 1 h 45 ».
@@ -210,11 +211,11 @@ export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById,
           <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
             <ListTodo size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
           </div>
-          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('myWork.emptyTitle')}</p>
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1 max-w-xs">{t('myWork.emptyHint')}</p>
+          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('myWork.emptyTitle')}</p>
+          <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1 max-w-xs">{tOrgAdmin('myWork.emptyHint')}</p>
         </div>
       ) : openCount === 0 ? (
-        <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{t('myWork.allDone')}</p>
+        <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{tOrgAdmin('myWork.allDone')}</p>
       ) : (
         <div className="space-y-3">
           {groups.map(({ horizon, tasks }) => (
@@ -223,7 +224,7 @@ export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById,
                 horizon === 'overdue' ? 'text-red-500' : horizon === 'today' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-muted))]'
               }`}
               >
-                {t(HORIZON_KEYS[horizon])} · {tasks.length}
+                {tOrgAdmin(HORIZON_KEYS[horizon])} · {tasks.length}
               </p>
               <ul className="space-y-1">
                 {tasks.map((task) => {
@@ -238,7 +239,7 @@ export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById,
                       /* C-57 : la bordure fait 24 px, la cible 44 (WCAG 2.5.5). */
                       <TouchTarget
                         onClick={() => onToggle(task)}
-                        aria-label={t('myWork.markDone', { name: task.name })}
+                        aria-label={tOrgAdmin('myWork.markDone', { name: task.name })}
                         className="-my-2.5 -ml-2.5"
                       >
                         <span className="w-6 h-6 rounded-md border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] flex items-center justify-center transition-colors">
@@ -280,18 +281,18 @@ export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById,
 
 /** Mes projets, avec l'épinglage vers le panneau de droite (groupe « Épinglés »). */
 export const MyProjectsCard = ({ summaries, orgId, userId }: { summaries: MyProjectSummary[]; orgId: string; userId?: string }) => {
-  const { t, tp } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const navigate = useNavigate();
   const { pinned, toggle } = useOrgPins(orgId, userId);
   if (summaries.length === 0) return null;
   return (
     <div className={CARD}>
-      <h3 className={`${TITLE} mb-2`}>{t('myProjects.title')}</h3>
+      <h3 className={`${TITLE} mb-2`}>{tOrgAdmin('myProjects.title')}</h3>
       <ul>
         {summaries.slice(0, 6).map(({ project, open, overdue, nextDeadline }) => {
           const color = projectColor(project.color);
           const isPinned = pinned.includes(project.id);
-          const pinLabel = t(isPinned ? 'myProjects.unpin' : 'myProjects.pin', { name: project.name });
+          const pinLabel = tOrgAdmin(isPinned ? 'myProjects.unpin' : 'myProjects.pin', { name: project.name });
           return (
             <li key={project.id} className="flex items-center">
               <button
@@ -301,11 +302,11 @@ export const MyProjectsCard = ({ summaries, orgId, userId }: { summaries: MyProj
               >
                 <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
                 <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{project.name}</span>
-                <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">{tp('myProjects.open', open)}</span>
+                <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">{tpOrgAdmin('myProjects.open', open)}</span>
                 {overdue > 0 ? (
-                  <span className="text-xs font-semibold text-red-500 shrink-0">{tp('myProjects.overdue', overdue)}</span>
+                  <span className="text-xs font-semibold text-red-500 shrink-0">{tpOrgAdmin('myProjects.overdue', overdue)}</span>
                 ) : nextDeadline ? (
-                  <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">{t('myProjects.next', { date: shortDate(nextDeadline) })}</span>
+                  <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">{tOrgAdmin('myProjects.next', { date: shortDate(nextDeadline) })}</span>
                 ) : null}
                 <ChevronRight size={14} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
               </button>
@@ -334,12 +335,12 @@ export const MyProjectsCard = ({ summaries, orgId, userId }: { summaries: MyProj
 // ─── Mes KR ─────────────────────────────────────────────────────────
 
 export const MyKeyResultsCard = ({ items }: { items: MyKeyResult[] }) => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const navigate = useNavigate();
   if (items.length === 0) return null;
   return (
     <div className={CARD}>
-      <h3 className={`${TITLE} mb-2`}>{t('myKrs.title')}</h3>
+      <h3 className={`${TITLE} mb-2`}>{tOrgAdmin('myKrs.title')}</h3>
       <ul className="space-y-1">
         {items.slice(0, 6).map(({ kr, okr, percent }) => (
           <li key={kr.id}>

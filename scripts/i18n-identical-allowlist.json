@@ -209,7 +209,7 @@
       "categorie": "mot-identique",
       "valeur": "7. Contact"
     },
-    "legal.terms.s14.title": {
+    "legalTerms.terms.s14.title": {
       "categorie": "mot-identique",
       "valeur": "14. Contact"
     },
@@ -217,73 +217,17 @@
       "categorie": "mot-identique",
       "valeur": "Description"
     },
-    "org.colors.indigo": {
-      "categorie": "mot-identique",
-      "valeur": "Indigo"
-    },
-    "org.colors.teal": {
-      "categorie": "anglicisme-fr",
-      "valeur": "Teal"
-    },
-    "org.colors.violet": {
-      "categorie": "mot-identique",
-      "valeur": "Violet"
-    },
     "org.common.adminBadge": {
       "categorie": "mot-identique",
       "valeur": "Admin"
-    },
-    "org.member.manager": {
-      "categorie": "anglicisme-fr",
-      "valeur": "Manager"
-    },
-    "org.member.tabContribution": {
-      "categorie": "mot-identique",
-      "valeur": "Contribution"
-    },
-    "org.notifSettings.colType": {
-      "categorie": "mot-identique",
-      "valeur": "Type"
-    },
-    "org.notifSettings.kind.mention": {
-      "categorie": "mot-identique",
-      "valeur": "Mention"
-    },
-    "org.notifications.filterMentions": {
-      "categorie": "mot-identique",
-      "valeur": "Mentions"
-    },
-    "org.notifications.title": {
-      "categorie": "mot-identique",
-      "valeur": "Notifications"
-    },
-    "org.okrModal.descriptionLabel": {
-      "categorie": "mot-identique",
-      "valeur": "Description"
-    },
-    "org.overview.csvTotal": {
-      "categorie": "mot-identique",
-      "valeur": "Total"
     },
     "org.popups.placement.groupManagers": {
       "categorie": "anglicisme-fr",
       "valeur": "Managers"
     },
-    "org.profile.description": {
-      "categorie": "mot-identique",
-      "valeur": "Description"
-    },
     "org.projects.tasksTabColActions": {
       "categorie": "mot-identique",
       "valeur": "ACTIONS"
-    },
-    "org.pyramid.badgeAdmin": {
-      "categorie": "mot-identique",
-      "valeur": "Admin"
-    },
-    "org.pyramid.badgeManager": {
-      "categorie": "anglicisme-fr",
-      "valeur": "Manager"
     },
     "org.roles.adminShort": {
       "categorie": "mot-identique",
@@ -292,14 +236,6 @@
     "org.roles.manager": {
       "categorie": "anglicisme-fr",
       "valeur": "Manager"
-    },
-    "org.settings.tabCode": {
-      "categorie": "mot-identique",
-      "valeur": "Code"
-    },
-    "org.settings.tabContacts": {
-      "categorie": "mot-identique",
-      "valeur": "Contacts"
     },
     "org.taskModal.description": {
       "categorie": "mot-identique",
@@ -312,10 +248,6 @@
     "org.teamPage.descriptionLabel": {
       "categorie": "mot-identique",
       "valeur": "Description"
-    },
-    "org.templates.sprint": {
-      "categorie": "anglicisme-fr",
-      "valeur": "Sprint"
     },
     "orgAccount.audit.csv.action": {
       "categorie": "mot-identique",
@@ -333,9 +265,57 @@
       "categorie": "anglicisme-fr",
       "valeur": "Manager"
     },
+    "orgAdmin.colors.indigo": {
+      "categorie": "mot-identique",
+      "valeur": "Indigo"
+    },
+    "orgAdmin.colors.teal": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Teal"
+    },
+    "orgAdmin.colors.violet": {
+      "categorie": "mot-identique",
+      "valeur": "Violet"
+    },
+    "orgAdmin.member.manager": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Manager"
+    },
+    "orgAdmin.member.tabContribution": {
+      "categorie": "mot-identique",
+      "valeur": "Contribution"
+    },
+    "orgAdmin.notifSettings.colType": {
+      "categorie": "mot-identique",
+      "valeur": "Type"
+    },
+    "orgAdmin.notifSettings.kind.mention": {
+      "categorie": "mot-identique",
+      "valeur": "Mention"
+    },
+    "orgAdmin.notifications.filterMentions": {
+      "categorie": "mot-identique",
+      "valeur": "Mentions"
+    },
+    "orgAdmin.notifications.title": {
+      "categorie": "mot-identique",
+      "valeur": "Notifications"
+    },
+    "orgAdmin.okrModal.descriptionLabel": {
+      "categorie": "mot-identique",
+      "valeur": "Description"
+    },
+    "orgAdmin.overview.csvTotal": {
+      "categorie": "mot-identique",
+      "valeur": "Total"
+    },
     "orgAdmin.permissions.sectionOrg": {
       "categorie": "mot-identique",
       "valeur": "Organisation"
+    },
+    "orgAdmin.profile.description": {
+      "categorie": "mot-identique",
+      "valeur": "Description"
     },
     "orgAdmin.pyramid.badgeAdmin": {
       "categorie": "mot-identique",
@@ -356,6 +336,18 @@
     "orgAdmin.pyramid.roleManager": {
       "categorie": "anglicisme-fr",
       "valeur": "manager"
+    },
+    "orgAdmin.settings.tabCode": {
+      "categorie": "mot-identique",
+      "valeur": "Code"
+    },
+    "orgAdmin.settings.tabContacts": {
+      "categorie": "mot-identique",
+      "valeur": "Contacts"
+    },
+    "orgAdmin.templates.sprint": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Sprint"
     },
     "orgAdmin.ui.event.date": {
       "categorie": "mot-identique",

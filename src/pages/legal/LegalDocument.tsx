@@ -31,18 +31,25 @@ import ManageCookiesButton from '@/components/ManageCookiesButton';
  * la phrase qui a été relue.
  */
 
+/**
+ * Clés d'un document : chaque document a son catalogue depuis le 2026-10-01
+ * (`legalTerms`, `legalPrivacy`, et `legal` pour les mentions), et sa page
+ * passe le traducteur qui va avec (`text`).
+ */
+export type LegalKey = KeyOf<'legal'> | KeyOf<'legalTerms'> | KeyOf<'legalPrivacy'>;
+
 /** Un bloc de contenu à l'intérieur d'une section. */
-export type LegalBlock =
-  | { kind: 'p'; key: KeyOf<'legal'> }
+export type LegalBlock<K extends LegalKey = LegalKey> =
+  | { kind: 'p'; key: K }
   /** Paragraphe secondaire, rendu plus discret (précisions, exceptions). */
-  | { kind: 'note'; key: KeyOf<'legal'> }
-  | { kind: 'ul'; items: KeyOf<'legal'>[]; bullets?: boolean }
+  | { kind: 'note'; key: K }
+  | { kind: 'ul'; items: K[]; bullets?: boolean }
   /** Bouton qui rouvre le bandeau de consentement (RGPD art. 7.3). */
   | { kind: 'cookie-settings' };
 
-export interface LegalSection {
-  title: KeyOf<'legal'>;
-  blocks: LegalBlock[];
+export interface LegalSection<K extends LegalKey = LegalKey> {
+  title: K;
+  blocks: LegalBlock<K>[];
 }
 
 const STRONG = 'text-white font-semibold';
@@ -58,23 +65,27 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
   </div>
 );
 
-interface LegalDocumentProps {
-  /** Clé du titre principal, dans le namespace `legal`. */
-  titleKey: KeyOf<'legal'>;
+interface LegalDocumentProps<K extends LegalKey> {
+  /** Clé du titre principal, dans le catalogue du document. */
+  titleKey: K;
   /** Clé de la date de dernière mise à jour (une chaîne, pas une date). */
-  updatedAtKey: KeyOf<'legal'>;
-  sections: LegalSection[];
+  updatedAtKey: K;
+  sections: LegalSection<K>[];
+  /** Traducteur du catalogue du document : celui de `legalTerms` pour les CGU, etc. */
+  text: (key: K) => string;
 }
 
-export const LegalDocument: React.FC<LegalDocumentProps> = ({
+export function LegalDocument<K extends LegalKey>({
   titleKey,
   updatedAtKey,
   sections,
-}) => {
+  text,
+}: LegalDocumentProps<K>) {
+  // Libellés communs aux trois documents : retour, « mis à jour le ».
   const { t } = useT('legal');
   const navigate = useNavigate();
 
-  const renderBlock = (block: LegalBlock, i: number) => {
+  const renderBlock = (block: LegalBlock<K>, i: number) => {
     if (block.kind === 'cookie-settings') {
       return (
         <p key={i}>
@@ -91,7 +102,7 @@ export const LegalDocument: React.FC<LegalDocumentProps> = ({
         >
           {block.items.map((item) => (
             <li key={item}>
-              <RichText strongClassName={STRONG} linkClassName={LINK}>{t(item)}</RichText>
+              <RichText strongClassName={STRONG} linkClassName={LINK}>{text(item)}</RichText>
             </li>
           ))}
         </ul>
@@ -100,7 +111,7 @@ export const LegalDocument: React.FC<LegalDocumentProps> = ({
     const className = block.kind === 'note' ? 'mt-3 text-slate-400 text-sm' : undefined;
     return (
       <p key={i} className={className}>
-        <RichText strongClassName={STRONG} linkClassName={LINK}>{t(block.key)}</RichText>
+        <RichText strongClassName={STRONG} linkClassName={LINK}>{text(block.key)}</RichText>
       </p>
     );
   };
@@ -116,17 +127,17 @@ export const LegalDocument: React.FC<LegalDocumentProps> = ({
           {t('back')}
         </button>
 
-        <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-white">{t(titleKey)}</h1>
-        <p className="text-slate-400 mb-10">{t('updated', { date: t(updatedAtKey) })}</p>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-white">{text(titleKey)}</h1>
+        <p className="text-slate-400 mb-10">{t('updated', { date: text(updatedAtKey) })}</p>
 
         {sections.map((section) => (
-          <Section key={section.title} title={t(section.title)}>
+          <Section key={section.title} title={text(section.title)}>
             {section.blocks.map(renderBlock)}
           </Section>
         ))}
       </div>
     </div>
   );
-};
+}
 
 export default LegalDocument;
