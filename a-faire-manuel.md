@@ -237,6 +237,30 @@ un correctif committé, testé et vert peut ne pas exister pour les utilisateurs
 > **sans jamais avoir comparé quoi que ce soit** — 14 fois. Un tableau tenu à la main aurait
 > continué à vieillir en silence.
 
+> 🔴 **2026-09-30 · CINQ gestes, dans CET ordre** (détail : [`faille.md`](./faille.md) § « Ordre de
+> priorité », lignes 3bis à 3quater). L'agent a préparé chacun ; l'application et le déploiement
+> en prod lui ont été refusés.
+>
+> 1. **Appliquer la mig. `204`** (`team_tasks.health`, une colonne nullable). Le menu « État »
+>    d'une tâche pro échoue en production sans elle. Vérifier ensuite :
+>    `select column_name from information_schema.columns where table_name = 'team_tasks' and column_name = 'health';`
+> 2. **Jouer `supabase/proofs/207.proof.sql`** (transaction annulée), puis **appliquer la mig. `207`**
+>    (cible de webhook publique, enfilement par trigger seul).
+> 3. **Redéployer `org-webhook-dispatch`** depuis la racine, sur `main` : c'est lui qui lit
+>    `verify_jwt = false` dans `config.toml`. ❌ **Jamais avant l'étape 2.**
+> 4. **Redéployer `stripe-org-checkout`, `stripe-org-portal`, `report-bug`, `send-org-invite`.**
+>    ```bash
+>    npx supabase functions deploy org-webhook-dispatch stripe-org-checkout stripe-org-portal report-bug send-org-invite --project-ref ykeugqfgklejcdbrmawy
+>    ```
+>    (l'ordre 2 → 3 compte ; les quatre autres peuvent partir ensemble).
+> 5. **Relancer `Edge deploy drift`** (`workflow_dispatch`) : attendu **12 fonctions identiques au
+>    dépôt, 12 sondes vertes**. C'est la seule preuve que 3 et 4 ont eu lieu.
+>
+> Et **inscrire au ledger** les onze migrations appliquées hors ledger (`164`, `181`, `190`-`195`,
+> `197`-`199`), relues au catalogue le 2026-09-30, pour que `check:migration-coverage` cesse de
+> les compter comme absentes. ❌ **Ne jamais réappliquer la `164`** pour ce faire.
+
+> ✅ *Périmé le 2026-09-30 : la `164` est en prod (relue au catalogue), conservé à sa date.*
 > 🆕 **2026-09-25 · mig. `164` (cas limites du mode entreprise) écrite, NON appliquée.** Branche
 > `claude/recommandations-mode-entreprise-swgi0u`. 🔴 **L'appliquer AVANT de déployer ce front** :
 > équipes associées d'un projet, purge d'un projet archivé, mode « transmettre » de l'assistant de

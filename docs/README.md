@@ -62,6 +62,32 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-09-30 · **sécurité 83 → 78 : la note couvrait deux tiers de la surface**
+
+Une session d'audit a mesuré, en lecture seule, dix écarts entre les `.md` de sécurité et la réalité
+(`prompt-audit-failles-acquisition-2026-09-30.md`, partie A). Tous ont été **reconfirmés** contre la
+prod ce jour, puis corrigés dans le dépôt. **Seule la note Sécurité bouge** ; les autres domaines
+n'ont pas été réaudités.
+
+| Audit | 09-22 soir | **09-30** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 83 | **78** | **−5** | AM-2 et AM-5 enfin crédités (+2, verdicts CI du 09-24). **AM-6** : la surface entreprise `160`-`207` n'avait été relue par aucun audit (−2). Quatre défauts nommés : webhooks jamais délivrés (W-1), SSRF latente (W-2), enfilement forgeable (W-3), invitations sans plafond (W-4), et le code facturation en prod qui n'est plus le dépôt (A-4) (−5). Tous corrigés dans le dépôt, **aucun en prod** : un défaut ne rembourse qu'en production |
+
+🔴 **Trouvé en chemin, hors de la liste de l'audit** : la mig. `204` (`team_tasks.health`) est
+**absente de la prod** alors que son commit la dit appliquée et que le front de `main` l'écrit. Le
+menu « État » des tâches pro échoue en production. Application refusée à l'agent : c'est le
+premier geste d'Axel ([`../a-faire-manuel.md`](../a-faire-manuel.md) § 8).
+
+| Mesure du 2026-09-30 | Résultat |
+|---|---|
+| Ledger | **155** entrées. Treize fichiers sans entrée : onze appliqués hors ledger (relus objet par objet), `196` retirée par la `200`, **`204` absente** |
+| Edge Functions | **12** en prod, 8 citées par la doc. `check:edge-smoke` porté à **12 sondes** : 11 vertes, `org-webhook-dispatch` **rouge** sur le 401 de la passerelle (W-1) |
+| Dependabot | 8 alertes (1 `high`, `undici`), toutes `development` : **refermées** par le lockfile (`undici` 7.30.0, `brace-expansion` 1.1.21 / 5.0.12) |
+| CodeQL | 11 alertes : les 3 `missing-workflow-permissions` corrigées, et une garde refuse désormais tout workflow sans `permissions` |
+| Gardes | **34** `check:*` / `i18n:*` / `validate:*` (la racine disait 36) ; **55** témoins `*.guard.test.*` (`faille.md` disait 39) |
+
+---
+
 ## Mise à jour du 2026-09-24 · **trois gardes muettes parlent enfin, et une cause de LCP est nommée**
 
 **Aucune note ne bouge dans cette passe**, délibérément : elle a réparé et vérifié, elle n'a pas
@@ -1274,9 +1300,9 @@ testées** (`scripts/migration-guards.test.mjs`).
 | Doc | Périmètre |
 |---|---|
 | [`../CLAUDE.md`](../CLAUDE.md) | Point d'entrée : stack, modules, conventions, garde-fous |
-| [`../faille.md`](../faille.md) | Sécurité : findings **ouverts**, priorités avant prod, règles durables · **note 88 au 2026-09-14 (soir)**, vérifiée inchangée |
+| [`../faille.md`](../faille.md) | Sécurité : findings **ouverts**, priorités avant prod, règles durables · **note 78 au 2026-09-30** (83 du 09-16 au 09-30 ; « 88 au 09-14 » écrit ici jusqu'au 09-30) |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · **note 90 au 2026-09-15** (+2 : `check:migration-coverage` referme le premier des trois motifs de plafonnement) |
-| [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets · **les 4 Edge Functions Stripe auditées le 2026-09-02**, cf. [`../faille.md`](../faille.md) |
+| [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets · **les 12 Edge Functions** (les 4 Stripe auditées le 2026-09-02, les 4 d'entreprise relues le 2026-09-30), cf. [`../faille.md`](../faille.md) |
 | [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 95 au 2026-09-15** (+1 : 8 routes publiques entrent dans la garde E2E, un 6ᵉ job CI apparaît) · ✅ **les cas WebKit tournent en CI depuis `af0190bd`, 2026-09-16** — la mention « aucun workflow » est corrigée le 09-21. 🔴 **Et le job `e2e` est ROUGE sur `main`**, 25 échecs, `C-111` · suite **2 603 / 229** verte en CI, couverture verte |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
 | [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 78 au 2026-09-15** (+2 : C-80 refermé, le curseur de forfait passe de 308 × 6 à 308 × 44 px) · ✅ **WebKit est en CI depuis le 2026-09-16**, et Android émulé depuis le 09-20 (`C-97`) ; l'appareil réel reste `M-25` |

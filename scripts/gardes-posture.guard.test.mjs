@@ -297,8 +297,11 @@ describe('témoin — coût serveur (C-87)', () => {
 
 // ═══════════════════════════════════════════════════════════════════
 describe('témoin — sondes de fumée des Edge Functions (C-91)', () => {
-  it('les huit fonctions sont sondées, et aucune en écriture', () => {
-    expect(SONDES).toHaveLength(8);
+  it('les douze fonctions sont sondées, et aucune en écriture', () => {
+    // 8 jusqu'au 2026-09-30 : les quatre fonctions du mode entreprise
+    // n'étaient sondées par rien (A-2). Une par dossier de supabase/functions/.
+    expect(SONDES).toHaveLength(12);
+    expect(new Set(SONDES.map((s) => s.fonction)).size).toBe(12);
     for (const s of SONDES) {
       expect(s.prouve.length).toBeGreaterThan(30);
       expect(s.statut.length).toBeGreaterThan(0);
@@ -307,6 +310,27 @@ describe('témoin — sondes de fumée des Edge Functions (C-91)', () => {
     const destructrices = SONDES.filter((s) => ['delete-account', 'stripe-org-refund'].includes(s.fonction));
     expect(destructrices).toHaveLength(2);
     for (const s of destructrices) expect(s.methode).toBe('GET');
+    // Celles qui ENVOIENT (e-mail, webhook) ne sont jamais sondées au-delà d'un refus.
+    const emettrices = SONDES.filter((s) => ['send-org-invite', 'org-digest', 'org-webhook-dispatch'].includes(s.fonction));
+    expect(emettrices).toHaveLength(3);
+    for (const s of emettrices) expect(s.statut.every((c) => c >= 400)).toBe(true);
+  });
+
+  it('A-3 · une fonction cron se sonde SANS jeton, et un 401 de la passerelle échoue', async () => {
+    const cron = SONDES.find((s) => s.fonction === 'org-webhook-dispatch');
+    expect(cron.sansJeton).toBe(true);
+    let vues = null;
+    const corps = async (_url, init) => {
+      vues = init.headers;
+      return { status: 401, text: async () => '{"error":"unauthorized"}' };
+    };
+    const r1 = await jouer(cron, { base: 'https://x.invalid', anon: 'CLE', fetchImpl: corps });
+    expect(vues.Authorization).toBeUndefined();
+    expect(r1.ok).toBe(true);
+    // TÉMOIN : le 401 que rendait la passerelle en verify_jwt = true.
+    const passerelle = async () => ({ status: 401, text: async () => '{"code":401,"message":"Missing authorization header"}' });
+    const r2 = await jouer(cron, { base: 'https://x.invalid', anon: 'CLE', fetchImpl: passerelle });
+    expect(r2.ok).toBe(false);
   });
 
   it('la sonde envoie la clé anon — sinon elle mesure Supabase, pas la fonction', async () => {

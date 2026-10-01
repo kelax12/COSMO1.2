@@ -113,13 +113,18 @@ describe('témoin — check-tooling-coverage (C-82)', () => {
 });
 
 describe('témoin — edge-function-coverage (C-82)', () => {
-  it('les huit Edge Functions sont vues, et `_shared` n en est pas une', () => {
+  it('les douze Edge Functions sont vues, et `_shared` n en est pas une', () => {
+    // « huit » jusqu'au 2026-09-30 : les quatre fonctions du mode entreprise
+    // (A-2) passaient sous le plancher sans que rien ne le dise.
     const fonctions = listerFonctions(RACINE);
     expect(fonctions).toContain('delete-account');
     expect(fonctions).toContain('stripe-webhook');
     expect(fonctions).toContain('stripe-create-checkout');
+    for (const f of ['send-org-invite', 'org-digest', 'verify-org-domain', 'org-webhook-dispatch']) {
+      expect(fonctions).toContain(f);
+    }
     expect(fonctions).not.toContain('_shared');
-    expect(fonctions.length).toBeGreaterThanOrEqual(8);
+    expect(fonctions.length).toBeGreaterThanOrEqual(12);
   });
 
   it('`listerTemoins` ramasse les trois familles de tests', () => {

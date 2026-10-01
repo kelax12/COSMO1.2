@@ -156,6 +156,18 @@ describe('garde — report-bug et renewal-notice (C-36)', () => {
     it('verifie, lien par lien, que l appelant l a cree ou administre l organisation', () => {
       expect(sendOrgInvite).toMatch(/!isAdmin\s*&&\s*link[.]created_by\s*!==\s*caller[.]id/);
     });
+
+    it('consomme un jeton de debit PAR E-MAIL, par compte et par organisation, avant d envoyer (A-10)', () => {
+      const consume = sendOrgInvite.indexOf('consumeRateLimits(');
+      expect(consume).toBeGreaterThan(0);
+      expect(sendOrgInvite).toContain("'send-org-invite:account', value: caller.id");
+      expect(sendOrgInvite).toContain("'send-org-invite:org', value: orgId");
+      // Dans la boucle, donc avant CHAQUE appel au fournisseur.
+      expect(consume).toBeGreaterThan(sendOrgInvite.indexOf('for (const link of'));
+      expect(consume).toBeLessThan(sendOrgInvite.indexOf('await fetch('));
+      // Un sel absent refuse, jamais un envoi sans plafond.
+      expect(sendOrgInvite).toMatch(/verdict[.]misconfigured\)\s*return json\(\{ error: 'rate_limit_not_configured' \}, 503/);
+    });
   });
 
   describe('report-bug — l allowlist de piece jointe n est pas decorative', () => {

@@ -17,9 +17,16 @@
 // ❌ Aucun corps de réponse du fournisseur relayé au client.
 // ⚠️ Une relance au plus par heure et par lien : au-delà, c'est du
 //    harcèlement, et la réputation du domaine d'envoi en paie le prix.
+// 🔴 Plafond de débit PAR E-MAIL (A-10, 2026-09-30), par compte ET par
+//    organisation (`SEND_ORG_INVITE_LIMITS`). Il n'y en avait aucun : un compte
+//    gratuit pouvait envoyer 50 e-mails par appel, en boucle, depuis le domaine
+//    qui porte aussi les e-mails d'authentification. Plafond atteint : l'envoi
+//    s'arrête, les liens restent valides et copiables, la réponse le dit.
+// ❌ `RATE_LIMIT_SALT` absent = 503, jamais un envoi sans plafond.
 // ═══════════════════════════════════════════════════════════════════
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
+import { SEND_ORG_INVITE_LIMITS, consumeRateLimits } from '../_shared/rate-limit.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
 const MAIL_FROM = Deno.env.get('BUG_REPORT_FROM')
@@ -148,12 +155,21 @@ Deno.serve(async (req) => {
   const inviterName = (profile?.display_name as string | undefined) || caller.email?.split('@')[0] || 'Un membre'
   let sent = 0
   let failed = 0
+  let limited = false
   const now = Date.now()
 
   for (const link of (rows ?? []) as LinkRow[]) {
+    if (limited) { failed++; continue }
     if (!link.email || link.claimed_at) { failed++; continue }
     if (!isAdmin && link.created_by !== caller.id) { failed++; continue }
     if (link.last_sent_at && now - Date.parse(link.last_sent_at) < RESEND_COOLDOWN_MS) { failed++; continue }
+    // Un jeton par e-mail, dans les deux seaux, AVANT l'appel au fournisseur.
+    const verdict = await consumeRateLimits('send-org-invite', [
+      { domain: 'send-org-invite:account', value: caller.id, ...SEND_ORG_INVITE_LIMITS.perAccount },
+      { domain: 'send-org-invite:org', value: orgId, ...SEND_ORG_INVITE_LIMITS.perOrg },
+    ])
+    if (verdict.misconfigured) return json({ error: 'rate_limit_not_configured' }, 503, req)
+    if (!verdict.allowed) { limited = true; failed++; continue }
     try {
       const { text, html } = mailBody(org.name as string, inviterName, `${APP_URL}/org-invite/${link.id}`)
       const res = await fetch('https://api.resend.com/emails', {
@@ -182,8 +198,10 @@ Deno.serve(async (req) => {
   }
   failed += tokens.length - (rows?.length ?? 0)
 
-  if (failed > 0 && sent === 0) {
+  // Plafond atteint : pas d'alerte, comme le 429 de report-bug. Celui qui
+  // boucle déclencherait sinon une alerte par appel et noierait le salon.
+  if (!limited && failed > 0 && sent === 0) {
     await opsAlert('send-org-invite', `aucune des ${tokens.length} invitation(s) demandee(s) n est partie`)
   }
-  return json({ sent, failed }, 200, req)
+  return json({ sent, failed, ...(limited ? { limited: true } : {}) }, 200, req)
 })

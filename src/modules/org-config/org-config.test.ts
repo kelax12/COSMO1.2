@@ -112,5 +112,14 @@ describe('gardes pures', () => {
     expect(webhookUrlIsAllowed('http://exemple.fr')).toBe(false);
     expect(webhookUrlIsAllowed('https://localhost:3000/x')).toBe(false);
     expect(webhookUrlIsAllowed('https://192.168.1.10/x')).toBe(false);
+    // A-6 (2026-09-30) : ce que l'ancienne liste noire laissait passer.
+    expect(webhookUrlIsAllowed('https://172.16.0.1/x')).toBe(false);
+    expect(webhookUrlIsAllowed('https://100.64.0.1/x')).toBe(false);
+    expect(webhookUrlIsAllowed('https://2130706433/x')).toBe(false);
+    expect(webhookUrlIsAllowed('https://0x7f000001/x')).toBe(false);
+    expect(webhookUrlIsAllowed('https://intranet.corp/x')).toBe(false);
+    expect(webhookUrlIsAllowed('https://api.internal:8443/x')).toBe(false);
+    expect(webhookUrlIsAllowed('https://user@hooks.slack.com/x')).toBe(false);
+    expect(webhookUrlIsAllowed('https://hooks.example.co.uk:8443/in')).toBe(true);
   });
 });

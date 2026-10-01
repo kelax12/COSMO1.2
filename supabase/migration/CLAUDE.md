@@ -89,6 +89,13 @@ compilait, la suite passait.
   Preuve : `supabase/proofs/202.proof.sql` (7 cas acteur par acteur).
 - ⚠️ **`206`** (2026-09-30) supprime les jalons de projet (table vide en prod, relue le même jour).
   **Écrite, NON appliquée.** À appliquer APRÈS le déploiement du front qui ne les lit plus.
+- 🔴 **Relu au catalogue le 2026-09-30, objet par objet** : `164`, `181`, `190`-`195`, `197`-`199`
+  sont en prod sans ligne au ledger (les notes « NON appliquée » ci-dessus sont périmées) ; `196` est
+  retirée par la `200`. 🔴 **`204` (`team_tasks.health`) n'est PAS en prod**, alors que son commit
+  (`7a9b3db0`) la dit « appliquée » et que le front l écrit : le menu « État » des tâches pro échoue.
+  ⏳ **`207`** (webhooks : cible publique, enfilement par trigger seul) : écrite le 2026-09-30,
+  preuve `supabase/proofs/207.proof.sql` verte sur PGlite (10/10, 2026-10-01), **avant** tout redéploiement de
+  `org-webhook-dispatch`. Ordre et détail : [`faille.md`](../../faille.md) § « Migrations ».
 - ⚠️ **Plages de numéros entre sessions (2026-09-24)** : `151`-`159` corbeille/équipes, `153` déjà
   prise par le portefeuille de projets (worktree `portefeuille`), `160`+ gouvernance/OKR/membres,
   `170`+ annuaire. **Relire le ledger avant de choisir un numéro.**

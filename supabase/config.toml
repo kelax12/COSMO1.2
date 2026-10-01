@@ -58,3 +58,23 @@ verify_jwt = true
 # never by a user: the secret is what authorizes it.
 [functions.org-digest]
 verify_jwt = false
+
+# org-webhook-dispatch (mig. 199) is called by
+# .github/workflows/org-webhook-dispatch.yml with CRON_SECRET, never by a user.
+# 🔴 A-3 (2026-09-30) : this entry was MISSING, so the function was deployed
+# with the default verify_jwt = true. The workflow sends no Authorization
+# header, and the gateway answered 401 before the code ran: not a single
+# webhook has ever been delivered. Redeploy AFTER mig. 207 (A-6), which is
+# what makes a real delivery safe.
+[functions.org-webhook-dispatch]
+verify_jwt = false
+
+# stripe-org-refund resolves the caller from the JWT and checks they are the
+# organization owner before any Stripe call.
+[functions.stripe-org-refund]
+verify_jwt = true
+
+# verify-org-domain (mig. 195) resolves the caller from the JWT and checks they
+# are an active admin of the domain's organization.
+[functions.verify-org-domain]
+verify_jwt = true

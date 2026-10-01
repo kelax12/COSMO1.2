@@ -52,6 +52,22 @@ export const REPORT_BUG_LIMITS = {
 } as const
 
 /**
+ * Plafonds d'envoi des invitations d'entreprise (A-10, 2026-09-30).
+ *
+ * 🔴 `send-org-invite` n'avait AUCUN plafond : 50 envois par appel, en boucle,
+ * depuis un compte gratuit qui crée sa propre organisation. Chaque envoi est un
+ * e-mail réel parti de `send.thecosmo.app`, le domaine qui porte AUSSI les
+ * e-mails d'authentification : brûler sa réputation, c'est couper les
+ * inscriptions. Un jeton est consommé PAR E-MAIL, pas par appel.
+ */
+export const SEND_ORG_INVITE_LIMITS = {
+  /** 100 e-mails par jour et par compte : borne celui qui multiplie les organisations. */
+  perAccount: { limit: 100, window: '1 day' },
+  /** 100 e-mails par jour et par organisation : borne une organisation à plusieurs admins. */
+  perOrg: { limit: 100, window: '1 day' },
+} as const
+
+/**
  * L'adresse de l'appelant, telle que la voit le gateway Supabase.
  *
  * `x-forwarded-for` peut porter une chaîne de relais : la PREMIÈRE entrée est

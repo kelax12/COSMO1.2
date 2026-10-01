@@ -17,6 +17,11 @@
 //    conditionnée à son propre secret.
 // ❌ Aucune redirection suivie (`redirect: 'manual'`) : une URL HTTPS publique
 //    ne doit pas pouvoir rebondir vers une adresse interne.
+// 🔴 Aucun envoi vers une cible qui n'est pas PUBLIQUE (A-6, 2026-09-30) : le
+//    nom doit être un nom DNS (`webhookHostOf`), et CHAQUE adresse qu'il résout,
+//    A et AAAA, doit être publique (`addressesArePublic`). Le CHECK de la base
+//    ne voit qu'un texte : `127.0.0.1.nip.io` le passe, pas cette étape.
+//    Résolution impossible = pas d'envoi, jamais « dans le doute, on envoie ».
 // ⚠️ 5 tentatives au plus par livraison ; au-delà de 20 échecs consécutifs,
 //    le webhook est COUPÉ (`enabled = false`) et l'écran le montre : une URL
 //    morte ne doit pas coûter un appel toutes les dix minutes pour toujours.
@@ -24,7 +29,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
-import { slackText } from '../_shared/org-integrations.ts'
+import { addressesArePublic, slackText, webhookHostOf } from '../_shared/org-integrations.ts'
 
 const CRON_SECRET = Deno.env.get('CRON_SECRET')
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
@@ -55,6 +60,21 @@ async function hmacHex(secret: string, message: string): Promise<string> {
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
+/** La cible est-elle publique ? Un nom DNS, et toutes ses adresses publiques. */
+async function targetIsPublic(url: string, cache: Map<string, boolean>): Promise<boolean> {
+  const host = webhookHostOf(url)
+  if (!host) return false
+  const known = cache.get(host)
+  if (known !== undefined) return known
+  const [v4, v6] = await Promise.all([
+    Deno.resolveDns(host, 'A').catch(() => [] as string[]),
+    Deno.resolveDns(host, 'AAAA').catch(() => [] as string[]),
+  ])
+  const ok = addressesArePublic([...v4, ...v6])
+  cache.set(host, ok)
+  return ok
+}
+
 Deno.serve(async (req) => {
   if (!CRON_SECRET) {
     await opsAlert('org-webhook-dispatch', 'CRON_SECRET absent, la fonction refuse tout appel : aucun webhook ne part')
@@ -72,6 +92,7 @@ Deno.serve(async (req) => {
   let delivered = 0
   let failed = 0
   const outcome = new Map<string, { ok: boolean; status: number | null }>()
+  const publicHosts = new Map<string, boolean>()
 
   for (const d of (data ?? []) as Due[]) {
     const body = d.format === 'slack' ? JSON.stringify({ text: slackText(d.event, d.payload, APP_URL) }) : JSON.stringify(d.payload)
@@ -84,6 +105,9 @@ Deno.serve(async (req) => {
     }
     let status: number | null = null
     try {
+      // Cible non publique : compté comme un échec, donc coupé au bout de
+      // DISABLE_AFTER_FAILURES, sans qu'aucun octet parte.
+      if (!(await targetIsPublic(d.url, publicHosts))) throw new Error('target_not_public')
       const res = await fetch(d.url, { method: 'POST', headers, body, redirect: 'manual', signal: AbortSignal.timeout(TIMEOUT_MS) })
       status = res.status
       await res.body?.cancel()

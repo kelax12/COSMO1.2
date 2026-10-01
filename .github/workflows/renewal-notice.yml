@@ -21,6 +21,11 @@ on:
     - cron: '12 7 * * *'
   workflow_dispatch:
 
+# Moindre privilege (A-8, CodeQL actions/missing-workflow-permissions) :
+# le job n appelle qu une URL, il ne lit ni n ecrit le depot.
+permissions:
+  contents: read
+
 jobs:
   notify:
     runs-on: ubuntu-latest

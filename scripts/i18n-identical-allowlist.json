@@ -265,6 +265,10 @@
       "categorie": "mot-identique",
       "valeur": "Total"
     },
+    "org.popups.placement.groupManagers": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Managers"
+    },
     "org.profile.description": {
       "categorie": "mot-identique",
       "valeur": "Description"
@@ -289,6 +293,14 @@
       "categorie": "anglicisme-fr",
       "valeur": "Manager"
     },
+    "org.settings.tabCode": {
+      "categorie": "mot-identique",
+      "valeur": "Code"
+    },
+    "org.settings.tabContacts": {
+      "categorie": "mot-identique",
+      "valeur": "Contacts"
+    },
     "org.taskModal.description": {
       "categorie": "mot-identique",
       "valeur": "Description"
@@ -304,6 +316,18 @@
     "org.templates.sprint": {
       "categorie": "anglicisme-fr",
       "valeur": "Sprint"
+    },
+    "orgAccount.audit.csv.action": {
+      "categorie": "mot-identique",
+      "valeur": "Action"
+    },
+    "orgAccount.audit.csv.date": {
+      "categorie": "mot-identique",
+      "valeur": "Date"
+    },
+    "orgAccount.audit.system": {
+      "categorie": "nom-propre",
+      "valeur": "COSMO"
     },
     "orgAccount.glossary.names.manager": {
       "categorie": "anglicisme-fr",
@@ -344,6 +368,10 @@
     "orgAdmin.ui.event.minutes": {
       "categorie": "symbole-ou-format",
       "valeur": "{{count}} min"
+    },
+    "orgAdmin.ui.event.minutesUnit": {
+      "categorie": "symbole-ou-format",
+      "valeur": "min"
     },
     "orgAdmin.ui.event.participants_one": {
       "categorie": "mot-identique",
@@ -440,18 +468,6 @@
     "tutorials.habitsMobile.step5Title": {
       "categorie": "anglicisme-fr",
       "valeur": "Mini heatmap"
-    },
-    "orgAccount.audit.csv.action": {
-      "categorie": "mot-identique",
-      "valeur": "Action"
-    },
-    "orgAccount.audit.csv.date": {
-      "categorie": "mot-identique",
-      "valeur": "Date"
-    },
-    "orgAccount.audit.system": {
-      "categorie": "nom-propre",
-      "valeur": "COSMO"
     }
   }
 }
