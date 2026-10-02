@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   aggregateReports,
   groupTasksByProject,
+  groupActivityByPerson,
   normalizePayload,
   periodBounds,
   shiftPeriod,
@@ -68,6 +69,25 @@ describe('groupTasksByProject', () => {
       task('c', '2026-09-22T11:00:00Z', 'p2'),
     ]);
     expect(groups.map((g) => g.projectId)).toEqual(['p2', 'p1', null]);
+  });
+});
+
+describe('groupActivityByPerson', () => {
+  it('réunit tâches et événements de chaque personne, le plus actif en tête, l auteur inconnu en dernier', () => {
+    const ev = (userId: string, start: string) => ({ userId, userName: userId, title: 'R', start, end: start });
+    const people = groupActivityByPerson(
+      [
+        { ...task('b', '2026-09-22T10:00:00Z'), byId: 'u2', byName: 'Bob' },
+        { ...task('a', '2026-09-22T09:00:00Z'), byId: 'u2', byName: 'Bob' },
+        { ...task('x', '2026-09-22T09:00:00Z'), byId: null, byName: null },
+        task('c', '2026-09-22T11:00:00Z'),
+      ],
+      [ev('u1', '2026-09-23T09:00:00Z'), ev('u3', '2026-09-22T09:00:00Z')],
+    );
+    expect(people.map((p) => p.userId)).toEqual(['u2', 'u1', 'u3', null]);
+    expect(people[0].tasks.map((t) => t.id)).toEqual(['a', 'b']);
+    expect(people[1].events).toHaveLength(1);
+    expect(people[2].tasks).toEqual([]);
   });
 });
 

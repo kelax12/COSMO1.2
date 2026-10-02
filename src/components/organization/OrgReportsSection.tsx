@@ -1,12 +1,11 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { CalendarClock, ChevronLeft, ChevronRight, CircleCheck, FolderKanban, Target, UsersRound } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CircleCheck, FolderKanban, Target, UserRound, UsersRound } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import {
   aggregateReports,
-  groupEventsByPerson,
-  groupTasksByProject,
+  groupActivityByPerson,
   lastReportDay,
   periodBounds,
   shiftPeriod,
@@ -35,7 +34,6 @@ interface OrgReportsSectionProps {
 const card = 'rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 md:p-5';
 const muted = 'text-[rgb(var(--color-text-muted))]';
 const primary = 'text-[rgb(var(--color-text-primary))]';
-const GROUP_PREVIEW = 3;
 
 const hexOf = (color: string | null | undefined) =>
   color && color.startsWith('#') ? color : projectColorHex(color ?? 'blue');
@@ -46,7 +44,7 @@ const initials = (name: string | null) =>
 const Avatar = ({ name }: { name: string | null }) => (
   <span
     aria-hidden="true"
-    className="w-6 h-6 shrink-0 rounded-full bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))] text-caption font-semibold flex items-center justify-center"
+    className="w-8 h-8 shrink-0 rounded-full bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))] text-caption font-semibold flex items-center justify-center"
   >
     {initials(name)}
   </span>
@@ -58,6 +56,18 @@ const BlockTitle = ({ Icon, children }: { Icon: typeof CircleCheck; children: Re
     {children}
   </h3>
 );
+
+/** Avant la période en gris, le gain de la période en vert à sa suite. */
+const ProgressBar = ({ before, after }: { before: number; after: number }) => {
+  const from = Math.min(100, Math.max(0, before));
+  const to = Math.min(100, Math.max(from, after));
+  return (
+    <span className="mt-1.5 block h-1.5 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden relative" aria-hidden="true">
+      <span className="absolute inset-y-0 left-0 bg-[rgb(var(--color-text-muted)/0.35)]" style={{ width: `${from}%` }} />
+      <span className="absolute inset-y-0 bg-emerald-500" style={{ left: `${from}%`, width: `${to - from}%` }} />
+    </span>
+  );
+};
 
 /**
  * Rapports d'activité (mig. 202) : ce que l'entreprise, ou une équipe, a FAIT
@@ -77,7 +87,6 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
   const [anchor, setAnchor] = useState(lastDay);
   const [custom, setCustom] = useState({ from: addDays(lastDay, -13), to: lastDay });
   const [pickedScope, setPickedScope] = useState<ReportScope | null>(initialTeamId ? { kind: 'team', teamId: initialTeamId } : null);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   // Périmètre effectif : le choix, s'il est encore permis, sinon le premier permis.
   const scope: ReportScope | null = useMemo(() => {
@@ -97,8 +106,7 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
 
   const { data: days = [], isLoading, isError, refetch } = useActivityReports(orgId, scope, from, to);
   const report = useMemo(() => aggregateReports(days, from, to), [days, from, to]);
-  const taskGroups = useMemo(() => groupTasksByProject(report.tasks), [report.tasks]);
-  const eventGroups = useMemo(() => groupEventsByPerson(report.events), [report.events]);
+  const people = useMemo(() => groupActivityByPerson(report.tasks, report.events), [report.tasks, report.events]);
   const memberName = useMemo(() => new Map(members.map((m) => [m.userId, m.displayName])), [members]);
 
   const fmtDay = (key: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, opts).format(fromDayKey(key));
@@ -124,11 +132,6 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
   }
 
   const personName = (id: string | null, frozen: string | null) => frozen ?? (id ? memberName.get(id) : null) ?? t('reports.unknownPerson');
-  const toggleGroup = (key: string) => setExpanded((prev) => {
-    const next = new Set(prev);
-    if (next.has(key)) next.delete(key); else next.add(key);
-    return next;
-  });
   const openTeam = (teamId: string) => {
     if (access.teams.some((tm) => tm.id === teamId)) setPickedScope({ kind: 'team', teamId });
   };
@@ -242,6 +245,120 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
 
           {report.truncated && <p className={`text-xs ${muted}`}>{t('reports.truncated')}</p>}
 
+          {/* Projets et OKR qui ont avancé, côte à côte */}
+          {(report.projects.length > 0 || report.krs.length > 0) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+              {report.projects.length > 0 && (
+                <section className={card}>
+                  <BlockTitle Icon={FolderKanban}>{t('reports.projectsTitle')}</BlockTitle>
+                  <ul className="divide-y divide-[rgb(var(--color-border))]">
+                    {report.projects.map((p) => (
+                      <li key={p.id} className="py-2.5 text-sm">
+                        <div className="flex items-center gap-3">
+                          <span className={`flex-1 min-w-0 truncate ${primary}`}>{p.name}</span>
+                          <span className="shrink-0 text-xs font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                            {p.before} → {p.after} % · {p.after >= 100 ? t('reports.projectDone') : t('reports.projectDelta', { count: p.after - p.before })}
+                          </span>
+                        </div>
+                        <ProgressBar before={p.before} after={p.after} />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+              {report.krs.length > 0 && (
+                <section className={card}>
+                  <BlockTitle Icon={Target}>{t('reports.krsTitle')}</BlockTitle>
+                  <ul className="divide-y divide-[rgb(var(--color-border))]">
+                    {report.krs.map((k) => (
+                      <li key={k.id} className="py-2.5 text-sm">
+                        <div className="flex items-center gap-3">
+                          <span className={`flex-1 min-w-0 truncate ${primary}`}>{k.title}</span>
+                          <span className="shrink-0 text-xs font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                            {k.before !== null ? `${k.before} → ` : ''}{k.after} %
+                            {k.completed
+                              ? ` · ${t('reports.krCompleted')}`
+                              : k.before !== null ? ` · ${t('reports.projectDelta', { count: k.after - k.before })}` : ''}
+                          </span>
+                        </div>
+                        <ProgressBar before={k.before ?? k.after} after={k.after} />
+                        <span className={`block truncate text-xs mt-1 ${muted}`}>{k.okrTitle}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          )}
+
+          {/* Qui a fait quoi : une fiche par personne, tâches à gauche, événements à droite */}
+          {people.length > 0 && (
+            <section aria-labelledby="report-people-title" className="space-y-3">
+              <h3 id="report-people-title" className={`flex items-center gap-2 text-sm font-bold ${primary}`}>
+                <UserRound size={16} aria-hidden="true" className={muted} />
+                {t('reports.peopleTitle')}
+              </h3>
+              {people.map((person) => {
+                const who = personName(person.userId, person.userName);
+                return (
+                  <article key={person.userId ?? ''} className={card} aria-label={who}>
+                    <header className="flex items-center gap-3 pb-3 mb-3 border-b border-[rgb(var(--color-border))]">
+                      <Avatar name={who} />
+                      <div className="min-w-0">
+                        <div className={`text-sm font-semibold truncate ${primary}`}>{who}</div>
+                        <div className={`text-xs ${muted}`}>
+                          {tp('reports.groupCount', person.tasks.length)} · {tp('reports.eventCount', person.events.length)}
+                        </div>
+                      </div>
+                    </header>
+                    <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-4">
+                      <div>
+                        <h4 className={`text-xs mb-1.5 ${muted}`}>{t('reports.colTasks')}</h4>
+                        {person.tasks.length === 0 ? (
+                          <p className={`text-sm ${muted}`}>{t('reports.noPersonTasks')}</p>
+                        ) : (
+                          <ul className="space-y-1">
+                            {person.tasks.map((task) => (
+                              <li key={task.id} className="flex items-start gap-2 text-sm">
+                                <CircleCheck size={15} aria-hidden="true" className="mt-0.5 shrink-0 text-emerald-500" />
+                                <span className={`flex-1 min-w-0 break-words ${primary}`}>{task.name}</span>
+                                {multiDay && (
+                                  <span className={`text-xs shrink-0 mt-0.5 ${muted}`}>
+                                    {fmtDay(toDayKey(new Date(task.at)), { day: 'numeric', month: 'short' })}
+                                  </span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      <div className="pt-3 border-t md:pt-0 md:border-t-0 md:pl-4 md:border-l border-[rgb(var(--color-border))]">
+                        <h4 className={`text-xs mb-1.5 ${muted}`}>{t('reports.colEvents')}</h4>
+                        {person.events.length === 0 ? (
+                          <p className={`text-sm ${muted}`}>{t('reports.noPersonEvents')}</p>
+                        ) : (
+                          <ul className="space-y-1.5">
+                            {person.events.map((e, i) => (
+                              <li key={`${e.start}-${i}`} className="flex items-start gap-2 text-sm">
+                                <span className={`shrink-0 rounded-full bg-[rgb(var(--color-hover))] px-2 py-0.5 text-xs tabular-nums ${muted}`}>
+                                  {multiDay ? `${fmtDay(toDayKey(new Date(e.start)), { weekday: 'short', day: 'numeric' })} ` : ''}{fmtTime(e.start)}
+                                </span>
+                                <span className="min-w-0">
+                                  <span className={`block break-words ${primary}`}>{e.title}</span>
+                                  <span className={`block text-xs ${muted}`}>{fmtDuration(minutes(e.start, e.end))}</span>
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </section>
+          )}
+
           {/* Performance par équipe (rapport d'entreprise) */}
           {scope.kind === 'org' && report.teams.length > 0 && (
             <section className={card}>
@@ -270,122 +387,6 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
                       ) : (
                         <div className="flex items-center gap-3 py-2">{body}</div>
                       )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          )}
-
-          {/* Tâches terminées, par projet */}
-          {taskGroups.length > 0 && (
-            <section className={card}>
-              <BlockTitle Icon={CircleCheck}>{t('reports.tasksTitle')}</BlockTitle>
-              <div className="space-y-4">
-                {taskGroups.map((g) => {
-                  const key = g.projectId ?? '';
-                  const open = expanded.has(key);
-                  const shown = open ? g.tasks : g.tasks.slice(0, GROUP_PREVIEW);
-                  return (
-                    <div key={key}>
-                      <div className="flex items-center gap-2 mb-1">
-                        {g.projectId && <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: hexOf(g.projectColor) }} aria-hidden="true" />}
-                        <span className={`text-sm font-semibold ${primary}`}>{g.projectName ?? t('reports.noProject')}</span>
-                        <span className={`text-xs ${muted}`}>· {tp('reports.groupCount', g.tasks.length)}</span>
-                      </div>
-                      <ul className="divide-y divide-[rgb(var(--color-border))]">
-                        {shown.map((task) => {
-                          const who = personName(task.byId, task.byName);
-                          return (
-                            <li key={task.id} className="flex items-center gap-2.5 py-1.5 text-sm">
-                              <Avatar name={who} />
-                              <span className={`flex-1 min-w-0 truncate ${primary}`}>{task.name}</span>
-                              <span className={`text-xs shrink-0 ${muted}`}>
-                                {who} · {multiDay ? `${fmtDay(toDayKey(new Date(task.at)), { day: 'numeric', month: 'short' })} ` : ''}{fmtTime(task.at)}
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                      {g.tasks.length > GROUP_PREVIEW && (
-                        <button type="button" aria-expanded={open} onClick={() => toggleGroup(key)}
-                          className="mt-1 text-xs font-semibold text-blue-500 hover:text-blue-600">
-                          {open ? t('reports.showLess') : t('reports.showAll', { count: g.tasks.length })}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
-          {/* Avancement des projets */}
-          {report.projects.length > 0 && (
-            <section className={card}>
-              <BlockTitle Icon={FolderKanban}>{t('reports.projectsTitle')}</BlockTitle>
-              <ul className="divide-y divide-[rgb(var(--color-border))]">
-                {report.projects.map((p) => (
-                  <li key={p.id} className="flex flex-wrap md:flex-nowrap items-center gap-x-3 gap-y-1 py-2 text-sm">
-                    <span className={`w-full md:w-48 truncate ${primary}`}>{p.name}</span>
-                    <span className="flex-1 h-1.5 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden relative" aria-hidden="true">
-                      <span className="absolute inset-y-0 left-0 bg-emerald-500/35" style={{ width: `${p.after}%` }} />
-                      <span className="absolute inset-y-0 left-0 bg-emerald-500" style={{ width: `${p.before}%` }} />
-                    </span>
-                    <span className={`w-10 text-right tabular-nums ${primary}`}>{p.after} %</span>
-                    <span className="w-20 text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                      {p.after >= 100 ? t('reports.projectDone') : t('reports.projectDelta', { count: p.after - p.before })}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {/* Avancement des KR */}
-          {report.krs.length > 0 && (
-            <section className={card}>
-              <BlockTitle Icon={Target}>{t('reports.krsTitle')}</BlockTitle>
-              <ul className="divide-y divide-[rgb(var(--color-border))]">
-                {report.krs.map((k) => (
-                  <li key={k.id} className="flex items-center gap-3 py-2 text-sm">
-                    <span className="flex-1 min-w-0">
-                      <span className={`block truncate ${primary}`}>{k.title}</span>
-                      <span className={`block truncate text-xs ${muted}`}>{k.okrTitle}</span>
-                    </span>
-                    <span className={`tabular-nums shrink-0 ${primary}`}>
-                      {k.before !== null ? `${k.before} % → ` : ''}{k.after} %
-                    </span>
-                    <span className="w-16 text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
-                      {k.completed ? t('reports.krCompleted') : k.before !== null ? t('reports.projectDelta', { count: k.after - k.before }) : ''}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {/* Événements, par personne */}
-          {eventGroups.length > 0 && (
-            <section className={card}>
-              <BlockTitle Icon={CalendarClock}>{t('reports.eventsTitle')}</BlockTitle>
-              <ul className="divide-y divide-[rgb(var(--color-border))]">
-                {eventGroups.map((g) => {
-                  const who = personName(g.userId, g.userName);
-                  return (
-                    <li key={g.userId} className="flex items-start gap-2.5 py-2 text-sm">
-                      <Avatar name={who} />
-                      <span className={`w-28 shrink-0 truncate font-medium ${primary}`}>{who}</span>
-                      <ul className="flex-1 min-w-0 space-y-0.5">
-                        {g.events.map((e, i) => (
-                          <li key={`${e.start}-${i}`} className="flex gap-2">
-                            <span className={`truncate ${primary}`}>{e.title}</span>
-                            <span className={`text-xs shrink-0 mt-0.5 ${muted}`}>
-                              {multiDay ? `${fmtDay(toDayKey(new Date(e.start)), { day: 'numeric', month: 'short' })} ` : ''}{fmtTime(e.start)}, {fmtDuration(minutes(e.start, e.end))}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
                     </li>
                   );
                 })}
