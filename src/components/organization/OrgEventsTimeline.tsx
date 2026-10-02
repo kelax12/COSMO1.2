@@ -42,24 +42,8 @@ const Dot = ({ event }: { event: PlacedOrgEvent }) => {
   );
 };
 
-const Caption = ({ event }: { event: PlacedOrgEvent }) => {
-  const tone = TONE[event.urgency];
-  return (
-    <>
-      <span className={`text-caption font-semibold leading-none ${tone.text}`}>{dayLabel(event.date)}</span>
-      <span className="text-xs text-[rgb(var(--color-text-primary))] text-center leading-snug line-clamp-2">
-        {event.name}
-      </span>
-    </>
-  );
-};
-
 /**
- * Prochains événements de l'entreprise, en frise chronologique.
- *
- * L'abscisse porte le temps : un paquet d'échéances collées se VOIT, ce qu'une
- * liste ne montrait pas. Sous `sm`, la frise bascule en rail vertical — six
- * libellés côte à côte sur 360 px se chevauchent, quoi qu'on fasse.
+ * Prochains événements de l'entreprise, en rail chronologique vertical.
  *
  * Aucune position ne dépend d'une animation : `prefers-reduced-motion` ne
  * change rien au rendu (cf. garde-fou « position finale d'une animation »).
@@ -78,50 +62,10 @@ const OrgEventsTimeline = ({ events }: OrgEventsTimelineProps) => {
         </span>
       </div>
 
-      {/* Frise horizontale — écrans larges. */}
-      <div className="hidden sm:block relative h-[152px] mt-2">
-        <div className="absolute top-[75px] left-0 right-0 h-px bg-[rgb(var(--color-border-strong))]" aria-hidden="true" />
-        <ul className="absolute inset-0">
-          {placed.map((e) => {
-            // 6 % de marge de chaque côté : une pastille à 0 % ou 100 % verrait
-            // son libellé (96 px, centré) sortir du cadre.
-            const left = `${6 + e.percent * 0.88}%`;
-            return (
-              <li
-                key={e.id}
-                className={`absolute w-24 -translate-x-1/2 flex flex-col items-center gap-1.5 ${
-                  e.row === 'top' ? 'bottom-[78px]' : 'top-[70px]'
-                }`}
-                style={{ left }}
-              >
-                {e.row === 'top' ? (
-                  <>
-                    <Caption event={e} />
-                    <Dot event={e} />
-                  </>
-                ) : (
-                  <>
-                    <Dot event={e} />
-                    <Caption event={e} />
-                  </>
-                )}
-                {e.kind === 'okr' ? (
-                  <span className="inline-flex items-center gap-1 text-caption font-semibold text-[rgb(var(--color-text-muted))]">
-                    <Target size={10} aria-hidden="true" /> OKR
-                  </span>
-                ) : e.projectName ? (
-                  <span className="text-caption text-[rgb(var(--color-text-muted))] truncate max-w-full">
-                    {e.projectName}
-                  </span>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-
-      {/* Rail vertical — mobile. Même donnée, même ordre. */}
-      <ul className="sm:hidden mt-3 pl-3 border-l border-[rgb(var(--color-border-strong))] space-y-3">
+      {/* Rail vertical à toutes les largeurs (maquette 9 A, 2026-10-02) : la
+          carte vit désormais dans une demi-colonne, où la frise horizontale
+          faisait se chevaucher ses libellés comme sur un téléphone. */}
+      <ul className="mt-3 ml-1.5 pl-3 border-l border-[rgb(var(--color-border-strong))] space-y-3">
         {placed.map((e) => (
           <li key={e.id} className="flex items-start gap-2.5 -ml-[19px]">
             <span className="mt-1 shrink-0">

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { AtSign, Check, ChevronRight, Eye, Hourglass, ListChecks, ListTodo, CircleCheckBig, Pin, PinOff } from 'lucide-react';
+import { AtSign, Check, ChevronRight, Eye, Hourglass, ListChecks, ListTodo, CircleCheckBig, Pin, PinOff, Undo2 } from 'lucide-react';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import type { OrgMember, OrgNotification } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
@@ -10,20 +10,34 @@ import TouchTarget from '@/components/mobile/TouchTarget';
 import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 import { buildOrgLink } from './deep-link.helpers';
 import { projectColor, PRIORITY_META, priorityLabelOf, formatDuration } from './team-projects.helpers';
-import type { BlockingEntry, Horizon, MyKeyResult, MyProjectSummary } from './my-work.helpers';
+import { projectElapsed, type BlockingEntry, type Horizon, type MyKeyResult, type MyProjectSummary } from './my-work.helpers';
 import { useOrgPins } from './org-pins';
 import TaskSelectCheckbox from './TaskSelectCheckbox';
 
 // Cartes de l'Aperçu entreprise (audit du 2026-09-24). Les dérivations sont
 // dans `my-work.helpers.ts` ; ce fichier ne fait que peindre.
 
-const CARD = 'min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4';
-const TITLE = 'text-sm font-bold text-[rgb(var(--color-text-primary))]';
+export const CARD = 'min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4';
+export const TITLE = 'text-sm font-bold text-[rgb(var(--color-text-primary))]';
 const firstName = (name: string) => name.split(' ')[0];
 const shortDate = (iso: string) => format(parseISO(iso), 'd MMM', { locale: getDateLocale() });
 
+const initials = (name: string) =>
+  name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('') || '?';
+
+/** Pastille d'initiales ; le nom complet passe en `title` et en texte masqué. */
+export const MemberInitials = ({ name, className = '' }: { name: string; className?: string }) => (
+  <span
+    title={name}
+    className={`w-6 h-6 rounded-full shrink-0 inline-flex items-center justify-center text-[10px] font-bold bg-[rgb(var(--color-accent)/0.14)] text-[rgb(var(--color-accent))] ring-2 ring-[rgb(var(--color-surface))] ${className}`}
+  >
+    <span aria-hidden="true">{initials(name)}</span>
+    <span className="sr-only">{name}</span>
+  </span>
+);
+
 /** Ligne cliquable qui ouvre une tâche : 44 px de haut (WCAG 2.5.5). */
-const TaskLink = ({ onClick, children }: { onClick: () => void; children: ReactNode }) => (
+export const TaskLink = ({ onClick, children }: { onClick: () => void; children: ReactNode }) => (
   <button
     type="button"
     onClick={onClick}
@@ -41,19 +55,25 @@ interface WaitingProps {
   blocking: BlockingEntry[];
   members: OrgMember[];
   onOpenTask: (task: TeamTask) => void;
+  /** Valider une tâche rendue : elle passe à « terminée ». */
+  onApprove: (task: TeamTask) => void;
+  /** La renvoyer à son assigné : elle repasse « en cours ». */
+  onSendBack: (task: TeamTask) => void;
 }
 
 /**
  * « En attente de moi » : la première question d'un membre. Trois sources,
  * dans l'ordre où elles débloquent le plus de monde : ce qu'on me demande de
  * valider, là où l'on m'a cité, et les tâches d'autres qui attendent la mienne.
+ *
+ * Maquette 2 B (2026-10-02) : une validation se tranche SUR PLACE. Ouvrir la
+ * tâche reste possible en cliquant son nom, pour qui veut relire avant.
  */
-export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenTask }: WaitingProps) => {
+export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenTask, onApprove, onSendBack }: WaitingProps) => {
   const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
-  const memberName = (id: string) => {
-    const m = members.find((x) => x.userId === id);
-    return m ? firstName(m.displayName) : tOrgAdmin('activity.someMember');
-  };
+  const fullName = (id: string) =>
+    members.find((x) => x.userId === id)?.displayName ?? tOrgAdmin('activity.someMember');
+  const memberName = (id: string) => firstName(fullName(id));
   const total = reviews.length + mentions.length + blocking.length;
 
   return (
@@ -79,15 +99,34 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
               <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
                 <Eye size={13} aria-hidden="true" /> {tpOrgAdmin('waiting.reviews', reviews.length)}
               </p>
-              <ul>
+              <ul className="space-y-1">
                 {reviews.map((task) => (
-                  <li key={task.id}>
+                  <li key={task.id} className="rounded-lg">
                     <TaskLink onClick={() => onOpenTask(task)}>
+                      {task.assigneeIds[0] && <MemberInitials name={fullName(task.assigneeIds[0])} />}
                       <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{task.name}</span>
                       <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
                         {task.assigneeIds.map(memberName).slice(0, 2).join(', ')}
                       </span>
                     </TaskLink>
+                    <div className="flex gap-2 pl-10 pb-1.5">
+                      <button
+                        type="button"
+                        onClick={() => onApprove(task)}
+                        aria-label={tOrgAdmin('apercu.review.approveTask', { name: task.name })}
+                        className="min-h-9 inline-flex items-center gap-1 px-3 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/25 transition-colors"
+                      >
+                        <Check size={13} aria-hidden="true" /> {tOrgAdmin('apercu.review.approve')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onSendBack(task)}
+                        aria-label={tOrgAdmin('apercu.review.sendBackTask', { name: task.name })}
+                        className="min-h-9 inline-flex items-center gap-1 px-3 rounded-lg text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                      >
+                        <Undo2 size={13} aria-hidden="true" /> {tOrgAdmin('apercu.review.sendBack')}
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -103,6 +142,7 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
                 {mentions.map(({ notification, task }) => (
                   <li key={notification.id}>
                     <TaskLink onClick={() => onOpenTask(task)}>
+                      {notification.actorId && <MemberInitials name={fullName(notification.actorId)} />}
                       <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{task.name}</span>
                       {notification.actorId && (
                         <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
@@ -283,36 +323,74 @@ export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById,
 
 // ─── Mes projets ────────────────────────────────────────────────────
 
-/** Mes projets, avec l'épinglage vers le panneau de droite (groupe « Épinglés »). */
-export const MyProjectsCard = ({ summaries, orgId, userId }: { summaries: MyProjectSummary[]; orgId: string; userId?: string }) => {
+interface MyProjectsProps {
+  summaries: MyProjectSummary[];
+  orgId: string;
+  userId?: string;
+  /** Qui d'autre travaille sur chaque projet (`projectPeople`), moi exclu. */
+  people: Map<string, string[]>;
+  members: OrgMember[];
+}
+
+/**
+ * Mes projets (maquette 7 C, 2026-10-02) : qui d'autre y travaille, ma part,
+ * la fin prévue du projet et le temps de calendrier déjà écoulé. La barre
+ * n'est PAS un avancement (on ne lit pas toutes les tâches du projet ici) :
+ * son libellé accessible le dit.
+ * L'épinglage vers le panneau de droite (groupe « Épinglés ») reste.
+ */
+export const MyProjectsCard = ({ summaries, orgId, userId, people, members }: MyProjectsProps) => {
   const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const navigate = useNavigate();
   const { pinned, toggle } = useOrgPins(orgId, userId);
   if (summaries.length === 0) return null;
+  const nameOf = (id: string) => members.find((m) => m.userId === id)?.displayName ?? tOrgAdmin('activity.someMember');
   return (
     <div className={CARD}>
       <h3 className={`${TITLE} mb-2`}>{tOrgAdmin('myProjects.title')}</h3>
-      <ul>
+      <ul className="space-y-1">
         {summaries.slice(0, 6).map(({ project, open, overdue, nextDeadline }) => {
           const color = projectColor(project.color);
           const isPinned = pinned.includes(project.id);
           const pinLabel = tOrgAdmin(isPinned ? 'myProjects.unpin' : 'myProjects.pin', { name: project.name });
+          const others = people.get(project.id) ?? [];
+          const elapsed = projectElapsed(project.startDate, project.dueDate);
           return (
-            <li key={project.id} className="flex items-center">
+            <li key={project.id} className="flex items-start">
               <button
                 type="button"
                 onClick={() => navigate(buildOrgLink('projects', { project: project.id }))}
-                className="flex-1 min-w-0 min-h-touch flex items-center gap-2.5 px-2 rounded-lg text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
+                className="flex-1 min-w-0 min-h-touch flex flex-col justify-center gap-1 px-2 py-1.5 rounded-lg text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
               >
-                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
-                <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{project.name}</span>
-                <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">{tpOrgAdmin('myProjects.open', open)}</span>
-                {overdue > 0 ? (
-                  <span className="text-xs font-semibold text-red-500 shrink-0">{tpOrgAdmin('myProjects.overdue', overdue)}</span>
-                ) : nextDeadline ? (
-                  <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">{tOrgAdmin('myProjects.next', { date: shortDate(nextDeadline) })}</span>
-                ) : null}
-                <ChevronRight size={14} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+                <span className="flex items-center gap-2.5 w-full">
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
+                  <span className="flex-1 min-w-0 truncate text-sm font-medium text-[rgb(var(--color-text-primary))]">{project.name}</span>
+                  {others.length > 0 && (
+                    <span className="flex -space-x-1.5 shrink-0">
+                      {others.map((id) => <MemberInitials key={id} name={nameOf(id)} />)}
+                    </span>
+                  )}
+                  <ChevronRight size={14} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+                </span>
+                <span className="flex items-center gap-1.5 pl-5 text-xs text-[rgb(var(--color-text-muted))]">
+                  <span>{tpOrgAdmin('myProjects.open', open)}</span>
+                  {overdue > 0 ? (
+                    <span className="font-semibold text-red-500">· {tpOrgAdmin('myProjects.overdue', overdue)}</span>
+                  ) : nextDeadline ? (
+                    <span>· {tOrgAdmin('myProjects.next', { date: shortDate(nextDeadline) })}</span>
+                  ) : null}
+                  {project.dueDate && <span>· {tOrgAdmin('apercu.projects.ends', { date: shortDate(project.dueDate) })}</span>}
+                </span>
+                {elapsed !== null && (
+                  <span
+                    className="ml-5 h-1 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden"
+                    role="img"
+                    aria-label={tOrgAdmin('apercu.projects.elapsed', { percent: elapsed })}
+                    title={tOrgAdmin('apercu.projects.elapsed', { percent: elapsed })}
+                  >
+                    <span className={`block h-full rounded-full ${color.dot}`} style={{ width: `${elapsed}%` }} />
+                  </span>
+                )}
               </button>
               {userId && (
                 <button

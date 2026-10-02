@@ -223,6 +223,140 @@ export const buildActivityItems = (
   return out.sort((a, b) => (a.date > b.date ? -1 : 1)).slice(0, max);
 };
 
+// ─── Digest du jour (maquette 8 C, 2026-10-02) ──────────────────────
+
+export interface ActivityDigest {
+  completed: number;
+  created: number;
+  /** Entrées faites par QUELQU'UN D'AUTRE sur une tâche qui m'est assignée. */
+  aboutMe: number;
+}
+
+/**
+ * Ce qui a bougé dans l'équipe depuis `since` (hier à la même heure, par
+ * défaut). Compté sur le JOURNAL brut, pas sur les 8 lignes du fil : un fil
+ * tronqué ferait mentir les chiffres.
+ */
+export const activityDigest = (
+  activity: TeamTaskActivity[],
+  myTaskIds: Set<string>,
+  me: string,
+  since: Date = new Date(Date.now() - 24 * 3600 * 1000),
+): ActivityDigest => {
+  const items = buildActivityItems(activity, Number.MAX_SAFE_INTEGER).filter(
+    (i) => new Date(i.date) >= since,
+  );
+  return {
+    completed: items.filter((i) => i.kind === 'completed').length,
+    created: items.filter((i) => i.kind === 'created').length,
+    aboutMe: items.filter((i) => i.actorId !== me && myTaskIds.has(i.taskId)).length,
+  };
+};
+
+// ─── Ma charge de la semaine (nouveau groupe N1) ────────────────────
+
+/** Semaine de référence : 35 h, la durée légale du travail en France. */
+export const WEEK_CAPACITY_MINUTES = 35 * 60;
+
+export interface WeekLoad {
+  /** Minutes estimées des tâches ouvertes en retard ou dues sous sept jours. */
+  minutes: number;
+  /** Tâches de la même fenêtre sans estimation : la somme les ignore. */
+  unestimated: number;
+  tasks: number;
+}
+
+export const weekLoad = (open: TeamTask[], now: Date = new Date()): WeekLoad => {
+  const due = open.filter((t) => {
+    const h = horizonOf(t, now);
+    return h === 'overdue' || h === 'today' || h === 'week';
+  });
+  return {
+    minutes: due.reduce((sum, t) => sum + (t.estimatedTime ?? 0), 0),
+    unestimated: due.filter((t) => !t.estimatedTime).length,
+    tasks: due.length,
+  };
+};
+
+// ─── J'attends quelqu'un (nouveau groupe N2) ────────────────────────
+
+export interface WaitingOnEntry {
+  /** La tâche que J'attends (pas la mienne). */
+  task: TeamTask;
+  /** `blocked` : une de mes tâches en dépend. `delegated` : je l'ai confiée. */
+  reason: 'blocked' | 'delegated';
+  /** Jours depuis sa dernière modification. */
+  idleDays: number;
+}
+
+/** Une tâche confiée n'est signalée qu'après ce délai sans mouvement. */
+export const DELEGATED_IDLE_DAYS = 3;
+
+/**
+ * Miroir de « En attente de moi » : ce qui attend QUELQU'UN D'AUTRE.
+ * Deux sources : les tâches d'autrui dont une des miennes dépend, et celles
+ * que j'ai créées pour d'autres et qui dorment depuis trois jours.
+ * Une tâche en revue est exclue : la balle est dans MON camp.
+ */
+export const waitingOnOthers = (
+  myOpen: TeamTask[],
+  deps: TeamTaskDependency[],
+  known: TeamTask[],
+  delegated: TeamTask[],
+  me: string,
+  now: Date = new Date(),
+): WaitingOnEntry[] => {
+  const idle = (t: TeamTask) => Math.floor((now.getTime() - new Date(t.updatedAt).getTime()) / 86_400_000);
+  const notMine = (t: TeamTask) => !t.completed && t.status !== 'review' && !t.assigneeIds.includes(me);
+  const mine = new Set(myOpen.map((t) => t.id));
+  const byId = new Map(known.map((t) => [t.id, t]));
+  const out = new Map<string, WaitingOnEntry>();
+  for (const d of deps) {
+    if (!mine.has(d.taskId)) continue;
+    const task = byId.get(d.dependsOnId);
+    if (task && notMine(task)) out.set(task.id, { task, reason: 'blocked', idleDays: idle(task) });
+  }
+  for (const task of delegated) {
+    if (out.has(task.id) || !notMine(task) || task.createdBy !== me || task.assigneeIds.length === 0) continue;
+    const days = idle(task);
+    if (days >= DELEGATED_IDLE_DAYS) out.set(task.id, { task, reason: 'delegated', idleDays: days });
+  }
+  return [...out.values()].sort(
+    (a, b) => (a.reason === b.reason ? b.idleDays - a.idleDays : a.reason === 'blocked' ? -1 : 1),
+  );
+};
+
+/** Ids des tâches dont une des miennes dépend (à lire si inconnues). */
+export const dependencyIdsOf = (myOpen: TeamTask[], deps: TeamTaskDependency[]): string[] => {
+  const mine = new Set(myOpen.map((t) => t.id));
+  return [...new Set(deps.filter((d) => mine.has(d.taskId)).map((d) => d.dependsOnId))].sort();
+};
+
+// ─── Mes projets : qui d'autre y travaille (maquette 7 C) ───────────
+
+/** Assignés des tâches connues de chaque projet, moi exclu, trois au plus. */
+export const projectPeople = (tasks: TeamTask[], me: string): Map<string, string[]> => {
+  const acc = new Map<string, Set<string>>();
+  for (const t of tasks) {
+    const set = acc.get(t.projectId) ?? new Set<string>();
+    for (const id of t.assigneeIds) if (id !== me) set.add(id);
+    acc.set(t.projectId, set);
+  }
+  return new Map([...acc].map(([id, set]) => [id, [...set].slice(0, 3)]));
+};
+
+/**
+ * Part du calendrier d'un projet déjà écoulée, 0..100, ou null sans dates.
+ * Ce n'est PAS un avancement : la carte le dit dans son libellé.
+ */
+export const projectElapsed = (startDate?: string | null, dueDate?: string | null, now: Date = new Date()): number | null => {
+  if (!startDate || !dueDate) return null;
+  const start = parseISO(startDate).getTime();
+  const end = parseISO(dueDate).getTime();
+  if (!(end > start)) return null;
+  return Math.min(100, Math.max(0, Math.round(((now.getTime() - start) / (end - start)) * 100)));
+};
+
 /** En retard : échéance passée, aujourd'hui exclu. Partagé par `MyWorkTab` et le bandeau de chiffres. */
 export const isOverdue = (t: TeamTask): boolean => {
   if (t.completed || !t.deadline) return false;

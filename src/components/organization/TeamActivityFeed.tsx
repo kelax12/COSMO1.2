@@ -16,6 +16,8 @@ interface TeamActivityFeedProps {
   onOpenTask?: (task: TeamTask) => void;
   /** Mes propres actions se disent à la première personne (« Vous avez créé »). */
   currentUserId?: string;
+  /** Sans cadre ni titre : rendu DANS une autre carte (digest de l'Aperçu). */
+  bare?: boolean;
 }
 
 const firstName = (name: string) => name.split(' ')[0];
@@ -40,7 +42,7 @@ const ICONS: Record<ActivityKind, { Icon: typeof PlusCircle; className: string }
  * Une entrée dont la tâche n'est pas lisible (supprimée, hors périmètre)
  * n'est pas affichée : un fil ne nomme que ce que le lecteur peut ouvrir.
  */
-const TeamActivityFeed = ({ items, taskById, projects, members, onOpenTask, currentUserId }: TeamActivityFeedProps) => {
+const TeamActivityFeed = ({ items, taskById, projects, members, onOpenTask, currentUserId, bare = false }: TeamActivityFeedProps) => {
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
   const memberById = new Map(members.map((m) => [m.userId, m]));
@@ -94,10 +96,12 @@ const TeamActivityFeed = ({ items, taskById, projects, members, onOpenTask, curr
   };
 
   return (
-    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-        {tOrgAdmin('activity.title')}
-      </h3>
+    <div className={bare ? '' : 'rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4'}>
+      {!bare && (
+        <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
+          {tOrgAdmin('activity.title')}
+        </h3>
+      )}
       <ul className="space-y-2">
         {visible.map((item) => {
           const task = taskById.get(item.taskId)!;

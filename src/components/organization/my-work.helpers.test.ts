@@ -9,6 +9,12 @@ import {
   summarizeMyProjects,
   myKeyResults,
   buildActivityItems,
+  activityDigest,
+  weekLoad,
+  waitingOnOthers,
+  dependencyIdsOf,
+  projectPeople,
+  projectElapsed,
 } from './my-work.helpers';
 import type { TeamProject, TeamTask, TeamTaskActivity } from '@/modules/team-projects';
 import type { TeamOKR } from '@/modules/team-okrs';
@@ -172,5 +178,88 @@ describe('buildActivityItems', () => {
   // même si une tâche récente existe quelque part.
   it("n'invente aucune création hors du journal", () => {
     expect(buildActivityItems([])).toEqual([]);
+  });
+});
+
+describe('activityDigest (maquette 8 C)', () => {
+  const e = (over: Partial<TeamTaskActivity>): TeamTaskActivity => ({
+    id: Math.random().toString(36), taskId: 't1', orgId: 'o1', actorId: 'bob', field: 'status', oldValue: 'todo', newValue: 'done',
+    createdAt: '2026-09-24T08:00:00.000Z', ...over,
+  });
+  it('compte sur le journal brut des 24 h, et ce que d autres ont fait sur mes tâches', () => {
+    const since = new Date('2026-09-23T10:00:00.000Z');
+    const out = activityDigest(
+      [
+        e({ taskId: 'mine' }),
+        e({ taskId: 'other' }),
+        e({ field: 'created', oldValue: null, newValue: null, taskId: 'mine', actorId: ME }),
+        e({ createdAt: '2026-09-20T08:00:00.000Z' }),
+      ],
+      new Set(['mine']),
+      ME,
+      since,
+    );
+    expect(out).toEqual({ completed: 2, created: 1, aboutMe: 1 });
+  });
+  it('ne tronque pas à 8 comme le fil', () => {
+    const many = Array.from({ length: 12 }, () => e({}));
+    expect(activityDigest(many, new Set(), ME, new Date('2026-09-23T00:00:00.000Z')).completed).toBe(12);
+  });
+});
+
+describe('weekLoad (N1)', () => {
+  it('somme les estimations des retards et des sept jours, signale les tâches sans estimation', () => {
+    const out = weekLoad(
+      [
+        task({ id: 'a', deadline: '2026-09-23', estimatedTime: 60 }),
+        task({ id: 'b', deadline: '2026-09-26', estimatedTime: 30 }),
+        task({ id: 'c', deadline: '2026-09-25' }),
+        task({ id: 'd', deadline: '2026-10-20', estimatedTime: 600 }),
+        task({ id: 'e', estimatedTime: 600 }),
+      ],
+      NOW,
+    );
+    expect(out).toEqual({ minutes: 90, unestimated: 1, tasks: 3 });
+  });
+});
+
+describe('waitingOnOthers (N2)', () => {
+  // Relatif à NOW (heure LOCALE) : une date UTC écrite en dur décale d'un jour selon le fuseau.
+  const daysBefore = (n: number) => new Date(NOW.getTime() - n * 86_400_000).toISOString();
+  const mine = task({ id: 'm1' });
+  it('remonte la tâche d autrui dont la mienne dépend, et ce que j ai confié qui dort', () => {
+    const theirs = task({ id: 'x1', assigneeIds: ['bob'], updatedAt: daysBefore(1) });
+    const stale = task({ id: 'd1', assigneeIds: ['ann'], createdBy: ME, updatedAt: daysBefore(7) });
+    const fresh = task({ id: 'd2', assigneeIds: ['ann'], createdBy: ME, updatedAt: daysBefore(1) });
+    const out = waitingOnOthers([mine], [{ taskId: 'm1', dependsOnId: 'x1' } as never], [theirs], [stale, fresh], ME, NOW);
+    expect(out.map((w) => [w.task.id, w.reason, w.idleDays])).toEqual([['x1', 'blocked', 1], ['d1', 'delegated', 7]]);
+  });
+  it('exclut ce qui est en revue (la balle est chez moi), terminé, ou à moi', () => {
+    const review = task({ id: 'r', assigneeIds: ['ann'], createdBy: ME, status: 'review' });
+    const done = task({ id: 'f', assigneeIds: ['ann'], createdBy: ME, completed: true });
+    const self = task({ id: 's', createdBy: ME });
+    const unassigned = task({ id: 'u', assigneeIds: [], createdBy: ME });
+    expect(waitingOnOthers([], [], [], [review, done, self, unassigned], ME, NOW)).toEqual([]);
+  });
+  it('dependencyIdsOf lit l arête dans le sens « ma tâche dépend de »', () => {
+    expect(dependencyIdsOf([mine], [{ taskId: 'm1', dependsOnId: 'z' }, { taskId: 'z', dependsOnId: 'm1' }] as never)).toEqual(['z']);
+  });
+});
+
+describe('projectPeople / projectElapsed (maquette 7 C)', () => {
+  it('autres assignés par projet, moi exclu, trois au plus', () => {
+    const out = projectPeople(
+      [task({ assigneeIds: [ME, 'a', 'b'] }), task({ id: 't2', assigneeIds: ['c', 'd'] }), task({ id: 't3', projectId: 'p2' })],
+      ME,
+    );
+    expect(out.get('p1')).toEqual(['a', 'b', 'c']);
+    expect(out.get('p2')).toEqual([]);
+  });
+  it('part du calendrier écoulée, bornée ; null sans dates ou dates incohérentes', () => {
+    expect(projectElapsed('2026-09-14', '2026-10-04', NOW)).toBe(52);
+    expect(projectElapsed('2026-10-01', '2026-10-04', NOW)).toBe(0);
+    expect(projectElapsed('2026-01-01', '2026-02-01', NOW)).toBe(100);
+    expect(projectElapsed(null, '2026-10-04', NOW)).toBeNull();
+    expect(projectElapsed('2026-10-04', '2026-10-01', NOW)).toBeNull();
   });
 });

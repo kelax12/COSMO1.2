@@ -1272,5 +1272,62 @@
   },
   "myKrs": {
     "title": "My key results"
+  },
+  "apercu": {
+    "greeting": {
+      "hello": "Hello {{name}}.",
+      "helloAnon": "Hello.",
+      "allClear": "Nothing is waiting for you and no task is open: you’re all clear.",
+      "waiting_one": "{{count}} waiting",
+      "waiting_other": "{{count}} waiting",
+      "open_one": "{{count}} open task",
+      "open_other": "{{count}} open tasks",
+      "overdue_one": "{{count}} overdue",
+      "overdue_other": "{{count}} overdue",
+      "next": "and your next deadline is",
+      "nextLate": "and your oldest missed deadline was",
+      "noDeadline": "and no deadline is set.",
+      "barLabel": "{{done}} done · {{inProgress}} in progress · {{overdue}} overdue"
+    },
+    "review": {
+      "approve": "Approve",
+      "approveTask": "Approve “{{name}}”",
+      "sendBack": "Send back",
+      "sendBackTask": "Send “{{name}}” back to its assignee"
+    },
+    "projects": {
+      "ends": "ends {{date}}",
+      "elapsed": "{{percent}}% of the project schedule elapsed"
+    },
+    "agendaFreeToday": "No meetings today.",
+    "weekLoad": {
+      "title": "My week",
+      "ofCapacity": "estimated out of a 35-hour week",
+      "percent": "{{percent}}% of a 35-hour week",
+      "tasks_one": "{{count}} task due within 7 days",
+      "tasks_other": "{{count}} tasks due within 7 days",
+      "unestimated_one": "{{count}} without an estimate",
+      "unestimated_other": "{{count}} without an estimate"
+    },
+    "waitingOn": {
+      "title": "Waiting on others",
+      "empty": "Nothing you’re waiting on is stuck.",
+      "blocked": "blocks one of your tasks",
+      "delegated": "assigned by you",
+      "idle_one": "{{count}}d",
+      "idle_other": "{{count}}d"
+    },
+    "digest": {
+      "title": "Your team since yesterday",
+      "quiet": "Quiet day: no task created or completed.",
+      "completed_one": "{{count}} completed",
+      "completed_other": "{{count}} completed",
+      "created_one": "{{count}} created",
+      "created_other": "{{count}} created",
+      "aboutMe_one": "Including {{count}} change to your tasks.",
+      "aboutMe_other": "Including {{count}} changes to your tasks.",
+      "show": "Show details",
+      "hide": "Hide details"
+    }
   }
 }

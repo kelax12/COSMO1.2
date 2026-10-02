@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { format, parseISO, isPast, isToday, startOfDay, subDays } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import {
-  CircleCheck, ChevronRight,
+  CircleCheck, ChevronRight, FolderKanban, Target, Users,
 } from 'lucide-react';
 import {
   useTeamProjects,
@@ -18,10 +18,9 @@ import {
 import { useTeamOKRs } from '@/modules/team-okrs';
 import { useOrgTeams } from '@/modules/org-teams';
 import { useUpcomingEvents, type CalendarEvent } from '@/modules/events';
-import { groupEventsByDay } from './agenda-events.helpers';
+import { dayTimeline, groupEventsByDay } from './agenda-events.helpers';
 import { useOrgNotifications, type OrgMember } from '@/modules/organizations';
 import { sortOpenTasks, sumEstimatedTime } from './team-projects.helpers';
-import WorkSummaryCard from './WorkSummaryCard';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTaskModal from './TeamTaskModal';
 import { MyWorkSkeleton } from './OrgLoadingSkeletons';
@@ -60,25 +59,29 @@ interface StartStep { id: string; label: string; done: boolean; tab: string; }
 const NewcomerHints = () => {
   const { t: tOrgAdmin } = useT('orgAdmin');
   const navigate = useNavigate();
-  const hints: { id: string; label: string; tab: string }[] = [
-    { id: 'projects', label: tOrgAdmin('myWork.hintProjects'), tab: 'projects' },
-    { id: 'members', label: tOrgAdmin('myWork.hintMembers'), tab: 'members' },
-    { id: 'okr', label: tOrgAdmin('myWork.hintOkr'), tab: 'okr' },
+  // Maquette 11 B (2026-10-02) : trois cartes à icône plutôt que trois liens,
+  // la porte d'entrée se repère avant de se lire.
+  const hints: { id: string; label: string; tab: string; Icon: typeof FolderKanban }[] = [
+    { id: 'projects', label: tOrgAdmin('myWork.hintProjects'), tab: 'projects', Icon: FolderKanban },
+    { id: 'members', label: tOrgAdmin('myWork.hintMembers'), tab: 'members', Icon: Users },
+    { id: 'okr', label: tOrgAdmin('myWork.hintOkr'), tab: 'okr', Icon: Target },
   ];
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('myWork.welcomeTitle')}</h3>
       <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1 mb-3">{tOrgAdmin('myWork.welcomeIntro')}</p>
-      <ul className="space-y-1">
-        {hints.map((h) => (
-          <li key={h.id}>
+      <ul className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        {hints.map(({ id, label, tab, Icon }) => (
+          <li key={id} className="min-w-0">
             <button
               type="button"
-              onClick={() => navigate(buildOrgLink(h.tab))}
-              className="w-full flex items-center gap-2.5 py-2 px-2 rounded-xl text-left transition-colors hover:bg-[rgb(var(--color-hover))]"
+              onClick={() => navigate(buildOrgLink(tab))}
+              className="w-full h-full min-h-touch flex sm:flex-col items-center sm:justify-center gap-2.5 sm:gap-2 p-3 rounded-xl border border-[rgb(var(--color-border))] text-left sm:text-center transition-colors hover:bg-[rgb(var(--color-hover))] hover:border-[rgb(var(--color-accent))]"
             >
-              <ChevronRight size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-              <span className="text-sm text-[rgb(var(--color-text-secondary))]">{h.label}</span>
+              <span className="w-9 h-9 rounded-xl bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))] flex items-center justify-center shrink-0">
+                <Icon size={18} aria-hidden="true" />
+              </span>
+              <span className="text-sm text-[rgb(var(--color-text-primary))]">{label}</span>
             </button>
           </li>
         ))}
@@ -88,19 +91,53 @@ const NewcomerHints = () => {
 };
 
 /**
+ * Frise de la journée (maquette 5 B, 2026-10-02) : mes rendez-vous du jour
+ * posés sur une règle horaire, « maintenant » en trait rouge. On voit d'un
+ * coup d'œil où sont les trous pour travailler.
+ */
+const DayTimelineStrip = ({ events }: { events: CalendarEvent[] }) => {
+  const { t: tOrgAdmin } = useT('orgAdmin');
+  const { fromHour, toHour, blocks, now } = dayTimeline(events);
+  const mid = Math.round((fromHour + toHour) / 2);
+  return (
+    <div>
+      <div className="relative h-12 rounded-lg bg-[rgb(var(--color-hover))]">
+        <ul aria-label={tOrgAdmin('myWork.agendaToday')}>
+          {blocks.map(({ event, left, width }) => (
+            <li
+              key={event.id}
+              className="absolute top-1.5 bottom-1.5 min-w-0 rounded-md px-1.5 flex items-center overflow-hidden text-[11px] font-semibold text-white"
+              style={{ left: `${left}%`, width: `${width}%`, backgroundColor: event.color || 'rgb(var(--color-accent))' }}
+              title={`${format(parseISO(event.start), 'HH:mm')} · ${event.title}`}
+            >
+              <span className="truncate">{event.title}</span>
+            </li>
+          ))}
+        </ul>
+        {now !== null && (
+          <span className="absolute -top-1 -bottom-1 w-0.5 rounded-full bg-red-500" style={{ left: `${now}%` }} aria-hidden="true" />
+        )}
+      </div>
+      <div className="flex justify-between mt-1 text-caption tabular-nums text-[rgb(var(--color-text-muted))]" aria-hidden="true">
+        <span>{fromHour} h</span><span>{mid} h</span><span>{toHour} h</span>
+      </div>
+    </div>
+  );
+};
+
+/**
  * Mon agenda — événements à venir de MON calendrier personnel (module
- * `events`), pas les échéances de tâches d'équipe : celles-ci vivent dans la
- * frise « Prochains événements d'entreprise » plus bas. Occupe la colonne
- * droite laissée vacante par le retrait de « Mes échéances ».
+ * `events`), pas les échéances de tâches d'équipe : celles-ci vivent dans le
+ * rail « Prochains événements d'entreprise » plus bas.
  *
- * Rendu groupé par jour (concept B) : un en-tête « Aujourd'hui » ou
- * « jeudi 4 sept. » sépare les jours, l'heure passe en colonne fixe à
- * gauche. Utile dès que plusieurs événements tombent le même jour, ce que la
- * liste plate précédente ne distinguait pas visuellement.
+ * Aujourd'hui en frise horaire (maquette 5 B), les jours suivants en liste
+ * groupée par jour sous la frise : la frise ne sait montrer qu'une journée.
  */
 const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
   const { t: tOrgAdmin } = useT('orgAdmin');
-  const groups = groupEventsByDay(events);
+  const allGroups = groupEventsByDay(events);
+  const today = allGroups.find((g) => g.isToday);
+  const groups = allGroups.filter((g) => !g.isToday);
   return (
     // `min-w-0` : second enfant de la même grille que « Mes tâches », donc
     // même borne `min-width: auto` à lever (cf. maquette 105 juste en dessous).
@@ -108,10 +145,18 @@ const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
       <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
         {tOrgAdmin('myWork.agendaSection')}
       </h3>
-      {groups.length === 0 ? (
-        <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{tOrgAdmin('myWork.agendaEmpty')}</p>
+      <p className="text-caption font-semibold uppercase tracking-wide mb-1.5 text-[rgb(var(--color-accent))]">
+        {tOrgAdmin('myWork.agendaToday')}
+      </p>
+      {today ? (
+        <DayTimelineStrip events={today.events} />
       ) : (
-        <div className="space-y-3">
+        <p className="text-xs text-[rgb(var(--color-text-muted))] py-2">{tOrgAdmin('apercu.agendaFreeToday')}</p>
+      )}
+      {groups.length === 0 ? (
+        !today && <p className="text-xs text-[rgb(var(--color-text-muted))] pt-1">{tOrgAdmin('myWork.agendaEmpty')}</p>
+      ) : (
+        <div className="space-y-3 mt-3">
           {groups.map((group) => (
             <div key={group.dayKey}>
               <div className={`text-caption font-semibold uppercase tracking-wide mb-1.5 ${
@@ -225,7 +270,7 @@ const isOverdue = (t: TeamTask): boolean => {
 const ACTIVITY_DAYS = 14;
 
 const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps) => {
-  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const me = currentUserId ?? '';
   const { data: projects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
   const { data: okrs = [], isLoading: loadingOkrs } = useTeamOKRs(orgId);
@@ -264,6 +309,13 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
   const { data: createdInReview = [] } = useTeamTaskSlice(
     orgId,
     { createdBy: me, status: 'review', limit: 50 },
+    { enabled: !!me },
+  );
+  // Ce que j'ai confié et qui reste ouvert (« J'attends quelqu'un ») : la
+  // dérivation ne garde que ce qui dort depuis trois jours.
+  const { data: delegated = [] } = useTeamTaskSlice(
+    orgId,
+    { createdBy: me, completed: false, limit: 50 },
     { enabled: !!me },
   );
   // Créations : dans le journal depuis la mig. 181, plus relues à part.
@@ -305,6 +357,12 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
 
   const toggleComplete = (task: TeamTask) =>
     updateTask.mutate({ taskId: task.id, input: { completed: !task.completed } });
+  // Validation sur place (maquette 2 B) : `completed` et `status` sont
+  // synchronisés côté serveur (mig. 091), on écrit les deux pour l'optimiste.
+  const approve = (task: TeamTask) =>
+    updateTask.mutate({ taskId: task.id, input: { completed: true, status: 'done' } });
+  const sendBack = (task: TeamTask) =>
+    updateTask.mutate({ taskId: task.id, input: { status: 'in_progress' } });
   const modalUpdate = (taskId: string, input: UpdateTeamTaskInput) =>
     updateTask.mutateAsync({ taskId, input });
 
@@ -329,6 +387,7 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
           mine={mine}
           upcoming={upcoming}
           createdInReview={createdInReview}
+          delegated={delegated}
           activity={activity}
           deps={deps}
           notifications={notifications}
@@ -338,19 +397,13 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
           hasAny={hasAnyTask}
           estimated={myEstimated}
           agenda={<AgendaEventsCard events={upcomingEvents} />}
-          summary={(
-            <WorkSummaryCard
-              title={tpOrgAdmin('myWork.myTasks', myTasks.length)}
-              completed={done.length}
-              inProgress={Math.max(0, open.length - overdue.length)}
-              overdue={overdue.length}
-              emptyLabel={tOrgAdmin('myWork.emptyLabel')}
-            />
-          )}
           overdueCount={overdue.length}
+          doneCount={done.length}
           nextDeadline={nextDeadline}
           onToggle={toggleComplete}
           onOpenTask={setEditingTask}
+          onApprove={approve}
+          onSendBack={sendBack}
         />
       </Suspense>
 
