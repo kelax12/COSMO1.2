@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { HelpCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useT } from '@/i18n/useT';
@@ -28,7 +28,19 @@ const RoleTerm = ({ term, children, label, className = '' }: {
   // « Voir tout le glossaire » : la feuille s'ouvre d'ici, sur ce terme.
   const [glossary, setGlossary] = useState(false);
   const [firstSight, setFirstSight] = useState(false);
+  const anchor = useRef<HTMLSpanElement>(null);
   useEffect(() => {
+    // 🔴 Jamais par-dessus une surface modale qui ne la contient pas. La bulle
+    // est en `z-[10001]` (elle doit passer au-dessus des fiches qui l'hébergent) :
+    // ouverte pendant qu'une feuille est montée AILLEURS, elle s'y posait dessus
+    // et prenait ses appuis. Mesuré le 2026-10-02 sur /entreprise/members à
+    // 375 px : sélecteur de section ouvert AVANT que l'annuaire ne rende ses
+    // rôles, la bulle « Administrateur » couvrait la feuille et le tap sur
+    // « OKR » tombait sur elle (cas e2e intermittent de demo-entreprise).
+    // Le premier affichage n'est alors PAS consommé : il attendra le suivant.
+    const elsewhere = [...document.querySelectorAll('[aria-modal="true"]')]
+      .some((modal) => !modal.contains(anchor.current));
+    if (elsewhere) return;
     if (claimFirstSight(term)) { setFirstSight(true); setOpen(true); }
   }, [term]);
   // La bulle de premier affichage refermée (ou démontée) laisse la place à la suivante.
@@ -40,7 +52,7 @@ const RoleTerm = ({ term, children, label, className = '' }: {
   const name = children ?? label ?? '';
 
   return (
-    <span className={`inline-flex items-center gap-0.5 ${className}`}>
+    <span ref={anchor} className={`inline-flex items-center gap-0.5 ${className}`}>
       {children}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
