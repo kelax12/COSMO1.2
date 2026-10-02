@@ -20,8 +20,11 @@ test.describe('Espace entreprise (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
     await expectOrgSectionOffered(page, /^aperçu/i);
 
-    // Sections de l'Aperçu (reco #2 + #11)
-    await expect(page.getByRole('heading', { name: /activité de l'équipe/i })).toBeVisible();
+    // Sections de l'Aperçu (reco #2 + #11). L'activité de l'équipe est devenue
+    // un digest des dernières 24 h, « Depuis hier dans l’équipe », à la refonte
+    // de l'Aperçu du 2026-10-02 (3609210c, décision produit). Apostrophe
+    // typographique : même précaution que plus bas.
+    await expect(page.getByRole('heading', { name: /depuis hier dans l[’']équipe/i })).toBeVisible();
     // Renommé le 2026-08-27 : la liste « Mes échéances » a été remplacée par la
     // frise « Prochains événements de l'entreprise » (commits ce8ac2c, e6a873a).
     // Ce test n'a pas suivi, et le job e2e est rouge sur `main` depuis.
