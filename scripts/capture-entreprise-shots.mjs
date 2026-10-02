@@ -86,8 +86,12 @@ const clickView = async (page, name, waitMs = 3500) => {
 const NAMES = [
   'apercu', 'pyramide', 'membres', 'taches',
   'projets', 'projets-planning', 'projets-portefeuille',
-  'okr', 'rapports',
+  'okr', 'rapports', 'taches-tableau', 'taches-dependances',
 ];
+
+/** `SHOTS_ONLY=taches-tableau,taches-dependances` : ne refait que ces captures. */
+const ONLY = process.env.SHOTS_ONLY ? new Set(process.env.SHOTS_ONLY.split(',')) : null;
+const want = (...names) => !ONLY || names.some((n) => ONLY.has(n));
 
 const run = async () => {
   mkdirSync(OUT, { recursive: true });
@@ -106,32 +110,92 @@ const run = async () => {
   const collapse = page.getByRole('button', { name: 'Réduire la barre latérale' }).first();
   if (await collapse.isVisible().catch(() => false)) await collapse.click();
 
-  await goTo(page, '');
-  await capture(page, 'apercu');
+  if (want('apercu')) {
+    await goTo(page, '');
+    await capture(page, 'apercu');
+  }
 
-  await goTo(page, '/pyramid', 4000); // laisse jouer l'entrée de l'organigramme
-  await capture(page, 'pyramide');
+  if (want('pyramide')) {
+    await goTo(page, '/pyramid', 4000); // laisse jouer l'entrée de l'organigramme
+    await capture(page, 'pyramide');
+  }
 
-  await goTo(page, '/members');
-  await capture(page, 'membres');
+  if (want('membres')) {
+    await goTo(page, '/members');
+    await capture(page, 'membres');
+  }
 
-  await goTo(page, '/tasks', 4500);
-  await capture(page, 'taches');
+  if (want('taches')) {
+    await goTo(page, '/tasks', 4500);
+    await capture(page, 'taches');
+  }
 
-  await goTo(page, '/projects');
-  await clickView(page, 'Liste');
-  await capture(page, 'projets');
-  await clickView(page, 'Planning', 5000);
-  await capture(page, 'projets-planning');
-  await clickView(page, 'Portefeuille');
-  await capture(page, 'projets-portefeuille');
-  await clickView(page, 'Liste', 500); // ne pas laisser la préférence sur Portefeuille
+  if (want('projets', 'projets-planning', 'projets-portefeuille')) {
+    await goTo(page, '/projects');
+    await clickView(page, 'Liste');
+    await capture(page, 'projets');
+    await clickView(page, 'Planning', 5000);
+    await capture(page, 'projets-planning');
+    await clickView(page, 'Portefeuille');
+    await capture(page, 'projets-portefeuille');
+    await clickView(page, 'Liste', 500); // ne pas laisser la préférence sur Portefeuille
+  }
 
-  await goTo(page, '/okr', 4000);
-  await capture(page, 'okr');
+  if (want('okr')) {
+    await goTo(page, '/okr', 4000);
+    await capture(page, 'okr');
+  }
 
-  await goTo(page, '/reports', 4500);
-  await capture(page, 'rapports');
+  if (want('rapports')) {
+    await goTo(page, '/reports', 4500);
+    await capture(page, 'rapports');
+  }
+
+  // ── Étape 3 « Exécution » : le Tableau par statut, et la fiche d'une tâche
+  // bloquée sur son onglet Dépendances. Viewport élargi : à 1280 px, les cinq
+  // colonnes de statut ne tiennent pas côte à côte.
+  if (want('taches-tableau', 'taches-dependances')) {
+    await page.setViewportSize({ width: 1600, height: 1200 });
+    await goTo(page, '/tasks', 4500);
+    await clickView(page, 'Tableau', 2500);
+    if (want('taches-tableau')) {
+      await page.evaluate(HIDE_TRANSIENTS);
+      await page.mouse.move(2, 1198);
+      await wait(400);
+      // Cadré sur la rangée des filtres rapides et le tableau, sans l'en-tête
+      // d'organisation ni le panneau de droite, en 16/10.
+      const row = await page.getByRole('button', { name: /^Tableau$/ }).first().boundingBox();
+      const main = await page.locator('main').first().boundingBox();
+      const x = Math.round(main.x) + 16;
+      await page.screenshot({
+        path: join(OUT, 'taches-tableau.png'),
+        clip: { x, y: Math.round(row.y) - 14, width: 1280, height: 800 },
+      });
+      console.log('  ✓ taches-tableau.png');
+    }
+    if (want('taches-dependances')) {
+      // « Audit accessibilité WCAG » est bloquée par « Intégration du header
+      // responsive » dans le seed démo (DEMO_TASK_DEPENDENCIES).
+      await page.getByRole('button', { name: /Modifier la tâche Audit accessibilité/ }).first().click();
+      await wait(2000);
+      await page.getByText('Dépendances', { exact: true }).first().click();
+      await wait(1500);
+      const dialog = page.getByRole('dialog').filter({ hasText: 'Modifier la tâche' }).first();
+      await page.mouse.move(2, 1198);
+      await wait(300);
+      // Sans le pied de la fiche (Supprimer / Annuler / Sauvegarder) : seul
+      // l'onglet Dépendances porte le message.
+      const box = await dialog.boundingBox();
+      const del = await dialog.getByRole('button', { name: /^Supprimer$/ }).first().boundingBox();
+      await page.screenshot({
+        path: join(OUT, 'taches-dependances.png'),
+        clip: { x: box.x, y: box.y, width: box.width, height: Math.round(del.y - 18 - box.y) },
+      });
+      console.log('  ✓ taches-dependances.png');
+      await page.keyboard.press('Escape');
+    }
+    await clickView(page, 'Liste', 500); // ne pas laisser la préférence sur Tableau
+  }
 
   await browser.close();
 
@@ -139,7 +203,7 @@ const run = async () => {
   // webp côté Node dans ce dépôt).
   const converter = await chromium.launch();
   const cpage = await converter.newPage();
-  for (const name of NAMES) {
+  for (const name of NAMES.filter((n) => want(n))) {
     const pngPath = join(OUT, `${name}.png`);
     const b64 = readFileSync(pngPath).toString('base64');
     const dataUrl = await cpage.evaluate(async ({ base64, outWidth }) => {
@@ -147,8 +211,9 @@ const run = async () => {
       img.src = `data:image/png;base64,${base64}`;
       await img.decode();
       const canvas = document.createElement('canvas');
-      canvas.width = outWidth;
-      canvas.height = Math.round((img.naturalHeight * outWidth) / img.naturalWidth);
+      // Jamais d'agrandissement : la carte Dépendances est plus étroite que 1600.
+      canvas.width = Math.min(outWidth, img.naturalWidth);
+      canvas.height = Math.round((img.naturalHeight * canvas.width) / img.naturalWidth);
       const ctx = canvas.getContext('2d');
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);

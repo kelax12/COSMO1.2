@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link2 } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
+import AppShot from './AppShot';
 import StepSection from './StepSection';
+import { SHOTS } from './data';
 
-/** Les trois arguments de l'étape — dans l'ordre où ils répondent à « qui bloque quoi ». */
+/** Les trois arguments de l'étape, dans l'ordre où ils répondent à « qui bloque quoi ». */
 const POINTS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
   { titleKey: 'enterprise.execution.p1t', bodyKey: 'enterprise.execution.p1d' },
   { titleKey: 'enterprise.execution.p2t', bodyKey: 'enterprise.execution.p2d' },
@@ -12,77 +13,23 @@ const POINTS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
 ];
 
 /**
- * Statut de flux d'une tâche du panneau — même vocabulaire et mêmes couleurs
- * de pastille que `STATUS_META` (`src/components/organization/team-projects.helpers.ts`) :
- * la landing ne réinvente pas de palette pour un statut qui existe déjà dans
- * le produit.
- */
-type MockStatus = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
-
-const STATUS_DOT: Record<MockStatus, string> = {
-  todo: 'bg-slate-400',
-  in_progress: 'bg-blue-500',
-  review: 'bg-violet-500',
-  blocked: 'bg-red-500',
-  done: 'bg-emerald-500',
-};
-
-const STATUS_LABEL_KEY: Record<MockStatus, KeyOf<'landing'>> = {
-  todo: 'enterprise.execution.statusTodo',
-  in_progress: 'enterprise.execution.statusProgress',
-  review: 'enterprise.execution.statusReview',
-  blocked: 'enterprise.execution.statusBlocked',
-  done: 'enterprise.execution.statusDone',
-};
-
-/**
- * Les quatre tâches du panneau — mêmes personas que la pyramide (`data.ts`),
- * pour que le visiteur retrouve les mêmes noms d'un bloc à l'autre. Trois
- * d'entre elles s'enchaînent (le chemin critique), la quatrième est
- * indépendante : c'est ce contraste qui fait comprendre la notion de marge.
- */
-const TASKS: {
-  nameKey: KeyOf<'landing'>;
-  status: MockStatus;
-  initials: string;
-  avatarClass: string;
-  onCriticalPath: boolean;
-  blockedByKey?: KeyOf<'landing'>;
-}[] = [
-  { nameKey: 'enterprise.execution.task1', status: 'done', initials: 'MD', avatarClass: 'bg-emerald-500', onCriticalPath: true },
-  {
-    nameKey: 'enterprise.execution.task2',
-    status: 'in_progress',
-    initials: 'SB',
-    avatarClass: 'bg-emerald-500',
-    onCriticalPath: true,
-    blockedByKey: 'enterprise.execution.task1',
-  },
-  {
-    nameKey: 'enterprise.execution.task3',
-    status: 'blocked',
-    initials: 'MD',
-    avatarClass: 'bg-emerald-500',
-    onCriticalPath: true,
-    blockedByKey: 'enterprise.execution.task2',
-  },
-  { nameKey: 'enterprise.execution.task4', status: 'todo', initials: 'LM', avatarClass: 'bg-pink-600', onCriticalPath: false },
-];
-
-/**
- * Étape 3 — l'exécution : le tableau de tâches transverse, les cinq statuts
- * de flux, les dépendances et le chemin critique.
+ * Étape 3 : l'exécution. Le tableau de tâches transverse, les cinq statuts de
+ * flux, les dépendances et le chemin critique.
  *
- * Section dédiée (option B retenue le 2026-08-24, plutôt que d'étendre
- * `ProjectsSection` à quatre points) : ces trois arguments méritaient leur
- * propre respiration plutôt que de s'entasser dans la carte « projets ». Le
- * panneau de droite n'est PAS une capture d'écran — `taches.webp` n'existe
- * pas encore — mais un mockup fidèle aux classes réelles (`STATUS_META`,
- * `critical-path.helpers.ts`), sur le même principe que la pyramide interactive
- * de `PyramidSection` : une reconstruction, pas une image.
+ * Deux VRAIES captures (2026-10-02), plus de mockup : l'onglet Tâches en vue
+ * Tableau, une colonne par statut, et en surimpression la fiche d'une tâche
+ * bloquée ouverte sur son onglet Dépendances. Les deux viennent de la même
+ * démo : « Audit accessibilité WCAG », dans la colonne Bloquée du tableau, est
+ * la tâche dont la fiche dit « Bloquée par Intégration du header responsive ».
+ * Si le seed démo change cette chaîne (`DEMO_TASK_DEPENDENCIES`), recapturer.
+ *
+ * La fiche est une image à part et pas un recadrage du tableau : un détail lu
+ * à 40 % de sa taille resterait illisible. Sous `sm`, elle passe sous le
+ * tableau au lieu de le recouvrir.
  */
 const ExecutionSection: React.FC = () => {
   const { t } = useT('landing');
+  const deps = SHOTS.tasksDeps;
 
   return (
     <StepSection
@@ -101,45 +48,39 @@ const ExecutionSection: React.FC = () => {
           ))}
         </ul>
 
-        {/* ── Panneau : onglet Tâches + dépendances + chemin critique ── */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#0A0C11] p-5 sm:p-6">
-          <span className="mb-4 block font-mono text-caption uppercase tracking-[0.22em] text-slate-500">
-            {t('enterprise.execution.panelLabel')}
-          </span>
+        <div className="relative sm:pb-24">
+          <div className="aspect-[16/10]">
+            <AppShot
+              src={SHOTS.tasksBoard.image}
+              alt={t(SHOTS.tasksBoard.altKey)}
+              label={t(SHOTS.tasksBoard.labelKey)}
+            />
+          </div>
 
-          <ul className="space-y-2">
-            {TASKS.map((task) => (
-              <li
-                key={task.nameKey}
-                className={`rounded-xl border p-3.5 ${
-                  task.onCriticalPath
-                    ? 'border-cyan-300/25 bg-cyan-400/[0.05]'
-                    : 'border-white/[0.06] bg-white/[0.015]'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[task.status]}`} aria-hidden="true" />
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-200">
-                    {t(task.nameKey)}
-                  </span>
-                  <span
-                    className={`h-6 w-6 shrink-0 rounded-full ${task.avatarClass} flex items-center justify-center font-mono text-[0.6rem] font-bold text-black/70`}
-                  >
-                    {task.initials}
-                  </span>
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 pl-5 font-mono text-[0.65rem] uppercase tracking-[0.1em] text-slate-500">
-                  <span>{t(STATUS_LABEL_KEY[task.status])}</span>
-                  {task.blockedByKey && (
-                    <span className="inline-flex items-center gap-1 normal-case tracking-normal text-slate-400">
-                      <Link2 size={11} aria-hidden="true" />
-                      {t('enterprise.execution.blockedBy', { name: t(task.blockedByKey) })}
-                    </span>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
+          {/* La fiche bloquée, posée sur les colonnes les plus vides du
+              tableau (En relecture, Bloquée, Terminée). Liseré cyan : c'est
+              l'élément sur lequel l'étape insiste. */}
+          <figure className="mt-4 overflow-hidden rounded-xl border border-cyan-300/30 bg-[#0A0C11] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.95)] sm:absolute sm:bottom-0 sm:right-[-1rem] sm:mt-0 sm:w-[72%]">
+            <div className="flex items-center gap-2 border-b border-white/[0.07] px-4 py-2">
+              <span className="flex gap-1.5" aria-hidden="true">
+                <span className="h-2 w-2 rounded-full bg-white/10" />
+                <span className="h-2 w-2 rounded-full bg-white/10" />
+                <span className="h-2 w-2 rounded-full bg-cyan-400/60" />
+              </span>
+              <figcaption className="ml-1 truncate font-mono text-caption uppercase tracking-[0.2em] text-slate-500">
+                {t(deps.labelKey)}
+              </figcaption>
+            </div>
+            <img
+              src={deps.image}
+              alt={t(deps.altKey)}
+              width={1152}
+              height={516}
+              loading="lazy"
+              decoding="async"
+              className="block h-auto w-full"
+            />
+          </figure>
         </div>
       </div>
     </StepSection>
