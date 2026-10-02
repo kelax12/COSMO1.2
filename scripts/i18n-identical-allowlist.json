@@ -153,14 +153,6 @@
       "categorie": "nom-propre",
       "valeur": "Design"
     },
-    "landing.enterprise.pyramid.roleAdmin": {
-      "categorie": "mot-identique",
-      "valeur": "Admin"
-    },
-    "landing.enterprise.pyramid.roleLead": {
-      "categorie": "anglicisme-fr",
-      "valeur": "Manager"
-    },
     "landing.footer.blog": {
       "categorie": "anglicisme-fr",
       "valeur": "Blog"

@@ -13,7 +13,7 @@ const POINTS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
 ];
 
 /**
- * Étape 3 : l'exécution. Le tableau de tâches transverse, les cinq statuts de
+ * Étape 2 : l'exécution. Le tableau de tâches transverse, les cinq statuts de
  * flux, les dépendances et le chemin critique.
  *
  * Deux VRAIES captures (2026-10-02), plus de mockup : l'onglet Tâches en vue
@@ -34,7 +34,7 @@ const ExecutionSection: React.FC = () => {
   return (
     <StepSection
       id="execution"
-      step={3}
+      step={2}
       titleKey="enterprise.execution.title"
       subtitleKey="enterprise.execution.subtitle"
     >
