@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
 import TouchTarget from '@/components/mobile/TouchTarget';
@@ -11,7 +11,7 @@ import { useCreateEvent } from '@/modules/events';
 import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useRestoreOkrWithJournal, useUpdateKeyResult, KeyResult } from '@/modules/okrs';
 import { useKRCompletions } from '@/modules/kr-completions';
 import { showUndoToast } from '@/lib/undo-toast';
-import { useCategories, useCreateCategory, useUpdateCategory } from '@/modules/categories';
+import { useCategories, useCreateCategory } from '@/modules/categories';
 import PageErrorState from '@/components/PageErrorState';
 import TaskModal from '@/components/TaskModal';
 import EventModal from '@/components/EventModal';
@@ -35,11 +35,11 @@ import { useT } from '@/i18n/useT';
 import { useDeadlineReview } from './okr/useDeadlineReview';
 import { useDeleteCategoryFlow } from './okr/useDeleteCategoryFlow';
 import { useTasks } from '@/modules/tasks';
-import { useAuth } from '@/modules/auth/AuthContext';
-import { useActiveOrganization } from '@/modules/organizations/ActiveOrgContext';
-import { useTeamOKRsAcrossOrgs } from '@/modules/team-okrs';
-import ProOKRSection from './okr/ProOKRSection';
-import { myProOkrs } from './okr/pro-okrs';
+import { useInlineCategoryEdit } from './okr/useInlineCategoryEdit';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+
+// OKR d'entreprise dont je porte un KR : section chargée à la demande (cf. ProOKRBlock).
+const ProOKRBlock = lazyWithRetry(() => import('./okr/ProOKRBlock'), ['okr', 'org']);
 
 const OKRPage: React.FC = () => {
   const { t, tp } = useT('okr');
@@ -65,16 +65,7 @@ const OKRPage: React.FC = () => {
   const { data: categories = [] } = useCategories();
   // Sert au décompte d'impact d'une suppression de catégorie (R-02).
   const { data: tasks = [] } = useTasks();
-  // OKR d'entreprise dont je porte un KR (responsable ou contributeur) :
-  // affichés à part, en lecture seule, pour ne pas les confondre avec les miens.
-  const { user } = useAuth();
-  // Toutes mes organisations, pas seulement l'active.
-  const { organizations, setActiveOrgId } = useActiveOrganization();
-  const teamOkrs = useTeamOKRsAcrossOrgs(organizations.map((o) => o.id));
-  const proOkrs = myProOkrs(teamOkrs, user?.id);
-  const orgNames = Object.fromEntries(organizations.map((o) => [o.id, o.name]));
   const createCategoryMutation = useCreateCategory();
-  const updateCategoryMutation = useUpdateCategory();
   // Restauration d'un « Annuler » : recree la categorie sous SON identifiant,
   // sinon les taches et objectifs qui la portaient restent orphelins (R-08).
   const [showCreateCategory, setShowCreateCategory] = useState(false);
@@ -93,11 +84,9 @@ const OKRPage: React.FC = () => {
   const [activeCategoryIds, setActiveCategoryIds] = useState<Set<string>>(new Set());
   const [deletingObjective, setDeletingObjective] = useState<string | null>(null);
   const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null);
-  // États d'édition inline d'une catégorie (nom + couleur). Activés via le
-  // bouton crayon dans la barre flottante au-dessus d'une chip catégorie.
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
-  const [editCategoryName, setEditCategoryName] = useState('');
-  const [editCategoryColor, setEditCategoryColor] = useState('blue');
+  // Édition inline d'une catégorie (nom + couleur), via le crayon de la barre
+  // flottante au-dessus d'une pastille : cf. useInlineCategoryEdit.
+  const categoryEdit = useInlineCategoryEdit(() => setHoveredCategoryId(null));
 
   // ── Deadline review popup ───────────────────────────────────────────
   // À l'ouverture de la page : si un OKR non complété a une deadline atteinte
@@ -107,31 +96,6 @@ const OKRPage: React.FC = () => {
   const [showCompletedModal, setShowCompletedModal] = useState(false);
   const finishedButtonRef = useRef<HTMLButtonElement>(null);
 
-  const startEditCategory = (cat: { id: string; name: string; color: string }) => {
-    setEditingCategoryId(cat.id);
-    setEditCategoryName(cat.name);
-    setEditCategoryColor(cat.color);
-    setHoveredCategoryId(null);
-  };
-
-  const cancelEditCategory = () => {
-    setEditingCategoryId(null);
-    setEditCategoryName('');
-    setEditCategoryColor('blue');
-  };
-
-  const submitEditCategory = () => {
-    if (!editingCategoryId) return;
-    const name = editCategoryName.trim();
-    if (name.length < 2) {
-      toast.error(t('page.categoryNameTooShort'));
-      return;
-    }
-    updateCategoryMutation.mutate(
-      { id: editingCategoryId, updates: { name, color: editCategoryColor } },
-      { onSuccess: () => cancelEditCategory() }
-    );
-  };
   // Suppression d'une catégorie : réaffecter, supprimer, savoir annuler les
   // DEUX. La séquence vit dans son propre module (cf. useDeleteCategoryFlow).
   const {
@@ -406,14 +370,7 @@ const OKRPage: React.FC = () => {
         setActiveCategoryIds={setActiveCategoryIds}
         hoveredCategoryId={hoveredCategoryId}
         setHoveredCategoryId={setHoveredCategoryId}
-        editingCategoryId={editingCategoryId}
-        editCategoryName={editCategoryName}
-        setEditCategoryName={setEditCategoryName}
-        editCategoryColor={editCategoryColor}
-        setEditCategoryColor={setEditCategoryColor}
-        startEditCategory={startEditCategory}
-        cancelEditCategory={cancelEditCategory}
-        submitEditCategory={submitEditCategory}
+        {...categoryEdit}
         setCategoryToDeleteId={setCategoryToDeleteId}
         colorOptions={colorOptions}
         resolveColor={resolveColor}
@@ -472,12 +429,9 @@ const OKRPage: React.FC = () => {
         </motion.div>
       )}
 
-      {user && (
-        <ProOKRSection okrs={proOkrs} orgNames={orgNames} userId={user.id} onSelectOrg={setActiveOrgId} />
-      )}
-      {proOkrs.length > 0 && filteredObjectives.length > 0 && (
-        <h2 className="text-lg font-bold mb-4 text-[rgb(var(--color-text-primary))]">{t('pro.personalSectionTitle')}</h2>
-      )}
+      <Suspense fallback={null}>
+        <ProOKRBlock hasPersonal={filteredObjectives.length > 0} />
+      </Suspense>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AnimatePresence mode="popLayout">

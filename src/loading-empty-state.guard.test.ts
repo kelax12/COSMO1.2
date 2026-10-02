@@ -81,7 +81,6 @@ const NOT_AN_ASSERTION = new Map<string, string>([
   ['components/organization/OrgJoinRequestsList.tsx', 'rend `null` : sans demande, la section entiere disparait, elle n affirme rien (relu le 2026-09-30)'],
   ['components/organization/TeamTasksTab.tsx', 'le test sur `taskDependencies` rend un Set vide de taches bloquees : aucun texte, les pastilles apparaissent a l arrivee des dependances (relu le 2026-09-30)'],
   ['components/organization/TeamAssigneeGroups.tsx', 'rend `null` : la section entiere disparait, elle n affirme rien'],
-  ['components/organization/TeamProjectsTab.tsx', 'le test choisit un GROUPEMENT, la liste plate reste rendue'],
 ]);
 
 /** Lecture React Query dont l'etat de chargement n'est PAS destructure. */
