@@ -10,6 +10,7 @@ import {
   timelineRange, timelineWindow, timelineWeeks, timelineMonths, timelineRows,
   timelineRowsByAssignee, todayOffsetPercent, inWindowOrUnscheduled, UNASSIGNED_ID,
   type TimelineZoom, type TimelineMarker, type TimelineSpan,
+  projectSpanStart,
 } from './timeline.helpers';
 import { projectColor, PRIORITY_META, formatDuration, priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
@@ -129,7 +130,7 @@ const TeamProjectsTimeline = ({
   // « Tout » couvre aussi les dates des projets (mig. 153).
   const fullRange = useMemo(
     () => timelineRange(tasks, new Date(), [
-      ...projects.flatMap((p) => [p.startDate, p.dueDate]),
+      ...projects.flatMap((p) => [projectSpanStart(p), p.dueDate]),
     ]),
     [tasks, projects],
   );
@@ -395,7 +396,7 @@ const TeamProjectsTimeline = ({
                         role="img"
                         aria-label={pf('timeline.projectSpan', {
                           name: row.label,
-                          start: format(parseISO(projectById.get(row.key)?.startDate ?? ''), 'd MMMM', { locale: getDateLocale() }),
+                          start: format(parseISO(projectById.has(row.key) ? projectSpanStart(projectById.get(row.key)!) : ''), 'd MMMM', { locale: getDateLocale() }),
                           end: format(parseISO(projectById.get(row.key)?.dueDate ?? ''), 'd MMMM', { locale: getDateLocale() }),
                         })}
                       />

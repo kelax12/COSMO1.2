@@ -218,9 +218,16 @@ function markerOf(task: TeamTask, deadline: Date, range: TimelineRange, todaySta
   };
 }
 
-/** Bandeau d'un projet : seulement s'il a DEUX dates et qu'il croise la fenêtre. */
+/**
+ * Point de départ du bandeau d'un projet. La date de début n'est plus saisie
+ * (2026-10-02) : on part de celle déjà enregistrée, sinon de la création.
+ */
+export const projectSpanStart = (project: TeamProject): string =>
+  project.startDate || project.createdAt.slice(0, 10);
+
+/** Bandeau d'un projet : seulement s'il a une échéance et qu'il croise la fenêtre. */
 export function projectSpan(project: TeamProject, range: TimelineRange): TimelineSpan | null {
-  const start = parse(project.startDate);
+  const start = parse(projectSpanStart(project));
   const end = parse(project.dueDate);
   if (!start || !end || end < range.start || start > range.end) return null;
   return { startPercent: markerOffset(start, range), endPercent: markerOffset(end, range) };
