@@ -129,8 +129,8 @@ gardes qui tournent : c'est exactement ce qu'on leur demande.
 ### Ce qu'il faut faire, dans l'ordre
 
 1. ~~**Tests des cinq dépôts** sans couverture : seul blocage restant avant le build et le budget en CI.~~ ✅ fait le 2026-10-02 ; le budget a parlé : `OKRPage` à 16,1 ko pour 15,0.
-2. **Agenda** : retirer le `role="region"` posé dans la grille FullCalendar (WCAG 1.3.1, niveau A).
-3. **Cibles tactiles** : « Sélectionner plusieurs tâches » (106 × 32), « Suivre cette tâche » (149 × 36).
+2. ~~**Agenda**~~ ✅ corrigé le 2026-10-02, vert en local : le défileur devient le `rowgroup` de la grille (retirer le rôle ne suffisait pas, cf. [`ACCESSIBILITY.md`](./ACCESSIBILITY.md)). Remboursement au verdict CI.
+3. ~~**Cibles tactiles**~~ ✅ corrigé le 2026-10-02, vert en local : ces deux-là, plus « Gérer les cookies » et les pastilles de listes de la fiche d'équipe. Remboursement au verdict CI.
 4. **Suite e2e entreprise** : la remettre au niveau de l'écran (« Personnes » → « Membres », navigation).
 5. **LCP mobile** : `C-116` à remesurer en CI ; l'élément LCP est le paragraphe animé du hero.
 

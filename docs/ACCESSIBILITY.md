@@ -47,6 +47,24 @@ Conséquences pratiques, à tenir :
 
 ## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → **80 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
 
+> ### 🟡 2026-10-02 · 0 : les deux défauts du 10-01 corrigés, remboursement en attente de la CI
+>
+> Même règle que la veille : un défaut ne se rembourse que **corrigé ET vérifié en CI**. Les deux
+> sont corrigés et verts en local ; la note ne bouge qu'au verdict du job `e2e`.
+>
+> | Item | Correctif | Vérifié en local (chromium, viewport 375 et desktop) |
+> |---|---|---|
+> | Agenda : `aria-required-children` / `aria-required-parent` | `useFocusableScrollers` : le défileur ne porte plus `region`. **Retirer le rôle ne suffisait pas**, mesuré avec axe 4.13 dans le navigateur : un élément simplement focalisable (`tabindex`) compte déjà comme enfant de la grille et coupe `grid > rowgroup > row`. Le défileur DEVIENT donc le `rowgroup` (nommé « Grille du calendrier », toujours arrêt de tabulation pour WebKit, C-119), et le `rowgroup` d'origine de FullCalendar passe en `presentation` ; rendu à l'identique quand le défileur cesse de déborder | `a11y-audit` 11/11 ; axe à 0 sur les deux règles, défileur forcé focalisable ; les 4 cas `/agenda` de `a11y-keyboard-audit` (dont les deux gardes C-54) verts ; 3 témoins unitaires (rôle cédé, rendu, deux défileurs dans un même `tbody`). **WebKit** (`mobile-safari`) : Agenda vert, seule `color-contrast` (bandeau démo, préexistante), et **pas** de `scrollable-region-focusable` : C-119 tient |
+> | Cibles tactiles (C-57) | `TAP_AREA_44_Y` sur « Sélectionner plusieurs tâches » (`MyWorkCards`, 106 × 32), « Suivre cette tâche » (149 × 36), « Gérer les cookies » du pied de page de la landing (115 × 20, un BOUTON parmi des liens, donc mesuré) et les pastilles de listes de la fiche de tâche d'équipe (116 à 158 × 36, révélées une fois le premier défaut corrigé) ; leur rangée passe à `gap-y-2` pour que deux débords ne se chevauchent pas | `touch-targets` 19/19 sous chromium : `/`, `/entreprise-presentation`, `/entreprise` et la modale de tâche d'équipe repassent au vert. Sous WebKit en local, `/` et `/entreprise-presentation` verts ; les autres cas expirent dans le fixture démo (serveur de dev) **sans rien mesurer** : non concluant, le verdict WebKit est celui de la CI |
+>
+> ⚠️ Deux écarts de mesure, laissés tels quels faute de cause établie. (1) En local, la modale
+> ne listait que « Sélectionner plusieurs tâches » au premier run, puis les trois pastilles de listes
+> au suivant : elles n'avaient pas été mesurées la première fois, pourquoi n'est pas prouvé.
+> (2) « Suivre cette tâche » (149 × 36 en CI) n'est apparu dans **aucun** run local ; il est
+> corrigé sur la foi de la CI et de sa classe (`min-h-9`, 36 px par construction).
+>
+> **80 → 80**, en attente de la CI (+1 par défaut vérifié).
+
 > ### 🟠 2026-10-01 · −1
 >
 > **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un

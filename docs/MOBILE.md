@@ -14,6 +14,14 @@
 
 ## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → **74 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
 
+> ### 🟡 2026-10-02 · 0 : cibles tactiles corrigées, remboursement en attente de la CI
+>
+> | Item | Effet | Mesuré le 2026-10-02 |
+> |---|---|---|
+> | Cibles tactiles sous 44 px | **0** (+1 au verdict CI) | `TAP_AREA_44_Y` sur « Sélectionner plusieurs tâches » (106 × 32), « Suivre cette tâche » (149 × 36), « Gérer les cookies » (115 × 20, pied de page de la landing) et les pastilles de listes de la fiche de tâche d'équipe (36 px de haut, rangée passée à `gap-y-2` : 6 px entre rangées aurait fait chevaucher deux débords de 4 px). Le dessin ne bouge pas. `touch-targets` vert en local sous chromium à 375 px. Détail : `ACCESSIBILITY.md` |
+>
+> **74 → 74**, en attente de la CI.
+
 > ### 🟠 2026-10-01 · −1
 >
 > **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un

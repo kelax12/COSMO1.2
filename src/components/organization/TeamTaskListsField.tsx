@@ -3,6 +3,7 @@ import { Check, ListChecks, Plus, X } from 'lucide-react';
 import { useCreateTeamList, useTeamLists } from '@/modules/team-lists';
 import { colorOptions, resolveListColor } from '@/pages/tasks/list-colors';
 import { useT } from '@/i18n/useT';
+import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
 interface TeamTaskListsFieldProps {
   orgId: string;
@@ -55,7 +56,11 @@ const TeamTaskListsField = ({ orgId, value, onChange }: TeamTaskListsFieldProps)
         <ListChecks size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />
         {t('teamLists.fieldTitle')}
       </span>
-      <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('teamLists.fieldTitle')}>
+      {/* `TAP_AREA_44_Y` sur les pastilles (C-57, 2026-10-01) : mesurees 116 a
+          158 x 36 px. Elles passent a la ligne, donc le debord vertical (4 px par
+          cote) doit tenir dans l ecart ENTRE rangees : `gap-y-2` (8 px) et pas
+          `gap-1.5` (6 px), qui ferait chevaucher deux rangees de 2 px. */}
+      <div className="flex flex-wrap gap-x-1.5 gap-y-2" role="group" aria-label={t('teamLists.fieldTitle')}>
         {lists.map((list) => {
           const on = value.includes(list.id);
           const hex = resolveListColor(list.color);
@@ -65,7 +70,7 @@ const TeamTaskListsField = ({ orgId, value, onChange }: TeamTaskListsFieldProps)
               type="button"
               aria-pressed={on}
               onClick={() => toggle(list.id)}
-              className={`inline-flex items-center gap-1.5 min-h-9 px-2.5 rounded-full border text-xs font-semibold transition-colors ${
+              className={`${TAP_AREA_44_Y} inline-flex items-center gap-1.5 min-h-9 px-2.5 rounded-full border text-xs font-semibold transition-colors ${
                 on ? 'border-transparent' : 'border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]'
               }`}
               style={on ? { backgroundColor: `${hex}22`, color: 'rgb(var(--color-text-primary))', boxShadow: `inset 0 0 0 1.5px ${hex}` } : { color: 'rgb(var(--color-text-secondary))' }}
@@ -80,7 +85,7 @@ const TeamTaskListsField = ({ orgId, value, onChange }: TeamTaskListsFieldProps)
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-1 min-h-9 px-2.5 rounded-full border border-dashed border-[rgb(var(--color-border))] text-xs font-semibold text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))]"
+            className={`${TAP_AREA_44_Y} inline-flex items-center gap-1 min-h-9 px-2.5 rounded-full border border-dashed border-[rgb(var(--color-border))] text-xs font-semibold text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))]`}
           >
             <Plus size={12} aria-hidden="true" /> {t('teamLists.newList')}
           </button>
