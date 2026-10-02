@@ -203,13 +203,9 @@ const ProjectDetailPage = ({
             <dt className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{pf('col.dates')}</dt>
             <dd className="mt-1 flex items-center gap-1.5 text-[rgb(var(--color-text-primary))]">
               <CalendarRange size={13} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
-              {project.startDate && project.dueDate
-                ? pf('dateRange', { start: longDate(project.startDate), end: longDate(project.dueDate) })
-                : project.dueDate
-                  ? pf('dueOn', { date: longDate(project.dueDate) })
-                  : project.startDate
-                    ? pf('startsOn', { date: longDate(project.startDate) })
-                    : <span className="italic text-[rgb(var(--color-text-muted))]">{pf('noDates')}</span>}
+              {project.dueDate
+                ? pf('dueOn', { date: longDate(project.dueDate) })
+                : <span className="italic text-[rgb(var(--color-text-muted))]">{pf('noDates')}</span>}
             </dd>
           </div>
           <div>

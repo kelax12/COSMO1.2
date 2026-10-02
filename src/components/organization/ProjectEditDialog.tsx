@@ -78,7 +78,6 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
   const [categoryId, setCategoryId] = useState<string | null>(project.categoryId ?? null);
   const [ownerId, setOwnerId] = useState(project.ownerId ?? '');
   const [status, setStatus] = useState<TeamProjectStatus>(project.status ?? 'active');
-  const [startDate, setStartDate] = useState(project.startDate ?? '');
   const [dueDate, setDueDate] = useState(project.dueDate ?? '');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -92,7 +91,6 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
   const submit = async () => {
     if (pending) return;
     if (!name.trim()) { setError(t('project.nameRequired')); return; }
-    if (startDate && dueDate && startDate > dueDate) { setError(pf('edit.datesInvalid')); return; }
     // N'envoie QUE ce qui a changé : un responsable qui renvoie `ownerId`
     // inchangé passerait, mais un patch minimal ne dépend d'aucune garde.
     const patch: UpdateTeamProjectInput = {};
@@ -102,7 +100,8 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
     if (categoryId !== (project.categoryId ?? null)) patch.categoryId = categoryId;
     if (canChangeOwner && ownerId !== (project.ownerId ?? '')) patch.ownerId = ownerId || null;
     if (status !== (project.status ?? 'active')) patch.status = status;
-    if (startDate !== (project.startDate ?? '')) patch.startDate = startDate || null;
+    // Plus de saisie du début : un ancien début devenu postérieur à l'échéance est effacé (CHECK de dates).
+    if (project.startDate && dueDate && project.startDate > dueDate) patch.startDate = null;
     if (dueDate !== (project.dueDate ?? '')) patch.dueDate = dueDate || null;
     if (Object.keys(patch).length === 0) { onClose(); return; }
     setPending(true);
@@ -223,12 +222,8 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
               </MenuSelect>
             </div>
             <div>
-              <label htmlFor="project-edit-start" className={labelClass}>{pf('edit.startDate')}</label>
-              <DatePicker id="project-edit-start" value={startDate} onChange={(v) => { setStartDate(v); setError(null); }} className="h-11" popoverClassName="z-[10000]" />
-            </div>
-            <div>
               <label htmlFor="project-edit-due" className={labelClass}>{pf('edit.dueDate')}</label>
-              <DatePicker id="project-edit-due" value={dueDate} onChange={(v) => { setDueDate(v); setError(null); }} className="h-11" popoverClassName="z-[10000]" minDate={startDate || undefined} />
+              <DatePicker id="project-edit-due" value={dueDate} onChange={(v) => { setDueDate(v); setError(null); }} className="h-11" popoverClassName="z-[10000]" />
             </div>
           </div>
           <p className="text-xs text-[rgb(var(--color-text-muted))]">{pf('edit.ownerHint')}</p>

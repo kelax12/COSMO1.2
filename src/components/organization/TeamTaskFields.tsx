@@ -75,8 +75,6 @@ interface TeamTaskFieldsProps {
   deadline: string;
   onDeadlineChange: (value: string) => void;
   /** Début planifié (mig. 153) — '' = aucun. La frise en fait une barre. */
-  startDate: string;
-  onStartDateChange: (value: string) => void;
   /**
    * Aucun projet présélectionné (création depuis le kanban, audit 2026-09-24) :
    * le sélecteur ouvre sur « Choisir un projet… » au lieu du premier venu.
@@ -126,8 +124,6 @@ const TeamTaskFields = ({
   onPriorityChange,
   deadline,
   onDeadlineChange,
-  startDate,
-  onStartDateChange,
   requireProjectChoice = false,
   estimatedTime,
   onEstimatedTimeChange,
@@ -272,20 +268,6 @@ const TeamTaskFields = ({
               </button>
             ))}
           </div>
-        </div>
-
-        <div>
-          <label htmlFor="team-task-start" className={labelClass} style={labelStyle}>{t('taskModal.startDate')}</label>
-          {/* Début planifié (mig. 153) : même calendrier, même cran de z-index
-              que l'échéance. Le serveur refuse un début après l'échéance. */}
-          <DatePicker
-            id="team-task-start"
-            value={startDate}
-            onChange={onStartDateChange}
-            placeholder={t('taskModal.startDatePlaceholder')}
-            className={inputHeightClass}
-            popoverClassName="z-[10000]"
-          />
         </div>
 
         <div>

@@ -95,7 +95,6 @@ const TeamTasksTable = ({
             {show('status') && <th className={th} style={{ width: '140px' }}>{t('projects.tasksTabColStatus')}</th>}
             {show('assignees') && <th className={th} style={{ width: '150px' }}>{pf.t('taskTable.colAssignees')}</th>}
             {show('priority') && sortable('priority', t('projects.tasksTabColPriority'), 'text-center px-1 py-3', '80px')}
-            {show('start') && <th className={th} style={{ width: '110px' }}>{pf.t('taskTable.colStart')}</th>}
             {show('deadline') && sortable('deadline', t('projects.tasksTabColDeadline'), th, '130px')}
             {show('duration') && sortable('estimatedTime', t('projects.tasksTabColDuration'), 'text-center px-1 py-3', '80px')}
             {show('category') && <th className={th} style={{ width: '160px' }}>{pf.t('taskTable.colCategory')}</th>}

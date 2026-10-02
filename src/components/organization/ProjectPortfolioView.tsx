@@ -172,13 +172,9 @@ const ProjectPortfolioView = ({
                   </span>
                 </td>
                 <td className="px-3 py-2.5 hidden lg:table-cell text-xs text-[rgb(var(--color-text-secondary))] whitespace-nowrap">
-                  {project.startDate && project.dueDate
-                    ? pf('dateRange', { start: shortDate(project.startDate), end: shortDate(project.dueDate) })
-                    : project.dueDate
-                      ? pf('dueOn', { date: shortDate(project.dueDate) })
-                      : project.startDate
-                        ? pf('startsOn', { date: shortDate(project.startDate) })
-                        : <span className="italic text-[rgb(var(--color-text-muted))]">{pf('noDates')}</span>}
+                  {project.dueDate
+                    ? pf('dueOn', { date: shortDate(project.dueDate) })
+                    : <span className="italic text-[rgb(var(--color-text-muted))]">{pf('noDates')}</span>}
                 </td>
                 <td className="px-3 py-2.5">
                   <span className="flex items-center gap-2" title={t('project.doneRatio', { done: progress.done, total: progress.total, percent: progress.percent })}>

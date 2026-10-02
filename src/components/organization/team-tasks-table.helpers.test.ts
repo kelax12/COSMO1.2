@@ -67,11 +67,11 @@ describe('colonnes, préférence locale', () => {
 describe('buildTasksCsv', () => {
   it('exporte ce que le tableau montre, sans identifiant interne', () => {
     const { headers, rows } = buildTasksCsv([task('Devis', { assigneeIds: ['u1'], deadline: '2026-09-30', priority: 1, estimatedTime: 45 })], {
-      headers: { name: 'N', project: 'P', status: 'S', priority: 'Pr', start: 'D', deadline: 'E', duration: 'Du', assignees: 'A', category: 'C', createdAt: 'Cr' },
+      headers: { name: 'N', project: 'P', status: 'S', priority: 'Pr', deadline: 'E', duration: 'Du', assignees: 'A', category: 'C', createdAt: 'Cr' },
       statusOf: () => 'À faire', projectOf: () => 'Site', personOf: () => 'Alice', categoryOf: () => '',
     });
-    expect(headers).toHaveLength(10);
-    expect(rows[0]).toEqual(['Devis', 'Site', 'À faire', 'P1', '', '2026-09-30', '45', 'Alice', '', '2026-09-01']);
+    expect(headers).toHaveLength(9);
+    expect(rows[0]).toEqual(['Devis', 'Site', 'À faire', 'P1', '2026-09-30', '45', 'Alice', '', '2026-09-01']);
     expect(rows[0].join('|')).not.toContain('p1');
   });
 });

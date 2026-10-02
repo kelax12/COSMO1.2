@@ -42,7 +42,6 @@ const TeamTasksViewControls = ({
     status: org.t('projects.tasksTabColStatus'),
     assignees: t('taskTable.colAssignees'),
     priority: org.t('projects.tasksTabColPriority'),
-    start: t('taskTable.colStart'),
     deadline: org.t('projects.tasksTabColDeadline'),
     duration: org.t('projects.tasksTabColDuration'),
     category: t('taskTable.colCategory'),

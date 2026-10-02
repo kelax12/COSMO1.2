@@ -12,8 +12,8 @@ import { STATUS_ORDER } from './team-projects.helpers';
 const todayIsoDefault = (): string => new Date().toLocaleDateString('en-CA');
 
 /** Colonnes qu'on peut masquer. Nom, case, pastille et actions restent toujours. */
-export type TaskColumnId = 'project' | 'status' | 'assignees' | 'priority' | 'start' | 'deadline' | 'duration' | 'category';
-export const TASK_COLUMNS: readonly TaskColumnId[] = ['project', 'status', 'assignees', 'priority', 'start', 'deadline', 'duration', 'category'];
+export type TaskColumnId = 'project' | 'status' | 'assignees' | 'priority' | 'deadline' | 'duration' | 'category';
+export const TASK_COLUMNS: readonly TaskColumnId[] = ['project', 'status', 'assignees', 'priority','deadline', 'duration', 'category'];
 export const DEFAULT_TASK_COLUMNS: readonly TaskColumnId[] = ['project', 'status', 'assignees', 'priority', 'deadline', 'duration'];
 
 // ⚠️ Préférence d'AFFICHAGE, par personne et par appareil : le stockage local,
@@ -119,7 +119,7 @@ export function flattenGroups(groups: readonly TaskGroup[], grouped: boolean, co
 // ─── Export CSV ─────────────────────────────────────────────────────
 
 export interface TaskCsvLabels {
-  headers: { name: string; project: string; status: string; priority: string; start: string; deadline: string; duration: string; assignees: string; category: string; createdAt: string };
+  headers: { name: string; project: string; status: string; priority: string; deadline: string; duration: string; assignees: string; category: string; createdAt: string };
   statusOf: (task: TeamTask) => string;
   projectOf: (projectId: string) => string;
   personOf: (userId: string) => string;
@@ -135,13 +135,12 @@ export interface TaskCsvLabels {
 export function buildTasksCsv(tasks: readonly TeamTask[], labels: TaskCsvLabels): { headers: string[]; rows: string[][] } {
   const h = labels.headers;
   return {
-    headers: [h.name, h.project, h.status, h.priority, h.start, h.deadline, h.duration, h.assignees, h.category, h.createdAt],
+    headers: [h.name, h.project, h.status, h.priority, h.deadline, h.duration, h.assignees, h.category, h.createdAt],
     rows: tasks.map((task) => [
       task.name,
       labels.projectOf(task.projectId),
       labels.statusOf(task),
       `P${task.priority}`,
-      task.startDate ?? '',
       task.deadline ?? '',
       String(task.estimatedTime ?? 0),
       task.assigneeIds.map(labels.personOf).filter(Boolean).join(' | '),

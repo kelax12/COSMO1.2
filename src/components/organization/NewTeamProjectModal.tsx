@@ -82,7 +82,6 @@ const NewTeamProjectModal = ({
   const [teamId, setTeamId] = useState(initialOrgTemplate?.teamId ?? defaultTeamId ?? '');
   const [ownerId, setOwnerId] = useState(currentUserId ?? '');
   const [description, setDescription] = useState(initialOrgTemplate?.description ?? '');
-  const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [templateChoice, setTemplateChoice] = useState<TemplateChoice>(initialOrgTemplate ? `org:${initialOrgTemplate.id}` : '');
   const [templateTasks, setTemplateTasks] = useState<TeamProjectTemplatePayload['tasks']>(
@@ -153,16 +152,15 @@ const NewTeamProjectModal = ({
   const handleSubmit = async () => {
     if (pending) return;
     if (!name.trim()) { setError(t('project.nameRequired')); return; }
-    if (startDate && dueDate && startDate > dueDate) { setError(pf('edit.datesInvalid')); return; }
     setPending(true);
     setError(null);
     // Une tâche en cours de saisie non ajoutée est incluse (évite la perte).
     const manual = composerName.trim()
       ? [...tasks, { name: composerName.trim(), assigneeIds: composerAssignees }]
       : tasks;
-    // Le modèle se DATE au moment de créer, depuis le début choisi (ou aujourd'hui).
+    // Le modèle se DATE au moment de créer, à partir d'aujourd'hui (plus de date de début de projet).
     const fromTemplate = selectedPayload
-      ? instantiateTemplate({ ...selectedPayload, tasks: templateTasks }, startDate || todayLocal())
+      ? instantiateTemplate({ ...selectedPayload, tasks: templateTasks }, todayLocal())
       : { tasks: [], dueDate: null };
     try {
       await onSubmit(
@@ -173,7 +171,7 @@ const NewTeamProjectModal = ({
           categoryId,
           ownerId: ownerId || null,
           description: description.trim() || null,
-          startDate: startDate || (selectedPayload ? todayLocal() : null),
+          startDate: null,
           dueDate: dueDate || fromTemplate.dueDate,
         },
         [...fromTemplate.tasks, ...manual.map((d) => ({ name: d.name, assigneeIds: d.assigneeIds }))],
@@ -326,14 +324,8 @@ const NewTeamProjectModal = ({
               </span>
             </p>
             <div>
-              <label htmlFor="new-project-start" className={labelClass} style={labelStyle}>
-                {selectedPayload ? pf('templates.startLabel') : pf('new.startDate')}
-              </label>
-              <DatePicker id="new-project-start" value={startDate} onChange={(v) => { setStartDate(v); setError(null); }} className="h-[2.626275rem]" popoverClassName="z-[10000]" />
-            </div>
-            <div>
               <label htmlFor="new-project-due" className={labelClass} style={labelStyle}>{pf('new.dueDate')}</label>
-              <DatePicker id="new-project-due" value={dueDate} onChange={(v) => { setDueDate(v); setError(null); }} className="h-[2.626275rem]" popoverClassName="z-[10000]" minDate={startDate || undefined} />
+              <DatePicker id="new-project-due" value={dueDate} onChange={(v) => { setDueDate(v); setError(null); }} className="h-[2.626275rem]" popoverClassName="z-[10000]" minDate={selectedPayload ? todayLocal() : undefined} />
             </div>
           </div>
 

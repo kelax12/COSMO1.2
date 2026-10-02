@@ -210,14 +210,10 @@ const TeamProjectCard = ({
               {pf('late')}
             </span>
           )}
-          {(project.startDate || project.dueDate) && !archived && (
+          {project.dueDate && !archived && (
             <span className="hidden md:inline-flex items-center gap-1 text-caption text-[rgb(var(--color-text-muted))] shrink-0">
               <CalendarRange size={10} aria-hidden="true" />
-              {project.startDate && project.dueDate
-                ? pf('dateRange', { start: shortDate(project.startDate), end: shortDate(project.dueDate) })
-                : project.dueDate
-                  ? pf('dueOn', { date: shortDate(project.dueDate) })
-                  : pf('startsOn', { date: shortDate(project.startDate!) })}
+              {pf('dueOn', { date: shortDate(project.dueDate) })}
             </span>
           )}
           {archived && (

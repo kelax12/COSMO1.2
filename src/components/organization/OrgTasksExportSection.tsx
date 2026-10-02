@@ -34,7 +34,7 @@ const OrgTasksExportSection = ({ orgId, members }: OrgTasksExportSectionProps) =
       headers: {
         name: h('taskTable.exportHeaders.name'), project: h('taskTable.exportHeaders.project'),
         status: h('taskTable.exportHeaders.status'), priority: h('taskTable.exportHeaders.priority'),
-        start: h('taskTable.exportHeaders.start'), deadline: h('taskTable.exportHeaders.deadline'),
+        deadline: h('taskTable.exportHeaders.deadline'),
         duration: h('taskTable.exportHeaders.duration'), assignees: h('taskTable.exportHeaders.assignees'),
         category: h('taskTable.exportHeaders.category'), createdAt: h('taskTable.exportHeaders.createdAt'),
       },
