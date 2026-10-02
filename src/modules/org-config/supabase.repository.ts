@@ -14,10 +14,10 @@ import type { TeamTaskStatus } from '@/modules/team-projects/types';
 import type { IOrgConfigRepository } from './repository';
 import {
   defaultOrgSettings,
-  type Automation, type CreateAutomationInput, type CreateCustomFieldInput, type CreateProjectStatusInput,
-  type CreateWebhookInput, type CustomField, type CustomFieldKind, type FieldValue,
+  type Automation, type CreateAutomationInput, type CreateProjectStatusInput,
+  type CreateWebhookInput, 
   type OrgDomain, type OrgSettings, type OrgSettingsPatch, type OrgWebhook, type ProjectStatus,
-  type TaskFieldValue, type WebhookEvent, type WebhookFormat,
+  type WebhookEvent, type WebhookFormat,
 } from './types';
 
 const client = () => {
@@ -48,11 +48,6 @@ const mapDomain = (r: DomainRow): OrgDomain => ({
 interface StatusRow { id: string; org_id: string; project_id: string; name: string; color: string; maps_to: TeamTaskStatus; position: number }
 const mapStatus = (r: StatusRow): ProjectStatus => ({
   id: r.id, orgId: r.org_id, projectId: r.project_id, name: r.name, color: r.color, mapsTo: r.maps_to, position: r.position,
-});
-
-interface FieldRow { id: string; org_id: string; project_id: string | null; name: string; kind: CustomFieldKind; options: string[]; position: number }
-const mapField = (r: FieldRow): CustomField => ({
-  id: r.id, orgId: r.org_id, projectId: r.project_id, name: r.name, kind: r.kind, options: r.options ?? [], position: r.position,
 });
 
 interface AutomationRow {
@@ -148,45 +143,6 @@ export class SupabaseOrgConfigRepository implements IOrgConfigRepository {
 
   async deleteProjectStatus(statusId: string): Promise<void> {
     const { error } = await client().from('team_project_statuses').delete().eq('id', statusId);
-    if (error) throw normalizeApiError(error);
-  }
-
-  async getCustomFields(orgId: string): Promise<CustomField[]> {
-    const { data, error } = await client().from('team_custom_fields')
-      .select('id, org_id, project_id, name, kind, options, position').eq('org_id', orgId).order('position');
-    if (error) throw normalizeApiError(error);
-    return (data as FieldRow[]).map(mapField);
-  }
-
-  async createCustomField(orgId: string, input: CreateCustomFieldInput): Promise<CustomField> {
-    const { data, error } = await client().from('team_custom_fields').insert({
-      org_id: orgId, project_id: input.projectId, name: input.name.trim(), kind: input.kind,
-      options: input.kind === 'select' ? input.options ?? [] : [],
-    }).select('id, org_id, project_id, name, kind, options, position').single();
-    if (error) throw normalizeApiError(error);
-    return mapField(data as FieldRow);
-  }
-
-  async deleteCustomField(fieldId: string): Promise<void> {
-    const { error } = await client().from('team_custom_fields').delete().eq('id', fieldId);
-    if (error) throw normalizeApiError(error);
-  }
-
-  /** Lecture par `task_id`, tête de la clé primaire : jamais la jonction de toute la plateforme. */
-  async getTaskFieldValues(taskId: string): Promise<TaskFieldValue[]> {
-    const { data, error } = await client().from('team_task_field_values').select('task_id, field_id, value').eq('task_id', taskId);
-    if (error) throw normalizeApiError(error);
-    return (data as { task_id: string; field_id: string; value: FieldValue }[])
-      .map((r) => ({ taskId: r.task_id, fieldId: r.field_id, value: r.value }));
-  }
-
-  async setTaskFieldValue(taskId: string, fieldId: string, value: FieldValue | null): Promise<void> {
-    const q = client().from('team_task_field_values');
-    // `org_id` n'est pas envoyé : le trigger le déduit de la tâche, AVANT la
-    // vérification du NOT NULL (les contraintes portent sur la ligne finale).
-    const { error } = value === null
-      ? await q.delete().eq('task_id', taskId).eq('field_id', fieldId)
-      : await q.upsert({ task_id: taskId, field_id: fieldId, value }, { onConflict: 'task_id,field_id' });
     if (error) throw normalizeApiError(error);
   }
 

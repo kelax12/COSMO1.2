@@ -4,9 +4,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import type {
-  Automation, CreateAutomationInput, CreateCustomFieldInput, CreateProjectStatusInput, CreateWebhookInput,
-  CustomField, FieldValue, OrgDomain, OrgSettings, OrgSettingsPatch, OrgWebhook, ProjectStatus,
-  TaskFieldValue, WebhookEvent,
+  Automation, CreateAutomationInput, CreateProjectStatusInput, CreateWebhookInput,
+  OrgDomain, OrgSettings, OrgSettingsPatch, OrgWebhook, ProjectStatus,
+  WebhookEvent,
 } from './types';
 
 export interface IOrgConfigRepository {
@@ -25,12 +25,6 @@ export interface IOrgConfigRepository {
   getProjectStatuses(orgId: string): Promise<ProjectStatus[]>;
   createProjectStatus(orgId: string, input: CreateProjectStatusInput): Promise<ProjectStatus>;
   deleteProjectStatus(statusId: string): Promise<void>;
-  getCustomFields(orgId: string): Promise<CustomField[]>;
-  createCustomField(orgId: string, input: CreateCustomFieldInput): Promise<CustomField>;
-  deleteCustomField(fieldId: string): Promise<void>;
-  getTaskFieldValues(taskId: string): Promise<TaskFieldValue[]>;
-  /** `null` efface la valeur. */
-  setTaskFieldValue(taskId: string, fieldId: string, value: FieldValue | null): Promise<void>;
 
   // 198
   getAutomations(orgId: string): Promise<Automation[]>;

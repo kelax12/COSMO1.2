@@ -5,7 +5,6 @@ import type { OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTaskStatus } from '@/modules/team-projects';
 import { useT } from '@/i18n/useT';
 import { STATUS_ORDER, STATUS_META } from '../team-projects.helpers';
-import CustomFieldsEditor from './CustomFieldsEditor';
 import AutomationsEditor from './AutomationsEditor';
 import { CARD, TITLE, HINT, FIELD, BUTTON, ICON_BTN, LABEL } from './config-ui';
 import MenuSelect from '@/components/organization/MenuSelect';
@@ -43,7 +42,7 @@ const ProjectWorkflowSection = ({ project, members, canEdit }: Props) => {
   return (
     <details className={CARD}>
       <summary className={`${TITLE} cursor-pointer select-none`}>
-        {t('statuses.title')} · {t('fields.title')} · {t('automations.title')}
+        {t('statuses.title')} · {t('automations.title')}
       </summary>
 
       <div className="mt-4 space-y-5">
@@ -91,12 +90,6 @@ const ProjectWorkflowSection = ({ project, members, canEdit }: Props) => {
               <button type="submit" className={BUTTON} disabled={!name.trim() || create.isPending}>{t('statuses.add')}</button>
             </form>
           )}
-        </div>
-
-        <div>
-          <h3 className={TITLE}>{t('fields.title')}</h3>
-          <p className={`${HINT} mb-2`}>{t('fields.hint')}</p>
-          <CustomFieldsEditor orgId={project.orgId} projectId={project.id} canEdit={canEdit} />
         </div>
 
         <div>

@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════
 // ORG-CONFIG : configuration d'une organisation (mig. 195 à 199)
 //
-// Réglages et sécurité (195), statuts et
-// champs personnalisés (197), automatisations (198), webhooks (199). Un
+// Réglages et sécurité (195), statuts de flux par
+// projet (197), automatisations (198), webhooks (199). Un
 // module à part d'`organizations` : ces surfaces ne servent qu'aux écrans
 // d'administration et à la fiche de tâche, jamais à l'entrée de l'app.
 // ═══════════════════════════════════════════════════════════════════
@@ -58,7 +58,7 @@ export interface OrgDomain {
   createdAt: string;
 }
 
-// ─── 197 · Statuts et champs personnalisés ────────────────────────────
+// ─── 197 · Statuts de flux par projet ────────────────────────────
 
 export interface ProjectStatus {
   id: string;
@@ -77,34 +77,6 @@ export interface CreateProjectStatusInput {
   color: string;
   mapsTo: TeamTaskStatus;
   position?: number;
-}
-
-export type CustomFieldKind = 'text' | 'number' | 'date' | 'select' | 'checkbox';
-
-export interface CustomField {
-  id: string;
-  orgId: string;
-  /** null = tous les projets de l'organisation. */
-  projectId: string | null;
-  name: string;
-  kind: CustomFieldKind;
-  options: string[];
-  position: number;
-}
-
-export interface CreateCustomFieldInput {
-  projectId: string | null;
-  name: string;
-  kind: CustomFieldKind;
-  options?: string[];
-}
-
-export type FieldValue = string | number | boolean;
-
-export interface TaskFieldValue {
-  taskId: string;
-  fieldId: string;
-  value: FieldValue;
 }
 
 // ─── 198 · Automatisations ────────────────────────────────────────────

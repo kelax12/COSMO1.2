@@ -9,7 +9,7 @@ import { toast } from '@/lib/toast';
 import { getOrgConfigRepository } from './repository.instance';
 import { orgConfigKeys } from './constants';
 import type {
-  CreateAutomationInput, CreateCustomFieldInput, CreateProjectStatusInput, CreateWebhookInput, FieldValue,
+  CreateAutomationInput, CreateProjectStatusInput, CreateWebhookInput,
   OrgSettingsPatch, WebhookEvent,
 } from './types';
 
@@ -78,34 +78,6 @@ export const useDeleteProjectStatus = (orgId: string) => {
   const repo = useRepo();
   // Supprimer un statut détache les tâches qui le portaient (SET NULL).
   return useWrite((id: string) => repo.deleteProjectStatus(id), [orgConfigKeys.statuses(orgId), ['team-projects']]);
-};
-export const useCustomFields = (orgId: string | undefined) => {
-  const repo = useRepo();
-  return useOrgRead(orgConfigKeys.fields(orgId ?? ''), orgId, (id) => repo.getCustomFields(id));
-};
-export const useCreateCustomField = (orgId: string) => {
-  const repo = useRepo();
-  return useWrite((input: CreateCustomFieldInput) => repo.createCustomField(orgId, input), [orgConfigKeys.fields(orgId)]);
-};
-export const useDeleteCustomField = (orgId: string) => {
-  const repo = useRepo();
-  return useWrite((id: string) => repo.deleteCustomField(id), [orgConfigKeys.fields(orgId), [...orgConfigKeys.all, 'field-values']]);
-};
-export const useTaskFieldValues = (taskId: string | undefined) => {
-  const repo = useRepo();
-  return useQuery({
-    queryKey: orgConfigKeys.fieldValues(taskId ?? ''),
-    queryFn: () => repo.getTaskFieldValues(taskId as string),
-    enabled: !!taskId,
-    staleTime: 1000 * 30,
-  });
-};
-export const useSetTaskFieldValue = (taskId: string) => {
-  const repo = useRepo();
-  return useWrite(
-    ({ fieldId, value }: { fieldId: string; value: FieldValue | null }) => repo.setTaskFieldValue(taskId, fieldId, value),
-    [orgConfigKeys.fieldValues(taskId)],
-  );
 };
 
 // ── 198 ──

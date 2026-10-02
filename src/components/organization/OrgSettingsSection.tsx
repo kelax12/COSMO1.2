@@ -1,7 +1,7 @@
 import { Suspense, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
-  AlertTriangle, ArrowRightLeft, ArrowUpRight, Bell, Building2, Check, ChevronRight, Download, History, KeyRound, ListPlus,
+  AlertTriangle, ArrowRightLeft, ArrowUpRight, Bell, Building2, Check, ChevronRight, Download, History, KeyRound,
   Lock, LogOut, Plug, Plus, Receipt, Repeat, ShieldCheck, SlidersHorizontal, Tags, Trash2, UserPlus, Users, Zap,
   FileText,
   type LucideIcon,
@@ -70,7 +70,7 @@ interface OrgSettingsSectionProps {
   initialPanel?: 'reports';
 }
 
-type ConfigPart = 'general' | 'security' | 'fields' | 'automations' | 'integrations';
+type ConfigPart = 'general' | 'security' | 'automations' | 'integrations';
 type PanelId =
   | ConfigPart
   | 'profile' | 'orgs' | 'invite' | 'myRights' | 'permissions' | 'categories'
@@ -79,7 +79,7 @@ interface NavGroup {
   label: string;
   items: { id: PanelId; icon: LucideIcon; label: string }[];
 }
-const CONFIG_PARTS: readonly string[] = ['general', 'security', 'fields', 'automations', 'integrations'];
+const CONFIG_PARTS: readonly string[] = ['general', 'security', 'automations', 'integrations'];
 const isConfigPart = (id: PanelId): id is ConfigPart => CONFIG_PARTS.includes(id);
 
 const CARD = 'rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4';
@@ -155,7 +155,6 @@ const OrgSettingsSection = ({
     ] },
     { label: ta('orgSettings.groupWork'), items: [
       ...(canManageCategories ? [{ id: 'categories' as const, icon: Tags, label: ta('orgSettings.navCategories') }] : []),
-      ...(isAdmin ? [{ id: 'fields' as const, icon: ListPlus, label: ta('orgSettings.navFields') }] : []),
       ...(isAdmin ? [{ id: 'automations' as const, icon: Zap, label: ta('orgSettings.navAutomations') }] : []),
     ] },
     { label: ta('orgSettings.groupTracking'), items: [

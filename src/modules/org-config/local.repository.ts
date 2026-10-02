@@ -12,10 +12,10 @@ import type { IOrgConfigRepository } from './repository';
 import { ORG_CONFIG_STORAGE_KEYS as K } from './constants';
 import {
   defaultOrgSettings,
-  type Automation, type CreateAutomationInput, type CreateCustomFieldInput, type CreateProjectStatusInput,
-  type CreateWebhookInput, type CustomField, type FieldValue, type OrgDomain,
+  type Automation, type CreateAutomationInput, type CreateProjectStatusInput,
+  type CreateWebhookInput, type OrgDomain,
   type OrgSettings, type OrgSettingsPatch, type OrgWebhook, type ProjectStatus,
-  type TaskFieldValue, type WebhookEvent,
+  type WebhookEvent,
 } from './types';
 
 const read = <T>(key: string, fallback: T): T => {
@@ -109,42 +109,6 @@ export class LocalStorageOrgConfigRepository implements IOrgConfigRepository {
     write(K.statuses, read<ProjectStatus[]>(K.statuses, []).filter((s) => s.id !== statusId));
   }
 
-  async getCustomFields(orgId: string): Promise<CustomField[]> {
-    return read<CustomField[]>(K.fields, []).filter((f) => f.orgId === orgId).sort((a, b) => a.position - b.position);
-  }
-
-  async createCustomField(orgId: string, input: CreateCustomFieldInput): Promise<CustomField> {
-    const all = read<CustomField[]>(K.fields, []);
-    const name = input.name.trim();
-    const options = [...new Set((input.options ?? []).map((o) => o.trim()).filter(Boolean))].slice(0, 30);
-    if (!name || name.length > 40) throw makeApiError('invalid_input');
-    if ((input.kind === 'select') !== (options.length > 0)) throw makeApiError('invalid_input');
-    if (all.filter((f) => f.orgId === orgId).length >= 30) throw makeApiError('invalid_input');
-    const row: CustomField = {
-      id: crypto.randomUUID(), orgId, projectId: input.projectId, name, kind: input.kind,
-      options: input.kind === 'select' ? options : [], position: all.filter((f) => f.orgId === orgId).length,
-    };
-    write(K.fields, [...all, row]);
-    return row;
-  }
-
-  async deleteCustomField(fieldId: string): Promise<void> {
-    write(K.fields, read<CustomField[]>(K.fields, []).filter((f) => f.id !== fieldId));
-    write(K.fieldValues, read<TaskFieldValue[]>(K.fieldValues, []).filter((v) => v.fieldId !== fieldId));
-  }
-
-  async getTaskFieldValues(taskId: string): Promise<TaskFieldValue[]> {
-    return read<TaskFieldValue[]>(K.fieldValues, []).filter((v) => v.taskId === taskId);
-  }
-
-  async setTaskFieldValue(taskId: string, fieldId: string, value: FieldValue | null): Promise<void> {
-    const rest = read<TaskFieldValue[]>(K.fieldValues, []).filter((v) => !(v.taskId === taskId && v.fieldId === fieldId));
-    if (value === null) return write(K.fieldValues, rest);
-    const field = read<CustomField[]>(K.fields, []).find((f) => f.id === fieldId);
-    if (!field || !fieldValueIsValid(field, value)) throw makeApiError('invalid_input');
-    write(K.fieldValues, [...rest, { taskId, fieldId, value }]);
-  }
-
   // ── 198 ──
   async getAutomations(orgId: string): Promise<Automation[]> {
     return read<Automation[]>(K.automations, []).filter((a) => a.orgId === orgId).sort((a, b) => a.position - b.position);
@@ -194,17 +158,6 @@ export class LocalStorageOrgConfigRepository implements IOrgConfigRepository {
 
   async deleteWebhook(webhookId: string): Promise<void> {
     write(K.webhooks, read<OrgWebhook[]>(K.webhooks, []).filter((w) => w.id !== webhookId));
-  }
-}
-
-/** Miroir de `team_task_field_value_before_write` (mig. 197). */
-export function fieldValueIsValid(field: Pick<CustomField, 'kind' | 'options'>, value: FieldValue): boolean {
-  switch (field.kind) {
-    case 'text': return typeof value === 'string' && value.length <= 500;
-    case 'number': return typeof value === 'number' && Number.isFinite(value);
-    case 'checkbox': return typeof value === 'boolean';
-    case 'date': return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
-    case 'select': return typeof value === 'string' && field.options.includes(value);
   }
 }
 

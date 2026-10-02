@@ -49,27 +49,6 @@
     "needVerified": "Verify at least one domain to turn this rule on.",
     "sessions": "Two-factor authentication is set by each person in their Settings; it protects sign-in, not the company."
   },
-  "fields": {
-    "title": "Custom fields",
-    "hint": "Information specific to your tasks: client, budget, acceptance date…",
-    "scopeOrg": "Whole company",
-    "name": "Field name",
-    "kind": "Field type",
-    "kinds": {
-      "text": "Text",
-      "number": "Number",
-      "date": "Calendar date",
-      "select": "List",
-      "checkbox": "Checkbox"
-    },
-    "options": "Options (one per line)",
-    "add": "Add field",
-    "remove": "Delete the field {{name}}",
-    "empty": "No custom field.",
-    "inTask": "Custom fields",
-    "none": "Not set",
-    "clear": "Clear"
-  },
   "statuses": {
     "title": "Project statuses",
     "hint": "Name your own columns. Each one maps to a COSMO status, which statistics keep using.",
