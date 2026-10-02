@@ -6,6 +6,7 @@ import ProjectsSection from './ProjectsSection';
 import ExecutionSection from './ExecutionSection';
 import OkrSection from './OkrSection';
 import ProgressSection from './ProgressSection';
+import MoreFeaturesSection from './MoreFeaturesSection';
 import SecuritySection from './SecuritySection';
 import PricingSection from './PricingSection';
 import EnterpriseFaqSection from './EnterpriseFaqSection';
@@ -30,8 +31,9 @@ interface EnterpriseTrackProps {
  * (5). Le visiteur qui l'a lue sait déjà quoi faire en arrivant dans le
  * produit, et retrouve les mêmes écrans.
  *
- * Vient ensuite ce qu'un décideur demande une fois convaincu : la sécurité,
- * puis le prix. Les tarifs arrivent en avant-dernier, une fois seulement que
+ * Vingt fonctionnalités du quotidien suivent, hors numérotation des étapes
+ * (`MoreFeaturesSection`). Vient ensuite ce qu'un décideur demande une fois
+ * convaincu : la sécurité, puis le prix. Les tarifs arrivent en avant-dernier, une fois seulement que
  * la valeur a été montrée.
  *
  * La direction artistique — graphite `#08090C`, cyan, or réservé à l'argent —
@@ -52,6 +54,7 @@ const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onMemberDemo,
       <ExecutionSection />
       <OkrSection />
       <ProgressSection />
+      <MoreFeaturesSection />
       <SecuritySection />
       <PricingSection onRegister={onRegister} />
       <EnterpriseFaqSection />
