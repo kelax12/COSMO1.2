@@ -131,7 +131,6 @@
       "team": "Team",
       "owner": "Project owner",
       "status": "Status",
-      "start": "Start",
       "due": "Due date",
       "archived": "Archived on",
       "project": "Project",
