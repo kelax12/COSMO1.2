@@ -116,8 +116,30 @@ const run = async () => {
   }
 
   if (want('pyramide')) {
+    // 1600 px : à 1280, le panneau « À placer » coupe la carte de droite. Cette
+    // capture remplace la reproduction interactive de l'étape 1 (2026-10-02),
+    // elle doit donc montrer l'arbre en entier.
+    await page.setViewportSize({ width: 1600, height: 1000 });
     await goTo(page, '/pyramid', 4000); // laisse jouer l'entrée de l'organigramme
-    await capture(page, 'pyramide');
+    // La charge sur chaque carte : c'est l'argument « managez depuis
+    // l'organigramme » de l'étape, et elle remplit une scène sinon creuse.
+    await page.getByRole('button', { name: /Afficher la charge/ }).first().click().catch(() => {});
+    await wait(1500);
+    await page.evaluate(HIDE_TRANSIENTS);
+    await page.mouse.move(2, 998);
+    await wait(400);
+    const main = await page.locator('main').first().boundingBox();
+    const x = Math.round(main.x) + 16;
+    const width = 1600 - x;
+    // Bandeau 12:5 : l'arbre de démo tient dans la moitié haute de l'écran.
+    await page.screenshot({
+      path: join(OUT, 'pyramide.png'),
+      clip: { x, y: 0, width, height: Math.round((width * 5) / 12) },
+    });
+    // Remettre la vue par défaut, préférence mémorisée par appareil.
+    await page.getByRole('button', { name: /Masquer la charge|Afficher la charge/ }).first().click().catch(() => {});
+    console.log('  ✓ pyramide.png');
+    await page.setViewportSize(VIEWPORT);
   }
 
   if (want('membres')) {

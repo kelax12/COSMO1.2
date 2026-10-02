@@ -14,7 +14,6 @@ import { useLandingTrack, type LandingTrack } from './landing/use-landing-track'
 import { TRACK_ANCHORS } from './landing/anchors';
 import { useT } from '@/i18n/useT';
 import { useRootSeoMeta } from '@/lib/useSeoMeta';
-import { buildOrgLink } from '@/components/organization/deep-link.helpers';
 import { applyTheme, THEME_STORAGE_KEY } from '@/lib/theme';
 
 // Le track entreprise est un parcours entier (10 sections, un shader WebGL) que
@@ -194,20 +193,6 @@ const LandingPage: React.FC = () => {
     if (isEnterprise) forceNoirTheme();
     loginDemo();
     setTimeout(() => navigate(isEnterprise ? '/entreprise' : '/dashboard'), 0);
-  };
-
-  // Un clic sur « Voir ses tâches / son agenda / sa contribution » depuis la
-  // pyramide de démonstration doit retomber sur EXACTEMENT le même écran que
-  // le même clic depuis la vraie pyramide de l'espace entreprise : le
-  // deep-link `?member=&memberTab=` que `PyramidTab` sait déjà lire (cf.
-  // `src/components/organization/deep-link.helpers.ts`).
-  const handlePyramidMemberDemo = (demoUserId: string, tab: 'tasks' | 'agenda' | 'contribution') => {
-    forceNoirTheme();
-    loginDemo();
-    setTimeout(
-      () => navigate(buildOrgLink('pyramid', { member: demoUserId }, { memberTab: tab })),
-      0,
-    );
   };
 
   const handleFeatureClick = (path: string) => {
@@ -515,7 +500,6 @@ const LandingPage: React.FC = () => {
             <Suspense fallback={<TrackFallback />}>
               <EnterpriseTrack
                 onDemo={handleDemo}
-                onMemberDemo={handlePyramidMemberDemo}
                 onRegister={handleRegisterClick}
                 onHeroCtaRef={setHeroCtaEl}
               />

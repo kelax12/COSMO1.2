@@ -30,7 +30,7 @@ const HOLD = 1;
 const FADE = 0.5;
 
 /**
- * Étape 2 — les projets, et surtout l'échelle à laquelle on les attribue.
+ * Étape 3 — les projets, et surtout l'échelle à laquelle on les attribue.
  *
  * Le point que la page ne disait pas : une tâche de projet s'assigne à qui on
  * veut dans son périmètre, d'une personne à toute une équipe, et la personne
@@ -160,7 +160,7 @@ const ProjectsSection: React.FC = () => {
   return (
     <StepSection
       id="projets"
-      step={2}
+      step={3}
       titleKey="enterprise.projects.title"
       subtitleKey="enterprise.projects.subtitle"
     >

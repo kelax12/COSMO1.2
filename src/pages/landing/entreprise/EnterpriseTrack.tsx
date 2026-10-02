@@ -14,8 +14,6 @@ import EnterpriseCta from './EnterpriseCta';
 
 interface EnterpriseTrackProps {
   onDemo: () => void;
-  /** Ouvre la démo puis la fiche du membre réel, sur l'onglet demandé — cf. `PyramidSection`. */
-  onMemberDemo: (demoUserId: string, tab: 'tasks' | 'agenda' | 'contribution') => void;
   onRegister: () => void;
   /** Rangée des CTA du hero, cf. `PersoTrack`. */
   onHeroCtaRef?: (el: HTMLElement | null) => void;
@@ -26,9 +24,10 @@ interface EnterpriseTrackProps {
  *
  * La page EST l'onboarding. Après le constat, elle suit les cinq étapes de
  * mise en place réelles, dans l'ordre où on les fait : inviter et structurer
- * (1), créer des projets et les attribuer (2), suivre leur exécution — statuts,
- * dépendances, chemin critique (3), poser les OKR (4), suivre la progression
- * (5). Le visiteur qui l'a lue sait déjà quoi faire en arrivant dans le
+ * (1), suivre l'exécution des tâches : statuts, dépendances (2), regrouper le
+ * travail en projets et les attribuer (3), poser les OKR (4), suivre la
+ * progression (5). Tâches avant Projets depuis le 2026-10-02 : la tâche est
+ * l'unité que chacun manipule tous les jours, le projet vient la ranger. Le visiteur qui l'a lue sait déjà quoi faire en arrivant dans le
  * produit, et retrouve les mêmes écrans.
  *
  * Vingt fonctionnalités du quotidien suivent, hors numérotation des étapes
@@ -40,7 +39,7 @@ interface EnterpriseTrackProps {
  * est portée ici, à la racine du track : les sections héritent du fond et ne
  * repeignent que leurs propres surfaces.
  */
-const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onMemberDemo, onRegister, onHeroCtaRef }) => {
+const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onRegister, onHeroCtaRef }) => {
   return (
     <div className="bg-[#08090C] text-white">
       {/* Le sommaire du parcours vit dans le header de `LandingPage`. */}
@@ -49,9 +48,9 @@ const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onMemberDemo,
       <ProblemSection />
 
       {/* Les cinq étapes de mise en place, dans l'ordre où on les fait. */}
-      <PyramidSection onMemberDemo={onMemberDemo} />
-      <ProjectsSection />
+      <PyramidSection />
       <ExecutionSection />
+      <ProjectsSection />
       <OkrSection />
       <ProgressSection />
       <MoreFeaturesSection />

@@ -27,8 +27,8 @@ export const TRACK_ANCHORS: Record<LandingTrack, TrackAnchor[]> = {
   // l'ordre : le sommaire doit se lire comme la marche à suivre.
   entreprise: [
     { href: '#equipes', labelKey: 'enterprise.nav.teams' },
-    { href: '#projets', labelKey: 'enterprise.nav.projects' },
     { href: '#execution', labelKey: 'enterprise.nav.execution' },
+    { href: '#projets', labelKey: 'enterprise.nav.projects' },
     { href: '#okr', labelKey: 'enterprise.nav.okr' },
     { href: '#statistiques', labelKey: 'enterprise.nav.progress' },
     { href: '#fonctionnalites', labelKey: 'enterprise.nav.more' },
