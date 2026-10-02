@@ -3,6 +3,7 @@ import {
   timelineRange, timelineWeeks, timelineRows, todayOffsetPercent,
   timelineWindow, timelineMonths, timelineRowsByAssignee, inWindowOrUnscheduled,
   UNASSIGNED_ID,
+  projectSpanStart,
 } from './timeline.helpers';
 import type { TeamTask, TeamProject } from '@/modules/team-projects';
 
@@ -331,8 +332,15 @@ describe('frise avec dates de début', () => {
     expect(rows[0].span!.startPercent).toBeLessThan(rows[0].span!.endPercent);
   });
 
-  it('un projet avec UNE seule date n’a pas de bandeau (jamais inventé)', () => {
+  it('sans date de début, le bandeau part de la création du projet', () => {
     const rows = timelineRows([task({ deadline: '2026-07-20' })], [project({ dueDate: '2026-07-28' })], range, NOW);
+    expect(rows[0].span).not.toBeNull();
+    expect(projectSpanStart(project({ dueDate: '2026-07-28' }))).toBe('2026-07-01');
+    expect(projectSpanStart(project({ startDate: '2026-07-14' }))).toBe('2026-07-14');
+  });
+
+  it('un projet sans échéance n’a pas de bandeau (jamais inventé)', () => {
+    const rows = timelineRows([task({ deadline: '2026-07-20' })], [project({})], range, NOW);
     expect(rows[0].span).toBeNull();
   });
 
