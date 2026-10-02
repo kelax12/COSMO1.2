@@ -134,6 +134,44 @@ export const groupEventsByPerson = (events: AggregatedReport['events']): EventGr
   return [...groups.values()].sort((a, b) => (a.userName ?? '').localeCompare(b.userName ?? ''));
 };
 
+export interface PersonActivity {
+  /** `null` : tâche terminée sans auteur connu. */
+  userId: string | null;
+  userName: string | null;
+  tasks: ReportTask[];
+  events: AggregatedReport['events'];
+}
+
+/**
+ * Ce que chaque personne a fait : ses tâches terminées et ses événements, sur une
+ * seule fiche. Le plus actif d'abord, l'auteur inconnu en dernier.
+ */
+export const groupActivityByPerson = (
+  tasks: ReportTask[],
+  events: AggregatedReport['events'],
+): PersonActivity[] => {
+  const people = new Map<string, PersonActivity>();
+  const of = (id: string | null, name: string | null) => {
+    const key = id ?? '';
+    const person = people.get(key) ?? { userId: id, userName: name, tasks: [], events: [] };
+    person.userName ??= name;
+    people.set(key, person);
+    return person;
+  };
+  for (const task of tasks) of(task.byId, task.byName).tasks.push(task);
+  for (const e of events) of(e.userId, e.userName).events.push(e);
+  for (const p of people.values()) {
+    p.tasks.sort((a, b) => a.at.localeCompare(b.at));
+    p.events.sort((a, b) => a.start.localeCompare(b.start));
+  }
+  return [...people.values()].sort((a, b) => {
+    if (!a.userId !== !b.userId) return a.userId ? -1 : 1;
+    return b.tasks.length - a.tasks.length
+      || b.events.length - a.events.length
+      || (a.userName ?? '').localeCompare(b.userName ?? '');
+  });
+};
+
 // ─── Périodes ──────────────────────────────────────────────────────
 
 export type ReportPeriodKind = 'day' | 'week' | 'month' | 'custom';

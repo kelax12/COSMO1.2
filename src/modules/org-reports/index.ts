@@ -19,6 +19,7 @@ export {
   aggregateReports,
   groupTasksByProject,
   groupEventsByPerson,
+  groupActivityByPerson,
   normalizePayload,
   periodBounds,
   shiftPeriod,
@@ -29,5 +30,6 @@ export {
   type ReportPeriodKind,
   type TaskGroup,
   type EventGroup,
+  type PersonActivity,
 } from './aggregate';
 export { useActivityReports } from './hooks';
