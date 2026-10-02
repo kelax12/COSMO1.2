@@ -75,11 +75,23 @@ async function api(chemin, { token, fetchImpl = fetch }) {
   return res.json();
 }
 
-/** Les advisors, réduits à `{ nom → { niveau, compte } }`. */
+/**
+ * Les advisors, réduits à `{ nom → { niveau, compte } }`.
+ *
+ * 🔴 L'API Management rend UNE ENTRÉE PAR OCCURRENCE, sans `count` ni
+ * `findings` : 80 fonctions exposées, ce sont 80 entrées du même nom. La forme
+ * groupée (`count`, ou `findings`) est celle du serveur MCP. Les deux
+ * s'additionnent par nom. Du 2026-09-20 au 2026-10-02, cette fonction
+ * ÉCRASAIT chaque entrée et lisait `count ?? findings.length ?? 0` sur une
+ * forme qui n'a ni l'un ni l'autre : chaque advisor comptait ZÉRO, en
+ * production à 11 / 2 / 80 / 1. Les 28 fonctions DEFINER du mode entreprise
+ * sont passées sous une garde qui ne pouvait voir AUCUNE hausse.
+ */
 export function resumerAdvisors(reponse) {
   const out = {};
   for (const l of reponse?.lints ?? []) {
-    out[l.name] = { niveau: l.level, compte: l.count ?? (l.findings?.length ?? 0) };
+    const occurrences = l.count ?? l.findings?.length ?? 1;
+    out[l.name] = { niveau: l.level, compte: (out[l.name]?.compte ?? 0) + occurrences };
   }
   return out;
 }
