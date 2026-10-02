@@ -418,10 +418,10 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                     </div>
 
                     <div
-                      className="grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none group-hover:grid-rows-[1fr] group-hover:opacity-100 focus-within:grid-rows-[1fr] focus-within:opacity-100 [@media(hover:none)]:grid-rows-[1fr] [@media(hover:none)]:opacity-100"
+                      className="grid grid-rows-[0fr] opacity-0 [transition:grid-template-rows_420ms_cubic-bezier(0.22,1,0.36,1),opacity_180ms_ease-out] group-hover:[transition:grid-template-rows_420ms_cubic-bezier(0.22,1,0.36,1),opacity_320ms_ease-out_90ms] focus-within:[transition:grid-template-rows_420ms_cubic-bezier(0.22,1,0.36,1),opacity_320ms_ease-out_90ms] motion-reduce:!transition-none group-hover:grid-rows-[1fr] group-hover:opacity-100 focus-within:grid-rows-[1fr] focus-within:opacity-100 [@media(hover:none)]:grid-rows-[1fr] [@media(hover:none)]:opacity-100"
                     >
                       <div className="min-h-0 overflow-hidden">
-                        <div className="grid grid-cols-4 gap-2 pt-3">
+                        <div className="grid grid-cols-4 gap-2 pt-3 -translate-y-1.5 scale-[0.985] origin-top transition-transform duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none group-hover:translate-y-0 group-hover:scale-100 group-focus-within:translate-y-0 group-focus-within:scale-100 [@media(hover:none)]:translate-y-0 [@media(hover:none)]:scale-100">
                           <div className="grid gap-1">
                             <Label className="text-xs font-medium text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('okrModal.current')}</Label>
                             <Input type="number" min={0} className="h-9 tabular-nums" value={kr.currentValue} onChange={(e) => setKR(idx, { currentValue: Number(e.target.value) })} />
