@@ -19,10 +19,6 @@ interface ProjectsToolbarProps {
   prefs: ProjectsUiPrefs;
   updatePrefs: (patch: Partial<ProjectsUiPrefs>) => void;
   /** Droit `project.create` — affiche « Nouveau projet ». */
-  canCreateProject: boolean;
-  /** Pourquoi « Nouveau projet » est grisé, quand il l'est. */
-  createDeniedReason?: string;
-  onNewProject: () => void;
   /** Vue réellement affichée (le portefeuille peut s'imposer sans choix, M2). */
   effectiveView: ProjectsUiPrefs['view'];
   /** Utilisateur courant, pour le preset « Mes tâches ». Absent : pas de rangée de presets. */
@@ -60,13 +56,12 @@ const ViewTab = ({ active, onClick, label, Icon }: {
 );
 
 const ProjectsToolbar = ({
-  prefs, updatePrefs, canCreateProject, createDeniedReason, onNewProject, effectiveView, currentUserId, onStartSelect, sortControl,
+  prefs, updatePrefs, effectiveView, currentUserId, onStartSelect, sortControl,
 }: ProjectsToolbarProps) => {
   // Même état que la barre de filtres de l'onglet : l'URL (task-filters.ts).
   const { filters, setFilters } = useOrgTaskFilters('all');
-  const { t } = useT('org');
   const { t: pf } = useT('portfolio');
-  // Ligne 1 : la création, à droite. Ligne 2 : vue, préréglages puis
+  // Vue, préréglages puis
   // « Sélectionner » (même pastille), et le tri à droite (2026-09-29) ; `showArchived` reste sur la bascule contextuelle
   // du bas de liste, qui affiche le compte et n'existe que s'il y a des archives.
   const { timelineGroupBy } = prefs;
@@ -78,24 +73,6 @@ const ProjectsToolbar = ({
   const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
 
   return (
-    <div className="flex flex-col gap-2">
-      {/* La seule action créative de la page, seul bouton plein : au-dessus de
-          la ligne des vues, alignée à droite (2026-09-29).
-          `PermissionGate` ne rend son enveloppe QUE si `reason` est défini :
-          l'alignement vit donc sur un conteneur toujours présent. */}
-      <div className="flex justify-end">
-        <PermissionGate reason={canCreateProject ? undefined : createDeniedReason}>
-          <button
-            type="button"
-            onClick={onNewProject}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
-            aria-label={t('projects.newProject')}
-          >
-            <Plus size={15} aria-hidden="true" />
-            <span className="hidden sm:inline">{t('projects.newProject')}</span>
-          </button>
-        </PermissionGate>
-      </div>
     <div className="flex items-center gap-2 flex-wrap">
       {/* ── Vue, réglages rares ──────────────────────────────────── */}
       <div
@@ -147,8 +124,31 @@ const ProjectsToolbar = ({
       {/* Tri poussé à droite de la même ligne. */}
       {sortControl && <div className="ml-auto">{sortControl}</div>}
     </div>
-    </div>
   );
 };
 
 export default ProjectsToolbar;
+
+/** La seule action créative de la page, seul bouton plein : sur la ligne de la
+ *  recherche, alignée à droite (2026-10-01). `PermissionGate` ne rend son
+ *  enveloppe QUE si `reason` est défini. */
+export const NewProjectButton = ({ canCreateProject, createDeniedReason, onNewProject }: {
+  canCreateProject: boolean;
+  createDeniedReason?: string;
+  onNewProject: () => void;
+}) => {
+  const { t } = useT('org');
+  return (
+    <PermissionGate reason={canCreateProject ? undefined : createDeniedReason}>
+      <button
+        type="button"
+        onClick={onNewProject}
+        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
+        aria-label={t('projects.newProject')}
+      >
+        <Plus size={15} aria-hidden="true" />
+        <span className="hidden sm:inline">{t('projects.newProject')}</span>
+      </button>
+    </PermissionGate>
+  );
+};

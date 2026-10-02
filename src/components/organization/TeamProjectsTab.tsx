@@ -30,7 +30,7 @@ import {
   TeamProjectsTimeline, ProjectPortfolioView, ProjectDetailPage,
   ProjectEditDialog, BulkActionsBar,
 } from './team-projects.lazy';
-import ProjectsToolbar from './ProjectsToolbar';
+import ProjectsToolbar, { NewProjectButton } from './ProjectsToolbar';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
 import { usePermissionHints } from './permission-hints';
 import { useOrgTaskFilters } from './task-filters';
@@ -41,7 +41,6 @@ import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTrashDialog from './TeamTrashDialog';
 import { useProjectAccess } from './use-project-access';
 import { useT } from '@/i18n/useT';
-import TeamColorDot from './TeamColorDot';
 import { OrgCreateBoundary, useOrgCreate } from './org-create.context';
 
 interface TeamProjectsTabProps {
@@ -209,20 +208,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const toggleCollapse = (projectId: string) =>
     updatePrefs((prev) => ({ collapsed: { ...prev.collapsed, [projectId]: !(prev.collapsed[projectId] ?? manyProjects) } }));
 
-  // ─── Groupement par équipe (vue liste, sans filtre équipe) ──────────
-  const groupedSections = useMemo(() => {
-    if (teamFilter || teams.length === 0) return null;
-    const sections: { key: string; label: string | null; color?: string; projects: TeamProject[] }[] = [];
-    for (const team of teams) {
-      const ps = shownProjects.filter((p) => p.teamId === team.id);
-      if (ps.length > 0) sections.push({ key: team.id, label: t('projects.teamSection', { name: team.name }), color: team.color, projects: ps });
-    }
-    const orgProjects = shownProjects.filter((p) => !p.teamId || !teams.some((tm) => tm.id === p.teamId));
-    if (orgProjects.length > 0) sections.push({ key: 'org', label: sections.length > 0 ? t('projects.orgSection') : null, projects: orgProjects });
-    return sections;
-    // `t` en dépendance : les en-têtes de section sont traduits ici.
-  }, [teamFilter, teams, shownProjects, t]);
-
   if (loadingProjects) return <ProjectsSkeleton />;
 
   const editProject = editProjectId ? allProjects.find((p) => p.id === editProjectId) : undefined;
@@ -374,6 +359,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         <ProjectsPulse projectCount={activeProjects.length} totalEstimated={totalEstimated} />
       )}
 
+      {/* Recherche et vues, collées : deux lignes d'une même barre (2026-10-01). */}
+      <div className="space-y-2">
       <OrgTaskFilterBar
         filters={filters}
         setFilters={setFilters}
@@ -385,28 +372,35 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         searchAria={pf('searchAria')}
         entity="projects"
         onCreateTeam={can['team.create'] ? newTeam : undefined}
+        trailing={(
+          <>
+            {/* Corbeille (M4) : ne s'affiche que s'il y a quelque chose à restaurer. */}
+            <TeamTrashDialog orgId={orgId} projects={allProjects} members={members} />
+            <NewProjectButton
+              canCreateProject={can['project.create']}
+              createDeniedReason={hints.deniedReason('project.create')}
+              onNewProject={() => newProject()}
+            />
+          </>
+        )}
       />
 
       {/* Les cartes portent une progression (terminées / total) : elles ont
           besoin de TOUTES les tâches, donc de la lecture complète. Au-delà du
           plafond, elles se calculent sur un extrait, et l'écran le dit. */}
       {allTasks.length >= TEAM_TASKS_READ_LIMIT && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
-      {/* Corbeille (M4) : ne s'affiche que s'il y a quelque chose à restaurer. */}
-      <div className="flex justify-end"><TeamTrashDialog orgId={orgId} projects={allProjects} members={members} /></div>
 
       <ProjectsToolbar
         currentUserId={currentUserId}
         prefs={prefs}
         updatePrefs={updatePrefs}
         effectiveView={view}
-        canCreateProject={can['project.create']}
-        createDeniedReason={hints.deniedReason('project.create')}
-        onNewProject={() => newProject()}
         onStartSelect={onStartSelect}
         sortControl={showSort ? (
           <ProjectsSearchBar sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} />
         ) : undefined}
       />
+      </div>
       {view === 'list' && manyProjects && (
         <p className="text-xs text-[rgb(var(--color-text-muted))]">{pf('manyProjectsHint', { count: PORTFOLIO_CARD_THRESHOLD })}</p>
       )}
@@ -460,18 +454,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
                 onExitSelect={() => setPortfolioSelect(false)}
               />
             )
-          ) : groupedSections ? (
-            groupedSections.map((section) => (
-              <div key={section.key} className="space-y-3">
-                {section.label && (
-                  <h3 className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] px-1 pt-1">
-                    {section.color && <TeamColorDot color={section.color} />}
-                    {section.label}
-                  </h3>
-                )}
-                {section.projects.map(renderProjectCard)}
-              </div>
-            ))
           ) : (
             shownProjects.map(renderProjectCard)
           )}

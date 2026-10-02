@@ -151,6 +151,13 @@ const TeamProjectCard = ({
   };
 
   return (
+    <div className="space-y-3">
+    {/* Le nom du projet titre le groupe, au-dessus de la carte (2026-10-01) :
+        il n'est plus répété dans l'en-tête, sauf pendant un renommage. */}
+    <h3 className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] px-1 pt-1">
+      <span className={`w-2 h-2 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
+      {project.name}
+    </h3>
     <section className={`rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] overflow-hidden ${archived ? 'opacity-70' : ''}`}>
       {/* Header */}
       <div className="flex items-center gap-2 px-2 py-1.5">
@@ -161,8 +168,7 @@ const TeamProjectCard = ({
           className="flex-1 min-w-0 flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
         >
           {collapsed ? <ChevronRight size={16} className="shrink-0" aria-hidden="true" /> : <ChevronDown size={16} className="shrink-0" aria-hidden="true" />}
-          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
-          {renaming ? (
+          {renaming && (
             <input
               type="text"
               value={renameValue}
@@ -178,8 +184,6 @@ const TeamProjectCard = ({
               aria-label={t('project.renameAria')}
               className="h-7 px-2 rounded-md border border-indigo-400 bg-[rgb(var(--color-background))] text-sm font-bold focus:outline-none min-w-0 flex-1"
             />
-          ) : (
-            <span className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">{project.name}</span>
           )}
           {teamName && (
             // Couleur de l'ÉQUIPE, pas du projet : c'était la couleur du projet
@@ -467,6 +471,7 @@ const TeamProjectCard = ({
         />
       )}
     </section>
+    </div>
   );
 };
 
