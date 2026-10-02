@@ -109,12 +109,12 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
                         {task.assigneeIds.map(memberName).slice(0, 2).join(', ')}
                       </span>
                     </TaskLink>
-                    <div className="flex gap-2 pl-10 pb-1.5">
+                    <div className="flex gap-2 pl-10 pt-1 pb-1.5">
                       <button
                         type="button"
                         onClick={() => onApprove(task)}
                         aria-label={tOrgAdmin('apercu.review.approveTask', { name: task.name })}
-                        className="min-h-9 inline-flex items-center gap-1 px-3 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/25 transition-colors"
+                        className={`min-h-9 inline-flex items-center gap-1 px-3 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/25 transition-colors ${TAP_AREA_44_Y}`}
                       >
                         <Check size={13} aria-hidden="true" /> {tOrgAdmin('apercu.review.approve')}
                       </button>
@@ -122,7 +122,7 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
                         type="button"
                         onClick={() => onSendBack(task)}
                         aria-label={tOrgAdmin('apercu.review.sendBackTask', { name: task.name })}
-                        className="min-h-9 inline-flex items-center gap-1 px-3 rounded-lg text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                        className={`min-h-9 inline-flex items-center gap-1 px-3 rounded-lg text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors ${TAP_AREA_44_Y}`}
                       >
                         <Undo2 size={13} aria-hidden="true" /> {tOrgAdmin('apercu.review.sendBack')}
                       </button>

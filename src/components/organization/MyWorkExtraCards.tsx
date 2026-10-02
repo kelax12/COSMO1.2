@@ -6,6 +6,7 @@ import { useT } from '@/i18n/useT';
 import { formatDuration } from './team-projects.helpers';
 import { WEEK_CAPACITY_MINUTES, type ActivityDigest, type WaitingOnEntry, type WeekLoad } from './my-work.helpers';
 import { CARD, MemberInitials, TaskLink, TITLE } from './MyWorkCards';
+import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
 // Cartes ajoutées à l'Aperçu le 2026-10-02 (N1, N2, maquette 8 C), à part de
 // `MyWorkCards.tsx` pour qu'il reste sous le plafond de 600 lignes.
@@ -141,7 +142,7 @@ export const ActivityDigestCard = ({ digest, children }: { digest: ActivityDiges
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="mt-2 min-h-9 inline-flex items-center gap-1 -ml-1 px-1 rounded-md text-xs font-medium text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))] transition-colors"
+        className={`mt-2 min-h-9 inline-flex items-center gap-1 -ml-1 px-1 rounded-md text-xs font-medium text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))] transition-colors ${TAP_AREA_44_Y}`}
       >
         <ChevronDown size={14} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} aria-hidden="true" />
         {tOrgAdmin(expanded ? 'apercu.digest.hide' : 'apercu.digest.show')}
