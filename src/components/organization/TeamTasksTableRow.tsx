@@ -291,11 +291,6 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
           </DropdownMenu>
         </td>
       )}
-      {show('start') && (
-        <td className="px-2 py-3 whitespace-nowrap text-sm text-[rgb(var(--color-text-secondary))]">
-          {task.startDate ? formatDeadlineSmart(task.startDate) : '—'}
-        </td>
-      )}
       {show('deadline') && (
         <td onClick={(e) => e.stopPropagation()} className="px-2 py-3 whitespace-nowrap">
           <DeadlineCell task={task} disabledReason={editReason} onChange={(d) => handlers.setDeadline(task, d)} />

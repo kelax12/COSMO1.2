@@ -101,7 +101,9 @@ const TeamTaskModal = ({
   // mig. 062) n'intervient qu'au save, si le champ reste vraiment vide.
   const [priority, setPriority] = useState<number | null>(task?.priority ?? null);
   const [deadline, setDeadline] = useState(task?.deadline ?? '');
-  const [startDate, setStartDate] = useState(task?.startDate ?? '');
+  // Le champ « Début » n'est plus saisi dans la modale : on conserve la valeur
+  // existante, ramenée à l'échéance si celle-ci passe avant (CHECK mig. 153).
+  const startDate = task?.startDate ?? '';
   const [estimatedTime, setEstimatedTime] = useState(task?.estimatedTime?.toString() ?? '');
   const [projectId, setProjectId] = useState(
     task?.projectId ?? defaultProjectId ?? (requireProjectChoice ? '' : projects[0]?.id ?? ''),
@@ -211,7 +213,7 @@ const TeamTaskModal = ({
       description: description.trim(),
       ...(priority !== null ? { priority } : {}),
       deadline,
-      startDate,
+      startDate: startDate && deadline && startDate > deadline ? deadline : startDate,
       status,
       ...(minutes !== undefined && !Number.isNaN(minutes) ? { estimatedTime: minutes } : {}),
       assigneeIds,
@@ -222,8 +224,6 @@ const TeamTaskModal = ({
   const validate = (): boolean => {
     if (!name.trim()) { setError(t('taskModal.nameRequired')); setTab('details'); return false; }
     if (!projectId) { setError(t('taskModal.projectRequired')); setTab('details'); return false; }
-    // CHECK `team_tasks_dates_order` (mig. 153) : le dire ici plutôt qu'en toast d'erreur SQL.
-    if (startDate && deadline && startDate > deadline) { setError(t('taskModal.datesInvalid')); setTab('details'); return false; }
     return true;
   };
 
@@ -451,8 +451,6 @@ const TeamTaskModal = ({
                 onPriorityChange={setPriority}
                 deadline={deadline}
                 onDeadlineChange={setDeadline}
-                startDate={startDate}
-                onStartDateChange={(v) => { setStartDate(v); setError(null); }}
                 requireProjectChoice={requireProjectChoice}
                 estimatedTime={estimatedTime}
                 onEstimatedTimeChange={setEstimatedTime}

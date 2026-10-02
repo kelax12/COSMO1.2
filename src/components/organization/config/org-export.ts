@@ -53,17 +53,17 @@ export function buildOrgExport(d: OrgExportData, h: (key: string) => string): Cs
     },
     {
       name: 'projects',
-      headers: [h('name'), h('team'), h('owner'), h('status'), h('start'), h('due'), h('archived')],
+      headers: [h('name'), h('team'), h('owner'), h('status'), h('due'), h('archived')],
       rows: d.projects.map((p) => [
         p.name, p.teamId ? teamName.get(p.teamId) ?? '' : '', person(p.ownerId), p.status ?? 'active',
-        p.startDate ?? '', p.dueDate ?? '', day(p.archivedAt),
+        p.dueDate ?? '', day(p.archivedAt),
       ]),
     },
     {
       name: 'tasks',
-      headers: [h('name'), h('project'), h('status'), h('priority'), h('start'), h('due'), h('duration'), h('assignees'), h('created')],
+      headers: [h('name'), h('project'), h('status'), h('priority'), h('due'), h('duration'), h('assignees'), h('created')],
       rows: d.tasks.map((t) => [
-        t.name, projectName.get(t.projectId) ?? '', t.status, `P${t.priority}`, t.startDate ?? '', t.deadline ?? '',
+        t.name, projectName.get(t.projectId) ?? '', t.status, `P${t.priority}`, t.deadline ?? '',
         String(t.estimatedTime ?? 0), t.assigneeIds.map(person).filter(Boolean).join(' | '), day(t.createdAt),
       ]),
     },
