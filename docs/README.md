@@ -62,6 +62,28 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-02 · couverture refermée en CI, le blocage suivant est `OKRPage` · **945 → 946**
+
+Pas une passe complète : un seul item, le n° 1 de la liste du 2026-10-01, joué jusqu'au verdict de la CI.
+
+| Étape de `lint-test-build` | Run `36985012405` sur `2300fd62` |
+|---|---|
+| toutes les gardes avant les tests | ✅ vertes |
+| **Unit tests + coverage** | ✅ **verte**, pour la première fois depuis que les cinq dépôts sont entrés. Mesure locale identique : `npm run test:coverage`, exit 0, 305 fichiers sur 305 ; glob `src/modules/**/supabase.repository.ts` à **93,90 L · 96,41 F · 80,91 S · 71,11 B** (seuils 90 / 93 / 76 / 65, aucun touché) |
+| couverture de l'outillage | ✅ verte |
+| **Build** | ✅ **vert**, premier build atteint en CI depuis le 2026-09-28 |
+| **Budget de bundle** | 🔴 **rouge** : chunk `OKRPage` à **16,1 ko pour un cliquet à 15,0**. Seul dépassement, reproduit en local avec le même `VITE_SENTRY_DSN` que la CI. Le budget était vert le 2026-10-01 à 10:24 (`af622168`) : la régression est entrée plus tard dans la journée. Cause **non tracée** |
+
+`e2e` est marqué *cancelled* sur ce run : `cancel-in-progress` l'a coupé à l'arrivée d'un push d'une autre session, ce n'est pas un verdict.
+
+| Audit | Avant | **2026-10-02** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Tests / CI](./TESTING.md) | 92 | **93** | **+1** | le −1 « cinq dépôts sans test » est remboursé : corrigé (`2300fd62`) et **vérifié en CI**. Le −1 de la suite e2e entreprise reste dû |
+
+⚠️ **Performance n'est pas renotée ici** : `OKRPage` est un défaut que la garde a trouvé en tournant enfin, à compter par la prochaine passe Performance, pas par celle-ci.
+
+**Ce qu'il faut faire, mis à jour** : le n° 1 de la liste ci-dessous est fait. Le nouveau n° 1 est **`OKRPage` sous 15,0 ko** (leviers dans [`PERFORMANCE.md`](./PERFORMANCE.md)), sans remonter le cliquet : c'est la dernière étape de `lint-test-build`.
+
 ## Mise à jour du 2026-10-01 (soir) · **passe complète : les onze audits rejoués, 943 → 945**
 
 Consigne d'Axel : « mets à jour tous les audits ». Comme le 2026-09-22, chaque item a été confronté à
@@ -80,7 +102,7 @@ suivante, et aucune n'avait été vue, parce que le job était déjà rouge :
 | `check:portability` | même table, ni exportée ni déclarée | ✅ `7a6897fa` |
 | `check:env` | **faux positif depuis la pose de la garde** (09-21) : `INVITE_ROW` lu comme `VITE_ROW`, et deux entrées du contrat écrites pour le faire taire | ✅ `7a6897fa`, limite de mot, témoin |
 | tests unitaires | `useAgendaMobileView` intermittent : `Date.now()` dans la même milliseconde | ✅ `7cd73d24`, témoin à horloge figée |
-| **couverture** | cinq dépôts livrés sans test (`org-config`, `org-reports`, `governance`, `execution` à 0 %, `team-lists` 11 %) | 🔴 **ouvert** : `org-config` est en cours de modification par une autre session |
+| **couverture** | cinq dépôts livrés sans test (`org-config`, `org-reports`, `governance`, `execution` à 0 %, `team-lists` 11 %) | 🔴 **ouvert** : `org-config` est en cours de modification par une autre session · ✅ **refermé le 2026-10-02** (`2300fd62`), cf. § précédente |
 
 Après les quatre premiers : **299 fichiers, 3 284 tests, tous verts** en CI. 🔴 **Dernier `CI` vert sur
 `main` : 2026-09-23** (`869fb05a`). Le build et `check:bundle` n'ont plus été atteints en CI depuis le 09-28.
@@ -106,7 +128,7 @@ gardes qui tournent : c'est exactement ce qu'on leur demande.
 
 ### Ce qu'il faut faire, dans l'ordre
 
-1. **Tests des cinq dépôts** sans couverture : seul blocage restant avant le build et le budget en CI.
+1. ~~**Tests des cinq dépôts** sans couverture : seul blocage restant avant le build et le budget en CI.~~ ✅ fait le 2026-10-02 ; le budget a parlé : `OKRPage` à 16,1 ko pour 15,0.
 2. **Agenda** : retirer le `role="region"` posé dans la grille FullCalendar (WCAG 1.3.1, niveau A).
 3. **Cibles tactiles** : « Sélectionner plusieurs tâches » (106 × 32), « Suivre cette tâche » (149 × 36).
 4. **Suite e2e entreprise** : la remettre au niveau de l'écran (« Personnes » → « Membres », navigation).

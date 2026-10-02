@@ -1,4 +1,4 @@
-<!-- note-audit: note=92 -->
+<!-- note-audit: note=93 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,35 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **92 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **93 / 100** au 2026-10-02, au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → **92 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → **93 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02)
+
+> ### 🟢 2026-10-02 · +1 : la couverture des dépôts refermée, vérifiée en CI
+>
+> | Item | Effet | Mesuré le 2026-10-02 |
+> |---|---|---|
+> | Cinq dépôts livrés sans test | **+1** | remboursé : corrigé dans `2300fd62` et **vu vert en CI** (run `36985012405`, étape « Unit tests + coverage »). Le −1 du 2026-10-01 tombe |
+>
+> **Ce qui a été écrit.** Un fichier de test par dépôt, sur le modèle des `*.supabase.repository.test.ts` existants (mock `@/test/supabase-mock`, chaîne PostgREST assertée appel par appel) : `org-config` (29 cas, plus 8 pour les champs personnalisés, retirés le jour même avec la mig. `211`), `org-reports` (4), `team-lists` (14), `organizations/governance` (30), `team-okrs/execution` (9). Les cinq sont à **100 % de fonctions**. `functions.invoke`, absent du mock commun, est ajouté au client mocké du fichier qui s'en sert.
+>
+> 🔴 **Les cinq ne suffisaient pas, et la cause était ailleurs.** Après eux, le glob restait rouge sur un seul indicateur : fonctions à **90,84 %** pour 93. Deux raisons, mesurées fichier par fichier dans `coverage/coverage-summary.json` :
+>
+> - `governance.supabase.repository.ts` et `execution.supabase.repository.ts` **n'entrent pas dans le glob** : `**/supabase.repository.ts` exige ce nom exact. Leurs tests protègent le code, ils ne bougent pas le seuil. Le total recalculé sans eux (278 / 306) rend exactement le 90,84 % de vitest.
+> - Le vrai trou était **`team-projects`, 24 fonctions sur 41** : ses délégations vers `supabase.portfolio`, `audience.repository`, `supabase.access` et `supabase.activity` n'étaient appelées par aucun test. `supabase.repository.delegation.test.ts` les fige, **ordre des arguments compris** : il change d'un sous-module à l'autre (`addProjectDependency(projectId, dependsOnId, orgId)` contre `addProjectTeam(orgId, projectId, teamId)`) et tout est `string`, une inversion passerait `tsc`.
+>
+> Résultat, `npm run test:coverage`, exit 0, 305 fichiers sur 305 : glob à **93,90 L · 96,41 F · 80,91 S · 71,11 B** (seuils 90 / 93 / 76 / 65). **Aucun seuil touché**, ni à la baisse ni à la hausse : remonter le cliquet reste possible (~2 pt sous la mesure, convention du fichier), ce n'était pas la demande.
+>
+> ⚠️ **Deux pièges vus en route, sans effet sur la note** :
+>
+> - Isoler les tests d'une méthode qu'une autre session est en train de retirer a payé : `accca41d` a supprimé les cinq méthodes de champs personnalisés sans voir le fichier qui les testait, `main` ne compilait plus. Le fichier isolé a été supprimé seul (`f7ad34ea`), rien d'autre n'a bougé.
+> - Sous charge (CPU à 100 %, plusieurs sessions), `vitest` a rendu « 1 passed (1) » avec **exit 1** : `org-config.test.ts` n'avait jamais démarré (*Timeout waiting for worker*). Règle n° 1 du `CLAUDE.md` racine, rejouée telle quelle.
+>
+> **Étape suivante du job** : le build passe en CI, `check:bundle` tombe sur `OKRPage` (16,1 ko pour 15,0). C'est un défaut de Performance, pas de Tests.
+>
+> **92 → 93.** Détail : [tableau de bord](./README.md).
 
 > ### ⚪ 2026-10-01 · 0 : inchangée, pas pour les mêmes raisons
 >
