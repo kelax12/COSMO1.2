@@ -239,14 +239,19 @@ test.describe('Entreprise — responsable d’équipe (démo)', () => {
     await openTeam(page, 'Design');
     await expect(leadBadges(page).first()).toBeVisible({ timeout: 15_000 });
 
-    const before = await leadBadges(page).count();
+    // On compte les responsables par LEUR commande (« Retirer le rôle de
+    // responsable », une par responsable), pas par le texte « Responsable » :
+    // la bulle de premier affichage du rôle porte le même mot, et elle se
+    // referme au clic qui suit. Mesuré : 2 avant, 2 après, promotion pourtant
+    // faite (bulle comptée avant, plus après).
+    const leads = page.getByRole('button', { name: /^retirer le rôle de responsable/i });
+    const before = await leads.count();
+    expect(before).toBeGreaterThan(0);
     await page.getByRole('button', { name: /nommer responsable de l'équipe/i }).first().click();
 
     // Le rôle est multiple : nommer un second responsable ne révoque pas le
     // premier — c'est la différence avec `created_by`, qui était unique.
-    await expect(async () => {
-      expect(await leadBadges(page).count()).toBe(before + 1);
-    }).toPass({ timeout: 10_000 });
+    await expect(leads).toHaveCount(before + 1, { timeout: 10_000 });
 
     // Et il reste porté par l'appartenance à UNE équipe : la promotion n'a pas
     // ajouté de responsable ailleurs.
