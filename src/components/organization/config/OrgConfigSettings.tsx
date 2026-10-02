@@ -4,7 +4,6 @@ import { useT } from '@/i18n/useT';
 import OrgGeneralSettingsCard from './OrgGeneralSettingsCard';
 import OrgSecurityCard from './OrgSecurityCard';
 import OrgIntegrationsCard from './OrgIntegrationsCard';
-import CustomFieldsEditor from './CustomFieldsEditor';
 import AutomationsEditor from './AutomationsEditor';
 import { CARD, TITLE, HINT } from './config-ui';
 
@@ -17,30 +16,20 @@ interface Props {
   part: OrgConfigPart;
 }
 
-export type OrgConfigPart = 'general' | 'security' | 'fields' | 'automations' | 'integrations';
+export type OrgConfigPart = 'general' | 'security' | 'automations' | 'integrations';
 
 /**
  * Rubriques de configuration de Paramètres (audit du 2026-09-24) : réglages
- * propres à l'organisation, Sécurité (M13), champs personnalisés et
- * automatisations d'entreprise, intégrations. Mig. 195 à 199.
+ * propres à l'organisation, Sécurité (M13), automatisations
+ * d'entreprise, intégrations. Mig. 195 à 199.
  */
 const OrgConfigSettings = ({ orgId, members, currentUserId, isAdmin, part }: Props) => {
-  const { t } = useT('orgConfig');
   if (part === 'general') return <OrgGeneralSettingsCard orgId={orgId} isAdmin={isAdmin} />;
   if (part === 'security') return isAdmin ? <OrgSecurityCard orgId={orgId} /> : null;
   if (part === 'integrations') {
     return <OrgIntegrationsCard orgId={orgId} members={members} currentUserId={currentUserId} isAdmin={isAdmin} />;
   }
   if (!isAdmin) return null;
-  if (part === 'fields') {
-    return (
-      <section className={CARD} aria-labelledby="org-fields-title">
-        <h2 id="org-fields-title" className={TITLE}>{t('fields.title')}</h2>
-        <p className={`${HINT} mb-3`}>{t('fields.hint')}</p>
-        <CustomFieldsEditor orgId={orgId} projectId={null} canEdit />
-      </section>
-    );
-  }
   return <OrgAutomationsPart orgId={orgId} members={members} />;
 };
 

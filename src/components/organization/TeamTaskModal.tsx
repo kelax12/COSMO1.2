@@ -26,9 +26,8 @@ import { useModalA11y } from '@/hooks/use-modal-a11y';
 const TeamTaskTabPanels = lazyWithRetry(() => import('./TeamTaskTabPanels'));
 // Listes et « Suivre » : même raison, hors du premier affichage de la fiche.
 const TeamTaskListsField = lazyWithRetry(() => import('./TeamTaskListsField'));
-// Suivre (mig. 162) et champs personnalisés (mig. 197) : UN chargement pour les
-// deux, catalogue compris (`TAB_GATE_HOSTS` : cette fiche déclare sa liste).
-const TaskDetailsExtras = lazyWithRetry(() => import('./TaskDetailsExtras'), ['org', 'orgConfig', 'overlays']);
+// Suivre (mig. 162) : chargé à part, catalogue compris (`TAB_GATE_HOSTS` : cette fiche déclare sa liste).
+const TaskDetailsExtras = lazyWithRetry(() => import('./TaskDetailsExtras'), ['org', 'overlays']);
 // Commentaires (2026-10-01) : panneau latéral, sous le premier affichage. Sortis
 // du chunk pour le ramener sous son plafond (16,0 ko pour 14,5). Le brouillon
 // « Créer et commenter » part toujours au MONTAGE de la section, qui attend
@@ -475,7 +474,7 @@ const TeamTaskModal = ({
           {/* Suivre une tâche (mig. 162, M14) : ses changements de statut
               arrivent dans la cloche même quand on n'y est pas assigné. */}
           {tab === 'details' && liveTask && (
-            <Suspense fallback={null}><TaskDetailsExtras orgId={orgId} task={liveTask} canEdit={!taskEditReason(liveTask)} /></Suspense>
+            <Suspense fallback={null}><TaskDetailsExtras orgId={orgId} task={liveTask} /></Suspense>
           )}
 
           {/* Sous-tâches, dépendances, historique : chargés à la première

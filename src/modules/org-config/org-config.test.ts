@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest';
-import { LocalStorageOrgConfigRepository, fieldValueIsValid, webhookUrlIsAllowed } from './local.repository';
+import { LocalStorageOrgConfigRepository, webhookUrlIsAllowed } from './local.repository';
 import { applyAutomations, applyCustomStatus } from './automation.helpers';
 import type { Automation, ProjectStatus } from './types';
 
@@ -83,15 +83,6 @@ describe('dépôt démo', () => {
     expect((await repo.getDomains('o'))[0].domain).toBe('exemple.fr');
   });
 
-  it('champs : une liste exige des options, une valeur respecte le type', async () => {
-    await expect(repo.createCustomField('o', { projectId: null, name: 'Client', kind: 'select', options: [] })).rejects.toBeTruthy();
-    const f = await repo.createCustomField('o', { projectId: null, name: 'Client', kind: 'select', options: ['A', 'B', 'A'] });
-    expect(f.options).toEqual(['A', 'B']);
-    await expect(repo.setTaskFieldValue('t', f.id, 'Z')).rejects.toBeTruthy();
-    await repo.setTaskFieldValue('t', f.id, 'B');
-    expect(await repo.getTaskFieldValues('t')).toEqual([{ taskId: 't', fieldId: f.id, value: 'B' }]);
-  });
-
   it('automatisation : « statut vers statut » refusée', async () => {
     await expect(repo.createAutomation('o', {
       projectId: null, name: 'x', triggerKind: 'status_changed', triggerValue: 'review', actionKind: 'set_status', actionValue: 'done',
@@ -100,13 +91,6 @@ describe('dépôt démo', () => {
 });
 
 describe('gardes pures', () => {
-  it('fieldValueIsValid', () => {
-    expect(fieldValueIsValid({ kind: 'number', options: [] }, 3)).toBe(true);
-    expect(fieldValueIsValid({ kind: 'number', options: [] }, '3')).toBe(false);
-    expect(fieldValueIsValid({ kind: 'date', options: [] }, '2026-09-30')).toBe(true);
-    expect(fieldValueIsValid({ kind: 'checkbox', options: [] }, 'oui')).toBe(false);
-  });
-
   it('webhookUrlIsAllowed : HTTPS public seulement', () => {
     expect(webhookUrlIsAllowed('https://hooks.slack.com/services/T/B/X')).toBe(true);
     expect(webhookUrlIsAllowed('http://exemple.fr')).toBe(false);

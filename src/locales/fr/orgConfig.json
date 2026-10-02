@@ -50,27 +50,6 @@
     "needVerified": "Vérifiez au moins un domaine pour activer cette règle.",
     "sessions": "La double authentification se règle par chaque personne dans ses Réglages ; elle protège la connexion, pas l'entreprise."
   },
-  "fields": {
-    "title": "Champs personnalisés",
-    "hint": "Des informations propres à vos tâches : client, budget, date de recette…",
-    "scopeOrg": "Toute l'entreprise",
-    "name": "Nom du champ",
-    "kind": "Type",
-    "kinds": {
-      "text": "Texte",
-      "number": "Nombre",
-      "date": "Date",
-      "select": "Liste",
-      "checkbox": "Case à cocher"
-    },
-    "options": "Options (une par ligne)",
-    "add": "Ajouter le champ",
-    "remove": "Supprimer le champ {{name}}",
-    "empty": "Aucun champ personnalisé.",
-    "inTask": "Champs personnalisés",
-    "none": "Non renseigné",
-    "clear": "Effacer"
-  },
   "statuses": {
     "title": "Statuts du projet",
     "hint": "Nommez vos propres colonnes. Chacune correspond à un statut COSMO, qui reste celui des statistiques.",
