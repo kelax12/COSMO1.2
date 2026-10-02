@@ -49,6 +49,9 @@ interface OrgTaskFilterBarProps {
   /** Place le périmètre ailleurs (onglet Tâches : à côté du tri, 2026-09-30).
    *  Reçoit le sélecteur, rend la ligne qui l'accueille sous la recherche. */
   scopeSlot?: (scope: ReactNode) => ReactNode;
+  /** Actions poussées à droite de la ligne de recherche (onglet Projets :
+   *  corbeille et « Nouveau projet », 2026-10-01). */
+  trailing?: ReactNode;
 }
 
 const segBase = 'h-8 px-2.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
@@ -57,7 +60,7 @@ const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-
 
 const OrgTaskFilterBar = ({
   filters, setFilters, defaultStatus, members, teams, projects = [], currentUserId,
-  searchPlaceholder, searchAria, onCreateTeam, entity = 'tasks', scopeSlot,
+  searchPlaceholder, searchAria, onCreateTeam, entity = 'tasks', scopeSlot, trailing,
 }: OrgTaskFilterBarProps) => {
   // Catalogue `portfolio`, chargé avec les deux seuls onglets qui montrent cette
   // barre (Tâches, Projets) : `org` est payé par toute visite de /entreprise.
@@ -247,6 +250,7 @@ const OrgTaskFilterBar = ({
 
         {/* Plus de pastilles d'état ici (2026-09-28) : « Terminées cette
             semaine » est un préréglage (`FilterPresets`), « Tout » est retiré. */}
+        {trailing && <div className="ml-auto flex items-center gap-2">{trailing}</div>}
       </div>
       {scopeSlot?.(scope)}
     </div>

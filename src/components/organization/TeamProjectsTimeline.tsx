@@ -401,26 +401,6 @@ const TeamProjectsTimeline = ({
                         })}
                       />
                     )}
-                    {/* Barres (tâches avec un début) : dessinées d'abord, pour
-                        que les points restent au-dessus et cliquables. */}
-                    {row.markers.map((marker) => {
-                      if (marker.startOffsetPercent === null) return null;
-                      const markerProject = projectById.get(marker.task.projectId);
-                      const barClass = marker.overdue
-                        ? 'bg-red-500/40'
-                        : markerProject ? `${projectColor(markerProject.color).dot} opacity-40` : 'bg-slate-400/40';
-                      return (
-                        <span
-                          key={`bar-${marker.task.id}`}
-                          aria-hidden="true"
-                          className={`absolute top-1/2 -translate-y-1/2 h-2 rounded-full ${barClass}`}
-                          style={{
-                            left: `${marker.startOffsetPercent}%`,
-                            width: `${Math.max(0, marker.offsetPercent - marker.startOffsetPercent)}%`,
-                          }}
-                        />
-                      );
-                    })}
                     {row.markers.map((marker, i) => {
                       const deadline = parseISO(marker.task.deadline!);
                       const markerProject = projectById.get(marker.task.projectId);
@@ -455,25 +435,23 @@ const TeamProjectsTimeline = ({
                             <PopoverTrigger asChild>
                               <button
                                 type="button"
-                                onClick={() => (selectable ? onToggleSelect?.(marker.task) : onOpenTask(marker.task))}
+                                // La card se referme au clic : elle ne doit pas rester
+                                // ouverte par-dessus la modale de la tâche (2026-10-01).
+                                onClick={() => { closeHoverNow(); if (selectable) onToggleSelect?.(marker.task); else onOpenTask(marker.task); }}
                                 aria-pressed={selectable ? isSelected : undefined}
                                 onMouseEnter={() => scheduleHoverOpen(marker.task.id)}
                                 onMouseLeave={scheduleHoverClose}
-                                onFocus={() => { cancelHoverTimer(); setHoverTaskId(marker.task.id); }}
+                                // Focus CLAVIER seulement : un clic souris donne aussi le
+                                // focus, et rouvrait la card en même temps que la modale.
+                                onFocus={(e) => { if (!e.currentTarget.matches(':focus-visible')) return; cancelHoverTimer(); setHoverTaskId(marker.task.id); }}
                                 onBlur={closeHoverNow}
                                 aria-label={
                                   selectable
                                     ? t('projects.selectTask', { name: marker.task.name })
-                                    : marker.task.startDate
-                                      ? pf('timeline.bar', {
-                                          name: marker.task.name,
-                                          start: format(parseISO(marker.task.startDate), 'd MMMM', { locale: getDateLocale() }),
-                                          end: format(deadline, 'd MMMM', { locale: getDateLocale() }),
-                                        })
-                                      : pf('timeline.marker', {
-                                          name: marker.task.name,
-                                          date: format(deadline, 'd MMMM', { locale: getDateLocale() }),
-                                        })
+                                    : pf('timeline.marker', {
+                                        name: marker.task.name,
+                                        date: format(deadline, 'd MMMM', { locale: getDateLocale() }),
+                                      })
                                 }
                                 // Le chemin critique se signale par un ANNEAU,
                                 // pas par une couleur de pastille : la couleur
