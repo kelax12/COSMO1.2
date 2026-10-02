@@ -188,6 +188,10 @@ export const SHOTS: Record<string, AppShotRef> = {
   // l'étape « Suivi » montre les rapports d'activité, qu'on atteint vraiment.
   reports: { id: 'reports', labelKey: 'enterprise.shot.reports', image: shot('rapports'), altKey: 'enterprise.shot.reportsAlt' },
   tasks: { id: 'tasks', labelKey: 'enterprise.shot.tasks', image: shot('taches'), altKey: 'enterprise.shot.tasksAlt' },
+  // Étape 3 : le Tableau par statut, et la fiche d'une tâche bloquée (onglet
+  // Dépendances), affichée en surimpression par `ExecutionSection`.
+  tasksBoard: { id: 'tasksBoard', labelKey: 'enterprise.shot.tasksBoard', image: shot('taches-tableau'), altKey: 'enterprise.shot.tasksBoardAlt' },
+  tasksDeps: { id: 'tasksDeps', labelKey: 'enterprise.shot.tasksDeps', image: shot('taches-dependances'), altKey: 'enterprise.shot.tasksDepsAlt' },
 };
 
 /** Les trois écrans qui défilent dans le hero. */

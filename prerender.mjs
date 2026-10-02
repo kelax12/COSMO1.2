@@ -395,7 +395,7 @@ const ROUTES = [
 
         <h2>Étape 3 : suivez l'exécution, pas seulement les échéances</h2>
         <p>Chaque tâche porte un statut (à faire, en cours, en relecture, bloquée, terminée) et peut en bloquer une autre. Le planning calcule le chemin critique, la chaîne de tâches dont le moindre retard décale la livraison. L'onglet Tâches réunit les tâches de tous les projets de votre périmètre, avec préréglages, listes partagées, tri et regroupement, en liste ou en kanban.</p>
-        <p><img src="/screenshots/entreprise/taches.webp" width="1600" height="1000" alt="Onglet Tâches de Cosmo Entreprise : les tâches de toute l'organisation avec listes partagées et préréglages de filtres" /></p>
+        <p><img src="/screenshots/entreprise/taches-tableau.webp" width="1600" height="1000" alt="Onglet Tâches de Cosmo Entreprise en vue Tableau : une colonne par statut, de à faire à terminée, avec les retards signalés" /></p>
 
         <h2>Étape 4 : posez vos objectifs, à toutes les échelles</h2>
         <p>Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés avec leur porteur. Un objectif peut être visible par toute l'entreprise, par certaines équipes ou par les seules personnes choisies. Chaque résultat clé atteint est journalisé à la date où il l'a été, dans un journal qui ne se réécrit pas après coup.</p>
@@ -430,7 +430,7 @@ const ROUTES = [
 
         <h2>Step 3: follow execution, not just deadlines</h2>
         <p>Every task carries a status (to do, in progress, in review, blocked, done) and can block another. The timeline computes the critical path, the chain of tasks where the slightest delay pushes back delivery. The Tasks tab gathers the tasks of every project in your scope, with presets, shared lists, sorting and grouping, as a list or a board.</p>
-        <p><img src="/screenshots/entreprise/taches.webp" width="1600" height="1000" alt="The Tasks tab in Cosmo for companies: every task across the organisation with shared lists and filter presets" /></p>
+        <p><img src="/screenshots/entreprise/taches-tableau.webp" width="1600" height="1000" alt="The Tasks tab in Cosmo for companies in Board view: one column per status, from to do to done, with overdue tasks flagged" /></p>
 
         <h2>Step 4: set your goals, at every scale</h2>
         <p>An organisation goal cascades into team OKRs, each OKR into numeric key results with their owner. An objective can be visible to the whole company, to some teams or only to the people you pick. Each key result achieved is logged on the date it was achieved, in a journal that cannot be rewritten afterwards.</p>
