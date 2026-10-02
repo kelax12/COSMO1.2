@@ -181,15 +181,85 @@ export const SHOTS: Record<string, AppShotRef> = {
   pyramid: { id: 'pyramid', labelKey: 'enterprise.shot.pyramid', image: shot('pyramide'), altKey: 'enterprise.shot.pyramidAlt' },
   members: { id: 'members', labelKey: 'enterprise.shot.members', image: shot('membres'), altKey: 'enterprise.shot.membersAlt' },
   projects: { id: 'projects', labelKey: 'enterprise.shot.projects', image: shot('projets'), altKey: 'enterprise.shot.projectsAlt' },
-  projectsKanban: { id: 'projectsKanban', labelKey: 'enterprise.shot.projectsKanban', image: shot('projets-kanban'), altKey: 'enterprise.shot.projectsKanbanAlt' },
   projectsPlanning: { id: 'projectsPlanning', labelKey: 'enterprise.shot.projectsPlanning', image: shot('projets-planning'), altKey: 'enterprise.shot.projectsPlanningAlt' },
+  projectsPortfolio: { id: 'projectsPortfolio', labelKey: 'enterprise.shot.projectsPortfolio', image: shot('projets-portefeuille'), altKey: 'enterprise.shot.projectsPortfolioAlt' },
   okr: { id: 'okr', labelKey: 'enterprise.shot.okr', image: shot('okr'), altKey: 'enterprise.shot.okrAlt' },
-  stats: { id: 'stats', labelKey: 'enterprise.shot.stats', image: shot('statistiques'), altKey: 'enterprise.shot.statsAlt' },
+  // L'onglet Statistiques est masqué de la navigation depuis le 2026-09-30 :
+  // l'étape « Suivi » montre les rapports d'activité, qu'on atteint vraiment.
+  reports: { id: 'reports', labelKey: 'enterprise.shot.reports', image: shot('rapports'), altKey: 'enterprise.shot.reportsAlt' },
   tasks: { id: 'tasks', labelKey: 'enterprise.shot.tasks', image: shot('taches'), altKey: 'enterprise.shot.tasksAlt' },
 };
 
 /** Les trois écrans qui défilent dans le hero. */
-export const HERO_SHOTS = [SHOTS.projects, SHOTS.okr, SHOTS.stats];
+export const HERO_SHOTS = [SHOTS.overview, SHOTS.projects, SHOTS.okr];
+
+/**
+ * Les vingt fonctionnalités de la section « Plus », en quatre familles de cinq.
+ *
+ * Uniquement ce que les cinq étapes ne montrent PAS, et uniquement ce qui est
+ * atteignable dans le produit aujourd'hui (relu dans le code le 2026-10-02).
+ * Une fonctionnalité qu'on retire du produit sort d'ici le même jour. L'icône
+ * est un NOM, résolu par le composant : ce module n'importe rien de lourd.
+ */
+export type MoreFeatureIcon =
+  | 'KeyRound' | 'UserCog' | 'UsersRound' | 'CalendarPlus' | 'Rocket'
+  | 'Copy' | 'Link2' | 'ListChecks' | 'Filter' | 'Search'
+  | 'Zap' | 'Webhook' | 'Download' | 'BellRing' | 'Target'
+  | 'ScrollText' | 'BadgeCheck' | 'Timer' | 'UserMinus' | 'ArchiveRestore';
+
+export interface MoreFeature {
+  /** Rang 1 à 20 : les clés sont `enterprise.more.f{n}t` / `f{n}d`. */
+  n: number;
+  icon: MoreFeatureIcon;
+}
+
+export interface MoreFeatureGroup {
+  titleKey: KeyOf<'landing'>;
+  features: MoreFeature[];
+}
+
+export const MORE_FEATURE_GROUPS: MoreFeatureGroup[] = [
+  {
+    titleKey: 'enterprise.more.g1',
+    features: [
+      { n: 1, icon: 'KeyRound' },
+      { n: 2, icon: 'UserCog' },
+      { n: 3, icon: 'UsersRound' },
+      { n: 4, icon: 'CalendarPlus' },
+      { n: 5, icon: 'Rocket' },
+    ],
+  },
+  {
+    titleKey: 'enterprise.more.g2',
+    features: [
+      { n: 6, icon: 'Copy' },
+      { n: 7, icon: 'Link2' },
+      { n: 8, icon: 'ListChecks' },
+      { n: 9, icon: 'Filter' },
+      { n: 10, icon: 'Search' },
+    ],
+  },
+  {
+    titleKey: 'enterprise.more.g3',
+    features: [
+      { n: 11, icon: 'Zap' },
+      { n: 12, icon: 'Webhook' },
+      { n: 13, icon: 'Download' },
+      { n: 14, icon: 'BellRing' },
+      { n: 15, icon: 'Target' },
+    ],
+  },
+  {
+    titleKey: 'enterprise.more.g4',
+    features: [
+      { n: 16, icon: 'ScrollText' },
+      { n: 17, icon: 'BadgeCheck' },
+      { n: 18, icon: 'Timer' },
+      { n: 19, icon: 'UserMinus' },
+      { n: 20, icon: 'ArchiveRestore' },
+    ],
+  },
+];
 
 /** Les quatre garanties de la section sécurité. */
 export interface SecurityPoint {

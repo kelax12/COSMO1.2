@@ -477,17 +477,22 @@ section cockpit) et référencées dans le prérendu de `/entreprise-presentatio
 
 > ⚠️ Une capture périmée ment sur le produit. À reprendre dès que l'UI entreprise change.
 
-Procédure (Playwright, dev server sur le port de `dev-verify`) :
+Procédure : `scripts/capture-entreprise-shots.mjs` (Playwright), refait le 2026-10-02 pour la
+navigation à une route par section.
 
-1. `localStorage.theme = 'noir'` **avant** le login démo — la landing est graphite, une capture
-   en thème clair y fait une tache blanche.
-2. `loginDemo()` puis `/entreprise`, et fermer le bandeau démo, l'avis de tarification et
-   replier la barre latérale : on ne montre que le produit.
-3. Viewport **1280 de large** et cadrage depuis la barre d'onglets, en 16/10. La largeur compte :
-   au-delà, l'UI devient trop petite une fois réduite à la taille d'affichage et le texte n'est
-   plus lisible.
-4. Encoder en WebP 1500 px (`ffmpeg -c:v libwebp -quality 80`) — l'ensemble tient sous 250 kB.
-5. Mettre à jour les `alt` (`enterprise.cockpit.a1…a6`) si le contenu des écrans a changé.
+1. Un serveur de dev en **mode démo forcé** (`dev-landing-shots` dans `.claude/launch.json`, port
+   5521, variables Supabase vides), puis `SHOTS_BASE=http://localhost:5521 node scripts/capture-entreprise-shots.mjs`.
+2. Le script pose `theme = 'noir'` **avant** la démo, neutralise ce qui ne s'affiche qu'une fois
+   (glossaire au premier affichage d'un rôle, carte « Gardez votre organisation », bandeau démo) et
+   replie la barre latérale de l'app : on ne montre que l'espace entreprise.
+3. Viewport **1280 de large**, cadrage = colonne principale **et** panneau de navigation de droite,
+   en 16/10. La largeur compte : au-delà, l'UI devient illisible une fois réduite.
+4. WebP 1600 px, ré-encodés par le canvas de Chromium : l'ensemble tient sous 1 Mo.
+5. Mettre à jour les `alt` (`enterprise.shot.*Alt` des catalogues `landing`, et les `<img>` du
+   prérendu de `/entreprise-presentation` dans `prerender.mjs`) si le contenu des écrans a changé.
+
+⚠️ L'onglet **Statistiques** est masqué de la navigation depuis le 2026-09-30 : ne pas le
+recapturer pour la landing. L'étape « Suivi » montre les rapports d'activité (`rapports.webp`).
 
 ### `lastmod` et `dateModified` — jamais la date du build
 

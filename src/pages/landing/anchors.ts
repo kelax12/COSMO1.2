@@ -31,6 +31,7 @@ export const TRACK_ANCHORS: Record<LandingTrack, TrackAnchor[]> = {
     { href: '#execution', labelKey: 'enterprise.nav.execution' },
     { href: '#okr', labelKey: 'enterprise.nav.okr' },
     { href: '#statistiques', labelKey: 'enterprise.nav.progress' },
+    { href: '#fonctionnalites', labelKey: 'enterprise.nav.more' },
     { href: '#securite', labelKey: 'enterprise.nav.security' },
     { href: '#tarifs', labelKey: 'enterprise.nav.pricing' },
   ],

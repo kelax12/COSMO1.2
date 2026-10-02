@@ -6,7 +6,7 @@ import ScrollHighlight from './ScrollHighlight';
 import StepSection from './StepSection';
 import { SHOTS } from './data';
 
-/** Les trois lectures que l'onglet Statistiques rend possibles. */
+/** Les trois lectures du suivi : rapports d'activité, qui a fait quoi, charge. */
 const POINTS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
   { titleKey: 'enterprise.progress.p1t', bodyKey: 'enterprise.progress.p1d' },
   { titleKey: 'enterprise.progress.p2t', bodyKey: 'enterprise.progress.p2d' },
@@ -16,10 +16,9 @@ const POINTS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
 /**
  * Étape 4 — ce qu'on regarde une fois que tout tourne.
  *
- * La boucle se referme ici : le périmètre posé à l'étape 1 est exactement ce
- * qui détermine ce que chacun voit dans les statistiques. Une direction lit
- * toute l'organisation, un manager lit son sous-arbre, et personne n'a eu à
- * configurer un droit pour ça.
+ * Montre les rapports d'activité, pas l'onglet Statistiques : celui-ci est
+ * masqué de la navigation depuis le 2026-09-30, et une capture d'un écran
+ * qu'on ne peut pas ouvrir ment sur le produit.
  */
 const ProgressSection: React.FC = () => {
   const { t } = useT('landing');
@@ -34,9 +33,9 @@ const ProgressSection: React.FC = () => {
       <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:gap-14">
         <div className="aspect-[16/10]">
           <AppShot
-            src={SHOTS.stats.image}
-            alt={t(SHOTS.stats.altKey)}
-            label={t(SHOTS.stats.labelKey)}
+            src={SHOTS.reports.image}
+            alt={t(SHOTS.reports.altKey)}
+            label={t(SHOTS.reports.labelKey)}
           />
         </div>
 
