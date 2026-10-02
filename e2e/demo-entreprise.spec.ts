@@ -1,5 +1,4 @@
-import type { Page } from '@playwright/test';
-import { test, expect, navTo } from './fixtures';
+import { test, expect, navTo, openOrgSection, expectOrgSectionOffered } from './fixtures';
 
 /**
  * Parcours entreprise (reco #19) — mode démo, org « Nova Studio » seedée
@@ -10,18 +9,6 @@ import { test, expect, navTo } from './fixtures';
  * échéances entreprise), le modal de tâche s'ouvre avec son fil de
  * commentaires, l'onglet Membres liste l'annuaire et les cartes d'invitation.
  */
-/**
- * Entrée de la navigation entreprise (`OrgSideNav`, à droite sur desktop).
- *
- * ⚠️ Ne PAS ancrer sur la fin du libellé (`/^projets$/i`) : depuis les badges
- * de nouveautés (vague 1 entreprise, 2026-08-08), le compteur porte un
- * `aria-label` (« 3 nouveautés ») qui entre dans le NOM ACCESSIBLE du bouton —
- * lequel vaut donc « Projets 3 nouveautés » dès qu'il y a du neuf dans la
- * démo. Les deux tests qui ancraient la fin tournaient jusqu'au timeout.
- * On ancre au début : « Nouveau projet » ne matche pas, le badge ne gêne plus.
- */
-const orgTab = (page: Page, label: RegExp) =>
-  page.getByRole('navigation', { name: /sections de l.entreprise/i }).getByRole('link', { name: label });
 
 test.describe('Espace entreprise (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
@@ -31,7 +18,7 @@ test.describe('Espace entreprise (démo)', () => {
 
     // Header org + onglets
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
-    await expect(orgTab(page, /^aperçu/i)).toBeVisible();
+    await expectOrgSectionOffered(page, /^aperçu/i);
 
     // Sections de l'Aperçu (reco #2 + #11)
     await expect(page.getByRole('heading', { name: /activité de l'équipe/i })).toBeVisible();
@@ -55,11 +42,11 @@ test.describe('Espace entreprise (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
     // Projets
-    await orgTab(page, /^projets/i).click();
+    await openOrgSection(page, /^projets/i);
     await page.waitForURL(/\/entreprise\/projects/);
 
     // OKR — le bouton « Nouvel objectif » confirme le contenu de l'onglet
-    await orgTab(page, /^okr/i).click();
+    await openOrgSection(page, /^okr/i);
     await page.waitForURL(/\/entreprise\/okr/);
     await expect(
       page.getByRole('button', { name: /nouvel objectif/i }).filter({ visible: true }).first()
@@ -73,9 +60,14 @@ test.describe('Espace entreprise (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
     // Aperçu → « Mes tâches » : ouvrir la première tâche assignée au compte démo
+    //
+    // ⚠️ Le titre vit dans sa propre rangée depuis edcfd61f (bouton
+    // « Sélectionner » à côté) : le `div` le plus profond qui porte le titre
+    // est cette rangée, pas la carte. On exige donc aussi la liste.
     const tasksCard = page
       .locator('div')
       .filter({ has: page.getByRole('heading', { name: /^mes tâches/i }) })
+      .filter({ has: page.getByRole('list') })
       .last();
     // Bouton du nom de tâche (ouvre TeamTaskModal en édition)
     const taskButton = tasksCard.locator('button:has(span.block)').first();
@@ -95,20 +87,22 @@ test.describe('Espace entreprise (démo)', () => {
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });
 
-  // Audit Membres du 2026-09-24 : « quatre pages en une ». Personnes garde
-  // l'annuaire ; Équipes et Paramètres (invitations, zone de danger) en sortent.
-  test('Personnes, Équipes, Paramètres : trois sections et une page d\'équipe', async ({ demoPage: page }) => {
+  // Audit Membres du 2026-09-24 : « quatre pages en une ». La section des
+  // personnes garde l'annuaire ; Équipes et Paramètres (invitations, zone de
+  // danger) en sortent. Son libellé « Personnes » est devenu « Membres » le
+  // 2026-09-29 (de464b92, décision produit) ; la route reste `/members`.
+  test('Membres, Équipes, Paramètres : trois sections et une page d\'équipe', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
-    await orgTab(page, /^personnes/i).click();
+    await openOrgSection(page, /^membres/i);
     await page.waitForURL(/\/entreprise\/members/);
     await expect(page.getByRole('heading', { name: /annuaire/i })).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/marie dupont/i).first()).toBeVisible();
     // Les invitations ne sont plus au-dessus de l'annuaire.
     await expect(page.getByText(/code d'invitation/i)).toHaveCount(0);
 
-    await orgTab(page, /^équipes/i).click();
+    await openOrgSection(page, /^équipes/i);
     await page.waitForURL(/\/entreprise\/teams$/);
     await page.getByRole('link', { name: /^design$/i }).click();
     await page.waitForURL(/\/entreprise\/teams\/team-design/);
@@ -120,6 +114,10 @@ test.describe('Espace entreprise (démo)', () => {
     await page.goto('/entreprise/settings');
     // Rechargement complet : même délai que les autres arrivées par `goto`.
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 20_000 });
+    // Paramètres n'affiche qu'UNE rubrique à la fois depuis 7038a95e
+    // (2026-09-27) : les invitations vivent dans « Inviter ».
+    await page.getByRole('navigation', { name: /rubriques des paramètres/i })
+      .getByRole('button', { name: /^inviter$/i }).click();
     await expect(page.getByText(/code d'invitation/i).first()).toBeVisible({ timeout: 20_000 });
 
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
@@ -145,6 +143,10 @@ test.describe('Espace entreprise · navigation', () => {
   });
 
   test("desktop : ouverte à l'arrivée, repliée quand le curseur la quitte, ressortie au bord", async ({ demoPage: page }) => {
+    // Largeur posée par le cas lui-même, comme son homologue mobile plus bas :
+    // sous `mobile-safari` (390 px), ce panneau n'est pas rendu du tout, et le
+    // cas échouait sur une absence voulue.
+    await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/entreprise/okr');
     const nav = page.getByRole('navigation', { name: /sections de l.entreprise/i });
     const okr = nav.getByRole('link', { name: /^okr/i });
@@ -173,7 +175,7 @@ test.describe('Espace entreprise · navigation', () => {
     // elle ressort. Puis il s'éloigne : elle se replie.
     await page.mouse.move(viewport.width - 4, 10);
     await expect(nav).toHaveAttribute('data-collapsed', 'false');
-    await expect(nav.getByRole('link', { name: /^personnes/i })).toBeVisible();
+    await expect(nav.getByRole('link', { name: /^membres/i })).toBeVisible();
     await page.mouse.move(viewport.width / 3, 10);
     await expect(nav).toHaveAttribute('data-collapsed', 'true');
 
@@ -188,7 +190,7 @@ test.describe('Espace entreprise · navigation', () => {
 
     const switcher = page.locator('[data-org-section-switcher]');
     await expect(switcher).toBeVisible({ timeout: 20_000 });
-    await expect(switcher).toContainText(/personnes/i);
+    await expect(switcher).toContainText(/membres/i);
 
     await switcher.click();
     const sheet = page.locator('[data-org-section-sheet]');

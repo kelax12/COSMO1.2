@@ -120,9 +120,24 @@ async function openMembers(
     '/entreprise?tab=settings',
     options.shell
       ? options.shell(page)
-      : page.getByRole('heading', { name: DANGER_ZONE }),
+      : settingsEntry(page, DANGER_ZONE),
   );
+  if (!options.shell) await openDangerPanel(page, DANGER_ZONE);
   return stub;
+}
+
+/**
+ * Paramètres n'affiche plus qu'UNE rubrique à la fois depuis 7038a95e
+ * (2026-09-27, barre latérale) : la zone de danger n'est montée qu'une fois
+ * son entrée choisie. Ces cas attendaient son titre à l'arrivée et expiraient
+ * à 90 s, le produit n'ayant rien de cassé.
+ */
+const settingsEntry = (page: Page, name: RegExp) =>
+  page.getByRole('navigation', { name: /rubriques des paramètres/i }).getByRole('button', { name });
+
+async function openDangerPanel(page: Page, entry: RegExp) {
+  await settingsEntry(page, entry).click();
+  await expect(settingsEntry(page, entry)).toHaveAttribute('aria-current', 'page');
 }
 
 /** Les écritures de suppression parties vers la base, quel qu'en soit le corps. */
@@ -248,6 +263,11 @@ test.describe('C-39 — supprimer une entreprise : rembourser, puis supprimer', 
       ownerId: OTHER_USER_ID,
       shell: (p) => p.getByRole('heading', { name: /nova e2e/i }).first(),
     });
+
+    // Même rubrique, autre libellé pour qui ne possède pas l'organisation : on
+    // l'OUVRE, sinon l'absence ci-dessous serait vraie pour le propriétaire
+    // aussi (une seule rubrique montée à la fois depuis 7038a95e).
+    await openDangerPanel(page, /quitter l'entreprise/i);
 
     await expect(page.getByRole('heading', { name: DANGER_ZONE })).toHaveCount(0);
     await expect(page.getByRole('button', { name: DELETE_CTA })).toHaveCount(0);
