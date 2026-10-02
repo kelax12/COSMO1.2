@@ -2,7 +2,7 @@
 // TEAM-OKRS MODULE - React Query hooks
 // ═══════════════════════════════════════════════════════════════════
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { getTeamOKRsRepository } from '@/lib/repository.factory';
 import { validateAsync } from '@/lib/validation/lazy';
@@ -39,6 +39,22 @@ export const useTeamOKRs = (
     staleTime: 1000 * 60 * 2,
     // Donnée partagée : au retour sur l'onglet, on resynchronise (reco #12).
     refetchOnWindowFocus: true,
+  });
+};
+
+/**
+ * OKR d'équipe de PLUSIEURS organisations (mode perso : OKR pro de toutes
+ * mes entreprises). Mêmes clés que `useTeamOKRs`, donc cache partagé.
+ */
+export const useTeamOKRsAcrossOrgs = (orgIds: string[]) => {
+  const repository = useRepo();
+  return useQueries({
+    queries: orgIds.map((orgId) => ({
+      queryKey: teamOkrKeys.list(orgId),
+      queryFn: () => repository.getAll(orgId),
+      staleTime: 1000 * 60 * 2,
+    })),
+    combine: (results) => results.flatMap((r) => r.data ?? []),
   });
 };
 
