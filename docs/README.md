@@ -62,6 +62,100 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-02 (soir) · **passe complète : les onze audits rejoués, 946 → 943**
+
+Consigne d'Axel : « remet à jour tous ces audits ». Même méthode que le 2026-10-01 au soir, sur les
+**19 commits** arrivés depuis (`2300fd62` à `9ea33927`) : **CI réelle** de `main`, **production**
+(advisors par l'API, catalogue, ledger, Edge Functions), **dépôt à `HEAD`**. Même règle : un angle
+mort ne se rembourse que sur un verdict rendu en CI, un défaut que corrigé et vérifié.
+
+### Ce que la CI dit à `HEAD`
+
+| Job | Dernier verdict | Mesuré le 2026-10-02 (soir) |
+|---|---|---|
+| `lint-test-build` | 🔴 `9ea33927` | les 19 étapes avant les tests vertes ; **tests unitaires : 3 échecs sur 3 395**, trois gardes qui mordent juste (ci-dessous). Build et budget non atteints |
+| `e2e` | 🔴 `f301f0bf`, seul run complet du jour | **57 échecs, 13 instables, 167 verts** (60 / 9 / 168 la veille au soir), en **4,3 h**. Celui de `HEAD` tourne encore |
+| `lighthouse` | ✅ `9ea33927` | desktop : LCP 0,7 à 1,8 s ; mobile : **3,6 à 8,4 s**, inchangé |
+| `rls-integration`, `audit` | ✅ `9ea33927` | |
+| `Visual` | ✅ `9ea33927` | 18 cas, un instable |
+| `CodeQL`, Dependabot | ✅ | **0** alerte ouverte des deux côtés |
+| `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift` | ✅ 2026-10-02 | |
+| `Posture` | 🔴 depuis sa pose | `vercel-env` et `supabase` attendent `C-105` et `M-58` ; et la moitié advisors **comptait zéro** (ci-dessous) |
+
+🔴 **Le 2026-10-02, 18 runs `CI` sur `main` : 16 annulés, 1 rouge, 1 en cours.** `cancel-in-progress`
+coupe un `e2e` de 4,3 h à chaque push : un verdict `e2e` par jour, au mieux. Dernier `CI` vert :
+toujours le 2026-09-23 (`869fb05a`).
+
+### Les trois gardes rouges à `HEAD`, et elles ont raison
+
+| Garde | Ce qu'elle voit | Entré avec |
+|---|---|---|
+| `architecture.guard` | `src/pages/OKRPage.tsx` à **617** lignes pour 600 | `05ddf746`, les OKR d'entreprise en mode perso |
+| `lazy-namespaces.guard` | `/okr` traduit dans `org` sans le charger | même commit |
+| `loading-empty-state.guard` (témoin) | la dispense de `TeamProjectsTab` ne correspond plus à rien | `28f4299d`, refonte de l'onglet Projets : dispense morte, à retirer |
+
+⚠️ Le 2026-10-01, [`ARCHITECTURE.md`](./ARCHITECTURE.md) avait vu les 617 lignes « en local, sur le
+travail non commité d'une autre session ». Elles sont entrées dans `main` le lendemain matin, sans
+que la suite unitaire ait tourné avant le push.
+
+### 🔴 Trouvé en chemin : la garde des advisors ne voyait rien, depuis sa pose
+
+`check:supabase-posture` (C-88, job `supabase` de `posture.yml`) imprime **`0`** pour chaque advisor
+dans les **douze** runs relus du 2026-09-22 au 2026-10-02, alors que la base était à
+`10 / 53 / 2 / 1`, puis à **`11 / 80 / 2 / 1`** (relu ce soir par l'API, ordre de
+[`../faille.md`](../faille.md)). L'API Management rend **une entrée par occurrence**, sans `count`
+ni `findings` ; le script écrasait chaque entrée et retombait sur zéro. Son témoin ne testait que la
+forme groupée du serveur MCP.
+
+Conséquence : **la hausse 52 → 80 des fonctions `SECURITY DEFINER` du mode entreprise est passée
+sous une garde dont la raison d'être, écrite dans sa référence, est de signaler « la 53ᵉ »**. Elle
+n'a jamais rendu de faux vert, parce qu'elle était rouge pour une autre raison (`M-58`), et n'avait
+jamais été remboursée : ni débit ni crédit. ✅ Corrigée ce soir (`resumerAdvisors` additionne par
+nom), cas témoin à la forme réelle de l'API, **vu rouge sans le correctif, vert avec**. `M-58` est
+mis à jour : le premier `--update` fera passer les deux mêmes comptes **9 → 11** et **52 → 80**, tous
+objets identifiés.
+
+⚠️ **Un faux relevé évité de justesse.** Le premier `bundle.log` lu ce soir annonçait `org` 37,3 ko
+et `legal` 18,5 ko : c'était le fichier d'une autre session, daté du **2026-09-26**, dans le dossier
+temporaire commun, que le build de ce soir n'avait pas encore réécrit. Écarté sur sa date avant
+toute conclusion. **Une mesure s'écrit dans le dossier de la session**, jamais sous un nom générique
+d'un dossier partagé.
+
+### Les notes
+
+| Audit | Avant | **2026-10-02 (soir)** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 84 | **84** | 0 | advisors `11 / 80 / 2 / 1` inchangés, 74 tables sous RLS, 194 policies, ledger 162, CodeQL et Dependabot à 0. Garde des advisors aveugle : corrigée, jamais créditée |
+| [UI / UX](./UI-PATTERNS.md) | 86 | **85** | **−1** | `Visual` vert, mais **aucun écran `/entreprise`** sous lui, le jour où 37 fichiers de `components/organization` changent (angle mort nommé) |
+| [RGPD](./RGPD.md) | 87 | **87** | 0 | mig. `211` relue au catalogue (deux tables vides retirées) ; `check:erasure`, `check:portability`, `retention` verts |
+| [Tests / CI](./TESTING.md) | 93 | **93** | 0 | trois gardes rouges, toutes justes, débitées dans leur domaine ; `e2e` 57 échecs (déjà payé) ; un verdict `e2e` par jour, nommé |
+| [Architecture](./ARCHITECTURE.md) | 93 | **92** | **−1** | `OKRPage.tsx` à 617 lignes, `architecture.guard` rouge en CI |
+| [Performance](./PERFORMANCE.md) | 93 | **92** | **−1** | budget rouge en CI (`OKRPage`), puis **quatre** cliquets dépassés en local à `HEAD` : `OKRPage` 17,0 / 15,0, `landing` 25,4 / 24,0, `vendor-query` 18,9 / 18,5, `vendor-utils` 33,3 / 33,0 |
+| [Scalabilité](./SCALABILITY.md) | 90 | **90** | 0 | charge planifiée le 2026-10-03, pas encore jouée ; `cout-db` vert |
+| [i18n](./I18N.md) | 88 | **87** | **−1** | `/okr` utilise `org` sans le déclarer, garde rouge en CI. Effet visible non observé |
+| [SEO](./SEO.md) | 78 | **78** | 0 | SEO Lighthouse 100 sur sept URLs, 92 sur `/en/` ; `check:seo` vert sur la landing refaite |
+| [Accessibilité](./ACCESSIBILITY.md) | 80 | **81** | **+1** | Agenda **vert en CI** (+1) ; cibles tactiles du 10-01 vertes en CI (+1), mais l'Aperçu refait en a recréé cinq à 36 px (−1) |
+| [Mobile / DA](./MOBILE.md) | 74 | **74** | 0 | même mouvement : +1 −1 sur les cibles tactiles |
+
+**946 → 943.** Une note monte, quatre baissent. **Trois des quatre baisses sont des défauts entrés
+dans `main` le 2026-10-02**, chacun vu par une garde qui tourne : c'est ce qu'on leur demande, ce qui
+manque est qu'elles tournent **avant** le push. La quatrième (UI) est un angle mort nommé ce soir.
+
+### Ce qu'il faut faire, dans l'ordre
+
+1. **`05ddf746`, une cause pour deux gardes** : découper `OKRPage.tsx` sous 600 lignes, et soit
+   déclarer `org` pour `/okr`, soit ne plus tirer les hooks d'organisation depuis la page. Retirer
+   la dispense morte de `TeamProjectsTab`. C'est ce qui rend la main au build et au budget en CI.
+2. **Budget de bundle** : les quatre cliquets ci-dessus, sans en remonter un.
+3. **Cibles tactiles de l'Aperçu** : « Valider », « Renvoyer », « Voir le détail » (`MyWorkCards`,
+   `MyWorkExtraCards`), même geste que le 2026-10-02 au matin.
+4. **Suite e2e entreprise** (depuis le 10-01) : elle fait aussi la durée du job, donc le nombre de verdicts.
+5. **Mettre l'Aperçu de `/entreprise` sous `Visual`.**
+6. **`M-58`**, geste d'Axel : poser la référence de `Posture`, avec des comptes enfin lisibles.
+7. **LCP mobile** (`C-116`) : inchangé, *Render Delay* de 5 à 8 s.
+
+---
+
 ## Mise à jour du 2026-10-02 · couverture refermée en CI, le blocage suivant est `OKRPage` · **945 → 946**
 
 Pas une passe complète : un seul item, le n° 1 de la liste du 2026-10-01, joué jusqu'au verdict de la CI.
@@ -1387,22 +1481,22 @@ testées** (`scripts/migration-guards.test.mjs`).
 | Doc | Périmètre |
 |---|---|
 | [`../CLAUDE.md`](../CLAUDE.md) | Point d'entrée : stack, modules, conventions, garde-fous |
-| [`../faille.md`](../faille.md) | Sécurité : findings **ouverts**, priorités avant prod, règles durables · **note 78 au 2026-09-30** (83 du 09-16 au 09-30 ; « 88 au 09-14 » écrit ici jusqu'au 09-30) |
-| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · **note 90 au 2026-09-15** (+2 : `check:migration-coverage` referme le premier des trois motifs de plafonnement) |
+| [`../faille.md`](../faille.md) | Sécurité : findings **ouverts**, priorités avant prod, règles durables · **note 84 au 2026-10-02 (soir)** · 78 au 2026-09-30 (83 du 09-16 au 09-30 ; « 88 au 09-14 » écrit ici jusqu'au 09-30) |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · **note 92 au 2026-10-02 (soir)** · 90 au 2026-09-15 (+2 : `check:migration-coverage` referme le premier des trois motifs de plafonnement) |
 | [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets · **les 12 Edge Functions** (les 4 Stripe auditées le 2026-09-02, les 4 d'entreprise relues le 2026-09-30), cf. [`../faille.md`](../faille.md) |
-| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 95 au 2026-09-15** (+1 : 8 routes publiques entrent dans la garde E2E, un 6ᵉ job CI apparaît) · ✅ **les cas WebKit tournent en CI depuis `af0190bd`, 2026-09-16** — la mention « aucun workflow » est corrigée le 09-21. 🔴 **Et le job `e2e` est ROUGE sur `main`**, 25 échecs, `C-111` · suite **2 603 / 229** verte en CI, couverture verte |
+| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 93 au 2026-10-02 (soir)** · 95 au 2026-09-15 (+1 : 8 routes publiques entrent dans la garde E2E, un 6ᵉ job CI apparaît) · ✅ **les cas WebKit tournent en CI depuis `af0190bd`, 2026-09-16** — la mention « aucun workflow » est corrigée le 09-21. 🔴 **Et le job `e2e` est ROUGE sur `main`**, 25 échecs, `C-111` · suite **2 603 / 229** verte en CI, couverture verte |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
-| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 78 au 2026-09-15** (+2 : C-80 refermé, le curseur de forfait passe de 308 × 6 à 308 × 44 px) · ✅ **WebKit est en CI depuis le 2026-09-16**, et Android émulé depuis le 09-20 (`C-97`) ; l'appareil réel reste `M-25` |
-| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **note 85 au 2026-09-15**, inchangée · ✅ **C-77 refermé le 2026-09-20**, le zéro de `/statistics` n'est plus faux (corrigé ici le 09-21) · 🔴 **M-44 s'est inversé** : le retrait tranché CONTRE est entré dans `main` le 09-16 |
-| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 95 au 2026-09-15**, inchangée · ✅ **C-77 refermé le 2026-09-20** (mig. `136` au ledger `20260920104729`), la mention « rend toujours 0 » est corrigée le 09-21, gardé par `npm run check:bundle` et par le job `lighthouse` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, ramené de 29 à 21 requêtes REST |
-| [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 84 au 2026-09-15** (+2 : la garde couvre 8 pages publiques de plus, 18 cas sur 18 verts) · 37 cas a11y verts rejoués le 09-14 |
+| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 74 au 2026-10-02 (soir)** · 78 au 2026-09-15 (+2 : C-80 refermé, le curseur de forfait passe de 308 × 6 à 308 × 44 px) · ✅ **WebKit est en CI depuis le 2026-09-16**, et Android émulé depuis le 09-20 (`C-97`) ; l'appareil réel reste `M-25` |
+| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **note 85 au 2026-10-02 (soir)** · 85 au 2026-09-15, inchangée · ✅ **C-77 refermé le 2026-09-20**, le zéro de `/statistics` n'est plus faux (corrigé ici le 09-21) · 🔴 **M-44 s'est inversé** : le retrait tranché CONTRE est entré dans `main` le 09-16 |
+| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 92 au 2026-10-02 (soir)** · 95 au 2026-09-15, inchangée · ✅ **C-77 refermé le 2026-09-20** (mig. `136` au ledger `20260920104729`), la mention « rend toujours 0 » est corrigée le 09-21, gardé par `npm run check:bundle` et par le job `lighthouse` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, ramené de 29 à 21 requêtes REST |
+| [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 81 au 2026-10-02 (soir)** · 84 au 2026-09-15 (+2 : la garde couvre 8 pages publiques de plus, 18 cas sur 18 verts) · 37 cas a11y verts rejoués le 09-14 |
 | [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) | Check-list du **quatrième** audit d'accessibilité, à jouer d'une traite sur un iPhone (12 étapes, ~60 min, témoin en tête). Le seul instrument qui mesure l'**annonce** : le dépôt ne prouve aujourd'hui que le **focus** |
-| [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **note 91, vérifiée au 2026-09-14 (soir)** (plans d'exécution rejoués en production), coût par ligne mesuré, éprouvé à volume (§9ter) **et en concurrence** (1 → 16 sessions, §9quater) |
-| [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale · **note 80, vérifiée au 2026-09-14 (soir)** · données Search Console du 2026-08-19, non remesurées · ⚠️ **1 inscription sur 30 jours** mesurée en base le 09-14 |
+| [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **note 90 au 2026-10-02 (soir)** · 91, vérifiée au 2026-09-14 (soir) (plans d'exécution rejoués en production), coût par ligne mesuré, éprouvé à volume (§9ter) **et en concurrence** (1 → 16 sessions, §9quater) |
+| [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale · **note 78 au 2026-10-02 (soir)** · 80, vérifiée au 2026-09-14 (soir) · données Search Console du 2026-08-19, non remesurées · ⚠️ **1 inscription sur 30 jours** mesurée en base le 09-14 |
 | [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md) | 🔴 Le chantier qui débloque le SEO : kit de soumission annuaires, prêt à coller — **100 % manuel** |
 | [`ACQUISITION.md`](./ACQUISITION.md) | Attribution `?ref=`, funnel mesuré en prod, runbook — **audit du 2026-08-14** |
-| [`I18N.md`](./I18N.md) | Qualité réelle des traductions, périmètre bilingue · **note 90, vérifiée au 2026-09-14 (soir)** · les trois gates sont bloquantes et à **0** (`i18n:check` **23 namespaces**, `i18n:scan`, `i18n:identical`) |
-| [`RGPD.md`](./RGPD.md) | Inventaire des données personnelles, droits, rétention · **note 87, vérifiée au 2026-09-14 (soir)** (51 FK vers `auth.users` relues : 32 CASCADE / 19 SET NULL), durées de conservation publiées |
+| [`I18N.md`](./I18N.md) | Qualité réelle des traductions, périmètre bilingue · **note 87 au 2026-10-02 (soir)** · 90, vérifiée au 2026-09-14 (soir) · les trois gates sont bloquantes et à **0** (`i18n:check` **23 namespaces**, `i18n:scan`, `i18n:identical`) |
+| [`RGPD.md`](./RGPD.md) | Inventaire des données personnelles, droits, rétention · **note 87 au 2026-10-02 (soir)** · 87, vérifiée au 2026-09-14 (soir) (51 FK vers `auth.users` relues : 32 CASCADE / 19 SET NULL), durées de conservation publiées |
 | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) | Registre des activites de traitement (RGPD art. 30) · **cree le 2026-08-26** |
 | [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md) | Procedure de violation de donnees sous 72 h (RGPD art. 33-34) · **cree le 2026-08-26** |
 | [`LEGAL.md`](./LEGAL.md) | Obligations légales du fondateur : statut, TVA, droit de la consommation, marque, sous-traitants · **créé le 2026-08-26**, non noté (ce n'est pas un audit) |

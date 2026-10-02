@@ -1,4 +1,4 @@
-<!-- note-audit: note=80 -->
+<!-- note-audit: note=81 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **80 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **81 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Accessibilité (a11y) — COSMO
 
@@ -45,7 +45,26 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → **80 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir)
+
+> ### 🟢 2026-10-02 (soir) · +1 : l'Agenda vérifié en CI ; les cibles tactiles réparées, puis cassées ailleurs le même jour
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | ✅ Agenda : `aria-required-children` / `aria-required-parent` | **+1** | corrigé (`5564445d`) et **vert en CI** sur `f301f0bf` : `a11y-audit › Agenda` vert en chromium **et** WebKit, les quatre cas `/agenda` de `a11y-keyboard-audit` verts. Le bloc 🟡 du matin, juste en dessous, est soldé |
+> | ✅ Cibles tactiles du 2026-10-01 (C-57) | **+1** | les quatre commandes nommées le 10-01 ne figurent plus dans aucune liste de `touch-targets` en CI ; `/` et `/entreprise-presentation` verts en chromium |
+> | 🔴 Cibles tactiles : nouvelle régression, même classe | **−1** | refonte de l'Aperçu (`3609210c`, quelques heures après le correctif) : « Valider » **81 × 36**, « Renvoyer » **98 × 36** (une paire par tâche à valider), « Voir le détail » **96 × 36**. `/entreprise` et la modale de tâche d'équipe restent rouges, en chromium **et** en WebKit, pour ces cinq-là seulement. Toujours dans le code à `HEAD` (`MyWorkCards`, `MyWorkExtraCards`) |
+> | `touch-targets` sous WebKit, `/` et `/entreprise-presentation` | 0 | « navigation interrompue par une autre navigation » vers la même URL : rien n'a été mesuré. Harnais (serveur de dev), pas un verdict |
+> | `a11y-audit` sous WebKit : Habits, OKR, Settings | 0 | instables, verts au second essai |
+>
+> ✅ Desktop, Lighthouse à `9ea33927` : accessibilité **92 à 100** sur les 8 URLs, inchangée.
+>
+> **80 → 81.** Détail : [tableau de bord](./README.md).
 
 > ### 🟡 2026-10-02 · 0 : les deux défauts du 10-01 corrigés, remboursement en attente de la CI
 >

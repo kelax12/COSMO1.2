@@ -1,4 +1,4 @@
-<!-- note-audit: note=86 -->
+<!-- note-audit: note=85 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,27 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **86 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **85 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → **85 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir)
+
+> ### 🟠 2026-10-02 (soir) · −1 : la surface la plus retouchée n'est comparée par rien
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | `Visual` | 0 | **vert** à `9ea33927` : 18 cas, `/dashboard` en thème gris instable au premier essai. Il compare `/dashboard`, `/tasks`, `/settings` dans les quatre thèmes, les états vide et erreur, `/`, `/guide`, `/blog` |
+> | 🔴 Angle mort nommé : **aucun écran `/entreprise` sous `Visual`** | **−1** | le 2026-10-02, **37** fichiers de `src/components/organization` ont changé (Aperçu refait, organigramme, onglet Projets, rapport d'activité, dates de début retirées) et aucune capture ne les a comparés. La seule régression vue sur ces écrans l'a été par un test fonctionnel (cibles tactiles de l'Aperçu, cf. [`ACCESSIBILITY.md`](./ACCESSIBILITY.md)). Barème du 09-16 : angle mort réel, partiellement couvert. Il complète AM-1, dont la portée était déclarée (« 3 routes ») mais jamais comptée |
+> | AM-4, AM-5 | 0 | toujours ouverts, déjà payés |
+>
+> **86 → 85.** Le point revient quand l'Aperçu de `/entreprise` entre dans `visual-regression.spec.ts`
+> et qu'un run `Visual` l'a comparé.
 
 > ### 🟢 2026-10-01 · +3
 >

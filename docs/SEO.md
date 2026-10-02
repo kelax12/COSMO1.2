@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **78 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **78 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # SEO — état mesuré, règles et dette
 
@@ -25,7 +25,23 @@ cause n'est pas dans le dépôt.
 > liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
 > PageSpeed Insights.
 
-## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → **78 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → **78 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ⚪ 2026-10-02 (soir) · 0 : vérifiée inchangée
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | SEO Lighthouse | 0 | **100** sur sept URLs, **92** sur `/en/`, desktop et mobile, à `9ea33927` |
+> | `check:seo` | 0 | vert en CI : **40** URLs au sitemap, prérendu et balises par page. Parcours entreprise de la landing refait le soir même : `/entreprise-presentation/` à **881** mots en `fr`, **842** en `en` |
+> | LCP mobile (−1 le 09-22) | 0 | `/entreprise-presentation/` 8,4 s, `/` 8,1 s : déjà payé (cf. [`PERFORMANCE.md`](./PERFORMANCE.md)) |
+> | Résultat | 0 | **2** comptes créés sur 30 jours (`auth.users`, relu en base). Search Console non remesurée |
+>
+> **78 → 78.** Détail : [tableau de bord](./README.md).
 
 > ### ⚪ 2026-10-01 · 0 : vérifiée inchangée
 >

@@ -10,10 +10,14 @@ et les **règles durables** tirées des audits.
   portée à **86**, et les deux tableaux d'actions relus ligne par ligne (A-9 et les réglages de
   console : **trois lignes sur cinq étaient périmées**). ⚠️ **Aucune mesure nouvelle contre la
   production** ce jour-là : les chiffres cités sont ceux des commits qui les ont produits.
-- Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-10-01** (mig.
+- Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-10-02** au soir, et avant elle **2026-10-01** (mig.
   `204`, `207`-`210` appliquées et relues au catalogue, cinq Edge Functions redéployées, `Edge deploy
   drift` vert, audit A-1 des 23 tables `160`-`207` acteur par acteur, § « Surface entreprise »),
-  puis `212`. ✅ **Advisors relus par l'API le 2026-10-01 au soir : `11 / 80 / 2 / 1`** ; les deux
+  puis `212`. ✅ **Remesuré le 2026-10-02 au soir** : advisors **`11 / 80 / 2 / 1`** inchangés, **74**
+  tables (mig. `211`, deux tables vides retirées), **194** policies, ledger **162**, 12 Edge Functions,
+  CodeQL et Dependabot à **0** ; et la garde `check:supabase-posture` comptait **zéro** pour chaque
+  advisor depuis sa pose (corrigée, cf. note). Relevé du 10-01 :
+  ✅ **Advisors relus par l'API le 2026-10-01 au soir : `11 / 80 / 2 / 1`** ; les deux
   `authenticated_security_definer_function_executable` de plus que le 09-30 sont exactement
   `can_manage_team_okr_audience` et `set_team_okr_links`, voulues par la mig. `212`. Base : **76**
   tables, toutes sous RLS, **202** policies, ledger **161** entrées, **0** encaissement.
@@ -28,7 +32,26 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → **84 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → **2026-10-01**)
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → **84 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → **2026-10-02 soir**)
+
+> ### ⚪ 2026-10-02 (soir) · 0 : production inchangée, et la garde des advisors était aveugle depuis sa pose
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | Advisors, relus par l'API | 0 | **11 / 80 / 2 / 1** (`rls_enabled_no_policy` · `authenticated_security_definer_function_executable` · `anon_security_definer_function_executable` · mots de passe compromis, même ordre que plus haut) : identiques au 10-01 |
+> | Base et fonctions | 0 | **74** tables (la `211` en retire deux, vides), toutes sous RLS, **194** policies, ledger **162** ; **12** Edge Functions, `Edge deploy drift` vert le 10-02 ; **0** alerte CodeQL, **0** Dependabot ; secret scanning : la seule alerte ouverte est la n° 1, connue (clé du commit initial, projet supprimé, inerte) |
+> | 🔴 `check:supabase-posture` comptait **zéro** partout | 0 | l'API Management rend **une entrée par occurrence**, sans `count` ni `findings` ; le script écrasait chaque entrée et retombait sur 0. Les douze runs de `Posture` relus (09-22 → 10-02) impriment tous `0 (-9)`, `0 (-52)`, `0 (-2)`, `0 (-1)` alors que la base était à 10 / 53 / 2 / 1, puis 11 / 80 / 2 / 1. **La hausse 52 → 80 des fonctions DEFINER du mode entreprise est passée sous une garde qui ne pouvait voir aucune hausse** : sa raison d'être, écrite dans sa référence, est pourtant de signaler « la 53ᵉ ». Rouge pour une autre raison (`M-58`), elle n'a jamais rendu de faux vert, et n'avait jamais été remboursée (AM-1) : ni débit ni crédit. ✅ **Corrigé** (`resumerAdvisors` additionne par nom), cas témoin à la forme réelle de l'API, **vu rouge sans le correctif** |
+>
+> **84 → 84.** ⚠️ Conséquence pour `M-58` : le premier `--update` fera bouger les deux mêmes comptes,
+> mais **beaucoup plus loin** : `rls_enabled_no_policy` **9 → 11** (`support_reports`, mig. `150` ;
+> `org_webhook_deliveries`, mig. `199`) et `authenticated_…` **52 → 80** (`get_support_stats`,
+> mig. `150` ; 25 fonctions `160`-`207` relues le 10-01 par l'audit A-1 ; 2 de la `212`). Tous
+> identifiés : le recalage est légitime. Un 81ᵉ ne le serait pas sans réponse à « quel objet ».
 
 > ### 🟢 2026-10-01 · +6 : les correctifs du 09-30 sont EN PRODUCTION, le défaut trouvé en route aussi, et CodeQL est vide
 >
@@ -177,7 +200,7 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Les advisors Supabase ne sont lus qu'à LA MAIN.** Ils sont la seule source qui voit une policy manquante ou une fonction `SECURITY DEFINER` exposée après coup, et aucun workflow ne les interroge | le mot « advisor » dans `ci.yml` désigne **`npm audit`**, pas les advisors de la base. `9 / 52 / 2 / 1` au 2026-09-14, relevé manuellement | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · advisors lus par l'API Management (`C-88`) — 🔴 ne prouve PAS : 🔴 rien pour l'instant : **elle échoue exprès** tant que la référence des réglages d'auth n'est pas posée **et commitée** — **`M-58`** |
+| AM-1 | 🔴 **Les advisors Supabase ne sont lus qu'à LA MAIN.** Ils sont la seule source qui voit une policy manquante ou une fonction `SECURITY DEFINER` exposée après coup, et aucun workflow ne les interroge | le mot « advisor » dans `ci.yml` désigne **`npm audit`**, pas les advisors de la base. `9 / 52 / 2 / 1` au 2026-09-14, relevé manuellement | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · advisors lus par l'API Management (`C-88`) — 🔴 ne prouve PAS : 🔴 rien pour l'instant : **elle échoue exprès** tant que la référence des réglages d'auth n'est pas posée **et commitée** — **`M-58`** · 🔎 🔴 **2026-10-02 : elle comptait ZÉRO pour chaque advisor depuis sa pose.** L'API Management rend une entrée par occurrence, le script écrasait et lisait un `count` absent : douze runs relus, tous à `0`, la base à 11 / 80 / 2 / 1. Corrigée le même soir, témoin vu rouge sans le correctif. Elle n'avait jamais rendu de faux vert parce qu'elle était rouge pour `M-58` |
 | AM-2 | **`check:edge` compare le CODE déployé, jamais le COMPORTEMENT.** Une fonction identique au dépôt mais dont un **secret** a changé de valeur, ou dont une dépendance distante a bougé, rend la garde verte | `scripts/check-edge-deploy.mjs` compare des sources | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:edge-smoke` · **8 sondes**, dans `edge-deploy-drift.yml`, **vertes contre la production** le jour de leur pose (`C-91`) — 🔴 ne prouve PAS : que la fonction fasse son travail : on touche ses premiers mètres, on ne parcourt pas le chemin · 🔎 🔴 **2026-09-22 : jamais joué en CI.** `VITE_SUPABASE_ANON_KEY` n'est pas passé au job, la sonde s'arrête avant de sonder. → `C-114` · 🔎 ✅ **2026-09-24 : premier verdict en CI, 8 sondes sur 8 vertes** (`35967773021`). Le secret attendu n'a jamais existé au dépôt : la clé anon, publique, est lue par l'API Management avec `SUPABASE_ACCESS_TOKEN`. Le job reste rouge sur la dérive de `report-bug` (`M-61`), pas sur les sondes · 🔎 🔴 **2026-09-30 : huit sondes pour DOUZE fonctions.** Les quatre du mode entreprise n'étaient sondées par rien (A-2). **12 sondes** depuis, les fonctions cron sondées **sans jeton**, comme la CI les appelle : jouées contre la prod, **11 vertes**, `org-webhook-dispatch` **rouge** sur le 401 de la passerelle (W-1), et c'est juste |
 | AM-3 | **`npm audit` ne couvre que les dépendances de PRODUCTION** (`--omit=dev`). Une vulnérabilité dans la chaîne de build n'est vue par rien | `ci.yml:148` : `npm audit --omit=dev --audit-level=high` | ✅ **OUTILLÉ le 2026-09-20** · second `npm audit` sur la chaîne de build, **non bloquant mais LU** (compte par sévérité au résumé) (`C-90`) — 🔴 ne prouve PAS : rien, et c'est assumé : c'est un **arbitrage** écrit comme tel, pas une garde |
 | AM-4 | **Aucune analyse statique de sécurité (SAST) sur le code du dépôt.** Les gardes existantes vérifient des invariants nommés, jamais des motifs inconnus | aucun CodeQL, Semgrep ou équivalent dans `.github/workflows/` | ✅ **OUTILLÉ le 2026-09-20** · `codeql.yml`, `security-extended`, JS/TS **et** `actions` (`C-89`) — 🔴 ne prouve PAS : 🔴 un job vert. Fini quand **chaque alerte ouverte porte une décision** — **`M-60`** · 🔎 🟠 **2026-09-22 : 9 alertes ouvertes** (5 `high`, 4 `medium`), aucune triée · 🔎 🟠 **2026-09-30 : 11** (5 `high`, 6 `medium`). Les deux nouvelles, `actions/missing-workflow-permissions` sur `org-digest.yml` et `org-webhook-dispatch.yml`, sont **corrigées dans le dépôt** avec celle de `renewal-notice.yml`, et `src/workflow-permissions.guard.test.ts` refuse désormais tout workflow sans `permissions` : l'alerte triée à la main ne protégeait pas le workflow suivant. Les 5 `high` (`scripts/`) restent à trier (`M-60`) · 🔎 ✅ **2026-10-01 : les 5 `high` sont CORRIGÉES à la source, aucune rejetée.** Décision par alerte : `js/file-system-race` #5 (`check-db-cost.mjs`) et #7 (`check-i18n-pages.mjs`) : `existsSync` puis lecture du même chemin remplacés par une lecture qui traite `ENOENT` ; #6 : `statSync` séparé remplacé par `readdirSync({ withFileTypes })` ; #8 (`scripts/cosmo/client.mjs`, le fichier qui porte les **jetons de session** du CLI) : création atomique `wx` au lieu de `existsSync` puis écriture ; #2 `js/bad-tag-filter` : `</script >` est une fin de balise valide, le compteur de mots la reconnaît désormais (vérifié : 2 mots, pas 5). ✅ **Fermées par CodeQL** sur `43fed445` pour les quatre `file-system-race` ; `js/bad-tag-filter` est revenue (n° 12 : une fin de balise peut porter espaces, tabulations ou attributs), refaite en `[^>]*` après le nom de balise, et **fermée par CodeQL sur `62e0b571`** : 0 alerte ouverte. Les 3 `medium` restantes : ✅ **rejetées dans GitHub le 2026-10-01** (« won't fix », accord d'Axel), motif écrit dans chacune : #9 `js/file-access-to-http` (`check-edge-deploy.mjs`) envoie à l'API Management l'identifiant de projet lu dans `.github/edge-deploy.json`, fichier **versionné** qui désigne précisément la cible ; #3 et #4 `js/http-to-file-access` écrivent une réponse de l'API Supabase dans `GITHUB_STEP_SUMMARY` (résumé de CI) ou, sur `--update` **explicite**, dans la référence versionnée de `check:supabase-posture`, relue en revue avant commit. C'est la fonction de ces deux scripts, pas un détournement |
