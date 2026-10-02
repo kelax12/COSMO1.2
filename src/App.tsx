@@ -62,7 +62,7 @@ const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'), ['das
 const TasksPage = lazyWithRetry(() => import('@/pages/TasksPage'), ['eventModal', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
 const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'), ['agenda', 'eventModal', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
 const HabitsPage = lazyWithRetry(() => import('@/pages/HabitsPage'), ['eventModal', 'habits', 'overlays', 'premium', 'tasks', 'tutorials']);
-const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'), ['eventModal', 'okr', 'overlays', 'taskModal', 'tasks', 'tutorials']);
+const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'), ['eventModal', 'okr', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
 const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'), ['dashboard', 'overlays', 'premium', 'statistics']);
 // `tasks` : DataTab (export CSV) et `csv-export.ts` importent le BARREL
 // `@/modules/lists` pour `listKeys`, qui réexporte aussi `useDeleteListWithUndo`
