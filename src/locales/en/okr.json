@@ -1,4 +1,12 @@
 {
+  "pro": {
+    "sectionTitle": "Work OKRs",
+    "sectionSubtitle": "{{org}} objectives you contribute to",
+    "badge": "Work",
+    "you": "You",
+    "openInOrg": "Open in the company space",
+    "personalSectionTitle": "Personal OKRs"
+  },
   "page": {
     "title": "OKRs - Objectives & Key Results",
     "titleShort": "Objectives",

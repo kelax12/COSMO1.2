@@ -35,6 +35,11 @@ import { useT } from '@/i18n/useT';
 import { useDeadlineReview } from './okr/useDeadlineReview';
 import { useDeleteCategoryFlow } from './okr/useDeleteCategoryFlow';
 import { useTasks } from '@/modules/tasks';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { useActiveOrganization } from '@/modules/organizations/ActiveOrgContext';
+import { useTeamOKRsAcrossOrgs } from '@/modules/team-okrs';
+import ProOKRSection from './okr/ProOKRSection';
+import { myProOkrs } from './okr/pro-okrs';
 
 const OKRPage: React.FC = () => {
   const { t, tp } = useT('okr');
@@ -60,6 +65,14 @@ const OKRPage: React.FC = () => {
   const { data: categories = [] } = useCategories();
   // Sert au décompte d'impact d'une suppression de catégorie (R-02).
   const { data: tasks = [] } = useTasks();
+  // OKR d'entreprise dont je porte un KR (responsable ou contributeur) :
+  // affichés à part, en lecture seule, pour ne pas les confondre avec les miens.
+  const { user } = useAuth();
+  // Toutes mes organisations, pas seulement l'active.
+  const { organizations, setActiveOrgId } = useActiveOrganization();
+  const teamOkrs = useTeamOKRsAcrossOrgs(organizations.map((o) => o.id));
+  const proOkrs = myProOkrs(teamOkrs, user?.id);
+  const orgNames = Object.fromEntries(organizations.map((o) => [o.id, o.name]));
   const createCategoryMutation = useCreateCategory();
   const updateCategoryMutation = useUpdateCategory();
   // Restauration d'un « Annuler » : recree la categorie sous SON identifiant,
@@ -457,6 +470,13 @@ const OKRPage: React.FC = () => {
             {t('page.createOkr')}
           </button>
         </motion.div>
+      )}
+
+      {user && (
+        <ProOKRSection okrs={proOkrs} orgNames={orgNames} userId={user.id} onSelectOrg={setActiveOrgId} />
+      )}
+      {proOkrs.length > 0 && filteredObjectives.length > 0 && (
+        <h2 className="text-lg font-bold mb-4 text-[rgb(var(--color-text-primary))]">{t('pro.personalSectionTitle')}</h2>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

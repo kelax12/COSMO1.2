@@ -29,6 +29,7 @@ export { SupabaseTeamOKRsRepository } from './supabase.repository';
 
 export {
   useTeamOKRs,
+  useTeamOKRsAcrossOrgs,
   useCreateTeamOKR,
   useEditTeamOKR,
   useDeleteTeamOKR,

@@ -1,4 +1,12 @@
 {
+  "pro": {
+    "sectionTitle": "OKR pro",
+    "sectionSubtitle": "Objectifs de {{org}} sur lesquels vous contribuez",
+    "badge": "Pro",
+    "you": "Vous",
+    "openInOrg": "Ouvrir dans l'espace entreprise",
+    "personalSectionTitle": "OKR perso"
+  },
   "page": {
     "title": "OKR - Objectifs & Résultats Clés",
     "titleShort": "Objectifs",
