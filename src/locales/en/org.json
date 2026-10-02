@@ -915,7 +915,8 @@
       "summary": "{{person}} will report to {{manager}}",
       "summaryDetach": "{{person}} will be detached from the org chart",
       "summaryEmpty": "Select a person",
-      "searchToggle": "Search"
+      "searchToggle": "Search",
+      "inviteButton": "Invite"
     }
   },
   "follow": {

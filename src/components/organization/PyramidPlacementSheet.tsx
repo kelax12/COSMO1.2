@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ArrowUpFromLine, ArrowUp, ArrowDown, Copy, Check, Search, CheckCircle2 } from 'lucide-react';
+import { X, ArrowUpFromLine, ArrowUp, ArrowDown, Copy, Check, Search, CheckCircle2, UserPlus } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import {
   useActiveOrganization,
@@ -12,7 +12,7 @@ import {
 } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 import InviteFriendsToOrg from './InviteFriendsToOrg';
-import { MEMBER_SEARCH_THRESHOLD, filterMembersByQuery } from './member-search.helpers';
+import { filterMembersByQuery } from './member-search.helpers';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 
@@ -90,11 +90,10 @@ const PyramidPlacementSheet = ({
   }, [members, target, currentUserId, isAdmin, mySubtree]);
 
   const list = direction === 'up' ? managers : reports;
-  const searchable = list.length > MEMBER_SEARCH_THRESHOLD;
-  const [searchOpen, setSearchOpen] = useState(false);
-  const shown = searchOpen ? filterMembersByQuery(list, query) : list;
-  const shownManagers = shown.filter((m) => isManagerOf(members, m.userId));
-  const shownMembers = shown.filter((m) => !isManagerOf(members, m.userId));
+  // 2026-10-01 : barre de recherche toujours visible, liste unique sans
+  // intertitres Managers / Membres (le rôle reste dit sous chaque nom).
+  const shown = filterMembersByQuery(list, query);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   // Design C (2026-09-28) : on SÉLECTIONNE puis on confirme, le pied de page
   // dit l'effet avant qu'il n'ait lieu. `'detach'` = retirer son responsable.
@@ -129,13 +128,13 @@ const PyramidPlacementSheet = ({
           role="radio"
           aria-checked={on}
           onClick={() => setSelected(m)}
-          className={`w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-left transition-colors ${
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left transition-colors ${
             on ? 'bg-indigo-50 dark:bg-indigo-500/15' : 'hover:bg-[rgb(var(--color-hover))]'
           }`}
         >
-          <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} />
+          <MemberAvatar avatar={m.avatar} name={m.displayName} size={32} />
           <span className="flex-1 min-w-0">
-            <span className="block text-[15px] font-semibold text-[rgb(var(--color-text-primary))] truncate">
+            <span className="block text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">
               {/* Pas de « Vous (vous) » : en démo le nom affiché est déjà « Vous ». */}
               {m.displayName}{m.userId === currentUserId && m.displayName !== t('common.youBadge') ? tOrgAdmin('member.youSuffix') : ''}
             </span>
@@ -168,7 +167,6 @@ const PyramidPlacementSheet = ({
     `inline-flex items-center gap-1.5 pb-2.5 -mb-px border-b-2 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
       on ? 'border-[rgb(var(--color-text-primary))] text-[rgb(var(--color-text-primary))]' : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
     }`;
-  const groupLabel = 'text-xs font-semibold text-[rgb(var(--color-text-muted))] px-3 mb-1';
 
   return createPortal(
     <div
@@ -206,35 +204,21 @@ const PyramidPlacementSheet = ({
             <button type="button" role="tab" aria-selected={direction === 'down'} disabled={!canPlaceUnder} onClick={() => switchDirection('down')} className={tabClass(direction === 'down')}>
               <ArrowDown size={14} aria-hidden="true" /> {t('popups.placement.down')}
             </button>
-            {searchable && (
-              <button
-                type="button"
-                onClick={() => { setSearchOpen((v) => !v); setQuery(''); }}
-                aria-pressed={searchOpen}
-                aria-label={t('popups.placement.searchToggle')}
-                className={`ml-auto mb-2 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[rgb(var(--color-hover))] ${searchOpen ? 'text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'}`}
-              >
-                <Search size={16} aria-hidden="true" />
-              </button>
-            )}
           </div>
         </div>
 
         <div role="tabpanel" className="overflow-y-auto px-6 py-4 flex-1 min-h-0">
-          {searchOpen && (
-            <label className="relative block mb-3">
+          <label className="relative block mb-3">
               <span className="sr-only">{t('assign.memberSearch')}</span>
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
               <input
                 type="search"
-                autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t('assign.memberSearch')}
                 className="w-full h-10 pl-9 pr-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-[rgb(var(--color-text-primary))]"
               />
             </label>
-          )}
 
           <div role="radiogroup" aria-label={title} className="space-y-4">
             {direction === 'up' && isAdmin && target.managerId !== null && !query.trim() && (
@@ -253,18 +237,7 @@ const PyramidPlacementSheet = ({
                 <span className="flex-1 text-sm text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('member.detach')}</span>
               </button>
             )}
-            {shownManagers.length > 0 && (
-              <section>
-                <h3 className={groupLabel}>{t('popups.placement.groupManagers')}</h3>
-                <ul className="space-y-0.5">{shownManagers.map(renderRow)}</ul>
-              </section>
-            )}
-            {shownMembers.length > 0 && (
-              <section>
-                <h3 className={groupLabel}>{t('popups.placement.groupMembers')}</h3>
-                <ul className="space-y-0.5">{shownMembers.map(renderRow)}</ul>
-              </section>
-            )}
+            {shown.length > 0 && <ul className="space-y-0.5">{shown.map(renderRow)}</ul>}
             {shown.length === 0 && (
               <p className="text-center text-sm text-[rgb(var(--color-text-muted))] py-8">
                 {direction === 'up' ? tOrgAdmin('member.placementEmpty') : t('popups.placement.nobodyToPlace')}
@@ -272,10 +245,19 @@ const PyramidPlacementSheet = ({
             )}
           </div>
 
-          {direction === 'down' && <InviteUnder orgId={orgId} under={target} name={name} />}
         </div>
+        {inviteOpen && <InviteUnder orgId={orgId} under={target} name={name} onClose={() => setInviteOpen(false)} />}
 
         <div className="px-6 py-4 shrink-0 border-t border-[rgb(var(--color-border))] flex items-center gap-2.5">
+          {direction === 'down' && (
+            <button
+              type="button"
+              onClick={() => setInviteOpen(true)}
+              className="min-h-10 px-3 rounded-xl text-sm font-semibold inline-flex items-center gap-1.5 border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] shrink-0"
+            >
+              <UserPlus size={16} aria-hidden="true" /> {t('popups.placement.inviteButton')}
+            </button>
+          )}
           <p className="flex-1 min-w-0 text-sm text-[rgb(var(--color-text-muted))] truncate" aria-live="polite">{summary}</p>
           <button
             type="button"
@@ -299,9 +281,12 @@ const PyramidPlacementSheet = ({
   );
 };
 
-/** Ex-`AddUnderSheet` : inviter une personne qui n'est PAS encore dans l'entreprise. */
-const InviteUnder = ({ orgId, under, name }: { orgId: string; under: OrgMember; name: string }) => {
+/** Ex-`AddUnderSheet` : inviter une personne qui n'est PAS encore dans l'entreprise.
+ *  Modale à part depuis le 2026-10-01 : en ligne, elle surchargeait la feuille. */
+const InviteUnder = ({ orgId, under, name, onClose }: { orgId: string; under: OrgMember; name: string; onClose: () => void }) => {
   const { t } = useT('org');
+  const title = t('popups.placement.inviteTitle');
+  const { ref, dialogProps } = useModalA11y<HTMLDivElement>({ open: true, onClose, label: title });
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState<'link' | 'code' | null>(null);
   const createLink = useCreateInviteLink();
@@ -319,9 +304,20 @@ const InviteUnder = ({ orgId, under, name }: { orgId: string; under: OrgMember; 
     }
   };
 
-  return (
-    <section className="mt-5 pt-4 border-t border-[rgb(var(--color-border))] space-y-4">
-      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('popups.placement.inviteTitle')}</h3>
+  return createPortal(
+    <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4" onClick={onClose}>
+    <section
+      ref={ref}
+      {...dialogProps}
+      onClick={(e) => e.stopPropagation()}
+      className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-[24px] sm:rounded-2xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] shadow-2xl p-5 space-y-4"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{title}</h2>
+        <button type="button" onClick={onClose} aria-label={t('common.close')} className="w-9 h-9 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]">
+          <X size={20} aria-hidden="true" />
+        </button>
+      </div>
       <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4">
         <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))] mb-1">{t('invite.personalLink')}</p>
         <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">{t('invite.personalLinkHint', { name })}</p>
@@ -359,6 +355,8 @@ const InviteUnder = ({ orgId, under, name }: { orgId: string; under: OrgMember; 
         <InviteFriendsToOrg orgId={orgId} variant="inline" />
       </div>
     </section>
+    </div>,
+    document.body,
   );
 };
 

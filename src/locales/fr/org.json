@@ -958,7 +958,8 @@
       "summary": "{{person}} passera sous {{manager}}",
       "summaryDetach": "{{person}} sera détaché(e) de l'organigramme",
       "summaryEmpty": "Sélectionnez une personne",
-      "searchToggle": "Rechercher"
+      "searchToggle": "Rechercher",
+      "inviteButton": "Inviter"
     }
   },
   "follow": {
