@@ -31,6 +31,62 @@ describe('markScrollers (C-119)', () => {
     expect(el.hasAttribute('tabindex')).toBe(false);
   });
 
+  // C-119, suite (2026-10-01) : dans la grille FullCalendar, une `region` (ou un simple élément
+  // focalisable sans rôle de grille) coupe `grid > rowgroup > row` — deux
+  // violations axe critiques. Le défileur DEVIENT le `rowgroup`.
+  function inGrid(el: HTMLElement): { grid: HTMLElement; tbody: HTMLElement } {
+    const grid = document.createElement('table');
+    grid.setAttribute('role', 'grid');
+    const tbody = document.createElement('tbody');
+    tbody.setAttribute('role', 'rowgroup');
+    const tr = document.createElement('tr');
+    tr.setAttribute('role', 'presentation');
+    const td = document.createElement('td');
+    td.setAttribute('role', 'presentation');
+    td.appendChild(el);
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    grid.appendChild(tbody);
+    return { grid, tbody };
+  }
+
+  it('dans une grille, le défileur prend le rôle du rowgroup au lieu de region', () => {
+    const el = scroller(true);
+    const { grid, tbody } = inGrid(el);
+    markScrollers(grid, 'Grille du calendrier');
+    expect(el.getAttribute('role')).toBe('rowgroup');
+    expect(el.getAttribute('tabindex')).toBe('0');
+    expect(el.getAttribute('aria-label')).toBe('Grille du calendrier');
+    expect(tbody.getAttribute('role')).toBe('presentation');
+    // Aucun rowgroup imbriqué : un seul entre la grille et les rangées.
+    expect(grid.querySelectorAll('[role="rowgroup"]')).toHaveLength(1);
+  });
+
+  it('rend son rôle au rowgroup de FullCalendar quand le défileur cesse de déborder', () => {
+    const el = scroller(true);
+    const { grid, tbody } = inGrid(el);
+    markScrollers(grid, 'x');
+    markScrollers(grid, 'x'); // idempotent : le tbody cédé reste reconnu
+    expect(el.getAttribute('role')).toBe('rowgroup');
+    Object.defineProperty(el, 'scrollHeight', { configurable: true, value: 100 });
+    markScrollers(grid, 'x');
+    expect(el.hasAttribute('role')).toBe(false);
+    expect(tbody.getAttribute('role')).toBe('rowgroup');
+    expect(tbody.hasAttribute('data-rowgroup-yielded')).toBe(false);
+  });
+
+  it("garde le tbody cédé tant qu'un autre défileur y est encore un rowgroup", () => {
+    const a = scroller(true);
+    const { grid, tbody } = inGrid(a);
+    const b = scroller(true);
+    tbody.firstElementChild!.firstElementChild!.appendChild(b);
+    markScrollers(grid, 'x');
+    Object.defineProperty(a, 'scrollHeight', { configurable: true, value: 100 });
+    markScrollers(grid, 'x');
+    expect(b.getAttribute('role')).toBe('rowgroup');
+    expect(tbody.getAttribute('role')).toBe('presentation');
+  });
+
   it("retire l'arrêt quand le défileur cesse de déborder", () => {
     const root = document.createElement('div');
     const el = scroller(true);

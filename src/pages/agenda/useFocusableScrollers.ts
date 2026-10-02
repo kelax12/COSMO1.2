@@ -14,9 +14,24 @@
 // attributs que sur un défileur qui déborde vraiment : un arrêt de tabulation
 // sur une zone qui ne défile pas n'est qu'un arrêt de plus pour rien (C-54 :
 // le bouton « Nouveau » reste le chemin clavier de création).
+//
+// 🔴 C-119, suite · 2026-10-01 — le rôle `region` de C-119 cassait la grille ARIA.
+// FullCalendar range ses défileurs DANS sa table `role="grid"` :
+// `grid > tbody[rowgroup] > tr/td[presentation] > .fc-scroller > … > row`.
+// axe (critique, WCAG 1.3.1) relevait `aria-required-children` sur la grille
+// et `aria-required-parent` sur les rangées : une `region` interposée coupe la
+// chaîne d'appartenance. Mesuré dans le navigateur : retirer le rôle NE
+// suffit PAS, axe compte aussi un élément simplement focalisable comme un
+// enfant de plein droit. Le défileur doit donc rester focalisable (WebKit) ET
+// porter un rôle que la grille accepte : il DEVIENT le `rowgroup`, et le
+// `rowgroup` d'origine de FullCalendar (son `tbody`/`thead`) passe en
+// `presentation`. Même nom accessible, même arrêt de tabulation, structure
+// `grid > rowgroup > row` intacte. Hors d'une grille, `region` reste juste.
 import React from 'react';
 
 const SCROLLER = '.fc-scroller';
+/** Pose sur le `rowgroup` de FullCalendar dont le rôle a été cédé au défileur. */
+const YIELDED = 'data-rowgroup-yielded';
 
 function isScrollable(el: HTMLElement): boolean {
   const style = getComputedStyle(el);
@@ -25,16 +40,42 @@ function isScrollable(el: HTMLElement): boolean {
   return scrollY || scrollX;
 }
 
+/** Le `rowgroup` de la grille qui contient ce défileur, s'il y en a un. */
+function enclosingRowgroup(el: HTMLElement): HTMLElement | null {
+  return el.parentElement?.closest<HTMLElement>(`[role="rowgroup"], [${YIELDED}]`) ?? null;
+}
+
+function setAttr(el: HTMLElement, name: string, value: string): void {
+  if (el.getAttribute(name) !== value) el.setAttribute(name, value);
+}
+
 export function markScrollers(root: ParentNode, label: string): void {
   root.querySelectorAll<HTMLElement>(SCROLLER).forEach((el) => {
+    const rowgroup = enclosingRowgroup(el);
     if (isScrollable(el)) {
-      if (el.getAttribute('tabindex') !== '0') el.setAttribute('tabindex', '0');
-      if (el.getAttribute('role') !== 'region') el.setAttribute('role', 'region');
-      if (el.getAttribute('aria-label') !== label) el.setAttribute('aria-label', label);
+      setAttr(el, 'tabindex', '0');
+      setAttr(el, 'aria-label', label);
+      if (rowgroup) {
+        setAttr(rowgroup, 'role', 'presentation');
+        setAttr(rowgroup, YIELDED, '');
+        setAttr(el, 'role', 'rowgroup');
+      } else {
+        setAttr(el, 'role', 'region');
+      }
     } else if (el.getAttribute('tabindex') === '0') {
       el.removeAttribute('tabindex');
       el.removeAttribute('role');
       el.removeAttribute('aria-label');
+      // Un même `tbody` peut porter deux sections (toute la journée, horaires),
+      // donc deux défileurs : on ne lui rend son rôle que quand plus aucun
+      // n'est un `rowgroup`, sinon on fabriquerait un `rowgroup` imbriqué.
+      if (
+        rowgroup?.hasAttribute(YIELDED)
+        && !rowgroup.querySelector(`${SCROLLER}[role="rowgroup"]`)
+      ) {
+        rowgroup.setAttribute('role', 'rowgroup');
+        rowgroup.removeAttribute(YIELDED);
+      }
     }
   });
 }

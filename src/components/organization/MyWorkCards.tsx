@@ -7,6 +7,7 @@ import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import type { OrgMember, OrgNotification } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 import TouchTarget from '@/components/mobile/TouchTarget';
+import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 import { buildOrgLink } from './deep-link.helpers';
 import { projectColor, PRIORITY_META, priorityLabelOf, formatDuration } from './team-projects.helpers';
 import type { BlockingEntry, Horizon, MyKeyResult, MyProjectSummary } from './my-work.helpers';
@@ -200,7 +201,10 @@ export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById,
           type="button"
           onClick={selection.onStart}
           aria-label={t('projects.selectMultiple')}
-          className="inline-flex items-center gap-1 h-8 px-2 rounded-lg text-xs font-medium text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-secondary))] transition-colors shrink-0"
+          // `TAP_AREA_44_Y` (C-57, 2026-10-01) : mesure 106 x 32 px. Le dessin
+          // reste a `h-8` dans l en-tete de carte ; le debord de 6 px par cote
+          // tient dans le `mb-3` dessous et le padding de carte dessus.
+          className={`${TAP_AREA_44_Y} inline-flex items-center gap-1 h-8 px-2 rounded-lg text-xs font-medium text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-secondary))] transition-colors shrink-0`}
         >
           <ListChecks size={14} aria-hidden="true" /> {t('projects.selectMode')}
         </button>
