@@ -376,3 +376,72 @@ export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promi
   await clickThroughOrgMenuIfAny(page);
   await page.waitForURL(urlPattern);
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Navigation de l'espace entreprise, sur les DEUX tailles d'écran
+// ═══════════════════════════════════════════════════════════════════
+//
+// 🔴 Depuis la navigation du 2026-09-23 (livrée sur main par b96aff02), une
+// section = une route, et on l'atteint
+// par DEUX composants distincts selon la largeur :
+//   - `md` et plus : `OrgSideNav`, un `<nav>` de LIENS à droite de la page ;
+//   - en dessous : `OrgSectionSwitcher`, un bouton `[data-org-section-switcher]`
+//     qui ouvre une feuille `[data-org-section-sheet]` de BOUTONS.
+// Les specs entreprise ne connaissaient que les liens desktop : sous
+// `mobile-safari` (390 px), le `<nav>` n'est pas rendu du tout (il vit dans un
+// emplacement que `Layout` ne pose pas sur mobile), et chaque cas expirait à
+// 2 min sur `getByRole('navigation').getByRole('link')` (run 36866415723 :
+// huit des neuf échecs entreprise propres à WebKit).
+//
+// ⚠️ Ancrer le libellé au DÉBUT (`/^projets/i`) : le badge de nouveautés entre
+// dans le nom accessible (« Projets 3 nouveautés »).
+
+const ORG_NAV = /sections de l.entreprise/i;
+
+/** Attend que l'une des deux navigations soit peinte, et dit laquelle. */
+async function orgNavKind(page: Page): Promise<'desktop' | 'mobile'> {
+  const switcher = page.locator('[data-org-section-switcher]');
+  const nav = page.getByRole('navigation', { name: ORG_NAV });
+  // ⚠️ `filter({ visible: true })` est indispensable : sur desktop, le
+  // sélecteur mobile est DANS le DOM (`md:hidden`), avant le `<nav>`, et
+  // `.first()` le choisissait pour attendre qu'il devienne visible.
+  await expect(switcher.or(nav).filter({ visible: true }).first()).toBeVisible({ timeout: 20_000 });
+  return (await switcher.isVisible()) ? 'mobile' : 'desktop';
+}
+
+/** Ouvre une section de l'espace entreprise, comme une personne le ferait. */
+export async function openOrgSection(page: Page, label: RegExp): Promise<void> {
+  if ((await orgNavKind(page)) === 'desktop') {
+    const nav = page.getByRole('navigation', { name: ORG_NAV });
+    // Visitée puis quittée, la carte se REPLIE hors de l'écran (comportement
+    // voulu du 2026-09-23) : ses liens restent « visibles » pour Playwright
+    // mais le clic tombe sur la page. On la rouvre par sa zone d'approche,
+    // le chemin clavier et tactile (`Afficher la navigation`).
+    if ((await nav.getAttribute('data-collapsed')) === 'true') {
+      await nav.getByRole('button', { name: /^afficher la navigation/i }).click();
+      await expect(nav).toHaveAttribute('data-collapsed', 'false');
+    }
+    await nav.getByRole('link', { name: label }).click();
+    return;
+  }
+  await page.locator('[data-org-section-switcher]').click();
+  const sheet = page.locator('[data-org-section-sheet]');
+  await sheet.getByRole('button', { name: label }).click();
+  await expect(sheet).toHaveCount(0, { timeout: 10_000 });
+}
+
+/**
+ * La section est-elle PROPOSÉE à ce compte ? Sur mobile, ouvre la feuille pour
+ * le vérifier, puis la referme (Échap, `useModalA11y`).
+ */
+export async function expectOrgSectionOffered(page: Page, label: RegExp): Promise<void> {
+  if ((await orgNavKind(page)) === 'desktop') {
+    await expect(page.getByRole('navigation', { name: ORG_NAV }).getByRole('link', { name: label })).toBeVisible();
+    return;
+  }
+  await page.locator('[data-org-section-switcher]').click();
+  const sheet = page.locator('[data-org-section-sheet]');
+  await expect(sheet.getByRole('button', { name: label })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(sheet).toHaveCount(0, { timeout: 10_000 });
+}
