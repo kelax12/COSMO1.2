@@ -70,6 +70,9 @@ alertes CodeQL reste à faire (`C-89`). Ces gestes sont au § 9 d'[`a-faire-manu
 sur `rls_enabled_no_policy` et de **52 → 53** sur `authenticated_security_definer_function_executable`.
 Les deux objets sont `support_reports` et `get_support_stats`, tous deux décidés et écrits dans la
 migration. ❌ Un **troisième** compte qui bougerait ne serait pas un effet de la `150`.
+🔴 **2026-10-02 : la garde comptait 0 pour chaque advisor depuis sa pose** (l'API rend une entrée
+par occurrence). Corrigée, témoin dans `gardes-posture.guard.test.mjs`. Comptes attendus au
+`--update` : **9 → 11** et **52 → 80**, objets nommés dans `M-58` d'[`a-faire-manuel.md`](../a-faire-manuel.md).
 
 ---
 

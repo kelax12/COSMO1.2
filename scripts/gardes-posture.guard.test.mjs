@@ -55,6 +55,32 @@ describe('témoin — posture Supabase (C-88)', () => {
     expect(resumerAdvisors({})).toEqual({});
   });
 
+  it('TEMOIN : la forme de l API Management, une entrée PAR OCCURRENCE, se compte', () => {
+    // C'est la forme que rend réellement `/v1/projects/{ref}/advisors/security` :
+    // ni `count` ni `findings`, le même `name` répété. Du 2026-09-20 au
+    // 2026-10-02, chaque nom comptait ZÉRO (production : 11 / 2 / 80 / 1), et
+    // la hausse 52 → 80 des fonctions DEFINER est passée sans un mot.
+    const entree = (name, level, detail) => ({ name, level, detail, metadata: {} });
+    const resume = resumerAdvisors({
+      lints: [
+        entree('authenticated_security_definer_function_executable', 'WARN', 'f1'),
+        entree('authenticated_security_definer_function_executable', 'WARN', 'f2'),
+        entree('authenticated_security_definer_function_executable', 'WARN', 'f3'),
+        entree('auth_leaked_password_protection', 'WARN', 'auth'),
+      ],
+    });
+    expect(resume).toEqual({
+      authenticated_security_definer_function_executable: { niveau: 'WARN', compte: 3 },
+      auth_leaked_password_protection: { niveau: 'WARN', compte: 1 },
+    });
+    // Et ce compte-là doit faire ROUGIR la garde contre une référence plus basse.
+    const { ecarts } = comparerAdvisors(
+      { authenticated_security_definer_function_executable: { niveau: 'WARN', compte: 2 } },
+      resume,
+    );
+    expect(ecarts.some((e) => e.includes('+1'))).toBe(true);
+  });
+
   it('`comparerAdvisors` voit une HAUSSE et un advisor NEUF', () => {
     const ref = { a: { niveau: 'WARN', compte: 52 } };
     const { ecarts } = comparerAdvisors(ref, {
