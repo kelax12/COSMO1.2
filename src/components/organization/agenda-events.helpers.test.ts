@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { groupEventsByDay } from './agenda-events.helpers';
+import { dayTimeline, groupEventsByDay } from './agenda-events.helpers';
 import type { CalendarEvent } from '@/modules/events';
 
 const event = (over: Partial<CalendarEvent>): CalendarEvent => ({
@@ -48,5 +48,29 @@ describe('groupEventsByDay', () => {
     ]);
     expect(groups.map((g) => g.dayKey)).toEqual(['2026-08-27', '2026-08-28', '2026-09-01']);
     expect(groups[1].events.map((e) => e.id)).toEqual(['b', 'c']);
+  });
+});
+
+describe('dayTimeline (maquette 5 B)', () => {
+  // Dates LOCALES : la frise lit l'heure murale de la personne.
+  const at = (h: number, m = 0) => new Date(2026, 9, 2, h, m).toISOString();
+
+  it('fenêtre 8 h à 19 h par défaut, positions en pourcentage, maintenant placé', () => {
+    const out = dayTimeline([event({ start: at(10), end: at(11) })], new Date(2026, 9, 2, 13, 30));
+    expect([out.fromHour, out.toHour]).toEqual([8, 19]);
+    expect(out.blocks[0]!.left).toBeCloseTo((2 / 11) * 100);
+    expect(out.blocks[0]!.width).toBeCloseTo((1 / 11) * 100);
+    expect(out.now).toBeCloseTo((5.5 / 11) * 100);
+  });
+
+  it("s'élargit pour un rendez-vous matinal ou tardif, et masque « maintenant » hors fenêtre", () => {
+    const out = dayTimeline([event({ start: at(6, 30), end: at(7) }), event({ id: 'e2', start: at(20), end: at(21, 15) })], new Date(2026, 9, 2, 23, 30));
+    expect([out.fromHour, out.toHour]).toEqual([6, 22]);
+    expect(out.now).toBeNull();
+  });
+
+  it('un événement sans durée garde une largeur minimale', () => {
+    const out = dayTimeline([event({ start: at(12), end: at(12) })], new Date(2026, 9, 2, 9));
+    expect(out.blocks[0]!.width).toBeGreaterThanOrEqual(3);
   });
 });

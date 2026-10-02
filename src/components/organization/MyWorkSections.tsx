@@ -11,20 +11,25 @@ import type { OrgMember, OrgNotification } from '@/modules/organizations';
 import TeamActivityFeed from './TeamActivityFeed';
 import OrgEventsTimeline from './OrgEventsTimeline';
 import { MyKeyResultsCard, MyProjectsCard, MyTasksCard, WaitingForMeCard } from './MyWorkCards';
+import { ActivityDigestCard, WaitingOnOthersCard, WeekLoadCard } from './MyWorkExtraCards';
 import { buildOrgEvents } from './org-events.helpers';
 import { KpiStrip } from './MyWorkKpiStrip';
-import { useT } from '@/i18n/useT';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
 import {
+  activityDigest,
   buildActivityItems,
   computeBlocking,
+  dependencyIdsOf,
   dependentIdsOf,
   groupByHorizon,
   myKeyResults,
+  projectPeople,
   reviewsForMe,
   summarizeMyProjects,
   unreadMentions,
+  waitingOnOthers,
+  weekLoad,
 } from './my-work.helpers';
 
 export interface MyWorkSectionsProps {
@@ -36,6 +41,8 @@ export interface MyWorkSectionsProps {
   mine: TeamTask[];
   upcoming: TeamTask[];
   createdInReview: TeamTask[];
+  /** Tâches ouvertes que j'ai créées (« J'attends quelqu'un »). */
+  delegated: TeamTask[];
   activity: TeamTaskActivity[];
   deps: TeamTaskDependency[];
   notifications: OrgNotification[];
@@ -46,12 +53,14 @@ export interface MyWorkSectionsProps {
   estimated: number;
   /** Carte « Mon agenda », construite par `MyWorkTab`. */
   agenda: ReactNode;
-  /** Carte de progression (`WorkSummaryCard`), construite par `MyWorkTab`. */
-  summary: ReactNode;
   overdueCount: number;
+  /** Mes tâches terminées sur la fenêtre lue, pour la barre de l'en-tête. */
+  doneCount: number;
   nextDeadline: TeamTask | null;
   onToggle: (task: TeamTask) => void;
   onOpenTask: (task: TeamTask) => void;
+  onApprove: (task: TeamTask) => void;
+  onSendBack: (task: TeamTask) => void;
 }
 
 /**
@@ -69,11 +78,10 @@ export interface MyWorkSectionsProps {
  * des requêtes : son attente est couverte par le squelette de données.
  */
 const MyWorkSections = ({
-  orgId, currentUserId, open, mine, upcoming, createdInReview,
+  orgId, currentUserId, open, mine, upcoming, createdInReview, delegated,
   activity, deps, notifications, okrs, projects, members, hasAny, estimated,
-  agenda, summary, overdueCount, nextDeadline, onToggle, onOpenTask,
+  agenda, overdueCount, doneCount, nextDeadline, onToggle, onOpenTask, onApprove, onSendBack,
 }: MyWorkSectionsProps) => {
-  const { t: tOrgAdmin } = useT('orgAdmin');
   const me = currentUserId ?? '';
   const activeProjectIds = useMemo(
     () => new Set(projects.filter((p) => !p.archivedAt).map((p) => p.id)),
@@ -91,14 +99,15 @@ const MyWorkSections = ({
   // identifiants, triés pour que la clé de cache ne bouge pas.
   const known = useMemo(() => {
     const map = new Map<string, TeamTask>();
-    for (const list of [createdInReview, upcoming, mine]) {
+    for (const list of [delegated, createdInReview, upcoming, mine]) {
       for (const task of list) map.set(task.id, task);
     }
     return map;
-  }, [createdInReview, upcoming, mine]);
+  }, [delegated, createdInReview, upcoming, mine]);
   const missingIds = useMemo(() => {
     const wanted = new Set([
       ...dependentIdsOf(open, deps),
+      ...dependencyIdsOf(open, deps),
       ...activityItems.map((i) => i.taskId),
       ...mentions.map((n) => n.taskId!),
     ]);
@@ -125,7 +134,21 @@ const MyWorkSections = ({
     [mentions, taskById],
   );
   const myProjects = useMemo(() => summarizeMyProjects(open, projects), [open, projects]);
+  const people = useMemo(() => projectPeople([...taskById.values()], me), [taskById, me]);
   const krs = useMemo(() => myKeyResults(okrs, me), [okrs, me]);
+  const load = useMemo(() => weekLoad(open), [open]);
+  const waitingOn = useMemo(
+    () => waitingOnOthers(open, deps, [...taskById.values()], delegated, me),
+    [open, deps, taskById, delegated, me],
+  );
+  const digest = useMemo(
+    () => activityDigest(activity, new Set(mine.map((t) => t.id)), me),
+    [activity, mine, me],
+  );
+  // La démo nomme le compte courant « Vous » / « You » : « Bonjour Vous. »
+  // ne se dit pas, on retombe alors sur le salut neutre.
+  const ownName = members.find((m) => m.userId === me)?.displayName.split(' ')[0] || null;
+  const firstName = ownName && !/^(vous|you)$/i.test(ownName) ? ownName : null;
 
   // Prochains événements de l'ENTREPRISE : échéances des tâches ouvertes
   // (tous assignés) + fins d'OKR, 6 max, en frise (OrgEventsTimeline).
@@ -136,25 +159,22 @@ const MyWorkSections = ({
 
   return (
     <>
-      {/* Maquette A (2026-09-28) : bandeau de chiffres, puis deux colonnes,
-          l'ACTION à gauche (en attente, mes tâches) et le CONTEXTE à droite
-          (progression, agenda, KR, projets), puis l'équipe en bas.
+      {/* Refonte du 2026-10-02 (choix 1B 2B 3A 4C 5B 6A 7C 8C 9A 10A 11B + N1 N2) :
+          une phrase d'accueil qui absorbe l'ancienne carte de synthèse, puis
+          deux colonnes, l'ACTION à gauche (en attente de moi, mes tâches)
+          et le CONTEXTE à droite (charge, agenda, KR, projets), puis ce qui
+          dépend des autres et la vie de l'équipe en bas.
           ⚠️ `minmax(0, …)` et `min-w-0` sur les colonnes (maquette 105) : un
           élément de grille a `min-width: auto` et débordait en 390 px.
           ⚠️ L'agenda est rendu HORS de toute condition : un nouvel arrivant
           sans tâche doit aussi voir le sien. */}
       <KpiStrip
+        firstName={firstName}
         waiting={reviews.length + mentionRows.length + blocking.length}
         open={open.length}
         overdue={overdueCount}
+        done={doneCount}
         nextDeadline={nextDeadline}
-        labels={{
-          waiting: tOrgAdmin('waiting.title'),
-          open: tOrgAdmin('overview.openTasks'),
-          overdue: tOrgAdmin('horizon.overdue'),
-          next: tOrgAdmin('myWork.nextDeadline'),
-          upToDate: tOrgAdmin('myWork.upToDate'),
-        }}
       />
 
       <div className="grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-5 items-start">
@@ -165,6 +185,8 @@ const MyWorkSections = ({
             blocking={blocking}
             members={members}
             onOpenTask={onOpenTask}
+            onApprove={onApprove}
+            onSendBack={onSendBack}
           />
           <MyTasksCard
             groups={groups}
@@ -183,10 +205,12 @@ const MyWorkSections = ({
           />
         </div>
         <div className="min-w-0 space-y-5">
-          {summary}
+          <WeekLoadCard load={load} />
           {agenda}
           {krs.length > 0 && <MyKeyResultsCard items={krs} />}
-          {myProjects.length > 0 && <MyProjectsCard summaries={myProjects} orgId={orgId} userId={currentUserId} />}
+          {myProjects.length > 0 && (
+            <MyProjectsCard summaries={myProjects} orgId={orgId} userId={currentUserId} people={people} members={members} />
+          )}
         </div>
       </div>
 
@@ -196,18 +220,25 @@ const MyWorkSections = ({
         </Suspense>
       )}
 
-      {/* Activité de l'équipe (journal, mig. 094, 14 jours) et prochains
-          événements de l'entreprise (reco #2), côte à côte. */}
-      <div className="grid lg:grid-cols-2 gap-5 items-start">
+      {/* Ce qui dépend des autres, puis la vie de l'équipe : digest des 24 h
+          (fil du journal, mig. 094, replié dessous) et prochains événements de
+          l'entreprise en rail vertical. */}
+      <div className="grid lg:grid-cols-3 gap-5 items-start">
         <div className="min-w-0">
-          <TeamActivityFeed
-            items={activityItems}
-            taskById={taskById}
-            projects={projects}
-            members={members}
-            currentUserId={currentUserId}
-            onOpenTask={onOpenTask}
-          />
+          <WaitingOnOthersCard entries={waitingOn} members={members} onOpenTask={onOpenTask} />
+        </div>
+        <div className="min-w-0">
+          <ActivityDigestCard digest={digest}>
+            <TeamActivityFeed
+              bare
+              items={activityItems}
+              taskById={taskById}
+              projects={projects}
+              members={members}
+              currentUserId={currentUserId}
+              onOpenTask={onOpenTask}
+            />
+          </ActivityDigestCard>
         </div>
         <div className="min-w-0">
           <OrgEventsTimeline events={orgEvents} />

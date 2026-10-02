@@ -1354,5 +1354,71 @@
   },
   "myKrs": {
     "title": "Mes résultats clés"
+  },
+  "apercu": {
+    "greeting": {
+      "hello": "Bonjour {{name}}.",
+      "helloAnon": "Bonjour.",
+      "allClear": "Rien ne vous attend et aucune tâche ouverte : la voie est libre.",
+      "waiting_one": "{{count}} en attente",
+      "waiting_many": "{{count}} en attente",
+      "waiting_other": "{{count}} en attente",
+      "open_one": "{{count}} tâche ouverte",
+      "open_many": "{{count}} de tâches ouvertes",
+      "open_other": "{{count}} tâches ouvertes",
+      "overdue_one": "{{count}} en retard",
+      "overdue_many": "{{count}} en retard",
+      "overdue_other": "{{count}} en retard",
+      "next": "et la prochaine échéance tombe",
+      "nextLate": "et la plus ancienne échéance dépassée date du",
+      "noDeadline": "et aucune échéance n’est posée.",
+      "barLabel": "{{done}} terminées · {{inProgress}} en cours · {{overdue}} en retard"
+    },
+    "review": {
+      "approve": "Valider",
+      "approveTask": "Valider « {{name}} »",
+      "sendBack": "Renvoyer",
+      "sendBackTask": "Renvoyer « {{name}} » à son assigné"
+    },
+    "projects": {
+      "ends": "fin {{date}}",
+      "elapsed": "{{percent}} % du calendrier du projet écoulé"
+    },
+    "agendaFreeToday": "Aucun rendez-vous aujourd’hui.",
+    "weekLoad": {
+      "title": "Ma charge de la semaine",
+      "ofCapacity": "estimées sur une semaine de 35 h",
+      "percent": "{{percent}} % d’une semaine de 35 h",
+      "tasks_one": "{{count}} tâche due sous 7 jours",
+      "tasks_many": "{{count}} de tâches dues sous 7 jours",
+      "tasks_other": "{{count}} tâches dues sous 7 jours",
+      "unestimated_one": "{{count}} sans estimation",
+      "unestimated_many": "{{count}} sans estimation",
+      "unestimated_other": "{{count}} sans estimation"
+    },
+    "waitingOn": {
+      "title": "J’attends quelqu’un",
+      "empty": "Rien de ce que vous attendez n’est en souffrance.",
+      "blocked": "bloque une de vos tâches",
+      "delegated": "confiée par vous",
+      "idle_one": "{{count}} j",
+      "idle_many": "{{count}} j",
+      "idle_other": "{{count}} j"
+    },
+    "digest": {
+      "title": "Depuis hier dans l’équipe",
+      "quiet": "Journée calme : aucune tâche créée ni terminée.",
+      "completed_one": "{{count}} terminée",
+      "completed_many": "{{count}} terminées",
+      "completed_other": "{{count}} terminées",
+      "created_one": "{{count}} créée",
+      "created_many": "{{count}} créées",
+      "created_other": "{{count}} créées",
+      "aboutMe_one": "Dont {{count}} changement sur vos tâches.",
+      "aboutMe_many": "Dont {{count}} de changements sur vos tâches.",
+      "aboutMe_other": "Dont {{count}} changements sur vos tâches.",
+      "show": "Voir le détail",
+      "hide": "Masquer le détail"
+    }
   }
 }

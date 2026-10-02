@@ -1,58 +1,88 @@
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import type { TeamTask } from '@/modules/team-projects';
+import { useT } from '@/i18n/useT';
 import { isOverdue } from './my-work.helpers';
 
 
 interface KpiStripProps {
+  /** Prénom affiché dans le salut ; absent, le salut reste neutre. */
+  firstName: string | null;
   waiting: number;
   open: number;
   overdue: number;
+  /** Tâches terminées sur la fenêtre lue (30 jours), pour la barre. */
+  done: number;
   nextDeadline: TeamTask | null;
-  labels: { waiting: string; open: string; overdue: string; next: string; upToDate: string };
 }
 
-const TILE = 'min-w-0 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] px-4 py-3';
-const LABEL = 'block text-xs text-[rgb(var(--color-text-secondary))] truncate';
-const VALUE = 'block text-2xl font-bold tabular-nums leading-tight mt-0.5';
+const PILL = 'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold tabular-nums';
 
 /**
- * Bandeau de chiffres en tête de l'Aperçu (maquette A, 2026-09-28) : les
- * quatre réponses qu'on vient chercher avant de lire une liste. Une tuile à 0
- * reste neutre, la couleur ne marque que ce qui demande un geste.
+ * En-tête de l'Aperçu (maquette 1 B, 2026-10-02) : une phrase plutôt que
+ * quatre tuiles. Elle porte les mêmes réponses (ce qui m'attend, ce qui est
+ * ouvert, ce qui est en retard, la prochaine échéance) et absorbe la barre de
+ * l'ancienne carte de synthèse (maquette 4 C), qui redisait ces chiffres.
+ *
+ * Une pastille à 0 n'est pas peinte : la couleur ne marque que ce qui
+ * demande un geste.
  */
-export const KpiStrip = ({ waiting, open, overdue, nextDeadline, labels }: KpiStripProps) => {
+export const KpiStrip = ({ firstName, waiting, open, overdue, done, nextDeadline }: KpiStripProps) => {
+  const { t, tp } = useT('orgAdmin');
   const late = !!nextDeadline && isOverdue(nextDeadline);
+  const inProgress = Math.max(0, open - overdue);
+  const total = done + open;
+  const barLabel = t('apercu.greeting.barLabel', { done, inProgress, overdue });
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <div className={TILE}>
-        <span className={LABEL}>{labels.waiting}</span>
-        <span className={`${VALUE} ${waiting > 0 ? 'text-amber-500' : 'text-[rgb(var(--color-text-primary))]'}`}>{waiting}</span>
-      </div>
-      <div className={TILE}>
-        <span className={LABEL}>{labels.open}</span>
-        <span className={`${VALUE} text-[rgb(var(--color-text-primary))]`}>{open}</span>
-      </div>
-      <div className={TILE}>
-        <span className={LABEL}>{labels.overdue}</span>
-        <span className={`${VALUE} ${overdue > 0 ? 'text-red-500' : 'text-[rgb(var(--color-text-primary))]'}`}>{overdue}</span>
-      </div>
-      <div className={TILE}>
-        <span className={LABEL}>{labels.next}</span>
-        {nextDeadline?.deadline ? (
-          <>
-            <time
-              dateTime={nextDeadline.deadline}
-              className={`block text-base font-bold leading-tight mt-1 ${late ? 'text-red-500' : 'text-[rgb(var(--color-accent))]'}`}
-            >
-              {format(parseISO(nextDeadline.deadline), 'd MMMM', { locale: getDateLocale() })}
-            </time>
-            <span className="block text-xs text-[rgb(var(--color-text-primary))] truncate mt-0.5">{nextDeadline.name}</span>
-          </>
+    <section
+      aria-labelledby="my-work-greeting"
+      className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-4 py-4 sm:px-5"
+    >
+      <h2 id="my-work-greeting" className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
+        {firstName ? t('apercu.greeting.hello', { name: firstName }) : t('apercu.greeting.helloAnon')}
+      </h2>
+      <p className="mt-1.5 text-sm leading-relaxed text-[rgb(var(--color-text-secondary))]">
+        {waiting === 0 && overdue === 0 && open === 0 ? (
+          t('apercu.greeting.allClear')
         ) : (
-          <span className="block text-base font-bold leading-tight mt-1 text-[rgb(var(--color-text-muted))]">{labels.upToDate}</span>
+          <>
+            {waiting > 0 && (
+              <><span className={`${PILL} bg-amber-500/15 text-amber-700 dark:text-amber-300`}>{tp('apercu.greeting.waiting', waiting)}</span>{' '}</>
+            )}
+            <span className={`${PILL} bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]`}>{tp('apercu.greeting.open', open)}</span>{' '}
+            {overdue > 0 && (
+              <><span className={`${PILL} bg-red-500/15 text-red-700 dark:text-red-300`}>{tp('apercu.greeting.overdue', overdue)}</span>{' '}</>
+            )}
+            {nextDeadline?.deadline ? (
+              <>
+                {t(late ? 'apercu.greeting.nextLate' : 'apercu.greeting.next')}{' '}
+                <time
+                  dateTime={nextDeadline.deadline}
+                  className={`font-semibold ${late ? 'text-red-500' : 'text-[rgb(var(--color-text-primary))]'}`}
+                >
+                  {format(parseISO(nextDeadline.deadline), 'EEEE d MMMM', { locale: getDateLocale() })}
+                </time>
+                {' · '}
+                <span className="text-[rgb(var(--color-text-primary))]">{nextDeadline.name}</span>
+              </>
+            ) : (
+              t('apercu.greeting.noDeadline')
+            )}
+          </>
         )}
-      </div>
-    </div>
+      </p>
+
+      {total > 0 && (
+        <div className="mt-3">
+          <div className="flex h-2 rounded-full overflow-hidden bg-[rgb(var(--color-hover))]" role="img" aria-label={barLabel}>
+            <span className="bg-emerald-500" style={{ flexGrow: done }} />
+            <span className="bg-[rgb(var(--color-accent))]" style={{ flexGrow: inProgress }} />
+            <span className="bg-red-500" style={{ flexGrow: overdue }} />
+          </div>
+          <p className="mt-1.5 text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">{barLabel}</p>
+        </div>
+      )}
+    </section>
   );
 };
