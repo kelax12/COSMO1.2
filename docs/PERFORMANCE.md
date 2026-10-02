@@ -1,4 +1,4 @@
-<!-- note-audit: note=93 -->
+<!-- note-audit: note=92 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,32 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **93 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **92 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → **93 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → **92 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir)
+
+> ### 🟠 2026-10-02 (soir) · −1 : le budget de bundle repasse au rouge, quatre cliquets
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | 🔴 Budget de bundle | **−1** | **vu rouge en CI** le 2026-10-02 au matin (run `36985012405`, `OKRPage` 16,1 / 15,0), la CI n'atteint plus l'étape depuis (tests unitaires rouges, cf. [`TESTING.md`](./TESTING.md)). Remesuré en local à `HEAD`, build **avec** Sentry comme en CI : **quatre** cliquets dépassés, `OKRPage` **17,0 / 15,0**, `landing` **25,4 / 24,0** (parcours entreprise de la landing, le soir même), `vendor-query` **18,9 / 18,5**, `vendor-utils` **33,3 / 33,0**. Chemin critique **310,6 ko** (plafond 323,0), entrée **67,1 ko** (70,5) : intacts |
+> | `TasksPage` au-delà de son cliquet (−1 le 09-22) | 0 | **29,8 / 37,0** en local à `HEAD`, mais aucun verdict CI sur l'étape depuis le 09-28 : non remboursé |
+> | `C-116` · LCP mobile | 0 | Lighthouse mobile en CI à `9ea33927` : `/` **8,1 s** (perf 50), `/guide/` 6,6, `/blog/` 6,1, article 5,9, `/pour-freelances/` 5,7, `/entreprise-presentation/` **8,4** (perf 47), `/a-propos/` 5,6, `/en/` 3,6. *Render Delay* de 5,1 à 7,9 s sur chaque URL : l'élément LCP est là, il attend le rendu. Inchangé depuis le 10-01, déjà payé |
+> | Desktop | 0 | LCP **0,7 à 1,8 s**, perf 91 à 99 sur les 8 URLs |
+> | AM-5 · coût serveur | 0 | `cout-db` vert le 2026-10-02 |
+>
+> ⚠️ Un premier relevé de ce soir montrait d'autres chiffres (`org` 37,3, `legal` 18,5) : c'était un
+> `bundle.log` du **2026-09-26**, laissé par une autre session dans le dossier temporaire commun.
+> Écarté avant toute conclusion ; les chiffres ci-dessus viennent du build de ce soir.
+>
+> **93 → 92.** ❌ Aucun cliquet remonté : ce sont les chunks qui doivent maigrir.
 
 > ### ⚪ 2026-10-01 · 0 : inchangée : le correctif LCP ne se voit pas en CI
 >

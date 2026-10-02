@@ -8,11 +8,26 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **74 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **74 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → **74 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
+## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → **74 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir)
+
+> ### ⚪ 2026-10-02 (soir) · 0 : les cibles tactiles vérifiées en CI, puis une nouvelle rangée sous 44 px
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | ✅ Cibles tactiles du 2026-10-01 | **+1** | vérifié en CI (`f301f0bf`) : les quatre commandes corrigées sortent des listes de `touch-targets`. Le bloc 🟡 du matin, juste en dessous, est soldé |
+> | 🔴 « Valider », « Renvoyer », « Voir le détail » à 36 px de haut | **−1** | refonte de l'Aperçu (`3609210c`) : `/entreprise` et la modale de tâche d'équipe rouges en chromium **et** en WebKit, pour ces cinq commandes seulement. Détail : [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) |
+> | WebKit : `/` et `/entreprise-presentation` | 0 | navigation interrompue avant toute mesure : harnais, pas un verdict |
+>
+> **74 → 74.** Détail : [tableau de bord](./README.md).
 
 > ### 🟡 2026-10-02 · 0 : cibles tactiles corrigées, remboursement en attente de la CI
 >

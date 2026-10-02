@@ -8,11 +8,27 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **93 / 100** au 2026-10-02, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **93 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → **93 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → **93 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir)
+
+> ### ⚪ 2026-10-02 (soir) · 0 : les tests unitaires de nouveau rouges, et c'est le produit qu'ils voient
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | Tests unitaires à `HEAD` | 0 | **3 échecs sur 3 395** (`9ea33927`, 306 fichiers sur 306), trois gardes qui mordent juste : `architecture.guard` (`OKRPage.tsx`, 617 lignes), `lazy-namespaces.guard` (`/okr` → `org`), et le témoin de `loading-empty-state.guard`, dont la dispense de `TeamProjectsTab` ne correspond plus à rien depuis la refonte de l'onglet (`28f4299d`) : dispense morte, à retirer. Les deux premiers sont débités dans [`ARCHITECTURE.md`](./ARCHITECTURE.md) et [`I18N.md`](./I18N.md), pas ici |
+> | `e2e` (−1 le 10-01) | 0 | dernier verdict complet `f301f0bf` : **57 échecs, 13 instables, 167 verts** (60 / 9 / 168 le 10-01 au soir). Les deux cas Agenda tombent ; restent `demo-entreprise-*`, `delete-org` (attend « Zone de danger »), `demo-calendar` surfaces 5 et 6 (tâche d'équipe), déjà rouges le 10-01, et les cibles tactiles de l'Aperçu. Déjà payé |
+> | 🔴 Un verdict `e2e` par jour, au mieux | 0 | le job dure **4,3 h** et `cancel-in-progress` l'annule à chaque push : le 2026-10-02, sur **18** runs `CI` de `main`, **16** annulés, **1** complet, 1 en cours. La durée vient surtout des échecs (57 cas × 3 tentatives, délais de 120 s) : réparer la suite entreprise la ramène. Conséquence de l'item déjà payé, nommée pour qu'elle ne se perde pas |
+> | ✅ Témoin de `check:supabase-posture` | 0 | la garde comptait **zéro** pour chaque advisor depuis sa pose (cf. [`../faille.md`](../faille.md)) : corrigée, cas ajouté à `gardes-posture.guard.test.mjs` à la forme réelle de l'API, **vu rouge sans le correctif, vert avec**. Jamais créditée : rien à rembourser |
+>
+> **93 → 93.** Dernier `CI` vert sur `main` : toujours le 2026-09-23 (`869fb05a`).
 
 > ### 🟢 2026-10-02 · +1 : la couverture des dépôts refermée, vérifiée en CI
 >

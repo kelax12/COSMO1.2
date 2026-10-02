@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **87 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **87 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # RGPD — inventaire, droits des personnes et dette
 
@@ -16,7 +16,22 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ⚪ 2026-10-02 (soir) · 0 : vérifiée inchangée
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | mig. `211` · champs personnalisés retirés | 0 | appliquée (ledger `20261002090434`), relue au catalogue : `team_custom_fields` et `team_task_field_values` n'existent plus, aucune fonction ne les cite. **0 ligne** dans les deux avant retrait (relu le 10-01, écrit dans la migration) : aucune donnée personnelle détruite. `check:erasure` et `check:portability` verts en CI à `9ea33927` |
+> | AM-3 · rétention | 0 | `retention` vert le 2026-10-02 (`posture.yml`) |
+> | Production | 0 | **74** tables (76 → 74 par la `211`), toutes sous RLS, **194** policies |
+>
+> **87 → 87.** Détail : [tableau de bord](./README.md).
 
 > ### 🟢 2026-10-01 · +1
 >

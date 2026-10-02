@@ -1,4 +1,4 @@
-<!-- note-audit: note=93 -->
+<!-- note-audit: note=92 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **93 / 100** au 2026-10-01, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **92 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Architecture — invariants, dette et vérification
 
@@ -22,7 +22,22 @@ dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → 93 → **93 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01)
+## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → 93 → 93 → **92 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir)
+
+> ### 🟠 2026-10-02 (soir) · −1 : `OKRPage.tsx` franchit 600 lignes, et la garde mord en CI
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | 🔴 `src/pages/OKRPage.tsx` à **617 lignes** | **−1** | ce que la passe du 10-01 avait vu « en local, sur le travail non commité d'une autre session » est entré dans `main` avec `05ddf746` (les OKR d'entreprise en mode perso). `architecture.guard` **rouge en CI** sur `f301f0bf`, puis sur `9ea33927`. L'objectif du § 3, « aucun fichier > 600 LOC », repasse de 0 à **1** |
+> | `tsc -b`, `check:cycles`, `Validate RLS invariants` | 0 | verts en CI à `9ea33927` |
+> | AM-4, `MobileShowcases` hors garde | 0 | inchangés, déjà payés |
+>
+> **93 → 92.** Le point revient à la découpe, vue verte en CI. ❌ Pas de relèvement du seuil.
 
 > ### ⚪ 2026-10-01 · 0 : vérifiée inchangée
 >
@@ -465,6 +480,10 @@ Deux choix méritent d'être relus avant d'être « simplifiés » :
 explique la règle déclenchait la règle.
 
 ## 3. ✅ L'objectif « aucun fichier > 600 LOC » · 17 → **0** fichier, 13 103 → **0** ligne
+
+> 🔴 **2026-10-02 (soir) : 1 fichier.** `src/pages/OKRPage.tsx`, **617 lignes**, entré dans `main`
+> avec `05ddf746` ; `architecture.guard` rouge en CI sur `f301f0bf` et `9ea33927`. La garde a fait
+> son travail, et `OVERSIZED_BUDGET` reste à 0 : c'est la page qui se découpe. Cf. la note en tête.
 
 > ✅ **ATTEINT le 2026-09-06** (`7653d398`, item `C-09`), et **remesuré le 2026-09-20** :
 > `KNOWN_OVERSIZED` est un `Set` **vide** et `OVERSIZED_BUDGET` vaut **0** dans
