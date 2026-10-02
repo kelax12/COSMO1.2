@@ -14,6 +14,7 @@ import {
 import { priorityLabelOf } from './team-projects.helpers';
 import MemberPickList from './MemberPickList';
 import TeamTaskFields from './TeamTaskFields';
+import TeamTaskBlockedNote from './TeamTaskBlockedNote';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import PreCreateCommentComposer from './PreCreateCommentComposer';
 import { OrgCreateBoundary } from './org-create.context';
@@ -429,6 +430,7 @@ const TeamTaskModal = ({
 
           {tab === 'details' && (
             <>
+              {liveTask && <TeamTaskBlockedNote task={liveTask} onOpen={() => setTab('dependencies')} />}
               <TeamTaskFields
                 orgId={orgId}
                 projects={projects}
