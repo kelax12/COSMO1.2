@@ -209,6 +209,17 @@ export default defineConfig(({ mode }) => ({
               id.includes('node_modules/class-variance-authority')) {
             return 'vendor-utils';
           }
+          // ⚠️ La virtualisation AVANT la règle `@tanstack` : elle n'a rien à
+          // faire dans `vendor-query`, qui est dans le CHEMIN CRITIQUE (préchargé
+          // par index.html pour tout le monde). Seuls deux écrans lazy s'en
+          // servent (tableau de /tasks, tableau Tâches de l'entreprise) ; la
+          // laisser là coûtait ~5 ko gzip à chaque visiteur et a fait déborder
+          // le cliquet de `vendor-query` (18,9 / 18,5, mesuré le 2026-10-03 :
+          // `virtual-core` + `react-virtual` = 48 ko bruts sur 141).
+          if (id.includes('node_modules/@tanstack/react-virtual') ||
+              id.includes('node_modules/@tanstack/virtual-core')) {
+            return 'vendor-virtual';
+          }
           if (id.includes('node_modules/@tanstack')) {
             return 'vendor-query';
           }

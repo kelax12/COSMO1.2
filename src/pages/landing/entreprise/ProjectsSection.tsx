@@ -12,14 +12,14 @@ import StepSection from './StepSection';
 import { SHOTS, type AppShotRef } from './data';
 
 /** Ce qu'on peut faire d'un projet une fois l'organisation en place. */
-const POINTS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
+const POINTS: { titleKey: KeyOf<'landingEnterprise'>; bodyKey: KeyOf<'landingEnterprise'> }[] = [
   { titleKey: 'enterprise.projects.p1t', bodyKey: 'enterprise.projects.p1d' },
   { titleKey: 'enterprise.projects.p2t', bodyKey: 'enterprise.projects.p2d' },
   { titleKey: 'enterprise.projects.p3t', bodyKey: 'enterprise.projects.p3d' },
 ];
 
 /** Les trois lectures d'un même projet, dans l'ordre où le scroll les montre. */
-const VIEWS: { shot: AppShotRef; labelKey: KeyOf<'landing'>; Icon: typeof LayoutList }[] = [
+const VIEWS: { shot: AppShotRef; labelKey: KeyOf<'landingEnterprise'>; Icon: typeof LayoutList }[] = [
   { shot: SHOTS.projects, labelKey: 'enterprise.projects.viewList', Icon: LayoutList },
   { shot: SHOTS.projectsPlanning, labelKey: 'enterprise.projects.viewPlanning', Icon: CalendarRange },
   { shot: SHOTS.projectsPortfolio, labelKey: 'enterprise.projects.viewPortfolio', Icon: Table2 },
@@ -57,7 +57,7 @@ const FADE = 0.5;
  *   • non épinglé (mobile) → aucun ScrollTrigger, React possède l'opacité.
  */
 const ProjectsSection: React.FC = () => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
   const isMobile = useIsMobile();
   const reduceMotion = useReducedMotion();
   const sectionRef = useRef<HTMLDivElement>(null);

@@ -13,7 +13,7 @@ import StepSection from './StepSection';
  * réorganisation), les deux suivantes disent les gestes quotidiens qu'elle
  * autorise.
  */
-const PYRAMID_BENEFITS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
+const PYRAMID_BENEFITS: { titleKey: KeyOf<'landingEnterprise'>; bodyKey: KeyOf<'landingEnterprise'> }[] = [
   { titleKey: 'enterprise.pyramid.b1t', bodyKey: 'enterprise.pyramid.b1d' },
   { titleKey: 'enterprise.pyramid.b2t', bodyKey: 'enterprise.pyramid.b2d' },
   { titleKey: 'enterprise.pyramid.b3t', bodyKey: 'enterprise.pyramid.b3d' },
@@ -35,7 +35,7 @@ const PYRAMID_BENEFITS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> 
  * (`scripts/capture-entreprise-shots.mjs`, `SHOTS_ONLY=pyramide`).
  */
 const PyramidSection: React.FC = () => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
 
   return (
     <StepSection

@@ -77,6 +77,7 @@ interface FrModules {
   habits: typeof import('@/locales/fr/habits.json');
   invite: typeof import('@/locales/fr/invite.json');
   landing: typeof import('@/locales/fr/landing.json');
+  landingEnterprise: typeof import('@/locales/fr/landingEnterprise.json');
   legal: typeof import('@/locales/fr/legal.json');
   legalTerms: typeof import('@/locales/fr/legalTerms.json');
   legalPrivacy: typeof import('@/locales/fr/legalPrivacy.json');
@@ -154,6 +155,12 @@ interface CatalogShapes {
   premium: Shape<'premium'>;
   /** Landing publique + pages marketing (à propos, cas d'usage, blog). */
   landing: Shape<'landing'>;
+  /**
+   * Parcours ENTREPRISE de la landing, chargé avec `EnterpriseTrack` (lazy) :
+   * la moitié du texte de la landing, que le parcours perso n'affiche jamais.
+   * L'aiguillage, le sélecteur et les ancres restent dans `landing`.
+   */
+  landingEnterprise: Shape<'landingEnterprise'>;
   /**
    * Pages contractuelles : libellés communs (retour, date de mise à jour) et
    * mentions légales.
@@ -314,7 +321,7 @@ registry[DEFAULT_LOCALE] = {
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
-  'habits', 'invite', 'landing', 'legal', 'legalPrivacy', 'legalTerms', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgConfig', 'portfolio', 'premium', 'seo',
+  'habits', 'invite', 'landing', 'landingEnterprise', 'legal', 'legalPrivacy', 'legalTerms', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgConfig', 'portfolio', 'premium', 'seo',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];

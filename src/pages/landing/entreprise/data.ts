@@ -16,10 +16,10 @@ import { ENTERPRISE_FREE_OFFER } from './free-offer';
 /** Une capture réelle d'un onglet de l'espace entreprise. */
 export interface AppShotRef {
   id: string;
-  labelKey: KeyOf<'landing'>;
+  labelKey: KeyOf<'landingEnterprise'>;
   /** Capture réelle de l'onglet (mode démo, thème noir). */
   image: string;
-  altKey: KeyOf<'landing'>;
+  altKey: KeyOf<'landingEnterprise'>;
 }
 
 const shot = (name: string) => `/screenshots/entreprise/${name}.webp`;
@@ -73,7 +73,7 @@ export interface MoreFeature {
 }
 
 export interface MoreFeatureGroup {
-  titleKey: KeyOf<'landing'>;
+  titleKey: KeyOf<'landingEnterprise'>;
   features: MoreFeature[];
 }
 
@@ -122,8 +122,8 @@ export const MORE_FEATURE_GROUPS: MoreFeatureGroup[] = [
 
 /** Les quatre garanties de la section sécurité. */
 export interface SecurityPoint {
-  titleKey: KeyOf<'landing'>;
-  bodyKey: KeyOf<'landing'>;
+  titleKey: KeyOf<'landingEnterprise'>;
+  bodyKey: KeyOf<'landingEnterprise'>;
 }
 
 export const SECURITY_POINTS: SecurityPoint[] = [
@@ -151,7 +151,7 @@ export const ENTERPRISE_FAQ = Array.from({ length: 5 }, (_, i) => {
   const n = i + 1;
   const free = ENTERPRISE_FREE_OFFER && FREE_OFFER_ANSWERS.has(n);
   return {
-    questionKey: `enterprise.faq.q${n}` as KeyOf<'landing'>,
-    answerKey: `enterprise.faq.a${n}${free ? 'Free' : ''}` as KeyOf<'landing'>,
+    questionKey: `enterprise.faq.q${n}` as KeyOf<'landingEnterprise'>,
+    answerKey: `enterprise.faq.a${n}${free ? 'Free' : ''}` as KeyOf<'landingEnterprise'>,
   };
 });

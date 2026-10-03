@@ -178,12 +178,14 @@ const PLAFONDS_PAR_CHUNK = {
   'vendor-utils': 33_000, // 31 053 o
   org: 25_000, // 23 722 o sur 2 chunks (2026-10-01 : 40 6xx → 23 722, sections de /entreprise passées dans `orgAdmin`)
   TaskModal: 29_000, // 27 183 o
-  landing: 24_000, // 22 853 o sur 2 chunks
+  landing: 13_800, // 13 083 o sur 2 chunks (2026-10-03 : le parcours entreprise passe dans `landingEnterprise`, 24 000 avant)
+  landingEnterprise: 14_200, // 13 462 o sur 2 chunks — texte du parcours entreprise, chargé avec `EnterpriseTrack`
   'dropdown-menu': 22_000, // 20 526 o
   HabitsPage: 21_000, // 19 873 o
   LandingPage: 21_000, // 19 740 o
   DashboardPage: 20_500, // 19 175 o
-  'vendor-query': 18_500, // 17 599 o
+  'vendor-query': 12_700, // 12 066 o (2026-10-03 : la virtualisation sort dans `vendor-virtual`, 18 500 avant)
+  'vendor-virtual': 7_600, // 7 206 o — @tanstack/react-virtual + virtual-core, lazy (/tasks, Tâches entreprise)
   AgendaPage: 18_500, // 17 468 o
   OrganizationPage: 18_000, // 16 686 o
   TeamProjectsTab: 17_000, // 15 992 o

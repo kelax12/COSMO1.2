@@ -13,7 +13,7 @@ import { SECURITY_POINTS } from './data';
  * graphite) plutôt qu'au neutre livré par défaut.
  */
 const SecuritySection: React.FC = () => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
 
   return (
     <section

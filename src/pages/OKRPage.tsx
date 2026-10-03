@@ -17,8 +17,6 @@ import TaskModal from '@/components/TaskModal';
 import EventModal from '@/components/EventModal';
 import OKRModalSheet from '@/components/OKRModalSheet';
 import ColorSettingsModal from '@/components/ColorSettingsModal';
-import OKRDeadlineReviewModal from '@/components/OKRDeadlineReviewModal';
-import CompletedOKRsModal from '@/components/CompletedOKRsModal';
 import { toast } from '@/lib/toast';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
@@ -40,6 +38,10 @@ import { lazyWithRetry } from '@/lib/lazy-with-retry';
 
 // OKR d'entreprise dont je porte un KR : section chargée à la demande (cf. ProOKRBlock).
 const ProOKRBlock = lazyWithRetry(() => import('./okr/ProOKRBlock'), ['okr', 'org']);
+// Deux modales qui ne s'ouvrent que sur un geste ou une échéance atteinte :
+// hors du chunk de la page (cliquet `check:bundle`, 2026-10-03).
+const OKRDeadlineReviewModal = lazyWithRetry(() => import('@/components/OKRDeadlineReviewModal'));
+const CompletedOKRsModal = lazyWithRetry(() => import('@/components/CompletedOKRsModal'));
 
 const OKRPage: React.FC = () => {
   const { t, tp } = useT('okr');
@@ -252,6 +254,13 @@ const OKRPage: React.FC = () => {
   });
 
   const completedCount = objectives.filter(o => o.completed).length;
+
+  // Les deux modales lazy se montent à leur PREMIÈRE ouverture, puis restent
+  // montées : leur sortie animée (AnimatePresence) vit à l'intérieur.
+  const [completedMounted, setCompletedMounted] = useState(false);
+  if (showCompletedModal && !completedMounted) setCompletedMounted(true);
+  const [reviewMounted, setReviewMounted] = useState(false);
+  if (deadlineReview.okr && !reviewMounted) setReviewMounted(true);
 
   return (
     <motion.div
@@ -543,26 +552,26 @@ const OKRPage: React.FC = () => {
       {/* Popup deadline atteinte : affiché à l'ouverture pour les OKR non
           complétés dont endDate <= aujourd'hui. Au validate, la carte s'anime
           vers le bouton « OKR terminés ». */}
-      <OKRDeadlineReviewModal
+      {reviewMounted && <Suspense fallback={null}><OKRDeadlineReviewModal
         okr={deadlineReview.okr}
         categories={categories}
         flyTargetRef={finishedButtonRef}
         onClose={deadlineReview.close}
         onValidate={deadlineReview.validate}
         resolveColor={resolveColor}
-      />
+      /></Suspense>}
 
       {/* Liste des OKR terminés — ouverte par le bouton du header. Chaque
           item a un bouton "Modifier" qui referme cette modal et ouvre
           OKRModalSheet en mode édition. */}
-      <CompletedOKRsModal
+      {completedMounted && <Suspense fallback={null}><CompletedOKRsModal
         isOpen={showCompletedModal}
         onClose={() => setShowCompletedModal(false)}
         okrs={objectives.filter(o => o.completed)}
         categories={categories}
         resolveColor={resolveColor}
         onEdit={handleEditObjective}
-      />
+      /></Suspense>}
     </motion.div>);
 
 };

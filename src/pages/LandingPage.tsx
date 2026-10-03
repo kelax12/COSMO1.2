@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence, useReducedMotion, useScroll, useMotionValueEvent } from 'framer-motion';
@@ -13,6 +13,7 @@ import { useActiveAnchor } from './landing/use-active-anchor';
 import { useLandingTrack, type LandingTrack } from './landing/use-landing-track';
 import { TRACK_ANCHORS } from './landing/anchors';
 import { useT } from '@/i18n/useT';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useRootSeoMeta } from '@/lib/useSeoMeta';
 import { applyTheme, THEME_STORAGE_KEY } from '@/lib/theme';
 
@@ -20,7 +21,12 @@ import { applyTheme, THEME_STORAGE_KEY } from '@/lib/theme';
 // la moitié des visiteurs ne verra jamais. Il est chargé à la demande, à la
 // bascule — le track perso, lui, reste dans le chunk de la landing puisqu'il
 // est servi par défaut sur `/`.
-const EnterpriseTrack = lazy(() => import('./landing/entreprise/EnterpriseTrack'));
+//
+// 🔴 Son TEXTE voyage avec lui depuis le 2026-10-03 (`landingEnterprise`) : il
+// pesait la moitié du catalogue `landing`, que chaque visiteur de `/` payait
+// pour un parcours qu'il n'ouvre pas, et faisait déborder le cliquet du chunk
+// `landing` (25,4 / 24,0). Frontière déclarante : cf. TAB_GATE_HOSTS.
+const EnterpriseTrack = lazyWithRetry(() => import('./landing/entreprise/EnterpriseTrack'), ['landingEnterprise']);
 
 /**
  * La landing publique — un header, un aiguillage, et deux parcours exclusifs.
