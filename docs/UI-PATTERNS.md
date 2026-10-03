@@ -1,4 +1,4 @@
-<!-- note-audit: note=85 -->
+<!-- note-audit: note=86 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,25 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **85 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **86 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
 
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → **85 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir)
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03)
+
+> ### 🟢 2026-10-03 · +1 : l'Aperçu de `/entreprise` sous `Visual`
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Verdict : run `CI`
+> `37109937640` sur `c7fb936c`, **les cinq jobs verts**, le premier `CI` entièrement vert sur `main`
+> depuis le 2026-09-23 (`869fb05a`). Correctifs : `d8b1584b`, `16fbaae9`, `ac1e8c40`, `59aa4fd8`,
+> `315804df` (autres sessions) et `d8c215ad`, `290d6f51`, `c7fb936c` (celle-ci).
+>
+> | Item | Effet | Mesuré le 2026-10-03 |
+> |---|---|---|
+> | ✅ Aucun écran `/entreprise` sous `Visual` (−1 le 10-02) | **+1** | `entreprise-apercu-light` ajouté (`c7fb936c`) ; référence produite par `visual.yml` (run `37135216156`), **deux passes vertes**, la seconde comparant à la première, committée (`cd80c2b`). Une première tentative (`37109961426`) avait refusé de committer : `/settings` en thème gris différait d'une passe à l'autre, instabilité de la garde, pas de l'Aperçu |
+> | Références publiques réécrites | 0 | `publique-home`, `-guide`, `-blog` réencodées par la régénération, écarts sous la tolérance (0,2 % de pixels) |
+>
+> **85 → 86.** ⚠️ Le thème gris est instable deux jours de suite (`/dashboard` le 10-02, `/settings` le 10-03) : à diagnostiquer avant qu'il ne désarme la garde.
 
 > ### 🟠 2026-10-02 (soir) · −1 : la surface la plus retouchée n'est comparée par rien
 >

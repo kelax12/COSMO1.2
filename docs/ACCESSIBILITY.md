@@ -1,4 +1,4 @@
-<!-- note-audit: note=81 -->
+<!-- note-audit: note=82 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **81 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **82 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
 
 # Accessibilité (a11y) — COSMO
 
@@ -45,7 +45,21 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03)
+
+> ### 🟢 2026-10-03 · +1 : les cibles de l'Aperçu à 44 px, vues vertes en CI
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Verdict : run `CI`
+> `37109937640` sur `c7fb936c`, **les cinq jobs verts**, le premier `CI` entièrement vert sur `main`
+> depuis le 2026-09-23 (`869fb05a`). Correctifs : `d8b1584b`, `16fbaae9`, `ac1e8c40`, `59aa4fd8`,
+> `315804df` (autres sessions) et `d8c215ad`, `290d6f51`, `c7fb936c` (celle-ci).
+>
+> | Item | Effet | Mesuré le 2026-10-03 |
+> |---|---|---|
+> | ✅ « Valider », « Renvoyer », « Voir le détail » à 36 px (−1 le 10-02) | **+1** | corrigés (`16fbaae9`) ; `touch-targets` sur `/entreprise` et la modale de tâche d'équipe **verts** en chromium et en WebKit |
+> | `touch-targets` WebKit, quatre pages publiques | 0 | instables (navigation interrompue avant la mesure) : harnais |
+>
+> **81 → 82.**
 
 > ### 🟢 2026-10-02 (soir) · +1 : l'Agenda vérifié en CI ; les cibles tactiles réparées, puis cassées ailleurs le même jour
 >

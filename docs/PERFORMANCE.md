@@ -1,4 +1,4 @@
-<!-- note-audit: note=92 -->
+<!-- note-audit: note=94 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,26 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **92 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **94 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → **92 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → **94 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03)
+
+> ### 🟢 2026-10-03 · +2 : budget de bundle vert en CI, sans remonter un plafond
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Verdict : run `CI`
+> `37109937640` sur `c7fb936c`, **les cinq jobs verts**, le premier `CI` entièrement vert sur `main`
+> depuis le 2026-09-23 (`869fb05a`). Correctifs : `d8b1584b`, `16fbaae9`, `ac1e8c40`, `59aa4fd8`,
+> `315804df` (autres sessions) et `d8c215ad`, `290d6f51`, `c7fb936c` (celle-ci).
+>
+> | Item | Effet | Mesuré le 2026-10-03 |
+> |---|---|---|
+> | ✅ Budget dépassé sur quatre cliquets (−1 le 10-02) | **+1** | `check:bundle` **vert en CI**. `OKRPage` 17,0 → **14,0** (deux modales rares à leur première ouverture), `landing` 25,4 → **13,1** (parcours entreprise dans `landingEnterprise`), `vendor-query` 18,9 → **12,1** (`@tanstack/virtual` dans `vendor-virtual`, lazy), `vendor-utils` 33,3 → **32,0** (locale `date-fns` `es` retirée, langue ni servie ni traduite). Cliquets **abaissés**. Chemin critique **310,6 → 302,6 ko** gzip, pour tout visiteur. `useTeamOKRsAcrossOrgs` sans `useQueries` (`d8c215ad`) : `QueriesObserver` hors du chemin critique |
+> | ✅ `TasksPage` au-delà de son cliquet (−1 le 09-22) | **+1** | non remboursé depuis le 09-22 faute de verdict CI sur l'étape ; le budget est atteint et vert, `TasksPage` à **29,8 / 37,0** |
+> | 🔴 `C-116` · LCP mobile | 0 | le bandeau cookies n'est plus l'élément LCP (texte coupé en deux paragraphes, `290d6f51`), mais le chiffre ne bouge presque pas : `/` **7,8 s** (8,1), `/guide/` **6,3** (6,6), le reste inchangé. L'élément LCP devient le paragraphe animé du héros (`data-hero-fade`, GSAP depuis l'opacité 0) ou un paragraphe rendu par React, plus grand que sa version prérendue. **La cause est une seule** : ce que React peint remplace un prérendu qui n'a pas sa mise en page. Déjà payé |
+>
+> **92 → 94.**
 
 > ### 🟠 2026-10-02 (soir) · −1 : le budget de bundle repasse au rouge, quatre cliquets
 >
