@@ -49,7 +49,7 @@
 // plutôt que recopié : une mesure se refait, elle ne se reprend pas.
 // ═══════════════════════════════════════════════════════════════════
 
-import { test, expect } from './fixtures';
+import { test, expect, gotoTolerant } from './fixtures';
 import type { Page } from '@playwright/test';
 
 test.describe.configure({ timeout: 180_000 });
@@ -493,7 +493,12 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
   ]) {
     test(`page publique ${route} : aucune commande sous 44 x 44 px`, async ({ page, context }) => {
       await context.clearCookies();
-      await page.goto(route);
+      // `gotoTolerant`, jamais `page.goto` nu : sous WebKit, Vite se
+      // ré-empaquette au premier passage d'une page lazy et RECHARGE, ce qui
+      // annule la navigation (« interrupted by another navigation »). Le
+      // 2026-10-03, ce cas a épuisé ses trois essais et mis `main` au rouge
+      // sur un commit de documentation (run `37135662759`).
+      await gotoTolerant(page, route);
       // 🔴 Le bandeau cookies RECOUVRE des commandes sur telephone
       // (`left-4 right-4`, z-[200], ancre en bas) : mesurer sans l'ecarter
       // rend un comptage faux dans les deux sens, en cachant des cibles et en
@@ -504,7 +509,7 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
           localStorage.setItem('cosmo_cookie_consent', 'refused');
         } catch { /* ignore */ }
       });
-      await page.goto(route);
+      await gotoTolerant(page, route);
       await page.waitForLoadState('networkidle');
       // La landing est lazy-loadee et animee : son etat final n'est pas celui
       // du premier rendu, et une cible mesuree en cours d'animation ment.

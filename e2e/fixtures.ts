@@ -46,7 +46,7 @@ import { test as base, expect, Page, Locator } from '@playwright/test';
  * c'est le project `mobile-safari-warmup` qui paie le gros de la compilation,
  * une fois, sous un nom qui le dit.
  */
-async function gotoTolerant(page: Page, url: string): Promise<void> {
+export async function gotoTolerant(page: Page, url: string): Promise<void> {
   let derniere: unknown;
   for (let essai = 0; essai < 3; essai += 1) {
     try {
