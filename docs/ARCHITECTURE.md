@@ -1,4 +1,4 @@
-<!-- note-audit: note=92 -->
+<!-- note-audit: note=93 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **92 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **93 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
 
 # Architecture — invariants, dette et vérification
 
@@ -22,7 +22,20 @@ dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → 93 → 93 → **92 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir)
+## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → 93 → 93 → 92 → **93 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03)
+
+> ### 🟢 2026-10-03 · +1 : `OKRPage.tsx` sous 600 lignes, vu vert en CI
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Verdict : run `CI`
+> `37109937640` sur `c7fb936c`, **les cinq jobs verts**, le premier `CI` entièrement vert sur `main`
+> depuis le 2026-09-23 (`869fb05a`). Correctifs : `d8b1584b`, `16fbaae9`, `ac1e8c40`, `59aa4fd8`,
+> `315804df` (autres sessions) et `d8c215ad`, `290d6f51`, `c7fb936c` (celle-ci).
+>
+> | Item | Effet | Mesuré le 2026-10-03 |
+> |---|---|---|
+> | ✅ `OKRPage.tsx` à 617 lignes (−1 le 10-02) | **+1** | **579** lignes à `c7fb936c` : la section OKR pro et l'édition de catégorie sorties dans `ProOKRBlock` et `useInlineCategoryEdit` (`d8b1584b`). `architecture.guard` vert en CI ; `OVERSIZED_BUDGET` toujours à 0 |
+>
+> **92 → 93.**
 
 > ### 🟠 2026-10-02 (soir) · −1 : `OKRPage.tsx` franchit 600 lignes, et la garde mord en CI
 >
@@ -484,6 +497,7 @@ explique la règle déclenchait la règle.
 > 🔴 **2026-10-02 (soir) : 1 fichier.** `src/pages/OKRPage.tsx`, **617 lignes**, entré dans `main`
 > avec `05ddf746` ; `architecture.guard` rouge en CI sur `f301f0bf` et `9ea33927`. La garde a fait
 > son travail, et `OVERSIZED_BUDGET` reste à 0 : c'est la page qui se découpe. Cf. la note en tête.
+> ✅ **2026-10-03 : de nouveau 0.** `OKRPage.tsx` à 579 lignes (`d8b1584b`), garde verte en CI sur `c7fb936c`.
 
 > ✅ **ATTEINT le 2026-09-06** (`7653d398`, item `C-09`), et **remesuré le 2026-09-20** :
 > `KNOWN_OVERSIZED` est un `Set` **vide** et `OVERSIZED_BUDGET` vaut **0** dans

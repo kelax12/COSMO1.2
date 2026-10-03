@@ -1,4 +1,4 @@
-<!-- note-audit: note=93 -->
+<!-- note-audit: note=96 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,27 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **93 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **96 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → **93 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → **96 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03)
+
+> ### 🟢 2026-10-03 · +3 : `main` entièrement vert en CI, `e2e` compris
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Verdict : run `CI`
+> `37109937640` sur `c7fb936c`, **les cinq jobs verts**, le premier `CI` entièrement vert sur `main`
+> depuis le 2026-09-23 (`869fb05a`). Correctifs : `d8b1584b`, `16fbaae9`, `ac1e8c40`, `59aa4fd8`,
+> `315804df` (autres sessions) et `d8c215ad`, `290d6f51`, `c7fb936c` (celle-ci).
+>
+> | Item | Effet | Mesuré le 2026-10-03 |
+> |---|---|---|
+> | ✅ CI de `main` rouge depuis le 2026-09-16 (−2 le 09-22) | **+2** | les cinq jobs verts sur `c7fb936c`. Tests unitaires **3 395** verts (306 fichiers), build et budget atteints et verts |
+> | ✅ Suite `e2e` entreprise en retard sur l'écran (−1 le 10-01) | **+1** | job `e2e` **vert** : **0 échec**, 11 instables, 226 verts, en **27 min** (4,3 h le 2026-10-02 : la durée venait bien des échecs et de leurs tentatives). Les trois derniers rouges WebKit étaient des tests en retard sur le mobile : compteur de liste masqué sous 640 px, aperçu au survol sans équivalent tactile, bulle de premier affichage par-dessus la commande |
+> | Onze cas instables | 0 | `touch-targets` sur quatre pages publiques WebKit (navigation interrompue par le serveur de dev), trois `a11y` / réglages WebKit, deux cas clavier chromium. Instables, pas rouges : à suivre, non débités |
+>
+> **93 → 96.** ⚠️ Un vert n'est pas un état acquis : une autre session travaille dans le même arbre
+> (onboarding), et le prochain push est le prochain verdict.
 
 > ### ⚪ 2026-10-02 (soir) · 0 : les tests unitaires de nouveau rouges, et c'est le produit qu'ils voient
 >
