@@ -26,7 +26,7 @@ const ICONS: Record<MoreFeatureIcon, LucideIcon> = {
  * principal pour un contenu qui se lit, et ne se regarde pas.
  */
 const MoreFeaturesSection: React.FC = () => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
 
   return (
     <section
@@ -70,10 +70,10 @@ const MoreFeaturesSection: React.FC = () => {
                       </span>
                       <div>
                         <h4 className="mb-1 text-sm font-semibold text-white">
-                          {t(`enterprise.more.f${n}t` as KeyOf<'landing'>)}
+                          {t(`enterprise.more.f${n}t` as KeyOf<'landingEnterprise'>)}
                         </h4>
                         <p className="text-sm leading-relaxed text-slate-400">
-                          {t(`enterprise.more.f${n}d` as KeyOf<'landing'>)}
+                          {t(`enterprise.more.f${n}d` as KeyOf<'landingEnterprise'>)}
                         </p>
                       </div>
                     </li>

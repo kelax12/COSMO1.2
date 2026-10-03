@@ -8,8 +8,8 @@ interface StepSectionProps {
   id: string;
   /** Rang affiché dans l'en-tête (1 → « 01 »). */
   step: number;
-  titleKey: KeyOf<'landing'>;
-  subtitleKey: KeyOf<'landing'>;
+  titleKey: KeyOf<'landingEnterprise'>;
+  subtitleKey: KeyOf<'landingEnterprise'>;
   children: React.ReactNode;
 }
 
@@ -26,7 +26,7 @@ interface StepSectionProps {
  * lire la page comme une marche à suivre plutôt que comme une liste d'arguments.
  */
 const StepSection: React.FC<StepSectionProps> = ({ id, step, titleKey, subtitleKey, children }) => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
 
   return (
     <section

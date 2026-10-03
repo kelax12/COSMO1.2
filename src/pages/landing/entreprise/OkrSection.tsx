@@ -7,7 +7,7 @@ import AppShot from './AppShot';
 import StepSection from './StepSection';
 import { SHOTS } from './data';
 
-const BULLETS: KeyOf<'landing'>[] = ['enterprise.okr.b1', 'enterprise.okr.b2', 'enterprise.okr.b3'];
+const BULLETS: KeyOf<'landingEnterprise'>[] = ['enterprise.okr.b1', 'enterprise.okr.b2', 'enterprise.okr.b3'];
 
 /**
  * Trois OKR d'équipe de démonstration, chacun avec ses propres résultats
@@ -17,9 +17,9 @@ const BULLETS: KeyOf<'landing'>[] = ['enterprise.okr.b1', 'enterprise.okr.b2', '
  */
 const TEAM_OKRS: {
   dotClassName: string;
-  teamKey: KeyOf<'landing'>;
-  objectiveKey: KeyOf<'landing'>;
-  keyResults: { progress: number; done: boolean; labelKey: KeyOf<'landing'> }[];
+  teamKey: KeyOf<'landingEnterprise'>;
+  objectiveKey: KeyOf<'landingEnterprise'>;
+  keyResults: { progress: number; done: boolean; labelKey: KeyOf<'landingEnterprise'> }[];
 }[] = [
   {
     dotClassName: 'bg-fuchsia-500',
@@ -62,7 +62,7 @@ const TEAM_OKRS: {
  * joue pas (reduced-motion), les barres sont simplement déjà pleines.
  */
 const OkrSection: React.FC = () => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
   const rootRef = useRef<HTMLDivElement>(null);
 
   useGSAP(

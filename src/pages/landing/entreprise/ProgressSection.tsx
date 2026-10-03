@@ -7,7 +7,7 @@ import StepSection from './StepSection';
 import { SHOTS } from './data';
 
 /** Les trois lectures du suivi : rapports d'activité, qui a fait quoi, charge. */
-const POINTS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
+const POINTS: { titleKey: KeyOf<'landingEnterprise'>; bodyKey: KeyOf<'landingEnterprise'> }[] = [
   { titleKey: 'enterprise.progress.p1t', bodyKey: 'enterprise.progress.p1d' },
   { titleKey: 'enterprise.progress.p2t', bodyKey: 'enterprise.progress.p2d' },
   { titleKey: 'enterprise.progress.p3t', bodyKey: 'enterprise.progress.p3d' },
@@ -21,7 +21,7 @@ const POINTS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
  * qu'on ne peut pas ouvrir ment sur le produit.
  */
 const ProgressSection: React.FC = () => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
 
   return (
     <StepSection

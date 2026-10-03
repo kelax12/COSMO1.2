@@ -7,7 +7,7 @@ import ScrollHighlight from './ScrollHighlight';
 // Pas de pictogramme décoratif : une icône générique posée en tête de carte ne
 // dit rien que le titre ne dise déjà, et c'est le tic visuel qui fait lire une
 // page comme générée. Le titre porte seul.
-const PROBLEMS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
+const PROBLEMS: { titleKey: KeyOf<'landingEnterprise'>; bodyKey: KeyOf<'landingEnterprise'> }[] = [
   { titleKey: 'enterprise.problem.p1t', bodyKey: 'enterprise.problem.p1d' },
   { titleKey: 'enterprise.problem.p2t', bodyKey: 'enterprise.problem.p2d' },
   { titleKey: 'enterprise.problem.p3t', bodyKey: 'enterprise.problem.p3d' },
@@ -20,7 +20,7 @@ const PROBLEMS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
  * montent en décalé au scroll.
  */
 const ProblemSection: React.FC = () => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
   const rootRef = useRef<HTMLElement>(null);
 
   useGSAP(

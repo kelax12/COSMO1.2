@@ -6,7 +6,7 @@ import StepSection from './StepSection';
 import { SHOTS } from './data';
 
 /** Les trois arguments de l'étape, dans l'ordre où ils répondent à « qui bloque quoi ». */
-const POINTS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
+const POINTS: { titleKey: KeyOf<'landingEnterprise'>; bodyKey: KeyOf<'landingEnterprise'> }[] = [
   { titleKey: 'enterprise.execution.p1t', bodyKey: 'enterprise.execution.p1d' },
   { titleKey: 'enterprise.execution.p2t', bodyKey: 'enterprise.execution.p2d' },
   { titleKey: 'enterprise.execution.p3t', bodyKey: 'enterprise.execution.p3d' },
@@ -28,7 +28,7 @@ const POINTS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
  * tableau au lieu de le recouvrir.
  */
 const ExecutionSection: React.FC = () => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
   const deps = SHOTS.tasksDeps;
 
   return (

@@ -49,7 +49,7 @@ const avecAppui = (texte: string) =>
  * générées, et deux sources de lumière qui se disputaient la page.
  */
 const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
   const isMobile = useIsMobile();
   const heroRef = useRef<HTMLElement>(null);
   const magneticDemo = useMagnetic<HTMLButtonElement>(0.16);

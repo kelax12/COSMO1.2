@@ -207,6 +207,9 @@ export const TAB_GATE_HOSTS = [
   // Configuration d'entreprise (mig. 195-199) : `orgConfig` voyage avec ses écrans.
   'components/organization/org-config.lazy.ts',
   'components/organization/TeamTaskModal.tsx',
+  // 2026-10-03 : le texte du parcours entreprise de la landing (`landingEnterprise`)
+  // charge avec le parcours, plus avec toute visite de `/`.
+  'pages/LandingPage.tsx',
 ];
 
 /** Chemins absolus des modules gatés : routes d'`App.tsx`, onglets déclarants. */

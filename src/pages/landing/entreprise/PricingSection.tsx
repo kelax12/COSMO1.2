@@ -29,7 +29,7 @@ const SLIDER_DEFAULT = 10;
 
 const INTERVALS: OrgBillingInterval[] = ['monthly', 'yearly'];
 
-const INCLUDED: KeyOf<'landing'>[] = [
+const INCLUDED: KeyOf<'landingEnterprise'>[] = [
   'enterprise.pricing.i1',
   'enterprise.pricing.i2',
   'enterprise.pricing.i3',
@@ -66,7 +66,7 @@ function tierFor(members: number): Tier {
  * promo, c'est une surprise à retardement.
  */
 const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
   // Les noms de paliers vivent dans `common` : la landing et le produit doivent
   // annoncer le même nom, comme ils annoncent déjà le même montant.
   const { t: tc } = useT('common');

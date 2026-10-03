@@ -13,7 +13,7 @@ import { ENTERPRISE_FAQ } from './data';
  * voudra faire remonter ces questions-ci dans les résultats enrichis.
  */
 const EnterpriseFaqSection: React.FC = () => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
 
   return (
     <section

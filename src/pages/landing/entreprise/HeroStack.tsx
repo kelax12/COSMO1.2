@@ -100,7 +100,7 @@ interface HeroStackProps {
 }
 
 const HeroStack: React.FC<HeroStackProps> = ({ shots, simple = false }) => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
   const { t: tCommon } = useT('common');
 
   const racineRef = useRef<HTMLDivElement>(null);
