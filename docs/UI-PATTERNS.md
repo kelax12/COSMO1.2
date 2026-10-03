@@ -690,9 +690,63 @@ Props : `icon: LucideIcon, title, description?, actionLabel?, onAction?, accentC
 
 ## Onboarding & Tutoriels
 
+### Les deux accueils (refaits le 2026-10-03)
+
+Les premières minutes doivent tout faire comprendre, et marquer. Chaque parcours continue la DA de
+la landing d'où vient la personne, quel que soit le thème de l'application.
+
+**Perso : le planétaire** (`src/components/onboarding/FirstRunSetup.tsx`, `perso/`). COSMO se
+présente comme un système dont la personne est le centre (la planète du logo) et dont chaque
+module est une orbite : Tâches, Agenda, Habitudes, Objectifs, du bleu au fuchsia comme les accents
+de la landing perso. Écran partagé : à gauche la question, à droite la scène (planétaire + aperçu
+de ce que l'étape va créer, sous la forme exacte d'une carte de l'app). Sur téléphone, le
+planétaire réduit passe au-dessus et l'aperçu disparaît. Six écrans : présentation, tâches (cinq
+au plus, idées cliquables, touche N), agenda (montre la PREMIÈRE tâche écrite posée dans un
+créneau, ne crée rien), habitude (idées), objectif + résultat clé facultatif, bilan.
+
+**Entreprise : la constellation** (`src/components/onboarding/enterprise/`). L'entreprise se
+dessine comme une carte du ciel sur la nuit de la landing entreprise : vous au centre, les
+personnes invitées en étoiles reliées à vous (l'organigramme), l'équipe en amas, le projet
+dessous, et l'objectif d'entreprise en étoile polaire dorée (l'or n'a que ce rôle). Le nom de
+l'entreprise s'écrit dessous comme on nomme une constellation. Bienvenue (trois promesses), créer
+ou rejoindre (code + consentement), attente avec la visite des quatre lieux, puis mise en place :
+invitations (avec le code de l'entreprise), équipe, projet depuis un modèle, **cap** (étape ajoutée
+le 2026-10-03 : objectif `audience: 'org'`, un résultat clé exigé par le schéma), fin avec la
+carte des six lieux. `MemberWelcome` accueille qui arrive sans être passé par là.
+
+**Règles communes**, et pourquoi :
+
+- Chaque étape crée au moment où elle est validée. Mesuré le 2026-08-28 : 50 % des inscrits ne
+  revenaient jamais après leur session d'inscription, c'est précisément la population qui ferme
+  l'onglet entre deux questions.
+- La garde d'ouverture est un verrou (`latched`). `useCreateTask` écrit la tâche créée dans le
+  cache : relue à chaque rendu, la garde se refermait entre la première et la deuxième question,
+  et l'écran ne revenait plus (le compte n'était plus vide). Seul le parcours
+  `e2e/stubbed/first-run.spec.ts` l'a vu, le 2026-09-08 : un écran qui se referme sur son propre
+  effet ne se voit qu'en le parcourant.
+- 🔴 **Bug trouvé en rejouant l'accueil hors démo (2026-10-03)** : le résultat clé de l'objectif
+  partait avec un id `kr-<horodatage>`. `syncKRsToTable` l'upserte, puis refuse tout id qui n'est
+  pas un UUID avant de l'interpoler dans un filtre PostgREST (M-1) : la personne lisait
+  « Impossible de créer l'OKR » à sa première minute. Le parcours e2e comptait les écritures sur
+  `okrs` et ne pouvait pas le voir ; son témoin est désormais le `DELETE` sur `key_results`, qui
+  n'existe que si la garde a laissé passer l'id (vérifié rouge en remettant l'ancien id).
+- Le perso ne s'ouvre jamais sur `/entreprise` : il s'empilait sur l'accueil entreprise à la
+  sortie de celui-ci. L'admin qui finit la mise en place est marqué « accueilli » pour
+  `MemberWelcome`.
+- Tailles de texte : l'échelle du projet uniquement (garde `design-system.guard.test.ts`, stock de
+  `text-[Npx]` plafonné).
+
+Le sélecteur de modules a été supprimé le 2026-08-23 (`acf29b7`) : Agenda, Habitudes, OKR et
+Statistiques sont visibles par tout le monde. `cosmo_onboarding_examples_created` (ancien accueil à
+trois tâches d'exemple, écrites en dur en français) reste LU, jamais écrit.
+
+Debug : `localStorage.removeItem('cosmo_first_run_done')` sur un compte SANS tâche, puis recharger ;
+`cosmo_org_welcome_seen_<org>_<user>` pour l'accueil membre. Hors démo, les écrans se jouent avec
+le harnais `e2e/supabase-stub.ts` (`first-run.spec.ts`, `org-onboarding.spec.ts`).
+
 ### OnboardingOverlay — supprimé (2026-07, commit c170e37)
 
-Le tutoriel 3 étapes affiché après `loginDemo()` a été **retiré volontairement** et le composant supprimé du repo (purge 2026-07-15). L'onboarding démo repose désormais sur `OnboardingExampleTasks` (tâches d'exemple au premier login) et les `PageTutorial` par page. Ne pas recréer d'overlay bloquant à l'entrée en démo.
+Le tutoriel 3 étapes affiché après `loginDemo()` a été **retiré volontairement** et le composant supprimé du repo (purge 2026-07-15). En démo, ce sont les `PageTutorial` par page qui guident (les deux accueils ci-dessus ne s'ouvrent jamais en démo). Ne pas recréer d'overlay bloquant à l'entrée en démo.
 
 ### PageTutorial — tutoriel par page
 

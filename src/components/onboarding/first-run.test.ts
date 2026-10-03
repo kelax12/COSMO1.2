@@ -125,6 +125,14 @@ describe('buildOkrInput', () => {
     expect(okr.keyResults[0].completed).toBe(false);
   });
 
+  it('donne au resultat cle un id UUID, seul accepte par le depot Supabase', () => {
+    // `kr-<horodatage>` faisait lever `invalid_input` dans `syncKRsToTable` :
+    // l'objectif etait insere, son resultat cle refuse, et l'accueil affichait
+    // « Impossible de creer l'OKR » (mesure le 2026-10-03).
+    const okr = buildOkrInput('Lancer la v2', 'Publier la page de vente', now);
+    expect(okr.keyResults[0].id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+  });
+
   it('ouvre une fenetre de 90 jours a partir de maintenant', () => {
     const okr = buildOkrInput('Lancer la v2', '', now);
     expect(okr.startDate).toBe('2026-09-02T10:00:00.000Z');

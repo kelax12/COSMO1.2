@@ -18,6 +18,20 @@ import type { CreateOKRInput } from '@/modules/okrs/types';
 /** Vu une fois par appareil, comme le flag qu'il remplace. */
 export const FIRST_RUN_FLAG = 'cosmo_first_run_done';
 
+/** Cinq tâches pour commencer : au-delà, l'accueil deviendrait une saisie. */
+export const MAX_FIRST_TASKS = 5;
+
+/**
+ * Le prénom de l'accueil (« Bonjour Axel. »), pris au premier mot du nom de
+ * profil. Une adresse e-mail n'est pas un prénom : quand le nom n'est que
+ * l'adresse (inscription sans nom), on ne salue personne plutôt que de
+ * saluer « axel@exemple.fr ».
+ */
+export const firstName = (fullName: string | null | undefined): string => {
+  const first = (fullName ?? '').trim().split(/\s+/)[0] ?? '';
+  return first.includes('@') ? '' : first.slice(0, 40);
+};
+
 /**
  * Ancien drapeau des trois tâches d'exemple. Il reste lu, jamais écrit : un
  * compte qui a déjà eu l'ancien accueil puis supprimé ses tâches ne doit pas
@@ -103,7 +117,24 @@ export const buildHabitInput = (name: string): CreateHabitInput => ({
  * une mesure chiffrée au premier écran est exactement le genre de friction
  * qui fait fermer l'onglet. Quand il est donné, il est binaire (cible 1) —
  * l'écran OKR permet de le chiffrer ensuite.
+ *
+ * 🔴 L'id du résultat clé est un UUID, jamais `kr-<horodatage>`. Le dépôt
+ * Supabase refuse tout id de KR qui n'en est pas un avant de l'interpoler
+ * dans un filtre PostgREST (M-1, `syncKRsToTable` → `invalid_input`) : cet
+ * accueil insérait l'objectif puis échouait sur son résultat clé, et la
+ * personne lisait « Impossible de créer l'OKR » à sa toute première minute.
+ * Trouvé le 2026-10-03 en rejouant l'accueil hors démo ; le parcours e2e ne
+ * le voyait pas, il comptait les écritures parties, pas la réponse.
  */
+/** Même repli que `OKRModalSheet` pour un navigateur sans `randomUUID`. */
+const newKeyResultId = (): string =>
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.floor(Math.random() * 16);
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+      });
+
 export const buildOkrInput = (
   objective: string,
   keyResult: string,
@@ -121,7 +152,7 @@ export const buildOkrInput = (
     keyResults: kr
       ? [
           {
-            id: `kr-${now.getTime()}`,
+            id: newKeyResultId(),
             title: kr,
             currentValue: 0,
             targetValue: 1,
