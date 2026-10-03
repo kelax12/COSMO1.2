@@ -40,15 +40,26 @@ test.describe('Entreprise — onglet Tâches (démo)', () => {
     await expect(rows.first()).toBeVisible({ timeout: 15_000 });
     const totalCount = await rows.count();
 
-    // Seed « Revue du vendredi » : une liste d'organisation, son compteur
-    // dans son nom accessible (« Revue du vendredi 3 »).
-    const chip = page.getByRole('button', { name: /^revue du vendredi \d+$/i });
-    const announced = Number((await chip.getAttribute('aria-label') ?? (await chip.innerText())).match(/(\d+)\s*$/)?.[1]);
-    expect(announced).toBeGreaterThan(0);
-    expect(announced).toBeLessThan(totalCount);
+    // Seed « Revue du vendredi » : une liste d'organisation. Sur desktop, son
+    // compteur est dans son nom accessible (« Revue du vendredi 3 ») ; sous
+    // `sm` la pastille n'affiche que le nom (mobile-safari, run 37069364236),
+    // le compteur ne se vérifie donc que là où il est montré.
+    const chip = page.getByRole('button', { name: /^revue du vendredi( \d+)?$/i });
+    const label = (await chip.getAttribute('aria-label')) ?? (await chip.innerText());
+    const shown = label.match(/(\d+)\s*$/)?.[1];
 
     await chip.click();
-    await expect(rows).toHaveCount(announced, { timeout: 5_000 });
+    if (shown) {
+      const announced = Number(shown);
+      expect(announced).toBeLessThan(totalCount);
+      await expect(rows).toHaveCount(announced, { timeout: 5_000 });
+    } else {
+      await expect(async () => {
+        const n = await rows.count();
+        expect(n).toBeGreaterThan(0);
+        expect(n).toBeLessThan(totalCount);
+      }).toPass({ timeout: 5_000 });
+    }
 
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });

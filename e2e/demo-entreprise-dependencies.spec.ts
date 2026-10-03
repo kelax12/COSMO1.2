@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { test, expect, navTo, openOrgSection } from './fixtures';
+import { test, expect, navTo, openOrgSection, dismissFirstSightBubble } from './fixtures';
 
 /**
  * Dépendances entre tâches + chemin critique (mig. 108) et responsable
@@ -247,6 +247,12 @@ test.describe('Entreprise — responsable d’équipe (démo)', () => {
     const leads = page.getByRole('button', { name: /^retirer le rôle de responsable/i });
     const before = await leads.count();
     expect(before).toBeGreaterThan(0);
+
+    // La bulle de premier affichage du rôle (71f65211) s'ouvre d'elle-même sous
+    // le badge, une fois. À 390 px (mobile-safari), ses 288 px couvrent les
+    // boutons des rangées suivantes et prennent le tap (CI, run 37069364236).
+    // On la referme comme une personne le ferait avant d'agir.
+    await dismissFirstSightBubble(page);
     await page.getByRole('button', { name: /nommer responsable de l'équipe/i }).first().click();
 
     // Le rôle est multiple : nommer un second responsable ne révoque pas le
@@ -268,6 +274,11 @@ test.describe('Entreprise — aperçu des badges de nouveautés (démo)', () => 
   test.describe.configure({ timeout: 120_000 });
 
   test('Le badge dit CE QUI a changé, pas seulement combien', async ({ demoPage: page }) => {
+    // L'aperçu au survol vit dans le panneau DESKTOP (`OrgSideNav`). Sous `md`,
+    // la navigation est le sélecteur + feuille, dont le total est `aria-hidden` :
+    // le badge y est dans le DOM mais caché (mobile-safari, run 37069364236).
+    // Largeur posée par le cas lui-même, comme le cas desktop de navigation.
+    await page.setViewportSize({ width: 1280, height: 800 });
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 

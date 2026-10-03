@@ -445,3 +445,21 @@ export async function expectOrgSectionOffered(page: Page, label: RegExp): Promis
   await page.keyboard.press('Escape');
   await expect(sheet).toHaveCount(0, { timeout: 10_000 });
 }
+
+/**
+ * Referme la bulle de PREMIER affichage d'un rôle, si elle est ouverte.
+ *
+ * `RoleTerm` (71f65211) ouvre la définition d'un rôle d'elle-même, une fois par
+ * appareil, au premier affichage du terme. C'est voulu : un repère qu'on
+ * congédie. Mais sur un écran étroit le popover (288 px) couvre les commandes
+ * voisines et prend le tap destiné à l'une d'elles. Un cas qui agit à côté d'un
+ * rôle fraîchement affiché la referme donc d'abord, comme une personne.
+ */
+export async function dismissFirstSightBubble(page: Page): Promise<void> {
+  const bubble = page.locator('[data-slot="popover-content"][data-state="open"]');
+  // Elle s'ouvre au montage du rôle, juste après le titre : lui laisser paraître.
+  await bubble.first().waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {});
+  if ((await bubble.count()) === 0) return;
+  await page.keyboard.press('Escape');
+  await expect(bubble).toHaveCount(0, { timeout: 5_000 });
+}
