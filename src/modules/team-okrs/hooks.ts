@@ -2,7 +2,7 @@
 // TEAM-OKRS MODULE - React Query hooks
 // ═══════════════════════════════════════════════════════════════════
 
-import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { getTeamOKRsRepository } from '@/lib/repository.factory';
 import { validateAsync } from '@/lib/validation/lazy';
@@ -44,18 +44,33 @@ export const useTeamOKRs = (
 
 /**
  * OKR d'équipe de PLUSIEURS organisations (mode perso : OKR pro de toutes
- * mes entreprises). Mêmes clés que `useTeamOKRs`, donc cache partagé.
+ * mes entreprises). Chaque liste passe par `fetchQuery` sur la clé de
+ * `useTeamOKRs` : le cache par organisation reste partagé.
+ *
+ * UNE requête, pas `useQueries` : ce dernier tire `QueriesObserver` dans le
+ * lot `vendor-query`, sur le CHEMIN CRITIQUE de tout visiteur (+3 ko bruts
+ * mesurés le 2026-09-29), pour une seule section qui s'en sert. Même
+ * arbitrage que `useGroupEventsWindow` (module events).
  */
 export const useTeamOKRsAcrossOrgs = (orgIds: string[]) => {
   const repository = useRepo();
-  return useQueries({
-    queries: orgIds.map((orgId) => ({
-      queryKey: teamOkrKeys.list(orgId),
-      queryFn: () => repository.getAll(orgId),
-      staleTime: 1000 * 60 * 2,
-    })),
-    combine: (results) => results.flatMap((r) => r.data ?? []),
+  const queryClient = useQueryClient();
+  const ids = [...orgIds].sort();
+  const query = useQuery({
+    queryKey: [...teamOkrKeys.all, 'across', ids.join(',')] as const,
+    queryFn: async () => {
+      // `allSettled` : une organisation qui refuse ne vide pas les autres.
+      const lists = await Promise.allSettled(ids.map((orgId) => queryClient.fetchQuery({
+        queryKey: teamOkrKeys.list(orgId),
+        queryFn: () => repository.getAll(orgId),
+        staleTime: 1000 * 60 * 2,
+      })));
+      return lists.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
+    },
+    enabled: ids.length > 0,
+    staleTime: 1000 * 60 * 2,
   });
+  return query.data ?? [];
 };
 
 export const useCreateTeamOKR = (orgId: string) => {
