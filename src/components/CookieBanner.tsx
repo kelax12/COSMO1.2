@@ -165,8 +165,17 @@ const CookieBanner: React.FC = () => {
                   Une clé = une phrase complète : l'ancienne version concaténait
                   trois fragments traduits, ce qui rend toute relecture juridique
                   impossible dans une autre langue. */}
+              {/* ⚡ C-116 · DEUX paragraphes, pas un. Le bandeau apparaît 1,2 s après
+                  le montage de React, quand la page prérendue est peinte depuis
+                  longtemps ; d'un seul bloc, c'était le plus grand texte de l'écran
+                  mobile, donc l'élément LCP de `/` et de `/guide/` (5 à 8 s en CI,
+                  `Render Delay` pur) alors que le contenu était là vers 2 s. Le
+                  texte ne change pas, ni l'ordre : ce que l'acceptation déclenche,
+                  puis ce que le refus garde, avec le lien. */}
               <p className={`text-[13px] leading-relaxed ${pick('text-slate-600', 'text-[rgb(var(--color-text-muted))]')}`}>
-                {t('cookies.body')}{' '}
+                {t('cookies.body')}
+              </p>
+              <p className={`mt-1.5 text-[13px] leading-relaxed ${pick('text-slate-600', 'text-[rgb(var(--color-text-muted))]')}`}>
                 {t('cookies.ifYouRefuse')}{' '}
                 {/* A11y: links inside text blocks need a non-color affordance
                     (WCAG 1.4.1). underline is always on, not only :hover. */}
