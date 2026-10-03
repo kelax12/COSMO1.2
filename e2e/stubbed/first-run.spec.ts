@@ -20,11 +20,15 @@ import { gotoStubbed, installSupabaseStub, type SupabaseStub } from '../supabase
  *    la derniere etape ») — ici mesure sur les requetes reellement parties ;
  *  • qu'une premiere tache part SANS echeance, la seconde regle de l'ecran ;
  *  • qu'il ne revient pas au rechargement suivant.
+ *
+ * Refait le 2026-10-03 (planétaire) : une présentation avant les questions,
+ * une étape Agenda qui ne crée rien, et un bilan avant la sortie.
  */
 
-const TASK_QUESTION = /qu'avez-vous a faire cette semaine/i;
+const TASK_QUESTION = /faire cette semaine/i;
 const HABIT_QUESTION = /une habitude que vous voulez tenir/i;
 const OKR_QUESTION = /un objectif pour les trois prochains mois/i;
+const AGENDA_TITLE = /place.*vos tâches/i;
 
 /** Prepare le stub, ouvre `/dashboard`, rend le stub au test. */
 async function openDashboard(
@@ -55,6 +59,8 @@ test.describe('C-27 — accueil du premier compte (FirstRunSetup)', () => {
     // ── Etape 1 : les taches ──────────────────────────────────────
     const dialog = page.getByRole('dialog', { name: /bienvenue dans cosmo/i });
     await expect(dialog).toBeVisible({ timeout: 45_000 });
+    // La présentation d'abord : rien n'est demandé avant « Commencer ».
+    await page.getByRole('button', { name: /^commencer/i }).click();
     await expect(page.getByRole('heading', { name: TASK_QUESTION })).toBeVisible();
 
     const taskField = page.getByLabel(TASK_QUESTION);
@@ -63,7 +69,11 @@ test.describe('C-27 — accueil du premier compte (FirstRunSetup)', () => {
     // La seconde reste dans le CHAMP, sans passer par « Ajouter » : personne ne
     // devrait avoir a cliquer « Ajouter » pour que sa reponse existe.
     await taskField.fill('Relire le devis');
-    await page.getByRole('button', { name: /^continuer$/i }).click();
+    await page.getByRole('button', { name: /^continuer/i }).click();
+
+    // L'étape Agenda ne crée rien : elle montre ce que devient une tâche.
+    await expect(page.getByRole('heading', { name: AGENDA_TITLE })).toBeVisible();
+    await page.getByRole('button', { name: /^compris/i }).click();
 
     await expect(page.getByRole('heading', { name: HABIT_QUESTION })).toBeVisible();
     // Mesure sur les requetes PARTIES, pas sur un etat React : c'est la seule
@@ -101,7 +111,7 @@ test.describe('C-27 — accueil du premier compte (FirstRunSetup)', () => {
 
     // ── Etape 2 : l'habitude ──────────────────────────────────────
     await page.getByLabel(HABIT_QUESTION).fill('Marcher 30 minutes');
-    await page.getByRole('button', { name: /^continuer$/i }).click();
+    await page.getByRole('button', { name: /^continuer/i }).click();
 
     await expect(page.getByRole('heading', { name: OKR_QUESTION })).toBeVisible();
     await expect.poll(() => stub.writesTo('habits').length, { timeout: 30_000 }).toBe(1);
@@ -112,11 +122,26 @@ test.describe('C-27 — accueil du premier compte (FirstRunSetup)', () => {
 
     // ── Etape 3 : l'objectif, puis la sortie ──────────────────────
     await page.getByLabel(OKR_QUESTION).fill('Lancer la v2 du produit');
-    await page.getByLabel(/resultat cle/i).fill('Publier la page de vente');
-    await page.getByRole('button', { name: /entrer dans cosmo/i }).click();
+    await page.getByLabel(/résultat clé/i).fill('Publier la page de vente');
+    await page.getByRole('button', { name: /^continuer/i }).click();
 
-    await expect(dialog).toBeHidden();
+    // Le bilan, puis la sortie.
+    await expect(page.getByText('Objectif : Lancer la v2 du produit')).toBeVisible();
     await expect.poll(() => stub.writesTo('okrs').length, { timeout: 30_000 }).toBe(1);
+    // 🔴 2026-10-03 : le résultat clé partait avec un id `kr-<horodatage>`.
+    // `syncKRsToTable` l'upserte, PUIS refuse tout id qui n'est pas un UUID
+    // (`invalid_input`) avant de nettoyer les résultats clés retirés : la
+    // personne lisait « Impossible de créer l'OKR » à sa première minute. Ce
+    // parcours comptait les écritures sur `okrs` et ne pouvait pas le voir.
+    // ⚠️ Le témoin est le DELETE, pas l'upsert : l'upsert part AVANT la
+    // garde, il passait donc aussi avec le défaut (vérifié en le remettant).
+    // Le DELETE, lui, n'existe que si la garde a laissé passer l'id.
+    await expect
+      .poll(() => stub.writesTo('key_results').filter((w) => w.method === 'DELETE').length, { timeout: 30_000 })
+      .toBe(1);
+    await expect(page.getByText(/impossible de créer l'okr/i)).toHaveCount(0);
+    await page.getByRole('button', { name: /entrer dans cosmo/i }).click();
+    await expect(dialog).toBeHidden();
     const okrWrites = stub.writesTo('okrs');
     const okr = (okrWrites[0].body as Array<Record<string, unknown>>)[0];
     expect(okr.title).toBe('Lancer la v2 du produit');
@@ -156,11 +181,17 @@ test.describe('C-27 — accueil du premier compte (FirstRunSetup)', () => {
     await expect(page.getByRole('dialog', { name: /bienvenue dans cosmo/i })).toBeVisible({
       timeout: 45_000,
     });
+    await page.getByRole('button', { name: /^commencer/i }).click();
 
     for (const heading of [TASK_QUESTION, HABIT_QUESTION, OKR_QUESTION]) {
       await expect(page.getByRole('heading', { name: heading })).toBeVisible();
-      await page.getByRole('button', { name: /passer cette etape/i }).click();
+      await page.getByRole('button', { name: /passer cette étape/i }).click();
+      if (heading === TASK_QUESTION) {
+        await expect(page.getByRole('heading', { name: AGENDA_TITLE })).toBeVisible();
+        await page.getByRole('button', { name: /^compris/i }).click();
+      }
     }
+    await page.getByRole('button', { name: /entrer dans cosmo/i }).click();
 
     await expect(page.getByRole('dialog', { name: /bienvenue dans cosmo/i })).toBeHidden();
     await page.waitForTimeout(1_000);

@@ -5,56 +5,32 @@
 
 ---
 
-## Onboarding du premier compte
+## Onboarding (perso et entreprise, refaits le 2026-10-03)
 
-🔴 **La sélection de modules N'EXISTE PLUS.** Elle a été supprimée le 2026-08-23 (`acf29b7`,
-bug 6 sur 10), et ce fichier a continué à la décrire pendant dix jours. Vérifié dans tout le
-dépôt le 2026-09-02, en cherchant le code et pas seulement le nom : `active-modules.store.ts`,
-`useActiveModules`, `isModuleActive`, `ModuleOnboarding.tsx`, `RequireModule` et la clé
-`cosmo_active_modules` rendent **zéro occurrence**. Agenda, Habitudes, OKR et Statistiques sont
-visibles par tout le monde, tout le temps.
+Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.md) § Onboarding & Tutoriels.
+🔴 La sélection de modules N'EXISTE PLUS (supprimée le 2026-08-23) : ne pas la décrire.
 
-> ⚠️ **Une note ajoutée le 2026-09-02 sur cette même section n'a corrigé qu'un nom sur six** :
-> elle constatait l'absence de `RequireModule` et concluait « écrire la garde OU retirer
-> l'affirmation », sans voir que la fonctionnalité entière avait disparu. Chercher le symptôme
-> cité par la doc plutôt que la chose décrite laisse la dérive presque intacte, et la fait
-> paraître vérifiée.
-
-**Ce qui se passe réellement après une inscription** (parcours personnel) :
-
-1. `SignupPage` renvoie sur `/dashboard` (`postAuthRoute`) — `/entreprise/onboarding` pour un
-   compte professionnel, qui est le seul onboarding restant.
-2. `FirstRunSetup` (`src/components/onboarding/`, monté dans `Layout`) pose **trois questions
-   passables** à un compte VIDE : des tâches, une habitude, un objectif. Ce qui est écrit devient
-   de vraies données. Une fois par appareil (`cosmo_first_run_done`), jamais en mode démo.
-
-Livré le 2026-09-02 (T-23). Il remplace `OnboardingExampleTasks`, qui créait 3 tâches d'exemple
-sans écran, **écrites en dur en français** hors des catalogues i18n.
-
-- ❌ **Ne jamais différer les créations à la dernière étape.** Chaque étape crée au moment où elle
-  est validée : quelqu'un qui répond à la première question puis ferme l'onglet garde sa tâche, et
-  c'est exactement la population que l'écran existe pour retenir (50 % des inscrits ne revenaient
-  jamais après leur session d'inscription).
-- ❌ **Ne jamais le déplacer sur une route.** Une inscription par Google ne repasse pas par
-  `SignupPage` : un accueil monté sur une route n'accueillerait qu'un des deux chemins.
-- ❌ **Ne jamais poser d'échéance sur la première tâche.** La personne a donné un intitulé, pas une
-  date ; en inventer une la ferait apparaître « en retard » dès le lendemain.
-- 🔴 **UNE GARDE D'ENTRÉE SE FIGE À L'ENTRÉE.** `shouldOfferFirstRun` décide d'OUVRIR l'écran ; elle
-  ne doit pas décider de le garder ouvert. `alreadyDone` était déjà figé pour cette raison exacte
-  (« relire à chaque rendu ferait disparaître l'écran sous les doigts de la personne ») ;
-  `taskCount` ne l'était pas. Or `useCreateTask` écrit la tâche créée dans le cache React Query
-  (`setQueryData`) : dès la PREMIÈRE réponse, `tasks.length` passait à 1, la garde se refermait, et
-  **l'accueil disparaissait entre la question des tâches et celle de l'habitude**. La personne ne
-  voyait jamais les deux dernières questions, et l'écran ne revenait plus — son compte n'était
-  désormais plus vide. Corrigé le 2026-09-08 par un verrou (`latched`).
-  ⚠️ **Aucun test unitaire ne pouvait le voir** : ils passent des valeurs figées aux hooks. C'est le
-  parcours `e2e/stubbed/first-run.spec.ts` qui l'a trouvé, et seulement une fois qu'il a attendu que
-  les écritures atterrissent. Un écran qui se referme **sur son propre effet** ne se voit qu'en le
-  parcourant.
-- ⚠️ L'ancien drapeau `cosmo_onboarding_examples_created` reste **lu, jamais écrit** : qui a eu
-  l'ancien accueil puis supprimé ses tâches n'est pas accueilli une seconde fois.
-- Debug : `localStorage.removeItem('cosmo_first_run_done')`, supprimer ses tâches, puis recharger.
-  ⚠️ **Le compte doit être vide** : la garde est `taskCount === 0`, pas « compte récent ».
+- **Perso** : `onboarding/FirstRunSetup` (planétaire), monté dans `Layout`. Présentation → tâches →
+  agenda (ne crée rien) → habitude → objectif → bilan. Compte VIDE, une fois par appareil
+  (`cosmo_first_run_done`), jamais en démo, jamais sur `/entreprise`.
+- **Entreprise** : `onboarding/enterprise/EnterpriseOnboarding` (`/entreprise/onboarding`,
+  constellation) : bienvenue → créer | rejoindre → mise en place `?setup=&step=` (invitations,
+  équipe, projet, cap) → fin. `MemberWelcome` : premier passage dans `/entreprise`, une fois par
+  entreprise et par appareil, jamais en démo ni sur un lien profond.
+- ❌ **Jamais sur une route** pour le perso : une inscription Google ne repasse pas par `SignupPage`.
+- ❌ **Jamais de création différée** : chaque étape crée quand elle est validée, et passer avance
+  sans rien créer.
+- ❌ **Jamais d'échéance ni de cible inventée** : première tâche sans date, résultat clé sans
+  nombre = binaire (cible 1).
+- 🔴 **Une garde d'entrée se fige à l'entrée** (`latched`) : relue à chaque rendu, l'accueil se
+  refermait sur sa propre première création (2026-09-08).
+- 🔴 **Un id de résultat clé est un UUID** : `syncKRsToTable` refuse le reste (`invalid_input`).
+  Témoin e2e : le `DELETE` de `key_results`, jamais l'upsert, qui part avant la garde.
+- ⚠️ **DA fixe par parcours** (clair perso, nuit entreprise) : variables de thème redéclarées sur le
+  conteneur (`LIGHT_SCOPE`, `ENT_SCOPE`), sinon les champs globaux suivent le thème de l'app.
+- ⚠️ Sous mouvement réduit, aucun SMIL monté (il ignore le réglage) : le dessin final tient seul.
+- ⚠️ `MemberWelcome` n'importe jamais `SetupSteps` (catalogues `org`, `portfolio` tirés) :
+  `ent-places.tsx` existe pour ça.
 
 ---
 

@@ -1,16 +1,4 @@
 {
-  "onboarding": {
-    "intro": "Créez votre entreprise ou rejoignez-en une pour collaborer avec votre équipe.",
-    "memberOf": "partie de",
-    "goToOrg": "Accéder à mon entreprise",
-    "orCreateAnother": "ou en créer/rejoindre une autre",
-    "later": "Plus tard, accéder à l'application",
-    "title": "Votre espace entreprise",
-    "memberOfOrg": "Vous faites partie de {{name}}.",
-    "memberOfCount_one": "Vous faites partie de {{count}} entreprise.",
-    "memberOfCount_other": "Vous faites partie de {{count}} entreprises.",
-    "memberOfCount_many": "Vous faites partie de {{count}} d'entreprises."
-  },
   "claim": {
     "backHome": "Retour à l'accueil Cosmo",
     "discover": "Découvrir mon espace",

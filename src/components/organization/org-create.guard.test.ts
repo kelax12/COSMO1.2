@@ -8,7 +8,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const DIR = 'src/components/organization';
+// L'assistant de démarrage vit depuis le 2026-10-03 dans l'accueil entreprise :
+// sans ce second dossier, une création y échapperait à la garde.
+const DIRS = ['src/components/organization', 'src/components/onboarding/enterprise'];
 
 /**
  * Seuls endroits autorisés à créer un projet ou une équipe. Chaque entrée dit
@@ -19,7 +21,7 @@ const ALLOWED: Record<string, string> = {
   'OrgCreateForms.tsx': 'le formulaire unique lui-même',
   'CreateTeamModal.tsx': "définit CreateTeamForm et la modale qui l'entoure",
   'TeamOKRModal.tsx': 'intègre CreateTeamForm tel quel : un panneau Radix ne laisse pas une autre modale prendre le focus',
-  'OrgSetupWizard.tsx': "assistant de démarrage : parcours guidé d'une entreprise vide, un écran par étape",
+  'SetupSteps.tsx': "assistant de démarrage (accueil entreprise) : parcours guidé d'une entreprise vide, un écran par étape",
   'use-team-projects-actions.ts': 'dupliquer un projet et enregistrer un modèle, pas une création depuis un formulaire',
 };
 
@@ -29,14 +31,21 @@ const CREATION = /\buseCreateTeamProject\s*\(|\buseCreateTeamProjectWithTasks\s*
 const code = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
 
 describe('un seul formulaire de création par objet (mode entreprise)', () => {
-  const files = readdirSync(DIR).filter((f) => /\.(ts|tsx)$/.test(f) && !/\.test\./.test(f));
+  const paths = DIRS.flatMap((dir) =>
+    readdirSync(dir)
+      .filter((f) => /\.(ts|tsx)$/.test(f) && !/\.test\./.test(f))
+      .map((f) => ({ dir, f })),
+  );
+  const files = paths.map((p) => p.f);
 
   it('lit bien le dossier', () => {
     expect(files.length).toBeGreaterThan(50);
   });
 
   it("aucun écran ne recrée sa propre création de projet ou d'équipe", () => {
-    const offenders = files.filter((f) => !(f in ALLOWED) && CREATION.test(code(readFileSync(join(DIR, f), 'utf8'))));
+    const offenders = paths
+      .filter(({ dir, f }) => !(f in ALLOWED) && CREATION.test(code(readFileSync(join(dir, f), 'utf8'))))
+      .map(({ f }) => f);
     expect(offenders).toEqual([]);
   });
 

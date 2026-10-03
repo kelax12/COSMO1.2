@@ -82,6 +82,7 @@ interface FrModules {
   legalTerms: typeof import('@/locales/fr/legalTerms.json');
   legalPrivacy: typeof import('@/locales/fr/legalPrivacy.json');
   okr: typeof import('@/locales/fr/okr.json');
+  onboarding: typeof import('@/locales/fr/onboarding.json');
   overlays: typeof import('@/locales/fr/overlays.json');
   org: typeof import('@/locales/fr/org.json');
   premium: typeof import('@/locales/fr/premium.json');
@@ -151,6 +152,13 @@ interface CatalogShapes {
    * eager, donc annulerait le gain en le déguisant.
    */
   overlays: Shape<'overlays'>;
+  /**
+   * Accueil des nouveaux comptes : planétaire du parcours perso
+   * (`FirstRunSetup`) et constellation du parcours entreprise
+   * (`/entreprise/onboarding`, accueil d'un membre). À PART pour ne partir
+   * qu'avec ces écrans : une personne déjà accueillie ne le télécharge jamais.
+   */
+  onboarding: Shape<'onboarding'>;
   /** Premium — page d'offre, mur de fonctionnalité, modale publicitaire. */
   premium: Shape<'premium'>;
   /** Landing publique + pages marketing (à propos, cas d'usage, blog). */
@@ -322,6 +330,7 @@ const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
   'habits', 'invite', 'landing', 'landingEnterprise', 'legal', 'legalPrivacy', 'legalTerms', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgConfig', 'portfolio', 'premium', 'seo',
+  'onboarding',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];

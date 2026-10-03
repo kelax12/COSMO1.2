@@ -37,6 +37,8 @@ import MyWorkTab from '@/components/organization/MyWorkTab';
 import { MyWorkSkeleton, TeamTasksSkeleton, TeamOverviewSkeleton, OrgTabSkeleton } from '@/components/organization/OrgLoadingSkeletons';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
+import { useIsDemo } from '@/lib/app-mode.store';
+import { markMemberWelcomeSeen, readMemberWelcomeSeen } from '@/components/onboarding/enterprise/ent-onboarding';
 import type { KeyOf } from '@/i18n/catalog';
 
 // ── Onglets chargés à la demande ──────────────────────────────────
@@ -82,6 +84,9 @@ const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
 // Glossaire et liens profonds (`?task=`…) : UNE entrée paresseuse pour les deux,
 // chargée seulement quand l'un sert (cf. `OrgPageOverlays`).
+// Accueil d'un membre au premier passage (2026-10-03) : son catalogue
+// `onboarding` ne part qu'avec lui, soit une fois par entreprise et par appareil.
+const MemberWelcome = lazyWithRetry(() => import('@/components/onboarding/enterprise/MemberWelcome'), ['onboarding']);
 const OrgPageOverlays = lazyWithRetry(() => import('@/components/organization/OrgPageOverlays'), ['eventModal', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'tasks']);
 
 type OrgTab = OrgSection;
@@ -135,6 +140,9 @@ const OrganizationPage = () => {
   // info-bulles de rôle l'ouvrent elles-mêmes, sur leur terme (`RoleTerm`).
   const [glossary, setGlossary] = useState(false);
   const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
+  const isDemo = useIsDemo();
+  // Fermé pendant cette visite ; le drapeau, lui, est posé par entreprise.
+  const [welcomeClosed, setWelcomeClosed] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const badges = useOrgBadges();
   const { data: orgNotifications = [] } = useOrgNotifications(myOrg?.id);
@@ -504,6 +512,22 @@ const OrganizationPage = () => {
         onTogglePin={togglePin}
         onSearch={openSearch}
       />
+
+      {/* Premier passage dans CETTE entreprise : les lieux à connaître.
+          Jamais en démo, jamais par-dessus un lien profond (on vient alors
+          pour la fiche, pas pour une visite). */}
+      {!welcomeClosed && !isDemo && !hasEntityParam && user?.id && !readMemberWelcomeSeen(myOrg.id, user.id) && (
+        <Suspense fallback={null}>
+          <MemberWelcome
+            orgName={myOrg.name}
+            isAdmin={isAdmin}
+            onClose={() => {
+              markMemberWelcomeSeen(myOrg.id, user.id);
+              setWelcomeClosed(true);
+            }}
+          />
+        </Suspense>
+      )}
 
       {/* Liens profonds : `?task=`, `?member=`, `?project=`, `?okr=`, `?team=`
           ouvrent leur fiche quelle que soit la section affichée. */}

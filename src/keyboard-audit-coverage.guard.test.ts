@@ -124,6 +124,10 @@ const NON_MESUREES: Record<string, string> = {
   'components/mobile/BottomSheet.tsx':
     'PRIMITIVE, pas une surface : c est elle que montent la plupart des '
     + 'feuilles ci-dessus, et quatre de ses consommatrices sont mesurées.',
+  'components/onboarding/enterprise/MemberWelcome.tsx':
+    'inatteignable en démo par conception (jamais en démo, 2026-10-03). Hors démo, '
+    + '`e2e/stubbed/org-onboarding.spec.ts` vérifie le focus d entrée et la sortie par Échap ; '
+    + 'le piège de Tab, lui, n est pas mesuré : dette.',
   'components/onboarding/FirstRunSetup.tsx':
     'inatteignable en démo par conception (`!isDemo`) — c est même le parcours '
     + 'qui a motivé la création du project `supabase-stub`.',

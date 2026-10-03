@@ -45,14 +45,19 @@ import SyncStatusIndicator from './SyncStatusIndicator';
 import SkipLink, { MAIN_CONTENT_ID } from './SkipLink';
 import { isDueToday } from '@/lib/deadline';
 import { readJson, safeSetItem } from '@/lib/safe-json';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { readFirstRunDone } from './onboarding/first-run';
 
 // Quick-add global — lazy : ne se charge qu'au premier rendu du Layout.
 const QuickAddBar = lazy(() => import('./QuickAddBar'));
 // Rappel habitudes du soir (#24) — lazy également.
 // Aide raccourcis clavier (#48) — touche « ? ».
 const ShortcutsHelp = lazy(() => import('./ShortcutsHelp'));
-// Tâches d'exemple au premier login (#49) — headless.
-const FirstRunSetup = lazy(() => import('./onboarding/FirstRunSetup'));
+// Accueil du premier compte (T-23, planétaire du 2026-10-03). Son catalogue
+// `onboarding` voyage AVEC lui (`lazyWithRetry`, hôte déclaré dans
+// `scripts/i18n-shell-namespaces.mjs`), et il n'est même pas téléchargé une
+// fois l'accueil vu sur cet appareil (`firstRunDone`, plus bas).
+const FirstRunSetup = lazyWithRetry(() => import('./onboarding/FirstRunSetup'), ['onboarding', 'overlays']);
 // Formulaire « Signaler un bug » — lazy : la très grande majorité des
 // sessions ne l'ouvre jamais, son chunk n'a pas à peser sur le Layout.
 const BugReportModal = lazy(() => import('./BugReportModal'));
@@ -171,6 +176,10 @@ const Layout: React.FC = () => {
   // « + » de la nav : inviter un ami / rejoindre une entreprise avec un code.
   // Monte dans `globalOverlays`, donc partage par les rendus mobile ET desktop.
   const [inviteOpen, setInviteOpen] = useState(false);
+  // Lu une fois par montage : l'écran lui-même relit le drapeau et pose le
+  // verrou. Ce test ne sert qu'à épargner son chunk et son catalogue aux
+  // personnes déjà accueillies, soit presque tout le monde.
+  const [firstRunDone] = useState(readFirstRunDone);
   // « Signaler un bug » — même schéma que le « + » ci-dessus : l'état vit ici,
   // la feuille « Plus » du mobile l'ouvre par événement custom.
   const [bugOpen, setBugOpen] = useState(false);
@@ -361,9 +370,11 @@ const NavItems = () =>
         <ShortcutsHelp />
       </Suspense>
       {/* Premier écran d'un compte réel et vide (T-23) */}
-      <Suspense fallback={null}>
-        <FirstRunSetup />
-      </Suspense>
+      {!firstRunDone && (
+        <Suspense fallback={null}>
+          <FirstRunSetup />
+        </Suspense>
+      )}
       {/* Raccourcis « g puis lettre » (#44) */}
       <GlobalNavShortcuts />
       {/* Rappel deadlines du jour à l'ouverture (#30) — headless, 1×/jour */}

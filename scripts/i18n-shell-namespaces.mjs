@@ -210,6 +210,8 @@ export const TAB_GATE_HOSTS = [
   // 2026-10-03 : le texte du parcours entreprise de la landing (`landingEnterprise`)
   // charge avec le parcours, plus avec toute visite de `/`.
   'pages/LandingPage.tsx',
+  // Accueil du premier compte : `onboarding` voyage avec lui (2026-10-03).
+  'components/Layout.tsx',
 ];
 
 /** Chemins absolus des modules gatés : routes d'`App.tsx`, onglets déclarants. */
