@@ -178,6 +178,37 @@ test.describe('C-95 — les quatre themes', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════
+// 1 bis. L'ESPACE ENTREPRISE — la surface la plus retouchée du produit
+// ═══════════════════════════════════════════════════════════════════
+//
+// 🔴 Ajouté le 2026-10-03. Le 2026-10-02, 37 fichiers de
+// `components/organization` ont changé (Aperçu refait, organigramme, onglet
+// Projets, rapport d'activité) sans qu'AUCUNE capture ne les compare : la
+// seule régression vue sur ces écrans l'a été par un test fonctionnel (cibles
+// tactiles de l'Aperçu). L'Aperçu est la porte d'entrée de `/entreprise`.
+// ⚠️ Un seul thème : les quatre sont déjà balayés sur trois écrans, et ce que
+// cette capture doit voir est la MISE EN PAGE, pas les tokens de couleur.
+test.describe('C-95 — espace entreprise', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test('/entreprise · Apercu', async ({ demoPage }) => {
+    await demoPage.goto('/entreprise');
+    await expect(demoPage.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 30_000 });
+    await demoPage.waitForLoadState('networkidle');
+    // La bulle de premier affichage d'un rôle s'ouvre par-dessus l'écran :
+    // elle n'est pas l'Aperçu, et elle fige une capture sur un instant.
+    const bulle = demoPage.locator('[data-slot="popover-content"]');
+    if (await bulle.first().isVisible()) {
+      await demoPage.keyboard.press('Escape');
+      await expect(bulle).toHaveCount(0, { timeout: 5_000 });
+    }
+    await poserTheme(demoPage, 'light');
+    await demoPage.waitForTimeout(400);
+    await capturer(demoPage, 'entreprise-apercu-light');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
 // 2. LES ÉTATS QU'ON NE VOIT QU'AU HASARD : vide, chargement, erreur
 // ═══════════════════════════════════════════════════════════════════
 test.describe('C-95 — etats vide, chargement et erreur', () => {
