@@ -13,6 +13,15 @@ import React from 'react';
 // donnée saisie par quelqu'un, il ne doit jamais devenir du balisage.
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * Le mot appuyé d'un titre d'accueil : Instrument Serif italique, au milieu
+ * d'un titre en Inter demi-gras. `1.1em` compense l'œil plus petit et la
+ * chasse plus étroite de la sérif (mesuré le 2026-10-04 une fois la police
+ * réellement servie : à taille égale, le mot paraissait plus petit que ses
+ * voisins). Relatif au titre, donc juste à toutes les tailles de l'échelle.
+ */
+export const EMPHASIS_CLASS = 'font-display font-normal italic text-[1.1em] leading-none tracking-[-0.01em]';
+
 const EMPHASIS = /(<em>.*?<\/em>)/g;
 const EMPHASIS_ONLY = /^<em>(.*)<\/em>$/;
 

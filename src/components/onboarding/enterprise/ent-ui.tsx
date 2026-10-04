@@ -1,5 +1,5 @@
 import type React from 'react';
-import { withEmphasis } from '../onboarding-text';
+import { EMPHASIS_CLASS, withEmphasis } from '../onboarding-text';
 
 // ═══════════════════════════════════════════════════════════════════
 // Primitives visuelles de l'accueil entreprise (DA nuit de la landing).
@@ -24,7 +24,6 @@ export const ENT_CHIP =
   'inline-flex items-center gap-1.5 rounded-full border border-[#2D3542] px-3 py-1.5 text-label text-[#C9D2DE] transition-colors hover:border-[#22D3EE]/60 hover:text-[#EDF2F7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#22D3EE]';
 export const ENT_CARD = 'rounded-[20px] border border-[#1F2530] bg-[#0E1116]';
 
-const EM = 'font-display font-normal italic tracking-[-0.01em]';
 
 export const EntTitle = ({ text, size = 'md' }: { text: string; size?: 'lg' | 'md' }) => (
   <h2
@@ -32,7 +31,7 @@ export const EntTitle = ({ text, size = 'md' }: { text: string; size?: 'lg' | 'm
       size === 'lg' ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl'
     }`}
   >
-    {withEmphasis(text, EM)}
+    {withEmphasis(text, EMPHASIS_CLASS)}
   </h2>
 );
 

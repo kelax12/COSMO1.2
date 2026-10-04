@@ -709,6 +709,29 @@ cadrage n'a changé, aucune balise n'a bougé de place. Les captures restent en
   passante de crawl et risquerait de dégrader l'aperçu de partage, qui est la
   première impression du produit. Mauvais échange.
 
+### Instrument Serif, auto-hébergée (2026-10-04)
+
+`tailwind.config.js` déclarait `font-display: "Instrument Serif"` depuis le hero entreprise
+(2026-09-23), mais **aucun `@font-face` n'existait** et la CSP (`font-src 'self'`) interdit
+Google Fonts : tout titre `font-display` sortait en Georgia, le repli, sans erreur ni
+avertissement. Quatre fichiers dans `public/fonts/` (droit et italique, latin et latin-ext,
+licence OFL à côté), déclarés dans `src/index.css` § Polices d'affichage.
+
+Mesuré dans Chromium headless, `/entreprise-presentation` à 1440 × 900 :
+
+| | Georgia (police bloquée) | Instrument Serif |
+|---|---|---|
+| Fichiers téléchargés | aucun | `latin` droit (21 ko) + `latin` italique (22 ko) |
+| Boîte du `h1` | 960 × 199 px | **960 × 199 px** |
+| CLS de la page | 0,000006 | **0,0064** (seuil « bon » : 0,1) |
+
+- ✅ Le sous-ensemble `latin-ext` n'est PAS téléchargé : même ordre de déclaration qu'Inter
+  (latin en dernier, cf. la règle ci-dessus sur le chevauchement U+0152-0153).
+- ❌ **Pas de préchargement dans `index.html`** : la police ne sert qu'au parcours entreprise de la
+  landing et aux deux accueils ; la précharger ferait payer ~21 ko à chaque visiteur de l'app.
+- ⚠️ `font-data` (`"Geist Mono"`) est dans le même cas qu'Instrument Serif avant ce correctif :
+  déclarée, jamais servie, rendue en `ui-monospace` (Consolas sous Windows).
+
 Réencodage reproductible : `npm run images:check` (mesure) puis
 `node scripts/optimize-images.mjs`.
 
