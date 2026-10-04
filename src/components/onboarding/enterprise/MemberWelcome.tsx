@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, X } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
-import { withEmphasis } from '../onboarding-text';
+import { EMPHASIS_CLASS, withEmphasis } from '../onboarding-text';
 import { ENT, fourPointStar, starField } from './constellation-geometry';
 import { ENT_SCOPE } from './ent-onboarding';
 import { ENT_PRIMARY, ENT_LABEL } from './ent-ui';
@@ -90,7 +90,7 @@ const MemberWelcome = ({ orgName, isAdmin, onClose }: MemberWelcomeProps) => {
 
           <div className="px-6 pb-6 pt-6 sm:px-9 sm:pb-9">
             <h2 className="text-3xl font-semibold leading-[1.06] tracking-[-0.035em] sm:text-4xl">
-              {withEmphasis(t('ent.member.title', { org: orgName }), 'font-display font-normal italic tracking-[-0.01em]')}
+              {withEmphasis(t('ent.member.title', { org: orgName }), EMPHASIS_CLASS)}
             </h2>
             <p className="mt-3 max-w-[34rem] text-base leading-[1.6] text-[#8B96A8]">
               {isAdmin ? t('ent.member.roleAdmin') : t('ent.member.roleMember')}

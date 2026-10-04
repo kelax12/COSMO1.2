@@ -20,7 +20,7 @@ import {
   readFirstRunDone,
   shouldOfferFirstRun,
 } from './first-run';
-import { withEmphasis } from './onboarding-text';
+import { EMPHASIS_CLASS, withEmphasis } from './onboarding-text';
 import Orrery from './perso/Orrery';
 import PersoPreview from './perso/PersoPreview';
 import { PLANETS, PLANET_COLOR, type Planet } from './perso/orrery-geometry';
@@ -236,7 +236,7 @@ const FirstRunSetup: React.FC = () => {
     habits: t('perso.planets.habits'),
     okr: t('perso.planets.okr'),
   };
-  const emClass = 'font-display font-normal italic tracking-[-0.01em]';
+  const emClass = EMPHASIS_CLASS;
   const enter = reduce
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
     : { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -10 } };
