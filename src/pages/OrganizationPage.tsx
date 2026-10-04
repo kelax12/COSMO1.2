@@ -143,6 +143,15 @@ const OrganizationPage = () => {
   const isDemo = useIsDemo();
   // Fermé pendant cette visite ; le drapeau, lui, est posé par entreprise.
   const [welcomeClosed, setWelcomeClosed] = useState(false);
+  // 🔴 DÉCIDÉ À L'ARRIVÉE, une seule fois : l'accueil membre ne s'ouvre que
+  // si l'on ARRIVE sur l'Aperçu nu (`/entreprise`, sans section ni paramètre).
+  // Relue à chaque rendu, la condition laissait l'accueil s'ouvrir APRÈS coup
+  // par-dessus l'écran qu'on était venu voir : `?tab=settings` réécrit en
+  // `/entreprise/settings`, retour Stripe `?tab=billing`, `?task=` retiré par
+  // `DeepTaskModal` quand la tâche est introuvable. Mesuré le 2026-10-04 par
+  // le job e2e (8 échecs `supabase-stub`, run 37138213107). Même règle que le
+  // verrou de `FirstRunSetup` : une garde d'entrée se fige à l'entrée.
+  const [arrivedOnOverview] = useState(() => section === undefined && searchParams.toString() === '');
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const badges = useOrgBadges();
   const { data: orgNotifications = [] } = useOrgNotifications(myOrg?.id);
@@ -514,9 +523,10 @@ const OrganizationPage = () => {
       />
 
       {/* Premier passage dans CETTE entreprise : les lieux à connaître.
-          Jamais en démo, jamais par-dessus un lien profond (on vient alors
-          pour la fiche, pas pour une visite). */}
-      {!welcomeClosed && !isDemo && !hasEntityParam && user?.id && !readMemberWelcomeSeen(myOrg.id, user.id) && (
+          Jamais en démo, et seulement à une arrivée sur l'Aperçu nu : qui
+          arrive par un lien (fiche, réglages, retour de paiement) vient pour
+          cet écran, pas pour une visite. */}
+      {arrivedOnOverview && !welcomeClosed && !isDemo && !hasEntityParam && user?.id && !readMemberWelcomeSeen(myOrg.id, user.id) && (
         <Suspense fallback={null}>
           <MemberWelcome
             orgName={myOrg.name}

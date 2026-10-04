@@ -15,8 +15,9 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
   (`cosmo_first_run_done`), jamais en démo, jamais sur `/entreprise`.
 - **Entreprise** : `onboarding/enterprise/EnterpriseOnboarding` (`/entreprise/onboarding`,
   constellation) : bienvenue → créer | rejoindre → mise en place `?setup=&step=` (invitations,
-  équipe, projet, cap) → fin. `MemberWelcome` : premier passage dans `/entreprise`, une fois par
-  entreprise et par appareil, jamais en démo ni sur un lien profond.
+  équipe, projet, cap) → fin. `MemberWelcome` : une fois par entreprise et par appareil, jamais
+  en démo, et SEULEMENT à une arrivée sur l'Aperçu nu (`arrivedOnOverview`, décidé à l'arrivée).
+  Relue à chaque rendu, la garde l'ouvrait après coup sur `?tab=`, `?task=` : 8 e2e rouges (10-04).
 - ❌ **Jamais sur une route** pour le perso : une inscription Google ne repasse pas par `SignupPage`.
 - ❌ **Jamais de création différée** : chaque étape crée quand elle est validée, et passer avance
   sans rien créer.
