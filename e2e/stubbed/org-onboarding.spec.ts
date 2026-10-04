@@ -101,13 +101,32 @@ test.describe('accueil entreprise (EnterpriseOnboarding + MemberWelcome)', () =>
     await expect(page.getByRole('dialog', { name: MEMBER_WELCOME })).toHaveCount(0);
   });
 
-  test('l accueil membre ne s ouvre pas par-dessus un lien profond', async ({ page }) => {
+  // 🔴 Les deux cas suivants ont mis le job e2e de main au rouge le 2026-10-04
+  // (run 37138213107) : la garde était relue à chaque rendu, et l'accueil
+  // s'ouvrait APRÈS coup, une fois le paramètre retiré de l'URL (`?task=`
+  // effacé quand la tâche est introuvable, `?tab=` réécrit en section). Il
+  // couvrait alors l'écran visé et interceptait les clics de `delete-org` et
+  // `refund`. La décision est désormais prise à l'arrivée, une fois.
+  test('l accueil membre ne s ouvre pas par-dessus un lien profond, même après coup', async ({ page }) => {
     const stub = await installSupabaseStub(page);
     stub.reply('rpc/get_my_org_inbox', {});
     stub.reply('organization_members', [{ role: 'member', organizations: ORG }]);
 
     await gotoStubbed(page, '/entreprise/tasks?task=stub-task-1', page.getByRole('heading', { name: 'Nova Studio' }));
-    await page.waitForTimeout(1_500);
+    // Le défaut se manifestait APRÈS le retrait du paramètre : on laisse à la
+    // fiche introuvable le temps de se refermer avant de conclure.
+    await page.waitForTimeout(4_000);
+    await expect(page.getByRole('dialog', { name: MEMBER_WELCOME })).toHaveCount(0);
+  });
+
+  test('une arrivée par ?tab= (ancien lien, retour de paiement) ne déclenche pas l accueil', async ({ page }) => {
+    const stub = await installSupabaseStub(page);
+    stub.reply('rpc/get_my_org_inbox', {});
+    stub.reply('organization_members', [{ role: 'admin', organizations: ORG }]);
+
+    await gotoStubbed(page, '/entreprise?tab=settings', page.getByRole('heading', { name: 'Nova Studio' }));
+    await expect(page).toHaveURL(/\/entreprise\/settings/);
+    await page.waitForTimeout(3_000);
     await expect(page.getByRole('dialog', { name: MEMBER_WELCOME })).toHaveCount(0);
   });
 });

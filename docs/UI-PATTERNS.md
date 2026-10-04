@@ -731,7 +731,12 @@ carte des six lieux. `MemberWelcome` accueille qui arrive sans être passé par 
   `okrs` et ne pouvait pas le voir ; son témoin est désormais le `DELETE` sur `key_results`, qui
   n'existe que si la garde a laissé passer l'id (vérifié rouge en remettant l'ancien id).
 - Le perso ne s'ouvre jamais sur `/entreprise` : il s'empilait sur l'accueil entreprise à la
-  sortie de celui-ci. L'admin qui finit la mise en place est marqué « accueilli » pour
+  sortie de celui-ci.
+- `MemberWelcome` ne s'ouvre qu'à une ARRIVÉE sur l'Aperçu nu (`/entreprise` sans section ni
+  paramètre), décision prise une fois (`arrivedOnOverview`). Relue à chaque rendu, la garde
+  laissait l'accueil s'ouvrir après coup, une fois `?tab=settings` réécrit en section, le retour
+  Stripe `?tab=billing` traité ou `?task=` retiré par une fiche introuvable : il couvrait l'écran
+  visé et a mis 8 cas du job e2e au rouge le 2026-10-04 (`delete-org`, `refund`, et le sien). L'admin qui finit la mise en place est marqué « accueilli » pour
   `MemberWelcome`.
 - Tailles de texte : l'échelle du projet uniquement (garde `design-system.guard.test.ts`, stock de
   `text-[Npx]` plafonné).
