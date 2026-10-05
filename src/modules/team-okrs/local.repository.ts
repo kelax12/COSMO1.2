@@ -93,6 +93,40 @@ const DEMO_OKRS: TeamOKR[] = [
       { id: 'tkr-7', okrId: 'tokr-3', orgId: DEMO_ORG_ID, title: 'Score eNPS ≥ 40', currentValue: 34, targetValue: 40, unit: 'pts', assigneeId: 'user-lucas', completed: false, estimatedTime: 30 },
     ],
   },
+  {
+    id: 'tokr-4',
+    orgId: DEMO_ORG_ID,
+    title: 'Doubler le trafic qualifié',
+    description: 'Faire croître l\'acquisition sans faire exploser le coût par lead.',
+    categoryId: 'teamcat-croissance',
+    startDate: new Date(Date.now() - 15 * 86400000).toISOString().slice(0, 10),
+    endDate: new Date(Date.now() + 45 * 86400000).toISOString().slice(0, 10),
+    createdBy: 'user-manon',
+    createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
+    teamIds: ['team-marketing'],
+    keyResults: [
+      { id: 'tkr-8', okrId: 'tokr-4', orgId: DEMO_ORG_ID, title: '20 000 visites organiques par mois', currentValue: 12400, targetValue: 20000, unit: 'visites', assigneeId: 'user-paul', completed: false, estimatedTime: 60 },
+      { id: 'tkr-9', okrId: 'tokr-4', orgId: DEMO_ORG_ID, title: '300 leads qualifiés', currentValue: 185, targetValue: 300, unit: 'leads', assigneeId: 'user-karim', completed: false, estimatedTime: 45 },
+      { id: 'tkr-10', okrId: 'tokr-4', orgId: DEMO_ORG_ID, title: '2 000 abonnés à la newsletter', currentValue: 2000, targetValue: 2000, unit: 'abonnés', assigneeId: 'user-lea', completed: true, completedAt: new Date(Date.now() - 2 * 86400000).toISOString(), estimatedTime: 30 },
+    ],
+  },
+  {
+    id: 'tokr-5',
+    orgId: DEMO_ORG_ID,
+    title: 'Sortir la bêta de l\'app mobile',
+    description: 'Une première version stable entre les mains de vrais utilisateurs.',
+    categoryId: 'teamcat-produit',
+    startDate: new Date(Date.now() - 5 * 86400000).toISOString().slice(0, 10),
+    endDate: new Date(Date.now() + 75 * 86400000).toISOString().slice(0, 10),
+    createdBy: 'user-lucas',
+    createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+    teamIds: ['team-dev'],
+    keyResults: [
+      { id: 'tkr-11', okrId: 'tokr-5', orgId: DEMO_ORG_ID, title: '50 bêta-testeurs actifs', currentValue: 18, targetValue: 50, unit: 'testeurs', assigneeId: 'user-ines', completed: false, estimatedTime: 90 },
+      { id: 'tkr-12', okrId: 'tokr-5', orgId: DEMO_ORG_ID, title: '12 écrans maquettés', currentValue: 7, targetValue: 12, unit: 'écrans', assigneeId: 'user-chloe', completed: false, estimatedTime: 60 },
+      { id: 'tkr-13', okrId: 'tokr-5', orgId: DEMO_ORG_ID, title: '100 tests automatisés', currentValue: 42, targetValue: 100, unit: 'tests', assigneeId: 'user-antoine', completed: false, estimatedTime: 120 },
+    ],
+  },
 ];
 
 // Overlay anglais — cf. src/lib/seed-i18n.ts. `TeamOKR` imbrique `keyResults`
@@ -128,6 +162,24 @@ const DEMO_OKRS_EN: Record<string, {
     keyResults: {
       'tkr-6': { title: 'Onboard 3 new hires', unit: 'people' },
       'tkr-7': { title: 'eNPS score ≥ 40', unit: 'pts' },
+    },
+  },
+  'tokr-4': {
+    title: 'Double qualified traffic',
+    description: 'Grow acquisition without blowing up the cost per lead.',
+    keyResults: {
+      'tkr-8': { title: '20,000 organic visits per month', unit: 'visits' },
+      'tkr-9': { title: '300 qualified leads', unit: 'leads' },
+      'tkr-10': { title: '2,000 newsletter subscribers', unit: 'subscribers' },
+    },
+  },
+  'tokr-5': {
+    title: 'Ship the mobile app beta',
+    description: 'A first stable release in the hands of real users.',
+    keyResults: {
+      'tkr-11': { title: '50 active beta testers', unit: 'testers' },
+      'tkr-12': { title: '12 screens designed', unit: 'screens' },
+      'tkr-13': { title: '100 automated tests', unit: 'tests' },
     },
   },
 };

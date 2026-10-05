@@ -14,12 +14,12 @@ describe('LocalStorageOrgTeamsRepository (démo)', () => {
     repo = new LocalStorageOrgTeamsRepository();
   });
 
-  it('seede 2 équipes (Design, Dev) avec leurs membres', async () => {
+  it('seede 3 équipes (Design, Dev, Marketing) avec leurs membres', async () => {
     const teams = await repo.getTeams(ORG);
-    expect(teams.map((t) => t.name).sort()).toEqual(['Design', 'Dev']);
+    expect(teams.map((t) => t.name).sort()).toEqual(['Design', 'Dev', 'Marketing']);
     const memberships = await repo.getTeamMembers(ORG);
-    expect(memberships.filter((m) => m.teamId === 'team-design').length).toBe(3);
-    expect(memberships.filter((m) => m.teamId === 'team-dev').length).toBe(2);
+    expect(memberships.filter((m) => m.teamId === 'team-design').length).toBe(5);
+    expect(memberships.filter((m) => m.teamId === 'team-dev').length).toBe(4);
   });
 
   it('crée une équipe, y ajoute/retire un membre (idempotent)', async () => {
@@ -36,7 +36,7 @@ describe('LocalStorageOrgTeamsRepository (démo)', () => {
 
   it('supprimer une équipe purge ses appartenances', async () => {
     await repo.deleteTeam({ teamId: 'team-design', targetTeamId: 'team-dev', archiveProjects: false });
-    expect((await repo.getTeams(ORG)).length).toBe(1);
+    expect((await repo.getTeams(ORG)).length).toBe(2);
     expect((await repo.getTeamMembers(ORG)).some((m) => m.teamId === 'team-design')).toBe(false);
   });
 
