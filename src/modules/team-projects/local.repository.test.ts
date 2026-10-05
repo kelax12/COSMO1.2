@@ -12,15 +12,15 @@ describe('LocalStorageTeamProjectsRepository (démo)', () => {
     repo = new LocalStorageTeamProjectsRepository();
   });
 
-  it('seede 3 projets', async () => {
+  it('seede 5 projets', async () => {
     const projects = await repo.getProjects(ORG);
-    expect(projects.length).toBe(3);
+    expect(projects.length).toBe(5);
     expect(projects.map((p) => p.name)).toContain('Refonte du site');
   });
 
-  it('seede ~20 tâches réparties sur les projets et assignées (certaines multi)', async () => {
+  it('seede ~40 tâches réparties sur les projets et assignées (certaines multi)', async () => {
     const tasks = await repo.getTasks(ORG);
-    expect(tasks.length).toBe(20);
+    expect(tasks.length).toBe(39);
     expect(tasks.every((t) => t.assigneeIds.length > 0)).toBe(true);
     // La multi-assignation est représentée dans les seeds (1 tâche sur 4).
     expect(tasks.some((t) => t.assigneeIds.length > 1)).toBe(true);

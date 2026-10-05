@@ -40,7 +40,12 @@ const dateStr = (offset: number): string =>
   new Date(Date.now() + offset * DAY).toLocaleDateString('en-CA');
 const iso = (offset: number): string => new Date(Date.now() + offset * DAY).toISOString();
 
-const MEMBERS = ['demo-user', 'friend-1', 'friend-2', 'friend-3', 'user-lucas', 'user-camille'];
+const MEMBERS = [
+  'demo-user', 'friend-1', 'friend-2', 'friend-3', 'user-lucas', 'user-camille',
+  // 6..14 : élargissement à 15 personnes (2026-10-05).
+  'user-manon', 'user-chloe', 'user-emma', 'user-ines', 'user-antoine',
+  'user-paul', 'user-lea', 'user-karim', 'user-yanis',
+];
 
 // Cloisonnement (v2, 1d) : Refonte → équipe Dev, Lancement → équipe Design,
 // Interne → projet d'ORG (team_id null, visible par toute l'entreprise).
@@ -60,6 +65,16 @@ export const DEMO_PROJECTS: TeamProject[] = [
     id: 'tproj-3', orgId: DEMO_ORG_ID, name: 'Interne', color: 'green', createdBy: 'friend-1', archivedAt: null, createdAt: iso(-15), teamId: null,
     ownerId: 'friend-1', status: 'active',
   },
+  {
+    id: 'tproj-4', orgId: DEMO_ORG_ID, name: 'Campagne d’acquisition', color: 'amber', createdBy: 'user-manon', archivedAt: null, createdAt: iso(-20), teamId: 'team-marketing',
+    description: 'Acquisition payante et organique : SEO, publicités, partenariats et newsletter.',
+    ownerId: 'user-manon', status: 'active', startDate: dateStr(-15), dueDate: dateStr(30),
+  },
+  {
+    id: 'tproj-5', orgId: DEMO_ORG_ID, name: 'Application mobile', color: 'teal', createdBy: 'user-lucas', archivedAt: null, createdAt: iso(-10), teamId: 'team-dev',
+    description: 'Première version de l’app iOS et Android : connexion, synchronisation, notifications.',
+    ownerId: 'user-lucas', status: 'planned', startDate: dateStr(5), dueDate: dateStr(75),
+  },
 ];
 
 // Overlay anglais — cf. src/lib/seed-i18n.ts.
@@ -67,6 +82,8 @@ export const DEMO_PROJECTS_EN: Record<string, Partial<TeamProject>> = {
   'tproj-1': { name: 'Website redesign', description: 'New showcase site: mockups, integration, performance and audience tracking.' },
   'tproj-2': { name: 'Product launch', description: 'Bringing the new offer to market: communication, press and demos.' },
   'tproj-3': { name: 'Internal' },
+  'tproj-4': { name: 'Acquisition campaign', description: 'Paid and organic acquisition: SEO, ads, partnerships and newsletter.' },
+  'tproj-5': { name: 'Mobile app', description: 'First release of the iOS and Android app: sign-in, sync, notifications.' },
 };
 
 // Le lancement attend le nouveau site : `tproj-2` est BLOQUÉ par `tproj-1`.
@@ -143,6 +160,26 @@ export const DEMO_TASKS: TeamTask[] = [
   t('tproj-3', 'Budget prévisionnel Q3', 3, 4, -1, false, 'blocked'),
   t('tproj-3', 'Commande matériel', 2, 2, 3, true),
   t('tproj-3', 'Planifier le séminaire', 5, 3, 14, false),
+  // Ajouts 15 personnes (ttask-21..39), appendus EN FIN : les ids 1-20 restent stables.
+  t('tproj-1', 'Animations de la page produit', 7, 3, 6, false, 'in_progress'),
+  t('tproj-1', 'Tests de charge', 10, 3, 11, false),
+  t('tproj-1', 'Recette multi-navigateurs', 9, 4, 4, false, 'review'),
+  t('tproj-2', 'Vidéo de présentation', 8, 4, 8, false, 'in_progress'),
+  t('tproj-2', 'Webinaire de lancement', 6, 4, 15, false),
+  t('tproj-3', 'Process de notes de frais', 14, 2, 9, false),
+  t('tproj-3', 'Entretiens annuels', 0, 3, 20, false),
+  t('tproj-4', 'Audit SEO concurrentiel', 11, 4, 2, false, 'in_progress'),
+  t('tproj-4', 'Campagne LinkedIn Ads', 12, 3, 7, false),
+  t('tproj-4', 'Newsletter mensuelle', 13, 2, 5, false, 'review'),
+  t('tproj-4', 'Programme de parrainage', 6, 4, 18, false),
+  t('tproj-4', 'Partenariats influenceurs', 12, 3, -2, false, 'blocked'),
+  t('tproj-4', 'Persona cibles', 11, 3, -8, true),
+  t('tproj-4', 'Tableau de bord acquisition', 14, 3, 10, false),
+  t('tproj-5', 'Choix de la stack mobile', 4, 5, -1, true),
+  t('tproj-5', 'Maquettes de l’app', 7, 4, 12, false, 'in_progress'),
+  t('tproj-5', 'Connexion mobile', 9, 4, 20, false),
+  t('tproj-5', 'Notifications push', 10, 3, 28, false),
+  t('tproj-5', 'Parcours d’accueil mobile', 8, 3, 25, false),
 ];
 
 /**
@@ -163,6 +200,10 @@ export const DEMO_TASK_DEPENDENCIES: TeamTaskDependency[] = [
   { taskId: 'ttask-7', dependsOnId: 'ttask-4' },
   // Lancement produit : le kit presse attend le plan de communication.
   { taskId: 'ttask-9', dependsOnId: 'ttask-8' },
+  // Campagne d'acquisition : le tableau de bord attend l'audit SEO.
+  { taskId: 'ttask-34', dependsOnId: 'ttask-28' },
+  // Application mobile : maquettes → connexion.
+  { taskId: 'ttask-37', dependsOnId: 'ttask-36' },
 ];
 
 // Overlay anglais — cf. src/lib/seed-i18n.ts. Les ids `ttask-N` reprennent
@@ -188,6 +229,25 @@ export const DEMO_TASKS_EN: Record<string, Partial<TeamTask>> = {
   'ttask-18': { name: 'Q3 budget forecast' },
   'ttask-19': { name: 'Equipment order' },
   'ttask-20': { name: 'Plan the offsite' },
+  'ttask-21': { name: 'Product page animations' },
+  'ttask-22': { name: 'Load testing' },
+  'ttask-23': { name: 'Cross-browser QA' },
+  'ttask-24': { name: 'Presentation video' },
+  'ttask-25': { name: 'Launch webinar' },
+  'ttask-26': { name: 'Expense report process' },
+  'ttask-27': { name: 'Annual reviews' },
+  'ttask-28': { name: 'Competitive SEO audit' },
+  'ttask-29': { name: 'LinkedIn Ads campaign' },
+  'ttask-30': { name: 'Monthly newsletter' },
+  'ttask-31': { name: 'Referral program' },
+  'ttask-32': { name: 'Influencer partnerships' },
+  'ttask-33': { name: 'Target personas' },
+  'ttask-34': { name: 'Acquisition dashboard' },
+  'ttask-35': { name: 'Mobile stack choice' },
+  'ttask-36': { name: 'App mockups' },
+  'ttask-37': { name: 'Mobile sign-in' },
+  'ttask-38': { name: 'Push notifications' },
+  'ttask-39': { name: 'Mobile onboarding flow' },
 };
 
 // Commentaires seed (mig. 082) — fil de discussion réaliste sur 2 tâches.
@@ -289,4 +349,8 @@ export const DEMO_ACTIVITY: TeamTaskActivity[] = [
   act('act-seed-7', 'ttask-10', DEMO_USER_ID, 'name', null, null, -2),
   act('act-seed-8', 'ttask-18', 'friend-3', 'status', 'todo', 'blocked', -2),
   act('act-seed-9', 'ttask-6', 'friend-1', 'status', 'review', 'done', -1),
+  act('act-seed-10', 'ttask-28', 'user-paul', 'status', 'todo', 'in_progress', -3),
+  act('act-seed-11', 'ttask-32', 'user-lea', 'status', 'in_progress', 'blocked', -2),
+  act('act-seed-12', 'ttask-35', 'user-lucas', 'status', 'in_progress', 'done', -1),
+  act('act-seed-13', 'ttask-21', 'user-chloe', 'status', 'todo', 'in_progress', -1),
 ];

@@ -78,7 +78,7 @@ describe('LocalStorageOrganizationsRepository (démo, multi-org v2)', () => {
     await seedSecondOrg(repo);
     const novaMembers = await repo.getMembers(DEMO_ORG_ID);
     const luneMembers = await repo.getMembers(SECOND_ORG_ID);
-    expect(novaMembers.length).toBe(6);
+    expect(novaMembers.length).toBe(15);
     expect(luneMembers.length).toBe(3);
     expect(novaMembers.every((m) => m.orgId === DEMO_ORG_ID)).toBe(true);
     expect(luneMembers.every((m) => m.orgId === SECOND_ORG_ID)).toBe(true);
@@ -154,9 +154,9 @@ describe('LocalStorageOrganizationsRepository (démo, multi-org v2)', () => {
     const { roots, unplaced } = buildOrgTree(members, 'demo-user');
     expect(roots.length).toBe(1);
     expect(roots[0].member.userId).toBe('demo-user');
-    expect(roots[0].children.map((c) => c.member.userId).sort()).toEqual(['friend-1', 'user-lucas']);
+    expect(roots[0].children.map((c) => c.member.userId).sort()).toEqual(['friend-1', 'user-lucas', 'user-manon', 'user-yanis']);
     const marie = roots[0].children.find((c) => c.member.userId === 'friend-1')!;
-    expect(marie.children.map((c) => c.member.userId).sort()).toEqual(['friend-2', 'friend-3']);
+    expect(marie.children.map((c) => c.member.userId).sort()).toEqual(['friend-2', 'friend-3', 'user-chloe', 'user-emma']);
     expect(unplaced.map((m) => m.userId)).toEqual(['user-camille']);
   });
 
@@ -244,7 +244,7 @@ describe('LocalStorageOrganizationsRepository (démo, multi-org v2)', () => {
     localStorage.removeItem(ORG_MEMBERS_STORAGE_KEY);
     localStorage.removeItem(ORG_JOIN_REQUESTS_STORAGE_KEY);
     const fresh = new LocalStorageOrganizationsRepository();
-    expect((await fresh.getMembers(DEMO_ORG_ID)).length).toBe(6);
+    expect((await fresh.getMembers(DEMO_ORG_ID)).length).toBe(15);
     expect((await fresh.getPendingJoinRequests(DEMO_ORG_ID)).length).toBe(1);
   });
 });

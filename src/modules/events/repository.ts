@@ -167,6 +167,8 @@ const seedMemberEvents = (uid: string): CalendarEvent[] => [
 const KNOWN_DEMO_MEMBER_IDS = [
   'friend-1', 'friend-2', 'friend-3', 'user-lucas', 'user-camille',
   'user-nina', 'user-theo', 'user-hugo',
+  'user-manon', 'user-chloe', 'user-emma', 'user-ines', 'user-antoine',
+  'user-paul', 'user-lea', 'user-karim', 'user-yanis',
 ];
 
 // ═══════════════════════════════════════════════════════════════════

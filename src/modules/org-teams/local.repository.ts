@@ -36,6 +36,7 @@ function readArray<T>(key: string): T[] {
 const DEMO_TEAMS: OrgTeam[] = [
   { id: 'team-design', orgId: DEMO_ORG_ID, name: 'Design', color: 'purple', description: null, createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 40 * DAY).toISOString() },
   { id: 'team-dev', orgId: DEMO_ORG_ID, name: 'Dev', color: 'blue', description: null, createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 40 * DAY).toISOString() },
+  { id: 'team-marketing', orgId: DEMO_ORG_ID, name: 'Marketing', color: 'amber', description: null, createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 35 * DAY).toISOString() },
 ];
 
 // Chaque équipe a un responsable (mig. 107) : une organisation de démo dont
@@ -46,7 +47,15 @@ const DEMO_TEAM_MEMBERS: OrgTeamMember[] = [
   { teamId: 'team-design', orgId: DEMO_ORG_ID, userId: 'friend-3', isLead: false },
   { teamId: 'team-design', orgId: DEMO_ORG_ID, userId: 'user-camille', isLead: false },
   { teamId: 'team-dev', orgId: DEMO_ORG_ID, userId: 'friend-2', isLead: true },
+  { teamId: 'team-design', orgId: DEMO_ORG_ID, userId: 'user-chloe', isLead: false },
+  { teamId: 'team-design', orgId: DEMO_ORG_ID, userId: 'user-emma', isLead: false },
   { teamId: 'team-dev', orgId: DEMO_ORG_ID, userId: 'user-lucas', isLead: false },
+  { teamId: 'team-dev', orgId: DEMO_ORG_ID, userId: 'user-ines', isLead: false },
+  { teamId: 'team-dev', orgId: DEMO_ORG_ID, userId: 'user-antoine', isLead: false },
+  { teamId: 'team-marketing', orgId: DEMO_ORG_ID, userId: 'user-manon', isLead: true },
+  { teamId: 'team-marketing', orgId: DEMO_ORG_ID, userId: 'user-paul', isLead: false },
+  { teamId: 'team-marketing', orgId: DEMO_ORG_ID, userId: 'user-lea', isLead: false },
+  { teamId: 'team-marketing', orgId: DEMO_ORG_ID, userId: 'user-karim', isLead: false },
 ];
 
 function readOrSeed<T>(key: string, seed: T): T {
