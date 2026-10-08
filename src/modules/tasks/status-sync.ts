@@ -35,6 +35,13 @@ export function applyStatusSync<P extends Partial<Task>>(
   nowIso: string = new Date().toISOString(),
 ): P {
   if (patch.completed !== undefined) {
+    // 🔴 Ligne sans statut (servie avant la mig. 214) et patch sans statut :
+    // ne RIEN inventer. Un statut ajouté ici dans le cache repartirait en base
+    // avec la tâche entière (« Annuler » une suppression), vers une colonne
+    // qui n'existe peut-être pas encore.
+    if (prev.status === undefined && patch.status === undefined) {
+      return patch.completed ? patch : { ...patch, completedAt: undefined };
+    }
     if (patch.completed) return { ...patch, status: 'done' };
     if (patch.status === undefined && effectiveStatus(prev) === 'done') {
       return { ...patch, completedAt: undefined, status: 'todo' };
