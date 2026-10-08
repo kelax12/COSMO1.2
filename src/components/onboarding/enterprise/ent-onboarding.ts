@@ -87,10 +87,52 @@ export const readMemberWelcomeSeen = (orgId: string, userId: string): boolean =>
   }
 };
 
+/**
+ * L'accueil membre est sorti le 2026-10-03. Une personne déjà membre AVANT
+ * n'en a pas besoin et le recevait pourtant, par surprise, à sa visite
+ * suivante (Axel compris). Seuls les arrivés depuis sont accueillis. Tant que
+ * l'annuaire n'est pas chargé, on ne sait pas : on n'ouvre rien.
+ */
+export const MEMBER_WELCOME_SINCE = '2026-10-03T00:00:00Z';
+
+export const joinedSinceWelcome = (
+  members: readonly { userId: string; joinedAt: string }[],
+  userId: string,
+): boolean => {
+  const me = members.find((m) => m.userId === userId);
+  return Boolean(me && Date.parse(me.joinedAt) >= Date.parse(MEMBER_WELCOME_SINCE));
+};
+
 export const markMemberWelcomeSeen = (orgId: string, userId: string): void => {
   try {
     localStorage.setItem(welcomeKey(orgId, userId), '1');
   } catch {
     // Sans persistance l'accueil reviendra ; il se ferme en un geste.
+  }
+};
+
+// ─── Demande d'adhésion en attente : le nom de l'entreprise visée ───
+
+const JOIN_ORG_KEY = 'cosmo_join_request_org';
+
+/**
+ * La demande relue depuis le serveur ne porte que l'identifiant de
+ * l'entreprise (illisible tant qu'on n'en est pas membre) : l'écran d'attente
+ * ne pouvait pas dire À QUI la demande était partie. On garde le nom renvoyé
+ * à l'envoi, sur cet appareil.
+ */
+export const rememberJoinRequestOrg = (name: string): void => {
+  try {
+    localStorage.setItem(JOIN_ORG_KEY, name.slice(0, 80));
+  } catch {
+    /* stockage indisponible : l'attente restera anonyme */
+  }
+};
+
+export const readJoinRequestOrg = (): string => {
+  try {
+    return localStorage.getItem(JOIN_ORG_KEY) ?? '';
+  } catch {
+    return '';
   }
 };

@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
-import { Routes, Route, Navigate } from 'react-router';
+import { Routes, Route, Navigate, useLocation } from 'react-router';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { loadSonner } from '@/lib/toast';
@@ -48,6 +48,27 @@ const CommandPalette = lazy(() => import('@/components/CommandPalette'));
 // ⚠️ Il lui faut son PROPRE `<Suspense>` : suspendre sur la frontière qui
 // enveloppe les routes cacherait la page pendant le chargement.
 const Toaster = lazy(() => loadSonner().then((m) => ({ default: m.Toaster })));
+
+/**
+ * L'accueil entreprise (`/entreprise/onboarding`) a une DA nuit FIXE : un toast
+ * clair (« Équipe créée ») y tombait comme une carte blanche sur la nuit
+ * (relevé le 2026-10-04). Ses toasts sont donc sombres ; partout ailleurs, le
+ * réglage d'origine (`system`).
+ */
+const ThemedToaster = () => {
+  const { pathname } = useLocation();
+  return (
+    <Toaster
+      position="top-right"
+      richColors
+      closeButton
+      theme={pathname.endsWith('/entreprise/onboarding') ? 'dark' : 'system'}
+      toastOptions={{
+        duration: 3000,
+      }}
+    />
+  );
+};
 
 // Lazy load pages for code splitting.
 //
@@ -427,15 +448,7 @@ const App: React.FC = () => {
                 de mouvement décoratif). Exigence WCAG 2.3.3 / EAA. */}
             <MotionConfig reducedMotion="user">
             <Suspense fallback={null}>
-              <Toaster
-                position="top-right"
-                richColors
-                closeButton
-                theme="system"
-                toastOptions={{
-                  duration: 3000,
-                }}
-              />
+              <ThemedToaster />
             </Suspense>
             {/* Défense en profondeur autour des SATELLITES de l'app.
                 Ces trois-là sont montés au niveau App, donc au-dessus de tout

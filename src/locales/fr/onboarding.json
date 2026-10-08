@@ -23,14 +23,17 @@
       "hello": "Bonjour {{name}}.",
       "helloAnon": "Bonjour.",
       "title": "Construisons votre <em>système</em>.",
-      "body": "COSMO réunit ce que vous avez à faire, le moment où vous le faites, ce que vous voulez tenir et la direction que vous prenez. Quatre étapes suffisent pour le mettre en marche, et ce que vous écrirez deviendra vos vraies données.",
+      "body": "COSMO réunit vos tâches, votre agenda, vos habitudes et vos objectifs. En quatre étapes, vous notez ce qui vous occupe, vous le placez dans votre semaine, vous choisissez une habitude et un cap. Tout ce que vous écrivez est enregistré.",
       "duration": "Deux minutes · tout est facultatif",
       "cta": "Commencer",
       "legendTitle": "Les quatre orbites de COSMO",
       "legendTasks": "ce que vous avez à faire",
       "legendAgenda": "quand vous le faites",
       "legendHabits": "ce que vous tenez chaque jour",
-      "legendOkr": "où vous allez"
+      "legendOkr": "où vous allez",
+      "businessTitle": "Votre espace entreprise vous attend",
+      "businessBody": "Vous aviez commencé à créer un espace entreprise. Vous pouvez le reprendre maintenant, ou plus tard depuis l'entrée Entreprise du menu.",
+      "businessCta": "Reprendre mon entreprise"
     },
     "tasks": {
       "title": "Qu'avez-vous à faire cette semaine ?",
@@ -43,7 +46,9 @@
       "limit": "Cinq pour commencer, c'est largement assez.",
       "tip": "Dans COSMO, la touche N ajoute une tâche depuis n'importe quelle page.",
       "previewTitle": "Votre liste",
-      "previewEmpty": "Vos tâches apparaîtront ici, au fil de la saisie."
+      "previewEmpty": "Vos tâches apparaîtront ici, au fil de la saisie.",
+      "alreadyCreated": "Déjà dans votre liste",
+      "alreadyHint": "Vous pourrez les modifier dans Tâches. Ajoutez-en d'autres si vous voulez."
     },
     "agenda": {
       "title": "Donnez une <em>place</em> à vos tâches.",
@@ -53,7 +58,16 @@
       "point3": "Une tâche sans créneau reste dans votre liste : rien ne se perd.",
       "cta": "Compris",
       "fallbackTask": "Préparer la présentation",
-      "previewCaption": "Une tâche, un créneau."
+      "previewCaption": "Une tâche, un créneau.",
+      "slotTitle": "Bloquer une heure pour « {{name}} » ?",
+      "slotHint": "Facultatif. Le créneau apparaîtra dans votre agenda, relié à la tâche.",
+      "slotDay": "Jour du créneau",
+      "slotHour": "Heure du créneau",
+      "today": "Aujourd'hui",
+      "tomorrow": "Demain",
+      "slotCreated": "Créneau bloqué : {{when}}.",
+      "noTask": "Ajoutez une tâche à l'étape précédente pour essayer avec la vôtre.",
+      "ctaSlot": "Bloquer ce créneau"
     },
     "habits": {
       "title": "Une habitude que vous voulez tenir ?",
@@ -64,9 +78,12 @@
       "idea3": "Méditer 10 minutes",
       "idea4": "Se coucher avant 23 h",
       "previewFallback": "Votre habitude",
-      "previewDaily": "Chaque jour",
       "previewStreak": "La série commence aujourd'hui",
-      "previewCaption": "Chaque case cochée allonge la série."
+      "previewCaption": "Chaque case cochée allonge la série.",
+      "durationLabel": "Combien de temps, chaque jour ?",
+      "minutes": "{{minutes}} min",
+      "previewEvery": "{{minutes}} min · chaque jour",
+      "alreadyCreated": "Habitude ajoutée : {{name}}. Vous pourrez la modifier dans Habitudes."
     },
     "okr": {
       "title": "Un objectif pour les trois prochains mois ?",
@@ -77,11 +94,15 @@
       "previewFallback": "Votre objectif",
       "previewKrFallback": "Votre résultat clé",
       "previewPeriod": "Sur 90 jours",
-      "previewCaption": "Une tâche reliée et terminée, et la jauge avance."
+      "previewCaption": "Une tâche reliée et terminée, et la jauge avance.",
+      "targetLabel": "Cible (facultatif)",
+      "targetPlaceholder": "Ex. 10",
+      "targetHint": "Sans nombre, le résultat clé se coche simplement une fois atteint.",
+      "alreadyCreated": "Objectif ajouté : {{name}}. Vous pourrez le compléter dans OKR."
     },
     "done": {
       "title": "Votre système est <em>en orbite</em>.",
-      "body": "Chaque tâche cochée, chaque habitude tenue nourrit vos statistiques : votre semaine, vos séries et l'avancée de vos objectifs y prennent forme.",
+      "body": "Tout ce que vous avez créé est déjà dans COSMO. Chaque tâche cochée et chaque habitude tenue nourrissent vos statistiques.",
       "recapTitle": "Ce que vous venez de créer",
       "recapTasks_one": "{{count}} tâche dans votre liste",
       "recapTasks_many": "{{count}} de tâches dans votre liste",
@@ -90,7 +111,21 @@
       "recapOkr": "Objectif : {{name}}",
       "recapNothing": "Rien pour l'instant, et c'est très bien : tout s'ajoute en un geste depuis l'application.",
       "next": "Chaque page vous montrera ses gestes la première fois que vous l'ouvrirez.",
-      "cta": "Entrer dans COSMO"
+      "cta": "Entrer dans COSMO",
+      "recapSlot": "Créneau bloqué : {{when}}",
+      "statsTitle": "Vos statistiques, cette semaine",
+      "statsToday_one": "{{count}} élément posé aujourd'hui : votre semaine commence.",
+      "statsToday_many": "{{count}} d'éléments posés aujourd'hui : votre semaine commence.",
+      "statsToday_other": "{{count}} éléments posés aujourd'hui : votre semaine commence.",
+      "statsEmpty": "Elles se rempliront dès votre première tâche cochée.",
+      "nextTitle": "Par où commencer",
+      "goTasks": "Voir mes tâches",
+      "goAgenda": "Ouvrir l'agenda",
+      "goHabits": "Voir mes habitudes"
+    },
+    "motion": {
+      "play": "Animer",
+      "stop": "Arrêter l'animation"
     }
   },
   "ent": {
@@ -144,10 +179,13 @@
     },
     "pending": {
       "title": "Demande <em>envoyée</em>.",
-      "body": "Un administrateur doit l'accepter. Cette page se met à jour toute seule. En attendant, voici comment fonctionne votre futur espace.",
+      "body": "Un administrateur doit l'accepter. Cette page se met à jour toute seule.",
       "cancel": "Annuler la demande",
       "cancelled": "Demande annulée",
-      "tourLabel": "Votre futur espace en quatre lieux"
+      "tourLabel": "En attendant, votre futur espace en quatre lieux",
+      "bodyNamed": "Votre demande est partie vers {{org}}. Un administrateur doit l'accepter ; cette page se met à jour toute seule.",
+      "since": "Envoyée {{when}}",
+      "noAnswer": "Pas de réponse ? Prévenez la personne qui vous a donné le code : votre demande l'attend dans son espace entreprise. Vous pouvez aussi annuler et saisir un autre code."
     },
     "places": {
       "overviewTitle": "Aperçu",
@@ -177,7 +215,7 @@
     "invite": {
       "kicker": "Les personnes",
       "title": "Qui travaille <em>avec vous</em> ?",
-      "body": "Chaque personne invitée reçoit un e-mail avec un lien personnel, que seule elle peut accepter. Vous la placerez ensuite dans l'organigramme, sous son manager.",
+      "body": "Chaque personne invitée reçoit un e-mail avec un lien personnel, que seule elle peut accepter. Vous pouvez dès maintenant la rattacher à votre équipe et la placer sous vous dans l'organigramme.",
       "label": "Adresses e-mail",
       "hint": "Séparez les adresses par une virgule, un espace ou un retour à la ligne.",
       "cta_one": "Envoyer l'invitation",
@@ -194,7 +232,10 @@
       "codeHint": "Quiconque le saisit vous envoie une demande, que vous acceptez ou non.",
       "copy": "Copier le code",
       "copied": "Code copié",
-      "copyFailed": "Copie impossible, sélectionnez le code à la main."
+      "copyFailed": "Copie impossible, sélectionnez le code à la main.",
+      "placementLegend": "Où placer les personnes invitées",
+      "joinTeam": "Les ajouter à l'équipe « {{team}} »",
+      "underMe": "Les placer sous moi dans l'organigramme"
     },
     "team": {
       "kicker": "Les équipes",
@@ -228,7 +269,8 @@
       "targetLabel": "Cible (facultatif)",
       "targetPlaceholder": "Ex. 20",
       "hint": "Sur les trois prochains mois. D'autres résultats clés s'ajoutent ensuite, dans OKR.",
-      "cta": "Fixer le cap"
+      "cta": "Fixer le cap",
+      "krNeeded": "Ajoutez un résultat clé : c'est lui qui rend l'objectif mesurable, et COSMO en demande au moins un."
     },
     "done": {
       "title": "{{name}} est <em>prête</em>.",

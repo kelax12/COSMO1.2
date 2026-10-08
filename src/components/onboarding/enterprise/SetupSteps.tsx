@@ -47,12 +47,17 @@ type TemplateKey = (typeof BUILT_IN_TEMPLATES)[number]['key'];
 export const InviteStep = ({
   orgId,
   joinCode,
+  team,
+  currentUserId,
   onDraft,
   onDone,
   onSkip,
 }: {
   orgId: string;
   joinCode?: string;
+  /** Équipe à laquelle rattacher les invitations (créée juste avant), s'il y en a une. */
+  team: { id: string; name: string } | null;
+  currentUserId?: string;
   onDraft: (emails: string[]) => void;
   onDone: (invited: string[]) => void;
   onSkip: () => void;
@@ -60,6 +65,11 @@ export const InviteStep = ({
   const { t, tp } = useT('onboarding');
   const invite = useInviteByEmail(orgId);
   const [raw, setRaw] = useState('');
+  // Les invitations partaient sans équipe ni manager, et il fallait replacer
+  // chaque personne ailleurs, plus tard (relevé le 2026-10-04). Les deux
+  // rattachements sont proposés, cochés, et décochables.
+  const [joinTeam, setJoinTeam] = useState(true);
+  const [underMe, setUnderMe] = useState(true);
   const [sent, setSent] = useState<{ emails: string[]; unavailable: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
   const emails = useMemo(() => splitEmails(raw), [raw]);
@@ -109,6 +119,31 @@ export const InviteStep = ({
             />
           </div>
           <p className="mt-2 text-label text-[#8B96A8]">{t('ent.invite.hint')}</p>
+          <fieldset className="mt-4 space-y-2">
+            <legend className="sr-only">{t('ent.invite.placementLegend')}</legend>
+            {team && (
+              <label className="flex cursor-pointer items-start gap-3 text-sm text-[#C9D2DE]">
+                <input
+                  type="checkbox"
+                  checked={joinTeam}
+                  onChange={(e) => setJoinTeam(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#22D3EE]"
+                />
+                {t('ent.invite.joinTeam', { team: team.name })}
+              </label>
+            )}
+            {currentUserId && (
+              <label className="flex cursor-pointer items-start gap-3 text-sm text-[#C9D2DE]">
+                <input
+                  type="checkbox"
+                  checked={underMe}
+                  onChange={(e) => setUnderMe(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#22D3EE]"
+                />
+                {t('ent.invite.underMe')}
+              </label>
+            )}
+          </fieldset>
         </>
       )}
 
@@ -151,7 +186,12 @@ export const InviteStep = ({
             disabled={emails.length === 0 || invite.isPending}
             onClick={() =>
               invite.mutate(
-                { emails, managerId: null, teamIds: [], accessDays: null },
+                {
+                  emails,
+                  managerId: underMe && currentUserId ? currentUserId : null,
+                  teamIds: joinTeam && team ? [team.id] : [],
+                  accessDays: null,
+                },
                 {
                   onSuccess: ({ results, sending }) =>
                     setSent({
@@ -309,28 +349,44 @@ export const ProjectStep = ({
         <legend className={`mb-2 ${ENT_LABEL}`}>{t('ent.project.templateLegend')}</legend>
         {BUILT_IN_TEMPLATES.map((tpl) => {
           const active = templateKey === tpl.key;
+          const listId = `setup-template-tasks-${tpl.key}`;
           return (
-            <label
+            <div
               key={tpl.key}
-              className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition-colors ${
+              className={`rounded-2xl border px-4 py-3 transition-colors ${
                 active ? 'border-[#22D3EE]/70 bg-[#22D3EE]/[0.06]' : 'border-[#1F2530] bg-[#0E1116] hover:border-[#2D3542]'
               }`}
             >
-              <input
-                type="radio"
-                name="setup-template"
-                value={tpl.key}
-                checked={active}
-                onChange={() => setTemplateKey(tpl.key)}
-                className="h-4 w-4 shrink-0 accent-[#22D3EE]"
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block text-body font-semibold text-[#EDF2F7]">{templateLabel(tpl.key)}</span>
-                <span className="block font-data text-caption text-[#8B96A8]">
-                  {t('ent.project.templateMeta', { tasks: tpl.tasks.length, days: tpl.durationDays })}
+              <label className="flex cursor-pointer items-center gap-3">
+                <input
+                  type="radio"
+                  name="setup-template"
+                  value={tpl.key}
+                  checked={active}
+                  onChange={() => setTemplateKey(tpl.key)}
+                  aria-describedby={active ? listId : undefined}
+                  className="h-4 w-4 shrink-0 accent-[#22D3EE]"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-body font-semibold text-[#EDF2F7]">{templateLabel(tpl.key)}</span>
+                  <span className="block font-data text-caption text-[#8B96A8]">
+                    {t('ent.project.templateMeta', { tasks: tpl.tasks.length, days: tpl.durationDays })}
+                  </span>
                 </span>
-              </span>
-            </label>
+              </label>
+              {/* Le modèle choisi montre ses tâches (on choisissait à l'aveugle
+                  entre deux noms, relevé le 2026-10-04). HORS du <label> : dedans,
+                  la liste entrait dans le nom accessible du bouton radio. */}
+              {active && (
+                <ul id={listId} className="ml-7 mt-2 space-y-1 border-l border-[#2D3542] pl-3">
+                  {tpl.tasks.map((task) => (
+                    <li key={task.key} className="text-label text-[#C9D2DE]">
+                      {pf(`builtIn.${task.key}` as 'builtIn.sprint')}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           );
         })}
       </fieldset>
@@ -449,6 +505,11 @@ export const ObjectiveStep = ({
         </div>
       </div>
       <p className="mt-3 text-label text-[#8B96A8]">{t('ent.objective.hint')}</p>
+      {objective.trim() && !keyResult.trim() && (
+        <p role="status" className="mt-2 text-label text-[#F5B942]">
+          {t('ent.objective.krNeeded')}
+        </p>
+      )}
       <EntActions>
         <button type="button" onClick={onSkip} disabled={createOkr.isPending} className={ENT_LINK}>
           {t('common.skipStep')}

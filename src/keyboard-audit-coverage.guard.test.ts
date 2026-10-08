@@ -126,11 +126,11 @@ const NON_MESUREES: Record<string, string> = {
     + 'feuilles ci-dessus, et quatre de ses consommatrices sont mesurées.',
   'components/onboarding/enterprise/MemberWelcome.tsx':
     'inatteignable en démo par conception (jamais en démo, 2026-10-03). Hors démo, '
-    + '`e2e/stubbed/org-onboarding.spec.ts` vérifie le focus d entrée et la sortie par Échap ; '
-    + 'le piège de Tab, lui, n est pas mesuré : dette.',
+    + '`e2e/stubbed/org-onboarding.spec.ts` mesure le focus d entrée, le piège de Tab (25 Tab) '
+    + 'et la sortie par Échap (2026-10-05), sur chromium seulement.',
   'components/onboarding/FirstRunSetup.tsx':
-    'inatteignable en démo par conception (`!isDemo`) — c est même le parcours '
-    + 'qui a motivé la création du project `supabase-stub`.',
+    'inatteignable en démo par conception (`!isDemo`). Hors démo, '
+    + '`e2e/stubbed/first-run.spec.ts` mesure le piège de Tab (25 Tab) depuis le 2026-10-05.',
   'components/organization/AssignEventDialog.tsx': 'mode entreprise.',
   'components/organization/AssignTaskSheet.tsx': 'mode entreprise.',
   'components/organization/CreateTeamModal.tsx': 'mode entreprise.',
