@@ -151,7 +151,7 @@ const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
   return (
     // `min-w-0` : second enfant de la même grille que « Mes tâches », donc
     // même borne `min-width: auto` à lever (cf. maquette 105 juste en dessous).
-    <div className="min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+    <div data-testid="org-agenda-card" className="min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
         {tOrgAdmin('myWork.agendaSection')}
       </h3>
