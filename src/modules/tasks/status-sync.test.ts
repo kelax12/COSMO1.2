@@ -55,6 +55,13 @@ describe('applyStatusSync', () => {
     expect(applyStatusSync(todo, { name: 'x' }, NOW)).toEqual({ name: 'x' });
   });
 
+  it('ligne sans statut (avant la mig. 214) : cocher ou décocher n’invente pas de statut', () => {
+    expect(applyStatusSync({ completed: false }, { completed: true, completedAt: NOW }, NOW))
+      .toEqual({ completed: true, completedAt: NOW });
+    expect(applyStatusSync({ completed: true, completedAt: NOW }, { completed: false }, NOW))
+      .toEqual({ completed: false, completedAt: undefined });
+  });
+
   it('ligne ancienne terminée (sans statut) ramenée à todo : décochée', () => {
     expect(applyStatusSync({ completed: true }, { status: 'todo' }, NOW))
       .toEqual({ status: 'todo', completed: false, completedAt: undefined });

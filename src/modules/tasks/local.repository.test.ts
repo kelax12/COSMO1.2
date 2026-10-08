@@ -244,3 +244,50 @@ describe('dépendances', () => {
     expect(await repo.getDependencies()).toEqual([]);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Statut ↔ terminée (mig. 214) : la démo applique la règle du trigger.
+// Sans ça, le Tableau afficherait juste en démo et faux en prod, ou l'inverse.
+// ═══════════════════════════════════════════════════════════════════
+describe('statut et état (mig. 214)', () => {
+  const base = {
+    name: 'Carte', priority: 3, category: '', deadline: '', estimatedTime: 0,
+    bookmarked: false, completed: false,
+  };
+
+  it('create pose un statut cohérent avec completed', async () => {
+    await repo.getAll();
+    expect((await repo.create(base)).status).toBe('todo');
+    expect((await repo.create({ ...base, completed: true })).status).toBe('done');
+    expect((await repo.create({ ...base, status: 'in_progress' })).status).toBe('in_progress');
+  });
+
+  it('update vers done coche la tâche, en sortir la décoche', async () => {
+    await repo.getAll();
+    const t = await repo.create(base);
+    const done = await repo.update(t.id, { status: 'done' });
+    expect(done).toMatchObject({ completed: true, status: 'done' });
+    expect(done.completedAt).toBeTruthy();
+    const back = await repo.update(t.id, { status: 'blocked' });
+    expect(back).toMatchObject({ completed: false, status: 'blocked', completedAt: undefined });
+  });
+
+  it('update de l’état seul ne touche pas au statut', async () => {
+    await repo.getAll();
+    const t = await repo.create({ ...base, status: 'blocked' });
+    expect(await repo.update(t.id, { health: 'at_risk' })).toMatchObject({ status: 'blocked', health: 'at_risk' });
+  });
+
+  it('toggleComplete suit le statut, et l’occurrence générée naît todo sans état', async () => {
+    await repo.getAll();
+    const t = await repo.create({
+      ...base, deadline: '2026-10-08', recurrence: 'daily', status: 'blocked', health: 'off_track',
+    });
+    const { task, spawned } = await repo.toggleComplete(t.id, '2026-10-09');
+    expect(task.status).toBe('done');
+    expect(spawned).toMatchObject({ status: 'todo', completed: false });
+    expect(spawned?.health).toBeUndefined();
+    const { task: reopened } = await repo.toggleComplete(t.id, null);
+    expect(reopened.status).toBe('todo');
+  });
+});
