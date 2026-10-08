@@ -71,7 +71,9 @@ sont un `update({ status })` ; le trigger remet `completed` d'accord.
     cliquable. Un clic ouvre la fiche existante.
   - « + » en tête de colonne : crée une tâche née dans ce statut.
   - Tâche partagée en lecture seule : pas de glisser, et la carte le dit au survol.
-- **Fiche tâche** (bureau et mobile) : champs Statut et État.
+- **Fiche tâche** (bureau et mobile) : champs Statut et État **en édition**, enregistrés à chaque
+  choix comme la checklist. À la création, une tâche naît `todo` (sauf depuis le « + » d'une
+  colonne). Précisé au plan : `useTaskModal.ts` est à 577 lignes pour un plafond de 600.
 - **Vue Liste** : étiquette « En cours » / « Bloquée » quand le statut n'est ni `todo` ni `done`,
   pastille d'État quand elle est posée.
 - **Fichiers** : nouveau dossier `src/components/task-board/`. `TaskTable.tsx` est à 599 lignes et
