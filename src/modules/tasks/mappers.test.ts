@@ -136,9 +136,13 @@ describe('statut et état (mig. 214)', () => {
       .toMatchObject({ status: 'blocked', health: 'at_risk' });
   });
 
-  it('ligne antérieure à la migration : statut déduit de completed, sans état', () => {
-    expect(mapTaskFromDb({ ...baseRow, completed: true }).status).toBe('done');
-    expect(mapTaskFromDb({ ...baseRow, completed: false }).status).toBe('todo');
+  // Un statut fabriqué à la lecture repartirait en base avec la tâche entière
+  // (« Annuler », dupliquer), y compris avant que la colonne n'existe.
+  it('ligne antérieure à la migration : ni statut ni état inventés', () => {
+    const t = mapTaskFromDb({ ...baseRow, completed: true });
+    expect(t.status).toBeUndefined();
+    expect(t.health).toBeUndefined();
+    expect('status' in mapTaskToDb(t)).toBe(false);
     expect(mapTaskFromDb({ ...baseRow, health: null }).health).toBeUndefined();
   });
 

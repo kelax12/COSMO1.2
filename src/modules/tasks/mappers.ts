@@ -85,9 +85,12 @@ export function mapTaskFromDb(row: TaskRow): Task {
     pendingInvites: row.pending_invites || [],
     collaboratorValidations: row.collaborator_validations || {},
     userId: row.user_id,
-    // Mig. 214. Une ligne servie avant la migration n'a pas de statut : on le
-    // déduit de `completed`, qui reste le champ canonique de « terminée ».
-    status: (row.status as TaskStatus | null | undefined) ?? (row.completed ? 'done' : 'todo'),
+    // Mig. 214. 🔴 On ne DÉDUIT PAS le statut ici, on rend ce que la base a
+    // servi. Une tâche lue repart entière dans plusieurs écritures (« Annuler »
+    // une suppression, dupliquer) : un statut fabriqué à la lecture y
+    // partirait en base, et avant l'application de la migration la colonne
+    // n'existe pas, donc l'écriture échouerait. Lire par `effectiveStatus()`.
+    status: (row.status as TaskStatus | null | undefined) ?? undefined,
     health: (row.health as TaskHealth | null | undefined) ?? undefined,
   };
 }
