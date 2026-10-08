@@ -741,6 +741,20 @@ carte des six lieux. `MemberWelcome` accueille qui arrive sans être passé par 
 - Tailles de texte : l'échelle du projet uniquement (garde `design-system.guard.test.ts`, stock de
   `text-[Npx]` plafonné).
 
+**Corrigé le 2026-10-05**, après une revue honnête de ses points faibles : retour arrière (une
+étape faite s'affiche enregistrée, rien n'est recréé) ; un VRAI créneau d'agenda, facultatif,
+relié à la première tâche ; l'aperçu sous le formulaire sur téléphone ; la durée de l'habitude
+choisie ; une cible chiffrée facultative au résultat clé ; un bilan avec une carte de
+statistiques et des sorties concrètes (tâches, agenda, habitudes) ; le thème de l'app suivi (plus
+d'éclair blanc en thème Noir) ; un bouton « Animer » sous mouvement réduit (WCAG 2.3.3 interdit le
+mouvement non demandé, pas le mouvement) ; un rappel de l'entreprise remise à plus tard. Côté
+entreprise : équipe AVANT invitations, pour que l'invitation emporte l'équipe et le manager ;
+constellation redessinée depuis les vraies données après un rechargement ; tâches du modèle de
+projet visibles ; résultat clé manquant expliqué ; attente nommée et datée ; toasts sombres ;
+reprise de l'assistant à la première étape non faite depuis l'Aperçu.
+⚠️ **Mesure** : la mig. `213` (`get_admin_onboarding_funnel`, carte « Accueils » de la console
+admin) est ÉCRITE, NON appliquée. Tant qu'elle dort, la carte le dit au lieu d'afficher des zéros.
+
 Le sélecteur de modules a été supprimé le 2026-08-23 (`acf29b7`) : Agenda, Habitudes, OKR et
 Statistiques sont visibles par tout le monde. `cosmo_onboarding_examples_created` (ancien accueil à
 trois tâches d'exemple, écrites en dur en français) reste LU, jamais écrit.

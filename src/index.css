@@ -82,6 +82,28 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* Geist Mono (SIL OFL 1.1, variable 100-900, licence dans public/fonts/),
+   auto-hébergée le 2026-10-05 : même cas qu'Instrument Serif, déclarée par
+   `tailwind.config.js` (`font-data`) sans jamais être servie, donc rendue en
+   `ui-monospace` (Consolas sous Windows). Mêmes règles : pas de
+   préchargement, latin déclaré en dernier. */
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/geist-mono-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/geist-mono-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -1417,67 +1439,70 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
 }
 
 /* ────── DARK MODE ────── */
-/* data-theme="dark" = Sonner OS detection ; .dark = toggle classe app */
+/* data-sonner-theme="dark" = thème du <Toaster> ; .dark = toggle classe app.
+   🔴 Ces règles visaient `data-theme`, attribut que Sonner ne pose PAS (il pose
+   `data-sonner-theme`) : la branche n'a jamais rien coloré, et un toast restait
+   clair sur l'accueil entreprise, qui force un Toaster sombre (2026-10-08). */
 
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="success"],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="success"],
 .dark [data-sonner-toast][data-type="success"] {
   background: #052e1c !important;
   border-color: rgba(52, 211, 153, 0.45) !important;
   box-shadow: 0 6px 24px rgba(52, 211, 153, 0.12), 0 2px 8px rgba(0, 0, 0, 0.35) !important;
 }
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="success"] [data-title],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="success"] [data-title],
 .dark [data-sonner-toast][data-type="success"] [data-title]       { color: #a7f3d0 !important; }
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="success"] [data-description],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="success"] [data-description],
 .dark [data-sonner-toast][data-type="success"] [data-description] { color: #6ee7b7 !important; }
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="success"] [data-icon],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="success"] [data-icon],
 .dark [data-sonner-toast][data-type="success"] [data-icon] {
   background: rgba(52, 211, 153, 0.15) !important;
   color: #34d399 !important;
 }
 
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="error"],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="error"],
 .dark [data-sonner-toast][data-type="error"] {
   background: #2a0f0f !important;
   border-color: rgba(248, 113, 113, 0.4) !important;
   box-shadow: 0 6px 24px rgba(248, 113, 113, 0.12), 0 2px 8px rgba(0, 0, 0, 0.35) !important;
 }
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="error"] [data-title],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="error"] [data-title],
 .dark [data-sonner-toast][data-type="error"] [data-title]       { color: #fecaca !important; }
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="error"] [data-description],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="error"] [data-description],
 .dark [data-sonner-toast][data-type="error"] [data-description] { color: #fca5a5 !important; }
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="error"] [data-icon],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="error"] [data-icon],
 .dark [data-sonner-toast][data-type="error"] [data-icon] {
   background: rgba(248, 113, 113, 0.15) !important;
   color: #f87171 !important;
 }
 
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="info"],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="info"],
 .dark [data-sonner-toast][data-type="info"] {
   background: #0c1a3a !important;
   border-color: rgba(96, 165, 250, 0.4) !important;
   box-shadow: 0 6px 24px rgba(96, 165, 250, 0.12), 0 2px 8px rgba(0, 0, 0, 0.35) !important;
 }
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="info"] [data-title],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="info"] [data-title],
 .dark [data-sonner-toast][data-type="info"] [data-title]       { color: #bfdbfe !important; }
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="info"] [data-description],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="info"] [data-description],
 .dark [data-sonner-toast][data-type="info"] [data-description] { color: #93c5fd !important; }
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="info"] [data-icon],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="info"] [data-icon],
 .dark [data-sonner-toast][data-type="info"] [data-icon] {
   background: rgba(96, 165, 250, 0.15) !important;
   color: #60a5fa !important;
 }
 
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="warning"],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="warning"],
 .dark [data-sonner-toast][data-type="warning"] {
   background: #1c1200 !important;
   border-color: rgba(251, 191, 36, 0.4) !important;
   box-shadow: 0 6px 24px rgba(251, 191, 36, 0.10), 0 2px 8px rgba(0, 0, 0, 0.35) !important;
 }
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="warning"] [data-title],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="warning"] [data-title],
 .dark [data-sonner-toast][data-type="warning"] [data-title]       { color: #fde68a !important; }
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="warning"] [data-description],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="warning"] [data-description],
 .dark [data-sonner-toast][data-type="warning"] [data-description] { color: #fcd34d !important; }
-[data-sonner-toaster][data-theme="dark"] [data-sonner-toast][data-type="warning"] [data-icon],
+[data-sonner-toaster][data-sonner-theme="dark"] [data-sonner-toast][data-type="warning"] [data-icon],
 .dark [data-sonner-toast][data-type="warning"] [data-icon] {
   background: rgba(251, 191, 36, 0.15) !important;
   color: #fbbf24 !important;

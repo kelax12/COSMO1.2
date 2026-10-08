@@ -729,8 +729,9 @@ Mesuré dans Chromium headless, `/entreprise-presentation` à 1440 × 900 :
   (latin en dernier, cf. la règle ci-dessus sur le chevauchement U+0152-0153).
 - ❌ **Pas de préchargement dans `index.html`** : la police ne sert qu'au parcours entreprise de la
   landing et aux deux accueils ; la précharger ferait payer ~21 ko à chaque visiteur de l'app.
-- ⚠️ `font-data` (`"Geist Mono"`) est dans le même cas qu'Instrument Serif avant ce correctif :
-  déclarée, jamais servie, rendue en `ui-monospace` (Consolas sous Windows).
+- ✅ `font-data` (`"Geist Mono"`) était dans le même cas : déclarée, jamais servie, rendue en
+  `ui-monospace` (Consolas sous Windows). Auto-hébergée le 2026-10-05 (variable 100-900, latin
+  23 ko, latin-ext 15 ko, mêmes règles).
 
 Réencodage reproductible : `npm run images:check` (mesure) puis
 `node scripts/optimize-images.mjs`.

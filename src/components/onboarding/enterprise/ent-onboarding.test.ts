@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createTeamOKRSchema } from '@/modules/team-okrs/team-okr.schema';
-import { buildCompanyOkrInput, markMemberWelcomeSeen, readMemberWelcomeSeen } from './ent-onboarding';
+import {
+  buildCompanyOkrInput,
+  joinedSinceWelcome,
+  markMemberWelcomeSeen,
+  readJoinRequestOrg,
+  readMemberWelcomeSeen,
+  rememberJoinRequestOrg,
+} from './ent-onboarding';
 import { NORTH, PEOPLE_SLOTS, PROJECT, SKY, TEAM_HULL, YOU, clip, initials, personInitial, starField } from './constellation-geometry';
 
 describe('buildCompanyOkrInput (étoile polaire)', () => {
@@ -85,5 +92,25 @@ describe('constellation : géométrie', () => {
     expect(personInitial('lea@nova.fr')).toBe('L');
     expect(clip('Nova Studio', 40)).toBe('Nova Studio');
     expect(clip('Une entreprise au nom vraiment très long', 12)).toBe('Une entrepr…');
+  });
+});
+
+describe('ajouts du 2026-10-05', () => {
+  it('l accueil membre ne vise que les personnes arrivées depuis sa sortie', () => {
+    const members = [
+      { userId: 'old', joinedAt: '2026-09-01T10:00:00+00:00' },
+      { userId: 'new', joinedAt: '2026-10-04T08:12:00.123456+00:00' },
+    ];
+    expect(joinedSinceWelcome(members, 'new')).toBe(true);
+    expect(joinedSinceWelcome(members, 'old')).toBe(false);
+    // Annuaire pas encore chargé : on ne sait pas, donc on n'ouvre rien.
+    expect(joinedSinceWelcome([], 'new')).toBe(false);
+  });
+
+  it('l attente se souvient de l entreprise visée', () => {
+    localStorage.clear();
+    expect(readJoinRequestOrg()).toBe('');
+    rememberJoinRequestOrg('Nova Studio');
+    expect(readJoinRequestOrg()).toBe('Nova Studio');
   });
 });

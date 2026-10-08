@@ -23,80 +23,114 @@
       "hello": "Hello {{name}}.",
       "helloAnon": "Hello.",
       "title": "Let's build your <em>system</em>.",
-      "body": "COSMO brings together what you have to do, when you do it, what you want to keep up and where you are heading. Four steps are enough to set it in motion, and whatever you write becomes your real data.",
+      "body": "COSMO brings your tasks, calendar, habits and goals together. In four steps you write down what is on your mind, fit it into your week, and pick a habit and a goal. Everything you write is saved.",
       "duration": "Two minutes · everything is optional",
       "cta": "Get started",
       "legendTitle": "The four orbits of COSMO",
       "legendTasks": "what you have to do",
       "legendAgenda": "when you do it",
       "legendHabits": "what you keep up every day",
-      "legendOkr": "where you are heading"
+      "legendOkr": "where you are heading",
+      "businessTitle": "Your company space is waiting",
+      "businessBody": "You started setting up a company space. You can pick it up now, or later from the Company entry in the menu.",
+      "businessCta": "Resume my company"
     },
     "tasks": {
       "title": "What do you need to do this week?",
-      "body": "Everything starts with a task: one precise thing, checked off once done. Write down what is on your mind. Priority, category and due date can come later.",
+      "body": "Everything starts with a task: one specific thing you check off once it's done. Write down what's on your mind. Priority, category and due date can come later.",
       "placeholder": "e.g. Call the accountant",
       "listLabel": "Tasks to create",
       "idea1": "Answer pending emails",
       "idea2": "Prepare Monday's meeting",
-      "idea3": "Do the groceries",
+      "idea3": "Get groceries",
       "limit": "Five to start with is plenty.",
       "tip": "In COSMO, the N key adds a task from any page.",
       "previewTitle": "Your list",
-      "previewEmpty": "Your tasks will show up here as you type."
+      "previewEmpty": "Your tasks will show up here as you type.",
+      "alreadyCreated": "Already in your list",
+      "alreadyHint": "You can edit them in Tasks. Add more if you like."
     },
     "agenda": {
       "title": "Give your tasks a <em>place</em>.",
-      "body": "The calendar shows your week hour by hour. Drop a task onto it: it becomes a time slot, and you finally know when you will do it.",
-      "point1": "Drag a task from the calendar's side list.",
+      "body": "The calendar shows your week hour by hour. Put a task on it and it becomes a time slot, so you know exactly when you'll do it.",
+      "point1": "Drag a task from the calendar's side panel.",
       "point2": "Stretch the slot to give it its real duration.",
       "point3": "A task without a slot stays in your list: nothing gets lost.",
       "cta": "Got it",
       "fallbackTask": "Prepare the presentation",
-      "previewCaption": "One task, one slot."
+      "previewCaption": "One task, one slot.",
+      "slotTitle": "Block an hour for “{{name}}”?",
+      "slotHint": "Optional. The slot will show up in your calendar, linked to the task.",
+      "slotDay": "Day of the slot",
+      "slotHour": "Time of the slot",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "slotCreated": "Slot booked: {{when}}.",
+      "noTask": "Add a task in the previous step to try it with your own.",
+      "ctaSlot": "Book this slot"
     },
     "habits": {
       "title": "A habit you want to keep up?",
-      "body": "A habit gets checked every day you keep it. COSMO counts your streak and shows you, week after week, what you really stick to.",
+      "body": "Tick a habit off every day you keep it. COSMO tracks your streak and shows you, week after week, what you really stick to.",
       "placeholder": "e.g. Walk for 30 minutes",
       "idea1": "Read for 20 minutes",
       "idea2": "Walk for 30 minutes",
       "idea3": "Meditate for 10 minutes",
       "idea4": "Go to bed before 11 pm",
       "previewFallback": "Your habit",
-      "previewDaily": "Every day",
       "previewStreak": "Your streak starts today",
-      "previewCaption": "Every checked box makes the streak longer."
+      "previewCaption": "Every checked box makes the streak longer.",
+      "durationLabel": "How long, each day?",
+      "minutes": "{{minutes}} min",
+      "previewEvery": "{{minutes}} min · every day",
+      "alreadyCreated": "Habit added: {{name}}. You can edit it in Habits."
     },
     "okr": {
       "title": "A goal for the next three months?",
-      "body": "A goal sets the direction. The key result, optional, says how you will know you got there. Link your tasks to it: each one you finish moves the gauge.",
+      "body": "A goal sets the direction. The key result, optional, tells you how you'll know you got there. Link your tasks to it: each one you finish moves the gauge.",
       "placeholder": "e.g. Launch v2 of the product",
       "krLabel": "Key result (optional)",
       "krPlaceholder": "e.g. Publish the sales page",
       "previewFallback": "Your goal",
       "previewKrFallback": "Your key result",
       "previewPeriod": "Over 90 days",
-      "previewCaption": "A linked task gets done, and the gauge moves."
+      "previewCaption": "A linked task gets done, and the gauge moves.",
+      "targetLabel": "Target (optional)",
+      "targetPlaceholder": "e.g. 10",
+      "targetHint": "Without a number, the key result is simply ticked off once reached.",
+      "alreadyCreated": "Goal added: {{name}}. You can flesh it out in Goals."
     },
     "done": {
-      "title": "Your system is <em>in orbit</em>.",
-      "body": "Every task checked off and every habit kept feeds your statistics: your week, your streaks and the progress of your goals take shape there.",
+      "title": "Your system is <em>up and running</em>.",
+      "body": "Everything you created is already in COSMO. Every task you tick off and every habit you keep feeds your statistics.",
       "recapTitle": "What you just created",
       "recapTasks_one": "{{count}} task in your list",
       "recapTasks_other": "{{count}} tasks in your list",
       "recapHabit": "Habit tracked: {{name}}",
       "recapOkr": "Goal: {{name}}",
       "recapNothing": "Nothing yet, and that is fine: everything can be added in one move from the app.",
-      "next": "Each page will show you its moves the first time you open it.",
-      "cta": "Enter COSMO"
+      "next": "Each page will walk you through its main moves the first time you open it.",
+      "cta": "Enter COSMO",
+      "recapSlot": "Slot booked: {{when}}",
+      "statsTitle": "Your statistics, this week",
+      "statsToday_one": "{{count}} item added today: your week is underway.",
+      "statsToday_other": "{{count}} items added today: your week is underway.",
+      "statsEmpty": "They will fill up as soon as you tick off your first task.",
+      "nextTitle": "Where to start",
+      "goTasks": "See my tasks",
+      "goAgenda": "Open the calendar",
+      "goHabits": "See my habits"
+    },
+    "motion": {
+      "play": "Animate",
+      "stop": "Stop the animation"
     }
   },
   "ent": {
     "badge": "Company",
     "stage": {
       "you": "You",
-      "north": "Company heading",
+      "north": "Company goal",
       "team": "Team",
       "project": "Project",
       "orgFallback": "Your company",
@@ -104,13 +138,13 @@
     },
     "welcome": {
       "title": "Your company, <em>aligned</em>.",
-      "body": "COSMO for companies connects the company's heading to everyone's work. In a few minutes you set up the essentials: people, teams, projects and a shared goal.",
+      "body": "COSMO for companies connects the company's goals to everyone's work. In a few minutes you set up the essentials: people, teams, projects and a shared goal.",
       "pillarsLabel": "What COSMO for companies changes",
       "p1Title": "Everyone knows what to do",
       "p1Body": "Assigned tasks land in each person's Tasks tab, with their project and due date.",
       "p2Title": "Every manager sees their scope",
       "p2Body": "The org chart says who manages whom: a manager follows the work in their scope, and only that.",
-      "p3Title": "Everyone follows the same heading",
+      "p3Title": "Everyone pulls in the same direction",
       "p3Body": "Company goals break down into team goals, and each key result moves with the work actually done.",
       "choiceLabel": "How would you like to start?",
       "create": "Create my company",
@@ -142,10 +176,13 @@
     },
     "pending": {
       "title": "Request <em>sent</em>.",
-      "body": "An admin has to accept it. This page updates on its own. Meanwhile, here is how your future space works.",
+      "body": "An admin has to accept it. This page updates on its own.",
       "cancel": "Cancel the request",
       "cancelled": "Request cancelled",
-      "tourLabel": "Your future space in four places"
+      "tourLabel": "Meanwhile, your future space in four places",
+      "bodyNamed": "Your request was sent to {{org}}. An admin has to accept it; this page updates on its own.",
+      "since": "Sent {{when}}",
+      "noAnswer": "No answer yet? Let the person who gave you the code know: your request is waiting in their company space. You can also cancel and enter another code."
     },
     "places": {
       "overviewTitle": "Overview",
@@ -155,7 +192,7 @@
       "projectsTitle": "Projects",
       "projectsBody": "Each project carries its tasks, its owner, its milestones and its end date, as a list, a board or a timeline.",
       "okrTitle": "OKRs",
-      "okrBody": "The heading of the company and its teams, and how far there is still to go.",
+      "okrBody": "The company's and teams' goals, and how far there is still to go.",
       "pyramidTitle": "Org chart",
       "pyramidBody": "Who manages whom. It decides what each manager can see.",
       "membersTitle": "Members",
@@ -167,7 +204,7 @@
       "invite": "Invites",
       "team": "Team",
       "project": "Project",
-      "objective": "Heading",
+      "objective": "Goal",
       "stateDone": "done",
       "stateCurrent": "in progress",
       "stateTodo": "to come"
@@ -175,7 +212,7 @@
     "invite": {
       "kicker": "People",
       "title": "Who works <em>with you</em>?",
-      "body": "Each invited person gets an email with a personal link that only they can accept. You will then place them in the org chart, under their manager.",
+      "body": "Each invited person gets an email with a personal link that only they can accept. You can add them to your team right away and place them under you in the org chart.",
       "label": "Email addresses",
       "hint": "Separate addresses with a comma, a space or a line break.",
       "cta_one": "Send the invitation",
@@ -189,7 +226,10 @@
       "codeHint": "Anyone who enters it sends you a request, which you accept or not.",
       "copy": "Copy the code",
       "copied": "Code copied",
-      "copyFailed": "Could not copy, select the code by hand."
+      "copyFailed": "Could not copy, select the code by hand.",
+      "placementLegend": "Where to place the people you invite",
+      "joinTeam": "Add them to the “{{team}}” team",
+      "underMe": "Place them under me in the org chart"
     },
     "team": {
       "kicker": "Teams",
@@ -213,7 +253,7 @@
       "cta": "Create the project"
     },
     "objective": {
-      "kicker": "The heading",
+      "kicker": "The goal",
       "title": "What is your <em>north star</em>?",
       "body": "A company goal is visible to everyone. Each team can attach its own goals to it, and its key result says how you will know you got there.",
       "objectiveLabel": "Company goal",
@@ -223,7 +263,8 @@
       "targetLabel": "Target (optional)",
       "targetPlaceholder": "e.g. 20",
       "hint": "Over the next three months. More key results can be added later, in OKRs.",
-      "cta": "Set the heading"
+      "cta": "Set the goal",
+      "krNeeded": "Add a key result: it is what makes the goal measurable, and COSMO needs at least one."
     },
     "done": {
       "title": "{{name}} is <em>ready</em>.",
@@ -233,7 +274,7 @@
       "invited_other": "{{count}} people invited",
       "team": "Team “{{name}}” created",
       "project": "Project “{{name}}” launched",
-      "objective": "Heading set: “{{name}}”",
+      "objective": "Goal set: “{{name}}”",
       "nothing": "Nothing created yet: everything can also be done from the company space.",
       "mapTitle": "What awaits you",
       "cta": "Open the company space"

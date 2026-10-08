@@ -97,5 +97,21 @@
   "supportOldest": "The oldest unanswered report has been waiting {{days}} day(s).",
   "supportAllAnswered": "Every report has had a reply.",
   "supportMedian": "Median time to first reply: {{hours}} h.",
-  "supportNoResponseRecorded": "No reply date recorded: it is set by hand, since the reply goes out from a mailbox."
+  "supportNoResponseRecorded": "No reply date recorded: it is set by hand, since the reply goes out from a mailbox.",
+  "onboarding": "Onboarding (last 30 days)",
+  "onboardingNote": "What new accounts create within 24 h of signing up, and what happens to newly created companies. Migration 213.",
+  "onboardingNotInstalled": "Measurement not installed: migration 213 has not been applied.",
+  "onboardingNone": "No signups or companies over the period.",
+  "onboardingSignups": "Signups",
+  "onboardingTask": "With a task",
+  "onboardingSlot": "With a time slot",
+  "onboardingHabit": "With a habit",
+  "onboardingOkr": "With a goal",
+  "onboardingOrgs": "Companies created",
+  "onboardingOrgTeam": "With a team",
+  "onboardingOrgMember": "With a 2nd member",
+  "onboardingOrgProject": "With a project",
+  "onboardingOrgOkr": "With a company goal",
+  "onboardingReturn": "Came back between D+7 and D+14: {{all}} of mature signups ({{mature}}), {{withTask}} of those who created a task during onboarding.",
+  "onboardingReturnTooEarly": "Return not measurable yet: no signup in the period is 14 days old."
 }

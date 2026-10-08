@@ -11,6 +11,7 @@ import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useAdminStats,
   useSupportStats,
+  useOnboardingFunnel,
   chooseGranularity,
   fillMissingDays,
   aggregateWeekly,
@@ -129,6 +130,8 @@ const AdminDashboard: React.FC = () => {
   // déjà payé l'inverse : la mig. 136 a dormi commitée dix-sept jours pendant
   // que `/statistics` affichait zéro (C-77).
   const { data: support } = useSupportStats();
+  // Entonnoir des accueils (mig. 213) : même contrat, `null` = non appliquée.
+  const { data: funnel } = useOnboardingFunnel();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -445,6 +448,50 @@ const AdminDashboard: React.FC = () => {
                 {support.answered > 0
                   ? t('supportMedian', { hours: support.medianResponseHours })
                   : t('supportNoResponseRecorded')}
+              </p>
+            </div>
+          )}
+        </ChartCard>
+
+        {/* ═══ ACCUEILS : qui va au bout, et qui revient ═════════════
+          * Les deux accueils ont été refaits le 2026-10-03 pour une raison
+          * chiffrée (50 % des inscrits ne revenaient jamais). Cette carte dit
+          * si ça change quelque chose. Mêmes trois états que le support.
+          */}
+        <ChartCard title={t('onboarding')} note={t('onboardingNote')}>
+          {funnel === null ? (
+            <EmptyChart>{t('onboardingNotInstalled')}</EmptyChart>
+          ) : funnel === undefined ? (
+            <EmptyChart>{t('supportLoading')}</EmptyChart>
+          ) : funnel.perso.signups === 0 && funnel.orgs.created === 0 ? (
+            <EmptyChart>{t('onboardingNone')}</EmptyChart>
+          ) : (
+            <div className="space-y-3">
+              <CountBars
+                data={[
+                  { label: t('onboardingSignups'), value: funnel.perso.signups },
+                  { label: t('onboardingTask'), value: funnel.perso.withTask },
+                  { label: t('onboardingSlot'), value: funnel.perso.withSlot },
+                  { label: t('onboardingHabit'), value: funnel.perso.withHabit },
+                  { label: t('onboardingOkr'), value: funnel.perso.withOkr },
+                  { label: t('onboardingOrgs'), value: funnel.orgs.created },
+                  { label: t('onboardingOrgTeam'), value: funnel.orgs.withTeam },
+                  { label: t('onboardingOrgMember'), value: funnel.orgs.withMember },
+                  { label: t('onboardingOrgProject'), value: funnel.orgs.withProject },
+                  { label: t('onboardingOrgOkr'), value: funnel.orgs.withOkr },
+                ]}
+              />
+              <p className="text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                {funnel.perso.mature > 0
+                  ? t('onboardingReturn', {
+                      all: `${Math.round((100 * funnel.perso.cameBack) / funnel.perso.mature)}%`,
+                      withTask:
+                        funnel.perso.matureWithTask > 0
+                          ? `${Math.round((100 * funnel.perso.cameBackWithTask) / funnel.perso.matureWithTask)}%`
+                          : '·',
+                      mature: funnel.perso.mature,
+                    })
+                  : t('onboardingReturnTooEarly')}
               </p>
             </div>
           )}

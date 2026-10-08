@@ -209,6 +209,10 @@
       "categorie": "mot-identique",
       "valeur": "Description"
     },
+    "onboarding.perso.habits.minutes": {
+      "categorie": "symbole-ou-format",
+      "valeur": "{{minutes}} min"
+    },
     "org.common.adminBadge": {
       "categorie": "mot-identique",
       "valeur": "Admin"

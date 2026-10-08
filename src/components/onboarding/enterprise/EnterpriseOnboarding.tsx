@@ -14,6 +14,12 @@ import {
   useRequestJoinOrganization,
 } from '@/modules/organizations';
 import OrgConsentNotice from '@/components/organization/OrgConsentNotice';
+import { useEmailInvitations } from '@/modules/organizations/governance.hooks';
+import { useOrgTeams } from '@/modules/org-teams';
+import { useTeamProjects } from '@/modules/team-projects';
+import { useTeamOKRs } from '@/modules/team-okrs';
+import { formatRelativeTime } from '@/i18n/format';
+import { setBusinessPending } from '../first-run';
 import {
   ORG_SETUP_STEPS,
   orgSetupPath,
@@ -23,7 +29,7 @@ import {
 } from '@/components/organization/org-setup.helpers';
 import Constellation, { type ConstellationFocus } from './Constellation';
 import { initials } from './constellation-geometry';
-import { ENT_SCOPE, markMemberWelcomeSeen } from './ent-onboarding';
+import { ENT_SCOPE, markMemberWelcomeSeen, readJoinRequestOrg, rememberJoinRequestOrg } from './ent-onboarding';
 import {
   ENT_CARD,
   ENT_FIELD,
@@ -98,11 +104,31 @@ const EnterpriseOnboarding = () => {
   const [objectiveDraft, setObjectiveDraft] = useState('');
   const [objective, setObjective] = useState('');
 
+  // 🔴 La constellation se redessine à partir des VRAIES données de
+  // l'entreprise : après un rechargement, l'état local est perdu, et la scène
+  // repartait en pointillés comme si rien n'avait été enregistré (relevé le
+  // 2026-10-04). L'état local reste prioritaire : il suit la frappe.
+  const realOrgId = setupOrg?.id;
+  const { data: realTeams = [] } = useOrgTeams(realOrgId);
+  const { data: realInvites = [] } = useEmailInvitations(realOrgId);
+  const { data: realProjects = [] } = useTeamProjects(realOrgId);
+  const { data: realOkrs = [] } = useTeamOKRs(realOrgId);
+  const firstRealProject = realProjects.find((p) => !p.archivedAt);
+  const firstRealOkr = realOkrs[0];
+  // L'équipe à laquelle rattacher les invitations : celle créée pendant la
+  // visite, sinon la seule de l'entreprise s'il n'y en a qu'une.
+  const inviteTeam = teamId
+    ? { id: teamId, name: teamName }
+    : realTeams.length === 1
+      ? { id: realTeams[0].id, name: realTeams[0].name }
+      : null;
+
   const goToScreen = (next: OrgSetupScreen) => {
     if (!setupOrg) return;
     navigate(orgSetupPath(setupOrg.id, next));
   };
   const finishSetup = () => {
+    setBusinessPending(false);
     if (setupOrg) {
       setActiveOrgId(setupOrg.id);
       // Qui vient de tout mettre en place n'a pas besoin de l'accueil membre.
@@ -112,6 +138,7 @@ const EnterpriseOnboarding = () => {
   };
 
   const settingUp = Boolean(setupOrgId && (isLoading || setupOrg));
+  const [pendingOrg] = useState(readJoinRequestOrg);
   const pending = !settingUp && Boolean(sentRequest);
   const view: 'setup' | 'pending' | Mode = settingUp ? 'setup' : pending ? 'pending' : mode;
 
@@ -122,10 +149,18 @@ const EnterpriseOnboarding = () => {
     focus,
     orgName,
     youInitials: initials(user?.name),
-    people: invited.length > 0 ? invited : view === 'setup' && screen === 'invite' ? peopleDraft : [],
-    teamName: teamName || (screen === 'team' ? teamDraft : ''),
-    project: project ?? (screen === 'project' ? projectDraft : null),
-    objective: objective || (screen === 'objective' ? objectiveDraft : ''),
+    people:
+      invited.length > 0
+        ? invited
+        : view === 'setup' && screen === 'invite' && peopleDraft.length > 0
+          ? peopleDraft
+          : realInvites.filter((i) => !i.claimedAt).map((i) => i.email),
+    teamName: teamName || (screen === 'team' ? teamDraft : '') || realTeams[0]?.name || '',
+    project:
+      project ??
+      (screen === 'project' ? projectDraft : null) ??
+      (firstRealProject ? { name: firstRealProject.name, taskCount: 4 } : null),
+    objective: objective || (screen === 'objective' ? objectiveDraft : '') || firstRealOkr?.title || '',
     labels: {
       you: t('ent.stage.you'),
       north: t('ent.stage.north'),
@@ -140,23 +175,21 @@ const EnterpriseOnboarding = () => {
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
     : { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -10 } };
 
-  const leave = () => (setupOrg ? finishSetup() : navigate('/dashboard'));
+  const leave = () => {
+    if (setupOrg) {
+      finishSetup();
+      return;
+    }
+    // Sans entreprise, l'accueil perso rappellera celle qui attend (sinon
+    // plus rien ne ramenait la personne ici, cf. `BUSINESS_PENDING_FLAG`).
+    if (organizations.length === 0) setBusinessPending(true);
+    navigate('/dashboard');
+  };
 
   let content: React.ReactNode = null;
   if (view === 'setup') {
     content = !setupOrg ? (
       <div className="h-40" aria-hidden="true" />
-    ) : screen === 'invite' ? (
-      <InviteStep
-        orgId={setupOrg.id}
-        joinCode={setupOrg.joinCode}
-        onDraft={setPeopleDraft}
-        onDone={(emails) => {
-          setInvited(emails);
-          goToScreen('team');
-        }}
-        onSkip={() => goToScreen('team')}
-      />
     ) : screen === 'team' ? (
       <TeamStep
         orgId={setupOrg.id}
@@ -164,6 +197,19 @@ const EnterpriseOnboarding = () => {
         onDone={(id, name) => {
           setTeamId(id);
           setTeamName(name);
+          goToScreen('invite');
+        }}
+        onSkip={() => goToScreen('invite')}
+      />
+    ) : screen === 'invite' ? (
+      <InviteStep
+        orgId={setupOrg.id}
+        joinCode={setupOrg.joinCode}
+        team={inviteTeam}
+        currentUserId={user?.id}
+        onDraft={setPeopleDraft}
+        onDone={(emails) => {
+          setInvited(emails);
           goToScreen('project');
         }}
         onSkip={() => goToScreen('project')}
@@ -207,8 +253,17 @@ const EnterpriseOnboarding = () => {
     content = (
       <>
         <EntTitle text={t('ent.pending.title')} size="lg" />
-        <EntBody>{t('ent.pending.body')}</EntBody>
+        <EntBody>
+          {pendingOrg ? t('ent.pending.bodyNamed', { org: pendingOrg }) : t('ent.pending.body')}
+        </EntBody>
+        {sentRequest?.requestedAt && (
+          <p className="mt-2 font-data text-caption text-[#8B96A8]">
+            {t('ent.pending.since', { when: formatRelativeTime(sentRequest.requestedAt) })}
+          </p>
+        )}
+        <p className={`mt-5 p-4 text-sm leading-relaxed text-[#C9D2DE] ${ENT_CARD}`}>{t('ent.pending.noAnswer')}</p>
         <div className="mt-7">
+          <p className={`mb-3 ${ENT_LABEL}`}>{t('ent.pending.tourLabel')}</p>
           <PlacesGrid keys={['overview', 'tasks', 'projects', 'okr']} label={t('ent.pending.tourLabel')} />
         </div>
         <EntActions>
@@ -231,7 +286,12 @@ const EnterpriseOnboarding = () => {
     const valid = orgDraft.trim().length >= 2;
     const submit = () => {
       if (!valid || createOrg.isPending) return;
-      createOrg.mutate(orgDraft.trim(), { onSuccess: (org) => setSearchParams({ setup: org.id }) });
+      createOrg.mutate(orgDraft.trim(), {
+        onSuccess: (org) => {
+          setBusinessPending(false);
+          setSearchParams({ setup: org.id });
+        },
+      });
     };
     content = (
       <>
@@ -271,7 +331,15 @@ const EnterpriseOnboarding = () => {
     const valid = code.trim().length > 0 && consent;
     const submit = () => {
       if (!valid || requestJoin.isPending) return;
-      requestJoin.mutate(code.trim(), { onSuccess: () => setCode('') });
+      requestJoin.mutate(code.trim(), {
+        onSuccess: (result) => {
+          setBusinessPending(false);
+          // Le nom de l'entreprise visée, pour l'écran d'attente (la demande
+          // relue au rechargement ne porte que son identifiant).
+          if (result?.orgName) rememberJoinRequestOrg(result.orgName);
+          setCode('');
+        },
+      });
     };
     content = (
       <>
