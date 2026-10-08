@@ -5,7 +5,7 @@
 // formatters dans ./helpers. Aucune logique métier (filtrage/tri =
 // task-filtering.ts).
 // ═══════════════════════════════════════════════════════════════════
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, Pencil, ListPlus, ListChecks, Hourglass } from "lucide-react";
@@ -22,7 +22,9 @@ import {
 import TaskCategoryIndicator from "@/components/TaskCategoryIndicator";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
-import { getSnoozeOptions } from "@/modules/tasks/snooze";
+import { DateCalendarPanel, DATE_PANEL_CLASS } from "@/components/ui/date-picker";
+import { deadlineFromDayKey } from "@/lib/deadline";
+import { addDaysToKey, getTimezonePref, todayKeyInTz } from "@/lib/timezone";
 import { Friend } from "@/modules/friends";
 import { TaskCard } from "./TaskCard";
 import { TeamTaskCardLite } from "./TeamTaskCardLite";
@@ -213,6 +215,9 @@ export const TaskRow = React.memo(({
   friends,
 }: TaskRowProps) => {
   const { t } = useT('tasks');
+  // « Choisir » remplace le contenu du sous-menu par le calendrier (même
+  // pattern qu'OverdueBanner : une seule couche, pas de course au focus).
+  const [snoozeCalendar, setSnoozeCalendar] = useState(false);
   const getCategoryById = useCategoryLookup();
   const category = getCategoryById(task.category);
   const categoryColor = category?.color || '#94a3b8';
@@ -449,7 +454,7 @@ export const TaskRow = React.memo(({
       </td>
       <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatDuration(task.estimatedTime)}</td>
       <td onClick={e => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap text-center">
-        <DropdownMenu>
+        <DropdownMenu onOpenChange={(open) => { if (!open) setSnoozeCalendar(false); }}>
           <DropdownMenuTrigger asChild>
             <button
               aria-label={`Actions pour ${task.name}`}
@@ -480,12 +485,33 @@ export const TaskRow = React.memo(({
                 <DropdownMenuSubTrigger>
                   <Hourglass aria-hidden="true" /> {t('snooze.menu')}
                 </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  {getSnoozeOptions().map((opt) => (
-                    <DropdownMenuItem key={opt.id} onClick={() => onSnooze(task.id, opt.deadline)}>
-                      {t(opt.labelKey)}
-                    </DropdownMenuItem>
-                  ))}
+                <DropdownMenuSubContent className={snoozeCalendar ? `${DATE_PANEL_CLASS} p-0` : undefined}>
+                  {snoozeCalendar ? (
+                    <DateCalendarPanel
+                      // Jamais vers hier : borne au jour du fuseau CHOISI.
+                      minDate={todayKeyInTz(getTimezonePref())}
+                      allowClear={false}
+                      onSelect={(day) => {
+                        if (!day) return;
+                        onSnooze(task.id, deadlineFromDayKey(day, getTimezonePref()));
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          const pref = getTimezonePref();
+                          onSnooze(task.id, deadlineFromDayKey(addDaysToKey(todayKeyInTz(pref), 1), pref));
+                        }}
+                      >
+                        {t('snooze.tomorrow')}
+                      </DropdownMenuItem>
+                      {/* `preventDefault` : sinon Radix referme le menu au lieu d'afficher le calendrier. */}
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setSnoozeCalendar(true); }}>
+                        {t('snooze.chooseDate')}
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
             )}
