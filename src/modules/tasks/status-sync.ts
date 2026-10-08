@@ -42,7 +42,9 @@ export function applyStatusSync<P extends Partial<Task>>(
     if (prev.status === undefined && patch.status === undefined) {
       return patch.completed ? patch : { ...patch, completedAt: undefined };
     }
-    if (patch.completed) return { ...patch, status: 'done' };
+    if (patch.completed) {
+      return { ...patch, status: 'done', completedAt: patch.completedAt ?? prev.completedAt ?? nowIso };
+    }
     if (patch.status === undefined && effectiveStatus(prev) === 'done') {
       return { ...patch, completedAt: undefined, status: 'todo' };
     }
