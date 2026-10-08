@@ -22,6 +22,11 @@ describe('applyStatusSync', () => {
       .toEqual({ completed: true, completedAt: NOW, status: 'done' });
   });
 
+  it('completed true sans date : la date est posée, comme sous le trigger', () => {
+    expect(applyStatusSync(todo, { completed: true }, NOW))
+      .toEqual({ completed: true, completedAt: NOW, status: 'done' });
+  });
+
   it('completed false depuis done → status todo, completedAt effacé', () => {
     expect(applyStatusSync(done, { completed: false }, NOW))
       .toEqual({ completed: false, completedAt: undefined, status: 'todo' });
