@@ -253,20 +253,32 @@ test.describe('Entreprise — responsable d’équipe (démo)', () => {
     // boutons des rangées suivantes et prennent le tap (CI, run 37069364236).
     // On la referme comme une personne le ferait avant d'agir.
     await dismissFirstSightBubble(page);
+
+    // Les responsables des AUTRES équipes, photographiés avant la promotion.
+    // Comparer à une photo plutôt qu'à une borne : « au plus 2 équipes avec
+    // un responsable » était juste avec deux équipes de démo, et faux dès la
+    // troisième (Marketing, 1284a5f5), sans que rien n'ait régressé.
+    const leadsOutsideDesign = () =>
+      page.evaluate(() => {
+        const raw = localStorage.getItem('cosmo_org_team_members');
+        const rows = raw ? (JSON.parse(raw) as { teamId: string; userId: string; isLead: boolean }[]) : [];
+        return rows
+          .filter((m) => m.isLead && m.teamId !== 'team-design')
+          .map((m) => `${m.teamId}:${m.userId}`)
+          .sort();
+      });
+    const othersBefore = await leadsOutsideDesign();
+    expect(othersBefore.length).toBeGreaterThan(0);
+
     await page.getByRole('button', { name: /nommer responsable de l'équipe/i }).first().click();
 
     // Le rôle est multiple : nommer un second responsable ne révoque pas le
     // premier — c'est la différence avec `created_by`, qui était unique.
     await expect(leads).toHaveCount(before + 1, { timeout: 10_000 });
 
-    // Et il reste porté par l'appartenance à UNE équipe : la promotion n'a pas
-    // ajouté de responsable ailleurs.
-    const stored = await page.evaluate(() => {
-      const raw = localStorage.getItem('cosmo_org_team_members');
-      return raw ? (JSON.parse(raw) as { teamId: string; isLead: boolean }[]) : [];
-    });
-    const leadTeams = new Set(stored.filter((m) => m.isLead).map((m) => m.teamId));
-    expect(leadTeams.size).toBeLessThanOrEqual(2);
+    // Et il reste porté par l'appartenance à UNE équipe : la promotion n'a
+    // rien changé aux responsables des autres équipes.
+    expect(await leadsOutsideDesign()).toEqual(othersBefore);
   });
 });
 

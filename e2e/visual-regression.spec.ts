@@ -107,6 +107,11 @@ const MASQUES = [
   // Toute exécution après 10:00 (Paris) voyait un autre événement que la
   // référence prise le matin (mesuré le 2026-10-01).
   '[data-testid="dashboard-summary"]',
+  // « Mon agenda » de l'Aperçu entreprise : la frise d'AUJOURD'HUI et les
+  // jours suivants dépendent du jour et de l'heure du run (seeds relatifs à
+  // `now()`). Vu le 2026-10-08 : « Aucun rendez-vous aujourd'hui » contre une
+  // frise remplie, et un autre premier jour listé, à code identique.
+  '[data-testid="org-agenda-card"]',
   '.fc-toolbar-title',
   'time',
 ];
