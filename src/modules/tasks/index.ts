@@ -3,7 +3,10 @@
 // ═══════════════════════════════════════════════════════════════════
 
 // Types
-export type { Task, Subtask, TaskDependency, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskStatus, TaskRecurrence } from './types';
+export type { Task, Subtask, TaskDependency, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskStatus, TaskHealth, TaskRecurrence } from './types';
+
+// Statut <-> terminee (mig. 214) : miroir pur du trigger, cf. son en-tete.
+export { applyStatusSync, effectiveStatus } from './status-sync';
 
 // Récurrence (#26) — helpers purs
 export { nextOccurrenceDeadline, buildNextOccurrence } from './recurrence';

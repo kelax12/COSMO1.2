@@ -128,3 +128,29 @@ describe('category — la frontière `` ↔ NULL (mig. 145)', () => {
     expect('category' in mapTaskToDb({ name: 'X' })).toBe(false);
   });
 });
+
+// ═══ Statut et État (mig. 214) ═══
+describe('statut et état (mig. 214)', () => {
+  it('lit status et health tels quels', () => {
+    expect(mapTaskFromDb({ ...baseRow, status: 'blocked', health: 'at_risk' }))
+      .toMatchObject({ status: 'blocked', health: 'at_risk' });
+  });
+
+  it('ligne antérieure à la migration : statut déduit de completed, sans état', () => {
+    expect(mapTaskFromDb({ ...baseRow, completed: true }).status).toBe('done');
+    expect(mapTaskFromDb({ ...baseRow, completed: false }).status).toBe('todo');
+    expect(mapTaskFromDb({ ...baseRow, health: null }).health).toBeUndefined();
+  });
+
+  it('whitelist : status et health partent, un état effacé devient NULL', () => {
+    expect(mapTaskToDb({ status: 'in_progress', health: 'on_track' }))
+      .toEqual({ status: 'in_progress', health: 'on_track' });
+    expect(mapTaskToDb({ health: null })).toEqual({ health: null });
+  });
+
+  it('n envoie ni status ni health quand ils sont absents', () => {
+    const out = mapTaskToDb({ name: 'X' });
+    expect('status' in out).toBe(false);
+    expect('health' in out).toBe(false);
+  });
+});
