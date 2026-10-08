@@ -101,6 +101,10 @@ compilait, la suite passait.
   comparés **octet pour octet** au fichier). Chacune jouée d'abord en prod dans un bloc qui ne peut
   que s'annuler, avec une passe témoin SANS elle qui devait échouer. Détail : [`faille.md`](../../faille.md)
   § « Migrations ». ⏳ `206` reste non appliquée, délibérément.
+- ✅ **`214`** (statut et état des tâches perso) : **appliquée** le 2026-10-08, ledger `20261008210323`,
+  relue au catalogue (colonnes, deux `CHECK`, trigger `INVOKER` non exécutable par `anon` /
+  `authenticated`, corps identique au fichier, 0 tâche terminée hors `done`). Preuve
+  `proofs/214.proof.sql` jouée avant : 15 sur 15, témoin sans trigger rouge sur 3 cas.
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
   seule issue, et le verdict est le texte de l'exception. ⚠️ En PL/pgSQL `N` et `n`, `OK` et `ok`
