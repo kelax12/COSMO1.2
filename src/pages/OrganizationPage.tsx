@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
-import { BookOpen, Building2, Pencil, X } from 'lucide-react';
+import { BookOpen, Building2, Pencil } from 'lucide-react';
 import { useManagerSectionsToast, useOrgShortcuts } from '@/components/organization/org-page.hooks';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
@@ -114,7 +114,6 @@ const tabFallback = (tab: OrgTab, tOrgAdmin: (key: KeyOf<'orgAdmin'>) => string)
 };
 
 /** Bannière sièges : dismiss persistant par org (informative, freemium dormant). */
-const seatsBannerKey = (orgId: string) => `cosmo_org_seats_banner_dismissed_${orgId}`;
 
 // 🗑️ Bannière « gratuit jusqu'au 1er août » retirée le 2026-09-24 : elle ne
 // s'affichait plus depuis le 2026-08-01, son code et ses libellés restaient.
@@ -139,7 +138,6 @@ const OrganizationPage = () => {
   // Glossaire (cohérence globale) : ouvert par le bouton d'en-tête. Les
   // info-bulles de rôle l'ouvrent elles-mêmes, sur leur terme (`RoleTerm`).
   const [glossary, setGlossary] = useState(false);
-  const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
   const isDemo = useIsDemo();
   // Fermé pendant cette visite ; le drapeau, lui, est posé par entreprise.
   const [welcomeClosed, setWelcomeClosed] = useState(false);
@@ -298,16 +296,6 @@ const OrganizationPage = () => {
   const seatsQuota = effectiveQuota(orgSubscription ?? null);
   const seatsFull = ENTERPRISE_BILLING_ENFORCED && isQuotaReached(members.length, orgSubscription ?? null);
 
-  let bannerDismissed = seatsBannerDismissed;
-  try {
-    bannerDismissed = bannerDismissed || !!localStorage.getItem(seatsBannerKey(myOrg.id));
-  } catch { /* localStorage indisponible : bannière visible */ }
-
-  const dismissSeatsBanner = () => {
-    setSeatsBannerDismissed(true);
-    try { localStorage.setItem(seatsBannerKey(myOrg.id), '1'); } catch { /* no-op */ }
-  };
-
   const hasEntityParam = ['task', 'member', 'project', 'okr', 'team'].some((k) => searchParams.has(k));
   const glossaryButton = (
     <button
@@ -399,27 +387,15 @@ const OrganizationPage = () => {
         <OrgNotificationsBell orgId={myOrg.id} members={members} />
       </header>
 
-      {/* Bannière freemium — informative tant que ENTERPRISE_BILLING_ENFORCED
-          est false (gate dormant ; le vrai blocage sera côté serveur).
-          #5 : dismissible (persistant par org) tant qu'elle est informative. */}
-      {members.length >= (seatsQuota ?? Infinity) && (ENTERPRISE_BILLING_ENFORCED || !bannerDismissed) && (
-        <div className="mb-5 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] px-4 py-3 flex items-start justify-between gap-3">
+      {/* Bannière sièges : affichée UNIQUEMENT quand il faut changer de plan
+          (facturation active ET quota atteint). Le simple constat « gratuit
+          jusqu'à 5, rien ne change » n'appelait aucune action : retiré. */}
+      {seatsFull && (
+        <div className="mb-5 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] px-4 py-3">
           <p className="text-xs text-[rgb(var(--color-text-secondary))]">
             <span className="font-semibold text-[rgb(var(--color-text-primary))]">{tpOrgAdmin('page.memberCountDot', members.length)}</span>{' '}
-            {ENTERPRISE_BILLING_ENFORCED
-              ? tOrgAdmin('page.freemiumOver')
-              : tOrgAdmin('page.freemiumInfo')}
+            {tOrgAdmin('page.freemiumOver')}
           </p>
-          {!ENTERPRISE_BILLING_ENFORCED && (
-            <button
-              type="button"
-              onClick={dismissSeatsBanner}
-              aria-label={tOrgAdmin('page.hideInfo')}
-              className="shrink-0 w-11 h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          )}
         </div>
       )}
 
