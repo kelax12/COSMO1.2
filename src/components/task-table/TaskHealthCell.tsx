@@ -7,7 +7,7 @@
 // pas `portfolio` (lazy-namespaces.guard), ses clés s'y afficheraient brutes.
 import { Activity } from 'lucide-react';
 import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { HEALTH_DOT, HEALTHS } from '@/components/organization/health-state.helpers';
 import type { TeamProjectHealth } from '@/modules/team-projects';
@@ -17,7 +17,8 @@ interface TaskHealthCellProps {
   name: string;
   health: TeamProjectHealth | null | undefined;
   done: boolean;
-  onSetHealth: (health: TeamProjectHealth) => void;
+  /** `null` efface l'état (« Effacer l'état », repris du Tableau perso). */
+  onSetHealth: (health: TeamProjectHealth | null) => void;
   /** Coche la tâche : toujours par la bascule de complétion, jamais par un `status`. */
   onMarkDone: () => void;
   /** Pourquoi changer l'état est refusé : le déclencheur se grise et le dit. */
@@ -61,6 +62,12 @@ const TaskHealthCell = ({ name, health, done, onSetHealth, onMarkDone, disabledR
           {t('board.health.done')}
           {done && <span className="ml-auto text-xs" aria-hidden="true">✓</span>}
         </DropdownMenuItem>
+        {health && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onSetHealth(null)}>{t('board.health.clear')}</DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

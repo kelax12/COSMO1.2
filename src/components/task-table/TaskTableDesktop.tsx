@@ -26,7 +26,7 @@ interface TaskTableDesktopProps extends Omit<TaskRowProps, 'task'> {
   onSort: (field: string) => void;
   onToggleTeamComplete: (task: TeamTask) => void;
   onEditTeamTask: (task: TeamTask) => void;
-  onSetTeamHealth: (task: TeamTask, health: TeamProjectHealth) => void;
+  onSetTeamHealth: (task: TeamTask, health: TeamProjectHealth | null) => void;
   teamEditReason: (task: TeamTask) => string | undefined;
 }
 

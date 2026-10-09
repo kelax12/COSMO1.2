@@ -20,7 +20,7 @@ interface TeamTaskRowLiteProps {
   project: TeamProject | undefined;
   onToggleComplete: (task: TeamTask) => void;
   onEdit: (task: TeamTask) => void;
-  onSetHealth: (task: TeamTask, health: TeamProjectHealth) => void;
+  onSetHealth: (task: TeamTask, health: TeamProjectHealth | null) => void;
   /** Pourquoi modifier cette tâche est refusé (miroir de `team_tasks_update`). */
   editReason?: string;
 }
