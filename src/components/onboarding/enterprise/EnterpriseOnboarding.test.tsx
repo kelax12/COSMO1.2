@@ -187,10 +187,10 @@ describe('EnterpriseOnboarding', () => {
     expect(await screen.findByText('COSMO-ABCDEFGHIJ')).toBeTruthy();
   });
 
-  it('un ?setup= qui ne désigne pas une entreprise que j administre retombe sur la bienvenue', async () => {
+  it('un ?setup= qui ne désigne pas une entreprise que j administre retombe sur le choix', async () => {
     organizations = [{ id: 'org-1', name: 'Acme', myRole: 'member' }];
     renderAt('/entreprise/onboarding?setup=org-1');
-    expect(await screen.findByRole('button', { name: /créer mon entreprise/i })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /créer une entreprise/i })).toBeTruthy();
     expect(screen.queryByLabelText(/première équipe/i)).toBeNull();
   });
 
@@ -199,17 +199,30 @@ describe('EnterpriseOnboarding', () => {
     localStorage.setItem(BUSINESS_PENDING_FLAG, '1');
     createOrgMutate.mockImplementation((_name, opts) => opts.onSuccess({ id: 'org-new' }));
     renderAt('/entreprise/onboarding');
-    click(/créer mon entreprise/i);
+    click(/créer une entreprise/i);
     await type(/nom de l'entreprise/i, '  Nova Studio ');
     click(/créer l'entreprise/i);
     expect(createOrgMutate.mock.calls[0][0]).toBe('Nova Studio');
     expect(localStorage.getItem(BUSINESS_PENDING_FLAG)).toBeNull();
   });
 
+  it('une création ouvre la mise en place de la nouvelle entreprise', async () => {
+    organizations = [];
+    createOrgMutate.mockImplementation((_name, opts) => {
+      organizations = [{ id: 'org-new', name: 'Nova Studio', myRole: 'admin' }];
+      opts.onSuccess({ id: 'org-new', name: 'Nova Studio' });
+    });
+    renderAt('/entreprise/onboarding');
+    click(/créer une entreprise/i);
+    await type(/nom de l'entreprise/i, 'Nova Studio');
+    click(/créer l'entreprise/i);
+    expect(await screen.findByLabelText(/première équipe/i)).toBeTruthy();
+  });
+
   it('« Plus tard » sans entreprise laisse un rappel pour l accueil perso', async () => {
     organizations = [];
     renderAt('/entreprise/onboarding');
-    fireEvent.click(screen.getAllByRole('button', { name: /plus tard/i })[0]);
+    click(/plus tard/i);
     expect(await screen.findByText('espace perso')).toBeTruthy();
     expect(localStorage.getItem(BUSINESS_PENDING_FLAG)).toBe('1');
   });
@@ -217,25 +230,27 @@ describe('EnterpriseOnboarding', () => {
   it('rejoindre exige le consentement avant d envoyer la demande', async () => {
     organizations = [];
     renderAt('/entreprise/onboarding');
+    localStorage.setItem(BUSINESS_PENDING_FLAG, '1');
+    joinMutate.mockImplementation((_code, opts) => opts.onSuccess());
     click(/rejoindre une entreprise/i);
-    await type(/code d'entreprise/i, 'cosmo-abcdefghij');
+    await type(/code d'invitation/i, 'cosmo-abcdefghij');
     const send = screen.getByRole('button', { name: /envoyer la demande/i });
     expect(send.hasAttribute('disabled')).toBe(true);
     fireEvent.click(screen.getByRole('checkbox'));
     click(/envoyer la demande/i);
     expect(joinMutate.mock.calls[0][0]).toBe('COSMO-ABCDEFGHIJ');
+    expect(localStorage.getItem(BUSINESS_PENDING_FLAG)).toBeNull();
   });
 
-  it('l attente dit à qui la demande est partie, depuis quand, et quoi faire', async () => {
+  it('une demande en attente s affiche, et « Plus tard » ne laisse pas de rappel', async () => {
     organizations = [];
-    sentRequest = { id: 'jr-1', requestedAt: new Date(Date.now() - 2 * 3600_000).toISOString() };
-    localStorage.setItem('cosmo_join_request_org', 'Nova Studio');
+    sentRequest = { id: 'jr-1' };
     renderAt('/entreprise/onboarding');
-    expect(await screen.findByRole('button', { name: /annuler la demande/i })).toBeTruthy();
-    expect(screen.getByText(/partie vers Nova Studio/)).toBeTruthy();
-    expect(screen.getByText(/^Envoyée/)).toBeTruthy();
-    expect(screen.getByText(/pas de réponse/i)).toBeTruthy();
-    expect(screen.getByRole('list', { name: /votre futur espace/i })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /annuler ma demande/i })).toBeTruthy();
+    expect(screen.getByText(/en attente de validation/i)).toBeTruthy();
+    click(/plus tard/i);
+    expect(await screen.findByText('espace perso')).toBeTruthy();
+    expect(localStorage.getItem(BUSINESS_PENDING_FLAG)).toBeNull();
   });
 
   it('après un rechargement, la scène se redessine à partir des vraies données', async () => {

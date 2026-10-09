@@ -138,55 +138,6 @@
       "orgFallback": "Votre entreprise",
       "pending": "Demande en attente"
     },
-    "welcome": {
-      "title": "Votre entreprise, <em>alignée</em>.",
-      "body": "COSMO Entreprise relie le cap de l'entreprise au travail de chacun. En quelques minutes, vous posez l'essentiel : les personnes, les équipes, les projets et l'objectif commun.",
-      "pillarsLabel": "Ce que COSMO Entreprise change",
-      "p1Title": "Chacun sait quoi faire",
-      "p1Body": "Les tâches confiées arrivent dans l'onglet Tâches de la personne, avec leur projet et leur échéance.",
-      "p2Title": "Chaque manager voit son périmètre",
-      "p2Body": "L'organigramme dit qui encadre qui : un manager suit le travail de son périmètre, et seulement celui-là.",
-      "p3Title": "Tout le monde suit le même cap",
-      "p3Body": "Les objectifs de l'entreprise se déclinent en objectifs d'équipe, et chaque résultat clé avance avec le travail réellement fait.",
-      "choiceLabel": "Comment voulez-vous commencer ?",
-      "create": "Créer mon entreprise",
-      "createHint": "Vous en aurez tous les droits d'administration. Comptez cinq minutes.",
-      "join": "Rejoindre une entreprise",
-      "joinHint": "Avec le code transmis par un administrateur.",
-      "later": "Plus tard, aller à mon espace personnel",
-      "memberOf": "Vous faites déjà partie de {{name}}.",
-      "memberOfCount_one": "Vous faites déjà partie de {{count}} entreprise.",
-      "memberOfCount_many": "Vous faites déjà partie de {{count}} d'entreprises.",
-      "memberOfCount_other": "Vous faites déjà partie de {{count}} entreprises.",
-      "goToOrg": "Ouvrir l'espace entreprise",
-      "orAnother": "Vous pouvez aussi en créer ou en rejoindre une autre."
-    },
-    "create": {
-      "kicker": "Votre entreprise",
-      "title": "Comment s'appelle votre <em>entreprise</em> ?",
-      "body": "C'est le nom que verront les personnes que vous invitez. Il se change à tout moment dans les paramètres.",
-      "label": "Nom de l'entreprise",
-      "placeholder": "Ex. Nova Studio",
-      "cta": "Créer l'entreprise"
-    },
-    "join": {
-      "kicker": "Rejoindre",
-      "title": "Entrez votre <em>code</em>.",
-      "body": "Un administrateur de l'entreprise vous l'a transmis. Votre demande lui parvient aussitôt, et vous entrez dès qu'elle est acceptée.",
-      "label": "Code d'entreprise",
-      "cta": "Envoyer la demande",
-      "sending": "Envoi…"
-    },
-    "pending": {
-      "title": "Demande <em>envoyée</em>.",
-      "body": "Un administrateur doit l'accepter. Cette page se met à jour toute seule.",
-      "cancel": "Annuler la demande",
-      "cancelled": "Demande annulée",
-      "tourLabel": "En attendant, votre futur espace en quatre lieux",
-      "bodyNamed": "Votre demande est partie vers {{org}}. Un administrateur doit l'accepter ; cette page se met à jour toute seule.",
-      "since": "Envoyée {{when}}",
-      "noAnswer": "Pas de réponse ? Prévenez la personne qui vous a donné le code : votre demande l'attend dans son espace entreprise. Vous pouvez aussi annuler et saisir un autre code."
-    },
     "places": {
       "overviewTitle": "Aperçu",
       "overviewBody": "Votre journée de travail : ce qui vous attend, les échéances proches, ce qui bouge dans vos équipes.",

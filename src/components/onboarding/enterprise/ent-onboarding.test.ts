@@ -5,9 +5,7 @@ import {
   buildCompanyOkrInput,
   joinedSinceWelcome,
   markMemberWelcomeSeen,
-  readJoinRequestOrg,
   readMemberWelcomeSeen,
-  rememberJoinRequestOrg,
 } from './ent-onboarding';
 import { NORTH, PEOPLE_SLOTS, PROJECT, SKY, TEAM_HULL, YOU, clip, initials, personInitial, starField } from './constellation-geometry';
 
@@ -105,12 +103,5 @@ describe('ajouts du 2026-10-05', () => {
     expect(joinedSinceWelcome(members, 'old')).toBe(false);
     // Annuaire pas encore chargé : on ne sait pas, donc on n'ouvre rien.
     expect(joinedSinceWelcome([], 'new')).toBe(false);
-  });
-
-  it('l attente se souvient de l entreprise visée', () => {
-    localStorage.clear();
-    expect(readJoinRequestOrg()).toBe('');
-    rememberJoinRequestOrg('Nova Studio');
-    expect(readJoinRequestOrg()).toBe('Nova Studio');
   });
 });

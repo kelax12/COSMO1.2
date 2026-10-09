@@ -15,9 +15,10 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
   facultative) → bilan avec sorties concrètes. Suit le thème de l'app (`perso/perso-theme.ts`).
 - ❌ **Revenir en arrière ne recrée JAMAIS** : une étape faite s'affiche « enregistrée ». Compte VIDE, une fois par appareil
   (`cosmo_first_run_done`), jamais en démo, jamais sur `/entreprise`.
-- **Entreprise** : `onboarding/enterprise/EnterpriseOnboarding` (`/entreprise/onboarding`,
-  constellation) : bienvenue → créer | rejoindre → mise en place `?setup=&step=` (invitations,
-  équipe → invitations (rattachées à l'équipe et sous soi), projet, cap) → fin. `MemberWelcome` :
+- **Entreprise** : `onboarding/enterprise/EnterpriseOnboarding` (`/entreprise/onboarding`) :
+  choix créer | rejoindre = `OrgChoice` (l'ancienne carte, remise le 2026-10-09 à la demande
+  d'Axel, à la place de la bienvenue en constellation) → mise en place `?setup=&step=`
+  (constellation : équipe → invitations (rattachées à l'équipe et sous soi), projet, cap) → fin. `MemberWelcome` :
   une fois par entreprise et par appareil, jamais en démo, seulement aux arrivés depuis le
   2026-10-03, et SEULEMENT à une arrivée sans paramètre (`arrivedBare`, décidé à l'arrivée).
   Relue à chaque rendu, la garde l'ouvrait après coup sur `?tab=`, `?task=` : 8 e2e rouges (10-04).
