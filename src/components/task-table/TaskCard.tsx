@@ -17,6 +17,7 @@ import { Friend } from "@/modules/friends";
 import { formatDeadlineSmart, formatDuration, formatOverdueSince } from "./helpers";
 import { useT } from '@/i18n/useT';
 import { isTaskOverdue } from './helpers';
+import TaskStateBadges from './TaskStateBadges';
 
 interface TaskCardProps {
   task: Task;
@@ -423,6 +424,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           </span>
           <span aria-hidden="true">·</span>
           <span>{formatDuration(task.estimatedTime)}</span>
+          <TaskStateBadges task={task} />
           {/* Compteur sous-tâches (#12) */}
           {(task.subtasks?.length ?? 0) > 0 && (
             <>

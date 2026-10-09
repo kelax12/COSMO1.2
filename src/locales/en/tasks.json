@@ -407,7 +407,10 @@
     "check": "Check “{{name}}”",
     "uncheck": "Uncheck “{{name}}”",
     "delete": "Delete the subtask “{{name}}”",
-    "limitReached": "Maximum of {{max}} subtasks reached."
+    "limitReached": "Maximum of {{max}} subtasks reached.",
+    "promote": "Turn “{{name}}” into a task",
+    "promoted": "Subtask turned into a task",
+    "promoteFailed": "Couldn't turn the subtask into a task"
   },
   "smartPreset": {
     "overdue": "Overdue",
@@ -458,5 +461,42 @@
     "clearQuickFilter": "Remove the {{name}} filter",
     "close": "Close search",
     "placeholder": "Search"
+  },
+  "board": {
+    "view": {
+      "label": "View",
+      "list": "List",
+      "board": "Board"
+    },
+    "columns": {
+      "todo": "To do",
+      "in_progress": "In progress",
+      "blocked": "Blocked",
+      "done": "Done"
+    },
+    "count_one": "{{count}} task",
+    "count_other": "{{count}} tasks",
+    "doneWindow": "Last 7 days",
+    "empty": "No tasks",
+    "add": "Add",
+    "addAria": "Add a task to “{{column}}”",
+    "addPlaceholder": "Task name, then Enter",
+    "moveTo": "Move to…",
+    "moveToAria": "Move “{{name}}”",
+    "moveSheetTitle": "Move “{{name}}” to",
+    "current": "current column",
+    "openAria": "Open “{{name}}”",
+    "regionAria": "Task board",
+    "statusLabel": "Status",
+    "health": {
+      "label": "Health",
+      "on_track": "On track",
+      "at_risk": "At risk",
+      "off_track": "Off track",
+      "none": "None",
+      "clear": "Clear health",
+      "menuAria": "Health of “{{name}}”",
+      "badgeAria": "Health: {{state}}"
+    }
   }
 }

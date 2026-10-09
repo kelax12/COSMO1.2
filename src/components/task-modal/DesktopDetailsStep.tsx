@@ -17,6 +17,7 @@ import {
 import { DatePicker } from '@/components/ui/date-picker';
 import CategoryField from './CategoryField';
 import SubtaskChecklist from './SubtaskChecklist';
+import TaskStateFields from './TaskStateFields';
 import TaskDependenciesSection from './TaskDependenciesSection';
 import DescriptionField from '@/components/DescriptionField';
 import type { useCreateCategory, Category } from '@/modules/categories';
@@ -308,6 +309,8 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
 
                   {/* Sous-tâches (#12) — édition : persistance immédiate ;
                       création : contrôlé, incluses dans le payload createTask. */}
+                  {/* Statut et État (mig. 214) — édition : enregistrés à chaque choix. */}
+                  {!isCreating && task && <TaskStateFields taskId={task.id} />}
                   {!isCreating && task && <SubtaskChecklist taskId={task.id} initialSubtasks={task.subtasks} />}
                   {isCreating && (
                     <SubtaskChecklist
