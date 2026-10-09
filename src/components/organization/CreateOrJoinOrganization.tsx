@@ -14,6 +14,8 @@ import { useT } from '@/i18n/useT';
 interface CreateOrJoinOrganizationProps {
   /** Appelé quand l'utilisateur vient de créer une entreprise (nav vers /entreprise). */
   onCreated?: (org: Organization) => void;
+  /** Appelé quand la demande d'adhésion vient de partir. */
+  onJoinRequested?: () => void;
 }
 
 const cardBase =
@@ -38,7 +40,7 @@ const primaryBtn =
  *   • join : saisie du code → écran « demande envoyée » (piloté par
  *     getMySentJoinRequest, poll 20 s → l'écran d'attente reste après reload)
  */
-const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onCreated }) => {
+const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onCreated, onJoinRequested }) => {
   const { t } = useT('org');
   const [mode, setMode] = useState<'choice' | 'create' | 'join'>('choice');
   const [name, setName] = useState('');
@@ -64,7 +66,10 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
 
   const handleJoin = () => {
     requestJoinMutation.mutate(code.trim(), {
-      onSuccess: () => setCode(''),
+      onSuccess: () => {
+        setCode('');
+        onJoinRequested?.();
+      },
     });
   };
 

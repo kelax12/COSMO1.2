@@ -136,54 +136,6 @@
       "orgFallback": "Your company",
       "pending": "Request pending"
     },
-    "welcome": {
-      "title": "Your company, <em>aligned</em>.",
-      "body": "COSMO for companies connects the company's goals to everyone's work. In a few minutes you set up the essentials: people, teams, projects and a shared goal.",
-      "pillarsLabel": "What COSMO for companies changes",
-      "p1Title": "Everyone knows what to do",
-      "p1Body": "Assigned tasks land in each person's Tasks tab, with their project and due date.",
-      "p2Title": "Every manager sees their scope",
-      "p2Body": "The org chart says who manages whom: a manager follows the work in their scope, and only that.",
-      "p3Title": "Everyone pulls in the same direction",
-      "p3Body": "Company goals break down into team goals, and each key result moves with the work actually done.",
-      "choiceLabel": "How would you like to start?",
-      "create": "Create my company",
-      "createHint": "You will hold every admin right. It takes about five minutes.",
-      "join": "Join a company",
-      "joinHint": "With the code an admin sent you.",
-      "later": "Later, go to my personal space",
-      "memberOf": "You are already part of {{name}}.",
-      "memberOfCount_one": "You are already part of {{count}} company.",
-      "memberOfCount_other": "You are already part of {{count}} companies.",
-      "goToOrg": "Open the company space",
-      "orAnother": "You can also create or join another one."
-    },
-    "create": {
-      "kicker": "Your company",
-      "title": "What is your <em>company</em> called?",
-      "body": "This is the name the people you invite will see. You can change it any time in the settings.",
-      "label": "Company name",
-      "placeholder": "e.g. Nova Studio",
-      "cta": "Create the company"
-    },
-    "join": {
-      "kicker": "Join",
-      "title": "Enter your <em>code</em>.",
-      "body": "An admin of the company sent it to you. Your request reaches them right away, and you are in as soon as it is accepted.",
-      "label": "Company code",
-      "cta": "Send the request",
-      "sending": "Sending…"
-    },
-    "pending": {
-      "title": "Request <em>sent</em>.",
-      "body": "An admin has to accept it. This page updates on its own.",
-      "cancel": "Cancel the request",
-      "cancelled": "Request cancelled",
-      "tourLabel": "Meanwhile, your future space in four places",
-      "bodyNamed": "Your request was sent to {{org}}. An admin has to accept it; this page updates on its own.",
-      "since": "Sent {{when}}",
-      "noAnswer": "No answer yet? Let the person who gave you the code know: your request is waiting in their company space. You can also cancel and enter another code."
-    },
     "places": {
       "overviewTitle": "Overview",
       "overviewBody": "Your working day: what is waiting for you, upcoming deadlines, what is moving in your teams.",
