@@ -72,11 +72,12 @@ test.describe('collaboration (demo)', () => {
     await expect(modal).toBeVisible({ timeout: 10_000 });
 
     // Ouvrir la section collaborateurs :
-    //  - desktop : bouton disclosure « Partager la tâche » (step 2 inline) ;
+    //  - desktop : onglet « Partager » ;
     //  - mobile  : Cell « Collaborateurs » (primitives.tsx rend un <button>)
     //              qui ouvre une action sheet.
     await modal
-      .getByRole('button', { name: /partager la tâche|collaborateurs/i })
+      .getByRole('tab', { name: /^partager/i })
+      .or(modal.getByRole('button', { name: /collaborateurs/i }))
       .filter({ visible: true })
       .first()
       .click();

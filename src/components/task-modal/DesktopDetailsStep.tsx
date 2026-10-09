@@ -39,7 +39,7 @@ type TaskFormState = {
   subtasks: import('@/modules/tasks').Subtask[];
 };
 
-export type DetailsTab = 'details' | 'subtasks' | 'dependencies';
+export type DetailsTab = 'details' | 'advanced' | 'subtasks' | 'dependencies' | 'share';
 
 export interface DesktopDetailsStepProps {
   formData: TaskFormState;
@@ -65,7 +65,7 @@ export interface DesktopDetailsStepProps {
   /** Section Description masquée par défaut — même système que EventModal. */
   showDescription: boolean;
   setShowDescription: React.Dispatch<React.SetStateAction<boolean>>;
-  /** Onglet affiché (Détails / Sous-tâches / Dépendances). */
+  /** Onglet affiché. « Partager » est rendu par le parent : ici, rien. */
   tab?: DetailsTab;
 }
 
@@ -96,6 +96,187 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListColor, setNewListColor] = useState('blue');
+
+  if (tab === 'share') return null;
+
+  if (tab === 'advanced') {
+    return (
+      <div className="space-y-5">
+        {/* Statut et État (mig. 214) — édition : enregistrés à chaque choix. */}
+        {!isCreating && task
+          ? <TaskStateFields taskId={task.id} />
+          : <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('tabs.stateAfterCreate')}</p>}
+        <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm font-medium border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-border-strong))] hover:bg-[rgb(var(--color-accent-solid-hover))]/10"
+                            style={{
+                              backgroundColor: 'rgb(var(--color-hover))',
+                              color: 'rgb(var(--color-text-primary))',
+                            }}
+                          >
+                            <List size={16} className="text-blue-500" />
+                            {t('fields.addToList')}
+                            <ChevronDown size={14} className="text-blue-500" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="start"
+                          className="w-56 shadow-xl border"
+                          style={{
+                            backgroundColor: 'rgb(var(--color-surface))',
+                            borderColor: 'rgb(var(--color-border))',
+                            color: 'rgb(var(--color-text-primary))',
+                          }}
+                        >
+                          {lists.map(list => {
+                            const listColorHex = listColorOptions.find(c => c.value === list.color)?.color || list.color || '#3B82F6';
+                            return (
+                            <DropdownMenuCheckboxItem
+                              key={list.id}
+                              checked={selectedListIds.includes(list.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedListIds([...selectedListIds, list.id]);
+                                } else {
+                                  setSelectedListIds(selectedListIds.filter(id => id !== list.id));
+                                }
+                                setHasChanges(true);
+                              }}
+                              className="focus:bg-[rgb(var(--color-accent-solid))]/10"
+                              style={{ color: 'rgb(var(--color-text-primary))' }}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: listColorHex }} />
+                                {list.name}
+                              </div>
+                            </DropdownMenuCheckboxItem>
+                            );
+                          })}
+                          {lists.length > 0 && (
+                            <DropdownMenuSeparator style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+                          )}
+                          <DropdownMenuItem asChild>
+                            <button
+                              type="button"
+                              className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-300 bg-[rgb(var(--color-accent-solid))]/10 hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
+                              onClick={() => { setShowNewListInput(true); setNewListName(''); }}
+                            >
+                              <Plus size={15} />
+                              {t('fields.createList')}
+                            </button>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                      {showNewListInput && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const idx = listColorOptions.findIndex(c => c.value === newListColor);
+                              setNewListColor(listColorOptions[(idx + 1) % listColorOptions.length].value);
+                            }}
+                            className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
+                            style={{ backgroundColor: listColorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' }}
+                            title={tCommon('actions.changeColor')}
+                          />
+                          <input
+                            type="text"
+                            autoFocus
+                            value={newListName}
+                            onChange={(e) => setNewListName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (!newListName.trim()) return;
+                                createListMutation.mutate(
+                                  { name: newListName.trim(), color: newListColor },
+                                  {
+                                    onSuccess: (created) => {
+                                      setSelectedListIds(prev => [...prev, created.id]);
+                                      setHasChanges(true);
+                                      setShowNewListInput(false);
+                                      setNewListName('');
+                                      setNewListColor('blue');
+                                    }
+                                  }
+                                );
+                              } else if (e.key === 'Escape') {
+                                setShowNewListInput(false);
+                                setNewListName('');
+                                setNewListColor('blue');
+                              }
+                            }}
+                            placeholder={t('desktop.listNamePlaceholder')}
+                            className="flex-1 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent))] border-[rgb(var(--color-border))]"
+                            style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
+                          />
+                          <button
+                            type="button"
+                            disabled={!newListName.trim() || createListMutation.isPending}
+                            onClick={() => {
+                              if (!newListName.trim()) return;
+                              createListMutation.mutate(
+                                { name: newListName.trim(), color: newListColor },
+                                {
+                                  onSuccess: (created) => {
+                                    setSelectedListIds(prev => [...prev, created.id]);
+                                    setHasChanges(true);
+                                    setShowNewListInput(false);
+                                    setNewListName('');
+                                    setNewListColor('blue');
+                                  }
+                                }
+                              );
+                            }}
+                            className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
+                          >
+                            {createListMutation.isPending ? t('common.creating') : t('common.create')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setShowNewListInput(false); setNewListName(''); setNewListColor('blue'); }}
+                            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            style={{ color: 'rgb(var(--color-text-secondary))' }}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      )}
+
+
+
+                      <div className="flex flex-wrap gap-2 items-center">
+                                {selectedListIds.map(id => {
+                                  const list = lists.find(l => l.id === id);
+                                  if (!list) return null;
+                                  return (
+                                    <div
+                                      key={id}
+                                      className="flex items-center gap-1.5 text-xs font-medium bg-[rgb(var(--color-accent-solid))]/10 text-blue-400 px-3 py-1.5 rounded-lg border border-[rgb(var(--color-accent-solid))]/20"
+                                    >
+                                      {list.name}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedListIds(selectedListIds.filter(lid => lid !== id));
+                                          setHasChanges(true);
+                                        }}
+                                        className="text-blue-500 hover:text-blue-400 transition-colors"
+                                      >
+                                        <X size={14} />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+        </div>
+      </div>
+    );
+  }
 
   if (tab === 'subtasks') {
     return (
@@ -338,9 +519,6 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                       demande utilisateur — le lien tâche↔KR reste géré via
                       l'auto-liaison depuis la page OKR (formData.krId préservé). */}
 
-                  {/* Statut et État (mig. 214) — édition : enregistrés à chaque choix. */}
-                  {!isCreating && task && <TaskStateFields taskId={task.id} />}
-
                   {/* Description — masquée par défaut pour épurer l'UI (même
                       système que EventModal, cf. docs/UI-PATTERNS.md). Visible
                       d'emblée seulement si la tâche a déjà une description. */}
@@ -370,7 +548,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                     </button>
                   )}
 
-                  {/* Status toggles */}
+                  {/* Favori — les listes sont dans « Options avancées ». */}
                   <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
                       <button
                         type="button"
@@ -390,172 +568,6 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                         />
                       </button>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm font-medium border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-border-strong))] hover:bg-[rgb(var(--color-accent-solid-hover))]/10"
-                            style={{
-                              backgroundColor: 'rgb(var(--color-hover))',
-                              color: 'rgb(var(--color-text-primary))',
-                            }}
-                          >
-                            <List size={16} className="text-blue-500" />
-                            {t('fields.addToList')}
-                            <ChevronDown size={14} className="text-blue-500" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="start"
-                          className="w-56 shadow-xl border"
-                          style={{
-                            backgroundColor: 'rgb(var(--color-surface))',
-                            borderColor: 'rgb(var(--color-border))',
-                            color: 'rgb(var(--color-text-primary))',
-                          }}
-                        >
-                          {lists.map(list => {
-                            const listColorHex = listColorOptions.find(c => c.value === list.color)?.color || list.color || '#3B82F6';
-                            return (
-                            <DropdownMenuCheckboxItem
-                              key={list.id}
-                              checked={selectedListIds.includes(list.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedListIds([...selectedListIds, list.id]);
-                                } else {
-                                  setSelectedListIds(selectedListIds.filter(id => id !== list.id));
-                                }
-                                setHasChanges(true);
-                              }}
-                              className="focus:bg-[rgb(var(--color-accent-solid))]/10"
-                              style={{ color: 'rgb(var(--color-text-primary))' }}
-                            >
-                              <div className="flex items-center gap-2">
-                                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: listColorHex }} />
-                                {list.name}
-                              </div>
-                            </DropdownMenuCheckboxItem>
-                            );
-                          })}
-                          {lists.length > 0 && (
-                            <DropdownMenuSeparator style={{ backgroundColor: 'rgb(var(--color-border))' }} />
-                          )}
-                          <DropdownMenuItem asChild>
-                            <button
-                              type="button"
-                              className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-300 bg-[rgb(var(--color-accent-solid))]/10 hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
-                              onClick={() => { setShowNewListInput(true); setNewListName(''); }}
-                            >
-                              <Plus size={15} />
-                              {t('fields.createList')}
-                            </button>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-
-                      {showNewListInput && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const idx = listColorOptions.findIndex(c => c.value === newListColor);
-                              setNewListColor(listColorOptions[(idx + 1) % listColorOptions.length].value);
-                            }}
-                            className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
-                            style={{ backgroundColor: listColorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' }}
-                            title={tCommon('actions.changeColor')}
-                          />
-                          <input
-                            type="text"
-                            autoFocus
-                            value={newListName}
-                            onChange={(e) => setNewListName(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                if (!newListName.trim()) return;
-                                createListMutation.mutate(
-                                  { name: newListName.trim(), color: newListColor },
-                                  {
-                                    onSuccess: (created) => {
-                                      setSelectedListIds(prev => [...prev, created.id]);
-                                      setHasChanges(true);
-                                      setShowNewListInput(false);
-                                      setNewListName('');
-                                      setNewListColor('blue');
-                                    }
-                                  }
-                                );
-                              } else if (e.key === 'Escape') {
-                                setShowNewListInput(false);
-                                setNewListName('');
-                                setNewListColor('blue');
-                              }
-                            }}
-                            placeholder={t('desktop.listNamePlaceholder')}
-                            className="flex-1 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent))] border-[rgb(var(--color-border))]"
-                            style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
-                          />
-                          <button
-                            type="button"
-                            disabled={!newListName.trim() || createListMutation.isPending}
-                            onClick={() => {
-                              if (!newListName.trim()) return;
-                              createListMutation.mutate(
-                                { name: newListName.trim(), color: newListColor },
-                                {
-                                  onSuccess: (created) => {
-                                    setSelectedListIds(prev => [...prev, created.id]);
-                                    setHasChanges(true);
-                                    setShowNewListInput(false);
-                                    setNewListName('');
-                                    setNewListColor('blue');
-                                  }
-                                }
-                              );
-                            }}
-                            className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
-                          >
-                            {createListMutation.isPending ? t('common.creating') : t('common.create')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => { setShowNewListInput(false); setNewListName(''); setNewListColor('blue'); }}
-                            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                            style={{ color: 'rgb(var(--color-text-secondary))' }}
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      )}
-
-
-
-                      <div className="flex flex-wrap gap-2 items-center">
-                                {selectedListIds.map(id => {
-                                  const list = lists.find(l => l.id === id);
-                                  if (!list) return null;
-                                  return (
-                                    <div
-                                      key={id}
-                                      className="flex items-center gap-1.5 text-xs font-medium bg-[rgb(var(--color-accent-solid))]/10 text-blue-400 px-3 py-1.5 rounded-lg border border-[rgb(var(--color-accent-solid))]/20"
-                                    >
-                                      {list.name}
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setSelectedListIds(selectedListIds.filter(lid => lid !== id));
-                                          setHasChanges(true);
-                                        }}
-                                        className="text-blue-500 hover:text-blue-400 transition-colors"
-                                      >
-                                        <X size={14} />
-                                      </button>
-                                    </div>
-                                  );
-                                })}
-                              </div>
                   </div>
                   </>)}
                 </div>
