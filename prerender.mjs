@@ -97,7 +97,23 @@ html = html.replace(/"dateModified":\s*"[\d-]+"/g, `"dateModified": "${CONTENT_L
 // à un utilisateur qui rafraîchit /dashboard. Chaque page prérendue porte
 // désormais `data-prerendered` sur <html>, et SEULE elle peint son contenu
 // (cf. le <style> d'index.html) ; app.html garde le spinner.
-writeFileSync(join(DIST, 'app.html'), html, 'utf8');
+//
+// 2026-10-09 · la coquille sort en `noindex` et SANS cible de canonical. Copie
+// brute d'index.html, elle déclarait toute URL inconnue indexable et canonique
+// de `/` : un soft-404 vu tel quel par Bing et les crawlers IA, qui
+// n'exécutent pas le JS de NotFoundPage. Aucune page qu'on veut voir classée
+// ne passe par ici, elles ont toutes leur fichier prérendu. Le <link> reste
+// (sans href, donc ignoré par les moteurs) parce que `setCanonical()` de
+// useSeoMeta en modifie un existant et n'en crée pas.
+const ROBOTS_INDEX = /<meta name="robots" content="index[^"]*" \/>/;
+const CANONICAL_HOME = /<link rel="canonical" href="https:\/\/thecosmo\.app\/" \/>/;
+if (!ROBOTS_INDEX.test(html) || !CANONICAL_HOME.test(html)) {
+  throw new Error('prerender: robots/canonical introuvables dans index.html, app.html resterait indexable');
+}
+const appShell = html
+  .replace(ROBOTS_INDEX, '<meta name="robots" content="noindex" />')
+  .replace(CANONICAL_HOME, '<link rel="canonical" />');
+writeFileSync(join(DIST, 'app.html'), appShell, 'utf8');
 
 // ── FAQ ───────────────────────────────────────────────────────────────────
 // LUE dans le catalogue que rend l'application (`faq.q1…qN`), pas recopiée ici.
