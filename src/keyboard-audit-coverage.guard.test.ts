@@ -164,6 +164,9 @@ const NON_MESUREES: Record<string, string> = {
     'atteignable, et déjà ouverte par `reduced-motion-sheets.spec.ts` — mais '
     + 'pour mesurer son ANIMATION, pas son clavier. Dette.',
   'pages/tasks/CreateListSheet.tsx': 'dette : atteignable sur /tasks.',
+  'pages/settings/ImportTasksDialog.tsx':
+    'dette : import de tâches (/settings, onglet Données, 2026-10-09). Câblée par '
+    + '`BottomSheet`, jamais parcourue au clavier par le spec.',
   'pages/tasks/MobileTaskSearch.tsx':
     'dette : atteignable sur /tasks sous 768 px. Le harnais clavier tourne '
     + 'en viewport desktop, où la surface est `md:hidden` : la mesurer demande '

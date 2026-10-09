@@ -2,9 +2,9 @@
 // settings/DataTab — onglet « Mes données » (export RGPD CSV).
 // Extrait verbatim de SettingsPage (god-component refactor).
 // ═══════════════════════════════════════════════════════════════════
-import React from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, FileSpreadsheet } from 'lucide-react';
+import { Download, FileSpreadsheet, FileUp } from 'lucide-react';
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
@@ -26,6 +26,9 @@ import { toast } from '@/lib/toast';
 import { useT } from '@/i18n/useT';
 import ManageCookiesButton from '@/components/ManageCookiesButton';
 
+// Fenêtre d'import (point 44) : chargée au premier clic, l'onglet n'en paie rien.
+const ImportTasksDialog = lazy(() => import('./ImportTasksDialog'));
+
 export function DataTab() {
   const { t, tp } = useT('settings');
   const { data: tasks = [] } = useTasks();
@@ -35,6 +38,8 @@ export function DataTab() {
   const { data: categories = [] } = useCategories();
   const { data: lists = [] } = useLists();
   const { user } = useAuth();
+  const [importOpen, setImportOpen] = useState(false);
+  const [importMounted, setImportMounted] = useState(false);
 
   // Profil exporte au titre de l'article 20 : le nom et l'adresse sont les
   // donnees les plus evidemment « fournies par la personne concernee ». Le
@@ -143,12 +148,28 @@ export function DataTab() {
         </div>
       </div>
 
-      {/* Note import */}
-      <div className="p-4 rounded-xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))]">
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">
-          <strong className="text-[rgb(var(--color-text-secondary))]">{t('data.importNotice')}</strong>{t('data.importNoticeRest')}
-        </p>
+      {/* Import (point 44) : remplace la mention « bientôt disponible ». */}
+      <div className="p-4 rounded-xl border border-[rgb(var(--color-border))] flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="w-10 h-10 rounded-lg bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0">
+          <FileUp size={18} className="text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm text-[rgb(var(--color-text-primary))]">{t('import.cardTitle')}</p>
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('import.cardHint')}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => { setImportMounted(true); setImportOpen(true); }}
+          className="min-h-11 px-4 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] shrink-0"
+        >
+          {t('import.open')}
+        </button>
       </div>
+      {importMounted && (
+        <Suspense fallback={null}>
+          <ImportTasksDialog open={importOpen} onClose={() => setImportOpen(false)} />
+        </Suspense>
+      )}
 
       {/* Consentement aux traceurs : revenir sur son choix (RGPD art. 7.3) */}
       <div className="p-4 rounded-xl border border-[rgb(var(--color-border))] flex items-center justify-between gap-3">
