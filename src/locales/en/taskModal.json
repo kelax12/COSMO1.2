@@ -13,6 +13,13 @@
     "optional": "(Optional)",
     "savingDots": "Saving..."
   },
+  "tabs": {
+    "aria": "Task sections",
+    "details": "Details",
+    "subtasks": "Subtasks",
+    "dependencies": "Dependencies",
+    "dependenciesAfterCreate": "Dependencies can be linked once the task is created."
+  },
   "fields": {
     "moreOptions": "More options: due date, category, priority, duration, lists",
     "priority": "Priority",
