@@ -7,6 +7,7 @@ import TaskModal from './TaskModal';
 import AddToListModal from './AddToListModal';
 import { VirtualizedTaskList } from './task-table/list';
 import { useUnifiedTaskRows } from './task-table/useUnifiedTaskRows';
+import { useTeamTasksInList } from './task-table/useTeamTasksInList';
 import TaskTableDesktop from './task-table/TaskTableDesktop';
 import ConfirmDeleteSheet from './task-table/ConfirmDeleteSheet';
 import TaskListPlaceholders from './task-table/TaskListPlaceholders';
@@ -46,8 +47,6 @@ import { useFriends, useCollaboratorsByTask, usePendingCollaboratorTaskIds, useU
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useT } from '@/i18n/useT';
-import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
-import { useTeamProjects, useTeamTasks, useUpdateTeamTask, type TeamTask, type UpdateTeamTaskInput } from '@/modules/team-projects';
 
 type TaskTableProps = {
   tasks?: Task[];
@@ -113,36 +112,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const pendingCollaboratorTaskIds = usePendingCollaboratorTaskIds(user?.id);
   const unshareTaskMutation = useUnshareTask();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Fusion tâches d'équipe (mode entreprise) — assignées à moi, injectées
-  // dans la même liste que les tâches perso avec une distinction visuelle
-  // forte (fond indigo) et un jeu d'actions restreint (cf. TeamTaskRowLite).
-  // ═══════════════════════════════════════════════════════════════════
-  const { activeOrg } = useActiveOrganization();
-  const orgId = activeOrg?.id;
-  const { data: teamProjects = [] } = useTeamProjects(orgId);
-  const { data: allTeamTasks = [] } = useTeamTasks(orgId);
-  const { data: orgMembers = [] } = useOrgMembers(orgId);
-  const updateTeamTaskMutation = useUpdateTeamTask(orgId ?? '');
-  const [editingTeamTask, setEditingTeamTask] = useState<TeamTask | null>(null);
+  // Tâches d'équipe assignées à moi, fusionnées dans la liste perso
+  // (cf. `task-table/useTeamTasksInList`).
+  const team = useTeamTasksInList();
+  const { orgId, teamProjects, allTeamTasks, orgMembers, teamProjectsById, editingTeamTask, setEditingTeamTask } = team;
   const [scopeFilter, setScopeFilter] = useState<'all' | 'perso' | 'entreprise'>('all');
-
-  const teamProjectsById = useMemo(
-    () => new Map(teamProjects.map((p) => [p.id, p])),
-    [teamProjects],
-  );
-
-  const handleToggleTeamComplete = useCallback((task: TeamTask) => {
-    updateTeamTaskMutation.mutate({ taskId: task.id, input: { completed: !task.completed } });
-    /* eslint-disable-next-line react-hooks/exhaustive-deps --
-    `updateTeamTaskMutation` est recree a chaque rendu alors que son
-       `.mutate` est stable (React Query) : le mettre en dependance recreerait
-       ce callback a chaque rendu. `orgId` est la seule valeur dont depend la
-       mutation, et elle y est. */
-  }, [orgId]);
-
-  const modalUpdateTeamTask = (taskId: string, input: UpdateTeamTaskInput) =>
-    updateTeamTaskMutation.mutateAsync({ taskId, input });
 
   // Utiliser propTasks si fourni, sinon les tasks du module
   const tasks = propTasks || moduleTasks;
@@ -442,8 +416,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
         collaboratorsByTask={collaboratorsByTask}
         pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}
         friends={friends}
-        onToggleTeamComplete={handleToggleTeamComplete}
+        onToggleTeamComplete={team.toggleComplete}
         onEditTeamTask={setEditingTeamTask}
+        onSetTeamHealth={team.setHealth}
+        teamEditReason={team.editReason}
       />
 
       {/* Mobile View (Cards) — virtualisé au-delà de 50 items */}
@@ -466,7 +442,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           collaboratorsByTask={collaboratorsByTask}
           pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}
           friends={friends}
-          onToggleTeamComplete={handleToggleTeamComplete}
+          onToggleTeamComplete={team.toggleComplete}
           onEditTeamTask={setEditingTeamTask}
         />
 
@@ -588,7 +564,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             task={editingTeamTask}
             projects={teamProjects.filter((p) => !p.archivedAt)}
             members={orgMembers}
-            onUpdate={modalUpdateTeamTask}
+            onUpdate={team.updateFromModal}
             onClose={() => setEditingTeamTask(null)}
           />
         )}

@@ -524,6 +524,7 @@
       "clear": "Effacer l'état",
       "menuAria": "État de « {{name}} »",
       "badgeAria": "État : {{state}}",
+      "done": "Atteint",
       "unset": "Sans état"
     },
     "axis": {
