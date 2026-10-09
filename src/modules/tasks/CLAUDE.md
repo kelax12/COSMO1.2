@@ -19,5 +19,23 @@ au client**. Elle est atomique (même transaction que la bascule) et idempotente
   `mapTaskToDb` ne l'émet volontairement pas.
 
 
+## 🗂️ Statut et État (mig. `214`, appliquée le 2026-10-08)
+
+`tasks.status` (`todo`, `in_progress`, `blocked`, `done`) et `tasks.health` (`on_track`,
+`at_risk`, `off_track`, NULL). Le trigger `sync_task_status` (`SECURITY INVOKER`) tient
+`status` et `completed` d'accord ; `applyStatusSync` (`status-sync.ts`) en est le miroir pour la
+démo et les mises à jour optimistes. `review` n'existe pas en perso, exprès.
+
+- ❌ **Ne jamais écrire `update({ status: 'done' })` pour terminer une tâche À SOI.** Passer par
+  `toggleComplete` : seule `toggle_task_complete_v2` génère l'occurrence récurrente. Le Tableau le
+  fait dans `use-move-task.ts` ; une tâche REÇUE écrit le statut, la RPC ne connaissant que le
+  propriétaire.
+- ❌ **Ne jamais déduire un statut dans `mapTaskFromDb`, ni en ajouter un dans le cache à une
+  ligne qui n'en a pas.** Une tâche lue repart entière dans « Annuler » et « Dupliquer » : un
+  statut inventé partirait en base.
+- ❌ **La fiche (`save-task.ts`) n'envoie pas `completed`.** Elle ne l'édite pas, et le Statut de
+  la fiche peut cocher la tâche pendant qu'elle est ouverte : renvoyer la valeur de l'ouverture
+  la décocherait.
+
 > Les ÉCHÉANCES (`tasks.deadline`, un jour et non un instant) sont documentées dans
 > [`src/lib/CLAUDE.md`](../../lib/CLAUDE.md) : le module qui fait foi est `src/lib/deadline.ts`.

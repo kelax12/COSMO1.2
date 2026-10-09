@@ -256,8 +256,8 @@ restoreCategoryMutation.mutate(snapshot); // ✅ useRestoreX, id d'origine conse
 ## Champs canoniques du modèle
 
 - ❌ `habit.completedDates` — canonique : `habit.completions: Record<string, boolean>` (B5)
-- ❌ `task.status` / `task.title` / `task.dueDate` / `task.isBookmarked` — utiliser
-  `task.completed` / `task.name` / `task.deadline` / `task.bookmarked` (B6)
+- ❌ `task.title` / `task.dueDate` / `task.isBookmarked` → `name` / `deadline` / `bookmarked` (B6).
+  `task.status` n'est pas « terminée », c'est `completed` : [`tasks/CLAUDE.md`](tasks/CLAUDE.md)
 - ❌ Faire porter au type `User` un état d'abonnement — il ne porte QUE l'identité ; l'état
   premium vient de `useBilling()`, jamais d'ailleurs (ex-N5). Les champs que cette règle nommait
   (`premiumTokens`, `premiumWinStreak`, `lastTokenConsumption`) n'existent plus nulle part depuis

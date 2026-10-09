@@ -1,6 +1,7 @@
 # Tâches perso : Statut, État, vue Tableau, conversion de sous-tâche, import · design
 
-Statut : validé avec Axel le 2026-10-08. Vivant jusqu'à implémentation, puis archivable.
+Statut : validé avec Axel le 2026-10-08, **implémenté le 2026-10-09** (mig. `214` appliquée, ledger
+`20261008210323`). Archivable.
 Origine : liste des 50 améliorations du 2026-10-08, points 4, 10 et 44. Le point 11 (corbeille
 perso) a été écarté par Axel pendant la conception.
 
