@@ -894,12 +894,10 @@
   "page": {
     "overview": "Overview",
     "freemiumOver": "Beyond 5 collaborators, a company subscription is required to accept new members.",
-    "freemiumInfo": "Free up to 5 collaborators. Nothing changes today.",
     "dangerZone": "Danger zone",
     "dangerHint": "Permanently deletes the company, its projects, OKRs and teams.",
     "transferOwnership": "Transfer ownership",
     "editProfile": "Edit the company profile",
-    "hideInfo": "Hide this notice",
     "memberCount_one": "{{count}} member",
     "memberCount_other": "{{count}} members",
     "memberCountDot_one": "{{count}} member.",
