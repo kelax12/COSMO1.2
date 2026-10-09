@@ -4,16 +4,19 @@
 // une étiquette sur chaque ligne noierait les deux seules qui informent,
 // « En cours » et « Bloquée ». La pastille d'État n'apparaît que si un état a
 // été déclaré.
+//
+// En vue tableau (desktop), l'État a sa propre colonne (`TaskHealthCell.tsx`) :
+// la ligne passe alors `withHealth={false}` pour ne pas le dire deux fois.
 import { effectiveStatus, type Task } from '@/modules/tasks';
 import { HEALTH_DOT } from '@/components/organization/health-state.helpers';
 import { STATUS_DOT } from '@/components/task-board/status-style';
 import { useT } from '@/i18n/useT';
 
-const TaskStateBadges = ({ task }: { task: Task }) => {
+const TaskStateBadges = ({ task, withHealth = true }: { task: Task; withHealth?: boolean }) => {
   const { t } = useT('tasks');
   const status = effectiveStatus(task);
   const showStatus = status === 'in_progress' || status === 'blocked';
-  const health = task.health ?? null;
+  const health = withHealth ? task.health ?? null : null;
   if (!showStatus && !health) return null;
 
   return (
