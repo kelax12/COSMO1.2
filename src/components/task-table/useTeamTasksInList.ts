@@ -45,7 +45,7 @@ export const useTeamTasksInList = () => {
   }, [orgId]);
 
   // Colonne État : même mutation que la colonne des tâches d'équipe (`TeamTasksTab`).
-  const setHealth = useCallback((task: TeamTask, health: TeamProjectHealth) => {
+  const setHealth = useCallback((task: TeamTask, health: TeamProjectHealth | null) => {
     updateTeamTaskMutation.mutate({ taskId: task.id, input: { health } });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- même raison que ci-dessus
   }, [orgId]);
