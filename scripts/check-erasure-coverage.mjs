@@ -156,10 +156,22 @@ export function tablesAvecUserId(dossier = MIGRATIONS) {
       const ligne = corps.split('\n').find((l) => /^\s*user_id\b/i.test(l));
       if (ligne) out.set(nom, { fichier: f, ligne: ligne.trim(), corps });
     }
+    // 🔴 Un ALTER peut porter PLUSIEURS clauses. On lit l'instruction entière,
+    // on la coupe en clauses, et la `ligne` retenue est celle de `user_id`
+    // SEULE. L'ancienne expression ne voyait `user_id` qu'en première clause,
+    // et lui attribuait alors le texte des clauses suivantes : le
+    // `ON DELETE CASCADE` d'une autre colonne prouvait le sien (2026-10-09).
     for (const m of sql.matchAll(
-      /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:public\.)?([a-z_0-9]+)\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?(user_id\b[^;]*)/gi,
+      /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?(?:public\.)?([a-z_0-9]+)\s+([^;]*);/gi,
     )) {
-      if (!out.has(m[1])) out.set(m[1], { fichier: f, ligne: m[2].trim() });
+      if (out.has(m[1])) continue;
+      for (const clause of m[2].split(/,\s*(?=(?:ADD|DROP|ALTER|RENAME|VALIDATE)\b)/i)) {
+        const c = /^\s*ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?(user_id\b[\s\S]*)$/i.exec(clause);
+        if (c) {
+          out.set(m[1], { fichier: f, ligne: c[1].trim() });
+          break;
+        }
+      }
     }
   }
   return out;

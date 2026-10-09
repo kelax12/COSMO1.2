@@ -57,6 +57,36 @@ describe('témoin — effacement dérivé du schéma (C-92)', () => {
     }
   });
 
+  it('`tablesAvecUserId` lit CHAQUE clause d un `ALTER TABLE`, et rien que la sienne', () => {
+    // 🔴 Deux défauts d'une même expression (2026-10-09) : un `user_id` ajouté
+    // en SECONDE clause était invisible (table jamais exigée à l'effacement),
+    // et un `user_id` nu en première clause emportait le texte de TOUTES les
+    // clauses suivantes, donc le `ON DELETE CASCADE` d'une autre colonne
+    // passait pour le sien.
+    const { racine, d } = migrations({
+      '001.sql': [
+        'CREATE TABLE public.seconde (', '  id UUID PRIMARY KEY', ');',
+        'CREATE TABLE public.voisine (', '  id UUID PRIMARY KEY', ');',
+      ].join(LF),
+      '002.sql': [
+        'ALTER TABLE public.seconde',
+        '  ADD COLUMN IF NOT EXISTS nom TEXT,',
+        '  ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;',
+        'ALTER TABLE public.voisine',
+        '  ADD COLUMN user_id UUID,',
+        '  ADD COLUMN auteur UUID REFERENCES auth.users(id) ON DELETE CASCADE;',
+      ].join(LF),
+    });
+    try {
+      const t = tablesAvecUserId(d);
+      expect([...t.keys()].sort()).toEqual(['seconde', 'voisine']);
+      expect(cascadeProuvee(t.get('seconde').ligne)).toBe(true);
+      expect(cascadeProuvee(t.get('voisine').ligne)).toBe(false);
+    } finally {
+      rmSync(racine, { recursive: true, force: true });
+    }
+  });
+
   it('`cascadeProuvee` ne croit personne sur parole', () => {
     // 🔴 Le contrôle qui compte : une table DÉCLARÉE `cascade` sans la clause
     // affirme que Postgres efface ces lignes. Il ne le fait pas, et personne
