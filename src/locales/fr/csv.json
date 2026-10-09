@@ -25,6 +25,8 @@
     "linkedKr": "KR lié",
     "completed": "Complétée",
     "completedAt": "Complétée le",
+    "status": "Statut",
+    "health": "État",
     "bookmarked": "Favori",
     "createdAt": "Créée le",
     "frequency": "Fréquence",
