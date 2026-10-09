@@ -431,7 +431,10 @@
     "check": "Cocher « {{name}} »",
     "uncheck": "Décocher « {{name}} »",
     "delete": "Supprimer la sous-tâche « {{name}} »",
-    "limitReached": "Maximum de {{max}} sous-tâches atteint."
+    "limitReached": "Maximum de {{max}} sous-tâches atteint.",
+    "promote": "Convertir « {{name}} » en tâche",
+    "promoted": "Sous-tâche convertie en tâche",
+    "promoteFailed": "Impossible de convertir la sous-tâche"
   },
   "smartPreset": {
     "overdue": "En retard",
@@ -483,5 +486,43 @@
     "clearQuickFilter": "Retirer le filtre {{name}}",
     "close": "Fermer la recherche",
     "placeholder": "Rechercher"
+  },
+  "board": {
+    "view": {
+      "label": "Affichage",
+      "list": "Liste",
+      "board": "Tableau"
+    },
+    "columns": {
+      "todo": "À faire",
+      "in_progress": "En cours",
+      "blocked": "Bloquée",
+      "done": "Terminée"
+    },
+    "count_one": "{{count}} tâche",
+    "count_many": "{{count}} de tâches",
+    "count_other": "{{count}} tâches",
+    "doneWindow": "7 derniers jours",
+    "empty": "Aucune tâche",
+    "add": "Ajouter",
+    "addAria": "Ajouter une tâche dans « {{column}} »",
+    "addPlaceholder": "Nom de la tâche, puis Entrée",
+    "moveTo": "Déplacer vers…",
+    "moveToAria": "Déplacer « {{name}} »",
+    "moveSheetTitle": "Déplacer « {{name}} » vers",
+    "current": "colonne actuelle",
+    "openAria": "Ouvrir « {{name}} »",
+    "regionAria": "Tableau des tâches",
+    "statusLabel": "Statut",
+    "health": {
+      "label": "État",
+      "on_track": "Dans les temps",
+      "at_risk": "À risque",
+      "off_track": "En difficulté",
+      "none": "Aucun",
+      "clear": "Effacer l'état",
+      "menuAria": "État de « {{name}} »",
+      "badgeAria": "État : {{state}}"
+    }
   }
 }

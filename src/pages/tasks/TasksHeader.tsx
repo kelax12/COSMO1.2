@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, Settings } from 'lucide-react';
+import { CalendarDays, Settings, SquareKanban } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader, TouchTarget } from '@/components/mobile';
 import TasksInboxMenu from '@/components/task-table/TasksInboxMenu';
 import ColorSettingsModal from '@/components/ColorSettingsModal';
 import { useT } from '@/i18n/useT';
 import { OVERDUE_FOCUS_EVENT } from '@/lib/hooks/use-overdue-focus';
+import ViewModeToggle from '@/components/task-board/ViewModeToggle';
+import { setTasksView, useTasksView } from '@/components/task-board/view-mode.store';
 
 interface TasksHeaderProps {
   showDeadlineCalendar: boolean;
@@ -46,6 +48,8 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
   // carte « Taches en cours », masquee sur mobile depuis le 2026-09-22 : sans
   // ce report, la seule porte vers ces reglages disparaissait avec elle.
   const [showColorSettings, setShowColorSettings] = useState(false);
+  // Vue Liste / Tableau (mig. 214) : store mémorisé, lu aussi par la page.
+  const tasksView = useTasksView();
 
   // Maquette 04 — « En-tête large qui se rétracte » : au repos le titre porte
   // ce qu'il y a à faire, au premier défilement il ne reste que « Tâches ».
@@ -107,6 +111,16 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
             {/* Tâches/listes partagées en attente, regroupées ici plutôt
                 qu'en bandeaux inline (cf. TaskTable, masqués sur mobile). */}
             <TasksInboxMenu />
+            {/* Un seul bouton ici, enfoncé ou non : l'en-tête mobile n'a que
+                des icônes, la bascule segmentée ne vit que sur desktop. */}
+            <TouchTarget
+              aria-label={t('board.view.board')}
+              aria-pressed={tasksView === 'board'}
+              onClick={() => setTasksView(tasksView === 'board' ? 'list' : 'board')}
+              className={tasksView === 'board' ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]' : ''}
+            >
+              <SquareKanban size={20} aria-hidden="true" />
+            </TouchTarget>
             <TouchTarget
               aria-label={tCommon('colorLegend.edit')}
               onClick={() => setShowColorSettings(true)}
@@ -167,6 +181,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
                 dans le tableau (cf. TaskTable), tout passe par cette boîte de
                 réception — comme sur mobile, avec un déclencheur en pastille
                 assortie au bouton Calendrier. */}
+            <ViewModeToggle />
             <TasksInboxMenu variant="desktop" />
             <motion.button
               whileHover={{ scale: 1.05 }}

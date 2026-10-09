@@ -156,6 +156,9 @@ const NON_MESUREES: Record<string, string> = {
   'components/task-table/ConfirmDeleteSheet.tsx':
     'variante de `DeleteTaskConfirm`, mesurée depuis `EventModal`.',
   'components/ListActionsSheet.tsx': 'dette : atteignable par appui long sur une puce de liste.',
+  'components/task-board/MoveTaskSheet.tsx':
+    'dette : « Déplacer vers… » du Tableau perso (/tasks, vue Tableau, 2026-10-08). Câblée '
+    + 'par `BottomSheet`, jamais parcourue au clavier par le spec.',
   'pages/agenda/QuickEventCard.tsx': 'dette : atteignable sur /agenda.',
   'pages/okr/DeleteObjectiveConfirm.tsx':
     'atteignable, et déjà ouverte par `reduced-motion-sheets.spec.ts` — mais '

@@ -25,6 +25,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import { buildDatePresets } from '@/lib/date-presets';
 import SubtaskChecklist from './SubtaskChecklist';
+import TaskStateFields from './TaskStateFields';
 import TaskDependenciesSection from './TaskDependenciesSection';
 import DescriptionField from '@/components/DescriptionField';
 import { PRIORITY_OPTIONS, priorityColor, RECURRENCE_OPTIONS } from './constants';
@@ -443,6 +444,10 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 conteneur parent est en `gap-0`), et les deux bordures
                 arrondies se heurtaient en un bug d'affichage visible à
                 l'écran (coins qui se chevauchent au lieu de s'espacer). ── */}
+          {/* Statut et État (mig. 214) — édition : enregistrés à chaque choix. */}
+          {!isCreating && taskId && (
+            <SectionCard><div className="px-4 py-3"><TaskStateFields taskId={taskId} /></div></SectionCard>
+          )}
           {((!isCreating && taskId) || (isCreating && onSubtasksChange)) && (
             <>
               <SectionTitle>{t('sections.subtasks')}</SectionTitle>

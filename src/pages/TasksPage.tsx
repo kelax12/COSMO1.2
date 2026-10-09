@@ -46,13 +46,17 @@ import { useHiddenWhileSearching } from './tasks/search-open.store';
 import { useChipLongPress } from './tasks/useChipLongPress';
 import { useTaskLists } from './tasks/useTaskLists';
 import { useT } from '@/i18n/useT';
+import { useTasksView } from '@/components/task-board/view-mode.store';
 
 // C-117 · feuille ouverte à la demande : son code ne pèse plus sur l'ouverture de /tasks.
 const ShareListSheet = React.lazy(() => import('@/components/ShareListSheet'));
+// Vue Tableau (mig. 214) : la vue Liste ne paie rien pour elle.
+const TaskBoard = React.lazy(() => import('@/components/task-board/TaskBoard'));
 
 const TasksPage: React.FC = () => {
   const { t } = useT('tasks');
   const isMobile = useIsMobile();
+  const tasksView = useTasksView();
   // Tutoriel séparé desktop / mobile : flag localStorage distinct par variante
   // pour que basculer de l'un à l'autre (rotation tablette) ré-affiche le tour
   // adapté au viewport courant.
@@ -429,6 +433,10 @@ const TasksPage: React.FC = () => {
               >
                 {isTasksLoading && tasks.length === 0 ? (
                   <TaskListSkeleton count={6} />
+                ) : tasksView === 'board' && !selectingTasksForListId ? (
+                  <React.Suspense fallback={<TaskListSkeleton count={6} />}>
+                    <TaskBoard tasks={filteredTasks} />
+                  </React.Suspense>
                 ) : (
                 <TaskTable
                   tasks={filteredTasks}
