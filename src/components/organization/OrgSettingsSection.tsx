@@ -132,7 +132,12 @@ const OrgSettingsSection = ({
   // C-39 — « la suppression resilie ET REMBOURSE » (arbitrage du 2026-09-03) :
   // un seul geste, aucun debit orphelin. L'enchainement et son ordre vivent
   // dans `useDeleteOrgFlow`, avec la raison de cet ordre.
-  const deleteFlow = useDeleteOrgFlow(org.id, () => setConfirmingDelete(false));
+  // Une fois l'entreprise supprimée, retour au tableau de bord PERSONNEL :
+  // rester sur `/entreprise` montrerait une organisation qui n'existe plus.
+  const deleteFlow = useDeleteOrgFlow(org.id, () => {
+    setConfirmingDelete(false);
+    navigate('/dashboard', { replace: true });
+  });
 
   // Miroir de `create_org_email_invitations` (mig. 161) : un admin, ou un
   // manager qui a le droit `member.invite` (il place alors sous lui-même).
