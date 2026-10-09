@@ -16,9 +16,12 @@
   "tabs": {
     "aria": "Sections de la tâche",
     "details": "Détails",
+    "advanced": "Options avancées",
     "subtasks": "Sous-tâches",
     "dependencies": "Dépendances",
-    "dependenciesAfterCreate": "Les dépendances se relient une fois la tâche créée."
+    "dependenciesAfterCreate": "Les dépendances se relient une fois la tâche créée.",
+    "share": "Partager",
+    "stateAfterCreate": "Le statut et l'état se règlent une fois la tâche créée."
   },
   "fields": {
     "moreOptions": "Plus d'options : échéance, catégorie, priorité, durée, listes",
