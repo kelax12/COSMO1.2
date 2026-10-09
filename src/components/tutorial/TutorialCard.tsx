@@ -113,9 +113,10 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="px-3 min-h-touch sm:min-h-0 sm:py-2 rounded-lg border border-[rgb(var(--color-border-strong))] font-medium text-sm text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+          aria-label={t('tutorial.skip')}
+          className="px-3 min-h-touch sm:min-h-0 sm:py-2 rounded-lg font-medium text-sm text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
         >
-          {t('tutorial.skip')}
+          {t('tutorial.skipShort')}
         </button>
         <span className="flex-1" />
         <button

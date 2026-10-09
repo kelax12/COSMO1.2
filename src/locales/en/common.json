@@ -237,6 +237,7 @@
   },
   "tutorial": {
     "skip": "Skip the tutorial",
+    "skipShort": "Skip",
     "done": "Done",
     "next": "Next",
     "previous": "← Previous"
