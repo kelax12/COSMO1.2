@@ -53,6 +53,7 @@ const TaskTableDesktop = ({
               {t('table.colName')}
               {arrow('name')}
             </th>
+            <th className="px-2 py-3" style={{ width: '140px' }}>{t('table.colHealth')}</th>
             <th className="px-2 py-3" style={{ width: '150px' }}>{t('table.colCategory')}</th>
             <th
               className="cursor-pointer text-center px-1 py-3"

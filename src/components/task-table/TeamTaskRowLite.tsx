@@ -13,6 +13,7 @@ import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import { isTaskOverdue, projectColor, taskDisplayStatus } from '@/components/organization/team-projects.helpers';
 import { formatDeadlineSmart, formatDuration } from './helpers';
 import { useT } from '@/i18n/useT';
+import TaskHealthCell from './TaskHealthCell';
 
 interface TeamTaskRowLiteProps {
   task: TeamTask;
@@ -73,6 +74,9 @@ export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, on
             {tOrg(status.labelKey as Parameters<typeof tOrg>[0])}
           </span>
         </div>
+      </td>
+      <td className="px-2 py-4 whitespace-nowrap">
+        <TaskHealthCell health={task.health} />
       </td>
       <td className="px-2 py-4 whitespace-nowrap">
         <span className="inline-flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>

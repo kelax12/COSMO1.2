@@ -31,6 +31,7 @@ import { TeamTaskCardLite } from "./TeamTaskCardLite";
 import { isTaskOverdue, formatDeadlineSmart, formatDuration } from "./helpers";
 import { useT } from '@/i18n/useT';
 import TaskStateBadges from './TaskStateBadges';
+import TaskHealthCell from './TaskHealthCell';
 import type { TeamProject, TeamTask } from "@/modules/team-projects";
 
 // Ligne unifiée perso/entreprise — même liste, deux rendus distincts.
@@ -380,7 +381,7 @@ export const TaskRow = React.memo(({
           style={{ color: showChecked ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
         <div className="flex items-center gap-2">
           <span className="truncate" title={task.name}>{task.name}</span>
-          <TaskStateBadges task={task} />
+          <TaskStateBadges task={task} withHealth={false} />
           {/* Compteur sous-tâches (#12) : « 2/5 » quand la checklist existe */}
           {(task.subtasks?.length ?? 0) > 0 && (
             <span
@@ -422,6 +423,9 @@ export const TaskRow = React.memo(({
             </span>
           ) : null}
         </div>
+      </td>
+      <td className="px-2 py-4 whitespace-nowrap">
+        <TaskHealthCell health={task.health} />
       </td>
       <td className="px-2 py-4 whitespace-nowrap">
         <span className="inline-flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
