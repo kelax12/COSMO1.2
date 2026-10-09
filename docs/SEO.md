@@ -322,7 +322,7 @@ Mesuré sur les 24 pages prérendues :
 | `X-Robots-Tag` | ✅ `noindex` sur invitations, reset de mot de passe, pages légales |
 | `rss.xml` | ✅ généré au build |
 | Maillage interne depuis l'accueil | ✅ les 4 use-cases, le guide, le blog et un article |
-| 404 | ✅ vraie page + `noindex` client (statut HTTP 200 — limite SPA assumée et documentée) |
+| 404 | ✅ vraie page + `noindex` (statut HTTP 200, limite SPA assumée). Depuis le 2026-10-09 le `noindex` est aussi dans le HTML SERVEUR : `app.html` sort sans `index` ni canonical vers `/`, visible par Bing et les crawlers IA qui n'exécutent pas le JS |
 
 **Le grief central de juillet — « le prérendu ne sort que 161 mots » — est corrigé** : l'accueil
 émet ~600 mots de contenu propre, les pages use-case 680–900.

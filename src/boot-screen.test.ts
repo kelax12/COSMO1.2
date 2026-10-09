@@ -62,7 +62,16 @@ describe('C-116 · peindre le prérendu, mais seulement sur une page prérendue'
 
   it('le prérendu pose data-prerendered et écrit une coquille vierge app.html', () => {
     expect(prerender).toContain("'<html data-prerendered'");
-    expect(prerender).toMatch(/writeFileSync\(join\(DIST, 'app\.html'\), html/);
+    expect(prerender).toMatch(/writeFileSync\(join\(DIST, 'app\.html'\), appShell/);
+  });
+
+  it("app.html sort en noindex sans canonical vers la home (sinon toute URL inconnue est un soft-404 indexable)", () => {
+    expect(prerender).toContain(`'<meta name="robots" content="noindex" />'`);
+    expect(prerender).toContain(`'<link rel="canonical" />'`);
+    // Les deux motifs remplacés doivent exister dans la source, sinon le
+    // prérendu lève : on vérifie ici qu'ils y sont encore.
+    expect(indexHtml).toMatch(/<meta name="robots" content="index[^"]*" \/>/);
+    expect(indexHtml).toContain('<link rel="canonical" href="https://thecosmo.app/" />');
   });
 
   it("le rewrite SPA sert app.html, jamais la home prérendue (la landing s'afficherait sur /dashboard)", () => {
