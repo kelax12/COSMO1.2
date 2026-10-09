@@ -496,7 +496,13 @@
       "none": "None",
       "clear": "Clear health",
       "menuAria": "Health of “{{name}}”",
-      "badgeAria": "Health: {{state}}"
+      "badgeAria": "Health: {{state}}",
+      "unset": "No health"
+    },
+    "axis": {
+      "label": "Columns",
+      "status": "Status",
+      "health": "Health"
     }
   }
 }

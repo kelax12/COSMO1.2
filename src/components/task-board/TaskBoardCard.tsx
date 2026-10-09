@@ -7,26 +7,31 @@
 import { memo } from 'react';
 import { AlertTriangle, ArrowRightLeft } from 'lucide-react';
 import { useCategoryLookup } from '@/modules/categories';
-import type { Task } from '@/modules/tasks';
+import { effectiveStatus, type Task } from '@/modules/tasks';
 import { formatDeadlineSmart, formatOverdueSince, isTaskOverdue } from '@/components/task-table/helpers';
 import { useT } from '@/i18n/useT';
 import TaskHealthMenu from './TaskHealthMenu';
+import { STATUS_DOT } from './status-style';
 
 export const TASK_DRAG_TYPE = 'application/x-cosmo-task';
 
 interface TaskBoardCardProps {
   task: Task;
   draggable: boolean;
+  /** Colonnes par État : le statut n'est plus dit par la colonne, la carte le dit. */
+  showStatus?: boolean;
   onOpen: (task: Task) => void;
   onRequestMove: (task: Task) => void;
 }
 
-const TaskBoardCard = ({ task, draggable, onOpen, onRequestMove }: TaskBoardCardProps) => {
+const TaskBoardCard = ({ task, draggable, showStatus = false, onOpen, onRequestMove }: TaskBoardCardProps) => {
   const { t } = useT('tasks');
   const lookupCategory = useCategoryLookup();
   const category = task.category ? lookupCategory(task.category) : null;
   const overdue = isTaskOverdue(task.deadline, task.completed);
   const hasPriority = task.priority >= 1 && task.priority <= 5;
+  const status = effectiveStatus(task);
+  const statusShown = showStatus && (status === 'in_progress' || status === 'blocked');
 
   return (
     <article
@@ -69,6 +74,12 @@ const TaskBoardCard = ({ task, draggable, onOpen, onRequestMove }: TaskBoardCard
             <span className={overdue ? 'text-red-500 font-semibold inline-flex items-center gap-0.5' : ''}>
               {overdue && <AlertTriangle size={12} aria-hidden="true" />}
               {overdue ? formatOverdueSince(task.deadline) : formatDeadlineSmart(task.deadline)}
+            </span>
+          )}
+          {statusShown && (
+            <span className="inline-flex items-center gap-1 px-1.5 rounded-md text-caption font-medium bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
+              <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[status]}`} aria-hidden="true" />
+              {t(`board.columns.${status}`)}
             </span>
           )}
           {hasPriority && (

@@ -522,7 +522,13 @@
       "none": "Aucun",
       "clear": "Effacer l'état",
       "menuAria": "État de « {{name}} »",
-      "badgeAria": "État : {{state}}"
+      "badgeAria": "État : {{state}}",
+      "unset": "Sans état"
+    },
+    "axis": {
+      "label": "Colonnes",
+      "status": "Statut",
+      "health": "État"
     }
   }
 }
