@@ -127,7 +127,12 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
             </p>
           )}
         </div>
-        {actions && <div className="flex items-center gap-1 shrink-0">{actions}</div>}
+        {/* `flex-wrap` et non `shrink-0` : à 200 % de police (WCAG 1.4.4) une
+            cible de 44 px en mesure 88, et quatre actions dépassaient l'écran
+            de 20 px sur /tasks (2026-10-09, icône Tableau ajoutée). Elles
+            passent à la ligne au lieu de sortir ; à taille normale elles
+            tiennent sur une rangée, comme avant. */}
+        {actions && <div className="flex flex-wrap items-center justify-end gap-1 min-w-0">{actions}</div>}
       </div>
     </header>
   );
