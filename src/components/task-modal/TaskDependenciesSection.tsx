@@ -24,6 +24,11 @@ interface TaskDependenciesSectionProps {
    * pour que l'appelant puisse afficher sans risquer un 403.
    */
   readOnly?: boolean;
+  /**
+   * Toujours déplié, « Ajouter » au bout de la ligne de titre. Utilisé par
+   * l'onglet Dépendances du modal desktop, où replier n'a plus de sens.
+   */
+  alwaysOpen?: boolean;
 }
 
 /**
@@ -39,9 +44,10 @@ interface TaskDependenciesSectionProps {
  * `useTaskDependencies`. La page Tâches, ouverte bien plus souvent que le
  * modal, ne paie donc jamais cette requête.
  */
-const TaskDependenciesSection = ({ taskId, readOnly = false }: TaskDependenciesSectionProps) => {
+const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false }: TaskDependenciesSectionProps) => {
   const { t, tp } = useT('tasks');
-  const [open, setOpen] = useState(false);
+  const [openState, setOpen] = useState(false);
+  const open = alwaysOpen || openState;
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const { data: allTasks = [] } = useTasks();
@@ -108,12 +114,13 @@ const TaskDependenciesSection = ({ taskId, readOnly = false }: TaskDependenciesS
   );
 
   return (
-    <div className="pt-3 border-t border-[rgb(var(--color-border))]">
+    <div className={alwaysOpen ? '' : 'pt-3 border-t border-[rgb(var(--color-border))]'}>
+      <div className="flex items-center gap-2">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="w-full flex items-center gap-2 text-left"
+        onClick={() => { if (!alwaysOpen) setOpen((v) => !v); }}
+        aria-expanded={alwaysOpen ? undefined : open}
+        className={`flex-1 min-w-0 flex items-center gap-2 text-left ${alwaysOpen ? 'cursor-default' : ''}`}
       >
         <Link2 size={13} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
         <span className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
@@ -131,6 +138,16 @@ const TaskDependenciesSection = ({ taskId, readOnly = false }: TaskDependenciesS
           </span>
         )}
       </button>
+      {alwaysOpen && !readOnly && (
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors"
+        >
+          <Plus size={12} aria-hidden="true" /> {t('dependencies.add')}
+        </button>
+      )}
+      </div>
 
       {open && (
         <div className="mt-2 space-y-3">
@@ -160,7 +177,7 @@ const TaskDependenciesSection = ({ taskId, readOnly = false }: TaskDependenciesS
               popup sait en créer une, et un bouton qui disparaît quand il n'y
               a « rien à choisir » supprime précisément le chemin dont on a
               besoin ce jour-là. */}
-          {!readOnly && (
+          {!readOnly && !alwaysOpen && (
             <button
               type="button"
               onClick={() => setPickerOpen(true)}

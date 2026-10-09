@@ -117,7 +117,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
     return (
       <div className="space-y-5">
         {!isCreating && task
-          ? <TaskDependenciesSection taskId={task.id} />
+          ? <TaskDependenciesSection taskId={task.id} alwaysOpen />
           : <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('tabs.dependenciesAfterCreate')}</p>}
       </div>
     );
