@@ -8,9 +8,10 @@
 //     sous-tâches partent dans le payload createTask.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState, useEffect } from 'react';
-import { Plus, X } from 'lucide-react';
+import { ArrowUpRight, Plus, X } from 'lucide-react';
 import { useTask, useUpdateTask, Subtask } from '@/modules/tasks';
 import { useT } from '@/i18n/useT';
+import { usePromoteSubtask } from './use-promote-subtask';
 
 /**
  * Plafond aligné sur la garde zod (`task.schema.ts`) : afficher un compteur
@@ -39,6 +40,9 @@ const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubt
   // plus frais après une mutation — on privilégie le détail s'il existe.
   const { data: detail } = useTask(isControlled ? '' : taskId ?? '');
   const updateTaskMutation = useUpdateTask();
+  // Point 10 de la liste du 2026-10-08 : convertir une sous-tâche en tâche.
+  // Édition seulement : en création, la parente n'existe pas encore.
+  const promote = usePromoteSubtask(isControlled ? undefined : taskId);
 
   const [localItems, setLocalItems] = useState<Subtask[]>(initialSubtasks ?? []);
   const [newName, setNewName] = useState('');
@@ -125,6 +129,19 @@ const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubt
               >
                 {sub.name}
               </span>
+              {!isControlled && taskId && !sub.completed && (
+                <button
+                  type="button"
+                  onClick={() => promote(sub.id, items, setLocalItems)}
+                  aria-label={t('subtasks.promote', { name: sub.name })}
+                  title={t('subtasks.promote', { name: sub.name })}
+                  // Visible au doigt : sous 768 px il n'y a pas de survol.
+                  className="md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 p-1 rounded transition-all hover:bg-[rgb(var(--color-hover))]"
+                  style={{ color: 'rgb(var(--color-text-muted))' }}
+                >
+                  <ArrowUpRight size={14} aria-hidden="true" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => commit(items.filter(s => s.id !== sub.id))}
