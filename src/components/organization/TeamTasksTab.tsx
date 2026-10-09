@@ -54,6 +54,13 @@ interface TeamTasksTabProps {
 /** Sans accents/casse — même normalisation que MemberDirectory. */
 const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
+// Tri des colonnes TEXTE par collation française, pas par point de code :
+// l'apostrophe typographique (U+2019) se classait après toutes les lettres,
+// donc « Maquettes de l’app » tombait après « Maquettes de la page » (et
+// l'inverse avec une apostrophe droite). Vu en CI le 2026-10-08.
+const TEXT_COLLATOR = new Intl.Collator('fr', { sensitivity: 'base' });
+const TEXT_SORT_FIELDS = new Set(['name', 'project', 'assignee']);
+
 /**
  * Onglet « Tâches » de l'espace entreprise — entre Pyramide et Projets.
  *
@@ -235,8 +242,13 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     const sorted = [...visibleTasks].sort((a, b) => {
       const pa = primary(a);
       const pb = primary(b);
-      if (pa < pb) return -1;
-      if (pa > pb) return 1;
+      if (TEXT_SORT_FIELDS.has(sortField)) {
+        const byText = TEXT_COLLATOR.compare(String(pa), String(pb));
+        if (byText !== 0) return byText;
+      } else {
+        if (pa < pb) return -1;
+        if (pa > pb) return 1;
+      }
       const sa = secondary(a);
       const sb = secondary(b);
       if (sa < sb) return -1;
