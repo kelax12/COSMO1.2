@@ -56,6 +56,21 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
 
   const byId = useMemo(() => new Map(allTasks.map((x) => [x.id, x])), [allTasks]);
   const task = byId.get(taskId);
+  // `useTasks` rend aussi les tâches qu'un ami m'a partagées : elles vivent
+  // dans SON compte, et le trigger de la mig. 137 refuse une arête entre deux
+  // comptes (`dependency_cross_account`). On ne propose donc que les tâches du
+  // même propriétaire que la tâche ouverte.
+  const sameAccountTasks = useMemo(
+    () =>
+      task
+        ? allTasks.filter((x) =>
+            x.userId && task.userId ? x.userId === task.userId : !x.sharedBy === !task.sharedBy,
+          )
+        : [],
+    [allTasks, task],
+  );
+  // Une tâche partagée par un ami : son graphe appartient à son propriétaire.
+  const locked = readOnly || !!task?.sharedBy;
 
   const blockedBy = useMemo(
     () =>
@@ -94,7 +109,7 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
       >
         {item.name}
       </span>
-      {!readOnly && (
+      {!locked && (
         <button
           type="button"
           onClick={() =>
@@ -138,7 +153,7 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
           </span>
         )}
       </button>
-      {alwaysOpen && !readOnly && (
+      {alwaysOpen && !locked && (
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
@@ -177,7 +192,7 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
               popup sait en créer une, et un bouton qui disparaît quand il n'y
               a « rien à choisir » supprime précisément le chemin dont on a
               besoin ce jour-là. */}
-          {!readOnly && !alwaysOpen && (
+          {!locked && !alwaysOpen && (
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
@@ -189,12 +204,12 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
         </div>
       )}
 
-      {!readOnly && pickerOpen && task && (
+      {!locked && pickerOpen && task && (
         <TaskDependencyPicker
           open={pickerOpen}
           onClose={() => setPickerOpen(false)}
           task={task}
-          tasks={allTasks}
+          tasks={sameAccountTasks}
           dependencies={dependencies}
         />
       )}
