@@ -148,6 +148,27 @@ describe('témoin — portabilité confrontée au schéma (C-94)', () => {
     }
   });
 
+  it('`colonnesParTable` voit CHAQUE clause d un `ALTER TABLE` a plusieurs `ADD COLUMN`', () => {
+    // 🔴 Le défaut du 2026-10-09 : la mig. 214 ajoute `status` ET `health`
+    // dans un seul ALTER. Seule la première clause était lue, donc `health`
+    // n'existait pas pour la garde, qui n'aurait jamais réclamé son export.
+    const { racine, d } = migrations({
+      '001.sql': ['CREATE TABLE public.t (', '  id UUID PRIMARY KEY,', '  a TEXT,', '  b TEXT', ');'].join(LF),
+      '002.sql': [
+        'ALTER TABLE public.t',
+        '  ADD COLUMN IF NOT EXISTS premiere TEXT NOT NULL DEFAULT \'x\',',
+        '  ADD COLUMN IF NOT EXISTS seconde TEXT;',
+      ].join(LF),
+      '003.sql': 'ALTER TABLE public.t DROP COLUMN IF EXISTS a, DROP COLUMN b;',
+    });
+    try {
+      const c = colonnesParTable(d);
+      expect([...c.get('t')].sort()).toEqual(['id', 'premiere', 'seconde']);
+    } finally {
+      rmSync(racine, { recursive: true, force: true });
+    }
+  });
+
   it('`entetesDeclarees` lit a travers les COMMENTAIRES', () => {
     // 🔴 Le défaut rencontré à la pose : l'expression s'arrête à la première
     // parenthèse fermante, et un commentaire à l'intérieur d'un `cols(...)`

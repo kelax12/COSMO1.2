@@ -69,6 +69,8 @@ const EXPORTS = {
       kr_id: 'linkedKr',
       completed: 'completed',
       completed_at: 'completedAt',
+      status: 'status',
+      health: 'health',
       bookmarked: 'bookmarked',
       created_at: 'createdAt',
     },
@@ -174,6 +176,8 @@ const EXPORTS = {
     exclu: {
       user_id: 'Identifiant interne du compte.',
       created_at: 'Métadonnée technique.',
+      // Invisible pour cette garde jusqu'au 2026-10-09 (ALTER à clauses multiples).
+      position: "Rang d'affichage entre catégories sœurs (glisser-déposer, mig. 143) : un réglage d'interface, l'arbre lui-même est exporté (`parent`). ⚠️ Discutable : à rouvrir si l'export doit restituer l'ordre.",
     },
   },
   lists: {
@@ -183,12 +187,17 @@ const EXPORTS = {
       name: 'name',
       color: 'color',
       type: 'type',
+      smart_rule: 'smartRule',
       task_ids: 'taskCount',
     },
     exclu: {
       user_id: 'Identifiant interne du compte.',
       created_at: 'Métadonnée technique.',
       updated_at: 'Métadonnée technique.',
+      // `smart_rule`, `is_default` et `position` (mig. 021) étaient invisibles
+      // pour cette garde jusqu'au 2026-10-09 (ALTER à clauses multiples).
+      is_default: "Liste ouverte par défaut à l'écran (mig. 021) : un réglage d'interface, pas un contenu. ⚠️ Discutable : à rouvrir si l'export doit restituer les réglages.",
+      position: "Rang d'affichage des listes (glisser-déposer, mig. 021) : un réglage d'interface. ⚠️ Discutable : à rouvrir si l'export doit restituer l'ordre.",
     },
   },
 };
@@ -250,15 +259,20 @@ export function colonnesParTable(dossier = MIGRATIONS) {
         add(m[1], c[1]);
       }
     }
+    // 🔴 Un ALTER peut porter PLUSIEURS clauses (`ADD COLUMN a …, ADD COLUMN
+    // b …`). On lit donc l'instruction entière jusqu'à son `;`, puis chaque
+    // clause. L'ancienne expression ne voyait que la première : `tasks.health`
+    // (mig. 214) n'existait pas pour cette garde, qui n'aurait jamais réclamé
+    // son export (2026-10-09).
     for (const m of sql.matchAll(
-      /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:public\.)?([a-z_0-9]+)\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z_0-9]*)/gi,
+      /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?(?:public\.)?([a-z_0-9]+)\s+([^;]*);/gi,
     )) {
-      add(m[1], m[2]);
-    }
-    for (const m of sql.matchAll(
-      /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:public\.)?([a-z_0-9]+)\s+DROP\s+COLUMN\s+(?:IF\s+EXISTS\s+)?([a-z_][a-z_0-9]*)/gi,
-    )) {
-      out.get(m[1])?.delete(m[2]);
+      for (const a of m[2].matchAll(/\bADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z_0-9]*)/gi)) {
+        add(m[1], a[1]);
+      }
+      for (const dr of m[2].matchAll(/\bDROP\s+COLUMN\s+(?:IF\s+EXISTS\s+)?([a-z_][a-z_0-9]*)/gi)) {
+        out.get(m[1])?.delete(dr[1]);
+      }
     }
   }
   return out;
