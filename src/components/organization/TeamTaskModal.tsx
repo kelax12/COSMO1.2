@@ -386,7 +386,7 @@ const TeamTaskModal = ({
           </button>
         </div>
 
-        <div role="tablist" aria-label={t('popups.task.tabsAria')} className="flex gap-1 px-3 overflow-x-auto border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))' }}>
+        <div role="tablist" aria-label={t('popups.task.tabsAria')} className="flex gap-1 px-3 overflow-x-auto overflow-y-hidden border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))' }}>
           {tabs.map(({ id, label }) => (
             <button
               key={id}
@@ -396,7 +396,7 @@ const TeamTaskModal = ({
               aria-selected={tab === id}
               aria-controls="team-task-tabpanel"
               onClick={() => setTab(id)}
-              className={`min-h-11 px-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+              className={`min-h-10 px-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
                 tab === id
                   ? 'border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-text-primary))]'
                   : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
