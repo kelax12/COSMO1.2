@@ -498,6 +498,7 @@
       "clear": "Clear health",
       "menuAria": "Health of “{{name}}”",
       "badgeAria": "Health: {{state}}",
+      "done": "Achieved",
       "unset": "No health"
     },
     "axis": {

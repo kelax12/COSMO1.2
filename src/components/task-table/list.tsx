@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import TaskCategoryIndicator from "@/components/TaskCategoryIndicator";
 import { useCategoryLookup } from "@/modules/categories";
-import { Task } from "@/modules/tasks";
+import { Task, useUpdateTask } from "@/modules/tasks";
 import { DateCalendarPanel, DATE_PANEL_CLASS } from "@/components/ui/date-picker";
 import { deadlineFromDayKey } from "@/lib/deadline";
 import { addDaysToKey, getTimezonePref, todayKeyInTz } from "@/lib/timezone";
@@ -217,6 +217,7 @@ export const TaskRow = React.memo(({
   friends,
 }: TaskRowProps) => {
   const { t } = useT('tasks');
+  const { mutate: updateTask } = useUpdateTask();
   // « Choisir » remplace le contenu du sous-menu par le calendrier (même
   // pattern qu'OverdueBanner : une seule couche, pas de course au focus).
   const [snoozeCalendar, setSnoozeCalendar] = useState(false);
@@ -424,8 +425,14 @@ export const TaskRow = React.memo(({
           ) : null}
         </div>
       </td>
-      <td className="px-2 py-4 whitespace-nowrap">
-        <TaskHealthCell health={task.health} />
+      <td className="px-1 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+        <TaskHealthCell
+          name={task.name}
+          health={task.health}
+          done={task.completed}
+          onSetHealth={(health) => updateTask({ id: task.id, updates: { health } })}
+          onMarkDone={() => onToggleComplete(task.id)}
+        />
       </td>
       <td className="px-2 py-4 whitespace-nowrap">
         <span className="inline-flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
