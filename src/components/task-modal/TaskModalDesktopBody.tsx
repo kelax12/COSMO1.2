@@ -8,7 +8,8 @@
 // verbatim). Étape 1 (détails) extraite dans DesktopDetailsStep ; étape 2
 // (collaborateurs) dans DesktopCollaboratorsStep. Ce fichier = chrome
 // (header, footer wizard) + aiguillage des deux étapes.
-import React from 'react';
+import React, { useState } from 'react';
+import type { DetailsTab } from './DesktopDetailsStep';
 import { X, AlertCircle, ChevronRight, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DesktopCollaboratorsStep from './DesktopCollaboratorsStep';
@@ -114,6 +115,8 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   sentRequests, pendingInvitesLocal, friends, cancelFriendRequestMutation,
 }) => {
   const { t } = useT('taskModal');
+  // Onglets Détails / Sous-tâches / Dépendances, repris de TeamTaskModal.
+  const [tab, setTab] = useState<DetailsTab>('details');
   const { t: tCommon } = useT('common');
   // Enregistrement principal (bouton + touche Entrée dans un champ) : les
   // boutons vivent hors du <form> (footer sticky), donc on partage cette
@@ -166,7 +169,34 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
             </button>
           </div>
 
-          <div className="p-6 overflow-y-auto flex-1 min-h-0" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+          {!collaboratorsOnly && (
+            <div role="tablist" aria-label={t('tabs.aria')} className="flex gap-1 px-3 overflow-x-auto border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}>
+              {(['details', 'subtasks', 'dependencies'] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  id={`task-tab-${id}`}
+                  aria-selected={tab === id}
+                  aria-controls="task-tabpanel"
+                  onClick={() => setTab(id)}
+                  className={`min-h-11 px-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                    tab === id
+                      ? 'border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-text-primary))]'
+                      : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
+                  }`}
+                >
+                  {id === 'subtasks' && isCreating && formData.subtasks.length > 0
+                    ? `${t('tabs.subtasks')} (${formData.subtasks.length})`
+                    : t(`tabs.${id}`)}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div
+            {...(!collaboratorsOnly ? { id: 'task-tabpanel', role: 'tabpanel', 'aria-labelledby': `task-tab-${tab}` } : {})}
+            className={`p-6 overflow-y-auto flex-1 ${collaboratorsOnly ? 'min-h-0' : 'min-h-[22rem]'}`} style={{ backgroundColor: 'rgb(var(--color-background))' }}>
             {/* Error display */}
             {errors.general &&
               <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg" role="alert">
@@ -231,10 +261,12 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                     task={task}
                     showDescription={showDescription}
                     setShowDescription={setShowDescription}
+                    tab={tab}
                   />
 
                 {/* ── Collaborateurs en disclosure (#29) — repliés par défaut,
                     dépliés via « Partager » ou l'ouverture ciblée (step===2). ── */}
+                {tab === 'details' && (
                 <div className="mt-6 border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
                   <button
                     type="button"
@@ -282,6 +314,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                     </div>
                   )}
                 </div>
+                )}
                   </>
                 )}
             </form>

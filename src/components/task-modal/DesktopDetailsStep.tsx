@@ -39,6 +39,8 @@ type TaskFormState = {
   subtasks: import('@/modules/tasks').Subtask[];
 };
 
+export type DetailsTab = 'details' | 'subtasks' | 'dependencies';
+
 export interface DesktopDetailsStepProps {
   formData: TaskFormState;
   setFormData: React.Dispatch<React.SetStateAction<TaskFormState>>;
@@ -63,6 +65,8 @@ export interface DesktopDetailsStepProps {
   /** Section Description masquée par défaut — même système que EventModal. */
   showDescription: boolean;
   setShowDescription: React.Dispatch<React.SetStateAction<boolean>>;
+  /** Onglet affiché (Détails / Sous-tâches / Dépendances). */
+  tab?: DetailsTab;
 }
 
 const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
@@ -73,6 +77,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
   lists, selectedListIds, setSelectedListIds, createListMutation,
   isCreating, task,
   showDescription, setShowDescription,
+  tab = 'details',
 }) => {
   const { t } = useT('taskModal');
   const { t: tCommon } = useT('common');
@@ -91,6 +96,32 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListColor, setNewListColor] = useState('blue');
+
+  if (tab === 'subtasks') {
+    return (
+      <div className="space-y-5">
+        {!isCreating && task && <SubtaskChecklist taskId={task.id} initialSubtasks={task.subtasks} />}
+        {isCreating && (
+          <SubtaskChecklist
+            value={formData.subtasks ?? []}
+            onChange={(subtasks) => setFormData(prev => ({ ...prev, subtasks }))}
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (tab === 'dependencies') {
+    // Dépendances (mig. 132) — édition seulement : une arête référence deux
+    // tâches, la seconde n'existe pas encore tant qu'on est en création.
+    return (
+      <div className="space-y-5">
+        {!isCreating && task
+          ? <TaskDependenciesSection taskId={task.id} />
+          : <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('tabs.dependenciesAfterCreate')}</p>}
+      </div>
+    );
+  }
 
   return (
                 <div className="space-y-5">
@@ -307,22 +338,8 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                       demande utilisateur — le lien tâche↔KR reste géré via
                       l'auto-liaison depuis la page OKR (formData.krId préservé). */}
 
-                  {/* Sous-tâches (#12) — édition : persistance immédiate ;
-                      création : contrôlé, incluses dans le payload createTask. */}
                   {/* Statut et État (mig. 214) — édition : enregistrés à chaque choix. */}
                   {!isCreating && task && <TaskStateFields taskId={task.id} />}
-                  {!isCreating && task && <SubtaskChecklist taskId={task.id} initialSubtasks={task.subtasks} />}
-                  {isCreating && (
-                    <SubtaskChecklist
-                      value={formData.subtasks ?? []}
-                      onChange={(subtasks) => setFormData(prev => ({ ...prev, subtasks }))}
-                    />
-                  )}
-
-                  {/* Dépendances (mig. 132) — édition seulement : une arête
-                      référence deux tâches, la seconde n'existe pas encore
-                      tant qu'on est en création. */}
-                  {!isCreating && task && <TaskDependenciesSection taskId={task.id} />}
 
                   {/* Description — masquée par défaut pour épurer l'UI (même
                       système que EventModal, cf. docs/UI-PATTERNS.md). Visible

@@ -13,6 +13,13 @@
     "optional": "(Facultatif)",
     "savingDots": "Enregistrement..."
   },
+  "tabs": {
+    "aria": "Sections de la tâche",
+    "details": "Détails",
+    "subtasks": "Sous-tâches",
+    "dependencies": "Dépendances",
+    "dependenciesAfterCreate": "Les dépendances se relient une fois la tâche créée."
+  },
   "fields": {
     "moreOptions": "Plus d'options : échéance, catégorie, priorité, durée, listes",
     "priority": "Priorité",
