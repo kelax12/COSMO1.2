@@ -37,6 +37,7 @@ import {
 } from './settings/primitives';
 import { DataTab } from './settings/DataTab';
 import TimezoneSection from './settings/TimezoneSection';
+import ReplayTutorialsCard from './settings/ReplayTutorialsCard';
 import { useAvatarActions } from './settings/useAvatarUpload';
 import { useAccountActions } from './settings/useAccountActions';
 import OrganizationSettingsCard from '@/components/organization/OrganizationSettingsCard';
@@ -472,6 +473,8 @@ const SettingsPage: React.FC = () => {
                   {t('help.openGuide')} <ChevronRight size={15} />
                 </button>
               </div>
+
+              <ReplayTutorialsCard />
 
               {/* support card */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">

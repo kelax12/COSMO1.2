@@ -29,24 +29,38 @@ import { useEffect, useState, useCallback } from 'react';
  * première ligne (`TaskCard`, jouée une fois par appareil) et le bandeau de
  * geste de `/tasks`.
  *
- * ⚠️ **Aucune entrée « Revoir le tutoriel » n'existe aujourd'hui dans l'app** :
- * `restart()` n'a pas d'appelant. Sur mobile, le tutoriel devient donc
- * inatteignable, et c'est bien l'effet demandé par la maquette — mais c'est un
- * FAIT, pas un repli. Le jour où une entrée est posée (feuille « Plus »,
- * /guide), elle rend les quatre tutoriels accessibles sans rien changer ici.
+ * ✅ Depuis le 2026-10-09, Réglages > Guide porte « Relancer les tutoriels »
+ * (`requestTutorialsReplay`) : c'est le seul chemin vers le tutoriel sur
+ * mobile, où il ne s'ouvre jamais de lui-même.
  *
  * ❌ Ne pas supprimer les fichiers de `src/tutorials/` : le desktop les ouvre
  * toujours automatiquement, et rien ne les y a montrés nuisibles.
  */
+const SEEN_PREFIX = 'cosmo_tutorial_seen_';
+// Valeur posée par « Relancer les tutoriels » (Réglages > Guide) : elle ouvre
+// le tutoriel même là où `autoStart` est faux (mobile), sinon le bouton ne
+// ferait rien sur téléphone.
+const REPLAY = 'replay';
+const TUTORIAL_KEYS = ['tasks', 'agenda', 'habits', 'okr'].flatMap((page) => [
+  `${page}_desktop`,
+  `${page}_mobile`,
+]);
+
+/** Marque les huit tutoriels (4 pages × desktop/mobile) comme à rejouer. */
+export const requestTutorialsReplay = () => {
+  try {
+    for (const key of TUTORIAL_KEYS) localStorage.setItem(`${SEEN_PREFIX}${key}`, REPLAY);
+  } catch { /* localStorage indisponible */ }
+};
+
 export const useTutorial = (storageKey: string, delayMs = 600, autoStart = true) => {
-  const fullKey = `cosmo_tutorial_seen_${storageKey}`;
+  const fullKey = `${SEEN_PREFIX}${storageKey}`;
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (!autoStart) return;
     try {
       const seen = localStorage.getItem(fullKey);
-      if (seen !== '1') {
+      if (seen === REPLAY || (autoStart && seen !== '1')) {
         const t = setTimeout(() => setIsOpen(true), delayMs);
         return () => clearTimeout(t);
       }

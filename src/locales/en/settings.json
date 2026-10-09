@@ -135,7 +135,11 @@
     "adminHint": "Growth, activity and conversion, admin only.",
     "openGuide": "Open the guide",
     "contactSupport": "Contact support",
-    "openDashboard": "Open the dashboard"
+    "openDashboard": "Open the dashboard",
+    "replayTitle": "Tutorials",
+    "replayHint": "Replay the guided tour of Tasks, Calendar, Habits and OKRs.",
+    "replayAction": "Replay tutorials",
+    "replayDone": "Each tutorial will replay the next time you open its page."
   },
   "data": {
     "title": "My data",

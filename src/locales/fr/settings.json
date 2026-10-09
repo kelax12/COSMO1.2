@@ -135,7 +135,11 @@
     "adminHint": "Croissance, activité et conversion, réservé admin.",
     "openGuide": "Ouvrir le guide",
     "contactSupport": "Contacter le support",
-    "openDashboard": "Ouvrir le dashboard"
+    "openDashboard": "Ouvrir le dashboard",
+    "replayTitle": "Tutoriels",
+    "replayHint": "Revoir la visite guidée de Tâches, Agenda, Habitudes et OKR.",
+    "replayAction": "Relancer les tutoriels",
+    "replayDone": "Chaque tutoriel se relancera à la prochaine ouverture de sa page."
   },
   "data": {
     "title": "Mes données",

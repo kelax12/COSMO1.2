@@ -241,6 +241,7 @@
   },
   "tutorial": {
     "skip": "Passer le tutoriel",
+    "skipShort": "Passer",
     "done": "Terminé",
     "next": "Suivant",
     "previous": "← Précédent"
