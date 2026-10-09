@@ -27,9 +27,9 @@ au client**. Elle est atomique (même transaction que la bascule) et idempotente
 démo et les mises à jour optimistes. `review` n'existe pas en perso, exprès.
 
 - ❌ **Ne jamais écrire `update({ status: 'done' })` pour terminer une tâche À SOI.** Passer par
-  `toggleComplete` : seule `toggle_task_complete_v2` génère l'occurrence récurrente. Le Tableau le
-  fait dans `use-move-task.ts` ; une tâche REÇUE écrit le statut, la RPC ne connaissant que le
-  propriétaire.
+  `toggleComplete` : seule `toggle_task_complete_v2` génère l'occurrence récurrente (Tableau :
+  `use-move-task.ts`). Depuis la mig. `215`, la RPC laisse la RLS décider : un ami « editor »
+  coche une tâche reçue, l'occurrence suivante reste réservée au propriétaire.
 - ❌ **Ne jamais déduire un statut dans `mapTaskFromDb`, ni en ajouter un dans le cache à une
   ligne qui n'en a pas.** Une tâche lue repart entière dans « Annuler » et « Dupliquer » : un
   statut inventé partirait en base.

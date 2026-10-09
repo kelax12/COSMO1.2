@@ -105,6 +105,9 @@ compilait, la suite passait.
   relue au catalogue (colonnes, deux `CHECK`, trigger `INVOKER` non exécutable par `anon` /
   `authenticated`, corps identique au fichier, 0 tâche terminée hors `done`). Preuve
   `proofs/214.proof.sql` jouée avant : 15 sur 15, témoin sans trigger rouge sur 3 cas.
+- ✅ **`215`** (un ami « editor » coche une tâche partagée) : **appliquée** le 2026-10-09, ledger
+  `20261009071902`, relue au catalogue. Preuve `proofs/215.proof.sql` : 8 sur 8 ; témoin = la reproduction
+  du défaut (`Task not found` pour l éditeur) jouée avant.
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
   seule issue, et le verdict est le texte de l'exception. ⚠️ En PL/pgSQL `N` et `n`, `OK` et `ok`
