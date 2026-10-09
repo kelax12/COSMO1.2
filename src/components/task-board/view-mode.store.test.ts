@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { readTasksView, setTasksView, TASKS_VIEW_KEY } from './view-mode.store';
+import { readBoardAxis, readTasksView, setBoardAxis, setTasksView, TASKS_BOARD_AXIS_KEY, TASKS_VIEW_KEY } from './view-mode.store';
 
 beforeEach(() => {
   localStorage.clear();
@@ -30,5 +30,16 @@ describe('vue Liste / Tableau mémorisée', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
     expect(readTasksView()).toBe('list');
     expect(() => setTasksView('board')).not.toThrow();
+  });
+});
+
+describe('axe des colonnes : Statut ou État', () => {
+  it('Statut par défaut, retient État, retombe sur Statut si inconnu', () => {
+    localStorage.clear();
+    expect(readBoardAxis()).toBe('status');
+    setBoardAxis('health');
+    expect(readBoardAxis()).toBe('health');
+    localStorage.setItem(TASKS_BOARD_AXIS_KEY, 'xyz');
+    expect(readBoardAxis()).toBe('status');
   });
 });

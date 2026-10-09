@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { BOARD_COLUMNS, DONE_WINDOW_DAYS, groupTasksByStatus, moveIntent } from './board.helpers';
+import { BOARD_COLUMNS, DONE_WINDOW_DAYS, HEALTH_COLUMNS, groupTasksByHealth, groupTasksByStatus, moveIntent } from './board.helpers';
 import type { Task } from '@/modules/tasks';
 
 let seq = 0;
@@ -76,5 +76,37 @@ describe('moveIntent', () => {
   });
   it('même colonne : rien', () => {
     expect(moveIntent('blocked', 'blocked')).toBe('none');
+  });
+});
+
+describe('groupTasksByHealth', () => {
+  it('quatre colonnes, Sans état en dernier', () => {
+    expect(HEALTH_COLUMNS).toEqual(['on_track', 'at_risk', 'off_track', 'none']);
+    expect(Object.keys(groupTasksByHealth([], NOW))).toEqual([...HEALTH_COLUMNS]);
+  });
+
+  it('range par état, sans état si absent ou NULL', () => {
+    const g = groupTasksByHealth([
+      t({ id: 'a', health: 'at_risk' }),
+      t({ id: 'b', health: null }),
+      t({ id: 'c' }),
+      t({ id: 'd', health: 'off_track', status: 'blocked' }),
+    ], NOW);
+    expect(g.at_risk.map((x) => x.id)).toEqual(['a']);
+    expect(g.off_track.map((x) => x.id)).toEqual(['d']);
+    expect(g.none.map((x) => x.id).sort()).toEqual(['b', 'c']);
+  });
+
+  it('les tâches terminées n ont pas d état à suivre : exclues', () => {
+    const g = groupTasksByHealth([t({ id: 'done', completed: true, status: 'done', health: 'at_risk', completedAt: '2026-10-08T09:00:00Z' })], NOW);
+    expect(Object.values(g).flat()).toEqual([]);
+  });
+
+  it('même tri que les colonnes de statut : en retard d abord', () => {
+    const g = groupTasksByHealth([
+      t({ id: 'later', health: 'on_track', deadline: '2026-10-20T00:00:00Z' }),
+      t({ id: 'late', health: 'on_track', deadline: '2026-10-01T00:00:00Z' }),
+    ], NOW);
+    expect(g.on_track.map((x) => x.id)).toEqual(['late', 'later']);
   });
 });

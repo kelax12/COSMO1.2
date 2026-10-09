@@ -5,22 +5,26 @@
 // cette feuille est atteinte par un bouton de la carte, par la touche menu
 // contextuel et par Maj+F10. Feuille du bas sur mobile, dialogue sur desktop
 // (`BottomSheet`), focus piégé et rendu au déclencheur (`useModalA11y`).
+//
+// Indépendante de l'axe (2026-10-09) : le Tableau lui passe ses colonnes,
+// de Statut ou d'État, et la colonne courante de la tâche.
 import { Check } from 'lucide-react';
 import { BottomSheet } from '@/components/mobile';
-import { effectiveStatus, type Task, type TaskStatus } from '@/modules/tasks';
+import type { Task } from '@/modules/tasks';
 import { useT } from '@/i18n/useT';
-import { BOARD_COLUMNS } from './board.helpers';
-import { STATUS_DOT } from './status-style';
+
+export interface MoveTarget { id: string; label: string; dot: string }
 
 interface MoveTaskSheetProps {
   task: Task | null;
+  targets: readonly MoveTarget[];
+  currentId: string | null;
   onClose: () => void;
-  onMove: (task: Task, to: TaskStatus) => void;
+  onMove: (task: Task, targetId: string) => void;
 }
 
-const MoveTaskSheet = ({ task, onClose, onMove }: MoveTaskSheetProps) => {
+const MoveTaskSheet = ({ task, targets, currentId, onClose, onMove }: MoveTaskSheetProps) => {
   const { t } = useT('tasks');
-  const current = task ? effectiveStatus(task) : null;
   const title = task ? t('board.moveSheetTitle', { name: task.name }) : '';
 
   return (
@@ -30,19 +34,19 @@ const MoveTaskSheet = ({ task, onClose, onMove }: MoveTaskSheetProps) => {
           {title}
         </h2>
         <ul className="space-y-1">
-          {BOARD_COLUMNS.map((status) => {
-            const isCurrent = status === current;
+          {targets.map((target) => {
+            const isCurrent = target.id === currentId;
             return (
-              <li key={status}>
+              <li key={target.id}>
                 <button
                   type="button"
                   disabled={isCurrent}
-                  onClick={() => { if (task) onMove(task, status); onClose(); }}
+                  onClick={() => { if (task) onMove(task, target.id); onClose(); }}
                   className="w-full min-h-11 flex items-center gap-3 px-3 rounded-xl text-left text-sm hover:bg-[rgb(var(--color-hover))] disabled:cursor-default disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60"
                   style={{ color: 'rgb(var(--color-text-primary))' }}
                 >
-                  <span className={`w-2.5 h-2.5 rounded-full ${STATUS_DOT[status]}`} aria-hidden="true" />
-                  <span className="flex-1">{t(`board.columns.${status}`)}</span>
+                  <span className={`w-2.5 h-2.5 rounded-full ${target.dot}`} aria-hidden="true" />
+                  <span className="flex-1">{target.label}</span>
                   {isCurrent && (
                     <span className="inline-flex items-center gap-1 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                       <Check size={14} aria-hidden="true" /> {t('board.current')}

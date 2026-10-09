@@ -5,7 +5,7 @@
 // Logique pure, testée dans board.helpers.test.ts. Le Tableau reçoit des
 // tâches DÉJÀ filtrées par la page (recherche, liste, catégories) : il ne
 // filtre rien d'autre que la fenêtre de « Terminée ».
-import { effectiveStatus, type Task, type TaskStatus } from '@/modules/tasks';
+import { effectiveStatus, type Task, type TaskHealth, type TaskStatus } from '@/modules/tasks';
 import { isOverdue } from '@/lib/deadline';
 
 /** Ordre des colonnes, vides comprises : une colonne qui n'apparaîtrait qu'une
@@ -57,6 +57,27 @@ export function groupTasksByStatus(tasks: readonly Task[], now: Date = new Date(
     if (status === 'done') columns.done.sort((a, b) => instant(b.completedAt) - instant(a.completedAt));
     else columns[status].sort((a, b) => compareOpen(a, b, now));
   }
+  return columns;
+}
+
+// ─── Colonnes par État (2026-10-09) ────────────────────────────────
+
+/** Colonne d'État : les trois états déclarés, puis « Sans état » (NULL en base). */
+export type HealthColumn = TaskHealth | 'none';
+export const HEALTH_COLUMNS: readonly HealthColumn[] = ['on_track', 'at_risk', 'off_track', 'none'];
+
+export const healthColumnOf = (task: Task): HealthColumn => task.health ?? 'none';
+
+/**
+ * Tâches OUVERTES par État. Une tâche terminée n'a plus d'état à suivre :
+ * elle n'apparaît dans aucune colonne (la vue par Statut a sa « Terminée »).
+ */
+export function groupTasksByHealth(tasks: readonly Task[], now: Date = new Date()): Record<HealthColumn, Task[]> {
+  const columns = Object.fromEntries(HEALTH_COLUMNS.map((c) => [c, [] as Task[]])) as Record<HealthColumn, Task[]>;
+  for (const task of tasks) {
+    if (effectiveStatus(task) !== 'done') columns[healthColumnOf(task)].push(task);
+  }
+  for (const column of HEALTH_COLUMNS) columns[column].sort((a, b) => compareOpen(a, b, now));
   return columns;
 }
 

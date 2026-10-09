@@ -35,3 +35,25 @@ const subscribe = (listener: () => void): (() => void) => {
 export function useTasksView(): TasksView {
   return useSyncExternalStore(subscribe, () => current, () => 'list');
 }
+
+// ─── Axe des colonnes du Tableau : Statut ou État (2026-10-09) ─────
+// Même mécanique : préférence par appareil, lue par le Tableau seul.
+
+export type BoardAxis = 'status' | 'health';
+export const TASKS_BOARD_AXIS_KEY = 'cosmo_tasks_board_axis';
+
+export function readBoardAxis(): BoardAxis {
+  return safeGetItem(TASKS_BOARD_AXIS_KEY) === 'health' ? 'health' : 'status';
+}
+
+let currentAxis: BoardAxis = readBoardAxis();
+
+export function setBoardAxis(axis: BoardAxis): void {
+  currentAxis = axis;
+  safeSetItem(TASKS_BOARD_AXIS_KEY, axis);
+  listeners.forEach((listener) => listener());
+}
+
+export function useBoardAxis(): BoardAxis {
+  return useSyncExternalStore(subscribe, () => currentAxis, () => 'status');
+}
