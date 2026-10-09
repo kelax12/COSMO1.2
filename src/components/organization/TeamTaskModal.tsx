@@ -346,7 +346,7 @@ const TeamTaskModal = ({
         )}
 
       <div
-        className="flex flex-col w-full sm:max-w-xl sm:w-full shrink-0 max-h-[92vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
+        className="flex flex-col w-full sm:max-w-xl sm:w-full shrink-0 max-h-[92vh] sm:h-[85vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
         style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         onClick={(e) => e.stopPropagation()}
         ref={modalA11yRef}
