@@ -137,7 +137,12 @@ async function capturer(page: Page, nom: string): Promise<void> {
     // échoué, sa seconde passe ne retrouvant pas le toast de la première.
     // Un masque ne suffit pas (une zone absente d'une capture reste une
     // différence) : on les retire du rendu le temps de la capture.
-    style: '[data-sonner-toaster] { display: none !important; }',
+    // 🔴 Masquer ne suffit pas quand la HAUTEUR dépend de l'heure : « Mon
+    // agenda » (Aperçu entreprise) est plus court sans rendez-vous qu'avec, et
+    // décalait « Mes résultats clés » en dessous (2026-10-09, 12 368 px). On
+    // lui fixe une hauteur le temps de la capture ; son contenu reste masqué.
+    style: '[data-sonner-toaster] { display: none !important; }'
+      + ' [data-testid="org-agenda-card"] { height: 180px !important; overflow: hidden !important; }',
     maxDiffPixelRatio: 0.002,
   });
 }
