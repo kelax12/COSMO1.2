@@ -112,11 +112,20 @@ const MASQUES = [
   // `now()`). Vu le 2026-10-08 : « Aucun rendez-vous aujourd'hui » contre une
   // frise remplie, et un autre premier jour listé, à code identique.
   '[data-testid="org-agenda-card"]',
+  // Mini-graphiques du tableau de bord : les 7 derniers jours, relatifs à
+  // `now()`. Vu le 2026-10-09 : une barre de l'Agenda avait changé de jour.
+  '[data-testid="mini-bar-chart"]',
   '.fc-toolbar-title',
   'time',
 ];
 
 async function capturer(page: Page, nom: string): Promise<void> {
+  // Aucun toast à l'écran au moment de capturer. Le style ci-dessous les
+  // retire déjà du rendu, et pourtant le rappel d'échéances (« 1 en retard ·
+  // Voir », 8 s) figurait dans la capture CI du 2026-10-09 sans qu'on sache
+  // le reproduire en local. On attend donc qu'il soit parti, plutôt que de
+  // dépendre du seul masquage.
+  await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 15_000 });
   await expect(page).toHaveScreenshot(`${nom}.png`, {
     fullPage: false,
     animations: 'disabled',
