@@ -430,7 +430,10 @@ test('MESURE — ShareListSheet (partage d\'une liste manuelle)', async ({ demoP
   // pas une feuille, et son déclencheur est la puce « Liste » — le bouton
   // « Nouvelle liste » est `sm:hidden`, donc mobile uniquement. Viser ce
   // dernier ici faisait attendre 3 min un élément jamais monté.
-  await page.getByRole('button', { name: /^liste$/i }).filter({ visible: true }).first().click();
+  // 🔴 La puce porte le nom « Nouvelle liste manuelle » depuis le 2026-10-09 :
+  // la bascule de vue Liste / Tableau a aussi un bouton « Liste », et `^liste$`
+  // cliquait celle-là (la vue Liste, déjà active), donc rien ne s'ouvrait.
+  await page.getByRole('button', { name: /^nouvelle liste manuelle$/i }).filter({ visible: true }).first().click();
   const nameField = page.getByPlaceholder(/nom de la liste/i).first();
   await expect(nameField).toBeVisible({ timeout: 10_000 });
   await nameField.fill('Liste a11y');

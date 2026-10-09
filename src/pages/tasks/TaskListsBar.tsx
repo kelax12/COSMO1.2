@@ -489,7 +489,15 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               initial={{ opacity: 0, scale: 0.9 }}
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.9 }}
+                              type="button"
                               onClick={() => setShowCreateList(true)}
+                              // Nom explicite : la bascule de vue Liste / Tableau
+                              // porte AUSSI un bouton « Liste » depuis le
+                              // 2026-10-09. Deux commandes au même nom, l'une qui
+                              // crée et l'autre qui change de vue, se confondent
+                              // au lecteur d'écran. « Liste » reste dans le nom
+                              // (WCAG 2.5.3, l'étiquette visible dans le nom).
+                              aria-label={t('lists.manualListTitle')}
                               className="inline-flex shrink-0 items-center gap-1.5 min-h-touch sm:min-h-0 sm:h-9 px-3 rounded-lg border-2 border-dashed border-[rgb(var(--color-border))] bg-transparent text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-[rgb(var(--color-border-strong))] hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
                               title={t('lists.manualListTitle')}
                             >

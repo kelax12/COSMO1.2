@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { AlertTriangle, Link2, Plus, X } from 'lucide-react';
 import {
   useRemoveTaskDependency,
@@ -6,8 +6,15 @@ import {
   useTasks,
   type Task,
 } from '@/modules/tasks';
-import TaskDependencyPicker from './TaskDependencyPicker';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
+
+// Le sélecteur (~20 ko de source) ne s'ouvre qu'au clic sur « Ajouter une
+// dépendance » : chargé à la demande, il sort du chunk `TaskModal`, qui avait
+// franchi son plafond (29,3 ko > 29,0 ko, 2026-10-09). Même découpe que
+// `TeamTaskTabPanels` côté entreprise. Catalogue `tasks` déjà chargé par la
+// modale.
+const TaskDependencyPicker = lazyWithRetry(() => import('./TaskDependencyPicker'));
 
 interface TaskDependenciesSectionProps {
   /**
@@ -205,13 +212,15 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
       )}
 
       {!locked && pickerOpen && task && (
-        <TaskDependencyPicker
-          open={pickerOpen}
-          onClose={() => setPickerOpen(false)}
-          task={task}
-          tasks={sameAccountTasks}
-          dependencies={dependencies}
-        />
+        <Suspense fallback={null}>
+          <TaskDependencyPicker
+            open={pickerOpen}
+            onClose={() => setPickerOpen(false)}
+            task={task}
+            tasks={sameAccountTasks}
+            dependencies={dependencies}
+          />
+        </Suspense>
       )}
     </div>
   );

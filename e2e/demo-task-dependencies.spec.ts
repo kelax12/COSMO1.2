@@ -56,10 +56,13 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Déplie la section « Dépendances » et ouvre la popup d'ajout. */
+/**
+ * Ouvre l'onglet « Dépendances » et la popup d'ajout. L'onglet a remplacé la
+ * section repliable le 2026-10-09 (b2d79318).
+ */
 async function openDependencyPicker(page: Page): Promise<void> {
   const taskDialog = page.getByRole('dialog', { name: /modifier la tâche/i });
-  await taskDialog.getByRole('button', { name: /^dépendances/i }).first().click();
+  await taskDialog.getByRole('tab', { name: /^dépendances/i }).click();
   await taskDialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
   await expect(page.getByRole('dialog', { name: /ajouter une dépendance/i })).toBeVisible({
     timeout: 10_000,
@@ -158,7 +161,7 @@ test.describe('C-27 — dépendances entre tâches personnelles (démo)', () => 
 
     // ── 6. Retirer l'arête la fait disparaître ────────────────────
     await openTaskModal(page, TASK_A);
-    await taskDialog(page).getByRole('button', { name: /^dépendances/i }).first().click();
+    await taskDialog(page).getByRole('tab', { name: /^dépendances/i }).click();
     await expect(taskDialog(page).getByText(TASK_B)).toBeVisible({ timeout: 10_000 });
     await taskDialog(page).getByRole('button', { name: /retirer cette dépendance/i }).first().click();
 

@@ -181,7 +181,10 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                   aria-selected={tab === id}
                   aria-controls="task-tabpanel"
                   onClick={() => setTab(id)}
-                  className={`min-h-10 px-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                  // 44 px (WCAG 2.5.5). La barre de défilement que 290e2599 a fait
+                  // disparaître venait du `-mb-px` dans un conteneur overflow-x-auto :
+                  // `overflow-y-hidden` la règle seul, la hauteur n'y était pour rien.
+                  className={`min-h-11 px-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
                     tab === id
                       ? 'border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-text-primary))]'
                       : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
