@@ -5435,7 +5435,7 @@ périmètre, ses questions et ses pièges connus.
 >
 > | Item | Ce qui reste | Débloqué par |
 > |---|---|---|
-> | ~~`C-116`~~ | ✅ fermé le 2026-10-10 : 8/8 sous 4 s en CI | — |
+> | ~~`C-116`~~ | ✅ fermé le 2026-10-10 : 8/8 sous 4 s en CI | rien |
 > | `C-118` | aucun audit clavier sous WebKit (`a11y-keyboard-audit` toujours exclu de `mobile-safari`) | **du code**, ou une revue manuelle datée sous Safari macOS |
 > | `C-45` | le réglage de console des URL de `loginWithGoogle` | un geste (`M-15`/`M-16`/`M-17`) |
 > | `C-24` | VoiceOver iOS sur un appareil réel | un geste (`M-40`, `M-52`) |
