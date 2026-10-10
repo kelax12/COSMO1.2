@@ -548,7 +548,16 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
     const taskButton = demoPage.locator('button[aria-label^="Marquer"]').first();
     await expect(taskButton).toBeVisible({ timeout: 15_000 });
     // Le bouton VOISIN de la case ouvre la tâche (la case, elle, la coche).
-    await demoPage.locator('li:has(button[aria-label^="Marquer"]) button').nth(1).click();
+    // Délai propre puis clic forcé, comme `navTo` : sous WebKit la rangée
+    // était jugée instable jusqu'au délai du test (180 s), instable le
+    // 2026-10-09. L'élément doit quand même exister et être visible.
+    const ouvrir = demoPage.locator('li:has(button[aria-label^="Marquer"]) button').nth(1);
+    await expect(ouvrir).toBeVisible({ timeout: 15_000 });
+    try {
+      await ouvrir.click({ timeout: 15_000 });
+    } catch {
+      await ouvrir.click({ force: true, timeout: 10_000 });
+    }
 
     const dialog = demoPage.getByRole('dialog');
     await expect(dialog.first()).toBeVisible({ timeout: 10_000 });

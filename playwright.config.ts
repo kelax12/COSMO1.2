@@ -111,6 +111,12 @@ export default defineConfig({
     },
     {
       name: 'mobile-safari',
+      // 180 s et non 120 : sous WebKit en CI, l'ENTRÉE dans la démo coûte à
+      // elle seule ~47 s (trace du 2026-10-09 : 16 s de chargement de la
+      // landing, 30 s avant que son CTA peigne), avant la première ligne du
+      // test, et la fixture peut recharger la landing une fois. Ce délai ne
+      // relâche aucune assertion : il borne le harnais, pas le produit.
+      timeout: 180_000,
       // ─── Deux specs ne sont PAS jouées ici, et il faut dire pourquoi ───
       //
       // `demo-calendar` et `demo-task-dependencies` visent un DOM qui n'est
