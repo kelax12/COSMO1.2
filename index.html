@@ -100,7 +100,16 @@
          le thème mobile sombre colorerait le fond. Police système : attendre
          la police web retarderait le rendu qu'on cherche à avancer. */
       html[data-prerendered] #boot-screen{display:none}
-      html[data-prerendered] #seo-fallback{display:block;box-sizing:border-box;max-width:none;min-height:100vh;margin:0;padding:32px max(20px,calc((100% - 760px) / 2));background:#fff;color:#1e293b;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+      html[data-prerendered] #seo-fallback{display:block;box-sizing:border-box;max-width:none;min-height:100vh;margin:0;padding:32px max(16px,calc((100% - 760px) / 2));background:#fff;color:#1e293b;font:18px/1.75 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+      /* C-116 · 2026-10-10 : typographie alignée sur celle des articles React
+         (18-19 px, marge 16 px). Le LCP ne change de candidat que pour un
+         élément PLUS GRAND : un fallback en 16 px laissait le paragraphe React
+         reprendre le LCP sur /pour-freelances/ et les articles du blog.
+         L'interligne est volontairement PLUS large que celui des articles
+         (1,75 et 2 contre 1,625 et 1,75) : la police système est plus étroite
+         qu'Inter sous Windows et Android, le même texte y tient en une ligne
+         de moins, et l'élément React redevenait le plus grand. */
+      html[data-prerendered] #seo-fallback .lead{font-size:19px;line-height:2}
       html[data-prerendered] #seo-fallback h1{font-size:2rem;line-height:1.2;font-weight:700;margin:0 0 16px}
       html[data-prerendered] #seo-fallback h2{font-size:1.3rem;line-height:1.3;font-weight:600;margin:28px 0 8px}
       html[data-prerendered] #seo-fallback p,html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{margin:0 0 12px}
