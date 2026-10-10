@@ -5,13 +5,14 @@
     "jamais à la main.",
     "🔴 La garde juge sur un ÉCART à ces valeurs, pas sur un absolu : les 52",
     "fonctions SECURITY DEFINER exposées à `authenticated` sont un choix",
-    "🔴 La garde juge sur un ÉCART à ces valeurs, pas sur un absolu : les 81",
+    "🔴 La garde juge sur un ÉCART à ces valeurs, pas sur un absolu : les 82",
     "est la 53e, ou une policy qui disparaît.",
     "❌ Ne jamais relever un compte ici pour faire passer la CI : répondre",
-    "est la 82e, ou une policy qui disparaît."
+    "est la 83e, ou une policy qui disparaît."
   ],
-  "pose_le": "2026-10-08",
+  "pose_le": "2026-10-10",
   "_securite_source": [
+    "Recalé le 2026-10-10 (81 → 82) : claim_acquisition_source (mig. 217), relue au catalogue. Les trois autres comptes inchangés (2 / 11 / 1).",
     "Recalé le 2026-10-08 (advisors/security du projet ykeugqfgklejcdbrmawy), après",
     "avoir répondu objet par objet à « qu'est-ce qui est apparu ? » depuis le 2026-09-20",
     "(9 / 52 / 2 / 1 → 11 / 81 / 2 / 1). Les 29 fonctions et 2 tables nouvelles",
@@ -31,8 +32,8 @@
     },
     "authenticated_security_definer_function_executable": {
       "niveau": "WARN",
-      "compte": 81,
-      "_note": "Les helpers RLS et les RPC métier. 🔴 C'est ce compte qu'il faut surveiller : la 82e fonction exposée est celle qu'on n'a pas décidée. ⚠️ Trois d'entre eux (get_subtree, has_subordinates, org_admin_count) ont eu leur EXECUTE révoqué par la mig. 100 pour fermer une fuite inter-organisations : ils ne doivent PAS réapparaître ici (absents au 2026-10-08). Recalage du 2026-10-08 (52 → 81) : chacune des 81 a été lue au catalogue. 67 testent auth.uid() ou un helper de garde (is_admin, is_org_member, my_org_perm, can_access_team_*…). Les autres délèguent à un helper lié à auth.uid() et NON exécutable par authenticated : get_my_team_* (7) → my_team_project_ids, get_team_trash / restore_team_task → can_restore_team_task, get_team_okr_trash / restore_team_okr → can_restore_team_okr. Deux sont publiques par conception (preview_share_link, record_demo_visit, cf. advisor anon). org_seats_allowed ne lit que des compteurs (quota de sièges), sans donnée de membre. La 81e est get_admin_onboarding_funnel (mig. 213), gardée par is_admin()."
+      "compte": 82,
+      "_note": "Les helpers RLS et les RPC métier. 🔴 C'est ce compte qu'il faut surveiller : la 83e fonction exposée est celle qu'on n'a pas décidée. ⚠️ Trois d'entre eux (get_subtree, has_subordinates, org_admin_count) ont eu leur EXECUTE révoqué par la mig. 100 pour fermer une fuite inter-organisations : ils ne doivent PAS réapparaître ici (absents au 2026-10-08). Recalage du 2026-10-08 (52 → 81) : chacune des 81 a été lue au catalogue. 67 testent auth.uid() ou un helper de garde (is_admin, is_org_member, my_org_perm, can_access_team_*…). Les autres délèguent à un helper lié à auth.uid() et NON exécutable par authenticated : get_my_team_* (7) → my_team_project_ids, get_team_trash / restore_team_task → can_restore_team_task, get_team_okr_trash / restore_team_okr → can_restore_team_okr. Deux sont publiques par conception (preview_share_link, record_demo_visit, cf. advisor anon). org_seats_allowed ne lit que des compteurs (quota de sièges), sans donnée de membre. La 81e est get_admin_onboarding_funnel (mig. 213), gardée par is_admin(). La 82e est claim_acquisition_source (mig. 217) : n'écrit que le profil de auth.uid(), compte de moins d'une heure, source jamais écrasée, valeur bornée par une regex, fermée à anon (relue le 2026-10-10)."
     },
     "auth_leaked_password_protection": {
       "niveau": "WARN",
