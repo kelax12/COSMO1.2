@@ -32,6 +32,8 @@ import {
 } from './team-projects.lazy';
 import ProjectsToolbar, { NewProjectButton } from './ProjectsToolbar';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { MobileFiltersButton, MobileFiltersSheet } from './MobileTeamTasks';
 import { usePermissionHints } from './permission-hints';
 import { useOrgTaskFilters } from './task-filters';
 import { useRememberedTaskFilters } from './remembered-task-filters';
@@ -78,6 +80,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const [taskModal, setTaskModal] = useState<TaskModalState>(null);
   // Sélection de PROJETS du Portefeuille : distincte de la sélection de tâches.
   const [portfolioSelect, setPortfolioSelect] = useState(false);
+  const isMobile = useIsMobile();
+  const [filtersOpen, setFiltersOpen] = useState(false);
   // Filtres : le MÊME état d'URL que l'onglet Tâches (task-filters.ts), mais
   // ils trient ici des PROJETS (project-filters.ts, répartition du 2026-09-27) :
   // personne, équipe, recherche, « En retard », « Cette semaine ».
@@ -353,6 +357,19 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       ? () => setSelectMode(true)
       : undefined;
 
+  const toolbar = (
+    <ProjectsToolbar
+      currentUserId={currentUserId}
+      prefs={prefs}
+      updatePrefs={updatePrefs}
+      effectiveView={view}
+      onStartSelect={onStartSelect}
+      sortControl={showSort ? (
+        <ProjectsSearchBar sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} />
+      ) : undefined}
+    />
+  );
+
   return (
     <div className="space-y-4">
       {activeProjects.length > 0 && (
@@ -372,8 +389,16 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         searchAria={pf('searchAria')}
         entity="projects"
         onCreateTeam={can['team.create'] ? newTeam : undefined}
+        // Mobile (242, 250) : périmètre, vues nommées, préréglages et tri dans une feuille.
+        scopeSlot={isMobile ? (scope) => (
+          <MobileFiltersSheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+            {scope}
+            {toolbar}
+          </MobileFiltersSheet>
+        ) : undefined}
         trailing={(
           <>
+            {isMobile && <MobileFiltersButton activeCount={0} onOpenChange={setFiltersOpen} />}
             {/* Corbeille (M4) : ne s'affiche que s'il y a quelque chose à restaurer. */}
             <TeamTrashDialog orgId={orgId} projects={allProjects} members={members} />
             <NewProjectButton
@@ -390,16 +415,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           plafond, elles se calculent sur un extrait, et l'écran le dit. */}
       {allTasks.length >= TEAM_TASKS_READ_LIMIT && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
 
-      <ProjectsToolbar
-        currentUserId={currentUserId}
-        prefs={prefs}
-        updatePrefs={updatePrefs}
-        effectiveView={view}
-        onStartSelect={onStartSelect}
-        sortControl={showSort ? (
-          <ProjectsSearchBar sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} />
-        ) : undefined}
-      />
+      {!isMobile && toolbar}
       </div>
       {view === 'list' && manyProjects && (
         <p className="text-xs text-[rgb(var(--color-text-muted))]">{pf('manyProjectsHint', { count: PORTFOLIO_CARD_THRESHOLD })}</p>

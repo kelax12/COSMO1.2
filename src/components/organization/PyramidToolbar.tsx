@@ -115,14 +115,14 @@ const PyramidToolbar = ({
             aria-label={ta('pyramid.chooseView')}
             className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${
               activeTeam
-                ? 'border-transparent text-white'
+                ? 'md:border-transparent md:text-white max-md:border-[rgb(var(--color-border))] max-md:!bg-transparent max-md:text-[rgb(var(--color-text-primary))]'
                 : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
             }`}
             style={activeTeam ? { backgroundColor: activeTeam.color } : undefined}
           >
             {activeTeam ? (
               <>
-                <span className="w-2 h-2 rounded-full bg-white/80 shrink-0" aria-hidden="true" />
+                <span className="w-2 h-2 rounded-full md:!bg-white/80 shrink-0" style={{ backgroundColor: activeTeam.color }} aria-hidden="true" />
                 {activeTeam.name}
               </>
             ) : (
@@ -203,7 +203,7 @@ const PyramidToolbar = ({
             className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
               editMode
                 ? 'border border-red-400/60 text-red-500 hover:bg-red-500/10'
-                : 'text-white bg-indigo-600 hover:bg-indigo-700'
+                : 'md:text-white md:bg-indigo-600 md:hover:bg-indigo-700 max-md:px-1 max-md:text-[rgb(var(--color-accent))]'
             }`}
           >
             {editMode ? (
@@ -212,7 +212,7 @@ const PyramidToolbar = ({
               </>
             ) : (
               <>
-                <Pencil size={14} aria-hidden="true" /> {ta('pyramid.edit')}
+                <Pencil size={14} aria-hidden="true" className="max-md:hidden" /> {ta('pyramid.edit')}
               </>
             )}
           </button>

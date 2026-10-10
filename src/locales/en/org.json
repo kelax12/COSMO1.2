@@ -550,6 +550,7 @@
     "body": "This person will immediately lose access to the company's projects, tasks and OKRs. Their personal data (tasks, habits, calendar) is not affected. They can come back with a new invitation code."
   },
   "common": {
+    "delete": "Delete",
     "close": "Close",
     "cancel": "Cancel",
     "add": "Add",

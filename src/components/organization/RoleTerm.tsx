@@ -41,6 +41,8 @@ const RoleTerm = ({ term, children, label, className = '' }: {
     const elsewhere = [...document.querySelectorAll('[aria-modal="true"]')]
       .some((modal) => !modal.contains(anchor.current));
     if (elsewhere) return;
+    // Sur mobile le « ? » est masqué (maquettes 264, 272) : pas de bulle d'office.
+    if (window.matchMedia?.('(max-width: 767px)').matches) return;
     if (claimFirstSight(term)) { setFirstSight(true); setOpen(true); }
   }, [term]);
   // La bulle de premier affichage refermée (ou démontée) laisse la place à la suivante.
@@ -60,7 +62,7 @@ const RoleTerm = ({ term, children, label, className = '' }: {
             type="button"
             onClick={(e) => e.stopPropagation()}
             aria-label={t('glossary.termHelp', { term: name })}
-            className="inline-flex items-center justify-center w-4 h-4 rounded-full text-current opacity-60 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+            className="max-md:hidden inline-flex items-center justify-center w-4 h-4 rounded-full text-current opacity-60 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
           >
             <HelpCircle size={11} aria-hidden="true" />
           </button>

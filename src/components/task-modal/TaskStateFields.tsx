@@ -39,7 +39,7 @@ const TaskStateFields = ({ taskId }: { taskId: string }) => {
   return (
     <div className="space-y-3">
       <div>
-        <p id={`status-${taskId}`} className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+        <p id={`status-${taskId}`} className="block text-xs max-md:text-label font-semibold md:uppercase md:tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
           {t('board.statusLabel')}
         </p>
         <div role="radiogroup" aria-labelledby={`status-${taskId}`} className="flex flex-wrap gap-1.5">
@@ -59,7 +59,7 @@ const TaskStateFields = ({ taskId }: { taskId: string }) => {
         </div>
       </div>
       <div>
-        <p id={`health-${taskId}`} className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+        <p id={`health-${taskId}`} className="block text-xs max-md:text-label font-semibold md:uppercase md:tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
           {t('board.health.label')}
         </p>
         <div role="radiogroup" aria-labelledby={`health-${taskId}`} className="flex flex-wrap gap-1.5">

@@ -251,7 +251,7 @@ const TeamProjectCard = ({
             )}
             {contributors.length > 0 && (
               <span className="flex -space-x-1.5" aria-label={`${contributors.length} contributeurs`}>
-                {contributors.slice(0, 3).map(({ member, open, overdue }) => (
+                {contributors.slice(0, 2).map(({ member, open, overdue }) => (
                   <span
                     key={member.userId}
                     className="rounded-full ring-2 ring-[rgb(var(--color-surface))]"
@@ -261,12 +261,12 @@ const TeamProjectCard = ({
                         : tp('project.memberOpen', open, { name: member.displayName })
                     }
                   >
-                    <MemberAvatar avatar={member.avatar} name={member.displayName} size={20} neutral />
+                    <MemberAvatar avatar={member.avatar} name={member.displayName} size={24} neutral />
                   </span>
                 ))}
-                {contributors.length > 3 && (
+                {contributors.length > 2 && (
                   <span className="w-[22px] h-[22px] rounded-full bg-[rgb(var(--color-hover))] ring-2 ring-[rgb(var(--color-surface))] flex items-center justify-center text-[9px] font-bold text-[rgb(var(--color-text-muted))]">
-                    +{contributors.length - 3}
+                    +{contributors.length - 2}
                   </span>
                 )}
               </span>

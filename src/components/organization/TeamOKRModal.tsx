@@ -56,6 +56,8 @@ interface TeamOKRModalProps {
   /** OKR à modifier — absent = création. */
   editingOKR?: TeamOKR | null;
   onClose: () => void;
+  /** Mobile (maquette 252) : la corbeille quitte la carte, la suppression vit ici. */
+  onDelete?: () => void;
 }
 
 interface KRDraft {
@@ -94,7 +96,7 @@ const newKR = (): KRDraft => ({
   contributorIds: [],
 });
 
-export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModalProps) {
+export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: TeamOKRModalProps) {
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
   const isEdit = !!editingOKR;
@@ -513,6 +515,11 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
             <span className="font-data mr-auto text-caption text-[rgb(var(--color-text-muted))]">
               {tOrgAdmin('okrModal.weightedProgress', { pct: weighted })}
             </span>
+          )}
+          {onDelete && (
+            <button type="button" onClick={onDelete} aria-label={t('common.deleteOkrAria', { title: editingOKR?.title ?? '' })} className="md:hidden min-h-touch px-2 text-label font-medium text-[rgb(var(--color-danger-text))]">
+              {t('common.delete')}
+            </button>
           )}
           <Button type="button" variant="outline" onClick={handleClose}>{tOrgAdmin('okrModal.cancel')}</Button>
           <Button

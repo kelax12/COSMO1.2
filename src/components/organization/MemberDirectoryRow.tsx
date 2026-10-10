@@ -34,8 +34,8 @@ const RoleBadge = ({ kind, help = true }: { kind: DirectoryRole; help?: boolean 
   const { t } = useT('org');
   const { labelKey, Icon, className } = BADGE_META[kind];
   return (
-    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${className}`}>
-      <Icon size={11} aria-hidden="true" /> {help ? <RoleTerm term={kind}>{t(labelKey)}</RoleTerm> : t(labelKey)}
+    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full max-md:!bg-transparent max-md:px-0 max-md:!text-[rgb(var(--color-text-secondary))] ${className}`}>
+      <Icon size={11} aria-hidden="true" className="max-md:hidden" /> {help ? <RoleTerm term={kind}>{t(labelKey)}</RoleTerm> : t(labelKey)}
     </span>
   );
 };
@@ -102,7 +102,7 @@ const MemberDirectoryRow = ({
       }}
       aria-label={selectMode ? tOrgAdmin('directory.select.rowAria', { name: m.displayName }) : t('common.seeProfileOf', { name: m.displayName })}
       aria-pressed={selectMode ? selected : undefined}
-      className={`flex items-center gap-3 p-3 rounded-xl border bg-[rgb(var(--color-surface))] cursor-pointer hover:border-indigo-400/60 hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+      className={`flex items-center gap-3 p-3 max-md:px-1 rounded-xl max-md:rounded-none border max-md:border-0 max-md:border-b bg-[rgb(var(--color-surface))] max-md:bg-transparent cursor-pointer [@media(hover:hover)]:hover:border-indigo-400/60 [@media(hover:hover)]:hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
         selected ? 'border-indigo-500' : 'border-[rgb(var(--color-border))]'
       }`}
     >
@@ -115,20 +115,24 @@ const MemberDirectoryRow = ({
           className="w-4 h-4 shrink-0 accent-indigo-600"
         />
       )}
-      <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} />
+      <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} neutral />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">{m.displayName}</p>
-          {rights.isSelf && (
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))]">
+          {rights.isSelf && m.displayName !== t('common.youBadge') && (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 max-md:px-0 rounded bg-[rgb(var(--color-hover))] max-md:bg-transparent max-md:text-label max-md:font-normal text-[rgb(var(--color-text-muted))]">
               {t('common.youBadge')}
             </span>
           )}
           <MemberAccessBadge member={m} />
         </div>
-        {m.email && <p className="text-xs text-[rgb(var(--color-text-muted))] truncate">{m.email}</p>}
+        {m.email && <p className="max-md:hidden text-xs text-[rgb(var(--color-text-muted))] truncate">{m.email}</p>}
+        {!lastActivity && !rights.canChangeRole && (
+          <p className="md:hidden text-caption text-[rgb(var(--color-text-muted))] truncate">{t(BADGE_META[role].labelKey)}</p>
+        )}
         {lastActivity && (
           <p className="text-caption text-[rgb(var(--color-text-muted))] truncate">
+            {!rights.canChangeRole && <span className="md:hidden">{t(BADGE_META[role].labelKey)} · </span>}
             {lastActivity.lastActivityAt
               ? tOrgAdmin('directory.activity.rowAgo', {
                   when: formatDistanceToNow(new Date(lastActivity.lastActivityAt), { addSuffix: true, locale: getDateLocale() }),
@@ -174,10 +178,10 @@ const MemberDirectoryRow = ({
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-        <RoleTerm term={role} label={t(BADGE_META[role].labelKey)} className="text-[rgb(var(--color-text-muted))]" />
+        <RoleTerm term={role} label={t(BADGE_META[role].labelKey)} className="max-md:hidden text-[rgb(var(--color-text-muted))]" />
         </span>
       ) : (
-        <RoleBadge kind={role} />
+        <span className="max-md:hidden"><RoleBadge kind={role} /></span>
       )}
 
       {rights.isAbove && !selectMode && (

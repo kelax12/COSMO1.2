@@ -27,9 +27,11 @@ interface TeamKRRowProps {
   /** Change l'état du KR : pose un point d'étape à la valeur courante. */
   onSetHealth: (status: ProjectHealth, value: number) => void;
   personOf?: (userId: string) => OrgMember | undefined;
+  /** Mobile (253) : toucher la ligne ouvre la fiche, où la valeur se met à jour. */
+  onOpen?: () => void;
 }
 
-const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf }: TeamKRRowProps) => {
+const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf, onOpen }: TeamKRRowProps) => {
   const { t: tOrgAdmin } = useT('orgAdmin');
   const { t: pf } = useT('portfolio');
   const [value, setValue] = useState<string>(String(kr.currentValue));
@@ -59,7 +61,7 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf }: Te
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0" onClick={onOpen ? () => { if (window.matchMedia('(max-width: 767px)').matches) onOpen(); } : undefined}>
         <div className="flex items-center gap-2">
           <p className={`text-sm md:truncate max-md:min-w-0 ${kr.completed ? 'line-through text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-primary))]'}`}>
             {kr.title}
@@ -82,7 +84,7 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf }: Te
               <span className="flex -space-x-1.5 shrink-0" title={pf('krContrib.carriers', { names: people.map((m) => m.displayName).join(', ') })}>
                 {people.slice(0, 4).map((m) => (
                   <span key={m.userId} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
-                    <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
+                    <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} neutral />
                   </span>
                 ))}
               </span>
@@ -174,7 +176,7 @@ const TeamOKRCard = ({
           <div className="flex flex-wrap items-center gap-2">
             {category && (
               <span
-                className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded md:uppercase md:tracking-wide max-md:!bg-transparent max-md:!px-0"
+                className="inline-flex max-md:w-full items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded md:uppercase md:tracking-wide max-md:!bg-transparent max-md:!px-0"
                 style={{ backgroundColor: `${category.color}1a`, color: category.color }}
               >
                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: category.color }} aria-hidden="true" />
@@ -240,7 +242,7 @@ const TeamOKRCard = ({
                 type="button"
                 onClick={onDelete}
                 aria-label={t('common.deleteOkrAria', { title: okr.title })}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                className="max-md:hidden w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 transition-colors"
               >
                 <Trash2 size={15} aria-hidden="true" />
               </button>
@@ -263,6 +265,7 @@ const TeamOKRCard = ({
               onCommit={(v) => onCommitKR(kr, v)}
               onSetHealth={(status, value) => onSetKRHealth(kr, status, value)}
               personOf={personOf}
+              onOpen={editDeniedReason ? undefined : onEdit}
             />
           ))}
         </div>
