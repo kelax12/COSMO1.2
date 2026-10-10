@@ -65,8 +65,15 @@ async function measureFocus(
   container: Locator,
   checkReturn = false,
 ): Promise<FocusReport> {
+  // ⚠️ Attendu jusqu'à 3 s, pas lu une fois : une surface pose son focus JUSTE
+  // APRÈS son affichage, et la lecture immédiate tombait parfois avant
+  // (MobileAddToList, instable en CI le 2026-10-10). Un focus qui n'entre
+  // jamais rend toujours `false`, au bout des 3 s.
+  const focusMovedIn = await expect
+    .poll(() => focusInside(container), { timeout: 3_000 })
+    .toBe(true)
+    .then(() => true, () => false);
   const focusedOnOpen = await describeFocus(page);
-  const focusMovedIn = await focusInside(container);
   const role = await container.getAttribute('role');
   const ariaModal = await container.getAttribute('aria-modal');
 
@@ -223,10 +230,13 @@ test('GARDE — EventModal : Échap passe par guardedClose, et le piège suit la
   await expect(titleField).toHaveValue('Titre modifié au clavier');
 
   // ── Le piège est passé À L'ENFANT ────────────────────────────────
-  expect(
-    await focusInside(discard),
-    `focus non entré dans la confirmation: ${await describeFocus(page)}`,
-  ).toBe(true);
+  // Attendu 3 s, même raison que les frères ci-dessous (instable le 2026-10-10).
+  await expect
+    .poll(() => focusInside(discard), {
+      timeout: 3_000,
+      message: `focus non entré dans la confirmation: ${await describeFocus(page)}`,
+    })
+    .toBe(true);
   const escapee = await firstTabEscapee(page, discard);
   expect(escapee, `le focus a quitté la confirmation vers ${escapee}`).toBe(null);
 
