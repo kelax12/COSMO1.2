@@ -965,6 +965,8 @@
     "target": "Target",
     "unit": "Unit",
     "weight": "Weight (1–10)",
+    "krAssignTeam": "Assign to a team",
+    "krPeople": "Owner and contributors",
     "weightHint": "How much this KR counts towards overall progress",
     "needOneKr": "Add at least 1 measurable key result.",
     "cancel": "Cancel",
