@@ -137,7 +137,10 @@ test.describe('a11y audit', () => {
   // The first navigation triggers vite's on-demand compile of heavy pages
   // (LandingPage + showcases). Give the cold-start headroom so the suite
   // doesn't flake on the very first goto under CI/loaded machines.
-  test.describe.configure({ timeout: 120_000 });
+  // ⚠️ Plus de `describe.configure({ timeout: 120_000 })` ici : il écrasait
+  // les 180 s du project mobile-safari (playwright.config.ts), et « Settings »
+  // mourait à 120 s sous WebKit (2026-10-10). Sur les autres projects, 120 s
+  // est déjà le délai global : rien ne change pour eux.
 
   test('Landing (public)', async ({ page }) => {
     await page.goto('/');
@@ -222,8 +225,16 @@ test.describe('a11y audit', () => {
   });
 
   test('Settings (demo)', async ({ demoPage }) => {
-    await navTo(demoPage, /param[èe]tres?|settings/i, /\/settings/);
+    // `goto` direct (sûr en démo, cf. la note plus haut) : ce test audite la
+    // PAGE, pas le chemin. La feuille « Plus » qu'empruntait `navTo` était le
+    // point fragile sous WebKit (instable le 2026-10-10), et elle reste
+    // couverte par les parcours qui la testent pour elle-même.
+    await demoPage.goto('/settings');
+    await expect(demoPage).toHaveURL(/\/settings/);
     await demoPage.waitForLoadState('networkidle');
+    // Un audit sur une page pas encore peinte rendrait 0 violation : la page
+    // doit être LÀ avant de scanner.
+    await expect(demoPage.getByRole('heading', { level: 1 }).first()).toBeVisible({ timeout: 20_000 });
     const violations = await scan(demoPage, 'settings');
     console.log(`[a11y] Settings: ${violations.length} violation(s)`);
     assertNoCritical(violations, 'Settings');
