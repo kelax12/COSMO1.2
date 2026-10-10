@@ -372,6 +372,10 @@ export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promi
     .or(sheet.getByRole('button', { name }))
     .filter({ visible: true })
     .first();
+  // L'item peut ne pas être encore VISIBLE quand la feuille l'est : sous WebKit
+  // elle glisse à ~1 image/s, et le clic forcé ci-dessous expirait sur un
+  // élément jamais trouvé (instable le 2026-10-10). On l'attend d'abord.
+  await sheetItem.waitFor({ state: 'visible', timeout: 20_000 });
   try {
     await sheetItem.click({ timeout: 10_000 });
   } catch {
@@ -440,10 +444,22 @@ export async function openOrgSection(page: Page, label: RegExp): Promise<void> {
   // « stable » de Playwright n'aboutissait jamais (181 essais, puis délai du
   // TEST entier, 120 s : instable le 2026-10-09). Délai propre, puis clic forcé
   // sur un élément résolu et visible.
-  try {
-    await item.click({ timeout: 15_000 });
-  } catch {
-    await item.click({ force: true, timeout: 10_000 });
+  // 🔴 Et un clic ne compte que si la feuille se REFERME : un clic forcé
+  // pendant qu'elle glisse encore pouvait tomber sans effet, la feuille
+  // restant ouverte (instable le 2026-10-10). Une seconde tentative, pas plus.
+  for (let essai = 0; essai < 2; essai += 1) {
+    // Le premier clic a pu agir et la feuille se refermer lentement : on ne
+    // reclique pas un élément qui n'est plus là.
+    if (essai > 0 && !(await item.isVisible().catch(() => false))) break;
+    try {
+      await item.click({ timeout: 15_000 });
+    } catch {
+      await item.click({ force: true, timeout: 10_000 });
+    }
+    const fermee = await expect(sheet)
+      .toHaveCount(0, { timeout: 5_000 })
+      .then(() => true, () => false);
+    if (fermee) return;
   }
   await expect(sheet).toHaveCount(0, { timeout: 10_000 });
 }
