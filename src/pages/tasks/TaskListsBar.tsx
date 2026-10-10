@@ -489,7 +489,11 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           type="button"
                           onClick={() => setShowCreateList(true)}
                           aria-label={t('lists.newList')}
-                          className={`sm:hidden shrink-0 inline-flex items-center justify-center h-9 w-9 ${TAP_AREA_44_Y} rounded-full bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] active:bg-[rgb(var(--color-hover))]`}
+                          // `w-11` : 44 px de LARGE réels (36 × 44 mesurés en CI le
+                          // 2026-10-10). Pas `TAP_AREA_44` : dernière pastille d'une
+                          // rangée défilante, son débord horizontal chevaucherait la
+                          // voisine et serait rogné par le conteneur (tap-area.ts).
+                          className={`sm:hidden shrink-0 inline-flex items-center justify-center h-9 w-11 ${TAP_AREA_44_Y} rounded-full bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] active:bg-[rgb(var(--color-hover))]`}
                         >
                           <Plus size={18} aria-hidden="true" />
                         </button>

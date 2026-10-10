@@ -75,9 +75,12 @@ test.describe('collaboration (demo)', () => {
     //  - desktop : onglet « Partager » ;
     //  - mobile  : Cell « Collaborateurs » (primitives.tsx rend un <button>)
     //              qui ouvre une action sheet.
+    //  - mobile sans collaborateur : « Inviter quelqu'un » (maquette 160,
+    //    4535e720 : « Collaborateurs 0 » se lisait comme un compte de rien).
     await modal
       .getByRole('tab', { name: /^partager/i })
       .or(modal.getByRole('button', { name: /collaborateurs/i }))
+      .or(modal.getByRole('button', { name: /inviter quelqu/i }))
       .filter({ visible: true })
       .first()
       .click();
