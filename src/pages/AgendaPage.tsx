@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router';
 import FullCalendar from '@fullcalendar/react';
 import { Draggable } from '@fullcalendar/interaction';
@@ -6,15 +6,7 @@ import { DateSelectArg, EventClickArg, DatesSetArg } from '@fullcalendar/core';
 import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, useRestoreEvent, CalendarEvent } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 import TaskSidebar from '@/components/TaskSidebar';
-import { lazyWithRetry } from '@/lib/lazy-with-retry';
-// Chargée à la demande : la feuille « Planifier une tâche » (maquette 170)
-// avait fait passer AgendaPage à 19,5 ko pour un plafond de 18,5 (2026-10-10).
-const MobileScheduleSheet = lazyWithRetry(() => import('./agenda/MobileScheduleSheet'));
-// Idem : la carte de création rapide n'existe qu'après un appui sur un créneau.
-const QuickEventCard = lazyWithRetry(() => import('./agenda/QuickEventCard'));
-// Idem : la gestion des récurrences ne s'ouvre qu'à la demande (montée à sa
-// première ouverture, puis gardée pour animer sa fermeture).
-const RecurringEventsManager = lazyWithRetry(() => import('./agenda/RecurringEventsManager'));
+import { MobileScheduleSheet, QuickEventCard, RecurringEventsManager } from './agenda/lazy-overlays';
 import TaskModal from '@/components/TaskModal';
 import EventModal from '@/components/EventModal';
 import ColorSettingsModal from '@/components/ColorSettingsModal';
@@ -77,20 +69,10 @@ const AgendaPage: React.FC = () => {
 
   const [currentView, setCurrentView] = useState('timeGridWeek');
   const [showTaskSidebar, setShowTaskSidebar] = useState(() => window.innerWidth >= 768);
-  // Montée à sa PREMIÈRE ouverture, puis gardée : chargée à la demande sans
-  // perdre l'animation de fermeture, qui exige un composant encore monté.
-  const [scheduleSheetMounted, setScheduleSheetMounted] = useState(false);
-  useEffect(() => {
-    if (isMobile && showTaskSidebar) setScheduleSheetMounted(true);
-  }, [isMobile, showTaskSidebar]);
   const [isDraggingTask, setIsDraggingTask] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [showEditEventModal, setShowEditEventModal] = useState(false);
   const [showRecurringManager, setShowRecurringManager] = useState(false);
-  const [recurringManagerMounted, setRecurringManagerMounted] = useState(false);
-  useEffect(() => {
-    if (showRecurringManager) setRecurringManagerMounted(true);
-  }, [showRecurringManager]);
   const [showQuickCategoryModal, setShowQuickCategoryModal] = useState(false);
 
   // Ouverture directe du modal de création depuis la palette ⌘K (#19).
@@ -407,10 +389,8 @@ const AgendaPage: React.FC = () => {
       {/* Maquette 170 (2026-10-10) : sur mobile, les tâches à planifier
           s'ouvrent dans une feuille du bas (`MobileScheduleSheet`), plus dans
           le tiroir latéral, qui reste le panneau desktop. */}
-      {isMobile && (showTaskSidebar || scheduleSheetMounted) && (
-        <Suspense fallback={null}>
-          <MobileScheduleSheet open={showTaskSidebar} onClose={() => setShowTaskSidebar(false)} />
-        </Suspense>
+      {isMobile && (
+        <MobileScheduleSheet open={showTaskSidebar} onClose={() => setShowTaskSidebar(false)} />
       )}
 
       {/* Task Sidebar & Backdrop */}
@@ -507,7 +487,6 @@ const AgendaPage: React.FC = () => {
       </div>
 
       {quickSlot && (
-        <Suspense fallback={null}>
         <QuickEventCard
           slot={quickSlot}
           categories={categories}
@@ -516,7 +495,6 @@ const AgendaPage: React.FC = () => {
           onClose={handleQuickClose}
           onAddCategory={() => setShowQuickCategoryModal(true)}
         />
-        </Suspense>
       )}
 
       <ColorSettingsModal
@@ -535,19 +513,15 @@ const AgendaPage: React.FC = () => {
         />
       )}
 
-      {(showRecurringManager || recurringManagerMounted) && (
-        <Suspense fallback={null}>
-          <RecurringEventsManager
-            isOpen={showRecurringManager}
-            setShowRecurringManager={setShowRecurringManager}
-            events={events}
-            updateEventMutation={updateEventMutation}
-            setSelectedEvent={setSelectedEvent}
-            setSelectedInstanceDate={setSelectedInstanceDate}
-            setShowEditEventModal={setShowEditEventModal}
-          />
-        </Suspense>
-      )}
+      <RecurringEventsManager
+        isOpen={showRecurringManager}
+        setShowRecurringManager={setShowRecurringManager}
+        events={events}
+        updateEventMutation={updateEventMutation}
+        setSelectedEvent={setSelectedEvent}
+        setSelectedInstanceDate={setSelectedInstanceDate}
+        setShowEditEventModal={setShowEditEventModal}
+      />
 
       {showEditEventModal && selectedEvent && (
         <EventModal
