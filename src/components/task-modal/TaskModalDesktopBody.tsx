@@ -8,11 +8,15 @@
 // verbatim). Étape 1 (détails) extraite dans DesktopDetailsStep ; étape 2
 // (collaborateurs) dans DesktopCollaboratorsStep. Ce fichier = chrome
 // (header, footer wizard) + aiguillage des deux étapes.
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import type { DetailsTab } from './DesktopDetailsStep';
 import { X, AlertCircle, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import DesktopCollaboratorsStep from './DesktopCollaboratorsStep';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+// L'onglet « Partager » (~16 ko de source) ne s'affiche qu'à la demande :
+// chargé alors, il sort du chunk `TaskModal`, qui n'avait plus que 1,4 ko de
+// marge sous son plafond (2026-10-10). Catalogue `tasks` déjà chargé.
+const DesktopCollaboratorsStep = lazyWithRetry(() => import('./DesktopCollaboratorsStep'));
 import DesktopDetailsStep from './DesktopDetailsStep';
 import { useCreateCategory, type Category } from '@/modules/categories';
 import { useCreateList } from '@/modules/lists';
@@ -218,28 +222,30 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                 {collaboratorsOnly ? (
                   /* Ouverture ciblée « Partager » (menu ⋯ → Collaborateur) :
                      UNIQUEMENT la section collaboration, sans les champs tâche. */
-                  <DesktopCollaboratorsStep
-                    collaboratorRef={collaboratorRef}
-                    isTaskOwner={isTaskOwner}
-                    task={task}
-                    onGenerateShareLink={onGenerateShareLink}
-                    collaborators={collaborators}
-                    displayInfo={displayInfo}
-                    pendingShareIds={pendingShareIds}
-                    handleRemoveCollaborator={handleRemoveCollaborator}
-                    emailInput={emailInput}
-                    setEmailInput={setEmailInput}
-                    inputError={inputError}
-                    setInputError={setInputError}
-                    handleAddEmail={handleAddEmail}
-                    filteredFriends={filteredFriends}
-                    collabIdOf={collabIdOf}
-                    toggleCollaborator={toggleCollaborator}
-                    sentRequests={sentRequests}
-                    pendingInvitesLocal={pendingInvitesLocal}
-                    friends={friends}
-                    cancelFriendRequestMutation={cancelFriendRequestMutation}
-                  />
+                  <Suspense fallback={null}>
+                    <DesktopCollaboratorsStep
+                      collaboratorRef={collaboratorRef}
+                      isTaskOwner={isTaskOwner}
+                      task={task}
+                      onGenerateShareLink={onGenerateShareLink}
+                      collaborators={collaborators}
+                      displayInfo={displayInfo}
+                      pendingShareIds={pendingShareIds}
+                      handleRemoveCollaborator={handleRemoveCollaborator}
+                      emailInput={emailInput}
+                      setEmailInput={setEmailInput}
+                      inputError={inputError}
+                      setInputError={setInputError}
+                      handleAddEmail={handleAddEmail}
+                      filteredFriends={filteredFriends}
+                      collabIdOf={collabIdOf}
+                      toggleCollaborator={toggleCollaborator}
+                      sentRequests={sentRequests}
+                      pendingInvitesLocal={pendingInvitesLocal}
+                      friends={friends}
+                      cancelFriendRequestMutation={cancelFriendRequestMutation}
+                    />
+                  </Suspense>
                 ) : (
                   <>
                 {/* ── Vue unique (#29) : le wizard 2 étapes est remplacé par une
@@ -272,28 +278,30 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
 
                 {/* Partager : la section collaboration, dans son propre onglet. */}
                 {tab === 'share' && (
-                  <DesktopCollaboratorsStep
-                    collaboratorRef={collaboratorRef}
-                    isTaskOwner={isTaskOwner}
-                    task={task}
-                    onGenerateShareLink={onGenerateShareLink}
-                    collaborators={collaborators}
-                    displayInfo={displayInfo}
-                    pendingShareIds={pendingShareIds}
-                    handleRemoveCollaborator={handleRemoveCollaborator}
-                    emailInput={emailInput}
-                    setEmailInput={setEmailInput}
-                    inputError={inputError}
-                    setInputError={setInputError}
-                    handleAddEmail={handleAddEmail}
-                    filteredFriends={filteredFriends}
-                    collabIdOf={collabIdOf}
-                    toggleCollaborator={toggleCollaborator}
-                    sentRequests={sentRequests}
-                    pendingInvitesLocal={pendingInvitesLocal}
-                    friends={friends}
-                    cancelFriendRequestMutation={cancelFriendRequestMutation}
-                  />
+                  <Suspense fallback={null}>
+                    <DesktopCollaboratorsStep
+                      collaboratorRef={collaboratorRef}
+                      isTaskOwner={isTaskOwner}
+                      task={task}
+                      onGenerateShareLink={onGenerateShareLink}
+                      collaborators={collaborators}
+                      displayInfo={displayInfo}
+                      pendingShareIds={pendingShareIds}
+                      handleRemoveCollaborator={handleRemoveCollaborator}
+                      emailInput={emailInput}
+                      setEmailInput={setEmailInput}
+                      inputError={inputError}
+                      setInputError={setInputError}
+                      handleAddEmail={handleAddEmail}
+                      filteredFriends={filteredFriends}
+                      collabIdOf={collabIdOf}
+                      toggleCollaborator={toggleCollaborator}
+                      sentRequests={sentRequests}
+                      pendingInvitesLocal={pendingInvitesLocal}
+                      friends={friends}
+                      cancelFriendRequestMutation={cancelFriendRequestMutation}
+                    />
+                  </Suspense>
                 )}
                   </>
                 )}
