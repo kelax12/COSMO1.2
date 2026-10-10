@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { MobileFiltersButton, MobileFiltersSheet } from './MobileTeamTasks';
 import { Search, X, ChevronDown, CheckSquare, Download } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
@@ -108,6 +110,8 @@ const MemberDirectoryToolbar = ({
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
   const activeCount = activeFilterCount(filters);
+  const isMobile = useIsMobile();
+  const [sheetOpen, setSheetOpen] = useState(false);
   const set = (patch: Partial<DirectoryFilters>) => onChange({ ...filters, ...patch });
 
   const teamName = teams.find((x) => x.id === filters.teamId)?.name;
@@ -146,6 +150,9 @@ const MemberDirectoryToolbar = ({
         </div>
         <div className="flex-1 hidden sm:block" aria-hidden="true" />
         {inviteAction}
+        {/* Maquette 266 : sur mobile, cinq filtres sur deux rangées deviennent un bouton. */}
+        <MobileFiltersButton activeCount={activeCount} onOpenChange={setSheetOpen} />
+        <div className="hidden md:contents">
         {canSelect && (
           <button type="button" onClick={onToggleSelectMode} aria-pressed={selectMode} className={TOOL_BUTTON}>
             <CheckSquare size={15} aria-hidden="true" />
@@ -164,8 +171,10 @@ const MemberDirectoryToolbar = ({
             <Download size={15} aria-hidden="true" />
           </button>
         )}
+        </div>
       </div>
 
+      <div className="hidden md:block">
       <div
         role="group"
         aria-label={tOrgAdmin('directory.filters.panelAria')}
@@ -234,6 +243,99 @@ const MemberDirectoryToolbar = ({
           </>
         )}
       </div>
+      </div>
+      {isMobile && (
+        <MobileFiltersSheet open={sheetOpen} onOpenChange={setSheetOpen}>
+      <div
+        role="group"
+        aria-label={tOrgAdmin('directory.filters.panelAria')}
+        className="flex flex-wrap items-center gap-1.5"
+      >
+        <FilterPill
+          label={tOrgAdmin('directory.filters.team')}
+          activeLabel={teamActive}
+          value={filters.teamId ?? ''}
+          onSelect={(v) => set({ teamId: v || null })}
+          onClear={() => set({ teamId: null })}
+          clearAria={clearAria(teamActive ?? '')}
+          options={teams.map((team) => ({ value: team.id, label: team.name }))}
+          anyLabel={tOrgAdmin('directory.filters.any')}
+        />
+        <FilterPill
+          label={tOrgAdmin('directory.filters.role')}
+          activeLabel={roleActive}
+          value={filters.role ?? ''}
+          onSelect={(v) => set({ role: (v || null) as DirectoryRole | null })}
+          onClear={() => set({ role: null })}
+          clearAria={clearAria(roleActive ?? '')}
+          options={DIRECTORY_ROLES.map((r) => ({ value: r, label: t(ROLE_KEY[r]) }))}
+          anyLabel={tOrgAdmin('directory.filters.any')}
+        />
+        <FilterPill
+          label={tOrgAdmin('directory.filters.manager')}
+          activeLabel={managerActive}
+          value={filters.managerId ?? ''}
+          onSelect={(v) => set({ managerId: v || null })}
+          onClear={() => set({ managerId: null })}
+          clearAria={clearAria(managerActive ?? '')}
+          options={managers.map((m) => ({ value: m.userId, label: m.displayName }))}
+          anyLabel={tOrgAdmin('directory.filters.any')}
+        />
+        <FilterPill
+          label={tOrgAdmin('directory.filters.joined')}
+          activeLabel={joinedActive}
+          value={filters.joined ?? ''}
+          onSelect={(v) => set({ joined: (v || null) as JoinedPeriod | null })}
+          onClear={() => set({ joined: null })}
+          clearAria={clearAria(joinedActive ?? '')}
+          options={JOINED_PERIODS.map((p) => ({ value: p, label: tOrgAdmin(JOINED_KEY[p]) }))}
+          anyLabel={tOrgAdmin('directory.filters.any')}
+        />
+        <button
+          type="button"
+          onClick={() => set({ unplaced: !filters.unplaced })}
+          aria-pressed={filters.unplaced}
+          className={`${PILL} pr-3 ${filters.unplaced ? PILL_ON : PILL_IDLE}`}
+        >
+          {tOrgAdmin('directory.filters.unplaced')}
+        </button>
+        {narrowed && (
+          <>
+            <span className="text-xs text-[rgb(var(--color-text-muted))] tabular-nums ml-1" aria-live="polite">
+              {tOrgAdmin('directory.filters.count', { shown, total })}
+            </span>
+            <button
+              type="button"
+              onClick={() => onChange(EMPTY_DIRECTORY_FILTERS)}
+              className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline px-1"
+            >
+              {tOrgAdmin('directory.filters.clearAll')}
+            </button>
+          </>
+        )}
+      </div>
+          <div className="flex flex-wrap gap-2">
+        {canSelect && (
+          <button type="button" onClick={onToggleSelectMode} aria-pressed={selectMode} className={TOOL_BUTTON}>
+            <CheckSquare size={15} aria-hidden="true" />
+            {selectMode ? tOrgAdmin('directory.select.exit') : tOrgAdmin('directory.select.enter')}
+          </button>
+        )}
+        {onExport && (
+          <button
+            type="button"
+            onClick={onExport}
+            disabled={shown === 0}
+            aria-label={tOrgAdmin('directory.export.button')}
+            title={tOrgAdmin('directory.export.button')}
+            className={`${TOOL_BUTTON} w-10 justify-center px-0 disabled:opacity-50`}
+          >
+            <Download size={15} aria-hidden="true" />
+          </button>
+        )}
+          </div>
+        </MobileFiltersSheet>
+      )}
     </div>
   );
 };

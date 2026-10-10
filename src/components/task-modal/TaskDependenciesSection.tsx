@@ -145,7 +145,7 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
         className={`flex-1 min-w-0 flex items-center gap-2 text-left ${alwaysOpen ? 'cursor-default' : ''}`}
       >
         <Link2 size={13} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-        <span className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
+        <span className="text-xs font-bold md:uppercase md:tracking-wide text-[rgb(var(--color-text-muted))]">
           {t('dependencies.title')}
         </span>
         <span className="text-xs text-[rgb(var(--color-text-muted))]">

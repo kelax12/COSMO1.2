@@ -18,7 +18,7 @@
 // parent le construit, la carte s'en sert. Le mettre ailleurs obligerait les
 // deux fichiers à importer un troisième.
 // ═══════════════════════════════════════════════════════════════════
-import { useRef } from 'react';
+import { useRef, type CSSProperties } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -182,6 +182,9 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
                 ? 'border-[rgb(var(--color-accent-solid))]/50'
                 : 'border-[rgb(var(--color-border))]';
 
+  // Maquettes 273-274 : sur mobile, au repos, un nœud sans cadre ni anneau ;
+  // le rôle écrit (« Manager · 4 ») dit déjà qui encadre.
+  const plain = mobile && !editMode && !drag && !isDropTarget && !isMatch && flashId !== m.userId;
   const myTeams = teamsByUser.get(m.userId) ?? [];
   const myWorkload = workloadByUser?.get(m.userId);
 
@@ -279,7 +282,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
       style={isDragSource || editDraggable ? { touchAction: 'none' } : undefined}
       className={`inline-flex items-center rounded-2xl border bg-[rgb(var(--color-surface))] transition-colors ${
         isDropTarget && mobile ? 'gap-2.5 px-3 py-3.5' : 'gap-2.5 px-3 py-2'
-      } ${borderClass} ${
+      } ${plain ? 'border-transparent bg-transparent' : borderClass} ${
         isDragSource ? `cursor-grab select-none ${drag.pointerActive ? 'opacity-40' : ''}` : ''
       } ${isDropTarget ? 'cursor-pointer animate-wiggle' : ''} ${
         editDraggable ? 'cursor-grab select-none animate-wiggle' : ''
@@ -315,7 +318,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
           {collapsed ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
         </button>
       )}
-      <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} />
+      <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} neutral={mobile} />
       <div className="min-w-0">
           <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate max-w-[140px]">
             {isMe ? ta('pyramid.you') : m.displayName}
@@ -356,7 +359,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
             </span>
           )}
           <p
-            className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] inline-flex items-center gap-1.5"
+            className="text-caption font-semibold md:uppercase md:tracking-wide text-[rgb(var(--color-text-muted))] inline-flex items-center gap-1.5"
             title={
               totalReports > node.children.length
                 ? tpa('pyramid.directCount', node.children.length) + ta('pyramid.totalSuffix', { count: totalReports })
@@ -376,8 +379,9 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
                   <span
                     key={t.id}
                     title={t.name}
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: t.color }}
+                    // Maquette 269 : sur mobile, la teinte d'équipe adoucie.
+                    className="w-2 h-2 rounded-full max-md:bg-[color-mix(in_srgb,var(--tc)_55%,#8b949e)] md:bg-[var(--tc)]"
+                    style={{ '--tc': t.color } as CSSProperties}
                   />
                 ))}
               </span>

@@ -117,7 +117,8 @@ export const MobileFiltersSheet: React.FC<Omit<FiltersProps, 'activeCount'>> = (
     <BottomSheet open={open} onClose={() => onOpenChange(false)} ariaLabel={t('filters.mobileButton')}>
       <div className="px-gutter pb-5">
         <h2 className="text-title font-bold py-3 text-[rgb(var(--color-text-primary))]">{t('filters.mobileButton')}</h2>
-        <div className="flex flex-col gap-4">{children}</div>
+        {/* Dans la feuille, les rangées défilantes passent à la ligne : rien ne se coupe au bord. */}
+        <div className="flex flex-col gap-4 [&_.overflow-x-auto]:flex-wrap">{children}</div>
       </div>
     </BottomSheet>,
     document.body,

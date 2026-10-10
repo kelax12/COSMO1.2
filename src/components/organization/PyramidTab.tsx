@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useSearchParams } from 'react-router';
 import { Move, Users, ArrowUpFromLine, UserPlus } from 'lucide-react';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
@@ -344,7 +344,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-3">
               {orgTeams.map((t) => (
                 <span key={t.id} className="inline-flex items-center gap-1.5 text-[11px] text-[rgb(var(--color-text-muted))]">
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} aria-hidden="true" />
+                  <span className="w-2 h-2 rounded-full shrink-0 max-md:bg-[color-mix(in_srgb,var(--tc)_55%,#8b949e)] md:bg-[var(--tc)]" style={{ '--tc': t.color } as CSSProperties} aria-hidden="true" />
                   {t.name}
                 </span>
               ))}

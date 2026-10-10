@@ -245,7 +245,12 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
         />
       )}
       {editingOKR && (
-        <TeamOKRModal orgId={orgId} editingOKR={editingOKR} onClose={() => setEditingOKR(null)} />
+        <TeamOKRModal
+          orgId={orgId}
+          editingOKR={editingOKR}
+          onClose={() => setEditingOKR(null)}
+          onDelete={hints.deniedReason('okr.delete') ? undefined : () => { setDeletingOKR(editingOKR); setEditingOKR(null); }}
+        />
       )}
     </div>
   );

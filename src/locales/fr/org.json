@@ -579,6 +579,7 @@
     "body": "Cette personne perdra immédiatement l'accès aux projets, tâches et OKR de l'entreprise. Ses données personnelles (tâches, habitudes, agenda) ne sont pas affectées. Elle pourra revenir avec un nouveau code d'invitation."
   },
   "common": {
+    "delete": "Supprimer",
     "close": "Fermer",
     "cancel": "Annuler",
     "add": "Ajouter",

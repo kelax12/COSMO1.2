@@ -80,11 +80,11 @@ const VisibilityPill = ({ orgId, teamIds: ownTeamIds, projectId, closed = false,
     <Popover>
       <PopoverTrigger
         aria-label={t('visibility.aria', { scope, count })}
-        className={`inline-flex items-center ${size === 'md' ? 'gap-1.5 text-xs px-2.5 py-1' : 'gap-1 text-caption px-2 py-0.5'} font-medium rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]`}
+        className={`inline-flex items-center max-w-full ${size === 'md' ? 'gap-1.5 text-xs px-2.5 py-1' : 'gap-1 text-caption px-2 py-0.5'} font-medium rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]`}
       >
         <Eye size={size === 'md' ? 13 : 11} aria-hidden="true" />
-        <span className="truncate max-w-[260px]">{t('visibility.pill', { scope })}</span>
-        <span className="tabular-nums">· {tp('visibility.people', count)}</span>
+        <span className="truncate min-w-0 max-w-[260px]">{t('visibility.pill', { scope })}</span>
+        <span className="tabular-nums whitespace-nowrap shrink-0">· {tp('visibility.people', count)}</span>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 p-0">
         <div className="p-3 border-b border-[rgb(var(--color-border))] space-y-1">
