@@ -165,6 +165,7 @@
     "groupByStatus": "Status"
   },
   "filters": {
+    "mobileButton": "Filters",
     "barAria": "Task filters",
     "scopeAll": "All",
     "scopeMine": "Me",
@@ -253,6 +254,7 @@
     "byOn": "by {{name}}, on {{date}}"
   },
   "okrCard": {
+    "reached": "Reached",
     "weightTitle": "Importance weight ×{{weight}}",
     "contributesTo": "Contributes to: {{title}}",
     "childrenCount_one": "{{count}} objective contributes to it",

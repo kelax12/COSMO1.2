@@ -37,6 +37,7 @@ import {
 } from './settings/primitives';
 import { DataTab } from './settings/DataTab';
 import TimezoneSection from './settings/TimezoneSection';
+import MobileSettingsHome, { MobileSettingsBack, MobileThemeList, type MobileSettingsPage } from './settings/MobileSettingsHome';
 import ReplayTutorialsCard from './settings/ReplayTutorialsCard';
 import { useAvatarActions } from './settings/useAvatarUpload';
 import { useAccountActions } from './settings/useAccountActions';
@@ -55,6 +56,14 @@ const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  // Mobile (maquette 205) : `null` = l'accueil en liste groupée.
+  const [mobilePage, setMobilePage] = useState<MobileSettingsPage | null>(null);
+  const openMobile = (page: MobileSettingsPage | null) => {
+    setMobilePage(page);
+    if (page && page !== 'timezone' && page !== 'org') setActiveTab(page);
+    window.scrollTo(0, 0);
+  };
+  const showTabContent = !isMobile || (mobilePage !== null && mobilePage !== 'timezone' && mobilePage !== 'org');
   // Sous prefers-reduced-motion, l'exit d'un onglet ne signale jamais sa fin
   // à AnimatePresence (bug Framer Motion) : le panneau sortant reste dans le
   // DOM (invisible mais toujours focusable) et bloque le nouvel onglet en
@@ -206,7 +215,14 @@ const SettingsPage: React.FC = () => {
 
       {/* ──────── MAIN CONTENT ──────── */}
       <main className="flex-1 min-w-0 pt-4 pb-10 md:py-10 px-gutter sm:px-8 lg:px-12">
-        <MobileHeader title={t('page.title')} subtitle={t('page.subtitle')} />
+        {/* Maquette 206 : plus de sous-titre générique sur mobile. */}
+        {(!isMobile || mobilePage === null) && <MobileHeader title={t('page.title')} />}
+        {isMobile && mobilePage === null && (
+          <MobileSettingsHome user={user} initials={initials} hasOrganization onOpen={openMobile} onLogout={confirmLogout} />
+        )}
+        {isMobile && mobilePage !== null && <MobileSettingsBack onBack={() => openMobile(null)} />}
+        {isMobile && mobilePage === 'timezone' && <TimezoneSection />}
+        {isMobile && mobilePage === 'org' && <SectionCard><OrganizationSettingsCard /></SectionCard>}
         <div className="mb-8 max-w-3xl hidden md:block">
           <PageHeading variant="standard" className="tracking-tight">
             {t('page.title')}
@@ -226,7 +242,7 @@ const SettingsPage: React.FC = () => {
             tactile 44 portée par `TAP_AREA_44_Y`.
             ❌ Ne pas remettre de conteneur bordé : c'est lui qui donnait
             l'impression d'un cadre dont le contenu dépasse. */}
-        <div className="lg:hidden flex gap-2 mb-6 overflow-x-auto hide-scrollbar -mx-gutter px-gutter">
+        {!isMobile && <div className="lg:hidden flex gap-2 mb-6 overflow-x-auto hide-scrollbar -mx-gutter px-gutter">
           {NAV_GROUPS.flatMap(g => g.items).map((item) => {
             const Icon = item.icon;
             const active = activeTab === item.id;
@@ -242,7 +258,7 @@ const SettingsPage: React.FC = () => {
               </button>
             );
           })}
-        </div>
+        </div>}
 
         {/* `mode="wait"` retiré : sous prefers-reduced-motion, l'exit de
             l'onglet sortant ne signale jamais sa fin à AnimatePresence (bug
@@ -251,7 +267,7 @@ const SettingsPage: React.FC = () => {
             onglet monte immédiatement ; l'ancien continue son exit en
             parallèle (ou reste figé sans bloquer l'affichage si son
             exit-complete ne se déclenche pas). */}
-        <AnimatePresence mode={prefersReducedMotion ? undefined : 'wait'}>
+        {showTabContent && <AnimatePresence mode={prefersReducedMotion ? undefined : 'wait'}>
 
           {/* ── PROFIL ── */}
           {activeTab === 'profile' && (
@@ -331,22 +347,23 @@ const SettingsPage: React.FC = () => {
                     avant d'être retiré de cette route — un bouton aligné à
                     droite sur 390 px est exactement ce qu'un bouton flottant
                     vient masquer. */}
-                <div className="flex justify-stretch sm:justify-end mt-5 [&>button]:w-full [&>button]:sm:w-auto">
+                {/* Maquette 208 : le bouton n'apparaît que si quelque chose a changé. */}
+                {(profileDraft.name !== user.name || profileDraft.email !== user.email) && <div className="flex justify-stretch sm:justify-end mt-5 [&>button]:w-full [&>button]:sm:w-auto">
                   <PrimaryButton onClick={() => saveProfile(profileDraft)} loading={savingProfile}>{savingProfile ? t('profile.saving') : t('profile.save')}</PrimaryButton>
-                </div>
+                </div>}
               </SectionCard>
 
-              {/* ── Fuseau horaire d'affichage ── */}
-              <TimezoneSection />
+              {/* ── Fuseau horaire d'affichage (sa propre ligne sur mobile) ── */}
+              {!isMobile && <TimezoneSection />}
 
               </div>
 
               {/* Mode entreprise : carte info (membre) ou conversion (particulier). */}
-              <div className="flex flex-col gap-5">
+              {!isMobile && <div className="flex flex-col gap-5">
                 <SectionCard>
                   <OrganizationSettingsCard />
                 </SectionCard>
-              </div>
+              </div>}
             </motion.div>
           )}
 
@@ -367,7 +384,12 @@ const SettingsPage: React.FC = () => {
                   </div>
                 </form>
               </SectionCard>
-              <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-2xl p-6">
+              {/* Maquette 212 : sur mobile, une ligne en texte rouge ; la
+                  confirmation (saisie du mot) porte le poids. */}
+              <button type="button" onClick={deleteAccount} className="md:hidden w-full min-h-touch rounded-2xl bg-[rgb(var(--color-surface))] text-body text-[rgb(var(--color-danger-text))]">
+                {t('security.deleteAccount')}
+              </button>
+              <div className="hidden md:block bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-2xl p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h2 className="text-sm font-bold text-red-600 dark:text-red-500">{t('security.dangerZone')}</h2>
@@ -385,7 +407,8 @@ const SettingsPage: React.FC = () => {
           {/* ── APPARENCE ── */}
           {activeTab === 'appearance' && (
             <motion.div key="appearance" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl">
-              <SectionCard>
+              {isMobile && <MobileThemeList />}
+              <SectionCard className="hidden md:flex">
                 <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('appearance.heading')}</h2>
                 <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">{t('appearance.hint')}</p>
                 <div style={{ minHeight: '72px' }}
@@ -514,7 +537,7 @@ const SettingsPage: React.FC = () => {
               )}
             </motion.div>
           )}
-        </AnimatePresence>
+        </AnimatePresence>}
       </main>
 
       {/* ── confirm dialog ── */}

@@ -660,7 +660,7 @@
     "requestCancelled": "Demande annulée.",
     "joinAnother": "Rejoindre une autre entreprise",
     "backToPending": "← Revenir à la demande en attente",
-    "navLabel": "Créer / rejoindre",
+    "navLabel": "Créer ou rejoindre une entreprise",
     "navAria": "Créer ou rejoindre une entreprise",
     "inboxHeading": "Invitations d'entreprise",
     "inboxFrom": "Invitation de {{name}}",

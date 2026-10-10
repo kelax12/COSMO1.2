@@ -79,7 +79,7 @@ const AssigneesPicker = ({ members, value, onChange, disabled, canAssign, reveal
             <span className="flex -space-x-1.5">
               {assigned.slice(0, 3).map((m) => (
                 <span key={m.userId} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
-                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
+                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} neutral />
                 </span>
               ))}
               {assigned.length > 3 && (

@@ -5,6 +5,7 @@ import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
 import MobileDisplaySheet from './MobileDisplaySheet';
 import TasksInboxMenu from '@/components/task-table/TasksInboxMenu';
+import InboxMenu from '@/components/InboxMenu';
 import ColorSettingsModal from '@/components/ColorSettingsModal';
 import { useT } from '@/i18n/useT';
 import { OVERDUE_FOCUS_EVENT } from '@/lib/hooks/use-overdue-focus';
@@ -105,7 +106,12 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
                 accessible via la palette (Cmd/Ctrl+K) et l'onglet « Plus ». */}
             {/* Tâches/listes partagées en attente, regroupées ici plutôt
                 qu'en bandeaux inline (cf. TaskTable, masqués sur mobile). */}
-            <TasksInboxMenu />
+            {/* Maquette 217 (2026-10-10) : la MÊME boîte que l'accueil. La
+                même icône affichait 8 sur l'accueil (`InboxMenu`) et 5 ici
+                (`TasksInboxMenu`, qui n'en voit qu'une partie : tâches et
+                listes partagées). `InboxMenu` les contient aussi. Desktop
+                garde `TasksInboxMenu` dans sa propre barre. */}
+            <InboxMenu />
             {/* Maquette 140 : vue tableau, couleurs et mini-calendrier
                 règlent tous trois la façon dont la liste se montre. Ils
                 quittent l'en-tête (quatre icônes) pour la feuille « Affichage ». */}

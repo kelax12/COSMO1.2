@@ -172,6 +172,7 @@
     "groupByStatus": "Statut"
   },
   "filters": {
+    "mobileButton": "Filtres",
     "barAria": "Filtres des tâches",
     "scopeAll": "Tout",
     "scopeMine": "Moi",
@@ -260,6 +261,7 @@
     "byOn": "par {{name}}, le {{date}}"
   },
   "okrCard": {
+    "reached": "Atteint",
     "weightTitle": "Coefficient d'importance ×{{weight}}",
     "contributesTo": "Contribue à : {{title}}",
     "childrenCount_one": "{{count}} objectif y contribue",

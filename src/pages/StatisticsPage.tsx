@@ -26,6 +26,9 @@ import { useBilling } from '@/modules/billing/billing.context';
 import PremiumGateModal from '@/components/PremiumGateModal';
 import { formatTime, formatTimeShort } from './statistics/format';
 import PeriodSummaryCard from './statistics/PeriodSummaryCard';
+import StatSectionHeading from './statistics/StatSectionHeading';
+import MobilePeriodTotal from './statistics/MobilePeriodTotal';
+import { rollingPair } from './statistics/period-delta';
 import { buildInsights } from '@/lib/stats-insights';
 import { useInsightText } from './statistics/insights';
 
@@ -45,42 +48,6 @@ import type { TimePeriod, WorkTimePeriodData } from './statistics/types';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 
-
-/**
- * En-tête d'une famille de statistiques.
- *
- * La page empile ses cinq familles depuis le 2026-09-21 : sans repère, elles
- * se lisent comme une seule liste de cartes. L'icône et la couleur sont
- * exactement celles que le sélecteur donnait à l'onglet correspondant.
- */
-const StatSectionHeading = ({ section, suffix }: {
-  section: { label: string; icon: typeof BarChart3; color: string };
-  // Qualificatif de période (« 7 derniers jours »). Porté par le titre de la
-  // vue globale depuis que l'étiquette centrée en capitales a disparu : la
-  // période était le texte le plus fort de la page pour son étiquette la moins
-  // actionnable, et elle était écrite une fois de plus qu'il n'en faut.
-  suffix?: string;
-}) => {
-  const Icon = section.icon;
-  return (
-    <div className="flex items-baseline gap-2.5 mt-10 mb-4">
-      <Icon size={18} aria-hidden="true" style={{ color: section.color }} className="translate-y-0.5 shrink-0" />
-      <h2 className="text-headline md:text-lg font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
-        {section.label}
-        {/* L'espace explicite n'est pas décoratif : `ml-2` ne sépare que les
-            pixels, le nom accessible du titre collait « Vue globale· 7 j ». */}
-        {suffix && (
-          <>
-            {' '}
-            <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-              · {suffix}
-            </span>
-          </>
-        )}
-      </h2>
-    </div>
-  );
-};
 
 // ═══════════════════════════════════════════════════════════════════
 // PAGE PRINCIPALE
@@ -174,14 +141,23 @@ export default function StatisticsPage() {
     ];
   }, [now]);
 
-  // Un seul appel pour tout : 4 plages fixes + 5 à 12 buckets de graphique.
+  // Maquette 194 : la période choisie et la précédente, pour le grand nombre
+  // mobile et son écart. Mêmes totaux (RPC) que la synthèse desktop.
+  const pairRanges = useMemo<WorkTimeRange[]>(() => {
+    const days = { day: 1, week: 7, month: 30, year: 365 }[selectedPeriod];
+    const { current, previous } = rollingPair(now, days);
+    return [current, previous].map((r) => ({ start: getLocalDateString(r.start), end: getLocalDateString(r.end) }));
+  }, [selectedPeriod, now]);
+
+  // Un seul appel pour tout : 4 plages fixes + 5 à 12 buckets de graphique + 2.
   const allRanges = useMemo(
-    () => [...fixedRanges, ...chartRangeDefs.map(d => d.range)],
-    [fixedRanges, chartRangeDefs]
+    () => [...fixedRanges, ...chartRangeDefs.map(d => d.range), ...pairRanges],
+    [fixedRanges, chartRangeDefs, pairRanges]
   );
   const { data: workTimeBuckets } = useWorkTimeStats(allRanges);
   const fixedBuckets = workTimeBuckets?.slice(0, fixedRanges.length);
-  const chartBuckets = workTimeBuckets?.slice(fixedRanges.length);
+  const chartBuckets = workTimeBuckets?.slice(fixedRanges.length, fixedRanges.length + chartRangeDefs.length);
+  const pairBuckets = workTimeBuckets?.slice(fixedRanges.length + chartRangeDefs.length);
 
   // La page n'a plus de sélecteur de section (cf. plus bas) : le graphique
   // principal porte le TOTAL, et chaque famille a sa propre section empilée.
@@ -293,7 +269,8 @@ export default function StatisticsPage() {
       {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
           Titre grand au repos, compacté au scroll. Le bloc desktop ci-dessous
           est l'ancien rendu, masqué sous `md`. */}
-      <MobileHeader title={t('page.title')} subtitle={t('page.subtitle')} />
+      {/* Maquette 195 : sur mobile, plus de sous-titre générique. */}
+      <MobileHeader title={t('page.title')} />
 
       <div className="mb-8 hidden md:block">
         <PageHeading variant="standard" className="mb-2">{t('page.title')}</PageHeading>
@@ -320,7 +297,7 @@ export default function StatisticsPage() {
         </div>
       )}
 
-      <PeriodSummaryCard fixedStats={fixedStats} sectionColor={sectionColor} />
+      <div className="hidden md:block"><PeriodSummaryCard fixedStats={fixedStats} sectionColor={sectionColor} /></div>
 
       {/* Gate premium — graphiques et détails */}
       {!isPremium() ? (
@@ -421,6 +398,11 @@ export default function StatisticsPage() {
 
           Le troisième sélecteur encadré, lui, était devenu ce lien le 20 :
           il ne change que le graphique juste en dessous, pas la page. */}
+      <MobilePeriodTotal
+        current={pickBucketTime(pairBuckets?.[0])}
+        previous={pickBucketTime(pairBuckets?.[1])}
+        periodLabel={periodDescriptiveText[selectedPeriod]}
+      />
       <div className="flex items-center justify-end gap-3 mb-3 md:mb-0">
         {(
           <button

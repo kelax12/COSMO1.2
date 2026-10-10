@@ -2,7 +2,6 @@
   "pro": {
     "sectionTitle": "OKR pro",
     "sectionSubtitle": "Objectifs de {{org}} sur lesquels vous contribuez",
-    "badge": "Pro",
     "you": "Vous",
     "openInOrg": "Ouvrir dans l'espace entreprise",
     "personalSectionTitle": "OKR perso"
@@ -36,10 +35,17 @@
     "activeCount_other": "{{count}} objectifs actifs"
   },
   "card": {
+    "reached": "Atteint",
+    "tasksCount_other": "{{count}} tâches",
+    "tasksCount_many": "{{count}} de tâches",
+    "tasksCount_one": "{{count}} tâche",
+    "krOpen": "Créer une tâche ou planifier",
+    "perUnit": "{{duration}} par unité",
+    "endsOn": "fin le {{date}}",
     "uncategorized": "Sans catégorie",
     "timeElapsed": "{{percent}}% du temps écoulé",
     "overallProgress": "Progression globale",
-    "keyResults": "Résultats Clés",
+    "keyResults": "Résultats clés",
     "timeSpent": "Temps effectué",
     "editObjective": "Modifier l'objectif",
     "deleteObjective": "Supprimer l'objectif",
@@ -53,6 +59,8 @@
     "objectiveActions": "Actions de l'objectif"
   },
   "categories": {
+    "manage": "Gérer les catégories",
+    "allLong": "Toutes les catégories",
     "mobileLabel": "Catégorie :",
     "all": "Tous",
     "edit": "Modifier la catégorie",

@@ -77,7 +77,7 @@ const NewcomerHints = () => {
     { id: 'okr', label: tOrgAdmin('myWork.hintOkr'), tab: 'okr', Icon: Target },
   ];
   return (
-    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:px-0 max-md:py-2">
       <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('myWork.welcomeTitle')}</h3>
       <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1 mb-3">{tOrgAdmin('myWork.welcomeIntro')}</p>
       <ul className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -151,15 +151,28 @@ const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
   return (
     // `min-w-0` : second enfant de la même grille que « Mes tâches », donc
     // même borne `min-width: auto` à lever (cf. maquette 105 juste en dessous).
-    <div data-testid="org-agenda-card" className="min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+    <div data-testid="org-agenda-card" className="min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:px-0 max-md:py-2">
       <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
         {tOrgAdmin('myWork.agendaSection')}
       </h3>
-      <p className="text-caption font-semibold uppercase tracking-wide mb-1.5 text-[rgb(var(--color-accent))]">
+      <p className="text-label font-semibold mb-1.5 text-[rgb(var(--color-text-secondary))]">
         {tOrgAdmin('myWork.agendaToday')}
       </p>
       {today ? (
-        <DayTimelineStrip events={today.events} />
+        <>
+          {/* Maquette 232 : sur mobile, une liste ; la frise 8 h – 20 h
+              tronquait l'événement du soir en « S… ». Desktop garde la frise. */}
+          <div className="hidden md:block"><DayTimelineStrip events={today.events} /></div>
+          <ul className="md:hidden">
+            {today.events.map((e) => (
+              <li key={e.id} className="flex items-center gap-2.5 min-h-touch border-b last:border-b-0 border-[rgb(var(--color-border))]">
+                <span className="w-11 shrink-0 text-label tabular-nums text-[rgb(var(--color-text-secondary))]">{format(parseISO(e.start), 'HH:mm', { locale: getDateLocale() })}</span>
+                <span className="h-4 w-0.5 shrink-0 rounded-full" style={{ backgroundColor: e.color || 'rgb(var(--color-accent))' }} aria-hidden="true" />
+                <span className="flex-1 min-w-0 truncate text-body text-[rgb(var(--color-text-primary))]">{e.title}</span>
+              </li>
+            ))}
+          </ul>
+        </>
       ) : (
         <p className="text-xs text-[rgb(var(--color-text-muted))] py-2">{tOrgAdmin('apercu.agendaFreeToday')}</p>
       )}
@@ -169,14 +182,13 @@ const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
         <div className="space-y-3 mt-3">
           {groups.map((group) => (
             <div key={group.dayKey}>
-              <div className={`text-caption font-semibold uppercase tracking-wide mb-1.5 ${
-                group.isToday ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-muted))]'
-              }`}
-              >
+              <div className="text-label font-semibold mb-1.5 text-[rgb(var(--color-text-secondary))]">
                 {group.isToday ? (
                   tOrgAdmin('myWork.agendaToday')
                 ) : (
-                  <span className="capitalize">{format(group.date, 'EEEE d MMM', { locale: getDateLocale() })}</span>
+                  // Maquette 233 : « dim. 18 oct. ». `capitalize` mettait une capitale à
+                  // CHAQUE mot (« Dimanche 18 Oct. »).
+                  <span>{format(group.date, 'EEE d MMM', { locale: getDateLocale() })}</span>
                 )}
               </div>
               <ul className="space-y-1">
@@ -219,7 +231,7 @@ const StartChecklist = ({ steps, orgId }: { steps: StartStep[]; orgId: string })
   // non faite (2026-10-05) au lieu de tout recommencer depuis l'équipe.
   const firstWizardStep = WIZARD_ORDER.find((id) => steps.some((s) => s.id === id && !s.done));
   return (
-    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:px-0 max-md:py-2">
       <div className="flex items-center justify-between gap-2 mb-3">
         <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('myWork.getStarted')}</h3>
         <span className="text-xs text-[rgb(var(--color-text-muted))]">{doneCount}/{steps.length}</span>
