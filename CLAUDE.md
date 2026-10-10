@@ -14,12 +14,8 @@ fausses restées en place pendant des jours parce que le fichier était trop gro
 
 ✅ Cliquet : `npm run check:docs` refuse ce fichier au-delà de son plafond.
 
-✅ **`C-77` est REFERMÉ le 2026-09-20** : la mig. `136` est **appliquée en production** (ledger
-`20260920104729`), vérifiée par `pg_get_functiondef` et non par le ledger. `okrTime` a valu **0**
-sur `/statistics` pour tous les comptes réels pendant dix-sept jours pendant que la migration
-dormait, commitée, dans le dépôt.
-⚠️ **Un KR sans `estimated_time` compte toujours 0 minute**, et c est juste : le temps OKR vaut
-`Σ minutes estimées du KR` par complétion. Ne pas relire un mois à zéro comme une panne.
+🗺️ **Pour trouver un fichier, une table ou un écran : [`docs/MODULES.md`](./docs/MODULES.md).**
+À ouvrir avant de chercher à l'aveugle.
 
 ---
 
@@ -60,6 +56,7 @@ dormait, commitée, dans le dépôt.
 |---|---|
 | [`docs/README.md`](./docs/README.md) | Carte complète + **tableau de bord des notes d'audit** (avant/après daté) |
 | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Invariants du projet et leur état vérifié (audit 2026-08-14) |
+| [`docs/MODULES.md`](./docs/MODULES.md) | **Carte** : module → fichiers, tables, RPC, écran |
 | [`docs/SECURITY.md`](./docs/SECURITY.md) | RLS, migrations SQL, repositories Supabase, Edge Functions, Stripe, CSP, secrets |
 | [`docs/MOBILE.md`](./docs/MOBILE.md) | Toute page/composant mobile, bottom-sheets, bug iOS Safari WebKit |
 | [`docs/UI-PATTERNS.md`](./docs/UI-PATTERNS.md) | Listes/SmartListMenu, EventModal, tutoriels, onboarding, shadcn, thèmes |
@@ -284,88 +281,37 @@ Runbook : [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
 - ❌ `JSON.parse(localStorage.getItem(...))` sans `try/catch` — utiliser `safeParse<T>` (B14)
 - ❌ Réintroduire des gates `isPremium()` sur le partage de tâches / la collaboration
 
-### Journal fiscal et consentement (2026-08-26)
+### Journal fiscal et consentement
 
-- ❌ **Ne JAMAIS ajouter de policy UPDATE ou DELETE sur `payment_records` ou `payment_closures`,
-  ni les inclure dans une purge.** C'est le journal d'encaissement inaltérable (mig. `125`,
-  CGI art. 286-I-3° bis). L'immuabilité est portée par un **trigger**, pas par la RLS, parce que
-  `service_role` contourne la RLS mais pas les triggers.
-  🔴 **CORRIGÉ le 2026-09-02** : ce paragraphe demandait d'« anonymiser `user_id` » à la purge.
-  C'est **inapplicable**. `row_hash` scelle `user_id` dans le chaînage, et
-  `verify_payment_chain()` recalcule chaque hash depuis les colonnes : écrire NULL casserait la
-  chaîne, donc produirait exactement le signal de falsification qu'on montre à un contrôleur.
-  Le trigger refuse d'ailleurs l'UPDATE. Ce qui rend la conservation acceptable est ailleurs :
-  `user_id` cesse d'identifier quiconque dès que la ligne `auth.users` disparaît, il ne reste
-  qu'un UUID que COSMO ne sait plus rattacher. `delete-account` ne touche donc PAS cette table,
-  et le commentaire qui l'explique est dans la fonction.
-  Une erreur se corrige par une ligne compensatoire, comme en comptabilité.
-- ❌ **Ne jamais lire `cosmo_cookie_consent` directement.** Passer par
-  `src/lib/cookie-consent.ts`, et par `useCookieConsent()` dans React. La dispersion est
-  exactement ce qui a permis au bandeau de proposer un choix qu'aucune ligne de code
-  n'appliquait. **Tout nouveau traceur doit être conditionné** : `null` n'est pas une
-  acceptation tacite.
-- ❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre secret.**
-  `if (SECRET && header !== SECRET)` laisse passer tout le monde tant que le secret n'est pas
-  posé : on ne se protège que quand on est déjà protégé. Bug introduit puis corrigé le
-  2026-08-26 dans `renewal-notice`.
-- ⚠️ **`renewal_notices` est une PREUVE**, pas un cache. Ne jamais la purger : c'est ce qu'on
-  produit si un client conteste une reconduction (Conso. art. L215-1).
+- ❌ **Jamais de policy UPDATE/DELETE ni de purge sur `payment_records` / `payment_closures`**
+  (journal inaltérable, mig. `125`, trigger). **Jamais anonymiser `user_id`** : `row_hash` le
+  scelle. Une erreur se corrige par une ligne compensatoire.
+- ❌ Lire `cosmo_cookie_consent` ailleurs que par `src/lib/cookie-consent.ts` / `useCookieConsent()`.
+  Tout nouveau traceur est conditionné : `null` n'est pas une acceptation.
+- ❌ Une garde conditionnelle à la présence de son propre secret (`if (SECRET && …)`).
+- ⚠️ `renewal_notices` est une PREUVE (L215-1) : ne jamais la purger.
 
 ### Sécurité & env
 
-- ❌ `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client
-- ❌ Committer sans vérifier que `.env` reste gitignored
+- ❌ `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client · committer sans vérifier que `.env` reste ignoré
 - ❌ Écrire en base via le MCP Supabase (contourne la RLS)
-- ❌ **Appeler `get_subtree` / `has_subordinates` / `org_admin_count` depuis une policy.** La
-  mig. `100` leur a révoqué `EXECUTE` à `authenticated` pour fermer une fuite inter-organisations,
-  et une policy s'évalue avec le **rôle courant** : l'appel échoue par `permission denied`. Dans
-  une policy, utiliser `is_above(org_id, user_id)` ou `i_have_subordinates(org_id)`. À l'intérieur
-  d'une fonction `SECURITY DEFINER`, les helpers restent appelables (rôle = propriétaire).
-  Régression en cours en prod : mig. `107`, finding B-1 de [`faille.md`](./faille.md).
-- ❌ **Garder une surface admin par `admin_allowlisted()`.** Depuis la mig. `131`, deux fonctions
-  répondent à deux questions différentes : `admin_allowlisted()` dit « ce compte est admin »
-  (AFFICHAGE, ignore volontairement le niveau d'assurance, sinon l'écran d'enrôlement TOTP
-  devient inatteignable) et `is_admin()` dit « cette requête est autorisée » (GARDE : allowlist
-  ET `auth.jwt() ->> 'aal' = 'aal2'`). Les intervertir annule la migration. Et ne jamais tester
-  « ce compte a activé la 2FA » : `aal2` porte sur la SESSION, or c'est précisément la session
-  ouverte avec un mot de passe volé qu'il faut refuser. Détail : `docs/SECURITY.md`.
-- ❌ **Une fonction de trigger en `SECURITY DEFINER`.** Une garde doit être `SECURITY INVOKER`
-  (défaut) et `REVOKE`-ée pour `anon` (mig. `064b` / `094b`). Un trigger `BEFORE` s'exécutant
-  **avant** le `WITH CHECK` de la RLS, en DEFINER ses messages d'erreur deviennent un oracle sur
-  des lignes non lisibles (mig. `108`, finding B-3).
-- 🔴 **En CSP, un schéma écrit explicitement doit correspondre : `https:` ne couvre PAS `wss:`.**
-  `connect-src` autorisait `https://*.supabase.co` sans `wss://*.supabase.co` : le navigateur
-  bloquait **toutes** les connexions Realtime **en production**, en silence (la console disait
-  « The action has been blocked », l'écran ne disait rien). Les trois canaux d'`App.tsx` étaient
-  coupés, et comme ils ont justement REMPLACÉ huit sondages, il n'y avait plus aucun filet
-  derrière eux : une tâche partagée n'arrivait jamais. Trouvé le 2026-09-01 dans la console
-  d'Axel, **en cherchant autre chose**. Garde : `src/csp.guard.test.ts` (schéma `wss`, directives
-  de confinement, absence d'`unsafe-eval`, et `data:` dans `img-src` dont dépend le QR code TOTP).
-- 🔴 **Une migration qui crée une dépendance à un chemin de récupération : PARCOURIR ce chemin
-  avant de l'appliquer.** La mig. `131` exige une session `aal2` ; l'écran d'enrôlement TOTP levait
-  en phase de rendu et son QR portait un double préfixe `data:`. `/admin` est resté inaccessible du
-  2026-08-31 au 2026-09-01, et **un seul compte au monde** ouvre cette console. Le raisonnement
-  « ce n'est pas un verrouillage, l'écran reste atteignable » était juste sur la garde et faux dans
-  les faits. Il suffisait d'ouvrir l'écran une fois.
-- ⚠️ **Le dépôt est PUBLIC**, avec secret scanning, push protection et Dependabot actifs depuis le
-  2026-09-01. Une fuite réelle est confirmée dans l'historique (`.env` au commit initial), **inerte**
-  car elle vise un projet supprimé depuis. Retirer un fichier du suivi n'efface pas l'historique.
+- ❌ Appeler `get_subtree` / `has_subordinates` / `org_admin_count` depuis une policy
+  (`EXECUTE` révoqué, mig. `100`) : utiliser `is_above()` ou `i_have_subordinates()`.
+- ❌ Garder une surface admin par `admin_allowlisted()` (affichage). La garde est `is_admin()`
+  (allowlist ET session `aal2`, mig. `131`).
+- ❌ Une fonction de trigger en `SECURITY DEFINER` : `INVOKER` + `REVOKE` pour `anon` (mig. `108`).
+- 🔴 En CSP, `https:` ne couvre PAS `wss:`. Garde : `src/csp.guard.test.ts`.
+- 🔴 Une migration qui crée une dépendance à un chemin de récupération : PARCOURIR ce chemin avant.
+- ⚠️ Le dépôt est **PUBLIC**. Retirer un fichier du suivi n'efface pas l'historique.
 
 ### Documentation
 
-- ❌ Traiter un fichier de `docs/archive/**` comme l'état courant du projet
-- ❌ Citer un numéro de ligne d'un autre fichier `.md` — les fichiers bougent, les liens de
-  section survivent
-- ❌ **Recopier un « avant » au lieu de le relire à sa source.** Le tableau de bord des audits est
-  parti d'une note RGPD de 84 le 2026-09-02 alors qu'elle valait 86 depuis le 08-29 : la colonne
-  avait été reprise du tableau du 25. Troisième occurrence, après les `refetchInterval` du 08-25 et
-  la garde `architecture.guard` du 08-27 (« antérieure à mon travail », déclarée depuis un
-  `git stash` qui contenait déjà le commit fautif). **Un « avant » se reconstruit à un commit
-  nommé, jamais dans un arbre de travail ni depuis un tableau plus ancien.**
-- ❌ **Chercher le symptôme cité par la doc plutôt que la chose décrite.** Une note du 2026-09-02
-  n'a corrigé qu'un nom sur six sur la sélection de modules : elle constatait l'absence de
-  `RequireModule` sans voir que la fonctionnalité entière avait disparu, ce qui laisse la dérive
-  presque intacte **et la fait paraître vérifiée**.
+- ❌ Traiter `docs/archive/**` comme l'état courant · citer un numéro de ligne d'un autre `.md`
+- ❌ Recopier un « avant » : il se reconstruit à un commit nommé, jamais depuis un tableau ancien.
+- ❌ Chercher le symptôme cité par la doc plutôt que la chose décrite.
+
+> Le **pourquoi** de chacune de ces lignes (incident, date, mesure) est dans
+> [`docs/SECURITY.md`](./docs/SECURITY.md) § « Garde-fous transversaux, récits repris de `CLAUDE.md` ».
 
 > **Sécurité (RLS, mass-assignment, Stripe, secrets) → [`docs/SECURITY.md`](./docs/SECURITY.md).
 > Toujours la consulter avant de toucher `supabase/`, le billing, ou un repository.**

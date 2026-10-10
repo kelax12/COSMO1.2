@@ -1,6 +1,8 @@
+> ⚠️ **ARCHIVE, non maintenue.** Prompt daté, déplacé de la racine le 2026-10-11. Il décrit l'état qui l'a produit, pas l'état courant : relire [`a-faire-code.md`](../../../a-faire-code.md) et [`faille.md`](../../../faille.md) avant d'en rejouer un bloc.
+
 # Prompts des huit audits (A-1 → A-8)
 
-**Écrits le 2026-09-03**, en accompagnement du §10 de [`a-faire-code.md`](./a-faire-code.md). Un
+**Écrits le 2026-09-03**, en accompagnement du §10 de [`a-faire-code.md`](../../../a-faire-code.md). Un
 prompt par session, à coller tel quel. Ils sont indépendants : n'importe quel ordre marche, mais
 l'ordre du tableau est celui du rapport valeur / effort.
 

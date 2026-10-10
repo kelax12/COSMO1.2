@@ -1,3 +1,5 @@
+> ⚠️ **ARCHIVE, non maintenue.** Prompt daté, déplacé de la racine le 2026-10-11. Il décrit l'état qui l'a produit, pas l'état courant : relire [`a-faire-code.md`](../../../a-faire-code.md) et [`faille.md`](../../../faille.md) avant d'en rejouer un bloc.
+
 # Prompts · un par item ouvert de `a-faire-code.md`
 
 > ## 🔄 Relu le 2026-09-21 · **la moitié des blocs de ce fichier est périmée**
@@ -21,7 +23,7 @@
 
 > 🆕 **Passe d'audit du 2026-09-14 au soir : quatre items neufs, `C-77` a `C-80`.** Leurs
 > prompts ne sont PAS dans ce fichier : ils vivent dans
-> [`prompt-correctifs-audit-2026-09-15.md`](./prompt-correctifs-audit-2026-09-15.md), en un seul
+> [`prompt-correctifs-audit-2026-09-15.md`](../../../prompt-correctifs-audit-2026-09-15.md), en un seul
 > bloc decoupe en phases P0 a P5, avec l'etat deja mesure en tete pour qu'une session n'ait pas a
 > tout remesurer.
 >

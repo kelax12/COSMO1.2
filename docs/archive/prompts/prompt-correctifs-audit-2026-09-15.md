@@ -1,3 +1,5 @@
+> ⚠️ **ARCHIVE, non maintenue.** Prompt daté, déplacé de la racine le 2026-10-11. Il décrit l'état qui l'a produit, pas l'état courant : relire [`a-faire-code.md`](../../../a-faire-code.md) et [`faille.md`](../../../faille.md) avant d'en rejouer un bloc.
+
 # Prompt de correction · passe d'audit du 2026-09-14 au soir
 
 > ## ✅ Relu le 2026-09-21 · **les six phases sont traitées, et une s'est INVERSÉE**
@@ -483,4 +485,4 @@ Sécurité 88, Scalabilité 91, RGPD 87, SEO 80, i18n 90 vérifiées inchangées
 
 **Dix angles morts**, dont trois dans des documents **sans note** : un audit noté attire
 l'attention, un runbook est ce qu'on exécute. Détail et preuves :
-[`docs/README.md`](./docs/README.md) § « Mise à jour du 2026-09-14 (soir) ».
+[`docs/README.md`](../../../docs/README.md) § « Mise à jour du 2026-09-14 (soir) ».
