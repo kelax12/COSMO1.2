@@ -12,7 +12,7 @@ import { useTodayItems, useCompleteTodayItem, type TodayItem } from '@/modules/t
 import { useT } from '@/i18n/useT';
 import { showUndoToast } from '@/lib/undo-toast';
 import TaskModal from '@/components/TaskModal';
-import { buildMoments, todayCompletionReport } from './today-moments.helpers';
+import { buildMoments, isEventPast, todayCompletionReport } from './today-moments.helpers';
 
 /**
  * « Matin · après-midi · soir » — maquette 28, l'accueil MOBILE.
@@ -97,6 +97,9 @@ const TodayMoments = () => {
   );
 
   const groups = useMemo(() => buildMoments({ events, tasks: items }), [events, items]);
+  // Relu à chaque rendu : la vue se rafraîchit avec ses données, une heure
+  // figée au montage laisserait un rendez-vous fini au premier plan.
+  const now = new Date();
   const report = useMemo(
     () => todayCompletionReport({ tasks: allTasks, teamTasks: myTeamTasks, habits, events }),
     [allTasks, myTeamTasks, habits, events],
@@ -216,24 +219,23 @@ const TodayMoments = () => {
                       <span className="block text-body text-[rgb(var(--color-text-primary))] truncate">
                         {entry.task.name}
                       </span>
-                      <span className="flex items-center gap-1.5 text-caption text-[rgb(var(--color-text-muted))]">
-                        {/* Catégorie plutôt que perso/équipe (icône Building2/
-                            User) : le rond reprend la couleur EXACTE de la
-                            catégorie — même code que les autres écrans
-                            (TaskCard, TeamCategoryPicker) — au lieu de
-                            distinguer seulement la source. */}
-                        <span
-                          className="size-2 rounded-full shrink-0"
-                          style={{ backgroundColor: entry.task.categoryColor ?? 'rgb(var(--color-text-muted))' }}
-                          aria-hidden="true"
-                        />
-                        <span className="truncate">
-                          {entry.task.categoryName ?? t('today.noCategory')}
+                      {/* Maquette 134 : « Sans catégorie » derrière un point
+                          gris n'apprenait rien. Pas de catégorie, pas de
+                          ligne de méta. Le rond reprend la couleur EXACTE de
+                          la catégorie (même code que TaskCard). */}
+                      {entry.task.categoryName && (
+                        <span className="flex items-center gap-1.5 text-caption text-[rgb(var(--color-text-muted))]">
+                          <span
+                            className="size-2 rounded-full shrink-0"
+                            style={{ backgroundColor: entry.task.categoryColor ?? 'rgb(var(--color-text-muted))' }}
+                            aria-hidden="true"
+                          />
+                          <span className="truncate">{entry.task.categoryName}</span>
                         </span>
-                      </span>
+                      )}
                     </button>
                     {entry.task.overdue && (
-                      <span className="flex shrink-0 items-center gap-1 text-caption font-semibold text-[rgb(var(--color-error))]">
+                      <span className="flex shrink-0 items-center gap-1 text-caption font-semibold text-[rgb(var(--color-danger-text))]">
                         <AlertTriangle size={12} aria-hidden="true" />
                         {/* Maquette 87 — cf. TodayUnified : clé de jour brute. */}
                         {formatOverdueSince(entry.task.deadline)}
@@ -244,7 +246,10 @@ const TodayMoments = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/agenda')}
-                    className="flex-1 min-w-0 min-h-touch flex items-center gap-2.5 text-left"
+                    // Maquette 135 : un rendez-vous passé s'estompe, il ne
+                    // pèse plus autant que celui qui vient.
+                    data-past={entry.event && isEventPast(entry.event, now) ? '' : undefined}
+                    className="flex-1 min-w-0 min-h-touch flex items-center gap-2.5 text-left data-[past]:opacity-55"
                   >
                     {/* L'heure est la seule donnée temporelle réelle de
                         l'écran : elle n'apparaît que sur les rendez-vous. */}

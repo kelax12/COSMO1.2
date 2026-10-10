@@ -111,19 +111,14 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                   <div className="mb-2 sm:mb-4">
                     {/* Libellé court « Listes » partout, sans marge sous le titre : le
                         `pt-*` des chips suffit (2026-10-01). */}
+                    {/* Maquette 142 (2026-10-10) : sur mobile, le titre « Listes »
+                        et son « + » coûtaient une rangée de 60 px au-dessus des
+                        pastilles. Le titre reste pour les lecteurs d'écran, le
+                        « + » devient la dernière pastille de la rangée. */}
                     <div className="flex items-center justify-between">
-                      <h2 className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      <h2 className="sr-only sm:not-sr-only text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                         {t('lists.sectionTitleShort')}
                       </h2>
-                      {!showCreateList && (
-                        <button
-                          onClick={() => setShowCreateList(true)}
-                          aria-label={t('lists.newList')}
-                          className="sm:hidden flex items-center justify-center min-w-touch min-h-touch rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 active:bg-blue-100 dark:active:bg-blue-900/40 transition-colors"
-                        >
-                          <Plus size={20} />
-                        </button>
-                      )}
                     </div>
 
                     {/* `pt-*` réserve l'espace des boutons +/corbeille de la
@@ -221,7 +216,8 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           }`}
                           title={t('lists.todayChipTitle')}
                         >
-                          <Sparkles size={13} />
+                          {/* Maquette 143 : l'étincelle n'est qu'un décor sur mobile. */}
+                          <Sparkles size={13} className="hidden sm:block" />
                           <span>{t('filters.today')}</span>
                           {/* Compte masqué sur mobile (souci d'espace, 2026-09-06) : chaque
                               chip mobile n'a déjà que la place pour son nom. */}
@@ -430,7 +426,11 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               >
                                 {/* Indicateur visuel : pastille couleur, ou icône Sparkles si smart */}
                                 {list.type === 'smart' ? (
-                                  <Sparkles size={13} style={{ color: isSelected ? 'currentColor' : resolveListColor(list.color) }} />
+                                  <>
+                                    {/* Maquette 143 : sur mobile, le point de couleur suffit. */}
+                                    <Sparkles size={13} className="hidden sm:block" style={{ color: isSelected ? 'currentColor' : resolveListColor(list.color) }} />
+                                    <div className="sm:hidden w-3 h-3 rounded-full" style={{ backgroundColor: resolveListColor(list.color) }} />
+                                  </>
                                 ) : (
                                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: resolveListColor(list.color) }} />
                                 )}
@@ -440,7 +440,9 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   <Pin
                                     size={11}
                                     fill="currentColor"
-                                    className={isSelected ? 'opacity-80' : 'text-amber-500'}
+                                    // Maquette 143 : punaise ambre retirée sur
+                                    // mobile (l'épinglage reste dans l'appui long).
+                                    className={`hidden sm:block ${isSelected ? 'opacity-80' : 'text-amber-500'}`}
                                   />
                                 )}
                                 {/* Compte masqué sur mobile (souci d'espace, 2026-09-06). */}
@@ -478,6 +480,19 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           onToggleToday={() => setTodayHidden(!todayHidden)}
                           todayCount={tasksCountByListId.get(VIRTUAL_TODAY_ID) ?? 0}
                         />
+                      )}
+
+                      {/* Maquette 142 : « + » de nouvelle liste, dernière pastille
+                          sur mobile (il vivait à côté du titre « Listes »). */}
+                      {!showCreateList && (
+                        <button
+                          type="button"
+                          onClick={() => setShowCreateList(true)}
+                          aria-label={t('lists.newList')}
+                          className={`sm:hidden shrink-0 inline-flex items-center justify-center h-9 w-9 ${TAP_AREA_44_Y} rounded-full bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] active:bg-[rgb(var(--color-hover))]`}
+                        >
+                          <Plus size={18} aria-hidden="true" />
+                        </button>
                       )}
 
                       {/* Bouton + nouvelle liste — desktop uniquement inline dans le scroll */}

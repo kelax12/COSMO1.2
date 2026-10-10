@@ -6,6 +6,7 @@ import { DateSelectArg, EventClickArg, DatesSetArg } from '@fullcalendar/core';
 import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, useRestoreEvent, CalendarEvent } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 import TaskSidebar from '@/components/TaskSidebar';
+import MobileScheduleSheet from './agenda/MobileScheduleSheet';
 import TaskModal from '@/components/TaskModal';
 import EventModal from '@/components/EventModal';
 import ColorSettingsModal from '@/components/ColorSettingsModal';
@@ -387,9 +388,16 @@ const AgendaPage: React.FC = () => {
         />
       )}
 
+      {/* Maquette 170 (2026-10-10) : sur mobile, les tâches à planifier
+          s'ouvrent dans une feuille du bas (`MobileScheduleSheet`), plus dans
+          le tiroir latéral, qui reste le panneau desktop. */}
+      {isMobile && (
+        <MobileScheduleSheet open={showTaskSidebar} onClose={() => setShowTaskSidebar(false)} />
+      )}
+
       {/* Task Sidebar & Backdrop */}
       <AnimatePresence mode="wait">
-        {showTaskSidebar && (
+        {showTaskSidebar && !isMobile && (
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

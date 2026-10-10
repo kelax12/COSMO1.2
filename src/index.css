@@ -134,6 +134,7 @@
                                    de l'erreur, et un message d'erreur illisible ne
                                    remplit pas sa fonction. Les trois themes sombres
                                    gardent leur valeur : le contraste y est inverse. */
+    --color-danger-text: 220 38 38; /* texte rouge (retard, maquette 146) : red-600, 4,83:1 sur blanc */
     --color-surface: 255 255 255;
     --color-background: 248 250 252;
 
@@ -277,6 +278,7 @@
         --color-success: 52 211 153;
         --color-warning: 251 191 36;
         --color-error: 239 68 68;
+        --color-danger-text: 244 112 103; /* #f47067 : 4,8:1 sur la surface #1e293b, ou 239 68 68 rendait 4,0:1 */
         --color-surface: 30 41 59;
     --color-background: 15 23 42;
 
@@ -384,6 +386,7 @@
     --color-success: 52 211 153;
     --color-warning: 251 191 36;
     --color-error: 239 68 68;
+    --color-danger-text: 244 112 103; /* #f47067 (maquette 146) : 5,1:1 sur le fond, 4,6:1 sur une surface. `--color-error` (239 68 68) mesurait 3,9:1 en 11 px sur /tasks le 2026-10-10 */
     --color-surface: 43 49 55;         /* #2b3137 card/surface */
     --color-background: 36 41 46;      /* #24292e canvas */
 
@@ -480,6 +483,7 @@
     --color-success: 160 160 160;
     --color-warning: 180 180 180;
     --color-error: 200 60 60;                 /* rouge désaturé, gardé pour les actions destructives */
+    --color-danger-text: 244 112 103; /* texte rouge lisible : 200 60 60 rendait ~4:1 sur le fond noir */
     --color-surface: 22 22 22;
     --color-background: 8 8 8;
 

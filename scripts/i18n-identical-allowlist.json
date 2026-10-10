@@ -93,10 +93,6 @@
       "categorie": "symbole-ou-format",
       "valeur": "{{name}} - {{status}}"
     },
-    "dashboard.habits.minutes": {
-      "categorie": "symbole-ou-format",
-      "valeur": "{{count}} min"
-    },
     "dashboard.okrs.timeProgress": {
       "categorie": "symbole-ou-format",
       "valeur": "{{current}} / {{target}} min"
@@ -428,18 +424,6 @@
     "taskModal.mobile.participants": {
       "categorie": "mot-identique",
       "valeur": "Participants"
-    },
-    "taskModal.sections.collaboration": {
-      "categorie": "mot-identique",
-      "valeur": "Collaboration"
-    },
-    "taskModal.sections.description": {
-      "categorie": "mot-identique",
-      "valeur": "Description"
-    },
-    "taskModal.sections.organisation": {
-      "categorie": "mot-identique",
-      "valeur": "Organisation"
     },
     "tasks.card.options": {
       "categorie": "mot-identique",

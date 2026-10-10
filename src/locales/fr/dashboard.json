@@ -119,10 +119,12 @@
     "progress": "{{done}}/{{total}} complétées • {{duration}}",
     "create": "+ Créer une habitude",
     "empty": "Aucune habitude pour aujourd'hui",
-    "minutes": "{{count}} min",
     "streak_one": "{{count}} jour",
     "streak_many": "{{count}} de jours",
     "streak_other": "{{count}} jours",
+    "doneCount_one": "{{count}} faite",
+    "doneCount_many": "{{count}} de faites",
+    "doneCount_other": "{{count}} faites",
     "showLess": "Voir moins",
     "showMore_one": "Voir plus ({{count}} restante)",
     "showMore_many": "Voir plus ({{count}} de restantes)",
@@ -141,8 +143,7 @@
     "markUndone": "Marquer « {{name}} » comme non terminée",
     "completedToast": "« {{name}} » terminée",
     "sourcePersonal": "Perso",
-    "sourceTeam": "Équipe",
-    "noCategory": "Sans catégorie"
+    "sourceTeam": "Équipe"
   },
   "collab": {
     "removeShare": "Supprimer"

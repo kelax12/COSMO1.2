@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Bookmark, CheckCircle2, CheckSquare, Search, Sparkles, Users, X } from 'lucide-react';
+import { AlertTriangle, Bookmark, CheckCircle2, CheckSquare, Plus, Search, Sparkles, Users, X } from 'lucide-react';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { measureKeyboardInset, useKeyboardInset } from '@/lib/hooks/use-keyboard-inset';
 import { useQuickFilter, setQuickFilter } from '@/components/task-table/quick-filter.store';
@@ -105,6 +105,7 @@ const KEYBOARD_LIFT_PX = 80;
 
 const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, listPicker, sort }) => {
   const { t } = useT('tasks');
+  const { t: tCommon } = useT('common');
   // L'ouverture vit dans un store : `TasksPage` efface son en-tête, ses listes
   // et son tri pendant la recherche, et `SwipeHintBanner` s'efface aussi, deux
   // niveaux plus bas. Cf. `search-open.store.ts`.
@@ -310,6 +311,20 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
           onFieldChange={sort.onFieldChange}
           onToggleDirection={sort.onToggleDirection}
         />
+
+        {/* Maquette 150 : le « + » rejoint la barre. Trois couches flottaient
+            l'une sur l'autre (FAB, cette barre, la barre d'onglets) et le FAB
+            couvrait la pastille de la dernière ligne visible. Même évènement
+            que l'ancien FAB global de `/tasks`, même nom accessible. */}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent('open-task-create'))}
+          aria-label={tCommon('nav.createTask')}
+          data-tutorial-id="tasks-create"
+          className="shrink-0 flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/10 active:scale-95 transition-transform"
+        >
+          <Plus size={24} aria-hidden="true" />
+        </button>
       </div>
 
       <AnimatePresence>

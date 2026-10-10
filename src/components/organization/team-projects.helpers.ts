@@ -7,6 +7,7 @@ import { useCallback, useState } from 'react';
 import { isPast, isToday, parseISO } from 'date-fns';
 import type { TeamActivityField, TeamTask, TeamTaskStatus } from '@/modules/team-projects';
 import { translator } from '@/i18n/useT';
+import { formatDurationMinutes } from '@/lib/duration';
 
 // ─── Couleurs de projet (champ TeamProject.color) ────────────────────
 
@@ -159,11 +160,7 @@ export const sumEstimatedTime = (tasks: TeamTask[]): number =>
  */
 export const formatDuration = (minutes: number): string => {
   if (!minutes || minutes <= 0) return '';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m} min`;
-  if (m === 0) return `${h} h`;
-  return `${h} h ${String(m).padStart(2, '0')}`;
+  return formatDurationMinutes(minutes);
 };
 
 // ─── Prefs UI persistées (vue, tri, projets repliés) ──────────────────
