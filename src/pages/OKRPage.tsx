@@ -35,6 +35,7 @@ import { useDeleteCategoryFlow } from './okr/useDeleteCategoryFlow';
 import { useTasks } from '@/modules/tasks';
 import { useInlineCategoryEdit } from './okr/useInlineCategoryEdit';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { formatDurationMinutes } from '@/lib/duration';
 
 // OKR d'entreprise dont je porte un KR : section chargée à la demande (cf. ProOKRBlock).
 const ProOKRBlock = lazyWithRetry(() => import('./okr/ProOKRBlock'), ['okr', 'org']);
@@ -209,13 +210,8 @@ const OKRPage: React.FC = () => {
   const resolveColor = (color: string) =>
     color.startsWith('#') ? color : getColorHex(color);
 
-  const formatTime = (minutes: number) => {
-    if (minutes === 0) return '0min';
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h === 0) return `${m}min`;
-    return m > 0 ? `${h}h ${m}min` : `${h}h`;
-  };
+  // Maquette 139 : une seule écriture des durées (`@/lib/duration`).
+  const formatTime = formatDurationMinutes;
 
   useEffect(() => {
     const state = location.state as {selectedOKRId?: string; openCreate?: boolean;};

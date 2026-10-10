@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { formatDeadlineSmart, formatOverdueSince } from './helpers';
+import { formatDeadlineSmart, formatOverdueSince, priorityPillClass } from './helpers';
 
 // Mercredi 8 juillet 2026
 const NOW = new Date(2026, 6, 8, 12, 0);
@@ -78,5 +78,15 @@ describe('formatOverdueSince — maquette 87', () => {
   it('sans échéance : le tiret, comme les autres formatteurs', () => {
     expect(formatOverdueSince(undefined)).toBe('—');
     expect(formatOverdueSince(null)).toBe('—');
+  });
+});
+
+describe('priorityPillClass — maquette 145', () => {
+  it("garde la teinte d'urgence pour P1 et P2", () => {
+    expect(priorityPillClass(1)).toBe('task-priority-1');
+    expect(priorityPillClass(2)).toBe('task-priority-2');
+  });
+  it('passe P3 à P5 en gris', () => {
+    for (const p of [3, 4, 5]) expect(priorityPillClass(p)).not.toMatch(/task-priority/);
   });
 });

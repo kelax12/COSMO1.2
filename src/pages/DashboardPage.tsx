@@ -35,6 +35,12 @@ import { useStatCards } from './dashboard/useStatCards';
 import { deadlineDayKey } from '@/lib/deadline';
 import { useT } from '@/i18n/useT';
 import { VIEW_MODES, type ViewMode } from '@/lib/view-mode';
+
+/** Capitale en tête, le reste intact (« samedi 10 oct. » → « Samedi 10 oct. »). */
+function capitalizeFirst(text: string): string {
+  return text.charAt(0).toLocaleUpperCase() + text.slice(1);
+}
+
 // SocialRequests retiré du corps de page : les demandes d'amis ET les tâches
 // partagées à accepter sont désormais regroupées dans InboxMenu (bouton boîte
 // de réception en haut de page, avec pastille de notification).
@@ -142,11 +148,13 @@ const DashboardPage: React.FC = () => {
         // compense par défaut : sans cet alignement il débordait de 4 px à
         // droite, 8 px à 200 % de police (WCAG 1.4.4, C-97).
         className="-mx-3 px-3 sm:-mx-6 sm:px-6"
-        title={formatDate(new Date(), {
+        // Maquette 129 : « samedi 10 oct. » ouvrait le titre sur une
+        // minuscule (juste en pleine phrase, pas en tête de page).
+        title={capitalizeFirst(formatDate(new Date(), {
           weekday: 'long',
           day: 'numeric',
           month: 'short',
-        })}
+        }))}
         // `-my-1.5` sur le bouton, PAS sur ce qui suit le header : réduit sa
         // boîte à marge (44px → ~32px, la hauteur du titre) pour que la ligne
         // d'en-tête garde la hauteur du TEXTE plutôt que celle du bouton, sans

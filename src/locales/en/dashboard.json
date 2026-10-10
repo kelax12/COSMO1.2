@@ -113,9 +113,10 @@
     "progress": "{{done}}/{{total}} done • {{duration}}",
     "create": "+ New habit",
     "empty": "No habits for today",
-    "minutes": "{{count}} min",
     "streak_one": "{{count}} day",
     "streak_other": "{{count}} days",
+    "doneCount_one": "{{count}} done",
+    "doneCount_other": "{{count}} done",
     "showLess": "Show less",
     "showMore_one": "Show more ({{count}} left)",
     "showMore_other": "Show more ({{count}} left)"
@@ -131,8 +132,7 @@
     "markUndone": "Mark “{{name}}” as not done",
     "completedToast": "“{{name}}” completed",
     "sourcePersonal": "Personal",
-    "sourceTeam": "Team",
-    "noCategory": "No category"
+    "sourceTeam": "Team"
   },
   "collab": {
     "removeShare": "Delete"

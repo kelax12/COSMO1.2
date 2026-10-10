@@ -512,8 +512,9 @@ const TasksPage: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* Création mobile (#22) : point d'entrée unique = FAB quick-add global
-          monté dans Layout (data-tutorial-id="global-quick-add-fab"). Les deux FABs
+      {/* Création mobile (#22) : point d'entrée unique = le « + » de la barre
+          du bas (`MobileTaskSearch`, data-tutorial-id="tasks-create", maquette
+          150 ; c'était le FAB global de Layout jusqu'au 2026-10-10). Les deux FABs
           locaux (éclair + plus) ont été retirés : deux affordances pour une
           même intention créaient une hésitation à chaque création. Le modal
           complet reste accessible en tapant une tâche existante (enrichir

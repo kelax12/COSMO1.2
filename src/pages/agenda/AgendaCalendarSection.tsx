@@ -111,6 +111,14 @@ interface AgendaCalendarSectionProps {
   renderReviewBadge?: (eventId: string) => React.ReactNode;
 }
 
+/**
+ * Teinte d'une couleur d'événement (maquette 161) : hex à 18 % d'opacité,
+ * sinon `color-mix` (couleur nommée ou `rgb(...)`).
+ */
+function tintOf(color: string): string {
+  return /^#[0-9a-f]{6}$/i.test(color) ? `${color}2e` : `color-mix(in srgb, ${color} 18%, transparent)`;
+}
+
 const UNSELECT_CANCEL =
   '.modal-overlay,.modal-content,input,textarea,select,button,.fc-event,[data-radix-popper-content-wrapper]';
 
@@ -206,17 +214,28 @@ const AgendaCalendarSection = ({
     hasTask: boolean,
     needsReview: boolean,
     taskDone: boolean,
+    /**
+     * Mobile (maquette 161) : couleur de l'événement, rendue en TEINTE (~18 %)
+     * derrière un titre clair, au lieu d'un aplat saturé à texte blanc. Le
+     * bloc FullCalendar est alors transparent (`cosmo-event-tinted`).
+     */
+    tint?: string,
   ) => {
-    const author = createdBy && createdBy !== user?.id ? memberById.get(createdBy) : undefined;
+    // Maquette 169 : pas d'avatar dans le bloc sur mobile (deux couleurs dans
+    // un centimètre carré) ; l'auteur reste dans le détail de l'événement.
+    const author = !tint && createdBy && createdBy !== user?.id ? memberById.get(createdBy) : undefined;
     return (
-      <div className={`relative h-full w-full flex items-center gap-1 p-1 text-xs cursor-pointer ${centered ? 'justify-center' : ''}`}>
+      <div
+        className={`relative h-full w-full flex items-center gap-1 p-1 text-xs cursor-pointer ${centered ? 'justify-center' : ''} ${tint ? 'rounded-lg px-1.5' : ''}`}
+        style={tint ? { backgroundColor: tintOf(tint) } : undefined}
+      >
         {author && (
           <span className="shrink-0 rounded-full ring-1 ring-white/70" title={t('event.addedBy', { name: author.displayName })}>
             <MemberAvatar avatar={author.avatar} name={author.displayName} size={16} />
           </span>
         )}
         <span
-          className={`font-medium text-white truncate leading-tight ${centered ? 'text-center' : ''} ${hasTask ? 'pr-5' : ''}`}
+          className={`font-medium ${tint ? 'text-[rgb(var(--color-text-primary))]' : 'text-white'} truncate leading-tight ${centered ? 'text-center' : ''} ${hasTask ? 'pr-5' : ''}`}
         >
           {title}
         </span>
@@ -230,7 +249,7 @@ const AgendaCalendarSection = ({
                 côté → 14,4px) — demandé explicitement, la pastille en dessous
                 reçoit le même facteur. */}
             <CheckSquare
-              className="h-[14.4px] w-[14.4px] shrink-0 text-white/75 pointer-events-none"
+              className={`h-[14.4px] w-[14.4px] shrink-0 pointer-events-none ${tint ? 'text-[rgb(var(--color-text-secondary))]' : 'text-white/75'}`}
               aria-label={t('event.linkedToTask')}
             />
             {/* Le clic ne doit pas remonter au bloc : il ouvrirait l'EventModal
@@ -416,10 +435,11 @@ const AgendaCalendarSection = ({
                 Boolean(eventInfo.event.extendedProps?.taskId),
                 Boolean(eventInfo.event.extendedProps?.needsReview),
                 Boolean(eventInfo.event.extendedProps?.taskDone),
+                eventInfo.event.backgroundColor || 'rgb(var(--color-accent))',
               )
             }
             eventClassNames={(arg) => [
-              'rounded-lg shadow-sm border-0 cursor-pointer',
+              'rounded-lg shadow-sm border-0 cursor-pointer cosmo-event-tinted',
               conflictIds.has(arg.event.id) ? 'event-conflict' : '',
             ]}
           />

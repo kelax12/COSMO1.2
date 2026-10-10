@@ -16,7 +16,7 @@ import { Task } from "@/modules/tasks";
 import { Friend } from "@/modules/friends";
 import { formatDeadlineSmart, formatDuration, formatOverdueSince } from "./helpers";
 import { useT } from '@/i18n/useT';
-import { isTaskOverdue } from './helpers';
+import { isTaskOverdue, priorityPillClass } from './helpers';
 import TaskStateBadges from './TaskStateBadges';
 
 interface TaskCardProps {
@@ -415,7 +415,9 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
               était la seule à ne pas l'utiliser.
               En retard, le calcul est fait pour le lecteur : « en retard de
               2 j » au lieu d'une date rouge à soustraire soi-même. */}
-          <span className={isOverdue ? 'text-red-500 font-semibold inline-flex items-center gap-0.5' : ''}>
+          {/* Maquette 146 : `--color-danger-text`, lisible en 11 px
+              (`text-red-500` mesurait 3,9:1 sur le fond Gris). */}
+          <span className={isOverdue ? 'text-[rgb(var(--color-danger-text))] font-semibold inline-flex items-center gap-0.5' : ''}>
             {isOverdue && <AlertTriangle size={12} aria-hidden="true" />}
             {task.deadline
               ? (isOverdue ? formatOverdueSince(task.deadline) : formatDeadlineSmart(task.deadline))
@@ -450,16 +452,22 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           jaune→bleu→gris), distincte de la couleur de catégorie (la barre gauche).
           Réutilise les classes du tableau desktop pour une sémantique cohérente
           mobile/desktop + dark mode. Masqué si priorité facultative (0). */}
+      {/* Maquette 145 (2026-10-10) : la pilule reste (arbitrage 85), mais
+          seules P1 et P2 gardent leur teinte. P3 à P5 passent en gris : quatre
+          couleurs pour quatre crans faisaient de chaque ligne un nuancier, et
+          la chaleur ne signalait plus rien. */}
       {task.priority > 0 && (
         <div
-          className={`self-center shrink-0 px-1.5 py-0.5 rounded-md font-bold text-caption task-priority-${task.priority}`}
+          className={`self-center shrink-0 px-1.5 py-0.5 rounded-md font-bold text-caption ${priorityPillClass(task.priority)}`}
         >
           P{task.priority}
         </div>
       )}
 
       {task.bookmarked && (
-        <Bookmark size={16} className="self-center shrink-0 text-amber-500" fill="currentColor" />
+        // Maquette 149 : contour gris, plus un marque-page ambre plein (une
+        // cinquième couleur sur la ligne). Le nom accessible dit l'état.
+        <Bookmark size={16} className="self-center shrink-0 text-[rgb(var(--color-text-muted))]" aria-label={t('card.bookmarked')} />
       )}
 
       {/* ── Maquette 85 : le partage se dit à DROITE, par un seul signe ────
@@ -469,7 +477,8 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           zéro largeur prise au libellé. */}
       {task.sharedBy && (
         <span
-          className="self-center shrink-0 inline-flex size-7 items-center justify-center rounded-full bg-[rgb(var(--color-accent))]/15 text-xs font-bold leading-none text-[rgb(var(--color-accent))]"
+          // Maquette 148 : avatar neutre, la couleur reste aux catégories.
+          className="self-center shrink-0 inline-flex size-7 items-center justify-center rounded-full bg-[rgb(var(--color-border))] text-xs font-bold leading-none text-[rgb(var(--color-text-secondary))]"
           title={t('card.receivedFrom', { name: task.sharedBy })}
           aria-hidden="true"
         >

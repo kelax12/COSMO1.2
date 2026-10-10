@@ -27,7 +27,7 @@
     "step1Desc": "A vertical day view, built for thumb scrolling. Tap the highlighted areas to discover the essentials.",
     "step2Desc": "Swipe horizontally to browse your upcoming days. Tap a date to centre it in the grid below.",
     "step3Desc": "Day for hour-by-hour detail, 2D to compare two days, Month for wider context. One tap to switch.",
-    "step4Desc": "This button opens the panel with your unscheduled tasks. Tap one, then “Schedule in the calendar”. Drag and drop is desktop only.",
+    "step4Desc": "This button opens your unscheduled tasks. Tap one to pick a slot for it.",
     "step5Desc": "The “+” button at the bottom of the screen opens the form in a bottom sheet, pre-filled with the current time on the selected day.",
     "step6Desc": "Press and hold an empty time range in the grid to create an event right at that hour."
   },
@@ -91,14 +91,14 @@
     "step1Title": "Your tasks in one place",
     "step2Title": "Personal lists",
     "step3Title": "Search & filters",
-    "step4Title": "Mini calendar",
+    "step4Title": "Display",
     "step5Title": "Create a task",
     "step6Title": "Gesture: swipe right to complete",
     "step1Desc": "This is where you run all your tasks. Swipe a row right to complete it, left for options.",
     "step2Desc": "Your lists (Work, Shopping, Travel…) live here. Tap a list to filter. Swipe the carousel to see them all.",
     "step3Desc": "Search lives at the bottom of the screen, under your thumb. Leave it empty and it offers its filters: Starred, Done, Overdue, Shared, Select.",
-    "step4Desc": "Shows your due dates across a week. Tap this button to show or hide it.",
-    "step5Desc": "This floating button is available from every page. It opens quick create: type “Call the dentist Thursday 10am” and the date is picked up automatically.",
+    "step4Desc": "This button sets how the list shows up: list or board view, a mini calendar of your due dates, category colours.",
+    "step5Desc": "The + at the bottom right creates a task. A name is enough, everything else is optional.",
     "step6Desc": "On a task, swipe your finger to the right. A green “Complete” area appears. Let go: the task is ticked (with a light vibration)."
   }
 }

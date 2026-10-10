@@ -57,12 +57,7 @@
     "createList": "Créer une liste"
   },
   "sections": {
-    "details": "Détails",
-    "detailsHint": "champs facultatifs",
-    "description": "Description",
-    "organisation": "Organisation",
-    "subtasks": "Sous-tâches",
-    "collaboration": "Collaboration"
+    "detailsHint": "champs facultatifs"
   },
   "mobile": {
     "createTask": "Créer la tâche",
@@ -93,6 +88,14 @@
     "bodyShared": "Vous quitterez cette tâche partagée : elle restera visible pour son propriétaire et les autres collaborateurs."
   },
   "form": {
+    "addNote": "Ajouter une note",
+    "durationOther": "Autre durée",
+    "inviteSomeone": "Inviter quelqu'un",
+    "collaborators": "Collaborateurs",
+    "lists": "Liste",
+    "listsCount_one": "{{count}} liste",
+    "listsCount_many": "{{count}} de listes",
+    "listsCount_other": "{{count}} listes",
     "nameRequired": "Nom de la tâche *",
     "namePlaceholder": "Nom de la tâche",
     "descriptionPlaceholder": "Description de la tâche",

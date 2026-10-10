@@ -138,7 +138,9 @@ const ORG_SECTION_TITLE_KEYS: Record<string, KeyOf<'org'>> = {
  * ❌ Ne pas revenir à une liste noire : une route ajoutée demain hériterait
  * d'un bouton que personne n'a décidé d'y mettre.
  */
-const FAB_ROUTES = new Set(['/tasks', '/agenda']);
+// `/tasks` en est sorti le 2026-10-10 (maquette 150) : son « + » vit dans la
+// barre de recherche du bas (`MobileTaskSearch`), une couche flottante de moins.
+const FAB_ROUTES = new Set(['/agenda']);
 
 const Layout: React.FC = () => {
   const { t, tp } = useT('common');
@@ -436,22 +438,15 @@ const NavItems = () =>
           <button
             type="button"
             onClick={() => {
-              // Sur /tasks, la capture rapide (QuickAddBar) n'est pas la bonne
-              // popup : on ouvre le formulaire de création complet, comme le
-              // bouton « Nouvelle tâche » du desktop. TasksPage écoute cet
-              // événement. Ailleurs, capture rapide globale inchangée.
-              const evt = location.pathname === '/tasks' ? 'open-task-create'
-                : location.pathname === '/agenda' ? 'open-agenda-create'
+              // Sur /agenda, la création d'évènement ; ailleurs, la capture
+              // rapide globale. (`/tasks` a son « + » dans sa barre du bas.)
+              const evt = location.pathname === '/agenda' ? 'open-agenda-create'
                 : 'open-quick-add';
               window.dispatchEvent(new CustomEvent(evt));
             }}
             data-tutorial-id="global-quick-add-fab"
             aria-label={t('nav.createTask')}
-            // `/tasks` porte depuis la refonte mobile une barre de recherche
-            // ancrée au-dessus de la tab bar (MobileTaskSearch, 48 px + 8 px
-            // d'écart) : le FAB monte d'autant, sinon il la recouvre. Partout
-            // ailleurs, `bottom-20` inchangé.
-            className={`fixed ${location.pathname === '/tasks' ? 'bottom-[8.5rem]' : 'bottom-20'} right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center active:scale-95 transition-transform`}
+            className={`fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center active:scale-95 transition-transform`}
             style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
           >
             <Plus size={26} aria-hidden="true" />
