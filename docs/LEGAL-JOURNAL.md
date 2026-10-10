@@ -137,3 +137,27 @@ et valent dès publication.
 ⚠️ **Rédigé par un assistant, pas par un juriste.** La clause 6.3 en particulier tient lieu de
 contrat art. 28 : elle couvre les huit éléments de l'art. 28.3, mais un acheteur B2B peut exiger
 un DPA séparé et signé.
+
+### 2026-10-10 · identité de l'éditeur · **FOND (identification)** · **aucun préavis**
+
+| Document | Empreinte |
+|---|---|
+| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `7b98a53c54266c40` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `227b1e35354d1039` |
+
+**Ce qui a changé** (ligne `M-62` d'[`a-faire-manuel.md`](../a-faire-manuel.md), lignes `A2` et
+`A3` de [`LEGAL.md`](./LEGAL.md)) :
+
+- **Mentions légales**, s1 : « Dénomination : Cosmo » devient « Éditeur : Axel Longatte, personne
+  physique », et le directeur de la publication n'est plus « L'équipe Cosmo » mais Axel Longatte
+  (LCEN 6-III, loi de 1982 art. 93-2 : une personne physique).
+- **Politique de confidentialité**, s1 : le responsable de traitement est Axel Longatte, et non
+  plus « l'équipe Cosmo », qui n'identifiait personne (RGPD art. 13.1.a). Le registre art. 30 le
+  nommait déjà.
+- Dates de mise à jour des deux documents portées au 10 octobre 2026.
+
+**Aucun préavis** : aucune clause des CGU ne bouge. C'est une information exacte due tout de suite,
+pas une condition nouvelle opposée à l'utilisateur.
+
+⚠️ **Ce qui reste ouvert sur `A3`** : SIREN, RCS, TVA et adresse attendent l'immatriculation et la
+domiciliation (`M-01`, `M-02`, `M-05`), et le téléphone des hébergeurs (`M-65`).
