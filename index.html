@@ -116,9 +116,17 @@
       html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{padding-left:24px;list-style:revert}
       html[data-prerendered] #seo-fallback a{color:#4f46e5;text-decoration:underline}
       html[data-prerendered] #seo-fallback img{max-width:100%;height:auto;border-radius:8px}
+      /* C-116 · 2026-10-10 : les captures du fallback ne sont PAS montrées.
+         React remplace ce contenu quelques instants après, avec ses propres
+         captures : les afficher ici faisait télécharger ~350 ko d'images
+         jetées aussitôt, et Lighthouse mobile les comptait dans le chemin du
+         LCP (5,1 s sur /entreprise-presentation/). Une image `loading=lazy`
+         en display:none n'est jamais demandée. Les robots lisent toujours
+         src et alt ; le <noscript> plus bas les réaffiche sans JS. */
+      html[data-prerendered] #seo-fallback img{display:none}
     </style>
     <noscript>
-      <style>#boot-screen{display:none}#seo-fallback{display:block}</style>
+      <style>#boot-screen{display:none}#seo-fallback{display:block}html[data-prerendered] #seo-fallback img{display:inline}</style>
     </noscript>
 
     <!-- ❌ Aucun script publicitaire, nulle part. Le mur-pub et le système de

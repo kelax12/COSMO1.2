@@ -41,7 +41,7 @@ describe('écran de démarrage (index.html)', () => {
 
   it('réaffiche le contenu SEO et retire le spinner quand le JS est coupé', () => {
     expect(indexHtml).toMatch(
-      /<noscript>\s*<style>#boot-screen\{display:none\}#seo-fallback\{display:block\}<\/style>\s*<\/noscript>/
+      /<noscript>\s*<style>#boot-screen\{display:none\}#seo-fallback\{display:block\}html\[data-prerendered\] #seo-fallback img\{display:inline\}<\/style>\s*<\/noscript>/
     );
   });
 });
@@ -54,6 +54,13 @@ describe('C-116 · peindre le prérendu, mais seulement sur une page prérendue'
   it('peint #seo-fallback et masque le spinner sous html[data-prerendered]', () => {
     expect(indexHtml).toMatch(/html\[data-prerendered\] #boot-screen\{display:none\}/);
     expect(indexHtml).toMatch(/html\[data-prerendered\] #seo-fallback\{display:block/);
+  });
+
+  it("ne télécharge pas les captures du fallback peint : elles partaient avant le LCP", () => {
+    expect(indexHtml).toMatch(/html\[data-prerendered\] #seo-fallback img\{display:none\}/);
+    // `display:none` ne suffit à éviter la requête que sur une image lazy.
+    const eager = [...prerender.matchAll(/<img (?![^>]*loading="lazy")[^>]*>/g)].map((m) => m[0].slice(0, 80));
+    expect(eager).toEqual([]);
   });
 
   it("n'expose pas l'attribut dans la coquille source : les routes de l'app gardent le spinner", () => {
