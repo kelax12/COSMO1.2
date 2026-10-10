@@ -560,6 +560,15 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
     }
 
     const dialog = demoPage.getByRole('dialog');
+    // Un clic forcé pouvait tomber à côté (aucune modale, instable le
+    // 2026-10-10) : seconde tentative au clavier, sans dépendre de la géométrie.
+    const ouverte = await expect(dialog.first())
+      .toBeVisible({ timeout: 5_000 })
+      .then(() => true, () => false);
+    if (!ouverte) {
+      await ouvrir.focus();
+      await demoPage.keyboard.press('Enter');
+    }
     await expect(dialog.first()).toBeVisible({ timeout: 10_000 });
     await demoPage.waitForTimeout(1200);
 

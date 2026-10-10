@@ -387,7 +387,20 @@ export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promi
     await sheetItem.click({ force: true, timeout: 10_000 });
   }
   await clickThroughOrgMenuIfAny(page);
-  await page.waitForURL(urlPattern);
+  // 🔴 Le clic (forcé) pouvait tomber sans effet : la navigation n'avait
+  // jamais lieu et `waitForURL` attendait jusqu'au délai du TEST (180 s,
+  // instable le 2026-10-10). Délai propre, puis UNE seconde tentative au
+  // clavier si l'item est toujours là.
+  const arrive = await page
+    .waitForURL(urlPattern, { timeout: 15_000 })
+    .then(() => true, () => false);
+  if (arrive) return;
+  if (await sheetItem.isVisible().catch(() => false)) {
+    await sheetItem.focus();
+    await page.keyboard.press('Enter');
+    await clickThroughOrgMenuIfAny(page);
+  }
+  await page.waitForURL(urlPattern, { timeout: 15_000 });
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -451,10 +464,20 @@ export async function openOrgSection(page: Page, label: RegExp): Promise<void> {
     // Le premier clic a pu agir et la feuille se refermer lentement : on ne
     // reclique pas un élément qui n'est plus là.
     if (essai > 0 && !(await item.isVisible().catch(() => false))) break;
-    try {
-      await item.click({ timeout: 15_000 });
-    } catch {
-      await item.click({ force: true, timeout: 10_000 });
+    if (essai === 0) {
+      try {
+        await item.click({ timeout: 15_000 });
+      } catch {
+        await item.click({ force: true, timeout: 10_000 });
+      }
+    } else {
+      // 🔴 Seconde tentative AU CLAVIER, pas un second clic : deux clics
+      // (dont un forcé) sont restés sans effet sous WebKit, feuille ouverte et
+      // bouton présent (2026-10-10). Un clic forcé vise le CENTRE calculé de
+      // l'élément, qui peut tomber à côté pendant l'animation ; focus + Entrée
+      // ne dépend d'aucune géométrie, et c'est un vrai chemin utilisateur.
+      await item.focus();
+      await page.keyboard.press('Enter');
     }
     const fermee = await expect(sheet)
       .toHaveCount(0, { timeout: 5_000 })
