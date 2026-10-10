@@ -12,6 +12,7 @@ import { mountAudienceScript } from './lib/audience';
 import { DEFAULT_LOCALE, applyLocale, resolveInitialLocale, type Locale } from './i18n/locale';
 import { resolveRouterBootstrap } from './i18n/bootstrap';
 import { loadCatalogs } from './i18n/catalog';
+import { afterFirstPaint } from './lib/after-first-paint';
 import './index.css';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -251,7 +252,20 @@ function mount(): void {
 // `catch` et non `finally` sur l'échec : on monte l'app quoi qu'il arrive. Une
 // langue dont les catalogues n'ont pas pu être chargés rend en français, ce qui
 // reste infiniment préférable à une page blanche.
-loadCatalogs(activeLocale).catch(() => undefined).then(() => {
+// ── C-116 : laisser PEINDRE le prérendu avant que React ne le remplace ──
+//
+// En français, `loadCatalogs` se résout en une microtask : `mount()` vidait
+// `#root` AVANT la première peinture, et `#seo-fallback` n'était jamais peint.
+// En anglais, le chargement du catalogue laissait passer une frame : `/en/`
+// était la seule page sous 4 s. Seulement sur une page prérendue : la coquille
+// `app.html` n'a rien à montrer et monte tout de suite. Détail dans
+// `lib/after-first-paint.ts`.
+const isPrerendered = document.documentElement.hasAttribute('data-prerendered');
+
+loadCatalogs(activeLocale).catch(() => undefined).then(() => new Promise<void>((resolve) => {
+  if (isPrerendered) afterFirstPaint(resolve);
+  else resolve();
+})).then(() => {
   mount();
 
   // ── Sentry, APRÈS le premier rendu ────────────────────────────────
