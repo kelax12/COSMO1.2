@@ -1,3 +1,5 @@
+> ⚠️ **ARCHIVE, non maintenue.** Prompt daté, déplacé de la racine le 2026-10-11. Il décrit l'état qui l'a produit, pas l'état courant : relire [`a-faire-code.md`](../../../a-faire-code.md) et [`faille.md`](../../../faille.md) avant d'en rejouer un bloc.
+
 # Prompt · finir les failles ouvertes après la passe du 2026-09-30 / 10-01
 
 > **Mode d'emploi.** Copier tout le bloc ci-dessous dans une nouvelle session, à la racine du
