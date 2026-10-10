@@ -109,7 +109,16 @@ export const test = base.extend<{ demoPage: Page }>({
     //    30 s : la LandingPage est lazy-loadée et animée par GSAP ; au premier
     //    test d'un serveur Vite froid son rendu dépasse largement 10 s.
     const demoBtn = page.getByRole('button', { name: /essayer.*sans inscription/i }).first();
-    await demoBtn.waitFor({ state: 'visible', timeout: 30_000 });
+    // 🔴 Une seconde chance, bornée. Sous WebKit en CI, la landing (lazy,
+    // animée) n'avait parfois toujours pas peint son CTA à 30 s : deux tests
+    // instables le 2026-10-09, réussis au retry. Recharger reprend un rendu
+    // bloqué ; un serveur qui ne sert vraiment pas la page échoue toujours.
+    try {
+      await demoBtn.waitFor({ state: 'visible', timeout: 30_000 });
+    } catch {
+      await gotoTolerant(page, '/');
+      await demoBtn.waitFor({ state: 'visible', timeout: 30_000 });
+    }
     // Deux faux positifs d'actionnabilité se cumulent sur la landing :
     //   - « element is not stable » : les animations GSAP d'entrée bougent
     //     encore le CTA quand Playwright vérifie sa position ;
@@ -426,7 +435,16 @@ export async function openOrgSection(page: Page, label: RegExp): Promise<void> {
   }
   await page.locator('[data-org-section-switcher]').click();
   const sheet = page.locator('[data-org-section-sheet]');
-  await sheet.getByRole('button', { name: label }).click();
+  const item = sheet.getByRole('button', { name: label });
+  // Même repli que `navTo` : sous WebKit la feuille glisse encore, et le test
+  // « stable » de Playwright n'aboutissait jamais (181 essais, puis délai du
+  // TEST entier, 120 s : instable le 2026-10-09). Délai propre, puis clic forcé
+  // sur un élément résolu et visible.
+  try {
+    await item.click({ timeout: 15_000 });
+  } catch {
+    await item.click({ force: true, timeout: 10_000 });
+  }
   await expect(sheet).toHaveCount(0, { timeout: 10_000 });
 }
 

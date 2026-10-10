@@ -57,24 +57,44 @@ test('démo : toggle d\'habitude PERSISTE à travers une navigation SPA', async 
   const checkboxes = main.locator('[role="checkbox"]');
   await expect(checkboxes.first()).toBeVisible({ timeout: 15_000 });
 
-  const checkedCount = () => main.locator('[role="checkbox"][aria-checked="true"]').count();
-  const before = await checkedCount();
+  // 🔴 On suit UNE case, par son nom accessible, et plus un TOTAL de cases.
+  // Mesuré dans la trace CI du 2026-10-09 : le total valait 0 à la première
+  // lecture alors que la grille en porte ~60, donc « avant » était faux et le
+  // test passait ou cassait selon le moment de la relecture. Une case nommée
+  // est sans ambiguïté, et ce test reste capable de voir une coche perdue.
+  // 1. Attendre la grille remplie (les seeds de démo cochent la plupart des jours).
+  await expect
+    .poll(() => main.locator('[role="checkbox"][aria-checked="true"]').count(), { timeout: 15_000 })
+    .toBeGreaterThan(0);
 
-  // Toggle de la première case (jour × habitude) — l'ordre des habitudes est
-  // stable (pas de réordonnancement à la complétion).
-  await checkboxes.first().click();
-  await expect.poll(checkedCount, { timeout: 7_000 }).not.toBe(before);
-  const after = await checkedCount();
+  // 2. La case visée : la première du tableau, identifiée par habitude + date.
+  //    Le libellé change avec l'état (« (complétée) ») : on garde la racine.
+  const cible = checkboxes.first();
+  const libelle = (await cible.getAttribute('aria-label')) ?? '';
+  const racine = libelle.replace(/\s*\(.*\)\s*$/, '');
+  expect(racine, 'la case visée doit avoir un nom (habitude, date)').toMatch(/, \d{4}-\d{2}-\d{2}$/);
+  // Nom en texte = sous-chaîne : couvre « …, 2026-10-03 » et « …, 2026-10-03 (complétée) ».
+  const caseVisee = (p: typeof page) => p.getByRole('main').getByRole('checkbox', { name: racine });
+  const etatAvant = await caseVisee(page).getAttribute('aria-checked');
+  const etatApres = etatAvant === 'true' ? 'false' : 'true';
+
+  // 3. Cocher (ou décocher) et attendre que CETTE case ait basculé.
+  await caseVisee(page).click();
+  await expect(caseVisee(page)).toHaveAttribute('aria-checked', etatApres, { timeout: 7_000 });
 
   // Aller-retour SPA : l'état doit survivre (repo localStorage démo).
   await navTo(page, /accueil|dashboard|tableau/i, /\/$|\/dashboard/);
   await navTo(page, /habitudes|habits/i, /\/habits/);
 
-  const mainAfter = page.getByRole('main');
-  await expect(mainAfter.locator('[role="checkbox"]').first()).toBeVisible({ timeout: 15_000 });
-  await expect
-    .poll(() => mainAfter.locator('[role="checkbox"][aria-checked="true"]').count(), { timeout: 10_000 })
-    .toBe(after);
+  // 4. La MÊME case porte toujours le nouvel état.
+  await expect(caseVisee(page)).toHaveAttribute('aria-checked', etatApres, { timeout: 15_000 });
+
+  // 5. Et après un RECHARGEMENT. 🔴 Sans cette étape le test ne mesurait pas
+  //    la persistance : l'aller-retour SPA relit le cache React Query (2 min),
+  //    jamais le stockage. Prouvé le 2026-10-09 en supprimant l'écriture de
+  //    `toggleCompletion` : le test restait vert. Un rechargement vide le cache.
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(caseVisee(page)).toHaveAttribute('aria-checked', etatApres, { timeout: 20_000 });
 
   await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
 });

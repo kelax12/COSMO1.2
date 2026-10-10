@@ -267,10 +267,15 @@ for (const child of EVENT_MODAL_CHILDREN) {
     await expect(sibling).toBeVisible({ timeout: 10_000 });
 
     // ── Le piège est passé À L'ENFANT ──────────────────────────────
-    expect(
-      await focusInside(sibling),
-      `focus non entré dans ${child.surface}: ${await describeFocus(page)}`,
-    ).toBe(true);
+    // ⚠️ Attendu, pas lu une fois : la modale pose le focus JUSTE APRÈS son
+    // affichage, et une lecture immédiate tombait parfois avant (instable en
+    // CI le 2026-10-09). Un focus qui n'entre JAMAIS échoue toujours, en 3 s.
+    await expect
+      .poll(() => focusInside(sibling), {
+        timeout: 3_000,
+        message: `focus non entré dans ${child.surface}: ${await describeFocus(page)}`,
+      })
+      .toBe(true);
     const escapee = await firstTabEscapee(page, sibling);
     expect(escapee, `le focus a quitté ${child.surface} vers ${escapee}`).toBe(null);
 
