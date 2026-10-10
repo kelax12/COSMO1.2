@@ -510,7 +510,10 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
         } catch { /* ignore */ }
       });
       await gotoTolerant(page, route);
-      await page.waitForLoadState('networkidle');
+      // Borne a 15 s : sous WebKit le reseau de la landing ne se calme pas
+      // toujours, et l'attente filait jusqu'au delai du test (180 s, instable
+      // le 2026-10-10). L'attente d'animation ci-dessous suit de toute facon.
+      await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
       // La landing est lazy-loadee et animee : son etat final n'est pas celui
       // du premier rendu, et une cible mesuree en cours d'animation ment.
       await page.waitForTimeout(2500);

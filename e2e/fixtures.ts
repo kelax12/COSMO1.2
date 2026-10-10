@@ -354,53 +354,67 @@ export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promi
   // du TEST entier, 120 s, et le cas mourait sur « page fermée » (run
   // `35847722505`, /statistics). Même délai et même repli que les autres clics
   // de cette fonction.
-  const plus = page.getByRole('button', { name: /plus d'options/i }).filter({ visible: true }).first();
+  // 🔴 Le chemin mobile ENTIER (« Plus » → feuille → item → URL) est rejoué
+  // UNE fois s'il échoue : sous WebKit, le bouton « Plus » ou l'item de la
+  // feuille restaient parfois introuvables (2026-10-10, deux tests).
+  // Échap referme une feuille bloquée ; une app réellement cassée échoue
+  // encore au second passage.
+  const viaPlus = async (): Promise<void> => {
+    const plus = page.getByRole('button', { name: /plus d'options/i }).filter({ visible: true }).first();
+    try {
+      await plus.click({ timeout: 15_000 });
+    } catch {
+      await plus.click({ force: true, timeout: 10_000 });
+    }
+    // ⚠️ Scoper au sheet est OBLIGATOIRE : la page reste montée DERRIÈRE lui et
+    // ses propres contrôles matchent le même `name`. Le Dashboard a par exemple
+    // un MobileCollapsible « OKR » qui arrivait avant l'item du sheet en ordre
+    // DOM ; `.first()` le sélectionnait et le clic était intercepté par le
+    // sheet posé au-dessus → timeout de 5 s (échec mobile-safari sur /okr).
+    const sheet = page.locator('[data-mobile-more-sheet]');
+    await sheet.waitFor({ state: 'visible', timeout: 10_000 });
+    const sheetItem = sheet
+      .getByRole('link', { name })
+      .or(sheet.getByRole('button', { name }))
+      .filter({ visible: true })
+      .first();
+    // L'item peut ne pas être encore VISIBLE quand la feuille l'est : sous WebKit
+    // elle glisse à ~1 image/s, et le clic forcé ci-dessous expirait sur un
+    // élément jamais trouvé (instable le 2026-10-10). On l'attend d'abord.
+    await sheetItem.waitFor({ state: 'visible', timeout: 20_000 });
+    try {
+      await sheetItem.click({ timeout: 10_000 });
+    } catch {
+      if (urlPattern.test(page.url())) return;
+      // Même repli que le chemin par lien : sous WebKit, la feuille peut encore
+      // s'animer (mesuré sur un poste : ~1 image/s), et le test « stable » de
+      // Playwright n'aboutit jamais sur un élément qui glisse. L'élément est
+      // résolu et visible ; on force le dispatch, avec un délai explicite.
+      await sheetItem.click({ force: true, timeout: 10_000 });
+    }
+    await clickThroughOrgMenuIfAny(page);
+    // 🔴 Le clic (forcé) pouvait tomber sans effet : la navigation n'avait
+    // jamais lieu et `waitForURL` attendait jusqu'au délai du TEST (180 s,
+    // instable le 2026-10-10). Délai propre, puis UNE seconde tentative au
+    // clavier si l'item est toujours là.
+    const arrive = await page
+      .waitForURL(urlPattern, { timeout: 15_000 })
+      .then(() => true, () => false);
+    if (arrive) return;
+    if (await sheetItem.isVisible().catch(() => false)) {
+      await sheetItem.focus();
+      await page.keyboard.press('Enter');
+      await clickThroughOrgMenuIfAny(page);
+    }
+    await page.waitForURL(urlPattern, { timeout: 15_000 });
+  };
   try {
-    await plus.click({ timeout: 15_000 });
-  } catch {
-    await plus.click({ force: true, timeout: 10_000 });
-  }
-  // ⚠️ Scoper au sheet est OBLIGATOIRE : la page reste montée DERRIÈRE lui et
-  // ses propres contrôles matchent le même `name`. Le Dashboard a par exemple
-  // un MobileCollapsible « OKR » qui arrivait avant l'item du sheet en ordre
-  // DOM ; `.first()` le sélectionnait et le clic était intercepté par le
-  // sheet posé au-dessus → timeout de 5 s (échec mobile-safari sur /okr).
-  const sheet = page.locator('[data-mobile-more-sheet]');
-  await sheet.waitFor({ state: 'visible', timeout: 10_000 });
-  const sheetItem = sheet
-    .getByRole('link', { name })
-    .or(sheet.getByRole('button', { name }))
-    .filter({ visible: true })
-    .first();
-  // L'item peut ne pas être encore VISIBLE quand la feuille l'est : sous WebKit
-  // elle glisse à ~1 image/s, et le clic forcé ci-dessous expirait sur un
-  // élément jamais trouvé (instable le 2026-10-10). On l'attend d'abord.
-  await sheetItem.waitFor({ state: 'visible', timeout: 20_000 });
-  try {
-    await sheetItem.click({ timeout: 10_000 });
+    await viaPlus();
   } catch {
     if (urlPattern.test(page.url())) return;
-    // Même repli que le chemin par lien : sous WebKit, la feuille peut encore
-    // s'animer (mesuré sur un poste : ~1 image/s), et le test « stable » de
-    // Playwright n'aboutit jamais sur un élément qui glisse. L'élément est
-    // résolu et visible ; on force le dispatch, avec un délai explicite.
-    await sheetItem.click({ force: true, timeout: 10_000 });
+    await page.keyboard.press('Escape').catch(() => {});
+    await viaPlus();
   }
-  await clickThroughOrgMenuIfAny(page);
-  // 🔴 Le clic (forcé) pouvait tomber sans effet : la navigation n'avait
-  // jamais lieu et `waitForURL` attendait jusqu'au délai du TEST (180 s,
-  // instable le 2026-10-10). Délai propre, puis UNE seconde tentative au
-  // clavier si l'item est toujours là.
-  const arrive = await page
-    .waitForURL(urlPattern, { timeout: 15_000 })
-    .then(() => true, () => false);
-  if (arrive) return;
-  if (await sheetItem.isVisible().catch(() => false)) {
-    await sheetItem.focus();
-    await page.keyboard.press('Enter');
-    await clickThroughOrgMenuIfAny(page);
-  }
-  await page.waitForURL(urlPattern, { timeout: 15_000 });
 }
 
 // ═══════════════════════════════════════════════════════════════════
