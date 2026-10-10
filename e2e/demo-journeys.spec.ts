@@ -72,7 +72,9 @@ test('démo : toggle d\'habitude PERSISTE à travers une navigation SPA', async 
   const cible = checkboxes.first();
   const libelle = (await cible.getAttribute('aria-label')) ?? '';
   const racine = libelle.replace(/\s*\(.*\)\s*$/, '');
-  expect(racine, 'la case visée doit avoir un nom (habitude, date)').toMatch(/, \d{4}-\d{2}-\d{2}$/);
+  // Deux formats selon la vue : tableau (desktop) « Méditation, 2026-10-03 »,
+  // cartes (mobile) « Méditation, dim. 4 ». Les deux nomment habitude + jour.
+  expect(racine, 'la case visée doit avoir un nom (habitude, jour)').toMatch(/^.+, .+$/);
   // Nom en texte = sous-chaîne : couvre « …, 2026-10-03 » et « …, 2026-10-03 (complétée) ».
   const caseVisee = (p: typeof page) => p.getByRole('main').getByRole('checkbox', { name: racine });
   const etatAvant = await caseVisee(page).getAttribute('aria-checked');
