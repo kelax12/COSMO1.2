@@ -1,14 +1,14 @@
 // Créer / Modifier un OKR d'équipe — Sheet latéral droit (calqué sur
 // OKRModalSheet de la page OKR perso), enrichi du rattachement à des équipes
-// (cloisonnement). Un OKR ne s'assigne PAS à une personne (#10) : le travail
-// individuel passe par les tâches de projet.
+// (cloisonnement). L'objectif ne s'assigne pas (#10), mais chaque KR porte un
+// responsable et des contributeurs, attribuables aussi par équipe entière.
 //
 // Audit des popups du 2026-09-25 : cycle, objectif parent et projets reliés
 // aux KR (mig. 160) arrivent ici ; la création d'équipe en est RETIRÉE. Elle
 // faisait de cette fiche un point d'entrée de plus pour les équipes, sans
 // responsable ni membres : l'équipe naissait vide.
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Building2 } from 'lucide-react';
+import { Plus, Trash2, Building2, Users } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -35,7 +35,15 @@ import {
   type CreateTeamKRInput,
   type SyncTeamKRInput,
 } from '@/modules/team-okrs';
-import { useOrgTeams } from '@/modules/org-teams';
+import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import AssigneesPicker from './AssigneesPicker';
 import { useOrgMembers } from '@/modules/organizations';
 import { useAuth } from '@/modules/auth/AuthContext';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
@@ -96,6 +104,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
   const { data: krLinks = [], isSuccess: krLinksLoaded } = useKRProjects(orgId);
   const setKRProjects = useSetKRProjects(orgId);
   const { data: members = [] } = useOrgMembers(orgId);
+  const { data: teamMembers = [] } = useOrgTeamMembers(orgId);
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -146,6 +155,17 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
 
   const setKR = (idx: number, patch: Partial<KRDraft>) =>
     setKeyResults((prev) => prev.map((k, i) => (i === idx ? { ...k, ...patch } : k)));
+
+  // Personnes d'un KR : le responsable en tête, puis les contributeurs.
+  const krPeople = (k: KRDraft) => (k.assigneeId ? [k.assigneeId, ...k.contributorIds.filter((id) => id !== k.assigneeId)] : k.contributorIds);
+  const setKRPeople = (idx: number, ids: string[]) => {
+    const [first, ...rest] = Array.from(new Set(ids)).slice(0, 50);
+    setKR(idx, { assigneeId: first ?? null, contributorIds: rest });
+  };
+  const addTeamToKR = (idx: number, teamId: string) => {
+    const ids = teamMembers.filter((m) => m.teamId === teamId).map((m) => m.userId);
+    setKRPeople(idx, [...krPeople(keyResults[idx]), ...ids]);
+  };
 
   // Un objectif sans résultat clé mesurable n'est pas valide : ≥ 1 KR nommé + cible > 0.
   const hasKeyResult = keyResults.some((k) => k.title.trim() && Number(k.targetValue) > 0);
@@ -380,8 +400,8 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                 // ces valeurs (clavier, ou saisie en cours). Sans pointeur fin,
                 // toujours ouvert. Sous mouvement réduit, le dépliage (déclenché par la
                 // personne) reste animé ; seuls le glissement et l'échelle sont coupés. Projets
-                // reliés et contributeurs ne sont plus montrés ici : la fiche les
-                // conserve tels quels à l'enregistrement.
+                // reliés ne sont plus montrés ici : la fiche les conserve tels
+                // quels à l'enregistrement.
                 const compact = keyResults.length > 1;
                 const pct = kr.targetValue > 0 ? Math.min(100, Math.max(0, (kr.currentValue / kr.targetValue) * 100)) : 0;
                 return (
@@ -401,6 +421,33 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                         {kr.currentValue}
                         <span className="text-xs text-[rgb(var(--color-text-muted))]"> / {kr.targetValue}{kr.unit ? ` ${kr.unit}` : ''}</span>
                       </span>
+                      {/* Responsable (1er) + contributeurs (mig. 160). Une équipe
+                          s'attribue en ajoutant ses membres d'un coup. */}
+                      <div className="flex shrink-0 items-center gap-0.5" aria-label={tOrgAdmin('okrModal.krPeople')}>
+                        <AssigneesPicker
+                          members={members}
+                          value={krPeople(kr)}
+                          onChange={(ids) => setKRPeople(idx, ids)}
+                        />
+                        {teams.length > 0 && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button type="button" variant="ghost" size="icon-sm" aria-label={tOrgAdmin('okrModal.krAssignTeam')} title={tOrgAdmin('okrModal.krAssignTeam')} className="text-[rgb(var(--color-text-muted))]">
+                                <Users aria-hidden="true" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>{tOrgAdmin('okrModal.krAssignTeam')}</DropdownMenuLabel>
+                              {teams.map((team) => (
+                                <DropdownMenuItem key={team.id} onSelect={() => addTeamToKR(idx, team.id)}>
+                                  <span className="mr-2 inline-block size-2 rounded-full" style={{ background: team.color }} aria-hidden="true" />
+                                  {team.name}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
                       {compact && (
                         <Button
                           type="button"

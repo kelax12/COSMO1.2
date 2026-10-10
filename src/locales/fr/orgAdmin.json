@@ -1037,6 +1037,8 @@
     "target": "Cible",
     "unit": "Unité",
     "weight": "Coef. (1–10)",
+    "krAssignTeam": "Attribuer à une équipe",
+    "krPeople": "Responsable et contributeurs",
     "weightHint": "Importance du KR dans la progression globale",
     "needOneKr": "Ajoute au moins 1 résultat clé mesurable.",
     "cancel": "Annuler",
