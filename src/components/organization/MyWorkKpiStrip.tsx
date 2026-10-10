@@ -42,7 +42,9 @@ export const KpiStrip = ({ firstName, waiting, open, overdue, done, nextDeadline
       <h2 id="my-work-greeting" className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
         {firstName ? t('apercu.greeting.hello', { name: firstName }) : t('apercu.greeting.helloAnon')}
       </h2>
-      <p className="mt-1.5 text-sm leading-relaxed text-[rgb(var(--color-text-secondary))]">
+      {/* `data-testid` : masquée par la garde visuelle, la date et le nom de la
+          prochaine échéance avancent avec le jour. */}
+      <p data-testid="apercu-greeting-summary" className="mt-1.5 text-sm leading-relaxed text-[rgb(var(--color-text-secondary))]">
         {waiting === 0 && overdue === 0 && open === 0 ? (
           t('apercu.greeting.allClear')
         ) : (

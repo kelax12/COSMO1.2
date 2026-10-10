@@ -112,6 +112,10 @@ const MASQUES = [
   // `now()`). Vu le 2026-10-08 : « Aucun rendez-vous aujourd'hui » contre une
   // frise remplie, et un autre premier jour listé, à code identique.
   '[data-testid="org-agenda-card"]',
+  // Phrase de résumé de l'Aperçu : date ET nom de la prochaine échéance
+  // avancent avec le jour ; masquer la seule date laissait le texte suivant
+  // se décaler selon sa largeur (« demain » / « lundi 12 octobre »).
+  '[data-testid="apercu-greeting-summary"]',
   // Mini-graphiques du tableau de bord : les 7 derniers jours, relatifs à
   // `now()`. Vu le 2026-10-09 : une barre de l'Agenda avait changé de jour.
   '[data-testid="mini-bar-chart"]',
@@ -119,7 +123,22 @@ const MASQUES = [
   'time',
 ];
 
+/**
+ * Hauteurs FIXÉES pour les zones dont la taille dépend de l'heure.
+ *
+ * 🔴 Masquer ne suffit pas : un masque cache un contenu, pas une taille, et
+ * la zone décale tout ce qui suit. Et l'option `style` de `toHaveScreenshot`
+ * ne suffisait pas non plus : mesuré le 2026-10-10, « Mon agenda » faisait
+ * 212 px malgré un `height: 180px !important` passé par elle. Une vraie
+ * feuille injectée dans la page agit, elle, sur la mise en page.
+ */
+const HAUTEURS_FIXES = [
+  '[data-testid="org-agenda-card"] { height: 180px !important; overflow: hidden !important; }',
+  '[data-testid="apercu-greeting-summary"] { height: 46px !important; overflow: hidden !important; }',
+].join(' ');
+
 async function capturer(page: Page, nom: string): Promise<void> {
+  await page.addStyleTag({ content: HAUTEURS_FIXES });
   // Aucun toast à l'écran au moment de capturer. Le style ci-dessous les
   // retire déjà du rendu, et pourtant le rappel d'échéances (« 1 en retard ·
   // Voir », 8 s) figurait dans la capture CI du 2026-10-09 sans qu'on sache
@@ -137,12 +156,7 @@ async function capturer(page: Page, nom: string): Promise<void> {
     // échoué, sa seconde passe ne retrouvant pas le toast de la première.
     // Un masque ne suffit pas (une zone absente d'une capture reste une
     // différence) : on les retire du rendu le temps de la capture.
-    // 🔴 Masquer ne suffit pas quand la HAUTEUR dépend de l'heure : « Mon
-    // agenda » (Aperçu entreprise) est plus court sans rendez-vous qu'avec, et
-    // décalait « Mes résultats clés » en dessous (2026-10-09, 12 368 px). On
-    // lui fixe une hauteur le temps de la capture ; son contenu reste masqué.
-    style: '[data-sonner-toaster] { display: none !important; }'
-      + ' [data-testid="org-agenda-card"] { height: 180px !important; overflow: hidden !important; }',
+    style: '[data-sonner-toaster] { display: none !important; }',
     maxDiffPixelRatio: 0.002,
   });
 }
