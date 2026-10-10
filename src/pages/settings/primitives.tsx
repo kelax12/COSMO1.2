@@ -95,13 +95,16 @@ export function LabeledInput({
 }
 
 /* ─── reusable: PrimaryButton ──────────────────────────────────── */
+// Maquette 208 (2026-10-10) : l'accent, comme toute action principale de
+// l'app. Il était blanc (« Sauvegarder », « Mettre à jour ») à côté d'un
+// « Accéder » bleu et d'un « Enregistrer » violet.
 export function PrimaryButton({ onClick, type = 'button', loading = false, children }: {
   onClick?: () => void; type?: 'button' | 'submit'; loading?: boolean; children: React.ReactNode;
 }) {
   return (
     <button onClick={onClick} type={type} disabled={loading}
       style={{ minHeight: '44px' }}
-      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] rounded-xl text-sm font-semibold hover:opacity-85 active:scale-[0.97] transition-all duration-150 disabled:opacity-50">
+      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] rounded-xl text-sm font-semibold hover:bg-[rgb(var(--color-accent-solid-hover))] active:scale-[0.97] transition-all duration-150 disabled:opacity-50">
       {loading && <Loader2 size={14} className="animate-spin" />}
       {children}
     </button>

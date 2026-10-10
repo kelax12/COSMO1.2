@@ -16,7 +16,9 @@ interface KpiStripProps {
   nextDeadline: TeamTask | null;
 }
 
-const PILL = 'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold tabular-nums';
+// Maquette 227 (2026-10-10) : sur mobile, plus de pastilles colorées, du
+// texte ; seul le retard reste en rouge. Desktop garde ses pastilles.
+const PILL = 'tabular-nums md:inline-flex md:items-center md:px-2 md:py-0.5 md:rounded-md md:text-xs md:font-semibold';
 
 /**
  * En-tête de l'Aperçu (maquette 1 B, 2026-10-02) : une phrase plutôt que
@@ -37,7 +39,7 @@ export const KpiStrip = ({ firstName, waiting, open, overdue, done, nextDeadline
   return (
     <section
       aria-labelledby="my-work-greeting"
-      className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-4 py-4 sm:px-5"
+      className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-4 py-4 sm:px-5 max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:px-0 max-md:py-1"
     >
       <h2 id="my-work-greeting" className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
         {firstName ? t('apercu.greeting.hello', { name: firstName }) : t('apercu.greeting.helloAnon')}
@@ -50,11 +52,11 @@ export const KpiStrip = ({ firstName, waiting, open, overdue, done, nextDeadline
         ) : (
           <>
             {waiting > 0 && (
-              <><span className={`${PILL} bg-amber-500/15 text-amber-700 dark:text-amber-300`}>{tp('apercu.greeting.waiting', waiting)}</span>{' '}</>
+              <><span className={`${PILL} md:bg-amber-500/15 md:text-amber-700 md:dark:text-amber-300`}>{tp('apercu.greeting.waiting', waiting)}</span>{' '}</>
             )}
-            <span className={`${PILL} bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]`}>{tp('apercu.greeting.open', open)}</span>{' '}
+            <span className={`${PILL} md:bg-[rgb(var(--color-accent)/0.12)] md:text-[rgb(var(--color-accent))]`}>{tp('apercu.greeting.open', open)}</span>{' '}
             {overdue > 0 && (
-              <><span className={`${PILL} bg-red-500/15 text-red-700 dark:text-red-300`}>{tp('apercu.greeting.overdue', overdue)}</span>{' '}</>
+              <><span className={`${PILL} font-semibold text-[rgb(var(--color-danger-text))] md:bg-red-500/15 md:text-red-700 md:dark:text-red-300`}>{tp('apercu.greeting.overdue', overdue)}</span>{' '}</>
             )}
             {nextDeadline?.deadline ? (
               <>
@@ -76,7 +78,8 @@ export const KpiStrip = ({ firstName, waiting, open, overdue, done, nextDeadline
       </p>
 
       {total > 0 && (
-        <div className="mt-3">
+        // Maquette 227 : la barre bicolore répétait les chiffres de la phrase.
+        <div className="mt-3 hidden md:block">
           <div className="flex h-2 rounded-full overflow-hidden bg-[rgb(var(--color-hover))]" role="img" aria-label={barLabel}>
             <span className="bg-emerald-500" style={{ flexGrow: done }} />
             <span className="bg-[rgb(var(--color-accent))]" style={{ flexGrow: inProgress }} />

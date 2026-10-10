@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router';
-import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight, Building2, Check, Plus, Bug, Repeat } from 'lucide-react';
+import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight, Building2, Check, Plus, Bug, Repeat, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { prefetchRoute } from '@/lib/route-prefetch';
@@ -54,11 +54,15 @@ interface SheetLink {
   to: string;
   /** Clés de catalogue — `links` est une constante de module (cf. MobileTabBar). */
   labelKey: KeyOf<'common'>;
+  /** Nom accessible, quand le libellé visible ne suffit pas (« Objectifs (OKR) »). */
+  ariaLabelKey?: KeyOf<'common'>;
   icon: typeof Target;
 }
 
 const links: SheetLink[] = [
-  { to: '/okr',        labelKey: 'nav.okr',        icon: Target    },
+  // Maquette 224 : « Objectifs », le nom de la page (le nom accessible garde
+  // « OKR », cf. `ariaLabelKey`).
+  { to: '/okr',        labelKey: 'nav.objectives', icon: Target, ariaLabelKey: 'nav.objectivesAria' },
   { to: '/statistics', labelKey: 'nav.statistics', icon: BarChart2 },
   { to: '/premium',    labelKey: 'nav.premium',    icon: Crown     },
   { to: '/settings',   labelKey: 'nav.settings',   icon: Settings  },
@@ -66,7 +70,8 @@ const links: SheetLink[] = [
 
 /** Libellé de groupe, une seule définition pour les deux sections. */
 const GroupLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p className="px-4 pt-1 pb-1.5 text-caption font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))]">
+  // Maquette 219 : casse normale (« ALLER À », « AUTRE » en capitales espacées).
+  <p className="px-4 pt-1 pb-1.5 text-label font-semibold text-[rgb(var(--color-text-muted))]">
     {children}
   </p>
 );
@@ -85,7 +90,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
   const sheetMotion = useSheetMotion();
   const { t } = useT('common');
   const { t: tOrg } = useT('org');
-  const { user, logout } = useAuth();
+  const { user, logout, isDemo } = useAuth();
   const { isPremium } = useBilling();
   const { activeOrg: myOrg, organizations, setActiveOrgId } = useActiveOrganization();
   const navigate = useNavigate();
@@ -96,7 +101,10 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
   const visibleLinks: SheetLink[] = [
     ...(PREMIUM_ENFORCED ? links : links.filter((l) => l.to !== '/premium')),
     ...(myOrg ? [habitsLink] : []),
-    ...(myOrg
+    // Maquette 218 : « Entreprise » est déjà un onglet de la barre du bas pour
+    // un membre ; la ligne ne reste que comme CHOIX d'organisation, quand il y
+    // en a plusieurs.
+    ...(myOrg && organizations.length > 1
       ? [{ to: '/entreprise', labelKey: 'nav.enterprise' as const, icon: Building2 }]
       : []),
   ];
@@ -173,13 +181,13 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
             {/* Content */}
             <div className="px-4 pb-5 flex flex-col gap-3" data-scroll-area>
 
-              {/* — Profile card — */}
-              <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
+              {/* — Profil — maquette 225 : une ligne, plus une carte surélevée. */}
+              <div className="border-b border-[rgb(var(--color-border))]">
                 <button
                   type="button"
                   onPointerDown={() => prefetchRoute('/settings')}
                   onClick={() => handleNav('/settings')}
-                  className="w-full flex items-center gap-3.5 px-4 min-h-[72px] active:bg-[rgb(var(--color-hover))] transition-colors"
+                  className="w-full flex items-center gap-3.5 px-1 min-h-[64px] active:bg-[rgb(var(--color-hover))] transition-colors"
                   aria-label={t('nav.goToSettings')}
                 >
                   {/* Avatar */}
@@ -213,10 +221,22 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                 </button>
               </div>
 
+              {/* Maquette 222 : la mention démo vit ici, plus en bandeau. */}
+              {isDemo && (
+                <button
+                  type="button"
+                  onClick={() => handleNav('/signup')}
+                  className="w-full flex items-center gap-3 px-1 min-h-touch text-left text-body font-medium text-[rgb(var(--color-accent))]"
+                >
+                  <Sparkles size={19} className="shrink-0" aria-hidden="true" />
+                  {t('nav.demoCreateAccount')}
+                </button>
+              )}
+
               {/* — Aller à (maquette 93 : un groupe NOMMÉ, pas un bloc flottant) — */}
               <GroupLabel>{t('nav.sheetGoTo')}</GroupLabel>
               <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden -mt-2">
-                {visibleLinks.map(({ to, labelKey, icon: Icon }, idx) => {
+                {visibleLinks.map(({ to, labelKey, ariaLabelKey, icon: Icon }, idx) => {
                   const row = (
                     <button
                       type="button"
@@ -228,6 +248,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                         location.pathname === to ? 'bg-[rgb(var(--color-hover))]' : '',
                       ].join(' ')}
                       aria-current={location.pathname === to ? 'page' : undefined}
+                      aria-label={ariaLabelKey ? t(ariaLabelKey) : undefined}
                     >
                       {/* Maquette 94 : l'icône repère, elle ne classe pas. */}
                       <Icon size={19} className="shrink-0 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />

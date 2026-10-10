@@ -1,4 +1,10 @@
 {
+  "mobile": {
+    "theme": "Thème",
+    "timezoneAuto": "Automatique",
+    "organization": "Entreprise",
+    "organizationRow": "Mon entreprise"
+  },
   "page": {
     "title": "Paramètres",
     "subtitle": "Gérez votre compte, sécurité et préférences.",
@@ -99,8 +105,8 @@
     "displayMode": "Mode d'affichage",
     "shortcuts": "Raccourcis clavier",
     "shortcutsHint": "Aussi accessibles à tout moment avec la touche",
-    "themeListTest": "Clair · Sombre · Noir · Test",
-    "themeList": "Clair · Sombre · Noir"
+    "themeListTest": "Clair · Sombre · Gris · Noir · Test",
+    "themeList": "Clair · Sombre · Gris · Noir"
   },
   "modules": {
     "hint": "Activez uniquement ce dont vous avez besoin. Les modules masqués disparaissent de la navigation ; vos données sont conservées. Tâches & Dashboard sont toujours présents.",

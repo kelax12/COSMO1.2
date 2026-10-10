@@ -154,7 +154,7 @@ const TeamProjectCard = ({
     <div className="space-y-3">
     {/* Le nom du projet titre le groupe, au-dessus de la carte (2026-10-01) :
         il n'est plus répété dans l'en-tête, sauf pendant un renommage. */}
-    <h3 className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] px-1 pt-1">
+    <h3 className="flex items-center gap-1.5 text-caption font-semibold md:uppercase md:tracking-wide max-md:text-label max-md:text-[rgb(var(--color-text-secondary))] text-[rgb(var(--color-text-muted))] px-1 pt-1">
       <span className={`w-2 h-2 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
       {project.name}
     </h3>
@@ -165,7 +165,7 @@ const TeamProjectCard = ({
           type="button"
           onClick={onToggleCollapse}
           aria-expanded={!collapsed}
-          className="flex-1 min-w-0 flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
+          className="flex-1 min-w-0 flex max-md:flex-wrap items-center gap-2 max-md:gap-y-1 px-2 py-1.5 rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
         >
           {collapsed ? <ChevronRight size={16} className="shrink-0" aria-hidden="true" /> : <ChevronDown size={16} className="shrink-0" aria-hidden="true" />}
           {renaming && (
@@ -243,15 +243,15 @@ const TeamProjectCard = ({
           )}
 
           {/* Contributeurs (avatars empilés + charge au survol) */}
-          <span className="ml-auto flex items-center gap-2 shrink-0">
+          <span className="ml-auto max-md:ml-6 max-md:basis-full flex items-center gap-2 shrink-0">
             {owner && (
-              <span className="hidden sm:inline-flex rounded-full ring-2 ring-indigo-500/60" title={`${pf('col.owner')} : ${owner.displayName}`}>
-                <MemberAvatar avatar={owner.avatar} name={owner.displayName} size={20} />
+              <span className="hidden sm:inline-flex rounded-full ring-2 ring-[rgb(var(--color-border-strong))]" title={`${pf('col.owner')} : ${owner.displayName}`}>
+                <MemberAvatar avatar={owner.avatar} name={owner.displayName} size={20} neutral />
               </span>
             )}
             {contributors.length > 0 && (
               <span className="flex -space-x-1.5" aria-label={`${contributors.length} contributeurs`}>
-                {contributors.slice(0, 4).map(({ member, open, overdue }) => (
+                {contributors.slice(0, 3).map(({ member, open, overdue }) => (
                   <span
                     key={member.userId}
                     className="rounded-full ring-2 ring-[rgb(var(--color-surface))]"
@@ -261,12 +261,12 @@ const TeamProjectCard = ({
                         : tp('project.memberOpen', open, { name: member.displayName })
                     }
                   >
-                    <MemberAvatar avatar={member.avatar} name={member.displayName} size={20} />
+                    <MemberAvatar avatar={member.avatar} name={member.displayName} size={20} neutral />
                   </span>
                 ))}
-                {contributors.length > 4 && (
+                {contributors.length > 3 && (
                   <span className="w-[22px] h-[22px] rounded-full bg-[rgb(var(--color-hover))] ring-2 ring-[rgb(var(--color-surface))] flex items-center justify-center text-[9px] font-bold text-[rgb(var(--color-text-muted))]">
-                    +{contributors.length - 4}
+                    +{contributors.length - 3}
                   </span>
                 )}
               </span>

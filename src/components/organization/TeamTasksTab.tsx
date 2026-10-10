@@ -39,6 +39,8 @@ import { useOrgTeams } from '@/modules/org-teams';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 import { OrgCreateBoundary } from './org-create.context';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { MobileTeamTaskList, MobileFiltersButton, MobileFiltersSheet, MobileCreateButton } from './MobileTeamTasks';
 
 interface TeamTasksTabProps {
   orgId: string;
@@ -173,6 +175,8 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   // dans l'URL. Seul le sens du tri reste un état local, comme avant.
   const sortField = filters.group;
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const isMobile = useIsMobile();
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [taskModal, setTaskModal] = useState<{
     mode: 'create' | 'edit'; task?: TeamTask; assigneeIds?: string[]; status?: TeamTaskStatus; fromKanban?: boolean;
   } | null>(null);
@@ -393,7 +397,24 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         searchPlaceholder={t('projects.tasksTabSearchPlaceholder')}
         searchAria={t('projects.tasksTabSearchAria')}
         // Périmètre à côté du tri (2026-09-30) : la recherche reste seule en haut.
-        scopeSlot={(scope) => (
+        // Mobile (239, 242, 250) : périmètre, tri, préréglages et vue dans une feuille.
+        trailing={isMobile ? <MobileFiltersButton activeCount={hasActiveFilter ? 1 : 0} onOpenChange={setFiltersOpen} /> : undefined}
+        scopeSlot={(scope) => isMobile ? (
+          <MobileFiltersSheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <TeamTasksToolbar
+              sortField={sortField}
+              onSortField={(group) => setFilters({ group })}
+              sortDirection={sortDirection}
+              onToggleSortDirection={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
+              canCreate={false}
+              onCreate={() => undefined}
+              hideCreate
+              scope={scope}
+            />
+            <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="open" currentUserId={currentUserId ?? user?.id} />
+            <TeamTasksViewControls {...viewControlsProps} part="view" />
+          </MobileFiltersSheet>
+        ) : (
           <TeamTasksToolbar
             sortField={sortField}
             onSortField={(group) => setFilters({ group })}
@@ -408,7 +429,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
       />
 
       {/* Préréglages, puis la vue ; les colonnes au bout de la ligne (2026-09-30). */}
-      <div className="-mt-2 flex items-center gap-2">
+      <div className="-mt-2 hidden md:flex items-center gap-2">
         <FilterPresets
           filters={filters} setFilters={setFilters} defaultStatus="open" currentUserId={currentUserId ?? user?.id}
           // « Sélectionner » sur la MÊME ligne que les préréglages, comme sur la page Tâches perso.
@@ -476,6 +497,18 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
             onToggleSelect={bulk.toggleSelect}
           />
         </Suspense>
+      ) : isMobile ? (
+        <MobileTeamTaskList
+          lines={lines}
+          groupLabel={groupLabel}
+          onToggleGroup={toggleGroup}
+          projectById={projectById}
+          onToggleComplete={toggleComplete}
+          onOpen={handlers.open}
+          selectMode={bulk.selectMode}
+          selectedIds={bulk.selectedIds}
+          onToggleSelect={bulk.toggleSelect}
+        />
       ) : (
         <TeamTasksTable
           lines={lines}
@@ -494,6 +527,10 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           sortIndicator={sortIndicator}
           onSort={handleSort}
         />
+      )}
+
+      {isMobile && projects.length > 0 && can['task.create'] && (
+        <MobileCreateButton label={t('projects.tasksTabNewTask')} onClick={() => setTaskModal({ mode: 'create' })} />
       )}
 
       {taskModal && (

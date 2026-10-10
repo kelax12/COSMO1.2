@@ -8,6 +8,7 @@ interface MemberAvatarProps {
   /** Taille du cercle en px (défaut 36). */
   size?: number;
   className?: string;
+  neutral?: boolean;
 }
 
 /** Couleur déterministe (hue) dérivée du nom — stable entre rendus et appareils. */
@@ -34,7 +35,9 @@ function initialsOf(name: string): string {
  * colorées (si `name` fourni), ou fallback icône. Même logique de
  * classification que les avatars amis (lib/avatar).
  */
-const MemberAvatar = ({ avatar, name, size = 36, className = '' }: MemberAvatarProps) => {
+// `neutral` (maquette 248, 2026-10-10) : initiales sur fond gris, sans teinte
+// tirée du nom, là où huit pastilles colorées se disputaient l'œil.
+const MemberAvatar = ({ avatar, name, size = 36, className = '', neutral = false }: MemberAvatarProps) => {
   const showInitials = !isImageAvatar(avatar) && !isEmojiAvatar(avatar) && !!name?.trim();
   return (
     <div
@@ -42,7 +45,7 @@ const MemberAvatar = ({ avatar, name, size = 36, className = '' }: MemberAvatarP
       style={{
         width: size,
         height: size,
-        ...(showInitials ? { backgroundColor: `hsl(${hueFromName(name!.trim())} 60% 45%)` } : {}),
+        ...(showInitials && !neutral ? { backgroundColor: `hsl(${hueFromName(name!.trim())} 60% 45%)` } : {}),
       }}
     >
       {isImageAvatar(avatar) ? (
@@ -52,7 +55,7 @@ const MemberAvatar = ({ avatar, name, size = 36, className = '' }: MemberAvatarP
       ) : showInitials ? (
         <span
           style={{ fontSize: size * 0.38 }}
-          className="font-bold text-white leading-none select-none"
+          className={`font-bold leading-none select-none ${neutral ? 'text-[rgb(var(--color-text-secondary))]' : 'text-white'}`}
           aria-hidden="true"
         >
           {initialsOf(name!)}

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ArrowUpDown, ChevronDown, ListChecks, Plus } from 'lucide-react';
+import { ArrowUpDown, ListChecks, Plus } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { PermissionGate } from './permission-hints';
 import { TASK_SORT_CRITERIA, GROUPABLE_SORT_CRITERIA, type TaskSortCriterion } from './task-filters';
@@ -23,6 +23,8 @@ interface TeamTasksToolbarProps {
   viewControls?: ReactNode;
   /** Périmètre (tout / moi / une personne / équipe), à droite du tri. */
   scope?: ReactNode;
+  /** Mobile (maquette 241) : la création passe au « + » flottant, pas ici. */
+  hideCreate?: boolean;
 }
 
 /**
@@ -51,6 +53,7 @@ const TeamTasksToolbar = ({
   onCreate,
   viewControls,
   scope,
+  hideCreate = false,
 }: TeamTasksToolbarProps) => {
   const { t } = useT('org');
   const criterionLabel: Record<TaskSortCriterion, string> = {
@@ -82,9 +85,8 @@ const TeamTasksToolbar = ({
             {flat.map((c) => <option key={c} value={c}>{criterionLabel[c]}</option>)}
           </optgroup>
         </MenuSelect>
-        <div className="pointer-events-none absolute inset-y-0 right-9 flex items-center" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          <ChevronDown size={16} aria-hidden="true" />
-        </div>
+        {/* Maquette 240 (2026-10-10) : `MenuSelect` dessine déjà son chevron ;
+            celui qu'on posait ici par-dessus donnait « Par priorité ˅ ˅ ⇅ ». */}
         <button
           type="button"
           onClick={onToggleSortDirection}
@@ -101,6 +103,7 @@ const TeamTasksToolbar = ({
 
       <div className="ml-auto flex items-center gap-2 flex-wrap justify-end">
       {viewControls}
+      {!hideCreate && (
       <PermissionGate reason={canCreate ? undefined : createDeniedReason}>
       <button
         type="button"
@@ -112,6 +115,7 @@ const TeamTasksToolbar = ({
         {t('projects.tasksTabNewTask')}
       </button>
       </PermissionGate>
+      )}
       </div>
     </div>
   );

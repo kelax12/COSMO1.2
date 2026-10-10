@@ -1,4 +1,10 @@
 {
+  "delta": {
+    "up": "+{{pct}}% vs the previous period",
+    "down": "−{{pct}}% vs the previous period",
+    "same": "Same as the previous period",
+    "noBase": "No previous period to compare"
+  },
   "page": {
     "title": "Statistics",
     "subtitle": "Analyse your productivity and performance",
@@ -42,6 +48,8 @@
     "featureName": "detailed analytics"
   },
   "details": {
+    "noTaskDone": "No task completed in this period.",
+    "avgPriority": "Avg. {{value}}",
     "globalTimeSplit": "Overall time split",
     "total": "Total",
     "byColor": "Split by colour",

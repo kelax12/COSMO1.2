@@ -23,6 +23,7 @@ import { useTeamLists, useSetTaskTeamLists } from '@/modules/team-lists';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
+import { toast } from '@/lib/toast';
 
 const TeamTaskTabPanels = lazyWithRetry(() => import('./TeamTaskTabPanels'));
 // Listes et « Suivre » : même raison, hors du premier affichage de la fiche.
@@ -438,7 +439,12 @@ const TeamTaskModal = ({
                 orgId={orgId}
                 projects={projects}
                 status={status}
-                onStatusChange={setStatus}
+                onStatusChange={(v) => {
+                  // Sans le droit, le clic dit pourquoi au lieu de changer un statut
+                  // que Sauvegarder (grisé) ne pourrait jamais écrire.
+                  if (editReason) { toast.info(t('popups.task.noRights'), { description: editReason }); return; }
+                  setStatus(v);
+                }}
                 name={name}
                 onNameChange={(v) => { setName(v); setError(null); }}
                 description={description}

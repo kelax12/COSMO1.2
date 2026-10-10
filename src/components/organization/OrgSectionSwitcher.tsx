@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Search } from 'lucide-react';
+import { BookOpen, ChevronDown, Search } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
@@ -15,6 +15,8 @@ interface Props {
   /** Même groupe « Épinglés / Récents » que le panneau desktop. */
   shortcuts?: OrgShortcutGroup;
   onSearch?: () => void;
+  /** Glossaire : il a quitté l'en-tête mobile (maquette 236). */
+  onGlossary?: () => void;
 }
 
 /**
@@ -30,12 +32,11 @@ interface Props {
  * réduit), `useBottomSheet` (la poignée tient son geste, C-07) et
  * `useModalA11y` (piège de focus, Échap, C-53).
  */
-const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId, shortcuts, onSearch }) => {
+const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId, shortcuts, onSearch, onGlossary }) => {
   const { t: tOrgAdmin } = useT('orgAdmin');
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const active = items.find((item) => item.id === activeId);
-  const newsCount = items.reduce((sum, item) => sum + item.badgeCount, 0);
 
   return (
     <div className="md:hidden mb-5">
@@ -52,16 +53,10 @@ const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId, shortcuts, onSea
         <span className="flex-1 min-w-0 truncate text-body font-semibold text-[rgb(var(--color-text-primary))]">
           {active?.label}
         </span>
-        {/* Le total des nouveautés, ailleurs que dans la section courante : la
-            feuille fermée ne doit pas les cacher. */}
-        {newsCount > 0 && (
-          <span
-            aria-hidden="true"
-            className="min-w-[18px] h-[18px] px-1 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] text-caption font-bold inline-flex items-center justify-center"
-          >
-            {newsCount}
-          </span>
-        )}
+        {/* Maquette 226 (2026-10-10) : plus de total ici. Le même écran
+            affichait 1 (onglet), 3 (cloche), 6 (ce bouton), 6 (« En attente
+            de moi ») : le nombre ne vit plus que dans la section qui le fait
+            baisser, et dans la feuille, section par section. */}
         <ChevronDown size={18} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-text-muted))]" />
       </button>
 
@@ -81,6 +76,7 @@ const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId, shortcuts, onSea
               navigate(href);
             }}
             onSearch={onSearch ? () => { setOpen(false); onSearch(); } : undefined}
+            onGlossary={onGlossary ? () => { setOpen(false); onGlossary(); } : undefined}
           />
         )}
       </AnimatePresence>
@@ -96,10 +92,12 @@ interface SheetProps {
   onSelect: (id: string) => void;
   onGo: (href: string) => void;
   onSearch?: () => void;
+  onGlossary?: () => void;
 }
 
-const SectionSheet: React.FC<SheetProps> = ({ items, activeId, shortcuts, onClose, onSelect, onGo, onSearch }) => {
+const SectionSheet: React.FC<SheetProps> = ({ items, activeId, shortcuts, onClose, onSelect, onGo, onSearch, onGlossary }) => {
   const { t: tOrgAdmin } = useT('orgAdmin');
+  const { t: tOrg } = useT('org');
   const sheetMotion = useSheetMotion();
   const { sheetRef, backdropOpacity, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const { ref: panelRef, dialogProps } = useModalA11y<HTMLDivElement>({
@@ -188,6 +186,16 @@ const SectionSheet: React.FC<SheetProps> = ({ items, activeId, shortcuts, onClos
             );
           })}
 
+          {onGlossary && (
+            <button
+              type="button"
+              onClick={onGlossary}
+              className="w-full flex items-center gap-2.5 px-4 min-h-touch rounded-2xl bg-[rgb(var(--color-surface))] text-body text-[rgb(var(--color-text-secondary))] active:bg-[rgb(var(--color-hover))]"
+            >
+              <BookOpen size={18} aria-hidden="true" />
+              {tOrg('glossary.open')}
+            </button>
+          )}
           {shortcuts && shortcuts.items.length > 0 && (
             <div>
               <p className="px-1 pt-1 pb-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">

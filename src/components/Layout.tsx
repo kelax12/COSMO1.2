@@ -405,7 +405,9 @@ const NavItems = () =>
         <SkipLink targetId={MAIN_CONTENT_ID} label={t('nav.skipToContent')} />
         {/* Bannière conversion démo → compte (#9) */}
         <OfflineBanner />
-        <DemoConversionBanner />
+        {/* Maquette 222 (2026-10-10) : sur mobile, plus de bandeau « Mode démo »
+            en tête de chaque page (une ligne de liste en permanence) ; la
+            mention vit dans la feuille « Plus » (`MobileMoreSheet`). */}
         {/* État sync mobile (#37) — visible uniquement hors ligne / en cours */}
         <div className="fixed top-2 right-2 z-40 rounded-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] px-2.5 py-1 shadow-sm empty:hidden">
           <SyncStatusIndicator hideWhenSynced />

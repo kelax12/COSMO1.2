@@ -1,4 +1,10 @@
 {
+  "mobile": {
+    "theme": "Theme",
+    "timezoneAuto": "Automatic",
+    "organization": "Company",
+    "organizationRow": "My company"
+  },
   "page": {
     "title": "Settings",
     "subtitle": "Manage your account, security and preferences.",
@@ -99,8 +105,8 @@
     "displayMode": "Display mode",
     "shortcuts": "Keyboard shortcuts",
     "shortcutsHint": "Also available at any time with the key",
-    "themeListTest": "Light · Dark · Black · Test",
-    "themeList": "Light · Dark · Black"
+    "themeListTest": "Light · Dark · Grey · Black · Test",
+    "themeList": "Light · Dark · Grey · Black"
   },
   "modules": {
     "hint": "Turn on only what you need. Hidden modules disappear from the navigation; your data is kept. Tasks & Dashboard are always on.",

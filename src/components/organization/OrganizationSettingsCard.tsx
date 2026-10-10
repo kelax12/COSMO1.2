@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router';
-import { ArrowRight, CreditCard } from 'lucide-react';
+import { ArrowRight, ChevronRight, CreditCard } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useActiveOrganization } from '@/modules/organizations';
 import CreateOrJoinOrganization from './CreateOrJoinOrganization';
@@ -46,7 +46,28 @@ const OrganizationSettingsCard = () => {
       {isLoading ? (
         <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('settingsCard.loading')}</p>
       ) : myOrg ? (
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-4 mt-3">
+        <>
+        {/* Maquette 214 (2026-10-10), mobile : deux lignes du même groupe.
+            C'étaient deux boutons d'alignements différents (contour centré,
+            puis bleu plein au texte calé à gauche). */}
+        <ul className="md:hidden mt-1 -mx-1">
+          <li className="border-b border-[rgb(var(--color-border))]">
+            <button type="button" onClick={() => navigate('/entreprise')} className="w-full flex items-center gap-3 min-h-touch px-1 text-left">
+              <span className="flex-1 min-w-0 truncate text-body text-[rgb(var(--color-text-primary))]">{myOrg.name}</span>
+              <span className="text-body text-[rgb(var(--color-text-secondary))]">{t(ROLE_KEYS[myOrg.myRole as keyof typeof ROLE_KEYS] ?? 'roles.member')}</span>
+              <ChevronRight size={18} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
+            </button>
+          </li>
+          {isOwner && (
+            <li>
+              <button type="button" onClick={() => navigate(buildOrgLink('billing'))} className="w-full flex items-center gap-3 min-h-touch px-1 text-left">
+                <span className="flex-1 text-body text-[rgb(var(--color-text-primary))]">{t('settingsCard.billing')}</span>
+                <ChevronRight size={18} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
+              </button>
+            </li>
+          )}
+        </ul>
+        <div className="hidden md:flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-4 mt-3">
           {/* `sm:flex-wrap` : la carte occupe UNE colonne de la grille des Réglages.
               Sans retour à la ligne, « Abonnement et factures » poussait « Accéder »
               hors de la carte et hors de l'écran (garde Visual, 2026-10-01). */}
@@ -75,6 +96,7 @@ const OrganizationSettingsCard = () => {
           </button>
           </div>
         </div>
+        </>
       ) : (
         <div className="mt-3">
           <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-4">

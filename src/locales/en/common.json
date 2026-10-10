@@ -10,6 +10,9 @@
     "reloadNotice": "The page reloads to apply the language everywhere, including dates and number formats."
   },
   "nav": {
+    "demoCreateAccount": "Demo mode · create an account",
+    "objectivesAria": "Objectives (OKR)",
+    "objectives": "Objectives",
     "dashboard": "Home",
     "tasks": "Tasks",
     "agenda": "Calendar",

@@ -65,7 +65,7 @@ const TeamTaskRow = ({
         title={editReason}
         aria-label={task.completed ? t('projects.markIncomplete') : t('projects.markComplete')}
         aria-pressed={task.completed}
-        className={`disabled:opacity-50 disabled:cursor-not-allowed w-6 h-6 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+        className={`disabled:opacity-50 disabled:cursor-not-allowed w-6 h-6 max-md:rounded-full rounded-md border flex items-center justify-center shrink-0 transition-colors ${
           task.completed
             ? 'bg-indigo-600 border-indigo-600 text-white'
             : 'border-[rgb(var(--color-border))] hover:border-indigo-500'

@@ -326,22 +326,10 @@ const OrganizationPage = () => {
       <MobileHeader
         title={myOrg.name}
         subtitle={`${tpOrgAdmin('page.memberCount', members.length)}${myOrg.industry ? ` · ${myOrg.industry}` : ''}`}
-        actions={
-          <>
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={() => setTab('settings')}
-                aria-label={tOrgAdmin('page.editProfile')}
-                className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
-              >
-                <Pencil size={18} aria-hidden="true" />
-              </button>
-            )}
-            {glossaryButton}
-            <OrgNotificationsBell orgId={myOrg.id} members={members} />
-          </>
-        }
+        // Maquette 236 (2026-10-10) : une seule icône, la cloche. Le crayon
+        // menait à Paramètres, qui est une section ; le glossaire passe dans
+        // la feuille des sections (`OrgSectionSwitcher`, `onGlossary`).
+        actions={<OrgNotificationsBell orgId={myOrg.id} members={members} />}
       />
 
       {/* En-tête desktop (rendu historique, inchangé) */}
@@ -401,7 +389,7 @@ const OrganizationPage = () => {
 
       {/* Mobile : la section courante devient un sélecteur (maquette M1).
           Desktop : la navigation vit à droite, dans `OrgSideNav`. */}
-      <OrgSectionSwitcher items={navItems} activeId={tab} shortcuts={shortcuts} onSearch={openSearch} />
+      <OrgSectionSwitcher items={navItems} activeId={tab} shortcuts={shortcuts} onSearch={openSearch} onGlossary={() => setGlossary(true)} />
 
       {/* Contenu */}
       {/* Une seule frontière Suspense pour tout le contenu : les onglets sont

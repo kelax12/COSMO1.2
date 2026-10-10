@@ -99,13 +99,14 @@ export function DataTab() {
       <button
         type="button"
         onClick={handleExportAll}
-        className="w-full flex items-center gap-4 p-5 rounded-2xl bg-[rgb(var(--color-accent-solid))]/10 border border-[rgb(var(--color-accent-solid))]/30 hover:bg-[rgb(var(--color-accent-solid))]/15 transition-colors text-left"
+        // Maquette 213 : sur mobile, une ligne d'action (texte bleu), plus une carte teintée.
+        className="w-full flex items-center gap-4 p-5 max-md:px-4 max-md:py-3 rounded-2xl bg-[rgb(var(--color-accent-solid))]/10 max-md:bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-accent-solid))]/30 max-md:border-0 hover:bg-[rgb(var(--color-accent-solid))]/15 transition-colors text-left"
       >
-        <div className="w-12 h-12 rounded-xl bg-[rgb(var(--color-accent-solid))] flex items-center justify-center shrink-0">
+        <div className="hidden md:flex w-12 h-12 rounded-xl bg-[rgb(var(--color-accent-solid))] items-center justify-center shrink-0">
           <Download size={22} className="text-[rgb(var(--color-accent-solid-foreground))]" />
         </div>
         <div className="flex-1">
-          <div className="font-bold text-[rgb(var(--color-text-primary))] text-base">
+          <div className="font-bold max-md:font-semibold text-[rgb(var(--color-text-primary))] max-md:text-[rgb(var(--color-accent))] text-base">
             {t('data.exportAll')}
           </div>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">
@@ -116,10 +117,10 @@ export function DataTab() {
 
       {/* Exports individuels */}
       <div>
-        <h3 className="text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-3 uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-3 md:uppercase md:tracking-wider">
           {t('data.byCategory')}
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-md:gap-0 max-md:rounded-2xl max-md:bg-[rgb(var(--color-surface))] max-md:px-4">
           {exports.map(ex => {
             const Icon = ex.icon;
             return (
@@ -128,9 +129,9 @@ export function DataTab() {
                 type="button"
                 onClick={ex.run}
                 disabled={ex.count === 0}
-                className="flex items-center gap-3 p-4 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-3 p-4 max-md:px-0 max-md:py-2.5 max-md:min-h-touch rounded-xl max-md:rounded-none border border-[rgb(var(--color-border))] max-md:border-0 max-md:border-b max-md:last:border-b-0 bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <div className="w-10 h-10 rounded-lg bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0">
+                <div className="hidden md:flex w-10 h-10 rounded-lg bg-[rgb(var(--color-hover))] items-center justify-center shrink-0">
                   <Icon size={18} className="text-[rgb(var(--color-text-secondary))]" />
                 </div>
                 <div className="flex-1 min-w-0">
