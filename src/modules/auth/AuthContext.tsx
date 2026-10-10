@@ -9,6 +9,7 @@ import { withTimeout } from '@/lib/withTimeout';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
 import { recordDemoVisit, recordDemoConversionIfAny } from '@/lib/demo-metrics';
 import { readFirstTouch } from '@/lib/attribution';
+import { claimAcquisitionSource } from './acquisition-claim';
 import { recordSeedLocale, seedLocaleMatchesCurrent } from '@/lib/seed-i18n';
 import {
   DEMO_SENTINEL_EMAIL,
@@ -237,6 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           checkOAuthLanding();
           setUser(mapSupabaseUserToAppUser(session.user));
           touchLastSeen(session.user.id);
+          claimAcquisitionSource(session.user);
           dlog('initializeAuth: calling restoreAndRefresh()');
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
           dlog('initializeAuth: restoreAndRefresh() returned');
@@ -321,6 +323,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           checkOAuthLanding();
           setUser(mapSupabaseUserToAppUser(session.user));
           touchLastSeen(session.user.id);
+          claimAcquisitionSource(session.user);
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
         }
         setIsLoading(false);
@@ -345,6 +348,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         checkOAuthLanding();
         setUser(mapSupabaseUserToAppUser(session.user));
         touchLastSeen(session.user.id);
+        // Inscription Google : `signInWithOAuth` ne porte pas la source
+        // first-touch, on la rattache ici (mig. 217, acquisition-claim.ts).
+        claimAcquisitionSource(session.user);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         // Un re-login dans le même chargement de page doit re-pinger last_seen_at.

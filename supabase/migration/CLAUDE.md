@@ -108,6 +108,11 @@ compilait, la suite passait.
 - ✅ **`215`** (un ami « editor » coche une tâche partagée) : **appliquée** le 2026-10-09, ledger
   `20261009071902`, relue au catalogue. Preuve `proofs/215.proof.sql` : 8 sur 8 ; témoin = la reproduction
   du défaut (`Task not found` pour l éditeur) jouée avant.
+- ✅ **`217`** (source d'acquisition rattachée après une inscription Google) : **appliquée** le
+  2026-10-10, ledger `20261010121835`, relue au catalogue (DEFINER, `search_path` vide, `anon` **f**,
+  `authenticated` **t**). Preuve `proofs/217.proof.sql` : 8 sur 8, témoin sans la fonction rouge.
+  ⚠️ C'est la **82e** fonction DEFINER exposée à `authenticated` : `check:supabase-posture` rougit
+  sur 81 → 82 jusqu'au `--update`, et ce rouge est légitime.
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
   seule issue, et le verdict est le texte de l'exception. ⚠️ En PL/pgSQL `N` et `n`, `OK` et `ok`
