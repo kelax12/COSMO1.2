@@ -119,8 +119,16 @@ test.describe('Espace entreprise (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 20_000 });
     // Paramètres n'affiche qu'UNE rubrique à la fois depuis 7038a95e
     // (2026-09-27) : les invitations vivent dans « Inviter ».
-    await page.getByRole('navigation', { name: /rubriques des paramètres/i })
-      .getByRole('button', { name: /^inviter$/i }).click();
+    // Sur téléphone, les paramètres s'ouvrent sur une LISTE (706f4ba4,
+    // maquettes 275+) et la barre de rubriques n'existe qu'à partir de
+    // 768 px : on vise le bouton « Inviter » de l'une ou de l'autre selon
+    // la largeur, jamais un « Inviter » quelconque de la page.
+    const enListe = (page.viewportSize()?.width ?? 1280) < 768;
+    await (enListe
+      ? page.getByRole('main').getByRole('button', { name: /^inviter$/i }).first()
+      : page.getByRole('navigation', { name: /rubriques des paramètres/i })
+        .getByRole('button', { name: /^inviter$/i })
+    ).click();
     await expect(page.getByText(/code d'invitation/i).first()).toBeVisible({ timeout: 20_000 });
 
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);

@@ -15,21 +15,13 @@
 // Module à part pour une seconde raison : AgendaPage tutoie la limite de
 // 600 lignes de `architecture.guard`, et l'a franchie avec ce code inline.
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense } from 'react';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { useMountedAfterFirstOpen } from '@/lib/hooks/use-mounted-after-first-open';
 
 const MobileScheduleSheetLazy = lazyWithRetry(() => import('./MobileScheduleSheet'));
 const QuickEventCardLazy = lazyWithRetry(() => import('./QuickEventCard'));
 const RecurringEventsManagerLazy = lazyWithRetry(() => import('./RecurringEventsManager'));
-
-/** Vrai dès la première ouverture, et le reste. */
-function useMountedAfterFirstOpen(open: boolean): boolean {
-  const [mounted, setMounted] = useState(open);
-  useEffect(() => {
-    if (open) setMounted(true);
-  }, [open]);
-  return mounted || open;
-}
 
 export function MobileScheduleSheet(props: React.ComponentProps<typeof MobileScheduleSheetLazy>) {
   const mounted = useMountedAfterFirstOpen(props.open);

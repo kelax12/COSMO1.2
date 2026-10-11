@@ -21,8 +21,11 @@ const switchView = async (page: Page, name: 'Liste' | 'Tableau' | 'Planning') =>
   // Sur téléphone, la barre « Vue » vit dans la feuille « Filtres » depuis la
   // refonte mobile (maquettes 242 et 250, 29ceaa6c) : on l'ouvre d'abord, et
   // on la referme après le choix.
-  const vue = page.getByRole('group', { name: /vue/i }).filter({ visible: true }).first();
-  const dansFeuille = !(await vue.isVisible().catch(() => false));
+  // 🔴 Décidé par la LARGEUR (seuil `useIsMobile`, 768 px), pas par la
+  // visibilité de la barre : lue avant son rendu, celle-ci faisait croire à
+  // un téléphone sur desktop, et le test cherchait un « Filtres » inexistant
+  // (six échecs chromium, 2026-10-11).
+  const dansFeuille = (page.viewportSize()?.width ?? 1280) < 768;
   if (dansFeuille) await page.getByRole('button', { name: /^filtres$/i }).click();
   await page.getByRole('group', { name: /vue/i }).filter({ visible: true }).first().getByRole('button', { name }).click();
   if (dansFeuille) {
