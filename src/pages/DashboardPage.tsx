@@ -2,7 +2,7 @@ import React, { useState, Suspense } from 'react';
 import { Link } from 'react-router';
 import { X } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
-import { MobileHeader } from '@/components/mobile';
+import { MobileHeader, SectionDivider } from '@/components/mobile';
 import { useRevealVariants } from '@/components/mobile/mobile-motion';
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -458,7 +458,9 @@ const DashboardPage: React.FC = () => {
                   lui-même, retiré ici). */}
             {isMobile && (
               <div className="flex flex-col gap-6">
+                <SectionDivider />
                 <TodayHabits />
+                <SectionDivider />
                 <ActiveOKRs />
               </div>
             )}

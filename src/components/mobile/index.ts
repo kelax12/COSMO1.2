@@ -17,6 +17,7 @@ export { default as SectionHeader } from './SectionHeader';
 export { default as Segmented } from './Segmented';
 export { default as TouchTarget } from './TouchTarget';
 export { default as BottomSheet } from './BottomSheet';
+export { default as SectionDivider } from './SectionDivider';
 export type { SegmentedOption } from './Segmented';
 export { TAP_AREA_44_Y, TAP_AREA_44 } from './tap-area';
 export {
