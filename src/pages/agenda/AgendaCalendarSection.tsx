@@ -111,14 +111,6 @@ interface AgendaCalendarSectionProps {
   renderReviewBadge?: (eventId: string) => React.ReactNode;
 }
 
-/**
- * Teinte d'une couleur d'événement (maquette 161) : hex à 18 % d'opacité,
- * sinon `color-mix` (couleur nommée ou `rgb(...)`).
- */
-function tintOf(color: string): string {
-  return /^#[0-9a-f]{6}$/i.test(color) ? `${color}2e` : `color-mix(in srgb, ${color} 18%, transparent)`;
-}
-
 const UNSELECT_CANCEL =
   '.modal-overlay,.modal-content,input,textarea,select,button,.fc-event,[data-radix-popper-content-wrapper]';
 
@@ -215,9 +207,10 @@ const AgendaCalendarSection = ({
     needsReview: boolean,
     taskDone: boolean,
     /**
-     * Mobile (maquette 161) : couleur de l'événement, rendue en TEINTE (~18 %)
-     * derrière un titre clair, au lieu d'un aplat saturé à texte blanc. Le
-     * bloc FullCalendar est alors transparent (`cosmo-event-tinted`).
+     * Mobile : couleur de l'événement en APLAT, texte blanc. La maquette 161
+     * (teinte à 18 %) a été retirée à la demande d'Axel le 2026-10-11. Le bloc
+     * FullCalendar reste transparent (`cosmo-event-tinted`) : c'est ce contenu
+     * qui porte la couleur, sans avatar (maquette 169).
      */
     tint?: string,
   ) => {
@@ -227,7 +220,7 @@ const AgendaCalendarSection = ({
     return (
       <div
         className={`relative h-full w-full flex items-center gap-1 p-1 text-xs cursor-pointer ${centered ? 'justify-center' : ''} ${tint ? 'rounded-lg px-1.5' : ''}`}
-        style={tint ? { backgroundColor: tintOf(tint) } : undefined}
+        style={tint ? { backgroundColor: tint } : undefined}
       >
         {author && (
           <span className="shrink-0 rounded-full ring-1 ring-white/70" title={t('event.addedBy', { name: author.displayName })}>
@@ -235,7 +228,7 @@ const AgendaCalendarSection = ({
           </span>
         )}
         <span
-          className={`font-medium ${tint ? 'text-[rgb(var(--color-text-primary))]' : 'text-white'} truncate leading-tight ${centered ? 'text-center' : ''} ${hasTask ? 'pr-5' : ''}`}
+          className={`font-medium text-white truncate leading-tight ${centered ? 'text-center' : ''} ${hasTask ? 'pr-5' : ''}`}
         >
           {title}
         </span>
