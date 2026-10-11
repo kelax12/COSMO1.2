@@ -263,12 +263,13 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                           >
                             <span className="min-w-0">
                               <span className="block text-body font-medium line-clamp-2" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
-                              <span className="block text-label" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                                {keyResult.estimatedTime > 0
-                                  ? t('card.perUnit', { duration: formatTime(keyResult.estimatedTime) })
-                                  : t('card.krOpen')}
-                                {(tasksByKr.get(keyResult.id) ?? 0) > 0 && ` · ${tp('card.tasksCount', tasksByKr.get(keyResult.id) ?? 0)}`}
-                              </span>
+                              {/* Ligne « x temps par unité » retirée sur mobile le
+                                  2026-10-11, à la demande d'Axel. */}
+                              {(tasksByKr.get(keyResult.id) ?? 0) > 0 && (
+                                <span className="block text-label" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                                  {tp('card.tasksCount', tasksByKr.get(keyResult.id) ?? 0)}
+                                </span>
+                              )}
                             </span>
                             {keyResult.completed ? (
                               <span className="shrink-0 inline-flex items-center gap-1 text-label font-semibold" style={{ color: 'rgb(var(--color-accent))' }}>

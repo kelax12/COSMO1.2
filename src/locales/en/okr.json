@@ -37,8 +37,6 @@
     "reached": "Reached",
     "tasksCount_other": "{{count}} tasks",
     "tasksCount_one": "{{count}} task",
-    "krOpen": "Create a task or schedule",
-    "perUnit": "{{duration}} per unit",
     "endsOn": "ends {{date}}",
     "uncategorized": "Uncategorized",
     "timeElapsed": "{{percent}}% of time elapsed",
