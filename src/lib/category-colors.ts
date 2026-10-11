@@ -48,8 +48,12 @@ export const getColorHex = (colorName: string): string =>
   CATEGORY_COLORS.find((c) => c.name === colorName)?.hex ?? '#3b82f6';
 
 /**
- * Couleur d'un élément « Sans catégorie » quand le modèle ne porte qu'une
- * couleur (événement, habitude) : le gris déjà utilisé par l'agenda pour une
- * tâche sans catégorie (`calendar-events.ts`).
+ * Couleur de tout élément SANS catégorie (tâche, événement, habitude, OKR) :
+ * gris clair, partout le même (demande 2026-10-11). Sur ce fond, le texte se
+ * pose en sombre : `textOnCategoryColor`.
  */
-export const NO_CATEGORY_COLOR = '#6B7280';
+export const NO_CATEGORY_COLOR = '#CBD5E1';
+
+/** Couleur de texte lisible sur un fond de catégorie (blanc, sauf sur le gris clair). */
+export const textOnCategoryColor = (color: string | null | undefined): string =>
+  !color || color.toUpperCase() === NO_CATEGORY_COLOR ? '#1F2937' : '#ffffff';

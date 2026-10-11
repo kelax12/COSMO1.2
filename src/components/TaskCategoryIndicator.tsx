@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useCategories, useCategoryLookup } from '@/modules/categories';
 import { categoryPath, formatPath } from '@/modules/categories/tree';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 type TaskCategoryProps = {
   category: string;
@@ -19,7 +20,7 @@ const TaskCategoryIndicator: React.FC<TaskCategoryProps> = ({ category }) => {
     <div
       className="w-6 h-6 rounded"
       style={{
-        backgroundColor: categoryData?.color || '#CBD5E1'
+        backgroundColor: categoryData?.color || NO_CATEGORY_COLOR
       }}
       title={fullPath}
       // 🔴 `role="img"` est OBLIGATOIRE ici, pas décoratif. Un `<div>` nu a le

@@ -36,6 +36,7 @@ import {
 import RecurrenceDaysModal from './event-modal/RecurrenceDaysModal';
 import EventModalForm from './event-modal/EventModalForm';
 import { useT } from '@/i18n/useT';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 type EventData = {
   title: string;
@@ -273,12 +274,9 @@ const EventModal: React.FC<EventModalProps> = ({
         setNotes("");
       }
 
-      if (task.category) {
-        const categoryColor = categories.find((cat) => cat.id === task.category)?.color;
-        setColor(categoryColor || categories[0]?.color || "#3B82F6");
-      } else {
-        setColor(categories[0]?.color || "#3B82F6");
-      }
+      // Tâche sans catégorie (ou catégorie disparue) → gris clair, jamais la
+      // première catégorie venue : elle n'en a pas.
+      setColor(categories.find((cat) => cat.id === task.category)?.color || NO_CATEGORY_COLOR);
 
       // Brouillon (#47) : restaure titre/notes d'une saisie interrompue
       // (uniquement en création libre — pas quand le titre est pré-rempli).
@@ -309,12 +307,9 @@ const EventModal: React.FC<EventModalProps> = ({
       setEndTime(endTimeDate.toTimeString().slice(0, 5));
       setEndDate(endTimeDate.toLocaleDateString("en-CA"));
 
-      if (task.category) {
-        const categoryColor = categories.find((cat) => cat.id === task.category)?.color;
-        setColor(categoryColor || categories[0]?.color || "#3B82F6");
-      } else {
-        setColor(categories[0]?.color || "#3B82F6");
-      }
+      // Tâche sans catégorie (ou catégorie disparue) → gris clair, jamais la
+      // première catégorie venue : elle n'en a pas.
+      setColor(categories.find((cat) => cat.id === task.category)?.color || NO_CATEGORY_COLOR);
     }
 
     setPrefilledFields(prefilled);

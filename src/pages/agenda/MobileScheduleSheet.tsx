@@ -18,6 +18,7 @@ import { useT } from '@/i18n/useT';
 import { useCreateEvent } from '@/modules/events';
 import { localInputToIso } from '@/components/ScheduleEventModal';
 import { useTaskHoldDrag, type DropSlot } from './use-task-hold-drag';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 interface Props {
   open: boolean;
@@ -81,10 +82,10 @@ const MobileScheduleSheet: React.FC<Props> = ({ open, onClose }) => {
           key: `perso-${task.id}`,
           name: task.name,
           meta: metaOf(cat?.name, task.deadline, task.estimatedTime),
-          color: cat?.color ?? 'rgb(var(--color-text-muted))',
+          color: cat?.color ?? NO_CATEGORY_COLOR,
           schedulable: task,
           team: false,
-          eventColor: cat?.color ?? '#CBD5E1',
+          eventColor: cat?.color ?? NO_CATEGORY_COLOR,
         };
       });
     const team: Row[] = (user ? myAssignedTasks(teamTasks, user.id) : [])
@@ -96,10 +97,10 @@ const MobileScheduleSheet: React.FC<Props> = ({ open, onClose }) => {
           name: task.name,
           meta: metaOf(cat?.name, task.deadline, task.estimatedTime),
           // Couleur ÉCRITE dans l'événement : un hex, jamais une variable CSS.
-          color: cat?.color ?? '#6B7280',
+          color: cat?.color ?? NO_CATEGORY_COLOR,
           schedulable: { id: task.id, name: task.name, category: '', deadline: task.deadline ?? '', estimatedTime: task.estimatedTime ?? 0 },
           team: true,
-          eventColor: cat?.color ?? '#6B7280',
+          eventColor: cat?.color ?? NO_CATEGORY_COLOR,
         };
       });
     return [...perso, ...team];

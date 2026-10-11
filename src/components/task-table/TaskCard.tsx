@@ -18,6 +18,7 @@ import { formatDeadlineSmart, formatDuration, formatOverdueSince } from "./helpe
 import { useT } from '@/i18n/useT';
 import { isTaskOverdue, priorityPillClass } from './helpers';
 import TaskStateBadges from './TaskStateBadges';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 interface TaskCardProps {
   task: Task;
@@ -66,7 +67,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const category = getCategoryById(task.category);
   // Fallback gris neutre (pas bleu = couleur Travail par défaut) pour
   // signaler une catégorie manquante au lieu de la masquer.
-  const categoryColor = category?.color || '#94a3b8';
+  const categoryColor = category?.color || NO_CATEGORY_COLOR;
   const { t } = useT('tasks');
 
   const [actionsVisible, setActionsVisible] = useState(false);
