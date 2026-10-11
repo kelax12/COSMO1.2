@@ -1080,6 +1080,8 @@
     "privacyNote": "Only team task due dates are visible (the personal calendar stays private)."
   },
   "member": {
+    "copyEmail": "Copy",
+    "managerLabel": "Manager",
     "detach": "Detach (unplaced)",
     "manager": "Manager",
     "attachedTo": "Reports to",

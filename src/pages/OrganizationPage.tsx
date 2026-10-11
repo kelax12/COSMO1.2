@@ -389,7 +389,9 @@ const OrganizationPage = () => {
 
       {/* Mobile : la section courante devient un sélecteur (maquette M1).
           Desktop : la navigation vit à droite, dans `OrgSideNav`. */}
-      <OrgSectionSwitcher items={navItems} activeId={tab} shortcuts={shortcuts} onSearch={openSearch} onGlossary={() => setGlossary(true)} />
+      <OrgSectionSwitcher
+        fallbackActive={(() => { const s = ORG_SECTIONS.find((x) => x.id === tab); return s ? { label: t(s.labelKey), Icon: s.Icon } : undefined; })()}
+        items={navItems} activeId={tab} shortcuts={shortcuts} onSearch={openSearch} onGlossary={() => setGlossary(true)} />
 
       {/* Contenu */}
       {/* Une seule frontière Suspense pour tout le contenu : les onglets sont

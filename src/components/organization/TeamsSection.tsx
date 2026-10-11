@@ -20,6 +20,7 @@ import {
 import type { OrgMember } from '@/modules/organizations';
 import { useTeamProjects } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { OrgCreateBoundary, useOrgCreate } from './org-create.context';
 import { PermissionGate, usePermissionHints } from './permission-hints';
 import DeleteTeamDialog from './DeleteTeamDialog';
@@ -91,6 +92,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
   const hiddenTeams = matchingTeams.length - shownTeams.length;
   const memberById = new Map(members.map((m) => [m.userId, m]));
 
+  const isMobile = useIsMobile();
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -103,7 +105,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
             onClick={() => create.openTeam()}
             className="inline-flex items-center gap-1 text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors"
           >
-            <Plus size={14} aria-hidden="true" /> {t('team.add')}
+            <Plus size={14} aria-hidden="true" className="max-md:w-5 max-md:h-5" /> <span className="max-md:sr-only">{t('team.add')}</span>
           </button>
         </PermissionGate>
       </div>
@@ -144,7 +146,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
           {matchingTeams.length === 0 && (
             <p className="text-xs text-[rgb(var(--color-text-muted))] py-3">{t('team.noTeamMatch')}</p>
           )}
-          <ul className="grid gap-3 md:grid-cols-2">
+          <ul className="grid gap-3 max-md:gap-0 md:grid-cols-2">
             {shownTeams.map((team) => {
               const teamMemberships = memberships.filter((m) => m.teamId === team.id);
               // Responsables d'abord, puis le reste de l'équipe.
@@ -170,7 +172,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
               return (
                 <li
                   key={team.id}
-                  className="relative rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3.5 hover:border-[rgb(var(--color-accent)/0.5)] transition-colors"
+                  className="relative rounded-2xl max-md:rounded-none border max-md:border-0 max-md:border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] max-md:bg-transparent p-3.5 max-md:px-1 [@media(hover:hover)]:hover:border-[rgb(var(--color-accent)/0.5)] transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     {/* La couleur CHOISIE à la création : la pastille prenait
@@ -188,7 +190,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                     >
                       {team.name}
                     </Link>
-                    <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
+                    <span className="max-md:hidden text-xs text-[rgb(var(--color-text-muted))] shrink-0">
                       {tp('team.memberCount', teamMemberships.length)}
                     </span>
                     {/* Options. Suppression : admin ou créateur SEULEMENT, miroir
@@ -199,7 +201,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                         <button
                           type="button"
                           aria-label={t('team.optionsAria', { name: team.name })}
-                          className="relative z-10 w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] data-[state=open]:bg-[rgb(var(--color-hover))] transition-colors"
+                          className="max-md:hidden relative z-10 w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] data-[state=open]:bg-[rgb(var(--color-hover))] transition-colors"
                         >
                           <MoreHorizontal size={15} aria-hidden="true" />
                         </button>
@@ -245,13 +247,16 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                           <span
                             key={member.userId}
                             title={member.displayName}
-                            className={`relative flex rounded-full border-2 border-[rgb(var(--color-surface))] ${i > 0 ? '-ml-1.5' : ''} ${isLead ? 'z-10 ring-2 ring-amber-400' : ''}`}
+                            className={`relative flex rounded-full border-2 border-[rgb(var(--color-surface))] ${i > 0 ? '-ml-1.5' : ''} ${i >= 2 ? 'max-md:hidden' : ''} ${isLead ? 'z-10 md:ring-2 md:ring-amber-400' : ''}`}
                           >
-                            <MemberAvatar avatar={member.avatar} name={member.displayName} size={20} />
+                            <MemberAvatar avatar={member.avatar} name={member.displayName} size={20} neutral={isMobile} />
                           </span>
                         ))}
+                        {ordered.length > 2 && (
+                          <span className="md:hidden -ml-1.5 w-[26px] h-[26px] rounded-full border-2 border-[rgb(var(--color-surface))] bg-[rgb(var(--color-hover))] text-[10px] font-semibold text-[rgb(var(--color-text-secondary))] flex items-center justify-center">+{ordered.length - 2}</span>
+                        )}
                         {ordered.length > AVATARS_SHOWN && (
-                          <span className="-ml-1.5 w-[26px] h-[26px] rounded-full border-2 border-[rgb(var(--color-surface))] bg-[rgb(var(--color-hover))] text-[10px] font-semibold text-[rgb(var(--color-text-secondary))] flex items-center justify-center">
+                          <span className="max-md:hidden -ml-1.5 w-[26px] h-[26px] rounded-full border-2 border-[rgb(var(--color-surface))] bg-[rgb(var(--color-hover))] text-[10px] font-semibold text-[rgb(var(--color-text-secondary))] flex items-center justify-center">
                             +{ordered.length - AVATARS_SHOWN}
                           </span>
                         )}
@@ -262,6 +267,8 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                         {leads.length > LEADS_SHOWN
                           ? t('team.leadsMore', { names: leadNames, count: leads.length - LEADS_SHOWN })
                           : leadNames}
+                        {/* Maquette 287 : le responsable écrit, plus un anneau doré. */}
+                        <span className="md:hidden">{t('team.leadSuffix')}</span>
                       </span>
                     ) : (
                       <span>{t('teamPage.noLead')}</span>

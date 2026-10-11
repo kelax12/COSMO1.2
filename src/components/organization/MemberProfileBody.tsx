@@ -4,6 +4,8 @@ import { subtreeOf, type MemberLastActivity, type OrgMember } from '@/modules/or
 import type { OrgTeam } from '@/modules/org-teams';
 import { getDateLocale } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { Link } from 'react-router';
+import { orgSectionPath } from './deep-link.helpers';
 
 const SOURCE_KEY = {
   activity: 'directory.activity.sourceActivity',
@@ -12,7 +14,8 @@ const SOURCE_KEY = {
 } as const;
 
 const CARD = 'rounded-2xl border border-[rgb(var(--color-border))] p-4';
-const CARD_TITLE = 'text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-3';
+// Maquette 307 : sans capitales sur mobile.
+const CARD_TITLE = 'text-caption font-semibold md:uppercase md:tracking-wide max-md:text-label text-[rgb(var(--color-text-muted))] mb-3';
 
 interface MemberProfileBodyProps {
   member: OrgMember;
@@ -63,11 +66,15 @@ export const MemberProfileBody = ({
             {m.email && (
               <div className="flex items-center gap-2.5 text-sm">
                 <Mail size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-                <dd className="text-[rgb(var(--color-text-secondary))] truncate">{m.email}</dd>
+                <dd className="flex-1 min-w-0 text-[rgb(var(--color-text-secondary))] truncate">{m.email}</dd>
+                {/* Maquette 308 : l'email s'utilise. */}
+                <button type="button" onClick={() => { void navigator.clipboard?.writeText(m.email ?? ''); }} className="md:hidden shrink-0 min-h-touch px-1 text-label font-medium text-[rgb(var(--color-accent))]">
+                  {ta('member.copyEmail')}
+                </button>
               </div>
             )}
             {lastActivity && (
-              <div className="flex items-center gap-2.5 text-sm">
+              <div className="max-md:hidden flex items-center gap-2.5 text-sm">
                 <Clock size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
                 <dd className="text-[rgb(var(--color-text-secondary))]">
                   {lastActivity.lastActivityAt
@@ -89,7 +96,7 @@ export const MemberProfileBody = ({
               <Network size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
               <dd className="text-[rgb(var(--color-text-secondary))]">
                 {managerMember
-                  ? <>{ta('member.attachedTo')} <strong className="text-[rgb(var(--color-text-primary))]">{managerMember.userId === currentUserId ? ta('member.you') : managerMember.displayName}</strong></>
+                  ? <><span className="max-md:hidden">{ta('member.attachedTo')} </span><span className="md:hidden">{ta('member.managerLabel')} : </span><strong className="text-[rgb(var(--color-text-primary))]">{managerMember.userId === currentUserId ? ta('member.you') : managerMember.displayName}</strong></>
                   : ta('member.noManager')}
               </dd>
             </div>
@@ -98,7 +105,12 @@ export const MemberProfileBody = ({
               <dd className="text-[rgb(var(--color-text-secondary))]">
                 {directs === 0
                   ? ta('member.noDirectReport')
-                  : tpa('pyramid.directCount', directs) + (total > directs ? ta('pyramid.totalSuffix', { count: total }) : '')}
+                  : (
+                    // Maquette 311 : « 4 directs » mène à l'organigramme.
+                    <Link to={orgSectionPath('pyramid')} onClick={onClose} className="max-md:text-[rgb(var(--color-accent))]">
+                      {tpa('pyramid.directCount', directs) + (total > directs ? ta('pyramid.totalSuffix', { count: total }) : '')}
+                    </Link>
+                  )}
               </dd>
             </div>
           </dl>
@@ -109,7 +121,7 @@ export const MemberProfileBody = ({
                 {teams.map((team) => (
                   <span
                     key={team.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--color-border))] px-2 py-0.5 text-caption font-medium text-[rgb(var(--color-text-secondary))]"
+                    className="inline-flex items-center gap-1.5 rounded-full border max-md:border-0 border-[rgb(var(--color-border))] px-2 max-md:px-0 max-md:mr-2 py-0.5 text-caption max-md:text-label font-medium text-[rgb(var(--color-text-secondary))]"
                   >
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: team.color }} aria-hidden="true" />
                     {team.name}
@@ -130,7 +142,7 @@ export const MemberProfileBody = ({
                 onClose();
                 onAddUnder(m);
               }}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
             >
               <UserRoundPlus size={15} aria-hidden="true" /> {t('common.add')}
             </button>

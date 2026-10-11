@@ -44,12 +44,12 @@ interface InboxSocialSectionsProps {
 }
 
 const HEADING_CLASS =
-  'px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide';
+  'px-4 pt-3 pb-1 text-caption sm:text-xs max-md:text-label font-semibold text-[rgb(var(--color-text-muted))] md:uppercase md:tracking-wide';
 const ROW_CLASS = 'flex items-center gap-3 px-4 py-2.5';
 const TITLE_CLASS = 'text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate';
 const SUBTITLE_CLASS = 'text-caption sm:text-xs text-[rgb(var(--color-text-muted))] truncate';
 const ICON_BUTTON_CLASS =
-  'w-7 h-7 rounded-md flex items-center justify-center hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]';
+  'w-7 h-7 max-md:w-auto max-md:min-w-10 max-md:h-10 max-md:px-2 max-md:text-label max-md:font-medium rounded-md flex items-center justify-center hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]';
 
 const InboxSocialSections = ({
   friendRequests,
@@ -89,7 +89,8 @@ const InboxSocialSections = ({
                   <div className="flex-1 min-w-0">
                     <p className={TITLE_CLASS}>{req.senderName || name}</p>
                     <p className={SUBTITLE_CLASS}>
-                      {req.senderEmail}{timeAgo ? ` · ${timeAgo}` : ''}
+                      {/* Maquette 348 : sur mobile, plus d'email dans une demande d'ami. */}
+                      <span className="max-md:hidden">{req.senderEmail}{timeAgo ? ' · ' : ''}</span>{timeAgo}
                     </p>
                   </div>
                   <div className="flex items-center gap-0.5 shrink-0">
@@ -100,7 +101,7 @@ const InboxSocialSections = ({
                       className={`${ICON_BUTTON_CLASS} text-[rgb(var(--color-accent))]`}
                       aria-label={tTasks('inbox.acceptNamed', { name })}
                     >
-                      <Check size={15} aria-hidden="true" />
+                      <Check size={15} aria-hidden="true" className="max-md:hidden" /><span className="md:hidden">{tTasks('inbox.accept')}</span>
                     </button>
                     <button
                       onClick={() => onRejectFriend(req.id)}
@@ -121,8 +122,16 @@ const InboxSocialSections = ({
 
       {/* ── Tâches à accepter ── */}
       {sharedTasks.length > 0 && (
-        <div className="px-3 pt-3 pb-1">
-          <p className={HEADING_CLASS}>{tTasks('inbox.sharedTasks', { count: sharedTasks.length })}</p>
+        <div className="md:px-3 md:pt-3 md:pb-1">
+          <div className="flex items-center justify-between pr-1">
+            <p className={HEADING_CLASS}>{tTasks('inbox.sharedTasks', { count: sharedTasks.length })}</p>
+            {/* Maquette 350 : « Tout accepter » pour le groupe. */}
+            {sharedTasks.length > 1 && (
+              <button type="button" onClick={() => sharedTasks.forEach(onAcceptTask)} className="md:hidden min-h-touch px-2 text-label font-medium text-[rgb(var(--color-accent))]">
+                {tTasks('inbox.acceptAll')}
+              </button>
+            )}
+          </div>
           <div className="divide-y divide-[rgb(var(--color-border))]">
             {sharedTasks.map((task) => (
               <div key={task.id} className={ROW_CLASS}>
@@ -137,7 +146,7 @@ const InboxSocialSections = ({
                     className={`${ICON_BUTTON_CLASS} text-[rgb(var(--color-accent))]`}
                     aria-label={tTasks('inbox.acceptTask', { name: task.name })}
                   >
-                    <Check size={15} aria-hidden="true" />
+                    <Check size={15} aria-hidden="true" className="max-md:hidden" /><span className="md:hidden">{tTasks('inbox.accept')}</span>
                   </button>
                   <button
                     onClick={() => onRejectTask(task)}
@@ -176,7 +185,7 @@ const InboxSocialSections = ({
                     className={`${ICON_BUTTON_CLASS} text-[rgb(var(--color-accent))]`}
                     aria-label={tTasks('inbox.acceptList', { name: grant.name })}
                   >
-                    <Check size={15} aria-hidden="true" />
+                    <Check size={15} aria-hidden="true" className="max-md:hidden" /><span className="md:hidden">{tTasks('inbox.accept')}</span>
                   </button>
                   <button
                     onClick={() => onRejectList(grant)}

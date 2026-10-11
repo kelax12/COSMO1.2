@@ -20,6 +20,7 @@ import { OrgConfigSettings } from '@/components/organization/org-config.lazy';
 import { buildOrgLink } from './deep-link.helpers';
 import OrgPlanChip from './OrgPlanChip';
 import OrgProfileForm from './OrgProfileForm';
+import MobileOrgSettingsHome, { MobileOrgSettingsBack } from './MobileOrgSettingsHome';
 import MyPermissionsCard from './MyPermissionsCard';
 import { useT } from '@/i18n/useT';
 
@@ -176,6 +177,8 @@ const OrgSettingsSection = ({
   const [requested, setActive] = useState<PanelId>(initialPanel ?? 'profile');
   // Un droit retiré en cours de visite referme la rubrique, il ne l'affiche pas vide.
   const active: PanelId = visibleIds.has(requested) ? requested : 'profile';
+  // Mobile (295) : `false` = la liste des rubriques.
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const navButton = (id: PanelId, Icon: LucideIcon, label: string, danger = false) => (
     <button
@@ -198,9 +201,16 @@ const OrgSettingsSection = ({
 
   return (
     <div className="max-w-5xl md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 md:items-start">
+      {!mobileOpen && (
+        <MobileOrgSettingsHome
+          groups={groups}
+          danger={{ id: 'danger', icon: LogOut, label: isOwner ? ta('orgSettings.navDanger') : ta('orgSettings.navLeave') }}
+          onOpen={(id) => { setActive(id); setMobileOpen(true); }}
+        />
+      )}
       <nav
         aria-label={ta('orgSettings.navLabel')}
-        className="mb-4 md:mb-0 md:sticky md:top-4 flex md:block gap-1 overflow-x-auto [scrollbar-width:none] md:overflow-visible -mx-1 px-1 pb-1 md:p-3 md:mx-0 md:rounded-2xl md:border md:border-[rgb(var(--color-border))] md:bg-[rgb(var(--color-surface))]"
+        className="max-md:hidden mb-4 md:mb-0 md:sticky md:top-4 flex md:block gap-1 overflow-x-auto [scrollbar-width:none] md:overflow-visible -mx-1 px-1 pb-1 md:p-3 md:mx-0 md:rounded-2xl md:border md:border-[rgb(var(--color-border))] md:bg-[rgb(var(--color-surface))]"
       >
         {groups.map((g) => (
           <div key={g.label} className="contents md:block md:mb-3">
@@ -223,7 +233,8 @@ const OrgSettingsSection = ({
         </div>
       </nav>
 
-      <div className="space-y-5 min-w-0">
+      <div className={`space-y-5 min-w-0 ${mobileOpen ? '' : 'max-md:hidden'}`}>
+      {mobileOpen && <MobileOrgSettingsBack label={t('tabs.settings')} onBack={() => setMobileOpen(false)} />}
       {/* Profil : ÉDITÉ ici depuis l'audit du 2026-09-24 (il vivait dans une
           feuille ouverte par un crayon de l'en-tête, qui mène désormais ici). */}
       {active === 'profile' && (
@@ -338,13 +349,14 @@ const OrgSettingsSection = ({
                   <Building2 size={15} aria-hidden="true" className="text-[rgb(var(--color-text-muted))] shrink-0" />
                   <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{o.name}</span>
                   {o.myRole === 'admin' && (
-                    <span className="text-caption font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                    <span className="text-caption font-semibold px-1.5 py-0.5 max-md:px-0 rounded bg-indigo-500/10 max-md:bg-transparent text-indigo-600 dark:text-indigo-400 max-md:!text-[rgb(var(--color-text-muted))]">
                       {t('common.adminBadge')}
                     </span>
                   )}
                   {current ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                      <Check size={13} aria-hidden="true" /> {ta('orgSettings.current')}
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 max-md:!text-[rgb(var(--color-accent))]">
+                      {/* Maquette 302 : l'active cochée, en bleu. */}
+                      <Check size={13} aria-hidden="true" className="max-md:w-[18px] max-md:h-[18px]" /> <span className="max-md:sr-only">{ta('orgSettings.current')}</span>
                     </span>
                   ) : (
                     <span className="text-xs text-[rgb(var(--color-accent))]">{ta('orgSettings.open')}</span>

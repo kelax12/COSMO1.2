@@ -264,6 +264,7 @@
     "create": "Create a smart list"
   },
   "inbox": {
+    "acceptAll": "Accept all",
     "label": "Inbox",
     "allClear": "All caught up",
     "allClearHint": "No pending shared tasks or lists.",

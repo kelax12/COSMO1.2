@@ -332,6 +332,7 @@
     "historyNone": "none"
   },
   "team": {
+    "leadSuffix": ", lead",
     "newTeam": "New team",
     "nameRequired": "The team name is required",
     "name": "Team name *",
@@ -710,6 +711,7 @@
     "intro": "These settings override the rights inferred from the org chart. A row left on “Default” follows the member's position in the company."
   },
   "teamPage": {
+    "addDescription": "Add a description",
     "back": "All teams",
     "notFound": "This team does not exist, or no longer does. It may have been deleted.",
     "edit": "Edit team",

@@ -39,6 +39,8 @@
     "noTask": "No tasks on that day."
   },
   "form": {
+    "timeRange": "Time",
+    "recurrenceNever": "Never",
     "recurrenceCustom": "Custom",
     "addComment": "+ Add a note",
     "customizeColors": "Customise the colours",

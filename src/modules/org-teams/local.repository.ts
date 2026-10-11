@@ -34,9 +34,9 @@ function readArray<T>(key: string): T[] {
 }
 
 const DEMO_TEAMS: OrgTeam[] = [
-  { id: 'team-design', orgId: DEMO_ORG_ID, name: 'Design', color: 'purple', description: null, createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 40 * DAY).toISOString() },
-  { id: 'team-dev', orgId: DEMO_ORG_ID, name: 'Dev', color: 'blue', description: null, createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 40 * DAY).toISOString() },
-  { id: 'team-marketing', orgId: DEMO_ORG_ID, name: 'Marketing', color: 'amber', description: null, createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 35 * DAY).toISOString() },
+  { id: 'team-design', orgId: DEMO_ORG_ID, name: 'Design', color: '#8b5cf6', description: null, createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 40 * DAY).toISOString() },
+  { id: 'team-dev', orgId: DEMO_ORG_ID, name: 'Dev', color: '#3b82f6', description: null, createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 40 * DAY).toISOString() },
+  { id: 'team-marketing', orgId: DEMO_ORG_ID, name: 'Marketing', color: '#f59e0b', description: null, createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 35 * DAY).toISOString() },
 ];
 
 // Chaque équipe a un responsable (mig. 107) : une organisation de démo dont

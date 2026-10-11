@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Check } from 'lucide-react';
+import { X, Plus, Check, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
@@ -11,6 +11,7 @@ import { useCreateHabit, useUpdateHabit, Habit } from '@/modules/habits';
 import ColorSettingsModal from './ColorSettingsModal';
 import ConfirmDiscardDialog from './ConfirmDiscardDialog';
 import { Button } from '@/components/ui/button';
+import { formatDurationMinutes } from '@/lib/duration';
 import { useT } from '@/i18n/useT';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
 
@@ -43,6 +44,9 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
   const updateHabitMutation = useUpdateHabit();
   const isEditing = !!habit;
   const isMobile = useIsMobile();
+  // Maquette 329 : la catégorie se choisit par identifiant ; plusieurs
+  // catégories partagent une couleur, la couleur seule ne la désigne pas.
+  const [categoryId, setCategoryId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -123,6 +127,8 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
     label: isEditing ? t('modal.editHabit') : t('modal.createHabit'),
   });
 
+  const selectedCategory = categories.find((c) => c.id === categoryId) ?? categories.find((c) => c.color === formData.color);
+
   return (
     <>
       <AnimatePresence>
@@ -171,7 +177,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       type="button"
                       onClick={doSave}
                       className={`text-[15px] font-semibold min-w-16 min-h-11 flex items-center justify-end ${
-                        formData.name.trim() ? 'text-blue-500' : 'text-blue-300'
+                        formData.name.trim() ? 'text-blue-500' : 'text-[rgb(var(--color-text-muted))]'
                       }`}
                     >
                       {isEditing ? t('modal.ok') : t('modal.create')}
@@ -190,7 +196,8 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     {/* Groupe 1 — Nom (sans overflow-hidden pour iOS selection handles) */}
                     <div
                       ref={register('name')}
-                      className={`bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm transition-[box-shadow] ${
+                      // Maquette 325 : le nom sans cadre, en titre.
+                      className={`rounded-xl transition-[box-shadow] ${
                         isInvalid('name') ? 'ring-2 ring-red-500' : ''
                       }`}
                     >
@@ -199,101 +206,65 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         value={formData.name}
                         onChange={(e) => { setFormData({ ...formData, name: e.target.value }); clear('name'); }}
                         placeholder={t('modal.namePlaceholder')}
-                        className="w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
+                        // Maquette 331 : le clavier s'ouvre sur le nom.
+                        autoFocus={!isEditing}
+                        className="no-input-chrome w-full px-1 min-h-12 text-title font-semibold bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
                         style={{ border: 'none' }}
                       />
                     </div>
 
-                    {/* Section DÉTAILS */}
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
+                    {/* Maquettes 326 à 334 (2026-10-11) : un seul groupe, comme la
+                        fiche tâche (332). Durée lue « 30 min » (326) ; catégorie en
+                        une ligne point et nom (328), choisie PAR IDENTIFIANT : par
+                        couleur, trois catégories bleues paraissaient choisies (329). */}
+                    <p className="text-label font-semibold text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
                       {t('modal.details')}
                     </p>
                     <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
-                      {/* Durée — sélecteur heure/minute natif du système (ouvre
-                          la roue OS au tap), même pattern que TaskModalMobileBody. */}
-                      <div className="flex items-center justify-between px-4 min-h-11">
+                      <label className="relative flex items-center justify-between px-4 min-h-11">
                         <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{t('modal.duration')}</span>
+                        <span className="text-[15px] text-[rgb(var(--color-text-secondary))]">{formatDurationMinutes(formData.estimatedTime)}</span>
                         <input
                           type="time"
+                          aria-label={t('modal.duration')}
                           value={minutesToTimeValue(formData.estimatedTime)}
                           onChange={(e) => setFormData({ ...formData, estimatedTime: timeValueToMinutes(e.target.value) })}
-                          className="text-[15px] text-blue-500 bg-transparent focus:outline-none text-right"
-                          style={{ border: 'none', minWidth: 0 }}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          style={{ border: 'none' }}
                         />
-                      </div>
-                    </div>
-
-                    {/* Section COULEUR — affichage par CATÉGORIE (nom + swatch)
-                        pour que l'utilisateur sache à quelle catégorie chaque
-                        couleur appartient. Fallback sur favoriteColors si aucune
-                        catégorie n'existe encore. */}
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
-                      {t('modal.category')}
-                    </p>
-                    <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden px-4 py-4">
-                      {categories.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-2">
-                          {categories.map((cat) => {
-                            const isSelected = formData.color === cat.color;
-                            return (
-                              <button
-                                key={cat.id}
-                                type="button"
-                                onClick={() => setFormData({ ...formData, color: cat.color })}
-                                aria-label={cat.name}
-                                aria-pressed={isSelected}
-                                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all active:scale-95 ${
-                                  isSelected
-                                    ? 'border-[rgb(var(--color-accent-solid))] bg-blue-50 dark:bg-blue-900/20'
-                                    : 'border-[rgb(var(--color-border))]'
-                                }`}
-                              >
-                                <span
-                                  className="w-6 h-6 rounded-lg shrink-0"
-                                  style={{ backgroundColor: cat.color }}
-                                />
-                                <span className="flex-1 text-left text-[13px] font-medium text-[rgb(var(--color-text-primary))] truncate">
-                                  {cat.name}
-                                </span>
-                              </button>
-                            );
-                          })}
-                          <button
-                            type="button"
-                            onClick={() => setIsColorSettingsOpen(true)}
-                            aria-label={t('modal.customizeColors')}
-                            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgb(var(--color-border-strong))] text-blue-500 text-[13px] font-medium"
-                          >
-                            <Plus className="w-4 h-4" />
-                            {t('modal.customize')}
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-wrap gap-3">
-                          {favoriteColors.map((favColor, index) => (
-                            <button
-                              key={`${favColor}-${index}`}
-                              type="button"
-                              onClick={() => setFormData({ ...formData, color: favColor })}
-                              aria-label={`Couleur ${favColor}`}
-                              className={`w-10 h-10 rounded-xl transition-transform active:scale-90 ${
-                                formData.color === favColor
-                                  ? 'ring-2 ring-offset-2 ring-gray-900 dark:ring-white scale-110'
-                                  : ''
-                              }`}
-                              style={{ backgroundColor: favColor }}
-                            />
+                      </label>
+                      <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
+                      <label className="relative flex items-center justify-between gap-3 px-4 min-h-11">
+                        <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{t('modal.category')}</span>
+                        <span className="flex items-center gap-2 min-w-0 text-[15px] text-[rgb(var(--color-text-secondary))]">
+                          {selectedCategory ? (
+                            <>
+                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedCategory.color }} aria-hidden="true" />
+                              <span className="truncate">{selectedCategory.name}</span>
+                            </>
+                          ) : (
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: formData.color }} aria-hidden="true" />
+                          )}
+                          <ChevronRight size={16} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
+                        </span>
+                        <select
+                          aria-label={t('modal.category')}
+                          value={selectedCategory?.id ?? ''}
+                          onChange={(e) => {
+                            if (e.target.value === '__new') { setIsColorSettingsOpen(true); return; }
+                            const cat = categories.find((c) => c.id === e.target.value);
+                            if (cat) { setCategoryId(cat.id); setFormData({ ...formData, color: cat.color }); }
+                          }}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        >
+                          {!selectedCategory && <option value="">{t('modal.category')}</option>}
+                          {categories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
                           ))}
-                          <button
-                            type="button"
-                            onClick={() => setIsColorSettingsOpen(true)}
-                            aria-label={t('modal.customizeColors')}
-                            className="w-10 h-10 rounded-xl border-2 border-dashed border-[rgb(var(--color-border-strong))] flex items-center justify-center"
-                          >
-                            <Plus className="w-4 h-4 text-blue-500" />
-                          </button>
-                        </div>
-                      )}
+                          {/* Maquette 334 : « Nouvelle catégorie », plus « + Personnaliser » en pointillés. */}
+                          <option value="__new">{t('modal.newCategory')}</option>
+                        </select>
+                      </label>
                     </div>
                   </div>
                 </div>

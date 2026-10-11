@@ -42,10 +42,11 @@ const PeriodCompareCard = ({ periodLabel, current, previous }: PeriodCompareCard
               <dd className="mt-0.5 flex items-baseline gap-2">
                 <span className="text-2xl font-bold tabular-nums text-[rgb(var(--color-text-primary))]">{now}</span>
                 <span className={`inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums ${tone}`}>
-                  <Icon size={12} aria-hidden="true" />
+                  {/* Maquette 282 : pas de « — » devant « nouveau ». */}
+                  {delta !== null && <Icon size={12} aria-hidden="true" />}
                   {delta === null ? t('ui.compare.noBase') : `${delta > 0 ? '+' : ''}${delta} %`}
                 </span>
-                <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('ui.compare.before', { count: before })}</span>
+                {before > 0 && <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('ui.compare.before', { count: before })}</span>}
               </dd>
             </div>
           );

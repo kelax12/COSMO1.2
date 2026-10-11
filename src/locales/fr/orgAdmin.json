@@ -1023,7 +1023,7 @@
   "okrModal": {
     "edit": "Modifier l'objectif",
     "new": "Nouvel objectif d'équipe",
-    "description": "Définis un objectif d'équipe et ses résultats clés mesurables.",
+    "description": "Définissez un objectif d'équipe et ses résultats clés mesurables.",
     "objective": "Objectif",
     "objectivePlaceholder": "Ex. Réussir le lancement produit",
     "deadline": "Échéance",
@@ -1040,7 +1040,7 @@
     "krAssignTeam": "Attribuer à une équipe",
     "krPeople": "Responsable et contributeurs",
     "weightHint": "Importance du KR dans la progression globale",
-    "needOneKr": "Ajoute au moins 1 résultat clé mesurable.",
+    "needOneKr": "Ajoutez au moins un résultat clé mesurable.",
     "cancel": "Annuler",
     "saving": "Enregistrement…",
     "save": "Enregistrer",
@@ -1157,6 +1157,8 @@
     "privacyNote": "Seules les échéances des tâches d'équipe sont visibles (le calendrier personnel reste privé)."
   },
   "member": {
+    "copyEmail": "Copier",
+    "managerLabel": "Responsable",
     "detach": "Détacher (non placé)",
     "manager": "Manager",
     "attachedTo": "Rattaché(e) à",

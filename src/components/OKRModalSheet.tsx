@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2, ArrowUpDown } from 'lucide-react';
 import ColorSettingsModal from './ColorSettingsModal';
 import AddCategoryButton from './AddCategoryButton';
+import OKRSheetMobileBar, { KrAdvancedMobile } from './OKRSheetMobileBar';
 import {
   Sheet,
   SheetContent,
@@ -27,6 +28,7 @@ import type { Category } from '@/modules/categories';
 import type { KeyResult } from '@/modules/okrs';
 import { getProgress, type Objective } from '@/pages/okr/okr-page-logic';
 import { useT } from '@/i18n/useT';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 
 interface OKRModalSheetProps {
   isOpen: boolean;
@@ -60,20 +62,6 @@ const newKR = (): KRDraft => ({
   completed: false,
   weight: 1,
 });
-
-/** Minutes → `HH:MM` pour l'input natif `type="time"` (roue OS sur mobile,
- *  même pattern que TaskModalMobileBody / HabitModal). */
-const minutesToTimeValue = (minutes: number | string): string => {
-  const total = typeof minutes === 'number' ? minutes : Number(minutes) || 0;
-  const h = Math.floor(total / 60).toString().padStart(2, '0');
-  const m = (total % 60).toString().padStart(2, '0');
-  return `${h}:${m}`;
-};
-
-const timeValueToMinutes = (value: string): number => {
-  const [h, m] = value.split(':').map((n) => Number(n) || 0);
-  return h * 60 + m;
-};
 
 const todayIso = () => new Date().toISOString();
 const plusDaysIso = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString(); };
@@ -142,6 +130,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
   };
 
   // Un objectif sans résultat clé n'est pas mesurable : au moins 1 KR nommé requis.
+  const isMobile = useIsMobile();
   const hasKeyResult = keyResults.some((k) => k.title.trim().length > 0);
   const canSave = title.trim().length > 0 && hasKeyResult;
   // Badge mobile à côté de « Résultats clés » (redesign 2026-09-19) : ne
@@ -197,13 +186,21 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
       <SheetContent
         className="flex w-full flex-col gap-0 p-0 border-0 rounded-t-3xl sm:rounded-tr-none sm:rounded-tl-2xl sm:rounded-bl-2xl sm:max-w-lg sm:border-l-0 overflow-hidden"
         // Croix de fermeture agrandie sur mobile (2026-09-19), desktop inchangé.
-        closeButtonClassName="max-sm:top-5 max-sm:right-5 max-sm:p-1"
+        closeButtonClassName="max-sm:hidden"
         closeIconClassName="max-sm:size-6"
       >
-        <SheetHeader>
+        {/* Maquette 335 : sur mobile, la même tête que la fiche tâche. */}
+        <OKRSheetMobileBar
+          cancelLabel={t('modal.cancel')}
+          submitLabel={isEdit ? t('modal.save') : t('modal.create')}
+          canSubmit={canSave}
+          onCancel={onClose}
+          onSubmit={handleSave}
+        />
+        <SheetHeader className="max-sm:pt-0 max-sm:-mt-12 max-sm:pointer-events-none max-sm:items-center">
           {/* Titre agrandi sur mobile (redesign 2026-09-19), desktop inchangé. */}
-          <SheetTitle className="max-sm:text-xl">{isEdit ? t('card.editObjective') : t('page.newObjective')}</SheetTitle>
-          <SheetDescription>{t('modal.description')}</SheetDescription>
+          <SheetTitle className="max-sm:text-body max-sm:font-semibold">{isEdit ? t('card.editObjective') : t('page.newObjective')}</SheetTitle>
+          <SheetDescription className="max-sm:sr-only">{t('modal.description')}</SheetDescription>
         </SheetHeader>
 
         {/* min-h-0 : sans lui, l'enfant flex-1 garde sa hauteur de contenu et le
@@ -211,9 +208,12 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
         <ScrollArea className="flex-1 min-h-0">
           <div className="grid gap-4 px-4 pb-4">
             <div className="grid gap-2">
-              <Label htmlFor="okr-title">{t('modal.objective')}</Label>
+              <Label htmlFor="okr-title" className="max-sm:sr-only">{t('modal.objective')}</Label>
               <Input
                 id="okr-title"
+                // Sur mobile, le champ sort du style global des champs (`data-slot`),
+                // dont le `!important` gagnait sur le « sans cadre » de la maquette 338.
+                {...(isMobile ? { 'data-slot': 'input-bare' } : {})}
                 value={title}
                 autoFocus
                 placeholder={t('modalSheet.titlePlaceholder')}
@@ -223,7 +223,8 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 // sheet, comme l'input « Choix catégorie »
                 // (`bg-[rgb(var(--color-surface))]`) juste en dessous. Desktop
                 // inchangé.
-                className="max-sm:!bg-[rgb(var(--color-surface))] max-sm:h-12 max-sm:text-lg"
+                // Maquette 338 : le nom sans cadre, en titre.
+                className="no-input-chrome max-sm:!bg-transparent max-sm:!border-0 max-sm:!shadow-none max-sm:px-1 max-sm:h-12 max-sm:!text-title max-sm:font-semibold"
               />
             </div>
 
@@ -252,10 +253,9 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 carte juste en dessous colle à cette ligne (`-mt-4` annule le
                 `gap-4` du parent — ne reste que le `pb-1` de la ligne). */}
             <div className="sm:hidden flex items-center justify-between px-4 pb-1 pt-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))]">
+              <span className="text-label font-semibold text-[rgb(var(--color-text-muted))]">
                 {t('modal.detailsSection')}
               </span>
-              <AddCategoryButton onClick={() => setShowColorSettings(true)} />
             </div>
             <SectionCard className="sm:hidden max-sm:-mt-4">
               <CategoryTreeSelect
@@ -332,7 +332,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Label>{t('modal.keyResults')}</Label>
+                <Label className="max-sm:text-label max-sm:text-[rgb(var(--color-text-muted))]">{t('modal.keyResults')}</Label>
                 {/* Repère mobile (redesign 2026-09-19) : combien de KR sont
                     déjà nommés, utile dès qu'on en empile plusieurs — remplace
                     en partie le message d'erreur qui n'apparaît qu'au pied du
@@ -347,7 +347,8 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 type="button"
                 size="sm"
                 onClick={() => setKeyResults((p) => [...p, newKR()])}
-                className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0"
+                // Maquette 339 : sur mobile, un lien « + Ajouter », plus un bouton plein.
+                className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0 max-sm:!bg-transparent max-sm:!text-[rgb(var(--color-accent))] max-sm:px-0"
               >
                 <Plus aria-hidden="true" /> {tCommon('actions.add')}
               </Button>
@@ -413,11 +414,13 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                         <Label className="sr-only">{t('modal.unit')}</Label>
                         <Input
                           aria-label={t('modal.unit')}
+                          data-slot="input-bare"
                           value={kr.unit}
                           placeholder="%"
                           onChange={(e) => setKR(kr.id, { unit: e.target.value })}
                           size={Math.max(kr.unit.length, 2)}
-                          className="h-8 px-1 text-center !bg-[rgb(var(--color-surface))]"
+                          // Maquette 341 : l'unité se lit après la cible, sans pastille.
+                          className="no-input-chrome h-8 px-1 text-center !bg-transparent !border-0 !shadow-none"
                           style={{ fieldSizing: 'content' } as React.CSSProperties}
                         />
                       </div>
@@ -441,7 +444,8 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                     )}
                   </div>
 
-                  <div className="grid gap-1.5">
+                  {/* Maquette 340 : à la création, on part de 0 ; pas de curseur sur mobile. */}
+                  <div className={`grid gap-1.5 ${isEdit ? '' : 'max-sm:hidden'}`}>
                     <div className="text-muted-foreground flex items-center justify-between text-xs">
                       <span>{t('modal.progress')}</span>
                       <span className="tabular-nums">{kr.currentValue} / {kr.targetValue} {kr.unit}</span>
@@ -490,66 +494,25 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                     </div>
                   </div>
 
-                  {/* Mobile (redesign 2026-09-19) : Durée + Coef. repliés
-                      derrière « Fonctionnalité avancée », sous la barre de
-                      progression — réglages secondaires, sortis du parcours
-                      par défaut. Desktop inchangé (toujours visibles ci-dessus). */}
-                  <div className="sm:hidden">
-                    {advancedKrIds.has(kr.id) ? (
-                      <div className="grid gap-2">
-                        {/* Dimensions normales (2e retouche) : -40% de largeur
-                            (w-3/5) au lieu de remplir toute leur colonne. */}
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="grid gap-1">
-                            <Label className="text-muted-foreground text-xs whitespace-nowrap">{t('modal.duration')} <span className="normal-case font-normal opacity-70">{t('modal.optional')}</span></Label>
-                            <input
-                              type="time"
-                              aria-label={`${t('modal.duration')} (${t('modal.optional')})`}
-                              value={minutesToTimeValue(kr.estimatedTime)}
-                              onChange={(e) => setKR(kr.id, { estimatedTime: timeValueToMinutes(e.target.value) })}
-                              className="h-8 w-3/5 min-w-0 rounded-md border px-2 text-sm border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] !bg-[rgb(var(--color-surface))]"
-                            />
-                          </div>
-                          <div className="grid gap-1">
-                            <Label className="text-muted-foreground text-xs" title={t('modal.weightHint')}>{t('modal.weight')}</Label>
-                            <Input
-                              type="number"
-                              min={1}
-                              max={10}
-                              step={1}
-                              className="h-8 w-3/5 !bg-[rgb(var(--color-surface))]"
-                              value={kr.weight}
-                              onChange={(e) => setKR(kr.id, { weight: Number(e.target.value) })}
-                            />
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setAdvancedKrIds((prev) => { const next = new Set(prev); next.delete(kr.id); return next; })}
-                          className="text-sm font-semibold text-[rgb(var(--color-text-muted))]"
-                        >
-                          {t('modal.advancedFeatureHide')}
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setAdvancedKrIds((prev) => new Set(prev).add(kr.id))}
-                        className="text-sm font-semibold text-[rgb(var(--color-accent-solid))]"
-                      >
-                        {t('modal.advancedFeature')}
-                      </button>
-                    )}
-                  </div>
+                  <KrAdvancedMobile
+                    kr={kr}
+                    open={advancedKrIds.has(kr.id)}
+                    onOpenChange={(open) => setAdvancedKrIds((prev) => { const next = new Set(prev); if (open) next.add(kr.id); else next.delete(kr.id); return next; })}
+                    onChange={(patch) => setKR(kr.id, patch)}
+                  />
                 </div>
               ))}
             </div>
           </div>
+          {!hasKeyResult && (
+            <p className="sm:hidden px-5 pb-4 text-label text-[rgb(var(--color-text-muted))]">{t('modal.needOneKr')}</p>
+          )}
         </ScrollArea>
 
-        <SheetFooter className="flex-row items-center justify-end gap-2 border-t">
+        {/* Maquette 343 : sur mobile, plus de pied ; l'aide grise vit sous la liste. */}
+        <SheetFooter className="flex-row items-center justify-end gap-2 border-t max-sm:hidden">
           {!hasKeyResult && (
-            <span className="text-xs text-amber-600 dark:text-amber-400 mr-auto" role="status">
+            <span className="text-xs text-amber-600 dark:text-amber-400 max-sm:text-[rgb(var(--color-text-muted))] mr-auto" role="status">
               {t('modal.needOneKr')}
             </span>
           )}

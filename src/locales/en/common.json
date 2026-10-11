@@ -86,6 +86,10 @@
     "refuse": "Decline"
   },
   "auth": {
+    "legalConsentTermsShort": "terms",
+    "legalConsentShort": "By creating an account, you accept the {{terms}} and have read the {{privacy}}.",
+    "createAccountTitle": "Create an account",
+    "signInTitle": "Sign in",
     "modalAria": "Sign in or sign up",
     "loginSubtitle": "Sign in to your account",
     "registerSubtitle": "Create your free account",
@@ -202,6 +206,7 @@
     "hide": "Hide the demo banner"
   },
   "demoBridge": {
+    "short": "Demo: nothing is kept",
     "aria": "Create a COSMO account",
     "title": "Keep your setup",
     "text": "You've just built yourself a real system. Create your account to have it on every device, it's free.",

@@ -14,7 +14,7 @@
     "seeCompleted": "Voir la liste des OKR terminés",
     "weeklyCheckin": "Check-in hebdo",
     "openWeeklyCheckin": "Ouvrir le check-in hebdo",
-    "newObjective": "Nouvel Objectif",
+    "newObjective": "Nouvel objectif",
     "createObjective": "Créer un nouvel objectif",
     "createOkr": "Créer un OKR",
     "okrDeleted": "OKR supprimé",
@@ -97,7 +97,7 @@
     "confirm": "Supprimer"
   },
   "modal": {
-    "description": "Définis un objectif et ses résultats clés mesurables.",
+    "description": "Définissez un objectif et ses résultats clés mesurables.",
     "objective": "Objectif",
     "category": "Catégorie",
     "deadline": "Échéance",
@@ -116,11 +116,11 @@
     "unit": "Unité",
     "duration": "Durée",
     "optional": "(Facultatif)",
-    "advancedFeature": "Fonctionnalité avancée",
+    "advancedFeature": "Plus d'options",
     "advancedFeatureHide": "Masquer",
     "weight": "Coef. (1–10)",
     "weightHint": "Importance du KR dans la progression globale",
-    "needOneKr": "Ajoute au moins 1 résultat clé pour créer l'objectif.",
+    "needOneKr": "Ajoutez au moins un résultat clé pour créer l'objectif.",
     "cancel": "Annuler",
     "save": "Enregistrer",
     "create": "Créer"

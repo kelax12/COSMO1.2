@@ -3,7 +3,7 @@ import { useSeoMeta } from '@/lib/useSeoMeta';
 import { Link } from 'react-router';
 import {
   CheckSquare, Calendar, Repeat, Target, BarChart2,
-  Rocket, ArrowRight, ChevronRight,
+  Rocket, ArrowRight, ChevronRight, ChevronLeft, ChevronDown,
   BookOpen, Clock, Flag, Bookmark, Users, TrendingUp,
   Flame, Layers, Filter, Bell, List,
   GripVertical, Building2, Network, FolderKanban, ListTodo,
@@ -76,21 +76,26 @@ const GuidePage: React.FC = () => {
       <header className="sticky top-0 z-50 bg-[rgb(var(--color-surface))]/80 backdrop-blur-xl border-b border-[rgb(var(--color-border))]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors text-sm">
+            {/* Maquette 369 : sur mobile, une ligne « ‹ Retour » puis le titre. */}
+            <Link to="/" className="md:hidden -ml-1 flex items-center gap-1 min-h-touch text-sm text-[rgb(var(--color-accent))]">
+              <ChevronLeft size={18} aria-hidden="true" />
+              {t('chrome.backHome')}
+            </Link>
+            <Link to="/" className="max-md:hidden flex items-center gap-2 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors text-sm">
               <img src="/logo-128.webp" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
               <span className="font-semibold text-[rgb(var(--color-text-primary))]">Cosmo</span>
             </Link>
-            <ChevronRight size={14} className="text-[rgb(var(--color-text-muted))]" />
+            <ChevronRight size={14} className="max-md:hidden text-[rgb(var(--color-text-muted))]" />
             {/* h1 sémantique (SEO) — rendu identique au span grâce au preflight
                 Tailwind (les headings héritent font-size/weight) */}
-            <h1 className="text-sm text-[rgb(var(--color-text-secondary))] flex items-center gap-1.5 font-normal">
+            <h1 className="max-md:sr-only text-sm text-[rgb(var(--color-text-secondary))] flex items-center gap-1.5 font-normal">
               <BookOpen size={14} />
               {t('chrome.heading')}
             </h1>
           </div>
           <Link
             to="/"
-            className="text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors flex items-center gap-1.5"
+            className="max-md:hidden text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors flex items-center gap-1.5"
           >
             {t('chrome.backHome')}
             <ArrowRight size={14} />
@@ -128,7 +133,22 @@ const GuidePage: React.FC = () => {
           </aside>
 
           {/* ── Content ── */}
-          <main className="flex-1 min-w-0 space-y-24">
+          <main className="flex-1 min-w-0 space-y-24 max-md:space-y-16 max-md:[&_strong]:font-medium">
+
+            {/* Maquette 370 : sur mobile, un sommaire repliable en tête. */}
+            <details className="lg:hidden rounded-xl bg-[rgb(var(--color-surface))] px-4 [&_summary::-webkit-details-marker]:hidden">
+              <summary className="flex items-center justify-between min-h-touch cursor-pointer text-sm font-medium">
+                {t('chrome.summary')} · {NAV_ITEMS.length}
+                <ChevronDown size={16} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
+              </summary>
+              <nav className="pb-2">
+                {NAV_ITEMS.map(({ id, labelKey }) => (
+                  <button key={id} type="button" onClick={() => scrollTo(id)} className="w-full text-left min-h-touch text-sm text-[rgb(var(--color-text-secondary))] border-t border-[rgb(var(--color-border))]">
+                    {t(labelKey)}
+                  </button>
+                ))}
+              </nav>
+            </details>
 
             {/* ══ PRISE EN MAIN ══════════════════════════════════════════ */}
             <section>
