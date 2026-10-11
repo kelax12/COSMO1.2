@@ -25,6 +25,7 @@ import { TeamOverviewSkeleton } from './OrgLoadingSkeletons';
 import StatsScopeSelect from './StatsScopeSelect';
 import { defaultScope, scopeMembers, scopeTasks, type StatsScope } from './stats-scope.helpers';
 import { useT } from '@/i18n/useT';
+import { SectionDivider } from '@/components/mobile';
 
 interface TeamOverviewTabProps {
   orgId: string;
@@ -309,10 +310,12 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         />
       )}
 
+      <SectionDivider />
       {/* Charge de l'équipe — placée juste sous la synthèse : c'est la question
           la plus opérationnelle de l'onglet, elle ne doit pas se mériter. */}
       <TeamWorkloadCard rows={workload} members={scopedMembers} />
 
+      <SectionDivider />
       {/* Par membre + Par projet */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
         <SectionCard title={ta('overview.byMember')}>
@@ -364,6 +367,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         </SectionCard>
       </div>
 
+      <SectionDivider />
       {/* Vélocité + Tendance */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
         <SectionCard title={ta('overview.velocity')}>
@@ -399,6 +403,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         </SectionCard>
       </div>
 
+      <SectionDivider />
       {/* Avancement OKR détaillé */}
       <SectionCard title={ta('overview.okrProgressTitle')}>
         {okrStats.length === 0 ? (
@@ -426,6 +431,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       </SectionCard>
 
       {/* Retards par membre + liste des tâches en retard */}
+      {summary.overdueCount > 0 && <SectionDivider />}
       {summary.overdueCount > 0 && (
         <div className="grid lg:grid-cols-2 gap-5 items-start">
           <SectionCard title={ta('overview.overdueByMember')}>
