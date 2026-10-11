@@ -54,6 +54,21 @@ export const getColorHex = (colorName: string): string =>
  */
 export const NO_CATEGORY_COLOR = '#CBD5E1';
 
+/** Couleurs de catégories normalisées (hex MAJUSCULE, un nom comme `blue` résolu). */
+export const categoryColorSet = (categories: ReadonlyArray<{ color: string }>): ReadonlySet<string> =>
+  new Set(categories.map((c) => (c.color.startsWith('#') ? c.color : getColorHex(c.color)).toUpperCase()));
+
+/**
+ * Couleur d'AFFICHAGE d'un élément qui ne porte qu'une couleur (événement) :
+ * la sienne si elle correspond encore à une catégorie, sinon le gris clair.
+ * La donnée n'est pas réécrite : une catégorie recréée dans la même couleur
+ * retrouve ses événements.
+ */
+export const displayCategoryColor = (
+  color: string | null | undefined,
+  categoryColors: ReadonlySet<string>,
+): string => (color && categoryColors.has(color.toUpperCase()) ? color : NO_CATEGORY_COLOR);
+
 /** Couleur de texte lisible sur un fond de catégorie (blanc, sauf sur le gris clair). */
 export const textOnCategoryColor = (color: string | null | undefined): string =>
   !color || color.toUpperCase() === NO_CATEGORY_COLOR ? '#1F2937' : '#ffffff';
