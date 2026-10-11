@@ -7,6 +7,7 @@ import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 import { useCreateHabit, useUpdateHabit, Habit } from '@/modules/habits';
 import ColorSettingsModal from './ColorSettingsModal';
 import ConfirmDiscardDialog from './ConfirmDiscardDialog';
@@ -74,6 +75,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
             color: categories[0]?.color || favoriteColors[0] || '#3B82F6',
           };
       setFormData(initial);
+      setCategoryId(null);
       initialSnapshotRef.current = JSON.stringify(initial);
     }
   }, [isOpen, habit, categories, favoriteColors]);
@@ -127,7 +129,9 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
     label: isEditing ? t('modal.editHabit') : t('modal.createHabit'),
   });
 
-  const selectedCategory = categories.find((c) => c.id === categoryId) ?? categories.find((c) => c.color === formData.color);
+  // `'__none'` : « Sans catégorie » choisi explicitement (couleur grise).
+  const noCategory = categoryId === '__none' || (!categoryId && formData.color === NO_CATEGORY_COLOR);
+  const selectedCategory = noCategory ? undefined : (categories.find((c) => c.id === categoryId) ?? categories.find((c) => c.color === formData.color));
 
   return (
     <>
@@ -242,6 +246,8 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                               <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedCategory.color }} aria-hidden="true" />
                               <span className="truncate">{selectedCategory.name}</span>
                             </>
+                          ) : noCategory ? (
+                            <span className="truncate">{tCommon('noCategory')}</span>
                           ) : (
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: formData.color }} aria-hidden="true" />
                           )}
@@ -249,15 +255,17 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         </span>
                         <select
                           aria-label={t('modal.category')}
-                          value={selectedCategory?.id ?? ''}
+                          value={selectedCategory?.id ?? (noCategory ? '__none' : '')}
                           onChange={(e) => {
                             if (e.target.value === '__new') { setIsColorSettingsOpen(true); return; }
+                            if (e.target.value === '__none') { setCategoryId('__none'); setFormData({ ...formData, color: NO_CATEGORY_COLOR }); return; }
                             const cat = categories.find((c) => c.id === e.target.value);
                             if (cat) { setCategoryId(cat.id); setFormData({ ...formData, color: cat.color }); }
                           }}
                           className="absolute inset-0 opacity-0 cursor-pointer"
                         >
-                          {!selectedCategory && <option value="">{t('modal.category')}</option>}
+                          {!selectedCategory && !noCategory && <option value="">{t('modal.category')}</option>}
+                          <option value="__none">{tCommon('noCategory')}</option>
                           {categories.map((cat) => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                           ))}

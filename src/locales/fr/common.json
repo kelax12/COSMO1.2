@@ -1,4 +1,5 @@
 {
+  "noCategory": "Sans catégorie",
   "listActions": {
     "removeDefault": "Retirer des favoris",
     "setDefault": "Épingler par défaut"

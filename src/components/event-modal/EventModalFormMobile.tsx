@@ -11,6 +11,7 @@ import type { EventRecurrence } from '@/modules/events';
 import DescriptionField from '@/components/DescriptionField';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DAY_LABEL_KEYS } from './helpers';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 import type { EventModalFormBodyProps } from './event-modal-form.types';
 import { useT } from '@/i18n/useT';
 
@@ -212,6 +213,20 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
           <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden px-4 py-3">
             {/* Maquettes 321 et 322 : pastilles rondes sur une ligne, plus des cartes. */}
             <div className="flex flex-wrap items-center gap-3">
+              {/* « Sans catégorie » : couleur grise neutre, toujours en premier. */}
+              <button
+                type="button"
+                onClick={() => { handleFieldChange("color", setColor, NO_CATEGORY_COLOR); setOpenSubcategoriesFor(null); }}
+                aria-label={tCommon('noCategory')}
+                aria-pressed={color === NO_CATEGORY_COLOR}
+                className={`relative w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95 ${
+                  color === NO_CATEGORY_COLOR ? 'ring-2 ring-[rgb(var(--color-text-primary))] ring-offset-2 ring-offset-[rgb(var(--color-surface))]' : ''
+                }`}
+              >
+                <span className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center" style={{ backgroundColor: "rgb(var(--color-hover))" }}>
+                  <Ban size={14} style={{ color: "rgb(var(--color-text-muted))" }} aria-hidden="true" />
+                </span>
+              </button>
               {rootCategories.map((cat) => {
                 const subs = subcategoriesOf(cat.id);
                 const hasSubs = subs.length > 0;

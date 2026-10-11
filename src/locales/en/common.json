@@ -1,4 +1,5 @@
 {
+  "noCategory": "No category",
   "listActions": {
     "removeDefault": "Remove from favorites",
     "setDefault": "Pin by default"

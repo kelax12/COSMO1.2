@@ -19,6 +19,7 @@ import { useCollapsedCategories } from '@/modules/categories/collapsed.store';
 import { CellSeparator } from './primitives';
 import { MobileActionSheet } from './MobileActionSheet';
 import { useT } from '@/i18n/useT';
+import NoCategoryOption from '@/components/category/NoCategoryOption';
 
 interface TaskModalCategorySheetProps {
   open: boolean;
@@ -92,9 +93,10 @@ const TaskModalCategorySheet: React.FC<TaskModalCategorySheetProps> = ({
       onClose={handleClose}
       scrollable
     >
-      {visibleCategoryRows.map((row, i) => (
+      <NoCategoryOption variant="sheet" selected={!selectedId} onSelect={() => onSelect('')} />
+      {visibleCategoryRows.map((row) => (
         <React.Fragment key={row.node.category.id}>
-          {i > 0 && <CellSeparator />}
+          <CellSeparator />
           <div className="flex items-center gap-1 min-h-11" style={{ paddingInlineStart: `${16 + row.depth * 16}px` }}>
             {row.hasChildren ? (
               <button

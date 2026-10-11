@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DateCalendarPanel } from '@/components/ui/date-picker';
 import { buildTree, type Category, type CategoryNode } from '@/modules/categories';
 import { useCollapsedCategories } from '@/modules/categories/collapsed.store';
+import NoCategoryOption from '@/components/category/NoCategoryOption';
 import { useT } from '@/i18n/useT';
 
 interface Props {
@@ -55,6 +56,7 @@ const TaskBulkActionsBar: React.FC<Props> = ({
   onExit,
 }) => {
   const { t, tp } = useT('tasks');
+  const { t: tCommon } = useT('common');
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<'root' | 'category' | 'date'>('root');
   // Partagé avec ColorSettingsModal / CategoryFilterTree : un même compte a un
@@ -199,6 +201,7 @@ const TaskBulkActionsBar: React.FC<Props> = ({
                         </button>
                         <div className="h-px" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
                         <div className="max-h-56 overflow-y-auto">
+                          <NoCategoryOption onSelect={() => { setMenuOpen(false); onSetCategory('', tCommon('noCategory')); }} selected={false} />
                           {categories.length === 0 ? (
                             <p className="px-3.5 py-3 text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
                               {t('table.noCategory')}
