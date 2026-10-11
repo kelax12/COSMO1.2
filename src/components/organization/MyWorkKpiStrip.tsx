@@ -46,7 +46,9 @@ export const KpiStrip = ({ firstName, waiting, open, overdue, done, nextDeadline
       </h2>
       {/* `data-testid` : masquée par la garde visuelle, la date et le nom de la
           prochaine échéance avancent avec le jour. */}
-      <p data-testid="apercu-greeting-summary" className="mt-1.5 text-sm leading-relaxed text-[rgb(var(--color-text-secondary))]">
+      {/* Masquée sur mobile (retour 2026-10-11) : les mêmes chiffres sont
+          repris par les sections juste en dessous, la phrase surchargeait. */}
+      <p data-testid="apercu-greeting-summary" className="max-md:hidden mt-1.5 text-sm leading-relaxed text-[rgb(var(--color-text-secondary))]">
         {waiting === 0 && overdue === 0 && open === 0 ? (
           t('apercu.greeting.allClear')
         ) : (
