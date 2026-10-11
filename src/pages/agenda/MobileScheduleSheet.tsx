@@ -1,4 +1,5 @@
 import React, { Suspense, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Search } from 'lucide-react';
 import { BottomSheet } from '@/components/mobile';
 import { ScheduleEventModal } from '@/components/task-table/lazy-dialogs';
@@ -14,6 +15,9 @@ import { useAuth } from '@/modules/auth/AuthContext';
 import { usePriorityRange } from '@/modules/ui-states';
 import { formatDurationMinutes } from '@/lib/duration';
 import { useT } from '@/i18n/useT';
+import { useCreateEvent } from '@/modules/events';
+import { localInputToIso } from '@/components/ScheduleEventModal';
+import { useTaskHoldDrag, type DropSlot } from './use-task-hold-drag';
 
 interface Props {
   open: boolean;
@@ -28,7 +32,12 @@ interface Row {
   schedulable: SchedulableTask;
   /** Tâche d'équipe : l'événement n'est pas lié (cf. `ScheduleEventModal`). */
   team: boolean;
+  /** Couleur ÉCRITE dans l'événement créé par glisser : toujours un hex. */
+  eventColor: string;
 }
+
+/** Durée par défaut d'un créneau posé au doigt, quand la tâche n'en a pas. */
+const DEFAULT_DROP_MINUTES = 60;
 
 /**
  * « Planifier une tâche » — agenda MOBILE (maquette 170, 2026-10-10).
@@ -75,6 +84,7 @@ const MobileScheduleSheet: React.FC<Props> = ({ open, onClose }) => {
           color: cat?.color ?? 'rgb(var(--color-text-muted))',
           schedulable: task,
           team: false,
+          eventColor: cat?.color ?? '#CBD5E1',
         };
       });
     const team: Row[] = (user ? myAssignedTasks(teamTasks, user.id) : [])
@@ -89,14 +99,49 @@ const MobileScheduleSheet: React.FC<Props> = ({ open, onClose }) => {
           color: cat?.color ?? '#6B7280',
           schedulable: { id: task.id, name: task.name, category: '', deadline: task.deadline ?? '', estimatedTime: task.estimatedTime ?? 0 },
           team: true,
+          eventColor: cat?.color ?? '#6B7280',
         };
       });
     return [...perso, ...team];
   }, [search, tasks, categories, teamTasks, teamCategories, user, priorityRange]);
 
+  // Appui long → la feuille se ferme, la tâche suit le doigt → on la lâche sur
+  // un créneau (demande d'Axel, 2026-10-11). Le toucher simple garde le
+  // formulaire de créneau : jamais un geste comme seul chemin (C-111).
+  const createEvent = useCreateEvent();
+  // La feuille reste montée mais invisible pendant le glisser (cf. `concealed`).
+  const [lifted, setLifted] = useState(false);
+  const dropOn = (row: Row, slot: DropSlot | null) => {
+    setLifted(false);
+    onClose();
+    if (!slot) return;
+    const minutes = row.schedulable.estimatedTime && row.schedulable.estimatedTime > 0 ? row.schedulable.estimatedTime : DEFAULT_DROP_MINUTES;
+    const start = new Date(localInputToIso(`${slot.date}T${slot.time}`));
+    createEvent.mutate({
+      title: row.name,
+      start: start.toISOString(),
+      end: new Date(start.getTime() + minutes * 60_000).toISOString(),
+      taskId: row.team ? undefined : row.schedulable.id,
+      color: row.eventColor,
+      isPrivate: true,
+    });
+  };
+  const { drag, bind } = useTaskHoldDrag<Row>({ onLift: () => setLifted(true), onDrop: dropOn });
+
   return (
     <>
-      <BottomSheet open={open && !picked} onClose={onClose} ariaLabel={t('sidebar.scheduleTitle')}>
+      {drag && typeof document !== 'undefined' && createPortal(
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed z-[10000] max-w-[70vw] -translate-x-1/2 -translate-y-[130%] rounded-xl px-3 py-2 text-label font-semibold text-white shadow-xl"
+          style={{ left: drag.x, top: drag.y, backgroundColor: drag.item.eventColor }}
+        >
+          <span className="block truncate">{drag.item.name}</span>
+          <span className="block text-caption font-medium opacity-90">{drag.slot ? drag.slot.time : t('sidebar.dropHere')}</span>
+        </div>,
+        document.body,
+      )}
+      <BottomSheet open={open && !picked} concealed={lifted} onClose={onClose} ariaLabel={t('sidebar.scheduleTitle')}>
         <div className="px-gutter pb-4">
           <h2 className="text-title font-bold pt-3 text-[rgb(var(--color-text-primary))]">{t('sidebar.scheduleTitle')}</h2>
           <p className="text-label pb-3 text-[rgb(var(--color-text-secondary))]">{t('sidebar.scheduleHint')}</p>
@@ -117,7 +162,8 @@ const MobileScheduleSheet: React.FC<Props> = ({ open, onClose }) => {
                 <button
                   type="button"
                   onClick={() => setPicked(row)}
-                  className="w-full flex items-center gap-3 min-h-touch py-2 text-left active:bg-[rgb(var(--color-hover))]"
+                  {...bind(row)}
+                  className="w-full flex items-center gap-3 min-h-touch py-2 text-left select-none [-webkit-touch-callout:none] active:bg-[rgb(var(--color-hover))]"
                 >
                   <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: row.color }} aria-hidden="true" />
                   <span className="flex-1 min-w-0">

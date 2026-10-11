@@ -50,7 +50,7 @@
   "sidebar": {
     "title": "Available tasks",
     "scheduleTitle": "Schedule a task",
-    "scheduleHint": "Tap a task to pick a slot for it.",
+    "scheduleHint": "Hold a task to drag it onto the calendar, or tap it to pick a slot.", "dropHere": "Drop on a time slot",
     "addTask": "Add a task",
     "close": "Close the task panel",
     "search": "Search a task...",

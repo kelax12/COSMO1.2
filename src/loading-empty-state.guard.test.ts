@@ -79,7 +79,6 @@ const NOT_AN_ASSERTION = new Map<string, string>([
   ['components/HabitTable.tsx', 'le test ne sert qu a choisir une date par defaut, aucun rendu'],
   ['components/organization/OrgNotificationsBell.tsx', 'rend `null` : une cloche morte est du bruit, pas un mensonge'],
   ['components/organization/OrgJoinRequestsList.tsx', 'rend `null` : sans demande, la section entiere disparait, elle n affirme rien (relu le 2026-09-30)'],
-  ['components/organization/TeamTasksTab.tsx', 'le test sur `taskDependencies` rend un Set vide de taches bloquees : aucun texte, les pastilles apparaissent a l arrivee des dependances (relu le 2026-09-30)'],
   ['components/organization/TeamAssigneeGroups.tsx', 'rend `null` : la section entiere disparait, elle n affirme rien'],
 ]);
 
