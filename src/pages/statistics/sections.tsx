@@ -16,6 +16,7 @@ import { completionColor } from './completion-color';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { formatDurationMinutes } from '@/lib/duration';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 // ═══════════════════════════════════════════════════════════════════
 // COMPOSANT MÉMOÏSÉ — Habit Stat Item
@@ -191,7 +192,7 @@ export const TasksStatistics: React.FC<{
   categories: Array<{ id: string; color: string; name: string }>;
 }> = ({ tasks, colorSettings, categories }) => {
   const { t, tp } = useT('statistics');
-  const getColorValue = (catId: string | undefined) => categories.find(c => c.id === catId)?.color || '#64748B';
+  const getColorValue = (catId: string | undefined) => categories.find(c => c.id === catId)?.color || NO_CATEGORY_COLOR;
   // Fix dots gris : itérer sur les VRAIES catégories (UUIDs), pas sur colorSettings (clés hardcodées cat-1...).
   // Fallback aux entrées colorSettings si aucune catégorie chargée (mode démo très précoce).
   const colorDistribution = (categories.length > 0

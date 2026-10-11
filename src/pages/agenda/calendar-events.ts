@@ -3,6 +3,7 @@
 // Comportement déplacé verbatim depuis AgendaPage.tsx.
 import { expandRecurringEvents, type CalendarEvent } from '@/modules/events';
 import { toDisplayISO, type TimezonePref } from '@/lib/timezone';
+import { NO_CATEGORY_COLOR, textOnCategoryColor } from '@/lib/category-colors';
 
 // Durée par défaut (minutes) d'un événement créé en glissant une tâche depuis la
 // sidebar. Une tâche sans durée estimée a `estimatedTime = 0` (défaut du
@@ -101,7 +102,7 @@ export function buildCalendarEvents(
     end: event.end,
     backgroundColor: event.color,
     borderColor: event.color,
-    textColor: '#ffffff',
+    textColor: textOnCategoryColor(event.color),
     editable: !event.id.includes('::'),
     extendedProps: {
       notes: event.notes,
@@ -175,8 +176,8 @@ export function resolveDraggedTaskEventData(
   const isTeamTask = taskData.source === 'pro';
   const personalCategory = () => categories.find((cat) => cat.id === taskData.category);
   const catColor = isTeamTask
-    ? (taskData.categoryColor || '#6B7280')
-    : (personalCategory()?.color || '#6B7280');
+    ? (taskData.categoryColor || NO_CATEGORY_COLOR)
+    : (personalCategory()?.color || NO_CATEGORY_COLOR);
   const catName = isTeamTask
     ? (taskData.categoryName || uncategorizedLabel)
     : (personalCategory()?.name || uncategorizedLabel);
@@ -189,7 +190,7 @@ export function resolveDraggedTaskEventData(
     duration: { minutes: taskEventDurationMinutes(taskData.estimatedTime) },
     backgroundColor: catColor,
     borderColor: catColor,
-    textColor: '#ffffff',
+    textColor: textOnCategoryColor(catColor),
     extendedProps: {
       taskId: isTeamTask ? undefined : taskData.id,
       isTeamTask,

@@ -13,6 +13,7 @@ import { useT } from '@/i18n/useT';
 import { showUndoToast } from '@/lib/undo-toast';
 import TaskModal from '@/components/TaskModal';
 import { buildMoments, isEventPast, todayCompletionReport } from './today-moments.helpers';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 /**
  * « Matin · après-midi · soir » — maquette 28, l'accueil MOBILE.
@@ -227,7 +228,7 @@ const TodayMoments = () => {
                         <span className="flex items-center gap-1.5 text-caption text-[rgb(var(--color-text-muted))]">
                           <span
                             className="size-2 rounded-full shrink-0"
-                            style={{ backgroundColor: entry.task.categoryColor ?? 'rgb(var(--color-text-muted))' }}
+                            style={{ backgroundColor: entry.task.categoryColor ?? NO_CATEGORY_COLOR }}
                             aria-hidden="true"
                           />
                           <span className="truncate">{entry.task.categoryName}</span>

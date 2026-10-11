@@ -26,6 +26,7 @@ import { formatRelativeTime } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { selectCollaborativeTasks } from './collaborative-tasks.helpers';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 const CollaborativeTasks: React.FC = () => {
   const { t, tp } = useT('dashboard');
@@ -51,7 +52,7 @@ const CollaborativeTasks: React.FC = () => {
 
   const getCategoryColor = (categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId);
-    return category?.color || '#6b7280';
+    return category?.color || NO_CATEGORY_COLOR;
   };
 
   // Action modals

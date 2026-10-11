@@ -18,6 +18,7 @@ import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { isDueToday } from '@/lib/deadline';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 const TodayTasks: React.FC = () => {
   const { t, tp } = useT('dashboard');
@@ -234,7 +235,7 @@ const TodayTasks: React.FC = () => {
                       <div className="flex items-center gap-1"><Clock size={14} /><span>{task.estimatedTime} min</span></div>
                       {task.priority > 0 && (
                         <div className="flex items-center gap-1">
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: categoryData?.color || '#CBD5E1' }} />
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: categoryData?.color || NO_CATEGORY_COLOR }} />
                           <span>{t('todayTasks.priority', { level: task.priority })}</span>
                         </div>
                       )}

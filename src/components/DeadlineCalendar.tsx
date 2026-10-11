@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import TaskModal from './TaskModal';
 import { useT } from '@/i18n/useT';
 import { deadlineDayKey } from '@/lib/deadline';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 // Calendrier des échéances — composant shadcn Calendar (react-day-picker)
 // agrandi, avec pastilles de catégorie directement dans les cases des jours
@@ -43,7 +44,7 @@ const DeadlineCalendar: React.FC = () => {
       const dayOfTask = deadlineDayKey(t.deadline);
       if (!dayOfTask) continue;
       const key = dayKey(dayKeyToLocalDate(dayOfTask));
-      const color = getCategoryById(t.category)?.color || '#94a3b8';
+      const color = getCategoryById(t.category)?.color || NO_CATEGORY_COLOR;
       const arr = map.get(key) ?? [];
       if (arr.length < 4) arr.push(color);
       map.set(key, arr);

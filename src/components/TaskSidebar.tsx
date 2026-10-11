@@ -35,6 +35,7 @@ import { useTeamTasks, type TeamTask } from '@/modules/team-projects';
 import { useTeamCategories } from '@/modules/team-categories';
 import { myAssignedTasks } from './organization/team-projects.helpers';
 import { formatDurationMinutes } from '@/lib/duration';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 type TaskSidebarProps = {
   onClose?: () => void;
@@ -252,11 +253,11 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   ];
 
   const getCategoryColor = (category: string) => {
-    return categories.find(cat => cat.id === category)?.color || '#6B7280';
+    return categories.find(cat => cat.id === category)?.color || NO_CATEGORY_COLOR;
   };
 
   const getTeamCategoryColor = (categoryId: string | null | undefined) =>
-    teamCategories.find(cat => cat.id === categoryId)?.color || '#6B7280';
+    teamCategories.find(cat => cat.id === categoryId)?.color || NO_CATEGORY_COLOR;
 
   const getTeamCategoryName = (categoryId: string | null | undefined) =>
     teamCategories.find(cat => cat.id === categoryId)?.name || t('sidebar.uncategorized');

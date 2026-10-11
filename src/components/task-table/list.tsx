@@ -33,6 +33,7 @@ import { useT } from '@/i18n/useT';
 import TaskStateBadges from './TaskStateBadges';
 import TaskHealthCell from './TaskHealthCell';
 import type { TeamProject, TeamTask } from "@/modules/team-projects";
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 // Ligne unifiée perso/entreprise — même liste, deux rendus distincts.
 export type UnifiedTaskRow =
@@ -223,7 +224,7 @@ export const TaskRow = React.memo(({
   const [snoozeCalendar, setSnoozeCalendar] = useState(false);
   const getCategoryById = useCategoryLookup();
   const category = getCategoryById(task.category);
-  const categoryColor = category?.color || '#94a3b8';
+  const categoryColor = category?.color || NO_CATEGORY_COLOR;
   const overdue = isTaskOverdue(task.deadline, task.completed);
 
   // Micro-animation de complétion (#47) : check dessiné (draw 200 ms) +
