@@ -23,6 +23,12 @@ const taskRows = (page: Page) =>
 
 test.describe('Entreprise — onglet Tâches (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
+  // 🔴 Ces cas mesurent le TABLEAU (en-têtes, tri, colonne PROJET). Depuis la
+  // refonte mobile (29ceaa6c, 2026-10-11), un téléphone affiche une liste de
+  // cartes (MobileTeamTaskList) : sans cette largeur, le project mobile-safari
+  // cherchait des en-têtes qui n'y existent plus (14 échecs). On garde la
+  // couverture WebKit du tableau ; la liste mobile reste à couvrir pour elle.
+  test.use({ viewport: { width: 1280, height: 900 } });
 
   // L'accès rapide porte les LISTES de l'organisation depuis la mig. 203
   // (21ae8662, 2026-09-28), plus les projets : ce cas cherchait la pastille

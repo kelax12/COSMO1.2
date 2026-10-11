@@ -38,6 +38,9 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
 
   test('Description en grand : la popup s\'ouvre au-dessus du modal et reste synchronisée', async ({ demoPage: page }) => {
+    // Mesure le TABLEAU des tâches : largeur d'ordinateur, la refonte mobile
+    // (29ceaa6c) affichant une liste de cartes sur téléphone.
+    await page.setViewportSize({ width: 1280, height: 900 });
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
@@ -94,6 +97,9 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
   });
 
   test('Assigner l\'événement : la sidebar ne montre que la tâche ciblée', async ({ demoPage: page }) => {
+    // Mesure le TABLEAU des tâches : largeur d'ordinateur, la refonte mobile
+    // (29ceaa6c) affichant une liste de cartes sur téléphone.
+    await page.setViewportSize({ width: 1280, height: 900 });
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 

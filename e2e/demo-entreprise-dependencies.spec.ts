@@ -18,7 +18,18 @@ import { test, expect, navTo, openOrgSection, dismissFirstSightBubble } from './
 
 /** Passe la vue Projets sur l'un des trois modes de la barre d'outils. */
 const switchView = async (page: Page, name: 'Liste' | 'Tableau' | 'Planning') => {
-  await page.getByRole('group', { name: /vue/i }).getByRole('button', { name }).click();
+  // Sur téléphone, la barre « Vue » vit dans la feuille « Filtres » depuis la
+  // refonte mobile (maquettes 242 et 250, 29ceaa6c) : on l'ouvre d'abord, et
+  // on la referme après le choix.
+  const vue = page.getByRole('group', { name: /vue/i }).filter({ visible: true }).first();
+  const dansFeuille = !(await vue.isVisible().catch(() => false));
+  if (dansFeuille) await page.getByRole('button', { name: /^filtres$/i }).click();
+  await page.getByRole('group', { name: /vue/i }).filter({ visible: true }).first().getByRole('button', { name }).click();
+  if (dansFeuille) {
+    const feuille = page.getByRole('dialog', { name: /^filtres$/i });
+    if (await feuille.isVisible().catch(() => false)) await page.keyboard.press('Escape');
+    await expect(feuille).toBeHidden({ timeout: 5_000 });
+  }
 };
 
 /**
