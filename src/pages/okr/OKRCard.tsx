@@ -8,6 +8,7 @@ import { getProgress, type Objective } from './okr-page-logic';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import BottomSheet from '@/components/mobile/BottomSheet';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 interface OKRCardProps {
   objective: Objective;
@@ -81,7 +82,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                     <div className="flex-1 min-w-0">
                       <h2 className="text-headline font-semibold line-clamp-2" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h2>
                       <p className="mt-0.5 flex items-center gap-1.5 text-label" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: category ? resolveColor(category.color) : 'rgb(var(--color-text-muted))' }} aria-hidden="true" />
+                        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: category ? resolveColor(category.color) : NO_CATEGORY_COLOR }} aria-hidden="true" />
                         <span className="truncate">
                           {category?.name ?? t('card.uncategorized')} · {t('card.endsOn', { date: formatDate(end, { day: 'numeric', month: 'short' }) })}
                         </span>
@@ -98,10 +99,8 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   </div>
 
                   <div className="hidden sm:flex justify-between items-center mb-4 gap-4">
-                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-caption sm:text-xs font-medium whitespace-nowrap shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}>
-                      {category && (
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: resolveColor(category.color) }} />
-                      )}
+                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-caption sm:text-xs font-medium whitespace-nowrap shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : NO_CATEGORY_COLOR + '40', color: category ? resolveColor(category.color) : 'rgb(var(--color-text-secondary))' }}>
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) : NO_CATEGORY_COLOR }} />
                       <span>{category?.name ?? t('card.uncategorized')}</span>
                     </span>
 
