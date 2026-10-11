@@ -111,6 +111,25 @@ interface AgendaCalendarSectionProps {
   renderReviewBadge?: (eventId: string) => React.ReactNode;
 }
 
+/**
+ * Couleur du titre d'un événement mobile, posé sur l'aplat de sa couleur.
+ * Bug rapporté le 2026-10-11 : un bloc blanc sans titre. Le titre était
+ * TOUJOURS blanc ; sur une couleur claire, ou sur l'accent de repli (presque
+ * blanc dans les thèmes Gris et Noir), il disparaissait. Hex : luminance
+ * relative ; au-delà de 0,6, texte sombre.
+ */
+function eventTextColor(color: string): string {
+  const m = /^#([0-9a-f]{6})$/i.exec(color.trim());
+  if (!m) return '#ffffff';
+  const n = parseInt(m[1], 16);
+  const lin = (c: number) => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const lum = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+  return lum > 0.6 ? '#1f2937' : '#ffffff';
+}
+
+/** Repli d'un événement sans couleur : l'accent PLEIN et son texte prévu. */
+const FALLBACK_EVENT_BG = 'rgb(var(--color-accent-solid))';
+
 const UNSELECT_CANCEL =
   '.modal-overlay,.modal-content,input,textarea,select,button,.fc-event,[data-radix-popper-content-wrapper]';
 
@@ -220,7 +239,7 @@ const AgendaCalendarSection = ({
     return (
       <div
         className={`relative h-full w-full flex items-center gap-1 p-1 text-xs cursor-pointer ${centered ? 'justify-center' : ''} ${tint ? 'rounded-lg px-1.5' : ''}`}
-        style={tint ? { backgroundColor: tint } : undefined}
+        style={tint ? { backgroundColor: tint, color: tint === FALLBACK_EVENT_BG ? 'rgb(var(--color-accent-solid-foreground))' : eventTextColor(tint) } : undefined}
       >
         {author && (
           <span className="shrink-0 rounded-full ring-1 ring-white/70" title={t('event.addedBy', { name: author.displayName })}>
@@ -228,7 +247,7 @@ const AgendaCalendarSection = ({
           </span>
         )}
         <span
-          className={`font-medium text-white truncate leading-tight ${centered ? 'text-center' : ''} ${hasTask ? 'pr-5' : ''}`}
+          className={`font-medium ${tint ? '' : 'text-white'} truncate leading-tight ${centered ? 'text-center' : ''} ${hasTask ? 'pr-5' : ''}`}
         >
           {title}
         </span>
@@ -428,7 +447,7 @@ const AgendaCalendarSection = ({
                 Boolean(eventInfo.event.extendedProps?.taskId),
                 Boolean(eventInfo.event.extendedProps?.needsReview),
                 Boolean(eventInfo.event.extendedProps?.taskDone),
-                eventInfo.event.backgroundColor || 'rgb(var(--color-accent))',
+                eventInfo.event.backgroundColor || FALLBACK_EVENT_BG,
               )
             }
             eventClassNames={(arg) => [
