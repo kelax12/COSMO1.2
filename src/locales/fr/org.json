@@ -347,6 +347,7 @@
     "historyNone": "aucune"
   },
   "team": {
+    "leadSuffix": ", responsable",
     "newTeam": "Nouvelle équipe",
     "nameRequired": "Le nom de l'équipe est requis",
     "name": "Nom de l'équipe *",
@@ -741,6 +742,7 @@
     "intro": "Ces réglages remplacent les droits déduits de l'organigramme. Une ligne laissée sur « Par défaut » suit la position du membre dans l'entreprise."
   },
   "teamPage": {
+    "addDescription": "Ajouter une description",
     "back": "Toutes les équipes",
     "notFound": "Cette équipe n'existe pas, ou plus. Elle a pu être supprimée.",
     "edit": "Modifier l'équipe",

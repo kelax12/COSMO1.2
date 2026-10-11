@@ -90,6 +90,10 @@
     "refuse": "Refuser"
   },
   "auth": {
+    "legalConsentTermsShort": "CGU",
+    "legalConsentShort": "En créant un compte, vous acceptez les {{terms}} et avez lu la {{privacy}}.",
+    "createAccountTitle": "Créer un compte",
+    "signInTitle": "Connexion",
     "modalAria": "Connexion ou inscription",
     "loginSubtitle": "Connectez-vous à votre compte",
     "registerSubtitle": "Créez votre compte gratuitement",
@@ -206,6 +210,7 @@
     "hide": "Masquer la bannière démo"
   },
   "demoBridge": {
+    "short": "Démo : rien n'est gardé",
     "aria": "Créer un compte COSMO",
     "title": "Gardez votre organisation",
     "text": "Vous venez de vous construire un vrai système. Créez votre compte pour l'avoir sur tous vos appareils, c'est gratuit.",

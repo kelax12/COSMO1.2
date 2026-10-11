@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Link as LinkIcon, UserRound, ListTodo, TrendingUp, CalendarDays, Briefcase, History } from 'lucide-react';
+import { X, Link as LinkIcon, UserRound, ListTodo, TrendingUp, CalendarDays, Briefcase, History, MoreHorizontal } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { getDateLocale } from '@/i18n/format';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { toast } from '@/lib/toast';
 import { isManagerOf, useOrgMemberLastActivity, type OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
@@ -122,6 +126,7 @@ const MemberSheet = ({
   const isMe = member.userId === currentUserId;
   // Mêmes mots que l'annuaire et le glossaire (cohérence globale, 2026-09-25).
   const roleTerm = member.role === 'admin' ? 'admin' : isManagerOf(members, member.userId) ? 'manager' : 'member';
+  const isMobile = useIsMobile();
   const roleLabel = <RoleTerm term={roleTerm}>{t(`roles.${roleTerm}`)}</RoleTerm>;
 
   // L'agenda est un calendrier plein écran, pas une carte : FullCalendar ne
@@ -155,23 +160,36 @@ const MemberSheet = ({
         {/* En-tête */}
         <div className="flex items-start justify-between gap-3 p-5 pb-3 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <MemberAvatar avatar={member.avatar} name={member.displayName} size={40} />
+            <MemberAvatar avatar={member.avatar} name={member.displayName} size={40} neutral={isMobile} />
             <div className="min-w-0">
               <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">
                 {isMe ? ta('pyramid.you') : member.displayName}
               </h2>
-              <p className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
+              {/* Maquettes 305 et 309 : rôle en casse normale, dernière activité sous le nom. */}
+              <p className="text-caption font-semibold md:uppercase md:tracking-wide max-md:text-label max-md:font-normal text-[rgb(var(--color-text-muted))]">
                 {roleLabel}
+                {memberActivity?.lastActivityAt && (
+                  <span className="md:hidden"> · {formatDistanceToNow(new Date(memberActivity.lastActivityAt), { addSuffix: true, locale: getDateLocale() })}</span>
+                )}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
+            {/* Maquette 313 : sur mobile, le lien passe dans un menu « … ». */}
+            <DropdownMenu>
+              <DropdownMenuTrigger aria-label={t('common.actionsFor', { name: member.displayName })} className="md:hidden w-10 h-10 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))]">
+                <MoreHorizontal size={20} aria-hidden="true" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onClick={copyProfileLink}><LinkIcon size={14} aria-hidden="true" /> {ta('member.copyLink')}</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <button
               type="button"
               onClick={copyProfileLink}
               aria-label={ta('member.copyLink')}
               title={ta('member.copyLink')}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
+              className="max-md:hidden w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
             >
               <LinkIcon size={16} aria-hidden="true" />
             </button>
@@ -203,13 +221,14 @@ const MemberSheet = ({
                   role="tab"
                   aria-selected={active}
                   onClick={() => setTab(id)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-3 max-md:px-2.5 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
                     active
-                      ? 'border-indigo-500 text-[rgb(var(--color-text-primary))]'
+                      ? 'border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-text-primary))]'
                       : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
                   }`}
                 >
-                  <Icon size={15} aria-hidden="true" /> {label.ns === 'org' ? t(label.key) : ta(label.key)}
+                  {/* Maquette 306 : sans icône sur mobile, les onglets tiennent entiers. */}
+                  <Icon size={15} aria-hidden="true" className="max-md:hidden" /> {label.ns === 'org' ? t(label.key) : ta(label.key)}
                 </button>
               );
             })}

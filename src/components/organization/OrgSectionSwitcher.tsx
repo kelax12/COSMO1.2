@@ -17,6 +17,9 @@ interface Props {
   onSearch?: () => void;
   /** Glossaire : il a quitté l'en-tête mobile (maquette 236). */
   onGlossary?: () => void;
+  /** Section courante absente de `items` (section masquée, ex. Statistiques) :
+   *  sans elle, le bouton s'affichait VIDE (maquette 275). */
+  fallbackActive?: Pick<OrgNavItem, 'label' | 'Icon'>;
 }
 
 /**
@@ -32,11 +35,11 @@ interface Props {
  * réduit), `useBottomSheet` (la poignée tient son geste, C-07) et
  * `useModalA11y` (piège de focus, Échap, C-53).
  */
-const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId, shortcuts, onSearch, onGlossary }) => {
+const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId, shortcuts, onSearch, onGlossary, fallbackActive }) => {
   const { t: tOrgAdmin } = useT('orgAdmin');
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const active = items.find((item) => item.id === activeId);
+  const active = items.find((item) => item.id === activeId) ?? fallbackActive;
 
   return (
     <div className="md:hidden mb-5">
