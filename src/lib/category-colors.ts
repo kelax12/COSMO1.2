@@ -46,3 +46,10 @@ export const CATEGORY_COLORS = [
  */
 export const getColorHex = (colorName: string): string =>
   CATEGORY_COLORS.find((c) => c.name === colorName)?.hex ?? '#3b82f6';
+
+/**
+ * Couleur d'un élément « Sans catégorie » quand le modèle ne porte qu'une
+ * couleur (événement, habitude) : le gris déjà utilisé par l'agenda pour une
+ * tâche sans catégorie (`calendar-events.ts`).
+ */
+export const NO_CATEGORY_COLOR = '#6B7280';
