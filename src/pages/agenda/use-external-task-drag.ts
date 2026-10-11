@@ -77,5 +77,5 @@ export function useExternalTaskDrag({ showTaskSidebar, setShowTaskSidebar, isDra
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [isDraggingTask]);
+  }, [isDraggingTask, setIsDraggingTask, setShowTaskSidebar, sidebarRef]);
 }
