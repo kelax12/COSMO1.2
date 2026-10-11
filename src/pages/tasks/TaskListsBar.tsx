@@ -108,7 +108,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                   className="mb-2 sm:mb-8"
                   data-tutorial-id="tasks-lists"
                 >
-                  <div className="mb-2 sm:mb-4">
+                  <div className="mb-1 sm:mb-4">
                     {/* Libellé court « Listes » partout, sans marge sous le titre : le
                         `pt-*` des chips suffit (2026-10-01). */}
                     {/* Maquette 142 (2026-10-10) : sur mobile, le titre « Listes »
@@ -136,7 +136,9 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         plutôt que juste discrets — c'est le bug qui a motivé
                         `pt-8` avant que le couple ne soit réduit de moitié
                         (2026-09-16, gap « Liste » → chips jugé trop grand). */}
-                    <div className="flex sm:flex-wrap gap-3 pt-2 sm:pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]">
+                    {/* 🔴 `overflow-y-hidden` + `pb-1` (2026-10-11) : la zone tactile de 44 px
+                        débordait de 4 px, la rangée défilait en Y et volait le geste à la page. */}
+                    <div className="flex sm:flex-wrap gap-3 pt-2 pb-1 sm:pt-8 sm:pb-0 overflow-x-auto overflow-y-hidden sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -261,13 +263,9 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                             onDragEnd={commitReorderLists}
                             whileDrag={{ scale: 1.05, zIndex: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}
                             className={`relative shrink-0 ${isMobile ? '' : 'cursor-grab active:cursor-grabbing'}`}
-                            // `touch-action: pan-y` explicite (mobile) : sans lui, ce
-                            // `Reorder.Item` (composant pensé pour le drag-to-reorder,
-                            // même avec `drag={false}`) peut encore intercepter le
-                            // geste tactile et empêcher le scroll vertical NATIF de la
-                            // page de passer à travers la chip — elle « résiste » au
-                            // doigt au lieu de le laisser scroller la page derrière elle.
-                            style={{ touchAction: 'pan-y' }}
+                            // ❌ Pas de `pan-y` sur mobile : il bloquait le glissé horizontal
+                            // de la rangée (0 px depuis une liste, mesuré 2026-10-11).
+                            style={isMobile ? undefined : { touchAction: 'pan-y' }}
                             onMouseEnter={() => setHoveredListId(list.id)}
                             onMouseLeave={() => setHoveredListId(null)}
                           >
