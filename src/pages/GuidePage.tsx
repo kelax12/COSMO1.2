@@ -151,7 +151,10 @@ const GuidePage: React.FC = () => {
             </details>
 
             {/* ══ PRISE EN MAIN ══════════════════════════════════════════ */}
-            <section>
+            {/* `lg:!mt-0` : le sommaire mobile ci-dessus est masqué par CLASSE dès lg,
+                et `space-y-24` le compte quand même : la section recevait 96 px de vide
+                en tête sur desktop (capture Visual du 2026-10-11). */}
+            <section className="lg:!mt-0">
               <SectionHeader
                 id="demarrage"
                 icon={<Rocket size={24} />}
