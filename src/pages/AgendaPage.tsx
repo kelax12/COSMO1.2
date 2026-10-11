@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router';
 import FullCalendar from '@fullcalendar/react';
 import { DateSelectArg, EventClickArg, DatesSetArg } from '@fullcalendar/core';
 import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, useRestoreEvent, CalendarEvent } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
+import { categoryColorSet } from '@/lib/category-colors';
 import TaskSidebar from '@/components/TaskSidebar';
 import { MobileScheduleSheet, QuickEventCard, RecurringEventsManager } from './agenda/lazy-overlays';
 import TaskModal from '@/components/TaskModal';
@@ -249,7 +250,8 @@ const AgendaPage: React.FC = () => {
     onDelete: handleSlotDelete,
   };
 
-  const calendarEvents = buildCalendarEvents(events, new Date(), reviewEventIds, doneEventIds);
+  const categoryColors = useMemo(() => categoryColorSet(categories), [categories]);
+  const calendarEvents = buildCalendarEvents(events, new Date(), reviewEventIds, doneEventIds, categoryColors);
 
   // Déplacer, redimensionner, déposer une tâche : les trois gestes qui écrivent
   // depuis la grille retirent le décalage du fuseau d'affichage au même endroit.
