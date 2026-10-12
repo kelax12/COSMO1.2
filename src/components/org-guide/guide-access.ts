@@ -13,3 +13,7 @@ export const guideAccess = (action: GuideAction, viewer: GuideViewer): GuideAcce
   if (req === 'manager') return viewer.isAdmin || viewer.isManager ? 'allowed' : 'denied';
   return viewer.can[req] ? 'allowed' : 'denied';
 };
+
+/** Clé du droit manquant : `task.create` devient `task_create` (`t()` découpe sur les points). */
+export const deniedRightKey = (action: GuideAction): string =>
+  `denied.rights.${(action.requires ?? 'admin').replace(/\./g, '_')}`;
