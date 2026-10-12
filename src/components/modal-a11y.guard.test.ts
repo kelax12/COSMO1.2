@@ -45,6 +45,8 @@ const EXEMPTS: Record<string, string> = {
     'popover de notifications ancre a la cloche, non modal (sorti de OrgNotificationsBell le 2026-09-25, charge a l ouverture).',
   'components/organization/TeamCategoryTreeSelect.tsx':
     "confirmation EN LIGNE (une bande dans le flux d'un Popover Radix deja piege, pas un calque) : elle porte alertdialog pour etre annoncee, mais elle ne recouvre rien et un second piege se disputerait le focus avec celui du Popover.",
+  'components/org-guide/OrgGuideHost.tsx':
+    "le `fixed inset-0` est un bouclier de clics transparent et aria-hidden, pose pendant la demo automatique du guide : il empeche l'utilisateur de cliquer l'ecran dessous, il n'expose aucune boite de dialogue et n'a rien a focaliser. Le tiroir (Sheet Radix) piege deja le focus ; la barre de controle et les panneaux de fin sont des role=status/toolbar hors calque.",
   'components/tutorial/TutorialCard.tsx':
     'carton de tutoriel ancre, rendu dans PageTutorial qui est en pointer-events-none : il commente la page, il ne la capture pas.',
 };
