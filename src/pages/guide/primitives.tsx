@@ -120,7 +120,7 @@ export function useGuideSchemas() {
       url: 'https://thecosmo.app/guide',
       inLanguage: currentInLanguage(),
       datePublished: '2025-01-01',
-      dateModified: '2026-08-30',
+      dateModified: '2026-10-12',
       author: { '@type': 'Organization', name: 'Cosmo', url: 'https://thecosmo.app' },
       publisher: { '@type': 'Organization', name: 'Cosmo', url: 'https://thecosmo.app' },
       mainEntityOfPage: 'https://thecosmo.app/guide',

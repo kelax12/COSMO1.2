@@ -134,7 +134,8 @@
   "help": {
     "intro": "Everything you need to master every Cosmo feature.",
     "guideTitle": "Full guide",
-    "guideHint": "Tasks, Calendar, Habits, OKRs, Statistics, Premium: it's all there.",
+    "heading": "User guide",
+    "guideHint": "Tasks, lists, Calendar, Habits, OKRs, Statistics, enterprise mode: it's all there.",
     "supportTitle": "Need help?",
     "supportHint": "Our team replies within 24h.",
     "adminTitle": "Cosmo stats",
