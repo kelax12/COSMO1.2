@@ -161,3 +161,21 @@ pas une condition nouvelle opposée à l'utilisateur.
 
 ⚠️ **Ce qui reste ouvert sur `A3`** : SIREN, RCS, TVA et adresse attendent l'immatriculation et la
 domiciliation (`M-01`, `M-02`, `M-05`), et le téléphone des hébergeurs (`M-65`).
+
+### 2026-10-12 · adresse de contact · **FORME** · **aucun préavis**
+
+| Document | Empreinte |
+|---|---|
+| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `26976cb9601f5f41` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `c28a46c4cd194d75` |
+
+**Ce qui a changé** : l'adresse `axellongattepro@gmail.com` devient `contact@thecosmo.app`
+partout où elle figure (mentions légales s1 et contact, politique de confidentialité s1 et
+exercice des droits, CGU : rétractation 5 bis, modèle de formulaire, données 6, contact).
+C'est l'adresse déjà publiée comme point de contact DSA (CGU 4 bis). Dates de mise à jour des
+trois documents portées au 12 octobre 2026. Empreintes relevées par
+`node scripts/check-legal-journal.mjs` le 2026-10-12.
+
+**Aucun préavis** : aucune clause ne bouge, seul le canal pour joindre l'éditeur change.
+⚠️ La boîte `contact@thecosmo.app` doit être relevée : une rétractation ou une demande RGPD
+envoyée là fait courir les délais légaux (14 jours, un mois).

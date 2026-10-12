@@ -3,10 +3,10 @@
     "seoTitle": "Privacy policy – Cosmo App",
     "seoDescription": "Cosmo's privacy policy: data collected, secure Supabase storage, Row Level Security, GDPR rights and contact.",
     "title": "Privacy policy",
-    "updatedAt": "10 October 2026",
+    "updatedAt": "12 October 2026",
     "s1": {
       "title": "1. Data controller",
-      "p1": "The controller of the personal data collected through the Cosmo application is Axel Longatte, publisher of Cosmo, reachable at [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com)."
+      "p1": "The controller of the personal data collected through the Cosmo application is Axel Longatte, publisher of Cosmo, reachable at [contact@thecosmo.app](mailto:contact@thecosmo.app)."
     },
     "s2": {
       "title": "2. Data collected",
@@ -86,7 +86,7 @@
       "li5": "**Right to object**: object to certain processing",
       "li6": "**Right to restriction**: restrict processing in certain cases",
       "p1": "Portability is exercised directly from **Settings, My data tab**: the export covers your tasks, habits, events, OKRs, categories, lists and your profile, in CSV format.",
-      "p2": "For any other right: [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com). We reply within **one month** of receiving your request, in accordance with Article 12 of the GDPR. That period may be extended by two months for a complex request, in which case we tell you within the first month.",
+      "p2": "For any other right: [contact@thecosmo.app](mailto:contact@thecosmo.app). We reply within **one month** of receiving your request, in accordance with Article 12 of the GDPR. That period may be extended by two months for a complex request, in which case we tell you within the first month.",
       "p3": "You can also lodge a complaint with the **CNIL**, the French data protection authority: [www.cnil.fr](https://www.cnil.fr)",
       "li7": "**Post-mortem instructions**: set instructions on how your data is kept, erased and disclosed after your death (Article 85 of the French Data Protection Act)"
     },
