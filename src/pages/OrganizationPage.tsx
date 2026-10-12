@@ -9,6 +9,7 @@ import {
   useOrgMembers,
   useMyOrgPermissions,
   useOrgNotifications,
+  useOrgRoles,
   isManagerOf,
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
@@ -19,6 +20,8 @@ import { MobileHeader } from '@/components/mobile';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
 import OrgSideNav from '@/components/organization/OrgSideNav';
+import { OrgGuideFab } from '@/components/org-guide/OrgGuideFab';
+import type { GuideViewer } from '@/components/org-guide/guide-types';
 import { useOrgNavMode } from '@/components/organization/use-org-nav-mode';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
@@ -178,6 +181,9 @@ const OrganizationPage = () => {
   // plusieurs onglets s'en servent — le hook ne déclenche qu'une requête,
   // partagée par React Query avec celles des composants enfants.
   const myPermissions = useMyOrgPermissions(myOrg?.id);
+  // Guide entreprise : les rôles personnalisés (mig. 219) n'existent que si
+  // leur lecture réussit. Même requête que `useMyOrgPermissions`, partagée.
+  const { isError: rolesUnavailable } = useOrgRoles(myOrg?.id);
   // Appelé ICI, avant les early returns `isLoading` / `!myOrg` : un hook placé
   // plus bas ne serait pas monté sur tous les rendus.
   const { data: orgSubscription } = useOrgSubscription(myOrg?.id);
@@ -226,6 +232,13 @@ const OrganizationPage = () => {
   // HIÉRARCHIQUES (onglets Pyramide et Statistiques) : voir l'équipe qu'on
   // encadre n'est pas une permission réglable, c'est une position.
   const canInvite = myPermissions.can['member.invite'];
+  const guideViewer: GuideViewer = {
+    can: myPermissions.can,
+    isAdmin,
+    isManager,
+    isOwner,
+    customRolesAvailable: !rolesUnavailable,
+  };
   // La pyramide dit qui encadre qui, l'équipe qui travaille ensemble (M3) :
   // un responsable d'équipe regarde les statistiques de SON équipe.
   // Tant que les équipes chargent, un lien vers `stats` n'est pas renvoyé
@@ -480,6 +493,9 @@ const OrganizationPage = () => {
       {/* Desktop : la navigation vit à DROITE, hors de la zone qui défile.
           Rendue par portail dans l'emplacement de `Layout`, donc sa place
           dans cet arbre ne dit rien de sa place à l'écran. */}
+      {/* Guide entreprise : bouton flottant desktop, le reste arrive en lazy. */}
+      <OrgGuideFab viewer={guideViewer} />
+
       <OrgSideNav
         items={navItems}
         activeId={tab}
