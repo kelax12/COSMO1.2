@@ -19,7 +19,7 @@ export function GuideCursor({ point, pressed }: { point: CursorPoint; pressed: b
       width={26}
       height={30}
       viewBox="0 0 26 30"
-      className="pointer-events-none fixed left-0 top-0 z-[520] drop-shadow-md"
+      className="pointer-events-none fixed left-0 top-0 z-[10020] drop-shadow-md"
       initial={false}
       animate={{ x: point.x - TIP.x, y: point.y - TIP.y, scale: pressed ? 0.85 : 1 }}
       transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 140, damping: 22, mass: 0.9 }}
