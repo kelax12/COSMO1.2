@@ -64,6 +64,10 @@
     "noReport": "No report yet: the first one is generated at midnight.",
     "noRequest": "No pending request.",
     "noUnplaced": "Everyone is already placed.",
+    "noTrash": "The bin is empty: nothing to restore for now.",
+    "noOneToAdd": "Every member is already in this team: nobody left to add.",
+    "noProjectTeam": "This project belongs to no team: the whole company already sees it.",
+    "noTeamProject": "This team has no project yet: no workload to spread for now.",
     "startPrereq": "Show me how"
   },
   "actions": {

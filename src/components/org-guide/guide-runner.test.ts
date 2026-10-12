@@ -53,6 +53,37 @@ describe('createGuideRun', () => {
     expect(await done).toEqual({ status: 'missing', target: 'nope' });
   });
 
+  it('cible conditionnelle absente : fin empty avec sa clé, pas missing', async () => {
+    const deps = makeDeps({});
+    const run = createGuideRun([
+      { kind: 'click', target: 'trash-open', emptyKey: 'empty.noTrash' },
+      { kind: 'field', target: 'trash-list', bubbleKey: 'b' },
+    ], deps);
+    const done = run.start();
+    await vi.advanceTimersByTimeAsync(3100);
+    expect(await done).toEqual({ status: 'empty', emptyKey: 'empty.noTrash' });
+  });
+
+  it('champ conditionnel absent : fin empty aussi', async () => {
+    const deps = makeDeps({});
+    const run = createGuideRun([{ kind: 'field', target: 'report-period', bubbleKey: 'b', emptyKey: 'empty.noReport' }], deps);
+    const done = run.start();
+    await vi.advanceTimersByTimeAsync(3100);
+    expect(await done).toEqual({ status: 'empty', emptyKey: 'empty.noReport' });
+  });
+
+  it('étape optional absente : sautée, la démo continue', async () => {
+    const deps = makeDeps({ next: tag('next') });
+    const run = createGuideRun([
+      { kind: 'click', target: 'project-menu-open', optional: true },
+      { kind: 'click', target: 'next' },
+    ], deps);
+    const done = run.start();
+    await vi.runAllTimersAsync();
+    expect(await done).toEqual({ status: 'completed' });
+    expect(deps.log).toEqual(['step:1/2', 'step:2/2', 'move:next', 'click:next']);
+  });
+
   it('cible qui apparaît tard est attendue', async () => {
     const found: Record<string, HTMLElement | null> = {};
     const deps = makeDeps(found);

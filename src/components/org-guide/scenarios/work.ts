@@ -47,8 +47,11 @@ export const WORK_ACTIONS: GuideAction[] = [
   // L'audience d'un projet = ses équipes associées (pas de case « confidentiel »).
   { id: 'project.audience', category: 'work', requires: 'project.edit', steps: [
     { kind: 'goto', section: 'projects', via: 'nav-projects' },
+    // Vue portfolio : l'élément choisi ouvre le projet. Vue liste : il ouvre
+    // le menu ⋯ de la carte, dont « Ouvrir la page » est l'étape suivante.
     { kind: 'pick-first', target: 'projects-list', emptyKey: 'empty.noProject' },
-    { kind: 'click', target: 'project-detail-audience' },
+    { kind: 'click', target: 'project-menu-open', optional: true },
+    { kind: 'click', target: 'project-detail-audience', emptyKey: 'empty.noProjectTeam' },
     { kind: 'field', target: 'project-audience-who', bubbleKey: k('project.audience', 'b1') },
     { kind: 'field', target: 'project-audience-add', bubbleKey: k('project.audience', 'b2') },
     { kind: 'handoff', bubbleKey: 'end.handoff' },
@@ -64,7 +67,7 @@ export const WORK_ACTIONS: GuideAction[] = [
   // La corbeille vit dans la barre de l'onglet Projets (et OKR), pas dans Tâches.
   { id: 'trash.restore', category: 'work', requires: 'task.deleteAny', steps: [
     { kind: 'goto', section: 'projects', via: 'nav-projects' },
-    { kind: 'click', target: 'trash-open' },
+    { kind: 'click', target: 'trash-open', emptyKey: 'empty.noTrash' },
     { kind: 'field', target: 'trash-list', bubbleKey: k('trash.restore', 'b1') },
     { kind: 'field', target: 'trash-retention', bubbleKey: k('trash.restore', 'b2') },
     { kind: 'handoff', bubbleKey: 'end.handoff' },

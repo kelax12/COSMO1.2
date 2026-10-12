@@ -290,13 +290,15 @@ const TeamProjectCard = ({
         {(
           <DropdownMenu>
             <DropdownMenuTrigger
+              // Guide entreprise : en vue liste, ouvrir un projet passe par ce menu.
+              data-guide-item
               aria-label={t('project.actionsAria', { name: project.name })}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
               <MoreHorizontal size={16} aria-hidden="true" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={onOpenProject}>
+              <DropdownMenuItem onClick={onOpenProject} data-guide-id="project-menu-open">
                 <ExternalLink size={14} aria-hidden="true" /> {pf('actions.open')}
               </DropdownMenuItem>
               {canEditProject && (

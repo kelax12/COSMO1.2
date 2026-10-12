@@ -499,7 +499,12 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
 
                       {/* Bouton + nouvelle liste — desktop uniquement inline dans le scroll */}
                       <div className="hidden sm:contents">
-                        <AnimatePresence mode="wait">
+                        {/* Pas de `mode="wait"` : il ne montait le formulaire qu'à la FIN
+                            de la sortie du bouton, donc d'une animation pilotée par
+                            requestAnimationFrame. Onglet en arrière-plan (démo du guide
+                            entreprise, mesure du 2026-10-12) : zéro image, le bouton
+                            restait figé à opacité 0 et le formulaire ne montait jamais. */}
+                        <AnimatePresence>
                           {!showCreateList ? (
                             <motion.button
                               key="add-btn"

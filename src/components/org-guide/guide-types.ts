@@ -12,8 +12,13 @@ export type GuideRequirement = OrgPermissionKey | 'admin' | 'manager' | 'owner';
  */
 export type GuideStep =
   | { kind: 'goto'; section: OrgSectionSegment | 'overview'; via: string }
-  | { kind: 'click'; target: string; bubbleKey?: string }
-  | { kind: 'field'; target: string; bubbleKey: string }
+  /**
+   * `emptyKey` : la cible n'existe qu'en présence de données (corbeille non
+   * vide, équipe avec projet...). Absente au délai : fin `empty`, pas `missing`.
+   * `optional` : cible propre à une seule vue ; absente, l'étape est sautée.
+   */
+  | { kind: 'click'; target: string; bubbleKey?: string; emptyKey?: string; optional?: boolean }
+  | { kind: 'field'; target: string; bubbleKey: string; emptyKey?: string }
   | { kind: 'pick-first'; target: string; emptyKey: string; bubbleKey?: string }
   | { kind: 'handoff'; bubbleKey: string };
 

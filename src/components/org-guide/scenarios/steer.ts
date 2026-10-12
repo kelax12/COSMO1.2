@@ -17,7 +17,7 @@ export const STEER_ACTIONS: GuideAction[] = [
   // La valeur d'un KR se saisit en ligne sur la carte (desktop), sans dialogue.
   { id: 'kr.update', category: 'steer', steps: [
     { kind: 'goto', section: 'okr', via: 'nav-okr' },
-    { kind: 'field', target: 'okr-kr-value', bubbleKey: k('kr.update', 'b1') },
+    { kind: 'field', target: 'okr-kr-value', emptyKey: 'empty.noOkr', bubbleKey: k('kr.update', 'b1') },
     { kind: 'field', target: 'okr-kr-progress', bubbleKey: k('kr.update', 'b2') },
     { kind: 'handoff', bubbleKey: 'end.handoff' },
   ] },
@@ -34,14 +34,14 @@ export const STEER_ACTIONS: GuideAction[] = [
   { id: 'report.view', category: 'steer', requires: 'report.org', steps: [
     { kind: 'goto', section: 'settings', via: 'nav-settings' },
     { kind: 'click', target: 'settings-panel-reports' },
-    { kind: 'field', target: 'report-period', bubbleKey: k('report.view', 'b1') },
+    { kind: 'field', target: 'report-period', emptyKey: 'empty.noReport', bubbleKey: k('report.view', 'b1') },
     { kind: 'field', target: 'report-scope', bubbleKey: k('report.view', 'b2') },
     { kind: 'handoff', bubbleKey: 'end.handoff' },
   ] },
   { id: 'team.workload', category: 'steer', requires: 'manager', steps: [
     { kind: 'goto', section: 'teams', via: 'nav-teams' },
     { kind: 'pick-first', target: 'teams-list', emptyKey: 'empty.noTeam' },
-    { kind: 'field', target: 'team-workload-members', bubbleKey: k('team.workload', 'b1') },
+    { kind: 'field', target: 'team-workload-members', emptyKey: 'empty.noTeamProject', bubbleKey: k('team.workload', 'b1') },
     { kind: 'field', target: 'team-workload-legend', bubbleKey: k('team.workload', 'b2') },
     { kind: 'handoff', bubbleKey: 'end.handoff' },
   ] },
