@@ -35,7 +35,7 @@ export const PEOPLE_ACTIONS: GuideAction[] = [
   { id: 'member.joinRequest', category: 'people', requires: 'admin', steps: [
     { kind: 'goto', section: 'settings', via: 'nav-settings' },
     { kind: 'click', target: 'settings-panel-invite' },
-    { kind: 'field', target: 'members-join-requests', bubbleKey: k('member.joinRequest', 'b1') },
+    { kind: 'field', target: 'members-join-requests', emptyKey: 'empty.noRequest', bubbleKey: k('member.joinRequest', 'b1') },
     { kind: 'field', target: 'join-request-first', bubbleKey: k('member.joinRequest', 'b2') },
     { kind: 'handoff', bubbleKey: 'end.handoff' },
   ] },
@@ -43,7 +43,7 @@ export const PEOPLE_ACTIONS: GuideAction[] = [
   { id: 'team.addMembers', category: 'people', requires: 'manager', steps: [
     { kind: 'goto', section: 'teams', via: 'nav-teams' },
     { kind: 'pick-first', target: 'teams-list', emptyKey: 'empty.noTeam' },
-    { kind: 'click', target: 'team-members-add' },
+    { kind: 'click', target: 'team-members-add', emptyKey: 'empty.noOneToAdd' },
     { kind: 'field', target: 'team-add-picker', bubbleKey: k('team.addMembers', 'b1') },
     { kind: 'handoff', bubbleKey: 'end.handoff' },
   ] },

@@ -21,6 +21,8 @@ export type GuideRunResult =
 
 const POLL_MS = 100;
 const TARGET_TIMEOUT_MS = 3000;
+/** Une étape `optional` attend moins : son absence est un cas prévu. */
+const OPTIONAL_TIMEOUT_MS = 1000;
 const FIELD_DWELL_MS = 2600;
 const STEP_GAP_MS = 500;
 
@@ -49,8 +51,8 @@ export const createGuideRun = (steps: GuideStep[], deps: GuideRunDeps) => {
     await gate();
   };
 
-  const waitFor = async (id: string): Promise<HTMLElement | null> => {
-    for (let waited = 0; waited <= TARGET_TIMEOUT_MS; waited += POLL_MS) {
+  const waitFor = async (id: string, timeout = TARGET_TIMEOUT_MS): Promise<HTMLElement | null> => {
+    for (let waited = 0; waited <= timeout; waited += POLL_MS) {
       await gate();
       const found = deps.find(id);
       if (found) return found;
@@ -67,8 +69,15 @@ export const createGuideRun = (steps: GuideStep[], deps: GuideRunDeps) => {
         deps.onStep(i, steps.length);
         if (step.kind === 'handoff') { deps.showBubble(step.bubbleKey, null); continue; }
         const id = step.kind === 'goto' ? step.via : step.target;
-        const target = await waitFor(id);
-        if (!target) return { status: 'missing', target: id };
+        const optional = step.kind === 'click' && step.optional === true;
+        const target = await waitFor(id, optional ? OPTIONAL_TIMEOUT_MS : TARGET_TIMEOUT_MS);
+        if (!target) {
+          if (optional) continue;
+          if ((step.kind === 'click' || step.kind === 'field') && step.emptyKey) {
+            return { status: 'empty', emptyKey: step.emptyKey };
+          }
+          return { status: 'missing', target: id };
+        }
         await deps.moveCursor(target);
         await gate();
         if (step.kind === 'goto') deps.navigate(step.section);

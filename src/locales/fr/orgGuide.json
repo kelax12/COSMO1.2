@@ -64,6 +64,10 @@
     "noReport": "Aucun rapport pour l'instant : le premier est généré à minuit.",
     "noRequest": "Aucune demande en attente.",
     "noUnplaced": "Tout le monde est déjà placé.",
+    "noTrash": "La corbeille est vide : rien à restaurer pour l'instant.",
+    "noOneToAdd": "Tous les membres sont déjà dans cette équipe : personne à ajouter.",
+    "noProjectTeam": "Ce projet n'appartient à aucune équipe : il est déjà visible par toute l'entreprise.",
+    "noTeamProject": "Cette équipe n'a pas encore de projet : rien à répartir pour l'instant.",
     "startPrereq": "Montre-moi comment"
   },
   "actions": {

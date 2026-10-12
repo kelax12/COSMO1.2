@@ -145,7 +145,7 @@ describe('scénarios du guide entreprise', () => {
       `actions.${a.id}.label`, `actions.${a.id}.synonyms`,
       ...a.steps.flatMap((s) => [
         'bubbleKey' in s ? s.bubbleKey : undefined,
-        s.kind === 'pick-first' ? s.emptyKey : undefined,
+        'emptyKey' in s ? s.emptyKey : undefined,
       ]),
     ]).filter((key): key is string => !!key);
     const missing = keys.filter((key) => typeof lookup(cat, key) !== 'string');
