@@ -3,7 +3,7 @@
     "seoTitle": "Terms of Use – Cosmo App",
     "seoDescription": "Terms of use for Cosmo, an app for tasks, habits and OKRs. Free access, rules of use and responsibilities.",
     "title": "Terms of Use",
-    "updatedAt": "24 September 2026",
+    "updatedAt": "12 October 2026",
     "s1": {
       "title": "1. Purpose",
       "p1": "These Terms of Use govern access to and use of **Cosmo**, a web platform for managing tasks, habits, objectives (OKRs) and a calendar.",
@@ -48,13 +48,13 @@
       "title": "5 bis. Right of withdrawal",
       "p1": "If you subscribe as a consumer, you have **fourteen days** from the date of subscription to withdraw, without having to give a reason.",
       "p2": "As the subscription covers a digital service supplied immediately, the checkout asks you, before paying, for two separate confirmations: your **express request** that the service start before the end of the withdrawal period, and your **acknowledgement** that you lose that right once the service has been fully performed before the end of the period. Neither box is ever pre-ticked, and payment cannot be started without both. If you withdraw within the fourteen days, you only owe the amount corresponding to the service supplied up to your withdrawal, in proportion to the total price. In practice, the refund guarantee in section 5 refunds the current period in full, which is more favourable to you.",
-      "p3": "If you do not give these confirmations, you keep your full fourteen-day period. To withdraw, simply write to us at [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com) stating your request. Any refund is made within fourteen days of our receiving it at the latest.",
-      "p4": "You may use the following template, but you are not required to: \"To Cosmo, axellongattepro@gmail.com. I hereby give notice that I withdraw from the contract for the subscription below. Plan subscribed on: [date]. Name: [your name]. Account email address: [address]. Date: [date].\""
+      "p3": "If you do not give these confirmations, you keep your full fourteen-day period. To withdraw, simply write to us at [contact@thecosmo.app](mailto:contact@thecosmo.app) stating your request. Any refund is made within fourteen days of our receiving it at the latest.",
+      "p4": "You may use the following template, but you are not required to: \"To Cosmo, contact@thecosmo.app. I hereby give notice that I withdraw from the contract for the subscription below. Plan subscribed on: [date]. Name: [your name]. Account email address: [address]. Date: [date].\""
     },
     "s6": {
       "title": "6. Ownership of your data",
       "p1": "The data you create in Cosmo (tasks, habits, objectives, events) belongs to you. Cosmo accesses it only in order to provide the service.",
-      "p2": "You can ask for your data to be exported or deleted at any time, from the settings or by contacting [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com).",
+      "p2": "You can ask for your data to be exported or deleted at any time, from the settings or by contacting [contact@thecosmo.app](mailto:contact@thecosmo.app).",
       "p3": "**Business workspace.** When an organisation uses the business workspace, it decides why and how its members' data is processed there (tasks, projects, comments, activity statistics): it is the **controller**, and Cosmo acts on its behalf as a **processor** within the meaning of Article 28 GDPR. In that capacity, Cosmo: processes this data only to provide the service, on the instructions the organisation gives by using it; ensures that the people who access it are bound by confidentiality; applies the security measures described in the privacy policy; uses only the sub-processors listed there and informs the organisation of any change, which it may refuse by terminating; helps it respond to requests to exercise rights and meet its security obligations; notifies it of any personal data breach affecting it without undue delay; deletes this data at the end of the service, after allowing it to be exported; and provides the information needed to demonstrate compliance with these obligations, including during a reasonable audit. The organisation remains responsible for informing its members, and where applicable their representatives, of how it uses this data.",
       "p4": "**Switching service.** You can export your data at any time and free of charge (Settings, My data tab), in an open format (CSV), to take it to another service. Do so before deleting your account: deletion is permanent."
     },
@@ -94,7 +94,7 @@
     },
     "s14": {
       "title": "14. Contact",
-      "p1": "For any question about these Terms of Use: [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com)"
+      "p1": "For any question about these Terms of Use: [contact@thecosmo.app](mailto:contact@thecosmo.app)"
     },
     "s4bis": {
       "title": "4a. Reporting illegal content",

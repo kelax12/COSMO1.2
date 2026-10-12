@@ -5,12 +5,12 @@
     "seoTitle": "Mentions légales – Cosmo App",
     "seoDescription": "Mentions légales de l'application de productivité Cosmo : éditeur, hébergeur, propriété intellectuelle et responsabilités.",
     "title": "Mentions légales",
-    "updatedAt": "10 octobre 2026",
+    "updatedAt": "12 octobre 2026",
     "s1": {
       "title": "1. Éditeur du site",
       "intro": "Le site et l'application **Cosmo** sont édités par :",
       "li1": "**Éditeur :** Axel Longatte, personne physique",
-      "li2": "**Adresse e-mail :** axellongattepro@gmail.com",
+      "li2": "**Adresse e-mail :** contact@thecosmo.app",
       "li3": "**Directeur de la publication :** Axel Longatte"
     },
     "s2": {
@@ -40,7 +40,7 @@
     },
     "s7": {
       "title": "7. Contact",
-      "p1": "Pour toute question relative aux présentes mentions légales, vous pouvez nous contacter à l'adresse suivante : [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com)"
+      "p1": "Pour toute question relative aux présentes mentions légales, vous pouvez nous contacter à l'adresse suivante : [contact@thecosmo.app](mailto:contact@thecosmo.app)"
     }
   }
 }

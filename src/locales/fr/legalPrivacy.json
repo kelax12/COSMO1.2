@@ -3,10 +3,10 @@
     "seoTitle": "Politique de confidentialité – Cosmo App",
     "seoDescription": "Politique de confidentialité de Cosmo : données collectées, stockage sécurisé Supabase, Row Level Security, droits RGPD et contact.",
     "title": "Politique de confidentialité",
-    "updatedAt": "10 octobre 2026",
+    "updatedAt": "12 octobre 2026",
     "s1": {
       "title": "1. Responsable du traitement",
-      "p1": "Le responsable du traitement des données personnelles collectées via l'application Cosmo est Axel Longatte, éditeur de Cosmo, joignable à [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com)."
+      "p1": "Le responsable du traitement des données personnelles collectées via l'application Cosmo est Axel Longatte, éditeur de Cosmo, joignable à [contact@thecosmo.app](mailto:contact@thecosmo.app)."
     },
     "s2": {
       "title": "2. Données collectées",
@@ -86,7 +86,7 @@
       "li5": "**Droit d'opposition** : s'opposer à certains traitements",
       "li6": "**Droit à la limitation** : restreindre le traitement dans certains cas",
       "p1": "La portabilité s'exerce directement depuis **Paramètres, onglet Mes données** : l'export couvre vos tâches, habitudes, événements, OKR, catégories, listes et votre profil, au format CSV.",
-      "p2": "Pour tout autre droit : [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com). Nous répondons dans un délai d'**un mois** à compter de la réception de votre demande, conformément à l'article 12 du RGPD. Ce délai peut être prolongé de deux mois en cas de demande complexe, auquel cas nous vous en informons dans le mois.",
+      "p2": "Pour tout autre droit : [contact@thecosmo.app](mailto:contact@thecosmo.app). Nous répondons dans un délai d'**un mois** à compter de la réception de votre demande, conformément à l'article 12 du RGPD. Ce délai peut être prolongé de deux mois en cas de demande complexe, auquel cas nous vous en informons dans le mois.",
       "p3": "Vous pouvez également saisir la **CNIL** : [www.cnil.fr](https://www.cnil.fr)",
       "li7": "**Directives post mortem** : définir des directives relatives à la conservation, à l'effacement et à la communication de vos données après votre décès (article 85 de la loi Informatique et Libertés)"
     },
