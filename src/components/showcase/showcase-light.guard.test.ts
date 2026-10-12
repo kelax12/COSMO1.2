@@ -67,8 +67,8 @@ const echapper = (classe: string) => classe.replace(/([/[\].])/g, '\\$1');
 // 🔴 La classe doit FINIR là où finit le sélecteur. Une comparaison par
 // `includes()` trouvait `.bg-slate-950` dans `.bg-slate-950\/40` : le sabotage 2
 // est resté VERT tant que ce cliquet comparait par préfixe.
-const aSaRegle = (feuille: string, classe: string) => {
-  const selecteur = `[data-sc-theme='light'] .${echapper(classe)}`;
+const aSaRegle = (feuille: string, classe: string, theme = 'light') => {
+  const selecteur = `[data-sc-theme='${theme}'] .${echapper(classe)}`;
   for (let i = feuille.indexOf(selecteur); i !== -1; i = feuille.indexOf(selecteur, i + 1)) {
     if (/[\s,{.:>]/.test(feuille[i + selecteur.length] ?? '')) return true;
   }
@@ -94,5 +94,24 @@ describe('thème clair des vitrines', () => {
     // En thème `noir`, --color-accent-solid vaut #F0F0F0 : une pastille
     // blanche sur une vitrine blanche.
     expect(feuille).toMatch(/\[data-sc-theme='light'\]\s*\{[^}]*--color-accent-solid:\s*37 99 235/);
+  });
+});
+
+// Gris et Noir (2026-10-12) : thèmes SOMBRES, seules les neutres `slate-*`
+// (teinte bleu nuit) y changent. Une classe slate sans sa règle garderait le
+// bleu nuit du thème Sombre au milieu d'une page graphite ou noire.
+// Sabotage joué : retirer `[data-sc-theme='noir'] .bg-slate-800` → rouge.
+describe('thèmes gris et noir des vitrines', () => {
+  const feuille = readFileSync(join(DOSSIER, 'showcase-gris-noir.css'), 'utf8');
+  const neutres = () =>
+    [...classesSombres().keys(), 'text-slate-500'].filter((c) => /-slate-/.test(c));
+
+  it('le détecteur voit des neutres slate', () => {
+    expect(neutres().length).toBeGreaterThan(8);
+  });
+
+  it.each(['gris', 'noir'])('chaque neutre slate a sa règle sous [data-sc-theme="%s"]', (theme) => {
+    const sansRegle = neutres().filter((classe) => !aSaRegle(feuille, classe, theme));
+    expect(sansRegle, `classe(s) slate sans règle ${theme} dans showcase-gris-noir.css`).toEqual([]);
   });
 });

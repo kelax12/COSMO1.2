@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { useT } from '@/i18n/useT';
+import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="mb-10">
@@ -61,8 +62,8 @@ const AProposPage: React.FC = () => {
           <p>{t('about.whoP')}</p>
           <p>
             {t('about.contactP')}{' '}
-            <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">
-              axellongattepro@gmail.com
+            <a href={`mailto:${CONTACT_EMAIL}`} className="text-blue-400 hover:underline">
+              {CONTACT_EMAIL}
             </a>
             {t('about.contactAfter')}
           </p>

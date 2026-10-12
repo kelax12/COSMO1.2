@@ -44,6 +44,7 @@ import { useAccountActions } from './settings/useAccountActions';
 import OrganizationSettingsCard from '@/components/organization/OrganizationSettingsCard';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
+import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 
 /* ─── main component ───────────────────────────────────────────── */
 const SettingsPage: React.FC = () => {
@@ -138,7 +139,7 @@ const SettingsPage: React.FC = () => {
   if (!user) return null;
 
   const handleOpenSupport = () => {
-    window.location.href = 'mailto:axellongattepro@gmail.com';
+    window.location.href = `mailto:${CONTACT_EMAIL}`;
   };
 
   const initials = user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
