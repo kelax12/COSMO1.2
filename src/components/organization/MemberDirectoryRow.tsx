@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import {
   Shield, UserCog, UserRound, MoreVertical, ShieldCheck,
-  ListTodo, CalendarDays, TrendingUp, ClipboardList, ChevronDown } from 'lucide-react';
+  ListTodo, CalendarDays, TrendingUp, ClipboardList, ChevronDown, BadgeCheck } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -48,6 +48,16 @@ export interface MemberRowRights {
   isAbove: boolean;
   canAssign: boolean;
   canEditPermissions: boolean;
+  /** « Gérer les rôles » (mig. 219), cible non admin. Ouvre le menu « … » même hors sous-arbre. */
+  canAssignRole?: boolean;
+}
+
+/** Un rôle personnalisé actif du membre (mig. 219). */
+export interface MemberRoleBadge {
+  id: string;
+  name: string;
+  color: string;
+  endsAt: string | null;
 }
 
 interface MemberDirectoryRowProps {
@@ -63,6 +73,9 @@ interface MemberDirectoryRowProps {
   onSetRole: (role: OrgRole) => void;
   onAssign: () => void;
   onEditPermissions: () => void;
+  onAssignRole?: () => void;
+  /** Rôles personnalisés actifs : une pastille chacun à côté du nom. */
+  roleBadges?: MemberRoleBadge[];
   /**
    * Gestes de cycle de vie (`useMemberLifecycle`, mig. 161) : accès et départ.
    * `null` quand l'appelant n'y a pas droit. Ils REMPLACENT l'ancien retrait
@@ -80,7 +93,7 @@ interface MemberDirectoryRowProps {
  */
 const MemberDirectoryRow = ({
   member: m, role, rights, lastActivity, selectMode, selected,
-  onToggleSelect, onOpen, onSetRole, onAssign, onEditPermissions, lifecycleItems,
+  onToggleSelect, onOpen, onSetRole, onAssign, onEditPermissions, onAssignRole, roleBadges = [], lifecycleItems,
 }: MemberDirectoryRowProps) => {
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
@@ -125,6 +138,24 @@ const MemberDirectoryRow = ({
             </span>
           )}
           <MemberAccessBadge member={m} />
+          {roleBadges.length > 0 && (
+            <span
+              className="inline-flex items-center gap-1 shrink-0"
+              role="img"
+              aria-label={tOrgAdmin('customRoles.badgesAria', { names: roleBadges.map((r) => r.name).join(', ') })}
+            >
+              {roleBadges.map((r) => (
+                <span
+                  key={r.id}
+                  title={r.endsAt
+                    ? `${r.name} · ${tOrgAdmin('customRoles.assign.endsOn', { date: format(new Date(r.endsAt), 'd MMM yyyy', { locale: getDateLocale() }) })}`
+                    : `${r.name} · ${tOrgAdmin('customRoles.assign.unlimited')}`}
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: r.color }}
+                />
+              ))}
+            </span>
+          )}
         </div>
         {m.email && <p className="max-md:hidden text-xs text-[rgb(var(--color-text-muted))] truncate">{m.email}</p>}
         {!lastActivity && !rights.canChangeRole && (
@@ -184,7 +215,7 @@ const MemberDirectoryRow = ({
         <span className="max-md:hidden"><RoleBadge kind={role} /></span>
       )}
 
-      {rights.isAbove && !selectMode && (
+      {(rights.isAbove || rights.canAssignRole) && !selectMode && (
         <DropdownMenu>
           <DropdownMenuTrigger
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
@@ -197,7 +228,7 @@ const MemberDirectoryRow = ({
                 `text-muted-foreground` à tout svg qui n'en porte pas. Seul
                 l'item destructeur reste coloré. Attribuer : seulement dans la
                 portée d'assignation de l'appelant (mig. 115). */}
-            {rights.canAssign && (
+            {rights.isAbove && rights.canAssign && (
               <>
                 <DropdownMenuItem onClick={onAssign}>
                   <ClipboardList size={14} aria-hidden="true" />
@@ -206,28 +237,36 @@ const MemberDirectoryRow = ({
                 <DropdownMenuSeparator />
               </>
             )}
-            <DropdownMenuItem onClick={() => onOpen('tasks')}>
-              <ListTodo size={14} aria-hidden="true" />
-              {tOrgAdmin('directory.seeTasks')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onOpen('agenda')}>
-              <CalendarDays size={14} aria-hidden="true" />
-              {tOrgAdmin('directory.seeAgenda')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onOpen('contribution')}>
-              <TrendingUp size={14} aria-hidden="true" />
-              {tOrgAdmin('directory.seeContribution')}
-            </DropdownMenuItem>
-            {rights.canEditPermissions && (
+            {rights.isAbove && (
               <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onEditPermissions}>
-                  <ShieldCheck size={14} aria-hidden="true" />
-                  {t('permissions.menuItem')}
+                <DropdownMenuItem onClick={() => onOpen('tasks')}>
+                  <ListTodo size={14} aria-hidden="true" />
+                  {tOrgAdmin('directory.seeTasks')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onOpen('agenda')}>
+                  <CalendarDays size={14} aria-hidden="true" />
+                  {tOrgAdmin('directory.seeAgenda')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onOpen('contribution')}>
+                  <TrendingUp size={14} aria-hidden="true" />
+                  {tOrgAdmin('directory.seeContribution')}
                 </DropdownMenuItem>
               </>
             )}
-            {lifecycleItems && (
+            {rights.isAbove && (rights.canEditPermissions || (rights.canAssignRole && onAssignRole)) && <DropdownMenuSeparator />}
+            {rights.canEditPermissions && (
+              <DropdownMenuItem onClick={onEditPermissions}>
+                <ShieldCheck size={14} aria-hidden="true" />
+                {t('permissions.menuItem')}
+              </DropdownMenuItem>
+            )}
+            {rights.canAssignRole && onAssignRole && (
+              <DropdownMenuItem onClick={onAssignRole}>
+                <BadgeCheck size={14} aria-hidden="true" />
+                {tOrgAdmin('customRoles.assign.menuItem')}
+              </DropdownMenuItem>
+            )}
+            {rights.isAbove && lifecycleItems && (
               <>
                 <DropdownMenuSeparator />
                 {lifecycleItems}

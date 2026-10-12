@@ -54,6 +54,7 @@ import { SupabaseTeamProjectsRepository } from '@/modules/team-projects/supabase
 // 2026-09-23, mig. 160 à 162) : deux dépôts de plus plutôt que deux dépôts
 // existants gonflés au-delà de 600 lignes.
 import type { IOrgGovernanceRepository } from '@/modules/organizations/governance.repository';
+import type { IOrgRolesRepository } from '@/modules/organizations/roles.repository';
 import type { IOkrExecutionRepository } from '@/modules/team-okrs/execution.repository';
 
 // Team OKRs (mode entreprise)
@@ -170,6 +171,7 @@ let orgTeamsRepository: IOrgTeamsRepository | null = null;
 let teamCategoriesRepository: ITeamCategoriesRepository | null = null;
 let teamListsRepository: ITeamListsRepository | null = null;
 let orgGovernanceRepository: IOrgGovernanceRepository | null = null;
+let orgRolesRepository: IOrgRolesRepository | null = null;
 let okrExecutionRepository: IOkrExecutionRepository | null = null;
 let statsRepository: IStatsRepository | null = null;
 
@@ -192,6 +194,7 @@ appModeStore.subscribe(() => {
   teamCategoriesRepository = null;
   teamListsRepository = null;
   orgGovernanceRepository = null;
+  orgRolesRepository = null;
   okrExecutionRepository = null;
   statsRepository = null;
 });
@@ -375,6 +378,20 @@ export function getOrgGovernanceRepository(): IOrgGovernanceRepository {
         );
   }
   return orgGovernanceRepository;
+}
+
+/** Rôles personnalisés à durée limitée (mig. 219). Chargé à la demande, comme la gouvernance. */
+export function getOrgRolesRepository(): IOrgRolesRepository {
+  if (!orgRolesRepository) {
+    orgRolesRepository = appModeStore.isDemo
+      ? lazyDemoRepository<IOrgRolesRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoOrgRolesRepository()),
+        )
+      : lazyDemoRepository<IOrgRolesRepository>(() =>
+          import('@/modules/organizations/roles.supabase.repository').then((m) => new m.SupabaseOrgRolesRepository()),
+        );
+  }
+  return orgRolesRepository;
 }
 
 /** Exécution des OKR (cycles, points d'étape, projets reliés). */

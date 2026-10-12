@@ -241,6 +241,10 @@
         "orgHint": "Lire le rapport d'activité de toute l'entreprise, et la performance de chaque équipe.",
         "allTeams": "Voir le rapport de toutes les équipes",
         "allTeamsHint": "Lire le rapport de n'importe quelle équipe. Sans ce droit, un responsable ne lit que celui de son équipe."
+      },
+      "role": {
+        "manage": "Gérer les rôles",
+        "manageHint": "Créer, modifier et attribuer des rôles personnalisés, pour une durée choisie. Droit de confiance : son détenteur peut donner des droits qu'il n'a pas."
       }
     },
     "target": {
@@ -914,7 +918,9 @@
     "filterMentions": "Mentions",
     "filterDeadlines": "Échéances",
     "filterProjects": "Projets",
-    "filterOrg": "Organisation"
+    "filterOrg": "Organisation",
+    "kindCustomRoleExpired": "Votre rôle « {{name}} » a pris fin : vous avez retrouvé vos droits précédents",
+    "kindCustomRoleExpiredGranter": "Le rôle « {{name}} » de {{member}} a pris fin"
   },
   "orgSettings": {
     "profileTitle": "Profil de l'entreprise",
@@ -955,7 +961,8 @@
     "navExport": "Export des tâches",
     "exportTitle": "Exporter les tâches",
     "exportHint": "Télécharge toutes les tâches de l’entreprise au format CSV.",
-    "navReports": "Rapports d'activité"
+    "navReports": "Rapports d'activité",
+    "navRoles": "Rôles"
   },
   "page": {
     "overview": "Aperçu",
@@ -1425,5 +1432,76 @@
       "show": "Voir le détail",
       "hide": "Masquer le détail"
     }
+  },
+  "customRoles": {
+    "title": "Rôles",
+    "intro": "Un rôle regroupe des permissions. Le modifier change les droits de tous ceux qui l'ont.",
+    "create": "Créer un rôle",
+    "emptyTitle": "Créez votre premier rôle",
+    "emptyBody": "Un rôle donne le même ensemble de droits à plusieurs personnes, pour une durée choisie.",
+    "permissionCount_one": "{{count}} permission",
+    "permissionCount_other": "{{count}} permissions",
+    "assignsTo": "assigne à : {{targets}}",
+    "assignsNobody": "n'assigne à personne",
+    "holders_one": "{{count}} membre",
+    "holders_other": "{{count}} membres",
+    "expiringSoon": "expire bientôt",
+    "actionsFor": "Actions pour le rôle {{name}}",
+    "edit": "Modifier",
+    "duplicate": "Dupliquer",
+    "delete": "Supprimer",
+    "copyName": "{{name}} (copie)",
+    "deleteTitle": "Supprimer le rôle « {{name}} » ?",
+    "deleteNobody": "Personne n'a ce rôle en ce moment.",
+    "deleteHolders": "Ces personnes perdront ce rôle et retrouveront leurs droits précédents :",
+    "deleteConfirm": "Supprimer le rôle",
+    "deleting": "Suppression…",
+    "editor": {
+      "titleNew": "Nouveau rôle",
+      "titleEdit": "Modifier le rôle",
+      "aria": "Éditeur du rôle {{name}}",
+      "nameLabel": "Nom du rôle",
+      "namePlaceholder": "Chef de projet",
+      "nameRequired": "Donnez un nom au rôle.",
+      "colorLabel": "Couleur",
+      "groupTasks": "Tâches",
+      "groupProjects": "Projets",
+      "groupOther": "OKR et autres",
+      "assignLabel": "Peut assigner une tâche à",
+      "assignNobody": "Personne : ce rôle n'assigne aucune tâche.",
+      "hint": "Un rôle actif prime sur les réglages individuels. Ce qui est désactivé est refusé, même un droit qu'un membre a par défaut. Plusieurs rôles s'additionnent.",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "cancel": "Annuler"
+    },
+    "assign": {
+      "menuItem": "Attribuer un rôle",
+      "title": "Attribuer un rôle à {{name}}",
+      "current": "Rôles actuels",
+      "none": "Aucun rôle en ce moment.",
+      "endsOn": "Jusqu'au {{date}}",
+      "unlimited": "Sans limite",
+      "revoke": "Retirer le rôle {{name}}",
+      "roleLabel": "Rôle",
+      "durationLabel": "Durée",
+      "duration": {
+        "week": "1 semaine",
+        "month": "1 mois",
+        "quarter": "3 mois",
+        "until": "Jusqu'au…",
+        "unlimited": "Sans limite"
+      },
+      "pickDate": "Date de fin",
+      "summary": "Du {{from}} au {{to}}, puis {{name}} retrouve ses droits actuels.",
+      "summaryUnlimited": "À partir du {{from}}, sans limite de durée.",
+      "extendNote": "{{name}} a déjà ce rôle : sa date de fin sera remplacée.",
+      "dateRequired": "Choisissez une date de fin dans le futur.",
+      "submit": "Attribuer",
+      "submitExtend": "Prolonger",
+      "noRoles": "Aucun rôle n'existe encore. Créez-en un dans Paramètres, rubrique Rôles.",
+      "close": "Fermer"
+    },
+    "badgesAria": "Rôles : {{names}}",
+    "sheetBanner": "Les rôles {{names}} priment sur cette fiche tant qu'ils sont actifs. Ces réglages s'appliqueront à leur fin."
   }
 }

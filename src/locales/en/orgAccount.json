@@ -81,7 +81,8 @@
       "project": "Projects",
       "task": "Tasks",
       "okr": "Objectives",
-      "org": "Organization"
+      "org": "Organization",
+      "role": "Roles"
     },
     "loading": "Loading…",
     "empty": "No entry for these filters.",
@@ -129,7 +130,14 @@
       "okr_deleted": "{{actor}} permanently deleted the objective “{{object}}”",
       "org_renamed": "{{actor}} renamed the organization to “{{object}}”",
       "org_owner_transferred": "{{actor}} transferred ownership of the organization to {{person}}",
-      "unknown": "{{actor}} performed an administration action"
+      "unknown": "{{actor}} performed an administration action",
+      "role_created": "{{actor}} created the role \"{{object}}\"",
+      "role_updated": "{{actor}} edited the role \"{{object}}\"",
+      "role_deleted": "{{actor}} deleted the role \"{{object}}\"",
+      "role_assigned": "{{actor}} assigned the role \"{{object}}\" to {{person}}",
+      "role_revoked": "{{actor}} removed the role \"{{object}}\" from {{person}}",
+      "role_extended": "{{actor}} changed how long {{person}} holds the role \"{{object}}\"",
+      "role_expired": "The role \"{{object}}\" of {{person}} has ended"
     }
   }
 }

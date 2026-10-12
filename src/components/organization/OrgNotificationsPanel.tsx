@@ -163,11 +163,23 @@ const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings
               const actor = notification.actorId ? nameById.get(notification.actorId) : null;
               const projectName = (notification.meta as { project_name?: string } | null | undefined)?.project_name;
               const ruleName = (notification.meta as { rule?: string } | null | undefined)?.rule;
+              // Fin d'un rôle personnalisé (mig. 219) : posée par le job horaire,
+              // pour la personne (`for: holder`) et pour qui l'avait attribué.
+              const roleMeta = notification.kind === 'role_changed'
+                ? notification.meta as { change?: string; for?: string; role_name?: string; member_id?: string } | null | undefined
+                : null;
               const label = notification.kind === 'project_archived' && projectName
                 ? tOrgAdmin('notifications.kindProjectArchivedNamed', { name: projectName })
                 : notification.kind === 'automation' && ruleName
                   ? tOrgAdmin('notifications.kindAutomationNamed', { name: ruleName })
-                  : tOrgAdmin(notificationLabelKey(notification, labelKey));
+                  : roleMeta?.change === 'custom_role_expired'
+                    ? roleMeta.for === 'granter'
+                      ? tOrgAdmin('notifications.kindCustomRoleExpiredGranter', {
+                          name: roleMeta.role_name ?? '',
+                          member: (roleMeta.member_id && nameById.get(roleMeta.member_id)) || '',
+                        })
+                      : tOrgAdmin('notifications.kindCustomRoleExpired', { name: roleMeta.role_name ?? '' })
+                    : tOrgAdmin(notificationLabelKey(notification, labelKey));
               return (
                 <li key={notification.id}>
                   <button

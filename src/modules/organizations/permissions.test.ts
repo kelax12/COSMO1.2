@@ -62,10 +62,10 @@ describe('effectivePermissions — les défauts (mig. 115, puis 152)', () => {
     expect(p['member.invite']).toBe(false);
   });
 
-  it('un manager (≥ 1 subordonné) a tout, comme is_org_manager(), sauf les rapports', () => {
+  it('un manager (≥ 1 subordonné) a tout, comme is_org_manager(), sauf les rapports et role.manage (admin seul)', () => {
     const p = effectivePermissions({ member: ALICE, members: MEMBERS });
     for (const key of ORG_PERMISSION_KEYS) {
-      expect(p[key]).toBe(!key.startsWith('report.'));
+      expect(p[key]).toBe(!key.startsWith('report.') && key !== 'role.manage');
     }
   });
 
@@ -255,5 +255,66 @@ describe('canEditTeamTask / canDeleteTeamTask', () => {
     expect(canDeleteTeamTask(none, 'author', task)).toBe(true);
     expect(canDeleteTeamTask(none, 'doer', task)).toBe(false);
     expect(canDeleteTeamTask({ ...none, 'task.deleteAny': true }, 'doer', task)).toBe(true);
+  });
+});
+
+describe('rôles personnalisés (mig. 219) : le rôle écrase tout, les rôles s’additionnent', () => {
+  const STAGIAIRE = { grantedKeys: ['okr.create'] as const, assignTargets: ['self'] as const };
+  const CHEF = { grantedKeys: ['project.create', 'report.org'] as const, assignTargets: ['subordinates'] as const };
+
+  it('role.manage : défaut admin seulement, réglable par surcharge', () => {
+    expect(effectivePermissions({ member: BOSS, members: MEMBERS })['role.manage']).toBe(false);
+    expect(effectivePermissions({ member: ADMIN, members: MEMBERS })['role.manage']).toBe(true);
+    const granted = effectivePermissions({
+      member: CARL, members: MEMBERS, overrides: overrides('carl', { overrides: { 'role.manage': true } }),
+    });
+    expect(granted['role.manage']).toBe(true);
+  });
+
+  it('un rôle actif retire même un droit par défaut de membre', () => {
+    const p = effectivePermissions({ member: CARL, members: MEMBERS, roles: [STAGIAIRE] });
+    expect(p['task.create']).toBe(false);
+    expect(p['task.editAny']).toBe(false);
+    expect(p['okr.create']).toBe(true);
+  });
+
+  it('un rôle actif prime sur la surcharge individuelle', () => {
+    const p = effectivePermissions({
+      member: CARL, members: MEMBERS,
+      overrides: overrides('carl', { overrides: { 'project.create': true } }),
+      roles: [STAGIAIRE],
+    });
+    expect(p['project.create']).toBe(false);
+  });
+
+  it('deux rôles : un droit accordé par l’un suffit', () => {
+    const p = effectivePermissions({ member: CARL, members: MEMBERS, roles: [STAGIAIRE, CHEF] });
+    expect(p['okr.create']).toBe(true);
+    expect(p['project.create']).toBe(true);
+    expect(p['report.org']).toBe(true);
+    expect(p['report.allTeams']).toBe(false);
+  });
+
+  it('sans rôle actif, rien ne change (liste vide)', () => {
+    expect(effectivePermissions({ member: CARL, members: MEMBERS, roles: [] }))
+      .toEqual(effectivePermissions({ member: CARL, members: MEMBERS }));
+  });
+
+  it('un admin reste insensible à un rôle', () => {
+    const p = effectivePermissions({ member: ADMIN, members: MEMBERS, roles: [STAGIAIRE] });
+    for (const key of ORG_PERMISSION_KEYS) expect(p[key]).toBe(true);
+    expect(effectiveAssignTargets({ member: ADMIN, roles: [STAGIAIRE] })).toEqual(['everyone']);
+  });
+
+  it('portée : union des rôles actifs, prioritaire sur la surcharge', () => {
+    expect(effectiveAssignTargets({
+      member: CARL,
+      overrides: overrides('carl', { assignTargets: ['everyone'] }),
+      roles: [STAGIAIRE, CHEF],
+    })).toEqual(['self', 'subordinates']);
+  });
+
+  it('un rôle à la portée vide ne laisse assigner à personne', () => {
+    expect(effectiveAssignTargets({ member: CARL, roles: [{ grantedKeys: [], assignTargets: [] }] })).toEqual([]);
   });
 });

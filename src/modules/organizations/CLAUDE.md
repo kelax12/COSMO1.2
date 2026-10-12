@@ -108,6 +108,24 @@ Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `i
 - ⚠️ `my_org_perm` de la 153 part du corps de la **152** (`task.deleteAny` = manager) : appliquer
   la 152 AVANT, sinon la 152 retirerait `project.edit`.
 
+### 🏷️ Rôles personnalisés à durée limitée (mig. 219, 2026-10-12)
+
+Spec : [`docs/superpowers/specs/2026-10-12-roles-personnalises-design.md`](../../../docs/superpowers/specs/2026-10-12-roles-personnalises-design.md).
+`org_roles` (paquet nommé de droits) + `org_member_roles` (attribution, `ends_at` NULL = sans limite).
+Fichiers : `roles.*` ; écrans `OrgRolesSettings`, `RoleEditorSheet`, `AssignRoleDialog`.
+
+- 🔴 **Ordre de résolution, non-admin** : rôles actifs (OU logique) > fiche individuelle > défaut.
+  Un rôle actif ÉCRASE tout : une clé absente est refusée, même `task.create`.
+- 🔴 **La couche rôle s'insère dans les QUATRE résolveurs** (`my_org_perm`, `my_project_edit_perm`,
+  `my_report_perm`, `my_assign_targets`), juste après le court-circuit admin. ❌ Réécrire l'un d'eux
+  sans `my_role_perm` / `my_role_assign_targets` en tête rendrait les rôles inopérants sur ce droit.
+- 🔴 **L'expiration se juge à la lecture** (`ends_at > now()`), jamais par une purge. Le job
+  `cosmo-expire-org-roles` (horaire) ne fait que notifier (`role_changed`, `meta.change =
+  custom_role_expired`) et journaliser (`role.expired`).
+- ❌ Jamais de rôle sur un admin (trigger) ; un membre promu admin garde une ligne inerte.
+- `role.manage` : défaut admin seul, droit de CONFIANCE (aucun plafond sur le contenu d'un rôle).
+- Le départ d'un membre emporte ses attributions (FK composite vers `organization_members`).
+
 ### 🧭 Étape 6 (mig. 190-193, 2026-09-25, NON appliquées) : rôles de projet, recherche, vues
 
 - 🔴 `team_project_members` : `lead`/`contributor`/`viewer`. Le lecteur est refusé par TRIGGER
