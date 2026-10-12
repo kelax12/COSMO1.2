@@ -22,11 +22,11 @@ const OrgJoinRequestsList = ({ orgId }: OrgJoinRequestsListProps) => {
       <h3 className="text-caption font-semibold text-[rgb(var(--color-text-muted))] mb-1.5">
         {t('invite.requestsTitle')} ({requests.length})
       </h3>
-      <ul className="divide-y divide-[rgb(var(--color-border))] rounded-2xl border border-[rgb(var(--color-border))]">
-        {requests.map((r) => {
+      <ul data-guide-id="members-join-requests" className="divide-y divide-[rgb(var(--color-border))] rounded-2xl border border-[rgb(var(--color-border))]">
+        {requests.map((r, i) => {
           const name = r.requesterName || r.requesterEmail || '?';
           return (
-            <li key={r.id} className="flex items-center gap-2.5 px-3 py-2.5">
+            <li key={r.id} data-guide-id={i === 0 ? 'join-request-first' : undefined} className="flex items-center gap-2.5 px-3 py-2.5">
               <span className="w-8 h-8 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden">
                 {r.requesterAvatar ? <img src={r.requesterAvatar} alt="" className="w-full h-full object-cover" /> : name.slice(0, 1).toUpperCase()}
               </span>

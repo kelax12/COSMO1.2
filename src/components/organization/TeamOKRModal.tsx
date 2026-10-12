@@ -299,7 +299,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
           <div className="grid md:grid-cols-[0.923fr_1fr] [&_input]:!bg-[rgb(var(--color-surface))] [&_textarea]:!bg-[rgb(var(--color-surface))] [&_select]:!bg-[rgb(var(--color-surface))] [&_button[aria-haspopup]]:!bg-[rgb(var(--color-surface))]">
             {/* Colonne gauche : le cadre de l'objectif. */}
             <div className="grid content-start gap-4 p-4 md:border-r md:border-[rgb(var(--color-border-muted))]">
-              <div className="grid gap-2">
+              <div className="grid gap-2" data-guide-id="okr-form-objective">
                 <Label htmlFor="tokr-title">{tOrgAdmin('okrModal.objective')}</Label>
                 <Input id="tokr-title" value={title} autoFocus className="h-11 rounded-xl" placeholder={tOrgAdmin('okrModal.objectivePlaceholder')} onChange={(e) => setTitle(e.target.value)} />
               </div>
@@ -329,7 +329,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
               </div>
 
               {/* Rattachement d'équipes (cloisonnement de visibilité) */}
-              <div className="grid gap-2">
+              <div className="grid gap-2" data-guide-id="okr-form-audience">
                 <Label id="tokr-vis">{tOrgAdmin('okrModal.visibility')}</Label>
                 <div role="radiogroup" aria-labelledby="tokr-vis" className="flex gap-1 rounded-xl bg-[rgb(var(--color-border-muted))] p-1">
                   <button type="button" role="radio" aria-checked={visMode === 'org'} onClick={() => chooseVisMode('org')} className={segClass(visMode === 'org')}>
@@ -375,7 +375,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
             </div>
 
             {/* Colonne droite : les résultats clés. */}
-            <div className="grid content-start gap-3 bg-[rgb(var(--color-background))] p-4">
+            <div data-guide-id="okr-form-krs" className="grid content-start gap-3 bg-[rgb(var(--color-background))] p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Label>{tOrgAdmin('okrModal.keyResults')}</Label>

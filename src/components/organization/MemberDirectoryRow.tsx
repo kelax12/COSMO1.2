@@ -218,6 +218,7 @@ const MemberDirectoryRow = ({
       {(rights.isAbove || rights.canAssignRole) && !selectMode && (
         <DropdownMenu>
           <DropdownMenuTrigger
+            data-guide-item
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             aria-label={t('common.actionsFor', { name: m.displayName })}
           >
@@ -255,13 +256,13 @@ const MemberDirectoryRow = ({
             )}
             {rights.isAbove && (rights.canEditPermissions || (rights.canAssignRole && onAssignRole)) && <DropdownMenuSeparator />}
             {rights.canEditPermissions && (
-              <DropdownMenuItem onClick={onEditPermissions}>
+              <DropdownMenuItem onClick={onEditPermissions} data-guide-id="member-open-permissions">
                 <ShieldCheck size={14} aria-hidden="true" />
                 {t('permissions.menuItem')}
               </DropdownMenuItem>
             )}
             {rights.canAssignRole && onAssignRole && (
-              <DropdownMenuItem onClick={onAssignRole}>
+              <DropdownMenuItem onClick={onAssignRole} data-guide-id="member-assign-role">
                 <BadgeCheck size={14} aria-hidden="true" />
                 {tOrgAdmin('customRoles.assign.menuItem')}
               </DropdownMenuItem>

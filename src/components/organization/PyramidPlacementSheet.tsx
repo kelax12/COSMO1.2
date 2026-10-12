@@ -220,7 +220,7 @@ const PyramidPlacementSheet = ({
               />
             </label>
 
-          <div role="radiogroup" aria-label={title} className="space-y-4">
+          <div role="radiogroup" aria-label={title} data-guide-id="pyramid-place-manager" className="space-y-4">
             {direction === 'up' && isAdmin && target.managerId !== null && !query.trim() && (
               <button
                 type="button"
@@ -258,7 +258,7 @@ const PyramidPlacementSheet = ({
               <UserPlus size={16} aria-hidden="true" /> {t('popups.placement.inviteButton')}
             </button>
           )}
-          <p className="flex-1 min-w-0 text-sm text-[rgb(var(--color-text-muted))] truncate" aria-live="polite">{summary}</p>
+          <p data-guide-id="pyramid-place-effect" className="flex-1 min-w-0 text-sm text-[rgb(var(--color-text-muted))] truncate" aria-live="polite">{summary}</p>
           <button
             type="button"
             onClick={onClose}

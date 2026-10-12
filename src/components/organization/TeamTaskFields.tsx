@@ -168,7 +168,7 @@ const TeamTaskFields = ({
         </div>
       </div>
 
-      <div>
+      <div data-guide-id="task-form-title">
         <label htmlFor="team-task-name" className={labelClass} style={labelStyle}>{t('taskModal.name')}</label>
         <input
           id="team-task-name"
@@ -209,7 +209,7 @@ const TeamTaskFields = ({
       {labelsField}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
+        <div data-guide-id="task-form-project">
           <div className="flex items-center justify-between mb-2">
             <label htmlFor="team-task-project" className={labelClass} style={{ ...labelStyle, marginBottom: 0 }}>{t('taskModal.project')}</label>
             {/* Créer un projet sans quitter la tâche : le formulaire complet,
@@ -337,7 +337,7 @@ const TeamTaskFields = ({
           permanence (pas besoin de replier ce qu'il y a la place de
           montrer). Même état, même `MemberPickList`. */}
       {!isWide && (
-        <div className="border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
+        <div data-guide-id="task-form-assignees" className="border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
           <button
             type="button"
             onClick={onToggleAssignees}

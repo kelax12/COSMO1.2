@@ -12,7 +12,7 @@ interface Props {
  * Les champs personnalisés (mig. 197) ont été retirés le 2026-10-01 (mig. 211).
  */
 const TaskDetailsExtras = ({ orgId, task }: Props) => (
-  <div className="mt-4 space-y-4">
+  <div data-guide-id="task-detail-followers" className="mt-4 space-y-4">
     <FollowTaskToggle orgId={orgId} taskId={task.id} />
   </div>
 );

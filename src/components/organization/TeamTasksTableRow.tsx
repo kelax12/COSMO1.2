@@ -158,6 +158,7 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
     <tr
       ref={ref}
       data-index={index}
+      data-guide-item
       className="transition-colors cursor-pointer hover:bg-[rgb(var(--color-hover))]"
       onClick={() => (selectMode ? handlers.toggleSelect(task) : handlers.open(task))}
       style={{ borderLeft: overdue ? '4px solid rgb(var(--color-error))' : '3px solid transparent' }}

@@ -112,7 +112,7 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberI
           )}
 
           {/* Nom */}
-          <div>
+          <div data-guide-id="team-form-name">
             <label htmlFor="new-team-name" className={labelClass} style={labelStyle}>{t('team.name')}</label>
             <input
               id="new-team-name"
@@ -149,7 +149,7 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberI
           </div>
 
           {/* Membres */}
-          <div>
+          <div data-guide-id="team-form-members">
             <span className={labelClass} style={labelStyle}>
               {t('team.membersCount', { count: selected.length })}
             </span>

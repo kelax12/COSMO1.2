@@ -323,7 +323,7 @@ const TeamTaskModal = ({
           d'être étiré à celle du modal central. */}
       <div className="flex items-start justify-center gap-4 w-full sm:w-auto">
         {isWide && (
-          <div className={sidePanelClass} style={sidePanelStyle} onClick={(e) => e.stopPropagation()}>
+          <div data-guide-id="task-form-assignees" className={sidePanelClass} style={sidePanelStyle} onClick={(e) => e.stopPropagation()}>
             <div className="px-4 py-3 border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))' }}>
               <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
                 {t('taskModal.assignTask')}
@@ -394,6 +394,7 @@ const TeamTaskModal = ({
               type="button"
               role="tab"
               id={`team-task-tab-${id}`}
+              data-guide-id={id === 'subtasks' ? 'task-detail-subtasks' : id === 'dependencies' ? 'task-detail-dependencies' : undefined}
               aria-selected={tab === id}
               aria-controls="team-task-tabpanel"
               onClick={() => setTab(id)}

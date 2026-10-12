@@ -109,7 +109,7 @@ const AssignRoleDialog = ({ orgId, member, onClose }: AssignRoleDialogProps) => 
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-4 space-y-4">
-          <section>
+          <section data-guide-id="assign-role-stack">
             <h3 className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1.5">{ta('customRoles.assign.current')}</h3>
             {current.length === 0 ? (
               <p className="text-xs text-[rgb(var(--color-text-muted))]">{ta('customRoles.assign.none')}</p>
@@ -147,7 +147,7 @@ const AssignRoleDialog = ({ orgId, member, onClose }: AssignRoleDialogProps) => 
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">{ta('customRoles.assign.noRoles')}</p>
           ) : (
             <>
-              <div>
+              <div data-guide-id="assign-role-select">
                 <label htmlFor="assign-role-select" className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1.5">
                   {ta('customRoles.assign.roleLabel')}
                 </label>
@@ -162,7 +162,7 @@ const AssignRoleDialog = ({ orgId, member, onClose }: AssignRoleDialogProps) => 
                 </select>
               </div>
 
-              <div role="radiogroup" aria-labelledby="assign-role-duration">
+              <div role="radiogroup" aria-labelledby="assign-role-duration" data-guide-id="assign-role-until">
                 <p id="assign-role-duration" className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1.5">
                   {ta('customRoles.assign.durationLabel')}
                 </p>
@@ -198,7 +198,7 @@ const AssignRoleDialog = ({ orgId, member, onClose }: AssignRoleDialogProps) => 
                 )}
               </div>
 
-              <p className="flex items-start gap-2 rounded-xl bg-[rgb(var(--color-hover))] px-3 py-2.5 text-sm text-[rgb(var(--color-text-primary))]" role="status">
+              <p data-guide-id="assign-role-until-hint" className="flex items-start gap-2 rounded-xl bg-[rgb(var(--color-hover))] px-3 py-2.5 text-sm text-[rgb(var(--color-text-primary))]" role="status">
                 <Clock size={15} aria-hidden="true" className="shrink-0 mt-0.5 text-[rgb(var(--color-text-muted))]" />
                 <span>
                   {endsAt === null
