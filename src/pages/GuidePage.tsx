@@ -5,9 +5,10 @@ import {
   CheckSquare, Calendar, Repeat, Target, BarChart2,
   Rocket, ArrowRight, ChevronRight, ChevronLeft, ChevronDown,
   BookOpen, Clock, Flag, Bookmark, Users, TrendingUp,
-  Flame, Layers, Filter, Bell, List,
+  Flame, Layers, Filter, Inbox, List,
   GripVertical, Building2, Network, FolderKanban, ListTodo,
-  ShieldCheck, UserPlus, BarChart3
+  ShieldCheck, UserPlus, BarChart3, Columns3, ListChecks, Link2,
+  Sparkles, Pin, Share2, CalendarCheck, PauseCircle, Image, UsersRound
 } from 'lucide-react';
 import TaskTableShowcase from '@/components/showcase/TaskTableShowcase';
 import AgendaShowcase from '@/components/showcase/AgendaShowcase';
@@ -182,7 +183,7 @@ const GuidePage: React.FC = () => {
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
                   { icon: <Layers size={18} />, label: t('start.cardDashboard'), desc: t('start.cardDashboardDesc') },
-                  { icon: <Bell size={18} />, label: t('start.cardNotifications'), desc: t('start.cardNotificationsDesc') },
+                  { icon: <Inbox size={18} />, label: t('start.cardInbox'), desc: t('start.cardInboxDesc') },
                   { icon: <Flag size={18} />, label: t('start.cardSettings'), desc: t('start.cardSettingsDesc') },
                 ].map((item) => (
                   <div key={item.label} className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl p-4">
@@ -224,9 +225,17 @@ const GuidePage: React.FC = () => {
                 <FeatureRow icon={<Bookmark size={15} />}   label={t('tasks.featBookmark')}   desc={t('tasks.featBookmarkDesc')} />
                 <FeatureRow icon={<Clock size={15} />}      label={t('tasks.featDuration')}   desc={t('tasks.featDurationDesc')} />
                 <FeatureRow icon={<Filter size={15} />}     label={t('tasks.featFilters')}    desc={t('tasks.featFiltersDesc')} />
+                <FeatureRow icon={<Columns3 size={15} />}   label={t('tasks.featBoard')}      desc={t('tasks.featBoardDesc')} />
+                <FeatureRow icon={<ListChecks size={15} />} label={t('tasks.featSubtasks')}   desc={t('tasks.featSubtasksDesc')} />
+                <FeatureRow icon={<Link2 size={15} />}      label={t('tasks.featDependencies')} desc={t('tasks.featDependenciesDesc')} />
+                <FeatureRow icon={<Repeat size={15} />}     label={t('tasks.featRecurrence')} desc={t('tasks.featRecurrenceDesc')} />
                 <FeatureRow icon={<Users size={15} />}      label={t('tasks.featCollab')}     desc={t('tasks.featCollabDesc')} />
                 <FeatureRow icon={<Flag size={15} />}       label={t('tasks.featCategories')} desc={t('tasks.featCategoriesDesc')} />
               </div>
+
+              <Tip>
+                <RichText strongClassName="font-semibold">{t('tasks.tip')}</RichText>
+              </Tip>
             </section>
 
             {/* ══ LISTES ═════════════════════════════════════════════════ */}
@@ -252,9 +261,10 @@ const GuidePage: React.FC = () => {
               </div>
 
               <div className="mt-8 space-y-0 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl overflow-hidden divide-y divide-[rgb(var(--color-border-muted))]">
-                <FeatureRow icon={<List size={15} />}       label={t('lists.featView')}  desc={t('lists.featViewDesc')} />
-                <FeatureRow icon={<Flag size={15} />}       label={t('lists.featColor')} desc={t('lists.featColorDesc')} />
-                <FeatureRow icon={<Filter size={15} />}     label={t('lists.featAll')}   desc={t('lists.featAllDesc')} />
+                <FeatureRow icon={<Sparkles size={15} />}   label={t('lists.featSmart')}   desc={t('lists.featSmartDesc')} />
+                <FeatureRow icon={<Pin size={15} />}        label={t('lists.featDefault')} desc={t('lists.featDefaultDesc')} />
+                <FeatureRow icon={<Share2 size={15} />}     label={t('lists.featShare')}   desc={t('lists.featShareDesc')} />
+                <FeatureRow icon={<Flag size={15} />}       label={t('lists.featColor')}   desc={t('lists.featColorDesc')} />
               </div>
 
               <Tip>
@@ -292,7 +302,7 @@ const GuidePage: React.FC = () => {
                 <FeatureRow icon={<GripVertical size={15} />} label={t('agenda.featDrag')}      desc={t('agenda.featDragDesc')} />
                 <FeatureRow icon={<Repeat size={15} />}       label={t('agenda.featRecurring')} desc={t('agenda.featRecurringDesc')} />
                 <FeatureRow icon={<Flag size={15} />}         label={t('agenda.featColors')}    desc={t('agenda.featColorsDesc')} />
-                <FeatureRow icon={<Clock size={15} />}        label={t('agenda.featCompact')}   desc={t('agenda.featCompactDesc')} />
+                <FeatureRow icon={<CalendarCheck size={15} />} label={t('agenda.featSlotReview')} desc={t('agenda.featSlotReviewDesc')} />
               </div>
 
               <Tip>
@@ -345,6 +355,20 @@ const GuidePage: React.FC = () => {
                   </div>
                   <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('habits.rateDesc')}</p>
                 </div>
+                <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <PauseCircle size={16} className="text-[rgb(var(--color-text-secondary))]" />
+                    <p className="font-semibold text-[rgb(var(--color-text-primary))] text-sm">{t('habits.pauseTitle')}</p>
+                  </div>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('habits.pauseDesc')}</p>
+                </div>
+                <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Image size={16} className="text-[rgb(var(--color-accent))]" />
+                    <p className="font-semibold text-[rgb(var(--color-text-primary))] text-sm">{t('habits.recapTitle')}</p>
+                  </div>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('habits.recapDesc')}</p>
+                </div>
               </div>
 
               <Tip>
@@ -393,9 +417,11 @@ const GuidePage: React.FC = () => {
               </div>
 
               <div className="mt-8 space-y-0 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl overflow-hidden divide-y divide-[rgb(var(--color-border-muted))]">
-                <FeatureRow icon={<TrendingUp size={15} />} label={t('okr.featHealth')}     desc={t('okr.featHealthDesc')} />
-                <FeatureRow icon={<Clock size={15} />}      label={t('okr.featDaysLeft')}  desc={t('okr.featDaysLeftDesc')} />
-                <FeatureRow icon={<Flag size={15} />}       label={t('okr.featCategories')} desc={t('okr.featCategoriesDesc')} />
+                <FeatureRow icon={<TrendingUp size={15} />}    label={t('okr.featHealth')}     desc={t('okr.featHealthDesc')} />
+                <FeatureRow icon={<CalendarCheck size={15} />} label={t('okr.featCheckin')}    desc={t('okr.featCheckinDesc')} />
+                <FeatureRow icon={<Clock size={15} />}         label={t('okr.featLinked')}     desc={t('okr.featLinkedDesc')} />
+                <FeatureRow icon={<Bookmark size={15} />}      label={t('okr.featCompleted')}  desc={t('okr.featCompletedDesc')} />
+                <FeatureRow icon={<Flag size={15} />}          label={t('okr.featCategories')} desc={t('okr.featCategoriesDesc')} />
               </div>
 
               <Tip>
@@ -479,10 +505,11 @@ const GuidePage: React.FC = () => {
                 <FeatureRow icon={<Network size={15} />}      label={t('entreprise.featPyramid')}     desc={t('entreprise.featPyramidDesc')} />
                 <FeatureRow icon={<Users size={15} />}        label={t('entreprise.featRoles')}       desc={t('entreprise.featRolesDesc')} />
                 <FeatureRow icon={<ShieldCheck size={15} />}  label={t('entreprise.featPermissions')} desc={t('entreprise.featPermissionsDesc')} />
+                <FeatureRow icon={<UsersRound size={15} />}   label={t('entreprise.featTeams')}       desc={t('entreprise.featTeamsDesc')} />
                 <FeatureRow icon={<FolderKanban size={15} />} label={t('entreprise.featProjects')}    desc={t('entreprise.featProjectsDesc')} />
                 <FeatureRow icon={<ListTodo size={15} />}     label={t('entreprise.featTasks')}       desc={t('entreprise.featTasksDesc')} />
                 <FeatureRow icon={<Target size={15} />}       label={t('entreprise.featOkr')}         desc={t('entreprise.featOkrDesc')} />
-                <FeatureRow icon={<BarChart3 size={15} />}    label={t('entreprise.featStats')}       desc={t('entreprise.featStatsDesc')} />
+                <FeatureRow icon={<BarChart3 size={15} />}    label={t('entreprise.featReports')}     desc={t('entreprise.featReportsDesc')} />
                 <FeatureRow icon={<UserPlus size={15} />}     label={t('entreprise.featInvite')}      desc={t('entreprise.featInviteDesc')} />
               </div>
 

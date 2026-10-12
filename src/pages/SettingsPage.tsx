@@ -473,7 +473,7 @@ const SettingsPage: React.FC = () => {
 
               <div>
                 <h2 className="text-xl font-extrabold text-[rgb(var(--color-text-primary))] mb-1">
-                  Guide d'utilisation
+                  {t('help.heading')}
                 </h2>
                 <p className="text-sm text-[rgb(var(--color-text-secondary))]">
                   {t('help.intro')}
