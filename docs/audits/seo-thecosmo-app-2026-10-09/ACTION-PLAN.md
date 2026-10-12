@@ -1,30 +1,41 @@
-# Plan d'action SEO, thecosmo.app (2026-10-09)
+# Plan d'action SEO, thecosmo.app (2026-10-09, mis à jour le 2026-10-12)
 
-Note actuelle : 78 / 100 (76 avant les correctifs du 2026-10-09, commit `69a972d0`). Détail : [FULL-AUDIT-REPORT.md](./FULL-AUDIT-REPORT.md).
+Note actuelle : **81 / 100** (76 le 2026-10-09, 78 après `69a972d0`, 81 après `dc243383`).
+Détail : [FULL-AUDIT-REPORT.md](./FULL-AUDIT-REPORT.md).
 
-## Élevé (semaine 1)
+## Ce qui reste, et pourquoi
 
-1. ⏳ (attend nom, bio, profil d'Axel) **Auteur humain sur le blog** : page auteur, `author: Person` + `sameAs`, encart en fin
-   d'article. Premier levier E-E-A-T.
-2. ⏳ (attend les URLs des profils) **Remplir `Organization.sameAs`** avec les profils existants (LinkedIn, GitHub, Product Hunt…).
-   Ne déclarer que des profils qui existent.
+### Attend une information d'Axel
 
-## Moyen (semaines 2-4)
+1. **Auteur humain sur le blog** : nom affiché, courte bio, un profil public. Ensuite : page
+   auteur, `author: Person` + `sameAs`, encart en fin d'article. Premier levier E-E-A-T.
+2. **`Organization.sameAs`** : les URLs des profils de la marque qui existent (LinkedIn, GitHub,
+   Product Hunt…). Ne déclarer que des profils réels.
 
-3. ⏸️ (décision contraire dans docs/I18N.md, à rouvrir quand l'anglais aura du trafic) **Slugs anglais pour les 11 articles `/en/blog/*`**, 301 depuis les slugs français, sitemap et
-   hreflang régénérés.
-4. ✅ ~~**Vrai 404**~~ (HTML serveur en noindex, fait ; statut 200 restant) : statut HTTP 404 et `noindex` dans le HTML serveur, pas seulement après JS.
-5. **Images dans les articles** : 1 à 3 visuels par article (captures annotées, schémas).
-6. **Image OG par page** générée au build.
-7. **Mesurer la perf mobile** (PSI avec clé API) puis alléger le JS de la landing (516 Ko, 41
-   fichiers) ; différer Supabase et Sentry sur les pages publiques.
+### Décision contraire documentée
 
-## Bas (backlog)
+3. ⏸️ **Slugs anglais des 11 articles `/en/blog/*`** : `docs/I18N.md`, à rouvrir quand l'anglais
+   aura du trafic (coût : une table de 301).
+4. ⏸️ **Statut HTTP 404 des URL inconnues** : limite SPA assumée (`docs/SEO.md`). Le HTML servi
+   est en `noindex` depuis le 2026-10-09.
 
-8. Redirection 308 des variantes à slash final (`/guide/`, `/en`).
-9. ✅ ~~Raccourcir la description de `/entreprise-presentation` (177 caractères) et celle de `/blog/cosmo-vs-todoist` (160 pile).~~ Fait pour `/entreprise-presentation`.
-10. ✅ ~~Allonger le title de `/en/about`.~~ Fait.
-11. Différencier `/pour-managers` et `/pour-equipes` pour éviter la cannibalisation.
+### Chantier à part
+
+5. **Landing lente sur mobile** (perf 68-70 en CI, TBT ~600 ms) : travail des animations sur le
+   fil principal. Suivi en T-51.
+
+### Volontairement non fait
+
+6. Redirection des variantes à slash final : le canonical les couvre, et la règle Vercel globale
+   casserait `/en/`.
+7. `dateModified` : ne bouge qu'avec une vraie révision du texte.
+
+## Fait
+
+| Quand | Commit | Quoi |
+|---|---|---|
+| 2026-10-09 | `69a972d0` | `app.html` en `noindex` sans canonical vers `/` · description `/entreprise-presentation` · title `/en/about` |
+| 2026-10-12 | `dc243383` | canonical/titre/description de la page entreprise réécrits vers l'accueil par React (SEO 92 → 100) · lien cookies « Learn more » (`/en/` 92 → 100) · image OG par page (39) · une capture dans chacun des 11 articles · intertitre managers ≠ équipes |
 
 ## Hors technique, le vrai goulot
 
