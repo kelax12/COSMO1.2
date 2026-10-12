@@ -90,7 +90,7 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf, onOp
               </span>
             );
           })()}
-          <span className="ml-auto text-xs max-md:font-sans font-mono tabular-nums text-[rgb(var(--color-text-muted))] shrink-0">
+          <span data-guide-id="okr-kr-progress" className="ml-auto text-xs max-md:font-sans font-mono tabular-nums text-[rgb(var(--color-text-muted))] shrink-0">
             {measured && taskProgress
               ? pf('krExec.tasksShort', { done: taskProgress.done, total: taskProgress.total })
               : `${liveValue.toLocaleString(locale)}/${kr.targetValue.toLocaleString(locale)}${kr.unit ? ` ${kr.unit}` : ''}`}
@@ -112,6 +112,7 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf, onOp
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onBlur={commit}
+          data-guide-id="okr-kr-value"
           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
           aria-label={tOrgAdmin('okrTab.currentValueAria', { title: kr.title })}
           className="max-md:hidden w-16 h-8 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500/40"

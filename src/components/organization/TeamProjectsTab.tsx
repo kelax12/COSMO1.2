@@ -453,6 +453,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           {query && shownProjects.length === 0 && (
             <p className="py-8 text-center text-sm text-[rgb(var(--color-text-muted))]">{pf('noResult', { query })}</p>
           )}
+          <div data-guide-id="projects-list" className="space-y-3">
           {view === 'portfolio' ? (
             shownProjects.length > 0 && (
               <ProjectPortfolioView
@@ -473,6 +474,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           ) : (
             shownProjects.map(renderProjectCard)
           )}
+          </div>
 
           {/* Archivés */}
           {archivedProjects.length > 0 && (

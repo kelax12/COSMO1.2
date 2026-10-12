@@ -282,7 +282,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
             : tOrgAdmin('directory.filters.noMatch')}
         </p>
       ) : (
-        <ul className={`space-y-2 ${bulk.selectMode ? 'pb-24' : ''}`}>
+        <ul data-guide-id="members-directory" className={`space-y-2 ${bulk.selectMode ? 'pb-24' : ''}`}>
           {filteredMembers.map((m) => (
             <li key={m.userId}>
               <MemberDirectoryRow

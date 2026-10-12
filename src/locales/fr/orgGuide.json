@@ -79,13 +79,13 @@
         "label": "Créer un projet depuis un modèle",
         "synonyms": "modèle, template, projet type, dupliquer, gabarit",
         "b1": "Choisis le modèle qui ressemble le plus au projet à lancer.",
-        "b2": "L'aperçu montre ce qui est copié : tâches, listes, sans les dates."
+        "b2": "Les tâches du modèle s'ajoutent ici ; tu peux en retirer avant de créer."
       },
       "audience": {
         "label": "Gérer la visibilité d'un projet",
         "synonyms": "visibilité, audience, confidentiel, accès, privé",
-        "b1": "Ce choix détermine qui peut voir le projet et ses tâches.",
-        "b2": "Un projet confidentiel reste caché à tous ceux qui n'y sont pas invités."
+        "b1": "Ces équipes voient aussi le projet et ses tâches, en plus de l'équipe principale.",
+        "b2": "Associer une équipe lui ouvre le projet ; une confirmation est demandée."
       }
     },
     "task": {
@@ -100,7 +100,7 @@
         "label": "Assigner une tâche",
         "synonyms": "assigner, attribuer, déléguer, affecter, responsable",
         "b1": "Les assignés sont les personnes qui doivent réaliser la tâche.",
-        "b2": "Les abonnés suivent l'avancement et reçoivent les notifications, sans la réaliser."
+        "b2": "« Suivre » t'envoie ses changements de statut sans t'assigner la tâche."
       },
       "subtaskDependency": {
         "label": "Ajouter une sous-tâche ou une dépendance",
@@ -114,16 +114,15 @@
         "label": "Créer une liste de tâches",
         "synonyms": "liste, regrouper, filtre, vue, tableau",
         "b1": "Le nom de la liste dit ce qu'elle regroupe, en quelques mots.",
-        "b2": "Épingler la liste la garde en tête de la barre, à portée de clic."
+        "b2": "La couleur distingue la liste dans la barre ; un clic passe à la suivante."
       }
     },
     "trash": {
       "restore": {
         "label": "Restaurer depuis la corbeille",
         "synonyms": "corbeille, restaurer, supprimé, récupérer, annuler suppression",
-        "b1": "Chaque élément supprimé reste visible ici avec sa date de suppression.",
-        "b2": "Restaurer remet l'élément à sa place, avec ses assignés et ses sous-tâches.",
-        "b3": "Passé le délai de purge, l'élément disparaît définitivement."
+        "b1": "Chaque élément supprimé reste visible ici, avec qui l'a supprimé et quand.",
+        "b2": "Restaurés, ils reviennent à l'identique ; passé le délai, ils sont purgés."
       }
     },
     "team": {
@@ -131,20 +130,18 @@
         "label": "Créer une équipe",
         "synonyms": "nouvelle équipe, groupe, service, département, squad",
         "b1": "Le nom de l'équipe apparaît partout où elle est mentionnée.",
-        "b2": "Le responsable pilote l'équipe et gère ses membres.",
-        "b3": "Les membres de départ reçoivent l'accès aux projets de l'équipe."
+        "b2": "Coche les membres de départ ; la couronne désigne le responsable, qui gère l'équipe."
       },
       "addMembers": {
         "label": "Ajouter des membres à une équipe",
         "synonyms": "ajouter, membres, équipe, rattacher, composer",
-        "b1": "Coche plusieurs personnes d'un coup pour les ajouter ensemble.",
-        "b2": "Le rôle dans l'équipe précise si la personne gère ou contribue."
+        "b1": "Coche plusieurs personnes d'un coup pour les ajouter ensemble."
       },
       "workload": {
         "label": "Voir la charge de l'équipe",
         "synonyms": "charge, surcharge, capacité, répartition, disponibilité",
         "b1": "Chaque ligne montre le travail en cours de chaque membre.",
-        "b2": "Une surcharge s'affiche quand quelqu'un dépasse sa capacité."
+        "b2": "Les couleurs séparent le travail en retard, de la semaine, à venir et sans date."
       }
     },
     "member": {
@@ -152,32 +149,31 @@
         "label": "Inviter par email",
         "synonyms": "inviter, email, mail, ajouter une personne, recruter",
         "b1": "Saisis une ou plusieurs adresses, séparées par une virgule ou un retour.",
-        "b2": "Le rôle d'arrivée fixe les droits dès la première connexion."
+        "b2": "Chaque adresse reçoit un lien personnel ; l'étape suivante fixe le rôle d'arrivée."
       },
       "inviteLink": {
         "label": "Partager un lien ou un code",
         "synonyms": "lien, code, rejoindre, partager, invitation",
-        "b1": "Copie le lien et envoie-le par le canal de ton choix.",
-        "b2": "L'expiration limite la durée pendant laquelle le lien reste valable.",
-        "b3": "Le code permet de rejoindre à la main, sans ouvrir de lien."
+        "b1": "Génère un lien d'invitation, puis copie-le pour l'envoyer par le canal de ton choix.",
+        "b2": "Le code permet de rejoindre à la main, sans ouvrir de lien."
       },
       "joinRequest": {
         "label": "Accepter une demande d'adhésion",
         "synonyms": "demande, adhésion, accepter, refuser, rejoindre",
         "b1": "Vérifie qui demande à rejoindre avant de répondre.",
-        "b2": "Accepter ouvre l'accès, refuser clôt la demande sans prévenir l'équipe."
+        "b2": "Accepter ouvre l'accès à l'entreprise ; refuser clôt la demande."
       },
       "offboard": {
         "label": "Retirer un membre",
         "synonyms": "retirer, départ, offboarding, supprimer un membre, exclure",
-        "b1": "Choisis qui reprend les tâches de la personne qui part.",
-        "b2": "Les tâches terminées et l'historique restent conservés dans l'entreprise."
+        "b1": "Ce bloc liste ce que la personne laisse ; pour chaque point, tu choisis qui le reprend.",
+        "b2": "Choisis ensuite la suite : transmettre seulement, suspendre ou retirer de l'entreprise."
       },
       "permissions": {
         "label": "Régler les permissions d'un membre",
         "synonyms": "permissions, surcharge, droits individuels, exception, membre",
         "b1": "Une surcharge remplace le droit par défaut pour ce seul membre.",
-        "b2": "« Suit le défaut » rend le droit à son rôle d'origine."
+        "b2": "« Tout remettre par défaut » rend à ce membre les droits de son rôle."
       }
     },
     "pyramid": {
@@ -200,19 +196,19 @@
         "label": "Modifier un rôle",
         "synonyms": "modifier un rôle, changer les droits, éditer, ajuster, permissions",
         "b1": "Les droits cochés s'appliquent à tous les membres qui ont ce rôle.",
-        "b2": "La liste des membres concernés montre qui sera touché par le changement."
+        "b2": "Un rôle actif prime sur les réglages individuels, et plusieurs rôles s'additionnent."
       },
       "assign": {
         "label": "Attribuer un rôle",
         "synonyms": "attribuer, donner un rôle, assigner un rôle, droits, affecter",
         "b1": "Choisis le rôle à donner à ce membre.",
-        "b2": "Le rôle s'ajoute au rôle de base : les droits se cumulent."
+        "b2": "Les rôles déjà actifs restent : plusieurs rôles s'additionnent."
       },
       "assignTimed": {
         "label": "Donner un rôle à durée limitée",
         "synonyms": "durée limitée, temporaire, échéance, expiration, intérim",
         "b1": "La date de fin dit jusqu'à quand le rôle reste actif.",
-        "b2": "À cette date, le membre retrouve automatiquement son rôle d'avant."
+        "b2": "Le résumé dit jusqu'à quand le rôle s'applique ; à cette date, il est retiré tout seul."
       }
     },
     "me": {
@@ -220,7 +216,7 @@
         "label": "Voir mes propres droits",
         "synonyms": "mes droits, mes permissions, ce que je peux faire, accès, rôle",
         "b1": "Les droits actifs listent ce que tu peux faire dans l'entreprise.",
-        "b2": "Chaque droit indique d'où il vient : rôle, équipe ou réglage personnel."
+        "b2": "Chaque droit indique d'où il vient : statut d'admin, défaut de ton rôle ou réglage décidé pour toi."
       }
     },
     "org": {
@@ -228,14 +224,14 @@
         "label": "Transférer la propriété",
         "synonyms": "propriétaire, transfert, céder, owner, passer la main",
         "b1": "Choisis la personne qui deviendra propriétaire de l'entreprise.",
-        "b2": "Le transfert est irréversible : toi seul peux le valider, une fois."
+        "b2": "La facturation passe au nouveau propriétaire ; seul lui pourra ensuite transférer à nouveau."
       },
       "profile": {
         "label": "Modifier le profil de l'entreprise",
         "synonyms": "profil, entreprise, nom, logo, fuseau horaire",
         "b1": "Le nom de l'entreprise s'affiche pour tous les membres.",
-        "b2": "Le logo personnalise l'espace et les invitations envoyées.",
-        "b3": "Le fuseau horaire sert de référence aux échéances et aux rapports."
+        "b2": "Le logo s'affiche à côté du nom de l'entreprise.",
+        "b3": "La description résume l'activité de l'entreprise, visible dans son profil."
       }
     },
     "okr": {
@@ -252,21 +248,15 @@
         "label": "Mettre à jour un résultat clé",
         "synonyms": "mettre à jour, avancement, progression, KR, saisir une valeur",
         "b1": "La nouvelle valeur remplace l'ancienne et fait bouger la progression.",
-        "b2": "Le commentaire de point explique l'écart ou la décision prise."
-      },
-      "linkProject": {
-        "label": "Lier un KR à un projet",
-        "synonyms": "lier, relier, projet, résultat clé, alignement",
-        "b1": "Le projet lié est celui dont le travail fait avancer ce résultat clé.",
-        "b2": "Le lien fait suivre la progression du KR à l'avancement du projet."
+        "b2": "Le compteur et la barre montrent où en est le résultat clé face à sa cible."
       }
     },
     "review": {
       "weekly": {
         "label": "Lancer la revue hebdomadaire",
         "synonyms": "revue, hebdomadaire, point de la semaine, bilan, weekly",
-        "b1": "Note ici ce qui a avancé depuis la dernière revue.",
-        "b2": "Les blocages signalent ce qui freine l'équipe et demande une décision."
+        "b1": "Le nombre de tâches terminées cette semaine, comparé à la semaine passée.",
+        "b2": "Les échéances repoussées sur les deux dernières semaines, à arbitrer."
       }
     },
     "report": {
@@ -274,15 +264,14 @@
         "label": "Consulter un rapport d'activité",
         "synonyms": "rapport, activité, bilan, statistiques, historique",
         "b1": "La période indique les dates couvertes par ce rapport.",
-        "b2": "Le périmètre dit quelles équipes et quels projets sont comptés."
+        "b2": "Le périmètre choisit l'entreprise entière ou une de tes équipes."
       }
     },
     "tasks": {
       "export": {
         "label": "Exporter les tâches",
         "synonyms": "exporter, export, CSV, télécharger, extraire",
-        "b1": "Le format décide du fichier obtenu, par exemple CSV pour un tableur.",
-        "b2": "Les filtres appliqués limitent l'export aux tâches que tu veux."
+        "b1": "L'export rassemble toutes les tâches de l'entreprise dans un fichier CSV, lisible dans un tableur."
       }
     }
   }

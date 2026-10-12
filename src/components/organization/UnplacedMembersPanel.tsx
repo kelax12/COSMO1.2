@@ -60,7 +60,7 @@ const UnplacedMembersPanel = ({
           </button>
         )}
       </div>
-      <section className="max-md:hidden rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4">
+      <section data-guide-id="pyramid-unplaced" className="max-md:hidden rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4">
         <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1">
           {ta('pyramid.unplaced', { count: members.length })}
         </h3>
@@ -76,6 +76,7 @@ const UnplacedMembersPanel = ({
                 <button
                   type="button"
                   onClick={() => onPlace(m)}
+                  data-guide-item
                   className="ml-1 text-xs font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
                 >
                   {ta('pyramid.place')}
@@ -91,6 +92,7 @@ const UnplacedMembersPanel = ({
 
   return (
     <aside
+      data-guide-id="pyramid-unplaced"
       className="w-60 shrink-0 sticky top-4 rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4"
       aria-label={ta('pyramid.toPlaceAria')}
     >
@@ -135,6 +137,7 @@ const UnplacedMembersPanel = ({
                   <button
                     type="button"
                     onClick={() => onPlace(m)}
+                    data-guide-item
                     className="text-[11px] font-semibold text-indigo-500 hover:text-indigo-600 transition-colors shrink-0"
                   >
                     {ta('pyramid.place')}

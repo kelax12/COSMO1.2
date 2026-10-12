@@ -273,7 +273,7 @@ const MemberPermissionsSheet = ({
               {ta('customRoles.sheetBanner', { names: activeRoleNames.join(', ') })}
             </p>
           )}
-          <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label={ta('permissions.presets')}>
+          <div data-guide-id="member-permissions-default" className="flex flex-wrap gap-2 mb-4" role="group" aria-label={ta('permissions.presets')}>
             <button
               type="button"
               onClick={applyGuestPreset}
@@ -293,6 +293,7 @@ const MemberPermissionsSheet = ({
             </button>
           </div>
 
+          <div data-guide-id="member-permissions-matrix">
           {SECTIONS.map(({ titleKey, keys }) => (
             <section key={titleKey} className="mb-5">
               <h3 className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
@@ -301,6 +302,7 @@ const MemberPermissionsSheet = ({
               {keys.map(renderRow)}
             </section>
           ))}
+          </div>
 
           <section>
             <h3 className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">

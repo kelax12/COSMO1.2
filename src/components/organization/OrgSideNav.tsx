@@ -217,6 +217,7 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shor
                     <li key={id}>
                       <Link
                         to={orgSectionPath(id)}
+                        data-guide-id={`nav-${id}`}
                         aria-current={active ? 'page' : undefined}
                         data-active={active}
                         className={`flex items-center gap-2.5 px-3 min-h-11 rounded-xl text-sm font-medium transition-colors ${

@@ -101,7 +101,7 @@ const OrgProfileForm = ({ org }: OrgProfileFormProps) => {
         {/* Maquette 298 : sur mobile, des lignes « Nom · Nova Studio », plus des cadres. */}
         <div className="space-y-3 max-md:space-y-0">
           {/* Image de profil (#12) */}
-          <div className="flex items-center gap-3 max-md:mb-3">
+          <div data-guide-id="org-profile-logo" className="flex items-center gap-3 max-md:mb-3">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -141,7 +141,7 @@ const OrgProfileForm = ({ org }: OrgProfileFormProps) => {
             </div>
             <input type="file" ref={fileInputRef} onChange={handleAvatarFile} className="hidden" accept="image/*" />
           </div>
-          <div className="max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:border-b max-md:border-[rgb(var(--color-border))] max-md:py-1">
+          <div data-guide-id="org-profile-name" className="max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:border-b max-md:border-[rgb(var(--color-border))] max-md:py-1">
             <label htmlFor="org-profile-name" className="block text-xs max-md:text-body max-md:text-[rgb(var(--color-text-primary))] font-medium text-[rgb(var(--color-text-secondary))] mb-1.5 max-md:mb-0">
               {t('common.nameLabel')}
             </label>
@@ -168,7 +168,7 @@ const OrgProfileForm = ({ org }: OrgProfileFormProps) => {
               maxLength={80}
             />
           </div>
-          <div className="max-md:py-2 max-md:border-b max-md:border-[rgb(var(--color-border))]">
+          <div data-guide-id="org-profile-description" className="max-md:py-2 max-md:border-b max-md:border-[rgb(var(--color-border))]">
             <label htmlFor="org-profile-description" className="block text-xs max-md:text-body max-md:text-[rgb(var(--color-text-primary))] font-medium text-[rgb(var(--color-text-secondary))] mb-1.5 max-md:mb-0">
               {tOrgAdmin('profile.description')}
             </label>

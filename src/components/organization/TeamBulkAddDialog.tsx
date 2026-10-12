@@ -58,6 +58,7 @@ const TeamBulkAddDialog = ({ orgId, team, addable }: TeamBulkAddDialogProps) => 
       <button
         type="button"
         onClick={() => setOpen(true)}
+        data-guide-id="team-members-add"
         className="inline-flex items-center gap-1 rounded-full border border-dashed border-[rgb(var(--color-chip-border))] min-h-9 px-2.5 text-xs text-[rgb(var(--color-text-muted))] hover:text-blue-500 transition-colors"
       >
         <UsersRound size={11} aria-hidden="true" /> {ta('teamBulk.addSeveral')}
@@ -76,7 +77,7 @@ const TeamBulkAddDialog = ({ orgId, team, addable }: TeamBulkAddDialogProps) => 
             aria-label={t('assign.memberSearch')}
             className="w-full px-3 py-2 text-sm rounded-lg border bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
           />
-          <ul className="max-h-72 overflow-y-auto divide-y divide-[rgb(var(--color-border))] rounded-xl border border-[rgb(var(--color-border))]">
+          <ul data-guide-id="team-add-picker" className="max-h-72 overflow-y-auto divide-y divide-[rgb(var(--color-border))] rounded-xl border border-[rgb(var(--color-border))]">
             {shown.map((m) => (
               <li key={m.userId}>
                 <label className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-[rgb(var(--color-hover))]">

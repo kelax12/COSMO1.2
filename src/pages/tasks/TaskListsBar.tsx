@@ -508,6 +508,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               exit={{ opacity: 0, scale: 0.9 }}
                               type="button"
                               onClick={() => setShowCreateList(true)}
+                              data-guide-id="task-lists-new"
                               // Nom explicite : la bascule de vue Liste / Tableau
                               // porte AUSSI un bouton « Liste » depuis le
                               // 2026-10-09. Deux commandes au même nom, l'une qui

@@ -118,7 +118,7 @@ const OffboardMemberDialog = ({ orgId, member, members, initialMode = 'remove', 
           </button>
         </div>
 
-        <section aria-labelledby="offboard-impact" className="rounded-xl bg-[rgb(var(--color-hover))] p-3">
+        <section aria-labelledby="offboard-impact" data-guide-id="offboard-reassign" className="rounded-xl bg-[rgb(var(--color-hover))] p-3">
           <h3 id="offboard-impact" className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
             {ta('lifecycle.impactTitle')}
           </h3>
@@ -186,7 +186,7 @@ const OffboardMemberDialog = ({ orgId, member, members, initialMode = 'remove', 
           />
         )}
 
-        <fieldset className="space-y-2">
+        <fieldset data-guide-id="offboard-mode" className="space-y-2">
           <legend className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">{ta('lifecycle.modeLegend')}</legend>
           {modes.map((value) => (
             <label key={value} className="flex items-start gap-2.5 p-2.5 rounded-xl border border-[rgb(var(--color-border))] cursor-pointer has-[:checked]:border-[rgb(var(--color-accent))]">

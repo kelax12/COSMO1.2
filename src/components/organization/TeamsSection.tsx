@@ -103,6 +103,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
           <button
             type="button"
             onClick={() => create.openTeam()}
+            data-guide-id="teams-new"
             className="inline-flex items-center gap-1 text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors"
           >
             <Plus size={14} aria-hidden="true" className="max-md:w-5 max-md:h-5" /> <span className="max-md:sr-only">{t('team.add')}</span>
@@ -146,7 +147,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
           {matchingTeams.length === 0 && (
             <p className="text-xs text-[rgb(var(--color-text-muted))] py-3">{t('team.noTeamMatch')}</p>
           )}
-          <ul className="grid gap-3 max-md:gap-0 md:grid-cols-2">
+          <ul data-guide-id="teams-list" className="grid gap-3 max-md:gap-0 md:grid-cols-2">
             {shownTeams.map((team) => {
               const teamMemberships = memberships.filter((m) => m.teamId === team.id);
               // Responsables d'abord, puis le reste de l'équipe.
@@ -186,6 +187,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                         bouton de suppression passe au-dessus (`relative z-10`). */}
                     <Link
                       to={orgTeamPath(team.id)}
+                      data-guide-item
                       className="text-sm font-bold text-[rgb(var(--color-text-primary))] flex-1 truncate after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-[rgb(var(--color-accent))]"
                     >
                       {team.name}
