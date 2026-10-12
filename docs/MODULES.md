@@ -55,7 +55,7 @@ Tous suivent la même forme. Partir de `index.ts` (exports publics), puis :
 | `billing` | `subscriptions`, `org_subscriptions`, `org_billing_contacts` | 1 | Stripe, paliers entreprise · [CLAUDE.md](../src/modules/billing/CLAUDE.md) |
 | `admin` | aucune (RPC) | 5 | console `/admin`, garde `is_admin()` (aal2) |
 
-Écrans entreprise : `pages/OrganizationPage.tsx`, `pages/organization/`, `components/organization/`.
+Écrans entreprise : `pages/OrganizationPage.tsx`, `pages/organization/`, `components/organization/`, `components/org-guide/` (guide entreprise).
 
 ## Ce qui n'est pas dans `src/modules`
 

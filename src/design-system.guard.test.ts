@@ -250,6 +250,9 @@ const Z_LADDER = new Set([
   190, 200,         // surfaces système (bannières, CommandPalette, PremiumGate)
   250, 300,         // interstitiels au-dessus des surfaces système
   500,              // tutoriel de page — au-dessus de tout le chrome
+  510, 520, 530,    // guide entreprise : capteur de clics (510) sous le curseur et la
+                    // bulle (520), sous la barre de contrôle (530), le tout au-dessus
+                    // du tutoriel de page (2026-10-12).
   9999, 10000,      // createPortal + fixed (feuille, puis popover dans la feuille)
   10001,            // popover dans une popup elle-même à 10000 (calendrier des
                     // popups de dépendances) — troisième étage réel du portail,
