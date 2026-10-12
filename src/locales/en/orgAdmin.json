@@ -221,6 +221,10 @@
         "orgHint": "Read the activity report of the whole company, and each team's performance.",
         "allTeams": "View every team's report",
         "allTeamsHint": "Read the report of any team. Without this right, a team lead only reads their own team's."
+      },
+      "role": {
+        "manage": "Manage roles",
+        "manageHint": "Create, edit and assign custom roles for a chosen period. A trust right: its holder can grant rights they do not hold."
       }
     },
     "target": {
@@ -848,7 +852,9 @@
     "filterMentions": "Mentions",
     "filterDeadlines": "Deadlines",
     "filterProjects": "Projects",
-    "filterOrg": "Organization"
+    "filterOrg": "Organization",
+    "kindCustomRoleExpired": "Your role \"{{name}}\" has ended: your previous rights are back",
+    "kindCustomRoleExpiredGranter": "The role \"{{name}}\" of {{member}} has ended"
   },
   "orgSettings": {
     "profileTitle": "Company profile",
@@ -889,7 +895,8 @@
     "navExport": "Task export",
     "exportTitle": "Export tasks",
     "exportHint": "Download every task of the organization as a CSV file.",
-    "navReports": "Activity reports"
+    "navReports": "Activity reports",
+    "navRoles": "Roles"
   },
   "page": {
     "overview": "Overview",
@@ -1333,5 +1340,76 @@
       "show": "Show details",
       "hide": "Hide details"
     }
+  },
+  "customRoles": {
+    "title": "Roles",
+    "intro": "A role groups permissions. Editing it changes the rights of everyone who holds it.",
+    "create": "Create a role",
+    "emptyTitle": "Create your first role",
+    "emptyBody": "A role gives the same set of rights to several people, for a period you choose.",
+    "permissionCount_one": "{{count}} permission",
+    "permissionCount_other": "{{count}} permissions",
+    "assignsTo": "assigns to: {{targets}}",
+    "assignsNobody": "assigns to nobody",
+    "holders_one": "{{count}} member",
+    "holders_other": "{{count}} members",
+    "expiringSoon": "ends soon",
+    "actionsFor": "Actions for role {{name}}",
+    "edit": "Edit",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "copyName": "{{name}} (copy)",
+    "deleteTitle": "Delete the role \"{{name}}\"?",
+    "deleteNobody": "Nobody holds this role right now.",
+    "deleteHolders": "These people will lose this role and get their previous rights back:",
+    "deleteConfirm": "Delete role",
+    "deleting": "Deleting…",
+    "editor": {
+      "titleNew": "New role",
+      "titleEdit": "Edit role",
+      "aria": "Editor for role {{name}}",
+      "nameLabel": "Role name",
+      "namePlaceholder": "Project lead",
+      "nameRequired": "Give the role a name.",
+      "colorLabel": "Color",
+      "groupTasks": "Tasks",
+      "groupProjects": "Projects",
+      "groupOther": "OKRs and more",
+      "assignLabel": "Can assign a task to",
+      "assignNobody": "Nobody: this role assigns no tasks.",
+      "hint": "An active role overrides individual settings. Anything turned off is denied, even a right members have by default. Several roles add up.",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel"
+    },
+    "assign": {
+      "menuItem": "Assign a role",
+      "title": "Assign a role to {{name}}",
+      "current": "Current roles",
+      "none": "No role right now.",
+      "endsOn": "Until {{date}}",
+      "unlimited": "No end date",
+      "revoke": "Remove role {{name}}",
+      "roleLabel": "Role",
+      "durationLabel": "Duration",
+      "duration": {
+        "week": "1 week",
+        "month": "1 month",
+        "quarter": "3 months",
+        "until": "Until…",
+        "unlimited": "No end date"
+      },
+      "pickDate": "End date",
+      "summary": "From {{from}} to {{to}}, then {{name}} gets their current rights back.",
+      "summaryUnlimited": "From {{from}}, with no end date.",
+      "extendNote": "{{name}} already holds this role: its end date will be replaced.",
+      "dateRequired": "Pick an end date in the future.",
+      "submit": "Assign",
+      "submitExtend": "Extend",
+      "noRoles": "No role exists yet. Create one in Settings, under Roles.",
+      "close": "Close"
+    },
+    "badgesAria": "Roles: {{names}}",
+    "sheetBanner": "The roles {{names}} override this sheet while they are active. These settings will apply once they end."
   }
 }

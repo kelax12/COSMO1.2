@@ -204,7 +204,11 @@
     "projectMember": "Could not update the project members: {{message}}",
     "trashTeamOkr": "Could not delete the objective: {{message}}",
     "restoreTeamOkr": "Could not restore the objective: {{message}}",
-    "purgeTask": "Could not permanently delete the task: {{message}}"
+    "purgeTask": "Could not permanently delete the task: {{message}}",
+    "saveRole": "Couldn't save the role: {{message}}",
+    "deleteRole": "Couldn't delete the role: {{message}}",
+    "assignRole": "Couldn't assign the role: {{message}}",
+    "revokeRole": "Couldn't remove the role: {{message}}"
   },
   "success": {
     "orgCreated": "Company created",
@@ -240,7 +244,11 @@
     "memberAccessUpdated": "Access updated",
     "notificationSettingsSaved": "Preferences saved",
     "weeklyReviewSaved": "Review saved",
-    "objectiveTrashed": "Objective moved to the trash (30 days to restore it)"
+    "objectiveTrashed": "Objective moved to the trash (30 days to restore it)",
+    "roleSaved": "Role saved",
+    "roleDeleted": "Role deleted",
+    "roleAssigned": "Role assigned",
+    "roleRevoked": "Role removed"
   },
   "friends": {
     "notAuthenticated": "You must be signed in to do this.",

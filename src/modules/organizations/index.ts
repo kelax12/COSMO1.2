@@ -94,6 +94,34 @@ export {
 } from './hooks';
 export { useMyOrgPermissions } from './use-my-permissions';
 
+// ─── Rôles personnalisés à durée limitée (mig. 219) ──────────────────
+export type { ActiveRoleGrant } from './permissions';
+export type {
+  OrgCustomRole,
+  OrgRoleAssignment,
+  SaveCustomRoleInput,
+  AssignRoleInput,
+  RoleDuration,
+} from './roles.types';
+export { ROLE_COLORS, ROLE_DURATIONS, ROLE_NAME_MAX } from './roles.types';
+export {
+  isAssignmentActive,
+  activeAssignmentsOf,
+  activeRolesOf,
+  computeEndsAt,
+  holdersCount,
+  expiringSoonCount,
+} from './roles.helpers';
+export {
+  rolesKeys,
+  useOrgRoles,
+  useOrgRoleAssignments,
+  useSaveOrgRole,
+  useDeleteOrgRole,
+  useAssignOrgRole,
+  useRevokeOrgRole,
+} from './roles.hooks';
+
 // Notifications d'entreprise (mig. 095) — lecture seule côté client.
 export {
   useOrgNotifications,

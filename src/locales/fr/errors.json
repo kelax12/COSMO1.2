@@ -204,7 +204,11 @@
     "projectMember": "Impossible de modifier les membres du projet : {{message}}",
     "trashTeamOkr": "Impossible de supprimer l'objectif : {{message}}",
     "restoreTeamOkr": "Impossible de restaurer l'objectif : {{message}}",
-    "purgeTask": "Impossible de supprimer définitivement la tâche : {{message}}"
+    "purgeTask": "Impossible de supprimer définitivement la tâche : {{message}}",
+    "saveRole": "Impossible d'enregistrer le rôle : {{message}}",
+    "deleteRole": "Impossible de supprimer le rôle : {{message}}",
+    "assignRole": "Impossible d'attribuer le rôle : {{message}}",
+    "revokeRole": "Impossible de retirer le rôle : {{message}}"
   },
   "success": {
     "orgCreated": "Entreprise créée",
@@ -240,7 +244,11 @@
     "memberAccessUpdated": "Accès mis à jour",
     "notificationSettingsSaved": "Préférences enregistrées",
     "weeklyReviewSaved": "Revue enregistrée",
-    "objectiveTrashed": "Objectif placé dans la corbeille (30 jours pour le restaurer)"
+    "objectiveTrashed": "Objectif placé dans la corbeille (30 jours pour le restaurer)",
+    "roleSaved": "Rôle enregistré",
+    "roleDeleted": "Rôle supprimé",
+    "roleAssigned": "Rôle attribué",
+    "roleRevoked": "Rôle retiré"
   },
   "friends": {
     "notAuthenticated": "Vous devez être connecté pour effectuer cette action.",

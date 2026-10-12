@@ -6,6 +6,9 @@ import {
   useSetMemberPermissions,
   useMyOrgPermissions,
   useOrgMemberLastActivity,
+  useOrgRoles,
+  useOrgRoleAssignments,
+  activeAssignmentsOf,
   canEditPermissionsOf,
   effectivePermissions,
   subtreeOf,
@@ -28,6 +31,7 @@ import AssignTaskSheet from './AssignTaskSheet';
 import TeamTaskModal from './TeamTaskModal';
 import { useMemberLifecycle } from './MemberLifecycleActions';
 import MemberPermissionsSheet from './MemberPermissionsSheet';
+import AssignRoleDialog from './AssignRoleDialog';
 import MemberDirectoryRow from './MemberDirectoryRow';
 import MemberDirectoryToolbar from './MemberDirectoryToolbar';
 import MemberBulkBar from './MemberBulkBar';
@@ -95,6 +99,20 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
   const [assigning, setAssigning] = useState<OrgMember | null>(null);
   const [creatingTaskFor, setCreatingTaskFor] = useState<{ member: OrgMember; projectId: string | null } | null>(null);
   const [editingPerms, setEditingPerms] = useState<OrgMember | null>(null);
+  const [assigningRole, setAssigningRole] = useState<OrgMember | null>(null);
+
+  // Rôles personnalisés (mig. 219) : pastilles de l'annuaire, bandeau de la
+  // fiche individuelle. « Actif » se juge au rendu, comme côté serveur.
+  const { data: customRoles = [] } = useOrgRoles(orgId);
+  const { data: roleAssignments = [] } = useOrgRoleAssignments(orgId);
+  const canManageRoles = isAdmin || myPermissions.can['role.manage'];
+  const roleBadgesOf = (userId: string) => {
+    const byId = new Map(customRoles.map((r) => [r.id, r]));
+    return activeAssignmentsOf(roleAssignments, userId, new Date()).flatMap((a) => {
+      const r = byId.get(a.roleId);
+      return r ? [{ id: r.id, name: r.name, color: r.color, endsAt: a.endsAt }] : [];
+    });
+  };
 
   // ─── URL : deep-link `?member=<id>` et filtres `?dir…` ──────────────
   // `?member=` : on ouvre la fiche puis on retire le paramètre, sinon refermer
@@ -278,7 +296,10 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
                   // 115), sinon le sheet s'ouvrirait pour finir en erreur RLS.
                   canAssign: myPermissions.canAssign(m.userId),
                   canEditPermissions: canEditPermissionsOf({ actorId: currentUserId, actorIsAdmin: isAdmin, target: m, members }),
+                  // Mig. 219 : jamais sur un admin (il détient tout, la base refuse).
+                  canAssignRole: canManageRoles && m.role !== 'admin',
                 }}
+                roleBadges={roleBadgesOf(m.userId)}
                 lastActivity={activityByUser.get(m.userId)}
                 selectMode={bulk.selectMode}
                 selected={bulk.selectedIds.has(m.userId)}
@@ -287,6 +308,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
                 onSetRole={(role) => (role === 'member' && m.role === 'admin' ? setDemoting(m) : setRole.mutate({ orgId, userId: m.userId, role }))}
                 onAssign={() => setAssigning(m)}
                 onEditPermissions={() => setEditingPerms(m)}
+                onAssignRole={() => setAssigningRole(m)}
                 lifecycleItems={lifecycle.menuItems(m)}
               />
             </li>
@@ -399,6 +421,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
           actorPermissions={myEffective}
           actorIsAdmin={isAdmin}
           actorAssignTargets={myPermissions.assignTargets}
+          activeRoleNames={roleBadgesOf(editingPerms.userId).map((r) => r.name)}
           pending={setPermissions.isPending}
           onSave={(input) =>
             setPermissions.mutate(
@@ -408,6 +431,10 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
           }
           onClose={() => setEditingPerms(null)}
         />
+      )}
+
+      {assigningRole && (
+        <AssignRoleDialog orgId={orgId} member={assigningRole} onClose={() => setAssigningRole(null)} />
       )}
 
       {lifecycle.dialogs}

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import {
   AlertTriangle, ArrowRightLeft, ArrowUpRight, Bell, Building2, Check, ChevronRight, Download, History, KeyRound,
   Lock, LogOut, Plug, Plus, Receipt, Repeat, ShieldCheck, SlidersHorizontal, Tags, Trash2, UserPlus, Users, Zap,
-  FileText,
+  FileText, BadgeCheck,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -42,6 +42,8 @@ const OffboardMemberDialog = lazyWithRetry(() => import('@/components/organizati
 // M13 : catégories et droits quittent l'onglet OKR et l'annuaire pour Paramètres.
 const TeamCategoryTreeManager = lazyWithRetry(() => import('@/components/organization/TeamCategoryTreeManager'));
 const OrgSettingsPermissions = lazyWithRetry(() => import('@/components/organization/OrgSettingsPermissions'));
+// Rôles personnalisés à durée limitée (mig. 219).
+const OrgRolesSettings = lazyWithRetry(() => import('@/components/organization/OrgRolesSettings'));
 // Journal d'audit (mig. 162) : admins seuls, chargé à l'ouverture de Paramètres.
 // Ses textes vivent dans `orgAccount` (surfaces rares) : `org` est payé par
 // toute visite de /entreprise, pas le journal. Le catalogue est déclaré sur la
@@ -74,7 +76,7 @@ interface OrgSettingsSectionProps {
 type ConfigPart = 'general' | 'security' | 'automations' | 'integrations';
 type PanelId =
   | ConfigPart
-  | 'profile' | 'orgs' | 'invite' | 'myRights' | 'permissions' | 'categories'
+  | 'profile' | 'orgs' | 'invite' | 'myRights' | 'permissions' | 'roles' | 'categories'
   | 'notifications' | 'export' | 'reports' | 'audit' | 'plan' | 'danger';
 interface NavGroup {
   label: string;
@@ -120,6 +122,8 @@ const OrgSettingsSection = ({
   const me = members.find((m) => m.userId === currentUserId);
   const { can } = useMyOrgPermissions(org.id);
   const canManageCategories = isAdmin || can['category.manage'];
+  // Mig. 219 : « Gérer les rôles » est un droit de confiance, délégable.
+  const canManageRoles = isAdmin || can['role.manage'];
   // Ici la barre ne filtre rien : son état de sélection reste local.
   const navigate = useNavigate();
   const { organizations, setActiveOrgId } = useActiveOrganization();
@@ -157,6 +161,7 @@ const OrgSettingsSection = ({
       { id: 'invite', icon: UserPlus, label: ta('orgSettings.navInvite') },
       { id: 'myRights', icon: ShieldCheck, label: ta('orgSettings.navMyRights') },
       ...(isAdmin ? [{ id: 'permissions' as const, icon: KeyRound, label: ta('orgSettings.navPermissions') }] : []),
+      ...(canManageRoles ? [{ id: 'roles' as const, icon: BadgeCheck, label: ta('orgSettings.navRoles') }] : []),
       ...(isAdmin ? [{ id: 'security' as const, icon: Lock, label: ta('orgSettings.navSecurity') }] : []),
     ] },
     { label: ta('orgSettings.groupWork'), items: [
@@ -297,6 +302,18 @@ const OrgSettingsSection = ({
           <div className="mt-2">
             <Suspense fallback={null}>
               <OrgSettingsPermissions orgId={org.id} members={members} currentUserId={currentUserId} isAdmin={isAdmin} />
+            </Suspense>
+          </div>
+        </section>
+      )}
+
+      {/* Rôles personnalisés (mig. 219) : paquets de droits attribués pour une durée. */}
+      {active === 'roles' && canManageRoles && (
+        <section className={CARD}>
+          <h2 className={TITLE}>{ta('customRoles.title')}</h2>
+          <div className="mt-2">
+            <Suspense fallback={null}>
+              <OrgRolesSettings orgId={org.id} members={members} />
             </Suspense>
           </div>
         </section>

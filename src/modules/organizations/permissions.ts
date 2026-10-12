@@ -34,6 +34,8 @@ export const ORG_PERMISSION_KEYS = [
   // Rapports d'activité (mig. 202) : défaut ADMIN SEULEMENT, jamais « manager ».
   'report.org',
   'report.allTeams',
+  // Rôles personnalisés (mig. 219) : défaut ADMIN SEULEMENT. Droit de confiance.
+  'role.manage',
 ] as const;
 
 export type OrgPermissionKey = (typeof ORG_PERMISSION_KEYS)[number];
@@ -56,7 +58,11 @@ const MEMBER_DEFAULT_KEYS: ReadonlySet<string> = new Set<OrgPermissionKey>([
  * toute l'entreprise. Un responsable d'équipe lit le rapport de SON équipe
  * sans aucun de ces droits (cf. `reportableTeamIds`).
  */
-const ADMIN_DEFAULT_KEYS: ReadonlySet<string> = new Set<OrgPermissionKey>(['report.org', 'report.allTeams']);
+const ADMIN_DEFAULT_KEYS: ReadonlySet<string> = new Set<OrgPermissionKey>([
+  'report.org',
+  'report.allTeams',
+  'role.manage',
+]);
 
 /** Cibles d'assignation cumulables. Tableau vide = « personne ». */
 export const ORG_ASSIGN_TARGETS = ['self', 'peers', 'manager', 'subordinates', 'everyone'] as const;
@@ -97,6 +103,15 @@ export interface SetOrgPermissionsInput {
   assignTargets: OrgAssignTarget[] | null;
 }
 
+/**
+ * Ce qu'un rôle personnalisé ACTIF apporte (mig. 219). Un rôle définit tout :
+ * une clé absente est REFUSÉE, même un droit qu'un membre a par défaut.
+ */
+export interface ActiveRoleGrant {
+  grantedKeys: readonly OrgPermissionKey[];
+  assignTargets: readonly OrgAssignTarget[];
+}
+
 /** Droits effectifs d'un membre : les dix clés, résolues. */
 export type EffectiveOrgPermissions = Record<OrgPermissionKey, boolean>;
 
@@ -107,10 +122,15 @@ interface EffectiveInput {
   members: OrgMember[];
   /** Sa surcharge, si elle existe. */
   overrides?: OrgMemberPermissions | null;
+  /** Ses rôles personnalisés ACTIFS (mig. 219). Vide = aucun. */
+  roles?: readonly ActiveRoleGrant[];
 }
 
 /**
- * Droits effectifs = COALESCE(surcharge, défaut dérivé).
+ * Droits effectifs = rôles actifs, sinon COALESCE(surcharge, défaut dérivé).
+ *
+ * Miroir de `my_org_perm` (mig. 219) : au moins un rôle actif → OU logique des
+ * rôles, et rien d'autre n'est lu (le rôle écrase la fiche et le défaut).
  *
  * Un admin est TOUJOURS à `true` partout : le serveur court-circuite dessus
  * (mig. 115), et c'est ce qui empêche une organisation de se bloquer
@@ -121,6 +141,7 @@ export const effectivePermissions = ({
   member,
   members,
   overrides,
+  roles = [],
 }: EffectiveInput): EffectiveOrgPermissions => {
   const isAdmin = member.role === 'admin';
   const isManager = isAdmin || isManagerOf(members, member.userId);
@@ -131,21 +152,31 @@ export const effectivePermissions = ({
       out[key] = true;
       continue;
     }
+    if (roles.length > 0) {
+      out[key] = roles.some((r) => r.grantedKeys.includes(key));
+      continue;
+    }
     const override = overrides?.overrides?.[key];
     out[key] = override ?? (MEMBER_DEFAULT_KEYS.has(key) ? true : ADMIN_DEFAULT_KEYS.has(key) ? false : isManager);
   }
   return out;
 };
 
-/** Cibles d'assignation effectives d'un membre (miroir de `my_assign_targets`). */
+/**
+ * Cibles d'assignation effectives d'un membre (miroir de `my_assign_targets`).
+ * Avec au moins un rôle actif : UNION des portées des rôles (mig. 219).
+ */
 export const effectiveAssignTargets = ({
   member,
   overrides,
+  roles = [],
 }: {
   member: OrgMember;
   overrides?: OrgMemberPermissions | null;
+  roles?: readonly ActiveRoleGrant[];
 }): OrgAssignTarget[] => {
   if (member.role === 'admin') return [...DEFAULT_ASSIGN_TARGETS];
+  if (roles.length > 0) return ORG_ASSIGN_TARGETS.filter((t) => roles.some((r) => r.assignTargets.includes(t)));
   return overrides?.assignTargets ?? [...DEFAULT_ASSIGN_TARGETS];
 };
 

@@ -737,6 +737,10 @@
         "orgHint": "Lire le rapport d'activité de toute l'entreprise, et la performance de chaque équipe.",
         "allTeams": "Voir le rapport de toutes les équipes",
         "allTeamsHint": "Lire le rapport de n'importe quelle équipe. Sans ce droit, un responsable ne lit que celui de son équipe."
+      },
+      "role": {
+        "manage": "Gérer les rôles",
+        "manageHint": "Créer, modifier et attribuer des rôles personnalisés, pour une durée choisie. Droit de confiance : son détenteur peut donner des droits qu'il n'a pas."
       }
     },
     "intro": "Ces réglages remplacent les droits déduits de l'organigramme. Une ligne laissée sur « Par défaut » suit la position du membre dans l'entreprise."
