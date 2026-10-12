@@ -250,13 +250,15 @@ const Z_LADDER = new Set([
   190, 200,         // surfaces système (bannières, CommandPalette, PremiumGate)
   250, 300,         // interstitiels au-dessus des surfaces système
   500,              // tutoriel de page — au-dessus de tout le chrome
-  510, 520, 530,    // guide entreprise : capteur de clics (510) sous le curseur et la
-                    // bulle (520), sous la barre de contrôle (530), le tout au-dessus
-                    // du tutoriel de page (2026-10-12).
   9999, 10000,      // createPortal + fixed (feuille, puis popover dans la feuille)
   10001,            // popover dans une popup elle-même à 10000 (calendrier des
                     // popups de dépendances) — troisième étage réel du portail,
                     // ajouté le 2026-08-30 avec sa justification d'ordre.
+  10010, 10020, 10030, // guide entreprise : capteur de clics (10010) sous le curseur et
+                    // la bulle (10020), sous la barre de contrôle (10030). AU-DESSUS
+                    // des modales maison (9999) et de leurs popovers : la démo ouvre
+                    // ces modales, et à 510/520/530 elle se jouait derrière elles,
+                    // invisible (mesuré dans le navigateur le 2026-10-12).
 ]);
 
 const ARBITRARY_Z = /z-\[(\d+)\]/g;

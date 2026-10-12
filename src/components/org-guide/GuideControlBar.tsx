@@ -30,7 +30,7 @@ export function GuideControlBar({ actionLabel, current, total, paused, onPause, 
       aria-label={actionLabel}
       onPointerDown={stop}
       onMouseDown={stop}
-      className="pointer-events-auto fixed bottom-6 left-1/2 z-[530] flex -translate-x-1/2 items-center gap-2 rounded-full border border-border bg-popover px-3 py-1.5 text-popover-foreground shadow-lg"
+      className="pointer-events-auto fixed bottom-6 left-1/2 z-[10030] flex -translate-x-1/2 items-center gap-2 rounded-full border border-border bg-popover px-3 py-1.5 text-popover-foreground shadow-lg"
     >
       <span className="px-2 text-xs text-muted-foreground">
         {t('control.progress', { action: actionLabel, current, total })}

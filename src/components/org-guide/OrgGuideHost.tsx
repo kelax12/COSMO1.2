@@ -133,7 +133,7 @@ export default function OrgGuideHost({ open, onClose, viewer }: Props) {
               pendant la démo. Les clics de la démo sont des évènements émis
               directement sur la cible, le calque ne les voit pas. */}
           <div
-            className="pointer-events-auto fixed inset-0 z-[510] cursor-default"
+            className="pointer-events-auto fixed inset-0 z-[10010] cursor-default"
             aria-hidden="true"
             onPointerDown={swallow}
             onMouseDown={swallow}
@@ -158,7 +158,7 @@ export default function OrgGuideHost({ open, onClose, viewer }: Props) {
           role="status"
           onPointerDown={stop}
           onMouseDown={stop}
-          className="pointer-events-auto fixed left-1/2 top-[40%] z-[530] w-72 -translate-x-1/2 rounded-xl border border-border bg-popover p-3 text-sm text-popover-foreground shadow-lg"
+          className="pointer-events-auto fixed left-1/2 top-[40%] z-[10030] w-72 -translate-x-1/2 rounded-xl border border-border bg-popover p-3 text-sm text-popover-foreground shadow-lg"
         >
           <p className="mb-3 leading-snug">
             {ending.result.status === 'empty' ? tx(ending.result.emptyKey) : t('end.missing')}

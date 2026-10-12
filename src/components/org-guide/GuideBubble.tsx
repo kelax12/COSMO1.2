@@ -9,7 +9,7 @@ export function GuideBubble({ text, at, counter }: { text: string; at: CursorPoi
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed z-[520] w-60 rounded-xl border border-border bg-popover p-3 text-sm text-popover-foreground shadow-lg"
+      className="pointer-events-none fixed z-[10020] w-60 rounded-xl border border-border bg-popover p-3 text-sm text-popover-foreground shadow-lg"
       style={style}
     >
       {counter && <p className="mb-1 text-xs text-primary">{counter}</p>}
