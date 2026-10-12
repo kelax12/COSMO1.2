@@ -22,6 +22,8 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
   une fois par entreprise et par appareil, jamais en démo, seulement aux arrivés depuis le
   2026-10-03, et SEULEMENT à une arrivée sans paramètre (`arrivedBare`, décidé à l'arrivée).
   Relue à chaque rendu, la garde l'ouvrait après coup sur `?tab=`, `?task=` : 8 e2e rouges (10-04).
+- ❌ **Guide entreprise** : ne jamais renommer ni déplacer un `data-guide-id` sans relancer la garde
+  `src/components/org-guide/guide-scenarios.guard.test.ts`.
 - ❌ **Jamais sur une route** pour le perso : une inscription Google ne repasse pas par `SignupPage`.
 - ❌ **Jamais de création différée** : chaque étape crée quand elle est validée, et passer avance
   sans rien créer.
