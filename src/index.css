@@ -1590,6 +1590,20 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
 .blog-prose ol { list-style: decimal; }
 .blog-prose li { margin-bottom: 0.5rem; }
 .blog-prose li::marker { color: #64748b; }
+.blog-prose figure { margin: 2rem 0; }
+.blog-prose figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  border: 1px solid #334155;
+}
+.blog-prose figcaption {
+  margin-top: 0.625rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #94a3b8;
+}
 .blog-prose strong { color: #fff; font-weight: 600; }
 .blog-prose em { color: #e2e8f0; }
 .blog-prose a {

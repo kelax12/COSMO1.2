@@ -26,6 +26,7 @@ export const article = {
       readingMinutes: 7,
       html: `
 <p class="lead">Todoist est probablement le gestionnaire de tâches le plus abouti du marché : 18 ans d'existence, des applications natives partout, une saisie en langage naturel redoutable. Alors pourquoi comparer ? Parce que la question n'est pas « quelle est la meilleure todo-list ? » mais « <strong>de quoi votre organisation a-t-elle besoin ?</strong> ». Si la réponse inclut le suivi d'habitudes, le time-blocking ou des objectifs mesurables, le match devient intéressant. Comparatif honnête, point par point.</p>
+<figure><img src="/screenshots/taches.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Le gestionnaire de tâches de Cosmo : listes d'accès rapide, filtres par priorité et par catégorie, tâches en retard signalées." /><figcaption>Le gestionnaire de tâches de Cosmo : listes d'accès rapide, filtres par priorité et par catégorie, tâches en retard signalées. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="resume">Le verdict en 30 secondes</h2>
 <ul>
@@ -97,6 +98,7 @@ export const article = {
       readingMinutes: 7,
       html: `
 <p class="lead">Todoist is probably the most accomplished task manager on the market: 18 years of existence, native apps everywhere, formidable natural-language input. So why compare at all? Because the question is not "which is the best to-do list?" but "<strong>what does your system actually need?</strong>". If the answer includes habit tracking, time-blocking or measurable goals, the match gets interesting. An honest comparison, point by point.</p>
+<figure><img src="/screenshots/taches.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's task manager: quick-access lists, filters by priority and category, overdue tasks flagged." /><figcaption>Cosmo's task manager: quick-access lists, filters by priority and category, overdue tasks flagged. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="resume">The verdict in 30 seconds</h2>
 <ul>

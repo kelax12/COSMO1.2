@@ -33,6 +33,7 @@ export const article = {
       ],
       html: `
 <p class="lead">Vous connaissez la méthode, il ne manque que le support. Voici un <strong>template OKR gratuit au format Excel</strong> (compatible Google Sheets et LibreOffice) : deux feuilles prêtes à remplir (OKR personnels et OKR équipe/startup), avec des exemples concrets et la progression calculée automatiquement. Téléchargement direct, <strong>sans email demandé</strong>.</p>
+<figure><img src="/screenshots/okr.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période." /><figcaption>Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période. Capture du mode démo, données fictives.</figcaption></figure>
 
 <p><a href="/downloads/template-okr-cosmo.xlsx" download><strong>Télécharger le template OKR (.xlsx, 9 Ko)</strong></a></p>
 
@@ -161,6 +162,7 @@ export const article = {
       ],
       html: `
 <p class="lead">You know the method, all that is missing is the support. Here is a <strong>free OKR template in Excel format</strong> (compatible with Google Sheets and LibreOffice): two sheets ready to fill in, personal OKRs and team or startup OKRs, with concrete examples and progress computed for you. Direct download, <strong>no email required</strong>.</p>
+<figure><img src="/screenshots/okr.webp" width="1280" height="800" loading="lazy" decoding="async" alt="OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed." /><figcaption>OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <p><a href="/downloads/template-okr-cosmo.xlsx" download><strong>Download the OKR template (.xlsx, 9 KB)</strong></a> (the sheet labels are in French)</p>
 
