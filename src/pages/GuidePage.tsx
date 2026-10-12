@@ -14,6 +14,9 @@ import TaskTableShowcase from '@/components/showcase/TaskTableShowcase';
 import AgendaShowcase from '@/components/showcase/AgendaShowcase';
 import OKRCardShowcase from '@/components/showcase/OKRCardShowcase';
 import HabitHeatmapShowcase from '@/components/showcase/HabitHeatmapShowcase';
+import ShowcaseTheme from '@/components/showcase/ShowcaseTheme';
+import { useDocumentTheme } from '@/hooks/useDocumentTheme';
+import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 // Audit perf 2026-05-29 — lazy-load Recharts wrapper (same rationale as LandingPage).
 const StatsShowcase = lazy(() => import('@/components/showcase/StatsShowcase'));
 const StatsShowcaseFallback = () => (
@@ -42,6 +45,9 @@ const GuidePage: React.FC = () => {
     canonical: 'https://thecosmo.app/guide',
   });
   useGuideSchemas();
+  // Les vitrines suivent le thème de l'app : des captures sombres faisaient
+  // des trous dans la page en thème clair.
+  const theme = useDocumentTheme();
   const [activeSection, setActiveSection] = useState<SectionId>('demarrage');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -134,6 +140,7 @@ const GuidePage: React.FC = () => {
           </aside>
 
           {/* ── Content ── */}
+          <ShowcaseTheme theme={theme}>
           <main className="flex-1 min-w-0 space-y-24 max-md:space-y-16 max-md:[&_strong]:font-medium">
 
             {/* Maquette 370 : sur mobile, un sommaire repliable en tête. */}
@@ -524,7 +531,7 @@ const GuidePage: React.FC = () => {
 
             {/* ── Footer guide ── */}
             <div className="border-t border-[rgb(var(--color-border))] pt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-[rgb(var(--color-text-muted))] text-sm">{t('chrome.contact')} <a href="mailto:axellongattepro@gmail.com" className="text-[rgb(var(--color-accent))] hover:underline">axellongattepro@gmail.com</a></p>
+              <p className="text-[rgb(var(--color-text-muted))] text-sm">{t('chrome.contact')} <a href={`mailto:${CONTACT_EMAIL}`} className="text-[rgb(var(--color-accent))] hover:underline">{CONTACT_EMAIL}</a></p>
               <Link
                 to="/"
                 className="flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
@@ -535,6 +542,7 @@ const GuidePage: React.FC = () => {
             </div>
 
           </main>
+          </ShowcaseTheme>
         </div>
       </div>
     </div>
