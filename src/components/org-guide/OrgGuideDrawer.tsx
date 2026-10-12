@@ -105,7 +105,8 @@ export function OrgGuideDrawer({ open, viewer, onClose, onStart, onSeeAdmins }: 
         </div>
         {denied && (
           <div
-            role="alertdialog"
+            role="region"
+            aria-live="polite"
             aria-labelledby="org-guide-denied"
             aria-describedby="org-guide-denied-body"
             className="m-3 rounded-xl border border-border bg-card p-3 text-card-foreground"

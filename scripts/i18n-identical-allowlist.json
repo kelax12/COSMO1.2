@@ -205,6 +205,10 @@
       "categorie": "symbole-ou-format",
       "valeur": "{{minutes}} min"
     },
+    "orgGuide.drawer.badgeAdmin": {
+      "categorie": "mot-identique",
+      "valeur": "Admin"
+    },
     "org.common.adminBadge": {
       "categorie": "mot-identique",
       "valeur": "Admin"
