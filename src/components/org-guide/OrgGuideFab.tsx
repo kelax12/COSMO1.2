@@ -27,7 +27,9 @@ export function OrgGuideFab({ viewer, openSignal }: { viewer: GuideViewer; openS
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [seen, setSeen] = useState(readSeen);
-  const [lastSignal, setLastSignal] = useState(openSignal);
+  // Départ à `undefined` : un signal déjà présent au premier rendu (arrivée par
+  // `?guide=1`) doit ouvrir le tiroir, pas être pris pour l'état initial.
+  const [lastSignal, setLastSignal] = useState<number | undefined>(undefined);
 
   if (openSignal !== lastSignal) {
     setLastSignal(openSignal);

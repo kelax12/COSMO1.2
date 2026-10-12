@@ -94,14 +94,14 @@ const EnterpriseOnboarding = () => {
     if (!setupOrg) return;
     navigate(orgSetupPath(setupOrg.id, next));
   };
-  const finishSetup = () => {
+  const finishSetup = (path: string = '/entreprise') => {
     setBusinessPending(false);
     if (setupOrg) {
       setActiveOrgId(setupOrg.id);
       // Qui vient de tout mettre en place n'a pas besoin de l'accueil membre.
       if (user?.id) markMemberWelcomeSeen(setupOrg.id, user.id);
     }
-    navigate('/entreprise');
+    navigate(path);
   };
 
   const settingUp = Boolean(setupOrgId && (isLoading || setupOrg));
@@ -198,7 +198,8 @@ const EnterpriseOnboarding = () => {
       teamName={teamName}
       projectName={project?.name ?? ''}
       objective={objective}
-      onFinish={finishSetup}
+      onFinish={() => finishSetup()}
+      onDiscoverGuide={() => finishSetup('/entreprise?guide=1')}
     />
   );
 
@@ -225,7 +226,7 @@ const EnterpriseOnboarding = () => {
               </span>
             </span>
             {setupOrg && screen !== 'done' && (
-              <button type="button" onClick={finishSetup} className={ENT_LINK}>
+              <button type="button" onClick={() => finishSetup()} className={ENT_LINK}>
                 {t('common.skipAll')}
               </button>
             )}

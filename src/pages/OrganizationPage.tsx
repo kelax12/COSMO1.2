@@ -133,7 +133,7 @@ const OrganizationPage = () => {
   // `entityId` : second segment, qui n'existe que pour la page d'une équipe
   // (`/entreprise/teams/<id>`).
   const { section, entityId } = useParams<{ section?: string; entityId?: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const urlTab: OrgTab = isOrgSectionSegment(section) ? section : 'overview';
   // Sans `replace` : chaque section est une page, le bouton précédent y revient.
@@ -155,6 +155,17 @@ const OrganizationPage = () => {
   // le job e2e (8 échecs `supabase-stub`, run 37138213107). Même règle que le
   // verrou de `FirstRunSetup` : une garde d'entrée se fige à l'entrée.
   const [arrivedBare] = useState(() => searchParams.toString() === '');
+  // `?guide=1` (fin de la constellation) : ouvre le guide une seule fois,
+  // puis le paramètre quitte l'URL pour qu'un rechargement ne le rouvre pas.
+  const [guideOpenSignal] = useState(() => (searchParams.get('guide') === '1' ? Date.now() : undefined));
+  useEffect(() => {
+    if (searchParams.get('guide') !== '1') return;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('guide');
+      return next;
+    }, { replace: true });
+  }, [searchParams, setSearchParams]);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const badges = useOrgBadges();
   const { data: orgNotifications = [] } = useOrgNotifications(myOrg?.id);
@@ -494,7 +505,7 @@ const OrganizationPage = () => {
           Rendue par portail dans l'emplacement de `Layout`, donc sa place
           dans cet arbre ne dit rien de sa place à l'écran. */}
       {/* Guide entreprise : bouton flottant desktop, le reste arrive en lazy. */}
-      <OrgGuideFab viewer={guideViewer} />
+      <OrgGuideFab viewer={guideViewer} openSignal={guideOpenSignal} />
 
       <OrgSideNav
         items={navItems}
