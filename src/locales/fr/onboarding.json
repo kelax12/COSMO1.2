@@ -235,7 +235,8 @@
       "objective": "Cap fixé : « {{name}} »",
       "nothing": "Rien de créé pour l'instant : tout se fait aussi depuis l'espace entreprise.",
       "mapTitle": "Ce qui vous attend",
-      "cta": "Ouvrir l'espace entreprise"
+      "cta": "Ouvrir l'espace entreprise",
+      "discoverGuide": "Découvrir le guide"
     },
     "member": {
       "dialogLabel": "Bienvenue dans l'espace entreprise",
