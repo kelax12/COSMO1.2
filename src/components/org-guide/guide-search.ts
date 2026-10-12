@@ -1,5 +1,5 @@
 export const normalizeGuideText = (value: string): string =>
-  value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 /** Chaque mot de la requête doit apparaître dans le libellé ou les synonymes. */
 export const matchesGuideQuery = (query: string, label: string, synonyms: string): boolean => {
