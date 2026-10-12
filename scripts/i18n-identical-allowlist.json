@@ -265,6 +265,14 @@
       "categorie": "mot-identique",
       "valeur": "Violet"
     },
+    "orgAdmin.customRoles.permissionCount_one": {
+      "categorie": "mot-identique",
+      "valeur": "{{count}} permission"
+    },
+    "orgAdmin.customRoles.permissionCount_other": {
+      "categorie": "mot-identique",
+      "valeur": "{{count}} permissions"
+    },
     "orgAdmin.member.manager": {
       "categorie": "anglicisme-fr",
       "valeur": "Manager"
