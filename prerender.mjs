@@ -15,7 +15,7 @@
 // (le filesystem est vérifié avant les rewrites). Aucun navigateur requis
 // au build → compatible avec l'image de build Vercel.
 // ─────────────────────────────────────────────────────────────────────────
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ARTICLES, articlesFor, relatedArticles } from './src/content/blog/index.mjs';
@@ -227,7 +227,7 @@ const guideArticle = (locale) => ({
   '@type': 'TechArticle',
   headline: seoFor('guide', locale).title,
   description: seoFor('guide', locale).description,
-  image: `${BASE}/og-card.png`,
+  image: ogImageFor('/guide', locale),
   url: canonicalUrl('/guide', locale),
   inLanguage: BCP47_TAG[locale],
   datePublished: '2025-01-01',
@@ -237,6 +237,17 @@ const guideArticle = (locale) => ({
   mainEntityOfPage: canonicalUrl('/guide', locale),
   articleSection: ['Prise en main', 'Tâches', 'Habitudes', 'Agenda', 'OKR', 'Statistiques'],
 });
+
+// ── Image Open Graph par page (2026-10-12) ─────────────────────────────────
+// `scripts/capture-og-images.mjs` rend `public/og/<clé>.jpg` (commitées : le
+// build Vercel n'a pas de navigateur). Une page sans image retombe sur
+// og-card.png, la vignette de l'accueil : jamais d'image cassée. La clé doit
+// rester celle d'`ogKey()` du script.
+const ogKey = (path) => path.replace(/^\/+|\/+$/g, '').replace(/\//g, '_') || 'home';
+const ogImageFor = (path, locale) => {
+  const key = ogKey(localizePath(path, locale));
+  return existsSync(join(DIST, 'og', `${key}.jpg`)) ? `${BASE}/og/${key}.jpg` : `${BASE}/og-card.png`;
+};
 
 const ld = (obj, id) => `<script type="application/ld+json"${id ? ` id="${id}"` : ''}>${JSON.stringify(obj)}</script>`;
 
@@ -492,7 +503,7 @@ const ROUTES = [
           blogPost: articlesFor(locale).map((a) => ({
             '@type': 'BlogPosting',
             headline: a.title,
-            image: `${BASE}/og-card.png`,
+            image: ogImageFor(`/blog/${a.slug}`, locale),
             url: canonicalUrl(`/blog/${a.slug}`, locale),
             datePublished: a.datePublished,
           })),
@@ -558,7 +569,7 @@ const ROUTES = [
             '@type': 'BlogPosting',
             headline: c.title,
             description: c.description,
-            image: `${BASE}/og-card.png`,
+            image: ogImageFor(`/blog/${a.slug}`, locale),
             url,
             inLanguage: BCP47_TAG[locale],
             datePublished: a.datePublished,
@@ -889,6 +900,17 @@ function buildPage(route, locale, alternates) {
   out = out.replace(/<meta property="og:locale" content="[\s\S]*?" \/>/, `<meta property="og:locale" content="${OG_LOCALE[locale]}" />`);
   out = out.replace(/<meta name="twitter:title" content="[\s\S]*?" \/>/, `<meta name="twitter:title" content="${esc(title)}" />`);
   out = out.replace(/<meta name="twitter:description" content="[\s\S]*?" \/>/, `<meta name="twitter:description" content="${esc(description)}" />`);
+
+  // Image de partage propre à la page, si `capture-og-images.mjs` l'a rendue.
+  const ogImage = ogImageFor(route.path, locale);
+  if (!ogImage.endsWith('/og-card.png')) {
+    out = out.replace(/<meta property="og:image" content="[^"]*" \/>/, `<meta property="og:image" content="${ogImage}" />`);
+    out = out.replace(/<meta property="og:image:secure_url" content="[^"]*" \/>/, `<meta property="og:image:secure_url" content="${ogImage}" />`);
+    out = out.replace(/<meta property="og:image:type" content="[^"]*" \/>/, '<meta property="og:image:type" content="image/jpeg" />');
+    out = out.replace(/<meta property="og:image:alt" content="[^"]*" \/>/, `<meta property="og:image:alt" content="${esc(title)}" />`);
+    out = out.replace(/<meta name="twitter:image" content="[^"]*" \/>/, `<meta name="twitter:image" content="${ogImage}" />`);
+    out = out.replace(/<meta name="twitter:image:alt" content="[^"]*" \/>/, `<meta name="twitter:image:alt" content="${esc(title)}" />`);
+  }
 
   // `inLanguage` des JSON-LD génériques d'index.html (Organization, WebSite…).
   out = out.replace(/"inLanguage":\s*"[^"]*"/g, `"inLanguage": "${BCP47_TAG[locale]}"`);

@@ -14,7 +14,7 @@ import { useLandingTrack, type LandingTrack } from './landing/use-landing-track'
 import { TRACK_ANCHORS } from './landing/anchors';
 import { useT } from '@/i18n/useT';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
-import { useRootSeoMeta } from '@/lib/useSeoMeta';
+import { useLandingSeoMeta } from '@/lib/useSeoMeta';
 import { applyTheme, THEME_STORAGE_KEY } from '@/lib/theme';
 
 // Le track entreprise est un parcours entier (10 sections, un shader WebGL) que
@@ -38,7 +38,6 @@ const EnterpriseTrack = lazyWithRetry(() => import('./landing/entreprise/Enterpr
  */
 const LandingPage: React.FC = () => {
   const { t } = useT('landing');
-  useRootSeoMeta();
   const navigate = useNavigate();
   const { loginDemo } = useAuth();
   const reduceMotion = useReducedMotion();
@@ -49,6 +48,7 @@ const LandingPage: React.FC = () => {
 
   const { track, selectTrack, transitionKey } = useLandingTrack();
   const isEnterprise = track === 'entreprise';
+  useLandingSeoMeta(track);
 
   // Header en verre dépoli évolutif : transparent en haut, opacifié au scroll.
   const { scrollY } = useScroll();

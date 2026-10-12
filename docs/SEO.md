@@ -323,6 +323,8 @@ Mesuré sur les 24 pages prérendues :
 | `rss.xml` | ✅ généré au build |
 | Maillage interne depuis l'accueil | ✅ les 4 use-cases, le guide, le blog et un article |
 | 404 | ✅ vraie page + `noindex` (statut HTTP 200, limite SPA assumée). Depuis le 2026-10-09 le `noindex` est aussi dans le HTML SERVEUR : `app.html` sort sans `index` ni canonical vers `/`, visible par Bing et les crawlers IA qui n'exécutent pas le JS |
+| Image OG | ✅ une par page depuis le 2026-10-12 : `public/og/<clé>.jpg`, rendues par `scripts/capture-og-images.mjs` (Playwright, après `npm run build`) et **commitées**, le build Vercel n'ayant pas de navigateur. Le prérendu retombe sur `og-card.png` si l'image manque ; l'accueil FR garde `og-card.png`. Garde : `src/og-images.guard.test.ts` (chaque article, chaque langue). ⚠️ Article neuf : relancer le script |
+| Canonical de la landing | ✅ depuis le 2026-10-12, `useLandingSeoMeta(track)` : `/entreprise-presentation` gardait son canonical prérendu puis React le réécrivait vers `/` (Lighthouse SEO 92). Témoin : `src/lib/useSeoMeta.test.ts` |
 
 **Le grief central de juillet — « le prérendu ne sort que 161 mots » — est corrigé** : l'accueil
 émet ~600 mots de contenu propre, les pages use-case 680–900.

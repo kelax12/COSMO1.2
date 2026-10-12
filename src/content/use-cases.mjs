@@ -174,7 +174,7 @@ export const USE_CASES = [
 <p>Le problème des OKR en entreprise n'est presque jamais leur formulation, c'est qu'ils sont rédigés en début de trimestre puis rouverts la veille de la revue. Entre les deux, les décisions quotidiennes se prennent sans eux, et l'écart se découvre trop tard pour être corrigé.</p>
 <p>Y remédier demande une seule chose : que les objectifs soient visibles au même endroit que les tâches. Quand la progression de chaque résultat clé se met à jour au fil de l'eau et s'affiche sur le dashboard, le point du lundi se prépare en cinq minutes avec des chiffres réels, et un objectif en dérive se repère à mi-parcours, au moment où il est encore possible d'arbitrer entre accélérer et renoncer explicitement. Si la méthode est nouvelle pour votre équipe, l'article <a href="/blog/okr-vs-smart-vs-kpi">OKR, SMART ou KPI</a> clarifie ce que chaque cadre sait faire et ne sait pas faire.</p>
 
-<h2>Suivre l'équipe sans surveiller</h2>
+<h2>Voir ce que vous avez délégué, sans surveiller</h2>
 <p>Le partage de tâches en rôle Lecteur ou Éditeur donne la visibilité nécessaire sans transformer l'outil en dispositif de contrôle : vous voyez l'avancement de ce qui a été explicitement partagé, pas l'activité de chacun. La distinction compte, un outil vécu comme une surveillance est renseigné a minima, et cesse rapidement d'être fiable. Cette collaboration est gratuite chez Cosmo, ce qui évite d'avoir à justifier des licences pour tester une méthode sur un trimestre.</p>
 
 <h2>Commencez par vous</h2>
@@ -204,7 +204,7 @@ export const USE_CASES = [
 <p>The problem with OKRs in companies is almost never how they are worded, it is that they are written at the start of the quarter and reopened the day before the review. In between, daily decisions get made without them, and the gap is discovered too late to correct.</p>
 <p>Fixing that takes one thing: the goals have to be visible in the same place as the tasks. When each key result's progress updates as you go and shows on the dashboard, the Monday check-in gets prepared in five minutes with real numbers, and a drifting objective is spotted halfway through, while it is still possible to choose between accelerating and giving up explicitly. If the method is new to your team, the article <a href="/en/blog/okr-vs-smart-vs-kpi">OKRs vs SMART vs KPIs</a> clarifies what each framework can and cannot do.</p>
 
-<h2>Following the team without watching over them</h2>
+<h2>Seeing what you delegated, without watching over anyone</h2>
 <p>Task sharing as Viewer or Editor gives the visibility you need without turning the tool into a surveillance device: you see the progress of what has been explicitly shared, not everybody's activity. The distinction matters, because a tool experienced as monitoring gets filled in as little as possible, and quickly stops being reliable. This collaboration is free in Cosmo, which spares you having to justify licences to test a method for a quarter.</p>
 
 <h2>Start with yourself</h2>
