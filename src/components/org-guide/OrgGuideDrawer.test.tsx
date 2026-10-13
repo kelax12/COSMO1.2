@@ -21,9 +21,16 @@ describe('OrgGuideDrawer', () => {
     await ensureNamespaces(['orgGuide'], 'fr');
   });
 
+  it('les catégories sont repliées par défaut', () => {
+    render(<OrgGuideDrawer open viewer={member} onClose={() => {}} onStart={() => {}} onSeeAdmins={() => {}} />);
+    expect(screen.queryByRole('button', { name: createProject })).toBeNull();
+    for (const b of screen.getAllByRole('button', { expanded: false })) expect(b.getAttribute('aria-expanded')).toBe('false');
+  });
+
   it('lance une action autorisée', () => {
     const onStart = vi.fn();
     render(<OrgGuideDrawer open viewer={member} onClose={() => {}} onStart={onStart} onSeeAdmins={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: /rôles et permissions|roles and permissions/i }));
     fireEvent.click(screen.getByRole('button', { name: /mes propres droits|my own/i }));
     expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ id: 'me.permissions' }));
   });
@@ -31,6 +38,7 @@ describe('OrgGuideDrawer', () => {
   it('une action refusée montre la carte du droit manquant, sans lancer', () => {
     const onStart = vi.fn();
     render(<OrgGuideDrawer open viewer={member} onClose={() => {}} onStart={onStart} onSeeAdmins={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: /projets et tâches|projects and tasks/i }));
     fireEvent.click(screen.getByRole('button', { name: createProject }));
     expect(onStart).not.toHaveBeenCalled();
     expect(screen.getByText(/créer des projets|create projects/i)).toBeTruthy();

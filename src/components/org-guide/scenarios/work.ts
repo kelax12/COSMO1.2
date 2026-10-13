@@ -10,7 +10,6 @@ export const WORK_ACTIONS: GuideAction[] = [
     { kind: 'field', target: 'project-form-name', bubbleKey: k('project.create', 'b1') },
     { kind: 'field', target: 'project-form-team', bubbleKey: k('project.create', 'b2') },
     { kind: 'field', target: 'project-form-due', bubbleKey: k('project.create', 'b3') },
-    { kind: 'handoff', bubbleKey: 'end.handoff' },
   ] },
   // Le modèle se choisit dans une liste en tête du formulaire (pas d'onglet) ;
   // ses tâches s'ajoutent à la section « Tâches de départ ».
@@ -19,7 +18,6 @@ export const WORK_ACTIONS: GuideAction[] = [
     { kind: 'click', target: 'projects-new' },
     { kind: 'field', target: 'project-form-template', bubbleKey: k('project.fromTemplate', 'b1') },
     { kind: 'field', target: 'project-form-tasks', bubbleKey: k('project.fromTemplate', 'b2') },
-    { kind: 'handoff', bubbleKey: 'end.handoff' },
   ] },
   { id: 'task.create', category: 'work', requires: 'task.create', steps: [
     { kind: 'goto', section: 'tasks', via: 'nav-tasks' },
@@ -27,7 +25,6 @@ export const WORK_ACTIONS: GuideAction[] = [
     { kind: 'field', target: 'task-form-title', bubbleKey: k('task.create', 'b1') },
     { kind: 'field', target: 'task-form-project', bubbleKey: k('task.create', 'b2') },
     { kind: 'field', target: 'task-form-assignees', bubbleKey: k('task.create', 'b3') },
-    { kind: 'handoff', bubbleKey: 'end.handoff' },
   ] },
   // La fiche d'une tâche existante est le même modal que la création.
   { id: 'task.assign', category: 'work', steps: [
@@ -35,14 +32,12 @@ export const WORK_ACTIONS: GuideAction[] = [
     { kind: 'pick-first', target: 'tasks-list', emptyKey: 'empty.noTask' },
     { kind: 'field', target: 'task-form-assignees', bubbleKey: k('task.assign', 'b1') },
     { kind: 'field', target: 'task-detail-followers', bubbleKey: k('task.assign', 'b2') },
-    { kind: 'handoff', bubbleKey: 'end.handoff' },
   ] },
   { id: 'task.subtaskDependency', category: 'work', steps: [
     { kind: 'goto', section: 'tasks', via: 'nav-tasks' },
     { kind: 'pick-first', target: 'tasks-list', emptyKey: 'empty.noTask' },
     { kind: 'field', target: 'task-detail-subtasks', bubbleKey: k('task.subtaskDependency', 'b1') },
     { kind: 'field', target: 'task-detail-dependencies', bubbleKey: k('task.subtaskDependency', 'b2') },
-    { kind: 'handoff', bubbleKey: 'end.handoff' },
   ] },
   // L'audience d'un projet = ses équipes associées (pas de case « confidentiel »).
   { id: 'project.audience', category: 'work', requires: 'project.edit', steps: [
@@ -54,7 +49,6 @@ export const WORK_ACTIONS: GuideAction[] = [
     { kind: 'click', target: 'project-detail-audience', emptyKey: 'empty.noProjectTeam' },
     { kind: 'field', target: 'project-audience-who', bubbleKey: k('project.audience', 'b1') },
     { kind: 'field', target: 'project-audience-add', bubbleKey: k('project.audience', 'b2') },
-    { kind: 'handoff', bubbleKey: 'end.handoff' },
   ] },
   // Le formulaire de liste porte un nom et une couleur ; l'épinglage se fait sur une liste existante.
   { id: 'list.create', category: 'work', steps: [
@@ -62,7 +56,6 @@ export const WORK_ACTIONS: GuideAction[] = [
     { kind: 'click', target: 'task-lists-new' },
     { kind: 'field', target: 'task-list-form-name', bubbleKey: k('list.create', 'b1') },
     { kind: 'field', target: 'task-list-form-color', bubbleKey: k('list.create', 'b2') },
-    { kind: 'handoff', bubbleKey: 'end.handoff' },
   ] },
   // La corbeille vit dans la barre de l'onglet Projets (et OKR), pas dans Tâches.
   { id: 'trash.restore', category: 'work', requires: 'task.deleteAny', steps: [
@@ -70,6 +63,5 @@ export const WORK_ACTIONS: GuideAction[] = [
     { kind: 'click', target: 'trash-open', emptyKey: 'empty.noTrash' },
     { kind: 'field', target: 'trash-list', bubbleKey: k('trash.restore', 'b1') },
     { kind: 'field', target: 'trash-retention', bubbleKey: k('trash.restore', 'b2') },
-    { kind: 'handoff', bubbleKey: 'end.handoff' },
   ] },
 ];

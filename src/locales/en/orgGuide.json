@@ -50,7 +50,6 @@
     "quit": "Quit the demo"
   },
   "end": {
-    "handoff": "Your turn: the form is open.",
     "missing": "This screen changed since the guide was written. Open it by hand.",
     "openDirect": "Open the screen"
   },
