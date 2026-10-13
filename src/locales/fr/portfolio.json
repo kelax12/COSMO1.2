@@ -217,6 +217,7 @@
     "cancel": "Annuler",
     "save": "Enregistrer"
   },
+  "statusChange": "Statut : {{status}}. Cliquer pour le changer",
   "chat": {
     "title": "Discussion du projet",
     "empty": "Aucun message. Lancez la discussion.",
@@ -228,6 +229,7 @@
     "title": "Ajouter au projet",
     "open": "Ajouter des personnes au projet",
     "viewersAria": "{{count}} personnes voient ce projet",
+    "extraHint": "{{count}} membre(s) du projet hors de ces équipes",
     "rolesOpen": "Voir qui a accès au projet et sa fonction",
     "rolesTitle": "Personnes du projet",
     "rolesHintManage": "Choisissez qui est responsable et qui est membre.",
