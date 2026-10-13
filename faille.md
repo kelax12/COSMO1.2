@@ -62,6 +62,23 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 > identifiés : le recalage est légitime. Un 81ᵉ ne le serait pas sans réponse à « quel objet ».
 
 
+## 🔴 BK-1 · sauvegardes de la base EN CLAIR dans un dépôt public · contenu le 2026-10-13, 2 gestes ouverts
+
+**Trouvé par l'audit juridique du 2026-10-13.** `db-backup.yml` déposait chaque jour un `pg_dump`
+complet, non chiffré, en artefact GitHub Actions. Le dépôt est public : un artefact s'y télécharge
+depuis **n'importe quel compte GitHub connecté**. Le commentaire du workflow affirmait l'inverse.
+Exposé du 2026-08-29 au 2026-10-13. C'est une **violation de données** (RGPD art. 4.12) : registre
+et brouillons **hors dépôt** (dossier privé d'Axel), procédure [`docs/RGPD-VIOLATION.md`](./docs/RGPD-VIOLATION.md).
+
+| | |
+|---|---|
+| ✅ Contenu le 2026-10-13 | dump chiffré avant dépôt (gpg AES-256, secret `BACKUP_PASSPHRASE`), relu à l'identique par sha256 avant dépôt, échec FERMÉ sans phrase secrète (`8c6a971d`) ; run `38392672092` vert ; les dumps en clair **supprimés**, l'API publique ne liste plus qu'un artefact, chiffré ; `restore-drill.yml` déchiffre |
+| 🔴 Ouvert | `M-68` révoquer les sessions et changer le mot de passe de la base (les jetons de rafraîchissement étaient probablement dans les dumps) · `M-69` décision CNIL sous 72 h · `M-70` information des personnes · `M-71` ranger la phrase secrète |
+| ❌ Règle durable | **aucune donnée personnelle en clair dans un artefact, un log ou un fichier d'un dépôt public.** « Il faut être connecté pour télécharger » ne protège rien : tout le monde a un compte GitHub |
+
+⚠️ La note de sécurité ci-dessus **n'est pas recalculée ici** : un débit se décide sur la grille de
+`docs/README.md`, pas à la volée. À faire à la prochaine relecture de la note.
+
 ## 🟠 G-2 · aucune vérification de l'adresse email à l'inscription (2026-08-27)
 
 > **DÉCISION D'AXEL, 2026-08-29 : la confirmation d'adresse NE SERA PAS activée pour l'instant.**
@@ -420,6 +437,10 @@ relit contre la console et contre `docs/ROADMAP-60J.md`, jamais de mémoire.
 
 Section référencée par [`CLAUDE.md`](./CLAUDE.md) — elle n'existait plus depuis la refonte
 documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
+
+> 🔴 **EN TÊTE depuis le 2026-10-13 : [`BK-1`](#-bk-1--sauvegardes-de-la-base-en-clair-dans-un-dépôt-public--contenu-le-2026-10-13-2-gestes-ouverts).**
+> Avant tout autre geste de déploiement : révoquer les sessions et changer le mot de passe de la
+> base (`M-68`), puis trancher la notification CNIL avant le 2026-10-16 (`M-69`).
 
 > 🔴 **Cette table est restée « à jour 2026-09-02 » pendant dix-huit jours, et TROIS migrations
 > écrites depuis n'y figuraient pas** — dont celle qui répare le seul défaut ouvert que voie un

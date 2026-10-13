@@ -179,3 +179,49 @@ trois documents portées au 12 octobre 2026. Empreintes relevées par
 **Aucun préavis** : aucune clause ne bouge, seul le canal pour joindre l'éditeur change.
 ⚠️ La boîte `contact@thecosmo.app` doit être relevée : une rétractation ou une demande RGPD
 envoyée là fait courir les délais légaux (14 jours, un mois).
+
+### 2026-10-13 · audit juridique avant déploiement · **FOND (information) et FORME** · **aucun préavis**
+
+| Document | Empreinte |
+|---|---|
+| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `b11060a6dc7f99c9` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `64df04e46c848228` |
+
+Empreintes relevées par `node scripts/check-legal-journal.mjs` le 2026-10-13, pas recopiées.
+Analyse qui l'a motivée : audit juridique du 2026-10-13 (constats repris dans [`LEGAL.md`](./LEGAL.md) § « Audit du 2026-10-13 »).
+
+**CGU**
+
+| Clause | Ce qui a changé | Sens pour l'utilisateur |
+|---|---|---|
+| 1 (nouveau §3) | l'éditeur est **nommé** (Axel Longatte) : « Cosmo » ne désignait personne (C. conso L111-1, L221-5) | information |
+| 7 | « propriété exclusive de Cosmo » devient « de son éditeur », sous réserve des licences open source | forme |
+| 9.p1 | l'exonération « du fait d'un tiers » est restreinte au fait **imprévisible et insurmontable** d'un tiers **étranger** à la fourniture du service (C. conso L221-15) | **plus favorable** |
+| 9 (nouveau §4) | la **garantie légale de conformité** du service numérique et ses modalités (C. conso L224-25-1 s.) | information, plus favorable |
+| 12.p3 | la clause attributive de juridiction ne vaut que « dans la mesure où la loi le permet » | plus favorable |
+
+**Politique de confidentialité** : origine des inscriptions et comptage des essais de la
+démonstration décrits, désormais **sous consentement** (ils étaient posés sans) ; jours de
+connexion rattachés à une finalité (statistiques internes) et à une base légale (intérêt
+légitime) ; invitations par e-mail (durée : 7 jours + 30 jours) ; Sentry décrit exactement
+(l'identifiant technique du compte EST joint aux rapports, ce que le texte niait ; jetons retirés
+des adresses de page ; hébergement UE) ; Vesk identifié (Veske, France, hébergé en Allemagne) ;
+GitHub ajouté (sauvegardes chiffrées) ; transferts complétés (Stripe, Google, GitHub, Supabase
+Inc.) ; sécurité : accès d'administration de l'éditeur dit, sauvegardes chiffrées ; durées
+ajoutées : comptes inactifs **3 ans** avec avertissement 30 jours avant, signalements de bug 12
+mois, sauvegardes 30 jours ; retrait du consentement par « Gérer les cookies ». Information,
+**pas de préavis** (art. 13 et 14 RGPD : l'information doit être exacte tout de suite).
+
+⚠️ **La suppression des comptes inactifs depuis 3 ans est une règle nouvelle**, mais aucun compte
+ne peut l'atteindre avant 2029 (premier compte : 2026), et elle s'annonce 30 jours avant par
+e-mail. La glisser dans le préavis de `M-63` reste la forme la plus propre. Le traitement qui
+l'applique n'existe pas encore : `a-faire-manuel.md`.
+
+**Mentions légales** : adresse de Vercel mise à jour (440 N Barranca Avenue, Covina, relue sur
+vercel.com le 2026-10-13) ; propriété des contenus attribuée à l'éditeur et non aux données des
+utilisateurs ; **suppression de la clause « ne saurait être tenu responsable des dommages directs
+ou indirects »** (clause noire R212-1 6°, contraire à l'art. 9 des CGU), remplacée par un renvoi
+à l'art. 9. Forme, plus favorable.
+
+❌ **Ce qui reste ouvert sur les mentions** : adresse et téléphone de l'éditeur (LCEN art. 1-1),
+téléphone des hébergeurs. Gestes d'Axel (`a-faire-manuel.md`).

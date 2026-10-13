@@ -17,7 +17,7 @@ décision. Rien ici ne se corrige en écrivant du code.
 > **[`docs/archive/a-faire-manuel-jusqua-2026-10-11.md`](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md)** : les deux encarts de mise à jour (09-14, 09-20), les lignes de
 > gestes **faits** (`M-11`, `M-12`, `M-22`, `M-30`, `M-31`, `M-33`, `M-33b`, `M-34`,
 > `M-37a`, `M-45`, `M-46`, `M-57`, `M-62`…), l'état des Edge Functions au 2026-09-03 et le § 9.5.
-> Les numéros `M-NN` ne se réutilisent jamais ; le dernier attribué est `M-67`.
+> Les numéros `M-NN` ne se réutilisent jamais ; le dernier attribué est `M-77` (2026-10-13).
 
 ---
 
@@ -35,6 +35,7 @@ décision. Rien ici ne se corrige en écrivant du code.
 | [8](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#8-déploiements-quun-git-push-ne-fait-pas) | 🔴 Edge Functions **et migrations** : le dépôt ≠ la production | ligne de commande |
 | [9](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#9-angles-morts-du-2026-09-16--ce-que-seules-tes-mains-ferment) | 🕳️ **Angles morts du 2026-09-16**, versés le 2026-09-20 | M-45 → M-56, **12 gestes neufs** |
 | [10](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#10-audit-juridique-du-2026-09-24--ce-que-le-code-ne-peut-pas-faire) | ⚖️ **Audit juridique du 2026-09-24** | M-62 → M-67, identité, préavis, DPA |
+| [11](#11-audit-juridique-du-2026-10-13--violation-de-données-et-gestes-restants) | 🔴 **Audit juridique du 2026-10-13 : violation de données, délai 72 h** | M-68 → M-77 |
 
 ---
 
@@ -245,10 +246,31 @@ Elles complètent le § 7. Comme lui, elles ne produisent pas de correctif : ell
 | # | Geste | Pourquoi | Ligne |
 |---|---|---|---|
 | M-63 🔴 | **Envoyer le préavis de 30 jours** des CGU aux comptes existants : clauses 3.3 (âge), 6.3 (sous-traitance entreprise), 9 (responsabilité envers un professionnel) | CGU art. 11. Sans lui, ces trois clauses ne sont pas opposables aux inscrits d'avant le 2026-09-24. Les autres changements sont plus favorables et valent dès publication | E11, A13 |
-| M-64 | **DPA** : accepter celui de **Sentry** (Legal & Compliance, rôle Owner), vérifier le plan **Vercel** (Hobby = pas de DPA), obtenir ceux de **Vesk** et **Resend**, et **Cloudflare** si Turnstile est activé. Archiver chaque copie datée | RGPD art. 28 et chap. V | A5, A6 |
+| M-64 | **DPA** : accepter celui de **Sentry** (Legal & Compliance, rôle Owner), vérifier le plan **Vercel** (Hobby = pas de DPA, cf. `M-74`), archiver celui de **Vesk** (publié sur `veske.io/dpa`, applicable dès l'usage, relevé le 2026-10-13) et celui de **Resend**, et **Cloudflare** si Turnstile est activé. Archiver chaque copie datée. ⚠️ **Rien de tout cela n'attend l'immatriculation** (relu le 2026-10-13) : Sentry s'accepte en ligne par le propriétaire du compte | RGPD art. 28 et chap. V | A5, A6 |
 | M-65 | **Téléphone des hébergeurs** (Vercel, Supabase) dans les mentions légales | LCEN 6-III-1. Aucun numéro public trouvé le 2026-09-24 : le demander à leur support | A3 |
 | M-66 | **Conseil en propriété industrielle** sur le nom COSMO | 11 marques antérieures actives en classes 9 et 42. Avant d'investir davantage en acquisition | F1, F2 |
 | M-67 | **Relecture juridique** des CGU réécrites (6.3 surtout) et qualification du **Data Act** | Rédigées par un assistant. Un acheteur B2B demandera un DPA séparé et signable | E11, A13, F8 |
+
+## 11. Audit juridique du 2026-10-13 · violation de données et gestes restants
+
+> Tout ce que le code pouvait corriger l'a été le même jour (`docs/LEGAL.md` § « Audit du
+> 2026-10-13 », `docs/LEGAL-JOURNAL.md`). Restent ces gestes, **dans cet ordre**. Les détails de
+> l'incident ne sont PAS dans ce dépôt public : ils sont dans `C:\Users\Axel\Documents\COSMO-coffre-hors-depot`
+> (registre des violations, brouillons).
+> ⚠️ Rien ici n'est un avis juridique.
+
+| # | Geste | Pourquoi | Ligne |
+|---|---|---|---|
+| **M-68** 🔴 | **Révoquer toutes les sessions** : Supabase → SQL Editor → `delete from auth.sessions;` (tout le monde se reconnecte, toi compris). Puis **changer le mot de passe de la base** (Settings → Database → Reset password) et mettre à jour le secret GitHub `SUPABASE_DB_URL` (`gh secret set SUPABASE_DB_URL`). Relancer `db-backup` à la main et vérifier qu'il passe | Les sauvegardes exposées contenaient probablement les jetons de rafraîchissement : tant qu'ils ne sont pas révoqués, quelqu'un qui les aurait téléchargées peut ouvrir une session. Écriture en base : interdite à un agent par `CLAUDE.md` | A9 |
+| **M-69** 🔴 | **Décider de la notification à la CNIL avant le 2026-10-16 vers 11 h UTC** (72 h après la découverte), sur `notifications.cnil.fr`. Recommandation de l'audit : **notifier**, quitte à compléter ensuite. Remplir « Notifiée le » au registre privé | RGPD art. 33. Nature et volume des données : registre privé. « Risque improbable » serait difficile à soutenir. Ne pas notifier se justifie par écrit, et ne se rattrape pas | A7 |
+| **M-70** 🔴 | **Informer les personnes concernées** (art. 34) : un e-mail court, factuel, qui dit ce qui a été exposé, ce qui a été fait, et recommande de changer son mot de passe. Brouillon : `C:\Users\Axel\Documents\COSMO-coffre-hors-depot\INFO-PERSONNES-BROUILLON.md` | Recommandé par l'audit dès lors que des empreintes de mots de passe sont en cause. Message **distinct** du préavis `M-63` | A7 |
+| **M-71** 🔴 | **Ranger la phrase secrète des sauvegardes** (`C:\Users\Axel\Documents\COSMO-coffre-hors-depot\BACKUP_PASSPHRASE.txt`) dans ton gestionnaire de mots de passe, en garder une copie hors ligne, puis **supprimer le fichier** | Sans elle, aucune sauvegarde ne se relit : elle est aussi le secret `BACKUP_PASSPHRASE` des Actions, mais un secret GitHub ne se relit pas | A9 |
+| **M-72** | **Publier l'adresse et le téléphone de l'éditeur** dans les mentions légales : soit ton domicile maintenant, soit l'adresse de domiciliation après `M-01`/`M-02`. Un numéro dédié suffit | LCEN art. 1-1 (ex-6-III, loi SREN du 21/05/2024) : nom, domicile **et téléphone** pour une personne physique. L'anonymat n'est ouvert qu'aux non-professionnels, et la page de tarifs t'en sort | A3, E14 |
+| **M-73** | **T'immatriculer avant de lancer l'acquisition** (`M-01`), même sans rien encaisser | Une activité annoncée avec publicité et tarifs est présumée lucrative (C. trav. L8221-4). Débloque aussi `M-72` (domiciliation) et la clause de juridiction des CGU (12.3) | B2 |
+| **M-74** | **Vérifier le plan Vercel** (équipe « axellongattepro-3874's projects ») et passer en **Pro** si c'est Hobby | Hobby est réservé à un usage non commercial et n'est pas couvert par le DPA de Vercel. Non lisible par l'API | F11, A5 |
+| **M-75** | **Glisser dans le préavis `M-63`** : la suppression des comptes inactifs depuis 3 ans, et un lien vers les CGU pour les comptes créés par Google depuis l'écran de connexion (ils ne les avaient jamais vues) | Rend le préavis plus utile, sans second e-mail | A15, E10 |
+| **M-76** | **Faire qualifier le médiateur de la consommation pour un service gratuit** (payé en données), au moment de `M-67` | Certain dès qu'il y a vente ; discuté pour un service gratuit | E4, E14 |
+| **M-77** | **Publier le rapport d'audit** (`docs/audits/AUDIT-JURIDIQUE-2026-10-13.md`, non commité) **après `M-68`** | Il décrit l'incident ; dans un dépôt public, il attend que les sessions soient révoquées | A9 |
 
 ❌ **Ne jamais réarmer `ENTERPRISE_BILLING_ENFORCED`** avant d'avoir aussi réglé E4 (médiateur),
 E5 (portail de résiliation) et E13 (bouton de rétractation, directive 2023/2673).
