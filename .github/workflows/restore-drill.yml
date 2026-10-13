@@ -120,6 +120,7 @@ jobs:
       - name: Relire le dernier dump
         env:
           GH_TOKEN: ${{ github.token }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
           REPO: ${{ github.repository }}
           RUN_ID: ${{ inputs.run_id }}
           # Les tables sans lesquelles un dump ne vaut rien. Elles portent les
@@ -137,6 +138,13 @@ jobs:
           fi
           echo "Run db-backup : $RUN_ID"
           gh run download "$RUN_ID" --repo "$REPO" --name db-dump --dir dump
+          # Depuis le 2026-10-13 l'artefact est chiffre (cf. db-backup.yml).
+          GPGF=$(ls dump/*.dump.gpg 2>/dev/null | head -1)
+          [ -n "$GPGF" ] || { echo "::error::Artefact db-dump sans fichier .dump.gpg (dump en clair ou absent)."; exit 1; }
+          [ "${#BACKUP_PASSPHRASE}" -ge 32 ] || { echo "::error::Secret BACKUP_PASSPHRASE absent : le dump ne se dechiffre pas."; exit 1; }
+          PF=$(mktemp); printf '%s' "$BACKUP_PASSPHRASE" > "$PF"
+          gpg --batch --yes --pinentry-mode loopback --passphrase-file "$PF" -o "${GPGF%.gpg}" -d "$GPGF"
+          rm -f "$PF" "$GPGF"
           DUMP=$(ls dump/*.dump 2>/dev/null | head -1)
           [ -n "$DUMP" ] || { echo "::error::Artefact db-dump vide ou absent."; exit 1; }
           TAILLE=$(stat -c%s "$DUMP")
@@ -255,6 +263,7 @@ jobs:
         id: dump
         env:
           GH_TOKEN: ${{ github.token }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
           RUN_ID: ${{ inputs.run_id }}
           REPO: ${{ github.repository }}
         run: |
@@ -267,6 +276,13 @@ jobs:
             echo "Dernier run db-backup reussi : $RUN_ID"
           fi
           gh run download "$RUN_ID" --repo "$REPO" --name db-dump --dir dump
+          # Depuis le 2026-10-13 l'artefact est chiffre (cf. db-backup.yml).
+          GPGF=$(ls dump/*.dump.gpg 2>/dev/null | head -1)
+          [ -n "$GPGF" ] || { echo "::error::Artefact db-dump sans fichier .dump.gpg (dump en clair ou absent)."; exit 1; }
+          [ "${#BACKUP_PASSPHRASE}" -ge 32 ] || { echo "::error::Secret BACKUP_PASSPHRASE absent : le dump ne se dechiffre pas."; exit 1; }
+          PF=$(mktemp); printf '%s' "$BACKUP_PASSPHRASE" > "$PF"
+          gpg --batch --yes --pinentry-mode loopback --passphrase-file "$PF" -o "${GPGF%.gpg}" -d "$GPGF"
+          rm -f "$PF" "$GPGF"
           DUMP=$(ls dump/*.dump | head -1)
           [ -n "$DUMP" ] || { echo "::error::Artefact db-dump vide."; exit 1; }
           echo "Fichier : $DUMP ($(stat -c%s "$DUMP") octets)"
