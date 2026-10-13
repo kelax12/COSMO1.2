@@ -254,18 +254,10 @@
         "b2": "The counter and the bar show where the key result stands against its target."
       }
     },
-    "review": {
-      "weekly": {
-        "label": "Start the weekly review",
-        "synonyms": "review, weekly, weekly check-in, recap, weekly",
-        "b1": "How many tasks were finished this week, compared with last week.",
-        "b2": "Deadlines pushed back over the last two weeks, to be settled."
-      }
-    },
     "report": {
       "view": {
         "label": "View an activity report",
-        "synonyms": "report, activity, summary, statistics, history",
+        "synonyms": "report, activity, summary, history",
         "b1": "The period shows the dates this report covers.",
         "b2": "The scope picks the whole company or one of your teams."
       }

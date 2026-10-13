@@ -19,14 +19,6 @@ export const STEER_ACTIONS: GuideAction[] = [
     { kind: 'field', target: 'okr-kr-value', emptyKey: 'empty.noOkr', bubbleKey: k('kr.update', 'b1') },
     { kind: 'field', target: 'okr-kr-progress', bubbleKey: k('kr.update', 'b2') },
   ] },
-  // La revue vit dans la section Statistiques, masquée de la navigation :
-  // le curseur passe par l'Aperçu, la route `stats` reste servie.
-  { id: 'review.weekly', category: 'steer', requires: 'manager', steps: [
-    { kind: 'goto', section: 'stats', via: 'nav-overview' },
-    { kind: 'click', target: 'overview-weekly-review' },
-    { kind: 'field', target: 'weekly-review-progress', bubbleKey: k('review.weekly', 'b1') },
-    { kind: 'field', target: 'weekly-review-slipped', bubbleKey: k('review.weekly', 'b2') },
-  ] },
   // Les rapports sont une rubrique de Paramètres, lus par période (pas de liste à choisir).
   { id: 'report.view', category: 'steer', requires: 'report.org', steps: [
     { kind: 'goto', section: 'settings', via: 'nav-settings' },
