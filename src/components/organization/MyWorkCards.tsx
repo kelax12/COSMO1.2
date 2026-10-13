@@ -104,15 +104,17 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
               </p>
               <ul className="space-y-1">
                 {reviews.map((task) => (
-                  <li key={task.id} className="rounded-lg">
-                    <TaskLink onClick={() => onOpenTask(task)}>
-                      {task.assigneeIds[0] && <MemberInitials name={fullName(task.assigneeIds[0])} />}
-                      <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{task.name}</span>
-                      <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
-                        {task.assigneeIds.map(memberName).slice(0, 2).join(', ')}
-                      </span>
-                    </TaskLink>
-                    <div className="flex gap-2 pl-10 pt-1 pb-1.5">
+                  <li key={task.id} className="rounded-lg flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <TaskLink onClick={() => onOpenTask(task)}>
+                        {task.assigneeIds[0] && <MemberInitials name={fullName(task.assigneeIds[0])} />}
+                        <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{task.name}</span>
+                        <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0 max-w-[40%] truncate">
+                          {task.assigneeIds.map(memberName).slice(0, 2).join(', ')}
+                        </span>
+                      </TaskLink>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
                       <button
                         type="button"
                         onClick={() => onApprove(task)}
