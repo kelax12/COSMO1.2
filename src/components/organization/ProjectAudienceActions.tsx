@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { Bell, BellOff, Trash2, UsersRound } from 'lucide-react';
+import { Trash2, UsersRound } from 'lucide-react';
 import type { OrgTeam } from '@/modules/org-teams';
 import {
-  useMyFollows,
   usePurgeArchivedProject,
   useTeamProjectTeams,
-  useToggleFollow,
   type TeamProject,
 } from '@/modules/team-projects';
 import OrgConfirmDialog from './OrgConfirmDialog';
@@ -22,8 +20,6 @@ interface ProjectAudienceActionsProps {
 }
 
 const chip = 'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]';
-const actionBtn =
-  'inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors';
 
 /**
  * Trois gestes que la page projet ne proposait pas (audit du 2026-09-24) :
@@ -33,7 +29,7 @@ const actionBtn =
  *   principale reste celle de la carte. Elles s'ajoutent depuis la popup
  *   « Ajouter au projet » de l'en-tête (le bouton « Équipes du projet » est
  *   retiré le 2026-10-13).
- * - **Suivre** (M14) : être prévenu d'un projet sans y avoir de tâche.
+ * - **Suivre** (M14) : déplacé dans la barre d'actions de l'en-tête le 2026-10-13.
  * - **Supprimer définitivement** un projet archivé : l'application n'avait
  *   que l'archivage, rien pour purger proprement. Irréversible, donc saisie du
  *   nom (modèle de `DeleteOrganizationDialog`).
@@ -41,16 +37,12 @@ const actionBtn =
 const ProjectAudienceActions = ({
   project, teams, canPurge, taskCount, onPurged,
 }: ProjectAudienceActionsProps) => {
-  const { t } = useT('org');
   const { t: ta, tp: tpa } = useT('orgAdmin');
   const { data: links = [] } = useTeamProjectTeams(project.orgId);
-  const { data: follows } = useMyFollows(project.orgId);
-  const toggleFollow = useToggleFollow(project.orgId);
   const purge = usePurgeArchivedProject(project.orgId);
   const [purging, setPurging] = useState(false);
 
   const archived = !!project.archivedAt;
-  const followed = follows?.projectIds.includes(project.id) ?? false;
   const associatedIds = new Set(links.filter((l) => l.projectId === project.id).map((l) => l.teamId));
   const associated = teams.filter((tm) => associatedIds.has(tm.id));
   return (
@@ -61,15 +53,6 @@ const ProjectAudienceActions = ({
             <UsersRound size={11} aria-hidden="true" /> {tm.name}
           </span>
         ))}
-        <button
-          type="button"
-          aria-pressed={followed}
-          onClick={() => toggleFollow.mutate({ target: 'project', id: project.id, follow: !followed })}
-          className={actionBtn}
-        >
-          {followed ? <BellOff size={14} aria-hidden="true" /> : <Bell size={14} aria-hidden="true" />}
-          {t(followed ? 'follow.unfollow' : 'follow.follow')}
-        </button>
         {canPurge && archived && (
           <button
             type="button"

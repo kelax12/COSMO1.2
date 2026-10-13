@@ -112,3 +112,6 @@ export {
 } from './task-extras.hooks';
 // Suivre une tâche ou un projet (mig. 162, M14).
 export { useMyFollows, useToggleFollow, type FollowTarget, type MyFollows } from './follows.hooks';
+// Chat de projet (mig. 220).
+export { useProjectMessages, useAddProjectMessage, useDeleteProjectMessage } from './messages.hooks';
+export type { TeamProjectMessage } from './messages.repository';

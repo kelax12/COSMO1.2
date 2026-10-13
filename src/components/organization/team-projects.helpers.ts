@@ -190,7 +190,7 @@ export interface ProjectsUiPrefs {
 }
 
 const DEFAULT_PREFS: ProjectsUiPrefs = {
-  view: 'list',
+  view: 'portfolio',
   viewChosen: false,
   sort: 'recent',
   collapsed: {},

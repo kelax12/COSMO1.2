@@ -15,13 +15,17 @@
 // `enforce_team_project_edit_scope` refuse qu'un responsable se remplace.
 // ═══════════════════════════════════════════════════════════════════
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import type { OrgMember } from '@/modules/organizations';
-import type { TeamProject, TeamProjectStatus, UpdateTeamProjectInput } from '@/modules/team-projects';
+import {
+  useSetProjectMember, useTeamProjectMembers,
+  type TeamProject, type TeamProjectStatus, type UpdateTeamProjectInput,
+} from '@/modules/team-projects';
+import MemberMultiSelectField from './MemberMultiSelectField';
 import { PROJECT_COLOR_NAMES, projectColor } from './team-projects.helpers';
 import { PROJECT_STATUSES } from './portfolio.helpers';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
@@ -76,7 +80,20 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
   const [description, setDescription] = useState(project.description ?? '');
   const [color, setColor] = useState(project.color);
   const [categoryId, setCategoryId] = useState<string | null>(project.categoryId ?? null);
-  const [ownerId, setOwnerId] = useState(project.ownerId ?? '');
+  // Responsables : `owner_id` en tête, puis les membres du projet au rôle `lead` (mig. 190).
+  const { data: projectMembers } = useTeamProjectMembers(project.orgId);
+  const setProjectMember = useSetProjectMember(project.orgId);
+  const initialOwners = useMemo(() => {
+    const leads = (projectMembers ?? [])
+      .filter((pm) => pm.projectId === project.id && pm.role === 'lead' && pm.userId !== project.ownerId)
+      .map((pm) => pm.userId);
+    return project.ownerId ? [project.ownerId, ...leads] : leads;
+  }, [projectMembers, project.id, project.ownerId]);
+  const [ownerIds, setOwnerIds] = useState<string[]>(initialOwners);
+  const [ownersTouched, setOwnersTouched] = useState(false);
+  // Les membres arrivent après l'ouverture : on suit tant que rien n'est coché à la main.
+  useEffect(() => { if (!ownersTouched) setOwnerIds(initialOwners); }, [initialOwners, ownersTouched]);
+  const ownerId = ownerIds[0] ?? '';
   const [status, setStatus] = useState<TeamProjectStatus>(project.status ?? 'active');
   const [dueDate, setDueDate] = useState(project.dueDate ?? '');
   const [error, setError] = useState<string | null>(null);
@@ -103,18 +120,31 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
     // Plus de saisie du début : un ancien début devenu postérieur à l'échéance est effacé (CHECK de dates).
     if (project.startDate && dueDate && project.startDate > dueDate) patch.startDate = null;
     if (dueDate !== (project.dueDate ?? '')) patch.dueDate = dueDate || null;
-    if (Object.keys(patch).length === 0) { onClose(); return; }
+    // Co-responsables : un coché devient `lead`, un décoché redevient contributeur
+    // (il garde l'accès au projet ; on le retire depuis Membres du projet).
+    const leadsBefore = initialOwners.filter((id) => id !== (project.ownerId ?? ''));
+    const leadsAfter = ownerIds.slice(1);
+    const memberChanges = canChangeOwner
+      ? [
+          ...leadsAfter.filter((id) => !leadsBefore.includes(id)).map((userId) => ({ userId, role: 'lead' as const })),
+          ...leadsBefore
+            .filter((id) => !leadsAfter.includes(id) && id !== ownerId)
+            .map((userId) => ({ userId, role: 'contributor' as const })),
+        ]
+      : [];
+    if (Object.keys(patch).length === 0 && memberChanges.length === 0) { onClose(); return; }
     setPending(true);
     setError(null);
     try {
-      await onSubmit(patch);
+      if (Object.keys(patch).length > 0) await onSubmit(patch);
+      await Promise.all(
+        memberChanges.map(({ userId, role }) => setProjectMember.mutateAsync({ projectId: project.id, userId, role })),
+      );
       onClose();
     } catch {
       setPending(false); // déjà notifié par le hook (toast)
     }
   };
-
-  const owner = members.find((m) => m.userId === project.ownerId);
 
   return createPortal(
     <div
@@ -189,23 +219,25 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="project-edit-owner" className={labelClass}>{pf('edit.owner')}</label>
               {canChangeOwner ? (
-                <MenuSelect
-                  id="project-edit-owner"
-                  value={ownerId}
-                  onChange={(e) => setOwnerId(e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="">{pf('noOwner')}</option>
-                  {members.map((m) => (
-                    <option key={m.userId} value={m.userId}>{m.displayName}</option>
-                  ))}
-                </MenuSelect>
+                <MemberMultiSelectField
+                  label={pf('new.owners')}
+                  labelClassName={labelClass}
+                  members={members}
+                  value={ownerIds}
+                  onChange={(ids) => { setOwnersTouched(true); setOwnerIds(ids); }}
+                  emptyLabel={pf('noOwner')}
+                  className="h-11 rounded-lg border-slate-200 dark:border-slate-700"
+                />
               ) : (
-                <p id="project-edit-owner" className="h-11 flex items-center text-sm text-[rgb(var(--color-text-secondary))]">
-                  {owner?.displayName ?? pf('noOwner')}
-                </p>
+                <>
+                  <span className={labelClass}>{pf('new.owners')}</span>
+                  <p className="h-11 flex items-center text-sm text-[rgb(var(--color-text-secondary))]">
+                    {initialOwners.length > 0
+                      ? initialOwners.map((id) => members.find((m) => m.userId === id)?.displayName).filter(Boolean).join(', ')
+                      : pf('noOwner')}
+                  </p>
+                </>
               )}
             </div>
             <div>

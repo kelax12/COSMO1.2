@@ -210,10 +210,26 @@
     "cancel": "Cancel",
     "save": "Save"
   },
+  "chat": {
+    "title": "Project chat",
+    "empty": "No messages yet. Start the conversation.",
+    "placeholder": "Write a message…",
+    "send": "Send",
+    "delete": "Delete this message"
+  },
   "members": {
     "title": "Add to project",
     "open": "Add people to the project",
     "viewersAria": "{{count}} people can see this project",
+    "rolesOpen": "See who has access to the project and their role",
+    "rolesTitle": "Project people",
+    "rolesHintManage": "Choose who is a lead and who is a member.",
+    "rolesHintRead": "Only the project leads can change these roles.",
+    "roleLabel": "Role",
+    "person": "Person",
+    "noCandidate": "Every active member is already in the project.",
+    "noTeam": "No other team to add.",
+    "wholeOrgTeam": "This project is already visible to the whole company.",
     "formerMember": "Former member",
     "you": "you",
     "roleOf": "Role of {{name}}",
