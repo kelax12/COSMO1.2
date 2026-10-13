@@ -15,8 +15,6 @@ import { GuideCursor, type CursorPoint } from './GuideCursor';
 import { OrgGuideDrawer } from './OrgGuideDrawer';
 import type { GuideAction, GuideViewer } from './guide-types';
 
-const HANDOFF_MS = 4000;
-
 const center = (el: HTMLElement): CursorPoint => {
   const r = el.getBoundingClientRect();
   return { x: r.left + Math.min(r.width / 2, 40), y: r.top + Math.min(r.height / 2, 18) };
@@ -70,11 +68,16 @@ export default function OrgGuideHost({ open, onClose, viewer }: Props) {
       find: (id) => document.querySelector<HTMLElement>(`[data-guide-id="${CSS.escape(id)}"]`),
       navigate: (section) => navigate(orgSectionPath(section)),
       moveCursor: async (el) => {
-        // Défilement instantané : la position se mesure APRÈS, sinon le
-        // curseur viserait l'endroit où l'élément était avant le défilement.
-        el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+        // On ne défile QUE si la cible sort de l'écran, et au plus court
+        // (`nearest`) : centrer chaque champ faisait dérouler le formulaire
+        // jusqu'en bas. Défilement instantané : la position se mesure APRÈS.
+        const r = el.getBoundingClientRect();
+        if (r.top < 0 || r.left < 0 || r.bottom > window.innerHeight || r.right > window.innerWidth) {
+          el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+        }
         setCursor(center(el));
-        await new Promise((r) => setTimeout(r, reduce ? 50 : 700));
+        // Durée du trajet du curseur (GuideCursor), plus un temps d'arrêt.
+        await new Promise((res) => setTimeout(res, 1400));
       },
       click: (el) => {
         setPressed(true);
@@ -98,10 +101,10 @@ export default function OrgGuideHost({ open, onClose, viewer }: Props) {
     if (result.status === 'missing' || result.status === 'empty') {
       setBubble(null);
       setEnding({ result, section: firstSection(action) });
-    } else if (result.status === 'quit') {
+    } else {
+      // `completed` comme `quit` : aucune note de fin, le formulaire reste ouvert.
       setBubble(null);
     }
-    // `completed` : la bulle de passage de main reste, le formulaire reste ouvert.
   }, [navigate, onClose, reduce, tx]);
 
   useEffect(() => {
@@ -111,13 +114,6 @@ export default function OrgGuideHost({ open, onClose, viewer }: Props) {
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
   }, [running]);
-
-  // La bulle de fin (handoff) reste 4 s puis s'efface d'elle-même.
-  useEffect(() => {
-    if (running || !bubble) return;
-    const id = setTimeout(() => setBubble(null), HANDOFF_MS);
-    return () => clearTimeout(id);
-  }, [running, bubble]);
 
   const seeAdmins = () => {
     onClose();

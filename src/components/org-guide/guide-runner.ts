@@ -23,8 +23,8 @@ const POLL_MS = 100;
 const TARGET_TIMEOUT_MS = 3000;
 /** Une étape `optional` attend moins : son absence est un cas prévu. */
 const OPTIONAL_TIMEOUT_MS = 1000;
-const FIELD_DWELL_MS = 2600;
-const STEP_GAP_MS = 500;
+const FIELD_DWELL_MS = 4200;
+const STEP_GAP_MS = 1100;
 
 class Quit extends Error {}
 
@@ -44,7 +44,7 @@ export const createGuideRun = (steps: GuideStep[], deps: GuideRunDeps) => {
 
   const sleep = async (ms: number, skippable = false) => {
     await new Promise<void>((resolve) => {
-      const t = setTimeout(resolve, deps.reducedMotion ? Math.min(ms, 300) : ms);
+      const t = setTimeout(resolve, ms);
       if (skippable) skipDwell = () => { clearTimeout(t); resolve(); };
     });
     skipDwell = null;

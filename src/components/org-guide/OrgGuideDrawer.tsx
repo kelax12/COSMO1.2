@@ -27,7 +27,7 @@ const badgeKey = (a: GuideAction) =>
 export function OrgGuideDrawer({ open, viewer, onClose, onStart, onSeeAdmins }: Props) {
   const { t } = useT('orgGuide');
   const [query, setQuery] = useState('');
-  const [collapsed, setCollapsed] = useState<Set<GuideCategory>>(new Set());
+  const [collapsed, setCollapsed] = useState<Set<GuideCategory>>(() => new Set(GUIDE_CATEGORIES));
   const [denied, setDenied] = useState<GuideAction | null>(null);
 
   // Le catalogue est typé depuis le JSON ; les clés d'action sont construites,
