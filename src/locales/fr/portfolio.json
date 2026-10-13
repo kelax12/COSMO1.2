@@ -218,6 +218,8 @@
   },
   "members": {
     "title": "Ajouter au projet",
+    "open": "Ajouter des personnes au projet",
+    "viewersAria": "{{count}} personnes voient ce projet",
     "formerMember": "Ancien membre",
     "you": "vous",
     "roleOf": "Rôle de {{name}}",
@@ -227,8 +229,8 @@
     "addMember": "Ajouter un membre",
     "addTeam": "Ajouter une équipe",
     "role": {
-      "lead": "Co-pilote",
-      "contributor": "Contributeur",
+      "lead": "Responsable",
+      "contributor": "Membre",
       "viewer": "Lecteur"
     },
     "yourRole": "Votre rôle : {{role}}"

@@ -1,5 +1,5 @@
-// Membres d'un projet et leur rôle (mig. 190) — co-pilote, contributeur,
-// lecteur. Être membre rend un projet VISIBLE, même hors de son équipe : c'est
+// Membres d'un projet et leur rôle (mig. 190) : responsable (`lead`), membre
+// (`contributor`), lecteur. Être membre rend un projet VISIBLE, même hors de son équipe : c'est
 // ainsi qu'on ouvre UN projet cloisonné à un prestataire, sans lui ouvrir les
 // autres. Le rôle élargit (contributeur) ou restreint (lecteur) les droits
 // d'organisation sur CE projet seulement ; un admin n'est jamais restreint.
@@ -30,11 +30,13 @@ interface ProjectMembersSectionProps {
   currentUserId?: string;
   /** Équipes de l'organisation, pour associer une équipe au projet (mig. 164). */
   teams: OrgTeam[];
+  /** Rendu dans la popup de l'en-tête : ni cadre ni titre (la popup les porte). */
+  bare?: boolean;
 }
 
 const selectCls = 'rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] h-9 px-3 text-sm text-[rgb(var(--color-text-primary))]';
 
-const ProjectMembersSection = ({ project, projectMembers, orgMembers, canManage, currentUserId, teams }: ProjectMembersSectionProps) => {
+const ProjectMembersSection = ({ project, projectMembers, orgMembers, canManage, currentUserId, teams, bare = false }: ProjectMembersSectionProps) => {
   const { t: pf } = useT('portfolio');
   const setMember = useSetProjectMember(project.orgId);
   const removeMember = useRemoveProjectMember(project.orgId);
@@ -70,13 +72,18 @@ const ProjectMembersSection = ({ project, projectMembers, orgMembers, canManage,
   };
 
   return (
-    <section aria-labelledby={`project-members-${project.id}`} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-      <h3 id={`project-members-${project.id}`} className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-        {pf('members.title')}
-      </h3>
+    <section
+      aria-labelledby={bare ? undefined : `project-members-${project.id}`}
+      className={bare ? '' : 'rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4'}
+    >
+      {!bare && (
+        <h3 id={`project-members-${project.id}`} className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
+          {pf('members.title')}
+        </h3>
+      )}
 
       {rows.length > 0 && (
-        <ul className="space-y-1.5 mb-3">
+        <ul className="space-y-1.5 mb-3" data-guide-id={bare ? 'project-audience-who' : undefined}>
           {rows.map((pm) => {
             const m = byId.get(pm.userId);
             const name = m?.displayName ?? pf('members.formerMember');
@@ -117,7 +124,7 @@ const ProjectMembersSection = ({ project, projectMembers, orgMembers, canManage,
       )}
 
       {canManage && (candidates.length > 0 || addableTeams.length > 0) && (
-        <div className="space-y-3">
+        <div className="space-y-3" data-guide-id={bare ? 'project-audience-add' : undefined}>
           {candidates.length > 0 && (
             <MemberSelectField
               label={pf('members.addMember')}

@@ -87,8 +87,8 @@
       "audience": {
         "label": "Manage a project's visibility",
         "synonyms": "visibility, audience, confidential, access, private",
-        "b1": "These teams also see the project and its tasks, on top of the main team.",
-        "b2": "Adding a team opens the project to it; you are asked to confirm."
+        "b1": "People added to the project can see it, with their role: lead, member or viewer.",
+        "b2": "Add a person or a team; opening the project to a team asks for confirmation."
       }
     },
     "task": {
