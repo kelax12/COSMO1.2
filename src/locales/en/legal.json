@@ -5,7 +5,7 @@
     "seoTitle": "Legal notice – Cosmo App",
     "seoDescription": "Legal notice for the Cosmo productivity app: publisher, host, intellectual property and responsibilities.",
     "title": "Legal notice",
-    "updatedAt": "12 October 2026",
+    "updatedAt": "13 October 2026",
     "s1": {
       "title": "1. Site publisher",
       "intro": "The **Cosmo** website and application are published by:",
@@ -16,19 +16,19 @@
     "s2": {
       "title": "2. Hosting",
       "intro": "The Cosmo application is hosted by:",
-      "li1": "**Frontend:** Vercel Inc., 340 Pine Street, Suite 701, San Francisco, CA 94104, USA",
+      "li1": "**Frontend:** Vercel Inc., 440 N Barranca Avenue #4133, Covina, CA 91723, USA",
       "li2": "**Database:** Supabase Inc., 970 Toa Payoh North, #07-04, Singapore 318992, on Amazon Web Services infrastructure located in Ireland (eu-west-1 region)"
     },
     "s3": {
       "title": "3. Intellectual property",
-      "p1": "All content on Cosmo (text, graphics, logos, icons, images, sounds, data) is the exclusive property of Cosmo or of its partners, and is protected by French and international intellectual property law.",
-      "p2": "Any reproduction, representation, modification, publication or adaptation of all or part of the site's elements, by whatever means or process, is prohibited without Cosmo's prior written authorisation.",
+      "p1": "All editorial content on Cosmo (text, graphics, logos, icons, images, sounds) belongs to its publisher, Axel Longatte, or to his partners, and is protected by intellectual property law. The data you enter in Cosmo remains yours (section 6 of the terms of use).",
+      "p2": "Any reproduction, representation, modification, publication or adaptation of all or part of this content, by any means or process, is prohibited without the publisher's prior written permission.",
       "p3": "Cosmo relies on open source components. Their list and the text of their licences are available in [this file](https://thecosmo.app/third-party-notices.txt), regenerated at every release."
     },
     "s4": {
       "title": "4. Liability",
-      "p1": "Cosmo endeavours to keep the information published in the application accurate and up to date. Cosmo cannot, however, guarantee the accuracy, precision or completeness of the information made available.",
-      "p2": "Cosmo cannot be held liable for direct or indirect damage arising from the use of the application or from being unable to reach it."
+      "p1": "The publisher strives to keep the information published on the site and in the application accurate and up to date, without being able to guarantee that it is complete.",
+      "p2": "The publisher's liability towards users of the service is governed by section 9 of the terms of use. Nothing in this notice limits it further, and the rights you hold under the law, in particular as a consumer, remain intact."
     },
     "s5": {
       "title": "5. Governing law",

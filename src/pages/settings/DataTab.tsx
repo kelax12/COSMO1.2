@@ -25,6 +25,8 @@ import {
 import { toast } from '@/lib/toast';
 import { useT } from '@/i18n/useT';
 import ManageCookiesButton from '@/components/ManageCookiesButton';
+import { Link } from 'react-router';
+import { useLocalizedPath } from '@/i18n/useLocalizedPath';
 
 // Fenêtre d'import (point 44) : chargée au premier clic, l'onglet n'en paie rien.
 const ImportTasksDialog = lazy(() => import('./ImportTasksDialog'));
@@ -38,6 +40,7 @@ export function DataTab() {
   const { data: categories = [] } = useCategories();
   const { data: lists = [] } = useLists();
   const { user } = useAuth();
+  const localizedPath = useLocalizedPath();
   const [importOpen, setImportOpen] = useState(false);
   const [importMounted, setImportMounted] = useState(false);
 
@@ -177,6 +180,28 @@ export function DataTab() {
         <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('data.cookiesHint')}</p>
         <ManageCookiesButton className="shrink-0 text-sm font-semibold underline underline-offset-2 text-[rgb(var(--color-text-primary))]" />
       </div>
+
+      {/* 🔴 LCEN : mentions légales, CGU et politique « directement et
+          facilement accessibles ». Avant le 2026-10-13, une fois connecté,
+          aucun écran de l'application n'y menait. Nouvel onglet : on ne quitte
+          pas ses réglages pour lire un contrat. */}
+      <nav aria-label={t('data.legalTitle')} className="p-4 rounded-xl border border-[rgb(var(--color-border))]">
+        <p className="text-xs font-semibold text-[rgb(var(--color-text-primary))] mb-2">{t('data.legalTitle')}</p>
+        <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+          {([['legalNotice', 'data.legalNotice'], ['terms', 'data.legalTerms'], ['privacy', 'data.legalPrivacy']] as const).map(([route, label]) => (
+            <li key={route}>
+              <Link
+                to={localizedPath(route)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center underline underline-offset-2 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]"
+              >
+                {t(label)}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </motion.div>
   );
 }

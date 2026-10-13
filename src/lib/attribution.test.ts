@@ -6,7 +6,17 @@ import {
   recordFallbackSource,
   normalizeSourceValue,
   FIRST_TOUCH_STORAGE_KEY,
+  persistPendingFirstTouch,
+  clearAttributionTraces,
+  _pendingFirstTouchForTests,
 } from './attribution';
+import { COOKIE_CONSENT_KEY, COOKIE_CONSENT_AT_KEY } from './cookie-consent';
+
+/** Les tests historiques supposent un visiteur qui a ACCEPTÉ (2026-10-13). */
+function accept(): void {
+  localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
+  localStorage.setItem(COOKIE_CONSENT_AT_KEY, String(Date.now()));
+}
 
 /** Réécrit window.location.search sans quitter la page (jsdom). */
 function setSearch(search: string): void {
@@ -27,7 +37,60 @@ function storeAged(source: string, ageDays: number): void {
 
 beforeEach(() => {
   localStorage.clear();
+  clearAttributionTraces(localStorage);
+  accept();
   setSearch('');
+});
+
+// 🔴 Loi I&L art. 82 : la source finit sur le PROFIL, elle exige le consentement.
+describe('sans consentement', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    clearAttributionTraces(localStorage);
+  });
+
+  it("captureFirstTouch n'écrit RIEN sur l'appareil, retient en mémoire", () => {
+    setSearch('?ref=tiktok');
+    captureFirstTouch();
+    expect(localStorage.getItem(FIRST_TOUCH_STORAGE_KEY)).toBeNull();
+    expect(_pendingFirstTouchForTests()?.source).toBe('tiktok');
+    expect(readFirstTouch()).toBeNull();
+  });
+
+  it('accepter ensuite pose la source retenue', () => {
+    setSearch('?ref=tiktok');
+    captureFirstTouch();
+    accept();
+    persistPendingFirstTouch();
+    expect(readFirstTouch()?.source).toBe('tiktok');
+    expect(_pendingFirstTouchForTests()).toBeNull();
+  });
+
+  it('refuser ensuite ne pose rien', () => {
+    setSearch('?ref=tiktok');
+    captureFirstTouch();
+    localStorage.setItem(COOKIE_CONSENT_KEY, 'refused');
+    persistPendingFirstTouch();
+    clearAttributionTraces(localStorage);
+    expect(localStorage.getItem(FIRST_TOUCH_STORAGE_KEY)).toBeNull();
+    expect(_pendingFirstTouchForTests()).toBeNull();
+  });
+
+  it("une valeur posée AVANT le correctif n'est pas lue sans consentement", () => {
+    storeAged('tiktok', 1);
+    expect(readFirstTouch()).toBeNull();
+  });
+
+  it("recordFallbackSource n'écrit rien", () => {
+    recordFallbackSource('demo');
+    expect(localStorage.getItem(FIRST_TOUCH_STORAGE_KEY)).toBeNull();
+  });
+
+  it('clearAttributionTraces efface la valeur stockée', () => {
+    storeAged('tiktok', 1);
+    clearAttributionTraces(localStorage);
+    expect(localStorage.getItem(FIRST_TOUCH_STORAGE_KEY)).toBeNull();
+  });
 });
 
 describe('normalizeSourceValue', () => {

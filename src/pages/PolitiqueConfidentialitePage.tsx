@@ -27,11 +27,14 @@ const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
         items: [
           'privacy.s2.li1', 'privacy.s2.li2', 'privacy.s2.li3',
           'privacy.s2.li4', 'privacy.s2.li5', 'privacy.s2.li6', 'privacy.s2.li7',
+          'privacy.s2.li8',
         ],
       },
       { kind: 'p', key: 'privacy.s2.p1' },
       { kind: 'p', key: 'privacy.s2.p2' },
       { kind: 'p', key: 'privacy.s2.p3' },
+      { kind: 'p', key: 'privacy.s2.p4' },
+      { kind: 'p', key: 'privacy.s2.p5' },
       { kind: 'note', key: 'privacy.s2.note' },
     ],
   },
@@ -50,7 +53,7 @@ const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
         kind: 'ul',
         items: [
           'privacy.s4.li1', 'privacy.s4.li2', 'privacy.s4.li3',
-          'privacy.s4.li4', 'privacy.s4.li5',
+          'privacy.s4.li4', 'privacy.s4.li5', 'privacy.s4.li6', 'privacy.s4.li7',
         ],
       },
     ],
@@ -71,6 +74,7 @@ const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
         items: [
           'privacy.s6.li1', 'privacy.s6.li2', 'privacy.s6.li3',
           'privacy.s6.li4', 'privacy.s6.li5', 'privacy.s6.li6',
+          'privacy.s6.li7', 'privacy.s6.li8', 'privacy.s6.li9',
         ],
       },
       { kind: 'note', key: 'privacy.s6.note' },
@@ -85,7 +89,7 @@ const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
         items: [
           'privacy.s7.li1', 'privacy.s7.li2', 'privacy.s7.li3', 'privacy.s7.li4',
           'privacy.s7.li5', 'privacy.s7.li6', 'privacy.s7.li7', 'privacy.s7.li8',
-          'privacy.s7.li9',
+          'privacy.s7.li9', 'privacy.s7.li10',
         ],
       },
       { kind: 'p', key: 'privacy.s7.outro' },
@@ -122,7 +126,13 @@ const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
       { kind: 'p', key: 'privacy.s10.intro' },
       { kind: 'ul', items: ['privacy.s10.li1', 'privacy.s10.li2', 'privacy.s10.li3'] },
       { kind: 'p', key: 'privacy.s10.consentIntro' },
-      { kind: 'ul', items: ['privacy.s10.consentLi1'] },
+      {
+        kind: 'ul',
+        items: [
+          'privacy.s10.consentLi1', 'privacy.s10.consentLi2',
+          'privacy.s10.consentLi3', 'privacy.s10.consentLi4',
+        ],
+      },
       { kind: 'note', key: 'privacy.s10.note1' },
       { kind: 'note', key: 'privacy.s10.note2' },
       // Retirer son consentement aussi simplement que le donner (RGPD art. 7.3).

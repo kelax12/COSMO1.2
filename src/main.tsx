@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import { scrubBreadcrumb, scrubEvent } from './lib/sentry-scrub';
 import { BrowserRouter } from 'react-router';
 import App from './App.tsx';
 import { RootErrorBoundary } from './components/RootErrorBoundary';
@@ -39,13 +40,9 @@ import './index.css';
 installEarlyHandlers();
 
 // M-9 — sendDefaultPii: false strips Sentry's auto-collected user identifiers
-// (IP, cookies). It does NOT scrub PII that lands in error.message itself —
-// Supabase errors routinely include emails and UUIDs in their message. This
-// beforeSend hook regex-strips both from message + exception values before
-// the event leaves the browser. Defense-in-depth for RGPD.
-const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
-const scrub = (s: string): string => s.replace(EMAIL_RE, '[email]').replace(UUID_RE, '[uuid]');
+// (IP, cookies). It does NOT scrub PII that lands in error.message itself, nor
+// the PAGE ADDRESSES (invitation tokens, OAuth codes). Both are stripped by
+// `@/lib/sentry-scrub` before the event leaves the browser (tested there).
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 
@@ -78,20 +75,9 @@ function initSentry(Sentry: typeof import('./lib/sentry-client')): void {
       'ResizeObserver loop completed with undelivered notifications',
       'Non-Error promise rejection captured',
     ],
-    beforeSend(event) {
-      if (event.message) event.message = scrub(event.message);
-      if (event.exception?.values) {
-        for (const ex of event.exception.values) {
-          if (ex.value) ex.value = scrub(ex.value);
-        }
-      }
-      if (event.breadcrumbs) {
-        for (const crumb of event.breadcrumbs) {
-          if (crumb.message) crumb.message = scrub(crumb.message);
-        }
-      }
-      return event;
-    },
+    beforeSend: (event) => scrubEvent(event),
+    beforeSendTransaction: (event) => scrubEvent(event),
+    beforeBreadcrumb: (crumb) => scrubBreadcrumb(crumb),
   });
 }
 

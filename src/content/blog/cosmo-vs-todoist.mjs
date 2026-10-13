@@ -13,7 +13,7 @@
 export const article = {
   slug: "cosmo-vs-todoist",
   datePublished: "2026-07-18",
-  dateModified: "2026-07-18",
+  dateModified: "2026-10-13",
   // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
   // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
   // laissait 4 d'entre eux sans aucun lien entrant interne.
@@ -52,13 +52,14 @@ export const article = {
 <tr><td>Essai sans compte</td><td>Non</td><td>Oui : démo instantanée pré-remplie, sans inscription</td></tr>
 </tbody>
 </table></div>
+<p><em>Comparatif établi le 18 juillet 2026 et relu le 13 octobre 2026, à partir des pages publiques de Todoist (fonctionnalités et tarifs). Les offres de Todoist évoluent : vérifiez-les sur todoist.com avant de choisir.</em></p>
 
 <h2 id="todoist-fort">Là où Todoist reste devant</h2>
 <p>Soyons directs : sur la <strong>pure gestion de tâches</strong>, Todoist a 18 ans d'avance et ça se sent.</p>
 <ul>
 <li><strong>La saisie en langage naturel.</strong> Taper « Rapport tous les lundis 9h #Travail » et voir la récurrence, l'heure et le projet se remplir seuls, c'est le meilleur du marché.</li>
 <li><strong>Les applications natives.</strong> Raccourcis clavier système, widget, capture depuis n'importe où : si vous capturez 30 tâches par jour, ce confort compte.</li>
-<li><strong>L'écosystème.</strong> Todoist se branche sur Gmail, Outlook, Slack, votre calendrier. Cosmo, à ce stade, ne propose pas d'intégrations tierces.</li>
+<li><strong>L'écosystème.</strong> Todoist se branche sur Gmail, Outlook, Slack, votre calendrier. Côté usage personnel, Cosmo ne propose pas encore d'intégrations tierces ; seul l'espace entreprise peut envoyer les événements de ses tâches vers Slack ou vers un service web.</li>
 <li><strong>La maturité collaborative.</strong> Les projets partagés Todoist sont éprouvés pour gérer une équipe entière.</li>
 </ul>
 
@@ -123,13 +124,14 @@ export const article = {
 <tr><td>Try without an account</td><td>No</td><td>Yes, an instant pre-filled demo with no sign-up</td></tr>
 </tbody>
 </table></div>
+<p><em>Comparison written on 18 July 2026 and reviewed on 13 October 2026, based on Todoist's public pages (features and pricing). Todoist's plans change: check them on todoist.com before choosing.</em></p>
 
 <h2 id="todoist-fort">Where Todoist is still ahead</h2>
 <p>Let us be direct: on <strong>pure task management</strong>, Todoist has an 18-year head start and it shows.</p>
 <ul>
 <li><strong>Natural-language input.</strong> Typing "Report every Monday 9am #Work" and watching the recurrence, the time and the project fill themselves in is the best on the market.</li>
 <li><strong>Native apps.</strong> System-wide keyboard shortcuts, a widget, capture from anywhere: if you capture 30 tasks a day, that comfort matters.</li>
-<li><strong>The ecosystem.</strong> Todoist plugs into Gmail, Outlook, Slack and your calendar. Cosmo, at this stage, offers no third-party integrations.</li>
+<li><strong>The ecosystem.</strong> Todoist plugs into Gmail, Outlook, Slack and your calendar. For personal use, Cosmo does not offer third-party integrations yet; only the company workspace can send its task events to Slack or to a web service.</li>
 <li><strong>Collaborative maturity.</strong> Todoist's shared projects are battle-tested for running a whole team.</li>
 </ul>
 

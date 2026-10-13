@@ -23,7 +23,19 @@ function setFirstTouch(value: object) {
 beforeEach(() => {
   rpc.mockClear();
   localStorage.clear();
+  // La source d'acquisition est sous consentement depuis le 2026-10-13.
+  localStorage.setItem('cosmo_cookie_consent', 'accepted');
+  localStorage.setItem('cosmo_cookie_consent_at', String(Date.now()));
   _resetClaimedForTests();
+});
+
+describe('sans consentement', () => {
+  it("n'envoie rien, même avec une source posée avant le correctif", () => {
+    localStorage.removeItem('cosmo_cookie_consent');
+    setFirstTouch({ source: 'tiktok', ts: Date.now() });
+    claimAcquisitionSource({ id: 'u-nc', created_at: fresh });
+    expect(rpc).not.toHaveBeenCalled();
+  });
 });
 
 describe('isFreshAccount', () => {

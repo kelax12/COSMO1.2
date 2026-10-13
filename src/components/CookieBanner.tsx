@@ -12,6 +12,9 @@ import {
   type CookieConsent,
 } from '@/lib/cookie-consent';
 import { clearAudienceTraces, mountAudienceScript } from '@/lib/audience';
+import { clearAttributionTraces, persistPendingFirstTouch } from '@/lib/attribution';
+import { clearDemoMetricsTraces } from '@/lib/demo-metrics';
+import { clearDemoEngagementTraces } from '@/lib/demo-engagement';
 import { useLocalizedPath } from '@/i18n/useLocalizedPath';
 
 const CookieBanner: React.FC = () => {
@@ -67,6 +70,9 @@ const CookieBanner: React.FC = () => {
         storage: window.localStorage,
       });
     } catch { /* la mesure ne doit jamais casser un clic de l'utilisateur */ }
+    // Source d'acquisition lue dans l'URL à l'arrivée, gardée en mémoire tant
+    // que la réponse n'était pas donnée (`attribution.ts`).
+    persistPendingFirstTouch();
   };
 
   const handleRefuse = () => {
@@ -75,6 +81,14 @@ const CookieBanner: React.FC = () => {
     setConsent('refused');
     setVisible(false);
     setReviewing(false);
+    // À CHAQUE refus, pas seulement au retrait : un identifiant de démo ou une
+    // source d'acquisition posés avant le 2026-10-13, sans consentement, ne
+    // doivent pas survivre au premier « Refuser ».
+    try {
+      clearAttributionTraces(window.localStorage);
+      clearDemoMetricsTraces(window.localStorage);
+      clearDemoEngagementTraces(window.localStorage);
+    } catch { /* stockage indisponible */ }
     if (wasAccepted) {
       // RETRAIT d'un accord déjà donné. Les deux mesures sont peut-être déjà
       // chargées, et on ne décharge pas du JavaScript évalué : on efface ce

@@ -436,11 +436,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
             Une seule phrase traduite, les liens posés sur des jetons
             `{{terms}}` / `{{privacy}}` que chaque langue place où elle veut. Ils
             s'ouvrent dans un nouvel onglet : ce formulaire vit aussi dans une
-            modale, et la saisie ne doit pas être perdue pour lire un contrat. */}
-        {mode === 'register' && (
+            modale, et la saisie ne doit pas être perdue pour lire un contrat.
+            🔴 AUSSI en mode connexion depuis le 2026-10-13 : le bouton Google y
+            est rendu, et il CRÉE un compte au premier passage. 6 inscriptions
+            sur 7 passent par Google ; sans cette phrase, elles se faisaient sans
+            avoir vu les CGU ni la politique. */}
           <p className="text-xs text-center text-[rgb(var(--color-text-muted))] leading-relaxed">
             {/* Maquette 364 : sur mobile, la même mention en une phrase courte. */}
-            {t(isMobile ? 'auth.legalConsentShort' : 'auth.legalConsent')
+            {t(mode === 'login' ? 'auth.legalConsentLogin' : isMobile ? 'auth.legalConsentShort' : 'auth.legalConsent')
               .split(/(\{\{terms\}\}|\{\{privacy\}\})/)
               .map((part, i) => {
                 if (part === '{{terms}}' || part === '{{privacy}}') {
@@ -460,7 +463,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
                 return <React.Fragment key={i}>{part}</React.Fragment>;
               })}
           </p>
-        )}
 
         {mode === 'login' && showDemo && (
           <button

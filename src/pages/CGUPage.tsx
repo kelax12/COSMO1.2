@@ -20,7 +20,12 @@ import type { KeyOf } from '@/i18n/catalog';
 const SECTIONS: LegalSection<KeyOf<'legalTerms'>>[] = [
   {
     title: 'terms.s1.title',
-    blocks: [{ kind: 'p', key: 'terms.s1.p1' }, { kind: 'p', key: 'terms.s1.p2' }],
+    blocks: [
+      { kind: 'p', key: 'terms.s1.p1' },
+      { kind: 'p', key: 'terms.s1.p2' },
+      // Identité du professionnel (C. conso L111-1, L221-5) : « Cosmo » n'est personne.
+      { kind: 'p', key: 'terms.s1.p3' },
+    ],
   },
   {
     title: 'terms.s2.title',
@@ -104,6 +109,7 @@ const SECTIONS: LegalSection<KeyOf<'legalTerms'>>[] = [
       // Les garanties légales du consommateur ne se limitent pas : les omettre
       // rendait la clause abusive, donc réputée non écrite (2026-09-02).
       { kind: 'p', key: 'terms.s9.p3' },
+      { kind: 'p', key: 'terms.s9.p4' },
     ],
   },
   {

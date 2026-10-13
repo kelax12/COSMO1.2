@@ -8,6 +8,7 @@ import { habitKeys } from '@/modules/habits/constants';
 import { withTimeout } from '@/lib/withTimeout';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
 import { recordDemoVisit, recordDemoConversionIfAny } from '@/lib/demo-metrics';
+import { resetDemoEngagementMemory } from '@/lib/demo-engagement';
 import { readFirstTouch } from '@/lib/attribution';
 import { claimAcquisitionSource } from './acquisition-claim';
 import { recordSeedLocale, seedLocaleMatchesCurrent } from '@/lib/seed-i18n';
@@ -455,6 +456,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set demo state synchronously so callers can navigate immediately
     // (existing callsites do not await this function).
     clearDemoStorage();
+    // Repli EN MÉMOIRE des compteurs de démo (sans consentement) : remis à zéro
+    // comme les clés que `clearDemoStorage()` vient d'effacer.
+    resetDemoEngagementMemory();
     appModeStore.setDemo(true);
     resetRepositories();
     queryClient.clear();

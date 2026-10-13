@@ -22,9 +22,21 @@
 // visiteur arrivé via `?ref=tiktok` qui clique sur « Essayer la démo » perd
 // son attribution instantanément — le parcours le plus fréquent du plan
 // d'acquisition.
+//
+// 🔴 SOUS CONSENTEMENT depuis le 2026-10-13 (loi I&L art. 82). La source finit
+// écrite sur le PROFIL : ce n'est pas une statistique anonyme, l'exemption
+// CNIL de mesure d'audience ne la couvre pas. Rien n'est écrit sur l'appareil
+// ni lu avant « Accepter » : la source de l'URL est gardée EN MÉMOIRE
+// (`pending`) et posée seulement si le visiteur accepte pendant la visite
+// (`persistPendingFirstTouch`). Refuser efface tout (`clearAttributionTraces`).
 // ═══════════════════════════════════════════════════════════════════
 
+import { hasConsented } from './cookie-consent';
+
 export const FIRST_TOUCH_STORAGE_KEY = 'cosmo_first_touch';
+
+/** Source lue dans l'URL avant toute réponse au bandeau. Jamais écrite sur l'appareil. */
+let pending: FirstTouch | null = null;
 
 /** 30 jours — au-delà, la visite d'origine n'explique plus l'inscription. */
 const TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -85,6 +97,9 @@ function readRaw(): FirstTouch | null {
  * nouvelle capture).
  */
 export function readFirstTouch(): FirstTouch | null {
+  // Une valeur posée AVANT le 2026-10-13, sans consentement, ne doit pas
+  // atteindre le profil : sans « Accepter », il n'y a pas d'attribution.
+  if (!hasConsented()) return null;
   const stored = readRaw();
   if (!stored) return null;
   if (Date.now() - stored.ts > TTL_MS) return null;
@@ -102,6 +117,7 @@ export function readFirstTouch(): FirstTouch | null {
  */
 export function recordFallbackSource(source: string): void {
   try {
+    if (!hasConsented()) return;
     if (readFirstTouch()) return;
     const clean = normalizeSourceValue(source);
     if (!clean) return;
@@ -133,8 +149,41 @@ export function captureFirstTouch(): void {
     );
 
     const entry: FirstTouch = { source, ts: Date.now(), ...(campaign ? { campaign } : {}) };
+    if (!hasConsented()) {
+      // Pas de réponse au bandeau (ou un refus) : on retient en mémoire, rien
+      // n'est écrit. Perdu au rechargement, et c'est voulu.
+      pending = entry;
+      return;
+    }
     localStorage.setItem(FIRST_TOUCH_STORAGE_KEY, JSON.stringify(entry));
   } catch {
     /* localStorage indisponible ou URL illisible — l'app doit démarrer quand même. */
   }
+}
+
+/**
+ * À appeler quand le visiteur ACCEPTE : pose la source retenue en mémoire
+ * depuis l'arrivée sur la page. No-op sans consentement ou sans source.
+ */
+export function persistPendingFirstTouch(): void {
+  try {
+    if (!pending || !hasConsented()) return;
+    if (!readFirstTouch()) {
+      localStorage.setItem(FIRST_TOUCH_STORAGE_KEY, JSON.stringify(pending));
+    }
+    pending = null;
+  } catch {
+    /* stockage indisponible : pas d'attribution, pas d'erreur. */
+  }
+}
+
+/** Refus ou retrait du consentement : la source ne survit nulle part. */
+export function clearAttributionTraces(storage: Pick<Storage, 'removeItem'>): void {
+  pending = null;
+  try { storage.removeItem(FIRST_TOUCH_STORAGE_KEY); } catch { /* stockage indisponible */ }
+}
+
+/** Réservé aux tests. */
+export function _pendingFirstTouchForTests(): FirstTouch | null {
+  return pending;
 }

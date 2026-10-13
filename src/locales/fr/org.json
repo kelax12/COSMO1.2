@@ -489,7 +489,8 @@
     "agendaMiddle": " et y ajouter des événements, sauf ceux que vous marquez ",
     "agendaPrivate": "« Privé »",
     "agendaAfter": ", qui restent invisibles pour eux.",
-    "personalSafe": "Vos tâches, habitudes et données personnelles restent invisibles pour l'entreprise."
+    "personalSafe": "Vos tâches, habitudes et données personnelles restent invisibles pour l'entreprise.",
+    "reports": "Vos responsables voient la date de votre dernière activité sur le travail d'équipe, et les rapports d'activité quotidiens indiquent les tâches d'équipe que vous avez terminées et les événements non privés que vous avez tenus. Jamais vos connexions."
   },
   "assign": {
     "assignTo": "Attribuer une tâche à {{name}}",
