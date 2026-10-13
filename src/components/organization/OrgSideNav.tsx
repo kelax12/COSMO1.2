@@ -188,7 +188,7 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shor
 
         {/* Recherche : la palette Ctrl+K cherche dans les tâches (côté
             serveur, au-delà du plafond de lecture), les projets, les membres,
-            les équipes et les OKR. Le raccourci ne se devine pas : il est dit. */}
+            les équipes et les OKR. Badge du raccourci masqué ; il reste annoncé par aria-keyshortcuts. */}
         {onSearch && (
           <button
             type="button"
@@ -198,7 +198,6 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shor
           >
             <Search size={15} aria-hidden="true" className="shrink-0" />
             <span className="flex-1 text-left">{tOrgAdmin('sideNav.search')}</span>
-            <kbd className="text-caption px-1.5 py-0.5 rounded border border-[rgb(var(--color-border))]">Ctrl K</kbd>
           </button>
         )}
 
