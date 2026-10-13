@@ -14,7 +14,7 @@ import { useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import {
   Settings2, Copy, LayoutTemplate, Archive, ArchiveRestore, Plus,
-  CalendarRange, UsersRound, UserRound, ChevronDown, ChevronRight, ListChecks,
+  CalendarRange, UsersRound, UserRound, UserPlus, Bell, BellOff, ChevronDown, ChevronRight, ListChecks,
 } from 'lucide-react';
 import { SAVE_AS_TEMPLATE_ENABLED } from './projectTemplatesFlag';
 
@@ -30,11 +30,14 @@ import type {
 import { projectColor, sortOpenTasks, sortCompletedTasks } from './team-projects.helpers';
 import { PROJECT_STATUS_META, isProjectLate, progressFromStats, projectProgress } from './portfolio.helpers';
 import ProjectHealthSection, { ProjectHealthBadge } from './ProjectHealthSection';
-import ProjectMembersSection from './ProjectMembersSection';
+import { ProjectRolesDialog, ProjectAddDialog } from './ProjectPeopleDialogs';
+import ProjectChat from './ProjectChat';
+import { projectFunctionOf } from './project-function';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useMyFollows, useToggleFollow } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
 import VisibilityPill from './VisibilityPill';
 import { useVisibility } from './useVisibility';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import TeamTaskRow from './TeamTaskRow';
 import ProjectAudienceActions from './ProjectAudienceActions';
 import { OrgBreadcrumb } from './OrgPagePrimitives';
@@ -97,7 +100,12 @@ const ProjectDetailPage = ({
   const { t: pf } = useT('portfolio');
   const { t: ta } = useT('orgAdmin');
   const [showCompleted, setShowCompleted] = useState(false);
-  const [addingPeople, setAddingPeople] = useState(false);
+  const [rolesOpen, setRolesOpen] = useState(false);
+  const [addMode, setAddMode] = useState<'person' | 'team' | null>(null);
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const { data: follows } = useMyFollows(project.orgId);
+  const toggleFollow = useToggleFollow(project.orgId);
+  const followed = follows?.projectIds.includes(project.id) ?? false;
   const { people: viewers } = useVisibility({ orgId: project.orgId, teamIds: project.teamId ? [project.teamId] : [], projectId: project.id });
   const color = projectColor(project.color);
   const status = project.status ?? 'active';
@@ -109,6 +117,8 @@ const ProjectDetailPage = ({
   // même sans `task.create`. Miroir de la policy et du trigger, pour ne pas
   // proposer un bouton que la base refuserait.
   const myRole = projectMembers.find((m) => m.userId === currentUserId)?.role;
+  // Seuls les responsables (propriétaire, `lead`) et un admin changent les fonctions.
+  const canManageRoles = !archived && (isAdmin || projectFunctionOf(currentUserId, project, projectMembers) === 'lead');
   const canAddTask = isAdmin || (myRole !== 'viewer' && (canCreateTask || myRole === 'lead' || myRole === 'contributor'));
   const late = isProjectLate(project);
   const longDate = (d: string) => format(parseISO(d), 'd MMMM yyyy', { locale: getDateLocale() });
@@ -143,7 +153,13 @@ const ProjectDetailPage = ({
               <h2 className="text-lg sm:text-xl font-bold text-[rgb(var(--color-text-primary))] break-words">{project.name}</h2>
               {/* Qui voit ce projet, et le geste pour y ajouter quelqu'un. */}
               <div className="flex items-center" aria-label={pf('members.viewersAria', { count: viewers.length })} role="group">
-                <div className="flex -space-x-1.5">
+                <button
+                  type="button"
+                  onClick={() => setRolesOpen(true)}
+                  aria-label={pf('members.rolesOpen')}
+                  title={pf('members.rolesOpen')}
+                  className="flex -space-x-1.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                >
                   {viewers.slice(0, AVATARS_SHOWN).map((m) => (
                     <span key={m.userId} title={m.displayName} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
                       <MemberAvatar avatar={m.avatar} name={m.displayName} size={26} />
@@ -154,30 +170,46 @@ const ProjectDetailPage = ({
                       +{viewers.length - AVATARS_SHOWN}
                     </span>
                   )}
-                </div>
+                </button>
                 {canEdit && !archived && (
-                  <button
-                    type="button"
-                    onClick={() => setAddingPeople(true)}
+                  <Popover open={addMenuOpen} onOpenChange={setAddMenuOpen}>
+                  <PopoverTrigger
                     data-guide-id="project-detail-audience"
                     aria-label={pf('members.open')}
                     title={pf('members.open')}
                     className="ml-1.5 w-[26px] h-[26px] rounded-full border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:border-[rgb(var(--color-accent))] flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                   >
                     <Plus size={14} aria-hidden="true" />
-                  </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-56 p-1">
+                    {(['person', 'team'] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => { setAddMenuOpen(false); setAddMode(mode); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
+                      >
+                        {mode === 'person' ? <UserPlus size={15} aria-hidden="true" /> : <UsersRound size={15} aria-hidden="true" />}
+                        {pf(mode === 'person' ? 'members.addMember' : 'members.addTeam')}
+                      </button>
+                    ))}
+                  </PopoverContent>
+                  </Popover>
                 )}
               </div>
             </div>
             <div className="mt-2 flex items-center gap-2 flex-wrap text-sm">
-              <span className={`font-semibold px-2.5 py-1 rounded-full ${PROJECT_STATUS_META[status].soft}`}>
-                {pf(`status.${status}`)}
-              </span>
+              {/* En cours ET en retard : « En retard » remplace le statut. */}
+              {!(late && status === 'active') && (
+                <span className={`font-semibold px-2.5 py-1 rounded-full ${PROJECT_STATUS_META[status].soft}`}>
+                  {pf(`status.${status}`)}
+                </span>
+              )}
               <ProjectHealthBadge health={project.health} />
               {late && <span className="font-bold px-2.5 py-1 rounded-full bg-red-500/10 text-red-500">{pf('late')}</span>}
               {myRole && (
                 <span className="font-semibold px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                  {pf('members.yourRole', { role: pf(`members.role.${myRole}`) })}
+                  {pf('members.yourRole', { role: pf(`members.role.${projectFunctionOf(currentUserId, project, projectMembers)}`) })}
                 </span>
               )}
               {archived && <span className="font-semibold px-2.5 py-1 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))]">{t('project.archivedBadge')}</span>}
@@ -218,6 +250,15 @@ const ProjectDetailPage = ({
                 <Archive size={14} aria-hidden="true" /> {t('project.archive')}
               </button>
             ))}
+            <button
+              type="button"
+              aria-pressed={followed}
+              onClick={() => toggleFollow.mutate({ target: 'project', id: project.id, follow: !followed })}
+              className={actionBtn}
+            >
+              {followed ? <BellOff size={14} aria-hidden="true" /> : <Bell size={14} aria-hidden="true" />}
+              {t(followed ? 'follow.unfollow' : 'follow.follow')}
+            </button>
           </div>
         </div>
 
@@ -304,25 +345,33 @@ const ProjectDetailPage = ({
 
         <div className="space-y-4">
           <ProjectHealthSection project={project} members={members} canEdit={canEdit && !archived} />
+          <ProjectChat
+            project={project}
+            projectMembers={projectMembers}
+            members={members}
+            currentUserId={currentUserId}
+            readOnly={archived}
+          />
         </div>
       </div>
 
-      <Dialog open={addingPeople} onOpenChange={setAddingPeople}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{pf('members.title')}</DialogTitle>
-          </DialogHeader>
-          <ProjectMembersSection
-            project={project}
-            projectMembers={projectMembers}
-            orgMembers={members}
-            canManage={canEdit && !archived}
-            currentUserId={currentUserId}
-            teams={teams}
-            bare
-          />
-        </DialogContent>
-      </Dialog>
+      <ProjectRolesDialog
+        open={rolesOpen}
+        onOpenChange={setRolesOpen}
+        project={project}
+        projectMembers={projectMembers}
+        viewers={viewers}
+        canManage={canManageRoles}
+        currentUserId={currentUserId}
+      />
+      <ProjectAddDialog
+        mode={addMode}
+        onClose={() => setAddMode(null)}
+        project={project}
+        projectMembers={projectMembers}
+        orgMembers={members}
+        teams={teams}
+      />
     </div>
   );
 };
