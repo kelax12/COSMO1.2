@@ -14,7 +14,7 @@ import { useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import {
   Settings2, Copy, LayoutTemplate, Archive, ArchiveRestore, Plus,
-  CalendarRange, UsersRound, UserRound, UserPlus, Bell, BellOff, Eye, Check, ChevronDown, ChevronRight, ListChecks,
+  CalendarRange, UsersRound, UserRound, UserPlus, Bell, BellOff, Check, ChevronDown, ChevronRight, ListChecks,
 } from 'lucide-react';
 import { SAVE_AS_TEMPLATE_ENABLED } from './projectTemplatesFlag';
 
@@ -253,16 +253,6 @@ const ProjectDetailPage = ({
                   <span className="font-semibold tabular-nums" title={pf('members.extraHint', { count: extraMembers })}>+{extraMembers}</span>
                 )}
               </span>
-              {/* Qui voit ce projet, et sa fonction : la même fenêtre que les avatars. */}
-              <button
-                type="button"
-                onClick={() => setRolesOpen(true)}
-                aria-label={pf('members.rolesOpen')}
-                title={pf('members.rolesOpen')}
-                className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-              >
-                <Eye size={15} aria-hidden="true" />
-              </button>
               {categoryName && <span className="text-[rgb(var(--color-text-secondary))]">· {categoryName}</span>}
             </div>
           </div>
