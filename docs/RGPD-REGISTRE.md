@@ -229,7 +229,14 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
   > couvre toute information déposée sur le terminal, et un identifiant persistant est
   > exactement ce que la personne a le droit de connaître. Une formulation littéralement vraie
   > qui laisse croire à l'absence de traceur est une formulation fausse.
-- **Sous-traitants** : Vesk, Vercel Analytics.
+- **Sous-traitants** : Vesk (édité par Veske, entrepreneur individuel, Montauban, SIREN
+  107 484 743, hébergé chez Hetzner à Falkenstein, Allemagne ; DPA publié sur `veske.io/dpa`,
+  applicable dès l'usage, à archiver), Vercel Analytics. *Identité relevée le 2026-10-13.*
+- **Même base, même bandeau (2026-10-13)** : la **source d'acquisition** (`cosmo_first_touch`,
+  30 jours, puis `profiles.acquisition_source`) et l'**identifiant d'appareil de la démo**
+  (`cosmo_demo_device_id`, `demo_devices.converted_user_id`). Ils étaient posés SANS
+  consentement et finissaient rattachés au compte : hors de toute exemption. Depuis, rien n'est
+  écrit ni envoyé sans « Accepter », et tout s'efface au refus.
 - **Recueil du consentement** : bandeau. **Rien n'est chargé tant que la personne n'a pas
   accepté**, et un refus ne charge jamais rien. Le choix est conservé **six mois** sur l'appareil
   (`cosmo_cookie_consent_at`), puis redemandé. **Retrait** : « Gérer les cookies » (pied de page,
@@ -254,10 +261,13 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
 
 - **Finalité** : détecter et corriger les erreurs en production.
 - **Base légale** : intérêt légitime (sécurité et continuité du service).
-- **Données** : trace d'erreur, page concernée, version du navigateur. **Les adresses email et
-  les identifiants sont retirés automatiquement** des messages, des exceptions et des
-  breadcrumbs avant tout envoi (`beforeSend`), et `sendDefaultPii` est désactivé.
-- **Sous-traitant** : Sentry (États-Unis).
+- **Données** : trace d'erreur, page concernée (jetons d'invitation et codes OAuth retirés de
+  l'adresse, `src/lib/sentry-scrub.ts`, 2026-10-13), version du navigateur, et l'**identifiant
+  technique du compte** (`monitoring.setUser({ id })`). 🔴 Ce registre disait « les identifiants
+  sont retirés » : c'est vrai des identifiants présents dans les TEXTES, faux pour celui du
+  compte, joint volontairement pour relier les erreurs. Corrigé le 2026-10-13. `sendDefaultPii`
+  est désactivé.
+- **Sous-traitant** : Sentry (société américaine ; ingestion dans la région UE, Allemagne).
 - **Conservation** : selon la rétention Sentry, 90 jours par défaut.
 
 ## T10 · Administration de la plateforme
@@ -268,6 +278,10 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
   les non-administrateurs côté serveur** : la protection n'est pas l'URL, qui n'est pas
   référencée, mais le contrôle en base.
 - **Tables** : `admin_users`, `user_activity_days`.
+- **Sauvegardes** (2026-10-13) : dump quotidien de la base, **chiffré avant dépôt** (AES-256),
+  conservé 30 jours en artefact GitHub (`db-backup.yml`). Sous-traitant : GitHub (États-Unis),
+  qui ne détient pas la clé. 🔴 Ces dumps sont partis EN CLAIR, dans un dépôt public, du
+  2026-08-29 au 2026-10-13 : violation consignée au registre des violations (hors dépôt).
 
 ---
 
@@ -282,10 +296,14 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
 | Google | Irlande et États-Unis | Uniquement si l'utilisateur choisit la connexion Google |
 | Resend | États-Unis | Clauses contractuelles types via le DPA du prestataire, **non archivé**. Ajouté le 2026-09-24 |
 | Cloudflare (Turnstile) | États-Unis | Idem, **non archivé**, seulement si la clé Turnstile est posée. Ajouté le 2026-09-24 |
+| GitHub | États-Unis | Sauvegardes **chiffrées**, clé hors de GitHub. Ajouté le 2026-10-13 |
+| Vesk (Veske) | France, hébergé en Allemagne | Aucun transfert. Ajouté le 2026-10-13 |
+| Supabase Inc. | société non européenne | Données en Irlande ; accès possible des équipes pour maintenance et support, encadré par le DPA (clauses types acceptées avec les conditions). Ajouté le 2026-10-13 |
 
 > ❌ **Ligne A5 de [`LEGAL.md`](./LEGAL.md) : les DPA ne sont pas encore collectés et archivés.**
-> Ils se signent en tant qu'entreprise, donc après immatriculation. C'est la pièce manquante de
-> ce registre.
+> ⚠️ « Ils se signent en tant qu'entreprise » est **faux pour Sentry** (relu le 2026-10-13) : le
+> propriétaire du compte l'accepte en ligne, dès maintenant. Vesk publie un DPA applicable dès
+> l'usage. C'est la pièce manquante de ce registre.
 
 ---
 

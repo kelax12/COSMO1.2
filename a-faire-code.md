@@ -8,7 +8,7 @@
 >
 > ✅ **Règle d'entretien** : un item qui se ferme quitte ce fichier dans le même commit, avec sa
 > ligne dans l'index ci-dessous. Un nouvel item s'ajoute au § « Ouvert » avec un identifiant
-> `C-121` et suivants (le dernier attribué est `C-120`).
+> `C-122` et suivants (le dernier attribué est `C-121`, le 2026-10-13).
 
 Classement : ce fichier porte ce qui se fait **avec du code, sans geste d'Axel**. Les gestes
 (console, appareil réel, décision) sont dans [`a-faire-manuel.md`](./a-faire-manuel.md).
@@ -79,6 +79,13 @@ Sécurité : [`faille.md`](./faille.md) fait foi.
 ---
 
 ## Ouvert · le détail de chaque item
+
+### C-121 · Supprimer les comptes inactifs depuis 3 ans · **P3 · M** · ⏳ promesse publiée, traitement absent
+
+| Item | Constat | Ce qui prouve que c'est fini |
+|---|---|---|
+| **C-121** · P3 · M | **Ouvert le 2026-10-13 (audit juridique).** La politique de confidentialité (s6.li1) annonce désormais qu'un compte sans connexion pendant **3 ans** est supprimé, après un e-mail d'avertissement **30 jours avant** (RGPD art. 5.1.e : jusqu'ici, un compte abandonné était gardé sans limite). **Aucun traitement ne l'applique.** Rien ne presse avant 2029 (premiers comptes : 2026), mais une promesse publiée sans exécution redevient une fausse déclaration le jour où un compte franchit le seuil | un job planifié (pg_cron ou workflow) qui (1) repère `last_sign_in_at < now() - 3 ans`, (2) envoie l'avertissement par Resend et le trace, (3) 30 jours plus tard, supprime par le même chemin que `delete-account` (transfert de propriété d'organisation compris) ; preuve en transaction annulée acteur par acteur, et un témoin : un compte connecté hier n'est JAMAIS visé. ❌ Ne pas supprimer sans l'e-mail : la politique le promet |
+
 
 ### C-118 · Aucun audit clavier sous WebKit · **P2 · M** · 🔴 le seul item qui relève du code
 
