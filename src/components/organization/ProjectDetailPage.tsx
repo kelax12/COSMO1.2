@@ -16,6 +16,7 @@ import {
   Settings2, Copy, LayoutTemplate, Archive, ArchiveRestore, Plus,
   CalendarRange, UsersRound, UserRound, ChevronDown, ChevronRight, ListChecks,
 } from 'lucide-react';
+import { SAVE_AS_TEMPLATE_ENABLED } from './projectTemplatesFlag';
 import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
@@ -162,9 +163,11 @@ const ProjectDetailPage = ({
                 <button type="button" onClick={onDuplicate} className={actionBtn}>
                   <Copy size={14} aria-hidden="true" /> {pf('actions.duplicate')}
                 </button>
-                <button type="button" onClick={onSaveTemplate} className={actionBtn}>
-                  <LayoutTemplate size={14} aria-hidden="true" /> {pf('actions.saveTemplate')}
-                </button>
+                {SAVE_AS_TEMPLATE_ENABLED && (
+                  <button type="button" onClick={onSaveTemplate} className={actionBtn}>
+                    <LayoutTemplate size={14} aria-hidden="true" /> {pf('actions.saveTemplate')}
+                  </button>
+                )}
               </>
             )}
             {canArchive && (archived ? (
