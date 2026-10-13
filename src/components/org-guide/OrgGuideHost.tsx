@@ -9,6 +9,7 @@ import { orgSectionPath } from '@/components/organization/deep-link.helpers';
 import { DIRECTORY_PARAMS } from '@/components/organization/member-directory.filters';
 import { createGuideRun, type GuideRunResult } from './guide-runner';
 import { dispatchGuideClick } from './guide-click';
+import { emitOrgGuideDemo } from './guide-demo-signal';
 import { GuideBubble } from './GuideBubble';
 import { GuideControlBar } from './GuideControlBar';
 import { GuideCursor, type CursorPoint } from './GuideCursor';
@@ -53,7 +54,7 @@ export default function OrgGuideHost({ open, onClose, viewer }: Props) {
   const runRef = useRef<ReturnType<typeof createGuideRun> | null>(null);
 
   // Quitter la page pendant une démo l'arrête : rien ne doit cliquer dans le vide.
-  useEffect(() => () => runRef.current?.quit(), []);
+  useEffect(() => () => { runRef.current?.quit(); emitOrgGuideDemo(false); }, []);
 
   const start = useCallback(async (action: GuideAction) => {
     runRef.current?.quit();
@@ -89,11 +90,16 @@ export default function OrgGuideHost({ open, onClose, viewer }: Props) {
     });
     runRef.current = run;
     let result: GuideRunResult;
+    // La navigation repliée ressort avant le premier pas ; on attend la fin
+    // de sa transition (300 ms) pour que le curseur vise sa vraie position.
+    emitOrgGuideDemo(true);
+    await new Promise((res) => setTimeout(res, 350));
     try {
       result = await run.start();
     } catch {
       result = { status: 'quit' };
     }
+    if (runRef.current === run) emitOrgGuideDemo(false);
     if (runRef.current !== run) return; // une autre démo a pris la main
     runRef.current = null;
     setRunning(null);
