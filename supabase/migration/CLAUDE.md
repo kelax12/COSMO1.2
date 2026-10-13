@@ -113,6 +113,11 @@ compilait, la suite passait.
   `authenticated` **t**). Preuve `proofs/217.proof.sql` : 8 sur 8, témoin sans la fonction rouge.
   ⚠️ C'est la **82e** fonction DEFINER exposée à `authenticated` : `check:supabase-posture` rougit
   sur 81 → 82 jusqu'au `--update`, et ce rouge est légitime.
+- ✅ **`219`** (rôles personnalisés à durée limitée) : **appliquée** le 2026-10-13 par `db query -f`, ledger
+  `20261013093805` (inscrit à la main), relue au catalogue (2 tables sous RLS, 8 policies, 4 triggers `INVOKER`,
+  4 résolveurs avec la couche rôle, couche rôle et job non exécutables par `authenticated`, job `7 * * * *`).
+  Corps vivants des 6 fonctions réécrites relus AVANT : identiques à la base de la 219. Preuve `proofs/219.proof.sql`
+  rejouée en prod le même jour : 18 sur 18, rien laissé derrière.
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
   seule issue, et le verdict est le texte de l'exception. ⚠️ En PL/pgSQL `N` et `n`, `OK` et `ok`
