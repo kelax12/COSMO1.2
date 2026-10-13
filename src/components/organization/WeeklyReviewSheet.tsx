@@ -173,7 +173,7 @@ const WeeklyReviewSheet = ({ orgId, tasks: baseTasks, members: baseMembers, base
 
           {/* 1. Ce qui a avancé */}
           <Step index={1} title={ta('weeklyReview.progressTitle')}>
-            <div className="flex items-center gap-4">
+            <div data-guide-id="weekly-review-progress" className="flex items-center gap-4">
               <p className="text-3xl font-bold text-[rgb(var(--color-text-primary))] tabular-nums">
                 {review.completedThisWeek}
               </p>
@@ -195,6 +195,7 @@ const WeeklyReviewSheet = ({ orgId, tasks: baseTasks, members: baseMembers, base
 
           {/* 2. Ce qui a dérapé */}
           <Step index={2} title={ta('weeklyReview.slippedTitle')}>
+            <div data-guide-id="weekly-review-slipped">
             {review.slipped.length === 0 ? (
               <Empty>{ta('weeklyReview.slippedEmpty')}</Empty>
             ) : (
@@ -216,6 +217,7 @@ const WeeklyReviewSheet = ({ orgId, tasks: baseTasks, members: baseMembers, base
                 ))}
               </ul>
             )}
+            </div>
           </Step>
 
           {/* 3. Qui est en tension */}

@@ -86,6 +86,7 @@ const OrgRolesSettings = ({ orgId, members }: OrgRolesSettingsProps) => {
         <button
           type="button"
           onClick={() => setEditor({ initial: null })}
+          data-guide-id="settings-roles-new"
           className="inline-flex items-center gap-1.5 px-3 min-h-9 rounded-lg text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
         >
           <Plus size={15} aria-hidden="true" /> {ta('customRoles.create')}
@@ -99,7 +100,7 @@ const OrgRolesSettings = ({ orgId, members }: OrgRolesSettingsProps) => {
           <p className="mt-1 text-xs text-[rgb(var(--color-text-muted))]">{ta('customRoles.emptyBody')}</p>
         </div>
       ) : (
-        <ul className="divide-y divide-[rgb(var(--color-border))] rounded-xl border border-[rgb(var(--color-border))]">
+        <ul data-guide-id="settings-roles-list" className="divide-y divide-[rgb(var(--color-border))] rounded-xl border border-[rgb(var(--color-border))]">
           {roles.map((role) => {
             const holders = holdersCount(role.id, assignments, now);
             const soon = expiringSoonCount(role.id, assignments, now) > 0;
@@ -109,6 +110,7 @@ const OrgRolesSettings = ({ orgId, members }: OrgRolesSettingsProps) => {
                 <button
                   type="button"
                   onClick={() => setEditor({ roleId: role.id, initial: toInput(role) })}
+                  data-guide-item
                   className="flex-1 min-w-0 text-left"
                 >
                   <span className="block text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">{role.name}</span>

@@ -1,0 +1,281 @@
+{
+  "fab": {
+    "label": "Ouvrir le guide entreprise",
+    "newBadge": "Nouveau"
+  },
+  "drawer": {
+    "title": "Guide entreprise",
+    "close": "Fermer le guide",
+    "searchPlaceholder": "Inviter, rôle, projet…",
+    "noResult": "Aucune action ne correspond. Essaie un autre mot.",
+    "badgeAdmin": "Admin",
+    "badgeManager": "Gestion",
+    "badgeOwner": "Propriétaire"
+  },
+  "categories": {
+    "work": "Projets et tâches",
+    "people": "Équipes et membres",
+    "roles": "Rôles et permissions",
+    "steer": "OKR et pilotage"
+  },
+  "denied": {
+    "title": "Droit manquant",
+    "body": "Il te faut le droit « {{right}} ». Un admin de l'entreprise peut te l'accorder.",
+    "seeAdmins": "Voir les admins",
+    "rights": {
+      "admin": "Administrateur",
+      "manager": "Gestion d'équipe",
+      "owner": "Propriétaire",
+      "task_create": "Créer des tâches",
+      "task_editAny": "Modifier toutes les tâches",
+      "task_deleteAny": "Supprimer toutes les tâches",
+      "project_create": "Créer des projets",
+      "project_edit": "Modifier les projets",
+      "project_delete": "Supprimer les projets",
+      "okr_create": "Créer des OKR",
+      "okr_delete": "Supprimer des OKR",
+      "category_manage": "Gérer les catégories",
+      "team_create": "Créer des équipes",
+      "member_invite": "Inviter des membres",
+      "report_org": "Rapports de l'entreprise",
+      "report_allTeams": "Rapports de toutes les équipes",
+      "role_manage": "Gérer les rôles"
+    }
+  },
+  "control": {
+    "progress": "{{action}} · étape {{current}}/{{total}}",
+    "pause": "Mettre en pause",
+    "resume": "Reprendre",
+    "skip": "Passer",
+    "quit": "Quitter la démo"
+  },
+  "end": {
+    "missing": "Cet écran a changé depuis l'écriture du guide. Ouvre-le à la main.",
+    "openDirect": "Ouvrir l'écran"
+  },
+  "empty": {
+    "noTask": "Il te faut d'abord une tâche.",
+    "noProject": "Il te faut d'abord un projet.",
+    "noTeam": "Il te faut d'abord une équipe.",
+    "noMember": "Il n'y a encore personne d'autre que toi.",
+    "noRole": "Aucun rôle personnalisé pour l'instant.",
+    "noOkr": "Il te faut d'abord un OKR.",
+    "noReport": "Aucun rapport pour l'instant : le premier est généré à minuit.",
+    "noRequest": "Aucune demande en attente.",
+    "noUnplaced": "Tout le monde est déjà placé.",
+    "noTrash": "La corbeille est vide : rien à restaurer pour l'instant.",
+    "noOneToAdd": "Tous les membres sont déjà dans cette équipe : personne à ajouter.",
+    "noProjectTeam": "Ce projet n'appartient à aucune équipe : il est déjà visible par toute l'entreprise.",
+    "noTeamProject": "Cette équipe n'a pas encore de projet : rien à répartir pour l'instant.",
+    "startPrereq": "Montre-moi comment"
+  },
+  "actions": {
+    "project": {
+      "create": {
+        "label": "Créer un projet",
+        "synonyms": "nouveau projet, chantier, dossier, initiative",
+        "b1": "Le nom du projet, visible par toute l'audience choisie.",
+        "b2": "L'équipe propriétaire décide de qui pilote et gère le projet.",
+        "b3": "L'échéance alimente la timeline et déclenche les alertes de retard."
+      },
+      "fromTemplate": {
+        "label": "Créer un projet depuis un modèle",
+        "synonyms": "modèle, template, projet type, dupliquer, gabarit",
+        "b1": "Choisis le modèle qui ressemble le plus au projet à lancer.",
+        "b2": "Les tâches du modèle s'ajoutent ici ; tu peux en retirer avant de créer."
+      },
+      "audience": {
+        "label": "Gérer la visibilité d'un projet",
+        "synonyms": "visibilité, audience, confidentiel, accès, privé",
+        "b1": "Ces équipes voient aussi le projet et ses tâches, en plus de l'équipe principale.",
+        "b2": "Associer une équipe lui ouvre le projet ; une confirmation est demandée."
+      }
+    },
+    "task": {
+      "create": {
+        "label": "Créer une tâche d'équipe",
+        "synonyms": "nouvelle tâche, ticket, à faire, todo, action",
+        "b1": "Le titre dit en quelques mots ce qui doit être fait.",
+        "b2": "Le projet rattache la tâche à son contexte et à son audience.",
+        "b3": "Les assignés reçoivent la tâche et une notification."
+      },
+      "assign": {
+        "label": "Assigner une tâche",
+        "synonyms": "assigner, attribuer, déléguer, affecter, responsable",
+        "b1": "Les assignés sont les personnes qui doivent réaliser la tâche.",
+        "b2": "« Suivre » t'envoie ses changements de statut sans t'assigner la tâche."
+      },
+      "subtaskDependency": {
+        "label": "Ajouter une sous-tâche ou une dépendance",
+        "synonyms": "sous-tâche, dépendance, bloquant, étape, découper",
+        "b1": "Ajoute une sous-tâche pour découper le travail en étapes courtes.",
+        "b2": "Une tâche bloquante doit être terminée avant que celle-ci puisse avancer."
+      }
+    },
+    "list": {
+      "create": {
+        "label": "Créer une liste de tâches",
+        "synonyms": "liste, regrouper, filtre, vue, tableau",
+        "b1": "Le nom de la liste dit ce qu'elle regroupe, en quelques mots.",
+        "b2": "La couleur distingue la liste dans la barre ; un clic passe à la suivante."
+      }
+    },
+    "trash": {
+      "restore": {
+        "label": "Restaurer depuis la corbeille",
+        "synonyms": "corbeille, restaurer, supprimé, récupérer, annuler suppression",
+        "b1": "Chaque élément supprimé reste visible ici, avec qui l'a supprimé et quand.",
+        "b2": "Restaurés, ils reviennent à l'identique ; passé le délai, ils sont purgés."
+      }
+    },
+    "team": {
+      "create": {
+        "label": "Créer une équipe",
+        "synonyms": "nouvelle équipe, groupe, service, département, squad",
+        "b1": "Le nom de l'équipe apparaît partout où elle est mentionnée.",
+        "b2": "Coche les membres de départ ; la couronne désigne le responsable, qui gère l'équipe."
+      },
+      "addMembers": {
+        "label": "Ajouter des membres à une équipe",
+        "synonyms": "ajouter, membres, équipe, rattacher, composer",
+        "b1": "Coche plusieurs personnes d'un coup pour les ajouter ensemble."
+      },
+      "workload": {
+        "label": "Voir la charge de l'équipe",
+        "synonyms": "charge, surcharge, capacité, répartition, disponibilité",
+        "b1": "Chaque ligne montre le travail en cours de chaque membre.",
+        "b2": "Les couleurs séparent le travail en retard, de la semaine, à venir et sans date."
+      }
+    },
+    "member": {
+      "inviteEmail": {
+        "label": "Inviter par email",
+        "synonyms": "inviter, email, mail, ajouter une personne, recruter",
+        "b1": "Saisis une ou plusieurs adresses, séparées par une virgule ou un retour.",
+        "b2": "Chaque adresse reçoit un lien personnel ; l'étape suivante fixe le rôle d'arrivée."
+      },
+      "inviteLink": {
+        "label": "Partager un lien ou un code",
+        "synonyms": "lien, code, rejoindre, partager, invitation",
+        "b1": "Génère un lien d'invitation, puis copie-le pour l'envoyer par le canal de ton choix.",
+        "b2": "Le code permet de rejoindre à la main, sans ouvrir de lien."
+      },
+      "joinRequest": {
+        "label": "Accepter une demande d'adhésion",
+        "synonyms": "demande, adhésion, accepter, refuser, rejoindre",
+        "b1": "Vérifie qui demande à rejoindre avant de répondre.",
+        "b2": "Accepter ouvre l'accès à l'entreprise ; refuser clôt la demande."
+      },
+      "offboard": {
+        "label": "Retirer un membre",
+        "synonyms": "retirer, départ, offboarding, supprimer un membre, exclure",
+        "b1": "Ce bloc liste ce que la personne laisse ; pour chaque point, tu choisis qui le reprend.",
+        "b2": "Choisis ensuite la suite : transmettre seulement, suspendre ou retirer de l'entreprise."
+      },
+      "permissions": {
+        "label": "Régler les permissions d'un membre",
+        "synonyms": "permissions, surcharge, droits individuels, exception, membre",
+        "b1": "Une surcharge remplace le droit par défaut pour ce seul membre.",
+        "b2": "« Tout remettre par défaut » rend à ce membre les droits de son rôle."
+      }
+    },
+    "pyramid": {
+      "place": {
+        "label": "Placer un membre dans l'organigramme",
+        "synonyms": "organigramme, pyramide, hiérarchie, supérieur, manager",
+        "b1": "Le supérieur choisi devient le manager direct de la personne.",
+        "b2": "Ce choix décide qui voit les tâches et le travail de cette personne."
+      }
+    },
+    "role": {
+      "create": {
+        "label": "Créer un rôle personnalisé",
+        "synonyms": "rôle, permissions, droits, profil, personnalisé",
+        "b1": "Donne au rôle un nom que toute l'équipe comprendra.",
+        "b2": "La matrice des droits liste ce que le rôle permet de faire.",
+        "b3": "La couleur aide à repérer le rôle dans les listes de membres."
+      },
+      "edit": {
+        "label": "Modifier un rôle",
+        "synonyms": "modifier un rôle, changer les droits, éditer, ajuster, permissions",
+        "b1": "Les droits cochés s'appliquent à tous les membres qui ont ce rôle.",
+        "b2": "Un rôle actif prime sur les réglages individuels, et plusieurs rôles s'additionnent."
+      },
+      "assign": {
+        "label": "Attribuer un rôle",
+        "synonyms": "attribuer, donner un rôle, assigner un rôle, droits, affecter",
+        "b1": "Choisis le rôle à donner à ce membre.",
+        "b2": "Les rôles déjà actifs restent : plusieurs rôles s'additionnent."
+      },
+      "assignTimed": {
+        "label": "Donner un rôle à durée limitée",
+        "synonyms": "durée limitée, temporaire, échéance, expiration, intérim",
+        "b1": "La date de fin dit jusqu'à quand le rôle reste actif.",
+        "b2": "Le résumé dit jusqu'à quand le rôle s'applique ; à cette date, il est retiré tout seul."
+      }
+    },
+    "me": {
+      "permissions": {
+        "label": "Voir mes propres droits",
+        "synonyms": "mes droits, mes permissions, ce que je peux faire, accès, rôle",
+        "b1": "Les droits actifs listent ce que tu peux faire dans l'entreprise.",
+        "b2": "Chaque droit indique d'où il vient : statut d'admin, défaut de ton rôle ou réglage décidé pour toi."
+      }
+    },
+    "org": {
+      "transferOwnership": {
+        "label": "Transférer la propriété",
+        "synonyms": "propriétaire, transfert, céder, owner, passer la main",
+        "b1": "Choisis la personne qui deviendra propriétaire de l'entreprise.",
+        "b2": "La facturation passe au nouveau propriétaire ; seul lui pourra ensuite transférer à nouveau."
+      },
+      "profile": {
+        "label": "Modifier le profil de l'entreprise",
+        "synonyms": "profil, entreprise, nom, logo, fuseau horaire",
+        "b1": "Le nom de l'entreprise s'affiche pour tous les membres.",
+        "b2": "Le logo s'affiche à côté du nom de l'entreprise.",
+        "b3": "La description résume l'activité de l'entreprise, visible dans son profil."
+      }
+    },
+    "okr": {
+      "create": {
+        "label": "Créer un OKR d'entreprise",
+        "synonyms": "OKR, objectif, résultat clé, cap, ambition",
+        "b1": "L'objectif dit où l'entreprise veut aller, en une phrase.",
+        "b2": "Les résultats clés mesurent concrètement si l'objectif est atteint.",
+        "b3": "L'audience décide qui voit cet objectif et peut y contribuer."
+      }
+    },
+    "kr": {
+      "update": {
+        "label": "Mettre à jour un résultat clé",
+        "synonyms": "mettre à jour, avancement, progression, KR, saisir une valeur",
+        "b1": "La nouvelle valeur remplace l'ancienne et fait bouger la progression.",
+        "b2": "Le compteur et la barre montrent où en est le résultat clé face à sa cible."
+      }
+    },
+    "review": {
+      "weekly": {
+        "label": "Lancer la revue hebdomadaire",
+        "synonyms": "revue, hebdomadaire, point de la semaine, bilan, weekly",
+        "b1": "Le nombre de tâches terminées cette semaine, comparé à la semaine passée.",
+        "b2": "Les échéances repoussées sur les deux dernières semaines, à arbitrer."
+      }
+    },
+    "report": {
+      "view": {
+        "label": "Consulter un rapport d'activité",
+        "synonyms": "rapport, activité, bilan, statistiques, historique",
+        "b1": "La période indique les dates couvertes par ce rapport.",
+        "b2": "Le périmètre choisit l'entreprise entière ou une de tes équipes."
+      }
+    },
+    "tasks": {
+      "export": {
+        "label": "Exporter les tâches",
+        "synonyms": "exporter, export, CSV, télécharger, extraire",
+        "b1": "L'export rassemble toutes les tâches de l'entreprise dans un fichier CSV, lisible dans un tableur."
+      }
+    }
+  }
+}

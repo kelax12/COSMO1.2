@@ -229,7 +229,8 @@
       "objective": "Goal set: “{{name}}”",
       "nothing": "Nothing created yet: everything can also be done from the company space.",
       "mapTitle": "What awaits you",
-      "cta": "Open the company space"
+      "cta": "Open the company space",
+      "discoverGuide": "Discover the guide"
     },
     "member": {
       "dialogLabel": "Welcome to the company space",

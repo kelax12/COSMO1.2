@@ -49,7 +49,7 @@ const OrgTasksExportSection = ({ orgId, members }: OrgTasksExportSectionProps) =
   return (
     <section className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('orgSettings.exportTitle')}</h2>
-      <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5 mb-3">{tOrgAdmin('orgSettings.exportHint')}</p>
+      <p data-guide-id="export-hint" className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5 mb-3">{tOrgAdmin('orgSettings.exportHint')}</p>
       <button
         type="button"
         onClick={() => void exportCsv()}

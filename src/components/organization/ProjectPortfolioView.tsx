@@ -116,6 +116,7 @@ const ProjectPortfolioView = ({
                   <button
                     type="button"
                     onClick={() => onOpenProject(project.id)}
+                    data-guide-item
                     aria-label={pf('openProject', { name: project.name })}
                     className="flex items-center gap-2 min-w-0 text-left rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                   >

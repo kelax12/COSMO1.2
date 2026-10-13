@@ -19,6 +19,7 @@ import {
   ENT_LABEL,
   ENT_LINK,
   ENT_PRIMARY,
+  ENT_SECONDARY,
   EntActions,
   EntBody,
   EntKicker,
@@ -532,6 +533,7 @@ export const DoneStep = ({
   projectName,
   objective,
   onFinish,
+  onDiscoverGuide,
 }: {
   orgName: string;
   invitedCount: number;
@@ -539,6 +541,7 @@ export const DoneStep = ({
   projectName: string;
   objective: string;
   onFinish: () => void;
+  onDiscoverGuide: () => void;
 }) => {
   const { t, tp } = useT('onboarding');
   const recap: string[] = [];
@@ -571,7 +574,9 @@ export const DoneStep = ({
         <PlacesGrid keys={['overview', 'tasks', 'projects', 'okr', 'pyramid', 'members']} label={t('ent.done.mapTitle')} compact />
       </div>
       <EntActions>
-        <span />
+        <button type="button" onClick={onDiscoverGuide} className={ENT_SECONDARY}>
+          {t('ent.done.discoverGuide')}
+        </button>
         <button type="button" onClick={onFinish} className={ENT_PRIMARY}>
           {t('ent.done.cta')}
           <ArrowRight size={17} aria-hidden="true" />

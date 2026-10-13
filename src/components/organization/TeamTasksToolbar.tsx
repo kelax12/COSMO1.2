@@ -109,6 +109,7 @@ const TeamTasksToolbar = ({
         type="button"
         onClick={onCreate}
         disabled={!canCreate}
+        data-guide-id="tasks-new"
         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-95 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 disabled:hover:scale-100"
       >
         <Plus size={18} aria-hidden="true" />

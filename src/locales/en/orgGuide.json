@@ -1,0 +1,281 @@
+{
+  "fab": {
+    "label": "Open the company guide",
+    "newBadge": "New"
+  },
+  "drawer": {
+    "title": "Company guide",
+    "close": "Close the guide",
+    "searchPlaceholder": "Invite, role, project…",
+    "noResult": "No action matches. Try another word.",
+    "badgeAdmin": "Admin",
+    "badgeManager": "Management",
+    "badgeOwner": "Owner"
+  },
+  "categories": {
+    "work": "Projects and tasks",
+    "people": "Teams and members",
+    "roles": "Roles and permissions",
+    "steer": "OKRs and steering"
+  },
+  "denied": {
+    "title": "Missing right",
+    "body": "You need the \"{{right}}\" right. A company admin can grant it to you.",
+    "seeAdmins": "See the admins",
+    "rights": {
+      "admin": "Administrator",
+      "manager": "Team management",
+      "owner": "Owner",
+      "task_create": "Create tasks",
+      "task_editAny": "Edit all tasks",
+      "task_deleteAny": "Delete all tasks",
+      "project_create": "Create projects",
+      "project_edit": "Edit projects",
+      "project_delete": "Delete projects",
+      "okr_create": "Create OKRs",
+      "okr_delete": "Delete OKRs",
+      "category_manage": "Manage categories",
+      "team_create": "Create teams",
+      "member_invite": "Invite members",
+      "report_org": "Company reports",
+      "report_allTeams": "Reports for all teams",
+      "role_manage": "Manage roles"
+    }
+  },
+  "control": {
+    "progress": "{{action}} · step {{current}}/{{total}}",
+    "pause": "Pause",
+    "resume": "Resume",
+    "skip": "Skip",
+    "quit": "Quit the demo"
+  },
+  "end": {
+    "missing": "This screen changed since the guide was written. Open it by hand.",
+    "openDirect": "Open the screen"
+  },
+  "empty": {
+    "noTask": "You need a task first.",
+    "noProject": "You need a project first.",
+    "noTeam": "You need a team first.",
+    "noMember": "There is nobody else but you yet.",
+    "noRole": "No custom role yet.",
+    "noOkr": "You need an OKR first.",
+    "noReport": "No report yet: the first one is generated at midnight.",
+    "noRequest": "No pending request.",
+    "noUnplaced": "Everyone is already placed.",
+    "noTrash": "The bin is empty: nothing to restore for now.",
+    "noOneToAdd": "Every member is already in this team: nobody left to add.",
+    "noProjectTeam": "This project belongs to no team: the whole company already sees it.",
+    "noTeamProject": "This team has no project yet: no workload to spread for now.",
+    "startPrereq": "Show me how"
+  },
+  "actions": {
+    "project": {
+      "create": {
+        "label": "Create a project",
+        "synonyms": "new project, workstream, folder, initiative",
+        "b1": "The project name, visible to the whole audience you choose.",
+        "b2": "The owner team decides who leads and manages the project.",
+        "b3": "The due date feeds the timeline and triggers late alerts."
+      },
+      "fromTemplate": {
+        "label": "Create a project from a template",
+        "synonyms": "template, preset, duplicate, blueprint, standard project",
+        "b1": "Pick the template closest to the project you want to start.",
+        "b2": "The template's tasks are added here; you can remove some before creating."
+      },
+      "audience": {
+        "label": "Manage a project's visibility",
+        "synonyms": "visibility, audience, confidential, access, private",
+        "b1": "These teams also see the project and its tasks, on top of the main team.",
+        "b2": "Adding a team opens the project to it; you are asked to confirm."
+      }
+    },
+    "task": {
+      "create": {
+        "label": "Create a team task",
+        "synonyms": "new task, ticket, to-do, action item, todo",
+        "b1": "The title says in a few words what needs to be done.",
+        "b2": "The project ties the task to its context and its audience.",
+        "b3": "Assignees receive the task along with a notification."
+      },
+      "assign": {
+        "label": "Assign a task",
+        "synonyms": "assign, delegate, allocate, owner, responsible",
+        "b1": "Assignees are the people who must actually do the task.",
+        "b2": "\"Follow\" sends you its status changes without assigning you the task."
+      },
+      "subtaskDependency": {
+        "label": "Add a subtask or a dependency",
+        "synonyms": "subtask, dependency, blocker, step, break down",
+        "b1": "Add a subtask to split the work into short steps.",
+        "b2": "A blocking task must be finished before this one can move forward."
+      }
+    },
+    "list": {
+      "create": {
+        "label": "Create a task list",
+        "synonyms": "list, group, filter, view, board",
+        "b1": "The list name says what it groups, in a few words.",
+        "b2": "The color sets the list apart in the bar; one click moves to the next one."
+      }
+    },
+    "trash": {
+      "restore": {
+        "label": "Restore from the trash",
+        "synonyms": "trash, restore, deleted, recover, undelete",
+        "b1": "Each deleted item stays visible here, with who deleted it and when.",
+        "b2": "Restored items come back as they were; after the delay, they are purged."
+      }
+    },
+    "team": {
+      "create": {
+        "label": "Create a team",
+        "synonyms": "new team, group, department, squad, unit",
+        "b1": "The team name appears everywhere the team is mentioned.",
+        "b2": "Tick the starting members; the crown marks the lead, who manages the team."
+      },
+      "addMembers": {
+        "label": "Add members to a team",
+        "synonyms": "add, members, team, attach, staff",
+        "b1": "Tick several people at once to add them together."
+      },
+      "workload": {
+        "label": "See the team workload",
+        "synonyms": "workload, overload, capacity, distribution, availability",
+        "b1": "Each row shows the work currently on each member's plate.",
+        "b2": "The colors split work into late, this week, later and no date."
+      }
+    },
+    "member": {
+      "inviteEmail": {
+        "label": "Invite by email",
+        "synonyms": "invite, email, mail, add a person, onboard",
+        "b1": "Enter one or more addresses, separated by a comma or a new line.",
+        "b2": "Each address gets a personal link; the next step sets the starting role."
+      },
+      "inviteLink": {
+        "label": "Share a link or a code",
+        "synonyms": "link, code, join, share, invitation",
+        "b1": "Generate an invite link, then copy it and send it through the channel of your choice.",
+        "b2": "The code lets people join by hand, without opening a link."
+      },
+      "joinRequest": {
+        "label": "Accept a join request",
+        "synonyms": "request, join, accept, decline, approve",
+        "b1": "Check who is asking to join before you answer.",
+        "b2": "Accepting opens access to the company; declining closes the request."
+      },
+      "offboard": {
+        "label": "Remove a member",
+        "synonyms": "remove, leave, offboarding, delete a member, exclude",
+        "b1": "This block lists what the person leaves behind; for each item, you choose who takes it over.",
+        "b2": "Then choose what happens next: hand over only, suspend, or remove from the company."
+      },
+      "permissions": {
+        "label": "Set a member's permissions",
+        "synonyms": "permissions, override, individual rights, exception, member",
+        "b1": "An override replaces the default right for this one member only.",
+        "b2": "\"Reset everything to default\" gives this member the rights of their role back."
+      }
+    },
+    "pyramid": {
+      "place": {
+        "label": "Place a member in the org chart",
+        "synonyms": "org chart, pyramid, hierarchy, manager, reports to",
+        "b1": "The chosen superior becomes the person's direct manager.",
+        "b2": "This choice decides who can see this person's tasks and work."
+      }
+    },
+    "role": {
+      "create": {
+        "label": "Create a custom role",
+        "synonyms": "role, permissions, rights, profile, custom",
+        "b1": "Give the role a name the whole team will understand.",
+        "b2": "The rights matrix lists what the role allows people to do.",
+        "b3": "The color helps you spot the role in member lists."
+      },
+      "edit": {
+        "label": "Edit a role",
+        "synonyms": "edit a role, change rights, adjust, update, permissions",
+        "b1": "Ticked rights apply to every member who holds this role.",
+        "b2": "An active role overrides individual settings, and several roles add up."
+      },
+      "assign": {
+        "label": "Assign a role",
+        "synonyms": "assign, give a role, grant, rights, allocate",
+        "b1": "Pick the role you want to give this member.",
+        "b2": "Roles already active stay: several roles add up."
+      },
+      "assignTimed": {
+        "label": "Give a role for a limited time",
+        "synonyms": "limited time, temporary, expiry, deadline, interim",
+        "b1": "The end date says until when the role stays active.",
+        "b2": "The summary says until when the role applies; on that date, it is removed automatically."
+      }
+    },
+    "me": {
+      "permissions": {
+        "label": "See my own rights",
+        "synonyms": "my rights, my permissions, what I can do, access, role",
+        "b1": "Active rights list what you can do inside the company.",
+        "b2": "Each right shows where it comes from: admin status, your role's default, or a setting made for you."
+      }
+    },
+    "org": {
+      "transferOwnership": {
+        "label": "Transfer ownership",
+        "synonyms": "owner, transfer, hand over, give away, ownership",
+        "b1": "Choose the person who will become the company owner.",
+        "b2": "Billing moves to the new owner; only they can transfer ownership again afterwards."
+      },
+      "profile": {
+        "label": "Edit the company profile",
+        "synonyms": "profile, company, name, logo, timezone",
+        "b1": "The company name is shown to every member.",
+        "b2": "The logo shows next to the company name.",
+        "b3": "The description sums up what the company does, shown on its profile."
+      }
+    },
+    "okr": {
+      "create": {
+        "label": "Create a company OKR",
+        "synonyms": "OKR, objective, key result, goal, ambition",
+        "b1": "The objective says where the company wants to go, in one sentence.",
+        "b2": "Key results measure concretely whether the objective is reached.",
+        "b3": "The audience decides who sees this objective and can contribute."
+      }
+    },
+    "kr": {
+      "update": {
+        "label": "Update a key result",
+        "synonyms": "update, progress, check-in, KR, enter a value",
+        "b1": "The new value replaces the old one and moves the progress.",
+        "b2": "The counter and the bar show where the key result stands against its target."
+      }
+    },
+    "review": {
+      "weekly": {
+        "label": "Start the weekly review",
+        "synonyms": "review, weekly, weekly check-in, recap, weekly",
+        "b1": "How many tasks were finished this week, compared with last week.",
+        "b2": "Deadlines pushed back over the last two weeks, to be settled."
+      }
+    },
+    "report": {
+      "view": {
+        "label": "View an activity report",
+        "synonyms": "report, activity, summary, statistics, history",
+        "b1": "The period shows the dates this report covers.",
+        "b2": "The scope picks the whole company or one of your teams."
+      }
+    },
+    "tasks": {
+      "export": {
+        "label": "Export tasks",
+        "synonyms": "export, CSV, download, extract, spreadsheet",
+        "b1": "The export gathers every company task into a CSV file you can open in a spreadsheet."
+      }
+    }
+  }
+}

@@ -144,6 +144,7 @@ export const NewProjectButton = ({ canCreateProject, createDeniedReason, onNewPr
       <button
         type="button"
         onClick={onNewProject}
+        data-guide-id="projects-new"
         className="inline-flex items-center gap-1.5 h-9 px-3 max-md:rounded-2xl rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
         aria-label={t('projects.newProject')}
       >

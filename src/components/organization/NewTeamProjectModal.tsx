@@ -231,7 +231,7 @@ const NewTeamProjectModal = ({
           )}
 
           {/* Modèle de départ (mig. 153) : ceux de l'entreprise, puis ceux de COSMO. */}
-          <div>
+          <div data-guide-id="project-form-template">
             <label htmlFor="new-project-template" className={labelClass} style={labelStyle}>
               <LayoutTemplate size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />
               {pf('builtIn.pickLabel')}
@@ -259,7 +259,7 @@ const NewTeamProjectModal = ({
             </MenuSelect>
           </div>
 
-          <div>
+          <div data-guide-id="project-form-name">
             <label htmlFor="new-project-name" className={labelClass} style={labelStyle}>{t('project.name')}</label>
             <input
               id="new-project-name"
@@ -288,7 +288,7 @@ const NewTeamProjectModal = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+            <div data-guide-id="project-form-team">
               <label htmlFor="new-project-team" className={labelClass} style={labelStyle}>{t('project.team')}</label>
               <MenuSelect
                 id="new-project-team"
@@ -323,7 +323,7 @@ const NewTeamProjectModal = ({
                   : tp('popups.project.audienceTeam', audience.count, { team: teams.find((tm) => tm.id === teamId)?.name ?? '' })}
               </span>
             </p>
-            <div>
+            <div data-guide-id="project-form-due">
               <label htmlFor="new-project-due" className={labelClass} style={labelStyle}>{pf('new.dueDate')}</label>
               <DatePicker id="new-project-due" value={dueDate} onChange={(v) => { setDueDate(v); setError(null); }} className="h-[2.626275rem]" popoverClassName="z-[10000]" minDate={selectedPayload ? todayLocal() : undefined} />
             </div>
@@ -343,7 +343,7 @@ const NewTeamProjectModal = ({
             />
           </div>
 
-          <div>
+          <div data-guide-id="project-form-tasks">
             <span className={labelClass} style={labelStyle}>
               <ListTodo size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />
               {t('project.initialTasks')}
