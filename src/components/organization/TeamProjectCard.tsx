@@ -4,6 +4,7 @@ import {
   Pencil, Archive, ArchiveRestore, Clock, ListChecks, Tag,
   ExternalLink, Settings2, Copy, LayoutTemplate, CalendarRange,
 } from 'lucide-react';
+import { SAVE_AS_TEMPLATE_ENABLED } from './projectTemplatesFlag';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import { getColorHex } from '@/lib/category-colors';
@@ -357,9 +358,11 @@ const TeamProjectCard = ({
                   <DropdownMenuItem onClick={onDuplicate}>
                     <Copy size={14} aria-hidden="true" /> {pf('actions.duplicate')}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onSaveTemplate}>
-                    <LayoutTemplate size={14} aria-hidden="true" /> {pf('actions.saveTemplate')}
-                  </DropdownMenuItem>
+                  {SAVE_AS_TEMPLATE_ENABLED && (
+                    <DropdownMenuItem onClick={onSaveTemplate}>
+                      <LayoutTemplate size={14} aria-hidden="true" /> {pf('actions.saveTemplate')}
+                    </DropdownMenuItem>
+                  )}
                 </>
               )}
               {/* Actions groupées — ouvertes à tous, et seulement quand il y a
