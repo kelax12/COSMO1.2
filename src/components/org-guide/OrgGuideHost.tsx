@@ -54,7 +54,7 @@ export default function OrgGuideHost({ open, onClose, viewer }: Props) {
   const runRef = useRef<ReturnType<typeof createGuideRun> | null>(null);
 
   // Quitter la page pendant une démo l'arrête : rien ne doit cliquer dans le vide.
-  useEffect(() => () => { runRef.current?.quit(); emitOrgGuideDemo(false); }, []);
+  useEffect(() => () => { runRef.current?.quit(); emitOrgGuideDemo('off'); }, []);
 
   const start = useCallback(async (action: GuideAction) => {
     runRef.current?.quit();
@@ -64,6 +64,15 @@ export default function OrgGuideHost({ open, onClose, viewer }: Props) {
     setPaused(false);
     setStep({ current: 0, total: action.steps.length });
     setRunning(action);
+    // Navigation de droite : visible pendant un changement de page, masquée
+    // ensuite. Chaque bascule la fait glisser (300 ms) et, ouverte, elle
+    // réservait sa place : le contenu se décale. Le curseur attend donc la fin
+    // de la bascule avant de mesurer sa cible.
+    let navSettledAt = 0;
+    const setNavPhase = (phase: 'nav' | 'hide') => {
+      emitOrgGuideDemo(phase);
+      navSettledAt = Date.now() + 350;
+    };
     const run = createGuideRun(action.steps, {
       reducedMotion: reduce,
       find: (id) => document.querySelector<HTMLElement>(`[data-guide-id="${CSS.escape(id)}"]`),
@@ -72,6 +81,8 @@ export default function OrgGuideHost({ open, onClose, viewer }: Props) {
         // On ne défile QUE si la cible sort de l'écran, et au plus court
         // (`nearest`) : centrer chaque champ faisait dérouler le formulaire
         // jusqu'en bas. Défilement instantané : la position se mesure APRÈS.
+        const settle = navSettledAt - Date.now();
+        if (settle > 0) await new Promise((res) => setTimeout(res, settle));
         const r = el.getBoundingClientRect();
         if (r.top < 0 || r.left < 0 || r.bottom > window.innerHeight || r.right > window.innerWidth) {
           el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
@@ -86,20 +97,19 @@ export default function OrgGuideHost({ open, onClose, viewer }: Props) {
         dispatchGuideClick(el);
       },
       showBubble: (key, el) => setBubble(key ? { text: tx(key), at: el ? center(el) : null } : null),
-      onStep: (i, n) => setStep({ current: i + 1, total: n }),
+      onStep: (i, n) => {
+        setStep({ current: i + 1, total: n });
+        setNavPhase(action.steps[i]?.kind === 'goto' ? 'nav' : 'hide');
+      },
     });
     runRef.current = run;
     let result: GuideRunResult;
-    // La navigation repliée ressort avant le premier pas ; on attend la fin
-    // de sa transition (300 ms) pour que le curseur vise sa vraie position.
-    emitOrgGuideDemo(true);
-    await new Promise((res) => setTimeout(res, 350));
     try {
       result = await run.start();
     } catch {
       result = { status: 'quit' };
     }
-    if (runRef.current === run) emitOrgGuideDemo(false);
+    if (runRef.current === run) emitOrgGuideDemo('off');
     if (runRef.current !== run) return; // une autre démo a pris la main
     runRef.current = null;
     setRunning(null);

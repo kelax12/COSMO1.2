@@ -21,9 +21,9 @@ import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
 import OrgSideNav from '@/components/organization/OrgSideNav';
 import { OrgGuideFab } from '@/components/org-guide/OrgGuideFab';
-import { useOrgGuideDemoActive } from '@/components/org-guide/guide-demo-signal';
+import { useOrgGuideDemoPhase } from '@/components/org-guide/guide-demo-signal';
 import type { GuideViewer } from '@/components/org-guide/guide-types';
-import { useOrgNavMode } from '@/components/organization/use-org-nav-mode';
+import { useOrgNavMode, type OrgNavMode } from '@/components/organization/use-org-nav-mode';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
 import { sectionNotificationBadges, type BadgeSection } from '@/components/organization/org-section-badges';
@@ -174,10 +174,14 @@ const OrganizationPage = () => {
   // survol). Porté ici : la page réserve la place de la carte ouverte à
   // l'arrivée, sinon elle recouvrirait la colonne de droite du contenu.
   const [navMode, setNavMode] = useOrgNavMode();
-  // Démo du guide en cours : une navigation repliée ressort (`peek`, sans
-  // réserver de place) pour qu'on voie le curseur changer de page.
-  const guideDemo = useOrgGuideDemoActive();
-  const sideNavMode = guideDemo && navMode === 'collapsed' ? 'peek' : navMode;
+  // Démo du guide : visible pendant un changement de page (`peek` si elle
+  // était repliée, sans réserver de place), masquée une fois la page atteinte
+  // pour que le curseur ne clique jamais derrière elle (cf. guide-demo-signal).
+  const guidePhase = useOrgGuideDemoPhase();
+  const sideNavMode: OrgNavMode =
+    guidePhase === 'hide' ? 'collapsed'
+    : guidePhase === 'nav' && navMode === 'collapsed' ? 'peek'
+    : navMode;
 
   // Badge nav (reco #7) : on marque « vu » en QUITTANT la page, pas en y
   // arrivant. Marquer au montage remettait `lastSeen` à `now` avant le premier
@@ -342,7 +346,7 @@ const OrganizationPage = () => {
     // suit la même courbe que la carte, pour que les deux bougent ensemble.
     <div
       className={`max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:transition-[padding] md:duration-300 motion-reduce:transition-none ${
-        navMode === 'open' ? 'md:pr-[232px]' : ''
+        sideNavMode === 'open' ? 'md:pr-[232px]' : ''
       }`}
       style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
     >
