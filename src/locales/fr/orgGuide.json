@@ -254,18 +254,10 @@
         "b2": "Le compteur et la barre montrent où en est le résultat clé face à sa cible."
       }
     },
-    "review": {
-      "weekly": {
-        "label": "Lancer la revue hebdomadaire",
-        "synonyms": "revue, hebdomadaire, point de la semaine, bilan, weekly",
-        "b1": "Le nombre de tâches terminées cette semaine, comparé à la semaine passée.",
-        "b2": "Les échéances repoussées sur les deux dernières semaines, à arbitrer."
-      }
-    },
     "report": {
       "view": {
         "label": "Consulter un rapport d'activité",
-        "synonyms": "rapport, activité, bilan, statistiques, historique",
+        "synonyms": "rapport, activité, bilan, historique",
         "b1": "La période indique les dates couvertes par ce rapport.",
         "b2": "Le périmètre choisit l'entreprise entière ou une de tes équipes."
       }

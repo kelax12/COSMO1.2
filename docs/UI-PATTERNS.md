@@ -801,7 +801,7 @@ Flags : `cosmo_tutorial_seen_tasks_(desktop|mobile)`, idem `agenda`, `habits`, `
 ### Guide entreprise (2026-10-12)
 
 **Rôle** : sur `/entreprise`, un bouton flottant (boussole, en bas à droite) ouvre un tiroir de
-**29 actions** classées par catégorie, avec recherche. Chaque action joue une démo : un curseur
+**28 actions** classées par catégorie, avec recherche. Chaque action joue une démo : un curseur
 animé se déplace vers les vraies cibles de l'écran, ouvre le formulaire **vide** et commente
 chaque étape dans une bulle. La démo **n'écrit jamais** : rien n'est saisi ni validé. Pause,
 Passer et Échap (quitter) dans la barre de contrôle. Une action hors des droits du lecteur
