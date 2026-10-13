@@ -86,6 +86,7 @@
   },
   "new": {
     "owner": "Owner",
+    "owners": "Owners",
     "dueDate": "End",
     "color": "Color",
     "description": "Description (optional)",

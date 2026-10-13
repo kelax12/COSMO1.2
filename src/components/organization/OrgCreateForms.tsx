@@ -11,6 +11,7 @@ import { useActiveOrganization, useMyOrgPermissions, useOrgMembers } from '@/mod
 import { useCreateTeamWithMembers, useOrgTeams, type CreateTeamFullInput } from '@/modules/org-teams';
 import {
   useCreateTeamProjectWithTasks, useTeamProjectTemplates,
+  useSetProjectMember,
   type CreateTeamProjectInput, type DraftProjectTask,
 } from '@/modules/team-projects';
 import { useT } from '@/i18n/useT';
@@ -33,6 +34,7 @@ const OrgCreateForms = ({ orgId, request, onClose }: OrgCreateFormsProps) => {
   const { data: teams = [] } = useOrgTeams(orgId);
   const { data: templates = [] } = useTeamProjectTemplates(request.kind === 'project' ? orgId : undefined);
   const createProject = useCreateTeamProjectWithTasks(orgId);
+  const setProjectMember = useSetProjectMember(orgId);
   const createTeamWithMembers = useCreateTeamWithMembers(orgId);
   const isAdmin = activeOrg?.id === orgId && activeOrg.myRole === 'admin';
 
@@ -43,8 +45,14 @@ const OrgCreateForms = ({ orgId, request, onClose }: OrgCreateFormsProps) => {
     const submit = async (
       input: CreateTeamProjectInput,
       tasks: DraftProjectTask[],
+      coLeadIds: string[],
     ) => {
       const projectId = await createProject.mutateAsync({ input, tasks });
+      // Les autres responsables co-pilotent le projet (rôle `lead`, mig. 190).
+      // Le projet existe déjà : un échec ici est notifié par le hook, pas rejeté.
+      await Promise.allSettled(
+        coLeadIds.map((userId) => setProjectMember.mutateAsync({ projectId, userId, role: 'lead' })),
+      );
       toast.success(tErrors('success.projectCreated'));
       request.options.onCreated?.(projectId);
     };

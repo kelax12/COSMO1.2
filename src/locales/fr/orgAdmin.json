@@ -18,7 +18,6 @@
     "accessUntilHint": "Pour un prestataire ou un stagiaire : après cette date, l'accès cesse tout seul.",
     "accessSave": "Enregistrer",
     "searchPerson": "Rechercher une personne",
-    "searchPersonAria": "Rechercher une personne pour « {{field}} »",
     "offboardTitle": "Départ de {{name}}",
     "offboardIntro": "Choisissez à qui transmettre son travail, puis retirez la personne ou suspendez simplement son accès.",
     "impactTitle": "Ce qui sera transmis",
