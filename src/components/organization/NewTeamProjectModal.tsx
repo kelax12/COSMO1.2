@@ -16,7 +16,7 @@ import { PRIORITY_META } from './team-projects.helpers';
 import { instantiateTemplate, todayLocal } from './portfolio.helpers';
 import { BUILT_IN_TEMPLATES, builtInPayload } from './project-templates';
 import AssigneesPicker from './AssigneesPicker';
-import MemberSelectField from './MemberSelectField';
+import MemberMultiSelectField from './MemberMultiSelectField';
 import { projectAudience } from './audience.helpers';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
 import { ProjectColorPicker } from './ProjectEditDialog';
@@ -49,6 +49,8 @@ interface NewTeamProjectModalProps {
   onSubmit: (
     input: CreateTeamProjectInput,
     tasks: DraftProjectTask[],
+    /** Responsables en plus du premier : membres du projet au rôle `lead` (mig. 190). */
+    coLeadIds: string[],
   ) => Promise<void>;
   onClose: () => void;
 }
@@ -80,7 +82,8 @@ const NewTeamProjectModal = ({
   const [color, setColor] = useState(initialOrgTemplate?.color ?? 'blue');
   const [categoryId, setCategoryId] = useState<string | null>(initialOrgTemplate?.categoryId ?? null);
   const [teamId, setTeamId] = useState(initialOrgTemplate?.teamId ?? defaultTeamId ?? '');
-  const [ownerId, setOwnerId] = useState(currentUserId ?? '');
+  // Le premier coché est le responsable principal (`owner_id`), les autres co-pilotent.
+  const [ownerIds, setOwnerIds] = useState<string[]>(currentUserId ? [currentUserId] : []);
   const [description, setDescription] = useState(initialOrgTemplate?.description ?? '');
   const [dueDate, setDueDate] = useState('');
   const [templateChoice, setTemplateChoice] = useState<TemplateChoice>(initialOrgTemplate ? `org:${initialOrgTemplate.id}` : '');
@@ -169,12 +172,13 @@ const NewTeamProjectModal = ({
           color,
           teamId: teamId || null,
           categoryId,
-          ownerId: ownerId || null,
+          ownerId: ownerIds[0] ?? null,
           description: description.trim() || null,
           startDate: null,
           dueDate: dueDate || fromTemplate.dueDate,
         },
         [...fromTemplate.tasks, ...manual.map((d) => ({ name: d.name, assigneeIds: d.assigneeIds }))],
+        ownerIds.slice(1),
       );
       onClose();
     } catch {
@@ -303,11 +307,11 @@ const NewTeamProjectModal = ({
                 ))}
               </MenuSelect>
             </div>
-            <MemberSelectField
-              label={pf('new.owner')}
+            <MemberMultiSelectField
+              label={pf('new.owners')}
               members={members}
-              value={ownerId}
-              onChange={setOwnerId}
+              value={ownerIds}
+              onChange={setOwnerIds}
               emptyLabel={pf('noOwner')}
             />
             <p

@@ -18,7 +18,6 @@
     "accessUntilHint": "For a contractor or an intern: after this date, access ends on its own.",
     "accessSave": "Save",
     "searchPerson": "Search for a person",
-    "searchPersonAria": "Search for a person for \"{{field}}\"",
     "offboardTitle": "{{name}} is leaving",
     "offboardIntro": "Choose who takes over their work, then remove the person or simply suspend their access.",
     "impactTitle": "What will be handed over",

@@ -88,6 +88,7 @@
   },
   "new": {
     "owner": "Responsable",
+    "owners": "Responsables",
     "dueDate": "Fin",
     "color": "Couleur",
     "description": "Description (optionnel)",
