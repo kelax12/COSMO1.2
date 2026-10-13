@@ -41,6 +41,6 @@ export const useVisibility = ({ orgId, teamIds: ownTeamIds, projectId, closed = 
     .sort((a, b) =>
       REASON_ORDER.indexOf(vis.viewers.get(a.userId)!) - REASON_ORDER.indexOf(vis.viewers.get(b.userId)!)
       || a.displayName.localeCompare(b.displayName));
-  return { vis, teamIds, directIds, people };
+  return { vis, teamIds, directIds, memberships, people };
 };
 

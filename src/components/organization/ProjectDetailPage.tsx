@@ -14,7 +14,7 @@ import { useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import {
   Settings2, Copy, LayoutTemplate, Archive, ArchiveRestore, Plus,
-  CalendarRange, UsersRound, UserRound, UserPlus, Bell, BellOff, ChevronDown, ChevronRight, ListChecks,
+  CalendarRange, UsersRound, UserRound, UserPlus, Bell, BellOff, Eye, Check, ChevronDown, ChevronRight, ListChecks,
 } from 'lucide-react';
 import { SAVE_AS_TEMPLATE_ENABLED } from './projectTemplatesFlag';
 
@@ -28,15 +28,14 @@ import type {
   TeamProject, TeamProjectDependency, TeamProjectMember, TeamProjectTaskStats, TeamTask,
 } from '@/modules/team-projects';
 import { projectColor, sortOpenTasks, sortCompletedTasks } from './team-projects.helpers';
-import { PROJECT_STATUS_META, isProjectLate, progressFromStats, projectProgress } from './portfolio.helpers';
+import { PROJECT_STATUS_META, PROJECT_STATUSES, isProjectLate, progressFromStats, projectProgress } from './portfolio.helpers';
 import ProjectHealthSection, { ProjectHealthBadge } from './ProjectHealthSection';
 import { ProjectRolesDialog, ProjectAddDialog } from './ProjectPeopleDialogs';
 import ProjectChat from './ProjectChat';
 import { projectFunctionOf } from './project-function';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useMyFollows, useToggleFollow } from '@/modules/team-projects';
+import { useMyFollows, useToggleFollow, useUpdateTeamProject } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
-import VisibilityPill from './VisibilityPill';
 import { useVisibility } from './useVisibility';
 import TeamTaskRow from './TeamTaskRow';
 import ProjectAudienceActions from './ProjectAudienceActions';
@@ -106,12 +105,18 @@ const ProjectDetailPage = ({
   const { data: follows } = useMyFollows(project.orgId);
   const toggleFollow = useToggleFollow(project.orgId);
   const followed = follows?.projectIds.includes(project.id) ?? false;
-  const { people: viewers } = useVisibility({ orgId: project.orgId, teamIds: project.teamId ? [project.teamId] : [], projectId: project.id });
+  const updateProject = useUpdateTeamProject(project.orgId);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const { people: viewers, teamIds: visibleTeamIds, directIds, memberships } = useVisibility({ orgId: project.orgId, teamIds: project.teamId ? [project.teamId] : [], projectId: project.id });
+  // Équipes du projet (principale puis associées), puis « +x » : membres
+  // directs du projet hors de ces équipes. La hiérarchie ne compte pas.
+  const teamNames = visibleTeamIds.map((id) => teams.find((tm) => tm.id === id)?.name).filter(Boolean).join(', ');
+  const inTeams = new Set(memberships.filter((m) => visibleTeamIds.includes(m.teamId)).map((m) => m.userId));
+  const extraMembers = directIds.filter((id) => !inTeams.has(id)).length;
   const color = projectColor(project.color);
   const status = project.status ?? 'active';
   const archived = !!project.archivedAt;
   const owner = project.ownerId ? members.find((m) => m.userId === project.ownerId) : undefined;
-  const team = project.teamId ? teams.find((tm) => tm.id === project.teamId) : undefined;
   const progress = stats ? progressFromStats(stats) : projectProgress(project.id, allProjectTasks);
   // Rôle de projet (mig. 190) : le lecteur ne crée pas ; le contributeur crée
   // même sans `task.create`. Miroir de la policy et du trigger, pour ne pas
@@ -201,9 +206,37 @@ const ProjectDetailPage = ({
             <div className="mt-2 flex items-center gap-2 flex-wrap text-sm">
               {/* En cours ET en retard : « En retard » remplace le statut. */}
               {!(late && status === 'active') && (
-                <span className={`font-semibold px-2.5 py-1 rounded-full ${PROJECT_STATUS_META[status].soft}`}>
-                  {pf(`status.${status}`)}
-                </span>
+                canEdit && !archived ? (
+                  <Popover open={statusOpen} onOpenChange={setStatusOpen}>
+                    <PopoverTrigger
+                      aria-label={pf('statusChange', { status: pf(`status.${status}`) })}
+                      className={`font-semibold px-2.5 py-1 rounded-full hover:ring-2 hover:ring-[rgb(var(--color-border))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] ${PROJECT_STATUS_META[status].soft}`}
+                    >
+                      {pf(`status.${status}`)}
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-48 p-1">
+                      {PROJECT_STATUSES.map((st) => (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => {
+                            setStatusOpen(false);
+                            if (st !== status) updateProject.mutate({ projectId: project.id, input: { status: st } });
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
+                        >
+                          <span className={`w-2 h-2 rounded-full ${PROJECT_STATUS_META[st].dot}`} aria-hidden="true" />
+                          <span className="flex-1 text-left">{pf(`status.${st}`)}</span>
+                          {st === status && <Check size={14} aria-hidden="true" />}
+                        </button>
+                      ))}
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <span className={`font-semibold px-2.5 py-1 rounded-full ${PROJECT_STATUS_META[status].soft}`}>
+                    {pf(`status.${status}`)}
+                  </span>
+                )
               )}
               <ProjectHealthBadge health={project.health} />
               {late && <span className="font-bold px-2.5 py-1 rounded-full bg-red-500/10 text-red-500">{pf('late')}</span>}
@@ -214,10 +247,22 @@ const ProjectDetailPage = ({
               )}
               {archived && <span className="font-semibold px-2.5 py-1 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))]">{t('project.archivedBadge')}</span>}
               <span className="inline-flex items-center gap-1 text-[rgb(var(--color-text-secondary))]">
-                <UsersRound size={15} aria-hidden="true" /> {team?.name ?? t('project.wholeOrg')}
+                <UsersRound size={15} aria-hidden="true" />
+                {teamNames || t('project.wholeOrg')}
+                {extraMembers > 0 && (
+                  <span className="font-semibold tabular-nums" title={pf('members.extraHint', { count: extraMembers })}>+{extraMembers}</span>
+                )}
               </span>
-              {/* Qui voit ce projet, et pourquoi (M12). */}
-              <VisibilityPill orgId={project.orgId} teamIds={project.teamId ? [project.teamId] : []} projectId={project.id} size="lg" />
+              {/* Qui voit ce projet, et sa fonction : la même fenêtre que les avatars. */}
+              <button
+                type="button"
+                onClick={() => setRolesOpen(true)}
+                aria-label={pf('members.rolesOpen')}
+                title={pf('members.rolesOpen')}
+                className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+              >
+                <Eye size={15} aria-hidden="true" />
+              </button>
               {categoryName && <span className="text-[rgb(var(--color-text-secondary))]">· {categoryName}</span>}
             </div>
           </div>
