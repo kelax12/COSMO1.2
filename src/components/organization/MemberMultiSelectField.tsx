@@ -16,6 +16,8 @@ interface MemberMultiSelectFieldProps {
   onChange: (userIds: string[]) => void;
   /** Affiché quand rien n'est coché. */
   emptyLabel: string;
+  /** Classe du libellé, pour suivre le style de la fenêtre qui l'accueille. */
+  labelClassName?: string;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -24,7 +26,7 @@ interface MemberMultiSelectFieldProps {
  * Sélecteur de PLUSIEURS personnes : le même menu déroulant que `MenuSelect`,
  * avec une case par personne. Le menu reste ouvert entre deux cases.
  */
-const MemberMultiSelectField = ({ label, members, value, onChange, emptyLabel, className, style }: MemberMultiSelectFieldProps) => {
+const MemberMultiSelectField = ({ label, members, value, onChange, emptyLabel, labelClassName, className, style }: MemberMultiSelectFieldProps) => {
   const id = useId();
   const names = value
     .map((uid) => members.find((m) => m.userId === uid)?.displayName)
@@ -34,7 +36,7 @@ const MemberMultiSelectField = ({ label, members, value, onChange, emptyLabel, c
 
   return (
     <div>
-      <label htmlFor={id} className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">
+      <label htmlFor={id} className={labelClassName ?? 'block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1'}>
         {label}
       </label>
       <DropdownMenu modal={false}>
