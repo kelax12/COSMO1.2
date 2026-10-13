@@ -87,8 +87,8 @@
       "audience": {
         "label": "Gérer la visibilité d'un projet",
         "synonyms": "visibilité, audience, confidentiel, accès, privé",
-        "b1": "Ces équipes voient aussi le projet et ses tâches, en plus de l'équipe principale.",
-        "b2": "Associer une équipe lui ouvre le projet ; une confirmation est demandée."
+        "b1": "Les personnes ajoutées au projet le voient, avec leur rôle : responsable, membre ou lecteur.",
+        "b2": "Ajoute une personne ou une équipe ; ouvrir le projet à une équipe demande une confirmation."
       }
     },
     "task": {
