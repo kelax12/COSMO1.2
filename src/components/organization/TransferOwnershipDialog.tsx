@@ -58,7 +58,7 @@ const TransferOwnershipDialog = ({ orgName, candidates, hasSubscription = false,
             {ta('transfer.body')}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="rounded-xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/60 dark:bg-amber-900/10 px-4 py-3">
+        <div data-guide-id="transfer-warning" className="rounded-xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/60 dark:bg-amber-900/10 px-4 py-3">
           <p className="text-xs font-semibold text-[rgb(var(--color-text-primary))] mb-1">{ta('transfer.billingTitle')}</p>
           <ul className="text-xs text-[rgb(var(--color-text-secondary))] space-y-1 list-disc pl-4">
             <li>{ta(hasSubscription ? 'transfer.billingSubscription' : 'transfer.billingNoSubscription')}</li>
@@ -67,7 +67,7 @@ const TransferOwnershipDialog = ({ orgName, candidates, hasSubscription = false,
             <li>{ta('transfer.billingYou')}</li>
           </ul>
         </div>
-        <label className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1" htmlFor="transfer-owner-select">
+        <label data-guide-id="transfer-new-owner" className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1" htmlFor="transfer-owner-select">
           {ta('transfer.newOwner')}
         </label>
         <MenuSelect

@@ -152,7 +152,7 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
   return (
     <div className="space-y-4">
       {/* Périmètre */}
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('reports.scopeLabel')}>
+      <div data-guide-id="report-scope" className="flex flex-wrap items-center gap-2" role="group" aria-label={t('reports.scopeLabel')}>
         {access.canOrg && access.teams.length > 0 && (
           <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden">
             <button type="button" aria-pressed={scope.kind === 'org'} className={segBtn(scope.kind === 'org')} onClick={() => setPickedScope({ kind: 'org' })}>
@@ -209,7 +209,7 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
               onChange={(v) => v && setCustom((c) => ({ ...c, to: v > lastDay ? lastDay : v }))} />
           </div>
         )}
-        <div className="ml-auto inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden" role="group" aria-label={t('reports.periodLabel')}>
+        <div data-guide-id="report-period" className="ml-auto inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden" role="group" aria-label={t('reports.periodLabel')}>
           {(['day', 'week', 'month', 'custom'] as const).map((k) => (
             <button key={k} type="button" aria-pressed={kind === k} className={segBtn(kind === k)} onClick={() => setKind(k)}>
               {t(k === 'day' ? 'reports.periodDay' : k === 'week' ? 'reports.periodWeek' : k === 'month' ? 'reports.periodMonth' : 'reports.periodCustom')}

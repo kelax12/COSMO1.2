@@ -798,6 +798,32 @@ Flags : `cosmo_tutorial_seen_tasks_(desktop|mobile)`, idem `agenda`, `habits`, `
 
 > **Ne pas renommer** un `data-tutorial-id` sans grep les tutorials d'abord.
 
+### Guide entreprise (2026-10-12)
+
+**Rôle** : sur `/entreprise`, un bouton flottant (boussole, en bas à droite) ouvre un tiroir de
+**29 actions** classées par catégorie, avec recherche. Chaque action joue une démo : un curseur
+animé se déplace vers les vraies cibles de l'écran, ouvre le formulaire **vide** et commente
+chaque étape dans une bulle. La démo **n'écrit jamais** : rien n'est saisi ni validé. Pause,
+Passer et Échap (quitter) dans la barre de contrôle. Une action hors des droits du lecteur
+s'affiche verrouillée et explique pourquoi. **Desktop uniquement** (le bouton n'est pas rendu
+sur mobile).
+
+**Fichiers** (`src/components/org-guide/`) : `OrgGuideFab` (seul morceau chargé d'emblée, monté
+par `OrganizationPage`) ; `OrgGuideHost` (lazy : tiroir, scénarios, démo) ; `OrgGuideDrawer` ;
+`GuideCursor`, `GuideBubble`, `GuideControlBar` ; `guide-runner.ts` (moteur), `guide-access.ts`
+(droits), `guide-search.ts`, `guide-click.ts` ; `scenarios/` (une liste par catégorie). Textes :
+namespace `orgGuide`. Entrée aussi depuis la fin de la constellation entreprise : « Découvrir le
+guide » mène à `/entreprise?guide=1`, la page ouvre le tiroir une fois et retire le paramètre.
+
+**Ancrages** : un scénario vise ses cibles par `data-guide-id`, jamais par un texte ou une
+classe. La garde `src/components/org-guide/guide-scenarios.guard.test.ts` vérifie que chaque
+`data-guide-id` cité par un scénario existe dans le code. ❌ Ne pas renommer ni déplacer un
+`data-guide-id` sans la relancer.
+
+**z-index** : 10010 (capteur de clics), 10020 (curseur, bulle), 10030 (barre de contrôle), voir la
+table plus bas. **Drapeau** : `cosmo_org_guide_seen` (pastille « nouveau » du bouton, posée au
+premier clic). **e2e** : `e2e/org-guide.spec.ts` (démo, aucune clé `cosmo_*` de données modifiée).
+
 ### Ré-afficher un tutoriel
 ```js
 ['tasks','agenda','habits','okr'].forEach(p => {
@@ -837,6 +863,7 @@ Paliers en usage — **choisir dans cette table**, ne pas inventer de nouvelle v
 | `z-[190]` `z-[200]` | Surfaces système : bannières, CommandPalette, PremiumGateModal | `DemoBridgePrompt` 190, `CookieBanner` 200 |
 | `z-[250]` `z-[300]` | Interstitiels AU-DESSUS des surfaces système | `ShareInviteClaimer`, `AdModal` |
 | `z-[500]` | Tutoriel de page — au-dessus de tout le chrome | `PageTutorial` |
+| `z-[10010]` `z-[10020]` `z-[10030]` | Guide entreprise pendant une démo : capteur de clics (10010), curseur et bulle (10020), barre de contrôle et écran « accès refusé » (10030), au-dessus des modales maison (9999) et de leurs popovers (jusqu à 10001) | `OrgGuideHost`, `GuideCursor`, `GuideBubble`, `GuideControlBar` |
 | `z-[9999]` `z-[10000]` `z-[10001]` | `createPortal` + `position: fixed`. Trois étages réels : la feuille (9999), un popover DANS la feuille (10000), et un popover dans une popup elle-même montée à 10000 (10001) | SmartListMenu, `AssigneesPicker`, calendrier des popups de dépendances |
 
 > 🔒 **Liste fermée, vérifiée par `src/design-system.guard.test.ts`.** Toute valeur `z-[…]` hors

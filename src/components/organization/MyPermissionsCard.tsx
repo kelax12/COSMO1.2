@@ -62,8 +62,8 @@ const MyPermissionsCard = ({ orgId, members, currentUserId }: MyPermissionsCardP
       <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
         {ta(me.role === 'admin' ? 'myRights.adminHint' : 'myRights.hint')}
       </p>
-      <ul className="divide-y divide-[rgb(var(--color-border))]">
-        {rows.map(({ key, allowed, source }) => (
+      <ul data-guide-id="my-permissions-card" className="divide-y divide-[rgb(var(--color-border))]">
+        {rows.map(({ key, allowed, source }, i) => (
           <li key={key} className="flex items-center gap-2.5 py-2">
             {allowed ? (
               <Check size={15} className="text-emerald-500 shrink-0" aria-hidden="true" />
@@ -74,7 +74,7 @@ const MyPermissionsCard = ({ orgId, members, currentUserId }: MyPermissionsCardP
               {ta(`permissions.key.${key}` as KeyOf<'orgAdmin'>)}
               <span className="sr-only"> : {ta(allowed ? 'myRights.allowed' : 'myRights.denied')}</span>
             </span>
-            <span className="text-caption text-[rgb(var(--color-text-muted))] shrink-0">{ta(source)}</span>
+            <span data-guide-id={i === 0 ? 'my-permissions-source' : undefined} className="text-caption text-[rgb(var(--color-text-muted))] shrink-0">{ta(source)}</span>
           </li>
         ))}
       </ul>

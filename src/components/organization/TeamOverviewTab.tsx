@@ -258,6 +258,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
             <button
               type="button"
               onClick={() => setReviewOpen(true)}
+              data-guide-id="overview-weekly-review"
               // Maquette 277 : sur mobile, un lien, plus un bloc violet sur trois lignes.
               className="max-md:order-last max-md:basis-full max-md:justify-start max-md:px-0 max-md:text-[rgb(var(--color-accent))] max-md:bg-transparent inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-colors whitespace-nowrap"
             >

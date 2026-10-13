@@ -106,6 +106,7 @@ const TeamTrashDialog = ({ orgId, projects, members }: TeamTrashDialogProps) => 
       <button
         type="button"
         onClick={() => setOpen(true)}
+        data-guide-id="trash-open"
         className="inline-flex items-center gap-1.5 text-xs font-medium text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
       >
         <Trash2 size={13} aria-hidden="true" />
@@ -116,9 +117,9 @@ const TeamTrashDialog = ({ orgId, projects, members }: TeamTrashDialogProps) => 
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t('trash.title')}</DialogTitle>
-            <DialogDescription>{t('trash.description', { days: TEAM_TASK_TRASH_DAYS })}</DialogDescription>
+            <DialogDescription data-guide-id="trash-retention">{t('trash.description', { days: TEAM_TASK_TRASH_DAYS })}</DialogDescription>
           </DialogHeader>
-          <ul className="max-h-80 overflow-y-auto divide-y divide-[rgb(var(--color-border))] rounded-xl border border-[rgb(var(--color-border))]">
+          <ul data-guide-id="trash-list" className="max-h-80 overflow-y-auto divide-y divide-[rgb(var(--color-border))] rounded-xl border border-[rgb(var(--color-border))]">
             {rows.map((row) => {
               const Icon = row.kind === 'task' ? CheckSquare : Target;
               const key = `${row.kind}-${row.id}`;

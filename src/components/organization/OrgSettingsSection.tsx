@@ -190,6 +190,7 @@ const OrgSettingsSection = ({
       key={id}
       type="button"
       onClick={() => setActive(id)}
+      data-guide-id={`settings-panel-${id}`}
       aria-current={active === id ? 'page' : undefined}
       className={`shrink-0 md:w-full min-h-9 flex items-center gap-2 px-2.5 rounded-lg text-sm text-left whitespace-nowrap transition-colors ${
         active === id
@@ -479,6 +480,7 @@ const OrgSettingsSection = ({
                 <button
                   type="button"
                   onClick={() => setTransferring(true)}
+                  data-guide-id="settings-transfer-ownership"
                   disabled={transferMutation.isPending}
                   className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-60 transition-colors"
                 >

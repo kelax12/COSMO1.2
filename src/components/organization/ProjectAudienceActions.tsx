@@ -82,7 +82,7 @@ const ProjectAudienceActions = ({
           </span>
         ))}
         {canManageAudience && project.teamId && !archived && (
-          <button type="button" onClick={() => setManaging(true)} className={actionBtn}>
+          <button type="button" onClick={() => setManaging(true)} className={actionBtn} data-guide-id="project-detail-audience">
             <UsersRound size={14} aria-hidden="true" /> {ta('projectTeams.manage')}
           </button>
         )}
@@ -112,6 +112,7 @@ const ProjectAudienceActions = ({
             <DialogTitle>{ta('projectTeams.title', { name: project.name })}</DialogTitle>
             <DialogDescription>{ta('projectTeams.description')}</DialogDescription>
           </DialogHeader>
+          <div data-guide-id="project-audience-who">
           {associated.length === 0 ? (
             <p className="text-sm text-[rgb(var(--color-text-muted))]">{ta('projectTeams.none')}</p>
           ) : (
@@ -131,8 +132,9 @@ const ProjectAudienceActions = ({
               ))}
             </ul>
           )}
+          </div>
           {addable.length > 0 && (
-            <div>
+            <div data-guide-id="project-audience-add">
               <p className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1.5">{ta('projectTeams.add')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {addable.map((tm) => (

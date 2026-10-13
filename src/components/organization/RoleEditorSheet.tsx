@@ -121,7 +121,7 @@ const RoleEditorSheet = ({ initial, editing, pending, onSave, onClose }: RoleEdi
 
         <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-1 pb-4 space-y-5">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 items-end">
-            <div className="min-w-0">
+            <div className="min-w-0" data-guide-id="role-editor-name">
               <label htmlFor="role-editor-name" className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">
                 {ta('customRoles.editor.nameLabel')}
               </label>
@@ -144,7 +144,7 @@ const RoleEditorSheet = ({ initial, editing, pending, onSave, onClose }: RoleEdi
                 </p>
               )}
             </div>
-            <div role="radiogroup" aria-label={ta('customRoles.editor.colorLabel')} className="flex flex-wrap gap-1.5 pb-1.5 max-w-[11rem]">
+            <div role="radiogroup" aria-label={ta('customRoles.editor.colorLabel')} data-guide-id="role-editor-color" className="flex flex-wrap gap-1.5 pb-1.5 max-w-[11rem]">
               {ROLE_COLORS.map((c) => (
                 <button
                   key={c}
@@ -162,7 +162,7 @@ const RoleEditorSheet = ({ initial, editing, pending, onSave, onClose }: RoleEdi
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div data-guide-id="role-editor-matrix" className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {GROUPS.map(({ titleKey, Icon, keys }) => (
               <section key={titleKey} className="min-w-0">
                 <h3 className="flex items-center gap-1.5 text-sm font-semibold text-[rgb(var(--color-text-primary))] mb-1">
@@ -211,7 +211,7 @@ const RoleEditorSheet = ({ initial, editing, pending, onSave, onClose }: RoleEdi
             )}
           </section>
 
-          <p className="flex items-start gap-2 rounded-xl bg-[rgb(var(--color-hover))] px-3 py-2.5 text-xs text-[rgb(var(--color-text-secondary))]">
+          <p data-guide-id="role-editor-hint" className="flex items-start gap-2 rounded-xl bg-[rgb(var(--color-hover))] px-3 py-2.5 text-xs text-[rgb(var(--color-text-secondary))]">
             <Info size={14} aria-hidden="true" className="shrink-0 mt-0.5" />
             {ta('customRoles.editor.hint')}
           </p>

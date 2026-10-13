@@ -84,7 +84,7 @@ const TeamTasksTable = ({
   );
 
   return (
-    <div ref={tableRef} className="table-container shadow-sm overflow-x-auto">
+    <div ref={tableRef} data-guide-id="tasks-list" className="table-container shadow-sm overflow-x-auto">
       <table className="data-table w-full" style={{ minWidth: `${560 + columns.length * 110}px` }} aria-label={pf.t('taskTable.tableAria')} aria-rowcount={lines.length}>
         <thead>
           <tr>

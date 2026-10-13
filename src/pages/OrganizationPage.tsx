@@ -9,6 +9,7 @@ import {
   useOrgMembers,
   useMyOrgPermissions,
   useOrgNotifications,
+  useOrgRoles,
   isManagerOf,
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
@@ -19,6 +20,8 @@ import { MobileHeader } from '@/components/mobile';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
 import OrgSideNav from '@/components/organization/OrgSideNav';
+import { OrgGuideFab } from '@/components/org-guide/OrgGuideFab';
+import type { GuideViewer } from '@/components/org-guide/guide-types';
 import { useOrgNavMode } from '@/components/organization/use-org-nav-mode';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
@@ -130,7 +133,7 @@ const OrganizationPage = () => {
   // `entityId` : second segment, qui n'existe que pour la page d'une équipe
   // (`/entreprise/teams/<id>`).
   const { section, entityId } = useParams<{ section?: string; entityId?: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const urlTab: OrgTab = isOrgSectionSegment(section) ? section : 'overview';
   // Sans `replace` : chaque section est une page, le bouton précédent y revient.
@@ -152,6 +155,17 @@ const OrganizationPage = () => {
   // le job e2e (8 échecs `supabase-stub`, run 37138213107). Même règle que le
   // verrou de `FirstRunSetup` : une garde d'entrée se fige à l'entrée.
   const [arrivedBare] = useState(() => searchParams.toString() === '');
+  // `?guide=1` (fin de la constellation) : ouvre le guide une seule fois,
+  // puis le paramètre quitte l'URL pour qu'un rechargement ne le rouvre pas.
+  const [guideOpenSignal] = useState(() => (searchParams.get('guide') === '1' ? Date.now() : undefined));
+  useEffect(() => {
+    if (searchParams.get('guide') !== '1') return;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('guide');
+      return next;
+    }, { replace: true });
+  }, [searchParams, setSearchParams]);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const badges = useOrgBadges();
   const { data: orgNotifications = [] } = useOrgNotifications(myOrg?.id);
@@ -178,6 +192,9 @@ const OrganizationPage = () => {
   // plusieurs onglets s'en servent — le hook ne déclenche qu'une requête,
   // partagée par React Query avec celles des composants enfants.
   const myPermissions = useMyOrgPermissions(myOrg?.id);
+  // Guide entreprise : les rôles personnalisés (mig. 219) n'existent que si
+  // leur lecture réussit. Même requête que `useMyOrgPermissions`, partagée.
+  const { isError: rolesUnavailable } = useOrgRoles(myOrg?.id);
   // Appelé ICI, avant les early returns `isLoading` / `!myOrg` : un hook placé
   // plus bas ne serait pas monté sur tous les rendus.
   const { data: orgSubscription } = useOrgSubscription(myOrg?.id);
@@ -226,6 +243,13 @@ const OrganizationPage = () => {
   // HIÉRARCHIQUES (onglets Pyramide et Statistiques) : voir l'équipe qu'on
   // encadre n'est pas une permission réglable, c'est une position.
   const canInvite = myPermissions.can['member.invite'];
+  const guideViewer: GuideViewer = {
+    can: myPermissions.can,
+    isAdmin,
+    isManager,
+    isOwner,
+    customRolesAvailable: !rolesUnavailable,
+  };
   // La pyramide dit qui encadre qui, l'équipe qui travaille ensemble (M3) :
   // un responsable d'équipe regarde les statistiques de SON équipe.
   // Tant que les équipes chargent, un lien vers `stats` n'est pas renvoyé
@@ -480,6 +504,9 @@ const OrganizationPage = () => {
       {/* Desktop : la navigation vit à DROITE, hors de la zone qui défile.
           Rendue par portail dans l'emplacement de `Layout`, donc sa place
           dans cet arbre ne dit rien de sa place à l'écran. */}
+      {/* Guide entreprise : bouton flottant desktop, le reste arrive en lazy. */}
+      <OrgGuideFab viewer={guideViewer} openSignal={guideOpenSignal} />
+
       <OrgSideNav
         items={navItems}
         activeId={tab}

@@ -85,6 +85,7 @@ const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, o
                 type="button"
                 role="tab"
                 id={`invite-tab-${id}`}
+                data-guide-id={`invite-mode-${id}`}
                 aria-selected={on}
                 aria-controls="invite-panel"
                 onClick={() => setMode(id)}
@@ -112,13 +113,14 @@ const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, o
               </label>
               <textarea
                 id="invite-mode-emails"
+                data-guide-id="invite-email-addresses"
                 value={emails}
                 onChange={(e) => setEmails(e.target.value)}
                 rows={3}
                 placeholder={t('invite.emailPlaceholder')}
                 className="w-full rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2 text-sm text-[rgb(var(--color-text-primary))]"
               />
-              <p className="text-xs text-[rgb(var(--color-text-muted))]">{tOrgAdmin('invites.emailIntro')}</p>
+              <p data-guide-id="invite-email-intro" className="text-xs text-[rgb(var(--color-text-muted))]">{tOrgAdmin('invites.emailIntro')}</p>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('invite.moreOptions')}</span>
                 <button
