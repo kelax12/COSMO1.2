@@ -20,7 +20,6 @@ import {
 import type { OrgMember } from '@/modules/organizations';
 import { useTeamProjects } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
-import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { OrgCreateBoundary, useOrgCreate } from './org-create.context';
 import { PermissionGate, usePermissionHints } from './permission-hints';
 import DeleteTeamDialog from './DeleteTeamDialog';
@@ -92,7 +91,6 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
   const hiddenTeams = matchingTeams.length - shownTeams.length;
   const memberById = new Map(members.map((m) => [m.userId, m]));
 
-  const isMobile = useIsMobile();
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -251,7 +249,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                             title={member.displayName}
                             className={`relative flex rounded-full border-2 border-[rgb(var(--color-surface))] ${i > 0 ? '-ml-1.5' : ''} ${i >= 2 ? 'max-md:hidden' : ''} ${isLead ? 'z-10 md:ring-2 md:ring-amber-400' : ''}`}
                           >
-                            <MemberAvatar avatar={member.avatar} name={member.displayName} size={20} neutral={isMobile} />
+                            <MemberAvatar avatar={member.avatar} name={member.displayName} size={20} />
                           </span>
                         ))}
                         {ordered.length > 2 && (

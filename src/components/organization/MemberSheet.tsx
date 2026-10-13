@@ -4,7 +4,6 @@ import { X, Link as LinkIcon, UserRound, ListTodo, TrendingUp, CalendarDays, Bri
 import { formatDistanceToNow } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { toast } from '@/lib/toast';
 import { isManagerOf, useOrgMemberLastActivity, type OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
@@ -126,7 +125,6 @@ const MemberSheet = ({
   const isMe = member.userId === currentUserId;
   // Mêmes mots que l'annuaire et le glossaire (cohérence globale, 2026-09-25).
   const roleTerm = member.role === 'admin' ? 'admin' : isManagerOf(members, member.userId) ? 'manager' : 'member';
-  const isMobile = useIsMobile();
   const roleLabel = <RoleTerm term={roleTerm}>{t(`roles.${roleTerm}`)}</RoleTerm>;
 
   // L'agenda est un calendrier plein écran, pas une carte : FullCalendar ne
@@ -160,7 +158,7 @@ const MemberSheet = ({
         {/* En-tête */}
         <div className="flex items-start justify-between gap-3 p-5 pb-3 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <MemberAvatar avatar={member.avatar} name={member.displayName} size={40} neutral={isMobile} />
+            <MemberAvatar avatar={member.avatar} name={member.displayName} size={40} />
             <div className="min-w-0">
               <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">
                 {isMe ? ta('pyramid.you') : member.displayName}
