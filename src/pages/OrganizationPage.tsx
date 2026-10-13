@@ -21,6 +21,7 @@ import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
 import OrgSideNav from '@/components/organization/OrgSideNav';
 import { OrgGuideFab } from '@/components/org-guide/OrgGuideFab';
+import { useOrgGuideDemoActive } from '@/components/org-guide/guide-demo-signal';
 import type { GuideViewer } from '@/components/org-guide/guide-types';
 import { useOrgNavMode } from '@/components/organization/use-org-nav-mode';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
@@ -173,6 +174,10 @@ const OrganizationPage = () => {
   // survol). Porté ici : la page réserve la place de la carte ouverte à
   // l'arrivée, sinon elle recouvrirait la colonne de droite du contenu.
   const [navMode, setNavMode] = useOrgNavMode();
+  // Démo du guide en cours : une navigation repliée ressort (`peek`, sans
+  // réserver de place) pour qu'on voie le curseur changer de page.
+  const guideDemo = useOrgGuideDemoActive();
+  const sideNavMode = guideDemo && navMode === 'collapsed' ? 'peek' : navMode;
 
   // Badge nav (reco #7) : on marque « vu » en QUITTANT la page, pas en y
   // arrivant. Marquer au montage remettait `lastSeen` à `now` avant le premier
@@ -510,7 +515,7 @@ const OrganizationPage = () => {
       <OrgSideNav
         items={navItems}
         activeId={tab}
-        mode={navMode}
+        mode={sideNavMode}
         onModeChange={setNavMode}
         shortcuts={shortcuts}
         onTogglePin={togglePin}
