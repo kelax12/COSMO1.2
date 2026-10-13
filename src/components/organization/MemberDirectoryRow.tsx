@@ -128,7 +128,7 @@ const MemberDirectoryRow = ({
           className="w-4 h-4 shrink-0 accent-indigo-600"
         />
       )}
-      <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} neutral />
+      <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">{m.displayName}</p>
