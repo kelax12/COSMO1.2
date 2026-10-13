@@ -1,5 +1,6 @@
 // src/components/org-guide/scenarios/work.ts
 import type { GuideAction } from '../guide-types';
+import { SAVE_AS_TEMPLATE_ENABLED } from '@/components/organization/projectTemplatesFlag';
 
 const k = (id: string, b: string) => `actions.${id}.${b}`;
 
@@ -13,12 +14,13 @@ export const WORK_ACTIONS: GuideAction[] = [
   ] },
   // Le modèle se choisit dans une liste en tête du formulaire (pas d'onglet) ;
   // ses tâches s'ajoutent à la section « Tâches de départ ».
-  { id: 'project.fromTemplate', category: 'work', requires: 'project.create', steps: [
+  // Masqué du menu d'aide tant que les modèles le sont (projectTemplatesFlag).
+  ...(SAVE_AS_TEMPLATE_ENABLED ? [{ id: 'project.fromTemplate', category: 'work', requires: 'project.create', steps: [
     { kind: 'goto', section: 'projects', via: 'nav-projects' },
     { kind: 'click', target: 'projects-new' },
     { kind: 'field', target: 'project-form-template', bubbleKey: k('project.fromTemplate', 'b1') },
     { kind: 'field', target: 'project-form-tasks', bubbleKey: k('project.fromTemplate', 'b2') },
-  ] },
+  ] } satisfies GuideAction] : []),
   { id: 'task.create', category: 'work', requires: 'task.create', steps: [
     { kind: 'goto', section: 'tasks', via: 'nav-tasks' },
     { kind: 'click', target: 'tasks-new' },
