@@ -1,5 +1,6 @@
 // @vitest-environment node
 // src/components/org-guide/guide-scenarios.guard.test.ts
+import { SAVE_AS_TEMPLATE_ENABLED } from '@/components/organization/projectTemplatesFlag';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -104,8 +105,10 @@ const lookup = (cat: unknown, key: string): unknown =>
 
 describe('scénarios du guide entreprise', () => {
   it('ids d\'action uniques', () => {
-    // 29 et non 30 : « Lier un KR à un projet » n'a plus d'écran (cf. scenarios/steer.ts).
-    expect(GUIDE_ACTIONS).toHaveLength(29);
+    // 28 et non 30 : « Lier un KR à un projet » n'a plus d'écran, et « Lancer la revue
+    // hebdomadaire » vivait dans Statistiques, page masquée (décision du 2026-10-13).
+    // 28 tant que « Créer un projet depuis un modèle » est masqué (projectTemplatesFlag).
+    expect(GUIDE_ACTIONS).toHaveLength(SAVE_AS_TEMPLATE_ENABLED ? 28 : 27);
     expect(new Set(GUIDE_ACTIONS.map((a) => a.id)).size).toBe(GUIDE_ACTIONS.length);
   });
 
