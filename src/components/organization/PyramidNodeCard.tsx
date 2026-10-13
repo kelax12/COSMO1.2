@@ -318,7 +318,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
           {collapsed ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
         </button>
       )}
-      <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} neutral={mobile} />
+      <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} />
       <div className="min-w-0">
           <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate max-w-[140px]">
             {isMe ? ta('pyramid.you') : m.displayName}

@@ -2,7 +2,6 @@ import { AlertTriangle } from 'lucide-react';
 import { workloadTone, type MemberWorkload } from './team-stats.helpers';
 import { formatDuration } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
-import { useIsMobile } from '@/lib/hooks/use-mobile';
 import type { OrgMember } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 
@@ -26,7 +25,6 @@ const barWidth = (minutes: number, max: number): string =>
  */
 const TeamWorkloadCard = ({ rows, members }: TeamWorkloadCardProps) => {
   const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
-  const isMobile = useIsMobile();
   const memberById = new Map(members.map((m) => [m.userId, m]));
 
   // Personnes réellement concernées : sans tâche ouverte, on n'occupe pas une
@@ -70,7 +68,7 @@ const TeamWorkloadCard = ({ rows, members }: TeamWorkloadCardProps) => {
             return (
               <li key={row.userId} className="flex items-center gap-3">
                 {member && (
-                  <MemberAvatar avatar={member.avatar} name={member.displayName} size={28} neutral={isMobile} />
+                  <MemberAvatar avatar={member.avatar} name={member.displayName} size={28} />
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">

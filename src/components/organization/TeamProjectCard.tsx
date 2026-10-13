@@ -247,7 +247,7 @@ const TeamProjectCard = ({
           <span className="ml-auto max-md:ml-6 max-md:basis-full flex items-center gap-2 shrink-0">
             {owner && (
               <span className="hidden sm:inline-flex rounded-full ring-2 ring-[rgb(var(--color-border-strong))]" title={`${pf('col.owner')} : ${owner.displayName}`}>
-                <MemberAvatar avatar={owner.avatar} name={owner.displayName} size={20} neutral />
+                <MemberAvatar avatar={owner.avatar} name={owner.displayName} size={20} />
               </span>
             )}
             {contributors.length > 0 && (
@@ -262,7 +262,7 @@ const TeamProjectCard = ({
                         : tp('project.memberOpen', open, { name: member.displayName })
                     }
                   >
-                    <MemberAvatar avatar={member.avatar} name={member.displayName} size={24} neutral />
+                    <MemberAvatar avatar={member.avatar} name={member.displayName} size={24} />
                   </span>
                 ))}
                 {contributors.length > 2 && (
