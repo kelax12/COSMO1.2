@@ -3,7 +3,7 @@
     "seoTitle": "Privacy policy – Cosmo App",
     "seoDescription": "Cosmo's privacy policy: data collected, secure Supabase storage, Row Level Security, GDPR rights and contact.",
     "title": "Privacy policy",
-    "updatedAt": "12 October 2026",
+    "updatedAt": "13 October 2026",
     "s1": {
       "title": "1. Data controller",
       "p1": "The controller of the personal data collected through the Cosmo application is Axel Longatte, publisher of Cosmo, reachable at [contact@thecosmo.app](mailto:contact@thecosmo.app)."
@@ -15,13 +15,16 @@
       "li2": "**Productivity data:** tasks, categories, lists, habits and their completion history, calendar events, OKRs (objectives and key results) and their progress",
       "li3": "**Social data:** friend list, friend requests, tasks shared with other users",
       "li4": "**Subscription data (business workspace):** the organisation's plan, subscription status and dates, and Stripe technical identifiers. Bank details are handled exclusively by Stripe; Cosmo has no access to them",
-      "li5": "**Technical data:** Supabase session information (authentication token, date of last sign-in)",
+      "li5": "**Technical data:** Supabase session information (authentication token, date of last sign-in) and the days on which you signed in (internal usage statistics)",
       "p1": "**Audience measurement:** Cosmo uses Vesk, an audience measurement tool, loaded only if you accept it. For each page viewed it records the page address, the page you came from, your IP address, your browser, and engagement indicators (scroll depth, time spent, clicks on links and buttons). It builds no advertising profile.",
-      "p2": "**Measurement identifier:** Vesk stores a random identifier on your device, in your browser's local storage, which lets it recognise a single visit from one page to the next. It is not a cookie, but it is still information placed on your equipment: it is therefore written only after you accept, and you can erase it at any time by clearing the site data in your browser. Your IP address, your browser and this identifier are personal data. This data is not attached to your Cosmo account and is never cross-referenced with your tasks, habits or OKRs.",
+      "p2": "**Measurement identifier:** Vesk stores a random identifier on your device, in your browser's local storage, which lets it recognise a single visit from one page to the next. It is not a cookie, but it is still information placed on your equipment: it is therefore written only after you accept, and it is erased as soon as you withdraw your consent with “Manage cookies”. Your IP address, your browser and this identifier are personal data. This data is not attached to your Cosmo account and is never cross-referenced with your tasks, habits or OKRs.",
       "p3": "**Pages excluded from measurement:** audience measurement is never loaded on pages where you enter credentials (account creation, sign-in, password reset, accepting an invitation), nor on any screen of the application once you are signed in.",
-      "note": "No other third-party tracking tool (Google Analytics, Mixpanel, Hotjar, and so on) is used, and no behavioural data is collected inside the application beyond this audience measurement.",
+      "note": "No other third-party tracking tool (Google Analytics, Mixpanel, Hotjar, and so on) is used. Inside the application, nothing else is collected about your behaviour apart from the sign-in days described above.",
       "li6": "**Business workspace data:** membership of an organisation, role, team tasks and projects, comments, activity history and notifications. For this data, the organisation is the controller and Cosmo acts on its behalf, as set out in section 6 of the Terms of Use",
-      "li7": "**Bug reports:** the message and any screenshots you attach, your account email address if you are signed in, and the technical context of the page, sent by email to the team"
+      "li7": "**Bug reports:** the message and any screenshots you attach, your account email address if you are signed in, and the technical context of the page, sent by email to the team",
+      "li8": "**Email invitations:** when a member of an organisation invites you, your email address is used to send you the invitation link, on behalf of that organisation. A link that is not accepted expires after 7 days and is erased 30 days later",
+      "p4": "**Where your sign-up came from:** if you accept it in the banner, Cosmo keeps for 30 days, in your browser's local storage, the channel that brought you here (the “ref” or “utm” parameter of a campaign link, or “demo”), then records it on your account if you create one. It is used only to know which channels bring sign-ups. Without your consent, nothing is stored or recorded.",
+      "p5": "**Trying the demo:** if you accept, a random device identifier is stored when you start the demo, and the visit is counted. If you then create an account from the same device, the visit is attached to your account, to measure how many trials lead to a sign-up. Without your consent, the demo works exactly the same and nothing is counted."
     },
     "s3": {
       "title": "3. Authentication methods",
@@ -36,25 +39,30 @@
       "li2": "Store and synchronise your productivity data (tasks, habits, calendar, OKRs)",
       "li3": "Enable collaboration: task sharing, friend management and the business workspace",
       "li4": "Process payments and manage the business workspace subscription",
-      "li5": "Keep the application secure and working properly"
+      "li5": "Keep the application secure and working properly",
+      "li6": "Produce internal usage statistics (sign-in days) and, with your consent, measure traffic and where sign-ups come from",
+      "li7": "Send you service emails: invitations, notices before a subscription renews, organisation notifications you chose to receive, replies to your messages"
     },
     "s5": {
       "title": "5. Legal basis",
       "intro": "The processing of your data relies on:",
       "li1": "**Performance of the contract**, for all data needed for the service to work",
-      "li2": "**Legitimate interest**, for the security and continuity of the application",
-      "li3": "**Consent**, for audience measurement (Vesk and Vercel Analytics) and for anything stored on your device that is not strictly necessary to the service. Nothing is loaded until you have accepted, and a refusal never loads anything. You can change your mind at any time",
+      "li2": "**Legitimate interest**, for the security and continuity of the application, and for internal usage statistics (sign-in days), which are used only to improve the service",
+      "li3": "**Consent**, for audience measurement (Vesk and Vercel Analytics), where your sign-up came from, counting demo trials, and anything stored on your device that is not strictly necessary to the service. Nothing is stored or loaded until you have accepted, and a refusal never stores anything. You can change your mind at any time",
       "note": "Cosmo is intended for people aged at least 15. Below that age, audience measurement can only be accepted with the joint consent of a holder of parental authority (Article 45 of the French Data Protection Act)."
     },
     "s6": {
       "title": "6. Retention periods",
-      "li1": "Account and content data: kept for as long as the account is active, then permanently deleted within 90 days of closure",
+      "li1": "Account and content data: kept while the account is active, then permanently deleted within 90 days of closure. An account with no sign-in for **3 years** is deleted, after a warning email sent 30 days beforehand",
       "li2": "Session tokens: expire automatically according to the Supabase configuration",
-      "li3": "**Demo visit** (device identifier, set before any account is created): **90 days** if the visit does not lead to a sign-up, **400 days** if it does",
+      "li3": "**Demo visit** (device identifier, stored only if you accepted): **90 days** if the visit does not lead to a sign-up, **400 days** if it does",
       "li4": "**Activity days** (sign-in dates, used for usage statistics): **400 days**",
       "li5": "**Technical payment markers** (identifiers of Stripe events already processed, used to avoid charging twice): **90 days**",
       "li6": "Payment data: kept in line with legal obligations (10 years for accounting)",
-      "note": "These periods are applied automatically by the database, with no manual step. The payment journal is the exception: tax law requires it to be kept **and to remain unalterable**, so it can be neither erased nor modified, not even following a request to delete an account. Its rows contain neither your name nor your email address: they carry only a technical identifier, which stops designating anyone once your account is deleted."
+      "note": "These periods are applied automatically by the database, with no manual step. The payment journal is the exception: tax law requires it to be kept **and to remain unalterable**, so it can be neither erased nor modified, not even following a request to delete an account. Its rows contain neither your name nor your email address: they carry only a technical identifier, which stops designating anyone once your account is deleted.",
+      "li7": "**Where your sign-up came from** (only if you accepted): kept on your profile for as long as the account exists",
+      "li8": "**Bug reports**: the emails received are kept for at most 12 months after they have been handled",
+      "li9": "**Database backups**: encrypted, kept for 30 days, then replaced automatically"
     },
     "s7": {
       "title": "7. Data sharing",
@@ -62,18 +70,19 @@
       "li1": "**Supabase**: database and authentication. Your data is hosted in the **eu-west-1 (Ireland)** region, therefore within the European Union",
       "li2": "**Vercel**: website hosting. Processes connection data (IP address, technical logs)",
       "li3": "**Vercel Analytics**: cookie-free audience measurement, loaded only if you accept it",
-      "li4": "**Sentry**: technical error detection. Email addresses and identifiers are stripped automatically before sending",
+      "li4": "**Sentry**: technical error detection, data hosted in the Union (Germany). Email addresses and identifiers appearing in error messages are masked, and invitation or sign-in tokens are removed from page addresses. Your account's technical identifier (a random string, with no name or email) is attached to reports to link errors together",
       "li5": "**Stripe**: secure payment processing",
       "li6": "**Google**: only if you use Google OAuth sign-in",
-      "li7": "**Vesk**: audience measurement (page address, referring page, IP address, browser, engagement indicators, and a random identifier stored in the browser's local storage), loaded only if you accept it and never on pages where credentials are entered",
+      "li7": "**Vesk** (a service of Veske, a sole trader established in France, hosted in Germany): audience measurement (page address, referring page, IP address, browser, engagement indicators, and a random identifier stored in the browser's local storage), loaded only if you accept it and never on pages where credentials are entered",
       "outro": "No data is sold to third parties. Nothing is shared for advertising or marketing purposes.",
       "li8": "**Resend**: sending service emails (bug reports, notices before a subscription renews)",
-      "li9": "**Cloudflare Turnstile**: bot protection on the sign-in and sign-up forms, when enabled. Processes your IP address and technical browser signals, with no advertising purpose"
+      "li9": "**Cloudflare Turnstile**: bot protection on the sign-in and sign-up forms, when enabled. Processes your IP address and technical browser signals, with no advertising purpose",
+      "li10": "**GitHub**: storage of the daily database backups, encrypted before they are uploaded. GitHub does not hold the decryption key"
     },
     "s7bis": {
       "title": "7 bis. Transfers outside the European Union",
-      "p1": "Your database is hosted in Ireland, therefore within the European Union, and does not leave it.",
-      "p2": "However, **Vercel**, **Sentry**, **Resend** and **Cloudflare** are companies established in the United States. The data they process on our behalf (IP address, connection logs, redacted error reports, service emails) may therefore be transferred outside the Union. These transfers are covered by the European Commission's standard contractual clauses or by an equivalent adequacy mechanism, as provided for in Articles 45 and 46 GDPR.",
+      "p1": "Your database is hosted in Ireland, within the European Union.",
+      "p2": "However, several providers are companies established outside the Union or may access data from outside it: **Vercel**, **Sentry**, **Resend**, **Cloudflare**, **Stripe**, **Google** (Google sign-in), **GitHub** (encrypted backups), and **Supabase Inc.**, whose teams may access the infrastructure for maintenance and support. The data they process on our behalf may therefore be transferred outside the Union. These transfers are covered by the European Commission's adequacy decision on the EU-US Data Privacy Framework, where the provider is certified under it, or otherwise by the Commission's standard contractual clauses (Articles 45 and 46 GDPR).",
       "p3": "You can ask us for a copy of the applicable safeguards at the address given below."
     },
     "s8": {
@@ -92,7 +101,7 @@
     },
     "s9": {
       "title": "9. Security",
-      "p1": "All communications between your browser and our servers are encrypted with HTTPS/TLS. Passwords are stored hashed (bcrypt, through Supabase Auth). Access to data is protected by Row Level Security (RLS) policies in the database: each user can reach only their own data."
+      "p1": "All communications between your browser and our servers are encrypted with HTTPS/TLS. Passwords are stored hashed (bcrypt, through Supabase Auth). Access to data is protected by Row Level Security (RLS) policies in the database: each user can reach only their own data and what others have shared with them. The publisher has technical administrative access, reserved for maintenance, security and support. Database backups are encrypted."
     },
     "s10": {
       "title": "10. Cookies and information stored on your device",
@@ -103,7 +112,10 @@
       "consentIntro": "The following are stored **only after you accept**:",
       "consentLi1": "A random identifier placed by Vesk in the browser's local storage, to recognise a single visit from one page to the next",
       "note1": "No advertising cookie is placed on your device, and no data is used for advertising purposes.",
-      "note2": "Both of our audience measurement tools (Vesk and Vercel Analytics) require your consent: **they are loaded only if you click “Accept”** in the banner. Until you answer, nothing is loaded, and if you refuse, they never are. Your choice is kept on your device for six months, after which you are asked again. You can change it at any time with the button below or the “Manage cookies” link at the bottom of the page: if you withdraw your consent, the measurement identifier is erased from your device."
+      "note2": "Both of our audience measurement tools (Vesk and Vercel Analytics), where your sign-up came from and counting demo trials all require your consent: **none of this is loaded or stored until you click “Accept”** in the banner, and if you refuse, it never is. Your choice is kept on your device for six months, after which you are asked again. You can change it at any time with the button below or the “Manage cookies” link: if you withdraw your consent, the identifiers and sign-up origin stored on your device are erased.",
+      "consentLi2": "Where your sign-up came from (campaign link or demo), kept for 30 days in the browser's local storage",
+      "consentLi3": "A random device identifier stored when the demo starts, to count trials",
+      "consentLi4": "Two demo counters (time spent and number of items created), which choose when to suggest an account. Without your consent, they stay in memory and disappear when the page is reloaded"
     },
     "s11": {
       "title": "11. Changes",

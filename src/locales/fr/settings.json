@@ -173,7 +173,11 @@
     "exportingAllHint": "{{count}} éléments répartis dans 4 fichiers CSV",
     "exportAll": "Tout exporter",
     "exportAllHint": "Sept fichiers CSV : tâches, habitudes, agenda, OKR, catégories, listes, profil",
-    "cookiesHint": "Mesure d'audience : vous pouvez revenir à tout moment sur votre choix d'accepter ou de refuser."
+    "cookiesHint": "Mesure d'audience : vous pouvez revenir à tout moment sur votre choix d'accepter ou de refuser.",
+    "legalTitle": "Informations légales",
+    "legalNotice": "Mentions légales",
+    "legalTerms": "Conditions générales d'utilisation",
+    "legalPrivacy": "Politique de confidentialité"
   },
   "import": {
     "cardTitle": "Importer depuis Todoist, TickTick ou Notion",

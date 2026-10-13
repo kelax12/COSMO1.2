@@ -3,11 +3,12 @@
     "seoTitle": "Terms of Use – Cosmo App",
     "seoDescription": "Terms of use for Cosmo, an app for tasks, habits and OKRs. Free access, rules of use and responsibilities.",
     "title": "Terms of Use",
-    "updatedAt": "12 October 2026",
+    "updatedAt": "13 October 2026",
     "s1": {
       "title": "1. Purpose",
       "p1": "These Terms of Use govern access to and use of **Cosmo**, a web platform for managing tasks, habits, objectives (OKRs) and a calendar.",
-      "p2": "By creating an account or using Cosmo, you accept these Terms of Use in full. If you do not accept them, you must not use the application."
+      "p2": "By creating an account or using Cosmo, you accept these Terms of Use in full. If you do not accept them, you must not use the application.",
+      "p3": "Cosmo is published by **Axel Longatte**, a natural person, who can be reached at [contact@thecosmo.app](mailto:contact@thecosmo.app). In these terms, “Cosmo” refers both to the service and to its publisher. Full contact details are given in the site's legal notice."
     },
     "s2": {
       "title": "2. Access to the service",
@@ -60,7 +61,7 @@
     },
     "s7": {
       "title": "7. Intellectual property",
-      "p1": "The Cosmo application, its source code, its design, its trade marks and its logos are the exclusive property of Cosmo. Any unauthorised reproduction or exploitation is strictly prohibited."
+      "p1": "The Cosmo application, its source code, design, trademarks and logos belong to its publisher. Any unauthorised reproduction or use is prohibited, subject to the licences of the open source components the application relies on."
     },
     "s8": {
       "title": "8. Availability of the service",
@@ -68,9 +69,10 @@
     },
     "s9": {
       "title": "9. Limitation of liability",
-      "p1": "Cosmo is bound by an obligation of means. It is not liable for damage resulting from use of the service that does not comply with these Terms of Use, from force majeure, or from the act of a third party.",
+      "p1": "Cosmo has an obligation of means. It is not liable for damage resulting from use of the service that does not comply with these terms, from force majeure, or from the unforeseeable and insurmountable act of a third party unconnected with the supply of the service.",
       "p2": "**Towards a business user**, and except in cases of gross negligence or wilful misconduct, Cosmo's liability is limited to direct damage and to the amounts paid over the last 12 months.",
-      "p3": "**Towards a consumer**, no clause in these terms limits or excludes Cosmo's liability beyond what the law allows, and the **statutory guarantee of conformity and the guarantee against hidden defects** remain owed in all circumstances."
+      "p3": "**Towards a consumer**, no clause in these terms limits or excludes Cosmo's liability beyond what the law allows, and the **statutory guarantee of conformity and the guarantee against hidden defects** remain owed in all circumstances.",
+      "p4": "**Legal guarantee of conformity.** If you are a consumer, the service must conform to the contract for as long as it is supplied (French Consumer Code, Articles L224-25-1 et seq.). If it does not, you can have it brought into conformity or, failing that, obtain a price reduction or the termination of the contract. This right is exercised free of charge, by writing to [contact@thecosmo.app](mailto:contact@thecosmo.app)."
     },
     "s10": {
       "title": "10. Termination",
@@ -86,7 +88,7 @@
       "title": "12. Governing law and jurisdiction",
       "p1": "These Terms of Use are governed by French law.",
       "p2": "**If you are a consumer**, you keep the right to bring proceedings before the courts of the place where you live, and nothing in these Terms takes that right away from you.",
-      "p3": "For disputes between Cosmo and a business, and after an attempt at amicable resolution, the courts of Paris shall have sole jurisdiction."
+      "p3": "For disputes between Cosmo and a business, and after an attempt at amicable settlement, the courts of Paris have jurisdiction, to the extent permitted by law."
     },
     "s13": {
       "title": "13. Language of the contract",

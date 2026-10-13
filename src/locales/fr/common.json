@@ -93,6 +93,7 @@
   "auth": {
     "legalConsentTermsShort": "CGU",
     "legalConsentShort": "En créant un compte, vous acceptez les {{terms}} et avez lu la {{privacy}}.",
+    "legalConsentLogin": "Nouveau sur Cosmo ? Continuer avec Google crée votre compte : vous acceptez alors les {{terms}} et reconnaissez avoir pris connaissance de la {{privacy}}.",
     "createAccountTitle": "Créer un compte",
     "signInTitle": "Connexion",
     "modalAria": "Connexion ou inscription",
@@ -174,8 +175,8 @@
     "banner": "Bannière cookies",
     "title": "Cookies",
     "noTracking": "Aucune publicité, aucun profil",
-    "body": "Cosmo mesure la fréquentation de ses pages publiques. Si vous acceptez, un identifiant aléatoire est déposé sur votre appareil pour relier les pages d'une même visite.",
-    "ifYouRefuse": "Si vous refusez, seuls les éléments strictement nécessaires au service sont utilisés (session, préférences).",
+    "body": "Cosmo mesure la fréquentation de ses pages publiques et l'origine de ses inscriptions. Si vous acceptez, un identifiant aléatoire est déposé sur votre appareil pour relier les pages d'une même visite, et le canal qui vous a amené (lien de campagne, démo) est rattaché à votre compte si vous en créez un.",
+    "ifYouRefuse": "Si vous refusez, rien de tout cela n'est déposé ni transmis : seuls les éléments strictement nécessaires au service sont utilisés (session, préférences).",
     "learnMore": "Lire notre politique de confidentialité",
     "decline": "Refuser",
     "accept": "Accepter",

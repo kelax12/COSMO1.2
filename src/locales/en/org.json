@@ -463,7 +463,8 @@
     "agendaMiddle": " and add events to it, except the ones you mark ",
     "agendaPrivate": "“Private”",
     "agendaAfter": ", which stay invisible to them.",
-    "personalSafe": "Your tasks, habits and personal data stay invisible to the company."
+    "personalSafe": "Your tasks, habits and personal data stay invisible to the company.",
+    "reports": "Your managers see the date of your latest activity on team work, and the daily activity reports show the team tasks you completed and the non-private events you held. Never your sign-ins."
   },
   "assign": {
     "assignTo": "Assign a task to {{name}}",

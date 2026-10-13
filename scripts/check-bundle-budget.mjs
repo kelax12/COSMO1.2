@@ -191,8 +191,11 @@ const PLAFONDS_PAR_CHUNK = {
   TeamProjectsTab: 17_000, // 15 992 o
   UseCasePage: 16_500, // 15 591 o
   legal: 3_000, // 2 693 o sur 2 chunks (2026-10-01 : CGU et confidentialité dans leur propre catalogue)
-  legalPrivacy: 9_900, // 9 378 o sur 2 chunks — chargé par la seule page confidentialité
-  legalTerms: 9_700, // 9 221 o sur 2 chunks — chargé par la seule page CGU
+  // ⚖️ RELEVÉS SUR ARBITRAGE D'AXEL le 2026-10-13, pas pour faire passer la CI : l'audit juridique
+  // du jour a ajouté de l'information DUE (RGPD art. 13, C. conso L111-1, L224-25-1). Ces deux
+  // catalogues ne sont chargés que par leur page légale, jamais sur le chemin critique.
+  legalPrivacy: 12_200, // 11 637 o sur 2 chunks (5 510 + 6 127) — chargé par la seule page confidentialité ; 9 900 jusqu'au 2026-10-13
+  legalTerms: 10_300, // 9 824 o sur 2 chunks (4 693 + 5 131) — chargé par la seule page CGU ; 9 700 jusqu'au 2026-10-13
   OKRPage: 15_000, // 14 192 o
   'vendor-router': 14_500, // 13 729 o
   TeamTaskModal: 12_000, // 11 437 o (2026-10-01 : commentaires et arbre de catégories chargés à la demande)
