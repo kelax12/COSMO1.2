@@ -798,9 +798,6 @@
     "loadMore_many": "+{{count}} d'autres",
     "loadMore_other": "+{{count}} autres"
   },
-  "setup": {
-    "resume": "Reprendre l'assistant de démarrage"
-  },
   "glossary": {
     "open": "Glossaire",
     "termHelp": "Définition : {{term}}"

@@ -129,123 +129,14 @@
     }
   },
   "ent": {
-    "badge": "Entreprise",
-    "stage": {
-      "you": "Vous",
-      "north": "Cap de l'entreprise",
-      "team": "Équipe",
-      "project": "Projet",
-      "orgFallback": "Votre entreprise",
-      "pending": "Demande en attente"
-    },
-    "places": {
-      "overviewTitle": "Aperçu",
-      "overviewBody": "Votre journée de travail : ce qui vous attend, les échéances proches, ce qui bouge dans vos équipes.",
-      "tasksTitle": "Tâches",
-      "tasksBody": "Ce qui vous est confié, avec son projet et son échéance. Vous le faites avancer, votre manager le voit.",
-      "projectsTitle": "Projets",
-      "projectsBody": "Chaque projet porte ses tâches, son responsable, ses jalons et sa date de fin, en liste, en kanban ou en frise.",
-      "okrTitle": "OKR",
-      "okrBody": "Le cap de l'entreprise et des équipes, et ce qu'il reste à parcourir pour l'atteindre.",
-      "pyramidTitle": "Organigramme",
-      "pyramidBody": "Qui encadre qui. C'est lui qui décide ce que chaque manager voit.",
-      "membersTitle": "Membres",
-      "membersBody": "L'annuaire, les invitations en cours et les droits de chacun."
-    },
-    "steps": {
-      "aria": "Progression de la mise en place",
-      "name": "Nom",
-      "invite": "Invitations",
-      "team": "Équipe",
-      "project": "Projet",
-      "objective": "Cap",
-      "stateDone": "terminée",
-      "stateCurrent": "en cours",
-      "stateTodo": "à venir"
-    },
-    "invite": {
-      "kicker": "Les personnes",
-      "title": "Qui travaille <em>avec vous</em> ?",
-      "body": "Chaque personne invitée reçoit un e-mail avec un lien personnel, que seule elle peut accepter. Vous pouvez dès maintenant la rattacher à votre équipe et la placer sous vous dans l'organigramme.",
-      "label": "Adresses e-mail",
-      "hint": "Séparez les adresses par une virgule, un espace ou un retour à la ligne.",
-      "cta_one": "Envoyer l'invitation",
-      "cta_many": "Envoyer les {{count}} d'invitations",
-      "cta_other": "Envoyer les {{count}} invitations",
-      "sending": "Envoi…",
-      "sent_one": "{{count}} invitation envoyée.",
-      "sent_many": "{{count}} d'invitations envoyées.",
-      "sent_other": "{{count}} invitations envoyées.",
-      "createdNotSent_one": "{{count}} invitation créée, mais l'e-mail n'a pas pu partir. Le lien est à copier depuis Membres.",
-      "createdNotSent_many": "{{count}} d'invitations créées, mais les e-mails n'ont pas pu partir. Les liens sont à copier depuis Membres.",
-      "createdNotSent_other": "{{count}} invitations créées, mais les e-mails n'ont pas pu partir. Les liens sont à copier depuis Membres.",
-      "codeTitle": "Ou partagez le code de l'entreprise",
-      "codeHint": "Quiconque le saisit vous envoie une demande, que vous acceptez ou non.",
-      "copy": "Copier le code",
-      "copied": "Code copié",
-      "copyFailed": "Copie impossible, sélectionnez le code à la main.",
-      "placementLegend": "Où placer les personnes invitées",
-      "joinTeam": "Les ajouter à l'équipe « {{team}} »",
-      "underMe": "Les placer sous moi dans l'organigramme"
-    },
-    "team": {
-      "kicker": "Les équipes",
-      "title": "Votre première <em>équipe</em>.",
-      "body": "Une équipe regroupe des personnes qui travaillent ensemble, quelle que soit leur place dans l'organigramme. Elle sert aussi de frontière : un projet rattaché à une équipe n'est visible que d'elle.",
-      "label": "Nom de la première équipe",
-      "placeholder": "Ex. Produit",
-      "idea1": "Direction",
-      "idea2": "Produit",
-      "idea3": "Ventes",
-      "idea4": "Opérations",
-      "cta": "Créer l'équipe"
-    },
-    "project": {
-      "kicker": "Les projets",
-      "title": "Lancez un premier <em>projet</em>.",
-      "body": "Un projet porte des tâches, un responsable, des jalons et une échéance. Partez d'un modèle : ses tâches sont posées pour vous et datées à partir d'aujourd'hui.",
-      "templateLegend": "Modèle",
-      "templateMeta": "{{tasks}} tâches · {{days}} jours",
-      "label": "Nom du projet (facultatif)",
-      "cta": "Créer le projet"
-    },
-    "objective": {
-      "kicker": "Le cap",
-      "title": "Quelle est votre <em>étoile polaire</em> ?",
-      "body": "Un objectif d'entreprise est visible de tous. Chaque équipe peut y rattacher ses propres objectifs, et son résultat clé dit comment vous saurez qu'il est atteint.",
-      "objectiveLabel": "Objectif de l'entreprise",
-      "objectivePlaceholder": "Ex. Devenir la référence de notre marché",
-      "krLabel": "Résultat clé",
-      "krPlaceholder": "Ex. Signer de nouveaux clients",
-      "targetLabel": "Cible (facultatif)",
-      "targetPlaceholder": "Ex. 20",
-      "hint": "Sur les trois prochains mois. D'autres résultats clés s'ajoutent ensuite, dans OKR.",
-      "cta": "Fixer le cap",
-      "krNeeded": "Ajoutez un résultat clé : c'est lui qui rend l'objectif mesurable, et COSMO en demande au moins un."
-    },
-    "done": {
-      "title": "{{name}} est <em>prête</em>.",
-      "body": "Voici ce que vous venez de poser. Tout le reste se règle dans l'espace entreprise.",
-      "recapTitle": "Mis en place",
-      "invited_one": "{{count}} personne invitée",
-      "invited_many": "{{count}} de personnes invitées",
-      "invited_other": "{{count}} personnes invitées",
-      "team": "Équipe « {{name}} » créée",
-      "project": "Projet « {{name}} » lancé",
-      "objective": "Cap fixé : « {{name}} »",
-      "nothing": "Rien de créé pour l'instant : tout se fait aussi depuis l'espace entreprise.",
-      "mapTitle": "Ce qui vous attend",
-      "cta": "Ouvrir l'espace entreprise",
-      "discoverGuide": "Découvrir le guide"
-    },
-    "member": {
+    "video": {
       "dialogLabel": "Bienvenue dans l'espace entreprise",
       "title": "Bienvenue chez <em>{{org}}</em>.",
-      "roleAdmin": "Vous administrez cette entreprise : équipes, droits, invitations et organigramme sont entre vos mains.",
-      "roleMember": "Vous faites partie de cette entreprise. Voici les quatre lieux à connaître pour vous y retrouver.",
-      "placesLabel": "Les lieux à connaître",
-      "cta": "C'est parti",
-      "close": "Fermer l'accueil"
+      "subtitle": "Trois minutes pour faire le tour de votre espace entreprise.",
+      "unmute": "Activer le son",
+      "skip": "Passer la vidéo",
+      "cta": "Commencer",
+      "close": "Fermer"
     }
   }
 }

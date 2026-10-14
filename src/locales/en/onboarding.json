@@ -127,119 +127,14 @@
     }
   },
   "ent": {
-    "badge": "Company",
-    "stage": {
-      "you": "You",
-      "north": "Company goal",
-      "team": "Team",
-      "project": "Project",
-      "orgFallback": "Your company",
-      "pending": "Request pending"
-    },
-    "places": {
-      "overviewTitle": "Overview",
-      "overviewBody": "Your working day: what is waiting for you, upcoming deadlines, what is moving in your teams.",
-      "tasksTitle": "Tasks",
-      "tasksBody": "What has been assigned to you, with its project and due date. You move it forward, your manager sees it.",
-      "projectsTitle": "Projects",
-      "projectsBody": "Each project carries its tasks, its owner, its milestones and its end date, as a list, a board or a timeline.",
-      "okrTitle": "OKRs",
-      "okrBody": "The company's and teams' goals, and how far there is still to go.",
-      "pyramidTitle": "Org chart",
-      "pyramidBody": "Who manages whom. It decides what each manager can see.",
-      "membersTitle": "Members",
-      "membersBody": "The directory, pending invitations and everyone's rights."
-    },
-    "steps": {
-      "aria": "Setup progress",
-      "name": "Name",
-      "invite": "Invites",
-      "team": "Team",
-      "project": "Project",
-      "objective": "Goal",
-      "stateDone": "done",
-      "stateCurrent": "in progress",
-      "stateTodo": "to come"
-    },
-    "invite": {
-      "kicker": "People",
-      "title": "Who works <em>with you</em>?",
-      "body": "Each invited person gets an email with a personal link that only they can accept. You can add them to your team right away and place them under you in the org chart.",
-      "label": "Email addresses",
-      "hint": "Separate addresses with a comma, a space or a line break.",
-      "cta_one": "Send the invitation",
-      "cta_other": "Send the {{count}} invitations",
-      "sending": "Sending…",
-      "sent_one": "{{count}} invitation sent.",
-      "sent_other": "{{count}} invitations sent.",
-      "createdNotSent_one": "{{count}} invitation created, but the email could not go out. Copy the link from Members.",
-      "createdNotSent_other": "{{count}} invitations created, but the emails could not go out. Copy the links from Members.",
-      "codeTitle": "Or share the company code",
-      "codeHint": "Anyone who enters it sends you a request, which you accept or not.",
-      "copy": "Copy the code",
-      "copied": "Code copied",
-      "copyFailed": "Could not copy, select the code by hand.",
-      "placementLegend": "Where to place the people you invite",
-      "joinTeam": "Add them to the “{{team}}” team",
-      "underMe": "Place them under me in the org chart"
-    },
-    "team": {
-      "kicker": "Teams",
-      "title": "Your first <em>team</em>.",
-      "body": "A team groups people who work together, whatever their place in the org chart. It is also a boundary: a project attached to a team is only visible to it.",
-      "label": "Name of the first team",
-      "placeholder": "e.g. Product",
-      "idea1": "Leadership",
-      "idea2": "Product",
-      "idea3": "Sales",
-      "idea4": "Operations",
-      "cta": "Create the team"
-    },
-    "project": {
-      "kicker": "Projects",
-      "title": "Launch a first <em>project</em>.",
-      "body": "A project carries tasks, an owner, milestones and a due date. Start from a template: its tasks are laid out for you and dated from today.",
-      "templateLegend": "Template",
-      "templateMeta": "{{tasks}} tasks · {{days}} days",
-      "label": "Project name (optional)",
-      "cta": "Create the project"
-    },
-    "objective": {
-      "kicker": "The goal",
-      "title": "What is your <em>north star</em>?",
-      "body": "A company goal is visible to everyone. Each team can attach its own goals to it, and its key result says how you will know you got there.",
-      "objectiveLabel": "Company goal",
-      "objectivePlaceholder": "e.g. Become the reference in our market",
-      "krLabel": "Key result",
-      "krPlaceholder": "e.g. Sign new customers",
-      "targetLabel": "Target (optional)",
-      "targetPlaceholder": "e.g. 20",
-      "hint": "Over the next three months. More key results can be added later, in OKRs.",
-      "cta": "Set the goal",
-      "krNeeded": "Add a key result: it is what makes the goal measurable, and COSMO needs at least one."
-    },
-    "done": {
-      "title": "{{name}} is <em>ready</em>.",
-      "body": "Here is what you just set up. Everything else lives in the company space.",
-      "recapTitle": "Set up",
-      "invited_one": "{{count}} person invited",
-      "invited_other": "{{count}} people invited",
-      "team": "Team “{{name}}” created",
-      "project": "Project “{{name}}” launched",
-      "objective": "Goal set: “{{name}}”",
-      "nothing": "Nothing created yet: everything can also be done from the company space.",
-      "mapTitle": "What awaits you",
-      "cta": "Open the company space",
-      "discoverGuide": "Discover the guide"
-    },
-    "member": {
-      "dialogLabel": "Welcome to the company space",
+    "video": {
+      "dialogLabel": "Welcome to the business space",
       "title": "Welcome to <em>{{org}}</em>.",
-      "roleAdmin": "You run this company: teams, rights, invitations and the org chart are in your hands.",
-      "roleMember": "You are part of this company. Here are the four places to know to find your way around.",
-      "placesLabel": "Places to know",
-      "cta": "Let's go",
-      "close": "Close the welcome"
+      "subtitle": "A three-minute tour of your business space (in French, with subtitles).",
+      "unmute": "Turn sound on",
+      "skip": "Skip the video",
+      "cta": "Get started",
+      "close": "Close"
     }
   }
 }

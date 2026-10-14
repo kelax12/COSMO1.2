@@ -2,7 +2,6 @@
 // Accueil entreprise : règles pures, sans React.
 // ═══════════════════════════════════════════════════════════════════
 import type React from 'react';
-import type { CreateTeamOKRInput } from '@/modules/team-okrs/types';
 
 /**
  * Variables de thème redéclarées sur le conteneur de l'accueil entreprise :
@@ -26,48 +25,6 @@ export const ENT_SCOPE = {
   '--color-text-secondary': '139 150 168',
   '--color-text-muted': '139 150 168',
 } as React.CSSProperties;
-
-/** Trois mois, comme l'objectif du premier compte perso. */
-const QUARTER_DAYS = 90;
-
-const isoDay = (d: Date): string => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-};
-
-/**
- * Le premier objectif d'entreprise (« l'étoile polaire »).
- *
- * · `audience: 'org'` et aucune équipe : visible de toute l'entreprise, c'est
- *   le sens même de l'étape.
- * · Le schéma exige au moins UN résultat clé (`createTeamOKRSchema`). Sa cible
- *   n'est jamais inventée : sans nombre saisi, il est binaire (cible 1),
- *   exactement comme l'objectif du premier compte perso. Un nombre non
- *   strictement positif est traité comme absent (garde B17 : on divise par
- *   la cible).
- * · Dates en jours locaux (`AAAA-MM-JJ`), comme `TeamOKRModal`.
- */
-export const buildCompanyOkrInput = (
-  objective: string,
-  keyResult: string,
-  target: string,
-  now: Date = new Date(),
-): CreateTeamOKRInput => {
-  const end = new Date(now);
-  end.setDate(end.getDate() + QUARTER_DAYS);
-  const parsed = Number(target.replace(',', '.').trim());
-  const targetValue = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-  return {
-    title: objective.trim(),
-    teamIds: [],
-    audience: 'org',
-    startDate: isoDay(now),
-    endDate: isoDay(end),
-    keyResults: [{ title: keyResult.trim(), targetValue, currentValue: 0 }],
-  };
-};
 
 // ─── Accueil d'un membre, au premier passage dans l'espace entreprise ───
 

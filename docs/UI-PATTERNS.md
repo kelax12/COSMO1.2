@@ -704,15 +704,16 @@ planétaire réduit passe au-dessus et l'aperçu disparaît. Six écrans : prés
 au plus, idées cliquables, touche N), agenda (montre la PREMIÈRE tâche écrite posée dans un
 créneau, ne crée rien), habitude (idées), objectif + résultat clé facultatif, bilan.
 
-**Entreprise : la constellation** (`src/components/onboarding/enterprise/`). L'entreprise se
-dessine comme une carte du ciel sur la nuit de la landing entreprise : vous au centre, les
-personnes invitées en étoiles reliées à vous (l'organigramme), l'équipe en amas, le projet
-dessous, et l'objectif d'entreprise en étoile polaire dorée (l'or n'a que ce rôle). Le nom de
-l'entreprise s'écrit dessous comme on nomme une constellation. Bienvenue (trois promesses), créer
-ou rejoindre (code + consentement), attente avec la visite des quatre lieux, puis mise en place :
-invitations (avec le code de l'entreprise), équipe, projet depuis un modèle, **cap** (étape ajoutée
-le 2026-10-03 : objectif `audience: 'org'`, un résultat clé exigé par le schéma), fin avec la
-carte des six lieux. `MemberWelcome` accueille qui arrive sans être passé par là.
+**Entreprise : la vidéo d'accueil** (refait le 2026-10-14, à la demande d'Axel, sur le modèle de
+RemNote). `/entreprise/onboarding` ne propose plus que le choix créer | rejoindre (`OrgChoice`).
+L'assistant de mise en place en constellation (équipe, invitations, projet, cap), qui demandait
+des informations avant d'avoir montré le produit, est supprimé avec `MemberWelcome`. À la place,
+`OrgWelcomeVideo` ouvre un lecteur au premier passage dans `/entreprise`, créateur comme membre :
+vidéo de ~2 min 45 (`public/videos/onboarding-entreprise.mp4`, source
+`cockpit-marketing/videos/onboarding-entreprise`), sous-titres FR actifs d'office hors locale fr,
+démarrage avec le son et repli muet + bouton « Activer le son » si le navigateur refuse, aucun
+démarrage automatique sous mouvement réduit. Le guide (`?guide=1`, `OrgGuideFab`) est inchangé.
+Historique de la constellation : `git log -- src/components/onboarding/enterprise/Constellation.tsx`.
 
 **Règles communes**, et pourquoi :
 
@@ -732,12 +733,11 @@ carte des six lieux. `MemberWelcome` accueille qui arrive sans être passé par 
   n'existe que si la garde a laissé passer l'id (vérifié rouge en remettant l'ancien id).
 - Le perso ne s'ouvre jamais sur `/entreprise` : il s'empilait sur l'accueil entreprise à la
   sortie de celui-ci.
-- `MemberWelcome` ne s'ouvre qu'à une ARRIVÉE sur l'Aperçu nu (`/entreprise` sans section ni
+- L'accueil vidéo (ex-`MemberWelcome`) ne s'ouvre qu'à une ARRIVÉE sur l'Aperçu nu (`/entreprise` sans section ni
   paramètre), décision prise une fois (`arrivedOnOverview`). Relue à chaque rendu, la garde
   laissait l'accueil s'ouvrir après coup, une fois `?tab=settings` réécrit en section, le retour
   Stripe `?tab=billing` traité ou `?task=` retiré par une fiche introuvable : il couvrait l'écran
-  visé et a mis 8 cas du job e2e au rouge le 2026-10-04 (`delete-org`, `refund`, et le sien). L'admin qui finit la mise en place est marqué « accueilli » pour
-  `MemberWelcome`.
+  visé et a mis 8 cas du job e2e au rouge le 2026-10-04 (`delete-org`, `refund`, et le sien).
 - Tailles de texte : l'échelle du projet uniquement (garde `design-system.guard.test.ts`, stock de
   `text-[Npx]` plafonné).
 

@@ -27,7 +27,6 @@ import { MyWorkSkeleton } from './OrgLoadingSkeletons';
 import { useT } from '@/i18n/useT';
 import { buildOrgLink } from './deep-link.helpers';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
-import { orgSetupPath, type OrgSetupScreen } from './org-setup.helpers';
 
 interface MyWorkTabProps {
   orgId: string;
@@ -49,14 +48,6 @@ interface MyWorkTabProps {
 /** Étape de la checklist de démarrage (reco #3, admins d'une org jeune). */
 interface StartStep { id: string; label: string; done: boolean; tab: string; }
 
-/** Étapes de la checklist que l'assistant de démarrage sait reprendre, dans SON ordre. */
-const WIZARD_ORDER = ['team', 'invite', 'project', 'okr'] as const;
-const WIZARD_SCREEN: Record<(typeof WIZARD_ORDER)[number], OrgSetupScreen> = {
-  team: 'team',
-  invite: 'invite',
-  project: 'project',
-  okr: 'objective',
-};
 
 /**
  * Accueil d'un membre qui vient d'arriver et à qui rien n'est encore assigné.
@@ -217,19 +208,10 @@ const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
   );
 };
 
-// Entrée de l'assistant de démarrage, écrite en toutes lettres plutôt
-// qu'importée d'`org-setup.helpers` : ce module, partagé avec cet écran,
-// deviendrait un chunk de plus dans la table de préchargement du chunk
-// d'ENTRÉE (mesuré le 2026-09-25). Même forme que `orgSetupPath`, testée là-bas.
-const StartChecklist = ({ steps, orgId }: { steps: StartStep[]; orgId: string }) => {
-  const { t } = useT('org');
+const StartChecklist = ({ steps }: { steps: StartStep[] }) => {
   const { t: tOrgAdmin } = useT('orgAdmin');
   const navigate = useNavigate();
   const doneCount = steps.filter((s) => s.done).length;
-  // L'assistant couvre l'équipe, les invitations, le projet et le cap : proposé
-  // tant que l'une de ces étapes reste à faire, et il REPREND à la première
-  // non faite (2026-10-05) au lieu de tout recommencer depuis l'équipe.
-  const firstWizardStep = WIZARD_ORDER.find((id) => steps.some((s) => s.id === id && !s.done));
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:px-0 max-md:py-2">
       <div className="flex items-center justify-between gap-2 mb-3">
@@ -260,15 +242,6 @@ const StartChecklist = ({ steps, orgId }: { steps: StartStep[]; orgId: string })
           </li>
         ))}
       </ul>
-      {firstWizardStep && (
-        <button
-          type="button"
-          onClick={() => navigate(orgSetupPath(orgId, WIZARD_SCREEN[firstWizardStep]))}
-          className="mt-2 w-full rounded-xl border border-[rgb(var(--color-border))] px-3 py-2 text-sm font-medium text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-        >
-          {t('setup.resume')}
-        </button>
-      )}
     </div>
   );
 };
@@ -399,7 +372,7 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
   return (
     <div className="space-y-5">
       {mine.length >= TEAM_TASKS_READ_LIMIT && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
-      {showChecklist && <StartChecklist steps={startSteps} orgId={orgId} />}
+      {showChecklist && <StartChecklist steps={startSteps} />}
       {showNewcomerHints && <NewcomerHints />}
 
       <Suspense fallback={<MyWorkSkeleton label={tOrgAdmin('myWork.loading')} />}>

@@ -124,10 +124,9 @@ const NON_MESUREES: Record<string, string> = {
   'components/mobile/BottomSheet.tsx':
     'PRIMITIVE, pas une surface : c est elle que montent la plupart des '
     + 'feuilles ci-dessus, et quatre de ses consommatrices sont mesurées.',
-  'components/onboarding/enterprise/MemberWelcome.tsx':
-    'inatteignable en démo par conception (jamais en démo, 2026-10-03). Hors démo, '
-    + '`e2e/stubbed/org-onboarding.spec.ts` mesure le focus d entrée, le piège de Tab (25 Tab) '
-    + 'et la sortie par Échap (2026-10-05), sur chromium seulement.',
+  'components/onboarding/enterprise/OrgWelcomeVideo.tsx':
+    'inatteignable en démo par conception (jamais en démo). Hors démo, '
+    + '`e2e/stubbed/org-onboarding.spec.ts` mesure le focus d entrée et la sortie par Échap (2026-10-14).',
   'components/onboarding/FirstRunSetup.tsx':
     'inatteignable en démo par conception (`!isDemo`). Hors démo, '
     + '`e2e/stubbed/first-run.spec.ts` mesure le piège de Tab (25 Tab) depuis le 2026-10-05.',

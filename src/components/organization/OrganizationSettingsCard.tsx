@@ -24,14 +24,10 @@ const ROLE_KEYS = {
  *
  * Rend son propre titre ; à insérer dans un <SectionCard> côté SettingsPage.
  */
-// Entrée de l'assistant de démarrage, écrite en toutes lettres plutôt
-// qu'importée d'`org-setup.helpers` : ce module, partagé avec cet écran,
-// deviendrait un chunk de plus dans la table de préchargement du chunk
-// d'ENTRÉE (mesuré le 2026-09-25). Même forme que `orgSetupPath`, testée là-bas.
 const OrganizationSettingsCard = () => {
   const { t } = useT('org');
   const navigate = useNavigate();
-  const { activeOrg: myOrg, isLoading } = useActiveOrganization();
+  const { activeOrg: myOrg, isLoading, setActiveOrgId } = useActiveOrganization();
   const { user } = useAuth();
   const isOwner = !!myOrg && !!user?.id && myOrg.ownerId === user.id;
 
@@ -102,8 +98,13 @@ const OrganizationSettingsCard = () => {
           <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-4">
             {t('settingsCard.hint')}
           </p>
-          {/* Une création ouvre l'assistant de démarrage, sur sa propre page. */}
-          <CreateOrJoinOrganization onCreated={(org) => navigate(`/entreprise/onboarding?setup=${encodeURIComponent(org.id)}`)} />
+          {/* Une création mène à l'espace entreprise, où s'ouvre la vidéo d'accueil. */}
+          <CreateOrJoinOrganization
+            onCreated={(org) => {
+              setActiveOrgId(org.id);
+              navigate('/entreprise');
+            }}
+          />
         </div>
       )}
     </>
