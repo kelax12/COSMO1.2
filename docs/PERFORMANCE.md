@@ -1,4 +1,4 @@
-<!-- note-audit: note=94 -->
+<!-- note-audit: note=95 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,26 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **94 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **95 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → **94 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → **95 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15)
+
+> ### 🟢 2026-10-15 · +1 : le LCP mobile enfin crédité, le budget de nouveau rouge
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`
+> (Lighthouse du run `38476034238`), build local à `HEAD` avec Sentry comme en CI. Tableau de
+> bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | ✅ LCP mobile « mauvais » sur 8 URLs sur 8 (−3 le 09-22) | **+2** | `C-116` fermé le 2026-10-10 (run `38056459284`) et **jamais crédité depuis**. Relu à `HEAD`, Lighthouse mobile en CI : `/` **3,27 s** · `/guide/` 3,40 · `/blog/` 3,29 · article 3,31 · `/pour-freelances/` 3,39 · `/entreprise-presentation/` 3,26 · `/a-propos/` 3,37 · `/en/` 3,26. Tout sous 4 s : plus rien de « mauvais » |
+> | Le troisième point, retenu | 0 | 3,3 s reste au-dessus de 2,5 s (« à améliorer »), et le fil principal est chargé sur les pages animées : perf mobile **65** sur `/` (TBT 878 ms), **62** sur `/entreprise-presentation/` (1 049 ms), **64** sur `/en/` (949 ms). Desktop : LCP 0,65 à 1,34 s, perf 83 à 100 |
+> | 🔴 Budget de bundle rouge sur deux cliquets | **−1** | `OrganizationPage` **18,4 / 18,0 ko**, `TeamTaskModal` **12,3 / 12,0**. La CI n'atteint plus l'étape depuis le 2026-10-12 (cf. [`TESTING.md`](./TESTING.md)). Chemin critique **303,9 ko** (302,6 le 10-03, plafond 323,0), entrée 69,2 / 70,5. Marge sous 1 % : `StatisticsPage` 12,9 / 13,0 |
+>
+> **94 → 95.**
 
 > ### 🟢 2026-10-03 · +2 : budget de bundle vert en CI, sans remonter un plafond
 >

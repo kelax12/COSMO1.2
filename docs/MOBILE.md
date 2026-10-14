@@ -1,4 +1,4 @@
-<!-- note-audit: note=75 -->
+<!-- note-audit: note=76 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,24 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **75 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **76 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
 
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → **75 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03)
+## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → 75 → **76 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15)
+
+> ### 🟢 2026-10-15 · +1 : le LCP mobile sort de « mauvais »
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | ✅ LCP mobile (−2 le 09-22) | **+1** | **3,26 à 3,40 s** sur les 8 URLs, Lighthouse mobile en CI à `HEAD` (5,6 à 8,4 s le 10-02). **Un point retenu** : au-dessus de 2,5 s, et le fil principal reste chargé sur les pages animées (TBT 878 à 1 049 ms sur `/`, `/en/`, `/entreprise-presentation/`) |
+> | Refonte « Une seule lumière » (maquettes 129 à 374, 10-10 et 10-11) | 0 | ses quatre rouges réparés (`8079039c`). À `HEAD`, aucun échec sur `mobile-safari` ni `mobile-chrome`, deux cas instables sur WebKit. `C-97` (texte à 200 % sur `/dashboard`), rouge sur `mobile-chrome` les 10-12 et 10-13, est absent des échecs à `HEAD` |
+>
+> **75 → 76.**
 
 > ### 🟢 2026-10-03 · +1 : les cibles de l'Aperçu à 44 px, vues vertes en CI
 >

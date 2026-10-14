@@ -67,3 +67,4 @@ Tous suivent la même forme. Partir de `index.ts` (exports publics), puis :
 | Traductions | `src/locales/{fr,en}/`, `src/i18n/` |
 | Gardes CI | `scripts/` · [CLAUDE.md](../scripts/CLAUDE.md) |
 | CLI sur les vraies données | `scripts/cosmo/` · [`COSMO-CLI.md`](./COSMO-CLI.md) |
+| Import de tâches (Todoist, TickTick, Notion, CSV) | `src/lib/task-import/` (analyse, plan, exécution), écran `pages/settings/ImportTasksDialog.tsx` · ajouté à cette carte le 2026-10-15 |

@@ -310,6 +310,8 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
 ## Mesures de sécurité
 
 Détaillées dans l'annexe article 32 de [`LEGAL.md`](./LEGAL.md), avec leurs limites assumées.
-En résumé : chiffrement en transit avec HSTS preload, RLS sur **les 47 tables**, CSP stricte,
+En résumé : chiffrement en transit avec HSTS preload, RLS sur **toutes les tables** (77 dans
+`public` au 2026-10-15, relu en base ; ce document en annonçait 47), sauvegardes chiffrées avant
+dépôt depuis le 2026-10-13, CSP stricte,
 moindre privilège sur les fonctions, minimisation dans le monitoring, et gates d'intégration
 continue bloquantes sur les invariants RLS et les migrations.

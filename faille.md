@@ -13,7 +13,11 @@ et les **règles durables** tirées des audits.
 - Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-10-02** au soir, et avant elle **2026-10-01** (mig.
   `204`, `207`-`210` appliquées et relues au catalogue, cinq Edge Functions redéployées, `Edge deploy
   drift` vert, audit A-1 des 23 tables `160`-`207` acteur par acteur, § « Surface entreprise »),
-  puis `212`. ✅ **Remesuré le 2026-10-02 au soir** : advisors **`11 / 80 / 2 / 1`** inchangés, **74**
+  puis `212`. ✅ **Remesuré le 2026-10-15** : advisors **`11 / 82 / 2 / 1`** (égaux à la référence
+  de `Posture`, vert chaque jour depuis le 10-08), **77** tables toutes sous RLS, **205** policies,
+  ledger **170**, 12 Edge Functions, dépôt de nouveau public (privé du 10-13 au 10-14), une alerte
+  CodeQL et quatre Dependabot de développement ouvertes. Note **84 → 82** (`BK-1`).
+  ✅ **Remesuré le 2026-10-02 au soir** : advisors **`11 / 80 / 2 / 1`** inchangés, **74**
   tables (mig. `211`, deux tables vides retirées), **194** policies, ledger **162**, 12 Edge Functions,
   CodeQL et Dependabot à **0** ; et la garde `check:supabase-posture` comptait **zéro** pour chaque
   advisor depuis sa pose (corrigée, cf. note). Relevé du 10-01 :
@@ -40,7 +44,27 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → **84 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → **2026-10-02 soir**)
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → **82 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → **2026-10-15**)
+
+> ### 🟠 2026-10-15 · −2 : `BK-1` entre dans la note, la garde des advisors est enfin remboursée
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> production (advisors par l'API, catalogue, Edge Functions), dépôt à `HEAD`. Tableau de bord :
+> [`docs/README.md`](./docs/README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | ✅ AM-1 · advisors lus à la main (non remboursé le 09-22, « `M-58` pas fait ») | **+1** | `M-58` fait le 2026-10-08 : référence posée depuis le run `37773471782`, recalée le 10-10 (81 → 82, `claim_acquisition_source`, mig. `217`, relue). `Posture` **vert chaque jour depuis**, et sur des comptes **réels** depuis le correctif du 10-02. Relu ce soir par l'API : **`11 / 82 / 2 / 1`**, exactement la référence. Les deux de plus qu'au 10-02 sont nommés : `get_admin_onboarding_funnel` (mig. `213`, gardée par `is_admin()`) et `claim_acquisition_source` |
+> | 🔴 `BK-1` · dumps en clair dans les artefacts d'un dépôt public | **−2** | défaut refermé et vérifié (`8c6a971d`, `db-backup` vert et chiffré les 10-13 et 10-14). Mais ce qu'il a pu exposer ne l'est pas : `M-68`, **révoquer les sessions et changer le mot de passe de la base**, est ouvert à `a-faire-manuel.md`. Tant qu'un jeton de rafraîchissement lu dans un dump peut encore ouvrir une session, c'est structurel. ⚠️ Non relu en base : la lecture de `auth.sessions` a été refusée à l'agent, à juste titre |
+> | 🔴 CodeQL n° 13 · `high`, sans décision depuis le 2026-10-12 | **−1** | `js/double-escaping`, `scripts/capture-og-images.mjs`, fonction `unescape` : `&amp;` est décodé **avant** les autres entités, donc `&amp;lt;` devient `<`. **Trié par lecture** : script de build (images OG), entrée = notre propre prérendu, rien n'atteint un navigateur ; défaut de justesse réel, exploitation nulle. Le +1 de `M-60` (09-22) avait été crédité sur « chaque alerte porte une décision » : celle-ci n'en porte pas. Correctif : décoder `&amp;` en dernier |
+> | ⚠️ Dépôt **privé** du 2026-10-13 au 2026-10-14 (21:51 UTC) | 0 | CodeQL rouge sur quatre pushs (« Code scanning is not enabled »), secret scanning coupé. Rendu public par Axel : relu ce soir, `visibility: public`, secret scanning actif, **une** alerte (n° 1, connue, inerte). Les rouges CodeQL de la fenêtre ne sont pas des alertes |
+> | Dependabot | 0 | **4** alertes ouvertes le 10-13, toutes en dépendances de **développement** : `proxy-addr` (critique), `source-map-js` et `@modelcontextprotocol/sdk` (hautes), `postcss-selector-parser` (moyenne). Job `audit` (dépendances de production) vert. À trier, non débitées : rien n'est expédié |
+> | Base et fonctions | 0 | **77** tables, toutes sous RLS, **205** policies, ledger **170** (dernière `20261013150941`, mig. `220`) ; **12** Edge Functions actives, `send-org-invite` v3 déployée le 2026-10-13, `Edge deploy drift` vert le 10-14 |
+>
+> **84 → 82.** ⚠️ L'arbitrage `BK-1` à −2 et non plus : la grille ne connaît que « structurel » et
+> « limité », et le défaut lui-même est refermé. Ce qui reste ouvert est la conséquence, et elle se
+> rembourse au geste `M-68` vérifié.
 
 > ### ⚪ 2026-10-02 (soir) · 0 : production inchangée, et la garde des advisors était aveugle depuis sa pose
 >
@@ -76,8 +100,12 @@ et brouillons **hors dépôt** (dossier privé d'Axel), procédure [`docs/RGPD-V
 | 🔴 Ouvert | `M-68` révoquer les sessions et changer le mot de passe de la base (les jetons de rafraîchissement étaient probablement dans les dumps) · `M-69` décision CNIL sous 72 h · `M-70` information des personnes · `M-71` ranger la phrase secrète |
 | ❌ Règle durable | **aucune donnée personnelle en clair dans un artefact, un log ou un fichier d'un dépôt public.** « Il faut être connecté pour télécharger » ne protège rien : tout le monde a un compte GitHub |
 
-⚠️ La note de sécurité ci-dessus **n'est pas recalculée ici** : un débit se décide sur la grille de
-`docs/README.md`, pas à la volée. À faire à la prochaine relecture de la note.
+✅ **Note recalculée le 2026-10-15** : −2, en entrée de la note ci-dessus. Le −2 se rembourse à
+`M-68` vérifié. ⚠️ `docs/DEPLOYMENT.md` § 7 portait encore, le 2026-10-15, la phrase fausse du
+workflow (« les artefacts d'un run exigent une authentification ») : corrigée le même jour. Et
+`restore-drill.yml`, qui doit désormais **déchiffrer** le dump, est désactivé depuis le 2026-09-01 :
+le chemin de récupération chiffré n'a été parcouru que par `db-backup` lui-même (aller-retour
+sha256 avant dépôt), jamais par une restauration.
 
 ## 🟠 G-2 · aucune vérification de l'adresse email à l'inscription (2026-08-27)
 

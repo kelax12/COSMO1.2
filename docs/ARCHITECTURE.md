@@ -1,4 +1,4 @@
-<!-- note-audit: note=93 -->
+<!-- note-audit: note=90 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **93 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **90 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
 
 # Architecture — invariants, dette et vérification
 
@@ -22,7 +22,24 @@ dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → 93 → 93 → 92 → **93 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03)
+## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → 93 → 93 → 92 → 93 → **90 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15)
+
+> ### 🟠 2026-10-15 · −3 : trois gardes de structure rouges, aucune vue par la CI
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> dépôt à `HEAD` rejoué étape par étape dans un worktree propre. Tableau de bord :
+> [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | 🔴 Le référentiel au-delà de son plafond (AM-1, remboursé le 09-16 par `check:docs`) | **−1** | `src/modules/organizations/CLAUDE.md` à **15 378 o** pour 14 000 depuis `a6562733` (2026-10-12, rôles personnalisés). `check:docs` rouge en CI depuis, et c'est cette garde, en tête du job, qui a coupé tout le reste (cf. [`TESTING.md`](./TESTING.md)). Le remède est dans son message : faire descendre un contenu d'un cran, jamais relever la borne |
+> | 🔴 `organizations/supabase.repository.ts` à **602** lignes | **−1** | même commit (599 avant). `architecture.guard` rouge en local à `HEAD`, jamais en CI. `OVERSIZED_BUDGET` toujours à 0 |
+> | 🔴 Hook orphelin `useRemoveProjectTeam` (`team-projects/portfolio.hooks.ts`) | **−1** | son dernier consommateur est parti avec la refonte de la page projet (`35942a7d`, 10-13). `orphan-hooks.guard` (C-49) rouge en local. Deux sorties : le rebrancher, ou le supprimer |
+> | Cycles d'imports, `tsc`, lint | 0 | verts à `HEAD` (lint : 0 erreur, 34 avertissements). [`MODULES.md`](./MODULES.md) relu : chat de projet et rôles personnalisés y sont, l'import de tâches (`src/lib/task-import/`) y est ajouté ce jour |
+>
+> **93 → 90.** Les trois viennent de deux commits des 12 et 13 octobre, poussés pendant que la CI
+> ne pouvait plus les voir.
 
 > ### 🟢 2026-10-03 · +1 : `OKRPage.tsx` sous 600 lignes, vu vert en CI
 >

@@ -1,4 +1,4 @@
-<!-- note-audit: note=78 -->
+<!-- note-audit: note=79 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **78 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **79 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
 
 # SEO — état mesuré, règles et dette
 
@@ -25,7 +25,23 @@ cause n'est pas dans le dépôt.
 > liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
 > PageSpeed Insights.
 
-## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → **78 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → 78 → **79 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### 🟢 2026-10-15 · +1 : le LCP mobile sort de « mauvais »
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> production (curl sur le HTML servi), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | ✅ LCP mobile « mauvais » sur 8 URLs sur 8 (−1 le 09-22) | **+1** | **3,26 à 3,40 s** sur les 8 URLs, Lighthouse mobile en CI à `HEAD` (cf. [`PERFORMANCE.md`](./PERFORMANCE.md)). Signal *page experience* toujours sans donnée terrain |
+> | SEO Lighthouse | 0 | **100 sur les 8 URLs**, desktop et mobile. `/en/` passe de 92 à 100 (lien du bandeau cookies, `dc243383`) |
+> | Coquille `app.html` indexable ; canonical de `/entreprise-presentation` réécrit vers `/` par React | 0 | trouvés par l'audit externe du 2026-10-09 ([`audits/seo-thecosmo-app-2026-10-09/`](./audits/seo-thecosmo-app-2026-10-09/FULL-AUDIT-REPORT.md)), refermés le 10-09 (`69a972d0`) et le 10-12 (`dc243383`), **relus en production** ce soir : `noindex` servi par `app.html`, canonical et `og:image` propres à la page entreprise. Trouvés et refermés entre deux passes : ni débit ni crédit |
+> | `check:seo` | 0 | vert en local à `HEAD` : 50 pages prérendues, 40 URLs au sitemap, 150 `hreflang` réciproques |
+> | AM-4 · le résultat n'est pas mesuré | 0 | toujours vrai, `M-24` et `M-55` |
+>
+> **78 → 79.**
 
 > ### ⚪ 2026-10-02 (soir) · 0 : vérifiée inchangée
 >

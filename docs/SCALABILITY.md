@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **90 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **90 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
 
 # Scalabilité — audit mesuré, décisions et runbook
 
@@ -21,7 +21,21 @@ s'est révélée fausse.
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
 
-## Note de scalabilité : 71 → 84 → 86 → 89 → 91 → 87 → 90 → 90 → **90 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
+## Note de scalabilité : 71 → 84 → 86 → 89 → 91 → 87 → 90 → 90 → 90 → **90 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
+
+> ### ⚪ 2026-10-15 · 0 : le premier run de charge automatique, et un sondage permanent
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> production (catalogue, advisors), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | ✅ AM-1 · charge jouée automatiquement (+1 sur 2 le 09-22) | **+1** | `scalability-volume.yml`, premier run **planifié** le 2026-10-03 à 09:04 UTC : **vert**. Le second point attendait exactement ce run |
+> | 🔴 Sondage permanent du chat de projet | **−1** | `src/modules/team-projects/messages.hooks.ts` : `refetchInterval: 1000 * 20`, sans condition (`000eeedd`, mig. `220`, 2026-10-13). Trois requêtes par minute et par personne tant qu'une page projet est ouverte au premier plan. `polling.guard` rouge en local (deux cas), jamais en CI. La voie écrite au § 3 est Realtime (publication + `REPLICA IDENTITY FULL`), ou `refetchOnWindowFocus` seul |
+> | Production | 0 | **77** tables, toutes sous RLS, **205** policies, ledger **170** |
+>
+> **90 → 90.**
 
 > ### ⚪ 2026-10-02 (soir) · 0 : vérifiée inchangée
 >
