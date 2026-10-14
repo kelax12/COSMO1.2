@@ -391,6 +391,13 @@ Se déconnecter (feuille « Plus »), puis `/login`.
 
 ## Annexe A · les surfaces câblées, et ce que chacune doit dire
 
+> 🔴 **Recompté le 2026-10-15 : 60 appels du hook en production** (même commande, hors témoins,
+> à `f74b0874`), contre 51 au 2026-09-14. **Onze surfaces câblées manquaient à cette annexe**,
+> presque toutes dans le mode entreprise : elles sont ajoutées en tête du tableau, datées. Deux d'entre elles
+> (`AssignRoleDialog`, `RoleEditorSheet`) ne sont pas non plus déclarées à l'audit clavier
+> (`keyboard-audit-coverage`, rouge à `HEAD`, cf. [`ACCESSIBILITY.md`](./ACCESSIBILITY.md)). Cette
+> check-list n'a toujours **jamais été jouée** (AM-1) : chaque mois qui passe l'allonge.
+
 > 🔴 **Recompté le 2026-09-14 au soir : deux surfaces câblées manquaient à cette annexe.**
 > Le comptage de référence est désormais le nombre d'APPELS du hook, pas de fichiers qui le
 > mentionnent : `grep -rn "= useModalA11y\|useModalA11y<" src --include=*.tsx` rend **54** sites,
@@ -417,6 +424,17 @@ la référence des noms attendus, pour que « M1 » ait un contenu vérifiable �
 
 | Surface | Où l'ouvrir | Nom attendu (M1) | § |
 |---|---|---|---|
+| **`AssignRoleDialog`** 🆕 2026-10-15 | `/entreprise` › annuaire (`MemberDirectory`) › attribuer un rôle personnalisé | à relire dans le code · **jamais auditée** · ⚠️ affiche « aucun rôle » pendant le chargement (`loading-empty-state.guard`) | 9 |
+| **`RoleEditorSheet`** 🆕 2026-10-15 | `/entreprise` › Paramètres › rôles (`OrgRolesSettings`) | à relire dans le code · **jamais auditée** | 9 |
+| **`InviteModeDialog`** 🆕 2026-10-15 | `/entreprise` › Personnes › inviter | à relire dans le code · **jamais auditée** | 9 |
+| **`InviteByEmailDialog`** 🆕 2026-10-15 | Personnes ou Paramètres › inviter par e-mail | à relire dans le code · **jamais auditée** | 9 |
+| **`MemberBulkPicker`** 🆕 2026-10-15 | annuaire › sélection multiple | à relire dans le code · **jamais auditée** | 9 |
+| **`OrgSectionSwitcher`** 🆕 2026-10-15 | `/entreprise`, changement de section sur téléphone | à relire dans le code · **jamais auditée** | 9 |
+| **`OrgGlossarySheet`** 🆕 2026-10-15 | `/entreprise`, un terme de rôle souligné (`RoleTerm`) | à relire dans le code · **jamais auditée** | 9 |
+| **`ProjectEditDialog`** 🆕 2026-10-15 | projets › nouveau projet, ou page projet › modifier | à relire dans le code · **jamais auditée** | 9 |
+| **`PyramidPlacementSheet`** 🆕 2026-10-15 | pyramide › placer une personne | à relire dans le code · **jamais auditée** | 9 |
+| **`OrgWelcomeVideo`** 🆕 2026-10-15 | premier passage dans `/entreprise`, créateur comme membre : lecteur de la vidéo d'accueil (`f74b0874`, qui retire `MemberWelcome`) | à relire dans le code · **jamais auditée** · déclarée à l'audit clavier | 9 |
+| **`MobileTaskSearch`** 🆕 2026-10-15 | `/tasks` sur téléphone, recherche | à relire dans le code · **jamais auditée** | 4 |
 | **`MoveCategoryDialog`** 🆕 | `ColorSettingsModal` › déplacer une catégorie | à relire dans le code · **jamais auditée** | · |
 | **`DeleteTeamCategoryConfirm`** 🆕 | onglet OKR d'équipe › supprimer une catégorie | à relire dans le code · **jamais auditée** | · |
 | `MobileMoreSheet` | barre d'onglets, « Plus » | Plus d'options | 3.3 |

@@ -3,6 +3,15 @@
 > **Historique de la note** · 2026-10-09 : **76** · après `69a972d0` (même jour) : **78** ·
 > après `dc243383` (2026-10-12) : **81**. Chaque passe est déployée et vérifiée en production
 > (curl sur le HTML servi, Lighthouse sur la prod), pas seulement commitée.
+>
+> 🔎 **Revérifié le 2026-10-15, note inchangée (81)** : aucun commit SEO depuis le 10-12. En
+> production (curl) : `app.html` sert `noindex`, `/entreprise-presentation` porte son propre
+> canonical et sa carte `og/entreprise-presentation.jpg`, 40 URLs au sitemap, toutes en 200. En CI
+> (Lighthouse du run `38476034238`, `6847bbf3`) : SEO **100 sur les 8 URLs**, desktop et mobile ;
+> perf mobile 62 à 86, **LCP mobile 3,26 à 3,40 s** sur les 8 URLs (accueil : 65, TBT 878 ms, le
+> chantier T-51 reste ouvert). Les quatre lignes « Ce qui reste » du plan d'action sont inchangées.
+> Note du domaine dans le dépôt : [`docs/SEO.md`](../../SEO.md), 78 → **79** le même jour (barème
+> distinct de celui-ci, les deux ne se comparent pas).
 
 Outil : skill `seo-audit` (claude-seo v2.4.2), exécuté en local. Périmètre : les 40 URLs du
 sitemap (20 FR + 20 EN), toutes en 200, plus robots.txt, redirections, 404 et rendu client.

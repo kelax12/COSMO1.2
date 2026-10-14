@@ -62,6 +62,119 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-15 · **passe complète : les onze audits rejoués, 953 → 940**
+
+Consigne d'Axel : « remet à jour TOUS les audits en .md ». Même méthode que les passes du 10-01 et
+du 10-02 au soir, sur les **152 commits** arrivés depuis la dernière (`63573b39` → `6847bbf3`) :
+**CI réelle** de `main`, **production** (advisors par l'API, catalogue, ledger, Edge Functions),
+**dépôt à `HEAD`**. Même règle : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+défaut que corrigé et vérifié. Mesures prises dans la nuit du 2026-10-14 au 2026-10-15.
+⚠️ **`f74b0874`** (onboarding entreprise : vidéo d'accueil, assistant en constellation retiré, 29
+fichiers) est arrivé **pendant** la passe : il n'est couvert par aucune mesure ci-dessous, sauf le
+recomptage VoiceOver. Les sept gardes rouges portent sur d'autres fichiers ; le budget de bundle
+de `OrganizationPage`, lui, est à remesurer.
+
+### 🔴 Le constat qui domine : un rouge de documentation cache dix rouges de produit
+
+| Job | Dernier verdict | Mesuré le 2026-10-15 |
+|---|---|---|
+| `lint-test-build` | 🔴 depuis le 2026-10-12 | s'arrête à l'**étape 2 sur 23**, `check:docs` : `src/modules/organizations/CLAUDE.md` pèse **15 378 o** pour 14 000 (`a6562733`, rôles personnalisés). Dernier `CI` vert : `9f6595b5`, le 2026-10-11 à 15:26 UTC. **Rien de ce qui suit l'étape 2 n'a tourné en CI depuis trois jours** |
+| `e2e` | 🔴 `6847bbf3` | **1 échec, 2 instables, 239 verts**, en 39 min (27 min le 10-03). L'échec : `org-guide.spec.ts`, rouge à chaque run depuis le 10-13 : il cherche « Créer une équipe » dans un tiroir dont les catégories sont repliées depuis `c7051e19`. Test en retard sur l'écran |
+| `lighthouse` | ✅ | desktop : LCP 0,65 à 1,34 s ; **mobile : 3,26 à 3,40 s sur les 8 URLs** (5,6 à 8,4 s le 10-02). `C-116` tient en CI depuis le 2026-10-10, et n'avait été crédité nulle part |
+| `rls-integration`, `audit` | ✅ | |
+| `Visual` | 🔴 depuis le 2026-10-12 | **4 cas sur 20** : `/entreprise · Aperçu`, `/`, `/guide`, `/blog`. Différences non triées entre changement voulu et régression |
+| `CodeQL` | 🔴 du 2026-10-13 au 2026-10-14 | « Code scanning is not enabled » : le dépôt était **privé** (ci-dessous). Une alerte ouverte, `high`, sans décision |
+| `Posture` | ✅ tous les jours depuis le 2026-10-08 | `M-58` fait : advisors `11 / 82 / 2 / 1`, égaux à la référence |
+| `Edge deploy drift`, `Migration coverage`, `db-backup` (chiffré), `Uptime`, `Deploy SHA drift`, `Vendor script watch`, `renewal-notice`, `Sabotages` (10-12) | ✅ | |
+| `scalability-volume` | ✅ 2026-10-03 | **premier run planifié**, vert |
+| `restore-drill` | ⛔ **désactivé à la main depuis le 2026-09-01** | le contrôle trimestriel `dump-check` (`C-86`, 2026-09-20) n'a **jamais** tourné : son premier passage, le 2026-10-05, n'a pas eu lieu. Un workflow désactivé ne rend ni vert ni rouge, il disparaît de `gh run list` |
+
+**Rejoué en local**, sur un worktree propre de `HEAD` (aucun fichier d'une autre session), étape par
+étape et code de sortie lu, tout ce que la CI n'atteint plus :
+
+| Étape | À `HEAD` | Cause, et commit d'entrée |
+|---|---|---|
+| `check:erasure`, `check:portability` | 🔴 | `org_member_roles` (mig. `219`, appliquée le 10-13) porte `user_id` sans décision d'effacement ni d'export (`a6562733`). Vue rouge en CI **une fois**, le 10-12 (`8b791715`), puis masquée |
+| Tests unitaires | 🔴 **13 échecs sur 3 762**, 12 fichiers sur 338, exit 1 | six fichiers, rejoués seuls machine libre : **69 / 69 verts** (délais de 20 s dépassés sous la charge). Restent **7 gardes rouges pour de vrai**, ci-dessous |
+| Budget de bundle | 🔴 | `OrganizationPage` **18,4 / 18,0 ko**, `TeamTaskModal` **12,3 / 12,0**. Chemin critique 303,9 ko (302,6 le 10-03), entrée 69,2 / 70,5 |
+| Lint (0 erreur), `tsc`, migrations, RLS, cycles, plancher de tests, Edge, env, études, journal légal, i18n (×4), notes déclarées, acquisition, couverture de l'outillage, build, `check:seo` | ✅ | |
+
+Les sept gardes, toutes entrées les 12 et 13 octobre, aucune vue par la CI :
+
+| Garde | Ce qu'elle voit | Entré avec | Débité dans |
+|---|---|---|---|
+| `architecture.guard` | `organizations/supabase.repository.ts` à **602** lignes | `a6562733` | Architecture |
+| `orphan-hooks.guard` | `useRemoveProjectTeam` n'est plus monté par rien | `35942a7d` | Architecture |
+| `polling.guard` (2 cas) | `team-projects/messages.hooks.ts` sonde **toutes les 20 s, en permanence** (chat de projet) | `000eeedd` | Scalabilité |
+| `error-messages.guard` | `messages.repository.ts` lance « Empty message » en dur, affiché tel quel en français | `000eeedd` | i18n |
+| `keyboard-audit-coverage` | `AssignRoleDialog`, `RoleEditorSheet` ni mesurées ni déclarées | `a6562733` | Accessibilité |
+| `loading-empty-state` | `AssignRoleDialog` affirme l'absence de rôles avant la réponse | `a6562733` | UI / UX |
+
+🔴 **C'est le constat du 2026-09-22, en plus court et en plus dense.** Une garde de documentation
+placée en tête du job a coupé l'instrument : `a6562733` a fait entrer **six** défauts en un commit
+(budget du `CLAUDE.md`, 602 lignes, effacement, portabilité, deux surfaces au clavier), et seul le
+premier était visible. Chaque garde a mordu, aucune n'a parlé. La leçon outillable : **un job qui
+s'arrête au premier rouge ne mesure que le premier rouge**, les étapes de garde pourraient toutes
+tourner (`if: always()` ou `continue-on-error` suivi d'un verdict final).
+
+### 🔴 En production : la violation `BK-1` entre enfin dans les notes
+
+`db-backup.yml` déposait chaque jour un `pg_dump` complet **en clair** en artefact d'un dépôt public,
+du 2026-08-29 au 2026-10-13 (cf. [`../faille.md`](../faille.md) § `BK-1`). Le défaut est refermé et
+vérifié : dump chiffré avant dépôt (`8c6a971d`), `db-backup` vert les 10-13 et 10-14, dumps en clair
+supprimés. Restent quatre gestes d'Axel, dont **`M-69`, la décision de notifier la CNIL, avant le
+2026-10-16 vers 11 h UTC**. `faille.md` avait noté le 10-13 que la note de sécurité n'était « pas
+recalculée » : elle l'est ici, et la note RGPD aussi.
+
+⚠️ **Le dépôt a été privé du 2026-10-13 au 2026-10-14 (21:51 UTC), puis rendu public par Axel.**
+Effets mesurés pendant l'épisode : CodeQL rouge sur quatre pushs (« Code scanning is not enabled »),
+secret scanning coupé. Les deux sont revenus ; l'alerte de secret n° 1 (connue, inerte) est la
+seule. ❌ Ne pas lire les quatre rouges CodeQL de cette fenêtre comme des alertes.
+
+`docs/DEPLOYMENT.md` § 7 portait encore, ce matin, **la phrase exacte qui a produit `BK-1`** (« les
+artefacts d'un run exigent une authentification ») : corrigée dans cette passe.
+
+### Les notes
+
+| Audit | Avant | **2026-10-15** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 84 | **82** | **−2** | `M-58` fait, `Posture` vert chaque jour sur des comptes réels (+1) ; `BK-1` : sessions et mot de passe de la base pas encore changés (`M-68`) (−2) ; alerte CodeQL `high` sans décision depuis le 10-12 (−1) |
+| [UI / UX](./UI-PATTERNS.md) | 86 | **84** | **−2** | `Visual` rouge depuis trois jours, Aperçu compris (−1) ; `AssignRoleDialog` affirme une absence avant de savoir (−1) |
+| [RGPD](./RGPD.md) | 87 | **84** | **−3** | `BK-1`, violation au sens de l'art. 4.12, décision CNIL et information des personnes ouvertes (−2) ; `org_member_roles` hors effacement déclaré et hors export (−1) |
+| [Tests / CI](./TESTING.md) | 96 | **92** | **−4** | `main` rouge depuis le 2026-10-12, 21 étapes jamais jouées (−2) ; `org-guide.spec` rouge à chaque run (−1) ; `restore-drill` désactivé, `dump-check` jamais joué (−1) |
+| [Architecture](./ARCHITECTURE.md) | 93 | **90** | **−3** | `CLAUDE.md` d'organisations au-delà de son plafond, le référentiel d'AM-1 (−1) ; 602 lignes (−1) ; hook orphelin (−1) |
+| [Performance](./PERFORMANCE.md) | 94 | **95** | **+1** | LCP mobile 3,3 s sur 8 / 8 en CI (+2 sur le −3 du 09-22) ; budget rouge sur deux cliquets (−1) |
+| [Scalabilité](./SCALABILITY.md) | 90 | **90** | 0 | premier run de charge planifié, vert (+1) ; sondage permanent du chat de projet (−1) |
+| [i18n](./I18N.md) | 88 | **87** | **−1** | « Empty message » en dur |
+| [SEO](./SEO.md) | 78 | **79** | **+1** | LCP mobile sorti de « mauvais » (le −1 du 09-22) ; SEO Lighthouse 100 sur 8 / 8, `/en/` compris |
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | **81** | **−1** | deux surfaces modales neuves ni mesurées ni déclarées |
+| [Mobile / DA](./MOBILE.md) | 75 | **76** | **+1** | LCP mobile (+1 sur le −2 du 09-22, un point retenu : 3,3 s reste au-dessus de 2,5 s) |
+
+**953 → 940 : −19 débités, +6 remboursés.** Trois notes montent, sept baissent. Trois des six
+points remboursés le sont pour **une seule** correction, `C-116`, fermée le 10-10 et jamais
+créditée. **Neuf des dix-neuf points débités sont des défauts entrés les 12 et 13 octobre**, vus
+par des gardes qui n'ont pas pu parler en CI, et deux de plus sont le prix de cette CI muette. Le
+reste : `BK-1` (4), deux instruments éteints (`restore-drill`, `Visual`), deux rouges qui, eux,
+parlent (`org-guide.spec`, CodeQL).
+
+### Ce qu'il faut faire, dans l'ordre
+
+1. **`M-68` à `M-71`** (Axel) : révoquer les sessions et changer le mot de passe de la base, puis
+   **trancher la notification CNIL avant le 2026-10-16 vers 11 h UTC**, informer les personnes,
+   ranger la phrase secrète. Seule cette ligne a une échéance légale.
+2. **Rendre la main à la CI** : faire descendre ~1,4 ko de `src/modules/organizations/CLAUDE.md`
+   (jamais relever la borne). La CI verra alors, dans cet ordre, effacement et portabilité de
+   `org_member_roles`, les sept gardes et le budget : les traiter **avant** de pousser.
+3. **`org-guide.spec`** : déplier la catégorie avant de chercher « Créer une équipe ».
+4. **`Visual`** : trier les quatre différences, régénérer seulement ce qui est voulu.
+5. **Réactiver `restore-drill.yml`** et jouer `dump-check` une fois à la main : il doit désormais
+   **déchiffrer** le dump, chemin que rien n'a parcouru hors de `db-backup` lui-même.
+6. **CodeQL n° 13** (`scripts/capture-og-images.mjs`) : décoder `&amp;` en dernier, une ligne.
+7. Quatre alertes Dependabot de **développement** (`proxy-addr` critique, `source-map-js`,
+   `@modelcontextprotocol/sdk`, `postcss-selector-parser`), ouvertes le 10-13 : à trier.
+
+---
+
 ## Mise à jour du 2026-10-03 · **`main` entièrement vert en CI, 943 → 953**
 
 Consigne d'Axel : « fais tout ce que tu peux faire avec du code ». Trois sessions y ont travaillé en

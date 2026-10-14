@@ -53,7 +53,7 @@ réagir à un incident. À lire avant toute mise en prod.
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
 | AM-1 | ✅ **COMBLÉ le 2026-09-16 par `npm run check:deploy`** (job `Deploy SHA drift`, horaire, branché sur `ci-alert.yml`). Était : **rien ne comparait le commit déployé sur Vercel à `main`.** C'est exactement le défaut C-35 des Edge Functions, **côté front**, et il n'a jamais été nommé. `check:edge` compare le code déployé des fonctions au dépôt ; **aucun équivalent n'existe pour l'application elle-même** | la garde lit `/version.json` **sur la production**, écrit au build par `VERCEL_GIT_COMMIT_SHA`, et distingue **à jour / retard / dérive** : un `!=` confondrait un déploiement en vol avec une dérive, et une prod **en avance** avec un simple retard | ✅ **COMBLÉ le 2026-09-16** · `npm run check:deploy` (`T-8`), job horaire branché sur `ci-alert.yml`. Cycle complet observé le même jour |
-| AM-2 | 🔴 **Le ROLLBACK n'a jamais été éprouvé.** Le runbook le décrit ; `restore-drill.yml` n'a qu'un `workflow_dispatch` avec confirmation. **Un chemin de récupération qui n'a pas été parcouru est une hypothèse**, et ce dépôt l'a déjà appris au prix fort avec la mig. `131` (`/admin` inaccessible deux jours) | `restore-drill.yml` : `on: workflow_dispatch` | ✅ **OUTILLÉ le 2026-09-20** · `dump-check` **trimestriel et automatique** (`C-86`) — 🔴 ne prouve PAS : qu'un dump soit restaurable, et surtout pas que le **rollback** fonctionne : personne ne l'a jamais parcouru, c'est **`M-47`** |
+| AM-2 | 🔴 **Le ROLLBACK n'a jamais été éprouvé.** Le runbook le décrit ; `restore-drill.yml` n'a qu'un `workflow_dispatch` avec confirmation. **Un chemin de récupération qui n'a pas été parcouru est une hypothèse**, et ce dépôt l'a déjà appris au prix fort avec la mig. `131` (`/admin` inaccessible deux jours) | `restore-drill.yml` : `on: workflow_dispatch` | ✅ **OUTILLÉ le 2026-09-20** · `dump-check` **trimestriel et automatique** (`C-86`) · 🔴 ne prouve PAS : qu'un dump soit restaurable, et surtout pas que le **rollback** fonctionne : personne ne l'a jamais parcouru, c'est **`M-47`** · 🔎 🔴 **2026-10-15 : l'outil lui-même ne tourne pas.** `restore-drill.yml` est désactivé à la main depuis le 2026-09-01 : `dump-check` n'a jamais été joué, et `gh run list` ne montre même pas qu'il manque |
 | AM-3 | **Les variables d'environnement Vercel ne sont comparées à rien.** Une `VITE_*` manquante ou périmée ne se voit qu'à l'exécution. Le cas a déjà mordu : `VITE_SENTRY_DSN` absente changeait la forme du bundle et rendait la garde de budget aveugle à ~45 ko | aucun job ne lit la configuration Vercel | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:env` · contrat statique des 8 `VITE_*` avec l'**effet d'absence** de chacune (`C-105`) — 🔴 ne prouve PAS : les **valeurs** : la moitié Vercel vérifie une présence, jamais un contenu. ⚠️ Et elle dort tant que `VERCEL_TOKEN` / `VERCEL_PROJECT_ID` ne sont pas posés (**`M-59`**) |
 | AM-4 | **L'état réel de Turnstile n'est écrit nulle part de vérifiable.** Le code existe (`TurnstileWidget.tsx`, `AuthForm.tsx`) ; son activation dépend d'une variable posée **hors du dépôt**. Ce document le dit « inerte au 2026-08-28 », et rien ne dirait qu'il a changé | 3 fichiers sources le référencent, 0 garde | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:env` (`C-105`) — 🔴 ne prouve PAS : rien de plus qu'AM-3 : même garde, même réserve |
 | AM-5 | **`uptime.yml` mesure qu'une page RÉPOND, jamais qu'elle FONCTIONNE.** Un HTTP 200 sur une coquille SPA vide est vert. C'est le même piège que la garde Lighthouse qui mesurait une 404 (`T-50`, corrigé le 2026-08-29) | `uptime.yml` : `-w '%{http_code}'` sur `/` et `/auth/v1/health` | ✅ **OUTILLÉ le 2026-09-20** · 3 marqueurs **absents de la coquille SPA** + une 2ᵉ page prérendue sondée + le corps de `/auth/v1/health` (`C-104`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé dans l'autre sens** : `uptime.yml` avait un marqueur (`grep -i cosmo`) qui **ne pouvait pas échouer**, la coquille contenant le mot 21 fois |
@@ -580,6 +580,13 @@ passer par `apply_migration` (MCP) ou le SQL editor avec le fichier versionné.
 
 ## 7. Backup & Disaster Recovery (runbook)
 
+> 🔎 **État au 2026-10-15.** `db-backup` est vert tous les jours, **chiffré** depuis le 2026-10-13.
+> 🔴 `restore-drill.yml` est **désactivé à la main depuis le 2026-09-01** (`gh api …/workflows` :
+> `disabled_manually`) : le `dump-check` trimestriel posé le 2026-09-20 (`C-86`) n'a **jamais**
+> tourné, son premier passage du 2026-10-05 n'a pas eu lieu, et la restauration d'un dump
+> **chiffré** n'a été parcourue par aucun job. À réactiver, puis à jouer une fois à la main
+> (débité dans [`TESTING.md`](./TESTING.md)).
+
 **État au 2026-09-01** : le plan Free n'offre **aucune sauvegarde native**, et le PITR a été
 écarté avec le plan Pro (T-01). La seule copie de la base qui existe est le dump quotidien de
 `.github/workflows/db-backup.yml`. **La restauration a été testée le 2026-09-01** (drill
@@ -587,8 +594,9 @@ ci-dessous) : le dump se restaure, en 163 s, et l'isolation RLS survit.
 
 ### Restauration réelle (sinistre)
 1. Créer un projet Supabase neuf, récupérer sa chaîne de connexion en mode **session**.
-2. Restaurer le dernier dump :
-   `pg_restore --no-owner --no-privileges --dbname "<url>" cosmo-<date>.dump`
+2. Déchiffrer puis restaurer le dernier dump (chiffré depuis le 2026-10-13) :
+   `gpg --batch --passphrase-file <fichier> -o cosmo.dump -d cosmo-<date>.dump.gpg`, puis
+   `pg_restore --no-owner --no-privileges --dbname "<url>" cosmo.dump`
    (client PostgreSQL **17** obligatoire, cf. le piège de version plus bas).
 3. Re-pointer le front : Vercel `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`, puis redéployer.
 4. Redéployer les Edge Functions et reposer les secrets sur le nouveau ref : **le dump ne les
@@ -659,16 +667,26 @@ artefact avec **30 jours de rétention**.
 **Mise en service** : poser le secret GitHub `SUPABASE_DB_URL` (Dashboard → Settings → Database →
 Connection string, mode « session »). Sans lui le job s'arrête en **avertissement**, pas en échec —
 une CI rouge en permanence finit ignorée, règle déjà appliquée à `renewal-notice`.
+**Depuis le 2026-10-13**, le secret `BACKUP_PASSPHRASE` (32 caractères au moins) est obligatoire :
+sans lui le job **échoue**, parce que c'est la seule absence qui exposerait. Sa copie hors de
+GitHub est le geste `M-71` : un secret Actions ne se relit pas, et sans elle aucune sauvegarde ne
+se restaure.
 
 > ⚠️ **Ce n'est PAS l'équivalent d'un PITR.** Un dump quotidien a un RPO de 24 h : il sert à ne
 > pas TOUT perdre, pas à revenir à l'état d'il y a une heure, et il ne se restaure pas en un clic. Ce qu'il couvre et que le PITR ne couvre pas, c'est
 > la perte du **compte** — suspension, litige, ou décision de partir. Les deux répondent à des
 > risques différents, aucun ne dispense de l'autre.
 >
-> 🔴 **L'artefact contient des données personnelles** (noms, emails, contenu des tâches). Le dépôt
-> est public, mais les artefacts d'un run exigent une authentification. Ne **jamais** committer un
-> dump. Pour une vraie copie longue durée, le télécharger et le garder sur un disque chiffré :
-> GitHub n'est pas un coffre.
+> 🔴 **L'artefact contient des données personnelles** (noms, emails, empreintes de mots de passe,
+> contenu des tâches). ❌ **Corrigé le 2026-10-15 : ce paragraphe disait « le dépôt est public, mais
+> les artefacts d'un run exigent une authentification ».** C'est faux : sur un dépôt public,
+> **n'importe quel compte GitHub connecté** télécharge un artefact. Cette phrase, recopiée du
+> commentaire du workflow, est exactement ce qui a produit la violation **`BK-1`** (dumps en clair
+> exposés du 2026-08-29 au 2026-10-13, cf. [`../faille.md`](../faille.md)). Depuis `8c6a971d`
+> (2026-10-13), **seul un dump chiffré** (`gpg`, AES-256, phrase secrète `BACKUP_PASSPHRASE`) part
+> en artefact, relu à l'identique par sha256 avant dépôt ; sans la phrase secrète, le job
+> **échoue**. Ne **jamais** committer un dump. Pour une vraie copie longue durée, la télécharger et
+> la garder sur un disque chiffré : GitHub n'est pas un coffre.
 
 Manuellement, si besoin :
 ```bash

@@ -1,4 +1,4 @@
-<!-- note-audit: note=82 -->
+<!-- note-audit: note=81 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **82 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **81 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
 
 # Accessibilité (a11y) — COSMO
 
@@ -45,7 +45,21 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15)
+
+> ### 🟠 2026-10-15 · −1 : deux surfaces modales neuves, ni mesurées ni déclarées
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> dépôt à `HEAD` rejoué étape par étape. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | 🔴 `AssignRoleDialog`, `RoleEditorSheet` (rôles personnalisés, `a6562733`) | **−1** | `keyboard-audit-coverage` (C-96) rouge en local à `HEAD`, jamais en CI (masqué par `check:docs`) : ni mesurées, ni déclarées « non mesurées » avec leur raison |
+> | axe et clavier en CI | 0 | `e2e` à `HEAD` : les 11 routes `a11y-audit` et les cas `a11y-keyboard-audit` verts sur chromium. Lighthouse a11y 92 à 100 sur les 8 URLs |
+> | Check-list VoiceOver | 0 | **60** surfaces câblées par `useModalA11y` (51 au 2026-09-14), dont **11** absentes de l'Annexe A de [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) : ajoutées ce jour. Non débité, `M-56` toujours pas arbitré |
+>
+> **82 → 81.**
 
 > ### 🟢 2026-10-03 · +1 : les cibles de l'Aperçu à 44 px, vues vertes en CI
 >

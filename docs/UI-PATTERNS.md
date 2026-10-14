@@ -1,4 +1,4 @@
-<!-- note-audit: note=86 -->
+<!-- note-audit: note=84 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,25 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **86 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **84 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
 
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03)
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15)
+
+> ### 🟠 2026-10-15 · −2 : `Visual` rouge trois jours, et un dialogue qui affirme avant de savoir
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> dépôt à `HEAD` rejoué étape par étape. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | 🔴 `Visual` rouge depuis le 2026-10-12 | **−1** | dernier vert : `9f6595b5` (10-11). À `HEAD` (run `38476034115`) : **4 cas sur 20**, `/entreprise · Aperçu` (la surface remboursée le 10-03), `/`, `/guide`, `/blog`, trois tentatives chacun. Depuis le dernier vert, l'Aperçu et les pages publiques ont changé plusieurs fois (avatars en couleur, « Valider / Renvoyer » sur la ligne de la tâche, captures et images OG) : rien ne dit lesquelles des quatre différences sont voulues. **Une garde rouge trois jours ne compare plus rien**, elle sonne |
+> | 🔴 `AssignRoleDialog` affirme l'absence de rôles avant la réponse | **−1** | `loading-empty-state.guard` (C-40) rouge en local à `HEAD` : lecture « à l'aveugle » de `roles`, l'état vide s'affiche pendant le chargement (`a6562733`) |
+> | Guide entreprise (30 scénarios, 10-12 et 10-13) | 0 | livré avec ses ancrages `data-guide-id` et la garde de ses scénarios ; son e2e est rouge (cf. [`TESTING.md`](./TESTING.md)) |
+>
+> **86 → 84.**
 
 > ### 🟢 2026-10-03 · +1 : l'Aperçu de `/entreprise` sous `Visual`
 >

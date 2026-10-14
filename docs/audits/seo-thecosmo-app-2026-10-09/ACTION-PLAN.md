@@ -3,6 +3,10 @@
 Note actuelle : **81 / 100** (76 le 2026-10-09, 78 après `69a972d0`, 81 après `dc243383`).
 Détail : [FULL-AUDIT-REPORT.md](./FULL-AUDIT-REPORT.md).
 
+🔎 **Relu le 2026-10-15** : rien n'a bougé depuis le 10-12, les sept lignes ci-dessous sont
+toujours à leur état. Seul fait neuf, sur la ligne 5 : le LCP mobile est à 3,3 s sur toutes les
+URLs en CI, mais l'accueil reste à 65 de perf mobile (TBT 878 ms).
+
 ## Ce qui reste, et pourquoi
 
 ### Attend une information d'Axel

@@ -1,4 +1,4 @@
-<!-- note-audit: note=87 -->
+<!-- note-audit: note=84 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **87 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **84 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
 
 # RGPD — inventaire, droits des personnes et dette
 
@@ -16,7 +16,24 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### 🔴 2026-10-15 · −3 : la première violation de données, et une table neuve hors effacement déclaré
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> production (catalogue), dépôt à `HEAD` rejoué étape par étape. Tableau de bord :
+> [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | 🔴 `BK-1` · dumps complets de la base, en clair, téléchargeables depuis un dépôt public, du 2026-08-29 au 2026-10-13 | **−2** | violation au sens de l'art. 4.12 (cf. [`../faille.md`](../faille.md) § `BK-1`). Le défaut technique est refermé et vérifié (`8c6a971d`). **Ouverts** : `M-69`, décision de notification à la CNIL (art. 33), **avant le 2026-10-16 vers 11 h UTC** ; `M-70`, information des personnes (art. 34) ; registre des violations tenu **hors dépôt**. [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md) a servi pour la première fois, en situation réelle et non à blanc |
+> | 🔴 `org_member_roles` (mig. `219`, en production depuis le 10-13) | **−1** | porte `user_id` sans décision écrite : `check:erasure` et `check:portability` **rouges à `HEAD`**, vus rouges en CI une seule fois (effacement, `8b791715`, 10-12), puis masqués par `check:docs`. Dans les faits, la FK `user_id` est `ON DELETE CASCADE` (lu dans le fichier de la migration, la lecture du catalogue ayant été refusée à l'agent) : l'effacement a lieu, il n'est pas déclaré. L'**export**, lui, manque : les rôles attribués à une personne ne sortent pas de son export |
+> | `C-121` · suppression des comptes inactifs depuis 3 ans | 0 | promesse publiée le 10-13 sans traitement ; aucun compte n'atteint le seuil avant 2029 |
+> | Export enrichi | 0 | statut et état des tâches dans l'export (mig. `214`, `d0ffbf2e`) ; la garde d'effacement lit désormais chaque clause d'un `ALTER TABLE` (`7d98cf78`) |
+> | Production | 0 | **77** tables, toutes sous RLS, **205** policies |
+>
+> **87 → 84.**
 
 > ### ⚪ 2026-10-02 (soir) · 0 : vérifiée inchangée
 >

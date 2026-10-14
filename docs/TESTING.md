@@ -1,4 +1,4 @@
-<!-- note-audit: note=96 -->
+<!-- note-audit: note=92 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,33 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **96 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **92 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → **96 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → **92 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15)
+
+> ### 🟠 2026-10-15 · −4 : `main` rouge depuis trois jours, et le rouge de tête en cache dix autres
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`
+> (run `38476034238`), production, et dépôt à `HEAD` **rejoué étape par étape** dans un worktree
+> propre. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | 🔴 `main` rouge depuis le 2026-10-12 | **−2** | dernier `CI` vert : `9f6595b5` (2026-10-11, run `38151250177`). Depuis `93fac9aa` (10-12), `lint-test-build` s'arrête à l'**étape 2 sur 23**, `check:docs` (`src/modules/organizations/CLAUDE.md`, 15 378 o pour 14 000, entré avec `a6562733`) : **21 étapes jamais jouées en CI**, tests, build et budget compris. Rejouées en local à `HEAD` : `check:erasure`, `check:portability`, **sept gardes unitaires** et le budget de bundle sont rouges, chacun débité dans son domaine |
+> | Tests unitaires à `HEAD` | 0 | **3 762 tests, 338 fichiers** (3 395 et 306 le 10-03). Sous la charge : **13 échecs dans 12 fichiers**, exit 1. Six fichiers rejoués seuls, machine libre : **69 / 69 verts**, c'étaient des délais de 20 s dépassés (règle n° 1 du `CLAUDE.md` racine : le code de sortie, puis le décompte, puis l'attribution). Restent sept gardes, cf. tableau de bord. Couverture de l'outillage verte |
+> | 🔴 `e2e` · `org-guide.spec.ts` | **−1** | rouge à **chaque** run depuis le 2026-10-13, trois tentatives de 2 min : le test clique « Créer une équipe » dans le tiroir du guide, dont les catégories sont repliées depuis `c7051e19`. Test posé le 10-12 (`eb443737`), jamais vert depuis la refonte du tiroir. Le reste : **239 verts, 2 instables** (WebKit), en 39 min |
+> | 🔴 `restore-drill.yml` **désactivé à la main depuis le 2026-09-01** | **−1** | `C-86` (2026-09-20) l'avait coupé en deux, dont un `dump-check` **trimestriel et automatique**. Un workflow désactivé n'exécute pas son `schedule` : le premier passage, le 2026-10-05, n'a pas eu lieu, et `gh run list --workflow restore-drill` répond « could not find any workflows ». Depuis `BK-1` (10-13), le dump est chiffré : ce workflow est le seul qui le **déchiffre** pour le restaurer, et il n'a jamais tourné sous cette forme. Une garde qu'on ne peut voir ni rouge ni verte |
+> | `Visual` rouge depuis le 2026-10-12 | 0 | 4 cas sur 20, débité dans [`UI-PATTERNS.md`](./UI-PATTERNS.md) |
+> | CodeQL rouge du 10-13 au 10-14 | 0 | dépôt privé pendant l'épisode : pas un défaut de test (cf. [`../faille.md`](../faille.md)) |
+> | `Sabotages` (10-12), `Posture`, `Edge deploy drift`, `Migration coverage`, `Uptime`, `Deploy SHA drift` | 0 | verts |
+>
+> **96 → 92.** 🔴 **La leçon, et elle est outillable** : un job qui s'arrête au premier rouge ne
+> mesure que le premier rouge. Faire tourner toutes les étapes de garde (`if: ${{ !cancelled() }}`
+> sur chacune, puis une étape finale qui échoue si l'une a échoué) aurait montré les dix rouges le
+> jour même, au lieu de trois jours de silence.
 
 > ### 🟢 2026-10-03 · +3 : `main` entièrement vert en CI, `e2e` compris
 >
