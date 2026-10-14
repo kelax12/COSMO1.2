@@ -15,13 +15,14 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
   facultative) → bilan avec sorties concrètes. Suit le thème de l'app (`perso/perso-theme.ts`).
 - ❌ **Revenir en arrière ne recrée JAMAIS** : une étape faite s'affiche « enregistrée ». Compte VIDE, une fois par appareil
   (`cosmo_first_run_done`), jamais en démo, jamais sur `/entreprise`.
-- **Entreprise** : `onboarding/enterprise/EnterpriseOnboarding` (`/entreprise/onboarding`) :
-  choix créer | rejoindre = `OrgChoice` (l'ancienne carte, remise le 2026-10-09 à la demande
-  d'Axel, à la place de la bienvenue en constellation) → mise en place `?setup=&step=`
-  (constellation : équipe → invitations (rattachées à l'équipe et sous soi), projet, cap) → fin. `MemberWelcome` :
-  une fois par entreprise et par appareil, jamais en démo, seulement aux arrivés depuis le
-  2026-10-03, et SEULEMENT à une arrivée sans paramètre (`arrivedBare`, décidé à l'arrivée).
-  Relue à chaque rendu, la garde l'ouvrait après coup sur `?tab=`, `?task=` : 8 e2e rouges (10-04).
+- **Entreprise** (refait le 2026-10-14) : `/entreprise/onboarding` = `OrgChoice` seul (créer |
+  rejoindre). Une création mène droit à `/entreprise`. L'assistant de mise en place (équipe,
+  invitations, projet, cap, constellation) est SUPPRIMÉ : ne pas le recréer.
+  `OrgWelcomeVideo` (vidéo `public/videos/onboarding-entreprise.mp4`, sous-titres `.fr.vtt`) s'ouvre
+  au premier passage, créateur comme membre : une fois par entreprise et par appareil, jamais en
+  démo, seulement aux arrivés depuis le 2026-10-03, et SEULEMENT à une arrivée sans paramètre
+  (`arrivedBare`, décidé à l'arrivée). Relue à chaque rendu, la garde l'ouvrait après coup sur
+  `?tab=`, `?task=` : 8 e2e rouges (10-04). Lecture avec le son, repli muet + « Activer le son ».
 - ❌ **Guide entreprise** : ne jamais renommer ni déplacer un `data-guide-id` sans relancer la garde
   `src/components/org-guide/guide-scenarios.guard.test.ts`.
 - ❌ **Jamais sur une route** pour le perso : une inscription Google ne repasse pas par `SignupPage`.
@@ -36,8 +37,6 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
 - ⚠️ **DA fixe par parcours** (clair perso, nuit entreprise) : variables de thème redéclarées sur le
   conteneur (`LIGHT_SCOPE`, `ENT_SCOPE`), sinon les champs globaux suivent le thème de l'app.
 - ⚠️ Sous mouvement réduit, aucun SMIL monté (il ignore le réglage) : le dessin final tient seul.
-- ⚠️ `MemberWelcome` n'importe jamais `SetupSteps` (catalogues `org`, `portfolio` tirés) :
-  `ent-places.tsx` existe pour ça.
 
 ---
 

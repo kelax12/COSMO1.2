@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from 'react-router';
+import { useNavigate } from 'react-router';
 import { ArrowRight } from 'lucide-react';
 import Logo from '@/components/Logo';
 import CreateOrJoinOrganization from '@/components/organization/CreateOrJoinOrganization';
@@ -13,14 +13,15 @@ import { setBusinessPending } from '../first-run';
  * d'Axel : plus sobre que l'écran de bienvenue en constellation, qui
  * empilait trois paragraphes avant les deux seuls gestes possibles.
  *
- * Seul le CHOIX est revenu : une création ouvre toujours la mise en place
- * (`?setup=<org>`) d'`EnterpriseOnboarding`.
+ * Une création mène droit à l'espace entreprise, où la vidéo d'accueil
+ * (`OrgWelcomeVideo`) s'ouvre au premier passage. L'assistant de mise en
+ * place qui demandait équipe, invitations, projet et cap a été retiré le
+ * 2026-10-14.
  */
 const OrgChoice = () => {
   const { t, tp } = useT('org');
   const navigate = useNavigate();
-  const [, setSearchParams] = useSearchParams();
-  const { activeOrg, organizations, isLoading } = useActiveOrganization();
+  const { activeOrg, organizations, isLoading, setActiveOrgId } = useActiveOrganization();
   const { data: sentRequest } = useMySentJoinRequest();
 
   const [orgSentenceBefore, orgSentenceAfter] = splitAroundName(
@@ -78,7 +79,8 @@ const OrgChoice = () => {
         <CreateOrJoinOrganization
           onCreated={(org) => {
             setBusinessPending(false);
-            setSearchParams({ setup: org.id });
+            setActiveOrgId(org.id);
+            navigate('/entreprise');
           }}
           onJoinRequested={() => setBusinessPending(false)}
         />

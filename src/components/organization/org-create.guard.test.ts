@@ -21,7 +21,6 @@ const ALLOWED: Record<string, string> = {
   'OrgCreateForms.tsx': 'le formulaire unique lui-même',
   'CreateTeamModal.tsx': "définit CreateTeamForm et la modale qui l'entoure",
   'TeamOKRModal.tsx': 'intègre CreateTeamForm tel quel : un panneau Radix ne laisse pas une autre modale prendre le focus',
-  'SetupSteps.tsx': "assistant de démarrage (accueil entreprise) : parcours guidé d'une entreprise vide, un écran par étape",
   'use-team-projects-actions.ts': 'dupliquer un projet et enregistrer un modèle, pas une création depuis un formulaire',
 };
 

@@ -90,7 +90,7 @@ const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization
 // chargée seulement quand l'un sert (cf. `OrgPageOverlays`).
 // Accueil d'un membre au premier passage (2026-10-03) : son catalogue
 // `onboarding` ne part qu'avec lui, soit une fois par entreprise et par appareil.
-const MemberWelcome = lazyWithRetry(() => import('@/components/onboarding/enterprise/MemberWelcome'), ['onboarding']);
+const OrgWelcomeVideo = lazyWithRetry(() => import('@/components/onboarding/enterprise/OrgWelcomeVideo'), ['onboarding']);
 const OrgPageOverlays = lazyWithRetry(() => import('@/components/organization/OrgPageOverlays'), ['eventModal', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'tasks']);
 
 type OrgTab = OrgSection;
@@ -526,15 +526,14 @@ const OrganizationPage = () => {
         onSearch={openSearch}
       />
 
-      {/* Premier passage dans CETTE entreprise : les lieux à connaître.
-          Jamais en démo, et seulement à une arrivée sur l'Aperçu nu : qui
-          arrive par un lien (fiche, réglages, retour de paiement) vient pour
-          cet écran, pas pour une visite. */}
+      {/* Premier passage dans CETTE entreprise (créateur comme membre) : la
+          vidéo d'accueil. Jamais en démo, et seulement à une arrivée sans
+          paramètre : qui arrive par un lien (fiche, réglages, retour de
+          paiement) vient pour cet écran, pas pour une visite. */}
       {arrivedBare && !welcomeClosed && !isDemo && !hasEntityParam && user?.id && joinedSinceWelcome(members, user.id) && !readMemberWelcomeSeen(myOrg.id, user.id) && (
         <Suspense fallback={null}>
-          <MemberWelcome
+          <OrgWelcomeVideo
             orgName={myOrg.name}
-            isAdmin={isAdmin}
             onClose={() => {
               markMemberWelcomeSeen(myOrg.id, user.id);
               setWelcomeClosed(true);
