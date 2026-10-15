@@ -31,7 +31,7 @@ import { SONDES, jouer, cleAnonDepuisApi } from './check-edge-smoke.mjs';
 import { variablesLues, variablesDeLExemple } from './check-env-contract.mjs';
 import { lignesAnnuaires, dateDeRemesure, ETATS } from './check-acquisition.mjs';
 import { lireMarqueur, lirePhrase, documents } from './check-docs-scored.mjs';
-import { CATALOGUE } from './replay-sabotages.mjs';
+import { CATALOGUE, verifierCatalogue } from './replay-sabotages.mjs';
 import { aplatir, grouperPluriels, categoriesAttendues, volumeIndexable, decouper } from './check-i18n-pages.mjs';
 
 const LF = String.fromCharCode(10);
@@ -502,24 +502,24 @@ describe('témoin — notes d audit déclarées (C-109)', () => {
 
 // ═══════════════════════════════════════════════════════════════════
 describe('témoin — catalogue de sabotages (C-81)', () => {
-  it('chaque sabotage nomme sa cible, son témoin et ce qu il protège', () => {
-    expect(CATALOGUE.length).toBeGreaterThanOrEqual(10);
-    const ids = CATALOGUE.map((s) => s.id);
-    expect(new Set(ids).size, 'deux sabotages portent le même id').toBe(ids.length);
-    for (const s of CATALOGUE) {
-      expect(s.cible).toBeTruthy();
-      expect(s.temoin).toMatch(/\.(test|spec)\.(ts|tsx|mjs)$/);
-      expect(s.chercher).toBeTruthy();
-      expect(s.remplacer).not.toBe(s.chercher);
-      expect(s.pourquoi.length, `${s.id} sans explication`).toBeGreaterThan(40);
-    }
+  it('chaque sabotage nomme sa cible, sa garde, ce qui doit rougir et ce qu il protège', () => {
+    // La forme détaillée (ids uniques, `attendu` pour un fichier de test,
+    // `raison` pour une commande, `pourquoi` écrit) est jugée par
+    // `verifierCatalogue`, que `replay-sabotages.guard.test.mjs` soumet à des
+    // entrées fautives.
+    expect(CATALOGUE.length).toBeGreaterThanOrEqual(40);
+    expect(verifierCatalogue(CATALOGUE)).toEqual([]);
   });
 
-  it('le catalogue couvre PLUSIEURS témoins, pas un seul', () => {
-    // Un catalogue concentré sur un témoin donnerait une fausse impression de
+  it('le catalogue couvre PLUSIEURS gardes, pas une seule', () => {
+    // Un catalogue concentré sur une garde donnerait une fausse impression de
     // couverture : le script IMPRIME déjà le rapport couvert/total, ce cas
-    // empêche qu'il tombe à un.
-    expect(new Set(CATALOGUE.map((s) => s.temoin)).size).toBeGreaterThanOrEqual(6);
+    // empêche qu'il se réduise.
+    const gardes = new Set(CATALOGUE.map((s) => (typeof s.garde === 'string' ? s.garde : s.garde.commande)));
+    expect(gardes.size).toBeGreaterThanOrEqual(15);
+    // Et les deux familles : le défaut du PRODUIT vu par la garde, la garde
+    // DÉSARMÉE vue par son témoin.
+    expect(new Set(CATALOGUE.map((s) => s.famille))).toEqual(new Set(['produit', 'detecteur']));
   });
 });
 

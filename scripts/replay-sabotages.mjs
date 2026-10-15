@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════
-// C-81 — LES TÉMOINS NE SONT JAMAIS REJOUÉS
+// C-81 · AM-1 — LES TÉMOINS NE SONT JAMAIS REJOUÉS
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 LE DÉFAUT, ET IL EST STRUCTUREL. Ce dépôt compte 42 fichiers
-// `*guard.test.*`. Chacun est arrivé avec la même phrase : « vu rouge sur N
-// sabotages ». Ce sabotage a été joué UNE FOIS, à la main, le jour de
+// 🔴 LE DÉFAUT, ET IL EST STRUCTUREL. Un témoin est un cas de test qui prouve
+// qu'une garde mord encore. Chacun est arrivé avec la même phrase : « vu rouge
+// sur N sabotages ». Ce sabotage a été joué UNE FOIS, à la main, le jour de
 // l'écriture. Rien, ensuite, ne dit qu'un témoin détecte ENCORE.
 //
 // Un témoin qui ne détecte plus est pire qu'un témoin absent : il produit un
@@ -14,404 +14,687 @@
 //
 // ── CE QUE CE SCRIPT FAIT ───────────────────────────────────────────
 //
-// Pour chaque sabotage du catalogue ci-dessous :
-//   1. il écrit la version FAUTIVE du fichier cible sur le disque ;
-//   2. il lance le fichier de témoin correspondant, et lui SEUL ;
-//   3. il exige que le témoin soit ROUGE ;
-//   4. il restaure la cible, octet pour octet, et le vérifie.
+//   1. Il RECOMPTE les témoins du dépôt à chaque run (jamais un total recopié) :
+//      tout cas `it`/`test` de `src/**`, `scripts/**` et `eslint-rules/**` dont
+//      le nom, ou celui d'un `describe` qui le porte, a la marque `TÉMOIN` /
+//      `TEMOIN` (ou l'étiquette `témoin :`, `(témoin)`). Lecture par l'AST de
+//      TypeScript, pas par une expression régulière : un parseur de garde qui
+//      se trompe est la classe de défaut que ce fichier existe pour attraper.
+//   2. Il COPIE l'arbre de travail dans un dossier temporaire. 🔴 Il n'écrit
+//      JAMAIS dans l'arbre de travail : plusieurs sessions travaillent sur
+//      cette machine, et la version d'avant écrivait ses sabotages en place.
+//   3. Il joue chaque garde du catalogue sur la copie PROPRE (la référence).
+//   4. Pour chaque sabotage : il casse la chose gardée DANS LA COPIE, rejoue
+//      la garde, exige qu'elle rougisse POUR LA BONNE RAISON, et restaure la
+//      copie octet pour octet.
+//   5. Il imprime le ratio témoins rejoués / témoins du dépôt.
 //
-// Si un témoin reste VERT sur son sabotage, il ne garde plus rien : le script
-// échoue en le nommant.
+// ── « POUR LA BONNE RAISON » ────────────────────────────────────────
+//
+// Un rouge ne prouve rien par lui-même : un fichier qui plante à l'import, une
+// garde déjà rouge sur l'arbre propre, rougissent aussi. Deux formes de garde,
+// deux preuves :
+//   · un fichier de test : chaque cas `attendu` est lu par son NOM dans le
+//     rapport JSON de vitest. Il doit être VERT sur la copie propre et ROUGE
+//     sur la copie sabotée. Un cas absent du rapport n'est pas un rouge ;
+//   · une commande (`npm run check:*`) : elle doit sortir en non-zéro, ET sa
+//     sortie doit porter la `raison` attendue — qui nomme l'objet saboté —,
+//     ET cette raison doit être ABSENTE de la sortie de la copie propre.
+//
+// ── CE QUI COMPTE COMME « TÉMOIN REJOUÉ » ───────────────────────────
+//
+// 🔴 Un témoin compte quand il a été VU ROUGE, par son nom, sous un sabotage,
+// et VERT sans lui. Pas quand un sabotage le « concerne », pas quand son
+// fichier a été lancé : quand son propre rouge a été observé. Les sabotages
+// d'une garde-commande (`check:rls`…) prouvent que la GARDE mord ; ils sont
+// comptés à part, et n'entrent pas dans ce ratio.
 //
 // ── POURQUOI PAS STRYKER ────────────────────────────────────────────
-//
-// L'énoncé de C-81 laissait le choix entre « rejouer N sabotages connus » et
-// « Stryker ». Le second a été écarté, et la raison s'écrit :
 //
 //   · Stryker mute le code SOURCE et regarde si les tests tombent. Or la
 //     majorité des témoins de ce dépôt ne testent pas du code : ils lisent
 //     des FICHIERS — `vercel.json`, une migration SQL, une Edge Function
 //     Deno, un workflow YAML. Un mutateur JavaScript n'y touche pas ;
-//   · il ajoute une dépendance lourde et un temps de run de plusieurs
-//     dizaines de minutes pour couvrir la part la moins à risque ;
 //   · surtout : un score de mutation est un POURCENTAGE, et l'expérience de
 //     ce dépôt est qu'un pourcentage finit par être négocié. Un sabotage
 //     nommé qui passe au vert ne se négocie pas.
 //
 // ── CE QUE ÇA NE PROUVE PAS ─────────────────────────────────────────
 //
-// ⚠️ Que les 42 témoins détectent. Le catalogue en couvre une partie, celle
-// dont le sabotage est exprimable par un remplacement de texte sûr et
-// réversible. Le nombre couvert est IMPRIMÉ à chaque run, à côté du total,
-// pour que l'écart reste visible au lieu d'être oublié.
+// ⚠️ Que TOUS les témoins détectent. Le nombre rejoué est IMPRIMÉ à chaque
+// run, à côté du total, et les fichiers non rejoués sont nommés.
 // ❌ Ne jamais écrire « les témoins sont vérifiés » : écrire combien.
-//
-// ── SÉCURITÉ ────────────────────────────────────────────────────────
-//
-// 🔴 CE SCRIPT ÉCRIT DANS L'ARBRE DE TRAVAIL. Plusieurs sessions travaillent
-// sur cette machine (`CLAUDE.md` racine). Trois précautions, non négociables :
-//   · refus de démarrer si l'une des cibles est déjà MODIFIÉE selon git —
-//     on ne saurait pas quoi restaurer ;
-//   · restauration dans un `finally`, ET sur `SIGINT`/`SIGTERM`/exception ;
-//   · vérification finale octet pour octet, et échec bruyant sinon.
 // ═══════════════════════════════════════════════════════════════════
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { join, sep } from 'node:path';
+import {
+  readFileSync, writeFileSync, existsSync, mkdtempSync, mkdirSync, copyFileSync, rmSync,
+  symlinkSync, unlinkSync, rmdirSync, lstatSync, realpathSync,
+} from 'node:fs';
+import { join, sep, dirname } from 'node:path';
+import { tmpdir } from 'node:os';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 
+import { CATALOGUE } from './replay-sabotages.catalogue.mjs';
+
+export { CATALOGUE };
+
 const RACINE = process.cwd();
+const CHAMP = ['src', 'scripts', 'eslint-rules'];
+const EST_UN_TEST = /\.(test|spec)\.(ts|tsx|mjs|js)$/;
+const MEGA = 64 * 1024 * 1024;
+
+// ═══════════════════════════════════════════════════════════════════
+// 1. Le recensement des témoins
+// ═══════════════════════════════════════════════════════════════════
 
 /**
- * LE CATALOGUE.
+ * Un titre porte-t-il la marque du témoin ?
  *
- * `cible`    : le fichier à saboter, relatif à la racine.
- * `temoin`   : le fichier de test qui DOIT rougir.
- * `chercher` / `remplacer` : le sabotage, un remplacement littéral unique.
- * `pourquoi` : ce que le témoin perdrait s'il cessait de voir ce défaut.
+ * La marque en CAPITALES (`TÉMOIN`, `TEMOIN`, `TEMOIN DU TEMOIN`), où qu'elle
+ * soit ; ou l'étiquette en minuscules, en TÊTE de titre (`témoin : …`,
+ * `témoin — …`) ou entre parenthèses (`… (témoin)`).
  *
- * ⚠️ `chercher` doit apparaître EXACTEMENT UNE FOIS dans la cible. Un motif
- * ambigu saboterait autre chose que prévu, ou rien du tout, et un sabotage qui
- * ne sabote rien laisse le témoin vert pour la bonne raison — c'est-à-dire
- * qu'il ment. Le script le vérifie avant d'écrire.
+ * ⚠️ Le mot nu en minuscules au milieu d'une phrase ne compte PAS : « aucune
+ * Edge Function n est sans temoin » parle des témoins, il n'en est pas un.
  */
-const CATALOGUE = [
-  {
-    id: 'csp-wss',
-    cible: 'vercel.json',
-    temoin: 'src/csp.guard.test.ts',
-    chercher: ' wss://*.supabase.co',
-    remplacer: '',
-    pourquoi:
-      'Sans `wss:` dans connect-src, le navigateur bloque TOUTES les connexions '
-      + 'Realtime en production, en silence. Trois canaux d`App.tsx` coupés, et '
-      + 'ils avaient remplacé huit sondages : une tâche partagée n`arrive jamais.',
-  },
-  {
-    id: 'csp-unsafe-eval',
-    cible: 'vercel.json',
-    temoin: 'src/csp.guard.test.ts',
-    chercher: "script-src 'self'",
-    remplacer: "script-src 'self' 'unsafe-eval'",
-    pourquoi:
-      "`'unsafe-eval'` rouvre l'exécution de chaînes arbitraires : la CSP cesse "
-      + "d'être une défense contre le XSS et devient une décoration.",
-  },
-  {
-    id: 'rate-limit-borne',
-    cible: 'supabase/migration/139_rate_limits.sql',
-    temoin: 'src/rate-limit.guard.test.ts',
-    chercher: 'rl.hits > p_limit',
-    remplacer: 'rl.hits >= p_limit',
-    pourquoi:
-      'Avec `>=` et un plafond de 3, le 4ᵉ appel est ACCEPTÉ : le plafond de '
-      + "débit de `report-bug` n'a jamais rien refusé, tout en ayant l'air "
-      + "d'exister. C'est le défaut exact qui a failli partir.",
-  },
-  {
-    id: 'stripe-checkout-cors',
-    cible: 'supabase/functions/stripe-create-checkout/index.ts',
-    temoin: 'src/stripe-create-checkout.guard.test.ts',
-    chercher: "if (allow) headers['Access-Control-Allow-Origin'] = allow",
-    remplacer: "headers['Access-Control-Allow-Origin'] = '*'",
-    pourquoi:
-      "Le joker CORS amplifie la portée d'un JWT qui fuit : rejeu depuis "
-      + "n'importe quelle origine (faille N7).",
-  },
-  {
-    id: 'stripe-checkout-upsert',
-    cible: 'supabase/functions/stripe-create-checkout/index.ts',
-    temoin: 'src/stripe-create-checkout.guard.test.ts',
-    chercher: '.upsert(',
-    remplacer: '.update(',
-    pourquoi:
-      "Un `UPDATE` seul ne matche aucune ligne tant que `subscriptions` n'existe "
-      + "pas : l'identifiant du client Stripe est perdu en silence et chaque "
-      + 'reprise crée un client orphelin de plus (faille U1).',
-  },
-  {
-    id: 'rgpd-friends-symetrie',
-    cible: 'supabase/functions/delete-account/index.ts',
-    temoin: 'src/rgpd-erasure.guard.test.ts',
-    chercher: 'friend_user_id.eq.',
-    remplacer: 'user_id.eq.',
-    pourquoi:
-      "`friends` est symétrique : un compte y apparaît aussi en "
-      + '`friend_user_id`. Purger une seule colonne laisse des lignes portant '
-      + 'les données personnelles du compte supprimé (RGPD art. 17).',
-  },
-  {
-    id: 'cron-garde-conditionnelle',
-    cible: 'supabase/functions/renewal-notice/index.ts',
-    temoin: 'src/edge-mail-functions.guard.test.ts',
-    chercher: "  if (req.headers.get('x-cron-secret') !== CRON_SECRET) {",
-    remplacer: "  if (CRON_SECRET && req.headers.get('x-cron-secret') !== CRON_SECRET) {",
-    pourquoi:
-      "C'est LE motif « on ne se protège que quand on est déjà protégé » : "
-      + 'tant que le secret n\'est pas posé, la garde laisse passer tout le monde. '
-      + 'Introduit puis corrigé le 2026-08-26 dans cette fonction même.',
-  },
-  {
-    id: 'org-deletion-preuve-append-only',
-    cible: 'supabase/migration/138_evidence_survives_org_deletion.sql',
-    temoin: 'src/org-deletion.guard.test.ts',
-    chercher: 'NEW.org_id IS NULL',
-    remplacer: 'NEW.org_id IS NOT NULL',
-    pourquoi:
-      '`withdrawal_consents` est une preuve append-only (Conso. L221-28). '
-      + 'Inverser ce test rend le trigger inopérant : la suppression d\'une '
-      + 'organisation emporte les preuves qu\'on produit en litige.',
-  },
-  {
-    id: 'sentry-filets-precoces',
-    cible: 'src/main.tsx',
-    temoin: 'src/monitoring.guard.test.ts',
-    // Le motif est l'INSTRUCTION entière, `;` compris : `installEarlyHandlers()`
-    // seul apparaît trois fois dans ce fichier (import, commentaire, appel) et
-    // le sabotage serait alors ambigu — le script le refuse.
-    chercher: '\ninstallEarlyHandlers();',
-    remplacer: '\n// installEarlyHandlers();',
-    pourquoi:
-      'Les filets doivent être posés AVANT `mount()` : sans eux, les erreurs '
-      + 'des premières millisecondes — celles qui empêchent l\'application de '
-      + "monter du tout — ne remontent nulle part.",
-  },
-  {
-    id: 'polling-permanent',
-    cible: 'src/modules/organizations/hooks.ts',
-    temoin: 'src/modules/polling.guard.test.ts',
-    chercher: '...(options?.live ? { refetchInterval: 20_000 } : {}),',
-    remplacer: 'refetchInterval: 20_000,',
-    pourquoi:
-      'Un `refetchInterval` littéral est un sondage PERMANENT. Huit d\'entre eux '
-      + 'faisaient ~30 requêtes par minute et par onglet, et 91,5 % du trafic '
-      + 'Supabase venait de deux onglets jamais rechargés.',
-  },
-  {
-    id: 'toast-import-statique',
-    cible: 'src/App.tsx',
-    temoin: 'src/lib/toast.guard.test.ts',
-    chercher: "import React",
-    remplacer: "import { toast as _sabotage } from 'sonner';\nimport React",
-    pourquoi:
-      'Un seul import statique de `sonner` dans tout `src/` suffit à faire '
-      + "replacer le module dans le chunk d'ENTRÉE par Rollup : les 10,1 ko "
-      + 'gzip sortis du chemin critique par C-14 y reviennent en silence.',
-  },
-];
-
-// ── Utilitaires ────────────────────────────────────────────────────
-
-/** Le fichier est-il propre selon git ? On ne sabote que ce qu'on sait rendre. */
-function estPropre(chemin) {
-  const r = spawnSync('git', ['status', '--porcelain', '--', chemin], {
-    cwd: RACINE,
-    encoding: 'utf8',
-  });
-  if (r.status !== 0) return null; // git indisponible : on ne peut pas juger
-  return r.stdout.trim() === '';
+export function porteLaMarque(titre) {
+  return /T[ÉE]MOIN/.test(titre)
+    || /^\s*t[ée]moins?\b/i.test(titre)
+    || /\(\s*t[ée]moins?\b/i.test(titre);
 }
 
+/** La clé d'un cas : ses `describe` puis son titre, comme vitest les rend. */
+export const cleDuCas = (chemin, titre) => [...chemin, titre].join(' > ');
+
 /**
- * Lance UN fichier de témoin. Rend `{ vert, casEnEchec }`.
+ * Les témoins d'UNE source de test, lus dans son arbre syntaxique.
  *
- * 🔴 `casEnEchec` est LU dans la ligne de résumé de vitest (`Tests  2 failed |
- * 8 passed`), et pas deviné à partir de marqueurs de mise en forme. La
- * première écriture de ce script cherchait `FAIL` ou `×` dans la sortie du
- * reporter `dot` : ce reporter ne les émet pas sous cette forme, donc les SEPT
- * sabotages étaient déclarés « rouges pour la mauvaise raison » alors que les
- * sept témoins faisaient exactement leur travail. Une garde qui interprète un
- * AFFICHAGE au lieu de lire un CHIFFRE rend un verdict sur la mise en forme.
- *
- * La distinction vaut la peine d'être faite : un témoin qui PLANTE à l'import
- * (module absent, erreur de parse) sort aussi en non-zéro sans avoir exécuté
- * un seul cas. Ce rouge-là ne prouve rien, et c'est le faux positif qu'on
- * veut écarter.
+ * Un cas est un témoin si son titre, OU celui d'un `describe` qui l'englobe,
+ * porte la marque. `gabarit` signale un titre construit (`${table} …`) : vitest
+ * le rendra substitué, il ne peut donc pas être apparié mot pour mot.
  */
-function jouerTemoin(temoin) {
-  // 🔴 `node node_modules/vitest/vitest.mjs`, JAMAIS `npx`. Sur Windows,
-  // `spawnSync('npx.cmd', …)` échoue en `EINVAL` sans rien lancer : `status`
-  // vaut `null`, donc `status === 0` est faux, donc CHAQUE témoin passait pour
-  // « rouge ». Le script annonçait sept sabotages détectés en n'ayant pas
-  // exécuté une seule suite. C'est la garde qui répond sans mesurer, écrite
-  // dans le script dont le métier est d'attraper ça — et c'est le contrôle
-  // « rouge mais zéro cas en échec » qui l'a révélé, pas la lecture.
-  // ⚠️ `shell: true` serait l'autre réponse, et c'est la mauvaise : elle
-  // passerait un chemin de fichier à un interpréteur de commandes.
-  const VITEST = join(RACINE, 'node_modules', 'vitest', 'vitest.mjs');
-  if (!existsSync(VITEST)) {
-    throw new Error(
-      `vitest introuvable à ${VITEST}. Lancer \`npm ci\` avant de rejouer les sabotages.`,
-    );
+export function temoinsDuSource(texte, fichier, ts) {
+  const kind = fichier.endsWith('.tsx') ? ts.ScriptKind.TSX
+    : fichier.endsWith('.ts') ? ts.ScriptKind.TS
+      : ts.ScriptKind.JS;
+  const sf = ts.createSourceFile(fichier, texte, ts.ScriptTarget.Latest, true, kind);
+  const out = [];
+
+  // `it.skip(…)`, `it.each(t)(…)`, `describe.only(…)` : on remonte à l'identifiant.
+  const racineDeLAppel = (e) => {
+    let x = e;
+    while (ts.isCallExpression(x) || ts.isPropertyAccessExpression(x)) x = x.expression;
+    return ts.isIdentifier(x) ? x.text : null;
+  };
+  // Un titre qui n'est pas un littéral (`describe(name, …)` dans une boucle)
+  // est gardé comme GABARIT : vitest le rendra substitué.
+  const titreDe = (a) => {
+    if (!a) return null;
+    if (ts.isStringLiteral(a) || ts.isNoSubstitutionTemplateLiteral(a)) return { titre: a.text, gabarit: false };
+    if (ts.isTemplateExpression(a)) return { titre: a.getText(sf).slice(1, -1), gabarit: true };
+    return { titre: `\${${a.getText(sf)}}`, gabarit: true };
+  };
+  // Un appel de test porte une FONCTION : c'est ce qui distingue `it('x', () => …)`
+  // de l'appel intérieur d'`it.each(table)`, et de `regex.test('…')`.
+  const porteUneFonction = (n) => n.arguments.some((a) => ts.isArrowFunction(a) || ts.isFunctionExpression(a));
+
+  const visiter = (n, chemin, gabarit) => {
+    if (ts.isCallExpression(n) && porteUneFonction(n)) {
+      const qui = racineDeLAppel(n.expression);
+      const t = titreDe(n.arguments[0]);
+      if (t && (qui === 'describe' || qui === 'suite')) {
+        ts.forEachChild(n, (c) => visiter(c, [...chemin, t.titre], gabarit || t.gabarit));
+        return;
+      }
+      if (t && (qui === 'it' || qui === 'test') && [...chemin, t.titre].some(porteLaMarque)) {
+        out.push({
+          fichier,
+          chemin,
+          titre: t.titre,
+          cle: cleDuCas(chemin, t.titre),
+          // `it.each(table)('cas %s', …)` : vitest rend un cas PAR ligne, titre substitué.
+          gabarit: gabarit || t.gabarit || ts.isCallExpression(n.expression),
+          parSonNom: porteLaMarque(t.titre),
+          ligne: sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1,
+        });
+      }
+    }
+    ts.forEachChild(n, (c) => visiter(c, chemin, gabarit));
+  };
+  visiter(sf, [], false);
+  return out;
+}
+
+/** Les fichiers de l'arbre de travail : suivis, plus les nouveaux non ignorés. */
+function fichiersDeLArbre(racine, ...chemins) {
+  const sortie = execFileSync(
+    'git',
+    ['ls-files', '-z', '--cached', '--others', '--exclude-standard', '--', ...chemins],
+    { cwd: racine, maxBuffer: MEGA },
+  ).toString('utf8');
+  return [...new Set(sortie.split('\0').filter(Boolean))].filter((f) => existsSync(join(racine, f)));
+}
+
+/** Tous les témoins du dépôt. Lecture seule. */
+export function recenserTemoins(racine = RACINE) {
+  const ts = createRequire(join(racine, 'package.json'))('typescript');
+  const fichiers = fichiersDeLArbre(racine, ...CHAMP).filter((f) => EST_UN_TEST.test(f));
+  const temoins = [];
+  for (const f of fichiers) temoins.push(...temoinsDuSource(readFileSync(join(racine, f), 'utf8'), f, ts));
+  return { temoins, fichiersDeTest: fichiers.length };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 2. L'atelier : une copie jetable de l'arbre
+// ═══════════════════════════════════════════════════════════════════
+
+/** git sans conversion de fins de ligne : on compare des OCTETS. */
+const git = (cwd, args) => spawnSync('git', ['-c', 'core.autocrlf=false', '-c', 'core.safecrlf=false', ...args], {
+  cwd, encoding: 'utf8', maxBuffer: MEGA,
+});
+
+/**
+ * Copie l'arbre de travail dans un dossier temporaire.
+ *
+ * 🔴 `node_modules` est un LIEN, jamais une copie (des centaines de Mo), et
+ * c'est le point dangereux : un effacement récursif qui suivrait le lien
+ * viderait le `node_modules` du dépôt (mémoire « worktree + junction »,
+ * récidive du 2026-09-25). `nettoyerAtelier` retire donc le lien SEUL, vérifie
+ * qu'il a disparu, et seulement ensuite efface le reste.
+ *
+ * La copie est un dépôt git à elle (index seulement, aucun commit) : en fin de
+ * run, `git status` y prouve, indépendamment de la vérification octet pour
+ * octet, que chaque sabotage a été défait.
+ */
+export function preparerAtelier(racine = RACINE) {
+  const base = realpathSync(mkdtempSync(join(tmpdir(), 'cosmo-sabotages-')));
+  const copie = join(base, 'arbre');
+  const journal = join(base, 'journal');
+  mkdirSync(copie);
+  mkdirSync(journal);
+  const fichiers = fichiersDeLArbre(racine);
+  for (const f of fichiers) {
+    const cible = join(copie, f);
+    mkdirSync(dirname(cible), { recursive: true });
+    copyFileSync(join(racine, f), cible);
   }
+  symlinkSync(join(racine, 'node_modules'), join(copie, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
+  const init = git(copie, ['init', '-q']);
+  const ajout = init.status === 0 ? git(copie, ['add', '-A']) : init;
+  if (ajout.status !== 0) throw new Error(`git dans la copie : ${ajout.stderr}`);
+  return { base, copie, journal, fichiers: fichiers.length };
+}
+
+/** Retire l'atelier. Rend `true` si tout est parti, `false` si on a préféré le laisser. */
+export function nettoyerAtelier(atelier) {
+  if (!atelier || !existsSync(atelier.base)) return true;
+  const lien = join(atelier.copie, 'node_modules');
+  // Deux gestes NON récursifs, et seulement eux : ni l'un ni l'autre ne peut
+  // vider un dossier réel. `unlink` retire un lien symbolique (et une jonction
+  // sous Windows) ; `rmdir` retire une jonction comme un dossier vide, sans
+  // toucher sa cible, et échoue sur un vrai dossier non vide.
+  try {
+    unlinkSync(lien);
+  } catch {
+    try {
+      rmdirSync(lien);
+    } catch {
+      // traité juste en dessous
+    }
+  }
+  let present = true;
+  try {
+    lstatSync(lien);
+  } catch {
+    present = false;
+  }
+  if (present) {
+    console.error(
+      `\n⚠️ Le lien ${lien} n'a pas pu être retiré : la copie est LAISSÉE en place\n`
+        + `   (${atelier.base}) plutôt que d'effacer à travers le lien le node_modules du dépôt.`,
+    );
+    return false;
+  }
+  rmSync(atelier.base, { recursive: true, force: true });
+  return true;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 3. Sabotage et restauration, dans la copie seulement
+// ═══════════════════════════════════════════════════════════════════
+
+/** Nombre d'occurrences littérales. */
+const occurrences = (texte, motif) => texte.split(motif).length - 1;
+
+/**
+ * Vérifie qu'une modification est applicable SANS l'appliquer.
+ *
+ * ⚠️ `chercher` doit apparaître EXACTEMENT UNE FOIS. Un motif ambigu saboterait
+ * autre chose que prévu, ou rien du tout, et un sabotage qui ne sabote rien
+ * laisse la garde verte pour la bonne raison — c'est-à-dire qu'il ment.
+ */
+export function verifierModif(copie, m) {
+  const chemin = join(copie, m.fichier);
+  if ('creer' in m) {
+    return existsSync(chemin) ? `${m.fichier} existe déjà : le sabotage écraserait un vrai fichier` : null;
+  }
+  if (!existsSync(chemin)) return `${m.fichier} absent : le catalogue décrit un état périmé`;
+  if (m.supprimer) return null;
+  const n = occurrences(readFileSync(chemin, 'utf8'), m.chercher);
+  return n === 1 ? null : `le motif « ${m.chercher} » apparaît ${n} fois dans ${m.fichier} (attendu : exactement 1)`;
+}
+
+/** Applique les modifications d'un sabotage. Rend les octets d'origine, pour restaurer. */
+export function appliquerModifs(copie, modifs) {
+  const originaux = new Map();
+  for (const m of modifs) {
+    const chemin = join(copie, m.fichier);
+    if (!originaux.has(m.fichier)) originaux.set(m.fichier, existsSync(chemin) ? readFileSync(chemin) : null);
+    if ('creer' in m) {
+      mkdirSync(dirname(chemin), { recursive: true });
+      writeFileSync(chemin, m.creer, 'utf8');
+    } else if (m.supprimer) {
+      unlinkSync(chemin);
+    } else {
+      const texte = readFileSync(chemin, 'utf8');
+      // Fonction de remplacement : une chaîne `remplacer` contenant `$&` ou `$1`
+      // serait sinon INTERPRÉTÉE par `String.replace`.
+      writeFileSync(chemin, texte.replace(m.chercher, () => m.remplacer), 'utf8');
+    }
+  }
+  return originaux;
+}
+
+/** Remet chaque fichier touché dans son état d'origine. Rend les fichiers qui ne sont PAS revenus. */
+export function restaurer(copie, originaux) {
+  for (const [f, octets] of originaux) {
+    const chemin = join(copie, f);
+    if (octets === null) {
+      if (existsSync(chemin)) unlinkSync(chemin);
+    } else {
+      writeFileSync(chemin, octets);
+    }
+  }
+  const abimes = [];
+  for (const [f, octets] of originaux) {
+    const chemin = join(copie, f);
+    const revenu = octets === null ? !existsSync(chemin) : existsSync(chemin) && readFileSync(chemin).equals(octets);
+    if (!revenu) abimes.push(f);
+  }
+  return abimes;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 4. Jouer une garde
+// ═══════════════════════════════════════════════════════════════════
+
+// eslint-disable-next-line no-control-regex
+const sansAnsi = (s) => s.replace(/\[[0-9;]*m/g, '');
+const fin = (s, n = 12) => sansAnsi(s).trim().split('\n').slice(-n).join('\n');
+const posix = (p) => p.split('\\').join('/');
+
+let numeroDeRapport = 0;
+
+/**
+ * Lance UN fichier de test dans la copie et rend chacun de ses cas, par nom.
+ *
+ * 🔴 Le verdict est lu dans le RAPPORT JSON de vitest, cas par cas, jamais
+ * dans l'affichage. La première version de ce script lisait le reporter `dot`
+ * et déclarait les sept témoins « rouges pour la mauvaise raison » alors
+ * qu'ils faisaient leur travail ; la deuxième lisait un résumé coloré par des
+ * séquences ANSI. Une garde qui interprète un AFFICHAGE rend un verdict sur la
+ * mise en forme.
+ *
+ * 🔴 `node node_modules/vitest/vitest.mjs`, JAMAIS `npx` : sur Windows,
+ * `spawnSync('npx.cmd')` échoue en `EINVAL` sans rien lancer, `status` vaut
+ * `null`, et chaque témoin passait pour rouge sans avoir tourné.
+ */
+export function jouerVitest(atelier, fichier) {
+  const vitest = join(atelier.copie, 'node_modules', 'vitest', 'vitest.mjs');
+  if (!existsSync(vitest)) throw new Error(`vitest introuvable (${vitest}) : lancer \`npm ci\` d'abord.`);
+  numeroDeRapport += 1;
+  const rapport = join(atelier.journal, `vitest-${numeroDeRapport}.json`);
   const r = spawnSync(
     process.execPath,
-    [VITEST, 'run', temoin],
-    { cwd: RACINE, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+    [vitest, 'run', fichier, '--reporter=json', `--outputFile=${rapport}`],
+    { cwd: atelier.copie, encoding: 'utf8', maxBuffer: MEGA, stdio: ['ignore', 'pipe', 'pipe'] },
   );
-  // ⚠️ Les SÉQUENCES ANSI sont retirées avant de lire le chiffre. Vitest
-  // colore son résumé, donc « Tests » et « 2 failed » sont séparés par des
-  // codes d'échappement : une expression écrite sur le texte brut ne matche
-  // jamais, et le script déclarait alors les sept témoins « rouges pour la
-  // mauvaise raison ». Deuxième fois, dans le même fichier, qu'une lecture
-  // d'AFFICHAGE tient lieu de mesure.
-  const brut = `${r.stdout ?? ''}${r.stderr ?? ''}`;
-  // eslint-disable-next-line no-control-regex
-  const sortie = brut.replace(/\[[0-9;]*m/g, '');
-  const resume = /Tests\s+(\d+)\s+failed/.exec(sortie);
-  return { vert: r.status === 0, casEnEchec: resume ? Number(resume[1]) : 0 };
+  if (r.error) throw r.error;
+  if (!existsSync(rapport)) {
+    return { panne: `aucun rapport JSON (sortie ${r.status}) :\n${fin(`${r.stdout}${r.stderr}`)}` };
+  }
+  return lireRapportVitest(JSON.parse(readFileSync(rapport, 'utf8')), fichier, r.status);
 }
 
-// ── Exécution ──────────────────────────────────────────────────────
+/** Rend `{ code, cas, message }` d'un rapport JSON de vitest, ou `{ panne }`. */
+export function lireRapportVitest(json, fichier, code) {
+  const resultats = json.testResults ?? [];
+  const vises = resultats.filter((t) => posix(t.name ?? '').endsWith(`/${fichier}`));
+  // « Ne JAMAIS conclure d une ligne de résumé » (CLAUDE.md racine) : on vérifie
+  // que le rapport porte le fichier visé, et lui seul.
+  if (resultats.length !== 1 || vises.length !== 1) {
+    return {
+      panne: `le rapport porte ${resultats.length} fichier(s) (${resultats.map((t) => posix(t.name ?? '?').split('/').pop()).join(', ')}), attendu : ${fichier} seul`,
+    };
+  }
+  const t = vises[0];
+  return {
+    code,
+    message: t.message ?? '',
+    cas: (t.assertionResults ?? []).map((a) => ({
+      titre: a.title,
+      chemin: a.ancestorTitles ?? [],
+      cle: cleDuCas(a.ancestorTitles ?? [], a.title),
+      statut: a.status,
+      echec: (a.failureMessages ?? []).join('\n'),
+    })),
+  };
+}
+
+/** Lance une garde-commande (`scripts/*.mjs`) dans la copie. */
+export function jouerCommande(atelier, garde) {
+  const args = [];
+  if (garde.precharger) args.push('--import', pathToFileURL(join(atelier.copie, garde.precharger.fichier)).href);
+  args.push(join(atelier.copie, garde.commande), ...(garde.args ?? []));
+  const r = spawnSync(process.execPath, args, {
+    cwd: atelier.copie,
+    encoding: 'utf8',
+    maxBuffer: MEGA,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, ...(garde.env ?? {}) },
+  });
+  if (r.error) throw r.error;
+  return { code: r.status, sortie: sansAnsi(`${r.stdout ?? ''}${r.stderr ?? ''}`) };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 5. Juger
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Le verdict d'un sabotage sur un fichier de test.
+ *
+ * Rend `{ ok, motif, bascules }` où `bascules` est la clé de CHAQUE cas passé
+ * du vert au rouge — celles des témoins font le ratio.
+ */
+export function jugerVitest(attendu, base, sabote) {
+  if (base.panne) return { ok: false, motif: `la garde est en panne sur la copie PROPRE : ${base.panne}`, bascules: [] };
+  if (sabote.panne) return { ok: false, motif: `rouge pour une raison qui n'est pas la nôtre : ${sabote.panne}`, bascules: [] };
+  const statutDeBase = new Map(base.cas.map((c) => [c.cle, c.statut]));
+  const bascules = sabote.cas
+    .filter((c) => c.statut === 'failed' && statutDeBase.get(c.cle) === 'passed')
+    .map((c) => c.cle);
+  if (!attendu || attendu.length === 0) {
+    return {
+      ok: false,
+      motif: `aucun cas \`attendu\` déclaré. Cas passés au rouge :\n        ${bascules.join('\n        ') || '(aucun)'}`,
+      bascules,
+    };
+  }
+  const problemes = [];
+  for (const nom of attendu) {
+    const trouves = base.cas.filter((c) => c.titre === nom || c.cle === nom);
+    if (trouves.length !== 1) {
+      problemes.push(`« ${nom} » : ${trouves.length} cas portent ce nom sur la copie propre (attendu : 1). Le catalogue décrit un état périmé.`);
+      continue;
+    }
+    const [cas] = trouves;
+    if (cas.statut !== 'passed') {
+      problemes.push(`« ${nom} » est déjà ${cas.statut} sur la copie PROPRE : son rouge sous sabotage ne prouverait rien.`);
+      continue;
+    }
+    const apres = sabote.cas.find((c) => c.cle === cas.cle);
+    if (!apres) {
+      problemes.push(`« ${nom} » est ABSENT du rapport sabote${sabote.message ? ` (${fin(sabote.message, 3)})` : ''} : le fichier a planté, ce rouge ne prouve rien.`);
+    } else if (apres.statut !== 'failed') {
+      problemes.push(`« ${nom} » reste ${apres.statut === 'passed' ? 'VERT' : apres.statut} alors que la chose gardée est cassée.`);
+    }
+  }
+  return problemes.length === 0
+    ? { ok: true, motif: '', bascules }
+    : { ok: false, motif: problemes.join('\n      '), bascules };
+}
+
+/** Le verdict d'un sabotage sur une garde-commande. */
+export function jugerCommande(raison, base, sabote) {
+  if (!(raison instanceof RegExp)) return { ok: false, motif: 'aucune `raison` (RegExp) déclarée' };
+  if (raison.test(base.sortie)) {
+    return { ok: false, motif: `la raison ${raison} est DÉJÀ dans la sortie de la copie propre : le sabotage ne prouverait rien.` };
+  }
+  if (sabote.code === 0) return { ok: false, motif: `la garde reste VERTE (sortie 0) alors que la chose gardée est cassée.\n${fin(sabote.sortie, 6)}` };
+  if (!raison.test(sabote.sortie)) {
+    return {
+      ok: false,
+      motif: `la garde rougit (sortie ${sabote.code}) mais SANS la raison ${raison} : rouge pour une autre raison.\n${fin(sabote.sortie, 8)}`,
+    };
+  }
+  return { ok: true, motif: '' };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 6. Le run
+// ═══════════════════════════════════════════════════════════════════
+
+/** Clé d'une garde, pour ne jouer la référence qu'une fois. */
+const cleDeGarde = (g) => (typeof g === 'string' ? g : JSON.stringify({ c: g.commande, a: g.args ?? [], e: g.env ?? {}, p: g.precharger?.fichier ?? '' }));
+const nomDeGarde = (g) => (typeof g === 'string' ? g : `node ${[g.commande, ...(g.args ?? [])].join(' ')}`);
+
+/** Une erreur de forme dans le catalogue, avant tout run. */
+export function verifierCatalogue(catalogue) {
+  const erreurs = [];
+  const ids = new Set();
+  for (const s of catalogue) {
+    if (ids.has(s.id)) erreurs.push(`${s.id} : id en double`);
+    ids.add(s.id);
+    if (!['produit', 'detecteur'].includes(s.famille)) erreurs.push(`${s.id} : famille « ${s.famille} » inconnue`);
+    if (!Array.isArray(s.modifs) || s.modifs.length === 0) erreurs.push(`${s.id} : aucune modification`);
+    for (const m of s.modifs ?? []) {
+      if (!m.fichier) erreurs.push(`${s.id} : une modification sans fichier`);
+      if (!('creer' in m) && !m.supprimer && (!m.chercher || m.remplacer === undefined || m.remplacer === m.chercher)) {
+        erreurs.push(`${s.id} : modification de ${m.fichier} sans \`chercher\`/\`remplacer\` distincts`);
+      }
+    }
+    if (typeof s.garde === 'string') {
+      if (!EST_UN_TEST.test(s.garde)) erreurs.push(`${s.id} : la garde ${s.garde} n'est pas un fichier de test`);
+      if (!Array.isArray(s.attendu) || s.attendu.length === 0) erreurs.push(`${s.id} : aucun cas \`attendu\``);
+    } else if (!s.garde?.commande || !(s.raison instanceof RegExp)) {
+      erreurs.push(`${s.id} : une garde-commande exige \`commande\` et une \`raison\` (RegExp)`);
+    }
+    if (!s.pourquoi || s.pourquoi.length < 40) erreurs.push(`${s.id} : \`pourquoi\` absent ou trop court`);
+  }
+  return erreurs;
+}
 
 const estLanceDirectement =
   process.argv[1]
   && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
 
-export { CATALOGUE };
-
 if (estLanceDirectement) {
-  const seulement = process.argv.find((a) => a.startsWith('--only='))?.slice('--only='.length);
-  const catalogue = seulement
-    ? CATALOGUE.filter((s) => s.id === seulement)
-    : CATALOGUE;
-
-  if (catalogue.length === 0) {
-    console.error(`✖ Aucun sabotage nommé « ${seulement} » dans le catalogue.`);
+  const debut = Date.now();
+  const seulement = process.argv.find((a) => a.startsWith('--only='))?.slice('--only='.length).split(',');
+  const catalogue = seulement ? CATALOGUE.filter((s) => seulement.includes(s.id)) : CATALOGUE;
+  if (seulement && catalogue.length !== seulement.length) {
+    console.error(`✖ Inconnu(s) au catalogue : ${seulement.filter((id) => !CATALOGUE.some((s) => s.id === id)).join(', ')}`);
+    process.exit(1);
+  }
+  const erreursDeForme = verifierCatalogue(catalogue);
+  if (erreursDeForme.length > 0) {
+    console.error('✖ Catalogue mal formé :');
+    for (const e of erreursDeForme) console.error(`  - ${e}`);
     process.exit(1);
   }
 
-  // ── Garde 1 : toutes les cibles existent et sont PROPRES ─────────
-  const cibles = [...new Set(catalogue.map((s) => s.cible))];
-  const problemes = [];
-  for (const c of cibles) {
-    if (!existsSync(join(RACINE, c))) {
-      problemes.push(`${c} : fichier absent. Le catalogue décrit un état périmé.`);
-      continue;
-    }
-    const propre = estPropre(c);
-    if (propre === false) {
-      problemes.push(
-        `${c} : MODIFIÉ dans l'arbre de travail. Ce script écrit dans les fichiers `
-          + 'et les restaure ensuite ; sur un fichier déjà modifié, il détruirait un '
-          + 'travail en cours. Committer ou remiser d\'abord.',
-      );
-    }
-  }
-  if (problemes.length > 0) {
-    console.error('✖ Refus de démarrer :');
-    for (const p of problemes) console.error(`  - ${p}`);
-    process.exit(1);
-  }
+  // ── Le recensement, dans l'arbre RÉEL, en lecture seule ──────────
+  const { temoins, fichiersDeTest } = recenserTemoins();
+  const etatAvant = git(RACINE, ['status', '--porcelain', '--untracked-files=all']).stdout;
 
-  // ── Garde 2 : la restauration survit à tout ──────────────────────
-  const originaux = new Map(cibles.map((c) => [c, readFileSync(join(RACINE, c))]));
-  let restaure = false;
-  const toutRestaurer = () => {
-    if (restaure) return;
-    restaure = true;
-    for (const [c, octets] of originaux) writeFileSync(join(RACINE, c), octets);
+  // ── L'atelier, et sa disparition garantie ────────────────────────
+  let atelier = null;
+  const quitter = (code, message) => {
+    if (message) console.error(message);
+    nettoyerAtelier(atelier);
+    process.exit(code);
   };
-  for (const signal of ['SIGINT', 'SIGTERM']) {
-    process.on(signal, () => {
-      toutRestaurer();
-      console.error(`\n⚠️ Interrompu (${signal}) — les ${cibles.length} cibles ont été restaurées.`);
-      process.exit(130);
-    });
+  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => quitter(130, `\n⚠️ Interrompu (${signal}) : copie retirée.`));
+  process.on('uncaughtException', (e) => quitter(1, `\n✖ Exception : ${e?.stack ?? e}`));
+
+  atelier = preparerAtelier();
+  console.log(`Copie de travail : ${atelier.fichiers} fichiers dans ${atelier.base}`);
+  console.log('🔴 Aucun sabotage n est écrit dans l arbre de travail : tout se joue dans cette copie.\n');
+
+  const echecs = [];
+  const rejoues = new Set(); // clés `fichier :: cas` des témoins vus rouges
+  const resultats = [];
+
+  // ── Le décor : les fichiers dont une garde a besoin pour tourner ──
+  for (const s of catalogue) {
+    const p = typeof s.garde === 'object' ? s.garde.precharger : null;
+    if (p && !existsSync(join(atelier.copie, p.fichier))) {
+      mkdirSync(dirname(join(atelier.copie, p.fichier)), { recursive: true });
+      writeFileSync(join(atelier.copie, p.fichier), p.contenu, 'utf8');
+    }
   }
-  process.on('uncaughtException', (e) => {
-    toutRestaurer();
-    console.error('\n✖ Exception — cibles restaurées.', e);
-    process.exit(1);
-  });
+  // Le décor fait partie de la référence : il entre dans l'index de la copie.
+  git(atelier.copie, ['add', '-A']);
 
-  const survivants = [];
-  const joues = [];
+  // ── Chaque modification est-elle applicable ? ────────────────────
+  for (const s of catalogue) {
+    for (const m of s.modifs) {
+      const e = verifierModif(atelier.copie, m);
+      if (e) echecs.push(`${s.id} : ${e}`);
+    }
+  }
 
-  try {
-    for (const s of catalogue) {
-      const chemin = join(RACINE, s.cible);
-      const original = originaux.get(s.cible).toString('utf8');
-
-      const occurrences = original.split(s.chercher).length - 1;
-      if (occurrences !== 1) {
-        survivants.push(
-          `${s.id} : le motif « ${s.chercher} » apparaît ${occurrences} fois dans `
-            + `${s.cible} (attendu : exactement 1). Un sabotage ambigu ne sabote pas `
-            + 'ce qu\'il croit, et un sabotage qui ne sabote rien laisse le témoin vert '
-            + 'pour la mauvaise raison.',
-        );
+  // ── La référence : chaque garde, une fois, sur la copie PROPRE ───
+  const references = new Map();
+  const gardes = [...new Map(catalogue.map((s) => [cleDeGarde(s.garde), s.garde])).values()];
+  console.log(`Référence : ${gardes.length} garde(s) jouée(s) sur la copie propre…`);
+  for (const g of gardes) {
+    const ref = typeof g === 'string' ? jouerVitest(atelier, g) : jouerCommande(atelier, g);
+    references.set(cleDeGarde(g), ref);
+    if (typeof g === 'string') {
+      if (ref.panne) {
+        console.log(`  ✖ ${g} : ${ref.panne}`);
         continue;
       }
-
-      process.stdout.write(`  ${s.id.padEnd(26)} → ${s.temoin} … `);
-      writeFileSync(chemin, original.replace(s.chercher, s.remplacer), 'utf8');
-      const { vert, casEnEchec } = jouerTemoin(s.temoin);
-      writeFileSync(chemin, originaux.get(s.cible));
-
-      joues.push(s.id);
-      if (vert) {
-        process.stdout.write('VERT ✖\n');
-        survivants.push(
-          `${s.id} : le témoin ${s.temoin} reste VERT alors que ${s.cible} porte le `
-            + `défaut.\n      Ce que le témoin ne voit plus : ${s.pourquoi}\n`
-            + '      Il ne garde donc plus rien, et son vert est lu comme une preuve.',
+      const rouges = ref.cas.filter((c) => c.statut === 'failed').length;
+      console.log(`  ${rouges === 0 ? '✓' : '⚠️'} ${g} : ${ref.cas.length} cas${rouges ? `, dont ${rouges} DÉJÀ ROUGE(S) sur l arbre propre` : ''}`);
+      // 🔴 Le recensement statique est confronté à ce que vitest a réellement
+      // exécuté : si l'AST et le runner ne voient pas les mêmes témoins, c'est
+      // le compteur qui ment, et le ratio avec lui.
+      const statiques = temoins.filter((t) => t.fichier === g);
+      const exacts = new Set(statiques.filter((t) => !t.gabarit).map((t) => t.cle));
+      const vus = new Set(ref.cas
+        .filter((c) => c.statut !== 'todo' && [...c.chemin, c.titre].some(porteLaMarque))
+        .map((c) => c.cle));
+      const oublies = [...exacts].filter((k) => !vus.has(k));
+      const inconnus = statiques.some((t) => t.gabarit) ? [] : [...vus].filter((k) => !exacts.has(k));
+      if (oublies.length || inconnus.length) {
+        echecs.push(
+          `recensement : ${g} — l'AST et vitest ne voient pas les mêmes témoins.\n`
+            + `      absents du rapport : ${oublies.join(' | ') || '—'}\n`
+            + `      absents du recensement : ${inconnus.join(' | ') || '—'}`,
         );
-      } else if (casEnEchec === 0) {
-        // Un témoin qui sort en erreur SANS cas en échec (crash à l'import,
-        // module absent) est rouge pour une raison qui n'est pas la nôtre.
-        process.stdout.write('rouge, mais 0 cas en echec ✖\n');
-        survivants.push(
-          `${s.id} : ${s.temoin} est rouge mais AUCUN cas n'a échoué — le fichier a `
-            + "probablement planté à l'import. Ce rouge ne prouve pas que le témoin "
-            + 'détecte.',
-        );
-      } else {
-        process.stdout.write(`rouge ✓ (${casEnEchec} cas)\n`);
       }
+    } else {
+      console.log(`  ${ref.code === 0 ? '✓' : '⚠️'} ${nomDeGarde(g)} : sortie ${ref.code}${ref.code === 0 ? '' : ' — DÉJÀ ROUGE sur l arbre propre, seule la raison nommée tranchera'}`);
     }
-  } finally {
-    toutRestaurer();
   }
 
-  // ── Garde 3 : tout est revenu, octet pour octet ──────────────────
-  const abimes = [];
-  for (const [c, octets] of originaux) {
-    if (!readFileSync(join(RACINE, c)).equals(octets)) abimes.push(c);
-  }
-  if (abimes.length > 0) {
-    console.error(
-      `\n🔴 RESTAURATION INCOMPLÈTE : ${abimes.join(', ')}.\n`
-        + `  Restaurer à la main :  git checkout -- ${abimes.join(' ')}`,
-    );
-    process.exit(1);
+  // ── Les sabotages ────────────────────────────────────────────────
+  console.log(`\nSabotages : ${catalogue.length}`);
+  for (const s of catalogue) {
+    if (echecs.some((e) => e.startsWith(`${s.id} :`))) continue; // inapplicable, déjà signalé
+    process.stdout.write(`  [${s.famille === 'produit' ? 'produit  ' : 'détecteur'}] ${s.id.padEnd(34)} → ${nomDeGarde(s.garde)} … `);
+    const originaux = appliquerModifs(atelier.copie, s.modifs);
+    let verdict;
+    try {
+      const ref = references.get(cleDeGarde(s.garde));
+      if (typeof s.garde === 'string') {
+        verdict = jugerVitest(s.attendu, ref, jouerVitest(atelier, s.garde));
+      } else {
+        verdict = jugerCommande(s.raison, ref, jouerCommande(atelier, s.garde));
+      }
+    } finally {
+      const abimes = restaurer(atelier.copie, originaux);
+      if (abimes.length > 0) echecs.push(`${s.id} : la COPIE n'est pas revenue pour ${abimes.join(', ')}`);
+    }
+    resultats.push({ s, verdict });
+    if (verdict.ok) {
+      const temoinsVus = (verdict.bascules ?? []).filter((cle) => cle.split(' > ').some(porteLaMarque));
+      for (const cle of temoinsVus) rejoues.add(`${s.garde} :: ${cle}`);
+      process.stdout.write(`rouge ✓${temoinsVus.length ? ` (${temoinsVus.length} témoin${temoinsVus.length > 1 ? 's' : ''})` : ''}\n`);
+    } else {
+      process.stdout.write('✖\n');
+      echecs.push(`${s.id} (${nomDeGarde(s.garde)}) :\n      ${verdict.motif}\n      Ce que la garde ne verrait plus : ${s.pourquoi}`);
+    }
   }
 
-  const totalTemoins = compterTemoins();
+  // ── La copie est-elle revenue à la référence ? ───────────────────
+  // L'index de la copie EST la référence (aucun commit) : on compare l'arbre
+  // de la copie à son index, et on cherche tout fichier né pendant le run.
+  const modifies = git(atelier.copie, ['diff', '--name-only']);
+  const nes = git(atelier.copie, ['ls-files', '--others', '--exclude-standard']);
+  const ecarts = `${modifies.stdout ?? ''}${nes.stdout ?? ''}`.trim();
+  if (modifies.status !== 0 || nes.status !== 0 || ecarts !== '') {
+    echecs.push(`la copie n'est pas revenue à la référence (git, contre son index) :\n${ecarts || modifies.stderr || nes.stderr}`);
+  }
+  const nettoye = nettoyerAtelier(atelier);
+  atelier = null;
+
+  // ── L'arbre RÉEL n'a-t-il vraiment pas bougé ? ───────────────────
+  const etatApres = git(RACINE, ['status', '--porcelain', '--untracked-files=all']).stdout;
+  if (etatApres !== etatAvant) {
+    echecs.push(`🔴 L'ARBRE DE TRAVAIL A CHANGÉ pendant le run, alors que ce script ne doit rien y écrire :\n${etatApres}`);
+  }
+  if (!existsSync(join(RACINE, 'node_modules', 'vitest', 'package.json'))) {
+    echecs.push('🔴 node_modules/vitest a DISPARU du dépôt pendant le nettoyage de la copie.');
+  }
+
+  // ── Le rapport ───────────────────────────────────────────────────
+  const total = temoins.length;
+  const parSonNom = temoins.filter((t) => t.parSonNom).length;
+  const fichiersTemoins = new Set(temoins.map((t) => t.fichier));
+  const couverts = temoins.filter((t) => rejoues.has(`${t.fichier} :: ${t.cle}`)
+    || (t.gabarit && [...rejoues].some((k) => k.startsWith(`${t.fichier} :: `))));
+  const pct = total === 0 ? 0 : (100 * couverts.length) / total;
+  const produits = resultats.filter((r) => r.s.famille === 'produit' && r.verdict.ok);
+  const gardesProduit = new Set(produits.map((r) => nomDeGarde(r.s.garde)));
+  const fichiersGuard = fichiersDeLArbre(RACINE, ...CHAMP).filter((f) => /[.-]guard\.(test|spec)\.(ts|tsx|mjs)$/.test(f));
+  const guardsJoues = new Set(resultats.filter((r) => r.verdict.ok && typeof r.s.garde === 'string').map((r) => r.s.garde)
+    .filter((g) => fichiersGuard.includes(g)));
+
+  console.log('\n── Ratio ─────────────────────────────────────────────────────────');
   console.log(
-    `\n${joues.length} sabotage(s) rejoué(s), sur ${new Set(catalogue.map((s) => s.temoin)).size} `
-      + `témoin(s) — le dépôt en compte ${totalTemoins}.`,
+    `Témoins du dépôt, recomptés à ce run : ${total} cas dans ${fichiersTemoins.size} fichiers `
+      + `(${parSonNom} par leur propre nom, ${total - parSonNom} par le describe qui les porte),\n`
+      + `  sur ${fichiersDeTest} fichiers de test de ${CHAMP.join(', ')}.`,
   );
   console.log(
-    '⚠️ Les autres témoins ne sont PAS vérifiés par ce script. Écrire « les témoins',
-    "\n   sont vérifiés » serait faux : écrire combien.",
+    `TÉMOINS REJOUÉS : ${couverts.length} / ${total} (${pct.toFixed(1).replace('.', ',')} %) — vus ROUGES par leur nom sous un sabotage, VERTS sans lui.`,
   );
+  console.log(
+    `Gardes rejouées sur un défaut du PRODUIT : ${produits.length} sabotage(s), ${gardesProduit.size} garde(s).`,
+  );
+  console.log(`Fichiers *.guard.test.* rejoués : ${guardsJoues.size} / ${fichiersGuard.length}.`);
+  const restants = new Map();
+  for (const t of temoins) {
+    if (couverts.includes(t)) continue;
+    restants.set(t.fichier, (restants.get(t.fichier) ?? 0) + 1);
+  }
+  if (!seulement && restants.size > 0) {
+    console.log(`Témoins JAMAIS vus rouges ici (${total - couverts.length}), par fichier :`);
+    for (const [f, n] of [...restants].sort((a, b) => b[1] - a[1])) console.log(`  ${String(n).padStart(3)}  ${f}`);
+  }
+  console.log('⚠️ Écrire « les témoins sont vérifiés » serait faux : écrire combien.');
+  console.log(`Durée : ${Math.round((Date.now() - debut) / 1000)} s${nettoye ? '' : ' · ⚠️ copie laissée en place'}.`);
 
-  if (survivants.length > 0) {
-    console.error('\n✖ Des témoins ne détectent plus :');
-    for (const s of survivants) console.error(`  - ${s}`);
+  if (echecs.length > 0) {
+    console.error(`\n✖ ${echecs.length} problème(s) :`);
+    for (const e of echecs) console.error(`  - ${e}`);
     process.exit(1);
   }
-  console.log('\n✓ Chaque sabotage du catalogue a été VU par son témoin.');
-}
-
-/** Le nombre de témoins du dépôt, pour afficher l'écart plutôt que le taire. */
-function compterTemoins() {
-  try {
-    const suivis = execFileSync('git', ['ls-files'], { cwd: RACINE, encoding: 'utf8' });
-    return suivis.split('\n').filter((f) => /[.-]guard\.(test|spec)\.(ts|tsx|mjs)$/.test(f.trim()))
-      .length;
-  } catch {
-    return -1;
-  }
+  console.log(`\n✓ Les ${catalogue.length} sabotages du catalogue ont été VUS, chacun pour sa raison.`);
 }
