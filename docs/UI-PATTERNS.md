@@ -27,6 +27,18 @@
 > | Guide entreprise (30 scénarios, 10-12 et 10-13) | 0 | livré avec ses ancrages `data-guide-id` et la garde de ses scénarios ; son e2e est rouge (cf. [`TESTING.md`](./TESTING.md)) |
 >
 > **86 → 84.**
+>
+> 🔎 **2026-10-15 (jour) · les quatre rouges de `Visual` tranchés** (artefacts du run `38650837007`) :
+> · `/entreprise · Aperçu` : **voulu**. Trois changements, écart identique sur trois essais (9 330 px) :
+> « Valider / Renvoyer » sur la ligne de la tâche (`8df06f57`), badge Ctrl K retiré (`fd4adabf`),
+> bouton flottant du guide (`c651ba18`). Référence régénérée.
+> · `/`, `/guide`, `/blog` : **défaut de la GARDE**, puis changement voulu. Le spec posait
+> `cosmo_cookie_consent = 'rejected'`, valeur que le produit ne connaît pas (`'refused'`) : le
+> bandeau cookies n'a jamais été neutralisé, et les trois références le contenaient depuis leur
+> création. L'allongement de son texte par l'audit juridique (`79c0f0b3`) les a rendues rouges ;
+> `/guide` porte en plus le guide remis à jour (`a0dc4990`). Valeur corrigée et témoin à deux sens
+> posé (bandeau vu, puis absent), `477e2fc8` ; références régénérées par `visual.yml`
+> (run `38728499545`, deux passes, `22a00936`). Aucune tolérance touchée.
 
 > ### 🟢 2026-10-03 · +1 : l'Aperçu de `/entreprise` sous `Visual`
 >
