@@ -71,10 +71,10 @@ import {
   symlinkSync, unlinkSync, rmdirSync, lstatSync, realpathSync,
 } from 'node:fs';
 import { join, sep, dirname } from 'node:path';
-import { tmpdir } from 'node:os';
+import { tmpdir, cpus } from 'node:os';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync, spawn } from 'node:child_process';
 
 import { CATALOGUE } from './replay-sabotages.catalogue.mjs';
 
@@ -107,6 +107,19 @@ export function porteLaMarque(titre) {
 
 /** La clé d'un cas : ses `describe` puis son titre, comme vitest les rend. */
 export const cleDuCas = (chemin, titre) => [...chemin, titre].join(' > ');
+
+/**
+ * Le motif des clés qu'un témoin à titre CONSTRUIT peut produire.
+ *
+ * `it.each(t)('cas %s')` rend un cas par ligne, `describe(nom, …)` ou
+ * `` it(`${x} …`) `` un titre substitué : chaque trou devient « n'importe quoi ».
+ * Sans ce motif, un témoin à gabarit compterait comme rejoué dès qu'un AUTRE
+ * témoin de son fichier rougit.
+ */
+export function motifDuGabarit(cle) {
+  const echappe = cle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^${echappe.replace(/%[sdifjoO#]|\\\$\\\{.*?\\\}/g, '.*')}$`);
+}
 
 /**
  * Les témoins d'UNE source de test, lus dans son arbre syntaxique.
@@ -269,6 +282,15 @@ export function nettoyerAtelier(atelier) {
 const occurrences = (texte, motif) => texte.split(motif).length - 1;
 
 /**
+ * Un motif écrit avec `\n` suit les fins de ligne du FICHIER.
+ *
+ * ⚠️ Le catalogue est écrit une fois, et joué sur deux arbres : un checkout
+ * Windows (`core.autocrlf`, CRLF) et le runner Linux (LF). Sans cette
+ * adaptation, un motif sur deux lignes ne se trouverait que sur l'un des deux.
+ */
+export const selonLeFichier = (texte, s) => (texte.includes('\r\n') ? s.replace(/\r?\n/g, '\r\n') : s);
+
+/**
  * Vérifie qu'une modification est applicable SANS l'appliquer.
  *
  * ⚠️ `chercher` doit apparaître EXACTEMENT UNE FOIS. Un motif ambigu saboterait
@@ -282,7 +304,8 @@ export function verifierModif(copie, m) {
   }
   if (!existsSync(chemin)) return `${m.fichier} absent : le catalogue décrit un état périmé`;
   if (m.supprimer) return null;
-  const n = occurrences(readFileSync(chemin, 'utf8'), m.chercher);
+  const texte = readFileSync(chemin, 'utf8');
+  const n = occurrences(texte, selonLeFichier(texte, m.chercher));
   return n === 1 ? null : `le motif « ${m.chercher} » apparaît ${n} fois dans ${m.fichier} (attendu : exactement 1)`;
 }
 
@@ -301,7 +324,7 @@ export function appliquerModifs(copie, modifs) {
       const texte = readFileSync(chemin, 'utf8');
       // Fonction de remplacement : une chaîne `remplacer` contenant `$&` ou `$1`
       // serait sinon INTERPRÉTÉE par `String.replace`.
-      writeFileSync(chemin, texte.replace(m.chercher, () => m.remplacer), 'utf8');
+      writeFileSync(chemin, texte.replace(selonLeFichier(texte, m.chercher), () => selonLeFichier(texte, m.remplacer)), 'utf8');
     }
   }
   return originaux;
@@ -330,12 +353,27 @@ export function restaurer(copie, originaux) {
 // 4. Jouer une garde
 // ═══════════════════════════════════════════════════════════════════
 
-// eslint-disable-next-line no-control-regex
-const sansAnsi = (s) => s.replace(/\[[0-9;]*m/g, '');
+const sansAnsi = (s) => s.replace(/\x1b\[[0-9;]*m/g, '');
 const fin = (s, n = 12) => sansAnsi(s).trim().split('\n').slice(-n).join('\n');
 const posix = (p) => p.split('\\').join('/');
 
 let numeroDeRapport = 0;
+
+/**
+ * Lance un processus et attend sa fin. Asynchrone : plusieurs copies jouent
+ * en même temps, chacune son sabotage, sans jamais partager un fichier.
+ */
+function executer(commande, args, options) {
+  return new Promise((resolve) => {
+    const enfant = spawn(commande, args, { ...options, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
+    enfant.stdout.setEncoding('utf8').on('data', (d) => { stdout += d; });
+    enfant.stderr.setEncoding('utf8').on('data', (d) => { stderr += d; });
+    enfant.on('error', (error) => resolve({ status: null, stdout, stderr, error }));
+    enfant.on('close', (status) => resolve({ status, stdout, stderr }));
+  });
+}
 
 /**
  * Lance UN fichier de test dans la copie et rend chacun de ses cas, par nom.
@@ -351,21 +389,37 @@ let numeroDeRapport = 0;
  * `spawnSync('npx.cmd')` échoue en `EINVAL` sans rien lancer, `status` vaut
  * `null`, et chaque témoin passait pour rouge sans avoir tourné.
  */
-export function jouerVitest(atelier, fichier) {
+export async function jouerVitest(atelier, fichier) {
   const vitest = join(atelier.copie, 'node_modules', 'vitest', 'vitest.mjs');
   if (!existsSync(vitest)) throw new Error(`vitest introuvable (${vitest}) : lancer \`npm ci\` d'abord.`);
-  numeroDeRapport += 1;
-  const rapport = join(atelier.journal, `vitest-${numeroDeRapport}.json`);
-  const r = spawnSync(
-    process.execPath,
-    [vitest, 'run', fichier, '--reporter=json', `--outputFile=${rapport}`],
-    { cwd: atelier.copie, encoding: 'utf8', maxBuffer: MEGA, stdio: ['ignore', 'pipe', 'pipe'] },
-  );
-  if (r.error) throw r.error;
-  if (!existsSync(rapport)) {
-    return { panne: `aucun rapport JSON (sortie ${r.status}) :\n${fin(`${r.stdout}${r.stderr}`)}` };
-  }
-  return lireRapportVitest(JSON.parse(readFileSync(rapport, 'utf8')), fichier, r.status);
+  const uneFois = async () => {
+    numeroDeRapport += 1;
+    const rapport = join(atelier.journal, `vitest-${numeroDeRapport}.json`);
+    const r = await executer(
+      process.execPath,
+      [vitest, 'run', fichier, '--reporter=json', `--outputFile=${rapport}`],
+      { cwd: atelier.copie },
+    );
+    if (r.error) throw r.error;
+    const sortie = `${r.stdout}${r.stderr}`;
+    if (!existsSync(rapport)) {
+      return { panne: `aucun rapport JSON (sortie ${r.status}) :\n${fin(sortie)}`, aucunCas: true };
+    }
+    const json = JSON.parse(readFileSync(rapport, 'utf8'));
+    const lu = lireRapportVitest(json, fichier, r.status);
+    if (lu.panne && (json.testResults ?? []).length === 0) {
+      return { panne: `${lu.panne}\n${fin(sortie, 6)}`, aucunCas: true };
+    }
+    return lu;
+  };
+  // ⚠️ UNE seconde chance, et seulement quand vitest n'a exécuté AUCUN cas
+  // (« Timeout waiting for worker to respond », C-47) : ce n'est pas un
+  // verdict, ni vert ni rouge, donc le rejouer ne rend rien plus indulgent.
+  // Un cas rouge, lui, ne se rejoue jamais.
+  const premier = await uneFois();
+  if (!premier.aucunCas) return premier;
+  const second = await uneFois();
+  return second.aucunCas ? { panne: `${second.panne}\n      (deux tentatives, aucun cas exécuté)` } : second;
 }
 
 /** Rend `{ code, cas, message }` d'un rapport JSON de vitest, ou `{ panne }`. */
@@ -394,15 +448,12 @@ export function lireRapportVitest(json, fichier, code) {
 }
 
 /** Lance une garde-commande (`scripts/*.mjs`) dans la copie. */
-export function jouerCommande(atelier, garde) {
+export async function jouerCommande(atelier, garde) {
   const args = [];
   if (garde.precharger) args.push('--import', pathToFileURL(join(atelier.copie, garde.precharger.fichier)).href);
   args.push(join(atelier.copie, garde.commande), ...(garde.args ?? []));
-  const r = spawnSync(process.execPath, args, {
+  const r = await executer(process.execPath, args, {
     cwd: atelier.copie,
-    encoding: 'utf8',
-    maxBuffer: MEGA,
-    stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env, ...(garde.env ?? {}) },
   });
   if (r.error) throw r.error;
@@ -507,6 +558,138 @@ export function verifierCatalogue(catalogue) {
   return erreurs;
 }
 
+/**
+ * Répartit le catalogue en `n` voies, une copie chacune.
+ *
+ * Les sabotages d'une même garde restent dans la même voie : sa référence
+ * n'est jouée qu'une fois. Les voies s'équilibrent en nombre de sabotages,
+ * les plus grosses gardes d'abord.
+ */
+export function repartir(catalogue, n) {
+  const groupes = new Map();
+  for (const s of catalogue) {
+    const k = cleDeGarde(s.garde);
+    if (!groupes.has(k)) groupes.set(k, []);
+    groupes.get(k).push(s);
+  }
+  const voies = Array.from({ length: Math.max(1, n) }, () => []);
+  for (const g of [...groupes.values()].sort((a, b) => b.length - a.length)) {
+    voies.reduce((min, v) => (v.length < min.length ? v : min), voies[0]).push(...g);
+  }
+  return voies.filter((v) => v.length > 0);
+}
+
+const famille = (s) => (s.famille === 'produit' ? 'produit  ' : 'détecteur');
+
+/**
+ * Une voie : sa copie, ses gardes de référence, ses sabotages, dans l'ordre.
+ *
+ * Rend `{ echecs, resultats, rejoues }`. Ne lève pas : tout ce qui se passe
+ * mal devient un échec NOMMÉ, et la copie est vérifiée avant de rendre.
+ */
+async function jouerUneVoie(atelier, voie, temoins) {
+  const echecs = [];
+  const resultats = [];
+  const rejoues = new Set(); // `fichier :: clé` des témoins vus rouges
+
+  // ── Le décor : les fichiers dont une garde a besoin pour tourner ──
+  for (const s of voie) {
+    const p = typeof s.garde === 'object' ? s.garde.precharger : null;
+    if (p && !existsSync(join(atelier.copie, p.fichier))) {
+      mkdirSync(dirname(join(atelier.copie, p.fichier)), { recursive: true });
+      writeFileSync(join(atelier.copie, p.fichier), p.contenu, 'utf8');
+    }
+  }
+  // Le décor fait partie de la référence : il entre dans l'index de la copie.
+  git(atelier.copie, ['add', '-A']);
+
+  // ── Chaque modification est-elle applicable ? ────────────────────
+  const inapplicables = new Set();
+  for (const s of voie) {
+    for (const m of s.modifs) {
+      const e = verifierModif(atelier.copie, m);
+      if (e) {
+        echecs.push(`${s.id} : ${e}`);
+        inapplicables.add(s.id);
+      }
+    }
+  }
+
+  // ── La référence : chaque garde, une fois, sur la copie PROPRE ───
+  const references = new Map();
+  for (const g of new Map(voie.map((s) => [cleDeGarde(s.garde), s.garde])).values()) {
+    const ref = typeof g === 'string' ? await jouerVitest(atelier, g) : await jouerCommande(atelier, g);
+    references.set(cleDeGarde(g), ref);
+    if (typeof g !== 'string') {
+      console.log(`  réf. ${ref.code === 0 ? '✓' : '⚠️'} ${nomDeGarde(g)} : sortie ${ref.code}${ref.code === 0 ? '' : ' — DÉJÀ ROUGE sur la copie propre, seule la raison nommée tranchera'}`);
+      continue;
+    }
+    if (ref.panne) {
+      console.log(`  réf. ✖ ${g} : ${ref.panne}`);
+      continue;
+    }
+    const rouges = ref.cas.filter((c) => c.statut === 'failed').length;
+    console.log(`  réf. ${rouges === 0 ? '✓' : '⚠️'} ${g} : ${ref.cas.length} cas${rouges ? `, dont ${rouges} DÉJÀ ROUGE(S) sur la copie propre` : ''}`);
+    // 🔴 Le recensement statique est confronté à ce que vitest a réellement
+    // exécuté : si l'AST et le runner ne voient pas les mêmes témoins, c'est
+    // le compteur qui ment, et le ratio avec lui.
+    const statiques = temoins.filter((t) => t.fichier === g);
+    const exacts = new Set(statiques.filter((t) => !t.gabarit).map((t) => t.cle));
+    const vus = new Set(ref.cas
+      .filter((c) => c.statut !== 'todo' && [...c.chemin, c.titre].some(porteLaMarque))
+      .map((c) => c.cle));
+    const oublies = [...exacts].filter((k) => !vus.has(k));
+    const gabarits = statiques.filter((t) => t.gabarit).map((t) => motifDuGabarit(t.cle));
+    const inconnus = [...vus].filter((k) => !exacts.has(k) && !gabarits.some((m) => m.test(k)));
+    if (oublies.length || inconnus.length) {
+      echecs.push(
+        `recensement : ${g} — l'AST et vitest ne voient pas les mêmes témoins.\n`
+          + `      absents du rapport : ${oublies.join(' | ') || '—'}\n`
+          + `      absents du recensement : ${inconnus.join(' | ') || '—'}`,
+      );
+    }
+  }
+
+  // ── Les sabotages ────────────────────────────────────────────────
+  for (const s of voie) {
+    if (inapplicables.has(s.id)) continue; // déjà signalé
+    const originaux = appliquerModifs(atelier.copie, s.modifs);
+    let verdict;
+    try {
+      const ref = references.get(cleDeGarde(s.garde));
+      verdict = typeof s.garde === 'string'
+        ? jugerVitest(s.attendu, ref, await jouerVitest(atelier, s.garde))
+        : jugerCommande(s.raison, ref, await jouerCommande(atelier, s.garde));
+    } catch (e) {
+      verdict = { ok: false, motif: `exception pendant le rejeu : ${e?.message ?? e}` };
+    } finally {
+      const abimes = restaurer(atelier.copie, originaux);
+      if (abimes.length > 0) echecs.push(`${s.id} : la COPIE n'est pas revenue pour ${abimes.join(', ')}`);
+    }
+    resultats.push({ s, verdict });
+    const ligne = `  [${famille(s)}] ${s.id.padEnd(34)} → ${nomDeGarde(s.garde)} … `;
+    if (verdict.ok) {
+      const temoinsVus = (verdict.bascules ?? []).filter((cle) => cle.split(' > ').some(porteLaMarque));
+      for (const cle of temoinsVus) rejoues.add(`${s.garde} :: ${cle}`);
+      console.log(`${ligne}rouge ✓${temoinsVus.length ? ` (${temoinsVus.length} témoin${temoinsVus.length > 1 ? 's' : ''})` : ''}`);
+    } else {
+      console.log(`${ligne}✖`);
+      echecs.push(`${s.id} (${nomDeGarde(s.garde)}) :\n      ${verdict.motif}\n      Ce que la garde ne verrait plus : ${s.pourquoi}`);
+    }
+  }
+
+  // ── La copie est-elle revenue à la référence ? ───────────────────
+  // L'index de la copie EST la référence (aucun commit) : on compare l'arbre
+  // de la copie à son index, et on cherche tout fichier né pendant le run.
+  const modifies = git(atelier.copie, ['diff', '--name-only']);
+  const nes = git(atelier.copie, ['ls-files', '--others', '--exclude-standard']);
+  const ecarts = `${modifies.stdout ?? ''}${nes.stdout ?? ''}`.trim();
+  if (modifies.status !== 0 || nes.status !== 0 || ecarts !== '') {
+    echecs.push(`la copie n'est pas revenue à la référence (git, contre son index) :\n${ecarts || modifies.stderr || nes.stderr}`);
+  }
+  return { echecs, resultats, rejoues };
+}
+
 const estLanceDirectement =
   process.argv[1]
   && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
@@ -525,124 +708,42 @@ if (estLanceDirectement) {
     for (const e of erreursDeForme) console.error(`  - ${e}`);
     process.exit(1);
   }
+  // ⚠️ Une voie = une copie et un vitest à la fois. Sur le runner (4 cœurs),
+  // trois voies ; sur un poste partagé par plusieurs sessions, une seule,
+  // sauf demande explicite (`--voies=N`).
+  const demandees = Number(process.argv.find((a) => a.startsWith('--voies='))?.slice('--voies='.length));
+  const nVoies = Number.isInteger(demandees) && demandees > 0
+    ? demandees
+    : (process.env.CI ? Math.min(3, Math.max(1, cpus().length - 1)) : 1);
 
   // ── Le recensement, dans l'arbre RÉEL, en lecture seule ──────────
   const { temoins, fichiersDeTest } = recenserTemoins();
   const etatAvant = git(RACINE, ['status', '--porcelain', '--untracked-files=all']).stdout;
 
-  // ── L'atelier, et sa disparition garantie ────────────────────────
-  let atelier = null;
+  // ── Les ateliers, et leur disparition garantie ───────────────────
+  const ateliers = [];
+  const toutNettoyer = () => ateliers.map((a) => nettoyerAtelier(a)).every(Boolean);
   const quitter = (code, message) => {
     if (message) console.error(message);
-    nettoyerAtelier(atelier);
+    toutNettoyer();
     process.exit(code);
   };
-  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => quitter(130, `\n⚠️ Interrompu (${signal}) : copie retirée.`));
+  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => quitter(130, `\n⚠️ Interrompu (${signal}) : copies retirées.`));
   process.on('uncaughtException', (e) => quitter(1, `\n✖ Exception : ${e?.stack ?? e}`));
+  process.on('unhandledRejection', (e) => quitter(1, `\n✖ Rejet non traité : ${e?.stack ?? e}`));
 
-  atelier = preparerAtelier();
-  console.log(`Copie de travail : ${atelier.fichiers} fichiers dans ${atelier.base}`);
-  console.log('🔴 Aucun sabotage n est écrit dans l arbre de travail : tout se joue dans cette copie.\n');
+  const voies = repartir(catalogue, nVoies);
+  for (let i = 0; i < voies.length; i += 1) ateliers.push(preparerAtelier());
+  console.log(`${voies.length} copie(s) de travail, ${ateliers[0].fichiers} fichiers chacune (${ateliers.map((a) => a.base).join(', ')}).`);
+  console.log('🔴 Aucun sabotage n est écrit dans l arbre de travail : tout se joue dans ces copies.');
+  console.log(`Sabotages : ${catalogue.length}, sur ${new Set(catalogue.map((s) => cleDeGarde(s.garde))).size} gardes.\n`);
 
-  const echecs = [];
-  const rejoues = new Set(); // clés `fichier :: cas` des témoins vus rouges
-  const resultats = [];
-
-  // ── Le décor : les fichiers dont une garde a besoin pour tourner ──
-  for (const s of catalogue) {
-    const p = typeof s.garde === 'object' ? s.garde.precharger : null;
-    if (p && !existsSync(join(atelier.copie, p.fichier))) {
-      mkdirSync(dirname(join(atelier.copie, p.fichier)), { recursive: true });
-      writeFileSync(join(atelier.copie, p.fichier), p.contenu, 'utf8');
-    }
-  }
-  // Le décor fait partie de la référence : il entre dans l'index de la copie.
-  git(atelier.copie, ['add', '-A']);
-
-  // ── Chaque modification est-elle applicable ? ────────────────────
-  for (const s of catalogue) {
-    for (const m of s.modifs) {
-      const e = verifierModif(atelier.copie, m);
-      if (e) echecs.push(`${s.id} : ${e}`);
-    }
-  }
-
-  // ── La référence : chaque garde, une fois, sur la copie PROPRE ───
-  const references = new Map();
-  const gardes = [...new Map(catalogue.map((s) => [cleDeGarde(s.garde), s.garde])).values()];
-  console.log(`Référence : ${gardes.length} garde(s) jouée(s) sur la copie propre…`);
-  for (const g of gardes) {
-    const ref = typeof g === 'string' ? jouerVitest(atelier, g) : jouerCommande(atelier, g);
-    references.set(cleDeGarde(g), ref);
-    if (typeof g === 'string') {
-      if (ref.panne) {
-        console.log(`  ✖ ${g} : ${ref.panne}`);
-        continue;
-      }
-      const rouges = ref.cas.filter((c) => c.statut === 'failed').length;
-      console.log(`  ${rouges === 0 ? '✓' : '⚠️'} ${g} : ${ref.cas.length} cas${rouges ? `, dont ${rouges} DÉJÀ ROUGE(S) sur l arbre propre` : ''}`);
-      // 🔴 Le recensement statique est confronté à ce que vitest a réellement
-      // exécuté : si l'AST et le runner ne voient pas les mêmes témoins, c'est
-      // le compteur qui ment, et le ratio avec lui.
-      const statiques = temoins.filter((t) => t.fichier === g);
-      const exacts = new Set(statiques.filter((t) => !t.gabarit).map((t) => t.cle));
-      const vus = new Set(ref.cas
-        .filter((c) => c.statut !== 'todo' && [...c.chemin, c.titre].some(porteLaMarque))
-        .map((c) => c.cle));
-      const oublies = [...exacts].filter((k) => !vus.has(k));
-      const inconnus = statiques.some((t) => t.gabarit) ? [] : [...vus].filter((k) => !exacts.has(k));
-      if (oublies.length || inconnus.length) {
-        echecs.push(
-          `recensement : ${g} — l'AST et vitest ne voient pas les mêmes témoins.\n`
-            + `      absents du rapport : ${oublies.join(' | ') || '—'}\n`
-            + `      absents du recensement : ${inconnus.join(' | ') || '—'}`,
-        );
-      }
-    } else {
-      console.log(`  ${ref.code === 0 ? '✓' : '⚠️'} ${nomDeGarde(g)} : sortie ${ref.code}${ref.code === 0 ? '' : ' — DÉJÀ ROUGE sur l arbre propre, seule la raison nommée tranchera'}`);
-    }
-  }
-
-  // ── Les sabotages ────────────────────────────────────────────────
-  console.log(`\nSabotages : ${catalogue.length}`);
-  for (const s of catalogue) {
-    if (echecs.some((e) => e.startsWith(`${s.id} :`))) continue; // inapplicable, déjà signalé
-    process.stdout.write(`  [${s.famille === 'produit' ? 'produit  ' : 'détecteur'}] ${s.id.padEnd(34)} → ${nomDeGarde(s.garde)} … `);
-    const originaux = appliquerModifs(atelier.copie, s.modifs);
-    let verdict;
-    try {
-      const ref = references.get(cleDeGarde(s.garde));
-      if (typeof s.garde === 'string') {
-        verdict = jugerVitest(s.attendu, ref, jouerVitest(atelier, s.garde));
-      } else {
-        verdict = jugerCommande(s.raison, ref, jouerCommande(atelier, s.garde));
-      }
-    } finally {
-      const abimes = restaurer(atelier.copie, originaux);
-      if (abimes.length > 0) echecs.push(`${s.id} : la COPIE n'est pas revenue pour ${abimes.join(', ')}`);
-    }
-    resultats.push({ s, verdict });
-    if (verdict.ok) {
-      const temoinsVus = (verdict.bascules ?? []).filter((cle) => cle.split(' > ').some(porteLaMarque));
-      for (const cle of temoinsVus) rejoues.add(`${s.garde} :: ${cle}`);
-      process.stdout.write(`rouge ✓${temoinsVus.length ? ` (${temoinsVus.length} témoin${temoinsVus.length > 1 ? 's' : ''})` : ''}\n`);
-    } else {
-      process.stdout.write('✖\n');
-      echecs.push(`${s.id} (${nomDeGarde(s.garde)}) :\n      ${verdict.motif}\n      Ce que la garde ne verrait plus : ${s.pourquoi}`);
-    }
-  }
-
-  // ── La copie est-elle revenue à la référence ? ───────────────────
-  // L'index de la copie EST la référence (aucun commit) : on compare l'arbre
-  // de la copie à son index, et on cherche tout fichier né pendant le run.
-  const modifies = git(atelier.copie, ['diff', '--name-only']);
-  const nes = git(atelier.copie, ['ls-files', '--others', '--exclude-standard']);
-  const ecarts = `${modifies.stdout ?? ''}${nes.stdout ?? ''}`.trim();
-  if (modifies.status !== 0 || nes.status !== 0 || ecarts !== '') {
-    echecs.push(`la copie n'est pas revenue à la référence (git, contre son index) :\n${ecarts || modifies.stderr || nes.stderr}`);
-  }
-  const nettoye = nettoyerAtelier(atelier);
-  atelier = null;
+  const parVoie = await Promise.all(voies.map((voie, i) => jouerUneVoie(ateliers[i], voie, temoins)));
+  const echecs = parVoie.flatMap((v) => v.echecs);
+  const resultats = parVoie.flatMap((v) => v.resultats);
+  const rejoues = new Set(parVoie.flatMap((v) => [...v.rejoues]));
+  const nettoye = toutNettoyer();
+  ateliers.length = 0;
 
   // ── L'arbre RÉEL n'a-t-il vraiment pas bougé ? ───────────────────
   const etatApres = git(RACINE, ['status', '--porcelain', '--untracked-files=all']).stdout;
@@ -650,16 +751,19 @@ if (estLanceDirectement) {
     echecs.push(`🔴 L'ARBRE DE TRAVAIL A CHANGÉ pendant le run, alors que ce script ne doit rien y écrire :\n${etatApres}`);
   }
   if (!existsSync(join(RACINE, 'node_modules', 'vitest', 'package.json'))) {
-    echecs.push('🔴 node_modules/vitest a DISPARU du dépôt pendant le nettoyage de la copie.');
+    echecs.push('🔴 node_modules/vitest a DISPARU du dépôt pendant le nettoyage d une copie.');
   }
 
   // ── Le rapport ───────────────────────────────────────────────────
   const total = temoins.length;
-  const parSonNom = temoins.filter((t) => t.parSonNom).length;
+  const parSonNom = temoins.filter((t) => t.parSonNom);
   const fichiersTemoins = new Set(temoins.map((t) => t.fichier));
-  const couverts = temoins.filter((t) => rejoues.has(`${t.fichier} :: ${t.cle}`)
-    || (t.gabarit && [...rejoues].some((k) => k.startsWith(`${t.fichier} :: `))));
-  const pct = total === 0 ? 0 : (100 * couverts.length) / total;
+  const estRejoue = (t) => rejoues.has(`${t.fichier} :: ${t.cle}`)
+    || (t.gabarit && [...rejoues].some((k) => k.startsWith(`${t.fichier} :: `)
+      && motifDuGabarit(t.cle).test(k.slice(`${t.fichier} :: `.length))));
+  const couverts = temoins.filter(estRejoue);
+  const couvertsParSonNom = parSonNom.filter(estRejoue);
+  const pct = (a, b) => (b === 0 ? '0,0' : ((100 * a) / b).toFixed(1).replace('.', ','));
   const produits = resultats.filter((r) => r.s.famille === 'produit' && r.verdict.ok);
   const gardesProduit = new Set(produits.map((r) => nomDeGarde(r.s.garde)));
   const fichiersGuard = fichiersDeLArbre(RACINE, ...CHAMP).filter((f) => /[.-]guard\.(test|spec)\.(ts|tsx|mjs)$/.test(f));
@@ -669,11 +773,14 @@ if (estLanceDirectement) {
   console.log('\n── Ratio ─────────────────────────────────────────────────────────');
   console.log(
     `Témoins du dépôt, recomptés à ce run : ${total} cas dans ${fichiersTemoins.size} fichiers `
-      + `(${parSonNom} par leur propre nom, ${total - parSonNom} par le describe qui les porte),\n`
+      + `(${parSonNom.length} par leur propre nom, ${total - parSonNom.length} par le describe qui les porte),\n`
       + `  sur ${fichiersDeTest} fichiers de test de ${CHAMP.join(', ')}.`,
   );
   console.log(
-    `TÉMOINS REJOUÉS : ${couverts.length} / ${total} (${pct.toFixed(1).replace('.', ',')} %) — vus ROUGES par leur nom sous un sabotage, VERTS sans lui.`,
+    `TÉMOINS REJOUÉS : ${couverts.length} / ${total} (${pct(couverts.length, total)} %) — vus ROUGES par leur nom sous un sabotage, VERTS sans lui.`,
+  );
+  console.log(
+    `  dont nommés TÉMOIN par leur propre titre : ${couvertsParSonNom.length} / ${parSonNom.length} (${pct(couvertsParSonNom.length, parSonNom.length)} %).`,
   );
   console.log(
     `Gardes rejouées sur un défaut du PRODUIT : ${produits.length} sabotage(s), ${gardesProduit.size} garde(s).`,
@@ -682,14 +789,18 @@ if (estLanceDirectement) {
   const restants = new Map();
   for (const t of temoins) {
     if (couverts.includes(t)) continue;
-    restants.set(t.fichier, (restants.get(t.fichier) ?? 0) + 1);
+    if (!restants.has(t.fichier)) restants.set(t.fichier, []);
+    restants.get(t.fichier).push(t.titre);
   }
   if (!seulement && restants.size > 0) {
-    console.log(`Témoins JAMAIS vus rouges ici (${total - couverts.length}), par fichier :`);
-    for (const [f, n] of [...restants].sort((a, b) => b[1] - a[1])) console.log(`  ${String(n).padStart(3)}  ${f}`);
+    console.log(`Témoins JAMAIS vus rouges ici (${total - couverts.length}), nommés :`);
+    for (const [f, titres] of [...restants].sort((a, b) => b[1].length - a[1].length)) {
+      console.log(`  ${f}`);
+      for (const t of titres) console.log(`      · ${t}`);
+    }
   }
   console.log('⚠️ Écrire « les témoins sont vérifiés » serait faux : écrire combien.');
-  console.log(`Durée : ${Math.round((Date.now() - debut) / 1000)} s${nettoye ? '' : ' · ⚠️ copie laissée en place'}.`);
+  console.log(`Durée : ${Math.round((Date.now() - debut) / 1000)} s, ${voies.length} voie(s)${nettoye ? '' : ' · ⚠️ copie laissée en place'}.`);
 
   if (echecs.length > 0) {
     console.error(`\n✖ ${echecs.length} problème(s) :`);
