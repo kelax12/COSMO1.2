@@ -33,6 +33,9 @@ test.describe('Guide entreprise (démo)', () => {
     const before = await snapshotCosmoStorage(page);
 
     await page.getByRole('button', { name: /ouvrir le guide entreprise/i }).click();
+    // Les catégories du tiroir sont repliées à l'ouverture depuis `c7051e19` :
+    // l'action n'existe pas dans l'arbre tant que sa catégorie n'est pas dépliée.
+    await page.getByRole('button', { name: /équipes et membres/i, expanded: false }).click();
     await page.getByRole('button', { name: /^créer une équipe$/i }).click();
     await expect(page.locator('[data-guide-id="team-form-name"]')).toBeVisible({ timeout: 10_000 });
 

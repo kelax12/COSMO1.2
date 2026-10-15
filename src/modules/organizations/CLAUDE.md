@@ -136,60 +136,17 @@ Fichiers : `roles.*` ; écrans `OrgRolesSettings`, `RoleEditorSheet`, `AssignRol
 - La palette lit `search_org` par `search.hooks.ts` : ❌ jamais `governance.hooks` depuis l'entrée.
 - Une vue enregistrée ne DONNE rien : ses filtres se relisent sous la RLS, et se valident (URL).
 
-### 📬 Agréger des lectures, oui. Agréger des AUTORISATIONS, jamais (mig. 129)
+### 📬 Boîte de réception (mig. 129) et pastille (mig. 142)
 
-`get_my_org_inbox()` remplace **cinq** lectures qui partaient à chaque ouverture de
-l'application, sur toutes les pages protégées, parce que `Layout` monte `useOrgBadges` pour
-peindre une pastille : invitations, avis de retrait, ma demande d'adhésion, demandes reçues côté
-admin, notifications, plus un sixième appel conditionnel à `profiles`.
+Récit, preuves et règles complètes : [`docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md)
+§ « La boîte de réception d'entreprise » et « La pastille COMPTE ».
 
-- 🔴 **Une RPC d'agrégat est `SECURITY INVOKER`.** En `DEFINER`, agréger cinq lectures revient à
-  réécrire cinq autorisations à la main dans une fonction qui contourne la RLS : c'est là qu'une
-  agrégation « de performance » devient une fuite. Les deux sections qui ont besoin de privilèges
-  élevés ne sont pas réécrites, elles **appellent** les fonctions `DEFINER` existantes
-  (`get_my_org_invitations`, `get_my_org_removal_notices`), inchangées.
-- ❌ **Ne jamais lui donner un `p_org`.** Le périmètre vient de `auth.uid()` seul, comme
-  `get_my_tasks`. Un paramètre d'organisation forcerait le client à attendre que l'organisation
-  active soit résolue : on échangerait quatre requêtes contre du délai, en sérialisant ce qui
-  partait en parallèle. Les sections par organisation couvrent TOUTES mes organisations, le
-  client filtre.
-- ❌ **Ne jamais borner globalement.** 200 demandes et 50 notifications, **par organisation**
-  (window function). Une borne globale tronquerait la troisième organisation d'un compte avec les
-  lignes des deux premières, et ça ne se verrait que chez lui.
-- ❌ **Ne jamais réintroduire une invalidation par section** dans `useOrgInboxRealtime` : ces clés
-  ne portent plus de donnée, l'écran cesserait de se rafraîchir **en silence**. Une seule clé,
-  `orgKeys.inbox()`.
-- Les cinq hooks gardent leur nom et leur forme de retour : ce sont des sélecteurs `useMemo`.
-  Garde : `src/modules/organizations/inbox.hooks.test.tsx`.
-
-### 🔢 La pastille COMPTE, elle ne lit pas la liste (mig. 142, finding C-05)
-
-La même boîte de réception porte depuis le 2026-09-05 une section `badge_tasks`. `useOrgBadges`
-montait `useTeamTasks`, donc `get_my_team_tasks` + `.limit(1000)` — la lecture la plus chère du
-produit — sur **toutes les pages protégées**, pour peindre un nombre. Le rechargement avait été
-coupé le 2026-08-27 (`background`), la **lecture** pas.
-
-- Le serveur rend les **seules** lignes utiles : assignations en cours qui ne viennent pas de moi
-  (`kind = 'assigned'`), et noms des tâches visées par mes notifications non lues
-  (`kind = 'notified'`). Bornes : 200 et 50 **par organisation**, jamais globalement.
-- ❌ **Ne jamais faire compter une ligne `notified`.** Une tâche peut sortir dans les DEUX branches ;
-  le client leur retire toute assignation pour cette raison précise. Sans ça, elle compte deux fois
-  et le nombre affiché change.
-- ❌ **Ne jamais passer `lastSeen` au serveur.** Il vit dans `localStorage`, il est **par
-  organisation**, et il change à chaque visite de /entreprise : en paramètre, il ferait dépendre la
-  clé de cache d'une valeur mouvante, et un seul horodatage ne pourrait pas servir plusieurs
-  organisations. La borne reste côté client, sur un ensemble déjà réduit.
-- ✅ `my_org_badge_tasks()` est `SECURITY DEFINER` pour la SEULE raison qui vaut ici : appeler
-  `my_team_project_ids`, dont `EXECUTE` est révoqué à `authenticated` (mig. 100/113). L'autorisation
-  est celle de `get_my_team_tasks`, reprise mot pour mot. La RPC d'agrégat, elle, reste
-  `SECURITY INVOKER` — agréger des lectures, oui ; agréger des autorisations, jamais.
-- ⚠️ En **démo** la source reste `useTeamTasks` : c'est du `localStorage`, donc gratuit, et écrire
-  une seconde dérivation de « nouvelle assignation » dans le repository local aurait fait deux
-  définitions du même chiffre. Hors démo l'identifiant vaut `undefined` et rien ne part.
-- Gardes : `src/lib/hooks/org-badges.server-count.test.tsx` (dont un témoin qui exige que le
-  compteur TOMBE quand la source serveur est vidée — sans lui, le fichier passerait encore si plus
-  aucune source n'alimentait rien).
-
+- 🔴 `get_my_org_inbox()` est `SECURITY INVOKER` : agréger des lectures, oui ; des autorisations, jamais.
+- ❌ Jamais de `p_org`, jamais de borne globale (200 / 50 **par organisation**), jamais
+  d'invalidation par section dans `useOrgInboxRealtime` : une seule clé, `orgKeys.inbox()`.
+- ❌ Hors démo, `useOrgBadges` ne monte pas `useTeamTasks`. Ne jamais faire compter une ligne
+  `notified`, ne jamais passer `lastSeen` au serveur.
+- Gardes : `organizations/inbox.hooks.test.tsx`, `src/lib/hooks/org-badges.server-count.test.tsx`.
 
 ---
 

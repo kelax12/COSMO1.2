@@ -17,8 +17,8 @@ const markSeen = () => {
 };
 
 /**
- * Seul morceau eager du guide : le tiroir, les scénarios et la démo arrivent
- * au premier clic. Desktop uniquement (v1). En bas à droite : sur desktop,
+ * Le bouton arrive en lazy avec `OrganizationPage` (2026-10-15) ; le tiroir,
+ * les scénarios et la démo arrivent au premier clic. Desktop uniquement (v1). En bas à droite : sur desktop,
  * il n'y a pas de FAB de création rapide (`global-quick-add-fab` est mobile).
  */
 export function OrgGuideFab({ viewer, openSignal }: { viewer: GuideViewer; openSignal?: number }) {
@@ -62,3 +62,5 @@ export function OrgGuideFab({ viewer, openSignal }: { viewer: GuideViewer; openS
     </>
   );
 }
+
+export default OrgGuideFab;

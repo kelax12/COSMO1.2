@@ -9,7 +9,7 @@
 import { supabase } from '@/lib/supabase';
 import { appModeStore } from '@/lib/app-mode.store';
 import { getCurrentUserId } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { readJson, writeJsonOrThrow } from '@/lib/safe-json';
 import { DEMO_USER_ID } from './demo-seed';
 
@@ -58,7 +58,9 @@ export async function getProjectMessages(projectId: string): Promise<TeamProject
 
 export async function addProjectMessage(orgId: string, projectId: string, body: string): Promise<TeamProjectMessage> {
   const text = body.trim().slice(0, PROJECT_MESSAGE_MAX);
-  if (!text) throw new Error('Empty message');
+  // Code catalogué (`errors.json` § api) : la phrase est affichée telle quelle
+  // par le toast de `useAddProjectMessage`, jamais une chaîne en dur.
+  if (!text) throw makeApiError('empty_message');
   if (appModeStore.isDemo) {
     const msg: TeamProjectMessage = {
       id: `pmsg-${Date.now()}`, projectId, authorId: DEMO_USER_ID, body: text, createdAt: new Date().toISOString(),

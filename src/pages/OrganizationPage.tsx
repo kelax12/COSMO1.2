@@ -20,7 +20,6 @@ import { MobileHeader } from '@/components/mobile';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
 import OrgSideNav from '@/components/organization/OrgSideNav';
-import { OrgGuideFab } from '@/components/org-guide/OrgGuideFab';
 import { useOrgGuideDemoPhase } from '@/components/org-guide/guide-demo-signal';
 import type { GuideViewer } from '@/components/org-guide/guide-types';
 import { useOrgNavMode, type OrgNavMode } from '@/components/organization/use-org-nav-mode';
@@ -90,6 +89,9 @@ const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization
 // chargée seulement quand l'un sert (cf. `OrgPageOverlays`).
 // Accueil d'un membre au premier passage (2026-10-03) : son catalogue
 // `onboarding` ne part qu'avec lui, soit une fois par entreprise et par appareil.
+// Bouton flottant du guide (desktop) : lazy depuis le 2026-10-15, budget de ce
+// chunk. Il n'est pas nécessaire au premier rendu, et il arrive avec son catalogue.
+const OrgGuideFab = lazyWithRetry(() => import('@/components/org-guide/OrgGuideFab'), ['org', 'orgGuide', 'overlays']);
 const OrgWelcomeVideo = lazyWithRetry(() => import('@/components/onboarding/enterprise/OrgWelcomeVideo'), ['onboarding']);
 const OrgPageOverlays = lazyWithRetry(() => import('@/components/organization/OrgPageOverlays'), ['eventModal', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'tasks']);
 
@@ -514,7 +516,9 @@ const OrganizationPage = () => {
           Rendue par portail dans l'emplacement de `Layout`, donc sa place
           dans cet arbre ne dit rien de sa place à l'écran. */}
       {/* Guide entreprise : bouton flottant desktop, le reste arrive en lazy. */}
-      <OrgGuideFab viewer={guideViewer} openSignal={guideOpenSignal} />
+      <Suspense fallback={null}>
+        <OrgGuideFab viewer={guideViewer} openSignal={guideOpenSignal} />
+      </Suspense>
 
       <OrgSideNav
         items={navItems}

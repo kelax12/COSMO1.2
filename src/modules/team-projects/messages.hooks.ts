@@ -16,8 +16,12 @@ export const useProjectMessages = (projectId: string | undefined) =>
     queryFn: () => getProjectMessages(projectId as string),
     enabled: !!projectId,
     staleTime: 1000 * 10,
-    // Pas de Realtime : un fil de projet tolère quelques secondes de retard.
-    refetchInterval: 1000 * 20,
+    // Pas de sondage (`polling.guard`, 2026-10-15) : la version d'origine
+    // relisait le fil toutes les 20 s, en permanence, tant que la page projet
+    // restait ouverte. Le fil se relit à l'ouverture, au retour sur l'onglet et
+    // après chaque envoi. Un fil en direct passera par Realtime (publication
+    // `supabase_realtime` + `REPLICA IDENTITY FULL`, absents de la mig. 220),
+    // jamais par un intervalle.
     refetchOnWindowFocus: true,
   });
 

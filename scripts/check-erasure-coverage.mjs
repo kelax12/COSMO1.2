@@ -107,6 +107,12 @@ const DECISIONS = {
   // hebdomadaire et liens hiérarchiques secondaires. Rien à garder.
   org_member_capacity: { decision: 'cascade' },
   org_member_secondary_managers: { decision: 'cascade' },
+  // Rôles personnalisés (mig. 219, 2026-10-12), décidé le 2026-10-15 :
+  // attribuer un rôle à un compte parti n'a plus d'objet. `user_id` cascade
+  // vers `auth.users`, et la clé composite vers `organization_members` emporte
+  // déjà la ligne au départ de l'organisation. La trace des attributions
+  // (`role.assigned` / `role.revoked`) vit dans `org_audit_log`, pas ici.
+  org_member_roles: { decision: 'cascade' },
   // Audience « Personnaliser » d'un OKR (mig. 205, 2026-09-29), décidée le
   // 2026-10-01 : `user_id` est nu, la ligne part par sa clé composite vers
   // `organization_members`, qui part avec le compte. Vérifié en base le même

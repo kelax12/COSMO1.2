@@ -88,8 +88,9 @@ const NON_MESUREES: Record<string, string> = {
     'dette, et la plus gênante des trois : une palette de commandes EST un '
     + 'geste clavier. Elle devrait être la première mesurée.',
   'components/CompletedOKRsModal.tsx': 'dette : atteignable depuis /okr.',
-  'components/organization/OrgSectionSwitcher.tsx':
-    'dette : atteignable en démo sur mobile (/entreprise, sélecteur de section). '
+  'components/organization/OrgSectionSheet.tsx':
+    'dette : atteignable en démo sur mobile (/entreprise, sélecteur de section ; feuille sortie '
+    + 'd OrgSectionSwitcher le 2026-10-15, chargée au premier toucher). '
     + 'Échap vérifié à la main le 2026-09-23, piège de focus jamais mesuré.',
   'components/organization/MemberBulkPicker.tsx':
     'dette : atteignable en démo (/entreprise/members, Sélectionner, puis une '
@@ -140,6 +141,14 @@ const NON_MESUREES: Record<string, string> = {
   'components/organization/InviteByEmailDialog.tsx': 'mode entreprise, et hors démo : exige `create_org_email_invitations` (mig. 161).',
   'components/organization/InviteOrJoinModal.tsx': 'mode entreprise.',
   'components/organization/MemberPermissionsSheet.tsx': 'mode entreprise.',
+  // Rôles personnalisés (mig. 219, 2026-10-12) : arrivées sans déclaration,
+  // relevées par cette garde le 2026-10-15. La démo seme deux rôles.
+  'components/organization/AssignRoleDialog.tsx':
+    'dette : attribuer un rôle personnalisé, atteignable en démo (/entreprise/members, menu '
+    + '« … » d un membre). Câblée sur useModalA11y, jamais parcourue au clavier.',
+  'components/organization/RoleEditorSheet.tsx':
+    'dette : créer ou modifier un rôle personnalisé, atteignable en démo (/entreprise/settings, '
+    + 'section Rôles). Câblée sur useModalA11y, jamais parcourue au clavier.',
   'components/organization/MemberSheet.tsx': 'mode entreprise.',
   'components/organization/NewTeamProjectModal.tsx': 'mode entreprise.',
   'components/organization/OffboardMemberDialog.tsx':

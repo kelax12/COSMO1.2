@@ -13,25 +13,7 @@ import { translator } from '@/i18n/useT';
 
 const useRepo = () => getOrgTeamsRepository();
 
-export const useOrgTeams = (orgId: string | undefined) => {
-  const repository = useRepo();
-  return useQuery({
-    queryKey: orgTeamKeys.teams(orgId ?? ''),
-    queryFn: () => repository.getTeams(orgId as string),
-    enabled: !!orgId,
-    staleTime: 1000 * 60 * 5,
-  });
-};
-
-export const useOrgTeamMembers = (orgId: string | undefined) => {
-  const repository = useRepo();
-  return useQuery({
-    queryKey: orgTeamKeys.members(orgId ?? ''),
-    queryFn: () => repository.getTeamMembers(orgId as string),
-    enabled: !!orgId,
-    staleTime: 1000 * 60 * 5,
-  });
-};
+export { useOrgTeams, useOrgTeamMembers } from './queries';
 
 export const useCreateOrgTeam = (orgId: string) => {
   const queryClient = useQueryClient();
