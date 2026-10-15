@@ -38,7 +38,8 @@
 > création. L'allongement de son texte par l'audit juridique (`79c0f0b3`) les a rendues rouges ;
 > `/guide` porte en plus le guide remis à jour (`a0dc4990`). Valeur corrigée et témoin à deux sens
 > posé (bandeau vu, puis absent), `477e2fc8` ; références régénérées par `visual.yml`
-> (run `38728499545`, deux passes, `22a00936`). Aucune tolérance touchée.
+> (run `38728499545`, deux passes, `22a00936`). Aucune tolérance touchée. **Comparaison verte**
+> sur `main` : run `38730049045` (`6f6ec984`), 20 cas, étape « Comparer aux références ».
 
 > ### 🟢 2026-10-03 · +1 : l'Aperçu de `/entreprise` sous `Visual`
 >
