@@ -11,7 +11,7 @@ import { useMemo } from 'react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useOrgMemberPermissions } from './hooks';
 import { useOrgMembers } from './hooks';
-import { useOrgRoleAssignments, useOrgRoles } from './roles.hooks';
+import { useOrgRoleAssignments, useOrgRoles } from './roles.queries';
 import { activeRolesOf } from './roles.helpers';
 import type { OrgCustomRole } from './roles.types';
 import {

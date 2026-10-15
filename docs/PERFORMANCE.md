@@ -1027,6 +1027,38 @@ portent plus de donnée, l'écran cesserait de se rafraîchir **en silence**. Ga
 requêtes (reçues, émises). La première paire ne peut pas devenir une jointure PostgREST, il n'y a
 pas de clé étrangère entre `friends.email` et `profiles.email`.
 
+#### La pastille COMPTE, elle ne lit pas la liste (mig. `142`, finding C-05)
+
+> Descendu de `src/modules/organizations/CLAUDE.md` le 2026-10-15 (plafond de 14 000 o dépassé),
+> sans une coupe. Le dossier n'en garde que les interdits. Trace « avant » et parité mesurée :
+> [`SCALABILITY.md`](./SCALABILITY.md) § « le rechargement était éteint, la LECTURE ne l'était pas ».
+
+La même boîte de réception porte depuis le 2026-09-05 une section `badge_tasks`. `useOrgBadges`
+montait `useTeamTasks`, donc `get_my_team_tasks` + `.limit(1000)`, la lecture la plus chère du
+produit, sur **toutes les pages protégées**, pour peindre un nombre. Le rechargement avait été
+coupé le 2026-08-27 (`background`), la **lecture** pas.
+
+- Le serveur rend les **seules** lignes utiles : assignations en cours qui ne viennent pas de moi
+  (`kind = 'assigned'`), et noms des tâches visées par mes notifications non lues
+  (`kind = 'notified'`). Bornes : 200 et 50 **par organisation**, jamais globalement.
+- ❌ **Ne jamais faire compter une ligne `notified`.** Une tâche peut sortir dans les DEUX branches ;
+  le client leur retire toute assignation pour cette raison précise. Sans ça, elle compte deux fois
+  et le nombre affiché change.
+- ❌ **Ne jamais passer `lastSeen` au serveur.** Il vit dans `localStorage`, il est **par
+  organisation**, et il change à chaque visite de /entreprise : en paramètre, il ferait dépendre la
+  clé de cache d'une valeur mouvante, et un seul horodatage ne pourrait pas servir plusieurs
+  organisations. La borne reste côté client, sur un ensemble déjà réduit.
+- ✅ `my_org_badge_tasks()` est `SECURITY DEFINER` pour la SEULE raison qui vaut ici : appeler
+  `my_team_project_ids`, dont `EXECUTE` est révoqué à `authenticated` (mig. 100/113). L'autorisation
+  est celle de `get_my_team_tasks`, reprise mot pour mot. La RPC d'agrégat, elle, reste
+  `SECURITY INVOKER` : agréger des lectures, oui ; agréger des autorisations, jamais.
+- ⚠️ En **démo** la source reste `useTeamTasks` : c'est du `localStorage`, donc gratuit, et écrire
+  une seconde dérivation de « nouvelle assignation » dans le repository local aurait fait deux
+  définitions du même chiffre. Hors démo l'identifiant vaut `undefined` et rien ne part.
+- Gardes : `src/lib/hooks/org-badges.server-count.test.tsx` (dont un témoin qui exige que le
+  compteur TOMBE quand la source serveur est vidée : sans lui, le fichier passerait encore si plus
+  aucune source n'alimentait rien).
+
 ### 🔴 Le correctif que personne ne reçoit : les onglets jamais rechargés
 
 **91,5 % du trafic Supabase du 2026-08-26 est venu de DEUX onglets** qui exécutaient encore le

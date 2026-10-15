@@ -300,6 +300,7 @@ const ProjectDetailPage = ({
         <ProjectAudienceActions
           project={project}
           teams={teams}
+          canManageTeams={canEdit}
           canPurge={canArchive}
           taskCount={allProjectTasks.length}
           onPurged={onBack}

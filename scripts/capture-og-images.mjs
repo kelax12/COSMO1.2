@@ -30,8 +30,10 @@ const ORIGIN = 'https://thecosmo.app';
 
 export const ogKey = (path) => path.replace(/^\/+|\/+$/g, '').replace(/\//g, '_') || 'home';
 
+// `&amp;` se décode EN DERNIER (CodeQL n° 13, double décodage) : décodé en
+// premier, `&amp;lt;` devenait `&lt;` puis `<`, au lieu du `&lt;` littéral.
 const unescape = (s) =>
-  s.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+  s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** Étiquette de rubrique, d'après le chemin. */

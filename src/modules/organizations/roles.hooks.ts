@@ -5,41 +5,20 @@
 // Les droits se résolvent dans `useMyOrgPermissions` (miroir de `my_org_perm`),
 // jamais ici : ces hooks ne font que lire et écrire les deux tables.
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { getOrgRolesRepository } from '@/lib/repository.factory';
 import { translator } from '@/i18n/useT';
 import type { AssignRoleInput, SaveCustomRoleInput } from './roles.types';
+import { rolesKeys } from './roles.queries';
 
 const useRepo = () => getOrgRolesRepository();
 
-export const rolesKeys = {
-  all: ['org-roles'] as const,
-  roles: (orgId: string) => [...rolesKeys.all, 'roles', orgId] as const,
-  assignments: (orgId: string) => [...rolesKeys.all, 'assignments', orgId] as const,
-};
+export { rolesKeys, useOrgRoles, useOrgRoleAssignments } from './roles.queries';
 
 /** Un rôle ou une attribution qui change touche les droits de tout l'écran. */
 const invalidateRoles = (queryClient: ReturnType<typeof useQueryClient>) =>
   queryClient.invalidateQueries({ queryKey: rolesKeys.all });
-
-export const useOrgRoles = (orgId: string | undefined) => {
-  const repository = useRepo();
-  return useQuery({
-    queryKey: rolesKeys.roles(orgId ?? ''),
-    queryFn: () => repository.getRoles(orgId as string),
-    enabled: !!orgId,
-  });
-};
-
-export const useOrgRoleAssignments = (orgId: string | undefined) => {
-  const repository = useRepo();
-  return useQuery({
-    queryKey: rolesKeys.assignments(orgId ?? ''),
-    queryFn: () => repository.getAssignments(orgId as string),
-    enabled: !!orgId,
-  });
-};
 
 export const useSaveOrgRole = () => {
   const repository = useRepo();

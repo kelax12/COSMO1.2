@@ -61,7 +61,8 @@
     "project_viewer_read_only": "You are a viewer on this project: you can only change the tasks assigned to you.",
     "domain_taken": "This domain is already verified by another company.",
     "email_domain_not_allowed": "This company only invites addresses from its verified domains.",
-    "open_link_not_allowed": "This company only accepts named invitations to its verified domains: this open link cannot be used."
+    "open_link_not_allowed": "This company only accepts named invitations to its verified domains: this open link cannot be used.",
+    "empty_message": "The message is empty: write something before sending."
   },
   "validation": {
     "fallback": "Invalid data",

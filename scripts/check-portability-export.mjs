@@ -235,6 +235,9 @@ const TABLES_NON_EXPORTEES = {
   org_saved_views: "Combinaisons de filtres nommées (mig. 192) : un réglage d'interface, sans contenu de travail.",
   org_member_capacity: "Capacité hebdomadaire déclarée pour la personne, le plus souvent PAR son responsable (mig. 196) : une donnée de planification de l'organisation. ⚠️ Discutable quand la personne l'a saisie elle-même : à rouvrir si l'export doit restituer les réglages.",
   org_member_secondary_managers: "Lien hiérarchique secondaire décidé par l'organisation (mig. 196), qui désigne une AUTRE personne.",
+  // Mig. 219 (2026-10-12), déclarée le 2026-10-15 : la garde la voyait sans
+  // décision depuis l'application de la migration.
+  org_member_roles: "Rôle personnalisé attribué à la personne PAR l'organisation (détenteur de `role.manage`, mig. 219), pour une durée qu'elle fixe : des droits accordés, pas une donnée fournie. Même raison que `org_member_permissions`, et `granted_by` désigne une AUTRE personne.",
 };
 
 // ── Lecture du schéma ──────────────────────────────────────────────

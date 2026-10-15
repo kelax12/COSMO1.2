@@ -61,7 +61,8 @@
     "project_viewer_read_only": "Vous êtes lecteur de ce projet : vous ne pouvez modifier que les tâches qui vous sont assignées.",
     "domain_taken": "Ce domaine est déjà vérifié par une autre entreprise.",
     "email_domain_not_allowed": "Cette entreprise n'invite que des adresses de ses domaines vérifiés.",
-    "open_link_not_allowed": "Cette entreprise n'accepte que des invitations nominatives à ses domaines vérifiés : ce lien ouvert ne peut pas être utilisé."
+    "open_link_not_allowed": "Cette entreprise n'accepte que des invitations nominatives à ses domaines vérifiés : ce lien ouvert ne peut pas être utilisé.",
+    "empty_message": "Le message est vide : écrivez quelque chose avant d'envoyer."
   },
   "validation": {
     "fallback": "Données invalides",
