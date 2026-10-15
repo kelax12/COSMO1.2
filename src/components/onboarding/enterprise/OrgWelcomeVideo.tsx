@@ -126,7 +126,7 @@ const OrgWelcomeVideo = ({ orgName, onClose }: OrgWelcomeVideoProps) => {
               <track
                 kind="subtitles"
                 srcLang="fr"
-                label="Français"
+                label={t('ent.video.captionsLabel')}
                 src={ORG_WELCOME_VIDEO.captionsFr}
                 default={locale !== 'fr'}
               />

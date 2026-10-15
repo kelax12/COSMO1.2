@@ -134,7 +134,8 @@
       "unmute": "Turn sound on",
       "skip": "Skip the video",
       "cta": "Get started",
-      "close": "Close"
+      "close": "Close",
+      "captionsLabel": "French"
     }
   }
 }
