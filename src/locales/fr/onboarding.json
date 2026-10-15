@@ -136,7 +136,8 @@
       "unmute": "Activer le son",
       "skip": "Passer la vidéo",
       "cta": "Commencer",
-      "close": "Fermer"
+      "close": "Fermer",
+      "captionsLabel": "Français"
     }
   }
 }
