@@ -298,13 +298,21 @@ test.describe('C-95 — pages publiques', () => {
       // ⚠️ Le bandeau cookies est neutralisé : il est ancré en bas sur toute
       // la largeur, il recouvre donc une part variable de la capture selon
       // qu'il a été refusé ou non dans un test précédent.
+      // 🔴 2026-10-15 : la valeur posée ici était `'rejected'`, que le produit
+      // ne connaît pas (`readConsent` n'accepte que `accepted` | `refused`).
+      // Le bandeau n'a donc JAMAIS été neutralisé : les références le
+      // contenaient, et l'allongement de son texte (`79c0f0b3`) a rendu les
+      // trois pages rouges. Témoin à deux sens : on le voit, puis plus.
+      const bandeau = page.getByRole('complementary', { name: /cookie/i });
+      await expect(bandeau, 'le témoin ne trouve pas le bandeau : il ne prouve plus rien').toBeVisible({ timeout: 15_000 });
       await page.evaluate(() => {
         try {
-          localStorage.setItem('cosmo_cookie_consent', 'rejected');
+          localStorage.setItem('cosmo_cookie_consent', 'refused');
         } catch { /* stockage bloqué */ }
       });
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(1200);
+      await expect(bandeau, 'le bandeau cookies figure encore dans la capture').toHaveCount(0);
       await capturer(page, `publique-${route === '/' ? 'home' : route.slice(1)}`);
     });
   }
