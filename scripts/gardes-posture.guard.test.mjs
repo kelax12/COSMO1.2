@@ -507,7 +507,9 @@ describe('témoin — catalogue de sabotages (C-81)', () => {
     // `raison` pour une commande, `pourquoi` écrit) est jugée par
     // `verifierCatalogue`, que `replay-sabotages.guard.test.mjs` soumet à des
     // entrées fautives.
-    expect(CATALOGUE.length).toBeGreaterThanOrEqual(40);
+    // Cliquet posé au réel du 2026-10-15 (221 sabotages) : le catalogue ne
+    // rétrécit pas en silence. Retirer un sabotage est une décision écrite.
+    expect(CATALOGUE.length).toBeGreaterThanOrEqual(220);
     expect(verifierCatalogue(CATALOGUE)).toEqual([]);
   });
 
@@ -516,7 +518,7 @@ describe('témoin — catalogue de sabotages (C-81)', () => {
     // couverture : le script IMPRIME déjà le rapport couvert/total, ce cas
     // empêche qu'il se réduise.
     const gardes = new Set(CATALOGUE.map((s) => (typeof s.garde === 'string' ? s.garde : s.garde.commande)));
-    expect(gardes.size).toBeGreaterThanOrEqual(15);
+    expect(gardes.size).toBeGreaterThanOrEqual(55);
     // Et les deux familles : le défaut du PRODUIT vu par la garde, la garde
     // DÉSARMÉE vue par son témoin.
     expect(new Set(CATALOGUE.map((s) => s.famille))).toEqual(new Set(['produit', 'detecteur']));

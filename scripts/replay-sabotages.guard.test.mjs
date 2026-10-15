@@ -17,8 +17,8 @@ import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
 
 import {
-  porteLaMarque, temoinsDuSource, jugerVitest, jugerCommande, lireRapportVitest,
-  verifierModif, appliquerModifs, restaurer, verifierCatalogue, nettoyerAtelier, CATALOGUE,
+  porteLaMarque, temoinsDuSource, motifDuGabarit, jugerVitest, jugerCommande, lireRapportVitest,
+  verifierModif, appliquerModifs, restaurer, verifierCatalogue, nettoyerAtelier, selonLeFichier, repartir, CATALOGUE,
 } from './replay-sabotages.mjs';
 
 const ts = createRequire(join(process.cwd(), 'package.json'))('typescript');
@@ -66,6 +66,14 @@ describe('témoin — le recensement des témoins (AM-1)', () => {
     expect(t.map((e) => e.parSonNom)).toEqual([false, false, true, true]);
     expect(t.map((e) => e.gabarit)).toEqual([false, true, false, true]);
     expect(t[2].ligne).toBe(5);
+  });
+
+  it('un titre construit ne s apparie qu aux cas de SON gabarit', () => {
+    const m = motifDuGabarit('verifierJob : sabotages (témoins) > %s');
+    expect(m.test('verifierJob : sabotages (témoins) > un continue-on-error')).toBe(true);
+    expect(m.test('verifierJob : autre chose > un continue-on-error')).toBe(false);
+    expect(motifDuGabarit('d > ${table} finit en SET NULL').test('d > friends finit en SET NULL')).toBe(true);
+    expect(motifDuGabarit('d > ${table} finit en SET NULL').test('d > friends finit en CASCADE')).toBe(false);
   });
 
   it('lit le TSX sans se tromper de nombre', () => {
@@ -155,6 +163,23 @@ describe('témoin — sabotage et restauration dans la copie (AM-1)', () => {
     }
   });
 
+  it('un motif sur plusieurs lignes suit les fins de ligne du fichier (CRLF ici, LF sur le runner)', () => {
+    const d = mkdtempSync(join(tmpdir(), 'sabot-crlf-'));
+    try {
+      writeFileSync(join(d, 'w.txt'), 'a\r\nb\r\nc');
+      writeFileSync(join(d, 'l.txt'), 'a\nb\nc');
+      const m = (fichier) => ({ fichier, chercher: 'a\nb', remplacer: 'x\ny' });
+      expect(verifierModif(d, m('w.txt'))).toBeNull();
+      expect(verifierModif(d, m('l.txt'))).toBeNull();
+      appliquerModifs(d, [m('w.txt'), m('l.txt')]);
+      expect(readFileSync(join(d, 'w.txt'), 'utf8')).toBe('x\r\ny\r\nc');
+      expect(readFileSync(join(d, 'l.txt'), 'utf8')).toBe('x\ny\nc');
+      expect(selonLeFichier('sans fin de ligne', 'a\nb')).toBe('a\nb');
+    } finally {
+      rmSync(d, { recursive: true, force: true });
+    }
+  });
+
   it('TEMOIN : le nettoyage ne traverse JAMAIS le lien node_modules', () => {
     // 🔴 Le défaut que ce cas existe pour voir a déjà coûté un node_modules
     // entier (mémoire « worktree + junction », récidive du 2026-09-25).
@@ -174,6 +199,28 @@ describe('témoin — sabotage et restauration dans la copie (AM-1)', () => {
       rmSync(base, { recursive: true, force: true });
       rmSync(cible, { recursive: true, force: true });
     }
+  });
+});
+
+describe('les voies parallèles', () => {
+  it('une garde ne se partage jamais entre deux copies, et les voies s équilibrent', () => {
+    const s = (id, garde) => ({ id, garde });
+    const cat = [
+      s('a1', 'a.test.ts'), s('a2', 'a.test.ts'), s('a3', 'a.test.ts'),
+      s('b1', 'b.test.ts'), s('b2', 'b.test.ts'),
+      s('c1', { commande: 'scripts/c.mjs' }), s('c2', { commande: 'scripts/c.mjs' }),
+      s('d1', 'd.test.ts'),
+    ];
+    const voies = repartir(cat, 3);
+    expect(voies).toHaveLength(3);
+    expect(voies.flat().map((x) => x.id).sort()).toEqual(cat.map((x) => x.id).sort());
+    for (const g of ['a.test.ts', 'b.test.ts', 'd.test.ts']) {
+      expect(voies.filter((v) => v.some((x) => x.garde === g))).toHaveLength(1);
+    }
+    expect(Math.max(...voies.map((v) => v.length))).toBe(3);
+    // Une seule voie demandée : tout le catalogue, une seule copie.
+    expect(repartir(cat, 1)).toHaveLength(1);
+    expect(repartir(cat, 10)).toHaveLength(4);
   });
 });
 
