@@ -458,9 +458,17 @@ async function adminEfface(table: string, match: Row): Promise<void> {
   if (error) throw new Error(`effacement admin de ${table} : ${error.message}`);
 }
 
+/**
+ * Pose (ou remet) une ligne du décor.
+ *
+ * ⚠️ En `upsert`, jamais en « effacer puis réinsérer » : effacer une liste, un
+ * rôle ou un webhook emporte EN CASCADE ses lignes filles (`team_list_tasks`,
+ * `org_member_roles`, `org_webhook_deliveries`). La première version le
+ * faisait, et la lecture de ces trois tables mesurait une ligne absente : 0
+ * pour tout le monde, donc un « refusé » qui n'aurait rien prouvé.
+ */
 async function adminPose(table: string, row: Row, keys: string[]): Promise<void> {
-  await adminEfface(table, pick(row, keys));
-  const { error } = await admin.from(table).insert(row);
+  const { error } = await admin.from(table).upsert(row, { onConflict: keys.join(',') });
   if (error) throw new Error(`décor ${table} : ${error.message}`);
 }
 
@@ -571,7 +579,14 @@ describe('RLS — surface entreprise, 24 tables × 6 acteurs (mig. 160 à 220, A
   async function mesure(spec: Spec, op: Op, a: Acteur): Promise<number> {
     const n = compteur++;
     if (op === 'select') {
-      const { data } = await a.client.from(spec.table).select('*').match(pick(spec.canonical(d), spec.keys));
+      const cle = pick(spec.canonical(d), spec.keys);
+      // Un « 0 » ne vaut refus que si la ligne EXISTE : sinon c'est le décor
+      // qui manque, et la cellule le dit.
+      if ((await adminLit(spec.table, cle)) === null) {
+        console.log(`RLS-INCOHERENT|${spec.label}|select|${a.who}|ligne canonique absente du décor`);
+        return 9;
+      }
+      const { data } = await a.client.from(spec.table).select('*').match(cle);
       return cell((data ?? []).length > 0);
     }
 
