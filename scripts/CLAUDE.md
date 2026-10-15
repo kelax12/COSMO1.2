@@ -96,6 +96,7 @@ le plus lourd de la fenêtre 08-30 → 09-03, et il ne porte pas sur le produit 
   ou une mesure qui ne détecterait plus rien. Trois des quatre en ont un aujourd'hui.
 - 🔴 **Une garde qui se trompe dans le sens rassurant est pire qu'une garde absente : elle donne
   une réponse, et on la croit.**
+- 🔴 **Toute étape de garde de `lint-test-build` joue après un rouge** (`if: ${{ !cancelled() && steps.deps.outcome == 'success' }}`, un `id`, jamais `continue-on-error`), et la dernière étape liste tous les rouges : le 2026-10-12, `check:docs` en a masqué dix pendant trois jours. Témoin : `ci-toutes-les-gardes.guard.test.mjs`.
 
 #### Le cas symétrique : ce que AUCUNE garde ne regardait (C-35)
 

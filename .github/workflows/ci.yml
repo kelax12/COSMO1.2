@@ -42,6 +42,23 @@ jobs:
   # `@supabase/supabase-js` exige un WebSocket NATIF, absent avant Node 22.
   # En Node 20 le simple `createClient()` de src/lib/supabase.ts jette, et
   # toute la suite de tests tombe. Ne pas redescendre.
+  #
+  # 🔴 TOUTES LES GARDES JOUENT, MÊME APRÈS UN ROUGE (2026-10-15).
+  # Le 2026-10-12, l'étape 2 sur 23 (`check:docs`) est passée au rouge, et un
+  # job s'arrête au premier échec : les 21 suivantes n'ont plus été jouées
+  # pendant trois jours, dont dix étaient rouges elles aussi (effacement,
+  # portabilité, sept gardes unitaires, budget de bundle). Un job qui s'arrête
+  # au premier rouge ne mesure que le premier rouge. Désormais :
+  #   · `npm ci` (`id: deps`) reste BLOQUANT : sans dépendances, rien ne mesure ;
+  #   · chaque étape suivante porte `if: ${{ !cancelled() && steps.deps.outcome == 'success' }}`
+  #     et un `id`, et AUCUNE ne porte `continue-on-error` : un échec garde le
+  #     job rouge ;
+  #   · une étape qui lit la sortie d'une autre (`dist/`, `coverage/`) échoue
+  #     en le disant quand cette sortie manque, jamais à vide ;
+  #   · la dernière étape liste TOUTES les étapes rouges (résumé du job + une
+  #     annotation) et sort en 1 s'il y en a une.
+  # Témoin : `scripts/ci-toutes-les-gardes.guard.test.mjs`. ❌ Une nouvelle
+  # étape sans cette condition ou sans `id` le fait rougir.
   lint-test-build:
     runs-on: ubuntu-latest
     steps:
@@ -51,17 +68,26 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
+        id: deps
 
       - name: Lint
+        id: lint
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run lint
 
       - name: Budget des CLAUDE.md
+        id: docs
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:docs
 
       - name: Type-check (tsc -b)
+        id: typecheck
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npx tsc -b
 
       - name: Validate SQL migrations
+        id: migrations
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run validate:migrations
 
       # Les invariants RLS (auth.uid() wrappé, une seule policy PERMISSIVE par
@@ -69,6 +95,8 @@ jobs:
       # (mig. 059, 077, 082). Une règle non vérifiée n'est pas une règle.
       # Ce check est un cliquet : il n'audite que les migrations ≥ 043.
       - name: Validate RLS invariants
+        id: rls
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:rls
 
       # ═══ LES GARDES POSÉES LE 2026-09-20 (§ 12 d'a-faire-code.md) ═══
@@ -81,44 +109,60 @@ jobs:
       # un `undefined` à l'exécution, au moment où un module lit l'export d'un
       # module pas encore évalué. Sept cycles existaient le jour de la pose.
       - name: Cycles d imports
+        id: cycles
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:cycles
 
       # C-83 — un test supprimé avec le code qu'il gardait ne laisse aucune
       # trace : le total baisse, et un total qui baisse ne fait rougir rien.
       - name: Plancher de tests
+        id: test-floor
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:test-floor
 
       # C-92 — aucune table portant `user_id` ne peut exister sans décision
       # d'effacement écrite (RGPD art. 17). Le périmètre est DÉRIVÉ des
       # migrations, pas recopié.
       - name: Effacement de compte (perimetre derive)
+        id: erasure
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:erasure
 
       # C-94 — l'export de portabilité (art. 20) confronté au schéma : une
       # colonne ajoutée à une table exportée doit y entrer ou être déclarée
       # exclue. Trois colonnes saisies manquaient à la pose.
       - name: Export de portabilite
+        id: portability
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:portability
 
       # C-82 — aucune Edge Function déployée sans au moins un témoin qui la
       # nomme. `stripe-create-checkout` était à zéro.
       - name: Temoins des Edge Functions
+        id: edge-coverage
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:edge-coverage
 
       # C-105 — le contrat des variables `VITE_*`. Moitié STATIQUE seulement
       # ici (la moitié Vercel demande un jeton, cf. `env-drift.yml`).
       - name: Contrat des variables d environnement
+        id: env
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:env
 
       # C-108 — une étude périme sans que rien ne le signale. Échoue si une
       # majeure citée par `docs/MIGRATION-REACT19.md` a bougé.
       - name: Fraicheur des etudes
+        id: study
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:study
 
       # C-107 — les CGU vivent dans un catalogue i18n ordinaire pour la CI.
       # Une modification de fond est un changement de CONTRAT (préavis de
       # 30 jours, CGU art. 11) : elle doit passer par le journal.
       - name: Journal des documents contractuels
+        id: legal-journal
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:legal-journal
 
       # C-99, PREMIÈRE MOITIÉ — les pluriels et les locales déclarées. Le
@@ -131,6 +175,8 @@ jobs:
       # ⚠️ La SECONDE moitié (volume par page) exige un build : elle tourne
       # dans le job `lighthouse`, à côté de `check:seo`.
       - name: i18n · pluriels et locales declarees
+        id: i18n-pages
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run i18n:pages
 
       # C-109 — douze documents de fond n'étaient notés par RIEN, donc ils ne
@@ -140,6 +186,8 @@ jobs:
       # ❌ `non-note` est une réponse honnête ; un chiffre inventé sans audit
       #    ne l'est pas — il vivrait dans un document qu'on produit en contrôle.
       - name: Notes d audit declarees
+        id: docs-scored
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:docs-scored
 
       # C-101 — une liste d'actions manuelles sans colonne d'état ne distingue
@@ -148,17 +196,23 @@ jobs:
       # n'ont pas plus de 45 jours.
       # ⚠️ La moitié qui REJOUE les compteurs en base est dans `posture.yml`.
       - name: Acquisition · etats et fraicheur
+        id: acquisition
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:acquisition
 
       # Le moteur de traduction retombe sur le français clé par clé : un
       # catalogue traduit incomplet ne casse rien visiblement et partirait donc
       # en prod à moitié traduit. Ce check est la seule protection réelle.
       - name: Validate i18n catalogs
+        id: i18n-check
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run i18n:check
 
       # Cliquet de dette : `i18n:check` ne voit que les clés, donc jamais une
       # chaîne restée en dur. Sans cette étape, la dette remonte en silence.
       - name: No new hardcoded strings
+        id: i18n-scan
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run i18n:scan
 
       # Second angle mort du meme mecanisme : le moteur retombe sur le francais
@@ -167,9 +221,13 @@ jobs:
       # `i18n:check` ne voit que les CLES. Ce cliquet compte les valeurs
       # identiques qui ne sont pas declarees legitimes.
       - name: No untranslated en values
+        id: i18n-identical
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run i18n:identical
 
       - name: Unit tests + coverage (enforced thresholds)
+        id: tests
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run test:coverage
 
       # C-82 — la couverture s'arrêtait à `src/`. En étaient absents
@@ -183,17 +241,26 @@ jobs:
       # silence à la pose (shebang non analysable par le provider v8), et le
       # pourcentage affiché en était plus FLATTEUR que la réalité.
       - name: Couverture de l outillage (scripts/)
+        id: tooling-coverage
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run test:coverage:tooling
 
+      # Son ENTRÉE est `coverage/`, écrit par l'étape `tests`, et vitest ne
+      # l'écrit pas quand un test échoue. `if-no-files-found: error` : un envoi
+      # sans fichier ÉCHOUE au lieu de passer à vide avec un simple warning.
       - name: Upload coverage report
-        if: ${{ !cancelled() }}
+        id: coverage-upload
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: coverage
           path: coverage/
+          if-no-files-found: error
           retention-days: 7
 
       - name: Build
+        id: build
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -218,8 +285,29 @@ jobs:
       # reculé sans que personne le voie (+5 ko gzip sur le chemin critique en
       # une journée, le 2026-08-25). Mesure le build RÉEL, pas une estimation.
       # 🔴 Ne jamais remonter un plafond pour faire passer ce job.
+      # Son ENTRÉE est `dist/`, écrit par l'étape `build`. Un Build rouge laisse
+      # un `dist/` absent ou partiel : la garde ÉCHOUE alors en le disant, au
+      # lieu de mesurer un reste.
       - name: Budget de bundle
-        run: npm run check:bundle
+        id: bundle
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        env:
+          ENTREE_BUILD: ${{ steps.build.outcome }}
+        run: |
+          if [ "$ENTREE_BUILD" != success ]; then
+            echo "::error title=Budget de bundle::entree absente, l etape Build a rendu '$ENTREE_BUILD' : dist/ ne decrit aucun build complet, rien a mesurer"
+            exit 1
+          fi
+          npm run check:bundle
+
+      # Dernière étape : TOUTES les étapes rouges, en un endroit. Elle joue même
+      # si `npm ci` a échoué, pour le dire, et sort en 1 s'il y a un rouge ou
+      # une étape sautée alors que `npm ci` est vert.
+      - name: Resume des gardes (toutes les etapes rouges)
+        if: ${{ !cancelled() }}
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: node scripts/ci-toutes-les-gardes.mjs --job lint-test-build
 
   # ──────────────────────────────────────────────────────────────────
   # Garde sécurité dépendances : échoue si une vulnérabilité high/critical
@@ -236,7 +324,12 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
+        id: deps
+      # Même dispositif que `lint-test-build` : un rouge sur les dépendances de
+      # prod ne doit pas masquer la lecture de la chaîne de build.
       - name: npm audit (prod deps, high+)
+        id: audit-prod
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm audit --omit=dev --audit-level=high
 
       # ── C-90 · le second passage, sur la chaine de BUILD ─────────
@@ -258,6 +351,8 @@ jobs:
       # JSON est illisible — sinon cette etape deviendrait la garde qui repond
       # sans mesurer que `scripts/CLAUDE.md` decrit.
       - name: npm audit (chaine de build, non bloquant, resultat LU)
+        id: audit-build
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: |
           set -uo pipefail
           npm audit --json > audit-all.json || true
@@ -409,6 +504,7 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
           } >> "$GITHUB_ENV"
       - name: Apply migrations on fresh DB
+        id: migrate
         run: |
           set -o pipefail   # sans ça, le statut serait celui de `tee`, jamais celui de node
           # Les LOGS d'un run exigent une authentification, même sur un dépôt
@@ -433,10 +529,16 @@ jobs:
       # refusé sans dire laquelle, alors que les deux moitiés du prédicat sont
       # vraies quand on les évalue séparément. Ce que le dépôt DÉCRIT a été
       # compare a la prod ; il reste a voir ce que la base CONTIENT.
+      # 🔴 Ce diagnostic ne teste rien, il DÉCRIT ; il peut pourtant sortir en
+      # non-zéro (connexion, requête). Il ne doit jamais masquer les tests :
+      # les deux étapes ne dépendent que du replay (`migrate`), pas l'une de
+      # l'autre (même défaut que `lint-test-build` le 2026-10-12).
       - name: Etat RLS de la base fraiche
+        if: ${{ !cancelled() && steps.migrate.outcome == 'success' }}
         run: node scripts/diagnose-rls-state.mjs
 
       - name: Run RLS integration tests
+        if: ${{ !cancelled() && steps.migrate.outcome == 'success' }}
         run: |
           set -o pipefail
           if npm run test:rls 2>&1 | tee rls.log; then exit 0; fi
@@ -505,7 +607,13 @@ jobs:
 
       # Le prérendu fait partie du build : sans lui, les routes publiques
       # renvoient la coquille SPA et Lighthouse mesurerait une page vide.
+      #
+      # 🔴 Après le Build, chaque étape porte `!cancelled()` : un `check:seo`
+      # rouge masquait jusqu'ici le volume i18n ET la passe Lighthouse desktop
+      # (même défaut que `lint-test-build` le 2026-10-12). Les lectrices de
+      # `dist/` dépendent du Build, chaque assert de SON collect.
       - name: Build (avec prérendu)
+        id: build
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -544,6 +652,7 @@ jobs:
       # Ici plutôt que dans `lint-test-build` : la garde lit `dist/**`, et ce
       # job est le seul qui construise AVEC le prérendu déjà en place.
       - name: Sitemap, prerendu et balises par page
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: npm run check:seo
 
       # C-99, SECONDE MOITIÉ — le volume de texte indexable par page ET par
@@ -555,6 +664,7 @@ jobs:
       # le rapport fr↔en ne se calculerait jamais sur les neuf pages
       # éditoriales, c'est-à-dire celles qui portent le contenu.
       - name: i18n · volume de texte par page et par locale
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: npm run i18n:pages -- --pages
 
       # Quel Chrome, et existe-t-il ? Une phase `collect` qui ne produit AUCUN
@@ -563,6 +673,7 @@ jobs:
       # se devine pas depuis l'exterieur. Trois lignes dans le resume valent
       # mieux qu'une hypothese.
       - name: Chrome disponible ?
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           VU=""
           for BIN in google-chrome google-chrome-stable chromium chromium-browser; do
@@ -592,6 +703,8 @@ jobs:
       # et le releve des scores tourne en `always()`. Sans ca, T-28 (resserrer
       # les seuils sur le reel) ne peut jamais lire le reel.
       - name: Lighthouse collect
+        id: lhci-desktop
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           set -o pipefail
           npx --yes @lhci/cli@0.15.x collect 2>&1 | tee lhci.log
@@ -646,6 +759,7 @@ jobs:
           '
 
       - name: Lighthouse assert
+        if: ${{ !cancelled() && steps.lhci-desktop.outcome == 'success' }}
         run: |
           set -o pipefail
           if npx --yes @lhci/cli@0.15.x assert 2>&1 | tee -a lhci.log; then exit 0; fi
@@ -690,7 +804,8 @@ jobs:
       # assertion, et c'est exactement le moment ou l'on veut AUSSI le chiffre
       # mobile. Meme raison que la separation collect/assert/upload au-dessus.
       - name: Lighthouse collect (mobile)
-        if: ${{ !cancelled() }}
+        id: lhci-mobile
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           set -o pipefail
           npx --yes @lhci/cli@0.15.x collect --config=lighthouserc.mobile.json 2>&1 | tee lhci-mobile.log
@@ -736,7 +851,7 @@ jobs:
           '
 
       - name: Lighthouse assert (mobile)
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.lhci-mobile.outcome == 'success' }}
         run: |
           set -o pipefail
           if npx --yes @lhci/cli@0.15.x assert --config=lighthouserc.mobile.json 2>&1 | tee -a lhci-mobile.log; then exit 0; fi
