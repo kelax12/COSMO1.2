@@ -32,6 +32,10 @@ describe('témoin — le recensement des témoins (AM-1)', () => {
     expect(porteLaMarque('TEMOIN : le detecteur voit un window.confirm')).toBe(true);
     expect(porteLaMarque('TEMOIN DU TEMOIN : sans `dist`, la garde ECHOUE')).toBe(true);
     expect(porteLaMarque('TÉMOIN — sans le hook, Échap est mort')).toBe(true);
+    // 🔴 Le cas qui distingue les capitales de l'étiquette : `TÉMOIN` en
+    // MILIEU de titre. En tête, la variante minuscule (`/i`) le rattrapait, et
+    // un `É` oublié dans les capitales passait inaperçu (rejeu du 2026-10-15).
+    expect(porteLaMarque('le découpage, TÉMOIN du plafond')).toBe(true);
     expect(porteLaMarque('témoin : la règle voit un confirm() nu')).toBe(true);
     expect(porteLaMarque('témoin — effacement dérivé du schéma (C-92)')).toBe(true);
     expect(porteLaMarque('détecte réellement une poignée sans geste (témoin)')).toBe(true);
