@@ -53,9 +53,16 @@ describe('témoin — cycles d imports (C-103)', () => {
   });
 
   it('`importsStatiques` ne lit pas les commentaires', () => {
+    // 🔴 Le bloc SUR PLUSIEURS LIGNES est le cas qui compte : un bloc sur une
+    // seule ligne ne commence pas par `import`, et l'ancrage de l'expression
+    // l'écartait déjà. Sans lui, ce cas restait vert avec un retrait des
+    // blocs supprimé (rejeu des sabotages du 2026-10-15).
     const src = [
       "// import { faux } from './faux';",
       '/* import { autre } from "./autre"; */',
+      '/*',
+      "import { cache } from './dans-un-bloc';",
+      '*/',
       "import { vrai } from './vrai';",
     ].join(LF);
     expect(importsStatiques(src)).toEqual(['./vrai']);
