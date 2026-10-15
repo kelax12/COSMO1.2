@@ -65,5 +65,6 @@
     "parent": "Catégorie parente",
     "krDurationMin": "KR Durée (min)",
     "krWeight": "KR Pondération"
-  }
+  },
+  "sabotageDemo": "Cle sans traduction (sabotage de demonstration)"
 }
