@@ -30,6 +30,18 @@ test.describe('Guide entreprise (démo)', () => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
+    // La démo SÈME ses données à la première lecture (équipes, rôles) : prises
+    // avant, elles passaient pour des écritures du guide (run 38788554320). La
+    // page Équipes lit les quatre ; on attend qu'elles existent avant l'instantané.
+    await page.goto('/entreprise/teams');
+    await page.waitForFunction(
+      (keys) => keys.every((k) => localStorage.getItem(k) !== null),
+      ['cosmo_org_teams', 'cosmo_org_team_members', 'cosmo_org_roles', 'cosmo_org_member_roles'],
+      { timeout: 15_000 },
+    );
+    await page.goto('/entreprise');
+    await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
+
     const before = await snapshotCosmoStorage(page);
 
     await page.getByRole('button', { name: /ouvrir le guide entreprise/i }).click();
