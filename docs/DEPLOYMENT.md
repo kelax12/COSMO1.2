@@ -581,11 +581,15 @@ passer par `apply_migration` (MCP) ou le SQL editor avec le fichier versionné.
 ## 7. Backup & Disaster Recovery (runbook)
 
 > 🔎 **État au 2026-10-15.** `db-backup` est vert tous les jours, **chiffré** depuis le 2026-10-13.
-> 🔴 `restore-drill.yml` est **désactivé à la main depuis le 2026-09-01** (`gh api …/workflows` :
-> `disabled_manually`) : le `dump-check` trimestriel posé le 2026-09-20 (`C-86`) n'a **jamais**
-> tourné, son premier passage du 2026-10-05 n'a pas eu lieu, et la restauration d'un dump
-> **chiffré** n'a été parcourue par aucun job. À réactiver, puis à jouer une fois à la main
-> (débité dans [`TESTING.md`](./TESTING.md)).
+> `restore-drill.yml` était **désactivé à la main du 2026-09-01 au 2026-10-15** (rangement
+> d'après-drill, rendu caduc par `C-86`) : le premier `dump-check` trimestriel, le 2026-10-05,
+> n'a pas eu lieu. ✅ **Réactivé le 2026-10-15**, et la relecture passe par
+> `scripts/dump-check.mjs` (témoin `dump-check.guard.test.mjs`) : elle refusait mal un `.gpg`
+> non chiffré et un clair posé à côté du chiffré.
+> ✅ **2026-10-15, run [`38787097174`](https://github.com/kelax12/COSMO1.2/actions/runs/38787097174)** :
+> `dump-check` **vert sur le dump CHIFFRÉ** du run db-backup `38711418682` (déchiffré,
+> 1 594 147 octets en clair, 2 214 objets, toutes les tables attendues). `drill` arrêté à sa
+> première garde (confirmation absente), rien écrit : c'est le rouge attendu.
 
 **État au 2026-09-01** : le plan Free n'offre **aucune sauvegarde native**, et le PITR a été
 écarté avec le plan Pro (T-01). La seule copie de la base qui existe est le dump quotidien de
