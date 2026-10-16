@@ -115,6 +115,22 @@ describe('lireEtapes : le parseur étroit', () => {
     expect(() => lireEtapes(CONFORME.replace('        id: lint', '         id: lint'), 'j'))
       .toThrow(/indentation/);
   });
+
+  // CodeQL n° 14 (`js/regex-injection`, 2026-10-15) : le nom du job venait de
+  // `--job` et entrait tel quel dans une `RegExp`. `.` y valait « n'importe
+  // quel job » : le script lisait alors les étapes de `j` en croyant lire
+  // celles de `.`, et le résumé jugeait le mauvais job sans rien dire.
+  it.each([['.'], ['.*'], ['j|autre'], ['(j)'], ['j:'], [''], ['2j']])(
+    'refuse `--job %s`, qui n’est pas un identifiant de job GitHub',
+    (job) => {
+      expect(() => lireEtapes(CONFORME, job)).toThrow(/identifiant de job invalide/);
+    },
+  );
+
+  it('lit un identifiant GitHub valide, majuscules et `_` compris', () => {
+    const yaml = CONFORME.replace('\n  j:\n', '\n  Job_2-b:\n');
+    expect(lireEtapes(yaml, 'Job_2-b').map((x) => x.id).filter(Boolean)).toContain('bundle');
+  });
 });
 
 describe('verifierJob : chaque sabotage est refusé (témoins)', () => {
@@ -168,6 +184,20 @@ describe('ci.yml réel', () => {
     for (const x of apres.filter((y) => /lhci\/cli@[^ ]+ assert/.test(y.run ?? ''))) {
       expect(x.if, x.name).toMatch(/steps\.lhci-(desktop|mobile)\.outcome == 'success'/);
     }
+  });
+
+  // 🔴 2026-10-16 : sur les 141 runs `CI` de `main` créés depuis le 10-09,
+  // 108 avaient été annulés par le push suivant, `e2e` (23 min) le premier.
+  // Quatre sessions ont dû ouvrir une PR brouillon jetable (n° 71, 72, 74, 76)
+  // pour obtenir un verdict. Sur `main`, un groupe PAR COMMIT : aucun run n'en
+  // annule un autre. Sur une PR, le push suivant remplace toujours le précédent.
+  it('concurrency : TÉMOIN, un run de main n’est jamais annulé, une PR l’est encore', () => {
+    const bloc = CI.replace(/\r\n/g, '\n').match(/\nconcurrency:\n {2}group: (.*)\n {2}cancel-in-progress: (.*)\n/);
+    expect(bloc, 'bloc `concurrency:` de premier niveau introuvable').not.toBeNull();
+    const [, groupe, annule] = bloc;
+    expect(groupe).toBe("ci-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}");
+    expect(annule).toBe("${{ github.event_name == 'pull_request' }}");
+    expect(CI.match(/^\s*concurrency:/gm)).toHaveLength(1);
   });
 
   it('rls-integration : le diagnostic ne masque jamais les tests', () => {
@@ -242,6 +272,13 @@ describe('run : le point d’entrée', () => {
 
   it('sans --job : échec', () => {
     expect(run({ argv: [], env: { STEPS_JSON: '{}' }, lire, log: () => {} })).toBe(1);
+  });
+
+  it('`--job .*` : TÉMOIN, échec qui nomme l’identifiant, jamais la lecture d’un autre job', () => {
+    const s = sortie();
+    const steps = JSON.stringify({ deps: { outcome: 'success' } });
+    expect(run({ argv: ['--job', '.*'], env: { STEPS_JSON: steps }, lire, log: s.log })).toBe(1);
+    expect(s.lignes.join()).toMatch(/identifiant de job invalide/);
   });
 
   it('deux rouges : résumé écrit, UNE annotation qui les nomme toutes les deux, code 1', () => {
