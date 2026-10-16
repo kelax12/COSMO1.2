@@ -1191,14 +1191,20 @@ mobile n'offre pas de menu de ligne équivalent. 🔴 **C'est un écart de produ
 pas un verdict de conformité mobile** — il est nommé dans `playwright.config.ts`
 plutôt que caché derrière un `skip` silencieux.
 
-🔴 **Depuis le 2026-09-23, `a11y-keyboard-audit` non plus** (`C-111`). Ses assertions encodent la
-navigation séquentielle de **Chromium** : point de départ de la tabulation après un lien
-d'évitement, entrée du focus dans une confirmation empilée. WebKit les implémente autrement :
-**11 cas rouges** en CI depuis que `mobile-safari` y tourne (2026-09-16), dont des cas à 1 280 px,
-donc sur l'interface de bureau. Et sur iPhone, Tab n'existe qu'avec « Accès complet au clavier »,
-que Playwright n'émule pas. Ses cas à 375 px restent joués sous `chromium`.
-❌ **Ce retrait ne dit PAS que Safari est accessible au clavier** : aucun audit clavier Safari
-n'existe, et une partie de ces 11 échecs peut être un vrai défaut. C'est `C-118`.
+✅ **Depuis le 2026-10-16, `a11y-keyboard-audit` JOUE sous WebKit** (`C-118`, fermé). Il en était
+exclu depuis le 2026-09-23 (11 cas rouges, aucun audit clavier Safari). Triage des cas rouges, un par un :
+**un défaut produit** (Safari n'émet aucun `contextmenu` au clavier : `Shift+F10` et la touche Menu
+n'arrivent qu'en `keydown`, donc la feuille d'actions d'une tâche était inatteignable au clavier sur la
+carte mobile, WCAG 2.1.1 ; corrigé dans `TaskCard`, 6 cas unitaires dont trois témoins) ; **un écart
+Safari déclaré** (Tab saute les liens par défaut, Option+Tab les parcourt ; Playwright ne sait pas
+l'émuler, le cas du lien d'évitement mesure donc les mêmes propriétés sans passer par Tab, après une
+sonde de capacité) ; **le reste du harnais** (le fichier s'exécutait à 390 px tactile alors que ses
+déclencheurs sont de bureau, `/tasks` lu avant son rendu, barre mobile non attendue après un
+redimensionnement, 2 s de fermeture trop courtes pour une modale animée sous WebKit).
+⚠️ Le fichier impose lui-même un poste de bureau (`test.use`) : c'est l'audit d'une personne au
+clavier, et c'est ce qui permet de le jouer dans l'unique project WebKit du job `e2e` sans toucher à
+`ci.yml`. ❌ Ne pas lire « 16 cas verts sous WebKit » comme « Safari est accessible au clavier » :
+Option+Tab, VoiceOver et l'accès complet au clavier d'iOS ne sont pas émulés.
 
 ⚠️ **Six autres specs supposaient le bureau, et ont été rendues adaptatives plutôt que retirées**
 (2026-09-23) : le bouton « Créer » de l'en-tête mobile (`demo-create-task`), un pourcentage OKR
