@@ -23,6 +23,12 @@
 // de `main.tsx` et ses dépendances dans le chemin critique (il lit la liste de
 // préchargement de ce point d'entrée), le budget ne perd donc rien de vue.
 import { afterFirstPaint } from './lib/after-first-paint';
+import { applyRouterBootstrap } from './i18n/apply-bootstrap';
+
+// `<html lang>` et l'URL canonique (`/fr/x` → `/x`, `/` → `/en/` selon la
+// préférence) AVANT la première peinture, comme quand `main.tsx` était
+// l'entrée : charger l'app après la peinture les avait retardés après `load`.
+applyRouterBootstrap();
 
 const charger = () => {
   void import('./main');
