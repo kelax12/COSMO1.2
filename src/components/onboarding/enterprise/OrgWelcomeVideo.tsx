@@ -35,6 +35,11 @@ interface OrgWelcomeVideoProps {
  *
  * Fermer (croix, Échap, « Passer », fond) marque l'accueil comme vu : un
  * lecteur qu'on ne peut pas quitter est un mur, pas un accueil.
+ *
+ * ⚠️ Limite du lecteur NATIF (mesuré dans Chromium le 2026-10-16) : quand le
+ * focus est dans ses commandes (lecture, volume…), aucune touche n'atteint la
+ * page, Échap compris. Ce n'est pas un piège (Tab en ressort vers « Passer »),
+ * mais Échap n'y ferme rien. Seules des commandes maison lèveraient la limite.
  */
 const OrgWelcomeVideo = ({ orgName, onClose }: OrgWelcomeVideoProps) => {
   const { t, locale } = useT('onboarding');

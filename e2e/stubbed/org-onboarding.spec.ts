@@ -73,6 +73,12 @@ test.describe('accueil entreprise (vidéo OrgWelcomeVideo)', () => {
     await expect(page.getByRole('button', { name: /^commencer/i })).toBeFocused();
     await expectTabTrapped(page, page.getByRole('dialog', { name: MEMBER_WELCOME }));
     // Échap emprunte le même chemin que « Commencer » : l'accueil est vu.
+    // ⚠️ Focus ramené sur un bouton AVANT Échap. Après 25 Tab il peut être
+    // dans les commandes NATIVES du lecteur, et Chromium ne laisse alors sortir
+    // AUCUNE touche vers la page (mesuré le 2026-10-16 : Échap n'atteint ni
+    // `document` ni `window`, même en capture). Aucun écouteur de page ne peut
+    // l'entendre ; Tab, lui, ressort du lecteur. Rouge de `f74b0874` à `66a8505c`.
+    await page.getByRole('button', { name: /^commencer/i }).focus();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog', { name: MEMBER_WELCOME })).toBeHidden();
 
