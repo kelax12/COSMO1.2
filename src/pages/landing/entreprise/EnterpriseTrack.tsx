@@ -11,6 +11,7 @@ import SecuritySection from './SecuritySection';
 import PricingSection from './PricingSection';
 import EnterpriseFaqSection from './EnterpriseFaqSection';
 import EnterpriseCta from './EnterpriseCta';
+import { ENTERPRISE_PRICES_SHOWN } from './free-offer';
 
 interface EnterpriseTrackProps {
   onDemo: () => void;
@@ -55,7 +56,9 @@ const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onRegister, o
       <ProgressSection />
       <MoreFeaturesSection />
       <SecuritySection />
-      <PricingSection onRegister={onRegister} />
+      {/* Prix masqués depuis le 2026-10-16 (`PRICES_VISIBLE`) : la section
+          reste intacte, elle n'est juste plus montée. */}
+      {ENTERPRISE_PRICES_SHOWN && <PricingSection onRegister={onRegister} />}
       <EnterpriseFaqSection />
       <EnterpriseCta onDemo={onDemo} onRegister={onRegister} />
     </div>

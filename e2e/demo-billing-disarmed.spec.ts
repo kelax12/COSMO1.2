@@ -34,9 +34,17 @@ test.describe('C-65 — facturation entreprise désarmée (démo)', () => {
 
     // TÉMOIN : la vue est bien celle de la facturation. Sans cette ancre, les
     // trois absences ci-dessous seraient vraies sur n'importe quelle page.
-    await expect(page.getByText(/tous les prix sont affichés ttc/i)).toBeVisible({
+    // Repère : la phrase de la facturation dormante. La mention TTC servait de
+    // repère jusqu'au 2026-10-16, mais elle accompagne la grille de prix, qui
+    // n'est plus montée tant que `PRICES_VISIBLE` vaut `false`.
+    await expect(page.getByText(/la facturation entreprise n.est pas encore activée/i)).toBeVisible({
       timeout: 20_000,
     });
+
+    // Aucun montant affiché (`PRICES_VISIBLE`, 2026-10-16) : ni grille de
+    // paliers, ni prix barré, ni mention TTC.
+    await expect(page.getByText(/\d\s?€/)).toHaveCount(0);
+    await expect(page.getByText(/tous les prix sont affichés ttc/i)).toHaveCount(0);
 
     for (const forbidden of [
       /résilier et être remboursé/i,

@@ -144,6 +144,7 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   la landing et le produit doivent annoncer le même prix le jour de l'activation du paywall.
   Et le montant n'est **pas** animé par un compteur à ressort (il passerait par 48 € avant de
   se poser sur 50 €).
+- 🔴 Prix masqués (2026-10-16) : `ENTERPRISE_PRICES_SHOWN`, cf. `billing/CLAUDE.md`.
 - **Offre de lancement (2026-08-24)** : `landing/entreprise/free-offer.ts` expose
   `ENTERPRISE_FREE_OFFER`, **dérivé de `ENTERPRISE_BILLING_ENFORCED`** — jamais une constante
   indépendante, sinon la landing et le produit peuvent diverger. Tant qu'il est vrai, la section
