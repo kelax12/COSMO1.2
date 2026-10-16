@@ -8,11 +8,24 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **96 / 100** au 2026-10-16, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **96 / 100** au 2026-10-16 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → **96 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → **96 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir))
+
+> ### ⚪ 2026-10-16 (soir) · 0 : la page entreprise enfin mesurée, et son TBT est trop haut
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-16
+> au soir : Lighthouse mobile des runs `38907264016` (`9dcaf94b`, première mesure du vrai parcours)
+> et `38941369233` (`4e6f4293`). Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 (soir) |
+> |---|---|---|
+> | ✅ La page entreprise n'était mesurée par rien (−1 le matin) | **+1** | `9dcaf94b` : `/entreprise-presentation/` sert le parcours entreprise, Lighthouse le mesure enfin |
+> | 🔴 TBT mobile du parcours entreprise au-dessus de la cible | **−1** | LCP **1,36 à 1,52 s** (bon), mais TBT **350 ms** puis **934 ms**, perf mobile **88** puis **75**, sur deux runs. La cible fixée le 2026-10-15 (TBT sous 300 ms) n'est tenue que sur le parcours perso : le gain de `c8591450` et suivants a été mesuré sur la mauvaise page pour celle-ci |
+>
+> **96 → 96.**
 
 > ### 🟢 2026-10-16 · +1 : LCP mobile sous 1,6 s partout, mais la page entreprise n'a jamais été mesurée
 >

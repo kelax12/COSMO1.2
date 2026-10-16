@@ -62,6 +62,26 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-16 (soir) · **les quatre commits suivants : 960 → 962**
+
+Consigne d'Axel : « reprends le dernier commit et remets à jour les scores ». Commits relus : `9dcaf94b`,
+`9bd63d41`, `eb6ee7ba`, `4e6f4293` (et `b4092bbf`, documentation). CI de `main` : **quatre runs
+complets de suite, tous verts**, aucun annulé depuis `eb6ee7ba` ; `e2e` 256 verts, 1 instable.
+
+| Audit | Matin | **Soir** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 86 | **87** | **+1** | CodeQL n° 14 fermée : 0 alerte CodeQL, 0 Dependabot |
+| [SEO](./SEO.md) | 78 | **79** | **+1** | `/entreprise-presentation/` sert de nouveau la page entreprise, relu en production |
+| [Performance](./PERFORMANCE.md) | 96 | **96** | 0 | la page entreprise enfin mesurée (+1) ; son TBT mobile est de 350 à 934 ms, perf 75 à 88 (−1) |
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | **82** | 0 | Lighthouse a11y **93** sur le parcours entreprise, vu pour la première fois : audits à identifier |
+| Les sept autres | | | 0 | inchangées |
+
+**960 → 962.** 🔴 Ce que la bonne URL a révélé : le gain de TBT du 2026-10-16 matin avait été mesuré,
+pour la page entreprise, sur l'accueil perso. Le vrai parcours entreprise, celui des prospects,
+reste lourd sur mobile (TBT jusqu'à 934 ms). C'est le prochain chantier de performance.
+
+---
+
 ## Mise à jour du 2026-10-16 · **passe complète après les corrections : 940 → 960**
 
 Consigne d'Axel : « rejoue la passe d'audit complète sur main pour rembourser les notes de ce qui a
