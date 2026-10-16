@@ -79,7 +79,7 @@
     "confirm": "Done",
     "close": "Close",
     "duplicate": "Duplicate",
-    "changeColor": "Change colour",
+    "changeColor": "Change color",
     "newList": "New list",
     "createCategory": "Create a category",
     "undo": "Undo",
@@ -95,7 +95,7 @@
     "modalAria": "Sign in or sign up",
     "loginSubtitle": "Sign in to your account",
     "registerSubtitle": "Create your free account",
-    "orEmail": "or continue with an email",
+    "orEmail": "or continue with email",
     "accountBusiness": "Company",
     "accountBusinessDesc": "Team & collaboration",
     "forgotPassword": "Forgot your password?",
@@ -184,7 +184,7 @@
     "aria": "Current theme: {{name}}. Click to change.",
     "light": "Light",
     "dark": "Dark",
-    "grey": "Grey",
+    "grey": "Gray",
     "black": "Black"
   },
   "errorBoundary": {
@@ -275,7 +275,7 @@
     "dismiss": "Later"
   },
   "colorLegend": {
-    "edit": "Edit the colour legend"
+    "edit": "Edit the color legend"
   },
   "loadingLabel": {
     "tasks": "Loading tasks",

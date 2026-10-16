@@ -33,7 +33,7 @@
   "contactInvalid": "This email address is not valid.",
   "contactHint": "The address is passed on to Stripe at the next payment, or the next time you open “Manage subscription”.",
   "contactSave": "Save",
-  "contactRemove": "Send to the owner again",
+  "contactRemove": "Send invoices to the owner",
   "contactSaved": "Billing contact saved.",
   "contactRemoved": "Invoices will be sent to the owner again.",
   "contactError": "The billing contact could not be saved. Try again in a moment.",
@@ -48,13 +48,13 @@
     "sectionObjects": "Objects",
     "defs": {
       "owner": "The person who created the company in COSMO and holds its subscription. There is only one; they can hand this role over. They are also an administrator.",
-      "admin": "A ROLE: full rights (invite, organise the org chart, set everyone’s permissions). There can be several.",
+      "admin": "A ROLE: full rights (invite, organize the org chart, set everyone’s permissions). There can be several.",
       "manager": "A POSITION, not a role: anyone with at least one person reporting to them in the org chart. They see Statistics and the Org chart for their scope.",
       "teamLead": "The person appointed to run a cross-functional team. It is neither a role nor a reporting position: you can lead a team without managing anyone in the org chart.",
       "member": "Anyone in the company. Their default rights can be widened or narrowed by an administrator (Members → Edit permissions).",
       "team": "A group of people, independent from the org chart (someone can belong to several teams). A project or objective attached to a team is visible to that team only.",
-      "project": "A set of tasks with an owner, dates and a chosen colour. Every team task belongs to a project.",
-      "category": "A thematic classification shared by projects, tasks and objectives, organised as a tree. It has its own colour and does not change a project’s colour."
+      "project": "A set of tasks with an owner, dates and a chosen color. Every team task belongs to a project.",
+      "category": "A thematic classification shared by projects, tasks and objectives, organized as a tree. It has its own color and does not change a project’s color."
     },
     "names": {
       "owner": "Owner",
@@ -85,7 +85,7 @@
       "role": "Roles"
     },
     "loading": "Loading…",
-    "empty": "No entry for these filters.",
+    "empty": "No entries match these filters.",
     "more": "Older entries",
     "someone": "a former member",
     "system": "COSMO",
@@ -137,7 +137,7 @@
       "role_assigned": "{{actor}} assigned the role \"{{object}}\" to {{person}}",
       "role_revoked": "{{actor}} removed the role \"{{object}}\" from {{person}}",
       "role_extended": "{{actor}} changed how long {{person}} holds the role \"{{object}}\"",
-      "role_expired": "The role \"{{object}}\" of {{person}} has ended"
+      "role_expired": "{{person}}'s role \"{{object}}\" has ended"
     }
   }
 }

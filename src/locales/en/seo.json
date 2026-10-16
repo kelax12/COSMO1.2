@@ -41,7 +41,7 @@
     "description": "Cosmo's privacy policy: data collected, secure Supabase storage, Row Level Security, GDPR rights and contact details."
   },
   "forgotPassword": {
-    "title": "Forgotten password – Cosmo",
+    "title": "Forgot password – Cosmo",
     "description": "Reset the password of your Cosmo account."
   },
   "resetPassword": {

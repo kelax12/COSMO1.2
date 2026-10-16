@@ -72,7 +72,7 @@
   "desktop": {
     "closeForm": "Close the form",
     "unsaved": "Unsaved",
-    "changeColor": "Change colour",
+    "changeColor": "Change color",
     "namePlaceholder": "Enter the task name",
     "minuteEstimate": "Estimate in minutes",
     "listNamePlaceholder": "List name..."
@@ -111,6 +111,6 @@
     "collaboratorPlaceholder": "Email or name…",
     "addCollaborator": "Add",
     "userNotFound": "User not found",
-    "bookmark": "Favourite"
+    "bookmark": "Favorite"
   }
 }

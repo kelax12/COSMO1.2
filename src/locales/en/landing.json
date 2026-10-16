@@ -26,7 +26,7 @@
       "tasks": "Tasks",
       "habits": "Habits",
       "agenda": "Calendar",
-      "okr": "OKR"
+      "okr": "OKRs"
     },
     "showcasePause": "Pause the product showcase",
     "showcasePlay": "Play the product showcase"
@@ -75,12 +75,12 @@
     "retention": "Retention 71%",
     "demoVolume": "100 tasks · 100 habits · 150 events",
     "chartTasks": "Tasks",
-    "chartAgenda": "Agenda",
+    "chartAgenda": "Calendar",
     "chartOkr": "OKRs",
     "chartHabits": "Habits",
     "chartReading": "Reading",
     "chartOther": "Other",
-    "desc4Intro": "Tasks, agenda, OKRs, habits: everything meets in a single view.",
+    "desc4Intro": "Tasks, calendar, OKRs, habits: everything meets in a single view.",
     "title5": "No sign-up.",
     "title5b": "Just try it."
   },
@@ -91,10 +91,10 @@
     "tasks": {
       "titleTop": "Task management",
       "titleAccent": "done right",
-      "description": "Bring all your tasks together with priorities, colour-coded categories and due dates. Filter in one click to focus on what matters.",
+      "description": "Bring all your tasks together with priorities, color-coded categories and due dates. Filter in one click to focus on what matters.",
       "b1": "Filter by priority, category or due date in one click",
       "b2": "Add categories to see your work at a glance",
-      "b3": "Create task lists to stay organised",
+      "b3": "Create task lists to stay organized",
       "b4": "Share your tasks with your team",
       "cta": "Try tasks"
     },
@@ -103,7 +103,7 @@
       "titleAccent": "and time-blocking",
       "description": "Plan your tasks in time blocks. Drag and drop links your calendar to your tasks, with no double entry.",
       "b1": "Drag a task from the sidebar onto a slot: an event is created instantly",
-      "b2": "The event's colour matches the task's category, so your priorities stand out",
+      "b2": "The event's color matches the task's category, so your priorities stand out",
       "b3": "Create, move or resize events with the mouse: the linked task updates on its own",
       "b4": "Day / week / month views, one click apart, with quick navigation between periods",
       "cta": "Try the calendar"
@@ -130,8 +130,8 @@
     },
     "stats": {
       "titleTop": "Statistics",
-      "titleAccent": "that speak",
-      "description": "Analyse the time you invest across every module: tasks, calendar, OKRs, habits. Precise data for informed decisions.",
+      "titleAccent": "that speak for themselves",
+      "description": "Analyze the time you invest across every module: tasks, calendar, OKRs, habits. Precise data for informed decisions.",
       "b1": "Time split across tasks, calendar, OKRs and habits, for real clarity",
       "b2": "Day, week, month, year views: zoom wherever you want",
       "b3": "Track your progress from a single page",
@@ -145,8 +145,8 @@
     "students": {
       "profile": "Students",
       "title": "Academic excellence",
-      "description": "Manage your courses, assignments and revision with optimised planning that adapts to how you learn.",
-      "f1": "Optimised revision schedule",
+      "description": "Manage your courses, assignments and revision with optimized planning that adapts to how you learn.",
+      "f1": "Optimized revision schedule",
       "f2": "Track grades and objectives",
       "f3": "The full picture + less stress"
     },
@@ -156,7 +156,7 @@
       "description": "Boost your career with productivity tools that change how you work and how you hit your goals.",
       "f1": "Advanced project management",
       "f2": "OKRs and personal development",
-      "f3": "An effective prioritisation system"
+      "f3": "An effective prioritization system"
     },
     "teams": {
       "profile": "Teams",
@@ -170,7 +170,7 @@
       "profile": "Founders",
       "title": "Faster growth",
       "description": "Steer your startup with precise metrics and automations that save you real time.",
-      "f1": "Advanced multi-project organisation",
+      "f1": "Advanced multi-project organization",
       "f2": "Delegation and task tracking",
       "f3": "Built-in strategic planning"
     }
@@ -181,7 +181,7 @@
     "notListed": "A question not covered?",
     "writeUs": "Write to us",
     "q1": "Is Cosmo really free?",
-    "a1": "Yes for personal use: tasks, habits, calendar, OKRs, statistics and task sharing, with no credit card and no time-limited trial. Sharing will stay free: it is what makes the tool useful with other people. Only organisations have a price, and it starts beyond five members.",
+    "a1": "Yes for personal use: tasks, habits, calendar, OKRs, statistics and task sharing, with no credit card and no time-limited trial. Sharing will stay free: it is what makes the tool useful with other people. Only organizations pay, and only beyond five members.",
     "q2": "What is the OKR method and why use it?",
     "a2": "The OKR method (Objectives & Key Results) is the goal-setting system used by Google, Intel and Netflix. One OKR = one ambitious qualitative objective + 2 to 5 measurable key results. Cosmo computes progress for you and shows where you stand in real time, with no spreadsheet.",
     "q3": "How is it different from Notion or Todoist?",
@@ -193,7 +193,7 @@
     "q6": "What is time-blocking?",
     "a6": "Time-blocking means reserving slots in your calendar to work on specific tasks, instead of reacting as things come. In Cosmo, just drag a task from the side panel onto a slot in your calendar: the event is created automatically and linked to the task. It's the method favoured by Elon Musk, Bill Gates and Cal Newport.",
     "q7": "Can I collaborate with my team?",
-    "a7": "Yes, free of charge. Send an invitation by email, share a task with a Viewer or Editor role, and follow its progress from your dashboard. For a whole organisation (org chart, team projects and OKRs, statistics per scope), that is the company mode, free up to five members.",
+    "a7": "Yes, free of charge. Send an invitation by email, share a task with a Viewer or Editor role, and follow its progress from your dashboard. For a whole organization (org chart, team projects and OKRs, statistics per scope), that is the company mode, free up to five members.",
     "q8": "How do I track my habits effectively?",
     "a8": "Create a habit, set its frequency (daily, weekly, specific days), then tick it off each day. Cosmo shows a GitHub-style 26-week heatmap, computes your streak (consecutive days) and your completion rate over the period you choose. The golden rule: start with 2 to 3 habits at most.",
     "q9": "Is my data secure?",
@@ -230,7 +230,7 @@
     "metaDescription": "Why Cosmo exists: a free productivity app that brings tasks, habits, calendar and OKRs into a single ecosystem.",
     "title": "About Cosmo",
     "subtitle": "A free, all-in-one productivity app.",
-    "p1": "Getting organised in 2026 too often looks like this: a to-do list somewhere, a habits app elsewhere, a calendar in a third tool, and new-year objectives… in a spreadsheet nobody opens again. Each tool is fine, but none of them talk to each other.",
+    "p1": "Getting organized in 2026 too often looks like this: a to-do list somewhere, a habits app elsewhere, a calendar in a third tool, and new-year objectives… in a spreadsheet nobody opens again. Each tool is fine, but none of them talk to each other.",
     "p2before": "Cosmo starts from a simple conviction: ",
     "p2bold": "personal productivity rests on four pillars: tasks, habits, time and objectives",
     "p2after": ", and they only really work when connected. A task gets scheduled in the calendar, a habit feeds an objective, and all of it is measured in one place.",
@@ -276,8 +276,8 @@
   },
   "enterprise": {
     "gateway": {
-      "eyebrow": "One product, two grounds",
-      "title": "Are you here for yourself, or for your organisation?",
+      "eyebrow": "One product, two ways to use it",
+      "title": "Are you here for yourself, or for your organization?",
       "hint": "You can switch at any time from the header.",
       "enter": "Enter",
       "perso": {
@@ -291,7 +291,7 @@
       },
       "entreprise": {
         "kicker": "Cosmo for Companies",
-        "title": "For my organisation",
+        "title": "For my organization",
         "desc": "Projects, OKRs and activity reports, structured by your org chart.",
         "f1": "Org chart and scopes",
         "f2": "Projects, OKRs and team workload",

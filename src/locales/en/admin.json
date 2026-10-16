@@ -101,8 +101,8 @@
   "onboarding": "Onboarding (last 30 days)",
   "onboardingNote": "What new accounts create within 24 h of signing up, and what happens to newly created companies. Migration 213.",
   "onboardingNotInstalled": "Measurement not installed: migration 213 has not been applied.",
-  "onboardingNone": "No signups or companies over the period.",
-  "onboardingSignups": "Signups",
+  "onboardingNone": "No sign-ups or companies over the period.",
+  "onboardingSignups": "Sign-ups",
   "onboardingTask": "With a task",
   "onboardingSlot": "With a time slot",
   "onboardingHabit": "With a habit",
@@ -112,6 +112,6 @@
   "onboardingOrgMember": "With a 2nd member",
   "onboardingOrgProject": "With a project",
   "onboardingOrgOkr": "With a company goal",
-  "onboardingReturn": "Came back between D+7 and D+14: {{all}} of mature signups ({{mature}}), {{withTask}} of those who created a task during onboarding.",
-  "onboardingReturnTooEarly": "Return not measurable yet: no signup in the period is 14 days old."
+  "onboardingReturn": "Came back between D+7 and D+14: {{all}} of mature sign-ups ({{mature}}), {{withTask}} of those who created a task during onboarding.",
+  "onboardingReturnTooEarly": "Return not measurable yet: no sign-up in the period is 14 days old."
 }

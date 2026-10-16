@@ -5,7 +5,7 @@
     "errorTitle": "Couldn't load your habits",
     "errorHint": "Check your internet connection, then try again.",
     "subtitle": "Build good habits, one day at a time",
-    "emptyTitle": "No habit yet",
+    "emptyTitle": "No habits yet",
     "emptyBody": "Start by creating your first habit",
     "emptyCta": "Create a habit",
     "viewTable": "Table",
@@ -37,7 +37,7 @@
     "duration": "Duration",
     "decreaseDuration": "Decrease duration",
     "increaseDuration": "Increase duration",
-    "customizeColors": "Customise colours",
+    "customizeColors": "Customize colors",
     "close": "Close",
     "create": "Create",
     "edit": "Edit",
@@ -50,12 +50,12 @@
     "nameLabel": "Habit name",
     "legend": "Legend",
     "category": "Category",
-    "customize": "Customise"
+    "customize": "Customize"
   },
   "actions": {
     "more": "More actions",
     "resume": "Resume tracking",
-    "pauseHint": "Holidays, illness… streak preserved",
+    "pauseHint": "Vacation, illness… streak preserved",
     "pauseKeepsStreak": "Your streak stays intact until you resume",
     "indefinite": "open-ended",
     "scheduled": "Habit “{{name}}” scheduled",
