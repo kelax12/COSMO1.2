@@ -279,6 +279,28 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         cancelLongPress();
         setActionsVisible(true);
       }}
+      // ═══ C-118 · SAFARI N'ÉMET PAS `contextmenu` AU CLAVIER ═══
+      //
+      // 🔴 Mesuré le 2026-10-16 sous WebKit (Safari 26.5), carte focalisée à
+      // 375 px : `Shift+F10` puis la touche « Menu » arrivent bien en `keydown`
+      // (`F10` avec `shiftKey`, `ContextMenu`), et AUCUN évènement `contextmenu`
+      // ne suit. La ligne `onContextMenu` ci-dessus ne s'exécute donc jamais :
+      // sous Safari, le chemin clavier de C-111 était mort, et les actions
+      // d'une tâche redevenaient inatteignables au clavier (WCAG 2.1.1, A).
+      // Chromium et Firefox, eux, synthétisent l'évènement, d'où un audit vert
+      // qui ne mesurait qu'un moteur sur deux.
+      //
+      // On ne dépend donc plus de la synthèse : les deux touches sont lues en
+      // `keydown`, et `preventDefault` empêche le menu natif de s'ouvrir par-
+      // dessus la feuille là où le navigateur le synthétise quand même.
+      // ⚠️ Même garde qu'`onContextMenu` : rien en mode « ajout à une liste ».
+      onKeyDown={(e) => {
+        if (e.key !== 'ContextMenu' && !(e.key === 'F10' && e.shiftKey)) return;
+        e.preventDefault();
+        if (addToListMode) return;
+        cancelLongPress();
+        setActionsVisible(true);
+      }}
       // Annonce le raccourci aux technologies d'assistance : sans lui, le
       // chemin existe mais rien ne le dit.
       aria-keyshortcuts="Shift+F10"
