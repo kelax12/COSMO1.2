@@ -1,3 +1,5 @@
+<!-- note-audit: non-note -->
+> **Note d'audit** — **NON NOTÉ** : dossier de travail pour un conseil en propriété industrielle, pas un audit. Il se périme à la date de son relevé d'antériorités, à refaire avant tout dépôt.
 # Marque « COSMO » : dossier pour un conseil en propriété industrielle (M-66)
 
 > ⚠️ **Ce document n'est PAS un avis juridique.** C'est un relevé factuel préparé par un assistant
