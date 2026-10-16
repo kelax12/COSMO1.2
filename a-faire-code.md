@@ -70,7 +70,7 @@ Sécurité : [`faille.md`](./faille.md) fait foi.
 > | Item | Ce qui reste | Débloqué par |
 > |---|---|---|
 > | ~~`C-116`~~ | ✅ fermé le 2026-10-10 : 8/8 sous 4 s en CI | rien |
-> | `C-118` | aucun audit clavier sous WebKit (`a11y-keyboard-audit` toujours exclu de `mobile-safari`) | **du code**, ou une revue manuelle datée sous Safari macOS |
+> | ~~`C-118`~~ | ✅ fermé le 2026-10-16 : `a11y-keyboard-audit` joue sous WebKit (`mobile-safari`), 16 cas, les cinq jobs verts, e2e compris (CI `38899295767` sur la PR n° 76, `b95ed132`). Un défaut produit corrigé (la feuille d'actions d'une tâche ne s'ouvrait pas au clavier sous Safari), un écart Safari déclaré (Tab saute les liens), le reste du harnais | rien |
 > | `C-45` | le réglage de console des URL de `loginWithGoogle` | un geste (`M-15`/`M-16`/`M-17`) |
 > | `C-24` | VoiceOver iOS sur un appareil réel | un geste (`M-40`, `M-52`) |
 > | `C-65` + `C-39` | l'épreuve du remboursement contre une vraie carte | un geste (`M-08`) |
@@ -86,12 +86,6 @@ Sécurité : [`faille.md`](./faille.md) fait foi.
 |---|---|---|
 | **C-121** · P3 · M | **Ouvert le 2026-10-13 (audit juridique).** La politique de confidentialité (s6.li1) annonce désormais qu'un compte sans connexion pendant **3 ans** est supprimé, après un e-mail d'avertissement **30 jours avant** (RGPD art. 5.1.e : jusqu'ici, un compte abandonné était gardé sans limite). **Aucun traitement ne l'applique.** Rien ne presse avant 2029 (premiers comptes : 2026), mais une promesse publiée sans exécution redevient une fausse déclaration le jour où un compte franchit le seuil | un job planifié (pg_cron ou workflow) qui (1) repère `last_sign_in_at < now() - 3 ans`, (2) envoie l'avertissement par Resend et le trace, (3) 30 jours plus tard, supprime par le même chemin que `delete-account` (transfert de propriété d'organisation compris) ; preuve en transaction annulée acteur par acteur, et un témoin : un compte connecté hier n'est JAMAIS visé. ❌ Ne pas supprimer sans l'e-mail : la politique le promet |
 
-
-### C-118 · Aucun audit clavier sous WebKit · **P2 · M** · 🔴 le seul item qui relève du code
-
-| Item | Constat | Ce qui prouve que c'est fini |
-|---|---|---|
-| **C-118** 🔴 · P2 · M | **Aucun audit clavier Safari n'existe.** `a11y-keyboard-audit` sort de `mobile-safari` le 2026-09-23 (`C-111`) : ses assertions encodent la navigation séquentielle de Chromium, et **11 cas** y étaient rouges depuis le 2026-09-16, dont des cas à 1 280 px, donc sur l'interface de bureau. Une partie peut être un vrai défaut pour quelqu'un qui navigue au clavier sous Safari (macOS, ou iPhone avec « Accès complet au clavier ») | un harnais clavier propre à WebKit, ou une revue manuelle datée sous Safari macOS, qui trie les 11 cas un par un. ❌ Le retrait de la config n'est pas une conclusion |
 
 ### C-65 · Le remboursement du mois en cours n'existe nulle part dans le code · **P1 · M** · 🟠 **le code est fini ; l'épreuve contre Stripe ne l'est pas**
 
@@ -516,7 +510,7 @@ viewport de mise en page.
 
 `C-01` · `C-02` · `C-03` · `C-04` · `C-05` · `C-06` · `C-07` · `C-08` · `C-09` · `C-10` · `C-11` · `C-12` · `C-13` · `C-14` · `C-15` · `C-16` · `C-17` · `C-18` · `C-19` · `C-20` · `C-21` · `C-22` · `C-23` · `C-25` · `C-26` · `C-27` · `C-28` · `C-29` · `C-30` · `C-31` · `C-32` · `C-33` · `C-34` · `C-35` · `C-36` · `C-37` · `C-38` · `C-40` · `C-41` · `C-42` · `C-43` · `C-44` · `C-46` · `C-47` · `C-48` · `C-49` · `C-50` · `C-51` · `C-52` · `C-53` · `C-54` · `C-55` · `C-56` · `C-57` · `C-59` · `C-60` · `C-61` · `C-62` · `C-63` · `C-64` · `C-66` · `C-67` · `C-68` · `C-69` · `C-70` · `C-71` · `C-72` · `C-73` · `C-74` · `C-75` · `C-76`
 
-Plus les items tenus en lignes de tableau et non en titres : `C-81` → `C-117`, `C-119`, `C-120`
+Plus les items tenus en lignes de tableau et non en titres : `C-81` → `C-120`
 (§ 12 de l'archive, chercher `**C-NN**`).
 
 Audits passés : `A-1`, `A-2`, `A-3`, `A-5`, `A-6`, `A-7`, `A-8` (§ 10 de l'archive). Reste `A-4`, ci-dessus.
