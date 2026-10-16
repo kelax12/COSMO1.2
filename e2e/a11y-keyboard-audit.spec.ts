@@ -28,6 +28,99 @@ import type { Page, Locator } from '@playwright/test';
 
 test.describe.configure({ timeout: 180_000 });
 
+// ── C-118 · CE FICHIER JOUE AUSSI SOUS WEBKIT, EN CLAVIER DE BUREAU ─────────
+//
+// Le project `mobile-safari` (iPhone 12, 390 px, tactile) joue ce fichier, et
+// c'est le seul moteur WebKit du job `e2e`. Mais un audit CLAVIER est un audit
+// d'ordinateur : la personne qui navigue à la touche Tab est sur Safari macOS,
+// à 1 280 px, sans écran tactile. À 390 px, les déclencheurs de bureau
+// (« Nouveau », la création d'habitude) n'existent pas, et les cas expiraient
+// sur un élément jamais monté. Mesuré le 2026-10-16 sur un build de production.
+//
+// On remet donc le viewport, le tactile et l'échelle d'un poste de bureau POUR
+// CE FICHIER, quel que soit le project. Sous `chromium` ces trois valeurs sont
+// déjà celles par défaut : rien ne change pour lui. Les cas qui ont besoin
+// d'une feuille mobile redimensionnent eux-mêmes (`setViewportSize(375…)`),
+// comme avant.
+//
+// ⚠️ Le user-agent reste celui de l'iPhone : l'application ne le lit que pour
+// le libellé des raccourcis (⌘ ou Ctrl), identique pour Mac et iPhone.
+test.use({ viewport: { width: 1280, height: 720 }, isMobile: false, hasTouch: false, deviceScaleFactor: 1 });
+
+// ── ÉCART SAFARI N° 1 : Tab ne s'arrête pas sur les LIENS ───────────────────
+//
+// Safari (macOS) laisse désactivé par défaut « Appuyer sur Tab pour mettre en
+// évidence chaque élément d'une page » : Tab saute les liens et ne s'arrête que
+// sur les champs et les boutons ; Option+Tab parcourt tout. Mesuré le
+// 2026-10-16 sous WebKit (Safari 26.5, build Playwright pour Windows) : après un
+// chargement frais de /agenda, cinq Tab de suite traversent la barre latérale
+// sans toucher un seul de ses liens, ni le lien d'évitement.
+//
+// ❌ Ce n'est PAS un défaut du produit : c'est le réglage par défaut du
+// navigateur, et une personne qui navigue au clavier sous Safari connaît
+// Option+Tab. ⚠️ Playwright ne sait pas l'émuler : `Alt+Tab` n'y change rien
+// (mesuré), et sous le WebKit de Linux, qui est celui de la CI, ce serait
+// l'inverse d'un réglage qui parcourt déjà les liens. On ne simule donc pas la
+// touche : on SONDE le moteur (`tabAtteintLesLiens`) et le cas qui parcourt des
+// liens (le lien d'évitement) mesure alors les MÊMES propriétés du produit sans
+// passer par Tab : le lien est le premier focalisable dans l'ordre du document,
+// sa cible accepte le focus, et Entrée l'y déplace.
+// ❌ Ne pas appliquer ce repli aux cas qui mesurent des boutons et des champs
+// (pièges de focus des modales) : Tab seul est ce que Safari fait, et c'est ce
+// qu'ils doivent mesurer.
+
+/** Tab s'arrête-t-il sur un lien dans ce navigateur ? (Faux par défaut sous Safari macOS.) */
+async function tabAtteintLesLiens(page: Page): Promise<boolean> {
+  const sonde = await page.context().newPage();
+  try {
+    await sonde.setContent('<a href="#x">lien</a><button>bouton</button>');
+    await sonde.keyboard.press('Tab');
+    return await sonde.evaluate(() => document.activeElement?.tagName === 'A');
+  } finally {
+    await sonde.close();
+  }
+}
+
+const FOCALISABLES =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), '
+  + 'textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Le premier arrêt de tabulation d'un conteneur, lu dans l'ORDRE DU DOCUMENT, et
+ * le focus qui s'y pose : ce que ferait un Tab dans un moteur qui parcourt tout.
+ */
+async function premierArretDuDocument(page: Page, conteneurId?: string) {
+  return page.evaluate(
+    ({ sel, id }) => {
+      const racine = id ? document.getElementById(id) : document;
+      const el = racine?.querySelector<HTMLElement>(sel) ?? null;
+      el?.focus();
+      return {
+        id: el?.id ?? '',
+        tag: el?.tagName.toLowerCase() ?? '',
+        name: (el?.getAttribute('aria-label') || el?.textContent || '').trim().slice(0, 40),
+      };
+    },
+    { sel: FOCALISABLES, id: conteneurId },
+  );
+}
+
+/**
+ * Passe en gabarit téléphone ET attend que la barre d'onglets mobile soit
+ * montée.
+ *
+ * 🔴 Sans cette attente, `navTo` cherchait ses liens pendant que la mise en page
+ * bureau se démontait encore : sous WebKit, le lien « Tâches » n'était pas
+ * encore atteignable, la fixture retombait sur la feuille « Plus », qui ne le
+ * porte pas, et le cas expirait sur un élément qui n'existe pas dans cette
+ * feuille (échec constant le 2026-10-16, absent sous Chromium).
+ */
+async function passerEnMobile(page: Page): Promise<void> {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect(page.getByRole('button', { name: /plus d'options/i }).filter({ visible: true }).first())
+    .toBeVisible({ timeout: 20_000 });
+}
+
 interface FocusReport {
   focusMovedIn: boolean;
   focusedOnOpen: string;
@@ -84,8 +177,13 @@ async function measureFocus(
   }
 
   await page.keyboard.press('Escape');
+  // 5 s et non 2 : sous WebKit, machine chargée ou runner CI, la sortie animée
+  // d'une modale dépasse 2 s (mesuré le 2026-10-16 : le TÉMOIN Radix lui-même
+  // rendait « Échap ne ferme pas » une fois sur trois alors qu'il se fermait).
+  // Le détecteur reste le même : une modale qu'Échap ne ferme JAMAIS échoue
+  // toujours, au bout des 5 s.
   const escClosed = await container
-    .waitFor({ state: 'hidden', timeout: 2_000 })
+    .waitFor({ state: 'hidden', timeout: 5_000 })
     .then(() => true)
     .catch(() => false);
 
@@ -268,7 +366,11 @@ for (const child of EVENT_MODAL_CHILDREN) {
     await navTo(page, /agenda/i, /\/agenda/);
     await page.waitForLoadState('networkidle');
     const trigger = page.getByRole('button', { name: /^nouveau$/i }).filter({ visible: true }).first();
-    await trigger.click({ timeout: 20_000 });
+    // `dispatchEvent`, comme `MESURE — EventModal` plus haut : sous WebKit le
+    // test « stable » de Playwright n'aboutit pas sur ce bouton animé (échec du
+    // 2026-10-16, un run sur trois). Le focus est posé d'abord, comme au clavier.
+    await trigger.focus({ timeout: 20_000 });
+    await trigger.dispatchEvent('click');
     const eventModal = page.getByRole('dialog', { name: /ajouter un événement/i });
     await expect(eventModal).toBeVisible({ timeout: 20_000 });
 
@@ -399,7 +501,7 @@ test('MESURE — TaskActionsSheet (feuille d\'actions d\'une tâche)', async ({ 
   // Au-dessus du point de rupture, le bouton « Actions pour … » existe encore
   // mais n'ouvre pas cette surface — mesuré le 2026-09-08, la garde cherchait
   // un `role="dialog"` qui n'était jamais monté.
-  await page.setViewportSize({ width: 375, height: 812 });
+  await passerEnMobile(page);
   await openTasksPage(page);
 
   const sheet = await ouvrirActionsAuClavier(page);
@@ -415,7 +517,7 @@ test('MESURE — MobileAddToList (« Ajouter à une liste »)', async ({ demoPag
   // au-dessus du point de rupture. Cette variante-là n'est PAS câblée sur
   // `useModalA11y` ; mesurée sur desktop, la garde parlerait d'un autre
   // composant que celui qu'elle nomme.
-  await page.setViewportSize({ width: 375, height: 812 });
+  await passerEnMobile(page);
   await openTasksPage(page);
 
   const actions = await ouvrirActionsAuClavier(page);
@@ -627,6 +729,13 @@ test('MESURE — DatePicker ancré à un champ (modale OKR)', async ({ demoPage:
 async function openTasksBare(page: Page): Promise<void> {
   await page.goto('/tasks');
   await page.waitForLoadState('networkidle');
+  // 🔴 Attendre un élément DE LA PAGE, pas un délai : la page Tâches est lazy, et
+  // sous WebKit son rendu arrivait APRÈS le délai fixe ci-dessous. Les sondes
+  // qui suivent (`isVisible`, qui n'attend pas) lisaient alors un `<main>` vide
+  // et concluaient « mode sélection introuvable » (échec constant le 2026-10-16,
+  // alors que le bouton était là quelques secondes plus tard).
+  await expect(page.getByRole('button', { name: /^créer une (nouvelle )?tâche$/i }).first())
+    .toBeVisible({ timeout: 30_000 });
   await page.waitForTimeout(1_200);
 
   const skip = page.getByRole('button', { name: /passer le tutoriel/i }).first();
@@ -916,8 +1025,16 @@ test('GARDE — /agenda : les deux liens d\'évitement déplacent le focus', asy
   await page.waitForLoadState('networkidle');
   await page.locator('.fc').first().waitFor({ state: 'attached', timeout: 30_000 });
   await page.waitForTimeout(1_000);
-  await page.keyboard.press('Tab');
-  const first = await focusedIdentity(page);
+  const tabSurLesLiens = await tabAtteintLesLiens(page);
+  console.log("[a11y-kbd] C-118 Tab s'arrête sur les liens :", tabSurLesLiens);
+  let first;
+  if (tabSurLesLiens) {
+    await page.keyboard.press('Tab');
+    first = await focusedIdentity(page);
+  } else {
+    // Écart Safari n° 1 (cf. plus haut) : même propriété, lue sans Tab.
+    first = await premierArretDuDocument(page);
+  }
   expect(first.tag, `premier arrêt de tabulation: ${JSON.stringify(first)}`).toBe('a');
   expect(first.name).toMatch(/contenu principal/i);
 
@@ -927,8 +1044,13 @@ test('GARDE — /agenda : les deux liens d\'évitement déplacent le focus', asy
 
   // 3. Le premier arrêt À L'INTÉRIEUR du main est le second lien d'évitement,
   //    celui qui saute le panneau des tâches.
-  await page.keyboard.press('Tab');
-  const second = await focusedIdentity(page);
+  let second;
+  if (tabSurLesLiens) {
+    await page.keyboard.press('Tab');
+    second = await focusedIdentity(page);
+  } else {
+    second = await premierArretDuDocument(page, 'main-content');
+  }
   expect(second.name, `premier arrêt dans le main: ${JSON.stringify(second)}`).toMatch(/calendrier/i);
 
   // 4. Il pose le focus sur le conteneur du calendrier DESKTOP.
