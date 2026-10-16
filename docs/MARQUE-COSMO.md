@@ -107,6 +107,41 @@ de productivité.
 Les options ne s'excluent pas : on peut par exemple déposer un signe composé ET rechercher une
 coexistence.
 
+### Piste retenue par Axel pour l'option A : le logo COSMO + un libellé étroit
+
+**Le signe.** Marque semi-figurative : le mot « Cosmo » accompagné du logo existant
+(`public/logo.svg`, `public/icon-512.png`). Le logo représente une **planète violette
+(indigo `#4f46e5`) avec une tache sombre, ceinte d'un anneau turquoise (`#2dd4bf`)**, cerné
+d'un trait bleu nuit épais (`#1a1744`), avec une étoile blanche à quatre branches en haut à
+droite. Style illustration plate, contours marqués.
+
+**Le libellé, volontairement étroit** (projet à faire réécrire par le conseil) :
+- classe 9 : « logiciels téléchargeables de gestion de tâches, d'habitudes, d'agenda et
+  d'objectifs, à usage personnel et professionnel » ;
+- classe 42 : « mise à disposition en ligne de logiciels non téléchargeables de planification,
+  de gestion de tâches, d'habitudes et d'objectifs, et de coordination d'équipes » ;
+- classe 35 : à ne retenir que si le conseil l'estime utile (c'est la classe de Hearst).
+
+Un libellé étroit éloigne COSMO des marques à libellé précis (routeurs, casques, antennes,
+magazines). Il ne suffit pas, seul, face aux libellés larges de Cosmo Technologies (« conception
+et développement de logiciels ») et d'ISTITUTO VENETO (« PaaS ») : un libellé large englobe un
+libellé étroit. D'où les leviers complémentaires ci-dessous.
+
+**Points de vigilance à soumettre au conseil (non juridiques, à vérifier) :**
+- Quand le mot est identique, l'élément verbal est en général jugé **dominant** dans une marque
+  semi-figurative : un logo ajouté au même mot ne suffit pas toujours à écarter la confusion.
+- Une planète à anneau est un motif **répandu et évocateur** du mot « cosmos » : son pouvoir
+  distinctif propre peut être jugé faible.
+- Les marques d'ISTITUTO VENETO, de Cosmo Technologies (018764119) et de COSMO PHARMACEUTICALS
+  sont **elles aussi figuratives** : comparer leurs logos au nôtre (fiches eSearch EUIPO).
+- **Titularité des droits sur le logo** : qui l'a créé (graphiste, outil de génération) et Axel
+  en détient-il les droits d'auteur ? À établir avant de le déposer.
+
+**Leviers à combiner avec le dépôt :** déchéance pour non-usage de la classe 42 de COSMO
+PHARMACEUTICALS (enregistrée en 2012, possible dès aujourd'hui si elle n'a jamais vendu de
+logiciel ; à partir de 2027-2029 pour les deux autres) ; accord de coexistence où chaque titulaire
+limite son libellé à son vrai métier (pharma, thérapie familiale), secteurs opposés au nôtre.
+
 ## 6. Cabinets et CPI à contacter
 
 Aucune grille publique de tarif de cabinet CPI pour une recherche d'antériorité n'a été trouvée
@@ -133,6 +168,7 @@ Keobiz) : elles affichent des forfaits de dépôt, mais ce ne sont pas des CPI e
 
 - Ce document, et le tableau du § 4 avec les numéros.
 - La description du produit (§ 2) et l'URL de production.
+- Le logo en vectoriel (`public/logo.svg`) et la preuve de sa création ou de la cession des droits.
 - La date de premier usage public du nom COSMO et du domaine.
 - Le budget et l'horizon d'acquisition, puisque ce sont eux qui rendent la question urgente.
 
@@ -183,8 +219,10 @@ Le relevé complet est joint. Il n'a aucune valeur d'avis.
 Je souhaiterais un devis pour une recherche d'antériorités (identiques et similaires, y compris
 dénominations sociales et noms de domaine) en classes 9, 35 et 42, France et Union européenne,
 assortie d'un avis écrit répondant à trois questions :
-1. Un dépôt de COSMO accompagné d'un élément distinctif (nom composé ou logo) est-il possible,
-   et à quelles conditions ?
+1. Un dépôt semi-figuratif « Cosmo » avec notre logo (planète à anneau, joint), sur un libellé
+   étroit limité aux logiciels de gestion de tâches, d'habitudes et d'objectifs (classes 9 et
+   42), est-il possible, et à quelles conditions ? Faut-il y ajouter une coexistence ou une
+   action en déchéance pour non-usage contre les titulaires les plus proches ?
 2. Quel est le risque concret face aux marques listées, pour un dépôt comme pour l'usage
    actuel du nom ?
 3. Faut-il renommer le produit avant d'investir en acquisition ?
