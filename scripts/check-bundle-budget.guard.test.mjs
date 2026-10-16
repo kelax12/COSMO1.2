@@ -224,6 +224,29 @@ describe('témoin — budget de bundle par chunk (C-85)', () => {
     });
   });
 
+  it("derriere un AMORCAGE, l'application et ce qu'il precharge sont mesures", () => {
+    // 🔴 2026-10-15 : `index.html` exécute `src/boot.ts`, qui ne fait qu'un
+    // `import()` de l'application. Lue sur le seul HTML, la garde aurait mesuré
+    // un chemin critique d'un kilo-octet : elle répondrait sans mesurer. Ici
+    // l'application pèse 80 ko, au-dessus du budget `entry` (70,5 ko) : la
+    // garde doit le voir, et compter son vendor dans le chemin critique.
+    const racine = monterDist({ main: 80_000, 'vendor-amorce': 20_000 });
+    try {
+      const assets = join(racine, 'dist', 'assets');
+      writeFileSync(
+        join(assets, 'index-Ab3xZ9_q.js'),
+        'const d=["assets/vendor-amorce-Ab3xZ9_q.js"];import("./main-Ab3xZ9_q.js");',
+      );
+      const { code, sortie } = lancer(racine);
+      expect(sortie).toMatch(/amorçage/);
+      expect(sortie).toMatch(/entrée\s+80\.\d ko/);
+      expect(sortie).toMatch(/^\s+20\.\d ko\s+vendor-amorce$/m);
+      expect(code).toBe(1);
+    } finally {
+      rmSync(racine, { recursive: true, force: true });
+    }
+  });
+
   it('TEMOIN DU TEMOIN : sans `dist`, la garde ECHOUE au lieu de se taire', () => {
     // Une garde qui, faute d'artefact, imprimerait « respecté » serait la
     // pire des quatre gardes que `scripts/CLAUDE.md` met en cause.
