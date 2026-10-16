@@ -57,6 +57,20 @@
     <!-- Inter self-hosted (déclaré dans src/index.css) — préload du subset latin -->
     <link rel="preload" href="/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 
+    <!-- 2026-10-16 · Une personne CONNECTÉE ne voit jamais le prérendu.
+         `/` est servi par la home prérendue (Vercel sert le fichier avant le
+         rewrite) : ouvrir ou rafraîchir l'app à la racine (raccourci, PWA
+         `start_url: "/"`, favori) peignait le texte SEO de la landing jusqu'à
+         ce que React redirige vers le dashboard. Avec une session Supabase ou
+         une démo persistée, on retire `data-prerendered` AVANT la première
+         peinture : spinner, et `boot.ts` charge l'app sans attendre.
+         Seul <script> inline exécutable du dépôt, autorisé par son empreinte
+         sha256 dans `script-src` (vercel.json). ❌ Le modifier d'un octet
+         sans recalculer l'empreinte le fait bloquer en prod, en silence :
+         `src/boot-screen.test.ts` compare les deux. Une seule ligne exprès :
+         des fins de ligne CRLF changeraient l'empreinte. -->
+    <script>(function(){try{var s=localStorage,a=s.getItem('cosmo_demo_active')==='1';for(var i=0;!a&&i<s.length;i++)a=/^sb-.+-auth-token$/.test(s.key(i)||'');if(a)document.documentElement.removeAttribute('data-prerendered')}catch(e){}})()</script>
+
     <!-- ───────────────────────────────────────────────────────────────────
          Écran de démarrage + contenu SEO. 100 % CSS, AUCUN JS.
 
@@ -65,6 +79,7 @@
          prod, le serveur de dev n'envoie pas la CSP). Masquer le bloc SEO en
          JS marcherait donc en local et échouerait silencieusement en ligne.
          D'où le choix du CSS pur : `style-src` autorise bien 'unsafe-inline'.
+         Seule exception : le script juste au-dessus, autorisé par empreinte.
 
          Règle du jeu :
          - #boot-screen est peint immédiatement (overlay opaque plein écran),
