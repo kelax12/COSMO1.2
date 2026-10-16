@@ -79,9 +79,17 @@ export function stripLocalePrefix(pathname: string): { locale: Locale | null; pa
   return { locale, path: normalizePath(rest) };
 }
 
+/**
+ * Chemin absolu, sans barre oblique finale (sauf la racine).
+ *
+ * Vercel sert `/entreprise-presentation/` en 200 sans rediriger : sans ce
+ * retrait, la comparaison de slug de `useLandingTrack` ratait cette URL et
+ * l'hydratation rendait le parcours perso (mesuré en prod le 2026-10-16).
+ */
 function normalizePath(path: string): string {
-  if (!path || path === '/') return '/';
-  return path.startsWith('/') ? path : `/${path}`;
+  const trimmed = path.replace(/\/+$/, '');
+  if (!trimmed) return '/';
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
 }
 
 /**
