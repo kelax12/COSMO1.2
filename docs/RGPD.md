@@ -18,6 +18,16 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 
 ## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → **85 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
 
+> ### ⚪ 2026-10-16 (soir) · 0 : `M-69` fait, le −2 de `BK-1` attend `M-70`
+>
+> **Même règle** : un débit ne se rembourse que lorsque le défaut est corrigé et daté. Source : parole d'Axel, notification soumise le 2026-10-16 au soir (téléservice, non mesurable par un agent).
+>
+> | Item | Effet | Constaté le 2026-10-16 (soir) |
+> |---|---|---|
+> | 🟠 `BK-1` · notification CNIL et information des personnes | 0 (−2 maintenu) | ✅ `M-69` fait : notification initiale, tardive, avec motifs du retard, consignée au registre privé. 🔴 `M-70` ni fait ni décidé par écrit : le −2 se rembourse quand l'information des personnes est envoyée, ou quand la décision de ne pas informer est consignée avec son motif |
+>
+> **85 → 85.**
+
 > ### 🟠 2026-10-16 · +1 : `org_member_roles` déclarée, mais l'échéance CNIL est passée sans trace
 >
 > **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du

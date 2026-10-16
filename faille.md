@@ -135,7 +135,8 @@ et brouillons **hors dépôt** (dossier privé d'Axel), procédure [`docs/RGPD-V
 |---|---|
 | ✅ Contenu le 2026-10-13 | dump chiffré avant dépôt (gpg AES-256, secret `BACKUP_PASSPHRASE`), relu à l'identique par sha256 avant dépôt, échec FERMÉ sans phrase secrète (`8c6a971d`) ; run `38392672092` vert ; les dumps en clair **supprimés**, l'API publique ne liste plus qu'un artefact, chiffré ; `restore-drill.yml` déchiffre |
 | ✅ Fait le 2026-10-16 | `M-68` : sessions révoquées. Relu en base le même jour : 0 session et 0 jeton vivant antérieurs au chiffrement. Mot de passe de la base non changé, décision motivée (un dump ne le contient pas). `dump-check` de `restore-drill` vert sur le dump chiffré, et une garde refuse désormais tout artefact de données de production non chiffré (`467d5115`) |
-| 🔴 Ouvert | `M-69` décision CNIL : **l'échéance de 72 h est passée le 2026-10-16 vers 11 h 26 UTC** sans trace au registre privé ; une notification tardive reste due, avec les motifs du retard (art. 33.1) · `M-70` information des personnes · `M-71` la phrase secrète est toujours en clair dans le dossier privé |
+| ✅ Fait le 2026-10-16 (soir) | `M-69` : notification initiale soumise à la CNIL, **tardive** (échéance de 72 h passée vers 11 h 26 UTC), avec les motifs du retard (art. 33.1). Consignée au registre privé. Notification complémentaire à suivre |
+| 🔴 Ouvert | `M-70` information des personnes · `M-71` la phrase secrète est toujours en clair dans le dossier privé |
 | ❌ Règle durable | **aucune donnée personnelle en clair dans un artefact, un log ou un fichier d'un dépôt public.** « Il faut être connecté pour télécharger » ne protège rien : tout le monde a un compte GitHub |
 
 ✅ **Note recalculée le 2026-10-15** : −2, en entrée de la note ci-dessus. Le −2 se rembourse à
