@@ -25,11 +25,13 @@ import { reparateur, listerRuns, run } from './ci-alert-perime.mjs';
 import { lireEtapes } from './ci-toutes-les-gardes.mjs';
 
 const CREE = '2026-10-16T10:00:00Z';
+const REPO = 'kelax12/COSMO1.2';
 const vert = (id, cree, sha = `sha${id}000000`) => ({
   id, created_at: cree, head_sha: sha, conclusion: 'success', html_url: `https://x/runs/${id}`,
+  event: 'push', head_branch: 'main', head_repository: { full_name: REPO },
 });
 const env = (o = {}) => ({
-  REPO: 'kelax12/COSMO1.2', WF_ID: '123', CREE, SHA: 'aaaaaaa1111', GH_TOKEN: 't',
+  REPO, WF_ID: '123', CREE, SHA: 'aaaaaaa1111', GH_TOKEN: 't',
   GITHUB_OUTPUT: 'sortie.txt', ...o,
 });
 
@@ -63,11 +65,31 @@ describe('ci-alert-perime · TÉMOIN : un rouge déjà réparé ne réveille per
 
   it('un run plus récent mais ROUGE ne répare rien', async () => {
     const rouge = { ...vert(9, '2026-10-16T10:10:00Z'), conclusion: 'failure' };
-    expect(reparateur([rouge], { creeLe: CREE })).toBeNull();
+    expect(reparateur([rouge], { creeLe: CREE, repo: REPO })).toBeNull();
   });
 
   it('créé à la même seconde : pas plus récent, pas périmé', () => {
-    expect(reparateur([vert(9, CREE)], { creeLe: CREE })).toBeNull();
+    expect(reparateur([vert(9, CREE)], { creeLe: CREE, repo: REPO })).toBeNull();
+  });
+
+  // 🔴 Revue de sécurité du 2026-10-16 : le filtre `branch=main` de l'API
+  // compare `head_branch`, qui vaut aussi `main` pour une PR ouverte depuis
+  // la branche `main` d'un FORK. Un vert de fork, créé après un vrai rouge,
+  // aurait tu l'alerte. Seul un push sur `main` de CE dépôt répare.
+  it.each([
+    ['une PR depuis la branche `main` d’un fork', { event: 'pull_request', head_repository: { full_name: 'tiers/COSMO1.2' } }],
+    ['une PR de ce dépôt', { event: 'pull_request' }],
+    ['un push sur `main` d’un autre dépôt', { head_repository: { full_name: 'tiers/COSMO1.2' } }],
+    ['un run sans dépôt de tête', { head_repository: null }],
+    ['un push sur une autre branche', { head_branch: 'claude/x' }],
+    ['un déclenchement manuel', { event: 'workflow_dispatch' }],
+  ])('TÉMOIN : %s ne répare rien', (_nom, o) => {
+    const r = { ...vert(9, '2026-10-16T10:10:00Z'), ...o };
+    expect(reparateur([r], { creeLe: CREE, repo: REPO })).toBeNull();
+  });
+
+  it('sans dépôt attendu, rien ne répare', () => {
+    expect(reparateur([vert(9, '2026-10-16T10:10:00Z')], { creeLe: CREE })).toBeNull();
   });
 });
 
@@ -87,7 +109,7 @@ describe('ci-alert-perime · TÉMOIN : dans le doute, l’alerte part', () => {
   });
 
   it('date de création illisible : jamais périmé', () => {
-    expect(reparateur([vert(9, '2026-10-16T10:10:00Z')], { creeLe: 'pas une date' })).toBeNull();
+    expect(reparateur([vert(9, '2026-10-16T10:10:00Z')], { creeLe: 'pas une date', repo: REPO })).toBeNull();
   });
 
   it('sans `GITHUB_OUTPUT` : rien n’est écrit, la sortie vide laisse partir l’alerte', async () => {
@@ -98,7 +120,7 @@ describe('ci-alert-perime · TÉMOIN : dans le doute, l’alerte part', () => {
 });
 
 describe('listerRuns · la lecture de l’API', () => {
-  it('lit les runs VERTS de `main` du même workflow, avec le jeton', async () => {
+  it('lit les runs VERTS des PUSHS sur `main` du même workflow, avec le jeton', async () => {
     const vus = [];
     const fetchImpl = async (url, init) => {
       vus.push({ url, init });
@@ -106,7 +128,7 @@ describe('listerRuns · la lecture de l’API', () => {
     };
     const runs = await listerRuns({ repo: 'o/r', workflowId: '123', token: 't', fetchImpl });
     expect(runs).toHaveLength(1);
-    expect(vus[0].url).toBe('https://api.github.com/repos/o/r/actions/workflows/123/runs?branch=main&status=success&per_page=5');
+    expect(vus[0].url).toBe('https://api.github.com/repos/o/r/actions/workflows/123/runs?branch=main&event=push&status=success&per_page=5');
     expect(vus[0].init.headers.Authorization).toBe('Bearer t');
   });
 
