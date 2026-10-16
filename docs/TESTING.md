@@ -32,6 +32,16 @@
 >
 > **92 → 97.** ⚠️ Le run de `main` reste annulé à chaque poussée voisine : le 2026-10-16, plusieurs
 > sessions ont dû passer par une PR brouillon (n° 71, 72, 74, 76) pour obtenir un verdict `e2e`.
+>
+> ✅ **2026-10-16 (soir) · corrigé, les runs de `main` ne s'annulent plus** (`eb6ee7ba`) : un groupe de
+> concurrence par commit sur `main`, l'annulation gardée sur les PR. Avant : **108** runs `CI` de `main`
+> annulés sur **141** du 10-09 au 10-16. Vu sur deux pushs successifs : `38915680173` (`eb6ee7ba`, 33 min,
+> vert) et `38941369233` (`4e6f4293`, 26 min, vert), aucun annulé. Coût : **0** minute facturée (dépôt public) ;
+> pic rejoué sur l'historique, **6** runs et **16** jobs simultanés, **28** si `e2e` retombe à 4,3 h (en
+> file, sans annulation). `ci-alert.yml` tait désormais un rouge fini après le vert qui l'a réparé
+> (`scripts/ci-alert-perime.mjs`, push sur `main` de ce dépôt seulement). Témoins : « concurrency » dans
+> `ci-toutes-les-gardes.guard.test.mjs`, `ci-alert-perime.guard.test.mjs` ; sabotages `ci-main-annule`,
+> `perime-*`, `ci-alert-webhook-sourd` rejoués rouges.
 
 > ### 🟠 2026-10-15 · −4 : `main` rouge depuis trois jours, et le rouge de tête en cache dix autres
 >
@@ -1335,7 +1345,7 @@ npx playwright test e2e/a11y-audit.spec.ts --project=chromium
   développement, ils n'ont donc pas pu être posés « au réel mesuré » comme tous les autres budgets
   du dépôt. **À resserrer après le premier run réel**, un budget très au-dessus du réel ne mesure
   rien.
-- `concurrency` annule les runs obsolètes, `permissions: contents:read`. Dépendances : `.github/dependabot.yml`.
+- `concurrency` : sur une PR, le push suivant annule le run en cours ; sur `main`, un groupe par commit, aucun run annulé (2026-10-16). `permissions: contents:read`. Dépendances : `.github/dependabot.yml`.
 
 ### `edge-deploy-drift.yml` · le code déployé contre le dépôt *(ajouté le 2026-09-04, finding C-35)*
 

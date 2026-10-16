@@ -67,6 +67,12 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 >
 > **82 → 86.** Le BK-1 n'est pas clos pour autant : sa moitié RGPD (`M-69`, `M-70`) reste ouverte,
 > et l'échéance de la notification CNIL est passée sans trace au registre (cf. `docs/RGPD.md`).
+>
+> ✅ **2026-10-16 (soir) · CodeQL n° 14 `fixed`** à 14 h 27 UTC, par `eb6ee7ba` (analyse CodeQL de
+> `main` verte) : `lireEtapes` valide l'identifiant de job (`/^[A-Za-z_][A-Za-z0-9_-]*$/`) et compare
+> des chaînes, plus aucune `RegExp` construite depuis `--job`. Le témoin `--job .*` a été vu rouge
+> avant le correctif : le script lisait alors les étapes d'un AUTRE job, sans le dire. Le point débité
+> ci-dessus est à créditer par la prochaine passe (86 → 87), pas ici.
 
 > ### 🟠 2026-10-15 · −2 : `BK-1` entre dans la note, la garde des advisors est enfin remboursée
 >

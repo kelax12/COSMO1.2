@@ -125,7 +125,7 @@ Performance (la mesure). **Corrigé sur `main` par `9dcaf94b` pendant la passe**
    (art. 33.1) ; si elle l'a été, consigner la date au registre privé. Puis `M-70` et `M-71`.
 2. **La barre oblique de la page entreprise** : `9dcaf94b` est sur `main` ; vérifier son run CI et la
    production, puis relire le Lighthouse du vrai parcours entreprise.
-3. **CodeQL n° 14** : échapper `job` dans `ci-toutes-les-gardes.mjs`, une ligne.
+3. ✅ **CodeQL n° 14** : `fixed` le 2026-10-16 à 14 h 27 UTC (`eb6ee7ba`), cf. [`../faille.md`](../faille.md).
 4. **PR n° 75** (`fast-uri`) et la pile de PR Dependabot ouvertes (n° 29 à 70) : à trier.
 
 ---
