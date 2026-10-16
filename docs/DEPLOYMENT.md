@@ -496,6 +496,49 @@ déploiement précédent** :
 - Ou `vercel rollback <deployment-url>` (CLI).
 - Aucun rebuild : bascule instantanée de l'alias prod.
 
+### ✅ Répété le 2026-10-16 : le retour arrière par `git revert` (moitié de `M-47`)
+
+Fait par un agent, sur `main`, avec un commit sans effet : `42ee5006` ajoute
+`public/repetition-retour-arriere.txt`, `2b9ad9d` le défait. Heures lues dans les statuts de
+déploiement que Vercel publie sur GitHub (`gh api repos/.../deployments?sha=…`) :
+
+| | Poussé (UTC) | Servi en production | Délai |
+|---|---|---|---|
+| Commit A | 19:01:16 | 19:01:56 | **40 s** |
+| Revert | 19:13:09 | 19:13:42 | **33 s** |
+
+Vérifié de l'extérieur : `version.json` rend le nouveau commit, et l'URL du fichier renvoie
+ensuite la page d'app générique.
+
+**Ce que la répétition a appris :**
+- 🔴 **Vercel déploie sans attendre la CI.** Un revert est en ligne en ~35 s, mais un mauvais
+  commit l'est tout aussi vite : la CI (25 min) juge APRÈS la mise en production. Le retour
+  arrière est donc le vrai filet, pas la CI.
+- ⚠️ **Une URL inconnue répond 200** (repli SPA, limite assumée) : pour prouver qu'un fichier a
+  disparu, lire son contenu, jamais son code HTTP.
+- ❌ **Ne pas enchaîner `git revert -q` et `git commit --amend`** : si le revert échoue en silence,
+  l'amend réécrit le commit précédent. C'est arrivé ici ; le push a été refusé (pas d'avance
+  rapide) et rien de faux n'est parti. Lancer le revert sans `-q`, lire sa sortie, puis seulement
+  pousser.
+
+### À faire par Axel : l'autre moitié de `M-47`, le « Promote » de Vercel (5 min)
+
+Pas de jeton Vercel côté agent (`M-59`) : ce geste est le tien. À jouer une fois, à froid :
+
+1. Vercel → projet COSMO → **Deployments**. Repérer le déploiement de production courant et le
+   précédent (vert).
+2. Sur le précédent : **⋯ → Promote to Production** (ou « Instant Rollback »). Noter l'heure.
+3. Vérifier : `curl -s https://thecosmo.app/version.json` doit rendre le commit du déploiement
+   promu. Noter l'heure : c'est le délai réel.
+4. ⚠️ Après un « Promote », Vercel **ne redéploie plus automatiquement** les pushs suivants tant
+   que le déploiement courant n'est pas re-promu. Re-promouvoir le plus récent, puis revérifier
+   `version.json`, et attendre le prochain run `Deploy SHA drift` (vert attendu).
+5. Écrire les deux heures ici, sous ce paragraphe, et fermer `M-47` dans `a-faire-manuel.md`.
+
+La contrepartie base de données n'a rien à rejouer tant qu'aucune migration n'accompagne le
+déploiement défait : les migrations sont additives (ci-dessous), et un retour arrière du front ne
+touche pas la base.
+
 ### Base de données
 Postgres n'a pas de « rollback » automatique. Les migrations doivent donc être
 **additives et rétro-compatibles** (le front N-1 doit tolérer le schéma N) :
