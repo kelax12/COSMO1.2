@@ -51,6 +51,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, 'dist');
 const BASE = 'https://thecosmo.app';
 
+// Miroir de `PRICES_VISIBLE` (src/modules/billing/premium-config.ts) : ce script
+// Node ne lit pas le TypeScript. Prix masqués depuis le 2026-10-16 (acquisition
+// sans monétisation) ; le paragraphe « Tarifs » reste écrit plus bas, il n'est
+// juste plus servi. Garde de parité : src/modules/billing/prices-visible.guard.test.ts.
+const PRIX_VISIBLES = false;
+
 // ── Catalogues SEO par locale ─────────────────────────────────────────────
 // Mêmes fichiers que ceux consommés par l'app (src/lib/useSeoMeta.ts) : le
 // titre d'une page ne peut donc pas différer entre le prérendu et le rendu
@@ -443,8 +449,8 @@ const ROUTES = [
 
         <h2>Sécurité, confidentialité et réversibilité</h2>
         <p>Chaque table est protégée par des politiques d'accès évaluées côté serveur : une requête forgée depuis le navigateur ne rapporte rien de plus qu'une requête légitime. Un manager voit le travail de son périmètre, jamais les tâches, habitudes ou agenda personnels de ses collaborateurs. Effacement du compte réellement exécuté côté serveur, consentement explicite à l'entrée dans une organisation, aucune donnée revendue. Transfert de propriété, départ d'un membre avec transmission de son travail et suppression de l'organisation sont dans l'interface, pas dans un ticket de support.</p>
-        <h2>Tarifs</h2>
-        <p>Un forfait pour toute l'organisation, quel que soit le nombre de projets, et non un tarif par personne : gratuit jusqu'à 5 membres, 20 € par mois de 5 à 10 membres, 50 € de 10 à 20, 100 € de 20 à 50, et 200 € au-delà de 50. Le forfait s'ajuste tout seul quand l'organisation grandit et redescend si l'effectif baisse. Sans engagement, résiliable à tout moment, sans carte bancaire pour démarrer.</p>
+        ${PRIX_VISIBLES ? `<h2>Tarifs</h2>
+        <p>Un forfait pour toute l'organisation, quel que soit le nombre de projets, et non un tarif par personne : gratuit jusqu'à 5 membres, 20 € par mois de 5 à 10 membres, 50 € de 10 à 20, 100 € de 20 à 50, et 200 € au-delà de 50. Le forfait s'ajuste tout seul quand l'organisation grandit et redescend si l'effectif baisse. Sans engagement, résiliable à tout moment, sans carte bancaire pour démarrer.</p>` : ''}
 
         <p><a href="/">Cosmo pour moi</a> · <a href="/signup">Créer mon organisation</a> · <a href="/guide">Guide d'utilisation</a></p>`,
       en: `<h1>Cosmo for companies: your org chart is your execution engine</h1>
@@ -478,8 +484,8 @@ const ROUTES = [
 
         <h2>Security, privacy and reversibility</h2>
         <p>Every table is protected by access policies evaluated server side: a request forged from the browser brings back nothing more than a legitimate one. A manager sees the work in their scope, never the personal tasks, habits or calendar of their colleagues. Account deletion is genuinely executed server side, consent to joining an organisation is explicit, and no data is resold. Transferring ownership, a member's departure with their work handed over, and deleting the organisation are in the interface, not in a support ticket.</p>
-        <h2>Pricing</h2>
-        <p>One plan for the whole organisation, whatever the number of projects, rather than a per-person price: free up to 5 members, 20 € a month from 5 to 10 members, 50 € from 10 to 20, 100 € from 20 to 50, and 200 € beyond 50. The plan adjusts itself as the organisation grows and comes back down if headcount falls. No commitment, cancellable at any time, no credit card to start.</p>
+        ${PRIX_VISIBLES ? `<h2>Pricing</h2>
+        <p>One plan for the whole organisation, whatever the number of projects, rather than a per-person price: free up to 5 members, 20 € a month from 5 to 10 members, 50 € from 10 to 20, 100 € from 20 to 50, and 200 € beyond 50. The plan adjusts itself as the organisation grows and comes back down if headcount falls. No commitment, cancellable at any time, no credit card to start.</p>` : ''}
 
         <p><a href="/en/">Cosmo for me</a> · <a href="/en/signup">Create my organisation</a> · <a href="/en/guide">User guide</a></p>`,
     },
