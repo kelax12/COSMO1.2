@@ -11,11 +11,17 @@
 Mis à jour le **2026-10-16**. Remplace, en le complétant, le relevé du 2026-08-28
 (`docs/LEGAL.md` § 5). Ligne d'origine : `a-faire-manuel.md`, M-66.
 
-## 1. Pourquoi maintenant
+## 1. Quand
 
-COSMO entre en phase d'acquisition. Se voir opposer une marque après avoir bâti une audience
-obligerait à renommer le produit, le domaine et toute la communication. La vérification coûte
-quelques centaines d'euros ; un changement de nom tardif coûte l'audience.
+**Décision d'Axel du 2026-10-16 : la consultation se fait juste après l'activation du mode
+payant** (bascule Stripe live), et avant d'accélérer l'acquisition payante. Raisonnement :
+un procès contre un SaaS gratuit, sans chiffre d'affaires, de la part de titulaires d'un secteur
+opposé, est peu probable ; le risque réaliste est une **opposition au moment du dépôt** (les
+titulaires sont alertés par leurs services de surveillance) ou une mise en demeure une fois
+COSMO visible. Le risque grandit donc avec le chiffre d'affaires et l'audience.
+
+⚠️ D'ici là : **ne pas déposer** la marque sans avoir consulté, et refaire le relevé du § 4
+juste avant le rendez-vous (il se périme).
 
 ## 2. Ce que COSMO vend (à donner tel quel au conseil)
 
