@@ -62,6 +62,19 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-16 (soir, plus tard) · **`BK-1` décidé : 962 → 964**
+
+Notification CNIL (`M-69`) soumise par Axel le 2026-10-16 au soir ; information des personnes (`M-70`) **décidée par écrit** : non effectuée, gravité déclarée « limitée ». Détail : [`RGPD.md`](./RGPD.md).
+
+| Audit | Soir | **Plus tard** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [RGPD](./RGPD.md) | 85 | **87** | **+2** | `BK-1` : `M-69` fait, `M-70` décidé et motivé au registre privé |
+| Les neuf autres | | | 0 | inchangées |
+
+**962 → 964.** Reste dû hors note : la notification complémentaire à la CNIL, et `M-71`.
+
+---
+
 ## Mise à jour du 2026-10-16 (soir) · **les quatre commits suivants : 960 → 962**
 
 Consigne d'Axel : « reprends le dernier commit et remets à jour les scores ». Commits relus : `9dcaf94b`,

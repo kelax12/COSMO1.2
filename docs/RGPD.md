@@ -1,4 +1,4 @@
-<!-- note-audit: note=85 -->
+<!-- note-audit: note=87 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **85 / 100** au 2026-10-16, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **87 / 100** au 2026-10-16 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # RGPD — inventaire, droits des personnes et dette
 
@@ -16,7 +16,17 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → **85 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → 85 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ✅ 2026-10-16 (soir, plus tard) · +2 : `BK-1` décidé des deux côtés, le −2 est remboursé
+>
+> **Même règle** : un débit se rembourse quand le défaut est fermé et daté. Pour un geste de décision, fermé veut dire **fait ou décidé par écrit**, avec son motif. Source : parole d'Axel et registre privé, non mesurables par un agent.
+>
+> | Item | Effet | Constaté le 2026-10-16 (soir) |
+> |---|---|---|
+> | ✅ `BK-1` · notification CNIL et information des personnes (−2 du 10-15) | **+2** | `M-69` fait : notification initiale soumise, tardive, avec motifs du retard. `M-70` **décidé par écrit** : pas d'information des personnes, gravité déclarée « limitée », l'art. 34 ne l'impose qu'en cas de risque élevé ; consigné au registre privé avec ce qui rouvrirait la décision (indice d'usage, demande de la CNIL). ⚠️ Reste dû hors note : la notification complémentaire |
+>
+> **85 → 87.**
 
 > ### ⚪ 2026-10-16 (soir) · 0 : `M-69` fait, le −2 de `BK-1` attend `M-70`
 >
