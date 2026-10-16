@@ -1213,6 +1213,75 @@ export const CATALOGUE = [
       'Une garde qui refuse le job conforme est désarmée au premier rouge : on la fait taire, '
       + 'et avec elle la vérification de toutes les autres.',
   },
+  {
+    id: 'citg-job-motif',
+    famille: 'detecteur',
+    garde: 'scripts/ci-toutes-les-gardes.guard.test.mjs',
+    modifs: [
+      r('scripts/ci-toutes-les-gardes.mjs', "  if (typeof job !== 'string' || !IDENTIFIANT_JOB.test(job)) {", '  if (false) {'),
+      r(
+        'scripts/ci-toutes-les-gardes.mjs',
+        '  const iJob = lignes.findIndex((l, k) => k > iJobs && l.trimEnd() === entete);',
+        "  const iJob = lignes.findIndex((l, k) => k > iJobs && new RegExp(`^  ${job}:\\\\s*$`).test(l));",
+      ),
+    ],
+    attendu: ['`--job .*` : TÉMOIN, échec qui nomme l’identifiant, jamais la lecture d’un autre job'],
+    pourquoi:
+      'L’état exact de CodeQL n° 14 (2026-10-15) : `--job` entre dans une `RegExp`, `.*` y vaut '
+      + '« n’importe quel job », et le résumé juge les étapes d’un autre job que celui demandé.',
+  },
+  {
+    id: 'ci-main-annule',
+    famille: 'produit',
+    garde: 'scripts/ci-toutes-les-gardes.guard.test.mjs',
+    modifs: [r(
+      '.github/workflows/ci.yml',
+      "  group: ci-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}",
+      '  group: ci-${{ github.workflow }}-${{ github.ref }}',
+    )],
+    attendu: ['concurrency : TÉMOIN, un run de main n’est jamais annulé, une PR l’est encore'],
+    pourquoi:
+      'Un groupe par ref sur `main` : chaque push annule le run en cours. Le 2026-10-16, 108 runs '
+      + 'de `main` sur 141 annulés, `e2e` le premier, et quatre PR brouillon jetables pour un verdict.',
+  },
+
+  // ═════════════════════════════════════════════════════════════════
+  // CI ALERT · UN ROUGE DÉJÀ RÉPARÉ NE RÉVEILLE PERSONNE (2026-10-16)
+  // ═════════════════════════════════════════════════════════════════
+  {
+    id: 'perime-rouge-repare',
+    famille: 'produit',
+    garde: 'scripts/ci-alert-perime.guard.test.mjs',
+    modifs: [r('scripts/ci-alert-perime.mjs', "r.conclusion === 'success' && ", '')],
+    attendu: ['un run plus récent mais ROUGE ne répare rien'],
+    pourquoi:
+      'Un run plus récent ROUGE compté comme réparateur : l’alerte d’un `main` qui reste rouge '
+      + 'serait avalée, exactement le silence que `ci-alert.yml` existe pour empêcher.',
+  },
+  {
+    id: 'perime-doute-tait',
+    famille: 'produit',
+    garde: 'scripts/ci-alert-perime.guard.test.mjs',
+    modifs: [r(
+      'scripts/ci-alert-perime.mjs',
+      '      log(`::warning::vérification impossible (${e.message}) : l’alerte part quand même.`);',
+      '      perime = true;',
+    )],
+    attendu: ['API en panne : `perime=false`, et la ligne dit que la vérification n’a pas eu lieu'],
+    pourquoi:
+      'Une API en panne qui tait l’alerte : un jeton sans `actions: read` suffirait à rendre '
+      + 'toute la CI muette, sans un mot dans le run.',
+  },
+  {
+    id: 'ci-alert-webhook-sourd',
+    famille: 'produit',
+    garde: 'scripts/ci-alert-perime.guard.test.mjs',
+    modifs: [r('.github/workflows/ci-alert.yml', "        if: always() && steps.perime.outputs.perime != 'true'", '        if: always()')],
+    attendu: ['le webhook respecte le contrôle, et part encore si le contrôle a planté'],
+    pourquoi:
+      'Le webhook qui ignore le contrôle : l’issue se tait, Discord sonne quand même des heures '
+      + 'après la réparation, et deux canaux qui se contredisent apprennent à en ignorer un.',
+  },
 
   // ═════════════════════════════════════════════════════════════════
   // LE REJEU LUI-MÊME (C-81) — qui garde la garde des gardes

@@ -70,6 +70,14 @@ function paire(texte, ligne) {
 const indentation = (l) => l.match(/^ */)[0].length;
 
 /**
+ * Un identifiant de job GitHub : une lettre ou `_`, puis lettres, chiffres,
+ * `-` ou `_`. 🔴 CodeQL n° 14 (2026-10-15) : le nom venait de `--job` et
+ * entrait tel quel dans une `RegExp`, où `.` valait « n'importe quel job ».
+ * Le script lisait alors un autre job que celui demandé, sans le dire.
+ */
+export const IDENTIFIANT_JOB = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+
+/**
  * Lit les étapes d'un job dans un workflow GitHub Actions.
  *
  * Parseur volontairement ÉTROIT : il ne connaît que la forme des workflows de
@@ -82,10 +90,15 @@ const indentation = (l) => l.match(/^ */)[0].length;
  *   env:Record<string,string>}>}
  */
 export function lireEtapes(yaml, job) {
+  if (typeof job !== 'string' || !IDENTIFIANT_JOB.test(job)) {
+    throw new Error(`ci.yml : identifiant de job invalide : « ${job} »`);
+  }
   const lignes = yaml.replace(/\r\n/g, '\n').split('\n');
   const iJobs = lignes.findIndex((l) => /^jobs:\s*$/.test(l));
   if (iJobs < 0) throw new Error('ci.yml : aucun bloc `jobs:`');
-  const iJob = lignes.findIndex((l, k) => k > iJobs && new RegExp(`^  ${job}:\\s*$`).test(l));
+  // Une égalité de chaînes, pas une `RegExp` : l'argument n'est jamais un motif.
+  const entete = `  ${job}:`;
+  const iJob = lignes.findIndex((l, k) => k > iJobs && l.trimEnd() === entete);
   if (iJob < 0) throw new Error(`ci.yml : job \`${job}\` introuvable`);
 
   let iSteps = -1;

@@ -23,11 +23,24 @@ permissions:
 # Le commentaire `# vX.Y.Z` en fin de ligne est la version lisible ; c'est aussi
 # ce que Dependabot (ecosystem github-actions) met à jour en bumpant le SHA.
 
-# A newer push to the same ref cancels the in-progress run — saves runner
-# minutes and gives faster feedback on the latest commit.
+# 🔴 SUR `main`, AUCUN RUN N'EN ANNULE UN AUTRE (2026-10-16). Le groupe y est
+# le COMMIT : chaque push a le sien, donc son verdict complet. Avant, le push
+# suivant annulait le run en cours : sur les 141 runs `CI` de `main` créés du
+# 10-09 au 10-16, 108 annulés, `e2e` (23 min) le premier, et quatre sessions
+# ont dû ouvrir une PR brouillon jetable (n° 71, 72, 74, 76) pour un verdict.
+# Sur une PR, le push suivant annule toujours le précédent : seul son dernier
+# commit compte.
+# Coût : 0 minute facturée (dépôt public, runners standard ; `timing` du run
+# 38907264016 : `total_ms: 0`). Le vrai prix est le parallélisme : rejoué sur
+# ces 141 runs, le pic aurait été de 6 runs et 16 jobs simultanés, sous les 20
+# du plan gratuit. ⚠️ Si `e2e` redevient lent (4,3 h le 10-02, quand il était
+# rouge), le pic monte à 28 jobs : ils attendent en file, aucun n'est annulé.
+# ⚠️ Un rouge peut donc finir APRÈS le vert qui l'a réparé : `ci-alert.yml` ne
+# le pousse plus (`scripts/ci-alert-perime.mjs`).
+# Témoin : `ci-toutes-les-gardes.guard.test.mjs` (« concurrency »).
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # ──────────────────────────────────────────────────────────────────
