@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// RLS — la surface entreprise (mig. 160 à 220), rejouée acteur par acteur.
+// RLS · la surface entreprise (mig. 160 à 220), rejouée acteur par acteur.
 //
 // POURQUOI CE FICHIER EXISTE (angle mort AM-6 de `faille.md`)
 //
@@ -477,7 +477,7 @@ const ligne = (m: Record<Who, number>) => ACTEURS.map((w) => `${w}=${m[w]}`).joi
 
 // ─── Le fichier ────────────────────────────────────────────────────
 
-describe('RLS — surface entreprise, 24 tables × 6 acteurs (mig. 160 à 220, AM-6)', () => {
+describe('RLS · surface entreprise, 24 tables × 6 acteurs (mig. 160 à 220, AM-6)', () => {
   let d: Decor;
   let acteurs: Acteur[];
   let compteur = 0;

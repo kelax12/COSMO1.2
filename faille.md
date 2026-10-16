@@ -173,6 +173,18 @@ séparent pas.
 > production** (tables acteur par acteur, sept fonctions DEFINER de plus). Résultat : § « Audit A-1
 > des tables » plus bas. Un défaut nouveau, **E-3**, ouvert et soumis à l'arbitrage d'Axel.
 
+> ✅ **2026-10-16 · AM-6 rejoué en CI** : `e2e/rls/org-surface-entreprise.test.ts`, joué par
+> `npm run test:rls` (job `rls-integration`), rejoue **24 tables** (toutes celles que créent les
+> mig. `160`-`220` et qui existent encore) pour **6 acteurs** (anonyme, sans organisation, membre,
+> manager, admin, admin d'une AUTRE organisation) et **4 opérations** : **624 cellules**, 147
+> accordées et 477 refusées, chacune constatée en base sous `service_role` après la tentative du
+> client de l'acteur. Vert sur la PR brouillon n° 72 (run `38810405159`, 0 écart). **Vu rouge
+> sur deux sabotages** joués sur cette PR, base de CI seulement : policies relâchées
+> (`USING (true)`, parentes comprises, run `38859320682`) : les 477 refus deviennent des
+> acceptations ; policies retirées (run `38859843934`) : les 147 accès deviennent des refus. Le
+> premier passage a trouvé un défaut **du test**, pas du produit : le décor effaçait en cascade
+> les lignes filles de trois tables, dont la lecture valait alors 0 pour tout le monde.
+
 🔴 **Aucun audit n'avait relu cette surface** avant le 2026-09-30 : c'est l'angle mort **AM-6**
 de la note. La relecture de ce jour est **partielle**, et c'est dit : elle couvre les fonctions
 nommées par la session d'audit, les quatre Edge Functions et la file de webhooks. **Elle ne vaut
