@@ -145,6 +145,12 @@ test.describe('a11y audit', () => {
   test('Landing (public)', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
+    // 🔴 Le bas de la landing ne monte qu'au premier geste (`BelowFold.tsx`,
+    // TBT mobile) : sans ce défilement, l'audit ne verrait que le hero.
+    await page.evaluate(() => window.scrollBy(0, 1));
+    await page.locator('#faq').first().waitFor({ state: 'attached', timeout: 15_000 }).catch(() => {});
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForLoadState('networkidle');
     const violations = await scan(page, 'landing');
     console.log(`[a11y] Landing: ${violations.length} violation(s)`);
     assertNoCritical(violations, 'Landing');

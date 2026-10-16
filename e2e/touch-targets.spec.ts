@@ -514,6 +514,12 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
       // toujours, et l'attente filait jusqu'au delai du test (180 s, instable
       // le 2026-10-10). L'attente d'animation ci-dessous suit de toute facon.
       await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+      // 🔴 Le bas de la landing ne monte qu'au premier geste (`BelowFold.tsx`,
+      // TBT mobile). Sans ce défilement d'un pixel, le relevé ne compterait
+      // que les commandes du hero. Sans effet sur les autres routes.
+      await page.evaluate(() => window.scrollBy(0, 1));
+      await page.waitForTimeout(500);
+      await page.evaluate(() => window.scrollTo(0, 0));
       // La landing est lazy-loadee et animee : son etat final n'est pas celui
       // du premier rendu, et une cible mesuree en cours d'animation ment.
       await page.waitForTimeout(2500);
