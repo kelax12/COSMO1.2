@@ -115,15 +115,16 @@ production au navigateur : `h1` et titre de l'accueil, canonical réécrit vers 
 `useLandingTrack` compare le chemin sans tolérer la barre oblique. Conséquences : un prospect qui
 arrive par cette forme d'URL voit la mauvaise page, et **tous les chiffres « entreprise » de Lighthouse
 depuis l'origine sont ceux de l'accueil perso**. Débité une fois en SEO (la page servie), une fois en
-Performance (la mesure). Une session le corrige (`claude/happy-heyrovsky-d6e704`, rien sur `main`).
+Performance (la mesure). **Corrigé sur `main` par `9dcaf94b` pendant la passe** (`use-landing-track.ts`,
+`routes.ts`, avec tests) : ni vu en CI ni relu en production à l'écriture, donc pas remboursé ici.
 
 ### Ce qu'il faut faire, dans l'ordre
 
 1. **`M-69`** (Axel) : l'échéance de 72 h est passée le 2026-10-16 vers 11 h 26 UTC. Si la
    notification n'a pas été faite, elle reste due **maintenant**, avec les motifs du retard
    (art. 33.1) ; si elle l'a été, consigner la date au registre privé. Puis `M-70` et `M-71`.
-2. **La barre oblique de la page entreprise** : finir la session en cours, puis relire le Lighthouse
-   du vrai parcours entreprise.
+2. **La barre oblique de la page entreprise** : `9dcaf94b` est sur `main` ; vérifier son run CI et la
+   production, puis relire le Lighthouse du vrai parcours entreprise.
 3. **CodeQL n° 14** : échapper `job` dans `ci-toutes-les-gardes.mjs`, une ligne.
 4. **PR n° 75** (`fast-uri`) et la pile de PR Dependabot ouvertes (n° 29 à 70) : à trier.
 
