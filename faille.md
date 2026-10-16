@@ -47,7 +47,16 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → **86 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → **2026-10-16**)
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → **87 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → **2026-10-16 soir**)
+
+> ### 🟢 2026-10-16 (soir) · +1 : plus aucune alerte de code ouverte
+>
+> | Item | Effet | Mesuré le 2026-10-16 (soir) |
+> |---|---|---|
+> | ✅ CodeQL n° 14 · `high`, sans décision (−1 le matin) | **+1** | `eb6ee7ba` : `job` validé avant d'entrer dans la `RegExp` ; alerte `fixed` à 14 h 27 UTC. API relue : **0** alerte CodeQL ouverte, **0** Dependabot |
+> | CI de `main` | 0 | les runs de `main` ne s'annulent plus (`eb6ee7ba`) : quatre runs complets de suite, tous verts (`38907264016` à `38941369233`) |
+>
+> **86 → 87.** Reste ouvert côté `BK-1` : la moitié RGPD (`M-69`, `M-70`, `M-71`).
 
 > ### 🟢 2026-10-16 · +4 : les sessions révoquées, la surface entreprise rejouée en CI
 >

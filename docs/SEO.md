@@ -1,4 +1,4 @@
-<!-- note-audit: note=78 -->
+<!-- note-audit: note=79 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **78 / 100** au 2026-10-16, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **79 / 100** au 2026-10-16 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # SEO — état mesuré, règles et dette
 
@@ -25,7 +25,20 @@ cause n'est pas dans le dépôt.
 > liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
 > PageSpeed Insights.
 
-## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → 78 → 79 → **78 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → 78 → 79 → 78 → **79 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir)) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### 🟢 2026-10-16 (soir) · +1 : la page entreprise sert de nouveau la page entreprise
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vérifié**. Mesures du 2026-10-16 au
+> soir : CI de `main` (runs `38907264016` à `38941369233`, tous complets et verts), production au
+> navigateur. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 (soir) |
+> |---|---|---|
+> | ✅ `/entreprise-presentation/` servait l'accueil perso (−1 le matin) | **+1** | `9dcaf94b` (détection tolérante à la barre oblique, avec tests). Relu en production après hydratation : `h1` « Qui fait quoi. Où on en est. », titre entreprise, canonical `https://thecosmo.app/entreprise-presentation` |
+> | SEO Lighthouse | 0 | 100 sur les 8 URLs, la page entreprise désormais mesurée sur son vrai parcours |
+>
+> **78 → 79.**
 
 > ### 🟠 2026-10-16 · −1 : `/entreprise-presentation/` sert l'accueil perso, canonical compris
 >
