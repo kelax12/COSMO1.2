@@ -153,10 +153,6 @@
       "categorie": "sigle",
       "valeur": "FAQ"
     },
-    "landing.hero.modules.okr": {
-      "categorie": "sigle",
-      "valeur": "OKR"
-    },
     "landing.marquee.timeBlocking": {
       "categorie": "anglicisme-fr",
       "valeur": "Time-blocking"
@@ -172,10 +168,6 @@
     "landing.nav.solutions": {
       "categorie": "mot-identique",
       "valeur": "Solutions"
-    },
-    "landing.why.chartAgenda": {
-      "categorie": "mot-identique",
-      "valeur": "Agenda"
     },
     "landing.why.tag1": {
       "categorie": "anglicisme-fr",
@@ -309,10 +301,6 @@
       "categorie": "mot-identique",
       "valeur": "Total"
     },
-    "orgAdmin.permissions.sectionOrg": {
-      "categorie": "mot-identique",
-      "valeur": "Organisation"
-    },
     "orgAdmin.profile.description": {
       "categorie": "mot-identique",
       "valeur": "Description"
@@ -408,10 +396,6 @@
     "settings.nav.modules": {
       "categorie": "mot-identique",
       "valeur": "Modules"
-    },
-    "statistics.breakdown.agenda": {
-      "categorie": "mot-identique",
-      "valeur": "Agenda"
     },
     "statistics.chart.minutes": {
       "categorie": "symbole-ou-format",

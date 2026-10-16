@@ -16,11 +16,11 @@
     "work": "Projects and tasks",
     "people": "Teams and members",
     "roles": "Roles and permissions",
-    "steer": "OKRs and steering"
+    "steer": "OKRs and tracking"
   },
   "denied": {
-    "title": "Missing right",
-    "body": "You need the \"{{right}}\" right. A company admin can grant it to you.",
+    "title": "Permission required",
+    "body": "You need the \"{{right}}\" permission. A company admin can grant it to you.",
     "seeAdmins": "See the admins",
     "rights": {
       "admin": "Administrator",
@@ -57,13 +57,13 @@
     "noTask": "You need a task first.",
     "noProject": "You need a project first.",
     "noTeam": "You need a team first.",
-    "noMember": "There is nobody else but you yet.",
+    "noMember": "You are the only member so far.",
     "noRole": "No custom role yet.",
     "noOkr": "You need an OKR first.",
     "noReport": "No report yet: the first one is generated at midnight.",
-    "noRequest": "No pending request.",
+    "noRequest": "No pending requests.",
     "noUnplaced": "Everyone is already placed.",
-    "noTrash": "The bin is empty: nothing to restore for now.",
+    "noTrash": "The trash is empty: nothing to restore for now.",
     "noOneToAdd": "Every member is already in this team: nobody left to add.",
     "noProjectTeam": "This project belongs to no team: the whole company already sees it.",
     "noTeamProject": "This team has no project yet: no workload to spread for now.",

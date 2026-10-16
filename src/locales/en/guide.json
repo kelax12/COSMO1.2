@@ -18,7 +18,7 @@
     "habitudes": "Habits",
     "okr": "OKRs",
     "statistiques": "Statistics",
-    "entreprise": "Enterprise"
+    "entreprise": "Company"
   },
   "start": {
     "title": "Getting started",
@@ -39,7 +39,7 @@
   },
   "tasks": {
     "title": "Tasks",
-    "subtitle": "Organise, prioritise and keep track of everything on your plate.",
+    "subtitle": "Organize, prioritize and keep track of everything on your plate.",
     "step1Title": "Create a task",
     "step1": "Click **New task** at the top of the page. Only the name is required; due date, category, priority, duration and lists are all set in the same panel. Even faster: press **N** from any page and type the task as a single sentence.",
     "step2Title": "Set the priority",
@@ -64,15 +64,15 @@
     "featCollab": "Collaboration",
     "featCollabDesc": "Share a task with one of your contacts from the Share tab of its panel. It lands in their inbox, then they can follow and complete it from their own account.",
     "featCategories": "Categories",
-    "featCategoriesDesc": "Attach each task to a coloured category (Work, Personal, Health...) to see where your time goes."
+    "featCategoriesDesc": "Attach each task to a colored category (Work, Personal, Health...) to see where your time goes."
   },
   "lists": {
     "title": "Lists",
-    "subtitle": "Group your tasks by project or context for effortless organisation.",
+    "subtitle": "Group your tasks by project or context for effortless organization.",
     "step1Title": "Create a list",
-    "step1": "At the top of the Tasks page, in the lists bar, click **New list**. Give it a name and a colour. The list shows up right away as a new chip next to the others.",
+    "step1": "At the top of the Tasks page, in the lists bar, click **New list**. Give it a name and a color. The list shows up right away as a new chip next to the others.",
     "step2Title": "Add tasks to a list",
-    "step2": "In a task's panel, pick one or more lists. The same task can belong to several lists at once, for instance a client and « This week ».",
+    "step2": "In a task's panel, pick one or more lists. The same task can belong to several lists at once, for instance a client and “This week”.",
     "step3Title": "Filter by list",
     "step3": "Click a list in the bar to show only the tasks it contains. The counter next to the name shows how many active tasks it holds.",
     "featSmart": "Smart lists",
@@ -81,8 +81,8 @@
     "featDefaultDesc": "Pin a list so it opens every time you land on the Tasks page.",
     "featShare": "Share a list",
     "featShareDesc": "Share a whole list with a contact: it arrives in their inbox, with all its tasks.",
-    "featColor": "List colour",
-    "featColorDesc": "Give each list a distinctive colour so you can tell them apart at a glance.",
+    "featColor": "List color",
+    "featColorDesc": "Give each list a distinctive color so you can tell them apart at a glance.",
     "tip": "Use lists to separate your projects: a **Work** list, a **Personal** list, one per client or per active project. It keeps different contexts from blurring together in a single view."
   },
   "agenda": {
@@ -98,8 +98,8 @@
     "featDragDesc": "Drag any event to reschedule it in seconds, without opening a form.",
     "featRecurring": "Recurring events",
     "featRecurringDesc": "Create a daily or weekly event once, it repeats on its own. The Recurring button gathers them all.",
-    "featColors": "Colour categories",
-    "featColorsDesc": "Each category has its own colour. Your calendar becomes a visual dashboard of your time.",
+    "featColors": "Color categories",
+    "featColorsDesc": "Each category has its own color. Your calendar becomes a visual dashboard of your time.",
     "featSlotReview": "Finished slot",
     "featSlotReviewDesc": "Once a task's slot has passed, Cosmo asks whether it got done: you complete it, postpone it or delete it.",
     "tip": "Block time in your calendar for your important tasks (time blocking). It prevents overload and makes your days more predictable.",
@@ -109,17 +109,17 @@
     "title": "Habits",
     "subtitle": "Build routines that last and watch your progress day after day.",
     "step1Title": "Create a habit",
-    "step1": "Click **New habit**. Give it a name, a duration, a colour and, if you like, a category. The habit appears in the tracking board.",
+    "step1": "Click **New habit**. Give it a name, a duration, a color and, if you like, a category. The habit appears in the tracking board.",
     "step2Title": "Tick it off daily",
     "step2": "Each day, tick the habits you've done by clicking the matching cell in the board: your streak goes up. A habit's menu also lets you schedule it in the calendar or turn it into a task for today.",
     "step3Title": "Switch views",
-    "step3": "Toggle between **Table**, **List** and **Global tracking** with the tabs at the top of the page to match the view to what you want to analyse.",
+    "step3": "Toggle between **Table**, **List** and **Global tracking** with the tabs at the top of the page to match the view to what you want to analyze.",
     "streakTitle": "Streak",
     "streakDesc": "The orange counter shows how many days in a row you've done the habit. The streak resets to zero if you miss a day.",
     "rateTitle": "Completion rate",
     "rateDesc": "Shown in your statistics, it measures the share of days you ticked the habit off over the selected period.",
     "pauseTitle": "Pause",
-    "pauseDesc": "Holiday, illness: pause a habit, for a set time or indefinitely. Your streak stays intact until you resume.",
+    "pauseDesc": "Vacation, illness: pause a habit, for a set time or indefinitely. Your streak stays intact until you resume.",
     "recapTitle": "Weekly recap",
     "recapDesc": "The Recap button generates an image of your week, ready to share. No task or habit name appears on it.",
     "tip": "Start with **2 to 3 habits at most**. It's far easier to build on small regular wins than to burn out on a long list from day one."
@@ -149,14 +149,14 @@
     "featCompleted": "Completed OKRs",
     "featCompletedDesc": "A validated objective moves to the Completed OKRs list, where you can still view or edit it.",
     "featCategories": "Categories",
-    "featCategoriesDesc": "Sort your OKRs by category (Product, Personal, Team) to keep things organised.",
+    "featCategoriesDesc": "Sort your OKRs by category (Product, Personal, Team) to keep things organized.",
     "tip": "A good key result is **binary or measurable**: either you can put a number on it (e.g. 10,000 users), or it's met or it isn't. Avoid vague wording like \"Improve quality\"."
   },
   "stats": {
     "title": "Statistics",
-    "subtitle": "Analyse your productivity and spot where you can improve.",
+    "subtitle": "Analyze your productivity and spot where you can improve.",
     "step1Title": "Pick a section and a period",
-    "step1": "At the top of the page, choose the section to analyse (**Overview**, **Tasks**, **Calendar**, **OKRs**, **Habits**) then the period: **Day**, **Week**, **Month** or **Year**. Every chart updates automatically.",
+    "step1": "At the top of the page, choose the section to analyze (**Overview**, **Tasks**, **Calendar**, **OKRs**, **Habits**) then the period: **Day**, **Week**, **Month** or **Year**. Every chart updates automatically.",
     "step2Title": "Read the charts",
     "step2": "The page opens with a plain-language summary, followed by time invested per period compared with the previous one, then detailed charts for the section. Hover the bars to see the details.",
     "step3Title": "Spot the trends",
@@ -172,10 +172,10 @@
     "note": "Statistics are computed in real time from your own data. The more regularly you use Cosmo, the more the charts reflect how you actually work."
   },
   "entreprise": {
-    "title": "Enterprise mode",
+    "title": "Company mode",
     "subtitle": "A full collaboration space: management org chart, teams, projects, team OKRs and fine-grained per-member permissions.",
     "step1Title": "Create or join a company",
-    "step1": "In the sidebar, click **Create or join**. Give your organisation a name to create it, or enter the company code a colleague sent you to join theirs.",
+    "step1": "In the sidebar, click **Create or join**. Give your organization a name to create it, or enter the company code a colleague sent you to join theirs.",
     "step2Title": "Invite members",
     "step2": "Invite one of your contacts directly: the invitation lands in their inbox. You can also share an invite link or the company code; a colleague who enters the code sends a request, which an admin approves.",
     "step3Title": "Find your way around",
@@ -183,9 +183,9 @@
     "featPyramid": "Management org chart",
     "featPyramidDesc": "Every member can have one or more managers. A manager sees the tasks and calendar of their direct and indirect reports, never those of a colleague they don't manage.",
     "featRoles": "Roles",
-    "featRolesDesc": "Three roles exist: Admin (runs the organisation), Manager (runs a team within the org chart) and Member. The role sets default rights, which can then be fine-tuned one by one.",
+    "featRolesDesc": "Three roles exist: Admin (runs the organization), Manager (runs a team within the org chart) and Member. The role sets default rights, which can then be fine-tuned one by one.",
     "featPermissions": "Per-member permissions",
-    "featPermissionsDesc": "From the directory, a member's « ⋯ » menu opens **Edit permissions**: tasks, projects, OKRs, categories, teams, invitations and reports, each right granted or withdrawn individually beyond the role's defaults.",
+    "featPermissionsDesc": "From the directory, a member's “⋯” menu opens **Edit permissions**: tasks, projects, OKRs, categories, teams, invitations and reports, each right granted or withdrawn individually beyond the role's defaults.",
     "featTeams": "Teams",
     "featTeamsDesc": "Cross-functional teams, independent of the org chart. A team lead manages its members and projects without being a company admin.",
     "featProjects": "Team projects",
@@ -199,6 +199,6 @@
     "featInvite": "Invitations",
     "featInviteDesc": "Three ways to bring a member in: invite them from your contacts, share an invite link, or give them the company code (with admin approval). A newcomer arrives unplaced; an admin then places them in the org chart.",
     "tip": "Place each member in the **org chart** first (who manages whom) before fine-tuning individual permissions: the defaults already follow the role and the position in the org chart, so the exception should stay the exception.",
-    "note": "Enterprise mode is currently free, whatever the size of your team: no tier is billed for the time being."
+    "note": "Company mode is currently free, whatever the size of your team: no tier is billed for the time being."
   }
 }

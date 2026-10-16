@@ -59,9 +59,9 @@
   "timezone": {
     "heading": "Time zone",
     "description": "Choose the time zone used to display your calendar and event times.",
-    "defaultTitle": "Default time",
+    "defaultTitle": "Default time zone",
     "defaultHint": "Your device's automatic time zone",
-    "customTitle": "Custom time",
+    "customTitle": "Custom time zone",
     "customHint": "Set a UTC offset",
     "offsetLabel": "Offset:",
     "offsetSign": "Offset sign"
@@ -82,7 +82,7 @@
     "deleteAccountBody": "This cannot be undone. All your data (tasks, habits, OKRs, events, friends) will be permanently deleted. Type \"DELETE\" to confirm.",
     "demoAccountCleared": "Demo account cleared",
     "deleteFailed": "Automatic deletion failed",
-    "deleteFailedHint": "Contact contact@thecosmo.app, your request will be handled manually.",
+    "deleteFailedHint": "Contact contact@thecosmo.app and we will handle your request manually.",
     "accountDeleted": "Account deleted",
     "networkError": "Network error",
     "networkErrorHint": "Try again, or contact contact@thecosmo.app.",
@@ -105,8 +105,8 @@
     "displayMode": "Display mode",
     "shortcuts": "Keyboard shortcuts",
     "shortcutsHint": "Also available at any time with the key",
-    "themeListTest": "Light · Dark · Grey · Black · Test",
-    "themeList": "Light · Dark · Grey · Black"
+    "themeListTest": "Light · Dark · Gray · Black · Test",
+    "themeList": "Light · Dark · Gray · Black"
   },
   "modules": {
     "hint": "Turn on only what you need. Hidden modules disappear from the navigation; your data is kept. Tasks & Dashboard are always on.",
@@ -128,14 +128,14 @@
     },
     "statistics": {
       "label": "Statistics",
-      "description": "Analyse your progress"
+      "description": "Analyze your progress"
     }
   },
   "help": {
     "intro": "Everything you need to master every Cosmo feature.",
     "guideTitle": "Full guide",
     "heading": "User guide",
-    "guideHint": "Tasks, lists, Calendar, Habits, OKRs, Statistics, enterprise mode: it's all there.",
+    "guideHint": "Tasks, lists, Calendar, Habits, OKRs, Statistics, company mode: it's all there.",
     "supportTitle": "Need help?",
     "supportHint": "Our team replies within 24h.",
     "adminTitle": "Cosmo stats",
@@ -172,7 +172,7 @@
     "exportingAllHint": "{{count}} items across 4 CSV files",
     "exportAll": "Export everything",
     "exportAllHint": "Seven CSV files: tasks, habits, calendar, OKRs, categories, lists, profile",
-    "cookiesHint": "Audience measurement: you can change your choice to accept or refuse at any time.",
+    "cookiesHint": "Audience measurement: you can change your choice to accept or decline at any time.",
     "legalTitle": "Legal information",
     "legalNotice": "Legal notice",
     "legalTerms": "Terms of use",
