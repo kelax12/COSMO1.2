@@ -15,7 +15,7 @@
       "help": "Show this help",
       "goDashboard": "Go to Home",
       "goTasks": "Go to Tasks",
-      "goAgenda": "Go to Agenda",
+      "goAgenda": "Go to Calendar",
       "goHabits": "Go to Habits",
       "goOkr": "Go to OKRs",
       "goStatistics": "Go to Statistics",
@@ -56,7 +56,7 @@
     "goSettings": "Go to settings",
     "themeLight": "Light theme",
     "themeDark": "Dark theme",
-    "themeGrey": "Grey theme",
+    "themeGrey": "Gray theme",
     "themeBlack": "Black theme",
     "quickTask": "Create a quick task",
     "createEvent": "Create an event",
@@ -64,7 +64,7 @@
     "createObjective": "Create an objective",
     "logout": "Sign out",
     "noResult": "No results",
-    "searchPlaceholder": "Search a task, a page, a command...",
+    "searchPlaceholder": "Search for a task, page or command...",
     "goTasks": "Go to tasks",
     "goHabits": "Go to habits",
     "goOkr": "Go to OKRs",
@@ -158,7 +158,7 @@
       "friends": "friends",
       "team_tasks": "team tasks",
       "team_projects": "team projects",
-      "org_members": "organisation members",
+      "org_members": "organization members",
       "org_teams": "teams",
       "team_members": "team memberships",
       "team_task_comments": "comments",
@@ -167,7 +167,7 @@
       "team_task_activity": "activity entries",
       "team_task_dependencies": "task dependencies",
       "org_invite_links": "invite links",
-      "organizations": "organisations"
+      "organizations": "organizations"
     }
   },
   "inbox": {

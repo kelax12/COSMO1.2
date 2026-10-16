@@ -108,8 +108,8 @@
       "recapTasks_other": "{{count}} tasks in your list",
       "recapHabit": "Habit tracked: {{name}}",
       "recapOkr": "Goal: {{name}}",
-      "recapNothing": "Nothing yet, and that is fine: everything can be added in one move from the app.",
-      "next": "Each page will walk you through its main moves the first time you open it.",
+      "recapNothing": "Nothing yet, and that is fine: you can add anything in a few taps from the app.",
+      "next": "Each page will walk you through its main features the first time you open it.",
       "cta": "Enter COSMO",
       "recapSlot": "Slot booked: {{when}}",
       "statsTitle": "Your statistics, this week",
@@ -128,9 +128,9 @@
   },
   "ent": {
     "video": {
-      "dialogLabel": "Welcome to the business space",
+      "dialogLabel": "Welcome to the company space",
       "title": "Welcome to <em>{{org}}</em>.",
-      "subtitle": "A three-minute tour of your business space (in French, with subtitles).",
+      "subtitle": "A three-minute tour of your company space (in French, with subtitles).",
       "unmute": "Turn sound on",
       "skip": "Skip the video",
       "cta": "Get started",

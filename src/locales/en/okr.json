@@ -65,9 +65,9 @@
     "namePlaceholder": "Category name…",
     "create": "Create",
     "cancel": "Cancel",
-    "changeColor": "Change colour",
-    "customColor": "Pick a custom colour",
-    "colorHint": "Click: cycle colours · Shift+click: hex palette"
+    "changeColor": "Change color",
+    "customColor": "Pick a custom color",
+    "colorHint": "Click: cycle colors · Shift+click: hex palette"
   },
   "deleteCategory": {
     "title": "Delete “{{name}}”?",
@@ -99,7 +99,7 @@
     "descriptionLabel": "Description",
     "addDescription": "Add a description",
     "keyResults": "Key results",
-    "keyResultName": "Sub-objective",
+    "keyResultName": "Key result",
     "krCount_one": "{{count}} set",
     "krCount_other": "{{count}} set",
     "keyResultPlaceholder": "Measurable key result",
@@ -135,7 +135,7 @@
   },
   "checkin": {
     "close": "Close",
-    "question": "Where are you at?",
+    "question": "Where do things stand?",
     "previous": "Previous",
     "next": "Next",
     "finish": "Finish",
