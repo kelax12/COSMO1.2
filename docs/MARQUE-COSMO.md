@@ -37,7 +37,12 @@ quelques centaines d'euros ; un changement de nom tardif coûte l'audience.
 - **Limites, à dire au conseil** :
   - La **WIPO Global Brand Database** n'a pas été interrogée en direct : sa partie Madrid est
     couverte par l'office `WO` de TMview, pas les registres nationaux hors UE (États-Unis, Royaume-Uni,
-    etc.). À faire si l'international hors UE entre dans le projet.
+    etc.). **Nouvelle tentative le 2026-10-16 : échec.** `branddb.wipo.int` impose une
+    vérification anti-robot (« Verifying… ») puis rend une page vide à l'assistant : la base n'est
+    pas interrogeable d'ici, et contourner ce contrôle est exclu. À faire par Axel en deux minutes,
+    ou à confier au conseil : `https://branddb.wipo.int`, nom `COSMO`, stratégie « exact », filtre
+    Nice 9, 35, 42, statut actif. Utile seulement si un marché hors UE (États-Unis, Royaume-Uni)
+    entre dans le projet.
   - Seules les marques **à l'identique** sont listées. Les variantes (COSMOS, KOSMO, COSMO+suffixe)
     et les **dénominations sociales, noms de domaine et noms commerciaux** antérieurs, qui peuvent
     aussi fonder une opposition, n'ont pas été recherchés : c'est le cœur d'une recherche de
@@ -113,7 +118,7 @@ honoraires d'avocat spécialisé **150 à 450 € HT de l'heure** (Plateya, avri
 | **INPI, entretien avec un expert et « Pass PI »** | Premier échange gratuit avec l'INPI, accompagnement PME | Entretien gratuit, à vérifier sur `inpi.fr` |
 | **Novagraaf** (CPI, Paris et Lyon) | Cabinet de marques important, présence européenne | Sur devis |
 | **Plasseraud IP** (CPI, Paris) | Cabinet historique, pôle marques et numérique | Sur devis |
-| **Inlex IP Expertise** (CPI, Paris) | Cabinet spécialisé marques, habitué des start-up | Sur devis |
+| **Inlex IP Expertise** (CPI, Paris) | Cabinet dont l'activité est centrée sur les marques (positionnement à confirmer à l'appel) | Sur devis |
 
 Ne pas confondre avec les plateformes juridiques en ligne (LegalPlace, Captain Contrat, Legalstart,
 Keobiz) : elles affichent des forfaits de dépôt, mais ce ne sont pas des CPI et une recherche
@@ -135,3 +140,69 @@ Keobiz) : elles affichent des forfaits de dépôt, mais ce ne sont pas des CPI e
 - Barème INPI au 2 juillet 2026 (dépôt 190 €, 40 € par classe en plus) ; redevances EUIPO 2026.
 - Plateya, « Coût avocat propriété intellectuelle et marques, tarifs 2026 ».
 - Keobiz, « Déposer une marque : prix ».
+
+## Annexe : brouillons d'e-mail de demande de devis
+
+> ⚠️ **Brouillons à envoyer par Axel lui-même.** Aucun n'a été envoyé. Les adresses ne sont pas
+> renseignées exprès : passer par le formulaire de contact ou l'adresse affichée sur le site de
+> chaque cabinet, plutôt que par une adresse devinée. Joindre ce document (ou le seul § 4) en PDF.
+
+Le corps est le même pour les trois cabinets ; seuls l'objet et la formule d'appel changent.
+
+### Objet, par cabinet
+
+- **Novagraaf** : `Demande de devis : recherche d'antériorités et avis, marque COSMO (classes 9, 35, 42)`
+- **Plasseraud IP** : `Demande de devis : recherche d'antériorités et avis, marque COSMO (classes 9, 35, 42)`
+- **Inlex IP Expertise** : `Demande de devis : recherche d'antériorités et avis, marque COSMO (classes 9, 35, 42)`
+
+Formule d'appel : `Madame, Monsieur,` (ou le nom du conseil si l'annuaire CNCPI en donne un).
+
+### Corps commun
+
+```text
+Madame, Monsieur,
+
+Je développe COSMO (https://thecosmo.app), une application web de productivité : tâches,
+habitudes, agenda, objectifs (OKR) et statistiques, avec un mode entreprise (équipes,
+permissions, projets, rapports). Le service est gratuit aujourd'hui ; des offres payantes
+(premium pour les particuliers, offre entreprise) sont prévues. La clientèle est mixte,
+particuliers et entreprises, en France d'abord, avec une interface en français et en anglais
+et une ouverture prévue à l'Union européenne.
+
+Je m'apprête à investir dans l'acquisition d'utilisateurs et je souhaite, avant cela, faire
+vérifier le nom. Un premier relevé à l'identique, fait sur TMview en classes 9, 35 et 42
+(offices FR, UE et enregistrements internationaux), montre plusieurs marques COSMO actives.
+Les plus proches sur le libellé me semblent être :
+- ISTITUTO VENETO DI TERAPIA FAMIGLIARE SRL, marque UE 019004987 (2024), classe 42 : PaaS ;
+- Cosmo Technologies Limited, marques UE 018763289 et 018764119 (2022), classe 42 :
+  conception et développement de logiciels.
+Le relevé complet est joint. Il n'a aucune valeur d'avis.
+
+Je souhaiterais un devis pour une recherche d'antériorités (identiques et similaires, y compris
+dénominations sociales et noms de domaine) en classes 9, 35 et 42, France et Union européenne,
+assortie d'un avis écrit répondant à trois questions :
+1. Un dépôt de COSMO accompagné d'un élément distinctif (nom composé ou logo) est-il possible,
+   et à quelles conditions ?
+2. Quel est le risque concret face aux marques listées, pour un dépôt comme pour l'usage
+   actuel du nom ?
+3. Faut-il renommer le produit avant d'investir en acquisition ?
+
+Pourriez-vous m'indiquer votre tarif pour cette prestation, le délai de remise de l'avis, et,
+à titre indicatif, le coût d'un dépôt si l'avis le permet ?
+
+Je reste disponible pour un premier échange téléphonique.
+
+Bien cordialement,
+
+Axel [Nom]
+[Téléphone]
+https://thecosmo.app
+```
+
+### Qui contacter en premier
+
+Recommandation d'assistant, à prendre comme telle : **Inlex IP Expertise**, parce que la question
+porte sur une seule marque et que son activité est centrée sur les marques, ce qui laisse espérer
+un devis rapide et proportionné. Envoyer le même jour aux deux autres pour comparer prix et délai :
+trois devis coûtent un e-mail chacun. Ce positionnement n'a pas été vérifié autrement que par la
+présentation publique du cabinet.
