@@ -1,4 +1,4 @@
-<!-- note-audit: note=84 -->
+<!-- note-audit: note=85 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **84 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **85 / 100** au 2026-10-16, au tableau de bord de [`README.md`](./README.md).
 
 # RGPD — inventaire, droits des personnes et dette
 
@@ -16,7 +16,21 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → **85 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### 🟠 2026-10-16 · +1 : `org_member_roles` déclarée, mais l'échéance CNIL est passée sans trace
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab`, dépôt à `HEAD`, registre privé relu à 14 h 50 (heure de
+> Paris). Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `org_member_roles` hors effacement déclaré et hors export (−1) | **+1** | `check:erasure` et `check:portability` verts en CI (`38902071817`) et en local à `HEAD` |
+> | 🔴 `BK-1` · notification CNIL et information des personnes | 0 (−2 maintenu) | **l'échéance de `M-69` est passée** : 72 h après la découverte, soit le 2026-10-16 vers 11 h 26 UTC. Le registre privé porte toujours « Notifiée le : _à remplir_ ». Soit la notification a été faite sans être consignée, soit elle reste due : une notification tardive se fait **avec les motifs du retard** (art. 33.1). `M-70`, l'information des personnes, n'est pas faite non plus. Les brouillons sont prêts depuis le 2026-10-15, dans le dossier privé. `M-68` (sessions) est fait et vérifié, c'est la note de sécurité qui le rembourse |
+> | ✅ Prévention de `BK-1` | 0 | `scripts/artefacts-donnees-prod.guard.test.mjs` (`467d5115`) refuse tout artefact de données de production non chiffré, témoin sur le `db-backup.yml` d'avant `8c6a971d` ; `restore-drill` réactivé, `dump-check` vert sur le dump chiffré. Nommés et outillés le même jour : aucun débit à rembourser |
+>
+> **84 → 85.**
 
 > ### 🔴 2026-10-15 · −3 : la première violation de données, et une table neuve hors effacement déclaré
 >

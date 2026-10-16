@@ -1,4 +1,4 @@
-<!-- note-audit: note=76 -->
+<!-- note-audit: note=78 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,24 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **76 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **78 / 100** au 2026-10-16, au tableau de bord de [`README.md`](./README.md).
 
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → 75 → **76 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15)
+## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → 75 → 76 → **78 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16)
+
+> ### 🟢 2026-10-16 · +2 : LCP mobile sous 1,6 s, et WebKit vert de bout en bout
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab` (run `38902071817`). Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ LCP mobile, point retenu le 10-15 (−2 le 09-22) | **+1** | LCP **1,22 à 1,52 s** sur les 8 URLs, TBT 90 à 300 ms (cf. [`PERFORMANCE.md`](./PERFORMANCE.md)) |
+> | ✅ Parcours rouges sur WebKit (−1 le 09-22, jamais remboursé) | **+1** | `e2e` vert en CI sur `mobile-safari` et `mobile-chrome` (`38870561074`, puis `38902071817` : 0 échec), et l'audit clavier y joue désormais (`C-118`) |
+> | `M-25` · essai sur un vrai téléphone | 0 | fermé le 2026-10-16 sur la parole d'Axel, sans modèle, OS ni navigateur relevé : `C-56` et `C-57` ne sont ni confirmés ni infirmés au doigt. Un constat, pas une mesure |
+>
+> **76 → 78.**
 
 > ### 🟢 2026-10-15 · +1 : le LCP mobile sort de « mauvais »
 >

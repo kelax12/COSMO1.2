@@ -1,4 +1,4 @@
-<!-- note-audit: note=81 -->
+<!-- note-audit: note=82 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **81 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **82 / 100** au 2026-10-16, au tableau de bord de [`README.md`](./README.md).
 
 # Accessibilité (a11y) — COSMO
 
@@ -45,7 +45,20 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → 81 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16)
+
+> ### 🟢 2026-10-16 · +1 : les deux surfaces des rôles déclarées, et l'audit clavier joue sous WebKit
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab`, dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `AssignRoleDialog`, `RoleEditorSheet` ni mesurées ni déclarées (−1) | **+1** | déclarées (`c791eb55`) ; `keyboard-audit-coverage` vert en CI et en local |
+> | `C-118` · aucun audit clavier sous WebKit | 0 | **fermé** (`a47f1164`, `a4878cab`) : `a11y-keyboard-audit` joue sous `mobile-safari`, 16 cas, CI verte (PR n° 76). Un vrai défaut trouvé et corrigé (la feuille d'actions d'une tâche ne s'ouvrait pas au clavier sous Safari), un écart Safari déclaré (Tab saute les liens). Jamais débité à part : progrès réel, rien à rembourser |
+> | axe et Lighthouse | 0 | `a11y-audit` vert en CI ; Lighthouse a11y 92 à 100 sur les 8 URLs |
+>
+> **81 → 82.**
 
 > ### 🟠 2026-10-15 · −1 : deux surfaces modales neuves, ni mesurées ni déclarées
 >

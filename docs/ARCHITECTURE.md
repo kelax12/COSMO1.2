@@ -1,4 +1,4 @@
-<!-- note-audit: note=90 -->
+<!-- note-audit: note=93 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **90 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **93 / 100** au 2026-10-16, au tableau de bord de [`README.md`](./README.md).
 
 # Architecture — invariants, dette et vérification
 
@@ -22,7 +22,22 @@ dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → 93 → 93 → 92 → 93 → **90 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15)
+## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → 93 → 93 → 92 → 93 → 90 → **93 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16)
+
+> ### 🟢 2026-10-16 · +3 : les trois gardes de structure de nouveau vertes
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab` (run `38902071817`, cinq jobs verts), dépôt à `HEAD` rejoué
+> étape par étape. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `organizations/CLAUDE.md` au-delà de son plafond (−1) | **+1** | **11 992 o** pour 14 000 (15 378 le 10-15) : contenu descendu d'un cran, borne intacte (`c791eb55`). `check:docs` vert en CI et en local |
+> | ✅ `organizations/supabase.repository.ts` à 602 lignes (−1) | **+1** | **544** lignes ; `architecture.guard` vert, `OVERSIZED_BUDGET` toujours à 0 |
+> | ✅ Hook orphelin `useRemoveProjectTeam` (−1) | **+1** | `orphan-hooks.guard` vert en CI et en local |
+> | Cycles, `tsc`, lint | 0 | verts à `HEAD` |
+>
+> **90 → 93.**
 
 > ### 🟠 2026-10-15 · −3 : trois gardes de structure rouges, aucune vue par la CI
 >

@@ -13,7 +13,10 @@ et les **règles durables** tirées des audits.
 - Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-10-02** au soir, et avant elle **2026-10-01** (mig.
   `204`, `207`-`210` appliquées et relues au catalogue, cinq Edge Functions redéployées, `Edge deploy
   drift` vert, audit A-1 des 23 tables `160`-`207` acteur par acteur, § « Surface entreprise »),
-  puis `212`. ✅ **Remesuré le 2026-10-15** : advisors **`11 / 82 / 2 / 1`** (égaux à la référence
+  puis `212`. ✅ **Remesuré le 2026-10-16** : advisors `11 / 82 / 2 / 1` inchangés, 77 tables,
+  205 policies, ledger 170, 12 Edge Functions ; `M-68` vérifié en base (0 session et 0 jeton
+  antérieurs au chiffrement) ; AM-6 rejoué en CI ; une alerte CodeQL neuve (n° 14). Note **82 → 86**.
+  ✅ **Remesuré le 2026-10-15** : advisors **`11 / 82 / 2 / 1`** (égaux à la référence
   de `Posture`, vert chaque jour depuis le 10-08), **77** tables toutes sous RLS, **205** policies,
   ledger **170**, 12 Edge Functions, dépôt de nouveau public (privé du 10-13 au 10-14), une alerte
   CodeQL et quatre Dependabot de développement ouvertes. Note **84 → 82** (`BK-1`).
@@ -44,7 +47,26 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → **82 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → **2026-10-15**)
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → **86 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → **2026-10-16**)
+
+> ### 🟢 2026-10-16 · +4 : les sessions révoquées, la surface entreprise rejouée en CI
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures du 2026-10-16 : CI de `main` à `a4878cab` (run
+> `38902071817`, cinq jobs verts), production (advisors par l'API, catalogue, comptage agrégé sur
+> `auth`), alertes GitHub. Tableau de bord : [`docs/README.md`](./docs/README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `BK-1` · sessions et jetons pouvant sortir des dumps (−2 le 10-15) | **+2** | `M-68` fait par Axel le 2026-10-16. **Relu par cette passe en production**, par un comptage sans aucune donnée personnelle : **0** session et **0** jeton de rafraîchissement vivant créés avant le chiffrement des sauvegardes (2026-10-13, 11 h 47 UTC). Mot de passe de la base non changé, décision motivée : un `pg_dump` ne le contient pas, il vit dans le secret masqué `SUPABASE_DB_URL` |
+> | ✅ AM-6 · surface entreprise jamais rejouée en CI (−2 le 09-30) | **+2** | `e2e/rls/org-surface-entreprise.test.ts` (`b89e1b3f`, `1ace166f`) : **24 tables × 6 acteurs × 4 opérations, 624 cellules**, toutes vues **rouges** sur deux sabotages en CI (runs `38859320682`, `38859843934`, PR brouillon n° 72), vertes sur `main` (`38860697711`, puis `38902071817`) |
+> | ✅ CodeQL n° 13 (−1 le 10-15) | **+1** | `fixed` le 2026-10-15 à 17 h 52 UTC |
+> | 🔴 CodeQL n° 14 · `high`, sans décision | **−1** | `js/regex-injection`, `scripts/ci-toutes-les-gardes.mjs` (posé le 10-15) : une `RegExp` construite depuis l'argument `--job`. **Trié par lecture** : `--job` est un littéral écrit dans `ci.yml`, exploitation nulle. Même règle que pour le n° 13 : une alerte `high` sans décision coûte le point. Correctif : échapper `job`, ou le valider par `/^[a-z-]+$/` |
+> | Dependabot, secret scanning | 0 | **0** alerte Dependabot ouverte (31 à 34 fermées par `3a645c11`). `braces` (haute, sans version corrigée publiée) et `fast-uri` (PR n° 75, non fusionnée) relevés par `npm audit`, dépendances de développement. Secret scanning : la seule n° 1, connue, inerte |
+> | Production | 0 | advisors **`11 / 82 / 2 / 1`**, égaux à la référence (`Posture` vert le 10-16) ; **77** tables toutes sous RLS, **205** policies, ledger **170**, **12** Edge Functions |
+>
+> **82 → 86.** Le BK-1 n'est pas clos pour autant : sa moitié RGPD (`M-69`, `M-70`) reste ouverte,
+> et l'échéance de la notification CNIL est passée sans trace au registre (cf. `docs/RGPD.md`).
 
 > ### 🟠 2026-10-15 · −2 : `BK-1` entre dans la note, la garde des advisors est enfin remboursée
 >
@@ -97,7 +119,8 @@ et brouillons **hors dépôt** (dossier privé d'Axel), procédure [`docs/RGPD-V
 | | |
 |---|---|
 | ✅ Contenu le 2026-10-13 | dump chiffré avant dépôt (gpg AES-256, secret `BACKUP_PASSPHRASE`), relu à l'identique par sha256 avant dépôt, échec FERMÉ sans phrase secrète (`8c6a971d`) ; run `38392672092` vert ; les dumps en clair **supprimés**, l'API publique ne liste plus qu'un artefact, chiffré ; `restore-drill.yml` déchiffre |
-| 🔴 Ouvert | `M-68` révoquer les sessions et changer le mot de passe de la base (les jetons de rafraîchissement étaient probablement dans les dumps) · `M-69` décision CNIL sous 72 h · `M-70` information des personnes · `M-71` ranger la phrase secrète |
+| ✅ Fait le 2026-10-16 | `M-68` : sessions révoquées. Relu en base le même jour : 0 session et 0 jeton vivant antérieurs au chiffrement. Mot de passe de la base non changé, décision motivée (un dump ne le contient pas). `dump-check` de `restore-drill` vert sur le dump chiffré, et une garde refuse désormais tout artefact de données de production non chiffré (`467d5115`) |
+| 🔴 Ouvert | `M-69` décision CNIL : **l'échéance de 72 h est passée le 2026-10-16 vers 11 h 26 UTC** sans trace au registre privé ; une notification tardive reste due, avec les motifs du retard (art. 33.1) · `M-70` information des personnes · `M-71` la phrase secrète est toujours en clair dans le dossier privé |
 | ❌ Règle durable | **aucune donnée personnelle en clair dans un artefact, un log ou un fichier d'un dépôt public.** « Il faut être connecté pour télécharger » ne protège rien : tout le monde a un compte GitHub |
 
 ✅ **Note recalculée le 2026-10-15** : −2, en entrée de la note ci-dessus. Le −2 se rembourse à
