@@ -292,6 +292,9 @@
         <p><a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a></p>
       </div>
     </noscript>
-    <script type="module" src="/src/main.tsx"></script>
+    <!-- `boot.ts` et non `main.tsx` : l'app n'est chargée qu'après la première
+         peinture du prérendu, pour que son JS et sa CSS sortent du chemin du
+         LCP. Pourquoi : en-tête de src/boot.ts. -->
+    <script type="module" src="/src/boot.ts"></script>
   </body>
 </html>

@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { ArrowRight } from 'lucide-react';
@@ -12,6 +12,7 @@ import FaqSection from './FaqSection';
 import { pauseWhenOffscreen } from './pause-offscreen';
 import HeroModuleDock, { DELAI_ARRIMAGE_MS } from './HeroModuleDock';
 import HeroAppIcon from './HeroAppIcon';
+import { setModuleActif } from './hero-module-actif';
 import HeroBackdrop from './HeroBackdrop';
 
 interface PersoTrackProps {
@@ -263,10 +264,10 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
     { scope: heroRef },
   );
 
-  // Vue affichée par la fenêtre du hero : la puce du module correspondant
-  // s'allume en même temps. Callback stable, la fenêtre étant mémoïsée.
-  const [moduleAffiche, setModuleAffiche] = useState('tasks');
-  const onSlideChange = useCallback((cle: string) => setModuleAffiche(cle), []);
+  // Vue affichée par la tuile du hero : la puce du module correspondant
+  // s'allume en même temps. 🔴 Par un magasin, JAMAIS par un état d'ici : un
+  // `useState` dans ce composant re-rendait tout le parcours toutes les 2,6 s
+  // (cf. `hero-module-actif.ts`).
 
   // Le tilt 3D à la souris a été RETIRÉ le 2026-08-30 avec la refonte du hero.
   // Il coûtait deux ressorts Framer et un handler par mouvement de souris, pour
@@ -290,7 +291,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               (`xl:left-[1%]`, `xl:right-[4%]`, cf. hero-modules.ts), donc leur
               ancetre positionne doit etre la pleine largeur, pas la colonne de
               lecture. */}
-          <HeroModuleDock actif={moduleAffiche} />
+          <HeroModuleDock />
 
           {/* La colonne de lecture est plus large que le texte n'en a besoin,
               et c'est le titre qui fixe sa largeur : `max-w-4xl` est la valeur
@@ -317,7 +318,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   app, quatre modules » sans repousser la promesse sous la ligne
                   de flottaison. Le meme retard d'entree que la fenetre d'avant,
                   pour que les puces se posent avant elle. */}
-              <HeroAppIcon onModuleChange={onSlideChange} delaiEntree={DELAI_ARRIMAGE_MS + 120} />
+              <HeroAppIcon onModuleChange={setModuleActif}delaiEntree={DELAI_ARRIMAGE_MS + 120} />
 
               {/* ── Typographie de la refonte centree (2026-09-22) ──
                   Le titre est la seule chose que le premier ecran doit reussir,

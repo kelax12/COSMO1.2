@@ -269,7 +269,28 @@ const preloaded = [
   ...html.matchAll(/<link[^>]+rel="modulepreload"[^>]+href="\/assets\/([^"]+)"/g),
 ].map((m) => m[1]);
 
-const criticalNames = new Set(entry ? [entry.name, ...preloaded] : preloaded);
+// 🔴 2026-10-15 · L'ENTRÉE D'`index.html` EST UN AMORÇAGE (`src/boot.ts`) : elle
+// ne fait qu'un `import()` de l'application, après la première peinture du
+// prérendu (LCP mobile). Lu sur le seul HTML, le chemin critique serait tombé à
+// ~1 ko et la garde aurait répondu sans mesurer. Ce que l'amorçage charge
+// d'office se lit dans SON code : la cible de l'`import("./x.js")` et la liste
+// de préchargement que Vite y écrit (`__vite__mapDeps`, `"assets/x.js"`). Tout
+// cela est chargé par tout visiteur, donc compté dans le chemin critique, et le
+// chunk de l'application reprend le budget `entry` qu'il portait avant.
+const entrySource = entry ? readFileSync(join(ASSETS, entry.name), 'latin1') : '';
+const appMatch = /\bimport\(\s*["']\.\/([A-Za-z0-9_.-]+\.js)["']\s*\)/.exec(entrySource);
+const app = appMatch ? measured.find((m) => m.name === appMatch[1]) ?? null : null;
+const amorcees = [...entrySource.matchAll(/["']assets\/([A-Za-z0-9_.-]+\.js)["']/g)].map((m) => m[1]);
+if (appMatch && !app) {
+  errors.push(`L'amorçage importe \`${appMatch[1]}\`, introuvable dans dist/assets : le chemin critique ne mesure pas l'application.`);
+}
+
+const criticalNames = new Set([
+  ...(entry ? [entry.name] : []),
+  ...(app ? [app.name] : []),
+  ...preloaded,
+  ...amorcees,
+]);
 const critical = measured
   .filter((m) => criticalNames.has(m.name))
   .sort((a, b) => b.gzip - a.gzip);
@@ -295,11 +316,15 @@ if (criticalTotal > BUDGETS.critical) {
   );
 }
 
-if (entry) {
-  report.push(`entrée    ${KB(entry.gzip).padStart(9)}  (plafond ${KB(BUDGETS.entry)})`);
-  if (entry.gzip > BUDGETS.entry) {
+// Le budget `entry` juge le chunk de l'APPLICATION : celui qu'`index.html`
+// exécute directement, ou celui que l'amorçage importe (cf. plus haut).
+const entreeJugee = app ?? entry;
+if (entreeJugee) {
+  if (app && entry) report.push(`amorçage  ${KB(entry.gzip).padStart(9)}  (${entry.base}, compté dans le chemin critique)`);
+  report.push(`entrée    ${KB(entreeJugee.gzip).padStart(9)}  (plafond ${KB(BUDGETS.entry)})`);
+  if (entreeJugee.gzip > BUDGETS.entry) {
     errors.push(
-      `Chunk d'entrée : ${KB(entry.gzip)} > ${KB(BUDGETS.entry)}.\n` +
+      `Chunk d'entrée : ${KB(entreeJugee.gzip)} > ${KB(BUDGETS.entry)}.\n` +
         `  Vérifier d'abord \`critique\` ci-dessus : si le total a baissé, c'est\n` +
         `  que du code préchargé à côté a été absorbé, et c'est une bonne nouvelle.`
     );
@@ -310,6 +335,7 @@ if (entry) {
 const parBase = new Map();
 for (const m of measured) {
   if (entry && m.name === entry.name) continue; // budget propre : `BUDGETS.entry`
+  if (app && m.name === app.name) continue; // idem, derrière l'amorçage
   const e = parBase.get(m.base) ?? { gzip: 0, fichiers: 0 };
   e.gzip += m.gzip;
   e.fichiers += 1;

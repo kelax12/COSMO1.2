@@ -133,6 +133,8 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   donc sur le cadre décoratif, et le bouton de pause reste annoncé.
   ⚠️ **Le bouton fait 44 × 44 px RÉELS**, pas un débord de `tap-area` : `/` est mesurée par
   `e2e/touch-targets.spec.ts`. Règle : `rotation-state.ts` (module pur), témoin 13 cas.
+- ❌ **Jamais d'état périodique dans `PersoTrack`** : la rotation de la tuile passe par
+  `hero-module-actif.ts`, sinon tout le parcours se re-rend toutes les 2,6 s (TBT mobile).
 - ⚠️ **`HeroModuleDock` n'est pas une décoration** : les quatre puces suivent le module affiché
   par `HeroAppIcon` (`onModuleChange`), et c'est ce qui fait comprendre que Tâches, Habitudes,
   Agenda et OKR sont quatre vues de la MÊME application. Sous `prefers-reduced-motion` elles sont
