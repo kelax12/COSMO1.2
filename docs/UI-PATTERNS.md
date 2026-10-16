@@ -1,4 +1,4 @@
-<!-- note-audit: note=84 -->
+<!-- note-audit: note=86 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,24 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **84 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **86 / 100** au 2026-10-16, au tableau de bord de [`README.md`](./README.md).
 
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15)
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → 84 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16)
+
+> ### 🟢 2026-10-16 · +2 : `Visual` compare de nouveau, et le dialogue des rôles attend sa réponse
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab`, dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `Visual` rouge depuis le 2026-10-12 (−1) | **+1** | les quatre cas tranchés (`477e2fc8`, `22a00936`) ; vert **en comparaison** deux fois de suite (`38730049045`, `38731274622` : 18 références, 20 cas, production de références sautée), et vert à `HEAD` |
+> | ✅ `AssignRoleDialog` affirmait l'absence de rôles avant la réponse (−1) | **+1** | `loading-empty-state.guard` vert en CI et en local |
+> | Page entreprise avec barre oblique | 0 | elle sert l'accueil perso : débité dans [`SEO.md`](./SEO.md), une seule fois |
+>
+> **84 → 86.**
 
 > ### 🟠 2026-10-15 · −2 : `Visual` rouge trois jours, et un dialogue qui affirme avant de savoir
 >

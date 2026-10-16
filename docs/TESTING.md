@@ -1,4 +1,4 @@
-<!-- note-audit: note=92 -->
+<!-- note-audit: note=97 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,30 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **92 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **97 / 100** au 2026-10-16, au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → **92 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → **97 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16)
+
+> ### 🟢 2026-10-16 · +5 : `main` entièrement vert, et les deux instruments éteints rallumés
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab` (run `38902071817`, **les cinq jobs verts**), dépôt à `HEAD`
+> rejoué étape par étape dans un worktree propre, `npm ci` compris. Tableau de bord :
+> [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `main` rouge depuis le 2026-10-12 (−2 le 10-15) | **+2** | premier `CI` vert sur les cinq jobs le 2026-10-16 (`38870561074`, `89ddecb9`), puis à `HEAD` (`38902071817`) : `e2e` **254 verts, 3 instables, 0 échec**, en 22 min. En local à `HEAD`, les 23 étapes de `lint-test-build` sont vertes ; la suite unitaire rend **341 fichiers, 3 837 tests** verts (deux fichiers dont le worker n'avait pas démarré sous la charge, rejoués seuls : 46 / 46) |
+> | ✅ `org-guide.spec` rouge à chaque run (−1) | **+1** | `000cdcad` ; vert en CI depuis |
+> | ✅ `restore-drill` désactivé, `dump-check` jamais joué (−1) | **+1** | réactivé le 2026-10-15 ; `dump-check` **vert sur le dump chiffré** (run `38787097174`), le job `drill` arrêté à ses gardes comme voulu. Trois trous de `dump-check` corrigés en route (`d65420ef`), dont un faux `.gpg` en clair accepté comme déchiffré |
+> | ✅ AM-1 · 11 témoins rejoués sur 55 (« +1 et non +2 » le 10-01) | **+1** | `check:sabotages` étendu : **221 sabotages sur 55 gardes, 203 / 210 témoins rejoués (96,7 %)**, dans une copie temporaire ; `Sabotages` vert sur `main` (`66a8505c`). Deux témoins trop faibles trouvés et renforcés par le rejeu (`b8f0a435`) |
+> | Toutes les gardes jouées après un premier rouge | 0 | `10ba32f5`, avec témoin : le défaut qui a masqué dix rouges le 2026-10-12 ne peut plus se reproduire. Vu en vrai dès le 2026-10-16 : les runs `38873301698` et `38875691233` n'avaient qu'un rouge (`check:docs-scored`), et les 3 834 tests ont joué derrière lui. Prévention : rien à rembourser |
+> | Instables | 0 | 3 à `HEAD` (`touch-targets` et réglages sous WebKit). À suivre, non débités |
+>
+> **92 → 97.** ⚠️ Le run de `main` reste annulé à chaque poussée voisine : le 2026-10-16, plusieurs
+> sessions ont dû passer par une PR brouillon (n° 71, 72, 74, 76) pour obtenir un verdict `e2e`.
 
 > ### 🟠 2026-10-15 · −4 : `main` rouge depuis trois jours, et le rouge de tête en cache dix autres
 >

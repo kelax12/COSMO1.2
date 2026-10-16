@@ -1,4 +1,4 @@
-<!-- note-audit: note=79 -->
+<!-- note-audit: note=78 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **79 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **78 / 100** au 2026-10-16, au tableau de bord de [`README.md`](./README.md).
 
 # SEO — état mesuré, règles et dette
 
@@ -25,7 +25,22 @@ cause n'est pas dans le dépôt.
 > liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
 > PageSpeed Insights.
 
-## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → 78 → **79 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → 78 → 79 → **78 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### 🟠 2026-10-16 · −1 : `/entreprise-presentation/` sert l'accueil perso, canonical compris
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab`, production (curl et navigateur). Tableau de bord :
+> [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | 🔴 La variante avec barre oblique de la page entreprise | **−1** | `https://thecosmo.app/entreprise-presentation/` répond en **200** (variantes à slash final servies volontairement) et, une fois React chargé, affiche le **parcours perso** : `h1` « Toute votre productivité… », titre de l'accueil, **canonical réécrit vers `https://thecosmo.app/`**. Cause : `useLandingTrack` compare le chemin sans tolérer la barre oblique. Le sitemap porte la forme sans barre, mais un lien externe ou une saisie mènent un prospect entreprise sur la mauvaise page, et le « SEO 100 » mesuré sur cette URL en CI était celui de l'accueil. Une session corrige |
+> | SEO Lighthouse | 0 | 100 sur les 8 URLs, desktop et mobile (en notant la réserve ci-dessus) |
+> | `check:seo` | 0 | vert à `HEAD` : 50 pages prérendues, 40 URLs au sitemap, 150 `hreflang` réciproques |
+> | AM-4 · le résultat n'est pas mesuré | 0 | toujours vrai, `M-24` et `M-55` |
+>
+> **79 → 78.**
 
 > ### 🟢 2026-10-15 · +1 : le LCP mobile sort de « mauvais »
 >

@@ -1,4 +1,4 @@
-<!-- note-audit: note=95 -->
+<!-- note-audit: note=96 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,25 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **95 / 100** au 2026-10-15, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **96 / 100** au 2026-10-16, au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → **95 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → **96 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16)
+
+> ### 🟢 2026-10-16 · +1 : LCP mobile sous 1,6 s partout, mais la page entreprise n'a jamais été mesurée
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : Lighthouse mobile du run `38902071817` (`a4878cab`), build local à `HEAD` avec Sentry
+> comme en CI, production au navigateur. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ LCP mobile, troisième point retenu le 10-15 | **+1** | à `HEAD` : LCP **1,22 à 1,52 s** sur les 8 URLs, TBT **90 à 300 ms**, perf **93 à 100** (le 10-15 : 3,26 à 3,40 s, TBT jusqu'à 1 049 ms, perf 62). Correctifs `c8591450`, `4eb34cb2`, `89ddecb9`, `65b8c87a` ; gain confirmé sur deux runs consécutifs (`38899945555`, `38901051072`) |
+> | ✅ Budget de bundle rouge sur deux cliquets (−1) | **+1** | `check:bundle` vert en CI et en local : `OrganizationPage` **17,6 / 18,0 ko** ; `TeamTaskModal` n'apparaît plus comme chunk propre au rapport. Chemin critique **304,5 ko** (plafond 323,0), entrée **66,8 / 70,5**. Marge sous 1 % : `StatisticsPage` 13,0 / 13,0 |
+> | 🔴 La page entreprise n'est mesurée par rien | **−1** | `lighthouserc.json` et `lighthouserc.mobile.json` mesurent `/entreprise-presentation/` **avec** barre oblique finale. À cette URL l'application sert le parcours **perso** (vérifié en production le 2026-10-16 : `h1` et titre de l'accueil perso, canonical réécrit vers `/`). Tous les chiffres « entreprise » de Lighthouse depuis l'origine sont donc ceux du parcours perso : le parcours entreprise, celui des prospects, n'a jamais été mesuré. Une session corrige la détection (`useLandingTrack`) |
+>
+> **95 → 96.**
 
 > ### 🟢 2026-10-15 · +1 : le LCP mobile enfin crédité, le budget de nouveau rouge
 >

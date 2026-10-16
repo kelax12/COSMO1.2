@@ -62,6 +62,73 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-16 · **passe complète après les corrections : 940 → 960**
+
+Consigne d'Axel : « rejoue la passe d'audit complète sur main pour rembourser les notes de ce qui a
+été corrigé, avec la même méthode que le 2026-10-15 ». **44 commits** depuis la passe précédente
+(`ab50c7fc` → `a4878cab`), dont ceux des onze sessions de correction lancées le 2026-10-15. Même
+méthode : CI réelle de `main`, production, dépôt à `HEAD` rejoué étape par étape dans un worktree
+propre (`npm ci` compris, le lockfile ayant changé). Même règle : un défaut ne se rembourse que
+corrigé **et vu vert en CI**.
+
+### Ce que la CI dit à `HEAD`
+
+| Job | Verdict | Mesuré le 2026-10-16 |
+|---|---|---|
+| `CI` (`a4878cab`, run `38902071817`) | ✅ **les cinq jobs verts** | `e2e` **254 verts, 3 instables, 0 échec** en 22 min ; Lighthouse mobile LCP **1,22 à 1,52 s** sur les 8 URLs. Premier `CI` entièrement vert depuis le 2026-10-11, d'abord à `89ddecb9` (`38870561074`) |
+| `lint-test-build` rejoué en local | ✅ 23 étapes sur 23 | 341 fichiers, 3 837 tests (deux workers non démarrés sous la charge, rejoués seuls : 46 / 46) ; budget : chemin critique 304,5 ko, `OrganizationPage` 17,6 / 18,0 |
+| `Visual`, `CodeQL`, `Posture`, `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `Sabotages`, `Vendor script watch` | ✅ | **aucun workflow désactivé** : `restore-drill` est actif, `dump-check` vert sur le dump chiffré |
+| Alertes | | Dependabot **0** ; CodeQL : n° 13 fermée, **n° 14 ouverte** (`high`, sans décision) ; secret scanning : la n° 1, connue |
+
+✅ **La garde « toutes les étapes jouées après un rouge » a servi dès le lendemain** : les runs
+`38873301698` et `38875691233` n'avaient qu'un rouge, `check:docs-scored` (un dossier `docs/marque`
+sans marqueur, corrigé par `64222e89`), et les 3 834 tests ont joué derrière lui. Le 2026-10-12, le
+même rouge de documentation en avait masqué dix.
+
+### Les notes
+
+| Audit | 10-15 | **10-16** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 82 | **86** | **+4** | `M-68` vérifié en base, 0 session et 0 jeton antérieurs au chiffrement (+2) ; AM-6, surface entreprise rejouée en CI, 624 cellules vues rouges sur sabotage (+2) ; CodeQL n° 13 fermée (+1) ; n° 14 ouverte, sans décision (−1) |
+| [UI / UX](./UI-PATTERNS.md) | 84 | **86** | **+2** | `Visual` vert en comparaison (+1) ; `AssignRoleDialog` attend sa réponse (+1) |
+| [RGPD](./RGPD.md) | 84 | **85** | **+1** | `org_member_roles` déclarée (+1) ; `BK-1` maintenu à −2 : **échéance CNIL passée sans trace au registre** |
+| [Tests / CI](./TESTING.md) | 92 | **97** | **+5** | `main` vert sur les cinq jobs (+2) ; `org-guide` (+1) ; `restore-drill` rallumé (+1) ; 203 / 210 témoins rejoués (+1) |
+| [Architecture](./ARCHITECTURE.md) | 90 | **93** | **+3** | `CLAUDE.md` d'organisations à 11 992 o, 544 lignes, hook orphelin réglé |
+| [Performance](./PERFORMANCE.md) | 95 | **96** | **+1** | LCP mobile 1,2 à 1,5 s (+1) ; budget vert (+1) ; **la page entreprise n'a jamais été mesurée** (−1) |
+| [Scalabilité](./SCALABILITY.md) | 90 | **91** | **+1** | plus de sondage permanent |
+| [i18n](./I18N.md) | 87 | **88** | **+1** | « Empty message » catalogué |
+| [SEO](./SEO.md) | 79 | **78** | **−1** | `/entreprise-presentation/` sert l'accueil perso, canonical réécrit vers `/` |
+| [Accessibilité](./ACCESSIBILITY.md) | 81 | **82** | **+1** | surfaces des rôles déclarées ; `C-118` fermé, jamais débité |
+| [Mobile / DA](./MOBILE.md) | 76 | **78** | **+2** | LCP mobile (+1) ; WebKit vert de bout en bout, débit du 09-22 enfin remboursé (+1) |
+
+**940 → 960 : +23 remboursés, −3 débités.** Dix notes montent, une baisse : exactement ce que la
+règle du 2026-08-25 dit de soupçonner. Ce qui l'explique : les débits du 2026-10-15 étaient des
+défauts **nommés et datés**, et chaque remboursement ci-dessus a son run vert. Ce qui a régressé est
+noté : une alerte CodeQL neuve posée par une session de correction, et un défaut de la page
+entreprise que la correction du LCP a fait voir.
+
+### 🔴 Trouvé en chemin : la page entreprise n'a jamais été mesurée
+
+`lighthouserc.json` et `lighthouserc.mobile.json` mesurent `/entreprise-presentation/` **avec** barre
+oblique finale. À cette URL, une fois React chargé, l'application sert le **parcours perso** (relu en
+production au navigateur : `h1` et titre de l'accueil, canonical réécrit vers `https://thecosmo.app/`).
+`useLandingTrack` compare le chemin sans tolérer la barre oblique. Conséquences : un prospect qui
+arrive par cette forme d'URL voit la mauvaise page, et **tous les chiffres « entreprise » de Lighthouse
+depuis l'origine sont ceux de l'accueil perso**. Débité une fois en SEO (la page servie), une fois en
+Performance (la mesure). Une session le corrige (`claude/happy-heyrovsky-d6e704`, rien sur `main`).
+
+### Ce qu'il faut faire, dans l'ordre
+
+1. **`M-69`** (Axel) : l'échéance de 72 h est passée le 2026-10-16 vers 11 h 26 UTC. Si la
+   notification n'a pas été faite, elle reste due **maintenant**, avec les motifs du retard
+   (art. 33.1) ; si elle l'a été, consigner la date au registre privé. Puis `M-70` et `M-71`.
+2. **La barre oblique de la page entreprise** : finir la session en cours, puis relire le Lighthouse
+   du vrai parcours entreprise.
+3. **CodeQL n° 14** : échapper `job` dans `ci-toutes-les-gardes.mjs`, une ligne.
+4. **PR n° 75** (`fast-uri`) et la pile de PR Dependabot ouvertes (n° 29 à 70) : à trier.
+
+---
+
 ## Mise à jour du 2026-10-15 · **passe complète : les onze audits rejoués, 953 → 940**
 
 Consigne d'Axel : « remet à jour TOUS les audits en .md ». Même méthode que les passes du 10-01 et
