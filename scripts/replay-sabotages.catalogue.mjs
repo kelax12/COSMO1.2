@@ -1252,11 +1252,24 @@ export const CATALOGUE = [
     id: 'perime-rouge-repare',
     famille: 'produit',
     garde: 'scripts/ci-alert-perime.guard.test.mjs',
-    modifs: [r('scripts/ci-alert-perime.mjs', "r.conclusion === 'success' && ", '')],
+    modifs: [r('scripts/ci-alert-perime.mjs', "runs.find((r) => r.conclusion === 'success'", 'runs.find((r) => true')],
     attendu: ['un run plus récent mais ROUGE ne répare rien'],
     pourquoi:
       'Un run plus récent ROUGE compté comme réparateur : l’alerte d’un `main` qui reste rouge '
       + 'serait avalée, exactement le silence que `ci-alert.yml` existe pour empêcher.',
+  },
+  {
+    id: 'perime-fork-repare',
+    famille: 'produit',
+    garde: 'scripts/ci-alert-perime.guard.test.mjs',
+    modifs: [
+      r('scripts/ci-alert-perime.mjs', "    && r.event === 'push'", "    && r.event !== 'interdit'"),
+      r('scripts/ci-alert-perime.mjs', '    && r.head_repository?.full_name === repo', '    && repo'),
+    ],
+    attendu: ['TÉMOIN : une PR depuis la branche `main` d’un fork ne répare rien'],
+    pourquoi:
+      '`head_branch` vaut `main` pour une PR ouverte depuis la branche `main` d’un fork : sans '
+      + 'les filtres push et dépôt, un tiers tait une vraie alerte avec le vert de sa PR.',
   },
   {
     id: 'perime-doute-tait',

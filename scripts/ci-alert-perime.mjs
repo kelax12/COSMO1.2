@@ -20,7 +20,9 @@
 //    ne se taisent que sur `perime == 'true'`. Ce contrôle ne peut faire
 //    qu'une chose : retirer une alerte DONT LA RÉPARATION EST PROUVÉE.
 // ⚠️ Il ne compare que des runs du MÊME workflow (`workflow_id`) : un vert de
-//    `Visual` ne répare pas un rouge de `CI`.
+//    `Visual` ne répare pas un rouge de `CI`. Et seulement des PUSHS sur
+//    `main` de ce dépôt : un vert de PR, même depuis la branche `main` d'un
+//    fork, ne répare rien.
 // ⚠️ Pour un workflow planifié, le run plus récent est créé APRÈS que le
 //    rouge a fini : le contrôle ne le trouve pas, l'alerte part. Il ne mord
 //    que sur ce que l'ordre d'arrivée a inversé.
@@ -32,19 +34,28 @@
 import { appendFileSync } from 'node:fs';
 
 /**
- * Le premier run VERT créé strictement après `creeLe`, ou `null`.
- * Une date illisible ne rend jamais un rouge périmé.
+ * Le premier run VERT d'un PUSH sur `main` de `repo`, créé strictement
+ * après `creeLe`, ou `null`. Une date illisible ne rend jamais un rouge périmé.
+ *
+ * 🔴 `head_branch` vaut aussi `main` pour une PR ouverte depuis la branche
+ * `main` d'un FORK (revue de sécurité du 2026-10-16) : un tiers aurait pu
+ * taire une vraie alerte avec un vert de sa PR. Seul un push compte, et un
+ * push sur `main` de ce dépôt exige le droit d'écriture.
  */
-export function reparateur(runs, { creeLe }) {
+export function reparateur(runs, { creeLe, repo }) {
   const t0 = Date.parse(creeLe);
-  if (Number.isNaN(t0)) return null;
-  return runs.find((r) => r.conclusion === 'success' && Date.parse(r.created_at) > t0) ?? null;
+  if (Number.isNaN(t0) || !repo) return null;
+  return runs.find((r) => r.conclusion === 'success'
+    && r.event === 'push'
+    && r.head_branch === 'main'
+    && r.head_repository?.full_name === repo
+    && Date.parse(r.created_at) > t0) ?? null;
 }
 
-/** Les derniers runs VERTS de `main` pour ce workflow. Une réponse non 2xx est une erreur, jamais une liste vide. */
+/** Les derniers runs VERTS des pushs sur `main` pour ce workflow. Une réponse non 2xx est une erreur, jamais une liste vide. */
 export async function listerRuns({ repo, workflowId, token, fetchImpl = fetch }) {
   const url = `https://api.github.com/repos/${repo}/actions/workflows/${workflowId}/runs`
-    + '?branch=main&status=success&per_page=5';
+    + '?branch=main&event=push&status=success&per_page=5';
   const res = await fetchImpl(url, {
     headers: {
       Accept: 'application/vnd.github+json',
@@ -78,7 +89,7 @@ export async function run({
   } else {
     try {
       const runs = await lister({ repo: env.REPO, workflowId: env.WF_ID, token: env.GH_TOKEN });
-      const r = reparateur(runs, { creeLe: env.CREE });
+      const r = reparateur(runs, { creeLe: env.CREE, repo: env.REPO });
       if (r) {
         perime = true;
         log(
