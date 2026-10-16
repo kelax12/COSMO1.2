@@ -10,8 +10,7 @@ import { mountAudienceScript } from './lib/audience';
 // Import direct du module de locale (et non du barrel `@/i18n`) : le barrel
 // ré-exporte `format.ts`, qui tire les locales `date-fns` — inutile ici et
 // alourdirait le chunk d'entrée.
-import { DEFAULT_LOCALE, applyLocale, resolveInitialLocale, type Locale } from './i18n/locale';
-import { resolveRouterBootstrap } from './i18n/bootstrap';
+import { applyRouterBootstrap } from './i18n/apply-bootstrap';
 import { loadCatalogs } from './i18n/catalog';
 import { afterFirstPaint } from './lib/after-first-paint';
 import './index.css';
@@ -150,27 +149,10 @@ try {
 // dans l'app de se préfixer automatiquement — cf. l'en-tête de
 // src/i18n/bootstrap.ts.
 // ──────────────────────────────────────────────────────────────────
-let routerBasename = '/';
-let activeLocale: Locale = DEFAULT_LOCALE;
-try {
-  const bootstrap = resolveRouterBootstrap({
-    pathname: window.location.pathname,
-    search: window.location.search,
-    hash: window.location.hash,
-  });
-  routerBasename = bootstrap.basename;
-  activeLocale = bootstrap.locale;
-  applyLocale(document.documentElement, bootstrap.locale);
-  if (bootstrap.replaceUrl && bootstrap.replaceUrl !== window.location.pathname + window.location.search + window.location.hash) {
-    window.history.replaceState(null, '', bootstrap.replaceUrl);
-  }
-} catch {
-  /* localStorage/navigator inaccessibles (navigation privée stricte) — on reste
-     sur la locale par défaut à la racine, ce qui est toujours servable. */
-  try {
-    applyLocale(document.documentElement, resolveInitialLocale());
-  } catch { /* rien de plus à tenter */ }
-}
+// ⚠️ `src/boot.ts` l'a DÉJÀ appliqué, avant la première peinture : cet appel
+// part de l'URL canonique et ne réécrit rien. Il reste ici pour lire `basename`
+// et la locale. Pourquoi deux appels : `i18n/apply-bootstrap.ts`.
+const { basename: routerBasename, locale: activeLocale } = applyRouterBootstrap();
 
 // iOS Safari has a well-known WebKit bug where the *very first* cross-origin
 // fetch made during page load can fail silently with "Load failed" / DOMException
