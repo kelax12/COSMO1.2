@@ -67,7 +67,11 @@ function initSentry(Sentry: typeof import('./lib/sentry-client')): void {
     tracesSampleRate: 0.1,
     // Propage le contexte de trace aux requêtes Supabase (corrèle un appel
     // PostgREST/RPC lent à la transaction front qui l'a déclenché).
-    tracePropagationTargets: [/^\//, /supabase\.co/],
+    // 🔴 JAMAIS `/functions/v1/` : les Edge Functions n'autorisent pas
+    // `baggage`/`sentry-trace` en pré-requête, l'appel meurt avant le POST
+    // (M-32, 2026-10-16). PostgREST et Auth les acceptent. Garde :
+    // `src/sentry-propagation.guard.test.ts`.
+    tracePropagationTargets: [/^\//, /supabase\.co\/(?!functions\/v1\/)/],
     sendDefaultPii: false,
     ignoreErrors: [
       'ResizeObserver loop limit exceeded',
