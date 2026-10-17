@@ -205,7 +205,7 @@ démonstration décrits, désormais **sous consentement** (ils étaient posés s
 connexion rattachés à une finalité (statistiques internes) et à une base légale (intérêt
 légitime) ; invitations par e-mail (durée : 7 jours + 30 jours) ; Sentry décrit exactement
 (l'identifiant technique du compte EST joint aux rapports, ce que le texte niait ; jetons retirés
-des adresses de page ; hébergement UE) ; Vesk identifié (Veske, France, hébergé en Allemagne) ;
+des adresses de page ; hébergement UE) ;
 GitHub ajouté (sauvegardes chiffrées) ; transferts complétés (Stripe, Google, GitHub, Supabase
 Inc.) ; sécurité : accès d'administration de l'éditeur dit, sauvegardes chiffrées ; durées
 ajoutées : comptes inactifs **3 ans** avec avertissement 30 jours avant, signalements de bug 12
