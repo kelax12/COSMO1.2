@@ -5,11 +5,12 @@
     "seoTitle": "Mentions légales – Cosmo App",
     "seoDescription": "Mentions légales de l'application de productivité Cosmo : éditeur, hébergeur, propriété intellectuelle et responsabilités.",
     "title": "Mentions légales",
-    "updatedAt": "13 octobre 2026",
+    "updatedAt": "18 octobre 2026",
     "s1": {
       "title": "1. Éditeur du site",
       "intro": "Le site et l'application **Cosmo** sont édités par :",
       "li1": "**Éditeur :** Axel Longatte, personne physique",
+      "liAddress": "**Adresse :** 138 avenue Victor Hugo, 75016 Paris, France (domiciliation : Les Tricolores)",
       "li2": "**Adresse e-mail :** contact@thecosmo.app",
       "li3": "**Directeur de la publication :** Axel Longatte"
     },
