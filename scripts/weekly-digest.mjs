@@ -1,5 +1,7 @@
-// Résumé hebdomadaire envoyé sur le canal d'alerte (Discord), chaque lundi.
-// Workflow : .github/workflows/weekly-digest.yml.
+// Résumés envoyés sur le canal d'alerte (Discord) : quotidien (la veille,
+// comparée à l'avant-veille) et hebdomadaire (les 7 derniers jours, comparés
+// aux 7 précédents). Workflows : daily-digest.yml (`--days=1`) et
+// weekly-digest.yml (7 jours, par défaut).
 //
 // Lecture SEULE, dans une transaction READ ONLY : ce script ne peut rien
 // écrire, même par erreur. Totaux uniquement, aucune donnée personnelle dans
@@ -7,13 +9,13 @@
 // (`admin_stats_excluded_uids()`, mig. 149) le sont ici aussi.
 //
 // Variables : DB_URL (secret SUPABASE_DB_URL), WEBHOOK (secret OPS_ALERT_WEBHOOK_URL).
-// `--dry-run` affiche le message sans l'envoyer.
+// `--dry-run` affiche le message sans l'envoyer ; `--days=N` choisit la période (1 à 31).
 import pg from 'pg';
 import { deliver } from './ops-alert.mjs';
 
 const fmt = new Intl.NumberFormat('fr-FR');
 
-/** Variation en %, ou null quand la semaine précédente est vide. */
+/** Variation en %, ou null quand la période précédente est vide. */
 export function delta(cur, prev) {
   return prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null;
 }
@@ -26,7 +28,7 @@ function withDelta(cur, prev) {
 /** Message lisible dans Discord comme dans Slack (texte simple). */
 export function buildDigest(m) {
   const lines = [
-    `📊 [cosmo] Semaine du ${m.from} au ${m.to}`,
+    m.days === 1 ? `📊 [cosmo] Journée du ${m.to}` : `📊 [cosmo] Semaine du ${m.from} au ${m.to}`,
     `• Inscriptions : ${withDelta(m.signups, m.signupsPrev)}`,
     `• Utilisateurs actifs sur 7 jours : ${fmt.format(m.active7d)} sur ${fmt.format(m.users)} comptes`,
   ];
@@ -43,20 +45,28 @@ export function buildDigest(m) {
   return lines.join('\n');
 }
 
-export async function collect(client) {
-  const one = async (sql) => (await client.query(sql)).rows[0];
+/** `--days=N` (1 à 31), 7 par défaut. */
+export function parseDays(argv) {
+  const arg = argv.find((a) => a.startsWith('--days='));
+  const n = arg ? Number(arg.slice('--days='.length)) : 7;
+  return Number.isInteger(n) && n >= 1 && n <= 31 ? n : 7;
+}
+
+export async function collect(client, days = 7) {
+  // $1 = nombre de jours de la période ; la précédente a la même durée.
+  const one = async (sql) => (await client.query(sql, sql.includes('$1') ? [days] : [])).rows[0];
   const base = await one(`
     WITH ex AS (SELECT unnest(public.admin_stats_excluded_uids()) AS id),
          u AS (SELECT u.id, u.created_at FROM auth.users u WHERE u.id NOT IN (SELECT id FROM ex))
     SELECT
-      to_char(current_date - 7, 'DD/MM') AS "from",
+      to_char(current_date - $1::int, 'DD/MM') AS "from",
       to_char(current_date - 1, 'DD/MM') AS "to",
-      (SELECT count(*) FROM u WHERE created_at >= current_date - 7 AND created_at < current_date)::int AS signups,
-      (SELECT count(*) FROM u WHERE created_at >= current_date - 14 AND created_at < current_date - 7)::int AS "signupsPrev",
+      (SELECT count(*) FROM u WHERE created_at >= current_date - $1::int AND created_at < current_date)::int AS signups,
+      (SELECT count(*) FROM u WHERE created_at >= current_date - 2 * $1::int AND created_at < current_date - $1::int)::int AS "signupsPrev",
       (SELECT count(*) FROM u)::int AS users,
       (SELECT count(*) FROM public.profiles p WHERE p.id IN (SELECT id FROM u)
          AND p.last_seen_at >= now() - interval '7 days')::int AS "active7d",
-      (SELECT count(*) FROM public.organizations WHERE created_at >= current_date - 7)::int AS orgs,
+      (SELECT count(*) FROM public.organizations WHERE created_at >= current_date - $1::int AND created_at < current_date)::int AS orgs,
       ((SELECT count(*) FROM public.subscriptions
          WHERE plan = 'premium' AND status = 'active' AND stripe_subscription_id IS NOT NULL
            AND user_id NOT IN (SELECT id FROM ex))
@@ -72,20 +82,21 @@ export async function collect(client) {
     traffic = await one(`
       SELECT
         (SELECT coalesce(sum(n), 0) FROM (SELECT count(DISTINCT visitor) n FROM public.traffic_hits
-           WHERE kind = 'view' AND occurred_at >= current_date - 7 AND occurred_at < current_date
+           WHERE kind = 'view' AND occurred_at >= current_date - $1::int AND occurred_at < current_date
            GROUP BY occurred_at::date) d)::int AS visitors,
         (SELECT coalesce(sum(n), 0) FROM (SELECT count(DISTINCT visitor) n FROM public.traffic_hits
-           WHERE kind = 'view' AND occurred_at >= current_date - 14 AND occurred_at < current_date - 7
+           WHERE kind = 'view' AND occurred_at >= current_date - 2 * $1::int AND occurred_at < current_date - $1::int
            GROUP BY occurred_at::date) d)::int AS "visitorsPrev",
         (SELECT count(*) FROM public.traffic_hits
-           WHERE kind = 'view' AND occurred_at >= current_date - 7 AND occurred_at < current_date)::int AS pageviews
+           WHERE kind = 'view' AND occurred_at >= current_date - $1::int AND occurred_at < current_date)::int AS pageviews
     `);
   }
-  return { ...base, traffic };
+  return { ...base, days, traffic };
 }
 
 export async function main(env = process.env, argv = process.argv) {
   const dryRun = argv.includes('--dry-run');
+  const days = parseDays(argv);
   if (!env.DB_URL) {
     console.log('::warning::SUPABASE_DB_URL absent : aucun résumé produit.');
     return 0;
@@ -99,7 +110,7 @@ export async function main(env = process.env, argv = process.argv) {
   let message;
   try {
     await client.query('BEGIN READ ONLY');
-    message = buildDigest(await collect(client));
+    message = buildDigest(await collect(client, days));
     await client.query('ROLLBACK');
   } finally {
     await client.end();
@@ -116,7 +127,7 @@ export async function main(env = process.env, argv = process.argv) {
     console.log(`::error::Envoi du résumé refusé (HTTP ${status}).`);
     return 1;
   }
-  console.log('Résumé hebdomadaire envoyé.');
+  console.log(`Résumé envoyé (${days} jour${days > 1 ? 's' : ''}).`);
   return 0;
 }
 
@@ -124,7 +135,7 @@ export async function main(env = process.env, argv = process.argv) {
 // (incident du 2026-09-09). Lancer par `node scripts/weekly-digest.mjs`.
 if (process.argv[1]?.replace(/\\/g, '/').endsWith('scripts/weekly-digest.mjs')) {
   main().then((code) => process.exit(code), (err) => {
-    console.log(`::error::Résumé hebdomadaire : ${err.message}`);
+    console.log(`::error::Résumé : ${err.message}`);
     process.exit(1);
   });
 }
