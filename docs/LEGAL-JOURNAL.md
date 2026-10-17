@@ -225,3 +225,19 @@ ou indirects »** (clause noire R212-1 6°, contraire à l'art. 9 des CGU), remp
 
 ❌ **Ce qui reste ouvert sur les mentions** : adresse et téléphone de l'éditeur (LCEN art. 1-1),
 téléphone des hébergeurs. Gestes d'Axel (`a-faire-manuel.md`).
+
+### 2026-10-18 · mesure d'audience internalisée · **FOND (information)** · **aucun préavis**
+
+| Document | Empreinte |
+|---|---|
+| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `d10728a3fde91ac2` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `dc7fab7e40f1de4e` |
+
+**Ce qui a changé** (politique de confidentialité uniquement) : le fournisseur tiers de mesure
+d'audience est débranché et retiré de la politique (§2 p1 à p3, base légale §5, destinataires §7,
+traceurs §10). Reste Vercel Analytics, sous consentement ; les statistiques d'usage de
+l'application sont calculées en interne. Le périmètre de la mesure est décrit tel qu'il est :
+Vercel Analytics, une fois accepté, couvre tout le site.
+
+**Aucun préavis** : un destinataire et un traceur en moins, information plus favorable
+(art. 13 et 14 RGPD : l'information doit être exacte tout de suite).

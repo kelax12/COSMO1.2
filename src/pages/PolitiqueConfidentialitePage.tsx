@@ -88,7 +88,7 @@ const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
         kind: 'ul',
         items: [
           'privacy.s7.li1', 'privacy.s7.li2', 'privacy.s7.li3', 'privacy.s7.li4',
-          'privacy.s7.li5', 'privacy.s7.li6', 'privacy.s7.li7', 'privacy.s7.li8',
+          'privacy.s7.li5', 'privacy.s7.li6', 'privacy.s7.li8',
           'privacy.s7.li9', 'privacy.s7.li10',
         ],
       },
@@ -129,7 +129,7 @@ const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
       {
         kind: 'ul',
         items: [
-          'privacy.s10.consentLi1', 'privacy.s10.consentLi2',
+          'privacy.s10.consentLi2',
           'privacy.s10.consentLi3', 'privacy.s10.consentLi4',
         ],
       },
