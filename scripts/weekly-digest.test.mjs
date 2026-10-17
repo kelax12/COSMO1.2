@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDigest, delta } from './weekly-digest.mjs';
+import { buildDigest, delta, parseDays } from './weekly-digest.mjs';
 
 const base = {
   from: '06/10', to: '12/10', signups: 10, signupsPrev: 8, users: 36, active7d: 7, orgs: 1, paidSubs: 0,
@@ -22,6 +22,18 @@ describe('weekly-digest', () => {
     const msg = buildDigest({ ...base, traffic: { visitors: 200, visitorsPrev: 100, pageviews: 640 } });
     expect(msg).toContain('Visiteurs (pages publiques) : 200 (+100 %)');
     expect(msg).toContain('Conversion visiteurs → inscriptions : 5 %');
+  });
+
+  it('titre le rapport quotidien sur la seule journée de la veille', () => {
+    const msg = buildDigest({ ...base, days: 1, from: '16/10', to: '17/10', traffic: null });
+    expect(msg.split('\n')[0]).toBe('📊 [cosmo] Journée du 17/10');
+  });
+
+  it('lit la période demandée et retombe sur 7 jours si elle est absurde', () => {
+    expect(parseDays(['node', 'x', '--days=1'])).toBe(1);
+    expect(parseDays(['node', 'x'])).toBe(7);
+    expect(parseDays(['node', 'x', '--days=0'])).toBe(7);
+    expect(parseDays(['node', 'x', '--days=abc'])).toBe(7);
   });
 
   it('ne contient aucune adresse email', () => {

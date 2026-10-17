@@ -133,6 +133,9 @@ export const CONTACTS_PROD = {
   'weekly-digest.yml › digest › Envoyer le résumé': {
     affiche: "l'état de l'envoi seulement ; le message (totaux de prod) part au webhook, jamais au journal",
   },
+  'daily-digest.yml › digest › Envoyer le résumé': {
+    affiche: "l'état de l'envoi seulement ; le message (totaux de prod) part au webhook, jamais au journal",
+  },
   'db-backup.yml › dump › Verifier le secret': {
     affiche: 'présence et longueur des secrets, jamais leur valeur',
   },
