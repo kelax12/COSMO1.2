@@ -3,7 +3,9 @@
 --
 -- Contrat : `analytics/docs/RPC-REVENU.md`. Lecture seule, totaux seulement.
 --
--- ÉTAT au 2026-10-18 : écrite, NON appliquée. Preuve `proofs/221.proof.sql` jouée
+-- ÉTAT au 2026-10-18 : APPLIQUÉE (apply_migration), ledger 20261017220737, relue au
+-- catalogue : DEFINER, search_path vide, anon f, authenticated t, corps identique au
+-- fichier (md5 2d47b544...). Preuve `proofs/221.proof.sql` jouée AVANT
 -- en prod dans un bloc annulé : 7 sur 7, témoin sans la fonction rouge, rien laissé.
 --
 -- Garde : `is_admin()` (allowlist ET session `aal2`, mig. 131) en PREMIÈRE
