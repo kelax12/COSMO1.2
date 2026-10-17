@@ -1,0 +1,30 @@
+name: Weekly digest
+
+# Résumé de la semaine (inscriptions, actifs, trafic, organisations,
+# abonnements payants) posté chaque lundi sur le canal d'alerte.
+# Lecture seule (transaction READ ONLY). Logique : scripts/weekly-digest.mjs.
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Envoyer le résumé
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          WEBHOOK: ${{ secrets.OPS_ALERT_WEBHOOK_URL }}
+        run: node scripts/weekly-digest.mjs
