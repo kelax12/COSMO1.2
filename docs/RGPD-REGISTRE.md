@@ -222,18 +222,10 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
 
 - **Finalité** : comprendre la fréquentation des pages publiques.
 - **Base légale** : **consentement** (art. 6.1.a et art. 82 loi Informatique et Libertés).
-- **Données** : adresse de la page, page référente, adresse IP, navigateur, indicateurs
-  d'engagement (profondeur de défilement, temps passé, clics sur liens et boutons), et un
-  **identifiant aléatoire déposé dans le `localStorage`** du navigateur (`_a_cid`), qui permet
-  de rattacher les pages d'une même visite.
-  > ⚠️ **Ne pas réécrire « sans cookie » ici.** La mention y a figuré jusqu'au 2026-09-01 et
-  > elle était trompeuse : `localStorage` n'est effectivement pas un cookie, mais l'art. 82
-  > couvre toute information déposée sur le terminal, et un identifiant persistant est
-  > exactement ce que la personne a le droit de connaître. Une formulation littéralement vraie
-  > qui laisse croire à l'absence de traceur est une formulation fausse.
-- **Sous-traitants** : Vesk (édité par Veske, entrepreneur individuel, Montauban, SIREN
-  107 484 743, hébergé chez Hetzner à Falkenstein, Allemagne ; DPA publié sur `veske.io/dpa`,
-  applicable dès l'usage, à archiver), Vercel Analytics. *Identité relevée le 2026-10-13.*
+- **Données** : pages vues et page référente, collectées par Vercel Analytics sans cookie.
+- **Sous-traitant** : Vercel Analytics. Les statistiques d'usage de l'application sont calculées en
+  interne, depuis la base COSMO (aucun outil de mesure tiers). *Fournisseur de mesure tiers débranché
+  le 2026-10-18.*
 - **Même base, même bandeau (2026-10-13)** : la **source d'acquisition** (`cosmo_first_touch`,
   30 jours, puis `profiles.acquisition_source`) et l'**identifiant d'appareil de la démo**
   (`cosmo_demo_device_id`, `demo_devices.converted_user_id`). Ils étaient posés SANS
@@ -242,22 +234,8 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
 - **Recueil du consentement** : bandeau. **Rien n'est chargé tant que la personne n'a pas
   accepté**, et un refus ne charge jamais rien. Le choix est conservé **six mois** sur l'appareil
   (`cosmo_cookie_consent_at`), puis redemandé. **Retrait** : « Gérer les cookies » (pied de page,
-  Paramètres, politique) rouvre le bandeau ; refuser après avoir accepté efface `_a_cid`,
-  `_a_sid`, `_a_sact` et recharge la page (RGPD art. 7.3, livré le 2026-09-24).
-- **Périmètre** : pages de contenu public uniquement. Le script n'est jamais monté sur une
-  session ouverte, pour qu'un compromis du fournisseur ne puisse pas lire un jeton de session,
-  **ni sur une page portant un formulaire d'identifiants** (création de compte, connexion,
-  réinitialisation, invitation).
-  > 🔴 **Cette dernière exclusion est une garde de conformité, pas un détail d'implémentation.**
-  > Le script de Vesk contient un `tryIdentify()` qui lit les champs d'un formulaire
-  > d'inscription et en extrait l'**adresse email** et le **nom** pour les envoyer au
-  > fournisseur (détecté le 2026-09-01 par `vendor-watch.yml`). Ces données ne relèvent pas de
-  > la mesure d'audience et **ne sont pas couvertes par le consentement recueilli ici**. La
-  > seule chose qui les empêche d'être transmises est que le script n'est pas chargé sur ces
-  > pages : `CREDENTIAL_FORM_SEGMENTS` dans `src/lib/audience.ts`, verrouillé par
-  > `src/lib/audience.test.ts`. Retirer cette exclusion rendrait ce traitement non conforme.
-- **Point ouvert** : aucun DPA (art. 28) n'a été signé avec Vesk. À obtenir — cf. T-43 de la
-  roadmap, dont la liste ne le mentionnait pas.
+  Paramètres, politique) rouvre le bandeau ; refuser après avoir accepté recharge la page sans
+  la mesure (RGPD art. 7.3).
 
 ## T9 · Supervision technique
 
@@ -330,13 +308,11 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
 | Resend | États-Unis | Clauses contractuelles types via le DPA du prestataire, **non archivé**. Ajouté le 2026-09-24 |
 | Cloudflare (Turnstile) | États-Unis | Idem, **non archivé**, seulement si la clé Turnstile est posée. Ajouté le 2026-09-24 |
 | GitHub | États-Unis | Sauvegardes **chiffrées**, clé hors de GitHub. Ajouté le 2026-10-13 |
-| Vesk (Veske) | France, hébergé en Allemagne | Aucun transfert. Ajouté le 2026-10-13 |
 | Supabase Inc. | société non européenne | Données en Irlande ; accès possible des équipes pour maintenance et support, encadré par le DPA (clauses types acceptées avec les conditions). Ajouté le 2026-10-13 |
 
 > ❌ **Ligne A5 de [`LEGAL.md`](./LEGAL.md) : les DPA ne sont pas encore collectés et archivés.**
 > ⚠️ « Ils se signent en tant qu'entreprise » est **faux pour Sentry** (relu le 2026-10-13) : le
-> propriétaire du compte l'accepte en ligne, dès maintenant. Vesk publie un DPA applicable dès
-> l'usage. C'est la pièce manquante de ce registre.
+> propriétaire du compte l'accepte en ligne, dès maintenant. C'est la pièce manquante de ce registre.
 
 ---
 

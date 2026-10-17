@@ -38,7 +38,7 @@ export function buildMessage({ event, wf, sha, runUrl }) {
     // etre pris pour une panne, ou pire, une vraie panne pour un test.
     return (
       "✅ [cosmo/ci] Test du canal d'alerte, aucun incident. " +
-      'Si vous lisez ceci dans Discord, les echecs de CI, de Vendor script watch ' +
+      'Si vous lisez ceci dans Discord, les echecs de CI ' +
       'et de Edge deploy drift arriveront ici.'
     );
   }

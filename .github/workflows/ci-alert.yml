@@ -1,6 +1,6 @@
 # ──────────────────────────────────────────────────────────────────────
 # Alerte quand une garde automatique passe au rouge sur `main`.
-# Couvre `CI`, `Vendor script watch` (surveillance du script tiers) et
+# Couvre `CI` et
 # `Edge deploy drift` (le code deploye des Edge Functions contre le depot).
 #
 # POURQUOI : les quatre gardes de `ci.yml` sont restées rouges des mois sans
@@ -39,7 +39,6 @@ on:
     # planifié (cf. son en-tête). Il y entre AVEC la bascule live.
     workflows:
       - CI
-      - Vendor script watch
       - Edge deploy drift
       - Migration coverage
       - Deploy SHA drift
@@ -139,10 +138,6 @@ jobs:
             "" \
             "Une garde rouge ne protege plus rien et rend muettes les autres" \
             "gardes du meme job. A traiter avant de livrer autre chose." \
-            "" \
-            "Si c'est **Vendor script watch** : le script tiers charge sur les" \
-            "pages publiques a change. Relire le diff AVANT de mettre a jour" \
-            "\`.github/vendor-scripts.sha256\`." \
             "" \
             "Cette issue se met a jour a chaque nouvel echec." \
             "**La refermer une fois au vert** : c'est ce qui rearme l'alerte.")

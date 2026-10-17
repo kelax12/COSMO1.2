@@ -247,67 +247,19 @@ pas audit** : ni preuve acteur par acteur en base, ni revue des 25 tables et de 
 | **14** fonctions de trigger en `SECURITY DEFINER` (`validate:migrations` : 19 avertissements), **relues une par une le 2026-10-01** au catalogue | toutes `AFTER` (donc après le `WITH CHECK`), `search_path` vide, aucune exécutable par `anon`/`authenticated`, **aucun `RAISE`** (pas d'oracle B-3), chacune écrit un journal ou une notification au-delà des droits de l'appelant | ✅ légitimes. 🟠 **E-4** : trois d'entre elles (`notify_team_task_status`, `notify_team_project_archived`, `notify_task_comment`) notifiaient un membre **suspendu**, qui lisait encore statuts, commentaires et nom des projets archivés (`org_notifications` se lit par `user_id` seul). Refermé mig. `212` : 3 notifications avant, 0 après |
 
 
-## 🟠 V-1 · le script analytics tiers capte email et nom — mitigé, arbitrage ouvert (2026-09-01)
+## ✅ V-1 · script de mesure tiers sur les pages publiques — REFERMÉ (2026-10-18)
 
-**Trouvé par `vendor-watch.yml`**, qui échouait à chaque exécution **depuis au moins le
-2026-08-29** sans que personne ne lise l'alerte. Le workflow n'était pas cassé : il alertait.
-C'est le premier enseignement, et il vaut pour toutes les gardes planifiées — **une alerte que
-personne ne lit ne protège rien.**
+Le script de mesure d'audience tiers chargé sur les pages publiques s'était mis, le 2026-09-01,
+à lire l'**email** et le **nom** saisis dans les formulaires d'inscription. Mitigé à l'époque en
+l'excluant des pages d'identifiants.
 
-**Ce qui a changé.** Le script servi à `https://www.vesk.dev/a.js` a gagné une fonction
-`tryIdentify()` qui lit les champs d'un formulaire d'inscription, en extrait l'**adresse email**
-(160 car. max) et le **nom** (80), et les envoie à `vesk.dev`. Elle se déclenche sur `submit`
-**et** sur un clic qui « ressemble » à une inscription — donc dans une SPA sans `submit` natif,
-ce qui est exactement notre cas. Elle exige un champ mot de passe et un signe d'inscription : un
-formulaire newsletter ne la déclenche donc pas.
+**Refermé le 2026-10-18 : le fournisseur est débranché.** La mesure d'audience est internalisée.
+Plus aucun script tiers de mesure n'est chargé : `src/lib/audience.ts`, son test, l'empreinte
+surveillée et `vendor-watch.yml` sont supprimés, l'origine retirée de la CSP (`script-src` et
+`connect-src`). Reste Vercel Analytics, monté après consentement (`ConsentedAnalytics`, `src/App.tsx`).
 
-**Pourquoi c'est un écart.** Le registre (art. 30, `docs/RGPD-REGISTRE.md` §T8) déclare pour ce
-traitement : « adresse de la page, page référente, adresse IP, navigateur. **Sans cookie.** » Ni
-email, ni nom, ni identifiant persistant — or le script pose aussi un UUID `_a_cid` en
-`localStorage`. **Un consentement recueilli pour une MESURE D'AUDIENCE ne couvre pas la
-transmission de l'identité de la personne à un tiers.** Et `/signup` étant une page publique sans
-session, les trois conditions de chargement étaient réunies : le script tournait bel et bien là
-où l'on saisit son email.
-
-**Ce qui a été fait (2026-09-01).** `src/lib/audience.ts` ne monte plus le script sur les pages
-portant un formulaire d'identifiants (`CREDENTIAL_FORM_SEGMENTS` : `signup`, `login`,
-`forgot-password`, `reset-password`, `invite`, `org-invite`). On aligne le code sur ce qui est
-déclaré, plutôt que l'inverse. La mesure garde sa finalité : landing, blog, guide, cas d'usage.
-Cliquet : `src/lib/audience.test.ts`, vérifié rouge sans la garde.
-
-**Le reste de la revue, sans reproche** : aucun `eval`, aucun `new Function`, aucune injection de
-script, aucune lecture de `document.cookie`, aucun accès aux champs mot de passe, aucune
-obfuscation `atob`. L'endpoint est dérivé de l'origine du script lui-même, et la CSP borne
-`connect-src`.
-
-**✅ Arbitré par Axel le 2026-09-01 — option A : on garde Vesk, et on met la déclaration en
-conformité.** Motif : Vercel reste le tableau de bord de référence, et les indicateurs
-d'engagement de Vesk gardent leur valeur pour la phase d'acquisition qui commence.
-
-Fait dans la foulée :
-
-- `docs/RGPD-REGISTRE.md` §T8 — les données déclarées incluent désormais les indicateurs
-  d'engagement **et l'identifiant persistant `_a_cid`**. La mention « sans cookie » a été
-  retirée, avec la raison écrite sur place : littéralement vraie, elle laissait croire à
-  l'absence de traceur. L'exclusion des pages d'identifiants y est inscrite comme **garde de
-  conformité**, pas comme détail d'implémentation.
-- `PolitiqueConfidentialitePage.tsx` — trois corrections. La page affirmait « Vesk n'écrit rien
-  sur votre appareil » (faux), rangeait la mesure sous l'**intérêt légitime** en §5 alors que
-  §7 et le registre disent consentement (deux sections du même document se contredisaient), et
-  sa section Cookies ne distinguait pas le strictement nécessaire de ce qui exige un accord.
-  Les pages exclues de la mesure sont maintenant nommées pour le visiteur. Une phrase cassée
-  qui traînait a été réparée au passage.
-- `docs/ROADMAP-60J.md` T-43 — **Vesk ajouté à la liste des DPA à collecter**, dont il était
-  absent. Un sous-traitant qu'on oublie de lister est un sous-traitant sans contrat.
-
-**🔴 Ce qui reste, et qui n'appartient qu'à Axel : obtenir le DPA de Vesk** (art. 28). Tant
-qu'il manque, ce traitement s'appuie sur un sous-traitant sans contrat de sous-traitance.
-
-⚠️ **Et la vraie leçon de ce finding n'est pas Vesk.** `vendor-watch.yml` a fait exactement son
-travail et a échoué chaque jour pendant quatre jours sans que personne ne le lise. Le prochain
-changement de ce script sera détecté de la même façon — **et ne servira à rien si l'alerte n'est
-pas lue.** Une garde planifiée sans destinataire n'est pas une garde. `OPS_ALERT_WEBHOOK_URL`
-existe depuis le 2026-08-29 : y router les échecs de `vendor-watch` fermerait ce trou.
+⚠️ La leçon reste valable : une garde planifiée sans destinataire n'est pas une garde. Les échecs
+de garde sont poussés sur `OPS_ALERT_WEBHOOK_URL` (`ci-alert.yml`).
 
 ---
 

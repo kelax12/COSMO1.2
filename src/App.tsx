@@ -415,8 +415,7 @@ const AppRoutes = () => {
  * Mesure d'audience Vercel — montée UNIQUEMENT après acceptation explicite.
  *
  * `<Analytics />` était monté inconditionnellement, alors que le bandeau
- * proposait de refuser. C'est le même manquement que celui corrigé dans
- * `src/lib/audience.ts` : deux traceurs, une seule promesse, non tenue.
+ * proposait de refuser : une promesse affichée, non tenue.
  *
  * Le composant réagit au store, donc accepter le monte sans rechargement.
  * Refuser ne le monte jamais : on ne charge pas pour démonter ensuite, car on
