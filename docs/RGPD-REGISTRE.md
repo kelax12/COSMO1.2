@@ -62,7 +62,7 @@ CNIL ou d'un client dans le cadre d'une due diligence.
 
 | | |
 |---|---|
-| Identité | Axel Longatte |
+| Identité | Axel Longatte, 138 avenue Victor Hugo, 75016 Paris (domiciliation Les Tricolores) |
 | Statut | **Personne physique.** Aucune structure juridique n'est immatriculée au 2026-08-26. |
 | Contact | axellongattepro@gmail.com |
 | Délégué à la protection des données | Non désigné. Non obligatoire : pas de suivi systématique à grande échelle, pas de données sensibles au sens de l'art. 9. |
