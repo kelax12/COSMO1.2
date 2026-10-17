@@ -241,3 +241,22 @@ Vercel Analytics, une fois accepté, couvre tout le site.
 
 **Aucun préavis** : un destinataire et un traceur en moins, information plus favorable
 (art. 13 et 14 RGPD : l'information doit être exacte tout de suite).
+
+### 2026-10-18 · mesure d'audience maison (mig. 222) · **FOND (information)** · **aucun préavis**
+
+| Document | Empreinte |
+|---|---|
+| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `a44ecb55e4be7d94` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `e3d741991fd75d93` |
+
+**Ce qui a changé** (politique de confidentialité, §2 p1) : Cosmo mesure lui-même la
+fréquentation des pages publiques, sous le **même consentement** que Vercel Analytics et pour la
+**même finalité** (mesure d'audience). Données ajoutées : pays et ville approximatifs, navigateur
+et appareil, temps passé, défilement, clics sur les principaux boutons. L'adresse IP n'est pas
+conservée (identifiant du jour, lien détruit le lendemain) ; conservation 13 mois. Registre :
+`docs/RGPD-REGISTRE.md` T8.
+
+**Aucun préavis** : rien n'est collecté sans « Accepter », et l'information est exacte dès la
+mise en service. ⚠️ **Question ouverte, à trancher par Axel** : un accord donné AVANT ce jour
+couvrait une mesure plus étroite (pages vues et référent). La finalité est identique, mais les
+catégories de données s'élargissent ; redemander le consentement lèverait le doute.

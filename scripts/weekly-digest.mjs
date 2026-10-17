@@ -104,13 +104,19 @@ export async function main(env = process.env, argv = process.argv) {
   } finally {
     await client.end();
   }
-  console.log(message);
-  if (dryRun) return 0;
+  // Le dépôt est PUBLIC : le journal de la CI aussi. Le message (chiffres de
+  // prod) ne s'affiche donc qu'en local, avec --dry-run ; en CI, seul l'état
+  // de l'envoi part au journal.
+  if (dryRun) {
+    console.log(message);
+    return 0;
+  }
   const status = await deliver(env.WEBHOOK, message);
   if (status < 200 || status >= 300) {
     console.log(`::error::Envoi du résumé refusé (HTTP ${status}).`);
     return 1;
   }
+  console.log('Résumé hebdomadaire envoyé.');
   return 0;
 }
 
