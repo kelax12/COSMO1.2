@@ -74,7 +74,8 @@ CNIL ou d'un client dans le cadre d'une due diligence.
 
 ## Vue d'ensemble
 
-Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level Security**.
+Onze traitements. Les dix premiers vivent sur 47 tables applicatives de COSMO, **toutes protégées
+par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supabase séparé.
 
 | # | Traitement | Base légale | Personnes concernées |
 |---|---|---|---|
@@ -88,6 +89,7 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
 | T8 | Mesure d'audience | **Consentement** | Visiteurs du site public |
 | T9 | Supervision technique | Intérêt légitime | Utilisateurs rencontrant une erreur |
 | T10 | Administration de la plateforme | Intérêt légitime | Tous, sous forme agrégée |
+| T11 | Prospection commerciale B2B par email | Intérêt légitime | Professionnels prospectés |
 
 ---
 
@@ -282,6 +284,37 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
   conservé 30 jours en artefact GitHub (`db-backup.yml`). Sous-traitant : GitHub (États-Unis),
   qui ne détient pas la clé. 🔴 Ces dumps sont partis EN CLAIR, dans un dépôt public, du
   2026-08-29 au 2026-10-13 : violation consignée au registre des violations (hors dépôt).
+
+## T11 · Prospection commerciale B2B par email
+
+*Ouvert le 2026-10-18.*
+
+- **Finalité** : suivre une campagne de cold email, de l'envoi à la conversion (Kanban de la
+  page Prospection de COSMO Analytics).
+- **Base légale** : intérêt légitime (art. 6.1.f). La prospection B2B par email ne demande pas
+  de consentement préalable si le message se rapporte à la **fonction professionnelle** de la
+  personne et si chaque mail offre un moyen **simple et gratuit** de s'y opposer (CNIL, art.
+  L34-5 CPCE). Les deux conditions sont à tenir dans chaque modèle de mail.
+- **Personnes concernées** : professionnels contactés, jamais des clients COSMO à ce titre.
+- **Données** : email professionnel, nom, entreprise, poste, source du contact, étape du
+  parcours, notes libres, date du dernier contact, journal des changements d'étape.
+  🔴 Les notes sont libres : n'y écrire **aucune donnée sensible** (art. 9) ni d'appréciation
+  qu'on ne montrerait pas à la personne, qui peut en demander copie (art. 15).
+- **Opposition** : `suppression_list`. Une adresse qui refuse ou se désinscrit y entre, et la
+  base **refuse** ensuite de la réinscrire (trigger, pas une règle d'interface). La glisser en
+  corbeille l'y inscrit aussi.
+- **Où** : projet Supabase **séparé** `cosmo-prospection` (`eu-west-1`, Irlande), tables
+  `prospects`, `prospect_events`, `suppression_list`. RLS : un seul administrateur, session
+  `aal2` exigée. Migration dans le dépôt `analytics` (`supabase/migrations/`), qui n'est **pas**
+  public. Aucune donnée de prospect dans un fichier versionné.
+- **Destinataires** : Supabase. À venir, à porter ici **avant** mise en service : Google (lecture
+  de la boîte Gmail d'envoi, lot 2) et Anthropic (classement des réponses, lot 3).
+- **Conservation** : **3 ans après le dernier contact** (recommandation CNIL), puis effacement.
+  ⚠️ Au 2026-10-18 cette durée n'est appliquée par **aucun automatisme** ; la purge est à écrire.
+  L'effacement d'un prospect emporte son journal (cascade) ; son inscription en opposition
+  reste, puisque c'est elle qui garantit qu'on ne le recontacte pas.
+- **Sauvegardes** : 🔴 **aucune**. Le projet est en offre gratuite, qui n'en fournit pas de
+  téléchargeable. Un export chiffré hors dépôt reste à mettre en place.
 
 ---
 
