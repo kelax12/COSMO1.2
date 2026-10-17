@@ -6,6 +6,7 @@ import { RootErrorBoundary } from './components/RootErrorBoundary';
 import { installEarlyHandlers, startMonitoring } from './lib/monitoring';
 import { applyTheme, resolveInitialTheme } from './lib/theme';
 import { captureFirstTouch } from './lib/attribution';
+import { startTrafficMeasurement } from './lib/traffic';
 // Import direct du module de locale (et non du barrel `@/i18n`) : le barrel
 // ré-exporte `format.ts`, qui tire les locales `date-fns` — inutile ici et
 // alourdirait le chunk d'entrée.
@@ -177,6 +178,14 @@ if (supabaseUrl) {
   fetch(`${supabaseUrl}/rest/v1/`, { method: 'GET', mode: 'cors', credentials: 'omit' })
     .catch(() => { /* expected to sometimes fail — we don't care */ });
 }
+
+// Mesure d'audience maison (mig. 222, remplace Veske). APRES l'amorcage i18n,
+// pour ne pas compter deux fois une URL que la canonicalisation reecrit.
+// Le module verifie lui-meme, avant CHAQUE envoi, consentement, page publique
+// et absence de session : detail dans src/lib/traffic.ts.
+try {
+  startTrafficMeasurement({ win: window, doc: document });
+} catch { /* la mesure ne doit jamais empêcher l'app de démarrer */ }
 
 // Les comportements v7 (startTransition, relativeSplatPath) sont les defauts
 // depuis la 7.0 — le prop `future` n'a plus lieu d'etre. Ils ont ete adoptes

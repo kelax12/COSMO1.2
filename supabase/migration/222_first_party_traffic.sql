@@ -5,6 +5,13 @@
 --   → RPC `track_hit` (ici) → table `traffic_hits`.
 -- Lecture : `get_admin_traffic(p_days)`, garde `is_admin()` (allowlist ET aal2).
 --
+-- ÉTAT au 2026-10-18 : APPLIQUÉE (apply_migration), ledger 20261017230922, relue au
+-- catalogue : 2 tables sous RLS sans policy, illisibles par anon/authenticated ;
+-- track_hit DEFINER exécutable par anon (voulu), get_admin_traffic fermée à anon,
+-- purge_traffic INVOKER fermée à tous, job « 17 0 * * * » ; corps des trois
+-- fonctions identiques au fichier. Preuve `proofs/222.proof.sql` jouée AVANT : 9 sur 9,
+-- témoin sans la migration rouge, rien laissé.
+--
 -- Données personnelles, au plus juste (registre art. 30, T8) :
 --   • AUCUN cookie, aucun identifiant déposé sur l'appareil.
 --   • L'adresse IP n'est JAMAIS stockée. Elle sert seulement à calculer

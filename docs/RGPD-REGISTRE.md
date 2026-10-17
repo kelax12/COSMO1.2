@@ -223,9 +223,18 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
 - **Finalité** : comprendre la fréquentation des pages publiques.
 - **Base légale** : **consentement** (art. 6.1.a et art. 82 loi Informatique et Libertés).
 - **Données** : pages vues et page référente, collectées par Vercel Analytics sans cookie.
-- **Sous-traitant** : Vercel Analytics. Les statistiques d'usage de l'application sont calculées en
-  interne, depuis la base COSMO (aucun outil de mesure tiers). *Fournisseur de mesure tiers débranché
-  le 2026-10-18.*
+- **Mesure maison (mig. 222, 2026-10-18)**, même consentement, pages publiques seulement, jamais
+  sur un formulaire d'identifiants ni avec une session ouverte : chemin de la page (sans query
+  string), hôte du référent, paramètres `utm_*`, pays/région/ville déduits de l'adresse IP par
+  Vercel, famille de navigateur et de système, type d'appareil, langue, durée et profondeur de
+  scroll, clics sur les boutons marqués `data-cta`. **L'adresse IP n'est pas conservée** : elle
+  sert seulement à calculer un identifiant du jour (sel aléatoire supprimé le lendemain), qui ne
+  relie ni deux jours ni une personne. Aucun cookie ni stockage sur l'appareil. Table
+  `traffic_hits`, **conservée 13 mois** (job `cosmo-purge-traffic`). Lecture : administrateurs
+  seulement (`get_admin_traffic`, `is_admin()`).
+- **Sous-traitant** : Vercel (Analytics, et hébergement du collecteur `api/collect.ts`). Les
+  statistiques d'usage de l'application sont calculées en interne, depuis la base COSMO (aucun
+  outil de mesure tiers). *Fournisseur de mesure tiers débranché le 2026-10-18.*
 - **Même base, même bandeau (2026-10-13)** : la **source d'acquisition** (`cosmo_first_touch`,
   30 jours, puis `profiles.acquisition_source`) et l'**identifiant d'appareil de la démo**
   (`cosmo_demo_device_id`, `demo_devices.converted_user_id`). Ils étaient posés SANS
