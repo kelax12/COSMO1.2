@@ -1,0 +1,16 @@
+{
+  "prospection": {
+    "title": "10a. Business prospecting",
+    "intro": "This section is for professionals whom Cosmo contacts by email to present its offer for businesses, without them having given Cosmo their contact details themselves (Article 14 of the GDPR). These people are not Cosmo users on that account, and their data is kept apart from account data.",
+    "li1": "**Controller:** Axel Longatte, publisher of Cosmo, reachable at [contact@thecosmo.app](mailto:contact@thecosmo.app)",
+    "li2": "**Purpose:** presenting Cosmo's offer for businesses to you by email and following up on those messages (reply, interest, unsubscribe)",
+    "li3": "**Legal basis:** Cosmo's legitimate interest in making its offer known (Article 6(1)(f) of the GDPR). Between professionals, a prospecting email does not require prior consent when it relates to the professional role of the person contacted and offers a simple, free way to object (Article L34-5 of the French Postal and Electronic Communications Code)",
+    "li4": "**Data processed:** professional email address, name, company, job title, where the contact came from, date of last contact, follow-up stage, internal notes, history of emails sent and, if you reply, the subject and the beginning of your reply (first 2,000 characters)",
+    "li5": "**Source of the data:** information about the company (name, SIREN number, sector, headcount band, city) comes from INSEE's public Sirene register, queried through the French government's company search API. Your name, job title and professional email address come from a professional data enrichment service (Dropcontact) or were entered by the publisher. No company officer is taken from the Sirene register",
+    "li6": "**Recipients:** Supabase, which hosts this data in a project separate from the application's, in Ireland; IONOS, which hosts the sending mailboxes, in Germany; Anthropic, in the United States, which automatically sorts the replies received based on their subject and text. That transfer outside the Union is covered by the European Commission's standard contractual clauses (Article 46 of the GDPR). This data is neither sold nor transferred to anyone",
+    "li7": "**Retention period:** 3 years after the last contact, then erased",
+    "li8": "**Right to object:** every email contains an unsubscribe link, and a reply asking us to stop works too. Your address is then added to an objection list, which the database checks before any email is sent. That entry serves only to make sure you are never contacted again: this is why it is kept, even after the rest of your data has been erased",
+    "p1": "Under the conditions set out in Articles 15 to 21 of the GDPR, you also have the rights of access (including to the notes about you), rectification, erasure and restriction. To exercise them, or for any question about this processing: [contact@thecosmo.app](mailto:contact@thecosmo.app). We reply within **one month**.",
+    "p2": "You can also lodge a complaint with the **CNIL**, the French data protection authority: [www.cnil.fr](https://www.cnil.fr)"
+  }
+}

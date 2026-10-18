@@ -52,8 +52,9 @@ describe('check-legal-journal : empreinte d un document découpé', () => {
       .toThrow(/deux fois/);
   });
 
-  it('les deux documents du dépôt, trois catalogues chacun, sont cités par le journal', () => {
-    expect(Object.values(DOCUMENTS).map((c) => c.length)).toEqual([3, 3]);
+  it('les deux documents du dépôt, quatre catalogues chacun, sont cités par le journal', () => {
+    // Quatrième catalogue le 2026-10-18 : `legalProspection` (section 10 bis).
+    expect(Object.values(DOCUMENTS).map((c) => c.length)).toEqual([4, 4]);
     const cites = empreintesDuJournal(readFileSync(join(process.cwd(), 'docs/LEGAL-JOURNAL.md'), 'utf8'));
     for (const [doc, h] of Object.entries(empreintesActuelles())) {
       expect(cites.has(h), `${doc} → ${h} absente du journal`).toBe(true);

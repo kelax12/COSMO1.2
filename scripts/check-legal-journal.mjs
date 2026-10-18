@@ -46,6 +46,8 @@ const JOURNAL = join(RACINE, 'docs', 'LEGAL-JOURNAL.md');
  * Les documents qui portent un engagement contractuel, UN par langue.
  *
  * 🔴 Depuis le 2026-10-01, le texte d'une langue vit dans TROIS catalogues
+ * (QUATRE depuis le 2026-10-18 : `legalProspection`, section 10 bis de la
+ * politique de confidentialité, sortie de `legalPrivacy` pour son budget)
  * (`legal` : mentions et libellés communs, `legalTerms` : CGU,
  * `legalPrivacy` : confidentialité), chargés chacun par sa page pour tenir le
  * budget de bundle. L'empreinte porte sur leur RÉUNION : un découpage ou un
@@ -54,8 +56,8 @@ const JOURNAL = join(RACINE, 'docs', 'LEGAL-JOURNAL.md');
  * et le témoin `scripts/check-legal-journal.guard.test.mjs` le vérifie.
  */
 export const DOCUMENTS = Object.fromEntries(['fr', 'en'].map((locale) => [
-  `src/locales/${locale}/{legal,legalTerms,legalPrivacy}.json`,
-  ['legal', 'legalTerms', 'legalPrivacy'].map((ns) => `src/locales/${locale}/${ns}.json`),
+  `src/locales/${locale}/{legal,legalTerms,legalPrivacy,legalProspection}.json`,
+  ['legal', 'legalTerms', 'legalPrivacy', 'legalProspection'].map((ns) => `src/locales/${locale}/${ns}.json`),
 ]));
 
 /**
