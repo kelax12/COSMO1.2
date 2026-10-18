@@ -410,8 +410,6 @@ const TasksPage: React.FC = () => {
                   lists={lists}
                   selectedCategories={selectedCategories}
                   searchTerm={searchTerm}
-                  shownCount={filteredTasks.length}
-                  totalCount={tasks.length}
                   onClearList={clearListFilter}
                   onClearCategories={() => setSelectedCategories([])}
                   onClearSearch={() => setSearchTerm('')}

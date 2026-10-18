@@ -8,8 +8,8 @@ import { useT } from '@/i18n/useT';
  * Ce qui réduit la liste, dit à l'écran, avec de quoi le retirer (#35).
  *
  * Trois filtres peuvent rétrécir la page sans que rien ne le dise : une liste,
- * des catégories, une recherche. Cette rangée les nomme, donne un ✕ à chacun et
- * rappelle le compte n/N — c'est la réponse au « où sont passées mes tâches ? ».
+ * des catégories, une recherche. Cette rangée les nomme et donne un ✕ à chacun :
+ * c'est la réponse au « où sont passées mes tâches ? ».
  *
  * Extraite de `TasksPage` le 2026-09-22, quand la page a dépassé son plafond de
  * 600 lignes (`architecture.guard`). La frontière n'est pas un compte de lignes
@@ -22,9 +22,6 @@ interface Props {
   lists: TaskList[];
   selectedCategories: string[];
   searchTerm: string;
-  /** Tâches affichées après filtrage, et total, pour le compte n/N. */
-  shownCount: number;
-  totalCount: number;
   onClearList: () => void;
   onClearCategories: () => void;
   onClearSearch: () => void;
@@ -44,14 +41,12 @@ const ActiveFiltersRow: React.FC<Props> = ({
   lists,
   selectedCategories,
   searchTerm,
-  shownCount,
-  totalCount,
   onClearList,
   onClearCategories,
   onClearSearch,
   className = '',
 }) => {
-  const { t, tp } = useT('tasks');
+  const { t } = useT('tasks');
   const hasSearch = searchTerm.trim() !== '';
   const activeCount = [selectedListId, selectedCategories.length > 0, hasSearch].filter(Boolean).length;
   if (activeCount === 0) return null;
@@ -83,13 +78,9 @@ const ActiveFiltersRow: React.FC<Props> = ({
         </button>
       )}
 
-      {/* Maquette 101 : le compte est une PRÉCISION, pas un message —
-          `text-caption` et non `text-sm`. Et « tout retirer » n'apparaît qu'à
-          partir de DEUX filtres : avec un seul, la croix de la pilule fait déjà
-          exactement ça. */}
-      <span className="text-caption text-[rgb(var(--color-text-muted))]">
-        {tp('filters.shown', totalCount, { shown: shownCount })}
-      </span>
+      {/* Pas de compte « n / N tâches affichées » : retiré à la demande d'Axel
+          le 2026-10-18. « Tout retirer » n'apparaît qu'à partir de DEUX
+          filtres : avec un seul, la croix de la pilule fait déjà exactement ça. */}
       {activeCount > 1 && (
         <button
           type="button"
