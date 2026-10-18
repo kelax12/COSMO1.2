@@ -116,7 +116,7 @@ Détail des clauses : [`LEGAL-JOURNAL.md`](./LEGAL-JOURNAL.md) § 2026-09-24.
 | # | Geste | Pourquoi maintenant |
 |---|---|---|
 | 1 | Mettre son **nom** comme éditeur, directeur de la publication (mentions légales) et responsable de traitement (politique, section 1) | A2, A3 : exigible sans structure, et le registre le nomme déjà dans un dépôt public |
-| 2 | Envoyer le **préavis de 30 jours** des CGU aux comptes existants (clauses 3.3, 6.3, 9) | CGU art. 11 : sans lui, ces trois clauses ne sont pas opposables aux inscrits d'avant le 2026-09-24 |
+| 2 | Envoyer le **préavis de 30 jours** des CGU aux comptes existants (clauses 3.3, 6.3, 9) | CGU art. 11 : sans lui, ces trois clauses ne sont pas opposables aux inscrits d'avant le 2026-09-24. ✅ **Prêt le 2026-10-18, pas envoyé** : texte et script à blanc par défaut, marche à suivre dans [`LEGAL-JOURNAL.md`](./LEGAL-JOURNAL.md) § « Préavis de l'article 11 » |
 | 3 | Accepter le DPA **Sentry**, vérifier le plan **Vercel**, obtenir celui de **Resend** | A5, A6 |
 | 4 | Trouver et publier le **téléphone** des hébergeurs | A3 (LCEN 6-III-1) |
 | 5 | Consulter un conseil en propriété industrielle sur **COSMO** | F1, F2 |

@@ -58,6 +58,41 @@ jamais sur la mise en forme.
 
 ---
 
+## 📨 Préavis de l'article 11 · prêt le 2026-10-18, **pas encore envoyé**
+
+Dû depuis l'entrée du 2026-09-24 (clauses 3.3, 6.3, 9), complété par `M-75` (règle des 3 ans
+d'inactivité, lien des CGU pour les comptes Google). Outil : `scripts/cgu-notice.mjs`, témoin
+`scripts/cgu-notice.test.mjs`. **À blanc par défaut** : sans `--send`, il compte et n'envoie rien.
+
+Marche à suivre (geste d'Axel, `M-63` d'[`a-faire-manuel.md`](../a-faire-manuel.md)) :
+
+1. `node scripts/cgu-notice.mjs --preview` : relire le message (objet, fr puis en).
+2. Poser `SUPABASE_ACCESS_TOKEN`, puis `node scripts/cgu-notice.mjs` : comptage agrégé, aucune
+   adresse lue. Mesuré le 2026-10-18 par le même prédicat : **36 destinataires**, dont **28**
+   inscrits avant le 2026-09-24 et **17** comptes Google créés avant le 2026-10-13. Langue :
+   **inconnue en base**, d'où un seul message bilingue.
+3. Poser aussi `RESEND_API_KEY` et `CGU_NOTICE_FROM` (une adresse de `send.thecosmo.app`, le seul
+   domaine signé chez Resend), puis
+   `node scripts/cgu-notice.mjs --send --expected <N du jour> --proof C:/Users/Axel/Documents/COSMO-coffre-hors-depot/preavis-cgu-AAAA-MM-JJ.jsonl`.
+   Un message par compte, une requête toutes les 1,5 s, réponse vers `contact@thecosmo.app`.
+   Interrompu, il se relance avec la même commande : les comptes déjà servis sont sautés.
+4. Garder le fichier de preuve (haché de chaque adresse, identifiant Resend, heure) : c'est la
+   trace de la notification, Resend n'en garde pas l'historique longtemps.
+5. Coller l'entrée ci-dessous dans « Entrées », dates et nombres remplis.
+
+```markdown
+### AAAA-MM-JJ · préavis de l'article 11 envoyé · **aucun changement de contenu**
+
+**Ce qui s'est passé** : préavis de 30 jours envoyé par e-mail à N comptes (`scripts/cgu-notice.mjs`,
+fichier de preuve hors dépôt : P envoyés, E échecs). Il annonce les clauses 3.3, 6.3 et 9 de
+l'entrée du 2026-09-24 et la suppression des comptes inactifs depuis 3 ans (entrée du
+2026-10-13) ; les G comptes créés par Google avant le 2026-10-13 ont reçu le lien des CGU.
+**Entrée en vigueur pour les comptes existants : JJ mois AAAA** (envoi + 30 jours). Droit de
+supprimer son compte sans frais jusque-là (art. 11.p2). Aucune empreinte ne change.
+```
+
+---
+
 ## Entrées
 
 ### 2026-09-20 · pose du journal · **aucun changement de contenu**
