@@ -312,6 +312,14 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   reste, puisque c'est elle qui garantit qu'on ne le recontacte pas.
 - **Sauvegardes** : 🔴 **aucune**. Le projet est en offre gratuite, qui n'en fournit pas de
   téléchargeable. Un export chiffré hors dépôt reste à mettre en place.
+- **Information des personnes (art. 14)** : ✅ depuis le 2026-10-18, la politique de
+  confidentialité publiée porte une section **10 bis « Prospection commerciale »**, ancre stable
+  `#prospection` (`https://thecosmo.app/politique-confidentialite#prospection`,
+  `https://thecosmo.app/en/privacy-policy#prospection`), visée par chaque email. Elle reprend ce
+  traitement point par point, source des données comprise (Sirene pour l'entreprise ; Dropcontact
+  ou saisie d'Axel pour la personne, d'après la skill `prospection` du dépôt `analytics`).
+  🔴 Ne jamais renommer l'ancre. Modifier ce traitement, c'est modifier aussi cette section
+  (`src/locales/{fr,en}/legalPrivacy.json`, clés `privacy.s10bis.*`) et le journal légal.
 
 ---
 

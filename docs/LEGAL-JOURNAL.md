@@ -260,3 +260,28 @@ conservée (identifiant du jour, lien détruit le lendemain) ; conservation 13 m
 mise en service. ⚠️ **Question ouverte, à trancher par Axel** : un accord donné AVANT ce jour
 couvrait une mesure plus étroite (pages vues et référent). La finalité est identique, mais les
 catégories de données s'élargissent ; redemander le consentement lèverait le doute.
+
+### 2026-10-18 · prospection commerciale B2B (T11) · **FOND (information)** · **aucun préavis**
+
+| Document | Empreinte |
+|---|---|
+| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `8c6f1c9eeac79943` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `bc1b25fd9964d9b1` |
+
+**Ce qui a changé** (politique de confidentialité uniquement) : nouvelle section **10 bis
+« Prospection commerciale »** (en : « 10a. Business prospecting »), ancre stable `#prospection`,
+visée par chaque email de prospection. Elle donne à une personne prospectée, dont Cosmo n'a pas
+recueilli les données elle-même, l'information de l'article 14 : responsable, finalité, base
+légale (intérêt légitime, art. 6.1.f ; L34-5 CPCE en B2B), données, **source** (Sirene pour
+l'entreprise ; Dropcontact ou saisie de l'éditeur pour la personne), destinataires (Supabase en
+Irlande dans un projet séparé, IONOS en Allemagne, Anthropic aux États-Unis sous clauses types),
+durée (3 ans après le dernier contact), opposition (lien de désinscription, liste d'opposition
+conservée), droits, CNIL. Date de mise à jour portée au 18 octobre 2026. Aucune autre section
+touchée. Source du contenu : `docs/RGPD-REGISTRE.md` T11.
+
+**Aucun préavis** : la section ne concerne pas les utilisateurs et ne change rien à leurs
+traitements ; c'est une information due tout de suite (art. 14 RGPD), pas une clause.
+
+⚠️ **Ce que la section affirme et que rien ne garantit encore** : la durée de 3 ans n'est
+appliquée par aucun automatisme (purge à écrire), et les DPA Anthropic et IONOS ne sont pas
+archivés (ligne A5 de `LEGAL.md`). Le texte dit la règle ; le registre T11 dit l'écart.

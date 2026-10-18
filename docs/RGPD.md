@@ -18,6 +18,18 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 
 ## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → 85 → 87 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
 
+> ### ⚪ 2026-10-18 (soir) · 0 : la politique publiée couvre la prospection, le −1 de T11 reste
+>
+> **Même règle** : un débit ne se rembourse que lorsque le défaut est fermé et daté. Le −1 de T11
+> en porte quatre ; un seul est fermé ici.
+>
+> | Item | Effet | Constaté le 2026-10-18 (soir) |
+> |---|---|---|
+> | ✅ T11 · la politique publiée ne disait rien de la prospection | 0 | section **10 bis « Prospection commerciale »**, ancre `#prospection`, fr et en ; information de l'art. 14 complète, source des données comprise. Journal légal daté (`LEGAL-JOURNAL.md`) |
+> | 🟠 T11 · purge à 3 ans, sauvegarde, DPA Anthropic et IONOS | 0 | **toujours ouverts** : trois des quatre manques restent, le −1 aussi |
+>
+> **87 → 87.**
+
 > ### ⚪ 2026-10-18 · 0 : le plafond `V-1` tombe, un traitement neuf ouvre ses propres manques
 >
 > **Même règle** : un défaut ne se rembourse que corrigé et daté. Dernière passe avant

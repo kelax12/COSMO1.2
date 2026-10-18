@@ -139,6 +139,25 @@ const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
       { kind: 'cookie-settings' },
     ],
   },
+  {
+    // 🔴 Ancre visée par chaque email de prospection : ne jamais la renommer.
+    // Source de vérité du contenu : `docs/RGPD-REGISTRE.md` T11.
+    id: 'prospection',
+    title: 'privacy.s10bis.title',
+    blocks: [
+      { kind: 'p', key: 'privacy.s10bis.intro' },
+      {
+        kind: 'ul',
+        items: [
+          'privacy.s10bis.li1', 'privacy.s10bis.li2', 'privacy.s10bis.li3',
+          'privacy.s10bis.li4', 'privacy.s10bis.li5', 'privacy.s10bis.li6',
+          'privacy.s10bis.li7', 'privacy.s10bis.li8',
+        ],
+      },
+      { kind: 'p', key: 'privacy.s10bis.p1' },
+      { kind: 'p', key: 'privacy.s10bis.p2' },
+    ],
+  },
   { title: 'privacy.s11.title', blocks: [{ kind: 'p', key: 'privacy.s11.p1' }] },
   { title: 'privacy.s12.title', blocks: [{ kind: 'p', key: 'privacy.s12.p1' }] },
 ];
