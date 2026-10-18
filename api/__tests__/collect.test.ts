@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import handler from '../collect';
+import handler from '../collect.js';
 
 /**
  * Le collecteur est le SEUL chemin d'écriture de la mesure d'audience depuis

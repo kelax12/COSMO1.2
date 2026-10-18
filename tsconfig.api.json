@@ -6,13 +6,14 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
     "skipLibCheck": true,
     "types": ["node"],
 
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
+    /* Résolution de Node, celle du contrôle TypeScript que Vercel joue sur
+       `api/` au build (relevé le 2026-10-18 : TS2835 sur un import sans
+       extension, invisible en mode `bundler`). Même règle des deux côtés. */
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
