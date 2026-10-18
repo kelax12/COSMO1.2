@@ -50,7 +50,9 @@ describe('SupabaseTasksRepository — lecture', () => {
     expect(select).not.toContain('collaborator_validations');
     expect(select).not.toBe('*');
     // Colonnes indispensables aux vues liste
-    for (const col of ['id', 'name', 'priority', 'deadline', 'completed', 'user_id']) {
+    // status + health : la colonne État du TaskTable les lit ; absentes, la relecture
+    // qui suit la mise à jour optimiste effaçait l'état choisi au bout de ~2 s.
+    for (const col of ['id', 'name', 'priority', 'deadline', 'completed', 'user_id', 'status', 'health']) {
       expect(select).toContain(col);
     }
   });
