@@ -68,6 +68,8 @@ type TaskTableProps = {
   listFilterActive?: boolean;
   /** Liste, catégorie(s) OU recherche active — gate « Voir les terminées ». */
   hasActiveFilter?: boolean;
+  /** Filtres actifs de la page, rendus au bout de la rangée des pastilles. */
+  quickFiltersTrailing?: React.ReactNode;
 };
 
 const TaskTable: React.FC<TaskTableProps> = ({
@@ -86,6 +88,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   onShowCompletedChange,
   listFilterActive = false,
   hasActiveFilter = false,
+  quickFiltersTrailing,
 }) => {
   const { t, tp } = useT('tasks');
 
@@ -375,6 +378,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         orgId={orgId}
         scope={scopeFilter}
         onScope={setScopeFilter}
+        trailing={quickFiltersTrailing}
       />
 
       {/* Bandeau « En retard » (#9) : visible dès qu'une tâche a dépassé sa
