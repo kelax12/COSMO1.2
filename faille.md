@@ -13,7 +13,11 @@ et les **règles durables** tirées des audits.
 - Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-10-02** au soir, et avant elle **2026-10-01** (mig.
   `204`, `207`-`210` appliquées et relues au catalogue, cinq Edge Functions redéployées, `Edge deploy
   drift` vert, audit A-1 des 23 tables `160`-`207` acteur par acteur, § « Surface entreprise »),
-  puis `212`. ✅ **Remesuré le 2026-10-16** : advisors `11 / 82 / 2 / 1` inchangés, 77 tables,
+  puis `212`. ✅ **Remesuré le 2026-10-18** (dernière passe avant l'acquisition) : advisors
+  **`13 / 85 / 3 / 1`**, `Posture` rouge depuis 09:29 UTC, les six objets des mig. `221` et `222`
+  relus au catalogue, dont `track_hit` (finding **`TR-1`**) ; 79 tables toutes sous RLS, 205
+  policies, ledger 172, 12 Edge Functions inchangées ; 0 alerte CodeQL et Dependabot. Note **87 → 86**.
+  ✅ **Remesuré le 2026-10-16** : advisors `11 / 82 / 2 / 1` inchangés, 77 tables,
   205 policies, ledger 170, 12 Edge Functions ; `M-68` vérifié en base (0 session et 0 jeton
   antérieurs au chiffrement) ; AM-6 rejoué en CI ; une alerte CodeQL neuve (n° 14). Note **82 → 86**.
   ✅ **Remesuré le 2026-10-15** : advisors **`11 / 82 / 2 / 1`** (égaux à la référence
@@ -47,7 +51,26 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → **87 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → **2026-10-16 soir**)
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → **86 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → **2026-10-18**)
+
+> ### 🟠 2026-10-18 · −1 : une écriture anonyme dont seul le plafond global tient
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Dernière passe avant l'acquisition. Mesures du 2026-10-18 : CI
+> de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea`, production
+> (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), alertes GitHub. Tableau de
+> bord : [`docs/README.md`](./docs/README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | 🟠 `TR-1` · `track_hit` (mig. `222`) appelable par `anon` sans passer par le collecteur | **−1** | § [`TR-1`](#-tr-1--la-mesure-daudience-accepte-3-000-écritures-anonymes-par-minute-2026-10-18) ci-dessous. Le collecteur filtre origine, taille et robots ; la RPC se joint **sans lui** avec la clé publique, et prend l'IP **dans le corps** : le plafond par visiteur se contourne, reste le global, **3 000 par minute**, soit 4,3 M lignes par jour gardées 13 mois, pour une base de **24 Mo** en plan Free (plafond 500 Mo). L'autre écriture anonyme, `record_demo_visit`, plafonne à 60 par minute |
+> | 🔴 `Posture` rouge depuis le 2026-10-18 à 09:29 UTC (run `39115503952`, alerte poussée) | 0 | `11 / 82 / 2 / 1` → **`13 / 85 / 3 / 1`**. Les six objets, **relus un par un au catalogue** : `get_admin_revenue` (mig. `221`) et `get_admin_traffic` (`222`) testent `is_admin()` en tête, fermées à `anon` ; `traffic_hits` et `traffic_salts` sous RLS sans policy, ACL réduite à `postgres` et `service_role` ; `track_hit`, c'est `TR-1`. **Pas de recalage** : il attend la décision sur `TR-1`, sinon la référence absorberait le seul objet qui pose question. Non débité à part : la garde a parlé, son objet l'est |
+> | ✅ `V-1` refermé, script de mesure tiers débranché (`23a12fdb`) | 0 | origine retirée de `script-src` et `connect-src`, relu dans l'en-tête CSP **servi** en production. Pas de débit en cours depuis la mitigation du 2026-09-01 : rien à rembourser |
+> | `M-32` · `baggage` / `sentry-trace` vers les Edge Functions (`ef694ac5`) | 0 | témoin `src/sentry-propagation.guard.test.ts` |
+> | Alertes GitHub | 0 | **0** CodeQL, **0** Dependabot ; secret scanning : la seule n° 1, connue, inerte ; dépôt `public` |
+> | Production | 0 | **79** tables (77 et les deux de la `222`), toutes sous RLS, **205** policies, ledger **172** (dernière `20261017230922`) ; **12** Edge Functions, versions inchangées, `Edge deploy drift` vert le 10-18 ; job `cosmo-purge-traffic` actif ; collecteur en ligne : 405 en GET, 403 sans origine, 400 sur un type inconnu, trois sondes qui n'écrivent rien |
+>
+> **87 → 86.**
 
 > ### 🟢 2026-10-16 (soir) · +1 : plus aucune alerte de code ouverte
 >
@@ -146,6 +169,41 @@ workflow (« les artefacts d'un run exigent une authentification ») : corrigée
 `restore-drill.yml`, qui doit désormais **déchiffrer** le dump, est désactivé depuis le 2026-09-01 :
 le chemin de récupération chiffré n'a été parcouru que par `db-backup` lui-même (aller-retour
 sha256 avant dépôt), jamais par une restauration.
+
+## 🟠 TR-1 · la mesure d'audience accepte 3 000 écritures anonymes par minute (2026-10-18)
+
+**Trouvé par la passe du 2026-10-18**, en lisant le rouge de `Posture`
+(`anon_security_definer_function_executable` 2 → 3).
+
+`track_hit(p jsonb)` (mig. `222`) est `SECURITY DEFINER` et exécutable par `anon`. C'est voulu
+par l'en-tête de la migration : le collecteur `api/collect.ts` l'appelle avec la clé **publique**.
+Mais ce que vérifie le collecteur se contourne en appelant la RPC directement, et la RPC prend
+`ip` et `ua` **dans le corps de la requête** :
+
+| Défense | Ce qu'elle tient | Ce qui la contourne |
+|---|---|---|
+| Même origine, corps ≤ 2 Ko, robots écartés (`api/collect.ts`) | les appels passés par `/api/collect` | `POST /rest/v1/rpc/track_hit` avec la clé publique |
+| 60 évènements par visiteur et par minute | un vrai navigateur | un `ip` différent à chaque appel : `visitor` change avec lui |
+| 3 000 évènements par minute au total | ✅ tient | rien, mais c'est **4,3 M lignes par jour**, gardées **13 mois** |
+
+**Effet.** Aucune fuite : les deux tables ne se lisent que par `service_role` et par
+`get_admin_traffic` (`is_admin()`). Le risque est la **disponibilité** : la base pèse **24 Mo**
+(relu le 2026-10-18), le plan Free plafonne à 500 Mo, et une base pleine passe en lecture seule,
+**toute l'application avec**. À quelques centaines d'octets la ligne, index compris (estimation,
+non mesurée), quelques heures d'appels y suffisent. Second effet : des statistiques d'acquisition
+empoisonnables, au moment précis où elles vont servir.
+
+**Correctif proposé, dans cet ordre :**
+
+1. le collecteur appelle la RPC avec un secret **serveur** (variable Vercel sans préfixe `VITE_`,
+   jamais servie au navigateur), puis `REVOKE EXECUTE ON FUNCTION public.track_hit(jsonb) FROM
+   anon, authenticated` ;
+2. plafond global ramené à l'ordre de grandeur réel (quelques centaines par minute), plus un
+   plafond journalier ;
+3. recaler `Posture` par `--update` : attendu **`13 / 84 / 2 / 1`**, les deux fonctions de plus
+   que la référence étant `get_admin_revenue` et `get_admin_traffic`, relues.
+
+❌ Ne pas recaler `Posture` avant le point 1 : la référence absorberait `track_hit` sans décision.
 
 ## 🟠 G-2 · aucune vérification de l'adresse email à l'inscription (2026-08-27)
 
@@ -469,6 +527,12 @@ relit contre la console et contre `docs/ROADMAP-60J.md`, jamais de mémoire.
 
 Section référencée par [`CLAUDE.md`](./CLAUDE.md) — elle n'existait plus depuis la refonte
 documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
+
+> 🟠 **2026-10-18, avant l'acquisition : [`TR-1`](#-tr-1--la-mesure-daudience-accepte-3-000-écritures-anonymes-par-minute-2026-10-18)**
+> (écriture anonyme à 3 000 par minute, `Posture` rouge en attendant). La liste complète des
+> gestes avant l'acquisition, code et mains d'Axel, est dans
+> [`docs/README.md`](./docs/README.md) § « Mise à jour du 2026-10-18 ». Le bandeau `BK-1`
+> ci-dessous est à jour : `M-68`, `M-69` et `M-70` faits ou décidés le 2026-10-16, reste `M-71`.
 
 > 🔴 **EN TÊTE depuis le 2026-10-13 : [`BK-1`](#-bk-1--sauvegardes-de-la-base-en-clair-dans-un-dépôt-public--contenu-le-2026-10-13-2-gestes-ouverts).**
 > Avant tout autre geste de déploiement : révoquer les sessions et changer le mot de passe de la

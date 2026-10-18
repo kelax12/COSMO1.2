@@ -1,4 +1,4 @@
-<!-- note-audit: note=97 -->
+<!-- note-audit: note=96 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,25 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **97 / 100** au 2026-10-16, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **96 / 100** au 2026-10-18, au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → **97 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → 97 → **96 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18)
+
+> ### 🟠 2026-10-18 · −1 : le premier code serveur du dépôt n'est vu par aucune garde
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Dernière passe avant
+> l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | ✅ CI de `main` à `e69cb729` | 0 | cinq jobs verts : **346** fichiers, **3 890** tests ; outillage 29 / 501 ; RLS 8 / 151 ; `e2e` **255 verts, 2 instables** (deux parcours démo `mobile-safari`), 4 sautés, en 23,6 min |
+> | ✅ `lint-test-build` rouge sur `8b253a1b` et `5f8ecbdb` | 0 | une seule garde, `scripts/cosmo/api.test.mjs` : `8b253a1b` ajoute `status,health` à `TASK_LIST_COLUMNS` sans reporter la copie du CLI. La garde anti-dérive a mordu au premier run, l'alerte est partie sur Discord. Corrigé par cette passe (`15d40bea`), rejoué seul 46 / 46, puis **vert en CI** (run `39156293593`). Rouge 2 h 30 : non débité |
+> | 🟠 `api/collect.ts` · hors `tsc` et hors tests | **−1** | premier fichier de `api/` (fonctions Vercel), créé le 2026-10-18 et exécuté en production. `tsconfig.app.json` n'inclut que `src`, `tsconfig.node.json` que `vite.config.ts` : `tsc -b` ne le compile pas. `vitest.config.ts` ne ramasse que `src/**`, `scripts/**` et `eslint-rules/**` : un test posé à côté ne tournerait jamais. Ses trois défenses (même origine, 2 Ko, robots) n'ont aucun test, seul ESLint le lit. Et la chaîne complète n'a jamais été vue écrire : `traffic_hits` vaut **0** ligne en production ~19 h après le branchement, la preuve `222` ne joue que la RPC |
+> | Planifiés | 0 | `Posture` rouge depuis 09:29 UTC : la garde a parlé, son objet est débité dans [`../faille.md`](../faille.md) (`TR-1`). Verts le 10-18 : `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest` (nouveau, `d9f10f4a`). `Sabotages` vert le 10-16. `restore-drill` : `dump-check` vert le 10-15, `drill` refusé faute de confirmation, comme prévu. `Weekly digest` pas encore joué (premier passage le 2026-10-19 à 7 h UTC). `vendor-watch.yml` retiré avec son fournisseur (`23a12fdb`) |
+>
+> **97 → 96.**
 
 > ### 🟢 2026-10-16 · +5 : `main` entièrement vert, et les deux instruments éteints rallumés
 >

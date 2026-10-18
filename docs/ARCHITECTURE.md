@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **93 / 100** au 2026-10-16, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **93 / 100** au 2026-10-18, au tableau de bord de [`README.md`](./README.md).
 
 # Architecture — invariants, dette et vérification
 
@@ -22,7 +22,19 @@ dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → 93 → 93 → 92 → 93 → 90 → **93 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16)
+## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → 93 → 93 → 92 → 93 → 90 → 93 → **93 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18)
+
+> ### ⚪ 2026-10-18 · 0 : un dossier neuf, `api/`, à déclarer
+>
+> Dernière passe avant l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | 🟠 `api/` · premier arbre de code serveur hors `src/` (`57c7fa88`) | 0 | hors des deux `tsconfig`, donc hors de `tsc -b`. Débité **une fois**, dans [`TESTING.md`](./TESTING.md). Un `tsconfig.api.json` référencé par `tsconfig.json` le ferait entrer |
+> | Gardes de structure | 0 | `architecture.guard`, `orphan-hooks`, cycles : vertes en CI à `e69cb729` et `15d40bea` |
+> | `src/lib/traffic.ts` (218 l.) remplace `src/lib/audience.ts` (200 l.) | 0 | même point de montage (`main.tsx`), mêmes quatre conditions, relues avant **chaque** envoi |
+>
+> **93 → 93.**
 
 > ### 🟢 2026-10-16 · +3 : les trois gardes de structure de nouveau vertes
 >
