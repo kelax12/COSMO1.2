@@ -269,6 +269,16 @@ const TasksPage: React.FC = () => {
     return <TasksErrorState error={tasksError as Error} onRetry={() => refetchTasks()} />;
   }
 
+  const activeFiltersProps = {
+    selectedListId,
+    lists,
+    selectedCategories,
+    searchTerm,
+    onClearList: clearListFilter,
+    onClearCategories: () => setSelectedCategories([]),
+    onClearSearch: () => setSearchTerm(''),
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -403,17 +413,13 @@ const TasksPage: React.FC = () => {
                 </motion.div>
               )}
 
-              {/* Ce qui réduit la liste, dit à l'écran (#35) — cf. ActiveFiltersRow. */}
+              {/* Ce qui réduit la liste, dit à l'écran (#35) — cf. ActiveFiltersRow.
+                  Vue Liste sur desktop : rendue au bout de la rangée Favoris /
+                  Terminées (cf. `activeFilters` passé à TaskTable), pas ici. */}
               {!showAddTaskForm && (
                 <ActiveFiltersRow
-                  selectedListId={selectedListId}
-                  lists={lists}
-                  selectedCategories={selectedCategories}
-                  searchTerm={searchTerm}
-                  onClearList={clearListFilter}
-                  onClearCategories={() => setSelectedCategories([])}
-                  onClearSearch={() => setSearchTerm('')}
-                  className={hiddenWhileSearchingFlex}
+                  {...activeFiltersProps}
+                  className={`${hiddenWhileSearchingFlex} ${tasksView === 'board' || selectingTasksForListId ? '' : 'md:hidden'}`}
                 />
               )}
 
@@ -455,6 +461,7 @@ const TasksPage: React.FC = () => {
                   searchTerm={searchTerm}
                   listFilterActive={!!selectedListId}
                   hasActiveFilter={!!selectedListId || selectedCategories.length > 0 || searchTerm.trim() !== ''}
+                  quickFiltersTrailing={<ActiveFiltersRow {...activeFiltersProps} className="!mb-0" />}
                 />
                 )}
               </motion.div>
