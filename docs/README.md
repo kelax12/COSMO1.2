@@ -62,6 +62,113 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-18 · **dernière passe avant l'acquisition : 964 → 962**
+
+Consigne d'Axel : « une dernière vérification de tous les audits, une dernière remise à jour des
+scores, parce qu'on va commencer l'acquisition ». **Quinze commits** relus depuis la note du
+2026-10-16 au soir (`2cd5b895` → `a82c28f8`), plus `15d40bea`, poussé par cette passe. Même
+méthode que les 10-15 et 10-16 : CI réelle de `main`, production (advisors par l'API, catalogue,
+cron, ledger, Edge Functions, sondes HTTP du site et du collecteur), dépôt à `HEAD`. Même règle :
+un défaut ne se rembourse que corrigé **et vu vert en CI**. Pas de rejeu local de
+`lint-test-build` : depuis le 2026-10-16 chaque étape joue après un rouge, un run vert couvre les
+23 étapes.
+
+### Ce que la CI et la production disent
+
+| Source | Verdict | Mesuré le 2026-10-18 |
+|---|---|---|
+| `CI` à `e69cb729` (run `39139204925`) | ✅ cinq jobs verts | 346 fichiers, **3 890** tests ; outillage 29 / 501 ; RLS 8 / 151 ; `e2e` **255 verts, 2 instables**, 4 sautés (23,6 min) ; Lighthouse mobile LCP **1,36 à 1,52 s** sur 8 URLs |
+| `CI` à `8b253a1b` et `5f8ecbdb` | 🔴 puis ✅ | une seule garde rouge, `scripts/cosmo/api.test.mjs` : la copie des colonnes du CLI n'avait pas suivi `status,health`. **Corrigé par cette passe** (`15d40bea`), `lint-test-build` vert (run `39156293593`) ; `e2e` de ce run en cours à l'écriture |
+| `Posture` (run `39115503952`) | 🔴 depuis 09:29 UTC | advisors **`13 / 85 / 3 / 1`** contre `11 / 82 / 2 / 1` : les six objets des mig. `221` et `222`, relus au catalogue. Cinq sont sains, le sixième est `TR-1` |
+| Autres planifiés | ✅ | `Edge deploy drift`, `Migration coverage`, `db-backup` chiffré, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest` (nouveau) ; `Visual` et `CodeQL` verts à chaque push ; aucun workflow désactivé |
+| Alertes GitHub | ✅ | 0 CodeQL, 0 Dependabot, secret scanning : la seule n° 1, connue ; dépôt `public` ; **13** PR ouvertes |
+| Base | | **79** tables toutes sous RLS, **205** policies, ledger **172** (`222` en dernier), 12 Edge Functions inchangées, **24 Mo**, **0** paiement |
+| Site | ✅ | `/`, `/entreprise-presentation/` (titre et canonical justes dans le HTML servi), `/en/`, `/blog/`, `sitemap.xml`, `robots.txt` en 200 ; CSP sans origine tierce de mesure ; collecteur `/api/collect` en ligne (405, 403, 400 sur trois sondes qui n'écrivent rien) |
+
+### 🔴 Trouvé en chemin : la mesure d'audience peut remplir la base
+
+`TR-1`, détail dans [`../faille.md`](../faille.md). `track_hit` est appelable par `anon` **sans
+passer par le collecteur**, et prend l'IP dans le corps de la requête : le seul plafond qui tient
+est global, **3 000 lignes par minute**, soit 4,3 M par jour gardées 13 mois. La base pèse 24 Mo,
+le plan Free plafonne à 500 Mo, et une base pleine passe en lecture seule : **toute l'application
+tomberait, pas seulement la mesure**. L'autre écriture anonyme (`record_demo_visit`) plafonne à
+60 par minute. Rien n'a fui : les deux tables ne se lisent que derrière `is_admin()`.
+
+Et la chaîne n'a encore **jamais été vue écrire** : `traffic_hits` vaut **0** ligne en production
+à 18 h 47 UTC, ~19 h après son branchement. Explication probable : peu de trafic, et une mesure qui
+n'écrit qu'après « accepter ». Mais rien ne l'a prouvé, et `api/collect.ts`, premier code serveur
+du dépôt, est hors de `tsc -b` et hors de tout test.
+
+### Les notes
+
+| Audit | 10-16 soir | **10-18** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 87 | **86** | **−1** | `TR-1` (−1) ; `V-1` refermé, sans débit en cours (0) ; `Posture` rouge non débité à part, son objet l'est |
+| [Tests / CI](./TESTING.md) | 97 | **96** | **−1** | `api/collect.ts` hors `tsc` et hors tests, chaîne jamais vue écrire (−1) ; le rouge du CLI, corrigé et vu vert dans la passe (0) |
+| [RGPD](./RGPD.md) | 87 | **87** | 0 | `V-1` levé, le plafond de cette note depuis le 09-14 (+1) ; T11 prospection : durée non appliquée, aucune sauvegarde, deux DPA, politique muette (−1) |
+| [Architecture](./ARCHITECTURE.md) | 93 | **93** | 0 | `api/` hors des deux `tsconfig`, débité une fois, en Tests |
+| [Performance](./PERFORMANCE.md) | 96 | **96** | 0 | chemin critique 305,4 ko (+0,9) ; TBT mobile de la page entreprise **399 ms**, le chantier reste ouvert |
+| [Scalabilité](./SCALABILITY.md) | 91 | **91** | 0 | croissance de `traffic_hits` débitée une fois, en Sécurité |
+| [i18n](./I18N.md) | 88 | **88** | 0 | catalogues légaux modifiés en `fr` et `en` dans les mêmes commits |
+| [SEO](./SEO.md) | 79 | **79** | 0 | production relue, SEO Lighthouse 100 sur 8 / 8 ; l'autorité de domaine reste le seul levier |
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | **82** | 0 | `/guide/` 92 et page entreprise 93 en Lighthouse, audits toujours à identifier |
+| [UI / UX](./UI-PATTERNS.md) | 86 | **86** | 0 | `Visual` vert ; « l'État disparaît après 2 s » vu et corrigé le même jour |
+| [Mobile / DA](./MOBILE.md) | 78 | **78** | 0 | WebKit : 2 instables sur 255, comme au 10-16 |
+
+**964 → 962 : −3 débités, +1 remboursé.** Neuf notes ne bougent pas, aucune ne monte. Les trois
+points débités viennent tous du 2026-10-18, et des deux outils de l'acquisition elle-même : la
+mesure d'audience maison (`57c7fa88`, `3438ff7e`) et la prospection par email (`563cb8a0`,
+`e69cb729`). Le point remboursé aussi : débrancher le fournisseur tiers (`23a12fdb`).
+
+### ✅ Avant l'acquisition : la liste
+
+> Ordre de priorité, pas de calendrier. « Axel » = un geste que le code ne peut pas faire
+> (détail dans [`../a-faire-manuel.md`](../a-faire-manuel.md)). ⚠️ Rien ici n'est un avis
+> juridique.
+
+#### 🔴 Avant le premier email de prospection ou la première campagne
+
+| # | À faire | Qui | Pourquoi |
+|---|---|---|---|
+| 1 | **T'immatriculer** (`M-73`, `M-01`), puis porter le SIREN aux mentions légales (`M-05`) | Axel | prospecter avec une page de tarifs : activité présumée lucrative (C. trav. L8221-4). Le cold email en est la forme la plus visible |
+| 2 | **Téléphone de l'éditeur** aux mentions légales (`M-72`, moitié restante : l'adresse de domiciliation est en ligne depuis `ab0ad655`) | Axel | LCEN art. 1-1 : nom, adresse **et** téléphone |
+| 3 | **Chaque email de prospection** : fonction professionnelle visée, identité de l'expéditeur, source de l'adresse, finalité, lien de désinscription simple et gratuit, lien vers une notice. Et **une section « Prospection » dans la politique de confidentialité**, qui n'en dit rien aujourd'hui | Axel (modèles), code (politique) | art. 14 RGPD et L34-5 CPCE. Les modèles vivent dans le dépôt `analytics`, non relus ici ([`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) T11) |
+| 4 | **Fermer `TR-1`** : collecteur avec un secret serveur, `REVOKE` de `track_hit` pour `anon` et `authenticated`, plafond global réaliste ; puis recaler `Posture` (attendu `13 / 84 / 2 / 1`) | code | une base pleine arrête toute l'application. Et tant que rien n'est décidé, `Posture` sonne chaque jour sur Discord : une alerte qui sonne chaque matin pour la même chose finit par ne plus être lue, au moment où on en aura le plus besoin |
+| 5 | **Voir la mesure écrire une fois** : fenêtre privée sur `thecosmo.app`, accepter, deux pages, un clic de bouton, puis `/admin` (trafic) | Axel | `traffic_hits` vaut 0 : acquérir sans mesure, c'est dépenser sans savoir où |
+| 6 | **Jouer l'attribution de bout en bout** : une inscription par Google ET une par email, chacune avec `?ref=` | Axel | ouvert depuis le 2026-09-30, jamais joué ; le correctif Google (mig. `217`) n'a jamais été vu porter une source ([`../faille.md`](../faille.md), ordre n° 4 ; [`ACQUISITION.md`](./ACQUISITION.md) § 3) |
+
+#### 🟠 Dans la première semaine, avant que le volume monte
+
+| # | À faire | Qui | Pourquoi |
+|---|---|---|---|
+| 7 | **`M-71`** : ranger la phrase secrète des sauvegardes, supprimer le fichier (toujours présent le 2026-10-18) | Axel | sans elle aucune sauvegarde ne se relit ; en clair sur le disque, elle les ouvre toutes |
+| 8 | **`M-74`** : vérifier le plan Vercel (illisible par l'API, relu encore ce jour) | Axel | Hobby = usage non commercial, hors DPA |
+| 9 | **DPA** (`M-64`) : Sentry (2 min), Resend, Vercel, et les deux neufs de T11, **Anthropic** et **IONOS** | Axel | art. 28 ; un acheteur B2B les demandera |
+| 10 | **T11, purge et sauvegarde** : durée de 3 ans appliquée par un job, export chiffré du projet `cosmo-prospection` | code (dépôt `analytics`) | ni l'une ni l'autre n'existe aujourd'hui |
+| 11 | **`M-63` et `M-75`** : préavis de 30 jours des CGU aux comptes existants | Axel | sans lui, les clauses 3.3, 6.3 et 9 ne sont pas opposables aux anciens inscrits |
+| 12 | **`M-27`** : un email de test vers Gmail ET Outlook, depuis les boîtes IONOS de prospection ET depuis `send.thecosmo.app` | Axel | un DNS vert ne prouve pas la délivrabilité ; une campagne qui atterrit en spam ne mesure rien |
+| 13 | **Page entreprise sur mobile** : TBT 399 ms, perf 86, la page où arrivent les prospects | code | seul défaut de performance ouvert, et il est sur la page de conversion |
+| 14 | **Lire les alertes** : salon Discord (`Daily digest` chaque matin), Sentry « api error non catalogué » (`M-36`) | Axel | le premier trafic réel est celui qui trouve les erreurs qu'aucun test ne voit |
+
+#### 🟡 Reportable sans risque, mais à savoir
+
+- **Facturation désarmée** (`ENTERPRISE_BILLING_ENFORCED = false`, clé Stripe de test). Ne jamais
+  la réarmer sans le médiateur (`M-03`), le portail de résiliation (E5), le bouton de rétractation
+  (E13) et la bascule live (`M-06` à `M-09`, `M-43`, `M-48`).
+- **Plan Supabase Free** : aucun PITR, le dump quotidien chiffré est la seule copie (`A-9`) ; la
+  protection des mots de passe compromis exige le plan Pro (`A-10`). À trancher au premier client
+  payant.
+- **Confirmation d'adresse email désactivée** (`G-2`, risque accepté) : à rouvrir au premier compte
+  injoignable ou au premier client payant.
+- **Annuaires et Search Console** (`M-23`, `M-24`) : le seul levier SEO, indépendant du reste.
+- **Marque et relecture juridique** (`M-66`, `M-67`) : après la bascule payante, décision du
+  2026-10-16.
+- **13 PR ouvertes**, dont la pile Dependabot : à trier.
+- **`M-77`** : la condition posée à la publication du rapport juridique du 2026-10-13 (`M-68`) est
+  remplie depuis le 2026-10-16. Le publier reste ta décision.
+
+---
+
 ## Mise à jour du 2026-10-16 (soir, plus tard) · **`BK-1` décidé : 962 → 964**
 
 Notification CNIL (`M-69`) soumise par Axel le 2026-10-16 au soir ; information des personnes (`M-70`) **décidée par écrit** : non effectuée, gravité déclarée « limitée ». Détail : [`RGPD.md`](./RGPD.md).

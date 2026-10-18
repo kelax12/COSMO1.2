@@ -8,11 +8,23 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **96 / 100** au 2026-10-16 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **96 / 100** au 2026-10-18, au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → **96 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir))
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → 96 → **96 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18)
+
+> ### ⚪ 2026-10-18 · 0 : rien n'a bougé, la page entreprise reste le chantier
+>
+> Dernière passe avant l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | Chemin critique | 0 | **305,4 ko** pour 323 (304,5 le 10-16) : +0,9 ko, `traffic.ts` monté par `main.tsx`. Entrée 67,7 / 70,5. En échange, plus aucune origine tierce de mesure à résoudre au chargement |
+> | Lighthouse mobile (`e69cb729`) | 0 | LCP **1,36 à 1,52 s** sur les 8 URLs. 🟠 `/entreprise-presentation/` : perf **86**, TBT **399 ms** (350 à 934 le 10-16). La page où arrivent les prospects reste la seule sous 97 |
+> | Lighthouse desktop | 0 | LCP 0,33 s partout, 1,1 s sur l'article OKR |
+>
+> **96 → 96.**
 
 > ### ⚪ 2026-10-16 (soir) · 0 : la page entreprise enfin mesurée, et son TBT est trop haut
 >

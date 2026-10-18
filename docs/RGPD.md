@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **87 / 100** au 2026-10-16 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **87 / 100** au 2026-10-18, au tableau de bord de [`README.md`](./README.md).
 
 # RGPD — inventaire, droits des personnes et dette
 
@@ -16,7 +16,21 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → 85 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → 85 → 87 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ⚪ 2026-10-18 · 0 : le plafond `V-1` tombe, un traitement neuf ouvre ses propres manques
+>
+> **Même règle** : un défaut ne se rembourse que corrigé et daté. Dernière passe avant
+> l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md). Registre et politique publiée relus.
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | ✅ `V-1` · fournisseur de mesure tiers sans DPA, « le plafond de cette note » depuis le 2026-09-14 | **+1** | débranché (`23a12fdb`) : plus de script tiers, plus d'identifiant `_a_cid` déposé. La mesure qui le remplace (T8, mig. `222`) ne stocke jamais l'IP, son sel du jour est supprimé le lendemain (job `cosmo-purge-traffic` actif, relu en base), le chemin est gardé sans query string, et elle n'écrit qu'après consentement |
+> | 🟠 T11 · prospection B2B par email, ouverte le 2026-10-18 | **−1** | déclarée au registre, et c'est juste. Mais quatre manques, écrits par le registre lui-même : la durée de 3 ans n'est appliquée par **aucun automatisme**, **aucune** sauvegarde, DPA **Anthropic** et **IONOS** non archivés ; et la politique de confidentialité publiée **ne dit pas un mot** de la prospection (aucune occurrence dans `legalPrivacy.json`). L'information due à une personne dont on n'a pas recueilli les données (art. 14) repose donc entièrement sur le texte de chaque email, qui vit dans le dépôt `analytics` et n'est pas relu ici |
+> | 🔴 `M-71` · phrase secrète des sauvegardes | 0 | **toujours présente** dans le coffre hors dépôt (existence relue le 2026-10-18, contenu non lu) |
+> | Production | 0 | **79** tables, toutes sous RLS ; `traffic_hits` à **0** ligne à 18 h 47 UTC |
+>
+> **87 → 87.**
 
 > ### ✅ 2026-10-16 (soir, plus tard) · +2 : `BK-1` décidé des deux côtés, le −2 est remboursé
 >
