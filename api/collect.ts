@@ -22,7 +22,7 @@
 // l'empreinte du jour (sel quotidien, supprimé le lendemain). Ils ne sont
 // jamais stockés, ni ici ni là-bas. L'IP est celle de `x-forwarded-for`, que
 // Vercel réécrit lui-même : un client ne peut pas la choisir.
-import { parseUserAgent } from '../src/lib/traffic-ua';
+import { parseUserAgent } from '../src/lib/traffic-ua.js';
 
 export const config = { runtime: 'edge' };
 
