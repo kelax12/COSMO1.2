@@ -265,8 +265,8 @@ catégories de données s'élargissent ; redemander le consentement lèverait le
 
 | Document | Empreinte |
 |---|---|
-| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `8c6f1c9eeac79943` |
-| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `bc1b25fd9964d9b1` |
+| `src/locales/fr/{legal,legalTerms,legalPrivacy,legalProspection}.json` | `1216fad0554d3cba` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy,legalProspection}.json` | `4d4125833662348d` |
 
 **Ce qui a changé** (politique de confidentialité uniquement) : nouvelle section **10 bis
 « Prospection commerciale »** (en : « 10a. Business prospecting »), ancre stable `#prospection`,
@@ -278,6 +278,13 @@ Irlande dans un projet séparé, IONOS en Allemagne, Anthropic aux États-Unis s
 durée (3 ans après le dernier contact), opposition (lien de désinscription, liste d'opposition
 conservée), droits, CNIL. Date de mise à jour portée au 18 octobre 2026. Aucune autre section
 touchée. Source du contenu : `docs/RGPD-REGISTRE.md` T11.
+
+⚠️ **Quatrième catalogue** : le texte de la section vit dans `legalProspection.json` (clé de tête
+`prospection`), chargé par la même page. Dans `legalPrivacy`, il faisait passer ce chunk de 11,6
+à 13,4 ko gzip (fr + en) pour un plafond de 12,2 (`check:bundle`, run `39159249533`). La garde
+réunit désormais **quatre** catalogues par langue ; l'empreinte ci-dessus est calculée sur les
+quatre. Une première empreinte de ce même jour (`8c6f1c9eeac79943` / `bc1b25fd9964d9b1`, section
+dans `legalPrivacy`) n'a jamais quitté la branche.
 
 **Aucun préavis** : la section ne concerne pas les utilisateurs et ne change rien à leurs
 traitements ; c'est une information due tout de suite (art. 14 RGPD), pas une clause.

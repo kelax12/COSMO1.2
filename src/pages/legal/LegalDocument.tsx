@@ -36,7 +36,11 @@ import ManageCookiesButton from '@/components/ManageCookiesButton';
  * (`legalTerms`, `legalPrivacy`, et `legal` pour les mentions), et sa page
  * passe le traducteur qui va avec (`text`).
  */
-export type LegalKey = KeyOf<'legal'> | KeyOf<'legalTerms'> | KeyOf<'legalPrivacy'>;
+export type LegalKey =
+  | KeyOf<'legal'>
+  | KeyOf<'legalTerms'>
+  | KeyOf<'legalPrivacy'>
+  | KeyOf<'legalProspection'>;
 
 /** Un bloc de contenu à l'intérieur d'une section. */
 export type LegalBlock<K extends LegalKey = LegalKey> =

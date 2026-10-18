@@ -115,20 +115,6 @@
       "consentLi3": "Un identifiant aléatoire d'appareil posé au lancement de la démonstration, pour compter les essais",
       "consentLi4": "Deux compteurs de la démonstration (durée et nombre de créations), qui choisissent le moment de vous proposer un compte. Sans votre accord, ils restent en mémoire et disparaissent au rechargement de la page"
     },
-    "s10bis": {
-      "title": "10 bis. Prospection commerciale",
-      "intro": "Cette section s'adresse aux professionnels que Cosmo contacte par e-mail pour leur présenter son offre aux entreprises, sans qu'ils lui aient eux-mêmes transmis leurs coordonnées (article 14 du RGPD). Ces personnes ne sont pas, à ce titre, des utilisateurs de Cosmo, et leurs données sont tenues à part de celles des comptes.",
-      "li1": "**Responsable du traitement :** Axel Longatte, éditeur de Cosmo, joignable à [contact@thecosmo.app](mailto:contact@thecosmo.app)",
-      "li2": "**Finalité :** vous présenter par e-mail l'offre de Cosmo pour les entreprises et suivre la suite donnée à ces messages (réponse, intérêt, désinscription)",
-      "li3": "**Base légale :** l'intérêt légitime de Cosmo à faire connaître son offre (article 6.1.f du RGPD). Entre professionnels, un e-mail de prospection n'exige pas de consentement préalable lorsqu'il se rapporte à la fonction professionnelle de la personne contactée et qu'il offre un moyen simple et gratuit de s'y opposer (article L34-5 du Code des postes et des communications électroniques)",
-      "li4": "**Données traitées :** adresse e-mail professionnelle, nom, entreprise, poste, origine du contact, date du dernier contact, étape du suivi, notes internes, historique des e-mails envoyés et, si vous répondez, l'objet et le début de votre réponse (2 000 premiers caractères)",
-      "li5": "**Origine des données :** les informations sur l'entreprise (nom, numéro SIREN, secteur d'activité, tranche d'effectif, ville) proviennent du répertoire public Sirene de l'INSEE, consulté par l'API Recherche d'entreprises de l'État. Vos nom, poste et adresse e-mail professionnelle proviennent d'un service d'enrichissement de données professionnelles (Dropcontact) ou ont été saisis par l'éditeur. Aucun dirigeant n'est repris du répertoire Sirene",
-      "li6": "**Destinataires :** Supabase, qui héberge ces données dans un projet distinct de celui de l'application, en Irlande ; IONOS, qui héberge les boîtes d'envoi, en Allemagne ; Anthropic, aux États-Unis, qui classe automatiquement les réponses reçues à partir de leur objet et de leur texte. Ce transfert hors de l'Union est encadré par les clauses contractuelles types de la Commission européenne (article 46 du RGPD). Ces données ne sont ni vendues ni cédées",
-      "li7": "**Durée de conservation :** 3 ans après le dernier contact, puis effacement",
-      "li8": "**Droit d'opposition :** chaque e-mail contient un lien de désinscription, et une réponse demandant l'arrêt suffit aussi. Votre adresse est alors inscrite sur une liste d'opposition, que la base de données vérifie avant tout envoi. Cette inscription ne sert qu'à ne plus jamais vous recontacter : c'est pourquoi elle est conservée, même après l'effacement du reste de vos données",
-      "p1": "Vous disposez aussi, dans les conditions prévues aux articles 15 à 21 du RGPD, des droits d'accès (y compris aux notes vous concernant), de rectification, d'effacement et de limitation. Pour les exercer, ou pour toute question sur ce traitement : [contact@thecosmo.app](mailto:contact@thecosmo.app). Nous répondons dans un délai d'**un mois**.",
-      "p2": "Vous pouvez également introduire une réclamation auprès de la **CNIL** : [www.cnil.fr](https://www.cnil.fr)"
-    },
     "s11": {
       "title": "11. Modifications",
       "p1": "Cette politique peut être mise à jour. En cas de modification substantielle, vous serez informé par e-mail ou via une notification dans l'application. La date de dernière mise à jour est indiquée en haut de cette page."

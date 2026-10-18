@@ -319,7 +319,7 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   traitement point par point, source des données comprise (Sirene pour l'entreprise ; Dropcontact
   ou saisie d'Axel pour la personne, d'après la skill `prospection` du dépôt `analytics`).
   🔴 Ne jamais renommer l'ancre. Modifier ce traitement, c'est modifier aussi cette section
-  (`src/locales/{fr,en}/legalPrivacy.json`, clés `privacy.s10bis.*`) et le journal légal.
+  (`src/locales/{fr,en}/legalProspection.json`, clés `prospection.*`) et le journal légal.
 
 ---
 
