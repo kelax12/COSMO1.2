@@ -294,11 +294,18 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   base **refuse** ensuite de la réinscrire (trigger, pas une règle d'interface). La glisser en
   corbeille l'y inscrit aussi.
 - **Où** : projet Supabase **séparé** `cosmo-prospection` (`eu-west-1`, Irlande), tables
-  `prospects`, `prospect_events`, `suppression_list`. RLS : un seul administrateur, session
-  `aal2` exigée. Migration dans le dépôt `analytics` (`supabase/migrations/`), qui n'est **pas**
-  public. Aucune donnée de prospect dans un fichier versionné.
-- **Destinataires** : Supabase. À venir, à porter ici **avant** mise en service : Google (lecture
-  de la boîte Gmail d'envoi, lot 2) et Anthropic (classement des réponses, lot 3).
+  `prospects`, `prospect_events`, `suppression_list`, et depuis le 2026-10-18 `send_log`
+  (journal d'envoi) et `inbound_messages` (réponses : objet et 2 000 premiers caractères).
+  RLS : un seul administrateur, session `aal2` exigée. Migrations dans le dépôt `analytics`
+  (`supabase/migrations/`), privé (vérifié sur GitHub le 2026-10-18). Aucune donnée de prospect
+  dans un fichier versionné.
+- **Envoi automatique (2026-10-18)** : des tâches programmées envoient les emails validés depuis
+  les boîtes IONOS d'Axel et lisent les réponses. Seul un message **rattaché à un prospect** est
+  lu jusqu'au corps et stocké ; le reste de la boîte n'est ni lu ni gardé. Envoi désactivé par
+  défaut, validation manuelle de chaque fiche, coupure d'urgence dans COSMO Analytics.
+- **Destinataires** : Supabase ; **IONOS** (hébergement des boîtes d'envoi, Allemagne) ;
+  **Anthropic** (classement de chaque réponse par Claude Haiku : objet et texte de la réponse,
+  seulement si la clé API est posée). 🔴 DPA Anthropic et IONOS à archiver (ligne A5 de `LEGAL.md`).
 - **Conservation** : **3 ans après le dernier contact** (recommandation CNIL), puis effacement.
   ⚠️ Au 2026-10-18 cette durée n'est appliquée par **aucun automatisme** ; la purge est à écrire.
   L'effacement d'un prospect emporte son journal (cascade) ; son inscription en opposition
@@ -321,6 +328,8 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
 | Cloudflare (Turnstile) | États-Unis | Idem, **non archivé**, seulement si la clé Turnstile est posée. Ajouté le 2026-09-24 |
 | GitHub | États-Unis | Sauvegardes **chiffrées**, clé hors de GitHub. Ajouté le 2026-10-13 |
 | Supabase Inc. | société non européenne | Données en Irlande ; accès possible des équipes pour maintenance et support, encadré par le DPA (clauses types acceptées avec les conditions). Ajouté le 2026-10-13 |
+| Anthropic | États-Unis | T11 seulement : texte des réponses de prospects, pour les classer. Clauses contractuelles types via le DPA du prestataire, **non archivé**. Ajouté le 2026-10-18 |
+| IONOS | Allemagne | T11 : boîtes d'envoi de la prospection. Aucun transfert. Ajouté le 2026-10-18 |
 
 > ❌ **Ligne A5 de [`LEGAL.md`](./LEGAL.md) : les DPA ne sont pas encore collectés et archivés.**
 > ⚠️ « Ils se signent en tant qu'entreprise » est **faux pour Sentry** (relu le 2026-10-13) : le
