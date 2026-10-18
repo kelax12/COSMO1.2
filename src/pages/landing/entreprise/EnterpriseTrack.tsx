@@ -12,6 +12,7 @@ import PricingSection from './PricingSection';
 import EnterpriseFaqSection from './EnterpriseFaqSection';
 import EnterpriseCta from './EnterpriseCta';
 import { ENTERPRISE_PRICES_SHOWN } from './free-offer';
+import BelowFold from '@/pages/landing/BelowFold';
 
 interface EnterpriseTrackProps {
   onDemo: () => void;
@@ -46,21 +47,29 @@ const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onRegister, o
       {/* Le sommaire du parcours vit dans le header de `LandingPage`. */}
       <EnterpriseHero onDemo={onDemo} onCtaRef={onHeroCtaRef} />
 
-      <ProblemSection />
+      {/* Tout ce qui suit le hero est monté au premier geste du visiteur,
+          comme sur le parcours perso. Le monter avec le hero coûtait UNE tâche
+          de ~500 ms à CPU ×4, dont la moitié en mise en page forcée par les
+          `useGSAP` des sections : l'essentiel du TBT mobile de
+          `/entreprise-presentation/` (399 ms en CI, 2026-10-18). Pourquoi et
+          déclencheurs : `BelowFold.tsx`. */}
+      <BelowFold>
+        <ProblemSection />
 
-      {/* Les cinq étapes de mise en place, dans l'ordre où on les fait. */}
-      <PyramidSection />
-      <ExecutionSection />
-      <ProjectsSection />
-      <OkrSection />
-      <ProgressSection />
-      <MoreFeaturesSection />
-      <SecuritySection />
-      {/* Prix masqués depuis le 2026-10-16 (`PRICES_VISIBLE`) : la section
-          reste intacte, elle n'est juste plus montée. */}
-      {ENTERPRISE_PRICES_SHOWN && <PricingSection onRegister={onRegister} />}
-      <EnterpriseFaqSection />
-      <EnterpriseCta onDemo={onDemo} onRegister={onRegister} />
+        {/* Les cinq étapes de mise en place, dans l'ordre où on les fait. */}
+        <PyramidSection />
+        <ExecutionSection />
+        <ProjectsSection />
+        <OkrSection />
+        <ProgressSection />
+        <MoreFeaturesSection />
+        <SecuritySection />
+        {/* Prix masqués depuis le 2026-10-16 (`PRICES_VISIBLE`) : la section
+            reste intacte, elle n'est juste plus montée. */}
+        {ENTERPRISE_PRICES_SHOWN && <PricingSection onRegister={onRegister} />}
+        <EnterpriseFaqSection />
+        <EnterpriseCta onDemo={onDemo} onRegister={onRegister} />
+      </BelowFold>
     </div>
   );
 };
