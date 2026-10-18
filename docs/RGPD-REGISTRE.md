@@ -239,7 +239,10 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   30 jours, puis `profiles.acquisition_source`) et l'**identifiant d'appareil de la démo**
   (`cosmo_demo_device_id`, `demo_devices.converted_user_id`). Ils étaient posés SANS
   consentement et finissaient rattachés au compte : hors de toute exemption. Depuis, rien n'est
-  écrit ni envoyé sans « Accepter », et tout s'efface au refus.
+  écrit ni envoyé sans « Accepter », et tout s'efface au refus. Depuis le 2026-10-18, sans
+  `?ref=` ni `utm_source`, la source est **déduite de l'hôte du site référent** (`google`,
+  `linkedin`…, sinon l'hôte lui-même), ou vaut `direct` : jamais le chemin ni la query string
+  du référent (`src/lib/attribution.ts`).
 - **Recueil du consentement** : bandeau. **Rien n'est chargé tant que la personne n'a pas
   accepté**, et un refus ne charge jamais rien. Le choix est conservé **six mois** sur l'appareil
   (`cosmo_cookie_consent_at`), puis redemandé. **Retrait** : « Gérer les cookies » (pied de page,
