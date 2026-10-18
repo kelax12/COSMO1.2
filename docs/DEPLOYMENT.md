@@ -571,6 +571,7 @@ Postgres n'a pas de « rollback » automatique. Les migrations doivent donc êtr
 | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | ✅ | — |
 | `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_SENTRY_DSN` | ✅ | — |
 | `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `APP_URL` | ❌ jamais côté client | ✅ `supabase secrets set …` |
+| `SUPABASE_SECRET_KEY` (clé secrète, rôle `service_role`) | ⚠️ **serveur seulement** : lue par la fonction `api/collect.ts`, jamais préfixée `VITE_`. Posée par l'intégration Vercel ↔ Supabase, en `production` seulement. Sans elle, la mesure d'audience n'écrit plus rien (mig. `223`, `TR-1`) ; `check:env --vercel` vérifie sa présence | — |
 
 Les mêmes secrets `VITE_*` doivent exister en **GitHub Actions secrets** (job
 `build` / `e2e`).
