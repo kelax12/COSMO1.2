@@ -440,13 +440,13 @@ describe('témoin — contrat d environnement (C-105)', () => {
   });
 
   it('TEMOIN : la clé serveur du collecteur est lue par son fichier, et une entrée morte se voit', () => {
-    // `api/` est parcouru : le collecteur lit `VITE_SUPABASE_URL`.
-    expect(variablesLues().has('VITE_SUPABASE_URL')).toBe(true);
     expect(serveurNonLues()).toEqual([]);
     const tmp = mkdtempSync(join(tmpdir(), 'env-'));
     try {
       mkdirSync(join(tmp, 'api'));
       writeFileSync(join(tmp, 'api', 'collect.ts'), 'const key = process.env.VITE_SUPABASE_ANON_KEY;\n');
+      // `api/` est parcouru : dans un arbre SANS `src/`, sa `VITE_*` est vue.
+      expect(variablesLues(tmp).has('VITE_SUPABASE_ANON_KEY')).toBe(true);
       expect(serveurNonLues(tmp)).toEqual(['SUPABASE_SECRET_KEY (api/collect.ts)']);
       rmSync(join(tmp, 'api'), { recursive: true, force: true });
       expect(serveurNonLues(tmp)).toEqual(['SUPABASE_SECRET_KEY (api/collect.ts)']);
