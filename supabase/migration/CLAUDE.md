@@ -118,8 +118,8 @@ compilait, la suite passait.
   4 résolveurs avec la couche rôle, couche rôle et job non exécutables par `authenticated`, job `7 * * * *`).
   Corps vivants des 6 fonctions réécrites relus AVANT : identiques à la base de la 219. Preuve `proofs/219.proof.sql`
   rejouée en prod le même jour : 18 sur 18, rien laissé derrière.
-- ⏳ **`223`** (`TR-1`) : écrite, prouvée en prod (8 sur 8, témoin rouge), NON appliquée au 2026-10-18.
-  Ordre, empreinte attendue et emprise de la preuve : en-tête du fichier.
+- ✅ **`223`** (`TR-1`) : **appliquée** le 2026-10-19 par `db query -f`, ledger `20261019122246` (même
+  transaction), relue au catalogue (md5 `2087347b…` de la preuve, ACL, `INVOKER`). Preuve 8 sur 8.
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
   seule issue, et le verdict est le texte de l'exception. ⚠️ En PL/pgSQL `N` et `n`, `OK` et `ok`

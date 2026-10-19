@@ -13,7 +13,10 @@ et les **règles durables** tirées des audits.
 - Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-10-02** au soir, et avant elle **2026-10-01** (mig.
   `204`, `207`-`210` appliquées et relues au catalogue, cinq Edge Functions redéployées, `Edge deploy
   drift` vert, audit A-1 des 23 tables `160`-`207` acteur par acteur, § « Surface entreprise »),
-  puis `212`. ✅ **Remesuré le 2026-10-18** (dernière passe avant l'acquisition) : advisors
+  puis `212`. ✅ **Remesuré le 2026-10-19** (`TR-1`) : mig. `223` appliquée (ledger
+  `20261019122246`, **173** entrées) et relue au catalogue, advisors **`13 / 84 / 2 / 1`**, sonde
+  `anon` sur `track_hit` refusée. Note **86 → 87**.
+  ✅ **Remesuré le 2026-10-18** (dernière passe avant l'acquisition) : advisors
   **`13 / 85 / 3 / 1`**, `Posture` rouge depuis 09:29 UTC, les six objets des mig. `221` et `222`
   relus au catalogue, dont `track_hit` (finding **`TR-1`**) ; 79 tables toutes sous RLS, 205
   policies, ledger 172, 12 Edge Functions inchangées ; 0 alerte CodeQL et Dependabot. Note **87 → 86**.
@@ -51,7 +54,22 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → **86 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → **2026-10-18**)
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → 86 → **87 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → **2026-10-19**)
+
+> ### 🟢 2026-10-19 · +1 : `TR-1` refermé, `track_hit` n'a plus qu'un appelant
+>
+> **Même règle** : un défaut ne se rembourse que corrigé et vérifié. Mesures du 2026-10-19 : CI de
+> la PR n° 79 à `62f8ba98` (run `39163166665`, cinq jobs verts) et de `main` à `11039a44`,
+> production (catalogue, ledger, advisors par l'API, sondes HTTP, `traffic_hits`). Tableau de
+> bord : [`docs/README.md`](./docs/README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-19 |
+> |---|---|---|
+> | ✅ `TR-1` · `track_hit` appelable par `anon` sans passer par le collecteur (−1 le 10-18) | **+1** | collecteur à la clé secrète servi (`11039a4`, `check:deploy` : `égal`) ; mig. `223` appliquée à 12:22 UTC (ledger `20261019122246`), relue au catalogue : corps identique à celui de la preuve (md5 `2087347b…`), ACL `postgres` + `service_role`, `INVOKER`, `search_path` vide. Sonde `anon` sur `/rest/v1/rpc/track_hit` : **401** `42501`, y compris avec un chemin valide (HTTP 200 la veille). Visite par le collecteur après application : 204, une ligne |
+> | `Posture` | 0 | advisors **`13 / 84 / 2 / 1`** : `track_hit` est sortie des deux listes. Restent au-dessus de la référence `traffic_hits`, `traffic_salts`, `get_admin_revenue` et `get_admin_traffic`, relus sains le 10-18. Rouge jusqu'au `--update` (geste d'Axel) : légitime, non débité |
+> | Trois lignes de test dans `traffic_hits` | 0 | `/verification-tr1`, `/verification-tr1-collecteur`, `/verification-tr1-apres-223` (12:12 à 12:23 UTC) : elles comptent dans la page Trafic de `/admin`. Laissées : les retirer est une écriture en base |
+>
+> **86 → 87.**
 
 > ### 🟠 2026-10-18 · −1 : une écriture anonyme dont seul le plafond global tient
 >
@@ -63,7 +81,7 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 >
 > | Item | Effet | Mesuré le 2026-10-18 |
 > |---|---|---|
-> | 🟠 `TR-1` · `track_hit` (mig. `222`) appelable par `anon` sans passer par le collecteur | **−1** | § [`TR-1`](#-tr-1--la-mesure-daudience-accepte-3-000-écritures-anonymes-par-minute-2026-10-18) ci-dessous. Le collecteur filtre origine, taille et robots ; la RPC se joint **sans lui** avec la clé publique, et prend l'IP **dans le corps** : le plafond par visiteur se contourne, reste le global, **3 000 par minute**, soit 4,3 M lignes par jour gardées 13 mois, pour une base de **24 Mo** en plan Free (plafond 500 Mo). L'autre écriture anonyme, `record_demo_visit`, plafonne à 60 par minute |
+> | 🟠 `TR-1` · `track_hit` (mig. `222`) appelable par `anon` sans passer par le collecteur | **−1** | § [`TR-1`](#-tr-1--track_hit-réservée-au-collecteur-refermé-2026-10-19) ci-dessous (✅ refermé le 2026-10-19). Le collecteur filtre origine, taille et robots ; la RPC se joint **sans lui** avec la clé publique, et prend l'IP **dans le corps** : le plafond par visiteur se contourne, reste le global, **3 000 par minute**, soit 4,3 M lignes par jour gardées 13 mois, pour une base de **24 Mo** en plan Free (plafond 500 Mo). L'autre écriture anonyme, `record_demo_visit`, plafonne à 60 par minute |
 > | 🔴 `Posture` rouge depuis le 2026-10-18 à 09:29 UTC (run `39115503952`, alerte poussée) | 0 | `11 / 82 / 2 / 1` → **`13 / 85 / 3 / 1`**. Les six objets, **relus un par un au catalogue** : `get_admin_revenue` (mig. `221`) et `get_admin_traffic` (`222`) testent `is_admin()` en tête, fermées à `anon` ; `traffic_hits` et `traffic_salts` sous RLS sans policy, ACL réduite à `postgres` et `service_role` ; `track_hit`, c'est `TR-1`. **Pas de recalage** : il attend la décision sur `TR-1`, sinon la référence absorberait le seul objet qui pose question. Non débité à part : la garde a parlé, son objet l'est |
 > | ✅ `V-1` refermé, script de mesure tiers débranché (`23a12fdb`) | 0 | origine retirée de `script-src` et `connect-src`, relu dans l'en-tête CSP **servi** en production. Pas de débit en cours depuis la mitigation du 2026-09-01 : rien à rembourser |
 > | `M-32` · `baggage` / `sentry-trace` vers les Edge Functions (`ef694ac5`) | 0 | témoin `src/sentry-propagation.guard.test.ts` |
@@ -170,7 +188,10 @@ workflow (« les artefacts d'un run exigent une authentification ») : corrigée
 le chemin de récupération chiffré n'a été parcouru que par `db-backup` lui-même (aller-retour
 sha256 avant dépôt), jamais par une restauration.
 
-## 🟠 TR-1 · la mesure d'audience accepte 3 000 écritures anonymes par minute (2026-10-18)
+## ✅ TR-1 · `track_hit` réservée au collecteur, REFERMÉ (2026-10-19)
+
+Ouvert le 2026-10-18 sous le titre « la mesure d'audience accepte 3 000 écritures anonymes par
+minute ». Refermé le 2026-10-19 : mig. `223` appliquée et relue au catalogue, sonde `anon` refusée.
 
 **Trouvé par la passe du 2026-10-18**, en lisant le rouge de `Posture`
 (`anon_security_definer_function_executable` 2 → 3).
@@ -179,7 +200,9 @@ sha256 avant dépôt), jamais par une restauration.
 |---|---|
 | ✅ Collecteur à la clé secrète, en production | PR n° 79, fusion `11039a44`, servie (`check:deploy` : `égal`). `api/collect.ts` appelle `track_hit` avec `SUPABASE_SECRET_KEY` (posée par l'intégration Vercel ↔ Supabase, production seulement, type sensible, jamais préfixée `VITE_`), dans l'en-tête `apikey` seulement. Aucun repli sur la clé publique : sans secret, 503 ; base qui refuse, 502, journalisé sans la clé. Relu en production le 2026-10-19 : GET 405, POST sans origine 403, origine étrangère 403, `Origin: null` 403 (un **500** avant, comme un corps `null`) ; une visite de test écrite (204, une ligne à 12:13:11 UTC), donc la clé de l'intégration vise la bonne base |
 | ✅ Mig. `223` écrite et prouvée | `REVOKE` à PUBLIC, `anon` et `authenticated`, `GRANT` à `service_role` ; `SECURITY INVOKER` ; plafonds 60 par visiteur et par minute, **300** par minute, **5 000** sur 24 h glissantes. Preuve `supabase/proofs/223.proof.sql` jouée en production dans un bloc qui ne peut que s'annuler : **8 sur 8**, témoin (la 222 en place) rouge sur les six cas attendus, rien laissé. Choix du secret justifié dans l'en-tête de la migration |
-| 🟠 Ouvert | **appliquer la `223`** (accord d'Axel), relire le catalogue (empreinte du corps `2087347b138e057717adca013b9fef3b`, ACL `postgres` + `service_role`, `INVOKER`), revoir la sonde `anon` refusée ; puis recaler `Posture` par `--update` (geste d'Axel, avec son jeton). Témoin HTTP relevé le 2026-10-18 au soir : `POST /rest/v1/rpc/track_hit` avec la clé publique rend **200** `false` (chemin invalide, rien d'écrit) : tant que la `223` n'est pas appliquée, le défaut est entier |
+| ✅ Mig. `223` appliquée le 2026-10-19 | 12:22 UTC, par `db query -f` sur le fichier lui-même, dans une transaction explicite qui inscrit aussi sa ligne de ledger (`20261019122246`). Corps vivant sauvegardé AVANT (md5 `88325db8…`, le seul retour arrière d'un `CREATE OR REPLACE`). Relue APRÈS : corps md5 `2087347b138e057717adca013b9fef3b`, celui de la preuve ; ACL `{postgres=X/postgres,service_role=X/postgres}` ; `INVOKER`, `search_path` vide ; `anon` et `authenticated` sans `EXECUTE` |
+| ✅ Vu de l'extérieur | `POST /rest/v1/rpc/track_hit` avec la clé publique : **200** `false` le 2026-10-18 au soir (chemin invalide, rien d'écrit), **401** `42501 permission denied for function track_hit` le 2026-10-19, y compris avec un chemin valide. Visite par le collecteur après application : 204, une ligne. Advisors : **`13 / 84 / 2 / 1`** |
+| ⏳ Reste | recaler `Posture` par `--update` (geste d'Axel, avec son jeton) : attendu exactement ces quatre comptes |
 
 `track_hit(p jsonb)` (mig. `222`) est `SECURITY DEFINER` et exécutable par `anon`. C'est voulu
 par l'en-tête de la migration : le collecteur `api/collect.ts` l'appelle avec la clé **publique**.
@@ -207,9 +230,9 @@ jours d'abus continu.
 
 1. le collecteur appelle la RPC avec un secret **serveur** (variable Vercel sans préfixe `VITE_`,
    jamais servie au navigateur), puis `REVOKE EXECUTE ON FUNCTION public.track_hit(jsonb) FROM
-   anon, authenticated` ; ✅ collecteur en production le 2026-10-19, ⏳ `REVOKE` dans la `223` ;
+   anon, authenticated` ; ✅ collecteur en production et `REVOKE` appliqué le 2026-10-19 ;
 2. plafond global ramené à l'ordre de grandeur réel (quelques centaines par minute), plus un
-   plafond journalier ; ⏳ dans la `223` (300 par minute, 5 000 sur 24 h) ;
+   plafond journalier ; ✅ 300 par minute, 5 000 sur 24 h, appliqués le 2026-10-19 ;
 3. recaler `Posture` par `--update` : attendu **`13 / 84 / 2 / 1`**, les deux fonctions de plus
    que la référence étant `get_admin_revenue` et `get_admin_traffic`, relues.
 
@@ -538,9 +561,8 @@ relit contre la console et contre `docs/ROADMAP-60J.md`, jamais de mémoire.
 Section référencée par [`CLAUDE.md`](./CLAUDE.md) — elle n'existait plus depuis la refonte
 documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 
-> 🟠 **2026-10-18, avant l'acquisition : [`TR-1`](#-tr-1--la-mesure-daudience-accepte-3-000-écritures-anonymes-par-minute-2026-10-18)**
-> (écriture anonyme à 3 000 par minute, `Posture` rouge en attendant). Collecteur à la clé secrète
-> en production depuis le 2026-10-19 (`11039a44`) ; reste la mig. `223`, prouvée, à appliquer. La liste complète des
+> ✅ **2026-10-19 : [`TR-1`](#-tr-1--track_hit-réservée-au-collecteur-refermé-2026-10-19) refermé** (collecteur à la clé
+> secrète, mig. `223` appliquée). Reste `Posture` à recaler par `--update` (Axel). La liste complète des
 > gestes avant l'acquisition, code et mains d'Axel, est dans
 > [`docs/README.md`](./docs/README.md) § « Mise à jour du 2026-10-18 ». Le bandeau `BK-1`
 > ci-dessous est à jour : `M-68`, `M-69` et `M-70` faits ou décidés le 2026-10-16, reste `M-71`.
