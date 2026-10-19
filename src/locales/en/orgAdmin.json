@@ -1396,7 +1396,11 @@
         "projects": "My projects",
         "waitingOn": "Waiting on others",
         "activity": "Team activity",
-        "orgEvents": "Company events"
+        "orgEvents": "Company events",
+        "deadlines": "My deadlines",
+        "mentions": "Mentions and comments",
+        "blockedByMe": "Blocked by me",
+        "note": "Pinned note"
       },
       "desc": {
         "kpi": "Your greeting, and what's waiting for you in numbers.",
@@ -1408,7 +1412,11 @@
         "projects": "The projects where you have tasks.",
         "waitingOn": "What you handed off that has stalled.",
         "activity": "What moved in the team over 24 hours.",
-        "orgEvents": "The company's upcoming deadlines."
+        "orgEvents": "The company's upcoming deadlines.",
+        "deadlines": "Your deadlines for the next seven days, day by day.",
+        "mentions": "Who mentioned you, with a reply right here.",
+        "blockedByMe": "People waiting for one of your tasks to be done.",
+        "note": "A personal memo, kept in this browser."
       },
       "picker": {
         "title": "Add a widget",
@@ -1422,9 +1430,7 @@
         "addTo": "Add",
         "alreadyHere": "Already on your overview",
         "switchSize": "Switch to {{size}}",
-        "current": "Current size",
-        "ideas": "Coming soon",
-        "ideasHint": "My deadlines, Mentions and comments, Blocked by me, Pinned note: in progress."
+        "current": "Current size"
       },
       "pager": {
         "prev": "Previous",
@@ -1467,6 +1473,31 @@
         "projLate": "{{count}} overdue",
         "inDays": "D-{{count}}",
         "dueToday": "Today"
+      },
+      "n": {
+        "overdue": "Overdue",
+        "overdueCount": "Overdue: {{count}}",
+        "dayCount": "{{day}}: {{count}}",
+        "daysLabel": "Days of the week",
+        "noDeadlines": "No deadlines this week.",
+        "freeDay": "Nothing that day.",
+        "postpone": "Push back",
+        "peopleWaiting": "{{count}} person(s) waiting on you.",
+        "blockingNobody": "You're not blocking anyone.",
+        "waitedBy": "Awaited by {{names}}",
+        "notify": "Let them know",
+        "noMentions": "No unread mentions.",
+        "onTask": "on {{name}}",
+        "replyTo": "Reply to {{name}}",
+        "send": "Send",
+        "openTask": "Open task",
+        "markRead": "Read",
+        "newNote": "New note",
+        "noNote": "No notes yet. Add a memo for yourself.",
+        "noteText": "Note text",
+        "saveNote": "Save",
+        "editNote": "Edit",
+        "deleteNote": "Delete note"
       }
     }
   },

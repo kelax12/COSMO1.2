@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import {
-  Activity, ArrowLeft, CalendarClock, CalendarDays, CircleCheckBig, Clock3, FolderKanban,
-  Gauge, Hourglass, Plus, Search, Sparkles, Target, type LucideIcon,
+  Activity, ArrowLeft, AtSign, CalendarClock, CalendarDays, CalendarRange, CircleCheckBig, Clock3, FolderKanban,
+  Gauge, Hourglass, Lock, Pin, Plus, Search, Target, type LucideIcon,
 } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
@@ -24,6 +24,10 @@ const ICONS: Record<WidgetId, LucideIcon> = {
   waitingOn: Hourglass,
   activity: Activity,
   orgEvents: CalendarClock,
+  deadlines: CalendarRange,
+  mentions: AtSign,
+  blockedByMe: Lock,
+  note: Pin,
 };
 
 /** Silhouette du format, à l'échelle de la grille de 6 colonnes. */
@@ -172,15 +176,6 @@ const AddWidgetPage = ({ layout, onAdd, onClose }: AddWidgetPageProps) => {
           </section>
         ))}
 
-        {!needle && (
-          <section className="rounded-2xl border border-dashed border-[rgb(var(--color-border))] p-4 flex gap-3">
-            <Sparkles size={18} className="shrink-0 text-[rgb(var(--color-accent))]" aria-hidden="true" />
-            <div>
-              <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('apercu.widgets.picker.ideas')}</p>
-              <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('apercu.widgets.picker.ideasHint')}</p>
-            </div>
-          </section>
-        )}
       </main>
     </div>
   );
