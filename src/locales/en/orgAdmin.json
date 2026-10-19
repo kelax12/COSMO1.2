@@ -1463,7 +1463,9 @@
       "dateRequired": "Pick an end date in the future.",
       "submit": "Assign",
       "submitExtend": "Extend",
-      "noRoles": "No role exists yet. Create one in Settings, under Roles.",
+      "noRoles": "No role exists yet. Create the first one here.",
+      "createRole": "Create a role",
+      "held": "already held",
       "close": "Close"
     },
     "badgesAria": "Roles: {{names}}",
