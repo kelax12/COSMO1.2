@@ -1,4 +1,4 @@
-// Collecteur de la mesure d'audience maison (remplace Veske, mig. 222).
+// Collecteur de la mesure d'audience maison (mig. 222).
 //
 // Reçoit les évènements de `src/lib/traffic.ts` (sendBeacon), y ajoute ce que
 // seul le serveur connaît (pays/région/ville fournis par Vercel, famille de
