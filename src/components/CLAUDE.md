@@ -19,8 +19,8 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
   rejoindre). Une création mène droit à `/entreprise`. L'assistant de mise en place (équipe,
   invitations, projet, cap, constellation) est SUPPRIMÉ : ne pas le recréer.
   `OrgWelcomeVideo` (vidéo V2 `public/videos/onboarding-entreprise-v2.mp4`, sous-titres `.fr.vtt`) s'ouvre
-  au premier passage, créateur comme membre : une fois par entreprise et par appareil, jamais en
-  démo, seulement aux arrivés depuis le 2026-10-03, et SEULEMENT à une arrivée sans paramètre
+  au premier passage, créateur comme membre : une fois par entreprise et par appareil, AUSSI en
+  démo depuis le 2026-10-19 (fixture e2e : drapeau posé), hors démo seulement aux arrivés depuis le 2026-10-03, et SEULEMENT à une arrivée sans paramètre
   (`arrivedBare`, décidé à l'arrivée). Relue à chaque rendu, la garde l'ouvrait après coup sur
   `?tab=`, `?task=` : 8 e2e rouges (10-04). Lecture avec le son, repli muet + « Activer le son ».
 - ❌ **Guides entreprise ET perso** : ne jamais renommer ni déplacer un `data-guide-id` sans relancer la garde
