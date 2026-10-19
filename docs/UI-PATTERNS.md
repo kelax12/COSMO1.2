@@ -817,7 +817,7 @@ le harnais `e2e/supabase-stub.ts` (`first-run.spec.ts`, `org-onboarding.spec.ts`
 
 ### OnboardingOverlay — supprimé (2026-07, commit c170e37)
 
-Le tutoriel 3 étapes affiché après `loginDemo()` a été **retiré volontairement** et le composant supprimé du repo (purge 2026-07-15). En démo, ce sont les `PageTutorial` par page qui guident (les deux accueils ci-dessus ne s'ouvrent jamais en démo). Ne pas recréer d'overlay bloquant à l'entrée en démo.
+Le tutoriel 3 étapes affiché après `loginDemo()` a été **retiré volontairement** et le composant supprimé du repo (purge 2026-07-15). En démo, ce sont les `PageTutorial` par page qui guident (l'accueil perso ne s'ouvre jamais en démo). Exception voulue par Axel le 2026-10-19 : la vidéo d'accueil entreprise s'ouvre au premier passage sur `/entreprise` en démo (fermable en un geste, drapeau posé par la fixture e2e). Ne pas recréer d'autre overlay bloquant à l'entrée en démo.
 
 ### PageTutorial — tutoriel par page
 

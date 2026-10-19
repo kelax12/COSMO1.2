@@ -195,6 +195,9 @@ export const test = base.extend<{ demoPage: Page }>({
         // Neutralise le wiggle d'invite au swipe de la 1ʳᵉ TaskCard mobile
         // (animation x de 1,7 s qui rendrait les tests de gestes flaky).
         localStorage.setItem('cosmo_swipe_hint_anim_seen', '1');
+        // Vidéo d'accueil entreprise, ouverte en démo depuis le 2026-10-19 :
+        // elle recouvrirait tout parcours qui passe par `/entreprise`.
+        localStorage.setItem('cosmo_org_welcome_seen_org-demo-1_demo-user', '1');
       } catch { /* ignore */ }
     });
 
