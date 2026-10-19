@@ -13,8 +13,13 @@ import OrgEventsTimeline from './OrgEventsTimeline';
 import { MyKeyResultsCard, MyProjectsCard, MyTasksCard, WaitingForMeCard } from './MyWorkCards';
 import { ActivityDigestCard, WaitingOnOthersCard, WeekLoadCard } from './MyWorkExtraCards';
 import { buildOrgEvents } from './org-events.helpers';
+import { useNavigate } from 'react-router';
+import type { CalendarEvent } from '@/modules/events';
 import ApercuWidgetGrid from './ApercuWidgetGrid';
-import type { PlacedWidget, WidgetId } from './apercu-widgets';
+import type { PlacedWidget, WidgetId, WidgetSize } from './apercu-widgets';
+import { AgendaCompact, KpiCompact, KpiTiles, TasksCompact, WaitingCompact } from './MyWorkCompactAction';
+import { ActivityCompact, KrsCompact, OrgEventsCompact, ProjectsCompact, WaitingOnCompact } from './MyWorkCompactContext';
+import { buildOrgLink } from './deep-link.helpers';
 import { KpiStrip } from './MyWorkKpiStrip';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
@@ -55,6 +60,8 @@ export interface MyWorkSectionsProps {
   estimated: number;
   /** Carte « Mon agenda », construite par `MyWorkTab`. */
   agenda: ReactNode;
+  /** Mêmes événements que la carte agenda, pour les formats petit et moyen. */
+  agendaEvents: CalendarEvent[];
   overdueCount: number;
   /** Mes tâches terminées sur la fenêtre lue, pour la barre de l'en-tête. */
   doneCount: number;
@@ -86,7 +93,7 @@ const MyWorkSections = ({
   orgId, currentUserId, open, mine, upcoming, createdInReview, delegated,
   activity, deps, notifications, okrs, projects, members, hasAny, estimated,
   agenda, overdueCount, doneCount, nextDeadline, onToggle, onOpenTask, onApprove, onSendBack,
-  layout, onLayoutChange,
+  layout, onLayoutChange, agendaEvents,
 }: MyWorkSectionsProps) => {
   const me = currentUserId ?? '';
   const activeProjectIds = useMemo(
@@ -163,23 +170,101 @@ const MyWorkSections = ({
     [upcoming, okrs, activeProjectIds, projects],
   );
 
+  const navigate = useNavigate();
+  const waitingCount = reviews.length + mentionRows.length + blocking.length;
+  const seeTasks = () => navigate(buildOrgLink('tasks'));
+
+  /**
+   * Formats petit et moyen (règle des maquettes du 2026-10-19) : la taille
+   * change la présentation, jamais l'accès. Chaque élément garde son action,
+   * le reste se parcourt avec ‹ 1/N ›. `undefined` = ce widget n'a pas de
+   * rendu compact propre, on retombe sur la carte complète.
+   */
+  const renderCompact = (id: WidgetId, size: 'small' | 'medium'): ReactNode | undefined => {
+    switch (id) {
+      case 'kpi':
+        return (
+          <KpiCompact
+            waiting={waitingCount}
+            overdue={overdueCount}
+            open={open.length}
+            done={doneCount}
+            nextDeadline={nextDeadline}
+            onOpenTask={onOpenTask}
+          />
+        );
+      case 'waiting':
+        return (
+          <WaitingCompact
+            size={size}
+            reviews={reviews}
+            mentions={mentionRows}
+            blocking={blocking}
+            members={members}
+            onOpenTask={onOpenTask}
+            onApprove={onApprove}
+            onSendBack={onSendBack}
+          />
+        );
+      case 'tasks':
+        return <TasksCompact size={size} open={open} projectById={projectById} onToggle={onToggle} onOpenTask={onOpenTask} onSeeAll={seeTasks} />;
+      case 'agenda':
+        return <AgendaCompact size={size} events={agendaEvents} onSeeAll={() => navigate('/agenda')} />;
+      case 'krs':
+        return <KrsCompact size={size} items={krs} onOpen={(okrId) => navigate(buildOrgLink('okr', { okr: okrId }))} />;
+      case 'projects':
+        return (
+          <ProjectsCompact
+            size={size}
+            summaries={myProjects}
+            onOpen={(projectId) => navigate(buildOrgLink('projects', { project: projectId }))}
+            onSeeAll={() => navigate(buildOrgLink('projects'))}
+          />
+        );
+      case 'waitingOn':
+        return <WaitingOnCompact size={size} entries={waitingOn} members={members} onOpenTask={onOpenTask} />;
+      case 'activity':
+        return <ActivityCompact size={size} digest={digest} onSeeAll={seeTasks} />;
+      case 'orgEvents':
+        return (
+          <OrgEventsCompact
+            size={size}
+            events={orgEvents}
+            onOpen={(e) => {
+              if (e.kind === 'okr') { navigate(buildOrgLink('okr', { okr: e.id.slice(4) })); return; }
+              const task = taskById.get(e.id.slice(5));
+              if (task) onOpenTask(task);
+            }}
+          />
+        );
+      default:
+        return undefined;
+    }
+  };
+
   // Aperçu en widgets (2026-10-19) : chaque bloc d'avant est un widget que
   // la personne retire, ajoute, redimensionne et déplace. `null` = rien à
   // montrer (la grille affiche alors un cadre vide en mode édition).
   // ⚠️ L'agenda reste rendu sans condition : un nouvel arrivant sans tâche
   // doit aussi voir le sien.
-  const renderWidget = (id: WidgetId): ReactNode => {
+  const renderWidget = (id: WidgetId, size: WidgetSize): ReactNode => {
+    if (size !== 'large') {
+      const compact = renderCompact(id, size);
+      if (compact !== undefined) return compact;
+    }
     switch (id) {
       case 'kpi':
         return (
           <KpiStrip
             firstName={firstName}
-            waiting={reviews.length + mentionRows.length + blocking.length}
+            waiting={waitingCount}
             open={open.length}
             overdue={overdueCount}
             done={doneCount}
             nextDeadline={nextDeadline}
-          />
+          >
+            <KpiTiles waiting={waitingCount} overdue={overdueCount} open={open.length} done={doneCount} />
+          </KpiStrip>
         );
       case 'waiting':
         return (

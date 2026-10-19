@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import type { TeamTask } from '@/modules/team-projects';
@@ -14,6 +15,8 @@ interface KpiStripProps {
   /** Tâches terminées sur la fenêtre lue (30 jours), pour la barre. */
   done: number;
   nextDeadline: TeamTask | null;
+  /** Grand format de l'Aperçu : les gros chiffres, posés sous le salut. */
+  children?: ReactNode;
 }
 
 // Maquette 227 (2026-10-10) : sur mobile, plus de pastilles colorées, du
@@ -29,7 +32,7 @@ const PILL = 'tabular-nums md:inline-flex md:items-center md:px-2 md:py-0.5 md:r
  * Une pastille à 0 n'est pas peinte : la couleur ne marque que ce qui
  * demande un geste.
  */
-export const KpiStrip = ({ firstName, waiting, open, overdue, done, nextDeadline }: KpiStripProps) => {
+export const KpiStrip = ({ firstName, waiting, open, overdue, done, nextDeadline, children }: KpiStripProps) => {
   const { t, tp } = useT('orgAdmin');
   const late = !!nextDeadline && isOverdue(nextDeadline);
   const inProgress = Math.max(0, open - overdue);
@@ -44,6 +47,7 @@ export const KpiStrip = ({ firstName, waiting, open, overdue, done, nextDeadline
       <h2 id="my-work-greeting" className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
         {firstName ? t('apercu.greeting.hello', { name: firstName }) : t('apercu.greeting.helloAnon')}
       </h2>
+      {children && <div className="mt-3">{children}</div>}
       {/* `data-testid` : masquée par la garde visuelle, la date et le nom de la
           prochaine échéance avancent avec le jour. */}
       {/* Masquée sur mobile (retour 2026-10-11) : les mêmes chiffres sont

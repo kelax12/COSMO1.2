@@ -402,6 +402,7 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
           hasAny={hasAnyTask}
           estimated={myEstimated}
           agenda={<AgendaEventsCard events={upcomingEvents} />}
+          agendaEvents={upcomingEvents}
           overdueCount={overdue.length}
           doneCount={done.length}
           nextDeadline={nextDeadline}
