@@ -1475,7 +1475,10 @@
         "saveNote": "Save",
         "editNote": "Edit",
         "deleteNote": "Delete note"
-      }
+      },
+      "editHint": "Drag a widget to move it, tap the cross to remove it.",
+      "removedToast": "{{name}} removed",
+      "undo": "Undo"
     }
   },
   "customRoles": {

@@ -1567,7 +1567,10 @@
         "saveNote": "Enregistrer",
         "editNote": "Modifier",
         "deleteNote": "Supprimer la note"
-      }
+      },
+      "editHint": "Glisse un widget pour le déplacer, touche la croix pour le retirer.",
+      "removedToast": "{{name}} retiré",
+      "undo": "Annuler"
     }
   },
   "customRoles": {

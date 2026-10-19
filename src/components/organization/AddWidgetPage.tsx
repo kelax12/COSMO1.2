@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Activity, ArrowLeft, AtSign, CalendarClock, CalendarDays, CalendarRange, CircleCheckBig, Clock3, FolderKanban,
   Gauge, Hourglass, Lock, Pin, Plus, Search, Target, type LucideIcon,
@@ -77,12 +78,19 @@ const AddWidgetPage = ({ layout, onAdd, onClose }: AddWidgetPageProps) => {
   const nothing = sections.every((s) => s.defs.length === 0);
 
   return (
-    <div
+    <motion.div
       ref={ref}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.2 } }}
       {...dialogProps}
       className="fixed inset-0 z-50 overflow-y-auto bg-[rgb(var(--color-background))]"
     >
-      <header className="sticky top-0 z-10 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-background)/0.95)] backdrop-blur">
+      <motion.header
+        initial={{ y: -24, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+        className="sticky top-0 z-10 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-background)/0.95)] backdrop-blur">
         <div className="mx-auto max-w-5xl px-4 pt-3 pb-3 space-y-3">
           <div className="flex items-center gap-2">
             <button
@@ -121,7 +129,7 @@ const AddWidgetPage = ({ layout, onAdd, onClose }: AddWidgetPageProps) => {
             ))}
           </nav>
         </div>
-      </header>
+      </motion.header>
 
       <main className="mx-auto max-w-5xl px-4 py-5 space-y-8">
         {nothing && (
@@ -138,16 +146,29 @@ const AddWidgetPage = ({ layout, onAdd, onClose }: AddWidgetPageProps) => {
             <h2 id={`widget-section-${size}`} className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{sizeName(size)}</h2>
             <p className="text-sm text-[rgb(var(--color-text-muted))] mb-3">{t(`apercu.widgets.picker.sectionHint_${size}`)}</p>
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {defs.map(({ id }) => {
+              <AnimatePresence mode="popLayout" initial>
+              {defs.map(({ id }, i) => {
                 const Icon = ICONS[id];
                 const current = placed.get(id);
                 const isCurrent = current === size;
                 return (
-                  <li key={id} className="flex flex-col rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+                  <motion.li
+                    key={id}
+                    layout
+                    initial={{ opacity: 0, y: 24, scale: 0.94 }}
+                    animate={{ opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 360, damping: 28, delay: 0.08 + i * 0.045 } }}
+                    exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+                    whileHover={{ y: -4 }}
+                    className="flex flex-col rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
                     <div className="h-14 rounded-xl bg-[rgb(var(--color-hover))] p-2 flex" aria-hidden="true">
-                      <div className={`${SHAPE[size]} h-full rounded-lg bg-[rgb(var(--color-accent)/0.18)] border border-[rgb(var(--color-accent)/0.35)] flex items-center justify-center`}>
+                      <motion.div
+                        initial={{ scaleX: 0.2, opacity: 0 }}
+                        animate={{ scaleX: 1, opacity: 1 }}
+                        transition={{ type: 'spring', stiffness: 220, damping: 22, delay: 0.25 + i * 0.045 }}
+                        style={{ originX: 0 }}
+                        className={`${SHAPE[size]} h-full rounded-lg bg-[rgb(var(--color-accent)/0.18)] border border-[rgb(var(--color-accent)/0.35)] flex items-center justify-center`}>
                         <Icon size={18} className="text-[rgb(var(--color-accent))]" />
-                      </div>
+                      </motion.div>
                     </div>
                     <p className="mt-3 text-base font-bold text-[rgb(var(--color-text-primary))]">{name(id)}</p>
                     <p className="mt-0.5 text-sm text-[rgb(var(--color-text-secondary))] flex-1">{desc(id)}</p>
@@ -157,8 +178,9 @@ const AddWidgetPage = ({ layout, onAdd, onClose }: AddWidgetPageProps) => {
                       </p>
                     )}
                     {!isCurrent && (
-                      <button
+                      <motion.button
                         type="button"
+                        whileTap={{ scale: 0.94 }}
                         onClick={() => onAdd(id, size)}
                         className="mt-3 min-h-touch inline-flex items-center justify-center gap-1.5 rounded-xl bg-[rgb(var(--color-accent))] text-sm font-semibold text-white hover:opacity-90"
                       >
@@ -167,17 +189,18 @@ const AddWidgetPage = ({ layout, onAdd, onClose }: AddWidgetPageProps) => {
                           ? t('apercu.widgets.picker.switchSize', { size: sizeName(size).toLocaleLowerCase() })
                           : t('apercu.widgets.picker.addTo')}
                         <span className="sr-only">{` ${name(id)}`}</span>
-                      </button>
+                      </motion.button>
                     )}
-                  </li>
+                  </motion.li>
                 );
               })}
+              </AnimatePresence>
             </ul>
           </section>
         ))}
 
       </main>
-    </div>
+    </motion.div>
   );
 };
 
