@@ -100,7 +100,7 @@ const ApercuWidgetGrid = ({ layout, onChange, renderWidget }: ApercuWidgetGridPr
           </button>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 md:grid-cols-6 gap-5 items-start">
+        <ul className="grid grid-cols-1 md:grid-cols-6 gap-5 items-stretch">
           {layout.map((w, index) => {
             const def = widgetDef(w.id);
             const content = renderWidget(w.id, w.size);
@@ -121,13 +121,13 @@ const ApercuWidgetGrid = ({ layout, onChange, renderWidget }: ApercuWidgetGridPr
               >
                 <div
                   className={editing
-                    ? 'rounded-2xl outline-dashed outline-2 outline-offset-4 outline-[rgb(var(--color-accent)/0.45)] motion-safe:animate-jiggle cursor-grab'
-                    : ''}
+                    ? 'h-full rounded-2xl outline-dashed outline-2 outline-offset-4 outline-[rgb(var(--color-accent)/0.45)] motion-safe:animate-jiggle cursor-grab'
+                    : 'h-full'}
                   style={editing ? { animationDelay: `${(index % 3) * -0.11}s` } : undefined}
                 >
                   <div
                     ref={(el) => { if (el) el.toggleAttribute('inert', editing); }}
-                    className={editing ? 'pointer-events-none select-none' : ''}
+                    className={editing ? 'h-full pointer-events-none select-none' : 'h-full'}
                   >
                     {content ?? (editing ? (
                       <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 min-h-[96px]">

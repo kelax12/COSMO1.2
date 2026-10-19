@@ -37,13 +37,13 @@ export interface WidgetDef {
 
 /** Le catalogue. L'ordre est celui de la page « Ajouter un widget ». */
 export const WIDGET_DEFS: readonly WidgetDef[] = [
-  { id: 'kpi', sizes: ['medium', 'large'] },
+  { id: 'kpi', sizes: ['small', 'medium', 'large'] },
   { id: 'waiting', sizes: ['small', 'medium', 'large'] },
-  { id: 'tasks', sizes: ['medium', 'large'] },
+  { id: 'tasks', sizes: ['small', 'medium', 'large'] },
   { id: 'load', sizes: ['small', 'medium'] },
   { id: 'agenda', sizes: ['small', 'medium', 'large'] },
   { id: 'krs', sizes: ['small', 'medium', 'large'] },
-  { id: 'projects', sizes: ['medium', 'large'] },
+  { id: 'projects', sizes: ['small', 'medium', 'large'] },
   { id: 'waitingOn', sizes: ['small', 'medium', 'large'] },
   { id: 'activity', sizes: ['small', 'medium', 'large'] },
   { id: 'orgEvents', sizes: ['small', 'medium', 'large'] },

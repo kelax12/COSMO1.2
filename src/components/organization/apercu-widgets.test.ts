@@ -26,7 +26,7 @@ describe('apercu-widgets', () => {
       { id: 'tasks', size: 'medium' },
       { id: 'tasks', size: 'large' },
       { id: 'nope', size: 'small' },
-      { id: 'kpi', size: 'small' },
+      { id: 'load', size: 'large' },
       null,
     ])).toEqual([{ id: 'tasks', size: 'medium' }]);
     expect(sanitizeLayout('x')).toBeNull();
@@ -42,8 +42,8 @@ describe('apercu-widgets', () => {
   });
 
   it('refuse un format que le widget ne propose pas', () => {
-    expect(resizeWidget(DEFAULT_LAYOUT, 'tasks', 'small')).toEqual(DEFAULT_LAYOUT);
-    expect(addWidget([], 'kpi', 'small')).toEqual([]);
+    expect(resizeWidget(DEFAULT_LAYOUT, 'load', 'large')).toEqual(DEFAULT_LAYOUT);
+    expect(addWidget([], 'load', 'large')).toEqual([]);
   });
 
   it('déplace en bornant l’index', () => {
