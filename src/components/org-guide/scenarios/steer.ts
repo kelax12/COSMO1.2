@@ -39,8 +39,10 @@ export const STEER_ACTIONS: GuideAction[] = [
     { kind: 'field', target: 'export-hint', bubbleKey: k('tasks.export', 'b1') },
   ] },
   // Le profil n'a pas de fuseau horaire : la bulle 3 vise la description.
+  // Paramètres garde sa rubrique tant qu'on y reste : cliquer Profil, ne pas le supposer.
   { id: 'org.profile', category: 'steer', requires: 'admin', steps: [
     { kind: 'goto', section: 'settings', via: 'nav-settings' },
+    { kind: 'click', target: 'settings-panel-profile' },
     { kind: 'field', target: 'org-profile-name', bubbleKey: k('org.profile', 'b1') },
     { kind: 'field', target: 'org-profile-logo', bubbleKey: k('org.profile', 'b2') },
     { kind: 'field', target: 'org-profile-description', bubbleKey: k('org.profile', 'b3') },
