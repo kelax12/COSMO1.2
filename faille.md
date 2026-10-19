@@ -175,6 +175,12 @@ sha256 avant dépôt), jamais par une restauration.
 **Trouvé par la passe du 2026-10-18**, en lisant le rouge de `Posture`
 (`anon_security_definer_function_executable` 2 → 3).
 
+| État au 2026-10-19 | |
+|---|---|
+| ✅ Collecteur à la clé secrète, en production | PR n° 79, fusion `11039a44`, servie (`check:deploy` : `égal`). `api/collect.ts` appelle `track_hit` avec `SUPABASE_SECRET_KEY` (posée par l'intégration Vercel ↔ Supabase, production seulement, type sensible, jamais préfixée `VITE_`), dans l'en-tête `apikey` seulement. Aucun repli sur la clé publique : sans secret, 503 ; base qui refuse, 502, journalisé sans la clé. Relu en production le 2026-10-19 : GET 405, POST sans origine 403, origine étrangère 403, `Origin: null` 403 (un **500** avant, comme un corps `null`) ; une visite de test écrite (204, une ligne à 12:13:11 UTC), donc la clé de l'intégration vise la bonne base |
+| ✅ Mig. `223` écrite et prouvée | `REVOKE` à PUBLIC, `anon` et `authenticated`, `GRANT` à `service_role` ; `SECURITY INVOKER` ; plafonds 60 par visiteur et par minute, **300** par minute, **5 000** sur 24 h glissantes. Preuve `supabase/proofs/223.proof.sql` jouée en production dans un bloc qui ne peut que s'annuler : **8 sur 8**, témoin (la 222 en place) rouge sur les six cas attendus, rien laissé. Choix du secret justifié dans l'en-tête de la migration |
+| 🟠 Ouvert | **appliquer la `223`** (accord d'Axel), relire le catalogue (empreinte du corps `2087347b138e057717adca013b9fef3b`, ACL `postgres` + `service_role`, `INVOKER`), revoir la sonde `anon` refusée ; puis recaler `Posture` par `--update` (geste d'Axel, avec son jeton). Témoin HTTP relevé le 2026-10-18 au soir : `POST /rest/v1/rpc/track_hit` avec la clé publique rend **200** `false` (chemin invalide, rien d'écrit) : tant que la `223` n'est pas appliquée, le défaut est entier |
+
 `track_hit(p jsonb)` (mig. `222`) est `SECURITY DEFINER` et exécutable par `anon`. C'est voulu
 par l'en-tête de la migration : le collecteur `api/collect.ts` l'appelle avec la clé **publique**.
 Mais ce que vérifie le collecteur se contourne en appelant la RPC directement, et la RPC prend
@@ -192,14 +198,18 @@ Mais ce que vérifie le collecteur se contourne en appelant la RPC directement, 
 **toute l'application avec**. À quelques centaines d'octets la ligne, index compris (estimation,
 non mesurée), quelques heures d'appels y suffisent. Second effet : des statistiques d'acquisition
 empoisonnables, au moment précis où elles vont servir.
+✅ **Mesuré le 2026-10-18 par la preuve `223`** : **442** octets pour une ligne réaliste, **1 810**
+au maximum de ce que les `CHECK` admettent, index compris. Au plafond de la `222`, la base se
+remplit donc en **1 h 30 à 6 h**. Au plafond journalier de la `223`, au pire 8,6 Mo par jour : 54
+jours d'abus continu.
 
 **Correctif proposé, dans cet ordre :**
 
 1. le collecteur appelle la RPC avec un secret **serveur** (variable Vercel sans préfixe `VITE_`,
    jamais servie au navigateur), puis `REVOKE EXECUTE ON FUNCTION public.track_hit(jsonb) FROM
-   anon, authenticated` ;
+   anon, authenticated` ; ✅ collecteur en production le 2026-10-19, ⏳ `REVOKE` dans la `223` ;
 2. plafond global ramené à l'ordre de grandeur réel (quelques centaines par minute), plus un
-   plafond journalier ;
+   plafond journalier ; ⏳ dans la `223` (300 par minute, 5 000 sur 24 h) ;
 3. recaler `Posture` par `--update` : attendu **`13 / 84 / 2 / 1`**, les deux fonctions de plus
    que la référence étant `get_admin_revenue` et `get_admin_traffic`, relues.
 
@@ -529,7 +539,8 @@ Section référencée par [`CLAUDE.md`](./CLAUDE.md) — elle n'existait plus de
 documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 
 > 🟠 **2026-10-18, avant l'acquisition : [`TR-1`](#-tr-1--la-mesure-daudience-accepte-3-000-écritures-anonymes-par-minute-2026-10-18)**
-> (écriture anonyme à 3 000 par minute, `Posture` rouge en attendant). La liste complète des
+> (écriture anonyme à 3 000 par minute, `Posture` rouge en attendant). Collecteur à la clé secrète
+> en production depuis le 2026-10-19 (`11039a44`) ; reste la mig. `223`, prouvée, à appliquer. La liste complète des
 > gestes avant l'acquisition, code et mains d'Axel, est dans
 > [`docs/README.md`](./docs/README.md) § « Mise à jour du 2026-10-18 ». Le bandeau `BK-1`
 > ci-dessous est à jour : `M-68`, `M-69` et `M-70` faits ou décidés le 2026-10-16, reste `M-71`.
