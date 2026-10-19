@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { format, parseISO, isPast, isToday, startOfDay, subDays } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
@@ -27,6 +27,7 @@ import { MyWorkSkeleton } from './OrgLoadingSkeletons';
 import { useT } from '@/i18n/useT';
 import { buildOrgLink } from './deep-link.helpers';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { loadLayout, saveLayout, type PlacedWidget } from './apercu-widgets';
 
 interface MyWorkTabProps {
   orgId: string;
@@ -274,6 +275,14 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
   const upcomingEvents = useUpcomingEvents(5);
   const updateTask = useUpdateTeamTask(orgId);
   const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
+  // Disposition des widgets : une par entreprise et par personne. Relue quand
+  // l'une ou l'autre change (la session peut arriver après le premier rendu).
+  const [layout, setLayout] = useState<PlacedWidget[]>(() => loadLayout(orgId, me));
+  useEffect(() => { setLayout(loadLayout(orgId, me)); }, [orgId, me]);
+  const changeLayout = (next: PlacedWidget[]) => {
+    setLayout(next);
+    saveLayout(orgId, me, next);
+  };
 
   // Bornes figées au montage : elles entrent dans les clés de cache.
   const bounds = useMemo(() => {
@@ -400,6 +409,8 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
           onOpenTask={setEditingTask}
           onApprove={approve}
           onSendBack={sendBack}
+          layout={layout}
+          onLayoutChange={changeLayout}
         />
       </Suspense>
 

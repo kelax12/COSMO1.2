@@ -1430,6 +1430,64 @@
       "aboutMe_other": "Dont {{count}} changements sur vos tâches.",
       "show": "Voir le détail",
       "hide": "Masquer le détail"
+    },
+    "widgets": {
+      "regionLabel": "Widgets de l'aperçu",
+      "edit": "Modifier l'aperçu",
+      "done": "Terminé",
+      "add": "Ajouter un widget",
+      "reset": "Réinitialiser",
+      "remove": "Retirer le widget {{name}}",
+      "moveBefore": "Avancer {{name}}",
+      "moveAfter": "Reculer {{name}}",
+      "sizeOf": "Format de {{name}}",
+      "emptyWidget": "Rien à afficher pour l'instant. Le widget se remplira tout seul.",
+      "emptyAll": "Ton aperçu est vide. Ajoute les widgets qui te servent.",
+      "sizes": {
+        "small": "Petit",
+        "medium": "Moyen",
+        "large": "Grand"
+      },
+      "names": {
+        "kpi": "Chiffres clés",
+        "waiting": "En attente de moi",
+        "tasks": "Mes tâches",
+        "load": "Charge de la semaine",
+        "agenda": "Mon agenda",
+        "krs": "Mes résultats clés",
+        "projects": "Mes projets",
+        "waitingOn": "J'attends les autres",
+        "activity": "Activité de l'équipe",
+        "orgEvents": "Événements de l'entreprise"
+      },
+      "desc": {
+        "kpi": "Le bonjour, et ce qui t'attend en chiffres.",
+        "waiting": "Validations, mentions et tâches que tu bloques.",
+        "tasks": "Tes tâches ouvertes, à cocher sur place.",
+        "load": "Ton temps estimé pour la semaine.",
+        "agenda": "Tes rendez-vous du jour et des prochains jours.",
+        "krs": "L'avancement des résultats clés qui te sont confiés.",
+        "projects": "Les projets où tu as des tâches.",
+        "waitingOn": "Ce que tu as confié et qui dort.",
+        "activity": "Ce qui a bougé dans l'équipe en 24 h.",
+        "orgEvents": "Les prochaines échéances de l'entreprise."
+      },
+      "picker": {
+        "title": "Ajouter un widget",
+        "back": "Retour à l'aperçu",
+        "search": "Rechercher un widget",
+        "searchEmpty": "Aucun widget ne correspond à « {{query}} ».",
+        "sectionsNav": "Aller au format",
+        "sectionHint_small": "Un tiers de largeur : un coup d'œil.",
+        "sectionHint_medium": "Une demi-largeur : l'essentiel et les actions.",
+        "sectionHint_large": "Toute la largeur : tout le détail.",
+        "addTo": "Ajouter",
+        "alreadyHere": "Déjà sur l'aperçu",
+        "switchSize": "Passer en {{size}}",
+        "current": "Format actuel",
+        "ideas": "Bientôt",
+        "ideasHint": "Mes échéances, Mentions et commentaires, Bloqué par moi, Note épinglée : en préparation."
+      }
     }
   },
   "customRoles": {

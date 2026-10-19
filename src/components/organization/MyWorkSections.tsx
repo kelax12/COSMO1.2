@@ -13,6 +13,8 @@ import OrgEventsTimeline from './OrgEventsTimeline';
 import { MyKeyResultsCard, MyProjectsCard, MyTasksCard, WaitingForMeCard } from './MyWorkCards';
 import { ActivityDigestCard, WaitingOnOthersCard, WeekLoadCard } from './MyWorkExtraCards';
 import { buildOrgEvents } from './org-events.helpers';
+import ApercuWidgetGrid from './ApercuWidgetGrid';
+import type { PlacedWidget, WidgetId } from './apercu-widgets';
 import { KpiStrip } from './MyWorkKpiStrip';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
@@ -61,6 +63,9 @@ export interface MyWorkSectionsProps {
   onOpenTask: (task: TeamTask) => void;
   onApprove: (task: TeamTask) => void;
   onSendBack: (task: TeamTask) => void;
+  /** Disposition des widgets, tenue par `MyWorkTab` (préférence par personne). */
+  layout: PlacedWidget[];
+  onLayoutChange: (next: PlacedWidget[]) => void;
 }
 
 /**
@@ -81,6 +86,7 @@ const MyWorkSections = ({
   orgId, currentUserId, open, mine, upcoming, createdInReview, delegated,
   activity, deps, notifications, okrs, projects, members, hasAny, estimated,
   agenda, overdueCount, doneCount, nextDeadline, onToggle, onOpenTask, onApprove, onSendBack,
+  layout, onLayoutChange,
 }: MyWorkSectionsProps) => {
   const me = currentUserId ?? '';
   const activeProjectIds = useMemo(
@@ -157,28 +163,26 @@ const MyWorkSections = ({
     [upcoming, okrs, activeProjectIds, projects],
   );
 
-  return (
-    <>
-      {/* Refonte du 2026-10-02 (choix 1B 2B 3A 4C 5B 6A 7C 8C 9A 10A 11B + N1 N2) :
-          une phrase d'accueil qui absorbe l'ancienne carte de synthèse, puis
-          deux colonnes, l'ACTION à gauche (en attente de moi, mes tâches)
-          et le CONTEXTE à droite (charge, agenda, KR, projets), puis ce qui
-          dépend des autres et la vie de l'équipe en bas.
-          ⚠️ `minmax(0, …)` et `min-w-0` sur les colonnes (maquette 105) : un
-          élément de grille a `min-width: auto` et débordait en 390 px.
-          ⚠️ L'agenda est rendu HORS de toute condition : un nouvel arrivant
-          sans tâche doit aussi voir le sien. */}
-      <KpiStrip
-        firstName={firstName}
-        waiting={reviews.length + mentionRows.length + blocking.length}
-        open={open.length}
-        overdue={overdueCount}
-        done={doneCount}
-        nextDeadline={nextDeadline}
-      />
-
-      <div className="grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-5 items-start">
-        <div className="min-w-0 space-y-5">
+  // Aperçu en widgets (2026-10-19) : chaque bloc d'avant est un widget que
+  // la personne retire, ajoute, redimensionne et déplace. `null` = rien à
+  // montrer (la grille affiche alors un cadre vide en mode édition).
+  // ⚠️ L'agenda reste rendu sans condition : un nouvel arrivant sans tâche
+  // doit aussi voir le sien.
+  const renderWidget = (id: WidgetId): ReactNode => {
+    switch (id) {
+      case 'kpi':
+        return (
+          <KpiStrip
+            firstName={firstName}
+            waiting={reviews.length + mentionRows.length + blocking.length}
+            open={open.length}
+            overdue={overdueCount}
+            done={doneCount}
+            nextDeadline={nextDeadline}
+          />
+        );
+      case 'waiting':
+        return (
           <WaitingForMeCard
             reviews={reviews}
             mentions={mentionRows}
@@ -188,6 +192,9 @@ const MyWorkSections = ({
             onApprove={onApprove}
             onSendBack={onSendBack}
           />
+        );
+      case 'tasks':
+        return (
           <MyTasksCard
             groups={groups}
             openCount={open.length}
@@ -203,31 +210,21 @@ const MyWorkSections = ({
               onStart: () => bulk.setSelectMode(true),
             }}
           />
-        </div>
-        <div className="min-w-0 space-y-5">
-          <WeekLoadCard load={load} />
-          {agenda}
-          {krs.length > 0 && <MyKeyResultsCard items={krs} />}
-          {myProjects.length > 0 && (
-            <MyProjectsCard summaries={myProjects} orgId={orgId} userId={currentUserId} people={people} members={members} />
-          )}
-        </div>
-      </div>
-
-      {bulk.selectMode && (
-        <Suspense fallback={null}>
-          <TeamTasksBulkLayer bulk={bulk} members={members} projects={projects} />
-        </Suspense>
-      )}
-
-      {/* Ce qui dépend des autres, puis la vie de l'équipe : digest des 24 h
-          (fil du journal, mig. 094, replié dessous) et prochains événements de
-          l'entreprise en rail vertical. */}
-      <div className="grid lg:grid-cols-3 gap-5 items-start">
-        <div className="min-w-0">
-          <WaitingOnOthersCard entries={waitingOn} members={members} onOpenTask={onOpenTask} />
-        </div>
-        <div className="min-w-0">
+        );
+      case 'load':
+        return <WeekLoadCard load={load} />;
+      case 'agenda':
+        return agenda;
+      case 'krs':
+        return krs.length > 0 ? <MyKeyResultsCard items={krs} /> : null;
+      case 'projects':
+        return myProjects.length > 0
+          ? <MyProjectsCard summaries={myProjects} orgId={orgId} userId={currentUserId} people={people} members={members} />
+          : null;
+      case 'waitingOn':
+        return <WaitingOnOthersCard entries={waitingOn} members={members} onOpenTask={onOpenTask} />;
+      case 'activity':
+        return (
           <ActivityDigestCard digest={digest}>
             <TeamActivityFeed
               bare
@@ -239,11 +236,21 @@ const MyWorkSections = ({
               onOpenTask={onOpenTask}
             />
           </ActivityDigestCard>
-        </div>
-        <div className="min-w-0">
-          <OrgEventsTimeline events={orgEvents} />
-        </div>
-      </div>
+        );
+      case 'orgEvents':
+        return <OrgEventsTimeline events={orgEvents} />;
+    }
+  };
+
+  return (
+    <>
+      <ApercuWidgetGrid layout={layout} onChange={onLayoutChange} renderWidget={renderWidget} />
+
+      {bulk.selectMode && (
+        <Suspense fallback={null}>
+          <TeamTasksBulkLayer bulk={bulk} members={members} projects={projects} />
+        </Suspense>
+      )}
     </>
   );
 };
