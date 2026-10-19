@@ -48,8 +48,12 @@ export const WORK_ACTIONS: GuideAction[] = [
     // le menu ⋯ de la carte, dont « Ouvrir la page » est l'étape suivante.
     { kind: 'pick-first', target: 'projects-list', emptyKey: 'empty.noProject' },
     { kind: 'click', target: 'project-menu-open', optional: true },
+    // Les avatars disent qui voit le projet ; le « + » ouvre un menu (personne / équipe)
+    // avant la modale d'ajout. Deux modales ne s'ouvrent pas l'une sur l'autre :
+    // la bulle 1 vise donc la rangée d'avatars, pas la modale des rôles.
+    { kind: 'field', target: 'project-detail-viewers', bubbleKey: k('project.audience', 'b1') },
     { kind: 'click', target: 'project-detail-audience', emptyKey: 'empty.noProjectTeam' },
-    { kind: 'field', target: 'project-audience-who', bubbleKey: k('project.audience', 'b1') },
+    { kind: 'click', target: 'project-audience-add-person' },
     { kind: 'field', target: 'project-audience-add', bubbleKey: k('project.audience', 'b2') },
   ] },
   // Le formulaire de liste porte un nom et une couleur ; l'épinglage se fait sur une liste existante.
