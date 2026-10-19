@@ -31,6 +31,10 @@ export default defineConfig({
       // `CLAUDE.md` documente sous « une garde se vérifie sur ce qu'elle
       // REGARDE ». Sans cette entrée, le témoin ne serait jamais joué.
       'eslint-rules/**/*.{test,spec}.mjs',
+      // `api/**` : les fonctions Vercel (`api/collect.ts`, seul chemin
+      // d'écriture de la mesure d'audience depuis la mig. 223). Avant cette
+      // entrée, un test posé à côté n'aurait jamais tourné (audit 2026-10-18).
+      'api/**/*.{test,spec}.ts',
     ],
     // L'ancien dossier Vitest jamais activé + les E2E Playwright ne doivent
     // pas être ramassés par Vitest.
