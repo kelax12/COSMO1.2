@@ -23,8 +23,10 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
   démo, seulement aux arrivés depuis le 2026-10-03, et SEULEMENT à une arrivée sans paramètre
   (`arrivedBare`, décidé à l'arrivée). Relue à chaque rendu, la garde l'ouvrait après coup sur
   `?tab=`, `?task=` : 8 e2e rouges (10-04). Lecture avec le son, repli muet + « Activer le son ».
-- ❌ **Guide entreprise** : ne jamais renommer ni déplacer un `data-guide-id` sans relancer la garde
-  `src/components/org-guide/guide-scenarios.guard.test.ts`.
+- ❌ **Guides entreprise ET perso** : ne jamais renommer ni déplacer un `data-guide-id` sans relancer la garde
+  `src/components/org-guide/guide-scenarios.guard.test.ts` (elle couvre les deux). Le guide perso
+  (`perso-guide/`, boussole du `Layout` desktop, hors `/entreprise`) partage le moteur `use-guide-demo.tsx` ;
+  pendant une démo, `useTutorial` n'ouvre aucun tutoriel de page (`src/lib/guide-demo-active.ts`).
 - ❌ **Jamais sur une route** pour le perso : une inscription Google ne repasse pas par `SignupPage`.
 - ❌ **Jamais de création différée** : chaque étape crée quand elle est validée, et passer avance
   sans rien créer.

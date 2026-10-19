@@ -47,6 +47,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={() => setShowTaskSidebar(!showTaskSidebar)}
                 data-tutorial-id="agenda-task-sidebar-toggle"
+                data-guide-id="perso-agenda-tasks"
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all shadow-sm shrink-0 border ${showTaskSidebar ? 'shadow-md' : ''}`}
                 style={{
                   backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
@@ -66,6 +67,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                     pour Sombre ET Gris ET Noir, donc `dark:bg-gray-800` rendait
                     le même gris bleuté dans les trois thèmes. */}
                 <div
+                  data-guide-id="perso-agenda-zoom"
                   className="flex items-center gap-1 rounded-lg p-1 border"
                   style={{
                     backgroundColor: 'rgb(var(--color-hover))',
@@ -88,6 +90,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
 
                 <div className="flex gap-1 p-1 rounded-xl border"
                   data-tutorial-id="agenda-view-switcher"
+                  data-guide-id="perso-agenda-views"
                   style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
                   {(['timeGridDay', 'timeGridWeek', 'dayGridMonth'] as const).map(view => (
                     <button key={view} onClick={() => handleViewChange(view)}
