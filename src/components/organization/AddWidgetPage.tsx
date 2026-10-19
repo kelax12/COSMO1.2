@@ -333,15 +333,25 @@ const AddWidgetPage = ({ layout, onAdd, onRemove, renderWidget, onClose }: AddWi
                         whileHover={{ y: -4 }}
                         className="flex flex-col rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3"
                       >
-                        <button
-                          type="button"
+                        {/* La miniature contient de vrais boutons : elle ne peut pas être
+                            elle-même un bouton. Clic souris ici, clavier sur « Formats ». */}
+                        <div
                           onClick={() => setFocus({ id, index: widgetDef(id)?.sizes.indexOf(size) ?? 0 })}
-                          aria-label={t('apercu.widgets.picker.seeFormats', { name: name(id) })}
-                          className="block w-full text-left rounded-xl cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          className="cursor-zoom-in rounded-xl"
                         >
                           <WidgetPreview size={size}>{renderWidget(id, size)}</WidgetPreview>
-                        </button>
-                        <p className="mt-3 px-1 text-base font-bold text-[rgb(var(--color-text-primary))]">{name(id)}</p>
+                        </div>
+                        <div className="mt-3 px-1 flex items-center gap-2">
+                          <p className="flex-1 min-w-0 text-base font-bold text-[rgb(var(--color-text-primary))]">{name(id)}</p>
+                          <button
+                            type="button"
+                            onClick={() => setFocus({ id, index: widgetDef(id)?.sizes.indexOf(size) ?? 0 })}
+                            aria-label={t('apercu.widgets.picker.seeFormats', { name: name(id) })}
+                            className="shrink-0 min-h-[32px] px-2.5 rounded-lg text-xs font-semibold text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))]"
+                          >
+                            {t('apercu.widgets.picker.formats')}
+                          </button>
+                        </div>
                         <p className="mt-0.5 px-1 text-sm text-[rgb(var(--color-text-secondary))] flex-1">{desc(id)}</p>
                         {current ? (
                           <div className="mt-3 flex items-center gap-2">

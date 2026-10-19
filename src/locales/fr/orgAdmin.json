@@ -1469,7 +1469,15 @@
         "deadlines": "Mes échéances",
         "mentions": "Mentions et commentaires",
         "blockedByMe": "Bloqué par moi",
-        "note": "Note épinglée"
+        "note": "Note épinglée",
+        "teamLoad": "Charge de l'équipe",
+        "teamOverdue": "Retards de l'équipe",
+        "teamOkrs": "OKR des équipes",
+        "orgHealth": "Santé de l'entreprise",
+        "riskProjects": "Projets à risque",
+        "companyOkrs": "OKR de l'entreprise",
+        "unassigned": "Tâches sans responsable",
+        "invitations": "Invitations en attente"
       },
       "desc": {
         "kpi": "Le bonjour, et ce qui t'attend en chiffres.",
@@ -1485,7 +1493,15 @@
         "deadlines": "Tes échéances des sept prochains jours, jour par jour.",
         "mentions": "Ceux qui t'ont mentionné, avec réponse sur place.",
         "blockedByMe": "Les personnes qui attendent qu'une de tes tâches soit finie.",
-        "note": "Un mémo personnel, gardé dans ce navigateur."
+        "note": "Un mémo personnel, gardé dans ce navigateur.",
+        "teamLoad": "Qui est surchargé, qui est libre cette semaine.",
+        "teamOverdue": "Les retards de ton équipe, personne par personne.",
+        "teamOkrs": "L'avancement des objectifs rattachés aux équipes.",
+        "orgHealth": "Projets à risque, OKR en retard, tâches orphelines : tout ce qui coince.",
+        "riskProjects": "Les projets déclarés à risque ou qui prennent du retard.",
+        "companyOkrs": "L'avancement de tous les objectifs de l'entreprise.",
+        "unassigned": "Les tâches que personne ne porte.",
+        "invitations": "Les invitations envoyées et pas encore acceptées."
       },
       "picker": {
         "title": "Ajouter un widget",
@@ -1573,7 +1589,54 @@
       },
       "editHint": "Glisse un widget pour le déplacer, touche la croix pour le retirer.",
       "removedToast": "{{name}} retiré",
-      "undo": "Annuler"
+      "undo": "Annuler",
+      "t": {
+        "noTeam": "Personne dans ton équipe pour le moment.",
+        "openTasks": "{{count}} ouvertes",
+        "weekMinutes": "{{time}} prévues sous 7 jours",
+        "noTeamOverdue": "Aucun retard dans l'équipe.",
+        "noOkrs": "Aucun objectif à suivre.",
+        "average": "de moyenne sur {{count}} objectif(s)",
+        "behind": "En retard sur le calendrier",
+        "onTrack": "Dans les temps"
+      },
+      "a": {
+        "riskyProjects": "projets à risque",
+        "okrsBehind": "OKR en retard",
+        "unassigned": "sans responsable",
+        "overdue": "tâches en retard",
+        "allGood": "Rien ne coince dans l'entreprise.",
+        "offTrack": "Hors piste",
+        "atRisk": "À risque",
+        "noRisk": "Aucun projet à risque.",
+        "noUnassigned": "Toutes les tâches ont un responsable.",
+        "assign": "Assigner",
+        "noInvitations": "Aucune invitation en attente.",
+        "sentAgo": "envoyée {{ago}}",
+        "notSent": "pas encore envoyée",
+        "resend": "Relancer"
+      },
+      "tpl": {
+        "button": "Modèles",
+        "title": "Choisir un modèle",
+        "intro": "Le modèle s'affiche d'abord en aperçu : rien n'est enregistré tant que tu ne l'as pas validé.",
+        "recommended": "Pour ton rôle",
+        "preview": "Voir en aperçu",
+        "names": {
+          "member": "Membre",
+          "manager": "Chef d'équipe",
+          "admin": "Administrateur"
+        },
+        "desc": {
+          "member": "Qu'est-ce que je fais aujourd'hui ? Mes tâches, mes échéances, ce qu'on attend de moi.",
+          "manager": "Mon équipe avance-t-elle ? Ce que je dois valider, la charge et les retards de l'équipe.",
+          "admin": "L'entreprise va-t-elle bien ? Santé, projets à risque, OKR, tâches orphelines, invitations."
+        },
+        "draftTitle": "Aperçu du modèle « {{name}} ».",
+        "draftHint": "Tu peux déjà le retoucher ; rien n'est enregistré avant « Valider ».",
+        "cancel": "Annuler",
+        "apply": "Valider ce modèle"
+      }
     }
   },
   "customRoles": {

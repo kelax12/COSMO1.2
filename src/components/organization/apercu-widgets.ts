@@ -31,7 +31,15 @@ export type WidgetId =
   | 'deadlines'
   | 'mentions'
   | 'blockedByMe'
-  | 'note';
+  | 'note'
+  | 'teamLoad'
+  | 'teamOverdue'
+  | 'teamOkrs'
+  | 'orgHealth'
+  | 'riskProjects'
+  | 'companyOkrs'
+  | 'unassigned'
+  | 'invitations';
 
 export interface WidgetDef {
   id: WidgetId;
@@ -56,6 +64,15 @@ export const WIDGET_DEFS: readonly WidgetDef[] = [
   { id: 'mentions', sizes: ['small', 'medium', 'large'] },
   { id: 'blockedByMe', sizes: ['small', 'medium', 'large'] },
   { id: 'note', sizes: ['small', 'medium', 'large'] },
+  // Chef d'équipe et administrateur (2026-10-19), posés par les modèles.
+  { id: 'teamLoad', sizes: ['small', 'medium', 'large'] },
+  { id: 'teamOverdue', sizes: ['small', 'medium', 'large'] },
+  { id: 'teamOkrs', sizes: ['small', 'medium', 'large'] },
+  { id: 'orgHealth', sizes: ['small', 'medium', 'large'] },
+  { id: 'riskProjects', sizes: ['small', 'medium', 'large'] },
+  { id: 'companyOkrs', sizes: ['small', 'medium', 'large'] },
+  { id: 'unassigned', sizes: ['small', 'medium', 'large'] },
+  { id: 'invitations', sizes: ['small', 'medium', 'large'] },
 ];
 
 const DEF_BY_ID = new Map(WIDGET_DEFS.map((d) => [d.id, d]));
@@ -132,10 +149,11 @@ export function moveWidget(layout: readonly PlacedWidget[], id: WidgetId, to: nu
 
 const storageKey = (orgId: string, userId: string) => `cosmo_apercu_layout_v1:${orgId}:${userId}`;
 
-export function loadLayout(orgId: string, userId: string): PlacedWidget[] {
+/** `fallback` : la disposition d'arrivée (le modèle du rôle) quand rien n'est enregistré. */
+export function loadLayout(orgId: string, userId: string, fallback: readonly PlacedWidget[] = DEFAULT_LAYOUT): PlacedWidget[] {
   const raw = safeGetItem(storageKey(orgId, userId));
   const parsed = raw ? sanitizeLayout(safeParse<unknown>(raw)) : null;
-  return parsed ?? [...DEFAULT_LAYOUT];
+  return parsed ?? [...fallback];
 }
 
 export function saveLayout(orgId: string, userId: string, layout: readonly PlacedWidget[]): void {

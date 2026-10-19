@@ -16,12 +16,16 @@ import { buildOrgEvents } from './org-events.helpers';
 import { useNavigate } from 'react-router';
 import type { CalendarEvent } from '@/modules/events';
 import ApercuWidgetGrid from './ApercuWidgetGrid';
+import type { TemplateId } from './apercu-templates';
 import type { PlacedWidget, WidgetId, WidgetSize } from './apercu-widgets';
 import { AgendaCompact, KpiCompact, KpiTiles, TasksCompact, WaitingCompact } from './MyWorkCompactAction';
 import { ActivityCompact, KrsCompact, OrgEventsCompact, ProjectsCompact, WaitingOnCompact } from './MyWorkCompactContext';
 import { buildOrgLink } from './deep-link.helpers';
 import { BlockedByMeWidget, DeadlinesWidget } from './MyWorkDeadlineWidgets';
 import { MentionsWidget, NoteWidget } from './MyWorkSocialWidgets';
+import { OkrsWidget, TeamLoadWidget, TeamOverdueWidget } from './MyWorkTeamWidgets';
+import { InvitationsWidget, OrgHealthWidget, RiskProjectsWidget, UnassignedWidget } from './MyWorkAdminWidgets';
+import { isTaskOverdue, myTeam, okrRows, riskyProjects as riskyProjectsOf, teamLoad as teamLoadOf, teamOverdue as teamOverdueOf, unassignedTasks } from './apercu-team.helpers';
 import { KpiStrip } from './MyWorkKpiStrip';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
@@ -74,6 +78,10 @@ export interface MyWorkSectionsProps {
   onSendBack: (task: TeamTask) => void;
   /** Reporter d'un jour (widget « Mes échéances »). */
   onPostpone: (task: TeamTask) => void;
+  /** Tâches ouvertes de l'organisation (widgets d'équipe et d'administration). */
+  teamOpen: TeamTask[];
+  /** Modèle du rôle : recommandé dans le choix des modèles, remis par « Réinitialiser ». */
+  roleTemplate: TemplateId;
   /** Disposition des widgets, tenue par `MyWorkTab` (préférence par personne). */
   layout: PlacedWidget[];
   onLayoutChange: (next: PlacedWidget[]) => void;
@@ -97,7 +105,7 @@ const MyWorkSections = ({
   orgId, currentUserId, open, mine, upcoming, createdInReview, delegated,
   activity, deps, notifications, okrs, projects, members, hasAny, estimated,
   agenda, overdueCount, doneCount, nextDeadline, onToggle, onOpenTask, onApprove, onSendBack,
-  layout, onLayoutChange, agendaEvents, onPostpone,
+  layout, onLayoutChange, agendaEvents, onPostpone, teamOpen, roleTemplate,
 }: MyWorkSectionsProps) => {
   const me = currentUserId ?? '';
   const activeProjectIds = useMemo(
@@ -177,6 +185,18 @@ const MyWorkSections = ({
   const navigate = useNavigate();
   const waitingCount = reviews.length + mentionRows.length + blocking.length;
   const seeTasks = () => navigate(buildOrgLink('tasks'));
+
+  // Équipe et administration (modèles chef d'équipe / admin, 2026-10-19).
+  const team = useMemo(() => myTeam(members, me), [members, me]);
+  const teamLoads = useMemo(() => teamLoadOf(team, teamOpen), [team, teamOpen]);
+  const teamLate = useMemo(() => teamOverdueOf(team, teamOpen), [team, teamOpen]);
+  const teamOkrRows = useMemo(() => okrRows(okrs, true), [okrs]);
+  const companyOkrRows = useMemo(() => okrRows(okrs, false), [okrs]);
+  const risky = useMemo(() => riskyProjectsOf(projects, teamOpen), [projects, teamOpen]);
+  const orphans = useMemo(() => unassignedTasks(teamOpen, activeProjectIds), [teamOpen, activeProjectIds]);
+  const orgOverdue = useMemo(() => teamOpen.filter((t) => isTaskOverdue(t)).length, [teamOpen]);
+  const openOkr = (okrId: string) => navigate(buildOrgLink('okr', { okr: okrId }));
+
 
   /**
    * Formats petit et moyen (règle des maquettes du 2026-10-19) : la taille
@@ -263,6 +283,31 @@ const MyWorkSections = ({
         return <MentionsWidget size={size} orgId={orgId} mentions={mentionRows} members={members} onOpenTask={onOpenTask} />;
       case 'blockedByMe':
         return <BlockedByMeWidget size={size} blocking={blocking} members={members} onToggle={onToggle} onOpenTask={onOpenTask} />;
+      case 'teamLoad':
+        return <TeamLoadWidget size={size} loads={teamLoads} onSeeAll={() => navigate(buildOrgLink('members'))} />;
+      case 'teamOverdue':
+        return <TeamOverdueWidget size={size} groups={teamLate} onOpenTask={onOpenTask} />;
+      case 'teamOkrs':
+        return <OkrsWidget size={size} rows={teamOkrRows} scope="team" onOpen={openOkr} />;
+      case 'companyOkrs':
+        return <OkrsWidget size={size} rows={companyOkrRows} scope="company" onOpen={openOkr} />;
+      case 'orgHealth':
+        return (
+          <OrgHealthWidget
+            size={size}
+            riskyProjects={risky.length}
+            okrsBehind={companyOkrRows.filter((r) => r.behind).length}
+            unassigned={orphans.length}
+            overdue={orgOverdue}
+            onGo={(section) => navigate(buildOrgLink(section))}
+          />
+        );
+      case 'riskProjects':
+        return <RiskProjectsWidget size={size} rows={risky} onOpen={(projectId) => navigate(buildOrgLink('projects', { project: projectId }))} />;
+      case 'unassigned':
+        return <UnassignedWidget size={size} tasks={orphans} projectName={(id) => projectById.get(id)?.name} onOpenTask={onOpenTask} />;
+      case 'invitations':
+        return <InvitationsWidget size={size} orgId={orgId} onSeeAll={() => navigate(buildOrgLink('members'))} />;
       case 'note':
         return <NoteWidget size={size} orgId={orgId} userId={me} />;
       case 'kpi':
@@ -341,7 +386,7 @@ const MyWorkSections = ({
 
   return (
     <>
-      <ApercuWidgetGrid layout={layout} onChange={onLayoutChange} renderWidget={renderWidget} />
+      <ApercuWidgetGrid layout={layout} onChange={onLayoutChange} renderWidget={renderWidget} roleTemplate={roleTemplate} />
 
       {bulk.selectMode && (
         <Suspense fallback={null}>
