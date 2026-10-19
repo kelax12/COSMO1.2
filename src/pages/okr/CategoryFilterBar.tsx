@@ -304,7 +304,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-1.5 mb-6" data-tutorial-id="okr-category-filter">
+    <div className="flex flex-col gap-1.5 mb-6" data-tutorial-id="okr-category-filter" data-guide-id="perso-okr-categories">
       {/* Bandeau mobile — reprend le système de TaskListsBar (« Liste » +
           bouton « + ») : un label et un déclencheur compact au lieu de la
           pilule en pointillés « + Nouvelle catégorie » dans la rangée de
