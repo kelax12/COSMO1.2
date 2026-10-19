@@ -18,7 +18,7 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
 - **Entreprise** (refait le 2026-10-14) : `/entreprise/onboarding` = `OrgChoice` seul (créer |
   rejoindre). Une création mène droit à `/entreprise`. L'assistant de mise en place (équipe,
   invitations, projet, cap, constellation) est SUPPRIMÉ : ne pas le recréer.
-  `OrgWelcomeVideo` (vidéo `public/videos/onboarding-entreprise.mp4`, sous-titres `.fr.vtt`) s'ouvre
+  `OrgWelcomeVideo` (vidéo V2 `public/videos/onboarding-entreprise-v2.mp4`, sous-titres `.fr.vtt`) s'ouvre
   au premier passage, créateur comme membre : une fois par entreprise et par appareil, jamais en
   démo, seulement aux arrivés depuis le 2026-10-03, et SEULEMENT à une arrivée sans paramètre
   (`arrivedBare`, décidé à l'arrivée). Relue à chaque rendu, la garde l'ouvrait après coup sur
