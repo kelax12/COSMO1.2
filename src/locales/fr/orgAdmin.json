@@ -88,6 +88,8 @@
     "statusAlreadyMember": "Déjà membre de l'organisation",
     "statusAlreadyInvited": "Une invitation est déjà en attente",
     "statusInvalid": "Adresse invalide",
+    "statusSentTo": "Invitation envoyée à {{email}}",
+    "statusFailed": "L'invitation n'a pas pu être envoyée. Réessayez.",
     "copyLinkFor": "Copier le lien d'invitation de {{email}}",
     "listLoading": "Chargement des invitations…",
     "listEmpty": "Aucune invitation par e-mail pour l'instant.",
