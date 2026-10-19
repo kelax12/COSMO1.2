@@ -273,11 +273,11 @@ const ApercuWidgetGrid = ({ layout, onChange, renderWidget }: ApercuWidgetGridPr
                     <motion.div
                       className="h-full"
                       animate={editing && !isDragged
-                        ? { rotate: [-1.1, 1.1, -1.1], scale: 0.97 }
+                        ? { rotate: [-0.45, 0.45, -0.45], scale: 0.98 }
                         : { rotate: 0, scale: 1 }}
                       transition={editing && !isDragged
                         ? {
-                          rotate: { duration: 0.26 + (index % 3) * 0.03, repeat: Infinity, ease: 'easeInOut', delay: (index % 4) * 0.06 },
+                          rotate: { duration: 0.42 + (index % 3) * 0.04, repeat: Infinity, ease: 'easeInOut', delay: (index % 4) * 0.06 },
                           scale: SPRING,
                         }
                         : SPRING}
