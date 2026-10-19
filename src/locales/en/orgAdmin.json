@@ -1406,7 +1406,11 @@
         "sectionHint_large": "Full width: every detail.",
         "addTo": "Add",
         "alreadyHere": "Already on your overview",
-        "removeFrom": "Remove"
+        "removeFrom": "Remove",
+        "backToList": "Back to the list",
+        "formats": "Sizes",
+        "addInSize": "Add as {{size}}",
+        "seeFormats": "See the sizes of {{name}}"
       },
       "pager": {
         "prev": "Previous",

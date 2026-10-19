@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, Plus, Search, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, Plus, Search, Trash2, X } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import {
@@ -9,6 +9,7 @@ import {
   type PlacedWidget,
   type WidgetId,
   type WidgetSize,
+  widgetDef,
 } from './apercu-widgets';
 
 /**
@@ -55,6 +56,152 @@ const WidgetPreview = ({ size, children }: { size: WidgetSize; children: ReactNo
   );
 };
 
+/**
+ * Carrousel des formats d'un widget : on voit le MÊME widget en petit, moyen
+ * et grand avant de choisir. Flèches, onglets, et ← → au clavier.
+ */
+const FormatCarousel = ({
+  id, startIndex, placedSize, renderWidget, onAdd, onRemove, onBack,
+}: {
+  id: WidgetId;
+  startIndex: number;
+  placedSize: WidgetSize | undefined;
+  renderWidget: (id: WidgetId, size: WidgetSize) => ReactNode;
+  onAdd: (id: WidgetId, size: WidgetSize) => void;
+  onRemove: (id: WidgetId) => void;
+  onBack: () => void;
+}) => {
+  const { t } = useT('orgAdmin');
+  const sizes = widgetDef(id)?.sizes ?? [];
+  const [[index, dir], setSlide] = useState<[number, number]>([Math.max(0, startIndex), 0]);
+  const backRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => { backRef.current?.focus(); }, []);
+  const size = sizes[index];
+  const go = (delta: number) => {
+    const next = index + delta;
+    if (next >= 0 && next < sizes.length) setSlide([next, delta]);
+  };
+  const sizeName = (s: WidgetSize) => t(`apercu.widgets.sizes.${s}`);
+  if (!size) return null;
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 40 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 40 }}
+      transition={{ type: 'spring', stiffness: 360, damping: 32 }}
+      className="absolute inset-0 z-20 flex flex-col bg-[rgb(var(--color-background))]"
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowLeft') go(-1);
+        if (e.key === 'ArrowRight') go(1);
+      }}
+    >
+      <div className="shrink-0 flex items-center gap-2 border-b border-[rgb(var(--color-border))] px-5 py-3">
+        <button
+          ref={backRef}
+          type="button"
+          onClick={onBack}
+          aria-label={t('apercu.widgets.picker.backToList')}
+          className="min-h-touch min-w-touch rounded-full flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
+        >
+          <ArrowLeft size={20} aria-hidden="true" />
+        </button>
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))] truncate">{t(`apercu.widgets.names.${id}`)}</h2>
+          <p className="text-sm text-[rgb(var(--color-text-muted))] truncate">{t(`apercu.widgets.desc.${id}`)}</p>
+        </div>
+      </div>
+
+      <div role="group" aria-label={t('apercu.widgets.picker.formats')} className="shrink-0 flex justify-center gap-2 pt-4">
+        {sizes.map((s, i) => (
+          <button
+            key={s}
+            type="button"
+            aria-pressed={i === index}
+            onClick={() => setSlide([i, i > index ? 1 : -1])}
+            className={`relative min-h-touch px-4 rounded-full text-sm font-semibold ${i === index ? 'text-white' : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'}`}
+          >
+            {i === index && (
+              <motion.span
+                layoutId="format-tab"
+                className="absolute inset-0 rounded-full bg-[rgb(var(--color-accent))]"
+                transition={{ type: 'spring', stiffness: 480, damping: 34 }}
+              />
+            )}
+            <span className="relative">{sizeName(s)}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="relative flex-1 min-h-0 flex items-center px-16 py-4 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => go(-1)}
+          disabled={index === 0}
+          aria-label={t('apercu.widgets.pager.prev')}
+          className="absolute left-3 z-10 w-11 h-11 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex items-center justify-center shadow-md disabled:opacity-30"
+        >
+          <ChevronLeft size={20} aria-hidden="true" />
+        </button>
+        <div className="relative w-full h-full flex items-center justify-center">
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div
+              key={size}
+              initial={{ opacity: 0, x: dir * 180, scale: 0.92 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: dir * -180, scale: 0.92 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="w-full max-h-full overflow-hidden"
+              style={{ maxWidth: NATURAL_WIDTH[size] }}
+            >
+              <div ref={(el) => { if (el) el.setAttribute('inert', ''); }} aria-hidden="true" className="pointer-events-none select-none">
+                {renderWidget(id, size)}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+        <button
+          type="button"
+          onClick={() => go(1)}
+          disabled={index === sizes.length - 1}
+          aria-label={t('apercu.widgets.pager.next')}
+          className="absolute right-3 z-10 w-11 h-11 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex items-center justify-center shadow-md disabled:opacity-30"
+        >
+          <ChevronRight size={20} aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="shrink-0 flex items-center justify-center gap-3 border-t border-[rgb(var(--color-border))] px-5 py-3">
+        {placedSize ? (
+          <>
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+              <Check size={15} aria-hidden="true" />
+              {t('apercu.widgets.picker.alreadyHere')}
+            </span>
+            <button
+              type="button"
+              onClick={() => onRemove(id)}
+              className="min-h-touch inline-flex items-center gap-1.5 px-4 rounded-xl border border-red-500/40 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-500/10"
+            >
+              <Trash2 size={15} aria-hidden="true" />
+              {t('apercu.widgets.picker.removeFrom')}
+            </button>
+          </>
+        ) : (
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onAdd(id, size)}
+            className="min-h-touch inline-flex items-center gap-1.5 px-6 rounded-xl bg-[rgb(var(--color-accent))] text-sm font-semibold text-white hover:opacity-90"
+          >
+            <Plus size={16} aria-hidden="true" />
+            {t('apercu.widgets.picker.addInSize', { size: sizeName(size).toLocaleLowerCase() })}
+          </motion.button>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
 interface AddWidgetPageProps {
   layout: PlacedWidget[];
   onAdd: (id: WidgetId, size: WidgetSize) => void;
@@ -75,6 +222,7 @@ interface AddWidgetPageProps {
 const AddWidgetPage = ({ layout, onAdd, onRemove, renderWidget, onClose }: AddWidgetPageProps) => {
   const { t } = useT('orgAdmin');
   const [query, setQuery] = useState('');
+  const [focus, setFocus] = useState<{ id: WidgetId; index: number } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const sectionRefs = useRef<Partial<Record<WidgetSize, HTMLElement | null>>>({});
   const { ref, dialogProps } = useModalA11y<HTMLDivElement>({
@@ -114,7 +262,7 @@ const AddWidgetPage = ({ layout, onAdd, onRemove, renderWidget, onClose }: AddWi
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 16, transition: { duration: 0.18 } }}
         transition={{ type: 'spring', stiffness: 360, damping: 30 }}
-        className="w-full max-w-5xl max-h-[88vh] flex flex-col overflow-hidden rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] shadow-2xl"
+        className="relative w-full max-w-5xl h-[88vh] flex flex-col overflow-hidden rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] shadow-2xl"
       >
         <header className="shrink-0 border-b border-[rgb(var(--color-border))] px-5 pt-4 pb-3 space-y-3">
           <div className="flex items-center gap-2">
@@ -185,7 +333,14 @@ const AddWidgetPage = ({ layout, onAdd, onRemove, renderWidget, onClose }: AddWi
                         whileHover={{ y: -4 }}
                         className="flex flex-col rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3"
                       >
-                        <WidgetPreview size={size}>{renderWidget(id, size)}</WidgetPreview>
+                        <button
+                          type="button"
+                          onClick={() => setFocus({ id, index: widgetDef(id)?.sizes.indexOf(size) ?? 0 })}
+                          aria-label={t('apercu.widgets.picker.seeFormats', { name: name(id) })}
+                          className="block w-full text-left rounded-xl cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                        >
+                          <WidgetPreview size={size}>{renderWidget(id, size)}</WidgetPreview>
+                        </button>
                         <p className="mt-3 px-1 text-base font-bold text-[rgb(var(--color-text-primary))]">{name(id)}</p>
                         <p className="mt-0.5 px-1 text-sm text-[rgb(var(--color-text-secondary))] flex-1">{desc(id)}</p>
                         {current ? (
@@ -225,6 +380,21 @@ const AddWidgetPage = ({ layout, onAdd, onRemove, renderWidget, onClose }: AddWi
             </section>
           ))}
         </div>
+
+        <AnimatePresence>
+          {focus && (
+            <FormatCarousel
+              key={focus.id}
+              id={focus.id}
+              startIndex={focus.index}
+              placedSize={placed.get(focus.id)}
+              renderWidget={renderWidget}
+              onAdd={onAdd}
+              onRemove={onRemove}
+              onBack={() => setFocus(null)}
+            />
+          )}
+        </AnimatePresence>
       </motion.div>
     </motion.div>
   );

@@ -1498,7 +1498,11 @@
         "sectionHint_large": "Toute la largeur : tout le détail.",
         "addTo": "Ajouter",
         "alreadyHere": "Déjà sur l'aperçu",
-        "removeFrom": "Retirer"
+        "removeFrom": "Retirer",
+        "backToList": "Retour à la liste",
+        "formats": "Formats",
+        "addInSize": "Ajouter en {{size}}",
+        "seeFormats": "Voir les formats de {{name}}"
       },
       "pager": {
         "prev": "Précédent",
