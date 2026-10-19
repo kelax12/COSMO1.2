@@ -1557,7 +1557,9 @@
       "dateRequired": "Choisissez une date de fin dans le futur.",
       "submit": "Attribuer",
       "submitExtend": "Prolonger",
-      "noRoles": "Aucun rôle n'existe encore. Créez-en un dans Paramètres, rubrique Rôles.",
+      "noRoles": "Aucun rôle n'existe encore. Créez le premier ici.",
+      "createRole": "Créer un rôle",
+      "held": "déjà attribué",
       "close": "Fermer"
     },
     "badgesAria": "Rôles : {{names}}",
