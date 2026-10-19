@@ -761,7 +761,7 @@ RemNote). `/entreprise/onboarding` ne propose plus que le choix créer | rejoind
 L'assistant de mise en place en constellation (équipe, invitations, projet, cap), qui demandait
 des informations avant d'avoir montré le produit, est supprimé avec `MemberWelcome`. À la place,
 `OrgWelcomeVideo` ouvre un lecteur au premier passage dans `/entreprise`, créateur comme membre :
-vidéo de ~2 min 45 (`public/videos/onboarding-entreprise.mp4`, source
+vidéo V2 du 2026-10-19, 2 min 24 (`public/videos/onboarding-entreprise-v2.mp4`, source
 `cockpit-marketing/videos/onboarding-entreprise`), sous-titres FR actifs d'office hors locale fr,
 démarrage avec le son et repli muet + bouton « Activer le son » si le navigateur refuse, aucun
 démarrage automatique sous mouvement réduit. Le guide (`?guide=1`, `OrgGuideFab`) est inchangé.

@@ -8,9 +8,9 @@ import { ENT_SCOPE } from './ent-onboarding';
 import { ENT_LINK, ENT_PRIMARY } from './ent-ui';
 
 export const ORG_WELCOME_VIDEO = {
-  src: '/videos/onboarding-entreprise.mp4',
-  poster: '/videos/onboarding-entreprise-poster.webp',
-  captionsFr: '/videos/onboarding-entreprise.fr.vtt',
+  src: '/videos/onboarding-entreprise-v2.mp4',
+  poster: '/videos/onboarding-entreprise-v2-poster.webp',
+  captionsFr: '/videos/onboarding-entreprise-v2.fr.vtt',
 } as const;
 
 interface OrgWelcomeVideoProps {
