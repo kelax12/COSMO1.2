@@ -28,6 +28,7 @@ import { useT } from '@/i18n/useT';
 import { buildOrgLink } from './deep-link.helpers';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { loadLayout, saveLayout, type PlacedWidget } from './apercu-widgets';
+import { TEMPLATES, templateForRole } from './apercu-templates';
 import { postponedDeadline } from './apercu-new-widgets.helpers';
 
 interface MyWorkTabProps {
@@ -264,6 +265,9 @@ const isOverdue = (t: TeamTask): boolean => {
   return isPast(d) && !isToday(d);
 };
 
+/** Widgets qui lisent les tâches ouvertes de toute l'organisation. */
+const TEAM_TASK_WIDGETS = new Set<PlacedWidget['id']>(['teamLoad', 'teamOverdue', 'orgHealth', 'riskProjects', 'unassigned']);
+
 /** Fenêtre du fil d'activité : 14 jours, comme avant le passage au journal. */
 const ACTIVITY_DAYS = 14;
 
@@ -278,8 +282,12 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
   const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
   // Disposition des widgets : une par entreprise et par personne. Relue quand
   // l'une ou l'autre change (la session peut arriver après le premier rendu).
-  const [layout, setLayout] = useState<PlacedWidget[]>(() => loadLayout(orgId, me));
-  useEffect(() => { setLayout(loadLayout(orgId, me)); }, [orgId, me]);
+  // Sans disposition enregistrée : le modèle du rôle (admin, chef d'équipe, membre).
+  const roleIsAdmin = members.find((m) => m.userId === currentUserId)?.role === 'admin';
+  const roleTemplateId = templateForRole(roleIsAdmin, isManager);
+  const roleTemplate = TEMPLATES[roleTemplateId];
+  const [layout, setLayout] = useState<PlacedWidget[]>(() => loadLayout(orgId, me, roleTemplate));
+  useEffect(() => { setLayout(loadLayout(orgId, me, roleTemplate)); }, [orgId, me, roleTemplate]);
   const changeLayout = (next: PlacedWidget[]) => {
     setLayout(next);
     saveLayout(orgId, me, next);
@@ -308,6 +316,16 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
     { live: true, enabled: !!me },
   );
   // Prochaines échéances de l'ENTREPRISE (frise) : les 30 plus proches.
+  // Tâches ouvertes de l'organisation (ce que la RLS me laisse voir), pour les
+  // widgets d'équipe et d'administration. Lues seulement si l'un d'eux est
+  // posé, ou pour qui encadre : un membre ne paie pas cette lecture.
+  const needsTeamTasks = roleIsAdmin || isManager
+    || layout.some((w) => TEAM_TASK_WIDGETS.has(w.id));
+  const { data: teamOpen = [] } = useTeamTaskSlice(
+    orgId,
+    { completed: false, limit: TEAM_TASKS_READ_LIMIT },
+    { enabled: needsTeamTasks },
+  );
   const { data: upcoming = [] } = useTeamTaskSlice(orgId, {
     completed: false, deadlineFrom: bounds.today, orderBy: 'deadline', limit: 30,
   });
@@ -416,6 +434,8 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
           layout={layout}
           onLayoutChange={changeLayout}
           onPostpone={postpone}
+          teamOpen={teamOpen}
+          roleTemplate={roleTemplateId}
         />
       </Suspense>
 

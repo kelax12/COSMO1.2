@@ -1,9 +1,8 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AnimatePresence, MotionConfig, motion, type PanInfo } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Check, LayoutGrid, Pencil, Plus, RotateCcw, Undo2, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, LayoutGrid, LayoutTemplate, Pencil, Plus, RotateCcw, Undo2, X } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import {
-  DEFAULT_LAYOUT,
   SIZE_SPAN_CLASS,
   addWidget,
   moveWidget,
@@ -15,13 +14,18 @@ import {
   type WidgetSize,
 } from './apercu-widgets';
 
+import { TEMPLATES, type TemplateId } from './apercu-templates';
+
 const AddWidgetPage = lazy(() => import('./AddWidgetPage'));
+const TemplatePicker = lazy(() => import('./TemplatePicker'));
 
 interface ApercuWidgetGridProps {
   layout: PlacedWidget[];
   onChange: (next: PlacedWidget[]) => void;
   /** Rend le contenu d'un widget ; `null` = rien à montrer pour l'instant. */
   renderWidget: (id: WidgetId, size: WidgetSize) => ReactNode;
+  /** Modèle du rôle : recommandé, et remis par « Réinitialiser ». */
+  roleTemplate: TemplateId;
 }
 
 const SIZE_LETTER: Record<WidgetSize, 'S' | 'M' | 'L'> = { small: 'S', medium: 'M', large: 'L' };
@@ -50,8 +54,21 @@ const SWAP_COOLDOWN_MS = 140;
  * ⚠️ Un geste n'est jamais le seul chemin (WCAG 2.1.1) : flèches et choix de
  * format restent au clavier. En édition, le contenu des widgets est `inert`.
  */
-const ApercuWidgetGrid = ({ layout, onChange, renderWidget }: ApercuWidgetGridProps) => {
+const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTemplate }: ApercuWidgetGridProps) => {
   const { t } = useT('orgAdmin');
+  /**
+   * Modèle en APERÇU : choisi mais pas encore validé. Tant qu'il n'est pas
+   * validé, rien n'est enregistré, et la personne peut déjà le retoucher
+   * (ses retouches vont dans l'aperçu). « Valider » l'enregistre ; ensuite
+   * elle continue de modifier comme d'habitude.
+   */
+  const [draft, setDraft] = useState<{ template: TemplateId; layout: PlacedWidget[] } | null>(null);
+  const [choosingTemplate, setChoosingTemplate] = useState(false);
+  const layout = draft?.layout ?? saved;
+  const onChange = (next: PlacedWidget[]) => {
+    if (draft) setDraft({ ...draft, layout: next });
+    else save(next);
+  };
   const [editing, setEditing] = useState(false);
   const [picking, setPicking] = useState(false);
   const [dragged, setDragged] = useState<WidgetId | null>(null);
@@ -142,11 +159,26 @@ const ApercuWidgetGrid = ({ layout, onChange, renderWidget }: ApercuWidgetGridPr
                   animate={{ opacity: 1, y: 0, scale: 1, transition: { ...POP, delay: 0.05 } }}
                   exit={{ opacity: 0, y: -10, scale: 0.85 }}
                   whileTap={{ scale: 0.94 }}
-                  onClick={() => { onChange([...DEFAULT_LAYOUT]); setRemoved(null); }}
+                  onClick={() => { onChange([...TEMPLATES[roleTemplate]]); setRemoved(null); }}
                   className={`${toolbarButton} font-normal text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]`}
                 >
                   <RotateCcw size={15} aria-hidden="true" />
                   {t('apercu.widgets.reset')}
+                </motion.button>,
+                <motion.button
+                  key="templates"
+                  type="button"
+                  layout
+                  initial={{ opacity: 0, y: -10, scale: 0.85 }}
+                  animate={{ opacity: 1, y: 0, scale: 1, transition: { ...POP, delay: 0.08 } }}
+                  exit={{ opacity: 0, y: -10, scale: 0.85 }}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => setChoosingTemplate(true)}
+                  className={`${toolbarButton} border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]`}
+                >
+                  <LayoutTemplate size={16} aria-hidden="true" />
+                  {t('apercu.widgets.tpl.button')}
                 </motion.button>,
                 <motion.button
                   key="add"
@@ -200,6 +232,45 @@ const ApercuWidgetGrid = ({ layout, onChange, renderWidget }: ApercuWidgetGridPr
             )}
           </AnimatePresence>
         </div>
+
+        <AnimatePresence initial={false}>
+          {draft && (
+            <motion.div
+              key="draft"
+              role="status"
+              initial={{ opacity: 0, y: -12, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -12, height: 0 }}
+              transition={SPRING}
+              className="overflow-hidden"
+            >
+              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[rgb(var(--color-accent)/0.5)] bg-[rgb(var(--color-accent)/0.08)] px-4 py-3">
+                <LayoutTemplate size={18} className="shrink-0 text-[rgb(var(--color-accent))]" aria-hidden="true" />
+                <p className="flex-1 min-w-[200px] text-sm text-[rgb(var(--color-text-primary))]">
+                  <span className="font-semibold">{t('apercu.widgets.tpl.draftTitle', { name: t(`apercu.widgets.tpl.names.${draft.template}`) })}</span>{' '}
+                  <span className="text-[rgb(var(--color-text-secondary))]">{t('apercu.widgets.tpl.draftHint')}</span>
+                </p>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => setDraft(null)}
+                  className="min-h-touch px-3.5 rounded-xl text-sm font-semibold text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
+                >
+                  {t('apercu.widgets.tpl.cancel')}
+                </motion.button>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => { save(draft.layout); setDraft(null); setRemoved(null); }}
+                  className="min-h-touch inline-flex items-center gap-1.5 px-4 rounded-xl bg-[rgb(var(--color-accent))] text-sm font-semibold text-white hover:opacity-90"
+                >
+                  <Check size={16} aria-hidden="true" />
+                  {t('apercu.widgets.tpl.apply')}
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence initial={false}>
           {editing && (
@@ -421,6 +492,20 @@ const ApercuWidgetGrid = ({ layout, onChange, renderWidget }: ApercuWidgetGridPr
         </AnimatePresence>
 
         <AnimatePresence>
+          {choosingTemplate && (
+            <Suspense key="templates" fallback={null}>
+              <TemplatePicker
+                recommended={roleTemplate}
+                onPick={(id) => {
+                  setDraft({ template: id, layout: [...TEMPLATES[id]] });
+                  setRemoved(null);
+                  setChoosingTemplate(false);
+                  setEditing(true);
+                }}
+                onClose={() => setChoosingTemplate(false)}
+              />
+            </Suspense>
+          )}
           {picking && (
             <Suspense key="picker" fallback={null}>
               <AddWidgetPage
