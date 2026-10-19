@@ -430,6 +430,8 @@ const ApercuWidgetGrid = ({ layout, onChange, renderWidget }: ApercuWidgetGridPr
                   setHighlight({ id, entering: !layout.some((w) => w.id === id) });
                   setPicking(false);
                 }}
+                onRemove={remove}
+                renderWidget={renderWidget}
                 onClose={() => setPicking(false)}
               />
             </Suspense>
