@@ -1,9 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-  Activity, ArrowLeft, AtSign, CalendarClock, CalendarDays, CalendarRange, CircleCheckBig, Clock3, FolderKanban,
-  Gauge, Hourglass, Lock, Pin, Plus, Search, Target, type LucideIcon,
-} from 'lucide-react';
+import { Check, Plus, Search, Trash2, X } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import {
@@ -14,43 +11,68 @@ import {
   type WidgetSize,
 } from './apercu-widgets';
 
-const ICONS: Record<WidgetId, LucideIcon> = {
-  kpi: Gauge,
-  waiting: Hourglass,
-  tasks: CircleCheckBig,
-  load: Clock3,
-  agenda: CalendarDays,
-  krs: Target,
-  projects: FolderKanban,
-  waitingOn: Hourglass,
-  activity: Activity,
-  orgEvents: CalendarClock,
-  deadlines: CalendarRange,
-  mentions: AtSign,
-  blockedByMe: Lock,
-  note: Pin,
-};
+/**
+ * Largeur « réelle » d'un widget de chaque format sur l'Aperçu desktop : la
+ * miniature le rend à cette largeur, puis le réduit à la taille de la carte.
+ */
+const NATURAL_WIDTH: Record<WidgetSize, number> = { small: 380, medium: 580, large: 1180 };
+const PREVIEW_HEIGHT = 170;
 
-/** Silhouette du format, à l'échelle de la grille de 6 colonnes. */
-const SHAPE: Record<WidgetSize, string> = {
-  small: 'w-1/3',
-  medium: 'w-1/2',
-  large: 'w-full',
+/**
+ * Miniature VIVANTE du widget : le vrai composant, avec les vraies données,
+ * rendu à sa largeur naturelle puis réduit. Inerte et masqué aux lecteurs
+ * d'écran (le nom et la description le disent déjà).
+ */
+const WidgetPreview = ({ size, children }: { size: WidgetSize; children: ReactNode }) => {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.45);
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const update = () => setScale(Math.min(1, (el.clientWidth - 16) / NATURAL_WIDTH[size]));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [size]);
+  return (
+    <div
+      ref={boxRef}
+      aria-hidden="true"
+      className="relative overflow-hidden rounded-xl bg-[rgb(var(--color-hover))]"
+      style={{ height: PREVIEW_HEIGHT }}
+    >
+      <div
+        ref={(el) => { if (el) el.setAttribute('inert', ''); }}
+        className="absolute left-2 top-2 origin-top-left pointer-events-none select-none"
+        style={{ width: NATURAL_WIDTH[size], transform: `scale(${scale})` }}
+      >
+        {children}
+      </div>
+      {/* Fondu bas : la miniature est un aperçu, pas tout le widget. */}
+      <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[rgb(var(--color-hover))] to-transparent" />
+    </div>
+  );
 };
 
 interface AddWidgetPageProps {
   layout: PlacedWidget[];
   onAdd: (id: WidgetId, size: WidgetSize) => void;
+  onRemove: (id: WidgetId) => void;
+  renderWidget: (id: WidgetId, size: WidgetSize) => ReactNode;
   onClose: () => void;
 }
 
 /**
- * Page « Ajouter un widget » : plein écran, une barre de recherche, des
- * raccourcis horizontaux vers les trois formats, puis une section par format
- * (petit, moyen, grand). Un widget déjà posé propose de changer de format
- * plutôt que d'en poser un second.
+ * Fenêtre « Ajouter un widget » (2026-10-19) : une vraie pop-up centrée aux
+ * bords arrondis, sur un voile. Recherche, raccourcis horizontaux vers les
+ * trois formats, une section par format, et pour chaque widget sa miniature
+ * vivante.
+ *
+ * Un widget déjà posé ne propose QUE « Retirer » : un « Passer en petit » du
+ * même bleu que « Ajouter » se confondait avec lui (retour d'Axel, 2026-10-19).
  */
-const AddWidgetPage = ({ layout, onAdd, onClose }: AddWidgetPageProps) => {
+const AddWidgetPage = ({ layout, onAdd, onRemove, renderWidget, onClose }: AddWidgetPageProps) => {
   const { t } = useT('orgAdmin');
   const [query, setQuery] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
@@ -79,29 +101,34 @@ const AddWidgetPage = ({ layout, onAdd, onClose }: AddWidgetPageProps) => {
 
   return (
     <motion.div
-      ref={ref}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.2 } }}
-      {...dialogProps}
-      className="fixed inset-0 z-50 overflow-y-auto bg-[rgb(var(--color-background))]"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/55 backdrop-blur-sm"
     >
-      <motion.header
-        initial={{ y: -24, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-        className="sticky top-0 z-10 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-background)/0.95)] backdrop-blur">
-        <div className="mx-auto max-w-5xl px-4 pt-3 pb-3 space-y-3">
+      <motion.div
+        ref={ref}
+        {...dialogProps}
+        initial={{ opacity: 0, scale: 0.94, y: 24 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 16, transition: { duration: 0.18 } }}
+        transition={{ type: 'spring', stiffness: 360, damping: 30 }}
+        className="w-full max-w-5xl max-h-[88vh] flex flex-col overflow-hidden rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] shadow-2xl"
+      >
+        <header className="shrink-0 border-b border-[rgb(var(--color-border))] px-5 pt-4 pb-3 space-y-3">
           <div className="flex items-center gap-2">
-            <button
+            <h1 className="flex-1 text-xl font-bold text-[rgb(var(--color-text-primary))]">{t('apercu.widgets.picker.title')}</h1>
+            <motion.button
               type="button"
+              whileHover={{ rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
               onClick={onClose}
               aria-label={t('apercu.widgets.picker.back')}
-              className="min-h-touch min-w-touch rounded-xl flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
+              className="min-h-touch min-w-touch rounded-full flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
             >
-              <ArrowLeft size={20} aria-hidden="true" />
-            </button>
-            <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{t('apercu.widgets.picker.title')}</h1>
+              <X size={20} aria-hidden="true" />
+            </motion.button>
           </div>
           <label className="relative block">
             <span className="sr-only">{t('apercu.widgets.picker.search')}</span>
@@ -128,78 +155,77 @@ const AddWidgetPage = ({ layout, onAdd, onClose }: AddWidgetPageProps) => {
               </button>
             ))}
           </nav>
-        </div>
-      </motion.header>
+        </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-5 space-y-8">
-        {nothing && (
-          <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('apercu.widgets.picker.searchEmpty', { query })}</p>
-        )}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5 space-y-8">
+          {nothing && (
+            <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('apercu.widgets.picker.searchEmpty', { query })}</p>
+          )}
 
-        {sections.map(({ size, defs }) => defs.length > 0 && (
-          <section
-            key={size}
-            ref={(el) => { sectionRefs.current[size] = el; }}
-            aria-labelledby={`widget-section-${size}`}
-            className="scroll-mt-48"
-          >
-            <h2 id={`widget-section-${size}`} className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{sizeName(size)}</h2>
-            <p className="text-sm text-[rgb(var(--color-text-muted))] mb-3">{t(`apercu.widgets.picker.sectionHint_${size}`)}</p>
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <AnimatePresence mode="popLayout" initial>
-              {defs.map(({ id }, i) => {
-                const Icon = ICONS[id];
-                const current = placed.get(id);
-                const isCurrent = current === size;
-                return (
-                  <motion.li
-                    key={id}
-                    layout
-                    initial={{ opacity: 0, y: 24, scale: 0.94 }}
-                    animate={{ opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 360, damping: 28, delay: 0.08 + i * 0.045 } }}
-                    exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
-                    whileHover={{ y: -4 }}
-                    className="flex flex-col rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-                    <div className="h-14 rounded-xl bg-[rgb(var(--color-hover))] p-2 flex" aria-hidden="true">
-                      <motion.div
-                        initial={{ scaleX: 0.2, opacity: 0 }}
-                        animate={{ scaleX: 1, opacity: 1 }}
-                        transition={{ type: 'spring', stiffness: 220, damping: 22, delay: 0.25 + i * 0.045 }}
-                        style={{ originX: 0 }}
-                        className={`${SHAPE[size]} h-full rounded-lg bg-[rgb(var(--color-accent)/0.18)] border border-[rgb(var(--color-accent)/0.35)] flex items-center justify-center`}>
-                        <Icon size={18} className="text-[rgb(var(--color-accent))]" />
-                      </motion.div>
-                    </div>
-                    <p className="mt-3 text-base font-bold text-[rgb(var(--color-text-primary))]">{name(id)}</p>
-                    <p className="mt-0.5 text-sm text-[rgb(var(--color-text-secondary))] flex-1">{desc(id)}</p>
-                    {current && (
-                      <p className="mt-2 text-xs text-[rgb(var(--color-text-muted))]">
-                        {isCurrent ? t('apercu.widgets.picker.current') : t('apercu.widgets.picker.alreadyHere')}
-                      </p>
-                    )}
-                    {!isCurrent && (
-                      <motion.button
-                        type="button"
-                        whileTap={{ scale: 0.94 }}
-                        onClick={() => onAdd(id, size)}
-                        className="mt-3 min-h-touch inline-flex items-center justify-center gap-1.5 rounded-xl bg-[rgb(var(--color-accent))] text-sm font-semibold text-white hover:opacity-90"
+          {sections.map(({ size, defs }) => defs.length > 0 && (
+            <section
+              key={size}
+              ref={(el) => { sectionRefs.current[size] = el; }}
+              aria-labelledby={`widget-section-${size}`}
+              className="scroll-mt-4"
+            >
+              <h2 id={`widget-section-${size}`} className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{sizeName(size)}</h2>
+              <p className="text-sm text-[rgb(var(--color-text-muted))] mb-3">{t(`apercu.widgets.picker.sectionHint_${size}`)}</p>
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <AnimatePresence mode="popLayout" initial>
+                  {defs.map(({ id }, i) => {
+                    const current = placed.get(id);
+                    return (
+                      <motion.li
+                        key={id}
+                        layout
+                        initial={{ opacity: 0, y: 24, scale: 0.94 }}
+                        animate={{ opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 360, damping: 28, delay: 0.08 + i * 0.045 } }}
+                        exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+                        whileHover={{ y: -4 }}
+                        className="flex flex-col rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3"
                       >
-                        <Plus size={16} aria-hidden="true" />
-                        {current
-                          ? t('apercu.widgets.picker.switchSize', { size: sizeName(size).toLocaleLowerCase() })
-                          : t('apercu.widgets.picker.addTo')}
-                        <span className="sr-only">{` ${name(id)}`}</span>
-                      </motion.button>
-                    )}
-                  </motion.li>
-                );
-              })}
-              </AnimatePresence>
-            </ul>
-          </section>
-        ))}
-
-      </main>
+                        <WidgetPreview size={size}>{renderWidget(id, size)}</WidgetPreview>
+                        <p className="mt-3 px-1 text-base font-bold text-[rgb(var(--color-text-primary))]">{name(id)}</p>
+                        <p className="mt-0.5 px-1 text-sm text-[rgb(var(--color-text-secondary))] flex-1">{desc(id)}</p>
+                        {current ? (
+                          <div className="mt-3 flex items-center gap-2">
+                            <span className="flex-1 inline-flex items-center gap-1.5 px-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                              <Check size={14} aria-hidden="true" />
+                              {t('apercu.widgets.picker.alreadyHere')}
+                            </span>
+                            <motion.button
+                              type="button"
+                              whileTap={{ scale: 0.94 }}
+                              onClick={() => onRemove(id)}
+                              className="min-h-touch inline-flex items-center gap-1.5 px-3.5 rounded-xl border border-red-500/40 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                            >
+                              <Trash2 size={15} aria-hidden="true" />
+                              {t('apercu.widgets.picker.removeFrom')}
+                              <span className="sr-only">{` ${name(id)}`}</span>
+                            </motion.button>
+                          </div>
+                        ) : (
+                          <motion.button
+                            type="button"
+                            whileTap={{ scale: 0.94 }}
+                            onClick={() => onAdd(id, size)}
+                            className="mt-3 min-h-touch inline-flex items-center justify-center gap-1.5 rounded-xl bg-[rgb(var(--color-accent))] text-sm font-semibold text-white hover:opacity-90"
+                          >
+                            <Plus size={16} aria-hidden="true" />
+                            {t('apercu.widgets.picker.addTo')}
+                            <span className="sr-only">{` ${name(id)} (${sizeName(size)})`}</span>
+                          </motion.button>
+                        )}
+                      </motion.li>
+                    );
+                  })}
+                </AnimatePresence>
+              </ul>
+            </section>
+          ))}
+        </div>
+      </motion.div>
     </motion.div>
   );
 };

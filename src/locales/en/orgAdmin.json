@@ -1406,8 +1406,7 @@
         "sectionHint_large": "Full width: every detail.",
         "addTo": "Add",
         "alreadyHere": "Already on your overview",
-        "switchSize": "Switch to {{size}}",
-        "current": "Current size"
+        "removeFrom": "Remove"
       },
       "pager": {
         "prev": "Previous",

@@ -1498,8 +1498,7 @@
         "sectionHint_large": "Toute la largeur : tout le détail.",
         "addTo": "Ajouter",
         "alreadyHere": "Déjà sur l'aperçu",
-        "switchSize": "Passer en {{size}}",
-        "current": "Format actuel"
+        "removeFrom": "Retirer"
       },
       "pager": {
         "prev": "Précédent",
