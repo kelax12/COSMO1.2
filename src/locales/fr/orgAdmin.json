@@ -1491,7 +1491,11 @@
         "projects": "Mes projets",
         "waitingOn": "J'attends les autres",
         "activity": "Activité de l'équipe",
-        "orgEvents": "Événements de l'entreprise"
+        "orgEvents": "Événements de l'entreprise",
+        "deadlines": "Mes échéances",
+        "mentions": "Mentions et commentaires",
+        "blockedByMe": "Bloqué par moi",
+        "note": "Note épinglée"
       },
       "desc": {
         "kpi": "Le bonjour, et ce qui t'attend en chiffres.",
@@ -1503,7 +1507,11 @@
         "projects": "Les projets où tu as des tâches.",
         "waitingOn": "Ce que tu as confié et qui dort.",
         "activity": "Ce qui a bougé dans l'équipe en 24 h.",
-        "orgEvents": "Les prochaines échéances de l'entreprise."
+        "orgEvents": "Les prochaines échéances de l'entreprise.",
+        "deadlines": "Tes échéances des sept prochains jours, jour par jour.",
+        "mentions": "Ceux qui t'ont mentionné, avec réponse sur place.",
+        "blockedByMe": "Les personnes qui attendent qu'une de tes tâches soit finie.",
+        "note": "Un mémo personnel, gardé dans ce navigateur."
       },
       "picker": {
         "title": "Ajouter un widget",
@@ -1517,9 +1525,7 @@
         "addTo": "Ajouter",
         "alreadyHere": "Déjà sur l'aperçu",
         "switchSize": "Passer en {{size}}",
-        "current": "Format actuel",
-        "ideas": "Bientôt",
-        "ideasHint": "Mes échéances, Mentions et commentaires, Bloqué par moi, Note épinglée : en préparation."
+        "current": "Format actuel"
       },
       "pager": {
         "prev": "Précédent",
@@ -1562,6 +1568,31 @@
         "projLate": "{{count}} en retard",
         "inDays": "J-{{count}}",
         "dueToday": "Auj."
+      },
+      "n": {
+        "overdue": "En retard",
+        "overdueCount": "En retard : {{count}}",
+        "dayCount": "{{day}} : {{count}}",
+        "daysLabel": "Jours de la semaine",
+        "noDeadlines": "Aucune échéance cette semaine.",
+        "freeDay": "Rien ce jour-là.",
+        "postpone": "Reporter",
+        "peopleWaiting": "{{count}} personne(s) t'attendent.",
+        "blockingNobody": "Tu ne bloques personne.",
+        "waitedBy": "Attendue par {{names}}",
+        "notify": "Prévenir",
+        "noMentions": "Aucune mention non lue.",
+        "onTask": "sur {{name}}",
+        "replyTo": "Répondre à {{name}}",
+        "send": "Envoyer",
+        "openTask": "Ouvrir la tâche",
+        "markRead": "Lu",
+        "newNote": "Nouvelle note",
+        "noNote": "Aucune note. Ajoute un mémo pour toi.",
+        "noteText": "Texte de la note",
+        "saveNote": "Enregistrer",
+        "editNote": "Modifier",
+        "deleteNote": "Supprimer la note"
       }
     }
   },

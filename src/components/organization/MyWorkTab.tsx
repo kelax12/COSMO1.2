@@ -28,6 +28,7 @@ import { useT } from '@/i18n/useT';
 import { buildOrgLink } from './deep-link.helpers';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { loadLayout, saveLayout, type PlacedWidget } from './apercu-widgets';
+import { postponedDeadline } from './apercu-new-widgets.helpers';
 
 interface MyWorkTabProps {
   orgId: string;
@@ -366,6 +367,8 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
   // synchronisés côté serveur (mig. 091), on écrit les deux pour l'optimiste.
   const approve = (task: TeamTask) =>
     updateTask.mutate({ taskId: task.id, input: { completed: true, status: 'done' } });
+  const postpone = (task: TeamTask) =>
+    updateTask.mutate({ taskId: task.id, input: { deadline: postponedDeadline(task.deadline) } });
   const sendBack = (task: TeamTask) =>
     updateTask.mutate({ taskId: task.id, input: { status: 'in_progress' } });
   const modalUpdate = (taskId: string, input: UpdateTeamTaskInput) =>
@@ -412,6 +415,7 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
           onSendBack={sendBack}
           layout={layout}
           onLayoutChange={changeLayout}
+          onPostpone={postpone}
         />
       </Suspense>
 

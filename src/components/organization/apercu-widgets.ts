@@ -27,7 +27,11 @@ export type WidgetId =
   | 'projects'
   | 'waitingOn'
   | 'activity'
-  | 'orgEvents';
+  | 'orgEvents'
+  | 'deadlines'
+  | 'mentions'
+  | 'blockedByMe'
+  | 'note';
 
 export interface WidgetDef {
   id: WidgetId;
@@ -47,6 +51,11 @@ export const WIDGET_DEFS: readonly WidgetDef[] = [
   { id: 'waitingOn', sizes: ['small', 'medium', 'large'] },
   { id: 'activity', sizes: ['small', 'medium', 'large'] },
   { id: 'orgEvents', sizes: ['small', 'medium', 'large'] },
+  // Nouveaux (2026-10-19) : hors disposition par défaut, à ajouter depuis la page.
+  { id: 'deadlines', sizes: ['small', 'medium', 'large'] },
+  { id: 'mentions', sizes: ['small', 'medium', 'large'] },
+  { id: 'blockedByMe', sizes: ['small', 'medium', 'large'] },
+  { id: 'note', sizes: ['small', 'medium', 'large'] },
 ];
 
 const DEF_BY_ID = new Map(WIDGET_DEFS.map((d) => [d.id, d]));

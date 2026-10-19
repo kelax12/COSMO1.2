@@ -20,6 +20,8 @@ import type { PlacedWidget, WidgetId, WidgetSize } from './apercu-widgets';
 import { AgendaCompact, KpiCompact, KpiTiles, TasksCompact, WaitingCompact } from './MyWorkCompactAction';
 import { ActivityCompact, KrsCompact, OrgEventsCompact, ProjectsCompact, WaitingOnCompact } from './MyWorkCompactContext';
 import { buildOrgLink } from './deep-link.helpers';
+import { BlockedByMeWidget, DeadlinesWidget } from './MyWorkDeadlineWidgets';
+import { MentionsWidget, NoteWidget } from './MyWorkSocialWidgets';
 import { KpiStrip } from './MyWorkKpiStrip';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
@@ -70,6 +72,8 @@ export interface MyWorkSectionsProps {
   onOpenTask: (task: TeamTask) => void;
   onApprove: (task: TeamTask) => void;
   onSendBack: (task: TeamTask) => void;
+  /** Reporter d'un jour (widget « Mes échéances »). */
+  onPostpone: (task: TeamTask) => void;
   /** Disposition des widgets, tenue par `MyWorkTab` (préférence par personne). */
   layout: PlacedWidget[];
   onLayoutChange: (next: PlacedWidget[]) => void;
@@ -93,7 +97,7 @@ const MyWorkSections = ({
   orgId, currentUserId, open, mine, upcoming, createdInReview, delegated,
   activity, deps, notifications, okrs, projects, members, hasAny, estimated,
   agenda, overdueCount, doneCount, nextDeadline, onToggle, onOpenTask, onApprove, onSendBack,
-  layout, onLayoutChange, agendaEvents,
+  layout, onLayoutChange, agendaEvents, onPostpone,
 }: MyWorkSectionsProps) => {
   const me = currentUserId ?? '';
   const activeProjectIds = useMemo(
@@ -253,6 +257,14 @@ const MyWorkSections = ({
       if (compact !== undefined) return compact;
     }
     switch (id) {
+      case 'deadlines':
+        return <DeadlinesWidget size={size} open={open} onToggle={onToggle} onOpenTask={onOpenTask} onPostpone={onPostpone} onSeeAll={seeTasks} />;
+      case 'mentions':
+        return <MentionsWidget size={size} orgId={orgId} mentions={mentionRows} members={members} onOpenTask={onOpenTask} />;
+      case 'blockedByMe':
+        return <BlockedByMeWidget size={size} blocking={blocking} members={members} onToggle={onToggle} onOpenTask={onOpenTask} />;
+      case 'note':
+        return <NoteWidget size={size} orgId={orgId} userId={me} />;
       case 'kpi':
         return (
           <KpiStrip
