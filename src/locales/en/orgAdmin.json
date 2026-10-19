@@ -83,6 +83,8 @@
     "statusAlreadyMember": "Already a member",
     "statusAlreadyInvited": "An invitation is already pending",
     "statusInvalid": "Invalid address",
+    "statusSentTo": "Invitation sent to {{email}}",
+    "statusFailed": "The invitation could not be sent. Try again.",
     "copyLinkFor": "Copy the invitation link for {{email}}",
     "listLoading": "Loading invitations…",
     "listEmpty": "No email invitations yet.",
