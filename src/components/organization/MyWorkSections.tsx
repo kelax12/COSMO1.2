@@ -290,7 +290,7 @@ const MyWorkSections = ({
         return (
           <OrgHealthWidget
             size={size}
-            atRiskProjects={activeProjects.filter((p) => p.health === 'at_risk').length}
+            atRiskProjects={risky.length}
             struggling={activeProjects.filter((p) => p.health === 'off_track').length}
             overdue={orgOverdue}
             blockedTasks={teamOpen.filter((t) => t.status === 'blocked').length}

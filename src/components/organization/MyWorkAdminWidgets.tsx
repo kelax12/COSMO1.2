@@ -21,7 +21,7 @@ const PER_PAGE: Record<WidgetSize, number> = { small: 1, medium: 3, large: 6 };
 
 interface OrgHealthProps {
   size: WidgetSize;
-  /** Projets dont la santé déclarée est « à risque ». */
+  /** Même compte que le widget « Projets à risque » : santé déclarée OU tâches en retard. */
   atRiskProjects: number;
   /** Projets déclarés « hors piste ». */
   struggling: number;
