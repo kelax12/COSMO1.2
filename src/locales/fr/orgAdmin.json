@@ -1561,7 +1561,8 @@
         "dueToday": "Auj.",
         "yesterday": "Hier",
         "today": "Aujourd'hui",
-        "tomorrow": "Demain"
+        "tomorrow": "Demain",
+        "doneTask": "Terminer {{name}}"
       },
       "n": {
         "overdue": "En retard",
