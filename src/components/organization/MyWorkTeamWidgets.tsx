@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { AlarmClock, ExternalLink, Gauge, Target, UsersRound } from 'lucide-react';
+import { AlarmClock, Gauge, Target } from 'lucide-react';
+import { safeGetItem, safeSetItem } from '@/lib/safe-json';
 import type { TeamTask } from '@/modules/team-projects';
 import { getDateLocale } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
@@ -7,7 +9,7 @@ import { deadlineDayKey } from '@/lib/deadline';
 import type { WidgetSize } from './apercu-widgets';
 import type { MemberLoad, OkrRow, OverdueGroup } from './apercu-team.helpers';
 import { formatDuration } from './team-projects.helpers';
-import { ItemAction, WidgetEmpty, WidgetShell } from './WidgetShell';
+import { WidgetEmpty, WidgetShell } from './WidgetShell';
 import { TONE_BADGE, TONE_TEXT, lateDays, usePager, type WidgetTone } from './widget-shell.helpers';
 
 /**
@@ -119,17 +121,17 @@ export const TeamOverdueWidget = ({ size, groups, onOpenTask }: { size: WidgetSi
           ))}
         </ul>
       ) : (
-        <ul className="space-y-3">
+        <ul className="divide-y divide-[rgb(var(--color-border))]">
           {rowPager.slice.map(({ member, task }) => (
-            <li key={task.id} className="min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="flex-1 min-w-0 truncate text-sm font-semibold text-[rgb(var(--color-text-primary))]">{task.name}</span>
-                <span className={`shrink-0 px-2 py-0.5 rounded-md text-xs font-bold ${TONE_BADGE.danger}`}>{t('apercu.widgets.c.late', { count: lateDays(task.deadline) })}</span>
-              </div>
-              <p className="mt-0.5 text-xs text-[rgb(var(--color-text-muted))] truncate">{member.displayName}</p>
-              <div className="mt-2">
-                <ItemAction icon={ExternalLink} label={t('apercu.widgets.c.followUp')} onClick={() => onOpenTask(task)} />
-              </div>
+            <li key={task.id} className="py-2 first:pt-0 last:pb-0 min-w-0">
+              {/* Plus de bouton « Relancer » (2026-10-20) : la ligne ouvre la tâche. */}
+              <button type="button" onClick={() => onOpenTask(task)} className="w-full text-left rounded-lg hover:bg-[rgb(var(--color-hover))] px-1 -mx-1">
+                <span className="flex items-center gap-2 min-w-0">
+                  <span className="flex-1 min-w-0 truncate text-sm font-semibold text-[rgb(var(--color-text-primary))]">{task.name}</span>
+                  <span className={`shrink-0 px-2 py-0.5 rounded-md text-xs font-bold ${TONE_BADGE.danger}`}>{t('apercu.widgets.c.late', { count: lateDays(task.deadline) })}</span>
+                </span>
+                <span className="mt-0.5 block text-xs text-[rgb(var(--color-text-muted))] truncate">{member.displayName}</span>
+              </button>
             </li>
           ))}
         </ul>
@@ -140,20 +142,47 @@ export const TeamOverdueWidget = ({ size, groups, onOpenTask }: { size: WidgetSi
 
 /* ─────────────────────────── OKR (équipes ou entreprise) ───────────── */
 
-export const OkrsWidget = ({ size, rows, scope, onOpen }: {
-  size: WidgetSize; rows: OkrRow[]; scope: 'team' | 'company'; onOpen: (okrId: string) => void;
+type OkrScope = 'team' | 'company';
+const OKR_SCOPE_KEY = 'cosmo_apercu_okr_scope_v1';
+const SCOPES: readonly OkrScope[] = ['company', 'team'];
+
+/**
+ * OKR (fusion « équipes » + « entreprise », 2026-10-20). La vue choisie
+ * devient la vue PAR DÉFAUT : elle est retenue dans ce navigateur.
+ */
+export const OkrsWidget = ({ size, teamRows, companyRows, onOpen }: {
+  size: WidgetSize; teamRows: OkrRow[]; companyRows: OkrRow[]; onOpen: (okrId: string) => void;
 }) => {
   const { t } = useT('orgAdmin');
+  const [scope, setScopeState] = useState<OkrScope>(() => (safeGetItem(OKR_SCOPE_KEY) === 'team' ? 'team' : 'company'));
+  const setScope = (next: OkrScope) => { setScopeState(next); safeSetItem(OKR_SCOPE_KEY, next); };
+  const rows = scope === 'team' ? teamRows : companyRows;
   const pager = usePager(rows, PER_PAGE[size]);
   const behind = rows.filter((r) => r.behind).length;
   const average = rows.length ? Math.round(rows.reduce((s, r) => s + r.progress, 0) / rows.length) : 0;
   return (
     <WidgetShell
-      icon={scope === 'team' ? UsersRound : Target}
-      title={t(scope === 'team' ? 'apercu.widgets.names.teamOkrs' : 'apercu.widgets.names.companyOkrs')}
+      icon={Target}
+      title={t('apercu.widgets.names.companyOkrs')}
       count={behind > 0 ? behind : undefined}
       countTone="warning"
       pager={pager}
+      actions={(
+        <span role="group" aria-label={t('apercu.widgets.t.scopeLabel')} className="inline-flex rounded-full border border-[rgb(var(--color-border))] p-0.5">
+          {SCOPES.map((s) => (
+            <button
+              key={s}
+              type="button"
+              aria-pressed={scope === s}
+              onClick={() => setScope(s)}
+              title={t('apercu.widgets.t.scopeHint')}
+              className={`h-7 px-3 rounded-full text-xs font-semibold ${scope === s ? 'bg-[rgb(var(--color-accent))] text-white' : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'}`}
+            >
+              {t(`apercu.widgets.t.scopes.${s}`)}
+            </button>
+          ))}
+        </span>
+      )}
     >
       {rows.length === 0 ? <WidgetEmpty>{t('apercu.widgets.t.noOkrs')}</WidgetEmpty> : (
         <>

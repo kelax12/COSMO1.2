@@ -34,7 +34,6 @@ export type WidgetId =
   | 'note'
   | 'teamLoad'
   | 'teamOverdue'
-  | 'teamOkrs'
   | 'orgHealth'
   | 'riskProjects'
   | 'companyOkrs'
@@ -67,7 +66,6 @@ export const WIDGET_DEFS: readonly WidgetDef[] = [
   // Chef d'équipe et administrateur (2026-10-19), posés par les modèles.
   { id: 'teamLoad', sizes: ['small', 'medium', 'large'] },
   { id: 'teamOverdue', sizes: ['small', 'medium', 'large'] },
-  { id: 'teamOkrs', sizes: ['small', 'medium', 'large'] },
   { id: 'orgHealth', sizes: ['small', 'medium', 'large'] },
   { id: 'riskProjects', sizes: ['small', 'medium', 'large'] },
   { id: 'companyOkrs', sizes: ['small', 'medium', 'large'] },
@@ -112,8 +110,10 @@ export function sanitizeLayout(raw: unknown): PlacedWidget[] | null {
   const out: PlacedWidget[] = [];
   for (const item of raw) {
     if (!item || typeof item !== 'object') continue;
-    const { id, size } = item as { id?: unknown; size?: unknown };
-    if (typeof id !== 'string' || typeof size !== 'string') continue;
+    const { id: rawId, size } = item as { id?: unknown; size?: unknown };
+    if (typeof rawId !== 'string' || typeof size !== 'string') continue;
+    // « OKR des équipes » a fusionné dans « OKR » (2026-10-20).
+    const id = rawId === 'teamOkrs' ? 'companyOkrs' : rawId;
     const def = DEF_BY_ID.get(id as WidgetId);
     if (!def || seen.has(def.id) || !def.sizes.includes(size as WidgetSize)) continue;
     seen.add(def.id);

@@ -172,7 +172,16 @@ export const NoteWidget = ({ size, orgId, userId }: { size: WidgetSize; orgId: s
       title={t('apercu.widgets.names.note')}
       count={notes.length > 1 ? notes.length : undefined}
       pager={pager}
-      actions={<ItemAction icon={Plus} label={t('apercu.widgets.n.newNote')} iconOnly={size === 'small'} onClick={add} />}
+      headerAction={(
+        <button
+          type="button"
+          onClick={add}
+          className="shrink-0 inline-flex items-center gap-1 h-8 px-2.5 rounded-lg text-sm font-semibold text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent)/0.1)]"
+        >
+          <Plus size={15} aria-hidden="true" />
+          {t('apercu.widgets.n.newNote')}
+        </button>
+      )}
     >
       {notes.length === 0 ? <WidgetEmpty>{t('apercu.widgets.n.noNote')}</WidgetEmpty> : (
         <ul className="space-y-2.5">
@@ -199,13 +208,19 @@ export const NoteWidget = ({ size, orgId, userId }: { size: WidgetSize; orgId: s
                 </form>
               ) : (
                 <>
-                  <p className={`whitespace-pre-line text-sm text-amber-900 dark:text-amber-100 ${size === 'small' ? 'line-clamp-4' : 'line-clamp-6'}`}>{note.text}</p>
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <ItemAction icon={Pencil} label={t('apercu.widgets.n.editNote')} iconOnly={size === 'small'} onClick={() => startEdit(note)} />
-                    {size !== 'small' && (
-                      <ItemAction iconOnly icon={Trash2} label={t('apercu.widgets.n.deleteNote')} onClick={() => remove(note.id)} />
-                    )}
-                    <span className="ml-auto text-xs text-amber-800/80 dark:text-amber-200/80">{ago(note.updatedAt)}</span>
+                  {/* Une seule ligne : la note, puis « modifier » et la date (2026-10-20). */}
+                  <div className="flex items-start gap-2">
+                    <p className={`flex-1 min-w-0 whitespace-pre-line text-sm text-amber-900 dark:text-amber-100 ${size === 'small' ? 'line-clamp-4' : 'line-clamp-6'}`}>{note.text}</p>
+                    <button
+                      type="button"
+                      onClick={() => startEdit(note)}
+                      aria-label={t('apercu.widgets.n.editNote')}
+                      title={t('apercu.widgets.n.editNote')}
+                      className="shrink-0 w-7 h-7 -mt-0.5 rounded-lg flex items-center justify-center text-amber-800 dark:text-amber-200 hover:bg-amber-500/20"
+                    >
+                      <Pencil size={14} aria-hidden="true" />
+                    </button>
+                    <span className="shrink-0 text-xs leading-5 text-amber-800/80 dark:text-amber-200/80 whitespace-nowrap">{ago(note.updatedAt)}</span>
                   </div>
                 </>
               )}
