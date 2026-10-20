@@ -107,12 +107,14 @@ export const DeadlinesWidget = ({ size, open, onToggle, onOpenTask, onPostpone, 
                   {late > 0 && (
                     <span className={`shrink-0 px-2 py-0.5 rounded-md text-xs font-bold ${TONE_BADGE.danger}`}>{t('apercu.widgets.c.late', { count: late })}</span>
                   )}
+                  {/* Reporter sur la MÊME ligne : icône seule en petit et moyen (place), libellé en grand. */}
+                  <ItemAction
+                    icon={CalendarClock}
+                    iconOnly={size !== 'large'}
+                    label={t('apercu.widgets.n.postpone')}
+                    onClick={() => onPostpone(task)}
+                  />
                 </div>
-                {size !== 'medium' && (
-                  <div className="mt-1.5 pl-[46px]">
-                    <ItemAction icon={CalendarClock} label={t('apercu.widgets.n.postpone')} onClick={() => onPostpone(task)} />
-                  </div>
-                )}
               </li>
             );
           })}
@@ -143,47 +145,52 @@ export const BlockedByMeWidget = ({ size, blocking, members, onToggle, onOpenTas
     <WidgetShell
       icon={Lock}
       title={t('apercu.widgets.names.blockedByMe')}
+      titleExtra={size !== 'small' && urgent ? t('apercu.widgets.n.peopleWaiting', { count: people.size }) : undefined}
       count={blocking.length}
       countTone={urgent ? 'danger' : 'neutral'}
-      tone={urgent && size === 'small' ? 'danger' : 'neutral'}
       pager={pager}
     >
-      {size !== 'small' && urgent && (
-        <p className="mb-2 text-xs text-[rgb(var(--color-text-secondary))]">
-          {t('apercu.widgets.n.peopleWaiting', { count: people.size })}
-        </p>
-      )}
       {!urgent ? <WidgetEmpty>{t('apercu.widgets.n.blockingNobody')}</WidgetEmpty> : (
-        <ul className="space-y-3">
+        <ul className="divide-y divide-[rgb(var(--color-border))]">
           {pager.slice.map(({ mine, waiting }) => {
             const late = lateDays(mine.deadline);
             const who = [...new Set(waiting.flatMap((w) => w.assigneeIds))].map((id) => nameOf(id));
             return (
-              <li key={mine.id} className="min-w-0">
+              <li key={mine.id} className="py-2 first:pt-0 last:pb-0 min-w-0">
+                {/* L'élément à gauche, ses deux actions sur la même ligne à droite. */}
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="flex-1 min-w-0 truncate text-sm font-semibold text-[rgb(var(--color-text-primary))]">{mine.name}</span>
-                  {late > 0 && (
-                    <span className={`shrink-0 px-2 py-0.5 rounded-md text-xs font-bold ${TONE_BADGE.danger}`}>{t('apercu.widgets.c.late', { count: late })}</span>
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="min-w-0 truncate text-sm font-semibold text-[rgb(var(--color-text-primary))]">{mine.name}</span>
+                      {late > 0 && (
+                        <span className={`shrink-0 px-2 py-0.5 rounded-md text-xs font-bold ${TONE_BADGE.danger}`}>{t('apercu.widgets.c.late', { count: late })}</span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-xs text-[rgb(var(--color-text-muted))] truncate">
+                      {t('apercu.widgets.n.waitedBy', { names: who.join(', ') || t('activity.someMember') })}
+                    </p>
+                  </div>
+                  <ItemAction primary hideIcon={size === 'small'} icon={Check} label={t('apercu.widgets.c.done')} onClick={() => onToggle(mine)} />
+                  <ItemAction hideIcon={size === 'small'} icon={ExternalLink} label={t('apercu.widgets.n.notify')} onClick={() => onOpenTask(mine)} />
                 </div>
-                <p className="mt-0.5 text-xs text-[rgb(var(--color-text-muted))] truncate">
-                  {t('apercu.widgets.n.waitedBy', { names: who.join(', ') || t('activity.someMember') })}
-                </p>
+                {/* Grand format : CE QUI attend, tâche par tâche (ce que « Attendue
+                    par » résume). Chaque tâche bloquée s'ouvre d'un clic. */}
                 {size === 'large' && (
-                  <ul className="mt-1.5 space-y-0.5">
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('apercu.widgets.n.blockedTasks')}</span>
                     {waiting.map((w) => (
-                      <li key={w.id}>
-                        <button type="button" onClick={() => onOpenTask(w)} className="w-full text-left truncate text-xs text-[rgb(var(--color-text-secondary))] hover:underline">
-                          → {w.name} · {w.assigneeIds.map((id) => nameOf(id)).join(', ')}
-                        </button>
-                      </li>
+                      <button
+                        key={w.id}
+                        type="button"
+                        onClick={() => onOpenTask(w)}
+                        className="max-w-full truncate rounded-full border border-[rgb(var(--color-border))] px-2.5 py-0.5 text-xs text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
+                      >
+                        {w.name}
+                        <span className="text-[rgb(var(--color-text-muted))]"> · {w.assigneeIds.map((id) => nameOf(id)).join(', ')}</span>
+                      </button>
                     ))}
-                  </ul>
+                  </div>
                 )}
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  <ItemAction primary icon={Check} label={t('apercu.widgets.c.done')} onClick={() => onToggle(mine)} />
-                  <ItemAction icon={ExternalLink} label={t('apercu.widgets.n.notify')} onClick={() => onOpenTask(mine)} />
-                </div>
               </li>
             );
           })}
