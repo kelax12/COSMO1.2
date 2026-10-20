@@ -61,8 +61,36 @@ export async function gotoTolerant(page: Page, url: string): Promise<void> {
   throw derniere;
 }
 
-export const test = base.extend<{ demoPage: Page }>({
-  demoPage: async ({ page, context }, use) => {
+/**
+ * Un lundi 10:00 (Paris), choisi exprès : le lundi et le mardi, le tableau de
+ * bord porte la carte check-in hebdo (`useWeeklyCheckin`), son contenu le plus
+ * large. Un verdict pris un autre jour ne la mesurerait jamais.
+ */
+export const HORLOGE_FIGEE = '2026-10-19T10:00:00+02:00';
+
+export const test = base.extend<{ demoPage: Page; horlogeFigee: string | null }>({
+  /**
+   * 🔴 L'HEURE DU NAVIGATEUR, figée au départ quand un spec le demande
+   * (`test.use({ horlogeFigee: HORLOGE_FIGEE })`).
+   *
+   * La démo date ses seeds par rapport à `new Date()`, et certains écrans
+   * dépendent du JOUR de la semaine. Le 2026-10-19, `Visual` et le cas C-97
+   * `/dashboard` à 200 % sont passés au rouge sur un commit qui ne changeait
+   * que deux commentaires : la carte check-in n'apparaît que le lundi et le
+   * mardi. Un verdict qui dépend du calendrier ne dit rien du code.
+   *
+   * `clock.install` et non `setFixedTime` : l'heure PART de cette date puis
+   * avance avec les minuteurs. Une date gelée bloquerait ce qui mesure le temps
+   * écoulé par `Date.now()` (le ticker GSAP de la landing, que la fixture
+   * traverse). Posée AVANT la première navigation, donc avant `loginDemo()`,
+   * qui génère les seeds.
+   * ⚠️ `null` par défaut : les autres specs gardent l'heure réelle, ce
+   * changement ne touche que ceux qui l'ont demandé.
+   */
+  horlogeFigee: [null, { option: true }],
+
+  demoPage: async ({ page, context, horlogeFigee }, use) => {
+    if (horlogeFigee) await page.clock.install({ time: new Date(horlogeFigee) });
     // 1. État propre, clear cookies + storage Supabase + flags démo
     //    (sinon RootRoute redirige immédiatement vers /dashboard si session
     //     déjà active, et le CTA "Essayer maintenant" n'existe pas).

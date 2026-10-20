@@ -37,10 +37,15 @@
 // la règle de `scripts/CLAUDE.md`, appliquée ici.
 // ═══════════════════════════════════════════════════════════════════
 
-import { test, expect } from './fixtures';
+import { test, expect, HORLOGE_FIGEE } from './fixtures';
 import type { Page } from '@playwright/test';
 
 test.describe.configure({ timeout: 240_000 });
+// 🔴 Un lundi, exprès (`e2e/fixtures.ts`) : la carte check-in hebdo n'existe que
+// le lundi et le mardi, et c'est elle qui débordait de 13 px à 200 % de police
+// (rouge le 2026-10-19, vert la veille, à code identique). Figer un autre jour
+// aurait rendu le cas vert en cachant le défaut.
+test.use({ horlogeFigee: HORLOGE_FIGEE });
 
 /**
  * Le débordement HORIZONTAL, en pixels CSS.
