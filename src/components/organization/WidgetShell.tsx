@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-react';
 import { useT } from '@/i18n/useT';
-import { TONE_BADGE, TONE_TEXT, type Pager, type WidgetTone } from './widget-shell.helpers';
+import { TONE_BADGE, type Pager, type WidgetTone } from './widget-shell.helpers';
 
 /**
  * Coque commune des formats petit et moyen de l'Aperçu (2026-10-19) : un
@@ -30,7 +30,7 @@ interface WidgetShellProps {
 const SHELL = 'h-full min-w-0 flex flex-col rounded-2xl border p-4';
 
 export const WidgetShell = ({
-  icon: Icon, title, count, countTone = 'neutral', actions, pager, pagerLabel, onSeeAll, tone = 'neutral', children,
+  icon: _icon, title, count, countTone = 'neutral', actions, pager, pagerLabel, onSeeAll, tone = 'neutral', children,
 }: WidgetShellProps) => {
   const { t } = useT('orgAdmin');
   const tinted = tone === 'danger'
@@ -40,7 +40,8 @@ export const WidgetShell = ({
   return (
     <section className={`${SHELL} ${tinted}`} aria-label={title}>
       <header className="flex items-center gap-2 mb-3">
-        <Icon size={17} className={tone === 'danger' ? TONE_TEXT.danger : 'text-[rgb(var(--color-text-secondary))]'} aria-hidden="true" />
+        {/* Pas d'icône devant le titre (retour d'Axel, 2026-10-20) : `icon` reste
+            accepté pour ne pas toucher chaque appel, mais n'est plus peint. */}
         <h3 className="flex-1 min-w-0 truncate text-sm font-bold text-[rgb(var(--color-text-primary))]">{title}</h3>
         {count !== undefined && (
           <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-bold tabular-nums ${TONE_BADGE[countTone]}`}>{count}</span>

@@ -1560,7 +1560,10 @@
         "projOpen": "{{count}} ouvertes",
         "projLate": "{{count}} en retard",
         "inDays": "J-{{count}}",
-        "dueToday": "Auj."
+        "dueToday": "Auj.",
+        "yesterday": "Hier",
+        "today": "Aujourd'hui",
+        "tomorrow": "Demain"
       },
       "n": {
         "overdue": "En retard",

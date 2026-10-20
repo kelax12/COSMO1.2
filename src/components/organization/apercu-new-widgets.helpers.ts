@@ -51,6 +51,23 @@ export function postponedDeadline(deadline: string | undefined, now: Date = new 
   return dayKey(addDays(parseISO(base), 1));
 }
 
+/**
+ * Pastille d'échéance d'une tâche : « hier », « aujourd'hui », « demain »
+ * pour ces trois jours, sinon le jour et le mois en toutes lettres. `kind`
+ * donne la teinte (passé = rouge).
+ */
+export type DeadlineKind = 'past' | 'yesterday' | 'today' | 'tomorrow' | 'later';
+
+export function deadlineKind(deadline: string | undefined, now: Date = new Date()): DeadlineKind | null {
+  const key = deadlineDayKey(deadline);
+  if (!key) return null;
+  const today = dayKey(now);
+  if (key === today) return 'today';
+  if (key === dayKey(addDays(parseISO(today), -1))) return 'yesterday';
+  if (key === dayKey(addDays(parseISO(today), 1))) return 'tomorrow';
+  return key < today ? 'past' : 'later';
+}
+
 /* ─────────────────────────── Note épinglée ─────────────────────────── */
 
 export interface PinnedNote {
