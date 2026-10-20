@@ -24,7 +24,9 @@ const ago = (iso: string) => formatDistanceToNowStrict(parseISO(iso), { locale: 
 interface MentionRow { notification: OrgNotification; task: TeamTask }
 
 /** Dernier message de l'auteur de la mention, et une réponse sur place. */
-const MentionThread = ({ row, nameOf, onReplied }: { row: MentionRow; nameOf: (id?: string | null) => string; onReplied: () => void }) => {
+const MentionThread = ({ row, nameOf, onReplied, onRead, onOpen }: {
+  row: MentionRow; nameOf: (id?: string | null) => string; onReplied: () => void; onRead: () => void; onOpen: () => void;
+}) => {
   const { t } = useT('orgAdmin');
   const { data: comments = [] } = useTeamTaskComments(row.task.id);
   const addComment = useAddTeamTaskComment(row.task.id);
@@ -68,6 +70,9 @@ const MentionThread = ({ row, nameOf, onReplied }: { row: MentionRow; nameOf: (i
         >
           <Send size={15} aria-hidden="true" />
         </button>
+        {/* Envoyer, Lu, Ouvrir la tâche : dans cet ordre, sur la ligne de la réponse. */}
+        <ItemAction icon={Check} label={t('apercu.widgets.n.markRead')} onClick={onRead} />
+        <ItemAction icon={ExternalLink} label={t('apercu.widgets.n.openTask')} onClick={onOpen} />
       </form>
     </div>
   );
@@ -96,24 +101,34 @@ export const MentionsWidget = ({ size, orgId, mentions, members, onOpenTask }: M
       pager={pager}
     >
       {mentions.length === 0 ? <WidgetEmpty>{t('apercu.widgets.n.noMentions')}</WidgetEmpty> : (
-        <ul className="space-y-3">
+        <ul className="divide-y divide-[rgb(var(--color-border))]">
           {pager.slice.map((row) => (
-            <li key={row.notification.id} className="min-w-0">
-              <p className="text-sm text-[rgb(var(--color-text-primary))] truncate">
-                <span className="font-semibold">{nameOf(row.notification.actorId)}</span>
-                <span className="text-[rgb(var(--color-text-muted))]"> · {ago(row.notification.createdAt)}</span>
-              </p>
-              <p className="text-xs text-[rgb(var(--color-text-secondary))] truncate">{t('apercu.widgets.n.onTask', { name: row.task.name })}</p>
-              {size === 'large' && <MentionThread row={row} nameOf={nameOf} onReplied={() => markRead.mutate(row.task.id)} />}
-              <div className="mt-2 flex flex-wrap gap-1.5">
+            <li key={row.notification.id} className="py-2 first:pt-0 last:pb-0 min-w-0">
+              {/* L'élément à gauche, Répondre et Lu sur la même ligne à droite. */}
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-[rgb(var(--color-text-primary))] truncate">
+                    <span className="font-semibold">{nameOf(row.notification.actorId)}</span>
+                    <span className="text-[rgb(var(--color-text-muted))]"> · {ago(row.notification.createdAt)}</span>
+                  </p>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))] truncate">{t('apercu.widgets.n.onTask', { name: row.task.name })}</p>
+                </div>
                 {size !== 'large' && (
-                  <ItemAction primary icon={AtSign} label={t('apercu.widgets.c.reply')} onClick={() => onOpenTask(row.task)} />
+                  <>
+                    <ItemAction primary hideIcon={size === 'small'} icon={AtSign} label={t('apercu.widgets.c.reply')} onClick={() => onOpenTask(row.task)} />
+                    <ItemAction hideIcon={size === 'small'} icon={Check} label={t('apercu.widgets.n.markRead')} onClick={() => markRead.mutate(row.task.id)} />
+                  </>
                 )}
-                {size === 'large' && (
-                  <ItemAction icon={ExternalLink} label={t('apercu.widgets.n.openTask')} onClick={() => onOpenTask(row.task)} />
-                )}
-                <ItemAction icon={Check} label={t('apercu.widgets.n.markRead')} onClick={() => markRead.mutate(row.task.id)} />
               </div>
+              {size === 'large' && (
+                <MentionThread
+                  row={row}
+                  nameOf={nameOf}
+                  onReplied={() => markRead.mutate(row.task.id)}
+                  onRead={() => markRead.mutate(row.task.id)}
+                  onOpen={() => onOpenTask(row.task)}
+                />
+              )}
             </li>
           ))}
         </ul>

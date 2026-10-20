@@ -1496,7 +1496,8 @@
         "noteText": "Note text",
         "saveNote": "Save",
         "editNote": "Edit",
-        "deleteNote": "Delete note"
+        "deleteNote": "Delete note",
+        "blockedTasks": "Blocked tasks:"
       },
       "editHint": "Drag a widget to move it, tap the cross to remove it.",
       "removedToast": "{{name}} removed",
@@ -1547,7 +1548,8 @@
         "draftHint": "You can already tweak it; nothing is saved until you confirm.",
         "cancel": "Cancel",
         "apply": "Use this template"
-      }
+      },
+      "loadInfo": "Workload adds up the estimated time of every task assigned to the person that is overdue or due within the next 7 days, then compares it with 35 h. A task with no estimate does not count."
     }
   },
   "customRoles": {

@@ -50,6 +50,7 @@ export const TeamLoadWidget = ({ size, loads, onSeeAll }: { size: WidgetSize; lo
     <WidgetShell
       icon={Gauge}
       title={t('apercu.widgets.names.teamLoad')}
+      info={t('apercu.widgets.loadInfo')}
       count={overloaded > 0 ? overloaded : undefined}
       countTone="danger"
       pager={pager}

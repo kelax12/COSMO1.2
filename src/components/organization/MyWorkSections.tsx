@@ -9,7 +9,6 @@ import {
 import type { TeamOKR } from '@/modules/team-okrs';
 import type { OrgMember, OrgNotification } from '@/modules/organizations';
 import TeamActivityFeed from './TeamActivityFeed';
-import OrgEventsTimeline from './OrgEventsTimeline';
 import { MyKeyResultsCard, MyProjectsCard, WaitingForMeCard } from './MyWorkCards';
 import { ActivityDigestCard, WaitingOnOthersCard, WeekLoadCard } from './MyWorkExtraCards';
 import { buildOrgEvents } from './org-events.helpers';
@@ -265,6 +264,18 @@ const MyWorkSections = ({
       if (compact !== undefined) return compact;
     }
     switch (id) {
+      case 'orgEvents':
+        return (
+          <OrgEventsCompact
+            size="large"
+            events={orgEvents}
+            onOpen={(e) => {
+              if (e.kind === 'okr') { navigate(buildOrgLink('okr', { okr: e.id.slice(4) })); return; }
+              const task = taskById.get(e.id.slice(5));
+              if (task) onOpenTask(task);
+            }}
+          />
+        );
       case 'tasks':
         return <TasksCompact size="large" open={open} projectById={projectById} onToggle={onToggle} onOpenTask={onOpenTask} onSeeAll={seeTasks} />;
       case 'deadlines':
@@ -351,8 +362,6 @@ const MyWorkSections = ({
             />
           </ActivityDigestCard>
         );
-      case 'orgEvents':
-        return <OrgEventsTimeline events={orgEvents} />;
     }
   };
 
