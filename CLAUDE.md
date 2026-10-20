@@ -40,6 +40,7 @@ fausses restées en place pendant des jours parce que le fichier était trop gro
 | i18n, slugs localisés, locales indexables | [`src/i18n/CLAUDE.md`](./src/i18n/CLAUDE.md) |
 | Migrations SQL, RLS, ledger | [`supabase/migration/CLAUDE.md`](./supabase/migration/CLAUDE.md) |
 | Edge Functions, drift déployé | [`supabase/functions/CLAUDE.md`](./supabase/functions/CLAUDE.md) |
+| Fonctions Vercel (`api/`), collecteur d'audience, clé secrète | [`api/CLAUDE.md`](./api/CLAUDE.md) |
 | Playwright | [`e2e/CLAUDE.md`](./e2e/CLAUDE.md) |
 | Gardes CI, témoins, alerting | [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) |
 
@@ -126,6 +127,7 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 | Toasts | Sonner |
 | Animations | Framer Motion (app) + GSAP 3 (**landing uniquement**, cf. [règle GSAP](#gsap--landing-page-uniquement)) |
 | Graphiques | recharts |
+| PDF | jsPDF (`vendor-pdf`, `import()` au clic sur « Exporter en PDF » seulement) |
 | i18n | **Catalogues JSON maison** (`src/i18n/` + `src/locales/{fr,en}/`) — pas d'i18next |
 | Paiement | Stripe (`@stripe/react-stripe-js`) — **non finalisé** |
 | Icônes | lucide-react (imports nominaux uniquement) |
@@ -135,7 +137,8 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 | Validation | `zod` (garde UX client — `src/lib/validation/`) |
 | Tests | Vitest (`*.test.ts` à côté du code) + Playwright (`e2e/`) |
 | Monitoring | Sentry (`beforeSend` strip emails/UUIDs) |
-| Hosting | Vercel (`vercel.json` + headers de sécurité + CSP) |
+| Hosting | Vercel (`vercel.json` + headers de sécurité + CSP) + fonctions `api/` (runtime edge) |
+| Audience | maison : `src/lib/traffic.ts` → `api/collect.ts` → `traffic_hits` ; Vercel Analytics sous consentement. Aucun script tiers de mesure |
 
 ---
 
@@ -165,10 +168,9 @@ npm run test:e2e            # Playwright (+ :ui, :report)         → e2e/CLAUDE
 npm run cosmo               # CLI données réelles (cf. plus haut)
 ```
 
-> 🛡️ **Les 34 gardes, une ligne chacune** (recomptées dans `package.json` le 2026-09-30 ; « 36 »
-> était faux) : [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) § Inventaire. Trois ne mesurent rien
-> tant qu'un geste manuel n'est pas fait (`C-88`, `C-89`, `C-105` ; `C-110` est tombée le
-> 2026-09-21) — § 9 d'[`a-faire-manuel.md`](./a-faire-manuel.md).
+> 🛡️ **Les 34 gardes, une ligne chacune** (recomptées dans `package.json` le 2026-10-20) :
+> [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) § Inventaire. Les trois qui attendaient un geste manuel
+> (`C-88`, `C-89`, `C-105`) mesurent toutes depuis le 2026-10-16.
 
 > Le build prod **drope** `console.*` et `debugger` (`vite.config.ts → esbuild.pure/drop`).
 > Les erreurs remontent via Sentry (`VITE_SENTRY_DSN`).
@@ -200,6 +202,8 @@ VITE_SENTRY_DSN=  # public, write-only — si absent, monitoring désactivé
 - **Ne jamais** utiliser `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client.
 - **`.env` est gitignored** — vérifier `git status` avant chaque commit.
 - `.env.cosmo-cli` (gitignored) : config du CLI agent, distincte de `.env`.
+- `SUPABASE_SECRET_KEY` : **serveur seulement**, lue par `api/collect.ts`, posée sur Vercel par
+  l'intégration Supabase (production). ❌ Jamais préfixée `VITE_` → [`api/CLAUDE.md`](./api/CLAUDE.md).
 
 ---
 
@@ -213,6 +217,8 @@ VITE_SENTRY_DSN=  # public, write-only — si absent, monitoring désactivé
 import { supabase } from '@/lib/supabase';      // ✅
 import { supabase } from '../../lib/supabase';   // ❌
 ```
+
+⚠️ Seule exception : `api/` (NodeNext), où l'alias ne résout pas → [`api/CLAUDE.md`](./api/CLAUDE.md).
 
 
 ### GSAP, toasts
@@ -252,8 +258,8 @@ schémas par module. Câblé dans les `mutationFn` create/update.
 
 `vercel.json` : SPA rewrite, headers de sécurité (HSTS, X-Frame-Options, CSP…), cache immuable
 `/assets/*`. Variables à configurer sur Vercel : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
-`VITE_STRIPE_PUBLISHABLE_KEY` (quand Stripe sera finalisé).
-Runbook : [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
+`VITE_STRIPE_PUBLISHABLE_KEY` (quand Stripe sera finalisé), et côté serveur `SUPABASE_SECRET_KEY`
+(intégration Supabase). Runbook : [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
 
 ---
 
