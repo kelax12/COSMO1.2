@@ -36,8 +36,10 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
   refermait sur sa propre première création (2026-09-08).
 - 🔴 **Un id de résultat clé est un UUID** : `syncKRsToTable` refuse le reste (`invalid_input`).
   Témoin e2e : le `DELETE` de `key_results`, jamais l'upsert, qui part avant la garde.
-- ⚠️ **DA fixe par parcours** (clair perso, nuit entreprise) : variables de thème redéclarées sur le
-  conteneur (`LIGHT_SCOPE`, `ENT_SCOPE`), sinon les champs globaux suivent le thème de l'app.
+- ⚠️ **DA fixe de l'accueil perso** (clair) : variables de thème redéclarées sur le conteneur
+  (`LIGHT_SCOPE`), sinon les champs globaux suivent le thème de l'app. La vidéo d'accueil
+  entreprise, elle, SUIT le thème choisi (jetons `--color-*`, 2026-10-20) ; `ENT_SCOPE` et
+  `ent-ui.tsx` (DA nuit) sont supprimés, ils n'habillaient plus qu'elle.
 - ⚠️ Sous mouvement réduit, aucun SMIL monté (il ignore le réglage) : le dessin final tient seul.
 
 ## Aperçu entreprise en widgets (2026-10-19)
