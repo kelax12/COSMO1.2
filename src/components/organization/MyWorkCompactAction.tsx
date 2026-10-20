@@ -221,9 +221,18 @@ export const TasksCompact = ({ size, open, projectById, onToggle, onOpenTask, on
             const project = projectById.get(task.projectId);
             return (
               <li key={task.id} className={`flex items-center gap-2.5 min-w-0 ${size === 'small' ? '' : 'py-1 first:pt-0'}`}>
-                {size === 'small' && (
-                  <ItemAction iconOnly icon={Check} label={t('apercu.widgets.c.done')} onClick={() => onToggle(task)} />
-                )}
+                {/* Case à cocher devant chaque tâche, dans tous les formats (2026-10-20) :
+                    elle termine la tâche ; la ligne, elle, l'ouvre. */}
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={false}
+                  aria-label={t('apercu.widgets.c.doneTask', { name: task.name })}
+                  onClick={() => onToggle(task)}
+                  className="group shrink-0 w-6 h-6 rounded-md border-2 border-[rgb(var(--color-border-strong))] flex items-center justify-center hover:border-emerald-500 hover:bg-emerald-500/10 transition-colors"
+                >
+                  <Check size={14} strokeWidth={3} className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
+                </button>
                 <button
                   type="button"
                   onClick={() => onOpenTask(task)}

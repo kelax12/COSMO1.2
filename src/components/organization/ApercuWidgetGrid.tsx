@@ -24,7 +24,7 @@ interface ApercuWidgetGridProps {
   onChange: (next: PlacedWidget[]) => void;
   /** Rend le contenu d'un widget ; `null` = rien à montrer pour l'instant. */
   renderWidget: (id: WidgetId, size: WidgetSize) => ReactNode;
-  /** Modèle du rôle : recommandé, et remis par « Réinitialiser ». */
+  /** Modèle du rôle : recommandé dans le choix des modèles. */
   roleTemplate: TemplateId;
 }
 
@@ -70,6 +70,17 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
     else save(next);
   };
   const [editing, setEditing] = useState(false);
+  /**
+   * Point de reprise (2026-10-20) : l'état VALIDÉ. Il est pris à l'ouverture
+   * du mode édition et à chaque « Terminé ». « Réinitialiser » ramène à lui,
+   * et n'apparaît que s'il y a quelque chose à défaire. Pour un modèle en
+   * aperçu, le point de reprise est le modèle tel quel.
+   */
+  const [checkpoint, setCheckpoint] = useState<PlacedWidget[]>(saved);
+  const base = draft ? TEMPLATES[draft.template] : checkpoint;
+  const dirty = JSON.stringify(layout) !== JSON.stringify(base);
+  const startEditing = () => { setCheckpoint(layout); setEditing(true); };
+  const finishEditing = () => { setCheckpoint(layout); setEditing(false); };
   const [picking, setPicking] = useState(false);
   const [dragged, setDragged] = useState<WidgetId | null>(null);
   /** Dernier widget ajouté ou redimensionné : il s'illumine un instant. */
@@ -151,20 +162,24 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
           <AnimatePresence mode="popLayout" initial={false}>
             {editing ? (
               [
-                <motion.button
-                  key="reset"
-                  type="button"
-                  layout
-                  initial={{ opacity: 0, y: -10, scale: 0.85 }}
-                  animate={{ opacity: 1, y: 0, scale: 1, transition: { ...POP, delay: 0.05 } }}
-                  exit={{ opacity: 0, y: -10, scale: 0.85 }}
-                  whileTap={{ scale: 0.94 }}
-                  onClick={() => { onChange([...TEMPLATES[roleTemplate]]); setRemoved(null); }}
-                  className={`${toolbarButton} font-normal text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]`}
-                >
-                  <RotateCcw size={15} aria-hidden="true" />
-                  {t('apercu.widgets.reset')}
-                </motion.button>,
+                // « Réinitialiser » : défait ce qui a changé depuis le dernier point
+                // de reprise, et seulement s'il y a quelque chose à défaire.
+                dirty && (
+                  <motion.button
+                    key="reset"
+                    type="button"
+                    layout
+                    initial={{ opacity: 0, y: -10, scale: 0.85 }}
+                    animate={{ opacity: 1, y: 0, scale: 1, transition: POP }}
+                    exit={{ opacity: 0, y: -10, scale: 0.85 }}
+                    whileTap={{ scale: 0.94 }}
+                    onClick={() => { onChange([...base]); setRemoved(null); }}
+                    className={`${toolbarButton} font-normal text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]`}
+                  >
+                    <RotateCcw size={15} aria-hidden="true" />
+                    {t('apercu.widgets.reset')}
+                  </motion.button>
+                ),
                 <motion.button
                   key="templates"
                   type="button"
@@ -205,7 +220,7 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
                   animate={{ opacity: 1, y: 0, scale: 1, transition: { ...POP, delay: 0.15 } }}
                   exit={{ opacity: 0, y: -10, scale: 0.85 }}
                   whileTap={{ scale: 0.94 }}
-                  onClick={() => setEditing(false)}
+                  onClick={finishEditing}
                   className={`${toolbarButton} px-4 bg-[rgb(var(--color-accent))] text-white hover:opacity-90`}
                 >
                   <Check size={16} aria-hidden="true" />
@@ -222,7 +237,7 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
                 exit={{ opacity: 0, scale: 0.85 }}
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.94 }}
-                onClick={() => setEditing(true)}
+                onClick={startEditing}
                 data-testid="apercu-edit"
                 className={`${toolbarButton} px-4 border border-[rgb(var(--color-accent)/0.4)] bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent)/0.16)]`}
               >
@@ -261,7 +276,7 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.94 }}
-                  onClick={() => { save(draft.layout); setDraft(null); setRemoved(null); }}
+                  onClick={() => { save(draft.layout); setCheckpoint(draft.layout); setDraft(null); setRemoved(null); }}
                   className="min-h-touch inline-flex items-center gap-1.5 px-4 rounded-xl bg-[rgb(var(--color-accent))] text-sm font-semibold text-white hover:opacity-90"
                 >
                   <Check size={16} aria-hidden="true" />
@@ -305,7 +320,7 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
               type="button"
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.94 }}
-              onClick={() => { setEditing(true); setPicking(true); }}
+              onClick={() => { startEditing(); setPicking(true); }}
               className="mt-3 min-h-touch inline-flex items-center gap-1.5 px-4 rounded-xl bg-[rgb(var(--color-accent))] text-sm font-semibold text-white"
             >
               <Plus size={16} aria-hidden="true" />

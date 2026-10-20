@@ -1469,7 +1469,8 @@
         "dueToday": "Today",
         "yesterday": "Yesterday",
         "today": "Today",
-        "tomorrow": "Tomorrow"
+        "tomorrow": "Tomorrow",
+        "doneTask": "Complete {{name}}"
       },
       "n": {
         "overdue": "Overdue",
