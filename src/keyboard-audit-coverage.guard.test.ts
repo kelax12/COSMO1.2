@@ -74,6 +74,9 @@ const MESUREES: Record<string, string> = {
  *   · NON MESURÉE, SANS OBSTACLE — la dette. Elle est nommée comme telle.
  */
 const NON_MESUREES: Record<string, string> = {
+  'components/organization/TemplatePicker.tsx':
+    'dette : choix d un modèle d Aperçu (2026-10-19), câblé sur useModalA11y, jamais parcouru '
+    + 'au clavier par le harnais.',
   'components/organization/AddWidgetPage.tsx':
     'dette : page « Ajouter un widget » de l Aperçu (2026-10-19), focus initial sur la recherche '
     + 'vu dans le navigateur, jamais parcourue au clavier par le harnais.',
