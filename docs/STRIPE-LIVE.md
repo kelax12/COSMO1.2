@@ -157,10 +157,19 @@ vérifiées contre `src/i18n/route-slugs.json` plutôt que de mémoire : `https:
 (`terms` → `cgu`) et `https://thecosmo.app/politique-confidentialite` (`privacy`). Ce n'est pas
 bloquant pour la résiliation, c'est un point de conformité.
 
+✅ **Refermé sur le compte LIVE le 2026-10-20** : les deux URL ci-dessus ont été posées par l'API
+sur `bpc_1UAv9vHJLweDSN4F4xssO3OQ`, et la réponse les relit. Le sandbox n'a pas été touché.
+
 ## Ce qui reste à faire avant d'encaisser
 
-1. **Créer la structure juridique.** Aucune micro-entreprise n'existe au 2026-08-26 : encaisser
-   sans immatriculation est du travail dissimulé. C'est le bloquant, pas la technique.
+> 🔎 **Bascule ouverte le 2026-10-20** : SIREN obtenu (déclaré par Axel). Mig. `140` appliquée
+> (ledger `20261020204838`), essai à blanc : 5 customers de test à effacer. Endpoint webhook live
+> créé : `we_1USk5YHJLweDSN4Fw4S9YQyO`, les 6 events, vers
+> `https://ykeugqfgklejcdbrmawy.supabase.co/functions/v1/stripe-webhook`. Restent les secrets
+> (étape 2), le reset (3bis), puis les deux drapeaux.
+
+1. ~~**Créer la structure juridique.**~~ ✅ SIREN obtenu (2026-10-20). Encaisser sans
+   immatriculation aurait été du travail dissimulé.
 2. Poser les 8 secrets `STRIPE_ORG_PRICE_*` sur les IDs ci-dessus, et remplacer
    `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` par ceux du compte live.
 3. Réenregistrer l'endpoint webhook sur le compte live. 🔴 **SIX events, pas cinq** — recomptés
