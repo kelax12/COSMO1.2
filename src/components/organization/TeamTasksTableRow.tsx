@@ -61,6 +61,8 @@ interface TeamTasksTableRowProps {
   unreadComments: number;
   selectMode: boolean;
   selected: boolean;
+  /** Bloquée par une dépendance non terminée : le statut affiché devient « Bloquée ». */
+  blocked: boolean;
   handlers: TeamTasksRowHandlers;
   /** Index pour la mesure du virtualiseur. */
   index: number;
@@ -142,7 +144,7 @@ const DeadlineCell = ({ task, disabledReason, onChange }: { task: TeamTask; disa
 
 const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps>(({
   task, project, columns, memberById, currentUserId, categoryName, projectStatuses, unreadComments,
-  selectMode, selected, handlers, index,
+  selectMode, selected, blocked, handlers, index,
 }, ref) => {
   const { t, tp } = useT('org');
   const pf = useT('portfolio');
@@ -151,8 +153,8 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
   const editReason = handlers.editReason(task);
   const deleteReason = handlers.deleteReason(task);
   const show = (c: TaskColumnId) => columns.includes(c);
-  const display = taskDisplayStatus(task);
-  const custom = task.customStatusId ? projectStatuses.find((s) => s.id === task.customStatusId) : undefined;
+  const display = blocked && !task.completed ? STATUS_META.blocked : taskDisplayStatus(task);
+  const custom = !(blocked && !task.completed) && task.customStatusId ? projectStatuses.find((s) => s.id === task.customStatusId) : undefined;
 
   return (
     <tr
@@ -161,12 +163,16 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
       data-guide-item
       className="transition-colors cursor-pointer hover:bg-[rgb(var(--color-hover))]"
       onClick={() => (selectMode ? handlers.toggleSelect(task) : handlers.open(task))}
-      style={{ borderLeft: overdue ? '4px solid rgb(var(--color-error))' : '3px solid transparent' }}
+      style={selectMode ? {
+        backgroundColor: selected ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+        borderLeft: selected ? '4px solid #3B82F6' : '3px solid transparent',
+      } : { borderLeft: overdue ? '4px solid rgb(var(--color-error))' : '3px solid transparent' }}
     >
       <td className="px-2 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-        {selectMode ? (
+        <div className="flex items-center gap-5">
+        {selectMode && (
           <TaskSelectCheckbox name={task.name} checked={selected} onToggle={() => handlers.toggleSelect(task)} />
-        ) : (
+        )}
           <button
             type="button"
             onClick={() => handlers.toggleComplete(task)}
@@ -188,7 +194,7 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
               </svg>
             )}
           </button>
-        )}
+        </div>
       </td>
       <td className="px-2 py-3">
         <div className="flex justify-center">
