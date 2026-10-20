@@ -40,6 +40,16 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
   conteneur (`LIGHT_SCOPE`, `ENT_SCOPE`), sinon les champs globaux suivent le thème de l'app.
 - ⚠️ Sous mouvement réduit, aucun SMIL monté (il ignore le réglage) : le dessin final tient seul.
 
+## Aperçu entreprise en widgets (2026-10-19)
+
+- Registre `organization/apercu-widgets.ts`, modèles par rôle `apercu-templates.ts`, grille
+  `ApercuWidgetGrid`. Disposition en `localStorage` (`cosmo_apercu_layout_v1:<org>:<user>`) :
+  une préférence, jamais une donnée ; la perdre rend le modèle par défaut, jamais un écran vide.
+- Chaque widget passe par `WidgetShell` (`section` nommée par son titre : les e2e la cherchent par
+  `getByRole('region')`). En édition, contenu `inert`, flèches et formats au clavier.
+- ⚠️ Ce qui ne sert qu'en édition (`AddWidgetPage`, `TemplatePicker`) pèse dans le chunk
+  `OrganizationPage`, plafonné : le charger en `lazy`.
+
 ---
 
 

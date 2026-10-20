@@ -35,7 +35,18 @@ d'origine sans qu'il puisse matcher une seule fois.
 `retry: 1` ne vaut plus que pour les **mutations**, et `useCancelAndRefundOrg` y met `retry: 0` :
 on ne rejoue jamais une mutation qui déplace de l'argent.
 
-`useSharedTasksRealtime` est monté **une seule fois** ici (composant `SharedTasksRealtime`).
+**Trois canaux Realtime**, chacun monté **une seule fois** ici et isolé dans son propre
+`AppErrorBoundary fallback={null}` : `SharedTasksRealtime`, `OrgInboxRealtime`,
+`FriendsInboxRealtime` (un canal est un WebSocket : jamais dans un composant d'écran).
+Montés aussi une seule fois au niveau App : `CookieBanner`, `NewVersionBanner` (onglet resté sur un
+bundle périmé), `ShareInviteClaimer`, `CommandPalette` (lazy) et `ConsentedAnalytics` (Vercel
+Analytics, rendu seulement si `useCookieConsent() === 'accepted'`).
+
+**Mesure d'audience maison** (mig. `222`, depuis le 2026-10-18) : démarrée dans `src/main.tsx`
+(`startTrafficMeasurement`), pas dans un composant. `src/lib/traffic.ts` revérifie **avant chaque
+envoi** consentement, page publique, absence de formulaire d'identifiants et absence de session,
+puis poste à `/api/collect` (même origine). ❌ Aucun appel direct à `track_hit` depuis le client :
+depuis la mig. `223` seule la clé secrète du collecteur peut l'exécuter → [`api/CLAUDE.md`](../api/CLAUDE.md).
 
 ### Type User — source de vérité
 
@@ -61,11 +72,15 @@ export type User = {
 | `/invite/:token` · `/org-invite/:token` | Claim d'invitation (partage / entreprise) | public |
 | `/dashboard` · `/tasks` · `/settings` | Socle | protégé |
 | `/agenda` · `/habits` · `/okr` · `/statistics` | **Toujours visibles pour tout le monde** depuis le 2026-08-23, plus aucun réglage ne les masque | protégé |
-| `/entreprise` · `/entreprise/:section` · `/entreprise/onboarding` | Mode entreprise, une route par section ; `?tab=` redirigé (onboarding hors Layout) | protégé |
+| `/entreprise/:section?/:entityId?` · `/entreprise/onboarding` | Mode entreprise, une route par section, plus un identifiant d'entité pour les liens profonds ; `?tab=` redirigé (onboarding hors Layout) | protégé |
 | `/admin` | Console admin — URL non référencée, gating **serveur** (`get_admin_stats` rejette les non-admins) | protégé |
 | `/premium` | Redirige `/` tant que `PREMIUM_ENFORCED = false` | protégé |
 | `/welcome` | Redirection permanente vers `/` (ancienne URL) | public |
 | `*` | **NotFoundPage** (pas de redirect) | — |
 
-Toutes les pages sont lazy-loadées (`React.lazy`) et enveloppées dans `AppErrorBoundary`.
+Toutes les pages passent par `lazyWithRetry(import, [namespaces])` (`@/lib/lazy-with-retry`) et
+sont enveloppées dans `AppErrorBoundary` : un chunk périmé après déploiement est retenté puis
+recharge la page, et la liste de catalogues i18n de chaque route est **attendue avant le rendu**.
+⚠️ Une page qui utilise un nouveau namespace doit l'ajouter à SA liste dans `App.tsx` :
+`lazy-namespaces.guard.test.ts` lit ces appels.
 
