@@ -313,7 +313,7 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
             </motion.button>
           </motion.div>
         ) : (
-          <ul className="relative z-0 isolate grid grid-cols-1 md:grid-cols-6 gap-5 items-stretch">
+          <ul className="apercu-widget-grid relative z-0 isolate grid grid-cols-1 md:grid-cols-6 gap-5 items-stretch">
             <AnimatePresence mode="popLayout" initial={false}>
               {layout.map((w, index) => {
                 const def = widgetDef(w.id);
