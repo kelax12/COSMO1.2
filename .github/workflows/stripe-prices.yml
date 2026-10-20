@@ -45,9 +45,9 @@
 name: Grille Stripe
 
 on:
-  # schedule:
-  #   # À DÉCOMMENTER AVEC LA BASCULE LIVE, en même temps que le secret.
-  #   - cron: '31 7 * * *'
+  schedule:
+    # Décommenté le 2026-10-20 avec la bascule live (secret posé le même jour).
+    - cron: '31 7 * * *'
   workflow_dispatch:
 
 permissions:
