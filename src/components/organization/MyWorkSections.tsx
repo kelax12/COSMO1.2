@@ -182,7 +182,6 @@ const MyWorkSections = ({
   const team = useMemo(() => myTeam(members, me), [members, me]);
   const teamLoads = useMemo(() => teamLoadOf(team, teamOpen), [team, teamOpen]);
   const teamLate = useMemo(() => teamOverdueOf(team, teamOpen), [team, teamOpen]);
-  const teamOkrRows = useMemo(() => okrRows(okrs, true), [okrs]);
   const companyOkrRows = useMemo(() => okrRows(okrs, false), [okrs]);
   const risky = useMemo(() => riskyProjectsOf(projects, teamOpen), [projects, teamOpen]);
   const orphans = useMemo(() => unassignedTasks(teamOpen, activeProjectIds), [teamOpen, activeProjectIds]);
@@ -285,7 +284,7 @@ const MyWorkSections = ({
       case 'teamOverdue':
         return <TeamOverdueWidget size={size} groups={teamLate} onOpenTask={onOpenTask} />;
       case 'companyOkrs':
-        return <OkrsWidget size={size} teamRows={teamOkrRows} companyRows={companyOkrRows} onOpen={openOkr} />;
+        return <OkrsWidget size={size} rows={companyOkrRows} onOpen={openOkr} />;
       case 'orgHealth':
         return (
           <OrgHealthWidget

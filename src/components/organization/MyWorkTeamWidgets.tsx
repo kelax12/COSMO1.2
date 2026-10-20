@@ -142,49 +142,89 @@ export const TeamOverdueWidget = ({ size, groups, onOpenTask }: { size: WidgetSi
 
 /* ─────────────────────────── OKR (équipes ou entreprise) ───────────── */
 
-type OkrScope = 'team' | 'company';
-const OKR_SCOPE_KEY = 'cosmo_apercu_okr_scope_v1';
-const SCOPES: readonly OkrScope[] = ['company', 'team'];
+const OKR_PICK_KEY = 'cosmo_apercu_okr_pick_v1';
+const ALL = 'all';
+
+const krPercent = (kr: { completed: boolean; currentValue: number; targetValue: number }) => (
+  kr.completed ? 100 : kr.targetValue > 0 ? Math.min(100, Math.max(0, Math.round((kr.currentValue / kr.targetValue) * 100))) : 0
+);
 
 /**
- * OKR (fusion « équipes » + « entreprise », 2026-10-20). La vue choisie
- * devient la vue PAR DÉFAUT : elle est retenue dans ce navigateur.
+ * OKR (2026-10-20) : un menu déroulant à côté du titre choisit ce qu'on voit,
+ * « Tous les OKR » ou UN objectif (ses résultats clés un par un). Le choix
+ * devient la vue par défaut : il est retenu dans ce navigateur.
  */
-export const OkrsWidget = ({ size, teamRows, companyRows, onOpen }: {
-  size: WidgetSize; teamRows: OkrRow[]; companyRows: OkrRow[]; onOpen: (okrId: string) => void;
+export const OkrsWidget = ({ size, rows, onOpen }: {
+  size: WidgetSize; rows: OkrRow[]; onOpen: (okrId: string) => void;
 }) => {
   const { t } = useT('orgAdmin');
-  const [scope, setScopeState] = useState<OkrScope>(() => (safeGetItem(OKR_SCOPE_KEY) === 'team' ? 'team' : 'company'));
-  const setScope = (next: OkrScope) => { setScopeState(next); safeSetItem(OKR_SCOPE_KEY, next); };
-  const rows = scope === 'team' ? teamRows : companyRows;
-  const pager = usePager(rows, PER_PAGE[size]);
+  const [pick, setPickState] = useState<string>(() => safeGetItem(OKR_PICK_KEY) ?? ALL);
+  const setPick = (next: string) => { setPickState(next); safeSetItem(OKR_PICK_KEY, next); };
+  // Un OKR retenu puis supprimé : on retombe sur « Tous les OKR ».
+  const picked = pick === ALL ? null : rows.find((r) => r.okr.id === pick) ?? null;
+  const krs = picked ? picked.okr.keyResults : [];
+  const okrPager = usePager(rows, PER_PAGE[size]);
+  const krPager = usePager(krs, PER_PAGE[size]);
+  const pager = picked ? krPager : okrPager;
   const behind = rows.filter((r) => r.behind).length;
   const average = rows.length ? Math.round(rows.reduce((s, r) => s + r.progress, 0) / rows.length) : 0;
   return (
     <WidgetShell
       icon={Target}
       title={t('apercu.widgets.names.companyOkrs')}
-      count={behind > 0 ? behind : undefined}
+      titleControl={rows.length > 0 ? (
+        <label className="block max-w-full">
+          <span className="sr-only">{t('apercu.widgets.t.pickLabel')}</span>
+          <select
+            value={picked ? picked.okr.id : ALL}
+            onChange={(e) => setPick(e.target.value)}
+            title={t('apercu.widgets.t.scopeHint')}
+            className="max-w-full h-7 pl-2.5 pr-7 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
+          >
+            <option value={ALL}>{t('apercu.widgets.t.allOkrs')}</option>
+            {rows.map(({ okr }) => <option key={okr.id} value={okr.id}>{okr.title}</option>)}
+          </select>
+        </label>
+      ) : undefined}
+      count={!picked && behind > 0 ? behind : undefined}
       countTone="warning"
       pager={pager}
-      actions={(
-        <span role="group" aria-label={t('apercu.widgets.t.scopeLabel')} className="inline-flex rounded-full border border-[rgb(var(--color-border))] p-0.5">
-          {SCOPES.map((s) => (
-            <button
-              key={s}
-              type="button"
-              aria-pressed={scope === s}
-              onClick={() => setScope(s)}
-              title={t('apercu.widgets.t.scopeHint')}
-              className={`h-7 px-3 rounded-full text-xs font-semibold ${scope === s ? 'bg-[rgb(var(--color-accent))] text-white' : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'}`}
-            >
-              {t(`apercu.widgets.t.scopes.${s}`)}
-            </button>
-          ))}
-        </span>
-      )}
     >
-      {rows.length === 0 ? <WidgetEmpty>{t('apercu.widgets.t.noOkrs')}</WidgetEmpty> : (
+      {rows.length === 0 ? <WidgetEmpty>{t('apercu.widgets.t.noOkrs')}</WidgetEmpty> : picked ? (
+        <>
+          {size !== 'small' && (
+            <button type="button" onClick={() => onOpen(picked.okr.id)} className="mb-3 w-full text-left rounded-lg hover:bg-[rgb(var(--color-hover))] px-1 -mx-1">
+              <span className={`text-2xl font-bold tabular-nums ${TONE_TEXT[picked.behind ? 'warning' : picked.progress >= 70 ? 'success' : 'accent']}`}>{picked.progress} %</span>{' '}
+              <span className="text-sm text-[rgb(var(--color-text-secondary))]">
+                {picked.behind ? t('apercu.widgets.t.behind') : t('apercu.widgets.t.onTrack')}
+                {picked.okr.endDate && ` · ${format(parseISO(deadlineDayKey(picked.okr.endDate) || picked.okr.endDate), 'd MMM', { locale: getDateLocale() })}`}
+              </span>
+            </button>
+          )}
+          {krs.length === 0 ? <WidgetEmpty>{t('apercu.widgets.t.noKrs')}</WidgetEmpty> : (
+            <ul className="space-y-3">
+              {krPager.slice.map((kr) => {
+                const percent = krPercent(kr);
+                const tone: WidgetTone = percent >= 70 ? 'success' : percent >= 35 ? 'accent' : 'warning';
+                return (
+                  <li key={kr.id}>
+                    <button type="button" onClick={() => onOpen(picked.okr.id)} className="w-full text-left rounded-lg hover:bg-[rgb(var(--color-hover))] px-1 -mx-1">
+                      <span className="flex items-baseline gap-2 min-w-0">
+                        <span className="flex-1 min-w-0 truncate text-sm font-semibold text-[rgb(var(--color-text-primary))]">{kr.title}</span>
+                        <span className={`shrink-0 font-bold tabular-nums ${size === 'small' ? 'text-2xl' : 'text-sm'} ${TONE_TEXT[tone]}`}>{percent} %</span>
+                      </span>
+                      <span className="block truncate text-xs text-[rgb(var(--color-text-muted))]">
+                        {kr.currentValue} / {kr.targetValue}{kr.unit ? ` ${kr.unit}` : ''}
+                      </span>
+                      <Bar percent={percent} tone={tone} />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
+      ) : (
         <>
           {size !== 'small' && (
             <p className="mb-3 text-sm text-[rgb(var(--color-text-secondary))]">
@@ -193,7 +233,7 @@ export const OkrsWidget = ({ size, teamRows, companyRows, onOpen }: {
             </p>
           )}
           <ul className="space-y-3">
-            {pager.slice.map(({ okr, progress, behind: late }) => {
+            {okrPager.slice.map(({ okr, progress, behind: late }) => {
               const tone: WidgetTone = late ? 'warning' : progress >= 70 ? 'success' : 'accent';
               return (
                 <li key={okr.id}>

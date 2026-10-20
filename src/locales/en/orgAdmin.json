@@ -1509,12 +1509,10 @@
         "average": "average across {{count}} objective(s)",
         "behind": "Behind schedule",
         "onTrack": "On schedule",
-        "scopeLabel": "OKRs shown",
         "scopeHint": "This choice becomes the default view",
-        "scopes": {
-          "company": "Company",
-          "team": "Teams"
-        }
+        "pickLabel": "OKR shown",
+        "allOkrs": "All OKRs",
+        "noKrs": "This objective has no key results yet."
       },
       "a": {
         "riskyProjects": "projects at risk",

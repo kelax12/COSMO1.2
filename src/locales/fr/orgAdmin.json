@@ -1601,12 +1601,10 @@
         "average": "de moyenne sur {{count}} objectif(s)",
         "behind": "En retard sur le calendrier",
         "onTrack": "Dans les temps",
-        "scopeLabel": "OKR affichés",
         "scopeHint": "Ce choix devient la vue par défaut",
-        "scopes": {
-          "company": "Entreprise",
-          "team": "Équipes"
-        }
+        "pickLabel": "OKR affiché",
+        "allOkrs": "Tous les OKR",
+        "noKrs": "Cet objectif n'a pas encore de résultat clé."
       },
       "a": {
         "riskyProjects": "projets à risque",

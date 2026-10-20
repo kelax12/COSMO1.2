@@ -21,6 +21,8 @@ interface WidgetShellProps {
   info?: string;
   /** Action placée dans l'en-tête, à droite du titre (« Nouvelle note »). */
   headerAction?: ReactNode;
+  /** Commande collée au titre (menu déroulant des OKR). */
+  titleControl?: ReactNode;
   count?: number;
   countTone?: WidgetTone;
   /** Contrôles propres au widget, à gauche de la pagination. */
@@ -36,7 +38,7 @@ interface WidgetShellProps {
 const SHELL = 'h-full min-w-0 flex flex-col rounded-2xl border p-4';
 
 export const WidgetShell = ({
-  icon: _icon, title, titleExtra, info, headerAction, count, countTone = 'neutral', actions, pager, pagerLabel, onSeeAll, tone = 'neutral', children,
+  icon: _icon, title, titleExtra, info, headerAction, titleControl, count, countTone = 'neutral', actions, pager, pagerLabel, onSeeAll, tone = 'neutral', children,
 }: WidgetShellProps) => {
   const { t } = useT('orgAdmin');
   const tinted = tone === 'danger'
@@ -48,10 +50,11 @@ export const WidgetShell = ({
       <header className="flex items-center gap-2 mb-3">
         {/* Pas d'icône devant le titre (retour d'Axel, 2026-10-20) : `icon` reste
             accepté pour ne pas toucher chaque appel, mais n'est plus peint. */}
-        <h3 className="flex-1 min-w-0 truncate text-sm font-bold text-[rgb(var(--color-text-primary))]">
+        <h3 className={`${titleControl ? 'shrink-0' : 'flex-1'} min-w-0 truncate text-sm font-bold text-[rgb(var(--color-text-primary))]`}>
           {title}
           {titleExtra && <span className="ml-1.5 font-normal text-xs text-[rgb(var(--color-text-secondary))]">{titleExtra}</span>}
         </h3>
+        {titleControl && <div className="flex-1 min-w-0">{titleControl}</div>}
         {info && <InfoButton text={info} />}
         {headerAction}
         {count !== undefined && (
