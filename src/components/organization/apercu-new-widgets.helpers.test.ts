@@ -51,3 +51,15 @@ describe('Note épinglée', () => {
     expect(loadNotes('o', 'z')).toEqual([{ id: '2', text: 'ok', updatedAt: 'y' }]);
   });
 });
+
+describe('pastille d’échéance', () => {
+  it('hier, aujourd’hui, demain, sinon passé ou plus tard', async () => {
+    const { deadlineKind } = await import('./apercu-new-widgets.helpers');
+    expect(deadlineKind('2026-10-18', NOW)).toBe('yesterday');
+    expect(deadlineKind('2026-10-19', NOW)).toBe('today');
+    expect(deadlineKind('2026-10-20', NOW)).toBe('tomorrow');
+    expect(deadlineKind('2026-10-10', NOW)).toBe('past');
+    expect(deadlineKind('2026-10-24', NOW)).toBe('later');
+    expect(deadlineKind(undefined, NOW)).toBeNull();
+  });
+});

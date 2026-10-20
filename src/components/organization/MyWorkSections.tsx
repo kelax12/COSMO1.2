@@ -10,7 +10,7 @@ import type { TeamOKR } from '@/modules/team-okrs';
 import type { OrgMember, OrgNotification } from '@/modules/organizations';
 import TeamActivityFeed from './TeamActivityFeed';
 import OrgEventsTimeline from './OrgEventsTimeline';
-import { MyKeyResultsCard, MyProjectsCard, MyTasksCard, WaitingForMeCard } from './MyWorkCards';
+import { MyKeyResultsCard, MyProjectsCard, WaitingForMeCard } from './MyWorkCards';
 import { ActivityDigestCard, WaitingOnOthersCard, WeekLoadCard } from './MyWorkExtraCards';
 import { buildOrgEvents } from './org-events.helpers';
 import { useNavigate } from 'react-router';
@@ -18,7 +18,7 @@ import type { CalendarEvent } from '@/modules/events';
 import ApercuWidgetGrid from './ApercuWidgetGrid';
 import type { TemplateId } from './apercu-templates';
 import type { PlacedWidget, WidgetId, WidgetSize } from './apercu-widgets';
-import { AgendaCompact, KpiCompact, KpiTiles, TasksCompact, WaitingCompact } from './MyWorkCompactAction';
+import { AgendaCompact, KpiCompact, KpiTiles, TasksCompact } from './MyWorkCompactAction';
 import { ActivityCompact, KrsCompact, OrgEventsCompact, ProjectsCompact, WaitingOnCompact } from './MyWorkCompactContext';
 import { buildOrgLink } from './deep-link.helpers';
 import { BlockedByMeWidget, DeadlinesWidget } from './MyWorkDeadlineWidgets';
@@ -35,7 +35,6 @@ import {
   computeBlocking,
   dependencyIdsOf,
   dependentIdsOf,
-  groupByHorizon,
   myKeyResults,
   projectPeople,
   reviewsForMe,
@@ -103,7 +102,7 @@ export interface MyWorkSectionsProps {
  */
 const MyWorkSections = ({
   orgId, currentUserId, open, mine, upcoming, createdInReview, delegated,
-  activity, deps, notifications, okrs, projects, members, hasAny, estimated,
+  activity, deps, notifications, okrs, projects, members,
   agenda, overdueCount, doneCount, nextDeadline, onToggle, onOpenTask, onApprove, onSendBack,
   layout, onLayoutChange, agendaEvents, onPostpone, teamOpen, roleTemplate,
 }: MyWorkSectionsProps) => {
@@ -113,7 +112,6 @@ const MyWorkSections = ({
     [projects],
   );
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
-  const groups = useMemo(() => groupByHorizon(open), [open]);
   // Actions groupées sur « Mes tâches », comme partout où il y a une liste.
   const bulk = useTeamTasksBulk(orgId, open);
   const activityItems = useMemo(() => buildActivityItems(activity), [activity]);
@@ -217,19 +215,9 @@ const MyWorkSections = ({
             onOpenTask={onOpenTask}
           />
         );
+      // « En attente de moi » : petit et moyen reprennent la carte complète (2026-10-20).
       case 'waiting':
-        return (
-          <WaitingCompact
-            size={size}
-            reviews={reviews}
-            mentions={mentionRows}
-            blocking={blocking}
-            members={members}
-            onOpenTask={onOpenTask}
-            onApprove={onApprove}
-            onSendBack={onSendBack}
-          />
-        );
+        return undefined;
       case 'tasks':
         return <TasksCompact size={size} open={open} projectById={projectById} onToggle={onToggle} onOpenTask={onOpenTask} onSeeAll={seeTasks} />;
       case 'agenda':
@@ -277,6 +265,8 @@ const MyWorkSections = ({
       if (compact !== undefined) return compact;
     }
     switch (id) {
+      case 'tasks':
+        return <TasksCompact size="large" open={open} projectById={projectById} onToggle={onToggle} onOpenTask={onOpenTask} onSeeAll={seeTasks} />;
       case 'deadlines':
         return <DeadlinesWidget size={size} open={open} onToggle={onToggle} onOpenTask={onOpenTask} onPostpone={onPostpone} onSeeAll={seeTasks} />;
       case 'mentions':
@@ -333,24 +323,6 @@ const MyWorkSections = ({
             onOpenTask={onOpenTask}
             onApprove={onApprove}
             onSendBack={onSendBack}
-          />
-        );
-      case 'tasks':
-        return (
-          <MyTasksCard
-            groups={groups}
-            openCount={open.length}
-            hasAny={hasAny}
-            estimated={estimated}
-            projectById={projectById}
-            onToggle={onToggle}
-            onOpenTask={onOpenTask}
-            selection={{
-              active: bulk.selectMode,
-              selectedIds: bulk.selectedIds,
-              onToggle: bulk.toggleSelect,
-              onStart: () => bulk.setSelectMode(true),
-            }}
           />
         );
       case 'load':

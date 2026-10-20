@@ -1468,7 +1468,10 @@
         "projOpen": "{{count}} open",
         "projLate": "{{count}} overdue",
         "inDays": "D-{{count}}",
-        "dueToday": "Today"
+        "dueToday": "Today",
+        "yesterday": "Yesterday",
+        "today": "Today",
+        "tomorrow": "Tomorrow"
       },
       "n": {
         "overdue": "Overdue",
