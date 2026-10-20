@@ -55,7 +55,7 @@ const BASE = 'https://thecosmo.app';
 // Node ne lit pas le TypeScript. Prix masqués depuis le 2026-10-16 (acquisition
 // sans monétisation) ; le paragraphe « Tarifs » reste écrit plus bas, il n'est
 // juste plus servi. Garde de parité : src/modules/billing/prices-visible.guard.test.ts.
-const PRIX_VISIBLES = false;
+const PRIX_VISIBLES = true;
 
 // ── Catalogues SEO par locale ─────────────────────────────────────────────
 // Mêmes fichiers que ceux consommés par l'app (src/lib/useSeoMeta.ts) : le
