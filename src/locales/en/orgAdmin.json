@@ -1549,7 +1549,36 @@
         "cancel": "Cancel",
         "apply": "Use this template"
       },
-      "loadInfo": "Workload adds up the estimated time of every task assigned to the person that is overdue or due within the next 7 days, then compares it with 35 h. A task with no estimate does not count."
+      "loadInfo": "Workload adds up the estimated time of every task assigned to the person that is overdue or due within the next 7 days, then compares it with 35 h. A task with no estimate does not count.",
+      "act": {
+        "aTask": "a task",
+        "created": "created {{task}}",
+        "completed": "completed {{task}}",
+        "reopened": "reopened {{task}}",
+        "status": "changed the status of {{task}}",
+        "assigned": "assigned {{task}} to {{who}}",
+        "postponed": "pushed {{task}} back to {{date}}",
+        "advanced": "brought {{task}} forward to {{date}}",
+        "actions24h": "actions in the last 24 hours",
+        "onYourTask": "on your task",
+        "quiet": "Nothing moved in the last 24 hours.",
+        "last24h": "· last 24 h",
+        "onMyTasks": "On my tasks",
+        "actionsCount": "{{count}} change(s)",
+        "filterLabel": "Filter the feed",
+        "kinds": {
+          "completed": "Completed",
+          "created": "Created",
+          "assigned": "Assigned",
+          "postponed": "Pushed back"
+        },
+        "filters": {
+          "all": "All",
+          "mine": "My tasks",
+          "completed": "Completed"
+        },
+        "justNow": "just now"
+      }
     }
   },
   "customRoles": {

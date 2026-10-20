@@ -8,9 +8,8 @@ import {
 } from '@/modules/team-projects';
 import type { TeamOKR } from '@/modules/team-okrs';
 import type { OrgMember, OrgNotification } from '@/modules/organizations';
-import TeamActivityFeed from './TeamActivityFeed';
 import { MyKeyResultsCard, MyProjectsCard, WaitingForMeCard } from './MyWorkCards';
-import { ActivityDigestCard, WaitingOnOthersCard, WeekLoadCard } from './MyWorkExtraCards';
+import { WaitingOnOthersCard, WeekLoadCard } from './MyWorkExtraCards';
 import { buildOrgEvents } from './org-events.helpers';
 import { useNavigate } from 'react-router';
 import type { CalendarEvent } from '@/modules/events';
@@ -18,9 +17,11 @@ import ApercuWidgetGrid from './ApercuWidgetGrid';
 import type { TemplateId } from './apercu-templates';
 import type { PlacedWidget, WidgetId, WidgetSize } from './apercu-widgets';
 import { AgendaCompact, KpiCompact, KpiTiles, TasksCompact } from './MyWorkCompactAction';
-import { ActivityCompact, KrsCompact, OrgEventsCompact, ProjectsCompact, WaitingOnCompact } from './MyWorkCompactContext';
+import { KrsCompact, OrgEventsCompact, ProjectsCompact, WaitingOnCompact } from './MyWorkCompactContext';
 import { buildOrgLink } from './deep-link.helpers';
 import { BlockedByMeWidget, DeadlinesWidget } from './MyWorkDeadlineWidgets';
+import { ActivityWidget } from './MyWorkActivityWidget';
+import { recentItems } from './apercu-activity.helpers';
 import { MentionsWidget, NoteWidget } from './MyWorkSocialWidgets';
 import { OkrsWidget, TeamLoadWidget, TeamOverdueWidget } from './MyWorkTeamWidgets';
 import { InvitationsWidget, OrgHealthWidget, RiskProjectsWidget, UnassignedWidget } from './MyWorkAdminWidgets';
@@ -29,8 +30,6 @@ import { KpiStrip } from './MyWorkKpiStrip';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
 import {
-  activityDigest,
-  buildActivityItems,
   computeBlocking,
   dependencyIdsOf,
   dependentIdsOf,
@@ -113,7 +112,6 @@ const MyWorkSections = ({
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
   // Actions groupées sur « Mes tâches », comme partout où il y a une liste.
   const bulk = useTeamTasksBulk(orgId, open);
-  const activityItems = useMemo(() => buildActivityItems(activity), [activity]);
   const mentions = useMemo(() => unreadMentions(notifications), [notifications]);
 
   // Tâches à nommer sans les avoir encore : celles qui attendent les miennes,
@@ -130,11 +128,11 @@ const MyWorkSections = ({
     const wanted = new Set([
       ...dependentIdsOf(open, deps),
       ...dependencyIdsOf(open, deps),
-      ...activityItems.map((i) => i.taskId),
+      ...recentItems(activity).map((i) => i.taskId),
       ...mentions.map((n) => n.taskId!),
     ]);
     return [...wanted].filter((id) => !known.has(id)).sort();
-  }, [open, deps, activityItems, mentions, known]);
+  }, [open, deps, activity, mentions, known]);
   const { data: byIds = [] } = useTeamTaskSlice(
     orgId,
     { ids: missingIds, limit: 100 },
@@ -163,10 +161,6 @@ const MyWorkSections = ({
     () => waitingOnOthers(open, deps, [...taskById.values()], delegated, me),
     [open, deps, taskById, delegated, me],
   );
-  const digest = useMemo(
-    () => activityDigest(activity, new Set(mine.map((t) => t.id)), me),
-    [activity, mine, me],
-  );
   // La démo nomme le compte courant « Vous » / « You » : « Bonjour Vous. »
   // ne se dit pas, on retombe alors sur le salut neutre.
   const ownName = members.find((m) => m.userId === me)?.displayName.split(' ')[0] || null;
@@ -182,6 +176,7 @@ const MyWorkSections = ({
   const navigate = useNavigate();
   const waitingCount = reviews.length + mentionRows.length + blocking.length;
   const seeTasks = () => navigate(buildOrgLink('tasks'));
+  const myTaskIdSet = useMemo(() => new Set(mine.map((t) => t.id)), [mine]);
 
   // Équipe et administration (modèles chef d'équipe / admin, 2026-10-19).
   const team = useMemo(() => myTeam(members, me), [members, me]);
@@ -235,7 +230,7 @@ const MyWorkSections = ({
       case 'waitingOn':
         return <WaitingOnCompact size={size} entries={waitingOn} members={members} onOpenTask={onOpenTask} />;
       case 'activity':
-        return <ActivityCompact size={size} digest={digest} onSeeAll={seeTasks} />;
+        return <ActivityWidget size={size} activity={activity} myTaskIds={myTaskIdSet} me={me} members={members} taskById={taskById} onOpenTask={onOpenTask} />;
       case 'orgEvents':
         return (
           <OrgEventsCompact
@@ -349,19 +344,7 @@ const MyWorkSections = ({
       case 'waitingOn':
         return <WaitingOnOthersCard entries={waitingOn} members={members} onOpenTask={onOpenTask} />;
       case 'activity':
-        return (
-          <ActivityDigestCard digest={digest}>
-            <TeamActivityFeed
-              bare
-              items={activityItems}
-              taskById={taskById}
-              projects={projects}
-              members={members}
-              currentUserId={currentUserId}
-              onOpenTask={onOpenTask}
-            />
-          </ActivityDigestCard>
-        );
+        return <ActivityWidget size={size} activity={activity} myTaskIds={myTaskIdSet} me={me} members={members} taskById={taskById} onOpenTask={onOpenTask} />;
     }
   };
 
