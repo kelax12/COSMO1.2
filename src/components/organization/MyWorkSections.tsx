@@ -27,6 +27,7 @@ import { OkrsWidget, TeamLoadWidget, TeamOverdueWidget } from './MyWorkTeamWidge
 import { InvitationsWidget, OrgHealthWidget, RiskProjectsWidget, UnassignedWidget } from './MyWorkAdminWidgets';
 import { isTaskOverdue, myTeam, okrRows, riskyProjects as riskyProjectsOf, teamLoad as teamLoadOf, teamOverdue as teamOverdueOf, unassignedTasks } from './apercu-team.helpers';
 import { KpiStrip } from './MyWorkKpiStrip';
+import { AgendaEventsCard } from './MyWorkAgendaCard';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
 import {
@@ -61,8 +62,6 @@ export interface MyWorkSectionsProps {
   members: OrgMember[];
   hasAny: boolean;
   estimated: number;
-  /** Carte « Mon agenda », construite par `MyWorkTab`. */
-  agenda: ReactNode;
   /** Mêmes événements que la carte agenda, pour les formats petit et moyen. */
   agendaEvents: CalendarEvent[];
   overdueCount: number;
@@ -101,7 +100,7 @@ export interface MyWorkSectionsProps {
 const MyWorkSections = ({
   orgId, currentUserId, open, mine, upcoming, createdInReview, delegated,
   activity, deps, notifications, okrs, projects, members,
-  agenda, overdueCount, doneCount, nextDeadline, onToggle, onOpenTask, onApprove, onSendBack,
+  overdueCount, doneCount, nextDeadline, onToggle, onOpenTask, onApprove, onSendBack,
   layout, onLayoutChange, agendaEvents, onPostpone, teamOpen, roleTemplate,
 }: MyWorkSectionsProps) => {
   const me = currentUserId ?? '';
@@ -332,7 +331,7 @@ const MyWorkSections = ({
       case 'load':
         return <WeekLoadCard load={load} />;
       case 'agenda':
-        return agenda;
+        return <AgendaEventsCard events={agendaEvents} />;
       case 'krs':
         return krs.length > 0 ? <MyKeyResultsCard items={krs} /> : null;
       case 'projects':
