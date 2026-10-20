@@ -187,6 +187,7 @@ const MyWorkSections = ({
   const risky = useMemo(() => riskyProjectsOf(projects, teamOpen), [projects, teamOpen]);
   const orphans = useMemo(() => unassignedTasks(teamOpen, activeProjectIds), [teamOpen, activeProjectIds]);
   const orgOverdue = useMemo(() => teamOpen.filter((t) => isTaskOverdue(t)).length, [teamOpen]);
+  const activeProjects = useMemo(() => projects.filter((p) => !p.archivedAt && !p.isTemplate), [projects]);
   const openOkr = (okrId: string) => navigate(buildOrgLink('okr', { okr: okrId }));
 
 
@@ -283,18 +284,16 @@ const MyWorkSections = ({
         return <TeamLoadWidget size={size} loads={teamLoads} onSeeAll={() => navigate(buildOrgLink('members'))} />;
       case 'teamOverdue':
         return <TeamOverdueWidget size={size} groups={teamLate} onOpenTask={onOpenTask} />;
-      case 'teamOkrs':
-        return <OkrsWidget size={size} rows={teamOkrRows} scope="team" onOpen={openOkr} />;
       case 'companyOkrs':
-        return <OkrsWidget size={size} rows={companyOkrRows} scope="company" onOpen={openOkr} />;
+        return <OkrsWidget size={size} teamRows={teamOkrRows} companyRows={companyOkrRows} onOpen={openOkr} />;
       case 'orgHealth':
         return (
           <OrgHealthWidget
             size={size}
-            riskyProjects={risky.length}
-            okrsBehind={companyOkrRows.filter((r) => r.behind).length}
-            unassigned={orphans.length}
+            atRiskProjects={activeProjects.filter((p) => p.health === 'at_risk').length}
+            struggling={activeProjects.filter((p) => p.health === 'off_track').length}
             overdue={orgOverdue}
+            blockedTasks={teamOpen.filter((t) => t.status === 'blocked').length}
             onGo={(section) => navigate(buildOrgLink(section))}
           />
         );

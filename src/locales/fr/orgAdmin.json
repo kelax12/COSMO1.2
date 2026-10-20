@@ -1472,10 +1472,9 @@
         "note": "Note épinglée",
         "teamLoad": "Charge de l'équipe",
         "teamOverdue": "Retards de l'équipe",
-        "teamOkrs": "OKR des équipes",
         "orgHealth": "Santé de l'entreprise",
         "riskProjects": "Projets à risque",
-        "companyOkrs": "OKR de l'entreprise",
+        "companyOkrs": "OKR",
         "unassigned": "Tâches sans responsable",
         "invitations": "Invitations en attente"
       },
@@ -1496,10 +1495,9 @@
         "note": "Un mémo personnel, gardé dans ce navigateur.",
         "teamLoad": "Qui est surchargé, qui est libre cette semaine.",
         "teamOverdue": "Les retards de ton équipe, personne par personne.",
-        "teamOkrs": "L'avancement des objectifs rattachés aux équipes.",
         "orgHealth": "Projets à risque, OKR en retard, tâches orphelines : tout ce qui coince.",
         "riskProjects": "Les projets déclarés à risque ou qui prennent du retard.",
-        "companyOkrs": "L'avancement de tous les objectifs de l'entreprise.",
+        "companyOkrs": "L'avancement des objectifs, de l'entreprise ou des équipes : tu choisis la vue par défaut.",
         "unassigned": "Les tâches que personne ne porte.",
         "invitations": "Les invitations envoyées et pas encore acceptées."
       },
@@ -1602,12 +1600,16 @@
         "noOkrs": "Aucun objectif à suivre.",
         "average": "de moyenne sur {{count}} objectif(s)",
         "behind": "En retard sur le calendrier",
-        "onTrack": "Dans les temps"
+        "onTrack": "Dans les temps",
+        "scopeLabel": "OKR affichés",
+        "scopeHint": "Ce choix devient la vue par défaut",
+        "scopes": {
+          "company": "Entreprise",
+          "team": "Équipes"
+        }
       },
       "a": {
         "riskyProjects": "projets à risque",
-        "okrsBehind": "OKR en retard",
-        "unassigned": "sans responsable",
         "overdue": "tâches en retard",
         "allGood": "Rien ne coince dans l'entreprise.",
         "offTrack": "Hors piste",
@@ -1618,7 +1620,9 @@
         "noInvitations": "Aucune invitation en attente.",
         "sentAgo": "envoyée {{ago}}",
         "notSent": "pas encore envoyée",
-        "resend": "Relancer"
+        "resend": "Relancer",
+        "strugglingProjects": "projets en difficulté",
+        "blockedTasks": "tâches en difficulté"
       },
       "tpl": {
         "button": "Modèles",

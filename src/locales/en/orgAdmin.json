@@ -1380,10 +1380,9 @@
         "note": "Pinned note",
         "teamLoad": "Team workload",
         "teamOverdue": "Team overdue tasks",
-        "teamOkrs": "Team OKRs",
         "orgHealth": "Company health",
         "riskProjects": "Projects at risk",
-        "companyOkrs": "Company OKRs",
+        "companyOkrs": "OKRs",
         "unassigned": "Unassigned tasks",
         "invitations": "Pending invitations"
       },
@@ -1404,10 +1403,9 @@
         "note": "A personal memo, kept in this browser.",
         "teamLoad": "Who's overloaded and who's free this week.",
         "teamOverdue": "Your team's overdue tasks, person by person.",
-        "teamOkrs": "Progress on objectives linked to teams.",
         "orgHealth": "Projects at risk, late OKRs, orphan tasks: everything that is stuck.",
         "riskProjects": "Projects flagged at risk or falling behind.",
-        "companyOkrs": "Progress on all of the company's objectives.",
+        "companyOkrs": "Progress on objectives, company-wide or by team: you pick the default view.",
         "unassigned": "Tasks nobody owns.",
         "invitations": "Invitations sent and not yet accepted."
       },
@@ -1510,12 +1508,16 @@
         "noOkrs": "No objectives to track.",
         "average": "average across {{count}} objective(s)",
         "behind": "Behind schedule",
-        "onTrack": "On schedule"
+        "onTrack": "On schedule",
+        "scopeLabel": "OKRs shown",
+        "scopeHint": "This choice becomes the default view",
+        "scopes": {
+          "company": "Company",
+          "team": "Teams"
+        }
       },
       "a": {
         "riskyProjects": "projects at risk",
-        "okrsBehind": "OKRs behind",
-        "unassigned": "without an owner",
         "overdue": "overdue tasks",
         "allGood": "Nothing is stuck in the company.",
         "offTrack": "Off track",
@@ -1526,7 +1528,9 @@
         "noInvitations": "No pending invitations.",
         "sentAgo": "sent {{ago}}",
         "notSent": "not sent yet",
-        "resend": "Resend"
+        "resend": "Resend",
+        "strugglingProjects": "struggling projects",
+        "blockedTasks": "struggling tasks"
       },
       "tpl": {
         "button": "Templates",

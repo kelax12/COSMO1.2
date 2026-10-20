@@ -33,7 +33,7 @@ export const TEMPLATES: Record<TemplateId, readonly PlacedWidget[]> = {
     { id: 'teamOverdue', size: 'medium' },
     { id: 'waitingOn', size: 'medium' },
     { id: 'projects', size: 'small' },
-    { id: 'teamOkrs', size: 'small' },
+    { id: 'companyOkrs', size: 'small' },
     { id: 'tasks', size: 'small' },
     { id: 'activity', size: 'medium' },
     { id: 'orgEvents', size: 'medium' },

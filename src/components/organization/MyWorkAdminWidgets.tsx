@@ -8,7 +8,7 @@ import { deadlineDayKey } from '@/lib/deadline';
 import type { WidgetSize } from './apercu-widgets';
 import type { RiskyProject } from './apercu-team.helpers';
 import { ItemAction, WidgetEmpty, WidgetShell } from './WidgetShell';
-import { TONE_BADGE, TONE_TEXT, lateDays, usePager, type WidgetTone } from './widget-shell.helpers';
+import { TONE_BADGE, TONE_TEXT, lateDays, usePager } from './widget-shell.helpers';
 
 /**
  * Widgets du modèle « administrateur » (2026-10-19) : santé de l'entreprise,
@@ -21,44 +21,49 @@ const PER_PAGE: Record<WidgetSize, number> = { small: 1, medium: 3, large: 6 };
 
 interface OrgHealthProps {
   size: WidgetSize;
-  riskyProjects: number;
-  okrsBehind: number;
-  unassigned: number;
+  /** Projets dont la santé déclarée est « à risque ». */
+  atRiskProjects: number;
+  /** Projets déclarés « hors piste ». */
+  struggling: number;
   overdue: number;
-  onGo: (section: 'projects' | 'okr' | 'tasks') => void;
+  /** Tâches au statut « bloquée ». */
+  blockedTasks: number;
+  onGo: (section: 'projects' | 'tasks') => void;
 }
 
-export const OrgHealthWidget = ({ size, riskyProjects, okrsBehind, unassigned, overdue, onGo }: OrgHealthProps) => {
+/**
+ * Santé de l'entreprise (revu le 2026-10-20) : quatre chiffres neutres, sans
+ * fond rouge. « OKR en retard » et « sans responsable » ont été retirés : le
+ * premier n'a pas de mesure fiable derrière, le second n'est pas un signal.
+ */
+export const OrgHealthWidget = ({ size, atRiskProjects, struggling, overdue, blockedTasks, onGo }: OrgHealthProps) => {
   const { t } = useT('orgAdmin');
-  const tiles: { value: number; label: string; tone: WidgetTone; go: 'projects' | 'okr' | 'tasks' }[] = [
-    { value: riskyProjects, label: t('apercu.widgets.a.riskyProjects'), tone: 'danger', go: 'projects' },
-    { value: okrsBehind, label: t('apercu.widgets.a.okrsBehind'), tone: 'warning', go: 'okr' },
-    { value: unassigned, label: t('apercu.widgets.a.unassigned'), tone: 'warning', go: 'tasks' },
-    { value: overdue, label: t('apercu.widgets.a.overdue'), tone: 'danger', go: 'tasks' },
+  const tiles: { value: number; label: string; go: 'projects' | 'tasks' }[] = [
+    { value: atRiskProjects, label: t('apercu.widgets.a.riskyProjects'), go: 'projects' },
+    { value: struggling, label: t('apercu.widgets.a.strugglingProjects'), go: 'projects' },
+    { value: overdue, label: t('apercu.widgets.a.overdue'), go: 'tasks' },
+    { value: blockedTasks, label: t('apercu.widgets.a.blockedTasks'), go: 'tasks' },
   ];
   const issues = tiles.reduce((n, x) => n + x.value, 0);
   const shown = size === 'small' ? tiles.filter((x) => x.value > 0).slice(0, 2) : tiles;
   return (
-    <WidgetShell icon={Activity} title={t('apercu.widgets.names.orgHealth')} count={issues} countTone={issues > 0 ? 'danger' : 'success'}>
+    <WidgetShell icon={Activity} title={t('apercu.widgets.names.orgHealth')} count={issues}>
       {issues === 0 ? (
         <p className={`font-semibold ${TONE_TEXT.success}`}>{t('apercu.widgets.a.allGood')}</p>
       ) : (
         <ul className={`grid gap-2.5 ${size === 'large' ? 'grid-cols-2 sm:grid-cols-4' : size === 'medium' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-          {shown.map(({ value, label, tone, go }) => {
-            const active = value > 0;
-            return (
-              <li key={label}>
-                <button
-                  type="button"
-                  onClick={() => onGo(go)}
-                  className={`w-full text-left rounded-xl px-3 py-2.5 transition-transform hover:-translate-y-0.5 ${active ? TONE_BADGE[tone] : 'bg-[rgb(var(--color-hover))]'}`}
-                >
-                  <span className={`block text-3xl font-bold leading-none tabular-nums ${active ? TONE_TEXT[tone] : TONE_TEXT.neutral}`}>{value}</span>
-                  <span className="mt-1 block text-xs font-medium text-[rgb(var(--color-text-secondary))]">{label}</span>
-                </button>
-              </li>
-            );
-          })}
+          {shown.map(({ value, label, go }) => (
+            <li key={label}>
+              <button
+                type="button"
+                onClick={() => onGo(go)}
+                className="w-full text-left rounded-xl px-3 py-2.5 bg-[rgb(var(--color-hover))] transition-transform hover:-translate-y-0.5"
+              >
+                <span className="block text-3xl font-bold leading-none tabular-nums text-[rgb(var(--color-text-primary))]">{value}</span>
+                <span className="mt-1 block text-xs font-medium text-[rgb(var(--color-text-secondary))]">{label}</span>
+              </button>
+            </li>
+          ))}
         </ul>
       )}
     </WidgetShell>
@@ -75,23 +80,21 @@ export const RiskProjectsWidget = ({ size, rows, onOpen }: { size: WidgetSize; r
   return (
     <WidgetShell icon={FolderKanban} title={t('apercu.widgets.names.riskProjects')} count={rows.length} countTone={rows.length > 0 ? 'danger' : 'neutral'} pager={pager}>
       {rows.length === 0 ? <WidgetEmpty>{t('apercu.widgets.a.noRisk')}</WidgetEmpty> : (
-        <ul className="space-y-3">
+        <ul className="divide-y divide-[rgb(var(--color-border))]">
           {pager.slice.map(({ project, overdue, open, health }) => (
-            <li key={project.id} className="min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: project.color }} aria-hidden="true" />
-                <span className="flex-1 min-w-0 truncate text-sm font-semibold text-[rgb(var(--color-text-primary))]">{project.name}</span>
+            <li key={project.id} className="py-2.5 first:pt-0 last:pb-0 min-w-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color }} aria-hidden="true" />
+                <span className="flex-1 min-w-0 truncate text-base font-semibold text-[rgb(var(--color-text-primary))]">{project.name}</span>
                 {healthLabel(health) && (
-                  <span className={`shrink-0 px-2 py-0.5 rounded-md text-xs font-bold ${TONE_BADGE[health === 'off_track' ? 'danger' : 'warning']}`}>{healthLabel(health)}</span>
+                  <span className={`shrink-0 px-2.5 py-0.5 rounded-md text-sm font-bold ${TONE_BADGE[health === 'off_track' ? 'danger' : 'warning']}`}>{healthLabel(health)}</span>
                 )}
+                <ItemAction icon={ExternalLink} label={t('apercu.widgets.c.open')} onClick={() => onOpen(project.id)} />
               </div>
-              <p className="mt-0.5 ml-[18px] text-xs text-[rgb(var(--color-text-muted))] truncate">
+              <p className="mt-0.5 ml-[22px] text-sm text-[rgb(var(--color-text-muted))] truncate">
                 {t('apercu.widgets.c.projOpen', { count: open })}
                 {overdue > 0 && <span className="text-red-500"> · {t('apercu.widgets.c.projLate', { count: overdue })}</span>}
               </p>
-              <div className="mt-2 ml-[18px]">
-                <ItemAction icon={ExternalLink} label={t('apercu.widgets.c.open')} onClick={() => onOpen(project.id)} />
-              </div>
             </li>
           ))}
         </ul>

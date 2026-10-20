@@ -19,6 +19,8 @@ interface WidgetShellProps {
   titleExtra?: ReactNode;
   /** Bouton ⓘ à droite du titre : son texte s'affiche au survol ET au clic. */
   info?: string;
+  /** Action placée dans l'en-tête, à droite du titre (« Nouvelle note »). */
+  headerAction?: ReactNode;
   count?: number;
   countTone?: WidgetTone;
   /** Contrôles propres au widget, à gauche de la pagination. */
@@ -34,7 +36,7 @@ interface WidgetShellProps {
 const SHELL = 'h-full min-w-0 flex flex-col rounded-2xl border p-4';
 
 export const WidgetShell = ({
-  icon: _icon, title, titleExtra, info, count, countTone = 'neutral', actions, pager, pagerLabel, onSeeAll, tone = 'neutral', children,
+  icon: _icon, title, titleExtra, info, headerAction, count, countTone = 'neutral', actions, pager, pagerLabel, onSeeAll, tone = 'neutral', children,
 }: WidgetShellProps) => {
   const { t } = useT('orgAdmin');
   const tinted = tone === 'danger'
@@ -51,6 +53,7 @@ export const WidgetShell = ({
           {titleExtra && <span className="ml-1.5 font-normal text-xs text-[rgb(var(--color-text-secondary))]">{titleExtra}</span>}
         </h3>
         {info && <InfoButton text={info} />}
+        {headerAction}
         {count !== undefined && (
           <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-bold tabular-nums ${TONE_BADGE[countTone]}`}>{count}</span>
         )}
