@@ -1641,7 +1641,36 @@
         "cancel": "Annuler",
         "apply": "Valider ce modèle"
       },
-      "loadInfo": "La charge additionne les temps estimés de toutes les tâches attribuées à la personne qui sont en retard ou dues dans les 7 prochains jours, puis la compare à 35 h. Une tâche sans temps estimé ne compte pas."
+      "loadInfo": "La charge additionne les temps estimés de toutes les tâches attribuées à la personne qui sont en retard ou dues dans les 7 prochains jours, puis la compare à 35 h. Une tâche sans temps estimé ne compte pas.",
+      "act": {
+        "aTask": "une tâche",
+        "created": "a créé {{task}}",
+        "completed": "a terminé {{task}}",
+        "reopened": "a rouvert {{task}}",
+        "status": "a changé le statut de {{task}}",
+        "assigned": "a assigné {{task}} à {{who}}",
+        "postponed": "a reporté {{task}} au {{date}}",
+        "advanced": "a avancé {{task}} au {{date}}",
+        "actions24h": "actions dans les dernières 24 h",
+        "onYourTask": "sur ta tâche",
+        "quiet": "Rien n'a bougé ces dernières 24 h.",
+        "last24h": "· 24 h",
+        "onMyTasks": "Sur mes tâches",
+        "actionsCount": "{{count}} action(s)",
+        "filterLabel": "Filtrer le fil",
+        "kinds": {
+          "completed": "Terminées",
+          "created": "Créées",
+          "assigned": "Assignées",
+          "postponed": "Reportées"
+        },
+        "filters": {
+          "all": "Tout",
+          "mine": "Mes tâches",
+          "completed": "Terminées"
+        },
+        "justNow": "à l'instant"
+      }
     }
   },
   "customRoles": {
