@@ -54,7 +54,18 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → 86 → **87 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → **2026-10-19**)
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → 86 → 87 → **87 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → 2026-10-19 → **2026-10-20**)
+
+> ### ⚪ 2026-10-20 · 0 : `Posture` toujours en attente de son recalage
+>
+> Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`./docs/README.md`](./docs/README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | `Posture` | 0 | advisors **`13 / 84 / 2 / 1`**, identiques au 10-19 ; rouge chaque matin tant que la référence n'est pas recalée (`--update`, geste d'Axel) |
+> | Base | 0 | 79 tables toutes sous RLS, 205 policies, ledger 173 (`223` en dernier), 12 Edge Functions inchangées ; `jspdf` 4.2.1 ajouté, job `audit` vert |
+>
+> **87 → 87.**
 
 > ### 🟢 2026-10-19 · +1 : `TR-1` refermé, `track_hit` n'a plus qu'un appelant
 >

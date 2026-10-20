@@ -1,4 +1,4 @@
-<!-- note-audit: note=96 -->
+<!-- note-audit: note=95 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,25 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **96 / 100** au 2026-10-18, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **95 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → 97 → **96 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → 97 → 96 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**)
+
+> ### 🟠 2026-10-20 · −1 : `main` rouge 29 runs, et deux verdicts qui dépendent de la date
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | 🔴 `main` rouge depuis le 2026-10-19 à 12:06 UTC | **−1** | dernier vert `bf94958f` (10-18). `e2e` rouge depuis `a9db6f2c`, `lint-test-build` depuis `08bce3d4` (budget de bundle, seule étape rouge, débitée dans [`PERFORMANCE.md`](./PERFORMANCE.md)). **23 commits de code poussés sur du rouge** en 26 h, l'alerte Discord partie à chaque run. `f0c2a433` a réparé les deux parcours entreprise et C-57, pas le reste |
+> | 🟠 Deux verdicts liés au jour de la semaine | **−1** | rouges sur `a9db6f2c`, qui ne change **que deux commentaires** ; vert le dimanche 10-18, rouge le lundi 10-19. `e2e/visual-regression.spec.ts` et `e2e/mobile-android.spec.ts` ne figent pas l'horloge (aucun `page.clock`) alors que la démo date ses données par rapport à aujourd'hui. Correctif : `page.clock.install` à une date fixe |
+> | ✅ `api/collect.ts` hors `tsc` et hors tests (−1 le 10-18) | **+1** | `946046952` et `f2507e69` : `api/` dans `tsconfig.json` (NodeNext, comme le contrôle de Vercel) et dans `vitest.config.ts` ; cinq sabotages du collecteur au catalogue (`62f8ba98`). **Vert en CI** sur la PR n° 79 (run `39163166665`, cinq jobs). Chaîne vue écrire par le collecteur le 10-19 (204, une ligne) |
+> | Comptes à `HEAD` | 0 | 352 fichiers, **3 969** tests ; outillage 29 / 503 ; `e2e` 254 verts, 1 échec (C-97 `/dashboard`), 2 instables, 4 sautés, 22,7 min ; 5 fichiers de test neufs pour 33 fichiers source neufs (les helpers de l'Aperçu) |
+> | Planifiés | 0 | `Posture` rouge chaque matin, référence non recalée (débit nul, voir [`../faille.md`](../faille.md)) ; verts : `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest` |
+>
+> **96 → 95.**
 
 > ### 🟠 2026-10-18 · −1 : le premier code serveur du dépôt n'est vu par aucune garde
 >

@@ -1,4 +1,4 @@
-<!-- note-audit: note=96 -->
+<!-- note-audit: note=95 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,24 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **96 / 100** au 2026-10-18, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **95 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → 96 → **96 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → 96 → 96 → **95 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → **2026-10-20**)
+
+> ### 🟠 2026-10-20 · −1 : le cliquet de `OrganizationPage` dépassé depuis 26 h
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | 🔴 `OrganizationPage` au-dessus de son cliquet | **−1** | **18,2 ko** à `08bce3d4` (Aperçu en widgets), **19,1 ko** à `86ea357f`, pour un plafond de 18,0 ko posé au poids du 2026-09-20 (16,7 ko). Le chunk a continué de grossir sur 22 commits après le premier rouge. Levier : `AddWidgetPage`, `TemplatePicker` et le carrousel des formats ne servent qu'en mode édition, les charger en `lazy` |
+> | ✅ `vendor-pdf` (jsPDF) | 0 | **126,3 ko**, chargé par `import()` au clic sur « Exporter en PDF », jamais au chargement ; exempté **et** borné (133,0 ko), comme l'exige C-85 |
+> | Lighthouse | 0 | job vert à `86ea357f` ; TBT mobile de la page entreprise (399 ms le 10-18) toujours ouvert |
+> | Marges serrées | 0 | `vendor-utils` 0,5 %, `StatisticsPage` 0,2 %, `AgendaPage` 1,7 % : le prochain ajout dans l'un d'eux rougira la garde |
+>
+> **96 → 95.**
 
 > ### ⚪ 2026-10-18 · 0 : rien n'a bougé, la page entreprise reste le chantier
 >
