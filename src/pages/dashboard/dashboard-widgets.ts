@@ -1,5 +1,5 @@
 import { safeGetItem, safeParse, safeSetItem } from '@/lib/safe-json';
-import { sanitizeLayoutIn, type CatalogDef, type PlacedOf } from '@/components/organization/apercu-widgets';
+import { sanitizeLayoutIn, type CatalogDef, type PlacedOf, type WidgetSize } from '@/components/organization/apercu-widgets';
 
 /**
  * Tableau de bord perso en widgets (2026-10-21) : même système que l'Aperçu
@@ -67,4 +67,27 @@ export function loadOkrChoices(userId: string): Record<string, string> {
 
 export function saveOkrChoices(userId: string, choices: Record<string, string>): void {
   safeSetItem(okrChoiceKey(userId), JSON.stringify(choices));
+}
+
+/**
+ * Vue du widget Habitudes, choisie PAR FORMAT : liste en petit, semaine en
+ * moyen et grand par défaut, la personne peut basculer (2026-10-21).
+ */
+export type HabitsViewChoice = 'list' | 'week';
+const habitsViewKey = (userId: string) => `cosmo_dashboard_habits_view_v1:${userId}`;
+
+export const defaultHabitsView = (size: WidgetSize): HabitsViewChoice => (size === 'small' ? 'list' : 'week');
+
+export function loadHabitsViews(userId: string): Partial<Record<WidgetSize, HabitsViewChoice>> {
+  const raw = safeGetItem(habitsViewKey(userId));
+  const parsed = raw ? safeParse<unknown>(raw) : null;
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+  return Object.fromEntries(
+    Object.entries(parsed as Record<string, unknown>)
+      .filter(([k, v]) => ['small', 'medium', 'large'].includes(k) && (v === 'list' || v === 'week')),
+  ) as Partial<Record<WidgetSize, HabitsViewChoice>>;
+}
+
+export function saveHabitsViews(userId: string, views: Partial<Record<WidgetSize, HabitsViewChoice>>): void {
+  safeSetItem(habitsViewKey(userId), JSON.stringify(views));
 }
