@@ -178,18 +178,20 @@ export const OkrsWidget = ({ size, rows, onOpen }: {
       icon={Target}
       title={t('apercu.widgets.names.companyOkrs')}
       titleControl={rows.length > 0 ? (
-        <OkrPickerMenu
-          options={[
-            // « Tous les OKR » : la moyenne, en couleur d'accent.
-            { id: ALL, title: t('apercu.widgets.t.allOkrs'), progress: average, color: OKR_TONE_COLOR.accent },
-            ...rows.map((r) => ({ id: r.okr.id, title: r.okr.title, progress: r.progress, color: OKR_TONE_COLOR[okrTone(r)] })),
-          ]}
-          value={picked ? picked.okr.id : ALL}
-          onChange={setPick}
-          label={picked ? picked.okr.title : t('apercu.widgets.t.allOkrs')}
-          ariaLabel={t('apercu.widgets.t.pickLabel')}
-          triggerClassName="text-xs font-semibold"
-        />
+        <div className="flex min-w-0">
+          <OkrPickerMenu
+            options={[
+              // « Tous les OKR » : la moyenne, en couleur d'accent.
+              { id: ALL, title: t('apercu.widgets.t.allOkrs'), progress: average, color: OKR_TONE_COLOR.accent },
+              ...rows.map((r) => ({ id: r.okr.id, title: r.okr.title, progress: r.progress, color: OKR_TONE_COLOR[okrTone(r)] })),
+            ]}
+            value={picked ? picked.okr.id : ALL}
+            onChange={setPick}
+            label={picked ? picked.okr.title : t('apercu.widgets.t.allOkrs')}
+            ariaLabel={t('apercu.widgets.t.pickLabel')}
+            triggerClassName="text-xs font-semibold"
+          />
+        </div>
       ) : undefined}
       count={!picked && behind > 0 ? behind : undefined}
       countTone="warning"

@@ -60,7 +60,7 @@ const OkrWidget = ({ okrId, fallbackIndex, onSelect }: OkrWidgetProps) => {
       {/* Progression de l'OKR juste après son titre, à la couleur de sa
           catégorie : plus de barre globale (2026-10-21). */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="min-w-0">
+        <div className="flex min-w-0">
           <OkrPickerMenu
             options={pool.map((o) => ({
               id: o.id,
