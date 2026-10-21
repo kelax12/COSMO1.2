@@ -33,6 +33,8 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
 import NewVersionBanner from '@/components/NewVersionBanner';
 import ShareInviteClaimer from '@/components/ShareInviteClaimer';
+import { releasePrerenderHero } from '@/lib/prerender-hero';
+import BootScreen from '@/components/BootScreen';
 import { isOrgPath } from '@/components/organization/deep-link.helpers';
 // Audit perf 2026-05-29 — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
 // it so its imports (framer-motion subset, lucide icons, fuzzy search) don't
@@ -170,6 +172,16 @@ const LayoutWithSuspense = () => (
   </AppErrorBoundary>
 );
 
+// Page PUBLIQUE : son chunk se charge derrière le spinner de démarrage, rendu
+// par React à l'identique (`BootScreen`) : pas un second spinner différent.
+const PublicPageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <AppErrorBoundary>
+    <Suspense fallback={<BootScreen />}>
+      {children}
+    </Suspense>
+  </AppErrorBoundary>
+);
+
 // Page wrapper with Suspense
 const PageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <AppErrorBoundary>
@@ -264,6 +276,9 @@ const RootRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) return null;
   if (isAuthenticated) {
+    // Une session que le script inline d'index.html n'a pas vue (retour OAuth
+    // sur `/`) : la copie du hero du prérendu couvrirait l'app.
+    releasePrerenderHero();
     // Rouvre l'app sur la dernière page quittée (mémorisée par Layout),
     // fallback dashboard si inconnue ou invalide.
     const last = getLastVisitedPage();
@@ -343,13 +358,13 @@ const AppRoutes = () => {
 
     {/* Public pages — accessibles sans authentification */}
     <Route path="welcome" element={<Navigate to="/" replace />} />
-    <Route path="login" element={<PageWithSuspense><LoginPage /></PageWithSuspense>} />
-    <Route path="signup" element={<PageWithSuspense><SignupPage /></PageWithSuspense>} />
-    <Route path="forgot-password" element={<PageWithSuspense><ForgotPasswordPage /></PageWithSuspense>} />
-    <Route path="reset-password" element={<PageWithSuspense><ResetPasswordPage /></PageWithSuspense>} />
-    <Route path="guide" element={<PageWithSuspense><GuidePage /></PageWithSuspense>} />
-    <Route path="blog" element={<PageWithSuspense><BlogIndexPage /></PageWithSuspense>} />
-    <Route path="blog/:slug" element={<PageWithSuspense><BlogArticlePage /></PageWithSuspense>} />
+    <Route path="login" element={<PublicPageWithSuspense><LoginPage /></PublicPageWithSuspense>} />
+    <Route path="signup" element={<PublicPageWithSuspense><SignupPage /></PublicPageWithSuspense>} />
+    <Route path="forgot-password" element={<PublicPageWithSuspense><ForgotPasswordPage /></PublicPageWithSuspense>} />
+    <Route path="reset-password" element={<PublicPageWithSuspense><ResetPasswordPage /></PublicPageWithSuspense>} />
+    <Route path="guide" element={<PublicPageWithSuspense><GuidePage /></PublicPageWithSuspense>} />
+    <Route path="blog" element={<PublicPageWithSuspense><BlogIndexPage /></PublicPageWithSuspense>} />
+    <Route path="blog/:slug" element={<PublicPageWithSuspense><BlogArticlePage /></PublicPageWithSuspense>} />
     {/* Slugs publics localisés — cf. src/i18n/routes.ts.
         `basename` retire déjà le préfixe de locale, donc ces chemins restent
         relatifs ; seul le SLUG change selon la langue servie. Conséquence
@@ -359,20 +374,20 @@ const AppRoutes = () => {
       path={routeSlug('enterprisePresentation', activeLocale)}
       element={<RootRoute />}
     />
-    <Route path={routeSlug('about', activeLocale)} element={<PageWithSuspense><AProposPage /></PageWithSuspense>} />
-    <Route path={routeSlug('freelancers', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('students', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('managers', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('teams', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('legalNotice', activeLocale)} element={<PageWithSuspense><MentionsLegalesPage /></PageWithSuspense>} />
-    <Route path={routeSlug('privacy', activeLocale)} element={<PageWithSuspense><PolitiqueConfidentialitePage /></PageWithSuspense>} />
-    <Route path={routeSlug('terms', activeLocale)} element={<PageWithSuspense><CGUPage /></PageWithSuspense>} />
+    <Route path={routeSlug('about', activeLocale)} element={<PublicPageWithSuspense><AProposPage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('freelancers', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('students', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('managers', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('teams', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('legalNotice', activeLocale)} element={<PublicPageWithSuspense><MentionsLegalesPage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('privacy', activeLocale)} element={<PublicPageWithSuspense><PolitiqueConfidentialitePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('terms', activeLocale)} element={<PublicPageWithSuspense><CGUPage /></PublicPageWithSuspense>} />
     {/* Lien d'invitation de partage — public : pose le token puis redirige
         (login/signup si déconnecté) ; ShareInviteClaimer fait le claim. */}
-    <Route path="invite/:token" element={<PageWithSuspense><InvitePage /></PageWithSuspense>} />
+    <Route path="invite/:token" element={<PublicPageWithSuspense><InvitePage /></PublicPageWithSuspense>} />
     {/* Lien d'invitation entreprise placé (v2) — public : la page gère
         elle-même l'état connecté/déconnecté + consentement RGPD. */}
-    <Route path="org-invite/:token" element={<PageWithSuspense><ClaimOrgInvitePage /></PageWithSuspense>} />
+    <Route path="org-invite/:token" element={<PublicPageWithSuspense><ClaimOrgInvitePage /></PublicPageWithSuspense>} />
 
     {/* Protected routes — require authentication */}
     <Route element={<ProtectedRoute />}>
@@ -406,7 +421,7 @@ const AppRoutes = () => {
     </Route>
 
     {/* Fallback */}
-    <Route path="*" element={<PageWithSuspense><NotFoundPage /></PageWithSuspense>} />
+    <Route path="*" element={<PublicPageWithSuspense><NotFoundPage /></PublicPageWithSuspense>} />
   </Routes>
   );
 };

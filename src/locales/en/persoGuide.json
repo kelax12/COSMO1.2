@@ -1,0 +1,103 @@
+{
+  "drawer": {
+    "title": "Personal guide",
+    "close": "Close the guide",
+    "searchPlaceholder": "Task, habit, objective…",
+    "noResult": "No action matches. Try another word."
+  },
+  "categories": {
+    "tasks": "Tasks and lists",
+    "agenda": "Calendar",
+    "habits": "Habits",
+    "okr": "Objectives"
+  },
+  "control": {
+    "progress": "{{action}} · step {{current}}/{{total}}",
+    "pause": "Pause",
+    "resume": "Resume",
+    "skip": "Skip",
+    "quit": "Quit the demo"
+  },
+  "end": {
+    "missing": "This screen has changed since the guide was written. Open it yourself.",
+    "openDirect": "Open the screen"
+  },
+  "empty": {
+    "noHabit": "You need a habit first: start with \"Create a habit\".",
+    "noOkr": "You need an objective first: start with \"Create an objective\"."
+  },
+  "actions": {
+    "task": {
+      "create": {
+        "label": "Create a task",
+        "synonyms": "new task, add, todo, to do",
+        "b1": "Only the name is required. A task can be saved right away.",
+        "b2": "Priority sorts your list: important tasks rise to the top.",
+        "b3": "With a due date, the task shows up in the calendar and can repeat."
+      },
+      "find": {
+        "label": "Find a task",
+        "synonyms": "search, filter, sort, category",
+        "b1": "Search by name, or filter by category to keep a single topic.",
+        "b2": "The calendar shows your tasks by due date."
+      }
+    },
+    "list": {
+      "create": {
+        "label": "Create a list",
+        "synonyms": "list, group, folder, personal project",
+        "b1": "Name your list: groceries, project, reading…",
+        "b2": "Its color sets it apart at a glance in the list bar."
+      }
+    },
+    "agenda": {
+      "plan": {
+        "label": "Schedule a task",
+        "synonyms": "time blocking, slot, drag, plan, book",
+        "b1": "This button opens your tasks to schedule, next to the calendar.",
+        "b2": "Drag a task onto a slot: it becomes a block in your calendar."
+      },
+      "event": {
+        "label": "Create an event",
+        "synonyms": "appointment, meeting, event, slot, block",
+        "b1": "Click and drag over an empty slot to create an event at that time."
+      },
+      "views": {
+        "label": "Switch view",
+        "synonyms": "day, week, month, zoom, display",
+        "b1": "Day for detail, week for the big picture, month to step back.",
+        "b2": "Zoom tightens or widens the hours of the grid."
+      }
+    },
+    "habit": {
+      "create": {
+        "label": "Create a habit",
+        "synonyms": "new habit, routine, ritual, daily",
+        "b1": "The habit's name, phrased as an action: read, walk, meditate…",
+        "b2": "How long it takes you each day, in minutes.",
+        "b3": "Its color, used in tracking and statistics."
+      },
+      "track": {
+        "label": "Track your habits",
+        "synonyms": "check, complete, streak, tracking, heatmap",
+        "b1": "Pick a view: today's checklist, or each habit's history.",
+        "b2": "Check a habit to complete the day and extend your streak."
+      }
+    },
+    "okr": {
+      "create": {
+        "label": "Create an objective",
+        "synonyms": "okr, objective, goal, key result, ambition",
+        "b1": "The objective says where you want to go: one clear sentence.",
+        "b2": "The deadline sets when you review it.",
+        "b3": "Key results measure progress: a number to reach, or done / not done."
+      },
+      "progress": {
+        "label": "Move an objective forward",
+        "synonyms": "progress, update, advancement, key result, category",
+        "b1": "Update each key result from the card: the objective's gauge follows.",
+        "b2": "Filter by category to see only one area of your life."
+      }
+    }
+  }
+}

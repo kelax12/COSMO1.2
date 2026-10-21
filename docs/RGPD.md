@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **87 / 100** au 2026-10-18, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **87 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
 
 # RGPD — inventaire, droits des personnes et dette
 
@@ -16,7 +16,19 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → 85 → 87 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → 85 → 87 → 87 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → **2026-10-20**) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ⚪ 2026-10-20 · 0 : aucun traitement nouveau
+>
+> Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | Export PDF du rapport d'activité | 0 | généré dans le navigateur (jsPDF), rien n'est envoyé |
+> | Politique de confidentialité | 0 | toujours **sans section « Prospection »** (relue dans `src/locales/fr/legalPrivacy.json`) : déjà débitée au titre de T11 |
+> | `M-71` | 0 | `BACKUP_PASSPHRASE.txt` toujours présent dans le coffre hors dépôt le 2026-10-20 |
+>
+> **87 → 87.**
 
 > ### ⚪ 2026-10-18 (soir) · 0 : la politique publiée couvre la prospection, le −1 de T11 reste
 >

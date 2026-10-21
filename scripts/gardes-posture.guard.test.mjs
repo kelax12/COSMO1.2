@@ -28,7 +28,7 @@ import { grilleDuCode, palierDe, rapprocher, prixStripe } from './check-stripe-p
 import { sqlOrphelines, sqlAges, DUREE_DE_VIE_DU_COMPTE, DUREES_BORNEES, PREUVES, libelle } from './check-retention.mjs';
 import { sqlExplain, extraire, pente, REQUETES } from './check-db-cost.mjs';
 import { SONDES, jouer, cleAnonDepuisApi } from './check-edge-smoke.mjs';
-import { variablesLues, variablesDeLExemple } from './check-env-contract.mjs';
+import { variablesLues, variablesDeLExemple, secretsExposes, serveurNonLues } from './check-env-contract.mjs';
 import { lignesAnnuaires, dateDeRemesure, ETATS } from './check-acquisition.mjs';
 import { lireMarqueur, lirePhrase, documents } from './check-docs-scored.mjs';
 import { CATALOGUE, verifierCatalogue } from './replay-sabotages.mjs';
@@ -430,6 +430,29 @@ describe('témoin — contrat d environnement (C-105)', () => {
     expect(exemple).not.toBeNull();
     // 🔴 La variable dont l'absence CHANGE LA FORME DU BUNDLE.
     expect(exemple.has('VITE_SENTRY_DSN')).toBe(true);
+  });
+
+  it('TEMOIN : un nom de secret sous le préfixe `VITE_` est signalé (il partirait dans le bundle)', () => {
+    expect(secretsExposes(new Set(['VITE_SUPABASE_URL', 'VITE_SUPABASE_SECRET_KEY', 'VITE_SUPABASE_SERVICE_ROLE_KEY'])))
+      .toEqual(['VITE_SUPABASE_SECRET_KEY', 'VITE_SUPABASE_SERVICE_ROLE_KEY']);
+    // Le code réel n'en lit aucune.
+    expect(secretsExposes(variablesLues())).toEqual([]);
+  });
+
+  it('TEMOIN : la clé serveur du collecteur est lue par son fichier, et une entrée morte se voit', () => {
+    expect(serveurNonLues()).toEqual([]);
+    const tmp = mkdtempSync(join(tmpdir(), 'env-'));
+    try {
+      mkdirSync(join(tmp, 'api'));
+      writeFileSync(join(tmp, 'api', 'collect.ts'), 'const key = process.env.VITE_SUPABASE_ANON_KEY;\n');
+      // `api/` est parcouru : dans un arbre SANS `src/`, sa `VITE_*` est vue.
+      expect(variablesLues(tmp).has('VITE_SUPABASE_ANON_KEY')).toBe(true);
+      expect(serveurNonLues(tmp)).toEqual(['SUPABASE_SECRET_KEY (api/collect.ts)']);
+      rmSync(join(tmp, 'api'), { recursive: true, force: true });
+      expect(serveurNonLues(tmp)).toEqual(['SUPABASE_SECRET_KEY (api/collect.ts)']);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 
   it('un arbre sans `.env.example` rend `null`, pas un ensemble vide', () => {

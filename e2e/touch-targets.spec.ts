@@ -554,13 +554,18 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
     await demoPage.waitForLoadState('networkidle');
     await demoPage.waitForTimeout(2000);
 
-    const taskButton = demoPage.locator('button[aria-label^="Marquer"]').first();
-    await expect(taskButton).toBeVisible({ timeout: 15_000 });
-    // Le bouton VOISIN de la case ouvre la tâche (la case, elle, la coche).
+    // Aperçu en widgets (2026-10-19) : le compte démo (admin) arrive sur le
+    // modèle « Administrateur », sans « Mes tâches ». Une ligne de TÂCHE du
+    // widget « Événements de l'entreprise » ouvre la modale (elle porte son
+    // projet, « · Projet » ; une fin d'OKR non).
     // Délai propre puis clic forcé, comme `navTo` : sous WebKit la rangée
     // était jugée instable jusqu'au délai du test (180 s), instable le
     // 2026-10-09. L'élément doit quand même exister et être visible.
-    const ouvrir = demoPage.locator('li:has(button[aria-label^="Marquer"]) button').nth(1);
+    const ouvrir = demoPage
+      .getByRole('region', { name: /événements de l[’']entreprise/i })
+      .getByRole('button')
+      .filter({ hasText: ' · ' })
+      .first();
     await expect(ouvrir).toBeVisible({ timeout: 15_000 });
     try {
       await ouvrir.click({ timeout: 15_000 });

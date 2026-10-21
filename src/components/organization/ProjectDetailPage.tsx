@@ -157,7 +157,7 @@ const ProjectDetailPage = ({
             <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-lg sm:text-xl font-bold text-[rgb(var(--color-text-primary))] break-words">{project.name}</h2>
               {/* Qui voit ce projet, et le geste pour y ajouter quelqu'un. */}
-              <div className="flex items-center" aria-label={pf('members.viewersAria', { count: viewers.length })} role="group">
+              <div className="flex items-center" aria-label={pf('members.viewersAria', { count: viewers.length })} role="group" data-guide-id="project-detail-viewers">
                 <button
                   type="button"
                   onClick={() => setRolesOpen(true)}
@@ -191,6 +191,7 @@ const ProjectDetailPage = ({
                       <button
                         key={mode}
                         type="button"
+                        data-guide-id={mode === 'person' ? 'project-audience-add-person' : 'project-audience-add-team'}
                         onClick={() => { setAddMenuOpen(false); setAddMode(mode); }}
                         className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
                       >

@@ -383,7 +383,7 @@ const TasksPage: React.FC = () => {
                   // a ete retire, et le tri est passe dans la barre ancree.
                   className="hidden md:flex flex-col md:flex-row justify-between items-stretch md:items-start mb-3 sm:mb-8 gap-6"
                 >
-                  <div className="flex-1 w-full" data-tutorial-id="tasks-filter">
+                  <div className="flex-1 w-full" data-tutorial-id="tasks-filter" data-guide-id="perso-tasks-filter">
                     <TaskFilter
                       onFilterChange={handleFilterChange}
                       currentFilter={filter}
@@ -403,6 +403,7 @@ const TasksPage: React.FC = () => {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setShowAddTaskForm(true)}
                       data-tutorial-id="tasks-create-button"
+                      data-guide-id="perso-tasks-new"
                       className="hidden md:flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
                       aria-label={t('actions.newTaskAria')}
                     >

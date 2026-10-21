@@ -300,7 +300,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                   {/* Scrollable body */}
                   <form id="habit-form" onSubmit={handleSubmit} data-scroll-area className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="sm:col-span-2" ref={register('name')}>
+                      <div className="sm:col-span-2" ref={register('name')} data-guide-id="perso-habit-form-name">
                         <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           {t('modal.nameLabel')}
                         </label>
@@ -320,7 +320,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                           autoFocus
                         />
                       </div>
-                      <div>
+                      <div data-guide-id="perso-habit-form-time">
                         <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Temps (min)
                         </label>
@@ -340,7 +340,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       </div>
                     </div>
 
-                    <div>
+                    <div data-guide-id="perso-habit-form-color">
                       <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                         Couleur
                       </label>
