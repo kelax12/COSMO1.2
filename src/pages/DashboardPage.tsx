@@ -38,11 +38,16 @@ import { VIEW_MODES, type ViewMode } from '@/lib/view-mode';
 import ApercuWidgetGrid from '@/components/organization/ApercuWidgetGrid';
 import { baseWidgetId, type WidgetSize } from '@/components/organization/apercu-widgets';
 import OkrWidget from '@/components/OkrWidget';
+import HabitsWidget from '@/components/HabitsWidget';
 import type { WidgetCatalog } from '@/components/organization/widget-catalog';
 import {
   DASHBOARD_WIDGET_DEFS,
   loadDashboardLayout,
   loadOkrChoices,
+  loadHabitsViews,
+  saveHabitsViews,
+  defaultHabitsView,
+  type HabitsViewChoice,
   saveOkrChoices,
   saveDashboardLayout,
   type DashboardPlaced,
@@ -147,6 +152,13 @@ const DashboardPage: React.FC = () => {
     saveOkrChoices(userKey, next);
   };
 
+  const [habitsViews, setHabitsViews] = useState(() => loadHabitsViews(userKey));
+  const onHabitsView = (size: WidgetSize, view: HabitsViewChoice) => {
+    const next = { ...habitsViews, [size]: view };
+    setHabitsViews(next);
+    saveHabitsViews(userKey, next);
+  };
+
   const renderWidget = (id: DashboardWidgetId, size: WidgetSize): React.ReactNode => {
     switch (baseWidgetId(id) as DashboardWidgetId) {
       case 'stats':
@@ -239,7 +251,10 @@ const DashboardPage: React.FC = () => {
       case 'habits':
         return (
           <MobileCollapsible title={t('sections.todayHabits')}>
-            <TodayHabits />
+            <HabitsWidget
+              view={habitsViews[size] ?? defaultHabitsView(size)}
+              onViewChange={(view) => onHabitsView(size, view)}
+            />
           </MobileCollapsible>
         );
     }

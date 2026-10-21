@@ -201,5 +201,12 @@
   "okrWidget": {
     "choose": "Objectif affiché",
     "noKeyResult": "Aucun résultat clé pour cet objectif."
+  },
+  "habitsWidget": {
+    "viewList": "Vue liste",
+    "viewWeek": "Vue semaine",
+    "dayCell": "{{name}}, {{date}}",
+    "done": "fait",
+    "notDone": "pas fait"
   }
 }
