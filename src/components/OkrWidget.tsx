@@ -54,25 +54,23 @@ const OkrWidget = ({ okrId, fallbackIndex, onSelect }: OkrWidgetProps) => {
 
   return (
     <div className="card-plain-mobile p-gutter md:p-6 rounded-2xl">
-      <label className="block">
-        <span className="sr-only">{t('okrWidget.choose')}</span>
-        <select
-          value={okr.id}
-          onChange={(e) => onSelect(e.target.value)}
-          title={t('okrWidget.choose')}
-          className="w-full max-w-full truncate rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-2 py-1.5 text-sm font-semibold text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
-        >
-          {pool.map((o) => (
-            <option key={o.id} value={o.id}>{o.title}</option>
-          ))}
-        </select>
-      </label>
-
-      <div className="mt-3 mb-4 flex items-center gap-3">
-        <div className="flex-1 h-1.5 rounded-full bg-[rgb(var(--color-border-muted))] overflow-hidden">
-          <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: color }} />
-        </div>
-        <span className="shrink-0 text-sm font-semibold tabular-nums text-[rgb(var(--color-text-primary))]">{progress} %</span>
+      {/* Progression de l'OKR juste après son titre, à la couleur de sa
+          catégorie : plus de barre globale (2026-10-21). */}
+      <div className="flex items-center gap-3 mb-4">
+        <label className="min-w-0">
+          <span className="sr-only">{t('okrWidget.choose')}</span>
+          <select
+            value={okr.id}
+            onChange={(e) => onSelect(e.target.value)}
+            title={t('okrWidget.choose')}
+            className="max-w-full truncate rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-2 py-1.5 text-sm font-semibold text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
+          >
+            {pool.map((o) => (
+              <option key={o.id} value={o.id}>{o.title}</option>
+            ))}
+          </select>
+        </label>
+        <span className="shrink-0 text-sm font-bold tabular-nums" style={{ color }}>{progress} %</span>
       </div>
 
       {okr.keyResults.length === 0 ? (
