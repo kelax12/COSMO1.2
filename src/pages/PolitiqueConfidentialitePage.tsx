@@ -103,6 +103,16 @@ const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
       { kind: 'p', key: 'privacy.s7bis.p3' },
     ],
   },
+  // T11 du registre (`docs/RGPD-REGISTRE.md`) : prospection B2B par email.
+  {
+    title: 'privacy.s7ter.title',
+    blocks: [
+      { kind: 'p', key: 'privacy.s7ter.p1' },
+      { kind: 'p', key: 'privacy.s7ter.p2' },
+      { kind: 'p', key: 'privacy.s7ter.p3' },
+      { kind: 'p', key: 'privacy.s7ter.p4' },
+    ],
+  },
   {
     title: 'privacy.s8.title',
     blocks: [
