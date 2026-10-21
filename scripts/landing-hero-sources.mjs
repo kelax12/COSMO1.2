@@ -19,7 +19,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 
-/** Tout ce qui décide du balisage capturé : header, sélecteur, hero, textes. */
+/** Tout ce qui décide du balisage capturé : header, sélecteur, heros des deux parcours, textes. */
 export const HERO_SOURCES = [
   'src/pages/LandingPage.tsx',
   'src/pages/landing/TrackSwitcher.tsx',
@@ -32,6 +32,13 @@ export const HERO_SOURCES = [
   'src/pages/landing/hero-modules.ts',
   'src/locales/fr/landing.json',
   'src/locales/en/landing.json',
+  // Parcours entreprise (copie peinte par `/entreprise-presentation/`).
+  'src/pages/landing/entreprise/EnterpriseTrack.tsx',
+  'src/pages/landing/entreprise/EnterpriseHero.tsx',
+  'src/pages/landing/entreprise/HeroStack.tsx',
+  'src/pages/landing/entreprise/free-offer.ts',
+  'src/locales/fr/landingEnterprise.json',
+  'src/locales/en/landingEnterprise.json',
 ];
 
 export const SOURCES_MANIFEST = 'scripts/landing-hero/sources.json';

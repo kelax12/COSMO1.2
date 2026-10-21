@@ -72,4 +72,8 @@ export function applyTheme(root: HTMLElement, theme: Theme): void {
   if (theme !== 'light') root.classList.add('dark');
   if (theme === 'gris') root.classList.add('gris');
   if (theme === 'noir') root.classList.add('noir');
+  // Lu par la CSS du spinner de démarrage (index.html), que le script inline
+  // pose AVANT React depuis le thème enregistré : le spinner, puis celui des
+  // pages publiques (`BootScreen`), prennent les couleurs du thème.
+  root.setAttribute('data-boot-theme', theme);
 }

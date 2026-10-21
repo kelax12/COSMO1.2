@@ -51,10 +51,19 @@ function runSessionScript(entries: Record<string, string>): boolean {
     getItem: (k: string) => (k in entries ? entries[k] : null),
   };
   let prerendered = true;
-  const document = { documentElement: { removeAttribute: (name: string) => { if (name === 'data-prerendered') prerendered = false; } } };
+  const document = {
+    documentElement: {
+      removeAttribute: (name: string) => { if (name === 'data-prerendered') prerendered = false; },
+      setAttribute: (name: string, value: string) => { if (name === 'data-boot-theme') bootTheme = value; },
+    },
+  };
+  bootTheme = null;
   new Function('localStorage', 'document', inlineScripts()[0].body)(storage, document);
   return prerendered;
 }
+
+/** Valeur de `data-boot-theme` posée par le DERNIER `runSessionScript`. */
+let bootTheme: string | null = null;
 
 describe('écran de démarrage (index.html)', () => {
   it("n'a qu'UN <script> inline exécutable, et son empreinte est autorisée par la CSP", () => {
@@ -76,6 +85,24 @@ describe('écran de démarrage (index.html)', () => {
     expect(runSessionScript({ 'sb-abcd-auth-token': '{}' })).toBe(false);
     expect(runSessionScript({ theme: 'x', 'sb-abcd-auth-token': '{}' })).toBe(false);
     expect(runSessionScript({ cosmo_demo_active: '1' })).toBe(false);
+  });
+
+  it('pose data-boot-theme depuis le thème enregistré, avec les alias de resolveInitialTheme', () => {
+    runSessionScript({});
+    expect(bootTheme).toBeNull();
+    for (const t of ['light', 'dark', 'gris', 'noir']) {
+      runSessionScript({ theme: t });
+      expect(bootTheme).toBe(t);
+    }
+    runSessionScript({ theme: 'black' });
+    expect(bootTheme).toBe('gris');
+    runSessionScript({ theme: 'midnight', 'sb-abcd-auth-token': '{}' });
+    expect(bootTheme).toBe('gris');
+    // Une valeur inconnue n'est jamais recopiée dans un sélecteur CSS.
+    runSessionScript({ theme: 'x"]{}' });
+    expect(bootTheme).toBeNull();
+    // Et la clé est bien celle de l'app.
+    expect(readFileSync(join(ROOT, 'src/lib/theme.ts'), 'utf8')).toContain("export const THEME_STORAGE_KEY = 'theme';");
   });
 
   it('lit les mêmes clés que l’app : drapeau démo et client Supabase par défaut', () => {
