@@ -188,6 +188,10 @@
       "taskList": "One of your lists, your choice. Can be added several times.",
       "teamTasks": "Company tasks assigned to you.",
       "review": "Tasks your colleagues finished, waiting for your review."
+    },
+    "groups": {
+      "perso": "Personal widgets",
+      "pro": "Work widgets"
     }
   },
   "okrWidget": {

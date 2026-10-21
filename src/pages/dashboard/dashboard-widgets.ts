@@ -22,17 +22,17 @@ export type DashboardWidgetId =
   | `taskList~${string}`;
 
 export const DASHBOARD_WIDGET_DEFS: readonly CatalogDef<DashboardWidgetId>[] = [
-  { id: 'stats', sizes: ['medium', 'large'] },
-  { id: 'today', sizes: ['small', 'medium', 'large'] },
-  { id: 'priorityTasks', sizes: ['small', 'medium', 'large'] },
-  { id: 'collaborativeTasks', sizes: ['small', 'medium', 'large'] },
-  { id: 'okrs', sizes: ['small', 'medium', 'large'], multi: true },
-  { id: 'habits', sizes: ['small', 'medium', 'large'] },
-  { id: 'agenda', sizes: ['small', 'medium', 'large'] },
-  { id: 'taskList', sizes: ['small', 'medium', 'large'], multi: true },
+  { id: 'stats', sizes: ['medium', 'large'], group: 'perso' },
+  { id: 'today', sizes: ['small', 'medium', 'large'], group: 'pro' },
+  { id: 'priorityTasks', sizes: ['small', 'medium', 'large'], group: 'perso' },
+  { id: 'collaborativeTasks', sizes: ['small', 'medium', 'large'], group: 'perso' },
+  { id: 'okrs', sizes: ['small', 'medium', 'large'], multi: true, group: 'perso' },
+  { id: 'habits', sizes: ['small', 'medium', 'large'], group: 'perso' },
+  { id: 'agenda', sizes: ['small', 'medium', 'large'], group: 'perso' },
+  { id: 'taskList', sizes: ['small', 'medium', 'large'], multi: true, group: 'perso' },
   // Membres d'une organisation seulement (filtrés dans le catalogue de la page).
-  { id: 'teamTasks', sizes: ['small', 'medium', 'large'] },
-  { id: 'review', sizes: ['small', 'medium', 'large'] },
+  { id: 'teamTasks', sizes: ['small', 'medium', 'large'], group: 'pro' },
+  { id: 'review', sizes: ['small', 'medium', 'large'], group: 'pro' },
 ];
 
 /** Widgets qui n'ont de sens que pour un membre d'une organisation. */

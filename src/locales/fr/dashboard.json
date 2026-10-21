@@ -204,6 +204,10 @@
       "taskList": "Une de vos listes, au choix. Posable plusieurs fois.",
       "teamTasks": "Les tâches d'entreprise qui vous sont attribuées.",
       "review": "Les tâches terminées par vos collègues, à valider."
+    },
+    "groups": {
+      "perso": "Widgets personnels",
+      "pro": "Widgets professionnels"
     }
   },
   "okrWidget": {
