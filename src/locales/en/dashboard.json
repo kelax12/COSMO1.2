@@ -92,7 +92,8 @@
       "confirm": "Delete"
     },
     "collaboratorsTitle": "Collaborators",
-    "deleteTitle": "Delete"
+    "deleteTitle": "Delete",
+    "bookmark": "Bookmark"
   },
   "collaborative": {
     "shared_one": "{{count}} shared task",

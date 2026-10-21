@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router';
 import { toast } from '@/lib/toast';
 import { showUndoToast } from '@/lib/undo-toast';
-import { CheckSquare, Clock, Bookmark, AlertCircle, Calendar, MoreHorizontal, UserPlus, Trash2 } from 'lucide-react';
-import CollaboratorAvatars from './CollaboratorAvatars';
+import { CheckSquare, Bookmark, Calendar, ListPlus, UserPlus, Trash2 } from 'lucide-react';
+import TaskRow from './TaskRow';
 import TaskModal from './TaskModal';
 import EventModal from './EventModal';
 import AddToListModal from './AddToListModal';
@@ -12,17 +12,12 @@ import EmptyState from './EmptyState';
 
 import { useTasks, useToggleTaskComplete, useToggleTaskBookmark, useDeleteTask, useRestoreTask, Task } from '@/modules/tasks';
 import { useCreateEvent, CreateEventInput } from '@/modules/events';
-import { useCategories } from '@/modules/categories';
-import { useFriends, useSharesByTask } from '@/modules/friends';
-import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { isDueToday } from '@/lib/deadline';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
-import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
-const TodayTasks: React.FC = () => {
+const TodayTasks = ({ compact = false }: { compact?: boolean }) => {
   const { t, tp } = useT('dashboard');
-  const [completedTaskId, setCompletedTaskId] = useState<string | null>(null);
 
   // Modals
   const [selectedTask, setSelectedTask]             = useState<Task | null>(null);
@@ -39,9 +34,6 @@ const TodayTasks: React.FC = () => {
   // « Annuler » uniquement : rend la tache sous SON identifiant (R-08).
   const restoreMutation         = useRestoreTask();
   const createEventMutation     = useCreateEvent();
-  const { data: categories = [] } = useCategories();
-  const { data: friends = [] }    = useFriends();
-  const sharesByTask              = useSharesByTask();
 
   const todayTasks = useMemo(() => {
     return tasks
@@ -66,20 +58,8 @@ const TodayTasks: React.FC = () => {
 
   const totalTime = useMemo(() => todayTasks.reduce((sum, t) => sum + t.estimatedTime, 0), [todayTasks]);
 
-  const getCategoryData = (categoryId: string) => categories.find(c => c.id === categoryId);
 
-  const getPriorityIcon = (priority: number) => {
-    if (priority > 0 && priority <= 2) return <AlertCircle size={16} className="text-[rgb(var(--color-error))]" />;
-    return null;
-  };
 
-  const handleToggleComplete = (taskId: string) => {
-    setCompletedTaskId(taskId);
-    setTimeout(() => {
-      toggleCompleteMutation.mutate(taskId);
-      setCompletedTaskId(null);
-    }, 600);
-  };
 
   const handleCreateEventFromTask = (eventData: CreateEventInput) => {
     if (taskToEventModal) {
@@ -169,110 +149,26 @@ const TodayTasks: React.FC = () => {
           </p>
         </div>
 
-        <div className="space-y-3">
-          {todayTasks.map(task => {
-            const categoryData = getCategoryData(task.category);
-
-            return (
-              <div
-                key={task.id}
-                className={`group p-3 sm:p-4 rounded-xl border transition-all duration-300 cursor-pointer hover:shadow-md ${
-                  !task.bookmarked && task.isCollaborative ? 'collaborative-task' : ''
-                } ${completedTaskId === task.id ? 'animate-task-complete' : ''}`}
-                style={{
-                  backgroundColor: task.bookmarked ? 'rgba(234, 179, 8, 0.15)' : undefined,
-                  borderColor: task.bookmarked ? '#EAB308' : 'rgb(var(--color-border))',
-                }}
-                onClick={() => setSelectedTask(task)}
-              >
-                <div className="flex items-center gap-3">
-                  {/* Checkbox */}
-                  <button
-                    type="button"
-                    role="checkbox"
-                    aria-checked={task.completed}
-                    aria-label={task.completed ? t('todayTasks.markUndone', { name: task.name }) : t('todayTasks.markDone', { name: task.name })}
-                    onClick={(e) => { e.stopPropagation(); handleToggleComplete(task.id); }}
-                    className={`w-11 h-11 md:w-5 md:h-5 rounded-md border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                      task.completed
-                        ? 'bg-[rgb(var(--color-error))] border-[rgb(var(--color-error))]'
-                        : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-error)/0.5)]'
-                    }`}
-                  >
-                    {task.completed && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-body sm:text-base text-[rgb(var(--color-text-primary))] truncate">{task.name}</h3>
-                      {getPriorityIcon(task.priority)}
-                      {task.sharedBy ? (
-                        <span className="hidden md:inline-flex text-xs bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] px-2 py-0.5 rounded-full shrink-0" title={task.sharedBy}>
-                          {task.sharedBy}
-                        </span>
-                      ) : task.isCollaborative ? (
-                        (sharesByTask.get(task.id) ?? []).map((id) => {
-                          const friend = friends.find((f) => f.userId === id || f.id === id || f.name === id);
-                          const name = friend?.name ?? id;
-                          return (
-                            <span
-                              key={id}
-                              className="hidden md:inline-flex text-xs bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] px-2 py-0.5 rounded-full shrink-0"
-                              title={name}
-                            >
-                              {name}
-                            </span>
-                          );
-                        })
-                      ) : null}
-                    </div>
-                    <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-label sm:text-sm text-[rgb(var(--color-text-secondary))]">
-                      <div className="flex items-center gap-1"><Clock size={14} /><span>{task.estimatedTime} min</span></div>
-                      {task.priority > 0 && (
-                        <div className="flex items-center gap-1">
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: categoryData?.color || NO_CATEGORY_COLOR }} />
-                          <span>{t('todayTasks.priority', { level: task.priority })}</span>
-                        </div>
-                      )}
-                      <div className="text-caption sm:text-xs whitespace-nowrap">
-                        {task.deadline ? formatDate(new Date(task.deadline)) : t('todayTasks.noDeadline')}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Avatars collaborateurs */}
-                  {(sharesByTask.get(task.id)?.length ?? 0) > 0 && (
-                    <CollaboratorAvatars collaboratorIds={sharesByTask.get(task.id) ?? []} friends={friends} size="sm" />
-                  )}
-
-                  {/* Action icons — desktop hover only */}
-                  <div className="hidden md:flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
-                    <button onClick={(e) => { e.stopPropagation(); toggleBookmarkMutation.mutate(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title="Favori">
-                      <Bookmark size={15} className={task.bookmarked ? 'text-amber-500 fill-amber-500' : 'text-[rgb(var(--color-text-muted))]'} />
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); setTaskToEventModal(task); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title={t('todayTasks.convertToEvent')}>
-                      <Calendar size={15} className="text-[rgb(var(--color-text-muted))]" />
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); setAddToListTask(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title={t('todayTasks.addToList')}>
-                      <MoreHorizontal size={15} className="text-[rgb(var(--color-text-muted))]" />
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); setCollaboratorTaskId(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title={t('todayTasks.collaboratorsTitle')}>
-                      <UserPlus size={15} className="text-[rgb(var(--color-text-muted))]" />
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(task); }} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" title={t('todayTasks.deleteTitle')}>
-                      <Trash2 size={15} className="text-[rgb(var(--color-text-muted))] hover:text-red-500 transition-colors" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
+        <ul className="divide-y divide-[rgb(var(--color-border))]">
+          {todayTasks.map(task => (
+            <TaskRow
+              key={task.id}
+              name={task.name}
+              completeLabel={t('todayTasks.markDone', { name: task.name })}
+              onComplete={() => toggleCompleteMutation.mutate(task.id)}
+              onOpen={() => setSelectedTask(task)}
+              compact={compact}
+              actions={[
+                { key: 'bookmark', label: t('todayTasks.bookmark'), icon: Bookmark, active: !!task.bookmarked, run: () => toggleBookmarkMutation.mutate(task.id) },
+                { key: 'event', label: t('todayTasks.convertToEvent'), icon: Calendar, run: () => setTaskToEventModal(task) },
+                { key: 'list', label: t('todayTasks.addToList'), icon: ListPlus, run: () => setAddToListTask(task.id) },
+                { key: 'collab', label: t('todayTasks.collaboratorsTitle'), icon: UserPlus, run: () => setCollaboratorTaskId(task.id) },
+                { key: 'delete', label: t('todayTasks.deleteTitle'), icon: Trash2, danger: true, run: () => handleDeleteClick(task) },
+              ]}
+            />
+          ))}
+        </ul>
+        <div>
           {todayTasks.length === 0 && (
             <EmptyState
               icon={CheckSquare}

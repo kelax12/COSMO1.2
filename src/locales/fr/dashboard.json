@@ -97,7 +97,8 @@
       "confirm": "Supprimer"
     },
     "collaboratorsTitle": "Collaborateurs",
-    "deleteTitle": "Supprimer"
+    "deleteTitle": "Supprimer",
+    "bookmark": "Favori"
   },
   "collaborative": {
     "shared_one": "{{count}} tâche partagée",

@@ -200,19 +200,19 @@ const DashboardPage: React.FC = () => {
       case 'today':
         return activeOrg ? (
           <MobileCollapsible title={t('sections.today')} defaultOpen>
-            <TodayUnified />
+            <TodayUnified compact={size === 'small'} />
           </MobileCollapsible>
         ) : null;
       case 'priorityTasks':
         return (
           <MobileCollapsible title={t('sections.priorityTasks')} defaultOpen>
-            <TodayTasks />
+            <TodayTasks compact={size === 'small'} />
           </MobileCollapsible>
         );
       case 'collaborativeTasks':
         return hasCollaborativeTasks ? (
           <MobileCollapsible title={t('sections.collaborativeTasks')}>
-            <CollaborativeTasks />
+            <CollaborativeTasks compact={size === 'small'} />
           </MobileCollapsible>
         ) : null;
       case 'okrs':
