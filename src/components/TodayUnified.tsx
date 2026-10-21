@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
-  Circle, CheckCircle2, Clock, Pencil, Bookmark, ListPlus, Calendar, Hourglass, UserPlus, Copy, Trash2,
+  Pencil, Bookmark, ListPlus, Calendar, Hourglass, UserPlus, Trash2,
 } from 'lucide-react';
+import TaskRow from '@/components/TaskRow';
 import { useTodayItems, useCompleteTodayItem } from '@/modules/today';
 import type { TodayItem } from '@/modules/today/types';
 import {
-  useTasks, useUpdateTask, useCreateTask, useDeleteTask, useToggleTaskBookmark, useRestoreTask,
+  useTasks, useUpdateTask, useDeleteTask, useToggleTaskBookmark, useRestoreTask,
 } from '@/modules/tasks';
 import type { Task } from '@/modules/tasks';
 import { useUpdateTeamTask } from '@/modules/team-projects';
@@ -19,7 +20,6 @@ import { addDaysToKey, getTimezonePref, todayKeyInTz } from '@/lib/timezone';
 import { showUndoToast } from '@/lib/undo-toast';
 import { toast } from '@/lib/toast';
 import { useT } from '@/i18n/useT';
-import TouchTarget from '@/components/mobile/TouchTarget';
 import TaskModal from '@/components/TaskModal';
 import AddToListModal from '@/components/AddToListModal';
 import { ScheduleEventModal } from '@/components/task-table/lazy-dialogs';
@@ -45,7 +45,12 @@ import { ScheduleEventModal } from '@/components/task-table/lazy-dialogs';
  * Elle n'est rendue que pour les membres d'une organisation : sans deuxième
  * source, elle ferait doublon avec « Tâches prioritaires ».
  */
-const TodayUnified = () => {
+interface TodayUnifiedProps {
+  /** Widget petit format : un seul bouton « Actions » par ligne, le titre prend la place. */
+  compact?: boolean;
+}
+
+const TodayUnified = ({ compact = false }: TodayUnifiedProps) => {
   const { t, tp } = useT('dashboard');
   const { t: tt, tp: ttp } = useT('tasks');
   const navigate = useNavigate();
@@ -60,7 +65,6 @@ const TodayUnified = () => {
   const { activeOrg } = useActiveOrganization();
   const { data: tasks = [] } = useTasks();
   const updateTask = useUpdateTask();
-  const createTask = useCreateTask();
   const deleteTask = useDeleteTask();
   const restoreTask = useRestoreTask();
   const toggleBookmark = useToggleTaskBookmark();
@@ -96,20 +100,6 @@ const TodayUnified = () => {
   const postponeTomorrow = (item: TodayItem) => {
     moveTo(item, addDaysToKey(todayKeyInTz(getTimezonePref()), 1));
     toast.success(tt('toast.postponed'));
-  };
-
-  const duplicate = (id: string) => {
-    const src = taskOf(id);
-    if (!src) return;
-    createTask.mutate({
-      name: `${src.name} (copie)`,
-      priority: src.priority,
-      category: src.category,
-      deadline: src.deadline,
-      estimatedTime: src.estimatedTime,
-      bookmarked: src.bookmarked,
-      completed: false,
-    });
   };
 
   // Même règle que TaskTable : suppression directe et réversible pour une
@@ -155,7 +145,6 @@ const TodayUnified = () => {
       { key: 'schedule', label: t('today.schedule'), icon: Calendar, run: () => task && setScheduleTask(task) },
       { key: 'postpone', label: tt('card.postponeTomorrow'), icon: Hourglass, run: () => postponeTomorrow(item) },
       { key: 'collab', label: tt('rowMenu.collaborator'), icon: UserPlus, run: () => openCollaborators(item.id) },
-      { key: 'duplicate', label: tt('rowMenu.duplicate'), icon: Copy, run: () => duplicate(item.id) },
       { key: 'delete', label: tt('rowMenu.delete'), icon: Trash2, danger: true, run: () => remove(item) },
     ];
   };
@@ -180,16 +169,16 @@ const TodayUnified = () => {
 
       {overdue.length > 0 && (
         <div className="flex items-center gap-3 mb-3 px-3 py-2 rounded-xl bg-[rgb(var(--color-error)/0.08)]">
-          <Clock size={18} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-error))]" />
           <span className="flex-1 min-w-0 text-sm font-medium text-[rgb(var(--color-error))]">
             {tp('today.overdueBanner', overdue.length)}
           </span>
           <button
             type="button"
             onClick={replanAll}
-            className="shrink-0 min-h-touch px-3 rounded-lg text-sm font-medium border border-[rgb(var(--color-error)/0.35)] text-[rgb(var(--color-error))] transition-colors hover:bg-[rgb(var(--color-error)/0.1)]"
+            title={t('today.replanAll')}
+            className="shrink-0 px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-label sm:text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
           >
-            {t('today.replanAll')}
+            {tt('table.rescheduleAllBtn')}
           </button>
         </div>
       )}
@@ -202,56 +191,15 @@ const TodayUnified = () => {
         {planned.map((item) => (
           // Cle `(source, id)` : les deux tables ont leurs propres ids, et les
           // confondre cocherait la mauvaise ligne dans la mauvaise table.
-          <li key={`${item.source}-${item.id}`}>
-            <div className="group flex items-center gap-2 px-2 rounded-xl transition-colors hover:bg-[rgb(var(--color-hover))] focus-within:bg-[rgb(var(--color-hover))]">
-              {/* 🔴 C-57 — cible 44 x 44 portee par `TouchTarget`, l'icone reste
-                  petite : c'est le geste PRINCIPAL du produit sur son ecran
-                  d'accueil. Marges negatives : la rangee ne grandit pas. */}
-              <TouchTarget
-                onClick={() => complete(item)}
-                aria-label={t('today.markDone', { name: item.name })}
-                className="-my-1 -ml-1 text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-success))]"
-              >
-                <Circle size={18} strokeWidth={1.75} aria-hidden="true" className="group-hover:hidden" />
-                <CheckCircle2 size={18} strokeWidth={1.75} aria-hidden="true" className="hidden group-hover:block" />
-              </TouchTarget>
-
-              {/* C-57 — la rangee ouvre l'element : 44 px dans les deux
-                  dimensions (WCAG 2.5.5). */}
-              <button
-                type="button"
-                onClick={() => (item.source === 'personal' ? setEditId(item.id) : navigate(item.href))}
-                className="flex-1 min-w-0 min-h-touch flex items-center text-left"
-              >
-                <span className="truncate text-sm font-medium text-[rgb(var(--color-text-primary))]">
-                  {item.name}
-                </span>
-              </button>
-
-              {/* Les actions du menu de TaskTable, a plat. Visibles au survol ET
-                  au focus : au clavier, Tab les atteint et les revele (2.1.1). */}
-              <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                {actionsFor(item).map(({ key, label, icon: Icon, run, danger, active }) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={run}
-                    aria-label={`${label} : ${item.name}`}
-                    title={label}
-                    className={`inline-flex items-center justify-center w-8 h-8 rounded-md transition-colors hover:bg-[rgb(var(--color-surface))] ${
-                      danger
-                        ? 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-error))]'
-                        : active
-                          ? 'text-[rgb(var(--color-accent))]'
-                          : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))]'
-                    }`}
-                  >
-                    <Icon size={16} aria-hidden="true" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </li>
+          <TaskRow
+            key={`${item.source}-${item.id}`}
+            name={item.name}
+            completeLabel={t('today.markDone', { name: item.name })}
+            onComplete={() => complete(item)}
+            onOpen={() => (item.source === 'personal' ? setEditId(item.id) : navigate(item.href))}
+            actions={actionsFor(item)}
+            compact={compact}
+          />
         ))}
       </ul>
 
