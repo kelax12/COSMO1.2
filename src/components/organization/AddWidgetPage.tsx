@@ -225,6 +225,7 @@ const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, re
   const [focus, setFocus] = useState<{ id: Id; index: number } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const scrollRef = useRef<HTMLDivElement>(null);
   const { ref, dialogProps } = useModalA11y<HTMLDivElement>({
     open: true,
     onClose,
@@ -312,7 +313,15 @@ const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, re
               <button
                 key={key}
                 type="button"
-                onClick={() => sectionRefs.current[key]?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                onClick={() => {
+                  // ⚠️ Jamais `scrollIntoView` : quand la section est la dernière,
+                  // la liste ne peut pas la monter en haut et le navigateur fait
+                  // défiler les ANCESTRES (overflow-hidden compris) — la fenêtre
+                  // partait dans le vide (2026-10-21). On ne fait défiler que la liste.
+                  const list = scrollRef.current;
+                  const section = sectionRefs.current[key];
+                  if (list && section) list.scrollTo({ top: section.offsetTop - 16, behavior: 'smooth' });
+                }}
                 className="shrink-0 min-h-touch inline-flex items-center gap-2 px-4 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm font-semibold text-[rgb(var(--color-text-primary))] hover:border-[rgb(var(--color-accent))]"
               >
                 {title}
@@ -322,7 +331,7 @@ const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, re
           </nav>
         </header>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5 space-y-8">
+        <div ref={scrollRef} className="relative flex-1 overflow-y-auto overscroll-contain px-5 py-5 space-y-8">
           {nothing && (
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('apercu.widgets.picker.searchEmpty', { query })}</p>
           )}
