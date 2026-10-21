@@ -1,3 +1,4 @@
+import OkrPickerMenu from '@/components/OkrPickerMenu';
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { AlarmClock, Gauge, Target } from 'lucide-react';
@@ -154,6 +155,10 @@ const krPercent = (kr: { completed: boolean; currentValue: number; targetValue: 
  * « Tous les OKR » ou UN objectif (ses résultats clés un par un). Le choix
  * devient la vue par défaut : il est retenu dans ce navigateur.
  */
+/** Couleur d'un OKR dans le menu : même règle que le pourcentage affiché. */
+const OKR_TONE_COLOR = { warning: '#f59e0b', success: '#10b981', accent: '#3b82f6' } as const;
+const okrTone = (r: OkrRow): keyof typeof OKR_TONE_COLOR => (r.behind ? 'warning' : r.progress >= 70 ? 'success' : 'accent');
+
 export const OkrsWidget = ({ size, rows, onOpen }: {
   size: WidgetSize; rows: OkrRow[]; onOpen: (okrId: string) => void;
 }) => {
@@ -173,18 +178,18 @@ export const OkrsWidget = ({ size, rows, onOpen }: {
       icon={Target}
       title={t('apercu.widgets.names.companyOkrs')}
       titleControl={rows.length > 0 ? (
-        <label className="block max-w-full">
-          <span className="sr-only">{t('apercu.widgets.t.pickLabel')}</span>
-          <select
-            value={picked ? picked.okr.id : ALL}
-            onChange={(e) => setPick(e.target.value)}
-            title={t('apercu.widgets.t.scopeHint')}
-            className="max-w-full h-7 pl-2.5 pr-7 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
-          >
-            <option value={ALL}>{t('apercu.widgets.t.allOkrs')}</option>
-            {rows.map(({ okr }) => <option key={okr.id} value={okr.id}>{okr.title}</option>)}
-          </select>
-        </label>
+        <OkrPickerMenu
+          options={[
+            // « Tous les OKR » : la moyenne, en couleur d'accent.
+            { id: ALL, title: t('apercu.widgets.t.allOkrs'), progress: average, color: OKR_TONE_COLOR.accent },
+            ...rows.map((r) => ({ id: r.okr.id, title: r.okr.title, progress: r.progress, color: OKR_TONE_COLOR[okrTone(r)] })),
+          ]}
+          value={picked ? picked.okr.id : ALL}
+          onChange={setPick}
+          label={picked ? picked.okr.title : t('apercu.widgets.t.allOkrs')}
+          ariaLabel={t('apercu.widgets.t.pickLabel')}
+          triggerClassName="text-xs font-semibold"
+        />
       ) : undefined}
       count={!picked && behind > 0 ? behind : undefined}
       countTone="warning"
