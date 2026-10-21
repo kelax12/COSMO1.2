@@ -24,11 +24,15 @@
 // préchargement de ce point d'entrée), le budget ne perd donc rien de vue.
 import { afterFirstPaint } from './lib/after-first-paint';
 import { applyRouterBootstrap } from './i18n/apply-bootstrap';
+import { dropPrerenderHeroIfLocaleDiffers } from './lib/prerender-hero';
 
 // `<html lang>` et l'URL canonique (`/fr/x` → `/x`, `/` → `/en/` selon la
 // préférence) AVANT la première peinture, comme quand `main.tsx` était
 // l'entrée : charger l'app après la peinture les avait retardés après `load`.
-applyRouterBootstrap();
+const { locale } = applyRouterBootstrap();
+// La copie du hero peinte par le prérendu de la home est écrite dans UNE
+// langue : si l'amorçage en a choisi une autre, elle ne doit pas s'afficher.
+dropPrerenderHeroIfLocaleDiffers(locale);
 
 const charger = () => {
   void import('./main');

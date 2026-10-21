@@ -360,6 +360,7 @@ const OKRPage: React.FC = () => {
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowAddObjective(true)}
           data-tutorial-id="okr-create-button"
+          data-guide-id="perso-okr-new"
           className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm text-[rgb(var(--color-accent-solid-foreground))] shadow-sm bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-all"
           aria-label={t('page.createObjective')}
         >

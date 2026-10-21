@@ -1,10 +1,12 @@
 // src/components/org-guide/GuideControlBar.tsx
 import type { SyntheticEvent } from 'react';
 import { Pause, Play, SkipForward, X } from 'lucide-react';
-import { useT } from '@/i18n/useT';
 import { Button } from '@/components/ui/button';
+import type { GuideT } from './use-guide-demo';
 
 interface Props {
+  /** Traducteur du guide hôte : `control.*` existe dans `orgGuide` ET `persoGuide`. */
+  t: GuideT;
   actionLabel: string;
   current: number;
   total: number;
@@ -22,8 +24,7 @@ interface Props {
  */
 const stop = (e: SyntheticEvent) => e.stopPropagation();
 
-export function GuideControlBar({ actionLabel, current, total, paused, onPause, onResume, onSkip, onQuit }: Props) {
-  const { t } = useT('orgGuide');
+export function GuideControlBar({ t, actionLabel, current, total, paused, onPause, onResume, onSkip, onQuit }: Props) {
   return (
     <div
       role="toolbar"

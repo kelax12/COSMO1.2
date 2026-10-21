@@ -171,6 +171,7 @@ const PLAFONDS_PAR_CHUNK = {
   index: 89_500, // 84 893 o sur 8 barils de modules, chunk d'entrée EXCLU
   'vendor-react': 76_000, // 72 074 o — socle non découpable
   'vendor-supabase': 59_500, // 56 254 o — requis dès la première requête
+  'vendor-pdf': 133_000, // 126 418 o — jsPDF, chargé au seul clic sur « Exporter en PDF » du rapport d'activité (2026-10-19)
   'vendor-gsap': 57_500, // 54 737 o — gsap + plugins, lazy, landing uniquement
   'sentry-client': 52_000, // 49 320 o — chargé APRÈS le premier rendu (C-13 · C-14)
   'vendor-animation': 52_000, // 49 245 o — framer-motion
@@ -209,7 +210,7 @@ const PLAFONDS_PAR_CHUNK = {
  * Chunks vendor autorisés à dépasser `BUDGETS.page`, avec la raison.
  *
  * ⚠️ « Exempt » NE VEUT PLUS DIRE « sans borne » depuis C-85. Chacun de ces
- * cinq a désormais son plafond dans `PLAFONDS_PAR_CHUNK`, et une exemption
+ * six a désormais son plafond dans `PLAFONDS_PAR_CHUNK`, et une exemption
  * sans plafond est refusée par le contrôle de cohérence plus bas : c'était la
  * porte par laquelle 117 ko pouvaient en devenir 400.
  *
@@ -223,6 +224,7 @@ const EXEMPT = {
   'vendor-gsap': 'gsap + plugins, lazy, landing uniquement',
   'vendor-react': 'react + react-dom, socle non découpable',
   'vendor-supabase': 'client Supabase, requis dès la première requête',
+  'vendor-pdf': 'jsPDF, import() au clic sur « Exporter en PDF » du rapport d activité, jamais au chargement',
 };
 
 const KB = (n) => `${(n / 1000).toFixed(1)} ko`;

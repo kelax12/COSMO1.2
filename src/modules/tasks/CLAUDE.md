@@ -36,6 +36,10 @@ démo et les mises à jour optimistes. `review` n'existe pas en perso, exprès.
 - ❌ **La fiche (`save-task.ts`) n'envoie pas `completed`.** Elle ne l'édite pas, et le Statut de
   la fiche peut cocher la tâche pendant qu'elle est ouverte : renvoyer la valeur de l'ouverture
   la décocherait.
+- ❌ **Une colonne ajoutée à `tasks` et lue par l'interface entre dans `TASK_LIST_COLUMNS`**
+  (`supabase.repository.ts`), sinon la relecture qui suit une mise à jour optimiste l'efface :
+  l'État choisi disparaissait après 2 s (`8b253a1b`, 2026-10-18). Reporter la même liste dans
+  `scripts/cosmo/api.mjs` : `scripts/cosmo/api.test.mjs` refuse toute dérive.
 
 > Les ÉCHÉANCES (`tasks.deadline`, un jour et non un instant) sont documentées dans
 > [`src/lib/CLAUDE.md`](../../lib/CLAUDE.md) : le module qui fait foi est `src/lib/deadline.ts`.
