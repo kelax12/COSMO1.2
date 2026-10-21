@@ -1,4 +1,4 @@
-<!-- note-audit: note=96 -->
+<!-- note-audit: note=95 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,24 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **96 / 100** au 2026-10-18, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **95 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → 96 → **96 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → 96 → 96 → **95 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → **2026-10-20**)
+
+> ### 🟠 2026-10-20 · −1 : le cliquet de `OrganizationPage` dépassé depuis 26 h
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | 🔴 `OrganizationPage` au-dessus de son cliquet | **−1** | **18,2 ko** à `08bce3d4` (Aperçu en widgets), **19,1 ko** à `86ea357f`, pour un plafond de 18,0 ko posé au poids du 2026-09-20 (16,7 ko). Le chunk a continué de grossir sur 22 commits après le premier rouge. Levier : `AddWidgetPage`, `TemplatePicker` et le carrousel des formats ne servent qu'en mode édition, les charger en `lazy` |
+> | ✅ `vendor-pdf` (jsPDF) | 0 | **126,3 ko**, chargé par `import()` au clic sur « Exporter en PDF », jamais au chargement ; exempté **et** borné (133,0 ko), comme l'exige C-85 |
+> | Lighthouse | 0 | job vert à `86ea357f` ; TBT mobile de la page entreprise (399 ms le 10-18) toujours ouvert |
+> | Marges serrées | 0 | `vendor-utils` 0,5 %, `StatisticsPage` 0,2 %, `AgendaPage` 1,7 % : le prochain ajout dans l'un d'eux rougira la garde |
+>
+> **96 → 95.**
 
 > ### ⚪ 2026-10-18 · 0 : rien n'a bougé, la page entreprise reste le chantier
 >
@@ -260,6 +273,49 @@ bloc prérendu ne sert qu'aux robots qui n'appliquent pas la CSS.
 3. **Alléger le chemin critique des pages publiques** : ni Supabase ni Framer Motion ne sont
    nécessaires pour peindre un guide. Gain réseau d'environ 0,7 s, mais c'est l'architecture des
    providers (`AuthProvider` à la racine) qui est en jeu.
+
+#### 🔴 2026-10-21 · la home peint une copie de la landing, plus le texte SEO
+
+Le levier 1 avait un coût que personne n'avait mis en face du gain : sur `/`, le « prérendu
+peint » était le **texte SEO brut**, sans mise en page. Filmé en local (412 et 1 440 px, CPU ×4,
+4G lente) : **mur de texte** de 0 à 1,7 s, puis **squelette gris** (`LandingSkeleton`) jusqu'à
+3,2 s, puis la landing. Signalé par Axel comme un bug « corrigé huit fois » : chaque correctif
+traitait un cas (CSP, personne connectée le 10-16) sans toucher la décision de C-116, qui le
+recréait pour tout visiteur sans session. Trois issues proposées (spinner partout, LCP mobile
+rendu ; copie habillée ; statu quo), **Axel a choisi la copie**.
+
+- `/` et `/en/` peignent `#lp-hero` : le header et le hero **capturés sur le rendu React**
+  (`npm run capture:landing-hero`), avec leur CSS sortie de la feuille buildée et confinée
+  (`scripts/landing-hero-css.mjs`). Calque fixe **hors de `#root`** : `createRoot` ne l'efface pas,
+  l'attente de l'auth et le squelette passent dessous. `PersoTrack` le retire dans un
+  `useLayoutEffect`, sans rejouer les entrées du titre, du header ni le voile de `#track`.
+  Mécanique et sorties : `src/lib/prerender-hero.ts`.
+- **Le LCP aurait régressé sans `font-display: block` sur la copie.** En `swap`, elle se peignait
+  en police système, plus étroite : un bloc de 55 024 px² contre 57 195 pour le même bloc React
+  en Inter, qui **reprenait le LCP** à la relève (412 px, 3 passes : 4,6 à 5,9 s). En `block`
+  (Inter est préchargée) : LCP **1,17 à 1,42 s**, sur la copie, à FCP inchangé (1,0 à 1,2 s).
+- ⚠️ La copie est un **instantané**. `src/prerender-hero.guard.test.ts` compare l'empreinte des
+  sources du header et du hero à celle de la capture : il échoue dès que l'une bouge sans nouvelle
+  capture (vu rouge sur la modification de `LandingPage.tsx` du jour).
+- **Même jour, les autres pages prérendues.** Filmé à 412 px : le guide, le blog, les articles,
+  les `/pour-*`, l'à-propos, les pages légales et la connexion peignaient le texte SEO **sur fond
+  blanc**, puis le `PageLoader` (un autre spinner, sombre, centré dans 60vh), puis la page sombre.
+  L'entreprise, texte blanc puis squelette blanc puis landing noire.
+  - `/entreprise-presentation/` (et `/en/for-companies/`) : même copie que la home, en **deux
+    vues** (bureau 1 440 px, mobile 412 px, media query au seuil de `useIsMobile`) parce que la
+    pile du hero s'y rend autrement. La pile garde son image dans la copie : masquée, React la
+    peignait plus grande et **reprenait le LCP à 6,4 s** ; visible, LCP **0,9 à 1,6 s** sur la copie.
+    `useIsMobile` calcule désormais son état au premier rendu (il rendait la version bureau une
+    image avant de basculer, sur toutes les pages qui l'utilisent).
+  - **Pages de contenu : spinner, arbitré par Axel** (le texte habillé gardait un saut, le vrai
+    prérendu React est un chantier à part). `prerender.mjs` ne leur pose plus `data-prerendered` :
+    spinner de démarrage, puis `BootScreen` (même classe, même CSS, plein écran) jusqu'à la page.
+    Le spinner prend les couleurs **exactes** du thème : `html[data-boot-theme]`, posé par le
+    script inline (thème enregistré) puis par `applyTheme()`.
+  - ⚠️ **Le LCP mobile de ces pages est rendu en connaissance de cause** : il n'est plus un
+    texte peint avant React. Mesuré en local (412 px, CPU ×4, 4G lente) : 2,4 à 3,4 s, **4,8 s sur
+    `/guide/`**, contre 0,6 à 1,2 s pour le texte brut. Moins que redouté, parce que l'app se charge
+    désormais sans attendre une peinture. À relire au prochain Lighthouse CI mobile.
 
 ✅ **Corrigé le même jour, côté mesure** : le résumé CI mobile lisait `.lighthouseci-mobile`, un
 dossier jamais écrit (aucun `lhci upload` mobile), et `upload-artifact` ignorait `.lighthouseci/`

@@ -62,6 +62,77 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-20 · **`main` rouge depuis 26 h, 963 → 959**
+
+Consigne d'Axel : « remet à jour tous les audits du dossier doc et indique les améliorations ayant
+le plus gros ROI ». **32 commits** relus depuis la passe du 2026-10-18 (`bf94958f` → `86ea357f`),
+dont la fermeture de `TR-1` (déjà portée à [`../faille.md`](../faille.md) le 10-19 : **962 → 963**)
+et la refonte de l'Aperçu entreprise en widgets (≈ 7 000 lignes, 33 fichiers neufs). Même méthode :
+CI réelle de `main`, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes
+HTTP), dépôt à `HEAD`. Même règle : un défaut ne se rembourse que corrigé **et vu vert en CI**.
+
+### Ce que la CI et la production disent
+
+| Source | Verdict | Mesuré le 2026-10-20 |
+|---|---|---|
+| `CI` à `86ea357f` (run `39408311331`) | 🔴 deux jobs sur cinq | `lint-test-build` : **une seule** étape rouge, le budget de bundle ; 352 fichiers, **3 969** tests verts, outillage 29 / 503. `e2e` : **254 verts, 1 échec, 2 instables**, 4 sautés (22,7 min). `rls-integration`, `lighthouse`, `audit` verts |
+| Historique `CI` de `main` | 🔴 **29 runs rouges de suite** | dernier vert : `bf94958f`, le 2026-10-18 à 19:04 UTC. `e2e` rouge depuis `a9db6f2c` (10-19, 12:06), `lint-test-build` depuis `08bce3d4` (10-19, 12:59). **23 commits de code poussés sur du rouge**, l'alerte Discord partie à chaque fois. `f0c2a433` (« remettre la CI au vert ») a réparé les parcours entreprise, pas le budget |
+| `Visual` | 🔴 depuis `a9db6f2c` | `/dashboard` dans les quatre thèmes, `/entreprise` Aperçu, l'état ERREUR de la frontière d'erreur |
+| `Posture` | 🔴 chaque matin | advisors **`13 / 84 / 2 / 1`**, identiques au 10-19 : la référence attend toujours son `--update` (geste d'Axel) |
+| Autres planifiés | ✅ | `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest`, `org-digest`, `org-webhook-dispatch` ; aucun workflow désactivé ; dépôt `public` ; **16** PR ouvertes |
+| Base | | **79** tables toutes sous RLS, **205** policies, ledger **173** (`20261019122246`, mig. `223`), 12 Edge Functions inchangées, **28 Mo**, **0** paiement |
+| Mesure d'audience | ⚠️ | `traffic_hits` = **3** lignes, les trois de test du 10-19 (`/verification-tr1…`). **Aucune visite réelle** enregistrée en 40 h ; `demo_devices` : 0 nouvel appareil sur 7 jours ; 6 comptes actifs sur 7 jours, 38 profils |
+| Site | ✅ | `/`, `/entreprise-presentation/` en 200 ; `/api/collect` en 405 sur GET |
+
+### 🔴 Trouvé en chemin : deux verdicts dépendent du jour de la semaine
+
+`e2e` et `Visual` sont passés au rouge sur `a9db6f2c`, un commit qui ne change **que deux
+commentaires** (`api/collect.ts`, `src/lib/traffic.ts`). Le dernier vert date du dimanche 10-18,
+le premier rouge du lundi 10-19. Ni `e2e/visual-regression.spec.ts` ni
+`e2e/mobile-android.spec.ts` ne fige l'horloge (aucun `page.clock`), et la démo date ses données
+par rapport à aujourd'hui : **le contenu de `/dashboard` change avec la date, donc le verdict
+aussi.** Le débordement de 13 px à 200 % de police (C-97) est peut-être un vrai défaut, mais il
+n'apparaît que certains jours ; la capture `Visual` de `/dashboard` ne peut pas rester stable.
+
+### Les notes
+
+| Audit | 10-18 | 10-19 | **10-20** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|---|
+| [Sécurité](../faille.md) | 86 | 87 | **87** | 0 | `TR-1` refermé le 10-19 (+1, compté ce jour-là) ; `Posture` rouge par référence non recalée, non débité |
+| [Tests / CI](./TESTING.md) | 96 | 96 | **95** | **−1** | `main` rouge 29 runs, 23 commits poussés dessus (−1) ; deux verdicts dépendants de la date, sans horloge figée (−1) ; `api/` dans `tsc` et `vitest`, vert en CI sur la PR n° 79, chaîne vue écrire par le collecteur (+1) |
+| [Performance](./PERFORMANCE.md) | 96 | 96 | **95** | **−1** | `OrganizationPage` **19,1 ko** pour un cliquet à 18,0 ko (+6 %), rouge depuis 26 h ; `vendor-pdf` (jsPDF, 126 ko) chargé au clic et borné (0) |
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | 82 | **81** | **−1** | `/dashboard` déborde de **13 px** à 200 % de police sur `mobile-chrome` (C-97, WCAG 1.4.4 et 1.4.10) ; le mode édition de l'Aperçu force `reducedMotion="never"` (0, arbitrage écrit, à revoir) |
+| [UI / UX](./UI-PATTERNS.md) | 86 | 86 | **85** | **−1** | la refonte d'écran la plus large depuis septembre (Aperçu en widgets) est passée **sans référence visuelle** : `Visual` rouge, six captures dont la frontière d'erreur, non identifiée |
+| [Architecture](./ARCHITECTURE.md) | 93 | 93 | **93** | 0 | 33 fichiers neufs, le plus gros 530 lignes (`ApercuWidgetGrid`) ; `OrgGuideHost` −180 lignes ; aucune garde d'architecture rouge |
+| [Scalabilité](./SCALABILITY.md) | 91 | 91 | **91** | 0 | `TR-1` fermé : seul le collecteur écrit, le plafond par visiteur tient de nouveau |
+| [RGPD](./RGPD.md) | 87 | 87 | **87** | 0 | export PDF généré dans le navigateur, aucun traitement nouveau ; politique toujours sans section « Prospection » (déjà débitée) |
+| [i18n](./I18N.md) | 88 | 88 | **88** | 0 | +249 clés `orgAdmin` et +103 `persoGuide`, en `fr` **et** `en`, gardes i18n vertes |
+| [SEO](./SEO.md) | 79 | 79 | **79** | 0 | aucune page publique touchée |
+| [Mobile / DA](./MOBILE.md) | 78 | 78 | **78** | 0 | `mobile-safari` : 2 instables (modal OKR, swipe), comme au 10-18 |
+
+**963 → 959 : −5 débités, +1 remboursé.** Aucun débit ne vient d'un défaut de conception : tous
+viennent de rouges **visibles et annoncés** que personne n'a arrêtés avant de pousser la suite.
+
+### 📈 Les améliorations au plus gros ROI
+
+> Classées par **gain ÷ effort**, mesurés ce jour. « Axel » = un geste que le code ne peut pas
+> faire. ⚠️ Rien ici n'est un avis juridique.
+
+| # | Amélioration | Effort | Qui | Ce que ça rapporte |
+|---|---|---|---|---|
+| 1 | **Remettre `main` au vert** : sortir de `OrganizationPage` ce qui ne s'affiche qu'en mode édition (`AddWidgetPage`, `TemplatePicker`, en `lazy`) pour repasser sous 18,0 ko ; figer l'horloge (`page.clock.install`) dans `Visual` et C-97, puis régénérer les références de l'Aperçu | ~2 h | code | **+4 points** récupérables (Tests, Performance, UI, peut-être a11y). Surtout : tant que `main` est rouge, **aucune garde ne voit la régression suivante**, et l'acquisition démarre |
+| 2 | **Ne plus pousser sur du rouge** : `pre-push` qui lit le dernier run de `main` et refuse s'il est rouge (contournable volontairement) | ~30 min | code | évite la répétition exacte de cette passe : 23 commits, 26 h, une alerte par run rouge |
+| 3 | **Recaler `Posture`** (`--update`, attendu `13 / 84 / 2 / 1`) | 1 commande | Axel | une alerte qui sonne chaque matin pour rien apprend à ne plus lire les alertes, juste avant d'en avoir besoin |
+| 4 | **Voir une vraie visite s'écrire** : fenêtre privée, accepter, deux pages, puis `/admin` (trafic). Et **l'attribution de bout en bout** : une inscription Google et une email, chacune avec `?ref=` | 10 min | Axel | `traffic_hits` ne contient que des tests ; sans mesure, chaque euro ou heure d'acquisition est dépensé à l'aveugle |
+| 5 | **Les trois bloquants légaux de la prospection** : immatriculation (`M-73`) puis SIREN aux mentions (`M-05`), téléphone (`M-72`), section « Prospection » dans la politique de confidentialité (relue ce jour : absente) | ½ journée hors démarches | Axel + code | condition pour envoyer le premier email de prospection sans risque CNIL ni L8221-4 |
+| 6 | **`M-71`** : ranger la phrase secrète, supprimer `BACKUP_PASSPHRASE.txt` (**toujours présent** le 2026-10-20) | 5 min | Axel | un fichier en clair ouvre toutes les sauvegardes chiffrées |
+| 7 | **Page entreprise sur mobile** : TBT 399 ms, perf 86, la page d'arrivée des prospects | ~1 jour | code | seul défaut de performance ouvert, sur la page qui convertit |
+| 8 | **DPA** (`M-64`, Sentry en 2 min, puis Resend, Vercel, Anthropic, IONOS) et **plan Vercel** (`M-74`) | ~1 h | Axel | demandés par tout acheteur B2B ; Hobby interdit l'usage commercial |
+
+Le reste de la liste du 10-18 (préavis CGU, délivrabilité `M-27`, purge T11) ne change pas d'ordre.
+
+---
+
 ## Mise à jour du 2026-10-18 · **dernière passe avant l'acquisition : 964 → 962**
 
 Consigne d'Axel : « une dernière vérification de tous les audits, une dernière remise à jour des

@@ -64,12 +64,15 @@
          ce que React redirige vers le dashboard. Avec une session Supabase ou
          une démo persistée, on retire `data-prerendered` AVANT la première
          peinture : spinner, et `boot.ts` charge l'app sans attendre.
+         2026-10-21 : il pose aussi `data-boot-theme` depuis le thème enregistré
+         (mêmes alias que resolveInitialTheme), pour que le spinner en ait les
+         couleurs dès la première image.
          Seul <script> inline exécutable du dépôt, autorisé par son empreinte
          sha256 dans `script-src` (vercel.json). ❌ Le modifier d'un octet
          sans recalculer l'empreinte le fait bloquer en prod, en silence :
          `src/boot-screen.test.ts` compare les deux. Une seule ligne exprès :
          des fins de ligne CRLF changeraient l'empreinte. -->
-    <script>(function(){try{var s=localStorage,a=s.getItem('cosmo_demo_active')==='1';for(var i=0;!a&&i<s.length;i++)a=/^sb-.+-auth-token$/.test(s.key(i)||'');if(a)document.documentElement.removeAttribute('data-prerendered')}catch(e){}})()</script>
+    <script>(function(){try{var s=localStorage,a=s.getItem('cosmo_demo_active')==='1';for(var i=0;!a&&i<s.length;i++)a=/^sb-.+-auth-token$/.test(s.key(i)||'');var h=document.documentElement,t=s.getItem('theme');if(a)h.removeAttribute('data-prerendered');if(t==='black'||t==='midnight'||t==='monochrome')t='gris';if(/^(light|dark|gris|noir)$/.test(t||''))h.setAttribute('data-boot-theme',t)}catch(e){}})()</script>
 
     <!-- ───────────────────────────────────────────────────────────────────
          Écran de démarrage + contenu SEO. 100 % CSS, AUCUN JS.
@@ -96,15 +99,25 @@
            de chargement tournerait indéfiniment).
          ─────────────────────────────────────────────────────────────────── -->
     <style>
-      #boot-screen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#ffffff}
-      #boot-screen .ring{width:32px;height:32px;border:3px solid rgba(15,23,42,.14);border-top-color:#6366f1;border-radius:50%;animation:boot-spin .7s linear infinite}
+      /* 2026-10-21 · Le spinner prend les couleurs EXACTES du thème (fond
+         --color-background, accent --color-accent-solid de src/index.css) :
+         #boot-screen avant React, puis .boot-screen (`BootScreen`, fallback des
+         pages publiques) pendant le chargement de la page. Les deux doivent
+         être indiscernables, sinon on voit un spinner en remplacer un autre.
+         Sans thème enregistré : celui de defaultTheme() (src/lib/theme.ts),
+         donc Clair ou Sombre selon le système, et Gris sous 768 px, d'où la
+         règle mobile APRÈS celle du système. Un thème enregistré arrive par
+         html[data-boot-theme], posé par le script inline puis par applyTheme(). */
+      #boot-screen,.boot-screen{--bs-bg:#f8fafc;--bs-ring:rgba(15,23,42,.14);--bs-accent:#2563eb;position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bs-bg)}
+      #boot-screen .ring,.boot-screen .ring{width:32px;height:32px;border:3px solid var(--bs-ring);border-top-color:var(--bs-accent);border-radius:50%;animation:boot-spin .7s linear infinite}
       @keyframes boot-spin{to{transform:rotate(360deg)}}
-      @media (prefers-color-scheme:dark){#boot-screen{background:#0f172a}#boot-screen .ring{border-color:rgba(255,255,255,.16);border-top-color:#818cf8}}
-      /* Mobile démarre toujours en thème Noir (palette GitHub), cf. src/lib/theme.ts →
-         defaultTheme(), indépendant de la préférence système, d'où la règle après
-         (et non combinée avec prefers-color-scheme:dark) pour gagner y compris en clair. */
-      @media (max-width:767px){#boot-screen{background:#24292e}#boot-screen .ring{border-color:rgba(255,255,255,.16);border-top-color:#58a6ff}}
-      @media (prefers-reduced-motion:reduce){#boot-screen .ring{animation-duration:2.4s}}
+      @media (prefers-color-scheme:dark){#boot-screen,.boot-screen{--bs-bg:#0f172a;--bs-ring:rgba(255,255,255,.16);--bs-accent:#3472d8}}
+      @media (max-width:767px){#boot-screen,.boot-screen{--bs-bg:#24292e;--bs-ring:rgba(255,255,255,.16);--bs-accent:#2f75d5}}
+      html[data-boot-theme=light] :is(#boot-screen,.boot-screen){--bs-bg:#f8fafc;--bs-ring:rgba(15,23,42,.14);--bs-accent:#2563eb}
+      html[data-boot-theme=dark] :is(#boot-screen,.boot-screen){--bs-bg:#0f172a;--bs-ring:rgba(255,255,255,.16);--bs-accent:#3472d8}
+      html[data-boot-theme=gris] :is(#boot-screen,.boot-screen){--bs-bg:#24292e;--bs-ring:rgba(255,255,255,.16);--bs-accent:#2f75d5}
+      html[data-boot-theme=noir] :is(#boot-screen,.boot-screen){--bs-bg:#080808;--bs-ring:rgba(255,255,255,.16);--bs-accent:#f0f0f0}
+      @media (prefers-reduced-motion:reduce){#boot-screen .ring,.boot-screen .ring{animation-duration:2.4s}}
       #seo-fallback{display:none;font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b}
       /* C-116 · 2026-09-29 : une page PRÉRENDUE (prerender.mjs pose
          data-prerendered sur <html>) peint son contenu au lieu du spinner,
@@ -139,9 +152,21 @@
          en display:none n'est jamais demandée. Les robots lisent toujours
          src et alt ; le <noscript> plus bas les réaffiche sans JS. */
       html[data-prerendered] #seo-fallback img{display:none}
+      /* 2026-10-21 · Sur la HOME et l'ENTREPRISE, ce premier rendu n'est plus le
+         texte SEO : c'est #lp-hero, une copie du header et du hero du
+         parcours (prerender.mjs, `scripts/capture-landing-hero.mjs`), avec sa
+         propre CSS confinée. Un visiteur voyait un mur de texte, puis un
+         squelette gris, puis la landing. Elle vit HORS de #root, en calque :
+         createRoot ne l'efface pas, et la landing la retire dans l'image où
+         elle peint son hero. Pourquoi et sorties : src/lib/prerender-hero.ts.
+         Le texte SEO reste dans le balisage, pour les robots. */
+      #lp-hero{display:none}
+      html[data-prerendered] #lp-hero{display:block;position:fixed;inset:0;z-index:10000;overflow:hidden;background:#fff}
+      html[data-prerendered] #lp-hero[data-track=entreprise]{background:#08090C}
+      html[data-prerendered] #lp-hero ~ #root #seo-fallback{display:none}
     </style>
     <noscript>
-      <style>#boot-screen{display:none}#seo-fallback{display:block}html[data-prerendered] #seo-fallback img{display:inline}</style>
+      <style>#boot-screen{display:none}#seo-fallback{display:block!important}html[data-prerendered] #seo-fallback img{display:inline}#lp-hero{display:none!important}</style>
     </noscript>
 
     <!-- ❌ Aucun script publicitaire, nulle part. Le mur-pub et le système de

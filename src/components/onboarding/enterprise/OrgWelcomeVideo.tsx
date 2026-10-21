@@ -4,14 +4,23 @@ import { ArrowRight, Volume2, X } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { EMPHASIS_CLASS, withEmphasis } from '../onboarding-text';
-import { ENT_SCOPE } from './ent-onboarding';
-import { ENT_LINK, ENT_PRIMARY } from './ent-ui';
 
 export const ORG_WELCOME_VIDEO = {
-  src: '/videos/onboarding-entreprise.mp4',
-  poster: '/videos/onboarding-entreprise-poster.webp',
-  captionsFr: '/videos/onboarding-entreprise.fr.vtt',
+  src: '/videos/onboarding-entreprise-v2.mp4',
+  poster: '/videos/onboarding-entreprise-v2-poster.webp',
+  captionsFr: '/videos/onboarding-entreprise-v2.fr.vtt',
 } as const;
+
+// Habillage sur les jetons du thème choisi (Clair, Sombre, Gris, Noir), pas sur
+// la DA nuit figée qu'avait l'ancien accueil entreprise : le lecteur s'ouvre
+// PAR-DESSUS l'app, il en prend les couleurs (demande d'Axel, 2026-10-20).
+// Bouton plein : `accent-solid` + son `-foreground`, le duo de chaque thème
+// (texte quasi-noir sur quasi-blanc en Noir, blanc sur bleu ailleurs).
+const FOCUS = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]';
+const PRIMARY =
+  `inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-[rgb(var(--color-accent-solid))] px-6 text-body font-semibold text-[rgb(var(--color-accent-solid-foreground))] transition-colors hover:bg-[rgb(var(--color-accent-solid-hover))] ${FOCUS}`;
+const LINK =
+  `rounded-full px-2 py-2 text-sm font-medium text-[rgb(var(--color-text-secondary))] underline-offset-4 transition-colors hover:text-[rgb(var(--color-text-primary))] hover:underline ${FOCUS}`;
 
 interface OrgWelcomeVideoProps {
   orgName: string;
@@ -84,7 +93,7 @@ const OrgWelcomeVideo = ({ orgName, onClose }: OrgWelcomeVideoProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[150] overflow-y-auto bg-[#08090C]/85 backdrop-blur-sm" style={ENT_SCOPE} onClick={onClose}>
+    <div className="fixed inset-0 z-[150] overflow-y-auto bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div className="flex min-h-full items-center justify-center p-3 sm:p-6">
         <motion.div
           ref={ref}
@@ -94,26 +103,26 @@ const OrgWelcomeVideo = ({ orgName, onClose }: OrgWelcomeVideoProps) => {
             ? { initial: { opacity: 0 }, animate: { opacity: 1 } }
             : { initial: { opacity: 0, y: 24, scale: 0.98 }, animate: { opacity: 1, y: 0, scale: 1 } })}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="relative w-full max-w-[1040px] rounded-[24px] border border-[#1F2530] bg-[#0A0C10] p-3 text-[#EDF2F7] shadow-[0_40px_120px_-40px_rgba(34,211,238,0.35)] sm:rounded-[28px] sm:p-5"
+          className="relative w-full max-w-[1040px] rounded-[24px] border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3 text-[rgb(var(--color-text-primary))] shadow-[0_40px_120px_-40px_rgb(var(--color-accent)/0.45)] sm:rounded-[28px] sm:p-5"
         >
           <div className="flex items-start justify-between gap-4 px-2 pb-3 pt-1 sm:px-2 sm:pb-4">
             <div className="min-w-0">
               <h2 className="text-xl font-semibold leading-tight tracking-[-0.03em] sm:text-2xl">
                 {withEmphasis(t('ent.video.title', { org: orgName }), EMPHASIS_CLASS)}
               </h2>
-              <p className="mt-1 text-sm text-[#8B96A8]">{t('ent.video.subtitle')}</p>
+              <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">{t('ent.video.subtitle')}</p>
             </div>
             <button
               type="button"
               onClick={onClose}
               aria-label={t('ent.video.close')}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#8B96A8] transition-colors hover:bg-white/[0.06] hover:text-[#EDF2F7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#22D3EE]"
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[rgb(var(--color-text-secondary))] transition-colors hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-primary))] ${FOCUS}`}
             >
               <X size={18} aria-hidden="true" />
             </button>
           </div>
 
-          <div className="relative overflow-hidden rounded-[16px] border border-[#14181F] bg-black">
+          <div className="relative overflow-hidden rounded-[16px] border border-[rgb(var(--color-border))] bg-black">
             <video
               ref={videoRef}
               className="block aspect-video w-full bg-black"
@@ -140,7 +149,7 @@ const OrgWelcomeVideo = ({ orgName, onClose }: OrgWelcomeVideoProps) => {
               <button
                 type="button"
                 onClick={unmute}
-                className="absolute left-1/2 top-4 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#08090C]/85 px-4 py-2 text-sm font-semibold text-[#EDF2F7] ring-1 ring-white/15 backdrop-blur transition-colors hover:bg-[#08090C] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#22D3EE]"
+                className={`absolute left-1/2 top-4 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#08090C]/85 px-4 py-2 text-sm font-semibold text-[#EDF2F7] ring-1 ring-white/15 backdrop-blur transition-colors hover:bg-[#08090C] ${FOCUS}`}
               >
                 <Volume2 size={16} aria-hidden="true" />
                 {t('ent.video.unmute')}
@@ -149,10 +158,10 @@ const OrgWelcomeVideo = ({ orgName, onClose }: OrgWelcomeVideoProps) => {
           </div>
 
           <div className="flex flex-col-reverse items-stretch gap-2 px-1 pb-1 pt-4 sm:flex-row sm:items-center sm:justify-between sm:px-2">
-            <button type="button" onClick={onClose} className={ENT_LINK}>
+            <button type="button" onClick={onClose} className={LINK}>
               {ended ? t('ent.video.close') : t('ent.video.skip')}
             </button>
-            <button ref={ctaRef} type="button" onClick={onClose} className={`${ENT_PRIMARY} w-full sm:w-auto`}>
+            <button ref={ctaRef} type="button" onClick={onClose} className={`${PRIMARY} w-full sm:w-auto`}>
               {t('ent.video.cta')}
               <ArrowRight size={17} aria-hidden="true" />
             </button>

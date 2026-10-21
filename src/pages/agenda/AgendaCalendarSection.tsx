@@ -468,6 +468,7 @@ const AgendaCalendarSection = ({
           id={AGENDA_CALENDAR_ID}
           tabIndex={-1}
           data-tutorial-id="agenda-calendar-grid"
+          data-guide-id="perso-agenda-grid"
           style={{ backgroundColor: 'rgb(var(--calendar-bg))', borderColor: 'rgb(var(--calendar-border))' }}>
           <div ref={desktopShellRef} className="p-2 lg:p-6 h-full w-full overflow-hidden">
             <FullCalendar

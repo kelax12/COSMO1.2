@@ -1,7 +1,14 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { format } from 'date-fns';
-import { Clock, X } from 'lucide-react';
+import { Check, ChevronDown, Clock, Plus, X } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   ROLE_DURATIONS,
   activeAssignmentsOf,
@@ -10,14 +17,17 @@ import {
   useOrgRoleAssignments,
   useOrgRoles,
   useRevokeOrgRole,
+  useSaveOrgRole,
   type OrgMember,
   type RoleDuration,
+  type SaveCustomRoleInput,
 } from '@/modules/organizations';
 import { DatePicker } from '@/components/ui/date-picker';
 import { getDateLocale } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import MemberAvatar from './MemberAvatar';
+import RoleEditorSheet from './RoleEditorSheet';
 
 interface AssignRoleDialogProps {
   orgId: string;
@@ -49,15 +59,28 @@ const AssignRoleDialog = ({ orgId, member, onClose }: AssignRoleDialogProps) => 
   const current = activeAssignmentsOf(assignments, member.userId, now);
   const roleById = useMemo(() => new Map(roles.map((r) => [r.id, r])), [roles]);
 
+  const saveRole = useSaveOrgRole();
+  const [creating, setCreating] = useState(false);
+  // Le dépôt ne rend pas l'id créé : le rôle neuf se retrouve par son nom au
+  // retour de la liste, puis devient le rôle choisi.
+  const [createdName, setCreatedName] = useState<string | null>(null);
   const [roleId, setRoleId] = useState<string>(() => roles[0]?.id ?? '');
-  const selectedRoleId = roleId || roles[0]?.id || '';
+  const createdId = createdName ? roles.find((r) => r.name === createdName)?.id : undefined;
+  const selectedRoleId = createdId || roleId || roles[0]?.id || '';
+  const selectedRole = roleById.get(selectedRoleId);
+  const pickRole = (id: string) => { setRoleId(id); setCreatedName(null); };
+  const createRole = (input: SaveCustomRoleInput) => {
+    saveRole.mutate({ orgId, input }, {
+      onSuccess: () => { setCreatedName(input.name); setCreating(false); },
+    });
+  };
   const [duration, setDuration] = useState<RoleDuration>('month');
   const [until, setUntil] = useState('');
   const [dateError, setDateError] = useState(false);
 
   const endsAt = computeEndsAt(duration, now, until);
   const extending = current.some((a) => a.roleId === selectedRoleId);
-  const pending = assign.isPending || revoke.isPending;
+  const pending = assign.isPending || revoke.isPending || saveRole.isPending;
   const fmt = (iso: string) => format(new Date(iso), DATE_FORMAT, { locale: getDateLocale() });
 
   const submit = () => {
@@ -85,7 +108,8 @@ const AssignRoleDialog = ({ orgId, member, onClose }: AssignRoleDialogProps) => 
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
-      onClick={() => { if (!pending) onClose(); }}
+      // L'éditeur de rôle est un enfant React : son voile remonte jusqu'ici.
+      onClick={() => { if (!pending && !creating) onClose(); }}
     >
       <div
         className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] w-full sm:max-w-md max-h-[90vh] shadow-2xl flex flex-col rounded-t-[24px] sm:rounded-2xl"
@@ -155,22 +179,71 @@ const AssignRoleDialog = ({ orgId, member, onClose }: AssignRoleDialogProps) => 
               </section>
 
               {roles.length === 0 ? (
-                <p className="text-sm text-[rgb(var(--color-text-secondary))]">{ta('customRoles.assign.noRoles')}</p>
+                <div className="rounded-xl border border-dashed border-[rgb(var(--color-border))] px-4 py-4 text-center">
+                  <p className="text-sm text-[rgb(var(--color-text-secondary))]">{ta('customRoles.assign.noRoles')}</p>
+                  <button
+                    type="button"
+                    onClick={() => setCreating(true)}
+                    disabled={pending}
+                    className="mt-3 inline-flex items-center gap-1.5 px-3 min-h-9 rounded-lg text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-white hover:opacity-90 disabled:opacity-50"
+                  >
+                    <Plus size={15} aria-hidden="true" /> {ta('customRoles.assign.createRole')}
+                  </button>
+                </div>
               ) : (
                 <>
                   <div data-guide-id="assign-role-select">
-                    <label htmlFor="assign-role-select" className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1.5">
+                    <p id="assign-role-select-label" className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1.5">
                       {ta('customRoles.assign.roleLabel')}
-                    </label>
-                    <select
-                      id="assign-role-select"
-                      value={selectedRoleId}
-                      onChange={(e) => setRoleId(e.target.value)}
-                      disabled={pending}
-                      className="w-full h-10 px-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-[rgb(var(--color-text-primary))]"
-                    >
-                      {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                    </select>
+                    </p>
+                    {/* Le menu COSMO des autres listes entreprise (MenuSelect), avec
+                        la pastille du rôle et une sortie « Créer un rôle ». */}
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger asChild disabled={pending}>
+                        <button
+                          type="button"
+                          id="assign-role-select"
+                          aria-labelledby="assign-role-select-label assign-role-select"
+                          className="w-full h-11 px-3 inline-flex items-center gap-2.5 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-left text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-60 data-[state=open]:border-[rgb(var(--color-accent))]"
+                        >
+                          {selectedRole && (
+                            <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: selectedRole.color }} />
+                          )}
+                          <span className="flex-1 min-w-0 truncate font-medium">{selectedRole?.name}</span>
+                          <ChevronDown className="size-4 shrink-0 opacity-60" aria-hidden="true" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      {/* z-[10000] : au-dessus de la modale (z-[9999]), comme MenuSelect. */}
+                      <DropdownMenuContent
+                        align="start"
+                        className="z-[10000] min-w-[var(--radix-dropdown-menu-trigger-width)] max-h-72 rounded-xl p-1.5 shadow-lg"
+                      >
+                        {roles.map((r) => {
+                          const on = r.id === selectedRoleId;
+                          const held = current.some((a) => a.roleId === r.id);
+                          return (
+                            <DropdownMenuItem
+                              key={r.id}
+                              onSelect={() => pickRole(r.id)}
+                              className={`rounded-lg px-2.5 py-2 text-sm cursor-pointer gap-2.5 ${on ? 'font-semibold' : ''}`}
+                            >
+                              <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: r.color }} />
+                              <span className="flex-1 truncate">{r.name}</span>
+                              {held && <span className="text-xs font-normal text-[rgb(var(--color-text-muted))]">{ta('customRoles.assign.held')}</span>}
+                              {on && <Check className="size-4 text-[rgb(var(--color-accent))]" aria-hidden="true" />}
+                            </DropdownMenuItem>
+                          );
+                        })}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onSelect={() => setCreating(true)}
+                          className="rounded-lg px-2.5 py-2 text-sm cursor-pointer gap-2.5 font-semibold text-[rgb(var(--color-accent))]"
+                        >
+                          <Plus className="size-4 shrink-0" aria-hidden="true" />
+                          {ta('customRoles.assign.createRole')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   <div role="radiogroup" aria-labelledby="assign-role-duration" data-guide-id="assign-role-until">
@@ -247,6 +320,15 @@ const AssignRoleDialog = ({ orgId, member, onClose }: AssignRoleDialogProps) => 
           )}
         </div>
       </div>
+      {creating && (
+        <RoleEditorSheet
+          initial={null}
+          editing={false}
+          pending={saveRole.isPending}
+          onSave={createRole}
+          onClose={() => setCreating(false)}
+        />
+      )}
     </div>,
     document.body,
   );

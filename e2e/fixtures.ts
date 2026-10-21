@@ -61,8 +61,36 @@ export async function gotoTolerant(page: Page, url: string): Promise<void> {
   throw derniere;
 }
 
-export const test = base.extend<{ demoPage: Page }>({
-  demoPage: async ({ page, context }, use) => {
+/**
+ * Un lundi 10:00 (Paris), choisi exprès : le lundi et le mardi, le tableau de
+ * bord porte la carte check-in hebdo (`useWeeklyCheckin`), son contenu le plus
+ * large. Un verdict pris un autre jour ne la mesurerait jamais.
+ */
+export const HORLOGE_FIGEE = '2026-10-19T10:00:00+02:00';
+
+export const test = base.extend<{ demoPage: Page; horlogeFigee: string | null }>({
+  /**
+   * 🔴 L'HEURE DU NAVIGATEUR, figée au départ quand un spec le demande
+   * (`test.use({ horlogeFigee: HORLOGE_FIGEE })`).
+   *
+   * La démo date ses seeds par rapport à `new Date()`, et certains écrans
+   * dépendent du JOUR de la semaine. Le 2026-10-19, `Visual` et le cas C-97
+   * `/dashboard` à 200 % sont passés au rouge sur un commit qui ne changeait
+   * que deux commentaires : la carte check-in n'apparaît que le lundi et le
+   * mardi. Un verdict qui dépend du calendrier ne dit rien du code.
+   *
+   * `clock.install` et non `setFixedTime` : l'heure PART de cette date puis
+   * avance avec les minuteurs. Une date gelée bloquerait ce qui mesure le temps
+   * écoulé par `Date.now()` (le ticker GSAP de la landing, que la fixture
+   * traverse). Posée AVANT la première navigation, donc avant `loginDemo()`,
+   * qui génère les seeds.
+   * ⚠️ `null` par défaut : les autres specs gardent l'heure réelle, ce
+   * changement ne touche que ceux qui l'ont demandé.
+   */
+  horlogeFigee: [null, { option: true }],
+
+  demoPage: async ({ page, context, horlogeFigee }, use) => {
+    if (horlogeFigee) await page.clock.install({ time: new Date(horlogeFigee) });
     // 1. État propre, clear cookies + storage Supabase + flags démo
     //    (sinon RootRoute redirige immédiatement vers /dashboard si session
     //     déjà active, et le CTA "Essayer maintenant" n'existe pas).
@@ -195,6 +223,9 @@ export const test = base.extend<{ demoPage: Page }>({
         // Neutralise le wiggle d'invite au swipe de la 1ʳᵉ TaskCard mobile
         // (animation x de 1,7 s qui rendrait les tests de gestes flaky).
         localStorage.setItem('cosmo_swipe_hint_anim_seen', '1');
+        // Vidéo d'accueil entreprise, ouverte en démo depuis le 2026-10-19 :
+        // elle recouvrirait tout parcours qui passe par `/entreprise`.
+        localStorage.setItem('cosmo_org_welcome_seen_org-demo-1_demo-user', '1');
       } catch { /* ignore */ }
     });
 
