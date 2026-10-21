@@ -18,6 +18,8 @@ import { scopedCssFor } from '../scripts/landing-hero-css.mjs';
 const ROOT = join(__dirname, '..');
 const read = (p: string) => readFileSync(join(ROOT, p), 'utf8');
 const LOCALES = ['fr', 'en'] as const;
+// Espace insécable : écrit par son code, un littéral se lit comme une espace.
+const NBSP = String.fromCharCode(160);
 
 describe('copie du hero : fraîcheur de la capture', () => {
   it('a été capturée sur les sources ACTUELLES du header et du hero', () => {
@@ -39,19 +41,49 @@ describe('copie du hero : fraîcheur de la capture', () => {
     expect(new Set(Object.values(a)).size).toBe(HERO_SOURCES.length);
   });
 
-  for (const locale of LOCALES) {
-    it(`${locale} : porte les textes du hero de son catalogue, et rien qui rejouerait une entrée`, () => {
-      const html = read(`scripts/landing-hero/${locale}.html`);
-      const hero = (JSON.parse(read(`src/locales/${locale}/landing.json`)) as { hero: Record<string, string> }).hero;
-      const texte = html.replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
-      for (const cle of ['line1', 'line2', 'subtitle', 'demoCta', 'signupCta']) {
-        expect(texte, `hero.${cle}`).toContain(hero[cle]);
+  const TEXTES = {
+    perso: { catalogue: 'landing', chemin: ['hero'], cles: ['line1', 'line2', 'subtitle', 'demoCta', 'signupCta'] },
+    entreprise: { catalogue: 'landingEnterprise', chemin: ['enterprise', 'hero'], cles: ['line1', 'line2', 'cta'] },
+  } as const;
+  const texteDe = (html: string) =>
+    html.replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').split(NBSP).join(' ').replace(/\s+/g, ' ');
+
+  const CAPTURES = [
+    ...LOCALES.map((l) => ['perso', `perso-${l}`, l] as const),
+    ...LOCALES.map((l) => ['entreprise', `entreprise-${l}`, l] as const),
+    ...LOCALES.map((l) => ['entreprise', `entreprise-${l}-mobile`, l] as const),
+  ];
+  for (const [track, fichier, locale] of CAPTURES) {
+    it(`${fichier} : porte les textes du hero de son catalogue, et rien qui rejouerait une entrée`, () => {
+      const html = read(`scripts/landing-hero/${fichier}.html`);
+      const { catalogue, chemin, cles } = TEXTES[track];
+      let noeud = JSON.parse(read(`src/locales/${locale}/${catalogue}.json`)) as Record<string, unknown>;
+      for (const k of chemin) noeud = noeud[k] as Record<string, unknown>;
+      const texte = texteDe(html);
+      for (const cle of cles) {
+        expect(texte, `${chemin.join('.')}.${cle}`).toContain(String(noeud[cle]).split(NBSP).join(' '));
       }
       // Un id dupliquerait celui de l'app pendant la relève.
       expect(html).not.toMatch(/\sid="/);
       expect(html).not.toMatch(/\bhero-(line-in|rise|chip|window|link|dock-settle)\b/);
+      // Un <canvas> cloné (shader entreprise) serait vide.
+      expect(html).not.toContain('<canvas');
     });
   }
+
+  it('entreprise : la pile garde son image (masquée, React la peignait plus grande et reprenait le LCP à 6,4 s)', () => {
+    for (const fichier of LOCALES.flatMap((l) => [`entreprise-${l}`, `entreprise-${l}-mobile`])) {
+      const html = read(`scripts/landing-hero/${fichier}.html`);
+      expect(html, fichier).toMatch(/<img[^>]*\ssrc="\/[^"]+"[^>]*loading="eager"|<img[^>]*loading="eager"[^>]*\ssrc="\/[^"]+"/);
+    }
+  });
+
+  it('entreprise : deux vues, bureau et mobile, au seuil de useIsMobile (768 px)', () => {
+    const prerender = read('prerender.mjs');
+    expect(prerender).toContain('`${track}-${locale}-mobile.html`');
+    expect(prerender).toContain('@media (max-width:767px){#lp-hero>.lp-vue-bureau{display:none}#lp-hero>.lp-vue-mobile{display:block}}');
+    expect(read('src/lib/hooks/use-mobile.tsx')).toContain('const MOBILE_BREAKPOINT = 768;');
+  });
 });
 
 describe('copie du hero : visible pour le seul visiteur sans session', () => {
@@ -74,9 +106,54 @@ describe('copie du hero : visible pour le seul visiteur sans session', () => {
 
   it('prerender.mjs la pose HORS de #root (createRoot l’effacerait), inerte, avec sa langue', () => {
     const prerender = read('prerender.mjs');
-    expect(prerender).toContain('<div id="lp-hero" inert data-locale="${locale}">${fragment}</div>');
+    expect(prerender).toContain('<div id="lp-hero" inert data-locale="${locale}" data-track="${track}">${fragment}</div>');
     expect(prerender).toMatch(/replace\('<div id="root">', \(\) => `<div id="lp-hero"/);
     expect(prerender).toMatch(/let home = injectHeroCopy\(buildPage\(homeRoute/);
+    expect(prerender).toContain('route.heroTrack ? injectHeroCopy(page, locale, route.heroTrack) : page');
+  });
+
+  it('seules la home et l’entreprise sont PEINTES avant React ; les autres pages gardent le spinner', () => {
+    const prerender = read('prerender.mjs');
+    // Le texte SEO brut, sur fond blanc, peint sur le guide, le blog… : arbitré le 2026-10-21.
+    expect(prerender).toContain("if (route.heroTrack) out = out.replace(/<html(?![^>]*data-prerendered)/, '<html data-prerendered');");
+    expect((prerender.match(/heroTrack: '/g) ?? []).length).toBe(2);
+    expect(index).toMatch(/html\[data-prerendered\] #lp-hero\[data-track=entreprise\]\{background:#08090C\}/);
+  });
+
+  it('les routes publiques se chargent derrière BootScreen, le spinner de démarrage à l’identique', () => {
+    const app = read('src/App.tsx');
+    for (const page of ['LoginPage', 'GuidePage', 'BlogIndexPage', 'BlogArticlePage', 'AProposPage', 'UseCasePage', 'CGUPage', 'NotFoundPage']) {
+      expect(app, page).toContain(`<PublicPageWithSuspense><${page} /></PublicPageWithSuspense>`);
+    }
+    expect(app).toMatch(/const PublicPageWithSuspense[\s\S]{0,200}<Suspense fallback=\{<BootScreen \/>\}>/);
+    expect(read('src/components/BootScreen.tsx')).toContain('<div className="boot-screen" role="status"');
+    // Même CSS pour les deux, sinon un spinner en remplace un autre.
+    expect(index).toContain('#boot-screen,.boot-screen{');
+    expect(index).toContain('#boot-screen .ring,.boot-screen .ring{');
+  });
+
+  it('le spinner prend les couleurs EXACTES de chaque thème (fond et accent de src/index.css)', () => {
+    const css = read('src/index.css');
+    const hex = (rgb: string) =>
+      '#' + rgb.trim().split(/\s+/).map((n) => Number(n).toString(16).padStart(2, '0')).join('');
+    const jeton = (selecteur: string, nom: string) => {
+      const debut = css.indexOf(`${selecteur} {`);
+      const bloc = css.slice(debut, css.indexOf('}', debut));
+      const m = bloc.match(new RegExp(`--color-${nom}:\\s*([\\d\\s]+);`));
+      expect(m, `${selecteur} --color-${nom}`).not.toBeNull();
+      return hex(m![1]);
+    };
+    for (const [theme, selecteur] of [['light', ':root'], ['dark', '.dark'], ['gris', '.gris'], ['noir', '.noir']] as const) {
+      const regle = index.match(new RegExp(`html\\[data-boot-theme=${theme}\\] :is\\(#boot-screen,\\.boot-screen\\)\\{([^}]*)\\}`))?.[1] ?? '';
+      expect(regle, theme).toContain(`--bs-bg:${jeton(selecteur, 'background')}`);
+      expect(regle, theme).toContain(`--bs-accent:${jeton(selecteur, 'accent-solid')}`);
+    }
+  });
+
+  it('le hero entreprise la relève aussi, sans rejouer aucune entrée', () => {
+    const hero = read('src/pages/landing/entreprise/EnterpriseHero.tsx');
+    expect(hero).toContain('const reprise = usePrerenderHeroTakeover();');
+    expect(hero).toMatch(/mm\.add\('\(prefers-reduced-motion: no-preference\)', \(\) => \{[\s\S]{0,400}if \(reprise\) return;/);
   });
 
   it('la landing la relève dans l’image où elle peint son hero, et ne rejoue pas ce qu’elle montrait', () => {

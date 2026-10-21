@@ -7,13 +7,15 @@
 // après l'autre. Le bug a été « corrigé » huit fois : chaque correctif traitait
 // un cas (personne connectée, CSP…) sans toucher la décision de C-116.
 //
-// Le prérendu de la home peint désormais `#lp-hero`, une COPIE du header et du
-// hero rendus par React (`scripts/capture-landing-hero.mjs`), avec leur CSS
-// réelle (`scripts/landing-hero-css.mjs`). Elle vit HORS de `#root`, en calque
-// fixe : `createRoot` ne peut donc pas l'effacer, et l'attente de l'auth (rendu
-// `null`) comme le squelette passent dessous, sans être vus. La landing la
-// retire elle-même, dans l'image où elle peint son propre hero (`useLayoutEffect`
-// de `PersoTrack`) : la relève se fait sans saut.
+// Le prérendu de la home et de l'entreprise peint désormais `#lp-hero`, une
+// COPIE du header et du hero rendus par React (`scripts/capture-landing-hero.mjs`),
+// avec leur CSS réelle (`scripts/landing-hero-css.mjs`). Elle vit HORS de
+// `#root`, en calque fixe : `createRoot` ne peut donc pas l'effacer, et
+// l'attente de l'auth (rendu `null`) comme le squelette passent dessous, sans
+// être vus. Le hero la retire lui-même, dans l'image où il se peint
+// (`usePrerenderHeroTakeover`, dans `PersoTrack` et `EnterpriseHero`) : la
+// relève se fait sans saut. Les autres pages prérendues ne peignent rien avant
+// React : spinner de démarrage, puis `BootScreen` (même spinner).
 //
 // Les autres sorties la retirent aussi, sinon elle couvrirait l'app : une
 // session trouvée par React (redirection vers l'app), une erreur attrapée par
