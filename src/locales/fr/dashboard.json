@@ -178,5 +178,23 @@
     "events_many": "{{count}} de rendez-vous",
     "events_other": "{{count}} rendez-vous",
     "at": "Journée bouclée à {{time}}."
+  },
+  "widgets": {
+    "names": {
+      "stats": "Statistiques",
+      "today": "Aujourd'hui",
+      "priorityTasks": "Tâches prioritaires",
+      "collaborativeTasks": "Tâches collaboratives",
+      "okrs": "OKR en cours",
+      "habits": "Habitudes du jour"
+    },
+    "desc": {
+      "stats": "Tâches, rendez-vous, habitudes et résultats clés de la période.",
+      "today": "Vos tâches perso et d'équipe du jour, réunies.",
+      "priorityTasks": "Les tâches à faire en premier.",
+      "collaborativeTasks": "Les tâches partagées avec vos amis.",
+      "okrs": "La progression de vos objectifs.",
+      "habits": "Les habitudes à cocher aujourd'hui."
+    }
   }
 }
