@@ -84,6 +84,16 @@
       "p2": "En revanche, plusieurs prestataires sont des sociétés établies hors de l'Union ou peuvent accéder aux données depuis l'extérieur : **Vercel**, **Sentry**, **Resend**, **Cloudflare**, **Stripe**, **Google** (connexion Google), **GitHub** (sauvegardes chiffrées), ainsi que **Supabase Inc.**, dont les équipes peuvent accéder à l'infrastructure pour la maintenance et le support. Les données qu'ils traitent pour notre compte peuvent donc faire l'objet d'un transfert hors de l'Union. Ces transferts sont encadrés par la décision d'adéquation de la Commission européenne relative au cadre de protection des données UE-États-Unis, lorsque le prestataire y adhère, ou à défaut par les clauses contractuelles types de la Commission (articles 45 et 46 du RGPD).",
       "p3": "Vous pouvez nous demander une copie des garanties applicables à l'adresse indiquée ci-dessous."
     },
+    "s7ter": {
+      "title": "7 ter. Prospection commerciale auprès des professionnels",
+      "p1": "Cosmo peut contacter par e-mail des professionnels pour leur présenter son offre entreprise. Cette section s'adresse aux personnes ainsi contactées, qui ne sont pas forcément utilisatrices de Cosmo.",
+      "li1": "**Données traitées :** adresse e-mail professionnelle, nom, entreprise, fonction, source du contact (site de l'entreprise, annuaire ou réseau professionnel), historique de nos échanges et réponses reçues",
+      "li2": "**Finalité :** vous présenter Cosmo et suivre nos échanges. Les messages portent uniquement sur votre activité professionnelle",
+      "li3": "**Base légale :** l'intérêt légitime de Cosmo à faire connaître son offre auprès des professionnels (article 6.1.f du RGPD et article L34-5 du Code des postes et des communications électroniques). Aucun consentement préalable n'est requis pour une prospection en lien avec votre fonction, mais vous pouvez vous y opposer à tout moment",
+      "li4": "**Destinataires :** Supabase (hébergement des données, en Irlande), IONOS (boîtes d'envoi, en Allemagne) et Anthropic (classement automatique des réponses reçues, société établie aux États-Unis, transfert encadré par les clauses contractuelles types). Vos données ne sont jamais vendues ni cédées",
+      "li5": "**Durée de conservation :** trois ans à compter de notre dernier contact, puis effacement",
+      "p2": "**Vous opposer à la prospection.** Chaque e-mail comporte un moyen simple et gratuit de ne plus être contacté. Vous pouvez aussi écrire à [contact@thecosmo.app](mailto:contact@thecosmo.app). Votre adresse est alors inscrite sur une liste d'opposition, conservée pour garantir que nous ne vous recontacterons pas. Vous disposez également des droits décrits à la section 8, dont celui d'obtenir une copie des données vous concernant."
+    },
     "s8": {
       "title": "8. Vos droits (RGPD)",
       "intro": "Conformément au Règlement Général sur la Protection des Données (RGPD), vous disposez des droits suivants :",
