@@ -3,7 +3,7 @@
     "seoTitle": "Privacy policy – Cosmo App",
     "seoDescription": "Cosmo's privacy policy: data collected, secure Supabase storage, Row Level Security, GDPR rights and contact.",
     "title": "Privacy policy",
-    "updatedAt": "13 October 2026",
+    "updatedAt": "21 October 2026",
     "s1": {
       "title": "1. Data controller",
       "p1": "The controller of the personal data collected through the Cosmo application is Axel Longatte, publisher of Cosmo, reachable at [contact@thecosmo.app](mailto:contact@thecosmo.app)."
@@ -83,6 +83,13 @@
       "p1": "Your database is hosted in Ireland, within the European Union.",
       "p2": "However, several providers are companies established outside the Union or may access data from outside it: **Vercel**, **Sentry**, **Resend**, **Cloudflare**, **Stripe**, **Google** (Google sign-in), **GitHub** (encrypted backups), and **Supabase Inc.**, whose teams may access the infrastructure for maintenance and support. The data they process on our behalf may therefore be transferred outside the Union. These transfers are covered by the European Commission's adequacy decision on the EU-US Data Privacy Framework, where the provider is certified under it, or otherwise by the Commission's standard contractual clauses (Articles 45 and 46 GDPR).",
       "p3": "You can ask us for a copy of the applicable safeguards at the address given below."
+    },
+    "s7ter": {
+      "title": "7 ter. Business-to-business prospecting",
+      "p1": "Cosmo may contact by email professionals who are not yet users, to present its offer. This processing is based on our **legitimate interest** (Article 6(1)(f) GDPR): the message always relates to your professional role, and every email contains a simple, free unsubscribe link (Article L34-5 of the French Postal and Electronic Communications Code).",
+      "p2": "**Data processed:** professional email address, name, company, job title, source of the address (stated in the first message), stage of our exchanges, date of last contact and the content of your replies.",
+      "p3": "**Recipients:** **Supabase** (hosting in Ireland, in a database separate from the application's), **IONOS** (sending mailboxes, in Germany) and **Anthropic** (United States), which classifies the text of your replies to help us follow up; this transfer is covered by the European Commission's standard contractual clauses.",
+      "p4": "**Retention:** 3 years after the last contact, then deletion. **Objection:** through the unsubscribe link in every email, or by writing to [contact@thecosmo.app](mailto:contact@thecosmo.app). Your address is then added to an objection list, kept to guarantee you will not be contacted again. You also have the rights described in section 8."
     },
     "s8": {
       "title": "8. Your rights (GDPR)",
