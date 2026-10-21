@@ -39,11 +39,17 @@ import ApercuWidgetGrid from '@/components/organization/ApercuWidgetGrid';
 import { baseWidgetId, type WidgetSize } from '@/components/organization/apercu-widgets';
 import OkrWidget from '@/components/OkrWidget';
 import HabitsWidget from '@/components/HabitsWidget';
+import AgendaTodayWidget from '@/components/dashboard-widgets/AgendaTodayWidget';
+import TaskListWidget from '@/components/dashboard-widgets/TaskListWidget';
+// Lazy : ne charge le module d'équipe que pour qui a posé l'un de ces widgets.
+const TeamTasksWidget = React.lazy(() => import('@/components/dashboard-widgets/TeamTasksWidgets').then((m) => ({ default: m.TeamTasksWidget })));
+const ReviewWidget = React.lazy(() => import('@/components/dashboard-widgets/TeamTasksWidgets').then((m) => ({ default: m.ReviewWidget })));
 import type { WidgetCatalog } from '@/components/organization/widget-catalog';
 import {
   DASHBOARD_WIDGET_DEFS,
   loadDashboardLayout,
   loadOkrChoices,
+  ORG_ONLY_WIDGETS,
   loadHabitsView,
   saveHabitsView,
   defaultHabitsView,
@@ -140,7 +146,7 @@ const DashboardPage: React.FC = () => {
   };
   const catalog = useMemo<WidgetCatalog<DashboardWidgetId>>(() => ({
     // « Aujourd'hui » unifié n'a de sens qu'avec une deuxième source de tâches.
-    defs: DASHBOARD_WIDGET_DEFS.filter((d) => d.id !== 'today' || !!activeOrg),
+    defs: DASHBOARD_WIDGET_DEFS.filter((d) => !ORG_ONLY_WIDGETS.has(d.id as BaseDashboardWidgetId) || !!activeOrg),
     name: (id) => t(`widgets.names.${baseWidgetId(id) as BaseDashboardWidgetId}`),
     desc: (id) => t(`widgets.desc.${baseWidgetId(id) as BaseDashboardWidgetId}`),
   }), [activeOrg, t]);
@@ -247,6 +253,21 @@ const DashboardPage: React.FC = () => {
             />
           </MobileCollapsible>
         );
+      case 'agenda':
+        return <AgendaTodayWidget />;
+      case 'taskList':
+        return (
+          <TaskListWidget
+            listId={okrChoices[id]}
+            fallbackIndex={layout.filter((w) => baseWidgetId(w.id) === 'taskList').findIndex((w) => w.id === id)}
+            onSelect={(listId) => onOkrSelect(id, listId)}
+            compact={size === 'small'}
+          />
+        );
+      case 'teamTasks':
+        return activeOrg ? <Suspense fallback={null}><TeamTasksWidget orgId={activeOrg.id} compact={size === 'small'} /></Suspense> : null;
+      case 'review':
+        return activeOrg ? <Suspense fallback={null}><ReviewWidget orgId={activeOrg.id} /></Suspense> : null;
       case 'habits':
         return (
           <MobileCollapsible title={t('sections.todayHabits')}>

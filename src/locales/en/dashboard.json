@@ -171,7 +171,11 @@
       "priorityTasks": "Priority tasks",
       "collaborativeTasks": "Collaborative tasks",
       "okrs": "Active OKRs",
-      "habits": "Today's habits"
+      "habits": "Today's habits",
+      "agenda": "Today's agenda",
+      "taskList": "Task list",
+      "teamTasks": "My team tasks",
+      "review": "To review"
     },
     "desc": {
       "stats": "Tasks, events, habits and key results for the period.",
@@ -179,7 +183,11 @@
       "priorityTasks": "The tasks to do first.",
       "collaborativeTasks": "Tasks shared with your friends.",
       "okrs": "Progress on your objectives.",
-      "habits": "Habits to check off today."
+      "habits": "Habits to check off today.",
+      "agenda": "Today's events, in order.",
+      "taskList": "One of your lists, your choice. Can be added several times.",
+      "teamTasks": "Company tasks assigned to you.",
+      "review": "Tasks your colleagues finished, waiting for your review."
     }
   },
   "okrWidget": {
@@ -192,5 +200,41 @@
     "dayCell": "{{name}}, {{date}}",
     "done": "done",
     "notDone": "not done"
+  },
+  "dw": {
+    "agenda": {
+      "count_one": "{{count}} event",
+      "count_many": "{{count}} events",
+      "count_other": "{{count}} events",
+      "empty": "No events today.",
+      "next": "Next",
+      "open": "Open agenda"
+    },
+    "list": {
+      "choose": "List shown",
+      "open_one": "{{count}} open task",
+      "open_many": "{{count}} open tasks",
+      "open_other": "{{count}} open tasks",
+      "empty": "No open tasks in this list.",
+      "noLists": "No lists yet.",
+      "create": "Create a list"
+    },
+    "team": {
+      "open_one": "{{count}} open task",
+      "open_many": "{{count}} open tasks",
+      "open_other": "{{count}} open tasks",
+      "empty": "No open team tasks.",
+      "seeAll": "See all"
+    },
+    "review": {
+      "count_one": "{{count}} task to review",
+      "count_many": "{{count}} tasks to review",
+      "count_other": "{{count}} tasks to review",
+      "empty": "Nothing to review.",
+      "approve": "Approve",
+      "sendBack": "Send back",
+      "approveName": "Approve \"{{name}}\"",
+      "sendBackName": "Send back \"{{name}}\""
+    }
   }
 }

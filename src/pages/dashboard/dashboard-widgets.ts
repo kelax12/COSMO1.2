@@ -10,12 +10,16 @@ import { sanitizeLayoutIn, type CatalogDef, type PlacedOf, type WidgetSize } fro
  * une donnée. La perdre rend la disposition par défaut.
  */
 
-export type BaseDashboardWidgetId = 'stats' | 'today' | 'priorityTasks' | 'collaborativeTasks' | 'okrs' | 'habits';
+export type BaseDashboardWidgetId =
+  | 'stats' | 'today' | 'priorityTasks' | 'collaborativeTasks' | 'okrs' | 'habits'
+  // 2026-10-21 : agenda, liste au choix, et deux widgets d'entreprise.
+  | 'agenda' | 'taskList' | 'teamTasks' | 'review';
 
 export type DashboardWidgetId =
   | BaseDashboardWidgetId
   // Le widget OKR se pose plusieurs fois (un objectif par exemplaire).
-  | `okrs~${string}`;
+  | `okrs~${string}`
+  | `taskList~${string}`;
 
 export const DASHBOARD_WIDGET_DEFS: readonly CatalogDef<DashboardWidgetId>[] = [
   { id: 'stats', sizes: ['medium', 'large'] },
@@ -24,7 +28,15 @@ export const DASHBOARD_WIDGET_DEFS: readonly CatalogDef<DashboardWidgetId>[] = [
   { id: 'collaborativeTasks', sizes: ['small', 'medium', 'large'] },
   { id: 'okrs', sizes: ['small', 'medium', 'large'], multi: true },
   { id: 'habits', sizes: ['small', 'medium', 'large'] },
+  { id: 'agenda', sizes: ['small', 'medium', 'large'] },
+  { id: 'taskList', sizes: ['small', 'medium', 'large'], multi: true },
+  // Membres d'une organisation seulement (filtrés dans le catalogue de la page).
+  { id: 'teamTasks', sizes: ['small', 'medium', 'large'] },
+  { id: 'review', sizes: ['small', 'medium', 'large'] },
 ];
+
+/** Widgets qui n'ont de sens que pour un membre d'une organisation. */
+export const ORG_ONLY_WIDGETS: ReadonlySet<BaseDashboardWidgetId> = new Set(['today', 'teamTasks', 'review']);
 
 export type DashboardPlaced = PlacedOf<DashboardWidgetId>;
 
@@ -51,7 +63,9 @@ export function saveDashboardLayout(userId: string, layout: readonly DashboardPl
 }
 
 /**
- * OKR affiché par chaque exemplaire du widget OKR : `{ idExemplaire: idOkr }`.
+ * Élément affiché par chaque exemplaire d'un widget multiple (OKR, liste de
+ * tâches) : `{ idExemplaire: idElement }`. Les ids d'exemplaire ne se
+ * recouvrent pas d'un widget à l'autre.
  * Même statut que la disposition : une préférence locale.
  */
 const okrChoiceKey = (userId: string) => `cosmo_dashboard_okr_choice_v1:${userId}`;
