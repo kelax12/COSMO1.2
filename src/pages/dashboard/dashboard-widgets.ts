@@ -10,14 +10,19 @@ import { sanitizeLayoutIn, type CatalogDef, type PlacedOf } from '@/components/o
  * une donnée. La perdre rend la disposition par défaut.
  */
 
-export type DashboardWidgetId = 'stats' | 'today' | 'priorityTasks' | 'collaborativeTasks' | 'okrs' | 'habits';
+export type BaseDashboardWidgetId = 'stats' | 'today' | 'priorityTasks' | 'collaborativeTasks' | 'okrs' | 'habits';
+
+export type DashboardWidgetId =
+  | BaseDashboardWidgetId
+  // Le widget OKR se pose plusieurs fois (un objectif par exemplaire).
+  | `okrs~${string}`;
 
 export const DASHBOARD_WIDGET_DEFS: readonly CatalogDef<DashboardWidgetId>[] = [
   { id: 'stats', sizes: ['medium', 'large'] },
   { id: 'today', sizes: ['small', 'medium', 'large'] },
   { id: 'priorityTasks', sizes: ['small', 'medium', 'large'] },
   { id: 'collaborativeTasks', sizes: ['small', 'medium', 'large'] },
-  { id: 'okrs', sizes: ['small', 'medium', 'large'] },
+  { id: 'okrs', sizes: ['small', 'medium', 'large'], multi: true },
   { id: 'habits', sizes: ['small', 'medium', 'large'] },
 ];
 
@@ -43,4 +48,23 @@ export function loadDashboardLayout(userId: string): DashboardPlaced[] {
 
 export function saveDashboardLayout(userId: string, layout: readonly DashboardPlaced[]): void {
   safeSetItem(storageKey(userId), JSON.stringify(layout));
+}
+
+/**
+ * OKR affiché par chaque exemplaire du widget OKR : `{ idExemplaire: idOkr }`.
+ * Même statut que la disposition : une préférence locale.
+ */
+const okrChoiceKey = (userId: string) => `cosmo_dashboard_okr_choice_v1:${userId}`;
+
+export function loadOkrChoices(userId: string): Record<string, string> {
+  const raw = safeGetItem(okrChoiceKey(userId));
+  const parsed = raw ? safeParse<unknown>(raw) : null;
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+  return Object.fromEntries(
+    Object.entries(parsed as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === 'string'),
+  );
+}
+
+export function saveOkrChoices(userId: string, choices: Record<string, string>): void {
+  safeSetItem(okrChoiceKey(userId), JSON.stringify(choices));
 }

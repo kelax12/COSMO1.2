@@ -181,5 +181,9 @@
       "okrs": "Progress on your objectives.",
       "habits": "Habits to check off today."
     }
+  },
+  "okrWidget": {
+    "choose": "Objective shown",
+    "noKeyResult": "No key results for this objective."
   }
 }

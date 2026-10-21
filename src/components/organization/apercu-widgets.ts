@@ -107,7 +107,19 @@ export const allowsSize = (id: WidgetId, size: WidgetSize): boolean =>
 export interface CatalogDef<Id extends string = string> {
   id: Id;
   sizes: readonly WidgetSize[];
+  /**
+   * Widget posable PLUSIEURS fois (2026-10-21, OKR du tableau de bord perso).
+   * Chaque exemplaire porte l'id `<base>~<suffixe>` ; le premier peut garder
+   * l'id nu.
+   */
+  multi?: boolean;
 }
+
+/** `okrs~k3x9` → `okrs`. Un id sans `~` est sa propre base. */
+export const baseWidgetId = (id: string): string => id.split('~')[0];
+
+export const findDef = <Id extends string>(defs: readonly CatalogDef<Id>[], id: string): CatalogDef<Id> | undefined =>
+  defs.find((d) => d.id === baseWidgetId(id));
 
 export interface PlacedOf<Id extends string = string> {
   id: Id;
@@ -115,7 +127,7 @@ export interface PlacedOf<Id extends string = string> {
 }
 
 const allows = <Id extends string>(defs: readonly CatalogDef<Id>[], id: Id, size: WidgetSize) =>
-  !!defs.find((d) => d.id === id)?.sizes.includes(size);
+  !!findDef(defs, id)?.sizes.includes(size);
 
 /**
  * Relit une disposition venue du stockage : tout ce qui n'est pas reconnu
@@ -134,10 +146,13 @@ export function sanitizeLayoutIn<Id extends string>(
     if (!item || typeof item !== 'object') continue;
     const { id: rawId, size } = item as { id?: unknown; size?: unknown };
     if (typeof rawId !== 'string' || typeof size !== 'string') continue;
-    const def = defs.find((d) => d.id === rename(rawId));
-    if (!def || seen.has(def.id) || !def.sizes.includes(size as WidgetSize)) continue;
-    seen.add(def.id);
-    out.push({ id: def.id, size: size as WidgetSize });
+    const renamed = rename(rawId);
+    const def = findDef(defs, renamed);
+    // Un exemplaire d'un widget multiple garde son id complet.
+    const id = (def?.multi ? renamed : def?.id) as Id | undefined;
+    if (!def || !id || seen.has(id) || !def.sizes.includes(size as WidgetSize)) continue;
+    seen.add(id);
+    out.push({ id, size: size as WidgetSize });
   }
   return out;
 }
@@ -162,6 +177,12 @@ export function addWidgetIn<Id extends string>(
   defs: readonly CatalogDef<Id>[], layout: readonly PlacedOf<Id>[], id: Id, size: WidgetSize,
 ): PlacedOf<Id>[] {
   if (!allows(defs, id, size)) return [...layout];
+  if (findDef(defs, id)?.multi) {
+    // Toujours un NOUVEL exemplaire : l'id nu s'il est libre, sinon suffixé.
+    const free = !layout.some((w) => w.id === id);
+    const instance = (free ? id : `${baseWidgetId(id)}~${Date.now().toString(36)}`) as Id;
+    return [...layout, { id: instance, size }];
+  }
   if (layout.some((w) => w.id === id)) return resizeWidgetIn(defs, layout, id, size);
   return [...layout, { id, size }];
 }

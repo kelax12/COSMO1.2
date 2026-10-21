@@ -6,6 +6,7 @@ import {
   SIZE_SPAN_CLASS,
   WIDGET_DEFS,
   addWidgetIn,
+  findDef,
   moveWidget,
   removeWidget,
   resizeWidgetIn,
@@ -342,7 +343,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
           <ul className="apercu-widget-grid relative z-0 isolate grid grid-cols-1 md:grid-cols-6 gap-5 items-stretch">
             <AnimatePresence mode="popLayout" initial={false}>
               {layout.map((w, index) => {
-                const def = cat.defs.find((d) => d.id === w.id);
+                const def = findDef(cat.defs, w.id);
                 const content = renderWidget(w.id, w.size);
                 const isDragged = dragged === w.id;
                 const lit = highlight?.id === w.id;
@@ -538,8 +539,12 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                 layout={layout}
                 catalog={cat}
                 onAdd={(id: Id, size: WidgetSize) => {
-                  onChange(addWidgetIn(cat.defs, layout, id, size));
-                  setHighlight({ id, entering: !layout.some((w) => w.id === id) });
+                  const next = addWidgetIn(cat.defs, layout, id, size);
+                  onChange(next);
+                  // Widget multiple : le nouvel exemplaire est le dernier posé.
+                  const multi = !!findDef(cat.defs, id)?.multi;
+                  const target = multi ? next[next.length - 1].id : id;
+                  setHighlight({ id: target, entering: multi || !layout.some((w) => w.id === id) });
                   setPicking(false);
                 }}
                 onRemove={remove}

@@ -197,5 +197,9 @@
       "okrs": "La progression de vos objectifs.",
       "habits": "Les habitudes à cocher aujourd'hui."
     }
+  },
+  "okrWidget": {
+    "choose": "Objectif affiché",
+    "noKeyResult": "Aucun résultat clé pour cet objectif."
   }
 }
