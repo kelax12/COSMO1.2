@@ -93,6 +93,10 @@
       "categorie": "symbole-ou-format",
       "valeur": "{{name}} - {{status}}"
     },
+    "dashboard.habitsWidget.dayCell": {
+      "categorie": "symbole-ou-format",
+      "valeur": "{{name}}, {{date}}"
+    },
     "dashboard.okrs.timeProgress": {
       "categorie": "symbole-ou-format",
       "valeur": "{{current}} / {{target}} min"
