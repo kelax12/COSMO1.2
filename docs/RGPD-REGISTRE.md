@@ -101,7 +101,8 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   d'affichage, avatar, identifiant Google si connexion OAuth, dates de création et de dernière
   connexion.
 - **Tables** : `profiles`, schéma `auth` de Supabase, `email_lookup_global`,
-  `email_lookup_quota`, `demo_devices`.
+  `email_lookup_quota`, `demo_devices`, `account_inactivity_notices` (mig. `226` : date d'un
+  avertissement d'inactivité, aucune adresse stockée).
 - **Destinataires** : Supabase (hébergeur et fournisseur d'authentification), Google
   uniquement si l'utilisateur choisit la connexion Google, **Cloudflare Turnstile** (anti-robot
   des formulaires de connexion et d'inscription, adresse IP et signaux du navigateur) lorsque
@@ -109,6 +110,12 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   le registre le déclare.*
 - **Conservation** : durée de vie du compte, puis suppression définitive sous 90 jours après
   clôture. La suppression est exécutée par la fonction `delete-account`.
+  **Compte inactif** (art. 5.1.e, `C-121`, appliqué le 2026-10-22) : sans activité pendant
+  **3 ans** (dernière connexion ou dernière ouverture de l'application, `profiles.last_seen_at`),
+  un e-mail prévient **30 jours avant** ; sans retour, le compte est supprimé par le même chemin
+  `delete-account`. Jamais un compte qui paie. Job quotidien `inactive-accounts.yml` →
+  Edge Function `inactive-accounts`, sélection en base (mig. `226`, preuve
+  `supabase/proofs/226.proof.sql`).
 - **Sécurité** : mot de passe jamais stocké en clair, RLS, jetons de session à expiration.
 
 ## T2 · Service de productivité personnelle
