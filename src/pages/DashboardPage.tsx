@@ -44,8 +44,8 @@ import {
   DASHBOARD_WIDGET_DEFS,
   loadDashboardLayout,
   loadOkrChoices,
-  loadHabitsViews,
-  saveHabitsViews,
+  loadHabitsView,
+  saveHabitsView,
   defaultHabitsView,
   type HabitsViewChoice,
   saveOkrChoices,
@@ -152,11 +152,10 @@ const DashboardPage: React.FC = () => {
     saveOkrChoices(userKey, next);
   };
 
-  const [habitsViews, setHabitsViews] = useState(() => loadHabitsViews(userKey));
-  const onHabitsView = (size: WidgetSize, view: HabitsViewChoice) => {
-    const next = { ...habitsViews, [size]: view };
-    setHabitsViews(next);
-    saveHabitsViews(userKey, next);
+  const [habitsView, setHabitsView] = useState(() => loadHabitsView(userKey));
+  const onHabitsView = (view: HabitsViewChoice) => {
+    setHabitsView(view);
+    saveHabitsView(userKey, view);
   };
 
   const renderWidget = (id: DashboardWidgetId, size: WidgetSize): React.ReactNode => {
@@ -252,8 +251,8 @@ const DashboardPage: React.FC = () => {
         return (
           <MobileCollapsible title={t('sections.todayHabits')}>
             <HabitsWidget
-              view={habitsViews[size] ?? defaultHabitsView(size)}
-              onViewChange={(view) => onHabitsView(size, view)}
+              view={habitsView ?? defaultHabitsView(size)}
+              onViewChange={onHabitsView}
             />
           </MobileCollapsible>
         );

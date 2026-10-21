@@ -29,7 +29,7 @@ const dayKey = (d: Date) => d.toLocaleDateString('en-CA');
  * - `list` (maquette 1) : rangées à séparateurs, comme les widgets tâches ;
  * - `week` (maquette 5) : une case par jour sur les 7 derniers jours.
  * Par défaut liste en petit, semaine en moyen et grand ; la personne peut
- * basculer (choix retenu par format, cf. `dashboard-widgets.ts`).
+ * basculer, et la vue choisie est gardée quand on redimensionne.
  */
 const HabitsWidget = ({ view, onViewChange }: HabitsWidgetProps) => {
   const { t, tp } = useT('dashboard');
