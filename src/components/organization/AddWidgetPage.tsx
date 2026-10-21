@@ -224,7 +224,7 @@ const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, re
   const [query, setQuery] = useState('');
   const [focus, setFocus] = useState<{ id: Id; index: number } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  const sectionRefs = useRef<Partial<Record<WidgetSize, HTMLElement | null>>>({});
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const { ref, dialogProps } = useModalA11y<HTMLDivElement>({
     open: true,
     onClose,
@@ -243,11 +243,26 @@ const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, re
   const matches = (id: Id) =>
     !needle || `${name(id)} ${desc(id)}`.toLocaleLowerCase().includes(needle);
 
-  const sections = WIDGET_SIZES.map((size) => ({
-    size,
-    defs: catalog.defs.filter((d) => d.sizes.includes(size) && matches(d.id)),
-  }));
-  const nothing = sections.every((s) => s.defs.length === 0);
+  // Deux façons de ranger la fenêtre : par GROUPE quand le catalogue en
+  // déclare (tableau de bord perso : personnels puis professionnels, chaque
+  // widget une fois, en format moyen), sinon par FORMAT (Aperçu entreprise).
+  const previewSize = (sizes: readonly WidgetSize[]): WidgetSize => (sizes.includes('medium') ? 'medium' : sizes[0]);
+  const sections = catalog.groups
+    ? catalog.groups.map((g) => ({
+      key: g.id,
+      title: g.label,
+      hint: g.hint,
+      items: catalog.defs
+        .filter((d) => d.group === g.id && matches(d.id))
+        .map((d) => ({ id: d.id, size: previewSize(d.sizes) })),
+    }))
+    : WIDGET_SIZES.map((size) => ({
+      key: size as string,
+      title: sizeName(size),
+      hint: t(`apercu.widgets.picker.sectionHint_${size}`),
+      items: catalog.defs.filter((d) => d.sizes.includes(size) && matches(d.id)).map((d) => ({ id: d.id, size })),
+    }));
+  const nothing = sections.every((s) => s.items.length === 0);
 
   return (
     <motion.div
@@ -293,15 +308,15 @@ const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, re
             />
           </label>
           <nav aria-label={t('apercu.widgets.picker.sectionsNav')} className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-0.5">
-            {sections.map(({ size, defs }) => (
+            {sections.map(({ key, title, items }) => (
               <button
-                key={size}
+                key={key}
                 type="button"
-                onClick={() => sectionRefs.current[size]?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                onClick={() => sectionRefs.current[key]?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 className="shrink-0 min-h-touch inline-flex items-center gap-2 px-4 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm font-semibold text-[rgb(var(--color-text-primary))] hover:border-[rgb(var(--color-accent))]"
               >
-                {sizeName(size)}
-                <span className="text-xs tabular-nums text-[rgb(var(--color-text-muted))]">{defs.length}</span>
+                {title}
+                <span className="text-xs tabular-nums text-[rgb(var(--color-text-muted))]">{items.length}</span>
               </button>
             ))}
           </nav>
@@ -312,18 +327,18 @@ const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, re
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('apercu.widgets.picker.searchEmpty', { query })}</p>
           )}
 
-          {sections.map(({ size, defs }) => defs.length > 0 && (
+          {sections.map(({ key, title, hint, items }) => items.length > 0 && (
             <section
-              key={size}
-              ref={(el) => { sectionRefs.current[size] = el; }}
-              aria-labelledby={`widget-section-${size}`}
+              key={key}
+              ref={(el) => { sectionRefs.current[key] = el; }}
+              aria-labelledby={`widget-section-${key}`}
               className="scroll-mt-4"
             >
-              <h2 id={`widget-section-${size}`} className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{sizeName(size)}</h2>
-              <p className="text-sm text-[rgb(var(--color-text-muted))] mb-3">{t(`apercu.widgets.picker.sectionHint_${size}`)}</p>
+              <h2 id={`widget-section-${key}`} className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{title}</h2>
+              {hint && <p className="text-sm text-[rgb(var(--color-text-muted))] mb-3">{hint}</p>}
               <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <AnimatePresence mode="popLayout" initial>
-                  {defs.map(({ id }, i) => {
+                  {items.map(({ id, size }, i) => {
                     const current = placedSize(id);
                     return (
                       <motion.li

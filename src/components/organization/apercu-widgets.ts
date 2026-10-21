@@ -113,6 +113,8 @@ export interface CatalogDef<Id extends string = string> {
    * l'id nu.
    */
   multi?: boolean;
+  /** Section de la fenêtre d'ajout, quand le catalogue en déclare (`WidgetCatalog.groups`). */
+  group?: string;
 }
 
 /** `okrs~k3x9` → `okrs`. Un id sans `~` est sa propre base. */

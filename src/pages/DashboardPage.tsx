@@ -149,6 +149,11 @@ const DashboardPage: React.FC = () => {
     defs: DASHBOARD_WIDGET_DEFS.filter((d) => !ORG_ONLY_WIDGETS.has(d.id as BaseDashboardWidgetId) || !!activeOrg),
     name: (id) => t(`widgets.names.${baseWidgetId(id) as BaseDashboardWidgetId}`),
     desc: (id) => t(`widgets.desc.${baseWidgetId(id) as BaseDashboardWidgetId}`),
+    // Personnels d'abord, professionnels ensuite (membres d'une entreprise seulement).
+    groups: [
+      { id: 'perso', label: t('widgets.groups.perso') },
+      ...(activeOrg ? [{ id: 'pro', label: t('widgets.groups.pro') }] : []),
+    ],
   }), [activeOrg, t]);
 
   const [okrChoices, setOkrChoices] = useState<Record<string, string>>(() => loadOkrChoices(userKey));
