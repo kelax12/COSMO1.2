@@ -143,7 +143,16 @@
     "markUndone": "Marquer « {{name}} » comme non terminée",
     "completedToast": "« {{name}} » terminée",
     "sourcePersonal": "Perso",
-    "sourceTeam": "Équipe"
+    "sourceTeam": "Équipe",
+    "overdueBanner_one": "{{count}} tâche en retard",
+    "overdueBanner_many": "{{count}} de tâches en retard",
+    "overdueBanner_other": "{{count}} tâches en retard",
+    "replanAll": "Tout replanifier à aujourd'hui",
+    "plannedCount_one": "{{count}} tâche prévue",
+    "plannedCount_many": "{{count}} de tâches prévues",
+    "plannedCount_other": "{{count}} tâches prévues",
+    "nothingPlanned": "Rien d'autre de prévu aujourd'hui.",
+    "schedule": "Planifier"
   },
   "collab": {
     "removeShare": "Supprimer"

@@ -132,7 +132,14 @@
     "markUndone": "Mark “{{name}}” as not done",
     "completedToast": "“{{name}}” completed",
     "sourcePersonal": "Personal",
-    "sourceTeam": "Team"
+    "sourceTeam": "Team",
+    "overdueBanner_one": "{{count}} overdue task",
+    "overdueBanner_other": "{{count}} overdue tasks",
+    "replanAll": "Move all to today",
+    "plannedCount_one": "{{count}} task planned",
+    "plannedCount_other": "{{count}} tasks planned",
+    "nothingPlanned": "Nothing else planned today.",
+    "schedule": "Schedule"
   },
   "collab": {
     "removeShare": "Delete"
