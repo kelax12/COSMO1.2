@@ -15,12 +15,13 @@
 // (le filesystem est vérifié avant les rewrites). Aucun navigateur requis
 // au build → compatible avec l'image de build Vercel.
 // ─────────────────────────────────────────────────────────────────────────
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ARTICLES, articlesFor, relatedArticles } from './src/content/blog/index.mjs';
 import { USE_CASES } from './src/content/use-cases.mjs';
 import { CONTACT_EMAIL } from './src/lib/contact.mjs';
+import { scopedCssFor } from './scripts/landing-hero-css.mjs';
 import {
   BCP47_TAG,
   DEFAULT_LOCALE,
@@ -955,6 +956,44 @@ for (const route of ROUTES) {
   }
 }
 
+// ── Home : copie du hero peinte avant React (2026-10-21) ─────────────────
+// Le premier rendu de la home n'est plus le texte SEO brut (C-116) mais une
+// COPIE du header et du hero de la landing, capturée sur le rendu React
+// (`scripts/capture-landing-hero.mjs`), avec SA CSS sortie de la feuille
+// buildée et confinée sous `#lp-hero` (`scripts/landing-hero-css.mjs`).
+// Posée HORS de #root, en calque : React ne l'efface pas, la landing la retire
+// dans l'image où elle peint son hero. Pourquoi : `src/lib/prerender-hero.ts`.
+// `inert` : ni focus ni lecteur d'écran sur une copie aux boutons morts.
+// ❌ Pas de copie absente qui passerait en silence : le build échoue, sinon la
+// home repeindrait le mur de texte sans que rien ne le signale.
+let landingCss = null;
+function heroCssSource() {
+  if (landingCss !== null) return landingCss;
+  const assets = join(DIST, 'assets');
+  const sheets = readdirSync(assets).filter((f) => f.endsWith('.css'))
+    .filter((f) => readFileSync(join(assets, f), 'utf8').includes('.hero-line-mask'));
+  if (sheets.length !== 1) {
+    throw new Error(`prerender: feuille du hero introuvable ou ambiguë dans dist/assets (${sheets.join(', ') || 'aucune'})`);
+  }
+  landingCss = readFileSync(join(assets, sheets[0]), 'utf8');
+  return landingCss;
+}
+
+function injectHeroCopy(out, locale) {
+  const file = join(__dirname, 'scripts', 'landing-hero', `${locale}.html`);
+  if (!existsSync(file)) {
+    throw new Error(`prerender: ${file} absent, lancer npm run capture:landing-hero (cf. son en-tête)`);
+  }
+  const fragment = readFileSync(file, 'utf8').trim();
+  const css = scopedCssFor(fragment, heroCssSource());
+  if (!out.includes('<div id="root">')) throw new Error('prerender: <div id="root"> introuvable, copie du hero non posée');
+  out = out.replace('</head>', () => `    <style id="lp-hero-css">${css}</style>
+  </head>`);
+  out = out.replace('<div id="root">', () => `<div id="lp-hero" inert data-locale="${locale}">${fragment}</div>
+    <div id="root">`);
+  return out;
+}
+
 // ── Home : FAQPage JSON-LD statique + contenu visible dans #root ──────────
 // La home est publiée dans chaque locale qui a un corps écrit, et le FAQPage
 // suit la locale de la page (`faqSchemaFor`) : un balisage français sur une
@@ -965,7 +1004,7 @@ const homeRoute = {
   content: { fr: HOME_STATIC, en: HOME_STATIC_EN },
 };
 for (const locale of availableLocales(homeRoute)) {
-  let home = buildPage(homeRoute, locale, availableLocales(homeRoute));
+  let home = injectHeroCopy(buildPage(homeRoute, locale, availableLocales(homeRoute)), locale);
   if (!home.includes('"FAQPage"')) {
     home = home.replace('</head>', `    ${ld(faqSchemaFor(locale), 'faq-schema')}\n  </head>`);
     console.log(`  injected FAQPage JSON-LD (${locale}) into index.html`);

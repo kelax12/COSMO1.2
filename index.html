@@ -139,9 +139,20 @@
          en display:none n'est jamais demandée. Les robots lisent toujours
          src et alt ; le <noscript> plus bas les réaffiche sans JS. */
       html[data-prerendered] #seo-fallback img{display:none}
+      /* 2026-10-21 · Sur la HOME (`/`, `/en/`), ce premier rendu n'est plus le
+         texte SEO : c'est #lp-hero, une copie du header et du hero de la
+         landing (prerender.mjs, `scripts/capture-landing-hero.mjs`), avec sa
+         propre CSS confinée. Un visiteur voyait un mur de texte, puis un
+         squelette gris, puis la landing. Elle vit HORS de #root, en calque :
+         createRoot ne l'efface pas, et la landing la retire dans l'image où
+         elle peint son hero. Pourquoi et sorties : src/lib/prerender-hero.ts.
+         Le texte SEO reste dans le balisage, pour les robots. */
+      #lp-hero{display:none}
+      html[data-prerendered] #lp-hero{display:block;position:fixed;inset:0;z-index:10000;overflow:hidden;background:#fff}
+      html[data-prerendered] #lp-hero ~ #root #seo-fallback{display:none}
     </style>
     <noscript>
-      <style>#boot-screen{display:none}#seo-fallback{display:block}html[data-prerendered] #seo-fallback img{display:inline}</style>
+      <style>#boot-screen{display:none}#seo-fallback{display:block!important}html[data-prerendered] #seo-fallback img{display:inline}#lp-hero{display:none!important}</style>
     </noscript>
 
     <!-- ❌ Aucun script publicitaire, nulle part. Le mur-pub et le système de

@@ -96,7 +96,7 @@ describe('écran de démarrage (index.html)', () => {
 
   it('réaffiche le contenu SEO et retire le spinner quand le JS est coupé', () => {
     expect(indexHtml).toMatch(
-      /<noscript>\s*<style>#boot-screen\{display:none\}#seo-fallback\{display:block\}html\[data-prerendered\] #seo-fallback img\{display:inline\}<\/style>\s*<\/noscript>/
+      /<noscript>\s*<style>#boot-screen\{display:none\}#seo-fallback\{display:block!important\}html\[data-prerendered\] #seo-fallback img\{display:inline\}#lp-hero\{display:none!important\}<\/style>\s*<\/noscript>/
     );
   });
 });

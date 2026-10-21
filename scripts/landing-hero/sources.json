@@ -1,0 +1,13 @@
+{
+  "src/pages/LandingPage.tsx": "06bcdae9c59e0e1e",
+  "src/pages/landing/TrackSwitcher.tsx": "da33e5d14294f863",
+  "src/pages/landing/TrackAnchors.tsx": "b8480ce708fd2674",
+  "src/pages/landing/anchors.ts": "95d4010587e7f617",
+  "src/pages/landing/PersoTrack.tsx": "cd2b00ff16ba032b",
+  "src/pages/landing/HeroAppIcon.tsx": "08707518acbfce81",
+  "src/pages/landing/HeroModuleDock.tsx": "9a73782d314aca48",
+  "src/pages/landing/HeroBackdrop.tsx": "8e3daa5d25855901",
+  "src/pages/landing/hero-modules.ts": "72920db3d407f205",
+  "src/locales/fr/landing.json": "198eafe8a0ace328",
+  "src/locales/en/landing.json": "e340822dafcc2d70"
+}
