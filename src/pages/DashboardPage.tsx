@@ -218,7 +218,7 @@ const DashboardPage: React.FC = () => {
       case 'okrs':
         return (
           <MobileCollapsible title={t('sections.activeOkrs')}>
-            <ActiveOKRs />
+            <ActiveOKRs limit={size === 'small' ? 1 : size === 'medium' ? 2 : 3} />
           </MobileCollapsible>
         );
       case 'habits':
