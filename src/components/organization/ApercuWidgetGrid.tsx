@@ -4,28 +4,32 @@ import { ArrowLeft, ArrowRight, Check, LayoutGrid, LayoutTemplate, Pencil, Plus,
 import { useT } from '@/i18n/useT';
 import {
   SIZE_SPAN_CLASS,
-  addWidget,
+  WIDGET_DEFS,
+  addWidgetIn,
   moveWidget,
   removeWidget,
-  resizeWidget,
-  widgetDef,
-  type PlacedWidget,
+  resizeWidgetIn,
+  type PlacedOf,
   type WidgetId,
   type WidgetSize,
 } from './apercu-widgets';
+import type { WidgetCatalog } from './widget-catalog';
 
 import { TEMPLATES, type TemplateId } from './apercu-templates';
+import type { AddWidgetPageProps } from './AddWidgetPage';
 
-const AddWidgetPage = lazy(() => import('./AddWidgetPage'));
+const AddWidgetPage = lazy(() => import('./AddWidgetPage')) as unknown as <Id extends string>(props: AddWidgetPageProps<Id>) => ReactNode;
 const TemplatePicker = lazy(() => import('./TemplatePicker'));
 
-interface ApercuWidgetGridProps {
-  layout: PlacedWidget[];
-  onChange: (next: PlacedWidget[]) => void;
+interface ApercuWidgetGridProps<Id extends string> {
+  layout: PlacedOf<Id>[];
+  onChange: (next: PlacedOf<Id>[]) => void;
   /** Rend le contenu d'un widget ; `null` = rien à montrer pour l'instant. */
-  renderWidget: (id: WidgetId, size: WidgetSize) => ReactNode;
-  /** Modèle du rôle : recommandé dans le choix des modèles. */
-  roleTemplate: TemplateId;
+  renderWidget: (id: Id, size: WidgetSize) => ReactNode;
+  /** Modèle du rôle : recommandé dans le choix des modèles. Absent = pas de modèles. */
+  roleTemplate?: TemplateId;
+  /** Catalogue des widgets ; absent = celui de l'Aperçu entreprise. */
+  catalog?: WidgetCatalog<Id>;
 }
 
 const SIZE_LETTER: Record<WidgetSize, 'S' | 'M' | 'L'> = { small: 'S', medium: 'M', large: 'L' };
@@ -54,18 +58,25 @@ const SWAP_COOLDOWN_MS = 140;
  * ⚠️ Un geste n'est jamais le seul chemin (WCAG 2.1.1) : flèches et choix de
  * format restent au clavier. En édition, le contenu des widgets est `inert`.
  */
-const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTemplate }: ApercuWidgetGridProps) => {
+const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, renderWidget, roleTemplate, catalog }: ApercuWidgetGridProps<Id>) => {
   const { t } = useT('orgAdmin');
+  type Placed = PlacedOf<Id>;
+  const cat: WidgetCatalog<Id> = catalog ?? ({
+    defs: WIDGET_DEFS,
+    name: (id: WidgetId) => t(`apercu.widgets.names.${id}`),
+    desc: (id: WidgetId) => t(`apercu.widgets.desc.${id}`),
+  } as unknown as WidgetCatalog<Id>);
+  const templateOf = (id: TemplateId) => TEMPLATES[id] as unknown as readonly Placed[];
   /**
    * Modèle en APERÇU : choisi mais pas encore validé. Tant qu'il n'est pas
    * validé, rien n'est enregistré, et la personne peut déjà le retoucher
    * (ses retouches vont dans l'aperçu). « Valider » l'enregistre ; ensuite
    * elle continue de modifier comme d'habitude.
    */
-  const [draft, setDraft] = useState<{ template: TemplateId; layout: PlacedWidget[] } | null>(null);
+  const [draft, setDraft] = useState<{ template: TemplateId; layout: Placed[] } | null>(null);
   const [choosingTemplate, setChoosingTemplate] = useState(false);
   const layout = draft?.layout ?? saved;
-  const onChange = (next: PlacedWidget[]) => {
+  const onChange = (next: Placed[]) => {
     if (draft) setDraft({ ...draft, layout: next });
     else save(next);
   };
@@ -76,22 +87,22 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
    * et n'apparaît que s'il y a quelque chose à défaire. Pour un modèle en
    * aperçu, le point de reprise est le modèle tel quel.
    */
-  const [checkpoint, setCheckpoint] = useState<PlacedWidget[]>(saved);
-  const base = draft ? TEMPLATES[draft.template] : checkpoint;
+  const [checkpoint, setCheckpoint] = useState<Placed[]>(saved);
+  const base = draft ? templateOf(draft.template) : checkpoint;
   const dirty = JSON.stringify(layout) !== JSON.stringify(base);
   const startEditing = () => { setCheckpoint(layout); setEditing(true); };
   const finishEditing = () => { setCheckpoint(layout); setEditing(false); };
   const [picking, setPicking] = useState(false);
-  const [dragged, setDragged] = useState<WidgetId | null>(null);
+  const [dragged, setDragged] = useState<Id | null>(null);
   /** Dernier widget ajouté ou redimensionné : il s'illumine un instant. */
-  const [highlight, setHighlight] = useState<{ id: WidgetId; entering: boolean } | null>(null);
-  const [removed, setRemoved] = useState<{ widget: PlacedWidget; index: number } | null>(null);
+  const [highlight, setHighlight] = useState<{ id: Id; entering: boolean } | null>(null);
+  const [removed, setRemoved] = useState<{ widget: Placed; index: number } | null>(null);
 
   const layoutRef = useRef(layout);
   layoutRef.current = layout;
   const lastSwap = useRef(0);
 
-  const name = (id: WidgetId) => t(`apercu.widgets.names.${id}`);
+  const name = (id: Id) => cat.name(id);
   const sizeName = (size: WidgetSize) => t(`apercu.widgets.sizes.${size}`);
 
   useEffect(() => {
@@ -114,7 +125,7 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
     return () => window.clearTimeout(timer);
   }, [highlight]);
 
-  const remove = (id: WidgetId) => {
+  const remove = (id: Id) => {
     const index = layout.findIndex((w) => w.id === id);
     if (index < 0) return;
     setRemoved({ widget: layout[index], index });
@@ -130,13 +141,13 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
     setRemoved(null);
   };
 
-  const resize = (id: WidgetId, size: WidgetSize) => {
-    onChange(resizeWidget(layout, id, size));
+  const resize = (id: Id, size: WidgetSize) => {
+    onChange(resizeWidgetIn(cat.defs, layout, id, size));
     setHighlight({ id, entering: false });
   };
 
   /** Pendant le glisser : le bloc survolé cède sa place, les autres glissent. */
-  const onDrag = (id: WidgetId, info: PanInfo) => {
+  const onDrag = (id: Id, info: PanInfo) => {
     const now = performance.now();
     if (now - lastSwap.current < SWAP_COOLDOWN_MS) return;
     const x = info.point.x - window.scrollX;
@@ -180,7 +191,7 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
                     {t('apercu.widgets.reset')}
                   </motion.button>
                 ),
-                <motion.button
+                roleTemplate && <motion.button
                   key="templates"
                   type="button"
                   layout
@@ -331,7 +342,7 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
           <ul className="apercu-widget-grid relative z-0 isolate grid grid-cols-1 md:grid-cols-6 gap-5 items-stretch">
             <AnimatePresence mode="popLayout" initial={false}>
               {layout.map((w, index) => {
-                const def = widgetDef(w.id);
+                const def = cat.defs.find((d) => d.id === w.id);
                 const content = renderWidget(w.id, w.size);
                 const isDragged = dragged === w.id;
                 const lit = highlight?.id === w.id;
@@ -507,12 +518,12 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
         </AnimatePresence>
 
         <AnimatePresence>
-          {choosingTemplate && (
+          {choosingTemplate && roleTemplate && (
             <Suspense key="templates" fallback={null}>
               <TemplatePicker
-                recommended={roleTemplate}
+                recommended={roleTemplate ?? 'member'}
                 onPick={(id) => {
-                  setDraft({ template: id, layout: [...TEMPLATES[id]] });
+                  setDraft({ template: id, layout: [...templateOf(id)] });
                   setRemoved(null);
                   setChoosingTemplate(false);
                   setEditing(true);
@@ -525,8 +536,9 @@ const ApercuWidgetGrid = ({ layout: saved, onChange: save, renderWidget, roleTem
             <Suspense key="picker" fallback={null}>
               <AddWidgetPage
                 layout={layout}
-                onAdd={(id, size) => {
-                  onChange(addWidget(layout, id, size));
+                catalog={cat}
+                onAdd={(id: Id, size: WidgetSize) => {
+                  onChange(addWidgetIn(cat.defs, layout, id, size));
                   setHighlight({ id, entering: !layout.some((w) => w.id === id) });
                   setPicking(false);
                 }}

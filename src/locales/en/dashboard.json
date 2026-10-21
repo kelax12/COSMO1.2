@@ -162,5 +162,23 @@
     "events_one": "{{count}} event",
     "events_other": "{{count}} events",
     "at": "Day closed at {{time}}."
+  },
+  "widgets": {
+    "names": {
+      "stats": "Statistics",
+      "today": "Today",
+      "priorityTasks": "Priority tasks",
+      "collaborativeTasks": "Collaborative tasks",
+      "okrs": "Active OKRs",
+      "habits": "Today's habits"
+    },
+    "desc": {
+      "stats": "Tasks, events, habits and key results for the period.",
+      "today": "Your personal and team tasks for today, together.",
+      "priorityTasks": "The tasks to do first.",
+      "collaborativeTasks": "Tasks shared with your friends.",
+      "okrs": "Progress on your objectives.",
+      "habits": "Habits to check off today."
+    }
   }
 }

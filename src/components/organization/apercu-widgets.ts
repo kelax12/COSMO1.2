@@ -100,21 +100,41 @@ export const allowsSize = (id: WidgetId, size: WidgetSize): boolean =>
   !!DEF_BY_ID.get(id)?.sizes.includes(size);
 
 /**
+ * Catalogue générique (2026-10-21) : la même grille sert l'Aperçu entreprise
+ * et le tableau de bord perso. Chaque écran fournit SES widgets ; les
+ * opérations de disposition ne dépendent que de la liste des formats permis.
+ */
+export interface CatalogDef<Id extends string = string> {
+  id: Id;
+  sizes: readonly WidgetSize[];
+}
+
+export interface PlacedOf<Id extends string = string> {
+  id: Id;
+  size: WidgetSize;
+}
+
+const allows = <Id extends string>(defs: readonly CatalogDef<Id>[], id: Id, size: WidgetSize) =>
+  !!defs.find((d) => d.id === id)?.sizes.includes(size);
+
+/**
  * Relit une disposition venue du stockage : tout ce qui n'est pas reconnu
  * (widget retiré du catalogue, format qu'il n'accepte plus, doublon) tombe
  * sans bruit. `null` = rien d'exploitable, on prendra le défaut.
  */
-export function sanitizeLayout(raw: unknown): PlacedWidget[] | null {
+export function sanitizeLayoutIn<Id extends string>(
+  defs: readonly CatalogDef<Id>[],
+  raw: unknown,
+  rename: (id: string) => string = (id) => id,
+): PlacedOf<Id>[] | null {
   if (!Array.isArray(raw)) return null;
-  const seen = new Set<WidgetId>();
-  const out: PlacedWidget[] = [];
+  const seen = new Set<Id>();
+  const out: PlacedOf<Id>[] = [];
   for (const item of raw) {
     if (!item || typeof item !== 'object') continue;
     const { id: rawId, size } = item as { id?: unknown; size?: unknown };
     if (typeof rawId !== 'string' || typeof size !== 'string') continue;
-    // « OKR des équipes » a fusionné dans « OKR » (2026-10-20).
-    const id = rawId === 'teamOkrs' ? 'companyOkrs' : rawId;
-    const def = DEF_BY_ID.get(id as WidgetId);
+    const def = defs.find((d) => d.id === rename(rawId));
     if (!def || seen.has(def.id) || !def.sizes.includes(size as WidgetSize)) continue;
     seen.add(def.id);
     out.push({ id: def.id, size: size as WidgetSize });
@@ -122,23 +142,38 @@ export function sanitizeLayout(raw: unknown): PlacedWidget[] | null {
   return out;
 }
 
-export const removeWidget = (layout: readonly PlacedWidget[], id: WidgetId): PlacedWidget[] =>
-  layout.filter((w) => w.id !== id);
-
-/** Ajoute en fin d'aperçu ; si le widget y est déjà, change seulement son format. */
-export function addWidget(layout: readonly PlacedWidget[], id: WidgetId, size: WidgetSize): PlacedWidget[] {
-  if (!allowsSize(id, size)) return [...layout];
-  if (layout.some((w) => w.id === id)) return resizeWidget(layout, id, size);
-  return [...layout, { id, size }];
+export function sanitizeLayout(raw: unknown): PlacedWidget[] | null {
+  // « OKR des équipes » a fusionné dans « OKR » (2026-10-20).
+  return sanitizeLayoutIn(WIDGET_DEFS, raw, (id) => (id === 'teamOkrs' ? 'companyOkrs' : id));
 }
 
-export function resizeWidget(layout: readonly PlacedWidget[], id: WidgetId, size: WidgetSize): PlacedWidget[] {
-  if (!allowsSize(id, size)) return [...layout];
+export const removeWidget = <Id extends string>(layout: readonly PlacedOf<Id>[], id: Id): PlacedOf<Id>[] =>
+  layout.filter((w) => w.id !== id);
+
+export function resizeWidgetIn<Id extends string>(
+  defs: readonly CatalogDef<Id>[], layout: readonly PlacedOf<Id>[], id: Id, size: WidgetSize,
+): PlacedOf<Id>[] {
+  if (!allows(defs, id, size)) return [...layout];
   return layout.map((w) => (w.id === id ? { ...w, size } : w));
 }
 
+/** Ajoute en fin d'aperçu ; si le widget y est déjà, change seulement son format. */
+export function addWidgetIn<Id extends string>(
+  defs: readonly CatalogDef<Id>[], layout: readonly PlacedOf<Id>[], id: Id, size: WidgetSize,
+): PlacedOf<Id>[] {
+  if (!allows(defs, id, size)) return [...layout];
+  if (layout.some((w) => w.id === id)) return resizeWidgetIn(defs, layout, id, size);
+  return [...layout, { id, size }];
+}
+
+export const addWidget = (layout: readonly PlacedWidget[], id: WidgetId, size: WidgetSize): PlacedWidget[] =>
+  addWidgetIn(WIDGET_DEFS, layout, id, size);
+
+export const resizeWidget = (layout: readonly PlacedWidget[], id: WidgetId, size: WidgetSize): PlacedWidget[] =>
+  resizeWidgetIn(WIDGET_DEFS, layout, id, size);
+
 /** Déplace `id` à l'index `to` (borné). */
-export function moveWidget(layout: readonly PlacedWidget[], id: WidgetId, to: number): PlacedWidget[] {
+export function moveWidget<Id extends string>(layout: readonly PlacedOf<Id>[], id: Id, to: number): PlacedOf<Id>[] {
   const from = layout.findIndex((w) => w.id === id);
   if (from < 0) return [...layout];
   const next = [...layout];

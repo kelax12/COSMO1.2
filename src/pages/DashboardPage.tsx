@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useMemo, useState, Suspense } from 'react';
 import { Link } from 'react-router';
 import { X } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
@@ -35,6 +35,16 @@ import { useStatCards } from './dashboard/useStatCards';
 import { deadlineDayKey } from '@/lib/deadline';
 import { useT } from '@/i18n/useT';
 import { VIEW_MODES, type ViewMode } from '@/lib/view-mode';
+import ApercuWidgetGrid from '@/components/organization/ApercuWidgetGrid';
+import type { WidgetSize } from '@/components/organization/apercu-widgets';
+import type { WidgetCatalog } from '@/components/organization/widget-catalog';
+import {
+  DASHBOARD_WIDGET_DEFS,
+  loadDashboardLayout,
+  saveDashboardLayout,
+  type DashboardPlaced,
+  type DashboardWidgetId,
+} from './dashboard/dashboard-widgets';
 
 /** Capitale en tête, le reste intact (« samedi 10 oct. » → « Samedi 10 oct. »). */
 function capitalizeFirst(text: string): string {
@@ -112,6 +122,113 @@ const DashboardPage: React.FC = () => {
   const { container: containerVariants, item: itemVariants } = useRevealVariants(20);
   const reduceMotion = useReducedMotion();
 
+
+  const userKey = authUser?.id ?? 'demo';
+  const [layout, setLayout] = useState<DashboardPlaced[]>(() => loadDashboardLayout(userKey));
+  const onLayoutChange = (next: DashboardPlaced[]) => {
+    setLayout(next);
+    saveDashboardLayout(userKey, next);
+  };
+  const catalog = useMemo<WidgetCatalog<DashboardWidgetId>>(() => ({
+    // « Aujourd'hui » unifié n'a de sens qu'avec une deuxième source de tâches.
+    defs: DASHBOARD_WIDGET_DEFS.filter((d) => d.id !== 'today' || !!activeOrg),
+    name: (id) => t(`widgets.names.${id}`),
+    desc: (id) => t(`widgets.desc.${id}`),
+  }), [activeOrg, t]);
+
+  const renderWidget = (id: DashboardWidgetId, size: WidgetSize): React.ReactNode => {
+    switch (id) {
+      case 'stats':
+        return (
+          <div>
+            <div className="flex items-center justify-end mb-3 sm:mb-4">
+              <div className="flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl">
+                {VIEW_MODES.map(mode => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setViewMode(mode)}
+                    className={cn(
+                      'px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 outline-none',
+                      viewMode === mode
+                        ? 'bg-[#1f6feb] text-white shadow-sm' // bleu foncé dédié : --color-accent (#58a6ff) ne passe pas le contraste AA (2.5:1) avec du texte blanc
+                        : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
+                    )}
+                  >
+                    {t(`viewMode.${mode}`)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className={cn('grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6', size === 'large' && 'xl:grid-cols-4')}>
+              {statCards.map((stat, index) => (
+                <motion.div
+                  key={index}
+                  className="relative overflow-hidden"
+                  // Sous mouvement reduit, AUCUNE cle de transform — sinon les
+                  // cartes restent figees a `y: 20` (mesure le 2026-08-24).
+                  initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+                  animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                  transition={reduceMotion ? { duration: 0.18 } : { delay: index * 0.05, type: 'spring', stiffness: 100 }}
+                >
+                  <div className="p-3 sm:p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
+                    <div className="space-y-0.5 sm:space-y-1 mb-2 sm:mb-3">
+                      <p className="text-caption sm:text-sm text-[rgb(var(--color-text-secondary))] font-bold truncate">{stat.label}</p>
+                      <motion.p
+                        key={`${stat.label}-${viewMode}`}
+                        className="text-title sm:text-3xl lg:text-4xl font-black text-[rgb(var(--color-text-primary))]"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: 'spring' }}
+                      >
+                        {stat.value}
+                      </motion.p>
+                    </div>
+                    <MiniBarChart data={stat.chartData} color={stat.color} ariaLabel={t('stats.trendLabel', { label: stat.label })} />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            {/* Graphique "Répartition du temps" masqué (réactivable via SHOW_REPARTITION_CHART). */}
+            {SHOW_REPARTITION_CHART && (
+              <Suspense fallback={null}>
+                <DashboardBarChart viewMode={viewMode} />
+              </Suspense>
+            )}
+          </div>
+        );
+      case 'today':
+        return activeOrg ? (
+          <MobileCollapsible title={t('sections.today')} defaultOpen>
+            <TodayUnified />
+          </MobileCollapsible>
+        ) : null;
+      case 'priorityTasks':
+        return (
+          <MobileCollapsible title={t('sections.priorityTasks')} defaultOpen>
+            <TodayTasks />
+          </MobileCollapsible>
+        );
+      case 'collaborativeTasks':
+        return hasCollaborativeTasks ? (
+          <MobileCollapsible title={t('sections.collaborativeTasks')}>
+            <CollaborativeTasks />
+          </MobileCollapsible>
+        ) : null;
+      case 'okrs':
+        return (
+          <MobileCollapsible title={t('sections.activeOkrs')}>
+            <ActiveOKRs />
+          </MobileCollapsible>
+        );
+      case 'habits':
+        return (
+          <MobileCollapsible title={t('sections.todayHabits')}>
+            <TodayHabits />
+          </MobileCollapsible>
+        );
+    }
+  };
 
   return (
     <div className="min-h-[100dvh] bg-[rgb(var(--color-background))] p-3 sm:p-6 lg:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8 transition-colors duration-300">
@@ -315,178 +432,32 @@ const DashboardPage: React.FC = () => {
           </motion.div>
         )}
 
-        {/* Toggle vue + Statistiques rapides — DESKTOP UNIQUEMENT.
-            Maquette 02 : sur mobile, ces quatre tuiles et leur sélecteur de
-            période occupaient tout le premier écran, au-dessus de la première
-            chose à faire. Un compteur ne se fait pas ; il se consulte, et il
-            se consulte depuis Statistiques. Le rendu desktop est inchangé. */}
-        {/* Les quatre tuiles et leurs mini-graphiques ne sont plus RENDUS sur
-            téléphone (maquette 02, puis arbitrage du 2026-09-05). `hidden`
-            suffisait à les cacher, pas à les décharger : quatre sparklines et
-            leurs 28 barres restaient calculées et montées dans le DOM d'un
-            écran qui ne les montre jamais. Desktop strictement inchangé. */}
-        {!isMobile && (
-        <motion.div variants={itemVariants} className="hidden md:block">
-          <div className="flex items-center justify-stretch sm:justify-end mb-3 sm:mb-4">
-            <div className="flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl w-full sm:w-auto">
-              {VIEW_MODES.map(mode => (
-                <button
-                  key={mode}
-                  onClick={() => setViewMode(mode)}
-                  className={cn(
-                    'flex-1 sm:flex-none px-4 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-label sm:text-sm font-medium transition-all duration-200 outline-none',
-                    viewMode === mode
-                      ? 'bg-[#1f6feb] text-white shadow-sm' // bleu foncé dédié : --color-accent (#58a6ff) ne passe pas le contraste AA (2.5:1) avec du texte blanc
-                      : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
-                  )}
-                >
-                  {/* `capitalize` retiré de la classe : la casse d'un libellé
-                      appartient à sa langue (l'allemand capitalise les noms,
-                      l'espagnol non), elle est portée par le catalogue. */}
-                  {t(`viewMode.${mode}`)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-            {statCards.map((stat, index) => (
-              <motion.div
-                key={index}
-                className="relative overflow-hidden"
-                // Meme regle que les variantes ci-dessus : sous mouvement
-                // reduit, AUCUNE cle de transform — sinon les quatre cartes
-                // restent figees a `y: 20` (mesure le 2026-08-24).
-                initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
-                animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-                transition={
-                  reduceMotion
-                    ? { duration: 0.18 }
-                    : { delay: index * 0.05, type: 'spring', stiffness: 100 }
-                }
-              >
-                <div className="p-3 sm:p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
-                  <div className="space-y-0.5 sm:space-y-1 mb-2 sm:mb-3">
-                    <p className="text-caption sm:text-sm text-[rgb(var(--color-text-secondary))] font-bold truncate">
-                      {stat.label}
-                    </p>
-                    <motion.p
-                      key={`${stat.label}-${viewMode}`}
-                      className="text-title sm:text-3xl lg:text-4xl font-black text-[rgb(var(--color-text-primary))]"
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ type: 'spring' }}
-                    >
-                      {stat.value}
-                    </motion.p>
-                  </div>
-                  <MiniBarChart data={stat.chartData} color={stat.color} ariaLabel={t('stats.trendLabel', { label: stat.label })} />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+        {/* ── Mobile : le fil découpé en trois moments (maquette 28) ──
+            Rendez-vous et tâches mélangés, rendu pour TOUT LE MONDE, puis
+            Habitudes et OKR sans carte. Le mobile n'a pas de widgets. */}
+        {isMobile && (
+          <motion.div className="flex flex-col gap-6" variants={itemVariants}>
+            <TodayMoments />
+            <SectionDivider />
+            <TodayHabits />
+            <SectionDivider />
+            <ActiveOKRs />
+          </motion.div>
         )}
 
-        {/* Contenu principal en grille */}
-        <motion.div
-          className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8"
-          variants={containerVariants}
-        >
-          {/* Colonne gauche - Tâches prioritaires (gros format) + Graphiques + OKR */}
-          <motion.div
-            className="lg:col-span-2 flex flex-col gap-4 sm:gap-6 lg:gap-8"
-            variants={itemVariants}
-          >
-            {/* Vue « Aujourd'hui » unifiee (#29) — perso + equipe. Reservee aux
-                membres d'une organisation : sans deuxieme source, elle ferait
-                doublon avec « Taches prioritaires ». */}
-            {/* ── Mobile : le fil découpé en trois moments (maquette 28) ──
-                Rendez-vous et tâches mélangés, et rendu pour TOUT LE MONDE :
-                `TodayUnified` était réservé aux membres d'une organisation
-                parce que sans deuxième source de tâches il faisait doublon
-                avec « Tâches prioritaires ». Ce fil-ci porte aussi l'agenda,
-                donc il dit quelque chose qu'aucune autre section ne dit, même
-                sans organisation. */}
-            <div className="md:hidden">
-              <TodayMoments />
-            </div>
-
-            {/* ── Desktop (inchangé) ── */}
-            {activeOrg && (
-              <div className="hidden md:block">
-                <MobileCollapsible title={t('sections.today')} defaultOpen>
-                  <TodayUnified />
-                </MobileCollapsible>
-              </div>
-            )}
-            {/* « Tâches prioritaires » et « Tâches collaboratives » — retirées
-                de MOBILE (arbitrage du 2026-09-05) : le fil « Aujourd'hui »
-                ci-dessus (`TodayMoments`) couvre déjà les tâches perso avec
-                case à cocher et ouverture en modale, ces deux sections
-                faisaient doublon. Desktop inchangé.
-                ⚠️ `isMobile`, pas `md:hidden` : les tuiles de stats plus haut
-                ont déjà appris cette leçon dans ce même fichier — un `hidden`
-                CSS cache sans décharger, `TodayTasks`/`CollaborativeTasks`
-                resteraient montés et à jour en double. */}
-            {!isMobile && (
-              <>
-                <MobileCollapsible title={t('sections.priorityTasks')} defaultOpen>
-                  <TodayTasks />
-                </MobileCollapsible>
-                {/* Graphique "Répartition du temps" masqué (conservé dans le code,
-                    réactivable en repassant SHOW_REPARTITION_CHART à true). */}
-                {SHOW_REPARTITION_CHART && (
-                  <Suspense fallback={null}>
-                    <DashboardBarChart viewMode={viewMode} />
-                  </Suspense>
-                )}
-                {hasCollaborativeTasks && (
-                  <MobileCollapsible title={t('sections.collaborativeTasks')}>
-                    <CollaborativeTasks />
-                  </MobileCollapsible>
-                )}
-              </>
-            )}
-
-            {/* OKR en cours / Habitudes du jour :
-                - Desktop (inchangé) : OKR dans cette colonne, Habitudes dans
-                  la colonne de droite, chacune dans sa carte collapsible.
-                - Mobile : les deux vivent ICI, l'une après l'autre, ordre
-                  INVERSÉ (Habitudes avant OKR) et SANS carte — même
-                  traitement que `TodayMoments` (`ActiveOKRs` et `TodayHabits`
-                  portent déjà leur propre titre et leur propre
-                  `card-plain-mobile`, transparent sous 768px ; le seul
-                  « format card » qui restait venait de `MobileCollapsible`
-                  lui-même, retiré ici). */}
-            {isMobile && (
-              <div className="flex flex-col gap-6">
-                <SectionDivider />
-                <TodayHabits />
-                <SectionDivider />
-                <ActiveOKRs />
-              </div>
-            )}
-            {!isMobile && (
-              <MobileCollapsible title={t('sections.activeOkrs')}>
-                <ActiveOKRs />
-              </MobileCollapsible>
-            )}
+        {/* ── Desktop : widgets (2026-10-21), même système que l'Aperçu
+            entreprise : « Modifier », formats S/M/L, déplacement, fenêtre
+            « Ajouter un widget ». La disposition vit dans le navigateur. */}
+        {!isMobile && (
+          <motion.div variants={itemVariants}>
+            <ApercuWidgetGrid
+              layout={layout}
+              onChange={onLayoutChange}
+              renderWidget={renderWidget}
+              catalog={catalog}
+            />
           </motion.div>
-
-          {/* Colonne droite - Habitudes du jour (desktop uniquement : sur
-              mobile, Habitudes vit dans la colonne de gauche ci-dessus). */}
-          {!isMobile && (
-            <motion.div
-              className="lg:col-span-1 flex flex-col gap-4 sm:gap-6 lg:gap-8"
-              variants={itemVariants}
-            >
-              <MobileCollapsible title={t('sections.todayHabits')}>
-                <TodayHabits />
-              </MobileCollapsible>
-            </motion.div>
-          )}
-        </motion.div>
+        )}
 
       </motion.div>
 
