@@ -1,4 +1,4 @@
-// Le bas du parcours perso, monté au premier geste du visiteur.
+// Le bas de chaque parcours (perso, entreprise), monté au premier geste du visiteur.
 //
 // 🔴 POURQUOI (2026-10-16, TBT mobile). Monter tout le parcours d'un coup
 // coûtait UNE tâche de ~1 s à CPU ×4 : React rendait les cinq vitrines, les

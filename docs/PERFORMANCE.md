@@ -327,6 +327,8 @@ mobile, n'avait donc jamais été archivé. Le résumé imprime désormais l'él
 
 📏 **2026-10-16 · première mesure du parcours ENTREPRISE, Lighthouse mobile en CI**, run `38907264016` (`9dcaf94b`), élément LCP vérifié dans l'artefact (H1 « Qui fait quoi. ») : perf **88**, LCP **1,36 s**, TBT **350 ms**, Speed Index 4,9 s, CLS 0,040, a11y **93**. Le LCP tient ; le TBT est le seul au-dessus de la cible des pages animées (300 ms). Fil principal : `styleLayout` 2,4 s, `vendor-react` 966 ms, `vendor-gsap` 936 ms, `vendor-animation` 666 ms ; tâches longues de 70 à 151 ms entre 8,2 et 10,6 s (sections épinglées, shader). Accessibilité : trois audits en échec, absents du parcours perso (`aria-prohibited-attr` sur les `ent-hero-line` du H1, `color-contrast` sur des `text-slate-500/600`, `label-content-name-mismatch` sur deux boutons). Seuils de `lighthouserc.mobile.json` inchangés.
 
+🟠 **2026-10-18 · parcours entreprise sous `BelowFold` (PR n° 78, `36412ba7`), Lighthouse mobile en CI**, run `39159717107` : `/entreprise-presentation/` perf **86 → 92**, TBT **399 → 276 ms**, LCP 1,36 s, CLS 0,053. Sous la cible de 300 ms, mais d'une seule mesure mobile, et la page reste la plus lente des huit (`/` 96, 204 ms au même run). Desktop : perf 99, TBT 0 à 7 ms. Cause et correctif : les dix sections montaient avec le hero, leurs `useGSAP` forçaient 262 à 276 ms de mise en page ; elles passent au premier geste, comme le parcours perso depuis le 10-16.
+
 
 > ### 🔴 2026-09-14 (soir) · −2 : une RPC créditée d'un gain de 71× rend un chiffre faux en production
 >
