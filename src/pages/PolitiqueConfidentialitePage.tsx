@@ -16,7 +16,13 @@ import type { KeyOf } from '@/i18n/catalog';
  * modifier ce texte transforme une politique en fausse déclaration. Le registre
  * de l'article 30 (`docs/RGPD-REGISTRE.md`) est l'autre moitié de la paire.
  */
-const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
+type PrivacyKey = KeyOf<'legalPrivacy'> | KeyOf<'legalProspection'>;
+
+/** La section 10 bis vit dans son propre catalogue (budget de bundle). */
+const isProspectionKey = (key: PrivacyKey): key is KeyOf<'legalProspection'> =>
+  key.startsWith('prospection.');
+
+const SECTIONS: LegalSection<PrivacyKey>[] = [
   { title: 'privacy.s1.title', blocks: [{ kind: 'p', key: 'privacy.s1.p1' }] },
   {
     title: 'privacy.s2.title',
@@ -139,12 +145,34 @@ const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
       { kind: 'cookie-settings' },
     ],
   },
+  {
+    // 🔴 Ancre visée par chaque email de prospection : ne jamais la renommer.
+    // Source de vérité du contenu : `docs/RGPD-REGISTRE.md` T11. Catalogue à
+    // part (`legalProspection`) : dans `legalPrivacy`, il dépassait le plafond.
+    id: 'prospection',
+    title: 'prospection.title',
+    blocks: [
+      { kind: 'p', key: 'prospection.intro' },
+      {
+        kind: 'ul',
+        items: [
+          'prospection.li1', 'prospection.li2', 'prospection.li3',
+          'prospection.li4', 'prospection.li5', 'prospection.li6',
+          'prospection.li7', 'prospection.li8',
+        ],
+      },
+      { kind: 'p', key: 'prospection.p1' },
+      { kind: 'p', key: 'prospection.p2' },
+    ],
+  },
   { title: 'privacy.s11.title', blocks: [{ kind: 'p', key: 'privacy.s11.p1' }] },
   { title: 'privacy.s12.title', blocks: [{ kind: 'p', key: 'privacy.s12.p1' }] },
 ];
 
 const PolitiqueConfidentialitePage: React.FC = () => {
   const { t } = useT('legalPrivacy');
+  const { t: tProspection } = useT('legalProspection');
+  const text = (key: PrivacyKey) => (isProspectionKey(key) ? tProspection(key) : t(key));
   useSeoMeta({
     title: t('privacy.seoTitle'),
     description: t('privacy.seoDescription'),
@@ -153,7 +181,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
 
   return (
     <LegalDocument
-      text={t}
+      text={text}
       titleKey="privacy.title"
       updatedAtKey="privacy.updatedAt"
       sections={SECTIONS}

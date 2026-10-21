@@ -83,6 +83,7 @@ interface FrModules {
   legal: typeof import('@/locales/fr/legal.json');
   legalTerms: typeof import('@/locales/fr/legalTerms.json');
   legalPrivacy: typeof import('@/locales/fr/legalPrivacy.json');
+  legalProspection: typeof import('@/locales/fr/legalProspection.json');
   okr: typeof import('@/locales/fr/okr.json');
   onboarding: typeof import('@/locales/fr/onboarding.json');
   overlays: typeof import('@/locales/fr/overlays.json');
@@ -188,6 +189,14 @@ interface CatalogShapes {
   legalTerms: Shape<'legalTerms'>;
   /** Politique de confidentialité (`/politique-confidentialite`). */
   legalPrivacy: Shape<'legalPrivacy'>;
+  /**
+   * Section 10 bis de la politique (prospection commerciale, ancre
+   * `#prospection`), chargée avec la même page. 🔴 À part depuis le
+   * 2026-10-18 : dans `legalPrivacy`, elle faisait passer ce catalogue de
+   * 11,6 à 13,4 ko gzip (fr + en) pour un plafond de 12,2. Même document au
+   * sens de `npm run check:legal-journal`, qui la réunit aux trois autres.
+   */
+  legalProspection: Shape<'legalProspection'>;
   /** Mode entreprise — pyramide, équipes, projets, OKR d'équipe, invitations. */
   org: Shape<'org'>;
   /**
@@ -334,7 +343,7 @@ registry[DEFAULT_LOCALE] = {
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
-  'habits', 'invite', 'landing', 'landingEnterprise', 'legal', 'legalPrivacy', 'legalTerms', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgConfig', 'orgGuide', 'persoGuide', 'portfolio', 'premium', 'seo',
+  'habits', 'invite', 'landing', 'landingEnterprise', 'legal', 'legalPrivacy', 'legalProspection', 'legalTerms', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgConfig', 'orgGuide', 'persoGuide', 'portfolio', 'premium', 'seo',
   'onboarding',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',

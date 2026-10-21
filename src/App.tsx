@@ -96,7 +96,7 @@ const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['csv',
 const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'), ['overlays', 'premium']);
 const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'), ['guide', 'seo']);
 const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'), ['legal', 'seo']);
-const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['legal', 'legalPrivacy', 'seo']);
+const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['legal', 'legalPrivacy', 'legalProspection', 'seo']);
 const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['legal', 'legalTerms', 'seo']);
 // `tasks` : même mécanisme que `SettingsPage` ci-dessus, un cran plus loin —
 // `usePreviewShareLink` (`@/modules/friends`) importe `listKeys` du barrel

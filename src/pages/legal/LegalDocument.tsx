@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router';
+import React, { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { RichText } from '@/components/ui/rich-text';
 import { useT } from '@/i18n/useT';
@@ -36,7 +36,11 @@ import ManageCookiesButton from '@/components/ManageCookiesButton';
  * (`legalTerms`, `legalPrivacy`, et `legal` pour les mentions), et sa page
  * passe le traducteur qui va avec (`text`).
  */
-export type LegalKey = KeyOf<'legal'> | KeyOf<'legalTerms'> | KeyOf<'legalPrivacy'>;
+export type LegalKey =
+  | KeyOf<'legal'>
+  | KeyOf<'legalTerms'>
+  | KeyOf<'legalPrivacy'>
+  | KeyOf<'legalProspection'>;
 
 /** Un bloc de contenu à l'intérieur d'une section. */
 export type LegalBlock<K extends LegalKey = LegalKey> =
@@ -50,6 +54,12 @@ export type LegalBlock<K extends LegalKey = LegalKey> =
 export interface LegalSection<K extends LegalKey = LegalKey> {
   title: K;
   blocks: LegalBlock<K>[];
+  /**
+   * Ancre de la section (`#id`), identique dans toutes les langues.
+   * 🔴 Une ancre posée ici est un ENGAGEMENT : des liens extérieurs la visent
+   * (chaque email de prospection vise `#prospection`). Ne jamais la renommer.
+   */
+  id?: string;
 }
 
 const STRONG = 'text-white font-semibold';
@@ -58,8 +68,12 @@ const STRONG = 'text-white font-semibold';
 // cette règle en commentaire).
 const LINK = 'text-blue-300 underline underline-offset-2 hover:text-blue-200';
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <div className="mb-10">
+const Section: React.FC<{ id?: string; title: string; children: React.ReactNode }> = ({
+  id,
+  title,
+  children,
+}) => (
+  <div id={id} className="mb-10 scroll-mt-6">
     <h2 className="text-xl font-bold text-white mb-4 pb-2 border-b border-white/10">{title}</h2>
     <div className="text-slate-300 space-y-3 leading-relaxed">{children}</div>
   </div>
@@ -84,6 +98,15 @@ export function LegalDocument<K extends LegalKey>({
   // Libellés communs aux trois documents : retour, « mis à jour le ».
   const { t } = useT('legal');
   const navigate = useNavigate();
+  const { hash } = useLocation();
+
+  // Le prérendu de ces pages n'en porte qu'un résumé : la section visée par
+  // `#ancre` n'existe pas quand le navigateur cherche à y défiler. On le fait
+  // donc une fois le document monté.
+  useEffect(() => {
+    if (!hash) return;
+    document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView();
+  }, [hash]);
 
   const renderBlock = (block: LegalBlock<K>, i: number) => {
     if (block.kind === 'cookie-settings') {
@@ -131,7 +154,7 @@ export function LegalDocument<K extends LegalKey>({
         <p className="text-slate-400 mb-10">{t('updated', { date: text(updatedAtKey) })}</p>
 
         {sections.map((section) => (
-          <Section key={section.title} title={text(section.title)}>
+          <Section key={section.title} id={section.id} title={text(section.title)}>
             {section.blocks.map(renderBlock)}
           </Section>
         ))}

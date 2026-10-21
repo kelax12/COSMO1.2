@@ -59,7 +59,7 @@ t('project.name')                // clé plate dans le namespace
   navigateur le 2026-09-02 : les quatre liens vers les pages contractuelles (bandeau cookies + pied
   de landing) tombaient tous sur une 404 en anglais. Passer par `useLocalizedPath()`
   (`src/i18n/useLocalizedPath.ts`).
-- 📄 **Les trois pages contractuelles vivent dans TROIS catalogues** depuis le 2026-10-01 : `legalTerms`
+- 📄 **Les trois pages contractuelles vivent dans TROIS catalogues** depuis le 2026-10-01 (QUATRE depuis le 2026-10-18 : la section prospection de la confidentialité est dans `legalProspection`, pour le budget de bundle) : `legalTerms`
   (CGU), `legalPrivacy` (confidentialité) et `legal` (mentions légales, libellés communs), chacun
   chargé par sa seule page (budget de bundle), en français et en anglais. Les pages ne portent plus que la STRUCTURE du document
   (`src/pages/legal/LegalDocument.tsx`) ; le gras et les liens sont dans le catalogue, en

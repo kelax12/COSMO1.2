@@ -30,6 +30,18 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 >
 > **87 → 87.**
 
+> ### ⚪ 2026-10-18 (soir) · 0 : la politique publiée couvre la prospection, le −1 de T11 reste
+>
+> **Même règle** : un débit ne se rembourse que lorsque le défaut est fermé et daté. Le −1 de T11
+> en porte quatre ; un seul est fermé ici.
+>
+> | Item | Effet | Constaté le 2026-10-18 (soir) |
+> |---|---|---|
+> | ✅ T11 · la politique publiée ne disait rien de la prospection | 0 | section **10 bis « Prospection commerciale »**, ancre `#prospection`, fr et en ; information de l'art. 14 complète, source des données comprise. Journal légal daté (`LEGAL-JOURNAL.md`) |
+> | 🟠 T11 · purge à 3 ans, sauvegarde, DPA Anthropic et IONOS | 0 | **toujours ouverts** : trois des quatre manques restent, le −1 aussi |
+>
+> **87 → 87.**
+
 > ### ⚪ 2026-10-18 · 0 : le plafond `V-1` tombe, un traitement neuf ouvre ses propres manques
 >
 > **Même règle** : un défaut ne se rembourse que corrigé et daté. Dernière passe avant
