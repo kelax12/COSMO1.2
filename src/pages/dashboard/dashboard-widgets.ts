@@ -70,24 +70,20 @@ export function saveOkrChoices(userId: string, choices: Record<string, string>):
 }
 
 /**
- * Vue du widget Habitudes, choisie PAR FORMAT : liste en petit, semaine en
- * moyen et grand par défaut, la personne peut basculer (2026-10-21).
+ * Vue du widget Habitudes (liste ou semaine), UNE pour tous les formats :
+ * redimensionner garde la vue en cours (2026-10-21). Tant que la personne
+ * n'a rien choisi, le format décide (liste en petit, semaine sinon).
  */
 export type HabitsViewChoice = 'list' | 'week';
-const habitsViewKey = (userId: string) => `cosmo_dashboard_habits_view_v1:${userId}`;
+const habitsViewKey = (userId: string) => `cosmo_dashboard_habits_view_v2:${userId}`;
 
 export const defaultHabitsView = (size: WidgetSize): HabitsViewChoice => (size === 'small' ? 'list' : 'week');
 
-export function loadHabitsViews(userId: string): Partial<Record<WidgetSize, HabitsViewChoice>> {
+export function loadHabitsView(userId: string): HabitsViewChoice | null {
   const raw = safeGetItem(habitsViewKey(userId));
-  const parsed = raw ? safeParse<unknown>(raw) : null;
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-  return Object.fromEntries(
-    Object.entries(parsed as Record<string, unknown>)
-      .filter(([k, v]) => ['small', 'medium', 'large'].includes(k) && (v === 'list' || v === 'week')),
-  ) as Partial<Record<WidgetSize, HabitsViewChoice>>;
+  return raw === 'list' || raw === 'week' ? raw : null;
 }
 
-export function saveHabitsViews(userId: string, views: Partial<Record<WidgetSize, HabitsViewChoice>>): void {
-  safeSetItem(habitsViewKey(userId), JSON.stringify(views));
+export function saveHabitsView(userId: string, view: HabitsViewChoice): void {
+  safeSetItem(habitsViewKey(userId), view);
 }
