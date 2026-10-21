@@ -232,7 +232,9 @@ const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, re
     initialFocusRef: searchRef,
   });
 
+  // Un widget multiple n'est jamais « déjà sur l'aperçu » : on peut toujours en ajouter un.
   const placed = useMemo(() => new Map(layout.map((w) => [w.id, w.size])), [layout]);
+  const placedSize = (id: Id) => (catalog.defs.find((d) => d.id === id)?.multi ? undefined : placed.get(id));
   const name = (id: Id) => catalog.name(id);
   const desc = (id: Id) => catalog.desc(id);
   const sizeName = (size: WidgetSize) => t(`apercu.widgets.sizes.${size}`);
@@ -322,7 +324,7 @@ const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, re
               <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <AnimatePresence mode="popLayout" initial>
                   {defs.map(({ id }, i) => {
-                    const current = placed.get(id);
+                    const current = placedSize(id);
                     return (
                       <motion.li
                         key={id}
@@ -398,7 +400,7 @@ const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, re
               key={focus.id}
               id={focus.id}
               startIndex={focus.index}
-              placedSize={placed.get(focus.id)}
+              placedSize={placedSize(focus.id)}
               renderWidget={renderWidget}
               onAdd={onAdd}
               onRemove={onRemove}

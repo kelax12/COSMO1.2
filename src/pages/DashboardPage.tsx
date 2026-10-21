@@ -36,14 +36,18 @@ import { deadlineDayKey } from '@/lib/deadline';
 import { useT } from '@/i18n/useT';
 import { VIEW_MODES, type ViewMode } from '@/lib/view-mode';
 import ApercuWidgetGrid from '@/components/organization/ApercuWidgetGrid';
-import type { WidgetSize } from '@/components/organization/apercu-widgets';
+import { baseWidgetId, type WidgetSize } from '@/components/organization/apercu-widgets';
+import OkrWidget from '@/components/OkrWidget';
 import type { WidgetCatalog } from '@/components/organization/widget-catalog';
 import {
   DASHBOARD_WIDGET_DEFS,
   loadDashboardLayout,
+  loadOkrChoices,
+  saveOkrChoices,
   saveDashboardLayout,
   type DashboardPlaced,
   type DashboardWidgetId,
+  type BaseDashboardWidgetId,
 } from './dashboard/dashboard-widgets';
 
 /** Capitale en tête, le reste intact (« samedi 10 oct. » → « Samedi 10 oct. »). */
@@ -132,12 +136,19 @@ const DashboardPage: React.FC = () => {
   const catalog = useMemo<WidgetCatalog<DashboardWidgetId>>(() => ({
     // « Aujourd'hui » unifié n'a de sens qu'avec une deuxième source de tâches.
     defs: DASHBOARD_WIDGET_DEFS.filter((d) => d.id !== 'today' || !!activeOrg),
-    name: (id) => t(`widgets.names.${id}`),
-    desc: (id) => t(`widgets.desc.${id}`),
+    name: (id) => t(`widgets.names.${baseWidgetId(id) as BaseDashboardWidgetId}`),
+    desc: (id) => t(`widgets.desc.${baseWidgetId(id) as BaseDashboardWidgetId}`),
   }), [activeOrg, t]);
 
+  const [okrChoices, setOkrChoices] = useState<Record<string, string>>(() => loadOkrChoices(userKey));
+  const onOkrSelect = (instanceId: string, okrId: string) => {
+    const next = { ...okrChoices, [instanceId]: okrId };
+    setOkrChoices(next);
+    saveOkrChoices(userKey, next);
+  };
+
   const renderWidget = (id: DashboardWidgetId, size: WidgetSize): React.ReactNode => {
-    switch (id) {
+    switch (baseWidgetId(id) as DashboardWidgetId) {
       case 'stats':
         return (
           <div>
@@ -218,7 +229,11 @@ const DashboardPage: React.FC = () => {
       case 'okrs':
         return (
           <MobileCollapsible title={t('sections.activeOkrs')}>
-            <ActiveOKRs limit={size === 'small' ? 1 : size === 'medium' ? 2 : 3} />
+            <OkrWidget
+              okrId={okrChoices[id]}
+              fallbackIndex={layout.filter((w) => baseWidgetId(w.id) === 'okrs').findIndex((w) => w.id === id)}
+              onSelect={(okrId) => onOkrSelect(id, okrId)}
+            />
           </MobileCollapsible>
         );
       case 'habits':
