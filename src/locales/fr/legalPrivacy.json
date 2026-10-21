@@ -3,7 +3,7 @@
     "seoTitle": "Politique de confidentialité – Cosmo App",
     "seoDescription": "Politique de confidentialité de Cosmo : données collectées, stockage sécurisé Supabase, Row Level Security, droits RGPD et contact.",
     "title": "Politique de confidentialité",
-    "updatedAt": "21 octobre 2026",
+    "updatedAt": "13 octobre 2026",
     "s1": {
       "title": "1. Responsable du traitement",
       "p1": "Le responsable du traitement des données personnelles collectées via l'application Cosmo est Axel Longatte, éditeur de Cosmo, joignable à [contact@thecosmo.app](mailto:contact@thecosmo.app)."
@@ -83,13 +83,6 @@
       "p1": "Votre base de données est hébergée en Irlande, au sein de l'Union européenne.",
       "p2": "En revanche, plusieurs prestataires sont des sociétés établies hors de l'Union ou peuvent accéder aux données depuis l'extérieur : **Vercel**, **Sentry**, **Resend**, **Cloudflare**, **Stripe**, **Google** (connexion Google), **GitHub** (sauvegardes chiffrées), ainsi que **Supabase Inc.**, dont les équipes peuvent accéder à l'infrastructure pour la maintenance et le support. Les données qu'ils traitent pour notre compte peuvent donc faire l'objet d'un transfert hors de l'Union. Ces transferts sont encadrés par la décision d'adéquation de la Commission européenne relative au cadre de protection des données UE-États-Unis, lorsque le prestataire y adhère, ou à défaut par les clauses contractuelles types de la Commission (articles 45 et 46 du RGPD).",
       "p3": "Vous pouvez nous demander une copie des garanties applicables à l'adresse indiquée ci-dessous."
-    },
-    "s7ter": {
-      "title": "7 ter. Prospection commerciale auprès de professionnels",
-      "p1": "Cosmo peut contacter par e-mail des professionnels qui ne sont pas encore utilisateurs, pour leur présenter son offre. Ce traitement repose sur notre **intérêt légitime** (article 6.1.f du RGPD) : le message se rapporte toujours à votre fonction professionnelle, et chaque e-mail contient un lien de désinscription simple et gratuit (article L34-5 du Code des postes et des communications électroniques).",
-      "p2": "**Données traitées :** adresse e-mail professionnelle, nom, entreprise, poste, source de l'adresse (indiquée dans le premier message), étape de nos échanges, date du dernier contact et contenu de vos réponses.",
-      "p3": "**Destinataires :** **Supabase** (hébergement en Irlande, dans une base distincte de celle de l'application), **IONOS** (boîtes d'envoi, en Allemagne) et **Anthropic** (États-Unis), qui classe le texte de vos réponses pour nous aider à y donner suite ; ce transfert est encadré par les clauses contractuelles types de la Commission européenne.",
-      "p4": "**Durée :** 3 ans après le dernier contact, puis effacement. **Opposition :** par le lien de désinscription présent dans chaque e-mail, ou en écrivant à [contact@thecosmo.app](mailto:contact@thecosmo.app). Votre adresse est alors inscrite sur une liste d'opposition, conservée pour garantir que vous ne serez plus contacté. Vous disposez aussi des droits décrits à la section 8."
     },
     "s8": {
       "title": "8. Vos droits (RGPD)",

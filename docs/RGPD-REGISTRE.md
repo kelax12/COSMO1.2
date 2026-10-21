@@ -286,9 +286,6 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   personne et si chaque mail offre un moyen **simple et gratuit** de s'y opposer (CNIL, art.
   L34-5 CPCE). Les deux conditions sont à tenir dans chaque modèle de mail.
 - **Personnes concernées** : professionnels contactés, jamais des clients COSMO à ce titre.
-- **Information (art. 14)** : section « 7 ter » de la politique de confidentialité, fr et en,
-  depuis le 2026-10-21. Elle ne dispense pas chaque premier email de citer la source de
-  l'adresse, la finalité et le lien de désinscription.
 - **Données** : email professionnel, nom, entreprise, poste, source du contact, étape du
   parcours, notes libres, date du dernier contact, journal des changements d'étape.
   🔴 Les notes sont libres : n'y écrire **aucune donnée sensible** (art. 9) ni d'appréciation
