@@ -39,7 +39,7 @@ const OkrPickerMenu = ({ options, value, onChange, label, ariaLabel, triggerClas
       <button
         type="button"
         aria-label={`${ariaLabel} : ${label}`}
-        className="group/okrpick inline-flex max-w-full min-w-0 items-center gap-1 rounded-lg -mx-1.5 px-1.5 py-1 text-left transition-colors hover:bg-[rgb(var(--color-hover))]"
+        className="group/okrpick inline-flex min-w-0 items-center gap-1 rounded-lg -mx-1.5 px-1.5 py-1 text-left transition-colors hover:bg-[rgb(var(--color-hover))]"
       >
         <span className={`truncate text-[rgb(var(--color-text-primary))] ${triggerClassName}`}>{label}</span>
         <ChevronsUpDown size={15} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-text-muted))] group-hover/okrpick:text-[rgb(var(--color-text-primary))]" />
