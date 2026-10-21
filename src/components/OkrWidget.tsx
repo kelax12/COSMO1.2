@@ -5,6 +5,7 @@ import { useCategories } from '@/modules/categories';
 import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 import { DashboardCardSkeleton } from '@/components/skeletons';
 import EmptyState from '@/components/EmptyState';
+import OkrPickerMenu from '@/components/OkrPickerMenu';
 import { useT } from '@/i18n/useT';
 
 interface OkrWidgetProps {
@@ -26,6 +27,8 @@ const OkrWidget = ({ okrId, fallbackIndex, onSelect }: OkrWidgetProps) => {
   const navigate = useNavigate();
   const { data: okrs = [], isLoading } = useOkrs();
   const { data: categories = [] } = useCategories();
+
+  const colorOfCategory = (id: string) => categories.find((c) => c.id === id)?.color || NO_CATEGORY_COLOR;
 
   if (isLoading && okrs.length === 0) return <DashboardCardSkeleton />;
 
@@ -49,7 +52,7 @@ const OkrWidget = ({ okrId, fallbackIndex, onSelect }: OkrWidgetProps) => {
     );
   }
 
-  const color = categories.find((c) => c.id === okr.category)?.color || NO_CATEGORY_COLOR;
+  const color = colorOfCategory(okr.category);
   const { progress } = recalcProgress(okr.keyResults);
 
   return (
@@ -57,19 +60,20 @@ const OkrWidget = ({ okrId, fallbackIndex, onSelect }: OkrWidgetProps) => {
       {/* Progression de l'OKR juste après son titre, à la couleur de sa
           catégorie : plus de barre globale (2026-10-21). */}
       <div className="flex items-center gap-3 mb-4">
-        <label className="min-w-0">
-          <span className="sr-only">{t('okrWidget.choose')}</span>
-          <select
+        <div className="min-w-0">
+          <OkrPickerMenu
+            options={pool.map((o) => ({
+              id: o.id,
+              title: o.title,
+              progress: recalcProgress(o.keyResults).progress,
+              color: colorOfCategory(o.category),
+            }))}
             value={okr.id}
-            onChange={(e) => onSelect(e.target.value)}
-            title={t('okrWidget.choose')}
-            className="max-w-full truncate rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-2 py-1.5 text-sm font-semibold text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
-          >
-            {pool.map((o) => (
-              <option key={o.id} value={o.id}>{o.title}</option>
-            ))}
-          </select>
-        </label>
+            onChange={onSelect}
+            label={okr.title}
+            ariaLabel={t('okrWidget.choose')}
+          />
+        </div>
         <span className="shrink-0 text-sm font-bold tabular-nums" style={{ color }}>{progress} %</span>
       </div>
 
