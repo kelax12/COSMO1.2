@@ -8,7 +8,7 @@
 ## i18n — catalogues maison (fr + en)
 
 L'app est **bilingue fr/en**, sans framework i18n (pas d'i18next). Socle dans `src/i18n/`,
-catalogues JSON par namespace dans `src/locales/{fr,en}/*.json` (**29 namespaces** au 2026-10-01, `npm run i18n:check` les compte : `common`,
+catalogues JSON par namespace dans `src/locales/{fr,en}/*.json` (**33 namespaces** au 2026-10-20, dont `persoGuide` du 2026-10-19 ; `npm run i18n:check` les compte : `common`,
 `tasks`, `org`, `landing`, `seo`, `settings`…). ⚠️ Ce fichier a écrit « 19 » jusqu'au 2026-09-14 :
 le chiffre datait du levier de chargement paresseux du 2026-08-25 et n'a jamais été recompté
 pendant que quatre catalogues entraient. Il se relit en une commande, `npm run i18n:check` l'annonce

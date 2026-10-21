@@ -106,8 +106,46 @@ const CONTRAT = {
   },
 };
 
+/**
+ * Les variables SERVEUR, sans préfixe `VITE_`, lues par les fonctions de
+ * `api/`. Elles n'existent que chez Vercel : jamais dans `.env.example`, une
+ * clé secrète n'a rien à faire dans le `.env` d'un poste.
+ *
+ * `lue_par` : le fichier qui doit la lire. Une entrée dont le fichier ne la
+ * lit plus est une entrée morte, et la garde le dit.
+ */
+const CONTRAT_SERVEUR = {
+  SUPABASE_SECRET_KEY: {
+    lue_par: 'api/collect.ts',
+    absence:
+      "🔴 LA MESURE D'AUDIENCE N'ÉCRIT PLUS RIEN, et le site a l'air de marcher. "
+      + 'Depuis la mig. 223 (TR-1), seul `service_role` exécute `track_hit` : '
+      + 'sans cette clé, le collecteur répond 503 à chaque évènement. Posée par '
+      + "l'intégration Vercel ↔ Supabase, en production seulement.",
+  },
+};
+
 /** Les arbres où une `VITE_*` peut être lue par le produit. */
-const ARBRES = ['src', 'prerender.mjs', 'vite.config.ts'];
+const ARBRES = ['src', 'prerender.mjs', 'vite.config.ts', 'api'];
+
+/**
+ * 🔴 Une `VITE_*` est INCLUSE DANS LE BUNDLE servi au navigateur. Un nom qui
+ * dit « secret » ou « service_role » sous ce préfixe est une fuite, pas une
+ * convention : rend ces noms-là.
+ */
+export function secretsExposes(lues) {
+  return [...lues].filter((v) => /SECRET|SERVICE_ROLE/.test(v)).sort();
+}
+
+/** Les variables serveur au contrat que leur fichier ne lit plus. */
+export function serveurNonLues(racine = RACINE, contrat = CONTRAT_SERVEUR) {
+  return Object.entries(contrat)
+    .filter(([v, d]) => {
+      const chemin = join(racine, d.lue_par);
+      return !existsSync(chemin) || !readFileSync(chemin, 'utf8').includes(`process.env.${v}`);
+    })
+    .map(([v, d]) => `${v} (${d.lue_par})`);
+}
 
 /** Toutes les `VITE_*` citées par le code du produit. */
 export function variablesLues(racine = RACINE) {
@@ -220,6 +258,15 @@ if (estLanceDirectement) {
       }
     }
   }
+  for (const v of secretsExposes(lues)) {
+    erreurs.push(
+      `\`${v}\` : un nom de SECRET sous le préfixe \`VITE_\`. Vite l'inclut dans le bundle\n`
+        + '    servi au navigateur. Une clé serveur se lit sans préfixe, depuis `api/` seulement.',
+    );
+  }
+  for (const v of serveurNonLues()) {
+    erreurs.push(`Variable serveur ${v} au contrat mais plus lue par son fichier : retirer l'entrée.`);
+  }
 
   const requises = Object.entries(CONTRAT).filter(([, d]) => d.requise).map(([v]) => v);
   console.log('Contrat des variables d environnement');
@@ -227,6 +274,7 @@ if (estLanceDirectement) {
   console.log(`  au contrat         : ${Object.keys(CONTRAT).length}`);
   console.log(`  requises au build  : ${requises.length} — ${requises.join(', ')}`);
   console.log(`  dans .env.example  : ${exemple ? exemple.size : '—'}`);
+  console.log(`  serveur (api/)     : ${Object.keys(CONTRAT_SERVEUR).join(', ')}`);
 
   // ── Moitié 2 · la réalité Vercel ─────────────────────────────────
   const veutVercel = process.argv.includes('--vercel');
@@ -260,6 +308,16 @@ if (estLanceDirectement) {
         if (d.requise && !cibles?.has('production')) {
           erreurs.push(
             `\`${v}\` est REQUISE et n'est pas configurée sur Vercel pour \`production\`.\n`
+              + `    Conséquence : ${d.absence}`,
+          );
+        }
+      }
+      for (const [v, d] of Object.entries(CONTRAT_SERVEUR)) {
+        const cibles = reelles.get(v);
+        console.log(`  ${v.padEnd(30)} ${cibles ? [...cibles].sort().join(',') : 'ABSENTE'}  (serveur)`);
+        if (!cibles?.has('production')) {
+          erreurs.push(
+            `\`${v}\` (serveur, lue par \`${d.lue_par}\`) n'est pas configurée sur Vercel pour \`production\`.\n`
               + `    Conséquence : ${d.absence}`,
           );
         }

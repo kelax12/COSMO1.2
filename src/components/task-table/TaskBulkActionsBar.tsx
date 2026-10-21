@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Trash2, ListPlus, MoreHorizontal, Tag, CalendarClock, ArrowLeft, X, ChevronRight, ChevronDown } from 'lucide-react';
+import { CheckCircle2, Trash2, ListPlus, MoreHorizontal, Tag, CalendarClock, Activity, ArrowLeft, X, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DateCalendarPanel } from '@/components/ui/date-picker';
 import { buildTree, type Category, type CategoryNode } from '@/modules/categories';
 import { useCollapsedCategories } from '@/modules/categories/collapsed.store';
 import NoCategoryOption from '@/components/category/NoCategoryOption';
+import { HEALTH_DOT, HEALTHS } from '@/components/organization/health-state.helpers';
+import type { TaskHealth } from '@/modules/tasks';
 import { useT } from '@/i18n/useT';
 
 interface Props {
@@ -19,6 +21,7 @@ interface Props {
   onDelete: () => void;
   onSetCategory: (categoryId: string, categoryName: string) => void;
   onSetDeadline: (deadline: string) => void;
+  onSetHealth: (health: TaskHealth | null) => void;
   onExit: () => void;
 }
 
@@ -53,12 +56,13 @@ const TaskBulkActionsBar: React.FC<Props> = ({
   onDelete,
   onSetCategory,
   onSetDeadline,
+  onSetHealth,
   onExit,
 }) => {
   const { t, tp } = useT('tasks');
   const { t: tCommon } = useT('common');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuView, setMenuView] = useState<'root' | 'category' | 'date'>('root');
+  const [menuView, setMenuView] = useState<'root' | 'category' | 'date' | 'health'>('root');
   // Partagé avec ColorSettingsModal / CategoryFilterTree : un même compte a un
   // seul état de pliage, pas un par sélecteur.
   const { isCollapsed, setCollapsed } = useCollapsedCategories();
@@ -110,7 +114,7 @@ const TaskBulkActionsBar: React.FC<Props> = ({
             <Trash2 size={16} data-icon="inline-start" />
             <span className="hidden sm:inline">{t('table.delete')}</span>
           </Button>
-          {/* « ⋯ » — actions supplémentaires : catégorie / deadline */}
+          {/* « ⋯ » — actions supplémentaires : catégorie / deadline / état */}
           <div className="relative">
             <Button
               size="sm"
@@ -143,7 +147,35 @@ const TaskBulkActionsBar: React.FC<Props> = ({
                     role="menu"
                     aria-label={t('table.moreActions')}
                   >
-                    {menuView === 'date' ? (
+                    {menuView === 'health' ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setMenuView('root')}
+                          className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-[rgb(var(--color-hover))] transition-colors"
+                          style={{ color: 'rgb(var(--color-text-muted))' }}
+                          aria-label={t('table.backAria')}
+                        >
+                          <ArrowLeft size={13} aria-hidden="true" /> {t('table.back')}
+                        </button>
+                        <div className="h-px" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+                        {([...HEALTHS, null] as Array<TaskHealth | null>).map((h) => (
+                          <button
+                            key={h ?? 'none'}
+                            type="button"
+                            role="menuitem"
+                            onClick={() => { setMenuOpen(false); onSetHealth(h); }}
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
+                            style={{ color: 'rgb(var(--color-text-primary))' }}
+                          >
+                            {h
+                              ? <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${HEALTH_DOT[h]}`} aria-hidden="true" />
+                              : <span className="w-2.5 h-2.5 rounded-full shrink-0 border" style={{ borderColor: 'rgb(var(--color-text-muted))' }} aria-hidden="true" />}
+                            {h ? t(`board.health.${h}`) : t('board.health.unset')}
+                          </button>
+                        ))}
+                      </>
+                    ) : menuView === 'date' ? (
                       <>
                         <button
                           type="button"
@@ -186,6 +218,17 @@ const TaskBulkActionsBar: React.FC<Props> = ({
                         >
                           <CalendarClock size={15} style={{ color: 'rgb(var(--color-text-secondary))' }} aria-hidden="true" />
                           {t('table.editDeadline')}
+                        </button>
+                        <div className="h-px" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => setMenuView('health')}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
+                          style={{ color: 'rgb(var(--color-text-primary))' }}
+                        >
+                          <Activity size={15} style={{ color: 'rgb(var(--color-text-secondary))' }} aria-hidden="true" />
+                          {t('table.editHealth')}
                         </button>
                       </>
                     ) : (

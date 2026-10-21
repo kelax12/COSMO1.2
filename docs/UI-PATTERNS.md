@@ -1,4 +1,4 @@
-<!-- note-audit: note=86 -->
+<!-- note-audit: note=85 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,22 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **86 / 100** au 2026-10-18, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **85 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
 
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → 84 → 86 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18)
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → 84 → 86 → 86 → **85 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**)
+
+> ### 🟠 2026-10-20 · −1 : la refonte de l'Aperçu passée sans référence visuelle
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | 🔴 `Visual` rouge depuis `a9db6f2c` | **−1** | six captures : `/dashboard` dans les quatre thèmes (contenu daté, voir [`TESTING.md`](./TESTING.md)), `/entreprise` Aperçu (refonte attendue, référence à régénérer), **l'état ERREUR de la frontière d'erreur** (non identifié). La refonte d'écran la plus large depuis septembre (Aperçu en widgets, modèles par rôle, « Ajouter un widget ») est donc arrivée sans aucune comparaison visuelle |
+> | Produit | 0 | Aperçu en grille de widgets éditable (S/M/L, modèles membre, chef d'équipe, admin) ; éditeur de rôle en modale centrée ; invitation une adresse à la fois ; boussole du guide en mode perso ; rapport d'activité refondu puis **rétabli** (`45b2d7fd`), export PDF conservé. Crédité quand `Visual` le verra |
+>
+> **86 → 85.**
 
 > ### ⚪ 2026-10-18 · 0 : vérifiée inchangée
 >
@@ -761,7 +772,7 @@ RemNote). `/entreprise/onboarding` ne propose plus que le choix créer | rejoind
 L'assistant de mise en place en constellation (équipe, invitations, projet, cap), qui demandait
 des informations avant d'avoir montré le produit, est supprimé avec `MemberWelcome`. À la place,
 `OrgWelcomeVideo` ouvre un lecteur au premier passage dans `/entreprise`, créateur comme membre :
-vidéo de ~2 min 45 (`public/videos/onboarding-entreprise.mp4`, source
+vidéo V2 du 2026-10-19, 2 min 24 (`public/videos/onboarding-entreprise-v2.mp4`, source
 `cockpit-marketing/videos/onboarding-entreprise`), sous-titres FR actifs d'office hors locale fr,
 démarrage avec le son et repli muet + bouton « Activer le son » si le navigateur refuse, aucun
 démarrage automatique sous mouvement réduit. Le guide (`?guide=1`, `OrgGuideFab`) est inchangé.
@@ -817,7 +828,7 @@ le harnais `e2e/supabase-stub.ts` (`first-run.spec.ts`, `org-onboarding.spec.ts`
 
 ### OnboardingOverlay — supprimé (2026-07, commit c170e37)
 
-Le tutoriel 3 étapes affiché après `loginDemo()` a été **retiré volontairement** et le composant supprimé du repo (purge 2026-07-15). En démo, ce sont les `PageTutorial` par page qui guident (les deux accueils ci-dessus ne s'ouvrent jamais en démo). Ne pas recréer d'overlay bloquant à l'entrée en démo.
+Le tutoriel 3 étapes affiché après `loginDemo()` a été **retiré volontairement** et le composant supprimé du repo (purge 2026-07-15). En démo, ce sont les `PageTutorial` par page qui guident (l'accueil perso ne s'ouvre jamais en démo). Exception voulue par Axel le 2026-10-19 : la vidéo d'accueil entreprise s'ouvre au premier passage sur `/entreprise` en démo (fermable en un geste, drapeau posé par la fixture e2e). Ne pas recréer d'autre overlay bloquant à l'entrée en démo.
 
 ### PageTutorial — tutoriel par page
 

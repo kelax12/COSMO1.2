@@ -35,6 +35,7 @@ import { translator } from '@/i18n/useT';
 // C-64 — la sortie de secours vit dans un module partage : `AppErrorBoundary`
 // l'offre desormais aussi, et deux copies d'un chemin de secours divergent.
 import { hardSignOut } from '@/lib/hard-sign-out';
+import { releasePrerenderHero } from '@/lib/prerender-hero';
 
 interface Props {
   children: ReactNode;
@@ -57,6 +58,9 @@ export class RootErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('[RootErrorBoundary]', error, info.componentStack);
+    // La copie du hero du prérendu est un calque AU-DESSUS de React : sans ça,
+    // elle cacherait l'écran d'erreur.
+    releasePrerenderHero();
     monitoring.captureException(error, {
       level: 'fatal',
       contexts: { react: { componentStack: info.componentStack ?? undefined } },

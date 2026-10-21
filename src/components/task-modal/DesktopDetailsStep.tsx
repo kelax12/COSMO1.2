@@ -308,7 +308,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                 <div className="space-y-5">
 
                   {/* Task Name */}
-                  <div ref={dRegister('name')}>
+                  <div ref={dRegister('name')} data-guide-id="perso-task-form-name">
                     <label htmlFor="task-name" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                       {t('form.nameRequired')}
                     </label>
@@ -345,6 +345,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                   {isCreating && !showAllFields && (
                     <button
                       type="button"
+                      data-guide-id="perso-task-form-more"
                       onClick={() => setShowAllFields(true)}
                       className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-dashed text-sm font-medium transition-all hover:border-[rgb(var(--color-border-strong))] hover:bg-[rgb(var(--color-accent-solid-hover))]/5 border-[rgb(var(--color-border))]"
                       style={{ color: 'rgb(var(--color-text-secondary))' }}
@@ -357,7 +358,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                   {showAllFields && (<>
                   {/* Priority and Category */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div ref={dRegister('priority')}>
+                      <div ref={dRegister('priority')} data-guide-id="perso-task-form-priority">
                         <label htmlFor="task-priority" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           {t('fields.priority')}
                         </label>
@@ -410,7 +411,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
 
                   {/* Deadline and Estimated Time */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div ref={dRegister('deadline')}>
+                      <div ref={dRegister('deadline')} data-guide-id="perso-task-form-deadline">
                         <label htmlFor="task-deadline" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           {t('fields.deadline')} <span className="normal-case font-normal opacity-60">{t('common.optional')}</span>
                         </label>

@@ -14,6 +14,7 @@ import HeroModuleDock, { DELAI_ARRIMAGE_MS } from './HeroModuleDock';
 import HeroAppIcon from './HeroAppIcon';
 import { setModuleActif } from './hero-module-actif';
 import BelowFold from './BelowFold';
+import { usePrerenderHeroTakeover } from './use-prerender-hero-takeover';
 import HeroBackdrop from './HeroBackdrop';
 
 interface PersoTrackProps {
@@ -37,6 +38,10 @@ interface PersoTrackProps {
 const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureClick, onHeroCtaRef }) => {
   const { t } = useT('landing');
   const isMobile = useIsMobile();
+
+  // Retire la copie du hero peinte par le prérendu ; `reprise` : ne pas
+  // rejouer l'entrée de ce qu'elle montrait déjà.
+  const reprise = usePrerenderHeroTakeover();
 
   const rootRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
@@ -89,7 +94,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
         // après le fallback de page, donc jamais vue.
 
         // Entrées du reste du hero (remplace les motion.* retirés).
-        gsap.from('[data-hero-fade]', {
+        if (!reprise) gsap.from('[data-hero-fade]', {
           opacity: 0,
           y: 18,
           duration: 0.8,
@@ -299,7 +304,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               >
                 <span className="hero-line-mask">
                   <span
-                    className="hero-line-in block bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 bg-clip-text text-transparent"
+                    className={`${reprise ? '' : 'hero-line-in '}block bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 bg-clip-text text-transparent`}
                     style={{ ['--d' as string]: '80ms' }}
                   >
                     {t('hero.line1')}
@@ -307,7 +312,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 </span>
                 <span className="hero-line-mask">
                   <span
-                    className="hero-line-in block bg-gradient-to-r from-blue-600 via-violet-600 to-fuchsia-600 bg-clip-text text-transparent"
+                    className={`${reprise ? '' : 'hero-line-in '}block bg-gradient-to-r from-blue-600 via-violet-600 to-fuchsia-600 bg-clip-text text-transparent`}
                     style={{ ['--d' as string]: '200ms' }}
                   >
                     {t('hero.line2')}

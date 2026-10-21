@@ -33,6 +33,8 @@ interface TeamTasksTableProps {
   unreadCommentsByTask: Map<string, number>;
   selectMode: boolean;
   selectedIds: ReadonlySet<string>;
+  /** Tâches qu'une dépendance non terminée bloque : statut affiché « Bloquée ». */
+  blockedTaskIds: ReadonlySet<string>;
   handlers: TeamTasksRowHandlers;
   /** Libellé d'un en-tête de groupe, et sa bascule repliée / dépliée. */
   groupLabel: (key: string) => { label: string; dot?: string };
@@ -46,7 +48,7 @@ const NO_STATUSES: ProjectStatus[] = [];
 
 const TeamTasksTable = ({
   lines, columns, projectById, memberById, categoryNameOf, statusesByProject, currentUserId, unreadCommentsByTask,
-  selectMode, selectedIds, handlers, groupLabel, onToggleGroup, sortIndicator, onSort,
+  selectMode, selectedIds, blockedTaskIds, handlers, groupLabel, onToggleGroup, sortIndicator, onSort,
 }: TeamTasksTableProps) => {
   const { t } = useT('org');
   const pf = useT('portfolio');
@@ -143,6 +145,7 @@ const TeamTasksTable = ({
                 unreadComments={unreadCommentsByTask.get(task.id) ?? 0}
                 selectMode={selectMode}
                 selected={selectedIds.has(task.id)}
+                blocked={blockedTaskIds.has(task.id)}
                 handlers={handlers}
               />
             );

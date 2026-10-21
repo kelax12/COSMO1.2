@@ -38,6 +38,11 @@ vi.mock('@/modules/team-projects', () => ({
 vi.mock('@/modules/team-okrs', () => ({ useTeamOKRs: () => q([]) }));
 vi.mock('@/modules/org-teams', () => ({ useOrgTeams: () => q([]), useOrgTeamMembers: () => q([]) }));
 vi.mock('@/modules/events', () => ({ useUpcomingEvents: () => [] }));
+// Widget « Invitations en attente » du modèle administrateur (Aperçu en widgets, 2026-10-19).
+vi.mock('@/modules/organizations/governance.hooks', () => ({
+  useEmailInvitations: () => q([]),
+  useResendInvitation: () => ({ mutate: vi.fn() }),
+}));
 vi.mock('@/modules/organizations', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/modules/organizations')>()),
   useOrgNotifications: () => ({ data: [] }),
@@ -86,7 +91,9 @@ describe('onglets entreprise — aucune affirmation pendant le chargement', () =
     // Les blocs peints arrivent dans leur propre chunk (`MyWorkSections`) : on
     // attend qu'il soit là, sinon on lirait le squelette de son Suspense.
     await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
-    expect(screen.getAllByText(/Aucune tâche/i).length).toBeGreaterThan(0);
+    // Aperçu en widgets (2026-10-19) : un admin arrive sur le modèle
+    // administrateur, dont les états vides sont ceux de SES widgets.
+    expect(screen.getAllByText(/Rien ne coince|Aucun projet à risque|Aucune invitation/i).length).toBeGreaterThan(0);
   });
 
   it('Statistiques : aucun chiffre affiché tant que les requêtes chargent', () => {

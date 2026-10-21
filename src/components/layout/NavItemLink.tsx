@@ -50,6 +50,8 @@ interface NavItemLinkProps {
    * d'entrer dans l'espace Entreprise).
    */
   menuContent?: React.ReactNode;
+  /** Ancre du guide perso (`perso-guide/scenarios.ts`), étapes `goto`. */
+  guideId?: string;
 }
 
 const NavItemLink: React.FC<NavItemLinkProps> = ({
@@ -64,6 +66,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
   badgeAriaLabel,
   end,
   menuContent,
+  guideId,
 }) => {
   const [iconHovered, setIconHovered] = useState(false);
   const [groupHovered, setGroupHovered] = useState(false);
@@ -134,6 +137,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
     <NavLink
       to={to}
       end={end}
+      data-guide-id={guideId}
       className={({ isActive }) =>
         `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : '!ml-1 !py-[0.7rem]'}`
       }
