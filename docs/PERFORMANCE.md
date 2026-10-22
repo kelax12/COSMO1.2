@@ -954,7 +954,7 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
 `vendor-utils`, `StatisticsPage` et `AgendaPage` étaient à moins de 2 % de leur cliquet : le
 commit suivant les aurait fait rougir, comme `OrganizationPage` le 2026-10-19. Règle suivie : ne
 sortir en lazy que ce qui sert à l'interaction (modales, menus, surfaces secondaires), jamais un
-plafond relevé. Mesure contre un build de `main` à `b687a683` dans le même worktree, **tous les
+plafond relevé. Mesure contre un build de `main` à `b687a683` dans le même worktree (confirmée par le `check:bundle` de la CI, build avec Sentry, sur `main` à `e9ed98f2` puis sur la PR), **tous les
 chunks** comparés par nom de base (octets gzip, comme `check:bundle`). Les deux builds sans
 `VITE_SENTRY_DSN`, pour comparer à l'identique ; aucun des chunks ci-dessous ne dépend de Sentry.
 
