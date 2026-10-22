@@ -47,7 +47,8 @@ describe('buildCalendarEvents', () => {
       title: 'Réunion',
       backgroundColor: '#3B82F6',
       borderColor: '#3B82F6',
-      textColor: '#ffffff',
+      // AM-5 : le blanc ne rend que 3,68:1 sur #3B82F6 ; texte sombre, 4,82:1.
+      textColor: '#111827',
       editable: true,
     });
     expect(out.extendedProps.isRecurringInstance).toBe(false);
