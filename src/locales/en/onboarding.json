@@ -130,7 +130,7 @@
     "video": {
       "dialogLabel": "Welcome to the company space",
       "title": "Welcome to <em>{{org}}</em>.",
-      "subtitle": "A three-minute tour of your company space (in French, with subtitles).",
+      "subtitle": "A two-and-a-half-minute tour of your company space (in French, with subtitles).",
       "unmute": "Turn sound on",
       "skip": "Skip the video",
       "cta": "Get started",

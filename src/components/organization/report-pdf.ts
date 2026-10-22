@@ -1,6 +1,6 @@
 /**
  * Export PDF du rapport d'activité : même ordre et même lecture que l'écran
- * (en bref, chiffres clés, équipes, avancées, personnes), dessiné à la main
+ * (chiffres clés, projets et OKR, fiches par personne, équipes), dessiné à la main
  * avec jsPDF. Le modèle arrive déjà traduit : ce fichier ne connaît aucun texte.
  *
  * jsPDF pèse ~350 ko : il n'est chargé qu'au clic sur « Exporter ».
@@ -27,7 +27,13 @@ export interface PdfProgress {
 export interface PdfPerson {
   name: string;
   meta: string;
-  items: { text: string; when: string; kind: 'task' | 'event' }[];
+  tasksTitle: string;
+  eventsTitle: string;
+  noTasks: string;
+  noEvents: string;
+  /** `when` vide : rapport d'une seule journée, la date n'apporte rien. */
+  tasks: { text: string; when: string }[];
+  events: { text: string; when: string }[];
 }
 
 export interface ReportPdfModel {
@@ -147,10 +153,11 @@ export const downloadReportPdf = async (model: ReportPdfModel): Promise<void> =>
   // Chiffres clés
   const gap = 4;
   const kw = (W - gap * (model.kpis.length - 1)) / model.kpis.length;
-  ensure(28);
+  const kh = model.kpis.some((k) => k.series.length > 1) ? 26 : 19;
+  ensure(kh + 2);
   model.kpis.forEach((k, i) => {
     const x = M + i * (kw + gap);
-    fill(SOFT); doc.roundedRect(x, y, kw, 26, 3, 3, 'F');
+    fill(SOFT); doc.roundedRect(x, y, kw, kh, 3, 3, 'F');
     font(8); color(MUTED);
     text(k.label, x + 4, y + 6, { maxWidth: kw - 8 });
     font(16, true); color(INK);
@@ -168,25 +175,7 @@ export const downloadReportPdf = async (model: ReportPdfModel): Promise<void> =>
       doc.setLineWidth(0.2);
     }
   });
-  y += 32;
-
-  // Par équipe
-  if (model.teams.length > 0) {
-    sectionTitle(model.teamsTitle);
-    const max = Math.max(1, ...model.teams.map((tm) => tm.value));
-    for (const tm of model.teams) {
-      ensure(7);
-      const c = hexToRgb(tm.color);
-      fill(c); doc.circle(M + 1.2, y + 1.6, 1.2, 'F');
-      font(9.5); color(INK);
-      text(tm.name, M + 5, y + 2.6, { maxWidth: 45 });
-      bar(M + 52, y + 0.8, W - 52 - 38, 0, (tm.value / max) * 100);
-      font(8.5); color(MUTED);
-      text(tm.label, M + W, y + 2.6, { align: 'right' });
-      y += 7;
-    }
-    y += 4;
-  }
+  y += kh + 6;
 
   // Projets et résultats clés
   const progressBlock = (title: string, items: PdfProgress[]) => {
@@ -209,11 +198,14 @@ export const downloadReportPdf = async (model: ReportPdfModel): Promise<void> =>
   progressBlock(model.projectsTitle, model.projects);
   progressBlock(model.krsTitle, model.krs);
 
-  // Personnes
+  // Qui a fait quoi : une fiche par personne, tâches à gauche, événements à droite (comme l'écran)
   if (model.people.length > 0) {
     sectionTitle(model.peopleTitle);
+    const leftW = W * 0.58 - 4;
+    const rightX = M + W * 0.58 + 4;
+    const rightW = W * 0.42 - 4;
     for (const p of model.people) {
-      ensure(14);
+      ensure(22);
       doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
       doc.line(M, y, M + W, y);
       y += 5;
@@ -221,20 +213,55 @@ export const downloadReportPdf = async (model: ReportPdfModel): Promise<void> =>
       text(p.name, M, y);
       font(8.5); color(MUTED);
       text(p.meta, M + W, y, { align: 'right' });
-      y += 5;
-      for (const item of p.items) {
-        const lines = doc.splitTextToSize(clean(item.text), W - 40) as string[];
-        ensure(lines.length * 4.2 + 1);
-        if (item.kind === 'task') { fill(GREEN); doc.circle(M + 3, y - 1.1, 0.9, 'F'); }
-        else { doc.setDrawColor(MUTED[0], MUTED[1], MUTED[2]); doc.circle(M + 3, y - 1.1, 0.9, 'S'); }
-        font(9); color(INK);
-        doc.text(lines, M + 6, y);
-        font(8); color(MUTED);
-        text(item.when, M + W, y, { align: 'right' });
-        y += lines.length * 4.2 + 0.6;
+      y += 6;
+      font(8); color(MUTED);
+      text(p.tasksTitle, M, y);
+      text(p.eventsTitle, rightX, y);
+      y += 4.5;
+      const left = p.tasks.length ? p.tasks : null;
+      const right = p.events.length ? p.events : null;
+      const rows = Math.max(left?.length ?? 1, right?.length ?? 1);
+      for (let i = 0; i < rows; i++) {
+        font(9);
+        const lt = left?.[i];
+        const rt = right?.[i];
+        const lLines = lt ? (doc.splitTextToSize(clean(lt.text), leftW - (lt.when ? 22 : 6)) as string[]) : [];
+        const rLines = rt ? (doc.splitTextToSize(clean(rt.text), rightW - 4) as string[]) : [];
+        const h = Math.max(lLines.length, rLines.length + (rt ? 1 : 0), 1) * 4.2 + 1;
+        ensure(h);
+        if (i === 0 && !left) { font(9); color(MUTED); text(p.noTasks, M, y); }
+        if (lt) {
+          fill(GREEN); doc.circle(M + 1.2, y - 1.1, 0.9, 'F');
+          font(9); color(INK); doc.text(lLines, M + 4, y);
+          if (lt.when) { font(8); color(MUTED); text(lt.when, M + leftW, y, { align: 'right' }); }
+        }
+        if (i === 0 && !right) { font(9); color(MUTED); text(p.noEvents, rightX, y); }
+        if (rt) {
+          font(8); color(MUTED); text(rt.when, rightX, y);
+          font(9); color(INK); doc.text(rLines, rightX, y + 4.2);
+        }
+        y += h;
       }
-      y += 2;
+      y += 3;
     }
+  }
+
+  // Performance par équipe (rapport d'entreprise), en fin de rapport comme à l'écran
+  if (model.teams.length > 0) {
+    sectionTitle(model.teamsTitle);
+    const max = Math.max(1, ...model.teams.map((tm) => tm.value));
+    for (const tm of model.teams) {
+      ensure(7);
+      const c = hexToRgb(tm.color);
+      fill(c); doc.circle(M + 1.2, y + 1.6, 1.2, 'F');
+      font(9.5); color(INK);
+      text(tm.name, M + 5, y + 2.6, { maxWidth: 45 });
+      bar(M + 52, y + 0.8, W - 52 - 38, 0, (tm.value / max) * 100);
+      font(8.5); color(MUTED);
+      text(tm.label, M + W, y + 2.6, { align: 'right' });
+      y += 7;
+    }
+    y += 4;
   }
 
   // Pied

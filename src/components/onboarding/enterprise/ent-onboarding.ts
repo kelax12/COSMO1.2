@@ -1,30 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // Accueil entreprise : règles pures, sans React.
 // ═══════════════════════════════════════════════════════════════════
-import type React from 'react';
-
-/**
- * Variables de thème redéclarées sur le conteneur de l'accueil entreprise :
- * la DA est celle, FIXE, de la landing entreprise (nuit, lune, brume,
- * faisceau), quel que soit le thème de l'application. Sans elles, les styles
- * globaux des champs (`index.css`) et `OrgConsentNotice` peindraient des
- * bordures et des fonds clairs en thème Clair, sur la nuit.
- */
-export const ENT_SCOPE = {
-  colorScheme: 'dark',
-  '--color-border': '45 53 66',
-  '--color-border-strong': '86 98 116',
-  '--color-accent': '34 211 238',
-  '--color-accent-solid': '34 211 238',
-  '--color-accent-solid-hover': '103 232 249',
-  '--color-accent-solid-foreground': '8 9 12',
-  '--color-surface': '26 31 39',
-  '--color-background': '8 9 12',
-  '--color-hover': '20 24 31',
-  '--color-text-primary': '237 242 247',
-  '--color-text-secondary': '139 150 168',
-  '--color-text-muted': '139 150 168',
-} as React.CSSProperties;
 
 // ─── Accueil d'un membre, au premier passage dans l'espace entreprise ───
 

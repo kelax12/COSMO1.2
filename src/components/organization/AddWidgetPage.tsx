@@ -1,55 +1,231 @@
-import { useMemo, useRef, useState } from 'react';
-import {
-  Activity, ArrowLeft, CalendarClock, CalendarDays, CircleCheckBig, Clock3, FolderKanban,
-  Gauge, Hourglass, Plus, Search, Sparkles, Target, type LucideIcon,
-} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, Plus, Search, Trash2, X } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import {
-  WIDGET_DEFS,
   WIDGET_SIZES,
-  type PlacedWidget,
-  type WidgetId,
+  type PlacedOf,
   type WidgetSize,
 } from './apercu-widgets';
+import type { WidgetCatalog } from './widget-catalog';
 
-const ICONS: Record<WidgetId, LucideIcon> = {
-  kpi: Gauge,
-  waiting: Hourglass,
-  tasks: CircleCheckBig,
-  load: Clock3,
-  agenda: CalendarDays,
-  krs: Target,
-  projects: FolderKanban,
-  waitingOn: Hourglass,
-  activity: Activity,
-  orgEvents: CalendarClock,
+/**
+ * Largeur « réelle » d'un widget de chaque format sur l'Aperçu desktop : la
+ * miniature le rend à cette largeur, puis le réduit à la taille de la carte.
+ */
+const NATURAL_WIDTH: Record<WidgetSize, number> = { small: 380, medium: 580, large: 1180 };
+const PREVIEW_HEIGHT = 170;
+
+/**
+ * Miniature VIVANTE du widget : le vrai composant, avec les vraies données,
+ * rendu à sa largeur naturelle puis réduit. Inerte et masqué aux lecteurs
+ * d'écran (le nom et la description le disent déjà).
+ */
+const WidgetPreview = ({ size, children }: { size: WidgetSize; children: ReactNode }) => {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.45);
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const update = () => setScale(Math.min(1, (el.clientWidth - 16) / NATURAL_WIDTH[size]));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [size]);
+  return (
+    <div
+      ref={boxRef}
+      aria-hidden="true"
+      className="relative overflow-hidden rounded-xl bg-[rgb(var(--color-hover))]"
+      style={{ height: PREVIEW_HEIGHT }}
+    >
+      <div
+        ref={(el) => { if (el) el.setAttribute('inert', ''); }}
+        className="absolute left-2 top-2 origin-top-left pointer-events-none select-none"
+        style={{ width: NATURAL_WIDTH[size], transform: `scale(${scale})` }}
+      >
+        {children}
+      </div>
+      {/* Fondu bas : la miniature est un aperçu, pas tout le widget. */}
+      <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[rgb(var(--color-hover))] to-transparent" />
+    </div>
+  );
 };
 
-/** Silhouette du format, à l'échelle de la grille de 6 colonnes. */
-const SHAPE: Record<WidgetSize, string> = {
-  small: 'w-1/3',
-  medium: 'w-1/2',
-  large: 'w-full',
+/**
+ * Carrousel des formats d'un widget : on voit le MÊME widget en petit, moyen
+ * et grand avant de choisir. Flèches, onglets, et ← → au clavier.
+ */
+const FormatCarousel = <Id extends string>({
+  catalog, id, startIndex, placedSize, renderWidget, onAdd, onRemove, onBack,
+}: {
+  catalog: WidgetCatalog<Id>;
+  id: Id;
+  startIndex: number;
+  placedSize: WidgetSize | undefined;
+  renderWidget: (id: Id, size: WidgetSize) => ReactNode;
+  onAdd: (id: Id, size: WidgetSize) => void;
+  onRemove: (id: Id) => void;
+  onBack: () => void;
+}) => {
+  const { t } = useT('orgAdmin');
+  const sizes = catalog.defs.find((d) => d.id === id)?.sizes ?? [];
+  const [[index, dir], setSlide] = useState<[number, number]>([Math.max(0, startIndex), 0]);
+  const backRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => { backRef.current?.focus(); }, []);
+  const size = sizes[index];
+  const go = (delta: number) => {
+    const next = index + delta;
+    if (next >= 0 && next < sizes.length) setSlide([next, delta]);
+  };
+  const sizeName = (s: WidgetSize) => t(`apercu.widgets.sizes.${s}`);
+  if (!size) return null;
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 40 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 40 }}
+      transition={{ type: 'spring', stiffness: 360, damping: 32 }}
+      className="absolute inset-0 z-20 flex flex-col bg-[rgb(var(--color-background))]"
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowLeft') go(-1);
+        if (e.key === 'ArrowRight') go(1);
+      }}
+    >
+      <div className="shrink-0 flex items-center gap-2 border-b border-[rgb(var(--color-border))] px-5 py-3">
+        <button
+          ref={backRef}
+          type="button"
+          onClick={onBack}
+          aria-label={t('apercu.widgets.picker.backToList')}
+          className="min-h-touch min-w-touch rounded-full flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
+        >
+          <ArrowLeft size={20} aria-hidden="true" />
+        </button>
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))] truncate">{catalog.name(id)}</h2>
+          <p className="text-sm text-[rgb(var(--color-text-muted))] truncate">{catalog.desc(id)}</p>
+        </div>
+      </div>
+
+      <div role="group" aria-label={t('apercu.widgets.picker.formats')} className="shrink-0 flex justify-center gap-2 pt-4">
+        {sizes.map((s, i) => (
+          <button
+            key={s}
+            type="button"
+            aria-pressed={i === index}
+            onClick={() => setSlide([i, i > index ? 1 : -1])}
+            className={`relative min-h-touch px-4 rounded-full text-sm font-semibold ${i === index ? 'text-white' : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'}`}
+          >
+            {i === index && (
+              <motion.span
+                layoutId="format-tab"
+                className="absolute inset-0 rounded-full bg-[rgb(var(--color-accent))]"
+                transition={{ type: 'spring', stiffness: 480, damping: 34 }}
+              />
+            )}
+            <span className="relative">{sizeName(s)}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="relative flex-1 min-h-0 flex items-center px-16 py-4 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => go(-1)}
+          disabled={index === 0}
+          aria-label={t('apercu.widgets.pager.prev')}
+          className="absolute left-3 z-10 w-11 h-11 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex items-center justify-center shadow-md disabled:opacity-30"
+        >
+          <ChevronLeft size={20} aria-hidden="true" />
+        </button>
+        <div className="relative w-full h-full flex items-center justify-center">
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div
+              key={size}
+              initial={{ opacity: 0, x: dir * 180, scale: 0.92 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: dir * -180, scale: 0.92 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="w-full max-h-full overflow-hidden"
+              style={{ maxWidth: NATURAL_WIDTH[size] }}
+            >
+              <div ref={(el) => { if (el) el.setAttribute('inert', ''); }} aria-hidden="true" className="pointer-events-none select-none">
+                {renderWidget(id, size)}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+        <button
+          type="button"
+          onClick={() => go(1)}
+          disabled={index === sizes.length - 1}
+          aria-label={t('apercu.widgets.pager.next')}
+          className="absolute right-3 z-10 w-11 h-11 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex items-center justify-center shadow-md disabled:opacity-30"
+        >
+          <ChevronRight size={20} aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="shrink-0 flex items-center justify-center gap-3 border-t border-[rgb(var(--color-border))] px-5 py-3">
+        {placedSize ? (
+          <>
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+              <Check size={15} aria-hidden="true" />
+              {t('apercu.widgets.picker.alreadyHere')}
+            </span>
+            <button
+              type="button"
+              onClick={() => onRemove(id)}
+              className="min-h-touch inline-flex items-center gap-1.5 px-4 rounded-xl border border-red-500/40 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-500/10"
+            >
+              <Trash2 size={15} aria-hidden="true" />
+              {t('apercu.widgets.picker.removeFrom')}
+            </button>
+          </>
+        ) : (
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onAdd(id, size)}
+            className="min-h-touch inline-flex items-center gap-1.5 px-6 rounded-xl bg-[rgb(var(--color-accent))] text-sm font-semibold text-white hover:opacity-90"
+          >
+            <Plus size={16} aria-hidden="true" />
+            {t('apercu.widgets.picker.addInSize', { size: sizeName(size).toLocaleLowerCase() })}
+          </motion.button>
+        )}
+      </div>
+    </motion.div>
+  );
 };
 
-interface AddWidgetPageProps {
-  layout: PlacedWidget[];
-  onAdd: (id: WidgetId, size: WidgetSize) => void;
+export interface AddWidgetPageProps<Id extends string> {
+  catalog: WidgetCatalog<Id>;
+  layout: PlacedOf<Id>[];
+  onAdd: (id: Id, size: WidgetSize) => void;
+  onRemove: (id: Id) => void;
+  renderWidget: (id: Id, size: WidgetSize) => ReactNode;
   onClose: () => void;
 }
 
 /**
- * Page « Ajouter un widget » : plein écran, une barre de recherche, des
- * raccourcis horizontaux vers les trois formats, puis une section par format
- * (petit, moyen, grand). Un widget déjà posé propose de changer de format
- * plutôt que d'en poser un second.
+ * Fenêtre « Ajouter un widget » (2026-10-19) : une vraie pop-up centrée aux
+ * bords arrondis, sur un voile. Recherche, raccourcis horizontaux vers les
+ * trois formats, une section par format, et pour chaque widget sa miniature
+ * vivante.
+ *
+ * Un widget déjà posé ne propose QUE « Retirer » : un « Passer en petit » du
+ * même bleu que « Ajouter » se confondait avec lui (retour d'Axel, 2026-10-19).
  */
-const AddWidgetPage = ({ layout, onAdd, onClose }: AddWidgetPageProps) => {
+const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, renderWidget, onClose }: AddWidgetPageProps<Id>) => {
   const { t } = useT('orgAdmin');
   const [query, setQuery] = useState('');
+  const [focus, setFocus] = useState<{ id: Id; index: number } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  const sectionRefs = useRef<Partial<Record<WidgetSize, HTMLElement | null>>>({});
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const scrollRef = useRef<HTMLDivElement>(null);
   const { ref, dialogProps } = useModalA11y<HTMLDivElement>({
     open: true,
     onClose,
@@ -57,39 +233,68 @@ const AddWidgetPage = ({ layout, onAdd, onClose }: AddWidgetPageProps) => {
     initialFocusRef: searchRef,
   });
 
+  // Un widget multiple n'est jamais « déjà sur l'aperçu » : on peut toujours en ajouter un.
   const placed = useMemo(() => new Map(layout.map((w) => [w.id, w.size])), [layout]);
-  const name = (id: WidgetId) => t(`apercu.widgets.names.${id}`);
-  const desc = (id: WidgetId) => t(`apercu.widgets.desc.${id}`);
+  const placedSize = (id: Id) => (catalog.defs.find((d) => d.id === id)?.multi ? undefined : placed.get(id));
+  const name = (id: Id) => catalog.name(id);
+  const desc = (id: Id) => catalog.desc(id);
   const sizeName = (size: WidgetSize) => t(`apercu.widgets.sizes.${size}`);
 
   const needle = query.trim().toLocaleLowerCase();
-  const matches = (id: WidgetId) =>
+  const matches = (id: Id) =>
     !needle || `${name(id)} ${desc(id)}`.toLocaleLowerCase().includes(needle);
 
-  const sections = WIDGET_SIZES.map((size) => ({
-    size,
-    defs: WIDGET_DEFS.filter((d) => d.sizes.includes(size) && matches(d.id)),
-  }));
-  const nothing = sections.every((s) => s.defs.length === 0);
+  // Deux façons de ranger la fenêtre : par GROUPE quand le catalogue en
+  // déclare (tableau de bord perso : personnels puis professionnels, chaque
+  // widget une fois, en format moyen), sinon par FORMAT (Aperçu entreprise).
+  const previewSize = (sizes: readonly WidgetSize[]): WidgetSize => (sizes.includes('medium') ? 'medium' : sizes[0]);
+  const sections = catalog.groups
+    ? catalog.groups.map((g) => ({
+      key: g.id,
+      title: g.label,
+      hint: g.hint,
+      items: catalog.defs
+        .filter((d) => d.group === g.id && matches(d.id))
+        .map((d) => ({ id: d.id, size: previewSize(d.sizes) })),
+    }))
+    : WIDGET_SIZES.map((size) => ({
+      key: size as string,
+      title: sizeName(size),
+      hint: t(`apercu.widgets.picker.sectionHint_${size}`),
+      items: catalog.defs.filter((d) => d.sizes.includes(size) && matches(d.id)).map((d) => ({ id: d.id, size })),
+    }));
+  const nothing = sections.every((s) => s.items.length === 0);
 
   return (
-    <div
-      ref={ref}
-      {...dialogProps}
-      className="fixed inset-0 z-50 overflow-y-auto bg-[rgb(var(--color-background))]"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.2 } }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/55 backdrop-blur-sm"
     >
-      <header className="sticky top-0 z-10 border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-background)/0.95)] backdrop-blur">
-        <div className="mx-auto max-w-5xl px-4 pt-3 pb-3 space-y-3">
+      <motion.div
+        ref={ref}
+        {...dialogProps}
+        initial={{ opacity: 0, scale: 0.94, y: 24 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 16, transition: { duration: 0.18 } }}
+        transition={{ type: 'spring', stiffness: 360, damping: 30 }}
+        className="relative w-full max-w-5xl h-[88vh] flex flex-col overflow-hidden rounded-3xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] shadow-2xl"
+      >
+        <header className="shrink-0 border-b border-[rgb(var(--color-border))] px-5 pt-4 pb-3 space-y-3">
           <div className="flex items-center gap-2">
-            <button
+            <h1 className="flex-1 text-xl font-bold text-[rgb(var(--color-text-primary))]">{t('apercu.widgets.picker.title')}</h1>
+            <motion.button
               type="button"
+              whileHover={{ rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
               onClick={onClose}
               aria-label={t('apercu.widgets.picker.back')}
-              className="min-h-touch min-w-touch rounded-xl flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
+              className="min-h-touch min-w-touch rounded-full flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
             >
-              <ArrowLeft size={20} aria-hidden="true" />
-            </button>
-            <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{t('apercu.widgets.picker.title')}</h1>
+              <X size={20} aria-hidden="true" />
+            </motion.button>
           </div>
           <label className="relative block">
             <span className="sr-only">{t('apercu.widgets.picker.search')}</span>
@@ -104,85 +309,131 @@ const AddWidgetPage = ({ layout, onAdd, onClose }: AddWidgetPageProps) => {
             />
           </label>
           <nav aria-label={t('apercu.widgets.picker.sectionsNav')} className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-0.5">
-            {sections.map(({ size, defs }) => (
+            {sections.map(({ key, title, items }) => (
               <button
-                key={size}
+                key={key}
                 type="button"
-                onClick={() => sectionRefs.current[size]?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                onClick={() => {
+                  // ⚠️ Jamais `scrollIntoView` : quand la section est la dernière,
+                  // la liste ne peut pas la monter en haut et le navigateur fait
+                  // défiler les ANCESTRES (overflow-hidden compris) — la fenêtre
+                  // partait dans le vide (2026-10-21). On ne fait défiler que la liste.
+                  const list = scrollRef.current;
+                  const section = sectionRefs.current[key];
+                  if (list && section) list.scrollTo({ top: section.offsetTop - 16, behavior: 'smooth' });
+                }}
                 className="shrink-0 min-h-touch inline-flex items-center gap-2 px-4 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm font-semibold text-[rgb(var(--color-text-primary))] hover:border-[rgb(var(--color-accent))]"
               >
-                {sizeName(size)}
-                <span className="text-xs tabular-nums text-[rgb(var(--color-text-muted))]">{defs.length}</span>
+                {title}
+                <span className="text-xs tabular-nums text-[rgb(var(--color-text-muted))]">{items.length}</span>
               </button>
             ))}
           </nav>
-        </div>
-      </header>
+        </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-5 space-y-8">
-        {nothing && (
-          <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('apercu.widgets.picker.searchEmpty', { query })}</p>
-        )}
+        <div ref={scrollRef} className="relative flex-1 overflow-y-auto overscroll-contain px-5 py-5 space-y-8">
+          {nothing && (
+            <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('apercu.widgets.picker.searchEmpty', { query })}</p>
+          )}
 
-        {sections.map(({ size, defs }) => defs.length > 0 && (
-          <section
-            key={size}
-            ref={(el) => { sectionRefs.current[size] = el; }}
-            aria-labelledby={`widget-section-${size}`}
-            className="scroll-mt-48"
-          >
-            <h2 id={`widget-section-${size}`} className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{sizeName(size)}</h2>
-            <p className="text-sm text-[rgb(var(--color-text-muted))] mb-3">{t(`apercu.widgets.picker.sectionHint_${size}`)}</p>
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {defs.map(({ id }) => {
-                const Icon = ICONS[id];
-                const current = placed.get(id);
-                const isCurrent = current === size;
-                return (
-                  <li key={id} className="flex flex-col rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-                    <div className="h-14 rounded-xl bg-[rgb(var(--color-hover))] p-2 flex" aria-hidden="true">
-                      <div className={`${SHAPE[size]} h-full rounded-lg bg-[rgb(var(--color-accent)/0.18)] border border-[rgb(var(--color-accent)/0.35)] flex items-center justify-center`}>
-                        <Icon size={18} className="text-[rgb(var(--color-accent))]" />
-                      </div>
-                    </div>
-                    <p className="mt-3 text-base font-bold text-[rgb(var(--color-text-primary))]">{name(id)}</p>
-                    <p className="mt-0.5 text-sm text-[rgb(var(--color-text-secondary))] flex-1">{desc(id)}</p>
-                    {current && (
-                      <p className="mt-2 text-xs text-[rgb(var(--color-text-muted))]">
-                        {isCurrent ? t('apercu.widgets.picker.current') : t('apercu.widgets.picker.alreadyHere')}
-                      </p>
-                    )}
-                    {!isCurrent && (
-                      <button
-                        type="button"
-                        onClick={() => onAdd(id, size)}
-                        className="mt-3 min-h-touch inline-flex items-center justify-center gap-1.5 rounded-xl bg-[rgb(var(--color-accent))] text-sm font-semibold text-white hover:opacity-90"
+          {sections.map(({ key, title, hint, items }) => items.length > 0 && (
+            <section
+              key={key}
+              ref={(el) => { sectionRefs.current[key] = el; }}
+              aria-labelledby={`widget-section-${key}`}
+              className="scroll-mt-4"
+            >
+              <h2 id={`widget-section-${key}`} className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{title}</h2>
+              {hint && <p className="text-sm text-[rgb(var(--color-text-muted))] mb-3">{hint}</p>}
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <AnimatePresence mode="popLayout" initial>
+                  {items.map(({ id, size }, i) => {
+                    const current = placedSize(id);
+                    return (
+                      <motion.li
+                        key={id}
+                        layout
+                        initial={{ opacity: 0, y: 24, scale: 0.94 }}
+                        animate={{ opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 360, damping: 28, delay: 0.08 + i * 0.045 } }}
+                        exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+                        whileHover={{ y: -4 }}
+                        className="flex flex-col rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3"
                       >
-                        <Plus size={16} aria-hidden="true" />
-                        {current
-                          ? t('apercu.widgets.picker.switchSize', { size: sizeName(size).toLocaleLowerCase() })
-                          : t('apercu.widgets.picker.addTo')}
-                        <span className="sr-only">{` ${name(id)}`}</span>
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ))}
+                        {/* La miniature contient de vrais boutons : elle ne peut pas être
+                            elle-même un bouton. Clic souris ici, clavier sur « Formats ». */}
+                        <div
+                          onClick={() => setFocus({ id, index: catalog.defs.find((d) => d.id === id)?.sizes.indexOf(size) ?? 0 })}
+                          className="cursor-zoom-in rounded-xl"
+                        >
+                          <WidgetPreview size={size}>{renderWidget(id, size)}</WidgetPreview>
+                        </div>
+                        <div className="mt-3 px-1 flex items-center gap-2">
+                          <p className="flex-1 min-w-0 text-base font-bold text-[rgb(var(--color-text-primary))]">{name(id)}</p>
+                          <button
+                            type="button"
+                            onClick={() => setFocus({ id, index: catalog.defs.find((d) => d.id === id)?.sizes.indexOf(size) ?? 0 })}
+                            aria-label={t('apercu.widgets.picker.seeFormats', { name: name(id) })}
+                            className="shrink-0 min-h-[32px] px-2.5 rounded-lg text-xs font-semibold text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))]"
+                          >
+                            {t('apercu.widgets.picker.formats')}
+                          </button>
+                        </div>
+                        <p className="mt-0.5 px-1 text-sm text-[rgb(var(--color-text-secondary))] flex-1">{desc(id)}</p>
+                        {current ? (
+                          <div className="mt-3 flex items-center gap-2">
+                            <span className="flex-1 inline-flex items-center gap-1.5 px-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                              <Check size={14} aria-hidden="true" />
+                              {t('apercu.widgets.picker.alreadyHere')}
+                            </span>
+                            <motion.button
+                              type="button"
+                              whileTap={{ scale: 0.94 }}
+                              onClick={() => onRemove(id)}
+                              className="min-h-touch inline-flex items-center gap-1.5 px-3.5 rounded-xl border border-red-500/40 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                            >
+                              <Trash2 size={15} aria-hidden="true" />
+                              {t('apercu.widgets.picker.removeFrom')}
+                              <span className="sr-only">{` ${name(id)}`}</span>
+                            </motion.button>
+                          </div>
+                        ) : (
+                          <motion.button
+                            type="button"
+                            whileTap={{ scale: 0.94 }}
+                            onClick={() => onAdd(id, size)}
+                            className="mt-3 min-h-touch inline-flex items-center justify-center gap-1.5 rounded-xl bg-[rgb(var(--color-accent))] text-sm font-semibold text-white hover:opacity-90"
+                          >
+                            <Plus size={16} aria-hidden="true" />
+                            {t('apercu.widgets.picker.addTo')}
+                            <span className="sr-only">{` ${name(id)} (${sizeName(size)})`}</span>
+                          </motion.button>
+                        )}
+                      </motion.li>
+                    );
+                  })}
+                </AnimatePresence>
+              </ul>
+            </section>
+          ))}
+        </div>
 
-        {!needle && (
-          <section className="rounded-2xl border border-dashed border-[rgb(var(--color-border))] p-4 flex gap-3">
-            <Sparkles size={18} className="shrink-0 text-[rgb(var(--color-accent))]" aria-hidden="true" />
-            <div>
-              <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('apercu.widgets.picker.ideas')}</p>
-              <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('apercu.widgets.picker.ideasHint')}</p>
-            </div>
-          </section>
-        )}
-      </main>
-    </div>
+        <AnimatePresence>
+          {focus && (
+            <FormatCarousel
+              catalog={catalog}
+              key={focus.id}
+              id={focus.id}
+              startIndex={focus.index}
+              placedSize={placedSize(focus.id)}
+              renderWidget={renderWidget}
+              onAdd={onAdd}
+              onRemove={onRemove}
+              onBack={() => setFocus(null)}
+            />
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </motion.div>
   );
 };
 

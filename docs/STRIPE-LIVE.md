@@ -157,10 +157,26 @@ vérifiées contre `src/i18n/route-slugs.json` plutôt que de mémoire : `https:
 (`terms` → `cgu`) et `https://thecosmo.app/politique-confidentialite` (`privacy`). Ce n'est pas
 bloquant pour la résiliation, c'est un point de conformité.
 
+✅ **Refermé sur le compte LIVE le 2026-10-20** : les deux URL ci-dessus ont été posées par l'API
+sur `bpc_1UAv9vHJLweDSN4F4xssO3OQ`, et la réponse les relit. Le sandbox n'a pas été touché.
+
 ## Ce qui reste à faire avant d'encaisser
 
-1. **Créer la structure juridique.** Aucune micro-entreprise n'existe au 2026-08-26 : encaisser
-   sans immatriculation est du travail dissimulé. C'est le bloquant, pas la technique.
+> 🔎 **Bascule ouverte le 2026-10-20** : SIREN obtenu (déclaré par Axel). Mig. `140` appliquée
+> (ledger `20261020204838`), essai à blanc : 5 customers de test à effacer. Endpoint webhook live
+> `we_1USka0HJLweDSN4FyEBTJZ6n`, les 6 events, **API `2024-06-20`** (celle du code) vers
+> `https://ykeugqfgklejcdbrmawy.supabase.co/functions/v1/stripe-webhook`.
+> 🔴 Un premier endpoint (`we_1USk5Y…`, supprimé) avait pris la version par défaut du compte
+> (`2026-04-22.dahlia`) : ❌ **toujours passer `api_version` à la création**, sinon `invoice.subscription`
+> et `current_period_end` n'arrivent plus là où le code les lit.
+> ✅ **BASCULE TERMINÉE le 2026-10-20** : secrets live posés (empreintes SHA-256 comparées pour le
+> webhook et les 4 prix), `reset_stripe_identifiers(true)` joué (5 customers effacés, journal
+> intact), mig. `224` + `ENTERPRISE_BILLING_ENFORCED = true` + `PRICES_VISIBLE = true`,
+> `stripe-prices.yml` planifié et ajouté à `ci-alert.yml`. Reste : recette réelle (paiement 20 €
+> puis remboursement) et mention 293 B au pied de facture (Dashboard).
+
+1. ~~**Créer la structure juridique.**~~ ✅ SIREN obtenu (2026-10-20). Encaisser sans
+   immatriculation aurait été du travail dissimulé.
 2. Poser les 8 secrets `STRIPE_ORG_PRICE_*` sur les IDs ci-dessus, et remplacer
    `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` par ceux du compte live.
 3. Réenregistrer l'endpoint webhook sur le compte live. 🔴 **SIX events, pas cinq** — recomptés

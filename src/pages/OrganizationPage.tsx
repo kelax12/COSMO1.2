@@ -329,7 +329,8 @@ const OrganizationPage = () => {
   // règle que `org_seats_allowed()` (dont le repli sans abonnement actif EST
   // `ORG_FREE_SEATS`), pour que le client annonce ce que le serveur appliquera.
   const seatsQuota = effectiveQuota(orgSubscription ?? null);
-  const seatsFull = ENTERPRISE_BILLING_ENFORCED && isQuotaReached(members.length, orgSubscription ?? null);
+  // Démo : pas de facturation réelle, la bannière n'appelle aucune action.
+  const seatsFull = !isDemo && ENTERPRISE_BILLING_ENFORCED && isQuotaReached(members.length, orgSubscription ?? null);
 
   const hasEntityParam = ['task', 'member', 'project', 'okr', 'team'].some((k) => searchParams.has(k));
   const glossaryButton = (
@@ -531,10 +532,13 @@ const OrganizationPage = () => {
       />
 
       {/* Premier passage dans CETTE entreprise (créateur comme membre) : la
-          vidéo d'accueil. Jamais en démo, et seulement à une arrivée sans
-          paramètre : qui arrive par un lien (fiche, réglages, retour de
-          paiement) vient pour cet écran, pas pour une visite. */}
-      {arrivedBare && !welcomeClosed && !isDemo && !hasEntityParam && user?.id && joinedSinceWelcome(members, user.id) && !readMemberWelcomeSeen(myOrg.id, user.id) && (
+          vidéo d'accueil, seulement à une arrivée sans paramètre : qui arrive
+          par un lien (fiche, réglages, retour de paiement) vient pour cet
+          écran, pas pour une visite. En démo aussi depuis le 2026-10-19 (demande
+          d'Axel) : le visiteur démo est un prospect, la vidéo lui fait le tour.
+          La date d'arrivée n'y compte pas (membres seedés), le drapeau « vu »
+          tombe avec le reste des clés `cosmo_*` à chaque nouvelle démo. */}
+      {arrivedBare && !welcomeClosed && !hasEntityParam && user?.id && (isDemo || joinedSinceWelcome(members, user.id)) && !readMemberWelcomeSeen(myOrg.id, user.id) && (
         <Suspense fallback={null}>
           <OrgWelcomeVideo
             orgName={myOrg.name}

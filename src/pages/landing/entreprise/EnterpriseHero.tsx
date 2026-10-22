@@ -7,6 +7,7 @@ import { ENTERPRISE_FREE_OFFER, ENTERPRISE_PRICES_SHOWN } from './free-offer';
 import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useMagnetic } from '@/lib/hooks/use-magnetic';
+import { usePrerenderHeroTakeover } from '../use-prerender-hero-takeover';
 
 // `LightRays` embarque `ogl` (chunk `vendor-ogl`, cf. vite.config.ts). Il est
 // chargé à la demande pour que le track perso, qui ne l'affiche jamais, ne
@@ -51,6 +52,9 @@ const avecAppui = (texte: string) =>
 const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => {
   const { t } = useT('landingEnterprise');
   const isMobile = useIsMobile();
+  // Retire la copie du hero peinte par le prérendu ; `reprise` : tout le hero,
+  // pile comprise, était déjà à l'écran, rien ne rejoue son entrée.
+  const reprise = usePrerenderHeroTakeover();
   const heroRef = useRef<HTMLElement>(null);
   const magneticDemo = useMagnetic<HTMLButtonElement>(0.16);
 
@@ -61,6 +65,7 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => 
         // Les deux lignes du titre montent mot par mot depuis leur masque.
         // Plus de dégradé sur le texte, donc plus de classes à recopier sur
         // chaque mot : c'était le correctif qu'imposait `bg-clip-text`.
+        if (reprise) return;
         SplitText.create('.ent-hero-line', {
           type: 'lines,words',
           mask: 'lines',

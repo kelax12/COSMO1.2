@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-react';
 import { useT } from '@/i18n/useT';
-import { TONE_BADGE, TONE_TEXT, type Pager, type WidgetTone } from './widget-shell.helpers';
+import { TONE_BADGE, type Pager, type WidgetTone } from './widget-shell.helpers';
 
 /**
  * Coque commune des formats petit et moyen de l'Aperçu (2026-10-19) : un
@@ -15,6 +15,14 @@ import { TONE_BADGE, TONE_TEXT, type Pager, type WidgetTone } from './widget-she
 interface WidgetShellProps {
   icon: LucideIcon;
   title: string;
+  /** Précision discrète à la suite du titre (« 2 personnes t'attendent »). */
+  titleExtra?: ReactNode;
+  /** Bouton ⓘ à droite du titre : son texte s'affiche au survol ET au clic. */
+  info?: string;
+  /** Action placée dans l'en-tête, à droite du titre (« Nouvelle note »). */
+  headerAction?: ReactNode;
+  /** Commande collée au titre (menu déroulant des OKR). */
+  titleControl?: ReactNode;
   count?: number;
   countTone?: WidgetTone;
   /** Contrôles propres au widget, à gauche de la pagination. */
@@ -30,7 +38,7 @@ interface WidgetShellProps {
 const SHELL = 'h-full min-w-0 flex flex-col rounded-2xl border p-4';
 
 export const WidgetShell = ({
-  icon: Icon, title, count, countTone = 'neutral', actions, pager, pagerLabel, onSeeAll, tone = 'neutral', children,
+  icon: _icon, title, titleExtra, info, headerAction, titleControl, count, countTone = 'neutral', actions, pager, pagerLabel, onSeeAll, tone = 'neutral', children,
 }: WidgetShellProps) => {
   const { t } = useT('orgAdmin');
   const tinted = tone === 'danger'
@@ -40,8 +48,15 @@ export const WidgetShell = ({
   return (
     <section className={`${SHELL} ${tinted}`} aria-label={title}>
       <header className="flex items-center gap-2 mb-3">
-        <Icon size={17} className={tone === 'danger' ? TONE_TEXT.danger : 'text-[rgb(var(--color-text-secondary))]'} aria-hidden="true" />
-        <h3 className="flex-1 min-w-0 truncate text-sm font-bold text-[rgb(var(--color-text-primary))]">{title}</h3>
+        {/* Pas d'icône devant le titre (retour d'Axel, 2026-10-20) : `icon` reste
+            accepté pour ne pas toucher chaque appel, mais n'est plus peint. */}
+        <h3 className={`${titleControl ? 'shrink-0' : 'flex-1'} min-w-0 truncate text-sm font-bold text-[rgb(var(--color-text-primary))]`}>
+          {title}
+          {titleExtra && <span className="ml-1.5 font-normal text-xs text-[rgb(var(--color-text-secondary))]">{titleExtra}</span>}
+        </h3>
+        {titleControl && <div className="flex-1 min-w-0">{titleControl}</div>}
+        {info && <InfoButton text={info} />}
+        {headerAction}
         {count !== undefined && (
           <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-bold tabular-nums ${TONE_BADGE[countTone]}`}>{count}</span>
         )}
@@ -92,21 +107,53 @@ export const WidgetShell = ({
 
 /** Bouton d'action d'un élément (Terminer, Valider, Ouvrir…). */
 export const ItemAction = ({
-  onClick, label, icon: Icon, primary = false, iconOnly = false,
-}: { onClick: () => void; label: string; icon: LucideIcon; primary?: boolean; iconOnly?: boolean }) => (
+  onClick, label, icon: Icon, primary = false, iconOnly = false, hideIcon = false,
+}: {
+  onClick: () => void; label: string; icon: LucideIcon; primary?: boolean; iconOnly?: boolean;
+  /** Libellé seul, sans icône : petit format où chaque pixel compte. */
+  hideIcon?: boolean;
+}) => (
   <button
     type="button"
     onClick={onClick}
     aria-label={iconOnly ? label : undefined}
     title={iconOnly ? label : undefined}
-    className={`shrink-0 h-9 ${iconOnly ? 'w-9' : 'px-3'} inline-flex items-center justify-center gap-1.5 rounded-lg text-xs font-semibold transition-colors ${primary
+    className={`shrink-0 h-9 ${iconOnly ? 'w-9' : hideIcon ? 'px-2.5' : 'px-3'} inline-flex items-center justify-center gap-1.5 rounded-lg text-xs font-semibold transition-colors ${primary
       ? 'bg-[rgb(var(--color-accent))] text-white hover:opacity-90'
       : 'border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]'}`}
   >
-    <Icon size={15} aria-hidden="true" />
+    {!hideIcon && <Icon size={15} aria-hidden="true" />}
     {!iconOnly && label}
   </button>
 );
+
+/**
+ * Petit bouton ⓘ : l'explication s'ouvre au survol, au focus clavier ET au
+ * clic (un écran tactile n'a pas de survol).
+ */
+export const InfoButton = ({ text }: { text: string }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative shrink-0" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        aria-label={text}
+        aria-expanded={open}
+        className="w-6 h-6 rounded-full border border-[rgb(var(--color-border))] text-[11px] font-bold italic font-serif text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] inline-flex items-center justify-center"
+      >
+        i
+      </button>
+      {open && (
+        <span role="tooltip" className="absolute right-0 top-8 z-20 w-64 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3 text-xs leading-relaxed text-[rgb(var(--color-text-secondary))] shadow-lg">
+          {text}
+        </span>
+      )}
+    </span>
+  );
+};
 
 /** Phrase de liste vide, commune aux formats compacts. */
 export const WidgetEmpty = ({ children }: { children: ReactNode }) => (

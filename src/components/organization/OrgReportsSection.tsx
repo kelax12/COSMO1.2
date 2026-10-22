@@ -1,42 +1,30 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import {
-  ChevronLeft, ChevronRight, CircleCheck, Download, FolderKanban, Sparkles, Target, UsersRound,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, CircleCheck, Download, FolderKanban, Target, UserRound, UsersRound } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import {
   aggregateReports,
-  buildHighlights,
-  dailySeries,
   eventMinutes,
   groupActivityByPerson,
   lastReportDay,
   periodBounds,
-  previousPeriod,
   shiftPeriod,
-  sortKrsByGain,
-  sortProjectsByGain,
-  totalEventMinutes,
-  trendOf,
   fromDayKey,
   addDays,
   toDayKey,
   useActivityReports,
   MAX_REPORT_DAYS,
-  type PersonActivity,
   type ReportPeriodKind,
   type ReportScope,
-  type Trend,
 } from '@/modules/org-reports';
 import { useT } from '@/i18n/useT';
-import { toast } from '@/lib/toast';
 import { DatePicker } from '@/components/ui/date-picker';
 import { projectColorHex } from './team-projects.helpers';
 import { reportAccess } from './report-access.helpers';
 import MenuSelect from '@/components/organization/MenuSelect';
+import { toast } from '@/lib/toast';
 import type { ReportPdfModel } from './report-pdf';
-import ReportPeopleList, { type PeopleSort } from './ReportPeopleList';
 
 interface OrgReportsSectionProps {
   orgId: string;
@@ -53,14 +41,23 @@ const primary = 'text-[rgb(var(--color-text-primary))]';
 const hexOf = (color: string | null | undefined) =>
   color && color.startsWith('#') ? color : projectColorHex(color ?? 'blue');
 
-const BlockTitle = ({ Icon, children, aside }: { Icon: typeof CircleCheck; children: ReactNode; aside?: ReactNode }) => (
-  <div className="flex items-center gap-2 mb-3">
-    <h3 className={`flex items-center gap-2 text-sm font-bold ${primary}`}>
-      <Icon size={16} aria-hidden="true" className={muted} />
-      {children}
-    </h3>
-    {aside && <span className={`ml-auto text-xs ${muted}`}>{aside}</span>}
-  </div>
+const initials = (name: string | null) =>
+  (name ?? '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('') || '?';
+
+const Avatar = ({ name }: { name: string | null }) => (
+  <span
+    aria-hidden="true"
+    className="w-8 h-8 shrink-0 rounded-full bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))] text-caption font-semibold flex items-center justify-center"
+  >
+    {initials(name)}
+  </span>
+);
+
+const BlockTitle = ({ Icon, children }: { Icon: typeof CircleCheck; children: ReactNode }) => (
+  <h3 className={`flex items-center gap-2 text-sm font-bold mb-3 ${primary}`}>
+    <Icon size={16} aria-hidden="true" className={muted} />
+    {children}
+  </h3>
 );
 
 /** Avant la période en gris, le gain de la période en vert à sa suite. */
@@ -75,38 +72,10 @@ const ProgressBar = ({ before, after }: { before: number; after: number }) => {
   );
 };
 
-const Badge = ({ children }: { children: ReactNode }) => (
-  <span className="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-    {children}
-  </span>
-);
-
-type Tone = 'up' | 'down' | 'flat';
-const toneOf = (trend: Trend): Tone => (trend.delta > 0 ? 'up' : trend.delta < 0 ? 'down' : 'flat');
-const toneClass: Record<Tone, string> = {
-  up: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-  down: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
-  flat: 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-muted))]',
-};
-const strokeOf: Record<Tone, string> = { up: '#10b981', down: '#d97706', flat: 'rgb(var(--color-text-muted))' };
-
-/** Courbe jour par jour d'un chiffre clé : décorative, le chiffre et la tendance portent le sens. */
-const Sparkline = ({ values, tone }: { values: number[]; tone: Tone }) => {
-  if (values.length < 2) return null;
-  const max = Math.max(1, ...values);
-  const points = values.map((v, i) => `${(i / (values.length - 1)) * 100},${18 - (v / max) * 16}`).join(' ');
-  return (
-    <svg viewBox="0 0 100 20" preserveAspectRatio="none" className="mt-1 w-full h-5" aria-hidden="true">
-      <polyline fill="none" stroke={strokeOf[tone]} strokeWidth="2" vectorEffect="non-scaling-stroke" points={points} />
-    </svg>
-  );
-};
-
 /**
  * Rapports d'activité (mig. 202) : ce que l'entreprise, ou une équipe, a FAIT
  * sur une période. Chaque journée est figée par le serveur à minuit ; semaine,
- * mois et période libre sont l'agrégat de ces journées. Chaque chiffre se lit
- * contre la période de même longueur qui précède.
+ * mois et période libre sont l'agrégat de ces journées.
  */
 const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: OrgReportsSectionProps) => {
   const { t, tp, locale } = useT('orgAdmin');
@@ -120,9 +89,8 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
   const [kind, setKind] = useState<ReportPeriodKind>('week');
   const [anchor, setAnchor] = useState(lastDay);
   const [custom, setCustom] = useState({ from: addDays(lastDay, -13), to: lastDay });
-  const [pickedScope, setPickedScope] = useState<ReportScope | null>(initialTeamId ? { kind: 'team', teamId: initialTeamId } : null);
-  const [peopleSort, setPeopleSort] = useState<PeopleSort>('tasks');
   const [exporting, setExporting] = useState(false);
+  const [pickedScope, setPickedScope] = useState<ReportScope | null>(initialTeamId ? { kind: 'team', teamId: initialTeamId } : null);
 
   // Périmètre effectif : le choix, s'il est encore permis, sinon le premier permis.
   const scope: ReportScope | null = useMemo(() => {
@@ -139,34 +107,17 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
     // Bornée à un an : au-delà, la requête couperait en silence.
     return { from: a < addDays(b, -(MAX_REPORT_DAYS - 1)) ? addDays(b, -(MAX_REPORT_DAYS - 1)) : a, to: b };
   }, [kind, anchor, custom]);
-  const prev = useMemo(() => previousPeriod(from, to), [from, to]);
 
   const { data: days = [], isLoading, isError, refetch } = useActivityReports(orgId, scope, from, to);
-  const { data: prevDays } = useActivityReports(orgId, scope, prev.from, prev.to);
   const report = useMemo(() => aggregateReports(days, from, to), [days, from, to]);
-  const prevReport = useMemo(() => (prevDays ? aggregateReports(prevDays, prev.from, prev.to) : null), [prevDays, prev]);
-  // Sans journée générée avant, il n'y a rien à comparer : pas de tendance plutôt qu'un faux « +100 % ».
-  const hasPrev = !!prevReport && prevReport.daysCovered > 0;
-  const series = useMemo(() => dailySeries(days, from, to), [days, from, to]);
-  const highlights = useMemo(() => buildHighlights(report, hasPrev ? prevReport!.tasks.length : null), [report, hasPrev, prevReport]);
-  const projects = useMemo(() => sortProjectsByGain(report.projects), [report.projects]);
-  const krs = useMemo(() => sortKrsByGain(report.krs), [report.krs]);
+  const people = useMemo(() => groupActivityByPerson(report.tasks, report.events), [report.tasks, report.events]);
   const memberName = useMemo(() => new Map(members.map((m) => [m.userId, m.displayName])), [members]);
 
   const fmtDay = (key: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, opts).format(fromDayKey(key));
   const fmtTime = (iso: string) => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
+  const minutes = (a: string, b: string) => Math.max(0, Math.round((Date.parse(b) - Date.parse(a)) / 60000));
   const fmtDuration = (m: number) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${String(m % 60).padStart(2, '0')}` : ''}` : `${m} min`);
   const multiDay = from !== to;
-
-  const personName = (id: string | null, frozen: string | null) => frozen ?? (id ? memberName.get(id) : null) ?? t('reports.unknownPerson');
-  const people = useMemo(() => {
-    const list = groupActivityByPerson(report.tasks, report.events).map((p) => ({ ...p, minutes: totalEventMinutes(p.events) }));
-    if (peopleSort === 'agenda') return [...list].sort((a, b) => b.minutes - a.minutes || b.tasks.length - a.tasks.length);
-    if (peopleSort === 'name') {
-      return [...list].sort((a, b) => (a.userName ?? memberName.get(a.userId ?? '') ?? '').localeCompare(b.userName ?? memberName.get(b.userId ?? '') ?? '', locale));
-    }
-    return list;
-  }, [report.tasks, report.events, peopleSort, memberName, locale]);
 
   const periodLabel = kind === 'day'
     ? fmtDay(from, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -184,82 +135,34 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
     return <p className={`text-sm py-8 text-center ${muted}`}>{t('reports.noAccess')}</p>;
   }
 
-  const scopeName = scope.kind === 'org'
-    ? t('reports.scopeAll')
-    : access.teams.find((tm) => tm.id === scope.teamId)?.name ?? t('reports.scopeTeam');
-  const scopeOptions = [
-    ...(access.canOrg ? [{ value: 'org', label: t('reports.scopeAll') }] : []),
-    ...access.teams.map((tm) => ({ value: tm.id, label: tm.name })),
-  ];
+  const personName = (id: string | null, frozen: string | null) => frozen ?? (id ? memberName.get(id) : null) ?? t('reports.unknownPerson');
   const openTeam = (teamId: string) => {
     if (access.teams.some((tm) => tm.id === teamId)) setPickedScope({ kind: 'team', teamId });
   };
 
-  const trendLabel = (trend: Trend, unit?: (n: number) => string) => {
-    if (trend.delta === 0) return t('reports.trendSame');
-    const sign = trend.delta > 0 ? '+' : '-';
-    if (unit) return `${sign}${unit(Math.abs(trend.delta))}`;
-    return trend.percent !== null ? `${sign}${Math.abs(trend.percent)} %` : `${sign}${Math.abs(trend.delta)}`;
-  };
-  const agendaMinutes = totalEventMinutes(report.events);
   const kpis = [
-    { label: t('reports.kpiTasks'), value: String(report.tasks.length), series: series.tasks,
-      trend: hasPrev ? trendOf(report.tasks.length, prevReport!.tasks.length) : null, unit: undefined },
-    { label: t('reports.kpiProjects'), value: String(report.projects.length), series: series.projects,
-      trend: hasPrev ? trendOf(report.projects.length, prevReport!.projects.length) : null, unit: undefined },
-    { label: t('reports.kpiKrs'), value: String(report.krs.length), series: series.krs,
-      trend: hasPrev ? trendOf(report.krs.length, prevReport!.krs.length) : null, unit: undefined },
-    { label: t('reports.kpiAgenda'), value: fmtDuration(agendaMinutes), series: series.eventMinutes,
-      trend: hasPrev ? trendOf(agendaMinutes, totalEventMinutes(prevReport!.events)) : null, unit: fmtDuration },
-  ].map((k) => ({ ...k, tone: k.trend ? toneOf(k.trend) : ('flat' as Tone), trendText: k.trend ? trendLabel(k.trend, k.unit) : null }));
-
-  // Le résumé en phrases : partagé par l'écran et le PDF.
-  const summary: string[] = [];
-  if (highlights.projectsDone.length > 0) {
-    summary.push(tp('reports.hlProjectsDone', highlights.projectsDone.length, { name: highlights.projectsDone[0].name }));
-  }
-  if (highlights.krsCompleted.length > 0) summary.push(tp('reports.hlKrs', highlights.krsCompleted.length));
-  if (scope.kind === 'org' && highlights.topTeam) summary.push(t('reports.hlTopTeam', highlights.topTeam));
-  if (summary.length === 0 && report.tasks.length > 0) summary.push(tp('reports.hlTasks', report.tasks.length));
-  // Une hausse « depuis zéro » n'a pas de pourcentage : on ne la raconte pas.
-  const tr = highlights.tasksTrend;
-  if (tr && report.tasks.length > 0) {
-    if (tr.delta === 0 || tr.percent === 0) summary.push(t('reports.hlTrendFlat'));
-    else if (tr.percent !== null) summary.push(t(tr.delta > 0 ? 'reports.hlTrendUp' : 'reports.hlTrendDown', { percent: Math.abs(tr.percent) }));
-  }
-
+    { label: t('reports.kpiTasks'), value: report.tasks.length },
+    { label: t('reports.kpiProjects'), value: report.projects.length },
+    { label: t('reports.kpiKrs'), value: report.krs.length },
+    { label: t('reports.kpiEvents'), value: report.events.length },
+  ];
   const nothing = report.tasks.length + report.projects.length + report.krs.length + report.events.length === 0;
   const segBtn = (active: boolean) =>
     `px-3 py-1.5 text-sm transition-colors ${active
       ? 'bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))] font-semibold'
       : `${primary} hover:bg-[rgb(var(--color-hover))]`}`;
   const input = 'px-2.5 py-1.5 text-sm rounded-lg border bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]';
-  const iconBtn = `p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] disabled:opacity-40 disabled:cursor-not-allowed ${primary}`;
 
-
-  /** Tâches puis événements d'une personne, avec leur moment : l'écran et le PDF lisent la même liste. */
-  const personItems = (p: PersonActivity) => [
-    ...p.tasks.map((task) => ({
-      key: task.id, kind: 'task' as const, text: task.name,
-      when: multiDay ? fmtDay(toDayKey(new Date(task.at)), { weekday: 'short', day: 'numeric' }) : fmtTime(task.at),
-    })),
-    ...p.events.map((e, i) => ({
-      key: `${e.start}-${i}`, kind: 'event' as const, text: `${e.title} · ${fmtDuration(eventMinutes(e))}`,
-      when: `${multiDay ? `${fmtDay(toDayKey(new Date(e.start)), { weekday: 'short', day: 'numeric' })} ` : ''}${fmtTime(e.start)}`,
-    })),
-  ];
-  const personMeta = (p: PersonActivity & { minutes: number }) => [
-    tp('reports.groupCount', p.tasks.length),
-    p.minutes > 0 ? t('reports.agendaTime', { time: fmtDuration(p.minutes) }) : null,
-  ].filter(Boolean).join(' · ');
-
-  const progressDetail = (before: number | null, after: number) =>
-    before !== null ? `${before} → ${after} % · ${t('reports.projectDelta', { count: after - before })}` : `${after} %`;
-
+  /** Le PDF reprend l'écran tel quel : chiffres clés, projets, OKR, fiches par personne, équipes. */
   const exportPdf = async () => {
     setExporting(true);
     try {
       const { downloadReportPdf } = await import('./report-pdf');
+      const scopeName = scope.kind === 'org'
+        ? t('reports.scopeOrg')
+        : access.teams.find((tm) => tm.id === scope.teamId)?.name ?? t('reports.scopeTeam');
+      const progressDetail = (before: number | null, after: number, done: boolean, doneLabel: string) =>
+        `${before !== null ? `${before} → ` : ''}${after} %${done ? ` · ${doneLabel}` : before !== null ? ` · ${t('reports.projectDelta', { count: after - before })}` : ''}`;
       const model: ReportPdfModel = {
         fileName: `rapport-${scope.kind === 'org' ? 'entreprise' : scopeName.toLowerCase().replace(/[^a-z0-9]+/gi, '-')}-${from}_${to}.pdf`,
         title: t('reports.title'),
@@ -267,29 +170,40 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
         periodLabel: periodLabel.charAt(0).toUpperCase() + periodLabel.slice(1),
         generatedLabel: t('reports.pdfGenerated', { date: new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(new Date()) }),
         pageLabel: (page, total) => t('reports.pdfPage', { page, total }),
-        summaryTitle: t('reports.summaryTitle'),
-        summary,
-        kpis: kpis.map((k) => ({ label: k.label, value: k.value, trend: k.trendText, tone: k.trend ? k.tone : null, series: k.series })),
+        summaryTitle: '',
+        summary: [],
+        kpis: kpis.map((k) => ({ label: k.label, value: String(k.value), trend: null, tone: null, series: [] })),
+        projectsTitle: t('reports.projectsTitle'),
+        projects: report.projects.map((p) => ({
+          name: p.name, before: p.before, after: p.after, badge: null,
+          detail: progressDetail(p.before, p.after, p.after >= 100, t('reports.projectDone')),
+        })),
+        krsTitle: t('reports.krsTitle'),
+        krs: report.krs.map((k) => ({
+          name: k.title, sub: k.okrTitle, before: k.before ?? k.after, after: k.after, badge: null,
+          detail: progressDetail(k.before, k.after, k.completed, t('reports.krCompleted')),
+        })),
+        peopleTitle: t('reports.peopleTitle'),
+        people: people.map((person) => ({
+          name: personName(person.userId, person.userName),
+          meta: `${tp('reports.groupCount', person.tasks.length)} · ${tp('reports.eventCount', person.events.length)}`,
+          tasksTitle: t('reports.colTasks'),
+          eventsTitle: t('reports.colEvents'),
+          noTasks: t('reports.noPersonTasks'),
+          noEvents: t('reports.noPersonEvents'),
+          tasks: person.tasks.map((task) => ({
+            text: task.name,
+            when: multiDay ? fmtDay(toDayKey(new Date(task.at)), { day: 'numeric', month: 'short' }) : '',
+          })),
+          events: person.events.map((e) => ({
+            text: `${e.title} · ${fmtDuration(eventMinutes(e))}`,
+            when: `${multiDay ? `${fmtDay(toDayKey(new Date(e.start)), { weekday: 'short', day: 'numeric' })} ` : ''}${fmtTime(e.start)}`,
+          })),
+        })),
         teamsTitle: t('reports.teamsTitle'),
         teams: scope.kind === 'org'
           ? report.teams.map((tm) => ({ name: tm.name, color: hexOf(tm.color), value: tm.tasksDone, label: tp('reports.teamsTasks', tm.tasksDone) }))
           : [],
-        projectsTitle: t('reports.projectsTitle'),
-        projects: projects.map((p) => ({
-          name: p.name, before: p.before, after: p.after,
-          badge: p.after >= 100 ? t('reports.projectDone') : null, detail: progressDetail(p.before, p.after),
-        })),
-        krsTitle: t('reports.krsTitle'),
-        krs: krs.map((k) => ({
-          name: k.title, sub: k.okrTitle, before: k.before ?? k.after, after: k.after,
-          badge: k.completed ? t('reports.krCompleted') : null, detail: progressDetail(k.before, k.after),
-        })),
-        peopleTitle: t('reports.peopleTitle'),
-        people: people.map((p) => ({
-          name: personName(p.userId, p.userName),
-          meta: personMeta(p),
-          items: personItems(p).map(({ kind: k, text, when }) => ({ kind: k, text, when })),
-        })),
         footer: t('reports.footer'),
       };
       await downloadReportPdf(model);
@@ -302,68 +216,82 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
 
   return (
     <div className="space-y-4">
-      {/* Périmètre, période, export */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div data-guide-id="report-scope" role="group" aria-label={t('reports.scopeLabel')}>
-          {scopeOptions.length > 1 ? (
-            <MenuSelect
-              aria-label={t('reports.scopeLabel')}
-              className={input}
-              value={scope.kind === 'org' ? 'org' : scope.teamId}
-              onChange={(e) => setPickedScope(e.target.value === 'org' ? { kind: 'org' } : { kind: 'team', teamId: e.target.value })}
+      {/* Périmètre */}
+      <div data-guide-id="report-scope" className="flex flex-wrap items-center gap-2" role="group" aria-label={t('reports.scopeLabel')}>
+        {access.canOrg && access.teams.length > 0 && (
+          <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden">
+            <button type="button" aria-pressed={scope.kind === 'org'} className={segBtn(scope.kind === 'org')} onClick={() => setPickedScope({ kind: 'org' })}>
+              {t('reports.scopeOrg')}
+            </button>
+            <button
+              type="button"
+              aria-pressed={scope.kind === 'team'}
+              className={segBtn(scope.kind === 'team')}
+              onClick={() => access.teams[0] && setPickedScope({ kind: 'team', teamId: access.teams[0].id })}
             >
-              {scopeOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </MenuSelect>
-          ) : (
-            <span className={`text-sm font-semibold ${primary}`}>{scopeName}</span>
-          )}
-        </div>
+              {t('reports.scopeTeam')}
+            </button>
+          </div>
+        )}
+        {scope.kind === 'team' && access.teams.length > 1 && (
+          <MenuSelect
+            aria-label={t('reports.teamSelect')}
+            className={input}
+            value={scope.teamId}
+            onChange={(e) => setPickedScope({ kind: 'team', teamId: e.target.value })}
+          >
+            {access.teams.map((tm) => <option key={tm.id} value={tm.id}>{tm.name}</option>)}
+          </MenuSelect>
+        )}
+        {scope.kind === 'team' && access.teams.length === 1 && (
+          <span className={`text-sm font-semibold ${primary}`}>{access.teams[0].name}</span>
+        )}
+      </div>
 
+      {/* Période */}
+      <div className="flex flex-wrap items-center gap-2">
         {kind !== 'custom' && (
-          <div className="flex items-center gap-1 min-w-0">
-            <button type="button" aria-label={t('reports.prev')} onClick={() => setAnchor(shiftPeriod(kind, anchor, -1))} className={iconBtn}>
+          <div className="flex items-center gap-1">
+            <button type="button" aria-label={t('reports.prev')} onClick={() => setAnchor(shiftPeriod(kind, anchor, -1))}
+              className={`p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] ${primary}`}>
               <ChevronLeft size={18} aria-hidden="true" />
             </button>
             <span className={`text-sm font-semibold first-letter:uppercase min-w-0 ${primary}`} aria-live="polite">{periodLabel}</span>
             <button type="button" aria-label={t('reports.next')} disabled={to >= lastDay}
               onClick={() => setAnchor(shiftPeriod(kind, anchor, 1) > lastDay ? lastDay : shiftPeriod(kind, anchor, 1))}
-              className={iconBtn}>
+              className={`p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] disabled:opacity-40 disabled:cursor-not-allowed ${primary}`}>
               <ChevronRight size={18} aria-hidden="true" />
             </button>
           </div>
         )}
-
-        <div className="ml-auto flex items-center gap-2">
-          <div data-guide-id="report-period" className="inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden" role="group" aria-label={t('reports.periodLabel')}>
-            {(['day', 'week', 'month', 'custom'] as const).map((k) => (
-              <button key={k} type="button" aria-pressed={kind === k} className={segBtn(kind === k)} onClick={() => setKind(k)}>
-                {t(k === 'day' ? 'reports.periodDay' : k === 'week' ? 'reports.periodWeek' : k === 'month' ? 'reports.periodMonth' : 'reports.periodCustom')}
-              </button>
-            ))}
+        {kind === 'custom' && (
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <label htmlFor="report-from" className={muted}>{t('reports.from')}</label>
+            <DatePicker id="report-from" className="w-40" value={custom.from} allowClear={false} displayFormat="d MMM yyyy"
+              onChange={(v) => v && setCustom((c) => ({ ...c, from: v > lastDay ? lastDay : v }))} />
+            <label htmlFor="report-to" className={muted}>{t('reports.to')}</label>
+            <DatePicker id="report-to" className="w-40" value={custom.to} allowClear={false} displayFormat="d MMM yyyy" minDate={custom.from}
+              onChange={(v) => v && setCustom((c) => ({ ...c, to: v > lastDay ? lastDay : v }))} />
           </div>
-          <button
-            type="button"
-            onClick={exportPdf}
-            disabled={exporting || isLoading || isError}
-            aria-label={exporting ? t('reports.exporting') : t('reports.exportPdf')}
-            title={t('reports.exportPdf')}
-            className={`p-2 rounded-lg border border-[rgb(var(--color-border))] ${iconBtn}`}
-          >
-            <Download size={16} aria-hidden="true" className={exporting ? 'animate-pulse' : undefined} />
-          </button>
+        )}
+        <div data-guide-id="report-period" className="ml-auto inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden" role="group" aria-label={t('reports.periodLabel')}>
+          {(['day', 'week', 'month', 'custom'] as const).map((k) => (
+            <button key={k} type="button" aria-pressed={kind === k} className={segBtn(kind === k)} onClick={() => setKind(k)}>
+              {t(k === 'day' ? 'reports.periodDay' : k === 'week' ? 'reports.periodWeek' : k === 'month' ? 'reports.periodMonth' : 'reports.periodCustom')}
+            </button>
+          ))}
         </div>
+        <button
+          type="button"
+          onClick={exportPdf}
+          disabled={exporting || isLoading || isError}
+          aria-label={exporting ? t('reports.exporting') : t('reports.exportPdf')}
+          title={t('reports.exportPdf')}
+          className={`p-2 rounded-lg border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-40 disabled:cursor-not-allowed ${primary}`}
+        >
+          <Download size={16} aria-hidden="true" className={exporting ? 'animate-pulse' : undefined} />
+        </button>
       </div>
-
-      {kind === 'custom' && (
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <label htmlFor="report-from" className={muted}>{t('reports.from')}</label>
-          <DatePicker id="report-from" className="w-40" value={custom.from} allowClear={false} displayFormat="d MMM yyyy"
-            onChange={(v) => v && setCustom((c) => ({ ...c, from: v > lastDay ? lastDay : v }))} />
-          <label htmlFor="report-to" className={muted}>{t('reports.to')}</label>
-          <DatePicker id="report-to" className="w-40" value={custom.to} allowClear={false} displayFormat="d MMM yyyy" minDate={custom.from}
-            onChange={(v) => v && setCustom((c) => ({ ...c, to: v > lastDay ? lastDay : v }))} />
-        </div>
-      )}
 
       {isLoading ? (
         <p className={`text-sm py-8 text-center ${muted}`}>{t('reports.loading')}</p>
@@ -374,72 +302,150 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
         </div>
       ) : (
         <>
-          {/* En bref */}
-          {summary.length > 0 && (
-            <section className="rounded-2xl bg-[rgb(var(--color-hover))] p-4" aria-labelledby="report-summary-title">
-              <h3 id="report-summary-title" className={`flex items-center gap-1.5 text-xs mb-1 ${muted}`}>
-                <Sparkles size={14} aria-hidden="true" />
-                {t('reports.summaryTitle')}
-              </h3>
-              <p className={`text-sm leading-relaxed ${primary}`}>{summary.join(' ')}</p>
-            </section>
-          )}
-
-          {/* Chiffres clés, comparés à la période précédente */}
+          {/* Chiffres clés */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {kpis.map((k) => (
               <div key={k.label} className="rounded-xl bg-[rgb(var(--color-hover))] p-3 md:p-4">
                 <div className={`text-xs ${muted}`}>{k.label}</div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-2xl font-bold tabular-nums ${primary}`}>{k.value}</span>
-                  {k.trendText && (
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${toneClass[k.tone]}`}
-                      aria-label={t('reports.trendAria', { value: k.trendText })}>
-                      {k.trendText}
-                    </span>
-                  )}
-                </div>
-                {multiDay && <Sparkline values={k.series} tone={k.tone} />}
+                <div className={`text-2xl font-bold tabular-nums ${primary}`}>{k.value}</div>
               </div>
             ))}
           </div>
 
           {report.daysCovered === 0 ? (
-            <div className="py-6 text-center space-y-2">
-              <p className={`text-sm ${muted}`}>{t('reports.noReportYet')}</p>
-              {kind !== 'custom' && (
-                <button type="button" onClick={() => setAnchor(shiftPeriod(kind, anchor, -1))} className="text-sm font-semibold text-[rgb(var(--color-accent))] hover:underline">
-                  {t('reports.emptyGoPrev')}
-                </button>
-              )}
-            </div>
+            <p className={`text-sm py-6 text-center ${muted}`}>{t('reports.noReportYet')}</p>
           ) : nothing && report.teams.every((tm) => tm.tasksDone === 0) ? (
-            <div className="py-6 text-center space-y-2">
-              <p className={`text-sm ${muted}`}>{t('reports.empty')}</p>
-              {kind !== 'custom' && (
-                <button type="button" onClick={() => setAnchor(shiftPeriod(kind, anchor, -1))} className="text-sm font-semibold text-[rgb(var(--color-accent))] hover:underline">
-                  {t('reports.emptyGoPrev')}
-                </button>
-              )}
-            </div>
+            <p className={`text-sm py-6 text-center ${muted}`}>{t('reports.empty')}</p>
           ) : null}
 
           {report.truncated && <p className={`text-xs ${muted}`}>{t('reports.truncated')}</p>}
 
-          {/* Par équipe (rapport d'entreprise) : la deuxième question qu'on se pose */}
+          {/* Projets et OKR qui ont avancé, côte à côte */}
+          {(report.projects.length > 0 || report.krs.length > 0) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+              {report.projects.length > 0 && (
+                <section className={card}>
+                  <BlockTitle Icon={FolderKanban}>{t('reports.projectsTitle')}</BlockTitle>
+                  <ul className="divide-y divide-[rgb(var(--color-border))]">
+                    {report.projects.map((p) => (
+                      <li key={p.id} className="py-2.5 text-sm">
+                        <div className="flex items-center gap-3">
+                          <span className={`flex-1 min-w-0 truncate ${primary}`}>{p.name}</span>
+                          <span className="shrink-0 text-xs font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                            {p.before} → {p.after} % · {p.after >= 100 ? t('reports.projectDone') : t('reports.projectDelta', { count: p.after - p.before })}
+                          </span>
+                        </div>
+                        <ProgressBar before={p.before} after={p.after} />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+              {report.krs.length > 0 && (
+                <section className={card}>
+                  <BlockTitle Icon={Target}>{t('reports.krsTitle')}</BlockTitle>
+                  <ul className="divide-y divide-[rgb(var(--color-border))]">
+                    {report.krs.map((k) => (
+                      <li key={k.id} className="py-2.5 text-sm">
+                        <div className="flex items-center gap-3">
+                          <span className={`flex-1 min-w-0 truncate ${primary}`}>{k.title}</span>
+                          <span className="shrink-0 text-xs font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                            {k.before !== null ? `${k.before} → ` : ''}{k.after} %
+                            {k.completed
+                              ? ` · ${t('reports.krCompleted')}`
+                              : k.before !== null ? ` · ${t('reports.projectDelta', { count: k.after - k.before })}` : ''}
+                          </span>
+                        </div>
+                        <ProgressBar before={k.before ?? k.after} after={k.after} />
+                        <span className={`block truncate text-xs mt-1 ${muted}`}>{k.okrTitle}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          )}
+
+          {/* Qui a fait quoi : une fiche par personne, tâches à gauche, événements à droite */}
+          {people.length > 0 && (
+            <section aria-labelledby="report-people-title" className="space-y-3">
+              <h3 id="report-people-title" className={`flex items-center gap-2 text-sm font-bold ${primary}`}>
+                <UserRound size={16} aria-hidden="true" className={muted} />
+                {t('reports.peopleTitle')}
+              </h3>
+              {people.map((person) => {
+                const who = personName(person.userId, person.userName);
+                return (
+                  <article key={person.userId ?? ''} className={card} aria-label={who}>
+                    <header className="flex items-center gap-3 pb-3 mb-3 border-b border-[rgb(var(--color-border))]">
+                      <Avatar name={who} />
+                      <div className="min-w-0">
+                        <div className={`text-sm font-semibold truncate ${primary}`}>{who}</div>
+                        <div className={`text-xs ${muted}`}>
+                          {tp('reports.groupCount', person.tasks.length)} · {tp('reports.eventCount', person.events.length)}
+                        </div>
+                      </div>
+                    </header>
+                    <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-4">
+                      <div>
+                        <h4 className={`text-xs mb-1.5 ${muted}`}>{t('reports.colTasks')}</h4>
+                        {person.tasks.length === 0 ? (
+                          <p className={`text-sm ${muted}`}>{t('reports.noPersonTasks')}</p>
+                        ) : (
+                          <ul className="space-y-1">
+                            {person.tasks.map((task) => (
+                              <li key={task.id} className="flex items-start gap-2 text-sm">
+                                <CircleCheck size={15} aria-hidden="true" className="mt-0.5 shrink-0 text-emerald-500" />
+                                <span className={`flex-1 min-w-0 break-words ${primary}`}>{task.name}</span>
+                                {multiDay && (
+                                  <span className={`text-xs shrink-0 mt-0.5 ${muted}`}>
+                                    {fmtDay(toDayKey(new Date(task.at)), { day: 'numeric', month: 'short' })}
+                                  </span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      <div className="pt-3 border-t md:pt-0 md:border-t-0 md:pl-4 md:border-l border-[rgb(var(--color-border))]">
+                        <h4 className={`text-xs mb-1.5 ${muted}`}>{t('reports.colEvents')}</h4>
+                        {person.events.length === 0 ? (
+                          <p className={`text-sm ${muted}`}>{t('reports.noPersonEvents')}</p>
+                        ) : (
+                          <ul className="space-y-1.5">
+                            {person.events.map((e, i) => (
+                              <li key={`${e.start}-${i}`} className="flex items-start gap-2 text-sm">
+                                <span className={`shrink-0 rounded-full bg-[rgb(var(--color-hover))] px-2 py-0.5 text-xs tabular-nums ${muted}`}>
+                                  {multiDay ? `${fmtDay(toDayKey(new Date(e.start)), { weekday: 'short', day: 'numeric' })} ` : ''}{fmtTime(e.start)}
+                                </span>
+                                <span className="min-w-0">
+                                  <span className={`block break-words ${primary}`}>{e.title}</span>
+                                  <span className={`block text-xs ${muted}`}>{fmtDuration(minutes(e.start, e.end))}</span>
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </section>
+          )}
+
+          {/* Performance par équipe (rapport d'entreprise) */}
           {scope.kind === 'org' && report.teams.length > 0 && (
             <section className={card}>
-              <BlockTitle Icon={UsersRound} aside={access.teams.length > 0 ? <span className="hidden md:inline">{t('reports.teamsHint')}</span> : undefined}>
-                {t('reports.teamsTitle')}
-              </BlockTitle>
-              <ul>
+              <BlockTitle Icon={UsersRound}>{t('reports.teamsTitle')}</BlockTitle>
+              <ul className="divide-y divide-[rgb(var(--color-border))]">
                 {report.teams.map((tm) => {
                   const max = Math.max(1, ...report.teams.map((x) => x.tasksDone));
                   const openable = access.teams.some((x) => x.id === tm.id);
                   const body = (
                     <>
                       <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: hexOf(tm.color) }} aria-hidden="true" />
-                      <span className={`w-24 md:w-44 truncate text-sm ${primary}`}>{tm.name}</span>
+                      <span className={`w-32 md:w-44 truncate text-sm ${primary}`}>{tm.name}</span>
                       <span className="flex-1 h-1.5 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden" aria-hidden="true">
                         <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${(tm.tasksDone / max) * 100}%` }} />
                       </span>
@@ -461,67 +467,6 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
                 })}
               </ul>
             </section>
-          )}
-
-          {/* Projets et OKR qui ont avancé : terminés d'abord, puis le plus gros gain */}
-          {(projects.length > 0 || krs.length > 0) && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-              {projects.length > 0 && (
-                <section className={card}>
-                  <BlockTitle Icon={FolderKanban}>{t('reports.projectsTitle')}</BlockTitle>
-                  <ul className="space-y-3">
-                    {projects.map((p) => (
-                      <li key={p.id} className="text-sm">
-                        <div className="flex items-center gap-3">
-                          <span className={`flex-1 min-w-0 truncate ${primary}`}>{p.name}</span>
-                          {p.after >= 100
-                            ? <Badge>{t('reports.projectDone')}</Badge>
-                            : <span className="shrink-0 text-xs font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">{t('reports.projectDelta', { count: p.after - p.before })}</span>}
-                        </div>
-                        <ProgressBar before={p.before} after={p.after} />
-                        <span className={`block text-xs mt-1 tabular-nums ${muted}`}>{p.before} → {p.after} %</span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-              {krs.length > 0 && (
-                <section className={card}>
-                  <BlockTitle Icon={Target}>{t('reports.krsTitle')}</BlockTitle>
-                  <ul className="space-y-3">
-                    {krs.map((k) => (
-                      <li key={k.id} className="text-sm">
-                        <div className="flex items-center gap-3">
-                          <span className={`flex-1 min-w-0 truncate ${primary}`}>{k.title}</span>
-                          {k.completed
-                            ? <Badge>{t('reports.krCompleted')}</Badge>
-                            : k.before !== null && (
-                              <span className="shrink-0 text-xs font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">{t('reports.projectDelta', { count: k.after - k.before })}</span>
-                            )}
-                        </div>
-                        <ProgressBar before={k.before ?? k.after} after={k.after} />
-                        <span className={`block truncate text-xs mt-1 ${muted}`}>
-                          {k.okrTitle} · {k.before !== null ? `${k.before} → ` : ''}{k.after} %
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-            </div>
-          )}
-
-          {/* Personnes : une ligne compacte chacune, le détail s'ouvre au clic */}
-          {people.length > 0 && (
-            <ReportPeopleList
-              people={people}
-              sort={peopleSort}
-              onSortChange={setPeopleSort}
-              nameOf={(p) => personName(p.userId, p.userName)}
-              metaOf={personMeta}
-              itemsOf={personItems}
-              inputClassName={input}
-            />
           )}
 
           <p className={`text-xs ${muted}`}>{t('reports.footer')}</p>

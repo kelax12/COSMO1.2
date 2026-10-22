@@ -104,6 +104,20 @@ const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
     ],
   },
   {
+    title: 'privacy.s7ter.title',
+    blocks: [
+      { kind: 'p', key: 'privacy.s7ter.p1' },
+      {
+        kind: 'ul',
+        items: [
+          'privacy.s7ter.li1', 'privacy.s7ter.li2', 'privacy.s7ter.li3',
+          'privacy.s7ter.li4', 'privacy.s7ter.li5',
+        ],
+      },
+      { kind: 'p', key: 'privacy.s7ter.p2' },
+    ],
+  },
+  {
     title: 'privacy.s8.title',
     blocks: [
       { kind: 'p', key: 'privacy.s8.intro' },

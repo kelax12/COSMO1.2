@@ -10,8 +10,8 @@ export type GuideRequirement = OrgPermissionKey | 'admin' | 'manager' | 'owner';
  * Une étape ne SAISIT jamais rien et ne cible jamais un bouton qui écrit :
  * la garde `guide-scenarios.guard.test.ts` le vérifie sur le source.
  */
-export type GuideStep =
-  | { kind: 'goto'; section: OrgSectionSegment | 'overview'; via: string }
+export type GuideStep<S extends string = OrgSectionSegment | 'overview'> =
+  | { kind: 'goto'; section: S; via: string }
   /**
    * `emptyKey` : la cible n'existe qu'en présence de données (corbeille non
    * vide, équipe avec projet...). Absente au délai : fin `empty`, pas `missing`.

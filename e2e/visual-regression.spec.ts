@@ -42,11 +42,14 @@
 //     instant différent ;
 //   · `caret: 'hide'` — un curseur de saisie clignote, donc il diffère une
 //     fois sur deux ;
-//   · LE TEMPS EST FIGÉ. `e2e/fixtures.ts` pose `timezoneId: 'Europe/Paris'`,
-//     mais pas la DATE : les seeds de démo sont relatifs à aujourd'hui, donc
-//     « Mardi 12 » devient « Mercredi 13 » du jour au lendemain et TOUTES les
-//     références deviennent fausses à minuit. Les captures masquent donc les
-//     zones qui portent une date, plutôt que de prétendre les comparer.
+//   · LE TEMPS EST FIGÉ. `playwright.config.ts` pose `timezoneId:
+//     'Europe/Paris'`, et depuis le 2026-10-20 ce spec pose aussi la DATE
+//     (`horlogeFigee`, `e2e/fixtures.ts`). Avant, les seeds de démo suivaient
+//     le jour réel : le 2026-10-19, un lundi, la carte check-in hebdo est
+//     apparue et les quatre `/dashboard`, l'Aperçu et l'état d'erreur (qui se
+//     capture PAR-DESSUS le tableau de bord) sont passés au rouge sur un
+//     commit qui ne changeait que deux commentaires. Les masques de date
+//     restent : ils ne coûtent rien et couvrent un spec qui oublierait l'horloge.
 //
 // ── CE QUE ÇA NE COUVRE PAS ─────────────────────────────────────────
 //
@@ -60,10 +63,13 @@
 // mêmes. Celles qui comptent sont générées par la CI.
 // ═══════════════════════════════════════════════════════════════════
 
-import { test, expect } from './fixtures';
+import { test, expect, HORLOGE_FIGEE } from './fixtures';
 import type { Page } from '@playwright/test';
 
 test.describe.configure({ timeout: 180_000 });
+// Le jour de la semaine change l'écran (carte check-in du lundi et du mardi) :
+// sans date fixe, le verdict dépend du calendrier et non du code.
+test.use({ horlogeFigee: HORLOGE_FIGEE });
 
 /** Les quatre thèmes du produit. `gris` et `noir` posent AUSSI `.dark`. */
 const THEMES = ['light', 'dark', 'gris', 'noir'] as const;
@@ -96,10 +102,11 @@ async function poserTheme(page: Page, theme: (typeof THEMES)[number]): Promise<v
 /**
  * Les zones à MASQUER dans une capture, parce qu'elles changent seules.
  *
- * 🔴 Sans ce masque, cette garde serait rouge tous les jours à minuit : les
- * seeds de démo sont relatifs à `now()`, donc chaque libellé de date avance.
- * Masquer est le seul choix honnête — l'alternative (figer l'horloge) rendrait
- * les seeds vides au bout de quelques jours de dérive.
+ * Posés quand l'horloge n'était pas figée : les seeds de démo sont relatifs à
+ * `now()`, donc chaque libellé de date avançait. ❌ L'argument d'alors, « figer
+ * l'horloge rendrait les seeds vides au bout de quelques jours », était faux :
+ * les seeds sont générés DANS le navigateur, par rapport à l'heure figée, donc
+ * identiques à chaque run. L'horloge est figée depuis le 2026-10-20.
  */
 const MASQUES = [
   '[data-testid="today-date"]',
