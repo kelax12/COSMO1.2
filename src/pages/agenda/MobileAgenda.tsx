@@ -152,18 +152,20 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
         >
           <button
             onClick={onPrevMonth}
+            aria-label={t('nav.prevPeriod')}
             className="min-h-touch min-w-touch flex items-center justify-center"
             style={{ color: 'rgb(var(--color-text-secondary))' }}
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={20} aria-hidden="true" />
           </button>
           <span className="font-semibold text-base">{capitalMonthYear}</span>
           <button
             onClick={onNextMonth}
+            aria-label={t('nav.nextPeriod')}
             className="min-h-touch min-w-touch flex items-center justify-center"
             style={{ color: 'rgb(var(--color-text-secondary))' }}
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={20} aria-hidden="true" />
           </button>
         </div>
       )}

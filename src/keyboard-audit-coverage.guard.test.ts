@@ -59,6 +59,11 @@ const MESUREES: Record<string, string> = {
   'pages/agenda/RecurringEventsManager.tsx': 'prend le piège, puis le rend',
   'components/ConfirmDiscardDialog.tsx': 'Échap passe par guardedClose',
   'components/task-modal/DeleteTaskConfirm.tsx': 'prend le piège, puis le rend',
+  // Rôles personnalisés (mig. 219) : déclarées « dette » du 2026-10-15 au
+  // 2026-10-22, mesurées depuis, ouvertes au clavier en démo. Le parcours
+  // empilé (l'éditeur ouvert depuis l'attribution) a sa propre garde.
+  'components/organization/AssignRoleDialog.tsx': 'MESURE — AssignRoleDialog',
+  'components/organization/RoleEditorSheet.tsx': 'MESURE — RoleEditorSheet',
 };
 
 /**
@@ -147,14 +152,6 @@ const NON_MESUREES: Record<string, string> = {
   'components/organization/InviteByEmailDialog.tsx': 'mode entreprise, et hors démo : exige `create_org_email_invitations` (mig. 161).',
   'components/organization/InviteOrJoinModal.tsx': 'mode entreprise.',
   'components/organization/MemberPermissionsSheet.tsx': 'mode entreprise.',
-  // Rôles personnalisés (mig. 219, 2026-10-12) : arrivées sans déclaration,
-  // relevées par cette garde le 2026-10-15. La démo seme deux rôles.
-  'components/organization/AssignRoleDialog.tsx':
-    'dette : attribuer un rôle personnalisé, atteignable en démo (/entreprise/members, menu '
-    + '« … » d un membre). Câblée sur useModalA11y, jamais parcourue au clavier.',
-  'components/organization/RoleEditorSheet.tsx':
-    'dette : créer ou modifier un rôle personnalisé, atteignable en démo (/entreprise/settings, '
-    + 'section Rôles). Câblée sur useModalA11y, jamais parcourue au clavier.',
   'components/organization/MemberSheet.tsx': 'mode entreprise.',
   'components/organization/NewTeamProjectModal.tsx': 'mode entreprise.',
   'components/organization/OffboardMemberDialog.tsx':
@@ -271,11 +268,12 @@ describe('C-96 — couverture clavier des surfaces modales', () => {
     const mesurees = cablees.filter((f) => f in MESUREES).length;
     const dette = Object.values(NON_MESUREES).filter((r) => r.includes('dette')).length;
     const total = cablees.length;
-    // Un CLIQUET : la couverture ne peut que monter.
+    // Un CLIQUET : la couverture ne peut que monter. 10 au 2026-09-20, 12 au
+    // 2026-10-22 (rôles personnalisés mesurés).
     expect(
       mesurees,
       `Couverture clavier en BAISSE : ${mesurees} surfaces mesurées sur ${total}.`,
-    ).toBeGreaterThanOrEqual(10);
+    ).toBeGreaterThanOrEqual(12);
     // …et le chiffre est imprimé, pour qu'il soit lisible sans ouvrir ce fichier.
     console.log(
       `::notice title=c96::${mesurees} surface(s) modale(s) mesurée(s) au clavier sur `
