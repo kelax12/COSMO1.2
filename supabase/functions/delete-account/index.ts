@@ -11,6 +11,11 @@
 //   table and (b) `auth.admin.deleteUser(user.id)`.
 // - The caller can only delete THEIR OWN account: the user id we delete is
 //   the id resolved from the JWT, never an id sent in the request body.
+// - Seule exception, C-121 (2026-10-22) : `inactive-accounts` désigne un compte
+//   inactif depuis 3 ans, averti depuis 30 jours. Il faut le `x-cron-secret`
+//   ET que `account_inactivity_deletion_due()` (mig. 226) le confirme : le
+//   secret seul n'efface rien. L'effacement suit ensuite EXACTEMENT le même
+//   chemin, transfert de propriété d'organisation compris.
 //
 // Deployment: `supabase functions deploy delete-account --no-verify-jwt=false`
 // then add it to the project's Edge Functions environment. Without this, the
@@ -22,6 +27,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
+
+/** Secret partagé avec `inactive-accounts` (C-121). Voir le mode cron plus bas. */
+const CRON_SECRET = Deno.env.get('CRON_SECRET')
 
 // Allowlist of origins permitted to call this function. Same defense-in-depth
 // as stripe-create-checkout (faille N7): never echo back a wildcard for an
@@ -93,38 +101,94 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...cors, 'Content-Type': 'application/json' },
-      })
-    }
-
-    const supabaseUser = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } },
-    )
-
-    const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...cors, 'Content-Type': 'application/json' },
-      })
-    }
-
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
+    // Le compte à effacer. Deux chemins, et seulement deux :
+    //   · une personne connectée efface SON compte : l'id vient du JWT ;
+    //   · le cron des comptes inactifs (C-121, `inactive-accounts`) désigne un
+    //     compte dans le corps, ce que le chemin utilisateur n'accepte jamais.
+    let userId: string
+
+    const cronHeader = req.headers.get('x-cron-secret')
+    if (cronHeader !== null) {
+      // ÉCHEC FERMÉ : secret absent ⇒ refus, jamais « pas de garde ».
+      if (!CRON_SECRET) {
+        await opsAlert('delete-account', 'CRON_SECRET absent — effacement des comptes inactifs (C-121) refuse')
+        return new Response(JSON.stringify({ error: 'cron_secret_not_configured' }), {
+          status: 503,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+      if (cronHeader !== CRON_SECRET) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+      const payload = await req.json().catch(() => null) as { userId?: unknown } | null
+      const candidate = payload?.userId
+      if (typeof candidate !== 'string' || !UUID_RE.test(candidate)) {
+        return new Response(JSON.stringify({ error: 'Invalid user id' }), {
+          status: 400,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+      // 🔴 Le secret ne suffit pas : la BASE doit confirmer que ce compte est
+      // dû (averti depuis 30 jours, aucune activité depuis, ne paie pas,
+      // mig. 226). Un secret volé ne peut donc effacer qu'un compte que le
+      // cron aurait effacé de toute façon. Cette lecture décide d'un
+      // effacement : son erreur arrête tout, elle n'est jamais un « non dû »
+      // ni un « dû » deviné.
+      const { data: due, error: dueError } = await supabaseAdmin.rpc('account_inactivity_deletion_due', {
+        p_user: candidate,
+      })
+      if (dueError) {
+        console.error('delete-account: account_inactivity_deletion_due failed:', dueError.message)
+        return new Response(JSON.stringify({ error: 'due_check_failed' }), {
+          status: 500,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+      if (due !== true) {
+        return new Response(JSON.stringify({ error: 'not_due' }), {
+          status: 409,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+      userId = candidate
+    } else {
+      const authHeader = req.headers.get('Authorization')
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+
+      const supabaseUser = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        { global: { headers: { Authorization: authHeader } } },
+      )
+
+      const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+      userId = user.id
+    }
+
     // M-6 — Defense-in-depth: validate the resolved user id is a UUID before
     // template-interpolating it into PostgREST `.or()` filters. The id comes
     // from a verified JWT so it should always be valid, but the contract is
     // "never inline string into PostgREST filters without a guard".
-    if (!UUID_RE.test(user.id)) {
+    if (!UUID_RE.test(userId)) {
       return new Response(JSON.stringify({ error: 'Invalid user id' }), {
         status: 400,
         headers: { ...cors, 'Content-Type': 'application/json' },
@@ -139,7 +203,7 @@ Deno.serve(async (req) => {
     // receiver_id; clean both before the main loop.
     {
       const { error } = await supabaseAdmin.from('friend_requests').delete().or(
-        `sender_id.eq.${user.id},receiver_id.eq.${user.id}`,
+        `sender_id.eq.${userId},receiver_id.eq.${userId}`,
       )
       if (error) {
         console.error('delete-account: failed to clean friend_requests:', error.message)
@@ -162,7 +226,7 @@ Deno.serve(async (req) => {
     // Meme traitement symetrique que `friend_requests` et `shared_tasks`.
     {
       const { error } = await supabaseAdmin.from('friends').delete().or(
-        `user_id.eq.${user.id},friend_user_id.eq.${user.id}`,
+        `user_id.eq.${userId},friend_user_id.eq.${userId}`,
       )
       if (error) {
         console.error('delete-account: failed to clean friends:', error.message)
@@ -175,7 +239,7 @@ Deno.serve(async (req) => {
     // share this user issued (and received) in the database after deletion.
     {
       const { error } = await supabaseAdmin.from('shared_tasks').delete().or(
-        `friend_id.eq.${user.id},shared_by.eq.${user.id}`,
+        `friend_id.eq.${userId},shared_by.eq.${userId}`,
       )
       if (error) {
         console.error('delete-account: failed to clean shared_tasks:', error.message)
@@ -193,7 +257,7 @@ Deno.serve(async (req) => {
       const { data: ownedOrgs, error: ownedErr } = await supabaseAdmin
         .from('organizations')
         .select('id')
-        .eq('owner_id', user.id)
+        .eq('owner_id', userId)
       if (ownedErr) {
         console.error('delete-account: failed to read owned organizations:', ownedErr.message)
         failedTables.push('organizations')
@@ -215,7 +279,7 @@ Deno.serve(async (req) => {
             .from('organization_members')
             .select('user_id, role, joined_at')
             .eq('org_id', orgId)
-            .neq('user_id', user.id)
+            .neq('user_id', userId)
             .order('joined_at', { ascending: true })
           if (membersErr) {
             console.error('delete-account: failed to read org members:', membersErr.message)
@@ -255,7 +319,7 @@ Deno.serve(async (req) => {
 
     for (const table of USER_OWNED_TABLES) {
       if (table === 'friend_requests' || table === 'friends') continue
-      const { error } = await supabaseAdmin.from(table).delete().eq('user_id', user.id)
+      const { error } = await supabaseAdmin.from(table).delete().eq('user_id', userId)
       if (error) {
         if (isMissingTableError(error)) {
           // Table absent from this project → nothing to purge. Do NOT fail the
@@ -275,7 +339,7 @@ Deno.serve(async (req) => {
     // (RGPD art. 17). Table absente d'un projet démo/local → no-op toléré.
     {
       const { error } = await supabaseAdmin.rpc('purge_user_from_team_assignments', {
-        p_user: user.id,
+        p_user: userId,
       })
       if (error && !isMissingTableError(error)) {
         console.error('delete-account: failed to purge team assignments:', error.message)
@@ -312,7 +376,7 @@ Deno.serve(async (req) => {
     {
       const { error } = await supabaseAdmin.storage
         .from('avatars')
-        .remove([`${user.id}/avatar.jpg`])
+        .remove([`${userId}/avatar.jpg`])
       if (error) {
         console.error('delete-account: failed to remove avatar object:', error.message)
         failedTables.push('storage:avatars')
@@ -334,7 +398,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
+    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
     if (authDeleteError) {
       console.error('delete-account: failed to drop auth user:', authDeleteError.message)
       await opsAlert('delete-account', 'auth.admin.deleteUser failed after successful data purge — manual follow-up required (RGPD)')

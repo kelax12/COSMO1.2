@@ -765,7 +765,7 @@ export const CATALOGUE = [
       'un statut inattendu et une panne réseau sont distingués',
       'Une fonction injoignable et une fonction qui répond mal ne se corrigent pas de la même façon : le rapport doit le dire.'],
     ['smoke-destructrice-en-post', 'produit', r('scripts/check-edge-smoke.mjs', "    fonction: 'delete-account',\n    methode: 'GET',", "    fonction: 'delete-account',\n    methode: 'POST',"),
-      'les douze fonctions sont sondées, et aucune en écriture',
+      'les treize fonctions sont sondées, et aucune en écriture',
       "`delete-account` SUPPRIME un compte : sondée en POST chaque jour, la sonde deviendrait l'incident."],
     ['anon-mauvaise-cle', 'detecteur', r('scripts/check-edge-smoke.mjs', "  const anon = Array.isArray(cles) ? cles.find((c) => c.name === 'anon') : null;", '  const anon = Array.isArray(cles) ? cles[0] : null;'),
       'lit la clé nommée « anon » par l API Management',
