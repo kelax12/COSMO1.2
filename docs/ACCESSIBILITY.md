@@ -15,7 +15,7 @@
 **Cibles** : WCAG 2.1 AA (obligation EAA — European Accessibility Act, applicable depuis le 28 juin 2025).
 **Outillage** : `e2e/a11y-audit.spec.ts` (axe-core, 11 routes, dumpe les violations par route)
 **+ Lighthouse CI** (`lighthouserc.json`, job `lighthouse`) sur les 4 routes prérendues.
-**Gates CI** : les violations `impact: 'critical'` sont **bloquantes** (`assertNoCritical`). `serious` / `moderate` / `minor` sont dumpées dans `test-results/a11y/<route>.json` mais non bloquantes. Le score a11y de Lighthouse est **bloquant** sur `/`, `/guide`, `/blog`, `/pour-freelances`.
+**Gates CI** : les violations `impact: 'critical'` sont **bloquantes** (`assertNoCritical`). `serious` / `moderate` / `minor` sont dumpées dans `test-results/a11y/<route>.json` mais non bloquantes. Le score a11y de Lighthouse est **bloquant** sur `/`, `/guide`, `/blog`, `/pour-freelances`, à 0,9, et à **1** sur `/guide/` depuis le 2026-10-22 (`assertMatrix`, desktop et mobile).
 
 ## 🔎 Ce que nos mesures prouvent, et ce qu'elles ne prouvent pas
 
@@ -80,6 +80,52 @@ Conséquences pratiques, à tenir :
 >
 > **81 → 81.** Le défaut Mois est trouvé et corrigé le même jour : il n'est pas débité, et ne se compte vérifié qu'au vert du job `e2e` de la PR.
 
+> ### 🟢 2026-10-22 · 0 : les widgets suivent enfin `prefers-reduced-motion`
+>
+> L'arbitrage « à revoir » du 2026-10-20 est soldé. `ApercuWidgetGrid` (Aperçu entreprise **et** tableau de bord perso au bureau, même composant depuis `b7d2ec97`) ne pose plus `MotionConfig reducedMotion="never"` : il suit celui d'`App.tsx` (`"user"`).
+>
+> | Item | Effet | Fait le 2026-10-22 |
+> |---|---|---|
+> | ✅ Vibration en boucle (±0,45°) en édition | 0 | coupée sous mouvement réduit par `useReducedMotion()` : une boucle rendue instantanée par Framer (`{ type: false }`) laisserait un `rotate` **résiduel**, d'où la coupe à la main plutôt que de s'en remettre au `MotionConfig` |
+> | ✅ Réordonnancement (flèches et glisser) | 0 | le `MotionConfig` ne suffisait PAS, deux trous de Framer 12.43 vus par la CI de #89 : (1) une animation `layout` rendue instantanée replace le bloc **une frame à son ancienne position** (`mixTargetDelta(0)`, saut aller-retour de 260 px) ; (2) le retour d'un bloc lâché (`dragSnapToOrigin`) passe par `animateMotionValue` sans consulter `reducedMotion` et glissait ~400 ms. Correctif : sous mouvement réduit, ni `layout` ni `layoutId` (la grille CSS place, la correction du glisser reste assurée par la fonctionnalité `drag`), et `dragTransition` instantanée. Défilement vers un bloc ajouté : `auto` au lieu de `smooth` |
+> | ✅ Garde | 0 | `e2e/reduced-motion-widgets.spec.ts` lit `transform` à chaque frame pendant l'édition, un déplacement au clavier et un glisser à la souris ; il exige aucun transform **et** l'ordre attendu (sans déplacement, « aucun transform » ne dirait rien). Mesuré le 2026-10-22 : 🔴 **rouge en CI sur le composant d'avant** (kelax12/COSMO1.2#90, `never` : 522 frames sur 522 et 180 sur 180 portent un transform) ; 🔴 rouge en CI sur le premier correctif de #89 (les deux trous de Framer ci-dessus, 2 frames et 25 frames) ; ✅ **vert en local** sur le correctif final (`chromium`, 2 cas sur 2). Vert en CI de #89 : à constater sur `5b17e858` ou après |
+> | ⚠️ Reste une exception écrite | 0 | `GuideCursor` (guide entreprise) garde `never` : son trajet EST le contenu de la démo, demande d'Axel du 2026-10-12. C'est désormais le seul |
+>
+> Note inchangée : l'item valait 0 le 2026-10-20 (non débité).
+
+> ### ✅ 2026-10-22 · 0 : `/guide/` passe de 92 à 100 en Lighthouse, audits enfin identifiés
+>
+> Les audits « à identifier » depuis le 2026-10-16 l'ont été, puis corrigés. Mesures du 2026-10-22, sur un build de production local (`npm run build`, `vite preview`, pages prérendues), Lighthouse 12.8.2 réglé comme la CI (preset desktop, mobile 412 px, `--lang=fr-FR`) et axe-core 4.14, celui que Lighthouse embarque. Avant : `src/` remis au commit de départ `5eaa8b8c`. Après : `e3406578`. Les artefacts `lighthouse` et `lighthouse-mobile` de la CI (commit `80588145`) donnaient le même 92 et les mêmes audits.
+>
+> | Mesure | Avant (`5eaa8b8c`) | Après (`e3406578`) |
+> |---|---|---|
+> | Lighthouse a11y `/guide/` mobile | 92 | **100** |
+> | Lighthouse a11y `/guide/` desktop | 92 | **100** |
+> | Lighthouse a11y `/en/guide/` mobile | 92 | **100** |
+> | Lighthouse a11y `/en/guide/` desktop | 92 | **100** |
+> | axe, 16 combinaisons (4 thèmes × fr/en × mobile/desktop), 4 passages chacune | 21 à 62 violations par combinaison | **0** |
+> | Lighthouse a11y `/` et `/en/` (mêmes vitrines, thème clair) | 100 | **100** |
+> | axe sur `/` et `/en/`, mobile et desktop | 36 violations | **28**, aucune nouvelle. Le reste est antérieur et hors de ce chantier : `label-content-name-mismatch`, `region`, et des contrastes dans les vitrines MOBILES de la landing (`MobileShowcases.tsx`, absent du guide : événements d'agenda blancs sur `-500`, « 65J restants » à 2,4:1), même classe de défaut, à reprendre avec `eventFill()` et la même règle de santé. Lighthouse y rend pourtant 100, sans doute parce que ces vitrines ne sont pas montées à l'instant de sa mesure (non vérifié) |
+>
+> | Audit en échec | Élément fautif | Correctif |
+> |---|---|---|
+> | `color-contrast` (poids 7) | **Les vitrines animées**, presque tout le reste : gris `slate-500/600` et orange à 60 % sur cartes sombres (2,1 à 4,4:1), teinte de catégorie `-500` en texte (« Produit », « Hier », valeurs des statistiques, 3,1 à 4,3:1), titres blancs sur des événements d'agenda `-500` (2,1 à 4,2:1), tâche « déjà planifiée » estompée à 50 % sous un voile (1,2:1), textes saisis à mi-fondu (compteurs OKR, tâche glissée, sélection) | re-teintes par thème dans `showcase-light.css` et `showcase-gris-noir.css` (le thème Sombre reçoit ses premières, ses fonds ne bougent pas) ; `tintText` au cran 400 en sombre ; `eventFill()` au cran 700 ; plus d'estompe ; glissement ou échelle sans fondu là où le texte change souvent |
+> | `color-contrast` | Sommaire du guide : section active écrite dans sa teinte (`#94a3b8` sur fond clair, 2,3:1) | texte actif à l'encre, la teinte reste sur le fond et l'icône |
+> | `color-contrast` | « O comme Objectif » en `--color-success` sur blanc (2,27:1) ; « KR » et « ‹ Retour » en accent du thème Sombre (`#3b82f6`, 4,0 et 4,2:1) | `text-green-700` en clair ; `blue-400` en thème Sombre seul (variante `[.dark:not(.gris):not(.noir)_&]`) |
+> | `link-in-text-block` (poids 7) | `mailto:` du pied de page, distingué par la seule couleur (1,1:1 avec le texte voisin) | souligné en permanence |
+> | `image-redundant-alt` (poids 1) | logo `alt="Cosmo"` suivi du mot « Cosmo » | `alt=""` |
+> | `scrollable-region-focusable` (axe seul, hors score Lighthouse) | grille de l'agenda, tableau des habitudes | grille en `overflow-hidden` (rien ne la fait défiler) ; tableau focalisable, `role="region"` nommé (`common.showcase.habitsTable`, fr et en) |
+>
+> 🔴 **Pourquoi personne ne l'avait vu entier** : la CI mesure le mobile en thème **Gris** (le thème par défaut sous 768 px) et le desktop en **Clair**. Sombre et Noir n'étaient mesurés par rien. Le script axe les force par `localStorage.theme` : il en a trouvé autant qu'en Gris.
+>
+> ⚠️ **Ce qui reste fragile, et pourquoi ce n'est pas masqué** : axe calcule le contraste à l'opacité du moment. Un texte qui entre en fondu, saisi à mi-chemin, échoue. La vitrine des tâches garde des fondus brefs et ponctuels, jamais saisis en 64 passages : ils restent. La règle qui en sort : **dans une vitrine, un texte qui change souvent ou qui reste longtemps à l'écran ne s'anime pas en opacité.** Les compteurs OKR repartaient d'une opacité nulle à chaque valeur, donc passaient la plupart du temps sous 4,5:1 : ce n'était pas du bruit de mesure. ❌ Rendre les vitrines `inert` aurait passé l'audit (axe ignore l'inerte) : c'est exactement le masquage refusé, et la vitrine des tâches porte un bouton pause qui doit rester utilisable (C-69).
+>
+> **Cliquet** : `lighthouserc.json` et `lighthouserc.mobile.json` passent en `assertMatrix`. L'entrée globale ne change pas (accessibilité 0,9 partout), une entrée ajoutée exige **1** sur `/guide/`. Vérifié avec `lhci assert` 0.15 sur les rapports CI de `80588145` : rouge sur `/guide/` seul tant qu'il vaut 92, vert à 100, aucune autre page touchée.
+>
+> **Note inchangée** : le 92 n'avait jamais été débité, et rien ne se compte avant d'être vu vert en CI.
+>
+> **81 → 81.**
+
 > ### ⚪ 2026-10-22 · remesure de C-57, note non rejouée (elle se rejoue à la passe d'audit)
 >
 > Le débit « cibles tactiles sous 44 px » des 10-01 et 10-02 (« Valider » 81 × 36, « Renvoyer » 98 × 36, « Voir le détail » 96 × 36, « Sélectionner plusieurs tâches » 106 × 32, « Suivre cette tâche » 149 × 36) est **déjà remboursé** : +1 le 10-02 au soir, +1 le 10-03 (`16fbaae9`). Remesuré à `5eaa8b8c` (origin/main), `touch-targets` en local, mode démo, 375 px : **19/19 verts sur `chromium`, 20/20 sur `mobile-safari`**. Ce que ce vert ne disait pas, et ce que cette passe ajoute :
@@ -102,7 +148,7 @@ Conséquences pratiques, à tenir :
 > | Item | Effet | Mesuré le 2026-10-20 |
 > |---|---|---|
 > | 🔴 C-97 · `/dashboard` à 200 % de police, `mobile-chrome` | **−1** | débordement latéral de **13 px**, trois essais sur trois, à chaque run depuis le 2026-10-19 (WCAG 1.4.4 et 1.4.10). N'apparaît que certains jours : la démo date ses données, voir [`TESTING.md`](./TESTING.md) |
-> | ⚠️ Mode édition de l'Aperçu · `MotionConfig reducedMotion="never"` | 0 | vibration en boucle des widgets (±0,45°) **même quand le système demande moins d'animation**. Arbitrage écrit dans `ApercuWidgetGrid.tsx` (mode ouvert par la personne, même choix que `GuideCursor`) : non débité, mais c'est le seul endroit hors guide où la préférence est ignorée. À rouvrir au premier retour |
+> | ⚠️ Mode édition de l'Aperçu · `MotionConfig reducedMotion="never"` | 0 | **soldé le 2026-10-22, voir plus haut.** vibration en boucle des widgets (±0,45°) **même quand le système demande moins d'animation**. Arbitrage écrit dans `ApercuWidgetGrid.tsx` (mode ouvert par la personne, même choix que `GuideCursor`) : non débité, mais c'est le seul endroit hors guide où la préférence est ignorée. À rouvrir au premier retour |
 > | ✅ Widgets | 0 | chaque widget est une `section` nommée (`WidgetShell`), le contenu passe `inert` en édition, flèches et formats au clavier ; C-57 (cibles 44 px) vert sur `/entreprise` après `f0c2a433` |
 >
 > **82 → 81.**

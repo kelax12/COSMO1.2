@@ -80,37 +80,6 @@ Sécurité : [`faille.md`](./faille.md) fait foi.
 
 ## Ouvert · le détail de chaque item
 
-### C-121 · Supprimer les comptes inactifs depuis 3 ans · **P3 · M** · 🟢 **mig. 226 en prod, reste le déploiement des deux fonctions**
-
-> ✅ **2026-10-22 · le traitement existe.** Mig. `226` **appliquée** (ledger `20261021225038`, corps
-> relu au catalogue : filtre `tier_key <> 'free'` présent, `EXECUTE` refusé à `anon` et
-> `authenticated`, RLS active, **0** compte dû ce jour). Preuve jouée AVANT en transaction annulée,
-> `supabase/proofs/226.proof.sql` : **14/14**, dont les deux témoins (un compte connecté hier, un
-> compte vu hier par `last_seen_at` malgré une connexion vieille de 4 ans : jamais visés), un client
-> épargné, un retour après l'avertissement qui annule l'effacement ; annulation vérifiée (ni table,
-> ni fonction, ni compte de test laissés).
->
-> | Pièce | Rôle |
-> |---|---|
-> | `supabase/functions/inactive-accounts` | avertit (Resend, 50 par jour au plus), trace APRÈS l'envoi, puis demande l'effacement des comptes dus (20 par jour au plus) |
-> | `delete-account`, mode cron | efface par le MÊME chemin que les Réglages, seulement avec `x-cron-secret` ET si `account_inactivity_deletion_due()` le confirme : un secret volé n'efface rien qui ne serait pas dû |
-> | `.github/workflows/inactive-accounts.yml` | tous les jours à 06:37 UTC |
-> | `src/inactive-accounts.guard.test.ts` | texte de l'e-mail, ordre envoi → trace, revérification avant effacement |
->
-> 🔴 **Ce que la conception a corrigé en route** : `last_sign_in_at` seul aurait visé quelqu'un qui
-> ouvre l'app tous les jours sans se reconnecter (il ne bouge pas au rafraîchissement de session) ;
-> l'activité est `greatest(last_sign_in_at, profiles.last_seen_at, created_at)`. Et
-> `org_subscriptions.status` vaut `active` par défaut **même au palier gratuit** : sans
-> `tier_key <> 'free'`, tout propriétaire d'organisation aurait été tenu pour client.
->
-> **Reste, et c'est ce qui ferme l'item** : déployer `inactive-accounts` et `delete-account` depuis
-> `main` après fusion (`supabase functions deploy <slug> --use-api`), puis voir le premier run du
-> workflow rendre `200` avec `toWarn: 0`. Jusque-là `Edge deploy drift` est rouge, et c'est juste.
-
-| Item | Constat | Ce qui prouve que c'est fini |
-|---|---|---|
-| **C-121** · P3 · M | **Ouvert le 2026-10-13 (audit juridique).** La politique de confidentialité (s6.li1) annonce désormais qu'un compte sans connexion pendant **3 ans** est supprimé, après un e-mail d'avertissement **30 jours avant** (RGPD art. 5.1.e : jusqu'ici, un compte abandonné était gardé sans limite). **Aucun traitement ne l'applique.** Rien ne presse avant 2029 (premiers comptes : 2026), mais une promesse publiée sans exécution redevient une fausse déclaration le jour où un compte franchit le seuil | un job planifié (pg_cron ou workflow) qui (1) repère `last_sign_in_at < now() - 3 ans`, (2) envoie l'avertissement par Resend et le trace, (3) 30 jours plus tard, supprime par le même chemin que `delete-account` (transfert de propriété d'organisation compris) ; preuve en transaction annulée acteur par acteur, et un témoin : un compte connecté hier n'est JAMAIS visé. ❌ Ne pas supprimer sans l'e-mail : la politique le promet |
-
 
 ### C-65 · Le remboursement du mois en cours n'existe nulle part dans le code · **P1 · M** · 🟠 **le code est fini ; l'épreuve contre Stripe ne l'est pas**
 
@@ -539,3 +508,41 @@ Plus les items tenus en lignes de tableau et non en titres : `C-81` → `C-120`
 (§ 12 de l'archive, chercher `**C-NN**`).
 
 Audits passés : `A-1`, `A-2`, `A-3`, `A-5`, `A-6`, `A-7`, `A-8` (§ 10 de l'archive). Reste `A-4`, ci-dessus.
+
+**Fermés depuis l'allègement du 2026-10-11**, détail ici (l'archive est figée à cette date) :
+
+### C-121 · Supprimer les comptes inactifs depuis 3 ans · **P3 · M** · ✅ **FERMÉ le 2026-10-22**
+
+> ✅ **2026-10-22 · fermé en production.** PR n° 87 fusionnée (`1234f807`). Déployées depuis `main` :
+> `delete-account` **v26** (`verify_jwt = true`) et `inactive-accounts` **v1** (`verify_jwt = false`),
+> relues en lecture seule par `list_edge_functions` ; `check:edge` **13/13 identiques** au constat de la session de déploiement. Premier run de
+> `inactive-accounts.yml` en `workflow_dispatch` : **HTTP 200**,
+> `{"toWarn":0,"warned":0,"warnFailed":0,"toDelete":0,"deleted":0,"deleteFailed":0}`
+> ([run `39799569837`](https://github.com/kelax12/COSMO1.2/actions/runs/39799569837)).
+> Objets de la mig. `226` listés au `_note` de `scripts/supabase-posture.reference.json` ; son
+> `--update` reste un geste d'Axel.
+>
+> ✅ **2026-10-22 · le traitement existe.** Mig. `226` **appliquée** (ledger `20261021225038`, corps
+> relu au catalogue : filtre `tier_key <> 'free'` présent, `EXECUTE` refusé à `anon` et
+> `authenticated`, RLS active, **0** compte dû ce jour). Preuve jouée AVANT en transaction annulée,
+> `supabase/proofs/226.proof.sql` : **14/14**, dont les deux témoins (un compte connecté hier, un
+> compte vu hier par `last_seen_at` malgré une connexion vieille de 4 ans : jamais visés), un client
+> épargné, un retour après l'avertissement qui annule l'effacement ; annulation vérifiée (ni table,
+> ni fonction, ni compte de test laissés).
+>
+> | Pièce | Rôle |
+> |---|---|
+> | `supabase/functions/inactive-accounts` | avertit (Resend, 50 par jour au plus), trace APRÈS l'envoi, puis demande l'effacement des comptes dus (20 par jour au plus) |
+> | `delete-account`, mode cron | efface par le MÊME chemin que les Réglages, seulement avec `x-cron-secret` ET si `account_inactivity_deletion_due()` le confirme : un secret volé n'efface rien qui ne serait pas dû |
+> | `.github/workflows/inactive-accounts.yml` | tous les jours à 06:37 UTC |
+> | `src/inactive-accounts.guard.test.ts` | texte de l'e-mail, ordre envoi → trace, revérification avant effacement |
+>
+> 🔴 **Ce que la conception a corrigé en route** : `last_sign_in_at` seul aurait visé quelqu'un qui
+> ouvre l'app tous les jours sans se reconnecter (il ne bouge pas au rafraîchissement de session) ;
+> l'activité est `greatest(last_sign_in_at, profiles.last_seen_at, created_at)`. Et
+> `org_subscriptions.status` vaut `active` par défaut **même au palier gratuit** : sans
+> `tier_key <> 'free'`, tout propriétaire d'organisation aurait été tenu pour client.
+
+| Item | Constat | Ce qui prouve que c'est fini |
+|---|---|---|
+| **C-121** · P3 · M | **Ouvert le 2026-10-13 (audit juridique).** La politique de confidentialité (s6.li1) annonce désormais qu'un compte sans connexion pendant **3 ans** est supprimé, après un e-mail d'avertissement **30 jours avant** (RGPD art. 5.1.e : jusqu'ici, un compte abandonné était gardé sans limite). **Aucun traitement ne l'applique.** Rien ne presse avant 2029 (premiers comptes : 2026), mais une promesse publiée sans exécution redevient une fausse déclaration le jour où un compte franchit le seuil | un job planifié (pg_cron ou workflow) qui (1) repère `last_sign_in_at < now() - 3 ans`, (2) envoie l'avertissement par Resend et le trace, (3) 30 jours plus tard, supprime par le même chemin que `delete-account` (transfert de propriété d'organisation compris) ; preuve en transaction annulée acteur par acteur, et un témoin : un compte connecté hier n'est JAMAIS visé. ❌ Ne pas supprimer sans l'e-mail : la politique le promet |

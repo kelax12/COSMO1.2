@@ -64,7 +64,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { test, expect, HORLOGE_FIGEE } from './fixtures';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 test.describe.configure({ timeout: 180_000 });
 // Le jour de la semaine change l'écran (carte check-in du lundi et du mardi) :
@@ -144,7 +144,11 @@ const HAUTEURS_FIXES = [
   '[data-testid="apercu-greeting-summary"] { height: 46px !important; overflow: hidden !important; }',
 ].join(' ');
 
-async function capturer(page: Page, nom: string): Promise<void> {
+/**
+ * `cible` : capturer un ÉLÉMENT plutôt que la fenêtre. Sans elle, la capture
+ * porte tout ce que l'écran affiche, y compris ce que le cas ne mesure pas.
+ */
+async function capturer(page: Page, nom: string, cible?: Locator): Promise<void> {
   await page.addStyleTag({ content: HAUTEURS_FIXES });
   // Aucun toast à l'écran au moment de capturer. Le style ci-dessous les
   // retire déjà du rendu, et pourtant le rappel d'échéances (« 1 en retard ·
@@ -152,10 +156,9 @@ async function capturer(page: Page, nom: string): Promise<void> {
   // le reproduire en local. On attend donc qu'il soit parti, plutôt que de
   // dépendre du seul masquage.
   await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 15_000 });
-  await expect(page).toHaveScreenshot(`${nom}.png`, {
-    fullPage: false,
-    animations: 'disabled',
-    caret: 'hide',
+  const options = {
+    animations: 'disabled' as const,
+    caret: 'hide' as const,
     mask: MASQUES.map((s) => page.locator(s)),
     // Les TOASTS ne font pas partie de la page : le rappel d'échéances
     // (« 1 en retard ») part sur un minuteur, donc figure dans une capture et
@@ -165,7 +168,9 @@ async function capturer(page: Page, nom: string): Promise<void> {
     // différence) : on les retire du rendu le temps de la capture.
     style: '[data-sonner-toaster] { display: none !important; }',
     maxDiffPixelRatio: 0.002,
-  });
+  };
+  if (cible) await expect(cible).toHaveScreenshot(`${nom}.png`, options);
+  else await expect(page).toHaveScreenshot(`${nom}.png`, { ...options, fullPage: false });
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -287,7 +292,14 @@ test.describe('C-95 — etats vide, chargement et erreur', () => {
     });
     expect(visible, 'le bloc de capture n a pas été inséré').toBe(true);
     await demoPage.waitForTimeout(200);
-    await capturer(demoPage, 'etat-erreur');
+    // 🔴 2026-10-22 : on capture le BLOC, pas la fenêtre. Capturé en plein
+    // écran, il était posé par-dessus `/dashboard`, et c'est le tableau de bord
+    // qui faisait rougir ce cas : après la refonte en widgets (2026-10-21), le
+    // bloc était identique au pixel près (0 pixel d'écart sur ses 104 px de
+    // haut, run 39668102924) et tout l'écart venait de l'écran dessous. Chaque
+    // changement du tableau de bord se lisait donc comme un défaut de l'état
+    // d'erreur (déjà le 2026-10-19, carte check-in du lundi).
+    await capturer(demoPage, 'etat-erreur', demoPage.locator('#c95-erreur'));
     await demoPage.evaluate(() => document.getElementById('c95-erreur')?.remove());
   });
 });
