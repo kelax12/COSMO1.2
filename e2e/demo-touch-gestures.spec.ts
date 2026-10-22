@@ -155,7 +155,22 @@ test('mobile : le bottom-sheet « Plus » s\'ouvre et se ferme au tap backdrop',
   // z-index de 999999999 et NE se ferme PAS tout seul (toast à action). Le tap
   // atterrissait donc sur lui — ni la souris ni `touchscreen.tap()` ne
   // fermaient le sheet. On calcule maintenant la zone libre dynamiquement.
-  const sheetBox = await sheet.boundingBox();
+  //
+  // 🔴 ET LE SHEET DOIT AVOIR FINI D'ARRIVER (2026-10-22, instable sur la PR
+  // #94 sous WebKit). Il monte par un ressort depuis `y: 100%` : une boîte lue
+  // pendant la montée place le point trop bas, sur le sheet une fois posé, et
+  // le tap n'y ferme rien. Deux lectures identiques à 250 ms d'écart, puis le
+  // point est vérifié dans la page : il doit tomber sur le FOND, pas sur le
+  // sheet ni sur un toast arrivé entre-temps.
+  let sheetBox = await sheet.boundingBox();
+  await expect
+    .poll(async () => {
+      const next = await sheet.boundingBox();
+      const stable = !!sheetBox && !!next && next.y === sheetBox.y;
+      sheetBox = next;
+      return stable;
+    }, { timeout: 10_000, intervals: [250] })
+    .toBe(true);
   if (!sheetBox) throw new Error('sheet sans bounding box');
   const toastBottom = await page.evaluate(() =>
     [...document.querySelectorAll('li[data-sonner-toast]')]
@@ -163,8 +178,14 @@ test('mobile : le bottom-sheet « Plus » s\'ouvre et se ferme au tap backdrop',
   );
   const y = (toastBottom + sheetBox.y) / 2;
   expect(y, 'aucune bande libre entre les toasts et le sheet').toBeGreaterThan(toastBottom);
+  const x = vw!.width / 2;
+  const surLeFond = await page.evaluate(
+    ([px, py]) => !!document.elementFromPoint(px, py)?.closest('[data-mobile-more-sheet-backdrop]'),
+    [x, y] as const,
+  );
+  expect(surLeFond, `le tap (${x}, ${y}) ne tombe pas sur le fond du sheet`).toBe(true);
 
-  await page.mouse.click(vw!.width / 2, y);
+  await page.mouse.click(x, y);
   await expect(logout).toBeHidden({ timeout: 5_000 });
 });
 
