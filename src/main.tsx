@@ -1,3 +1,4 @@
+import { startTransition, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { scrubBreadcrumb, scrubEvent } from './lib/sentry-scrub';
 import { BrowserRouter } from 'react-router';
@@ -191,7 +192,15 @@ try {
 // depuis la 7.0 — le prop `future` n'a plus lieu d'etre. Ils ont ete adoptes
 // par etapes sur la 6.30 avant ce bump (cf. plan de migration 2026-07-29).
 function mount(): void {
-  createRoot(document.getElementById('root')!).render(
+  const root = createRoot(document.getElementById('root')!);
+  // 🔴 Page prérendue : premier rendu en TRANSITION (2026-10-22, TBT mobile de
+  // `/`). Rendu à la priorité par défaut, React le faisait d'un bloc (114 ms en
+  // simulation mobile) ; en transition il rend par tranches et rend la main
+  // entre elles. Le visiteur n'attend rien de ce rendu : la page prérendue est
+  // déjà peinte. La coquille `app.html`, elle, n'a rien à l'écran et rend d'un bloc.
+  const rendre = (el: ReactNode) =>
+    isPrerendered ? startTransition(() => root.render(el)) : root.render(el);
+  rendre(
     // RootErrorBoundary ENGLOBE le routeur et donc tous les providers. Sans
     // lui, une erreur dans AuthProvider / ActiveOrgProvider / BillingProvider
     // ou dans le chunk du Layout demontait l app entiere et ne laissait que
