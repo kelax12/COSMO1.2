@@ -394,8 +394,9 @@ Se déconnecter (feuille « Plus »), puis `/login`.
 > 🔴 **Recompté le 2026-10-15 : 60 appels du hook en production** (même commande, hors témoins,
 > à `f74b0874`), contre 51 au 2026-09-14. **Onze surfaces câblées manquaient à cette annexe**,
 > presque toutes dans le mode entreprise : elles sont ajoutées en tête du tableau, datées. Deux d'entre elles
-> (`AssignRoleDialog`, `RoleEditorSheet`) ne sont pas non plus déclarées à l'audit clavier
-> (`keyboard-audit-coverage`, rouge à `HEAD`, cf. [`ACCESSIBILITY.md`](./ACCESSIBILITY.md)). Cette
+> (`AssignRoleDialog`, `RoleEditorSheet`) n'étaient pas non plus déclarées à l'audit clavier
+> (`keyboard-audit-coverage`, rouge à `HEAD`, cf. [`ACCESSIBILITY.md`](./ACCESSIBILITY.md)) ; elles y sont
+> **mesurées** depuis le 2026-10-22. Le clavier n'est pas VoiceOver : leur ligne ci-dessous reste à jouer. Cette
 > check-list n'a toujours **jamais été jouée** (AM-1) : chaque mois qui passe l'allonge.
 
 > 🔴 **Recompté le 2026-09-14 au soir : deux surfaces câblées manquaient à cette annexe.**
