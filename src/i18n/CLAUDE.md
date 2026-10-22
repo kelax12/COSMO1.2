@@ -38,6 +38,9 @@ t('project.name')                // clé plate dans le namespace
 - Le préfixe de locale est porté par le `basename` du routeur, **figé au montage** — changer de
   langue implique un rechargement complet (cf. `src/i18n/bootstrap.ts`).
 - Les dates passent par `src/i18n/format.ts` (locale date-fns alignée sur la locale active).
+  ✅ **Gardé depuis le 2026-10-22** par `date-format.guard.test.ts` (AM-3) : `toLocale*String()` sans
+  locale ou en dur, `Intl` en dur, `{ locale: fr }`, noms de jours écrits à la main. ❌ Une entrée
+  d'allowlist = un cas légitime avec sa raison, jamais pour faire passer.
 - ⚠️ **« Servie » ≠ « indexable »** : `SUPPORTED_LOCALES` (`src/i18n/locale.ts`) ouvre une langue
   aux utilisateurs ; `INDEXABLE_LOCALES` (`src/i18n/seo-urls.mjs`) l'ouvre à Google. Les deux
   valent aujourd'hui `fr` + `en` : **l'anglais est indexable depuis le 2026-09-08** (C-20). `es`
