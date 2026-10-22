@@ -32,10 +32,38 @@ async function firstCardGestureStart(page: import('@playwright/test').Page) {
   // n'atteignait aucun élément (`document.elementFromPoint()` → null), ce qui
   // faisait échouer swipe ET long-press sans erreur explicite.
   await target.scrollIntoViewIfNeeded();
-  const box = await target.boundingBox();
+
+  // 🔴 POSITION STABLE AVANT DE MESURER (2026-10-22). Les deux correctifs de
+  // frame n'ont pas suffi : la PR #94 a rejoué ce cas ×5 sans retry, et le
+  // PREMIER passage du run (page `/tasks` froide, 42,9 s contre 4 s pour les
+  // autres) a encore échoué, compteur inchangé. Une boîte lue pendant que
+  // l'écran se met en place (bandeaux et filtres paresseux au-dessus de la
+  // liste) fait partir le geste à côté de la carte. On attend donc deux
+  // lectures identiques à 250 ms d'écart.
+  let box = await target.boundingBox();
+  await expect
+    .poll(async () => {
+      const next = await target.boundingBox();
+      const stable = !!box && !!next && next.x === box.x && next.y === box.y;
+      box = next;
+      return stable;
+    }, { timeout: 15_000, intervals: [250] })
+    .toBe(true);
   if (!box) throw new Error('case de complétion sans bounding box');
   // ~90 px à droite de la case = milieu du titre, dans la card draggable.
-  return { x: box.x + box.width + 90, y: box.y + box.height / 2, unchecked };
+  const x = box.x + box.width + 90;
+  const y = box.y + box.height / 2;
+
+  // Et le point de départ doit tomber SUR la carte visée, vérifié dans la
+  // page : un geste parti à côté échouait jusqu'ici en silence (« compteur
+  // inchangé »), sans dire ce qu'il avait touché.
+  const card = target.locator('xpath=ancestor::*[@data-testid="task-card"][1]');
+  const pointSurLaCarte = await card.evaluate(
+    (el, [px, py]) => el.contains(document.elementFromPoint(px, py)),
+    [x, y] as const,
+  );
+  expect(pointSurLaCarte, `le geste part de (${x}, ${y}), hors de la carte visée`).toBe(true);
+  return { x, y, unchecked };
 }
 
 // Skip au niveau du describe, PAS dans le corps de chaque test : un
