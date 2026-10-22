@@ -38,5 +38,30 @@ const charger = () => {
   void import('./main');
 };
 
-if (document.documentElement.hasAttribute('data-prerendered')) afterFirstPaint(charger);
+// 🔴 PAGE PRÉRENDUE : les bibliothèques d'abord, chacune dans sa tâche, puis
+// `main` (2026-10-22, TBT mobile de `/`). `import('./main')` seul évaluait tout
+// le graphe de l'application en UN bloc, au premier arrivé de ses chunks : la
+// plus longue tâche du chargement (221 ms en simulation mobile, 171 ms des
+// 316 de TBT de `/` dans le Lighthouse CI de `263154b6`). Un `import()` par
+// chunk vendor, lancés ensemble : chacun est évalué dans sa propre tâche à son
+// arrivée, et `main` n'évalue plus que son propre code.
+// Le prix : `main` part une fois les bibliothèques évaluées, soit un aller-retour
+// de plus avant le montage. Sans effet sur le LCP (la page prérendue est déjà
+// peinte), et réservé à ces pages : la coquille `app.html` charge comme avant.
+// Les `.then(({ x }) => x)` ne sont pas décoratifs : un espace de noms non
+// déstructuré garderait TOUTES les exportations du paquet dans son chunk.
+// ❌ Ne jamais importer ici un module de l'application : il sortirait du chunk
+// `main` pour devenir un chunk à part.
+const chargerParEtapes = () => {
+  void Promise.allSettled([
+    import('react-dom/client').then(({ createRoot }) => createRoot),
+    import('clsx').then(({ clsx }) => clsx),
+    import('@supabase/supabase-js').then(({ createClient }) => createClient),
+    import('@tanstack/react-query').then(({ QueryClient }) => QueryClient),
+    import('react-router').then(({ BrowserRouter }) => BrowserRouter),
+    import('framer-motion').then(({ motion }) => motion),
+  ]).then(charger);
+};
+
+if (document.documentElement.hasAttribute('data-prerendered')) afterFirstPaint(chargerParEtapes);
 else charger();
