@@ -713,6 +713,151 @@ test('GARDE — AssignRoleDialog : RoleEditorSheet prend le piège, puis le rend
   await expect(parent).toBeHidden({ timeout: 5_000 });
 });
 
+// ═══════════════════════════════════════════════════════════════════
+// AM-2 (2026-10-22) · dix surfaces de plus, les plus fréquentées
+//
+// Tâche d'équipe, OKR, agenda, tableau de bord, raccourcis globaux et page
+// Tâches. Avant ce lot, elles étaient câblées sur `useModalA11y` et déclarées
+// « dette » dans `src/keyboard-audit-coverage.guard.test.ts` : jamais
+// parcourues à la touche Tab.
+//
+// Mêmes trois détecteurs que le témoin Radix (`assertModalTrapsFocus`).
+// Le déclencheur est actionné AU CLAVIER partout où il existe un chemin
+// clavier (Entrée sur un bouton focalisé, ou le raccourci global lui-même) :
+// c'est ce chemin que la personne emprunte, et il fait partie de la mesure.
+// Une seule exception, déclarée dans son cas : le créneau de l'agenda.
+// ═══════════════════════════════════════════════════════════════════
+
+/** Ouvre une surface en pressant Entrée sur son déclencheur focalisé. */
+async function ouvrirAuClavier(page: Page, trigger: Locator): Promise<void> {
+  await expect(trigger).toBeVisible({ timeout: 30_000 });
+  await trigger.focus();
+  await markTrigger(page);
+  await page.keyboard.press('Enter');
+}
+
+/**
+ * Ouvre une surface par un RACCOURCI GLOBAL (N, ?, Ctrl+K).
+ *
+ * ⚠️ Ces trois surfaces sont `lazy` : leur écouteur `keydown` n'existe qu'une
+ * fois leur chunk arrivé. Une touche pressée avant tombe dans le vide, d'où la
+ * reprise. ⚠️ Deux des trois raccourcis BASCULENT (`?`, Ctrl+K) : on ne
+ * represse donc que si la surface n'est pas déjà affichée, sinon une reprise
+ * tardive la refermerait.
+ */
+async function ouvrirParRaccourci(page: Page, touche: string, dialog: Locator): Promise<void> {
+  // Le raccourci est ignoré quand le focus est dans un champ : on part du corps.
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await expect(async () => {
+    if (!(await dialog.isVisible())) await page.keyboard.press(touche);
+    await expect(dialog).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
+}
+
+async function mesurerSurface(page: Page, surface: string, dialog: Locator): Promise<void> {
+  await expect(dialog).toBeVisible({ timeout: 20_000 });
+  const report = await measureFocus(page, dialog, true);
+  console.log(`[a11y-kbd] ${surface}`, JSON.stringify(report));
+  assertModalTrapsFocus(surface, report);
+}
+
+test('MESURE · TeamTaskModal (« Nouvelle tâche » d\'équipe)', async ({ demoPage: page }) => {
+  await navTo(page, /entreprise/i, /\/entreprise/);
+  await openOrgSection(page, /^tâches/i);
+  await page.waitForURL(/\/entreprise\/tasks/);
+  await ouvrirAuClavier(page, page.getByRole('button', { name: /nouvelle tâche/i }).filter({ visible: true }).first());
+  await mesurerSurface(page, 'TeamTaskModal', page.getByRole('dialog', { name: /nouvelle tâche d'équipe/i }));
+});
+
+test('MESURE · CompletedOKRsModal (« OKR terminés »)', async ({ demoPage: page }) => {
+  await navTo(page, /okr/i, /\/okr/);
+  await ouvrirAuClavier(
+    page,
+    page.getByRole('button', { name: /voir la liste des okr terminés/i }).filter({ visible: true }).first(),
+  );
+  await mesurerSurface(page, 'CompletedOKRsModal', page.getByRole('dialog', { name: /^okr terminés$/i }));
+});
+
+test('MESURE · DeleteObjectiveConfirm (suppression d\'un objectif)', async ({ demoPage: page }) => {
+  await navTo(page, /okr/i, /\/okr/);
+  await ouvrirAuClavier(
+    page,
+    page.getByRole('button', { name: /^supprimer l'objectif$/i }).filter({ visible: true }).first(),
+  );
+  await mesurerSurface(page, 'DeleteObjectiveConfirm', page.getByRole('dialog', { name: /^supprimer l'objectif$/i }));
+});
+
+test('MESURE · QuickEventCard (création rapide sur un créneau)', async ({ demoPage: page }) => {
+  // ⚠️ SEUL déclencheur à la souris de ce lot, et c'est assumé : un créneau
+  // FullCalendar n'est pas un arrêt de tabulation (C-54 a tranché que le
+  // chemin clavier de l'agenda est « Nouveau », mesuré par EventModal). On
+  // mesure ici la SURFACE, qu'un geste de pointeur ouvre, une fois ouverte.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await navTo(page, /agenda/i, /\/agenda/);
+  const colonne = page.locator('.fc-timegrid-col[data-date]').first();
+  await expect(colonne).toBeVisible({ timeout: 30_000 });
+  // 06:00 : avant les événements du jeu de démo, pour viser un créneau VIDE
+  // (un glisser sur un événement le déplacerait au lieu de sélectionner).
+  const sixHeures = page.locator('td.fc-timegrid-slot-lane[data-time="06:00:00"]');
+  const creneau = (await sixHeures.count()) > 0 ? sixHeures.first() : page.locator('td.fc-timegrid-slot-lane').first();
+  await creneau.scrollIntoViewIfNeeded();
+  const col = await colonne.boundingBox();
+  const lane = await creneau.boundingBox();
+  if (!col || !lane) throw new Error('grille horaire sans géométrie');
+  const x = col.x + col.width / 2;
+  const y = lane.y + lane.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x, y + lane.height * 2, { steps: 5 });
+  await page.mouse.up();
+  await mesurerSurface(page, 'QuickEventCard', page.getByRole('dialog', { name: /création rapide d'un événement/i }));
+});
+
+test('MESURE · TodayTasks (confirmation de suppression, tableau de bord)', async ({ demoPage: page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  // Les actions d'une ligne sont révélées AU FOCUS (`focus-within`) : Tab les
+  // atteint, et c'est ce chemin qu'on emprunte.
+  await ouvrirAuClavier(page, page.getByRole('button', { name: /^supprimer : /i }).first());
+  await mesurerSurface(page, 'TodayTasks', page.getByRole('dialog', { name: /^supprimer la tâche$/i }));
+});
+
+test('MESURE · QuickAddBar (touche N)', async ({ demoPage: page }) => {
+  await ouvrirParRaccourci(page, 'n', page.getByRole('dialog', { name: /^créer une tâche rapidement$/i }));
+  await mesurerSurface(page, 'QuickAddBar', page.getByRole('dialog', { name: /^créer une tâche rapidement$/i }));
+});
+
+test('MESURE · CommandPalette (Ctrl+K)', async ({ demoPage: page }) => {
+  const palette = page.getByRole('dialog', { name: /rechercher une tâche, une page, une commande/i });
+  await ouvrirParRaccourci(page, 'Control+k', palette);
+  await mesurerSurface(page, 'CommandPalette', palette);
+});
+
+test('MESURE · ShortcutsHelp (touche ?)', async ({ demoPage: page }) => {
+  const aide = page.getByRole('dialog', { name: /^raccourcis clavier$/i });
+  await ouvrirParRaccourci(page, '?', aide);
+  await mesurerSurface(page, 'ShortcutsHelp', aide);
+});
+
+test('MESURE · MoveTaskSheet (« Déplacer vers… », vue Tableau)', async ({ demoPage: page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openTasksPage(page);
+  const vue = page.getByRole('group', { name: /^affichage$/i }).filter({ visible: true }).first();
+  await vue.getByRole('button', { name: /tableau/i }).press('Enter');
+  // Le bouton est révélé au survol ET au focus (`group-focus-within`).
+  await ouvrirAuClavier(page, page.getByRole('button', { name: /^déplacer « /i }).first());
+  await mesurerSurface(page, 'MoveTaskSheet', page.getByRole('dialog', { name: /^déplacer « .+ » vers$/i }));
+});
+
+test('MESURE · CreateListSheet (« Nouvelle liste », mobile)', async ({ demoPage: page }) => {
+  // ⚠️ Viewport MOBILE : sur desktop la création de liste est INLINE (cf.
+  // ShareListSheet plus haut), et le bouton « + » qui ouvre cette feuille est
+  // `sm:hidden`.
+  await passerEnMobile(page);
+  await openTasksPage(page);
+  await ouvrirAuClavier(page, page.getByRole('button', { name: /^nouvelle liste$/i }).filter({ visible: true }).first());
+  await mesurerSurface(page, 'CreateListSheet', page.getByRole('dialog', { name: /^nouvelle liste$/i }));
+});
+
 test('MESURE — DatePicker ancré à un champ (modale OKR)', async ({ demoPage: page }) => {
   await navTo(page, /okr/i, /\/okr/);
   await page.waitForLoadState('networkidle');
