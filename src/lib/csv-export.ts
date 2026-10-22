@@ -7,10 +7,12 @@
  * forcer Excel à reconnaître les caractères accentués).
  */
 
-import { effectiveStatus, type Task } from '@/modules/tasks';
+import { effectiveStatus, type Task, type TaskDependency } from '@/modules/tasks';
 import type { Habit } from '@/modules/habits';
 import type { CalendarEvent } from '@/modules/events';
 import type { OKR } from '@/modules/okrs';
+import type { KRCompletion } from '@/modules/kr-completions';
+import type { MyOrgRoleAssignment } from '@/modules/organizations/roles.types';
 import type { Category } from '@/modules/categories';
 import type { TaskList } from '@/modules/lists';
 import { translator } from '@/i18n/useT';
@@ -163,6 +165,32 @@ export function exportTasksCSV(tasks: Task[]): void {
   download(fileName('tasks'), rowsToCSV(headers, rows));
 }
 
+/**
+ * Dépendances entre tâches personnelles (mig. 132) — « bloquée par ».
+ *
+ * 🔴 Absentes de l'export du 2026-08-30 (livraison de la mig. 132) au
+ * 2026-10-22, déclarées « dette reconnue » dans `check-portability-export.mjs`.
+ * Le graphe est SAISI par la personne : c'est l'ordre dans lequel elle a
+ * décidé de faire son travail, donc une donnée « fournie » au sens de
+ * l'article 20.
+ *
+ * Une ligne par arête, dans le sens de la table : la tâche BLOQUÉE puis la
+ * tâche BLOQUANTE. Les noms accompagnent les identifiants pour que le fichier
+ * se lise dans un tableur sans recouper le fichier des tâches ; un nom
+ * introuvable reste vide, l'arête n'est jamais omise.
+ */
+export function exportTaskDependenciesCSV(dependencies: TaskDependency[], tasks: Task[]): void {
+  const names = new Map(tasks.map((t) => [t.id, t.name]));
+  const headers = cols('blockedTask', 'blockedTaskName', 'blockingTask', 'blockingTaskName');
+  const rows = dependencies.map((d) => [
+    d.taskId,
+    names.get(d.taskId) ?? '',
+    d.dependsOnId,
+    names.get(d.dependsOnId) ?? '',
+  ]);
+  download(fileName('taskDependencies'), rowsToCSV(headers, rows));
+}
+
 export function exportHabitsCSV(habits: Habit[]): void {
   // ⚠️ `icon` AJOUTÉE le 2026-09-20 (C-94). Elle manquait depuis la création de
   // l'export, et personne ne l'avait vu : c'est un choix de la personne
@@ -285,6 +313,50 @@ export function exportOKRsCSV(okrs: OKR[]): void {
 }
 
 /**
+ * Journal des complétions de résultats clés (`kr_completions`).
+ *
+ * 🔴 Déclaré « non exporté » jusqu'au 2026-10-22 dans
+ * `check-portability-export.mjs`, avec la mention « discutable ». C'est
+ * pourtant la seule trace de QUAND chaque résultat clé a été atteint : le
+ * fichier des OKR ne dit que l'état présent. Même raisonnement que
+ * `completedAt` des tâches, ajouté le 2026-09-02.
+ *
+ * Les titres sont les instantanés pris à la complétion (un OKR renommé depuis
+ * garde ici le nom qu'il portait ce jour-là), c'est ce qui rend le fichier
+ * lisible même après la suppression de l'objectif.
+ */
+export function exportKRCompletionsCSV(completions: KRCompletion[]): void {
+  const headers = cols('completedAt', 'okrId', 'okrTitle', 'krId', 'krTitle');
+  const rows = completions.map((c) => [c.completedAt, c.okrId, c.okrTitle, c.krId, c.krTitle]);
+  download(fileName('krCompletions'), rowsToCSV(headers, rows));
+}
+
+/**
+ * Rôles personnalisés reçus dans une organisation (`org_member_roles`, mig. 219).
+ *
+ * 🔴 Déclarés « non exportés » du 2026-10-15 au 2026-10-22. Le rôle est
+ * attribué PAR l'organisation, mais il concerne la personne : quels droits elle
+ * a détenus, et de quand à quand. L'article 15 l'y donnerait accès de toute
+ * façon ; l'export est l'endroit où elle le lit.
+ *
+ * ❌ `grantedBy` ne sort JAMAIS : il désigne une AUTRE personne. Seules les
+ *    attributions de la personne connectée arrivent ici (filtre dans
+ *    `getMyAssignments`, la RLS laissant lire toute l'organisation).
+ */
+export function exportOrgRolesCSV(assignments: MyOrgRoleAssignment[]): void {
+  const headers = cols('organization', 'role', 'roleName', 'permissions', 'startsAt', 'endsAt');
+  const rows = assignments.map((a) => [
+    a.orgId,
+    a.roleId,
+    a.roleName,
+    a.grantedKeys.join(' '),
+    a.startsAt,
+    a.endsAt ?? '',
+  ]);
+  download(fileName('orgRoles'), rowsToCSV(headers, rows));
+}
+
+/**
  * Profil — identité et préférences fournies par la personne.
  *
  * Absent de l'export jusqu'au 2026-08-26, alors que c'est la donnée la plus
@@ -350,8 +422,10 @@ export function exportListsCSV(lists: TaskList[]): void {
  * Export combiné — déclenche les téléchargements en séquence (Safari refuse
  * souvent plusieurs `.click()` simultanés, on les espace de 150 ms).
  *
- * ⚠️ Sept fichiers depuis le 2026-08-26, contre quatre avant : profil,
- * catégories et listes manquaient. Toute nouvelle donnée SAISIE par
+ * ⚠️ Dix fichiers depuis le 2026-10-22 (dépendances entre tâches, journal des
+ * KR, rôles reçus), sept
+ * depuis le 2026-08-26, quatre avant : profil, catégories et listes
+ * manquaient. Toute nouvelle donnée SAISIE par
  * l'utilisateur doit rejoindre cette fonction, sinon l'export cesse
  * silencieusement d'être complet et la portabilité devient un mensonge.
  */
@@ -365,11 +439,14 @@ export function exportListsCSV(lists: TaskList[]): void {
  */
 export function exportAllCSV(data: {
   tasks: Task[];
+  taskDependencies: TaskDependency[];
   habits: Habit[];
   events: CalendarEvent[];
   okrs: OKR[];
   categories: Category[];
   lists: TaskList[];
+  krCompletions: KRCompletion[];
+  orgRoles: MyOrgRoleAssignment[];
   profile: { id: string; name: string; email: string; avatar?: string; autoValidation?: boolean };
 }): void {
   exportTasksCSV(data.tasks);
@@ -379,4 +456,7 @@ export function exportAllCSV(data: {
   setTimeout(() => exportCategoriesCSV(data.categories), 600);
   setTimeout(() => exportListsCSV(data.lists), 750);
   setTimeout(() => exportProfileCSV(data.profile), 900);
+  setTimeout(() => exportTaskDependenciesCSV(data.taskDependencies, data.tasks), 1050);
+  setTimeout(() => exportKRCompletionsCSV(data.krCompletions), 1200);
+  setTimeout(() => exportOrgRolesCSV(data.orgRoles), 1350);
 }

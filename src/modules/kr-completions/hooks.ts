@@ -37,6 +37,18 @@ export const useKRCompletions = (options?: { enabled?: boolean }) => {
   });
 };
 
+/**
+ * Le journal ENTIER, pour l'export de portabilité (RGPD art. 20) : paginé,
+ * jamais borné aux 500 lignes du tableau de bord.
+ */
+export const useKRCompletionsExport = () => {
+  const repository = useKRCompletionsRepository();
+  return useQuery({
+    queryKey: krCompletionKeys.export(),
+    queryFn: () => repository.getAllForExport(),
+  });
+};
+
 // ═══════════════════════════════════════════════════════════════════
 // WRITE HOOKS (Mutations)
 // ═══════════════════════════════════════════════════════════════════

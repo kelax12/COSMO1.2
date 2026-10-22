@@ -16,6 +16,7 @@ export const krCompletionKeys = {
   all: ['kr-completions'] as const,
   lists: () => [...krCompletionKeys.all, 'list'] as const,
   list: (filters: KRCompletionFilters) => [...krCompletionKeys.lists(), filters] as const,
+  export: () => [...krCompletionKeys.all, 'export'] as const,
 };
 
 /**
