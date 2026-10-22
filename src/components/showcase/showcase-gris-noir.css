@@ -19,11 +19,23 @@
    noir  #000000 #080808    #161616    #2e2e2e    #464646    #808080
    ═══════════════════════════════════════════════════════════════════ */
 
+/* ── CONTRASTE DES TEXTES (2026-10-22) ──
+   Mesure Lighthouse/axe sur /guide/ : les gris `slate-500/600` et l'orange à
+   60 % posés sur les cartes sombres rendaient 2,1:1 à 4,1:1. Les valeurs
+   ci-dessous tiennent 4,5:1 sur la surface la plus claire de chaque thème
+   (ligne survolée, pastille teintée). Le thème Sombre reçoit ici ses seules
+   re-teintes : ses fonds ne changent pas. */
+[data-sc-theme='dark'] .text-slate-500 { color: #8a99ae; }
+[data-sc-theme='dark'] .text-slate-600 { color: #8796ab; }
+[data-sc-theme='dark'] .text-orange-400\/60,
+[data-sc-theme='gris'] .text-orange-400\/60,
+[data-sc-theme='noir'] .text-orange-400\/60 { color: #fb923c; }
+
 /* ── GRIS ── */
 [data-sc-theme='gris'] .text-slate-300 { color: #adbac7; }
-[data-sc-theme='gris'] .text-slate-400 { color: #8f99a4; }
-[data-sc-theme='gris'] .text-slate-500 { color: #768390; }
-[data-sc-theme='gris'] .text-slate-600 { color: #636e7b; }
+[data-sc-theme='gris'] .text-slate-400 { color: #a0aab4; }
+[data-sc-theme='gris'] .text-slate-500 { color: #9aa5b0; }
+[data-sc-theme='gris'] .text-slate-600 { color: #8f99a4; }
 
 [data-sc-theme='gris'] .bg-slate-950\/40 { background-color: rgba(28, 32, 36, 0.4); }
 [data-sc-theme='gris'] .bg-slate-900 { background-color: #24292e; }
@@ -46,8 +58,8 @@
 /* ── NOIR ── */
 [data-sc-theme='noir'] .text-slate-300 { color: #c8c8c8; }
 [data-sc-theme='noir'] .text-slate-400 { color: #a8a8a8; }
-[data-sc-theme='noir'] .text-slate-500 { color: #808080; }
-[data-sc-theme='noir'] .text-slate-600 { color: #6e6e6e; }
+[data-sc-theme='noir'] .text-slate-500 { color: #8c8c8c; }
+[data-sc-theme='noir'] .text-slate-600 { color: #808080; }
 
 [data-sc-theme='noir'] .bg-slate-950\/40 { background-color: rgba(0, 0, 0, 0.4); }
 [data-sc-theme='noir'] .bg-slate-900 { background-color: #080808; }
