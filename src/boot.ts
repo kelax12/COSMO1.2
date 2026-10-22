@@ -38,5 +38,34 @@ const charger = () => {
   void import('./main');
 };
 
-if (document.documentElement.hasAttribute('data-prerendered')) afterFirstPaint(charger);
+// 🔴 PAGE PRÉRENDUE : les bibliothèques d'abord, chacune dans sa tâche, puis
+// `main` (2026-10-22, TBT mobile de `/`). `import('./main')` seul évaluait tout
+// le graphe de l'application en UN bloc, au premier arrivé de ses chunks : la
+// plus longue tâche du chargement (221 ms en simulation mobile, 171 ms des
+// 316 de TBT de `/` dans le Lighthouse CI de `183a88f3`). Un `import()` par
+// gros chunk vendor, lancés ensemble : chacun est évalué dans sa propre tâche à son
+// arrivée, et `main` n'évalue plus que le reste.
+// Le prix : `main` part une fois les bibliothèques évaluées, soit un aller-retour
+// de plus avant le montage. Sans effet sur le LCP (la page prérendue est déjà
+// peinte), et réservé à ces pages : la coquille `app.html` charge comme avant.
+// 🔴 Trois chunks seulement, choisis pour ne rien coûter en octets. Vite
+// réécrit chaque `import()` en accès à l'ESPACE DE NOMS du paquet, qui garde
+// toutes ses exportations vivantes, déstructuration ou pas. Mesuré contre
+// `main` (`c2959ded`) : `framer-motion` ajoutait 2,4 ko gzip à
+// `vendor-animation` (marge 5,3 % → 0,8 %), `react-router` 0,3, `react-query`
+// 0,2. Restent ceux dont l'espace de noms est déjà entièrement servi :
+// `react-dom/client`, `clsx` (qui évalue tout `vendor-utils`, icônes lucide
+// comprises, le plus gros morceau du bloc) et `supabase-js` (+0,4 ko).
+// ❌ Ne pas allonger cette liste sans relire `npm run check:bundle` avant/après.
+// ❌ Ne jamais importer ici un module de l'application : il sortirait du chunk
+// `main` pour devenir un chunk à part.
+const chargerParEtapes = () => {
+  void Promise.allSettled([
+    import('react-dom/client').then(({ createRoot }) => createRoot),
+    import('clsx').then(({ clsx }) => clsx),
+    import('@supabase/supabase-js').then(({ createClient }) => createClient),
+  ]).then(charger);
+};
+
+if (document.documentElement.hasAttribute('data-prerendered')) afterFirstPaint(chargerParEtapes);
 else charger();
