@@ -1,6 +1,6 @@
 # `team-projects` · projets et tâches d'ENTREPRISE
 
-> Chargé dès qu un fichier de ce dossier est touché. Règles communes à tous les modules :
+> Chargé dès qu'un fichier de ce dossier est touché. Règles communes à tous les modules :
 > [`../CLAUDE.md`](../CLAUDE.md). Relevé dans le code le 2026-10-22.
 
 Deuxième plus gros module (après `organizations`) : projets, tâches d'équipe, sous-tâches,

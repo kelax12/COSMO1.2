@@ -950,7 +950,7 @@ Paliers en usage — **choisir dans cette table**, ne pas inventer de nouvelle v
 | `z-[190]` `z-[200]` | Surfaces système : bannières, CommandPalette, PremiumGateModal | `DemoBridgePrompt` 190, `CookieBanner` 200 |
 | `z-[250]` `z-[300]` | Interstitiels AU-DESSUS des surfaces système | `ShareInviteClaimer`, `AdModal` |
 | `z-[500]` | Tutoriel de page — au-dessus de tout le chrome | `PageTutorial` |
-| `z-[10010]` `z-[10020]` `z-[10030]` | Guide entreprise pendant une démo : capteur de clics (10010), curseur et bulle (10020), barre de contrôle et écran « accès refusé » (10030), au-dessus des modales maison (9999) et de leurs popovers (jusqu à 10001) | `OrgGuideHost`, `GuideCursor`, `GuideBubble`, `GuideControlBar` |
+| `z-[10010]` `z-[10020]` `z-[10030]` | Guide entreprise pendant une démo : capteur de clics (10010), curseur et bulle (10020), barre de contrôle et écran « accès refusé » (10030), au-dessus des modales maison (9999) et de leurs popovers (jusqu'à 10001) | `OrgGuideHost`, `GuideCursor`, `GuideBubble`, `GuideControlBar` |
 | `z-[9999]` `z-[10000]` `z-[10001]` | `createPortal` + `position: fixed`. Trois étages réels : la feuille (9999), un popover DANS la feuille (10000), et un popover dans une popup elle-même montée à 10000 (10001) | SmartListMenu, `AssigneesPicker`, calendrier des popups de dépendances |
 
 > 🔒 **Liste fermée, vérifiée par `src/design-system.guard.test.ts`.** Toute valeur `z-[…]` hors

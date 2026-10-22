@@ -78,10 +78,11 @@ const CONTRAT = {
   VITE_STRIPE_PUBLISHABLE_KEY: {
     requise: false,
     absence:
-      "Le paiement n'est pas finalisé et la facturation entreprise est "
-      + 'désactivée (décision 2026-08-24). À passer `requise: true` LE JOUR de '
-      + 'la bascule live, pas avant : une variable exigée pour rien apprend à '
-      + 'ignorer la garde.',
+      "Sans effet aujourd'hui : aucun fichier de `src/` ne la lit. Le paiement "
+      + '(live depuis le 2026-10-20) passe par une redirection serveur '
+      + '(`stripe-org-checkout`). Ne la rendre requise que le jour où un '
+      + 'composant client Stripe la lit : exiger une variable inutile apprend '
+      + 'à ignorer la garde.',
   },
   VITE_TURNSTILE_SITE_KEY: {
     requise: false,

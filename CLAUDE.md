@@ -3,8 +3,8 @@
 Guide de travail dans ce dépôt. **Ce fichier est chargé à CHAQUE session : il reste court.**
 Le contenu de niche vit un cran plus bas (table ci-dessous). Plafond tenu par `npm run check:docs`.
 
-❌ **Ne jamais réécrire un récit d incident ici.** Un incident s écrit **une fois**, dans le doc de
-son domaine ; le `CLAUDE.md` concerné n en garde que l interdit, en une ligne. Pourquoi :
+❌ **Ne jamais réécrire un récit d'incident ici.** Un incident s'écrit **une fois**, dans le doc de
+son domaine ; le `CLAUDE.md` concerné n'en garde que l'interdit, en une ligne. Pourquoi :
 [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) § AM-1.
 
 ---
@@ -91,7 +91,7 @@ RPC, écran) → `index.ts` du module → son `CLAUDE.md` s'il existe → le cod
 | [`docs/TESTING.md`](./docs/TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** |
 | [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) | Runbook deploy/rollback Vercel + Supabase |
 | [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) | Montée en charge, limites Supabase/localStorage |
-| [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md) | Réactivation premium (`PREMIUM_ENFORCED`), finalisation Stripe |
+| [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md) | Réactivation du premium perso (`PREMIUM_ENFORCED`) |
 | [`docs/MIGRATION-REACT19.md`](./docs/MIGRATION-REACT19.md) | Étude de faisabilité React 19 + `react-router` 8 : chronologie CVE, composants shadcn ref par ref, chiffrage |
 | [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE.md) | **Mémo court** : ajouter une tâche dans le vrai compte COSMO |
 | [`docs/COSMO-CLI.md`](./docs/COSMO-CLI.md) | CLI d'accès aux données COSMO réelles (`scripts/cosmo/`) |
@@ -146,7 +146,7 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 | Graphiques | recharts |
 | PDF | jsPDF (`vendor-pdf`, `import()` au clic sur « Exporter en PDF » seulement) |
 | i18n | **Catalogues JSON maison** (`src/i18n/` + `src/locales/{fr,en}/`) — pas d'i18next |
-| Paiement | Stripe (`@stripe/react-stripe-js`) — **non finalisé** |
+| Paiement | Stripe **live** depuis le 2026-10-20, facturation entreprise seule. Checkout par redirection serveur (Edge Function), aucun SDK Stripe côté client |
 | Icônes | lucide-react (imports nominaux uniquement) |
 | Dates | date-fns 3 (locale `fr` importée nominalement) |
 | Calendrier | FullCalendar |
@@ -182,16 +182,16 @@ npm run cosmo               # CLI données réelles (cf. plus haut)
 > Le build prod **drope** `console.*` et `debugger` (`vite.config.ts → esbuild.pure/drop`).
 > Les erreurs remontent via Sentry (`VITE_SENTRY_DSN`).
 
-🔴 **Trois règles de lecture, chacune payée d une erreur réelle :**
+🔴 **Trois règles de lecture, chacune payée d'une erreur réelle :**
 
-1. ❌ **Ne JAMAIS conclure d une ligne de résumé.** Lire `$?`, **puis** comparer le nombre de
+1. ❌ **Ne JAMAIS conclure d'une ligne de résumé.** Lire `$?`, **puis** comparer le nombre de
    fichiers annoncé au périmètre du glob. Le 2026-09-15, une suite a rendu « 225 passed (225) »
-   et **exit 1**, quatre fichiers n ayant jamais démarré, dont un qui porte trois témoins.
+   et **exit 1**, quatre fichiers n'ayant jamais démarré, dont un qui porte trois témoins.
 2. 🔴 **Ne JAMAIS passer `--maxWorkers` en ligne de commande.** `vitest.config.ts` fixe
-   `maxWorkers: 2` exprès (C-47) ; l écraser sature la machine et compte comme échec un worker
-   qui n a exécuté aucun cas. Ce conseil a vécu dans ce fichier et a désarmé sa propre garde.
+   `maxWorkers: 2` exprès (C-47) ; l'écraser sature la machine et compte comme échec un worker
+   qui n'a exécuté aucun cas. Ce conseil a vécu dans ce fichier et a désarmé sa propre garde.
 3. ❌ **Ne JAMAIS relever un seuil ou un plafond pour faire passer la CI**, ni ajouter une entrée
-   d allowlist pour la même raison. Un dépassement dit qu un contenu doit bouger, pas que la borne
+   d'allowlist pour la même raison. Un dépassement dit qu'un contenu doit bouger, pas que la borne
    est trop basse.
 
 ## Variables d'environnement
@@ -227,9 +227,9 @@ import { supabase } from '../../lib/supabase';   // ❌
 
 ### GSAP, toasts
 
-- `gsap` s importe **uniquement** depuis `@/lib/gsap`, et **uniquement** dans la landing.
-  Le reste de l app est sur Framer Motion. → [`src/pages/landing/CLAUDE.md`](./src/pages/landing/CLAUDE.md)
-- `toast` s importe **uniquement** depuis `@/lib/toast` (façade différée), jamais depuis `sonner`,
+- `gsap` s'importe **uniquement** depuis `@/lib/gsap`, et **uniquement** dans la landing.
+  Le reste de l'app est sur Framer Motion. → [`src/pages/landing/CLAUDE.md`](./src/pages/landing/CLAUDE.md)
+- `toast` s'importe **uniquement** depuis `@/lib/toast` (façade différée), jamais depuis `sonner`,
   y compris dans une page lazy. Jamais depuis un repository ni depuis `normalizeApiError`.
   → [`src/lib/CLAUDE.md`](./src/lib/CLAUDE.md)
 ### TypeScript
@@ -257,8 +257,8 @@ schémas par module. Câblé dans les `mutationFn` create/update.
 
 `vercel.json` : SPA rewrite, headers de sécurité (HSTS, X-Frame-Options, CSP…), cache immuable
 `/assets/*`. Variables à configurer sur Vercel : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
-`VITE_STRIPE_PUBLISHABLE_KEY` (quand Stripe sera finalisé), et côté serveur `SUPABASE_SECRET_KEY`
-(intégration Supabase). Runbook : [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
+et côté serveur `SUPABASE_SECRET_KEY` (intégration Supabase). `VITE_STRIPE_PUBLISHABLE_KEY` n'est
+lue nulle part (checkout côté serveur). Runbook : [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
 
 ---
 

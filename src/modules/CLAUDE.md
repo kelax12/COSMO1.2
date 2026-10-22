@@ -1,6 +1,6 @@
 # Modules · règles transversales
 
-> Chargé dès qu un fichier de `src/modules/**` est lu ou édité. Chaque module a en plus
+> Chargé dès qu'un fichier de `src/modules/**` est lu ou édité. Chaque module a en plus
 > son propre `CLAUDE.md` : [billing](billing/CLAUDE.md) · [tasks](tasks/CLAUDE.md) ·
 > [habits](habits/CLAUDE.md) · [okrs](okrs/CLAUDE.md) · [categories](categories/CLAUDE.md) ·
 > [team-categories](team-categories/CLAUDE.md) · [organizations](organizations/CLAUDE.md) ·
@@ -126,14 +126,11 @@ import { useLists } from '@/modules/lists';
 
 ---
 
-
----
-
 ## ⚡ Lecture : passer par les RPC, jamais par la table
 
 Les policies RLS de `tasks`, `team_tasks`, `team_projects`, `team_task_dependencies` et `events`
 sont des prédicats que Postgres **ne peut pas indexer**. Lire la table en direct force un `Seq Scan`
-dont le coût croît avec le volume de TOUTE la plateforme, pas avec celui de l utilisateur.
+dont le coût croît avec le volume de TOUTE la plateforme, pas avec celui de l'utilisateur.
 
 ```typescript
 supabase.from('tasks').select(...)                              // ❌ Seq Scan global
@@ -145,17 +142,17 @@ supabase.rpc('get_my_team_task_dependencies', { p_org: orgId }) // ✅ mig. 117
 
 - Le périmètre vient de `auth.uid()` **seul** : `p_org` est un filtre, pas une portée. Forger un
   `p_org` étranger rend 0 ligne.
-- ❌ **Ne jamais faire dépendre un prédicat de policy d un argument pris dans la ligne.** Un helper
+- ❌ **Ne jamais faire dépendre un prédicat de policy d'un argument pris dans la ligne.** Un helper
   sans argument est évalué une fois par requête ; un helper sur une colonne, une fois par ligne.
-- ❌ **Ne pas ajouter de table entreprise sur le modèle prédicat-fonction.** Exprimer l appartenance
+- ❌ **Ne pas ajouter de table entreprise sur le modèle prédicat-fonction.** Exprimer l'appartenance
   en jointure indexable dans une RPC.
-- ❌ **Une RPC d agrégat est `SECURITY INVOKER`.** Agréger des lectures, oui. Agréger des
+- ❌ **Une RPC d'agrégat est `SECURITY INVOKER`.** Agréger des lectures, oui. Agréger des
   **autorisations**, jamais : en `DEFINER` on réécrit N autorisations à la main dans une fonction
   qui contourne la RLS.
 - Exception légitime : `getById` (accès par clé primaire). `task_dependencies` (mig. 132) se lit en
   direct, sa policy portant sur une colonne dénormalisée, donc indexable.
 
-📄 **Mesures, plans d exécution et détail de chaque migration :**
+📄 **Mesures, plans d'exécution et détail de chaque migration :**
 [`docs/PERFORMANCE.md`](../../docs/PERFORMANCE.md) § « Chemins de lecture indexables » ·
 [`docs/SCALABILITY.md`](../../docs/SCALABILITY.md) §2.
 
@@ -209,10 +206,7 @@ de sécurité à 5 min.
 
 ---
 
-
----
-
-## ↩️ « Annuler » restaure l identifiant (R-08)
+## ↩️ « Annuler » restaure l'identifiant (R-08)
 
 Cinq chemins d'annulation écrivaient le même déstructurage, qui perdait l'identité de l'objet :
 
