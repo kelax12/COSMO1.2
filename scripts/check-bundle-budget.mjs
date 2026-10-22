@@ -176,7 +176,7 @@ const PLAFONDS_PAR_CHUNK = {
   'sentry-client': 52_000, // 49 320 o — chargé APRÈS le premier rendu (C-13 · C-14)
   'vendor-animation': 52_000, // 49 245 o — framer-motion
   TasksPage: 37_000, // 35 039 o — la plus grosse page du produit
-  'vendor-utils': 33_000, // 31 053 o
+  'vendor-utils': 33_000, // 31 342 o le 2026-10-22 (32 854 avant) : parseur et formatRelative des locales date-fns retirés, cf. vite.config.ts. Plafond laissé, la marge est de 5,0 % tout juste
   org: 25_000, // 23 722 o sur 2 chunks (2026-10-01 : 40 6xx → 23 722, sections de /entreprise passées dans `orgAdmin`)
   TaskModal: 29_000, // 27 183 o
   landing: 13_800, // 13 083 o sur 2 chunks (2026-10-03 : le parcours entreprise passe dans `landingEnterprise`, 24 000 avant)
@@ -187,7 +187,7 @@ const PLAFONDS_PAR_CHUNK = {
   DashboardPage: 20_500, // 19 175 o
   'vendor-query': 12_700, // 12 066 o (2026-10-03 : la virtualisation sort dans `vendor-virtual`, 18 500 avant)
   'vendor-virtual': 7_600, // 7 206 o — @tanstack/react-virtual + virtual-core, lazy (/tasks, Tâches entreprise)
-  AgendaPage: 18_500, // 17 468 o
+  AgendaPage: 18_300, // 17 310 o le 2026-10-22 (18 278 avant) : tutoriel, panneau et pastille de revue chargés à part ; 18 500 jusque-là
   OrganizationPage: 18_000, // 16 686 o
   TeamProjectsTab: 17_000, // 15 992 o
   UseCasePage: 16_500, // 15 591 o
@@ -207,7 +207,7 @@ const PLAFONDS_PAR_CHUNK = {
   EnterpriseTrack: 13_500, // 12 790 o
   'vendor-ogl': 13_500, // 12 643 o
   types: 13_000, // 12 304 o
-  StatisticsPage: 13_000, // 12 015 o
+  StatisticsPage: 10_800, // 10 181 o le 2026-10-22 (12 977 avant) : modale Premium et heatmap chargées à part ; 13 000 jusque-là
 };
 
 /**
