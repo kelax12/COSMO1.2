@@ -195,6 +195,20 @@ export const SONDES = [
       "La garde `x-cron-secret` s'exécute et refuse AVANT toute lecture de la "
       + 'file de notifications. Même lecture du 503 que pour `renewal-notice`.',
   },
+  // C-121 (2026-10-22) : avertit puis fait effacer les comptes inactifs depuis
+  // 3 ans. Destructrice par délégation : sondée sur son REFUS seulement.
+  {
+    fonction: 'inactive-accounts',
+    methode: 'POST',
+    corps: '{}',
+    statut: [401, 503],
+    sansJeton: true,
+    marqueur: '"error":"(unauthorized|cron_secret_not_configured)"',
+    prouve:
+      "La garde `x-cron-secret` s'exécute et refuse AVANT toute sélection de "
+      + 'compte, tout e-mail et tout effacement. Même lecture du 503 que pour '
+      + '`renewal-notice`.',
+  },
   {
     fonction: 'org-webhook-dispatch',
     methode: 'POST',
