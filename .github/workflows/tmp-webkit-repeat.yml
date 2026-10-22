@@ -23,7 +23,7 @@ jobs:
           npx playwright test --project=mobile-safari --retries=0 --repeat-each=5
           e2e/demo-entreprise-okr-modal.spec.ts:51
           e2e/demo-entreprise.spec.ts:16
-          e2e/demo-touch-gestures.spec.ts:60
+          e2e/demo-touch-gestures.spec.ts:88
           e2e/demo-touch-gestures.spec.ts:141
           e2e/demo-journeys.spec.ts:22
         env:
