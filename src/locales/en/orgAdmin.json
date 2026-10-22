@@ -1063,7 +1063,7 @@
   "statsScope": {
     "label": "Statistics scope",
     "wholeOrg": "Whole organization",
-    "mySubtree": "Me and my reports",
+    "mySubtree": "Me and my team (all my reports)",
     "teams": "Teams",
     "projects": "Projects",
     "why": "Why am I seeing this?",

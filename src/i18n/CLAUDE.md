@@ -33,6 +33,9 @@ t('project.name')                // clé plate dans le namespace
   🔴 **Et les quatre gates ensemble ne mesurent toujours PAS la QUALITÉ.** Elles comparent des
   clés, des copies, des volumes et des formes. Une traduction **fausse mais différente** les passe
   toutes les quatre sans un bruit. Lire l'anglais est un geste humain : c'est `M-50`.
+  🟡 **Réduit le 2026-10-22** : `npm run i18n:quality` (bloquant CI) tient le glossaire épinglé
+  (`tâche` → `task`, `objectif` → `objective`…) et refuse le français resté dans `en`. Exceptions
+  une par une, justifiées, dans `scripts/i18n-quality-allowlist.json`. Le **sens** reste `M-50`.
 - **Slugs de routes localisés** : `src/i18n/routes.ts` + `route-slugs.json`. Une seule URL
   canonique par langue et par page (`/en/about` répond, `/en/a-propos` → 404, voulu).
 - Le préfixe de locale est porté par le `basename` du routeur, **figé au montage** — changer de
