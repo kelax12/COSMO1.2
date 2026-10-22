@@ -84,12 +84,16 @@ const GuidePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Maquette 369 : sur mobile, une ligne « ‹ Retour » puis le titre. */}
-            <Link to="/" className="md:hidden -ml-1 flex items-center gap-1 min-h-touch text-sm text-[rgb(var(--color-accent))]">
+            {/* Thème Sombre seul : son accent (blue-500) rend 4,2:1 sur la barre. Même
+                variante sur le libellé « KR » plus bas (Lighthouse, 2026-10-22). */}
+            <Link to="/" className="md:hidden -ml-1 flex items-center gap-1 min-h-touch text-sm text-[rgb(var(--color-accent))] [.dark:not(.gris):not(.noir)_&]:text-blue-400">
               <ChevronLeft size={18} aria-hidden="true" />
               {t('chrome.backHome')}
             </Link>
             <Link to="/" className="max-md:hidden flex items-center gap-2 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors text-sm">
-              <img src="/logo-128.webp" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
+              {/* alt vide : le nom « Cosmo » suit en texte, un alt identique le faisait
+                  lire deux fois (Lighthouse `image-redundant-alt`, 2026-10-22). */}
+              <img src="/logo-128.webp" alt="" className="w-7 h-7 rounded-lg object-contain" />
               <span className="font-semibold text-[rgb(var(--color-text-primary))]">Cosmo</span>
             </Link>
             <ChevronRight size={14} className="max-md:hidden text-[rgb(var(--color-text-muted))]" />
@@ -125,9 +129,12 @@ const GuidePage: React.FC = () => {
                       key={id}
                       onClick={() => scrollTo(id)}
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all text-left"
+                      // Le TEXTE actif reste à l'encre : la teinte de section (`#94a3b8`
+                      // pour « Prise en main ») rendait 2,3:1 sur fond clair. Seuls le
+                      // fond et l'icône portent la couleur (Lighthouse, 2026-10-22).
                       style={{
                         backgroundColor: isActive ? color + '15' : 'transparent',
-                        color: isActive ? color : 'rgb(var(--color-text-secondary))',
+                        color: isActive ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-secondary))',
                       }}
                     >
                       <span style={{ color: isActive ? color : 'rgb(var(--color-text-muted))' }}>{icon}</span>
@@ -401,11 +408,12 @@ const GuidePage: React.FC = () => {
                 <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))] mb-3">{t('okr.whatIs')}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-[rgb(var(--color-success))] font-medium mb-1">{t('okr.objectiveLabel')}</p>
+                    {/* green-700 en clair : `--color-success` (green-500) y rend 2,27:1. */}
+                    <p className="text-green-700 dark:text-[rgb(var(--color-success))] font-medium mb-1">{t('okr.objectiveLabel')}</p>
                     <p className="text-[rgb(var(--color-text-secondary))]">{t('okr.objectiveDesc')} <em>{t('okr.objectiveExample')}</em></p>
                   </div>
                   <div>
-                    <p className="text-[rgb(var(--color-accent))] font-medium mb-1">{t('okr.krLabel')}</p>
+                    <p className="text-[rgb(var(--color-accent))] [.dark:not(.gris):not(.noir)_&]:text-blue-400 font-medium mb-1">{t('okr.krLabel')}</p>
                     <p className="text-[rgb(var(--color-text-secondary))]">{t('okr.krDesc')} <em>{t('okr.krExample')}</em></p>
                   </div>
                 </div>
@@ -531,7 +539,7 @@ const GuidePage: React.FC = () => {
 
             {/* ── Footer guide ── */}
             <div className="border-t border-[rgb(var(--color-border))] pt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-[rgb(var(--color-text-muted))] text-sm">{t('chrome.contact')} <a href={`mailto:${CONTACT_EMAIL}`} className="text-[rgb(var(--color-accent))] hover:underline">{CONTACT_EMAIL}</a></p>
+              <p className="text-[rgb(var(--color-text-muted))] text-sm">{t('chrome.contact')} <a href={`mailto:${CONTACT_EMAIL}`} className="text-[rgb(var(--color-accent))] underline underline-offset-2">{CONTACT_EMAIL}</a></p>
               <Link
                 to="/"
                 className="flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"

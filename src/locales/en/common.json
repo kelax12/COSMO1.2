@@ -354,6 +354,7 @@
   },
   "showcase": {
     "pause": "Pause the animation",
-    "play": "Play the animation"
+    "play": "Play the animation",
+    "habitsTable": "Sample habit tracker"
   }
 }
