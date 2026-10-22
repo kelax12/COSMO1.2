@@ -23,7 +23,7 @@
 // donc devenues des assertions, sur les MÊMES détecteurs que le témoin Radix.
 // ═══════════════════════════════════════════════════════════════════
 
-import { test, expect, navTo } from './fixtures';
+import { test, expect, navTo, openOrgSection } from './fixtures';
 import type { Page, Locator } from '@playwright/test';
 
 test.describe.configure({ timeout: 180_000 });
@@ -597,6 +597,120 @@ test('MESURE — ShareListSheet (partage d\'une liste manuelle)', async ({ demoP
   const report = await measureFocus(page, sheet, true);
   console.log('[a11y-kbd] ShareListSheet', JSON.stringify(report));
   assertModalTrapsFocus('ShareListSheet', report);
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Rôles personnalisés (mig. 219, `a6562733`) : `AssignRoleDialog` et
+// `RoleEditorSheet`, déclarées « dette » par C-96 du 2026-10-15 au 2026-10-22.
+//
+// La démo sème « Nova Studio » et deux rôles : les deux surfaces s'atteignent
+// SANS le project `supabase-stub`. Les deux déclencheurs sont ouverts AU
+// CLAVIER (focus puis Entrée, y compris l'entrée de menu Radix) : un déclencheur
+// qu'on n'atteindrait qu'à la souris rendrait la mesure du piège sans objet.
+//
+// ⚠️ `RoleEditorSheet` est AUSSI ouverte depuis `AssignRoleDialog` (« Créer un
+// rôle » au bas du sélecteur), en portail, donc en FRÈRE DOM de son parent : le
+// cas de la pile (`openStack`) que `EventModal` couvre pour ses frères. La garde
+// qui suit mesure l'aller ET le retour du piège, pour la même raison qu'eux.
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Arrive sur `/entreprise` RENDUE. L'URL change avant que la page (lazy) ne
+ * remplace le tableau de bord : attendre le nom de l'organisation démo, comme
+ * `demo-entreprise.spec.ts`, sinon la navigation des sections n'existe pas encore.
+ */
+async function ouvrirEntreprise(page: Page): Promise<void> {
+  await navTo(page, /entreprise/i, /\/entreprise/);
+  await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 30_000 });
+}
+
+/** Ouvre `AssignRoleDialog` au clavier sur le premier membre qui le propose. */
+async function ouvrirAttribuerUnRole(page: Page): Promise<Locator> {
+  await ouvrirEntreprise(page);
+  await openOrgSection(page, /^membres/i);
+  const triggers = page.getByRole('button', { name: /^actions pour /i }).filter({ visible: true });
+  await expect(triggers.first()).toBeVisible({ timeout: 20_000 });
+  const item = page.locator('[data-guide-id="member-assign-role"]');
+  // Le menu d'un membre ne porte « Attribuer un rôle » que dans la portée de
+  // l'appelant : on prend le premier qui le propose, au lieu de supposer lequel.
+  const n = await triggers.count();
+  for (let i = 0; i < n; i++) {
+    const trigger = triggers.nth(i);
+    await trigger.focus();
+    // Marqué AVANT d'ouvrir : un menu Radix ouvert rend le reste de la page
+    // `aria-hidden`, et `getByRole` ne retrouverait plus ce bouton ensuite.
+    await markTrigger(page);
+    await page.keyboard.press('Enter');
+    const propose = await item.waitFor({ state: 'visible', timeout: 3_000 }).then(() => true, () => false);
+    if (propose) {
+      await item.focus();
+      await page.keyboard.press('Enter');
+      const dialog = page.getByRole('dialog', { name: /^attribuer un rôle à /i });
+      await expect(dialog).toBeVisible({ timeout: 20_000 });
+      // Le squelette (C-40) n'est pas focalisable : mesurer le piège APRÈS la réponse.
+      await expect(dialog.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 20_000 });
+      return dialog;
+    }
+    await page.keyboard.press('Escape');
+  }
+  throw new Error('aucun membre de la démo ne propose « Attribuer un rôle »');
+}
+
+test('MESURE — AssignRoleDialog (attribuer un rôle personnalisé)', async ({ demoPage: page }) => {
+  // Le déclencheur marqué est le bouton « Actions pour … » du membre : c'est
+  // lui qu'on attend au retour (l'entrée de menu, elle, a disparu).
+  const dialog = await ouvrirAttribuerUnRole(page);
+  const report = await measureFocus(page, dialog, true);
+  console.log('[a11y-kbd] AssignRoleDialog', JSON.stringify(report));
+  assertModalTrapsFocus('AssignRoleDialog', report);
+});
+
+test('MESURE — RoleEditorSheet (créer un rôle personnalisé)', async ({ demoPage: page }) => {
+  await ouvrirEntreprise(page);
+  await openOrgSection(page, /^paramètres/i);
+  const panneau = page.locator('[data-guide-id="settings-panel-roles"]').filter({ visible: true }).first();
+  await expect(panneau).toBeVisible({ timeout: 20_000 });
+  await panneau.focus();
+  await page.keyboard.press('Enter');
+  const trigger = page.locator('[data-guide-id="settings-roles-new"]').filter({ visible: true }).first();
+  await expect(trigger).toBeVisible({ timeout: 20_000 });
+  await trigger.focus();
+  await markTrigger(page);
+  await page.keyboard.press('Enter');
+
+  const sheet = page.getByRole('dialog', { name: /^éditeur du rôle/i });
+  await expect(sheet).toBeVisible({ timeout: 20_000 });
+  const report = await measureFocus(page, sheet, true);
+  console.log('[a11y-kbd] RoleEditorSheet', JSON.stringify(report));
+  assertModalTrapsFocus('RoleEditorSheet', report);
+});
+
+test('GARDE — AssignRoleDialog : RoleEditorSheet prend le piège, puis le rend', async ({ demoPage: page }) => {
+  const parent = await ouvrirAttribuerUnRole(page);
+  // « Créer un rôle » au bas du sélecteur, au clavier : Entrée ouvre le menu,
+  // Fin va au dernier item, Entrée le choisit.
+  await parent.locator('#assign-role-select').focus();
+  await page.keyboard.press('Enter');
+  const creer = page.getByRole('menuitem', { name: /^créer un rôle$/i });
+  await expect(creer).toBeVisible({ timeout: 10_000 });
+  await page.keyboard.press('End');
+  await expect(creer).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  const child = page.getByRole('dialog', { name: /^éditeur du rôle/i });
+  await expect(child).toBeVisible({ timeout: 20_000 });
+  await expect.poll(() => focusInside(child), { timeout: 3_000 }).toBe(true);
+  expect(await firstTabEscapee(page, child), 'RoleEditorSheet (enfant) : focus sorti').toBeNull();
+
+  // Échap ne ferme QUE l'enfant : le parent reste, et reprend le piège.
+  await page.keyboard.press('Escape');
+  await expect(child).toBeHidden({ timeout: 5_000 });
+  await expect(parent).toBeVisible();
+  expect(await firstTabEscapee(page, parent), 'AssignRoleDialog (parent rendu) : focus sorti').toBeNull();
+  expect(await focusInside(parent), 'AssignRoleDialog : le focus n est pas revenu au parent').toBe(true);
+
+  await page.keyboard.press('Escape');
+  await expect(parent).toBeHidden({ timeout: 5_000 });
 });
 
 test('MESURE — DatePicker ancré à un champ (modale OKR)', async ({ demoPage: page }) => {
