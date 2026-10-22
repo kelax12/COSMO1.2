@@ -1283,7 +1283,7 @@ sans E2E : `demo-entreprise-dependencies` (9), `demo-entreprise-tasks-tab` (5),
 | `stubbed/first-run.spec.ts` | 5 | `FirstRunSetup` : la garde s'ouvre sur un compte vide, **chaque étape écrit au moment où elle est validée** (mesuré sur les requêtes parties, pas sur un état React), la première tâche part sans échéance, l'accueil ne revient pas |
 | `demo-calendar.spec.ts` | 7 | Le calendrier COSMO sur ses **six** surfaces, plus `minDate` du report en masse et le focus au clavier dans la grille (défaut React 18 / `forwardRef`) |
 | `demo-task-dependencies.spec.ts` | 2 | Graphe **personnel** (mig. 132) : poser une arête et la relire, refuser un cycle **indirect à trois maillons**, ne jamais se proposer soi-même, retirer ; « Créer et lier » |
-| `demo-billing-disarmed.spec.ts` | 1 | Tant que `ENTERPRISE_BILLING_ENFORCED` est `false`, aucun CTA de paiement ni de remboursement n'est atteignable |
+| `demo-billing-consent.spec.ts` | 1 | Facturation armée depuis la bascule live (`5bf21a50`) : prix TTC affichés, et aucun « Choisir ce palier » tant que les DEUX cases de rétractation ne sont pas cochées (S-6, L221-28). S'appelait `demo-billing-disarmed` et vérifiait l'inverse jusqu'au 2026-10-22 |
 
 Les quatre premiers cas ont été **vus rouges avant d'être verts** : différer les
 créations de `FirstRunSetup` à la dernière étape fait tomber le premier ; le
