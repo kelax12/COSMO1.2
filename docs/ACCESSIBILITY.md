@@ -80,6 +80,19 @@ Conséquences pratiques, à tenir :
 >
 > **81 → 81.** Le défaut Mois est trouvé et corrigé le même jour : il n'est pas débité, et ne se compte vérifié qu'au vert du job `e2e` de la PR.
 
+> ### 🟢 2026-10-22 · 0 : les widgets suivent enfin `prefers-reduced-motion`
+>
+> L'arbitrage « à revoir » du 2026-10-20 est soldé. `ApercuWidgetGrid` (Aperçu entreprise **et** tableau de bord perso au bureau, même composant depuis `b7d2ec97`) ne pose plus `MotionConfig reducedMotion="never"` : il suit celui d'`App.tsx` (`"user"`).
+>
+> | Item | Effet | Fait le 2026-10-22 |
+> |---|---|---|
+> | ✅ Vibration en boucle (±0,45°) en édition | 0 | coupée sous mouvement réduit par `useReducedMotion()` : une boucle rendue instantanée par Framer (`{ type: false }`) laisserait un `rotate` **résiduel**, d'où la coupe à la main plutôt que de s'en remettre au `MotionConfig` |
+> | ✅ Réordonnancement (flèches et glisser) | 0 | le `MotionConfig` ne suffisait PAS, deux trous de Framer 12.43 vus par la CI de #89 : (1) une animation `layout` rendue instantanée replace le bloc **une frame à son ancienne position** (`mixTargetDelta(0)`, saut aller-retour de 260 px) ; (2) le retour d'un bloc lâché (`dragSnapToOrigin`) passe par `animateMotionValue` sans consulter `reducedMotion` et glissait ~400 ms. Correctif : sous mouvement réduit, ni `layout` ni `layoutId` (la grille CSS place, la correction du glisser reste assurée par la fonctionnalité `drag`), et `dragTransition` instantanée. Défilement vers un bloc ajouté : `auto` au lieu de `smooth` |
+> | ✅ Garde | 0 | `e2e/reduced-motion-widgets.spec.ts` lit `transform` à chaque frame pendant l'édition, un déplacement au clavier et un glisser à la souris ; il exige aucun transform **et** l'ordre attendu (sans déplacement, « aucun transform » ne dirait rien). Mesuré le 2026-10-22 : 🔴 **rouge en CI sur le composant d'avant** (kelax12/COSMO1.2#90, `never` : 522 frames sur 522 et 180 sur 180 portent un transform) ; 🔴 rouge en CI sur le premier correctif de #89 (les deux trous de Framer ci-dessus, 2 frames et 25 frames) ; ✅ **vert en local** sur le correctif final (`chromium`, 2 cas sur 2). Vert en CI de #89 : à constater sur `5b17e858` ou après |
+> | ⚠️ Reste une exception écrite | 0 | `GuideCursor` (guide entreprise) garde `never` : son trajet EST le contenu de la démo, demande d'Axel du 2026-10-12. C'est désormais le seul |
+>
+> Note inchangée : l'item valait 0 le 2026-10-20 (non débité).
+
 > ### 🟠 2026-10-20 · −1 : `/dashboard` déborde à 200 % de police
 >
 > **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
@@ -87,7 +100,7 @@ Conséquences pratiques, à tenir :
 > | Item | Effet | Mesuré le 2026-10-20 |
 > |---|---|---|
 > | 🔴 C-97 · `/dashboard` à 200 % de police, `mobile-chrome` | **−1** | débordement latéral de **13 px**, trois essais sur trois, à chaque run depuis le 2026-10-19 (WCAG 1.4.4 et 1.4.10). N'apparaît que certains jours : la démo date ses données, voir [`TESTING.md`](./TESTING.md) |
-> | ⚠️ Mode édition de l'Aperçu · `MotionConfig reducedMotion="never"` | 0 | vibration en boucle des widgets (±0,45°) **même quand le système demande moins d'animation**. Arbitrage écrit dans `ApercuWidgetGrid.tsx` (mode ouvert par la personne, même choix que `GuideCursor`) : non débité, mais c'est le seul endroit hors guide où la préférence est ignorée. À rouvrir au premier retour |
+> | ⚠️ Mode édition de l'Aperçu · `MotionConfig reducedMotion="never"` | 0 | **soldé le 2026-10-22, voir plus haut.** vibration en boucle des widgets (±0,45°) **même quand le système demande moins d'animation**. Arbitrage écrit dans `ApercuWidgetGrid.tsx` (mode ouvert par la personne, même choix que `GuideCursor`) : non débité, mais c'est le seul endroit hors guide où la préférence est ignorée. À rouvrir au premier retour |
 > | ✅ Widgets | 0 | chaque widget est une `section` nommée (`WidgetShell`), le contenu passe `inert` en édition, flèches et formats au clavier ; C-57 (cibles 44 px) vert sur `/entreprise` après `f0c2a433` |
 >
 > **82 → 81.**
