@@ -28,6 +28,18 @@
 > ⚠️ Aucun écart Safari à déclarer : aucun des trois n'était un comportement propre à Safari, seulement un moteur plus lent qui ouvrait plus grand deux fenêtres de course. Aucune assertion relâchée, aucun retry ajouté.
 > ❌ Rejeu local WebKit **non concluant** (machine à ~600 Mo libres : CTA démo à 30 s dans la fixture). La preuve est la CI de la PR, les quatre cas joués ×5 sans retry.
 
+> ### 🔧 2026-10-22 · `/agenda` en paysage : 447 → 0 px (note non touchée)
+>
+> Le dernier cliquet non nul du paysage (`PLAFOND_PAYSAGE`, `e2e/mobile-android.spec.ts`). Mesuré sur `main` à `5eaa8b8c`, Pixel 7 tourné (863 × 360), démo, vues jour, semaine et mois.
+>
+> | | Avant | Après |
+> |---|---|---|
+> | Débordement de page, 863 × 360 (jour / semaine / mois) | **447 / 447 / 445 px** | **0 / 0 / 0 px** |
+> | Ce qui sortait | la barre d'outils de `AgendaDesktopHeader` (en `md:` et plus) : une rangée sans retour à la ligne, ~1 100 px de contenu dans une colonne de 434 px. « Mois » rogné ; flèches, « Récurrences » et « Nouveau » invisibles, sans trace | tout visible, sur 2 rangées (115 px de haut) |
+> | Même barre à 1 024 / 1 280 / 1 600 px de large | **386 / 130 / 0 px** coupés (« Nouveau » perdu sur un portable) | 0 / 0 / 0 px ; 1 600 px inchangé, sur une ligne |
+>
+> Pas la grille FullCalendar : elle tenait déjà dans sa colonne. Correctif : la rangée se replie (`flex-wrap`, groupe central en `contents`, deux `ml-auto` qui rendent l'ancien `justify-between` sur une ligne) ; sous `lg`, « Tâches », « Récurrences » et « Nouveau » passent en icône, le nom restant dans `aria-label`. Plafond `/agenda` abaissé à **0**. La note n'est pas recalculée ici : le remboursement attend la CI verte de la PR, puis la prochaine passe d'audit.
+
 > ### ⚪ 2026-10-20 · 0 : inchangée
 >
 > Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
