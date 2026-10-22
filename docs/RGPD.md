@@ -516,7 +516,20 @@ tout consentement à un compte**. Une rétention de 12 mois maximum serait cohé
 ## 4. ✅ Ce qui est en place
 
 - **Droit d'accès et portabilité** : export CSV disponible (`src/lib/csv-export.ts`, onglet
-  Données des Paramètres).
+  Données des Paramètres), **dix fichiers** depuis le 2026-10-22. Trois y sont entrés ce jour-là,
+  chacun déclaré jusque-là hors export dans `check:portability`, et y sont désormais **mesurés**
+  comme tables exportées :
+  - les **dépendances entre tâches personnelles** (`task_dependencies`, mig. `132`), saisies par
+    la personne et absentes depuis leur livraison le 2026-08-30 (« dette reconnue ») ;
+  - le **journal des résultats clés** (`kr_completions`), seule trace de QUAND chaque résultat clé
+    a été atteint. Il était exclu comme « dérivé, discutable ». Lu en entier (`getAllForExport`,
+    paginé), jamais borné aux 500 lignes du tableau de bord ;
+  - les **rôles reçus dans une organisation** (`org_member_roles`, mig. `219`) : rôle, droits
+    accordés, début et fin. `granted_by` ne sort pas (il désigne un tiers).
+    🔴 **La RLS ne suffit pas ici** : la policy SELECT est `is_org_member(org_id)` (relue en
+    production le 2026-10-22), elle rend les attributions de **tous** les membres. Le filtre sur
+    la personne vit dans `getMyAssignments` (`.eq('user_id', moi)`), verrouillé par
+    `src/lib/csv-export.kr-roles.test.ts`. ❌ Ne jamais exporter `getAssignments(orgId)`.
 - **Droit à l'effacement** : suppression de compte en libre-service, exécutée côté serveur —
   sous réserve du §2.
 - **Consentement cookies** : bannière avec choix, l'option la plus protectrice par défaut.

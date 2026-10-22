@@ -8,6 +8,7 @@ import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IKRCompletionsRepository } from './repository';
 import { KRCompletion, CreateKRCompletionInput, KRCompletionFilters } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 
 // ─── DB row type ────────────────────────────────────────────────────
 
@@ -51,6 +52,27 @@ export class SupabaseKRCompletionsRepository implements IKRCompletionsRepository
 
     if (error) throw normalizeApiError(error);
     return warnIfTruncated((data || []) as KRCompletionRow[], 500, 'kr_completions').map(mapFromDb);
+  }
+
+  async getAllForExport(): Promise<KRCompletion[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const client = supabase;
+    const user = await getCurrentUser();
+    if (!user) throw makeApiError('not_authenticated');
+
+    // La RLS borne déjà à `auth.uid() = user_id` ; le filtre explicite garde
+    // l'export juste même si une policy d'équipe s'ajoutait un jour.
+    const rows = await fetchAllPages<KRCompletionRow>(async (from, to) => {
+      const { data, error } = await client
+        .from('kr_completions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('completed_at', { ascending: false })
+        .range(from, to);
+      if (error) throw normalizeApiError(error);
+      return (data || []) as KRCompletionRow[];
+    });
+    return warnIfTruncated(rows, MAX_ROWS, 'kr_completions').map(mapFromDb);
   }
 
   async getFiltered(filters: KRCompletionFilters): Promise<KRCompletion[]> {
