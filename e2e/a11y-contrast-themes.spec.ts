@@ -59,11 +59,16 @@ const CLASSES: Record<Theme, string[]> = {
   noir: ['dark', 'noir'],
 };
 
-// 1 600 px et non les 1 280 de Desktop Chrome : à 1 280, le tableau de
-// `/tasks` déborde à droite, et un texte dont le milieu sort de la page fait
-// LEVER axe (« Element midpoint exceeds the grid bounds », vu en CI le
-// 2026-10-22) : la règle entière part en `incomplete`, zéro texte mesuré.
-test.use({ reducedMotion: 'reduce', viewport: { width: 1600, height: 900 } });
+// 🔴 Un texte dont le milieu sort du document fait LEVER axe (« Element
+// midpoint exceeds the grid bounds », vu en CI le 2026-10-22 sur `/tasks`) :
+// la règle entière part en `incomplete`, zéro texte mesuré. Or `<main>` est un
+// conteneur qui DÉFILE (Layout), donc tout ce qui est sous la ligne de
+// flottaison est hors du document. `ouvrir` agrandit donc la fenêtre à la
+// hauteur réelle du contenu : axe voit TOUTE la page, pas son premier écran.
+// 1 600 px de large : à 1 280, le tableau de `/tasks` déborde aussi à droite.
+const LARGEUR = 1600;
+const HAUTEUR = 900;
+test.use({ reducedMotion: 'reduce', viewport: { width: LARGEUR, height: HAUTEUR } });
 // 7 routes rechargées par cas, plus la fixture démo.
 test.describe.configure({ timeout: 300_000 });
 
@@ -83,6 +88,7 @@ async function figerAnimations(page: Page): Promise<void> {
 }
 
 async function ouvrir(page: Page, route: string, theme: Theme): Promise<void> {
+  await page.setViewportSize({ width: LARGEUR, height: HAUTEUR });
   await page.goto(route);
   await expect(page).toHaveURL(new RegExp(route.replace('/', '\\/')));
   await page.waitForLoadState('networkidle');
@@ -98,6 +104,16 @@ async function ouvrir(page: Page, route: string, theme: Theme): Promise<void> {
   const classes = await page.evaluate(() => [...document.documentElement.classList]);
   for (const c of ['dark', 'gris', 'noir']) {
     expect(classes.includes(c), `${route} · ${theme} : classe .${c} sur <html>`).toBe(CLASSES[theme].includes(c));
+  }
+  // Ce qui dépasse de `<main>` vers le bas, ajouté à la fenêtre (plafond
+  // 8 000 px : au-delà, une liste infinie, pas une page).
+  const depasse = await page.evaluate(() => {
+    const main = document.querySelector('main');
+    return main ? Math.max(0, main.scrollHeight - main.clientHeight) : 0;
+  });
+  if (depasse > 0) {
+    await page.setViewportSize({ width: LARGEUR, height: Math.min(8000, HAUTEUR + depasse + 40) });
+    if (route === '/agenda') await page.waitForTimeout(500); // FullCalendar se remesure
   }
   await figerAnimations(page);
 }
