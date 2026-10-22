@@ -1,4 +1,4 @@
-<!-- note-audit: note=78 -->
+<!-- note-audit: note=77 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,23 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **78 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **77 / 100** au 2026-10-22, au tableau de bord de [`README.md`](./README.md).
 
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → 75 → 76 → 78 → 78 → **78 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**)
+## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → 75 → 76 → 78 → 78 → 78 → **77 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → **2026-10-22**)
+
+> ### 🟠 2026-10-22 (passe) · −1 : le LCP mobile crédité le 10-16 est perdu
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-22 : CI de `main` à `d16de29a` (run `39843255180`, cinq jobs verts ; `main` rouge du 10-20 à 22:03 au 10-22 à 14:39, 19 runs), `Visual` vert à `fb83cd60`, production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-22 |
+> |---|---|---|
+> | 🔴 LCP mobile de 4,5 à 6,0 s sur six URLs sur huit | **−1** | le +1 « LCP mobile » du 2026-10-16 repris : 1,36 à 1,52 s le 10-18, **`/guide/` 5,4 à 5,6 s, `/en/` 5,9 à 6,0 s** le 10-22. Détail et cause dans [`PERFORMANCE.md`](./PERFORMANCE.md), débité là aussi |
+> | ✅ WebKit | 0 | trois instables triés et corrigés (PR n° 94 : un produit, deux harnais) ; **aucun** instable `mobile-safari` au run `39843255180`. Les instables n'avaient pas été débités |
+> | ✅ Agenda en paysage, « Filtres » à 44 px | 0 | 447 → 0 px, plafond abaissé à 0 ; `MobileFiltersButton` 44 × 44. Jamais débités, comme les 11 commandes sous 44 px de `/entreprise/projects`, trouvées ce jour et laissées hors spec |
+>
+> **78 → 77.**
 
 > ### 🟡 2026-10-22 · instables WebKit triés : un produit, deux harnais
 >

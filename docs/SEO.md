@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **79 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **79 / 100** au 2026-10-22, au tableau de bord de [`README.md`](./README.md).
 
 # SEO — état mesuré, règles et dette
 
@@ -25,7 +25,20 @@ cause n'est pas dans le dépôt.
 > liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
 > PageSpeed Insights.
 
-## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → 78 → 79 → 78 → 79 → 79 → **79 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → **2026-10-20**) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → 78 → 79 → 78 → 79 → 79 → 79 → **79 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → **2026-10-22**) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ⚪ 2026-10-22 · 0 : la première visite venue de Google
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-22 : CI de `main` à `d16de29a` (run `39843255180`, cinq jobs verts ; `main` rouge du 10-20 à 22:03 au 10-22 à 14:39, 19 runs), `Visual` vert à `fb83cd60`, production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-22 |
+> |---|---|---|
+> | Production | 0 | `/`, `/en/`, `/entreprise-presentation/`, `/blog/`, `/guide/`, `sitemap.xml`, `robots.txt` en 200 ; canonical de la page entreprise identique au `sitemap.xml` ; `/guide/` sert 1 932 mots dans le HTML |
+> | Lighthouse SEO | 0 | **100** sur les 8 URLs, bureau et mobile, à `d16de29a` |
+> | Trafic | 0 | `traffic_hits` : une arrivée de `google.com` sur `/en/` le 10-22, la première mesurée |
+> | LCP mobile des pages de contenu | 0 | 4,5 à 5,6 s (guide, blog, article, `/pour-*`), signal de classement : débité une fois en [`PERFORMANCE.md`](./PERFORMANCE.md) et en [`MOBILE.md`](./MOBILE.md) |
+>
+> **79 → 79.**
 
 > ### ⚪ 2026-10-20 · 0 : aucune page publique touchée
 >

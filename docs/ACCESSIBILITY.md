@@ -1,4 +1,4 @@
-<!-- note-audit: note=81 -->
+<!-- note-audit: note=82 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **81 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **82 / 100** au 2026-10-22, au tableau de bord de [`README.md`](./README.md).
 
 # Accessibilité (a11y) — COSMO
 
@@ -45,7 +45,19 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → 81 → 82 → 82 → 82 → 81 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → **2026-10-22**)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → 81 → 82 → 82 → 82 → 81 → 81 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → 2026-10-22 → **2026-10-22 (passe)**)
+
+> ### 🟢 2026-10-22 (passe) · +1 : C-97 refermé et vu vert en CI
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-22 : CI de `main` à `d16de29a` (run `39843255180`, cinq jobs verts ; `main` rouge du 10-20 à 22:03 au 10-22 à 14:39, 19 runs), `Visual` vert à `fb83cd60`, production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-22 |
+> |---|---|---|
+> | ✅ `/dashboard` déborde de 13 px à 200 % de police sur `mobile-chrome` (C-97, −1 le 10-20) | **+1** | `071cdad2` (barre d'onglets mobile), PR n° 88 ; `e2e` vert sur `main` à `d16de29a` (`mobile-android.spec.ts`, horloge figée). Agenda en paysage ramené à 0 px dans la même vague (`56e1b976`) |
+> | `/guide/` 92 → 100, widgets sous mouvement réduit, chevrons de l'agenda mobile nommés, `AssignRoleDialog` et `RoleEditorSheet` mesurées au clavier | 0 | voir les blocs du jour ci-dessous : aucun n'était débité. Lighthouse a11y en CI à `d16de29a` : 100 sur `/`, `/guide/`, `/a-propos/`, `/en/` ; 99 sur `/blog/` et `/pour-freelances/` ; **97** sur la page entreprise (bureau), audits à identifier |
+> | ⚠️ `/entreprise/projects` à 375 px : 11 commandes sous 44 px | 0 | trouvé et chiffré par la remesure de C-57 du jour, hors spec ; non débité tant qu'il n'est pas dans une mesure rejouée. Suite ouverte dans [`MOBILE.md`](./MOBILE.md) |
+>
+> **81 → 82.**
 
 > ### ⚪ 2026-10-22 · 0 : les deux surfaces des rôles MESURÉES au clavier, et un vrai défaut corrigé
 >
