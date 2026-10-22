@@ -32,7 +32,7 @@
 >
 > | Item | Effet | Mesuré le 2026-10-20 |
 > |---|---|---|
-> | 🔴 `Visual` rouge depuis `a9db6f2c` | **−1** | six captures : `/dashboard` dans les quatre thèmes (contenu daté, voir [`TESTING.md`](./TESTING.md)), `/entreprise` Aperçu (refonte attendue, référence à régénérer), **l'état ERREUR de la frontière d'erreur** (non identifié). La refonte d'écran la plus large depuis septembre (Aperçu en widgets, modèles par rôle, « Ajouter un widget ») est donc arrivée sans aucune comparaison visuelle |
+> | 🔴 `Visual` rouge depuis `a9db6f2c` | **−1** | six captures : `/dashboard` dans les quatre thèmes (contenu daté, voir [`TESTING.md`](./TESTING.md)), `/entreprise` Aperçu (refonte attendue, référence à régénérer), **l'état ERREUR de la frontière d'erreur** (identifié le 2026-10-22 : référence périmée, pas une régression. Le bloc d'erreur était identique au pixel près, run `39668102924` ; l'écart venait du tableau de bord sur lequel il était capturé. Le cas capture désormais le bloc seul). La refonte d'écran la plus large depuis septembre (Aperçu en widgets, modèles par rôle, « Ajouter un widget ») est donc arrivée sans aucune comparaison visuelle |
 > | Produit | 0 | Aperçu en grille de widgets éditable (S/M/L, modèles membre, chef d'équipe, admin) ; éditeur de rôle en modale centrée ; invitation une adresse à la fois ; boussole du guide en mode perso ; rapport d'activité refondu puis **rétabli** (`45b2d7fd`), export PDF conservé. Crédité quand `Visual` le verra |
 >
 > **86 → 85.**
