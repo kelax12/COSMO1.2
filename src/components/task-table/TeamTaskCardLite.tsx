@@ -8,7 +8,7 @@ import React from 'react';
 import { CalendarClock, UsersRound } from 'lucide-react';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import { isTaskOverdue, projectColor, formatDuration, taskDisplayStatus } from '@/components/organization/team-projects.helpers';
-import { formatDeadlineSmart, formatOverdueSince } from './helpers';
+import { formatDeadlineSmart, formatOverdueSince, priorityPillClass } from './helpers';
 import { useT } from '@/i18n/useT';
 
 interface TeamTaskCardLiteProps {
@@ -94,7 +94,7 @@ const TeamTaskCardLiteInner = React.forwardRef<HTMLDivElement, TeamTaskCardLiteP
             {/* Maquette 87 : « 22/09/2026 » → « lundi » / « en retard de 2 j ». */}
             {task.deadline && (
               <>
-                <span className={overdue ? 'text-red-500 font-semibold inline-flex items-center gap-0.5' : 'inline-flex items-center gap-0.5'}>
+                <span className={overdue ? 'text-[rgb(var(--color-danger-text))] font-semibold inline-flex items-center gap-0.5' : 'inline-flex items-center gap-0.5'}>
                   <CalendarClock size={11} aria-hidden="true" />
                   {overdue ? formatOverdueSince(task.deadline) : formatDeadlineSmart(task.deadline)}
                 </span>
@@ -112,7 +112,7 @@ const TeamTaskCardLiteInner = React.forwardRef<HTMLDivElement, TeamTaskCardLiteP
         </div>
 
         {task.priority > 0 && (
-          <div className={`self-center shrink-0 px-1.5 py-0.5 rounded-md font-bold text-caption task-priority-${task.priority}`}>
+          <div className={`self-center shrink-0 px-1.5 py-0.5 rounded-md font-bold text-caption ${priorityPillClass(task.priority)}`}>
             P{task.priority}
           </div>
         )}

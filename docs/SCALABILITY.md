@@ -1,4 +1,4 @@
-<!-- note-audit: note=90 -->
+<!-- note-audit: note=91 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **90 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **91 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
 
 # Scalabilité — audit mesuré, décisions et runbook
 
@@ -21,7 +21,56 @@ s'est révélée fausse.
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
 
-## Note de scalabilité : 71 → 84 → 86 → 89 → 91 → 87 → 90 → 90 → **90 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
+## Note de scalabilité : 71 → 84 → 86 → 89 → 91 → 87 → 90 → 90 → 90 → 90 → 91 → 91 → **91 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
+
+> ### ⚪ 2026-10-20 · 0 : le plafond par visiteur tient de nouveau
+>
+> Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | ✅ `traffic_hits` · croissance | 0 | `TR-1` fermé le 2026-10-19 (mig. `223`) : seul le collecteur appelle `track_hit`, avec la clé secrète, et l'IP n'est plus prise dans le corps. **3** lignes en base (de test), base à **28 Mo** sur 500 |
+>
+> **91 → 91.**
+
+> ### ⚪ 2026-10-18 · 0 : une table qui peut grossir plus vite que la base
+>
+> Dernière passe avant l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | 🟠 `traffic_hits` · croissance | 0 | débitée **une fois**, dans [`../faille.md`](../faille.md) (`TR-1`) : purge à 13 mois active, mais jusqu'à **4,3 M lignes par jour** acceptées d'un appelant anonyme, pour une base de **24 Mo** et un plafond de 500 Mo en plan Free |
+> | Requêtes de `track_hit` | 0 | deux `count(*)` sur la dernière minute, servis par `idx_traffic_hits_visitor` et `idx_traffic_hits_time` |
+> | `scalability-volume` | 0 | dernier run planifié (mensuel) vert le 2026-10-03 |
+>
+> **91 → 91.**
+
+> ### 🟢 2026-10-16 · +1 : le chat de projet ne sonde plus en permanence
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab`, production (catalogue, advisors), dépôt à `HEAD`. Tableau de
+> bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ Sondage permanent du chat de projet (−1) | **+1** | plus aucun `refetchInterval` dans `team-projects/messages.hooks.ts` (`c791eb55`) ; `polling.guard` vert en CI et en local |
+> | Production | 0 | **77** tables, toutes sous RLS, **205** policies, ledger **170** : inchangés depuis le 10-15 |
+>
+> **90 → 91.**
+
+> ### ⚪ 2026-10-15 · 0 : le premier run de charge automatique, et un sondage permanent
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> production (catalogue, advisors), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | ✅ AM-1 · charge jouée automatiquement (+1 sur 2 le 09-22) | **+1** | `scalability-volume.yml`, premier run **planifié** le 2026-10-03 à 09:04 UTC : **vert**. Le second point attendait exactement ce run |
+> | 🔴 Sondage permanent du chat de projet | **−1** | `src/modules/team-projects/messages.hooks.ts` : `refetchInterval: 1000 * 20`, sans condition (`000eeedd`, mig. `220`, 2026-10-13). Trois requêtes par minute et par personne tant qu'une page projet est ouverte au premier plan. `polling.guard` rouge en local (deux cas), jamais en CI. La voie écrite au § 3 est Realtime (publication + `REPLICA IDENTITY FULL`), ou `refetchOnWindowFocus` seul |
+> | Production | 0 | **77** tables, toutes sous RLS, **205** policies, ledger **170** |
+>
+> **90 → 90.**
 
 > ### ⚪ 2026-10-02 (soir) · 0 : vérifiée inchangée
 >

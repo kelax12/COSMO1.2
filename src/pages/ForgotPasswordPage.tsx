@@ -65,13 +65,13 @@ const ForgotPasswordPage = () => {
 
   return (
     <main
-      className="min-h-[100dvh] flex flex-col items-center justify-center p-4 gap-6"
+      className="min-h-[100dvh] flex flex-col items-center justify-center max-md:justify-start max-md:items-stretch p-4 max-md:px-6 max-md:pt-6 gap-6"
       style={{ backgroundColor: 'rgb(var(--color-background))' }}
     >
-      <Link to="/" aria-label={t('auth.backHome')} className="shrink-0">
+      <Link to="/" aria-label={t('auth.backHome')} className="shrink-0 max-md:self-start max-md:scale-90 max-md:origin-left">
         <Logo showText />
       </Link>
-      <div className="w-full max-w-md bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl p-8 shadow-2xl">
+      <div className="w-full max-w-md bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl p-8 shadow-2xl max-md:bg-transparent max-md:border-0 max-md:shadow-none max-md:p-0">
         {sent ? (
           <div className="text-center" role="status">
             <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-green-500/10 flex items-center justify-center">

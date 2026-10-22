@@ -11,7 +11,9 @@ import {
   subscribeConsentReview,
   type CookieConsent,
 } from '@/lib/cookie-consent';
-import { clearAudienceTraces, mountAudienceScript } from '@/lib/audience';
+import { clearAttributionTraces, persistPendingFirstTouch } from '@/lib/attribution';
+import { clearDemoMetricsTraces } from '@/lib/demo-metrics';
+import { clearDemoEngagementTraces } from '@/lib/demo-engagement';
 import { useLocalizedPath } from '@/i18n/useLocalizedPath';
 
 const CookieBanner: React.FC = () => {
@@ -58,15 +60,9 @@ const CookieBanner: React.FC = () => {
     setConsent('accepted');
     setVisible(false);
     setReviewing(false);
-    // Monte MAINTENANT ce qui n'avait pas pu l'être au démarrage. Sans cet
-    // appel, accepter ne produirait aucune mesure avant le prochain
-    // rechargement — l'utilisateur dirait oui, et il ne se passerait rien.
-    try {
-      mountAudienceScript(document, {
-        pathname: window.location.pathname,
-        storage: window.localStorage,
-      });
-    } catch { /* la mesure ne doit jamais casser un clic de l'utilisateur */ }
+    // Source d'acquisition lue dans l'URL à l'arrivée, gardée en mémoire tant
+    // que la réponse n'était pas donnée (`attribution.ts`).
+    persistPendingFirstTouch();
   };
 
   const handleRefuse = () => {
@@ -75,11 +71,18 @@ const CookieBanner: React.FC = () => {
     setConsent('refused');
     setVisible(false);
     setReviewing(false);
+    // À CHAQUE refus, pas seulement au retrait : un identifiant de démo ou une
+    // source d'acquisition posés avant le 2026-10-13, sans consentement, ne
+    // doivent pas survivre au premier « Refuser ».
+    try {
+      clearAttributionTraces(window.localStorage);
+      clearDemoMetricsTraces(window.localStorage);
+      clearDemoEngagementTraces(window.localStorage);
+    } catch { /* stockage indisponible */ }
     if (wasAccepted) {
-      // RETRAIT d'un accord déjà donné. Les deux mesures sont peut-être déjà
-      // chargées, et on ne décharge pas du JavaScript évalué : on efface ce
-      // qu'elles ont déposé, puis on recharge, ce qui repart sans elles.
-      try { clearAudienceTraces(window.localStorage, window.sessionStorage); } catch { /* stockage indisponible */ }
+      // RETRAIT d'un accord déjà donné. La mesure Vercel est peut-être déjà
+      // chargée, et on ne décharge pas du JavaScript évalué : on recharge,
+      // ce qui repart sans elle.
       window.location.reload();
       return;
     }
@@ -159,8 +162,7 @@ const CookieBanner: React.FC = () => {
                   décrire ce que « Accepter » déclenche, sinon le consentement
                   n'est pas éclairé (art. 82 loi I&L, art. 4.11 RGPD).
                   Il annonçait « uniquement des cookies strictement nécessaires »
-                  alors qu'accepter charge Vesk et Vercel Analytics, et dépose un
-                  identifiant persistant : la phrase décrivait le cas du REFUS et
+                  alors qu'accepter charge Vercel Analytics et la mesure interne : la phrase décrivait le cas du REFUS et
                   la proposait comme description de l'acceptation.
                   Une clé = une phrase complète : l'ancienne version concaténait
                   trois fragments traduits, ce qui rend toute relecture juridique

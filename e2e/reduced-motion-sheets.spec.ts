@@ -115,7 +115,7 @@
 // desktop (cf. le commentaire de `e2e/fixtures.ts`).
 //
 // ═══════════════════════════════════════════════════════════════════
-import { test, expect } from './fixtures';
+import { test, expect, gotoTolerant } from './fixtures';
 import type { Page } from '@playwright/test';
 
 // Émulation réelle du réglage système, pour tout ce fichier.
@@ -301,7 +301,9 @@ test.describe('mouvement réduit — les feuilles s’ouvrent réellement', () =
     // `LoginModal` est le témoin POSITIF du harnais : migrée le 2026-08-27,
     // elle DOIT passer. Un échec ici invalide tous les autres résultats du
     // fichier — il signifie que rien ne s'anime, pas que le produit est cassé.
-    await page.goto('/');
+    // `gotoTolerant` : sous WebKit, la première navigation peut être
+    // INTERROMPUE (« Frame load interrupted », instable le 2026-10-09).
+    await gotoTolerant(page, '/');
     await page.evaluate(() => {
       try {
         localStorage.setItem('cosmo_cookie_consent', 'refused');
@@ -309,7 +311,7 @@ test.describe('mouvement réduit — les feuilles s’ouvrent réellement', () =
         /* ignore */
       }
     });
-    await page.goto('/');
+    await gotoTolerant(page, '/');
     await assertPageIsPainting(page);
 
     // ⚠️ C'est un `<a href="/login">` neutralisé par `preventDefault`, pas un

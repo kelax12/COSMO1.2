@@ -8,9 +8,10 @@
 //     sous-tâches partent dans le payload createTask.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState, useEffect } from 'react';
-import { Plus, X } from 'lucide-react';
+import { ArrowUpRight, Plus, X } from 'lucide-react';
 import { useTask, useUpdateTask, Subtask } from '@/modules/tasks';
 import { useT } from '@/i18n/useT';
+import { usePromoteSubtask } from './use-promote-subtask';
 
 /**
  * Plafond aligné sur la garde zod (`task.schema.ts`) : afficher un compteur
@@ -30,15 +31,23 @@ interface SubtaskChecklistProps {
   value?: Subtask[];
   /** …et callback à chaque changement (remplace la mutation). */
   onChange?: (subtasks: Subtask[]) => void;
+  /**
+   * `line` (maquette 159, fiche mobile) : le champ encadré et son carré bleu
+   * plein deviennent une ligne « + Ajouter une sous-tâche » ; Entrée ajoute.
+   */
+  variant?: 'default' | 'line';
 }
 
-const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubtasks, hideLabel = false, value, onChange }) => {
+const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubtasks, hideLabel = false, value, onChange, variant = 'default' }) => {
   const { t } = useT('tasks');
   const isControlled = value !== undefined && onChange !== undefined;
   // Le détail (getById) porte toujours subtasks ; le cache liste peut être
   // plus frais après une mutation — on privilégie le détail s'il existe.
   const { data: detail } = useTask(isControlled ? '' : taskId ?? '');
   const updateTaskMutation = useUpdateTask();
+  // Point 10 de la liste du 2026-10-08 : convertir une sous-tâche en tâche.
+  // Édition seulement : en création, la parente n'existe pas encore.
+  const promote = usePromoteSubtask(isControlled ? undefined : taskId);
 
   const [localItems, setLocalItems] = useState<Subtask[]>(initialSubtasks ?? []);
   const [newName, setNewName] = useState('');
@@ -125,6 +134,19 @@ const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubt
               >
                 {sub.name}
               </span>
+              {!isControlled && taskId && !sub.completed && (
+                <button
+                  type="button"
+                  onClick={() => promote(sub.id, items, setLocalItems)}
+                  aria-label={t('subtasks.promote', { name: sub.name })}
+                  title={t('subtasks.promote', { name: sub.name })}
+                  // Visible au doigt : sous 768 px il n'y a pas de survol.
+                  className="md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 p-1 rounded transition-all hover:bg-[rgb(var(--color-hover))]"
+                  style={{ color: 'rgb(var(--color-text-muted))' }}
+                >
+                  <ArrowUpRight size={14} aria-hidden="true" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => commit(items.filter(s => s.id !== sub.id))}
@@ -139,29 +161,57 @@ const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubt
         </ul>
       )}
 
-      <div className="flex items-center gap-2">
-        <input
-          type="text"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') { e.preventDefault(); addItem(); }
-          }}
-          placeholder={`${t('subtasks.placeholder')}…`}
-          aria-label={t('subtasks.add')}
-          className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent-solid))] border-slate-200 dark:border-slate-700"
-          style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
-        />
-        <button
-          type="button"
-          onClick={addItem}
-          disabled={!newName.trim() || items.length >= MAX_SUBTASKS}
-          aria-label={t('subtasks.addAction')}
-          className="p-2 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] disabled:opacity-40 transition-all"
-        >
-          <Plus size={16} />
-        </button>
-      </div>
+      {variant === 'line' ? (
+        <div className="flex items-center gap-2.5 min-h-11">
+          <Plus size={18} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-accent))]" />
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); addItem(); }
+            }}
+            enterKeyHint="done"
+            placeholder={t('subtasks.add')}
+            aria-label={t('subtasks.add')}
+            disabled={items.length >= MAX_SUBTASKS}
+            className="no-input-chrome flex-1 min-w-0 bg-transparent text-body focus:outline-none text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-accent))]"
+          />
+          {newName.trim() && (
+            <button
+              type="button"
+              onClick={addItem}
+              className="shrink-0 min-h-11 px-1 text-body font-semibold text-[rgb(var(--color-accent))]"
+            >
+              {t('subtasks.addAction')}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); addItem(); }
+            }}
+            placeholder={`${t('subtasks.placeholder')}…`}
+            aria-label={t('subtasks.add')}
+            className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent-solid))] border-slate-200 dark:border-slate-700"
+            style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
+          />
+          <button
+            type="button"
+            onClick={addItem}
+            disabled={!newName.trim() || items.length >= MAX_SUBTASKS}
+            aria-label={t('subtasks.addAction')}
+            className="p-2 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] disabled:opacity-40 transition-all"
+          >
+            <Plus size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Le plafond ne se dit qu'une fois atteint : l'annoncer d'emblée
           encombrerait 99 % des tâches pour une limite qu'elles n'atteindront

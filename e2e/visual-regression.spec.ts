@@ -42,11 +42,14 @@
 //     instant différent ;
 //   · `caret: 'hide'` — un curseur de saisie clignote, donc il diffère une
 //     fois sur deux ;
-//   · LE TEMPS EST FIGÉ. `e2e/fixtures.ts` pose `timezoneId: 'Europe/Paris'`,
-//     mais pas la DATE : les seeds de démo sont relatifs à aujourd'hui, donc
-//     « Mardi 12 » devient « Mercredi 13 » du jour au lendemain et TOUTES les
-//     références deviennent fausses à minuit. Les captures masquent donc les
-//     zones qui portent une date, plutôt que de prétendre les comparer.
+//   · LE TEMPS EST FIGÉ. `playwright.config.ts` pose `timezoneId:
+//     'Europe/Paris'`, et depuis le 2026-10-20 ce spec pose aussi la DATE
+//     (`horlogeFigee`, `e2e/fixtures.ts`). Avant, les seeds de démo suivaient
+//     le jour réel : le 2026-10-19, un lundi, la carte check-in hebdo est
+//     apparue et les quatre `/dashboard`, l'Aperçu et l'état d'erreur (qui se
+//     capture PAR-DESSUS le tableau de bord) sont passés au rouge sur un
+//     commit qui ne changeait que deux commentaires. Les masques de date
+//     restent : ils ne coûtent rien et couvrent un spec qui oublierait l'horloge.
 //
 // ── CE QUE ÇA NE COUVRE PAS ─────────────────────────────────────────
 //
@@ -60,10 +63,13 @@
 // mêmes. Celles qui comptent sont générées par la CI.
 // ═══════════════════════════════════════════════════════════════════
 
-import { test, expect } from './fixtures';
+import { test, expect, HORLOGE_FIGEE } from './fixtures';
 import type { Page } from '@playwright/test';
 
 test.describe.configure({ timeout: 180_000 });
+// Le jour de la semaine change l'écran (carte check-in du lundi et du mardi) :
+// sans date fixe, le verdict dépend du calendrier et non du code.
+test.use({ horlogeFigee: HORLOGE_FIGEE });
 
 /** Les quatre thèmes du produit. `gris` et `noir` posent AUSSI `.dark`. */
 const THEMES = ['light', 'dark', 'gris', 'noir'] as const;
@@ -96,10 +102,11 @@ async function poserTheme(page: Page, theme: (typeof THEMES)[number]): Promise<v
 /**
  * Les zones à MASQUER dans une capture, parce qu'elles changent seules.
  *
- * 🔴 Sans ce masque, cette garde serait rouge tous les jours à minuit : les
- * seeds de démo sont relatifs à `now()`, donc chaque libellé de date avance.
- * Masquer est le seul choix honnête — l'alternative (figer l'horloge) rendrait
- * les seeds vides au bout de quelques jours de dérive.
+ * Posés quand l'horloge n'était pas figée : les seeds de démo sont relatifs à
+ * `now()`, donc chaque libellé de date avançait. ❌ L'argument d'alors, « figer
+ * l'horloge rendrait les seeds vides au bout de quelques jours », était faux :
+ * les seeds sont générés DANS le navigateur, par rapport à l'heure figée, donc
+ * identiques à chaque run. L'horloge est figée depuis le 2026-10-20.
  */
 const MASQUES = [
   '[data-testid="today-date"]',
@@ -107,11 +114,44 @@ const MASQUES = [
   // Toute exécution après 10:00 (Paris) voyait un autre événement que la
   // référence prise le matin (mesuré le 2026-10-01).
   '[data-testid="dashboard-summary"]',
+  // « Mon agenda » de l'Aperçu entreprise : la frise d'AUJOURD'HUI et les
+  // jours suivants dépendent du jour et de l'heure du run (seeds relatifs à
+  // `now()`). Vu le 2026-10-08 : « Aucun rendez-vous aujourd'hui » contre une
+  // frise remplie, et un autre premier jour listé, à code identique.
+  '[data-testid="org-agenda-card"]',
+  // Phrase de résumé de l'Aperçu : date ET nom de la prochaine échéance
+  // avancent avec le jour ; masquer la seule date laissait le texte suivant
+  // se décaler selon sa largeur (« demain » / « lundi 12 octobre »).
+  '[data-testid="apercu-greeting-summary"]',
+  // Mini-graphiques du tableau de bord : les 7 derniers jours, relatifs à
+  // `now()`. Vu le 2026-10-09 : une barre de l'Agenda avait changé de jour.
+  '[data-testid="mini-bar-chart"]',
   '.fc-toolbar-title',
   'time',
 ];
 
+/**
+ * Hauteurs FIXÉES pour les zones dont la taille dépend de l'heure.
+ *
+ * 🔴 Masquer ne suffit pas : un masque cache un contenu, pas une taille, et
+ * la zone décale tout ce qui suit. Et l'option `style` de `toHaveScreenshot`
+ * ne suffisait pas non plus : mesuré le 2026-10-10, « Mon agenda » faisait
+ * 212 px malgré un `height: 180px !important` passé par elle. Une vraie
+ * feuille injectée dans la page agit, elle, sur la mise en page.
+ */
+const HAUTEURS_FIXES = [
+  '[data-testid="org-agenda-card"] { height: 180px !important; overflow: hidden !important; }',
+  '[data-testid="apercu-greeting-summary"] { height: 46px !important; overflow: hidden !important; }',
+].join(' ');
+
 async function capturer(page: Page, nom: string): Promise<void> {
+  await page.addStyleTag({ content: HAUTEURS_FIXES });
+  // Aucun toast à l'écran au moment de capturer. Le style ci-dessous les
+  // retire déjà du rendu, et pourtant le rappel d'échéances (« 1 en retard ·
+  // Voir », 8 s) figurait dans la capture CI du 2026-10-09 sans qu'on sache
+  // le reproduire en local. On attend donc qu'il soit parti, plutôt que de
+  // dépendre du seul masquage.
+  await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 15_000 });
   await expect(page).toHaveScreenshot(`${nom}.png`, {
     fullPage: false,
     animations: 'disabled',
@@ -265,13 +305,21 @@ test.describe('C-95 — pages publiques', () => {
       // ⚠️ Le bandeau cookies est neutralisé : il est ancré en bas sur toute
       // la largeur, il recouvre donc une part variable de la capture selon
       // qu'il a été refusé ou non dans un test précédent.
+      // 🔴 2026-10-15 : la valeur posée ici était `'rejected'`, que le produit
+      // ne connaît pas (`readConsent` n'accepte que `accepted` | `refused`).
+      // Le bandeau n'a donc JAMAIS été neutralisé : les références le
+      // contenaient, et l'allongement de son texte (`79c0f0b3`) a rendu les
+      // trois pages rouges. Témoin à deux sens : on le voit, puis plus.
+      const bandeau = page.getByRole('complementary', { name: /cookie/i });
+      await expect(bandeau, 'le témoin ne trouve pas le bandeau : il ne prouve plus rien').toBeVisible({ timeout: 15_000 });
       await page.evaluate(() => {
         try {
-          localStorage.setItem('cosmo_cookie_consent', 'rejected');
+          localStorage.setItem('cosmo_cookie_consent', 'refused');
         } catch { /* stockage bloqué */ }
       });
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(1200);
+      await expect(bandeau, 'le bandeau cookies figure encore dans la capture').toHaveCount(0);
       await capturer(page, `publique-${route === '/' ? 'home' : route.slice(1)}`);
     });
   }

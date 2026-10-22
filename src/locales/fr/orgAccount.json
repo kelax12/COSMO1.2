@@ -86,7 +86,8 @@
       "project": "Projets",
       "task": "Tâches",
       "okr": "Objectifs",
-      "org": "Organisation"
+      "org": "Organisation",
+      "role": "Rôles"
     },
     "loading": "Chargement…",
     "empty": "Aucune entrée pour ces filtres.",
@@ -134,7 +135,14 @@
       "okr_deleted": "{{actor}} a supprimé définitivement l'objectif « {{object}} »",
       "org_renamed": "{{actor}} a renommé l'organisation en « {{object}} »",
       "org_owner_transferred": "{{actor}} a transféré la propriété de l'organisation à {{person}}",
-      "unknown": "{{actor}} a effectué une action d'administration"
+      "unknown": "{{actor}} a effectué une action d'administration",
+      "role_created": "{{actor}} a créé le rôle « {{object}} »",
+      "role_updated": "{{actor}} a modifié le rôle « {{object}} »",
+      "role_deleted": "{{actor}} a supprimé le rôle « {{object}} »",
+      "role_assigned": "{{actor}} a attribué le rôle « {{object}} » à {{person}}",
+      "role_revoked": "{{actor}} a retiré le rôle « {{object}} » à {{person}}",
+      "role_extended": "{{actor}} a modifié la durée du rôle « {{object}} » de {{person}}",
+      "role_expired": "Le rôle « {{object}} » de {{person}} a pris fin"
     }
   }
 }

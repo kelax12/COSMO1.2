@@ -12,10 +12,10 @@ describe('formatEventDuration', () => {
     expect(formatEventDuration('', '10:00', '2026-01-01', '11:00')).toBeNull();
   });
   it('formats hours and minutes', () => {
-    expect(formatEventDuration('2026-01-01', '10:00', '2026-01-01', '11:30')).toEqual({ kind: 'duration', text: '1h30min' });
+    expect(formatEventDuration('2026-01-01', '10:00', '2026-01-01', '11:30')).toEqual({ kind: 'duration', text: '1 h 30' });
   });
   it('formats whole hours', () => {
-    expect(formatEventDuration('2026-01-01', '10:00', '2026-01-01', '12:00')).toEqual({ kind: 'duration', text: '2h' });
+    expect(formatEventDuration('2026-01-01', '10:00', '2026-01-01', '12:00')).toEqual({ kind: 'duration', text: '2 h' });
   });
   it('formats minutes only', () => {
     expect(formatEventDuration('2026-01-01', '10:00', '2026-01-01', '10:45')).toEqual({ kind: 'duration', text: '45 min' });

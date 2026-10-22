@@ -6,7 +6,7 @@ import { test, expect, navTo } from './fixtures';
  * ⚠️ Historique : cette spec s'arrêtait à l'existence d'un bouton « Suivant »
  * (wizard à 2 étapes de l'ancien AddTaskForm). Ce wizard n'existe plus — le
  * TaskModal est désormais un formulaire à une seule étape, les collaborateurs
- * étant repliés dans une disclosure « Partager la tâche » (cf.
+ * étant rangés dans l'onglet « Partager » (cf.
  * TaskModalDesktopBody). Surtout, seul le NOM est obligatoire
  * (src/components/task-modal/validation.ts : échéance, priorité, catégorie et
  * temps estimé sont facultatifs et ne bloquent jamais).

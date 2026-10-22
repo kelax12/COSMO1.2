@@ -166,7 +166,11 @@ export async function runTaskSave(deps: TaskSaveDeps) {
       category: formData.category,
       deadline: deadlineFromDayKey(formData.deadline),
       estimatedTime: Number(formData.estimatedTime),
-      completed: formData.completed,
+      // 🔴 `completed` ne part PAS : la fiche ne l'édite pas, elle en garde la
+      // valeur À L'OUVERTURE. Depuis la mig. 214, le Statut de la fiche peut
+      // cocher la tâche entre-temps ; renvoyer la valeur périmée la décocherait,
+      // et le trigger la ramènerait en « À faire ». La case et la bascule sont
+      // les seuls chemins qui écrivent `completed`.
       bookmarked: formData.bookmarked,
       krId: formData.krId,
       recurrence: formData.recurrence ?? 'none',

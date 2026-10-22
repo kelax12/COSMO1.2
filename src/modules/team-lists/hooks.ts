@@ -6,7 +6,7 @@
 // optimistes sur la liste de l'organisation, retour arrière sur erreur.
 // ═══════════════════════════════════════════════════════════════════
 
-import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { showUndoToast } from '@/lib/undo-toast';
 import { getTeamListsRepository } from '@/lib/repository.factory';
@@ -29,15 +29,7 @@ async function patchLists(
   return previous;
 }
 
-export const useTeamLists = (orgId: string | undefined) => {
-  const repository = useRepo();
-  return useQuery({
-    queryKey: teamListKeys.list(orgId ?? ''),
-    queryFn: () => repository.getLists(orgId as string),
-    enabled: !!orgId,
-    staleTime: 1000 * 60,
-  });
-};
+export { useTeamLists, useSetTaskTeamLists } from './task-lists.hooks';
 
 export const useCreateTeamList = (orgId: string) => {
   const queryClient = useQueryClient();
@@ -92,27 +84,6 @@ export const useRemoveTaskFromTeamList = (orgId: string) => {
       if (previous) queryClient.setQueryData(teamListKeys.list(orgId), previous);
       toast.error(translator('errors').t('mutation.removeTaskFromList', { message: error.message }));
     },
-  });
-};
-
-/**
- * Pose les listes d'UNE tâche (fiche de tâche) : n'écrit que la différence
- * entre `before` et `after`. Chaque écriture est indépendante.
- */
-export const useSetTaskTeamLists = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: async ({ taskId, before, after }: { taskId: string; before: string[]; after: string[] }) => {
-      const results = await Promise.allSettled([
-        ...after.filter((id) => !before.includes(id)).map((listId) => repository.addTask(listId, taskId)),
-        ...before.filter((id) => !after.includes(id)).map((listId) => repository.removeTask(listId, taskId)),
-      ]);
-      const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
-      if (failed) throw failed.reason instanceof Error ? failed.reason : new Error(String(failed.reason));
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: teamListKeys.list(orgId) }),
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.addTaskToList', { message: error.message })),
   });
 };
 

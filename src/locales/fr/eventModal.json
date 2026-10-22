@@ -39,6 +39,8 @@
     "noTask": "Aucune tâche ce jour-là."
   },
   "form": {
+    "timeRange": "Horaire",
+    "recurrenceNever": "Jamais",
     "recurrenceCustom": "Personnaliser",
     "addComment": "+ Ajouter un commentaire",
     "customizeColors": "Personnaliser les couleurs",

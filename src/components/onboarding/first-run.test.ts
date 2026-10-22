@@ -5,8 +5,12 @@ import {
   LEGACY_EXAMPLES_FLAG,
   buildHabitInput,
   buildOkrInput,
+  buildSlotEvent,
   buildTaskInput,
   markFirstRunDone,
+  parseTarget,
+  readBusinessPending,
+  setBusinessPending,
   readFirstRunDone,
   shouldOfferFirstRun,
 } from './first-run';
@@ -137,5 +141,42 @@ describe('buildOkrInput', () => {
     const okr = buildOkrInput('Lancer la v2', '', now);
     expect(okr.startDate).toBe('2026-09-02T10:00:00.000Z');
     expect(okr.endDate).toBe('2026-12-01T10:00:00.000Z');
+  });
+});
+
+describe('ajouts du 2026-10-05', () => {
+  it('l habitude prend la duree choisie, 30 min si elle est absurde', () => {
+    expect(buildHabitInput('Lire', 20).estimatedTime).toBe(20);
+    expect(buildHabitInput('Lire', 0).estimatedTime).toBe(30);
+    expect(buildHabitInput('Lire', Number.NaN).estimatedTime).toBe(30);
+  });
+
+  it('une cible ne s invente pas : sans nombre positif, le resultat cle est binaire', () => {
+    expect(parseTarget('10')).toBe(10);
+    expect(parseTarget('2,5')).toBe(2.5);
+    for (const raw of ['', 'beaucoup', '0', '-3']) expect(parseTarget(raw)).toBe(1);
+    expect(buildOkrInput('O', 'KR', new Date(), '12').keyResults[0].targetValue).toBe(12);
+  });
+
+  it('le creneau dure une heure, a l heure choisie, aujourd hui ou demain, relie a la tache', () => {
+    const now = new Date(2026, 9, 5, 8, 30);
+    const today = buildSlotEvent('  Rappeler  ', 't-1', 'today', 14, now);
+    expect(today.title).toBe('Rappeler');
+    expect(today.taskId).toBe('t-1');
+    expect(new Date(today.start).getHours()).toBe(14);
+    expect(new Date(today.start).getDate()).toBe(5);
+    expect(new Date(today.end).getTime() - new Date(today.start).getTime()).toBe(3600_000);
+    const tomorrow = buildSlotEvent('X', undefined, 'tomorrow', 9, now);
+    expect(new Date(tomorrow.start).getDate()).toBe(6);
+    expect('taskId' in tomorrow).toBe(false);
+  });
+
+  it('le rappel « entreprise en attente » se pose et s efface', () => {
+    localStorage.clear();
+    expect(readBusinessPending()).toBe(false);
+    setBusinessPending(true);
+    expect(readBusinessPending()).toBe(true);
+    setBusinessPending(false);
+    expect(readBusinessPending()).toBe(false);
   });
 });

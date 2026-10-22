@@ -57,6 +57,23 @@
     <!-- Inter self-hosted (déclaré dans src/index.css) — préload du subset latin -->
     <link rel="preload" href="/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 
+    <!-- 2026-10-16 · Une personne CONNECTÉE ne voit jamais le prérendu.
+         `/` est servi par la home prérendue (Vercel sert le fichier avant le
+         rewrite) : ouvrir ou rafraîchir l'app à la racine (raccourci, PWA
+         `start_url: "/"`, favori) peignait le texte SEO de la landing jusqu'à
+         ce que React redirige vers le dashboard. Avec une session Supabase ou
+         une démo persistée, on retire `data-prerendered` AVANT la première
+         peinture : spinner, et `boot.ts` charge l'app sans attendre.
+         2026-10-21 : il pose aussi `data-boot-theme` depuis le thème enregistré
+         (mêmes alias que resolveInitialTheme), pour que le spinner en ait les
+         couleurs dès la première image.
+         Seul <script> inline exécutable du dépôt, autorisé par son empreinte
+         sha256 dans `script-src` (vercel.json). ❌ Le modifier d'un octet
+         sans recalculer l'empreinte le fait bloquer en prod, en silence :
+         `src/boot-screen.test.ts` compare les deux. Une seule ligne exprès :
+         des fins de ligne CRLF changeraient l'empreinte. -->
+    <script>(function(){try{var s=localStorage,a=s.getItem('cosmo_demo_active')==='1';for(var i=0;!a&&i<s.length;i++)a=/^sb-.+-auth-token$/.test(s.key(i)||'');var h=document.documentElement,t=s.getItem('theme');if(a)h.removeAttribute('data-prerendered');if(t==='black'||t==='midnight'||t==='monochrome')t='gris';if(/^(light|dark|gris|noir)$/.test(t||''))h.setAttribute('data-boot-theme',t)}catch(e){}})()</script>
+
     <!-- ───────────────────────────────────────────────────────────────────
          Écran de démarrage + contenu SEO. 100 % CSS, AUCUN JS.
 
@@ -65,6 +82,7 @@
          prod, le serveur de dev n'envoie pas la CSP). Masquer le bloc SEO en
          JS marcherait donc en local et échouerait silencieusement en ligne.
          D'où le choix du CSS pur : `style-src` autorise bien 'unsafe-inline'.
+         Seule exception : le script juste au-dessus, autorisé par empreinte.
 
          Règle du jeu :
          - #boot-screen est peint immédiatement (overlay opaque plein écran),
@@ -81,15 +99,25 @@
            de chargement tournerait indéfiniment).
          ─────────────────────────────────────────────────────────────────── -->
     <style>
-      #boot-screen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#ffffff}
-      #boot-screen .ring{width:32px;height:32px;border:3px solid rgba(15,23,42,.14);border-top-color:#6366f1;border-radius:50%;animation:boot-spin .7s linear infinite}
+      /* 2026-10-21 · Le spinner prend les couleurs EXACTES du thème (fond
+         --color-background, accent --color-accent-solid de src/index.css) :
+         #boot-screen avant React, puis .boot-screen (`BootScreen`, fallback des
+         pages publiques) pendant le chargement de la page. Les deux doivent
+         être indiscernables, sinon on voit un spinner en remplacer un autre.
+         Sans thème enregistré : celui de defaultTheme() (src/lib/theme.ts),
+         donc Clair ou Sombre selon le système, et Gris sous 768 px, d'où la
+         règle mobile APRÈS celle du système. Un thème enregistré arrive par
+         html[data-boot-theme], posé par le script inline puis par applyTheme(). */
+      #boot-screen,.boot-screen{--bs-bg:#f8fafc;--bs-ring:rgba(15,23,42,.14);--bs-accent:#2563eb;position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bs-bg)}
+      #boot-screen .ring,.boot-screen .ring{width:32px;height:32px;border:3px solid var(--bs-ring);border-top-color:var(--bs-accent);border-radius:50%;animation:boot-spin .7s linear infinite}
       @keyframes boot-spin{to{transform:rotate(360deg)}}
-      @media (prefers-color-scheme:dark){#boot-screen{background:#0f172a}#boot-screen .ring{border-color:rgba(255,255,255,.16);border-top-color:#818cf8}}
-      /* Mobile démarre toujours en thème Noir (palette GitHub), cf. src/lib/theme.ts →
-         defaultTheme(), indépendant de la préférence système, d'où la règle après
-         (et non combinée avec prefers-color-scheme:dark) pour gagner y compris en clair. */
-      @media (max-width:767px){#boot-screen{background:#24292e}#boot-screen .ring{border-color:rgba(255,255,255,.16);border-top-color:#58a6ff}}
-      @media (prefers-reduced-motion:reduce){#boot-screen .ring{animation-duration:2.4s}}
+      @media (prefers-color-scheme:dark){#boot-screen,.boot-screen{--bs-bg:#0f172a;--bs-ring:rgba(255,255,255,.16);--bs-accent:#3472d8}}
+      @media (max-width:767px){#boot-screen,.boot-screen{--bs-bg:#24292e;--bs-ring:rgba(255,255,255,.16);--bs-accent:#2f75d5}}
+      html[data-boot-theme=light] :is(#boot-screen,.boot-screen){--bs-bg:#f8fafc;--bs-ring:rgba(15,23,42,.14);--bs-accent:#2563eb}
+      html[data-boot-theme=dark] :is(#boot-screen,.boot-screen){--bs-bg:#0f172a;--bs-ring:rgba(255,255,255,.16);--bs-accent:#3472d8}
+      html[data-boot-theme=gris] :is(#boot-screen,.boot-screen){--bs-bg:#24292e;--bs-ring:rgba(255,255,255,.16);--bs-accent:#2f75d5}
+      html[data-boot-theme=noir] :is(#boot-screen,.boot-screen){--bs-bg:#080808;--bs-ring:rgba(255,255,255,.16);--bs-accent:#f0f0f0}
+      @media (prefers-reduced-motion:reduce){#boot-screen .ring,.boot-screen .ring{animation-duration:2.4s}}
       #seo-fallback{display:none;font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b}
       /* C-116 · 2026-09-29 : une page PRÉRENDUE (prerender.mjs pose
          data-prerendered sur <html>) peint son contenu au lieu du spinner,
@@ -100,16 +128,45 @@
          le thème mobile sombre colorerait le fond. Police système : attendre
          la police web retarderait le rendu qu'on cherche à avancer. */
       html[data-prerendered] #boot-screen{display:none}
-      html[data-prerendered] #seo-fallback{display:block;box-sizing:border-box;max-width:none;min-height:100vh;margin:0;padding:32px max(20px,calc((100% - 760px) / 2));background:#fff;color:#1e293b;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+      html[data-prerendered] #seo-fallback{display:block;box-sizing:border-box;max-width:none;min-height:100vh;margin:0;padding:32px max(16px,calc((100% - 760px) / 2));background:#fff;color:#1e293b;font:18px/1.75 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+      /* C-116 · 2026-10-10 : typographie alignée sur celle des articles React
+         (18-19 px, marge 16 px). Le LCP ne change de candidat que pour un
+         élément PLUS GRAND : un fallback en 16 px laissait le paragraphe React
+         reprendre le LCP sur /pour-freelances/ et les articles du blog.
+         L'interligne est volontairement PLUS large que celui des articles
+         (1,75 et 2 contre 1,625 et 1,75) : la police système est plus étroite
+         qu'Inter sous Windows et Android, le même texte y tient en une ligne
+         de moins, et l'élément React redevenait le plus grand. */
+      html[data-prerendered] #seo-fallback .lead{font-size:19px;line-height:2}
       html[data-prerendered] #seo-fallback h1{font-size:2rem;line-height:1.2;font-weight:700;margin:0 0 16px}
       html[data-prerendered] #seo-fallback h2{font-size:1.3rem;line-height:1.3;font-weight:600;margin:28px 0 8px}
       html[data-prerendered] #seo-fallback p,html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{margin:0 0 12px}
       html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{padding-left:24px;list-style:revert}
       html[data-prerendered] #seo-fallback a{color:#4f46e5;text-decoration:underline}
       html[data-prerendered] #seo-fallback img{max-width:100%;height:auto;border-radius:8px}
+      /* C-116 · 2026-10-10 : les captures du fallback ne sont PAS montrées.
+         React remplace ce contenu quelques instants après, avec ses propres
+         captures : les afficher ici faisait télécharger ~350 ko d'images
+         jetées aussitôt, et Lighthouse mobile les comptait dans le chemin du
+         LCP (5,1 s sur /entreprise-presentation/). Une image `loading=lazy`
+         en display:none n'est jamais demandée. Les robots lisent toujours
+         src et alt ; le <noscript> plus bas les réaffiche sans JS. */
+      html[data-prerendered] #seo-fallback img{display:none}
+      /* 2026-10-21 · Sur la HOME et l'ENTREPRISE, ce premier rendu n'est plus le
+         texte SEO : c'est #lp-hero, une copie du header et du hero du
+         parcours (prerender.mjs, `scripts/capture-landing-hero.mjs`), avec sa
+         propre CSS confinée. Un visiteur voyait un mur de texte, puis un
+         squelette gris, puis la landing. Elle vit HORS de #root, en calque :
+         createRoot ne l'efface pas, et la landing la retire dans l'image où
+         elle peint son hero. Pourquoi et sorties : src/lib/prerender-hero.ts.
+         Le texte SEO reste dans le balisage, pour les robots. */
+      #lp-hero{display:none}
+      html[data-prerendered] #lp-hero{display:block;position:fixed;inset:0;z-index:10000;overflow:hidden;background:#fff}
+      html[data-prerendered] #lp-hero[data-track=entreprise]{background:#08090C}
+      html[data-prerendered] #lp-hero ~ #root #seo-fallback{display:none}
     </style>
     <noscript>
-      <style>#boot-screen{display:none}#seo-fallback{display:block}</style>
+      <style>#boot-screen{display:none}#seo-fallback{display:block!important}html[data-prerendered] #seo-fallback img{display:inline}#lp-hero{display:none!important}</style>
     </noscript>
 
     <!-- ❌ Aucun script publicitaire, nulle part. Le mur-pub et le système de
@@ -226,27 +283,6 @@
       }
     }
     </script>
-    <!-- Mesure d'audience (Vesk, sans cookie) — PLUS DE BALISE ICI.
-         Le script est desormais injecte par src/lib/audience.ts, et seulement
-         quand il n'y a rien a voler : aucune session Supabase persistee ET
-         page publique.
-
-         Pourquoi : c'est le seul script tiers de l'origine, et `supabase.ts`
-         monte le client en `persistSession: true` — le jeton de session vit
-         dans le localStorage, lisible par tout script de l'origine. Charge sur
-         toute la SPA comme avant, un compromis du fournisseur donnait la prise
-         de controle des comptes connectes. Ni la RLS (l'attaquant agit AVEC le
-         jeton) ni la CSP (l'origine est autorisee) n'y changeaient quoi que ce
-         soit.
-
-         La mesure ne perd rien : elle porte sur l'audience des pages
-         publiques ; l'usage authentifie est deja mesure cote base par
-         get_admin_stats.
-
-         L'origine reste autorisee dans `script-src` ET `connect-src` de la CSP
-         (vercel.json) — l'injection dynamique en a toujours besoin.
-         Son empreinte est surveillee quotidiennement par le workflow
-         `vendor-watch` : une modification du fichier servi ouvre une issue. -->
   </head>
   <body>
     <div id="root">
@@ -275,6 +311,9 @@
         <p><a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a></p>
       </div>
     </noscript>
-    <script type="module" src="/src/main.tsx"></script>
+    <!-- `boot.ts` et non `main.tsx` : l'app n'est chargée qu'après la première
+         peinture du prérendu, pour que son JS et sa CSS sortent du chemin du
+         LCP. Pourquoi : en-tête de src/boot.ts. -->
+    <script type="module" src="/src/boot.ts"></script>
   </body>
 </html>

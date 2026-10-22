@@ -3,7 +3,6 @@ import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
 import TouchTarget from '@/components/mobile/TouchTarget';
 import { Plus, Target, CalendarCheck, CheckCircle2 } from 'lucide-react';
-import WeeklyCheckinModal from '@/components/WeeklyCheckinModal';
 import { getColorHex } from '@/lib/category-colors';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';
@@ -15,7 +14,6 @@ import { useCategories, useCreateCategory } from '@/modules/categories';
 import PageErrorState from '@/components/PageErrorState';
 import TaskModal from '@/components/TaskModal';
 import EventModal from '@/components/EventModal';
-import OKRModalSheet from '@/components/OKRModalSheet';
 import ColorSettingsModal from '@/components/ColorSettingsModal';
 import { toast } from '@/lib/toast';
 import PageTutorial from '@/components/tutorial/PageTutorial';
@@ -26,15 +24,17 @@ import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { filterObjectivesByCategories, shouldReopenOnDeadlineExtension, type Objective } from './okr/okr-page-logic';
 import OKRCard from './okr/OKRCard';
 import { OKRListSkeleton } from '@/components/skeletons';
-import DeleteObjectiveConfirm from './okr/DeleteObjectiveConfirm';
-import CategoryFilterBar from './okr/CategoryFilterBar';
+import { WeeklyCheckinModal, DeleteObjectiveConfirm, OKRModalSheet } from './okr/lazy-dialogs';
 import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
+import CategoryFilterBar from './okr/CategoryFilterBar';
+import OKRCategorySelect from './okr/OKRCategorySelect';
 import { useT } from '@/i18n/useT';
 import { useDeadlineReview } from './okr/useDeadlineReview';
 import { useDeleteCategoryFlow } from './okr/useDeleteCategoryFlow';
 import { useTasks } from '@/modules/tasks';
 import { useInlineCategoryEdit } from './okr/useInlineCategoryEdit';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { formatDurationMinutes } from '@/lib/duration';
 
 // OKR d'entreprise dont je porte un KR : section chargée à la demande (cf. ProOKRBlock).
 const ProOKRBlock = lazyWithRetry(() => import('./okr/ProOKRBlock'), ['okr', 'org']);
@@ -209,13 +209,8 @@ const OKRPage: React.FC = () => {
   const resolveColor = (color: string) =>
     color.startsWith('#') ? color : getColorHex(color);
 
-  const formatTime = (minutes: number) => {
-    if (minutes === 0) return '0min';
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h === 0) return `${m}min`;
-    return m > 0 ? `${h}h ${m}min` : `${h}h`;
-  };
+  // Maquette 139 : une seule écriture des durées (`@/lib/duration`).
+  const formatTime = formatDurationMinutes;
 
   useEffect(() => {
     const state = location.state as {selectedOKRId?: string; openCreate?: boolean;};
@@ -282,15 +277,15 @@ const OKRPage: React.FC = () => {
       {/* Titre raccourci au repos (redesign 2026-09-19) : le titre complet
           (`page.title`) ne tient pas dans le `text-display` du grand titre
           et tronquait en « OKR - Objectifs & R... ». `page.titleShort` reste
-          seul au repos ; le titre complet ne réapparaît qu'une fois compacté
-          (`text-headline`, plus petit, où il tient). */}
+          seul, au repos ET compacté : maquette 182 (2026-10-10), la page
+          changeait de nom au premier défilement (« OKR - Objectifs &
+          Résultats Clés »). */}
       {/* Maquette 110 : « OKR - Objectifs » disait deux fois la même chose,
           avec un tiret en plein titre, et l'onglet dit déjà « OKR ». Le
           sous-titre devient un ÉTAT (combien d'objectifs actifs) : une phrase
           de brochure n'apprend rien à quelqu'un qui revient tous les jours. */}
       <MobileHeader
         title={t('page.titleShort')}
-        compactTitle={t('page.title')}
         subtitle={tp('page.activeCount', objectives.filter((o) => !o.completed).length)}
         actions={
           <TouchTarget
@@ -365,6 +360,7 @@ const OKRPage: React.FC = () => {
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowAddObjective(true)}
           data-tutorial-id="okr-create-button"
+          data-guide-id="perso-okr-new"
           className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm text-[rgb(var(--color-accent-solid-foreground))] shadow-sm bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-all"
           aria-label={t('page.createObjective')}
         >
@@ -373,6 +369,16 @@ const OKRPage: React.FC = () => {
         </motion.button>
       </div>
 
+      {/* Mobile (2026-10-10, demande d'Axel) : un sélecteur unique au lieu
+          du libellé « Catégorie : » et de la rangée de pastilles. */}
+      <OKRCategorySelect
+        categories={categories}
+        activeCategoryIds={activeCategoryIds}
+        setActiveCategoryIds={setActiveCategoryIds}
+        resolveColor={resolveColor}
+        onManageCategories={() => setShowCategoryManage(true)}
+      />
+      <div className="hidden md:block">
       <CategoryFilterBar
         categories={categories}
         activeCategoryIds={activeCategoryIds}
@@ -394,6 +400,7 @@ const OKRPage: React.FC = () => {
         accentAllActive
         onManageCategories={() => setShowCategoryManage(true)}
       />
+      </div>
 
       <ColorSettingsModal
         isOpen={showCategoryManage}
@@ -532,7 +539,7 @@ const OKRPage: React.FC = () => {
         whileTap={{ scale: 0.95 }}
         onClick={() => setShowAddObjective(true)}
         aria-label="Nouvel objectif"
-        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
+        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
       >
         <Plus size={26} />
       </motion.button>

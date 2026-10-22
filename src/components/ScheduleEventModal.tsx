@@ -21,10 +21,22 @@ import { useCategoryColor } from '@/modules/categories';
 import type { Task } from '@/modules/tasks';
 import { useT } from '@/i18n/useT';
 
+/** Ce que la planification lit d'une tâche (une tâche d'équipe s'y ramène). */
+export type SchedulableTask = Pick<Task, 'id' | 'name' | 'category' | 'deadline' | 'estimatedTime'>;
+
 interface ScheduleEventModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  task: Task | null;
+  task: SchedulableTask | null;
+  /**
+   * `false` pour une tâche d'ÉQUIPE (feuille « Planifier » de l'agenda mobile,
+   * maquette 170) : `events.task_id` référence une tâche PERSO, l'événement
+   * n'est donc pas lié, exactement comme un glisser depuis le panneau desktop
+   * (`resolveDraggedTaskEventData`, `taskId: undefined`).
+   */
+  linkTask?: boolean;
+  /** Couleur à poser quand la catégorie n'est pas une catégorie perso. */
+  colorOverride?: string;
 }
 
 /** ISO → valeur <input type="datetime-local"> (locale). */
@@ -45,7 +57,7 @@ export function localInputToIso(value: string): string {
 }
 
 /** Échéance de la tâche (ou aujourd'hui) à 12:00, + fin selon durée estimée. */
-export function defaultSlot(task: Task | null): { start: string; end: string } {
+export function defaultSlot(task: SchedulableTask | null): { start: string; end: string } {
   const base = task?.deadline ? new Date(task.deadline) : new Date();
   if (Number.isNaN(base.getTime())) base.setTime(Date.now());
   base.setHours(12, 0, 0, 0);
@@ -54,7 +66,7 @@ export function defaultSlot(task: Task | null): { start: string; end: string } {
   return { start: isoToLocalInput(base.toISOString()), end: isoToLocalInput(end.toISOString()) };
 }
 
-export default function ScheduleEventModal({ open, onOpenChange, task }: ScheduleEventModalProps) {
+export default function ScheduleEventModal({ open, onOpenChange, task, linkTask = true, colorOverride }: ScheduleEventModalProps) {
   const { t } = useT('eventModal');
   const { t: tCommon } = useT('common');
   const createEvent = useCreateEvent();
@@ -88,8 +100,8 @@ export default function ScheduleEventModal({ open, onOpenChange, task }: Schedul
       start: localInputToIso(`${date}T${startTime}`),
       end: localInputToIso(`${date}T${endTime}`),
       notes: notes.trim() || undefined,
-      taskId: task.id,
-      color: categoryColor,
+      taskId: linkTask ? task.id : undefined,
+      color: colorOverride ?? categoryColor,
       isPrivate: true,
     };
     createEvent.mutate(payload, { onSuccess: () => onOpenChange(false) });

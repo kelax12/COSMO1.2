@@ -62,7 +62,7 @@ CNIL ou d'un client dans le cadre d'une due diligence.
 
 | | |
 |---|---|
-| Identité | Axel Longatte |
+| Identité | Axel Longatte, 138 avenue Victor Hugo, 75016 Paris (domiciliation Les Tricolores) |
 | Statut | **Personne physique.** Aucune structure juridique n'est immatriculée au 2026-08-26. |
 | Contact | axellongattepro@gmail.com |
 | Délégué à la protection des données | Non désigné. Non obligatoire : pas de suivi systématique à grande échelle, pas de données sensibles au sens de l'art. 9. |
@@ -74,7 +74,8 @@ CNIL ou d'un client dans le cadre d'une due diligence.
 
 ## Vue d'ensemble
 
-Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level Security**.
+Onze traitements. Les dix premiers vivent sur 47 tables applicatives de COSMO, **toutes protégées
+par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supabase séparé.
 
 | # | Traitement | Base légale | Personnes concernées |
 |---|---|---|---|
@@ -88,6 +89,7 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
 | T8 | Mesure d'audience | **Consentement** | Visiteurs du site public |
 | T9 | Supervision technique | Intérêt légitime | Utilisateurs rencontrant une erreur |
 | T10 | Administration de la plateforme | Intérêt légitime | Tous, sous forme agrégée |
+| T11 | Prospection commerciale B2B par email | Intérêt légitime | Professionnels prospectés |
 
 ---
 
@@ -99,7 +101,8 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
   d'affichage, avatar, identifiant Google si connexion OAuth, dates de création et de dernière
   connexion.
 - **Tables** : `profiles`, schéma `auth` de Supabase, `email_lookup_global`,
-  `email_lookup_quota`, `demo_devices`.
+  `email_lookup_quota`, `demo_devices`, `account_inactivity_notices` (mig. `226` : date d'un
+  avertissement d'inactivité, aucune adresse stockée).
 - **Destinataires** : Supabase (hébergeur et fournisseur d'authentification), Google
   uniquement si l'utilisateur choisit la connexion Google, **Cloudflare Turnstile** (anti-robot
   des formulaires de connexion et d'inscription, adresse IP et signaux du navigateur) lorsque
@@ -107,6 +110,12 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
   le registre le déclare.*
 - **Conservation** : durée de vie du compte, puis suppression définitive sous 90 jours après
   clôture. La suppression est exécutée par la fonction `delete-account`.
+  **Compte inactif** (art. 5.1.e, `C-121`, appliqué le 2026-10-22) : sans activité pendant
+  **3 ans** (dernière connexion ou dernière ouverture de l'application, `profiles.last_seen_at`),
+  un e-mail prévient **30 jours avant** ; sans retour, le compte est supprimé par le même chemin
+  `delete-account`. Jamais un compte qui paie. Job quotidien `inactive-accounts.yml` →
+  Edge Function `inactive-accounts`, sélection en base (mig. `226`, preuve
+  `supabase/proofs/226.proof.sql`).
 - **Sécurité** : mot de passe jamais stocké en clair, RLS, jetons de session à expiration.
 
 ## T2 · Service de productivité personnelle
@@ -220,44 +229,44 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
 
 - **Finalité** : comprendre la fréquentation des pages publiques.
 - **Base légale** : **consentement** (art. 6.1.a et art. 82 loi Informatique et Libertés).
-- **Données** : adresse de la page, page référente, adresse IP, navigateur, indicateurs
-  d'engagement (profondeur de défilement, temps passé, clics sur liens et boutons), et un
-  **identifiant aléatoire déposé dans le `localStorage`** du navigateur (`_a_cid`), qui permet
-  de rattacher les pages d'une même visite.
-  > ⚠️ **Ne pas réécrire « sans cookie » ici.** La mention y a figuré jusqu'au 2026-09-01 et
-  > elle était trompeuse : `localStorage` n'est effectivement pas un cookie, mais l'art. 82
-  > couvre toute information déposée sur le terminal, et un identifiant persistant est
-  > exactement ce que la personne a le droit de connaître. Une formulation littéralement vraie
-  > qui laisse croire à l'absence de traceur est une formulation fausse.
-- **Sous-traitants** : Vesk, Vercel Analytics.
+- **Données** : pages vues et page référente, collectées par Vercel Analytics sans cookie.
+- **Mesure maison (mig. 222, 2026-10-18)**, même consentement, pages publiques seulement, jamais
+  sur un formulaire d'identifiants ni avec une session ouverte : chemin de la page (sans query
+  string), hôte du référent, paramètres `utm_*`, pays/région/ville déduits de l'adresse IP par
+  Vercel, famille de navigateur et de système, type d'appareil, langue, durée et profondeur de
+  scroll, clics sur les boutons marqués `data-cta`. **L'adresse IP n'est pas conservée** : elle
+  sert seulement à calculer un identifiant du jour (sel aléatoire supprimé le lendemain), qui ne
+  relie ni deux jours ni une personne. Aucun cookie ni stockage sur l'appareil. Table
+  `traffic_hits`, **conservée 13 mois** (job `cosmo-purge-traffic`). Lecture : administrateurs
+  seulement (`get_admin_traffic`, `is_admin()`).
+- **Sous-traitant** : Vercel (Analytics, et hébergement du collecteur `api/collect.ts`). Les
+  statistiques d'usage de l'application sont calculées en interne, depuis la base COSMO (aucun
+  outil de mesure tiers). *Fournisseur de mesure tiers débranché le 2026-10-18.*
+- **Même base, même bandeau (2026-10-13)** : la **source d'acquisition** (`cosmo_first_touch`,
+  30 jours, puis `profiles.acquisition_source`) et l'**identifiant d'appareil de la démo**
+  (`cosmo_demo_device_id`, `demo_devices.converted_user_id`). Ils étaient posés SANS
+  consentement et finissaient rattachés au compte : hors de toute exemption. Depuis, rien n'est
+  écrit ni envoyé sans « Accepter », et tout s'efface au refus. Depuis le 2026-10-18, sans
+  `?ref=` ni `utm_source`, la source est **déduite de l'hôte du site référent** (`google`,
+  `linkedin`…, sinon l'hôte lui-même), ou vaut `direct` : jamais le chemin ni la query string
+  du référent (`src/lib/attribution.ts`).
 - **Recueil du consentement** : bandeau. **Rien n'est chargé tant que la personne n'a pas
   accepté**, et un refus ne charge jamais rien. Le choix est conservé **six mois** sur l'appareil
   (`cosmo_cookie_consent_at`), puis redemandé. **Retrait** : « Gérer les cookies » (pied de page,
-  Paramètres, politique) rouvre le bandeau ; refuser après avoir accepté efface `_a_cid`,
-  `_a_sid`, `_a_sact` et recharge la page (RGPD art. 7.3, livré le 2026-09-24).
-- **Périmètre** : pages de contenu public uniquement. Le script n'est jamais monté sur une
-  session ouverte, pour qu'un compromis du fournisseur ne puisse pas lire un jeton de session,
-  **ni sur une page portant un formulaire d'identifiants** (création de compte, connexion,
-  réinitialisation, invitation).
-  > 🔴 **Cette dernière exclusion est une garde de conformité, pas un détail d'implémentation.**
-  > Le script de Vesk contient un `tryIdentify()` qui lit les champs d'un formulaire
-  > d'inscription et en extrait l'**adresse email** et le **nom** pour les envoyer au
-  > fournisseur (détecté le 2026-09-01 par `vendor-watch.yml`). Ces données ne relèvent pas de
-  > la mesure d'audience et **ne sont pas couvertes par le consentement recueilli ici**. La
-  > seule chose qui les empêche d'être transmises est que le script n'est pas chargé sur ces
-  > pages : `CREDENTIAL_FORM_SEGMENTS` dans `src/lib/audience.ts`, verrouillé par
-  > `src/lib/audience.test.ts`. Retirer cette exclusion rendrait ce traitement non conforme.
-- **Point ouvert** : aucun DPA (art. 28) n'a été signé avec Vesk. À obtenir — cf. T-43 de la
-  roadmap, dont la liste ne le mentionnait pas.
+  Paramètres, politique) rouvre le bandeau ; refuser après avoir accepté recharge la page sans
+  la mesure (RGPD art. 7.3).
 
 ## T9 · Supervision technique
 
 - **Finalité** : détecter et corriger les erreurs en production.
 - **Base légale** : intérêt légitime (sécurité et continuité du service).
-- **Données** : trace d'erreur, page concernée, version du navigateur. **Les adresses email et
-  les identifiants sont retirés automatiquement** des messages, des exceptions et des
-  breadcrumbs avant tout envoi (`beforeSend`), et `sendDefaultPii` est désactivé.
-- **Sous-traitant** : Sentry (États-Unis).
+- **Données** : trace d'erreur, page concernée (jetons d'invitation et codes OAuth retirés de
+  l'adresse, `src/lib/sentry-scrub.ts`, 2026-10-13), version du navigateur, et l'**identifiant
+  technique du compte** (`monitoring.setUser({ id })`). 🔴 Ce registre disait « les identifiants
+  sont retirés » : c'est vrai des identifiants présents dans les TEXTES, faux pour celui du
+  compte, joint volontairement pour relier les erreurs. Corrigé le 2026-10-13. `sendDefaultPii`
+  est désactivé.
+- **Sous-traitant** : Sentry (société américaine ; ingestion dans la région UE, Allemagne).
 - **Conservation** : selon la rétention Sentry, 90 jours par défaut.
 
 ## T10 · Administration de la plateforme
@@ -268,6 +277,48 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
   les non-administrateurs côté serveur** : la protection n'est pas l'URL, qui n'est pas
   référencée, mais le contrôle en base.
 - **Tables** : `admin_users`, `user_activity_days`.
+- **Sauvegardes** (2026-10-13) : dump quotidien de la base, **chiffré avant dépôt** (AES-256),
+  conservé 30 jours en artefact GitHub (`db-backup.yml`). Sous-traitant : GitHub (États-Unis),
+  qui ne détient pas la clé. 🔴 Ces dumps sont partis EN CLAIR, dans un dépôt public, du
+  2026-08-29 au 2026-10-13 : violation consignée au registre des violations (hors dépôt).
+
+## T11 · Prospection commerciale B2B par email
+
+*Ouvert le 2026-10-18.*
+
+- **Finalité** : suivre une campagne de cold email, de l'envoi à la conversion (Kanban de la
+  page Prospection de COSMO Analytics).
+- **Base légale** : intérêt légitime (art. 6.1.f). La prospection B2B par email ne demande pas
+  de consentement préalable si le message se rapporte à la **fonction professionnelle** de la
+  personne et si chaque mail offre un moyen **simple et gratuit** de s'y opposer (CNIL, art.
+  L34-5 CPCE). Les deux conditions sont à tenir dans chaque modèle de mail.
+- **Personnes concernées** : professionnels contactés, jamais des clients COSMO à ce titre.
+- **Données** : email professionnel, nom, entreprise, poste, source du contact, étape du
+  parcours, notes libres, date du dernier contact, journal des changements d'étape.
+  🔴 Les notes sont libres : n'y écrire **aucune donnée sensible** (art. 9) ni d'appréciation
+  qu'on ne montrerait pas à la personne, qui peut en demander copie (art. 15).
+- **Opposition** : `suppression_list`. Une adresse qui refuse ou se désinscrit y entre, et la
+  base **refuse** ensuite de la réinscrire (trigger, pas une règle d'interface). La glisser en
+  corbeille l'y inscrit aussi.
+- **Où** : projet Supabase **séparé** `cosmo-prospection` (`eu-west-1`, Irlande), tables
+  `prospects`, `prospect_events`, `suppression_list`, et depuis le 2026-10-18 `send_log`
+  (journal d'envoi) et `inbound_messages` (réponses : objet et 2 000 premiers caractères).
+  RLS : un seul administrateur, session `aal2` exigée. Migrations dans le dépôt `analytics`
+  (`supabase/migrations/`), privé (vérifié sur GitHub le 2026-10-18). Aucune donnée de prospect
+  dans un fichier versionné.
+- **Envoi automatique (2026-10-18)** : des tâches programmées envoient les emails validés depuis
+  les boîtes IONOS d'Axel et lisent les réponses. Seul un message **rattaché à un prospect** est
+  lu jusqu'au corps et stocké ; le reste de la boîte n'est ni lu ni gardé. Envoi désactivé par
+  défaut, validation manuelle de chaque fiche, coupure d'urgence dans COSMO Analytics.
+- **Destinataires** : Supabase ; **IONOS** (hébergement des boîtes d'envoi, Allemagne) ;
+  **Anthropic** (classement de chaque réponse par Claude Haiku : objet et texte de la réponse,
+  seulement si la clé API est posée). 🔴 DPA Anthropic et IONOS à archiver (ligne A5 de `LEGAL.md`).
+- **Conservation** : **3 ans après le dernier contact** (recommandation CNIL), puis effacement.
+  ⚠️ Au 2026-10-18 cette durée n'est appliquée par **aucun automatisme** ; la purge est à écrire.
+  L'effacement d'un prospect emporte son journal (cascade) ; son inscription en opposition
+  reste, puisque c'est elle qui garantit qu'on ne le recontacte pas.
+- **Sauvegardes** : 🔴 **aucune**. Le projet est en offre gratuite, qui n'en fournit pas de
+  téléchargeable. Un export chiffré hors dépôt reste à mettre en place.
 
 ---
 
@@ -282,16 +333,22 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
 | Google | Irlande et États-Unis | Uniquement si l'utilisateur choisit la connexion Google |
 | Resend | États-Unis | Clauses contractuelles types via le DPA du prestataire, **non archivé**. Ajouté le 2026-09-24 |
 | Cloudflare (Turnstile) | États-Unis | Idem, **non archivé**, seulement si la clé Turnstile est posée. Ajouté le 2026-09-24 |
+| GitHub | États-Unis | Sauvegardes **chiffrées**, clé hors de GitHub. Ajouté le 2026-10-13 |
+| Supabase Inc. | société non européenne | Données en Irlande ; accès possible des équipes pour maintenance et support, encadré par le DPA (clauses types acceptées avec les conditions). Ajouté le 2026-10-13 |
+| Anthropic | États-Unis | T11 seulement : texte des réponses de prospects, pour les classer. Clauses contractuelles types via le DPA du prestataire, **non archivé**. Ajouté le 2026-10-18 |
+| IONOS | Allemagne | T11 : boîtes d'envoi de la prospection. Aucun transfert. Ajouté le 2026-10-18 |
 
 > ❌ **Ligne A5 de [`LEGAL.md`](./LEGAL.md) : les DPA ne sont pas encore collectés et archivés.**
-> Ils se signent en tant qu'entreprise, donc après immatriculation. C'est la pièce manquante de
-> ce registre.
+> ⚠️ « Ils se signent en tant qu'entreprise » est **faux pour Sentry** (relu le 2026-10-13) : le
+> propriétaire du compte l'accepte en ligne, dès maintenant. C'est la pièce manquante de ce registre.
 
 ---
 
 ## Mesures de sécurité
 
 Détaillées dans l'annexe article 32 de [`LEGAL.md`](./LEGAL.md), avec leurs limites assumées.
-En résumé : chiffrement en transit avec HSTS preload, RLS sur **les 47 tables**, CSP stricte,
+En résumé : chiffrement en transit avec HSTS preload, RLS sur **toutes les tables** (77 dans
+`public` au 2026-10-15, relu en base ; ce document en annonçait 47), sauvegardes chiffrées avant
+dépôt depuis le 2026-10-13, CSP stricte,
 moindre privilège sur les fonctions, minimisation dans le monitoring, et gates d'intégration
 continue bloquantes sur les invariants RLS et les migrations.

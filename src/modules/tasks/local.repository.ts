@@ -9,6 +9,7 @@ import type { CreateOptions } from '@/lib/restore-id';
 import { DEPENDENCY_ERRORS, makeDependencyError } from './dependency-errors';
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
+import { applyStatusSync, effectiveStatus } from './status-sync';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
 // Helper pour générer des dates
@@ -209,14 +210,20 @@ export class LocalStorageTasksRepository implements ITasksRepository {
 
   async create(input: CreateTaskInput, options?: CreateOptions): Promise<Task> {
     const tasks = this.getTasks();
-    const newTask: Task = {
+    // Mig. 214 : même règle que le trigger à l'INSERT. Une tâche née cochée
+    // est `done`, une tâche née `done` est cochée.
+    const synced = applyStatusSync({}, {
       ...input,
+      status: input.status ?? (input.completed ? 'done' : 'todo'),
+    });
+    const newTask: Task = {
+      ...synced,
       // Parite avec le repository Supabase : `restoreId` vient d'un
       // « Annuler », jamais d'un formulaire (R-08).
       id: options?.restoreId ?? crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       bookmarked: input.bookmarked ?? false,
-      completed: input.completed ?? false,
+      completed: synced.completed ?? false,
       isCollaborative: input.isCollaborative ?? false,
       pendingInvites: input.pendingInvites ?? [],
     };
@@ -232,7 +239,8 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       throw makeApiError('not_found');
     }
     
-    const updatedTask: Task = { ...tasks[index], ...updates };
+    // Mig. 214 : `status` et `completed` restent d'accord, comme sous le trigger.
+    const updatedTask: Task = { ...tasks[index], ...applyStatusSync(tasks[index], updates) };
     tasks[index] = updatedTask;
     this.saveTasks(tasks);
     return updatedTask;
@@ -280,6 +288,9 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       ...task,
       completed: !task.completed,
       completedAt: !task.completed ? new Date().toISOString() : undefined,
+      // Mig. 214 : décocher une tâche `done` la rend `todo` ; décocher une
+      // tâche restée dans un statut ouvert (cas impossible en base) le garde.
+      status: !task.completed ? 'done' : (effectiveStatus(task) === 'done' ? 'todo' : effectiveStatus(task)),
     };
     tasks[index] = updatedTask;
 
@@ -301,6 +312,10 @@ export class LocalStorageTasksRepository implements ITasksRepository {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         subtasks: (task.subtasks ?? []).map(s => ({ ...s, completed: false })),
+        // Parité avec l'INSERT de `toggle_task_complete_v2` : sa liste de
+        // colonnes n'a ni `status` ni `health`, l'occurrence naît `todo`.
+        status: 'todo',
+        health: undefined,
         // Le partage ne se propage pas à l'occurrence suivante.
         isCollaborative: undefined,
         pendingInvites: undefined,

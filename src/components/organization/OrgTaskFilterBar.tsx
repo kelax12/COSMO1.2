@@ -135,7 +135,7 @@ const OrgTaskFilterBar = ({
               ) : (
                 <>
                   <UserRound size={14} aria-hidden="true" />
-                  <span className="hidden sm:inline">{t('filters.scopeMember')}</span>
+                  <span className="inline">{t('filters.scopeMember')}</span>
                 </>
               )}
             </DropdownMenuTrigger>
@@ -164,7 +164,7 @@ const OrgTaskFilterBar = ({
                 className={`${segBase} inline-flex items-center gap-1.5 ${team !== '' ? segOn : segOff}`}
               >
                 {selectedTeam ? <TeamColorDot color={selectedTeam.color} /> : <Users size={14} aria-hidden="true" />}
-                <span className="hidden sm:inline max-w-[100px] truncate">{team === '' ? t('filters.teamLabel') : teamLabel}</span>
+                <span className="inline max-w-[100px] truncate">{team === '' ? t('filters.teamLabel') : teamLabel}</span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
                 <DropdownMenuItem onClick={() => setFilters({ team: '' })}>

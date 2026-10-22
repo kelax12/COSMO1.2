@@ -11,6 +11,7 @@ import { showUndoToast } from '@/lib/undo-toast';
 import { Button } from '@/components/ui/button';
 import HabitModal from './HabitModal';
 import HabitActionsMenu from './HabitActionsMenu';
+import { formatDurationMinutes } from '@/lib/duration';
 
 interface HabitCardProps {
   habit: Habit;
@@ -152,9 +153,11 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
                 {habit.name}
               </h3>
               <div className="flex items-center gap-4 mt-1 text-xs md:text-sm text-slate-600 flex-wrap">
+                {/* Maquette 179 : la durée se lit seule sur mobile, sans
+                    horloge ; même écriture que partout (`@/lib/duration`). */}
                 <div className="flex items-center gap-1">
-                  <Clock size={12} className="md:w-3.5 md:h-3.5" />
-                  <span>{habit.estimatedTime} min</span>
+                  <Clock size={12} className="hidden md:block md:w-3.5 md:h-3.5" />
+                  <span>{formatDurationMinutes(habit.estimatedTime)}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Flame size={12} className="md:w-3.5 md:h-3.5 text-orange-500" />

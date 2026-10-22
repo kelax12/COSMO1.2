@@ -1,4 +1,15 @@
 {
+  "onboarding": {
+    "intro": "Créez votre entreprise ou rejoignez-en une pour collaborer avec votre équipe.",
+    "goToOrg": "Accéder à mon entreprise",
+    "orCreateAnother": "ou en créer/rejoindre une autre",
+    "later": "Plus tard, accéder à l'application",
+    "title": "Votre espace entreprise",
+    "memberOfOrg": "Vous faites partie de {{name}}.",
+    "memberOfCount_one": "Vous faites partie de {{count}} entreprise.",
+    "memberOfCount_other": "Vous faites partie de {{count}} entreprises.",
+    "memberOfCount_many": "Vous faites partie de {{count}} d'entreprises."
+  },
   "claim": {
     "backHome": "Retour à l'accueil Cosmo",
     "discover": "Découvrir mon espace",
@@ -58,7 +69,7 @@
     "regenerateImpactPending": "Les demandes d'adhésion déjà envoyées restent à valider.",
     "otherWays": "Autres façons d'inviter",
     "recommended": "Recommandé",
-    "emailPlaceholder": "lea@entreprise.fr, karim@entreprise.fr",
+    "emailPlaceholder": "lea@entreprise.fr",
     "emailSubmit": "Inviter",
     "moreOptions": "Placement, équipes et durée d'accès",
     "codeRowHint": "Réutilisable. Chaque demande est validée par un admin.",
@@ -336,6 +347,7 @@
     "historyNone": "aucune"
   },
   "team": {
+    "leadSuffix": ", responsable",
     "newTeam": "Nouvelle équipe",
     "nameRequired": "Le nom de l'équipe est requis",
     "name": "Nom de l'équipe *",
@@ -477,7 +489,8 @@
     "agendaMiddle": " et y ajouter des événements, sauf ceux que vous marquez ",
     "agendaPrivate": "« Privé »",
     "agendaAfter": ", qui restent invisibles pour eux.",
-    "personalSafe": "Vos tâches, habitudes et données personnelles restent invisibles pour l'entreprise."
+    "personalSafe": "Vos tâches, habitudes et données personnelles restent invisibles pour l'entreprise.",
+    "reports": "Vos responsables voient la date de votre dernière activité sur le travail d'équipe, et les rapports d'activité quotidiens indiquent les tâches d'équipe que vous avez terminées et les événements non privés que vous avez tenus. Jamais vos connexions."
   },
   "assign": {
     "assignTo": "Attribuer une tâche à {{name}}",
@@ -568,6 +581,7 @@
     "body": "Cette personne perdra immédiatement l'accès aux projets, tâches et OKR de l'entreprise. Ses données personnelles (tâches, habitudes, agenda) ne sont pas affectées. Elle pourra revenir avec un nouveau code d'invitation."
   },
   "common": {
+    "delete": "Supprimer",
     "close": "Fermer",
     "cancel": "Annuler",
     "add": "Ajouter",
@@ -649,7 +663,7 @@
     "requestCancelled": "Demande annulée.",
     "joinAnother": "Rejoindre une autre entreprise",
     "backToPending": "← Revenir à la demande en attente",
-    "navLabel": "Créer / rejoindre",
+    "navLabel": "Créer ou rejoindre une entreprise",
     "navAria": "Créer ou rejoindre une entreprise",
     "inboxHeading": "Invitations d'entreprise",
     "inboxFrom": "Invitation de {{name}}",
@@ -724,11 +738,16 @@
         "orgHint": "Lire le rapport d'activité de toute l'entreprise, et la performance de chaque équipe.",
         "allTeams": "Voir le rapport de toutes les équipes",
         "allTeamsHint": "Lire le rapport de n'importe quelle équipe. Sans ce droit, un responsable ne lit que celui de son équipe."
+      },
+      "role": {
+        "manage": "Gérer les rôles",
+        "manageHint": "Créer, modifier et attribuer des rôles personnalisés, pour une durée choisie. Droit de confiance : son détenteur peut donner des droits qu'il n'a pas."
       }
     },
     "intro": "Ces réglages remplacent les droits déduits de l'organigramme. Une ligne laissée sur « Par défaut » suit la position du membre dans l'entreprise."
   },
   "teamPage": {
+    "addDescription": "Ajouter une description",
     "back": "Toutes les équipes",
     "notFound": "Cette équipe n'existe pas, ou plus. Elle a pu être supprimée.",
     "edit": "Modifier l'équipe",
@@ -779,9 +798,6 @@
     "loadMore_many": "+{{count}} d'autres",
     "loadMore_other": "+{{count}} autres"
   },
-  "setup": {
-    "resume": "Reprendre l'assistant de démarrage"
-  },
   "glossary": {
     "open": "Glossaire",
     "termHelp": "Définition : {{term}}"
@@ -795,6 +811,7 @@
   "popups": {
     "task": {
       "status": "Statut",
+      "noRights": "Vous n'avez pas les droits pour modifier cette tâche.",
       "tabsAria": "Sections de la tâche",
       "tabDetails": "Détails",
       "tabSubtasks": "Sous-tâches",

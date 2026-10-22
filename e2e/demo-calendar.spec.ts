@@ -154,9 +154,9 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
 
     const taskDialog = page.getByRole('dialog', { name: /modifier la tâche/i });
     await expect(taskDialog).toBeVisible({ timeout: 10_000 });
-    // ⚠️ La section « Dépendances » est REPLIÉE à l'ouverture : sans ce clic,
-    // le bouton d'ajout n'existe pas dans le DOM.
-    await taskDialog.getByRole('button', { name: /^dépendances/i }).first().click();
+    // ⚠️ « Dépendances » est un ONGLET de la modale depuis b2d79318 (avant :
+    // une section repliée). Sans ce clic, le bouton d'ajout n'est pas rendu.
+    await taskDialog.getByRole('tab', { name: /^dépendances/i }).click();
     await taskDialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
 
     const picker = page.getByRole('dialog', { name: /ajouter une dépendance/i });

@@ -1,6 +1,6 @@
 # ──────────────────────────────────────────────────────────────────────
 # Alerte quand une garde automatique passe au rouge sur `main`.
-# Couvre `CI`, `Vendor script watch` (surveillance du script tiers) et
+# Couvre `CI` et
 # `Edge deploy drift` (le code deploye des Edge Functions contre le depot).
 #
 # POURQUOI : les quatre gardes de `ci.yml` sont restées rouges des mois sans
@@ -39,7 +39,6 @@ on:
     # planifié (cf. son en-tête). Il y entre AVEC la bascule live.
     workflows:
       - CI
-      - Vendor script watch
       - Edge deploy drift
       - Migration coverage
       - Deploy SHA drift
@@ -49,6 +48,7 @@ on:
       - Visual
       - scalability-volume
       - restore-drill
+      - Grille Stripe
       # ⚠️ `Uptime` n'y est PAS NON PLUS, et ce n'est pas un oubli : il ouvre
       # DÉJÀ sa propre issue, qui se referme seule au retour du vert.
       # L'ajouter ici doublerait chaque panne d'une seconde alerte, et deux
@@ -58,7 +58,10 @@ on:
   workflow_dispatch:
 
 # Seul droit élevé du dépôt, strictement borné à l'ouverture d'issues.
+# `actions: read` (lecture seule, 2026-10-16) : lister les runs verts de `main`,
+# pour ne pas pousser un rouge déjà réparé (`scripts/ci-alert-perime.mjs`).
 permissions:
+  actions: read
   contents: read
   issues: write
 
@@ -73,10 +76,38 @@ jobs:
        github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     steps:
+      # Le depot d'abord : les deux scripts de ce job en viennent.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # ── Ce rouge est-il deja repare ? (2026-10-16) ──
+      #
+      # Les runs `CI` de `main` ne s'annulent plus entre eux (un groupe de
+      # concurrence par commit, cf. `ci.yml`). Un `e2e` rouge dure des heures
+      # (4,3 h le 10-02), un vert 23 min : le rouge d'un commit A peut donc
+      # finir APRES le vert du commit B qui l'a repare. Sans ce controle, il
+      # rouvrait l'issue et sonnait le webhook apres la reparation.
+      #
+      # ✅ Dans le doute, l'alerte part. Les deux sorties ne se taisent que sur
+      # `perime == 'true'`, ecrit seulement quand un run vert du MEME workflow,
+      # cree apres ce rouge, est prouve par l'API. Script qui plante, API en
+      # panne, jeton refuse : sortie vide ou `false`, l'alerte part.
+      # Temoin : `scripts/ci-alert-perime.guard.test.mjs`.
+      - name: Ce rouge est-il deja repare par un run plus recent ?
+        id: perime
+        if: github.event_name == 'workflow_run'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          WF_ID: ${{ github.event.workflow_run.workflow_id }}
+          CREE: ${{ github.event.workflow_run.created_at }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: node scripts/ci-alert-perime.mjs
+
       - name: Ouvrir ou mettre a jour l'issue « CI rouge »
         # Jamais sur un exercice : un test du canal ne doit pas polluer le
-        # journal des vrais incidents.
-        if: github.event_name == 'workflow_run'
+        # journal des vrais incidents. `always()` : elle part meme si le
+        # controle ci-dessus a plante.
+        if: always() && github.event_name == 'workflow_run' && steps.perime.outputs.perime != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -108,10 +139,6 @@ jobs:
             "" \
             "Une garde rouge ne protege plus rien et rend muettes les autres" \
             "gardes du meme job. A traiter avant de livrer autre chose." \
-            "" \
-            "Si c'est **Vendor script watch** : le script tiers charge sur les" \
-            "pages publiques a change. Relire le diff AVANT de mettre a jour" \
-            "\`.github/vendor-scripts.sha256\`." \
             "" \
             "Cette issue se met a jour a chaque nouvel echec." \
             "**La refermer une fois au vert** : c'est ce qui rearme l'alerte.")
@@ -162,11 +189,9 @@ jobs:
       # La logique vit dans `scripts/ops-alert.mjs` et non dans ce `run:`,
       # pour une seule raison : en shell elle n'avait pas de temoin jouable.
       # Temoin : `scripts/ops-alert.guard.test.mjs` (14 cas).
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: always()
-
+      # Seul silence admis : `perime == 'true'`, un rouge deja repare (cf. plus haut).
       - name: Pousser l'alerte sur le webhook ops
-        if: always()
+        if: always() && steps.perime.outputs.perime != 'true'
         env:
           WEBHOOK: ${{ secrets.OPS_ALERT_WEBHOOK_URL }}
           RUN_URL: ${{ github.event.workflow_run.html_url }}

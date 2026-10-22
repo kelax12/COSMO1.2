@@ -46,7 +46,18 @@ const DemoBridgePrompt: React.FC = () => {
           // légal passe avant une sollicitation commerciale.
           className="fixed bottom-[calc(64px+env(safe-area-inset-bottom)+16px)] left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-sm z-[190]"
         >
-          <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-xl shadow-gray-200/80 dark:shadow-black/40 overflow-hidden">
+          {/* Maquette 304 : sur mobile, une ligne. La carte recouvrait la moitié
+              du formulaire en cours de saisie. */}
+          <div className="md:hidden flex items-center gap-2 pl-4 pr-1 min-h-touch bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-lg shadow-black/20">
+            <span className="flex-1 min-w-0 truncate text-label text-[rgb(var(--color-text-secondary))]">{t('demoBridge.short')}</span>
+            <button type="button" onClick={handleSignup} className="shrink-0 min-h-touch px-2 text-label font-semibold text-[rgb(var(--color-accent))]">
+              {t('demoBridge.cta')}
+            </button>
+            <button type="button" onClick={snooze} aria-label={t('demoBridge.dismiss')} className="shrink-0 w-10 h-10 flex items-center justify-center text-[rgb(var(--color-text-muted))]">
+              <X size={16} aria-hidden="true" />
+            </button>
+          </div>
+          <div className="max-md:hidden bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl shadow-xl shadow-gray-200/80 dark:shadow-black/40 overflow-hidden">
             <div className="flex items-start justify-between px-4 pt-4 pb-3 gap-2">
               <span className="text-[15px] font-semibold text-[rgb(var(--color-text-primary))]">
                 {t('demoBridge.title')}

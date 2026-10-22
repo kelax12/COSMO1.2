@@ -1,4 +1,4 @@
-<!-- note-audit: note=75 -->
+<!-- note-audit: note=78 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,70 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **75 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **78 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
 
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → **75 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03)
+## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → 75 → 76 → 78 → 78 → **78 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**)
+
+> ### 🔧 2026-10-22 · `/agenda` en paysage : 447 → 0 px (note non touchée)
+>
+> Le dernier cliquet non nul du paysage (`PLAFOND_PAYSAGE`, `e2e/mobile-android.spec.ts`). Mesuré sur `main` à `5eaa8b8c`, Pixel 7 tourné (863 × 360), démo, vues jour, semaine et mois.
+>
+> | | Avant | Après |
+> |---|---|---|
+> | Débordement de page, 863 × 360 (jour / semaine / mois) | **447 / 447 / 445 px** | **0 / 0 / 0 px** |
+> | Ce qui sortait | la barre d'outils de `AgendaDesktopHeader` (en `md:` et plus) : une rangée sans retour à la ligne, ~1 100 px de contenu dans une colonne de 434 px. « Mois » rogné ; flèches, « Récurrences » et « Nouveau » invisibles, sans trace | tout visible, sur 2 rangées (115 px de haut) |
+> | Même barre à 1 024 / 1 280 / 1 600 px de large | **386 / 130 / 0 px** coupés (« Nouveau » perdu sur un portable) | 0 / 0 / 0 px ; 1 600 px inchangé, sur une ligne |
+>
+> Pas la grille FullCalendar : elle tenait déjà dans sa colonne. Correctif : la rangée se replie (`flex-wrap`, groupe central en `contents`, deux `ml-auto` qui rendent l'ancien `justify-between` sur une ligne) ; sous `lg`, « Tâches », « Récurrences » et « Nouveau » passent en icône, le nom restant dans `aria-label`. Plafond `/agenda` abaissé à **0**. La note n'est pas recalculée ici : le remboursement attend la CI verte de la PR, puis la prochaine passe d'audit.
+
+> ### ⚪ 2026-10-20 · 0 : inchangée
+>
+> Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | WebKit | 0 | 2 instables `mobile-safari` (modal OKR, swipe de TaskCard), comme au 10-18 ; le débordement C-97 de `mobile-chrome` est débité une fois, en Accessibilité |
+>
+> **78 → 78.**
+
+> ### ⚪ 2026-10-18 · 0 : vérifiée inchangée
+>
+> Dernière passe avant l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | WebKit | 0 | `e2e` à `e69cb729` : 2 instables sur 255 verts, deux parcours démo `mobile-safari` de 3 min, comme au 10-16 |
+> | LCP mobile | 0 | **1,36 à 1,52 s** sur les 8 URLs |
+>
+> **78 → 78.**
+
+> ### 🟢 2026-10-16 · +2 : LCP mobile sous 1,6 s, et WebKit vert de bout en bout
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab` (run `38902071817`). Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ LCP mobile, point retenu le 10-15 (−2 le 09-22) | **+1** | LCP **1,22 à 1,52 s** sur les 8 URLs, TBT 90 à 300 ms (cf. [`PERFORMANCE.md`](./PERFORMANCE.md)) |
+> | ✅ Parcours rouges sur WebKit (−1 le 09-22, jamais remboursé) | **+1** | `e2e` vert en CI sur `mobile-safari` et `mobile-chrome` (`38870561074`, puis `38902071817` : 0 échec), et l'audit clavier y joue désormais (`C-118`) |
+> | `M-25` · essai sur un vrai téléphone | 0 | fermé le 2026-10-16 sur la parole d'Axel, sans modèle, OS ni navigateur relevé : `C-56` et `C-57` ne sont ni confirmés ni infirmés au doigt. Un constat, pas une mesure |
+>
+> **76 → 78.**
+
+> ### 🟢 2026-10-15 · +1 : le LCP mobile sort de « mauvais »
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | ✅ LCP mobile (−2 le 09-22) | **+1** | **3,26 à 3,40 s** sur les 8 URLs, Lighthouse mobile en CI à `HEAD` (5,6 à 8,4 s le 10-02). **Un point retenu** : au-dessus de 2,5 s, et le fil principal reste chargé sur les pages animées (TBT 878 à 1 049 ms sur `/`, `/en/`, `/entreprise-presentation/`) |
+> | Refonte « Une seule lumière » (maquettes 129 à 374, 10-10 et 10-11) | 0 | ses quatre rouges réparés (`8079039c`). À `HEAD`, aucun échec sur `mobile-safari` ni `mobile-chrome`, deux cas instables sur WebKit. `C-97` (texte à 200 % sur `/dashboard`), rouge sur `mobile-chrome` les 10-12 et 10-13, est absent des échecs à `HEAD` |
+>
+> **75 → 76.**
 
 > ### 🟢 2026-10-03 · +1 : les cibles de l'Aperçu à 44 px, vues vertes en CI
 >

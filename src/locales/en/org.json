@@ -1,4 +1,14 @@
 {
+  "onboarding": {
+    "intro": "Create your company or join one to collaborate with your team.",
+    "goToOrg": "Go to my company",
+    "orCreateAnother": "or create/join another one",
+    "later": "Later, take me to the app",
+    "title": "Your company workspace",
+    "memberOfOrg": "You are part of {{name}}.",
+    "memberOfCount_one": "You are part of {{count}} company.",
+    "memberOfCount_other": "You are part of {{count}} companies."
+  },
   "claim": {
     "backHome": "Back to the Cosmo home page",
     "discover": "Explore my workspace",
@@ -58,7 +68,7 @@
     "regenerateImpactPending": "Join requests already sent still await approval.",
     "otherWays": "Other ways to invite",
     "recommended": "Recommended",
-    "emailPlaceholder": "lea@company.com, karim@company.com",
+    "emailPlaceholder": "lea@company.com",
     "emailSubmit": "Invite people",
     "moreOptions": "Placement, teams and access length",
     "codeRowHint": "Reusable. An admin approves every request.",
@@ -125,18 +135,18 @@
     "deleteTaskAria": "Delete task {{name}}",
     "assignTaskAria": "Assign task {{name}}",
     "removeTaskAria": "Remove task {{name}}",
-    "noTaskForFilter": "No task for this filter.",
-    "noTask": "No task.",
+    "noTaskForFilter": "No tasks match this filter.",
+    "noTask": "No tasks.",
     "dependencyFailed": "Dependency refused: {{message}}",
     "dependenciesTitle": "Dependencies",
     "blockedBy": "Blocked by",
     "blocks": "Blocks",
     "addDependency": "Add a dependency",
-    "noDependencies": "No dependency. This task can start right away.",
+    "noDependencies": "No dependencies. This task can start right away.",
     "removeDependency": "Remove this dependency",
     "dependencyHelpBlockedBy": "The selected tasks will have to be finished before this one.",
     "dependencyHelpBlocks": "This one will have to be finished before the selected tasks.",
-    "dependencySearchPlaceholder": "Search a task in this project",
+    "dependencySearchPlaceholder": "Search for a task in this project",
     "dependencyNoMatch": "No task in this project matches your search.",
     "dependencyNoCandidate": "This project has no other task. Create one to add the dependency.",
     "dependencyAlreadyLinked": "Already linked",
@@ -162,7 +172,7 @@
     "tasksTabQuickAccess": "Quick access to projects",
     "tasksTabAll": "All tasks",
     "tasksTabSearchPlaceholder": "Search…",
-    "tasksTabSearchAria": "Search a task",
+    "tasksTabSearchAria": "Search for a task",
     "tasksTabSortAria": "Sort by",
     "tasksTabSortPriority": "By priority",
     "tasksTabSortDeadline": "By deadline",
@@ -216,7 +226,7 @@
     "createTeamOption": "+ Create a team",
     "kanbanByAssignee": "Kanban view by assignee",
     "myTasks": "My tasks",
-    "tasksOf": "Tasks of…",
+    "tasksOf": "Tasks for…",
     "listView": "List view",
     "bulkClear": "Clear selection",
     "selectAll": "Select all",
@@ -248,7 +258,7 @@
     "viewLabel": "View",
     "viewList": "List",
     "viewKanban": "Board",
-    "viewTimeline": "Schedule",
+    "viewTimeline": "Timeline",
     "columnsLabel": "Columns:",
     "activeFilters": "Active filters:",
     "clearAll": "Clear all",
@@ -301,13 +311,13 @@
     "createProjectAria": "Create a project",
     "chooseProject": "Choose a project…",
     "labelsTitle": "Labels",
-    "labelsNone": "No label",
+    "labelsNone": "No labels",
     "labelsPick": "Pick labels",
     "labelsCreate": "Create \"{{name}}\"",
     "labelsSearch": "Search or create…",
     "labelsManagerOnly": "Only a manager can create a label.",
     "historyTitle": "History",
-    "historyEmpty": "No recorded change.",
+    "historyEmpty": "No changes recorded.",
     "historyStatus": "changed the status",
     "historyAssignees": "changed assignees",
     "historyDeadline": "changed the deadline",
@@ -322,12 +332,13 @@
     "historyNone": "none"
   },
   "team": {
+    "leadSuffix": ", lead",
     "newTeam": "New team",
     "nameRequired": "The team name is required",
     "name": "Team name *",
     "namePlaceholder": "e.g. Marketing",
-    "color": "Colour",
-    "colorAria": "Team colour",
+    "color": "Color",
+    "colorAria": "Team color",
     "noMember": "No members available in your scope.",
     "creating": "Creating...",
     "create": "Create the team",
@@ -347,7 +358,7 @@
       "newProject": "New project",
       "existingTask": "Existing task",
       "newTask": "New task",
-      "searchProject": "Search a project…",
+      "searchProject": "Search for a project…",
       "noProjectToAssign": "No other project",
       "noTaskToAssign": "No other open task",
       "needProject": "This team has no project yet",
@@ -359,7 +370,7 @@
     "removeMemberAria": "Remove {{member}} from the team {{team}}",
     "addMemberAria": "Add a member to the team {{team}}",
     "addTo": "Add to {{name}}",
-    "colorNamed": "Colour {{name}}",
+    "colorNamed": "Color {{name}}",
     "membersCount": "Members ({{count}})",
     "deleteDialog": {
       "title": "Delete the “{{name}}” team?",
@@ -401,7 +412,7 @@
     "newAria": "New team project",
     "name": "Project name *",
     "namePlaceholder": "e.g. Website redesign",
-    "color": "Colour",
+    "color": "Color",
     "category": "Category",
     "noCategory": "No category",
     "team": "Collaborators · team",
@@ -443,7 +454,7 @@
       "toOrg_other": "The project, its tasks and comments will become visible to the whole company, that is {{count}} people.",
       "confirm": "Change team"
     },
-    "colorAria": "Project colour"
+    "colorAria": "Project color"
   },
   "consent": {
     "visibility": "Members see your name, your avatar and your activity on team projects (tasks, comments).",
@@ -452,7 +463,8 @@
     "agendaMiddle": " and add events to it, except the ones you mark ",
     "agendaPrivate": "“Private”",
     "agendaAfter": ", which stay invisible to them.",
-    "personalSafe": "Your tasks, habits and personal data stay invisible to the company."
+    "personalSafe": "Your tasks, habits and personal data stay invisible to the company.",
+    "reports": "Your managers see the date of your latest activity on team work, and the daily activity reports show the team tasks you completed and the non-private events you held. Never your sign-ins."
   },
   "assign": {
     "assignTo": "Assign a task to {{name}}",
@@ -469,13 +481,13 @@
     "assignedTo": "Assigned to {{names}}",
     "picker": "Assign to",
     "unassignAll": "Unassign everyone",
-    "searchExisting": "Search an existing task",
-    "searchPlaceholder": "Search a task…",
+    "searchExisting": "Search for an existing task",
+    "searchPlaceholder": "Search for a task…",
     "assignMembers": "Assign members",
     "assignShort": "Assign",
     "assigneeCount_one": "{{count}} assignee",
     "assigneeCount_other": "{{count}} assignees",
-    "pickPersonAgenda": "Select a person to see their agenda.",
+    "pickPersonAgenda": "Select a person to see their calendar.",
     "memberSearch": "Search for a member…",
     "noMemberMatch": "No member matches."
   },
@@ -525,7 +537,7 @@
   "comments": {
     "loading": "Loading…",
     "placeholder": "Write a comment… (@ to mention)",
-    "empty": "No comment yet. Start the discussion. Type \"@\" to mention someone.",
+    "empty": "No comments yet. Start the discussion. Type \"@\" to mention someone.",
     "loadError": "Couldn't load comments. Check your connection and try again.",
     "retry": "Retry",
     "deleteAria": "Delete this comment",
@@ -540,6 +552,7 @@
     "body": "This person will immediately lose access to the company's projects, tasks and OKRs. Their personal data (tasks, habits, calendar) is not affected. They can come back with a new invitation code."
   },
   "common": {
+    "delete": "Delete",
     "close": "Close",
     "cancel": "Cancel",
     "add": "Add",
@@ -619,13 +632,13 @@
     "requestCancelled": "Request cancelled.",
     "joinAnother": "Join another company",
     "backToPending": "← Back to pending request",
-    "navLabel": "Create / join",
+    "navLabel": "Create or join a company",
     "navAria": "Create or join a company",
     "inboxHeading": "Company invitations",
     "inboxFrom": "Invitation from {{name}}",
     "inboxAccept": "Join {{org}}",
     "inboxRefuse": "Decline the invitation from {{org}}",
-    "inviteSent": "Invitation sent — it appears in their inbox.",
+    "inviteSent": "Invitation sent: it appears in their inbox.",
     "joinedOrg": "Welcome to the company!",
     "invitationRefused": "Invitation declined.",
     "done": "Done",
@@ -694,11 +707,16 @@
         "orgHint": "Read the activity report of the whole company, and each team's performance.",
         "allTeams": "View every team's report",
         "allTeamsHint": "Read the report of any team. Without this right, a team lead only reads their own team's."
+      },
+      "role": {
+        "manage": "Manage roles",
+        "manageHint": "Create, edit and assign custom roles for a chosen period. A trust right: its holder can grant rights they do not hold."
       }
     },
     "intro": "These settings override the rights inferred from the org chart. A row left on “Default” follows the member's position in the company."
   },
   "teamPage": {
+    "addDescription": "Add a description",
     "back": "All teams",
     "notFound": "This team does not exist, or no longer does. It may have been deleted.",
     "edit": "Edit team",
@@ -729,13 +747,13 @@
     "archivedProjects_one": "{{count}} archived project",
     "archivedProjects_other": "{{count}} archived projects",
     "okrTitle": "OKRs",
-    "okrEmpty": "No OKR is linked to the team.",
+    "okrEmpty": "No OKRs are linked to the team.",
     "okrProgressAria": "Progress of {{title}}",
     "showKrs": "Show key results",
     "hideKrs": "Hide key results",
     "krEmpty": "No key results.",
     "loadTitle": "Team workload",
-    "loadEmpty": "No open task in the team's projects.",
+    "loadEmpty": "No open tasks in the team's projects.",
     "loadOverdue": "Overdue",
     "loadThisWeek": "This week",
     "loadLater": "Later",
@@ -745,9 +763,6 @@
     "loadLateDays": "-{{count}} d",
     "loadMore_one": "+{{count}} more",
     "loadMore_other": "+{{count}} more"
-  },
-  "setup": {
-    "resume": "Resume the setup assistant"
   },
   "glossary": {
     "open": "Glossary",
@@ -761,6 +776,7 @@
   "popups": {
     "task": {
       "status": "Status",
+      "noRights": "You don't have permission to edit this task.",
       "tabsAria": "Task sections",
       "tabDetails": "Details",
       "tabSubtasks": "Subtasks",
@@ -774,7 +790,7 @@
     "draft": {
       "subtasksHint": "These steps will be added when the task is created.",
       "depsHint": "Tick the project tasks that must finish before this one.",
-      "depsSearch": "Search a task in the project",
+      "depsSearch": "Search for a task in the project",
       "depsNone": "No open task in this project.",
       "depsReadOnly": "Only a manager sets dependencies. They will show here once the task exists.",
       "depsNeedProject": "Pick a project in the Details tab first."
@@ -855,15 +871,15 @@
       "tabWork": "Teams and projects",
       "tabHistory": "History",
       "teams": "Teams",
-      "noTeam": "In no team.",
+      "noTeam": "Not in any team.",
       "lead": "lead",
       "projects": "Projects",
-      "noProject": "Owns no project and has no open task.",
+      "noProject": "Owns no projects and has no open tasks.",
       "owner": "Owner",
       "openTasks": "Open tasks: {{count}}",
       "projectsPeerHint": "Projects this person owns. Their tasks are only visible to their managers.",
       "historyScope": "What this person changed on tasks over the last {{days}} days.",
-      "historyEmpty": "No task change over the last {{days}} days.",
+      "historyEmpty": "No task changes over the last {{days}} days.",
       "historyEntry": "Changed {{field}} on \"{{task}}\"",
       "hiddenTask": "a task you cannot see",
       "historyCreated": "Created “{{task}}”"

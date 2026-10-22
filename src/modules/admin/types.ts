@@ -147,3 +147,22 @@ export interface AdminStats {
   // zéro, qui se lirait « aucun rapport ».
   support: AdminSupport | null;
 }
+
+/** Entonnoir des accueils (mig. 213), cohorte des 30 derniers jours. */
+export interface AdminOnboardingFunnel {
+  windowDays: number;
+  perso: {
+    signups: number;
+    withTask: number;
+    withSlot: number;
+    withHabit: number;
+    withOkr: number;
+    /** Inscrits depuis au moins 14 jours : seuls eux disent quelque chose du retour. */
+    mature: number;
+    cameBack: number;
+    matureWithTask: number;
+    cameBackWithTask: number;
+  };
+  businessSignups: number;
+  orgs: { created: number; withTeam: number; withMember: number; withProject: number; withOkr: number };
+}

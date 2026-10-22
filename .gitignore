@@ -139,3 +139,6 @@ full-run.txt
 # vitest.tooling.config.ts. Meme raison que `coverage/` : c est un artefact.
 coverage-tooling
 .lighthouseci-mobile
+
+# Artefacts locaux rangés hors racine (2026-10-11)
+.artifacts/

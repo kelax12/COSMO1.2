@@ -7,6 +7,7 @@ import { withTimeout } from '@/lib/withTimeout';
 import { ITasksRepository } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { nextOccurrenceDeadline } from './recurrence';
+import { applyStatusSync } from './status-sync';
 import { taskKeys } from './constants';
 import { dependencyErrorCode } from './dependency-errors';
 import { validateAsync } from '@/lib/validation/lazy';
@@ -224,7 +225,8 @@ export const useUpdateTask = () => {
       const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
       if (previousTasks) {
         queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
-          old?.map((task) => (task.id === id ? { ...task, ...updates } : task))
+          // Mig. 214 : la carte change de colonne tout de suite, et du bon côté.
+          old?.map((task) => (task.id === id ? { ...task, ...applyStatusSync(task, updates) } : task))
         );
       }
       return { previousTasks };
@@ -344,7 +346,7 @@ export const useToggleTaskComplete = () => {
         queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
           old
             ?.filter((t) => t.recurrenceParentId !== updatedTask.id)
-            .map((t) => (t.id === updatedTask.id ? { ...t, completed: false, completedAt: undefined } : t))
+            .map((t) => (t.id === updatedTask.id ? { ...t, ...applyStatusSync(t, { completed: false }) } : t))
         );
         repository
           // `null` = ne rien générer : on dé-valide, donc le serveur retire
@@ -376,8 +378,10 @@ export const useToggleTaskComplete = () => {
             task.id === id
               ? {
                   ...task,
-                  completed: !task.completed,
-                  completedAt: !task.completed ? new Date().toISOString() : undefined,
+                  ...applyStatusSync(task, {
+                    completed: !task.completed,
+                    completedAt: !task.completed ? new Date().toISOString() : undefined,
+                  }),
                 }
               : task
           )

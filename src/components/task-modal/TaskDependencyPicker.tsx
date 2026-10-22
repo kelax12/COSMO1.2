@@ -109,7 +109,8 @@ const TaskDependencyPicker = ({
 
   const candidates = useMemo(
     // Aucun `inScope` : le périmètre autorisé par la mig. 132 est le COMPTE,
-    // et `tasks` ne contient déjà que les tâches du compte.
+    // et l'appelant (TaskDependenciesSection) filtre `tasks` sur ce compte :
+    // `useTasks` y mêle les tâches partagées par des amis.
     () => dependencyCandidates({ tasks, dependencies, task, direction, query }),
     [tasks, dependencies, task, direction, query],
   );

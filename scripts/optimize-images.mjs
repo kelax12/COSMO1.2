@@ -36,7 +36,8 @@ const CHECK = process.argv.includes('--check');
  * portables du marché, ce serait un changement visuel, pas une optimisation.
  * Seul l'ENCODAGE change.
  */
-const SHOTS = ['dashboard', 'taches', 'habitudes'];
+// `agenda` et `okr` (2026-10-12) illustrent les articles de blog, pas la landing.
+const SHOTS = ['dashboard', 'taches', 'habitudes', 'agenda', 'okr'];
 
 /**
  * Variantes du logo, dimensionnées pour leurs usages réels.

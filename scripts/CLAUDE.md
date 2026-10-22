@@ -15,7 +15,7 @@
 > datées vivent dans le doc cité en fin de ligne. ❌ Elle ne dit pas qu'une garde est juste : la
 > section suivante existe précisément parce que quatre d'entre elles répondaient sans mesurer.
 >
-> **Compte, relu dans `package.json` le 2026-09-30** : **34** gardes `check:*` / `i18n:*` /
+> **Compte, relu dans `package.json` le 2026-10-20** : **34** gardes `check:*` / `i18n:*` /
 > `validate:*`, plus trois outils de mesure (`analyze:entry`, `profile:landing`, `images:check`).
 > La racine a écrit « 36 » du 09-21 au 09-30. Un total se recompte, il ne se recopie pas.
 
@@ -58,21 +58,19 @@
 | `check:mail` | SPF / DKIM / DMARC — **pas une gate** | | `docs/DEPLOYMENT.md` |
 | `images:check` | images non optimisées — **pas une gate** | | `docs/PERFORMANCE.md` |
 
-🔴 **Trois de ces gardes ne mesurent rien tant qu'un geste manuel n'est pas fait**, et elles sont
-vertes ou rouges pour des raisons qui ne parlent pas du produit : `check:supabase-posture` attend
-la référence des réglages d'auth (`C-88`, **échoue exprès** tant qu'elle n'est pas posée),
-`check:env` attend `VERCEL_TOKEN` / `VERCEL_PROJECT_ID` (`C-105`), et le tri des premières
-alertes CodeQL reste à faire (`C-89`). Ces gestes sont au § 9 d'[`a-faire-manuel.md`](../a-faire-manuel.md).
+✅ **Les trois gardes qui attendaient un geste manuel mesurent toutes** (relu le 2026-10-20) :
+`check:supabase-posture` a sa référence d'auth depuis le 2026-10-10 (`C-88`), `check:env` a
+`VERCEL_TOKEN` / `VERCEL_PROJECT_ID` depuis le 2026-10-09 (`C-105`), et CodeQL est à 0 alerte
+depuis le 2026-10-16 (`C-89`). Ce paragraphe a dit le contraire jusqu'au 2026-10-20.
 
-✅ **La quatrième est tombée le 2026-09-21** : la mig. `150` est **appliquée** (ledger
-`20260921075529`), `/admin` cesse d'afficher « compteur non installé ».
-⚠️ **Effet de bord attendu sur `check:supabase-posture`** : la référence doit passer de **9 → 10**
-sur `rls_enabled_no_policy` et de **52 → 53** sur `authenticated_security_definer_function_executable`.
-Les deux objets sont `support_reports` et `get_support_stats`, tous deux décidés et écrits dans la
-migration. ❌ Un **troisième** compte qui bougerait ne serait pas un effet de la `150`.
-🔴 **2026-10-02 : la garde comptait 0 pour chaque advisor depuis sa pose** (l'API rend une entrée
-par occurrence). Corrigée, témoin dans `gardes-posture.guard.test.mjs`. Comptes attendus au
-`--update` : **9 → 11** et **52 → 80**, objets nommés dans `M-58` d'[`a-faire-manuel.md`](../a-faire-manuel.md).
+🔴 **`check:supabase-posture` compte une entrée PAR OCCURRENCE** (corrigé le 2026-10-02 : il lisait
+0 depuis sa pose). Référence : `scripts/supabase-posture.reference.json`, chaque compte avec la
+liste NOMMÉE de ses objets. Un rouge = de nouveaux objets en base : les relire au catalogue
+(`pg_get_functiondef`, `has_function_privilege`, `relacl`) AVANT `--update`, et écrire leurs noms
+dans la `_note`. ❌ Jamais recaler pour faire taire.
+⚠️ **Rouge chaque matin depuis le 2026-10-18** : `13 / 84 / 2 / 1` contre une référence à
+`11 / 82 / 2 / 1`. Les quatre objets en plus (`traffic_hits`, `traffic_salts`, `get_admin_revenue`,
+`get_admin_traffic`, mig. `221`-`222`) ont été relus sains ; le `--update` reste à jouer (Axel).
 
 ---
 
@@ -96,6 +94,7 @@ le plus lourd de la fenêtre 08-30 → 09-03, et il ne porte pas sur le produit 
   ou une mesure qui ne détecterait plus rien. Trois des quatre en ont un aujourd'hui.
 - 🔴 **Une garde qui se trompe dans le sens rassurant est pire qu'une garde absente : elle donne
   une réponse, et on la croit.**
+- 🔴 **Toute étape de garde de `lint-test-build` joue après un rouge** (`if: ${{ !cancelled() && steps.deps.outcome == 'success' }}`, un `id`, jamais `continue-on-error`), et la dernière étape liste tous les rouges : le 2026-10-12, `check:docs` en a masqué dix pendant trois jours. Témoin : `ci-toutes-les-gardes.guard.test.mjs`.
 
 #### Le cas symétrique : ce que AUCUNE garde ne regardait (C-35)
 
@@ -121,7 +120,7 @@ de valeur par défaut.
 
 ### 📣 Une alerte que personne ne lit est une archive, pas une alerte
 
-`vendor-watch.yml` a fait exactement son travail : il a détecté que le script de mesure d'audience
+`vendor-watch.yml` (retiré le 2026-10-18 avec le script tiers, `23a12fdb`) a fait exactement son travail : il a détecté que le script de mesure d'audience
 chargé sur les pages publiques s'était mis à extraire **l'adresse email et le nom** saisis à
 l'inscription, il a échoué **chaque jour du 2026-08-29 au 2026-09-01**, il a mis son issue à jour à
 chaque fois, et personne ne l'a ouverte pendant quatre jours.
@@ -153,4 +152,7 @@ chaque fois, et personne ne l'a ouverte pendant quatre jours.
   ⚠️ **Pas de shebang** sur `scripts/ops-alert.mjs` : son témoin l'importe, et la chaîne Vite/vitest
   ne retire pas le shebang que Node retire. Témoin : `scripts/ops-alert.guard.test.mjs`, 14 cas, vu
   rouge sur **six** sabotages, dont un `deliver` qui répond 204 sans rien poster.
+- ⚠️ **2026-10-16 : les runs `CI` de `main` ne s'annulent plus** (un groupe par commit), donc un rouge
+  peut finir après le vert qui l'a réparé. `scripts/ci-alert-perime.mjs` tait l'issue ET le webhook
+  sur ce seul cas, prouvé par l'API ; ❌ jamais dans le doute (API en panne, contexte vide : l'alerte part).
 

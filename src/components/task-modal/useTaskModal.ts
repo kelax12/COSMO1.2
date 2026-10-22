@@ -360,7 +360,9 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       formData.category !== task.category ||
       formData.deadline !== deadlineDayKey(task.deadline) ||
       formData.estimatedTime !== task.estimatedTime ||
-      formData.completed !== task.completed ||
+      // `completed` n'est PAS comparé : la fiche ne l'édite pas, et depuis la
+      // mig. 214 le Statut le change pendant qu'elle est ouverte (cocher via
+      // « Terminée ») ; la comparer réclamerait un enregistrement fantôme.
       formData.bookmarked !== task.bookmarked ||
       formData.krId !== (task.krId ?? '') ||
       formData.recurrence !== (task.recurrence ?? 'none') ||

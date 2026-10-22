@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildMoments, momentOfHour, todayCompletionReport } from './today-moments.helpers';
+import { buildMoments, isEventPast, momentOfHour, todayCompletionReport } from './today-moments.helpers';
 import type { CalendarEvent } from '@/modules/events';
 import type { TodayItem } from '@/modules/today';
 
@@ -181,5 +181,16 @@ describe('todayCompletionReport — maquette 49', () => {
 
   it('distingue un compte vide d’une journée bouclée', () => {
     expect(todayCompletionReport({ tasks: [], habits: [], events: [], now: at(20) }).total).toBe(0);
+  });
+});
+
+describe('isEventPast — maquette 135', () => {
+  const now = new Date(2026, 9, 10, 15, 0);
+  it('passé quand la fin est atteinte', () => {
+    expect(isEventPast({ start: new Date(2026, 9, 10, 10).toISOString(), end: new Date(2026, 9, 10, 11).toISOString() }, now)).toBe(true);
+  });
+  it('en cours ou à venir : pas passé', () => {
+    expect(isEventPast({ start: new Date(2026, 9, 10, 14).toISOString(), end: new Date(2026, 9, 10, 16).toISOString() }, now)).toBe(false);
+    expect(isEventPast({ start: new Date(2026, 9, 10, 18, 30).toISOString(), end: '' }, now)).toBe(false);
   });
 });

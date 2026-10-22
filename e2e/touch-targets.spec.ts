@@ -510,7 +510,16 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
         } catch { /* ignore */ }
       });
       await gotoTolerant(page, route);
-      await page.waitForLoadState('networkidle');
+      // Borne a 15 s : sous WebKit le reseau de la landing ne se calme pas
+      // toujours, et l'attente filait jusqu'au delai du test (180 s, instable
+      // le 2026-10-10). L'attente d'animation ci-dessous suit de toute facon.
+      await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+      // 🔴 Le bas de la landing ne monte qu'au premier geste (`BelowFold.tsx`,
+      // TBT mobile). Sans ce défilement d'un pixel, le relevé ne compterait
+      // que les commandes du hero. Sans effet sur les autres routes.
+      await page.evaluate(() => window.scrollBy(0, 1));
+      await page.waitForTimeout(500);
+      await page.evaluate(() => window.scrollTo(0, 0));
       // La landing est lazy-loadee et animee : son etat final n'est pas celui
       // du premier rendu, et une cible mesuree en cours d'animation ment.
       await page.waitForTimeout(2500);
@@ -545,12 +554,35 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
     await demoPage.waitForLoadState('networkidle');
     await demoPage.waitForTimeout(2000);
 
-    const taskButton = demoPage.locator('button[aria-label^="Marquer"]').first();
-    await expect(taskButton).toBeVisible({ timeout: 15_000 });
-    // Le bouton VOISIN de la case ouvre la tâche (la case, elle, la coche).
-    await demoPage.locator('li:has(button[aria-label^="Marquer"]) button').nth(1).click();
+    // Aperçu en widgets (2026-10-19) : le compte démo (admin) arrive sur le
+    // modèle « Administrateur », sans « Mes tâches ». Une ligne de TÂCHE du
+    // widget « Événements de l'entreprise » ouvre la modale (elle porte son
+    // projet, « · Projet » ; une fin d'OKR non).
+    // Délai propre puis clic forcé, comme `navTo` : sous WebKit la rangée
+    // était jugée instable jusqu'au délai du test (180 s), instable le
+    // 2026-10-09. L'élément doit quand même exister et être visible.
+    const ouvrir = demoPage
+      .getByRole('region', { name: /événements de l[’']entreprise/i })
+      .getByRole('button')
+      .filter({ hasText: ' · ' })
+      .first();
+    await expect(ouvrir).toBeVisible({ timeout: 15_000 });
+    try {
+      await ouvrir.click({ timeout: 15_000 });
+    } catch {
+      await ouvrir.click({ force: true, timeout: 10_000 });
+    }
 
     const dialog = demoPage.getByRole('dialog');
+    // Un clic forcé pouvait tomber à côté (aucune modale, instable le
+    // 2026-10-10) : seconde tentative au clavier, sans dépendre de la géométrie.
+    const ouverte = await expect(dialog.first())
+      .toBeVisible({ timeout: 5_000 })
+      .then(() => true, () => false);
+    if (!ouverte) {
+      await ouvrir.focus();
+      await demoPage.keyboard.press('Enter');
+    }
     await expect(dialog.first()).toBeVisible({ timeout: 10_000 });
     await demoPage.waitForTimeout(1200);
 

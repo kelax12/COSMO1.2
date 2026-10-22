@@ -5,7 +5,7 @@
 // AdminForbiddenError pour que la page redirige silencieusement.
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
-import type { AdminStats, AdminSupport, DailyPoint } from './types';
+import type { AdminStats, AdminSupport, DailyPoint, AdminOnboardingFunnel } from './types';
 
 /** Signal de routing (compte non admin) — jamais toasté ni affiché. */
 export class AdminForbiddenError extends Error {
@@ -253,4 +253,51 @@ export async function fetchIsAdmin(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+interface RawOnboardingFunnel {
+  window_days?: number;
+  perso?: Record<string, number>;
+  business_signups?: number;
+  orgs?: Record<string, number>;
+}
+
+/**
+ * Entonnoir des accueils (mig. 213). Même contrat que `fetchSupportStats` :
+ * `null` quand la fonction n'existe pas encore (migration non appliquée), et
+ * SEULEMENT dans ce cas, pour ne jamais afficher des zéros qui se liraient
+ * « personne ne termine l'accueil ».
+ */
+export async function fetchOnboardingFunnel(): Promise<AdminOnboardingFunnel | null> {
+  const { data, error } = await supabase.rpc('get_admin_onboarding_funnel', { p_days: 30 });
+  if (error) {
+    if (error.code === '42501') throw new AdminForbiddenError();
+    if (error.code === '42883' || error.code === 'PGRST202') return null;
+    throw normalizeApiError(error);
+  }
+  const raw = (data ?? {}) as RawOnboardingFunnel;
+  const p = raw.perso ?? {};
+  const o = raw.orgs ?? {};
+  return {
+    windowDays: raw.window_days ?? 30,
+    perso: {
+      signups: p.signups ?? 0,
+      withTask: p.with_task ?? 0,
+      withSlot: p.with_slot ?? 0,
+      withHabit: p.with_habit ?? 0,
+      withOkr: p.with_okr ?? 0,
+      mature: p.mature ?? 0,
+      cameBack: p.came_back ?? 0,
+      matureWithTask: p.mature_with_task ?? 0,
+      cameBackWithTask: p.came_back_with_task ?? 0,
+    },
+    businessSignups: raw.business_signups ?? 0,
+    orgs: {
+      created: o.created ?? 0,
+      withTeam: o.with_team ?? 0,
+      withMember: o.with_member ?? 0,
+      withProject: o.with_project ?? 0,
+      withOkr: o.with_okr ?? 0,
+    },
+  };
 }

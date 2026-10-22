@@ -11,6 +11,8 @@ import SecuritySection from './SecuritySection';
 import PricingSection from './PricingSection';
 import EnterpriseFaqSection from './EnterpriseFaqSection';
 import EnterpriseCta from './EnterpriseCta';
+import { ENTERPRISE_PRICES_SHOWN } from './free-offer';
+import BelowFold from '../BelowFold';
 
 interface EnterpriseTrackProps {
   onDemo: () => void;
@@ -45,19 +47,26 @@ const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onRegister, o
       {/* Le sommaire du parcours vit dans le header de `LandingPage`. */}
       <EnterpriseHero onDemo={onDemo} onCtaRef={onHeroCtaRef} />
 
-      <ProblemSection />
+      {/* Tout ce qui suit le hero est monté au premier geste, comme le bas du
+          parcours perso : monté avec le hero, il coûtait le gros du TBT mobile
+          de la page des prospects (2026-10-22). Déclencheurs : `BelowFold.tsx`. */}
+      <BelowFold>
+        <ProblemSection />
 
-      {/* Les cinq étapes de mise en place, dans l'ordre où on les fait. */}
-      <PyramidSection />
-      <ExecutionSection />
-      <ProjectsSection />
-      <OkrSection />
-      <ProgressSection />
-      <MoreFeaturesSection />
-      <SecuritySection />
-      <PricingSection onRegister={onRegister} />
-      <EnterpriseFaqSection />
-      <EnterpriseCta onDemo={onDemo} onRegister={onRegister} />
+        {/* Les cinq étapes de mise en place, dans l'ordre où on les fait. */}
+        <PyramidSection />
+        <ExecutionSection />
+        <ProjectsSection />
+        <OkrSection />
+        <ProgressSection />
+        <MoreFeaturesSection />
+        <SecuritySection />
+        {/* Prix masqués depuis le 2026-10-16 (`PRICES_VISIBLE`) : la section
+            reste intacte, elle n'est juste plus montée. */}
+        {ENTERPRISE_PRICES_SHOWN && <PricingSection onRegister={onRegister} />}
+        <EnterpriseFaqSection />
+        <EnterpriseCta onDemo={onDemo} onRegister={onRegister} />
+      </BelowFold>
     </div>
   );
 };

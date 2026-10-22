@@ -31,6 +31,7 @@
     "i18n:scan": "node scripts/i18n-scan.mjs",
     "i18n:identical": "node scripts/i18n-identical.mjs",
     "i18n:namespaces": "node scripts/i18n-shell-namespaces.mjs",
+    "capture:landing-hero": "node scripts/capture-landing-hero.mjs",
     "profile:landing": "node scripts/profile-landing.mjs",
     "check:bundle": "node scripts/check-bundle-budget.mjs",
     "analyze:entry": "node scripts/analyze-entry.mjs",
@@ -93,6 +94,7 @@
     "date-fns": "^3.6.0",
     "framer-motion": "^12.34.2",
     "gsap": "^3.15.0",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.563.0",
     "ogl": "^1.0.11",
     "react": "^18.3.1",
@@ -130,5 +132,8 @@
     "typescript-eslint": "^8.3.0",
     "vite": "^7.3.2",
     "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "postcss-selector-parser": "^7.1.6"
   }
 }

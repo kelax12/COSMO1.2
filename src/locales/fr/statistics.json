@@ -1,4 +1,10 @@
 {
+  "delta": {
+    "up": "+{{pct}} % par rapport à la période précédente",
+    "down": "−{{pct}} % par rapport à la période précédente",
+    "same": "Comme la période précédente",
+    "noBase": "Pas de période précédente à comparer"
+  },
   "page": {
     "title": "Statistiques",
     "subtitle": "Analysez votre productivité et vos performances",
@@ -42,6 +48,8 @@
     "featureName": "les analyses détaillées"
   },
   "details": {
+    "noTaskDone": "Aucune tâche terminée sur la période.",
+    "avgPriority": "Moy. {{value}}",
     "globalTimeSplit": "Répartition globale du temps",
     "total": "Total",
     "byColor": "Répartition par couleur",

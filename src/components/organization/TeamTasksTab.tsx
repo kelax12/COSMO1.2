@@ -39,6 +39,8 @@ import { useOrgTeams } from '@/modules/org-teams';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 import { OrgCreateBoundary } from './org-create.context';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { MobileTeamTaskList, MobileFiltersButton, MobileFiltersSheet, MobileCreateButton } from './MobileTeamTasks';
 
 interface TeamTasksTabProps {
   orgId: string;
@@ -53,6 +55,13 @@ interface TeamTasksTabProps {
 
 /** Sans accents/casse — même normalisation que MemberDirectory. */
 const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+// Tri des colonnes TEXTE par collation française, pas par point de code :
+// l'apostrophe typographique (U+2019) se classait après toutes les lettres,
+// donc « Maquettes de l’app » tombait après « Maquettes de la page » (et
+// l'inverse avec une apostrophe droite). Vu en CI le 2026-10-08.
+const TEXT_COLLATOR = new Intl.Collator('fr', { sensitivity: 'base' });
+const TEXT_SORT_FIELDS = new Set(['name', 'project', 'assignee']);
 
 /**
  * Onglet « Tâches » de l'espace entreprise — entre Pyramide et Projets.
@@ -84,7 +93,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const { filters, setFilters } = useOrgTaskFilters('open');
   useRememberedTaskFilters(orgId, 'tasks');
   const { project: projectFilter, status: statusFilter, q: searchTerm } = filters;
-  const { data: taskDependencies = [] } = useTeamTaskDependencies(orgId);
+  const { data: taskDependencies = [], isLoading: loadingDependencies } = useTeamTaskDependencies(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
   const pf = useT('portfolio');
   const { data: categories = [] } = useTeamCategories(orgId);
@@ -119,7 +128,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     data: taskPages, isLoading: loadingTasks, hasNextPage, fetchNextPage, isFetchingNextPage,
   } = useTeamTaskPages(orgId, statusFilter === 'all' ? null : recentSince, { live: true });
   const tasks = useMemo(() => taskPages?.pages.flat() ?? [], [taskPages]);
-  const isLoading = loadingProjects || loadingTasks;
+  const isLoading = loadingProjects || loadingTasks || loadingDependencies;
   const truncated = !!hasNextPage;
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
@@ -166,6 +175,8 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   // dans l'URL. Seul le sens du tri reste un état local, comme avant.
   const sortField = filters.group;
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const isMobile = useIsMobile();
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [taskModal, setTaskModal] = useState<{
     mode: 'create' | 'edit'; task?: TeamTask; assigneeIds?: string[]; status?: TeamTaskStatus; fromKanban?: boolean;
   } | null>(null);
@@ -235,8 +246,13 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     const sorted = [...visibleTasks].sort((a, b) => {
       const pa = primary(a);
       const pb = primary(b);
-      if (pa < pb) return -1;
-      if (pa > pb) return 1;
+      if (TEXT_SORT_FIELDS.has(sortField)) {
+        const byText = TEXT_COLLATOR.compare(String(pa), String(pb));
+        if (byText !== 0) return byText;
+      } else {
+        if (pa < pb) return -1;
+        if (pa > pb) return 1;
+      }
       const sa = secondary(a);
       const sb = secondary(b);
       if (sa < sb) return -1;
@@ -381,7 +397,24 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         searchPlaceholder={t('projects.tasksTabSearchPlaceholder')}
         searchAria={t('projects.tasksTabSearchAria')}
         // Périmètre à côté du tri (2026-09-30) : la recherche reste seule en haut.
-        scopeSlot={(scope) => (
+        // Mobile (239, 242, 250) : périmètre, tri, préréglages et vue dans une feuille.
+        trailing={isMobile ? <MobileFiltersButton activeCount={hasActiveFilter ? 1 : 0} onOpenChange={setFiltersOpen} /> : undefined}
+        scopeSlot={(scope) => isMobile ? (
+          <MobileFiltersSheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <TeamTasksToolbar
+              sortField={sortField}
+              onSortField={(group) => setFilters({ group })}
+              sortDirection={sortDirection}
+              onToggleSortDirection={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
+              canCreate={false}
+              onCreate={() => undefined}
+              hideCreate
+              scope={scope}
+            />
+            <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="open" currentUserId={currentUserId ?? user?.id} />
+            <TeamTasksViewControls {...viewControlsProps} part="view" />
+          </MobileFiltersSheet>
+        ) : (
           <TeamTasksToolbar
             sortField={sortField}
             onSortField={(group) => setFilters({ group })}
@@ -396,7 +429,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
       />
 
       {/* Préréglages, puis la vue ; les colonnes au bout de la ligne (2026-09-30). */}
-      <div className="-mt-2 flex items-center gap-2">
+      <div className="-mt-2 hidden md:flex items-center gap-2">
         <FilterPresets
           filters={filters} setFilters={setFilters} defaultStatus="open" currentUserId={currentUserId ?? user?.id}
           // « Sélectionner » sur la MÊME ligne que les préréglages, comme sur la page Tâches perso.
@@ -464,6 +497,18 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
             onToggleSelect={bulk.toggleSelect}
           />
         </Suspense>
+      ) : isMobile ? (
+        <MobileTeamTaskList
+          lines={lines}
+          groupLabel={groupLabel}
+          onToggleGroup={toggleGroup}
+          projectById={projectById}
+          onToggleComplete={toggleComplete}
+          onOpen={handlers.open}
+          selectMode={bulk.selectMode}
+          selectedIds={bulk.selectedIds}
+          onToggleSelect={bulk.toggleSelect}
+        />
       ) : (
         <TeamTasksTable
           lines={lines}
@@ -476,12 +521,17 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           unreadCommentsByTask={unreadCommentsByTask}
           selectMode={bulk.selectMode}
           selectedIds={bulk.selectedIds}
+          blockedTaskIds={blockedTaskIds}
           handlers={handlers}
           groupLabel={groupLabel}
           onToggleGroup={toggleGroup}
           sortIndicator={sortIndicator}
           onSort={handleSort}
         />
+      )}
+
+      {isMobile && projects.length > 0 && can['task.create'] && (
+        <MobileCreateButton label={t('projects.tasksTabNewTask')} onClick={() => setTaskModal({ mode: 'create' })} />
       )}
 
       {taskModal && (

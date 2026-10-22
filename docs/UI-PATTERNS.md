@@ -1,4 +1,4 @@
-<!-- note-audit: note=86 -->
+<!-- note-audit: note=85 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,86 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **86 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **85 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
 
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03)
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → 84 → 86 → 86 → 85 → **85 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → **2026-10-22**)
+
+> ### ⚪ 2026-10-22 · 0 : `AssignRoleDialog` remesuré, la garde vue mordre
+>
+> Le −1 du 2026-10-15 est remboursé depuis le 2026-10-16 ; ce jour le vérifie au lieu de le reprendre.
+> Mesures du 2026-10-22, dépôt à `HEAD` (branche de la PR).
+>
+> | Item | Avant | Après |
+> |---|---|---|
+> | `loading-empty-state` (C-40) sur `AssignRoleDialog` | vert : `isLoading` des deux lectures (`roles`, `assignments`) lu, squelette `aria-busy` tant que l'une manque (`origin/main` à `5eaa8b8c`) | inchangé ; **vu rouge** sur la version fautive remise exprès (`data: roles = []` sans `isLoading`) : la garde nomme `AssignRoleDialog.tsx → roles`. Vert sur la vraie |
+> | Squelette observé | jamais regardé par un parcours | le cas clavier attend la fin d'`aria-busy` avant de mesurer, sur `chromium` et `mobile-safari`. ⚠️ En démo, la lecture répond tout de suite : le squelette n'a pas été vu à l'œil |
+>
+> **85 → 85.**
+
+> ### 🟠 2026-10-20 · −1 : la refonte de l'Aperçu passée sans référence visuelle
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | 🔴 `Visual` rouge depuis `a9db6f2c` | **−1** | six captures : `/dashboard` dans les quatre thèmes (contenu daté, voir [`TESTING.md`](./TESTING.md)), `/entreprise` Aperçu (refonte attendue, référence à régénérer), **l'état ERREUR de la frontière d'erreur** (non identifié). La refonte d'écran la plus large depuis septembre (Aperçu en widgets, modèles par rôle, « Ajouter un widget ») est donc arrivée sans aucune comparaison visuelle |
+> | Produit | 0 | Aperçu en grille de widgets éditable (S/M/L, modèles membre, chef d'équipe, admin) ; éditeur de rôle en modale centrée ; invitation une adresse à la fois ; boussole du guide en mode perso ; rapport d'activité refondu puis **rétabli** (`45b2d7fd`), export PDF conservé. Crédité quand `Visual` le verra |
+>
+> **86 → 85.**
+
+> ### ⚪ 2026-10-18 · 0 : vérifiée inchangée
+>
+> Dernière passe avant l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | `Visual` | 0 | vert sur `e69cb729`, `8b253a1b` et `5f8ecbdb` |
+> | ✅ `8b253a1b` · l'État choisi dans le tableau disparaissait au bout de 2 s | 0 | vu et corrigé le même jour, jamais débité : `TASK_LIST_COLUMNS` ne relisait pas `status` ni `health` |
+> | `5f8ecbdb`, `a82c28f8` | 0 | compte retiré, pastille de filtre au bout de la rangée Favoris. `a82c28f8` est arrivé pendant la passe : non mesuré |
+>
+> **86 → 86.**
+
+> ### 🟢 2026-10-16 · +2 : `Visual` compare de nouveau, et le dialogue des rôles attend sa réponse
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab`, dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `Visual` rouge depuis le 2026-10-12 (−1) | **+1** | les quatre cas tranchés (`477e2fc8`, `22a00936`) ; vert **en comparaison** deux fois de suite (`38730049045`, `38731274622` : 18 références, 20 cas, production de références sautée), et vert à `HEAD` |
+> | ✅ `AssignRoleDialog` affirmait l'absence de rôles avant la réponse (−1) | **+1** | `loading-empty-state.guard` vert en CI et en local |
+> | Page entreprise avec barre oblique | 0 | elle sert l'accueil perso : débité dans [`SEO.md`](./SEO.md), une seule fois |
+>
+> **84 → 86.**
+
+> ### 🟠 2026-10-15 · −2 : `Visual` rouge trois jours, et un dialogue qui affirme avant de savoir
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> dépôt à `HEAD` rejoué étape par étape. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | 🔴 `Visual` rouge depuis le 2026-10-12 | **−1** | dernier vert : `9f6595b5` (10-11). À `HEAD` (run `38476034115`) : **4 cas sur 20**, `/entreprise · Aperçu` (la surface remboursée le 10-03), `/`, `/guide`, `/blog`, trois tentatives chacun. Depuis le dernier vert, l'Aperçu et les pages publiques ont changé plusieurs fois (avatars en couleur, « Valider / Renvoyer » sur la ligne de la tâche, captures et images OG) : rien ne dit lesquelles des quatre différences sont voulues. **Une garde rouge trois jours ne compare plus rien**, elle sonne |
+> | 🔴 `AssignRoleDialog` affirme l'absence de rôles avant la réponse | **−1** | `loading-empty-state.guard` (C-40) rouge en local à `HEAD` : lecture « à l'aveugle » de `roles`, l'état vide s'affiche pendant le chargement (`a6562733`) |
+> | Guide entreprise (30 scénarios, 10-12 et 10-13) | 0 | livré avec ses ancrages `data-guide-id` et la garde de ses scénarios ; son e2e est rouge (cf. [`TESTING.md`](./TESTING.md)) |
+>
+> **86 → 84.**
+>
+> 🔎 **2026-10-15 (jour) · les quatre rouges de `Visual` tranchés** (artefacts du run `38650837007`) :
+> · `/entreprise · Aperçu` : **voulu**. Trois changements, écart identique sur trois essais (9 330 px) :
+> « Valider / Renvoyer » sur la ligne de la tâche (`8df06f57`), badge Ctrl K retiré (`fd4adabf`),
+> bouton flottant du guide (`c651ba18`). Référence régénérée.
+> · `/`, `/guide`, `/blog` : **défaut de la GARDE**, puis changement voulu. Le spec posait
+> `cosmo_cookie_consent = 'rejected'`, valeur que le produit ne connaît pas (`'refused'`) : le
+> bandeau cookies n'a jamais été neutralisé, et les trois références le contenaient depuis leur
+> création. L'allongement de son texte par l'audit juridique (`79c0f0b3`) les a rendues rouges ;
+> `/guide` porte en plus le guide remis à jour (`a0dc4990`). Valeur corrigée et témoin à deux sens
+> posé (bandeau vu, puis absent), `477e2fc8` ; références régénérées par `visual.yml`
+> (run `38728499545`, deux passes, `22a00936`). Aucune tolérance touchée. **Comparaison verte**
+> sur `main` : run `38730049045` (`6f6ec984`), 20 cas, étape « Comparer aux références ».
 
 > ### 🟢 2026-10-03 · +1 : l'Aperçu de `/entreprise` sous `Visual`
 >
@@ -146,7 +221,7 @@
 | AM-2 | **Les quatre thèmes ne sont balayés par aucun run.** Clair, sombre, gris et noir : les parcours e2e n'en jouent qu'un. C'est pourtant la classe de bug du 2026-07-23 (17 fichiers aux couleurs codées en dur) | aucun cas e2e ne change de thème | ✅ **OUTILLÉ le 2026-09-20** · `visual.yml`, qui **produit et commite** ses références au premier run (`C-95`) — 🔴 ne prouve PAS : idem AM-1 · 🔎 🔴 **2026-09-22 : idem AM-1, jamais joué avec succès** · 🔎 🟠 **2026-09-24 : idem AM-1**, vert à vide jusqu'ici, correctif poussé |
 | AM-3 | **Les états VIDES, de chargement et d'ERREUR ne sont vus qu'au hasard des parcours.** `loading-empty-state.guard.test.ts` vérifie leur présence statiquement, jamais leur rendu | garde statique | ✅ **OUTILLÉ le 2026-09-20** · états **vide** et **erreur** capturés, pas seulement l'état nominal (`C-95`) — 🔴 ne prouve PAS : idem AM-1 · 🔎 🔴 **2026-09-22 : idem AM-1, jamais joué avec succès** · 🔎 🟠 **2026-09-24 : idem AM-1**, vert à vide jusqu'ici, correctif poussé |
 | AM-4 | **La cohérence entre la landing et le produit n'est gardée que sur les PRIX et les NOMS de paliers.** Le reste (vocabulaire, promesses, captures) diverge sans alerte | `org-tiers.parity.test.ts` et `org-tier-labels.ts` ne couvrent que ça | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** Seuls les PRIX et les NOMS de paliers sont gardés (`org-tiers.parity.test.ts`, et `check:stripe-prices` depuis `C-106`) ; vocabulaire, promesses et captures divergent toujours sans alerte — *(jugé outillable le 09-16 : partiellement)* |
-| AM-5 | **Aucune mesure d'usage réel.** Le document note des écrans sans jamais savoir lesquels sont ouverts : un écran soigné que personne n'atteint et un écran négligé très fréquenté pèsent pareil | Vesk mesure l'audience des pages publiques, pas les écrans protégés | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte**, et c'est délibéré : mesurer l'usage réel demande de l'analytique produit, que ce dépôt n'a pas voulue. Un écran soigné que personne n'atteint pèse toujours autant qu'un écran négligé très fréquenté — *(jugé outillable le 09-16 : partiellement)* |
+| AM-5 | **Aucune mesure d'usage réel.** Le document note des écrans sans jamais savoir lesquels sont ouverts : un écran soigné que personne n'atteint et un écran négligé très fréquenté pèsent pareil | la mesure d'audience porte sur les pages publiques, pas les écrans protégés | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte**, et c'est délibéré : mesurer l'usage réel demande de l'analytique produit, que ce dépôt n'a pas voulue. Un écran soigné que personne n'atteint pèse toujours autant qu'un écran négligé très fréquenté — *(jugé outillable le 09-16 : partiellement)* |
 
 
 > ### 🔴 2026-09-14 (soir) · −2 : un écran du produit affiche un zéro qui n'est pas vrai
@@ -704,15 +779,16 @@ planétaire réduit passe au-dessus et l'aperçu disparaît. Six écrans : prés
 au plus, idées cliquables, touche N), agenda (montre la PREMIÈRE tâche écrite posée dans un
 créneau, ne crée rien), habitude (idées), objectif + résultat clé facultatif, bilan.
 
-**Entreprise : la constellation** (`src/components/onboarding/enterprise/`). L'entreprise se
-dessine comme une carte du ciel sur la nuit de la landing entreprise : vous au centre, les
-personnes invitées en étoiles reliées à vous (l'organigramme), l'équipe en amas, le projet
-dessous, et l'objectif d'entreprise en étoile polaire dorée (l'or n'a que ce rôle). Le nom de
-l'entreprise s'écrit dessous comme on nomme une constellation. Bienvenue (trois promesses), créer
-ou rejoindre (code + consentement), attente avec la visite des quatre lieux, puis mise en place :
-invitations (avec le code de l'entreprise), équipe, projet depuis un modèle, **cap** (étape ajoutée
-le 2026-10-03 : objectif `audience: 'org'`, un résultat clé exigé par le schéma), fin avec la
-carte des six lieux. `MemberWelcome` accueille qui arrive sans être passé par là.
+**Entreprise : la vidéo d'accueil** (refait le 2026-10-14, à la demande d'Axel, sur le modèle de
+RemNote). `/entreprise/onboarding` ne propose plus que le choix créer | rejoindre (`OrgChoice`).
+L'assistant de mise en place en constellation (équipe, invitations, projet, cap), qui demandait
+des informations avant d'avoir montré le produit, est supprimé avec `MemberWelcome`. À la place,
+`OrgWelcomeVideo` ouvre un lecteur au premier passage dans `/entreprise`, créateur comme membre :
+vidéo V2 du 2026-10-19, 2 min 24 (`public/videos/onboarding-entreprise-v2.mp4`, source
+`cockpit-marketing/videos/onboarding-entreprise`), sous-titres FR actifs d'office hors locale fr,
+démarrage avec le son et repli muet + bouton « Activer le son » si le navigateur refuse, aucun
+démarrage automatique sous mouvement réduit. Le guide (`?guide=1`, `OrgGuideFab`) est inchangé.
+Historique de la constellation : `git log -- src/components/onboarding/enterprise/Constellation.tsx`.
 
 **Règles communes**, et pourquoi :
 
@@ -732,14 +808,27 @@ carte des six lieux. `MemberWelcome` accueille qui arrive sans être passé par 
   n'existe que si la garde a laissé passer l'id (vérifié rouge en remettant l'ancien id).
 - Le perso ne s'ouvre jamais sur `/entreprise` : il s'empilait sur l'accueil entreprise à la
   sortie de celui-ci.
-- `MemberWelcome` ne s'ouvre qu'à une ARRIVÉE sur l'Aperçu nu (`/entreprise` sans section ni
+- L'accueil vidéo (ex-`MemberWelcome`) ne s'ouvre qu'à une ARRIVÉE sur l'Aperçu nu (`/entreprise` sans section ni
   paramètre), décision prise une fois (`arrivedOnOverview`). Relue à chaque rendu, la garde
   laissait l'accueil s'ouvrir après coup, une fois `?tab=settings` réécrit en section, le retour
   Stripe `?tab=billing` traité ou `?task=` retiré par une fiche introuvable : il couvrait l'écran
-  visé et a mis 8 cas du job e2e au rouge le 2026-10-04 (`delete-org`, `refund`, et le sien). L'admin qui finit la mise en place est marqué « accueilli » pour
-  `MemberWelcome`.
+  visé et a mis 8 cas du job e2e au rouge le 2026-10-04 (`delete-org`, `refund`, et le sien).
 - Tailles de texte : l'échelle du projet uniquement (garde `design-system.guard.test.ts`, stock de
   `text-[Npx]` plafonné).
+
+**Corrigé le 2026-10-05**, après une revue honnête de ses points faibles : retour arrière (une
+étape faite s'affiche enregistrée, rien n'est recréé) ; un VRAI créneau d'agenda, facultatif,
+relié à la première tâche ; l'aperçu sous le formulaire sur téléphone ; la durée de l'habitude
+choisie ; une cible chiffrée facultative au résultat clé ; un bilan avec une carte de
+statistiques et des sorties concrètes (tâches, agenda, habitudes) ; le thème de l'app suivi (plus
+d'éclair blanc en thème Noir) ; un bouton « Animer » sous mouvement réduit (WCAG 2.3.3 interdit le
+mouvement non demandé, pas le mouvement) ; un rappel de l'entreprise remise à plus tard. Côté
+entreprise : équipe AVANT invitations, pour que l'invitation emporte l'équipe et le manager ;
+constellation redessinée depuis les vraies données après un rechargement ; tâches du modèle de
+projet visibles ; résultat clé manquant expliqué ; attente nommée et datée ; toasts sombres ;
+reprise de l'assistant à la première étape non faite depuis l'Aperçu.
+⚠️ **Mesure** : la mig. `213` (`get_admin_onboarding_funnel`, carte « Accueils » de la console
+admin) est ÉCRITE, NON appliquée. Tant qu'elle dort, la carte le dit au lieu d'afficher des zéros.
 
 Le sélecteur de modules a été supprimé le 2026-08-23 (`acf29b7`) : Agenda, Habitudes, OKR et
 Statistiques sont visibles par tout le monde. `cosmo_onboarding_examples_created` (ancien accueil à
@@ -751,7 +840,7 @@ le harnais `e2e/supabase-stub.ts` (`first-run.spec.ts`, `org-onboarding.spec.ts`
 
 ### OnboardingOverlay — supprimé (2026-07, commit c170e37)
 
-Le tutoriel 3 étapes affiché après `loginDemo()` a été **retiré volontairement** et le composant supprimé du repo (purge 2026-07-15). En démo, ce sont les `PageTutorial` par page qui guident (les deux accueils ci-dessus ne s'ouvrent jamais en démo). Ne pas recréer d'overlay bloquant à l'entrée en démo.
+Le tutoriel 3 étapes affiché après `loginDemo()` a été **retiré volontairement** et le composant supprimé du repo (purge 2026-07-15). En démo, ce sont les `PageTutorial` par page qui guident (l'accueil perso ne s'ouvre jamais en démo). Exception voulue par Axel le 2026-10-19 : la vidéo d'accueil entreprise s'ouvre au premier passage sur `/entreprise` en démo (fermable en un geste, drapeau posé par la fixture e2e). Ne pas recréer d'autre overlay bloquant à l'entrée en démo.
 
 ### PageTutorial — tutoriel par page
 
@@ -783,6 +872,32 @@ Flags : `cosmo_tutorial_seen_tasks_(desktop|mobile)`, idem `agenda`, `habits`, `
 - OKRPage : `okr-category-filter`, `okr-create-button`, `okr-first-card`
 
 > **Ne pas renommer** un `data-tutorial-id` sans grep les tutorials d'abord.
+
+### Guide entreprise (2026-10-12)
+
+**Rôle** : sur `/entreprise`, un bouton flottant (boussole, en bas à droite) ouvre un tiroir de
+**28 actions** classées par catégorie, avec recherche. Chaque action joue une démo : un curseur
+animé se déplace vers les vraies cibles de l'écran, ouvre le formulaire **vide** et commente
+chaque étape dans une bulle. La démo **n'écrit jamais** : rien n'est saisi ni validé. Pause,
+Passer et Échap (quitter) dans la barre de contrôle. Une action hors des droits du lecteur
+s'affiche verrouillée et explique pourquoi. **Desktop uniquement** (le bouton n'est pas rendu
+sur mobile).
+
+**Fichiers** (`src/components/org-guide/`) : `OrgGuideFab` (seul morceau chargé d'emblée, monté
+par `OrganizationPage`) ; `OrgGuideHost` (lazy : tiroir, scénarios, démo) ; `OrgGuideDrawer` ;
+`GuideCursor`, `GuideBubble`, `GuideControlBar` ; `guide-runner.ts` (moteur), `guide-access.ts`
+(droits), `guide-search.ts`, `guide-click.ts` ; `scenarios/` (une liste par catégorie). Textes :
+namespace `orgGuide`. Entrée aussi depuis la fin de la constellation entreprise : « Découvrir le
+guide » mène à `/entreprise?guide=1`, la page ouvre le tiroir une fois et retire le paramètre.
+
+**Ancrages** : un scénario vise ses cibles par `data-guide-id`, jamais par un texte ou une
+classe. La garde `src/components/org-guide/guide-scenarios.guard.test.ts` vérifie que chaque
+`data-guide-id` cité par un scénario existe dans le code. ❌ Ne pas renommer ni déplacer un
+`data-guide-id` sans la relancer.
+
+**z-index** : 10010 (capteur de clics), 10020 (curseur, bulle), 10030 (barre de contrôle), voir la
+table plus bas. **Drapeau** : `cosmo_org_guide_seen` (pastille « nouveau » du bouton, posée au
+premier clic). **e2e** : `e2e/org-guide.spec.ts` (démo, aucune clé `cosmo_*` de données modifiée).
 
 ### Ré-afficher un tutoriel
 ```js
@@ -823,6 +938,7 @@ Paliers en usage — **choisir dans cette table**, ne pas inventer de nouvelle v
 | `z-[190]` `z-[200]` | Surfaces système : bannières, CommandPalette, PremiumGateModal | `DemoBridgePrompt` 190, `CookieBanner` 200 |
 | `z-[250]` `z-[300]` | Interstitiels AU-DESSUS des surfaces système | `ShareInviteClaimer`, `AdModal` |
 | `z-[500]` | Tutoriel de page — au-dessus de tout le chrome | `PageTutorial` |
+| `z-[10010]` `z-[10020]` `z-[10030]` | Guide entreprise pendant une démo : capteur de clics (10010), curseur et bulle (10020), barre de contrôle et écran « accès refusé » (10030), au-dessus des modales maison (9999) et de leurs popovers (jusqu à 10001) | `OrgGuideHost`, `GuideCursor`, `GuideBubble`, `GuideControlBar` |
 | `z-[9999]` `z-[10000]` `z-[10001]` | `createPortal` + `position: fixed`. Trois étages réels : la feuille (9999), un popover DANS la feuille (10000), et un popover dans une popup elle-même montée à 10000 (10001) | SmartListMenu, `AssigneesPicker`, calendrier des popups de dépendances |
 
 > 🔒 **Liste fermée, vérifiée par `src/design-system.guard.test.ts`.** Toute valeur `z-[…]` hors

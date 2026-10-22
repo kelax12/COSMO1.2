@@ -34,21 +34,19 @@ import { useActiveOrganization } from '@/modules/organizations';
 import { useTeamTasks, type TeamTask } from '@/modules/team-projects';
 import { useTeamCategories } from '@/modules/team-categories';
 import { myAssignedTasks } from './organization/team-projects.helpers';
+import { formatDurationMinutes } from '@/lib/duration';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 type TaskSidebarProps = {
   onClose?: () => void;
   onDragStart?: () => void;
 };
 
-// Durée « 40 h » / « 1 h 30 min » / « 45 min » — cohérent avec la TaskCard
+// Durée « 40 h » / « 1 h 30 » / « 45 min », la même que la TaskCard
 // (bug B10 : la sidebar affichait « 2400 min » au lieu de « 40 h »).
 const formatDuration = (minutes: number | undefined): string => {
   if (!minutes || minutes <= 0) return '—';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m} min`;
-  if (m === 0) return `${h} h`;
-  return `${h} h ${String(m).padStart(2, '0')} min`;
+  return formatDurationMinutes(minutes);
 };
 
 const TUTORIAL_KEY = 'cosmo_agenda_tutorial_open';
@@ -255,11 +253,11 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   ];
 
   const getCategoryColor = (category: string) => {
-    return categories.find(cat => cat.id === category)?.color || '#6B7280';
+    return categories.find(cat => cat.id === category)?.color || NO_CATEGORY_COLOR;
   };
 
   const getTeamCategoryColor = (categoryId: string | null | undefined) =>
-    teamCategories.find(cat => cat.id === categoryId)?.color || '#6B7280';
+    teamCategories.find(cat => cat.id === categoryId)?.color || NO_CATEGORY_COLOR;
 
   const getTeamCategoryName = (categoryId: string | null | undefined) =>
     teamCategories.find(cat => cat.id === categoryId)?.name || t('sidebar.uncategorized');

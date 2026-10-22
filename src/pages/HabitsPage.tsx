@@ -136,6 +136,7 @@ const HabitsPage: React.FC = () => {
                 borderColor: 'rgb(var(--color-border))',
               }}
               data-tutorial-id="habits-view-switcher"
+              data-guide-id="perso-habits-views"
             >
               {VIEW_TABS.map(({ mode, icon: Icon, labelKey }) => (
                 <motion.button
@@ -178,6 +179,7 @@ const HabitsPage: React.FC = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowModal(true)}
             data-tutorial-id="habits-create-button"
+            data-guide-id="perso-habits-new"
             className="hidden sm:flex flex-none items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
           >
             <Plus size={18} />
@@ -187,7 +189,7 @@ const HabitsPage: React.FC = () => {
       </div>
 
       {effectiveViewMode === 'list' && (
-        <div className="space-y-4 md:space-y-6" data-tutorial-id="habits-list">
+        <div className="space-y-4 md:space-y-6" data-tutorial-id="habits-list" data-guide-id="perso-habits-list">
           {isLoading && habits.length === 0 && <HabitListSkeleton count={4} />}
 
           {habits.map(habit => (
@@ -251,7 +253,7 @@ const HabitsPage: React.FC = () => {
               {t('page.emptyCta')}
             </Button>
           </div>
-        ) : <HabitTable />
+        ) : <div data-guide-id="perso-habits-list"><HabitTable /></div>
       )}
       {effectiveViewMode === 'global' && (
         habits.length === 0 && !isLoading ? (
@@ -280,7 +282,7 @@ const HabitsPage: React.FC = () => {
               {t('page.emptyCta')}
             </Button>
           </div>
-        ) : <HabitGlobalTracking />
+        ) : <div data-guide-id="perso-habits-list"><HabitGlobalTracking /></div>
       )}
 
       <HabitModal isOpen={showModal} onClose={() => setShowModal(false)} />
@@ -298,7 +300,7 @@ const HabitsPage: React.FC = () => {
         onClick={() => setShowModal(true)}
         data-tutorial-id="habits-fab"
         aria-label={t('page.newHabit')}
-        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
+        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
       >
         <Plus size={26} />
       </motion.button>

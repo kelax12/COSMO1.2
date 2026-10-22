@@ -1,13 +1,14 @@
 // Carte d'un objectif (OKR) — extraite verbatim de OKRPage, prop-driven + mémoïsée.
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Edit2, Trash2, Clock, CheckCircle, Calendar, MoreHorizontal } from 'lucide-react';
+import { Edit2, Trash2, Clock, CheckCircle, Calendar, MoreHorizontal, Check, ChevronRight } from 'lucide-react';
 import type { KeyResult } from '@/modules/okrs';
 import { useTasks } from '@/modules/tasks';
 import { getProgress, type Objective } from './okr-page-logic';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import BottomSheet from '@/components/mobile/BottomSheet';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 interface OKRCardProps {
   objective: Objective;
@@ -28,12 +29,15 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
   setDeletingObjective, setSelectedKeyResultForModal, setShowAddTaskModal, setShowAddEventModal,
   updateKeyResult,
 }) => {
-  const { t } = useT('okr');
+  const { t, tp } = useT('okr');
   const { t: tCommon } = useT('common');
   // Maquette 119 : identifiant de l'objectif dont la feuille d'actions est
   // ouverte. Null = fermée. Un identifiant plutôt qu'un booléen parce que
   // `OKRCardBase` est rendu par objectif, mais l'état reste local à la carte.
   const [actionsFor, setActionsFor] = useState<string | null>(null);
+  // Maquette 189 : feuille d'un résultat clé (créer une tâche, planifier),
+  // à la place de trois icônes muettes sur chaque ligne.
+  const [krSheet, setKrSheet] = useState<KeyResult | null>(null);
               const progress = getProgress(objective.keyResults);
               const category = getCategoryById(objective.category);
 
@@ -61,6 +65,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: index * 0.05 }}
                   data-tutorial-id={index === 0 ? 'okr-first-card' : undefined}
+                  data-guide-id={index === 0 ? 'perso-okr-first-card' : undefined}
                   // Séparation visuelle entre cartes sur mobile (2026-09-17) :
                   // `.card-plain-mobile` rend fond ET bordure transparents
                   // sous 768px (par design, pour d'autres écrans) — ici on la
@@ -68,11 +73,35 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   // distincte plutôt que de se fondre dans la suivante à 24px
                   // d'écart. Desktop déjà bordé, inchangé.
                   className="card-plain-mobile max-sm:!bg-[rgb(var(--color-surface))] max-sm:!border-[rgb(var(--color-border))] rounded-lg border md:p-6 p-gutter transition-all relative overflow-hidden group">
-                  <div className="flex justify-between items-center mb-4 gap-4">
-                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-caption sm:text-xs font-medium whitespace-nowrap shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}>
-                      {category && (
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: resolveColor(category.color) }} />
-                      )}
+                  {/* ── Maquettes 191-192 (mobile) : le titre d'abord, le
+                      pourcentage à sa droite, puis une ligne de méta
+                      « • Catégorie · fin le 9 nov. ». La pastille colorée et
+                      « 31 jours restants » centré entre elle et « ⋯ »
+                      disparaissent ; « Progression globale » aussi, le chiffre
+                      étant déjà à côté du titre. Desktop inchangé. */}
+                  <div className="sm:hidden mb-3 flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-headline font-semibold line-clamp-2" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h2>
+                      <p className="mt-0.5 flex items-center gap-1.5 text-label" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: category ? resolveColor(category.color) : NO_CATEGORY_COLOR }} aria-hidden="true" />
+                        <span className="truncate">
+                          {category?.name ?? t('card.uncategorized')} · {t('card.endsOn', { date: formatDate(end, { day: 'numeric', month: 'short' }) })}
+                        </span>
+                      </p>
+                    </div>
+                    <span className="shrink-0 pt-0.5 text-headline font-semibold tabular-nums" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress} %</span>
+                    <button
+                      onClick={() => setActionsFor(objective.id)}
+                      aria-label={t('card.objectiveActions')}
+                      className="-mr-2 -mt-2 min-w-touch min-h-touch flex items-center justify-center rounded-md"
+                      style={{ color: 'rgb(var(--color-text-muted))' }}>
+                      <MoreHorizontal size={18} />
+                    </button>
+                  </div>
+
+                  <div className="hidden sm:flex justify-between items-center mb-4 gap-4">
+                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-caption sm:text-xs font-medium whitespace-nowrap shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : NO_CATEGORY_COLOR + '40', color: category ? resolveColor(category.color) : 'rgb(var(--color-text-secondary))' }}>
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) : NO_CATEGORY_COLOR }} />
                       <span>{category?.name ?? t('card.uncategorized')}</span>
                     </span>
 
@@ -116,13 +145,6 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                         (maquette 86) : c'est pourquoi le « ⋯ » reste ici,
                         alors qu'il a disparu des lignes de tâches. */}
                     <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                      <button
-                        onClick={() => setActionsFor(objective.id)}
-                        aria-label={t('card.objectiveActions')}
-                        className="sm:hidden min-w-touch min-h-touch flex items-center justify-center p-1.5 transition-colors hover:bg-hover rounded-md"
-                        style={{ color: 'rgb(var(--color-text-muted))' }}>
-                        <MoreHorizontal size={18} />
-                      </button>
                       <button
                         onClick={() => handleEditObjective(objective.id)}
                         aria-label={t('card.editObjective')}
@@ -174,10 +196,10 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   )}
 
                   <div>
-                    <h2 className="text-base sm:text-lg font-semibold mb-4 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h2>
+                    <h2 className="hidden sm:block text-base sm:text-lg font-semibold mb-4 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h2>
                   </div>
 
-                <div className="mb-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                <div className="mb-3 sm:mb-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                   {/* Cercle retiré sur mobile (redesign 2026-09-16) : seule la
                       barre linéaire ci-dessous reste, desktop inchangé. */}
                   <div className="hidden sm:block relative w-16 h-16 sm:w-20 sm:h-20 shrink-0">
@@ -191,20 +213,20 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   </div>
 
                   <div className="flex-1 w-full">
-                    <div className="flex justify-between items-center mb-2">
+                    <div className="hidden sm:flex justify-between items-center mb-2">
                       <span className="text-xs sm:text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.overallProgress')}</span>
                       <span className="text-xs sm:text-sm font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
                     </div>
-                    <div className="w-full rounded-full h-2" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
-                      <div className="h-2 rounded-full transition-all duration-500" style={{ backgroundColor: 'rgb(var(--color-accent))', width: `${progress}%` }} />
+                    <div className="w-full rounded-full h-1 sm:h-2" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
+                      <div className="h-1 sm:h-2 rounded-full transition-all duration-500" style={{ backgroundColor: 'rgb(var(--color-accent))', width: `${progress}%` }} />
                     </div>
                   </div>
                 </div>
 
                 {/* Espaces réduits sur mobile (2026-09-17) : `space-y-3`/`p-3`
                     (12px) → `space-y-1.5`/`p-2` (6-8px), desktop inchangé. */}
-                <div className="space-y-1.5 sm:space-y-3">
-                  <h3 className="text-xs sm:text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.keyResults')}</h3>
+                <div className="sm:space-y-3">
+                  <h3 className="text-label sm:text-sm font-medium mb-1 sm:mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.keyResults')}</h3>
                   {objective.keyResults.map((keyResult) => {
                     // Guard targetValue > 0 (B17) : évite NaN quand la cible vaut 0.
                     const krProgress = keyResult.targetValue > 0
@@ -212,7 +234,9 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       : 0;
 
                     return (
-                      <div key={keyResult.id} className="rounded-lg py-1 px-2 sm:p-3 transition-all" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+                      // Maquette 187 : sur mobile, une ligne séparée par un filet,
+                      // plus une carte grise dans la carte de l'objectif.
+                      <div key={keyResult.id} className="okr-kr-row py-2.5 border-b last:border-b-0 border-[rgb(var(--color-border))] sm:border-b-0 sm:rounded-lg sm:p-3 transition-all">
                         {/* Espace réduit sur mobile (2026-09-19, resserré) entre
                             le nom du KR et la ligne de complétion — desktop
                             inchangé. */}
@@ -232,7 +256,30 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                             ❌ Ne pas y remettre `truncate` : c'est ce mot qui
                             rendait le libellé illisible. */}
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-1 sm:mb-3 gap-1 sm:gap-2">
-                          <span className="flex items-center gap-1.5 min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => setKrSheet(keyResult)}
+                            className="sm:hidden flex items-center justify-between gap-2 min-h-touch -my-2 text-left"
+                          >
+                            <span className="min-w-0">
+                              <span className="block text-body font-medium line-clamp-2" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
+                              {/* Ligne « x temps par unité » retirée sur mobile le
+                                  2026-10-11, à la demande d'Axel. */}
+                              {(tasksByKr.get(keyResult.id) ?? 0) > 0 && (
+                                <span className="block text-label" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                                  {tp('card.tasksCount', tasksByKr.get(keyResult.id) ?? 0)}
+                                </span>
+                              )}
+                            </span>
+                            {keyResult.completed ? (
+                              <span className="shrink-0 inline-flex items-center gap-1 text-label font-semibold" style={{ color: 'rgb(var(--color-accent))' }}>
+                                <Check size={15} aria-hidden="true" />{t('card.reached')}
+                              </span>
+                            ) : (
+                              <ChevronRight size={16} className="shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }} aria-hidden="true" />
+                            )}
+                          </button>
+                          <span className="hidden sm:flex items-center gap-1.5 min-w-0">
                             <span className="text-xs sm:text-sm font-medium line-clamp-2 sm:truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
                             {(keyResult.weight ?? 1) !== 1 && (
                               <span
@@ -243,7 +290,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                               </span>
                             )}
                           </span>
-                          <div className="flex items-center gap-1 sm:gap-2 shrink-0 self-end sm:self-auto">
+                          <div className="hidden sm:flex items-center gap-1 sm:gap-2 shrink-0 self-end sm:self-auto">
                             <button
                               onClick={() => {
                                 setSelectedKeyResultForModal({ kr: keyResult, obj: objective });
@@ -314,7 +361,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
 
                           <div className="flex items-center gap-3 flex-1">
                             <div className="flex-1 rounded-full h-1.5" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
-                              <div className={`h-1.5 rounded-full transition-all duration-500 ${keyResult.completed ? 'bg-green-500' : 'bg-[rgb(var(--color-accent-solid))]'}`} style={{ width: `${Math.min(krProgress, 100)}%` }} />
+                              <div className={`h-1.5 rounded-full transition-all duration-500 bg-[rgb(var(--color-accent-solid))]`} style={{ width: `${Math.min(krProgress, 100)}%` }} />
                             </div>
                             <span className="text-xs font-medium w-8 text-right" style={{ color: 'rgb(var(--color-text-secondary))' }}>{Math.round(krProgress)}%</span>
                           </div>
@@ -352,7 +399,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
 
                           <div className="flex items-center gap-2 flex-1">
                             <div className="flex-1 rounded-full h-1.5" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
-                              <div className={`h-1.5 rounded-full transition-all duration-500 ${keyResult.completed ? 'bg-green-500' : 'bg-[rgb(var(--color-accent-solid))]'}`} style={{ width: `${Math.min(krProgress, 100)}%` }} />
+                              <div className={`h-1.5 rounded-full transition-all duration-500 bg-[rgb(var(--color-accent-solid))]`} style={{ width: `${Math.min(krProgress, 100)}%` }} />
                             </div>
                             <span className="text-caption font-medium w-8 text-right shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>{Math.round(krProgress)}%</span>
                           </div>
@@ -377,6 +424,33 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                     </div>
                   ) : null;
                 })()}
+            {/* Maquette 189 : la feuille d'un résultat clé, mobile seule. */}
+            <BottomSheet
+              open={!!krSheet}
+              onClose={() => setKrSheet(null)}
+              ariaLabel={krSheet?.title ?? t('card.keyResults')}
+            >
+              <p className="px-4 pb-2 text-headline font-bold text-[rgb(var(--color-text-primary))] line-clamp-2">
+                {krSheet?.title}
+              </p>
+              <button
+                type="button"
+                onClick={() => { if (krSheet) { setSelectedKeyResultForModal({ kr: krSheet, obj: objective }); setShowAddTaskModal(true); } setKrSheet(null); }}
+                className="w-full flex items-center gap-3 px-4 min-h-touch text-left text-body text-[rgb(var(--color-text-primary))] active:bg-[rgb(var(--color-hover))]"
+              >
+                <CheckCircle size={18} className="shrink-0 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+                {t('card.createTask')}
+              </button>
+              <button
+                type="button"
+                onClick={() => { if (krSheet) { setSelectedKeyResultForModal({ kr: krSheet, obj: objective }); setShowAddEventModal(true); } setKrSheet(null); }}
+                className="w-full flex items-center gap-3 px-4 min-h-touch text-left text-body text-[rgb(var(--color-text-primary))] active:bg-[rgb(var(--color-hover))]"
+              >
+                <Calendar size={18} className="shrink-0 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+                {t('card.scheduleEvent')}
+              </button>
+            </BottomSheet>
+
             {/* Maquette 119 : la feuille d'actions de la carte, mobile seule.
                 `BottomSheet` rend un dialogue centré au-delà de `sm`, mais ce
                 chemin n'y est jamais ouvert (le bouton est `sm:hidden`). */}

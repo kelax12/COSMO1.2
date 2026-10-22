@@ -57,9 +57,9 @@ function basesDeclarees() {
 }
 
 /** Un chunk de `octets` octets incompressibles, nommé comme Vite le nomme. */
-function poserChunk(dossier, base, octets) {
+function poserChunk(dossier, base, octets, hash = 'Ab3xZ9_q') {
   // 8 caractères de hash exactement : c'est ce que découpe la garde.
-  const nom = `${base}-Ab3xZ9_q.js`;
+  const nom = `${base}-${hash}.js`;
   writeFileSync(join(dossier, nom), randomBytes(octets));
   return nom;
 }
@@ -71,7 +71,7 @@ function poserChunk(dossier, base, octets) {
  * garde échoue pour une AUTRE raison (« Sentry n'est pas expédié »), et le
  * témoin ne mesurerait plus ce qu'il croit mesurer.
  */
-function monterDist(chunks) {
+function monterDist(chunks, hashes = {}) {
   const racine = mkdtempSync(join(tmpdir(), 'c85-'));
   const assets = join(racine, 'dist', 'assets');
   mkdirSync(assets, { recursive: true });
@@ -85,7 +85,7 @@ function monterDist(chunks) {
     if (base in chunks) continue;
     poserChunk(assets, base, 1_000);
   }
-  for (const [base, octets] of Object.entries(chunks)) poserChunk(assets, base, octets);
+  for (const [base, octets] of Object.entries(chunks)) poserChunk(assets, base, octets, hashes[base]);
 
   writeFileSync(
     join(racine, 'dist', 'index.html'),
@@ -108,8 +108,8 @@ function lancer(racine) {
   }
 }
 
-function avec(chunks, verifier) {
-  const racine = monterDist(chunks);
+function avec(chunks, verifier, hashes) {
+  const racine = monterDist(chunks, hashes);
   try {
     verifier(lancer(racine));
   } finally {
@@ -224,6 +224,29 @@ describe('témoin — budget de bundle par chunk (C-85)', () => {
     });
   });
 
+  it("derriere un AMORCAGE, l'application et ce qu'il precharge sont mesures", () => {
+    // 🔴 2026-10-15 : `index.html` exécute `src/boot.ts`, qui ne fait qu'un
+    // `import()` de l'application. Lue sur le seul HTML, la garde aurait mesuré
+    // un chemin critique d'un kilo-octet : elle répondrait sans mesurer. Ici
+    // l'application pèse 80 ko, au-dessus du budget `entry` (70,5 ko) : la
+    // garde doit le voir, et compter son vendor dans le chemin critique.
+    const racine = monterDist({ main: 80_000, 'vendor-amorce': 20_000 });
+    try {
+      const assets = join(racine, 'dist', 'assets');
+      writeFileSync(
+        join(assets, 'index-Ab3xZ9_q.js'),
+        'const d=["assets/vendor-amorce-Ab3xZ9_q.js"];import("./main-Ab3xZ9_q.js");',
+      );
+      const { code, sortie } = lancer(racine);
+      expect(sortie).toMatch(/amorçage/);
+      expect(sortie).toMatch(/entrée\s+80\.\d ko/);
+      expect(sortie).toMatch(/^\s+20\.\d ko\s+vendor-amorce$/m);
+      expect(code).toBe(1);
+    } finally {
+      rmSync(racine, { recursive: true, force: true });
+    }
+  });
+
   it('TEMOIN DU TEMOIN : sans `dist`, la garde ECHOUE au lieu de se taire', () => {
     // Une garde qui, faute d'artefact, imprimerait « respecté » serait la
     // pire des quatre gardes que `scripts/CLAUDE.md` met en cause.
@@ -241,11 +264,21 @@ describe('témoin — budget de bundle par chunk (C-85)', () => {
   it('le decoupage du hash ne mange pas le nom de base', () => {
     // 🔴 Le défaut réel documenté dans la garde : `{8,}` gourmand transformait
     // `vendor-charts-DMeWk7Ji.js` en `vendor`. Le hash Vite est en base64url
-    // et peut contenir un tiret — ce cas en pose un exprès.
+    // et peut contenir un tiret — ce cas en pose un exprès (`C-bIaeYw`).
+    //
+    // 🔴 CE CAS NE MESURAIT RIEN, trouvé le 2026-10-15 par le rejeu des
+    // sabotages (C-81) : `{8,}` remis dans la garde le laissait VERT. Il
+    // n'avait pas de tiret dans son hash, malgré la phrase ci-dessus, et ses
+    // deux assertions étaient tenues par d'autres messages : `vendor-charts`
+    // restait cité par l'erreur « plafond périmé », et le chunk mal découpé
+    // sortait en `Chunk \`vendor\``, qu'un `/chunk\s+vendor\s/` ne voit pas.
+    // On exige donc la LIGNE de rapport du bon nom de base, et l'absence du
+    // mauvais, sous la forme où la garde l'écrit.
     avec({ 'vendor-charts': 100_000 }, ({ sortie }) => {
-      expect(sortie).toContain('vendor-charts');
-      expect(sortie).not.toMatch(/chunk\s+vendor\s/);
-    });
+      expect(sortie).toMatch(/^chunk\s+vendor-charts\s/m);
+      expect(sortie).not.toContain('Chunk `vendor`');
+      expect(sortie).not.toMatch(/`vendor-charts` a un plafond/);
+    }, { 'vendor-charts': 'C-bIaeYw' });
   });
 });
 

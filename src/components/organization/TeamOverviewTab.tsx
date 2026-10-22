@@ -25,6 +25,7 @@ import { TeamOverviewSkeleton } from './OrgLoadingSkeletons';
 import StatsScopeSelect from './StatsScopeSelect';
 import { defaultScope, scopeMembers, scopeTasks, type StatsScope } from './stats-scope.helpers';
 import { useT } from '@/i18n/useT';
+import { SectionDivider } from '@/components/mobile';
 
 interface TeamOverviewTabProps {
   orgId: string;
@@ -234,7 +235,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
           teams={teams}
           ctx={scopeCtx}
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap max-md:w-full">
           <div className="inline-flex items-center rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5" role="tablist" aria-label={ta('overview.period')}>
             {STATS_PERIODS.map((p) => (
               <button
@@ -243,7 +244,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                 role="tab"
                 aria-selected={period === p.id}
                 onClick={() => setPeriod(p.id)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                className={`px-3 max-md:px-2.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors ${
                   period === p.id
                     ? 'bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))]'
                     : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
@@ -257,18 +258,22 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
             <button
               type="button"
               onClick={() => setReviewOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+              data-guide-id="overview-weekly-review"
+              // Maquette 277 : sur mobile, un lien, plus un bloc violet sur trois lignes.
+              className="max-md:order-last max-md:basis-full max-md:justify-start max-md:px-0 max-md:text-[rgb(var(--color-accent))] max-md:bg-transparent inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-colors whitespace-nowrap"
             >
-              <ClipboardCheck size={13} aria-hidden="true" /> {ta('weeklyReview.open')}
+              <ClipboardCheck size={13} aria-hidden="true" className="max-md:hidden" /> {ta('weeklyReview.open')}
             </button>
           )}
           <button
             type="button"
             onClick={handleExport}
             disabled={isLoading}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors disabled:opacity-50"
+            // Maquette 278 : sur mobile, l'icône seule.
+            aria-label={ta('ui.report.export')}
+            className="max-md:border-0 max-md:px-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors disabled:opacity-50"
           >
-            <Download size={13} aria-hidden="true" /> {ta('ui.report.export')}
+            <Download size={13} aria-hidden="true" className="max-md:w-[18px] max-md:h-[18px]" /> <span className="max-md:hidden">{ta('ui.report.export')}</span>
           </button>
         </div>
       </div>
@@ -292,6 +297,12 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         aside={<ProgressRing value={okrProgress} label={ta('overview.okrProgressLabel')} />}
       />
 
+      {/* Maquette 281 : sur mobile, la progression OKR en chiffre, plus un anneau. */}
+      <div className="md:hidden flex items-center justify-between px-1 text-sm">
+        <span className="text-[rgb(var(--color-text-secondary))]">{ta('overview.okrProgressLabel')}</span>
+        <span className="font-semibold tabular-nums text-[rgb(var(--color-text-primary))]">{okrProgress} %</span>
+      </div>
+
       {flows && (
         <PeriodCompareCard
           periodLabel={periodLabel}
@@ -300,10 +311,12 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         />
       )}
 
+      <SectionDivider />
       {/* Charge de l'équipe — placée juste sous la synthèse : c'est la question
           la plus opérationnelle de l'onglet, elle ne doit pas se mériter. */}
       <TeamWorkloadCard rows={workload} members={scopedMembers} />
 
+      <SectionDivider />
       {/* Par membre + Par projet */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
         <SectionCard title={ta('overview.byMember')}>
@@ -320,7 +333,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                   </span>
                   <span
                     className={`w-11 shrink-0 text-right text-xs font-semibold tabular-nums ${
-                      m.completionRate >= 66 ? 'text-emerald-500' : m.completionRate >= 33 ? 'text-amber-500' : 'text-[rgb(var(--color-text-muted))]'
+                      m.completionRate >= 66 ? 'md:text-emerald-500 text-[rgb(var(--color-text-muted))]' : m.completionRate >= 33 ? 'md:text-amber-500 text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-muted))]'
                     }`}
                     title={ta('overview.doneRatio', { done: m.done, total: m.total })}
                   >
@@ -355,6 +368,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         </SectionCard>
       </div>
 
+      <SectionDivider />
       {/* Vélocité + Tendance */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
         <SectionCard title={ta('overview.velocity')}>
@@ -390,6 +404,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         </SectionCard>
       </div>
 
+      <SectionDivider />
       {/* Avancement OKR détaillé */}
       <SectionCard title={ta('overview.okrProgressTitle')}>
         {okrStats.length === 0 ? (
@@ -417,6 +432,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       </SectionCard>
 
       {/* Retards par membre + liste des tâches en retard */}
+      {summary.overdueCount > 0 && <SectionDivider />}
       {summary.overdueCount > 0 && (
         <div className="grid lg:grid-cols-2 gap-5 items-start">
           <SectionCard title={ta('overview.overdueByMember')}>

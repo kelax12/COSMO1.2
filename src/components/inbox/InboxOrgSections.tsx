@@ -32,7 +32,7 @@ interface InboxOrgSectionsProps {
 }
 
 const HEADING_CLASS =
-  'px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide';
+  'px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] md:uppercase md:tracking-wide max-md:text-label';
 const ROW_CLASS = 'flex items-center gap-3 px-4 py-2.5';
 const TITLE_CLASS = 'text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate';
 const SUBTITLE_CLASS = 'text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]';

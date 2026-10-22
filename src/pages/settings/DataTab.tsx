@@ -2,9 +2,9 @@
 // settings/DataTab — onglet « Mes données » (export RGPD CSV).
 // Extrait verbatim de SettingsPage (god-component refactor).
 // ═══════════════════════════════════════════════════════════════════
-import React from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, FileSpreadsheet } from 'lucide-react';
+import { Download, FileSpreadsheet, FileUp } from 'lucide-react';
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
@@ -25,6 +25,11 @@ import {
 import { toast } from '@/lib/toast';
 import { useT } from '@/i18n/useT';
 import ManageCookiesButton from '@/components/ManageCookiesButton';
+import { Link } from 'react-router';
+import { useLocalizedPath } from '@/i18n/useLocalizedPath';
+
+// Fenêtre d'import (point 44) : chargée au premier clic, l'onglet n'en paie rien.
+const ImportTasksDialog = lazy(() => import('./ImportTasksDialog'));
 
 export function DataTab() {
   const { t, tp } = useT('settings');
@@ -35,6 +40,9 @@ export function DataTab() {
   const { data: categories = [] } = useCategories();
   const { data: lists = [] } = useLists();
   const { user } = useAuth();
+  const localizedPath = useLocalizedPath();
+  const [importOpen, setImportOpen] = useState(false);
+  const [importMounted, setImportMounted] = useState(false);
 
   // Profil exporte au titre de l'article 20 : le nom et l'adresse sont les
   // donnees les plus evidemment « fournies par la personne concernee ». Le
@@ -94,13 +102,14 @@ export function DataTab() {
       <button
         type="button"
         onClick={handleExportAll}
-        className="w-full flex items-center gap-4 p-5 rounded-2xl bg-[rgb(var(--color-accent-solid))]/10 border border-[rgb(var(--color-accent-solid))]/30 hover:bg-[rgb(var(--color-accent-solid))]/15 transition-colors text-left"
+        // Maquette 213 : sur mobile, une ligne d'action (texte bleu), plus une carte teintée.
+        className="w-full flex items-center gap-4 p-5 max-md:px-4 max-md:py-3 rounded-2xl bg-[rgb(var(--color-accent-solid))]/10 max-md:bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-accent-solid))]/30 max-md:border-0 hover:bg-[rgb(var(--color-accent-solid))]/15 transition-colors text-left"
       >
-        <div className="w-12 h-12 rounded-xl bg-[rgb(var(--color-accent-solid))] flex items-center justify-center shrink-0">
+        <div className="hidden md:flex w-12 h-12 rounded-xl bg-[rgb(var(--color-accent-solid))] items-center justify-center shrink-0">
           <Download size={22} className="text-[rgb(var(--color-accent-solid-foreground))]" />
         </div>
         <div className="flex-1">
-          <div className="font-bold text-[rgb(var(--color-text-primary))] text-base">
+          <div className="font-bold max-md:font-semibold text-[rgb(var(--color-text-primary))] max-md:text-[rgb(var(--color-accent))] text-base">
             {t('data.exportAll')}
           </div>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">
@@ -111,10 +120,10 @@ export function DataTab() {
 
       {/* Exports individuels */}
       <div>
-        <h3 className="text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-3 uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-[rgb(var(--color-text-secondary))] mb-3 md:uppercase md:tracking-wider">
           {t('data.byCategory')}
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-md:gap-0 max-md:rounded-2xl max-md:bg-[rgb(var(--color-surface))] max-md:px-4">
           {exports.map(ex => {
             const Icon = ex.icon;
             return (
@@ -123,9 +132,9 @@ export function DataTab() {
                 type="button"
                 onClick={ex.run}
                 disabled={ex.count === 0}
-                className="flex items-center gap-3 p-4 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-3 p-4 max-md:px-0 max-md:py-2.5 max-md:min-h-touch rounded-xl max-md:rounded-none border border-[rgb(var(--color-border))] max-md:border-0 max-md:border-b max-md:last:border-b-0 bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <div className="w-10 h-10 rounded-lg bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0">
+                <div className="hidden md:flex w-10 h-10 rounded-lg bg-[rgb(var(--color-hover))] items-center justify-center shrink-0">
                   <Icon size={18} className="text-[rgb(var(--color-text-secondary))]" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -143,18 +152,56 @@ export function DataTab() {
         </div>
       </div>
 
-      {/* Note import */}
-      <div className="p-4 rounded-xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))]">
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">
-          <strong className="text-[rgb(var(--color-text-secondary))]">{t('data.importNotice')}</strong>{t('data.importNoticeRest')}
-        </p>
+      {/* Import (point 44) : remplace la mention « bientôt disponible ». */}
+      <div className="p-4 rounded-xl border border-[rgb(var(--color-border))] flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="w-10 h-10 rounded-lg bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0">
+          <FileUp size={18} className="text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm text-[rgb(var(--color-text-primary))]">{t('import.cardTitle')}</p>
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('import.cardHint')}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => { setImportMounted(true); setImportOpen(true); }}
+          className="min-h-11 px-4 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] shrink-0"
+        >
+          {t('import.open')}
+        </button>
       </div>
+      {importMounted && (
+        <Suspense fallback={null}>
+          <ImportTasksDialog open={importOpen} onClose={() => setImportOpen(false)} />
+        </Suspense>
+      )}
 
       {/* Consentement aux traceurs : revenir sur son choix (RGPD art. 7.3) */}
       <div className="p-4 rounded-xl border border-[rgb(var(--color-border))] flex items-center justify-between gap-3">
         <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('data.cookiesHint')}</p>
         <ManageCookiesButton className="shrink-0 text-sm font-semibold underline underline-offset-2 text-[rgb(var(--color-text-primary))]" />
       </div>
+
+      {/* 🔴 LCEN : mentions légales, CGU et politique « directement et
+          facilement accessibles ». Avant le 2026-10-13, une fois connecté,
+          aucun écran de l'application n'y menait. Nouvel onglet : on ne quitte
+          pas ses réglages pour lire un contrat. */}
+      <nav aria-label={t('data.legalTitle')} className="p-4 rounded-xl border border-[rgb(var(--color-border))]">
+        <p className="text-xs font-semibold text-[rgb(var(--color-text-primary))] mb-2">{t('data.legalTitle')}</p>
+        <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+          {([['legalNotice', 'data.legalNotice'], ['terms', 'data.legalTerms'], ['privacy', 'data.legalPrivacy']] as const).map(([route, label]) => (
+            <li key={route}>
+              <Link
+                to={localizedPath(route)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center underline underline-offset-2 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]"
+              >
+                {t(label)}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </motion.div>
   );
 }

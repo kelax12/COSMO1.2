@@ -141,6 +141,8 @@ interface Jetons {
   entete: string; enteteTexte: string; filet: string;
   encre: string; encre2: string; muet: string;
   puce: string; puceTexte: string; accent: string;
+  /** Texte posé sur `accent` : quasi noir en `noir`, où l'accent est quasi blanc. */
+  surAccent: string;
   caseBord: string; survol: string;
   menu: string; menuBord: string; menuOmbre: string;
   retardFond: string; retardBord: string; retardTexte: string; retardIcone: string; echeanceRetard: string;
@@ -156,7 +158,7 @@ const JETONS: Record<ShowcaseTheme, Jetons> = {
     cadre: 'rgb(30, 41, 59)', cadreBord: 'rgb(71, 85, 105)', ombre: '0 30px 60px -24px rgba(0,0,0,0.65)',
     entete: 'rgb(15, 23, 42)', enteteTexte: 'rgb(203, 213, 225)', filet: 'rgba(71, 85, 105, 0.6)',
     encre: 'rgb(248, 250, 252)', encre2: 'rgb(203, 213, 225)', muet: 'rgb(148, 163, 184)',
-    puce: 'rgb(51, 65, 85)', puceTexte: 'rgb(203, 213, 225)', accent: 'rgb(52, 114, 216)',
+    puce: 'rgb(51, 65, 85)', puceTexte: 'rgb(203, 213, 225)', accent: 'rgb(52, 114, 216)', surAccent: '#FFFFFF',
     caseBord: 'rgb(100, 116, 139)', survol: 'rgba(51, 65, 85, 0.55)',
     menu: 'rgb(30, 41, 59)', menuBord: 'rgb(71, 85, 105)', menuOmbre: '0 18px 40px -10px rgba(0,0,0,0.6)',
     retardFond: 'rgba(239,68,68,0.1)', retardBord: 'rgba(239,68,68,0.3)', retardTexte: '#FCA5A5', retardIcone: '#EF4444', echeanceRetard: '#EF4444',
@@ -175,7 +177,7 @@ const JETONS: Record<ShowcaseTheme, Jetons> = {
     cadre: '#FFFFFF', cadreBord: 'rgb(226, 232, 240)', ombre: '0 24px 50px -24px rgba(15,23,42,0.35)',
     entete: 'rgb(248, 250, 252)', enteteTexte: 'rgb(71, 85, 105)', filet: 'rgb(226, 232, 240)',
     encre: 'rgb(15, 23, 42)', encre2: 'rgb(71, 85, 105)', muet: 'rgb(105, 116, 131)',
-    puce: 'rgb(241, 245, 249)', puceTexte: 'rgb(71, 85, 105)', accent: '#2563EB',
+    puce: 'rgb(241, 245, 249)', puceTexte: 'rgb(71, 85, 105)', accent: '#2563EB', surAccent: '#FFFFFF',
     caseBord: 'rgb(148, 163, 184)', survol: 'rgb(248, 250, 252)',
     menu: '#FFFFFF', menuBord: 'rgb(226, 232, 240)', menuOmbre: '0 18px 40px -12px rgba(15,23,42,0.22)',
     // red-600 et pas red-500 pour l'échéance : 4,5:1 sur blanc.
@@ -188,6 +190,45 @@ const JETONS: Record<ShowcaseTheme, Jetons> = {
       3: { fond: '#FEFCE8', texte: '#A16207', bord: '#FEF08A' },
       4: { fond: '#EFF6FF', texte: '#1D4ED8', bord: '#BFDBFE' },
       5: { fond: '#F8FAFC', texte: '#334155', bord: '#E2E8F0' },
+    },
+  },
+  // `.gris` : `--table-*` et `--color-*` graphite ; les priorités sont celles
+  // de `.dark`, posé aussi pour ce thème.
+  gris: {
+    cadre: 'rgb(43, 49, 55)', cadreBord: 'rgb(68, 76, 86)', ombre: '0 30px 60px -24px rgba(0,0,0,0.65)',
+    entete: 'rgb(36, 41, 46)', enteteTexte: 'rgb(173, 186, 199)', filet: 'rgba(68, 76, 86, 0.6)',
+    encre: 'rgb(250, 251, 252)', encre2: 'rgb(173, 186, 199)', muet: 'rgb(143, 153, 164)',
+    puce: 'rgb(47, 53, 59)', puceTexte: 'rgb(173, 186, 199)', accent: 'rgb(47, 117, 213)', surAccent: '#FFFFFF',
+    caseBord: 'rgb(118, 131, 144)', survol: 'rgba(47, 53, 59, 0.8)',
+    menu: 'rgb(43, 49, 55)', menuBord: 'rgb(68, 76, 86)', menuOmbre: '0 18px 40px -10px rgba(0,0,0,0.6)',
+    retardFond: 'rgba(239,68,68,0.1)', retardBord: 'rgba(239,68,68,0.3)', retardTexte: '#FCA5A5', retardIcone: '#EF4444', echeanceRetard: '#EF4444',
+    favoriFond: 'rgba(234,179,8,0.2)',
+    curseur: '#F8FAFC', curseurBord: '#24292E',
+    priorites: {
+      1: { fond: 'rgba(220,38,38,0.3)', texte: '#F87171', bord: '#B91C1C' },
+      2: { fond: 'rgba(234,88,12,0.3)', texte: '#FDBA74', bord: '#C2410C' },
+      3: { fond: 'rgba(113,63,18,0.2)', texte: '#FDE047', bord: '#854D0E' },
+      4: { fond: 'rgba(30,58,138,0.2)', texte: '#93C5FD', bord: '#1E40AF' },
+      5: { fond: '#2B3137', texte: '#ADBAC7', bord: '#373E47' },
+    },
+  },
+  // `.noir` : OLED, gris sans teinte. L'accent plein de l'app y est quasi blanc.
+  noir: {
+    cadre: 'rgb(22, 22, 22)', cadreBord: 'rgb(70, 70, 70)', ombre: '0 30px 60px -24px rgba(0,0,0,0.8)',
+    entete: 'rgb(8, 8, 8)', enteteTexte: 'rgb(160, 160, 160)', filet: 'rgba(70, 70, 70, 0.6)',
+    encre: 'rgb(242, 242, 242)', encre2: 'rgb(168, 168, 168)', muet: 'rgb(128, 128, 128)',
+    puce: 'rgb(32, 32, 32)', puceTexte: 'rgb(168, 168, 168)', accent: 'rgb(240, 240, 240)', surAccent: '#080808',
+    caseBord: 'rgb(110, 110, 110)', survol: 'rgba(32, 32, 32, 0.9)',
+    menu: 'rgb(22, 22, 22)', menuBord: 'rgb(70, 70, 70)', menuOmbre: '0 18px 40px -10px rgba(0,0,0,0.8)',
+    retardFond: 'rgba(239,68,68,0.1)', retardBord: 'rgba(239,68,68,0.3)', retardTexte: '#FCA5A5', retardIcone: '#EF4444', echeanceRetard: '#EF4444',
+    favoriFond: 'rgba(234,179,8,0.2)',
+    curseur: '#F8FAFC', curseurBord: '#080808',
+    priorites: {
+      1: { fond: 'rgba(220,38,38,0.3)', texte: '#F87171', bord: '#B91C1C' },
+      2: { fond: 'rgba(234,88,12,0.3)', texte: '#FDBA74', bord: '#C2410C' },
+      3: { fond: 'rgba(113,63,18,0.2)', texte: '#FDE047', bord: '#854D0E' },
+      4: { fond: 'rgba(30,58,138,0.2)', texte: '#93C5FD', bord: '#1E40AF' },
+      5: { fond: '#161616', texte: '#A8A8A8', bord: '#2E2E2E' },
     },
   },
 };
@@ -487,7 +528,7 @@ const TaskTableShowcase: React.FC = () => {
                       style={{ borderWidth: 2, borderStyle: 'solid' }}
                     >
                       {fait && (
-                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <svg className="h-3 w-3" style={{ color: J.surAccent }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                           <motion.path
                             initial={{ pathLength: 0 }}
                             animate={{ pathLength: 1 }}
@@ -527,7 +568,7 @@ const TaskTableShowcase: React.FC = () => {
                       </span>
                     )}
                     {l.collaborateur && (
-                      <span className="shrink-0 rounded-full px-2 py-0.5 text-xs text-white" style={{ backgroundColor: J.accent }}>
+                      <span className="shrink-0 rounded-full px-2 py-0.5 text-xs" style={{ backgroundColor: J.accent, color: J.surAccent }}>
                         {l.collaborateur}
                       </span>
                     )}

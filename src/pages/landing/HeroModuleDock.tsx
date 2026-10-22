@@ -28,16 +28,15 @@
 import React from 'react';
 import { useT } from '@/i18n/useT';
 import { DELAI_ARRIMAGE_MS, MODULES_HERO } from './hero-modules';
+import { useModuleActif } from './hero-module-actif';
 
 export { DELAI_ARRIMAGE_MS };
 
-interface Props {
-  /** Module actuellement affiché par la tuile, pour allumer la bonne puce. */
-  actif?: string;
-}
-
-export const HeroModuleDock: React.FC<Props> = ({ actif }) => {
+/** Le module allumé vient du magasin de `hero-module-actif.ts`, pas d'une prop :
+ *  passé par `PersoTrack`, il re-rendait tout le parcours à chaque rotation. */
+export const HeroModuleDock: React.FC = () => {
   const { t } = useT('landing');
+  const actif = useModuleActif();
 
   return (
     <div

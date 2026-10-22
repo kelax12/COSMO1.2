@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import {
   AlertTriangle, ArrowRightLeft, ArrowUpRight, Bell, Building2, Check, ChevronRight, Download, History, KeyRound,
   Lock, LogOut, Plug, Plus, Receipt, Repeat, ShieldCheck, SlidersHorizontal, Tags, Trash2, UserPlus, Users, Zap,
-  FileText,
+  FileText, BadgeCheck,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -20,6 +20,7 @@ import { OrgConfigSettings } from '@/components/organization/org-config.lazy';
 import { buildOrgLink } from './deep-link.helpers';
 import OrgPlanChip from './OrgPlanChip';
 import OrgProfileForm from './OrgProfileForm';
+import MobileOrgSettingsHome, { MobileOrgSettingsBack } from './MobileOrgSettingsHome';
 import MyPermissionsCard from './MyPermissionsCard';
 import { useT } from '@/i18n/useT';
 
@@ -41,6 +42,8 @@ const OffboardMemberDialog = lazyWithRetry(() => import('@/components/organizati
 // M13 : catégories et droits quittent l'onglet OKR et l'annuaire pour Paramètres.
 const TeamCategoryTreeManager = lazyWithRetry(() => import('@/components/organization/TeamCategoryTreeManager'));
 const OrgSettingsPermissions = lazyWithRetry(() => import('@/components/organization/OrgSettingsPermissions'));
+// Rôles personnalisés à durée limitée (mig. 219).
+const OrgRolesSettings = lazyWithRetry(() => import('@/components/organization/OrgRolesSettings'));
 // Journal d'audit (mig. 162) : admins seuls, chargé à l'ouverture de Paramètres.
 // Ses textes vivent dans `orgAccount` (surfaces rares) : `org` est payé par
 // toute visite de /entreprise, pas le journal. Le catalogue est déclaré sur la
@@ -73,7 +76,7 @@ interface OrgSettingsSectionProps {
 type ConfigPart = 'general' | 'security' | 'automations' | 'integrations';
 type PanelId =
   | ConfigPart
-  | 'profile' | 'orgs' | 'invite' | 'myRights' | 'permissions' | 'categories'
+  | 'profile' | 'orgs' | 'invite' | 'myRights' | 'permissions' | 'roles' | 'categories'
   | 'notifications' | 'export' | 'reports' | 'audit' | 'plan' | 'danger';
 interface NavGroup {
   label: string;
@@ -119,6 +122,8 @@ const OrgSettingsSection = ({
   const me = members.find((m) => m.userId === currentUserId);
   const { can } = useMyOrgPermissions(org.id);
   const canManageCategories = isAdmin || can['category.manage'];
+  // Mig. 219 : « Gérer les rôles » est un droit de confiance, délégable.
+  const canManageRoles = isAdmin || can['role.manage'];
   // Ici la barre ne filtre rien : son état de sélection reste local.
   const navigate = useNavigate();
   const { organizations, setActiveOrgId } = useActiveOrganization();
@@ -132,7 +137,12 @@ const OrgSettingsSection = ({
   // C-39 — « la suppression resilie ET REMBOURSE » (arbitrage du 2026-09-03) :
   // un seul geste, aucun debit orphelin. L'enchainement et son ordre vivent
   // dans `useDeleteOrgFlow`, avec la raison de cet ordre.
-  const deleteFlow = useDeleteOrgFlow(() => setConfirmingDelete(false));
+  // Une fois l'entreprise supprimée, retour au tableau de bord PERSONNEL :
+  // rester sur `/entreprise` montrerait une organisation qui n'existe plus.
+  const deleteFlow = useDeleteOrgFlow(org.id, () => {
+    setConfirmingDelete(false);
+    navigate('/dashboard', { replace: true });
+  });
 
   // Miroir de `create_org_email_invitations` (mig. 161) : un admin, ou un
   // manager qui a le droit `member.invite` (il place alors sous lui-même).
@@ -151,6 +161,7 @@ const OrgSettingsSection = ({
       { id: 'invite', icon: UserPlus, label: ta('orgSettings.navInvite') },
       { id: 'myRights', icon: ShieldCheck, label: ta('orgSettings.navMyRights') },
       ...(isAdmin ? [{ id: 'permissions' as const, icon: KeyRound, label: ta('orgSettings.navPermissions') }] : []),
+      ...(canManageRoles ? [{ id: 'roles' as const, icon: BadgeCheck, label: ta('orgSettings.navRoles') }] : []),
       ...(isAdmin ? [{ id: 'security' as const, icon: Lock, label: ta('orgSettings.navSecurity') }] : []),
     ] },
     { label: ta('orgSettings.groupWork'), items: [
@@ -171,12 +182,15 @@ const OrgSettingsSection = ({
   const [requested, setActive] = useState<PanelId>(initialPanel ?? 'profile');
   // Un droit retiré en cours de visite referme la rubrique, il ne l'affiche pas vide.
   const active: PanelId = visibleIds.has(requested) ? requested : 'profile';
+  // Mobile (295) : `false` = la liste des rubriques.
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const navButton = (id: PanelId, Icon: LucideIcon, label: string, danger = false) => (
     <button
       key={id}
       type="button"
       onClick={() => setActive(id)}
+      data-guide-id={`settings-panel-${id}`}
       aria-current={active === id ? 'page' : undefined}
       className={`shrink-0 md:w-full min-h-9 flex items-center gap-2 px-2.5 rounded-lg text-sm text-left whitespace-nowrap transition-colors ${
         active === id
@@ -193,9 +207,16 @@ const OrgSettingsSection = ({
 
   return (
     <div className="max-w-5xl md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 md:items-start">
+      {!mobileOpen && (
+        <MobileOrgSettingsHome
+          groups={groups}
+          danger={{ id: 'danger', icon: LogOut, label: isOwner ? ta('orgSettings.navDanger') : ta('orgSettings.navLeave') }}
+          onOpen={(id) => { setActive(id); setMobileOpen(true); }}
+        />
+      )}
       <nav
         aria-label={ta('orgSettings.navLabel')}
-        className="mb-4 md:mb-0 md:sticky md:top-4 flex md:block gap-1 overflow-x-auto [scrollbar-width:none] md:overflow-visible -mx-1 px-1 pb-1 md:p-3 md:mx-0 md:rounded-2xl md:border md:border-[rgb(var(--color-border))] md:bg-[rgb(var(--color-surface))]"
+        className="max-md:hidden mb-4 md:mb-0 md:sticky md:top-4 flex md:block gap-1 overflow-x-auto [scrollbar-width:none] md:overflow-visible -mx-1 px-1 pb-1 md:p-3 md:mx-0 md:rounded-2xl md:border md:border-[rgb(var(--color-border))] md:bg-[rgb(var(--color-surface))]"
       >
         {groups.map((g) => (
           <div key={g.label} className="contents md:block md:mb-3">
@@ -218,7 +239,8 @@ const OrgSettingsSection = ({
         </div>
       </nav>
 
-      <div className="space-y-5 min-w-0">
+      <div className={`space-y-5 min-w-0 ${mobileOpen ? '' : 'max-md:hidden'}`}>
+      {mobileOpen && <MobileOrgSettingsBack label={t('tabs.settings')} onBack={() => setMobileOpen(false)} />}
       {/* Profil : ÉDITÉ ici depuis l'audit du 2026-09-24 (il vivait dans une
           feuille ouverte par un crayon de l'en-tête, qui mène désormais ici). */}
       {active === 'profile' && (
@@ -286,6 +308,18 @@ const OrgSettingsSection = ({
         </section>
       )}
 
+      {/* Rôles personnalisés (mig. 219) : paquets de droits attribués pour une durée. */}
+      {active === 'roles' && canManageRoles && (
+        <section className={CARD}>
+          <h2 className={TITLE}>{ta('customRoles.title')}</h2>
+          <div className="mt-2">
+            <Suspense fallback={null}>
+              <OrgRolesSettings orgId={org.id} members={members} />
+            </Suspense>
+          </div>
+        </section>
+      )}
+
       {/* Configuration d'entreprise (audit du 2026-09-24) : réglages propres,
           rubrique Sécurité (M13), champs, automatisations, intégrations. */}
       {isConfigPart(active) && (
@@ -333,13 +367,14 @@ const OrgSettingsSection = ({
                   <Building2 size={15} aria-hidden="true" className="text-[rgb(var(--color-text-muted))] shrink-0" />
                   <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{o.name}</span>
                   {o.myRole === 'admin' && (
-                    <span className="text-caption font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                    <span className="text-caption font-semibold px-1.5 py-0.5 max-md:px-0 rounded bg-indigo-500/10 max-md:bg-transparent text-indigo-600 dark:text-indigo-400 max-md:!text-[rgb(var(--color-text-muted))]">
                       {t('common.adminBadge')}
                     </span>
                   )}
                   {current ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                      <Check size={13} aria-hidden="true" /> {ta('orgSettings.current')}
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 max-md:!text-[rgb(var(--color-accent))]">
+                      {/* Maquette 302 : l'active cochée, en bleu. */}
+                      <Check size={13} aria-hidden="true" className="max-md:w-[18px] max-md:h-[18px]" /> <span className="max-md:sr-only">{ta('orgSettings.current')}</span>
                     </span>
                   ) : (
                     <span className="text-xs text-[rgb(var(--color-accent))]">{ta('orgSettings.open')}</span>
@@ -445,6 +480,7 @@ const OrgSettingsSection = ({
                 <button
                   type="button"
                   onClick={() => setTransferring(true)}
+                  data-guide-id="settings-transfer-ownership"
                   disabled={transferMutation.isPending}
                   className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-60 transition-colors"
                 >

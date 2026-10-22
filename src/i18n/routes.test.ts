@@ -89,6 +89,18 @@ describe('stripLocalePrefix', () => {
   it('ne prend pas un token d’invitation pour une locale', () => {
     expect(stripLocalePrefix('/invite/abc123')).toEqual({ locale: null, path: '/invite/abc123' });
   });
+
+  // Vercel sert `/entreprise-presentation/` en 200 sans rediriger, et c'est
+  // l'URL que mesure Lighthouse CI : la barre finale ne doit pas changer le chemin.
+  it('retire la barre oblique finale', () => {
+    expect(stripLocalePrefix('/entreprise-presentation/')).toEqual({
+      locale: null,
+      path: '/entreprise-presentation',
+    });
+    expect(stripLocalePrefix('/en/for-companies/')).toEqual({ locale: 'en', path: '/for-companies' });
+    expect(stripLocalePrefix('/en/')).toEqual({ locale: 'en', path: '/' });
+    expect(stripLocalePrefix('/tasks//')).toEqual({ locale: null, path: '/tasks' });
+  });
 });
 
 describe('localizePath', () => {

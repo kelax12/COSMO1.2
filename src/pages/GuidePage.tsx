@@ -3,16 +3,20 @@ import { useSeoMeta } from '@/lib/useSeoMeta';
 import { Link } from 'react-router';
 import {
   CheckSquare, Calendar, Repeat, Target, BarChart2,
-  Rocket, ArrowRight, ChevronRight,
+  Rocket, ArrowRight, ChevronRight, ChevronLeft, ChevronDown,
   BookOpen, Clock, Flag, Bookmark, Users, TrendingUp,
-  Flame, Layers, Filter, Bell, List,
+  Flame, Layers, Filter, Inbox, List,
   GripVertical, Building2, Network, FolderKanban, ListTodo,
-  ShieldCheck, UserPlus, BarChart3
+  ShieldCheck, UserPlus, BarChart3, Columns3, ListChecks, Link2,
+  Sparkles, Pin, Share2, CalendarCheck, PauseCircle, Image, UsersRound
 } from 'lucide-react';
 import TaskTableShowcase from '@/components/showcase/TaskTableShowcase';
 import AgendaShowcase from '@/components/showcase/AgendaShowcase';
 import OKRCardShowcase from '@/components/showcase/OKRCardShowcase';
 import HabitHeatmapShowcase from '@/components/showcase/HabitHeatmapShowcase';
+import ShowcaseTheme from '@/components/showcase/ShowcaseTheme';
+import { useDocumentTheme } from '@/hooks/useDocumentTheme';
+import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 // Audit perf 2026-05-29 — lazy-load Recharts wrapper (same rationale as LandingPage).
 const StatsShowcase = lazy(() => import('@/components/showcase/StatsShowcase'));
 const StatsShowcaseFallback = () => (
@@ -41,6 +45,9 @@ const GuidePage: React.FC = () => {
     canonical: 'https://thecosmo.app/guide',
   });
   useGuideSchemas();
+  // Les vitrines suivent le thème de l'app : des captures sombres faisaient
+  // des trous dans la page en thème clair.
+  const theme = useDocumentTheme();
   const [activeSection, setActiveSection] = useState<SectionId>('demarrage');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -76,21 +83,26 @@ const GuidePage: React.FC = () => {
       <header className="sticky top-0 z-50 bg-[rgb(var(--color-surface))]/80 backdrop-blur-xl border-b border-[rgb(var(--color-border))]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors text-sm">
+            {/* Maquette 369 : sur mobile, une ligne « ‹ Retour » puis le titre. */}
+            <Link to="/" className="md:hidden -ml-1 flex items-center gap-1 min-h-touch text-sm text-[rgb(var(--color-accent))]">
+              <ChevronLeft size={18} aria-hidden="true" />
+              {t('chrome.backHome')}
+            </Link>
+            <Link to="/" className="max-md:hidden flex items-center gap-2 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors text-sm">
               <img src="/logo-128.webp" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
               <span className="font-semibold text-[rgb(var(--color-text-primary))]">Cosmo</span>
             </Link>
-            <ChevronRight size={14} className="text-[rgb(var(--color-text-muted))]" />
+            <ChevronRight size={14} className="max-md:hidden text-[rgb(var(--color-text-muted))]" />
             {/* h1 sémantique (SEO) — rendu identique au span grâce au preflight
                 Tailwind (les headings héritent font-size/weight) */}
-            <h1 className="text-sm text-[rgb(var(--color-text-secondary))] flex items-center gap-1.5 font-normal">
+            <h1 className="max-md:sr-only text-sm text-[rgb(var(--color-text-secondary))] flex items-center gap-1.5 font-normal">
               <BookOpen size={14} />
               {t('chrome.heading')}
             </h1>
           </div>
           <Link
             to="/"
-            className="text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors flex items-center gap-1.5"
+            className="max-md:hidden text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors flex items-center gap-1.5"
           >
             {t('chrome.backHome')}
             <ArrowRight size={14} />
@@ -128,10 +140,29 @@ const GuidePage: React.FC = () => {
           </aside>
 
           {/* ── Content ── */}
-          <main className="flex-1 min-w-0 space-y-24">
+          <ShowcaseTheme theme={theme}>
+          <main className="flex-1 min-w-0 space-y-24 max-md:space-y-16 max-md:[&_strong]:font-medium">
+
+            {/* Maquette 370 : sur mobile, un sommaire repliable en tête. */}
+            <details className="lg:hidden rounded-xl bg-[rgb(var(--color-surface))] px-4 [&_summary::-webkit-details-marker]:hidden">
+              <summary className="flex items-center justify-between min-h-touch cursor-pointer text-sm font-medium">
+                {t('chrome.summary')} · {NAV_ITEMS.length}
+                <ChevronDown size={16} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
+              </summary>
+              <nav className="pb-2">
+                {NAV_ITEMS.map(({ id, labelKey }) => (
+                  <button key={id} type="button" onClick={() => scrollTo(id)} className="w-full text-left min-h-touch text-sm text-[rgb(var(--color-text-secondary))] border-t border-[rgb(var(--color-border))]">
+                    {t(labelKey)}
+                  </button>
+                ))}
+              </nav>
+            </details>
 
             {/* ══ PRISE EN MAIN ══════════════════════════════════════════ */}
-            <section>
+            {/* `lg:!mt-0` : le sommaire mobile ci-dessus est masqué par CLASSE dès lg,
+                et `space-y-24` le compte quand même : la section recevait 96 px de vide
+                en tête sur desktop (capture Visual du 2026-10-11). */}
+            <section className="lg:!mt-0">
               <SectionHeader
                 id="demarrage"
                 icon={<Rocket size={24} />}
@@ -159,7 +190,7 @@ const GuidePage: React.FC = () => {
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
                   { icon: <Layers size={18} />, label: t('start.cardDashboard'), desc: t('start.cardDashboardDesc') },
-                  { icon: <Bell size={18} />, label: t('start.cardNotifications'), desc: t('start.cardNotificationsDesc') },
+                  { icon: <Inbox size={18} />, label: t('start.cardInbox'), desc: t('start.cardInboxDesc') },
                   { icon: <Flag size={18} />, label: t('start.cardSettings'), desc: t('start.cardSettingsDesc') },
                 ].map((item) => (
                   <div key={item.label} className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl p-4">
@@ -201,9 +232,17 @@ const GuidePage: React.FC = () => {
                 <FeatureRow icon={<Bookmark size={15} />}   label={t('tasks.featBookmark')}   desc={t('tasks.featBookmarkDesc')} />
                 <FeatureRow icon={<Clock size={15} />}      label={t('tasks.featDuration')}   desc={t('tasks.featDurationDesc')} />
                 <FeatureRow icon={<Filter size={15} />}     label={t('tasks.featFilters')}    desc={t('tasks.featFiltersDesc')} />
+                <FeatureRow icon={<Columns3 size={15} />}   label={t('tasks.featBoard')}      desc={t('tasks.featBoardDesc')} />
+                <FeatureRow icon={<ListChecks size={15} />} label={t('tasks.featSubtasks')}   desc={t('tasks.featSubtasksDesc')} />
+                <FeatureRow icon={<Link2 size={15} />}      label={t('tasks.featDependencies')} desc={t('tasks.featDependenciesDesc')} />
+                <FeatureRow icon={<Repeat size={15} />}     label={t('tasks.featRecurrence')} desc={t('tasks.featRecurrenceDesc')} />
                 <FeatureRow icon={<Users size={15} />}      label={t('tasks.featCollab')}     desc={t('tasks.featCollabDesc')} />
                 <FeatureRow icon={<Flag size={15} />}       label={t('tasks.featCategories')} desc={t('tasks.featCategoriesDesc')} />
               </div>
+
+              <Tip>
+                <RichText strongClassName="font-semibold">{t('tasks.tip')}</RichText>
+              </Tip>
             </section>
 
             {/* ══ LISTES ═════════════════════════════════════════════════ */}
@@ -229,9 +268,10 @@ const GuidePage: React.FC = () => {
               </div>
 
               <div className="mt-8 space-y-0 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl overflow-hidden divide-y divide-[rgb(var(--color-border-muted))]">
-                <FeatureRow icon={<List size={15} />}       label={t('lists.featView')}  desc={t('lists.featViewDesc')} />
-                <FeatureRow icon={<Flag size={15} />}       label={t('lists.featColor')} desc={t('lists.featColorDesc')} />
-                <FeatureRow icon={<Filter size={15} />}     label={t('lists.featAll')}   desc={t('lists.featAllDesc')} />
+                <FeatureRow icon={<Sparkles size={15} />}   label={t('lists.featSmart')}   desc={t('lists.featSmartDesc')} />
+                <FeatureRow icon={<Pin size={15} />}        label={t('lists.featDefault')} desc={t('lists.featDefaultDesc')} />
+                <FeatureRow icon={<Share2 size={15} />}     label={t('lists.featShare')}   desc={t('lists.featShareDesc')} />
+                <FeatureRow icon={<Flag size={15} />}       label={t('lists.featColor')}   desc={t('lists.featColorDesc')} />
               </div>
 
               <Tip>
@@ -269,7 +309,7 @@ const GuidePage: React.FC = () => {
                 <FeatureRow icon={<GripVertical size={15} />} label={t('agenda.featDrag')}      desc={t('agenda.featDragDesc')} />
                 <FeatureRow icon={<Repeat size={15} />}       label={t('agenda.featRecurring')} desc={t('agenda.featRecurringDesc')} />
                 <FeatureRow icon={<Flag size={15} />}         label={t('agenda.featColors')}    desc={t('agenda.featColorsDesc')} />
-                <FeatureRow icon={<Clock size={15} />}        label={t('agenda.featCompact')}   desc={t('agenda.featCompactDesc')} />
+                <FeatureRow icon={<CalendarCheck size={15} />} label={t('agenda.featSlotReview')} desc={t('agenda.featSlotReviewDesc')} />
               </div>
 
               <Tip>
@@ -322,6 +362,20 @@ const GuidePage: React.FC = () => {
                   </div>
                   <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('habits.rateDesc')}</p>
                 </div>
+                <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <PauseCircle size={16} className="text-[rgb(var(--color-text-secondary))]" />
+                    <p className="font-semibold text-[rgb(var(--color-text-primary))] text-sm">{t('habits.pauseTitle')}</p>
+                  </div>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('habits.pauseDesc')}</p>
+                </div>
+                <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Image size={16} className="text-[rgb(var(--color-accent))]" />
+                    <p className="font-semibold text-[rgb(var(--color-text-primary))] text-sm">{t('habits.recapTitle')}</p>
+                  </div>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('habits.recapDesc')}</p>
+                </div>
               </div>
 
               <Tip>
@@ -370,9 +424,11 @@ const GuidePage: React.FC = () => {
               </div>
 
               <div className="mt-8 space-y-0 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl overflow-hidden divide-y divide-[rgb(var(--color-border-muted))]">
-                <FeatureRow icon={<TrendingUp size={15} />} label={t('okr.featHealth')}     desc={t('okr.featHealthDesc')} />
-                <FeatureRow icon={<Clock size={15} />}      label={t('okr.featDaysLeft')}  desc={t('okr.featDaysLeftDesc')} />
-                <FeatureRow icon={<Flag size={15} />}       label={t('okr.featCategories')} desc={t('okr.featCategoriesDesc')} />
+                <FeatureRow icon={<TrendingUp size={15} />}    label={t('okr.featHealth')}     desc={t('okr.featHealthDesc')} />
+                <FeatureRow icon={<CalendarCheck size={15} />} label={t('okr.featCheckin')}    desc={t('okr.featCheckinDesc')} />
+                <FeatureRow icon={<Clock size={15} />}         label={t('okr.featLinked')}     desc={t('okr.featLinkedDesc')} />
+                <FeatureRow icon={<Bookmark size={15} />}      label={t('okr.featCompleted')}  desc={t('okr.featCompletedDesc')} />
+                <FeatureRow icon={<Flag size={15} />}          label={t('okr.featCategories')} desc={t('okr.featCategoriesDesc')} />
               </div>
 
               <Tip>
@@ -456,10 +512,11 @@ const GuidePage: React.FC = () => {
                 <FeatureRow icon={<Network size={15} />}      label={t('entreprise.featPyramid')}     desc={t('entreprise.featPyramidDesc')} />
                 <FeatureRow icon={<Users size={15} />}        label={t('entreprise.featRoles')}       desc={t('entreprise.featRolesDesc')} />
                 <FeatureRow icon={<ShieldCheck size={15} />}  label={t('entreprise.featPermissions')} desc={t('entreprise.featPermissionsDesc')} />
+                <FeatureRow icon={<UsersRound size={15} />}   label={t('entreprise.featTeams')}       desc={t('entreprise.featTeamsDesc')} />
                 <FeatureRow icon={<FolderKanban size={15} />} label={t('entreprise.featProjects')}    desc={t('entreprise.featProjectsDesc')} />
                 <FeatureRow icon={<ListTodo size={15} />}     label={t('entreprise.featTasks')}       desc={t('entreprise.featTasksDesc')} />
                 <FeatureRow icon={<Target size={15} />}       label={t('entreprise.featOkr')}         desc={t('entreprise.featOkrDesc')} />
-                <FeatureRow icon={<BarChart3 size={15} />}    label={t('entreprise.featStats')}       desc={t('entreprise.featStatsDesc')} />
+                <FeatureRow icon={<BarChart3 size={15} />}    label={t('entreprise.featReports')}     desc={t('entreprise.featReportsDesc')} />
                 <FeatureRow icon={<UserPlus size={15} />}     label={t('entreprise.featInvite')}      desc={t('entreprise.featInviteDesc')} />
               </div>
 
@@ -474,7 +531,7 @@ const GuidePage: React.FC = () => {
 
             {/* ── Footer guide ── */}
             <div className="border-t border-[rgb(var(--color-border))] pt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-[rgb(var(--color-text-muted))] text-sm">{t('chrome.contact')} <a href="mailto:axellongattepro@gmail.com" className="text-[rgb(var(--color-accent))] hover:underline">axellongattepro@gmail.com</a></p>
+              <p className="text-[rgb(var(--color-text-muted))] text-sm">{t('chrome.contact')} <a href={`mailto:${CONTACT_EMAIL}`} className="text-[rgb(var(--color-accent))] hover:underline">{CONTACT_EMAIL}</a></p>
               <Link
                 to="/"
                 className="flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
@@ -485,6 +542,7 @@ const GuidePage: React.FC = () => {
             </div>
 
           </main>
+          </ShowcaseTheme>
         </div>
       </div>
     </div>

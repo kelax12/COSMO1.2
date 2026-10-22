@@ -2,7 +2,6 @@
   "pro": {
     "sectionTitle": "OKR pro",
     "sectionSubtitle": "Objectifs de {{org}} sur lesquels vous contribuez",
-    "badge": "Pro",
     "you": "Vous",
     "openInOrg": "Ouvrir dans l'espace entreprise",
     "personalSectionTitle": "OKR perso"
@@ -15,7 +14,7 @@
     "seeCompleted": "Voir la liste des OKR terminés",
     "weeklyCheckin": "Check-in hebdo",
     "openWeeklyCheckin": "Ouvrir le check-in hebdo",
-    "newObjective": "Nouvel Objectif",
+    "newObjective": "Nouvel objectif",
     "createObjective": "Créer un nouvel objectif",
     "createOkr": "Créer un OKR",
     "okrDeleted": "OKR supprimé",
@@ -36,10 +35,15 @@
     "activeCount_other": "{{count}} objectifs actifs"
   },
   "card": {
+    "reached": "Atteint",
+    "tasksCount_other": "{{count}} tâches",
+    "tasksCount_many": "{{count}} de tâches",
+    "tasksCount_one": "{{count}} tâche",
+    "endsOn": "fin le {{date}}",
     "uncategorized": "Sans catégorie",
     "timeElapsed": "{{percent}}% du temps écoulé",
     "overallProgress": "Progression globale",
-    "keyResults": "Résultats Clés",
+    "keyResults": "Résultats clés",
     "timeSpent": "Temps effectué",
     "editObjective": "Modifier l'objectif",
     "deleteObjective": "Supprimer l'objectif",
@@ -53,6 +57,8 @@
     "objectiveActions": "Actions de l'objectif"
   },
   "categories": {
+    "manage": "Gérer les catégories",
+    "allLong": "Toutes les catégories",
     "mobileLabel": "Catégorie :",
     "all": "Tous",
     "edit": "Modifier la catégorie",
@@ -89,7 +95,7 @@
     "confirm": "Supprimer"
   },
   "modal": {
-    "description": "Définis un objectif et ses résultats clés mesurables.",
+    "description": "Définissez un objectif et ses résultats clés mesurables.",
     "objective": "Objectif",
     "category": "Catégorie",
     "deadline": "Échéance",
@@ -108,11 +114,11 @@
     "unit": "Unité",
     "duration": "Durée",
     "optional": "(Facultatif)",
-    "advancedFeature": "Fonctionnalité avancée",
+    "advancedFeature": "Plus d'options",
     "advancedFeatureHide": "Masquer",
     "weight": "Coef. (1–10)",
     "weightHint": "Importance du KR dans la progression globale",
-    "needOneKr": "Ajoute au moins 1 résultat clé pour créer l'objectif.",
+    "needOneKr": "Ajoutez au moins un résultat clé pour créer l'objectif.",
     "cancel": "Annuler",
     "save": "Enregistrer",
     "create": "Créer"

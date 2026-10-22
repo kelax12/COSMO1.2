@@ -11,6 +11,7 @@ import type { EventRecurrence } from '@/modules/events';
 import DescriptionField from '@/components/DescriptionField';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DAY_LABEL_KEYS } from './helpers';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 import type { EventModalFormBodyProps } from './event-modal-form.types';
 import { useT } from '@/i18n/useT';
 
@@ -19,7 +20,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
   title, setTitle, startDate, setStartDate, startTime, setStartTime,
   setEndDate, endTime, setEndTime, notes, setNotes, color, setColor,
   recurrence, setRecurrence, recurrenceDays, setShowDaysModal,
-  showDescription, setShowDescription, setIsColorSettingsOpen,
+  showDescription, setIsColorSettingsOpen,
   categories, lockedSet, register, isInvalid,
   handleFieldChange, doSave, handleDelete, handleDuplicate,
   getHeaderTitle, getSubmitButtonText, duration, isMobileFormValid,
@@ -69,7 +70,8 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
       {/* Groupe 1 — Titre (sans overflow-hidden) */}
       <div
         ref={register('title')}
-        className={`bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm transition-[box-shadow] ${
+        // Maquette 315 : le nom sans cadre, en titre (comme la fiche tâche, 152).
+        className={`rounded-xl transition-[box-shadow] ${
           isInvalid('title') ? 'ring-2 ring-red-500' : ''
         }`}
       >
@@ -84,14 +86,14 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
             onChange={(e) => handleFieldChange("title", setTitle, e.target.value)}
             placeholder={t('titlePlaceholderMobile')}
             autoFocus={!lockedSet.has('title')}
-            className="w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
+            className="no-input-chrome w-full px-1 min-h-12 text-title font-semibold bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
             style={{ border: 'none' }}
           />
         )}
       </div>
 
       {/* Section HORAIRES */}
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
+      <p className="text-label font-semibold text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
         Horaires
       </p>
       <div
@@ -104,7 +106,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
         {/* Date */}
         <div className={`flex items-center px-4 min-h-11 relative ${lockedSet.has('startDate') ? 'opacity-60' : ''}`}>
           <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('date')}</span>
-          <span className={`text-[15px] ${startDate ? 'text-blue-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
+          <span className={`text-[15px] ${startDate ? 'text-[rgb(var(--color-text-secondary))]' : 'text-[rgb(var(--color-text-muted))]'}`}>
             {startDate
               ? format(new Date(startDate + "T12:00:00"), "d MMM yyyy", { locale: getDateLocale() })
               : 'Aucune'}
@@ -125,91 +127,60 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
 
         <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
 
-        {/* Début */}
-        <div className="flex items-center px-4 min-h-11 gap-3">
-          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('start')}</span>
+        {/* Maquettes 318 et 319 : début, fin et durée sur une ligne, sans horloges. */}
+        <div className="flex items-center px-4 min-h-11 gap-1">
+          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('form.timeRange')}</span>
           <input
             type="time"
+            aria-label={t('start')}
             value={startTime}
             onChange={(e) => handleFieldChange("startTime", setStartTime, e.target.value)}
-            className="text-[15px] text-blue-500 bg-transparent focus:outline-none text-right"
+            className="w-[4.5rem] text-[15px] text-[rgb(var(--color-text-secondary))] bg-transparent focus:outline-none text-center [&::-webkit-calendar-picker-indicator]:hidden"
             style={{ border: 'none', minWidth: 0 }}
           />
-        </div>
-
-        <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
-
-        {/* Fin */}
-        <div className="flex items-center px-4 min-h-11 gap-3">
-          <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('end')}</span>
+          <span aria-hidden="true" className="text-[rgb(var(--color-text-muted))]">→</span>
           <input
             type="time"
+            aria-label={t('end')}
             value={endTime}
             onChange={(e) => handleFieldChange("endTime", setEndTime, e.target.value)}
-            className="text-[15px] text-blue-500 bg-transparent focus:outline-none text-right"
+            className="w-[4.5rem] text-[15px] text-[rgb(var(--color-text-secondary))] bg-transparent focus:outline-none text-center [&::-webkit-calendar-picker-indicator]:hidden"
             style={{ border: 'none', minWidth: 0 }}
           />
+          {duration && duration.kind !== 'invalid' && (
+            <span className="text-[15px] text-[rgb(var(--color-text-muted))] whitespace-nowrap">· {duration.text}</span>
+          )}
         </div>
-
-        {/* Durée calculée */}
-        {duration && (
-          <>
-            <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
-            <div className="flex items-center px-4 min-h-11">
-              <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('duration')}</span>
-              <span className={`text-[15px] ${duration.kind === 'invalid' ? 'text-red-500' : 'text-blue-500'}`}>
-                {duration.kind === 'invalid' ? t('endBeforeStart') : duration.text}
-              </span>
-            </div>
-          </>
+        {duration?.kind === 'invalid' && (
+          <p className="px-4 pb-2 text-label text-[rgb(var(--color-danger-text))]">{t('endBeforeStart')}</p>
         )}
       </div>
 
       {/* Section OPTIONS */}
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
+      <p className="text-label font-semibold text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
         Options
       </p>
       <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
         {/* Récurrence */}
         <div className="flex items-center px-4 min-h-11 gap-3">
           <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('recurrence')}</span>
-          <div
-            className="inline-flex rounded-full p-0.5 border text-[11px]"
-            style={{
-              backgroundColor: "rgb(var(--color-chip-bg))",
-              borderColor: "rgb(var(--color-chip-border))",
-            }}
-            role="radiogroup"
+          {/* Maquette 320 : une ligne, plus un segmenté abrégé « Sem. ». */}
+          <select
+            value={recurrence}
             aria-label={t('recurrenceAria')}
+            onChange={(e) => {
+              const v = e.target.value as EventRecurrence;
+              setRecurrence(v);
+              if (v === 'custom') setShowDaysModal(true);
+            }}
+            className="no-input-chrome appearance-none bg-transparent text-right text-[15px] text-[rgb(var(--color-text-secondary))] focus:outline-none"
+            style={{ border: 'none' }}
           >
-            {([
-              { value: 'none', label: t('form.recurrenceShortNone') },
-              { value: 'daily', label: t('form.recurrenceShortDaily') },
-              { value: 'weekly', label: t('form.recurrenceShortWeekly') },
-              { value: 'custom', label: t('form.recurrenceShortCustom') },
-            ] as { value: EventRecurrence; label: string }[]).map((opt) => {
-              const active = recurrence === opt.value;
-              return (
-                <button
-                  type="button"
-                  key={opt.value}
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => { setRecurrence(opt.value); if (opt.value === 'custom') setShowDaysModal(true); }}
-                  className="px-2.5 py-1 rounded-full font-medium transition-colors text-[11px]"
-                  style={{
-                    backgroundColor: active ? 'rgb(var(--color-accent))' : 'transparent',
-                    // Jamais de blanc en dur sur --color-accent : en thème Noir cet
-                    // accent vaut 240,240,240 (quasi-blanc), donc la puce active
-                    // devenait illisible. Le duo prévu est accent-solid-foreground.
-                    color: active ? 'rgb(var(--color-accent-solid-foreground))' : 'rgb(var(--color-text-secondary))',
-                  }}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
+            <option value="none">{t('form.recurrenceNever')}</option>
+            <option value="daily">{t('form.recurrenceDaily')}</option>
+            <option value="weekly">{t('form.recurrenceWeekly')}</option>
+            <option value="custom">{t('form.recurrenceCustom')}</option>
+          </select>
         </div>
         {/* Jours personnalisés — visible uniquement en récurrence 'custom' */}
         {recurrence === 'custom' && (
@@ -221,7 +192,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
               className="w-full flex items-center px-4 min-h-11 gap-3 active:bg-[rgb(var(--color-hover))]"
             >
               <span className="flex-1 text-left text-[15px] text-[rgb(var(--color-text-primary))]">{t('days')}</span>
-              <span className="text-[15px] text-blue-500">
+              <span className="text-[15px] text-[rgb(var(--color-text-secondary))]">
                 {recurrenceDays.length > 0
                   ? [...recurrenceDays].sort().map((d) => t(DAY_LABEL_KEYS[d])).join(', ')
                   : t('choose')}
@@ -236,11 +207,26 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
           catégorie (le swatch seul est ambigu). */}
       {categories.length > 0 && (
         <>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
+          <p className="text-label font-semibold text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
             Couleur
           </p>
-          <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden px-4 py-4">
-            <div className="grid grid-cols-2 gap-2">
+          <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden px-4 py-3">
+            {/* Maquettes 321 et 322 : pastilles rondes sur une ligne, plus des cartes. */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* « Sans catégorie » : couleur grise neutre, toujours en premier. */}
+              <button
+                type="button"
+                onClick={() => { handleFieldChange("color", setColor, NO_CATEGORY_COLOR); setOpenSubcategoriesFor(null); }}
+                aria-label={tCommon('noCategory')}
+                aria-pressed={color === NO_CATEGORY_COLOR}
+                className={`relative w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95 ${
+                  color === NO_CATEGORY_COLOR ? 'ring-2 ring-[rgb(var(--color-text-primary))] ring-offset-2 ring-offset-[rgb(var(--color-surface))]' : ''
+                }`}
+              >
+                <span className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center" style={{ backgroundColor: "rgb(var(--color-hover))" }}>
+                  <Ban size={14} style={{ color: "rgb(var(--color-text-muted))" }} aria-hidden="true" />
+                </span>
+              </button>
               {rootCategories.map((cat) => {
                 const subs = subcategoriesOf(cat.id);
                 const hasSubs = subs.length > 0;
@@ -260,14 +246,12 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
                         }}
                         aria-label={cat.name}
                         aria-pressed={isSelected}
-                        className={`relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all active:scale-95 ${
-                          isSelected
-                            ? 'border-[rgb(var(--color-accent-solid))] bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-[rgb(var(--color-border))]'
+                        className={`relative w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95 ${
+                          isSelected ? 'ring-2 ring-[rgb(var(--color-text-primary))] ring-offset-2 ring-offset-[rgb(var(--color-surface))]' : ''
                         }`}
                       >
                         <span
-                          className="relative w-6 h-6 rounded-lg shrink-0"
+                          className="relative w-7 h-7 rounded-full shrink-0"
                           style={{ backgroundColor: cat.color }}
                         >
                           {hasSubs && (
@@ -277,9 +261,6 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
                               aria-hidden="true"
                             />
                           )}
-                        </span>
-                        <span className="flex-1 text-left text-[13px] font-medium text-[rgb(var(--color-text-primary))] truncate">
-                          {cat.name}
                         </span>
                       </button>
                     </PopoverTrigger>
@@ -360,10 +341,9 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
                 type="button"
                 onClick={() => setIsColorSettingsOpen(true)}
                 aria-label={t('form.customizeColors')}
-                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgb(var(--color-border-strong))] text-blue-500 text-[13px] font-medium"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-[rgb(var(--color-accent))]"
               >
-                <Plus className="w-4 h-4" />
-                Personnaliser
+                <Plus className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -371,65 +351,49 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
       )}
 
       {/* Description */}
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
+      <p className="text-label font-semibold text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
         Commentaire
       </p>
       <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
-        {showDescription ? (
-          <div className="px-4 py-3">
+        {/* Maquette 323 : une ligne qui grandit (155), sans bouton intermédiaire. */}
+          <div className="px-4 py-2.5">
             <DescriptionField
               value={notes}
               onChange={(value) => handleFieldChange("notes", setNotes, value)}
-              rows={4}
-              autoFocus={!notes}
+              rows={1}
+              autoGrow
+              autoFocus={showDescription && !notes}
+              className="no-input-chrome w-full text-[15px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] resize-none"
               placeholder={t('descriptionTitle')}
               expandedTitle={t('descriptionTitle')}
-              className="w-full text-[15px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] resize-none"
               style={{ border: 'none' }}
             />
           </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setShowDescription(true)}
-            className="flex items-center px-4 min-h-11 w-full"
-          >
-            <span className="text-[15px] text-blue-600 dark:text-blue-400">
-              {t('form.addComment')}
-            </span>
-          </button>
-        )}
       </div>
 
-      {/* Dupliquer (#3) — mode édition uniquement */}
-      {mode === 'edit' && handleDuplicate && (
-        <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden mt-5">
+      {/* Maquette 324 : dupliquer en gris, supprimer en rouge, dans un groupe. */}
+      {mode === 'edit' && (
+        <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden mt-6">
+          {handleDuplicate && (
+            <>
+              <button
+                type="button"
+                onClick={handleDuplicate}
+                className="flex items-center justify-center px-4 min-h-11 w-full text-[15px] text-[rgb(var(--color-text-secondary))] active:bg-[rgb(var(--color-hover))]"
+              >
+                {t('duplicate')}
+              </button>
+              <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
+            </>
+          )}
           <button
             type="button"
-            onClick={handleDuplicate}
-            className="flex items-center justify-center px-4 min-h-11 w-full active:bg-blue-50 dark:active:bg-blue-950/20"
+            onClick={handleDelete}
+            className="flex items-center justify-center px-4 min-h-11 w-full text-[15px] text-[rgb(var(--color-danger-text))] active:bg-[rgb(var(--color-hover))]"
           >
-            <span className="text-[15px] text-blue-600 dark:text-blue-400 font-medium">{t('duplicate')}</span>
+            {t('delete')}
           </button>
         </div>
-      )}
-
-      {/* Supprimer — mode édition uniquement */}
-      {mode === 'edit' && (
-        <>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
-            Zone dangereuse
-          </p>
-          <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="flex items-center justify-center px-4 min-h-11 w-full active:bg-red-50 dark:active:bg-red-950/20"
-            >
-              <span className="text-[15px] text-red-500 font-medium">{t('delete')}</span>
-            </button>
-          </div>
-        </>
       )}
 
       {/* Espace bas pour libérer la zone safe-area iOS (le bouton de

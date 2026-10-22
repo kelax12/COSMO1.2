@@ -83,10 +83,16 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
         className="relative w-11 h-11 rounded-xl flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
       >
         <Bell size={18} aria-hidden="true" />
+        {/* Maquette 226 (2026-10-10) : sur mobile, un point (« du nouveau »),
+            plus un nombre de plus sur l'écran ; le nom accessible garde le
+            compte. Desktop garde le nombre. */}
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] text-caption font-bold inline-flex items-center justify-center">
-            {unread > 9 ? '9+' : unread}
-          </span>
+          <>
+            <span aria-hidden="true" className="md:hidden absolute top-2.5 right-2.5 size-2 rounded-full bg-[rgb(var(--color-accent))] ring-2 ring-[rgb(var(--color-background))]" />
+            <span className="hidden md:inline-flex absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] text-caption font-bold items-center justify-center">
+              {unread > 9 ? '9+' : unread}
+            </span>
+          </>
         )}
       </button>
 

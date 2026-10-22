@@ -57,7 +57,7 @@ const OrgInviteLinkCard = ({ orgId, managerId, seatsFull = false }: OrgInviteLin
   };
 
   return (
-    <div className={INVITE_ROW}>
+    <div data-guide-id="invite-link-card" className={INVITE_ROW}>
       <Link2 size={18} aria-hidden="true" className="text-[rgb(var(--color-text-muted))] shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('invite.linkTitle')}</p>

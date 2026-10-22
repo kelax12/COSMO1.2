@@ -40,74 +40,22 @@ compilait, la suite passait.
 - ⚠️ **Et citer la bonne entrée** : le numéro publié le 2026-09-20 pour la `136` était
   `20260920105113`, qui n existe au ledger d **aucune** migration. Le vrai est `20260920104729`,
   relu en base le 09-21. Un numéro de ledger se copie depuis la base, jamais depuis une note.
-- ✅ **État au 2026-09-21** : la mig. **`150`** est **appliquée**, ledger `20260921075529`, et
-  vérifiée par le catalogue (table, RLS sans policy, deux fonctions, droits effectifs). Plus aucune
-  migration du dépôt ne dort. Le dépôt va de `000` à `150`.
-- ✅ **État au 2026-09-24** : la mig. **`151`** (suppression d équipe, M5) est **appliquée**, ledger
-  `20260924081357`, vérifiée par le catalogue (deux clés en `NO ACTION`, deux RPC `INVOKER`, `anon`
-  sans `EXECUTE`), après une preuve en transaction annulée (8 cas, dont la suppression d organisation
-  qui reste possible).
-- ✅ **La mig. `152`** (corbeille des tâches d équipe, M4) est **appliquée**, ledger `20260924131429`
-  (inscrit à la main après `db query -f`), vérifiée par le catalogue : colonnes, policies SELECT/DELETE,
-  six fonctions qui ignorent la corbeille, `task.deleteAny` en défaut manager, droits des cinq RPC,
-  job `cosmo-purge-team-task-trash`. Preuve en transaction annulée : 14 cas.
-- ✅ **La mig. `153`** (portefeuille de projets, M2) est **appliquée**, ledger `20260924121637`, AVANT
-  la `152`, relue au catalogue après elle : policy `team_projects_update`, plafond, `my_project_edit_perm`
-  intacts. Preuve en transaction annulée : 19 cas. 🔴 `project.edit` n est PAS une clé de `my_org_perm`
-  (que la 152 réécrit en entier) : une fonction dédiée, pour que l ordre d application n efface rien.
-- ✅ **État au 2026-09-25** : `160`, `161`, `162`, `170` (branches gouvernance et annuaire) et
-  `163` (page d équipe) sont **appliquées**, ledger `20260925063127`, `…063147`, `…063202`,
-  `…063218`, `…064540`, relues au catalogue après une preuve en transaction annulée (18 cas pour
-  les quatre premières, 8 pour la 163). La 161 a été corrigée AVANT application : elle
-  transmettait aussi les tâches à la corbeille (mig. 152).
-- ⚠️ **`164`** (cas limites du mode entreprise : équipes associées, purge d un projet archivé,
-  mode `transfer` du départ, `release_member_work`) est **écrite, NON appliquée** au 2026-09-26 :
-  ses corps de fonctions partent du catalogue relu le 2026-09-25, pas des fichiers `161`/`162`.
-- 🔴 **`194` réconcilie `164` et `190`** (2026-09-26) : écrites en parallèle, elles redéfinissent
-  toutes deux `can_access_team_project`, `my_team_project_ids`, `member_departure_impact` et
-  `offboard_org_member`, et la seconde appliquée effaçait l'ajout de l'autre (équipes associées OU
-  membres de projet, mode `transfer`). Ordre : `164`, `181`, `190` à `193`, **puis `194`**.
-  NON appliquée, NON prouvée.
-- 🔴 **`190` à `193` (étape 6, 2026-09-25) sont COMMITÉES, PAS APPLIQUÉES.** Ordre : 190, 191,
-  192, 193, AVANT le front qui les lit. Prouvées hors prod : les 167 fichiers rejoués sur un
-  Postgres 16 local (`supabase/proofs/supabase-shim.sql`), puis `190-193.proof.sql`, transaction
-  annulée, 55 cas acteur par acteur. ⚠️ Le shim imite `auth.uid()` et `pg_cron` : la preuve en
-  prod reste à faire, et le ledger à relire AVANT (d'autres sessions écrivent).
-- 🔴 **`195` à `199` (points rouges de l'audit entreprise, 2026-09-26) : écrites, NON appliquées,
-  NON prouvées.** Réglages et sécurité, capacité et lien secondaire, statuts et champs par projet,
-  automatisations, webhooks. Ordre : après `194`. Preuve prête, jamais jouée :
-  `supabase/proofs/195-199.proof.sql`. 🔴 Le lien secondaire (196) ne passe par AUCUNE policy.
-- ⚠️ **`200`** (2026-09-28) retire cycles d OKR (160), capacité et liens secondaires (196), sortis
-  du front le même jour. ✅ **Appliquée le 2026-09-28**, ledger `20260928071852`, relue au catalogue.
-- 🔴 **Relu au catalogue le 2026-09-28 : `164`, `190`, `194` et `195`-`199` sont EN PROD sans ligne
-  au ledger** (`can_access_team_project` porte déjà la réconciliation de la 194). Les notes
-  « non appliquée » ci-dessus sont périmées. ❌ **Ne jamais réappliquer la `164`** : elle retire la
-  branche « membre du projet » de la 190. `201` (action « Notifier » des automatisations) est
-  appliquée, ledger `20260928071259`.
-- ✅ **`202`** (rapports d activité) : **appliquée** le 2026-09-28, ledger `20260928081805` (inscrit à la main
-  après `db query -f`), relue au catalogue : table sous RLS, colonnes, plafond, droits, job `cosmo-activity-reports`.
-  Preuve : `supabase/proofs/202.proof.sql` (7 cas acteur par acteur).
-- ⚠️ **`206`** (2026-09-30) supprime les jalons de projet (table vide en prod, relue le même jour).
-  **Écrite, NON appliquée.** À appliquer APRÈS le déploiement du front qui ne les lit plus.
-- 🔴 **Relu au catalogue le 2026-09-30, objet par objet** : `164`, `181`, `190`-`195`, `197`-`199`
-  sont en prod sans ligne au ledger (les notes « NON appliquée » ci-dessus sont périmées) ; `196` est
-  retirée par la `200`. 🔴 **`204` (`team_tasks.health`) n'est PAS en prod**, alors que son commit
-  (`7a9b3db0`) la dit « appliquée » et que le front l écrit : le menu « État » des tâches pro échoue.
-  ⏳ **`207`** (webhooks : cible publique, enfilement par trigger seul) : écrite le 2026-09-30,
-  preuve `supabase/proofs/207.proof.sql` verte sur PGlite (10/10, 2026-10-01), **avant** tout redéploiement de
-  `org-webhook-dispatch`. Ordre et détail : [`faille.md`](../../faille.md) § « Migrations ».
-- ✅ **État au 2026-10-01** : `204`, `207`, `208`, `209`, `210`, `212` (ledger `20261001132108`) **appliquées** par `apply_migration`,
-  ledger `20261001100113`, `…100535`, `…102420`, `…102425`, `…102453`, relues au catalogue (corps
-  comparés **octet pour octet** au fichier). Chacune jouée d'abord en prod dans un bloc qui ne peut
-  que s'annuler, avec une passe témoin SANS elle qui devait échouer. Détail : [`faille.md`](../../faille.md)
-  § « Migrations ». ⏳ `206` reste non appliquée, délibérément.
+- ✅ **État au 2026-10-20, relu au ledger et au catalogue** : le dépôt va de `000` à `223`, et
+  tout est en prod **sauf `206`** (suppression des jalons : `team_project_milestones` existe
+  encore ; à appliquer APRÈS le front qui ne les lit plus). `211` → `223` ont chacune leur ligne
+  (ledger **173**, dernière `20261019122246`). `164`, `181`, `190`-`195`, `197`-`199` sont en
+  prod **sans** ligne ; `196` est retirée par la `200`. ❌ **Ne jamais réappliquer la `164`** :
+  elle retire la branche « membre du projet » de la `190`. `224` (2026-10-20) et `226` (2026-10-22,
+  ledger `20261021225038`, C-121) sont en prod ; `225` est pris par un fichier d'une autre session.
+  Prochain numéro libre : **`227`**.
+  Journal daté de chaque application (`150` → `223`) :
+  [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Journal d'application des migrations ».
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
   seule issue, et le verdict est le texte de l'exception. ⚠️ En PL/pgSQL `N` et `n`, `OK` et `ok`
   sont le MÊME identifiant : « duplicate declaration ».
-- ⚠️ **Plages de numéros entre sessions (2026-09-24)** : `151`-`159` corbeille/équipes, `153` déjà
-  prise par le portefeuille de projets (worktree `portefeuille`), `160`+ gouvernance/OKR/membres,
-  `170`+ annuaire. **Relire le ledger avant de choisir un numéro.**
+- ⚠️ **Plusieurs sessions écrivent des migrations en parallèle** : **relire le ledger ET
+  `ls supabase/migration` avant de choisir un numéro**, jamais la fin de ce fichier.
 - ✅ **La preuve AVANT a servi à quelque chose, et c est l argument de cette section** : la `150` a
   été jouée dans une transaction annulée, acteur par acteur, avant d être appliquée — insertion,
   catégorie hors énumération refusée (`23514`), non-admin refusé (`42501`), droits effectifs

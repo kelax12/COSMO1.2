@@ -31,6 +31,7 @@ import { useT } from '@/i18n/useT';
 import { buildTree, categoryPath, formatPath } from '@/modules/categories';
 import type { Category, CategoryNode } from '@/modules/categories';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import NoCategoryOption from './NoCategoryOption';
 
 interface CategoryTreeSelectProps {
   value: string;
@@ -174,6 +175,7 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
         className={`max-h-80 overflow-y-auto p-2 ${panelClassName}`}
       >
         <div role="listbox" aria-label={t('fields.category')}>
+          <NoCategoryOption selected={!value} onSelect={() => pick('')} />
           {buildTree(categories).map((node) => renderNode(node, 0))}
         </div>
       </PopoverContent>

@@ -49,6 +49,8 @@ import { LocalStorageOrgTeamsRepository } from '@/modules/org-teams/local.reposi
 import { LocalStorageOrgGovernanceRepository } from '@/modules/organizations/governance.local.repository';
 import { LocalStorageOkrExecutionRepository } from '@/modules/team-okrs/execution.local.repository';
 import type { IOrgGovernanceRepository } from '@/modules/organizations/governance.repository';
+import { LocalStorageOrgRolesRepository } from '@/modules/organizations/roles.local.repository';
+import type { IOrgRolesRepository } from '@/modules/organizations/roles.repository';
 import type { IOkrExecutionRepository } from '@/modules/team-okrs/execution.repository';
 
 import type { IOrganizationsRepository } from '@/modules/organizations/repository';
@@ -89,6 +91,9 @@ export const createDemoOrgTeamsRepository = (): IOrgTeamsRepository =>
 
 export const createDemoOrgGovernanceRepository = (): IOrgGovernanceRepository =>
   new LocalStorageOrgGovernanceRepository();
+
+export const createDemoOrgRolesRepository = (): IOrgRolesRepository =>
+  new LocalStorageOrgRolesRepository();
 
 export const createDemoOkrExecutionRepository = (): IOkrExecutionRepository =>
   new LocalStorageOkrExecutionRepository();

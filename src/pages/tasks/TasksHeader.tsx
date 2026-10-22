@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, Settings } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
-import { MobileHeader, TouchTarget } from '@/components/mobile';
+import { MobileHeader } from '@/components/mobile';
+import MobileDisplaySheet from './MobileDisplaySheet';
 import TasksInboxMenu from '@/components/task-table/TasksInboxMenu';
+import InboxMenu from '@/components/InboxMenu';
 import ColorSettingsModal from '@/components/ColorSettingsModal';
 import { useT } from '@/i18n/useT';
 import { OVERDUE_FOCUS_EVENT } from '@/lib/hooks/use-overdue-focus';
+import ViewModeToggle from '@/components/task-board/ViewModeToggle';
 
 interface TasksHeaderProps {
   showDeadlineCalendar: boolean;
@@ -29,8 +32,8 @@ interface TasksHeaderProps {
  * ne satisfait ni l'un ni l'autre — c'est ce compromis qui donnait au mobile
  * son allure de « desktop rétréci ».
  *
- * `data-tutorial-id` est porté par les DEUX boutons calendrier ; `findTarget`
- * (page-tutorial-helpers) sélectionne celui qui est réellement visible.
+ * `data-tutorial-id="tasks-calendar-toggle"` ne vit plus que sur desktop ;
+ * le tutoriel mobile vise `tasks-display` (feuille « Affichage », maquette 140).
  */
 const TasksHeader: React.FC<TasksHeaderProps> = ({
   showDeadlineCalendar,
@@ -39,9 +42,6 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
   overdueCount,
 }) => {
   const { t, tp } = useT('tasks');
-  // `colorLegend.edit` vit dans le catalogue `common` : c'est le meme libelle
-  // que l'engrenage de la carte des categories, on ne le duplique pas.
-  const { t: tCommon } = useT('common');
   // Reglages de couleurs des categories. L'engrenage vivait dans le coin de la
   // carte « Taches en cours », masquee sur mobile depuis le 2026-09-22 : sans
   // ce report, la seule porte vers ces reglages disparaissait avec elle.
@@ -83,7 +83,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
           <button
             type="button"
             onClick={focusOverdue}
-            className="text-red-500 font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:underline"
+            className="text-[rgb(var(--color-danger-text))] font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:underline"
             aria-label={tp('header.overdueFilter', overdueCount)}
           >
             {tp('header.overdueCount', overdueCount)}
@@ -106,26 +106,20 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
                 accessible via la palette (Cmd/Ctrl+K) et l'onglet « Plus ». */}
             {/* Tâches/listes partagées en attente, regroupées ici plutôt
                 qu'en bandeaux inline (cf. TaskTable, masqués sur mobile). */}
-            <TasksInboxMenu />
-            <TouchTarget
-              aria-label={tCommon('colorLegend.edit')}
-              onClick={() => setShowColorSettings(true)}
-            >
-              <Settings size={20} aria-hidden="true" />
-            </TouchTarget>
-            <TouchTarget
-              aria-label={showDeadlineCalendar ? t('header.hideCalendar') : t('header.showCalendar')}
-              aria-pressed={showDeadlineCalendar}
-              onClick={onToggleCalendar}
-              data-tutorial-id="tasks-calendar-toggle"
-              className={
-                showDeadlineCalendar
-                  ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
-                  : ''
-              }
-            >
-              <CalendarDays size={20} aria-hidden="true" />
-            </TouchTarget>
+            {/* Maquette 217 (2026-10-10) : la MÊME boîte que l'accueil. La
+                même icône affichait 8 sur l'accueil (`InboxMenu`) et 5 ici
+                (`TasksInboxMenu`, qui n'en voit qu'une partie : tâches et
+                listes partagées). `InboxMenu` les contient aussi. Desktop
+                garde `TasksInboxMenu` dans sa propre barre. */}
+            <InboxMenu />
+            {/* Maquette 140 : vue tableau, couleurs et mini-calendrier
+                règlent tous trois la façon dont la liste se montre. Ils
+                quittent l'en-tête (quatre icônes) pour la feuille « Affichage ». */}
+            <MobileDisplaySheet
+              showDeadlineCalendar={showDeadlineCalendar}
+              onToggleCalendar={onToggleCalendar}
+              onOpenColorSettings={() => setShowColorSettings(true)}
+            />
           </>
         }
       />
@@ -167,12 +161,14 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
                 dans le tableau (cf. TaskTable), tout passe par cette boîte de
                 réception — comme sur mobile, avec un déclencheur en pastille
                 assortie au bouton Calendrier. */}
+            <ViewModeToggle />
             <TasksInboxMenu variant="desktop" />
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onToggleCalendar}
               data-tutorial-id="tasks-calendar-toggle"
+              data-guide-id="perso-tasks-calendar"
               aria-label={showDeadlineCalendar ? t('header.hideCalendar') : t('header.showCalendar')}
               className={`flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm ${
                 showDeadlineCalendar

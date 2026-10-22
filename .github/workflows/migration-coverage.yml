@@ -132,7 +132,10 @@ jobs:
 
       # ⚠️ L'introspection contient des NOMS D'OBJETS, jamais de donnees
       # personnelles : pas de ligne, pas d'email, pas de contenu de tache.
-      # Elle reste neanmoins un artefact de run, donc non public.
+      # 🔴 Le depot est PUBLIC : cet artefact se telecharge depuis n'importe
+      # quel compte GitHub connecte (BK-1). La garde
+      # scripts/artefacts-donnees-prod.guard.test.mjs verifie que la requete
+      # ne lit que le catalogue.
       - name: Deposer l'introspection
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

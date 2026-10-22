@@ -23,6 +23,7 @@ import { useTeamLists, useSetTaskTeamLists } from '@/modules/team-lists';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
+import { toast } from '@/lib/toast';
 
 const TeamTaskTabPanels = lazyWithRetry(() => import('./TeamTaskTabPanels'));
 // Listes et « Suivre » : même raison, hors du premier affichage de la fiche.
@@ -322,7 +323,7 @@ const TeamTaskModal = ({
           d'être étiré à celle du modal central. */}
       <div className="flex items-start justify-center gap-4 w-full sm:w-auto">
         {isWide && (
-          <div className={sidePanelClass} style={sidePanelStyle} onClick={(e) => e.stopPropagation()}>
+          <div data-guide-id="task-form-assignees" className={sidePanelClass} style={sidePanelStyle} onClick={(e) => e.stopPropagation()}>
             <div className="px-4 py-3 border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))' }}>
               <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
                 {t('taskModal.assignTask')}
@@ -346,7 +347,7 @@ const TeamTaskModal = ({
         )}
 
       <div
-        className="flex flex-col w-full sm:max-w-xl sm:w-full shrink-0 max-h-[92vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
+        className="flex flex-col w-full sm:max-w-xl sm:w-full shrink-0 max-h-[92vh] sm:h-[85vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
         style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         onClick={(e) => e.stopPropagation()}
         ref={modalA11yRef}
@@ -386,16 +387,20 @@ const TeamTaskModal = ({
           </button>
         </div>
 
-        <div role="tablist" aria-label={t('popups.task.tabsAria')} className="flex gap-1 px-3 overflow-x-auto border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))' }}>
+        <div role="tablist" aria-label={t('popups.task.tabsAria')} className="flex gap-1 px-3 overflow-x-auto overflow-y-hidden border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))' }}>
           {tabs.map(({ id, label }) => (
             <button
               key={id}
               type="button"
               role="tab"
               id={`team-task-tab-${id}`}
+              data-guide-id={id === 'subtasks' ? 'task-detail-subtasks' : id === 'dependencies' ? 'task-detail-dependencies' : undefined}
               aria-selected={tab === id}
               aria-controls="team-task-tabpanel"
               onClick={() => setTab(id)}
+              // 44 px (WCAG 2.5.5). La barre de défilement que 290e2599 a fait
+              // disparaître venait du `-mb-px` dans un conteneur overflow-x-auto :
+              // `overflow-y-hidden` la règle seul, la hauteur n'y était pour rien.
               className={`min-h-11 px-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
                 tab === id
                   ? 'border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-text-primary))]'
@@ -435,7 +440,12 @@ const TeamTaskModal = ({
                 orgId={orgId}
                 projects={projects}
                 status={status}
-                onStatusChange={setStatus}
+                onStatusChange={(v) => {
+                  // Sans le droit, le clic dit pourquoi au lieu de changer un statut
+                  // que Sauvegarder (grisé) ne pourrait jamais écrire.
+                  if (editReason) { toast.info(t('popups.task.noRights'), { description: editReason }); return; }
+                  setStatus(v);
+                }}
                 name={name}
                 onNameChange={(v) => { setName(v); setError(null); }}
                 description={description}

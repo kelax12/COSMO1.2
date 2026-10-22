@@ -13,7 +13,21 @@ et les **règles durables** tirées des audits.
 - Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-10-02** au soir, et avant elle **2026-10-01** (mig.
   `204`, `207`-`210` appliquées et relues au catalogue, cinq Edge Functions redéployées, `Edge deploy
   drift` vert, audit A-1 des 23 tables `160`-`207` acteur par acteur, § « Surface entreprise »),
-  puis `212`. ✅ **Remesuré le 2026-10-02 au soir** : advisors **`11 / 80 / 2 / 1`** inchangés, **74**
+  puis `212`. ✅ **Remesuré le 2026-10-19** (`TR-1`) : mig. `223` appliquée (ledger
+  `20261019122246`, **173** entrées) et relue au catalogue, advisors **`13 / 84 / 2 / 1`**, sonde
+  `anon` sur `track_hit` refusée. Note **86 → 87**.
+  ✅ **Remesuré le 2026-10-18** (dernière passe avant l'acquisition) : advisors
+  **`13 / 85 / 3 / 1`**, `Posture` rouge depuis 09:29 UTC, les six objets des mig. `221` et `222`
+  relus au catalogue, dont `track_hit` (finding **`TR-1`**) ; 79 tables toutes sous RLS, 205
+  policies, ledger 172, 12 Edge Functions inchangées ; 0 alerte CodeQL et Dependabot. Note **87 → 86**.
+  ✅ **Remesuré le 2026-10-16** : advisors `11 / 82 / 2 / 1` inchangés, 77 tables,
+  205 policies, ledger 170, 12 Edge Functions ; `M-68` vérifié en base (0 session et 0 jeton
+  antérieurs au chiffrement) ; AM-6 rejoué en CI ; une alerte CodeQL neuve (n° 14). Note **82 → 86**.
+  ✅ **Remesuré le 2026-10-15** : advisors **`11 / 82 / 2 / 1`** (égaux à la référence
+  de `Posture`, vert chaque jour depuis le 10-08), **77** tables toutes sous RLS, **205** policies,
+  ledger **170**, 12 Edge Functions, dépôt de nouveau public (privé du 10-13 au 10-14), une alerte
+  CodeQL et quatre Dependabot de développement ouvertes. Note **84 → 82** (`BK-1`).
+  ✅ **Remesuré le 2026-10-02 au soir** : advisors **`11 / 80 / 2 / 1`** inchangés, **74**
   tables (mig. `211`, deux tables vides retirées), **194** policies, ledger **162**, 12 Edge Functions,
   CodeQL et Dependabot à **0** ; et la garde `check:supabase-posture` comptait **zéro** pour chaque
   advisor depuis sa pose (corrigée, cf. note). Relevé du 10-01 :
@@ -30,9 +44,116 @@ et les **règles durables** tirées des audits.
 
 Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
+
+> 🗂️ **Allégé le 2026-10-11** (135 ko, 1 586 lignes). Sont partis, **à l'identique**, dans
+> **[`docs/archive/faille-jusqua-2026-10-11.md`](./docs/archive/faille-jusqua-2026-10-11.md)** : les entrées de note antérieures au 2026-10-02, les angles morts
+> du 2026-09-16, les états de gardes datés, l'état global du 08-25 et le détail des findings
+> **refermés** (`B-1`, `B-2`, `B-3`, `G-1`, `G-3`, `E-3`, `W-1` → `W-4`, `S-1` → `S-6`, audit A-1
+> des tables `160`-`207`), plus l'état des migrations au 09-30. **Un finding qui se referme
+> quitte ce fichier dans le même commit.**
+
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → **84 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → **2026-10-02 soir**)
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → 86 → 87 → **87 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → 2026-10-19 → **2026-10-20**)
+
+> ### ⚪ 2026-10-20 · 0 : `Posture` toujours en attente de son recalage
+>
+> Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`./docs/README.md`](./docs/README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | `Posture` | 0 | advisors **`13 / 84 / 2 / 1`**, identiques au 10-19 ; rouge chaque matin tant que la référence n'est pas recalée (`--update`, geste d'Axel) |
+> | Base | 0 | 79 tables toutes sous RLS, 205 policies, ledger 173 (`223` en dernier), 12 Edge Functions inchangées ; `jspdf` 4.2.1 ajouté, job `audit` vert |
+>
+> **87 → 87.**
+
+> ### 🟢 2026-10-19 · +1 : `TR-1` refermé, `track_hit` n'a plus qu'un appelant
+>
+> **Même règle** : un défaut ne se rembourse que corrigé et vérifié. Mesures du 2026-10-19 : CI de
+> la PR n° 79 à `62f8ba98` (run `39163166665`, cinq jobs verts) et de `main` à `11039a44`,
+> production (catalogue, ledger, advisors par l'API, sondes HTTP, `traffic_hits`). Tableau de
+> bord : [`docs/README.md`](./docs/README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-19 |
+> |---|---|---|
+> | ✅ `TR-1` · `track_hit` appelable par `anon` sans passer par le collecteur (−1 le 10-18) | **+1** | collecteur à la clé secrète servi (`11039a4`, `check:deploy` : `égal`) ; mig. `223` appliquée à 12:22 UTC (ledger `20261019122246`), relue au catalogue : corps identique à celui de la preuve (md5 `2087347b…`), ACL `postgres` + `service_role`, `INVOKER`, `search_path` vide. Sonde `anon` sur `/rest/v1/rpc/track_hit` : **401** `42501`, y compris avec un chemin valide (HTTP 200 la veille). Visite par le collecteur après application : 204, une ligne |
+> | `Posture` | 0 | advisors **`13 / 84 / 2 / 1`** : `track_hit` est sortie des deux listes. Restent au-dessus de la référence `traffic_hits`, `traffic_salts`, `get_admin_revenue` et `get_admin_traffic`, relus sains le 10-18. Rouge jusqu'au `--update` (geste d'Axel) : légitime, non débité |
+> | Trois lignes de test dans `traffic_hits` | 0 | `/verification-tr1`, `/verification-tr1-collecteur`, `/verification-tr1-apres-223` (12:12 à 12:23 UTC) : elles comptent dans la page Trafic de `/admin`. Laissées : les retirer est une écriture en base |
+>
+> **86 → 87.**
+
+> ### 🟠 2026-10-18 · −1 : une écriture anonyme dont seul le plafond global tient
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Dernière passe avant l'acquisition. Mesures du 2026-10-18 : CI
+> de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea`, production
+> (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), alertes GitHub. Tableau de
+> bord : [`docs/README.md`](./docs/README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | 🟠 `TR-1` · `track_hit` (mig. `222`) appelable par `anon` sans passer par le collecteur | **−1** | § [`TR-1`](#-tr-1--track_hit-réservée-au-collecteur-refermé-2026-10-19) ci-dessous (✅ refermé le 2026-10-19). Le collecteur filtre origine, taille et robots ; la RPC se joint **sans lui** avec la clé publique, et prend l'IP **dans le corps** : le plafond par visiteur se contourne, reste le global, **3 000 par minute**, soit 4,3 M lignes par jour gardées 13 mois, pour une base de **24 Mo** en plan Free (plafond 500 Mo). L'autre écriture anonyme, `record_demo_visit`, plafonne à 60 par minute |
+> | 🔴 `Posture` rouge depuis le 2026-10-18 à 09:29 UTC (run `39115503952`, alerte poussée) | 0 | `11 / 82 / 2 / 1` → **`13 / 85 / 3 / 1`**. Les six objets, **relus un par un au catalogue** : `get_admin_revenue` (mig. `221`) et `get_admin_traffic` (`222`) testent `is_admin()` en tête, fermées à `anon` ; `traffic_hits` et `traffic_salts` sous RLS sans policy, ACL réduite à `postgres` et `service_role` ; `track_hit`, c'est `TR-1`. **Pas de recalage** : il attend la décision sur `TR-1`, sinon la référence absorberait le seul objet qui pose question. Non débité à part : la garde a parlé, son objet l'est |
+> | ✅ `V-1` refermé, script de mesure tiers débranché (`23a12fdb`) | 0 | origine retirée de `script-src` et `connect-src`, relu dans l'en-tête CSP **servi** en production. Pas de débit en cours depuis la mitigation du 2026-09-01 : rien à rembourser |
+> | `M-32` · `baggage` / `sentry-trace` vers les Edge Functions (`ef694ac5`) | 0 | témoin `src/sentry-propagation.guard.test.ts` |
+> | Alertes GitHub | 0 | **0** CodeQL, **0** Dependabot ; secret scanning : la seule n° 1, connue, inerte ; dépôt `public` |
+> | Production | 0 | **79** tables (77 et les deux de la `222`), toutes sous RLS, **205** policies, ledger **172** (dernière `20261017230922`) ; **12** Edge Functions, versions inchangées, `Edge deploy drift` vert le 10-18 ; job `cosmo-purge-traffic` actif ; collecteur en ligne : 405 en GET, 403 sans origine, 400 sur un type inconnu, trois sondes qui n'écrivent rien |
+>
+> **87 → 86.**
+
+> ### 🟢 2026-10-16 (soir) · +1 : plus aucune alerte de code ouverte
+>
+> | Item | Effet | Mesuré le 2026-10-16 (soir) |
+> |---|---|---|
+> | ✅ CodeQL n° 14 · `high`, sans décision (−1 le matin) | **+1** | `eb6ee7ba` : `job` validé avant d'entrer dans la `RegExp` ; alerte `fixed` à 14 h 27 UTC. API relue : **0** alerte CodeQL ouverte, **0** Dependabot |
+> | CI de `main` | 0 | les runs de `main` ne s'annulent plus (`eb6ee7ba`) : quatre runs complets de suite, tous verts (`38907264016` à `38941369233`) |
+>
+> **86 → 87.** Reste ouvert côté `BK-1` : la moitié RGPD (`M-69`, `M-70`, `M-71`).
+
+> ### 🟢 2026-10-16 · +4 : les sessions révoquées, la surface entreprise rejouée en CI
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures du 2026-10-16 : CI de `main` à `a4878cab` (run
+> `38902071817`, cinq jobs verts), production (advisors par l'API, catalogue, comptage agrégé sur
+> `auth`), alertes GitHub. Tableau de bord : [`docs/README.md`](./docs/README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `BK-1` · sessions et jetons pouvant sortir des dumps (−2 le 10-15) | **+2** | `M-68` fait par Axel le 2026-10-16. **Relu par cette passe en production**, par un comptage sans aucune donnée personnelle : **0** session et **0** jeton de rafraîchissement vivant créés avant le chiffrement des sauvegardes (2026-10-13, 11 h 47 UTC). Mot de passe de la base non changé, décision motivée : un `pg_dump` ne le contient pas, il vit dans le secret masqué `SUPABASE_DB_URL` |
+> | ✅ AM-6 · surface entreprise jamais rejouée en CI (−2 le 09-30) | **+2** | `e2e/rls/org-surface-entreprise.test.ts` (`b89e1b3f`, `1ace166f`) : **24 tables × 6 acteurs × 4 opérations, 624 cellules**, toutes vues **rouges** sur deux sabotages en CI (runs `38859320682`, `38859843934`, PR brouillon n° 72), vertes sur `main` (`38860697711`, puis `38902071817`) |
+> | ✅ CodeQL n° 13 (−1 le 10-15) | **+1** | `fixed` le 2026-10-15 à 17 h 52 UTC |
+> | 🔴 CodeQL n° 14 · `high`, sans décision | **−1** | `js/regex-injection`, `scripts/ci-toutes-les-gardes.mjs` (posé le 10-15) : une `RegExp` construite depuis l'argument `--job`. **Trié par lecture** : `--job` est un littéral écrit dans `ci.yml`, exploitation nulle. Même règle que pour le n° 13 : une alerte `high` sans décision coûte le point. Correctif : échapper `job`, ou le valider par `/^[a-z-]+$/` |
+> | Dependabot, secret scanning | 0 | **0** alerte Dependabot ouverte (31 à 34 fermées par `3a645c11`). `braces` (haute, sans version corrigée publiée) et `fast-uri` (PR n° 75, non fusionnée) relevés par `npm audit`, dépendances de développement. Secret scanning : la seule n° 1, connue, inerte |
+> | Production | 0 | advisors **`11 / 82 / 2 / 1`**, égaux à la référence (`Posture` vert le 10-16) ; **77** tables toutes sous RLS, **205** policies, ledger **170**, **12** Edge Functions |
+>
+> **82 → 86.** Le BK-1 n'est pas clos pour autant : sa moitié RGPD (`M-69`, `M-70`) reste ouverte,
+> et l'échéance de la notification CNIL est passée sans trace au registre (cf. `docs/RGPD.md`).
+>
+> ✅ **2026-10-16 (soir) · CodeQL n° 14 `fixed`** à 14 h 27 UTC, par `eb6ee7ba` (analyse CodeQL de
+> `main` verte) : `lireEtapes` valide l'identifiant de job (`/^[A-Za-z_][A-Za-z0-9_-]*$/`) et compare
+> des chaînes, plus aucune `RegExp` construite depuis `--job`. Le témoin `--job .*` a été vu rouge
+> avant le correctif : le script lisait alors les étapes d'un AUTRE job, sans le dire. Le point débité
+> ci-dessus est à créditer par la prochaine passe (86 → 87), pas ici.
+
+> ### 🟠 2026-10-15 · −2 : `BK-1` entre dans la note, la garde des advisors est enfin remboursée
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> production (advisors par l'API, catalogue, Edge Functions), dépôt à `HEAD`. Tableau de bord :
+> [`docs/README.md`](./docs/README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | ✅ AM-1 · advisors lus à la main (non remboursé le 09-22, « `M-58` pas fait ») | **+1** | `M-58` fait le 2026-10-08 : référence posée depuis le run `37773471782`, recalée le 10-10 (81 → 82, `claim_acquisition_source`, mig. `217`, relue). `Posture` **vert chaque jour depuis**, et sur des comptes **réels** depuis le correctif du 10-02. Relu ce soir par l'API : **`11 / 82 / 2 / 1`**, exactement la référence. Les deux de plus qu'au 10-02 sont nommés : `get_admin_onboarding_funnel` (mig. `213`, gardée par `is_admin()`) et `claim_acquisition_source` |
+> | 🔴 `BK-1` · dumps en clair dans les artefacts d'un dépôt public | **−2** | défaut refermé et vérifié (`8c6a971d`, `db-backup` vert et chiffré les 10-13 et 10-14). Mais ce qu'il a pu exposer ne l'est pas : `M-68`, **révoquer les sessions et changer le mot de passe de la base**, est ouvert à `a-faire-manuel.md`. Tant qu'un jeton de rafraîchissement lu dans un dump peut encore ouvrir une session, c'est structurel. ⚠️ Non relu en base : la lecture de `auth.sessions` a été refusée à l'agent, à juste titre |
+> | 🔴 CodeQL n° 13 · `high`, sans décision depuis le 2026-10-12 | **−1** | `js/double-escaping`, `scripts/capture-og-images.mjs`, fonction `unescape` : `&amp;` est décodé **avant** les autres entités, donc `&amp;lt;` devient `<`. **Trié par lecture** : script de build (images OG), entrée = notre propre prérendu, rien n'atteint un navigateur ; défaut de justesse réel, exploitation nulle. Le +1 de `M-60` (09-22) avait été crédité sur « chaque alerte porte une décision » : celle-ci n'en porte pas. Correctif : décoder `&amp;` en dernier |
+> | ⚠️ Dépôt **privé** du 2026-10-13 au 2026-10-14 (21:51 UTC) | 0 | CodeQL rouge sur quatre pushs (« Code scanning is not enabled »), secret scanning coupé. Rendu public par Axel : relu ce soir, `visibility: public`, secret scanning actif, **une** alerte (n° 1, connue, inerte). Les rouges CodeQL de la fenêtre ne sont pas des alertes |
+> | Dependabot | 0 | **4** alertes ouvertes le 10-13, toutes en dépendances de **développement** : `proxy-addr` (critique), `source-map-js` et `@modelcontextprotocol/sdk` (hautes), `postcss-selector-parser` (moyenne). Job `audit` (dépendances de production) vert. À trier, non débitées : rien n'est expédié. ✅ **2026-10-16 : les quatre fermées d'elles-mêmes** (`fixed` à 06:35 UTC, relu par l'API) après `3a645c11` : `proxy-addr` 2.0.8, `source-map-js` 1.2.2 et `@modelcontextprotocol/sdk` 1.32.1 dans leurs plages ; `postcss-selector-parser` 7.1.6 par `overrides`, tailwindcss 3 tirant la ligne 6.x sans version corrigée (sortie Tailwind identique octet pour octet avant et après). Job `audit` vert sur `main` |
+> | Base et fonctions | 0 | **77** tables, toutes sous RLS, **205** policies, ledger **170** (dernière `20261013150941`, mig. `220`) ; **12** Edge Functions actives, `send-org-invite` v3 déployée le 2026-10-13, `Edge deploy drift` vert le 10-14 |
+>
+> **84 → 82.** ⚠️ L'arbitrage `BK-1` à −2 et non plus : la grille ne connaît que « structurel » et
+> « limité », et le défaut lui-même est refermé. Ce qui reste ouvert est la conséquence, et elle se
+> rembourse au geste `M-68` vérifié.
 
 > ### ⚪ 2026-10-02 (soir) · 0 : production inchangée, et la garde des advisors était aveugle depuis sa pose
 >
@@ -53,673 +174,80 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 > mig. `150` ; 25 fonctions `160`-`207` relues le 10-01 par l'audit A-1 ; 2 de la `212`). Tous
 > identifiés : le recalage est légitime. Un 81ᵉ ne le serait pas sans réponse à « quel objet ».
 
-> ### 🟢 2026-10-01 · +6 : les correctifs du 09-30 sont EN PRODUCTION, le défaut trouvé en route aussi, et CodeQL est vide
->
-> **Même barème, même règle** : un défaut rembourse son point le jour où il est corrigé **en
-> production et vérifié**, jamais sur un commit. Tout ce qui suit a été relu en base ou en ligne
-> après le geste, et chaque migration a d'abord été jouée **en production dans un bloc qui ne peut
-> que s'annuler**, avec une passe témoin SANS le correctif qui devait échouer, et a échoué.
->
-> | Item | Effet | Mesuré le 2026-10-01 |
-> |---|---|---|
-> | ✅ **W-1** webhooks jamais délivrés | **+1** | `org-webhook-dispatch` **v2**, `verify_jwt = false` ; `org-webhook-dispatch.yml` rend **HTTP 200** (run `36847104980`), le premier depuis la création |
-> | ✅ **W-2** SSRF | **+1** | mig. `207`, ledger `20261001100535` : `2130706433`, `0x7f000001`, `172.16.0.1`, `intranet.corp` **acceptées en prod avant**, refusées après ; résolution DNS dans la v2 déployée, identique au dépôt (`check:edge`) |
-> | ✅ **W-3** enfilement forgeable | **+1** | même migration : appel RPC d'un membre, **2 enfilements avant, 0 après** ; le trigger enfile toujours (2) |
-> | ✅ **W-4** `send-org-invite` sans plafond | **+1** | **v2** déployée, identique au dépôt ; `RATE_LIMIT_SALT` présent |
-> | ✅ **A-4** facturation prod ≠ dépôt | **+1** | `stripe-org-checkout` **v16**, `stripe-org-portal` **v13**, `report-bug` **v13** ; `Edge deploy drift` **vert** (`36849106222`), 12 fonctions identiques, 12 sondes vertes, pour la première fois depuis le 2026-09-21 |
-> | 🟠 **E-3** un manager s'ajoute à l'audience d'un OKR confidentiel (nouveau, audit A-1) | **−1** | prouvé en prod, transaction annulée : un manager qui ne voit pas l'OKR (`false`) s'y inscrit, puis le voit (`true`) ; il peut aussi en retirer tous les autres |
-> | E-1, E-2, G-3 | 0 | **corrigés en prod** (mig. `209`, `208`, `210`), mais ils étaient compris dans le −2 d'AM-6, pas comptés à part : rien à rembourser séparément |
-> | AM-6 · surface `160`-`207` jamais auditée | 0 | **relue ce jour** (23 tables × 6 acteurs, 25 fonctions DEFINER), mais aucune garde ne rejoue cette preuve en CI : non remboursé (règle du 2026-09-22) |
-> | A-8 · 5 alertes CodeQL `high` (`M-60`) | 0 | **corrigées à la source** dans `scripts/`, pas rejetées ; le point se rembourse quand CodeQL les **ferme** après le push, pas avant |
->
-> | ✅ **E-3** refermé le même jour | **+1** | mig. `212`, ledger `20261001132108` : témoin rejoué en prod SANS elle (inscription acceptée, 3 liens retirés), 10/10 vert AVEC, puis sur la prod réelle après application |
-> | ✅ **E-4** notifications d'un suspendu (trouvé en relisant les triggers) | 0 | nommé et refermé le même jour (mig. `212`) : ni débit ni remboursement |
->
-> | ✅ **M-60** CodeQL : chaque alerte porte une décision | **+1** | **0 alerte ouverte** sur `62e0b571` (relu par l'API) : 5 `high` corrigées à la source et fermées par CodeQL, 3 `medium` rejetées avec motif. C'est le critère de fin écrit au § AM-4 |
->
-> **78 + 5 − 1 + 1 + 1 = 84.** (82 en milieu de journée, avant la `212`.)
 
-> ### 🔴 2026-09-30 · −5 : la note décrivait un produit qui n'existait plus
->
-> **Constat** (session d'audit du 2026-09-30, reconfirmé ici contre la prod) : `faille.md` et
-> [`docs/SECURITY.md`](./docs/SECURITY.md) n'avaient pas été touchés depuis le 2026-09-24, pendant
-> que le mode entreprise ajoutait **25 tables** (51 → 76, toutes sous RLS), **25 fonctions
-> `SECURITY DEFINER`** exécutables par `authenticated` (advisors `10 / 53` → `11 / 78`) et
-> **quatre Edge Functions** (8 → 12). La note de 83 couvrait environ les deux tiers de la surface.
->
-> **Barème du 2026-09-16, sans changement**, et règle du 2026-09-22 : un angle mort n'est remboursé
-> que sur un verdict rendu en CI ; un défaut n'est remboursé que **en production**, jamais sur un
-> commit.
->
-> | Item | Effet | Mesuré le 2026-09-30 |
-> |---|---|---|
-> | AM-2 · `edge-smoke` | **+1** | premier verdict en CI le 2026-09-24 (8/8) : remboursable depuis, jamais crédité |
-> | AM-5 · témoins jamais rejoués | **+1** | `Sabotages` vert le 2026-09-24 : idem |
-> | 🔴 **AM-6** · la surface entreprise `160`-`206` n'a été relue par AUCUN audit (A-1) | **−2** | structurel : 25 fonctions DEFINER, 4 Edge Functions, 25 tables. Relecture partielle ce jour, § « Surface entreprise » plus bas |
-> | 🔴 **W-1** · les webhooks n'ont JAMAIS été délivrés (A-3) | **−1** | `org-webhook-dispatch` absente de `config.toml`, déployée en `verify_jwt = true` : la passerelle rend **401** (`UNAUTHORIZED_NO_AUTH_HEADER`, sondé le 2026-09-30) |
-> | 🟠 **W-2** · SSRF sur les webhooks sortants (A-6) | **−1** | liste noire textuelle, latente tant que W-1 bloque l'envoi |
-> | 🟠 **W-3** · enfilement de webhook forgeable en RPC (relecture A-1) | **−1** | tout membre forge un `task.completed` et inonde la file commune |
-> | 🟠 **W-4** · `send-org-invite` sans plafond de débit (A-10) | **−1** | 50 e-mails par appel, en boucle, depuis le domaine des e-mails d'auth |
-> | 🔴 A-4 · code facturation en prod ≠ dépôt | **−1** | `stripe-org-checkout` v15 et `stripe-org-portal` v12 déployées le 2026-09-08, source modifiée le 09-25 |
-> | A-5 · treize migrations sans ledger | 0 | angle mort **D-1**, déjà payé. Relu objet par objet : douze appliquées, **la `204` manquait** (§ Migrations) |
-> | A-8 · CodeQL 11 alertes, Dependabot 8 | 0 | `M-60` déjà payé ; Dependabot : dev seulement, **refermé ce jour** par le lockfile. Alerte #13 apparue après (2026-10-01, `ip-address` ≤ 10.5.0, SSRF NAT64, `moderate`, transitive via `shadcn`, dev seulement) : refermée par le lockfile (`ip-address` 10.7.2, `530b01f4`) |
->
-> **83 + 2 − 7 = 78.** ✅ **Corrigés dans le dépôt le 2026-09-30** : W-1 (`config.toml`), W-2 et
-> W-3 (mig. `207` + `org-webhook-dispatch`), W-4 (`send-org-invite`), et trois gardes nouvelles
-> (`src/edge-config.guard.test.ts`, `src/workflow-permissions.guard.test.ts`, les 12 sondes).
-> 🔴 **Rien de cela n'est en production** : chacun rembourse son point le jour où il y est, et
-> vérifié. Gestes dans l'ordre : § « Ordre de priorité ».
+## 🔴 BK-1 · sauvegardes de la base EN CLAIR dans un dépôt public · contenu le 2026-10-13, 2 gestes ouverts
 
-> ### ⚪ 2026-09-22 (soir) · 0 : remesure item par item, contre la CI réelle et la production
->
-> **Règle appliquée**, déclarée au [tableau de bord](./docs/README.md) : un angle mort payé le 2026-09-16
-> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
-> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
-> Un défaut nommé ce soir coûte selon le barème du 09-16.
->
-> | Item | Effet | Mesuré le 2026-09-22 |
-> |---|---|---|
-> | AM-4 · aucun SAST | **+1** | `codeql.yml` tourne et est vert sur chaque push |
-> | 🔴 9 alertes CodeQL ouvertes, aucune triée | **−1** | **5 `high`** (`js/file-system-race` ×4 dans `scripts/`, `js/bad-tag-filter` dans `check-i18n-pages.mjs`), **4 `medium`** (dont `actions/missing-workflow-permissions` sur `renewal-notice.yml`). Toutes hors du bundle client, aucune n'est une faille produit démontrée. C'est `M-60` |
-> | AM-1 · advisors lus à la main | **0** | **non remboursé** : `check:supabase-posture` échoue exprès tant que `M-58` n'est pas fait. ✅ Relus ce soir par l'API : **10 / 53 / 2 / 1**, les deux comptes qui bougent sont **exactement** ceux que `M-58` annonçait (mig. `150`) |
-> | AM-2 · comportement des fonctions | **0** | **non remboursé** : `check:edge-smoke` **n'a jamais sondé en CI**, `VITE_SUPABASE_ANON_KEY` n'est pas passé au job. → `C-114`. Et `check:edge` est rouge depuis le 09-21 sur une dérive **légitime** de `report-bug` (`M-61`) |
-> | AM-5 · témoins de sécurité jamais rejoués | **0** | **non remboursé** : `Sabotages` rouge (cf. `docs/TESTING.md`) |
->
-> ✅ Vérifié en base ce soir : 51 tables / 51 sous RLS / 126 policies ; `get_support_stats` et
-> `get_admin_stats` appellent `is_admin()` ; `org_subscriptions` et `payment_records` à 0 ligne.
->
-> **83 → 83.** Détail, règle et ordre de réparation : [tableau de bord](./docs/README.md).
+**Trouvé par l'audit juridique du 2026-10-13.** `db-backup.yml` déposait chaque jour un `pg_dump`
+complet, non chiffré, en artefact GitHub Actions. Le dépôt est public : un artefact s'y télécharge
+depuis **n'importe quel compte GitHub connecté**. Le commentaire du workflow affirmait l'inverse.
+Exposé du 2026-08-29 au 2026-10-13. C'est une **violation de données** (RGPD art. 4.12) : registre
+et brouillons **hors dépôt** (dossier privé d'Axel), procédure [`docs/RGPD-VIOLATION.md`](./docs/RGPD-VIOLATION.md).
 
-> ### 🟠 2026-09-16 · -5 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
->
-> **Ce n'est pas une régression.** Rien n'a cassé depuis la dernière passe. Les angles morts
-> listés juste en dessous **existaient tous** pendant que cette note montait : elle était
-> surévaluée parce qu'elle ne comptait que ce que les gardes regardent. C'est exactement ce qui
-> s'est produit le 2026-09-14, où cinq notes ont baissé sans qu'aucun défaut ne soit récent.
->
-> **Barème, déclaré pour être contestable ligne par ligne :**
->
-> | Situation | Effet |
-> |---|---|
-> | angle mort **structurel**, de portée large, qu'aucun outil ne regarde | −2 |
-> | angle mort réel mais de portée limitée, ou partiellement couvert | −1 |
-> | angle mort **assumé** (arbitrage documenté), ou déjà compté dans une passe antérieure | 0 |
-> | angle mort **comblé** le jour même, avec garde **et** témoin | +1 |
->
-> **Le calcul pour cette note :**
->
-> | Angle mort | Effet | Pourquoi |
-> |---|---|---|
-> | AM-1 · **les advisors Supabase ne sont lus qu'à la main** | −2 | seule source qui voit une policy manquante après coup ; « advisor » dans `ci.yml` désigne `npm audit` |
-> | AM-4 · aucun SAST, sur un dépôt **public** où CodeQL serait gratuit | −1 | filet manquant, pas une faille : les invariants nommés tiennent |
-> | AM-2 · `check:edge` compare le CODE, jamais le COMPORTEMENT | −1 | un secret qui change rend la garde verte |
-> | AM-5 · les témoins de sécurité ne sont jamais rejoués | −1 | `csp.guard`, `rgpd-erasure.guard`, `refund.guard`, `org-deletion.guard` |
-> | AM-3 · `npm audit` ne couvre que les dépendances de production | 0 | arbitrage assumé et documenté |
->
-> 🔴 **Une note baisse UNE FOIS, quand l'angle mort est nommé ; elle remonte quand il est
-> outillé.** Sans cette règle, nommer un angle mort deviendrait punitif, et la passe du
-> 2026-09-16 serait la dernière à en chercher. Un angle mort reconduit sans être comblé ne
-> re-coûte rien : il est **déjà payé**.
->
-> ⚠️ Un transversal (T-1 à T-10 du [tableau de bord](./docs/README.md)) est compté dans **chaque** audit
-> qu'il touche, parce que chaque note prétend quelque chose de différent. Les témoins jamais
-> rejoués coûtent donc à la fois aux tests et à la sécurité, et ce n'est pas un double comptage.
-> (Ils étaient 36 ce jour-là, **39 au 2026-09-20** ; le calcul de la note ne change pas.)
+| | |
+|---|---|
+| ✅ Contenu le 2026-10-13 | dump chiffré avant dépôt (gpg AES-256, secret `BACKUP_PASSPHRASE`), relu à l'identique par sha256 avant dépôt, échec FERMÉ sans phrase secrète (`8c6a971d`) ; run `38392672092` vert ; les dumps en clair **supprimés**, l'API publique ne liste plus qu'un artefact, chiffré ; `restore-drill.yml` déchiffre |
+| ✅ Fait le 2026-10-16 | `M-68` : sessions révoquées. Relu en base le même jour : 0 session et 0 jeton vivant antérieurs au chiffrement. Mot de passe de la base non changé, décision motivée (un dump ne le contient pas). `dump-check` de `restore-drill` vert sur le dump chiffré, et une garde refuse désormais tout artefact de données de production non chiffré (`467d5115`) |
+| ✅ Fait le 2026-10-16 (soir) | `M-69` : notification initiale soumise à la CNIL, **tardive** (échéance de 72 h passée vers 11 h 26 UTC), avec les motifs du retard (art. 33.1). Consignée au registre privé. Notification complémentaire à suivre |
+| ✅ Décidé le 2026-10-16 (soir) | `M-70` : **pas d'information des personnes**, décision d'Axel consignée au registre privé avec son motif (gravité déclarée « limitée », l'art. 34 ne l'impose qu'en cas de risque élevé). À rouvrir sur un indice d'usage des données ou sur demande de la CNIL |
+| 🔴 Ouvert | `M-71` la phrase secrète est toujours en clair dans le dossier privé |
+| ❌ Règle durable | **aucune donnée personnelle en clair dans un artefact, un log ou un fichier d'un dépôt public.** « Il faut être connecté pour télécharger » ne protège rien : tout le monde a un compte GitHub |
 
+✅ **Note recalculée le 2026-10-15** : −2, en entrée de la note ci-dessus. Le −2 se rembourse à
+`M-68` vérifié. ⚠️ `docs/DEPLOYMENT.md` § 7 portait encore, le 2026-10-15, la phrase fausse du
+workflow (« les artefacts d'un run exigent une authentification ») : corrigée le même jour. Et
+`restore-drill.yml`, qui doit désormais **déchiffrer** le dump, est désactivé depuis le 2026-09-01 :
+le chemin de récupération chiffré n'a été parcouru que par `db-backup` lui-même (aller-retour
+sha256 avant dépôt), jamais par une restauration.
 
+## ✅ TR-1 · `track_hit` réservée au collecteur, REFERMÉ (2026-10-19)
 
-### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
+Ouvert le 2026-10-18 sous le titre « la mesure d'audience accepte 3 000 écritures anonymes par
+minute ». Refermé le 2026-10-19 : mig. `223` appliquée et relue au catalogue, sonde `anon` refusée.
 
-> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
-> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
-> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
-> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
->
-> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
-> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
-> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
->
-> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
-> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+**Trouvé par la passe du 2026-10-18**, en lisant le rouge de `Posture`
+(`anon_security_definer_function_executable` 2 → 3).
 
+| État au 2026-10-19 | |
+|---|---|
+| ✅ Collecteur à la clé secrète, en production | PR n° 79, fusion `11039a44`, servie (`check:deploy` : `égal`). `api/collect.ts` appelle `track_hit` avec `SUPABASE_SECRET_KEY` (posée par l'intégration Vercel ↔ Supabase, production seulement, type sensible, jamais préfixée `VITE_`), dans l'en-tête `apikey` seulement. Aucun repli sur la clé publique : sans secret, 503 ; base qui refuse, 502, journalisé sans la clé. Relu en production le 2026-10-19 : GET 405, POST sans origine 403, origine étrangère 403, `Origin: null` 403 (un **500** avant, comme un corps `null`) ; une visite de test écrite (204, une ligne à 12:13:11 UTC), donc la clé de l'intégration vise la bonne base |
+| ✅ Mig. `223` écrite et prouvée | `REVOKE` à PUBLIC, `anon` et `authenticated`, `GRANT` à `service_role` ; `SECURITY INVOKER` ; plafonds 60 par visiteur et par minute, **300** par minute, **5 000** sur 24 h glissantes. Preuve `supabase/proofs/223.proof.sql` jouée en production dans un bloc qui ne peut que s'annuler : **8 sur 8**, témoin (la 222 en place) rouge sur les six cas attendus, rien laissé. Choix du secret justifié dans l'en-tête de la migration |
+| ✅ Mig. `223` appliquée le 2026-10-19 | 12:22 UTC, par `db query -f` sur le fichier lui-même, dans une transaction explicite qui inscrit aussi sa ligne de ledger (`20261019122246`). Corps vivant sauvegardé AVANT (md5 `88325db8…`, le seul retour arrière d'un `CREATE OR REPLACE`). Relue APRÈS : corps md5 `2087347b138e057717adca013b9fef3b`, celui de la preuve ; ACL `{postgres=X/postgres,service_role=X/postgres}` ; `INVOKER`, `search_path` vide ; `anon` et `authenticated` sans `EXECUTE` |
+| ✅ Vu de l'extérieur | `POST /rest/v1/rpc/track_hit` avec la clé publique : **200** `false` le 2026-10-18 au soir (chemin invalide, rien d'écrit), **401** `42501 permission denied for function track_hit` le 2026-10-19, y compris avec un chemin valide. Visite par le collecteur après application : 204, une ligne. Advisors : **`13 / 84 / 2 / 1`** |
+| ⏳ Reste | recaler `Posture` par `--update` (geste d'Axel, avec son jeton) : attendu exactement ces quatre comptes |
 
+`track_hit(p jsonb)` (mig. `222`) est `SECURITY DEFINER` et exécutable par `anon`. C'est voulu
+par l'en-tête de la migration : le collecteur `api/collect.ts` l'appelle avec la clé **publique**.
+Mais ce que vérifie le collecteur se contourne en appelant la RPC directement, et la RPC prend
+`ip` et `ua` **dans le corps de la requête** :
 
-> **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
-> retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
-> que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
-> n'est pas un oubli d'auditeur, c'est une propriété de la méthode de notation.
->
-> Le prototype du problème est daté : `CLAUDE.md` a pesé 150 ko et ~43 000 tokens sans qu'aucune
-> note ne bouge, alors qu'il est cité **13 fois** dans [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md), dont **9**
-> dans la seule colonne « Où il est écrit » du tableau des invariants, et **jamais** dans ce
-> qui est mesuré. Il était le mètre,
-> jamais l'objet.
->
-> Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
-> invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
-
-| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
-|---|---|---|---|
-| AM-1 | 🔴 **Les advisors Supabase ne sont lus qu'à LA MAIN.** Ils sont la seule source qui voit une policy manquante ou une fonction `SECURITY DEFINER` exposée après coup, et aucun workflow ne les interroge | le mot « advisor » dans `ci.yml` désigne **`npm audit`**, pas les advisors de la base. `9 / 52 / 2 / 1` au 2026-09-14, relevé manuellement | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · advisors lus par l'API Management (`C-88`) — 🔴 ne prouve PAS : 🔴 rien pour l'instant : **elle échoue exprès** tant que la référence des réglages d'auth n'est pas posée **et commitée** — **`M-58`** · 🔎 🔴 **2026-10-02 : elle comptait ZÉRO pour chaque advisor depuis sa pose.** L'API Management rend une entrée par occurrence, le script écrasait et lisait un `count` absent : douze runs relus, tous à `0`, la base à 11 / 80 / 2 / 1. Corrigée le même soir, témoin vu rouge sans le correctif. Elle n'avait jamais rendu de faux vert parce qu'elle était rouge pour `M-58` |
-| AM-2 | **`check:edge` compare le CODE déployé, jamais le COMPORTEMENT.** Une fonction identique au dépôt mais dont un **secret** a changé de valeur, ou dont une dépendance distante a bougé, rend la garde verte | `scripts/check-edge-deploy.mjs` compare des sources | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:edge-smoke` · **8 sondes**, dans `edge-deploy-drift.yml`, **vertes contre la production** le jour de leur pose (`C-91`) — 🔴 ne prouve PAS : que la fonction fasse son travail : on touche ses premiers mètres, on ne parcourt pas le chemin · 🔎 🔴 **2026-09-22 : jamais joué en CI.** `VITE_SUPABASE_ANON_KEY` n'est pas passé au job, la sonde s'arrête avant de sonder. → `C-114` · 🔎 ✅ **2026-09-24 : premier verdict en CI, 8 sondes sur 8 vertes** (`35967773021`). Le secret attendu n'a jamais existé au dépôt : la clé anon, publique, est lue par l'API Management avec `SUPABASE_ACCESS_TOKEN`. Le job reste rouge sur la dérive de `report-bug` (`M-61`), pas sur les sondes · 🔎 🔴 **2026-09-30 : huit sondes pour DOUZE fonctions.** Les quatre du mode entreprise n'étaient sondées par rien (A-2). **12 sondes** depuis, les fonctions cron sondées **sans jeton**, comme la CI les appelle : jouées contre la prod, **11 vertes**, `org-webhook-dispatch` **rouge** sur le 401 de la passerelle (W-1), et c'est juste |
-| AM-3 | **`npm audit` ne couvre que les dépendances de PRODUCTION** (`--omit=dev`). Une vulnérabilité dans la chaîne de build n'est vue par rien | `ci.yml:148` : `npm audit --omit=dev --audit-level=high` | ✅ **OUTILLÉ le 2026-09-20** · second `npm audit` sur la chaîne de build, **non bloquant mais LU** (compte par sévérité au résumé) (`C-90`) — 🔴 ne prouve PAS : rien, et c'est assumé : c'est un **arbitrage** écrit comme tel, pas une garde |
-| AM-4 | **Aucune analyse statique de sécurité (SAST) sur le code du dépôt.** Les gardes existantes vérifient des invariants nommés, jamais des motifs inconnus | aucun CodeQL, Semgrep ou équivalent dans `.github/workflows/` | ✅ **OUTILLÉ le 2026-09-20** · `codeql.yml`, `security-extended`, JS/TS **et** `actions` (`C-89`) — 🔴 ne prouve PAS : 🔴 un job vert. Fini quand **chaque alerte ouverte porte une décision** — **`M-60`** · 🔎 🟠 **2026-09-22 : 9 alertes ouvertes** (5 `high`, 4 `medium`), aucune triée · 🔎 🟠 **2026-09-30 : 11** (5 `high`, 6 `medium`). Les deux nouvelles, `actions/missing-workflow-permissions` sur `org-digest.yml` et `org-webhook-dispatch.yml`, sont **corrigées dans le dépôt** avec celle de `renewal-notice.yml`, et `src/workflow-permissions.guard.test.ts` refuse désormais tout workflow sans `permissions` : l'alerte triée à la main ne protégeait pas le workflow suivant. Les 5 `high` (`scripts/`) restent à trier (`M-60`) · 🔎 ✅ **2026-10-01 : les 5 `high` sont CORRIGÉES à la source, aucune rejetée.** Décision par alerte : `js/file-system-race` #5 (`check-db-cost.mjs`) et #7 (`check-i18n-pages.mjs`) : `existsSync` puis lecture du même chemin remplacés par une lecture qui traite `ENOENT` ; #6 : `statSync` séparé remplacé par `readdirSync({ withFileTypes })` ; #8 (`scripts/cosmo/client.mjs`, le fichier qui porte les **jetons de session** du CLI) : création atomique `wx` au lieu de `existsSync` puis écriture ; #2 `js/bad-tag-filter` : `</script >` est une fin de balise valide, le compteur de mots la reconnaît désormais (vérifié : 2 mots, pas 5). ✅ **Fermées par CodeQL** sur `43fed445` pour les quatre `file-system-race` ; `js/bad-tag-filter` est revenue (n° 12 : une fin de balise peut porter espaces, tabulations ou attributs), refaite en `[^>]*` après le nom de balise, et **fermée par CodeQL sur `62e0b571`** : 0 alerte ouverte. Les 3 `medium` restantes : ✅ **rejetées dans GitHub le 2026-10-01** (« won't fix », accord d'Axel), motif écrit dans chacune : #9 `js/file-access-to-http` (`check-edge-deploy.mjs`) envoie à l'API Management l'identifiant de projet lu dans `.github/edge-deploy.json`, fichier **versionné** qui désigne précisément la cible ; #3 et #4 `js/http-to-file-access` écrivent une réponse de l'API Supabase dans `GITHUB_STEP_SUMMARY` (résumé de CI) ou, sur `--update` **explicite**, dans la référence versionnée de `check:supabase-posture`, relue en revue avant commit. C'est la fonction de ces deux scripts, pas un détournement |
-| AM-5 | **Les 39 témoins ne sont jamais rejoués** (cf. [`docs/TESTING.md`](./docs/TESTING.md) AM-1). Plusieurs gardent des frontières de sécurité : `csp.guard`, `rgpd-erasure.guard`, `refund.guard`, `org-deletion.guard` | **39** fichiers `*.guard.test.*` (`git ls-files`, **recomptés le 2026-09-20** ; « 36 » datait du 09-16 et n'avait pas suivi les trois ajouts), aucun mutation testing | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:sabotages` · 11 sabotages rejoués, restauration octet pour octet vérifiée (`C-81`) — 🔴 ne prouve PAS : que les **39** témoins détectent : le rapport couvert / total est imprimé exprès · 🔎 🔴 **2026-09-22 : job rouge.** Les 11 sabotages sont vus, mais le contrôle « arbre restauré » échoue sur le `sabotages.log` du workflow. → `C-113` · 🔎 ✅ **2026-09-24 : premier run VERT** (cf. [`docs/TESTING.md`](./docs/TESTING.md) AM-1) · 🔎 🟠 **2026-09-30 : les « 39 » de l'énoncé sont 55** (`git ls-files '*.guard.test.*'` : 53, plus les deux témoins posés ce jour). Le rapport couvert / total de `check:sabotages` se lit donc **11 sur 55**, pas 11 sur 39 |
-
-
-> ### ⚪ 2026-09-14 (soir) · 0 : tout ce que cette note affirme a été rejoué, et deux angles morts s'ouvrent
->
-> **Rejoué ce soir, contre le code de l'arbre ET contre la prod `ykeugqfgklejcdbrmawy`** :
-> `check:rls` (**132 policies sur 106 migrations, 0 violation**), `validate:migrations`
-> (**152 fichiers, 0 erreur, les 6 mêmes avertissements**), `typecheck` (0), `lint` (0 erreur,
-> **31** warnings), `npm test` (**228 fichiers / 2 586 passés**, exit 0), `test:coverage` (verte,
-> exit 0), et les advisors Supabase : **9 / 52 / 2 / 1**, à l'unité près ce que ce fichier
-> annonçait. Aucune régression.
->
-> **Et l'invariant fondamental du projet est reconfirmé en base, pas déduit d'une migration** :
-> `public` porte **50 tables**, et **les 50 ont `relrowsecurity = true`**. C'est la même forme de
-> preuve que celle du 2026-08-25 (« 0 table sans RLS »), rejouée sur un schéma qui a gagné des
-> tables depuis. La base porte par ailleurs **126 policies** actives et **117 fonctions** dans
-> `public`.
->
-> **Une vérification d'isolation en prod s'y ajoute, et elle n'avait jamais été faite sous cette
-> forme.** Dans une transaction annulée, en se plaçant dans le rôle `authenticated` avec les claims
-> d'un compte réel, `select * from tasks` rend **289 lignes sur les 750 de la base**, et le plan
-> affiche `Rows Removed by Filter: 461` : les 461 lignes des autres comptes sont examinées puis
-> **rejetées par la policy**. C'est une preuve directe, sur données réelles, que
-> `tasks_select_own_or_shared` filtre ce qu'elle doit filtrer.
->
-> 🔴 **Angle mort D-1 · le ledger de migrations ne prouve pas ce qu'on lui fait dire.** Ce fichier
-> écrivait « ledger à 148 entrées ». Recompté : **138**. « 148 » est le NUMÉRO de la dernière
-> migration, recopié comme un total. Pire que l'erreur de chiffre, le raisonnement : comparé nom à
-> nom, **32 des 152 fichiers du dépôt n'ont aucune entrée au ledger** et **17 entrées n'ont aucun
-> fichier**. Les 32 SONT appliquées (vérifié objet par objet sur un échantillon dans le catalogue
-> Postgres), mais ce n'est jamais le ledger qui l'établit. **Aucune garde de ce dépôt ne surveille
-> ce recouvrement**, et `check:drift` ne le couvre pas : il compare un schéma, pas un journal.
-> C'est la version symétrique du défaut de la mig. `144` : là, une ligne au ledger ne prouvait pas
-> qu'un `CREATE OR REPLACE` avait pris ; ici, l'absence de ligne ne prouve pas qu'une migration
-> manque.
->
-> 🔴 **Angle mort D-2 · `email_confirmed_at` est rempli pour tout le monde, et ne vérifie rien.**
-> Mesuré ce soir : **28 comptes sur 28 portent `email_confirmed_at`**, dont **26 à la seconde même
-> de leur création**, et **18 comptes sont créés par email + mot de passe** (10 par Google). La
-> confirmation d'adresse étant désactivée (décision d'Axel, cf. G-2), Supabase pose la colonne
-> d'office : **aucune de ces 18 adresses n'a jamais été prouvée**. Le danger n'est pas la décision,
-> qui est assumée et documentée ; c'est que la colonne qui sert partout à répondre « cette adresse
-> est-elle vérifiée ? » réponde **oui** pour des adresses que personne n'a vérifiées. ❌ Ne jamais
-> conclure de `email_confirmed_at IS NOT NULL` que l'adresse existe, tant que G-2 est ouvert : le
-> seul signal exploitable ici est `raw_app_meta_data->>'provider' = 'google'`, où c'est Google qui
-> a fait la vérification.
->
-> ⚠️ **Ce que ce poste ne peut pas vérifier, et qui est donc repris de la CI, pas remesuré** :
-> `npm run check:edge` exige `SUPABASE_ACCESS_TOKEN`, absent de cet environnement. La non-dérive
-> des 8 Edge Functions reste établie par le job `Edge deploy drift` (run `34861975638`), pas par
-> une mesure d'aujourd'hui. Les **versions en ligne ont en revanche été relues ce soir par l'API**
-> et sont : `stripe-webhook` **v33**, `stripe-create-checkout` v23, `delete-account` **v17**,
-> `stripe-org-checkout` v15, `renewal-notice` v13, `report-bug` v12, `stripe-org-portal` v12,
-> `stripe-org-refund` **v6**.
->
-> **La note ne bouge pas, et c'est le bon résultat** : rien n'a été durci aujourd'hui, rien n'a
-> cédé. Les deux angles morts ci-dessus sont des défauts de PREUVE, pas des vulnérabilités : ils ne
-> retirent pas de point parce que rien n'indique qu'ils masquent une faille, et ils n'en donnent
-> évidemment aucun.
-
-
-> ### 🟢 2026-09-14 · +2 : le seul verrou non testé d'un chemin qui déplace de l'argent l'est désormais
->
-> `stripe-org-refund` a trois verrous anti-rejeu. Jusqu'à ce jour, **un seul des trois n'avait
-> jamais été exécuté par quoi que ce soit** : le pré-contrôle qui retranche le déjà-remboursé
-> vivait en ligne dans l'entrypoint Deno, entre deux appels réseau — structurellement intestable
-> depuis n'importe quel poste. Il est extrait (`_shared/refund-replay.ts`, TS pur), couvert par
-> **10 cas** (nominal, rejeu, période déjà remboursée, plus un témoin), **vu rouge sur trois
-> sabotages** avant d'être commité, et **déployé en v6**, identique au dépôt
-> (`Edge deploy drift` run `34861975638` : « 8 fonction(s) verifiee(s) »).
->
-> ⚠️ **Ce que ça change concrètement** : avant ce jour, rien ne garantissait que la borne « ce qui
-> reste à rendre = décidé − déjà rendu » calculait juste. Un mutant qui inverserait la soustraction
-> ou compterait un remboursement `failed` comme rendu serait passé inaperçu — les 3 sabotages joués
-> ici le prouvent, ils faisaient tous tomber des cas précis, jamais tous en même temps.
->
-> ⚠️ **Ce qui n'est PAS nouveau et ne doit pas gonfler ce +2** : la clé d'idempotence Stripe
-> (verrou 1) et le clamp par l'encaissé (verrou 3) existaient déjà et sont inchangés. Et rien n'a
-> encore tourné **contre Stripe** : `refunds.create` et la résiliation réelle restent non
-> éprouvées, `org_subscriptions` à zéro ligne. Ce +2 porte sur la preuve d'un verrou, pas sur
-> l'encaissement.
->
-> **Ce qui ne relève PAS d'un score** : quatre numéros de version d'Edge Functions cités par ce
-> fichier étaient décalés d'une unité, et un angle mort affirmait deux choses fausses. Corrigés
-> aujourd'hui — c'est une correction de documentation, pas un changement de posture, et ça n'entre
-> pas dans le delta.
-
-> ### 2026-09-03 · +2, et pour la première fois depuis longtemps ce sont des protections EN VIGUEUR
->
-> Cette passe rattrape les journées 08-30 au 09-01, que la campagne du 09-02 n'avait pas notées.
-> Les deux points viennent de choses qui **tournent en production**, pas de code écrit :
->
-> | | Ce qui a changé |
-> |---|---|
-> | **`/admin` derrière une session `aal2`** | La mig. `131` est appliquée (08-31) **et** le facteur TOTP est enrôlé : `auth.mfa_factors` porte 1 facteur `totp` en statut `verified` sur le compte admin, créé le 2026-09-01 à 14:20:27 UTC et vérifié 46 secondes plus tard. Une session ouverte avec un mot de passe volé ne suffit plus |
-> | **Realtime n'était pas chiffré ailleurs, il était BLOQUÉ** | `connect-src` autorisait `https://*.supabase.co` mais pas `wss://*.supabase.co` ; en CSP un schéma écrit explicitement doit correspondre. Les trois canaux de collaboration étaient coupés **en production**, en silence, et ils avaient justement remplacé huit sondages : plus aucun filet derrière eux. Verrouillé par `src/csp.guard.test.ts`, vérifié rouge sans le correctif |
-> | **Secret scanning, push protection et Dependabot** | Actifs sur le dépôt **public**. Une fuite réelle trouvée dans l'historique : `.env` commité au commit initial (`service_role`, `DATABASE_URL`). **Inerte** : ces clés visent un projet supprimé depuis (absent du compte, DNS inexistant). Reste la question de la réutilisation du mot de passe, qui n'appartient qu'à Axel |
-> | **Mig. `134` et `135` appliquées et vérifiées** | Déjà créditées le 09-02, rappelées ici parce qu'elles ferment la condition d'encaissement : sans `withdrawal_consents`, `stripe-org-checkout` refuse toute session |
->
-> 🔴 **Ce qui empêche d'aller au-delà de 86 :**
->
-> - **`V-1` reste ouvert par son seul bout qui compte** : le DPA du fournisseur de mesure
->   d'audience n'est pas obtenu (art. 28). Le script a transmis **email et nom** depuis `/signup`
->   en production, et la garde qui l'a détecté a échoué quatre jours sans être lue ;
-> - **A-9 change de forme sans disparaître** : le drill de restauration a été **exécuté avec succès
->   le 2026-09-01**, RTO mesuré **163 s**, isolation vérifiée. Il n'y a toujours **aucun PITR**, le
->   plan Free n'incluant aucune sauvegarde : le dump quotidien est désormais la **seule** copie de
->   la base qui existe ;
-> - **le canal d'alerte d'ops reste inerte** tant que `OPS_ALERT_WEBHOOK_URL` n'est pas posé dans
->   les secrets Actions du dépôt.
->
-> ⚠️ **Une leçon qui vaut plus que les deux points.** La mig. `131` a été appliquée **avant** que le
-> chemin de secours ait été parcouru une seule fois. Ce chemin était cassé : l'écran d'enrôlement
-> levait en phase de rendu, donc affichait l'erreur générique au lieu du QR code, lui-même cassé
-> par un double préfixe `data:`. `/admin` est resté inaccessible du 2026-08-31 au 2026-09-01, et un
-> seul compte au monde ouvre cette console. *Quand une migration crée une dépendance à un chemin de
-> récupération, ce chemin se PARCOURT avant de l'appliquer, il ne se raisonne pas : il suffisait
-> d'ouvrir l'écran une fois.*
-
-> ### 🟠 2026-09-02 · la note BAISSE de 2, et c'est l'audit qui l'a fait baisser
->
-> Rien ne s'est cassé : six findings sont apparus parce qu'on a enfin regardé la surface de
-> facturation. La ligne « findings ouverts dans le code » disait 0 depuis le 08-24 ; elle disait 0
-> **parce que personne n'avait lu les Edge Functions Stripe**, pas parce qu'elles étaient propres.
->
-> *Une note qui monte quand on cesse de chercher ne mesure pas la sécurité, elle mesure
-> l'attention.* Les six correctifs livrés le même jour ne la font pas remonter : ils réparent des
-> trous que la note n'avait jamais comptés.
->
-> ~~**Ce qui la retient à 84**, ce ne sont plus des findings ouverts — il n'y en a plus — mais deux
-> migrations **écrites et non appliquées** (`134`, `135`).~~ ✅ **Les deux ont été APPLIQUÉES en
-> production le 2026-09-02 au soir** (ledger `20260902162407` et `20260902162428`), et vérifiées
-> acteur par acteur dans une transaction annulée : doublon de `stripe_customer_id` refusé en 23505,
-> consentement incomplet refusé par la CHECK, UPDATE et DELETE refusés par le trigger **même au rôle
-> privilégié**, une seule policy et aucune policy d'écriture, un compte tiers ne voit rien. Le motif
-> qui retenait la note est donc levé le jour même. Un correctif non déployé n'est pas un correctif —
-> et celui-ci l'est.
->
-> ⚠️ **Incident de méthode, à consigner.** Les deux migrations ont été appliquées DEUX fois : une
-> session voisine les avait déjà passées à 16:24 UTC, une seconde application a suivi à 21:14 sans
-> que le ledger ait été relu d'abord. Sans effet sur le schéma — les deux migrations sont
-> idempotentes, et les vérifications ci-dessus portent sur l'état réel — mais le ledger a porté
-> **deux lignes par migration**, les seuls doublons de ses 127 entrées. Retirées, une entrée par
-> migration, schéma intact. *Ce dépôt a plusieurs sessions actives : lire le ledger avant
-> d'appliquer, pas seulement après.*
-
-> ### 🔴 2026-08-29 · la note ne bouge pas, mais une de ses justifications était fausse
->
-> Le +4 du 2026-08-25 était en partie porté par cette phrase, écrite plus bas : la mig. 115 est
-> arrivée avec « **337 lignes de test d'intégration contre une vraie base dans le même commit** ».
-> Le test existe, il est bon, et **il n'avait jamais été vert en CI** : le job `rls-integration`
-> échouait dessus depuis sa création. Un test rouge qu'on n'ouvre pas ne vaut pas mieux qu'un test
-> absent, et il coûte en plus la confiance qu'on lui accorde.
->
-> **Ce que le test reprochait n'était pas la base.** Rejeu mesuré sur base vierge, sous le rôle
-> `authenticated` avec un `auth.uid()` forgé : `is_org_admin` vrai, `my_org_perm` vrai, insertion
-> **acceptée**. Le refus venait de la RELECTURE demandée par `.insert().select()`, soumise à
-> `can_access_team_project(id)`, qui cherche en table une ligne pas encore visible. Le test
-> éprouvait une forme d'appel que l'application n'utilise nulle part, et que `createProject`
-> documente comme telle depuis le bug #9.
->
-> **Depuis le 2026-08-29, le test passe** : la justification est enfin vraie. La note ne monte pas
-> pour autant, parce qu'aucune protection nouvelle n'a été mise en vigueur, et parce que le crédit
-> avait déjà été versé. *Une note qui récompense une garde doit d'abord vérifier que la garde
-> tourne.*
->
-> ~~G-1 reste ouvert en production~~ → ✅ **G-1 est REFERMÉ le 2026-08-29** : mig. `130` appliquée en
-> production et vérifiée en base, pas sur parole (voir la section G-1).
-
-| Ce qui compose la note | 08-25 | 08-27 | **09-02** |
-|---|---|---|---|
-| Findings High/Critical exploitables | 0 | 0 | **0** |
-| Findings ouverts dans le code | 0 | 0 | **0** · `S-5` et `S-6` refermés le jour même |
-| Migrations écrites, **non appliquées** en prod | 0 | 0 | **0** · `134` et `135` appliquées le 2026-09-02 au soir |
-| Surface auditée au moins une fois | pages + RLS | idem | **+ les 4 Edge Functions Stripe** |
-| Findings ouverts **en production** | 0 | 0 | ~~🟠 1 · G-1~~ → **0 au 2026-08-29**, mig. 130 appliquée et vérifiée |
-| Bloquants restants, **hors dépôt** | A-9 (pas de PITR) + 5 réglages de console | **inchangés** | **inchangés** |
-| Gardes automatiques vertes | 4 | **4** (+ périmètre élargi : 128 policies, 127 migrations) | **4** · `check:rls` 0 violation, `validate:migrations` 0 erreur avec la mig. 130 |
-| Nouvelle surface livrée **avec** son test de base réelle | · | ✅ `org_member_permissions` (mig. 115) + `e2e/rls/org-permissions.test.ts` | ⚪️ sans objet, aucune nouvelle surface |
-| Fonctions `anon`-exécutables | 2 (les deux volontaires) | 2 | 2, non remesuré |
-
-**+4, et pas davantage.** Les neuf migrations du 2026-08-25 (`115` → `123`) n'ont ouvert aucune
-faille : la plus sensible, un système de permissions par membre, est arrivée avec sa policy, son
-trigger de garde en `SECURITY INVOKER`, ses `REVOKE`, et **337 lignes de test d'intégration contre
-une vraie base dans le même commit**. C'est la première fois qu'une brique entreprise fait ça, et
-c'est ce que la note récompense.
-
-Ce qui l'empêche de monter plus haut n'a pas bougé d'un pouce : **A-9** (plan Free, pas de PITR,
-restauration jamais testée) et les réglages de console. Ce sont les deux seules choses qui
-séparent « aucune faille connue » de « rattrapable en production », et aucune n'est du code.
-
-### 2026-08-27 · note inchangée, et c'est le bon résultat
-
-**Rien n'a changé en production.** Un finding de minimisation connu depuis le 2026-08-24 (noté
-alors sous B-2, « reste ouvert, non traité ») a reçu son correctif dans le dépôt, la **mig. 130**,
-qui **n'est pas appliquée**. Écrire une migration ne referme rien : tant qu'elle n'est pas passée
-en base, l'état de la prod est exactement celui du 25. La note ne peut donc pas monter, et elle ne
-baisse pas non plus, le finding n'étant pas nouveau.
-
-Deux points de vigilance sont apparus par ailleurs, tous deux vérifiés et **sans impact
-d'autorisation** :
-
-- **`wasOrgMember` (commit `f32d080`) est un INDICE D'AFFICHAGE persisté, jamais une
-  autorisation.** Il réserve la place de l'entrée « Entreprise » dans la navigation pendant que la
-  requête vole, à partir de la préférence d'organisation déjà stockée sur l'appareil. Il ne
-  débloque aucune donnée : `/entreprise` redirige toujours vers le tableau de bord si `activeOrg`
-  est nul une fois la requête résolue, et toute lecture reste gouvernée par la RLS. **Pire cas :
-  une entrée de navigation affichée une seconde de trop** chez quelqu'un qui vient de quitter sa
-  dernière organisation depuis un autre appareil. L'indice est effacé dès que la requête répond
-  « aucune organisation », et il ne traverse pas un changement de compte (vérifié par test).
-- **Le seed de démo passe de deux organisations à une seule** (`180fba1`). Effet de bord voulu :
-  sous une seule organisation la navigation redevient un vrai `<a href="/entreprise">` au lieu
-  d'un menu. La couverture des **refus non-admin**, qui dépendait de la seconde organisation, a
-  été reconstituée dans les tests (`seedSecondOrg`), **pas supprimée** : c'est la seule condition
-  qui rendait ce retrait acceptable.
-
----
-
-## Gardes automatiques · **rejouées le 2026-09-20**
-
-Toutes jouées ce jour, sur cet arbre, contre la prod `ykeugqfgklejcdbrmawy` pour les advisors et
-le ledger. Le tableau du 2026-09-14 est conservé sous celui-ci, à sa date.
-
-| Garde | Résultat au 2026-09-20 | Au 2026-09-14 |
+| Défense | Ce qu'elle tient | Ce qui la contourne |
 |---|---|---|
-| `npm run check:rls` | ✅ **132 policies sur 107 migration(s)**, 0 violation | 132 / 106 |
-| `npm run validate:migrations` | ✅ **153 fichiers**, 0 erreur, **les mêmes 6** avertissements | 152 fichiers, mêmes 6 |
-| `npm run typecheck` · `npm run lint` | ✅ 0 erreur, **31** warnings | identique |
-| `npm run i18n:check` | ✅ 23 namespaces, 0 erreur | identique |
-| `npm run i18n:scan` | 🔴 **ROUGE, puis corrigé le jour même** : 1 chaîne en dur, `Catégorie` dans `HabitModal.tsx`, entrée avec `6a25071c`. Externalisée en `habits.modal.category`, la gate est revenue à **0** | non mesurée ce jour-là |
-| `npm run i18n:identical` | ✅ 3 916 couples, 92 identiques **tous déclarés**, 0 non déclarée | — |
-| `npm test` | ✅ **2 653 passés / 232 fichiers**, + 1 sauté (cas POSIX du témoin de `check:edge`), exit 0 | 2 586 / 228 |
-| `npx playwright test --list` | **237 cas dans 27 fichiers** (recomptés, jamais « N × 2 ») | 236 à `HEAD` le 09-15 |
-| `npm run check:legal` | ✅ cohérent : 13 ✅ · 13 🟡 · 15 ❌ · 5 ⬜, total 46 | — |
-| `npm run check:docs` | ✅ **18 CLAUDE.md**, racine à 96,3 % du plafond, aucun lien mort | 17 |
-| `npm run check:deploy` | ✅ `egal` : la prod sert `ebb1dec`, le commit du dépôt | — |
-| Advisors Supabase (sécurité) | **9 / 52 / 2 / 1**, à l'unité près les mêmes | 9 / 52 / 2 / 1 |
-| Invariant RLS en base | ✅ **50 tables `public`, les 50 en `relrowsecurity = true`**, 126 policies, 117 fonctions | identique |
-| Ledger de migrations | ⚠️ **140 entrées pour 153 fichiers** après application de la `136` et de la `149` ce jour (138 au début de la passe). Reste la `140`, non appliquée **délibérément**. Et une confirmation NEUVE de l'angle mort D-1 : la `146` n'a **aucune entrée** alors que `events.review_dismissed_at` **existe en base** | 138 pour 152 |
+| Même origine, corps ≤ 2 Ko, robots écartés (`api/collect.ts`) | les appels passés par `/api/collect` | `POST /rest/v1/rpc/track_hit` avec la clé publique |
+| 60 évènements par visiteur et par minute | un vrai navigateur | un `ip` différent à chaque appel : `visitor` change avec lui |
+| 3 000 évènements par minute au total | ✅ tient | rien, mais c'est **4,3 M lignes par jour**, gardées **13 mois** |
 
-✅ **`okrTime` n'est plus à 0 : `C-77` est REFERMÉ le 2026-09-20**, mig. `136` appliquée et
-vérifiée par `pg_get_functiondef`. Détail, preuve avant/après et la réserve sur les KR sans
-`estimated_time` : § « Ordre de priorité avant déploiement prod ».
+**Effet.** Aucune fuite : les deux tables ne se lisent que par `service_role` et par
+`get_admin_traffic` (`is_admin()`). Le risque est la **disponibilité** : la base pèse **24 Mo**
+(relu le 2026-10-18), le plan Free plafonne à 500 Mo, et une base pleine passe en lecture seule,
+**toute l'application avec**. À quelques centaines d'octets la ligne, index compris (estimation,
+non mesurée), quelques heures d'appels y suffisent. Second effet : des statistiques d'acquisition
+empoisonnables, au moment précis où elles vont servir.
+✅ **Mesuré le 2026-10-18 par la preuve `223`** : **442** octets pour une ligne réaliste, **1 810**
+au maximum de ce que les `CHECK` admettent, index compris. Au plafond de la `222`, la base se
+remplit donc en **1 h 30 à 6 h**. Au plafond journalier de la `223`, au pire 8,6 Mo par jour : 54
+jours d'abus continu.
 
----
+**Correctif proposé, dans cet ordre :**
 
-## Gardes automatiques · état au 2026-09-14 · *conservé à sa date*
+1. le collecteur appelle la RPC avec un secret **serveur** (variable Vercel sans préfixe `VITE_`,
+   jamais servie au navigateur), puis `REVOKE EXECUTE ON FUNCTION public.track_hit(jsonb) FROM
+   anon, authenticated` ; ✅ collecteur en production et `REVOKE` appliqué le 2026-10-19 ;
+2. plafond global ramené à l'ordre de grandeur réel (quelques centaines par minute), plus un
+   plafond journalier ; ✅ 300 par minute, 5 000 sur 24 h, appliqués le 2026-10-19 ;
+3. recaler `Posture` par `--update` : attendu **`13 / 84 / 2 / 1`**, les deux fonctions de plus
+   que la référence étant `get_admin_revenue` et `get_admin_traffic`, relues.
 
-🔴 **Le tableau qui suivait datait du 2026-08-25 et affichait « 1 736 tests / 151 fichiers » — la
-suite en compte 2 586 sur 228.** Vingt jours de dérive, sur une page dont le métier est de dire
-où on en est. Il est conservé sous celui-ci, à sa date. Tout ce qui suit a été **joué ce jour**,
-advisors compris.
-
-| Garde | Résultat au 2026-09-14 | Au 2026-08-25 |
-|---|---|---|
-| `npm run check:rls` | ✅ **132 policies sur 106 migrations, 0 violation** | 128 / 81 |
-| `npm run validate:migrations` | ✅ **152 fichiers, 0 erreur, 6 avertissements** — les **mêmes** 6 qu'au 08-25, aucune des 29 migrations depuis n'en a ajouté | 127 fichiers, mêmes 6 |
-| `npm run typecheck` · `npm run lint` | ✅ 0 erreur, **31 warnings** Fast-refresh tolérés (rejoués le 2026-09-14 au soir ; « 35 » datait d'avant la suppression de `CategoryManager`) | 0 erreur, 27 warnings |
-| `npm run i18n:check` | ✅ **23 namespaces**, 0 erreur, 0 avertissement | 19 namespaces |
-| `npm test` | ✅ **2 586 passés / 228 fichiers**, zéro échec, **+ 1 sauté** : le cas POSIX du témoin de `check:edge`, que `it.skipIf(win32)` neutralise sur ce poste. Rejoué le 2026-09-14 au soir, exit 0 | 1 736 / 151 |
-| `npm run test:coverage` | ✅ verte, exit 0, rejouée le 2026-09-14 au soir : **31,15 L · 30,73 S · 24,48 F · 26,35 B** (les deux dernières valeurs étaient données à 24,41 et 26,31) | 26,96 L / 26,65 S |
-| `npm run check:edge` | ✅ **8 fonctions vérifiées, le code déployé est celui du dépôt** (job `Edge deploy drift`, run `34861975638`) | n'existait pas |
-| Advisors Supabase (sécurité) | **9** INFO `rls_enabled_no_policy`, **52** WARN `authenticated_security_definer_…`, **2** WARN `anon_security_definer_…`, **1** WARN `auth_leaked_password_protection` | 5 / 51 / 2 / 1 |
-| Migrations appliquées en prod | ⚠️ **RECOMPTÉ le 2026-09-14 au soir : le ledger porte 138 entrées, pas 148.** La dernière appliquée est bien `148_team_categories_tree_merge` (2026-09-13) : c'est son NUMÉRO qui avait été recopié comme un total. Et le ledger ne recouvre que 120 des 152 fichiers du dépôt, cf. l'angle mort **D-1** ci-dessous | jusqu'à `123` |
-
-⚠️ **Les quatre `rls_enabled_no_policy` de plus ne sont pas une régression** : ce sont
-`payment_records`, `payment_closures`, `rate_limits` et `renewal_notices`, toutes créées depuis, et
-toutes en **deny-all volontaire** — un journal scellé et un cache de défense n'ont aucune raison
-d'être lisibles par le client. Les cinq autres sont les tables analytiques déjà documentées.
-
-⚠️ **La 52ᵉ fonction `SECURITY DEFINER` exécutable par `authenticated`** est `my_org_badge_tasks`
-(mig. `142`). Elle l'est pour la seule raison qui vaut : appeler `my_team_project_ids`, dont
-`EXECUTE` est révoqué à `authenticated`. Son autorisation est celle de `get_my_team_tasks`, reprise
-mot pour mot.
-
----
-
-## Gardes automatiques · état au 2026-08-25 · *conservé à sa date*
-
-| Garde | Résultat |
-|---|---|
-| `npm run check:rls` | ✅ **128 policies sur 81 migrations, 0 violation** (120/68 au 08-24) · règle 3 comprise : toute fonction citée par une policy doit rester exécutable par `authenticated` |
-| `npm run validate:migrations` | ✅ **127 fichiers, 0 erreur, 6 avertissements**, les **mêmes** 6 qu'au 08-24 : 5 préexistants (doublons `000`/`007`/`010`, deux `FOR UPDATE` sans `WITH CHECK`) + 1 informatif (mig. `110`, trigger de notification en `SECURITY DEFINER`, légitime). Les sept migrations du 25 n'en ont ajouté aucun |
-| `npm run typecheck` · `npm run lint` | ✅ 0 erreur (27 warnings Fast-refresh tolérés) — + règle `no-restricted-imports` sur l'alias `@/` |
-| `npm run i18n:check` | ✅ 19 namespaces, 0 erreur |
-| `npm test` | ✅ **1 736 tests / 151 fichiers**, tous verts (1 583 / 143 au 08-24) |
-| `npm run test:coverage` | ✅ **VERTE au 2026-08-25 en fin de journée** (26,96 L / 26,65 S / 21,32 F / 22,75 B). Elle était rouge sur 3 seuils quelques heures plus tôt : refermée par **115 tests de repository**, sans qu'aucun seuil ne soit baissé, et les seuils du glob `supabase.repository.ts` ont été **remontés** (65 → 74 statements). Cf. [`docs/TESTING.md`](./docs/TESTING.md) |
-| Advisors Supabase (sécurité) | 5 INFO `rls_enabled_no_policy` (tables analytiques, **deny-all volontaire**), 1 WARN `auth_leaked_password_protection` (= A-10 ci-dessous), 51 WARN `authenticated_security_definer_function_executable` (48 au 08-24 : les 3 nouvelles RPC de lecture), **2** WARN `anon_security_definer_function_executable`, les deux volontaires, aucun de plus après sept migrations |
-| Couverture RLS | ✅ **toutes** les tables `public` ont RLS activée (vérifié en prod : `relrowsecurity = false` sur 0 table) |
-| Migrations appliquées en prod | ✅ ledger à jour jusqu'à `123_org_subscriptions_billing_interval` (relu en base le 2026-08-25 au soir) |
-
-Les fonctions exécutables par `anon` étaient **cinq** au 2026-08-24. Deux le sont
-volontairement : `preview_share_link(uuid)` (aperçu d'un lien d'invitation avant connexion) et
-`record_demo_visit(uuid)` (comptage des visites de démo). Toutes deux prennent un UUID non
-devinable en argument — à ne pas « nettoyer » par erreur. Les trois autres
-(`seed_default_categories`, `validate_team_task_dependency`,
-`prevent_team_task_dependency_cycle`) sont des **fonctions de trigger** : Postgres refuse leur
-appel direct, elles ne sont donc pas exploitables, mais elles violaient la règle de durcissement
-posée par les migrations `064b` / `094b` (cf. B-3). **La mig. `109` les révoque** — l'advisor
-retombera à deux dès qu'elle sera appliquée.
-
-## État global
-
-**Aucun finding High ou Critical exploitable** (dernière passe complète : **2026-08-25**, contre
-la prod `ykeugqfgklejcdbrmawy`). Risque global : **faible**.
-
-### Ce que la vague du 2026-08-25 a changé (mig. `115` → `123`)
-
-- ✅ **`org_member_permissions` (mig. 115)**, dix droits surchargeables par membre. Nouvelle
-  surface d'autorisation, donc nouveau risque potentiel ; elle arrive avec sa policy, un trigger
-  de garde en `SECURITY INVOKER` (règle B-3 respectée dès le premier jet, pas après coup), les
-  `REVOKE` correspondants, et `e2e/rls/org-permissions.test.ts` contre une base réelle. Deux
-  invariants méritent d'être relus avant toute évolution : `assign_targets = NULL` (aucune
-  décision → tout le monde) et `{}` (personne) sont **opposés**, et **aucune ligne ne peut être
-  posée sur un admin**, sinon un admin se retire un droit et bloque son organisation sans chemin
-  de retour.
-- ✅ **`friends.friend_user_id` : `SET NULL` → `CASCADE` (mig. 116)**, la prod divergeait du
-  dépôt sur la sémantique d'effacement d'une table qui porte l'email et le nom d'un tiers. Défense
-  en profondeur : la purge explicite de `delete-account` reste le rempart principal. Détail :
-  [`docs/RGPD.md`](./docs/RGPD.md) §2.
-- ✅ **Trois RPC de lecture (`117`, `119`, `121`)**, toutes `REVOKE`-ées pour `anon`, exécutables
-  par `authenticated` seulement. L'advisor `anon_security_definer_function_executable` est resté à
-  **2** (les deux volontaires) après sept migrations : le durcissement de la mig. `109` tient.
-- ⚠️ **Une entrée de ledger sans fichier** : `119b_habits_bounded_payload_future_guard` est
-  appliquée en prod et n'existe pas dans `supabase/migration/`. Vérifié : son contenu est
-  **identique** à celui du fichier `119` du dépôt (le correctif a été replié dans le fichier
-  d'origine au lieu d'être versionné à part), donc rejouer le dépôt sur base vierge donne le
-  **même** état final. Dérive de forme, pas de fond, mais c'est exactement le motif que
-  [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) §5 a mis six semaines à voir la première fois.
-  **Règle : un correctif appliqué en prod se versionne sous son propre numéro, jamais par édition
-  du fichier déjà appliqué.**
-
-Trois choses ont changé depuis le 2026-08-14 :
-
-- ✅ **La fuite inter-organisations par les helpers RLS est refermée** (mig. `100`, appliquée en
-  prod le 2026-08-23). Vérifié en base :
-  `has_function_privilege('authenticated', 'get_subtree', 'EXECUTE')` → **false**, idem
-  `has_subordinates` et `org_admin_count`. Finding + PoC archivés dans
-  [`docs/archive/faille-historique.md`](./docs/archive/faille-historique.md).
-- 🟠 **Trois findings ouverts par la vague entreprise du 2026-08-23/24** (migrations `103` → `108`) :
-  B-1, B-2, B-3.
-- ✅ **Les trois sont refermés, dépôt ET production.** Migration `109` appliquée en prod le
-  2026-08-24, vérifiée en base immédiatement après (policy, droits d'exécution, `prosecdef`).
-  Advisor `anon_security_definer_function_executable` retombé de 5 à **2** — les deux seules
-  fonctions volontaires (`preview_share_link`, `record_demo_visit`).
-
-Un seul **bloquant** subsiste côté sécurité, et c'est un point de **résilience**, pas une faille :
-le plan Supabase `free`. Tout le reste est du réglage de console Supabase.
-
----
-
-## ✅ B-1 · refermé (mig. 109, appliquée en prod le 2026-08-24)
-
-**Ce que c'était.** La mig. `100` a fermé la fuite des helpers en révoquant `EXECUTE` à
-`authenticated` sur `get_subtree` — et a réécrit la seule policy qui l'appelait **directement**,
-`org_team_members_insert`, en `is_above(org_id, user_id)`. Sept jours plus tard, la mig. `107`
-(leads d'équipe) a créé `org_team_members_update` **en réintroduisant le motif supprimé** :
-
-```sql
-OR user_id IN (SELECT public.get_subtree(org_id, (select auth.uid())))   -- 🔴
-```
-
-Un `WITH CHECK` de policy s'évalue **avec le rôle courant** (`authenticated`), pas avec le
-propriétaire : l'appel est refusé au niveau des droits.
-
-**Ce n'était pas une fuite — ça échoue fermé.** C'était une **fonctionnalité cassée en prod** : le
-`OR` court-circuite pour un admin et pour quelqu'un qui modifie sa propre ligne, mais dès qu'un
-**lead ou manager non-admin** nomme un lead sur un subordonné (`setTeamLead`,
-`src/modules/org-teams/supabase.repository.ts`), Postgres renvoie
-`ERROR: permission denied for function get_subtree`. Exactement le cas d'usage de la mig. `107`.
-
-**Correctif (mig. 109)** : `public.is_above(org_id, user_id)`, qui est à la lettre
-`p_user IN (SELECT get_subtree(p_org, auth.uid()))` (vérifié via `pg_get_functiondef`) — sémantique
-identique, droit d'exécution conservé.
-
-**Garde ajoutée** : `npm run check:rls` refuse désormais toute policy citant une fonction révoquée
-à `authenticated`. Il rejoue les `GRANT`/`REVOKE` de tout l'historique et évalue l'état final.
-Vérifié en réinjectant la régression : le script sort **exit 1** avec le nom de la fonction.
-Verrouillé par `scripts/migration-guards.test.mjs`.
-
-## ✅ B-2 · refermé (mig. 109, appliquée en prod le 2026-08-24)
-
-**Ce que c'était.** `invite_friend_to_org` (mig. `105`) n'exigeait que `is_org_member(p_org)`, là
-où les deux autres chemins d'entrée dans une organisation sont bien plus stricts — vérifié en prod
-sur `pg_policies` :
-
-| Chemin | Qui pouvait l'ouvrir |
-|---|---|
-| `org_invite_links_insert` (lien / code) | admin **ou** manager ayant des subordonnés (`i_have_subordinates`) |
-| `organization_join_requests` (demande spontanée) | l'admin décide (`respond_join_request`) |
-| **`invite_friend_to_org` (mig. 105)** | **n'importe quel membre** 🟠 |
-
-Pas d'élévation de privilège (l'entrant arrive `role = 'member'`, `manager_id NULL`) et le quota de
-sièges était bien vérifié à l'acceptation ✅ — mais la feuille la plus basse de la pyramide pouvait
-faire entrer un tiers, et consommer un siège payant une fois le paywall actif, sans qu'aucun admin
-ne l'ait décidé.
-
-**Décision (Axel, 2026-08-24)** : aligner sur le chemin du lien d'invitation. La mig. `109` ajoute
-`is_org_admin(p_org) OR i_have_subordinates(p_org)` en tête de la RPC — le **même** prédicat que
-`org_invite_links_insert`, pour qu'il n'y ait qu'une seule réponse à « qui peut faire grossir
-l'organisation ».
-
-**Le front était déjà aligné, par chance et non par conception** : `OrganizationPage` monte
-`InviteFriendsToOrg` sous `isAdmin`, et `AddUnderSheet` sous
-`canEdit = isAdmin || isManagerOf(members, currentUserId)` — or `isManagerOf` est, à la lettre,
-« quelqu'un a `managerId === moi` », c'est-à-dire `i_have_subordinates`. Aucun changement d'écran
-n'a donc été nécessaire ; la clé d'erreur `api.not_allowed_to_invite` est ajoutée aux deux
-catalogues comme filet, pas comme parcours attendu.
-
-**Vérifié en base le 2026-08-24** : `invite_friend_to_org(uuid, uuid)` redéployée avec la garde,
-signature inchangée.
-
-> ⚠️ **Reste ouvert, non traité** : `org_invitations_select` laisse tout membre lire l'`invitee_id`
-> de toutes les invitations, **y compris refusées**, sans date de péremption. Ce ne sont que des
-> UUID, mais c'est une trace persistante d'un refus. Cf. [`docs/RGPD.md`](./docs/RGPD.md) §1.
->
-> 🟠 **Suivi le 2026-08-27 : ce point devient le finding G-1**, correctif écrit (mig. `130`),
-> **non appliqué en production**. Détail ci-dessous.
-
-## ✅ G-1 · `org_invitations_select` · REFERMÉ le 2026-08-29, mig. `130` appliquée
-
-**Ce que c'est.** La policy posée par la mig. `105` est
-`(auth.uid() = invitee_id) OR is_org_member(org_id)` : **tout membre** de l'organisation lit
-l'`invitee_id` de **toutes** les invitations émises en son nom, y compris celles qui ont été
-**refusées**. Autrement dit, « telle personne a refusé de rejoindre cette entreprise » est lisible
-par n'importe quel collègue, alors que ni l'inviteur ni le destinataire ne le lui ont partagé.
-
-**Ce n'est pas une élévation de privilège.** Ce ne sont que des UUID : ni email ni nom, la policy
-de `profiles` tient toujours la frontière. C'est un défaut de **minimisation** (RGPD art. 5.1.c),
-sur une donnée qui est une décision individuelle rattachée à une personne identifiable par
-jointure.
-
-**Ce qui avait déjà été fait, et ce qui restait.** La mig. `112` a traité la **péremption** (les
-refus de plus de 30 jours sont purgés par `pg_cron`). Elle n'a pas touché au **périmètre** de
-lecture : pendant ces 30 jours, et pour toute invitation en attente, toute l'organisation lit la
-ligne. *Une purge n'est pas un contrôle d'accès.*
-
-**Correctif (mig. `130`)** : lecture restreinte à trois personnes, le **destinataire**,
-l'**inviteur** (il doit voir « en attente » pour ne pas réinviter) et un **admin** de
-l'organisation. Une seule policy PERMISSIVE, le `OR` existant est élargi (invariant mig. 049).
-
-**Impact client : nul.** La seule lecture directe de cette table côté application est
-`getPendingSentInvitationIds`, qui filtre déjà `inviter_id = auth.uid()`. La boîte de réception du
-destinataire passe par `get_my_org_invitations`, une fonction `SECURITY DEFINER` que cette policy
-ne gouverne pas.
-
-| État | Détail |
-|---|---|
-| Dépôt | ✅ `supabase/migration/130_org_invitations_select_narrowed.sql`, `check:rls` et `validate:migrations` verts |
-| **Production** | ✅ **APPLIQUÉE le 2026-08-29**, ledger `org_invitations_select_narrowed`. Vérifié en base : une seule policy PERMISSIVE en SELECT ; un membre simple de l'organisation qui porte l'invitation lit **0 ligne** (avant : toutes), témoin sur un second membre simple à 0 ; l'inviteur, le destinataire et l'admin lisent **2 lignes**, inchangé. `check:drift` derrière : aucun objet attendu ne manque |
-| Test de base réelle | ✅ `e2e/rls/org-invitations.test.ts` (2026-08-27, soir) · sept cas joués dans **cinq rôles réels** sur la stack Supabase, plus le rôle `anon` |
-| Réversibilité | rejouer le bloc `CREATE POLICY` de la mig. `105` |
-
-**Ce que le test ajoute, et pourquoi le commentaire ne suffisait pas.** La migration portait en
-pied de fichier une « vérification après application » : trois requêtes à jouer à la main dans
-trois rôles. *Un commentaire n'est pas une vérification.* Tant que personne ne les joue, la
-migration ne repose que sur une relecture de son propre `USING`, ce qui est exactement la manière
-dont B-1 (mig. `107`) est passée : le SQL avait l'air juste.
-
-Le test couvre les trois qui **doivent** voir (destinataire, inviteur, admin), celui qui ne doit
-**rien** voir (un membre simple, sur l'invitation en attente **et** sur le refus d'un tiers, la
-donnée personnelle en cause), et le rôle `anon`.
-
-> ⚠️ **Un cas est un contre-exemple délibéré** : `etranger` est le destinataire de l'invitation
-> refusée. Le test exige qu'il voie **la sienne, et rien d'autre**. Un fichier qui n'attendrait que
-> des listes vides passerait aussi bien avec une policy qui n'autorise plus personne : il
-> vérifierait qu'on ne fuit rien, pas que le produit marche encore.
->
-> 🔴 **Ce test est ROUGE tant que la migration n'est pas appliquée**, et seulement sur le cas du
-> membre simple. C'est voulu : c'est ce qui distingue « écrite » de « en vigueur ». Il tourne avec
-> `npm run test:rls`, qui exige une stack Supabase locale, donc en CI (job `rls-integration`).
-
-⚠️ `is_org_admin(org_id)` **dépend de la ligne**, contrairement aux deux autres branches. C'est
-assumé et documenté dans la migration : `org_invitations` compte des dizaines de lignes par
-organisation, pas des milliers. **Ne pas généraliser ce motif à une table volumineuse**, cf. les
-mig. `085` / `113` / `128`.
-
-## ✅ B-3 · refermé (mig. 109, appliquée en prod le 2026-08-24)
-
-**Ce que c'était.** La mig. `108` enfreignait deux règles déjà écrites :
-
-1. « Un trigger de garde doit être `SECURITY INVOKER` » (audit du 2026-07-26) —
-   `validate_team_task_dependency()` et `prevent_team_task_dependency_cycle()` étaient `DEFINER`,
-   alors que la mig. `107`, écrite le même jour, respecte la règle pour
-   `freeze_team_membership_identity()`.
-2. Pas de `REVOKE … FROM anon` (règle `064b`, réappliquée par `094b`).
-
-**Exploitabilité directe : nulle** (`RETURNS trigger`, Postgres refuse l'appel direct). Mais un
-trigger `BEFORE INSERT` s'exécute **avant** le `WITH CHECK` de la RLS : en `DEFINER`, la lecture de
-`team_tasks` ignorait la RLS, et les messages d'erreur distinguaient
-« `Both tasks must exist` » de « `… single project` » — soit un **oracle d'existence** sur
-`team_tasks` hors organisation. Étroit (UUID v4 requis, réponse booléenne), mais c'est la classe
-exacte du finding refermé par la mig. `100`.
-
-**Correctif (mig. 109)** : les deux triggers repassent en `SECURITY INVOKER` — le `SELECT`
-redevient filtré par la RLS, les deux cas convergent vers `Both tasks must exist`, l'oracle
-disparaît — et **quatre** fonctions de trigger sont révoquées pour `anon` **et** `authenticated`
-(`validate_team_task_dependency`, `prevent_team_task_dependency_cycle`,
-`freeze_team_membership_identity`, `seed_default_categories`).
-
-Ces quatre-là sont exactement celles qui restaient exposées : vérifié en prod le 2026-08-24 sur
-les **28** fonctions `RETURNS trigger` du schéma `public`, les 24 autres sont déjà fermées.
-
-**Garde ajoutée** : `npm run validate:migrations` refuse toute nouvelle fonction de trigger sans
-`REVOKE` explicite pour les deux rôles, et avertit si elle est `SECURITY DEFINER`. Cliquet à partir
-de la mig. `109` — et le contrôle évalue l'**état final** de l'historique, pas chaque fichier
-isolément, pour qu'une migration puisse réparer l'oubli d'une précédente.
-
-> **Pourquoi un cliquet et pas un audit rétroactif** : le premier jet, plancher à la mig. `064`,
-> sortait 12 erreurs. Vérification en prod : **les 12 étaient des faux positifs** — ces fonctions
-> sont déjà révoquées, par des chemins qu'un modèle statique ne voit pas (privilèges par défaut du
-> schéma, `REVOKE` hors du jeu de migrations). C'est la limite que `check-rls-advisors.mjs`
-> documentait déjà : *un modèle statique de l'historique complet est faux*. Une gate rouge en
-> permanence finit ignorée — le remède aurait été pire que le mal.
-
----
+❌ Ne pas recaler `Posture` avant le point 1 : la référence absorberait `track_hit` sans décision.
 
 ## 🟠 G-2 · aucune vérification de l'adresse email à l'inscription (2026-08-27)
 
@@ -780,46 +308,24 @@ séparent pas.
 > qui se vérifie, et la racine ne bouge pas — `check:mail` contrôle les deux, précisément pour
 > attraper cette erreur-là.
 
-### ✅ G-3 · G-2 croisé avec les mécanismes de septembre (2026-09-30) · REFERMÉ le 2026-10-01
-
-> ✅ **Décision d'Axel du 2026-10-01 : refuser les liens ouverts quand `invite_domain_only` est
-> actif.** Mig. `210`, ledger `20261001102453`, corps vivants relus **octet pour octet** contre le
-> fichier : le trigger refuse la **création** d'un lien ouvert, `claim_org_invite` refuse la
-> **réclamation** d'un lien ouvert créé avant l'activation ; retirer l'option les rend à nouveau
-> utilisables. Preuve en prod, transaction annulée (`supabase/proofs/208-210.proof.sql`, cas 10 à
-> 13) : **avant**, lien créé et réclamé sous l'option ; **après**, refusés, puis réclamé une fois
-> l'option retirée. Texte d'écran (`orgConfig.inviteDomainOnlyHint`, fr et en) et message
-> d'erreur (`errors.open_link_not_allowed`) à jour ; témoin : `src/lib/normalizeApiError.test.ts`,
-> vu rouge sans l'entrée de catalogue.
-> 🔴 **Trouvé en route** : un refus levé en `42501` n'affiche jamais son message (le code SQL connu
-> gagne, l'écran dit « droits insuffisants »). `email_domain_not_allowed` (mig. `195`) n'a donc
-> **jamais été lu par personne**. Les deux refus du trigger passent en `P0001` dans la `210`.
-> ⚠️ **Reste ouvert, et c'est G-2** : sans confirmation d'adresse, un lien NOMINATIF transféré ou
-> fuité reste réclamable par qui inscrit l'adresse avant son propriétaire.
-
-G-2 a été évalué **seul** le 2026-08-27. Deux mécanismes nés depuis supposent une adresse prouvée :
-
-- `claim_org_invite` (mig. `161`) lie une invitation **nominative** à `auth.email()`. Sans
-  confirmation d'adresse, `auth.email()` est une adresse **déclarée**. Le jeton reste le vrai
-  secret (UUID, envoyé à la seule adresse invitée) : le défaut ne s'exploite que sur un lien
-  **transféré ou fuité**, par quelqu'un qui inscrit l'adresse avant son propriétaire.
-- `invite_domain_only` (mig. `195`) filtre l'adresse **écrite dans le lien**, pas celle qui le
-  réclame, et **ne s'applique pas aux liens ouverts** (`email IS NULL`, « rien à comparer »). Un
-  admin qui coche « domaine vérifié seulement » peut croire son organisation fermée : un lien
-  ouvert, lui, l'ouvre à n'importe qui.
-
-**Pas d'élévation hors du lien** : aucun des deux ne se rejoue sans jeton. ⚠️ **Nouveau motif de
-réouverture de G-2**, ajouté aux trois de la décision d'Axel : **la première organisation qui
-active `invite_domain_only`**, parce qu'elle achète précisément la promesse que G-2 ne tient pas.
-Arbitrage produit ouvert : refuser les liens ouverts quand `invite_domain_only` est actif.
-
----
 
 ## 🟠 Surface entreprise `160`-`207` · relecture du 2026-09-30, audit du 2026-10-01 (A-1)
 
 > ✅ **2026-10-01** : la relecture partielle ci-dessous est complétée par un audit **joué en
 > production** (tables acteur par acteur, sept fonctions DEFINER de plus). Résultat : § « Audit A-1
 > des tables » plus bas. Un défaut nouveau, **E-3**, ouvert et soumis à l'arbitrage d'Axel.
+
+> ✅ **2026-10-16 · AM-6 rejoué en CI** : `e2e/rls/org-surface-entreprise.test.ts`, joué par
+> `npm run test:rls` (job `rls-integration`), rejoue **24 tables** (toutes celles que créent les
+> mig. `160`-`220` et qui existent encore) pour **6 acteurs** (anonyme, sans organisation, membre,
+> manager, admin, admin d'une AUTRE organisation) et **4 opérations** : **624 cellules**, 147
+> accordées et 477 refusées, chacune constatée en base sous `service_role` après la tentative du
+> client de l'acteur. Vert sur la PR brouillon n° 72 (run `38810405159`, 0 écart). **Vu rouge
+> sur deux sabotages** joués sur cette PR, base de CI seulement : policies relâchées
+> (`USING (true)`, parentes comprises, run `38859320682`) : les 477 refus deviennent des
+> acceptations ; policies retirées (run `38859843934`) : les 147 accès deviennent des refus. Le
+> premier passage a trouvé un défaut **du test**, pas du produit : le décor effaçait en cascade
+> les lignes filles de trois tables, dont la lecture valait alors 0 pour tout le monde.
 
 🔴 **Aucun audit n'avait relu cette surface** avant le 2026-09-30 : c'est l'angle mort **AM-6**
 de la note. La relecture de ce jour est **partielle**, et c'est dit : elle couvre les fonctions
@@ -842,180 +348,20 @@ pas audit** : ni preuve acteur par acteur en base, ni revue des 25 tables et de 
 | `get_my_team_kr_projects`, `get_my_team_project_members`, `get_my_team_project_progress`, `get_team_okr_trash`, `leave_organization`, `remove_member`, `my_project_role` (relues le 2026-10-01) | `my_team_project_ids` (passe par `is_org_member`, qui écarte suspendu et expiré), `can_access_team_okr`, `can_restore_team_okr`, `is_org_admin` | ✅ rien trouvé |
 | **14** fonctions de trigger en `SECURITY DEFINER` (`validate:migrations` : 19 avertissements), **relues une par une le 2026-10-01** au catalogue | toutes `AFTER` (donc après le `WITH CHECK`), `search_path` vide, aucune exécutable par `anon`/`authenticated`, **aucun `RAISE`** (pas d'oracle B-3), chacune écrit un journal ou une notification au-delà des droits de l'appelant | ✅ légitimes. 🟠 **E-4** : trois d'entre elles (`notify_team_task_status`, `notify_team_project_archived`, `notify_task_comment`) notifiaient un membre **suspendu**, qui lisait encore statuts, commentaires et nom des projets archivés (`org_notifications` se lit par `user_id` seul). Refermé mig. `212` : 3 notifications avant, 0 après |
 
-### ✅ Audit A-1 des tables `160`-`207` · 2026-10-01, en production
 
-**Ce qui a été joué**, et pas seulement lu : `supabase/proofs/a1-tables-160-207.proof.sql`, un
-bloc dont la seule issue est une exception (rien ne reste, vérifié après coup). Les **23 tables**
-encore présentes créées par ces migrations (26 moins les trois retirées par la `200`), une ligne
-de chaque, lues par six acteurs : admin, manager, membre, **membre suspendu chef d'équipe**,
-**ex-membre retiré créateur d'équipe**, **admin d'une autre organisation**.
+## ✅ V-1 · script de mesure tiers sur les pages publiques — REFERMÉ (2026-10-18)
 
-- ✅ **Lecture : rien trouvé.** Suspendu, retiré et autre organisation lisent **0 ligne dans les
-  23 tables**. Les tables personnelles (`org_saved_views`, abonnements, réglages de notification)
-  ne se lisent que par leur auteur ; `org_webhooks`, `org_billing_contacts`, `org_audit_log` par
-  l'admin seul. Témoin positif joué (un chef d'équipe ACTIF lit le rapport de son équipe) : le
-  0 du suspendu n'est pas celui d'une branche morte.
-- ✅ RLS active sur les 23 ; policies relues commande par commande ; aucune policy en double.
-  `TRUNCATE` est accordé à `anon` et `authenticated` sur ces tables : ce sont les privilèges par
-  défaut de Supabase, que PostgREST n'expose pas. Noté, pas un finding.
-- 🟠 **E-3, ci-dessous**, trouvé en relisant les policies d'écriture.
+Le script de mesure d'audience tiers chargé sur les pages publiques s'était mis, le 2026-09-01,
+à lire l'**email** et le **nom** saisis dans les formulaires d'inscription. Mitigé à l'époque en
+l'excluant des pages d'identifiants.
 
-### ✅ E-3 · un manager s'ajoute à l'audience d'un OKR confidentiel (2026-10-01) · REFERMÉ le jour même
+**Refermé le 2026-10-18 : le fournisseur est débranché.** La mesure d'audience est internalisée.
+Plus aucun script tiers de mesure n'est chargé : `src/lib/audience.ts`, son test, l'empreinte
+surveillée et `vendor-watch.yml` sont supprimés, l'origine retirée de la CSP (`script-src` et
+`connect-src`). Reste Vercel Analytics, monté après consentement (`ConsentedAnalytics`, `src/App.tsx`).
 
-> ✅ **Mig. `212`, ledger `20261001132108`**, corps vivants comparés octet pour octet au fichier.
-> Gérer l'audience exige désormais le droit de **modifier** l'OKR (manager qui le voit), ou d'en
-> être le **créateur** (sans quoi il ne pourrait pas peupler un OKR confidentiel qu'il ne voit pas
-> encore), ou d'être admin ; un manager suspendu ne gère plus rien. Les deux tables, membres et
-> équipes. Le front remplace l'audience par une RPC unique, `set_team_okr_links`, qui vérifie le
-> droit **avant** de toucher à quoi que ce soit : en deux requêtes, un manager qui ne voyait l'OKR
-> que par son audience perdait ce droit entre la suppression et la réinsertion. Preuve :
-> `supabase/proofs/212.proof.sql`, témoin rouge en prod sans la migration, 10/10 avec.
-
-`team_okr_members` (mig. `205`) : INSERT et DELETE exigent `is_org_manager(org_id)`, c'est-à-dire
-**admin, ou n'importe qui ayant au moins un subordonné**, sans regarder l'OKR. Les clés étrangères
-interdisent tout croisement d'organisation, mais pas ceci : **prouvé en prod, transaction
-annulée**, un manager sans aucun lien avec l'audience d'un OKR `custom` ne le voit pas
-(`can_access_team_okr` = `false`), s'y inscrit lui-même (insertion acceptée), et le voit
-(`true`), donc le lit et peut modifier ses KR (la policy UPDATE de `team_key_results` est
-`can_access_team_okr`). Il peut aussi retirer les autres personnes : l'OKR se referme alors sur
-les admins.
-⚠️ La règle est **héritée** de `team_okr_teams` (mig. `073`), qui l'applique aux équipes : un
-manager rattache son équipe et obtient le même accès. Les deux tables sont à corriger ensemble.
-**Pas d'élévation hors de l'organisation.** Proposition, **à arbitrer par Axel** : n'autoriser
-l'ajout et le retrait que pour un admin, ou pour qui **voit déjà** l'OKR et peut le modifier
-(`can_access_team_okr(okr_id)` en plus de `is_org_manager`).
-
-### ✅ W-1 · aucun webhook d'entreprise n'a jamais été délivré (A-3)
-
-✅ **REFERMÉ EN PRODUCTION le 2026-10-01** : `org-webhook-dispatch` **v2**, `verify_jwt = false`,
-redéployée depuis `main` **après** la mig. `207` ; `org-webhook-dispatch.yml` en
-`workflow_dispatch` rend **HTTP 200** (run `36847104980`), et la sonde répond `401` **depuis le
-corps de la fonction** (`{"error":"unauthorized"}`), plus depuis la passerelle.
-
-
-`org-webhook-dispatch` était **absente de `supabase/config.toml`**, donc déployée (v1, 2026-09-27)
-avec le défaut `verify_jwt = true`. `.github/workflows/org-webhook-dispatch.yml` n'envoie que
-`x-cron-secret` : la passerelle répond **401 avant le code**. Rejoué le 2026-09-30 par
-`check:edge-smoke` : `{"code":"UNAUTHORIZED_NO_AUTH_HEADER"}`. Aucun run vert depuis la création ;
-un client qui configure un webhook ne reçoit rien, et la file grossit (purge à 7 jours).
-✅ **Dépôt** : section `[functions.org-webhook-dispatch] verify_jwt = false`, plus
-`stripe-org-refund` et `verify-org-domain` qui manquaient aussi. **Garde** :
-`src/edge-config.guard.test.ts` (chaque fonction déclarée, une fonction cron en `false`, une
-fonction qui lit le JWT en `true`), **vue rouge** sur le `config.toml` d'avant.
-### ✅ W-2 · SSRF sur les webhooks sortants (A-6) · en production le 2026-10-01
-
-✅ Mig. `207` appliquée (ledger `20261001100535`), contrainte relue (`[a-z]{2,63}`, `NOT VALID`)
-et rejouée en prod, transaction annulée : les quatre adresses internes ci-dessous étaient
-**acceptées avant** et sont **refusées après**. La résolution DNS (second étage) est dans
-`org-webhook-dispatch` v2, identique au dépôt selon `check:edge`. ⚠️ Ce second étage n'a pas été
-exercé en prod : aucune organisation n'a de webhook (0 ligne), il l'est par ses témoins.
-
-La contrainte `org_webhooks_url` (mig. `199`) était une liste noire textuelle. Non couverts :
-`172.16.0.0/12`, `100.64.0.0/10`, l'IPv4 entière ou hexadécimale (`https://2130706433/`,
-normalisée en `127.0.0.1` par `fetch`), et tout **nom** qui résout vers une adresse privée
-(`127.0.0.1.nip.io`). Latent tant que W-1 bloque l'envoi, **exploitable le jour où W-1 est corrigé**.
-✅ **Dépôt** : deux étages. La mig. `207` n'accepte plus qu'un **nom DNS à TLD alphabétique**
-(aucune adresse littérale ne peut s'y écrire), et `org-webhook-dispatch` **résout** le nom (A et
-AAAA) et refuse si **une seule** adresse n'est pas publique (`_shared/org-integrations.ts`,
-`ipIsPublic`, IPv4 mappée et NAT64 comprises). Témoins : `src/org-edge-functions.guard.test.ts`,
-vu rouge en retirant la plage `172.16/12`. ⚠️ **Résiduel assumé** : entre la résolution et le
-`fetch`, un DNS à TTL nul peut encore changer (rebinding). La requête reste un POST aveugle, le
-corps de réponse n'est ni lu ni stocké ; seul le **code HTTP** l'est (`last_status`, visible de
-l'admin) : c'est un oracle d'un octet sur une cible interne, pas une lecture.
-
-### ✅ W-3 · enfilement de webhook forgeable (relecture A-1) · en production le 2026-10-01
-
-✅ Corps vivant relu (`pg_trigger_depth() = 0` en tête), et rejoué en prod : un membre qui
-appelle la RPC enfilait **2** livraisons avant la `207`, **0** après ; le trigger en enfile
-toujours 2 au passage à `done`.
-
-`enqueue_team_task_webhook` est `SECURITY DEFINER` et `EXECUTE` à `authenticated`, parce que le
-trigger INVOKER qui l'appelle en a besoin. Elle était donc aussi appelable **en RPC** par tout
-membre qui voit une tâche : forger `task.completed` sur une tâche ouverte vers le Slack du client,
-et boucler pour remplir une file **commune** à toutes les organisations (200 plus anciennes par
-passage), donc retarder les webhooks de tous les autres clients.
-✅ **Dépôt** : mig. `207`, `IF pg_trigger_depth() = 0 THEN RETURN` en tête ; rien d'autre ne
-change. Prouvé sur PGlite (cas 07 et 08 de `207.proof.sql`) : l'appel direct n'enfile rien, le
-trigger enfile toujours ; garde retirée, le cas 07 tombe.
-
-### ✅ W-4 · `send-org-invite` sans plafond de débit (A-10) · déployé le 2026-10-01
-
-✅ **v2** déployée depuis `main`, identique au dépôt (`check:edge`), `RATE_LIMIT_SALT` posé
-(`supabase secrets list`). Le plafond lui-même n'a pas été atteint en prod : ses témoins le
-prouvent, pas un envoi réel.
-
-50 envois par appel, aucun appel à `_shared/rate-limit.ts`. Un compte gratuit crée une
-organisation et appelle en boucle : quota Resend brûlé, et réputation de `send.thecosmo.app`, qui
-porte **aussi** les e-mails d'authentification. En phase d'acquisition, c'est le scénario qui
-coupe les inscriptions.
-✅ **Dépôt** : un jeton **par e-mail**, 100 par jour et par compte, 100 par jour et par
-organisation (`SEND_ORG_INVITE_LIMITS`), consommé avant chaque appel au fournisseur ; plafond
-atteint, l'envoi s'arrête et la réponse le dit (`limited`), les liens restent copiables ;
-`RATE_LIMIT_SALT` absent = 503. Témoin : `src/edge-mail-functions.guard.test.ts`.
-
----
-
-## 🟠 V-1 · le script analytics tiers capte email et nom — mitigé, arbitrage ouvert (2026-09-01)
-
-**Trouvé par `vendor-watch.yml`**, qui échouait à chaque exécution **depuis au moins le
-2026-08-29** sans que personne ne lise l'alerte. Le workflow n'était pas cassé : il alertait.
-C'est le premier enseignement, et il vaut pour toutes les gardes planifiées — **une alerte que
-personne ne lit ne protège rien.**
-
-**Ce qui a changé.** Le script servi à `https://www.vesk.dev/a.js` a gagné une fonction
-`tryIdentify()` qui lit les champs d'un formulaire d'inscription, en extrait l'**adresse email**
-(160 car. max) et le **nom** (80), et les envoie à `vesk.dev`. Elle se déclenche sur `submit`
-**et** sur un clic qui « ressemble » à une inscription — donc dans une SPA sans `submit` natif,
-ce qui est exactement notre cas. Elle exige un champ mot de passe et un signe d'inscription : un
-formulaire newsletter ne la déclenche donc pas.
-
-**Pourquoi c'est un écart.** Le registre (art. 30, `docs/RGPD-REGISTRE.md` §T8) déclare pour ce
-traitement : « adresse de la page, page référente, adresse IP, navigateur. **Sans cookie.** » Ni
-email, ni nom, ni identifiant persistant — or le script pose aussi un UUID `_a_cid` en
-`localStorage`. **Un consentement recueilli pour une MESURE D'AUDIENCE ne couvre pas la
-transmission de l'identité de la personne à un tiers.** Et `/signup` étant une page publique sans
-session, les trois conditions de chargement étaient réunies : le script tournait bel et bien là
-où l'on saisit son email.
-
-**Ce qui a été fait (2026-09-01).** `src/lib/audience.ts` ne monte plus le script sur les pages
-portant un formulaire d'identifiants (`CREDENTIAL_FORM_SEGMENTS` : `signup`, `login`,
-`forgot-password`, `reset-password`, `invite`, `org-invite`). On aligne le code sur ce qui est
-déclaré, plutôt que l'inverse. La mesure garde sa finalité : landing, blog, guide, cas d'usage.
-Cliquet : `src/lib/audience.test.ts`, vérifié rouge sans la garde.
-
-**Le reste de la revue, sans reproche** : aucun `eval`, aucun `new Function`, aucune injection de
-script, aucune lecture de `document.cookie`, aucun accès aux champs mot de passe, aucune
-obfuscation `atob`. L'endpoint est dérivé de l'origine du script lui-même, et la CSP borne
-`connect-src`.
-
-**✅ Arbitré par Axel le 2026-09-01 — option A : on garde Vesk, et on met la déclaration en
-conformité.** Motif : Vercel reste le tableau de bord de référence, et les indicateurs
-d'engagement de Vesk gardent leur valeur pour la phase d'acquisition qui commence.
-
-Fait dans la foulée :
-
-- `docs/RGPD-REGISTRE.md` §T8 — les données déclarées incluent désormais les indicateurs
-  d'engagement **et l'identifiant persistant `_a_cid`**. La mention « sans cookie » a été
-  retirée, avec la raison écrite sur place : littéralement vraie, elle laissait croire à
-  l'absence de traceur. L'exclusion des pages d'identifiants y est inscrite comme **garde de
-  conformité**, pas comme détail d'implémentation.
-- `PolitiqueConfidentialitePage.tsx` — trois corrections. La page affirmait « Vesk n'écrit rien
-  sur votre appareil » (faux), rangeait la mesure sous l'**intérêt légitime** en §5 alors que
-  §7 et le registre disent consentement (deux sections du même document se contredisaient), et
-  sa section Cookies ne distinguait pas le strictement nécessaire de ce qui exige un accord.
-  Les pages exclues de la mesure sont maintenant nommées pour le visiteur. Une phrase cassée
-  qui traînait a été réparée au passage.
-- `docs/ROADMAP-60J.md` T-43 — **Vesk ajouté à la liste des DPA à collecter**, dont il était
-  absent. Un sous-traitant qu'on oublie de lister est un sous-traitant sans contrat.
-
-**🔴 Ce qui reste, et qui n'appartient qu'à Axel : obtenir le DPA de Vesk** (art. 28). Tant
-qu'il manque, ce traitement s'appuie sur un sous-traitant sans contrat de sous-traitance.
-
-⚠️ **Et la vraie leçon de ce finding n'est pas Vesk.** `vendor-watch.yml` a fait exactement son
-travail et a échoué chaque jour pendant quatre jours sans que personne ne le lise. Le prochain
-changement de ce script sera détecté de la même façon — **et ne servira à rien si l'alerte n'est
-pas lue.** Une garde planifiée sans destinataire n'est pas une garde. `OPS_ALERT_WEBHOOK_URL`
-existe depuis le 2026-08-29 : y router les échecs de `vendor-watch` fermerait ce trou.
+⚠️ La leçon reste valable : une garde planifiée sans destinataire n'est pas une garde. Les échecs
+de garde sont poussés sur `OPS_ALERT_WEBHOOK_URL` (`ci-alert.yml`).
 
 ---
 
@@ -1079,129 +425,6 @@ le 02/07, 4 `customer.subscription.deleted` le 31/07), 0 ligne dans `payment_rec
 | S-5 | Un event tardif d'un ANCIEN abonnement peut dégrader l'org qui vient de repayer | 🟠 | ✅ corrigé · **`stripe-webhook` v33, déployée le 2026-09-13 à 16:12 UTC** |
 | S-6 | La renonciation au droit de rétractation ne quitte jamais le navigateur | ✅ | corrigé · mig. `135` **appliquée en prod le 2026-09-02**, immuabilité et cloisonnement vérifiés |
 
-### ✅ S-1 · le pré-contrôle d'idempotence avalait son erreur
-
-`const { data: alreadyProcessed } = await …` jetait `error`. Une panne de lecture se lisait donc
-« jamais traité », et les handlers repartaient. La plupart sont des upserts, donc idempotents —
-**mais pas `bump_win_streak`, qui incrémente**. Un rejeu y ajoutait une victoire jamais gagnée,
-c'est-à-dire exactement ce que ce pré-contrôle existe pour empêcher.
-
-**Corrigé** : l'erreur produit un 500, Stripe retente. C'est la même règle que le marqueur écrit
-après le handler (faille M-5) : en cas de doute, faire retenter plutôt que deviner.
-
-### ✅ S-2 · une panne de lecture devenait un succès silencieux
-
-Même motif, conséquence plus lourde. `getUidFromCustomer` ignorait l'erreur de sa requête et
-rendait `null`. Tous ses appelants font `if (!uid) return` : un **succès** du handler, donc le
-marqueur d'idempotence écrit, donc Stripe qui ne re-livre jamais. Un paiement encaissé sans que
-l'abonnement soit appliqué, et personne pour le voir passer.
-
-C'est le finding que `orgIdFromInvoice` avait déjà reçu, avec un commentaire de dix lignes
-expliquant pourquoi il fallait relancer. **La leçon n'avait pas traversé les vingt lignes qui
-séparent les deux fonctions** : la branche entreprise a été durcie, sa jumelle particulière non.
-
-**Corrigé** : l'erreur est relancée. `recordPayment` reste protégé à part — une ligne de journal
-sans `user_id` reste une pièce comptable, une ligne absente est un trou.
-
-### ✅ S-3 · le code s'appuyait sur une unicité qui n'existait pas — mig. `134` appliquée le 2026-09-02
-
-`getUidFromCustomer` fait `.maybeSingle()` sur `stripe_customer_id`, qui **lève** au-delà d'une
-ligne. Côté organisation, la mig. `101` pose la contrainte UNIQUE, et le commentaire de
-`orgIdFromInvoice` la cite comme ce qui rend son appel sûr. Côté particulier, la même hypothèse est
-faite et rien ne la garantit (vérifié en base : la contrainte n'existe pas).
-
-0 doublon aujourd'hui sur 54 lignes : latent, sans gardien. La mig. `134` pose un index unique
-partiel. **Elle échouera s'il existe un doublon — c'est voulu** : le découvrir en appliquant une
-migration vaut mieux que le découvrir sur une facture.
-
-### ✅ S-4 · l'avis de reconduction ne pouvait pas partir
-
-`renewal-notice` portait `BUG_REPORT_FROM ?? 'Cosmo <bug@thecosmo.app>'`. Or le domaine vérifié
-chez Resend est `send.thecosmo.app` : la racine porte les MX et le SPF d'IONOS et **ne sera jamais
-signée**. Ce défaut ne dégradait pas l'envoi, il le rendait impossible.
-
-Ce qui rend le défaut coûteux, c'est ce que la fonction porte : l'avis de l'article L215-1. Ne pas
-l'envoyer ne coûte pas une amende, ça rend l'abonnement annuel **résiliable à tout moment et
-remboursable**. `docs/DEPLOYMENT.md` §2ter le disait déjà noir sur blanc ; le code, lui, offrait la
-valeur qui échoue.
-
-**Corrigé** : plus de défaut. Sans le secret, la fonction répond 503 et alerte.
-
-### ✅ S-5 · un event tardif peut dégrader une organisation qui vient de repayer
-
-`handleOrgSubscriptionDeleted` filtre sur `stripe_subscription_id`, avec un commentaire qui
-explique exactement pourquoi : après un cycle « résiliation puis réabonnement », la livraison
-tardive du `deleted` de l'ANCIEN abonnement remettrait au gratuit une organisation qui vient de
-payer.
-
-**`applyOrgSubscription` n'a pas ce filtre.** Elle fait un `upsert` sur `org_id` seul. Un
-`customer.subscription.updated` tardif portant le statut `canceled` de l'ancien abonnement écrit
-donc `tier_key = 'free'`, `max_members = 5`, `current_period_end = null` sur l'organisation qui
-vient de souscrire. La garde a été posée sur une porte et pas sur l'autre.
-
-**Corrigé le 2026-09-02.** La garde est ASYMÉTRIQUE, et c'est ce qui la rend juste :
-
-- un event qui **active** fait autorité, d'où qu'il vienne : un nouvel abonnement actif supersède
-  le précédent, c'est la souscription elle-même ;
-- un event qui **dégrade** (`cancelled`, `past_due`) n'est appliqué que s'il concerne l'abonnement
-  actuellement enregistré. Venant d'un autre, il parle par définition d'un abonnement abandonné.
-
-Un simple `.eq()` sur l'upsert ne convenait pas : il aurait empêché la toute première écriture,
-quand la ligne n'a encore aucun `stripe_subscription_id`. La lecture préalable relance sur erreur,
-comme partout ailleurs dans ce fichier.
-
-⚠️ **Fenêtre de concurrence assumée** : lecture puis écriture, donc deux livraisons simultanées
-peuvent lire la même valeur. L'état converge — l'event actif finit toujours par être appliqué, et
-une dégradation appliquée à tort est corrigée par le suivant. Verrouiller la ligne coûterait plus
-cher que ce que ça protège.
-
-### ✅ S-6 · la renonciation au droit de rétractation ne quitte jamais le navigateur
-
-`OrgBillingTab` recueille les deux cases exigées par l'article L221-28, 13° — accord exprès à
-l'exécution immédiate, et reconnaissance de renoncer — sans les pré-cocher, et son commentaire
-conclut : « nous laisse la preuve ». **Rien n'est envoyé au serveur et rien n'est enregistré.** Le
-corps posté à `stripe-org-checkout` est `{ orgId, tierKey, interval }`.
-
-Deux conséquences. Un appel direct à la fonction avec un JWT valide ouvre une session de paiement
-sans qu'aucun consentement ait été donné, alors que les CGU affirment « le paiement ne peut être
-engagé sans elles ». Et surtout, **le jour où un client conteste, il n'y a aucune preuve** — alors
-que le même dépôt traite `renewal_notices` comme une pièce à produire, avec la règle écrite
-« ⚠️ c'est une PREUVE, pas un cache ».
-
-**Corrigé le 2026-09-02**, en trois pièces.
-
-1. Les deux booléens sont **transmis** au serveur, séparément.
-2. `stripe-org-checkout` les **exige** strictement à `true`, chacun de son côté : accepter une
-   valeur « truthy » reviendrait à accepter `"false"`, et les fondre en un seul drapeau ferait
-   exactement ce que le texte interdit — un accord global au lieu de deux accords distincts.
-3. La **mig. `135`** crée `withdrawal_consents`, jumelle de `renewal_notices` : append-only,
-   immuabilité par TRIGGER (car `service_role` contourne la RLS mais pas un trigger), aucune policy
-   d'écriture, lecture ouverte au propriétaire de l'organisation — c'est SA preuve autant que la
-   nôtre. La ligne est écrite **avant** la création de la session : l'ordre est la preuve.
-
-L'échec d'écriture est **bloquant**, contrairement à `renewal_notices` qui trace après l'envoi. La
-règle n'est pas la même parce que la situation ne l'est pas : là-bas, un avis parti sans trace vaut
-mieux qu'un avis jamais parti ; ici, rien n'est encore engagé, donc renoncer ne coûte rien — et
-ouvrir une page de paiement en sachant qu'on ne pourra rien produire en cas de litige, c'est
-encaisser sans preuve.
-
-> ⚠️ **Une incohérence RESTE dans les CGU, et elle n'appartient qu'à Axel.** L'article 5 bis dit
-> « le paiement ne peut être engagé sans elles » — vrai depuis ce correctif — puis « si vous ne
-> donnez pas ces confirmations, vous conservez l'intégralité de votre délai de quatorze jours »,
-> qui décrit un cas que le produit rend impossible. Deux lectures possibles : soit la seconde
-> phrase disparaît, soit le produit accepte de vendre sans renonciation (le client garde alors ses
-> quatorze jours, et il faut un chemin de remboursement). C'est un choix produit, pas un correctif.
-
-### Ce que l'audit n'a PAS trouvé, et qui méritait d'être cherché
-
-- Aucun montant n'est calculé côté COSMO au moment de facturer. Le seul endroit qui CHOISIT un prix
-  est la dérivation annuelle, et elle vérifie le montant contre la grille avant d'ouvrir la session.
-- Aucune donnée de carte ne transite ni n'est stockée. `payment_records.payload` est une copie
-  volontairement étroite.
-- Les deux fonctions org vérifient `organizations.owner_id` côté serveur, et répondent la même chose
-  pour « pas propriétaire » et « org inexistante ».
-- `allow_promotion_codes` délègue les coupons à Stripe : aucune surface de brute-force côté COSMO.
-- Aucun message d'erreur brut n'est renvoyé à l'appelant.
 
 ### 🆕 Hors périmètre de l'audit du 09-02 : `stripe-org-refund` — le chemin qui REND de l'argent
 
@@ -1270,6 +493,7 @@ le journal montrerait un encaissement sans son remboursement. Gestes : `a-faire-
    basculement live.
 
 ---
+
 
 ## 🔴 Ouvert — bloquant
 
@@ -1348,6 +572,16 @@ relit contre la console et contre `docs/ROADMAP-60J.md`, jamais de mémoire.
 Section référencée par [`CLAUDE.md`](./CLAUDE.md) — elle n'existait plus depuis la refonte
 documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 
+> ✅ **2026-10-19 : [`TR-1`](#-tr-1--track_hit-réservée-au-collecteur-refermé-2026-10-19) refermé** (collecteur à la clé
+> secrète, mig. `223` appliquée). Reste `Posture` à recaler par `--update` (Axel). La liste complète des
+> gestes avant l'acquisition, code et mains d'Axel, est dans
+> [`docs/README.md`](./docs/README.md) § « Mise à jour du 2026-10-18 ». Le bandeau `BK-1`
+> ci-dessous est à jour : `M-68`, `M-69` et `M-70` faits ou décidés le 2026-10-16, reste `M-71`.
+
+> 🔴 **EN TÊTE depuis le 2026-10-13 : [`BK-1`](#-bk-1--sauvegardes-de-la-base-en-clair-dans-un-dépôt-public--contenu-le-2026-10-13-2-gestes-ouverts).**
+> Avant tout autre geste de déploiement : révoquer les sessions et changer le mot de passe de la
+> base (`M-68`), puis trancher la notification CNIL avant le 2026-10-16 (`M-69`).
+
 > 🔴 **Cette table est restée « à jour 2026-09-02 » pendant dix-huit jours, et TROIS migrations
 > écrites depuis n'y figuraient pas** — dont celle qui répare le seul défaut ouvert que voie un
 > utilisateur. C'est le défaut exact que la ligne `Migrations écrites, non appliquées : 0` du
@@ -1395,7 +629,7 @@ pas qu'une migration manque, exactement ce que dit l'angle mort **D-1**. Seul
 | **3ter** | 🔴 **Mig. `207`** (W-2 SSRF + W-3 enfilement forgeable), puis **redéployer `org-webhook-dispatch`** (W-1, `verify_jwt = false` lu dans `config.toml`) | 🔴 sécurité, dans CET ordre | agent, accord d'Axel geste par geste | ✅ **FAIT le 2026-10-01, dans cet ordre** : preuve jouée **en prod** (passe témoin sans la 207 : failles reproduites ; passe avec : vert), mig. `207` appliquée (ledger `20261001100535`), relue au catalogue, **puis** `org-webhook-dispatch` v2 ; `org-webhook-dispatch.yml` **HTTP 200** |
 | **3quater** | 🔴 **Redéployer `stripe-org-checkout`, `stripe-org-portal`, `report-bug` et `send-org-invite`** depuis `main` (A-4, `M-61`, W-4) | 🔴 le code en prod n'est pas celui du dépôt | agent, accord d'Axel | ✅ **DÉPLOYÉES le 2026-10-01** depuis `main` (`af622168`) : `stripe-org-checkout` v16, `stripe-org-portal` v13, `report-bug` v13, `send-org-invite` v2, plus `verify-org-domain` v2 (sa copie de `_shared/org-integrations.ts` avait vieilli avec W-2). `Edge deploy drift` **vert** (`36849106222`) : 12 identiques, 12 sondes |
 | **3quinquies** | 🟠 **E-3** : un manager s'ajoute à l'audience d'un OKR confidentiel (`team_okr_members`, et `team_okr_teams` par héritage) | 🟠 élévation dans l'organisation | agent, accord d'Axel | ✅ **APPLIQUÉE le 2026-10-01** (mig. `212`, ledger `20261001132108`), avec E-4 |
-| 4 | Test de bout en bout de l'attribution `?ref=` (cf. [`docs/ACQUISITION.md`](./docs/ACQUISITION.md) §3) | 🟡 exige une vraie inscription | **Axel** | ⏳ **en attente** |
+| 4 | Test de bout en bout de l'attribution `?ref=` (cf. [`docs/ACQUISITION.md`](./docs/ACQUISITION.md) §3) | 🟡 exige une vraie inscription | **Axel** | ⏳ **en attente**, à jouer **par Google ET par e-mail** : jusqu'au 2026-10-10 une inscription Google ne portait jamais sa source (mig. `217`, ledger `20261010121835`) |
 | — | Garde `check:rls` « fonction citée par une policy exécutable par `authenticated` » | prévention (aurait attrapé B-1) | — | ✅ **livrée**, testée |
 | — | Garde `validate:migrations` « fonction de trigger révoquée + `SECURITY DEFINER` signalé » | prévention (aurait attrapé B-3) | — | ✅ **livrée**, testée |
 | — | Règle ESLint `no-restricted-imports` sur l'alias `@/` | prévention de dérive | — | ✅ **livrée** |
@@ -1505,65 +739,6 @@ que le catalogue n'ait déjà prouvé, et la garde les range déjà en « objet 
 ✅ `212_okr_audience_and_suspended_notifications` : ledger `20261001132108`, cinq corps identiques au fichier (E-3, E-4).
 ⏳ `206` (jalons) reste **non appliquée, délibérément** ; `211` appartient à une autre session.
 
-### État au 2026-09-30 (relu au ledger ET au catalogue) · *conservé à sa date*
-
-Dépôt : **183 fichiers**, dernière `207_org_webhooks_hardening.sql`. Ledger : **155 entrées** (141 au
-2026-09-22, plus quatorze : `151`-`153`, `160`-`163`, `170`, `180`, `200`-`203`, `205`), dernière
-`205_team_okr_custom_audience` (`20260929213952`).
-
-| Migrations | Ledger | Catalogue, objet par objet | Verdict |
-|---|---|---|---|
-| `164`, `181`, `190`, `191`, `192`, `193`, `194`, `195`, `197`, `198`, `199` | **aucune entrée** | tables, colonnes, contraintes, triggers et fonctions présents ; les quatre corps réécrits par la `194` portent bien l'union `164` + `190` | ✅ **appliquées hors ledger** (angle mort D-1). ❌ Ne jamais réappliquer la `164` |
-| `196` | aucune entrée | `org_member_capacity`, `org_member_secondary_managers` absentes | ✅ cohérent : la `200` (appliquée) les retire |
-| **`204`** | aucune entrée | 🔴 **`team_tasks.health` ABSENTE** | 🔴 **non appliquée**, alors que le front la lit et l'écrit : priorité **3bis** |
-| `206` | aucune entrée | — | ⏳ non appliquée, **délibérément** : après le front qui ne lit plus les jalons |
-| `207` | aucune entrée | — | ⏳ écrite le 2026-09-30 : priorité **3ter** |
-
-> 🔴 **Le « appliquée » d'un message de commit n'est pas une mesure.** `7a9b3db0` écrit « mig. 204,
-> appliquee » ; la colonne n'existe pas. C'est `C-77` une troisième fois : le seul énoncé qui vaut
-> cite une entrée de ledger **et** une relecture du catalogue.
-
-*Historique, conservé à sa date :* repo au 2026-08-25, **127 fichiers, dernière =
-`123_org_subscriptions_billing_interval.sql`**, toutes appliquées en prod, `115` → `123` déployées
-le 2026-08-25, après `111` → `114`.
-
-Vérifié en base le 2026-08-25 (`supabase_migrations.schema_migrations`) :
-- `115_org_member_permissions` → `123_org_subscriptions_billing_interval` présentes, dans l'ordre.
-- `122_habits_local_date` (le fuseau du client décide de « aujourd'hui ») et `123` (colonne
-  `billing_interval`) appliquées le soir du 2026-08-25.
-- ⚠️ Le ledger porte **une entrée de plus que le dépôt** :
-  `119b_habits_bounded_payload_future_guard`. Contenu relu et comparé au fichier `119` du dépôt :
-  **identique**. Cf. l'avertissement de l'État global.
-- Aucune migration en attente *à cette date* (vrai le 2026-08-25, **faux le 2026-09-30**, cf.
-  le tableau ci-dessus). `npm run check:drift` reste l'outil de référence avant tout
-  déploiement comportant une migration.
-
-Vérifié en base lors de la vague précédente (2026-08-24) :
-- `team_categories` existe, avec `team_projects.category_id` / `team_tasks.category_id` (111).
-- Le job `cosmo-prune-declined-invitations` est planifié et actif, `30 3 * * *` (112).
-- `get_my_team_projects` / `get_my_team_tasks` exécutables par `authenticated` uniquement (`anon`
-  et `public` révoqués), `my_team_project_ids` fermée à tout le monde (113 — c'est la migration qui
-  débloquait le déploiement front : `main` appelle déjà ces deux RPC).
-- `touch_last_seen` / `record_demo_visit` portent la rétention 400 j (114).
-- Advisors relus après coup : aucune erreur, aucune fonction `anon`-exécutable de plus que les deux
-  volontaires (`preview_share_link`, `record_demo_visit`).
-
-- `099` → `108` : **appliquées en prod** (ledger relu le 2026-08-24), y compris la `100` qui
-  referme la fuite des helpers.
-- `109` (correctifs B-1/B-2/B-3) et `110` (notifications de commentaire) : **appliquées et
-  vérifiées en prod le 2026-08-24**. Elles portent leur propre bloc de vérification SQL en fin de
-  fichier.
-
-> ⚠️ Ces deux dernières lignes ont dit « écrites, PAS appliquées » pendant vingt-quatre heures
-> alors que le haut du même fichier disait le contraire, et vrai. Un document de sécurité qui se
-> contredit sur l'état de la production est pire qu'un document absent. **Relire ce bloc à chaque
-> application, pas seulement l'en-tête.**
-
-Procédure d'application, checklist de rédaction d'une migration et pattern RLS obligatoire :
-[`docs/SECURITY.md`](./docs/SECURITY.md). Réconciliation du ledger :
-[`supabase/migration/README.md`](./supabase/migration/README.md).
-
----
 
 ## Stripe
 

@@ -42,7 +42,7 @@ const OrgJoinCodeCard = ({ code, orgId, isAdmin = false, seatsFull = false }: Or
     regenerateMutation.mutate(orgId, { onSettled: () => setConfirming(false) });
 
   return (
-    <div className={INVITE_ROW}>
+    <div data-guide-id="invite-join-code" className={INVITE_ROW}>
       <Hash size={18} aria-hidden="true" className="text-[rgb(var(--color-text-muted))] shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="flex flex-wrap items-center gap-x-2 text-sm font-semibold text-[rgb(var(--color-text-primary))]">

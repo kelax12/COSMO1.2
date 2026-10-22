@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { AtSign, Check, ChevronRight, Eye, Hourglass, ListChecks, ListTodo, CircleCheckBig, Pin, PinOff, Undo2 } from 'lucide-react';
+import { Check, ChevronRight, ListChecks, ListTodo, CircleCheckBig, Pin, PinOff, Undo2 } from 'lucide-react';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import type { OrgMember, OrgNotification } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
@@ -17,7 +17,9 @@ import TaskSelectCheckbox from './TaskSelectCheckbox';
 // Cartes de l'Aperçu entreprise (audit du 2026-09-24). Les dérivations sont
 // dans `my-work.helpers.ts` ; ce fichier ne fait que peindre.
 
-export const CARD = 'min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4';
+// Maquette 235 (2026-10-10) : sur mobile, des sections séparées par l'espace,
+// plus neuf cartes empilées (comme l'accueil perso). Desktop inchangé.
+export const CARD = 'min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:px-0 max-md:py-2';
 export const TITLE = 'text-sm font-bold text-[rgb(var(--color-text-primary))]';
 const firstName = (name: string) => name.split(' ')[0];
 const shortDate = (iso: string) => format(parseISO(iso), 'd MMM', { locale: getDateLocale() });
@@ -29,7 +31,7 @@ const initials = (name: string) =>
 export const MemberInitials = ({ name, className = '' }: { name: string; className?: string }) => (
   <span
     title={name}
-    className={`w-6 h-6 rounded-full shrink-0 inline-flex items-center justify-center text-[10px] font-bold bg-[rgb(var(--color-accent)/0.14)] text-[rgb(var(--color-accent))] ring-2 ring-[rgb(var(--color-surface))] ${className}`}
+    className={`w-6 h-6 rounded-full shrink-0 inline-flex items-center justify-center text-[10px] font-bold bg-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] ring-2 ring-[rgb(var(--color-background))] md:ring-[rgb(var(--color-surface))] ${className}`}
   >
     <span aria-hidden="true">{initials(name)}</span>
     <span className="sr-only">{name}</span>
@@ -81,7 +83,7 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
       <div className="flex items-center justify-between gap-2 mb-2">
         <h3 id="waiting-for-me-title" className={TITLE}>{tOrgAdmin('waiting.title')}</h3>
         {total > 0 && (
-          <span className="text-caption font-semibold px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]">
+          <span className="text-label tabular-nums text-[rgb(var(--color-text-muted))]">
             {total}
           </span>
         )}
@@ -96,20 +98,23 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
         <div className="space-y-3">
           {reviews.length > 0 && (
             <div>
-              <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
-                <Eye size={13} aria-hidden="true" /> {tpOrgAdmin('waiting.reviews', reviews.length)}
+              {/* Maquette 229 : casse normale, sans icône. */}
+              <p className="text-label font-semibold text-[rgb(var(--color-text-secondary))] mb-1">
+                {tpOrgAdmin('waiting.reviews', reviews.length)}
               </p>
               <ul className="space-y-1">
                 {reviews.map((task) => (
-                  <li key={task.id} className="rounded-lg">
-                    <TaskLink onClick={() => onOpenTask(task)}>
-                      {task.assigneeIds[0] && <MemberInitials name={fullName(task.assigneeIds[0])} />}
-                      <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{task.name}</span>
-                      <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
-                        {task.assigneeIds.map(memberName).slice(0, 2).join(', ')}
-                      </span>
-                    </TaskLink>
-                    <div className="flex gap-2 pl-10 pt-1 pb-1.5">
+                  <li key={task.id} className="rounded-lg flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <TaskLink onClick={() => onOpenTask(task)}>
+                        {task.assigneeIds[0] && <MemberInitials name={fullName(task.assigneeIds[0])} />}
+                        <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{task.name}</span>
+                        <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0 max-w-[40%] truncate">
+                          {task.assigneeIds.map(memberName).slice(0, 2).join(', ')}
+                        </span>
+                      </TaskLink>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
                       <button
                         type="button"
                         onClick={() => onApprove(task)}
@@ -135,8 +140,8 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
 
           {mentions.length > 0 && (
             <div>
-              <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
-                <AtSign size={13} aria-hidden="true" /> {tpOrgAdmin('waiting.mentions', mentions.length)}
+              <p className="text-label font-semibold text-[rgb(var(--color-text-secondary))] mb-1">
+                {tpOrgAdmin('waiting.mentions', mentions.length)}
               </p>
               <ul>
                 {mentions.map(({ notification, task }) => (
@@ -158,8 +163,8 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
 
           {blocking.length > 0 && (
             <div>
-              <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
-                <Hourglass size={13} aria-hidden="true" /> {tpOrgAdmin('waiting.blocking', blocking.length)}
+              <p className="text-label font-semibold text-[rgb(var(--color-text-secondary))] mb-1">
+                {tpOrgAdmin('waiting.blocking', blocking.length)}
               </p>
               <ul>
                 {blocking.map(({ mine, waiting }) => {
@@ -168,7 +173,8 @@ export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenT
                     <li key={mine.id}>
                       <TaskLink onClick={() => onOpenTask(mine)}>
                         <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{mine.name}</span>
-                        <span className="text-xs text-amber-600 dark:text-amber-400 shrink-0 truncate max-w-[45%]">
+                        {/* Maquette 237 : en gris ; le jaune signalait une urgence qui n'y est pas. */}
+                        <span className="text-xs text-[rgb(var(--color-text-secondary))] shrink-0 truncate max-w-[45%]">
                           {people.length > 0
                             ? tOrgAdmin('waiting.blockingPeople', { names: people.slice(0, 2).join(', ') })
                             : tpOrgAdmin('waiting.blockingTasks', waiting.length)}
@@ -264,8 +270,10 @@ export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById,
         <div className="space-y-3">
           {groups.map(({ horizon, tasks }) => (
             <div key={horizon}>
-              <p className={`text-caption font-semibold uppercase tracking-wide mb-1 ${
-                horizon === 'overdue' ? 'text-red-500' : horizon === 'today' ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-muted))]'
+              {/* Maquettes 229 et 231 : casse normale ; le rouge pour le retard,
+                  et rien d'autre (« Aujourd'hui » était bleu). */}
+              <p className={`text-label font-semibold mb-1 ${
+                horizon === 'overdue' ? 'text-[rgb(var(--color-danger-text))]' : 'text-[rgb(var(--color-text-secondary))]'
               }`}
               >
                 {tOrgAdmin(HORIZON_KEYS[horizon])} · {tasks.length}
@@ -299,13 +307,16 @@ export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById,
                       >
                         <span className="block text-sm text-[rgb(var(--color-text-primary))] truncate">{task.name}</span>
                       </button>
+                      {/* Maquette 230 : point et nom, comme une tâche perso (88),
+                          plus une pastille colorée. */}
                       {project && pColor && (
-                        <span className={`text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 truncate max-w-[110px] ${pColor.soft}`}>
-                          {project.name}
+                        <span className="inline-flex items-center gap-1.5 text-caption shrink-0 max-w-[110px] text-[rgb(var(--color-text-muted))]">
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${pColor.dot}`} aria-hidden="true" />
+                          <span className="truncate">{project.name}</span>
                         </span>
                       )}
                       {task.deadline && horizon !== 'today' && (
-                        <span className={`text-caption shrink-0 ${horizon === 'overdue' ? 'text-red-500 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
+                        <span className={`text-caption shrink-0 ${horizon === 'overdue' ? 'text-[rgb(var(--color-danger-text))] font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
                           {shortDate(task.deadline)}
                         </span>
                       )}
@@ -348,7 +359,7 @@ export const MyProjectsCard = ({ summaries, orgId, userId, people, members }: My
   return (
     <div className={CARD}>
       <h3 className={`${TITLE} mb-2`}>{tOrgAdmin('myProjects.title')}</h3>
-      <ul className="space-y-1">
+      <ul className="divide-y divide-[rgb(var(--color-border))]">
         {summaries.slice(0, 6).map(({ project, open, overdue, nextDeadline }) => {
           const color = projectColor(project.color);
           const isPinned = pinned.includes(project.id);
@@ -356,7 +367,7 @@ export const MyProjectsCard = ({ summaries, orgId, userId, people, members }: My
           const others = people.get(project.id) ?? [];
           const elapsed = projectElapsed(project.startDate, project.dueDate);
           return (
-            <li key={project.id} className="flex items-start">
+            <li key={project.id} className="flex items-start py-1">
               <button
                 type="button"
                 onClick={() => navigate(buildOrgLink('projects', { project: project.id }))}
@@ -365,9 +376,16 @@ export const MyProjectsCard = ({ summaries, orgId, userId, people, members }: My
                 <span className="flex items-center gap-2.5 w-full">
                   <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
                   <span className="flex-1 min-w-0 truncate text-sm font-medium text-[rgb(var(--color-text-primary))]">{project.name}</span>
+                  {/* Maquette 234 : deux avatars entiers et « +n », plus une
+                      rangée d'initiales coupées. */}
                   {others.length > 0 && (
-                    <span className="flex -space-x-1.5 shrink-0">
-                      {others.map((id) => <MemberInitials key={id} name={nameOf(id)} />)}
+                    <span className="flex -space-x-1 shrink-0">
+                      {others.slice(0, 2).map((id) => <MemberInitials key={id} name={nameOf(id)} />)}
+                      {others.length > 2 && (
+                        <span className="w-6 h-6 rounded-full inline-flex items-center justify-center text-[10px] font-bold bg-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] ring-2 ring-[rgb(var(--color-background))] md:ring-[rgb(var(--color-surface))]">
+                          +{others.length - 2}
+                        </span>
+                      )}
                     </span>
                   )}
                   <ChevronRight size={14} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
@@ -375,7 +393,7 @@ export const MyProjectsCard = ({ summaries, orgId, userId, people, members }: My
                 <span className="flex items-center gap-1.5 pl-5 text-xs text-[rgb(var(--color-text-muted))]">
                   <span>{tpOrgAdmin('myProjects.open', open)}</span>
                   {overdue > 0 ? (
-                    <span className="font-semibold text-red-500">· {tpOrgAdmin('myProjects.overdue', overdue)}</span>
+                    <span className="font-semibold text-[rgb(var(--color-danger-text))]">· {tpOrgAdmin('myProjects.overdue', overdue)}</span>
                   ) : nextDeadline ? (
                     <span>· {tOrgAdmin('myProjects.next', { date: shortDate(nextDeadline) })}</span>
                   ) : null}

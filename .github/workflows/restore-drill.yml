@@ -54,8 +54,9 @@ name: restore-drill
 #
 #   · `dump-check` — TRIMESTRIEL ET AUTOMATIQUE. Ne se connecte à aucune base et
 #     n'écrit nulle part. Il télécharge le dernier dump de `db-backup.yml`, le
-#     relit avec `pg_restore --list`, et ÉCHOUE si le fichier est tronqué, vide,
-#     ou s'il ne contient plus les tables attendues. C'est la moitié du drill
+#     DÉCHIFFRE (chiffré depuis BK-1, 2026-10-13), le relit avec
+#     `pg_restore --list`, et ÉCHOUE si l'artefact est absent, en clair,
+#     indéchiffrable, tronqué, ou s'il ne contient plus les tables attendues. C'est la moitié du drill
 #     qui répond à « le dump existe-t-il et est-il relisible », et c'est la
 #     moitié qui échouait en silence : un dump quotidien qui produit depuis
 #     trois semaines un fichier de 200 octets ne fait rougir personne.
@@ -117,68 +118,34 @@ jobs:
           "$BIN/pg_restore" --version | grep -q ' 17[.]' || {
             echo "::error::Le binaire impose n'est pas en version 17."; exit 1; }
 
+      # Le telechargement reste ici ; la relecture vit dans un module Node,
+      # parce que le shell qui la portait acceptait un `.gpg` non chiffre et un
+      # clair pose a cote du chiffre, sans qu'aucun temoin puisse le voir
+      # (relu le 2026-10-15). Detail : en-tete de `scripts/dump-check.mjs`,
+      # temoin `scripts/dump-check.guard.test.mjs`.
+      # Node est preinstalle sur les runners : pas de `setup-node`.
+      # ⚠️ Nom d'etape cite tel quel par `scripts/artefacts-donnees-prod.guard.test.mjs`.
       - name: Relire le dernier dump
         env:
           GH_TOKEN: ${{ github.token }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
           REPO: ${{ github.repository }}
           RUN_ID: ${{ inputs.run_id }}
-          # Les tables sans lesquelles un dump ne vaut rien. Elles portent les
-          # données du produit ET le journal fiscal inaltérable
-          # (`payment_records`, mig. 125, CGI art. 286-I-3° bis) : un dump qui
-          # ne le contient pas ne restaure pas une obligation légale.
-          ATTENDUES: 'profiles tasks habits events okrs categories payment_records'
         run: |
           set -euo pipefail
           if [ -z "${RUN_ID:-}" ]; then
             RUN_ID=$(gh run list --repo "$REPO" --workflow db-backup.yml \
                        --status success --limit 1 --json databaseId \
-                       --jq '.[0].databaseId')
-            [ -n "$RUN_ID" ] || { echo "::error::Aucun run db-backup reussi trouve."; exit 1; }
+                       --jq '.[0].databaseId') || RUN_ID=""
+            [ -n "$RUN_ID" ] || { echo "::error title=dump-check::Aucun run db-backup reussi trouve."; exit 1; }
           fi
           echo "Run db-backup : $RUN_ID"
-          gh run download "$RUN_ID" --repo "$REPO" --name db-dump --dir dump
-          DUMP=$(ls dump/*.dump 2>/dev/null | head -1)
-          [ -n "$DUMP" ] || { echo "::error::Artefact db-dump vide ou absent."; exit 1; }
-          TAILLE=$(stat -c%s "$DUMP")
-          echo "Fichier : $DUMP ($TAILLE octets)"
-
-          # 🔴 Un plancher de taille, parce que c'est le mode de defaillance
-          # silencieux de cette chaine : `pg_dump` qui echoue a mi-parcours rend
-          # un fichier VALIDE et minuscule. 100 ko est tres en dessous du reel
-          # (plusieurs Mo) : ce n'est pas une cible, c'est un detecteur de
-          # troncature.
-          if [ "$TAILLE" -lt 100000 ]; then
-            echo "::error title=dump-check::Dump de $TAILLE octets : trop petit pour etre complet."
+          if ! gh run download "$RUN_ID" --repo "$REPO" --name db-dump --dir dump; then
+            echo "::error title=dump-check::Artefact db-dump introuvable sur le run $RUN_ID (expire apres 30 jours, ou run reussi sans depot)."
             exit 1
           fi
-
-          # La table des matieres. Elle echoue sur un fichier corrompu.
-          pg_restore --list "$DUMP" > toc.txt
-          LIGNES=$(wc -l < toc.txt)
-          echo "Table des matieres : $LIGNES lignes"
-
-          MANQUANTES=""
-          for T in $ATTENDUES; do
-            grep -qE "TABLE (DATA )?public $T " toc.txt || MANQUANTES="$MANQUANTES $T"
-          done
-          {
-            echo '### Relecture du dump (trimestriel, sans restauration)'
-            echo ''
-            echo '```'
-            echo "run db-backup : $RUN_ID"
-            echo "fichier       : $(basename "$DUMP") ($TAILLE octets)"
-            echo "objets        : $LIGNES"
-            echo "tables        : ${MANQUANTES:+MANQUANTES ->$MANQUANTES}${MANQUANTES:-toutes presentes}"
-            echo '```'
-            echo ''
-            echo 'Ceci ne remplace PAS le drill : un dump relisible n est pas un dump restaure.'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          if [ -n "$MANQUANTES" ]; then
-            echo "::error title=dump-check::Tables absentes du dump :$MANQUANTES"
-            exit 1
-          fi
-          echo "::notice title=dump-check::Dump relisible, $LIGNES objets, toutes les tables attendues presentes."
+          export RUN_ID
+          node scripts/dump-check.mjs dump
 
   # ── La moitié MANUELLE : celle qui écrit ───────────────────────────
   drill:
@@ -255,6 +222,7 @@ jobs:
         id: dump
         env:
           GH_TOKEN: ${{ github.token }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
           RUN_ID: ${{ inputs.run_id }}
           REPO: ${{ github.repository }}
         run: |
@@ -267,6 +235,13 @@ jobs:
             echo "Dernier run db-backup reussi : $RUN_ID"
           fi
           gh run download "$RUN_ID" --repo "$REPO" --name db-dump --dir dump
+          # Depuis le 2026-10-13 l'artefact est chiffre (cf. db-backup.yml).
+          GPGF=$(ls dump/*.dump.gpg 2>/dev/null | head -1)
+          [ -n "$GPGF" ] || { echo "::error::Artefact db-dump sans fichier .dump.gpg (dump en clair ou absent)."; exit 1; }
+          [ "${#BACKUP_PASSPHRASE}" -ge 32 ] || { echo "::error::Secret BACKUP_PASSPHRASE absent : le dump ne se dechiffre pas."; exit 1; }
+          PF=$(mktemp); printf '%s' "$BACKUP_PASSPHRASE" > "$PF"
+          gpg --batch --yes --pinentry-mode loopback --passphrase-file "$PF" -o "${GPGF%.gpg}" -d "$GPGF"
+          rm -f "$PF" "$GPGF"
           DUMP=$(ls dump/*.dump | head -1)
           [ -n "$DUMP" ] || { echo "::error::Artefact db-dump vide."; exit 1; }
           echo "Fichier : $DUMP ($(stat -c%s "$DUMP") octets)"

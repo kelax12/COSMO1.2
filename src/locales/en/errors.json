@@ -11,7 +11,7 @@
     "already_a_member": "This person is already part of the company.",
     "cannot_invite_self": "You cannot invite yourself.",
     "category_batch_cycle": "This category batch can't be saved: it contains a loop.",
-    "category_has_children": "This category has sub-categories: move or delete them first.",
+    "category_has_children": "This category has subcategories: move or delete them first.",
     "demo_unavailable": "This action is not available in demo mode.",
     "dependency_cross_account": "A dependency can only link two tasks from the same account.",
     "dependency_cross_project": "A dependency can only link two tasks from the same project.",
@@ -27,7 +27,7 @@
     "invitation_not_found": "This invitation no longer exists.",
     "inviter_no_longer_member": "The person who invited you is no longer part of this company.",
     "last_admin": "This company must keep at least one administrator.",
-    "mfa_enrol_malformed_response": "Two-factor enrolment returned an unexpected response.",
+    "mfa_enrol_malformed_response": "Two-factor enrollment returned an unexpected response.",
     "no_url": "Stripe did not return a payment link. Please try again in a moment.",
     "not_a_friend": "You can only invite your COSMO contacts. Add this person as a friend first.",
     "not_a_member": "You must belong to this company to invite someone to it.",
@@ -61,7 +61,8 @@
     "project_viewer_read_only": "You are a viewer on this project: you can only change the tasks assigned to you.",
     "domain_taken": "This domain is already verified by another company.",
     "email_domain_not_allowed": "This company only invites addresses from its verified domains.",
-    "open_link_not_allowed": "This company only accepts named invitations to its verified domains: this open link cannot be used."
+    "open_link_not_allowed": "This company only accepts named invitations to its verified domains: this open link cannot be used.",
+    "empty_message": "The message is empty: write something before sending."
   },
   "validation": {
     "fallback": "Invalid data",
@@ -204,7 +205,11 @@
     "projectMember": "Could not update the project members: {{message}}",
     "trashTeamOkr": "Could not delete the objective: {{message}}",
     "restoreTeamOkr": "Could not restore the objective: {{message}}",
-    "purgeTask": "Could not permanently delete the task: {{message}}"
+    "purgeTask": "Could not permanently delete the task: {{message}}",
+    "saveRole": "Couldn't save the role: {{message}}",
+    "deleteRole": "Couldn't delete the role: {{message}}",
+    "assignRole": "Couldn't assign the role: {{message}}",
+    "revokeRole": "Couldn't remove the role: {{message}}"
   },
   "success": {
     "orgCreated": "Company created",
@@ -240,7 +245,11 @@
     "memberAccessUpdated": "Access updated",
     "notificationSettingsSaved": "Preferences saved",
     "weeklyReviewSaved": "Review saved",
-    "objectiveTrashed": "Objective moved to the trash (30 days to restore it)"
+    "objectiveTrashed": "Objective moved to the trash (30 days to restore it)",
+    "roleSaved": "Role saved",
+    "roleDeleted": "Role deleted",
+    "roleAssigned": "Role assigned",
+    "roleRevoked": "Role removed"
   },
   "friends": {
     "notAuthenticated": "You must be signed in to do this.",

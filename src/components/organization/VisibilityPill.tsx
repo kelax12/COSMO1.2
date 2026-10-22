@@ -1,31 +1,17 @@
 import { useState } from 'react';
 import { Eye } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useOrgMembers } from '@/modules/organizations';
-import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
-import { useTeamProjectMembers, useTeamProjectTeams } from '@/modules/team-projects';
+import { useOrgTeams } from '@/modules/org-teams';
 import { useT } from '@/i18n/useT';
 import MemberAvatar from './MemberAvatar';
-import { visibilityOf, type VisibilityReason } from './visibility.helpers';
+import type { VisibilityReason } from './visibility.helpers';
+import { useVisibility, type VisibilityTarget } from './useVisibility';
 
-interface VisibilityPillProps {
-  orgId: string;
-  /** Équipes de l'objet (principale et associées) ; [] = toute l'entreprise. */
-  teamIds: string[];
-  /**
-   * Projet : ses équipes ASSOCIÉES (mig. 164) et ses membres directs (mig. 190)
-   * s'ajoutent à `teamIds`. Absent pour un objectif.
-   */
-  projectId?: string;
-  /** OKR 'teams' ou 'custom' (mig. 205) : fermé même sans équipe. */
-  closed?: boolean;
-  /** Personnes nommées d'un OKR 'custom' (mig. 205). */
-  namedIds?: string[];
-  /** `md` : pastille agrandie (ligne de pastilles d'une carte d'objectif). */
-  size?: 'sm' | 'md';
+interface VisibilityPillProps extends VisibilityTarget {
+  /** `md` : pastille agrandie (carte d'objectif) ; `lg` : en-tête de la page projet. */
+  size?: 'sm' | 'md' | 'lg';
 }
 
-const REASON_ORDER: VisibilityReason[] = ['team', 'direct', 'hierarchy', 'admin', 'org'];
 const SHOWN = 40;
 
 /**
@@ -34,23 +20,9 @@ const SHOWN = 40;
  */
 const VisibilityPill = ({ orgId, teamIds: ownTeamIds, projectId, closed = false, namedIds = [], size = 'sm' }: VisibilityPillProps) => {
   const { t, tp } = useT('portfolio');
-  const { data: members = [] } = useOrgMembers(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
-  const { data: memberships = [] } = useOrgTeamMembers(orgId);
-  const { data: projectTeams = [] } = useTeamProjectTeams(projectId ? orgId : undefined);
-  const { data: projectMembers = [] } = useTeamProjectMembers(projectId ? orgId : undefined);
   const [query, setQuery] = useState('');
-  // Un projet sans équipe principale reste visible par TOUTE l'entreprise,
-  // quelles que soient ses équipes associées (`p.team_id IS NULL`, mig. 194).
-  const teamIds = ownTeamIds.length === 0 ? [] : [...new Set([
-    ...ownTeamIds,
-    ...projectTeams.filter((l) => l.projectId === projectId).map((l) => l.teamId),
-  ])];
-  const directIds = projectId ? projectMembers.filter((m) => m.projectId === projectId).map((m) => m.userId) : [];
-
-  // Pas de mémo : le calcul est linéaire en membres, et les tableaux reçus
-  // changent d'identité à chaque rendu du parent.
-  const vis = visibilityOf({ members, teamIds, memberships, directIds, closed, namedIds });
+  const { vis, teamIds, directIds, people: allPeople } = useVisibility({ orgId, teamIds: ownTeamIds, projectId, closed, namedIds });
   const names = teamIds.map((id) => teams.find((x) => x.id === id)?.name).filter(Boolean).join(', ');
   const scope = vis.wholeOrg
     ? t('visibility.wholeOrg')
@@ -70,21 +42,17 @@ const VisibilityPill = ({ orgId, teamIds: ownTeamIds, projectId, closed = false,
     org: t('visibility.reasonOrg'),
   };
   const q = query.trim().toLowerCase();
-  const people = members
-      .filter((m) => vis.viewers.has(m.userId) && (!q || m.displayName.toLowerCase().includes(q)))
-      .sort((a, b) =>
-        REASON_ORDER.indexOf(vis.viewers.get(a.userId)!) - REASON_ORDER.indexOf(vis.viewers.get(b.userId)!)
-        || a.displayName.localeCompare(b.displayName));
+  const people = allPeople.filter((m) => !q || m.displayName.toLowerCase().includes(q));
 
   return (
     <Popover>
       <PopoverTrigger
         aria-label={t('visibility.aria', { scope, count })}
-        className={`inline-flex items-center ${size === 'md' ? 'gap-1.5 text-xs px-2.5 py-1' : 'gap-1 text-caption px-2 py-0.5'} font-medium rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]`}
+        className={`inline-flex items-center max-w-full ${size === 'lg' ? 'gap-1.5 text-sm px-3 py-1' : size === 'md' ? 'gap-1.5 text-xs px-2.5 py-1' : 'gap-1 text-caption px-2 py-0.5'} font-medium rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]`}
       >
-        <Eye size={size === 'md' ? 13 : 11} aria-hidden="true" />
-        <span className="truncate max-w-[260px]">{t('visibility.pill', { scope })}</span>
-        <span className="tabular-nums">· {tp('visibility.people', count)}</span>
+        <Eye size={size === 'lg' ? 14 : size === 'md' ? 13 : 11} aria-hidden="true" />
+        <span className={`truncate min-w-0 ${size === 'lg' ? 'max-w-[420px]' : 'max-w-[260px]'}`}>{t('visibility.pill', { scope })}</span>
+        <span className="tabular-nums whitespace-nowrap shrink-0">· {tp('visibility.people', count)}</span>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 p-0">
         <div className="p-3 border-b border-[rgb(var(--color-border))] space-y-1">

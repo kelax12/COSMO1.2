@@ -1,17 +1,18 @@
 import { createRoot } from 'react-dom/client';
+import { scrubBreadcrumb, scrubEvent } from './lib/sentry-scrub';
 import { BrowserRouter } from 'react-router';
 import App from './App.tsx';
 import { RootErrorBoundary } from './components/RootErrorBoundary';
 import { installEarlyHandlers, startMonitoring } from './lib/monitoring';
 import { applyTheme, resolveInitialTheme } from './lib/theme';
 import { captureFirstTouch } from './lib/attribution';
-import { mountAudienceScript } from './lib/audience';
+import { startTrafficMeasurement } from './lib/traffic';
 // Import direct du module de locale (et non du barrel `@/i18n`) : le barrel
 // ré-exporte `format.ts`, qui tire les locales `date-fns` — inutile ici et
 // alourdirait le chunk d'entrée.
-import { DEFAULT_LOCALE, applyLocale, resolveInitialLocale, type Locale } from './i18n/locale';
-import { resolveRouterBootstrap } from './i18n/bootstrap';
+import { applyRouterBootstrap } from './i18n/apply-bootstrap';
 import { loadCatalogs } from './i18n/catalog';
+import { afterFirstPaint } from './lib/after-first-paint';
 import './index.css';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -38,13 +39,9 @@ import './index.css';
 installEarlyHandlers();
 
 // M-9 — sendDefaultPii: false strips Sentry's auto-collected user identifiers
-// (IP, cookies). It does NOT scrub PII that lands in error.message itself —
-// Supabase errors routinely include emails and UUIDs in their message. This
-// beforeSend hook regex-strips both from message + exception values before
-// the event leaves the browser. Defense-in-depth for RGPD.
-const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
-const scrub = (s: string): string => s.replace(EMAIL_RE, '[email]').replace(UUID_RE, '[uuid]');
+// (IP, cookies). It does NOT scrub PII that lands in error.message itself, nor
+// the PAGE ADDRESSES (invitation tokens, OAuth codes). Both are stripped by
+// `@/lib/sentry-scrub` before the event leaves the browser (tested there).
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 
@@ -70,27 +67,20 @@ function initSentry(Sentry: typeof import('./lib/sentry-client')): void {
     tracesSampleRate: 0.1,
     // Propage le contexte de trace aux requêtes Supabase (corrèle un appel
     // PostgREST/RPC lent à la transaction front qui l'a déclenché).
-    tracePropagationTargets: [/^\//, /supabase\.co/],
+    // 🔴 JAMAIS `/functions/v1/` : les Edge Functions n'autorisent pas
+    // `baggage`/`sentry-trace` en pré-requête, l'appel meurt avant le POST
+    // (M-32, 2026-10-16). PostgREST et Auth les acceptent. Garde :
+    // `src/sentry-propagation.guard.test.ts`.
+    tracePropagationTargets: [/^\//, /supabase\.co\/(?!functions\/v1\/)/],
     sendDefaultPii: false,
     ignoreErrors: [
       'ResizeObserver loop limit exceeded',
       'ResizeObserver loop completed with undelivered notifications',
       'Non-Error promise rejection captured',
     ],
-    beforeSend(event) {
-      if (event.message) event.message = scrub(event.message);
-      if (event.exception?.values) {
-        for (const ex of event.exception.values) {
-          if (ex.value) ex.value = scrub(ex.value);
-        }
-      }
-      if (event.breadcrumbs) {
-        for (const crumb of event.breadcrumbs) {
-          if (crumb.message) crumb.message = scrub(crumb.message);
-        }
-      }
-      return event;
-    },
+    beforeSend: (event) => scrubEvent(event),
+    beforeSendTransaction: (event) => scrubEvent(event),
+    beforeBreadcrumb: (crumb) => scrubBreadcrumb(crumb),
   });
 }
 
@@ -135,21 +125,6 @@ try {
   captureFirstTouch();
 } catch { /* l'analytics ne doit jamais empêcher l'app de démarrer */ }
 
-// Mesure d'audience — injectee ICI et plus par une balise d'index.html, pour
-// qu'elle ne soit JAMAIS presente quand une session existe. C'est le seul
-// script tiers de l'origine, et le jeton de session vit dans le localStorage :
-// charge sur toute la SPA, un compromis du fournisseur donnait la prise de
-// controle des comptes connectes. Detail et limite assumee : src/lib/audience.ts.
-//
-// Apres `captureFirstTouch` : l'attribution doit lire la query string d'origine
-// avant tout, et ne depend pas d'un tiers.
-try {
-  mountAudienceScript(document, {
-    pathname: window.location.pathname,
-    storage: window.localStorage,
-  });
-} catch { /* la mesure ne doit jamais empêcher l'app de démarrer */ }
-
 // ──────────────────────────────────────────────────────────────────
 // Amorçage i18n — locale, canonicalisation d'URL et `basename` du routeur.
 //
@@ -163,27 +138,10 @@ try {
 // dans l'app de se préfixer automatiquement — cf. l'en-tête de
 // src/i18n/bootstrap.ts.
 // ──────────────────────────────────────────────────────────────────
-let routerBasename = '/';
-let activeLocale: Locale = DEFAULT_LOCALE;
-try {
-  const bootstrap = resolveRouterBootstrap({
-    pathname: window.location.pathname,
-    search: window.location.search,
-    hash: window.location.hash,
-  });
-  routerBasename = bootstrap.basename;
-  activeLocale = bootstrap.locale;
-  applyLocale(document.documentElement, bootstrap.locale);
-  if (bootstrap.replaceUrl && bootstrap.replaceUrl !== window.location.pathname + window.location.search + window.location.hash) {
-    window.history.replaceState(null, '', bootstrap.replaceUrl);
-  }
-} catch {
-  /* localStorage/navigator inaccessibles (navigation privée stricte) — on reste
-     sur la locale par défaut à la racine, ce qui est toujours servable. */
-  try {
-    applyLocale(document.documentElement, resolveInitialLocale());
-  } catch { /* rien de plus à tenter */ }
-}
+// ⚠️ `src/boot.ts` l'a DÉJÀ appliqué, avant la première peinture : cet appel
+// part de l'URL canonique et ne réécrit rien. Il reste ici pour lire `basename`
+// et la locale. Pourquoi deux appels : `i18n/apply-bootstrap.ts`.
+const { basename: routerBasename, locale: activeLocale } = applyRouterBootstrap();
 
 // iOS Safari has a well-known WebKit bug where the *very first* cross-origin
 // fetch made during page load can fail silently with "Load failed" / DOMException
@@ -221,6 +179,14 @@ if (supabaseUrl) {
     .catch(() => { /* expected to sometimes fail — we don't care */ });
 }
 
+// Mesure d'audience maison (mig. 222, remplace Veske). APRES l'amorcage i18n,
+// pour ne pas compter deux fois une URL que la canonicalisation reecrit.
+// Le module verifie lui-meme, avant CHAQUE envoi, consentement, page publique
+// et absence de session : detail dans src/lib/traffic.ts.
+try {
+  startTrafficMeasurement({ win: window, doc: document });
+} catch { /* la mesure ne doit jamais empêcher l'app de démarrer */ }
+
 // Les comportements v7 (startTransition, relativeSplatPath) sont les defauts
 // depuis la 7.0 — le prop `future` n'a plus lieu d'etre. Ils ont ete adoptes
 // par etapes sur la 6.30 avant ce bump (cf. plan de migration 2026-07-29).
@@ -251,7 +217,20 @@ function mount(): void {
 // `catch` et non `finally` sur l'échec : on monte l'app quoi qu'il arrive. Une
 // langue dont les catalogues n'ont pas pu être chargés rend en français, ce qui
 // reste infiniment préférable à une page blanche.
-loadCatalogs(activeLocale).catch(() => undefined).then(() => {
+// ── C-116 : laisser PEINDRE le prérendu avant que React ne le remplace ──
+//
+// En français, `loadCatalogs` se résout en une microtask : `mount()` vidait
+// `#root` AVANT la première peinture, et `#seo-fallback` n'était jamais peint.
+// En anglais, le chargement du catalogue laissait passer une frame : `/en/`
+// était la seule page sous 4 s. Seulement sur une page prérendue : la coquille
+// `app.html` n'a rien à montrer et monte tout de suite. Détail dans
+// `lib/after-first-paint.ts`.
+const isPrerendered = document.documentElement.hasAttribute('data-prerendered');
+
+loadCatalogs(activeLocale).catch(() => undefined).then(() => new Promise<void>((resolve) => {
+  if (isPrerendered) afterFirstPaint(resolve);
+  else resolve();
+})).then(() => {
   mount();
 
   // ── Sentry, APRÈS le premier rendu ────────────────────────────────

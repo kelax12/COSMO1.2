@@ -6,12 +6,12 @@
     "step4Title": "From the panel to the calendar",
     "step5Title": "Stretch to make it longer",
     "step6Title": "Create from an empty slot",
-    "step1Desc": "See everything. Drag your unscheduled tasks into the calendar in one click.",
+    "step1Desc": "See everything. Drag your unscheduled tasks into the calendar in one move.",
     "step2Desc": "Hour-by-hour detail (Day), the big picture (Week), or wider context (Month).",
     "step3Desc": "Open the list of tasks to schedule. Drag one onto a slot to add it to your calendar.",
     "step4Desc": "Grab a task, drag it onto a slot. It lands in your calendar in one gesture.",
     "step5Desc": "Grab the bottom of the event and drag down to make it longer.",
-    "step6Desc": "Select a time slot to create an event there",
+    "step6Desc": "Select a time slot to create an event there.",
     "ghostWork": "Work",
     "ghostCoffee": "Coffee break",
     "ghostTask": "Task",
@@ -23,11 +23,11 @@
     "step3Title": "Three calendar views",
     "step4Title": "Your tasks to schedule",
     "step5Title": "Create an event",
-    "step6Title": "Touch a free slot",
+    "step6Title": "Tap a free slot",
     "step1Desc": "A vertical day view, built for thumb scrolling. Tap the highlighted areas to discover the essentials.",
-    "step2Desc": "Swipe horizontally to browse your upcoming days. Tap a date to centre it in the grid below.",
+    "step2Desc": "Swipe horizontally to browse your upcoming days. Tap a date to center it in the grid below.",
     "step3Desc": "Day for hour-by-hour detail, 2D to compare two days, Month for wider context. One tap to switch.",
-    "step4Desc": "This button opens the panel with your unscheduled tasks. Tap one, then “Schedule in the calendar”. Drag and drop is desktop only.",
+    "step4Desc": "This button opens your unscheduled tasks. Tap one to pick a slot for it.",
     "step5Desc": "The “+” button at the bottom of the screen opens the form in a bottom sheet, pre-filled with the current time on the selected day.",
     "step6Desc": "Press and hold an empty time range in the grid to create an event right at that hour."
   },
@@ -38,7 +38,7 @@
     "step4Title": "Click ✓ to complete",
     "step1Desc": "Set up things to repeat every day. Cosmo helps you keep your streak going.",
     "step2Desc": "List: weekly tracking. Board: a grid of the last 30 days. Overall tracking: statistics across all your habits.",
-    "step3Desc": "Give it a name and pick a colour.",
+    "step3Desc": "Give it a name and pick a color.",
     "step4Desc": "The button ticks off today's habit and extends your streak. A missed day resets it to zero."
   },
   "habitsMobile": {
@@ -46,9 +46,9 @@
     "step3Title": "Create a habit",
     "step4Title": "Tick it off with one tap",
     "step5Title": "Mini heatmap",
-    "step1Desc": "A habit is a behaviour you repeat every day, or several times a week. One tap is enough to tick off the day.",
-    "step3Desc": "The floating button at the bottom right opens the form. Name, colour, cadence: 30 seconds to set up.",
-    "step4Desc": "Tap the ✓ button on a habit to mark today as done. The card changes colour. Tap again to undo if you slipped.",
+    "step1Desc": "A habit is a behavior you repeat every day, or several times a week. One tap is enough to tick off the day.",
+    "step3Desc": "The floating button at the bottom right opens the form. Name, color, cadence: 30 seconds to set up.",
+    "step4Desc": "Tap the ✓ button on a habit to mark today as done. The card changes color. Tap again to undo a mistaken tap.",
     "step5Desc": "Under each habit, a strip shows your last 30 days: the fuller it is, the more consistent you've been. A quick read on your regularity."
   },
   "okrDesktop": {
@@ -59,7 +59,7 @@
     "step1Desc": "OKR = Objective (your goal) + Key Results (the metric). Clarity and alignment, guaranteed.",
     "step2Desc": "Split your OKRs across Work, Personal, Health... Filter by area. The “+” creates a category.",
     "step3Desc": "Set an objective and break it down into metrics (KRs).",
-    "step4Desc": "add metrics to your to-do list or to your calendar."
+    "step4Desc": "Add your metrics to your to-do list or to your calendar."
   },
   "okrMobile": {
     "step1Title": "Steering with OKRs",
@@ -67,7 +67,7 @@
     "step3Title": "Create an objective",
     "step4Title": "One card, one objective",
     "step5Title": "The strategic link: tasks → KRs",
-    "step1Desc": "OKR = Objective (an ambitious direction) + Key Results (3-5 numeric indicators). The startup method for moving the right way.",
+    "step1Desc": "OKR = Objective (an ambitious direction) + Key Results (3-5 numeric indicators). The method startups use to move in the right direction.",
     "step2Desc": "Swipe the chips sideways to filter your objectives (Work, Personal, Health…). Tap “All” to reset.",
     "step3Desc": "The floating button at the bottom right opens the form. Set 3 to 5 measurable KRs, no more, or you spread yourself thin.",
     "step4Desc": "Tap the card to open the details. The gauge on the right shows overall health. Each KR has its own progress bar, adjustable with a tap.",
@@ -75,7 +75,7 @@
   },
   "tasksDesktop": {
     "step1Title": "All your tasks in one place",
-    "step2Title": "Organise with lists",
+    "step2Title": "Organize with lists",
     "step3Title": "Find what you're after",
     "step4Title": "See your deadlines",
     "step5Title": "Create a task",
@@ -84,21 +84,21 @@
     "step2Desc": "Group your tasks into lists (Work, Home, Projects...). Click a list to see it on its own.",
     "step3Desc": "Keyword search, category filter, priority slider. In an instant.",
     "step4Desc": "A mini calendar of your due dates. Spot overloaded weeks at a glance.",
-    "step5Desc": "Organise your work into tasks to get more done.",
-    "step6Desc": "see all your tasks at a glance"
+    "step5Desc": "Organize your work into tasks to get more done.",
+    "step6Desc": "See all your tasks at a glance."
   },
   "tasksMobile": {
     "step1Title": "Your tasks in one place",
     "step2Title": "Personal lists",
     "step3Title": "Search & filters",
-    "step4Title": "Mini calendar",
+    "step4Title": "Display",
     "step5Title": "Create a task",
     "step6Title": "Gesture: swipe right to complete",
     "step1Desc": "This is where you run all your tasks. Swipe a row right to complete it, left for options.",
     "step2Desc": "Your lists (Work, Shopping, Travel…) live here. Tap a list to filter. Swipe the carousel to see them all.",
     "step3Desc": "Search lives at the bottom of the screen, under your thumb. Leave it empty and it offers its filters: Starred, Done, Overdue, Shared, Select.",
-    "step4Desc": "Shows your due dates across a week. Tap this button to show or hide it.",
-    "step5Desc": "This floating button is available from every page. It opens quick create: type “Call the dentist Thursday 10am” and the date is picked up automatically.",
+    "step4Desc": "This button sets how the list shows up: list or board view, a mini calendar of your due dates, category colors.",
+    "step5Desc": "The + at the bottom right creates a task. A name is enough, everything else is optional.",
     "step6Desc": "On a task, swipe your finger to the right. A green “Complete” area appears. Let go: the task is ticked (with a light vibration)."
   }
 }

@@ -69,6 +69,8 @@ const EXPORTS = {
       kr_id: 'linkedKr',
       completed: 'completed',
       completed_at: 'completedAt',
+      status: 'status',
+      health: 'health',
       bookmarked: 'bookmarked',
       created_at: 'createdAt',
     },
@@ -174,6 +176,8 @@ const EXPORTS = {
     exclu: {
       user_id: 'Identifiant interne du compte.',
       created_at: 'Métadonnée technique.',
+      // Invisible pour cette garde jusqu'au 2026-10-09 (ALTER à clauses multiples).
+      position: "Rang d'affichage entre catégories sœurs (glisser-déposer, mig. 143) : un réglage d'interface, l'arbre lui-même est exporté (`parent`). ⚠️ Discutable : à rouvrir si l'export doit restituer l'ordre.",
     },
   },
   lists: {
@@ -183,12 +187,17 @@ const EXPORTS = {
       name: 'name',
       color: 'color',
       type: 'type',
+      smart_rule: 'smartRule',
       task_ids: 'taskCount',
     },
     exclu: {
       user_id: 'Identifiant interne du compte.',
       created_at: 'Métadonnée technique.',
       updated_at: 'Métadonnée technique.',
+      // `smart_rule`, `is_default` et `position` (mig. 021) étaient invisibles
+      // pour cette garde jusqu'au 2026-10-09 (ALTER à clauses multiples).
+      is_default: "Liste ouverte par défaut à l'écran (mig. 021) : un réglage d'interface, pas un contenu. ⚠️ Discutable : à rouvrir si l'export doit restituer les réglages.",
+      position: "Rang d'affichage des listes (glisser-déposer, mig. 021) : un réglage d'interface. ⚠️ Discutable : à rouvrir si l'export doit restituer l'ordre.",
     },
   },
 };
@@ -209,6 +218,7 @@ const TABLES_NON_EXPORTEES = {
   payment_records: "Journal fiscal inaltérable (CGI art. 286-I-3° bis). Les factures se réclament par le portail Stripe.",
   withdrawal_consents: 'Preuve du consentement (Conso. L221-28). Produite en litige, pas exportée en vrac.',
   user_activity_days: 'Compteur de présence agrégé, dérivé, jamais saisi.',
+  account_inactivity_notices: "Date d'un avertissement de suppression pour inactivité (mig. 226, C-121), produite par le système. Un compte qui peut demander son export est, par définition, revenu : la ligne n'ouvre alors plus rien.",
   admin_users: "Allowlist d'administration, pas une donnée de compte.",
   email_lookup_quota: 'Compteur anti-abus, technique.',
   org_member_permissions: "Droits accordés PAR l'organisation, pas fournis par la personne.",
@@ -226,6 +236,9 @@ const TABLES_NON_EXPORTEES = {
   org_saved_views: "Combinaisons de filtres nommées (mig. 192) : un réglage d'interface, sans contenu de travail.",
   org_member_capacity: "Capacité hebdomadaire déclarée pour la personne, le plus souvent PAR son responsable (mig. 196) : une donnée de planification de l'organisation. ⚠️ Discutable quand la personne l'a saisie elle-même : à rouvrir si l'export doit restituer les réglages.",
   org_member_secondary_managers: "Lien hiérarchique secondaire décidé par l'organisation (mig. 196), qui désigne une AUTRE personne.",
+  // Mig. 219 (2026-10-12), déclarée le 2026-10-15 : la garde la voyait sans
+  // décision depuis l'application de la migration.
+  org_member_roles: "Rôle personnalisé attribué à la personne PAR l'organisation (détenteur de `role.manage`, mig. 219), pour une durée qu'elle fixe : des droits accordés, pas une donnée fournie. Même raison que `org_member_permissions`, et `granted_by` désigne une AUTRE personne.",
 };
 
 // ── Lecture du schéma ──────────────────────────────────────────────
@@ -250,15 +263,20 @@ export function colonnesParTable(dossier = MIGRATIONS) {
         add(m[1], c[1]);
       }
     }
+    // 🔴 Un ALTER peut porter PLUSIEURS clauses (`ADD COLUMN a …, ADD COLUMN
+    // b …`). On lit donc l'instruction entière jusqu'à son `;`, puis chaque
+    // clause. L'ancienne expression ne voyait que la première : `tasks.health`
+    // (mig. 214) n'existait pas pour cette garde, qui n'aurait jamais réclamé
+    // son export (2026-10-09).
     for (const m of sql.matchAll(
-      /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:public\.)?([a-z_0-9]+)\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z_0-9]*)/gi,
+      /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?(?:public\.)?([a-z_0-9]+)\s+([^;]*);/gi,
     )) {
-      add(m[1], m[2]);
-    }
-    for (const m of sql.matchAll(
-      /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:public\.)?([a-z_0-9]+)\s+DROP\s+COLUMN\s+(?:IF\s+EXISTS\s+)?([a-z_][a-z_0-9]*)/gi,
-    )) {
-      out.get(m[1])?.delete(m[2]);
+      for (const a of m[2].matchAll(/\bADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z_0-9]*)/gi)) {
+        add(m[1], a[1]);
+      }
+      for (const dr of m[2].matchAll(/\bDROP\s+COLUMN\s+(?:IF\s+EXISTS\s+)?([a-z_][a-z_0-9]*)/gi)) {
+        out.get(m[1])?.delete(dr[1]);
+      }
     }
   }
   return out;

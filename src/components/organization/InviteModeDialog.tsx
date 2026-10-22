@@ -1,7 +1,8 @@
 import { Suspense, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Contact, Hash, Link2, Mail, X, type LucideIcon } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Contact, Hash, Link2, Loader2, Mail, X, type LucideIcon } from 'lucide-react';
 import type { Organization } from '@/modules/organizations';
+import { useInviteByEmail } from '@/modules/organizations/governance.hooks';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
@@ -35,7 +36,34 @@ const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, o
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
   const { ref, dialogProps } = useModalA11y<HTMLDivElement>({ open: true, onClose, label: tOrgAdmin('settings.inviteTitle') });
-  const [emails, setEmails] = useState('');
+  // Une adresse à la fois, envoyée d'ici : le résultat s'affiche sous le champ
+  // et le champ se vide, prêt pour la suivante.
+  const invite = useInviteByEmail(org.id);
+  const [email, setEmail] = useState('');
+  const [outcome, setOutcome] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const sendInvite = () => {
+    const address = email.trim().toLowerCase();
+    if (!address || invite.isPending || seatsFull) return;
+    // Un manager ne place que sous lui (policy `org_invite_links_insert`).
+    invite.mutate(
+      { emails: [address], managerId: isAdmin ? null : currentUserId ?? null },
+      {
+        onSuccess: ({ results, sending }) => {
+          const r = results[0];
+          if (!r || r.status === 'invalid') { setOutcome({ ok: false, text: tOrgAdmin('invites.statusInvalid') }); return; }
+          if (r.status === 'already_member') { setOutcome({ ok: false, text: tOrgAdmin('invites.statusAlreadyMember') }); return; }
+          if (r.status === 'already_invited') { setOutcome({ ok: false, text: tOrgAdmin('invites.statusAlreadyInvited') }); return; }
+          const text = sending.unavailable
+            ? tOrgAdmin('invites.statusCreatedNotSent')
+            : sending.failed > 0 ? tOrgAdmin('invites.statusCreatedMaybe') : tOrgAdmin('invites.statusSentTo', { email: address });
+          setOutcome({ ok: !sending.unavailable && sending.failed === 0, text });
+          setEmail('');
+        },
+        onError: () => setOutcome({ ok: false, text: tOrgAdmin('invites.statusFailed') }),
+      },
+    );
+  };
 
   const modes: { id: Mode; icon: LucideIcon; label: string }[] = [
     ...(onChooseEmail ? [{ id: 'email' as const, icon: Mail, label: tOrgAdmin('settings.tabEmail') }] : []),
@@ -85,6 +113,7 @@ const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, o
                 type="button"
                 role="tab"
                 id={`invite-tab-${id}`}
+                data-guide-id={`invite-mode-${id}`}
                 aria-selected={on}
                 aria-controls="invite-panel"
                 onClick={() => setMode(id)}
@@ -105,30 +134,44 @@ const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, o
           {mode === 'email' && onChooseEmail && (
             <form
               className="space-y-3"
-              onSubmit={(e) => { e.preventDefault(); onChooseEmail(emails); }}
+              onSubmit={(e) => { e.preventDefault(); sendInvite(); }}
             >
               <label htmlFor="invite-mode-emails" className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))]">
                 {tOrgAdmin('invites.emailTitle')}
               </label>
-              <textarea
-                id="invite-mode-emails"
-                value={emails}
-                onChange={(e) => setEmails(e.target.value)}
-                rows={3}
-                placeholder={t('invite.emailPlaceholder')}
-                className="w-full rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2 text-sm text-[rgb(var(--color-text-primary))]"
-              />
-              <p className="text-xs text-[rgb(var(--color-text-muted))]">{tOrgAdmin('invites.emailIntro')}</p>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('invite.moreOptions')}</span>
+              <div className="flex gap-2">
+                <input
+                  id="invite-mode-emails"
+                  data-guide-id="invite-email-addresses"
+                  type="email"
+                  autoComplete="off"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setOutcome(null); }}
+                  placeholder={t('invite.emailPlaceholder')}
+                  aria-describedby="invite-mode-status"
+                  className="flex-1 min-w-0 min-h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                />
                 <button
                   type="submit"
-                  disabled={seatsFull}
+                  disabled={seatsFull || invite.isPending || !email.trim()}
                   className="shrink-0 min-h-11 px-4 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50"
                 >
-                  {tOrgAdmin('settings.emailContinue')}
+                  {invite.isPending ? tOrgAdmin('invites.sending') : t('invite.emailSubmit')}
                 </button>
               </div>
+              <p id="invite-mode-status" role="status" aria-live="polite" className="min-h-5 text-sm">
+                {invite.isPending ? (
+                  <span className="inline-flex items-center gap-1.5 text-[rgb(var(--color-text-secondary))]">
+                    <Loader2 size={14} aria-hidden="true" className="motion-safe:animate-spin" /> {tOrgAdmin('invites.sending')}
+                  </span>
+                ) : outcome ? (
+                  <span className={`inline-flex items-start gap-1.5 ${outcome.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {outcome.ok ? <CheckCircle2 size={15} aria-hidden="true" className="shrink-0 mt-0.5" /> : <AlertCircle size={15} aria-hidden="true" className="shrink-0 mt-0.5" />}
+                    {outcome.text}
+                  </span>
+                ) : null}
+              </p>
+              <p data-guide-id="invite-email-intro" className="text-xs text-[rgb(var(--color-text-muted))]">{tOrgAdmin('invites.emailIntro')}</p>
             </form>
           )}
           <Suspense fallback={null}>

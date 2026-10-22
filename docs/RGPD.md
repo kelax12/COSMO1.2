@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **87 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **87 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
 
 # RGPD — inventaire, droits des personnes et dette
 
@@ -16,7 +16,84 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → 85 → 87 → 87 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → **2026-10-20**) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ⚪ 2026-10-20 · 0 : aucun traitement nouveau
+>
+> Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | Export PDF du rapport d'activité | 0 | généré dans le navigateur (jsPDF), rien n'est envoyé |
+> | Politique de confidentialité | 0 | toujours **sans section « Prospection »** (relue dans `src/locales/fr/legalPrivacy.json`) : déjà débitée au titre de T11 |
+> | `M-71` | 0 | `BACKUP_PASSPHRASE.txt` toujours présent dans le coffre hors dépôt le 2026-10-20 |
+>
+> **87 → 87.**
+
+> ### ⚪ 2026-10-18 · 0 : le plafond `V-1` tombe, un traitement neuf ouvre ses propres manques
+>
+> **Même règle** : un défaut ne se rembourse que corrigé et daté. Dernière passe avant
+> l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md). Registre et politique publiée relus.
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | ✅ `V-1` · fournisseur de mesure tiers sans DPA, « le plafond de cette note » depuis le 2026-09-14 | **+1** | débranché (`23a12fdb`) : plus de script tiers, plus d'identifiant `_a_cid` déposé. La mesure qui le remplace (T8, mig. `222`) ne stocke jamais l'IP, son sel du jour est supprimé le lendemain (job `cosmo-purge-traffic` actif, relu en base), le chemin est gardé sans query string, et elle n'écrit qu'après consentement |
+> | 🟠 T11 · prospection B2B par email, ouverte le 2026-10-18 | **−1** | déclarée au registre, et c'est juste. Mais quatre manques, écrits par le registre lui-même : la durée de 3 ans n'est appliquée par **aucun automatisme**, **aucune** sauvegarde, DPA **Anthropic** et **IONOS** non archivés ; et la politique de confidentialité publiée **ne dit pas un mot** de la prospection (aucune occurrence dans `legalPrivacy.json`). L'information due à une personne dont on n'a pas recueilli les données (art. 14) repose donc entièrement sur le texte de chaque email, qui vit dans le dépôt `analytics` et n'est pas relu ici |
+> | 🔴 `M-71` · phrase secrète des sauvegardes | 0 | **toujours présente** dans le coffre hors dépôt (existence relue le 2026-10-18, contenu non lu) |
+> | Production | 0 | **79** tables, toutes sous RLS ; `traffic_hits` à **0** ligne à 18 h 47 UTC |
+>
+> **87 → 87.**
+
+> ### ✅ 2026-10-16 (soir, plus tard) · +2 : `BK-1` décidé des deux côtés, le −2 est remboursé
+>
+> **Même règle** : un débit se rembourse quand le défaut est fermé et daté. Pour un geste de décision, fermé veut dire **fait ou décidé par écrit**, avec son motif. Source : parole d'Axel et registre privé, non mesurables par un agent.
+>
+> | Item | Effet | Constaté le 2026-10-16 (soir) |
+> |---|---|---|
+> | ✅ `BK-1` · notification CNIL et information des personnes (−2 du 10-15) | **+2** | `M-69` fait : notification initiale soumise, tardive, avec motifs du retard. `M-70` **décidé par écrit** : pas d'information des personnes, gravité déclarée « limitée », l'art. 34 ne l'impose qu'en cas de risque élevé ; consigné au registre privé avec ce qui rouvrirait la décision (indice d'usage, demande de la CNIL). ⚠️ Reste dû hors note : la notification complémentaire |
+>
+> **85 → 87.**
+
+> ### ⚪ 2026-10-16 (soir) · 0 : `M-69` fait, le −2 de `BK-1` attend `M-70`
+>
+> **Même règle** : un débit ne se rembourse que lorsque le défaut est corrigé et daté. Source : parole d'Axel, notification soumise le 2026-10-16 au soir (téléservice, non mesurable par un agent).
+>
+> | Item | Effet | Constaté le 2026-10-16 (soir) |
+> |---|---|---|
+> | 🟠 `BK-1` · notification CNIL et information des personnes | 0 (−2 maintenu) | ✅ `M-69` fait : notification initiale, tardive, avec motifs du retard, consignée au registre privé. 🔴 `M-70` ni fait ni décidé par écrit : le −2 se rembourse quand l'information des personnes est envoyée, ou quand la décision de ne pas informer est consignée avec son motif |
+>
+> **85 → 85.**
+
+> ### 🟠 2026-10-16 · +1 : `org_member_roles` déclarée, mais l'échéance CNIL est passée sans trace
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab`, dépôt à `HEAD`, registre privé relu à 14 h 50 (heure de
+> Paris). Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `org_member_roles` hors effacement déclaré et hors export (−1) | **+1** | `check:erasure` et `check:portability` verts en CI (`38902071817`) et en local à `HEAD` |
+> | 🔴 `BK-1` · notification CNIL et information des personnes | 0 (−2 maintenu) | **l'échéance de `M-69` est passée** : 72 h après la découverte, soit le 2026-10-16 vers 11 h 26 UTC. Le registre privé porte toujours « Notifiée le : _à remplir_ ». Soit la notification a été faite sans être consignée, soit elle reste due : une notification tardive se fait **avec les motifs du retard** (art. 33.1). `M-70`, l'information des personnes, n'est pas faite non plus. Les brouillons sont prêts depuis le 2026-10-15, dans le dossier privé. `M-68` (sessions) est fait et vérifié, c'est la note de sécurité qui le rembourse |
+> | ✅ Prévention de `BK-1` | 0 | `scripts/artefacts-donnees-prod.guard.test.mjs` (`467d5115`) refuse tout artefact de données de production non chiffré, témoin sur le `db-backup.yml` d'avant `8c6a971d` ; `restore-drill` réactivé, `dump-check` vert sur le dump chiffré. Nommés et outillés le même jour : aucun débit à rembourser |
+>
+> **84 → 85.**
+
+> ### 🔴 2026-10-15 · −3 : la première violation de données, et une table neuve hors effacement déclaré
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> production (catalogue), dépôt à `HEAD` rejoué étape par étape. Tableau de bord :
+> [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | 🔴 `BK-1` · dumps complets de la base, en clair, téléchargeables depuis un dépôt public, du 2026-08-29 au 2026-10-13 | **−2** | violation au sens de l'art. 4.12 (cf. [`../faille.md`](../faille.md) § `BK-1`). Le défaut technique est refermé et vérifié (`8c6a971d`). **Ouverts** : `M-69`, décision de notification à la CNIL (art. 33), **avant le 2026-10-16 vers 11 h UTC** ; `M-70`, information des personnes (art. 34) ; registre des violations tenu **hors dépôt**. [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md) a servi pour la première fois, en situation réelle et non à blanc |
+> | 🔴 `org_member_roles` (mig. `219`, en production depuis le 10-13) | **−1** | porte `user_id` sans décision écrite : `check:erasure` et `check:portability` **rouges à `HEAD`**, vus rouges en CI une seule fois (effacement, `8b791715`, 10-12), puis masqués par `check:docs`. Dans les faits, la FK `user_id` est `ON DELETE CASCADE` (lu dans le fichier de la migration, la lecture du catalogue ayant été refusée à l'agent) : l'effacement a lieu, il n'est pas déclaré. L'**export**, lui, manque : les rôles attribués à une personne ne sortent pas de son export |
+> | `C-121` · suppression des comptes inactifs depuis 3 ans | 0 | promesse publiée le 10-13 sans traitement ; aucun compte n'atteint le seuil avant 2029 |
+> | Export enrichi | 0 | statut et état des tâches dans l'export (mig. `214`, `d0ffbf2e`) ; la garde d'effacement lit désormais chaque clause d'un `ALTER TABLE` (`7d98cf78`) |
+> | Production | 0 | **77** tables, toutes sous RLS, **205** policies |
+>
+> **87 → 84.**
 
 > ### ⚪ 2026-10-02 (soir) · 0 : vérifiée inchangée
 >

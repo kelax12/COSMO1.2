@@ -81,6 +81,10 @@ function mailBody(orgName: string, inviterName: string, link: string): { text: s
     `Si vous ne vous attendiez pas à cette invitation, ignorez simplement ce message.`,
     ``,
     `L'équipe Cosmo`,
+    ``,
+    // RGPD art. 14 : la personne invitée n'a rien demandé, elle doit savoir
+    // qui traite son adresse, pourquoi, combien de temps, et où sont ses droits.
+    `Votre adresse n'a été utilisée que pour vous envoyer cette invitation, pour le compte de « ${orgName} ». Si vous ne l'acceptez pas, elle est effacée 30 jours après l'expiration du lien. Éditeur du service et exercice de vos droits : ${APP_URL}/politique-confidentialite`,
   ]
   return {
     text: lines.join('\n'),

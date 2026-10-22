@@ -116,6 +116,7 @@ const ProjectPortfolioView = ({
                   <button
                     type="button"
                     onClick={() => onOpenProject(project.id)}
+                    data-guide-item
                     aria-label={pf('openProject', { name: project.name })}
                     className="flex items-center gap-2 min-w-0 text-left rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                   >
@@ -150,9 +151,12 @@ const ProjectPortfolioView = ({
                 </td>
                 <td className="px-3 py-2.5">
                   <span className="inline-flex flex-wrap items-center gap-1">
-                    <span className={`text-caption font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${PROJECT_STATUS_META[status].soft}`}>
-                      {pf(`status.${status}`)}
-                    </span>
+                    {/* En cours ET en retard : « En retard » remplace le statut. */}
+                    {!(late && status === 'active') && (
+                      <span className={`text-caption font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${PROJECT_STATUS_META[status].soft}`}>
+                        {pf(`status.${status}`)}
+                      </span>
+                    )}
                     {late && (
                       <span className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500 whitespace-nowrap">
                         {pf('late')}

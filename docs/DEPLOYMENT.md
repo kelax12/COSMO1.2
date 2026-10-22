@@ -53,7 +53,7 @@ réagir à un incident. À lire avant toute mise en prod.
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
 | AM-1 | ✅ **COMBLÉ le 2026-09-16 par `npm run check:deploy`** (job `Deploy SHA drift`, horaire, branché sur `ci-alert.yml`). Était : **rien ne comparait le commit déployé sur Vercel à `main`.** C'est exactement le défaut C-35 des Edge Functions, **côté front**, et il n'a jamais été nommé. `check:edge` compare le code déployé des fonctions au dépôt ; **aucun équivalent n'existe pour l'application elle-même** | la garde lit `/version.json` **sur la production**, écrit au build par `VERCEL_GIT_COMMIT_SHA`, et distingue **à jour / retard / dérive** : un `!=` confondrait un déploiement en vol avec une dérive, et une prod **en avance** avec un simple retard | ✅ **COMBLÉ le 2026-09-16** · `npm run check:deploy` (`T-8`), job horaire branché sur `ci-alert.yml`. Cycle complet observé le même jour |
-| AM-2 | 🔴 **Le ROLLBACK n'a jamais été éprouvé.** Le runbook le décrit ; `restore-drill.yml` n'a qu'un `workflow_dispatch` avec confirmation. **Un chemin de récupération qui n'a pas été parcouru est une hypothèse**, et ce dépôt l'a déjà appris au prix fort avec la mig. `131` (`/admin` inaccessible deux jours) | `restore-drill.yml` : `on: workflow_dispatch` | ✅ **OUTILLÉ le 2026-09-20** · `dump-check` **trimestriel et automatique** (`C-86`) — 🔴 ne prouve PAS : qu'un dump soit restaurable, et surtout pas que le **rollback** fonctionne : personne ne l'a jamais parcouru, c'est **`M-47`** |
+| AM-2 | 🔴 **Le ROLLBACK n'a jamais été éprouvé.** Le runbook le décrit ; `restore-drill.yml` n'a qu'un `workflow_dispatch` avec confirmation. **Un chemin de récupération qui n'a pas été parcouru est une hypothèse**, et ce dépôt l'a déjà appris au prix fort avec la mig. `131` (`/admin` inaccessible deux jours) | `restore-drill.yml` : `on: workflow_dispatch` | ✅ **OUTILLÉ le 2026-09-20** · `dump-check` **trimestriel et automatique** (`C-86`) · 🔴 ne prouve PAS : qu'un dump soit restaurable, et surtout pas que le **rollback** fonctionne : personne ne l'a jamais parcouru, c'est **`M-47`** · 🔎 🔴 **2026-10-15 : l'outil lui-même ne tourne pas.** `restore-drill.yml` est désactivé à la main depuis le 2026-09-01 : `dump-check` n'a jamais été joué, et `gh run list` ne montre même pas qu'il manque |
 | AM-3 | **Les variables d'environnement Vercel ne sont comparées à rien.** Une `VITE_*` manquante ou périmée ne se voit qu'à l'exécution. Le cas a déjà mordu : `VITE_SENTRY_DSN` absente changeait la forme du bundle et rendait la garde de budget aveugle à ~45 ko | aucun job ne lit la configuration Vercel | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:env` · contrat statique des 8 `VITE_*` avec l'**effet d'absence** de chacune (`C-105`) — 🔴 ne prouve PAS : les **valeurs** : la moitié Vercel vérifie une présence, jamais un contenu. ⚠️ Et elle dort tant que `VERCEL_TOKEN` / `VERCEL_PROJECT_ID` ne sont pas posés (**`M-59`**) |
 | AM-4 | **L'état réel de Turnstile n'est écrit nulle part de vérifiable.** Le code existe (`TurnstileWidget.tsx`, `AuthForm.tsx`) ; son activation dépend d'une variable posée **hors du dépôt**. Ce document le dit « inerte au 2026-08-28 », et rien ne dirait qu'il a changé | 3 fichiers sources le référencent, 0 garde | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:env` (`C-105`) — 🔴 ne prouve PAS : rien de plus qu'AM-3 : même garde, même réserve |
 | AM-5 | **`uptime.yml` mesure qu'une page RÉPOND, jamais qu'elle FONCTIONNE.** Un HTTP 200 sur une coquille SPA vide est vert. C'est le même piège que la garde Lighthouse qui mesurait une 404 (`T-50`, corrigé le 2026-08-29) | `uptime.yml` : `-w '%{http_code}'` sur `/` et `/auth/v1/health` | ✅ **OUTILLÉ le 2026-09-20** · 3 marqueurs **absents de la coquille SPA** + une 2ᵉ page prérendue sondée + le corps de `/auth/v1/health` (`C-104`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé dans l'autre sens** : `uptime.yml` avait un marqueur (`grep -i cosmo`) qui **ne pouvait pas échouer**, la coquille contenant le mot 21 fois |
@@ -496,6 +496,49 @@ déploiement précédent** :
 - Ou `vercel rollback <deployment-url>` (CLI).
 - Aucun rebuild : bascule instantanée de l'alias prod.
 
+### ✅ Répété le 2026-10-16 : le retour arrière par `git revert` (moitié de `M-47`)
+
+Fait par un agent, sur `main`, avec un commit sans effet : `42ee5006` ajoute
+`public/repetition-retour-arriere.txt`, `2b9ad9d` le défait. Heures lues dans les statuts de
+déploiement que Vercel publie sur GitHub (`gh api repos/.../deployments?sha=…`) :
+
+| | Poussé (UTC) | Servi en production | Délai |
+|---|---|---|---|
+| Commit A | 19:01:16 | 19:01:56 | **40 s** |
+| Revert | 19:13:09 | 19:13:42 | **33 s** |
+
+Vérifié de l'extérieur : `version.json` rend le nouveau commit, et l'URL du fichier renvoie
+ensuite la page d'app générique.
+
+**Ce que la répétition a appris :**
+- 🔴 **Vercel déploie sans attendre la CI.** Un revert est en ligne en ~35 s, mais un mauvais
+  commit l'est tout aussi vite : la CI (25 min) juge APRÈS la mise en production. Le retour
+  arrière est donc le vrai filet, pas la CI.
+- ⚠️ **Une URL inconnue répond 200** (repli SPA, limite assumée) : pour prouver qu'un fichier a
+  disparu, lire son contenu, jamais son code HTTP.
+- ❌ **Ne pas enchaîner `git revert -q` et `git commit --amend`** : si le revert échoue en silence,
+  l'amend réécrit le commit précédent. C'est arrivé ici ; le push a été refusé (pas d'avance
+  rapide) et rien de faux n'est parti. Lancer le revert sans `-q`, lire sa sortie, puis seulement
+  pousser.
+
+### À faire par Axel : l'autre moitié de `M-47`, le « Promote » de Vercel (5 min)
+
+Pas de jeton Vercel côté agent (`M-59`) : ce geste est le tien. À jouer une fois, à froid :
+
+1. Vercel → projet COSMO → **Deployments**. Repérer le déploiement de production courant et le
+   précédent (vert).
+2. Sur le précédent : **⋯ → Promote to Production** (ou « Instant Rollback »). Noter l'heure.
+3. Vérifier : `curl -s https://thecosmo.app/version.json` doit rendre le commit du déploiement
+   promu. Noter l'heure : c'est le délai réel.
+4. ⚠️ Après un « Promote », Vercel **ne redéploie plus automatiquement** les pushs suivants tant
+   que le déploiement courant n'est pas re-promu. Re-promouvoir le plus récent, puis revérifier
+   `version.json`, et attendre le prochain run `Deploy SHA drift` (vert attendu).
+5. Écrire les deux heures ici, sous ce paragraphe, et fermer `M-47` dans `a-faire-manuel.md`.
+
+La contrepartie base de données n'a rien à rejouer tant qu'aucune migration n'accompagne le
+déploiement défait : les migrations sont additives (ci-dessous), et un retour arrière du front ne
+touche pas la base.
+
 ### Base de données
 Postgres n'a pas de « rollback » automatique. Les migrations doivent donc être
 **additives et rétro-compatibles** (le front N-1 doit tolérer le schéma N) :
@@ -528,6 +571,7 @@ Postgres n'a pas de « rollback » automatique. Les migrations doivent donc êtr
 | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | ✅ | — |
 | `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_SENTRY_DSN` | ✅ | — |
 | `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `APP_URL` | ❌ jamais côté client | ✅ `supabase secrets set …` |
+| `SUPABASE_SECRET_KEY` (clé secrète, rôle `service_role`) | ⚠️ **serveur seulement** : lue par la fonction `api/collect.ts`, jamais préfixée `VITE_`. Posée par l'intégration Vercel ↔ Supabase, en `production` seulement. Sans elle, la mesure d'audience n'écrit plus rien (mig. `223`, `TR-1`) ; `check:env --vercel` vérifie sa présence | — |
 
 Les mêmes secrets `VITE_*` doivent exister en **GitHub Actions secrets** (job
 `build` / `e2e`).
@@ -580,6 +624,17 @@ passer par `apply_migration` (MCP) ou le SQL editor avec le fichier versionné.
 
 ## 7. Backup & Disaster Recovery (runbook)
 
+> 🔎 **État au 2026-10-15.** `db-backup` est vert tous les jours, **chiffré** depuis le 2026-10-13.
+> `restore-drill.yml` était **désactivé à la main du 2026-09-01 au 2026-10-15** (rangement
+> d'après-drill, rendu caduc par `C-86`) : le premier `dump-check` trimestriel, le 2026-10-05,
+> n'a pas eu lieu. ✅ **Réactivé le 2026-10-15**, et la relecture passe par
+> `scripts/dump-check.mjs` (témoin `dump-check.guard.test.mjs`) : elle refusait mal un `.gpg`
+> non chiffré et un clair posé à côté du chiffré.
+> ✅ **2026-10-15, run [`38787097174`](https://github.com/kelax12/COSMO1.2/actions/runs/38787097174)** :
+> `dump-check` **vert sur le dump CHIFFRÉ** du run db-backup `38711418682` (déchiffré,
+> 1 594 147 octets en clair, 2 214 objets, toutes les tables attendues). `drill` arrêté à sa
+> première garde (confirmation absente), rien écrit : c'est le rouge attendu.
+
 **État au 2026-09-01** : le plan Free n'offre **aucune sauvegarde native**, et le PITR a été
 écarté avec le plan Pro (T-01). La seule copie de la base qui existe est le dump quotidien de
 `.github/workflows/db-backup.yml`. **La restauration a été testée le 2026-09-01** (drill
@@ -587,8 +642,9 @@ ci-dessous) : le dump se restaure, en 163 s, et l'isolation RLS survit.
 
 ### Restauration réelle (sinistre)
 1. Créer un projet Supabase neuf, récupérer sa chaîne de connexion en mode **session**.
-2. Restaurer le dernier dump :
-   `pg_restore --no-owner --no-privileges --dbname "<url>" cosmo-<date>.dump`
+2. Déchiffrer puis restaurer le dernier dump (chiffré depuis le 2026-10-13) :
+   `gpg --batch --passphrase-file <fichier> -o cosmo.dump -d cosmo-<date>.dump.gpg`, puis
+   `pg_restore --no-owner --no-privileges --dbname "<url>" cosmo.dump`
    (client PostgreSQL **17** obligatoire, cf. le piège de version plus bas).
 3. Re-pointer le front : Vercel `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`, puis redéployer.
 4. Redéployer les Edge Functions et reposer les secrets sur le nouveau ref : **le dump ne les
@@ -659,16 +715,26 @@ artefact avec **30 jours de rétention**.
 **Mise en service** : poser le secret GitHub `SUPABASE_DB_URL` (Dashboard → Settings → Database →
 Connection string, mode « session »). Sans lui le job s'arrête en **avertissement**, pas en échec —
 une CI rouge en permanence finit ignorée, règle déjà appliquée à `renewal-notice`.
+**Depuis le 2026-10-13**, le secret `BACKUP_PASSPHRASE` (32 caractères au moins) est obligatoire :
+sans lui le job **échoue**, parce que c'est la seule absence qui exposerait. Sa copie hors de
+GitHub est le geste `M-71` : un secret Actions ne se relit pas, et sans elle aucune sauvegarde ne
+se restaure.
 
 > ⚠️ **Ce n'est PAS l'équivalent d'un PITR.** Un dump quotidien a un RPO de 24 h : il sert à ne
 > pas TOUT perdre, pas à revenir à l'état d'il y a une heure, et il ne se restaure pas en un clic. Ce qu'il couvre et que le PITR ne couvre pas, c'est
 > la perte du **compte** — suspension, litige, ou décision de partir. Les deux répondent à des
 > risques différents, aucun ne dispense de l'autre.
 >
-> 🔴 **L'artefact contient des données personnelles** (noms, emails, contenu des tâches). Le dépôt
-> est public, mais les artefacts d'un run exigent une authentification. Ne **jamais** committer un
-> dump. Pour une vraie copie longue durée, le télécharger et le garder sur un disque chiffré :
-> GitHub n'est pas un coffre.
+> 🔴 **L'artefact contient des données personnelles** (noms, emails, empreintes de mots de passe,
+> contenu des tâches). ❌ **Corrigé le 2026-10-15 : ce paragraphe disait « le dépôt est public, mais
+> les artefacts d'un run exigent une authentification ».** C'est faux : sur un dépôt public,
+> **n'importe quel compte GitHub connecté** télécharge un artefact. Cette phrase, recopiée du
+> commentaire du workflow, est exactement ce qui a produit la violation **`BK-1`** (dumps en clair
+> exposés du 2026-08-29 au 2026-10-13, cf. [`../faille.md`](../faille.md)). Depuis `8c6a971d`
+> (2026-10-13), **seul un dump chiffré** (`gpg`, AES-256, phrase secrète `BACKUP_PASSPHRASE`) part
+> en artefact, relu à l'identique par sha256 avant dépôt ; sans la phrase secrète, le job
+> **échoue**. Ne **jamais** committer un dump. Pour une vraie copie longue durée, la télécharger et
+> la garder sur un disque chiffré : GitHub n'est pas un coffre.
 
 Manuellement, si besoin :
 ```bash

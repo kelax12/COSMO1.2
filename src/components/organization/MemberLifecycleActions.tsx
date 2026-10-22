@@ -62,6 +62,7 @@ export const useMemberLifecycle = ({
         <DropdownMenuItem
           variant="destructive"
           onClick={() => setDepartureFor({ member, mode: 'remove' })}
+          data-guide-id="member-lifecycle-offboard"
           className="!text-red-500 focus:!text-red-500"
         >
           <LogOut size={14} className="!text-red-500" aria-hidden="true" /> {ta('lifecycle.menuOffboard')}

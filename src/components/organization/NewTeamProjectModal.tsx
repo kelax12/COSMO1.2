@@ -16,7 +16,7 @@ import { PRIORITY_META } from './team-projects.helpers';
 import { instantiateTemplate, todayLocal } from './portfolio.helpers';
 import { BUILT_IN_TEMPLATES, builtInPayload } from './project-templates';
 import AssigneesPicker from './AssigneesPicker';
-import MemberSelectField from './MemberSelectField';
+import MemberMultiSelectField from './MemberMultiSelectField';
 import { projectAudience } from './audience.helpers';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
 import { ProjectColorPicker } from './ProjectEditDialog';
@@ -49,6 +49,8 @@ interface NewTeamProjectModalProps {
   onSubmit: (
     input: CreateTeamProjectInput,
     tasks: DraftProjectTask[],
+    /** Responsables en plus du premier : membres du projet au rôle `lead` (mig. 190). */
+    coLeadIds: string[],
   ) => Promise<void>;
   onClose: () => void;
 }
@@ -80,7 +82,8 @@ const NewTeamProjectModal = ({
   const [color, setColor] = useState(initialOrgTemplate?.color ?? 'blue');
   const [categoryId, setCategoryId] = useState<string | null>(initialOrgTemplate?.categoryId ?? null);
   const [teamId, setTeamId] = useState(initialOrgTemplate?.teamId ?? defaultTeamId ?? '');
-  const [ownerId, setOwnerId] = useState(currentUserId ?? '');
+  // Le premier coché est le responsable principal (`owner_id`), les autres co-pilotent.
+  const [ownerIds, setOwnerIds] = useState<string[]>(currentUserId ? [currentUserId] : []);
   const [description, setDescription] = useState(initialOrgTemplate?.description ?? '');
   const [dueDate, setDueDate] = useState('');
   const [templateChoice, setTemplateChoice] = useState<TemplateChoice>(initialOrgTemplate ? `org:${initialOrgTemplate.id}` : '');
@@ -169,12 +172,13 @@ const NewTeamProjectModal = ({
           color,
           teamId: teamId || null,
           categoryId,
-          ownerId: ownerId || null,
+          ownerId: ownerIds[0] ?? null,
           description: description.trim() || null,
           startDate: null,
           dueDate: dueDate || fromTemplate.dueDate,
         },
         [...fromTemplate.tasks, ...manual.map((d) => ({ name: d.name, assigneeIds: d.assigneeIds }))],
+        ownerIds.slice(1),
       );
       onClose();
     } catch {
@@ -231,7 +235,7 @@ const NewTeamProjectModal = ({
           )}
 
           {/* Modèle de départ (mig. 153) : ceux de l'entreprise, puis ceux de COSMO. */}
-          <div>
+          <div data-guide-id="project-form-template">
             <label htmlFor="new-project-template" className={labelClass} style={labelStyle}>
               <LayoutTemplate size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />
               {pf('builtIn.pickLabel')}
@@ -259,7 +263,7 @@ const NewTeamProjectModal = ({
             </MenuSelect>
           </div>
 
-          <div>
+          <div data-guide-id="project-form-name">
             <label htmlFor="new-project-name" className={labelClass} style={labelStyle}>{t('project.name')}</label>
             <input
               id="new-project-name"
@@ -288,7 +292,7 @@ const NewTeamProjectModal = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+            <div data-guide-id="project-form-team">
               <label htmlFor="new-project-team" className={labelClass} style={labelStyle}>{t('project.team')}</label>
               <MenuSelect
                 id="new-project-team"
@@ -303,11 +307,11 @@ const NewTeamProjectModal = ({
                 ))}
               </MenuSelect>
             </div>
-            <MemberSelectField
-              label={pf('new.owner')}
+            <MemberMultiSelectField
+              label={pf('new.owners')}
               members={members}
-              value={ownerId}
-              onChange={setOwnerId}
+              value={ownerIds}
+              onChange={setOwnerIds}
               emptyLabel={pf('noOwner')}
             />
             <p
@@ -323,7 +327,7 @@ const NewTeamProjectModal = ({
                   : tp('popups.project.audienceTeam', audience.count, { team: teams.find((tm) => tm.id === teamId)?.name ?? '' })}
               </span>
             </p>
-            <div>
+            <div data-guide-id="project-form-due">
               <label htmlFor="new-project-due" className={labelClass} style={labelStyle}>{pf('new.dueDate')}</label>
               <DatePicker id="new-project-due" value={dueDate} onChange={(v) => { setDueDate(v); setError(null); }} className="h-[2.626275rem]" popoverClassName="z-[10000]" minDate={selectedPayload ? todayLocal() : undefined} />
             </div>
@@ -343,7 +347,7 @@ const NewTeamProjectModal = ({
             />
           </div>
 
-          <div>
+          <div data-guide-id="project-form-tasks">
             <span className={labelClass} style={labelStyle}>
               <ListTodo size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />
               {t('project.initialTasks')}

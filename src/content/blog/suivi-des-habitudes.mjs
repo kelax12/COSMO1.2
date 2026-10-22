@@ -31,6 +31,7 @@ export const article = {
       ],
       html: `
 <p class="lead">Suivre ses habitudes, c'est cocher des cases, la partie facile. La difficulté est ailleurs : choisir <em>quoi</em> regarder. Selon l'indicateur mis en avant, le même suivi produit soit une régularité qui s'installe, soit un abandon au premier accroc. Voici ce que chaque indicateur mesure réellement, celui qu'il faut mettre au centre, et la façon de démarrer un suivi qui tienne au-delà de trois semaines.</p>
+<figure><img src="/screenshots/habitudes.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Le suivi d'habitudes de Cosmo : tableau hebdomadaire des habitudes cochées, avec la série de jours consécutifs de chacune." /><figcaption>Le suivi d'habitudes de Cosmo : tableau hebdomadaire des habitudes cochées, avec la série de jours consécutifs de chacune. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="pourquoi">Pourquoi suivre, plutôt que simplement faire</h2>
 <p>Le suivi ne sert pas à se noter. Il sert à trois choses précises, et si votre système n'en fournit aucune, il ne vaut pas le temps qu'il coûte :</p>
@@ -97,6 +98,7 @@ export const article = {
       ],
       html: `
 <p class="lead">Tracking habits means ticking boxes, and that is the easy part. The difficulty lies elsewhere: choosing <em>what</em> to look at. Depending on which indicator you put front and centre, the same tracking produces either consistency that settles in, or abandonment at the first slip. Here is what each indicator actually measures, which one belongs at the centre, and how to start a tracking practice that lasts beyond three weeks.</p>
+<figure><img src="/screenshots/habitudes.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's habit tracker: a weekly grid of checked habits, with each habit's streak of consecutive days." /><figcaption>Cosmo's habit tracker: a weekly grid of checked habits, with each habit's streak of consecutive days. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="pourquoi">Why track, rather than simply do</h2>
 <p>Tracking is not there to grade you. It serves three precise purposes, and if your system delivers none of them it is not worth the time it costs:</p>

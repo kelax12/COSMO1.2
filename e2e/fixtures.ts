@@ -61,8 +61,36 @@ export async function gotoTolerant(page: Page, url: string): Promise<void> {
   throw derniere;
 }
 
-export const test = base.extend<{ demoPage: Page }>({
-  demoPage: async ({ page, context }, use) => {
+/**
+ * Un lundi 10:00 (Paris), choisi exprès : le lundi et le mardi, le tableau de
+ * bord porte la carte check-in hebdo (`useWeeklyCheckin`), son contenu le plus
+ * large. Un verdict pris un autre jour ne la mesurerait jamais.
+ */
+export const HORLOGE_FIGEE = '2026-10-19T10:00:00+02:00';
+
+export const test = base.extend<{ demoPage: Page; horlogeFigee: string | null }>({
+  /**
+   * 🔴 L'HEURE DU NAVIGATEUR, figée au départ quand un spec le demande
+   * (`test.use({ horlogeFigee: HORLOGE_FIGEE })`).
+   *
+   * La démo date ses seeds par rapport à `new Date()`, et certains écrans
+   * dépendent du JOUR de la semaine. Le 2026-10-19, `Visual` et le cas C-97
+   * `/dashboard` à 200 % sont passés au rouge sur un commit qui ne changeait
+   * que deux commentaires : la carte check-in n'apparaît que le lundi et le
+   * mardi. Un verdict qui dépend du calendrier ne dit rien du code.
+   *
+   * `clock.install` et non `setFixedTime` : l'heure PART de cette date puis
+   * avance avec les minuteurs. Une date gelée bloquerait ce qui mesure le temps
+   * écoulé par `Date.now()` (le ticker GSAP de la landing, que la fixture
+   * traverse). Posée AVANT la première navigation, donc avant `loginDemo()`,
+   * qui génère les seeds.
+   * ⚠️ `null` par défaut : les autres specs gardent l'heure réelle, ce
+   * changement ne touche que ceux qui l'ont demandé.
+   */
+  horlogeFigee: [null, { option: true }],
+
+  demoPage: async ({ page, context, horlogeFigee }, use) => {
+    if (horlogeFigee) await page.clock.install({ time: new Date(horlogeFigee) });
     // 1. État propre, clear cookies + storage Supabase + flags démo
     //    (sinon RootRoute redirige immédiatement vers /dashboard si session
     //     déjà active, et le CTA "Essayer maintenant" n'existe pas).
@@ -109,7 +137,16 @@ export const test = base.extend<{ demoPage: Page }>({
     //    30 s : la LandingPage est lazy-loadée et animée par GSAP ; au premier
     //    test d'un serveur Vite froid son rendu dépasse largement 10 s.
     const demoBtn = page.getByRole('button', { name: /essayer.*sans inscription/i }).first();
-    await demoBtn.waitFor({ state: 'visible', timeout: 30_000 });
+    // 🔴 Une seconde chance, bornée. Sous WebKit en CI, la landing (lazy,
+    // animée) n'avait parfois toujours pas peint son CTA à 30 s : deux tests
+    // instables le 2026-10-09, réussis au retry. Recharger reprend un rendu
+    // bloqué ; un serveur qui ne sert vraiment pas la page échoue toujours.
+    try {
+      await demoBtn.waitFor({ state: 'visible', timeout: 30_000 });
+    } catch {
+      await gotoTolerant(page, '/');
+      await demoBtn.waitFor({ state: 'visible', timeout: 30_000 });
+    }
     // Deux faux positifs d'actionnabilité se cumulent sur la landing :
     //   - « element is not stable » : les animations GSAP d'entrée bougent
     //     encore le CTA quand Playwright vérifie sa position ;
@@ -186,6 +223,9 @@ export const test = base.extend<{ demoPage: Page }>({
         // Neutralise le wiggle d'invite au swipe de la 1ʳᵉ TaskCard mobile
         // (animation x de 1,7 s qui rendrait les tests de gestes flaky).
         localStorage.setItem('cosmo_swipe_hint_anim_seen', '1');
+        // Vidéo d'accueil entreprise, ouverte en démo depuis le 2026-10-19 :
+        // elle recouvrirait tout parcours qui passe par `/entreprise`.
+        localStorage.setItem('cosmo_org_welcome_seen_org-demo-1_demo-user', '1');
       } catch { /* ignore */ }
     });
 
@@ -345,36 +385,67 @@ export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promi
   // du TEST entier, 120 s, et le cas mourait sur « page fermée » (run
   // `35847722505`, /statistics). Même délai et même repli que les autres clics
   // de cette fonction.
-  const plus = page.getByRole('button', { name: /plus d'options/i }).filter({ visible: true }).first();
+  // 🔴 Le chemin mobile ENTIER (« Plus » → feuille → item → URL) est rejoué
+  // UNE fois s'il échoue : sous WebKit, le bouton « Plus » ou l'item de la
+  // feuille restaient parfois introuvables (2026-10-10, deux tests).
+  // Échap referme une feuille bloquée ; une app réellement cassée échoue
+  // encore au second passage.
+  const viaPlus = async (): Promise<void> => {
+    const plus = page.getByRole('button', { name: /plus d'options/i }).filter({ visible: true }).first();
+    try {
+      await plus.click({ timeout: 15_000 });
+    } catch {
+      await plus.click({ force: true, timeout: 10_000 });
+    }
+    // ⚠️ Scoper au sheet est OBLIGATOIRE : la page reste montée DERRIÈRE lui et
+    // ses propres contrôles matchent le même `name`. Le Dashboard a par exemple
+    // un MobileCollapsible « OKR » qui arrivait avant l'item du sheet en ordre
+    // DOM ; `.first()` le sélectionnait et le clic était intercepté par le
+    // sheet posé au-dessus → timeout de 5 s (échec mobile-safari sur /okr).
+    const sheet = page.locator('[data-mobile-more-sheet]');
+    await sheet.waitFor({ state: 'visible', timeout: 10_000 });
+    const sheetItem = sheet
+      .getByRole('link', { name })
+      .or(sheet.getByRole('button', { name }))
+      .filter({ visible: true })
+      .first();
+    // L'item peut ne pas être encore VISIBLE quand la feuille l'est : sous WebKit
+    // elle glisse à ~1 image/s, et le clic forcé ci-dessous expirait sur un
+    // élément jamais trouvé (instable le 2026-10-10). On l'attend d'abord.
+    await sheetItem.waitFor({ state: 'visible', timeout: 20_000 });
+    try {
+      await sheetItem.click({ timeout: 10_000 });
+    } catch {
+      if (urlPattern.test(page.url())) return;
+      // Même repli que le chemin par lien : sous WebKit, la feuille peut encore
+      // s'animer (mesuré sur un poste : ~1 image/s), et le test « stable » de
+      // Playwright n'aboutit jamais sur un élément qui glisse. L'élément est
+      // résolu et visible ; on force le dispatch, avec un délai explicite.
+      await sheetItem.click({ force: true, timeout: 10_000 });
+    }
+    await clickThroughOrgMenuIfAny(page);
+    // 🔴 Le clic (forcé) pouvait tomber sans effet : la navigation n'avait
+    // jamais lieu et `waitForURL` attendait jusqu'au délai du TEST (180 s,
+    // instable le 2026-10-10). Délai propre, puis UNE seconde tentative au
+    // clavier si l'item est toujours là.
+    const arrive = await page
+      .waitForURL(urlPattern, { timeout: 15_000 })
+      .then(() => true, () => false);
+    if (arrive) return;
+    if (await sheetItem.isVisible().catch(() => false)) {
+      await sheetItem.focus();
+      await page.keyboard.press('Enter');
+      await clickThroughOrgMenuIfAny(page);
+    }
+    await page.waitForURL(urlPattern, { timeout: 15_000 });
+  };
   try {
-    await plus.click({ timeout: 15_000 });
-  } catch {
-    await plus.click({ force: true, timeout: 10_000 });
-  }
-  // ⚠️ Scoper au sheet est OBLIGATOIRE : la page reste montée DERRIÈRE lui et
-  // ses propres contrôles matchent le même `name`. Le Dashboard a par exemple
-  // un MobileCollapsible « OKR » qui arrivait avant l'item du sheet en ordre
-  // DOM ; `.first()` le sélectionnait et le clic était intercepté par le
-  // sheet posé au-dessus → timeout de 5 s (échec mobile-safari sur /okr).
-  const sheet = page.locator('[data-mobile-more-sheet]');
-  await sheet.waitFor({ state: 'visible', timeout: 10_000 });
-  const sheetItem = sheet
-    .getByRole('link', { name })
-    .or(sheet.getByRole('button', { name }))
-    .filter({ visible: true })
-    .first();
-  try {
-    await sheetItem.click({ timeout: 10_000 });
+    await viaPlus();
   } catch {
     if (urlPattern.test(page.url())) return;
-    // Même repli que le chemin par lien : sous WebKit, la feuille peut encore
-    // s'animer (mesuré sur un poste : ~1 image/s), et le test « stable » de
-    // Playwright n'aboutit jamais sur un élément qui glisse. L'élément est
-    // résolu et visible ; on force le dispatch, avec un délai explicite.
-    await sheetItem.click({ force: true, timeout: 10_000 });
+    await page.keyboard.press('Escape').catch(() => {});
+    await viaPlus();
   }
-  await clickThroughOrgMenuIfAny(page);
-  await page.waitForURL(urlPattern);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -426,7 +497,38 @@ export async function openOrgSection(page: Page, label: RegExp): Promise<void> {
   }
   await page.locator('[data-org-section-switcher]').click();
   const sheet = page.locator('[data-org-section-sheet]');
-  await sheet.getByRole('button', { name: label }).click();
+  const item = sheet.getByRole('button', { name: label });
+  // Même repli que `navTo` : sous WebKit la feuille glisse encore, et le test
+  // « stable » de Playwright n'aboutissait jamais (181 essais, puis délai du
+  // TEST entier, 120 s : instable le 2026-10-09). Délai propre, puis clic forcé
+  // sur un élément résolu et visible.
+  // 🔴 Et un clic ne compte que si la feuille se REFERME : un clic forcé
+  // pendant qu'elle glisse encore pouvait tomber sans effet, la feuille
+  // restant ouverte (instable le 2026-10-10). Une seconde tentative, pas plus.
+  for (let essai = 0; essai < 2; essai += 1) {
+    // Le premier clic a pu agir et la feuille se refermer lentement : on ne
+    // reclique pas un élément qui n'est plus là.
+    if (essai > 0 && !(await item.isVisible().catch(() => false))) break;
+    if (essai === 0) {
+      try {
+        await item.click({ timeout: 15_000 });
+      } catch {
+        await item.click({ force: true, timeout: 10_000 });
+      }
+    } else {
+      // 🔴 Seconde tentative AU CLAVIER, pas un second clic : deux clics
+      // (dont un forcé) sont restés sans effet sous WebKit, feuille ouverte et
+      // bouton présent (2026-10-10). Un clic forcé vise le CENTRE calculé de
+      // l'élément, qui peut tomber à côté pendant l'animation ; focus + Entrée
+      // ne dépend d'aucune géométrie, et c'est un vrai chemin utilisateur.
+      await item.focus();
+      await page.keyboard.press('Enter');
+    }
+    const fermee = await expect(sheet)
+      .toHaveCount(0, { timeout: 5_000 })
+      .then(() => true, () => false);
+    if (fermee) return;
+  }
   await expect(sheet).toHaveCount(0, { timeout: 10_000 });
 }
 

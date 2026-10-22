@@ -14,6 +14,7 @@
 import type { CreateTaskInput } from '@/modules/tasks/types';
 import type { CreateHabitInput } from '@/modules/habits/types';
 import type { CreateOKRInput } from '@/modules/okrs/types';
+import type { CreateEventInput } from '@/modules/events/types';
 
 /** Vu une fois par appareil, comme le flag qu'il remplace. */
 export const FIRST_RUN_FLAG = 'cosmo_first_run_done';
@@ -101,22 +102,90 @@ export const buildTaskInput = (name: string): CreateTaskInput => ({
   completed: false,
 });
 
+/** Durées proposées pour une habitude, en minutes. */
+export const HABIT_MINUTES = [10, 20, 30, 45, 60] as const;
+
 /** Mêmes valeurs par défaut que `HabitModal`, pour qu'une habitude créée ici
- *  soit indiscernable d'une habitude créée dans l'application. */
-export const buildHabitInput = (name: string): CreateHabitInput => ({
+ *  soit indiscernable d'une habitude créée dans l'application. La durée est
+ *  CHOISIE par la personne (2026-10-05) : « Se coucher avant 23 h » ne dure
+ *  pas trente minutes, et l'imposer faussait ses statistiques de temps. */
+export const buildHabitInput = (name: string, minutes = 30): CreateHabitInput => ({
   name: name.trim(),
   description: '',
   frequency: 'daily',
-  estimatedTime: 30,
+  estimatedTime: Number.isFinite(minutes) && minutes > 0 ? Math.round(minutes) : 30,
   color: '#3B82F6',
   icon: '✓',
 });
 
 /**
+ * Une cible saisie en texte (« 10 », « 2,5 ») : un nombre strictement positif,
+ * sinon 1 (résultat clé binaire). On ne devine jamais une cible : on divise
+ * par elle (garde B17).
+ */
+export const parseTarget = (raw: string): number => {
+  const n = Number(raw.replace(',', '.').trim());
+  return Number.isFinite(n) && n > 0 ? n : 1;
+};
+
+export type SlotDay = 'today' | 'tomorrow';
+export const SLOT_HOURS = [9, 14, 18] as const;
+
+/**
+ * Le créneau proposé à l'étape Agenda : une heure, aujourd'hui ou demain,
+ * relié à la tâche (`taskId`), exactement ce que fait un glisser-déposer
+ * depuis la liste latérale de l'agenda. Choisi par la personne, jamais posé
+ * à sa place.
+ */
+export const buildSlotEvent = (
+  taskName: string,
+  taskId: string | undefined,
+  day: SlotDay,
+  hour: number,
+  now: Date = new Date(),
+): CreateEventInput => {
+  const start = new Date(now);
+  start.setHours(hour, 0, 0, 0);
+  if (day === 'tomorrow') start.setDate(start.getDate() + 1);
+  const end = new Date(start.getTime() + 60 * 60 * 1000);
+  return {
+    title: taskName.trim(),
+    start: start.toISOString(),
+    end: end.toISOString(),
+    ...(taskId ? { taskId } : {}),
+  };
+};
+
+/**
+ * Compte entreprise remis à plus tard (« Plus tard » sur `/entreprise/onboarding`) :
+ * l'accueil perso le rappelle, sinon plus rien ne ramène la personne vers
+ * l'entreprise qu'elle était venue créer. Effacé à la création ou à
+ * l'adhésion.
+ */
+export const BUSINESS_PENDING_FLAG = 'cosmo_business_onboarding_pending';
+
+export const readBusinessPending = (): boolean => {
+  try {
+    return localStorage.getItem(BUSINESS_PENDING_FLAG) === '1';
+  } catch {
+    return false;
+  }
+};
+
+export const setBusinessPending = (pending: boolean): void => {
+  try {
+    if (pending) localStorage.setItem(BUSINESS_PENDING_FLAG, '1');
+    else localStorage.removeItem(BUSINESS_PENDING_FLAG);
+  } catch {
+    /* stockage indisponible : le rappel ne s'affichera pas */
+  }
+};
+
+/**
  * L'objectif seul suffit : le résultat clé est facultatif, parce qu'exiger
  * une mesure chiffrée au premier écran est exactement le genre de friction
- * qui fait fermer l'onglet. Quand il est donné, il est binaire (cible 1) —
- * l'écran OKR permet de le chiffrer ensuite.
+ * qui fait fermer l'onglet. Sa cible chiffrée est facultative aussi : sans
+ * nombre, le résultat clé est binaire (cible 1).
  *
  * 🔴 L'id du résultat clé est un UUID, jamais `kr-<horodatage>`. Le dépôt
  * Supabase refuse tout id de KR qui n'en est pas un avant de l'interpoler
@@ -139,6 +208,7 @@ export const buildOkrInput = (
   objective: string,
   keyResult: string,
   now: Date = new Date(),
+  target = '',
 ): CreateOKRInput => {
   const start = now.toISOString();
   const end = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString();
@@ -155,7 +225,7 @@ export const buildOkrInput = (
             id: newKeyResultId(),
             title: kr,
             currentValue: 0,
-            targetValue: 1,
+            targetValue: parseTarget(target),
             unit: '',
             completed: false,
             estimatedTime: 0,

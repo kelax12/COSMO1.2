@@ -30,6 +30,19 @@ const HABIT_QUESTION = /une habitude que vous voulez tenir/i;
 const OKR_QUESTION = /un objectif pour les trois prochains mois/i;
 const AGENDA_TITLE = /place.*vos tâches/i;
 
+/**
+ * Piège de focus mesuré au clavier (2026-10-05) : vingt-cinq Tab, et le focus
+ * ne quitte jamais la surface. `modal-a11y.guard` vérifie le CÂBLAGE de
+ * `useModalA11y` ; ceci vérifie son EFFET, hors démo, là où vivent ces écrans.
+ */
+async function expectTabTrapped(page: import('@playwright/test').Page, dialog: import('@playwright/test').Locator) {
+  for (let i = 0; i < 25; i += 1) {
+    await page.keyboard.press('Tab');
+    const inside = await dialog.evaluate((el) => el.contains(document.activeElement));
+    expect(inside, `Tab n°${i + 1} : le focus a quitté la surface`).toBe(true);
+  }
+}
+
 /** Prepare le stub, ouvre `/dashboard`, rend le stub au test. */
 async function openDashboard(
   page: import('@playwright/test').Page,
@@ -59,6 +72,8 @@ test.describe('C-27 — accueil du premier compte (FirstRunSetup)', () => {
     // ── Etape 1 : les taches ──────────────────────────────────────
     const dialog = page.getByRole('dialog', { name: /bienvenue dans cosmo/i });
     await expect(dialog).toBeVisible({ timeout: 45_000 });
+    // Le piège de focus, mesuré au clavier sur la présentation.
+    await expectTabTrapped(page, dialog);
     // La présentation d'abord : rien n'est demandé avant « Commencer ».
     await page.getByRole('button', { name: /^commencer/i }).click();
     await expect(page.getByRole('heading', { name: TASK_QUESTION })).toBeVisible();

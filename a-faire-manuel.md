@@ -12,69 +12,14 @@ décision. Rien ici ne se corrige en écrivant du code.
 > soit « fait » ici et « ouvert » ailleurs. Ce fichier dit **quoi faire et pourquoi**, pas où ça en
 > est.
 
----
 
-> ### 🔄 Mise à jour du 2026-09-14 — **3 gestes neufs, 3 retirés, 3 lignes qui décrivaient un produit disparu**
->
-> Tout ce qui suit est **mesuré ce jour-là**, pas repris d'un tableau : ledger de migrations lu en
-> base, versions d'Edge Functions lues par l'API, runs lus par `gh`, branches `case` du webhook
-> recomptées dans le code.
->
-> **🆕 Trois gestes qui n'étaient écrits nulle part**
->
-> | # | Geste | Pourquoi il apparaît maintenant |
-> |---|---|---|
-> | **M-43** | appliquer la mig. `140` et jouer `reset_stripe_identifiers(true)` **dans** la fenêtre de bascule | Il conditionne M-06 et **aucune ligne ne le portait**. Sans lui, un identifiant Stripe de TEST présenté à une clé LIVE répond 404, donc 500 |
-> | **M-44** | trancher le retrait de la pastille « Aujourd'hui » du report rapide | Un fichier non commité d'une autre session contredit la conclusion de `C-72`. Deux lectures du produit, pas deux états du code. 🔴 **Plus manuel depuis le 2026-09-16** : le retrait est entré dans `main` par `ab72cd39`, cf. § 5 |
-> | **M-37b**, 5ᵉ point | rejouer volontairement le remboursement et vérifier qu'il ne rend **rien de plus** | Le verrou vient d'être rendu testable et déployé (v6). Son arithmétique est prouvée ; son comportement **contre Stripe** ne l'est pas |
->
-> **🔴 Trois lignes étaient FAUSSES, et deux auraient coûté cher**
->
-> | # | Ce qu'elle disait | Ce que la mesure rend |
-> |---|---|---|
-> | **M-07** | réenregistrer l'endpoint webhook live « avec les **5** mêmes events » | **SIX** branches `case` dans `stripe-webhook`, recomptées dans le code. En réenregistrer cinq **couperait le remboursement en silence** |
-> | **M-08** | la recette live n'exerçait **pas** le remboursement | Le chemin existe depuis le 2026-09-12 (v6 aujourd'hui). Une recette qui ne l'emprunte pas laisse sortir en live le seul geste qui REND de l'argent, jamais éprouvé |
-> | **M-22** | « aujourd'hui **oui**, un admin non propriétaire peut supprimer l'entreprise » | Faux depuis la mig. `138` (prod, 2026-09-12). Décision **prise et appliquée** : non. Parcours joué dans un navigateur le 09-14 |
->
-> **✅ Trois lignes retirées, le geste étant fait** — ~~M-30~~ (les **8** Edge Functions sont en ligne
-> et identiques au dépôt, run `34861975638`), ~~M-31~~ (migrations `137` `138` `139` au ledger de
-> prod, relu en base), ~~M-22~~ (ci-dessus). Et le § 8 ne décrit plus une production divergente :
-> elle ne l'est plus.
->
-> ⚠️ **Ce que cette passe redit, pour la énième fois** : M-07, M-08 et M-22 n'ont pas été trouvées
-> en relisant ce fichier — elles l'ont été en comptant dans le code et en lisant le ledger. Une
-> ligne recopiée vieillit sans que rien ne l'annonce, et **un tableau de gestes qui en contient de
-> faux use la crédibilité de ceux qui restent.**
+> 🗂️ **Allégé le 2026-10-11** (65 ko). Sont partis, **à l'identique**, dans
+> **[`docs/archive/a-faire-manuel-jusqua-2026-10-11.md`](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md)** : les deux encarts de mise à jour (09-14, 09-20), les lignes de
+> gestes **faits** (`M-11`, `M-12`, `M-22`, `M-30`, `M-31`, `M-33`, `M-33b`, `M-34`,
+> `M-37a`, `M-45`, `M-46`, `M-57`, `M-62`…), l'état des Edge Functions au 2026-09-03 et le § 9.5.
+> Les numéros `M-NN` ne se réutilisent jamais ; le dernier attribué est `M-77` (2026-10-13).
 
----
-
-> ### 🕳️ Mise à jour du 2026-09-20 — **12 gestes neufs, dont un qui débloque le défaut P0 du dépôt**
->
-> Consigne d'Axel : « reprends tous les audits et classe les choses à faire, soit dans
-> `a-faire-code.md` si tout se fait avec du code sans mon intervention, soit dans
-> `a-faire-manuel.md` si ça nécessite mon intervention ».
->
-> Les **23 sections « 🕳️ Angles morts »** du 2026-09-16 (`faille.md` + 22 documents de `docs/`) et
-> les dix angles morts transversaux `T-1` → `T-10` du tableau de bord **n'étaient suivis nulle
-> part**. Tri fait : **30 items de code** dans [`a-faire-code.md`](./a-faire-code.md) § 12 (`C-81`
-| [9](#9-angles-morts-du-2026-09-16--ce-que-seules-tes-mains-ferment) | 🕳️ **Angles morts du 2026-09-16**, versés le 2026-09-20 | M-45 → M-56 · ~~M-45~~ ~~M-46~~ ✅ faits le 09-20 |
-| [9.1bis](#91bis-cinq-gestes-nés-de-la-passe-de-gardes-du-2026-09-21) | 🛡️ Ce que la passe de gardes du **2026-09-21** laisse à tes mains | M-57 → M-61, **5 gestes neufs** |
->
-> 🔴 **Le plus lourd des douze n'était pas un angle mort, c'était un trou de ce fichier.**
-> **`M-45` : appliquer la mig. `136`.** Le mot « 136 » n'apparaissait pas **une seule fois** dans
-> ce document, alors que c'est le geste qui ferme `C-77`, le seul défaut ouvert qu'un utilisateur
-> VOIT, et qu'il attendait depuis le 2026-09-03. Constat du matin du 2026-09-20 : ledger à **138**
-> entrées, dernière `20260913223918`, et `get_work_time_stats` lisait encore `history`.
->
-> ✅ **Fait le même jour**, et revérifié en base le **2026-09-21** : ledger `20260920104729`, la
-> fonction lit `kr_completions`. `M-46` (mig. `149`) aussi, ledger `20260920105522`. ⚠️ **Le numéro
-> de ledger publié le 09-20 pour la `136` était FAUX** — `20260920105113`, qui n'existe au ledger
-> d'aucune migration. Il avait été recopié, pas relu ; corrigé ici et dans `CLAUDE.md` le 09-21.
->
-> ⚠️ **Trois angles morts n'ont produit AUCUNE ligne**, parce que ce fichier les portait déjà
-> (`M-15`/`M-16`/`M-17`, `M-25`, `M-40`) : le détail et la raison sont au § 9.5. C'est la règle de
-> l'en-tête appliquée à une passe de classement, et c'est le seul moyen qu'une liste de gestes ne
-> double pas de taille sans gagner un geste.
+> 🔎 **Audit par mesure du 2026-10-16** (lecture seule : `gh secret list`, `supabase secrets list`, envs Vercel non déchiffrées, SELECT en prod, runs CI, git). Six lignes (sept avec `M-68`, fermée le même jour) dont le geste est **mesuré fait** sont parties **à l'identique** dans **[`docs/archive/a-faire-manuel-retires-2026-10-16.md`](./docs/archive/a-faire-manuel-retires-2026-10-16.md)**, avec la preuve de chacune : `M-29`, `M-41`, `M-42`, `M-58`, `M-59`, `M-61`. Les lignes restantes qui portaient un énoncé devenu faux ont été corrigées sur place (`M-14`, `M-60`, `M-68`, `M-69`, `M-71`). Tout ce qui se joue sur un appareil, une boîte mail, une console sans API ou une décision reste listé : **non vérifiable par agent** ne veut pas dire fait.
 
 ---
 
@@ -82,16 +27,17 @@ décision. Rien ici ne se corrige en écrivant du code.
 
 | § | Domaine | Nature |
 |---|---|---|
-| [1](#1-bloquant-absolu--rien-ne-sencaisse-avant) | Guichet et statut juridique | administratif |
-| [2](#2-bascule-stripe-live) | Stripe live | console + carte réelle |
-| [3](#3-secrets-à-poser) | Secrets | console |
-| [4](#4-réglages-de-console-supabase) | Supabase | clics |
-| [5](#5-décisions-qui-nappartiennent-quà-toi) | Décisions produit | arbitrage |
-| [6](#6-acquisition-et-seo) | Annuaires, Search Console | manuel, répétitif |
-| [7](#7-vérifications-quaucune-gate-ne-peut-faire) | Ce qu'il faut ouvrir soi-même | appareil réel |
-| [8](#8-déploiements-quun-git-push-ne-fait-pas) | 🔴 Edge Functions **et migrations** : le dépôt ≠ la production | ligne de commande |
-| [9](#9-angles-morts-du-2026-09-16--ce-que-seules-tes-mains-ferment) | 🕳️ **Angles morts du 2026-09-16**, versés le 2026-09-20 | M-45 → M-56, **12 gestes neufs** |
-| [10](#10-audit-juridique-du-2026-09-24--ce-que-le-code-ne-peut-pas-faire) | ⚖️ **Audit juridique du 2026-09-24** | M-62 → M-67, identité, préavis, DPA |
+| [1](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#1-bloquant-absolu--rien-ne-sencaisse-avant) | Guichet et statut juridique | administratif |
+| [2](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#2-bascule-stripe-live) | Stripe live | console + carte réelle |
+| [3](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#3-secrets-à-poser) | Secrets | console |
+| [4](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#4-réglages-de-console-supabase) | Supabase | clics |
+| [5](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#5-décisions-qui-nappartiennent-quà-toi) | Décisions produit | arbitrage |
+| [6](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#6-acquisition-et-seo) | Annuaires, Search Console | manuel, répétitif |
+| [7](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#7-vérifications-quaucune-gate-ne-peut-faire) | Ce qu'il faut ouvrir soi-même | appareil réel |
+| [8](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#8-déploiements-quun-git-push-ne-fait-pas) | 🔴 Edge Functions **et migrations** : le dépôt ≠ la production | ligne de commande |
+| [9](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#9-angles-morts-du-2026-09-16--ce-que-seules-tes-mains-ferment) | 🕳️ **Angles morts du 2026-09-16**, versés le 2026-09-20 | M-45 → M-56, **12 gestes neufs** |
+| [10](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#10-audit-juridique-du-2026-09-24--ce-que-le-code-ne-peut-pas-faire) | ⚖️ **Audit juridique du 2026-09-24** | M-62 → M-67, identité, préavis, DPA |
+| [11](#11-audit-juridique-du-2026-10-13--violation-de-données-et-gestes-restants) | 🔴 **Audit juridique du 2026-10-13 : violation de données, délai 72 h** | M-68 → M-77 |
 
 ---
 
@@ -102,8 +48,8 @@ décision. Rien ici ne se corrige en écrivant du code.
 | M-01 | **Immatriculation micro-entreprise au guichet unique INPI** | Encaisser avant l'immatriculation est du travail dissimulé. Aucune ligne de code ne contourne ça | `ROADMAP-60J.md` T-32 |
 | M-02 | **Choisir et signer une société de domiciliation** | Décision prise le 2026-08-26, exécution en attente. Conditionne l'adresse des mentions légales | `ROADMAP-60J.md` T-33 |
 | M-03 | **Adhérer à un médiateur de la consommation**, puis publier ses coordonnées dans les CGV | Adhésion payante et obligatoire dès qu'on vend à un consommateur. Oubli classique, sanctionné par la DGCCRF. Et **tout client de COSMO est un consommateur** (décision du 2026-08-26) | `ROADMAP-60J.md` T-34 |
-| M-04 | **Collecter et archiver les DPA** des six sous-traitants : Supabase, Vercel, Sentry, Stripe, Resend et **Vesk** | Un DPA ne s'obtient qu'en tant qu'entreprise, donc après M-01. Vesk reçoit de la donnée personnelle depuis les pages publiques : c'est un sous-traitant comme les autres | `ROADMAP-60J.md` T-43, `faille.md` V-1 |
-| M-05 | **Compléter les mentions légales** : SIREN, RCS, TVA, directeur de publication, et configurer les factures Stripe pour la France (« TVA non applicable, art. 293 B du CGI », mentions L441-9, numérotation continue) | Le SIREN n'existe qu'après M-01. Une mention fausse est pire qu'une mention absente | `ROADMAP-60J.md` T-37 |
+| M-04 | **Collecter et archiver les DPA** des cinq sous-traitants : Supabase, Vercel, Sentry, Stripe et Resend | Un DPA ne s'obtient qu'en tant qu'entreprise, donc après M-01. | `ROADMAP-60J.md` T-43, `faille.md` V-1 |
+| M-05 | ✅ **Mentions légales complétées le 2026-10-21** (EI, SIREN, SIRET, RNE, APE, art. 293 B), reste la configuration des factures Stripe · **Compléter les mentions légales** : SIREN, RCS, TVA, directeur de publication, et configurer les factures Stripe pour la France (« TVA non applicable, art. 293 B du CGI », mentions L441-9, numérotation continue) | Le SIREN n'existe qu'après M-01. Une mention fausse est pire qu'une mention absente | `ROADMAP-60J.md` T-37 |
 
 ---
 
@@ -133,16 +79,9 @@ déclencher la cascade depuis l'écran). Détail dans [`a-faire-code.md`](./a-fa
 
 | # | Secret | Où | Ce qui reste inerte tant qu'il manque | Statut tenu dans |
 |---|---|---|---|---|
-| ~~M-11~~ ✅ **Déjà POSÉ le 2026-09-02** à 09:13:47 UTC, onze jours avant que ce tableau ne le réclame encore | `OPS_ALERT_WEBHOOK_URL` | Secrets **Actions** du dépôt GitHub | 🔴 **Cette ligne était fausse**, mesurée le 2026-09-13 par `gh secret list` : le secret y est, et `ci-alert.yml` pousse. Exercice à blanc joué le 09-02 (run `33613177985`) **et rejoué le 09-13** (run `34749470125`), **HTTP 204** les deux fois ; **73** alertes réelles poussées depuis, dont les 14 échecs de `Edge deploy drift`. ✅ **CONFIRMÉ LU le 2026-09-13 à 18:28 (Paris)**, capture du salon `#général` à l'appui, avec les DEUX sources : `ci-alert.yml` et `opsAlert()` depuis une Edge Function. Un 204 disait que l'endpoint acceptait ; la lecture ne se prouve que par quelqu'un qui montre le message | `a-faire-code.md` C-28 |
-| ~~M-12~~ ✅ **POSÉ le 2026-09-13 à 16:21 UTC**, des DEUX côtés, à 3 secondes d'écart | `CRON_SECRET` | Supabase **et** GitHub, **même valeur des deux côtés** | Les avis de reconduction tacite. Un avis non envoyé rend l'abonnement résiliable à tout moment, remboursement compris. **Mesuré le 2026-09-03** : la fonction répondait `503 cron_secret_not_configured` à tout appel, donc le secret n'était posé **nulle part**, et le travail quotidien n'avait jamais tourné une seule fois. ✅ **Prouvé de bout en bout le 2026-09-13**, les trois cas : sans en-tête → `401`, **mauvais secret → `401`** (donc la garde COMPARE, elle ne se contente pas de constater que le secret existe), bon secret → **`200 {"due":0,"sent":0,"failed":0}`**. Et le workflow `renewal-notice` joué en `workflow_dispatch` (run `34768378680`) sort **VERT en HTTP 200** : c'est la seule preuve possible que les deux côtés portent la MÊME valeur | `ROADMAP-60J.md` T-40, `a-faire-code.md` C-34 |
-| M-29 | `BUG_REPORT_FROM` | Supabase (`supabase secrets set`) | **Les deux** fonctions qui envoient un e-mail (`report-bug` et `renewal-notice`) lisent ce même secret. La valeur doit viser `send.thecosmo.app`, jamais la racine `thecosmo.app`, que Resend ne signera jamais. ⚠️ Une fois le déploiement M-30 fait, les deux fonctions n'ont **plus de valeur par défaut** et répondent `503 sender_not_configured` : M-30 sans M-29 coupe le formulaire de signalement de bug | `a-faire-code.md` C-35 |
-| ~~M-33~~ ✅ | `SUPABASE_ACCESS_TOKEN` | Secrets **Actions** du dépôt GitHub (jeton personnel : dashboard Supabase → Account → Access Tokens) | Le job `Edge deploy drift`, seule chose qui compare le code **déployé** des Edge Functions à celui du dépôt. ⚠️ Contrairement aux autres lignes de ce tableau, ce secret manquant ne rend pas la garde muette : elle **échoue** et ouvre une issue `ci-red` tous les jours jusqu'à ce qu'il soit posé. C'est voulu : un secret absent ne doit jamais produire un run vert. Poser le secret ou désactiver le workflow, pas de troisième option. ✅ **POSÉ le 2026-09-13 à 09:34 UTC** : le job a comparé les 8 fonctions le jour même, après 14 échecs d'affilée sans jamais avoir rien comparé | `a-faire-code.md` C-35 |
-| ~~M-33b~~ ✅ **FAIT le 2026-09-13 à 16:12 UTC** (v32, run `34768021931` vert) | Redéployer `stripe-webhook` depuis `main` | `supabase functions deploy stripe-webhook` | La v31 en ligne (déployée le 2026-09-13 à 16:04 UTC) diffère de `main` par **un caractère de cadre dans un commentaire**, sur deux fichiers. Rien de fonctionnel, mais c'est la trace d'un déploiement fait depuis un arbre de travail non committé — exactement ce que C-35 existe pour attraper — et c'est le seul écart qui empêche encore `Edge deploy drift` d'être vert | `a-faire-code.md` C-35 |
-| ~~M-34~~ ✅ **POSÉ le 2026-09-12**, et `report-bug` déployée derrière (v11, 23:08 UTC) : le plafond s'applique, borne jouée en ligne (11ᵉ appel → `429`) | `RATE_LIMIT_SALT` | Supabase (`supabase secrets set RATE_LIMIT_SALT=<valeur aléatoire longue>`) | Le plafond de débit de `report-bug` (mig. `139`, finding C-31). ⚠️ Ce secret ne rend pas la fonction permissive quand il manque : une fois la nouvelle version déployée, `consumeRateLimits` **REFUSE de servir**, donc le formulaire de signalement de bug est coupé. C'est délibéré : pas de sel, pas de service, plutôt qu'un hachage d'IP devinable, une IP étant une donnée à caractère personnel. **À poser AVANT** le redéploiement de `report-bug`, dans la même séance que M-29. Changer la valeur plus tard remet à zéro les compteurs en cours, sans conséquence : `rate_limits` est un cache de défense, jamais une preuve | `a-faire-code.md` C-31 |
-| M-13 | `VITE_TURNSTILE_SITE_KEY` | Vercel | Le CAPTCHA d'inscription | `ROADMAP-60J.md` |
-| M-14 | `VITE_SENTRY_DSN` **au build** | Vercel et CI | ⚠️ Sans elle, Vite remplace la variable à la compilation, Rollup jette presque tout `@sentry/react`, et `check:bundle` mesure un artefact qui n'existe nulle part. La garde refuse désormais ce build, mais le réglage reste à tenir | `CLAUDE.md` |
+| M-13 ⏸️ **pas prioritaire** | `VITE_TURNSTILE_SITE_KEY` | Vercel | Le CAPTCHA d'inscription. ⏸️ **Reporté par décision d'Axel le 2026-10-16** : rien ne l'impose, les confirmations d'inscription étant désactivées une inscription de robot n'envoie aucun e-mail, et Supabase limite déjà le débit par IP. À activer au premier signe d'abus (inscriptions en rafale, « Trop de tentatives » chez de vrais utilisateurs) ou avant une campagne visible. ⚠️ L'activer côté Supabase casse `npm run cosmo:login` | `ROADMAP-60J.md` |
 
-> ✅ **PLUS AUCUN depuis le 2026-09-13.** Les quatre secrets de ce tableau sont posés : ~~M-11~~ (`OPS_ALERT_WEBHOOK_URL`, depuis le 09-02, sans que ce tableau l'ait jamais vérifié), ~~M-33~~ (`SUPABASE_ACCESS_TOKEN`, 09-13), ~~M-34~~ (`RATE_LIMIT_SALT`, 09-12) et ~~M-12~~ (`CRON_SECRET`, 09-13). **Il n'y a plus un seul endroit où du code écrit, testé et committé ne produise rien en production.**
+> ✅ **PLUS AUCUN depuis le 2026-09-13.** (`M-29` aussi est sorti de ce tableau le 2026-10-16 : `BUG_REPORT_FROM` est posé depuis le 2026-08-29, `supabase secrets list`.) Les quatre secrets de ce tableau sont posés : ~~M-11~~ (`OPS_ALERT_WEBHOOK_URL`, depuis le 09-02, sans que ce tableau l'ait jamais vérifié), ~~M-33~~ (`SUPABASE_ACCESS_TOKEN`, 09-13), ~~M-34~~ (`RATE_LIMIT_SALT`, 09-12) et ~~M-12~~ (`CRON_SECRET`, 09-13). **Il n'y a plus un seul endroit où du code écrit, testé et committé ne produise rien en production.**
 >
 > ⚠️ **Un secret posé n'est pas un secret qui marche.** Chacun des quatre a été prouvé par un APPEL, pas par sa présence dans une liste : M-11 par un `HTTP 204` sur le webhook, M-33 par un run de comparaison vert sur 8 fonctions, M-34 par un `429` au 11ᵉ appel, M-12 par un `200` depuis le runner GitHub ET un `401` sur une mauvaise valeur. C'est la règle du dépôt appliquée aux secrets : *une garde se vérifie sur ce qu'elle REGARDE.*
 >
@@ -180,12 +119,9 @@ facteur TOTP y donne accès. Téléphone perdu, la seule porte de sortie est
 |---|---|---|---|
 | M-18 | **Plan Supabase** : rester en `free` (pas de PITR) ou passer en Pro | La sauvegarde ponctuelle. Le drill de restauration a été exécuté le 2026-09-01, donc le risque est connu et assumé, pas ignoré | `faille.md` A-9, `ROADMAP-60J.md` T-01 |
 | M-19 | **Confirmations d'inscription par e-mail** : les réactiver ou non | Elles sont **désactivées**, par ta décision. Le DNS est vert (DKIM, SPF, MX du Return-Path), mais le DNS ne prouve pas qu'un e-mail arrive | `faille.md` G-2 |
-| M-20 | **Vesk** (mesure d'audience) : gardé, avec surveillance quotidienne de son empreinte | Décision du 2026-08-18. Refermer l'issue `ci-red` réarme l'alerte | `faille.md` V-1 |
+| M-20 | ~~Mesure d'audience tiers~~ : **débranchée le 2026-10-18**, analytics internalisé. Rien à faire | Clos | `faille.md` V-1 |
 | M-21 | **`vendor-sentry` sur le chemin critique** : le différer, ou pas | Ce n'est pas un arbitrage de performance : le différer revient à ne plus capturer les erreurs de démarrage, celles qui blanchissent l'écran. ⚠️ La mesure qui servait à trancher était fausse (build sans DSN) : il en faut une nouvelle avant de décider | `a-faire-code.md` C-13, `ROADMAP-60J.md` T-47 |
-| ~~M-22~~ | ~~**Un admin non propriétaire doit-il pouvoir supprimer l'entreprise ?**~~ ✅ **TRANCHÉ et APPLIQUÉ : non.** | 🔴 **Cette ligne décrivait un produit qui n'existe plus.** Elle disait « aujourd'hui oui » : c'est faux depuis la mig. **138**, appliquée en prod le 2026-09-12, qui fait exiger le PROPRIÉTAIRE à `delete_organization` et refuse tant qu'un abonnement court. L'écran applique la même règle (`isOwner`), et le parcours a été **joué dans un navigateur le 2026-09-14** : un admin non propriétaire n'atteint ni la zone de danger ni le bouton (`e2e/stubbed/delete-org.spec.ts`). ⚠️ L'écran n'est que l'affichage — la règle vit dans la RPC, seule porte vers un DELETE sur `organizations` | `a-faire-code.md` C-39 |
-| M-41 | ✅ **TRANCHÉ le 2026-09-13 : on DIFFÈRE la fusion** (issue 1). `feat/react-19` reste poussée, non fusionnée. Reprise conditionnée à **283,5 ko** de chemin critique sous React 18 (et non 299,7 : une garde à 0 % de marge rouvre C-14 le jour même), soit **22,8 ko** à couper, que seul `vendor-animation` peut rendre. 🔴 **Deux choses ont changé le 2026-09-14, et elles ne changent pas la décision — elles la rendent enfin opposable.** (1) Le plafond de **323 000 o EST désormais commité** (`7134d7fe`, run CI `34846164939` vert) : la phrase « il n'est dans aucun commit » est périmée, et React 19 à 329,8 ko **échouerait** maintenant à la garde de `main`, comme il le doit. (2) Les **9 corrections de types** de la branche ne sont **PAS portables** sur `main`, contrairement à ce qui était écrit : appliquées, `tsc -b` rend **72 erreurs** — sous React 18, `RefObject<T | null>` n'est pas assignable à `LegacyRef<T>`, donc chaque `ref={...}` qui les consomme casse. Port tenté, mesuré, **défait** ; `main` est propre. **Il n'y a donc aucun acompte à verser d'avance pour alléger la reprise.** Détail : `docs/MIGRATION-REACT19.md` § 4bis.c. Énoncé d'origine conservé ci-contre | ⚠️ **Ce n'est plus « quand la planifier » : elle a été jouée le 2026-09-12**, branche `feat/react-19` (poussée, **non fusionnable**). Tout est vert — typecheck, lint 0 erreur, 2 500 tests, les six gates, le build, et l'E2E (104 passés, 0 échec) — **sauf `check:bundle`, exit 1**. React 19 pèse **+23,3 ko gzip** et le chemin critique passe à **329,8 ko** pour un plafond de **323,0**. Ce plafond a été ABAISSÉ le 2026-09-11 pour satisfaire le critère de sortie de C-14 (5 % de marge) : le remonter rouvrirait C-14 le jour même. **Trois issues, et il faut en choisir une** : (1) différer — l'option par défaut, l'urgence sécurité étant tombée ; (2) sortir `framer-motion` du chemin critique pour de vrai, c'est-à-dire remplacer `MotionConfig` par une lecture CSS/`matchMedia` de `prefers-reduced-motion`, chantier à part avec sa mesure au navigateur **sous `reduce`** ; (3) accepter de rouvrir C-14. ❌ Ne pas « différer `MotionConfig` » naïvement : c'est un fournisseur de CONTEXTE, les premiers écrans rendraient sans `prefers-reduced-motion` |
 | **M-44** 🔴 | 🔴 **L'arbitrage a été rendu le 2026-09-15 CONTRE le retrait de la pastille « Aujourd'hui » du report rapide, et le retrait est entré dans `main` six jours plus tard.** Relu dans le code le **2026-09-21** : `src/components/task-table/OverdueQuickActions.tsx` à `HEAD` ne rend plus que « Demain » et « Choisir », et le commentaire qui porte l'argument démenti est commité (lignes 55-57), par `ab72cd39` (`feat(mobile): refonte UI mobile`, 2026-09-16) | ⚠️ **Ce n'est plus un geste manuel, et c'est précisément ce qu'il faut voir.** La ligne d'origine disait « défaire un fichier non commité d'une autre session » ; il n'y a plus rien à défaire dans l'arbre, il y a du **code à réécrire**. Ce qui reste à toi est la décision, parce que l'arbitrage du 09-15 portait sur un changement qui n'était alors dans aucun commit : soit on remet la pastille et on retire le commentaire, soit on rouvre l'arbitrage en sachant que `isOverdue` est **strictement** `< 0`, donc qu'une tâche qui affiche ces raccourcis n'est **jamais** due aujourd'hui. 🔴 **La leçon vaut plus que l'item** : un arbitrage rendu sur un fichier non suivi ne protège rien, et aucune garde ne pouvait le voir — le produit compile et la suite passe | `a-faire-code.md` C-72 |
-| M-42 | ✅ **TRANCHÉ le 2026-09-13 : on GARDE `#2563eb`.** Trois teintes ont été rendues côte à côte dans le produit (`/dashboard`, mode démo, thème clair, tokens surchargés sur le vrai bandeau) — `#1d4ed8` sur ce seul texte (5,59:1), `#1d4ed8` sur les deux tokens (5,50:1), `#1e40af` (7,05:1) — et aucune n'a emporté la décision pour 0,19 point de ratio | 🔴 **La mesure a corrigé l'énoncé de cette ligne, deux fois.** (1) Les « 9 nœuds » ne sont pas neuf endroits : c'est **un seul composant**, le lien « Créez un compte » de `DemoConversionBanner`, compté une fois par route protégée. (2) Ce n'était **pas** un arbitrage sur les liens et le focus : le texte fautif est peint par `--color-accent-solid`, pas par `--color-accent`, qui vaut 5,17:1 sur blanc et n'est flaggé nulle part. ⚠️ **La dispense `color-contrast` ne tombe pas**, c'est le prix assumé de la décision, et elle est tenue par un cliquet à 4,31:1 (`src/theme-contrast.guard.test.ts`), vu rouge deux fois avant d'être commité | `docs/ACCESSIBILITY.md` § « C-23 — pourquoi le bleu du thème clair reste à 4,31:1 » · `a-faire-code.md` C-23, **clos** |
 
 ---
 
@@ -206,138 +142,30 @@ produisent pas de correctif : elles produisent des **findings**, qui rejoignent 
 
 | # | À faire | Pourquoi aucune CI ne le remplace |
 |---|---|---|
-| M-25 | **Ouvrir le produit sur un vrai téléphone** (iOS Safari et Android), en mode démo puis sur un vrai compte | La note mobile de 76/100 n'a **aucune** mesure hors viewport émulé. 🟠 **Tenté le 2026-09-03, audit A-4** : aucun appareil n'était accessible, donc seule la moitié indépendante de l'appareil a pu être jouée (viewport émulé + sondes). Elle a rendu deux findings de code, `a-faire-code.md` **C-56** (le haut des trois formulaires `FirstRunSetup`, `BugReportModal`, `InviteOrJoinModal` devient inatteignable clavier ouvert, mesuré à 375×350) et **C-57** (cibles tactiles à 16×16 px pour cocher une tâche sur `/dashboard`, 40×40 sur `/okr`) — et a écarté deux soupçons (le plancher 16px des champs tient déjà, la conversion jour/instant de la date mobile d'événement est correcte). **Rien de tout ça n'a été confirmé au doigt**, et le mécanisme de C-56 diffère entre Android (viewport de mise en page réduit, modélisé) et iOS (page qui défile à la place, pas testé). Chaque bug retenu doit porter le modèle, la version d'OS et le navigateur, sinon il n'est pas reproductible. Prompt prêt : `prompts-audits.md`, A-4 |
 | M-40 | **Jouer la check-list VoiceOver iOS sur un iPhone**, d'une traite, en mode démo : [`docs/AUDIT-VOICEOVER-IOS.md`](./docs/AUDIT-VOICEOVER-IOS.md) (12 étapes, ~60 min, préparation comprise) | C'est le **quatrième** audit d'accessibilité de `C-24`, le seul que le 2026-09-03 n'a pas passé. Il ne se simule pas : ce que le dépôt prouve aujourd'hui, c'est le **focus**, jamais l'**annonce** (Playwright lit le DOM, pas l'arbre d'accessibilité comme un lecteur d'écran). Trois correctifs d'annonce (D4, D5, E2) ont été écrits **sans jamais avoir été entendus**. La check-list commence par un **témoin** : si le premier bouton n'annonce pas son `aria-label`, l'instrument est faux et rien de la suite ne compte. Chaque finding doit porter modèle, version d'iOS et **verbatim**. Se joue dans la même séance que M-25 |
 | M-26 | **Vérifier une échéance sur un appareil réglé sur un fuseau à décalage NÉGATIF** | C'est là que le bug R-01 cassait, et c'est invisible depuis la métropole. 467 des 601 échéances de la prod portaient 00:00:00 UTC |
 | M-27 | **Envoyer un e-mail de test vers un compte jetable Gmail ET Outlook** | Le DNS vert ne prouve pas la délivrabilité. Procédure dans `DEPLOYMENT.md` §2ter |
-| M-28 | **Parcourir l'application au clavier seul**, souris débranchée | Un tiers de WCAG est invisible pour axe-core. Le 2026-08-30, les flèches ne déplaçaient pas le focus dans le calendrier depuis des semaines, et aucune gate ne pouvait le voir. Prompt prêt : `prompts-audits.md`, A-3 |
+| M-28 | **Parcourir l'application au clavier seul**, souris débranchée | Un tiers de WCAG est invisible pour axe-core. Le 2026-08-30, les flèches ne déplaçaient pas le focus dans le calendrier depuis des semaines, et aucune gate ne pouvait le voir. Prompt prêt : `docs/archive/prompts/prompts-audits.md`, A-3 |
 | M-35 | **Provoquer les vraies pannes, connecté à la vraie base** : mot de passe refusé, session expirée en cours d'usage, réseau coupé pendant une sauvegarde, et le claim d'un lien d'invitation hors ligne | 🔴 **L'audit A-7 n'a pas pu le faire** : le `.env` local ne porte aucune valeur Supabase, donc l'app locale tourne intégralement en mode démo, et la seule tentative de connexion rend « Supabase non configuré », qui mesure la configuration, pas le produit. Tous les chemins d'erreur réels de Supabase, de GoTrue et du réseau sont donc **non mesurés**. Le cas le plus payant est celui de `a-faire-code.md` **C-63** : hors ligne, un lien d'invitation valide doit-il vraiment s'annoncer « invalide » ? |
 | M-36 | **Ouvrir Sentry et lire les alertes `api error non catalogué`** | `normalizeApiError` émet un `captureMessage` à chaque code d'erreur absent du catalogue — c'est-à-dire à chaque fois qu'un utilisateur réel a lu « Une erreur inattendue est survenue » sans que personne sache laquelle. C'est la seule source qui dise **quels** codes tombent vraiment en production. Aucune gate ne peut la lire à ta place : elle est derrière ton compte Sentry |
-| M-38 | **Ouvrir `/` sur ton poste (avec GPU) puis sur un téléphone**, `prefers-reduced-motion` **désactivé** | Toute la mesure d'A-8 a été prise dans un Chromium qui rastérise en **logiciel** (SwiftShader) — la bonne condition pour expliquer le score de CI, **pas** celle d'un poste équipé d'un GPU. Le lancement d'un navigateur avec GPU a échoué dans cet environnement : la question reste ouverte, et il ne faut pas la refermer par déduction. Regarder si le scroll reste fluide et si la fenêtre produit tourne sans à-coups. Un téléphone d'entrée de gamme est plus proche du cas logiciel qu'un poste de bureau : c'est là que le coût se paie. Rejoint M-25 |
 
 ---
 
 ## 8. Déploiements qu'un `git push` ne fait pas
 
-🔴 **Ajouté par l'audit A-1, le 2026-09-03, et c'est son résultat le plus lourd.** Les trois sources
-Edge Functions **réellement déployées** ont été lues via l'API de management et comparées à `main` :
-**les trois divergent, de trois façons différentes**. Un push ne déploie aucune Edge Function, donc
-un correctif committé, testé et vert peut ne pas exister pour les utilisateurs.
-
-> ✅ **LA DIVERGENCE EST REFERMÉE, et ce n'est plus un relevé fait à la main.** Mesuré le
-> **2026-09-14 à 15:25 UTC**, run `34861975638` du job `Edge deploy drift`, sur `main` :
-> **« 8 fonction(s) verifiee(s) : le code deploye est celui du depot. »** Les trois lignes du
-> tableau d'origine — `delete-account` v13, `renewal-notice` v9, `report-bug` v8 — ne décrivent
-> plus la production. Elles sont conservées ci-dessous **à leur date**, parce que ce qu'elles
-> enseignent ne périme pas : un push ne déploie aucune Edge Function, et le dépôt n'a jamais
-> garanti ce qui s'exécute.
->
-> 🔴 **Ce qui a réellement changé n'est pas le déploiement, c'est la MESURE.** Tant que
-> `SUPABASE_ACCESS_TOKEN` manquait (posé le 2026-09-13 à 09:34 UTC), le job échouait chaque jour
-> **sans jamais avoir comparé quoi que ce soit** — 14 fois. Un tableau tenu à la main aurait
-> continué à vieillir en silence.
-
-> ✅ **2026-10-01 · LES CINQ GESTES CI-DESSOUS SONT FAITS**, par l'agent, avec ton accord geste par
-> geste, dans l'ordre : mig. `204` et `207` appliquées (preuve jouée en prod avant), puis
-> `org-webhook-dispatch` v2, puis les quatre autres, plus `verify-org-domain` ; `Edge deploy drift`
-> **vert** (12/12), `org-webhook-dispatch.yml` **HTTP 200**. Les mig. `208`, `209`, `210` (E-2, E-1,
-> G-3) sont appliquées aussi. Versions et ledger : [`faille.md`](./faille.md) § « Ordre de priorité ».
-> E-3 et E-4 sont refermés aussi (mig. `212`), et les 3 alertes CodeQL `medium` rejetées avec
-> motif, avec ton accord. **Plus rien ne t'attend dans ce paragraphe.**
->
-> *Conservé à sa date :* 🔴 **2026-09-30 · CINQ gestes, dans CET ordre** (détail : [`faille.md`](./faille.md) § « Ordre de
-> priorité », lignes 3bis à 3quater). L'agent a préparé chacun ; l'application et le déploiement
-> en prod lui ont été refusés.
->
-> 1. **Appliquer la mig. `204`** (`team_tasks.health`, une colonne nullable). Le menu « État »
->    d'une tâche pro échoue en production sans elle. Vérifier ensuite :
->    `select column_name from information_schema.columns where table_name = 'team_tasks' and column_name = 'health';`
-> 2. **Jouer `supabase/proofs/207.proof.sql`** (transaction annulée), puis **appliquer la mig. `207`**
->    (cible de webhook publique, enfilement par trigger seul).
-> 3. **Redéployer `org-webhook-dispatch`** depuis la racine, sur `main` : c'est lui qui lit
->    `verify_jwt = false` dans `config.toml`. ❌ **Jamais avant l'étape 2.**
-> 4. **Redéployer `stripe-org-checkout`, `stripe-org-portal`, `report-bug`, `send-org-invite`.**
->    ```bash
->    npx supabase functions deploy org-webhook-dispatch stripe-org-checkout stripe-org-portal report-bug send-org-invite --project-ref ykeugqfgklejcdbrmawy
->    ```
->    (l'ordre 2 → 3 compte ; les quatre autres peuvent partir ensemble).
-> 5. **Relancer `Edge deploy drift`** (`workflow_dispatch`) : attendu **12 fonctions identiques au
->    dépôt, 12 sondes vertes**. C'est la seule preuve que 3 et 4 ont eu lieu.
->
-> Et **inscrire au ledger** les onze migrations appliquées hors ledger (`164`, `181`, `190`-`195`,
-> `197`-`199`), relues au catalogue le 2026-09-30, pour que `check:migration-coverage` cesse de
-> les compter comme absentes. ❌ **Ne jamais réappliquer la `164`** pour ce faire.
-
-> ✅ *Périmé le 2026-09-30 : la `164` est en prod (relue au catalogue), conservé à sa date.*
-> 🆕 **2026-09-25 · mig. `164` (cas limites du mode entreprise) écrite, NON appliquée.** Branche
-> `claude/recommandations-mode-entreprise-swgi0u`. 🔴 **L'appliquer AVANT de déployer ce front** :
-> équipes associées d'un projet, purge d'un projet archivé, mode « transmettre » de l'assistant de
-> départ et notifications `project_archived` / `role_changed` en dépendent (sans elle : erreur au
-> clic, rien de silencieux). Relire le ledger d'abord (d'autres sessions appliquent `16x`), puis
-> vérifier par `pg_get_functiondef` : `offboard_org_member`, `remove_member`, `leave_organization`,
-> `my_team_project_ids`, `can_access_team_project`.
-
-> 🆕 **2026-09-26 · mig. `195` à `199` (points rouges de l'audit entreprise) écrites, NON appliquées,
-> NON prouvées** (branche `feat/entreprise-audit-rouges`). Ordre : APRÈS `164`, `181`, `190`-`194`,
-> puis `195` → `199`, AVANT le front. 🔴 **La preuve `supabase/proofs/195-199.proof.sql` n'a jamais
-> tourné** (aucun Postgres sur le poste) : la jouer par `replay.sh`, la voir échouer sur un sabotage,
-> puis relire au catalogue. Ensuite, **déployer deux Edge Functions** : `verify-org-domain`
-> (vérification DNS d'un domaine) et `org-webhook-dispatch` (envoi des webhooks, appelée par
-> `.github/workflows/org-webhook-dispatch.yml` avec `CRON_SECRET`, déjà posé pour `org-digest`).
-> Tant qu'elles ne le sont pas, `check:edge` et ce job sont rouges, et c'est juste.
-
-*État du 2026-09-03, conservé à sa date :*
-
-| Fonction | Déployée | Ce qui tournait en production le 2026-09-03 |
-|---|---|---|
-| `delete-account` | v13, 2026-09-02 | Une variante **qui n'existait dans aucun commit** : elle portait les correctifs R-03 et R-06 du 09-02, mais avait **perdu** la purge symétrique de `friends` committée le 08-24. Elle aurait échoué à `src/rgpd-erasure.guard.test.ts`, qui est vert |
-| `renewal-notice` | v9, 2026-08-26 | Le défaut **S-4**, que `faille.md` déclarait corrigé : expéditeur par défaut sur un domaine que Resend ne signera jamais |
-| ~~`report-bug`~~ | ✅ **v11, 2026-09-12 à 23:08 UTC** | ✅ **S-4 refermé en production** : la version en ligne n'a plus de valeur par défaut pour l'expéditeur. Elle porte aussi le plafond de débit (C-31), l'allowlist de pièce jointe (C-32) et la distinction « auteur non résolu » (C-33). ⚠️ Le déploiement aurait coupé le formulaire si `BUG_REPORT_FROM` (M-29) manquait : **il ne manque pas**, mesuré juste après, l'appel atteint la validation du corps (`400`) et non `503 sender_not_configured` |
+🔴 **Un push ne déploie ni Edge Function ni migration.** Un correctif committé, testé et vert peut
+ne pas exister pour les utilisateurs. La dérive des Edge Functions est mesurée chaque jour par
+`npm run check:edge` (job `Edge deploy drift`) ; les migrations, par `check:migration-coverage`.
+❌ **Ne jamais réappliquer la mig. `164`** : elle est en prod hors ledger.
 
 | # | À faire | Pourquoi c'est toi | Statut tenu dans |
 |---|---|---|---|
-| ~~M-30~~ | ~~**Déployer les fonctions restantes**~~ ✅ **FAIT.** Les **8** fonctions du dépôt sont en ligne et **identiques au dépôt**, mesuré par la garde et non à la main : run `34861975638` du 2026-09-14 à 15:25 UTC, « 8 fonction(s) verifiee(s) ». `delete-account` est en **v17** et `renewal-notice` en **v13** (2026-09-13). ⚠️ Le numéro ne se réutilise pas | Fait | `a-faire-code.md` C-35 |
 | M-32 | **Envoyer un vrai signalement de bug depuis l'app**, après M-29 et M-30, et vérifier qu'il arrive sur `contact@thecosmo.app` avec le `Reply-To` du compte et la pièce jointe lisible | Envoyer un e-mail réel depuis le domaine est une action sortante. Et aucune sonde ne prouve qu'un e-mail **arrive** : il faut ouvrir la boîte. Complète M-27 | `a-faire-code.md` C-35 |
-| ~~M-31~~ | ~~**Appliquer les migrations `137`, `138` et `139`**~~ ✅ **FAIT, les trois.** Ledger de production relu **en base** le 2026-09-14 : `139_rate_limits`, `138_evidence_survives_org_deletion` et `137_dependency_error_identifiers` y sont, toutes trois datées du 2026-09-12. ⚠️ Ce qu'il faut garder de cette ligne, et qui ne périme pas : le piège de la borne (`hits > p_limit`, jamais `>=`, sinon le compteur gèle sur la limite et le plafond ne refuse **jamais**), et la règle de relire le ledger **avant** d'appliquer — ce dépôt a déjà appliqué deux fois la même migration parce qu'une session voisine était passée avant | Fait | `a-faire-code.md` C-48, C-30, C-31 |
-| ~~M-37a~~ | ~~**Déployer `stripe-org-refund`**~~ ✅ **FAIT, et redéployée depuis : v6 le 2026-09-14 à 15:24 UTC** (extraction du verrou anti-rejeu dans `_shared/refund-replay.ts`, C-65). La garde de dérive est **verte sur ce déploiement** — run `34861975638`, « 8 fonction(s) verifiee(s) : le code deploye est celui du depot » : pour la première fois, ce n'est pas une relecture qui l'affirme. Historique : **v2 le 2026-09-12, 22:05 UTC** (v1 à 21:53, reprise pour corriger un en-tête qui se disait encore « non déployée »). Vérifiée en ligne par ses propres réponses, pas par relecture du fichier : `GET` → `405 method_not_allowed`, `POST` + jeton anon → `401 Unauthorized`, les deux émis par le corps de la fonction, donc `npm:stripe` et les deux `_shared/` se chargent. `.github/edge-deploy.json` a perdu sa note `notDeployed` le même jour, faute de quoi la garde échoue — et elle a raison d'échouer. ⚠️ La clé de `.env` est une clé `sb_publishable_…` : la passerelle la refuse **avant** la fonction, et son 401 ressemble trait pour trait à celui de la fonction. Le test de fumée n'a de valeur qu'avec le jeton anon **au format JWT** | Le déploiement est passé par l'API Management (MCP Supabase), pas par la CLI | `a-faire-code.md` C-65, C-39 |
 | **M-37b** | 🔴 **Jouer un remboursement réel contre le compte Stripe de TEST.** ✅ **Cible arbitrée le 2026-09-12 : `cosmoentreprise`** (7 membres, propriétaire `axellongatte2@gmail.com`), et les deux lignes définitives du journal fiscal sont **acceptées**. Deux gestes, dans cet ordre. **(1)** `npm run cosmo:login` **avec `axellongatte2@gmail.com`** — la session du CLI est **expirée**, et c'est ce qui bloque : sans elle je n'ai aucun jeton de propriétaire, donc aucun appel possible à `stripe-org-checkout` ni à `stripe-org-refund`, toutes deux réservées au propriétaire. ⚠️ Se connecter avec un AUTRE compte ne débloque rien : l'appel serait refusé en `403 forbidden`. **(2)** Ouvrir la session Stripe Checkout que je produirai et la payer avec la carte de test `4242 4242 4242 4242` : une saisie de numéro de carte ne se délègue pas à un agent, même en mode test. Ensuite je prends la suite et je vérifie **cinq** points : montant (mensuel entier / annuel au prorata), ligne compensatoire **négative** au journal + `verify_payment_chain()` toujours vraie, abonnement relu par l'écran, aucun second appel, et — **ajouté le 2026-09-14** — **un REJEU volontaire qui ne rend RIEN de plus**. Ce cinquième point est nouveau parce que le verrou qui le tient vient seulement d'être rendu testable et déployé (`_shared/refund-replay.ts`, v6, 10 cas dont un témoin) : son arithmétique est prouvée, son comportement **contre Stripe** ne l'est pas. ⚠️ La clé d'idempotence Stripe ne couvre PAS ce cas — elle expire, donc elle n'arrête que deux appels concurrents ; un rejeu à quelques minutes n'est arrêté que par ce verrou-là | La connexion attend un code reçu par e-mail (`CLAUDE.md` l'interdit explicitement à un agent), et la carte est une saisie de moyen de paiement | `a-faire-code.md` C-65, C-39 |
 | **M-37c** | ⚠️ **Vérifier au tableau de bord Stripe que `charge.refunded` est bien SOUSCRIT sur l'endpoint webhook de test.** Le code du webhook traite **six** types d'events ; ce dépôt décrit l'endpoint comme enregistré pour **cinq**, et `charge.refunded` n'est arrivé qu'avec la v27 du 2026-09-06. Si l'event n'a pas été ajouté à l'endpoint avec elle, la branche est en ligne et **ne recevra jamais rien** : le journal fiscal montrerait un encaissement sans son remboursement, précisément le trou que `recordRefund` existe pour empêcher. **Une branche déployée n'est pas un event délivré.** À faire **avant** M-37b, sinon le test passera en semblant réussir | La liste des events souscrits n'est lisible qu'au tableau de bord ou avec `STRIPE_SECRET_KEY`, qui n'est ni dans `.env` ni exposée par le MCP | `a-faire-code.md` C-65 |
 
-✅ **Depuis le 2026-09-04, ce tableau n'est plus un relevé fait à la main.** `npm run check:edge`
-(job `Edge deploy drift`, quotidien) télécharge le bundle de chaque fonction en ligne et le compare
-au dépôt : la prochaine dérive s'annoncera toute seule, avec le nom du fichier et la première ligne
-qui diffère. Il faut **poser M-33** pour ça. Le tableau ci-dessus reste la mesure du 09-03,
-remesurée le 09-04 pour `report-bug`, puis **le 2026-09-12 : celle-ci est passée en v11 et son
-S-4 est refermé**.
-
-⚠️ **Aucune donnée n'est perdue aujourd'hui par la ligne `delete-account`** : la migration 116 a
-basculé `friends_friend_user_id_fkey` en `ON DELETE CASCADE` (remesuré le 2026-09-03), donc la
-cascade fait le travail que le code déployé ne fait plus. Ce qui est cassé n'est pas la purge, c'est
-le fait de **raisonner depuis un dépôt qui ne décrit pas la production**.
-
----
-
 > **Règle de tenue de ce fichier.** Une ligne se retire quand le geste est fait, jamais quand il est
 > planifié.
->
-> ✅ **Retiré le 2026-09-14 : M-30, M-31 et M-22.** Les deux premiers sont des gestes FAITS, et
-> mesurés plutôt que déclarés — les 8 Edge Functions sont en ligne **et identiques au dépôt** (run
-> `34861975638`, « 8 fonction(s) verifiee(s) »), les migrations `137` `138` `139` sont au ledger de
-> production, relu en base. Le troisième est une **décision prise et appliquée** depuis la mig.
-> `138`, dont cette ligne décrivait encore le contraire.
-> ⚠️ Les numéros M-22, M-30, M-31 et M-39 ne se réutilisent pas.
-> 🔴 **Ce qu'on garde de M-31, parce que ça ne périme pas** : le piège de la borne de débit — le
-> refus doit être `hits > p_limit`, **jamais `>=`**, sinon le compteur gèle sur la limite et le
-> plafond ne refuse jamais. Et la règle qui l'accompagne : relire le ledger **avant** d'appliquer,
-> pas seulement après. Ce dépôt a déjà appliqué deux fois la même migration parce qu'une session
-> voisine était passée avant.
->
-> ✅ **Retiré le 2026-09-12 : M-39** (« relever l'après sur le runner pour `/` »). Le geste est fait,
-> et au-delà de ce qu'il demandait : le job `lighthouse` a rendu **quatre runs consécutifs, huit
-> passes, toutes au-dessus de 90** (92·94, 91·95, 94·95, 96·93). `a-faire-code.md` C-12 est clos.
-> ⚠️ Le numéro M-39 ne se réutilise pas : il reste lisible dans l'historique git et dans les commits
-> qui le citent. Et un « fait » se coche **dans le fichier de statut** nommé en face, pas ici : ce
-> fichier est une liste de courses, pas un tableau de bord.
 
 ---
 
@@ -353,13 +181,6 @@ modification du dépôt ferme est parti dans [`a-faire-code.md`](./a-faire-code.
 chacun à l'intérieur du document qui le réclamait, donc à l'endroit le moins susceptible d'être
 relu au moment de décider quoi faire.
 
-### 9.1 Deux gestes qui débloquent du code déjà écrit
-
-| # | À faire | Pourquoi c'est toi | Statut tenu dans |
-|---|---|---|---|
-| ~~**M-45**~~ ✅ **FAIT le 2026-09-20** | **Appliquer la migration `136`** (`136_work_time_stats_okr_from_completions.sql`) | ✅ **Relu EN BASE le 2026-09-21, pas dans un statut** : ledger `20260920104729`, et `pg_get_functiondef('get_work_time_stats')` contient `kr_completions` et **ne contient plus** `history`. ⚠️ **Le numéro de ledger publié le 2026-09-20 était FAUX** — `CLAUDE.md` et cette ligne citaient `20260920105113`, qui n'existe dans le ledger d'aucune migration ; corrigé aux deux endroits le 09-21. C'est exactement le défaut que ce fichier combat : un chiffre recopié au lieu d'être relu à sa source. 🔴 **Août et septembre restent à ZÉRO sur `/statistics`, et c'est JUSTE** : trois KR sur cinq portent `estimated_time = 0`, cf. `a-faire-code.md` C-77 | `a-faire-code.md` C-77 |
-| ~~**M-46**~~ ✅ **FAIT le 2026-09-20** | **Commiter puis appliquer la migration `149`** (`149_admin_stats_excludes_non_users.sql`) | ✅ Commitée par `297ddd14`, appliquée au ledger `20260920105522` — **relu en base le 2026-09-21**. `/admin` annonçait 30 utilisateurs · 779 tâches · 454 événements · 32 habitudes ; il annonce 28 · 658 · 387 · 26, plus une clé `excluded_accounts = 2` qui **dit** la correction | `a-faire-code.md` C-100 · `docs/ACQUISITION.md` AM-3 |
-
 ### 9.1bis Cinq gestes nés de la passe de gardes du 2026-09-21
 
 **Versés ici le 2026-09-21.** Le commit `2b4c4304` a outillé les 28 items ouverts du § 12 de
@@ -372,11 +193,7 @@ faut le savoir avant de lire un run rouge.
 
 | # | À faire | Pourquoi c'est toi | Statut tenu dans |
 |---|---|---|---|
-| ~~**M-57**~~ ✅ **FAIT le 2026-09-21** | **Appliquer la migration `150`** (`150_support_reports_counter.sql`) | ✅ **Au ledger `20260921075529`**, et vérifiée par le CATALOGUE, jamais par le ledger : table présente, RLS activée, **0 policy** (voulu), 2 index, `record_support_report` en `SECURITY DEFINER` / `search_path=''`, et `get_support_stats` appelant **`is_admin()`** et non `admin_allowlisted()` — l'inverse annulerait la mig. `131`. Droits effectifs relus : `record` anon **f** / auth **f** / service **t** · `stats` anon **f** / auth **t**. Prouvée AVANT en transaction annulée, quatre cas (insertion, catégorie hors énumération refusée `23514`, non-admin refusé `42501`, droits), et l'annulation vérifiée : ni table ni fonction laissées derrière. 🔴 **Reste `M-58`** : la référence de posture doit passer de **9 → 10** et **52 → 53**, cf. ci-dessous | `a-faire-code.md` C-110 |
-| **M-58** 🔴 | **Poser la référence des réglages d'auth Supabase** (`npm run check:supabase-posture -- --update`), **puis la commiter**. ⚠️ **Le `--update` du 2026-09-21 doit faire bouger deux comptes, et c'est LÉGITIME** : `rls_enabled_no_policy` **9 → 10** (`support_reports`, sans policy par conception) et `authenticated_security_definer_function_executable` **52 → 53** (`get_support_stats`, gardée par `is_admin()` à l'intérieur). Les deux objets viennent de la mig. `150`, appliquée le 09-21, relevés par l'API le même jour. ❌ **Aucun autre compte ne doit bouger** — si un troisième change, la question n'est pas « relever le chiffre » mais « quel objet est apparu » · 🔴 **Mis à jour le 2026-10-02 (soir)** : la garde lisait 0 partout (corrigée ce soir), et le mode entreprise a ajouté des objets depuis. Les comptes attendus au `--update` sont désormais **`rls_enabled_no_policy` 9 → 11** (`support_reports`, mig. `150` ; `org_webhook_deliveries`, mig. `199`) et **`authenticated_…` 52 → 80** (`get_support_stats` ; 25 fonctions `160`-`207` relues le 10-01 par l'audit A-1 ; `can_manage_team_okr_audience` et `set_team_okr_links`, mig. `212`). `anon_…` **2** et mots de passe compromis **1** ne bougent pas. Un compte au-delà de ceux-là pose la même question | 🔴 **La garde échoue tant que ce n'est pas fait, et c'est voulu** : un secret ou une référence absents se soldent par un échec, jamais par un avertissement dans un run vert. C'est la règle posée le 2026-09-03 après `uptime.yml`. Le volet manuel qu'elle outille reste `M-15` / `M-16` / `M-17` | `a-faire-code.md` C-88 · `docs/SECURITY.md` |
-| **M-59** | **Poser `VERCEL_TOKEN` et `VERCEL_PROJECT_ID`** dans les secrets **Actions** du dépôt | Sans eux, `check:env` ne compare les variables d'environnement à rien. C'est le poste le plus cher du dépôt sur ce sujet : une variable manquante en production ne se voit qu'à l'écran d'un utilisateur | `a-faire-code.md` C-105 |
-| **M-60** | **Trier les premières alertes CodeQL**, et le dater | 🔴 **Un job CodeQL vert ne ferme pas l'item** : il dit que l'analyse a tourné, pas que ce qu'elle a trouvé a été lu. Même famille que `vendor-watch` en août — l'alerte a fonctionné quatre jours pendant que personne ne l'ouvrait | `a-faire-code.md` C-89 |
-| **M-61** 🔴 | **Redéployer `report-bug`** | Sa source a changé dans `2b4c4304`. ⚠️ Tant que ce n'est pas fait, `npm run check:edge` signale une dérive **LÉGITIME** : le rouge est juste, et le confondre avec un faux positif est exactement ce qui use une garde | `supabase/functions/CLAUDE.md` |
+| **M-60** | **Trier les premières alertes CodeQL**, et le dater | 🔴 **Un job CodeQL vert ne ferme pas l'item** : il dit que l'analyse a tourné, pas que ce qu'elle a trouvé a été lu. Même famille que `vendor-watch` en août — l'alerte a fonctionné quatre jours pendant que personne ne l'ouvrait. 🔎 **Mesuré le 2026-10-16** : trois alertes triées le 2026-10-01 (`won't fix`), dix closes `fixed`, mais **une alerte ouverte non triée**, n° 14 `js/regex-injection`, apparue le 2026-10-15. Le tri n'est donc pas une case qu'on coche une fois | `a-faire-code.md` C-89 |
 
 ### 9.2 Trois chemins de récupération jamais parcourus
 
@@ -386,7 +203,7 @@ inaccessible deux jours parce que le chemin d'enrôlement TOTP n'avait jamais é
 
 | # | À faire | Pourquoi c'est toi | Statut tenu dans |
 |---|---|---|---|
-| **M-47** | **Éprouver le ROLLBACK une fois**, pour de vrai : repromouvoir le déploiement Vercel précédent, et dérouler la contrepartie côté Supabase. Relever le temps réel, et ce qui a manqué dans le runbook | Le runbook le décrit et **personne ne l'a jamais parcouru**. La partie automatisable est `restore-drill.yml`, dont la planification est `C-86` ; la promotion d'un déploiement Vercel est un geste de console, et la décision de rollback n'appartient qu'à toi | `docs/DEPLOYMENT.md` AM-2 |
+| **M-47** | **Éprouver le ROLLBACK une fois**, pour de vrai : repromouvoir le déploiement Vercel précédent, et dérouler la contrepartie côté Supabase. Relever le temps réel, et ce qui a manqué dans le runbook. 🔎 **2026-10-16 : la moitié `git revert` est répétée (33 s du push à la production)** ; reste le « Promote » Vercel, pas à pas dans `docs/DEPLOYMENT.md` § 3 (5 min) | Le runbook le décrit et **personne ne l'a jamais parcouru**. La partie automatisable est `restore-drill.yml`, dont la planification est `C-86` ; la promotion d'un déploiement Vercel est un geste de console, et la décision de rollback n'appartient qu'à toi | `docs/DEPLOYMENT.md` AM-2 |
 | **M-48** | **Répéter à blanc la bascule Stripe live**, sur le compte de TEST : remettre à zéro les identifiants (mig. `140`), recréer les prix, réenregistrer le webhook avec ses **SIX** events, remplacer les secrets. Dans cet ordre, chronométré | La séquence n'a **jamais** été parcourue, et chaque étape manquante échoue **après** encaissement. Elle recoupe `M-43`, `M-06`, `M-07` et `M-08` : la répétition à blanc est ce qui transforme ces quatre lignes en une séquence éprouvée au lieu de quatre gestes espérés | `docs/STRIPE-LIVE.md` AM-4 |
 | **M-49** | **Jouer à blanc la procédure de violation RGPD des 72 h**, une fois, et dater l'exercice dans `RGPD-VIOLATION.md` | La procédure n'a jamais été éprouvée, et elle se parcourt **sous 72 heures, en situation de panique**. ⚠️ Son second angle mort ne se ferme pas par cet exercice : le délai court à partir d'une **détection** que rien ne mesure, et un registre des violations VIDE ne distingue pas « aucune violation » de « aucune détection » | `docs/RGPD-VIOLATION.md` AM-1, AM-2, AM-3 |
 
@@ -400,7 +217,6 @@ Elles complètent le § 7. Comme lui, elles ne produisent pas de correctif : ell
 | **M-50** | **Relire la qualité des traductions `en`**, catalogue par catalogue, et dater la relecture | 🔴 Les trois gates mesurent les **clés** et les **copies**, jamais la **qualité** : `i18n:check` compare des clés, `i18n:identical` détecte un `en` recopié du `fr`. Une traduction **fausse mais différente** passe les trois sans un bruit, et elles sont vertes sur 3 898 couples. Aucun script ne lira l'anglais à ta place. Le volet outillable, le volume de texte par page et par locale, est `C-99` |
 | **M-51** | **Passer la partie de WCAG qu'axe-core ne voit pas** : ordre de lecture, pertinence d'un libellé, sens porté par une couleur seule. Daté, écran par écran | Ce sont les critères **non automatisables par nature**, hors de portée de tout run vert. Ça recoupe `M-28` (clavier seul) et `M-40` (VoiceOver), sans les remplacer : `M-28` mesure l'atteignabilité, `M-40` l'annonce, et celle-ci le **sens**. Les trois se jouent dans la même séance |
 | **M-52** | **Fixer une date à l'audit VoiceOver iOS, et la tenir** | 🔴 `AUDIT-VOICEOVER-IOS.md` écrit lui-même « rien dans ce fichier n'est coché », et son absence ne fait baisser **aucune** note : `ACCESSIBILITY.md` est noté sans que ce quatrième audit ait été passé. « À jouer » sans date se reconduit indéfiniment, et c'est ce qui s'est produit depuis le 2026-09-03. La check-list est prête, 12 étapes, témoin compris. L'exécution est `M-40` ; ce qui manque ici est **la date** |
-| **M-53** | **Vérifier que `contact@thecosmo.app` REÇOIT vraiment**, en t'écrivant depuis une adresse extérieure, et relever le délai | `check:mail` vérifie SPF, DKIM et DMARC de l'**expédition sortante**. La **réception** n'est testée par rien, et c'est l'adresse publiée dans les mentions légales et dans le support. ⚠️ Distinct de `M-32`, qui prouve qu'un rapport de bug **part** ; celui-ci prouve qu'un message **arrive** |
 
 ### 9.4 Trois décisions qui n'appartiennent qu'à toi
 
@@ -410,25 +226,6 @@ Elles complètent le § 7. Comme lui, elles ne produisent pas de correctif : ell
 | **M-55** | **Relever les backlinks obtenus ET PERDUS**, et donner une date et un état à chaque action d'annuaire | 🔴 Aucun suivi des backlinks perdus, alors que c'est **le seul levier que `ACQUISITION-BACKLINKS.md` déclare débloquant**. Un lien retiré est aujourd'hui invisible. Complète `M-23` (soumettre) et `M-24` (relever dans Search Console) : celui-ci porte la **persistance**, pas l'obtention. La colonne d'état dans le tableau est `C-101` ; ce qui la remplit est toi | `docs/ACQUISITION-BACKLINKS.md` AM-1, AM-2, AM-3 |
 | ~~**M-56**~~ 🟡 **RENDU EN PARTIE le 2026-09-21** | **Arbitrer ce que chacun des 77 angles morts COÛTE en points de note**, ou décider qu'on ne les note pas | ✅ **La moitié « classer les items » est faite** : [`a-faire-code-risques.md`](./a-faire-code-risques.md) est recoté sur les **111** items le 2026-09-21, et les huit qui restent ouverts portent chacun leur G × E, leur niveau et ce qui les débloque. 🔴 **Ce qui l'a rendue possible n'est pas une méthode, c'est un ménage** : 44 items étaient clos dans leur corps sans que leur titre le dise, et le tableau en cotait cinquante qui n'existaient plus. ❌ **La moitié qui reste est bien la tienne** : tarifer un angle mort **en points de note d'audit** n'a PAS été fait, et les 22 lignes encore ouvertes des tableaux « Angles morts » ne pèsent toujours sur aucune note. Classer des items et débiter une note sont deux gestes différents, et le second engage un jugement qui n'appartient qu'à toi | `docs/README.md` § 2026-09-21 · `a-faire-code-risques.md` |
 
----
-
-### 9.5 Ce qui a été écarté de ce tableau, et pourquoi
-
-⚠️ **Trois angles morts du 09-16 ne produisent aucune ligne ici**, parce qu'ils sont **déjà**
-portés par ce fichier et qu'en refaire une ligne serait exactement le doublon que l'en-tête
-interdit :
-
-| Angle mort | Déjà porté par |
-|---|---|
-| `POST-AUDIT-GUIDE.md` AM-1 et `SECURITY.md` AM-2, les réglages de Dashboard qui se désactivent sans trace | **M-15**, **M-16**, **M-17** (§ 4). Le volet outillable, les lire par l'API Management, est `C-88` |
-| `MOBILE.md` AM-4, aucune mesure sur appareil réel | **M-25** (§ 7), tenté le 2026-09-03, moitié appareil non faite |
-| `ACCESSIBILITY.md` AM-3, aucun test avec un lecteur d'écran | **M-40** (§ 7). Ce qui manquait n'était pas le geste mais sa **date** : c'est `M-52` |
-
-🔴 **Et un énoncé du 09-16 était périmé**, remesuré avant classement : `MOBILE.md` AM-1 et
-`TESTING.md` AM-4 annonçaient les cas `mobile-safari` « écrits, non commités ». Ils sont dans
-`ci.yml` à `HEAD` depuis `af0190bd`, le 2026-09-16, **le jour même**. `a-faire-code.md` `C-78` est
-clos ; ce qui reste de mobile non mesuré est `C-97` (Android, bridage, paysage) et `M-25`
-(l'appareil réel).
 
 ---
 
@@ -440,12 +237,29 @@ clos ; ce qui reste de mobile non mesuré est `C-97` (Android, bridage, paysage)
 
 | # | Geste | Pourquoi | Ligne |
 |---|---|---|---|
-| M-62 🔴 | **Mettre ton nom** dans les mentions légales (éditeur **et** directeur de la publication, `notice.s1.li1` et `notice.s1.li3`) et dans la politique (responsable de traitement, `privacy.s1.p1`), fr et en | « Cosmo » et « L'équipe Cosmo » n'identifient personne. Exigible **sans** structure (LCEN 6-III, loi de 1982 art. 93-2, RGPD 13.1.a). Le registre art. 30 te nomme déjà, dans un dépôt public. Une modification de `legal.json` passe par `LEGAL-JOURNAL.md` | A2, A3 |
 | M-63 🔴 | **Envoyer le préavis de 30 jours** des CGU aux comptes existants : clauses 3.3 (âge), 6.3 (sous-traitance entreprise), 9 (responsabilité envers un professionnel) | CGU art. 11. Sans lui, ces trois clauses ne sont pas opposables aux inscrits d'avant le 2026-09-24. Les autres changements sont plus favorables et valent dès publication | E11, A13 |
-| M-64 | **DPA** : accepter celui de **Sentry** (Legal & Compliance, rôle Owner), vérifier le plan **Vercel** (Hobby = pas de DPA), obtenir ceux de **Vesk** et **Resend**, et **Cloudflare** si Turnstile est activé. Archiver chaque copie datée | RGPD art. 28 et chap. V | A5, A6 |
+| M-64 | **DPA** : accepter celui de **Sentry** (Legal & Compliance, rôle Owner), vérifier le plan **Vercel** (Hobby = pas de DPA, cf. `M-74`), archiver celui de **Resend**, et **Cloudflare** si Turnstile est activé. Archiver chaque copie datée. ⚠️ **Rien de tout cela n'attend l'immatriculation** (relu le 2026-10-13) : Sentry s'accepte en ligne par le propriétaire du compte | RGPD art. 28 et chap. V | A5, A6 |
 | M-65 | **Téléphone des hébergeurs** (Vercel, Supabase) dans les mentions légales | LCEN 6-III-1. Aucun numéro public trouvé le 2026-09-24 : le demander à leur support | A3 |
-| M-66 | **Conseil en propriété industrielle** sur le nom COSMO | 11 marques antérieures actives en classes 9 et 42. Avant d'investir davantage en acquisition | F1, F2 |
+| M-66 ⏸️ **après la bascule payante** | **Conseil en propriété industrielle** sur le nom COSMO | ⏸️ **Repoussé par décision d'Axel le 2026-10-16** : à faire juste **après** l'activation du mode payant (bascule Stripe live, § 2 : `M-43`, `M-06`, `M-07`, `M-48`), et avant d'accélérer l'acquisition payante. Motif : un procès contre un SaaS gratuit d'un secteur opposé est peu probable, le risque grandit avec le chiffre d'affaires et la visibilité. ⚠️ Ne PAS déposer la marque avant la consultation : c'est le dépôt qui alerte les titulaires (opposition). Dossier et brouillons d'e-mail prêts : `docs/MARQUE-COSMO.md` | F1, F2 |
 | M-67 | **Relecture juridique** des CGU réécrites (6.3 surtout) et qualification du **Data Act** | Rédigées par un assistant. Un acheteur B2B demandera un DPA séparé et signable | E11, A13, F8 |
+
+## 11. Audit juridique du 2026-10-13 · violation de données et gestes restants
+
+> Tout ce que le code pouvait corriger l'a été le même jour (`docs/LEGAL.md` § « Audit du
+> 2026-10-13 », `docs/LEGAL-JOURNAL.md`). Restent ces gestes, **dans cet ordre**. Les détails de
+> l'incident ne sont PAS dans ce dépôt public : ils sont dans `C:\Users\Axel\Documents\COSMO-coffre-hors-depot`
+> (registre des violations, brouillons).
+> ⚠️ Rien ici n'est un avis juridique.
+
+| # | Geste | Pourquoi | Ligne |
+|---|---|---|---|
+| **M-71** 🔴 | **Ranger la phrase secrète des sauvegardes** (`C:\Users\Axel\Documents\COSMO-coffre-hors-depot\BACKUP_PASSPHRASE.txt`) dans ton gestionnaire de mots de passe, en garder une copie hors ligne, puis **supprimer le fichier**. 🔎 **2026-10-16 : le fichier est toujours présent** dans le coffre | Sans elle, aucune sauvegarde ne se relit : elle est aussi le secret `BACKUP_PASSPHRASE` des Actions, mais un secret GitHub ne se relit pas | A9 |
+| **M-72** | ✅ **Fait le 2026-10-21** (domiciliation 75116 + téléphone) · **Publier l'adresse et le téléphone de l'éditeur** dans les mentions légales : soit ton domicile maintenant, soit l'adresse de domiciliation après `M-01`/`M-02`. Un numéro dédié suffit | LCEN art. 1-1 (ex-6-III, loi SREN du 21/05/2024) : nom, domicile **et téléphone** pour une personne physique. L'anonymat n'est ouvert qu'aux non-professionnels, et la page de tarifs t'en sort | A3, E14 |
+| **M-73** | **T'immatriculer avant de lancer l'acquisition** (`M-01`), même sans rien encaisser | Une activité annoncée avec publicité et tarifs est présumée lucrative (C. trav. L8221-4). Débloque aussi `M-72` (domiciliation) et la clause de juridiction des CGU (12.3) | B2 |
+| **M-74** | **Vérifier le plan Vercel** (équipe « axellongattepro-3874's projects ») et passer en **Pro** si c'est Hobby | Hobby est réservé à un usage non commercial et n'est pas couvert par le DPA de Vercel. Non lisible par l'API | F11, A5 |
+| **M-75** | **Glisser dans le préavis `M-63`** : la suppression des comptes inactifs depuis 3 ans, et un lien vers les CGU pour les comptes créés par Google depuis l'écran de connexion (ils ne les avaient jamais vues) | Rend le préavis plus utile, sans second e-mail | A15, E10 |
+| **M-76** | **Faire qualifier le médiateur de la consommation pour un service gratuit** (payé en données), au moment de `M-67` | Certain dès qu'il y a vente ; discuté pour un service gratuit | E4, E14 |
+| **M-77** | **Publier le rapport d'audit** (`docs/audits/AUDIT-JURIDIQUE-2026-10-13.md`, non commité) **après `M-68`** | Il décrit l'incident ; dans un dépôt public, il attend que les sessions soient révoquées | A9 |
 
 ❌ **Ne jamais réarmer `ENTERPRISE_BILLING_ENFORCED`** avant d'avoir aussi réglé E4 (médiateur),
 E5 (portail de résiliation) et E13 (bouton de rétractation, directive 2023/2673).

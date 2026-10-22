@@ -1,4 +1,4 @@
-export { useAdminStats, useIsAdmin, useAdminGate, useSupportStats } from './hooks';
+export { useAdminStats, useIsAdmin, useAdminGate, useSupportStats, useOnboardingFunnel } from './hooks';
 export { adminKeys, ACQUISITION_GOALS } from './constants';
 export { AdminForbiddenError } from './repository';
 export {
@@ -28,5 +28,6 @@ export type {
   AdminActivation48h,
   SourceRetention,
   AdminOrgs,
+  AdminOnboardingFunnel,
   AdminSupport,
 } from './types';

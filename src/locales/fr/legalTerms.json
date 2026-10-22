@@ -3,11 +3,12 @@
     "seoTitle": "Conditions Générales d'Utilisation – Cosmo App",
     "seoDescription": "Conditions générales d'utilisation de Cosmo, application de gestion de tâches, habitudes et OKR. Accès gratuit, règles d'utilisation et responsabilités.",
     "title": "Conditions Générales d'Utilisation",
-    "updatedAt": "24 septembre 2026",
+    "updatedAt": "21 octobre 2026",
     "s1": {
       "title": "1. Objet",
       "p1": "Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation de l'application **Cosmo**, plateforme de gestion de tâches, habitudes, objectifs (OKR) et agenda disponible sur le web.",
-      "p2": "En créant un compte ou en utilisant Cosmo, vous acceptez sans réserve les présentes CGU. Si vous n'acceptez pas ces conditions, vous ne devez pas utiliser l'application."
+      "p2": "En créant un compte ou en utilisant Cosmo, vous acceptez sans réserve les présentes CGU. Si vous n'acceptez pas ces conditions, vous ne devez pas utiliser l'application.",
+      "p3": "Cosmo est édité par **Axel Longatte**, entrepreneur individuel (EI) exerçant sous le nom commercial COSMO, immatriculé au Registre national des entreprises sous le numéro SIREN 131 769 317, domicilié 138 avenue Victor Hugo, 75116 Paris, joignable à [contact@thecosmo.app](mailto:contact@thecosmo.app) ou au [07 54 36 29 17](tel:+33754362917). TVA non applicable, article 293 B du CGI. Dans les présentes, « Cosmo » désigne à la fois le service et son éditeur. Ses coordonnées complètes figurent dans les mentions légales du site."
     },
     "s2": {
       "title": "2. Accès au service",
@@ -48,19 +49,19 @@
       "title": "5 bis. Droit de rétractation",
       "p1": "Si vous souscrivez en qualité de consommateur, vous disposez d'un délai de **quatorze jours** à compter de la souscription pour vous rétracter, sans avoir à motiver votre décision.",
       "p2": "L'abonnement portant sur un service numérique fourni immédiatement, le tunnel de paiement vous demande, avant de payer, deux confirmations distinctes : votre **demande expresse** que le service commence avant la fin du délai de rétractation, et votre **reconnaissance** que vous perdez ce droit lorsque le service a été pleinement exécuté avant la fin de ce délai. Ces deux cases ne sont jamais pré-cochées, et le paiement ne peut être engagé sans elles. Si vous vous rétractez dans les quatorze jours, vous ne restez redevable que du montant correspondant au service fourni jusqu'à votre rétractation, proportionnellement au prix total. En pratique, la garantie de remboursement de la section 5 vous rembourse la période en cours en entier, ce qui vous est plus favorable.",
-      "p3": "Si vous ne donnez pas ces confirmations, vous conservez l'intégralité de votre délai de quatorze jours. Pour exercer votre rétractation, il suffit de nous écrire à [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com) en indiquant votre demande. Le remboursement intervient au plus tard quatorze jours après réception de celle-ci.",
-      "p4": "Vous pouvez utiliser le modèle suivant, sans y être obligé : « À l'attention de Cosmo, axellongattepro@gmail.com. Je vous notifie par la présente ma rétractation du contrat portant sur l'abonnement ci-dessous. Forfait souscrit le : [date]. Nom : [votre nom]. Adresse e-mail du compte : [adresse]. Date : [date]. »"
+      "p3": "Si vous ne donnez pas ces confirmations, vous conservez l'intégralité de votre délai de quatorze jours. Pour exercer votre rétractation, il suffit de nous écrire à [contact@thecosmo.app](mailto:contact@thecosmo.app) en indiquant votre demande. Le remboursement intervient au plus tard quatorze jours après réception de celle-ci.",
+      "p4": "Vous pouvez utiliser le modèle suivant, sans y être obligé : « À l'attention de Cosmo, contact@thecosmo.app. Je vous notifie par la présente ma rétractation du contrat portant sur l'abonnement ci-dessous. Forfait souscrit le : [date]. Nom : [votre nom]. Adresse e-mail du compte : [adresse]. Date : [date]. »"
     },
     "s6": {
       "title": "6. Propriété des données",
       "p1": "Les données que vous créez dans Cosmo (tâches, habitudes, objectifs, événements) vous appartiennent. Cosmo n'y accède que dans le cadre de la fourniture du service.",
-      "p2": "Vous pouvez demander l'export ou la suppression de vos données à tout moment via les paramètres ou en contactant [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com).",
+      "p2": "Vous pouvez demander l'export ou la suppression de vos données à tout moment via les paramètres ou en contactant [contact@thecosmo.app](mailto:contact@thecosmo.app).",
       "p3": "**Espace entreprise.** Lorsqu'une organisation utilise l'espace entreprise, elle détermine pourquoi et comment les données de ses membres y sont traitées (tâches, projets, commentaires, statistiques d'activité) : elle en est **responsable de traitement**, et Cosmo agit pour son compte en qualité de **sous-traitant** au sens de l'article 28 du RGPD. À ce titre, Cosmo : ne traite ces données que pour fournir le service, sur les instructions que l'organisation donne en l'utilisant ; en garantit la confidentialité par les personnes qui y accèdent ; applique les mesures de sécurité décrites dans la politique de confidentialité ; ne recourt qu'aux sous-traitants qui y sont listés et informe l'organisation de tout changement, qu'elle peut refuser en résiliant ; l'aide à répondre aux demandes d'exercice de droits et à remplir ses obligations de sécurité ; lui notifie toute violation de données la concernant dans les meilleurs délais ; supprime ces données à la fin du service, après lui avoir permis de les exporter ; et lui fournit les informations nécessaires pour démontrer le respect de ces obligations, y compris lors d'un audit raisonnable. L'organisation reste tenue d'informer ses membres, et le cas échéant leurs représentants, de l'usage qu'elle fait de ces données.",
       "p4": "**Changer de service.** Vous pouvez exporter vos données à tout moment et sans frais (Paramètres, onglet Mes données), dans un format ouvert (CSV), pour les reprendre dans un autre service. Faites-le avant de supprimer votre compte : la suppression est définitive."
     },
     "s7": {
       "title": "7. Propriété intellectuelle",
-      "p1": "L'application Cosmo, son code source, son design, ses marques et logos sont la propriété exclusive de Cosmo. Toute reproduction ou exploitation non autorisée est strictement interdite."
+      "p1": "L'application Cosmo, son code source, son design, ses marques et logos sont la propriété de son éditeur. Toute reproduction ou exploitation non autorisée est interdite, sous réserve des licences des composants open source sur lesquels l'application s'appuie."
     },
     "s8": {
       "title": "8. Disponibilité du service",
@@ -68,9 +69,10 @@
     },
     "s9": {
       "title": "9. Limitation de responsabilité",
-      "p1": "Cosmo est tenu à une obligation de moyens. Il ne répond pas des dommages qui résultent d'une utilisation du service non conforme aux présentes CGU, d'un cas de force majeure, ou du fait d'un tiers.",
+      "p1": "Cosmo est tenu à une obligation de moyens. Il ne répond pas des dommages qui résultent d'une utilisation du service non conforme aux présentes CGU, d'un cas de force majeure, ou du fait imprévisible et insurmontable d'un tiers étranger à la fourniture du service.",
       "p2": "**À l'égard d'un professionnel**, et sauf faute lourde ou dolosive, la responsabilité de Cosmo est limitée aux dommages directs et au montant des sommes versées au cours des 12 derniers mois.",
-      "p3": "**À l'égard d'un consommateur**, aucune clause des présentes ne limite ni n'exclut la responsabilité de Cosmo au-delà de ce que la loi autorise, et les **garanties légales de conformité et des vices cachés** restent dues en toutes circonstances."
+      "p3": "**À l'égard d'un consommateur**, aucune clause des présentes ne limite ni n'exclut la responsabilité de Cosmo au-delà de ce que la loi autorise, et les **garanties légales de conformité et des vices cachés** restent dues en toutes circonstances.",
+      "p4": "**Garantie légale de conformité.** Si vous êtes un consommateur, le service doit être conforme au contrat pendant toute la durée de sa fourniture (Code de la consommation, articles L224-25-1 et suivants). En cas de défaut de conformité, vous pouvez obtenir sa mise en conformité, ou à défaut une réduction du prix ou la résolution du contrat. Ce droit s'exerce sans frais, en écrivant à [contact@thecosmo.app](mailto:contact@thecosmo.app)."
     },
     "s10": {
       "title": "10. Résiliation",
@@ -86,7 +88,7 @@
       "title": "12. Droit applicable et juridiction",
       "p1": "Les présentes CGU sont soumises au droit français.",
       "p2": "**Si vous êtes un consommateur**, vous conservez le droit de saisir la juridiction du lieu où vous demeurez, et rien dans les présentes ne vous en prive.",
-      "p3": "Pour les litiges opposant Cosmo à un professionnel, et après tentative de résolution amiable, les tribunaux de Paris sont seuls compétents."
+      "p3": "Pour les litiges opposant Cosmo à un professionnel, et après tentative de résolution amiable, les tribunaux de Paris sont compétents, dans la mesure où la loi le permet."
     },
     "s13": {
       "title": "13. Langue du contrat",
@@ -94,7 +96,7 @@
     },
     "s14": {
       "title": "14. Contact",
-      "p1": "Pour toute question relative aux présentes CGU : [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com)"
+      "p1": "Pour toute question relative aux présentes CGU : [contact@thecosmo.app](mailto:contact@thecosmo.app)"
     },
     "s4bis": {
       "title": "4 bis. Signaler un contenu illicite",

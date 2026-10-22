@@ -128,3 +128,33 @@ describe('category — la frontière `` ↔ NULL (mig. 145)', () => {
     expect('category' in mapTaskToDb({ name: 'X' })).toBe(false);
   });
 });
+
+// ═══ Statut et État (mig. 214) ═══
+describe('statut et état (mig. 214)', () => {
+  it('lit status et health tels quels', () => {
+    expect(mapTaskFromDb({ ...baseRow, status: 'blocked', health: 'at_risk' }))
+      .toMatchObject({ status: 'blocked', health: 'at_risk' });
+  });
+
+  // Un statut fabriqué à la lecture repartirait en base avec la tâche entière
+  // (« Annuler », dupliquer), y compris avant que la colonne n'existe.
+  it('ligne antérieure à la migration : ni statut ni état inventés', () => {
+    const t = mapTaskFromDb({ ...baseRow, completed: true });
+    expect(t.status).toBeUndefined();
+    expect(t.health).toBeUndefined();
+    expect('status' in mapTaskToDb(t)).toBe(false);
+    expect(mapTaskFromDb({ ...baseRow, health: null }).health).toBeUndefined();
+  });
+
+  it('whitelist : status et health partent, un état effacé devient NULL', () => {
+    expect(mapTaskToDb({ status: 'in_progress', health: 'on_track' }))
+      .toEqual({ status: 'in_progress', health: 'on_track' });
+    expect(mapTaskToDb({ health: null })).toEqual({ health: null });
+  });
+
+  it('n envoie ni status ni health quand ils sont absents', () => {
+    const out = mapTaskToDb({ name: 'X' });
+    expect('status' in out).toBe(false);
+    expect('health' in out).toBe(false);
+  });
+});

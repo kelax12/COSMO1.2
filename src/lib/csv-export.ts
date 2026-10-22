@@ -7,7 +7,7 @@
  * forcer Excel à reconnaître les caractères accentués).
  */
 
-import type { Task } from '@/modules/tasks';
+import { effectiveStatus, type Task } from '@/modules/tasks';
 import type { Habit } from '@/modules/habits';
 import type { CalendarEvent } from '@/modules/events';
 import type { OKR } from '@/modules/okrs';
@@ -137,7 +137,7 @@ export function exportTasksCSV(tasks: Task[]): void {
   const headers = cols(
     'id', 'name', 'description', 'category', 'priority', 'deadline',
     'durationMin', 'recurrence', 'subtasks', 'linkedKr',
-    'completed', 'completedAt', 'bookmarked', 'createdAt',
+    'completed', 'completedAt', 'status', 'health', 'bookmarked', 'createdAt',
   );
   const rows = tasks.map(t => [
     t.id,
@@ -152,6 +152,11 @@ export function exportTasksCSV(tasks: Task[]): void {
     t.krId || '',
     bool(t.completed),
     t.completedAt || '',
+    // Statut et état (mig. 214) : choisis par la personne sur le Tableau ou la
+    // fiche, donc dus au titre de l'article 20. Valeurs brutes, comme
+    // `recurrence` : un export de portabilité doit se relire par une machine.
+    effectiveStatus(t),
+    t.health ?? '',
     bool(t.bookmarked),
     t.createdAt,
   ]);

@@ -1,4 +1,4 @@
-<!-- note-audit: note=78 -->
+<!-- note-audit: note=79 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **78 / 100** au 2026-10-02 (soir), au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **79 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
 
 # SEO — état mesuré, règles et dette
 
@@ -25,7 +25,73 @@ cause n'est pas dans le dépôt.
 > liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
 > PageSpeed Insights.
 
-## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → **78 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → 78 → 79 → 78 → 79 → 79 → **79 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → **2026-10-20**) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ⚪ 2026-10-20 · 0 : aucune page publique touchée
+>
+> Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | Pages publiques | 0 | `/` et `/entreprise-presentation/` en 200 ; aucun commit n'a touché la landing, le blog ou le prérendu ; l'autorité de domaine reste le seul levier |
+>
+> **79 → 79.**
+
+> ### ⚪ 2026-10-18 · 0 : production relue, rien n'a bougé
+>
+> Dernière passe avant l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | Production | 0 | `/`, `/entreprise-presentation/`, `/en/`, `/blog/`, `sitemap.xml`, `robots.txt` en 200 ; la page entreprise sert son titre et sa canonical (`https://thecosmo.app/entreprise-presentation`) dès le HTML servi |
+> | Lighthouse SEO | 0 | **100** sur les 8 URLs, desktop et mobile |
+> | Autorité de domaine | 0 | rien de neuf mesuré : `M-23` et `M-24` restent le seul levier, cf. [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md) |
+>
+> **79 → 79.**
+
+> ### 🟢 2026-10-16 (soir) · +1 : la page entreprise sert de nouveau la page entreprise
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vérifié**. Mesures du 2026-10-16 au
+> soir : CI de `main` (runs `38907264016` à `38941369233`, tous complets et verts), production au
+> navigateur. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 (soir) |
+> |---|---|---|
+> | ✅ `/entreprise-presentation/` servait l'accueil perso (−1 le matin) | **+1** | `9dcaf94b` (détection tolérante à la barre oblique, avec tests). Relu en production après hydratation : `h1` « Qui fait quoi. Où on en est. », titre entreprise, canonical `https://thecosmo.app/entreprise-presentation` |
+> | SEO Lighthouse | 0 | 100 sur les 8 URLs, la page entreprise désormais mesurée sur son vrai parcours |
+>
+> **78 → 79.**
+
+> ### 🟠 2026-10-16 · −1 : `/entreprise-presentation/` sert l'accueil perso, canonical compris
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab`, production (curl et navigateur). Tableau de bord :
+> [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | 🔴 La variante avec barre oblique de la page entreprise | **−1** | `https://thecosmo.app/entreprise-presentation/` répond en **200** (variantes à slash final servies volontairement) et, une fois React chargé, affiche le **parcours perso** : `h1` « Toute votre productivité… », titre de l'accueil, **canonical réécrit vers `https://thecosmo.app/`**. Cause : `useLandingTrack` compare le chemin sans tolérer la barre oblique. Le sitemap porte la forme sans barre, mais un lien externe ou une saisie mènent un prospect entreprise sur la mauvaise page, et le « SEO 100 » mesuré sur cette URL en CI était celui de l'accueil. **Corrigé sur `main` par `9dcaf94b` pendant la passe**, ni vu en CI ni relu en production à son écriture : remboursable à la prochaine |
+> | SEO Lighthouse | 0 | 100 sur les 8 URLs, desktop et mobile (en notant la réserve ci-dessus) |
+> | `check:seo` | 0 | vert à `HEAD` : 50 pages prérendues, 40 URLs au sitemap, 150 `hreflang` réciproques |
+> | AM-4 · le résultat n'est pas mesuré | 0 | toujours vrai, `M-24` et `M-55` |
+>
+> **79 → 78.**
+
+> ### 🟢 2026-10-15 · +1 : le LCP mobile sort de « mauvais »
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> production (curl sur le HTML servi), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | ✅ LCP mobile « mauvais » sur 8 URLs sur 8 (−1 le 09-22) | **+1** | **3,26 à 3,40 s** sur les 8 URLs, Lighthouse mobile en CI à `HEAD` (cf. [`PERFORMANCE.md`](./PERFORMANCE.md)). Signal *page experience* toujours sans donnée terrain |
+> | SEO Lighthouse | 0 | **100 sur les 8 URLs**, desktop et mobile. `/en/` passe de 92 à 100 (lien du bandeau cookies, `dc243383`) |
+> | Coquille `app.html` indexable ; canonical de `/entreprise-presentation` réécrit vers `/` par React | 0 | trouvés par l'audit externe du 2026-10-09 ([`audits/seo-thecosmo-app-2026-10-09/`](./audits/seo-thecosmo-app-2026-10-09/FULL-AUDIT-REPORT.md)), refermés le 10-09 (`69a972d0`) et le 10-12 (`dc243383`), **relus en production** ce soir : `noindex` servi par `app.html`, canonical et `og:image` propres à la page entreprise. Trouvés et refermés entre deux passes : ni débit ni crédit |
+> | `check:seo` | 0 | vert en local à `HEAD` : 50 pages prérendues, 40 URLs au sitemap, 150 `hreflang` réciproques |
+> | AM-4 · le résultat n'est pas mesuré | 0 | toujours vrai, `M-24` et `M-55` |
+>
+> **78 → 79.**
 
 > ### ⚪ 2026-10-02 (soir) · 0 : vérifiée inchangée
 >
@@ -322,7 +388,9 @@ Mesuré sur les 24 pages prérendues :
 | `X-Robots-Tag` | ✅ `noindex` sur invitations, reset de mot de passe, pages légales |
 | `rss.xml` | ✅ généré au build |
 | Maillage interne depuis l'accueil | ✅ les 4 use-cases, le guide, le blog et un article |
-| 404 | ✅ vraie page + `noindex` client (statut HTTP 200 — limite SPA assumée et documentée) |
+| 404 | ✅ vraie page + `noindex` (statut HTTP 200, limite SPA assumée). Depuis le 2026-10-09 le `noindex` est aussi dans le HTML SERVEUR : `app.html` sort sans `index` ni canonical vers `/`, visible par Bing et les crawlers IA qui n'exécutent pas le JS |
+| Image OG | ✅ une par page depuis le 2026-10-12 : `public/og/<clé>.jpg`, rendues par `scripts/capture-og-images.mjs` (Playwright, après `npm run build`) et **commitées**, le build Vercel n'ayant pas de navigateur. Le prérendu retombe sur `og-card.png` si l'image manque ; l'accueil FR garde `og-card.png`. Garde : `src/og-images.guard.test.ts` (chaque article, chaque langue). ⚠️ Article neuf : relancer le script |
+| Canonical de la landing | ✅ depuis le 2026-10-12, `useLandingSeoMeta(track)` : `/entreprise-presentation` gardait son canonical prérendu puis React le réécrivait vers `/` (Lighthouse SEO 92). Témoin : `src/lib/useSeoMeta.test.ts` |
 
 **Le grief central de juillet — « le prérendu ne sort que 161 mots » — est corrigé** : l'accueil
 émet ~600 mots de contenu propre, les pages use-case 680–900.

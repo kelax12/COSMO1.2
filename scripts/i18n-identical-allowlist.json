@@ -93,9 +93,9 @@
       "categorie": "symbole-ou-format",
       "valeur": "{{name}} - {{status}}"
     },
-    "dashboard.habits.minutes": {
+    "dashboard.habitsWidget.dayCell": {
       "categorie": "symbole-ou-format",
-      "valeur": "{{count}} min"
+      "valeur": "{{name}}, {{date}}"
     },
     "dashboard.okrs.timeProgress": {
       "categorie": "symbole-ou-format",
@@ -124,10 +124,6 @@
     "guide.start.cardDashboard": {
       "categorie": "anglicisme-fr",
       "valeur": "Dashboard"
-    },
-    "guide.start.cardNotifications": {
-      "categorie": "mot-identique",
-      "valeur": "Notifications"
     },
     "guide.tasks.featCollab": {
       "categorie": "mot-identique",
@@ -161,10 +157,6 @@
       "categorie": "sigle",
       "valeur": "FAQ"
     },
-    "landing.hero.modules.okr": {
-      "categorie": "sigle",
-      "valeur": "OKR"
-    },
     "landing.marquee.timeBlocking": {
       "categorie": "anglicisme-fr",
       "valeur": "Time-blocking"
@@ -180,10 +172,6 @@
     "landing.nav.solutions": {
       "categorie": "mot-identique",
       "valeur": "Solutions"
-    },
-    "landing.why.chartAgenda": {
-      "categorie": "mot-identique",
-      "valeur": "Agenda"
     },
     "landing.why.tag1": {
       "categorie": "anglicisme-fr",
@@ -208,6 +196,14 @@
     "okr.modal.descriptionLabel": {
       "categorie": "mot-identique",
       "valeur": "Description"
+    },
+    "onboarding.perso.habits.minutes": {
+      "categorie": "symbole-ou-format",
+      "valeur": "{{minutes}} min"
+    },
+    "orgGuide.drawer.badgeAdmin": {
+      "categorie": "mot-identique",
+      "valeur": "Admin"
     },
     "org.common.adminBadge": {
       "categorie": "mot-identique",
@@ -269,6 +265,14 @@
       "categorie": "mot-identique",
       "valeur": "Violet"
     },
+    "orgAdmin.customRoles.permissionCount_one": {
+      "categorie": "mot-identique",
+      "valeur": "{{count}} permission"
+    },
+    "orgAdmin.customRoles.permissionCount_other": {
+      "categorie": "mot-identique",
+      "valeur": "{{count}} permissions"
+    },
     "orgAdmin.member.manager": {
       "categorie": "anglicisme-fr",
       "valeur": "Manager"
@@ -300,10 +304,6 @@
     "orgAdmin.overview.csvTotal": {
       "categorie": "mot-identique",
       "valeur": "Total"
-    },
-    "orgAdmin.permissions.sectionOrg": {
-      "categorie": "mot-identique",
-      "valeur": "Organisation"
     },
     "orgAdmin.profile.description": {
       "categorie": "mot-identique",
@@ -401,10 +401,6 @@
       "categorie": "mot-identique",
       "valeur": "Modules"
     },
-    "statistics.breakdown.agenda": {
-      "categorie": "mot-identique",
-      "valeur": "Agenda"
-    },
     "statistics.chart.minutes": {
       "categorie": "symbole-ou-format",
       "valeur": "min"
@@ -424,18 +420,6 @@
     "taskModal.mobile.participants": {
       "categorie": "mot-identique",
       "valeur": "Participants"
-    },
-    "taskModal.sections.collaboration": {
-      "categorie": "mot-identique",
-      "valeur": "Collaboration"
-    },
-    "taskModal.sections.description": {
-      "categorie": "mot-identique",
-      "valeur": "Description"
-    },
-    "taskModal.sections.organisation": {
-      "categorie": "mot-identique",
-      "valeur": "Organisation"
     },
     "tasks.card.options": {
       "categorie": "mot-identique",

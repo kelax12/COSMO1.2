@@ -47,6 +47,7 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import MenuSelect from '@/components/organization/MenuSelect';
+import NoCategoryOption from '@/components/category/NoCategoryOption';
 
 interface TeamCategoryTreeSelectProps {
   orgId: string;
@@ -430,6 +431,7 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
         className="z-[10000] max-h-80 overflow-y-auto p-2"
       >
         <div role="listbox" aria-label={t('teamCategory.picker')}>
+          <NoCategoryOption selected={!value} onSelect={() => { onChange(null); close(); }} />
           {buildTree(categories).map((node) => renderNode(node, 0))}
         </div>
 

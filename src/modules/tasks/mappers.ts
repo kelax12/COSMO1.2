@@ -4,7 +4,7 @@
 // it must NEVER emit `user_id` (anti-mass-assignment, faille V1). The id is
 // added server-side in the repository from `auth.getUser()`.
 // ═══════════════════════════════════════════════════════════════════
-import { Task, Subtask, TaskRecurrence } from './types';
+import { Task, Subtask, TaskRecurrence, TaskStatus, TaskHealth } from './types';
 
 /** Supabase DB row type for the `tasks` table (snake_case). */
 export interface TaskRow {
@@ -29,6 +29,9 @@ export interface TaskRow {
   pending_invites?: string[];
   collaborator_validations?: Record<string, boolean>;
   user_id?: string;
+  // Mig. 214 : absents d'une ligne servie avant la migration.
+  status?: string | null;
+  health?: string | null;
 }
 
 /** DB input type for insert/update operations (snake_case). */
@@ -49,6 +52,8 @@ export interface TaskDbInput {
   pending_invites?: string[];
   collaborator_validations?: Record<string, boolean>;
   user_id?: string;
+  status?: string;
+  health?: string | null;
 }
 
 export function mapTaskFromDb(row: TaskRow): Task {
@@ -80,6 +85,13 @@ export function mapTaskFromDb(row: TaskRow): Task {
     pendingInvites: row.pending_invites || [],
     collaboratorValidations: row.collaborator_validations || {},
     userId: row.user_id,
+    // Mig. 214. 🔴 On ne DÉDUIT PAS le statut ici, on rend ce que la base a
+    // servi. Une tâche lue repart entière dans plusieurs écritures (« Annuler »
+    // une suppression, dupliquer) : un statut fabriqué à la lecture y
+    // partirait en base, et avant l'application de la migration la colonne
+    // n'existe pas, donc l'écriture échouerait. Lire par `effectiveStatus()`.
+    status: (row.status as TaskStatus | null | undefined) ?? undefined,
+    health: (row.health as TaskHealth | null | undefined) ?? undefined,
   };
 }
 
@@ -111,5 +123,9 @@ export function mapTaskToDb(input: Partial<Task>): TaskDbInput {
   if (input.isCollaborative !== undefined) result.is_collaborative = input.isCollaborative;
   if (input.pendingInvites !== undefined) result.pending_invites = input.pendingInvites;
   if (input.collaboratorValidations !== undefined) result.collaborator_validations = input.collaboratorValidations;
+  // Statut et État (mig. 214). Un état effacé (`null`) part en NULL : c'est
+  // « aucun état déclaré », pas « ne touche pas à la colonne ».
+  if (input.status !== undefined) result.status = input.status;
+  if (input.health !== undefined) result.health = input.health ?? null;
   return result;
 }

@@ -15,11 +15,16 @@ Elles ne partagent aucune colonne. Le client ne peut écrire ni l'une ni l'autre
 
 ## État courant
 
+- (historique) `PRICES_VISIBLE = false` du 2026-10-16 au 10-20 (acquisition sans monétisation) : aucun montant affiché, ni sur
+  la landing ni dans l'onglet Abonnement ni dans le prérendu (miroir `PRIX_VISIBLES` de `prerender.mjs`).
+  Rien n'est supprimé. Les surfaces entreprise testent `PRICES_VISIBLE || ENTERPRISE_BILLING_ENFORCED`.
 - 🟢 `PREMIUM_ENFORCED = false` (`premium-config.ts`) : `isPremium()` rend `true` pour tous,
   `/premium` redirige vers `/`. Le code de gating reste dormant, il ne se supprime pas.
-- 🔴 `ENTERPRISE_BILLING_ENFORCED = false` **et** `billing_flags.enterprise_seat_limit = false`,
-  désarmés ensemble le 2026-08-26 (mig. 124).
-- 🔴 `STRIPE_SECRET_KEY` en prod est une clé de **TEST**. Le quota est réel, l'encaissement non.
+- 🟢 `ENTERPRISE_BILLING_ENFORCED = true` **et** `billing_flags.enterprise_seat_limit = true`,
+  réarmés ensemble le 2026-10-20 (mig. 224), après désarmement du 2026-08-26 (mig. 124).
+  `PRICES_VISIBLE = true` le même jour (on ne vend pas sans afficher de prix).
+- 🟢 Stripe en compte **LIVE** depuis le 2026-10-20 : on encaisse de l'argent réel.
+  Détail de la bascule : [`docs/STRIPE-LIVE.md`](../../../docs/STRIPE-LIVE.md).
 
 ## Interdits
 

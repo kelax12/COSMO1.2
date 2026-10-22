@@ -46,13 +46,17 @@ import { useHiddenWhileSearching } from './tasks/search-open.store';
 import { useChipLongPress } from './tasks/useChipLongPress';
 import { useTaskLists } from './tasks/useTaskLists';
 import { useT } from '@/i18n/useT';
+import { useTasksView } from '@/components/task-board/view-mode.store';
 
 // C-117 · feuille ouverte à la demande : son code ne pèse plus sur l'ouverture de /tasks.
 const ShareListSheet = React.lazy(() => import('@/components/ShareListSheet'));
+// Vue Tableau (mig. 214) : la vue Liste ne paie rien pour elle.
+const TaskBoard = React.lazy(() => import('@/components/task-board/TaskBoard'));
 
 const TasksPage: React.FC = () => {
   const { t } = useT('tasks');
   const isMobile = useIsMobile();
+  const tasksView = useTasksView();
   // Tutoriel séparé desktop / mobile : flag localStorage distinct par variante
   // pour que basculer de l'un à l'autre (rotation tablette) ré-affiche le tour
   // adapté au viewport courant.
@@ -265,6 +269,16 @@ const TasksPage: React.FC = () => {
     return <TasksErrorState error={tasksError as Error} onRetry={() => refetchTasks()} />;
   }
 
+  const activeFiltersProps = {
+    selectedListId,
+    lists,
+    selectedCategories,
+    searchTerm,
+    onClearList: clearListFilter,
+    onClearCategories: () => setSelectedCategories([]),
+    onClearSearch: () => setSearchTerm(''),
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -369,7 +383,7 @@ const TasksPage: React.FC = () => {
                   // a ete retire, et le tri est passe dans la barre ancree.
                   className="hidden md:flex flex-col md:flex-row justify-between items-stretch md:items-start mb-3 sm:mb-8 gap-6"
                 >
-                  <div className="flex-1 w-full" data-tutorial-id="tasks-filter">
+                  <div className="flex-1 w-full" data-tutorial-id="tasks-filter" data-guide-id="perso-tasks-filter">
                     <TaskFilter
                       onFilterChange={handleFilterChange}
                       currentFilter={filter}
@@ -389,6 +403,7 @@ const TasksPage: React.FC = () => {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setShowAddTaskForm(true)}
                       data-tutorial-id="tasks-create-button"
+                      data-guide-id="perso-tasks-new"
                       className="hidden md:flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
                       aria-label={t('actions.newTaskAria')}
                     >
@@ -399,19 +414,13 @@ const TasksPage: React.FC = () => {
                 </motion.div>
               )}
 
-              {/* Ce qui réduit la liste, dit à l'écran (#35) — cf. ActiveFiltersRow. */}
+              {/* Ce qui réduit la liste, dit à l'écran (#35) — cf. ActiveFiltersRow.
+                  Vue Liste sur desktop : rendue au bout de la rangée Favoris /
+                  Terminées (cf. `activeFilters` passé à TaskTable), pas ici. */}
               {!showAddTaskForm && (
                 <ActiveFiltersRow
-                  selectedListId={selectedListId}
-                  lists={lists}
-                  selectedCategories={selectedCategories}
-                  searchTerm={searchTerm}
-                  shownCount={filteredTasks.length}
-                  totalCount={tasks.length}
-                  onClearList={clearListFilter}
-                  onClearCategories={() => setSelectedCategories([])}
-                  onClearSearch={() => setSearchTerm('')}
-                  className={hiddenWhileSearchingFlex}
+                  {...activeFiltersProps}
+                  className={`${hiddenWhileSearchingFlex} ${tasksView === 'board' || selectingTasksForListId ? '' : 'md:hidden'}`}
                 />
               )}
 
@@ -429,6 +438,10 @@ const TasksPage: React.FC = () => {
               >
                 {isTasksLoading && tasks.length === 0 ? (
                   <TaskListSkeleton count={6} />
+                ) : tasksView === 'board' && !selectingTasksForListId ? (
+                  <React.Suspense fallback={<TaskListSkeleton count={6} />}>
+                    <TaskBoard tasks={filteredTasks} />
+                  </React.Suspense>
                 ) : (
                 <TaskTable
                   tasks={filteredTasks}
@@ -449,6 +462,7 @@ const TasksPage: React.FC = () => {
                   searchTerm={searchTerm}
                   listFilterActive={!!selectedListId}
                   hasActiveFilter={!!selectedListId || selectedCategories.length > 0 || searchTerm.trim() !== ''}
+                  quickFiltersTrailing={<ActiveFiltersRow {...activeFiltersProps} className="!mb-0" />}
                 />
                 )}
               </motion.div>
@@ -504,8 +518,9 @@ const TasksPage: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* Création mobile (#22) : point d'entrée unique = FAB quick-add global
-          monté dans Layout (data-tutorial-id="global-quick-add-fab"). Les deux FABs
+      {/* Création mobile (#22) : point d'entrée unique = le « + » de la barre
+          du bas (`MobileTaskSearch`, data-tutorial-id="tasks-create", maquette
+          150 ; c'était le FAB global de Layout jusqu'au 2026-10-10). Les deux FABs
           locaux (éclair + plus) ont été retirés : deux affordances pour une
           même intention créaient une hésitation à chaque création. Le modal
           complet reste accessible en tapant une tâche existante (enrichir

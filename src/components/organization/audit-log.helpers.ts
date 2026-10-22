@@ -22,6 +22,8 @@ export const AUDIT_ACTIONS = [
   'task.trashed', 'task.restored', 'task.deleted',
   'okr.trashed', 'okr.restored', 'okr.deleted',
   'org.renamed', 'org.owner_transferred',
+  // Rôles personnalisés (mig. 219). `role.expired` est écrit par le job horaire.
+  'role.created', 'role.updated', 'role.deleted', 'role.assigned', 'role.revoked', 'role.extended', 'role.expired',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
@@ -30,7 +32,7 @@ export const isKnownAuditAction = (action: string): action is AuditAction =>
   (AUDIT_ACTIONS as readonly string[]).includes(action);
 
 /** Familles filtrables : le préfixe d'action, tel que le serveur le filtre. */
-export const AUDIT_FAMILIES = ['member.', 'team.', 'project.', 'task.', 'okr.', 'org.'] as const;
+export const AUDIT_FAMILIES = ['member.', 'team.', 'project.', 'task.', 'okr.', 'role.', 'org.'] as const;
 export type AuditFamily = (typeof AUDIT_FAMILIES)[number];
 
 type DotToUnderscore<S extends string> = S extends `${infer A}.${infer B}` ? `${A}_${B}` : S;

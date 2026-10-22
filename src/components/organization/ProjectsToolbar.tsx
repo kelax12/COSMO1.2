@@ -50,8 +50,9 @@ const ViewTab = ({ active, onClick, label, Icon }: {
         : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
     }`}
   >
-    <Icon size={15} aria-hidden="true" />
-    <span className="hidden sm:inline">{label}</span>
+    {/* Maquette 250 : sur mobile, des vues NOMMÉES, sans icône. */}
+    <Icon size={15} aria-hidden="true" className="max-md:hidden" />
+    <span>{label}</span>
   </button>
 );
 
@@ -143,7 +144,8 @@ export const NewProjectButton = ({ canCreateProject, createDeniedReason, onNewPr
       <button
         type="button"
         onClick={onNewProject}
-        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
+        data-guide-id="projects-new"
+        className="inline-flex items-center gap-1.5 h-9 px-3 max-md:rounded-2xl rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
         aria-label={t('projects.newProject')}
       >
         <Plus size={15} aria-hidden="true" />

@@ -1,4 +1,4 @@
-<!-- note-audit: note=96 -->
+<!-- note-audit: note=95 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,90 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **96 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **95 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → **96 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → 97 → 96 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**)
+
+> ### 🟠 2026-10-20 · −1 : `main` rouge 29 runs, et deux verdicts qui dépendent de la date
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | 🔴 `main` rouge depuis le 2026-10-19 à 12:06 UTC | **−1** | dernier vert `bf94958f` (10-18). `e2e` rouge depuis `a9db6f2c`, `lint-test-build` depuis `08bce3d4` (budget de bundle, seule étape rouge, débitée dans [`PERFORMANCE.md`](./PERFORMANCE.md)). **23 commits de code poussés sur du rouge** en 26 h, l'alerte Discord partie à chaque run. `f0c2a433` a réparé les deux parcours entreprise et C-57, pas le reste |
+> | 🟠 Deux verdicts liés au jour de la semaine | **−1** | rouges sur `a9db6f2c`, qui ne change **que deux commentaires** ; vert le dimanche 10-18, rouge le lundi 10-19. `e2e/visual-regression.spec.ts` et `e2e/mobile-android.spec.ts` ne figent pas l'horloge (aucun `page.clock`) alors que la démo date ses données par rapport à aujourd'hui. Correctif : `page.clock.install` à une date fixe |
+> | ✅ `api/collect.ts` hors `tsc` et hors tests (−1 le 10-18) | **+1** | `946046952` et `f2507e69` : `api/` dans `tsconfig.json` (NodeNext, comme le contrôle de Vercel) et dans `vitest.config.ts` ; cinq sabotages du collecteur au catalogue (`62f8ba98`). **Vert en CI** sur la PR n° 79 (run `39163166665`, cinq jobs). Chaîne vue écrire par le collecteur le 10-19 (204, une ligne) |
+> | Comptes à `HEAD` | 0 | 352 fichiers, **3 969** tests ; outillage 29 / 503 ; `e2e` 254 verts, 1 échec (C-97 `/dashboard`), 2 instables, 4 sautés, 22,7 min ; 5 fichiers de test neufs pour 33 fichiers source neufs (les helpers de l'Aperçu) |
+> | Planifiés | 0 | `Posture` rouge chaque matin, référence non recalée (débit nul, voir [`../faille.md`](../faille.md)) ; verts : `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest` |
+>
+> **96 → 95.**
+
+> ### 🟠 2026-10-18 · −1 : le premier code serveur du dépôt n'est vu par aucune garde
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Dernière passe avant
+> l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | ✅ CI de `main` à `e69cb729` | 0 | cinq jobs verts : **346** fichiers, **3 890** tests ; outillage 29 / 501 ; RLS 8 / 151 ; `e2e` **255 verts, 2 instables** (deux parcours démo `mobile-safari`), 4 sautés, en 23,6 min |
+> | ✅ `lint-test-build` rouge sur `8b253a1b` et `5f8ecbdb` | 0 | une seule garde, `scripts/cosmo/api.test.mjs` : `8b253a1b` ajoute `status,health` à `TASK_LIST_COLUMNS` sans reporter la copie du CLI. La garde anti-dérive a mordu au premier run, l'alerte est partie sur Discord. Corrigé par cette passe (`15d40bea`), rejoué seul 46 / 46, puis **vert en CI** (run `39156293593`). Rouge 2 h 30 : non débité |
+> | 🟠 `api/collect.ts` · hors `tsc` et hors tests | **−1** | premier fichier de `api/` (fonctions Vercel), créé le 2026-10-18 et exécuté en production. `tsconfig.app.json` n'inclut que `src`, `tsconfig.node.json` que `vite.config.ts` : `tsc -b` ne le compile pas. `vitest.config.ts` ne ramasse que `src/**`, `scripts/**` et `eslint-rules/**` : un test posé à côté ne tournerait jamais. Ses trois défenses (même origine, 2 Ko, robots) n'ont aucun test, seul ESLint le lit. Et la chaîne complète n'a jamais été vue écrire : `traffic_hits` vaut **0** ligne en production ~19 h après le branchement, la preuve `222` ne joue que la RPC |
+> | Planifiés | 0 | `Posture` rouge depuis 09:29 UTC : la garde a parlé, son objet est débité dans [`../faille.md`](../faille.md) (`TR-1`). Verts le 10-18 : `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest` (nouveau, `d9f10f4a`). `Sabotages` vert le 10-16. `restore-drill` : `dump-check` vert le 10-15, `drill` refusé faute de confirmation, comme prévu. `Weekly digest` pas encore joué (premier passage le 2026-10-19 à 7 h UTC). `vendor-watch.yml` retiré avec son fournisseur (`23a12fdb`) |
+>
+> **97 → 96.**
+
+> ### 🟢 2026-10-16 · +5 : `main` entièrement vert, et les deux instruments éteints rallumés
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab` (run `38902071817`, **les cinq jobs verts**), dépôt à `HEAD`
+> rejoué étape par étape dans un worktree propre, `npm ci` compris. Tableau de bord :
+> [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `main` rouge depuis le 2026-10-12 (−2 le 10-15) | **+2** | premier `CI` vert sur les cinq jobs le 2026-10-16 (`38870561074`, `89ddecb9`), puis à `HEAD` (`38902071817`) : `e2e` **254 verts, 3 instables, 0 échec**, en 22 min. En local à `HEAD`, les 23 étapes de `lint-test-build` sont vertes ; la suite unitaire rend **341 fichiers, 3 837 tests** verts (deux fichiers dont le worker n'avait pas démarré sous la charge, rejoués seuls : 46 / 46) |
+> | ✅ `org-guide.spec` rouge à chaque run (−1) | **+1** | `000cdcad` ; vert en CI depuis |
+> | ✅ `restore-drill` désactivé, `dump-check` jamais joué (−1) | **+1** | réactivé le 2026-10-15 ; `dump-check` **vert sur le dump chiffré** (run `38787097174`), le job `drill` arrêté à ses gardes comme voulu. Trois trous de `dump-check` corrigés en route (`d65420ef`), dont un faux `.gpg` en clair accepté comme déchiffré |
+> | ✅ AM-1 · 11 témoins rejoués sur 55 (« +1 et non +2 » le 10-01) | **+1** | `check:sabotages` étendu : **221 sabotages sur 55 gardes, 203 / 210 témoins rejoués (96,7 %)**, dans une copie temporaire ; `Sabotages` vert sur `main` (`66a8505c`). Deux témoins trop faibles trouvés et renforcés par le rejeu (`b8f0a435`) |
+> | Toutes les gardes jouées après un premier rouge | 0 | `10ba32f5`, avec témoin : le défaut qui a masqué dix rouges le 2026-10-12 ne peut plus se reproduire. Vu en vrai dès le 2026-10-16 : les runs `38873301698` et `38875691233` n'avaient qu'un rouge (`check:docs-scored`), et les 3 834 tests ont joué derrière lui. Prévention : rien à rembourser |
+> | Instables | 0 | 3 à `HEAD` (`touch-targets` et réglages sous WebKit). À suivre, non débités |
+>
+> **92 → 97.** ⚠️ Le run de `main` reste annulé à chaque poussée voisine : le 2026-10-16, plusieurs
+> sessions ont dû passer par une PR brouillon (n° 71, 72, 74, 76) pour obtenir un verdict `e2e`.
+>
+> ✅ **2026-10-16 (soir) · corrigé, les runs de `main` ne s'annulent plus** (`eb6ee7ba`) : un groupe de
+> concurrence par commit sur `main`, l'annulation gardée sur les PR. Avant : **108** runs `CI` de `main`
+> annulés sur **141** du 10-09 au 10-16. Vu sur deux pushs successifs : `38915680173` (`eb6ee7ba`, 33 min,
+> vert) et `38941369233` (`4e6f4293`, 26 min, vert), aucun annulé. Coût : **0** minute facturée (dépôt public) ;
+> pic rejoué sur l'historique, **6** runs et **16** jobs simultanés, **28** si `e2e` retombe à 4,3 h (en
+> file, sans annulation). `ci-alert.yml` tait désormais un rouge fini après le vert qui l'a réparé
+> (`scripts/ci-alert-perime.mjs`, push sur `main` de ce dépôt seulement). Témoins : « concurrency » dans
+> `ci-toutes-les-gardes.guard.test.mjs`, `ci-alert-perime.guard.test.mjs` ; sabotages `ci-main-annule`,
+> `perime-*`, `ci-alert-webhook-sourd` rejoués rouges.
+
+> ### 🟠 2026-10-15 · −4 : `main` rouge depuis trois jours, et le rouge de tête en cache dix autres
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`
+> (run `38476034238`), production, et dépôt à `HEAD` **rejoué étape par étape** dans un worktree
+> propre. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | 🔴 `main` rouge depuis le 2026-10-12 | **−2** | dernier `CI` vert : `9f6595b5` (2026-10-11, run `38151250177`). Depuis `93fac9aa` (10-12), `lint-test-build` s'arrête à l'**étape 2 sur 23**, `check:docs` (`src/modules/organizations/CLAUDE.md`, 15 378 o pour 14 000, entré avec `a6562733`) : **21 étapes jamais jouées en CI**, tests, build et budget compris. Rejouées en local à `HEAD` : `check:erasure`, `check:portability`, **sept gardes unitaires** et le budget de bundle sont rouges, chacun débité dans son domaine |
+> | Tests unitaires à `HEAD` | 0 | **3 762 tests, 338 fichiers** (3 395 et 306 le 10-03). Sous la charge : **13 échecs dans 12 fichiers**, exit 1. Six fichiers rejoués seuls, machine libre : **69 / 69 verts**, c'étaient des délais de 20 s dépassés (règle n° 1 du `CLAUDE.md` racine : le code de sortie, puis le décompte, puis l'attribution). Restent sept gardes, cf. tableau de bord. Couverture de l'outillage verte |
+> | 🔴 `e2e` · `org-guide.spec.ts` | **−1** | rouge à **chaque** run depuis le 2026-10-13, trois tentatives de 2 min : le test clique « Créer une équipe » dans le tiroir du guide, dont les catégories sont repliées depuis `c7051e19`. Test posé le 10-12 (`eb443737`), jamais vert depuis la refonte du tiroir. Le reste : **239 verts, 2 instables** (WebKit), en 39 min |
+> | 🔴 `restore-drill.yml` **désactivé à la main depuis le 2026-09-01** | **−1** | `C-86` (2026-09-20) l'avait coupé en deux, dont un `dump-check` **trimestriel et automatique**. Un workflow désactivé n'exécute pas son `schedule` : le premier passage, le 2026-10-05, n'a pas eu lieu, et `gh run list --workflow restore-drill` répond « could not find any workflows ». Depuis `BK-1` (10-13), le dump est chiffré : ce workflow est le seul qui le **déchiffre** pour le restaurer, et il n'a jamais tourné sous cette forme. Une garde qu'on ne peut voir ni rouge ni verte |
+> | `Visual` rouge depuis le 2026-10-12 | 0 | 4 cas sur 20, débité dans [`UI-PATTERNS.md`](./UI-PATTERNS.md) |
+> | CodeQL rouge du 10-13 au 10-14 | 0 | dépôt privé pendant l'épisode : pas un défaut de test (cf. [`../faille.md`](../faille.md)) |
+> | `Sabotages` (10-12), `Posture`, `Edge deploy drift`, `Migration coverage`, `Uptime`, `Deploy SHA drift` | 0 | verts |
+>
+> **96 → 92.** 🔴 **La leçon, et elle est outillable** : un job qui s'arrête au premier rouge ne
+> mesure que le premier rouge. Faire tourner toutes les étapes de garde (`if: ${{ !cancelled() }}`
+> sur chacune, puis une étape finale qui échoue si l'une a échoué) aurait montré les dix rouges le
+> jour même, au lieu de trois jours de silence.
 
 > ### 🟢 2026-10-03 · +3 : `main` entièrement vert en CI, `e2e` compris
 >
@@ -180,7 +259,7 @@
 
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Les 39 témoins ne sont jamais rejoués** (« 36 » le 2026-09-16, **recomptés le 2026-09-20** : trois de plus en quatre jours, et aucun n'est rejoué davantage). Ce dépôt a une culture du témoin remarquable : chaque garde arrive avec un fichier `*.guard.test.*` **vu rouge sur des sabotages**. Mais ce sabotage est **manuel et unique**, joué le jour de sa création. Rien ne vérifie qu'un témoin détecte **encore** | `git ls-files` rend **39** fichiers `*.guard.test.{ts,tsx,mjs}` au 2026-09-20 (36 le 09-16). **Aucun mutation testing** : ni `stryker`, ni équivalent, dans `package.json` ni dans un workflow | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:sabotages` (`C-81`) — 🔴 ne prouve PAS : que les **39** témoins détectent ; le rapport couvert / total est imprimé exprès. À sa 1ʳᵉ exécution : `monitoring.guard.test.ts` ne détectait **plus rien** · 🔎 🔴 **2026-09-22 : job rouge**, 1 seul run (09-21) : les 11 sabotages vus, mais échec sur le contrôle « arbre restauré » (`sabotages.log` écrit dans l'arbre). Couverture **9 témoins sur 47**. → `C-113` · 🔎 ✅ **2026-09-24 : premier run VERT** (`35967766181`, lancé à la main), journal déplacé dans `$RUNNER_TEMP`. Les 11 sabotages vus, arbre intact. La couverture reste **9 témoins sur 47** |
+| AM-1 | 🔴 **Les 39 témoins ne sont jamais rejoués** (« 36 » le 2026-09-16, **recomptés le 2026-09-20** : trois de plus en quatre jours, et aucun n'est rejoué davantage). Ce dépôt a une culture du témoin remarquable : chaque garde arrive avec un fichier `*.guard.test.*` **vu rouge sur des sabotages**. Mais ce sabotage est **manuel et unique**, joué le jour de sa création. Rien ne vérifie qu'un témoin détecte **encore** | `git ls-files` rend **39** fichiers `*.guard.test.{ts,tsx,mjs}` au 2026-09-20 (36 le 09-16). **Aucun mutation testing** : ni `stryker`, ni équivalent, dans `package.json` ni dans un workflow | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:sabotages` (`C-81`) — 🔴 ne prouve PAS : que les **39** témoins détectent ; le rapport couvert / total est imprimé exprès. À sa 1ʳᵉ exécution : `monitoring.guard.test.ts` ne détectait **plus rien** · 🔎 🔴 **2026-09-22 : job rouge**, 1 seul run (09-21) : les 11 sabotages vus, mais échec sur le contrôle « arbre restauré » (`sabotages.log` écrit dans l'arbre). Couverture **9 témoins sur 47**. → `C-113` · 🔎 ✅ **2026-09-24 : premier run VERT** (`35967766181`, lancé à la main), journal déplacé dans `$RUNNER_TEMP`. Les 11 sabotages vus, arbre intact. La couverture reste **9 témoins sur 47** · 🔎 ✅ **2026-10-15 : rejeu ÉTENDU, et dans une COPIE.** `check:sabotages` recompte les témoins à chaque run par l'AST (cas dont le titre, ou celui d'un `describe` porteur, a la marque `TÉMOIN`) : **210 témoins dans 47 fichiers**, 79 par leur propre nom. **203 / 210 rejoués (96,7 %)**, vus ROUGES par leur nom sous un sabotage et verts sans lui, dont **73 / 79** parmi les nommés ; **221 sabotages sur 55 gardes**, dont `check:rls`, `validate:migrations`, `check:erasure`, `check:portability`, `check:retention` (production simulée, aucun appel réseau), architecture, bundle et i18n. Plus aucune écriture dans l'arbre de travail : copie temporaire, `node_modules` par lien retiré avant tout effacement, 3 copies en parallèle. Le premier rejeu a trouvé **trois témoins qui ne voyaient pas leur défaut** (découpage de hash de `check-bundle-budget`, commentaires de `check-import-cycles`, marque `TÉMOIN` du compteur), renforcés le jour même. Run `Sabotages` `38810356599` **vert** (175 s). Les 7 non rejoués sont nommés à chaque run : aucun sabotage réaliste ne les fait rougir |
 | AM-2 | **La couverture ne porte que sur `src/**`.** En sont donc absents : `scripts/**` (les gardes elles-mêmes, c'est-à-dire le code qui décide si la CI est verte) et `supabase/functions/**` (le code qui déplace de l'argent) | `vitest.config.ts` : `include: ['src/**/*.{ts,tsx}']`. Les seuils par fichier ne visent que `src/` | ✅ **OUTILLÉ le 2026-09-20** · `npm run test:coverage:tooling` · `check:edge-coverage` (`C-82`) — 🔴 ne prouve PAS : `supabase/functions/**` en lignes — impossible (Deno, jamais importé) ; le plancher de témoins en tient lieu. 1ʳᵉ exécution : **3 scripts** sortaient du rapport en silence, à cause de leur shebang |
 | AM-3 | **Un taux de couverture ne dit rien de la force des assertions.** Une ligne exécutée par un test qui n'assure rien compte comme couverte | par construction de la couverture v8 | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte**, et c'est le dernier trou de ce tableau. `C-81` rejoue des témoins, ce qui n'est PAS du test de mutation : un témoin prouve qu'une garde mord, pas qu'une assertion est forte — *(jugé outillable le 09-16 : AM-1 y répond en partie : la mutation mesure ce que la couverture ne voit pas)* |
 | AM-4 | ✅ **COMBLÉ le 2026-09-16, vérifié le 2026-09-20.** Était : « les 105 cas `mobile-safari` ne tournent dans aucun workflow » (item `C-78`) | 🔴 **Périmé le jour même où il a été écrit** : `git show HEAD:.github/workflows/ci.yml` lance `--project=chromium --project=supabase-stub --project=mobile-safari` depuis `af0190bd`, 2026-09-16, et `e2e/_warmup-mobile.spec.ts` est suivi par git | ✅ **FERMÉ le 2026-09-16** · `C-78`, `af0190bd` — `mobile-safari` est joué en CI. 🔴 ne prouve PAS : ni appareil réel, ni Android, ni réseau bridé (`C-97`, `M-25`) |
@@ -1169,14 +1248,20 @@ mobile n'offre pas de menu de ligne équivalent. 🔴 **C'est un écart de produ
 pas un verdict de conformité mobile** — il est nommé dans `playwright.config.ts`
 plutôt que caché derrière un `skip` silencieux.
 
-🔴 **Depuis le 2026-09-23, `a11y-keyboard-audit` non plus** (`C-111`). Ses assertions encodent la
-navigation séquentielle de **Chromium** : point de départ de la tabulation après un lien
-d'évitement, entrée du focus dans une confirmation empilée. WebKit les implémente autrement :
-**11 cas rouges** en CI depuis que `mobile-safari` y tourne (2026-09-16), dont des cas à 1 280 px,
-donc sur l'interface de bureau. Et sur iPhone, Tab n'existe qu'avec « Accès complet au clavier »,
-que Playwright n'émule pas. Ses cas à 375 px restent joués sous `chromium`.
-❌ **Ce retrait ne dit PAS que Safari est accessible au clavier** : aucun audit clavier Safari
-n'existe, et une partie de ces 11 échecs peut être un vrai défaut. C'est `C-118`.
+✅ **Depuis le 2026-10-16, `a11y-keyboard-audit` JOUE sous WebKit** (`C-118`, fermé). Il en était
+exclu depuis le 2026-09-23 (11 cas rouges, aucun audit clavier Safari). Triage des cas rouges, un par un :
+**un défaut produit** (Safari n'émet aucun `contextmenu` au clavier : `Shift+F10` et la touche Menu
+n'arrivent qu'en `keydown`, donc la feuille d'actions d'une tâche était inatteignable au clavier sur la
+carte mobile, WCAG 2.1.1 ; corrigé dans `TaskCard`, 6 cas unitaires dont trois témoins) ; **un écart
+Safari déclaré** (Tab saute les liens par défaut, Option+Tab les parcourt ; Playwright ne sait pas
+l'émuler, le cas du lien d'évitement mesure donc les mêmes propriétés sans passer par Tab, après une
+sonde de capacité) ; **le reste du harnais** (le fichier s'exécutait à 390 px tactile alors que ses
+déclencheurs sont de bureau, `/tasks` lu avant son rendu, barre mobile non attendue après un
+redimensionnement, 2 s de fermeture trop courtes pour une modale animée sous WebKit).
+⚠️ Le fichier impose lui-même un poste de bureau (`test.use`) : c'est l'audit d'une personne au
+clavier, et c'est ce qui permet de le jouer dans l'unique project WebKit du job `e2e` sans toucher à
+`ci.yml`. ❌ Ne pas lire « 16 cas verts sous WebKit » comme « Safari est accessible au clavier » :
+Option+Tab, VoiceOver et l'accès complet au clavier d'iOS ne sont pas émulés.
 
 ⚠️ **Six autres specs supposaient le bureau, et ont été rendues adaptatives plutôt que retirées**
 (2026-09-23) : le bouton « Créer » de l'en-tête mobile (`demo-create-task`), un pourcentage OKR
@@ -1198,7 +1283,7 @@ sans E2E : `demo-entreprise-dependencies` (9), `demo-entreprise-tasks-tab` (5),
 | `stubbed/first-run.spec.ts` | 5 | `FirstRunSetup` : la garde s'ouvre sur un compte vide, **chaque étape écrit au moment où elle est validée** (mesuré sur les requêtes parties, pas sur un état React), la première tâche part sans échéance, l'accueil ne revient pas |
 | `demo-calendar.spec.ts` | 7 | Le calendrier COSMO sur ses **six** surfaces, plus `minDate` du report en masse et le focus au clavier dans la grille (défaut React 18 / `forwardRef`) |
 | `demo-task-dependencies.spec.ts` | 2 | Graphe **personnel** (mig. 132) : poser une arête et la relire, refuser un cycle **indirect à trois maillons**, ne jamais se proposer soi-même, retirer ; « Créer et lier » |
-| `demo-billing-disarmed.spec.ts` | 1 | Tant que `ENTERPRISE_BILLING_ENFORCED` est `false`, aucun CTA de paiement ni de remboursement n'est atteignable |
+| `demo-billing-consent.spec.ts` | 1 | Facturation armée depuis la bascule live (`5bf21a50`) : prix TTC affichés, et aucun « Choisir ce palier » tant que les DEUX cases de rétractation ne sont pas cochées (S-6, L221-28). S'appelait `demo-billing-disarmed` et vérifiait l'inverse jusqu'au 2026-10-22 |
 
 Les quatre premiers cas ont été **vus rouges avant d'être verts** : différer les
 créations de `FirstRunSetup` à la dernière étape fait tomber le premier ; le
@@ -1288,7 +1373,7 @@ npx playwright test e2e/a11y-audit.spec.ts --project=chromium
   développement, ils n'ont donc pas pu être posés « au réel mesuré » comme tous les autres budgets
   du dépôt. **À resserrer après le premier run réel**, un budget très au-dessus du réel ne mesure
   rien.
-- `concurrency` annule les runs obsolètes, `permissions: contents:read`. Dépendances : `.github/dependabot.yml`.
+- `concurrency` : sur une PR, le push suivant annule le run en cours ; sur `main`, un groupe par commit, aucun run annulé (2026-10-16). `permissions: contents:read`. Dépendances : `.github/dependabot.yml`.
 
 ### `edge-deploy-drift.yml` · le code déployé contre le dépôt *(ajouté le 2026-09-04, finding C-35)*
 

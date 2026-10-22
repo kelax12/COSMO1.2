@@ -29,16 +29,20 @@ export const tasksTutorialStepsMobile: TutorialStep[] = [
     action: 'pulse',
   },
   {
+    // Maquette 140 : le mini-calendrier est rangé dans « Affichage ».
     titleKey: 'tasksMobile.step4Title',
     descriptionKey: 'tasksMobile.step4Desc',
-    target: '[data-tutorial-id="tasks-calendar-toggle"]',
+    target: '[data-tutorial-id="tasks-display"]',
     cardPlacement: 'bottom',
     action: 'pulse',
   },
   {
+    // Maquette 150 (2026-10-10) : le « + » de /tasks a quitté le FAB global
+    // pour la barre du bas. Viser l'ancien FAB aurait enseigné un bouton
+    // absent, l'erreur déjà commise deux fois sur ce tutoriel.
     titleKey: 'tasksMobile.step5Title',
     descriptionKey: 'tasksMobile.step5Desc',
-    target: '[data-tutorial-id="global-quick-add-fab"]',
+    target: '[data-tutorial-id="tasks-create"]',
     cardPlacement: 'top',
     action: 'pulse',
   },

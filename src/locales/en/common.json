@@ -1,4 +1,5 @@
 {
+  "noCategory": "No category",
   "listActions": {
     "removeDefault": "Remove from favorites",
     "setDefault": "Pin by default"
@@ -10,6 +11,9 @@
     "reloadNotice": "The page reloads to apply the language everywhere, including dates and number formats."
   },
   "nav": {
+    "demoCreateAccount": "Demo mode · create an account",
+    "objectivesAria": "Objectives (OKR)",
+    "objectives": "Objectives",
     "dashboard": "Home",
     "tasks": "Tasks",
     "agenda": "Calendar",
@@ -20,6 +24,7 @@
     "premium": "Premium",
     "settings": "Settings",
     "admin": "Admin",
+    "persoGuide": "Open the guide",
     "more": "More",
     "moreOptions": "More options",
     "sectionOther": "OTHER",
@@ -75,7 +80,7 @@
     "confirm": "Done",
     "close": "Close",
     "duplicate": "Duplicate",
-    "changeColor": "Change colour",
+    "changeColor": "Change color",
     "newList": "New list",
     "createCategory": "Create a category",
     "undo": "Undo",
@@ -83,10 +88,15 @@
     "refuse": "Decline"
   },
   "auth": {
+    "legalConsentTermsShort": "terms",
+    "legalConsentShort": "By creating an account, you accept the {{terms}} and have read the {{privacy}}.",
+    "legalConsentLogin": "New to Cosmo? Continuing with Google creates your account: you then accept the {{terms}} and acknowledge that you have read the {{privacy}}.",
+    "createAccountTitle": "Create an account",
+    "signInTitle": "Sign in",
     "modalAria": "Sign in or sign up",
     "loginSubtitle": "Sign in to your account",
     "registerSubtitle": "Create your free account",
-    "orEmail": "or continue with an email",
+    "orEmail": "or continue with email",
     "accountBusiness": "Company",
     "accountBusinessDesc": "Team & collaboration",
     "forgotPassword": "Forgot your password?",
@@ -162,9 +172,9 @@
     "banner": "Cookie banner",
     "title": "Cookies",
     "noTracking": "No advertising, no profiling",
-    "body": "Cosmo measures traffic on its public pages. If you accept, a random identifier is stored on your device to link the pages of a single visit.",
-    "ifYouRefuse": "If you decline, only what is strictly necessary for the service is used (session, preferences).",
-    "learnMore": "Learn more",
+    "body": "Cosmo measures traffic on its public pages and where its sign-ups come from. If you accept, a random identifier is stored on your device to link the pages of a single visit, and the channel that brought you here (campaign link, demo) is attached to your account if you create one.",
+    "ifYouRefuse": "If you decline, none of this is stored or sent: only what is strictly necessary for the service is used (session, preferences).",
+    "learnMore": "Read our privacy policy",
     "decline": "Decline",
     "accept": "Accept",
     "manage": "Manage cookies"
@@ -175,7 +185,7 @@
     "aria": "Current theme: {{name}}. Click to change.",
     "light": "Light",
     "dark": "Dark",
-    "grey": "Grey",
+    "grey": "Gray",
     "black": "Black"
   },
   "errorBoundary": {
@@ -199,6 +209,7 @@
     "hide": "Hide the demo banner"
   },
   "demoBridge": {
+    "short": "Demo: nothing is kept",
     "aria": "Create a COSMO account",
     "title": "Keep your setup",
     "text": "You've just built yourself a real system. Create your account to have it on every device, it's free.",
@@ -237,6 +248,7 @@
   },
   "tutorial": {
     "skip": "Skip the tutorial",
+    "skipShort": "Skip",
     "done": "Done",
     "next": "Next",
     "previous": "← Previous"
@@ -264,7 +276,7 @@
     "dismiss": "Later"
   },
   "colorLegend": {
-    "edit": "Edit the colour legend"
+    "edit": "Edit the color legend"
   },
   "loadingLabel": {
     "tasks": "Loading tasks",
