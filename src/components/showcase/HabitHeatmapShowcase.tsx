@@ -3,6 +3,7 @@ import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-re
 import { motion } from 'framer-motion';
 import { formatDate } from '@/i18n/format';
 import { useShowcasePalette } from './showcase-theme';
+import { useT } from '@/i18n/useT';
 
 // ─── Static demo data (Habit Table replication) ─────────────────────
 type Habit = {
@@ -165,6 +166,7 @@ const HabitTableShowcase: React.FC = () => {
   // Jetons de surface : sombres par défaut, clairs sous `<ShowcaseTheme
   // theme="light">` (cf. `showcase-theme.ts`).
   const P = useShowcasePalette();
+  const { t } = useT('common');
   const surface = P.surface;
   const hoverBg = P.hairlineSoft;
   const border = P.hairline;
@@ -240,8 +242,9 @@ const HabitTableShowcase: React.FC = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
+      {/* Table : défile en largeur sur téléphone, donc focalisable pour défiler
+          au clavier (axe `scrollable-region-focusable`, 2026-10-22). */}
+      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={t('showcase.habitsTable')}>
         <table className="w-full border-collapse">
           <thead className="border-b" style={{ borderColor: border }}>
             <tr>

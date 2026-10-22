@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Edit2, Trash2, Calendar, CheckCircle, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useShowcasePalette } from './showcase-theme';
+import { useShowcasePalette, useShowcaseTheme } from './showcase-theme';
 
 // ─── Real OKR-style data ────────────────────────────────────────────
 type KR = {
@@ -63,6 +63,7 @@ const fmtDate = (iso: string) => {
 
 const OKRCardShowcase: React.FC = () => {
   const P = useShowcasePalette();
+  const isLight = useShowcaseTheme() === 'light';
   const [phaseIdx, setPhaseIdx] = useState(0);
 
   useEffect(() => {
@@ -110,7 +111,9 @@ const OKRCardShowcase: React.FC = () => {
   }
   const healthBg = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.1)`;
   const healthBorder = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.2)`;
-  const healthText = `hsl(${hue}, ${saturation}%, ${lightness - 5}%)`;
+  // Texte de santé : 28 % de luminosité en clair, 62 % en sombre. À 40 %, il
+  // rendait 2,4:1 sur sa pastille claire et 4,3:1 en gris (Lighthouse, 2026-10-22).
+  const healthText = `hsl(${hue}, ${saturation}%, ${isLight ? 28 : 62}%)`;
 
   const doneMins = krs.reduce(
     (sum, kr) => sum + Math.round(kr.currentValue * kr.estimatedTime),
@@ -220,8 +223,11 @@ const OKRCardShowcase: React.FC = () => {
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.span
                 key={progress}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
+                // Glissement sans fondu : le compteur change sans cesse, chaque
+                // valeur repartait d'une opacité nulle et passait la plupart du
+                // temps sous 4,5:1 (Lighthouse, 2026-10-22). Idem plus bas.
+                initial={{ y: 4 }}
+                animate={{ y: 0 }}
                 transition={{ duration: 0.3 }}
                 className="text-xl font-bold text-white sc-ink"
               >
@@ -309,8 +315,8 @@ const OKRCardShowcase: React.FC = () => {
                     >
                       <motion.span
                         key={kr.currentValue}
-                        initial={{ opacity: 0, y: -3 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={{ y: -3 }}
+                        animate={{ y: 0 }}
                         transition={{ duration: 0.25 }}
                       >
                         {kr.currentValue}
