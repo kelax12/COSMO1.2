@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
-import { AnimatePresence, MotionConfig, motion, type PanInfo } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion, type PanInfo } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, LayoutGrid, LayoutTemplate, Pencil, Plus, RotateCcw, Undo2, X } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import {
@@ -51,16 +51,24 @@ const SWAP_COOLDOWN_MS = 140;
  * on déplace, un bloc retiré s'évanouit (avec « Annuler »), un bloc ajouté
  * arrive en rebondissant puis s'illumine.
  *
- * ⚠️ `MotionConfig reducedMotion="never"` : ces mouvements ne jouent QUE dans le
- * mode édition, qu'on ouvre soi-même et qu'on referme d'un clic (même
- * arbitrage que `GuideCursor`). Hors édition, rien ne bouge. Aucune position
- * finale ne dépend d'une animation : la grille CSS place, l'animation suit.
+ * 🔴 Mouvement réduit (WCAG 2.3.3) : ce composant suit le `MotionConfig
+ * reducedMotion="user"` d'`App.tsx`. Il a porté un `reducedMotion="never"`
+ * (2026-10-19 à 2026-10-22, « mode ouvert par la personne ») qui faisait
+ * vibrer les blocs EN BOUCLE chez qui demande moins d'animation. ❌ Ne pas le
+ * remettre : `e2e/reduced-motion-widgets.spec.ts` échoue s'il revient.
+ * Sous mouvement réduit, Framer rend instantanés `layout` et les transforms
+ * (`{ type: false }`) : les blocs SAUTENT à leur place, le glisser marche
+ * toujours (le geste n'est pas une animation). Ce que `type: false` ne règle
+ * pas est coupé à la main via `reduce` : la vibration (une boucle instantanée
+ * laisserait un `rotate` résiduel), le défilement doux. Aucune position finale
+ * ne dépend d'une animation : la grille CSS place, l'animation suit.
  *
  * ⚠️ Un geste n'est jamais le seul chemin (WCAG 2.1.1) : flèches et choix de
  * format restent au clavier. En édition, le contenu des widgets est `inert`.
  */
 const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, renderWidget, roleTemplate, catalog }: ApercuWidgetGridProps<Id>) => {
   const { t } = useT('orgAdmin');
+  const reduce = useReducedMotion() ?? false;
   type Placed = PlacedOf<Id>;
   const cat: WidgetCatalog<Id> = catalog ?? ({
     defs: WIDGET_DEFS,
@@ -121,10 +129,10 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
   useEffect(() => {
     if (!highlight?.entering) return;
     const timer = window.setTimeout(() => {
-      document.querySelector(`[data-widget="${highlight.id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.querySelector(`[data-widget="${highlight.id}"]`)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
     }, 120);
     return () => window.clearTimeout(timer);
-  }, [highlight]);
+  }, [highlight, reduce]);
 
   const remove = (id: Id) => {
     const index = layout.findIndex((w) => w.id === id);
@@ -168,7 +176,6 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
   const toolbarButton = 'min-h-touch inline-flex items-center gap-1.5 px-3.5 rounded-xl text-sm font-semibold';
 
   return (
-    <MotionConfig reducedMotion="never">
       <section aria-label={t('apercu.widgets.regionLabel')} className="space-y-4">
         <div className="flex flex-wrap items-center justify-end gap-2 min-h-touch">
           <AnimatePresence mode="popLayout" initial={false}>
@@ -367,13 +374,15 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                     style={{ zIndex: isDragged ? 40 : undefined, touchAction: editing ? 'none' : undefined }}
                     className={`relative min-w-0 rounded-2xl ${SIZE_SPAN_CLASS[w.size]} ${editing ? (isDragged ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
                   >
-                    {/* La vibration : rotation seule, rythme décalé d'un bloc à l'autre. */}
+                    {/* La vibration : rotation seule, rythme décalé d'un bloc à l'autre.
+                        Coupée sous mouvement réduit : la croix et les flèches
+                        disent déjà qu'on est en édition. */}
                     <motion.div
                       className="h-full"
-                      animate={editing && !isDragged
+                      animate={editing && !isDragged && !reduce
                         ? { rotate: [-0.45, 0.45, -0.45], scale: 0.98 }
                         : { rotate: 0, scale: 1 }}
-                      transition={editing && !isDragged
+                      transition={editing && !isDragged && !reduce
                         ? {
                           rotate: { duration: 0.42 + (index % 3) * 0.04, repeat: Infinity, ease: 'easeInOut', delay: (index % 4) * 0.06 },
                           scale: SPRING,
@@ -555,7 +564,6 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
           )}
         </AnimatePresence>
       </section>
-    </MotionConfig>
   );
 };
 
