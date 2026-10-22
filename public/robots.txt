@@ -1,16 +1,5 @@
 User-agent: *
 Allow: /
-Allow: /guide
-Allow: /blog
-Allow: /a-propos
-Allow: /pour-freelances
-Allow: /pour-etudiants
-Allow: /pour-managers
-Allow: /login
-Allow: /signup
-Allow: /cgu
-Allow: /mentions-legales
-Allow: /politique-confidentialite
 Disallow: /dashboard
 Disallow: /tasks
 Disallow: /agenda
@@ -19,11 +8,48 @@ Disallow: /okr
 Disallow: /statistics
 Disallow: /settings
 Disallow: /premium
-Disallow: /entreprise
+Disallow: /entreprise$
+Disallow: /entreprise/
 Disallow: /admin
+
+# Mêmes routes sous le préfixe de locale anglais. `Disallow:` est un préfixe :
+# `/dashboard` ne couvre PAS `/en/dashboard`. Tant que `en` n'était pas
+# indexable, le `X-Robots-Tag: noindex` posé par vercel.json sur `/en/(.*)`
+# les bouchait toutes ; ouvrir `en` à l'indexation (C-20) retire ce filet, et
+# il faut donc les nommer ici.
+Disallow: /en/dashboard
+Disallow: /en/tasks
+Disallow: /en/agenda
+Disallow: /en/habits
+Disallow: /en/okr
+Disallow: /en/statistics
+Disallow: /en/settings
+Disallow: /en/premium
+Disallow: /en/entreprise$
+Disallow: /en/entreprise/
+Disallow: /en/admin
+
+# ⚠️ `/entreprise` porte un `$` (fin d'URL) et une seconde règle pour son
+# sous-arbre, au lieu du préfixe nu `/entreprise`. `Disallow:` matche par
+# PRÉFIXE : `/entreprise` bloquait donc aussi `/entreprise-presentation`, la
+# page publique qui porte l'offre payante, prérendue et déclarée au sitemap en
+# priorité 0.9. On interdisait au crawl une page qu'on veut voir classée, soit
+# l'inverse exact de la contradiction que ce fichier documente plus bas.
+# Corrigé le 2026-09-08, après avoir mesuré les 40 URLs du sitemap contre les
+# 20 règles : c'était la seule collision.
+# ❌ Ne jamais réécrire ces lignes en préfixe nu : le slug public et la route
+# applicative partagent leurs onze premiers caractères.
+# (Le slug anglais est `for-companies`, il n'a jamais eu le problème ; les
+#  deux règles `/en/entreprise` gardent la même forme par cohérence.)
+
+# Les `Allow:` explicites par page ont été retirés le 2026-08-12 : `Allow: /`
+# les rendait tous redondants, et la liste devait être tenue à jour à chaque
+# nouvelle page publique — une source d'oubli silencieux.
 
 # /invite/ et /org-invite/ ne sont volontairement PAS bloqués ici :
 # ils sont désindexés via le header X-Robots-Tag (vercel.json), que Google
-# ne pourrait pas voir si le crawl était interdit.
+# ne pourrait pas voir si le crawl était interdit. Même raison pour les pages
+# légales (/cgu, /mentions-legales, /politique-confidentialite) : noindex par
+# header, crawl autorisé.
 
 Sitemap: https://thecosmo.app/sitemap.xml

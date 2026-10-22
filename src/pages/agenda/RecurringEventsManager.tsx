@@ -5,6 +5,7 @@ import { X as CloseIcon, Pencil, Trash2 } from 'lucide-react';
 import { useUpdateEvent, type CalendarEvent } from '@/modules/events';
 import { formatDate, formatTime } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface RecurringEventsManagerProps {
   isOpen: boolean;
@@ -21,12 +22,23 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({
   setSelectedEvent, setSelectedInstanceDate, setShowEditEventModal,
 }) => {
   const { t } = useT('agenda');
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    // Cette surface ne recoit pas de `onClose` : elle pilote directement
+    // l etat du parent, exactement comme son bouton de fermeture.
+    onClose: () => setShowRecurringManager(false),
+    label: t('recurrence.title'),
+  });
   return (
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setShowRecurringManager(false)}
+            ref={modalA11yRef}
+            {...modalA11yProps}
             className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
           >
             <motion.div

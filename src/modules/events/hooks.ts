@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getEventsRepository } from '@/lib/repository.factory';
 import type { CalendarEvent, CreateEventInput, UpdateEventInput } from './types';
 import { eventsKeys } from './constants';
 import { translator } from '@/i18n/useT';
+import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
+import { reportRestoreFailure, splitRestore } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -47,24 +49,6 @@ export const useEventsWindow = (startISO: string | null, endISO: string | null) 
   });
 };
 
-export const useEvent = (id: string) => {
-  const repository = useEventsRepository();
-  return useQuery({
-    queryKey: eventsKeys.detail(id),
-    queryFn: () => repository.getById(id),
-    enabled: !!id,
-  });
-};
-
-export const useEventsByTask = (taskId: string) => {
-  const repository = useEventsRepository();
-  return useQuery({
-    queryKey: eventsKeys.byTask(taskId),
-    queryFn: () => repository.getByTaskId(taskId),
-    enabled: !!taskId,
-  });
-};
-
 // ═══════════════════════════════════════════════════════════════════
 // MUTATION HOOKS
 // ═══════════════════════════════════════════════════════════════════
@@ -76,6 +60,8 @@ export const useCreateEvent = () => {
   return useMutation({
     mutationFn: (input: CreateEventInput) => repository.create(input),
     onSuccess: (newEvent) => {
+      // Engagement démo (src/lib/demo-engagement.ts) : no-op hors démo.
+      recordDemoCreationIfDemo();
       // Ajoute aux caches list-like (cache complet + toutes les fenêtres).
       queryClient.setQueriesData<CalendarEvent[]>(
         { queryKey: eventsKeys.lists() },
@@ -264,24 +250,20 @@ export const useDeleteMemberEvent = (userId: string) => {
 // DERIVED HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
-export const useEventsByDate = (date: string) => {
-  const { data: events = [] } = useEvents();
-  return useMemo(
-    () => events.filter((e) => e.start.startsWith(date)),
-    [events, date]
-  );
-};
-
 export const useUpcomingEvents = (limit = 5) => {
   const { data: events = [] } = useEvents();
-  const now = new Date().toISOString();
   return useMemo(
-    () =>
-      events
+    () => {
+      // `now` est calculé DANS le mémo. Le lire au corps du hook produisait une
+      // valeur neuve à chaque rendu, mise en dépendance : le mémo n'était
+      // jamais réutilisé et l'on retriait toute la liste à chaque frame.
+      const now = new Date().toISOString();
+      return events
         .filter((e) => e.start >= now)
         .sort((a, b) => a.start.localeCompare(b.start))
-        .slice(0, limit),
-    [events, now, limit]
+        .slice(0, limit);
+    },
+    [events, limit]
   );
 };
 
@@ -291,3 +273,110 @@ export const useUpcomingEvents = (limit = 5) => {
 
 export type { CalendarEvent, CreateEventInput, UpdateEventInput } from './types';
 export { eventsKeys } from './constants';
+
+// ═══════════════════════════════════════════════════════════════════
+// RESTAURATION (« Annuler ») — recree l'objet sous SON identifiant
+// ═══════════════════════════════════════════════════════════════════
+//
+// Separe de `useCreateEvent` a dessein : l'identifiant passe par le second
+// argument de `create()`, hors du payload, donc hors de portee d'un objet de
+// formulaire enrichi depuis les devtools. Contrat complet et raison de ce
+// decoupage : `src/lib/restore-id.ts` (R-08).
+//
+// ⚠️ N'appeler QUE depuis un toast d'annulation.
+export const useRestoreEvent = () => {
+  const queryClient = useQueryClient();
+  const repository = useEventsRepository();
+
+  return useMutation({
+    mutationFn: (snapshot: CalendarEvent) => {
+      const { payload, options } = splitRestore(snapshot);
+      return repository.create(payload as CreateEventInput, options);
+    },
+    onSuccess: () => {
+      invalidateAllEventQueries(queryClient);
+      queryClient.invalidateQueries({ queryKey: eventsKeys.all });
+    },
+    // Un « Annuler » rate doit se VOIR : `console.error` est supprime du
+    // bundle de production (vite.config.ts), l'echec etait donc muet.
+    onError: (error: Error) => reportRestoreFailure('event', error),
+  });
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// ÉVÉNEMENTS D'ÉQUIPE (reco UI n° 30)
+// ═══════════════════════════════════════════════════════════════════
+//
+// Il n'y a PAS de table d'événements partagés : un événement d'équipe est
+// UNE ligne par participant, posée dans son agenda. La RLS (mig. 128) ne
+// permet d'écrire que dans le sien et dans celui des personnes qu'on encadre :
+// c'est donc elle qui borne la liste des participants, pas l'écran.
+
+/**
+ * Agendas de plusieurs personnes sur une fenêtre, pour chercher un créneau
+ * commun. `selfId` lit son propre agenda par `getWindow` (le magasin démo
+ * range l'agenda perso ailleurs que celui des membres).
+ */
+export const useGroupEventsWindow = (
+  userIds: string[],
+  selfId: string | undefined,
+  startISO: string,
+  endISO: string,
+) => {
+  const repository = useEventsRepository();
+  // UNE requête pour tout le groupe, pas `useQueries` : ce dernier tire
+  // `QueriesObserver` dans le lot `vendor-query` partagé par toute l'app
+  // (+3 ko bruts mesurés le 2026-09-29), pour un seul écran qui s'en sert.
+  const ids = [...userIds].sort();
+  const query = useQuery({
+    queryKey: [...eventsKeys.all, 'group', ids.join(','), startISO, endISO] as const,
+    queryFn: async () => {
+      const results = await Promise.allSettled(ids.map((uid) => (uid === selfId
+        ? repository.getWindow(startISO, endISO)
+        : repository.getWindowForUser(uid, startISO, endISO))));
+      return {
+        eventsByUser: results.map((r) => (r.status === 'fulfilled' ? r.value : [])),
+        failed: results.filter((r) => r.status === 'rejected').length,
+      };
+    },
+    enabled: ids.length > 0,
+    placeholderData: keepPreviousData,
+  });
+  return {
+    eventsByUser: query.data?.eventsByUser ?? [],
+    isLoading: query.isLoading,
+    failed: query.data?.failed ?? 0,
+  };
+};
+
+export interface GroupEventResult { created: number; failed: number }
+
+/**
+ * Crée le même événement dans l'agenda de chaque participant. `allSettled` :
+ * un refus sur une personne (sortie de l'organisation entre-temps) ne doit
+ * pas priver les autres de leur invitation. Le compte rendu dit combien.
+ */
+export const useCreateGroupEvent = () => {
+  const queryClient = useQueryClient();
+  const repository = useEventsRepository();
+  return useMutation({
+    mutationFn: async ({ userIds, selfId, input }: { userIds: string[]; selfId?: string; input: CreateEventInput }): Promise<GroupEventResult> => {
+      const results = await Promise.allSettled(
+        userIds.map((uid) => (uid === selfId ? repository.create(input) : repository.createForUser(uid, input))),
+      );
+      const created = results.filter((r) => r.status === 'fulfilled').length;
+      if (created === 0) {
+        const first = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+        throw first?.reason instanceof Error ? first.reason : new Error(String(first?.reason));
+      }
+      return { created, failed: results.length - created };
+    },
+    onSuccess: () => {
+      invalidateAllEventQueries(queryClient);
+      queryClient.invalidateQueries({ queryKey: eventsKeys.all });
+    },
+    onError: (error: Error) => {
+      toast.error(translator('errors').t('mutation.createEvent', { message: error.message }));
+    },
+  });
+};

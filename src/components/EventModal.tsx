@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useFormDraft } from '@/lib/hooks/use-form-draft';
 import { useInvalidShake } from "@/hooks/use-invalid-shake";
+import { useModalA11y } from "@/hooks/use-modal-a11y";
 import ColorSettingsModal from "./ColorSettingsModal";
 import ConfirmDiscardDialog from "./ConfirmDiscardDialog";
 
@@ -27,13 +28,15 @@ export type EventModalMode = 'add' | 'edit' | 'convert';
 // Logique pure extraite (cf. event-modal/helpers.ts).
 import {
   formatEventDuration,
-  headerTitle,
-  submitButtonText,
+  headerTitleKey,
+  submitButtonKey,
   getMissingEventFields,
   validateEventRange,
 } from './event-modal/helpers';
 import RecurrenceDaysModal from './event-modal/RecurrenceDaysModal';
 import EventModalForm from './event-modal/EventModalForm';
+import { useT } from '@/i18n/useT';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 type EventData = {
   title: string;
@@ -61,6 +64,21 @@ type EventModalProps = {
   onDuplicateEvent?: (eventId: string) => void;
   onConvert?: (eventData: EventData) => void;
   /**
+   * Panneau rendu À GAUCHE du formulaire, sur écran large uniquement.
+   *
+   * C'est un emplacement, pas une fonctionnalité : l'EventModal ne sait pas ce
+   * qu'on y met (aujourd'hui, la décision à prendre sur un créneau de tâche
+   * terminé). Il est rendu DANS l'overlay, donc à l'intérieur du piège de focus
+   * déjà posé par cette modale. ❌ Ne jamais le sortir en frère de l'overlay
+   * avec son propre `useModalA11y` : la pile du hook fait que seule la
+   * dernière surface empilée réagit, et le panneau reprendrait le focus au
+   * formulaire (C-53).
+   *
+   * Masqué sous `md` : sur téléphone il n'y a pas de place à gauche, et la
+   * pastille du calendrier reste le seul accès.
+   */
+  sidePanel?: React.ReactNode;
+  /**
    * Liste des champs à verrouiller (lecture seule). Valeurs supportées :
    * 'title', 'startDate', 'endDate'. Permet à l'appelant de figer certains
    * champs pré-remplis (cas d'usage : planifier une habitude → titre +
@@ -75,6 +93,14 @@ type EventModalProps = {
    * toujours privé, sans choix possible pour l'utilisateur (F-1).
    */
   enterprisePublic?: boolean;
+  /**
+   * Catégories à proposer pour la couleur — remplace les catégories
+   * PERSONNELLES par défaut (`useCategories()`) quand fourni. Sert le mode
+   * entreprise (MemberAgendaBody) : les catégories d'entreprise (mig. 111)
+   * n'ont rien à voir avec celles du manager qui planifie l'événement, elles
+   * ne doivent donc jamais leur être substituées.
+   */
+  categoriesOverride?: { id: string; name: string; color: string; parentId: string | null }[];
 };
 
 const EventModal: React.FC<EventModalProps> = ({
@@ -89,8 +115,10 @@ const EventModal: React.FC<EventModalProps> = ({
   onDeleteEvent,
   onDuplicateEvent,
   onConvert,
+  sidePanel,
   lockedFields = [],
   enterprisePublic = false,
+  categoriesOverride,
 }) => {
   // Set pour lookup O(1) — utilisé partout dans le rendu pour disabled/readOnly
   const lockedSet = new Set(lockedFields);
@@ -106,11 +134,20 @@ const EventModal: React.FC<EventModalProps> = ({
     if (isOpen) {
       setShowDescription(Boolean(notes && notes.length > 0));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `notes` hors deps a dessein : la section Description se decide a
+       l OUVERTURE. La relire a chaque frappe replierait la section des que la
+       personne vide le champ, et ferait sauter le focus. `notes` ne peut pas
+       perimer puisqu il n est lu qu a l instant ou `isOpen` passe a vrai. */
   }, [isOpen]);
+  const { t } = useT('eventModal');
   const { favoriteColors } = useFavoriteColors();
   const { pref: tzPref } = useTimezonePref();
-  const { data: categories = [] } = useCategories();
+  // Toujours appelé (les hooks ne peuvent pas être conditionnels) : son
+  // résultat n'est utilisé que si l'appelant n'a pas fourni son propre jeu de
+  // catégories via `categoriesOverride` (mode entreprise).
+  const { data: personalCategories = [] } = useCategories();
+  const categories = categoriesOverride ?? personalCategories;
 
   const [title, setTitle] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -237,12 +274,9 @@ const EventModal: React.FC<EventModalProps> = ({
         setNotes("");
       }
 
-      if (task.category) {
-        const categoryColor = categories.find((cat) => cat.id === task.category)?.color;
-        setColor(categoryColor || categories[0]?.color || "#3B82F6");
-      } else {
-        setColor(categories[0]?.color || "#3B82F6");
-      }
+      // Tâche sans catégorie (ou catégorie disparue) → gris clair, jamais la
+      // première catégorie venue : elle n'en a pas.
+      setColor(categories.find((cat) => cat.id === task.category)?.color || NO_CATEGORY_COLOR);
 
       // Brouillon (#47) : restaure titre/notes d'une saisie interrompue
       // (uniquement en création libre — pas quand le titre est pré-rempli).
@@ -273,12 +307,9 @@ const EventModal: React.FC<EventModalProps> = ({
       setEndTime(endTimeDate.toTimeString().slice(0, 5));
       setEndDate(endTimeDate.toLocaleDateString("en-CA"));
 
-      if (task.category) {
-        const categoryColor = categories.find((cat) => cat.id === task.category)?.color;
-        setColor(categoryColor || categories[0]?.color || "#3B82F6");
-      } else {
-        setColor(categories[0]?.color || "#3B82F6");
-      }
+      // Tâche sans catégorie (ou catégorie disparue) → gris clair, jamais la
+      // première catégorie venue : elle n'en a pas.
+      setColor(categories.find((cat) => cat.id === task.category)?.color || NO_CATEGORY_COLOR);
     }
 
     setPrefilledFields(prefilled);
@@ -394,8 +425,20 @@ const EventModal: React.FC<EventModalProps> = ({
     : undefined;
 
   const calculateDuration = () => formatEventDuration(startDate, startTime, endDate, endTime);
-  const getHeaderTitle = () => headerTitle(mode);
-  const getSubmitButtonText = () => submitButtonText(mode);
+  // Les helpers rendent des CLÉS, l'écran les met en mots : le module est pur
+  // et n'a pas de locale (revue du 2026-09-02, point 7).
+  const getHeaderTitle = () => t(headerTitleKey(mode) as Parameters<typeof t>[0]);
+  const getSubmitButtonText = () => t(submitButtonKey(mode) as Parameters<typeof t>[0]);
+
+  // C-53 — piege de focus, restitution au declencheur, Echap et role dialog.
+  // Echap passe par `guardedClose`, donc par la MEME garde de brouillon que la
+  // croix : fermer au clavier ne doit pas perdre une saisie que le clic aurait
+  // protegee.
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: guardedClose,
+    label: t(headerTitleKey(mode) as Parameters<typeof t>[0]),
+  });
 
   if (!isOpen) return null;
   if (mode === 'edit' && !event) return null;
@@ -409,9 +452,19 @@ const EventModal: React.FC<EventModalProps> = ({
   return (
     <>
       <div
+        ref={overlayRef}
+        {...dialogProps}
         className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/30 backdrop-blur-md md:p-4 opacity-0 animate-modal-backdrop"
         onClick={guardedClose}
       >
+        {sidePanel && (
+          <div
+            className="mr-3 hidden md:block"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {sidePanel}
+          </div>
+        )}
         <EventModalForm
           mode={mode}
           onClose={guardedClose}

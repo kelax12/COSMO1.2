@@ -2,25 +2,62 @@
 // ORGANIZATIONS MODULE - LocalStorage Repository (mode démo)
 // ═══════════════════════════════════════════════════════════════════
 //
-// Multi-org (v2) : deux entreprises fictives seedées au premier accès —
-//   • « Nova Studio »  : l'utilisateur démo est ADMIN (6 membres, 1 demande
-//     d'adhésion en attente pour tester l'inbox).
-//   • « Atelier Lune » : l'utilisateur démo est MEMBRE simple (vue non-admin
-//     + démonstration du switcher d'organisation).
+// UNE entreprise fictive seedée au premier accès — « Nova Studio », où
+// l'utilisateur démo est ADMIN (6 membres, 1 demande d'adhésion en attente
+// pour tester l'inbox).
+//
+// ⚠️ Une SEULE, volontairement (2026-08-27). Une seconde organisation
+// (« Atelier Lune ») existait pour montrer la vue non-admin et le switcher.
+// Elle coûtait plus qu'elle ne montrait : au-delà d'une organisation,
+// `Layout` remplace le lien de navigation par un `<div role="button">` qui
+// ouvre un menu, donc la démo perdait le clic milieu, l'ouverture en nouvel
+// onglet, et demandait un clic de plus pour entrer dans l'espace entreprise.
+// La couverture non-admin qu'elle portait n'est pas perdue : les tests la
+// reconstituent eux-mêmes (`local.repository.test.ts`, `seedSecondOrg`).
+//
 // Seeds rechargées à chaque loginDemo() (sweep cosmo_* de clearDemoStorage).
 
 import { IOrganizationsRepository } from './repository';
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice, OrgInbox } from './types';
+import { readDemoNotifications } from './notifications';
 import {
   ORGS_STORAGE_KEY,
   ORG_MEMBERS_STORAGE_KEY,
   ORG_JOIN_REQUESTS_STORAGE_KEY,
   ORG_INVITE_LINKS_STORAGE_KEY,
+  ORG_MEMBER_PERMISSIONS_STORAGE_KEY,
 } from './constants';
+import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
+import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
+import { readJsonArray, safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY } from '@/modules/team-projects/constants';
+import type { TeamProject, TeamTask } from '@/modules/team-projects/types';
+
+/**
+ * Miroir de `release_member_work` (mig. 164) : quelqu'un qui n'a plus accès ne
+ * reste assigné à aucune tâche OUVERTE, ni responsable d'aucun projet. Les
+ * tâches terminées gardent leur assigné : c'est l'historique.
+ */
+function releaseMemberWork(orgId: string, userId: string): void {
+  const tasks = readJsonArray<TeamTask>(TEAM_TASKS_STORAGE_KEY);
+  if (tasks) {
+    writeJsonOrThrow(TEAM_TASKS_STORAGE_KEY, tasks.map((t) =>
+      t.orgId === orgId && !t.completed && t.assigneeIds?.includes(userId)
+        ? { ...t, assigneeIds: t.assigneeIds.filter((id) => id !== userId) }
+        : t,
+    ));
+  }
+  const projects = readJsonArray<TeamProject>(TEAM_PROJECTS_STORAGE_KEY);
+  if (projects) {
+    writeJsonOrThrow(TEAM_PROJECTS_STORAGE_KEY, projects.map((p) =>
+      p.orgId === orgId && p.ownerId === userId ? { ...p, ownerId: null } : p,
+    ));
+  }
+}
+import { makeApiError } from '@/lib/normalizeApiError';
 
 const DEMO_USER_ID = 'demo-user';
 export const DEMO_ORG_ID = 'org-demo-1';
-export const DEMO_ORG_2_ID = 'org-demo-2';
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -49,17 +86,8 @@ const DEMO_ORGS: Organization[] = [
     joinCode: 'COSMO-DEMO42',
     ownerId: DEMO_USER_ID,
     createdAt: new Date(Date.now() - 90 * DAY).toISOString(),
-    description: 'Studio de création digitale — sites, apps et identités de marque.',
+    description: 'Studio de création digitale : sites, apps et identités de marque.',
     industry: 'Design & Tech',
-  },
-  {
-    id: DEMO_ORG_2_ID,
-    name: 'Atelier Lune',
-    joinCode: 'COSMO-LUNE77',
-    ownerId: 'user-nina',
-    createdAt: new Date(Date.now() - 45 * DAY).toISOString(),
-    description: 'Collectif d\'artisans céramistes.',
-    industry: 'Artisanat',
   },
 ];
 
@@ -67,9 +95,19 @@ const DEMO_ORGS: Organization[] = [
 //   demo-user (racine, admin)
 //   ├── Marie Dupont (manager dérivé)
 //   │   ├── Jean Martin
-//   │   └── Sophie Bernard
-//   └── Lucas Moreau
+//   │   ├── Sophie Bernard
+//   │   ├── Chloé Petit
+//   │   └── Emma Lambert
+//   ├── Lucas Moreau (manager dérivé)
+//   │   ├── Inès Benali
+//   │   └── Antoine Girard
+//   ├── Manon Faure (manager dérivé, Marketing)
+//   │   ├── Paul Mercier
+//   │   ├── Léa Fontaine
+//   │   └── Karim Haddad
+//   └── Yanis Chevalier
 //   Camille Richard = NON PLACÉE (montre le flux de placement).
+//   15 membres au total (2026-10-05) : une PME crédible, pas une équipe de six.
 const DEMO_MEMBERS: OrgMember[] = [
   // ── Nova Studio (demo-user admin) ──
   { orgId: DEMO_ORG_ID, userId: DEMO_USER_ID, role: 'admin', managerId: null, joinedAt: new Date(Date.now() - 90 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app' },
@@ -78,10 +116,15 @@ const DEMO_MEMBERS: OrgMember[] = [
   { orgId: DEMO_ORG_ID, userId: 'friend-3', role: 'member', managerId: 'friend-1', joinedAt: new Date(Date.now() - 60 * DAY).toISOString(), displayName: 'Sophie Bernard', email: 'sophie.bernard@email.com' },
   { orgId: DEMO_ORG_ID, userId: 'user-lucas', role: 'member', managerId: DEMO_USER_ID, joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Lucas Moreau', email: 'lucas.moreau@email.com' },
   { orgId: DEMO_ORG_ID, userId: 'user-camille', role: 'member', managerId: null, joinedAt: new Date(Date.now() - 30 * DAY).toISOString(), displayName: 'Camille Richard', email: 'camille.richard@email.com' },
-  // ── Atelier Lune (demo-user membre simple, sous Nina) ──
-  { orgId: DEMO_ORG_2_ID, userId: 'user-nina', role: 'admin', managerId: null, joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Nina Rousseau', email: 'nina.rousseau@email.com' },
-  { orgId: DEMO_ORG_2_ID, userId: DEMO_USER_ID, role: 'member', managerId: 'user-nina', joinedAt: new Date(Date.now() - 20 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app' },
-  { orgId: DEMO_ORG_2_ID, userId: 'user-theo', role: 'member', managerId: 'user-nina', joinedAt: new Date(Date.now() - 15 * DAY).toISOString(), displayName: 'Théo Garnier', email: 'theo.garnier@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-manon', role: 'member', managerId: DEMO_USER_ID, joinedAt: new Date(Date.now() - 85 * DAY).toISOString(), displayName: 'Manon Faure', email: 'manon.faure@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-chloe', role: 'member', managerId: 'friend-1', joinedAt: new Date(Date.now() - 70 * DAY).toISOString(), displayName: 'Chloé Petit', email: 'chloe.petit@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-emma', role: 'member', managerId: 'friend-1', joinedAt: new Date(Date.now() - 28 * DAY).toISOString(), displayName: 'Emma Lambert', email: 'emma.lambert@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-ines', role: 'member', managerId: 'user-lucas', joinedAt: new Date(Date.now() - 40 * DAY).toISOString(), displayName: 'Inès Benali', email: 'ines.benali@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-antoine', role: 'member', managerId: 'user-lucas', joinedAt: new Date(Date.now() - 20 * DAY).toISOString(), displayName: 'Antoine Girard', email: 'antoine.girard@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-paul', role: 'member', managerId: 'user-manon', joinedAt: new Date(Date.now() - 65 * DAY).toISOString(), displayName: 'Paul Mercier', email: 'paul.mercier@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-lea', role: 'member', managerId: 'user-manon', joinedAt: new Date(Date.now() - 50 * DAY).toISOString(), displayName: 'Léa Fontaine', email: 'lea.fontaine@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-karim', role: 'member', managerId: 'user-manon', joinedAt: new Date(Date.now() - 14 * DAY).toISOString(), displayName: 'Karim Haddad', email: 'karim.haddad@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-yanis', role: 'member', managerId: DEMO_USER_ID, joinedAt: new Date(Date.now() - 55 * DAY).toISOString(), displayName: 'Yanis Chevalier', email: 'yanis.chevalier@email.com' },
 ];
 
 const DEMO_JOIN_REQUESTS: OrgJoinRequest[] = [
@@ -98,34 +141,46 @@ const DEMO_JOIN_REQUESTS: OrgJoinRequest[] = [
   },
 ];
 
+// Overlay anglais — cf. src/lib/seed-i18n.ts. Le nom propre « Nova Studio »
+// n'est pas traduit : c'est une marque, pas un mot de la langue.
+const DEMO_ORGS_EN: Record<string, Partial<Organization>> = {
+  [DEMO_ORG_ID]: { description: 'Digital creative studio: websites, apps and brand identities.' },
+};
+
 // Lecture défensive : clone des seeds (faille B12), JSON.parse protégé (B14).
 function readOrSeed<T>(key: string, seed: T): T {
-  const data = localStorage.getItem(key);
+  const data = safeGetItem(key);
   if (!data) {
     const clone = JSON.parse(JSON.stringify(seed)) as T;
-    localStorage.setItem(key, JSON.stringify(clone));
+    safeSetItem(key, JSON.stringify(clone));
     return clone;
   }
   try {
     return JSON.parse(data) as T;
   } catch {
     const clone = JSON.parse(JSON.stringify(seed)) as T;
-    localStorage.setItem(key, JSON.stringify(clone));
+    safeSetItem(key, JSON.stringify(clone));
     return clone;
   }
 }
 
 export class LocalStorageOrganizationsRepository implements IOrganizationsRepository {
   private getOrgsArray(): Organization[] {
-    return readOrSeed<Organization[]>(ORGS_STORAGE_KEY, DEMO_ORGS);
+    return readOrSeed<Organization[]>(ORGS_STORAGE_KEY, localizeSeed(DEMO_ORGS, DEMO_ORGS_EN));
   }
 
   private saveOrgs(orgs: Organization[]): void {
-    localStorage.setItem(ORGS_STORAGE_KEY, JSON.stringify(orgs));
+    writeJsonOrThrow(ORGS_STORAGE_KEY, orgs);
   }
 
   private getMembersArray(): OrgMember[] {
-    return readOrSeed<OrgMember[]>(ORG_MEMBERS_STORAGE_KEY, DEMO_MEMBERS);
+    // `OrgMember` n'a pas de champ `id` (clé composite orgId+userId) :
+    // localizeSeed ne s'applique pas telle quelle, d'où ce patch ad hoc sur
+    // le seul champ concerné (« Vous » n'est pas un nom propre).
+    const seed = isEnglishSeed()
+      ? DEMO_MEMBERS.map((m) => (m.displayName === 'Vous' ? { ...m, displayName: 'You' } : m))
+      : DEMO_MEMBERS;
+    return readOrSeed<OrgMember[]>(ORG_MEMBERS_STORAGE_KEY, seed);
   }
 
   private getRequestsArray(): OrgJoinRequest[] {
@@ -133,7 +188,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   }
 
   private saveRequests(requests: OrgJoinRequest[]): void {
-    localStorage.setItem(ORG_JOIN_REQUESTS_STORAGE_KEY, JSON.stringify(requests));
+    writeJsonOrThrow(ORG_JOIN_REQUESTS_STORAGE_KEY, requests);
   }
 
   // ─── Read ──────────────────────────────────────────────────────────
@@ -161,6 +216,31 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
     return this.getRequestsArray().find((r) => r.userId === DEMO_USER_ID && r.status === 'pending') ?? null;
   }
 
+  /**
+   * En demo il n'y a aucune requete a economiser : on rappelle les methodes
+   * unitaires. Ce qui compte est que la FORME rendue soit la meme qu'en prod,
+   * sans quoi les selecteurs qui la decoupent divergeraient entre les deux
+   * modes. Les notifications ne passent pas par ici : elles ont leur propre
+   * source localStorage (`notifications.ts`), relue ici telle quelle.
+   */
+  async getMyOrgInbox(): Promise<OrgInbox> {
+    const [invitations, removalNotices, myJoinRequest] = await Promise.all([
+      this.getMyOrgInvitations(),
+      this.getMyOrgRemovalNotices(),
+      this.getMySentJoinRequest(),
+    ]);
+    const joinRequests = this.getRequestsArray().filter((r) => r.status === 'pending');
+    // `badgeTasks` reste vide en demo, volontairement : il n'y a aucune requete
+    // a economiser, et les taches d'equipe locales sont deja lues gratuitement
+    // par `useOrgBadges` (cf. le commentaire de ce hook). Fabriquer ici une
+    // seconde derivation des memes seeds ferait DEUX definitions de « nouvelle
+    // assignation », donc deux chiffres qui finiraient par diverger.
+    return {
+      invitations, removalNotices, myJoinRequest, joinRequests,
+      notifications: readDemoNotifications(), badgeTasks: [],
+    };
+  }
+
   // ─── Write ─────────────────────────────────────────────────────────
 
   async createOrganization(name: string): Promise<Organization> {
@@ -180,29 +260,63 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       userId: DEMO_USER_ID,
       role: 'admin',
       joinedAt: new Date().toISOString(),
-      displayName: 'Vous',
+      displayName: isEnglishSeed() ? 'You' : 'Vous',
       email: 'demo@cosmo.app',
     });
-    localStorage.setItem(ORG_MEMBERS_STORAGE_KEY, JSON.stringify(members));
+    writeJsonOrThrow(ORG_MEMBERS_STORAGE_KEY, members);
     return org;
   }
 
   async requestJoin(code: string): Promise<{ orgName: string }> {
     const org = this.getOrgsArray().find((o) => o.joinCode === code.toUpperCase().trim());
     // Erreur générique (même comportement que la prod : pas de leak).
-    if (!org) throw new Error('Code invalide');
+    if (!org) throw makeApiError('invalid_link');
     const isMember = this.getMembersArray().some(
       (m) => m.orgId === org.id && m.userId === DEMO_USER_ID,
     );
-    if (isMember) throw new Error('Vous êtes déjà membre de cette entreprise');
-    throw new Error('Demande envoyée — en mode démo, utilisez les entreprises fournies');
+    if (isMember) throw makeApiError('already_a_member');
+    throw makeApiError('demo_unavailable');
+  }
+
+  // --- Invitations nominatives (mig. 105) ---------------------------
+  // Le mode demo est mono-utilisateur : il n existe personne pour emettre
+  // une invitation vers le compte demo, ni personne a inviter reellement.
+  // On garde les trois methodes pour respecter le contrat de l interface,
+  // avec le meme parti pris que requestJoin ci-dessus : un message honnete
+  // plutot qu une fausse reussite.
+
+  async inviteFriendToOrg(_orgId: string, _friendUserId: string): Promise<void> {
+    throw makeApiError('demo_unavailable');
+  }
+
+  async getMyOrgInvitations(): Promise<OrgInvitation[]> {
+    return [];
+  }
+
+  // Aucune invitation n'est jamais réellement envoyée en démo
+  // (`inviteFriendToOrg` lève systématiquement) : il n'y a donc jamais rien
+  // « en attente » à distinguer.
+  async getPendingSentInvitationIds(_orgId: string): Promise<string[]> {
+    return [];
+  }
+
+  async respondOrgInvitation(_invitationId: string, _accept: boolean): Promise<void> {
+    throw makeApiError('demo_unavailable');
+  }
+
+  async getMyOrgRemovalNotices(): Promise<OrgRemovalNotice[]> {
+    return [];
+  }
+
+  async dismissOrgRemovalNotice(_noticeId: string): Promise<void> {
+    // Rien a acquitter en demo : personne ne peut y retirer le compte demo.
   }
 
   async respondJoinRequest(requestId: string, accept: boolean): Promise<void> {
     const requests = this.getRequestsArray();
     const req = requests.find((r) => r.id === requestId);
     if (!req || req.status !== 'pending') {
-      throw new Error('Demande introuvable ou déjà traitée');
+      throw makeApiError('not_found');
     }
     req.status = accept ? 'accepted' : 'rejected';
     this.saveRequests(requests);
@@ -219,7 +333,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
           email: req.requesterEmail,
           avatar: req.requesterAvatar,
         });
-        localStorage.setItem(ORG_MEMBERS_STORAGE_KEY, JSON.stringify(members));
+        writeJsonOrThrow(ORG_MEMBERS_STORAGE_KEY, members);
       }
     }
   }
@@ -231,9 +345,9 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   async updateOrganization(orgId: string, input: UpdateOrganizationInput): Promise<Organization> {
     const orgs = this.getOrgsArray();
     const org = orgs.find((o) => o.id === orgId);
-    if (!org) throw new Error('Entreprise introuvable');
+    if (!org) throw makeApiError('not_found');
     const me = this.getMembersArray().find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
-    if (me?.role !== 'admin') throw new Error('Seul un administrateur peut modifier le profil');
+    if (me?.role !== 'admin') throw makeApiError('not_org_admin');
     if (input.name !== undefined) org.name = input.name;
     if (input.description !== undefined) org.description = input.description;
     if (input.industry !== undefined) org.industry = input.industry;
@@ -244,7 +358,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
 
   async deleteOrganization(orgId: string): Promise<void> {
     const me = this.getMembersArray().find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
-    if (me?.role !== 'admin') throw new Error('Seul un administrateur peut supprimer l\'entreprise');
+    if (me?.role !== 'admin') throw makeApiError('not_org_admin');
     this.saveOrgs(this.getOrgsArray().filter((o) => o.id !== orgId));
     this.saveMembers(this.getMembersArray().filter((m) => m.orgId !== orgId));
     this.saveRequests(this.getRequestsArray().filter((r) => r.orgId !== orgId));
@@ -253,11 +367,11 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   async transferOwnership(orgId: string, newOwnerId: string): Promise<void> {
     const orgs = this.getOrgsArray();
     const org = orgs.find((o) => o.id === orgId);
-    if (!org) throw new Error('Entreprise introuvable');
-    if (org.ownerId !== DEMO_USER_ID) throw new Error('Seul le propriétaire peut transférer la propriété');
+    if (!org) throw makeApiError('not_found');
+    if (org.ownerId !== DEMO_USER_ID) throw makeApiError('not_org_owner');
     const members = this.getMembersArray();
     if (!members.some((m) => m.orgId === orgId && m.userId === newOwnerId)) {
-      throw new Error('Le nouveau propriétaire doit être membre de l\'entreprise');
+      throw makeApiError('not_org_member');
     }
     org.ownerId = newOwnerId;
     this.saveOrgs(orgs);
@@ -270,7 +384,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   // ─── Administration ────────────────────────────────────────────────
 
   private saveMembers(members: OrgMember[]): void {
-    localStorage.setItem(ORG_MEMBERS_STORAGE_KEY, JSON.stringify(members));
+    writeJsonOrThrow(ORG_MEMBERS_STORAGE_KEY, members);
   }
 
   private adminCount(members: OrgMember[], orgId: string): number {
@@ -280,9 +394,9 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   async setMemberRole(orgId: string, userId: string, role: OrgRole): Promise<void> {
     const members = this.getMembersArray();
     const member = members.find((m) => m.orgId === orgId && m.userId === userId);
-    if (!member) throw new Error('Membre introuvable');
+    if (!member) throw makeApiError('not_found');
     if (member.role === 'admin' && role !== 'admin' && this.adminCount(members, orgId) <= 1) {
-      throw new Error('Impossible de rétrograder le dernier administrateur');
+      throw makeApiError('last_admin');
     }
     member.role = role;
     this.saveMembers(members);
@@ -291,9 +405,9 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   async removeMember(orgId: string, userId: string): Promise<void> {
     const members = this.getMembersArray();
     const member = members.find((m) => m.orgId === orgId && m.userId === userId);
-    if (!member) throw new Error('Membre introuvable');
+    if (!member) throw makeApiError('not_found');
     if (member.role === 'admin' && this.adminCount(members, orgId) <= 1) {
-      throw new Error('Impossible de retirer le dernier administrateur');
+      throw makeApiError('last_admin');
     }
     // Re-parentage des subordonnés vers le grand-parent (miroir de la RPC).
     const next = members
@@ -302,14 +416,15 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       )
       .filter((m) => !(m.orgId === orgId && m.userId === userId));
     this.saveMembers(next);
+    releaseMemberWork(orgId, userId);
   }
 
   async leaveOrganization(orgId: string): Promise<void> {
     const members = this.getMembersArray();
     const me = members.find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
-    if (!me) throw new Error('Vous ne faites pas partie de cette entreprise');
+    if (!me) throw makeApiError('not_org_member');
     if (me.role === 'admin' && this.adminCount(members, orgId) <= 1) {
-      throw new Error('Transférez le rôle admin avant de quitter');
+      throw makeApiError('last_admin');
     }
     // Re-parentage des subordonnés vers le grand-parent (miroir de la RPC).
     const next = members
@@ -318,6 +433,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       )
       .filter((m) => !(m.orgId === orgId && m.userId === DEMO_USER_ID));
     this.saveMembers(next);
+    releaseMemberWork(orgId, DEMO_USER_ID);
   }
 
   // ─── Pyramide (v2) ────────────────────────────────────────────────
@@ -342,31 +458,31 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   async setMemberManager(orgId: string, userId: string, managerId: string | null): Promise<void> {
     const members = this.getMembersArray();
     const target = members.find((m) => m.orgId === orgId && m.userId === userId);
-    if (!target) throw new Error('Membre introuvable');
+    if (!target) throw makeApiError('not_found');
 
     const me = members.find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
     const isAdmin = me?.role === 'admin';
     if (!isAdmin) {
       const mySubtree = this.subtreeOf(members, orgId, DEMO_USER_ID);
       if (!mySubtree.has(userId)) {
-        throw new Error('Vous ne pouvez déplacer que les membres sous vous');
+        throw makeApiError('out_of_scope');
       }
       if (managerId === null) {
-        throw new Error('Seul un administrateur peut détacher un membre');
+        throw makeApiError('not_org_admin');
       }
       if (managerId !== DEMO_USER_ID && !mySubtree.has(managerId)) {
-        throw new Error('La destination doit être dans votre équipe');
+        throw makeApiError('out_of_scope');
       }
     }
 
     if (managerId !== null) {
-      if (managerId === userId) throw new Error('Un membre ne peut pas être son propre responsable');
+      if (managerId === userId) throw makeApiError('hierarchy_cycle');
       if (!members.some((m) => m.orgId === orgId && m.userId === managerId)) {
-        throw new Error('Le responsable doit être membre de l\'entreprise');
+        throw makeApiError('not_org_member');
       }
       // Anti-cycle : la destination ne peut pas être un descendant de la cible.
       if (this.subtreeOf(members, orgId, userId).has(managerId)) {
-        throw new Error('Ce déplacement créerait un cycle dans la hiérarchie');
+        throw makeApiError('hierarchy_cycle');
       }
     }
 
@@ -381,19 +497,19 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   }
 
   private saveInviteLinks(links: OrgInviteLink[]): void {
-    localStorage.setItem(ORG_INVITE_LINKS_STORAGE_KEY, JSON.stringify(links));
+    writeJsonOrThrow(ORG_INVITE_LINKS_STORAGE_KEY, links);
   }
 
   async createInviteLink(orgId: string, managerId: string | null): Promise<OrgInviteLink> {
     const members = this.getMembersArray();
     const me = members.find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
-    if (!me) throw new Error('Vous ne faites pas partie de cette entreprise');
+    if (!me) throw makeApiError('not_org_member');
     const isAdmin = me.role === 'admin';
     if (!isAdmin) {
       // Manager : lien uniquement sous soi ou son sous-arbre.
       const mySubtree = this.subtreeOf(members, orgId, DEMO_USER_ID);
       if (managerId === null || (managerId !== DEMO_USER_ID && !mySubtree.has(managerId))) {
-        throw new Error('Vous ne pouvez inviter que sous votre équipe');
+        throw makeApiError('out_of_scope');
       }
     }
     const link: OrgInviteLink = {
@@ -422,18 +538,55 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
 
   async claimInviteLink(_token: string): Promise<{ orgId: string; orgName: string }> {
     // Démo mono-utilisateur : un lien s'adresse à quelqu'un d'autre.
-    throw new Error('Les liens d\'invitation se testent avec un vrai compte');
+    throw makeApiError('demo_unavailable');
   }
 
   async regenerateJoinCode(orgId: string): Promise<string> {
     const orgs = this.getOrgsArray();
     const org = orgs.find((o) => o.id === orgId);
-    if (!org) throw new Error('Entreprise introuvable');
+    if (!org) throw makeApiError('not_found');
     const me = this.getMembersArray().find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
-    if (me?.role !== 'admin') throw new Error('Seul un administrateur peut régénérer le code');
+    if (me?.role !== 'admin') throw makeApiError('not_org_admin');
     const code = generateDemoJoinCode();
     org.joinCode = code;
     this.saveOrgs(orgs);
     return code;
+  }
+
+  // ─── Permissions par membre (mig. 115) ─────────────────────────────
+  //
+  // Aucune seed : la démo part sans surcharge, exactement comme une vraie
+  // organisation qui n'a jamais ouvert la fiche. L'utilisateur démo est admin
+  // de « Nova Studio », donc tout lui reste ouvert quoi qu'il règle.
+
+  private getPermissionsArray(): OrgMemberPermissions[] {
+    return readOrSeed<OrgMemberPermissions[]>(ORG_MEMBER_PERMISSIONS_STORAGE_KEY, []);
+  }
+
+  async getMemberPermissions(orgId: string): Promise<OrgMemberPermissions[]> {
+    return this.getPermissionsArray().filter((p) => p.orgId === orgId);
+  }
+
+  async setMemberPermissions(
+    orgId: string,
+    userId: string,
+    input: SetOrgPermissionsInput,
+  ): Promise<void> {
+    const target = this.getMembersArray().find((m) => m.orgId === orgId && m.userId === userId);
+    if (!target) throw makeApiError('not_found');
+    // Miroir de la garde serveur : un admin détient tout par construction.
+    if (target.role === 'admin') {
+      throw makeApiError('forbidden');
+    }
+    const rows = this.getPermissionsArray().filter(
+      (p) => !(p.orgId === orgId && p.userId === userId),
+    );
+    rows.push({
+      orgId,
+      userId,
+      overrides: { ...input.overrides },
+      assignTargets: input.assignTargets,
+    });
+    writeJsonOrThrow(ORG_MEMBER_PERMISSIONS_STORAGE_KEY, rows);
   }
 }

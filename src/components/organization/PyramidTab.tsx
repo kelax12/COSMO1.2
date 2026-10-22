@@ -1,63 +1,34 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  UserPlus,
-  ChevronDown,
-  ChevronRight,
-  Move,
-  Users,
-  MoreHorizontal,
-  UserRoundPlus,
-  ArrowUpFromLine,
-  GripVertical,
-  Search,
-  X,
-  Pencil,
-  Check,
-  Trash2,
-  ListTodo,
-  CalendarDays,
-  TrendingUp,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { motion } from 'framer-motion';
-import { showUndoToast } from '@/lib/undo-toast';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useSearchParams } from 'react-router';
+import { Move, Users, ArrowUpFromLine, UserPlus } from 'lucide-react';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useOrgTeams, useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
+import { OrgCreateBoundary, useOrgCreate } from './org-create.context';
 import {
   buildOrgTree,
-  isManagerOf,
-  subtreeOf,
-  useSetMemberManager,
-  useRemoveMember,
   type OrgMember,
-  type OrgTreeNode,
 } from '@/modules/organizations';
 import {
   UNPLACED_DROP_ID,
-  collapsedStorageKey,
   normalize,
-  readCollapsedIds,
   canManage,
-  isValidDestination,
 } from './pyramid.helpers';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
+import { usePyramidCollapse } from './usePyramidCollapse';
+import { usePyramidDnd } from './usePyramidDnd';
+import PyramidPendingConfirm from './PyramidPendingConfirm';
+import PyramidToolbar from './PyramidToolbar';
+import UnplacedMembersPanel from './UnplacedMembersPanel';
+import { useTeamMemberWorkload } from '@/modules/team-projects';
+import { readEntityParam } from './deep-link.helpers';
+import { memberWorkloadFromServer } from './team-stats.helpers';
 import MemberAvatar from './MemberAvatar';
-import MemberPlacementSheet from './MemberPlacementSheet';
-import AddUnderSheet from './AddUnderSheet';
-import MemberProfileSheet from './MemberProfileSheet';
-import MemberInsightsSheet, { type InsightsTab } from './MemberInsightsSheet';
-import MemberAgendaSheet from './MemberAgendaSheet';
-import ReassignManagerSheet from './ReassignManagerSheet';
-import ConfirmRemoveMemberDialog from './ConfirmRemoveMemberDialog';
+import PyramidPlacementSheet, { type PlacementDirection } from './PyramidPlacementSheet';
+import MemberSheet from './MemberSheet';
+import { MEMBER_TAB_PARAM } from './member-sheet.helpers';
+import { useMemberLifecycle } from './MemberLifecycleActions';
 import { useT } from '@/i18n/useT';
 import RichText from '@/components/ui/rich-text';
+import { NodeCard, PyramidSkeleton } from './PyramidNodeCard';
 
 interface PyramidTabProps {
   orgId: string;
@@ -75,398 +46,7 @@ interface PyramidTabProps {
 // seules qui méritaient des tests. Elles y sont couvertes.
 const EMPTY_SET = new Set<string>();
 
-/** État du déplacement en cours, distribué aux cartes de l'arbre. */
-interface DragState {
-  member: OrgMember;
-  validDropIds: Set<string>;
-  hoverDropId: string | null;
-  /** true pendant que la carte est physiquement glissée (pointeur enfoncé). */
-  pointerActive: boolean;
-  onSourcePointerDown: (e: React.PointerEvent<HTMLElement>) => void;
-  onDrop: (dropId: string) => void;
-}
 
-interface NodeCardProps {
-  node: OrgTreeNode;
-  members: OrgMember[];
-  currentUserId?: string;
-  isAdmin: boolean;
-  onStartDrag: (m: OrgMember) => void;
-  onAddUnder: (m: OrgMember) => void;
-  /** Retire un membre de l'entreprise (admin — avec confirmation dans le parent). */
-  onRemove: (m: OrgMember) => void;
-  /** Saisie directe (poignée grip / long-press) : active le mode et démarre le glisser. */
-  onGrab: (m: OrgMember, pos: { clientX: number; clientY: number }) => void;
-  drag: DragState | null;
-  /** Membre à surligner brièvement après un déplacement réussi. */
-  flashId: string | null;
-  /** Nœuds repliés (état remonté, persisté par organisation). */
-  collapsedIds: Set<string>;
-  onToggleCollapse: (id: string) => void;
-  /** Membres correspondant à la recherche en cours (surlignés). */
-  matchIds: Set<string>;
-  /** Équipes transverses par membre (pastilles couleur). */
-  teamsByUser: Map<string, OrgTeam[]>;
-  /** Ouvre la fiche membre (clic ou Entrée sur une carte hors mode déplacement). */
-  onOpenProfile: (m: OrgMember) => void;
-  /** Ouvre les infos d'un subordonné (tâches / agenda / contribution). */
-  onOpenInsights: (m: OrgMember, tab: InsightsTab) => void;
-  /** Mode réorganisation : toutes les cartes déplaçables sont draggables. */
-  editMode: boolean;
-  /** Profondeur (mobile : indentation ; desktop : sans objet). */
-  depth: number;
-  mobile: boolean;
-}
-
-const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onRemove, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenProfile, onOpenInsights, editMode, depth, mobile }: NodeCardProps) => {
-  const { t, tp } = useT('org');
-  const collapsed = collapsedIds.has(node.member.userId);
-  // Radix ferme le menu sur pointerup PUIS le navigateur émet un `click` sur
-  // l'élément sous le pointeur (la carte) → sinon la fiche s'ouvrait en plus de
-  // l'action choisie. On horodate l'action du menu pour ignorer ce click fantôme.
-  const menuActionAtRef = useRef(0);
-  // Long-press mobile : timer + position initiale (annulé si le doigt bouge).
-  const longPressRef = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
-  const cancelLongPress = () => {
-    if (longPressRef.current) {
-      clearTimeout(longPressRef.current.timer);
-      longPressRef.current = null;
-    }
-  };
-  const m = node.member;
-  const manager = isManagerOf(members, m.userId);
-  const movable = canManage(m, members, currentUserId, isAdmin);
-  const isMe = m.userId === currentUserId;
-  // Effectif total du sous-arbre (au-delà des directs) — affiché quand il diffère.
-  const totalReports = node.children.length > 0 ? subtreeOf(members, m.userId).size : 0;
-  // « Ajouter un collaborateur » : admin partout ; sinon MANAGER (au moins un
-  // subordonné) sous soi-même ou son sous-arbre.
-  //
-  // AUD-02 — la condition `m.userId === currentUserId` seule reproduisait la
-  // policy vulnérable de la mig. 067 : tout membre, même sans subordonné,
-  // pouvait générer un lien et faire entrer un externe dans l'entreprise sans
-  // validation admin. La mig. 084 exige désormais `has_reports` côté serveur ;
-  // on aligne l'UI pour ne pas afficher un bouton qui renverrait 403.
-  const canAddUnder =
-    isAdmin ||
-    (!!currentUserId &&
-      isManagerOf(members, currentUserId) &&
-      (m.userId === currentUserId || canManage(m, members, currentUserId, isAdmin)));
-  // « Retirer de l'entreprise » : réservé aux admins (RPC remove_member exige
-  // is_org_admin), sur une autre personne que soi (sous soi dans la pyramide).
-  const canRemove = isAdmin && !isMe;
-  // Infos membre (tâches / agenda / contribution) : réservées aux supérieurs
-  // hiérarchiques (admin partout ; manager sur son sous-arbre) — jamais soi.
-  const canSeeInsights = movable;
-
-  const isDragSource = drag?.member.userId === m.userId;
-  const isDropTarget = !!drag && drag.validDropIds.has(m.userId);
-  const isDropHover = isDropTarget && drag.hoverDropId === m.userId;
-  const isMatch = matchIds.has(m.userId);
-  // Mode réorganisation : la carte se saisit directement (et gigote).
-  const editDraggable = editMode && movable && !drag;
-
-  const borderClass = flashId === m.userId
-    ? 'border-emerald-500 ring-2 ring-emerald-500/50'
-    : isDropHover
-    ? 'border-indigo-500 ring-2 ring-indigo-500/40'
-    : isDropTarget
-      ? 'border-dashed border-indigo-400/70'
-      : isDragSource
-        ? 'border-indigo-400 ring-2 ring-indigo-400/30'
-        : isMatch
-          ? 'border-amber-400 ring-2 ring-amber-400/30'
-          : isMe
-            ? 'border-indigo-400/70 ring-2 ring-indigo-400/20'
-            : m.role === 'admin'
-              ? 'border-indigo-400/60'
-              : manager
-                ? 'border-[rgb(var(--color-accent-solid))]/50'
-                : 'border-[rgb(var(--color-border))]';
-
-  const myTeams = teamsByUser.get(m.userId) ?? [];
-
-  const card = (
-    <motion.div
-      layoutId={`pyr-${m.userId}`}
-      layout
-      data-drop-id={isDropTarget ? m.userId : undefined}
-      data-me={isMe ? 'true' : undefined}
-      data-match={isMatch ? 'true' : undefined}
-      onPointerDown={(e) => {
-        if (isDragSource) {
-          drag.onSourcePointerDown(e);
-          return;
-        }
-        // Mode réorganisation : saisie directe de n'importe quelle carte déplaçable.
-        if (editDraggable) {
-          if (e.pointerType === 'mouse' && e.button !== 0) return;
-          if ((e.target as HTMLElement).closest('button,[data-grip]')) return;
-          e.preventDefault();
-          onGrab(m, e);
-          return;
-        }
-        // Long-press (mobile) : saisir la carte sans passer par le menu.
-        if (!mobile || drag || !movable) return;
-        if ((e.target as HTMLElement).closest('button')) return;
-        const { clientX, clientY } = e;
-        cancelLongPress();
-        longPressRef.current = {
-          timer: setTimeout(() => {
-            longPressRef.current = null;
-            onGrab(m, { clientX, clientY });
-          }, 450),
-          x: clientX,
-          y: clientY,
-        };
-      }}
-      onPointerMove={(e) => {
-        const lp = longPressRef.current;
-        if (lp && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) > 10) cancelLongPress();
-      }}
-      onPointerUp={cancelLongPress}
-      onPointerLeave={cancelLongPress}
-      onPointerCancel={cancelLongPress}
-      onClick={(e) => {
-        if (isDropTarget) {
-          drag.onDrop(m.userId);
-          return;
-        }
-        if (drag || editMode) return; // en mode déplacement/réorganisation, pas de fiche
-        // Ignore le click fantôme émis juste après la fermeture du menu (Radix).
-        if (Date.now() - menuActionAtRef.current < 500) return;
-        const t = e.target as HTMLElement;
-        if (t.closest('button') || t.closest('[data-grip]')) return;
-        onOpenProfile(m);
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          if (e.target !== e.currentTarget) return; // boutons internes
-          e.preventDefault();
-          if (isDropTarget) drag.onDrop(m.userId);
-          else if (!drag) onOpenProfile(m);
-          return;
-        }
-        // Navigation clavier : flèches = parent / enfant / frère précédent-suivant.
-        if (!e.key.startsWith('Arrow') || e.target !== e.currentTarget) return;
-        e.preventDefault();
-        const focusNode = (id?: string | null) => {
-          if (!id) return;
-          (document.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null)?.focus();
-        };
-        if (e.key === 'ArrowDown') focusNode(node.children[0]?.member.userId);
-        else if (e.key === 'ArrowUp') focusNode(m.managerId);
-        else {
-          const siblings = members
-            .filter((x) => (x.managerId ?? null) === (m.managerId ?? null))
-            .map((x) => x.userId);
-          const i = siblings.indexOf(m.userId);
-          focusNode(e.key === 'ArrowRight' ? siblings[i + 1] : siblings[i - 1]);
-        }
-      }}
-      role="button"
-      tabIndex={0}
-      data-node-id={m.userId}
-      data-card="true"
-      aria-label={
-        isDropTarget
-          ? t('pyramid.placeUnder', { member: drag.member.displayName, target: m.displayName })
-          : t('pyramid.cardAria', {
-              name: isMe ? t('pyramid.you') : m.displayName,
-              role: m.role === 'admin' ? t('pyramid.roleAdmin') : manager ? t('pyramid.roleManager') : t('pyramid.roleMember'),
-              reports: node.children.length > 0 ? tp('pyramid.directReports', node.children.length) : '',
-            })
-      }
-      style={isDragSource || editDraggable ? { touchAction: 'none' } : undefined}
-      className={`inline-flex items-center rounded-2xl border bg-[rgb(var(--color-surface))] transition-colors ${
-        isDropTarget && mobile ? 'gap-2.5 px-3 py-3.5' : 'gap-2.5 px-3 py-2'
-      } ${borderClass} ${
-        isDragSource ? `cursor-grab select-none ${drag.pointerActive ? 'opacity-40' : ''}` : ''
-      } ${isDropTarget ? 'cursor-pointer animate-wiggle' : ''} ${
-        editDraggable ? 'cursor-grab select-none animate-wiggle' : ''
-      }`}
-    >
-      {!mobile && movable && !drag && (
-        <span
-          onPointerDown={(e) => {
-            if (e.button !== 0) return;
-            e.stopPropagation();
-            e.preventDefault();
-            onGrab(m, e);
-          }}
-          title={t('pyramid.dragToMove', { name: m.displayName })}
-          data-grip="true"
-          className="cursor-grab text-[rgb(var(--color-text-muted))]/50 hover:text-indigo-500 -ml-1 shrink-0 touch-none"
-          aria-hidden="true"
-        >
-          <GripVertical size={13} />
-        </span>
-      )}
-      {node.children.length > 0 && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleCollapse(m.userId);
-          }}
-          aria-label={collapsed ? t('pyramid.expandTeam', { name: m.displayName }) : t('pyramid.collapseTeam', { name: m.displayName })}
-          aria-expanded={!collapsed}
-          className="w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0"
-        >
-          {collapsed ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
-        </button>
-      )}
-      <MemberAvatar avatar={m.avatar} name={m.displayName} size={34} />
-      <div className="min-w-0">
-          <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate max-w-[140px]">
-            {isMe ? t('pyramid.you') : m.displayName}
-          </p>
-          <p
-            className="text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] inline-flex items-center gap-1.5"
-            title={
-              totalReports > node.children.length
-                ? tp('pyramid.directCount', node.children.length) + t('pyramid.totalSuffix', { count: totalReports })
-                : undefined
-            }
-          >
-            <span>
-              {m.role === 'admin' ? t('pyramid.badgeAdmin') : manager ? t('pyramid.badgeManager') : t('pyramid.badgeMember')}
-              {node.children.length > 0 ? ` · ${node.children.length}` : ''}
-              {totalReports > node.children.length ? t('pyramid.totalSuffix', { count: totalReports }) : ''}
-            </span>
-            {myTeams.length > 0 && (
-              <span className="inline-flex items-center gap-1 shrink-0">
-                {myTeams.slice(0, 3).map((t) => (
-                  <span
-                    key={t.id}
-                    title={t.name}
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: t.color }}
-                  />
-                ))}
-              </span>
-            )}
-          </p>
-        </div>
-      {!drag && (movable || canAddUnder || canRemove) && (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            aria-label={`Actions pour ${m.displayName}`}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] shrink-0"
-          >
-            <MoreHorizontal size={15} aria-hidden="true" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-56"
-            onClick={() => {
-              menuActionAtRef.current = Date.now();
-            }}
-          >
-            {canAddUnder && (
-              <DropdownMenuItem onClick={() => onAddUnder(m)}>
-                <UserRoundPlus size={14} className="text-green-500" aria-hidden="true" />
-                Ajouter un collaborateur
-              </DropdownMenuItem>
-            )}
-            {movable && (
-              <DropdownMenuItem onClick={() => onStartDrag(m)}>
-                <Move size={14} className="text-indigo-500" aria-hidden="true" />
-                {t('pyramid.move')}
-              </DropdownMenuItem>
-            )}
-            {canSeeInsights && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onOpenInsights(m, 'tasks')}>
-                  <ListTodo size={14} className="text-blue-500" aria-hidden="true" />
-                  Voir ses tâches
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onOpenInsights(m, 'agenda')}>
-                  <CalendarDays size={14} className="text-violet-500" aria-hidden="true" />
-                  Voir son agenda
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onOpenInsights(m, 'contribution')}>
-                  <TrendingUp size={14} className="text-emerald-500" aria-hidden="true" />
-                  Voir sa contribution
-                </DropdownMenuItem>
-              </>
-            )}
-            {canRemove && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive" onClick={() => onRemove(m)}>
-                  <Trash2 size={14} aria-hidden="true" />
-                  Retirer de l'entreprise
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-    </motion.div>
-  );
-
-  if (mobile) {
-    return (
-      <div style={{ marginLeft: depth * 16 }} className="space-y-2">
-        <div className={depth > 0 ? 'border-l-2 border-[rgb(var(--color-border))] pl-3' : ''}>{card}</div>
-        {!collapsed && node.children.map((c) => (
-          <NodeCard key={c.member.userId} node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} onOpenInsights={onOpenInsights} editMode={editMode} depth={depth + 1} mobile />
-        ))}
-      </div>
-    );
-  }
-
-  // Desktop : arbre vertical centré, connecteurs en L continus (org-chart).
-  return (
-    <div className="flex flex-col items-center">
-      {card}
-      {!collapsed && node.children.length > 0 && (
-        <>
-          <div className="w-px h-4 bg-[rgb(var(--color-border))]" aria-hidden="true" />
-          <div className="flex items-start relative">
-            {node.children.map((c, i) => {
-              const first = i === 0;
-              const last = i === node.children.length - 1;
-              return (
-                <div key={c.member.userId} className="relative flex flex-col items-center px-3">
-                  {/* Segment horizontal du connecteur en L (couvre le padding) */}
-                  {node.children.length > 1 && (
-                    <div
-                      className={`absolute top-0 h-px bg-[rgb(var(--color-border))] ${
-                        first ? 'left-1/2 right-0' : last ? 'left-0 right-1/2' : 'left-0 right-0'
-                      }`}
-                      aria-hidden="true"
-                    />
-                  )}
-                  <div className="w-px h-3 bg-[rgb(var(--color-border))]" aria-hidden="true" />
-                  <NodeCard node={c} members={members} currentUserId={currentUserId} isAdmin={isAdmin} onStartDrag={onStartDrag} onAddUnder={onAddUnder} onRemove={onRemove} onGrab={onGrab} drag={drag} flashId={flashId} collapsedIds={collapsedIds} onToggleCollapse={onToggleCollapse} matchIds={matchIds} teamsByUser={teamsByUser} onOpenProfile={onOpenProfile} onOpenInsights={onOpenInsights} editMode={editMode} depth={depth + 1} mobile={false} />
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
-
-/** Skeleton en forme de pyramide (1-2-3 cartes fantômes) pendant le chargement. */
-const PyramidSkeleton = () => (
-  <div className="flex flex-col items-center gap-6 py-8" aria-hidden="true">
-    {[1, 2, 3].map((count) => (
-      <div key={count} className="flex items-center gap-6">
-        {Array.from({ length: count }, (_, i) => (
-          <div
-            key={i}
-            className="w-44 h-[52px] rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] animate-pulse"
-          />
-        ))}
-      </div>
-    ))}
-  </div>
-);
 
 /**
  * Onglet Pyramide — org-chart N+1. Desktop : arbre centré ; mobile : liste
@@ -476,50 +56,94 @@ const PyramidSkeleton = () => (
  * cibles valides surlignées et zone « Détacher » pour les admins.
  */
 const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }: PyramidTabProps) => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   const isMobile = useIsMobile();
-  const [dragging, setDragging] = useState<OrgMember | null>(null);
-  const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
-  const [hoverDropId, setHoverDropId] = useState<string | null>(null);
-  const [placing, setPlacing] = useState<OrgMember | null>(null);
-  const [addingUnder, setAddingUnder] = useState<OrgMember | null>(null);
-  const [profile, setProfile] = useState<OrgMember | null>(null);
-  // Infos d'un subordonné (tâches / contribution), ouvert sur un onglet.
-  const [insights, setInsights] = useState<{ member: OrgMember; tab: InsightsTab } | null>(null);
-  // Agenda complet d'un subordonné (manager) — plein écran, éditable.
-  const [agendaMember, setAgendaMember] = useState<OrgMember | null>(null);
-  // Retrait d'un membre AVEC subordonnés : on choisit d'abord leur nouveau manager.
-  const [reassigning, setReassigning] = useState<OrgMember | null>(null);
-  // Retrait d'un membre SANS subordonné : modal de confirmation (#3).
-  const [removing, setRemoving] = useState<OrgMember | null>(null);
-  // Annonce lecteur d'écran après un déplacement (aria-live).
-  const [announcement, setAnnouncement] = useState('');
-  // Mode réorganisation : toutes les cartes déplaçables sont draggables ;
-  // les déplacements de la session sont journalisés pour pouvoir tout annuler.
-  const [editMode, setEditMode] = useState(false);
-  const [moveCount, setMoveCount] = useState(0);
-  const sessionMovesRef = useRef<{ userId: string; prevManagerId: string | null }[]>([]);
-  const editModeRef = useRef(false);
-  editModeRef.current = editMode;
-  // Carte brièvement surlignée après un déplacement réussi (l'œil la retrouve).
-  const [flashId, setFlashId] = useState<string | null>(null);
+  // Le GESTE (saisir une carte, la suivre au pointeur, valider ou annuler un
+  // déplacement) vit dans `usePyramidDnd` : il ne connaît ni la recherche, ni
+  // les vues par équipe, ni les fiches membre. Cet écran garde tout le reste.
+  const {
+    dragging,
+    setDragging,
+    ghost,
+    hoverDropId,
+    flashId,
+    announcement,
+    editMode,
+    moveCount,
+    canEdit,
+    startEdit,
+    finishEdit,
+    cancelEdit,
+    pendingConfirm,
+    confirmPending,
+    dismissPending,
+    grabMember,
+    drop,
+    drag,
+    scrollContainerRef,
+    onBackgroundPointerDown,
+  } = usePyramidDnd({ orgId, members, currentUserId, isAdmin });
+  // « Placer dans la pyramide », une feuille pour les deux sens (audit des
+  // popups, 2026-09-25) : ex-MemberPlacementSheet (au-dessus) et
+  // ex-AddUnderSheet (en dessous).
+  const [placement, setPlacement] = useState<{ member: OrgMember; direction: PlacementDirection } | null>(null);
+  const setPlacing = (member: OrgMember) => setPlacement({ member, direction: 'up' });
+  const setAddingUnder = (member: OrgMember) => setPlacement({ member, direction: 'down' });
+  // Fiche membre unifiée (item #18) : profil, tâches, contribution, agenda —
+  // un seul sheet, ouvert sur l'onglet demandé. `tab` reste une chaîne brute
+  // ici : seul `MemberSheet` connaît les onglets AUTORISÉS pour ce membre, et
+  // c'est lui qui valide (une URL forgée ne doit pas ouvrir un onglet interdit).
+  const [sheet, setSheet] = useState<{ member: OrgMember; tab: string | null } | null>(null);
+
+  // ─── Deep-link `?member=<id>&memberTab=<tab>` ───────────────────────
+  // Le helper `readEntityParam` accepte 'member' depuis la vague 1 mais rien ne
+  // le consommait : une fiche membre n'était donc pas partageable.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepMemberId = readEntityParam(searchParams, 'member');
+  const deepMemberTab = searchParams.get(MEMBER_TAB_PARAM);
+
+  useEffect(() => {
+    if (!deepMemberId) return;
+    const target = members.find((m) => m.userId === deepMemberId);
+    // Les membres arrivent en asynchrone : tant qu'ils ne sont pas là, on garde
+    // le paramètre et l'effet se rejoue au chargement suivant.
+    if (!target) return;
+    setSheet({ member: target, tab: deepMemberTab });
+    // Nettoyage : sans lui, refermer la fiche la rouvrirait au rendu suivant,
+    // l'URL restant la source de vérité.
+    const next = new URLSearchParams(searchParams);
+    next.delete('member');
+    next.delete(MEMBER_TAB_PARAM);
+    setSearchParams(next, { replace: true });
+  }, [deepMemberId, deepMemberTab, members, searchParams, setSearchParams]);
+
+  // ─── Calque de charge (item #28) ────────────────────────────────────
+  // Désactivé par défaut : la pyramide sert d'abord à lire l'organisation, et
+  // une barre sur chaque carte en permanence brouillerait cette lecture.
+  const [showWorkload, setShowWorkload] = useState(false);
+  // Le calque compte les tâches OUVERTES côté SERVEUR (mig. 191), sur toutes
+  // les tâches : le calcul local ne voyait que l'extrait plafonné à 1 000.
+  const { data: serverWorkload = [] } = useTeamMemberWorkload(showWorkload ? orgId : undefined);
+
+  const workloadByUser = useMemo(() => {
+    if (!showWorkload) return undefined;
+    return new Map(memberWorkloadFromServer(serverWorkload, members).map((w) => [w.userId, w]));
+  }, [showWorkload, serverWorkload, members]);
   // Recherche de membre (surligne + déplie + scrolle jusqu'au premier résultat).
   const [query, setQuery] = useState('');
-  // Nœuds repliés — persistés par organisation (l'org est mémorisée pour ne
-  // pas écraser le storage d'une autre org lors d'un changement d'org active).
-  const [collapsed, setCollapsed] = useState<{ org: string; ids: Set<string> }>(() => ({
-    org: orgId,
-    ids: readCollapsedIds(orgId),
-  }));
   // Fades de scroll horizontal (desktop) : y a-t-il du contenu hors-champ ?
   const [scrollShadow, setScrollShadow] = useState({ left: false, right: false });
   // Vue : null = toute l'entreprise ; sinon id d'équipe (membres de l'équipe +
   // leur chaîne hiérarchique jusqu'à l'admin).
   const [viewTeamId, setViewTeamId] = useState<string | null>(null);
-  const setManager = useSetMemberManager();
-  const removeMember = useRemoveMember();
+  // Retrait = assistant de départ (mig. 161/164) : il annonce l'impact
+  // (tâches, subordonnés, équipes, projets, KR) et fait choisir qui reprend.
+  const lifecycle = useMemberLifecycle({ orgId, members, ownerId, currentUserId, isAdmin });
   const { data: orgTeams = [] } = useOrgTeams(orgId);
   const { data: orgTeamMembers = [] } = useOrgTeamMembers(orgId);
+  // Une équipe créée d'ici devient la vue affichée (formulaire unique).
+  const create = useOrgCreate();
 
   // Membres visibles selon la vue. Vue équipe : chaque membre de l'équipe + ses
   // ancêtres jusqu'à la racine (les liens managerId restent donc intacts).
@@ -548,26 +172,9 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     }
   }, [viewTeamId, orgTeams]);
 
-  // Retrait d'un membre (admin). Sans subordonné direct : modal de
-  // confirmation (#3). Avec subordonnés : d'abord le choix de leur nouveau
-  // responsable (ReassignManagerSheet).
-  const handleRemove = (m: OrgMember) => {
-    const hasReports = members.some((x) => x.managerId === m.userId);
-    if (hasReports) setReassigning(m);
-    else setRemoving(m);
-  };
-
-  // Réassigne les subordonnés directs de `member` à `newManagerId` (null =
-  // détacher), puis retire `member`. La hiérarchie SOUS ces subordonnés est
-  // préservée (on ne touche qu'à leur rattachement de premier niveau).
-  const performRemoveWithReassign = async (member: OrgMember, newManagerId: string | null) => {
-    const directs = members.filter((x) => x.managerId === member.userId);
-    for (const c of directs) {
-      await setManager.mutateAsync({ orgId, userId: c.userId, managerId: newManagerId, silent: true });
-    }
-    await removeMember.mutateAsync({ orgId, userId: member.userId });
-    setReassigning(null);
-  };
+  // Retrait d'un membre (admin) : l'assistant de départ, qui transmet tâches,
+  // subordonnés, rôles, projets et KR AVANT de retirer (audit du 2026-09-24).
+  const handleRemove = (m: OrgMember) => lifecycle.openDeparture(m, 'remove');
 
   // Équipes transverses par membre (pastilles couleur sur les cartes).
   const teamsByUser = useMemo(() => {
@@ -584,62 +191,8 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   }, [orgTeams, orgTeamMembers]);
 
 
-  // Refs pour les listeners window (évite les closures périmées).
-  const draggingRef = useRef<OrgMember | null>(null);
-  draggingRef.current = dragging;
-  const dropGuardRef = useRef(false);
-  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Auto-scroll pendant le glisser : position du pointeur + boucle rAF.
-  const pointerPosRef = useRef<{ x: number; y: number } | null>(null);
-  const scrollRafRef = useRef<number | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-
   const { roots, unplaced } = buildOrgTree(visibleMembers, ownerId);
   const selfMember = members.find((m) => m.userId === currentUserId) ?? null;
-
-  // Pan : glisser le fond de la pyramide pour se déplacer (desktop).
-  const onBackgroundPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isMobile || dragging) return;
-    if ((e.target as HTMLElement).closest('[data-card],button,input')) return;
-    const c = scrollContainerRef.current;
-    if (!c) return;
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startLeft = c.scrollLeft;
-    const startTop = window.scrollY;
-    const onMove = (ev: PointerEvent) => {
-      c.scrollLeft = startLeft - (ev.clientX - startX);
-      window.scrollTo(0, startTop - (ev.clientY - startY));
-    };
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-  };
-
-  // ── Replier/déplier (persisté par org) ─────────────────────────────
-  useEffect(() => {
-    if (collapsed.org !== orgId) setCollapsed({ org: orgId, ids: readCollapsedIds(orgId) });
-  }, [orgId, collapsed.org]);
-
-  useEffect(() => {
-    if (collapsed.org !== orgId) return;
-    try {
-      localStorage.setItem(collapsedStorageKey(orgId), JSON.stringify([...collapsed.ids]));
-    } catch {
-      // Quota localStorage plein : l'état replié n'est simplement pas persisté.
-    }
-  }, [collapsed, orgId]);
-
-  const toggleCollapse = (id: string) =>
-    setCollapsed((prev) => {
-      const ids = new Set(prev.ids);
-      if (ids.has(id)) ids.delete(id);
-      else ids.add(id);
-      return { org: prev.org, ids };
-    });
 
   // ── Recherche ──────────────────────────────────────────────────────
   const matchIds = useMemo(() => {
@@ -648,8 +201,11 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     return new Set(visibleMembers.filter((m) => normalize(m.displayName).includes(q)).map((m) => m.userId));
   }, [query, visibleMembers]);
 
-  // Pendant une recherche, tout est déplié pour que les résultats soient visibles.
-  const effectiveCollapsedIds = matchIds.size > 0 || query.trim() ? EMPTY_SET : collapsed.ids;
+  // Nœuds repliés : persistance par org, repli par défaut d'un grand
+  // organigramme, et dépliage du seul chemin vers les résultats de recherche.
+  const { effectiveCollapsedIds, toggleCollapse } = usePyramidCollapse({
+    orgId, roots, memberCount: members.length, visibleMembers, matchIds,
+  });
 
   // Scroll doux vers le premier résultat quand la recherche change.
   useEffect(() => {
@@ -679,234 +235,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     return () => window.removeEventListener('resize', updateScrollShadow);
   }, [members, isMobile, loading]);
 
-  // Destinations valides : pas soi-même, pas son sous-arbre (cycle), pas son
-  // manager actuel ; un non-admin ne dépose que sur lui-même ou son sous-arbre.
-  const validDropIds = useMemo(() => {
-    if (!dragging) return new Set<string>();
-    const targetSubtree = subtreeOf(members, dragging.userId);
-    const mySubtree = currentUserId ? subtreeOf(members, currentUserId) : new Set<string>();
-    return new Set(
-      members
-        .filter((m) => {
-          if (m.userId === dragging.userId) return false;
-          if (targetSubtree.has(m.userId)) return false;
-          if (m.userId === dragging.managerId) return false;
-          if (!isAdmin && m.userId !== currentUserId && !mySubtree.has(m.userId)) return false;
-          return true;
-        })
-        .map((m) => m.userId),
-    );
-  }, [dragging, members, currentUserId, isAdmin]);
-
-  useEffect(() => {
-    if (!dragging) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setDragging(null);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [dragging]);
-
-  // Nettoyage au démontage : boucle d'auto-scroll + timer de flash.
-  useEffect(
-    () => () => {
-      if (scrollRafRef.current !== null) cancelAnimationFrame(scrollRafRef.current);
-      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
-    },
-    [],
-  );
-
-  const flashCard = (userId: string) => {
-    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
-    setFlashId(userId);
-    flashTimerRef.current = setTimeout(() => setFlashId(null), 1600);
-  };
-
-  const drop = (dropId: string) => {
-    const target = draggingRef.current;
-    if (!target || dropGuardRef.current) return;
-    dropGuardRef.current = true;
-    const previousManagerId = target.managerId ?? null;
-    setManager.mutate(
-      { orgId, userId: target.userId, managerId: dropId === UNPLACED_DROP_ID ? null : dropId, silent: true },
-      {
-        onSettled: () => {
-          dropGuardRef.current = false;
-        },
-        onSuccess: () => {
-          setDragging(null);
-          flashCard(target.userId);
-          navigator.vibrate?.(30);
-          const destName =
-            dropId === UNPLACED_DROP_ID ? null : members.find((u) => u.userId === dropId)?.displayName;
-          setAnnouncement(
-            destName
-              ? t('pyramid.nowUnder', { name: target.displayName, manager: destName })
-              : t('pyramid.detached', { name: target.displayName }),
-          );
-          if (editModeRef.current) {
-            // Mode réorganisation : on journalise pour « Annuler », pas de toast.
-            sessionMovesRef.current.push({ userId: target.userId, prevManagerId: previousManagerId });
-            setMoveCount(sessionMovesRef.current.length);
-          } else {
-            showUndoToast(t('pyramid.moved', { name: target.displayName }), () => {
-              setManager.mutate({ orgId, userId: target.userId, managerId: previousManagerId });
-              flashCard(target.userId);
-            });
-          }
-        },
-      },
-    );
-  };
-
-  const findDropId = (x: number, y: number): string | null => {
-    const el = document.elementFromPoint(x, y)?.closest('[data-drop-id]');
-    return el instanceof HTMLElement ? (el.dataset.dropId ?? null) : null;
-  };
-
-  /**
-   * Auto-scroll pendant le glisser : boucle rAF tant que le pointeur est
-   * enfoncé — fenêtre verticalement, conteneur pyramide horizontalement,
-   * quand le pointeur approche des bords (zone de 56 px, vitesse dégressive).
-   */
-  const stopAutoScroll = () => {
-    if (scrollRafRef.current !== null) cancelAnimationFrame(scrollRafRef.current);
-    scrollRafRef.current = null;
-    pointerPosRef.current = null;
-  };
-
-  const startAutoScroll = () => {
-    if (scrollRafRef.current !== null) return;
-    const EDGE = 56;
-    const SPEED = 14;
-    const step = () => {
-      const p = pointerPosRef.current;
-      if (!p) {
-        scrollRafRef.current = null;
-        return;
-      }
-      // Vertical : fenêtre.
-      if (p.y < EDGE) window.scrollBy(0, -SPEED * (1 - p.y / EDGE));
-      else if (p.y > window.innerHeight - EDGE) window.scrollBy(0, SPEED * (1 - (window.innerHeight - p.y) / EDGE));
-      // Horizontal : conteneur scrollable de la pyramide.
-      const c = scrollContainerRef.current;
-      if (c) {
-        const r = c.getBoundingClientRect();
-        if (p.x < r.left + EDGE) c.scrollLeft -= SPEED * (1 - (p.x - r.left) / EDGE);
-        else if (p.x > r.right - EDGE) c.scrollLeft += SPEED * (1 - (r.right - p.x) / EDGE);
-      }
-      scrollRafRef.current = requestAnimationFrame(step);
-    };
-    scrollRafRef.current = requestAnimationFrame(step);
-  };
-
-  /** Suivi pointeur d'un glisser en cours (fantôme + survol cible + auto-scroll). */
-  const startPointerTracking = (e: { clientX: number; clientY: number }) => {
-    setGhost({ x: e.clientX, y: e.clientY });
-    pointerPosRef.current = { x: e.clientX, y: e.clientY };
-    startAutoScroll();
-    const onMove = (ev: PointerEvent) => {
-      setGhost({ x: ev.clientX, y: ev.clientY });
-      pointerPosRef.current = { x: ev.clientX, y: ev.clientY };
-      setHoverDropId(findDropId(ev.clientX, ev.clientY));
-    };
-    const endDrag = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      window.removeEventListener('pointercancel', onCancel);
-      stopAutoScroll();
-      setGhost(null);
-      setHoverDropId(null);
-    };
-    const onUp = (ev: PointerEvent) => {
-      let id = findDropId(ev.clientX, ev.clientY);
-      if (!id) {
-        // Secours : drag plus rapide que le re-render (data-drop-id pas encore
-        // posé) — on valide la destination par les données, pas par le DOM.
-        const el = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('[data-node-id]');
-        const nodeId = el instanceof HTMLElement ? el.dataset.nodeId : undefined;
-        const target = draggingRef.current;
-        if (nodeId && target && isValidDestination(target, nodeId, members, currentUserId, isAdmin)) {
-          id = nodeId;
-        }
-      }
-      endDrag();
-      if (id) drop(id);
-    };
-    const onCancel = () => endDrag();
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    window.addEventListener('pointercancel', onCancel);
-  };
-
-  const onSourcePointerDown = (e: React.PointerEvent<HTMLElement>) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    e.preventDefault();
-    startPointerTracking(e);
-  };
-
-  /** Saisie directe (poignée grip / long-press / mode réorganisation). */
-  const grabMember = (m: OrgMember, e: { clientX: number; clientY: number }) => {
-    draggingRef.current = m;
-    setDragging(m);
-    navigator.vibrate?.(20);
-    startPointerTracking(e);
-  };
-
-  // ── Mode réorganisation (Modifier / Annuler) ───────────────────────
-  const canEdit = isAdmin || (!!currentUserId && isManagerOf(members, currentUserId));
-
-  const startEdit = () => {
-    sessionMovesRef.current = [];
-    setMoveCount(0);
-    setEditMode(true);
-  };
-
-  const resetEditState = () => {
-    sessionMovesRef.current = [];
-    setMoveCount(0);
-    setEditMode(false);
-    setDragging(null);
-  };
-
-  const finishEdit = () => {
-    if (sessionMovesRef.current.length > 0) toast.success(t('pyramid.reorgSaved'));
-    resetEditState();
-  };
-
-  const cancelEdit = async () => {
-    const moves = sessionMovesRef.current;
-    if (moves.length > 0) {
-      const ok = window.confirm(
-        moves.length > 1
-          ? tp('pyramid.undoConfirm', moves.length)
-          : tp('pyramid.undoConfirm', 1),
-      );
-      if (!ok) return;
-      // Rétablissement dans l'ordre inverse (évite les faux cycles serveur).
-      for (const mv of [...moves].reverse()) {
-        try {
-          await setManager.mutateAsync({ orgId, userId: mv.userId, managerId: mv.prevManagerId, silent: true });
-        } catch {
-          break; // l'erreur est déjà remontée par le toast du hook
-        }
-      }
-      toast.success(t('pyramid.undone'));
-    }
-    resetEditState();
-  };
-
-  const drag: DragState | null = dragging
-    ? {
-        member: dragging,
-        validDropIds,
-        hoverDropId,
-        pointerActive: ghost !== null,
-        onSourcePointerDown,
-        onDrop: drop,
-      }
-    : null;
-
   if (loading) return <PyramidSkeleton />;
 
   return (
@@ -917,7 +245,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           <p className="text-sm text-[rgb(var(--color-text-primary))] inline-flex items-center gap-2 min-w-0">
             <Move size={15} className="text-indigo-500 shrink-0" aria-hidden="true" />
             <span className="truncate">
-              <RichText strongClassName="font-semibold">{t('pyramid.dragBanner', { name: dragging.displayName })}</RichText>
+              <RichText strongClassName="font-semibold">{ta('pyramid.dragBanner', { name: dragging.displayName })}</RichText>
             </span>
           </p>
           <button
@@ -925,7 +253,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             onClick={() => setDragging(null)}
             className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] px-3 py-1.5 rounded-lg border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] shrink-0 transition-colors"
           >
-            Annuler
+            {t('common.cancel')}
           </button>
         </div>
       )}
@@ -936,44 +264,25 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           type="button"
           data-drop-id={UNPLACED_DROP_ID}
           onClick={() => drop(UNPLACED_DROP_ID)}
-          aria-label={t('pyramid.detachAria', { name: dragging.displayName })}
+          aria-label={ta('pyramid.detachAria', { name: dragging.displayName })}
           className={`w-full flex items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-3 text-sm transition-colors ${
             hoverDropId === UNPLACED_DROP_ID
               ? 'border-amber-500 ring-2 ring-amber-500/40 text-amber-600 dark:text-amber-400'
               : 'border-amber-400/60 text-[rgb(var(--color-text-muted))] hover:border-amber-500'
           }`}
         >
-          <ArrowUpFromLine size={15} aria-hidden="true" /> {t('pyramid.detach')}
+          <ArrowUpFromLine size={15} aria-hidden="true" /> {ta('pyramid.detach')}
         </button>
       )}
 
       {/* Non placés — mobile (et pyramide vide) : section en haut. Desktop : barre latérale droite. */}
-      {unplaced.length > 0 && (isMobile || roots.length === 0) && (
-        <section className="rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4">
-          <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1 inline-flex items-center gap-1.5">
-            <UserPlus size={15} aria-hidden="true" /> {t('pyramid.unplaced', { count: unplaced.length })}
-          </h3>
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
-            {isAdmin ? t('pyramid.unplacedHintAdmin') : t('pyramid.unplacedHintMember')}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {unplaced.map((m) => (
-              <div key={m.userId} className="flex items-center gap-2 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2">
-                <MemberAvatar avatar={m.avatar} name={m.displayName} size={30} />
-                <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{m.displayName}</span>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => setPlacing(m)}
-                    className="ml-1 text-xs font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
-                  >
-                    {t('pyramid.place')}
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
+      {(isMobile || roots.length === 0) && (
+        <UnplacedMembersPanel
+          variant="section"
+          members={unplaced}
+          isAdmin={isAdmin}
+          onPlace={setPlacing}
+        />
       )}
 
       {/* Pyramide */}
@@ -983,11 +292,10 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             <Users size={26} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
           </div>
           <p className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1.5">
-            Votre pyramide est vide
+            {ta('pyramid.emptyTitle')}
           </p>
           <p className="text-sm text-[rgb(var(--color-text-muted))] max-w-sm mb-5">
-            {t('pyramid.intro')}
-            responsable direct (N+1). Invitez vos collaborateurs pour la construire.
+            {ta('pyramid.intro')}
           </p>
           {selfMember && canEdit && (
             <button
@@ -995,7 +303,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
               onClick={() => setAddingUnder(selfMember)}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
             >
-              <UserPlus size={16} aria-hidden="true" /> Inviter votre premier collaborateur
+              <UserPlus size={16} aria-hidden="true" /> {ta('pyramid.inviteFirst')}
             </button>
           )}
         </div>
@@ -1003,133 +311,31 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
         <div className="flex items-start gap-4">
         <div className="flex-1 min-w-0">
           {/* Recherche + bouton Modifier/Annuler (toujours visible) */}
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-              <div className="relative flex-1 min-w-[160px] max-w-xs">
-                <Search
-                  size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))] pointer-events-none"
-                  aria-hidden="true"
-                />
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t('pyramid.searchPlaceholder')}
-                  aria-label={t('pyramid.searchAria')}
-                  className="w-full pl-9 pr-8 py-2 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400 [&::-webkit-search-cancel-button]:hidden"
-                />
-                {query && (
-                  <button
-                    type="button"
-                    onClick={() => setQuery('')}
-                    aria-label={t('pyramid.clearSearch')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
-                  >
-                    <X size={12} aria-hidden="true" />
-                  </button>
-                )}
-              </div>
-              {query.trim() && (
-                <span className="text-xs text-[rgb(var(--color-text-muted))]" aria-live="polite">
-                  {tp('pyramid.results', matchIds.size)}
-                </span>
-              )}
-              {orgTeams.length > 0 && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    aria-label={t('pyramid.chooseView')}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${
-                      activeTeam
-                        ? 'border-transparent text-white'
-                        : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
-                    }`}
-                    style={activeTeam ? { backgroundColor: activeTeam.color } : undefined}
-                  >
-                    {activeTeam ? (
-                      <>
-                        <span className="w-2 h-2 rounded-full bg-white/80 shrink-0" aria-hidden="true" />
-                        {activeTeam.name}
-                      </>
-                    ) : (
-                      <>
-                        <Users size={14} aria-hidden="true" /> {t('pyramid.wholeOrg')}
-                      </>
-                    )}
-                    <ChevronDown size={13} aria-hidden="true" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
-                    <DropdownMenuLabel>{t('pyramid.display')}</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => setViewTeamId(null)}>
-                      <Users size={14} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-                      {t('pyramid.wholeOrg')}
-                      {!viewTeamId && <Check size={14} className="ml-auto text-indigo-500" aria-hidden="true" />}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>{t('pyramid.byTeam')}</DropdownMenuLabel>
-                    {orgTeams.map((t) => (
-                      <DropdownMenuItem key={t.id} onClick={() => setViewTeamId(t.id)}>
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: t.color }} aria-hidden="true" />
-                        <span className="truncate">{t.name}</span>
-                        {viewTeamId === t.id && <Check size={14} className="ml-auto text-indigo-500 shrink-0" aria-hidden="true" />}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-              {canEdit && (
-                <div className="ml-auto flex items-center gap-2">
-                  {editMode && moveCount > 0 && (
-                    <span className="text-xs font-semibold text-indigo-500 tabular-nums">
-                      {moveCount} modification{moveCount > 1 ? 's' : ''}
-                    </span>
-                  )}
-                  {!editMode && selfMember && canEdit && (
-                    <button
-                      type="button"
-                      onClick={() => setAddingUnder(selfMember)}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-                    >
-                      <UserPlus size={14} aria-hidden="true" /> {t('pyramid.add')}
-                    </button>
-                  )}
-                  {editMode && (
-                    <button
-                      type="button"
-                      onClick={finishEdit}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
-                    >
-                      <Check size={15} aria-hidden="true" /> {t('pyramid.done')}
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={editMode ? cancelEdit : startEdit}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                      editMode
-                        ? 'border border-red-400/60 text-red-500 hover:bg-red-500/10'
-                        : 'text-white bg-indigo-600 hover:bg-indigo-700'
-                    }`}
-                  >
-                    {editMode ? (
-                      <>
-                        <X size={15} aria-hidden="true" /> Annuler
-                      </>
-                    ) : (
-                      <>
-                        <Pencil size={14} aria-hidden="true" /> {t('pyramid.edit')}
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
-
+          <PyramidToolbar
+            query={query}
+            onQueryChange={setQuery}
+            matchCount={matchIds.size}
+            teams={orgTeams}
+            activeTeam={activeTeam}
+            viewTeamId={viewTeamId}
+            onViewTeamChange={setViewTeamId}
+            isAdmin={isAdmin}
+            onCreateTeam={() => create.openTeam({ onCreated: setViewTeamId })}
+            canEdit={canEdit}
+            editMode={editMode}
+            moveCount={moveCount}
+            onStartEdit={startEdit}
+            onCancelEdit={cancelEdit}
+            onFinishEdit={finishEdit}
+            showWorkload={showWorkload}
+            onToggleWorkload={() => setShowWorkload((v) => !v)}
+          />
           {/* Bandeau mode réorganisation */}
           {editMode && !dragging && (
             <div className="flex items-center gap-2 rounded-2xl border border-indigo-400/60 bg-indigo-50/60 dark:bg-indigo-900/15 px-4 py-3 mb-3">
               <Move size={15} className="text-indigo-500 shrink-0" aria-hidden="true" />
               <p className="text-sm text-[rgb(var(--color-text-primary))]">
-                {t('pyramid.reorgBanner')}
+                {ta('pyramid.reorgBanner')}
               </p>
             </div>
           )}
@@ -1138,7 +344,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-3">
               {orgTeams.map((t) => (
                 <span key={t.id} className="inline-flex items-center gap-1.5 text-[11px] text-[rgb(var(--color-text-muted))]">
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} aria-hidden="true" />
+                  <span className="w-2 h-2 rounded-full shrink-0 max-md:bg-[color-mix(in_srgb,var(--tc)_55%,#8b949e)] md:bg-[var(--tc)]" style={{ '--tc': t.color } as CSSProperties} aria-hidden="true" />
                   {t.name}
                 </span>
               ))}
@@ -1161,10 +367,10 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           {roots.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-                {t('pyramid.noMemberInTeam')}
+                {ta('pyramid.noMemberInTeam')}
               </p>
               <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
-                {t('pyramid.addMembersHint')}
+                {ta('pyramid.addMembersHint')}
               </p>
             </div>
           ) : (
@@ -1172,6 +378,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             {roots.map((root) => (
               <NodeCard
                 key={root.member.userId}
+                workloadByUser={workloadByUser}
                 node={root}
                 members={members}
                 currentUserId={currentUserId}
@@ -1186,10 +393,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
                 onToggleCollapse={toggleCollapse}
                 matchIds={matchIds}
                 teamsByUser={teamsByUser}
-                onOpenProfile={setProfile}
-                onOpenInsights={(mem, tab) =>
-                  tab === 'agenda' ? setAgendaMember(mem) : setInsights({ member: mem, tab })
-                }
+                onOpenMember={(mem, tab) => setSheet({ member: mem, tab })}
                 editMode={editMode}
                 depth={0}
                 mobile={isMobile}
@@ -1202,65 +406,16 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
         </div>
 
         {/* Barre latérale droite : personnes à placer (desktop) */}
-        {!isMobile && unplaced.length > 0 && (
-          <aside
-            className="w-60 shrink-0 sticky top-4 rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4"
-            aria-label={t('pyramid.toPlaceAria')}
-          >
-            <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1 inline-flex items-center gap-1.5">
-              <UserPlus size={15} aria-hidden="true" /> {t('pyramid.toPlace', { count: unplaced.length })}
-            </h3>
-            <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
-              {isAdmin
-                ? t('pyramid.dragEachHint')
-                : t('pyramid.unplacedHintMember')}
-            </p>
-            <ul className="space-y-2">
-              {unplaced.map((m) => {
-                const isBeingDragged = dragging?.userId === m.userId;
-                return (
-                  <li key={m.userId}>
-                    <div
-                      onPointerDown={
-                        isAdmin
-                          ? (e) => {
-                              if (e.pointerType === 'mouse' && e.button !== 0) return;
-                              if ((e.target as HTMLElement).closest('button')) return;
-                              e.preventDefault();
-                              grabMember(m, e);
-                            }
-                          : undefined
-                      }
-                      style={isAdmin ? { touchAction: 'none' } : undefined}
-                      title={isAdmin ? `Glisser ${m.displayName} dans la pyramide` : undefined}
-                      className={`flex items-center gap-2 rounded-xl border bg-[rgb(var(--color-surface))] px-2.5 py-2 transition-colors ${
-                        isBeingDragged
-                          ? 'border-indigo-400 ring-2 ring-indigo-400/30 opacity-40'
-                          : 'border-[rgb(var(--color-border))]'
-                      } ${isAdmin ? 'cursor-grab select-none' : ''} ${isAdmin && !dragging ? 'animate-wiggle' : ''}`}
-                    >
-                      {isAdmin && (
-                        <GripVertical size={12} className="text-[rgb(var(--color-text-muted))]/50 shrink-0" aria-hidden="true" />
-                      )}
-                      <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
-                      <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate flex-1">
-                        {m.displayName}
-                      </span>
-                      {isAdmin && !dragging && (
-                        <button
-                          type="button"
-                          onClick={() => setPlacing(m)}
-                          className="text-[11px] font-semibold text-indigo-500 hover:text-indigo-600 transition-colors shrink-0"
-                        >
-                          {t('pyramid.place')}
-                        </button>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </aside>
+        {!isMobile && (
+          <UnplacedMembersPanel
+            variant="sidebar"
+            members={unplaced}
+            isAdmin={isAdmin}
+            onPlace={setPlacing}
+            onGrab={grabMember}
+            draggingId={dragging?.userId ?? null}
+            isDragging={dragging !== null}
+          />
         )}
         </div>
       )}
@@ -1273,20 +428,23 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           aria-hidden="true"
         >
           <div className="flex items-center gap-2 rounded-xl border border-indigo-400 bg-[rgb(var(--color-surface))] px-3 py-2 shadow-2xl">
-            <MemberAvatar avatar={dragging.avatar} name={dragging.displayName} size={26} />
+            <MemberAvatar avatar={dragging.avatar} name={dragging.displayName} size={28} />
             <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{dragging.displayName}</span>
           </div>
         </div>
       )}
 
-      {placing && (
-        <MemberPlacementSheet
+      {placement && (
+        <PyramidPlacementSheet
           orgId={orgId}
-          target={placing}
+          target={placement.member}
           members={members}
           currentUserId={currentUserId}
           isAdmin={isAdmin}
-          onClose={() => setPlacing(null)}
+          initialDirection={placement.direction}
+          canMoveTarget={isAdmin || canManage(placement.member, members, currentUserId, isAdmin)}
+          canPlaceUnder={isAdmin || placement.member.userId === currentUserId || canManage(placement.member, members, currentUserId, isAdmin)}
+          onClose={() => setPlacement(null)}
         />
       )}
 
@@ -1295,69 +453,39 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
         {announcement}
       </div>
 
-      {profile && (
-        <MemberProfileSheet
-          member={profile}
+      {sheet && (
+        <MemberSheet
+          orgId={orgId}
+          member={sheet.member}
           members={members}
-          teams={teamsByUser.get(profile.userId) ?? []}
+          teams={teamsByUser.get(sheet.member.userId) ?? []}
           currentUserId={currentUserId}
-          canMove={canManage(profile, members, currentUserId, isAdmin)}
-          canAddUnder={isAdmin || profile.userId === currentUserId || canManage(profile, members, currentUserId, isAdmin)}
-          onClose={() => setProfile(null)}
+          canMove={canManage(sheet.member, members, currentUserId, isAdmin)}
+          canAddUnder={isAdmin || sheet.member.userId === currentUserId || canManage(sheet.member, members, currentUserId, isAdmin)}
+          // Mêmes droits que l'ancien menu ⋯ : supérieur hiérarchique
+          // uniquement (admin partout, manager sur son sous-arbre), jamais soi.
+          canSeeInsights={canManage(sheet.member, members, currentUserId, isAdmin)}
+          canSeeAgenda={canManage(sheet.member, members, currentUserId, isAdmin)}
+          initialTab={sheet.tab}
+          onClose={() => setSheet(null)}
           onMove={setDragging}
           onAddUnder={setAddingUnder}
         />
       )}
 
-      {insights && (
-        <MemberInsightsSheet
-          orgId={orgId}
-          member={insights.member}
-          initialTab={insights.tab}
-          canEdit={canManage(insights.member, members, currentUserId, isAdmin)}
-          onClose={() => setInsights(null)}
-        />
-      )}
+      {lifecycle.dialogs}
+      <PyramidPendingConfirm pending={pendingConfirm} onConfirm={confirmPending} onCancel={dismissPending} />
 
-      {agendaMember && (
-        <MemberAgendaSheet member={agendaMember} onClose={() => setAgendaMember(null)} />
-      )}
-
-      {removing && (
-        <ConfirmRemoveMemberDialog
-          member={removing}
-          pending={removeMember.isPending}
-          onConfirm={() =>
-            removeMember.mutate(
-              { orgId, userId: removing.userId },
-              { onSettled: () => setRemoving(null) },
-            )
-          }
-          onCancel={() => setRemoving(null)}
-        />
-      )}
-
-      {reassigning && (
-        <ReassignManagerSheet
-          member={reassigning}
-          members={members}
-          ownerId={ownerId}
-          currentUserId={currentUserId}
-          onConfirm={(newManagerId) => performRemoveWithReassign(reassigning, newManagerId)}
-          onCancel={() => setReassigning(null)}
-        />
-      )}
-
-      {addingUnder && (
-        <AddUnderSheet
-          orgId={orgId}
-          under={addingUnder}
-          currentUserId={currentUserId}
-          onClose={() => setAddingUnder(null)}
-        />
-      )}
     </div>
   );
 };
 
-export default PyramidTab;
+// Frontière du formulaire unique de création (org-create.context) : posée par
+// chaque écran qui crée, pas par la page, dont le chunk a un cliquet.
+const PyramidTabWithCreate = (props: PyramidTabProps) => (
+  <OrgCreateBoundary orgId={props.orgId}>
+    <PyramidTab {...props} />
+  </OrgCreateBoundary>
+);
+
+export default PyramidTabWithCreate;

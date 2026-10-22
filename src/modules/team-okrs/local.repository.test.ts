@@ -12,9 +12,9 @@ describe('LocalStorageTeamOKRsRepository (démo)', () => {
     repo = new LocalStorageTeamOKRsRepository();
   });
 
-  it('seede 3 OKR avec des KR assignés', async () => {
+  it('seede 5 OKR avec des KR assignés', async () => {
     const okrs = await repo.getAll(ORG);
-    expect(okrs.length).toBe(3);
+    expect(okrs.length).toBe(5);
     expect(okrs.every((o) => o.keyResults.length > 0)).toBe(true);
     expect(okrs.flatMap((o) => o.keyResults).some((kr) => kr.assigneeId)).toBe(true);
   });
@@ -56,13 +56,13 @@ describe('LocalStorageTeamOKRsRepository (démo)', () => {
     });
     expect(created.keyResults.length).toBe(1);
     expect(created.keyResults[0].targetValue).toBe(100);
-    expect((await repo.getAll(ORG)).length).toBe(4);
+    expect((await repo.getAll(ORG)).length).toBe(6);
   });
 
   it('supprime un OKR', async () => {
     const okrs = await repo.getAll(ORG);
     await repo.remove(okrs[0].id);
-    expect((await repo.getAll(ORG)).length).toBe(2);
+    expect((await repo.getAll(ORG)).length).toBe(4);
   });
 
   it('garantit teamIds tableau sur tous les OKR (coercition legacy)', async () => {

@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getCategoriesRepository } from '@/lib/repository.factory';
 import type { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
-import { categoryKeys } from './constants';
+import { categoryKeys, DEFAULT_CATEGORY_COLOR } from './constants';
 import { translator } from '@/i18n/useT';
+import { reportRestoreFailure, splitRestore } from '@/lib/restore-id';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -25,26 +27,31 @@ export const useCategories = () => {
   });
 };
 
-export const useCategory = (id: string) => {
-  const repository = useCategoriesRepository();
-  return useQuery({
-    queryKey: categoryKeys.detail(id),
-    queryFn: () => repository.getById(id),
-    enabled: !!id,
-    staleTime: 1000 * 60 * 30, // 30 minutes — quasi statiques, mutations invalident le cache
-  });
-};
-
 // ═══════════════════════════════════════════════════════════════════
 // MUTATION HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * Création d'une catégorie.
+ *
+ * ⚠️ La couleur est HÉRITÉE du parent au moment de la CRÉATION, pas résolue au
+ * rendu : une couleur calculée à l'affichage repeindrait rétroactivement toutes
+ * les sous-catégories le jour où on change celle du parent. Elle reste
+ * surchargeable ensuite, comme n'importe quelle couleur.
+ */
 export const useCreateCategory = () => {
   const queryClient = useQueryClient();
   const repository = useCategoriesRepository();
 
   return useMutation({
-    mutationFn: (input: CreateCategoryInput) => repository.create(input),
+    mutationFn: (input: CreateCategoryInput) => {
+      const known = queryClient.getQueryData<Category[]>(categoryKeys.lists()) ?? [];
+      const parent = input.parentId ? known.find((c) => c.id === input.parentId) : undefined;
+      return repository.create({
+        ...input,
+        color: input.color ?? parent?.color ?? DEFAULT_CATEGORY_COLOR,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
     },
@@ -93,6 +100,47 @@ export const useUpdateCategory = () => {
   });
 };
 
+/**
+ * Déplacement d'une catégorie : reparentage ET réordonnancement.
+ *
+ * 🔴 UNE SEULE mutation, et UN SEUL geste d'interface : le menu
+ * « Déplacer vers… ». ❌ Ne jamais lui adjoindre un glisser-déposer : la
+ * décision produit du 2026-09-09 est que cette fonctionnalité doit rester
+ * simple et intuitive, et un second chemin serait un second endroit où la
+ * règle peut diverger.
+ */
+export const useMoveCategory = () => {
+  const queryClient = useQueryClient();
+  const repository = useCategoriesRepository();
+
+  return useMutation({
+    mutationFn: ({ id, parentId, position }: { id: string; parentId: string | null; position: number }) =>
+      repository.update(id, { parentId, position }),
+
+    onMutate: async ({ id, parentId, position }) => {
+      await queryClient.cancelQueries({ queryKey: categoryKeys.all });
+      const previousCategories = queryClient.getQueryData<Category[]>(categoryKeys.lists());
+      if (previousCategories) {
+        queryClient.setQueryData<Category[]>(categoryKeys.lists(), (old) =>
+          old?.map((c) => (c.id === id ? { ...c, parentId, position } : c)),
+        );
+      }
+      return { previousCategories };
+    },
+
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousCategories) {
+        queryClient.setQueryData(categoryKeys.lists(), context.previousCategories);
+      }
+      toast.error(translator('errors').t('mutation.moveCategory', { message: error.message }));
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+    },
+  });
+};
+
 export const useDeleteCategory = () => {
   const queryClient = useQueryClient();
   const repository = useCategoriesRepository();
@@ -130,11 +178,6 @@ export const useDeleteCategory = () => {
 // DERIVED HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
-export const useCategoryNames = () => {
-  const { data: categories = [] } = useCategories();
-  return useMemo(() => categories.map((c) => c.name), [categories]);
-};
-
 export const useCategoryLookup = () => {
   const { data: categories = [] } = useCategories();
   return useMemo(() => {
@@ -145,7 +188,7 @@ export const useCategoryLookup = () => {
 
 export const useCategoryColor = (id: string) => {
   const lookup = useCategoryLookup();
-  return lookup(id)?.color ?? '#CBD5E1';
+  return lookup(id)?.color ?? NO_CATEGORY_COLOR;
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -154,3 +197,31 @@ export const useCategoryColor = (id: string) => {
 
 export type { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
 export { categoryKeys } from './constants';
+
+// ═══════════════════════════════════════════════════════════════════
+// RESTAURATION (« Annuler ») — recree l'objet sous SON identifiant
+// ═══════════════════════════════════════════════════════════════════
+//
+// Separe de `useCreateCategory` a dessein : l'identifiant passe par le second
+// argument de `create()`, hors du payload, donc hors de portee d'un objet de
+// formulaire enrichi depuis les devtools. Contrat complet et raison de ce
+// decoupage : `src/lib/restore-id.ts` (R-08).
+//
+// ⚠️ N'appeler QUE depuis un toast d'annulation.
+export const useRestoreCategory = () => {
+  const queryClient = useQueryClient();
+  const repository = useCategoriesRepository();
+
+  return useMutation({
+    mutationFn: (snapshot: Category) => {
+      const { payload, options } = splitRestore(snapshot);
+      return repository.create(payload as CreateCategoryInput, options);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+    },
+    // Un « Annuler » rate doit se VOIR : `console.error` est supprime du
+    // bundle de production (vite.config.ts), l'echec etait donc muet.
+    onError: (error: Error) => reportRestoreFailure('category', error),
+  });
+};

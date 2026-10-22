@@ -26,10 +26,8 @@ describe('LocalStorageEventsRepository', () => {
     expect(localStorage.getItem(EVENTS_STORAGE_KEY)).not.toBeNull();
   });
 
-  it('getById / getByTaskId', async () => {
+  it('getByTaskId', async () => {
     seed([ev({ id: 'e1', taskId: 't1' }), ev({ id: 'e2' })]);
-    expect((await repo.getById('e1'))?.id).toBe('e1');
-    expect(await repo.getById('absent')).toBeNull();
     expect((await repo.getByTaskId('t1')).map((e) => e.id)).toEqual(['e1']);
   });
 
@@ -54,7 +52,7 @@ describe('LocalStorageEventsRepository', () => {
     expect(updated.title).toBe('Modifié');
     await expect(repo.update('absent', { title: 'x' })).rejects.toThrow();
     await repo.delete(created.id);
-    expect(await repo.getById(created.id)).toBeNull();
+    expect((await repo.getAll()).some((e) => e.id === created.id)).toBe(false);
     await expect(repo.delete('absent')).rejects.toThrow();
   });
 

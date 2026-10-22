@@ -34,21 +34,6 @@ describe('SupabaseListsRepository', () => {
     expect(result[0].position).toBeUndefined();
   });
 
-  it('getById: defense-in-depth — scopes by id AND user_id (V15), null when logged out', async () => {
-    supabaseMock.queueTable('lists', { data: row });
-    await repo.getById('l1');
-    const eqs = supabaseMock.callsFor('lists').filter((c) => c.method === 'eq');
-    expect(eqs.map((c) => c.args)).toEqual([
-      ['id', 'l1'],
-      ['user_id', supabaseMock.user?.id],
-    ]);
-
-    supabaseMock.reset();
-    supabaseMock.user = null;
-    expect(await repo.getById('l1')).toBeNull();
-    expect(supabaseMock.queries).toHaveLength(0); // aucune requête sans session
-  });
-
   it('create: forces empty task_ids and auth-derived user_id (anti-mass-assignment)', async () => {
     // `create()` appelle d'abord `getAll()` en interne (backfill des positions,
     // cf. mig. 021) : il faut donc DEUX réponses en file, et la première doit
@@ -90,6 +75,50 @@ describe('SupabaseListsRepository', () => {
 
   it('delete: requires auth and double-scopes (V15)', async () => {
     supabaseMock.user = null;
-    await expect(repo.delete('l1')).rejects.toThrow('Not authenticated');
+    await expect(repo.delete('l1')).rejects.toMatchObject({ code: 'not_authenticated' });
+  });
+});
+
+describe('SupabaseListsRepository — getByTaskId et delete', () => {
+  // Double portée : `user_id` explicite EN PLUS de la RLS (défense en
+  // profondeur, faille V15), et `contains` sur le tableau `task_ids` plutôt
+  // qu'un chargement complet des listes filtré en JS.
+  it('getByTaskId: filtre côté base, sur user_id ET sur l’appartenance du tableau', async () => {
+    supabaseMock.queueTable('lists', { data: [row] });
+    const result = await repo.getByTaskId('t1');
+
+    expect(supabaseMock.argsOf('lists', 'eq')).toEqual(['user_id', supabaseMock.user?.id]);
+    expect(supabaseMock.argsOf('lists', 'contains')).toEqual(['task_ids', ['t1']]);
+    expect(result).toHaveLength(1);
+    expect(result[0].taskIds).toEqual(['t1']);
+  });
+
+  it('getByTaskId: session absente → tableau vide, aucune requête émise', async () => {
+    supabaseMock.user = null;
+    await expect(repo.getByTaskId('t1')).resolves.toEqual([]);
+    expect(supabaseMock.queries).toHaveLength(0);
+  });
+
+  it('getByTaskId: remonte une erreur normalisée', async () => {
+    supabaseMock.queueTable('lists', {
+      data: null,
+      error: { message: 'permission denied', code: '42501' },
+    });
+    await expect(repo.getByTaskId('t1')).rejects.toBeTruthy();
+  });
+
+  it('delete: double portée id + user_id (V15), et l’échec remonte', async () => {
+    supabaseMock.queueTable('lists', { data: null });
+    await repo.delete('l1');
+
+    const eqs = supabaseMock.callsFor('lists').filter((c) => c.method === 'eq').map((c) => c.args);
+    expect(eqs).toEqual([['id', 'l1'], ['user_id', supabaseMock.user?.id]]);
+
+    supabaseMock.reset();
+    supabaseMock.queueTable('lists', {
+      data: null,
+      error: { message: 'permission denied', code: '42501' },
+    });
+    await expect(repo.delete('l1')).rejects.toBeTruthy();
   });
 });

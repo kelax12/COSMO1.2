@@ -18,6 +18,13 @@ export interface HabitRow {
   completions?: Record<string, boolean>;
   created_at?: string;
   user_id?: string;
+  // Colonnes supplementaires de `get_my_habits()` (mig. 119) — absentes d'un
+  // SELECT direct sur la table, d'ou l'optionnalite.
+  streak_current?: number;
+  streak_best?: number;
+  completions_total?: number;
+  first_completion_date?: string | null;
+  window_days?: number;
 }
 
 /** DB input type for insert/update operations (snake_case). */
@@ -44,6 +51,11 @@ export function mapHabitFromDb(row: HabitRow): Habit {
     completions: row.completions || {},
     createdAt: row.created_at,
     userId: row.user_id,
+    streakCurrent: row.streak_current,
+    streakBest: row.streak_best,
+    completionsTotal: row.completions_total,
+    firstCompletionDate: row.first_completion_date ?? undefined,
+    completionsWindowDays: row.window_days,
   };
 }
 
@@ -55,6 +67,13 @@ export function mapHabitToDb(input: Partial<Habit>): HabitDbInput {
   if (input.estimatedTime !== undefined) result.estimated_time = input.estimatedTime;
   if (input.color !== undefined) result.color = input.color;
   if (input.icon !== undefined) result.icon = input.icon;
+  // 🔴 `completions` REMPLACE la colonne entière, elle ne la fusionne pas.
+  // Depuis la mig. 119, la map lue par le client est BORNÉE à une fenêtre :
+  // la renvoyer telle quelle DÉTRUIRAIT définitivement tout l'historique
+  // au-delà de la fenêtre. Aucun écran ne le fait aujourd'hui (`HabitModal`
+  // n'envoie que name / estimatedTime / color), et il ne faut pas commencer :
+  // la bascule d'un jour passe par `toggle_habit_completion_v2`, qui écrit
+  // une seule clé de façon atomique.
   if (input.completions !== undefined) result.completions = input.completions;
   return result;
 }

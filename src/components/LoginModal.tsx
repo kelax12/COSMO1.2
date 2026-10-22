@@ -4,8 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
 import AuthForm from '@/components/AuthForm';
+import { useT } from '@/i18n/useT';
 import type { AccountType } from '@/modules/auth/AuthContext';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -15,7 +18,11 @@ interface LoginModalProps {
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitchMode }) => {
+  const { t } = useT('common');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+  // Mouvement de feuille : en `prefers-reduced-motion`, un `initial: { y: '100%' }`
+  // écrit à la main RESTE appliqué — le modal s'ouvrait hors écran (CLAUDE.md § Animations).
+  const sheetMotion = useSheetMotion();
   const navigate = useNavigate();
 
   const handleSuccess = (accountType?: AccountType) => {
@@ -26,6 +33,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
     setTimeout(() => navigate(dest), 0);
   };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: onClose,
+    label: t('auth.modalAria'),
+  });
   return (
     <AnimatePresence>
       {isOpen && (
@@ -33,18 +47,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          ref={modalA11yRef}
+          {...modalA11yProps}
           className="fixed inset-0 bg-black/40 backdrop-blur-md z-[9999] flex items-end sm:items-center justify-center sm:p-4"
           onClick={onClose}
         >
           <motion.div
             ref={sheetRef}
             {...sheetDragProps}
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+            {...sheetMotion}
             data-scroll-area
-            className="bg-[rgb(var(--color-surface))] border-t sm:border border-[rgb(var(--color-border))] rounded-t-[28px] sm:rounded-2xl p-6 sm:p-8 w-full sm:max-w-md relative shadow-[0_-12px_40px_rgba(0,0,0,0.4)] sm:shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto"
+            className="bg-[rgb(var(--color-surface))] border-t sm:border border-[rgb(var(--color-border))] rounded-t-[28px] sm:rounded-2xl p-6 sm:px-8 sm:py-6 w-full sm:max-w-[33.6rem] relative shadow-[0_-12px_40px_rgba(0,0,0,0.4)] sm:shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto"
             style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
             onClick={(e) => e.stopPropagation()}
           >

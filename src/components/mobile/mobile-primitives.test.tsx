@@ -4,80 +4,11 @@
 // n'est pas installé dans ce projet, et l'ajouter pour trois matchers de confort
 // ne se justifie pas.
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import ListRow from './ListRow';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import SectionHeader from './SectionHeader';
 import Segmented from './Segmented';
 import TouchTarget from './TouchTarget';
-import MobileScreen from './MobileScreen';
 import BottomSheet from './BottomSheet';
-
-describe('MobileScreen', () => {
-  it('réserve plus de place en bas quand la page a un FAB', () => {
-    const { container, rerender } = render(<MobileScreen>contenu</MobileScreen>);
-    const screenEl = () => container.firstElementChild as HTMLElement;
-    expect(screenEl().className).toContain('pb-[calc(64px+env(safe-area-inset-bottom)+24px)]');
-
-    rerender(<MobileScreen hasFab>contenu</MobileScreen>);
-    expect(screenEl().className).toContain('pb-[calc(64px+env(safe-area-inset-bottom)+88px)]');
-  });
-
-  it('utilise 100dvh et jamais 100vh (Safari iOS rogne sinon le contenu)', () => {
-    const { container } = render(<MobileScreen>contenu</MobileScreen>);
-    const className = (container.firstElementChild as HTMLElement).className;
-    expect(className).toContain('min-h-[100dvh]');
-    expect(className).not.toContain('100vh');
-  });
-
-  it('permet de retirer la gouttière pour un contenu bord à bord', () => {
-    const { container } = render(<MobileScreen gutter={false}>contenu</MobileScreen>);
-    expect((container.firstElementChild as HTMLElement).className).not.toContain('px-gutter');
-  });
-});
-
-describe('ListRow', () => {
-  it('affiche titre et meta', () => {
-    render(<ListRow title="Réviser le devis" meta="Demain · 45 min" />);
-    expect(screen.getByText('Réviser le devis')).toBeTruthy();
-    expect(screen.getByText('Demain · 45 min')).toBeTruthy();
-  });
-
-  it("n'est un bouton que si elle est cliquable", () => {
-    const { rerender } = render(<ListRow title="Inerte" />);
-    expect(screen.queryByRole('button')).toBeNull();
-
-    rerender(<ListRow title="Cliquable" onClick={vi.fn()} />);
-    expect(screen.getByRole('button')).toBeTruthy();
-  });
-
-  it('est activable au clavier (Entrée et Espace), et rien d’autre', () => {
-    const onClick = vi.fn();
-    render(<ListRow title="Cliquable" onClick={onClick} />);
-    const row = screen.getByRole('button');
-
-    fireEvent.keyDown(row, { key: 'Enter' });
-    fireEvent.keyDown(row, { key: ' ' });
-    expect(onClick).toHaveBeenCalledTimes(2);
-
-    fireEvent.keyDown(row, { key: 'a' });
-    expect(onClick).toHaveBeenCalledTimes(2);
-  });
-
-  it('respecte la cible tactile minimale', () => {
-    render(<ListRow title="Ligne" onClick={vi.fn()} />);
-    expect(screen.getByRole('button').className).toContain('min-h-touch');
-  });
-
-  it('affiche le filet de couleur uniquement quand une couleur est fournie', () => {
-    const { container, rerender } = render(<ListRow title="Sans filet" />);
-    expect(container.querySelector('[aria-hidden]')).toBeNull();
-
-    rerender(<ListRow title="Avec filet" railColor="#ef4444" />);
-    const rail = container.querySelector('[aria-hidden]') as HTMLElement;
-    expect(rail).toBeTruthy();
-    expect(rail.style.backgroundColor).toBe('rgb(239, 68, 68)');
-  });
-});
 
 describe('SectionHeader', () => {
   it('affiche le compte à côté du titre', () => {
@@ -168,6 +99,80 @@ describe('BottomSheet', () => {
     expect(onClose).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('presentation'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// C-53 · `BottomSheet` — les trois détecteurs, en jsdom faute de mieux
+//
+// 🔴 C'est la SEULE des dix surfaces câblées sur `useModalA11y` qu'aucun test
+// de navigateur ne peut atteindre, et la raison n'est pas un oubli : son unique
+// consommateur produit est `WeeklyRecapSheet`, monté derrière
+// `WEEKLY_RECAP_ENABLED = false` (`src/pages/HabitsPage.tsx`). Aucun geste
+// utilisateur n'ouvre cette feuille aujourd'hui.
+//
+// On mesure donc le composant RÉEL ici, sur les mêmes détecteurs que le harnais
+// clavier (`e2e/a11y-keyboard-audit.spec.ts`) : entrée du focus, piège, Échap,
+// plus `aria-modal`. Ce n'est pas équivalent à une mesure de navigateur — jsdom
+// ne calcule aucune géométrie et ne simule aucune tabulation native — et
+// `docs/ACCESSIBILITY.md` le dit comme tel plutôt que de compter cette surface
+// avec les autres.
+//
+// ⚠️ Le jour où le drapeau repasse à `true`, cette couverture ne suffit plus :
+// il faut une ligne dans le harnais clavier.
+// ═══════════════════════════════════════════════════════════════════
+describe('BottomSheet — C-53 (piège de focus)', () => {
+  /**
+   * jsdom ne simule aucune navigation séquentielle : le piège se mesure en
+   * émettant le `keydown`, ce qui est justement le chemin que le défaut
+   * d'origine empruntait.
+   */
+  const press = (key: string, shiftKey = false) =>
+    act(() => {
+      document.activeElement?.dispatchEvent(
+        new KeyboardEvent('keydown', { key, shiftKey, bubbles: true, cancelable: true }),
+      );
+    });
+
+  const Sheet = ({ onClose = vi.fn() }: { onClose?: () => void }) => (
+    <BottomSheet open onClose={onClose} ariaLabel="Choix">
+      <button type="button">Premier</button>
+      <button type="button">Dernier</button>
+    </BottomSheet>
+  );
+
+  it('porte aria-modal, pas seulement role="dialog"', () => {
+    render(<Sheet />);
+    expect(screen.getByRole('dialog', { name: 'Choix' }).getAttribute('aria-modal')).toBe('true');
+  });
+
+  it('déplace le focus dans la feuille à l’ouverture (focusMovedIn)', async () => {
+    render(<Sheet />);
+    // Le hook déplace le focus après peinture (`requestAnimationFrame`).
+    await act(async () => { await new Promise((r) => requestAnimationFrame(() => r(null))); });
+    expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true);
+  });
+
+  it('boucle du dernier focalisable au premier (trapped)', async () => {
+    render(<Sheet />);
+    await act(async () => { await new Promise((r) => requestAnimationFrame(() => r(null))); });
+    act(() => screen.getByRole('button', { name: 'Dernier' }).focus());
+    press('Tab');
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Premier' }));
+  });
+
+  it('Échap ferme, même quand le focus est SORTI de la feuille (escClosed)', async () => {
+    const onClose = vi.fn();
+    render(
+      <>
+        <button type="button">Derrière la feuille</button>
+        <Sheet onClose={onClose} />
+      </>,
+    );
+    await act(async () => { await new Promise((r) => requestAnimationFrame(() => r(null))); });
+    act(() => screen.getByRole('button', { name: 'Derrière la feuille' }).focus());
+    press('Escape');
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

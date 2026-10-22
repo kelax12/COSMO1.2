@@ -1,0 +1,297 @@
+import { useRef, type ReactNode } from 'react';
+import { format, formatDistanceToNow } from 'date-fns';
+import {
+  Shield, UserCog, UserRound, MoreVertical, ShieldCheck,
+  ListTodo, CalendarDays, TrendingUp, ClipboardList, ChevronDown, BadgeCheck } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from '@/components/ui/dropdown-menu';
+import type { MemberLastActivity, OrgMember, OrgRole } from '@/modules/organizations';
+import { getDateLocale } from '@/i18n/format';
+import { useT } from '@/i18n/useT';
+import RoleTerm from './RoleTerm';
+import MemberAvatar from './MemberAvatar';
+import MemberAccessBadge from './MemberAccessBadge';
+import type { MemberTab } from './member-sheet.helpers';
+import type { DirectoryRole } from './member-directory.filters';
+
+// « Manager » n'est pas un rôle stocké : il est dérivé de la pyramide (a ≥ 1
+// subordonné). Le badge est purement informatif — la position ne se modifie
+// QUE depuis la pyramide (#1 : plus de changement de rôle depuis l'annuaire).
+const BADGE_META = {
+  admin: { labelKey: 'roles.adminShort', Icon: Shield, className: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10' },
+  manager: { labelKey: 'roles.manager', Icon: UserCog, className: 'text-blue-600 dark:text-blue-400 bg-[rgb(var(--color-accent-solid))]/10' },
+  member: { labelKey: 'roles.member', Icon: UserRound, className: 'text-slate-600 dark:text-slate-400 bg-slate-500/10' },
+} as const;
+
+const RoleBadge = ({ kind, help = true }: { kind: DirectoryRole; help?: boolean }) => {
+  const { t } = useT('org');
+  const { labelKey, Icon, className } = BADGE_META[kind];
+  return (
+    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full max-md:!bg-transparent max-md:px-0 max-md:!text-[rgb(var(--color-text-secondary))] ${className}`}>
+      <Icon size={11} aria-hidden="true" className="max-md:hidden" /> {help ? <RoleTerm term={kind}>{t(labelKey)}</RoleTerm> : t(labelKey)}
+    </span>
+  );
+};
+
+export interface MemberRowRights {
+  isSelf: boolean;
+  /** Admin et pas soi : le badge devient le menu de rôle. */
+  canChangeRole: boolean;
+  /** Supérieur hiérarchique : menu « … ». */
+  isAbove: boolean;
+  canAssign: boolean;
+  canEditPermissions: boolean;
+  /** « Gérer les rôles » (mig. 219), cible non admin. Ouvre le menu « … » même hors sous-arbre. */
+  canAssignRole?: boolean;
+}
+
+/** Un rôle personnalisé actif du membre (mig. 219). */
+export interface MemberRoleBadge {
+  id: string;
+  name: string;
+  color: string;
+  endsAt: string | null;
+}
+
+interface MemberDirectoryRowProps {
+  member: OrgMember;
+  role: DirectoryRole;
+  rights: MemberRowRights;
+  /** `undefined` : hors périmètre (rien affiché) ; `null` d'activité : aucune trace. */
+  lastActivity?: MemberLastActivity;
+  selectMode: boolean;
+  selected: boolean;
+  onToggleSelect: () => void;
+  onOpen: (tab: MemberTab) => void;
+  onSetRole: (role: OrgRole) => void;
+  onAssign: () => void;
+  onEditPermissions: () => void;
+  onAssignRole?: () => void;
+  /** Rôles personnalisés actifs : une pastille chacun à côté du nom. */
+  roleBadges?: MemberRoleBadge[];
+  /**
+   * Gestes de cycle de vie (`useMemberLifecycle`, mig. 161) : accès et départ.
+   * `null` quand l'appelant n'y a pas droit. Ils REMPLACENT l'ancien retrait
+   * nu, qui ne transmettait rien (M10).
+   */
+  lifecycleItems?: ReactNode;
+}
+
+/**
+ * Une ligne de l'annuaire. Clic → fiche profil ; en mode sélection, clic →
+ * coche. Le menu « … » reste réservé aux supérieurs hiérarchiques (#4).
+ *
+ * La pastille d'accès (`MemberAccessBadge`, suspendu ou accès borné) se
+ * monte à côté du nom ; les gestes de cycle de vie ferment le menu « … ».
+ */
+const MemberDirectoryRow = ({
+  member: m, role, rights, lastActivity, selectMode, selected,
+  onToggleSelect, onOpen, onSetRole, onAssign, onEditPermissions, onAssignRole, roleBadges = [], lifecycleItems,
+}: MemberDirectoryRowProps) => {
+  const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
+  const primary = () => (selectMode ? onToggleSelect() : onOpen('profile'));
+  // Chaque entrée du menu « … » ouvre une surface modale (fiche, attribution,
+  // droits, rôle). En se refermant, Radix rend le focus à son déclencheur APRÈS
+  // que la modale l'a pris : il restait derrière le voile (mesuré le 2026-10-22
+  // sur `AssignRoleDialog`, `a11y-keyboard-audit`). La modale porte le focus,
+  // et le hook des modales le rendra à ce bouton en se fermant.
+  const surfaceOpened = useRef(false);
+  const opensSurface = (open: () => void) => () => { surfaceOpened.current = true; open(); };
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest('button,[role="menu"],input')) return;
+        primary();
+      }}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
+          e.preventDefault();
+          primary();
+        }
+      }}
+      aria-label={selectMode ? tOrgAdmin('directory.select.rowAria', { name: m.displayName }) : t('common.seeProfileOf', { name: m.displayName })}
+      aria-pressed={selectMode ? selected : undefined}
+      className={`flex items-center gap-3 p-3 max-md:px-1 rounded-xl max-md:rounded-none border max-md:border-0 max-md:border-b bg-[rgb(var(--color-surface))] max-md:bg-transparent cursor-pointer [@media(hover:hover)]:hover:border-indigo-400/60 [@media(hover:hover)]:hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+        selected ? 'border-indigo-500' : 'border-[rgb(var(--color-border))]'
+      }`}
+    >
+      {selectMode && (
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggleSelect}
+          aria-label={tOrgAdmin('directory.select.rowAria', { name: m.displayName })}
+          className="w-4 h-4 shrink-0 accent-indigo-600"
+        />
+      )}
+      <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">{m.displayName}</p>
+          {rights.isSelf && m.displayName !== t('common.youBadge') && (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 max-md:px-0 rounded bg-[rgb(var(--color-hover))] max-md:bg-transparent max-md:text-label max-md:font-normal text-[rgb(var(--color-text-muted))]">
+              {t('common.youBadge')}
+            </span>
+          )}
+          <MemberAccessBadge member={m} />
+          {roleBadges.length > 0 && (
+            <span
+              className="inline-flex items-center gap-1 shrink-0"
+              role="img"
+              aria-label={tOrgAdmin('customRoles.badgesAria', { names: roleBadges.map((r) => r.name).join(', ') })}
+            >
+              {roleBadges.map((r) => (
+                <span
+                  key={r.id}
+                  title={r.endsAt
+                    ? `${r.name} · ${tOrgAdmin('customRoles.assign.endsOn', { date: format(new Date(r.endsAt), 'd MMM yyyy', { locale: getDateLocale() }) })}`
+                    : `${r.name} · ${tOrgAdmin('customRoles.assign.unlimited')}`}
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: r.color }}
+                />
+              ))}
+            </span>
+          )}
+        </div>
+        {m.email && <p className="max-md:hidden text-xs text-[rgb(var(--color-text-muted))] truncate">{m.email}</p>}
+        {!lastActivity && !rights.canChangeRole && (
+          <p className="md:hidden text-caption text-[rgb(var(--color-text-muted))] truncate">{t(BADGE_META[role].labelKey)}</p>
+        )}
+        {lastActivity && (
+          <p className="text-caption text-[rgb(var(--color-text-muted))] truncate">
+            {!rights.canChangeRole && <span className="md:hidden">{t(BADGE_META[role].labelKey)} · </span>}
+            {lastActivity.lastActivityAt
+              ? tOrgAdmin('directory.activity.rowAgo', {
+                  when: formatDistanceToNow(new Date(lastActivity.lastActivityAt), { addSuffix: true, locale: getDateLocale() }),
+                })
+              : tOrgAdmin('directory.activity.none')}
+          </p>
+        )}
+      </div>
+
+      {rights.canChangeRole && !selectMode ? (
+        <span className="inline-flex items-center gap-0.5">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            aria-label={tOrgAdmin('directory.changeRoleAria', { name: m.displayName })}
+          >
+            {/* Le « ? » du terme est À CÔTÉ du bouton, jamais dedans. */}
+            {/* Chevron (reco UI n° 23) : sans lui, rien ne dit que la
+                pastille est un menu éditable sur place. */}
+            <span className="inline-flex items-center gap-0.5">
+              <RoleBadge kind={role} help={false} />
+              <ChevronDown size={12} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
+            </span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuRadioGroup
+              value={m.role}
+              onValueChange={(value) => {
+                if (value !== m.role) onSetRole(value as OrgRole);
+              }}
+            >
+              <DropdownMenuRadioItem value="admin">{t('roles.admin')}</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="member">{t('roles.member')}</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+            {rights.canEditPermissions && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onEditPermissions}>
+                  <ShieldCheck size={14} aria-hidden="true" />
+                  {tOrgAdmin('directory.customizeRole')}
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <RoleTerm term={role} label={t(BADGE_META[role].labelKey)} className="max-md:hidden text-[rgb(var(--color-text-muted))]" />
+        </span>
+      ) : (
+        <span className="max-md:hidden"><RoleBadge kind={role} /></span>
+      )}
+
+      {(rights.isAbove || rights.canAssignRole) && !selectMode && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            data-guide-item
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            aria-label={t('common.actionsFor', { name: m.displayName })}
+          >
+            <MoreVertical size={16} aria-hidden="true" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-56"
+            onCloseAutoFocus={(e) => {
+              if (surfaceOpened.current) e.preventDefault();
+              surfaceOpened.current = false;
+            }}
+          >
+            {/* Icônes SANS classe de couleur : DropdownMenuItem applique déjà
+                `text-muted-foreground` à tout svg qui n'en porte pas. Seul
+                l'item destructeur reste coloré. Attribuer : seulement dans la
+                portée d'assignation de l'appelant (mig. 115). */}
+            {rights.isAbove && rights.canAssign && (
+              <>
+                <DropdownMenuItem onClick={opensSurface(onAssign)}>
+                  <ClipboardList size={14} aria-hidden="true" />
+                  {tOrgAdmin('directory.assignTask')}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            {rights.isAbove && (
+              <>
+                <DropdownMenuItem onClick={opensSurface(() => onOpen('tasks'))}>
+                  <ListTodo size={14} aria-hidden="true" />
+                  {tOrgAdmin('directory.seeTasks')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={opensSurface(() => onOpen('agenda'))}>
+                  <CalendarDays size={14} aria-hidden="true" />
+                  {tOrgAdmin('directory.seeAgenda')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={opensSurface(() => onOpen('contribution'))}>
+                  <TrendingUp size={14} aria-hidden="true" />
+                  {tOrgAdmin('directory.seeContribution')}
+                </DropdownMenuItem>
+              </>
+            )}
+            {rights.isAbove && (rights.canEditPermissions || (rights.canAssignRole && onAssignRole)) && <DropdownMenuSeparator />}
+            {rights.canEditPermissions && (
+              <DropdownMenuItem onClick={opensSurface(onEditPermissions)} data-guide-id="member-open-permissions">
+                <ShieldCheck size={14} aria-hidden="true" />
+                {t('permissions.menuItem')}
+              </DropdownMenuItem>
+            )}
+            {rights.canAssignRole && onAssignRole && (
+              <DropdownMenuItem onClick={opensSurface(onAssignRole)} data-guide-id="member-assign-role">
+                <BadgeCheck size={14} aria-hidden="true" />
+                {tOrgAdmin('customRoles.assign.menuItem')}
+              </DropdownMenuItem>
+            )}
+            {rights.isAbove && lifecycleItems && (
+              <>
+                <DropdownMenuSeparator />
+                {lifecycleItems}
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  );
+};
+
+export default MemberDirectoryRow;

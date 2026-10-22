@@ -3,6 +3,7 @@
 // Comportement déplacé verbatim depuis AgendaPage.tsx.
 import { expandRecurringEvents, type CalendarEvent } from '@/modules/events';
 import { toDisplayISO, type TimezonePref } from '@/lib/timezone';
+import { NO_CATEGORY_COLOR, displayCategoryColor, textOnCategoryColor } from '@/lib/category-colors';
 
 // Durée par défaut (minutes) d'un événement créé en glissant une tâche depuis la
 // sidebar. Une tâche sans durée estimée a `estimatedTime = 0` (défaut du
@@ -57,30 +58,67 @@ export interface FullCalendarEvent {
   borderColor?: string;
   textColor: string;
   editable: boolean;
-  extendedProps: { notes?: string; taskId?: string; isRecurringInstance: boolean; createdBy?: string };
+  extendedProps: {
+    notes?: string;
+    taskId?: string;
+    isRecurringInstance: boolean;
+    createdBy?: string;
+    /** Créneau de tâche terminé qui attend une décision (pastille « ! »). */
+    needsReview: boolean;
+    /** Tâche liée déjà validée (check vert, à la place de la pastille). */
+    taskDone: boolean;
+  };
 }
 
 // Étend les événements récurrents sur ±13 mois autour de `now`, puis les mappe
 // au format attendu par FullCalendar. Les instances récurrentes (id contenant
 // '::') sont non éditables.
-export function buildCalendarEvents(events: CalendarEvent[], now: Date = new Date()): FullCalendarEvent[] {
+export function buildCalendarEvents(
+  events: CalendarEvent[],
+  now: Date = new Date(),
+  /**
+   * Identifiants des événements qui attendent une décision. Passé en argument
+   * plutôt que recalculé ici : `findOverdueTaskSlots` a besoin des TÂCHES, que
+   * ce module ne connaît pas et n'a aucune raison de connaître. Une seconde
+   * dérivation de « ce créneau attend une décision » finirait par diverger de
+   * celle qui peint le panneau de l'EventModal.
+   */
+  reviewEventIds: ReadonlySet<string> = new Set(),
+  /** Identifiants des événements dont la tâche liée est déjà validée. Même
+   * motif que `reviewEventIds` : calculé par `findDoneTaskEvents`, qui a
+   * besoin des tâches. */
+  doneEventIds: ReadonlySet<string> = new Set(),
+  /** Couleurs (MAJUSCULES) des catégories de l'utilisateur. Fourni : un
+   * événement dont la couleur n'en est plus une s'affiche en gris clair. */
+  categoryColors?: ReadonlySet<string>,
+): FullCalendarEvent[] {
   const projectionFrom = new Date(now);
   projectionFrom.setMonth(projectionFrom.getMonth() - 13);
   const projectionTo = new Date(now);
   projectionTo.setMonth(projectionTo.getMonth() + 13);
   const expandedEvents = expandRecurringEvents(events, projectionFrom, projectionTo);
 
-  return expandedEvents.map(event => ({
+  return expandedEvents.map(event => {
+    const color = categoryColors ? displayCategoryColor(event.color, categoryColors) : event.color;
+    return {
     id: event.id,
     title: event.title,
     start: event.start,
     end: event.end,
-    backgroundColor: event.color,
-    borderColor: event.color,
-    textColor: '#ffffff',
+    backgroundColor: color,
+    borderColor: color,
+    textColor: textOnCategoryColor(color),
     editable: !event.id.includes('::'),
-    extendedProps: { notes: event.notes, taskId: event.taskId, isRecurringInstance: event.id.includes('::'), createdBy: event.createdBy },
-  }));
+    extendedProps: {
+      notes: event.notes,
+      taskId: event.taskId,
+      isRecurringInstance: event.id.includes('::'),
+      createdBy: event.createdBy,
+      needsReview: reviewEventIds.has(event.id),
+      taskDone: doneEventIds.has(event.id),
+    },
+  };
+  });
 }
 
 /**
@@ -91,6 +129,85 @@ export function buildCalendarEvents(events: CalendarEvent[], now: Date = new Dat
  * persister — cf. AgendaPage. En mode « défaut » c'est l'identité (référence
  * inchangée → pas de re-render superflu).
  */
+// ── Drag depuis TaskSidebar (tâche perso ou d'équipe) ──────────────────
+
+/** Payload JSON posé par `TaskSidebar` dans l'attribut `data-task`. */
+export interface DraggedTaskData {
+  id: string;
+  name: string;
+  priority: number;
+  estimatedTime?: number;
+  /** Absent pour une tâche d'équipe (TaskSidebar résout sa propre catégorie). */
+  category?: string;
+  /** Renseignés par `TaskSidebar` pour une tâche d'équipe uniquement — elle
+   *  seule connaît `team_categories`. */
+  categoryColor?: string;
+  categoryName?: string;
+  /** 'pro' = tâche d'équipe assignée ; absent/'perso' = tâche personnelle. */
+  source?: 'perso' | 'pro';
+}
+
+export interface DraggedTaskEventData {
+  title: string;
+  duration: { minutes: number };
+  backgroundColor: string;
+  borderColor: string;
+  textColor: string;
+  extendedProps: {
+    // 🔴 `taskId` UNDEFINED pour une tâche d'équipe : `events.task_id`
+    // référence `tasks` (perso) par clé étrangère (migration 004), jamais
+    // `team_tasks` — la définir ferait échouer l'écriture. `handleEventReceive`
+    // (useCalendarGridGestures.ts) s'appuie sur cette absence.
+    taskId: string | undefined;
+    isTeamTask: boolean;
+    priority: number;
+    category: string | undefined;
+    estimatedTime: number | undefined;
+    categoryName: string;
+  };
+}
+
+/**
+ * Traduit une tâche déposée depuis `TaskSidebar` en événement FullCalendar
+ * (aperçu du drag). Une tâche d'équipe (`source === 'pro'`) apporte déjà sa
+ * couleur/nom de catégorie résolus par l'appelant (lui seul connaît
+ * `team_categories`) ; une tâche perso se résout dans `categories` (module
+ * `categories`, connu de cette page).
+ */
+export function resolveDraggedTaskEventData(
+  taskData: DraggedTaskData,
+  categories: readonly { id: string; color: string; name: string }[],
+  uncategorizedLabel: string,
+): DraggedTaskEventData {
+  const isTeamTask = taskData.source === 'pro';
+  const personalCategory = () => categories.find((cat) => cat.id === taskData.category);
+  const catColor = isTeamTask
+    ? (taskData.categoryColor || NO_CATEGORY_COLOR)
+    : (personalCategory()?.color || NO_CATEGORY_COLOR);
+  const catName = isTeamTask
+    ? (taskData.categoryName || uncategorizedLabel)
+    : (personalCategory()?.name || uncategorizedLabel);
+
+  return {
+    title: taskData.name,
+    // Garde anti-aperçu-invisible : une tâche sans durée estimée
+    // (estimatedTime = 0, défaut du formulaire) donnerait duration:0 →
+    // mirror FullCalendar de hauteur nulle. On retombe sur 60 min.
+    duration: { minutes: taskEventDurationMinutes(taskData.estimatedTime) },
+    backgroundColor: catColor,
+    borderColor: catColor,
+    textColor: textOnCategoryColor(catColor),
+    extendedProps: {
+      taskId: isTeamTask ? undefined : taskData.id,
+      isTeamTask,
+      priority: taskData.priority,
+      category: taskData.category,
+      estimatedTime: taskData.estimatedTime,
+      categoryName: catName,
+    },
+  };
+}
+
 export function shiftEventsForDisplay(
   events: FullCalendarEvent[],
   pref: TimezonePref,

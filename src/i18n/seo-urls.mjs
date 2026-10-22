@@ -8,16 +8,25 @@
 //
 // ─── Pourquoi INDEXABLE_LOCALES ≠ SUPPORTED_LOCALES ───
 //
-// « Servie » et « indexable » sont deux choses différentes. L'anglais est servi
-// depuis la phase 2 (`/en/` répond), mais le CORPS des pages est encore
-// français : seules les méta le sont. Laisser Google indexer ça produirait
-// exactement le duplicate content que ce chantier cherche à éviter — du contenu
-// français sur des URLs anglaises.
+// « Servie » et « indexable » sont deux choses différentes. Une locale servie
+// répond ; une locale indexable est prérendue, annoncée en `hreflang` et listée
+// au sitemap. Tant qu'une locale n'est pas ici, `vercel.json` la met en
+// `noindex`, et `npm run i18n:check` échoue si les deux se contredisent.
 //
-// Tant qu'une locale n'est pas ici, elle n'est ni prérendue, ni annoncée en
-// `hreflang`, ni listée au sitemap, et `vercel.json` la met en `noindex`.
-// La phase 5 (traduction du contenu long) l'ajoute et retire la règle Vercel —
-// `npm run i18n:check` échoue si les deux ne sont pas cohérents.
+// `en` est indexable depuis le 2026-09-08 (chantier C-20). La condition de
+// sortie était le CONTENU, pas la config : le corps anglais a été mesuré page
+// par page avant la bascule : accueil, guide, à-propos, entreprise, les 4 pages
+// métier (579-815 mots) et les 11 articles (657-1985 mots). Aucune page ne
+// restait en français.
+//
+// `es` figure dans `route-slugs.json` mais n'est ni servie ni indexable : c'est
+// le mécanisme prévu, pas un oubli.
+//
+// ❌ Ne jamais ajouter une locale ici avant que son corps soit traduit : c'est
+// le duplicate content, du français sur des URLs anglaises, que toute cette
+// architecture existe pour empêcher. La garde structurelle est
+// `availableLocales()` dans prerender.mjs : une locale n'est publiée pour une
+// route que si elle a À LA FOIS des méta et du contenu.
 
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -30,7 +39,7 @@ export const SITE_ORIGIN = 'https://thecosmo.app';
 export const DEFAULT_LOCALE = 'fr';
 
 /** Locales réellement indexables. Voir l'en-tête pour la distinction. */
-export const INDEXABLE_LOCALES = ['fr'];
+export const INDEXABLE_LOCALES = ['fr', 'en'];
 
 /** Étiquettes BCP 47 — miroir de `BCP47_TAG` dans src/i18n/locale.ts. */
 export const BCP47_TAG = { fr: 'fr-FR', en: 'en-US', es: 'es-ES' };
@@ -89,8 +98,8 @@ export function canonicalUrl(pathname, locale) {
  *      les autres, elle-même comprise. Une déclaration unilatérale est
  *      silencieusement ignorée, et le groupe entier avec elle ;
  *   2. ne jamais déclarer une alternate vers une page qui n'existe pas. D'où
- *      `availableLocales` : les articles de blog restent français, ils ne
- *      reçoivent donc que `x-default`.
+ *      `availableLocales` : une route dont une locale n'a pas de corps écrit ne
+ *      l'annonce pas, et ne reçoit alors que `x-default`.
  *
  * `x-default` désigne la version servie à un visiteur dont la langue ne
  * correspond à aucune alternate — la locale par défaut.

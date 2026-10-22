@@ -1,102 +1,122 @@
 import React, { Suspense, lazy } from 'react';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
-import { Routes, Route, Navigate } from 'react-router';
+import { Routes, Route, Navigate, useLocation } from 'react-router';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
+import { loadSonner } from '@/lib/toast';
 import { MotionConfig } from 'framer-motion';
 import { installMobileFocusRecovery } from '@/lib/mobileFocus';
-import { isTimeoutError } from '@/lib/withTimeout';
+import { shouldRetryQuery } from '@/lib/query-retry';
 import { useLocale } from '@/i18n/store';
 import { routeSlug } from '@/i18n/routes';
+// Extrait de ce fichier vers `@/lib/lazy-with-retry` pour que les onglets de
+// /entreprise puissent s'en servir aussi. ⚠️ `lazy-namespaces.guard.test.ts`
+// lit les appels `lazyWithRetry` D'ICI : les listes de catalogues ci-dessous
+// restent la source de vérité par route.
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+
 import { getLastVisitedPage } from '@/modules/ui-states';
 import { useSharedTasksRealtime } from '@/modules/tasks/useSharedTasksRealtime';
+import { useOrgInboxRealtime } from '@/modules/organizations/useOrgInboxRealtime';
+import { useFriendsInboxRealtime } from '@/modules/friends/useFriendsInboxRealtime';
 // Import `/react` (pas `/next` — réservé aux apps Next.js) : ce projet est
 // Vite + React Router, hébergé sur Vercel (cf. vercel.json).
 import { Analytics } from '@vercel/analytics/react';
+import { useCookieConsent } from '@/lib/use-cookie-consent';
 
 // Providers
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/modules/auth/AuthContext';
-import { ActiveOrgProvider } from '@/modules/organizations';
+import { ActiveOrgProvider, useActiveOrganization } from '@/modules/organizations';
 import { BillingProvider } from '@/modules/billing/billing.context';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
+import NewVersionBanner from '@/components/NewVersionBanner';
 import ShareInviteClaimer from '@/components/ShareInviteClaimer';
-import { useActiveModules, type ModuleKey } from '@/modules/ui-states';
+import { releasePrerenderHero } from '@/lib/prerender-hero';
+import BootScreen from '@/components/BootScreen';
+import { isOrgPath } from '@/components/organization/deep-link.helpers';
 // Audit perf 2026-05-29 — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
 // it so its imports (framer-motion subset, lucide icons, fuzzy search) don't
 // land in the entry chunk. Suspense fallback is null because the palette
 // itself is invisible until opened.
 const CommandPalette = lazy(() => import('@/components/CommandPalette'));
-// AM10 — onboarding « Que voulez-vous gérer ? » : invisible tant que non
-// déclenché (1er login réel), donc lazy avec fallback null.
-const ModuleOnboarding = lazy(() => import('@/components/onboarding/ModuleOnboarding'));
 
-// ──────────────────────────────────────────────────────────────────
-// Lazy import wrapper — recharge la page si un chunk est obsolète
-// (cas après déploiement : le vieux index.html du navigateur référence
-// des chunks qui n'existent plus sur le CDN). On retry une fois, puis
-// on force un reload pour récupérer un index.html frais.
-// ──────────────────────────────────────────────────────────────────
-const lazyWithRetry = <T extends React.ComponentType<Record<string, never>>>(
-  factory: () => Promise<{ default: T }>
-) =>
-  lazy(async () => {
-    const STORAGE_KEY = 'cosmo:chunk-reload-attempt';
-    try {
-      const mod = await factory();
-      sessionStorage.removeItem(STORAGE_KEY);
-      return mod;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      const isChunkError =
-        message.includes('Failed to fetch dynamically imported module') ||
-        message.includes('Importing a module script failed') ||
-        message.includes('error loading dynamically imported module');
+// Sonner sort du chemin critique (66,6 ko bruts dans l'entrée, payés par tout
+// visiteur qui arrive sur la landing et repart). Le `<Toaster>` ne peint rien
+// tant qu'aucun toast n'est émis : le monter un tick plus tard ne change rien à
+// l'écran. L'import passe par `loadSonner()`, le MÊME que la façade
+// `@/lib/toast`, donc un seul chunk et une seule instance du store de toasts.
+// ⚠️ Il lui faut son PROPRE `<Suspense>` : suspendre sur la frontière qui
+// enveloppe les routes cacherait la page pendant le chargement.
+const Toaster = lazy(() => loadSonner().then((m) => ({ default: m.Toaster })));
 
-      if (isChunkError && !sessionStorage.getItem(STORAGE_KEY)) {
-        sessionStorage.setItem(STORAGE_KEY, '1');
-        window.location.reload();
-        // Promise jamais résolue : la page va recharger
-        return new Promise<{ default: T }>(() => {});
-      }
-      throw err;
-    }
-  });
+/**
+ * L'accueil entreprise (`/entreprise/onboarding`) a une DA nuit FIXE : un toast
+ * clair (« Équipe créée ») y tombait comme une carte blanche sur la nuit
+ * (relevé le 2026-10-04). Ses toasts sont donc sombres ; partout ailleurs, le
+ * réglage d'origine (`system`).
+ */
+const ThemedToaster = () => {
+  const { pathname } = useLocation();
+  return (
+    <Toaster
+      position="top-right"
+      richColors
+      closeButton
+      theme={pathname.endsWith('/entreprise/onboarding') ? 'dark' : 'system'}
+      toastOptions={{
+        duration: 3000,
+      }}
+    />
+  );
+};
 
-// Lazy load pages for code splitting
-const LandingPage = lazyWithRetry(() => import('@/pages/LandingPage'));
-const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'));
-const SignupPage = lazyWithRetry(() => import('@/pages/SignupPage'));
-const ForgotPasswordPage = lazyWithRetry(() => import('@/pages/ForgotPasswordPage'));
-const ResetPasswordPage = lazyWithRetry(() => import('@/pages/ResetPasswordPage'));
-const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'));
-const TasksPage = lazyWithRetry(() => import('@/pages/TasksPage'));
-const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'));
-const HabitsPage = lazyWithRetry(() => import('@/pages/HabitsPage'));
-const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'));
-const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'));
-const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'));
-const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'));
-const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'));
-const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'));
-const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'));
-const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'));
-const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'));
-const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'));
-const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'));
-const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'));
-const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'));
-const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'));
-const BlogIndexPage = lazyWithRetry(() => import('@/pages/BlogIndexPage'));
-const BlogArticlePage = lazyWithRetry(() => import('@/pages/BlogArticlePage'));
-const AProposPage = lazyWithRetry(() => import('@/pages/AProposPage'));
-const UseCasePage = lazyWithRetry(() => import('@/pages/UseCasePage'));
+// Lazy load pages for code splitting.
+//
+// Le second argument est la liste des catalogues i18n du SOUS-ARBRE de la page.
+// Régénérer après tout déplacement de composant : `npm run i18n:namespaces`.
+const LandingPage = lazyWithRetry(() => import('@/pages/LandingPage'), ['landing', 'overlays', 'seo']);
+const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'), ['overlays', 'seo']);
+const SignupPage = lazyWithRetry(() => import('@/pages/SignupPage'), ['overlays', 'seo']);
+const ForgotPasswordPage = lazyWithRetry(() => import('@/pages/ForgotPasswordPage'), ['seo']);
+const ResetPasswordPage = lazyWithRetry(() => import('@/pages/ResetPasswordPage'), ['seo']);
+const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'), ['dashboard', 'eventModal', 'okr', 'org', 'orgAdmin', 'overlays', 'taskModal', 'tasks']);
+const TasksPage = lazyWithRetry(() => import('@/pages/TasksPage'), ['eventModal', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
+const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'), ['agenda', 'eventModal', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
+const HabitsPage = lazyWithRetry(() => import('@/pages/HabitsPage'), ['eventModal', 'habits', 'overlays', 'premium', 'tasks', 'tutorials']);
+const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'), ['eventModal', 'okr', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
+const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'), ['dashboard', 'overlays', 'premium', 'statistics']);
+// `tasks` : DataTab (export CSV) et `csv-export.ts` importent le BARREL
+// `@/modules/lists` pour `listKeys`, qui réexporte aussi `useDeleteListWithUndo`
+// (`delete-flow.hooks.ts`), dont le toast d'annulation passe par
+// `translator('tasks')`. Importer un seul nom d'un barrel charge tout son
+// graphe : trouvé par `npm run i18n:namespaces -- --pages` le 2026-09-03.
+const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['csv', 'org', 'overlays', 'settings', 'tasks']);
+const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'), ['overlays', 'premium']);
+const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'), ['guide', 'seo']);
+const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'), ['legal', 'seo']);
+const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['legal', 'legalPrivacy', 'seo']);
+const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['legal', 'legalTerms', 'seo']);
+// `tasks` : même mécanisme que `SettingsPage` ci-dessus, un cran plus loin —
+// `usePreviewShareLink` (`@/modules/friends`) importe `listKeys` du barrel
+// `@/modules/lists`, qui traîne `delete-flow.hooks.ts` et son
+// `translator('tasks')`.
+const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'), ['invite', 'overlays', 'tasks']);
+const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'), ['admin', 'overlays']);
+const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'), ['onboarding', 'org', 'overlays', 'portfolio']);
+const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'), ['csv', 'eventModal', 'okr', 'org', 'orgAdmin', 'orgGuide', 'overlays', 'portfolio', 'tasks']);
+const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'), ['org', 'overlays']);
+const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'), ['seo']);
+const BlogIndexPage = lazyWithRetry(() => import('@/pages/BlogIndexPage'), ['landing', 'seo']);
+const BlogArticlePage = lazyWithRetry(() => import('@/pages/BlogArticlePage'), ['landing', 'seo']);
+const AProposPage = lazyWithRetry(() => import('@/pages/AProposPage'), ['landing', 'seo']);
+const UseCasePage = lazyWithRetry(() => import('@/pages/UseCasePage'), ['landing', 'seo']);
 
-// Lazy load Layout
-const Layout = lazyWithRetry(() => import('@/components/Layout'));
+// Lazy load Layout. Il enveloppe TOUTES les routes protégées : son `org` est
+// donc chargé une seule fois pour toute la session connectée, et les pages
+// qu'il contient le retrouvent déjà en mémoire.
+const Layout = lazyWithRetry(() => import('@/components/Layout'), ['bugReport', 'org', 'overlays', 'tasks']);
 
 // Query client config optimized
 const queryClient = new QueryClient({
@@ -104,23 +124,11 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5,    // 5 minutes
       gcTime: 1000 * 60 * 30,      // 30 minutes
-      // Skip retry on definitive RLS / Postgrest errors AND on timeout/abort —
-      // on iOS Safari, the first cold connection routinely stalls past our 8 s
-      // fetch timeout. A blind retry serializes 8 s + 1 s + 8 s = ~17 s before
-      // we surface the error, which the user perceives as "loading 20 seconds".
-      // Better to fail fast: the localStorage cache (AuthContext) keeps every
-      // subsequent open instant, and visibilitychange → refetchQueries (mobileFocus)
-      // recovers the stale state without making the user wait for a second 8 s window.
-      retry: (failureCount, error) => {
-        if (failureCount >= 1) return false;
-        const msg = error instanceof Error ? error.message : '';
-        if (msg.includes('PGRST') || msg.includes('row-level security')) return false;
-        // i18n — identification par code stable, pas par sous-chaîne du message
-        // FR (`includes('Délai')` mourait dès la traduction du message de
-        // withTimeout, faisant silencieusement retomber iOS sur ~17 s perçues).
-        if (isTimeoutError(error)) return false;
-        return true;
-      },
+      // Prédicat extrait dans `@/lib/query-retry`, avec ses tests. Il vivait
+      // ici, donc testable par rien, et il était doublement faux : il lisait
+      // `error.message` alors que le code vit dans `.code`, sur des valeurs qui
+      // n'étaient même pas des `Error`. Détail complet dans le module.
+      retry: shouldRetryQuery,
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 3000),
       refetchOnWindowFocus: false,
       // `networkMode: 'always'` runs queries regardless of `navigator.onLine`.
@@ -151,10 +159,27 @@ const PageLoader = () => (
 );
 
 // Layout wrapper with Suspense
+// AppErrorBoundary ICI aussi : le Layout est le parent de TOUTES les pages
+// protegees et il est lazy. Sans boundary, un chunk perime ou un throw dans
+// la barre laterale faisait remonter l erreur au-dessus des routes et vidait
+// l ecran. Le fallback est le plein cadre par defaut (pas null) : c est une
+// coquille de page, pas un widget secondaire.
 const LayoutWithSuspense = () => (
-  <Suspense fallback={null}>
-    <Layout />
-  </Suspense>
+  <AppErrorBoundary>
+    <Suspense fallback={null}>
+      <Layout />
+    </Suspense>
+  </AppErrorBoundary>
+);
+
+// Page PUBLIQUE : son chunk se charge derrière le spinner de démarrage, rendu
+// par React à l'identique (`BootScreen`) : pas un second spinner différent.
+const PublicPageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <AppErrorBoundary>
+    <Suspense fallback={<BootScreen />}>
+      {children}
+    </Suspense>
+  </AppErrorBoundary>
 );
 
 // Page wrapper with Suspense
@@ -169,29 +194,105 @@ const PageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children })
 // Pages protégées éligibles à la réouverture « dernière page visitée » (#34).
 const RESUMABLE_PAGES = ['/dashboard', '/tasks', '/agenda', '/habits', '/okr', '/statistics', '/settings', '/entreprise'];
 
-// AM10 — Garde de module : si l'utilisateur a désactivé un module optionnel
-// (Agenda / Habitudes / OKR / Statistiques) dans l'onboarding ou les réglages,
-// l'accès direct par URL redirige vers le Dashboard. En démo, tout est actif.
-const RequireModule: React.FC<{ module: ModuleKey; children: React.ReactNode }> = ({
-  module,
-  children,
-}) => {
-  const activeModules = useActiveModules();
-  if (!activeModules[module]) return <Navigate to="/dashboard" replace />;
-  return <>{children}</>;
-};
+// Les sections entreprise sont des routes (`/entreprise/projects`) : validées
+// contre la liste des sections, jamais contre un préfixe libre — la valeur
+// relue vient du stockage local (cf. no-open-redirect.test.ts).
+const isResumablePage = (path: string) => RESUMABLE_PAGES.includes(path) || isOrgPath(path);
 
+/**
+ * Squelette de la landing — le fallback qu'elle mérite.
+ *
+ * MESURÉ LE 2026-08-30, à 4x de bridage CPU : pendant ~2 s, `/` affichait un
+ * écran BLANC avec un spinner, puis la landing sombre apparaissait d'un coup,
+ * son animation d'entrée déjà terminée. Le fallback par défaut (`PageLoader`)
+ * est un spinner sur le fond de l'APPLICATION, qui suit le thème et se trouve
+ * donc être clair, alors que la landing est sombre par construction.
+ *
+ * Ce squelette ne cherche pas à faire patienter : il occupe exactement la
+ * place du hero, dans ses couleurs, pour que l'arrivée du vrai contenu soit
+ * une continuité et non un flash. Aucune animation ici — un squelette qui
+ * pulse sur une page qui va elle-même s'animer fait deux mouvements
+ * concurrents.
+ *
+ * Il est volontairement écrit en primitives (des `div`) et vit dans le chunk
+ * d'entrée : il doit s'afficher AVANT que quoi que ce soit d'autre ne charge.
+ */
+const LandingSkeleton = () => (
+  <div
+    className="min-h-[100dvh] bg-white"
+    aria-hidden="true"
+  >
+    <div className="mx-auto max-w-5xl px-4 pt-6">
+      <div className="h-14 rounded-2xl bg-slate-900/[0.04]" />
+    </div>
+    {/* 🔴 CE SQUELETTE DOIT DÉCALQUER LE HERO, pas seulement en occuper la
+        place. Il a décrit une mise en page à DEUX COLONNES — texte à gauche,
+        fenêtre produit à droite — jusqu'au 2026-09-22, c'est-à-dire pendant
+        que le hero, lui, était déjà centré. Un squelette qui annonce autre
+        chose que ce qui arrive produit un saut de mise en page à l'endroit
+        exact où il est censé l'éviter : la promesse glisse de la gauche vers
+        le centre sous les yeux du visiteur.
+        ⚠️ Il est peint AVANT le chunk de la page : le relire ne suffit pas à
+        savoir s'il est juste, il faut le regarder pendant qu'il s'affiche
+        (bridage CPU, onglet rechargé). */}
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 lg:pt-16">
+      <div className="mx-auto flex max-w-4xl flex-col items-center">
+        {/* La rangée de puces (< xl) puis la tuile produit. Au-delà de `xl`
+            les puces partent dans les marges : le squelette ne les y suit pas,
+            elles n'y pèsent aucune hauteur. */}
+        <div className="mb-6 flex gap-2.5 xl:invisible">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-7 w-24 rounded-full bg-slate-900/[0.05]" />
+          ))}
+        </div>
+        <div className="mb-8 sm:mb-10 h-24 w-24 rounded-[1.7rem] bg-slate-900/[0.06]" />
+        <div className="w-full space-y-3">
+          <div className="mx-auto h-[2.35rem] lg:h-[3.75rem] xl:h-[4.25rem] w-11/12 rounded-xl bg-slate-900/[0.06]" />
+          <div className="mx-auto h-[2.35rem] lg:h-[3.75rem] xl:h-[4.25rem] w-10/12 rounded-xl bg-blue-600/10" />
+        </div>
+        <div className="mt-8 w-full max-w-xl space-y-2.5">
+          <div className="mx-auto h-4 w-11/12 rounded bg-slate-900/[0.05]" />
+          <div className="mx-auto h-4 w-9/12 rounded bg-slate-900/[0.05]" />
+        </div>
+        <div className="mt-9 flex gap-3">
+          <div className="h-[3.25rem] w-52 rounded-full bg-blue-600/20" />
+          <div className="h-[3.25rem] w-48 rounded-full bg-slate-900/[0.06]" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+/**
+ * Racine publique — la landing, servie sur deux chemins.
+ *
+ * `/` sert le parcours perso, `/entreprise-presentation` le parcours
+ * entreprise. Les deux rendent le MÊME composant à la même profondeur : React
+ * réconcilie par type, donc passer de l'un à l'autre ne remonte pas la page et
+ * l'état de la landing (parcours affiché, transition en cours) survit à la
+ * navigation. Un utilisateur connecté est redirigé dans l'app, dans les deux cas.
+ */
 const RootRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) return null;
   if (isAuthenticated) {
+    // Une session que le script inline d'index.html n'a pas vue (retour OAuth
+    // sur `/`) : la copie du hero du prérendu couvrirait l'app.
+    releasePrerenderHero();
     // Rouvre l'app sur la dernière page quittée (mémorisée par Layout),
     // fallback dashboard si inconnue ou invalide.
     const last = getLastVisitedPage();
-    const target = last && RESUMABLE_PAGES.includes(last) ? last : '/dashboard';
+    const target = last && isResumablePage(last) ? last : '/dashboard';
     return <Navigate to={target} replace />;
   }
-  return <PageWithSuspense><LandingPage /></PageWithSuspense>;
+  // Fallback dédié : la landing est sombre, le fallback par défaut est clair.
+  return (
+    <AppErrorBoundary>
+      <Suspense fallback={<LandingSkeleton />}>
+        <LandingPage />
+      </Suspense>
+    </AppErrorBoundary>
+  );
 };
 
 /**
@@ -210,6 +311,39 @@ const SharedTasksRealtime: React.FC = () => {
   return null;
 };
 
+/**
+ * Boîte de réception d'organisation en temps réel — même rôle et mêmes
+ * contraintes que `SharedTasksRealtime` : point d'ancrage de cycle de vie, sans
+ * rendu, monté UNE SEULE FOIS (un canal Realtime est un WebSocket).
+ *
+ * Remplace trois `refetchInterval` de 20 s montés en permanence par `InboxMenu`
+ * (invitations, avis de retrait, demande d'adhésion), soit 9 requêtes par
+ * minute et par utilisateur connecté avant toute interaction.
+ * Cf. `docs/SCALABILITY.md` §3 et mig. 118.
+ */
+const OrgInboxRealtime: React.FC = () => {
+  const { user, isDemo } = useAuth();
+  // L'organisation active sert au filtre ADMIN (`org_id`) : sans elle, les
+  // demandes d'adhésion resteraient sondées sur toutes les pages.
+  const { activeOrg } = useActiveOrganization();
+  useOrgInboxRealtime(isDemo ? undefined : user?.id, isDemo ? undefined : activeOrg?.id);
+  return null;
+};
+
+/**
+ * Demandes d'amis et listes partagées en temps réel — mêmes contraintes que
+ * les deux hooks ci-dessus : point d'ancrage sans rendu, monté UNE SEULE FOIS.
+ *
+ * Remplace les trois DERNIERS `refetchInterval` permanents (15 s ×2, 20 s),
+ * soit ~15 requêtes par minute et par utilisateur connecté avant toute
+ * interaction. Cf. `docs/SCALABILITY.md` §3 et mig. 120.
+ */
+const FriendsInboxRealtime: React.FC = () => {
+  const { user, isDemo } = useAuth();
+  useFriendsInboxRealtime(isDemo ? undefined : user?.id);
+  return null;
+};
+
 const AppRoutes = () => {
   // Locale servie pour ce montage. `basename` étant figé au montage du routeur,
   // elle ne change pas sans rechargement complet (cf. src/i18n/bootstrap.ts) —
@@ -224,31 +358,36 @@ const AppRoutes = () => {
 
     {/* Public pages — accessibles sans authentification */}
     <Route path="welcome" element={<Navigate to="/" replace />} />
-    <Route path="login" element={<PageWithSuspense><LoginPage /></PageWithSuspense>} />
-    <Route path="signup" element={<PageWithSuspense><SignupPage /></PageWithSuspense>} />
-    <Route path="forgot-password" element={<PageWithSuspense><ForgotPasswordPage /></PageWithSuspense>} />
-    <Route path="reset-password" element={<PageWithSuspense><ResetPasswordPage /></PageWithSuspense>} />
-    <Route path="guide" element={<PageWithSuspense><GuidePage /></PageWithSuspense>} />
-    <Route path="blog" element={<PageWithSuspense><BlogIndexPage /></PageWithSuspense>} />
-    <Route path="blog/:slug" element={<PageWithSuspense><BlogArticlePage /></PageWithSuspense>} />
+    <Route path="login" element={<PublicPageWithSuspense><LoginPage /></PublicPageWithSuspense>} />
+    <Route path="signup" element={<PublicPageWithSuspense><SignupPage /></PublicPageWithSuspense>} />
+    <Route path="forgot-password" element={<PublicPageWithSuspense><ForgotPasswordPage /></PublicPageWithSuspense>} />
+    <Route path="reset-password" element={<PublicPageWithSuspense><ResetPasswordPage /></PublicPageWithSuspense>} />
+    <Route path="guide" element={<PublicPageWithSuspense><GuidePage /></PublicPageWithSuspense>} />
+    <Route path="blog" element={<PublicPageWithSuspense><BlogIndexPage /></PublicPageWithSuspense>} />
+    <Route path="blog/:slug" element={<PublicPageWithSuspense><BlogArticlePage /></PublicPageWithSuspense>} />
     {/* Slugs publics localisés — cf. src/i18n/routes.ts.
         `basename` retire déjà le préfixe de locale, donc ces chemins restent
         relatifs ; seul le SLUG change selon la langue servie. Conséquence
         voulue : `/en/about` répond, `/en/a-propos` tombe en 404 — une seule URL
         canonique par langue et par page. */}
-    <Route path={routeSlug('about', activeLocale)} element={<PageWithSuspense><AProposPage /></PageWithSuspense>} />
-    <Route path={routeSlug('freelancers', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('students', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('managers', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('legalNotice', activeLocale)} element={<PageWithSuspense><MentionsLegalesPage /></PageWithSuspense>} />
-    <Route path={routeSlug('privacy', activeLocale)} element={<PageWithSuspense><PolitiqueConfidentialitePage /></PageWithSuspense>} />
-    <Route path={routeSlug('terms', activeLocale)} element={<PageWithSuspense><CGUPage /></PageWithSuspense>} />
+    <Route
+      path={routeSlug('enterprisePresentation', activeLocale)}
+      element={<RootRoute />}
+    />
+    <Route path={routeSlug('about', activeLocale)} element={<PublicPageWithSuspense><AProposPage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('freelancers', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('students', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('managers', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('teams', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('legalNotice', activeLocale)} element={<PublicPageWithSuspense><MentionsLegalesPage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('privacy', activeLocale)} element={<PublicPageWithSuspense><PolitiqueConfidentialitePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('terms', activeLocale)} element={<PublicPageWithSuspense><CGUPage /></PublicPageWithSuspense>} />
     {/* Lien d'invitation de partage — public : pose le token puis redirige
         (login/signup si déconnecté) ; ShareInviteClaimer fait le claim. */}
-    <Route path="invite/:token" element={<PageWithSuspense><InvitePage /></PageWithSuspense>} />
+    <Route path="invite/:token" element={<PublicPageWithSuspense><InvitePage /></PublicPageWithSuspense>} />
     {/* Lien d'invitation entreprise placé (v2) — public : la page gère
         elle-même l'état connecté/déconnecté + consentement RGPD. */}
-    <Route path="org-invite/:token" element={<PageWithSuspense><ClaimOrgInvitePage /></PageWithSuspense>} />
+    <Route path="org-invite/:token" element={<PublicPageWithSuspense><ClaimOrgInvitePage /></PublicPageWithSuspense>} />
 
     {/* Protected routes — require authentication */}
     <Route element={<ProtectedRoute />}>
@@ -257,13 +396,21 @@ const AppRoutes = () => {
       <Route element={<LayoutWithSuspense />}>
         <Route path="dashboard" element={<PageWithSuspense><DashboardPage /></PageWithSuspense>} />
         <Route path="tasks" element={<PageWithSuspense><TasksPage /></PageWithSuspense>} />
-        <Route path="agenda" element={<RequireModule module="agenda"><PageWithSuspense><AgendaPage /></PageWithSuspense></RequireModule>} />
-        <Route path="habits" element={<RequireModule module="habits"><PageWithSuspense><HabitsPage /></PageWithSuspense></RequireModule>} />
-        <Route path="okr" element={<RequireModule module="okr"><PageWithSuspense><OKRPage /></PageWithSuspense></RequireModule>} />
-        <Route path="statistics" element={<RequireModule module="statistics"><PageWithSuspense><StatisticsPage /></PageWithSuspense></RequireModule>} />
+        <Route path="agenda" element={<PageWithSuspense><AgendaPage /></PageWithSuspense>} />
+        <Route path="habits" element={<PageWithSuspense><HabitsPage /></PageWithSuspense>} />
+        <Route path="okr" element={<PageWithSuspense><OKRPage /></PageWithSuspense>} />
+        <Route path="statistics" element={<PageWithSuspense><StatisticsPage /></PageWithSuspense>} />
         <Route path="settings" element={<PageWithSuspense><SettingsPage /></PageWithSuspense>} />
         {/* Espace entreprise — visible pour les membres d'une organisation */}
-        <Route path="entreprise" element={<PageWithSuspense><OrganizationPage /></PageWithSuspense>} />
+        {/* Une section = une route (`/entreprise/projects`), segment OPTIONNEL :
+            une seule route, donc changer de section ne remonte pas la page.
+            `entreprise/onboarding`, plus haut, est un segment STATIQUE : le
+            routeur le préfère toujours à ce segment dynamique. */}
+        {/* Second segment optionnel : la page d'une équipe,
+            `/entreprise/teams/<id>` (audit Membres du 2026-09-24). Toujours la
+            MÊME route, pour qu'ouvrir une équipe ne remonte pas la page ;
+            `OrganizationPage` renvoie tout autre `/<section>/<x>` à la section. */}
+        <Route path="entreprise/:section?/:entityId?" element={<PageWithSuspense><OrganizationPage /></PageWithSuspense>} />
         {/* Admin — URL non référencée (aucun lien dans l'UI), gating réel
             côté serveur : la RPC get_admin_stats rejette les non-admins. */}
         <Route path="admin" element={<PageWithSuspense><AdminPage /></PageWithSuspense>} />
@@ -274,10 +421,25 @@ const AppRoutes = () => {
     </Route>
 
     {/* Fallback */}
-    <Route path="*" element={<PageWithSuspense><NotFoundPage /></PageWithSuspense>} />
+    <Route path="*" element={<PublicPageWithSuspense><NotFoundPage /></PublicPageWithSuspense>} />
   </Routes>
   );
 };
+
+/**
+ * Mesure d'audience Vercel — montée UNIQUEMENT après acceptation explicite.
+ *
+ * `<Analytics />` était monté inconditionnellement, alors que le bandeau
+ * proposait de refuser : une promesse affichée, non tenue.
+ *
+ * Le composant réagit au store, donc accepter le monte sans rechargement.
+ * Refuser ne le monte jamais : on ne charge pas pour démonter ensuite, car on
+ * ne décharge pas du JavaScript déjà évalué.
+ */
+function ConsentedAnalytics() {
+  const consent = useCookieConsent();
+  return consent === 'accepted' ? <Analytics /> : null;
+}
 
 const App: React.FC = () => {
   return (
@@ -285,35 +447,70 @@ const App: React.FC = () => {
       <AuthProvider>
         <ActiveOrgProvider>
         <BillingProvider>
-          <TooltipProvider>
+          {/* ⚠️ Plus de <TooltipProvider> ici, et ce n'est PAS un oubli.
+              Le composant `Tooltip` de `ui/tooltip.tsx` fournit déjà son propre
+              provider (motif shadcn v4), avec le MÊME `delayDuration = 0` :
+              celui-ci était redondant, et il traînait tout `@radix-ui/react-tooltip`
+              + `floating-ui` — 113 ko bruts — dans le chunk d'entrée, pour un
+              seul consommateur réel (`OrgTabBadge`, dans l'espace entreprise,
+              déjà lazy).
+              🔴 Ne pas le remettre « par sécurité » : un tooltip sans provider
+              lève à l'affichage, ça se voit tout de suite. */}
+          <>
             {/* reducedMotion="user" : respecte `prefers-reduced-motion` du système
                 pour TOUTES les animations Framer Motion (transforms réduits, pas
                 de mouvement décoratif). Exigence WCAG 2.3.3 / EAA. */}
             <MotionConfig reducedMotion="user">
-            <Toaster
-              position="top-right"
-              richColors
-              closeButton
-              theme="system"
-              toastOptions={{
-                duration: 3000,
-              }}
-            />
-            <SharedTasksRealtime />
+            <Suspense fallback={null}>
+              <ThemedToaster />
+            </Suspense>
+            {/* Défense en profondeur autour des SATELLITES de l'app.
+                Ces trois-là sont montés au niveau App, donc au-dessus de tout
+                boundary de page : un throw dans l'un d'eux emportait
+                l'application entière.
+                C'est exactement ce qui est arrivé avec le canal Realtime — le
+                constructeur `WebSocket` lève « The operation is insecure » dans
+                un navigateur qui bloque les WebSockets, et l'écran devenait
+                noir à chaque visite. La cause est traitée dans
+                `useSharedTasksRealtime`, mais aucun de ces composants ne mérite
+                de pouvoir tuer l'app : `fallback={null}` les fait disparaître
+                en silence.
+                `AppRoutes` reste HORS de ce boundary — c'est l'application. */}
+            <AppErrorBoundary fallback={null}>
+              <SharedTasksRealtime />
+            </AppErrorBoundary>
+            <AppErrorBoundary fallback={null}>
+              <OrgInboxRealtime />
+            </AppErrorBoundary>
+            <AppErrorBoundary fallback={null}>
+              <FriendsInboxRealtime />
+            </AppErrorBoundary>
             <AppRoutes />
-            <CookieBanner />
-            {/* Popup d'invitation de partage — niveau App pour survivre aux
-                changements de route (claim après login OU fin d'inscription). */}
-            <ShareInviteClaimer />
-            <Suspense fallback={null}>
-              <CommandPalette />
-            </Suspense>
-            <Suspense fallback={null}>
-              <ModuleOnboarding />
-            </Suspense>
-            <Analytics />
+            <AppErrorBoundary fallback={null}>
+              <CookieBanner />
+              {/* Onglet resté ouvert sur un bundle périmé — 91,5 % du trafic
+                  Supabase du 2026-08-26 venait de deux onglets dans ce cas.
+                  Monté ici, une seule fois : c'est une propriété de
+                  l'application, pas d'un écran. */}
+              <NewVersionBanner />
+              {/* Popup d'invitation de partage — niveau App pour survivre aux
+                  changements de route (claim après login OU fin d'inscription). */}
+              <ShareInviteClaimer />
+            </AppErrorBoundary>
+            {/* AppErrorBoundary ici, PAS seulement le Suspense : un chunk périmé
+                (déploiement récent, vieil index.html en cache) fait échouer ce
+                lazy() en dehors de toute route — sans boundary à ce niveau,
+                l'erreur remonte jusqu'à la racine et blanchit TOUTE l'app,
+                alors que la palette de commandes n'est qu'un raccourci
+                secondaire (Ctrl/Cmd+K). */}
+            <AppErrorBoundary fallback={null}>
+              <Suspense fallback={null}>
+                <CommandPalette />
+              </Suspense>
+            </AppErrorBoundary>
+            <ConsentedAnalytics />
             </MotionConfig>
-          </TooltipProvider>
+          </>
         </BillingProvider>
         </ActiveOrgProvider>
       </AuthProvider>

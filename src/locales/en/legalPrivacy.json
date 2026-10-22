@@ -1,0 +1,137 @@
+{
+  "privacy": {
+    "seoTitle": "Privacy policy – Cosmo App",
+    "seoDescription": "Cosmo's privacy policy: data collected, secure Supabase storage, Row Level Security, GDPR rights and contact.",
+    "title": "Privacy policy",
+    "updatedAt": "21 October 2026",
+    "s1": {
+      "title": "1. Data controller",
+      "p1": "The controller of the personal data collected through the Cosmo application is Axel Longatte, sole proprietor (EI, SIREN 131 769 317), publisher of Cosmo, 138 avenue Victor Hugo, 75116 Paris, France, reachable at [contact@thecosmo.app](mailto:contact@thecosmo.app)."
+    },
+    "s2": {
+      "title": "2. Data collected",
+      "intro": "While you use Cosmo, we collect only the data needed for the service to work:",
+      "li1": "**Identification data:** display name, email address, encrypted password (standard sign-up), or profile picture and Google identifier (sign-in through Google OAuth)",
+      "li2": "**Productivity data:** tasks, categories, lists, habits and their completion history, calendar events, OKRs (objectives and key results) and their progress",
+      "li3": "**Social data:** friend list, friend requests, tasks shared with other users",
+      "li4": "**Subscription data (business workspace):** the organisation's plan, subscription status and dates, and Stripe technical identifiers. Bank details are handled exclusively by Stripe; Cosmo has no access to them",
+      "li5": "**Technical data:** Supabase session information (authentication token, date of last sign-in) and the days on which you signed in (internal usage statistics)",
+      "p1": "**Audience measurement:** Cosmo uses Vercel Analytics, a cookie-free audience measurement tool, loaded only if you accept it. It counts the pages viewed and the page you came from, and builds no advertising profile. With the same consent, and only on public pages while signed out, Cosmo also measures its own traffic: the page viewed, the site you came from, approximate country and city, browser and device type, time spent, scrolling and clicks on the main buttons. Your IP address is not stored: it is only used to recognise the same visit within a day, and that link is destroyed the next day. These measurements are kept for 13 months.",
+      "p2": "**Internal measurement:** inside the application, usage statistics are computed by Cosmo itself, from its own database (the sign-in days described above). No usage data is sent to a third-party measurement tool. This data is never cross-referenced with the content of your tasks, habits or OKRs.",
+      "p3": "**Scope of measurement:** if you accept it, Vercel Analytics is loaded across the whole site, application included. It only counts page views: it reads neither the content of your pages nor what you type into forms.",
+      "note": "No other third-party tracking tool (Google Analytics, Mixpanel, Hotjar, and so on) is used. Inside the application, nothing else is collected about your behaviour apart from the sign-in days described above.",
+      "li6": "**Business workspace data:** membership of an organisation, role, team tasks and projects, comments, activity history and notifications. For this data, the organisation is the controller and Cosmo acts on its behalf, as set out in section 6 of the Terms of Use",
+      "li7": "**Bug reports:** the message and any screenshots you attach, your account email address if you are signed in, and the technical context of the page, sent by email to the team",
+      "li8": "**Email invitations:** when a member of an organisation invites you, your email address is used to send you the invitation link, on behalf of that organisation. A link that is not accepted expires after 7 days and is erased 30 days later",
+      "p4": "**Where your sign-up came from:** if you accept it in the banner, Cosmo keeps for 30 days, in your browser's local storage, the channel that brought you here (the “ref” or “utm” parameter of a campaign link, or “demo”), then records it on your account if you create one. It is used only to know which channels bring sign-ups. Without your consent, nothing is stored or recorded.",
+      "p5": "**Trying the demo:** if you accept, a random device identifier is stored when you start the demo, and the visit is counted. If you then create an account from the same device, the visit is attached to your account, to measure how many trials lead to a sign-up. Without your consent, the demo works exactly the same and nothing is counted."
+    },
+    "s3": {
+      "title": "3. Authentication methods",
+      "intro": "Cosmo offers two ways to sign in:",
+      "li1": "**Email and password:** your password is hashed server-side by Supabase Auth and is never stored in clear text",
+      "li2": "**Google OAuth:** by signing in through Google, you authorise Cosmo to retrieve your name, email address and profile picture from your Google account. No access to your calendar or to any other Google service is requested"
+    },
+    "s4": {
+      "title": "4. Purposes of processing",
+      "intro": "Your data is used solely to:",
+      "li1": "Create and authenticate your user account",
+      "li2": "Store and synchronise your productivity data (tasks, habits, calendar, OKRs)",
+      "li3": "Enable collaboration: task sharing, friend management and the business workspace",
+      "li4": "Process payments and manage the business workspace subscription",
+      "li5": "Keep the application secure and working properly",
+      "li6": "Produce internal usage statistics (sign-in days) and, with your consent, measure traffic and where sign-ups come from",
+      "li7": "Send you service emails: invitations, notices before a subscription renews, organisation notifications you chose to receive, replies to your messages"
+    },
+    "s5": {
+      "title": "5. Legal basis",
+      "intro": "The processing of your data relies on:",
+      "li1": "**Performance of the contract**, for all data needed for the service to work",
+      "li2": "**Legitimate interest**, for the security and continuity of the application, and for internal usage statistics (sign-in days), which are used only to improve the service",
+      "li3": "**Consent**, for audience measurement (Vercel Analytics), where your sign-up came from, counting demo trials, and anything stored on your device that is not strictly necessary to the service. Nothing is stored or loaded until you have accepted, and a refusal never stores anything. You can change your mind at any time",
+      "note": "Cosmo is intended for people aged at least 15. Below that age, audience measurement can only be accepted with the joint consent of a holder of parental authority (Article 45 of the French Data Protection Act)."
+    },
+    "s6": {
+      "title": "6. Retention periods",
+      "li1": "Account and content data: kept while the account is active, then permanently deleted within 90 days of closure. An account with no sign-in for **3 years** is deleted, after a warning email sent 30 days beforehand",
+      "li2": "Session tokens: expire automatically according to the Supabase configuration",
+      "li3": "**Demo visit** (device identifier, stored only if you accepted): **90 days** if the visit does not lead to a sign-up, **400 days** if it does",
+      "li4": "**Activity days** (sign-in dates, used for usage statistics): **400 days**",
+      "li5": "**Technical payment markers** (identifiers of Stripe events already processed, used to avoid charging twice): **90 days**",
+      "li6": "Payment data: kept in line with legal obligations (10 years for accounting)",
+      "note": "These periods are applied automatically by the database, with no manual step. The payment journal is the exception: tax law requires it to be kept **and to remain unalterable**, so it can be neither erased nor modified, not even following a request to delete an account. Its rows contain neither your name nor your email address: they carry only a technical identifier, which stops designating anyone once your account is deleted.",
+      "li7": "**Where your sign-up came from** (only if you accepted): kept on your profile for as long as the account exists",
+      "li8": "**Bug reports**: the emails received are kept for at most 12 months after they have been handled",
+      "li9": "**Database backups**: encrypted, kept for 30 days, then replaced automatically"
+    },
+    "s7": {
+      "title": "7. Data sharing",
+      "intro": "Your data may pass through the following processors:",
+      "li1": "**Supabase**: database and authentication. Your data is hosted in the **eu-west-1 (Ireland)** region, therefore within the European Union",
+      "li2": "**Vercel**: website hosting. Processes connection data (IP address, technical logs)",
+      "li3": "**Vercel Analytics**: cookie-free audience measurement, loaded only if you accept it",
+      "li4": "**Sentry**: technical error detection, data hosted in the Union (Germany). Email addresses and identifiers appearing in error messages are masked, and invitation or sign-in tokens are removed from page addresses. Your account's technical identifier (a random string, with no name or email) is attached to reports to link errors together",
+      "li5": "**Stripe**: secure payment processing",
+      "li6": "**Google**: only if you use Google OAuth sign-in",
+      "outro": "No data is sold to third parties. Nothing is shared for advertising or marketing purposes.",
+      "li8": "**Resend**: sending service emails (bug reports, notices before a subscription renews)",
+      "li9": "**Cloudflare Turnstile**: bot protection on the sign-in and sign-up forms, when enabled. Processes your IP address and technical browser signals, with no advertising purpose",
+      "li10": "**GitHub**: storage of the daily database backups, encrypted before they are uploaded. GitHub does not hold the decryption key"
+    },
+    "s7bis": {
+      "title": "7 bis. Transfers outside the European Union",
+      "p1": "Your database is hosted in Ireland, within the European Union.",
+      "p2": "However, several providers are companies established outside the Union or may access data from outside it: **Vercel**, **Sentry**, **Resend**, **Cloudflare**, **Stripe**, **Google** (Google sign-in), **GitHub** (encrypted backups), and **Supabase Inc.**, whose teams may access the infrastructure for maintenance and support. The data they process on our behalf may therefore be transferred outside the Union. These transfers are covered by the European Commission's adequacy decision on the EU-US Data Privacy Framework, where the provider is certified under it, or otherwise by the Commission's standard contractual clauses (Articles 45 and 46 GDPR).",
+      "p3": "You can ask us for a copy of the applicable safeguards at the address given below."
+    },
+    "s7ter": {
+      "title": "7b. Business prospecting",
+      "p1": "Cosmo may contact professionals by email to present its business offer. This section is addressed to the people contacted in this way, who are not necessarily Cosmo users.",
+      "li1": "**Data processed:** business email address, name, company, job title, source of the contact (company website, professional directory or network), history of our exchanges and replies received",
+      "li2": "**Purpose:** presenting Cosmo to you and following up on our exchanges. Messages relate only to your professional activity",
+      "li3": "**Legal basis:** Cosmo's legitimate interest in making its offer known to professionals (article 6.1.f GDPR and article L34-5 of the French Postal and Electronic Communications Code). No prior consent is required for prospecting related to your role, but you may object at any time",
+      "li4": "**Recipients:** Supabase (data hosting, in Ireland), IONOS (sending mailboxes, in Germany) and Anthropic (automatic sorting of replies received, a company established in the United States, transfer governed by the standard contractual clauses). Your data is never sold or transferred",
+      "li5": "**Retention period:** three years from our last contact, then deletion",
+      "p2": "**Objecting to prospecting.** Every email includes a simple, free way to stop being contacted. You can also write to [contact@thecosmo.app](mailto:contact@thecosmo.app). Your address is then added to an objection list, kept to ensure we do not contact you again. You also have the rights described in section 8, including the right to obtain a copy of the data concerning you."
+    },
+    "s8": {
+      "title": "8. Your rights (GDPR)",
+      "intro": "Under the General Data Protection Regulation (GDPR), you have the following rights:",
+      "li1": "**Right of access**: obtain a copy of your personal data",
+      "li2": "**Right to rectification**: correct inaccurate information from the settings",
+      "li3": "**Right to erasure**: delete your account and all your data",
+      "li4": "**Right to data portability**: export your data in a readable format",
+      "li5": "**Right to object**: object to certain processing",
+      "li6": "**Right to restriction**: restrict processing in certain cases",
+      "p1": "Portability is exercised directly from **Settings, My data tab**: the export covers your tasks, habits, events, OKRs, categories, lists and your profile, in CSV format.",
+      "p2": "For any other right: [contact@thecosmo.app](mailto:contact@thecosmo.app). We reply within **one month** of receiving your request, in accordance with Article 12 of the GDPR. That period may be extended by two months for a complex request, in which case we tell you within the first month.",
+      "p3": "You can also lodge a complaint with the **CNIL**, the French data protection authority: [www.cnil.fr](https://www.cnil.fr)",
+      "li7": "**Post-mortem instructions**: set instructions on how your data is kept, erased and disclosed after your death (Article 85 of the French Data Protection Act)"
+    },
+    "s9": {
+      "title": "9. Security",
+      "p1": "All communications between your browser and our servers are encrypted with HTTPS/TLS. Passwords are stored hashed (bcrypt, through Supabase Auth). Access to data is protected by Row Level Security (RLS) policies in the database: each user can reach only their own data and what others have shared with them. The publisher has technical administrative access, reserved for maintenance, security and support. Database backups are encrypted."
+    },
+    "s10": {
+      "title": "10. Cookies and information stored on your device",
+      "intro": "The following are **strictly necessary** for the service to work, and are stored without your consent because the service cannot do without them:",
+      "li1": "Supabase session cookie (authentication)",
+      "li2": "Interface preferences stored in localStorage (theme, filters)",
+      "li3": "Your consent choice, stored in localStorage — it is what allows us to honour your refusal",
+      "consentIntro": "The following are stored **only after you accept**:",
+      "note1": "No advertising cookie is placed on your device, and no data is used for advertising purposes.",
+      "note2": "Our audience measurement tool (Vercel Analytics), where your sign-up came from and counting demo trials all require your consent: **none of this is loaded or stored until you click “Accept”** in the banner, and if you refuse, it never is. Your choice is kept on your device for six months, after which you are asked again. You can change it at any time with the button below or the “Manage cookies” link: if you withdraw your consent, the identifiers and sign-up origin stored on your device are erased.",
+      "consentLi2": "Where your sign-up came from (campaign link or demo), kept for 30 days in the browser's local storage",
+      "consentLi3": "A random device identifier stored when the demo starts, to count trials",
+      "consentLi4": "Two demo counters (time spent and number of items created), which choose when to suggest an account. Without your consent, they stay in memory and disappear when the page is reloaded"
+    },
+    "s11": {
+      "title": "11. Changes",
+      "p1": "This policy may be updated. In the event of a substantial change, you will be informed by email or through a notification in the application. The date of the last update is shown at the top of this page."
+    },
+    "s12": {
+      "title": "12. Language of this document",
+      "p1": "This document is available in French and in English. **If the two versions differ, the French version prevails**: it is the original version."
+    }
+  }
+}

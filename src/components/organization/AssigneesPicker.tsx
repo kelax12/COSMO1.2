@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -10,6 +11,7 @@ import {
 import { UserPlus, Plus } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
+import { MEMBER_SEARCH_THRESHOLD, filterMembersByQuery } from './member-search.helpers';
 import { useT } from '@/i18n/useT';
 
 interface AssigneesPickerProps {
@@ -18,6 +20,13 @@ interface AssigneesPickerProps {
   value: string[];
   onChange: (assigneeIds: string[]) => void;
   disabled?: boolean;
+  /**
+   * Portée d'assignation de l'utilisateur courant (mig. 115). Un membre hors
+   * portée n'apparaît pas dans le menu — SAUF s'il est déjà assigné : le
+   * serveur ne contrôle que les AJOUTS, et masquer un assigné existant
+   * empêcherait de le retirer.
+   */
+  canAssign?: (userId: string) => boolean;
   /**
    * Affiche, quand il y a déjà des assignés, une pastille « + » à côté des
    * avatars, révélée au survol de la ligne parente (`.group`). Rend l'ajout
@@ -30,26 +39,36 @@ interface AssigneesPickerProps {
  * Sélecteur MULTI-assignés (avatars empilés + menu à cases). Le déclencheur
  * montre jusqu'à 3 avatars (+N), ou une icône « assigner » si personne.
  */
-const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover }: AssigneesPickerProps) => {
+const AssigneesPicker = ({ members, value, onChange, disabled, canAssign, revealAddOnHover }: AssigneesPickerProps) => {
   const { t } = useT('org');
   const assigned = value
     .map((id) => members.find((m) => m.userId === id))
     .filter((m): m is OrgMember => !!m);
+
+  const selectable = canAssign
+    ? members.filter((m) => canAssign(m.userId) || value.includes(m.userId))
+    : members;
+
+  // Recherche au-delà de quelques personnes (audit du 2026-09-24) : elle ne
+  // filtre que l'affichage, une personne cochée puis masquée reste assignée.
+  const [query, setQuery] = useState('');
+  const searchable = selectable.length > MEMBER_SEARCH_THRESHOLD;
+  const shown = searchable ? filterMembersByQuery(selectable, query) : selectable;
 
   const toggle = (userId: string) =>
     onChange(value.includes(userId) ? value.filter((id) => id !== userId) : [...value, userId]);
 
   const label = assigned.length
     ? t('assign.assignedTo', { names: assigned.map((m) => m.displayName).join(', ') })
-    : 'Assigner des membres';
+    : t('assign.assignMembers');
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={(open) => { if (!open) setQuery(''); }}>
       <DropdownMenuTrigger
         disabled={disabled}
         className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-50"
         aria-label={label}
-        title={assigned.length ? assigned.map((m) => m.displayName).join(', ') : 'Assigner'}
+        title={assigned.length ? assigned.map((m) => m.displayName).join(', ') : t('assign.assignShort')}
       >
         {assigned.length === 0 ? (
           <span className="w-7 h-7 rounded-full border border-dashed border-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-muted))]">
@@ -60,7 +79,7 @@ const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover 
             <span className="flex -space-x-1.5">
               {assigned.slice(0, 3).map((m) => (
                 <span key={m.userId} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
-                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={26} />
+                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
                 </span>
               ))}
               {assigned.length > 3 && (
@@ -84,6 +103,22 @@ const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover 
           sans ça il s'ouvrait derrière le modal et paraissait « ne rien faire ». */}
       <DropdownMenuContent align="end" className="w-56 max-h-72 overflow-y-auto z-[10000]">
         <DropdownMenuLabel>{t('assign.picker')}</DropdownMenuLabel>
+        {searchable && (
+          <div className="px-1.5 pb-1.5">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              // Le menu Radix capte les touches (saisie semi-automatique,
+              // flèches) : sans ça, taper « a » sautait sur le premier membre
+              // en A au lieu d'écrire dans le champ. Échap reste au menu.
+              onKeyDown={(e) => { if (e.key !== 'Escape') e.stopPropagation(); }}
+              placeholder={t('assign.memberSearch')}
+              aria-label={t('assign.memberSearch')}
+              className="w-full px-2.5 py-1.5 text-sm rounded-md border bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
+            />
+          </div>
+        )}
         {value.length > 0 && (
           <>
             <DropdownMenuItem onClick={() => onChange([])}>
@@ -92,7 +127,10 @@ const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover 
             <DropdownMenuSeparator />
           </>
         )}
-        {members.map((m) => (
+        {shown.length === 0 && (
+          <p className="px-2 py-3 text-xs text-center text-[rgb(var(--color-text-muted))]">{t('assign.noMemberMatch')}</p>
+        )}
+        {shown.map((m) => (
           <DropdownMenuCheckboxItem
             key={m.userId}
             checked={value.includes(m.userId)}
@@ -100,7 +138,7 @@ const AssigneesPicker = ({ members, value, onChange, disabled, revealAddOnHover 
             // Garde le menu ouvert pour cocher plusieurs membres d'affilée.
             onSelect={(e) => e.preventDefault()}
           >
-            <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
+            <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
             <span className="truncate">{m.displayName}</span>
           </DropdownMenuCheckboxItem>
         ))}

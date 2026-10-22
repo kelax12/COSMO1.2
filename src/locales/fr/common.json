@@ -1,11 +1,19 @@
 {
+  "noCategory": "Sans catégorie",
+  "listActions": {
+    "removeDefault": "Retirer des favoris",
+    "setDefault": "Épingler par défaut"
+  },
   "language": {
     "label": "Langue",
     "description": "Langue de l'interface",
     "sectionSubtitle": "Choisissez la langue dans laquelle l'application s'affiche.",
-    "reloadNotice": "La page est rechargée pour appliquer la langue partout — dates et formats de nombres compris."
+    "reloadNotice": "La page est rechargée pour appliquer la langue partout, dates et formats de nombres compris."
   },
   "nav": {
+    "demoCreateAccount": "Mode démo · créer un compte",
+    "objectivesAria": "Objectifs (OKR)",
+    "objectives": "Objectifs",
     "dashboard": "Accueil",
     "tasks": "Tâches",
     "agenda": "Agenda",
@@ -16,12 +24,14 @@
     "premium": "Premium",
     "settings": "Paramètres",
     "admin": "Admin",
+    "persoGuide": "Ouvrir le guide",
     "more": "Plus",
     "moreOptions": "Plus d'options",
     "sectionOther": "AUTRE",
     "mobileNavLabel": "Navigation mobile",
     "documentTitle": "{{page}} – Cosmo",
     "createTask": "Créer une tâche",
+    "skipToContent": "Aller au contenu principal",
     "goToSettings": "Aller aux paramètres",
     "logout": "Déconnexion",
     "premiumActive": "Actif",
@@ -44,26 +54,58 @@
       "taskDueToday_other": "{{count}} tâches pour aujourd'hui",
       "orgNotification_one": "{{count}} notification entreprise",
       "orgNotification_many": "{{count}} de notifications entreprise",
-      "orgNotification_other": "{{count}} notifications entreprise"
+      "orgNotification_other": "{{count}} notifications entreprise",
+      "orgJoinRequest_one": "{{count}} demande d’adhésion à traiter",
+      "orgJoinRequest_many": "{{count}} de demandes d’adhésion à traiter",
+      "orgJoinRequest_other": "{{count}} demandes d’adhésion à traiter",
+      "orgNews": "Nouveautés dans l’espace entreprise"
     },
     "descriptions": {
       "okr": "Objectifs & résultats",
+      "habits": "Suivi quotidien",
       "statistics": "Suivi de progression",
       "premium": "Débloquer toutes les fonctions",
       "settings": "Compte & préférences",
-      "enterprise": "Équipe & collaboration"
-    }
+      "enterprise": "Équipe & collaboration",
+      "bugReport": "Nous aider à corriger Cosmo"
+    },
+    "bugReport": "Signaler un bug",
+    "seePremium": "Voir Premium",
+    "sheetGoTo": "Aller à",
+    "sheetOther": "Autre"
   },
   "actions": {
-    "all": "Tous"
+    "all": "Tous",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "remove": "Retirer",
+    "add": "Ajouter",
+    "confirm": "Valider",
+    "close": "Fermer",
+    "duplicate": "Dupliquer",
+    "changeColor": "Changer la couleur",
+    "newList": "Nouvelle liste",
+    "createCategory": "Créer une catégorie",
+    "undo": "Annuler",
+    "save": "Enregistrer",
+    "refuse": "Refuser"
   },
   "auth": {
+    "legalConsentTermsShort": "CGU",
+    "legalConsentShort": "En créant un compte, vous acceptez les {{terms}} et avez lu la {{privacy}}.",
+    "legalConsentLogin": "Nouveau sur Cosmo ? Continuer avec Google crée votre compte : vous acceptez alors les {{terms}} et reconnaissez avoir pris connaissance de la {{privacy}}.",
+    "createAccountTitle": "Créer un compte",
+    "signInTitle": "Connexion",
+    "modalAria": "Connexion ou inscription",
     "loginSubtitle": "Connectez-vous à votre compte",
     "registerSubtitle": "Créez votre compte gratuitement",
     "orEmail": "ou continuer avec un email",
     "accountBusiness": "Entreprise",
     "accountBusinessDesc": "Équipe & collaboration",
     "forgotPassword": "Mot de passe oublié ?",
+    "sendResetLink": "Envoyer le lien",
+    "sendingEllipsis": "Envoi...",
     "minChars": "{{count}} caractères minimum",
     "signingInSlow": "Connexion en cours… le serveur met du temps à répondre",
     "signIn": "Se connecter",
@@ -74,6 +116,9 @@
     "createOne": "Créer un compte",
     "backHome": "Retour à l'accueil Cosmo",
     "backToLogin": "Retour à la connexion",
+    "confirmTitle": "Vérifiez votre boîte mail",
+    "confirmBody": "Votre compte est créé. Ouvrez le lien que nous venons d'envoyer à {{email}} pour l'activer.",
+    "confirmSpam": "Rien reçu au bout de quelques minutes ? Regardez dans les indésirables.",
     "passwordTooShort": "Le mot de passe doit contenir au moins {{count}} caractères.",
     "serverTimeout": "Le serveur ne répond pas. Réessayez dans un instant.",
     "badCredentials": "Email ou mot de passe incorrect. Vérifiez votre saisie et réessayez.",
@@ -85,28 +130,62 @@
     "sendFailed": "L'envoi a échoué. Réessayez dans un instant.",
     "resetTitle": "Nouveau mot de passe",
     "resetLinkInvalid": "Ce lien est invalide ou a expiré.",
-    "resetFailed": "Impossible de mettre à jour le mot de passe. Le lien a peut-être expiré — refaites une demande.",
+    "resetFailed": "Impossible de mettre à jour le mot de passe. Le lien a peut-être expiré. Refaites une demande.",
     "welcomeBack": "Bon retour !",
     "joinCosmo": "Rejoignez Cosmo",
     "redirecting": "Redirection...",
     "continueGoogle": "Continuer avec Google",
     "email": "Email",
-    "password": "Mot de passe"
+    "password": "Mot de passe",
+    "fullName": "Nom complet",
+    "yourNamePlaceholder": "Votre nom",
+    "oauthFailed": "La connexion n'a pas abouti.",
+    "oauthRedirectLostTitle": "Connexion réussie, mais destination perdue.",
+    "oauthRedirectLostBody": "Vous avez été ramené sur la page d'accueil au lieu de la page demandée. Rouvrez votre lien d'invitation pour reprendre où vous en étiez.",
+    "resetIntro": "Choisissez le nouveau mot de passe de votre compte.",
+    "confirmPassword": "Confirmer le mot de passe",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "savePassword": "Enregistrer le mot de passe",
+    "savingEllipsis": "Enregistrement...",
+    "passwordMismatch": "Les deux mots de passe ne correspondent pas.",
+    "requestAgain": "Refaire une demande",
+    "backToSignIn": "Retour à la connexion",
+    "forgotIntro": "Saisissez votre email : nous vous enverrons un lien pour en choisir un nouveau.",
+    "resetSentBefore": "Si un compte existe pour",
+    "resetSentAfter": "vous recevrez un lien pour choisir un nouveau mot de passe. Pensez à vérifier vos spams.",
+    "supabaseMissing": "Supabase non configuré. Vérifiez les variables d'environnement.",
+    "invalidEmail": "Veuillez saisir une adresse email valide.",
+    "reservedEmail": "Cet email est réservé. Choisissez une autre adresse.",
+    "googleFailed": "La connexion avec Google a échoué.",
+    "defaultUserName": "Utilisateur",
+    "accountType": "Type de compte",
+    "accountPersonal": "Particulier",
+    "accountPersonalDesc": "Usage personnel",
+    "registerGeneric": "Impossible de finaliser l'inscription. Vérifiez vos informations et réessayez.",
+    "loginGeneric": "Email ou mot de passe incorrect.",
+    "tooManyAttempts": "Trop de tentatives. Réessayez dans quelques minutes.",
+    "weakPassword": "Mot de passe trop faible. Choisissez-en un plus long et plus varié.",
+    "invalidEmailAddress": "Cette adresse email n'est pas valide.",
+    "captchaFailed": "La vérification anti-robot a échoué. Réessayez.",
+    "legalConsent": "En créant un compte, y compris avec Google, vous acceptez les {{terms}} et reconnaissez avoir pris connaissance de la {{privacy}}.",
+    "legalConsentTerms": "conditions générales d'utilisation",
+    "legalConsentPrivacy": "politique de confidentialité"
   },
   "cookies": {
     "banner": "Bannière cookies",
-    "strictlyNecessary": "strictement nécessaires",
-    "purpose": " au fonctionnement (session, préférences). ",
     "title": "Cookies",
-    "noTracking": "Aucun tracking publicitaire",
-    "onlyCookies": "Uniquement des cookies ",
-    "learnMore": "En savoir plus",
+    "noTracking": "Aucune publicité, aucun profil",
+    "body": "Cosmo mesure la fréquentation de ses pages publiques et l'origine de ses inscriptions. Si vous acceptez, un identifiant aléatoire est déposé sur votre appareil pour relier les pages d'une même visite, et le canal qui vous a amené (lien de campagne, démo) est rattaché à votre compte si vous en créez un.",
+    "ifYouRefuse": "Si vous refusez, rien de tout cela n'est déposé ni transmis : seuls les éléments strictement nécessaires au service sont utilisés (session, préférences).",
+    "learnMore": "Lire notre politique de confidentialité",
     "decline": "Refuser",
-    "accept": "Accepter"
+    "accept": "Accepter",
+    "manage": "Gérer les cookies"
   },
   "theme": {
     "label": "Thème de l'interface",
-    "title": "Thème : {{name}} — cliquer pour changer",
+    "title": "Thème : {{name}}, cliquer pour changer",
     "aria": "Thème actuel : {{name}}. Cliquer pour changer.",
     "light": "Clair",
     "dark": "Sombre",
@@ -120,15 +199,28 @@
   },
   "pageError": {
     "hint": "Vérifie ta connexion internet, puis réessaie.",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "title": "Impossible de charger {{subject}}",
+    "subjectAgenda": "l'agenda",
+    "subjectOkr": "les OKR"
   },
   "demoBanner": {
     "aria": "Mode démo",
     "label": "Mode démo",
-    "text": " — données d'exemple, locales à cet appareil. ",
+    "text": " : données d'exemple, locales à cet appareil. ",
     "createAccount": "Créez un compte",
     "rest": " pour démarrer avec vos vraies données, synchronisées partout.",
     "hide": "Masquer la bannière démo"
+  },
+  "demoBridge": {
+    "short": "Démo : rien n'est gardé",
+    "aria": "Créer un compte COSMO",
+    "title": "Gardez votre organisation",
+    "text": "Vous venez de vous construire un vrai système. Créez votre compte pour l'avoir sur tous vos appareils, c'est gratuit.",
+    "disclaimer": "Les données de cette démo ne sont pas transférées : votre compte repart d'une page blanche.",
+    "cta": "Créer mon compte",
+    "later": "Plus tard",
+    "dismiss": "Masquer cette proposition"
   },
   "notFound": {
     "title": "Page introuvable",
@@ -136,75 +228,22 @@
     "home": "Retour à l'accueil",
     "guide": "Voir le guide"
   },
-  "palette": {
-    "groupNavigation": "Navigation",
-    "groupActions": "Actions",
-    "groupPreferences": "Préférences",
-    "events": "Événements",
-    "teamTasks": "Tâches d'équipe",
-    "team": "Équipe",
-    "teamProjects": "Projets d'équipe",
-    "goHome": "Aller à l'accueil",
-    "goAgenda": "Aller à l'agenda",
-    "goSettings": "Aller aux paramètres",
-    "themeLight": "Thème clair",
-    "themeDark": "Thème sombre",
-    "themeGrey": "Thème gris",
-    "themeBlack": "Thème noir",
-    "quickTask": "Créer une tâche rapide",
-    "createEvent": "Créer un événement",
-    "createHabit": "Créer une habitude",
-    "createObjective": "Créer un objectif",
-    "logout": "Se déconnecter",
-    "noResult": "Aucun résultat",
-    "searchPlaceholder": "Rechercher une tâche, une page, une commande...",
-    "goTasks": "Aller aux tâches",
-    "goHabits": "Aller aux habitudes",
-    "goOkr": "Aller aux OKR",
-    "goStats": "Aller aux statistiques",
-    "showShortcuts": "Afficher les raccourcis clavier",
-    "navigate": "naviguer",
-    "open": "ouvrir",
-    "close": "fermer"
-  },
-  "moduleOnboarding": {
-    "question": "Que voulez-vous gérer ?",
-    "hint": "Choisissez vos modules. Vous pourrez les réactiver à tout moment dans les Réglages."
-  },
   "shareInvite": {
     "alreadyCollab": "Vous collaborez déjà sur « {{name}} ».",
     "expired": "Ce lien d'invitation a expiré. Demandez-en un nouveau.",
     "invalid": "Ce lien d'invitation est invalide ou a été révoqué.",
     "accepted": "Tâche « {{name}} » acceptée !",
     "refused": "Invitation refusée.",
-    "sharedWithYou": "Tâche partagée avec vous"
-  },
-  "shareLink": {
-    "availableAfterCreate": "Disponible après la création",
-    "generatingLink": "Génération du lien…",
-    "copied": "Lien d'invitation copié !",
-    "copyFailed": "Impossible de copier — sélectionnez le lien manuellement.",
-    "hint": "Toute personne avec ce lien pourra rejoindre la tâche, même sans compte (valable 7 jours).",
-    "creating": "Création…",
-    "generate": "Générer le lien",
-    "willSave": "La tâche sera enregistrée pour créer un lien partageable.",
-    "aria": "Lien d'invitation à copier",
-    "copiedShort": "Copié !",
-    "copy": "Copier",
-    "saveFirst": "Enregistre la tâche pour générer un lien d'invitation partageable."
-  },
-  "removeFriend": {
-    "confirm": "Êtes-vous sûr de vouloir retirer",
-    "bodyBefore": "Cette personne sera retirée de ",
-    "bodyAllYours": "toutes vos tâches",
-    "bodyMiddle": ", et vous serez retiré de ",
-    "bodyAllTheirs": "toutes les siennes",
-    "bodyAfter": ".",
-    "losesAccess": "Tâches dont il perdra l'accès",
-    "youLoseAccess": "Tâches partagées auxquelles vous perdrez l'accès"
+    "sharedWithYou": "Tâche partagée avec vous",
+    "proposes": "**{{name}}** vous propose de collaborer sur **« {{task}} »**.",
+    "accept": "Accepter la tâche",
+    "ownLink": "Ce lien d'invitation pointe vers votre propre tâche.",
+    "unverified": "Nous n'avons pas pu vérifier ce lien d'invitation. Réessayez dans un instant."
   },
   "discard": {
-    "body": "Les modifications non enregistrées seront perdues."
+    "body": "Les modifications non enregistrées seront perdues.",
+    "title": "Abandonner les modifications ?",
+    "keepEditing": "Continuer la saisie"
   },
   "loading": "Chargement...",
   "tasksSummary": {
@@ -213,33 +252,114 @@
   },
   "tutorial": {
     "skip": "Passer le tutoriel",
+    "skipShort": "Passer",
     "done": "Terminé",
     "next": "Suivant",
     "previous": "← Précédent"
   },
-  "inbox": {
-    "friendAccepted": "Demande d'ami acceptée",
-    "requestRefused": "Demande refusée",
-    "removedFriend": "{{name}} retiré de vos amis",
-    "friendRequestSent": "Demande d'ami envoyée",
-    "backToInbox": "Retour à la boîte de réception",
-    "myFriends": "Mes amis",
-    "manageFriends": "Gérer mes amis",
-    "noFriend": "Aucun ami",
-    "noFriendHint": "Ajoutez un ami pour commencer à collaborer.",
-    "receivedFrom": "Reçu de {{name}}",
-    "receivedFromWithCount_one": "Reçu de {{name}} · {{count}} tâche",
-    "receivedFromWithCount_many": "Reçu de {{name}} · {{count}} de tâches",
-    "receivedFromWithCount_other": "Reçu de {{name}} · {{count}} tâches",
-    "joinRequests": "Demandes d'adhésion ({{count}})",
-    "acceptJoin": "Accepter la demande d'adhésion de {{name}}",
-    "refuseJoin": "Refuser la demande d'adhésion de {{name}}",
-    "someone": "cet utilisateur",
-    "friendEmailAria": "Email de l'ami à inviter"
-  },
   "collaborator": {
     "sent": "Envoyé",
     "requestSent": "⏳ Demande d'ami envoyée",
-    "awaiting": "En attente d'acceptation"
+    "awaiting": "En attente d'acceptation",
+    "generic": "Collaborateur",
+    "removeAria": "Retirer",
+    "addAria": "Ajouter",
+    "removeNamedAria": "Retirer {{name}}",
+    "addNamedAria": "Ajouter {{name}}"
+  },
+  "orgTier": {
+    "free": "Gratuit",
+    "t10": "Équipe",
+    "t20": "Département",
+    "t50": "Entreprise",
+    "tmax": "Illimité"
+  },
+  "appVersion": {
+    "available": "Une nouvelle version de COSMO est disponible.",
+    "reload": "Recharger",
+    "dismiss": "Plus tard"
+  },
+  "colorLegend": {
+    "edit": "Modifier la légende des couleurs"
+  },
+  "loadingLabel": {
+    "tasks": "Chargement des tâches",
+    "habits": "Chargement des habitudes",
+    "okrs": "Chargement des OKR"
+  },
+  "description": {
+    "expand": "Agrandir la description",
+    "collapse": "Fermer et revenir au formulaire",
+    "expandedTitle": "Description"
+  },
+  "rootError": {
+    "title": "COSMO n'a pas pu démarrer",
+    "signOut": "Se déconnecter",
+    "body": "Une erreur a interrompu le chargement de l'application. Rechargez la page. Si le problème persiste, déconnectez-vous pour repartir d'une session propre.",
+    "reload": "Recharger"
+  },
+  "period": {
+    "day": "Jour",
+    "week": "Semaine",
+    "month": "Mois",
+    "quarter": "Trimestre",
+    "year": "Année"
+  },
+  "priority": {
+    "p1": "P1 Très haute",
+    "p2": "P2 Haute",
+    "p3": "P3 Moyenne",
+    "p4": "P4 Basse",
+    "p5": "P5 Très basse",
+    "dotP1": "P1 · Critique",
+    "dotP2": "P2 · Haute",
+    "dotP3": "P3 · Normale",
+    "dotP4": "P4 · Basse",
+    "dotP5": "P5 · Très basse"
+  },
+  "summary": {
+    "openTasks": "Tâches en cours : {{count}}",
+    "todayLoad": "≈ {{load}} planifiées aujourd’hui"
+  },
+  "weekday": {
+    "0": "dimanche",
+    "1": "lundi",
+    "2": "mardi",
+    "3": "mercredi",
+    "4": "jeudi",
+    "5": "vendredi",
+    "6": "samedi"
+  },
+  "deadlineReminder": {
+    "dueToday_one": "{{count}} tâche pour aujourd'hui",
+    "dueToday_other": "{{count}} tâches pour aujourd'hui",
+    "overdue": "{{count}} en retard",
+    "description": "Touchez pour voir vos tâches",
+    "action": "Voir",
+    "dueToday_many": "{{count}} tâches pour aujourd'hui"
+  },
+  "relativeDay": {
+    "today": "Aujourd'hui",
+    "tomorrow": "Demain",
+    "yesterday": "Hier",
+    "daysAgo": "il y a {{count}} j",
+    "overdueBy_one": "en retard de {{count}} j",
+    "overdueBy_many": "en retard de {{count}} j",
+    "overdueBy_other": "en retard de {{count}} j"
+  },
+  "offline": {
+    "label": "Hors ligne",
+    "text": " · vous pouvez consulter vos données, mais vos modifications ne seront pas enregistrées tant que le réseau n'est pas revenu.",
+    "back": "Connexion rétablie"
+  },
+  "sync": {
+    "offline": "Hors ligne",
+    "syncing": "Synchronisation…",
+    "synced": "Synchronisé",
+    "savedLocal": "Enregistré (local)"
+  },
+  "showcase": {
+    "pause": "Mettre l'animation en pause",
+    "play": "Lancer l'animation"
   }
 }

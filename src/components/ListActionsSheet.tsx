@@ -3,6 +3,9 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Pencil, Pin, PinOff, Trash2, Share2 } from 'lucide-react';
 import type { TaskList } from '@/modules/lists';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 export interface ListColorOption {
   value: string;
@@ -19,8 +22,8 @@ interface ListActionsSheetProps {
   onToggleDefault: (list: TaskList) => void;
   onDelete: (list: TaskList) => void;
   onPickColor: (list: TaskList, colorValue: string) => void;
-  /** Partage la liste (listes manuelles uniquement). */
-  onShare: (list: TaskList) => void;
+  /** Partage la liste (listes manuelles uniquement). Absent : liste d'entreprise, déjà partagée. */
+  onShare?: (list: TaskList) => void;
 }
 
 const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
@@ -34,21 +37,31 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
   onPickColor,
   onShare,
 }) => {
+  const { t } = useT('common');
+  const sheetMotion = useSheetMotion();
   const isOpen = !!list;
   const isSmart = list?.type === 'smart';
   const currentColor = list ? resolveListColor(list.color) : '#3B82F6';
 
   useEffect(() => {
     if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
-      window.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
   }, [isOpen, onClose]);
+
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  //
+  // `list` peut etre null : la surface n'est montee que quand une liste est
+  // choisie, mais le hook est appele a CHAQUE rendu, comme tout hook.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose,
+    label: list ? `Actions pour la liste ${list.name}` : undefined,
+  });
 
   const content = (
     <AnimatePresence>
@@ -61,10 +74,11 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
           onClick={onClose}
         >
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%', transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 32, stiffness: 340, mass: 0.65 }}
+            // ⚠️ `useSheetMotion` et pas un `initial={{ y }}` en dur : sous
+            // `prefers-reduced-motion`, Framer ne joue pas les transforms et
+            // la valeur `initial` reste appliquee — la feuille s ouvrait
+            // 100 % sous l ecran. Mesure le 2026-08-24 (cf. mobile-motion.ts).
+            {...sheetMotion}
             onClick={(e) => e.stopPropagation()}
             className="w-full flex flex-col"
             style={{
@@ -72,8 +86,8 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
               paddingBottom: 'env(safe-area-inset-bottom)',
               borderRadius: '20px 20px 0 0',
             }}
-            role="dialog"
-            aria-label={`Actions pour la liste ${list.name}`}
+            ref={modalA11yRef}
+            {...modalA11yProps}
           >
             {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-2 shrink-0">
@@ -159,7 +173,7 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
               )}
 
               {/* Partager — listes manuelles uniquement */}
-              {!isSmart && (
+              {!isSmart && onShare && (
                 <>
                   <button
                     type="button"
@@ -192,7 +206,7 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
                   : <Pin    size={17} strokeWidth={1.75} aria-hidden="true" style={{ color: 'rgb(var(--color-text-secondary))', flexShrink: 0 }} />
                 }
                 <span className="text-[16px]" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                  {list.isDefault ? 'Retirer des favoris' : 'Épingler par défaut'}
+                  {list.isDefault ? t('listActions.removeDefault') : t('listActions.setDefault')}
                 </span>
               </button>
             </div>
@@ -210,7 +224,7 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
               >
                 <Trash2 size={17} strokeWidth={1.75} aria-hidden="true" className="text-red-500 shrink-0" />
                 <span className="text-[16px] text-red-500">
-                  Supprimer
+                  {t('actions.delete')}
                 </span>
               </button>
             </div>

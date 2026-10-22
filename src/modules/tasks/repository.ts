@@ -1,5 +1,6 @@
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { PaginationParams, PaginatedResult } from '@/lib/pagination.types';
+import type { CreateOptions } from '@/lib/restore-id';
 
 /**
  * Résultat d'un basculement de complétion.
@@ -35,6 +36,16 @@ export interface ITasksRepository {
   getAll(): Promise<Task[]>;
   
   /**
+   * Tâches partagées AVEC l'utilisateur courant et pas encore acceptées.
+   *
+   * Séparé de getAll() : depuis la migration 103, une tâche partagée n'entre
+   * dans la liste qu'une fois acceptée. C'est cette méthode qui alimente la
+   * boîte de réception, sinon la tâche serait invisible avant même de pouvoir
+   * être acceptée.
+   */
+  getPendingSharedTasks(): Promise<Task[]>;
+
+  /**
    * Fetch a single task by ID
    */
   getById(id: string): Promise<Task | null>;
@@ -56,7 +67,7 @@ export interface ITasksRepository {
   /**
    * Create a new task
    */
-  create(input: CreateTaskInput): Promise<Task>;
+  create(input: CreateTaskInput, options?: CreateOptions): Promise<Task>;
   
   /**
    * Update an existing task
@@ -88,4 +99,23 @@ export interface ITasksRepository {
    * Fetch a page of tasks (cursor-based pagination)
    */
   getPage(params?: PaginationParams): Promise<PaginatedResult<Task>>;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DÉPENDANCES (mig. 132)
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Tout le graphe de dépendances du compte, en une lecture.
+   *
+   * Pas de variante « par tâche » : un modal affiche les DEUX sens, donc des
+   * arêtes qui ne portent pas son id, et les charger tâche par tâche
+   * relancerait la même requête à chaque ouverture.
+   */
+  getDependencies(): Promise<TaskDependency[]>;
+
+  /** Ajoute « `taskId` est bloquée par `dependsOnId` ». */
+  addDependency(taskId: string, dependsOnId: string): Promise<void>;
+
+  /** Retire l'arête exacte. Retirer une arête absente n'est pas une erreur. */
+  removeDependency(taskId: string, dependsOnId: string): Promise<void>;
 }

@@ -5,7 +5,7 @@
 // formatters dans ./helpers. Aucune logique métier (filtrage/tri =
 // task-filtering.ts).
 // ═══════════════════════════════════════════════════════════════════
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, Pencil, ListPlus, ListChecks, Hourglass } from "lucide-react";
@@ -18,15 +18,27 @@ import {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
-} from "../ui/dropdown-menu";
-import TaskCategoryIndicator from "../TaskCategoryIndicator";
+} from "@/components/ui/dropdown-menu";
+import TaskCategoryIndicator from "@/components/TaskCategoryIndicator";
 import { useCategoryLookup } from "@/modules/categories";
-import { Task } from "@/modules/tasks";
-import { getSnoozeOptions } from "@/modules/tasks/snooze";
+import { Task, useUpdateTask } from "@/modules/tasks";
+import { DateCalendarPanel, DATE_PANEL_CLASS } from "@/components/ui/date-picker";
+import { deadlineFromDayKey } from "@/lib/deadline";
+import { addDaysToKey, getTimezonePref, todayKeyInTz } from "@/lib/timezone";
 import { Friend } from "@/modules/friends";
 import { TaskCard } from "./TaskCard";
+import { TeamTaskCardLite } from "./TeamTaskCardLite";
 import { isTaskOverdue, formatDeadlineSmart, formatDuration } from "./helpers";
 import { useT } from '@/i18n/useT';
+import TaskStateBadges from './TaskStateBadges';
+import TaskHealthCell from './TaskHealthCell';
+import type { TeamProject, TeamTask } from "@/modules/team-projects";
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
+
+// Ligne unifiée perso/entreprise — même liste, deux rendus distincts.
+export type UnifiedTaskRow =
+  | { kind: 'perso'; id: string; task: Task }
+  | { kind: 'entreprise'; id: string; task: TeamTask; project: TeamProject | undefined };
 
 // Re-export des formatters pour compat avec d'éventuels imports existants.
 export { formatDate, formatDeadlineSmart, formatDuration } from "./helpers";
@@ -41,8 +53,14 @@ const VIRTUALIZE_THRESHOLD = 50;
 const ESTIMATED_CARD_HEIGHT = 76; // mesuré : ~68px card + 8px mb-2
 
 interface VirtualizedTaskListProps {
-  tasks: Task[];
+  rows: UnifiedTaskRow[];
   addToListMode: boolean;
+  /**
+   * Ce que la case de gauche fait vraiment : ranger dans une LISTE, ou
+   * SÉLECTIONNER pour une action groupée. Les deux modes partagent le rendu,
+   * pas le nom accessible (C-55, WCAG 4.1.2).
+   */
+  selectionKind?: 'list' | 'select';
   selectedForListIds: string[];
   onToggleTaskForList?: (id: string) => void;
   onToggleComplete: (id: string) => void;
@@ -52,20 +70,22 @@ interface VirtualizedTaskListProps {
   onAddToList: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onScheduleTask: (task: Task) => void;
-  onDuplicate: (id: string) => void;
   onSnooze: (id: string, deadline: string) => void;
   collaboratorsByTask: Map<string, string[]>;
   pendingCollaboratorTaskIds: Set<string>;
   friends: Friend[];
+  onToggleTeamComplete: (task: TeamTask) => void;
+  onEditTeamTask: (task: TeamTask) => void;
 }
 
 export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) => {
-  const { tasks } = props;
+  const { rows } = props;
   const listRef = useRef<HTMLDivElement>(null);
 
   const cardProps = (task: Task) => ({
     task,
     addToListMode: props.addToListMode,
+    selectionKind: props.selectionKind,
     selectedForListIds: props.selectedForListIds,
     onToggleTaskForList: props.onToggleTaskForList,
     onToggleComplete: props.onToggleComplete,
@@ -75,30 +95,41 @@ export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) =
     onAddToList: props.onAddToList,
     onDeleteTask: props.onDeleteTask,
     onScheduleTask: props.onScheduleTask,
-    onDuplicate: props.onDuplicate,
     onSnooze: props.onSnooze,
     collaboratorsByTask: props.collaboratorsByTask,
     pendingCollaboratorTaskIds: props.pendingCollaboratorTaskIds,
     friends: props.friends,
   });
 
+  const renderRow = (row: UnifiedTaskRow, index: number, refProp?: React.Ref<HTMLDivElement>) =>
+    row.kind === 'perso'
+      ? <TaskCard key={row.id} ref={refProp} {...cardProps(row.task)} isFirst={index === 0} />
+      : (
+        <TeamTaskCardLite
+          key={row.id}
+          ref={refProp}
+          task={row.task}
+          project={row.project}
+          onToggleComplete={props.onToggleTeamComplete}
+          onEdit={props.onEditTeamTask}
+        />
+      );
+
   // useWindowVirtualizer : le scroll est sur la fenêtre (les pages COSMO
   // scrollent au niveau document, pas dans un container fixe). Offset retire
   // la position absolue de la liste relative au top de la page.
   const virtualizer = useWindowVirtualizer({
-    count: tasks.length,
+    count: rows.length,
     estimateSize: () => ESTIMATED_CARD_HEIGHT,
     overscan: 5,
     scrollMargin: listRef.current?.offsetTop ?? 0,
   });
 
   // En dessous du seuil, garder AnimatePresence pour les anims
-  if (tasks.length < VIRTUALIZE_THRESHOLD) {
+  if (rows.length < VIRTUALIZE_THRESHOLD) {
     return (
       <AnimatePresence mode="popLayout">
-        {tasks.map((task, index) => (
-          <TaskCard key={task.id} {...cardProps(task)} isFirst={index === 0} />
-        ))}
+        {rows.map((row, index) => renderRow(row, index))}
       </AnimatePresence>
     );
   }
@@ -116,10 +147,10 @@ export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) =
       }}
     >
       {items.map(virtualItem => {
-        const task = tasks[virtualItem.index];
+        const row = rows[virtualItem.index];
         return (
           <div
-            key={task.id}
+            key={row.id}
             data-index={virtualItem.index}
             ref={virtualizer.measureElement}
             style={{
@@ -130,7 +161,7 @@ export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) =
               transform: `translateY(${virtualItem.start - (listRef.current?.offsetTop ?? 0)}px)`,
             }}
           >
-            <TaskCard {...cardProps(task)} isFirst={virtualItem.index === 0} />
+            {renderRow(row, virtualItem.index)}
           </div>
         );
       })}
@@ -146,6 +177,8 @@ export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) =
 interface TaskRowProps {
   task: Task;
   addToListMode: boolean;
+  /** Cf. `VirtualizedTaskListProps` : deux modes, un rendu, deux noms (C-55). */
+  selectionKind?: 'list' | 'select';
   selectedForListIds: string[];
   activeQuickFilter: 'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration';
   showCompleted: boolean;
@@ -167,6 +200,7 @@ interface TaskRowProps {
 export const TaskRow = React.memo(({
   task,
   addToListMode,
+  selectionKind = 'list',
   selectedForListIds,
   activeQuickFilter,
   onSelectTask,
@@ -184,9 +218,13 @@ export const TaskRow = React.memo(({
   friends,
 }: TaskRowProps) => {
   const { t } = useT('tasks');
+  const { mutate: updateTask } = useUpdateTask();
+  // « Choisir » remplace le contenu du sous-menu par le calendrier (même
+  // pattern qu'OverdueBanner : une seule couche, pas de course au focus).
+  const [snoozeCalendar, setSnoozeCalendar] = useState(false);
   const getCategoryById = useCategoryLookup();
   const category = getCategoryById(task.category);
-  const categoryColor = category?.color || '#94a3b8';
+  const categoryColor = category?.color || NO_CATEGORY_COLOR;
   const overdue = isTaskOverdue(task.deadline, task.completed);
 
   // Micro-animation de complétion (#47) : check dessiné (draw 200 ms) +
@@ -255,6 +293,31 @@ export const TaskRow = React.memo(({
               >
                 <motion.button
                   onClick={() => onToggleTaskForList?.(task.id)}
+                  // 🔴 C-55 — cette case n'avait NI nom, NI rôle, NI état. Un
+                  // lecteur d'écran annonçait « bouton », sans rien d'autre,
+                  // pour le contrôle qui porte toute la sélection multiple
+                  // (WCAG 4.1.2). La carte MOBILE le faisait déjà
+                  // correctement ; c'est le rendu desktop qui, au lieu de
+                  // REMPLACER la case « terminée », en AJOUTE une seconde à
+                  // côté — d'où l'arbre d'accessibilité qui n'annonçait que
+                  // « Marquer … comme terminée », ce qu'A-3 avait relevé sans
+                  // pouvoir le confirmer.
+                  role="checkbox"
+                  aria-checked={selectedForListIds.includes(task.id)}
+                  aria-label={
+                    selectionKind === 'select'
+                      ? t(
+                          selectedForListIds.includes(task.id)
+                            ? 'table.deselectTaskAria'
+                            : 'table.selectTaskAria',
+                          { name: task.name },
+                        )
+                      : t(
+                          selectedForListIds.includes(task.id)
+                            ? 'card.removeFromList'
+                            : 'card.addToListShort',
+                        )
+                  }
                   animate={{}}
                   whileHover={{ scale: 1.15 }}
                   whileTap={{ scale: 0.88 }}
@@ -297,7 +360,7 @@ export const TaskRow = React.memo(({
             }`}
           >
             {showChecked && (
-              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="w-3 h-3 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <motion.path
                   initial={isValidating ? { pathLength: 0 } : false}
                   animate={{ pathLength: 1 }}
@@ -320,6 +383,7 @@ export const TaskRow = React.memo(({
           style={{ color: showChecked ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
         <div className="flex items-center gap-2">
           <span className="truncate" title={task.name}>{task.name}</span>
+          <TaskStateBadges task={task} withHealth={false} />
           {/* Compteur sous-tâches (#12) : « 2/5 » quand la checklist existe */}
           {(task.subtasks?.length ?? 0) > 0 && (
             <span
@@ -332,7 +396,7 @@ export const TaskRow = React.memo(({
             </span>
           )}
           {task.sharedBy ? (
-            <span className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full shrink-0">{task.sharedBy}</span>
+            <span className="text-xs bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] px-2 py-0.5 rounded-full shrink-0">{task.sharedBy}</span>
           ) : task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 ? (
             <span className="flex items-center gap-1 shrink-0">
               {(collaboratorsByTask.get(task.id) ?? [])
@@ -343,7 +407,7 @@ export const TaskRow = React.memo(({
                 .map(({ id, friend }) => (
                   <span
                     key={id}
-                    className="text-xs bg-[rgb(var(--color-accent))] text-white px-2 py-0.5 rounded-full"
+                    className="text-xs bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] px-2 py-0.5 rounded-full"
                     title={friend.name}
                   >
                     {friend.name}
@@ -361,6 +425,15 @@ export const TaskRow = React.memo(({
             </span>
           ) : null}
         </div>
+      </td>
+      <td className="px-1 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+        <TaskHealthCell
+          name={task.name}
+          health={task.health}
+          done={task.completed}
+          onSetHealth={(health) => updateTask({ id: task.id, updates: { health } })}
+          onMarkDone={() => onToggleComplete(task.id)}
+        />
       </td>
       <td className="px-2 py-4 whitespace-nowrap">
         <span className="inline-flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
@@ -386,14 +459,16 @@ export const TaskRow = React.memo(({
       </td>
       <td className={`${addToListMode ? 'px-0' : 'px-2'} py-4 whitespace-nowrap text-base font-medium`}>
         {activeQuickFilter === 'completed'
-          ? (task.completedAt ? formatDeadlineSmart(task.completedAt) : '—')
+          // `<time>` : une date relative à aujourd'hui (« dimanche », « 8 octobre »),
+          // que la garde visuelle masque (`MASQUES`, e2e/visual-regression.spec.ts).
+          ? (task.completedAt ? <time dateTime={task.completedAt}>{formatDeadlineSmart(task.completedAt)}</time> : '—')
           : (task.deadline
-              ? <span className={overdue ? 'text-red-500 font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</span>
+              ? <time dateTime={task.deadline} className={overdue ? 'text-red-500 font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</time>
               : <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('card.noDeadline')}</span>)}
       </td>
       <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatDuration(task.estimatedTime)}</td>
       <td onClick={e => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap text-center">
-        <DropdownMenu>
+        <DropdownMenu onOpenChange={(open) => { if (!open) setSnoozeCalendar(false); }}>
           <DropdownMenuTrigger asChild>
             <button
               aria-label={`Actions pour ${task.name}`}
@@ -405,10 +480,10 @@ export const TaskRow = React.memo(({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onSelectTask(task.id)}>
-              <Pencil aria-hidden="true" /> Modifier
+              <Pencil aria-hidden="true" /> {t('rowMenu.edit')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onToggleBookmark(task.id)}>
-              <Bookmark aria-hidden="true" /> {task.bookmarked ? 'Retirer le favori' : 'Favori'}
+              <Bookmark aria-hidden="true" /> {task.bookmarked ? t('rowMenu.unbookmark') : t('rowMenu.bookmark')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onAddToList(task.id)}>
               <ListPlus aria-hidden="true" /> {t('card.addToList')}
@@ -422,22 +497,43 @@ export const TaskRow = React.memo(({
             {overdue && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
-                  <Hourglass aria-hidden="true" /> Reporter
+                  <Hourglass aria-hidden="true" /> {t('snooze.menu')}
                 </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  {getSnoozeOptions().map((opt) => (
-                    <DropdownMenuItem key={opt.id} onClick={() => onSnooze(task.id, opt.deadline)}>
-                      {opt.label}
-                    </DropdownMenuItem>
-                  ))}
+                <DropdownMenuSubContent className={snoozeCalendar ? `${DATE_PANEL_CLASS} p-0` : undefined}>
+                  {snoozeCalendar ? (
+                    <DateCalendarPanel
+                      // Jamais vers hier : borne au jour du fuseau CHOISI.
+                      minDate={todayKeyInTz(getTimezonePref())}
+                      allowClear={false}
+                      onSelect={(day) => {
+                        if (!day) return;
+                        onSnooze(task.id, deadlineFromDayKey(day, getTimezonePref()));
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          const pref = getTimezonePref();
+                          onSnooze(task.id, deadlineFromDayKey(addDaysToKey(todayKeyInTz(pref), 1), pref));
+                        }}
+                      >
+                        {t('snooze.tomorrow')}
+                      </DropdownMenuItem>
+                      {/* `preventDefault` : sinon Radix referme le menu au lieu d'afficher le calendrier. */}
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setSnoozeCalendar(true); }}>
+                        {t('snooze.chooseDate')}
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
             )}
             <DropdownMenuItem onClick={() => onOpenCollaborator(task.id)}>
-              <UserPlus aria-hidden="true" /> Collaborateur
+              <UserPlus aria-hidden="true" /> {t('rowMenu.collaborator')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onDuplicate(task.id)}>
-              <Copy aria-hidden="true" /> Dupliquer la tâche
+              <Copy aria-hidden="true" /> {t('rowMenu.duplicate')}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -445,7 +541,7 @@ export const TaskRow = React.memo(({
               onClick={() => onDeleteTask(task.id)}
               className="!text-red-500 focus:!text-red-500"
             >
-              <Trash2 className="!text-red-500" aria-hidden="true" /> Supprimer
+              <Trash2 className="!text-red-500" aria-hidden="true" /> {t('rowMenu.delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

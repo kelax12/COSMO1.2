@@ -1,12 +1,14 @@
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { ITasksRepository, ToggleCompleteResult } from './repository';
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { TaskRow, TaskDbInput, mapTaskFromDb, mapTaskToDb } from './mappers';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
+import type { CreateOptions } from '@/lib/restore-id';
+import { dayEndInTz, dayStartISOInTz } from '@/lib/timezone';
 
 /** Fields the client is allowed to set on insert (user_id is added server-side from auth.uid()). */
 type TaskDbCreateInput = Omit<TaskDbInput, 'user_id'> & { user_id: string };
@@ -20,7 +22,7 @@ type TaskDbCreateInput = Omit<TaskDbInput, 'user_id'> & { user_id: string };
  * Ne PAS y ajouter une colonne sans vérifier qu'un consommateur de liste la lit.
  */
 const TASK_LIST_COLUMNS =
-  'id,name,priority,category,deadline,estimated_time,created_at,updated_at,bookmarked,completed,completed_at,subtasks,kr_id,recurrence,is_collaborative,pending_invites,user_id' as const;
+  'id,name,priority,category,deadline,estimated_time,created_at,updated_at,bookmarked,completed,completed_at,subtasks,kr_id,recurrence,is_collaborative,pending_invites,user_id,status,health' as const;
 
 export class SupabaseTasksRepository implements ITasksRepository {
   // ═══════════════════════════════════════════════════════════════════
@@ -138,6 +140,25 @@ export class SupabaseTasksRepository implements ITasksRepository {
     };
   }
 
+  /**
+   * Boîte de réception : tâches reçues d'un ami et pas encore acceptées.
+   *
+   * Depuis la mig. 103,  ne renvoie plus que les partages
+   * ACCEPTÉS — une tâche partagée n'apparaît donc plus dans le TaskTable du
+   * destinataire avant qu'il ne l'accepte. Cette RPC dédiée est ce qui reste
+   * pour la lui montrer et lui permettre d'accepter.
+   */
+  async getPendingSharedTasks(): Promise<Task[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .rpc('get_pending_shared_tasks')
+      .select(TASK_LIST_COLUMNS)
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (error) throw normalizeApiError(error);
+    return this.enrichSharedBy(((data || []) as unknown as TaskRow[]).map(mapTaskFromDb));
+  }
+
   async getById(id: string): Promise<Task | null> {
     if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
@@ -157,8 +178,13 @@ export class SupabaseTasksRepository implements ITasksRepository {
   async getByDate(date: string): Promise<Task[]> {
     if (!supabase) throw new Error('Supabase not configured');
     const targetDate = date.split('T')[0];
-    const startOfDay = `${targetDate}T00:00:00.000Z`;
-    const endOfDay = `${targetDate}T23:59:59.999Z`;
+    // La fenêtre est celle du jour VÉCU, pas du jour UTC. Les échéances sont
+    // écrites à minuit dans le fuseau retenu (`deadlineFromDayKey`) : borner en
+    // `…T00:00:00.000Z` faisait tomber hors fenêtre toute tâche du jour à l'est
+    // de Greenwich, et y faisait entrer celle de la veille à l'ouest.
+    const startOfDay = dayStartISOInTz(targetDate);
+    const endOfDay = dayEndInTz(targetDate).toISOString();
+    if (!startOfDay) return [];
 
     // Même chemin indexable que getAll (cf. C1). Sans cela, cette lecture
     // conservait le `Seq Scan` de la table globale : le filtre `deadline`
@@ -202,12 +228,15 @@ export class SupabaseTasksRepository implements ITasksRepository {
       query = query.lte('priority', filters.priorityMax);
     }
 
+    // `deadlineBefore` / `deadlineAfter` sont des CLÉS DE JOUR ('YYYY-MM-DD'),
+    // bornes incluses. Les convertir en instants du fuseau retenu, sinon
+    // Postgres les caste en minuit UTC et la borne glisse d'un jour.
     if (filters.deadlineBefore) {
-      query = query.lte('deadline', filters.deadlineBefore);
+      query = query.lte('deadline', dayEndInTz(filters.deadlineBefore).toISOString());
     }
 
     if (filters.deadlineAfter) {
-      query = query.gte('deadline', filters.deadlineAfter);
+      query = query.gte('deadline', dayStartISOInTz(filters.deadlineAfter));
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
@@ -220,11 +249,19 @@ export class SupabaseTasksRepository implements ITasksRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateTaskInput): Promise<Task> {
+  async create(input: CreateTaskInput, options?: CreateOptions): Promise<Task> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
-    const dbInput: TaskDbCreateInput = { ...mapTaskToDb(input), user_id: user.id };
+    if (!user) throw makeApiError('not_authenticated');
+    // `options.restoreId` ne vient JAMAIS d'un payload de formulaire :
+    // c'est un second argument, reserve aux « Annuler » (R-08). La
+    // whitelist `mapToDb` et le `user_id` pose depuis la session sont
+    // inchanges.
+    const dbInput: TaskDbCreateInput = {
+      ...mapTaskToDb(input),
+      user_id: user.id,
+      ...(options?.restoreId ? { id: options.restoreId } : {}),
+    };
 
     const { data, error } = await supabase
       .from('tasks')
@@ -273,8 +310,12 @@ export class SupabaseTasksRepository implements ITasksRepository {
     // fire-and-forget côté client : perdu si l'onglet se fermait, dupliqué si
     // l'utilisateur décochait puis recochait.
     //
-    // `p_next_deadline` est calculée par l'appelant, en date LOCALE de
-    // l'utilisateur (le serveur ne connaît pas son fuseau).
+    // `p_next_deadline` est calculée par l'appelant : c'est l'INSTANT de minuit
+    // du jour visé, dans le fuseau de l'utilisateur (mig. 133). Elle transitait
+    // avant en date nue, que le SQL castait en timestamptz avec le fuseau du
+    // serveur, donc UTC : l'occurrence suivante naissait la veille pour tout
+    // décalage négatif (risque R-01). Le serveur ne juge jamais quel jour on
+    // est — il ne connaît pas le fuseau de l'utilisateur.
     const { data, error } = await supabase.rpc('toggle_task_complete_v2', {
       p_task_id: id,
       p_next_deadline: nextDeadline ?? null,
@@ -296,4 +337,58 @@ export class SupabaseTasksRepository implements ITasksRepository {
     return mapTaskFromDb(data as TaskRow);
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // DÉPENDANCES (mig. 132)
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Lecture directe de la table, sans RPC de contournement — c'est ici la
+   * bonne réponse, pas un oubli.
+   *
+   * La mig. 132 a délibérément DÉNORMALISÉ `user_id` sur l'arête plutôt que
+   * de déléguer le périmètre à `tasks` : la policy est donc
+   * `(SELECT auth.uid()) = user_id`, un prédicat qui ne dépend pas de la
+   * ligne, hissé en InitPlan et servi par `idx_task_dependencies_user`. C'est
+   * exactement ce que `get_my_tasks()` (mig. 085) doit reconstruire pour
+   * `tasks`, dont la policy est un OR non indexable.
+   */
+  async getDependencies(): Promise<TaskDependency[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .from('task_dependencies')
+      .select('task_id,depends_on_id');
+
+    if (error) throw normalizeApiError(error);
+    return (data || []).map((row) => ({
+      taskId: (row as { task_id: string }).task_id,
+      dependsOnId: (row as { depends_on_id: string }).depends_on_id,
+    }));
+  }
+
+  /**
+   * `user_id` n'est PAS envoyé : le trigger `validate_task_dependency` le
+   * redérive du propriétaire de la tâche bloquée, et la policy vérifie
+   * ensuite que c'est bien l'appelant. L'émettre depuis le client ouvrirait
+   * la porte au mass-assignment que ce trigger existe précisément pour
+   * fermer.
+   */
+  async addDependency(taskId: string, dependsOnId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase
+      .from('task_dependencies')
+      .insert([{ task_id: taskId, depends_on_id: dependsOnId }]);
+
+    if (error) throw normalizeApiError(error);
+  }
+
+  async removeDependency(taskId: string, dependsOnId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase
+      .from('task_dependencies')
+      .delete()
+      .eq('task_id', taskId)
+      .eq('depends_on_id', dependsOnId);
+
+    if (error) throw normalizeApiError(error);
+  }
 }

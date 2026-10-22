@@ -4,12 +4,17 @@
 // Lance axe-core sur les routes publiques + protégées (mode démo) et
 // dump les violations dans le rapport HTML Playwright.
 //
-// Guard CI (audit architecture TOP-8) : les violations d'impact `critical`
-// sont désormais BLOQUANTES (`expect(criticals).toHaveLength(0)`). Les
-// niveaux `serious`/`moderate`/`minor` restent dumpés mais non bloquants
-// (roadmap A-7/A-8/A-10 de audit-a11y.md, Serious 8 résiduel). Une nouvelle
-// régression critical (bouton icon-only sans aria-label, input sans label,
-// page sans landmark…) casse la CI au lieu de partir en prod.
+// Guard CI : `critical` est bloquant depuis l'audit architecture TOP-8, et
+// `serious` l'est devenu le 2026-09-04 (C-23), sauf pour les règles nommées
+// dans `SERIOUS_NOT_BLOCKING` — aujourd'hui une seule, le contraste, dont
+// l'arbitrage a ete RENDU le 2026-09-13 (C-23 : on garde #2563eb) et dont la
+// dispense est donc definitive, motivee dans `docs/ACCESSIBILITY.md`.
+//
+// ⚠️ CE QUE CE FICHIER NE MESURE PAS, et il faut le savoir avant de lire ses
+// chiffres : axe ne scanne que l'ÉTAT INITIAL de chaque route. Aucune modale,
+// aucun menu, aucun calendrier ouvert n'entre dans ces totaux. Seule
+// exception : `/agenda`, scanné en plus dans chaque vue du sélecteur
+// (2026-10-22).
 // ═══════════════════════════════════════════════════════════════════
 
 import { test, expect, navTo } from './fixtures';
@@ -19,13 +24,84 @@ import type { Result } from 'axe-core';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
-// Échoue le test si au moins une violation d'impact `critical` est présente,
-// en listant les ids pour un diagnostic immédiat dans le rapport CI.
+/**
+ * Les règles `serious` qui restent NON bloquantes, et pourquoi.
+ *
+ * 🔴 CETTE LISTE EST NOMINATIVE EXPRÈS. Un seuil global (« bloquer critical,
+ * dumper serious ») ne dit pas ce qu'on laisse passer : il laisse passer TOUT
+ * ce qui n'a pas encore été regardé. Mesuré le 2026-09-04 : la landing portait
+ * un `aria-prohibited-attr` — un `aria-label` sur un `div` sans rôle, dont les
+ * enfants étaient `aria-hidden`, donc un bloc entièrement MUET pour un lecteur
+ * d'écran — depuis assez longtemps pour qu'aucun run ne s'en émeuve. C'était
+ * `serious`, donc dumpé, donc invisible.
+ *
+ * Depuis, tout `serious` casse la CI SAUF ce qui est nommé ici.
+ */
+const SERIOUS_NOT_BLOCKING: Record<string, string> = {
+  // C-23, TRANCHÉ le 2026-09-13 : cette dispense est DÉFINITIVE, elle n'attend
+  // plus rien. Elle attendait C-25, puis « un second arbitrage de marque » ;
+  // les deux sont rendus, et la décision est de GARDER `#2563eb`.
+  //
+  // Ce qu'elle couvre exactement, et rien d'autre :
+  //
+  //  · le noyau reproductible — `#2563eb` sur son propre fond teinté à 10 %
+  //    (`#e3ebfa`), à 4,31:1 pour 4,5 requis. Ce sont 9 nœuds, mais UN SEUL
+  //    composant : le lien « Créez un compte » de `DemoConversionBanner`, rendu
+  //    sur les 9 routes protégées ;
+  //  · tout le reste, qu'axe mesure EN PLEIN FONDU d'entrée de route. Ces
+  //    paires-là ne sont PAS reproductibles — trois passes du même commit ont
+  //    rendu 21, 41 puis 55 nœuds, une quatrième 18 — et leurs ratios s'étalent
+  //    de 1,02 à 4,44 selon l'instant où axe photographie l'opacité. Le même
+  //    élément y apparaît sous des couleurs différentes d'une passe à l'autre
+  //    (`#2563eb` devient `#2573eb`, `#487cee`, `#729af1`…), ce qui a longtemps
+  //    fait croire à une famille « dégradé du bouton principal » distincte :
+  //    c'est le même bleu, photographié plus tôt. Durcir dessus rendrait la CI
+  //    instable sans rendre quoi que ce soit plus lisible.
+  //
+  // 🔴 La justification complète, son périmètre d'acceptabilité et ce qu'elle
+  // NE couvre pas sont écrits dans `docs/ACCESSIBILITY.md`, section
+  // « C-23 — pourquoi le bleu du thème clair reste à 4,31:1 (décidé le
+  // 2026-09-13) ». Une dispense sans décision écrite est une régression qu'on a
+  // décidé de ne plus voir : celle-ci renvoie à sa décision, nommément.
+  //
+  // ⚠️ La dispense n'est pas un blanc-seing : le ratio de la paire gardée est
+  // verrouillé par un CLIQUET, `src/theme-contrast.guard.test.ts` § « C-23 »,
+  // qui refuse qu'elle descende sous 4,31:1. Sans lui, la seule garde qui voit
+  // cette paire étant celle-ci, une dérive passerait en silence.
+  //
+  // ❌ Ne JAMAIS étendre cette entrée à autre chose que du contraste, et ne
+  // jamais s'en réclamer pour un libellé de bouton, un message d'erreur ou une
+  // couleur sémantique — `--color-error` est passé à `red-600` précisément
+  // parce que ce raisonnement-là ne s'y transporte pas.
+  'color-contrast':
+    'C-23 tranche le 2026-09-13 : on garde #2563eb. Motif et perimetre dans '
+    + 'docs/ACCESSIBILITY.md, section "C-23 — pourquoi le bleu du theme clair '
+    + 'reste a 4,31:1". Cliquet : src/theme-contrast.guard.test.ts.',
+};
+
+/**
+ * Échoue le test sur toute violation `critical`, et sur toute violation
+ * `serious` dont la règle n'est pas nommément dispensée ci-dessus.
+ */
 function assertNoCritical(violations: Result[], route: string) {
   const criticals = violations.filter(v => v.impact === 'critical');
   expect(
     criticals,
     `[a11y] ${route} — violation(s) critical: ${criticals.map(v => v.id).join(', ')}`,
+  ).toHaveLength(0);
+
+  const serious = violations.filter(
+    v => v.impact === 'serious' && !(v.id in SERIOUS_NOT_BLOCKING),
+  );
+  expect(
+    serious,
+    [
+      `[a11y] ${route} — violation(s) serious non dispensée(s) : ` +
+        serious.map(v => `${v.id} (${v.nodes.length} noeud(s))`).join(', '),
+      'Corriger, ou ajouter la règle à SERIOUS_NOT_BLOCKING AVEC sa raison et',
+      "l'item qui la porte. Une dispense sans item est une regression qu'on",
+      'a decide de ne plus voir.',
+    ].join(String.fromCharCode(10)),
   ).toHaveLength(0);
 }
 
@@ -44,7 +120,12 @@ async function scan(page: Page, label: string) {
     tags: v.tags,
     help: v.help,
     nodes: v.nodes.length,
-    samples: v.nodes.slice(0, 3).map(n => ({
+    // 🔴 TOUS les noeuds, plus les trois premiers. Le `slice(0, 3)` d'origine
+    // est ce qui a produit un enonce FAUX dans le backlog : « trois violations
+    // distinctes, deux tokens, bon marche », alors que la mesure complete rend
+    // onze paires de couleurs sur 74 noeuds. Un echantillon rapporte comme un
+    // total est pire qu'une absence de mesure — on agit dessus.
+    samples: v.nodes.map(n => ({
       target: n.target,
       failureSummary: n.failureSummary,
       html: n.html.slice(0, 200),
@@ -58,10 +139,19 @@ test.describe('a11y audit', () => {
   // The first navigation triggers vite's on-demand compile of heavy pages
   // (LandingPage + showcases). Give the cold-start headroom so the suite
   // doesn't flake on the very first goto under CI/loaded machines.
-  test.describe.configure({ timeout: 120_000 });
+  // ⚠️ Plus de `describe.configure({ timeout: 120_000 })` ici : il écrasait
+  // les 180 s du project mobile-safari (playwright.config.ts), et « Settings »
+  // mourait à 120 s sous WebKit (2026-10-10). Sur les autres projects, 120 s
+  // est déjà le délai global : rien ne change pour eux.
 
   test('Landing (public)', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    // 🔴 Le bas de la landing ne monte qu'au premier geste (`BelowFold.tsx`,
+    // TBT mobile) : sans ce défilement, l'audit ne verrait que le hero.
+    await page.evaluate(() => window.scrollBy(0, 1));
+    await page.locator('#faq').first().waitFor({ state: 'attached', timeout: 15_000 }).catch(() => {});
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForLoadState('networkidle');
     const violations = await scan(page, 'landing');
     console.log(`[a11y] Landing: ${violations.length} violation(s)`);
@@ -123,6 +213,38 @@ test.describe('a11y audit', () => {
     const violations = await scan(demoPage, 'agenda');
     console.log(`[a11y] Agenda: ${violations.length} violation(s)`);
     assertNoCritical(violations, 'Agenda');
+
+    // 🔴 2026-10-22 · CHAQUE vue, pas seulement la vue d'arrivée. FullCalendar
+    // RECRÉE ses défileurs à chaque changement de vue, et `useFocusableScrollers`
+    // réécrit les rôles de la grille sur ceux qui débordent (C-119, puis la
+    // réparation `aria-required-children` / `aria-required-parent` du
+    // 2026-10-02). Le mois n'a pas la même structure que les grilles horaires :
+    // n'auditer que l'état initial laissait deux vues sur trois sans verdict.
+    // Bureau : Jour / Semaine / Mois. Mobile : Jour / 2J / Mois.
+    const switcher = demoPage
+      .locator('[data-tutorial-id="agenda-view-switcher"], [data-tutorial-id="agenda-mobile-view-switcher"]')
+      .filter({ visible: true })
+      .first();
+    const boutons = switcher.getByRole('button');
+    const nbVues = await boutons.count();
+    expect(nbVues, 'le sélecteur de vue de /agenda doit être visible').toBeGreaterThanOrEqual(3);
+    for (let i = 0; i < nbVues; i++) {
+      const bouton = boutons.nth(i);
+      const nom = ((await bouton.textContent()) ?? '').trim();
+      await bouton.click();
+      // Le rôle des défileurs se pose à la frame qui suit leur dimensionnement.
+      await demoPage.waitForTimeout(800);
+      const vue = await demoPage.evaluate(() => {
+        // Le calendrier de bureau et celui du mobile coexistent dans le DOM.
+        const el = [...document.querySelectorAll<HTMLElement>('.fc-view-harness .fc-view')]
+          .find(v => v.getClientRects().length > 0);
+        return [...(el?.classList ?? [])].find(c => /^fc-.+-view$/.test(c) && c !== 'fc-view') ?? '?';
+      });
+      const label = `agenda-${vue.replace(/^fc-|-view$/g, '')}`;
+      const parVue = await scan(demoPage, label);
+      console.log(`[a11y] Agenda, vue « ${nom} » (${vue}) : ${parVue.length} violation(s)`);
+      assertNoCritical(parVue, `Agenda, vue ${nom}`);
+    }
   });
 
   test('Entreprise (demo)', async ({ demoPage }) => {
@@ -143,8 +265,16 @@ test.describe('a11y audit', () => {
   });
 
   test('Settings (demo)', async ({ demoPage }) => {
-    await navTo(demoPage, /param[èe]tres?|settings/i, /\/settings/);
+    // `goto` direct (sûr en démo, cf. la note plus haut) : ce test audite la
+    // PAGE, pas le chemin. La feuille « Plus » qu'empruntait `navTo` était le
+    // point fragile sous WebKit (instable le 2026-10-10), et elle reste
+    // couverte par les parcours qui la testent pour elle-même.
+    await demoPage.goto('/settings');
+    await expect(demoPage).toHaveURL(/\/settings/);
     await demoPage.waitForLoadState('networkidle');
+    // Un audit sur une page pas encore peinte rendrait 0 violation : la page
+    // doit être LÀ avant de scanner.
+    await expect(demoPage.getByRole('heading', { level: 1 }).first()).toBeVisible({ timeout: 20_000 });
     const violations = await scan(demoPage, 'settings');
     console.log(`[a11y] Settings: ${violations.length} violation(s)`);
     assertNoCritical(violations, 'Settings');

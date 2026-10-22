@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getListsRepository } from '@/lib/repository.factory';
 import type { TaskList, CreateListInput, UpdateListInput } from './types';
 import { listKeys } from './constants';
 import { translator } from '@/i18n/useT';
+import { reportRestoreFailure, splitRestore } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -25,16 +25,6 @@ export const useLists = () => {
   return useQuery({
     queryKey: listKeys.lists(),
     queryFn: () => repository.getAll(),
-    staleTime: 1000 * 60 * 30, // 30 minutes — changent rarement, mutations invalident le cache
-  });
-};
-
-export const useList = (id: string) => {
-  const repository = useListsRepository();
-  return useQuery({
-    queryKey: listKeys.detail(id),
-    queryFn: () => repository.getById(id),
-    enabled: !!id,
     staleTime: 1000 * 60 * 30, // 30 minutes — changent rarement, mutations invalident le cache
   });
 };
@@ -82,7 +72,7 @@ export const useUpdateList = () => {
       if (context?.previousLists) {
         queryClient.setQueryData(listKeys.lists(), context.previousLists);
       }
-      toast.error(`Impossible de modifier la liste : ${error.message}`);
+      toast.error(translator('errors').t('mutation.updateList', { message: error.message }));
     },
 
     onSettled: (updatedList) => {
@@ -116,7 +106,7 @@ export const useDeleteList = () => {
       if (context?.previousLists) {
         queryClient.setQueryData(listKeys.lists(), context.previousLists);
       }
-      toast.error(`Impossible de supprimer la liste : ${error.message}`);
+      toast.error(translator('errors').t('mutation.deleteList', { message: error.message }));
     },
 
     onSettled: (_result, _error, deletedId) => {
@@ -189,7 +179,7 @@ export const useRemoveTaskFromList = () => {
       if (context?.previousLists) {
         queryClient.setQueryData(listKeys.lists(), context.previousLists);
       }
-      toast.error(`Impossible de retirer la tâche de la liste : ${error.message}`);
+      toast.error(translator('errors').t('mutation.removeTaskFromList', { message: error.message }));
     },
 
     onSettled: () => {
@@ -202,17 +192,38 @@ export const useRemoveTaskFromList = () => {
 // DERIVED HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
-export const useListsForTask = (taskId: string) => {
-  const { data: lists = [] } = useLists();
-  return useMemo(
-    () => lists.filter((list) => list.taskIds.includes(taskId)),
-    [lists, taskId]
-  );
-};
-
 // ═══════════════════════════════════════════════════════════════════
 // RE-EXPORTS
 // ═══════════════════════════════════════════════════════════════════
 
 export type { TaskList, CreateListInput, UpdateListInput } from './types';
 export { listKeys } from './constants';
+
+// ═══════════════════════════════════════════════════════════════════
+// RESTAURATION (« Annuler ») — recree l'objet sous SON identifiant
+// ═══════════════════════════════════════════════════════════════════
+//
+// Separe de `useCreateList` a dessein : l'identifiant passe par le second
+// argument de `create()`, hors du payload, donc hors de portee d'un objet de
+// formulaire enrichi depuis les devtools. Contrat complet et raison de ce
+// decoupage : `src/lib/restore-id.ts` (R-08).
+//
+// ⚠️ N'appeler QUE depuis un toast d'annulation.
+export const useRestoreList = () => {
+  const queryClient = useQueryClient();
+  const repository = useListsRepository();
+
+  return useMutation({
+    mutationFn: (snapshot: TaskList) => {
+      const { payload, options } = splitRestore(snapshot);
+      return repository.create(payload as CreateListInput, options);
+    },
+    onSuccess: () => {
+      invalidateAllListQueries(queryClient);
+    },
+    // Un « Annuler » rate doit se VOIR : `console.error` est supprime du
+    // bundle de production (vite.config.ts), l'echec etait donc muet.
+    onError: (error: Error) => reportRestoreFailure('list', error),
+  });
+};
+

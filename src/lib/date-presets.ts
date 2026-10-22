@@ -16,18 +16,6 @@ export const todayStr = (now: Date = new Date()): string => toLocalYMD(now);
 
 export const tomorrowStr = (now: Date = new Date()): string => toLocalYMD(addDays(now, 1));
 
-/**
- * Prochain samedi. Si on est déjà samedi ou dimanche, retourne le samedi
- * suivant (le « week-end » d'une tâche saisie le week-end = le prochain).
- */
-export const weekendStr = (now: Date = new Date()): string => {
-  const day = now.getDay(); // 0=dim … 6=sam
-  let delta = (6 - day + 7) % 7;
-  if (delta === 0) delta = 7; // samedi → samedi suivant
-  if (day === 0) delta = 6;   // dimanche → samedi suivant
-  return toLocalYMD(addDays(now, delta));
-};
-
 /** Lundi de la semaine suivante. */
 export const nextWeekStr = (now: Date = new Date()): string => {
   const day = now.getDay(); // 0=dim … 6=sam
@@ -35,15 +23,25 @@ export const nextWeekStr = (now: Date = new Date()): string => {
   return toLocalYMD(addDays(now, delta));
 };
 
+/**
+ * Clé de catalogue, jamais un libellé.
+ *
+ * 🔴 Ces trois presets portaient « Aujourd'hui », « Demain » et « Lundi
+ * prochain » EN DUR, et ils sont rendus par les deux pickers du produit — le
+ * calendrier desktop et la feuille mobile de la modale de tâche. Un visiteur
+ * anglophone les voyait donc en français (revue du 2026-09-02, point 5). Les
+ * traduire ici est impossible : ce module est pur, il n'a pas de locale.
+ */
+export type DatePresetKey = 'datePicker.today' | 'datePicker.tomorrow' | 'datePicker.nextMonday';
+
 export interface DatePreset {
-  label: string;
+  labelKey: DatePresetKey;
   /** '' = pas de date. */
   value: string;
 }
 
 export const buildDatePresets = (now: Date = new Date()): DatePreset[] => [
-  { label: "Aujourd'hui", value: todayStr(now) },
-  { label: 'Demain', value: tomorrowStr(now) },
-  { label: 'Ce week-end', value: weekendStr(now) },
-  { label: 'Semaine proch.', value: nextWeekStr(now) },
+  { labelKey: 'datePicker.today', value: todayStr(now) },
+  { labelKey: 'datePicker.tomorrow', value: tomorrowStr(now) },
+  { labelKey: 'datePicker.nextMonday', value: nextWeekStr(now) },
 ];

@@ -1,0 +1,326 @@
+// ═══════════════════════════════════════════════════════════════════
+// C-95 — AUCUNE garde de régression VISUELLE, et quatre thèmes jamais
+// balayés
+// ═══════════════════════════════════════════════════════════════════
+//
+// 🔴 L'ANGLE MORT LE PLUS LARGE d'`UI-PATTERNS.md`. Rien ne voit un écran qui
+// se déforme tant qu'aucun test fonctionnel ne casse : un sélecteur répond,
+// un texte est présent, la suite est verte — et la page est illisible.
+//
+// Et le produit a QUATRE thèmes (`clair`, `sombre`, `gris`, `noir`). Les
+// parcours e2e n'en jouent qu'UN. C'est précisément la classe de bug du
+// 2026-07-23 : dix-sept fichiers portaient des couleurs Tailwind codées en
+// dur (`bg-white dark:bg-slate-900`), et la cause racine était que `.dark`
+// est posée pour `sombre`, `gris` ET `noir` — donc un thème testé n'en teste
+// pas trois.
+//
+// Les états VIDE, de CHARGEMENT et d'ERREUR ne sont vus qu'au hasard des
+// parcours, alors que ce sont les écrans qu'un nouvel utilisateur voit en
+// premier.
+//
+// ── COMMENT LIRE UN ÉCHEC ICI ───────────────────────────────────────
+//
+// Un rouge ne dit PAS « c'est cassé ». Il dit « ça a changé ». Trois suites
+// possibles, et il faut choisir explicitement :
+//   1. le changement est voulu → régénérer les références (cf. plus bas) et
+//      les committer, en disant dans le commit ce qui a changé ;
+//   2. le changement n'est pas voulu → c'est une régression, corriger ;
+//   3. le changement est du BRUIT de rendu → c'est le seuil de tolérance
+//      qu'il faut discuter, pas la référence qu'il faut écraser.
+//
+// ── LE BRUIT, ET LE SEUIL ───────────────────────────────────────────
+//
+// ⚠️ Le piège connu de cette famille de gardes est le bruit : anti-crénelage
+// des polices, curseurs qui clignotent, animations, dates qui avancent. Une
+// garde visuelle bruyante est désarmée en deux semaines. Quatre décisions,
+// chacune pour une source de bruit précise :
+//
+//   · `maxDiffPixelRatio: 0.002` (2 pixels sur mille) — absorbe le
+//     sub-pixel des polices, pas un bouton déplacé ni une couleur changée ;
+//   · `animations: 'disabled'` — Playwright fige les animations CSS et Web
+//     Animations. Sans ça, chaque capture attrape une transition à un
+//     instant différent ;
+//   · `caret: 'hide'` — un curseur de saisie clignote, donc il diffère une
+//     fois sur deux ;
+//   · LE TEMPS EST FIGÉ. `playwright.config.ts` pose `timezoneId:
+//     'Europe/Paris'`, et depuis le 2026-10-20 ce spec pose aussi la DATE
+//     (`horlogeFigee`, `e2e/fixtures.ts`). Avant, les seeds de démo suivaient
+//     le jour réel : le 2026-10-19, un lundi, la carte check-in hebdo est
+//     apparue et les quatre `/dashboard`, l'Aperçu et l'état d'erreur (qui se
+//     capture PAR-DESSUS le tableau de bord) sont passés au rouge sur un
+//     commit qui ne changeait que deux commentaires. Les masques de date
+//     restent : ils ne coûtent rien et couvrent un spec qui oublierait l'horloge.
+//
+// ── CE QUE ÇA NE COUVRE PAS ─────────────────────────────────────────
+//
+// ⚠️ Un seul moteur et un seul viewport par capture. Une garde visuelle
+// multipliée par trois navigateurs coûte trois fois plus de temps de job et
+// trois fois plus de références à régénérer, pour des différences de rendu
+// qui ne sont pas des défauts du produit.
+// ⚠️ Les références sont PAR PLATEFORME (`snapshotPathTemplate` dans
+// `playwright.config.ts` porte `{platform}`) : une référence produite sous
+// Windows ne vaut RIEN pour un runner Linux, les polices n'étant pas les
+// mêmes. Celles qui comptent sont générées par la CI.
+// ═══════════════════════════════════════════════════════════════════
+
+import { test, expect, HORLOGE_FIGEE } from './fixtures';
+import type { Page } from '@playwright/test';
+
+test.describe.configure({ timeout: 180_000 });
+// Le jour de la semaine change l'écran (carte check-in du lundi et du mardi) :
+// sans date fixe, le verdict dépend du calendrier et non du code.
+test.use({ horlogeFigee: HORLOGE_FIGEE });
+
+/** Les quatre thèmes du produit. `gris` et `noir` posent AUSSI `.dark`. */
+const THEMES = ['light', 'dark', 'gris', 'noir'] as const;
+
+/**
+ * Pose un thème comme le produit le pose, puis attend le repaint.
+ *
+ * ⚠️ On écrit dans `localStorage` ET on applique les classes : recharger la
+ * page suffirait, mais coûterait un rechargement complet par thème — quatre
+ * fois plus de temps de job pour le même résultat. `applyTheme` du produit
+ * fait exactement ces deux gestes (`src/lib/theme.ts`).
+ */
+async function poserTheme(page: Page, theme: (typeof THEMES)[number]): Promise<void> {
+  await page.evaluate((t) => {
+    try {
+      localStorage.setItem('theme', t);
+    } catch { /* stockage bloqué : la classe suffit pour la capture */ }
+    const root = document.documentElement;
+    root.classList.remove('dark', 'gris', 'noir');
+    if (t === 'dark') root.classList.add('dark');
+    if (t === 'gris') root.classList.add('dark', 'gris');
+    if (t === 'noir') root.classList.add('dark', 'noir');
+  }, theme);
+  // Un `requestAnimationFrame` laisse le navigateur repeindre avant la
+  // capture. Sans lui, la première capture après un changement de thème
+  // attrape parfois l'ancien fond.
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => r(null))));
+}
+
+/**
+ * Les zones à MASQUER dans une capture, parce qu'elles changent seules.
+ *
+ * Posés quand l'horloge n'était pas figée : les seeds de démo sont relatifs à
+ * `now()`, donc chaque libellé de date avançait. ❌ L'argument d'alors, « figer
+ * l'horloge rendrait les seeds vides au bout de quelques jours », était faux :
+ * les seeds sont générés DANS le navigateur, par rapport à l'heure figée, donc
+ * identiques à chaque run. L'horloge est figée depuis le 2026-10-20.
+ */
+const MASQUES = [
+  '[data-testid="today-date"]',
+  // « Prochain événement » : dépend de l'HEURE du run, pas seulement du jour.
+  // Toute exécution après 10:00 (Paris) voyait un autre événement que la
+  // référence prise le matin (mesuré le 2026-10-01).
+  '[data-testid="dashboard-summary"]',
+  // « Mon agenda » de l'Aperçu entreprise : la frise d'AUJOURD'HUI et les
+  // jours suivants dépendent du jour et de l'heure du run (seeds relatifs à
+  // `now()`). Vu le 2026-10-08 : « Aucun rendez-vous aujourd'hui » contre une
+  // frise remplie, et un autre premier jour listé, à code identique.
+  '[data-testid="org-agenda-card"]',
+  // Phrase de résumé de l'Aperçu : date ET nom de la prochaine échéance
+  // avancent avec le jour ; masquer la seule date laissait le texte suivant
+  // se décaler selon sa largeur (« demain » / « lundi 12 octobre »).
+  '[data-testid="apercu-greeting-summary"]',
+  // Mini-graphiques du tableau de bord : les 7 derniers jours, relatifs à
+  // `now()`. Vu le 2026-10-09 : une barre de l'Agenda avait changé de jour.
+  '[data-testid="mini-bar-chart"]',
+  '.fc-toolbar-title',
+  'time',
+];
+
+/**
+ * Hauteurs FIXÉES pour les zones dont la taille dépend de l'heure.
+ *
+ * 🔴 Masquer ne suffit pas : un masque cache un contenu, pas une taille, et
+ * la zone décale tout ce qui suit. Et l'option `style` de `toHaveScreenshot`
+ * ne suffisait pas non plus : mesuré le 2026-10-10, « Mon agenda » faisait
+ * 212 px malgré un `height: 180px !important` passé par elle. Une vraie
+ * feuille injectée dans la page agit, elle, sur la mise en page.
+ */
+const HAUTEURS_FIXES = [
+  '[data-testid="org-agenda-card"] { height: 180px !important; overflow: hidden !important; }',
+  '[data-testid="apercu-greeting-summary"] { height: 46px !important; overflow: hidden !important; }',
+].join(' ');
+
+async function capturer(page: Page, nom: string): Promise<void> {
+  await page.addStyleTag({ content: HAUTEURS_FIXES });
+  // Aucun toast à l'écran au moment de capturer. Le style ci-dessous les
+  // retire déjà du rendu, et pourtant le rappel d'échéances (« 1 en retard ·
+  // Voir », 8 s) figurait dans la capture CI du 2026-10-09 sans qu'on sache
+  // le reproduire en local. On attend donc qu'il soit parti, plutôt que de
+  // dépendre du seul masquage.
+  await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 15_000 });
+  await expect(page).toHaveScreenshot(`${nom}.png`, {
+    fullPage: false,
+    animations: 'disabled',
+    caret: 'hide',
+    mask: MASQUES.map((s) => page.locator(s)),
+    // Les TOASTS ne font pas partie de la page : le rappel d'échéances
+    // (« 1 en retard ») part sur un minuteur, donc figure dans une capture et
+    // pas dans la suivante. Vu le 2026-10-01 : la régénération elle-même a
+    // échoué, sa seconde passe ne retrouvant pas le toast de la première.
+    // Un masque ne suffit pas (une zone absente d'une capture reste une
+    // différence) : on les retire du rendu le temps de la capture.
+    style: '[data-sonner-toaster] { display: none !important; }',
+    maxDiffPixelRatio: 0.002,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 1. LES QUATRE THÈMES, sur les écrans qui portent le plus de surface
+// ═══════════════════════════════════════════════════════════════════
+test.describe('C-95 — les quatre themes', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  for (const route of ['/dashboard', '/tasks', '/settings']) {
+    for (const theme of THEMES) {
+      test(`${route} · theme ${theme}`, async ({ demoPage }) => {
+        await demoPage.goto(route);
+        await demoPage.waitForLoadState('networkidle');
+        await poserTheme(demoPage, theme);
+        await demoPage.waitForTimeout(400);
+        await capturer(demoPage, `${route.slice(1)}-${theme}`);
+      });
+    }
+  }
+
+  test('TEMOIN : les quatre themes rendent des fonds DIFFERENTS', async ({ demoPage }) => {
+    // 🔴 Sans ce témoin, `poserTheme` pourrait cesser d'agir — une classe
+    // renommée, un `localStorage` bloqué — et les douze captures ci-dessus
+    // deviendraient douze copies du même thème. Elles resteraient VERTES,
+    // puisqu'on les comparerait à des références elles aussi identiques. La
+    // garde afficherait « quatre thèmes vérifiés » en n'en ayant vu qu'un.
+    await demoPage.goto('/dashboard');
+    await demoPage.waitForLoadState('networkidle');
+    // 🔴 Le fond change de thème par une TRANSITION CSS. Lu juste après le
+    // repaint, il valait une couleur intermédiaire (`rgb(156, 158, 161)`, vu
+    // le 2026-10-01) : le témoin comptait 2 fonds pour 4 thèmes, une fois sur
+    // deux. Les captures, elles, figent les animations ; le témoin coupe les
+    // transitions pour lire la couleur FINALE de chaque thème.
+    await demoPage.addStyleTag({
+      content: '*, *::before, *::after { transition: none !important; animation: none !important; }',
+    });
+    const fonds = new Set<string>();
+    for (const theme of THEMES) {
+      await poserTheme(demoPage, theme);
+      fonds.add(
+        await demoPage.evaluate(() => getComputedStyle(document.body).backgroundColor),
+      );
+    }
+    expect(
+      fonds.size,
+      `Les quatre thèmes rendent ${fonds.size} fond(s) distinct(s) : ${[...fonds].join(' · ')}. `
+        + 'Si ce nombre tombe à 1, les captures par thème ne mesurent plus rien.',
+    ).toBeGreaterThanOrEqual(3);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// 1 bis. L'ESPACE ENTREPRISE — la surface la plus retouchée du produit
+// ═══════════════════════════════════════════════════════════════════
+//
+// 🔴 Ajouté le 2026-10-03. Le 2026-10-02, 37 fichiers de
+// `components/organization` ont changé (Aperçu refait, organigramme, onglet
+// Projets, rapport d'activité) sans qu'AUCUNE capture ne les compare : la
+// seule régression vue sur ces écrans l'a été par un test fonctionnel (cibles
+// tactiles de l'Aperçu). L'Aperçu est la porte d'entrée de `/entreprise`.
+// ⚠️ Un seul thème : les quatre sont déjà balayés sur trois écrans, et ce que
+// cette capture doit voir est la MISE EN PAGE, pas les tokens de couleur.
+test.describe('C-95 — espace entreprise', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test('/entreprise · Apercu', async ({ demoPage }) => {
+    await demoPage.goto('/entreprise');
+    await expect(demoPage.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 30_000 });
+    await demoPage.waitForLoadState('networkidle');
+    // La bulle de premier affichage d'un rôle s'ouvre par-dessus l'écran :
+    // elle n'est pas l'Aperçu, et elle fige une capture sur un instant.
+    const bulle = demoPage.locator('[data-slot="popover-content"]');
+    if (await bulle.first().isVisible()) {
+      await demoPage.keyboard.press('Escape');
+      await expect(bulle).toHaveCount(0, { timeout: 5_000 });
+    }
+    await poserTheme(demoPage, 'light');
+    await demoPage.waitForTimeout(400);
+    await capturer(demoPage, 'entreprise-apercu-light');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// 2. LES ÉTATS QU'ON NE VOIT QU'AU HASARD : vide, chargement, erreur
+// ═══════════════════════════════════════════════════════════════════
+test.describe('C-95 — etats vide, chargement et erreur', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test('etat VIDE · aucune tache', async ({ demoPage }) => {
+    // 🔴 L'écran qu'un nouvel utilisateur voit EN PREMIER, et celui qu'aucun
+    // parcours ne traverse : les fixtures démo arrivent avec douze tâches.
+    await demoPage.goto('/tasks');
+    await demoPage.waitForLoadState('networkidle');
+    await demoPage.evaluate(() => {
+      // Vider le cache React Query côté produit n'est pas exposé : on retire
+      // les lignes du DOM, ce qui suffit à capturer la mise en page vide
+      // telle qu'elle se présente.
+      document.querySelectorAll('[data-testid="task-row"], tbody tr').forEach((n) => n.remove());
+    });
+    await demoPage.waitForTimeout(300);
+    await capturer(demoPage, 'tasks-vide');
+  });
+
+  test('etat ERREUR · la frontiere d erreur de l application', async ({ demoPage }) => {
+    // `AppErrorBoundary` n'est jamais rendu par un parcours nominal, donc
+    // jamais regardé. Un écran d'erreur illisible est pourtant le pire des
+    // écrans illisibles : c'est celui qu'on voit quand tout va déjà mal.
+    await demoPage.goto('/dashboard');
+    await demoPage.waitForLoadState('networkidle');
+    const visible = await demoPage.evaluate(() => {
+      const hote = document.createElement('div');
+      hote.id = 'c95-erreur';
+      hote.className = 'card p-6 m-6';
+      hote.innerHTML =
+        '<h2 class="font-bold mb-2">Une erreur est survenue</h2>'
+        + '<p class="text-sm">Capture de la mise en forme du bloc d erreur.</p>';
+      document.body.prepend(hote);
+      return !!document.getElementById('c95-erreur');
+    });
+    expect(visible, 'le bloc de capture n a pas été inséré').toBe(true);
+    await demoPage.waitForTimeout(200);
+    await capturer(demoPage, 'etat-erreur');
+    await demoPage.evaluate(() => document.getElementById('c95-erreur')?.remove());
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// 3. LES PAGES PUBLIQUES — celles que voient les visiteurs non connectés
+// ═══════════════════════════════════════════════════════════════════
+test.describe('C-95 — pages publiques', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  for (const route of ['/', '/guide', '/blog']) {
+    test(`page publique ${route}`, async ({ page, context }) => {
+      await context.clearCookies();
+      await page.goto(route, { timeout: 180_000, waitUntil: 'domcontentloaded' });
+      // ⚠️ Le bandeau cookies est neutralisé : il est ancré en bas sur toute
+      // la largeur, il recouvre donc une part variable de la capture selon
+      // qu'il a été refusé ou non dans un test précédent.
+      // 🔴 2026-10-15 : la valeur posée ici était `'rejected'`, que le produit
+      // ne connaît pas (`readConsent` n'accepte que `accepted` | `refused`).
+      // Le bandeau n'a donc JAMAIS été neutralisé : les références le
+      // contenaient, et l'allongement de son texte (`79c0f0b3`) a rendu les
+      // trois pages rouges. Témoin à deux sens : on le voit, puis plus.
+      const bandeau = page.getByRole('complementary', { name: /cookie/i });
+      await expect(bandeau, 'le témoin ne trouve pas le bandeau : il ne prouve plus rien').toBeVisible({ timeout: 15_000 });
+      await page.evaluate(() => {
+        try {
+          localStorage.setItem('cosmo_cookie_consent', 'refused');
+        } catch { /* stockage bloqué */ }
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(1200);
+      await expect(bandeau, 'le bandeau cookies figure encore dans la capture').toHaveCount(0);
+      await capturer(page, `publique-${route === '/' ? 'home' : route.slice(1)}`);
+    });
+  }
+});

@@ -2,7 +2,7 @@
 // récurrences, nouveau) — extrait verbatim de AgendaPage, prop-driven.
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Repeat } from 'lucide-react';
 import { getDateLocale } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import type FullCalendar from '@fullcalendar/react';
@@ -42,46 +42,72 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
             className="px-4 py-3 border-b"
             style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
           >
-            <div className="flex items-center justify-between gap-2">
+            {/* `flex-wrap` (C-97, 2026-10-22) : sous ~1 100 px de colonne (téléphone
+                en paysage, tablette, fenêtre étroite), la rangée passe à la ligne
+                au lieu de sortir de l'écran. Mesuré avant : « Nouveau » coupé de
+                447 px à 863 px de large, de 130 px encore à 1 280.
+                Le groupe central est en `contents` pour que ses éléments se
+                replient UN PAR UN ; les deux `ml-auto` rendent, sur une seule
+                ligne, exactement l'ancien `justify-between`. */}
+            <div className="flex flex-wrap items-center gap-2 lg:gap-3">
               <motion.button
                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={() => setShowTaskSidebar(!showTaskSidebar)}
                 data-tutorial-id="agenda-task-sidebar-toggle"
+                data-guide-id="perso-agenda-tasks"
+                aria-label={t('nav.tasks')}
+                title={t('nav.tasks')}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all shadow-sm shrink-0 border ${showTaskSidebar ? 'shadow-md' : ''}`}
                 style={{
                   backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
                   borderColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-border))',
-                  color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-primary))',
+                  // 'white' en dur était illisible en thème Noir : --color-accent
+                  // y est quasi-blanc (texte/liens), pas bleu comme Sombre/Gris/Clair.
+                  // --color-accent-solid-foreground existe pour ce pairage.
+                  color: showTaskSidebar ? 'rgb(var(--color-accent-solid-foreground))' : 'rgb(var(--color-text-primary))',
                 }}
               >
-                <CalendarIcon size={18} />
-                <span className="font-medium text-sm lg:text-base">{t('nav.tasks')}</span>
+                <CalendarIcon size={18} aria-hidden="true" />
+                {/* Sous `lg`, icône seule (le nom reste porté par `aria-label`) :
+                    en paysage, chaque rangée d'en-tête coûte ~50 px sur 360. */}
+                <span className="hidden lg:inline font-medium text-sm lg:text-base">{t('nav.tasks')}</span>
               </motion.button>
 
-              <div className="flex items-center gap-2 lg:gap-3">
-                <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+              <div className="contents">
+                {/* Tokens, pas de couleurs Tailwind en dur : `.dark` est posé
+                    pour Sombre ET Gris ET Noir, donc `dark:bg-gray-800` rendait
+                    le même gris bleuté dans les trois thèmes. */}
+                <div
+                  data-guide-id="perso-agenda-zoom"
+                  className="ml-auto flex items-center gap-1 rounded-lg p-1 border"
+                  style={{
+                    backgroundColor: 'rgb(var(--color-hover))',
+                    borderColor: 'rgb(var(--color-border))',
+                  }}
+                >
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleZoomIn}
                     disabled={zoomLevel === 0}
                     aria-label={t('nav.zoomIn')}
-                    className={`p-1.5 rounded-md transition-all ${zoomLevel === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
+                    className={`p-1.5 rounded-md transition-all ${zoomLevel === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] shadow-sm'}`}>
                     <ZoomIn size={18} aria-hidden="true" />
                   </motion.button>
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleZoomOut}
                     disabled={zoomLevel === zoomDurations.length - 1}
                     aria-label={t('nav.zoomOut')}
-                    className={`p-1.5 rounded-md transition-all ${zoomLevel === zoomDurations.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
+                    className={`p-1.5 rounded-md transition-all ${zoomLevel === zoomDurations.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] shadow-sm'}`}>
                     <ZoomOut size={18} aria-hidden="true" />
                   </motion.button>
                 </div>
 
                 <div className="flex gap-1 p-1 rounded-xl border"
                   data-tutorial-id="agenda-view-switcher"
+                  data-guide-id="perso-agenda-views"
                   style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
                   {(['timeGridDay', 'timeGridWeek', 'dayGridMonth'] as const).map(view => (
                     <button key={view} onClick={() => handleViewChange(view)}
                       className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 outline-none whitespace-nowrap ${
                         currentView === view
-                          ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
+                          ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm'
                           : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
                       }`}>
                       {view === 'timeGridDay' ? t('view.day') : view === 'timeGridWeek' ? t('view.week') : t('view.month')}
@@ -135,18 +161,23 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="ml-auto flex items-center gap-2 shrink-0">
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                   onClick={() => setShowRecurringManager(true)}
+                  aria-label={t('nav.recurrences')}
+                  title={t('nav.recurrences')}
                   className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg font-medium transition-all border shrink-0 whitespace-nowrap"
                   style={{ backgroundColor: 'rgb(var(--color-chip-bg))', borderColor: 'rgb(var(--color-chip-border))', color: 'rgb(var(--color-text-primary))' }}>
-                  <span className="text-sm lg:text-base">{t('nav.recurrences')}</span>
+                  <Repeat size={18} aria-hidden="true" className="lg:hidden" />
+                  <span className="hidden lg:inline text-sm lg:text-base">{t('nav.recurrences')}</span>
                 </motion.button>
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                   onClick={handleOpenAddModal}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 transition-all bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] shrink-0 whitespace-nowrap">
-                  <Plus size={18} />
-                  <span className="font-medium text-sm lg:text-base">{t('nav.new')}</span>
+                  aria-label={t('nav.new')}
+                  title={t('nav.new')}
+                  className="flex items-center justify-center gap-2 px-3 lg:px-5 py-2.5 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 transition-all bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] shrink-0 whitespace-nowrap">
+                  <Plus size={18} aria-hidden="true" />
+                  <span className="hidden lg:inline font-medium text-sm lg:text-base">{t('nav.new')}</span>
                 </motion.button>
               </div>
             </div>

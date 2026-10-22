@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Check, X, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
@@ -13,8 +13,13 @@ import {
   type ClaimShareLinkResult,
 } from '@/modules/friends';
 import { taskKeys } from '@/modules/tasks';
+import { ApiError } from '@/lib/normalizeApiError';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import { useT } from '@/i18n/useT';
+import { RichText } from '@/components/ui/rich-text';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 /**
  * Monté au niveau App (comme CookieBanner) : dès que l'utilisateur est
@@ -41,6 +46,8 @@ const ShareInviteClaimer: React.FC = () => {
     } catch { return; }
     if (!token) return;
     // Retire le flag AVANT le claim : pas de double-claim sur re-render/reload.
+    // C-63 — il est REPOSE si le refus n'est pas nomme (cf. onError) : une
+    // panne reseau ne doit pas consommer une invitation.
     try { localStorage.removeItem(PENDING_INVITE_STORAGE_KEY); } catch { /* no-op */ }
 
     claimMutation.mutate(token, {
@@ -54,23 +61,42 @@ const ShareInviteClaimer: React.FC = () => {
         }
         setInvite(result);
       },
+      // C-63 — on branche sur le CODE, jamais sur le texte du message. Une
+      // panne reseau ou un 500 de PostgREST ne contient aucun identifiant :
+      // l'ancien tri par texte les faisait tomber dans « ce lien est
+      // invalide », une affirmation definitive et fausse sur le chemin
+      // d'acquisition, apres laquelle personne ne reessaie.
       onError: (error: Error) => {
-        const msg = error.message || '';
-        if (msg.includes('own_link')) {
-          toast.info("Ce lien d'invitation pointe vers votre propre tâche.");
-        } else if (msg.includes('expired_link')) {
+        const code = error instanceof ApiError ? error.code : '';
+        if (code === 'own_link') {
+          toast.info(t('shareInvite.ownLink'));
+        } else if (code === 'expired_link') {
           toast.error(t('shareInvite.expired'));
-        } else {
+        } else if (code === 'invalid_link') {
           toast.error(t('shareInvite.invalid'));
+        } else {
+          // Refus NON nomme : on ne sait pas si le lien est mauvais. On le dit,
+          // et on REPOSE le jeton pour que le prochain montage reessaie —
+          // sinon une coupure reseau consomme l'invitation pour de bon.
+          toast.error(t('shareInvite.unverified'));
+          try { localStorage.setItem(PENDING_INVITE_STORAGE_KEY, token); } catch { /* no-op */ }
         }
       },
     });
     // claimMutation/queryClient stables (React Query) — on ne déclenche que
     // sur changement d'état d'auth.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    la reclamation ne doit partir qu a un changement d etat d AUTH.
+       `claimMutation`, `queryClient` et `t` sont recrees a chaque rendu ;
+       dependre d eux consommerait l invitation plusieurs fois. Le jeton, lui,
+       est relu dans `localStorage` au declenchement, jamais capture. */
   }, [isAuthenticated, isLoading, isDemo]);
 
   const closeAfter = () => setInvite(null);
+  const sheetMotion = useSheetMotion();
+  // Meme correction que les cinq feuilles de l'audit 2026-08-14 : la
+  // poignee affichee plus bas ne declenchait aucun geste.
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(closeAfter);
 
   const handleAccept = () => {
     if (!invite) return;
@@ -99,6 +125,16 @@ const ShareInviteClaimer: React.FC = () => {
 
   const busy = acceptMutation.isPending || unshareMutation.isPending;
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    // Le voile ferme par closeAfter (« decider plus tard », la tache reste
+    // dans la boite de reception). Echap emprunte le MEME chemin.
+    onClose: closeAfter,
+    labelledBy: "share-invite-title",
+  });
+
   return (
     <AnimatePresence>
       {invite && (
@@ -107,9 +143,8 @@ const ShareInviteClaimer: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="share-invite-title"
+          ref={modalA11yRef}
+          {...modalA11yProps}
         >
           {/* Backdrop — fermer = décider plus tard (la tâche reste dans l'inbox) */}
           <motion.div
@@ -121,15 +156,14 @@ const ShareInviteClaimer: React.FC = () => {
           />
 
           <motion.div
+            ref={sheetRef}
+            {...sheetDragProps}
             className="relative w-full sm:max-w-md bg-[rgb(var(--color-surface))] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden flex flex-col"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+            {...sheetMotion}
           >
             <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
-              <div className="h-[5px] w-10 rounded-full bg-[rgb(var(--color-border-strong))]" />
+              <motion.div className="h-[5px] rounded-full bg-[rgb(var(--color-border-strong))]" style={{ width: handleBarWidth }} />
             </div>
 
             <div className="p-6 text-center">
@@ -150,9 +184,9 @@ const ShareInviteClaimer: React.FC = () => {
                 {t('shareInvite.sharedWithYou')}
               </h2>
               <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
-                <span className="font-semibold text-[rgb(var(--color-text-primary))]">{invite.owner_name}</span>
-                {' '}vous propose de collaborer sur{' '}
-                <span className="font-semibold text-[rgb(var(--color-text-primary))]">« {invite.task_name} »</span>.
+                {/* Une phrase entiere : l'ordre « qui / quoi » n'est pas le
+                    meme partout, et trois fragments de JSX l'auraient fige. */}
+                <RichText>{t('shareInvite.proposes', { name: invite.owner_name, task: invite.task_name })}</RichText>
               </p>
 
               <div className="flex flex-col-reverse sm:flex-row gap-2">
@@ -162,7 +196,7 @@ const ShareInviteClaimer: React.FC = () => {
                   className="flex-1 min-h-11 px-4 py-2.5 rounded-xl text-sm font-semibold text-[rgb(var(--color-text-secondary))] border border-[rgb(var(--color-border))] hover:border-red-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                 >
                   <span className="inline-flex items-center gap-1.5 justify-center">
-                    <X size={15} aria-hidden="true" /> Refuser
+                    <X size={15} aria-hidden="true" /> {t('actions.refuse')}
                   </span>
                 </button>
                 <button
@@ -172,7 +206,7 @@ const ShareInviteClaimer: React.FC = () => {
                 >
                   <span className="inline-flex items-center gap-1.5 justify-center">
                     {busy ? <Loader2 size={15} className="animate-spin" aria-hidden="true" /> : <Check size={15} aria-hidden="true" />}
-                    Accepter la tâche
+                    {t('shareInvite.accept')}
                   </span>
                 </button>
               </div>

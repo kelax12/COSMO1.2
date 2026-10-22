@@ -1,0 +1,73 @@
+# ═══════════════════════════════════════════════════════════════════
+# Avis de reconduction tacite — obligation quotidienne (Conso. L215-1)
+#
+# Declenche l Edge Function `renewal-notice`, qui previent les clients dont
+# l abonnement ANNUEL se reconduit dans 30 a 60 jours.
+#
+# Pourquoi la CI et pas pg_cron : appeler une Edge Function depuis Postgres
+# exigerait l extension pg_net, non installee. Un workflow planifie fait le
+# meme travail sans ajouter de dependance en base.
+#
+# ⚠️ Ne PAS supprimer ce workflow en croyant nettoyer : son absence ne casse
+# rien de visible, elle fait juste que les avis cessent de partir. Et un avis
+# non envoye rend l abonnement resiliable a tout moment, remboursement compris.
+# ═══════════════════════════════════════════════════════════════════
+name: renewal-notice
+
+on:
+  schedule:
+    # 07:12 UTC, tous les jours. Heure decalee des autres crons du depot pour
+    # ne pas empiler les executions sur la meme minute.
+    - cron: '12 7 * * *'
+  workflow_dispatch:
+
+# Moindre privilege (A-8, CodeQL actions/missing-workflow-permissions) :
+# le job n appelle qu une URL, il ne lit ni n ecrit le depot.
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Declencher les avis de reconduction
+        env:
+          # Meme repli que `uptime.yml` : l'URL du projet est publique (bundle
+          # client, docs, `restore-drill.yml`). Elle manquait, et ce workflow
+          # exigeait donc DEUX secrets alors que la roadmap n'en nommait qu'un.
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ykeugqfgklejcdbrmawy.supabase.co' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          # `CRON_SECRET`, lui, est un vrai secret : sa valeur doit etre
+          # identique cote GitHub et cote Supabase, personne ne peut la
+          # deviner.
+          #
+          # 🔴 C-34 — ce bloc faisait `exit 0` sur un `::warning::`. C'est le
+          # motif exact retire d'`uptime.yml` le 2026-09-03, encore en place
+          # ici : le workflow sortait en VERT tous les jours depuis sa
+          # creation, sur une obligation quotidienne jamais tenue. Une garde
+          # qui repond sans mesurer est pire qu'une garde absente — elle donne
+          # une reponse, et on la croit.
+          #
+          # ❌ Ne jamais rendre une garde conditionnelle a la presence de son
+          #    propre secret : secret absent = ECHEC, jamais un silence vert.
+          if [ -z "$SUPABASE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET absent des secrets Actions : AUCUN avis de reconduction ne part (Conso. L215-1). Poser le secret, avec la meme valeur que cote Supabase."
+            exit 1
+          fi
+          code=$(curl -s -o /tmp/out.json -w '%{http_code}' -X POST \
+            "$SUPABASE_URL/functions/v1/renewal-notice" \
+            -H "x-cron-secret: $CRON_SECRET")
+          echo "HTTP $code"; cat /tmp/out.json; echo
+          # TEMOIN : une garde qui n'appelle rien ne mesure rien. Si `curl`
+          # n'a pas rendu de code HTTP a trois chiffres, l'appel n'a pas eu
+          # lieu, et le test de statut ci-dessous serait une comparaison sur
+          # du vide — verte par accident.
+          case "$code" in
+            [0-9][0-9][0-9]) ;;
+            *) echo "::error::Aucun code HTTP : l appel n a pas eu lieu, la garde n a rien mesure."; exit 1 ;;
+          esac
+          # Un echec doit etre VISIBLE : l obligation est quotidienne, et un
+          # workflow vert sur une fonction en erreur ferait passer un
+          # manquement pour un jour normal.
+          [ "$code" = "200" ]

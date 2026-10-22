@@ -4,19 +4,27 @@
 // chaque render parent). Pilotée par props, aucune logique métier.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
-import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, CheckCircle2, X, Users, AlertTriangle, Hourglass, Pencil } from "lucide-react";
-import CollaboratorAvatars from "../CollaboratorAvatars";
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { Bookmark, MoreHorizontal, AlertTriangle, Hourglass, CheckCircle2 } from "lucide-react";
+import { OverdueQuickActions } from "./OverdueQuickActions";
+import TaskActionsSheet from "./TaskActionsSheet";
+import { deadlineFromDayKey } from "@/lib/deadline";
+import { getTimezonePref } from "@/lib/timezone";
+import CollaboratorAvatars from "@/components/CollaboratorAvatars";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
-import { getSnoozeOptions } from "@/modules/tasks/snooze";
 import { Friend } from "@/modules/friends";
-import { formatDate, formatDuration } from "./helpers";
+import { formatDeadlineSmart, formatDuration, formatOverdueSince } from "./helpers";
 import { useT } from '@/i18n/useT';
+import { isTaskOverdue, priorityPillClass } from './helpers';
+import TaskStateBadges from './TaskStateBadges';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 interface TaskCardProps {
   task: Task;
   addToListMode: boolean;
+  /** Cf. `list.tsx` : même rendu pour deux modes, pas le même nom (C-55). */
+  selectionKind?: 'list' | 'select';
   selectedForListIds: string[];
   onToggleTaskForList?: (id: string) => void;
   onToggleComplete: (id: string) => void;
@@ -26,7 +34,6 @@ interface TaskCardProps {
   onAddToList: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onScheduleTask: (task: Task) => void;
-  onDuplicate: (id: string) => void;
   onSnooze: (id: string, deadline: string) => void;
   collaboratorsByTask: Map<string, string[]>;
   pendingCollaboratorTaskIds: Set<string>;
@@ -38,6 +45,7 @@ interface TaskCardProps {
 const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   task,
   addToListMode,
+  selectionKind = 'list',
   selectedForListIds,
   onToggleTaskForList,
   onToggleComplete,
@@ -47,7 +55,6 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   onAddToList,
   onDeleteTask,
   onScheduleTask,
-  onDuplicate,
   onSnooze,
   collaboratorsByTask,
   pendingCollaboratorTaskIds,
@@ -60,10 +67,13 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const category = getCategoryById(task.category);
   // Fallback gris neutre (pas bleu = couleur Travail par défaut) pour
   // signaler une catégorie manquante au lieu de la masquer.
-  const categoryColor = category?.color || '#94a3b8';
+  const categoryColor = category?.color || NO_CATEGORY_COLOR;
   const { t } = useT('tasks');
 
   const [actionsVisible, setActionsVisible] = useState(false);
+  // Maquette 16 — « Choisir » : le calendrier COSMO, jamais celui du
+  // navigateur (cf. CLAUDE.md, § Saisie de date).
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -104,7 +114,10 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       clearTimeout(startTimer);
       controls?.stop();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `x` est une MotionValue, stable pour la vie du composant. Seul le passage
+       en mode « ajouter a une liste » sur la PREMIERE carte doit rejouer
+       l indice gestuel ; dependre de `x` le relancerait a chaque frame. */
   }, [isFirst, addToListMode]);
 
   const startLongPress = (e: React.PointerEvent) => {
@@ -136,7 +149,21 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
     onSelectTask(task.id);
   };
 
-  const isOverdue = !task.completed && new Date(task.deadline) < new Date();
+  const isOverdue = isTaskOverdue(task.deadline, task.completed);
+
+  // Maquette 16 — « Le retard porte sa solution ». `OverdueQuickActions` rend
+  // une clé de jour ; la conversion en instant reste ici, sur le chemin
+  // d'écriture, et passe par `@/lib/deadline` comme les trois autres (R-01).
+  const rescheduleTo = (dayKey: string) => {
+    setRescheduleOpen(false);
+    onSnooze(task.id, deadlineFromDayKey(dayKey, getTimezonePref()));
+  };
+
+  // Deux initiales pour le rond de la maquette 15. `sharedBy` est un nom
+  // affichable, pas un UUID — il vient déjà résolu du repository.
+  const sharedByInitials = task.sharedBy
+    ? task.sharedBy.trim().split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase()
+    : '';
 
   return (
     <motion.div
@@ -145,13 +172,18 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       // la <table> desktop reste dans le DOM en `hidden md:block`, donc un
       // sélecteur `table tbody tr` résout une ligne INVISIBLE sur mobile.
       data-testid="task-card"
-      className="relative mb-1.5"
+      // ── Fin des cartes (arbitrage d'Axel, 2026-09-05) ──
+      // La disposition de chaque tâche est INCHANGÉE ; ce qui disparaît, c'est
+      // la carte qui l'entourait. Vingt cartes empilées, c'est vingt bords à
+      // lire avant d'atteindre vingt titres. Un filet d'un pixel sépare aussi
+      // bien et ne dessine rien.
+      className="relative border-b border-[rgb(var(--color-border))]"
       layout
       animate={isExiting ? { x: '100%', opacity: 0 } : { x: 0, opacity: 1 }}
       transition={{ type: 'spring', damping: 22, stiffness: 260 }}
     >
     {/* Swipe wrapper — isolates card + reveal layers from the action row below */}
-    <div className="relative overflow-hidden rounded-card">
+    <div className="relative overflow-hidden">
     {/* Reveal layers BEHIND the card — full size, full color */}
     {!addToListMode && (
       <>
@@ -160,20 +192,20 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           style={{ opacity: greenOpacity }}
           animate={isValidating ? { scale: [1, 1.04, 1] } : {}}
           transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="absolute inset-0 bg-green-500 pointer-events-none flex items-center justify-start pl-5 rounded-card"
+          className="absolute inset-0 bg-green-500 pointer-events-none flex items-center justify-start pl-5"
         >
           <motion.div
             style={{ opacity: greenIconOpacity }}
             className="flex items-center gap-2 text-white whitespace-nowrap"
           >
             <CheckCircle2 size={22} />
-            <span className="text-label font-bold">{task.completed ? 'Annuler' : 'Valider'}</span>
+            <span className="text-label font-bold">{task.completed ? t('card.cancel') : t('card.validate')}</span>
           </motion.div>
         </motion.div>
         {/* Left swipe → gray bg behind */}
         <motion.div
           style={{ opacity: grayOpacity }}
-          className="absolute inset-0 bg-slate-500 dark:bg-slate-600 pointer-events-none flex items-center justify-end pr-5 rounded-card"
+          className="absolute inset-0 bg-slate-500 dark:bg-slate-600 pointer-events-none flex items-center justify-end pr-5"
         >
           <motion.div
             style={{ opacity: grayIconOpacity }}
@@ -209,52 +241,104 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       }}
       whileTap={addToListMode ? undefined : { scale: 0.98 }}
       transition={{ duration: 0.1 }}
-      // Pas de bordure au repos : sur un fond sombre, une bordure par ligne
-      // dessine une grille qui fatigue l'œil dans une liste dense. La séparation
-      // vient du contraste surface/fond et de l'espace entre les lignes.
-      className={`relative flex items-stretch gap-3 px-3 py-2.5 rounded-card transition-colors ${addToListMode ? 'cursor-default border' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-50' : ''}`}
+      // Ni bordure ni arrondi : la séparation est le filet du parent.
+      // ⚠️ Le fond reste OPAQUE malgré la disparition de la carte — les calques
+      // vert et gris du swipe sont dessinés DERRIÈRE cette ligne. Un fond
+      // transparent les laisserait voir en permanence.
+      className={`relative flex items-stretch gap-3 px-3 py-2.5 transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-50' : ''}`}
       onClick={handleCardClick}
       onPointerDown={startLongPress}
       onPointerUp={cancelLongPress}
       onPointerCancel={cancelLongPress}
-      onContextMenu={(e) => { e.preventDefault(); }}
+      // ═══ C-111 · LE SEUL CHEMIN CLAVIER VERS LES ACTIONS ═══
+      //
+      // 🔴 CE QUI ÉTAIT FAUX, mesuré dans le navigateur le 2026-09-22
+      // (viewport 375, mode démo) : les trois chemins vers `TaskActionsSheet`
+      // que la maquette 86 a laissés — appui long, glissement à gauche, menu
+      // de la ligne DESKTOP — sont tous des gestes de POINTEUR, et le
+      // quatrième vit dans `div.hidden md:block`, donc à `0 x 0 px` sur
+      // téléphone. Modifier, supprimer, partager ou planifier une tâche était
+      // donc **inatteignable au clavier** sur mobile : WCAG 2.1.1 (A), le
+      // critère le plus élémentaire du référentiel.
+      //
+      // Cette ligne ne faisait qu'un `preventDefault()` : elle SUPPRIMAIT le
+      // menu du navigateur sans rien offrir à la place. Elle ouvre désormais
+      // la feuille, ce qui donne d'un coup le clic droit ET le clavier — la
+      // touche « menu contextuel » et `Shift+F10` émettent toutes deux un
+      // évènement `contextmenu` sur l'élément focalisé, et la carte porte déjà
+      // `tabIndex={0}`.
+      //
+      // ✅ Elle ne reprend RIEN à la colonne du pouce : aucun pixel n'est
+      // ajouté, donc l'arbitrage de la maquette 86 (« plus de ⋯ au repos »)
+      // tient entier. C'est précisément pour ça que l'interdit écrit plus bas
+      // — ne pas réintroduire le « ⋯ » sans retirer autre chose — n'est pas
+      // enfreint ici.
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (addToListMode) return;
+        cancelLongPress();
+        setActionsVisible(true);
+      }}
+      // ═══ C-118 · SAFARI N'ÉMET PAS `contextmenu` AU CLAVIER ═══
+      //
+      // 🔴 Mesuré le 2026-10-16 sous WebKit (Safari 26.5), carte focalisée à
+      // 375 px : `Shift+F10` puis la touche « Menu » arrivent bien en `keydown`
+      // (`F10` avec `shiftKey`, `ContextMenu`), et AUCUN évènement `contextmenu`
+      // ne suit. La ligne `onContextMenu` ci-dessus ne s'exécute donc jamais :
+      // sous Safari, le chemin clavier de C-111 était mort, et les actions
+      // d'une tâche redevenaient inatteignables au clavier (WCAG 2.1.1, A).
+      // Chromium et Firefox, eux, synthétisent l'évènement, d'où un audit vert
+      // qui ne mesurait qu'un moteur sur deux.
+      //
+      // On ne dépend donc plus de la synthèse : les deux touches sont lues en
+      // `keydown`, et `preventDefault` empêche le menu natif de s'ouvrir par-
+      // dessus la feuille là où le navigateur le synthétise quand même.
+      // ⚠️ Même garde qu'`onContextMenu` : rien en mode « ajout à une liste ».
+      onKeyDown={(e) => {
+        if (e.key !== 'ContextMenu' && !(e.key === 'F10' && e.shiftKey)) return;
+        e.preventDefault();
+        if (addToListMode) return;
+        cancelLongPress();
+        setActionsVisible(true);
+      }}
+      // Annonce le raccourci aux technologies d'assistance : sans lui, le
+      // chemin existe mais rien ne le dit.
+      aria-keyshortcuts="Shift+F10"
       style={{
         x,
-        backgroundColor: addToListMode
-          ? (selectedForListIds.includes(task.id) ? 'rgba(59, 130, 246, 0.1)' : 'rgb(var(--color-surface))')
-          : 'rgb(var(--color-surface))',
-        borderColor: addToListMode && selectedForListIds.includes(task.id)
-          ? '#3B82F6'
-          : 'rgb(var(--color-border))',
+        backgroundColor: addToListMode && selectedForListIds.includes(task.id)
+          ? 'rgba(59, 130, 246, 0.1)'
+          : 'rgb(var(--color-background))',
         minHeight: '60px',
         touchAction: 'pan-y',
       }}
     >
-      {/* Color bar (left) — toujours la couleur de catégorie pour que
-          la TaskCard mobile soit visuellement cohérente avec la catégorie.
-          L'état overdue/bookmark est signalé par l'icône bookmark + la date. */}
-      <div
-        className="w-1 self-stretch rounded-full shrink-0"
-        style={{ backgroundColor: categoryColor }}
-      />
-
       {/* Checkbox */}
       {addToListMode ? (
         <button
           onClick={(e) => { e.stopPropagation(); onToggleTaskForList?.(task.id); }}
           className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
-          aria-label={selectedForListIds.includes(task.id) ? t('card.removeFromList') : t('card.addToListShort')}
+          aria-label={
+            selectionKind === 'select'
+              ? t(
+                  selectedForListIds.includes(task.id)
+                    ? 'table.deselectTaskAria'
+                    : 'table.selectTaskAria',
+                  { name: task.name },
+                )
+              : t(selectedForListIds.includes(task.id) ? 'card.removeFromList' : 'card.addToListShort')
+          }
           aria-pressed={selectedForListIds.includes(task.id)}
         >
           <span
             className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
               selectedForListIds.includes(task.id)
-                ? 'bg-[rgb(var(--color-accent))] border-[rgb(var(--color-accent))]'
+                ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
                 : 'border-slate-400 dark:border-slate-500'
             }`}
           >
             {selectedForListIds.includes(task.id) && (
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="w-4 h-4 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             )}
@@ -275,12 +359,12 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           <span
             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
               task.completed
-                ? 'bg-[rgb(var(--color-accent))] border-[rgb(var(--color-accent))]'
+                ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
                 : 'border-[rgb(var(--color-text-muted))]'
             }`}
           >
             {task.completed && (
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="w-4 h-4 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             )}
@@ -291,46 +375,81 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       {/* Title + meta */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
         {/* Titre */}
-        <p className={`font-medium text-body leading-tight truncate ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
+        {/* `line-clamp-2` et non `truncate` (audit UI 2026-08-14, §2).
+            Mesuré sur /tasks en 375 px : 12 titres tronqués, le pire à 124 px
+            pour 220 nécessaires, soit 44 % coupés. La carte n'accordait que
+            ~40 % de la largeur d'écran au titre — sur l'écran principal du
+            produit, où l'on distingue deux tâches par leur libellé.
+            Deux lignes suffisent : la liste virtualisée MESURE chaque carte
+            (`virtualizer.measureElement` dans `list.tsx`), la hauteur variable
+            est donc supportée. Ne pas revenir à `truncate` « pour la densité ». */}
+        {/* Maquette 16 — « Le retard porte sa solution » : la tâche en retard
+            est la SEULE à s'agrandir. Un cran d'échelle suffit à la faire
+            sortir de la liste sans la déguiser en bloc à part. */}
+        {/* ── Maquette 85 (mix arbitré par Axel le 2026-09-19) ─────────────
+            Le titre reprend la LARGEUR ENTIÈRE de la ligne. Mesuré la veille
+            en 390 px : la pilule de catégorie prenait ~80 px, celle de
+            priorité ~48, le « ⋯ » ~56 — il restait 150 px sur 390 pour le
+            seul élément qui permet de reconnaître sa tâche, d'où « Préparer
+            la réunion de… » coupé.
+
+            La catégorie descend dans la ligne méta, en point + nom (elle ne
+            vole plus de largeur au titre) et l'avatar passe à droite de la
+            ligne, dans la colonne libérée par le « ⋯ » (maquette 86).
+
+            ❌ PAS de liseré de priorité à gauche : arbitrage explicite
+            d'Axel, « garder l'absence de barre colorée ». La priorité reste
+            dite par sa pilule `P{n}`, plus bas. */}
+        <p
+          // `task-title-boost` (index.css) : +1px sur le cran applique, sous
+          // 768 px seulement. Le titre d'une tache est ce qu'on lit en
+          // premier dans la liste ; il gagne un pixel sans deplacer l'echelle
+          // pour tout le reste de l'app.
+          className={`task-title-boost min-w-0 font-medium leading-tight line-clamp-2 ${
+            isOverdue ? 'text-body' : 'text-label'
+          } ${task.completed ? 'line-through' : ''}`}
+          style={{ color: 'rgb(var(--color-text-primary))' }}
+        >
           {task.name}
         </p>
 
-        {/* Collaborateur — ligne dédiée sous le titre, ne concurrence plus la méta */}
-        {task.sharedBy && (
-          <span className="inline-flex items-center gap-1 text-caption font-medium text-[rgb(var(--color-accent))] truncate">
-            <Users size={12} aria-hidden="true" />
-            Reçu de {task.sharedBy}
-          </span>
-        )}
-        {!task.sharedBy && task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (
-          <span className="inline-flex items-center gap-1.5">
-            <CollaboratorAvatars
-              collaboratorIds={collaboratorsByTask.get(task.id)}
-              friends={friends}
-              size="sm"
-              maxVisible={3}
-            />
-            {pendingCollaboratorTaskIds.has(task.id) && (
-              <span title="En attente d'acceptation" className="inline-flex shrink-0">
-                <Hourglass
-                  size={13}
-                  className="text-amber-500"
-                  aria-label={t('card.pendingInvite')}
+        {/* Méta : catégorie · échéance · durée, sur une ligne propre à taille normale.
+            `flex-wrap` : à 200 % de police (WCAG 1.4.4), la rangée sortait de
+            l'écran de 218 px, durée comprise, sans défilement pour l'atteindre. */}
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
+          {!addToListMode && category && (
+            <>
+              <span className="inline-flex min-w-0 items-center gap-1">
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: categoryColor }}
+                  aria-hidden="true"
                 />
+                <span className="truncate">{category.name}</span>
               </span>
-            )}
-          </span>
-        )}
-
-        {/* Méta : date · durée — toujours sur une ligne propre */}
-        <div className="flex items-center gap-1.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          <span className={isOverdue ? 'text-red-500 font-semibold inline-flex items-center gap-0.5' : ''}>
+              <span aria-hidden="true">·</span>
+            </>
+          )}
+          {/* Maquette 87 — l'échéance en français, pas en chiffres.
+              `formatDate` rendait « 26/09/2026 » : dix caractères pour dire
+              « vendredi », dont quatre d'année que TOUTES les tâches
+              partagent. `formatDeadlineSmart` existait déjà et servait
+              partout ailleurs (ligne desktop, onglet équipe) — cette carte
+              était la seule à ne pas l'utiliser.
+              En retard, le calcul est fait pour le lecteur : « en retard de
+              2 j » au lieu d'une date rouge à soustraire soi-même. */}
+          {/* Maquette 146 : `--color-danger-text`, lisible en 11 px
+              (`text-red-500` mesurait 3,9:1 sur le fond Gris). */}
+          <span className={isOverdue ? 'text-[rgb(var(--color-danger-text))] font-semibold inline-flex items-center gap-0.5' : ''}>
             {isOverdue && <AlertTriangle size={12} aria-hidden="true" />}
-            {task.deadline ? formatDate(task.deadline) : "Pas d'échéance"}
+            {task.deadline
+              ? (isOverdue ? formatOverdueSince(task.deadline) : formatDeadlineSmart(task.deadline))
+              : t('card.noDeadline')}
             {isOverdue && <span className="sr-only"> {t('card.overdue')}</span>}
           </span>
           <span aria-hidden="true">·</span>
           <span>{formatDuration(task.estimatedTime)}</span>
+          <TaskStateBadges task={task} />
           {/* Compteur sous-tâches (#12) */}
           {(task.subtasks?.length ?? 0) > 0 && (
             <>
@@ -341,136 +460,105 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             </>
           )}
         </div>
+
+        {isOverdue && !addToListMode && (
+          <OverdueQuickActions
+            deadline={task.deadline}
+            onReschedule={rescheduleTo}
+            open={rescheduleOpen}
+            onOpenChange={setRescheduleOpen}
+          />
+        )}
       </div>
 
       {/* Priority badge — échelle d'URGENCE (task-priority-1..5 : rouge→orange→
           jaune→bleu→gris), distincte de la couleur de catégorie (la barre gauche).
           Réutilise les classes du tableau desktop pour une sémantique cohérente
           mobile/desktop + dark mode. Masqué si priorité facultative (0). */}
+      {/* Maquette 145 (2026-10-10) : la pilule reste (arbitrage 85), mais
+          seules P1 et P2 gardent leur teinte. P3 à P5 passent en gris : quatre
+          couleurs pour quatre crans faisaient de chaque ligne un nuancier, et
+          la chaleur ne signalait plus rien. */}
       {task.priority > 0 && (
         <div
-          className={`self-center shrink-0 px-1.5 py-0.5 rounded-md font-bold text-caption task-priority-${task.priority}`}
+          className={`self-center shrink-0 px-1.5 py-0.5 rounded-md font-bold text-caption ${priorityPillClass(task.priority)}`}
         >
           P{task.priority}
         </div>
       )}
 
       {task.bookmarked && (
-        <Bookmark size={16} className="self-center shrink-0 text-amber-500" fill="currentColor" />
+        // Maquette 149 : contour gris, plus un marque-page ambre plein (une
+        // cinquième couleur sur la ligne). Le nom accessible dit l'état.
+        <Bookmark size={16} className="self-center shrink-0 text-[rgb(var(--color-text-muted))]" aria-label={t('card.bookmarked')} />
       )}
 
-      {/* Affordance permanente — bouton "…" pour révéler les actions sans devoir swipe/long-press.
-          Améliore la découvrabilité tout en gardant l'épuration : icône discrète, taille 44×44. */}
-      {!addToListMode && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            cancelLongPress();
-            setActionsVisible(v => !v);
-          }}
-          onPointerDown={(e) => { e.stopPropagation(); }}
-          className="self-center shrink-0 min-w-11 min-h-11 -my-1 -mr-1 p-2 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          aria-label={actionsVisible ? 'Masquer les actions' : 'Afficher les actions'}
-          aria-expanded={actionsVisible}
+      {/* ── Maquette 85 : le partage se dit à DROITE, par un seul signe ────
+          L'avatar vivait sous le titre, dans la colonne du texte, où il
+          poussait la ligne méta vers le bas et rognait le titre. Il occupe
+          maintenant la colonne libérée par le « ⋯ » : même information,
+          zéro largeur prise au libellé. */}
+      {task.sharedBy && (
+        <span
+          // Maquette 148 : avatar neutre, la couleur reste aux catégories.
+          className="self-center shrink-0 inline-flex size-7 items-center justify-center rounded-full bg-[rgb(var(--color-border))] text-xs font-bold leading-none text-[rgb(var(--color-text-secondary))]"
+          title={t('card.receivedFrom', { name: task.sharedBy })}
+          aria-hidden="true"
         >
-          <MoreHorizontal size={18} />
-        </button>
+          {sharedByInitials}
+        </span>
       )}
+      {task.sharedBy && (
+        <span className="sr-only">{t('card.receivedFrom', { name: task.sharedBy })}</span>
+      )}
+      {!task.sharedBy && task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (
+        <span className="self-center shrink-0 inline-flex items-center gap-1.5">
+          <CollaboratorAvatars
+            collaboratorIds={collaboratorsByTask.get(task.id)}
+            friends={friends}
+            size="lg"
+            maxVisible={3}
+          />
+          {pendingCollaboratorTaskIds.has(task.id) && (
+            <span title={t('card.pendingInvite')} className="inline-flex shrink-0">
+              <Hourglass
+                size={13}
+                className="text-amber-500"
+                aria-label={t('card.pendingInvite')}
+              />
+            </span>
+          )}
+        </span>
+      )}
+
+      {/* ── Maquette 86 : plus de « ⋯ » au repos ──────────────────────────
+          Il était présent sur CHAQUE ligne — onze cibles permanentes pour
+          une action rare — et occupait la colonne la plus précieuse, celle
+          du pouce droit, en doublant un geste que l'app enseigne elle-même
+          dans son bandeau d'astuce.
+          Les trois chemins vers `TaskActionsSheet` subsistent : appui long,
+          glissement vers la gauche, et le menu de la ligne desktop
+          (`TaskTableDesktop`), où la souris n'a pas d'appui long.
+          ❌ Ne pas le réintroduire « pour la découvrabilité » sans retirer
+          d'abord quelque chose d'autre de cette colonne. */}
     </motion.div>
     </div>
 
-    {/* Actions row — revealed on long press or left swipe */}
-    <AnimatePresence>
-      {actionsVisible && !addToListMode && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.18 }}
-          className="overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="mt-1 flex items-center justify-around gap-1 p-2 rounded-card border" style={{
-            borderColor: 'rgb(var(--color-border))',
-            backgroundColor: 'rgb(var(--color-hover))'
-          }}>
-            <button
-              onClick={(e) => { e.stopPropagation(); onSelectTask(task.id); setActionsVisible(false); }}
-              className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label={t('card.edit')}
-            >
-              <Pencil size={18} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleBookmark(task.id); setActionsVisible(false); }}
-              className={`min-w-touch min-h-touch p-2 rounded-row flex items-center justify-center transition-colors ${task.bookmarked ? 'text-amber-500 bg-amber-500/10' : 'text-slate-500'}`}
-              aria-label={task.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-            >
-              <Bookmark size={18} fill={task.bookmarked ? 'currentColor' : 'none'} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onOpenCollaborator(task.id); setActionsVisible(false); }}
-              className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label={t('card.addCollaborator')}
-            >
-              <UserPlus size={18} />
-            </button>
-            {!task.completed && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onScheduleTask(task); setActionsVisible(false); }}
-                className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-                aria-label={t('card.schedule')}
-              >
-                <Calendar size={18} />
-              </button>
-            )}
-            <button
-              onClick={(e) => { e.stopPropagation(); onAddToList(task.id); setActionsVisible(false); }}
-              className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label={t('card.addToList')}
-            >
-              <MoreHorizontal size={18} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onDuplicate(task.id); setActionsVisible(false); }}
-              className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label={t('card.duplicate')}
-            >
-              <Copy size={18} />
-            </button>
-            {/* Reporter à demain (#42) : disponible pour toute tâche non
-                complétée avec échéance, pas seulement celles en retard. */}
-            {!task.completed && task.deadline && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSnooze(task.id, getSnoozeOptions()[0].deadline);
-                  setActionsVisible(false);
-                }}
-                className={`min-w-touch min-h-touch p-2 rounded-row flex items-center justify-center ${isOverdue ? 'text-amber-500' : 'text-slate-500'}`}
-                aria-label={t('card.postponeTomorrow')}
-              >
-                <Hourglass size={18} />
-              </button>
-            )}
-            <button
-              onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); setActionsVisible(false); }}
-              className="min-w-touch min-h-touch p-2 rounded-row text-red-500 flex items-center justify-center"
-              aria-label={t('card.delete')}
-            >
-              <Trash2 size={18} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setActionsVisible(false); }}
-              className="min-w-touch min-h-touch p-2 rounded-row text-slate-400 dark:text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label={t('card.close')}
-            >
-              <X size={18} />
-            </button>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    {/* Feuille d'actions — design Spotify (en-tête + liste verticale icône +
+        libellé), déclenchée par long-press, swipe gauche ou le bouton « ⋯ ». */}
+    <TaskActionsSheet
+      open={actionsVisible && !addToListMode}
+      task={task}
+      categoryName={category?.name}
+      categoryColor={categoryColor}
+      onClose={() => setActionsVisible(false)}
+      onEdit={onSelectTask}
+      onToggleBookmark={onToggleBookmark}
+      onOpenCollaborator={onOpenCollaborator}
+      onScheduleTask={() => onScheduleTask(task)}
+      onAddToList={onAddToList}
+      onDeleteTask={onDeleteTask}
+    />
   </motion.div>
   );
 });

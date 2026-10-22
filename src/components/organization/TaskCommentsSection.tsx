@@ -1,20 +1,30 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { Send, Trash2, MessageSquare } from 'lucide-react';
+import { Send, Trash2 } from 'lucide-react';
 import {
   useTeamTaskComments,
   useAddTeamTaskComment,
   useDeleteTeamTaskComment,
+  useRestoreComment,
 } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
+import { showUndoToast } from '@/lib/undo-toast';
 import { useT } from '@/i18n/useT';
 
 interface TaskCommentsSectionProps {
   taskId: string;
   members: OrgMember[];
   currentUserId?: string;
+  /**
+   * Texte d'un commentaire tapé AVANT que la tâche existe (item #3) — posté
+   * automatiquement au montage, une fois `taskId` réel disponible (la tâche
+   * vient d'être créée en silence par l'appelant). `onAutoSubmitted` efface
+   * la file côté appelant pour ne pas reposter au prochain rendu.
+   */
+  autoSubmitDraft?: string | null;
+  onAutoSubmitted?: () => void;
 }
 
 /**
@@ -22,16 +32,40 @@ interface TaskCommentsSectionProps {
  * immuable, suppression par l'auteur. Mentions : taper « @ » ouvre la liste
  * des membres ; les ids mentionnés sont recalculés du texte à l'envoi.
  */
-const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSectionProps) => {
+const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, onAutoSubmitted }: TaskCommentsSectionProps) => {
   const { t } = useT('org');
-  const { data: comments = [], isLoading } = useTeamTaskComments(taskId);
+  const { data: comments = [], isLoading, isError, refetch } = useTeamTaskComments(taskId);
   const addMutation = useAddTeamTaskComment(taskId);
   const deleteMutation = useDeleteTeamTaskComment(taskId);
   const [body, setBody] = useState('');
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  // C-42 — la suppression partait sur un seul clic, sans confirmation ni
+  // annulation, et le commentaire disparaissait pour toute l'equipe. C'etait la
+  // seule suppression du mode entreprise sans aucun filet.
+  //
+  // ⚠️ L'arbitrage du 2026-09-03 a tranche pour le toast « Annuler », avec les
+  // jumeaux C-41 et C-43, plutot que pour une confirmation. `useRestoreComment`
+  // rend le commentaire sous SON identifiant ET a SA place dans le fil : sans
+  // l'horodatage, il reviendrait apres des reponses qu'il precedait.
+  const restoreMutation = useRestoreComment(taskId);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
+
+  // Poste le commentaire mis en attente par le composeur « pré-création »
+  // dès que ce composant monte avec un vrai `taskId`. Un seul essai — même
+  // sans succès on ne le rejoue pas ici, `addMutation` notifie déjà l'échec.
+  useEffect(() => {
+    if (!autoSubmitDraft || !autoSubmitDraft.trim()) return;
+    const text = autoSubmitDraft.trim();
+    const mentions = members.filter((m) => text.includes(`@${m.displayName}`)).map((m) => m.userId);
+    addMutation.mutate({ body: text, mentions });
+    onAutoSubmitted?.();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    un seul essai, a l arrivee d un vrai `taskId`. `autoSubmitDraft`,
+       `members` et `addMutation` sont lus a cet instant precis ; les mettre en
+       dependance reposterait le brouillon a chaque refetch des membres. */
+  }, [taskId]);
 
   // Détection de la mention en cours : « @ » suivi de texte sans espace,
   // en fin de saisie uniquement (UX simple, pas de curseur milieu de texte).
@@ -66,29 +100,54 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
   };
 
   return (
-    <div className="border-t pt-4 mt-5" style={{ borderColor: 'rgb(var(--color-border))' }}>
-      <h3 className="flex items-center gap-2 text-sm font-semibold mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-        <MessageSquare size={15} aria-hidden="true" />
+    <div className="flex flex-col h-full min-h-0 mt-5">
+      <h3 className="text-sm font-semibold mb-3 shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>
         Commentaires{comments.length > 0 ? ` (${comments.length})` : ''}
       </h3>
 
+      <div className="flex flex-col min-h-0 border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
+      {/* Liste scrollable — hauteur de contenu par défaut (pas de flex-1 qui
+          forcerait la zone à s'étirer et laisserait un vide sous « aucun
+          commentaire »). Seule une vraie liste longue déclenche le scroll
+          via max-h. */}
       {isLoading ? (
         <p className="text-xs py-3 text-center" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('comments.loading')}</p>
+      ) : isError ? (
+        // Une erreur réseau/serveur affichée comme « aucun commentaire » est
+        // indiscernable d'une vraie absence de commentaire — c'est exactement
+        // ce qui a rendu un incident (compte B ne voyait rien) impossible à
+        // diagnostiquer depuis l'écran lui-même. On la nomme, avec un moyen
+        // de réessayer sans fermer/rouvrir la tâche.
+        <div className="text-center py-3">
+          <p className="text-xs mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+            {t('comments.loadError')}
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="text-xs font-semibold underline"
+            style={{ color: 'rgb(var(--color-accent))' }}
+          >
+            {t('comments.retry')}
+          </button>
+        </div>
       ) : comments.length === 0 ? (
-        <p className="text-xs py-1 mb-2" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          Aucun commentaire — lancez la discussion. Tapez « @ » pour mentionner un membre.
+        // Espace agrandi de 10% (py-1 mb-2 → py-[0.275rem] mb-[0.55rem]) faute
+        // de liste : évite que la zone de conversation vide paraisse trop tassée.
+        <p className="text-xs py-[0.275rem] mb-[0.55rem]" style={{ color: 'rgb(var(--color-text-muted))' }}>
+          {t('comments.empty')}
         </p>
       ) : (
-        <ul className="space-y-3 mb-3 max-h-56 overflow-y-auto pr-1">
+        <ul className="space-y-3 mb-3 max-h-[21rem] overflow-y-auto pr-1 min-h-0">
           {comments.map((c) => {
             const author = c.authorId ? memberById.get(c.authorId) : undefined;
             return (
               <li key={c.id} className="flex items-start gap-2.5">
-                <MemberAvatar avatar={author?.avatar} name={author?.displayName ?? '?'} size={26} />
+                <MemberAvatar avatar={author?.avatar} name={author?.displayName ?? '?'} size={28} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2">
                     <span className="text-xs font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                      {author?.displayName ?? 'Ancien membre'}
+                      {author?.displayName ?? t('comments.formerMember')}
                     </span>
                     <span className="text-[10px] shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }}>
                       {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true, locale: getDateLocale() })}
@@ -101,10 +160,21 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
                 {c.authorId === currentUserId && (
                   <button
                     type="button"
-                    onClick={() => deleteMutation.mutate(c.id)}
+                    onClick={() => {
+                      deleteMutation.mutate(c.id, {
+                        onSuccess: () => showUndoToast(
+                          t('comments.deleted'),
+                          () => restoreMutation.mutate(c),
+                        ),
+                      });
+                    }}
                     disabled={deleteMutation.isPending}
-                    aria-label="Supprimer ce commentaire"
-                    className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/10 hover:text-red-500 transition-colors disabled:opacity-50"
+                    aria-label={t('comments.deleteAria')}
+                    // C-57 — 28 x 28 px avant : la zone tactile epousait l'icone.
+                    // Trouve en verifiant la conformite de C-57, dont la garde ne
+                    // mesure que l'etat initial de six ROUTES, jamais une modale.
+                    // Marges negatives pour que la rangee du fil ne grandisse pas.
+                    className="shrink-0 -my-2 min-h-touch min-w-touch rounded-lg flex items-center justify-center hover:bg-red-500/10 hover:text-red-500 transition-colors disabled:opacity-50"
                     style={{ color: 'rgb(var(--color-text-muted))' }}
                   >
                     <Trash2 size={13} aria-hidden="true" />
@@ -116,13 +186,13 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
         </ul>
       )}
 
-      <div className="relative">
+      <div className="relative shrink-0">
         {mentionCandidates.length > 0 && (
           <ul
             className="absolute bottom-full mb-1 left-0 right-0 rounded-xl border shadow-lg overflow-hidden z-10"
             style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}
             role="listbox"
-            aria-label="Mentionner un membre"
+            aria-label={t('comments.mentionAria')}
           >
             {mentionCandidates.map((m) => (
               <li key={m.userId}>
@@ -133,7 +203,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
                   onClick={() => pickMention(m)}
                   className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
                 >
-                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
+                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
                   <span className="text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>{m.displayName}</span>
                 </button>
               </li>
@@ -165,12 +235,16 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
             type="button"
             onClick={submit}
             disabled={!body.trim() || addMutation.isPending}
-            aria-label="Envoyer le commentaire"
-            className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors disabled:opacity-40 bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))] hover:opacity-90"
+            aria-label={t('comments.sendAria')}
+            // C-57 — 40 x 40 px avant, 4 px sous la cible. Meme famille de geste
+            // que la suppression juste au-dessus, meme composant : les corriger
+            // separement aurait laisse la moitie du fil sous la cible.
+            className="shrink-0 min-h-touch min-w-touch rounded-xl flex items-center justify-center transition-colors disabled:opacity-40 bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))] hover:opacity-90"
           >
             <Send size={16} aria-hidden="true" />
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

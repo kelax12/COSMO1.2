@@ -10,26 +10,35 @@ export const createTeamKRSchema = z.object({
   assigneeId: z.string().nullable().optional(),
   weight: z.coerce.number().int().min(1, 'validation.okr.weightMin').max(10, 'validation.okr.weightMax').optional(),
   estimatedTime: z.coerce.number().min(0).max(100000).optional(),
+  progressMode: z.enum(['manual', 'tasks']).optional(),
+  contributorIds: z.array(z.string()).max(20).optional(),
 });
 
 export const createTeamOKRSchema = z.object({
   title: z.string().trim().min(1, "validation.okr.objectiveTitleRequired").max(200, 'validation.okr.titleTooLong'),
   description: z.string().max(2000).optional(),
-  category: z.string().max(60).optional(),
+  categoryId: z.string().nullable().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   // Rattachement d'équipes (cloisonnement) — 20 max par garde-fou.
   teamIds: z.array(z.string()).max(20).optional(),
+  audience: z.enum(['org', 'teams', 'custom']).optional(),
+  memberIds: z.array(z.string()).max(50).optional(),
   keyResults: z.array(createTeamKRSchema).min(1, 'validation.okr.atLeastOneKr').max(10, 'validation.okr.tooManyKrs'),
+  // Mig. 153 — sans cette ligne, `z.object` les retirerait sans rien dire.
+  parentOkrId: z.string().nullable().optional(),
 });
 
 export const updateTeamOKRSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
   description: z.string().max(2000).optional(),
-  category: z.string().max(60).optional(),
+  categoryId: z.string().nullable().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   teamIds: z.array(z.string()).max(20).optional(),
+  audience: z.enum(['org', 'teams', 'custom']).optional(),
+  memberIds: z.array(z.string()).max(50).optional(),
+  parentOkrId: z.string().nullable().optional(),
 });
 
 export const updateTeamKRSchema = z.object({
@@ -41,4 +50,6 @@ export const updateTeamKRSchema = z.object({
   completed: z.boolean().optional(),
   weight: z.coerce.number().int().min(1).max(10).optional(),
   estimatedTime: z.coerce.number().min(0).max(100000).optional(),
+  progressMode: z.enum(['manual', 'tasks']).optional(),
+  contributorIds: z.array(z.string()).max(20).optional(),
 });

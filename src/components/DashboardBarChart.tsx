@@ -11,9 +11,9 @@ import {
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
-import { useOkrs, OKR, KeyResult } from '@/modules/okrs';
-import { useKRCompletions, KRCompletion } from '@/modules/kr-completions';
-import { calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
+import { useOkrs } from '@/modules/okrs';
+import { useKRCompletions } from '@/modules/kr-completions';
+import { calculateWorkTimeForPeriod } from '@/lib/workTimeCalculator';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { type ViewMode } from '@/lib/view-mode';
@@ -54,21 +54,6 @@ interface ChartPoint {
   habits: number;
 }
 
-const calcOkrTime = (start: Date, end: Date, krCompletions: KRCompletion[], okrs: OKR[]): number => {
-  const krMap = new Map<string, number>();
-  okrs.forEach((okr: OKR) => {
-    (okr.keyResults || []).forEach((kr: KeyResult) => {
-      krMap.set(kr.id, kr.estimatedTime || 0);
-    });
-  });
-  return krCompletions
-    .filter(c => {
-      const d = new Date(c.completedAt);
-      return d >= start && d <= end;
-    })
-    .reduce((sum, c) => sum + (krMap.get(c.krId) ?? 0), 0);
-};
-
 const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
   const { t } = useT('dashboard');
   // Config shadcn reconstruite à chaque changement de langue — c'est elle qui
@@ -88,11 +73,11 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
 
   const chartData: ChartPoint[] = useMemo(() => {
     const calcPeriod = (start: Date, end: Date) => {
-      const r = calculateWorkTimeForPeriod(start, end, { tasks, events, habits, okrs });
+      const r = calculateWorkTimeForPeriod(start, end, { tasks, events, habits, okrs, krCompletions });
       return {
         tasks: r.tasksTime,
         events: r.eventsTime,
-        okrs: calcOkrTime(start, end, krCompletions, okrs),
+        okrs: r.okrTime,
         habits: r.habitsTime,
       };
     };
@@ -162,7 +147,7 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
         <div>
           <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
-            Répartition du temps
+            {t('chart.timeBreakdown')}
           </h2>
           <p className="text-[rgb(var(--color-text-secondary))] text-xs sm:text-sm flex items-center gap-2 mt-0.5">
             <Calendar size={14} />

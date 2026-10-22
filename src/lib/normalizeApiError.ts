@@ -1,11 +1,57 @@
+// Sentry n'est PLUS importe statiquement : il est charge apres le premier
+// rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
+// tamponne ce qui arrive avant le chargement.
+import * as monitoring from '@/lib/monitoring';
 import { resolveMessage } from '@/i18n/catalog';
 import { localeStore } from '@/i18n/store';
 
-export type NormalizedError = {
-  code: string;
-  message: string;
-  originalMessage?: string; // server-side detail — for logging, never for UI
-};
+// ═══════════════════════════════════════════════════════════════════
+// NORMALISATION DES ERREURS D'API — et pourquoi c'est une vraie `Error`
+// ═══════════════════════════════════════════════════════════════════
+//
+// 🔴 POURQUOI (revue du 2026-09-02). Cette fonction rendait un OBJET LITTÉRAL
+// (`{ code, message, originalMessage }`), et 184 sites du dépôt font
+// `throw normalizeApiError(...)`. On lançait donc, partout, une valeur qui
+// n'est pas une `Error`. Trois conséquences, indépendantes les unes des
+// autres :
+//
+//   1. `error instanceof Error` était FAUX dans tout le produit. Le prédicat
+//      `retry` de React Query commence par là : il retombait sur une chaîne
+//      vide, donc la garde « ne pas retenter un refus RLS définitif » ne
+//      s'appliquait jamais (cf. `src/lib/query-retry.ts`).
+//   2. Une valeur non-`Error` n'a pas de PILE. Sentry la classe alors en
+//      « Non-Error promise rejection captured », et cette chaîne est
+//      explicitement listée dans `ignoreErrors` (`src/main.tsx`) : les rares
+//      erreurs d'API qui s'échappaient étaient jetées à l'entrée, sans même
+//      un endroit d'où elles venaient.
+//   3. Le détail serveur ne partait que dans un `console.error`, et le build
+//      de production supprime `console.error` (`vite.config.ts → esbuild.pure`).
+//      Le commentaire annonçait « log once for ops/sentry » ; en production il
+//      n'allait nulle part.
+//
+// ❌ Ne JAMAIS revenir à un objet littéral ici. Ce qu'on lance doit être une
+//    `Error` : c'est ce que testent les prédicats en aval, et c'est ce qui
+//    donne une pile à Sentry.
+// ❌ Ne JAMAIS rendre `error.message` du serveur à l'écran (faille V7/N1).
+//    `message` est le texte du catalogue ; le texte serveur reste dans
+//    `originalMessage`, pour le diagnostic seulement.
+
+export class ApiError extends Error {
+  /** Code stable : code PostgREST/Postgres, ou identifiant métier promu. */
+  readonly code: string;
+  /** Détail SERVEUR. Diagnostic uniquement, jamais rendu à l'écran (V7/N1). */
+  readonly originalMessage?: string;
+
+  constructor(code: string, message: string, originalMessage?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+    this.originalMessage = originalMessage;
+  }
+}
+
+/** Conservé pour les appelants qui nommaient la forme de retour. */
+export type NormalizedError = ApiError;
 
 /**
  * Message utilisateur associé à un code d'erreur, `null` si le code n'est pas
@@ -21,6 +67,62 @@ const messageForCode = (code: string): string | null =>
 /** Message de repli — toujours défini dans le catalogue de référence. */
 const genericMessage = (): string => messageForCode('GENERIC_ERROR') ?? 'GENERIC_ERROR';
 
+/**
+ * Lève-toi une erreur métier CATALOGUÉE, au lieu d'une phrase en dur.
+ *
+ * 🔴 POURQUOI (finding C-62). `src/modules/` contient 99
+ * `throw new Error('<littéral>')`, et 75 clés `mutation.*` interpolent
+ * `{{message}}`. Le littéral traverse donc le tuyau entier et s'affiche tel
+ * quel : « Impossible de modifier la tâche : Task with id … not found », ou
+ * « Impossible de créer le lien : localStorage is not defined ». Environ 45 de
+ * ces phrases sont en français écrit en dur — donc identiques en anglais — et
+ * une vingtaine en anglais, donc affichées telles quelles en français.
+ *
+ * `makeApiError` est le remplaçant : il rend une `ApiError` dont le `message`
+ * vient du catalogue (`errors.api.<code>`), exactement comme si le serveur
+ * avait levé `RAISE EXCEPTION '<code>'`. Le contrat de `{{message}}` redevient
+ * vrai — il ne reçoit que du texte de catalogue.
+ *
+ * ⚠️ Un code non catalogué retombe sur le message générique, il ne rend jamais
+ *    le code brut à l'écran. Le code reste dans `ApiError.code`, donc
+ *    l'appelant peut toujours brancher dessus.
+ *
+ * ❌ Ne pas ajouter un `throw new Error('<phrase>')` de plus « par parité »
+ *    avec les voisins d'un fichier : c'est le tuyau qui est le défaut, pas son
+ *    contenu du jour.
+ */
+export function makeApiError(code: string, originalMessage?: string): ApiError {
+  return new ApiError(code, messageForCode(code) ?? genericMessage(), originalMessage ?? code);
+}
+
+/**
+ * Forme d'un identifiant d'erreur métier : `seat_limit_reached`, `expired_link`…
+ * Volontairement stricte — elle ne peut pas matcher une phrase Postgres, qui
+ * contient des espaces, des majuscules ou des guillemets.
+ */
+const BUSINESS_CODE_RE = /^[a-z][a-z0-9_]{2,49}$/;
+
+/**
+ * Relais des erreurs métier levées par les fonctions SQL.
+ *
+ * Nos fonctions signalent leurs refus par `RAISE EXCEPTION 'identifiant'`.
+ * PostgREST renvoie alors TOUJOURS le même code générique (`P0001`) et place
+ * l'identifiant dans `message` — donc une whitelist indexée par `code` ne peut
+ * pas les distinguer, et « lien expiré », « quota de sièges atteint » ou
+ * « droits insuffisants » tombaient tous sur le message générique.
+ *
+ * On ne fait JAMAIS confiance au texte serveur pour l'affichage : il sert
+ * uniquement de clé de recherche. Si l'identifiant n'est pas dans le
+ * catalogue, on garde le message générique — la garantie de la faille V7/N1
+ * (ne jamais rendre `error.message`) reste entière.
+ */
+const promoteBusinessCode = (raw?: string): string | null => {
+  if (!raw) return null;
+  const candidate = raw.trim();
+  if (!BUSINESS_CODE_RE.test(candidate)) return null;
+  return messageForCode(candidate) !== null ? candidate : null;
+};
+
 interface ApiErrorLike {
   code?: string;
   message?: string;
@@ -30,34 +132,89 @@ interface ApiErrorLike {
   };
 }
 
-// Normalize a thrown error into a user-safe shape.
+/**
+ * Trace le détail SERVEUR là où on pourra le relire, c'est-à-dire pas dans la
+ * console : le build de production la vide.
+ *
+ * Deux niveaux, parce que les deux situations n'ont pas la même valeur :
+ *
+ *  • Fil d'Ariane systématique. Un `PGRST116` (ressource absente) est un
+ *    événement NORMAL ; en faire une alerte noierait le signal. Mais s'il
+ *    précède un plantage, il explique souvent le plantage : il a donc sa place
+ *    dans le contexte de l'erreur suivante, pas dans une alerte à lui seul.
+ *  • Alerte quand le code n'est PAS whitelisté. Là, l'utilisateur vient de voir
+ *    « une erreur inattendue est survenue » et personne ne sait laquelle :
+ *    c'est exactement l'événement qui doit remonter.
+ *
+ * ⚠️ Le détail passe par `message`, jamais par `extra`. Le `beforeSend` de
+ * `src/main.tsx` nettoie les emails et les UUID de `message`, des valeurs
+ * d'exception et des fils d'Ariane — mais PAS de `extra`. Y mettre un message
+ * Postgres reviendrait à contourner le seul filtre RGPD du chemin.
+ */
+const traceServerDetail = (code: string, originalMessage: string, known: boolean): void => {
+  const detail = `${code}: ${originalMessage}`;
+  monitoring.addBreadcrumb({ category: 'api', level: 'warning', message: detail });
+  if (!known) {
+    monitoring.captureMessage(`api error non catalogué — ${detail}`, {
+      level: 'warning',
+      tags: { api_code: code },
+    });
+  }
+};
+
+// Normalise une erreur lancée en une `ApiError` sûre pour l'affichage.
 //
 // Faille V7/N1 — never surface raw `error.message` to the UI. Postgres errors
 // regularly contain internal schema names, UUIDs, and constraint metadata
 // (e.g. `duplicate key value violates unique constraint "subscriptions_user_id_key"`).
-// The previous implementation fell back to the raw string whenever the error
-// code wasn't in the whitelist, defeating its own purpose.
 //
-// `message` is what the UI may render. `originalMessage` is for logs only.
-export const normalizeApiError = (error: ApiErrorLike | Error | string): NormalizedError => {
+// `message` est ce que l'UI peut rendre. `originalMessage` est pour le
+// diagnostic seulement.
+export const normalizeApiError = (error: ApiErrorLike | Error | string): ApiError => {
+  // Déjà normalisée : la relancer telle quelle. Sans ce court-circuit, la
+  // branche `instanceof Error` ci-dessous prendrait le message DU CATALOGUE
+  // pour un détail serveur et le remplacerait par le message générique — une
+  // erreur nommée redeviendrait anonyme au second passage.
+  if (error instanceof ApiError) return error;
+
   let code = 'GENERIC_ERROR';
   let message = genericMessage();
   let originalMessage: string | undefined;
+  let known = false;
 
   if (typeof error === 'object' && error !== null && 'code' in error && typeof error.code === 'string') {
     code = error.code;
     originalMessage = error.message;
     // Only use the whitelisted message; never the raw server message.
-    message = messageForCode(code) ?? message;
+    const catalogued = messageForCode(code);
+    const business = catalogued === null ? promoteBusinessCode(originalMessage) : null;
+    if (business) {
+      code = business;
+      message = messageForCode(business) ?? message;
+      known = true;
+    } else {
+      message = catalogued ?? message;
+      known = catalogued !== null;
+    }
   } else if (typeof error === 'object' && error !== null && 'error' in error && error.error?.code) {
     code = error.error.code;
     originalMessage = error.error.message;
-    message = messageForCode(code) ?? message;
+    const catalogued = messageForCode(code);
+    const business = catalogued === null ? promoteBusinessCode(originalMessage) : null;
+    if (business) {
+      code = business;
+      message = messageForCode(business) ?? message;
+      known = true;
+    } else {
+      message = catalogued ?? message;
+      known = catalogued !== null;
+    }
   } else if (error instanceof Error) {
     originalMessage = error.message;
     if (error.message.toLowerCase().includes('fetch')) {
       code = 'NETWORK_ERROR';
       message = messageForCode('NETWORK_ERROR') ?? message;
+      known = true;
     }
     // Otherwise: keep the generic message, do not echo error.message to UI.
   } else if (typeof error === 'string') {
@@ -65,10 +222,7 @@ export const normalizeApiError = (error: ApiErrorLike | Error | string): Normali
     // Keep generic message — string errors are usually internal.
   }
 
-  if (originalMessage) {
-    // Server-side detail: log once for ops/sentry, then drop on the floor for UI.
-    console.error('[normalizeApiError]', code, originalMessage);
-  }
+  if (originalMessage) traceServerDetail(code, originalMessage, known);
 
-  return { code, message, originalMessage };
+  return new ApiError(code, message, originalMessage);
 };

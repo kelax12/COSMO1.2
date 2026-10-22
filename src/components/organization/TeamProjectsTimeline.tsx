@@ -1,0 +1,543 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { format, parseISO } from 'date-fns';
+import { getDateLocale } from '@/i18n/format';
+import { CalendarRange, CalendarOff, CalendarClock, UserRound } from 'lucide-react';
+import type { TeamTask, TeamProject } from '@/modules/team-projects';
+import { useTeamTaskDependencies } from '@/modules/team-projects';
+import { computeCriticalPath } from './critical-path.helpers';
+import type { OrgMember } from '@/modules/organizations';
+import {
+  timelineRange, timelineWindow, timelineWeeks, timelineMonths, timelineRows,
+  timelineRowsByAssignee, todayOffsetPercent, inWindowOrUnscheduled, UNASSIGNED_ID,
+  type TimelineZoom, type TimelineMarker, type TimelineSpan,
+  projectSpanStart,
+} from './timeline.helpers';
+import { projectColor, PRIORITY_META, formatDuration, priorityLabelOf } from './team-projects.helpers';
+import MemberAvatar from './MemberAvatar';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { useT } from '@/i18n/useT';
+
+interface TeamProjectsTimelineProps {
+  projects: TeamProject[];
+  tasks: TeamTask[];
+  members: OrgMember[];
+  /** Axe des lignes : par projet (défaut) ou par personne — cf. ProjectsToolbar. */
+  groupBy: 'project' | 'assignee';
+  onOpenTask: (task: TeamTask) => void;
+  /** Mode sélection (actions groupées) : un clic coche la tâche au lieu de l'ouvrir. */
+  selectable?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (task: TeamTask) => void;
+}
+
+/** Largeur de colonne (label + éventuelle pastille « sans date »), alignée
+ *  avec le `ml-[140px]` de l'en-tête et de la grille. */
+const LABEL_COL_PX = 140;
+const PX_PER_WEEK = 100;
+const MIN_WIDTH_PX = 640;
+/** Écart minimal (en % de la fenêtre) pour afficher le nom en clair à côté
+ *  d'un jalon, plutôt que de compter uniquement sur la card de survol. */
+const LABEL_GAP_PERCENT = 9;
+/** Délai avant d'ouvrir la card de survol — laisse balayer plusieurs jalons
+ *  rapprochés sans qu'une card clignote sous le curseur à chaque pixel. */
+const HOVER_OPEN_DELAY_MS = 120;
+/** Délai avant de la refermer — la card flotte à quelques pixels du point ;
+ *  sans ce délai, traverser cet espace pour l'atteindre la referme en route. */
+const HOVER_CLOSE_DELAY_MS = 150;
+
+const zoomBtn = 'h-7 px-2 rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
+const zoomOn = 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm';
+const zoomOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
+
+/** Ligne affichée — même gabarit qu'elle vienne d'un projet ou d'une personne. */
+interface RowDescriptor {
+  key: string;
+  label: string;
+  dotClass?: string;
+  avatar?: string | null;
+  isUnassigned?: boolean;
+  markers: TimelineMarker[];
+  unscheduled: TeamTask[];
+  /** Bandeau du projet (début → fin), en mode « par projet » seulement. */
+  span?: TimelineSpan | null;
+}
+
+/**
+ * Vue chronologique (« Planning ») : une ligne par projet — ou par personne —,
+ * ses échéances en jalons, ses tâches sans date en pastille cliquable.
+ *
+ * Volontairement PAS un Gantt — cf. l'en-tête de `timeline.helpers.ts` : sans
+ * date de début sur `TeamTask`, des barres seraient de la donnée inventée.
+ */
+const TeamProjectsTimeline = ({
+  projects, tasks, members, groupBy, onOpenTask,
+  selectable = false, selectedIds, onToggleSelect,
+}: TeamProjectsTimelineProps) => {
+  const { t } = useT('org');
+  const { t: pf, tp: tpf } = useT('portfolio');
+  const [zoom, setZoom] = useState<TimelineZoom>('default');
+  const [openUnscheduled, setOpenUnscheduled] = useState<string | null>(null);
+  const [hoverTaskId, setHoverTaskId] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current); }, []);
+
+  // ─── Chemin critique (mig. 108) ────────────────────────────────────
+  // Calculé PAR PROJET puis fusionné : les dépendances ne traversent pas les
+  // projets, un calcul global ne ferait donc que mettre en concurrence des
+  // chaînes qui n'ont aucun rapport entre elles.
+  const orgId = tasks[0]?.orgId;
+  const { data: dependencies = [] } = useTeamTaskDependencies(orgId);
+
+  const { criticalIds, criticalMinutes } = useMemo(() => {
+    const ids = new Set<string>();
+    let minutes = 0;
+    for (const project of projects) {
+      const projectTasks = tasks.filter((x) => x.projectId === project.id);
+      const result = computeCriticalPath(projectTasks, dependencies);
+      for (const id of result.ids) ids.add(id);
+      minutes += result.totalMinutes;
+    }
+    return { criticalIds: ids, criticalMinutes: minutes };
+  }, [projects, tasks, dependencies]);
+
+  // Souris uniquement (`hover: hover`) : sur tactile, mouseenter est absent ou
+  // synthétique juste avant le tap — la card de survol n'y a pas sa place, le
+  // clic ouvre directement la tâche.
+  const canHover = () => typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
+
+  const scheduleHoverOpen = (taskId: string) => {
+    if (!canHover()) return;
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(() => setHoverTaskId(taskId), HOVER_OPEN_DELAY_MS);
+  };
+  // Fermeture différée : quitter le point pour rejoindre la card (quelques
+  // pixels plus haut) traverse un blanc — sans délai, ce blanc referme la
+  // card avant que la souris n'y arrive.
+  const scheduleHoverClose = () => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(() => setHoverTaskId(null), HOVER_CLOSE_DELAY_MS);
+  };
+  const cancelHoverTimer = () => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+  };
+  const closeHoverNow = () => {
+    cancelHoverTimer();
+    setHoverTaskId(null);
+  };
+
+  // « Tout » couvre aussi les dates des projets (mig. 153).
+  const fullRange = useMemo(
+    () => timelineRange(tasks, new Date(), [
+      ...projects.flatMap((p) => [projectSpanStart(p), p.dueDate]),
+    ]),
+    [tasks, projects],
+  );
+  const range = useMemo(() => timelineWindow(fullRange, zoom), [fullRange, zoom]);
+  const weeks = useMemo(() => timelineWeeks(range), [range]);
+  const months = useMemo(() => timelineMonths(range), [range]);
+  const todayOffset = useMemo(() => todayOffsetPercent(range), [range]);
+
+  // Fenêtre bornée (tout sauf « Tout ») : une tâche hors champ ne produit pas
+  // de jalon fantôme collé à un bord — elle réapparaît au zoom « Tout ».
+  const windowedTasks = useMemo(
+    () => (zoom === 'all' ? tasks : tasks.filter((task) => inWindowOrUnscheduled(task, range))),
+    [tasks, zoom, range],
+  );
+
+  const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
+  const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
+
+  /** Avatars + libellé pour la card de survol — jusqu'à 2 avatars, `+N` au-delà. */
+  const assigneeSummary = (assigneeIds: string[]) => {
+    const resolved = assigneeIds.map((id) => memberById.get(id)).filter((m): m is OrgMember => !!m);
+    if (resolved.length === 0) return { avatars: [] as OrgMember[], overflow: 0, label: pf('timeline.unassignedTask') };
+    return {
+      avatars: resolved.slice(0, 2),
+      overflow: Math.max(0, resolved.length - 2),
+      label: resolved.map((m) => m.displayName).join(', '),
+    };
+  };
+
+  const rows: RowDescriptor[] = useMemo(() => {
+    if (groupBy === 'assignee') {
+      const activeIds = new Set(projects.map((p) => p.id));
+      return timelineRowsByAssignee(windowedTasks, activeIds, range)
+        .map((row) => {
+          const member = row.assigneeId === UNASSIGNED_ID ? null : memberById.get(row.assigneeId);
+          return {
+            key: row.assigneeId,
+            label: member ? member.displayName : pf('kanban.unassigned'),
+            avatar: member?.avatar ?? null,
+            isUnassigned: !member,
+            markers: row.markers,
+            unscheduled: row.unscheduled,
+          };
+        })
+        // Charge décroissante : la personne la plus chargée se lit en premier.
+        .sort((a, b) => (b.markers.length + b.unscheduled.length) - (a.markers.length + a.unscheduled.length));
+    }
+    return timelineRows(windowedTasks, projects, range, new Date()).map((row) => ({
+      key: row.project.id,
+      label: row.project.name,
+      dotClass: projectColor(row.project.color).dot,
+      markers: row.markers,
+      unscheduled: row.unscheduled,
+      span: row.span,
+    }));
+  }, [groupBy, windowedTasks, projects, range, memberById, pf]);
+
+  const minWidthPx = Math.max(MIN_WIDTH_PX, weeks.length * PX_PER_WEEK);
+
+  // Cadrage initial sur aujourd'hui : au zoom « Tout », une échéance lointaine
+  // ne doit pas laisser la fenêtre ouverte loin d'aujourd'hui sans defiler.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || todayOffset === null) return;
+    const target = (todayOffset / 100) * el.scrollWidth - 96;
+    el.scrollLeft = Math.max(0, target);
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `todayOffset` omis : c est un CADRAGE INITIAL. Le remettre ramenerait la
+       fenetre sur aujourd hui pendant que la personne fait defiler, donc lui
+       reprendrait la main. Il est relu a chaque zoom, ce qui est le besoin. */
+  }, [zoom, range.start.getTime()]);
+
+  if (rows.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
+          <CalendarRange size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+        </div>
+        <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+          {pf('timeline.empty')}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">
+            {pf('timeline.legend')}
+          </p>
+          {/* Légende montée UNIQUEMENT s'il existe un chemin critique : sans
+              dépendance, l'anneau n'apparaît nulle part et expliquer un
+              symbole absent n'aide personne. */}
+          {criticalIds.size > 0 && (
+            <span
+              title={t('projects.criticalPathHint')}
+              className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-secondary))]"
+            >
+              <span
+                className="w-2.5 h-2.5 rounded-full bg-[rgb(var(--color-text-muted))] ring-2 ring-offset-1 ring-amber-500 ring-offset-[rgb(var(--color-surface))]"
+                aria-hidden="true"
+              />
+              {t('projects.criticalPath')}
+              <span className="text-[rgb(var(--color-text-muted))]">
+                {formatDuration(criticalMinutes)}
+              </span>
+            </span>
+          )}
+        </div>
+
+        {/* Zoom : la fenêtre par défaut est bornée à 8 semaines autour
+            d'aujourd'hui (cf. timeline.helpers.ts) — ces boutons l'élargissent.
+            Aucun n'est actif tant que rien n'a été choisi : le défaut n'est
+            littéralement aucun des trois. */}
+        <div
+          className="inline-flex rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5 gap-0.5 shrink-0"
+          role="group"
+          aria-label={pf('timeline.zoomLabel')}
+        >
+          <button type="button" onClick={() => setZoom('month')} aria-pressed={zoom === 'month'} className={`${zoomBtn} ${zoom === 'month' ? zoomOn : zoomOff}`}>
+            {pf('timeline.zoomMonth')}
+          </button>
+          <button type="button" onClick={() => setZoom('quarter')} aria-pressed={zoom === 'quarter'} className={`${zoomBtn} ${zoom === 'quarter' ? zoomOn : zoomOff}`}>
+            {pf('timeline.zoomQuarter')}
+          </button>
+          <button type="button" onClick={() => setZoom('all')} aria-pressed={zoom === 'all'} className={`${zoomBtn} ${zoom === 'all' ? zoomOn : zoomOff}`}>
+            {pf('timeline.zoomAll')}
+          </button>
+        </div>
+      </div>
+
+      {/* La grille scrolle horizontalement sans faire déborder la page
+          (garde-fou : le body ne doit jamais scroller latéralement). La
+          largeur minimale suit le nombre de semaines affichées : zoomer sur
+          « Tout » défile au lieu de tasser des mois dans le même espace. */}
+      <div ref={scrollRef} className="overflow-x-auto">
+        <div className="relative" style={{ minWidth: `${minWidthPx}px` }}>
+          {/* Bandeau mensuel — seulement au-delà de ~6 semaines de fenêtre. */}
+          {months.length > 0 && (
+            <div className="relative h-4 mb-1" style={{ marginLeft: LABEL_COL_PX }}>
+              {months.map((month) => (
+                <span
+                  key={month.label}
+                  className="absolute top-0 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] whitespace-nowrap"
+                  style={{ left: `${month.offsetPercent}%` }}
+                >
+                  {month.label}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* En-tête des semaines */}
+          <div className="relative h-6 mb-2" style={{ marginLeft: LABEL_COL_PX }}>
+            {weeks.map((week) => (
+              <span
+                key={week.start.toISOString()}
+                className="absolute top-0 text-caption text-[rgb(var(--color-text-muted))] whitespace-nowrap"
+                style={{ left: `${week.offsetPercent}%` }}
+              >
+                {week.label}
+              </span>
+            ))}
+          </div>
+
+          {/* Grille + lignes. Les séparateurs de semaine et le repère
+              « aujourd'hui » sont posés UNE fois, en superposition de toutes
+              les lignes — un trait par ligne se serait décalé des autres au
+              moindre écart d'arrondi. */}
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-0" style={{ marginLeft: LABEL_COL_PX }} aria-hidden="true">
+              {weeks.map((week) => (
+                <span
+                  key={week.start.toISOString()}
+                  className="absolute top-0 bottom-0 w-px bg-[rgb(var(--color-border))]/50"
+                  style={{ left: `${week.offsetPercent}%` }}
+                />
+              ))}
+              {todayOffset !== null && (
+                <span
+                  className="absolute top-0 bottom-0 w-0.5 bg-[rgb(var(--color-accent))]"
+                  style={{ left: `${todayOffset}%` }}
+                  title={pf('timeline.today')}
+                />
+              )}
+            </div>
+
+            <ul className="space-y-2 relative">
+              {rows.map((row) => (
+                <li key={row.key} className="flex items-center gap-0" style={{ minHeight: '2rem' }}>
+                  <span className="shrink-0 flex flex-col gap-1 min-w-0 pr-3" style={{ width: LABEL_COL_PX }}>
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      {row.dotClass && <span className={`w-2 h-2 rounded-full shrink-0 ${row.dotClass}`} aria-hidden="true" />}
+                      {groupBy === 'assignee' && (
+                        row.isUnassigned ? (
+                          <span className="w-[18px] h-[18px] rounded-full border border-dashed border-[rgb(var(--color-border))] flex items-center justify-center shrink-0">
+                            <UserRound size={10} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+                          </span>
+                        ) : (
+                          <MemberAvatar avatar={row.avatar ?? undefined} name={row.label} size={20} />
+                        )
+                      )}
+                      <span className="text-xs text-[rgb(var(--color-text-primary))] truncate">
+                        {row.label}
+                      </span>
+                    </span>
+
+                    {/* Pastille « N sans date » : la vue s'appelle Planning,
+                        cacher le travail non daté cacherait exactement ce
+                        qu'elle doit faire remonter. */}
+                    {row.unscheduled.length > 0 && (
+                      <Popover
+                        open={openUnscheduled === row.key}
+                        onOpenChange={(open) => setOpenUnscheduled(open ? row.key : null)}
+                      >
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label={pf('timeline.unscheduledAria', { count: row.unscheduled.length })}
+                            className="self-start inline-flex items-center gap-1 pl-1.5 pr-2 h-[18px] rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-caption font-semibold whitespace-nowrap hover:bg-amber-500/25 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          >
+                            <CalendarOff size={10} aria-hidden="true" />
+                            {tpf('timeline.unscheduled', row.unscheduled.length)}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="w-64 p-2">
+                          <p className="text-xs font-semibold text-[rgb(var(--color-text-muted))] px-1 pb-1">
+                            {pf('timeline.unscheduledTitle')}
+                          </p>
+                          <ul className="max-h-56 overflow-y-auto space-y-0.5">
+                            {row.unscheduled.map((task) => {
+                              const taskProject = projectById.get(task.projectId);
+                              return (
+                                <li key={task.id}>
+                                  <button
+                                    type="button"
+                                    onClick={() => { setOpenUnscheduled(null); onOpenTask(task); }}
+                                    className="w-full text-left px-2 py-1.5 rounded-md hover:bg-[rgb(var(--color-hover))]"
+                                  >
+                                    <span className="block text-xs text-[rgb(var(--color-text-primary))] truncate">{task.name}</span>
+                                    {groupBy === 'assignee' && taskProject && (
+                                      <span className="block text-caption text-[rgb(var(--color-text-muted))] truncate">{taskProject.name}</span>
+                                    )}
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  </span>
+
+                  <span className="relative flex-1 h-8 rounded-lg bg-[rgb(var(--color-hover))]/60">
+                    {/* Bandeau du projet (mig. 153) : de son début à sa fin,
+                        SOUS les tâches. Seulement s'il a ses deux dates. */}
+                    {row.span && (
+                      <span
+                        className={`absolute top-0 bottom-0 rounded-lg opacity-20 ${row.dotClass ?? 'bg-slate-400'}`}
+                        style={{ left: `${row.span.startPercent}%`, width: `${Math.max(0.5, row.span.endPercent - row.span.startPercent)}%` }}
+                        role="img"
+                        aria-label={pf('timeline.projectSpan', {
+                          name: row.label,
+                          start: format(parseISO(projectById.has(row.key) ? projectSpanStart(projectById.get(row.key)!) : ''), 'd MMMM', { locale: getDateLocale() }),
+                          end: format(parseISO(projectById.get(row.key)?.dueDate ?? ''), 'd MMMM', { locale: getDateLocale() }),
+                        })}
+                      />
+                    )}
+                    {row.markers.map((marker, i) => {
+                      const deadline = parseISO(marker.task.deadline!);
+                      const markerProject = projectById.get(marker.task.projectId);
+                      const dotClass = marker.overdue
+                        ? 'bg-red-500'
+                        : (markerProject ? projectColor(markerProject.color).dot : 'bg-slate-400');
+                      const prev = row.markers[i - 1];
+                      const next = row.markers[i + 1];
+                      const gapBefore = prev ? marker.offsetPercent - prev.offsetPercent : Infinity;
+                      const gapAfter = next ? next.offsetPercent - marker.offsetPercent : Infinity;
+                      const showLabel = Math.min(gapBefore, gapAfter) >= LABEL_GAP_PERCENT;
+                      const flipLeft = marker.offsetPercent > 80;
+                      const priority = PRIORITY_META[marker.task.priority] ?? PRIORITY_META[3];
+                      const onCriticalPath = criticalIds.has(marker.task.id);
+                      const assignees = assigneeSummary(marker.task.assigneeIds);
+                      const isSelected = !!selectedIds?.has(marker.task.id);
+
+                      return (
+                        <span
+                          key={marker.task.id}
+                          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
+                          style={{ left: `${marker.offsetPercent}%` }}
+                        >
+                          {/* Card de survol en `Popover` (Portal Radix) : la piste
+                              défile avec `overflow-x-auto`, qui borne aussi l'axe Y
+                              (règle CSS — fixer un seul axe rend l'autre `auto`) et
+                              rognait le haut d'une card en `position: absolute`
+                              classique. Le Portal en sort ; `open` est piloté par le
+                              survol, sans `onOpenChange` : le clic sur le point garde
+                              son comportement (ouvrir la tâche), pas de bascule ici. */}
+                          <Popover open={hoverTaskId === marker.task.id}>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                // La card se referme au clic : elle ne doit pas rester
+                                // ouverte par-dessus la modale de la tâche (2026-10-01).
+                                onClick={() => { closeHoverNow(); if (selectable) onToggleSelect?.(marker.task); else onOpenTask(marker.task); }}
+                                aria-pressed={selectable ? isSelected : undefined}
+                                onMouseEnter={() => scheduleHoverOpen(marker.task.id)}
+                                onMouseLeave={scheduleHoverClose}
+                                // Focus CLAVIER seulement : un clic souris donne aussi le
+                                // focus, et rouvrait la card en même temps que la modale.
+                                onFocus={(e) => { if (!e.currentTarget.matches(':focus-visible')) return; cancelHoverTimer(); setHoverTaskId(marker.task.id); }}
+                                onBlur={closeHoverNow}
+                                aria-label={
+                                  selectable
+                                    ? t('projects.selectTask', { name: marker.task.name })
+                                    : pf('timeline.marker', {
+                                        name: marker.task.name,
+                                        date: format(deadline, 'd MMMM', { locale: getDateLocale() }),
+                                      })
+                                }
+                                // Le chemin critique se signale par un ANNEAU,
+                                // pas par une couleur de pastille : la couleur
+                                // porte déjà le projet et le retard, la
+                                // surcharger rendrait les trois illisibles.
+                                className={`relative block w-3.5 h-3.5 rounded-full border-2 border-[rgb(var(--color-surface))] transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] ${dotClass} ${
+                                  isSelected
+                                    ? 'ring-2 ring-offset-1 ring-indigo-500 ring-offset-[rgb(var(--color-surface))] scale-125'
+                                    : onCriticalPath ? 'ring-2 ring-offset-1 ring-amber-500 ring-offset-[rgb(var(--color-surface))]' : ''
+                                }`}
+                              >
+                                {/* Nom en clair quand la place le permet (point 2) —
+                                    sinon la card de survol / l'aria-label restent le
+                                    seul recours. */}
+                                {showLabel && (
+                                  <span
+                                    className={`absolute top-1/2 -translate-y-1/2 text-caption font-medium text-[rgb(var(--color-text-secondary))] whitespace-nowrap max-w-[140px] truncate ${
+                                      flipLeft ? 'right-[calc(100%+6px)] text-right' : 'left-[calc(100%+6px)]'
+                                    }`}
+                                    aria-hidden="true"
+                                  >
+                                    {marker.task.name}
+                                  </span>
+                                )}
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              side="top"
+                              align="center"
+                              sideOffset={10}
+                              collisionPadding={12}
+                              // Purement informatif — ne doit jamais voler le focus
+                              // au survol (comportement attendu d'un tooltip, pas
+                              // d'une vraie popover ouverte par clic/clavier).
+                              onOpenAutoFocus={(e) => e.preventDefault()}
+                              onCloseAutoFocus={(e) => e.preventDefault()}
+                              onMouseEnter={cancelHoverTimer}
+                              onMouseLeave={scheduleHoverClose}
+                              className="w-56 p-3"
+                            >
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <span className="inline-flex items-center gap-1.5 text-caption font-bold text-[rgb(var(--color-text-secondary))] whitespace-nowrap">
+                                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} aria-hidden="true" />
+                                  {priorityLabelOf(marker.task.priority)}
+                                </span>
+                                <span className={`inline-flex items-center gap-1 text-caption font-semibold whitespace-nowrap ${marker.overdue ? 'text-red-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
+                                  <CalendarClock size={11} aria-hidden="true" />
+                                  {format(deadline, 'd MMM', { locale: getDateLocale() })}
+                                </span>
+                              </div>
+                              <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))] line-clamp-2 mb-2.5">
+                                {marker.task.name}
+                              </p>
+                              <div className="flex items-center gap-1.5 pt-2 border-t border-[rgb(var(--color-border-muted))] min-w-0">
+                                {assignees.avatars.length > 0 ? (
+                                  <span className="flex -space-x-1.5 shrink-0">
+                                    {assignees.avatars.map((m) => (
+                                      <span key={m.userId} className="rounded-full ring-1 ring-[rgb(var(--color-surface))]">
+                                        <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
+                                      </span>
+                                    ))}
+                                    {assignees.overflow > 0 && (
+                                      <span className="w-5 h-5 rounded-full ring-1 ring-[rgb(var(--color-surface))] bg-[rgb(var(--color-hover))] flex items-center justify-center text-caption font-bold text-[rgb(var(--color-text-muted))]">
+                                        +{assignees.overflow}
+                                      </span>
+                                    )}
+                                  </span>
+                                ) : null}
+                                <span className={`text-caption truncate ${assignees.avatars.length === 0 ? 'italic text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-secondary))] font-medium'}`}>
+                                  {assignees.label}
+                                </span>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </span>
+                      );
+                    })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TeamProjectsTimeline;

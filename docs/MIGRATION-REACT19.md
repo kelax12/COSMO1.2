@@ -1,0 +1,414 @@
+<!-- note-audit: non-note -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — **NON NOTÉ** : c'est une ÉTUDE, écrite contre les versions du 2026-09-03. Elle ne se note pas, elle périme — et `npm run check:study` échoue si une majeure qu'elle cite a bougé (C-108).
+
+# Étude de faisabilité — React 19 + `react-router` 8
+
+**Écrite le 2026-09-03**, audit **A-6** de `a-faire-code.md` §10. C'est une ÉTUDE : rien n'a été
+migré, aucune version majeure n'a bougé dans `package.json`. Le livrable est ce plan, et deux
+correctifs bornés livrés dans la foulée (cf. `a-faire-code.md` C-58 → C-60).
+
+> ⚠️ **Le point le plus important de cette étude change la prémisse de `CLAUDE.md`/`faille.md`** :
+> la migration n'est **plus** forcée par un blocage sécurité. Elle redevient un chantier de
+> modernisation ordinaire, à planifier sans urgence. Détail au §1.
+
+---
+
+
+## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
+
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
+>
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
+>
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
+
+
+> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
+> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
+> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
+>
+> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
+> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
+> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
+> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
+> sans que rien ne vérifie**.
+>
+> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
+> **reconduit avec sa date**, jamais ne se recopie.
+
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+|---|---|---|---|
+| AM-1 | 🔴 **C'est une ÉTUDE, et une étude périme.** Écrite le 2026-09-03 contre les versions de ce jour-là. Les composants shadcn audités « ref par ref », le chiffrage et la chronologie CVE décrivent un instant. Rien ne signale qu'une version a bougé depuis | aucune garde ne relit `package.json` contre ce document | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:study` · échoue si une majeure citée ici bouge (`C-108`) — 🔴 ne prouve PAS : le coût de **ne pas** migrer, qui se compte en incidents. Relu le 2026-09-21 : **5 comparaisons sur 5**, l'étude décrit encore les versions installées |
+| AM-2 | **La chronologie CVE n'est surveillée par rien de ciblé.** Dependabot alerte sur une vulnérabilité déclarée, jamais sur « React 18 approche de sa fin de support », qui est l'argument central de cette étude | `npm audit --omit=dev` ne voit pas une fin de support | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:study` (`C-108`) — 🔴 ne prouve PAS : idem AM-1 |
+| AM-3 | **Le coût de NE PAS migrer n'est pas mesuré.** Le piège `Button`/`forwardRef` (les flèches qui ne déplaçaient pas le focus dans le calendrier) est venu d'une source shadcn écrite **pour React 19**. Rien ne compte ces incidents, donc l'étude n'a pas de contrepartie chiffrée | l'incident est documenté, jamais agrégé | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:study` (`C-108`) — 🔴 ne prouve PAS : idem AM-1 : l'étude est fraîche, la décision de migrer reste différée (seuil de reprise : 283,5 ko) |
+
+---
+
+## 1. Le blocage sécurité qui forçait React 19 est déjà levé
+
+`CLAUDE.md` et `faille.md` décrivent depuis le 2026-09-02/03 un piège à deux CVE sans issue sous
+React 18 :
+
+> `GHSA-qwww-vcr4-c8h2` (`react-router` ≥ 7.12.0 < 8.3.0, CSRF en mode RSC) […] Aucune version ne
+> clôt les deux familles à la fois sous React 18 → la sortie est la migration React 19 +
+> `react-router` 8.
+
+**Mesuré aujourd'hui, contre trois sources indépendantes**, ce n'est plus vrai :
+
+1. **L'avis GitHub lui-même** (`GHSA-qwww-vcr4-c8h2`, interrogé via l'API), pas le résumé qu'en
+   fait `faille.md`, porte **deux plages disjointes avec chacune son propre correctif** :
+   `[7.12.0, 7.18.2)` corrigée en **7.18.2**, et `[8.0.0, 8.3.0)` corrigée en 8.3.0. `faille.md` les
+   avait fusionnées en une seule plage (« ≥ 7.12.0 < 8.3.0 »), ce qui masquait le correctif
+   intermédiaire.
+2. **`react-router@7.18.2`** (publié le 2026-07-28, un mois après les dernières versions encore
+   vulnérables) est **déjà celui installé** : `package.json` porte `^7.18.2`, `package-lock.json`
+   l'épingle exactement à cette version.
+3. **Deux bases de vulnérabilités interrogées en direct pour cette version précise** rendent
+   toutes les deux zéro résultat : `npm audit` local (les 2 seules alertes actuelles du dépôt
+   viennent de `shadcn`, une devDependency — cf. `a-faire-code.md` C-18, sans rapport) et l'API OSV
+   interrogée pour `react-router@7.18.2` (`{"vulns": []}`). L'open redirect
+   `GHSA-wrjc-x8rr-h8h6` est lui aussi fermé, dès **7.18.0**.
+
+Chronologie qui explique l'écart avec la doc, reconstituée version par version via OSV :
+
+| Version | Date de publication | `GHSA-qwww-vcr4-c8h2` | `GHSA-wrjc-x8rr-h8h6` |
+|---|---|---|---|
+| 7.17.0 | 2026-06-04 | vulnérable | vulnérable |
+| 7.18.0 | 2026-06-16 | vulnérable | **corrigé** |
+| 7.18.1 | 2026-06-29 | vulnérable | corrigé |
+| **7.18.2** | **2026-07-28** | **corrigé** | corrigé |
+| 7.18.3 | 2026-08-28 | corrigé | corrigé |
+
+L'énoncé « aucune version ne clôt les deux familles sous React 18 » était vrai tant que la version
+publiée la plus récente était 7.18.0 ou 7.18.1. Il a cessé de l'être à la publication de 7.18.2, et
+personne n'est revenu vérifier depuis.
+
+**Conséquence directe** : le dépôt ferme déjà les deux CVE, aujourd'hui, sous React 18, sans avoir
+rien changé. La migration React 19 + `react-router` 8 n'est plus une urgence sécurité — elle
+redevient un chantier de modernisation ordinaire (accès aux nouvelles API, alignement avec la
+source shadcn amont), à planifier sans la contrainte « CVE ouverte ». `faille.md` a été corrigé en
+conséquence (§ Ouvert · à planifier).
+
+❌ **Ça ne change rien à la règle `npm audit fix`** : ne toujours pas la lancer sur ce paquet sans
+relire l'avis à la main — un lockfile différent peut encore proposer une rétrogradation.
+
+---
+
+## 2. Ce que la migration React 19 casserait réellement dans CE code
+
+Balayage complet de `src/**/*.tsx` et `src/**/*.ts` contre la liste officielle des ruptures React 19
+(`react`/`CHANGELOG.md`, section « Breaking Changes » de la 19.0.0), pas une lecture de mémoire :
+
+| Rupture React 19 | Présente dans ce code ? | Mesuré par |
+|---|---|---|
+| `ReactDOM.render` / `.hydrate` / `unmountComponentAtNode` / `findDOMNode` | **Non**, 0 occurrence | `grep` sur tout `src/` |
+| `react-dom/test-utils` | **Non**, 0 occurrence | idem |
+| `propTypes` / `defaultProps` (composants fonction) / `contextTypes` / `getChildContext` | **Non**, 0 occurrence | idem |
+| Refs string, `React.createFactory`, `react-test-renderer/shallow` | **Non**, 0 occurrence | idem |
+| Nouvelle transformation JSX requise | **Déjà en place** : `tsconfig.app.json` porte `"jsx": "react-jsx"` | lecture directe |
+| Espace de noms global `JSX` (remplacé par `import { JSX } from 'react'`) | **Non utilisé** : 0 occurrence de `JSX.Element`/`JSX.IntrinsicElements` hors `React.JSX` | `grep` |
+| `useRef<T>()` sans argument initial (obligatoire sous les types React 19) | **Un seul site** : `src/lib/hooks/useDebounce.ts:69` (`usePrevious`) | `grep -rn "useRef<[^>]*>()"` |
+| Retour implicite non-`void` d'un callback ref (désormais une erreur de type) | **Non** : le seul callback ref multi-usage (`EventModalFormMobile.tsx:90`) a déjà un corps de bloc, et `register()` a une signature `=> void` | lecture de `event-modal-form.types.ts` + `grep` |
+| `ref` comme prop ordinaire (composant fonction recevant un `ref` sans `forwardRef`) | **Deux composants** touchés dans tout `src/`, cf. §3 | balayage exhaustif, détail ci-dessous |
+
+**`React.FC` (174 fichiers)** : pas une rupture. Cosmétique, ne bloque rien.
+
+**Aucun `<React.StrictMode>` n'est monté** (`src/main.tsx` fait un `createRoot(...).render(<App/>)`
+direct) : la double invocation des callbacks ref au montage, l'un des changements de comportement
+de StrictMode en React 19, ne peut donc rien casser aujourd'hui — mais si StrictMode est ajouté
+plus tard, dans la même PR ou une autre, il faudra revérifier les callbacks ref à effet de bord
+(aucun trouvé en dehors des refs déjà couvertes par des hooks `useRef`).
+
+**Rendu serveur** : sans objet. `prerender.mjs` ne fait AUCUN rendu React (ni `renderToString` ni
+`renderToStaticMarkup`) — c'est un script Node qui réécrit le `<head>` du `dist/index.html` déjà
+buildé, en chaîne de caractères. Toutes les ruptures React 19 côté `react-dom/server` (`prerender`,
+`prerenderToNodeStream`, hydratation) sont donc hors sujet pour ce dépôt.
+
+---
+
+## 3. Les composants shadcn recopiés, ref par ref (répond à C-19)
+
+Balayage de **tout** `ref={` dans `src/**/*.tsx` (125 occurrences) : 113 posent un ref sur un
+élément DOM natif (`<div>`, `<input>`, `<section>`…), toujours valide quelle que soit la version de
+React. Sur les 12 restantes, posées sur un composant (majuscule), un seul groupe touche
+`src/components/ui/` — les fichiers recopiés depuis shadcn :
+
+| Composant | Recevait un ref ? | État avant cette session | État après |
+|---|---|---|---|
+| `Button` | Oui (`ui/calendar.tsx`, en interne) | ✅ déjà `forwardRef` (corrigé le 2026-08-30, C-18 historique) | inchangé |
+| `Input` | Oui (`AdminMfaGate.tsx:106`) | ❌ pas de `forwardRef` — **cassé**, cf. C-59 | ✅ corrigé cette session |
+| `DialogPrimitive.Overlay` (wrapper `ui/dialog.tsx`) | Oui (test de non-régression) | ✅ déjà `forwardRef` | inchangé |
+| Les 22 autres fichiers (`avatar`, `badge`, `alert-dialog`, `calendar` le composant top-level, `chart`, `checkbox`, `command`, `dropdown-menu`, `label`, `popover`, `scroll-area`, `select`, `separator`, `sheet`, `skeleton`, `slider`, `textarea`, `tooltip`) | **Non, aucun** | — | — |
+
+**Conclusion falsifiable** : la classe de bug que C-19 redoutait (« composant shadcn recopié sans
+vérifier sa cible React, symptôme silencieux ») n'a **aucune autre instance vivante** aujourd'hui
+dans `src/components/ui/`. Elle en avait deux, `Button` (déjà fermé) et `Input` (fermé cette
+session, cf. C-59 dans `a-faire-code.md`).
+
+⚠️ **Ce que cette conclusion ne garantit pas** : c'est un état de CE JOUR, pas une propriété
+permanente. Le jour où un futur composant de `src/components/ui/` reçoit un `ref` pour la première
+fois, il faut revérifier qu'il est bien un `forwardRef` — la classe de bug reste silencieuse par
+nature (pas d'erreur au build, un avertissement console facile à manquer, un symptôme qui ne se
+voit qu'en testant le clavier ou le focus programmatique).
+
+Les composants Radix sous-jacents (`@radix-ui/react-*`, 39 paquets installés) déclarent tous, dans
+leur `package.json` déjà présent dans `node_modules`, un peer `react` couvrant
+`^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc` — ils gèrent `forwardRef` en interne et ne sont pas
+concernés par cette classe de bug.
+
+---
+
+## 4. `react-router` 7 → 8 : ce que ça change vraiment pour CE dépôt
+
+Lu le CHANGELOG officiel de la 8.0.0 (`remix-run/react-router`, section « Major Changes ») ligne par
+ligne et confronté à l'usage réel du dépôt (61 fichiers important depuis `'react-router'`, inventaire
+exhaustif des symboles importés) :
+
+| Rupture v8 | Concerne ce dépôt ? | Pourquoi |
+|---|---|---|
+| `react-router-dom` supprimé | **Non** | Le dépôt importe déjà tout depuis `'react-router'` bare, jamais `'react-router-dom'` (`grep` : 0 occurrence) |
+| Champs `data`/`meta` de route retirés | **Non** | Aucun `meta()` de route, aucun fichier de route module — le dépôt n'utilise pas le mode framework (`@react-router/dev`) |
+| `future.v8_middleware` toujours actif, `context` toujours un `RouterContextProvider` | **Non** | Aucun `loader`/`action`/`middleware` — 0 usage du routeur de données (`createBrowserRouter`, `RouterProvider`) |
+| `splitRouteModules` (config `@react-router/dev`) | **Non** | Le dépôt n'a pas de dépendance `@react-router/dev` ; le build passe par `vite build` + `prerender.mjs` maison |
+| Node 22.22.0+ minimum | **Mécanique** | `package.json` porte `"node": ">=22"` (non borné) ; à resserrer à `>=22.22.0` au moment de la bascule. Aucune action avant |
+| Vite 7+ minimum | **Déjà satisfait** | `vite@7.3.2` installé |
+| React 19.2.7+ (peer) | **C'est LA dépendance réelle** | `react-router` 8 ne s'installe pas sans React 19 déjà en place — ce n'est pas un travail parallèle, c'est séquentiel |
+
+**Sur nos usages précis** (61 imports recensés : `useNavigate` ×28, `Link` ×18, `useLocation` ×9,
+`useSearchParams` ×7, `Navigate` ×7, `MemoryRouter` ×7 en tests, `Routes`/`Route` ×4 chacun,
+`useParams` ×3, `Outlet`/`NavLink` ×2 chacun, `useResolvedPath`/`useMatch`/`BrowserRouter` ×1
+chacun) — **ce sont tous des symboles du mode déclaratif**, celui que les ruptures de la v8
+ne touchent pas :
+
+- **`basename`** (`<BrowserRouter basename={routerBasename}>`, `src/main.tsx:208`, figé au montage
+  par `src/i18n/bootstrap.ts`) : API stable depuis longtemps, absente du CHANGELOG v8. Rien à
+  changer.
+- **Routes lazy** (`<Route element={<Suspense><AppErrorBoundary><LazyPage/></AppErrorBoundary></Suspense>}>`,
+  `React.lazy` standard, pas `lazy()` de route module) : mécanisme React, pas React Router. Rien à
+  changer.
+- **`ErrorBoundary`** : le dépôt n'utilise **jamais** `errorElement`/`ErrorBoundary` de React
+  Router — chaque route est enveloppée dans le composant maison `AppErrorBoundary`
+  (`src/components/AppErrorBoundary.tsx`), monté explicitement dans `App.tsx`. Le retrait du champ
+  interne `hasErrorBoundary` (v8) ne concerne que le routeur de données. Rien à changer.
+- **Slugs localisés** (`src/i18n/routes.ts`, `useLocalizedPath()`) : construisent des chaînes de
+  chemin ordinaires passées à `<Link to=>` / `navigate()`. Aucune dépendance à une API de
+  `react-router` qui bouge en v8.
+
+**Conclusion falsifiable** : il n'y a pas de migration `react-router` 7 → 8 indépendante à
+chiffrer. Une fois React 19 en place, la bascule de `react-router` est une **montée de version**,
+pas un chantier — bump `package.json`, réinstalle, relance des tests.
+
+### La garde anti-open-redirect n'est pas concernée
+
+`src/lib/no-open-redirect.test.ts` verrouille une propriété du CODE de ce dépôt (aucune navigation
+n'est alimentée par un paramètre lu depuis l'URL courante), pas une propriété de la bibliothèque.
+Rien dans la migration ne peut la faire régresser ; elle continuera de tourner à l'identique après
+comme avant.
+
+---
+
+## 4bis. 🔴 CE QUE CETTE ÉTUDE AVAIT MANQUÉ — mesuré en exécutant la migration (2026-09-12)
+
+L'étude ci-dessus a été écrite en **lisant** : le CHANGELOG de React 19, celui de `react-router` 8,
+et le code du dépôt au `grep`. Elle conclut « aucun pré-requis », « 0,5 à 1 jour », « fix mécanique
+de `useRef<T>()` ». La migration a ensuite été **jouée** sur la branche `feat/react-19`. Deux
+choses qu'aucune lecture n'avait vues, et la seconde bloque.
+
+### a. Une classe de rupture de TYPES que le §2 ne liste pas : `RefObject<T>`
+
+Sous les types React 19, `useRef<T>(null)` ne rend plus `RefObject<T>` mais **`RefObject<T | null>`**
+(`RefObject` y est devenu mutable, et la variante « read-only ref » a disparu). Toute PROP déclarée
+`React.RefObject<HTMLDivElement>` refuse donc le ref qu'on lui passe.
+
+**8 erreurs de compilation, 5 fichiers, 9 déclarations à élargir** :
+`OKRDeadlineReviewModal`, `reactbits/ScrollReveal`, `task-modal/TaskModalDesktopBody`,
+`hooks/use-bottom-sheet`, `hooks/use-modal-a11y` (×2), `pages/agenda/AgendaCalendarSection` (×2),
+`pages/agenda/AgendaDesktopHeader`.
+
+Le correctif est mécanique — `RefObject<T>` → `RefObject<T | null>` — et il est juste **sous React
+19**. Coût réel : quelques minutes. ⚠️ Mais le §2 affirmait « le seul site » à propos de
+`useRef<T>()` sans argument : c'était vrai de CE motif, et faux de la classe. Un `grep` sur un motif
+ne mesure pas une classe de rupture.
+
+> 🔴 **ET CES 9 CORRECTIONS NE SONT PAS PORTABLES SUR `main`.** Ce document a affirmé le contraire
+> (« elles ne dépendent pas de React 19 », « portées séparément pour réduire la dette de la
+> reprise ») — **mesuré le 2026-09-14, c'est faux** : les sept fichiers appliqués sur `main`, puis
+> `tsc -b`, rendent **72 erreurs** dans une soixantaine de fichiers. Sous les types **React 18**,
+> `RefObject<T | null>` n'est pas assignable à `LegacyRef<T>`, donc **chaque `ref={...}` qui
+> consomme un de ces refs élargis casse**. Le port a été tenté, mesuré, puis **défait** ; `main` est
+> propre (`tsc -b` sans erreur).
+>
+> ⚠️ **La leçon dépasse React 19** : « un correctif de types est mécanique, donc portable » est une
+> intuition, pas une mesure. Élargir un type de prop est une rupture de contrat dans le sens des
+> **consommateurs**, et ils étaient soixante. **Il n'y a donc aucun acompte à verser d'avance pour
+> alléger la reprise** : la migration se prend en bloc, ou pas.
+
+### b. 🔴 LE BLOCAGE : React 19 pèse **+23,3 ko gzip**, et il fait sauter le budget de bundle
+
+Mesuré sur le build de production, `npm run check:bundle` :
+
+| | React 18.3.1 | React 19.3.0 | Écart |
+|---|---|---|---|
+| `vendor-react` (gzip) | 72,1 ko | **95,4 ko** | **+23,3 ko (+32 %)** |
+| chemin critique | 306,3 ko | **329,8 ko** | plafond **323,0** → **dépassé de 6,8 ko** |
+| entrée | 66,9 ko | 67,0 ko | plafond 71,0 → tient |
+
+`check:bundle` rend **exit 1**. Le chunk a été ouvert pour écarter un artefact : aucune trace de
+`react-dom/server`, de `renderToString`, de `__DEV__` ni d'un build de développement. **Le surcoût
+est réel.**
+
+🔴 **Et il ne peut PAS se régler en remontant le plafond.** Ce plafond a été ABAISSÉ à 323,0 ko le
+2026-09-11 pour satisfaire le critère de sortie de C-14, qui exige 5 % de marge sur les deux
+budgets ; la marge était de 5,2 %. React 19 la consomme entièrement et déborde. Remonter le plafond
+rouvrirait C-14 le jour même, et c'est interdit par la règle 1 du dépôt.
+
+**Il faut donc trouver ~7 ko ailleurs sur le chemin critique, ou différer.** Les sept chunks :
+
+```
+95,4 vendor-react · 67,0 index · 56,3 vendor-supabase · 49,0 vendor-animation
+30,8 vendor-utils · 17,6 vendor-query · 13,7 vendor-router
+```
+
+Le seul candidat de taille est **`vendor-animation` (49,0 ko, framer-motion)**, tiré dans le chemin
+critique par un unique import statique : `MotionConfig` dans `src/App.tsx`.
+
+❌ **Et c'est précisément le levier à ne PAS tirer sans y réfléchir.** `MotionConfig
+reducedMotion="user"` est un fournisseur de CONTEXTE : le charger en différé ferait rendre les
+premiers écrans **sans** lui, donc sans respecter `prefers-reduced-motion` — exactement la classe de
+régression qui a déjà coûté deux fois à ce dépôt (feuilles mobiles à 0 px visible, cascades du
+dashboard figées 20 px trop bas). Et `CLAUDE.md` note déjà, à propos du `Toaster`, que suspendre sur
+la frontière qui enveloppe les routes **cacherait la page**.
+
+**Les trois issues, et aucune n'est technique** :
+
+1. **Différer la migration** jusqu'à ce que le chemin critique ait 7 ko de marge de plus par
+   ailleurs. C'est l'option par défaut : rien n'urge, la justification sécurité est tombée (§1).
+2. **Sortir framer-motion du chemin critique pour de vrai** — c'est-à-dire remplacer
+   `MotionConfig` par une lecture CSS/matchMedia de `prefers-reduced-motion`, sans contexte React.
+   Chantier à part entière, avec sa propre mesure au navigateur sous `reduce`.
+3. **Accepter de rouvrir C-14** en remontant le plafond. Décision d'Axel, pas une correction.
+
+⚠️ **Ce que l'échec du budget ne remet PAS en cause** : tout le reste de la migration est vert.
+`tsc -b` propre, `npm run lint` 0 erreur, **226 fichiers / 2 500 tests** au vert, `i18n:check`,
+`i18n:scan`, `i18n:identical`, `validate:migrations`, `check:rls`, `check:legal` vertes, le build
+lui-même réussit, et la suite **E2E** est verte : **104 passés, 3 ignorés, 0 échec** sur le project
+`chromium` (23,8 min). Le seul rouge du run est `e2e/_tmp-probe.spec.ts`, la sonde jetable **non
+suivie par git** que `CLAUDE.md` documente — elle n'appartient pas au dépôt. La branche `feat/react-19` porte ce travail, prêt à reprendre le jour où le
+budget le permet.
+
+### c. ARBITRAGE RENDU le 2026-09-13 : on DIFFÈRE (option 1)
+
+Décision d'Axel, en réponse à `a-faire-manuel.md` M-41. La branche `feat/react-19` reste poussée et
+non fusionnée. Rien n'est annulé, rien n'est fusionné.
+
+> ✅ **MISE À JOUR DU 2026-09-14 : le plafond de 323 000 o EST commité** (`7134d7fe`, run CI
+> `34846164939` vert sur les cinq jobs), avec la façade `toast` qui le finance. Le paragraphe qui
+> suit décrivait l'état du 09-13 et **ne décrit plus la réalité** : contre `main` tel qu'il est
+> commité aujourd'hui, React 19 à 329,8 ko **échouerait** à la garde, comme il le doit. Le blocage
+> n'est plus adossé à un cliquet fantôme — il est opposable, et **le seuil de reprise de 283,5 ko
+> reste la seule lecture valable**. Conservé ci-dessous à sa date.
+
+**Ce qui avait été REMESURÉ le 2026-09-13, et qui corrigeait la façon de lire le blocage.**
+Le plafond de 323 000 o n'existait alors dans **aucun commit** : `git log -S"323_000"` sur
+`scripts/check-bundle-budget.mjs` ne rend rien, et `git show HEAD:scripts/check-bundle-budget.mjs`
+porte encore `critical: 370_000` / `entry: 78_000`. L'abaissement du 2026-09-11, comme la sortie de
+`sonner` qui le finance, vit uniquement dans l'arbre de travail **non commité** d'une session
+voisine (86 fichiers modifiés au 2026-09-13).
+
+Conséquence à ne pas se cacher : contre `main` **tel qu'il est commité**, React 19 à 329,8 ko
+passerait la garde sans rien dire, le plafond commité étant 370 000. Le blocage est donc réel mais
+il s'appuie sur un cliquet qui n'est pas encore dans l'histoire du dépôt. C'est un argument de plus
+pour différer plutôt que pour fusionner : fusionner React 19 avant que le lot C-14 soit commité
+reviendrait à passer sous un plafond périmé.
+
+**Les deux seuils de reprise, calculés, parce qu'un seul ne suffit pas :**
+
+| Seuil | Chemin critique React 18 exigé | Coupe à trouver | Ce que ça obtient |
+|---|---|---|---|
+| `check:bundle` simplement VERTE | ≤ 299,7 ko (323 000 − 23 300) | **6,8 ko** | la garde passe, avec **0 %** de marge restante |
+| Critère de sortie de **C-14** préservé (5 %) | ≤ 283,5 ko (323 000 × 0,95 − 23 300) | **22,8 ko** | React 19 fusionné SANS rouvrir C-14 |
+
+Mesure de départ : 306,3 ko (2026-09-11). Le premier seuil est un piège : une garde qui passe à
+0,0 % de marge rouvre C-14 le jour même, exactement comme le ferait un plafond relevé. **Le seuil
+opposable est 283,5 ko.**
+
+Or le seul gisement de cette taille sur le chemin critique reste `vendor-animation` (49,0 ko).
+**L'option 2 n'est donc pas une alternative à l'option 1, c'est sa condition de reprise** : tant que
+`MotionConfig` n'est pas remplacé par une lecture CSS/`matchMedia` de `prefers-reduced-motion`, sans
+contexte React et avec sa mesure au navigateur **sous `reduce`**, il n'y a pas 22,8 ko à prendre
+ailleurs.
+
+**Ce que différer coûte, écrit pour que personne n'ait à le redécouvrir :**
+
+- `react-router` 8 (PR 2) reste bloqué derrière, peer `react >= 19.2.7`. Sans conséquence sécurité :
+  `react-router@7.18.2` est installé et ferme les deux CVE (§1).
+- La classe de bug « composant shadcn recopié depuis l'amont React 19, `ref` jamais attaché » reste
+  ouverte, et elle est **silencieuse par construction**. Elle a déjà coûté `Button` puis `Input`.
+  Tant que le dépôt est sous React 18, tout composant repris de l'amont se relit à la main.
+- La branche vieillit, et **rien ne peut être versé d'avance**. Elle porte 9 corrections de types
+  (§4bis.a) que ce document donnait comme portables sur `main` : **mesuré le 2026-09-14, elles ne le
+  sont pas** — appliquées sous React 18, `tsc -b` rend **72 erreurs**, `RefObject<T | null>` n'étant
+  pas assignable à `LegacyRef<T>`. Port tenté, défait, `main` propre. La reprise coûtera donc son
+  prix entier le jour venu, et le seul moyen de réduire la dette est de **rebaser régulièrement**,
+  pas d'extraire des morceaux.
+
+⚠️ **Ne pas relire ce § comme un abandon.** La migration est faite et verte sur onze gates ; ce qui
+est différé, c'est sa FUSION, et la condition est chiffrée ci-dessus.
+
+---
+
+## 5. Chiffrage
+
+Étant donné que la quasi-totalité des ruptures listées aux §2 et §4 ne touchent pas ce code, le
+chiffrage est nettement plus léger que ce que « React 19 + react-router 8 » suggère en général :
+
+| Étape | Contenu | Effort |
+|---|---|---|
+| **PR 1 — React 18 → 19** | Bump `react`, `react-dom`, `@types/react`, `@types/react-dom` en 19.x. Fix mécanique de `useRef<T>()` (`useDebounce.ts:69`, cf. C-60). Relancer `npm test`, `npm run typecheck`, `npm run lint`. Parcours manuel des écrans qui utilisent `createPortal` (13 fichiers), le calendrier (`ui/calendar.tsx`), et l'audit clavier `e2e/a11y-keyboard-audit.spec.ts` (le témoin qu'il embarque doit rester vert) | **0,5 à 1 jour** |
+| **PR 2 — `react-router` 7 → 8** | Bump `react-router`, resserrer `"node": ">=22.22.0"` dans `package.json`. Relancer `src/lib/no-open-redirect.test.ts` et la suite complète. Fumée manuelle : navigation, `basename` (bascule de langue), routes lazy, slugs localisés | **< 1 heure**, une fois PR 1 posée et stable |
+
+**Pourquoi deux PR et pas une** : `react-router` 8 exige React ≥ 19.2.7 en peer — la coupe est donc
+imposée par la dépendance elle-même, pas un choix arbitraire. PR 1 doit être posée et éprouvée en
+prod avant PR 2.
+
+**Ce qui n'est délibérément PAS inclus** dans ce chiffrage : l'ajout de `<React.StrictMode>` (aucune
+des deux montées de version ne l'exige), et l'adoption des nouvelles API React 19 (`use()`,
+`useActionState`, métadonnées de document natives) — aucune n'est requise, ce sont des chantiers
+séparés à instruire pour eux-mêmes si intéressant.
+
+**Pré-requis avant de lancer PR 1** : aucun. La justification « urgence sécurité » ayant disparu
+(§1), le moment de la migration redevient un arbitrage produit ordinaire — cf.
+`a-faire-manuel.md` M-33.
+
+---
+
+## 6. Ce qui a été vérifié en dehors du périmètre strict de la migration
+
+- **`npm run typecheck`, `npm run lint`, `npm run i18n:check`** : verts sur l'état actuel (avant
+  toute bascule), avec le correctif `Input` inclus.
+- **Suite complète (`npx vitest run`)** : 2 112 → 2 114 tests (2 nouveaux, `input.test.tsx`), 0
+  avertissement « cannot be given refs » sur l'ensemble du run. Les deux échecs préexistants
+  (`demo-engagement.test.ts`, `org-loading-states.test.tsx`) sont des flakys temporels sans rapport
+  avec cette étude — non touchés.
+- **Dépendances directes et transitives de l'UI** (`framer-motion`, `@tanstack/react-query`,
+  `@tanstack/react-virtual`, `recharts`, `react-day-picker`, `sonner`, `cmdk`,
+  `@fullcalendar/react`, `@sentry/react`, `@gsap/react`, `lucide-react`,
+  `@testing-library/react`, les 39 paquets `@radix-ui/*`) : **toutes**, dans les versions
+  actuellement installées, déclarent déjà un peer `react` couvrant `^19.0.0` — zéro blocage de
+  dépendance à lever avant la bascule.

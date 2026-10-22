@@ -4,10 +4,12 @@ import type { ITasksRepository } from '@/modules/tasks/repository';
 import type { IEventsRepository } from '@/modules/events/repository';
 import type { IHabitsRepository } from '@/modules/habits/repository';
 import type { IOKRsRepository } from '@/modules/okrs/repository';
+import type { IKRCompletionsRepository } from '@/modules/kr-completions/repository';
 import type { Task } from '@/modules/tasks';
 import type { CalendarEvent } from '@/modules/events';
 import type { Habit } from '@/modules/habits';
 import type { OKR } from '@/modules/okrs';
+import type { KRCompletion } from '@/modules/kr-completions/types';
 
 // Stubs minimaux : seuls les champs lus par calculateWorkTimeForPeriod comptent.
 const task = (over: Partial<Task>): Task => ({
@@ -22,16 +24,19 @@ const habit = (completions: Record<string, boolean>, estimatedTime = 10): Habit 
   color: '#000', icon: '⭐', completions, createdAt: '2026-01-01',
 } as unknown as Habit);
 
-const fakeRepos = (data: { tasks?: Task[]; events?: CalendarEvent[]; habits?: Habit[]; okrs?: OKR[] }) => ({
+const fakeRepos = (data: { tasks?: Task[]; events?: CalendarEvent[]; habits?: Habit[]; okrs?: OKR[]; krCompletions?: KRCompletion[] }) => ({
   tasks: { getAll: async () => data.tasks ?? [] } as unknown as ITasksRepository,
   events: { getAll: async () => data.events ?? [] } as unknown as IEventsRepository,
   habits: { fetchHabits: async () => data.habits ?? [] } as unknown as IHabitsRepository,
   okrs: { getAll: async () => data.okrs ?? [] } as unknown as IOKRsRepository,
+  krCompletions: {
+    getAll: async () => data.krCompletions ?? [],
+  } as unknown as IKRCompletionsRepository,
 });
 
 const makeRepo = (data: Parameters<typeof fakeRepos>[0]) => {
   const r = fakeRepos(data);
-  return new LocalStatsRepository(r.tasks, r.events, r.habits, r.okrs);
+  return new LocalStatsRepository(r.tasks, r.events, r.habits, r.okrs, r.krCompletions);
 };
 
 describe('LocalStatsRepository', () => {
@@ -70,5 +75,47 @@ describe('LocalStatsRepository', () => {
     ]);
 
     expect(buckets.map(b => b.tasksTime)).toEqual([45, 0]);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// `okrTime` vient du journal `kr_completions` (revue du 2026-09-02)
+//
+// Il valait STRUCTURELLEMENT 0 : le calcul lisait `kr.history`, un champ absent
+// du modele et qu'aucun ecrivain ne pose. La demo comme la production
+// affichaient donc 0 minute investie sur les OKR, sans que rien ne le signale.
+// ═══════════════════════════════════════════════════════════════════
+describe('LocalStatsRepository — temps investi sur les OKR', () => {
+  const okrs = [
+    { id: 'okr-1', keyResults: [{ id: 'kr-1', estimatedTime: 45 }] },
+  ] as unknown as OKR[];
+
+  const completion = (over: Partial<KRCompletion>): KRCompletion => ({
+    id: 'c', krId: 'kr-1', okrId: 'okr-1', userId: 'demo-user',
+    completedAt: '2026-07-10T09:00:00', krTitle: '', okrTitle: '', ...over,
+  });
+
+  it('compte les minutes estimees du KR pour chaque completion de la plage', async () => {
+    const repo = makeRepo({
+      okrs,
+      krCompletions: [
+        completion({ id: 'c1', completedAt: '2026-07-09T09:00:00' }),
+        completion({ id: 'c2', completedAt: '2026-07-10T09:00:00' }),
+        completion({ id: 'c3', completedAt: '2026-06-01T09:00:00' }), // hors plage
+      ],
+    });
+
+    const [b] = await repo.getWorkTimeStats([{ start: '2026-07-07', end: '2026-07-13' }]);
+    expect(b.okrTime).toBe(90);
+    expect(b.totalTime).toBe(90);
+  });
+
+  it('inclut la DERNIERE journee de la plage, bornee a 23:59:59.999', async () => {
+    const repo = makeRepo({
+      okrs,
+      krCompletions: [completion({ completedAt: '2026-07-13T23:30:00' })],
+    });
+    const [b] = await repo.getWorkTimeStats([{ start: '2026-07-07', end: '2026-07-13' }]);
+    expect(b.okrTime).toBe(45);
   });
 });

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { warnIfTruncated } from './pagination.warning';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
-vi.mock('sonner', () => ({ toast: { warning: vi.fn() } }));
+vi.mock('@/lib/toast', () => ({ toast: { warning: vi.fn() } }));
 
 beforeEach(() => {
   vi.spyOn(console, 'warn').mockImplementation(() => {});

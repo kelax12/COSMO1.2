@@ -2,6 +2,7 @@
   "common": {
     "create": "Create",
     "ok": "OK",
+    "validate": "Confirm",
     "save": "Save",
     "creating": "Creating...",
     "creatingEllipsis": "Creating…",
@@ -12,8 +13,18 @@
     "optional": "(Optional)",
     "savingDots": "Saving..."
   },
+  "tabs": {
+    "aria": "Task sections",
+    "details": "Details",
+    "advanced": "Advanced options",
+    "subtasks": "Subtasks",
+    "dependencies": "Dependencies",
+    "dependenciesAfterCreate": "Dependencies can be linked once the task is created.",
+    "share": "Share",
+    "stateAfterCreate": "Status and state can be set once the task is created."
+  },
   "fields": {
-    "moreOptions": "More options — due date, category, priority, duration, lists",
+    "moreOptions": "More options: due date, category, priority, duration, lists",
     "priority": "Priority",
     "prioritySelect": "Select the task priority",
     "priorityPlaceholder": "Choose a priority",
@@ -46,11 +57,7 @@
     "createList": "Create a list"
   },
   "sections": {
-    "details": "Details",
-    "description": "Description",
-    "organisation": "Organisation",
-    "subtasks": "Subtasks",
-    "collaboration": "Collaboration"
+    "detailsHint": "optional fields"
   },
   "mobile": {
     "createTask": "Create task",
@@ -65,9 +72,45 @@
   "desktop": {
     "closeForm": "Close the form",
     "unsaved": "Unsaved",
-    "changeColor": "Change colour",
+    "changeColor": "Change color",
     "namePlaceholder": "Enter the task name",
     "minuteEstimate": "Estimate in minutes",
     "listNamePlaceholder": "List name..."
+  },
+  "delete": {
+    "titleOwner": "Delete this task",
+    "titleShared": "Leave this shared task",
+    "workingOwner": "Deleting…",
+    "workingShared": "Leaving…",
+    "confirmOwner": "Delete",
+    "confirmShared": "Leave",
+    "bodyOwner": "Are you sure you want to delete this task? This action cannot be undone.",
+    "bodyShared": "You'll leave this shared task: it will stay visible to its owner and the other collaborators."
+  },
+  "form": {
+    "addNote": "Add a note",
+    "durationOther": "Other duration",
+    "inviteSomeone": "Invite someone",
+    "collaborators": "Collaborators",
+    "lists": "List",
+    "listsCount_one": "{{count}} list",
+    "listsCount_other": "{{count}} lists",
+    "nameRequired": "Task name *",
+    "namePlaceholder": "Task name",
+    "descriptionPlaceholder": "Task description",
+    "addDescription": "+ Add a description",
+    "clearDate": "Clear the date",
+    "bookmarkAdd": "Add to bookmarks",
+    "bookmarkRemove": "Remove from bookmarks",
+    "categoryNameTooShort": "A category name needs at least 2 characters",
+    "headingShare": "Share this task",
+    "headingCreate": "New task",
+    "headingEdit": "Edit this task",
+    "headingEditShort": "Edit",
+    "deleteTask": "Delete this task",
+    "collaboratorPlaceholder": "Email or name…",
+    "addCollaborator": "Add",
+    "userNotFound": "User not found",
+    "bookmark": "Favorite"
   }
 }

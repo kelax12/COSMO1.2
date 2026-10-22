@@ -3,12 +3,14 @@
     "tasks": "Tasks",
     "recurrences": "Recurring",
     "new": "New",
+    "skipToCalendar": "Skip to the calendar",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "prevPeriod": "Previous period",
     "nextPeriod": "Next period",
     "backToToday": "Back to today",
-    "today": "Today"
+    "today": "Today",
+    "calendarScroller": "Calendar grid"
   },
   "view": {
     "day": "Day",
@@ -20,36 +22,39 @@
     "uncategorized": "Uncategorized",
     "addedBy": "Added by {{name}}",
     "occurrenceDeleted": "Occurrence deleted",
-    "eventDeleted": "Event deleted"
+    "eventDeleted": "Event deleted",
+    "copySuffix": "(copy)",
+    "linkedToTask": "Linked to a task",
+    "taskDone": "Task completed"
   },
   "quickCreate": {
+    "aria": "Quick event creation",
     "titlePlaceholder": "Event title",
     "categoryPlaceholder": "Category",
     "addCategory": "Add a category",
     "cancel": "Cancel",
     "create": "Create"
   },
-  "eventToTask": {
-    "title": "What should happen to this event?",
-    "subtitle": "It isn't linked to any task",
-    "close": "Close",
-    "delete": "Delete",
-    "convert": "Turn into a task"
-  },
   "slotReview": {
-    "title": "Time slot finished",
     "question": "Did you get this task done?",
-    "snooze": "Later",
-    "remaining_one": "{{count}} slot left to review",
-    "remaining_other": "{{count}} slots left to review",
     "validate": "Yes, complete the task",
     "postpone": "Reschedule",
-    "delete": "Delete"
+    "delete": "Delete",
+    "deleted": "Task and time slot deleted",
+    "postponed": "Time slot removed, the task is left to reschedule",
+    "ignore": "Task not done",
+    "badgeAria": "This time slot needs a decision: {{title}}",
+    "panelTitle": "Time slot ended",
+    "panelAction": "What about this slot?"
   },
   "sidebar": {
     "title": "Available tasks",
+    "scheduleTitle": "Schedule a task",
+    "scheduleHint": "Hold a task to drag it onto the calendar, or tap it to pick a slot.",
+    "dropHere": "Drop on a time slot",
+    "addTask": "Add a task",
     "close": "Close the task panel",
-    "search": "Search a task...",
+    "search": "Search for a task...",
     "filterCategory": "Filter by category",
     "allCategories": "All categories",
     "filterPriority": "Filter by priority",
@@ -63,10 +68,18 @@
     "taskOptions": "Task options",
     "editTask": "Edit task",
     "duplicateTask": "Duplicate task",
-    "deleteLinkedEvent": "Delete the linked event",
+    "deleteLinkedEvents_one": "Delete the linked event",
+    "deleteLinkedEvents_other": "Delete the {{count}} linked events",
+    "linkedEventsDeleted_one": "Linked event deleted",
+    "linkedEventsDeleted_other": "{{count}} linked events deleted",
     "deleteTask": "Delete task",
     "taskDeleted": "Task deleted",
     "copySuffix": "{{name}} (copy)",
+    "sourceFilterAria": "Filter tasks by origin",
+    "sourceAll": "All",
+    "sourcePerso": "Personal",
+    "sourcePro": "Team",
+    "proTaskBadge": "Team task",
     "help": {
       "closeTutorial": "Close the tips",
       "showGuide": "Show the guide",
@@ -75,7 +88,8 @@
       "step1": "• Drag a task onto the calendar",
       "step2": "• Its properties carry over automatically",
       "step3": "• The duration sets the event length"
-    }
+    },
+    "alreadyScheduled": "✓ Already scheduled"
   },
   "recurrence": {
     "title": "Recurring events",

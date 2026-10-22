@@ -1,0 +1,392 @@
+// ═══════════════════════════════════════════════════════════════════
+// report-bug Edge Function
+//
+// Reçoit le formulaire « Signaler un bug » de l'app et l'expédie par e-mail
+// à l'adresse de contact (contact@thecosmo.app) via l'API Resend.
+//
+// Trust model :
+// - Aucun accès base. La fonction ne lit ni n'écrit une seule ligne : elle
+//   valide un payload et relaie un e-mail. Pas de service_role ici.
+// - L'appelant est authentifié par le gateway Supabase (verify_jwt par
+//   défaut). Un visiteur non connecté passe avec la clé anon : c'est voulu,
+//   un bug se signale aussi depuis un compte cassé. Si le JWT porte un vrai
+//   utilisateur, son e-mail est mis en Reply-To pour pouvoir lui répondre.
+// - Origine restreinte (CORS) à APP_URL + les deux origines de dev.
+//
+// Secrets attendus :
+//   supabase secrets set RESEND_API_KEY=re_...
+//   supabase secrets set BUG_REPORT_TO=contact@thecosmo.app              (optionnel)
+//   supabase secrets set BUG_REPORT_FROM="Cosmo <bug@send.thecosmo.app>" (REQUIS)
+//
+// 🔴 Le domaine doit être `send.thecosmo.app`, PAS la racine `thecosmo.app` :
+//    seul le premier est vérifié chez Resend (la racine porte les MX et le SPF
+//    d'IONOS et ne sera jamais signée). Cette ligne recommandait la racine, et
+//    la disait « optionnel » — deux fois la même erreur, celle qui a fait
+//    échouer `renewal-notice` en silence jusqu'au 2026-09-02.
+//
+// Sans RESEND_API_KEY (ou sans BUG_REPORT_FROM) la fonction répond 503 : le
+// client affiche alors un repli « écrivez-nous directement ».
+//
+// Déploiement : `supabase functions deploy report-bug`
+// ═══════════════════════════════════════════════════════════════════
+
+import { createClient } from 'npm:@supabase/supabase-js@2'
+import { opsAlert } from '../_shared/alert.ts'
+import { REPORT_BUG_LIMITS, callerIp, consumeRateLimits } from '../_shared/rate-limit.ts'
+
+const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
+const CONTACT_EMAIL = Deno.env.get('BUG_REPORT_TO') ?? 'contact@thecosmo.app'
+/**
+ * Expéditeur. 🔴 AUCUN DÉFAUT, exactement comme `renewal-notice`.
+ *
+ * Le défaut supprimé était `Cosmo <bug@thecosmo.app>`, or le domaine vérifié
+ * chez Resend est `send.thecosmo.app` : la racine porte les MX et le SPF
+ * d'IONOS et ne sera jamais signée. Ce défaut ne dégradait pas l'envoi, il le
+ * rendait IMPOSSIBLE — tout signalement de bug repartait en 502 `send_failed`,
+ * en présentant une panne d'envoi là où il n'y avait qu'un secret absent.
+ *
+ * Le jumeau `renewal-notice` a été corrigé le 2026-09-02 ; celui-ci portait le
+ * même défaut, non repéré. Sans le secret, on répond `sender_not_configured`
+ * et le client bascule sur son lien mailto — le repli existe déjà.
+ */
+const MAIL_FROM = Deno.env.get('BUG_REPORT_FROM')
+
+// Origines autorisées : la prod, plus les deux serveurs de dev locaux
+// (`npm run dev` sur 5173, `npm start` sur 3000) — sans quoi le formulaire
+// serait intestable ailleurs qu'en production.
+const ALLOWED_ORIGINS = new Set([APP_URL, 'http://localhost:5173', 'http://localhost:3000'])
+
+function corsHeadersFor(req: Request) {
+  const origin = req.headers.get('Origin') ?? ''
+  const allow = ALLOWED_ORIGINS.has(origin) ? origin : ''
+  const headers: Record<string, string> = {
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
+  if (allow) headers['Access-Control-Allow-Origin'] = allow
+  return headers
+}
+
+// Bornes — miroir de `src/lib/bug-report.ts`. Le client valide pour l'UX,
+// le serveur valide parce que rien de ce qui vient du client n'est acquis.
+const TITLE_MIN = 3
+const TITLE_MAX = 120
+const DESCRIPTION_MIN = 10
+const DESCRIPTION_MAX = 5000
+const ATTACHMENT_MAX_BYTES = 3 * 1024 * 1024
+/**
+ * Types de piece jointe autorises, ET l'extension que porte le fichier joint.
+ *
+ * 🔴 C-32 — l'allowlist etait DECORATIVE. Elle validait `attachment.type`, puis
+ * ne le transmettait jamais : Resend ne recoit que `filename` et `content`, et
+ * type la piece jointe d'apres le NOM de fichier, qui n'etait borne qu'en
+ * longueur. `{ name: 'facture.html', type: 'image/png', content: <base64 d'un
+ * formulaire d'hameconnage> }` passait la validation et arrivait dans la boite
+ * de contact en piece jointe HTML — exactement ce que l'allowlist affirmait
+ * interdire.
+ *
+ * L'extension est donc DERIVEE du type valide, jamais reprise du nom envoye :
+ * c'est le seul des deux champs qui ait ete verifie.
+ */
+const ATTACHMENT_EXTENSION_BY_TYPE = new Map<string, string>([
+  ['image/png', 'png'],
+  ['image/jpeg', 'jpg'],
+  ['image/gif', 'gif'],
+  ['image/webp', 'webp'],
+  ['application/pdf', 'pdf'],
+  ['text/plain', 'txt'],
+])
+// Le contexte technique est un dictionnaire libre côté client : on le borne
+// pour qu'il ne devienne pas un canal d'exfiltration de 5 Mo de texte.
+const CONTEXT_MAX_ENTRIES = 12
+const CONTEXT_MAX_VALUE_LENGTH = 500
+
+function json(body: unknown, status: number, req: Request) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' },
+  })
+}
+
+/** Neutralise les injections d'en-têtes : un CR/LF dans un Subject les scinde. */
+function singleLine(value: string): string {
+  return value.replace(/[\r\n]+/g, ' ').trim()
+}
+
+/** Échappe le HTML — le corps du mail est rendu par un client de messagerie. */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeadersFor(req) })
+  }
+  if (req.method !== 'POST') {
+    return json({ error: 'method_not_allowed' }, 405, req)
+  }
+
+  if (!MAIL_FROM) {
+    // Même repli que `mail_not_configured` : 503 parce que ce n'est pas un
+    // bug, c'est une configuration absente. Sans cette garde, l'envoi partait
+    // avec un expéditeur non signé et échouait en 502.
+    return json({ error: 'sender_not_configured' }, 503, req)
+  }
+
+  const apiKey = Deno.env.get('RESEND_API_KEY')
+  if (!apiKey) {
+    // Pas d'alerte ops : ce n'est pas une panne, c'est une fonction pas encore
+    // configurée. Le client bascule sur le lien mailto.
+    return json({ error: 'mail_not_configured' }, 503, req)
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 🔴 C-31 — PLAFOND DE DEBIT, AVANT TOUT TRAVAIL
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // Cette fonction est un relais d'e-mail OUVERT : `verify_jwt: true`, mais la
+  // clé anon suffit — elle est dans le bundle client — et c'est VOULU, on doit
+  // pouvoir signaler un bug depuis un compte cassé. Il n'y avait ensuite ni
+  // CAPTCHA, ni throttle client, ni compteur serveur, ni plafond par IP.
+  //
+  // Une boucle de quelques lignes postait des rapports valides avec 3 Mo de
+  // pièce jointe. Chaque appel est un e-mail réel expédié par notre compte
+  // Resend : quota épuisé, boîte de contact noyée, et surtout réputation
+  // d'expéditeur du domaine abîmée — celle-là met des mois à se reconstruire,
+  // et c'est le même domaine qui porte les e-mails d'authentification et les
+  // avis de reconduction (Conso. L215-1). Un seul abus coupe l'inscription ET
+  // la conformité, pour tout le monde.
+  //
+  // ⚠️ LA PLACE DE CE BLOC EST UN CHOIX : avant le parsing du corps, donc
+  //    avant de décoder jusqu'à 3 Mo de base64. Un plafond qui s'applique
+  //    après le travail coûteux ne protège que la boîte mail, pas la fonction.
+  //
+  // Plafonds (arbitrage du 2026-09-03) : 3 rapports / heure / compte,
+  // 10 / jour / IP. Le compte n'est pas encore résolu ici — il l'est plus bas,
+  // depuis le JWT — donc on borne d'abord par IP, puis par compte une fois
+  // l'auteur connu.
+  const ipVerdict = await consumeRateLimits('report-bug', [
+    {
+      domain: 'report-bug:ip',
+      value: callerIp(req),
+      limit: REPORT_BUG_LIMITS.perIp.limit,
+      window: REPORT_BUG_LIMITS.perIp.window,
+    },
+  ])
+  if (!ipVerdict.allowed) {
+    // 503 quand c'est NOTRE configuration qui manque, 429 quand c'est un abus :
+    // les deux ne veulent pas dire la même chose à celui qui les lit.
+    return ipVerdict.misconfigured
+      ? json({ error: 'rate_limit_not_configured' }, 503, req)
+      : json({ error: 'too_many_requests' }, 429, req)
+  }
+
+  let payload: {
+    title?: unknown
+    description?: unknown
+    attachment?: unknown
+    context?: unknown
+    category?: unknown
+  }
+  try {
+    payload = await req.json()
+  } catch {
+    return json({ error: 'invalid_body' }, 400, req)
+  }
+
+  const title = typeof payload.title === 'string' ? singleLine(payload.title) : ''
+  const description = typeof payload.description === 'string' ? payload.description.trim() : ''
+  if (title.length < TITLE_MIN || title.length > TITLE_MAX) {
+    return json({ error: 'invalid_title' }, 400, req)
+  }
+  if (description.length < DESCRIPTION_MIN || description.length > DESCRIPTION_MAX) {
+    return json({ error: 'invalid_description' }, 400, req)
+  }
+
+  // ── C-110 · la CATÉGORIE, seule chose qu'on compte ────────────────
+  //
+  // 🔴 Énumération FERMÉE, et une valeur inconnue retombe sur `other` au lieu
+  // d'être refusée. Le raisonnement : ce champ ne sert qu'à un COMPTEUR, il
+  // n'a aucun effet sur le rapport lui-même, et refuser un signalement de bug
+  // parce que sa catégorie est mal orthographiée serait faire perdre
+  // l'information utile pour protéger la statistique. La contrainte SQL de la
+  // mig. 150, elle, reste stricte : c'est ici qu'on normalise.
+  const CATEGORIES = ['bug', 'idea', 'question', 'other']
+  const category = typeof payload.category === 'string' && CATEGORIES.includes(payload.category)
+    ? payload.category
+    : 'other'
+
+  // Pièce jointe — optionnelle, base64 sans préfixe `data:`.
+  let attachment: { filename: string; content: string } | null = null
+  if (payload.attachment && typeof payload.attachment === 'object') {
+    const raw = payload.attachment as Record<string, unknown>
+    const name = typeof raw.name === 'string' ? singleLine(raw.name).slice(0, 100) : ''
+    const type = typeof raw.type === 'string' ? raw.type : ''
+    const content = typeof raw.content === 'string' ? raw.content : ''
+    const extension = ATTACHMENT_EXTENSION_BY_TYPE.get(type)
+    if (!name || !extension || !content) {
+      return json({ error: 'invalid_attachment' }, 400, req)
+    }
+    // 4 caractères base64 = 3 octets : on borne la taille réelle du fichier
+    // sans avoir à le décoder.
+    if ((content.length * 3) / 4 > ATTACHMENT_MAX_BYTES) {
+      return json({ error: 'attachment_too_large' }, 413, req)
+    }
+    if (!/^[A-Za-z0-9+/=\s]+$/.test(content)) {
+      return json({ error: 'invalid_attachment' }, 400, req)
+    }
+    // C-32 — le nom est reconstruit : radical nettoye + extension DERIVEE du
+    // type valide. Un `facture.html` declare `image/png` repart en
+    // `facture.png`, donc inerte dans un client de messagerie.
+    const stem = name
+      .replace(/\.[^.]*$/, '')          // retire l'extension envoyee, quelle qu'elle soit
+      .replace(/[^A-Za-z0-9._-]/g, '_') // et tout ce qui n'est pas un nom de fichier
+      .slice(0, 80) || 'piece-jointe'
+    attachment = { filename: `${stem}.${extension}`, content: content.replace(/\s+/g, '') }
+  }
+
+  // Contexte technique (URL, user agent, viewport…) — borné et aplati.
+  const contextLines: string[] = []
+  if (payload.context && typeof payload.context === 'object') {
+    const entries = Object.entries(payload.context as Record<string, unknown>).slice(0, CONTEXT_MAX_ENTRIES)
+    for (const [key, value] of entries) {
+      if (typeof value !== 'string') continue
+      contextLines.push(`${singleLine(key).slice(0, 40)}: ${singleLine(value).slice(0, CONTEXT_MAX_VALUE_LENGTH)}`)
+    }
+  }
+
+  // Identité de l'auteur : elle vient du JWT, JAMAIS du corps de la requête.
+  // Un visiteur non connecté (clé anon) reste anonyme, et c'est valide.
+  //
+  // 🔴 C-33 — l'erreur de `getUser()` n'etait pas lue. Sur panne de l'API auth,
+  // un utilisateur CONNECTE etait traite comme anonyme : le rapport partait
+  // sans son adresse et sans `reply_to`, donc sans aucun moyen de lui repondre,
+  // et rien ne le disait. « Anonyme » et « auteur non resolu » sont deux etats
+  // differents, et un seul des deux justifie de ne pas pouvoir repondre.
+  let reporterEmail: string | null = null
+  let reporterUnresolved = false
+  const authHeader = req.headers.get('Authorization') ?? ''
+  if (authHeader) {
+    try {
+      const anon = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        { global: { headers: { Authorization: authHeader } } },
+      )
+      const { data, error } = await anon.auth.getUser()
+      // Une cle anon seule rend `user: null` SANS erreur : c'est un visiteur
+      // non connecte, cas nominal et voulu. Une erreur, elle, veut dire qu'on
+      // n'a pas su repondre a la question.
+      if (error) reporterUnresolved = true
+      else reporterEmail = data.user?.email ?? null
+    } catch {
+      reporterUnresolved = true
+    }
+  }
+  const reporterLabel = reporterEmail
+    ?? (reporterUnresolved ? 'auteur non resolu (panne de l API auth)' : 'non connecté (anonyme)')
+
+  // Second plafond, maintenant que l'auteur est connu : 3 / heure / compte.
+  // Il s'ajoute au plafond par IP, il ne le remplace pas — un abus depuis
+  // plusieurs comptes derrière une même IP reste borné par le premier, et un
+  // abus d'un compte derrière plusieurs IP par celui-ci.
+  if (reporterEmail) {
+    const accountVerdict = await consumeRateLimits('report-bug', [
+      {
+        domain: 'report-bug:account',
+        value: reporterEmail,
+        limit: REPORT_BUG_LIMITS.perAccount.limit,
+        window: REPORT_BUG_LIMITS.perAccount.window,
+      },
+    ])
+    if (!accountVerdict.allowed) {
+      return accountVerdict.misconfigured
+        ? json({ error: 'rate_limit_not_configured' }, 503, req)
+        : json({ error: 'too_many_requests' }, 429, req)
+    }
+  }
+
+  const textBody = [
+    description,
+    '',
+    '---',
+    `Auteur : ${reporterLabel}`,
+    ...contextLines,
+  ].join('\n')
+
+  const htmlBody = [
+    `<p style="white-space:pre-wrap">${escapeHtml(description)}</p>`,
+    '<hr>',
+    '<p style="font:12px/1.6 monospace;color:#555">',
+    `Auteur : ${escapeHtml(reporterLabel)}<br>`,
+    ...contextLines.map((line) => `${escapeHtml(line)}<br>`),
+    '</p>',
+  ].join('')
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: MAIL_FROM,
+        to: [CONTACT_EMAIL],
+        // Répondre au rapport doit répondre à son auteur, pas à la boîte
+        // d'envoi. Absent si l'auteur n'est pas connecté.
+        ...(reporterEmail ? { reply_to: reporterEmail } : {}),
+        subject: `[Bug] ${title}`,
+        text: textBody,
+        html: htmlBody,
+        ...(attachment ? { attachments: [attachment] } : {}),
+      }),
+      signal: AbortSignal.timeout(15000),
+    })
+
+    if (!res.ok) {
+      // Pas de corps de réponse relayé au client : il peut contenir des
+      // détails de compte Resend.
+      await opsAlert('report-bug', `Resend a refusé un envoi (HTTP ${res.status}).`)
+      return json({ error: 'send_failed' }, 502, req)
+    }
+  } catch {
+    await opsAlert('report-bug', 'Resend injoignable (timeout ou erreur réseau).')
+    return json({ error: 'send_failed' }, 502, req)
+  }
+
+  // ── C-110 · le compteur, APRÈS l'envoi et sans jamais le bloquer ──
+  //
+  // 🔴 L'ORDRE COMPTE, ET L'ISOLATION AUSSI. Le rapport est déjà parti : la
+  // seule chose qui reste est de le COMPTER. Si le compteur échoue, on ne
+  // rend surtout pas une erreur au client — il croirait son signalement
+  // perdu et le renverrait, alors que l'e-mail est bien arrivé. On perd une
+  // statistique, jamais un rapport.
+  //
+  // ⚠️ Ce que cette écriture NE contient PAS : ni `user_id`, ni e-mail, ni
+  // titre, ni description. La table n'a pas ces colonnes, par conception
+  // (mig. 150) — le contenu du rapport vit dans la boîte mail du
+  // destinataire, qui est le seul endroit déclaré au registre art. 30 (T7).
+  // ❌ Ne jamais enrichir cet appel : ce serait créer une seconde copie des
+  //    données de support, hors registre, sans durée ni chemin d'effacement.
+  try {
+    const compteur = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    )
+    const { error } = await compteur.rpc('record_support_report', { p_category: category })
+    if (error) {
+      // Un `console.error` seul serait invisible : le build de prod drope les
+      // `console.*` côté client, et côté Edge personne ne lit les journaux.
+      await opsAlert('report-bug', 'rapport envoye mais NON COMPTE (record_support_report a echoue)')
+    }
+  } catch {
+    await opsAlert('report-bug', 'rapport envoye mais NON COMPTE (compteur injoignable)')
+  }
+
+  return json({ ok: true }, 200, req)
+})

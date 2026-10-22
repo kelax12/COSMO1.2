@@ -4,10 +4,10 @@
 // Typographie : Inter global — pas de font dédiée à cette page.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState } from 'react';
-import { User, Palette, BookOpen, Shield, Database, Eye, EyeOff, Loader2, LayoutGrid } from 'lucide-react';
+import { User, Palette, BookOpen, Shield, Database, Eye, EyeOff, Loader2 } from 'lucide-react';
 import type { KeyOf } from '@/i18n/catalog';
 
-export type SettingsTab = 'profile' | 'appearance' | 'modules' | 'security' | 'data' | 'guide';
+export type SettingsTab = 'profile' | 'appearance' | 'security' | 'data' | 'guide';
 
 /* ─── nav config ───────────────────────────────────────────────── */
 //
@@ -39,7 +39,6 @@ export const NAV_GROUPS: NavGroup[] = [
     labelKey: 'nav.preferences',
     items: [
       { id: 'appearance' as SettingsTab, icon: Palette, labelKey: 'nav.appearance' },
-      { id: 'modules' as SettingsTab, icon: LayoutGrid, labelKey: 'nav.modules' },
     ],
   },
   {
@@ -55,11 +54,16 @@ export const NAV_GROUPS: NavGroup[] = [
 /* ─── reusable: LabeledInput ───────────────────────────────────── */
 export function LabeledInput({
   label, type = 'text', value, onChange, placeholder, icon: Icon, showToggle, disabled, hint,
+  showPasswordLabel = 'Show password', hidePasswordLabel = 'Hide password',
 }: {
   label: string; type?: string; value: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string; icon?: React.ElementType; showToggle?: boolean;
   disabled?: boolean; hint?: string;
+  /** Libellés du bouton œil — CLÉS résolues par l'appelant, jamais du texte
+   *  écrit ici (même règle que `labelKey` plus haut) : ce composant n'a pas
+   *  de `useT`, il rend ce qu'on lui passe. */
+  showPasswordLabel?: string; hidePasswordLabel?: string;
 }) {
   const [visible, setVisible] = useState(false);
   const inputType = showToggle ? (visible ? 'text' : 'password') : type;
@@ -78,7 +82,7 @@ export function LabeledInput({
         {showToggle && (
           <button type="button" tabIndex={-1} onClick={() => setVisible(v => !v)}
             className="absolute right-1 top-1/2 -translate-y-1/2 min-h-touch min-w-touch sm:min-h-0 sm:min-w-0 flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors sm:p-1"
-            aria-label={visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}>
+            aria-label={visible ? hidePasswordLabel : showPasswordLabel}>
             {visible ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
         )}
@@ -91,13 +95,16 @@ export function LabeledInput({
 }
 
 /* ─── reusable: PrimaryButton ──────────────────────────────────── */
+// Maquette 208 (2026-10-10) : l'accent, comme toute action principale de
+// l'app. Il était blanc (« Sauvegarder », « Mettre à jour ») à côté d'un
+// « Accéder » bleu et d'un « Enregistrer » violet.
 export function PrimaryButton({ onClick, type = 'button', loading = false, children }: {
   onClick?: () => void; type?: 'button' | 'submit'; loading?: boolean; children: React.ReactNode;
 }) {
   return (
     <button onClick={onClick} type={type} disabled={loading}
       style={{ minHeight: '44px' }}
-      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] rounded-xl text-sm font-semibold hover:opacity-85 active:scale-[0.97] transition-all duration-150 disabled:opacity-50">
+      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] rounded-xl text-sm font-semibold hover:bg-[rgb(var(--color-accent-solid-hover))] active:scale-[0.97] transition-all duration-150 disabled:opacity-50">
       {loading && <Loader2 size={14} className="animate-spin" />}
       {children}
     </button>

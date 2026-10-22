@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence, useInView, type Variants } from 'framer-motion';
+import { motion, AnimatePresence, useInView, useReducedMotion, type Variants } from 'framer-motion';
+import { Pause, Play } from 'lucide-react';
+import { useT } from '@/i18n/useT';
+import { rotationDemandee, etatApresAppui, type EtatRotation } from './rotation-state';
 import TaskTableShowcase from './TaskTableShowcase';
 import AgendaShowcase from './AgendaShowcase';
 import OKRCardShowcase from './OKRCardShowcase';
@@ -17,10 +20,8 @@ import {
  * Plutôt qu'un mockup custom, on RÉUTILISE les showcases existants (déjà
  * fidèles à l'app et déjà animés en interne) et on les fait TOURNER : un
  * showcase visible à la fois, rotation toutes les 2,5 s, avec une transition
- * « lourde » qui ALTERNE à chaque rotation entre deux effets (cf. slideVariants) :
- *   - Cube 3D : les slides sont les faces d'un cube qui pivote (rotateY ±90°).
- *   - Zoom portail : la sortante grossit et se dissout, la suivante émerge du
- *     centre, avec un flash lumineux radial au croisement.
+ * courte et sans chevauchement (cf. `slideVariants` : le pourquoi du
+ * remplacement des effets « cube » et « portail » y est écrit).
  *
  * - Desktop : TaskTable / Agenda / OKR / Habitudes.
  * - Mobile (`compact`) : versions mobiles correspondantes.
@@ -58,83 +59,149 @@ const MOBILE_SLIDES: ShowcaseSlide[] = [
 
 const ROTATE_MS = 2500;
 
-// Effets de transition « lourds » alternés à chaque rotation.
-type TransitionStyle = 'cube' | 'portal';
-const TRANSITION_CYCLE: TransitionStyle[] = ['cube', 'portal'];
-
-// Variants pilotés par `custom` (= TransitionStyle). Le pattern carousel
-// `custom` de Framer Motion garantit que l'élément SORTANT et l'élément
-// ENTRANT appliquent le MÊME effet pendant le croisement (mode sync).
+// ═══════════════════════════════════════════════════════════════════
+// UNE transition, courte, sans chevauchement. Ce qu'il y avait avant, et
+// pourquoi ça a sauté (mesuré le 2026-08-30 sur la vraie page) :
+//
+//   • deux effets « lourds » alternés (cube 3D, puis portail : entrée à
+//     `scale(0.18)` avec `blur(10px)`, sortie à `scale(2.4)`), joués en
+//     `mode="sync"` avec des RESSORTS. Un ressort met plus d'une seconde à
+//     se poser, la rotation tombe toutes les 2,5 s, et les sorties se
+//     chevauchaient ;
+//   • relevé dans le DOM : jusqu'à **trois diapositives simultanées**, dont
+//     une restée bloquée à `opacity: 0.47` pendant plus d'une seconde.
+//     Deux vues superposées en permanence — c'est ça que l'on voyait
+//     « buguer » sur le passage Tâches → Agenda ;
+//   • et pendant la transition, la barre d'adresse annonçait déjà la vue
+//     suivante au-dessus du contenu précédent.
+//
+// La correction n'est pas un réglage de durée, c'est une garantie : en
+// `mode="wait"`, il n'y a JAMAIS plus d'une diapositive à l'écran. La
+// sortie se termine avant que l'entrée commence, donc rien ne peut
+// s'empiler ni rester coincé. Deux tweens de 260 et 380 ms, soit 640 ms au
+// total, très en dessous des 2 500 ms de rotation.
+//
+// L'effet est volontairement sobre : la fenêtre imite un changement d'onglet
+// dans une application, ce qui est exactement le message du hero — quatre
+// modules, une seule app. Un cube 3D racontait l'inverse : quatre choses
+// différentes.
 const slideVariants: Variants = {
-  enter: (style: TransitionStyle) =>
-    style === 'cube'
-      ? { rotateY: 90, x: '55%', z: -220, scale: 0.9, opacity: 0 }
-      : { scale: 0.18, opacity: 0, filter: 'blur(10px)' },
-  center: (style: TransitionStyle) => ({
-    rotateY: 0,
-    x: 0,
-    z: 0,
-    scale: 1,
+  enter: { opacity: 0, y: 12 },
+  center: {
     opacity: 1,
-    filter: 'blur(0px)',
-    transition:
-      style === 'cube'
-        ? { type: 'spring', stiffness: 70, damping: 14, mass: 0.9 }
-        : { type: 'tween', duration: 0.8, ease: [0.22, 1, 0.36, 1] },
-  }),
-  exit: (style: TransitionStyle) =>
-    style === 'cube'
-      ? {
-          rotateY: -90,
-          x: '-55%',
-          z: -220,
-          scale: 0.9,
-          opacity: 0,
-          transition: { type: 'spring', stiffness: 70, damping: 16, mass: 0.9 },
-        }
-      : {
-          scale: 2.4,
-          opacity: 0,
-          filter: 'blur(12px)',
-          transition: { type: 'tween', duration: 0.8, ease: [0.5, 0, 0.75, 0] },
-        },
+    y: 0,
+    transition: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+  },
+  exit: {
+    opacity: 0,
+    y: -10,
+    transition: { duration: 0.26, ease: [0.55, 0, 1, 0.45] },
+  },
 };
 
 interface AppWindowShowcaseProps {
   /** Variante condensée (mobile) : utilise les showcases mobiles. */
   compact?: boolean;
+  /**
+   * Signale la vue affichée (`tasks` | `agenda` | `okr` | `habits`).
+   *
+   * Sert au hero de la landing : la puce du module correspondant s'allume en
+   * même temps que la fenêtre change de vue. C'est ce qui transforme une
+   * rangée de libellés en explication — le visiteur voit que les quatre
+   * modules sont quatre vues de la MÊME application.
+   *
+   * Doit être stable (`useCallback`) : ce composant est mémoïsé.
+   */
+  onSlideChange?: (cle: string) => void;
 }
 
-const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = false }) => {
+const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = false, onSlideChange }) => {
   const slides = compact ? MOBILE_SLIDES : DESKTOP_SLIDES;
   const containerRef = useRef<HTMLDivElement>(null);
   const inView = useInView(containerRef, { amount: 0.25 });
+  const { t } = useT('landing');
+
+  // C-69. `useReducedMotion` lit `prefers-reduced-motion` et se met à jour si
+  // le réglage change en cours de session — inutile de le figer au montage.
+  const mouvementReduit = useReducedMotion();
+  const [etat, setEtat] = useState<EtatRotation>('auto');
+  const [suspendu, setSuspendu] = useState(false);
 
   const [index, setIndex] = useState(0);
-  // `step` ne fait qu'augmenter → sert à alterner l'effet de transition et à
-  // keyer le flash du portail (l'index, lui, boucle modulo slides.length).
-  const [step, setStep] = useState(0);
 
-  // Rotation auto, uniquement quand le hero est visible (perf).
+  /**
+   * Vue ANNONCÉE par la barre d'adresse, l'étiquette et la puce du hero.
+   *
+   * Elle est distincte de la vue active exprès. Avant, tout lisait `active`,
+   * donc l'adresse affichait `cosmo.app/agenda` et l'étiquette « Agenda »
+   * pendant que le tableau des tâches occupait encore toute la fenêtre : la
+   * fenêtre se contredisait elle-même pendant une demi-seconde. Ici, le
+   * changement d'annonce est déclenché par `onExitComplete`, c'est-à-dire à
+   * l'instant précis où l'ancienne vue a fini de sortir et où la nouvelle
+   * commence à entrer.
+   */
+  const [cleAnnoncee, setCleAnnoncee] = useState(slides[0].key);
+
+  /**
+   * La rotation tourne-t-elle, à cet instant ?
+   *
+   * Quatre conditions, et il faut les quatre :
+   *   · `inView`   — hors écran, l'intervalle ne sert à rien (perf, déjà là) ;
+   *   · `!suspendu`— ni survol, ni focus dans la fenêtre ;
+   *   · l'état demandé par l'utilisateur ;
+   *   · `prefers-reduced-motion`, que seul l'état `lecture` outrepasse.
+   */
+  const tourneraitSansSuspension = rotationDemandee(etat, !!mouvementReduit);
+  const enRotation = inView && !suspendu && tourneraitSansSuspension;
+
   useEffect(() => {
-    if (!inView) return;
+    if (!enRotation) return;
     const id = setInterval(() => {
-      setStep((s) => s + 1);
       setIndex((i) => (i + 1) % slides.length);
     }, ROTATE_MS);
     return () => clearInterval(id);
-  }, [inView, slides.length]);
+  }, [enRotation, slides.length]);
+
 
   const active = slides[index];
   const ActiveComp = active.Comp;
+  // Repli sur `active` si la clé annoncée n'existe pas dans ce jeu de vues
+  // (bascule desktop ↔ mobile) : jamais d'annonce orpheline.
+  const annonce = slides.find((s) => s.key === cleAnnoncee) ?? active;
 
-  // Effet appliqué au swap courant (cube → portal → cube …).
-  const transitionStyle = TRANSITION_CYCLE[step % TRANSITION_CYCLE.length];
+  // Notifie APRÈS le rendu, jamais pendant : prévenir un parent en cours de
+  // rendu déclencherait un rendu imbriqué à chaque rotation. Et on notifie
+  // sur l'ANNONCE, pas sur l'active : la puce du hero doit s'allumer quand la
+  // vue apparaît, pas une demi-seconde avant.
+  useEffect(() => {
+    onSlideChange?.(annonce.key);
+  }, [annonce.key, onSlideChange]);
 
   return (
-    <div ref={containerRef} className="w-full select-none" aria-hidden="true">
-      {/* Cadre fenêtre commun (chrome) — unifie la rotation */}
-      <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-slate-950/80 backdrop-blur-sm shadow-[0_30px_80px_-20px_rgba(0,0,0,0.75)]">
+    <div
+      ref={containerRef}
+      className="relative w-full select-none"
+      // C-69 · le survol et le focus SUSPENDENT, sans changer l'état demandé.
+      // `onFocusCapture` et non `onFocus` : le seul élément focalisable ici est
+      // le bouton de pause, et un `onFocus` sur le conteneur ne se
+      // déclencherait pas pour lui (React remonte le focus, mais la capture est
+      // la forme qui ne dépend pas de l'ordre du DOM).
+      onPointerEnter={() => setSuspendu(true)}
+      onPointerLeave={() => setSuspendu(false)}
+      onFocusCapture={() => setSuspendu(true)}
+      onBlurCapture={() => setSuspendu(false)}
+    >
+      {/* Cadre fenêtre commun (chrome) — unifie la rotation.
+          🔴 `aria-hidden` vit ICI, et plus sur le conteneur : le bouton de
+          pause de C-69 est le SEUL élément de ce composant qui doit rester
+          annoncé. Le laisser sous un `aria-hidden` en ferait une commande
+          invisible aux technologies d'assistance — c'est-à-dire un mécanisme
+          de pause que les personnes qui en ont le plus besoin ne trouvent
+          pas. */}
+      <div
+        className="relative rounded-2xl overflow-hidden border border-white/10 bg-slate-950/80 backdrop-blur-sm shadow-[0_30px_80px_-20px_rgba(0,0,0,0.75)]"
+        aria-hidden="true"
+      >
         {/* Chrome bar : l'URL change selon le showcase */}
         <div className="flex items-center gap-2 px-4 h-10 bg-slate-900/90 border-b border-white/10">
           <span className="w-3 h-3 rounded-full bg-[#FF5F57]" />
@@ -144,36 +211,37 @@ const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = fal
             <span className="text-[11px] text-slate-500 font-medium tracking-tight shrink-0">cosmo.app/</span>
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
-                key={active.path}
+                key={annonce.path}
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
                 transition={{ duration: 0.3 }}
                 className="text-[11px] text-slate-300 font-medium tracking-tight"
               >
-                {active.path}
+                {annonce.path}
               </motion.span>
             </AnimatePresence>
           </div>
         </div>
 
-        {/* Scène : un showcase visible, rotation 3D très marquée */}
+        {/* Scène : une seule vue à l écran, jamais deux (mode wait) */}
         <div
           className={`relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 ${
             compact ? 'h-[460px] flex items-center justify-center p-4' : 'h-[540px] p-4 sm:p-5'
           }`}
-          style={{ perspective: 1600 }}
         >
-          <AnimatePresence initial={false} mode="sync" custom={transitionStyle}>
+          <AnimatePresence
+            initial={false}
+            mode="wait"
+            onExitComplete={() => setCleAnnoncee(active.key)}
+          >
             <motion.div
               key={active.key}
-              custom={transitionStyle}
               variants={slideVariants}
               initial="enter"
               animate="center"
               exit="exit"
               className={`absolute inset-0 ${compact ? 'flex items-center justify-center p-4' : 'p-4 sm:p-5 flex items-start'}`}
-              style={{ transformStyle: 'preserve-3d', transformOrigin: 'center', backfaceVisibility: 'hidden' }}
             >
               <div className="w-full">
                 <ActiveComp />
@@ -181,33 +249,18 @@ const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = fal
             </motion.div>
           </AnimatePresence>
 
-          {/* Flash lumineux radial — uniquement sur les swaps « portail » */}
-          <AnimatePresence>
-            {transitionStyle === 'portal' && (
-              <motion.div
-                key={`flash-${step}`}
-                className="absolute inset-0 z-10 pointer-events-none"
-                style={{ background: 'radial-gradient(circle at center, rgba(255,255,255,0.85), rgba(96,165,250,0.25) 45%, transparent 70%)' }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 0.55, 0] }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.55, ease: 'easeOut', times: [0, 0.4, 1] }}
-              />
-            )}
-          </AnimatePresence>
-
           {/* Étiquette de feature (haut-gauche) */}
           <div className="absolute top-3 left-3 z-20 pointer-events-none">
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
-                key={active.key}
+                key={annonce.key}
                 initial={{ opacity: 0, y: -8, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.9 }}
                 transition={{ duration: 0.35 }}
                 className="px-3 py-1 rounded-full bg-slate-950/85 border border-white/15 backdrop-blur-md shadow-lg"
               >
-                <span className="text-[11px] font-semibold text-white">{active.label}</span>
+                <span className="text-[11px] font-semibold text-white">{annonce.label}</span>
               </motion.div>
             </AnimatePresence>
           </div>
@@ -228,6 +281,29 @@ const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = fal
           ))}
         </div>
       </div>
+
+      {/* ═══ C-69 · le mécanisme de pause (WCAG 2.2.2) ═══
+          44 × 44 px RÉELS (`h-11 w-11`), et pas un débord de `tap-area` : `/`
+          est l'une des huit pages publiques mesurées par
+          `e2e/touch-targets.spec.ts`, et corriger un défaut d'accessibilité en
+          en créant un autre serait une drôle de façon de compter.
+          Il est en bas à DROITE : les points de rotation sont centrés, donc
+          rien ne se chevauche. */}
+      <button
+        type="button"
+        onClick={() => setEtat((e) => etatApresAppui(e, !!mouvementReduit))}
+        aria-pressed={!tourneraitSansSuspension}
+        className="absolute bottom-3 right-3 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/85 text-slate-300 backdrop-blur-md transition-colors hover:text-white hover:border-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+      >
+        {tourneraitSansSuspension ? (
+          <Pause className="h-4 w-4" aria-hidden="true" />
+        ) : (
+          <Play className="h-4 w-4" aria-hidden="true" />
+        )}
+        <span className="sr-only">
+          {tourneraitSansSuspension ? t('hero.showcasePause') : t('hero.showcasePlay')}
+        </span>
+      </button>
     </div>
   );
 };

@@ -10,15 +10,21 @@ import { PageHeading } from '@/components/ui/typography';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useAdminStats,
+  useSupportStats,
+  useOnboardingFunnel,
   chooseGranularity,
   fillMissingDays,
   aggregateWeekly,
   toCumulative,
+  rankSources,
+  stackBySource,
+  ACQUISITION_GOALS,
   type DailyPoint,
   type Granularity,
 } from '@/modules/admin';
 import type { AdminChartPoint, LabeledValue } from './admin/AdminCharts';
 import { useT } from '@/i18n/useT';
+import { AdminMfaGate } from '@/components/admin/AdminMfaGate';
 
 // Règle P-2 : recharts (vendor-charts) chargé uniquement quand un admin
 // ouvre effectivement la page.
@@ -36,6 +42,12 @@ const CountBars = React.lazy(() =>
 );
 const Donut = React.lazy(() =>
   import('./admin/AdminCharts').then((m) => ({ default: m.Donut }))
+);
+const SourceStackChart = React.lazy(() =>
+  import('./admin/AdminCharts').then((m) => ({ default: m.SourceStackChart }))
+);
+const GoalChart = React.lazy(() =>
+  import('./admin/AdminCharts').then((m) => ({ default: m.GoalChart }))
 );
 
 // 'YYYY-MM-DD' → Date locale (jamais new Date('YYYY-MM-DD') : parse UTC).
@@ -60,15 +72,28 @@ const bucketize = (points: DailyPoint[], today: string) => {
 };
 
 const pct = (part: number, total: number): string =>
-  total > 0 ? `${Math.round((100 * part) / total)}%` : '—';
+  total > 0 ? `${Math.round((100 * part) / total)}%` : '·';
 
 const pctNum = (part: number, total: number): number =>
   total > 0 ? Math.round((100 * part) / total) : 0;
 
-const KpiCard: React.FC<{ label: string; value: string; hint?: string }> = ({ label, value, hint }) => (
-  <div className="card p-5">
+const KpiCard: React.FC<{ label: string; value: string; hint?: string; highlight?: boolean }> = ({
+  label,
+  value,
+  hint,
+  highlight,
+}) => (
+  <div
+    className="card p-5"
+    style={highlight ? { borderColor: 'rgb(var(--color-accent))', borderWidth: 2 } : undefined}
+  >
     <p className="text-xs font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>{label}</p>
-    <p className="text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{value}</p>
+    <p
+      className="text-xl font-bold"
+      style={{ color: highlight ? 'rgb(var(--color-accent))' : 'rgb(var(--color-text-primary))' }}
+    >
+      {value}
+    </p>
     {hint && (
       <p className="text-xs mt-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>{hint}</p>
     )}
@@ -96,10 +121,17 @@ const ChartCard: React.FC<{ title: string; note?: string; children: React.ReactN
   </div>
 );
 
-const AdminPage: React.FC = () => {
+const AdminDashboard: React.FC = () => {
   const { t } = useT('admin');
   const { isDemo } = useAuth();
   const { data, isLoading, error } = useAdminStats();
+  // 🔴 REQUÊTE SÉPARÉE (C-110). Elle rend `null` tant que la mig. 150 n'est
+  // pas appliquée, et le reste de la console s'affiche quand même. Le dépôt a
+  // déjà payé l'inverse : la mig. 136 a dormi commitée dix-sept jours pendant
+  // que `/statistics` affichait zéro (C-77).
+  const { data: support } = useSupportStats();
+  // Entonnoir des accueils (mig. 213) : même contrat, `null` = non appliquée.
+  const { data: funnel } = useOnboardingFunnel();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -145,53 +177,74 @@ const AdminPage: React.FC = () => {
   }
 
   const { totals, demo, usage, adoption, activation24h, tasksCompletion, collaboration, stickiness } = data;
+  const { activation48h, orgs, retentionD7BySource } = data;
+
+  // ── Plan d'acquisition 30 j (mig. 099) ───────────────────────────────
+  // Canaux triés par volume : c'est cet ordre qui pilote « couper / doubler ».
+  const sources = rankSources(data.signupsBySource);
+  const sourceRows = sources.map((source) => {
+    const signupsCount =
+      source === 'autres'
+        ? totals.users - sources.reduce((s, k) => s + (data.signupsBySource[k] ?? 0), 0)
+        : (data.signupsBySource[source] ?? 0);
+    const act = activation48h.bySource[source];
+    const ret = retentionD7BySource[source];
+    return { source, signups: signupsCount, activation: act, retention: ret };
+  });
+
+  // Série empilée : 60 derniers jours renseignés, au-delà le graphe est illisible.
+  const stackRows = stackBySource(data.signupsBySourceByDay, sources).slice(-60);
+  const stackPoints: AdminChartPoint[] = stackRows.map(({ day, ...counts }) => ({
+    label: formatLabel(day, 'day'),
+    ...counts,
+  }));
 
   // ── Données des graphiques (dérivées, pas de useMemo : calculs triviaux) ──
   // Répartition de l'activité : segments exclusifs qui somment au total.
   const activityData: LabeledValue[] = [
-    { label: "Actifs aujourd'hui", value: totals.activeToday },
-    { label: 'Actifs 7 j', value: Math.max(0, totals.active7d - totals.activeToday) },
-    { label: 'Inactifs 7-30 j', value: Math.max(0, totals.inactive7dPlus - totals.inactive30dPlus) },
-    { label: 'Inactifs 30 j+', value: totals.inactive30dPlus },
+    { label: t('activeToday'), value: totals.activeToday },
+    { label: t('active7d'), value: Math.max(0, totals.active7d - totals.activeToday) },
+    { label: t('inactive7to30'), value: Math.max(0, totals.inactive7dPlus - totals.inactive30dPlus) },
+    { label: t('inactive30plus'), value: totals.inactive30dPlus },
   ].filter((d) => d.value > 0);
 
   const providerData: LabeledValue[] = Object.entries(data.signupsByProvider).map(([provider, count]) => ({
     label: provider.charAt(0).toUpperCase() + provider.slice(1),
     value: count,
-    hint: `${count} comptes (${pct(count, totals.users)})`,
+    hint: t('providerHint', { count, pct: pct(count, totals.users) }),
   }));
 
   const adoptionData: LabeledValue[] = [
-    { label: '≥1 tâche', value: pctNum(adoption.tasksUsers, totals.users), hint: `${adoption.tasksUsers}/${totals.users} utilisateurs` },
-    { label: '≥1 habitude', value: pctNum(adoption.habitsUsers, totals.users), hint: `${adoption.habitsUsers}/${totals.users} utilisateurs` },
+    { label: t('tasksAtLeastOne'), value: pctNum(adoption.tasksUsers, totals.users), hint: t('usersRatio', { count: adoption.tasksUsers, total: totals.users }) },
+    { label: t('habitsAtLeastOne'), value: pctNum(adoption.habitsUsers, totals.users), hint: t('usersRatio', { count: adoption.habitsUsers, total: totals.users }) },
     { label: t('eventsAtLeastOne'), value: pctNum(adoption.eventsUsers, totals.users), hint: t('usersRatio', { count: adoption.eventsUsers, total: totals.users }) },
-    { label: '≥1 OKR', value: pctNum(adoption.okrsUsers, totals.users), hint: `${adoption.okrsUsers}/${totals.users} utilisateurs` },
+    { label: t('okrsAtLeastOne'), value: pctNum(adoption.okrsUsers, totals.users), hint: t('usersRatio', { count: adoption.okrsUsers, total: totals.users }) },
   ];
 
   const engagementData: LabeledValue[] = [
     { label: t('activation24h'), value: pctNum(activation24h.activated, activation24h.total), hint: t('activationHint', { count: activation24h.activated, total: activation24h.total }) },
     { label: t('taskCompletion'), value: pctNum(tasksCompletion.completed, tasksCompletion.total), hint: t('taskCompletionHint', { count: tasksCompletion.completed, total: tasksCompletion.total }) },
-    { label: 'Stickiness DAU/MAU', value: pctNum(stickiness.dau, stickiness.mau), hint: `${stickiness.dau} actifs aujourd'hui / ${stickiness.mau} sur 30 j` },
-    { label: 'Churn 30 j+', value: pctNum(totals.inactive30dPlus, totals.users), hint: `${totals.inactive30dPlus}/${totals.users} comptes inactifs depuis 30 j+` },
+    { label: t('stickiness'), value: pctNum(stickiness.dau, stickiness.mau), hint: t('stickinessHint', { dau: stickiness.dau, mau: stickiness.mau }) },
+    { label: t('churn'), value: pctNum(totals.inactive30dPlus, totals.users), hint: t('churnHint', { count: totals.inactive30dPlus, total: totals.users }) },
   ];
 
   const usageData: LabeledValue[] = [
-    { label: 'Tâches', value: usage.tasks },
-    { label: 'Habitudes', value: usage.habits },
+    { label: t('tasks'), value: usage.tasks },
+    { label: t('habits'), value: usage.habits },
     { label: t('events'), value: usage.events },
-    { label: 'OKRs', value: usage.okrs },
-    { label: 'Partages', value: usage.sharedTasks },
+    { label: t('okrs'), value: usage.okrs },
+    { label: t('shares'), value: usage.sharedTasks },
   ];
 
   const collabData: LabeledValue[] = [
     { label: t('shared'), value: collaboration.sharers, hint: t('sharedHint', { count: collaboration.sharers, pct: pct(collaboration.sharers, totals.users) }) },
-    { label: 'Ont ≥1 ami', value: collaboration.usersWithFriends, hint: `${collaboration.usersWithFriends} users (${pct(collaboration.usersWithFriends, totals.users)})` },
+    { label: t('withFriends'), value: collaboration.usersWithFriends, hint: t('withFriendsHint', { count: collaboration.usersWithFriends, pct: pct(collaboration.usersWithFriends, totals.users) }) },
     { label: t('acceptedRequests'), value: collaboration.acceptedRequests },
   ];
 
   const demoData: LabeledValue[] = [
     { label: t('demoVisitors'), value: demo.visitors },
-    { label: t('accountsCreated'), value: demo.converted, hint: t('demoConverted', { count: demo.converted, pct: demo.visitors > 0 ? `${demo.conversionPct}%` : '—' }) },
+    { label: t('accountsCreated'), value: demo.converted, hint: t('demoConverted', { count: demo.converted, pct: demo.visitors > 0 ? `${demo.conversionPct}%` : '·' }) },
   ];
 
   // Cohortes rétention : les 12 dernières semaines, ordre chronologique.
@@ -213,11 +266,94 @@ const AdminPage: React.FC = () => {
         </p>
       </div>
 
+      {/* Plan d'acquisition 30 jours — la lecture du matin */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <KpiCard
+          label={t('goalUsers')}
+          value={`${totals.users} / ${ACQUISITION_GOALS.users}`}
+          hint={pct(totals.users, ACQUISITION_GOALS.users)}
+        />
+        <KpiCard
+          label={t('goalOrgs')}
+          value={`${orgs.with3plusMembers} / ${ACQUISITION_GOALS.orgs}`}
+          hint={t('goalOrgsHint', { total: orgs.total, created: orgs.created30d })}
+          highlight
+        />
+        <KpiCard
+          label={t('activation48h')}
+          value={pct(activation48h.activated, activation48h.total)}
+          hint={t('activationHint48h', { count: activation48h.activated, total: activation48h.total })}
+        />
+        <KpiCard
+          label={t('topChannel')}
+          value={sourceRows[0] ? sourceRows[0].source : '·'}
+          hint={sourceRows[0] ? t('topChannelHint', { count: sourceRows[0].signups }) : undefined}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <ChartCard title={t('goalChart')} note={t('goalChartNote', { goal: ACQUISITION_GOALS.users })}>
+          {signups && <GoalChart data={signups.points} goal={ACQUISITION_GOALS.users} />}
+        </ChartCard>
+        <ChartCard title={t('signupsBySource')} note={t('signupsBySourceNote')}>
+          {stackPoints.length > 0 ? (
+            <SourceStackChart data={stackPoints} sources={sources} />
+          ) : (
+            <EmptyChart>{t('noSignup')}</EmptyChart>
+          )}
+        </ChartCard>
+      </div>
+
+      {/* Tableau « inscriptions par canal » — trié par volume décroissant */}
+      <div className="card p-4 md:p-6 mb-8">
+        <h2 className="font-bold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('channels')}</h2>
+        <p className="text-xs mb-3" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('channelsNote')}</p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr style={{ color: 'rgb(var(--color-text-muted))' }}>
+                <th className="text-left font-medium py-2 pr-4">{t('channel')}</th>
+                <th className="text-right font-medium py-2 px-4">{t('signupsCol')}</th>
+                <th className="text-right font-medium py-2 px-4">{t('shareCol')}</th>
+                <th className="text-right font-medium py-2 px-4">{t('activation48hCol')}</th>
+                <th className="text-right font-medium py-2 pl-4">{t('retentionD7Col')}</th>
+              </tr>
+            </thead>
+            <tbody style={{ color: 'rgb(var(--color-text-primary))' }}>
+              {sourceRows.map((row) => (
+                <tr key={row.source} style={{ borderTop: '1px solid rgb(var(--color-border))' }}>
+                  <td className="py-2 pr-4 font-medium">{row.source}</td>
+                  <td className="py-2 px-4 text-right tabular-nums">{row.signups}</td>
+                  <td className="py-2 px-4 text-right tabular-nums" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                    {pct(row.signups, totals.users)}
+                  </td>
+                  <td className="py-2 px-4 text-right tabular-nums">
+                    {row.activation ? pct(row.activation.activated, row.activation.total) : '·'}
+                  </td>
+                  <td className="py-2 pl-4 text-right tabular-nums">
+                    {row.retention && row.retention.signups > 0
+                      ? pct(row.retention.retained, row.retention.signups)
+                      : '·'}
+                  </td>
+                </tr>
+              ))}
+              {sourceRows.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-4 text-center" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    {t('noSignup')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Croissance */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <KpiCard label={t('accountsCreated')} value={String(totals.users)} />
         <KpiCard
-          label="Actifs aujourd'hui"
+          label={t('activeToday')}
           value={String(totals.activeToday)}
           hint={`${pct(totals.activeToday, totals.users)} des comptes`}
         />
@@ -236,7 +372,7 @@ const AdminPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Inscriptions"
-          note={signups?.granularity === 'week' ? 'Par semaine, depuis le lancement' : 'Par jour, depuis le lancement'}
+          note={signups?.granularity === 'week' ? t('signupsNoteWeekly') : t('signupsNoteDaily')}
         >
           {signups && <SignupsChart data={signups.points} />}
         </ChartCard>
@@ -272,7 +408,96 @@ const AdminPage: React.FC = () => {
           <CountBars data={collabData} />
         </ChartCard>
 
-        <ChartCard title={t('demoConversion')} note={t('demoConversionNote', { pct: demo.visitors > 0 ? `${demo.conversionPct}%` : '—' })}>
+        {/* ═══ C-110 · LE SUPPORT, ENFIN COMPTÉ ════════════════════
+          *
+          * 🔴 `report-bug` est en ligne depuis le 2026-09-12 et AUCUN
+          * compteur ne disait si un rapport avait été lu. Un canal de support
+          * qu'on n'instrumente pas ne se distingue pas d'un canal que
+          * personne n'utilise : les deux rendent le même silence, et ils
+          * appellent des décisions opposées.
+          *
+          * ⚠️ TROIS ÉTATS, et il ne faut pas les confondre :
+          *   · `undefined` → la requête n'a pas encore répondu ;
+          *   · `null`      → la mig. 150 n'est pas appliquée. On le DIT, au
+          *                   lieu d'afficher des zéros qui se liraient
+          *                   « aucun rapport » ;
+          *   · des chiffres → et là `awaiting` est le premier à lire.
+          */}
+        <ChartCard title={t('support')} note={t('supportNote')}>
+          {support === null ? (
+            <EmptyChart>{t('supportNotInstalled')}</EmptyChart>
+          ) : support === undefined ? (
+            <EmptyChart>{t('supportLoading')}</EmptyChart>
+          ) : support.received === 0 ? (
+            <EmptyChart>{t('supportNone')}</EmptyChart>
+          ) : (
+            <div className="space-y-3">
+              <CountBars
+                data={[
+                  { label: t('supportReceived'), value: support.received },
+                  { label: t('supportReceived30d'), value: support.received30d },
+                  { label: t('supportAwaiting'), value: support.awaiting },
+                  { label: t('supportResolved'), value: support.resolved },
+                ]}
+              />
+              <p className="text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                {support.awaiting > 0
+                  ? t('supportOldest', { days: support.oldestAwaitingDays })
+                  : t('supportAllAnswered')}
+                {' · '}
+                {support.answered > 0
+                  ? t('supportMedian', { hours: support.medianResponseHours })
+                  : t('supportNoResponseRecorded')}
+              </p>
+            </div>
+          )}
+        </ChartCard>
+
+        {/* ═══ ACCUEILS : qui va au bout, et qui revient ═════════════
+          * Les deux accueils ont été refaits le 2026-10-03 pour une raison
+          * chiffrée (50 % des inscrits ne revenaient jamais). Cette carte dit
+          * si ça change quelque chose. Mêmes trois états que le support.
+          */}
+        <ChartCard title={t('onboarding')} note={t('onboardingNote')}>
+          {funnel === null ? (
+            <EmptyChart>{t('onboardingNotInstalled')}</EmptyChart>
+          ) : funnel === undefined ? (
+            <EmptyChart>{t('supportLoading')}</EmptyChart>
+          ) : funnel.perso.signups === 0 && funnel.orgs.created === 0 ? (
+            <EmptyChart>{t('onboardingNone')}</EmptyChart>
+          ) : (
+            <div className="space-y-3">
+              <CountBars
+                data={[
+                  { label: t('onboardingSignups'), value: funnel.perso.signups },
+                  { label: t('onboardingTask'), value: funnel.perso.withTask },
+                  { label: t('onboardingSlot'), value: funnel.perso.withSlot },
+                  { label: t('onboardingHabit'), value: funnel.perso.withHabit },
+                  { label: t('onboardingOkr'), value: funnel.perso.withOkr },
+                  { label: t('onboardingOrgs'), value: funnel.orgs.created },
+                  { label: t('onboardingOrgTeam'), value: funnel.orgs.withTeam },
+                  { label: t('onboardingOrgMember'), value: funnel.orgs.withMember },
+                  { label: t('onboardingOrgProject'), value: funnel.orgs.withProject },
+                  { label: t('onboardingOrgOkr'), value: funnel.orgs.withOkr },
+                ]}
+              />
+              <p className="text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                {funnel.perso.mature > 0
+                  ? t('onboardingReturn', {
+                      all: `${Math.round((100 * funnel.perso.cameBack) / funnel.perso.mature)}%`,
+                      withTask:
+                        funnel.perso.matureWithTask > 0
+                          ? `${Math.round((100 * funnel.perso.cameBackWithTask) / funnel.perso.matureWithTask)}%`
+                          : '·',
+                      mature: funnel.perso.mature,
+                    })
+                  : t('onboardingReturnTooEarly')}
+              </p>
+            </div>
+          )}
+        </ChartCard>
+
+        <ChartCard title={t('demoConversion')} note={t('demoConversionNote', { pct: demo.visitors > 0 ? `${demo.conversionPct}%` : '·' })}>
           <CountBars data={demoData} />
         </ChartCard>
         <ChartCard
@@ -289,5 +514,20 @@ const AdminPage: React.FC = () => {
     </div>
   );
 };
+
+/**
+ * `/admin` derrière la garde à double facteur (T-06 (b), mig. 131).
+ *
+ * L'ordre compte : `AdminMfaGate` ne monte le tableau de bord qu'une fois la
+ * session en `aal2`, donc `get_admin_stats()` n'est jamais appelée pour rien,
+ * et un admin sans second facteur voit un écran d'enrôlement au lieu d'une
+ * redirection silencieuse. La garde reste côté serveur : cet ordre n'est que
+ * de l'UX, exactement comme le `Navigate` ci-dessus.
+ */
+const AdminPage: React.FC = () => (
+  <AdminMfaGate>
+    <AdminDashboard />
+  </AdminMfaGate>
+);
 
 export default AdminPage;

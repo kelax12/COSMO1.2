@@ -6,6 +6,10 @@ import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from 
 import { EVENTS_STORAGE_KEY } from './constants';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { selectEventsInWindow } from './window';
+import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
+import type { CreateOptions } from '@/lib/restore-id';
+import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -20,22 +24,25 @@ const eventDate = (daysFromNow: number, h: number, m = 0): string => {
 };
 
 // Génère les réunions d'équipe hebdomadaires — 62 semaines passées (>14 mois)
-const weeklyMeetings = (): CalendarEvent[] =>
-  Array.from({ length: 62 }, (_, i) => {
+const weeklyMeetings = (): CalendarEvent[] => {
+  const en = isEnglishSeed();
+  return Array.from({ length: 62 }, (_, i) => {
     const week = 62 - i;
     return {
       id: `event-mtg-${week}`,
-      title: "Réunion d'équipe",
+      title: en ? 'Team meeting' : "Réunion d'équipe",
       start: eventDate(-week * 7, 10, 0),
       end:   eventDate(-week * 7, 11, 0),
       color: '#3B82F6',
-      description: "Point hebdomadaire avec l'équipe",
+      description: en ? 'Weekly sync with the team' : "Point hebdomadaire avec l'équipe",
     };
   });
+};
 
 // Génère les rétrospectives mensuelles — 14 mois passés
-const monthlyRetros = (): CalendarEvent[] =>
-  Array.from({ length: 14 }, (_, i) => {
+const monthlyRetros = (): CalendarEvent[] => {
+  const en = isEnglishSeed();
+  return Array.from({ length: 14 }, (_, i) => {
     const month = 14 - i;
     const d = new Date();
     d.setMonth(d.getMonth() - month);
@@ -44,27 +51,30 @@ const monthlyRetros = (): CalendarEvent[] =>
     const e = new Date(d); e.setHours(16, 0, 0, 0);
     return {
       id: `event-retro-${month}`,
-      title: 'Rétrospective mensuelle',
+      title: en ? 'Monthly retrospective' : 'Rétrospective mensuelle',
       start: d.toISOString(),
       end: e.toISOString(),
       color: '#F97316',
-      description: 'Bilan du mois et planification suivante',
+      description: en ? 'Review of the month and planning ahead' : 'Bilan du mois et planification suivante',
     };
   });
+};
 
 // Génère les 1:1 manager bimensuels — 28 occurrences passées
-const biweekly1on1 = (): CalendarEvent[] =>
-  Array.from({ length: 28 }, (_, i) => {
+const biweekly1on1 = (): CalendarEvent[] => {
+  const en = isEnglishSeed();
+  return Array.from({ length: 28 }, (_, i) => {
     const weeks = 28 - i;
     return {
       id: `event-1on1-${weeks}`,
-      title: '1:1 avec le manager',
+      title: en ? '1:1 with manager' : '1:1 avec le manager',
       start: eventDate(-weeks * 14 + 2, 9, 0),
       end:   eventDate(-weeks * 14 + 2, 9, 30),
       color: '#10B981',
-      description: 'Point individuel + feedback',
+      description: en ? 'Individual check-in + feedback' : 'Point individuel + feedback',
     };
   });
+};
 
 // Événements ponctuels notables. `createdBy` renseigné (≠ propriétaire) sur
 // quelques-uns pour démontrer la distinction perso / pro : un événement ajouté
@@ -73,12 +83,9 @@ const ONE_TIME_EVENTS: CalendarEvent[] = [
   // Aujourd'hui — « Réunion d'équipe » ajoutée par un collaborateur (avatar visible).
   { id: 'event-1', title: "Réunion d'équipe",    start: eventDate(0, 10, 0),  end: eventDate(0, 11, 0),  color: '#3B82F6', description: "Point hebdomadaire", createdBy: 'friend-1' },
   { id: 'event-2', title: 'Déjeuner client',      start: eventDate(0, 12, 30), end: eventDate(0, 14, 0),  color: '#10B981', description: 'Restaurant Le Petit Bistrot' },
-  { id: 'event-3', title: 'Formation React',      start: eventDate(0, 15, 0),  end: eventDate(0, 17, 0),  color: '#8B5CF6', description: 'Module avancé sur les hooks' },
   { id: 'event-4', title: 'Sport',                start: eventDate(0, 18, 30), end: eventDate(0, 19, 30), color: '#EF4444', description: 'Séance de running' },
   // À venir
-  { id: 'event-fut-1', title: 'Sprint Review Q2',     start: eventDate(5, 14, 0),  end: eventDate(5, 16, 0),  color: '#8B5CF6', description: 'Démo des fonctionnalités du sprint', createdBy: 'user-lucas' },
   { id: 'event-fut-2', title: 'Entretien candidat',   start: eventDate(8, 10, 0),  end: eventDate(8, 11, 0),  color: '#F97316', description: 'Poste développeur front-end' },
-  { id: 'event-fut-3', title: 'DevFest 2026',          start: eventDate(18, 9, 0),  end: eventDate(19, 18, 0), color: '#EF4444', description: 'Conférence tech — talk React' },
   // Conférences passées
   { id: 'event-conf-1', title: 'DevFest Paris 2025',  start: eventDate(-370, 9, 0), end: eventDate(-370, 18, 0), color: '#8B5CF6', description: 'Talk React architecture — 300 participants' },
   { id: 'event-conf-2', title: 'React Summit 2025',   start: eventDate(-310, 9, 0), end: eventDate(-310, 18, 0), color: '#3B82F6', description: 'Amsterdam — remote' },
@@ -93,7 +100,6 @@ const ONE_TIME_EVENTS: CalendarEvent[] = [
   { id: 'event-train-1', title: 'Formation SQL avancé',       start: eventDate(-248, 9, 0),  end: eventDate(-247, 17, 0), color: '#F97316', description: 'Window functions + optimisation' },
   { id: 'event-train-2', title: 'Workshop Design Thinking',   start: eventDate(-142, 9, 0),  end: eventDate(-141, 17, 0), color: '#F97316', description: '2 jours avec l\'équipe produit' },
   { id: 'event-train-3', title: 'Formation Sécurité OWASP',   start: eventDate(-92, 9, 0),   end: eventDate(-91, 17, 0),  color: '#EF4444', description: 'Top 10 vulnérabilités web' },
-  { id: 'event-train-4', title: 'Formation Leadership',       start: eventDate(-197, 9, 0),  end: eventDate(-196, 17, 0), color: '#F97316', description: 'Communication et gestion d\'équipe' },
   // Rendez-vous santé
   { id: 'event-health-1', title: 'Bilan médecin annuel',  start: eventDate(-380, 9, 30), end: eventDate(-380, 10, 15), color: '#EF4444', description: 'Check-up complet' },
   { id: 'event-health-2', title: 'Dentiste',              start: eventDate(-201, 14, 0), end: eventDate(-201, 14, 45), color: '#EF4444', description: 'Détartrage + contrôle' },
@@ -101,11 +107,34 @@ const ONE_TIME_EVENTS: CalendarEvent[] = [
   // Planning sessions importantes
   { id: 'event-plan-1', title: 'Définition OKRs 2026',       start: eventDate(-128, 10, 0), end: eventDate(-128, 12, 0), color: '#8B5CF6', description: 'Session stratégique annuelle' },
   { id: 'event-plan-2', title: 'Présentation investisseurs',  start: eventDate(-270, 10, 0), end: eventDate(-270, 11, 30),color: '#8B5CF6', description: 'Pitch + métriques croissance' },
-  { id: 'event-plan-3', title: 'Kickoff projet COSMO',        start: eventDate(-427, 9, 0),  end: eventDate(-427, 17, 0), color: '#8B5CF6', description: 'Lancement officiel du projet' },
 ];
 
+// Overlay anglais des événements ponctuels — cf. src/lib/seed-i18n.ts.
+// `createdBy` (id d'ami) n'a pas besoin de traduction.
+const ONE_TIME_EVENTS_EN: Record<string, Partial<CalendarEvent>> = {
+  'event-1': { title: 'Team meeting', description: 'Weekly sync' },
+  'event-2': { title: 'Client lunch', description: 'Le Petit Bistrot restaurant' },
+  'event-4': { title: 'Workout', description: 'Running session' },
+  'event-fut-2': { title: 'Candidate interview', description: 'Front-end developer role' },
+  'event-conf-1': { title: 'DevFest Paris 2025', description: 'React architecture talk — 300 attendees' },
+  'event-conf-2': { title: 'React Summit 2025', description: 'Amsterdam — remote' },
+  'event-conf-3': { title: 'Paris Web 2025', description: 'Accessibility + perf conference' },
+  'event-launch-1': { title: '🚀 COSMO v1.0 launch', description: 'First public release — 67 beta users' },
+  'event-launch-2': { title: '🚀 COSMO v2.0 launch', description: 'Major new features' },
+  'event-tb-1': { title: 'Team building Q2 2025', description: 'Escape room + dinner' },
+  'event-tb-2': { title: 'Team building Q4 2025', description: 'Karting + restaurant' },
+  'event-train-1': { title: 'Advanced SQL training', description: 'Window functions + optimization' },
+  'event-train-2': { title: 'Design Thinking workshop', description: '2 days with the product team' },
+  'event-train-3': { title: 'OWASP security training', description: 'Top 10 web vulnerabilities' },
+  'event-health-1': { title: 'Annual check-up', description: 'Full check-up' },
+  'event-health-2': { title: 'Dentist', description: 'Cleaning + check-up' },
+  'event-health-3': { title: 'Annual check-up', description: '2026 annual check-up' },
+  'event-plan-1': { title: '2026 OKR planning', description: 'Annual strategy session' },
+  'event-plan-2': { title: 'Investor presentation', description: 'Pitch + growth metrics' },
+};
+
 const DEMO_EVENTS: CalendarEvent[] = [
-  ...ONE_TIME_EVENTS,
+  ...localizeSeed(ONE_TIME_EVENTS, ONE_TIME_EVENTS_EN),
   ...weeklyMeetings(),
   ...monthlyRetros(),
   ...biweekly1on1(),
@@ -138,6 +167,8 @@ const seedMemberEvents = (uid: string): CalendarEvent[] => [
 const KNOWN_DEMO_MEMBER_IDS = [
   'friend-1', 'friend-2', 'friend-3', 'user-lucas', 'user-camille',
   'user-nina', 'user-theo', 'user-hugo',
+  'user-manon', 'user-chloe', 'user-emma', 'user-ines', 'user-antoine',
+  'user-paul', 'user-lea', 'user-karim', 'user-yanis',
 ];
 
 // ═══════════════════════════════════════════════════════════════════
@@ -147,8 +178,6 @@ const KNOWN_DEMO_MEMBER_IDS = [
 export interface IEventsRepository {
   // Read operations
   getAll(): Promise<CalendarEvent[]>;
-  getById(id: string): Promise<CalendarEvent | null>;
-  getByTaskId(taskId: string): Promise<CalendarEvent[]>;
   getFiltered(filters: EventFilters): Promise<CalendarEvent[]>;
   getPage(params?: PaginationParams): Promise<PaginatedResult<CalendarEvent>>;
   /** Événements de la fenêtre [startISO, endISO] + TOUS les récurrents (cf. window.ts). */
@@ -160,7 +189,7 @@ export interface IEventsRepository {
   getWindowForUser(userId: string, startISO: string, endISO: string): Promise<CalendarEvent[]>;
 
   // Write operations
-  create(input: CreateEventInput): Promise<CalendarEvent>;
+  create(input: CreateEventInput, options?: CreateOptions): Promise<CalendarEvent>;
   /** Crée un événement DANS l'agenda d'un subordonné (manager — RLS mig. 077). */
   createForUser(userId: string, input: CreateEventInput): Promise<CalendarEvent>;
   update(id: string, updates: UpdateEventInput): Promise<CalendarEvent>;
@@ -176,19 +205,21 @@ export class LocalStorageEventsRepository implements IEventsRepository {
    * Get all events from localStorage (or initialize with demo data)
    */
   private getEvents(): CalendarEvent[] {
-    const data = localStorage.getItem(EVENTS_STORAGE_KEY);
-    if (!data) {
+    const stored = safeParseArray<CalendarEvent>(safeGetItem(EVENTS_STORAGE_KEY));
+    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
+    // tomber la page (regle B14, helper `safeParseArray`).
+    if (!stored) {
       this.saveEvents(DEMO_EVENTS);
       return DEMO_EVENTS;
     }
-    return JSON.parse(data);
+    return stored;
   }
 
   /**
    * Save events to localStorage
    */
   private saveEvents(events: CalendarEvent[]): void {
-    localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events));
+    writeJsonOrThrow(EVENTS_STORAGE_KEY, events);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -197,11 +228,6 @@ export class LocalStorageEventsRepository implements IEventsRepository {
 
   async getAll(): Promise<CalendarEvent[]> {
     return this.getEvents();
-  }
-
-  async getById(id: string): Promise<CalendarEvent | null> {
-    const events = this.getEvents();
-    return events.find(e => e.id === id) || null;
   }
 
   async getByTaskId(taskId: string): Promise<CalendarEvent[]> {
@@ -215,7 +241,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
 
   // ── Agendas des membres (mode entreprise démo) ─────────────────────
   private getMemberStore(): Record<string, CalendarEvent[]> {
-    const raw = localStorage.getItem(MEMBER_EVENTS_STORAGE_KEY);
+    const raw = safeGetItem(MEMBER_EVENTS_STORAGE_KEY);
     if (!raw) return {};
     try {
       const parsed = JSON.parse(raw);
@@ -226,7 +252,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
   }
 
   private saveMemberStore(store: Record<string, CalendarEvent[]>): void {
-    localStorage.setItem(MEMBER_EVENTS_STORAGE_KEY, JSON.stringify(store));
+    writeJsonOrThrow(MEMBER_EVENTS_STORAGE_KEY, store);
   }
 
   /** Agenda d'un membre (seedé à la première lecture pour les subordonnés démo connus). */
@@ -284,11 +310,13 @@ export class LocalStorageEventsRepository implements IEventsRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateEventInput): Promise<CalendarEvent> {
+  async create(input: CreateEventInput, options?: CreateOptions): Promise<CalendarEvent> {
     const events = this.getEvents();
     const newEvent: CalendarEvent = {
       ...input,
-      id: crypto.randomUUID(),
+      // Parite avec le repository Supabase : `restoreId` vient d'un
+      // « Annuler », jamais d'un formulaire (R-08).
+      id: options?.restoreId ?? crypto.randomUUID(),
     };
     this.saveEvents([...events, newEvent]);
     return newEvent;
@@ -320,7 +348,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
         return updated;
       }
     }
-    throw new Error(`Event with id ${id} not found`);
+    throw makeApiError('not_found');
   }
 
   async delete(id: string): Promise<void> {
@@ -338,7 +366,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
           return;
         }
       }
-      throw new Error(`Event with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     this.saveEvents(filtered);

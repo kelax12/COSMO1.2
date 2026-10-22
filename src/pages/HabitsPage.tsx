@@ -1,49 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router';
-import { Plus, Calendar, Grid3X3, List, TrendingUp } from 'lucide-react';
+import { Plus, Calendar, Grid3X3, List, TrendingUp, Share2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PageHeading } from '@/components/ui/typography';
+import { MobileHeader } from '@/components/mobile';
 import { Button } from "@/components/ui/button";
 
 // Ordre : Tableau (défaut, plus dense) → Liste → Suivi global
-const VIEW_TABS: { mode: 'list' | 'table' | 'global'; icon: React.ElementType; label: string }[] = [
-  { mode: 'table', icon: Grid3X3, label: 'Tableau' },
-  { mode: 'list', icon: List, label: 'Liste' },
-  { mode: 'global', icon: TrendingUp, label: 'Suivi global' },
+// Des CLES, pas des libelles : une constante de module est evaluee a l'import,
+// donc un libelle ecrit ici figerait la langue pour toute la session.
+const VIEW_TABS: { mode: 'list' | 'table' | 'global'; icon: React.ElementType; labelKey: 'page.viewTable' | 'page.viewList' | 'page.viewGlobal' }[] = [
+  { mode: 'table', icon: Grid3X3, labelKey: 'page.viewTable' },
+  { mode: 'list', icon: List, labelKey: 'page.viewList' },
+  { mode: 'global', icon: TrendingUp, labelKey: 'page.viewGlobal' },
 ];
-import HabitCard from '../components/HabitCard';
-import HabitModal from '../components/HabitModal';
-import HabitTable from '../components/HabitTable';
-import HabitGlobalTracking from '../components/HabitGlobalTracking';
+import HabitCard from '@/components/HabitCard';
+import HabitModal from '@/components/HabitModal';
+import HabitTable from '@/components/HabitTable';
+import HabitGlobalTracking from '@/components/HabitGlobalTracking';
 import { useHabits } from '@/modules/habits';
 import { HabitListSkeleton } from '@/components/skeletons';
-import { usePullToRefresh } from '@/lib/hooks/use-pull-to-refresh';
-import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { useT } from '@/i18n/useT';
 import { habitsTutorialStepsDesktop } from '@/tutorials/habits.desktop';
 import { habitsTutorialStepsMobile } from '@/tutorials/habits.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import { useAuth } from '@/modules/auth/AuthContext';
-import { useBilling } from '@/modules/billing/billing.context';
-import { shouldShowAdWall } from '@/modules/billing/subscription.logic';
-import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
-import { useDailyAdGate } from '@/lib/hooks/use-daily-ad-gate';
-import HabitsAdGate from '@/components/HabitsAdGate';
+
+// Bilan hebdo partageable : chargé seulement quand on l'ouvre (le moteur de
+// rendu canvas ne doit peser sur aucun écran — cf. docs/PERFORMANCE.md).
+const WeeklyRecapSheet = React.lazy(() => import('@/components/share/WeeklyRecapSheet'));
+
+// Masqué (pas supprimé) : repasser à true réaffiche le bouton sans rien
+// reconstruire — WeeklyRecapSheet, showRecap et l'import lazy restent intacts.
+const WEEKLY_RECAP_ENABLED = false;
 
 type ViewMode = 'list' | 'table' | 'global';
 
 const HabitsPage: React.FC = () => {
   const { t } = useT('habits');
+  const { t: tCommon } = useT('common');
   const isMobile = useIsMobile();
-  const tutorial = useTutorial(isMobile ? 'habits_mobile' : 'habits_desktop');
+  const tutorial = useTutorial(isMobile ? 'habits_mobile' : 'habits_desktop', 600, !isMobile);
   const tutorialSteps = isMobile ? habitsTutorialStepsMobile : habitsTutorialStepsDesktop;
-  const { data: habits = [], isLoading, isError, error, refetch } = useHabits();
-  const { pullY, isRefreshing, threshold } = usePullToRefresh(() => refetch());
+  // `error` n'est volontairement plus destructuré : le message brut du backend
+  // ne s'affiche jamais (règle « faille V7 »), seul un texte traduit est rendu.
+  const { data: habits = [], isLoading, isError, refetch } = useHabits();
   const [showModal, setShowModal] = useState(false);
+  const [showRecap, setShowRecap] = useState(false);
   // Vue par défaut = Tableau (vue dense, panorama 30 jours d'un coup d'œil)
   const [viewMode, setViewMode] = useState<ViewMode>('table');
+  // Mobile : une seule vue (Liste), sobre — le switcheur Tableau/Suivi global
+  // reste desktop uniquement. Ne PAS modifier `viewMode`/`setViewMode` eux-mêmes :
+  // le desktop doit garder son état et son comportement inchangés.
+  const effectiveViewMode: ViewMode = isMobile ? 'list' : viewMode;
 
   // Ouverture directe du modal de création depuis la palette ⌘K (#19).
   const location = useLocation();
@@ -54,26 +64,6 @@ const HabitsPage: React.FC = () => {
       window.history.replaceState({}, document.title);
     }
   }, [location]);
-
-  // ── Mur-pub quotidien ────────────────────────────────────────────────
-  // Habitudes = gratuites mais ad-supported : un non-abonné regarde 1 pub/jour.
-  // Les abonnés PAYANTS (Stripe → current_period_end) n'en voient jamais. La
-  // démo non plus. Le flag daté (useDailyAdGate) garantit la récurrence : il ne
-  // dépend PAS de isPremium() (qui ne se périme jamais côté client, cf. CLAUDE.md).
-  const { isDemo } = useAuth();
-  const { subscription, isLoading: billingLoading } = useBilling();
-  const { seenToday, markSeenToday } = useDailyAdGate('habits');
-  const isPaidSubscriber =
-    !!subscription?.current_period_end &&
-    new Date(subscription.current_period_end) >= new Date();
-  // Premium désactivé (PREMIUM_ENFORCED=false) → mur-pub jamais affiché.
-  const showAdWall = shouldShowAdWall({
-    enforced: PREMIUM_ENFORCED,
-    isDemo,
-    billingLoading,
-    isPaidSubscriber,
-    seenToday,
-  });
 
   const getTodayCompletionRate = () => {
     if (habits.length === 0) return 0;
@@ -90,13 +80,13 @@ const HabitsPage: React.FC = () => {
           {t('page.errorTitle')}
         </h2>
         <p className="text-sm text-[rgb(var(--color-text-secondary))] max-w-md">
-          {(error as Error)?.message || t('page.errorHint')}
+          {t('page.errorHint')}
         </p>
         <button
           onClick={() => refetch()}
           className="px-5 py-2.5 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-semibold text-sm"
         >
-          Réessayer
+          {tCommon('pageError.retry')}
         </button>
       </div>
     );
@@ -104,14 +94,29 @@ const HabitsPage: React.FC = () => {
 
   return (
     <div className="min-h-[100dvh] p-4 md:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
-      <PullToRefreshIndicator pullY={pullY} isRefreshing={isRefreshing} threshold={threshold} />
+
+      {/* ── Mobile : en-tête canonique, partagé par toutes les pages ──
+          Le titre se compacte au scroll dans une barre collante. Le bloc
+          desktop ci-dessous est l'ancien rendu, inchangé et simplement masqué
+          sous `md`. Les deux ne sont PAS un compromis responsive : les faire
+          diverger explicitement est ce qui retire au mobile son allure de
+          « desktop rétréci ». Cf. docs/MOBILE.md. */}
+      <MobileHeader
+        title="Habitudes"
+        subtitle={
+          habits.length > 0
+            ? `Progression : ${getTodayCompletionRate()}% (${habits.filter(h => h.completions[new Date().toLocaleDateString('en-CA')]).length}/${habits.length})`
+            : t('page.subtitle')
+        }
+      />
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
-        <div>
+        <div className="hidden md:block">
           <PageHeading variant="standard" className="mb-2">
             Habitudes
           </PageHeading>
           <p className="text-sm md:text-base" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            Développez de bonnes habitudes au quotidien
+            {t('page.subtitle')}
           </p>
           {habits.length > 0 && (
             <div className="mt-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
@@ -125,14 +130,15 @@ const HabitsPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           {habits.length > 0 && (
             <div
-              className="flex items-center rounded-xl p-1 border transition-colors"
+              className="hidden md:flex items-center rounded-xl p-1 border transition-colors"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',
                 borderColor: 'rgb(var(--color-border))',
               }}
               data-tutorial-id="habits-view-switcher"
+              data-guide-id="perso-habits-views"
             >
-              {VIEW_TABS.map(({ mode, icon: Icon, label }) => (
+              {VIEW_TABS.map(({ mode, icon: Icon, labelKey }) => (
                 <motion.button
                   key={mode}
                   whileTap={{ scale: 0.95 }}
@@ -144,10 +150,28 @@ const HabitsPage: React.FC = () => {
                   }}
                 >
                   <Icon size={15} />
-                  <span>{label}</span>
+                  <span>{t(labelKey)}</span>
                 </motion.button>
               ))}
             </div>
+          )}
+
+          {WEEKLY_RECAP_ENABLED && habits.length > 0 && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowRecap(true)}
+              title={t('recapSheetTitle')}
+              aria-label={t('recapSheetTitle')}
+              className="flex items-center gap-2 px-3 min-h-touch sm:min-h-0 sm:py-2 rounded-lg text-sm font-medium border transition-colors"
+              style={{
+                backgroundColor: 'rgb(var(--color-surface))',
+                borderColor: 'rgb(var(--color-border))',
+                color: 'rgb(var(--color-text-secondary))',
+              }}
+            >
+              <Share2 size={15} />
+              <span className="hidden sm:inline">{t('recapCta')}</span>
+            </motion.button>
           )}
 
           <motion.button
@@ -155,6 +179,7 @@ const HabitsPage: React.FC = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowModal(true)}
             data-tutorial-id="habits-create-button"
+            data-guide-id="perso-habits-new"
             className="hidden sm:flex flex-none items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
           >
             <Plus size={18} />
@@ -163,8 +188,8 @@ const HabitsPage: React.FC = () => {
         </div>
       </div>
 
-      {viewMode === 'list' && (
-        <div className="space-y-4 md:space-y-6" data-tutorial-id="habits-list">
+      {effectiveViewMode === 'list' && (
+        <div className="space-y-4 md:space-y-6" data-tutorial-id="habits-list" data-guide-id="perso-habits-list">
           {isLoading && habits.length === 0 && <HabitListSkeleton count={4} />}
 
           {habits.map(habit => (
@@ -183,10 +208,10 @@ const HabitsPage: React.FC = () => {
                 className="text-lg md:text-xl font-semibold mb-2"
                 style={{ color: 'rgb(var(--color-text-primary))' }}
               >
-                Aucune habitude
+                {t('page.emptyTitle')}
               </h3>
               <p className="mb-6 text-sm md:text-base" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                Commencez par créer votre première habitude
+                {t('page.emptyBody')}
               </p>
               <Button
                 variant="default"
@@ -194,14 +219,14 @@ const HabitsPage: React.FC = () => {
                 onClick={() => setShowModal(true)}
                 className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
               >
-                Créer une habitude
+                {t('page.emptyCta')}
               </Button>
             </div>
           )}
         </div>
       )}
 
-      {viewMode === 'table' && (
+      {effectiveViewMode === 'table' && (
         habits.length === 0 && !isLoading ? (
           <div className="card p-8 text-center">
             <div
@@ -214,10 +239,10 @@ const HabitsPage: React.FC = () => {
               className="text-lg font-semibold mb-2"
               style={{ color: 'rgb(var(--color-text-primary))' }}
             >
-              Aucune habitude
+              {t('page.emptyTitle')}
             </h3>
             <p className="mb-6 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-              Commencez par créer votre première habitude
+              {t('page.emptyBody')}
             </p>
             <Button
               variant="default"
@@ -225,12 +250,12 @@ const HabitsPage: React.FC = () => {
               onClick={() => setShowModal(true)}
               className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
             >
-              Créer une habitude
+              {t('page.emptyCta')}
             </Button>
           </div>
-        ) : <HabitTable />
+        ) : <div data-guide-id="perso-habits-list"><HabitTable /></div>
       )}
-      {viewMode === 'global' && (
+      {effectiveViewMode === 'global' && (
         habits.length === 0 && !isLoading ? (
           <div className="card p-8 text-center">
             <div
@@ -243,10 +268,10 @@ const HabitsPage: React.FC = () => {
               className="text-lg font-semibold mb-2"
               style={{ color: 'rgb(var(--color-text-primary))' }}
             >
-              Aucune habitude
+              {t('page.emptyTitle')}
             </h3>
             <p className="mb-6 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-              Commencez par créer votre première habitude
+              {t('page.emptyBody')}
             </p>
             <Button
               variant="default"
@@ -254,13 +279,20 @@ const HabitsPage: React.FC = () => {
               onClick={() => setShowModal(true)}
               className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
             >
-              Créer une habitude
+              {t('page.emptyCta')}
             </Button>
           </div>
-        ) : <HabitGlobalTracking />
+        ) : <div data-guide-id="perso-habits-list"><HabitGlobalTracking /></div>
       )}
 
       <HabitModal isOpen={showModal} onClose={() => setShowModal(false)} />
+
+      {/* Bilan hebdo partageable — monté uniquement après ouverture (lazy). */}
+      {showRecap && (
+        <React.Suspense fallback={null}>
+          <WeeklyRecapSheet open={showRecap} onClose={() => setShowRecap(false)} />
+        </React.Suspense>
+      )}
 
       {/* FAB Nouvelle habitude — mobile only */}
       <motion.button
@@ -268,26 +300,19 @@ const HabitsPage: React.FC = () => {
         onClick={() => setShowModal(true)}
         data-tutorial-id="habits-fab"
         aria-label={t('page.newHabit')}
-        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
+        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
       >
         <Plus size={26} />
       </motion.button>
 
       {/* Tutoriel page Habitudes — variante adaptée au viewport */}
-      {/* accentColor en jaune foncé : #EAB308 ne passait pas le contraste AA (1.9:1, le pire relevé) avec le texte blanc du bouton "Suivant" */}
       <PageTutorial
         steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
-        accentColor="#A16207"
+        accentColor="#EAB308"
       />
 
-      {/* Bannière pub quotidienne NON bloquante (#50) — la page reste
-          pleinement utilisable ; fermer = masquer pour aujourd'hui (plus
-          d'éjection vers l'accueil : jamais de porte devant une streak). */}
-      {showAdWall && (
-        <HabitsAdGate onUnlocked={markSeenToday} onDismiss={markSeenToday} />
-      )}
     </div>
   );
 };

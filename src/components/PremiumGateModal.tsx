@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
-import { Crown, Play, X, Zap, Loader2 } from 'lucide-react';
+import { Crown, X, Loader2 } from 'lucide-react';
 import { useBilling } from '@/modules/billing/billing.context';
-import { isDailyAdLimitError } from '@/modules/billing/ad-limit';
 import { PREMIUM_MONTHLY_EUR } from '@/modules/billing/premium-config';
 import { formatCurrency } from '@/i18n/format';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import AdModal from './AdModal';
+import { toast } from '@/lib/toast';
 import { useT } from '@/i18n/useT';
+import { RichText } from '@/components/ui/rich-text';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface PremiumGateModalProps {
   isOpen: boolean;
@@ -24,31 +25,15 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
   // paramètre est évalué à l'appel, mais `t` n'existe pas au niveau du module.
   const feature = featureName ?? t('gate.defaultFeature');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
-  const { addTokens, refreshBillingStatus } = useBilling();
-  const [showAdModal, setShowAdModal] = useState(false);
+  const sheetMotion = useSheetMotion();
+  const { refreshBillingStatus } = useBilling();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
-
-  const handleAdComplete = async () => {
-    try {
-      await addTokens(1);
-      toast.success(t('gate.creditedFor', { feature }));
-      await refreshBillingStatus();
-    } catch (err) {
-      if (isDailyAdLimitError(err)) {
-        toast.error('Limite quotidienne de pubs atteinte (20/jour). Revenez demain ou passez Premium.');
-      } else {
-        toast.error(t('gate.creditError'));
-      }
-    }
-    setShowAdModal(false);
-    onClose();
-  };
 
   const handleCheckout = async () => {
     setIsCheckoutLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toast.error('Veuillez vous reconnecter.'); return; }
+      if (!session) { toast.error(t('gate.signInAgain')); return; }
 
       const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -73,6 +58,13 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
     }
   };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: onClose,
+    label: t('gate.title'),
+  });
   return (
     <>
       <AnimatePresence>
@@ -83,6 +75,8 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
             // or Radix pose `pointer-events: none` sur <body> tant que son
             // Dialog est ouvert. Sans override, le modal s'affiche mais aucun
             // élément n'est cliquable.
+            ref={modalA11yRef}
+            {...modalA11yProps}
             className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center sm:p-4 pointer-events-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -103,10 +97,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
               {...sheetDragProps}
               className="relative w-full sm:max-w-md bg-[rgb(var(--color-surface))] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden max-h-[88vh] sm:max-h-[90vh] flex flex-col"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              {...sheetMotion}
             >
               <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
                 <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
@@ -131,37 +122,15 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
               {/* Body */}
               <div className="p-6">
                 <p className="text-[rgb(var(--color-text-secondary))] text-sm mb-6 text-center">
-                  Débloquez <span className="font-semibold text-[rgb(var(--color-text-primary))]">{feature}</span> en regardant une pub gratuite ou en souscrivant.
+                  {/* Une phrase = une cle. La decouper en `avant` + `apres` figeait
+                      l'ordre des mots, ce qu'une langue peut changer, et c'est
+                      exactement ce que `RichText` existe pour eviter. */}
+                  <RichText strongClassName="font-semibold text-[rgb(var(--color-text-primary))]">
+                    {t('gate.unlock', { feature })}
+                  </RichText>
                 </p>
 
                 <div className="space-y-3">
-                  {/* Option 1 — Pub */}
-                  <motion.button
-                    onClick={() => setShowAdModal(true)}
-                    className="w-full flex items-center gap-4 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors group"
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                  >
-                    <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shrink-0">
-                      <Play size={18} className="text-white" />
-                    </div>
-                    <div className="text-left flex-1">
-                      <div className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">{t('gate.watchAd')}</div>
-                      <div className="text-emerald-600 dark:text-emerald-400/80 text-xs">{t('gate.watchAdHint')}</div>
-                    </div>
-                    <div className="flex items-center gap-1 bg-emerald-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shrink-0">
-                      <Zap size={11} />
-                      Gratuit
-                    </div>
-                  </motion.button>
-
-                  {/* Séparateur */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
-                    <span className="text-xs text-slate-400 font-medium">{t('gate.or')}</span>
-                    <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
-                  </div>
-
                   {/* Option 2 — Abonnement */}
                   <motion.button
                     onClick={handleCheckout}
@@ -192,12 +161,6 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
           </motion.div>
         )}
       </AnimatePresence>
-
-      <AdModal
-        isOpen={showAdModal}
-        onClose={() => setShowAdModal(false)}
-        onAdComplete={handleAdComplete}
-      />
     </>
   );
 }

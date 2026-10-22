@@ -2,10 +2,10 @@
 // styles FullCalendar mobile — extraits verbatim de AgendaPage, mémoïsés.
 import React from 'react';
 import { motion } from 'framer-motion';
-import { format, addDays, isSameDay, isToday } from 'date-fns';
+import { format, addDays, isSameDay, isSameMonth, isSameYear, isToday } from 'date-fns';
 import { useT } from '@/i18n/useT';
 import { getDateLocale } from '@/i18n/format';
-import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ListChecks } from 'lucide-react';
 
 export type MobileView = 'timeGridDay' | 'timeGrid2Day' | 'dayGridMonth';
 
@@ -22,6 +22,20 @@ export const mobileCalendarStyles = `
   .mobile-calendar .fc-scroller::-webkit-scrollbar { display: none; }
   .mobile-calendar .fc-scroller { -ms-overflow-style: none; scrollbar-width: none; }
   .mobile-calendar .fc-timegrid-slot-minor { border-top-style: none !important; }
+  /* Maquette 166 : « maintenant » en accent, 2 px, sans triangle. Le rouge
+     est réservé au retard et à l'irréversible (règle 121). */
+  .mobile-calendar .fc-timegrid-now-indicator-line {
+    border-color: rgb(var(--color-accent)) !important;
+    border-width: 2px 0 0 !important;
+  }
+  .mobile-calendar .fc-timegrid-now-indicator-arrow { display: none !important; }
+  /* Maquette 161 : le bloc FullCalendar devient transparent, la teinte est
+     portée par le contenu (cf. \`renderEventInner\`, variante \`tinted\`). */
+  .mobile-calendar .fc-event.cosmo-event-tinted {
+    background-color: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
 `;
 
 // ── Mobile Header ────────────────────────────────────────────────────────────
@@ -45,12 +59,21 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
   onSetView,
   onPrevMonth,
   onNextMonth,
-  onToday,
+  onToday: onTodayClick,
 }) => {
   const { t } = useT('agenda');
   const monthYear = format(currentDate, 'MMMM yyyy', { locale: getDateLocale() });
   const capitalMonthYear = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
   const isMonthView = viewMode === 'dayGridMonth';
+  // Maquette 164 : le mois devient le titre des vues Jour et 2 jours (seule
+  // la vue Mois le disait). L'année ne s'écrit que si ce n'est pas la nôtre.
+  const now = new Date();
+  const monthTitle = (() => {
+    const label = format(currentDate, isSameYear(currentDate, now) ? 'MMMM' : 'MMMM yyyy', { locale: getDateLocale() });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  })();
+  // « Aujourd'hui » n'a rien à faire quand on y est déjà.
+  const onToday = isMonthView ? isSameMonth(currentDate, now) : isToday(currentDate);
 
   // Segmented view selector
   const views: { key: MobileView; label: string }[] = [
@@ -65,39 +88,28 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
       style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
     >
       {/* Row 1: main controls */}
-      <div className="flex items-center justify-between px-3 py-1">
-        {/* Left: Tâches toggle */}
-        <button
-          onClick={onToggleSidebar}
-          data-tutorial-id="agenda-mobile-tasks-toggle"
-          className={`flex items-center gap-1 px-2 min-h-touch rounded-lg text-xs font-medium transition-colors`}
-          style={{
-            // bleu fonce (pas --color-accent) : #58a6ff ne passe pas le contraste AA (2.5:1) avec du texte blanc
-            backgroundColor: showTaskSidebar ? '#1f6feb' : 'transparent',
-            color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-secondary))',
-          }}
-        >
-          <Calendar size={15} />
-          <span>{t('nav.tasks')}</span>
-        </button>
+      <div className="flex items-center justify-between px-3 py-1.5 gap-2">
+        <h2 className="min-w-0 flex-1 truncate text-headline font-semibold text-[rgb(var(--color-text-primary))]">
+          {!isMonthView && monthTitle}
+        </h2>
 
-        {/* Right */}
-        <div className="flex items-center gap-1">
-          {/* 3-way view selector */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Sélecteur de vue : le segment actif prend un gris relevé, pas un
+              bleu plein (le bleu reste à l'action et au jour choisi). */}
           <div
             data-tutorial-id="agenda-mobile-view-switcher"
-            className="flex rounded-lg overflow-hidden text-xs"
+            className="flex items-center gap-0.5 rounded-full p-0.5 text-xs"
+            style={{ backgroundColor: 'rgb(var(--color-chip-bg))' }}
           >
             {views.map(({ key, label }) => (
               <button
                 key={key}
                 onClick={() => onSetView(key)}
-                className="px-2 min-h-touch min-w-touch flex items-center justify-center font-medium transition-colors"
+                aria-pressed={viewMode === key}
+                className="px-2.5 min-h-touch min-w-touch flex items-center justify-center rounded-full font-medium transition-colors"
                 style={{
-                  // bleu fonce (pas --color-accent) : #58a6ff ne passe pas le contraste AA (2.5:1) avec du texte blanc
-                  backgroundColor:
-                    viewMode === key ? '#1f6feb' : 'rgb(var(--color-chip-bg))',
-                  color: viewMode === key ? 'white' : 'rgb(var(--color-text-secondary))',
+                  backgroundColor: viewMode === key ? 'rgb(var(--color-active))' : 'transparent',
+                  color: viewMode === key ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-secondary))',
                 }}
               >
                 {label}
@@ -106,13 +118,28 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
           </div>
 
           {/* Aujourd'hui (#16) */}
+          {!onToday && (
+            <button
+              onClick={onTodayClick}
+              className="px-2.5 min-h-touch min-w-touch flex items-center justify-center rounded-full text-xs font-semibold shrink-0"
+              style={{ color: 'rgb(var(--color-accent))' }}
+            >
+              {t('nav.today')}
+            </button>
+          )}
+
+          {/* Maquette 170 : « Tâches » devient une icône ; elle ouvre la
+              feuille « Planifier une tâche » (`MobileScheduleSheet`). */}
           <button
-            onClick={onToday}
-            aria-label={t('nav.backToToday')}
-            className="px-2 min-h-touch min-w-touch flex items-center justify-center rounded-lg text-xs font-semibold border"
-            style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
+            onClick={onToggleSidebar}
+            data-tutorial-id="agenda-mobile-tasks-toggle"
+            aria-label={t('nav.tasks')}
+            aria-expanded={showTaskSidebar}
+            aria-haspopup="dialog"
+            className="min-h-touch min-w-touch flex items-center justify-center rounded-full shrink-0"
+            style={{ color: 'rgb(var(--color-text-secondary))' }}
           >
-            Auj.
+            <ListChecks size={20} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -125,18 +152,20 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
         >
           <button
             onClick={onPrevMonth}
+            aria-label={t('nav.prevPeriod')}
             className="min-h-touch min-w-touch flex items-center justify-center"
             style={{ color: 'rgb(var(--color-text-secondary))' }}
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={20} aria-hidden="true" />
           </button>
           <span className="font-semibold text-base">{capitalMonthYear}</span>
           <button
             onClick={onNextMonth}
+            aria-label={t('nav.nextPeriod')}
             className="min-h-touch min-w-touch flex items-center justify-center"
             style={{ color: 'rgb(var(--color-text-secondary))' }}
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={20} aria-hidden="true" />
           </button>
         </div>
       )}
@@ -170,7 +199,8 @@ const MobileDayStripBase: React.FC<MobileDayStripProps> = ({ selectedDate, onSel
         const key = format(day, 'yyyy-MM-dd');
         const selected = isSameDay(day, selectedDate);
         const today = isToday(day);
-        const initial = format(day, 'EEEEE', { locale: getDateLocale() }).toUpperCase();
+        // Maquette 168 : « lun. mar. mer. » ; l'initiale seule donnait deux M.
+        const initial = format(day, 'EEE', { locale: getDateLocale() });
         const num = format(day, 'd');
 
         return (
@@ -180,8 +210,8 @@ const MobileDayStripBase: React.FC<MobileDayStripProps> = ({ selectedDate, onSel
             className="flex flex-col items-center gap-1 min-w-touch py-2 flex-shrink-0"
           >
             <span
-              className="text-caption font-semibold uppercase"
-              style={{ color: 'rgb(var(--color-text-muted))' }}
+              className="text-caption font-medium"
+              style={{ color: selected ? 'rgb(var(--color-accent))' : 'rgb(var(--color-text-muted))' }}
             >
               {initial}
             </span>
@@ -189,12 +219,14 @@ const MobileDayStripBase: React.FC<MobileDayStripProps> = ({ selectedDate, onSel
               {selected && (
                 <motion.span
                   layoutId="mobile-day-indicator"
-                  className="absolute inset-0 rounded-full bg-black dark:bg-white"
+                  // Maquette 162 : le jour choisi prend l'accent, comme toute
+                  // sélection de l'app (il était en disque blanc plein).
+                  className="absolute inset-0 rounded-full bg-[rgb(var(--color-accent-solid))]"
                   transition={{ type: 'spring', damping: 28, stiffness: 380 }}
                 />
               )}
               <span
-                className={`relative z-10 text-sm font-semibold ${selected ? 'text-white dark:text-black' : ''}`}
+                className={`relative z-10 text-sm font-semibold ${selected ? 'text-[rgb(var(--color-accent-solid-foreground))]' : ''}`}
                 style={
                   !selected && today
                     ? { color: 'rgb(var(--color-accent))' }

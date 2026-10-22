@@ -1,6 +1,6 @@
 {
   "title": "Event title",
-  "titlePlaceholder": "event name",
+  "titlePlaceholder": "Event name",
   "titlePlaceholderMobile": "Event title",
   "datePlaceholder": "Pick a date",
   "date": "Date",
@@ -11,9 +11,12 @@
   "recurrence": "Repeat",
   "recurrenceAria": "Event recurrence",
   "days": "Days",
-  "descriptionPlaceholder": "event description",
+  "descriptionPlaceholder": "Event description",
   "descriptionTitle": "Event description",
-  "color": "Event colour",
+  "color": "Event color",
+  "subcategoriesOf": "Subcategories of {{name}}",
+  "subcategoryNone": "None",
+  "subcategoryNoneAria": "Stay on {{name}}, no subcategory",
   "showLegend": "Show the category legend",
   "hideLegend": "Hide the category legend",
   "legend": "Category legend",
@@ -34,5 +37,36 @@
   "calendar": {
     "pickDay": "Pick a day",
     "noTask": "No tasks on that day."
-  }
+  },
+  "form": {
+    "timeRange": "Time",
+    "recurrenceNever": "Never",
+    "recurrenceCustom": "Custom",
+    "addComment": "+ Add a note",
+    "customizeColors": "Customize the colors",
+    "recurrenceNone": "None",
+    "recurrenceDaily": "Every day",
+    "recurrenceWeekly": "Every week",
+    "recurrenceShortNone": "None",
+    "recurrenceShortDaily": "Day",
+    "recurrenceShortWeekly": "Wk",
+    "recurrenceShortCustom": "Custom"
+  },
+  "endBeforeStart": "⚠️ End before start",
+  "headerAdd": "Add an event",
+  "headerEdit": "Edit the event",
+  "headerConvert": "Convert into an event",
+  "submitAdd": "Confirm",
+  "submitEdit": "Save",
+  "dayShort": {
+    "0": "Sun",
+    "1": "Mon",
+    "2": "Tue",
+    "3": "Wed",
+    "4": "Thu",
+    "5": "Fri",
+    "6": "Sat"
+  },
+  "chooseDays": "Choose the days",
+  "choose": "Choose"
 }

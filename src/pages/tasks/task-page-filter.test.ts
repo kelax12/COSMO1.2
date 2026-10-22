@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { filterTasksForPage, VIRTUAL_TODAY_ID } from './task-page-filter';
 import type { Task } from '@/modules/tasks';
 import type { TaskList } from '@/modules/lists';
+import type { Category } from '@/modules/categories';
 
 const task = (over: Partial<Task> = {}): Task => ({
   id: 'id', name: 'Task', priority: 3, category: 'cat-a', deadline: '',
@@ -69,5 +70,55 @@ describe('filterTasksForPage', () => {
     ];
     const out = filterTasksForPage(tasks, { ...baseParams, selectedListId: VIRTUAL_TODAY_ID });
     expect(out.map(t => t.id)).toEqual(['today']);
+  });
+
+  // Sémantique de branche (tâche 12, sous-catégories) — retargetée depuis
+  // `matchesCategoryFilter` (ex-`task-filter-branch.test.ts`), une fonction
+  // qu'aucun appelant en production n'invoquait. La vraie règle vit ICI,
+  // dans `filterTasksForPage` (multi-sélection), c'est donc elle qui doit
+  // être exercée.
+  const cat = (id: string, parentId: string | null): Category => ({
+    id, name: id, color: '#000', parentId, position: 0,
+  });
+  const TREE: Category[] = [
+    cat('travail', null), cat('seo', 'travail'), cat('backlinks', 'seo'), cat('perso', null),
+  ];
+
+  it('un parent sélectionné remonte toute sa branche', () => {
+    const tasks = [
+      task({ id: 'a', category: 'travail' }),
+      task({ id: 'b', category: 'seo' }),
+      task({ id: 'c', category: 'backlinks' }),
+    ];
+    const out = filterTasksForPage(tasks, {
+      ...baseParams, selectedCategories: ['travail'], categories: TREE,
+    });
+    expect(out.map(t => t.id).sort()).toEqual(['a', 'b', 'c']);
+  });
+
+  it('ne remonte pas une autre branche', () => {
+    const tasks = [task({ id: 'a', category: 'perso' })];
+    const out = filterTasksForPage(tasks, {
+      ...baseParams, selectedCategories: ['travail'], categories: TREE,
+    });
+    expect(out).toHaveLength(0);
+  });
+
+  it('laisse tout passer sans sélection', () => {
+    const tasks = [task({ id: 'a', category: 'perso' }), task({ id: 'b', category: 'travail' })];
+    const out = filterTasksForPage(tasks, { ...baseParams, selectedCategories: [], categories: TREE });
+    expect(out).toHaveLength(2);
+  });
+
+  it('deux catégories sélectionnées font l union de leurs deux branches', () => {
+    const tasks = [
+      task({ id: 'a', category: 'backlinks' }), // sous "travail"
+      task({ id: 'b', category: 'perso' }),      // sélectionnée directement
+      task({ id: 'c', category: 'seo' }),        // sous "travail", pas sélectionnée seule
+    ];
+    const out = filterTasksForPage(tasks, {
+      ...baseParams, selectedCategories: ['travail', 'perso'], categories: TREE,
+    });
+    expect(out.map(t => t.id).sort()).toEqual(['a', 'b', 'c']);
   });
 });

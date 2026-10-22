@@ -10,10 +10,15 @@
 // (pas d'auto-promotion admin, pas d'accepted_at forgé).
 
 import { supabase } from '@/lib/supabase';
+import { fetchInChunks } from '@/lib/in-chunks';
+import { warnIfTruncated } from '@/lib/pagination.warning';
 import { getCurrentUserId } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrganizationsRepository } from './repository';
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice, OrgInbox } from './types';
+import { mapOrgInbox, type OrgInboxRow } from './inbox.repository';
+import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
+import * as memberPermissions from './permissions.supabase.repository';
 
 interface OrgRow {
   id: string;
@@ -32,6 +37,9 @@ interface MemberRow {
   role: OrgRole;
   joined_at: string;
   manager_id: string | null;
+  // Mig. 161 : absentes avant son application.
+  suspended_at?: string | null;
+  access_expires_at?: string | null;
 }
 
 interface ProfileRow {
@@ -63,50 +71,76 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     if (!uid) return [];
 
     // Mes memberships donnent orgs + rôles (RLS : je ne vois que mes orgs).
+    //
+    // ⚠️ UNE seule requête, via la jointure PostgREST sur la clé étrangère
+    // `organization_members.org_id -> organizations.id`. La version d'avant
+    // lisait les memberships, PUIS les organisations avec un `in(...)` bâti sur
+    // le premier résultat : deux allers-retours SÉQUENTIELS, le second ne
+    // pouvant même pas partir avant que le premier soit revenu. Ce hook est
+    // monté par `Layout`, donc sur toutes les pages protégées.
+    //
+    // La RLS ne change pas : la ligne `organizations` embarquée est filtrée par
+    // sa propre policy, exactement comme quand elle était lue à part. Une org
+    // illisible revient à `null` et est écartée ci-dessous, ce qui reproduit le
+    // comportement précédent (elle était simplement absente du second lot).
     const { data: memberships, error: mErr } = await supabase
       .from('organization_members')
-      .select('org_id, role')
+      .select('role, organizations(*)')
       .eq('user_id', uid)
       .limit(50);
     if (mErr) throw normalizeApiError(mErr);
-    const rows = (memberships ?? []) as { org_id: string; role: OrgRole }[];
-    if (rows.length === 0) return [];
 
-    const { data: orgRows, error: oErr } = await supabase
-      .from('organizations')
-      .select('*')
-      .in('id', rows.map((r) => r.org_id))
-      .order('created_at', { ascending: true });
-    if (oErr) throw normalizeApiError(oErr);
-
-    const roleByOrg = new Map(rows.map((r) => [r.org_id, r.role]));
-    return ((orgRows ?? []) as OrgRow[]).map((row) => ({
-      ...this.mapOrg(row),
-      myRole: roleByOrg.get(row.id) ?? 'member',
-    }));
+    type JoinedRow = { role: OrgRole; organizations: OrgRow | null };
+    // Onzieme lecture bornee en dur, meme classe que les dix du point 13 :
+    // au-dela de 50 organisations, la liste etait coupee sans un mot.
+    return warnIfTruncated((memberships ?? []) as unknown as JoinedRow[], 50, 'organizations')
+      .filter((r): r is JoinedRow & { organizations: OrgRow } => r.organizations != null)
+      .map((r) => ({ ...this.mapOrg(r.organizations), myRole: r.role ?? 'member' }))
+      // Le tri portait sur `organizations.created_at` : un `order` sur une
+      // table embarquée trierait les lignes DANS chaque parent (il y en a une),
+      // pas la liste. Il se fait donc ici, sur au plus 50 éléments.
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
 
   async getMembers(orgId: string): Promise<OrgMember[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: rows, error } = await supabase
-      .from('organization_members')
-      .select('*')
-      .eq('org_id', orgId)
-      .order('joined_at', { ascending: true })
-      .limit(500);
-    if (error) throw normalizeApiError(error);
-    const members = (rows ?? []) as MemberRow[];
+    // Capture locale : le narrowing de `supabase` ne survit pas au passage
+    // dans la closure de `fetchInChunks`.
+    const db = supabase;
+    // Lecture PAGINÉE (audit du 2026-09-24, « membres : 500 ») : au-delà, une
+    // personne n'existait pour aucun écran. Pages de 1 000 (plafond PostgREST),
+    // dix au plus. Tri décroissant puis inversion : au plafond, ce sont les plus
+    // ANCIENS qui manquent ; `user_id` départage deux arrivées à la même seconde.
+    const rows: MemberRow[] = [];
+    for (let from = 0; from < 10_000; from += 1000) {
+      const { data, error } = await db
+        .from('organization_members')
+        .select('*')
+        .eq('org_id', orgId)
+        .order('joined_at', { ascending: false })
+        .order('user_id', { ascending: true })
+        .range(from, from + 999);
+      if (error) throw normalizeApiError(error);
+      rows.push(...((data ?? []) as MemberRow[]));
+      if ((data ?? []).length < 1000) break;
+    }
+    const members = warnIfTruncated(rows, 10_000, 'org_members').reverse();
     if (members.length === 0) return [];
 
     // Enrichir depuis profiles (nom/avatar sanitizés — jamais raw metadata).
     const ids = members.map((m) => m.user_id);
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, email, display_name, avatar_url')
-      .in('id', ids);
-    const byId = new Map(
-      ((profiles ?? []) as ProfileRow[]).map((p) => [p.id, p]),
-    );
+    // Découpé en lots : `.in('id', ids)` passe par l'URL, et 500 UUID font
+    // ~19 ko de query string, donc un 414 avant même que la troncature de la
+    // lecture précédente ne se voie (point 14 de la revue du 2026-09-02).
+    const profiles = await fetchInChunks(ids, async (chunkIds) => {
+      const { data, error } = await db
+        .from('profiles')
+        .select('id, email, display_name, avatar_url')
+        .in('id', chunkIds);
+      if (error) throw normalizeApiError(error);
+      return (data ?? []) as ProfileRow[];
+    });
+    const byId = new Map(profiles.map((p) => [p.id, p]));
 
     return members.map((m) => {
       const p = byId.get(m.user_id);
@@ -116,6 +150,8 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
         role: m.role,
         joinedAt: m.joined_at,
         managerId: m.manager_id,
+        suspendedAt: m.suspended_at ?? null,
+        accessExpiresAt: m.access_expires_at ?? null,
         displayName: p?.display_name ?? p?.email?.split('@')[0] ?? 'Membre',
         email: p?.email ?? undefined,
         avatar: p?.avatar_url ?? undefined,
@@ -125,26 +161,40 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
 
   async getPendingJoinRequests(orgId: string): Promise<OrgJoinRequest[]> {
     if (!supabase) throw new Error('Supabase not configured');
+    // Capture locale : le narrowing de `supabase` ne survit pas au passage
+    // dans la closure de `fetchInChunks`.
+    const db = supabase;
     const { data: rows, error } = await supabase
       .from('organization_join_requests')
       .select('*')
       .eq('org_id', orgId)
       .is('accepted_at', null)
       .is('rejected_at', null)
-      .order('requested_at', { ascending: true })
+      // Même règle que `getMembers` : sous `limit`, on garde la demande la plus
+      // RÉCENTE, celle de quelqu'un qui attend une réponse.
+      .order('requested_at', { ascending: false })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    const requests = (rows ?? []) as { id: string; org_id: string; user_id: string; requested_at: string }[];
+    const requests = warnIfTruncated(
+      (rows ?? []) as { id: string; org_id: string; user_id: string; requested_at: string }[],
+      200,
+      'org_join_requests',
+    ).reverse();
     if (requests.length === 0) return [];
 
     const ids = requests.map((r) => r.user_id);
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, email, display_name, avatar_url')
-      .in('id', ids);
-    const byId = new Map(
-      ((profiles ?? []) as ProfileRow[]).map((p) => [p.id, p]),
-    );
+    // Découpé en lots : `.in('id', ids)` passe par l'URL, et 500 UUID font
+    // ~19 ko de query string, donc un 414 avant même que la troncature de la
+    // lecture précédente ne se voie (point 14 de la revue du 2026-09-02).
+    const profiles = await fetchInChunks(ids, async (chunkIds) => {
+      const { data, error } = await db
+        .from('profiles')
+        .select('id, email, display_name, avatar_url')
+        .in('id', chunkIds);
+      if (error) throw normalizeApiError(error);
+      return (data ?? []) as ProfileRow[];
+    });
+    const byId = new Map(profiles.map((p) => [p.id, p]));
 
     return requests.map((r) => {
       const p = byId.get(r.user_id);
@@ -188,6 +238,29 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     };
   }
 
+  /**
+   * Les CINQ lectures de la boite de reception en UNE requete (mig. 129).
+   *
+   * ❌ Ne pas revenir aux appels unitaires depuis un ecran monte en
+   * permanence. `Layout` monte `useOrgBadges`, donc ces lectures partaient sur
+   * TOUTES les pages protegees, pour peindre une pastille : invitations,
+   * avis de retrait, ma demande d'adhesion, demandes recues cote admin,
+   * notifications, plus un sixieme appel conditionnel a `profiles` pour nommer
+   * les demandeurs.
+   *
+   * La RPC est `SECURITY INVOKER` : elle n'ouvre aucun acces nouveau, la RLS
+   * de l'appelant s'applique comme quand le client lisait les tables lui-meme,
+   * et les deux sections privilegiees delegent aux fonctions DEFINER
+   * existantes. Elle ne prend aucun parametre, donc elle part immediatement,
+   * sans attendre que l'organisation active soit resolue.
+   */
+  async getMyOrgInbox(): Promise<OrgInbox> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase.rpc('get_my_org_inbox');
+    if (error) throw normalizeApiError(error);
+    return mapOrgInbox((data ?? {}) as OrgInboxRow);
+  }
+
   // ─── Write (RPC only) ──────────────────────────────────────────────
 
   async createOrganization(name: string): Promise<Organization> {
@@ -205,6 +278,94 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     if (error) throw normalizeApiError(error);
     const row = (Array.isArray(data) ? data[0] : data) as { org_name: string } | null;
     return { orgName: row?.org_name ?? '' };
+  }
+
+  // --- Invitations nominatives d un ami (mig. 105) ------------------
+
+  async inviteFriendToOrg(orgId: string, friendUserId: string): Promise<void> {
+    if (!supabase) throw new Error("Supabase not configured");
+    const { error } = await supabase.rpc("invite_friend_to_org", {
+      p_org: orgId,
+      p_invitee: friendUserId,
+    });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async getPendingSentInvitationIds(orgId: string): Promise<string[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const uid = await getCurrentUserId();
+    if (!uid) return [];
+    const { data, error } = await supabase
+      .from('org_invitations')
+      .select('invitee_id')
+      .eq('org_id', orgId)
+      .eq('inviter_id', uid)
+      .is('accepted_at', null)
+      .is('declined_at', null);
+    if (error) throw normalizeApiError(error);
+    return (data as { invitee_id: string }[]).map((r) => r.invitee_id);
+  }
+
+  async getMyOrgInvitations(): Promise<OrgInvitation[]> {
+    if (!supabase) throw new Error("Supabase not configured");
+    // RPC SECURITY DEFINER : le nom d une organisation n est PAS lisible par
+    // un non-membre (organizations_select = is_org_member). Sans elle, on
+    // afficherait une invitation sans pouvoir nommer l entreprise.
+    const { data, error } = await supabase.rpc("get_my_org_invitations");
+    if (error) throw normalizeApiError(error);
+    const rows = (data ?? []) as Array<{
+      id: string; org_id: string; org_name: string;
+      inviter_id: string; inviter_name: string | null; created_at: string;
+    }>;
+    return rows.map((r) => ({
+      id: r.id,
+      orgId: r.org_id,
+      orgName: r.org_name,
+      inviterId: r.inviter_id,
+      inviterName: r.inviter_name ?? "Un collaborateur",
+      createdAt: r.created_at,
+    }));
+  }
+
+  async respondOrgInvitation(invitationId: string, accept: boolean): Promise<void> {
+    if (!supabase) throw new Error("Supabase not configured");
+    const { error } = await supabase.rpc("respond_org_invitation", {
+      p_invitation: invitationId,
+      p_accept: accept,
+    });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async getMyOrgRemovalNotices(): Promise<OrgRemovalNotice[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // RPC SECURITY DEFINER : un ex-membre ne peut plus lire `organizations`,
+    // donc pas moyen de nommer l'entreprise par une lecture directe.
+    const { data, error } = await supabase.rpc('get_my_org_removal_notices');
+    if (error) throw normalizeApiError(error);
+    const rows = (data ?? []) as Array<{
+      id: string; org_id: string; org_name: string;
+      actor_name: string | null; created_at: string;
+    }>;
+    return rows.map((r) => ({
+      id: r.id,
+      orgId: r.org_id,
+      orgName: r.org_name,
+      actorName: r.actor_name,
+      createdAt: r.created_at,
+    }));
+  }
+
+  async dismissOrgRemovalNotice(noticeId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const uid = await getCurrentUserId();
+    // DELETE direct : la policy `org_notifications_delete` autorise deja
+    // `user_id = auth.uid()`. Pas de RPC a ecrire pour ca.
+    const { error } = await supabase
+      .from('org_notifications')
+      .delete()
+      .eq('id', noticeId)
+      .eq('user_id', uid ?? ''); // defense-in-depth
+    if (error) throw normalizeApiError(error);
   }
 
   async respondJoinRequest(requestId: string, accept: boolean): Promise<void> {
@@ -320,7 +481,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
   async createInviteLink(orgId: string, managerId: string | null): Promise<OrgInviteLink> {
     if (!supabase) throw new Error('Supabase not configured');
     const uid = await getCurrentUserId();
-    if (!uid) throw new Error('Not authenticated');
+    if (!uid) throw makeApiError('not_authenticated');
     const { data, error } = await supabase
       .from('org_invite_links')
       .insert({ org_id: orgId, manager_id: managerId, created_by: uid })
@@ -341,7 +502,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) throw normalizeApiError(error);
-    return (data ?? []).map((r) => this.mapInviteLink(r));
+    return warnIfTruncated(data ?? [], 100, 'org_invite_links').map((r) => this.mapInviteLink(r));
   }
 
   async revokeInviteLink(linkId: string): Promise<void> {
@@ -355,7 +516,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     const { data, error } = await supabase.rpc('claim_org_invite', { p_token: token });
     if (error) throw normalizeApiError(error);
     const row = (Array.isArray(data) ? data[0] : data) as { org_id: string; org_name: string } | null;
-    if (!row) throw new Error('invalid_link');
+    if (!row) throw makeApiError('invalid_link');
     return { orgId: row.org_id, orgName: row.org_name };
   }
 
@@ -364,5 +525,20 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     const { data, error } = await supabase.rpc('regenerate_join_code', { p_org: orgId });
     if (error) throw normalizeApiError(error);
     return data as string;
+  }
+
+  // ─── Permissions par membre (mig. 115) ─────────────────────────────
+  // Whitelist clé ↔ colonne et lectures : `permissions.supabase.repository.ts`.
+
+  async getMemberPermissions(orgId: string): Promise<OrgMemberPermissions[]> {
+    return memberPermissions.getMemberPermissions(orgId);
+  }
+
+  async setMemberPermissions(
+    orgId: string,
+    userId: string,
+    input: SetOrgPermissionsInput,
+  ): Promise<void> {
+    return memberPermissions.setMemberPermissions(orgId, userId, input);
   }
 }

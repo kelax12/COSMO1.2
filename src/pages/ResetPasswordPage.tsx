@@ -16,9 +16,13 @@ import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
  */
 const ResetPasswordPage = () => {
   const { t } = useT('common');
+  // Les titres et descriptions vivent DEJA dans `seo.json` : le prerendu les
+  // lit depuis ce catalogue, la page les recopiait a cote. Deux sources pour
+  // la meme balise, c'est une occasion de les laisser diverger.
+  const { t: tSeo } = useT('seo');
   useSeoMeta({
-    title: 'Nouveau mot de passe – Cosmo',
-    description: 'Choisissez un nouveau mot de passe pour votre compte Cosmo.',
+    title: tSeo('resetPassword.title'),
+    description: tSeo('resetPassword.description'),
     canonical: 'https://thecosmo.app/reset-password',
   });
   const navigate = useNavigate();
@@ -58,7 +62,7 @@ const ResetPasswordPage = () => {
       return;
     }
     if (password !== confirm) {
-      setError('Les deux mots de passe ne correspondent pas.');
+      setError(t('auth.passwordMismatch'));
       return;
     }
     setIsLoading(true);
@@ -68,6 +72,12 @@ const ResetPasswordPage = () => {
         setError(t('auth.resetFailed'));
         return;
       }
+      // R-17 — Révoquer les AUTRES sessions. Sans ça, changer son mot de passe
+      // après un accès non autorisé n'expulsait pas l'intrus : son jeton
+      // restait valide jusqu'à expiration, ce qui vide la manœuvre de son
+      // seul usage. `scope: 'others'` préserve la session courante.
+      const { error: revokeError } = await supabase.auth.signOut({ scope: 'others' });
+      if (revokeError) console.error('[ResetPasswordPage] revoke other sessions:', revokeError);
       navigate('/dashboard');
     } catch {
       setError(t('auth.genericError'));
@@ -91,7 +101,7 @@ const ResetPasswordPage = () => {
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2">{t('auth.resetTitle')}</h1>
           <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-            Choisissez le nouveau mot de passe de votre compte.
+            {t('auth.resetIntro')}
           </p>
         </div>
 
@@ -99,9 +109,9 @@ const ResetPasswordPage = () => {
           <div role="alert" className="mb-4 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-sm text-red-400">
             <AlertCircle size={16} className="shrink-0 mt-0.5" aria-hidden="true" />
             <span>
-              Ce lien est invalide ou a expiré.{' '}
+              {t('auth.resetLinkInvalid')}{' '}
               <Link to="/forgot-password" className="underline underline-offset-2 font-semibold">
-                Refaire une demande
+                {t('auth.requestAgain')}
               </Link>
             </span>
           </div>
@@ -128,7 +138,7 @@ const ResetPasswordPage = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors p-1"
               >
                 {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
@@ -139,7 +149,7 @@ const ResetPasswordPage = () => {
 
           <div>
             <label htmlFor="reset-confirm" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-              Confirmer le mot de passe
+              {t('auth.confirmPassword')}
             </label>
             <div className="relative">
               <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))] pointer-events-none" aria-hidden="true" />
@@ -168,7 +178,7 @@ const ResetPasswordPage = () => {
             disabled={isLoading || hasSession === false}
             className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20"
           >
-            {isLoading ? 'Enregistrement...' : 'Enregistrer le mot de passe'}
+            {isLoading ? t('auth.savingEllipsis') : t('auth.savePassword')}
           </button>
         </form>
       </div>

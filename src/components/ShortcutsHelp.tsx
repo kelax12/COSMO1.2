@@ -4,8 +4,11 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Keyboard, X } from 'lucide-react';
 import { ShortcutsList } from './keyboard-shortcuts';
+import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 const ShortcutsHelp = () => {
+  const ov = useT('overlays');
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -20,7 +23,6 @@ const ShortcutsHelp = () => {
         e.preventDefault();
         setIsOpen(v => !v);
       }
-      if (e.key === 'Escape') setIsOpen(false);
     };
     const onOpenEvent = () => setIsOpen(true);
     window.addEventListener('keydown', onKeyDown);
@@ -30,6 +32,14 @@ const ShortcutsHelp = () => {
       window.removeEventListener('open-shortcuts-help', onOpenEvent);
     };
   }, []);
+
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: () => setIsOpen(false),
+    label: "Raccourcis clavier",
+  });
 
   return (
     <AnimatePresence>
@@ -47,8 +57,8 @@ const ShortcutsHelp = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.18 }}
-            role="dialog"
-            aria-label="Raccourcis clavier"
+            ref={modalA11yRef}
+            {...modalA11yProps}
             className="w-full max-w-md rounded-2xl border shadow-2xl overflow-hidden"
             style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
             onClick={(e) => e.stopPropagation()}
@@ -72,7 +82,7 @@ const ShortcutsHelp = () => {
               <ShortcutsList />
             </div>
             <p className="px-5 pb-4 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-              Les raccourcis sont inactifs pendant la saisie dans un champ.
+              {ov.t('shortcuts.inactiveWhileTyping')}
             </p>
           </motion.div>
         </motion.div>

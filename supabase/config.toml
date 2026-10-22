@@ -20,3 +20,66 @@ verify_jwt = true
 # from the JWT, never from request body) — keep verify_jwt = true.
 [functions.delete-account]
 verify_jwt = true
+
+# stripe-org-checkout and stripe-org-portal both resolve the caller from their
+# JWT and then check they own the organization they are acting on — the org id
+# arrives in the request body and is never trusted on its own. Keep
+# verify_jwt = true: without it, an unauthenticated request would reach the
+# handler and the owner check would be comparing against a null user.
+[functions.stripe-org-checkout]
+verify_jwt = true
+
+[functions.stripe-org-portal]
+verify_jwt = true
+
+# report-bug relaie un formulaire vers une boîte mail : il n'y a rien à
+# autoriser en base, mais on garde verify_jwt = true pour que la passerelle
+# exige au minimum une clé du projet. Un visiteur non connecté passe avec la
+# clé anon (c'est voulu : un bug se signale aussi depuis un compte cassé) et
+# reste anonyme dans le mail ; un utilisateur connecté est identifié par son
+# JWT, jamais par le corps de la requête.
+[functions.report-bug]
+verify_jwt = true
+
+# renewal-notice n est appelee par AUCUN utilisateur : c est un travail
+# quotidien declenche par la CI. Elle n a donc pas de JWT a verifier, et son
+# autorisation repose sur le secret partage CRON_SECRET, verifie dans le corps
+# de la fonction. Sans cette ligne, la CI recevrait un 401 de la plateforme
+# avant meme d atteindre le code.
+[functions.renewal-notice]
+verify_jwt = false
+
+# send-org-invite (audit entreprise 2026-09-23, M11) resolves the inviter from
+# the JWT and checks, per link, that they created it or administer the org.
+[functions.send-org-invite]
+verify_jwt = true
+
+# org-digest is called by .github/workflows/org-digest.yml with CRON_SECRET,
+# never by a user: the secret is what authorizes it.
+[functions.org-digest]
+verify_jwt = false
+
+# inactive-accounts (C-121, mig. 226) is called by
+# .github/workflows/inactive-accounts.yml with CRON_SECRET, never by a user.
+[functions.inactive-accounts]
+verify_jwt = false
+
+# org-webhook-dispatch (mig. 199) is called by
+# .github/workflows/org-webhook-dispatch.yml with CRON_SECRET, never by a user.
+# 🔴 A-3 (2026-09-30) : this entry was MISSING, so the function was deployed
+# with the default verify_jwt = true. The workflow sends no Authorization
+# header, and the gateway answered 401 before the code ran: not a single
+# webhook has ever been delivered. Redeploy AFTER mig. 207 (A-6), which is
+# what makes a real delivery safe.
+[functions.org-webhook-dispatch]
+verify_jwt = false
+
+# stripe-org-refund resolves the caller from the JWT and checks they are the
+# organization owner before any Stripe call.
+[functions.stripe-org-refund]
+verify_jwt = true
+
+# verify-org-domain (mig. 195) resolves the caller from the JWT and checks they
+# are an active admin of the domain's organization.
+[functions.verify-org-domain]
+verify_jwt = true

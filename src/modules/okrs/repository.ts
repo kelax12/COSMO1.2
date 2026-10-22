@@ -6,8 +6,12 @@ import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters }
 import { recalcProgress } from './progress';
 import { OKRS_STORAGE_KEY } from './constants';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
-import { KR_COMPLETIONS_STORAGE_KEY } from '@/modules/kr-completions/constants';
+import { KR_COMPLETIONS_STORAGE_KEY, MAX_REPS_PER_WRITE } from '@/modules/kr-completions/constants';
 import { KRCompletion } from '@/modules/kr-completions/types';
+import { isEnglishSeed } from '@/lib/seed-i18n';
+import type { CreateOptions } from '@/lib/restore-id';
+import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -30,27 +34,27 @@ function createDemoOkrs(): OKR[] {
     title: 'Améliorer ma productivité Q2 2026',
     description: 'Devenir plus efficace dans mes tâches quotidiennes',
     category: 'cat-2',
-    progress: 55,
+    progress: 70,
     completed: false,
     keyResults: [
-      { id: 'kr-1', title: 'Compléter 90% des tâches planifiées', currentValue: 90, targetValue: 90, unit: '%',     completed: true,  estimatedTime: 30,  completedAt: completedAt(0)  },
-      { id: 'kr-2', title: 'Réduire les distractions de 50%',     currentValue: 30, targetValue: 50, unit: '%',     completed: false, estimatedTime: 15,  completedAt: null },
-      { id: 'kr-3', title: 'Méthode Pomodoro quotidiennement',     currentValue: 55, targetValue: 90, unit: 'jours', completed: false, estimatedTime: 25,  completedAt: null },
+      { id: 'kr-1', title: 'Compléter 90 tâches',                           currentValue: 90, targetValue: 90, unit: 'tâches',  completed: true,  estimatedTime: 30,  completedAt: completedAt(0)  },
+      { id: 'kr-2', title: 'Terminer 8 semaines sans tâche en retard',      currentValue: 4,  targetValue: 8,  unit: 'semaines', completed: false, estimatedTime: 15,  completedAt: null },
+      { id: 'kr-3', title: 'Pratiquer la méthode Pomodoro 90 jours sur le trimestre', currentValue: 55, targetValue: 90, unit: 'jours', completed: false, estimatedTime: 25,  completedAt: null },
     ],
     startDate: getDate(-60),
     endDate: getDate(30),
   },
   {
     id: 'okr-2',
-    title: 'Maîtriser le machine learning',
-    description: 'Acquérir des compétences solides en ML/IA',
-    category: 'cat-4',
-    progress: 50,
+    title: 'Lancer mon projet',
+    description: "Passer de l'idée au lancement effectif",
+    category: 'cat-5',
+    progress: 87,
     completed: false,
     keyResults: [
-      { id: 'kr-4', title: 'Terminer la spécialisation Coursera',  currentValue: 5,  targetValue: 5,  unit: 'cours',   completed: true,  estimatedTime: 180, completedAt: completedAt(-2) },
-      { id: 'kr-5', title: 'Créer 2 projets ML en production',     currentValue: 1,  targetValue: 2,  unit: 'projets', completed: false, estimatedTime: 300, completedAt: null },
-      { id: 'kr-6', title: 'Kaggle competitions top 20%',          currentValue: 1,  targetValue: 3,  unit: 'compét.', completed: false, estimatedTime: 120, completedAt: null },
+      { id: 'kr-4', title: 'Recueillir 10 retours utilisateurs sur le concept', currentValue: 10, targetValue: 10, unit: 'retours',        completed: true,  estimatedTime: 60,  completedAt: completedAt(-30) },
+      { id: 'kr-5', title: 'Livrer les 8 fonctionnalités clés du MVP',          currentValue: 8,  targetValue: 8,  unit: 'fonctionnalités', completed: true,  estimatedTime: 300, completedAt: completedAt(-10) },
+      { id: 'kr-6', title: 'Atteindre 20 premiers utilisateurs',                currentValue: 12, targetValue: 20, unit: 'utilisateurs',    completed: false, estimatedTime: 60,  completedAt: null },
     ],
     startDate: getDate(-90),
     endDate: getDate(90),
@@ -71,69 +75,7 @@ function createDemoOkrs(): OKR[] {
     endDate: getDate(80),
   },
 
-  // ── OKRs RÉCENTS COMPLÉTÉS (ce mois / semaine passée) ────────────────
-  {
-    id: 'okr-4',
-    title: 'Lancer COSMO v1.2 en production',
-    description: 'Développer et déployer la version 1.2',
-    category: 'cat-5',
-    progress: 100,
-    completed: true,
-    keyResults: [
-      { id: 'kr-10', title: 'Livrer les 5 nouvelles features',  currentValue: 5,  targetValue: 5,  unit: 'features',    completed: true, estimatedTime: 200, completedAt: completedAt(-5)  },
-      { id: 'kr-11', title: 'Déployer sur Vercel',              currentValue: 1,  targetValue: 1,  unit: 'déploiement', completed: true, estimatedTime: 20,  completedAt: completedAt(-4)  },
-      { id: 'kr-12', title: 'Atteindre 100 utilisateurs beta',  currentValue: 112,targetValue: 100,unit: 'users',       completed: true, estimatedTime: 30,  completedAt: completedAt(-6)  },
-    ],
-    startDate: getDate(-30),
-    endDate: getDate(-4),
-  },
-  {
-    id: 'okr-5',
-    title: 'Optimisation performances app',
-    description: 'Réduire les temps de chargement et améliorer le score Lighthouse',
-    category: 'cat-1',
-    progress: 100,
-    completed: true,
-    keyResults: [
-      { id: 'kr-13', title: 'Score Lighthouse > 90',          currentValue: 94,  targetValue: 90,  unit: '/100',  completed: true, estimatedTime: 120, completedAt: completedAt(-8)  },
-      { id: 'kr-14', title: 'Réduire bundle size de 30%',     currentValue: 33,  targetValue: 30,  unit: '%',     completed: true, estimatedTime: 90,  completedAt: completedAt(-10) },
-      { id: 'kr-15', title: 'TTI < 2s sur mobile',            currentValue: 1.8, targetValue: 2.0, unit: 'sec',   completed: true, estimatedTime: 80,  completedAt: completedAt(-9)  },
-    ],
-    startDate: getDate(-25),
-    endDate: getDate(-8),
-  },
-  {
-    id: 'okr-6',
-    title: 'Croissance utilisateurs COSMO v1',
-    description: 'Acquérir les premiers utilisateurs actifs',
-    category: 'cat-5',
-    progress: 100,
-    completed: true,
-    keyResults: [
-      { id: 'kr-16', title: 'Atteindre 200 utilisateurs actifs', currentValue: 234, targetValue: 200, unit: 'users',  completed: true, estimatedTime: 60, completedAt: completedAt(-18) },
-      { id: 'kr-17', title: 'NPS score supérieur à 40',          currentValue: 47,  targetValue: 40,  unit: 'score',  completed: true, estimatedTime: 30, completedAt: completedAt(-20) },
-      { id: 'kr-18', title: 'Rétention J30 > 40%',              currentValue: 43,  targetValue: 40,  unit: '%',      completed: true, estimatedTime: 20, completedAt: completedAt(-22) },
-    ],
-    startDate: getDate(-45),
-    endDate: getDate(-15),
-  },
-
-  // ── OKRs ANCIENS COMPLÉTÉS ────────────────────────────────────────────
-  {
-    id: 'okr-7',
-    title: 'Excellence technique Q3 2025',
-    description: 'Améliorer la qualité et la performance du code',
-    category: 'cat-1',
-    progress: 100,
-    completed: true,
-    keyResults: [
-      { id: 'kr-19', title: 'Couverture de tests > 80%',      currentValue: 84,  targetValue: 80,  unit: '%',     completed: true, estimatedTime: 300, completedAt: completedAt(-90)  },
-      { id: 'kr-20', title: 'Temps de chargement < 1.5s',     currentValue: 1.2, targetValue: 1.5, unit: 'sec',   completed: true, estimatedTime: 120, completedAt: completedAt(-95)  },
-      { id: 'kr-21', title: 'Zéro vulnérabilité critique',    currentValue: 0,   targetValue: 0,   unit: 'vuln.', completed: true, estimatedTime: 90,  completedAt: completedAt(-100) },
-    ],
-    startDate: getDate(-240),
-    endDate: getDate(-150),
-  },
+  // ── OKR ANCIEN COMPLÉTÉ ────────────────────────────────────────────
   {
     id: 'okr-8',
     title: 'Bien-être et santé H1 2025',
@@ -144,12 +86,93 @@ function createDemoOkrs(): OKR[] {
     keyResults: [
       { id: 'kr-22', title: 'Sport 3x par semaine pendant 6 mois', currentValue: 72,   targetValue: 72,   unit: 'séances', completed: true, estimatedTime: 60,  completedAt: completedAt(-160) },
       { id: 'kr-23', title: '5000 pages lues en 6 mois',           currentValue: 5240, targetValue: 5000, unit: 'pages',   completed: true, estimatedTime: 0,   completedAt: completedAt(-165) },
-      { id: 'kr-24', title: 'Méditation quotidienne — streak 90j', currentValue: 94,   targetValue: 90,   unit: 'jours',   completed: true, estimatedTime: 15,  completedAt: completedAt(-170) },
+      { id: 'kr-24', title: 'Méditation quotidienne, streak 90j', currentValue: 94,   targetValue: 90,   unit: 'jours',   completed: true, estimatedTime: 15,  completedAt: completedAt(-170) },
     ],
     startDate: getDate(-430),
     endDate: getDate(-250),
   },
   ];
+}
+
+// Overlay anglais — cf. src/lib/seed-i18n.ts. Structure imbriquée (titre de
+// l'OKR + titres de ses key results) : la fusion générique par id top-level
+// ne suffit pas, d'où ce merge dédié plutôt que `localizeSeed`.
+const DEMO_OKRS_EN: Record<string, { title: string; description: string; keyResults: Record<string, string> }> = {
+  'okr-1': {
+    title: 'Improve my productivity Q2 2026',
+    description: 'Become more efficient in my daily tasks',
+    keyResults: {
+      'kr-1': 'Complete 90 tasks',
+      'kr-2': 'Finish 8 weeks with no overdue task',
+      'kr-3': 'Practice the Pomodoro method 90 days this quarter',
+    },
+  },
+  'okr-2': {
+    title: 'Launch my project',
+    description: 'Go from idea to an actual launch',
+    keyResults: {
+      'kr-4': 'Collect 10 user feedback sessions on the concept',
+      'kr-5': 'Ship the 8 core MVP features',
+      'kr-6': 'Reach 20 first users',
+    },
+  },
+  'okr-3': {
+    title: 'Health & wellbeing 2026',
+    description: 'Adopt and maintain a healthy lifestyle',
+    keyResults: {
+      'kr-7': 'Exercise 4x a week',
+      'kr-8': 'Sleep 7h30+ per night',
+      'kr-9': '5 fruits/veggies a day',
+    },
+  },
+  'okr-8': {
+    title: 'Wellbeing & health H1 2025',
+    description: 'Build lasting healthy habits',
+    keyResults: {
+      'kr-22': 'Exercise 3x a week for 6 months',
+      'kr-23': '5000 pages read in 6 months',
+      'kr-24': 'Daily meditation, 90-day streak',
+    },
+  },
+};
+
+/**
+ * Titres anglais du seed de démo, pour un couple (OKR, KR).
+ *
+ * Exporté pour `kr-completions`, dont le journal de démo DUPLIQUE ces titres
+ * (`krTitle` / `okrTitle` y sont dénormalisés, comme en base). Les y réécrire à
+ * la main aurait donné deux traductions du même libellé, donc deux occasions de
+ * diverger — c'est la règle « une seule grille » du § facturation, appliquée
+ * ici aux seeds.
+ *
+ * Rend `null` quand le couple n'est pas dans l'overlay : l'appelant garde alors
+ * le français, même repli silencieux que `localizeSeed`.
+ */
+export function demoOkrTitlesEn(
+  okrId: string,
+  krId: string
+): { okrTitle: string; krTitle: string } | null {
+  const patch = DEMO_OKRS_EN[okrId];
+  const krTitle = patch?.keyResults[krId];
+  return patch && krTitle ? { okrTitle: patch.title, krTitle } : null;
+}
+
+/** Applique DEMO_OKRS_EN sur le seed français quand la locale est anglaise. */
+function localizeOkrs(okrs: OKR[]): OKR[] {
+  if (!isEnglishSeed()) return okrs;
+  return okrs.map((okr) => {
+    const patch = DEMO_OKRS_EN[okr.id];
+    if (!patch) return okr;
+    return {
+      ...okr,
+      title: patch.title,
+      description: patch.description,
+      keyResults: okr.keyResults.map((kr) => ({
+        ...kr,
+        title: patch.keyResults[kr.id] ?? kr.title,
+      })),
+    };
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -165,9 +188,33 @@ export interface IOKRsRepository {
   getPage(params?: PaginationParams): Promise<PaginatedResult<OKR>>;
 
   // Write operations
-  create(input: CreateOKRInput): Promise<OKR>;
+  create(input: CreateOKRInput, options?: CreateOptions): Promise<OKR>;
   update(id: string, updates: UpdateOKRInput): Promise<OKR>;
   delete(id: string): Promise<void>;
+
+
+  /**
+   * Rejoue le journal d'un OKR qu'on vient de restaurer (C-01).
+   *
+   * 🔴 POURQUOI C'EST UNE METHODE DE REPOSITORY, ET PAS UN APPEL CLIENT.
+   *
+   * La premiere version de C-01 appelait
+   * `getKRCompletionsRepository().create()` depuis le hook. C'est exactement
+   * ce que l'arbitrage du 2026-09-03 fait SUPPRIMER avec
+   * `useCreateKRCompletion` : « un INSERT client libre dans un journal
+   * append-only que ce fichier interdit par ailleurs ». Le contourner en
+   * appelant le repository plutot que le hook aurait garde le defaut en
+   * changeant son nom.
+   *
+   * L'ecriture du journal appartient donc au repository OKR, comme
+   * `appendKRReps` / `recordKRReps` — le meme chemin que celui que l'item
+   * C-01 designe explicitement.
+   *
+   * ⚠️ Borne `MAX_REPS_PER_WRITE` (faille B18) : le tableau vient d'une
+   *    lecture, mais il traverse l'etat d'un composant, donc un objet que des
+   *    devtools peuvent enrichir.
+   */
+  restoreCompletions(completions: KRCompletion[]): Promise<void>;
 
   // KeyResult operations
   updateKeyResult(okrId: string, keyResultId: string, updates: UpdateKeyResultInput): Promise<OKR>;
@@ -194,13 +241,15 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
    * Migrates legacy category IDs to the shared category system on first load.
    */
   private getOKRs(): OKR[] {
-    const data = localStorage.getItem(OKRS_STORAGE_KEY);
-    if (!data) {
-      const demo = createDemoOkrs();
+    const stored = safeParseArray<OKR>(safeGetItem(OKRS_STORAGE_KEY));
+    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
+    // tomber la page (regle B14, helper `safeParseArray`).
+    if (!stored) {
+      const demo = localizeOkrs(createDemoOkrs());
       this.saveOKRs(demo);
       return demo;
     }
-    const okrs: OKR[] = JSON.parse(data);
+    const okrs: OKR[] = stored;
     const migrated = okrs.map(okr => ({
       ...okr,
       category: CATEGORY_MIGRATIONS[okr.category] ?? okr.category,
@@ -215,7 +264,7 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
    * Save OKRs to localStorage
    */
   private saveOKRs(okrs: OKR[]): void {
-    localStorage.setItem(OKRS_STORAGE_KEY, JSON.stringify(okrs));
+    writeJsonOrThrow(OKRS_STORAGE_KEY, okrs);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -262,11 +311,13 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateOKRInput): Promise<OKR> {
+  async create(input: CreateOKRInput, options?: CreateOptions): Promise<OKR> {
     const okrs = this.getOKRs();
     const newOKR: OKR = {
       ...input,
-      id: crypto.randomUUID(),
+      // Parite avec le repository Supabase : `restoreId` vient d'un
+      // « Annuler », jamais d'un formulaire (R-08).
+      id: options?.restoreId ?? crypto.randomUUID(),
     };
     this.saveOKRs([...okrs, newOKR]);
 
@@ -284,7 +335,7 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     const index = okrs.findIndex(o => o.id === id);
 
     if (index === -1) {
-      throw new Error(`OKR with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     // Snapshot AVANT update : pour calculer le delta de currentValue par KR
@@ -306,14 +357,22 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     okrs[index] = updatedOKR;
     this.saveOKRs(okrs);
 
-    // Journal append-only : delta de reps par KR
+    // Journal append-only : delta de reps par KR, SYMÉTRIQUE ±.
+    //
+    // Le `Math.max(0, …)` d'origine écrasait toute baisse : baisser un
+    // `currentValue` en démo laissait les reps au journal, là où le repository
+    // Supabase appelle `removeKRReps`. Le graphique « KR réalisés » divergeait
+    // donc entre la démo et la prod, sur le même geste. `updateKeyResult` juste
+    // en dessous traitait déjà les deux sens : c'est ce chemin-ci qui manquait.
     if (updates.keyResults) {
       for (const kr of updates.keyResults) {
         const prev = previousKRsById.get(kr.id);
         const previousValue = prev?.currentValue ?? 0;
-        const delta = Math.max(0, Math.round(kr.currentValue - previousValue));
+        const delta = Math.round(kr.currentValue - previousValue);
         if (delta > 0) {
           this.appendKRReps(updatedOKR.id, kr, updatedOKR.title, delta);
+        } else if (delta < 0) {
+          this.removeKRReps(kr.id, -delta);
         }
       }
     }
@@ -325,13 +384,30 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
    * Append-only : ajoute `count` lignes (1 par rep) dans le journal
    * localStorage. Toutes timestampées à l'instant — utilisé par
    * create() / update() / updateKeyResult().
+   *
+   * ⚠️ PARITÉ OBLIGATOIRE avec `recordKRReps` du repository Supabase, sur DEUX
+   * points que ce chemin-ci a manqués (audit A-2) :
+   *
+   *   1. LE CLAMP (faille B18). Le champ `currentValue` de `OKRCard` est un
+   *      `input[type=number]` sans `max`, qui remonte à CHAQUE frappe : taper
+   *      « 50000 » demandait 5 puis 50 puis 500 puis 5 000 puis 50 000 reps.
+   *      Sans borne, la boucle écrivait des dizaines de milliers de lignes,
+   *      bloquait le fil principal ~20 s, puis levait un `QuotaExceededError`
+   *      des 5 Mo de `localStorage` — mesuré. Le repository Supabase clampe à
+   *      100 depuis B18 ; ce chemin ne l'avait jamais fait.
+   *   2. L'HORODATAGE. `kr.completedAt` est la date à laquelle le KR a été
+   *      ACHEVÉ, pas celle de la rep qu'on ajoute. L'utiliser datait les
+   *      nouvelles reps d'un KR déjà terminé au jour de son achèvement : le
+   *      graphique « KR réalisés » du tableau de bord ne montrait rien pour
+   *      aujourd'hui. Le serveur a toujours utilisé `now()`.
    */
   private appendKRReps(okrId: string, kr: { id: string; title: string; completedAt?: string | null }, okrTitle: string, count: number): void {
     if (count <= 0) return;
-    const raw = localStorage.getItem(KR_COMPLETIONS_STORAGE_KEY);
-    const completions: KRCompletion[] = raw ? JSON.parse(raw) : [];
-    const completedAt = kr.completedAt ?? new Date().toISOString();
-    for (let i = 0; i < count; i++) {
+    const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
+    const completions: KRCompletion[] =
+      safeParseArray<KRCompletion>(safeGetItem(KR_COMPLETIONS_STORAGE_KEY)) ?? [];
+    const completedAt = new Date().toISOString();
+    for (let i = 0; i < safeCount; i++) {
       completions.push({
         id: crypto.randomUUID(),
         krId: kr.id,
@@ -342,7 +418,28 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
         okrTitle,
       });
     }
-    localStorage.setItem(KR_COMPLETIONS_STORAGE_KEY, JSON.stringify(completions));
+    writeJsonOrThrow(KR_COMPLETIONS_STORAGE_KEY, completions);
+  }
+
+  /**
+   * C-01 — rejoue le journal d'un OKR restauré. Contrat et raison dans
+   * `IOKRsRepository.restoreCompletions`.
+   *
+   * ⚠️ Les horodatages d'ORIGINE sont conservés : c'est tout l'intérêt. Les
+   * réécrire à `now()` remettrait les N points d'un coup sur aujourd'hui, ce
+   * qui n'est pas restaurer un graphique mais en inventer un autre.
+   */
+  async restoreCompletions(completions: KRCompletion[]): Promise<void> {
+    if (completions.length === 0) return;
+    const bounded = completions.slice(0, MAX_REPS_PER_WRITE);
+    const existing: KRCompletion[] =
+      safeParseArray<KRCompletion>(safeGetItem(KR_COMPLETIONS_STORAGE_KEY)) ?? [];
+    writeJsonOrThrow(KR_COMPLETIONS_STORAGE_KEY, [
+      ...existing,
+      // Identifiant NEUF : un journal est un ensemble d'événements, rien ne
+      // référence une de ses lignes. Seul son contenu alimente le graphique.
+      ...bounded.map((c) => ({ ...c, id: crypto.randomUUID() })),
+    ]);
   }
 
   /**
@@ -351,19 +448,19 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
    */
   private removeKRReps(krId: string, count: number): void {
     if (count <= 0) return;
-    const raw = localStorage.getItem(KR_COMPLETIONS_STORAGE_KEY);
-    if (!raw) return;
-    const completions: KRCompletion[] = JSON.parse(raw);
+    const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
+    const completions = safeParseArray<KRCompletion>(safeGetItem(KR_COMPLETIONS_STORAGE_KEY));
+    if (!completions) return;
     const toRemoveIds = new Set(
       completions
         .filter(c => c.krId === krId)
         .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
-        .slice(0, count)
+        .slice(0, safeCount)
         .map(c => c.id)
     );
     if (toRemoveIds.size === 0) return;
     const remaining = completions.filter(c => !toRemoveIds.has(c.id));
-    localStorage.setItem(KR_COMPLETIONS_STORAGE_KEY, JSON.stringify(remaining));
+    writeJsonOrThrow(KR_COMPLETIONS_STORAGE_KEY, remaining);
   }
 
   async delete(id: string): Promise<void> {
@@ -371,7 +468,7 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     const filtered = okrs.filter(o => o.id !== id);
 
     if (filtered.length === okrs.length) {
-      throw new Error(`OKR with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     this.saveOKRs(filtered);
@@ -405,14 +502,14 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     const okrIndex = okrs.findIndex(o => o.id === okrId);
 
     if (okrIndex === -1) {
-      throw new Error(`OKR with id ${okrId} not found`);
+      throw makeApiError('not_found');
     }
 
     const okr = okrs[okrIndex];
     const krIndex = okr.keyResults.findIndex(kr => kr.id === keyResultId);
 
     if (krIndex === -1) {
-      throw new Error(`KeyResult with id ${keyResultId} not found`);
+      throw makeApiError('not_found');
     }
 
     // Snapshot before update — capture le currentValue d'origine pour delta

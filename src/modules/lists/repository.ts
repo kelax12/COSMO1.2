@@ -4,6 +4,10 @@
 
 import { TaskList, CreateListInput, UpdateListInput } from './types';
 import { LISTS_STORAGE_KEY } from './constants';
+import { localizeSeed } from '@/lib/seed-i18n';
+import type { CreateOptions } from '@/lib/restore-id';
+import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -21,11 +25,19 @@ const DEMO_LISTS: TaskList[] = [
   },
   {
     id: 'list-2',
-    name: 'Professionnel',
+    name: 'Lundi',
     color: 'purple',
-    taskIds: ['task-1', 'task-2'],
+    taskIds: ['t002', 't003', 't005', 't007', 't009'],
     type: 'manual',
     position: 1,
+  },
+  {
+    id: 'list-5',
+    name: 'Mardi',
+    color: 'blue',
+    taskIds: [],
+    type: 'manual',
+    position: 2,
   },
   {
     id: 'list-3-smart-overdue',
@@ -34,7 +46,7 @@ const DEMO_LISTS: TaskList[] = [
     taskIds: [],
     type: 'smart',
     smartRule: 'overdue',
-    position: 2,
+    position: 3,
   },
   {
     id: 'list-4-smart-priority',
@@ -43,9 +55,18 @@ const DEMO_LISTS: TaskList[] = [
     taskIds: [],
     type: 'smart',
     smartRule: 'high-priority',
-    position: 3,
+    position: 4,
   },
 ];
+
+// Overlay anglais — cf. src/lib/seed-i18n.ts.
+const DEMO_LISTS_EN: Record<string, Partial<TaskList>> = {
+  'list-1': { name: 'Urgent' },
+  'list-2': { name: 'Monday' },
+  'list-5': { name: 'Tuesday' },
+  'list-3-smart-overdue': { name: 'Overdue' },
+  'list-4-smart-priority': { name: 'High priority' },
+};
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY INTERFACE
@@ -54,11 +75,8 @@ const DEMO_LISTS: TaskList[] = [
 export interface IListsRepository {
   // Read operations
   getAll(): Promise<TaskList[]>;
-  getById(id: string): Promise<TaskList | null>;
-  getByTaskId(taskId: string): Promise<TaskList[]>;
-
   // Write operations
-  create(input: CreateListInput): Promise<TaskList>;
+  create(input: CreateListInput, options?: CreateOptions): Promise<TaskList>;
   update(id: string, updates: UpdateListInput): Promise<TaskList>;
   delete(id: string): Promise<void>;
 
@@ -76,19 +94,22 @@ export class LocalStorageListsRepository implements IListsRepository {
    * Get all lists from localStorage (or initialize with demo data)
    */
   private getLists(): TaskList[] {
-    const data = localStorage.getItem(LISTS_STORAGE_KEY);
-    if (!data) {
-      this.saveLists(DEMO_LISTS);
-      return DEMO_LISTS;
+    const stored = safeParseArray<TaskList>(safeGetItem(LISTS_STORAGE_KEY));
+    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
+    // tomber la page (regle B14, helper `safeParseArray`).
+    if (!stored) {
+      const seeded = localizeSeed(DEMO_LISTS, DEMO_LISTS_EN);
+      this.saveLists(seeded);
+      return seeded;
     }
-    return JSON.parse(data);
+    return stored;
   }
 
   /**
    * Save lists to localStorage
    */
   private saveLists(lists: TaskList[]): void {
-    localStorage.setItem(LISTS_STORAGE_KEY, JSON.stringify(lists));
+    writeJsonOrThrow(LISTS_STORAGE_KEY, lists);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -107,11 +128,6 @@ export class LocalStorageListsRepository implements IListsRepository {
     });
   }
 
-  async getById(id: string): Promise<TaskList | null> {
-    const lists = this.getLists();
-    return lists.find(l => l.id === id) || null;
-  }
-
   async getByTaskId(taskId: string): Promise<TaskList[]> {
     const lists = this.getLists();
     return lists.filter(l => l.taskIds.includes(taskId));
@@ -121,7 +137,7 @@ export class LocalStorageListsRepository implements IListsRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateListInput): Promise<TaskList> {
+  async create(input: CreateListInput, options?: CreateOptions): Promise<TaskList> {
     const lists = this.getLists();
 
     // Backfill (#XX) : les listes jamais réordonnées manuellement n'ont pas
@@ -145,7 +161,9 @@ export class LocalStorageListsRepository implements IListsRepository {
 
     const newList: TaskList = {
       ...input,
-      id: crypto.randomUUID(),
+      // Parite avec le repository Supabase : `restoreId` vient d'un
+      // « Annuler », jamais d'un formulaire (R-08).
+      id: options?.restoreId ?? crypto.randomUUID(),
       taskIds: [],
       position: input.position ?? nextPosition,
     };
@@ -158,7 +176,7 @@ export class LocalStorageListsRepository implements IListsRepository {
     const index = lists.findIndex(l => l.id === id);
 
     if (index === -1) {
-      throw new Error(`List with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     const updatedList: TaskList = { ...lists[index], ...updates };
@@ -172,7 +190,7 @@ export class LocalStorageListsRepository implements IListsRepository {
     const filtered = lists.filter(l => l.id !== id);
 
     if (filtered.length === lists.length) {
-      throw new Error(`List with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     this.saveLists(filtered);
@@ -187,7 +205,7 @@ export class LocalStorageListsRepository implements IListsRepository {
     const index = lists.findIndex(l => l.id === listId);
 
     if (index === -1) {
-      throw new Error(`List with id ${listId} not found`);
+      throw makeApiError('not_found');
     }
 
     const list = lists[index];
@@ -205,7 +223,7 @@ export class LocalStorageListsRepository implements IListsRepository {
     const index = lists.findIndex(l => l.id === listId);
 
     if (index === -1) {
-      throw new Error(`List with id ${listId} not found`);
+      throw makeApiError('not_found');
     }
 
     const list = lists[index];

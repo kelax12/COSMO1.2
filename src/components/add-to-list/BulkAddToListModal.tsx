@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { X, Plus, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLists, useCreateList } from '@/modules/lists';
+import { useTasks } from '@/modules/tasks';
 import { resolveColor, InlineForm } from './shared';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface BulkAddToListModalProps {
   isOpen: boolean;
@@ -24,9 +26,22 @@ interface BulkAddToListModalProps {
  */
 const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose, count, onAddToList }) => {
   const { t, tp } = useT('tasks');
-  const { data: lists = [] } = useLists();
+  const { t: tCommon } = useT('common');
+  // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
+  // encore : le premier rendu arrive avant la reponse, et la valeur par defaut
+  // `[]` est indistinguable d'un compte reellement vide.
+  const { data: lists = [], isLoading: loadingLists } = useLists();
   const createListMutation = useCreateList();
   const [creating, setCreating] = useState(false);
+  // Le compteur n'affiche que les tâches actives : ni terminées, ni
+  // fantômes. `list.taskIds` peut contenir l'id d'une tâche supprimée
+  // depuis — rien ne purge ce tableau à la suppression d'une tâche — donc
+  // on ne compte que les ids qui désignent encore une tâche réelle et non
+  // terminée, jamais "tout ce qui n'est pas explicitement complété".
+  const { data: tasks = [] } = useTasks();
+  const activeTaskIds = new Set(tasks.filter((t) => !t.completed).map((t) => t.id));
+  const activeTaskCount = (list: { taskIds: string[] }) =>
+    list.taskIds.filter((id) => activeTaskIds.has(id)).length;
 
   const manualLists = lists.filter((l) => l.type !== 'smart');
 
@@ -34,21 +49,16 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
     if (!isOpen) setCreating(false);
   }, [isOpen]);
 
+  // Echap appartient a useModalA11y (plus bas) ; cet effet ne garde que le
+  // blocage du defilement du fond.
   useEffect(() => {
     if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      if (creating) { setCreating(false); return; }
-      onClose();
-    };
-    document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
-      document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [isOpen, onClose, creating]);
+  }, [isOpen]);
 
   const handleCreate = (name: string, color: string) => {
     createListMutation.mutate(
@@ -63,6 +73,19 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
     onClose();
   };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    // ⚠️ Fermeture A ETAGES, conservee mot pour mot depuis l'ecouteur maison
+    // qu'elle remplace : quand le sous-formulaire de creation est ouvert, Echap
+    // l'annule d'abord et ne ferme la modale qu'au second appui. Deplacer la
+    // touche dans le hook sans deplacer l'escalade aurait fait perdre une
+    // saisie en cours, sans que rien ne le signale.
+    onClose: () => { if (creating) { setCreating(false); return; } onClose(); },
+    labelledBy: "bulk-add-to-list-title",
+  });
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -73,9 +96,8 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
           transition={{ duration: 0.18 }}
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
           onClick={onClose}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="bulk-add-to-list-title"
+          ref={modalA11yRef}
+          {...modalA11yProps}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
@@ -129,15 +151,15 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
                   >
                     <Plus size={16} className="shrink-0" />
-                    Nouvelle liste
+                    {tCommon('actions.newList')}
                   </motion.button>
                 )}
               </AnimatePresence>
 
-              {manualLists.length === 0 && !creating && (
+              {!loadingLists && manualLists.length === 0 && !creating && (
                 <div className="py-8 text-center">
                   <p className="text-sm text-[rgb(var(--color-text-muted))]">
-                    Aucune liste manuelle pour l'instant.
+                    {t('addToList.emptyManual')}
                   </p>
                   <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
                     {t('addToList.createOne')}
@@ -161,7 +183,7 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
                           {list.name}
                         </span>
                         <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
-                          {list.taskIds.length} tâche{list.taskIds.length !== 1 ? 's' : ''}
+                          {activeTaskCount(list)} tâche{activeTaskCount(list) !== 1 ? 's' : ''}
                         </span>
                       </button>
                     );
@@ -173,7 +195,7 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
               {lists.some((l) => l.type === 'smart') && (
                 <p className="flex items-center gap-1.5 text-[11px] text-[rgb(var(--color-text-muted))] px-1 pt-3">
                   <Sparkles size={10} aria-hidden="true" />
-                  Les listes intelligentes se remplissent automatiquement.
+                  {t('addToList.emptyManualHint')}
                 </p>
               )}
             </div>

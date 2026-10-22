@@ -1,87 +1,239 @@
-import { useEffect, useState } from 'react';
-import { Navigate, useSearchParams } from 'react-router';
-import { markOrgSeen } from '@/lib/hooks/use-org-notifications';
-import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X, ArrowRightLeft } from 'lucide-react';
+import { Suspense, useEffect, useState } from 'react';
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
+import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
+import { BookOpen, Building2, Pencil } from 'lucide-react';
+import { useManagerSectionsToast, useOrgShortcuts } from '@/components/organization/org-page.hooks';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
   useOrgMembers,
-  useLeaveOrganization,
-  useDeleteOrganization,
-  useTransferOwnership,
+  useMyOrgPermissions,
+  useOrgNotifications,
+  useOrgRoles,
   isManagerOf,
 } from '@/modules/organizations';
-import { ENTERPRISE_BILLING_ENFORCED, ORG_FREE_SEATS } from '@/modules/billing/premium-config';
+import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
+import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
+import { isQuotaReached, effectiveQuota } from '@/modules/billing/org-billing.logic';
 import { PageHeading } from '@/components/ui/typography';
-import MemberDirectory from '@/components/organization/MemberDirectory';
-import OrgJoinCodeCard from '@/components/organization/OrgJoinCodeCard';
-import OrgInviteLinkCard from '@/components/organization/OrgInviteLinkCard';
-import OrgProfileSheet from '@/components/organization/OrgProfileSheet';
-import DeleteOrganizationDialog from '@/components/organization/DeleteOrganizationDialog';
-import PyramidTab from '@/components/organization/PyramidTab';
-import TeamProjectsTab from '@/components/organization/TeamProjectsTab';
-import TeamsSection from '@/components/organization/TeamsSection';
-import TeamOKRTab from '@/components/organization/TeamOKRTab';
-import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
+import { MobileHeader } from '@/components/mobile';
+import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
+import OrgTabBadge from '@/components/organization/OrgTabBadge';
+import OrgSideNav from '@/components/organization/OrgSideNav';
+import { useOrgGuideDemoPhase } from '@/components/org-guide/guide-demo-signal';
+import type { GuideViewer } from '@/components/org-guide/guide-types';
+import { useOrgNavMode, type OrgNavMode } from '@/components/organization/use-org-nav-mode';
+import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
+import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
+import { sectionNotificationBadges, type BadgeSection } from '@/components/organization/org-section-badges';
+import {
+  isOrgSectionSegment,
+  legacyOrgTabRedirect,
+  orgSectionPath,
+  readTeamIdSegment,
+} from '@/components/organization/deep-link.helpers';
+import { safeRedirectPath } from '@/lib/safe-redirect';
+import { canSeeStats } from '@/components/organization/stats-scope.helpers';
+import { canSeeReports, reportAccess } from '@/components/organization/report-access.helpers';
+import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import MyWorkTab from '@/components/organization/MyWorkTab';
-import ConfirmLeaveOrgDialog from '@/components/organization/ConfirmLeaveOrgDialog';
-import TransferOwnershipDialog from '@/components/organization/TransferOwnershipDialog';
+import { MyWorkSkeleton, TeamTasksSkeleton, TeamOverviewSkeleton, OrgTabSkeleton } from '@/components/organization/OrgLoadingSkeletons';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
+import { useIsDemo } from '@/lib/app-mode.store';
+import { joinedSinceWelcome, markMemberWelcomeSeen, readMemberWelcomeSeen } from '@/components/onboarding/enterprise/ent-onboarding';
 import type { KeyOf } from '@/i18n/catalog';
 
-type OrgTab = 'overview' | 'pyramid' | 'projects' | 'okr' | 'stats' | 'members';
+// ── Onglets chargés à la demande ──────────────────────────────────
+//
+// Tout /entreprise tenait dans UN chunk de 280 ko bruts (64 ko gzip), le 4e du
+// build, plus lourd que `vendor-react`. Ouvrir l'Aperçu téléchargeait donc
+// aussi la pyramide, le kanban, la frise et les graphiques des statistiques,
+// que la plupart des visites n'ouvrent jamais.
+//
+// `MyWorkTab` reste EAGER : c'est l'onglet par défaut, le rendre paresseux
+// remplacerait l'écran d'arrivée par un squelette à chaque ouverture, pour
+// n'économiser que ce qu'on va charger dans la seconde. Ses blocs peints, eux,
+// sont chargés à part et préchargés (`MyWorkSections`, 2026-09-24).
+//
+// ⚠️ Second argument à `lazyWithRetry` VIDE par défaut : les catalogues de cette
+// page sont déclarés par sa ROUTE (`App.tsx`, ligne `OrganizationPage`).
+// Une exception, vérifiée : un onglet qui DÉCLARE sa liste devient une frontière
+// que `lazy-namespaces.guard.test.ts` contrôle comme une route (`TAB_GATE_HOSTS`
+// dans `scripts/i18n-shell-namespaces.mjs`). La liste doit alors couvrir TOUT
+// son sous-arbre, `org` compris.
+const PyramidTab = lazyWithRetry(() => import('@/components/organization/PyramidTab'), ['eventModal', 'org', 'orgAdmin', 'overlays', 'tasks']);
+// `portfolio` (M2) n'est payé que par qui ouvre Projets : dans `org`, il pesait
+// 4,7 ko gzip sur chaque visite de /entreprise.
+const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
+const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'), ['csv', 'eventModal', 'org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
+const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'), ['okr', 'org', 'orgAdmin', 'overlays', 'portfolio']);
+const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
+const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgAccount', 'orgAdmin', 'overlays']);
+// Section Membres : sortie de la page le 2026-09-24, et LAZY pour la même
+// raison que les onglets ci-dessus. Importée en dur, elle restait dans ce
+// chunk, qui dépassait son cliquet (18,3 ko pour 18,0) : seul qui ouvre
+// `/entreprise/members` doit la payer.
+const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/OrgMembersSection'));
+// Audit Membres du 2026-09-24 : la section Membres tenait quatre pages en une.
+// Équipes (et la page de chaque équipe) et Paramètres ont leur adresse, et
+// leur chunk.
+const TeamsSection = lazyWithRetry(() => import('@/components/organization/TeamsSection'));
+const TeamPage = lazyWithRetry(() => import('@/components/organization/TeamPage'));
+// Rapports d'activité (mig. 202) : un chunk à part, payé par qui l'ouvre.
+const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['csv', 'okr', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
 
-// Libellés = CLÉS : cette constante est évaluée au premier import, y écrire du
-// texte figerait les onglets en français pour toute la session.
-const TABS: { id: OrgTab; labelKey: KeyOf<'org'>; Icon: typeof Users; managerOnly?: boolean }[] = [
-  { id: 'overview', labelKey: 'tabs.overview', Icon: LayoutDashboard },
-  { id: 'pyramid', labelKey: 'tabs.pyramid', Icon: Network },
-  { id: 'projects', labelKey: 'tabs.projects', Icon: FolderKanban },
-  { id: 'okr', labelKey: 'tabs.okr', Icon: Target },
-  // #13 : statistiques collectives — admin (toute l'org) / manager (son périmètre).
-  { id: 'stats', labelKey: 'tabs.stats', Icon: BarChart3, managerOnly: true },
-  { id: 'members', labelKey: 'tabs.members', Icon: Users },
-];
+// Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
+// rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
+// Glossaire et liens profonds (`?task=`…) : UNE entrée paresseuse pour les deux,
+// chargée seulement quand l'un sert (cf. `OrgPageOverlays`).
+// Accueil d'un membre au premier passage (2026-10-03) : son catalogue
+// `onboarding` ne part qu'avec lui, soit une fois par entreprise et par appareil.
+// Bouton flottant du guide (desktop) : lazy depuis le 2026-10-15, budget de ce
+// chunk. Il n'est pas nécessaire au premier rendu, et il arrive avec son catalogue.
+const OrgGuideFab = lazyWithRetry(() => import('@/components/org-guide/OrgGuideFab'), ['org', 'orgGuide', 'overlays']);
+const OrgWelcomeVideo = lazyWithRetry(() => import('@/components/onboarding/enterprise/OrgWelcomeVideo'), ['onboarding']);
+const OrgPageOverlays = lazyWithRetry(() => import('@/components/organization/OrgPageOverlays'), ['eventModal', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'tasks']);
+
+type OrgTab = OrgSection;
 
 /**
- * Espace entreprise — onglets Aperçu / Projets / OKR / Membres (state local,
- * routing plat cohérent avec l'app). Réservé aux membres d'une organisation :
- * un non-membre est redirigé vers le dashboard.
+ * Espace entreprise. Chaque section est une ROUTE depuis le 2026-09-23
+ * (`/entreprise/projects`) : le bouton précédent passe d'une section à
+ * l'autre et l'onglet du navigateur porte son nom. La navigation vit à
+ * droite (`OrgSideNav`) sur desktop, dans un sélecteur (`OrgSectionSwitcher`)
+ * sur mobile. Réservé aux membres d'une organisation : un non-membre est
+ * redirigé vers le dashboard.
  */
-const TAB_IDS: readonly string[] = TABS.map((t) => t.id);
+/**
+ * Squelette d'attente d'un onglet dont le chunk est encore en vol.
+ *
+ * Trois onglets ont déjà un squelette dédié pour leur chargement de DONNÉES :
+ * on réutilise le même ici, pour que l'attente du CODE et celle de la donnée
+ * se ressemblent au lieu de s'enchaîner en deux formes différentes.
+ */
+const tabFallback = (tab: OrgTab, tOrgAdmin: (key: KeyOf<'orgAdmin'>) => string) => {
+  if (tab === 'overview') return <MyWorkSkeleton label={tOrgAdmin('myWork.loading')} />;
+  if (tab === 'tasks') return <TeamTasksSkeleton label={tOrgAdmin('page.tasksTabLoading')} />;
+  if (tab === 'stats') return <TeamOverviewSkeleton label={tOrgAdmin('overview.loading')} />;
+  return <OrgTabSkeleton label={tOrgAdmin('page.tabLoading')} />;
+};
 
 /** Bannière sièges : dismiss persistant par org (informative, freemium dormant). */
-const seatsBannerKey = (orgId: string) => `cosmo_org_seats_banner_dismissed_${orgId}`;
 
-/** Bannière lancement « gratuit jusqu'au 1er août » : dismiss persistant par org. */
-const launchBannerKey = (orgId: string) => `cosmo_org_launch_banner_dismissed_${orgId}`;
-const LAUNCH_FREE_UNTIL = new Date('2026-08-01T00:00:00');
+// 🗑️ Bannière « gratuit jusqu'au 1er août » retirée le 2026-09-24 : elle ne
+// s'affichait plus depuis le 2026-08-01, son code et ses libellés restaient.
+
+/** Ouvre la palette Ctrl+K (écoutée dans `CommandPalette.tsx`). */
+const openSearch = () => window.dispatchEvent(new CustomEvent('open-command-palette'));
 
 const OrganizationPage = () => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const { user } = useAuth();
-  // #1 — onglet actif dans l'URL (?tab=okr) : survit au refresh et se partage.
+  // Section active = segment de chemin. `billing` en fait partie : c'est une
+  // route sans entrée de navigation, où Stripe renvoie après un paiement.
+  // `entityId` : second segment, qui n'existe que pour la page d'une équipe
+  // (`/entreprise/teams/<id>`).
+  const { section, entityId } = useParams<{ section?: string; entityId?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const rawTab = searchParams.get('tab');
-  const tab: OrgTab = rawTab && TAB_IDS.includes(rawTab) ? (rawTab as OrgTab) : 'overview';
-  const setTab = (id: OrgTab) =>
-    setSearchParams(id === 'overview' ? {} : { tab: id }, { replace: true });
-  const [editProfile, setEditProfile] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [confirmingLeave, setConfirmingLeave] = useState(false);
-  const [transferring, setTransferring] = useState(false);
-  const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
-  const [launchBannerDismissed, setLaunchBannerDismissed] = useState(false);
-  const { activeOrg: myOrg, isLoading } = useActiveOrganization();
-
-  // Badge nav (reco #7) : visiter la page marque les notifications comme vues.
+  const navigate = useNavigate();
+  const urlTab: OrgTab = isOrgSectionSegment(section) ? section : 'overview';
+  // Sans `replace` : chaque section est une page, le bouton précédent y revient.
+  const setTab = (id: OrgTab) => navigate(orgSectionPath(id));
+  // Glossaire (cohérence globale) : ouvert par le bouton d'en-tête. Les
+  // info-bulles de rôle l'ouvrent elles-mêmes, sur leur terme (`RoleTerm`).
+  const [glossary, setGlossary] = useState(false);
+  const isDemo = useIsDemo();
+  // Fermé pendant cette visite ; le drapeau, lui, est posé par entreprise.
+  const [welcomeClosed, setWelcomeClosed] = useState(false);
+  // 🔴 DÉCIDÉ À L'ARRIVÉE, une seule fois : l'accueil membre ne s'ouvre que
+  // si l'on ARRIVE sans paramètre dans l'adresse. Toute section convient
+  // depuis le 2026-10-05 : limité à l'Aperçu nu, il ratait les personnes qui
+  // arrivent toujours par le menu sur Tâches ou Projets.
+  // Relue à chaque rendu, la condition laissait l'accueil s'ouvrir APRÈS coup
+  // par-dessus l'écran qu'on était venu voir : `?tab=settings` réécrit en
+  // `/entreprise/settings`, retour Stripe `?tab=billing`, `?task=` retiré par
+  // `DeepTaskModal` quand la tâche est introuvable. Mesuré le 2026-10-04 par
+  // le job e2e (8 échecs `supabase-stub`, run 37138213107). Même règle que le
+  // verrou de `FirstRunSetup` : une garde d'entrée se fige à l'entrée.
+  const [arrivedBare] = useState(() => searchParams.toString() === '');
+  // `?guide=1` (fin de la constellation) : ouvre le guide une seule fois,
+  // puis le paramètre quitte l'URL pour qu'un rechargement ne le rouvre pas.
+  const [guideOpenSignal] = useState(() => (searchParams.get('guide') === '1' ? Date.now() : undefined));
   useEffect(() => {
-    if (myOrg?.id) markOrgSeen(myOrg.id);
+    if (searchParams.get('guide') !== '1') return;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('guide');
+      return next;
+    }, { replace: true });
+  }, [searchParams, setSearchParams]);
+  const { activeOrg: myOrg, isLoading } = useActiveOrganization();
+  const badges = useOrgBadges();
+  const { data: orgNotifications = [] } = useOrgNotifications(myOrg?.id);
+  // Navigation de droite (ouverte à l'arrivée, repliée, ou ressortie au
+  // survol). Porté ici : la page réserve la place de la carte ouverte à
+  // l'arrivée, sinon elle recouvrirait la colonne de droite du contenu.
+  const [navMode, setNavMode] = useOrgNavMode();
+  // Démo du guide : visible pendant un changement de page (`peek` si elle
+  // était repliée, sans réserver de place), masquée une fois la page atteinte
+  // pour que le curseur ne clique jamais derrière elle (cf. guide-demo-signal).
+  const guidePhase = useOrgGuideDemoPhase();
+  const sideNavMode: OrgNavMode =
+    guidePhase === 'hide' ? 'collapsed'
+    : guidePhase === 'nav' && navMode === 'collapsed' ? 'peek'
+    : navMode;
+
+  // Badge nav (reco #7) : on marque « vu » en QUITTANT la page, pas en y
+  // arrivant. Marquer au montage remettait `lastSeen` à `now` avant le premier
+  // rendu, donc les badges d'onglet (Projets / Membres) naissaient toujours à
+  // zéro et la fonctionnalité était morte sans jamais échouer.
+  useEffect(() => {
+    const orgId = myOrg?.id;
+    if (!orgId) return;
+    return () => markOrgSeen(orgId);
   }, [myOrg?.id]);
-  const { data: members = [], isLoading: membersLoading } = useOrgMembers(myOrg?.id);
-  const leaveMutation = useLeaveOrganization();
-  const deleteMutation = useDeleteOrganization();
-  const transferMutation = useTransferOwnership();
+  // `live` : c'est LA page où l'on attend de voir un membre arriver.
+  const { data: members = [], isLoading: membersLoading } = useOrgMembers(myOrg?.id, { live: true });
+  // Appelés avant les early returns, comme tous les hooks de la page.
+  useManagerSectionsToast(myOrg?.id, user?.id, members, !membersLoading && members.length > 0, myOrg?.myRole === 'admin');
+  const { shortcuts, togglePin } = useOrgShortcuts(myOrg?.id, user?.id, urlTab, searchParams);
+  // Droits explicites de l'utilisateur courant (mig. 115). Monté ici parce que
+  // plusieurs onglets s'en servent — le hook ne déclenche qu'une requête,
+  // partagée par React Query avec celles des composants enfants.
+  const myPermissions = useMyOrgPermissions(myOrg?.id);
+  // Guide entreprise : les rôles personnalisés (mig. 219) n'existent que si
+  // leur lecture réussit. Même requête que `useMyOrgPermissions`, partagée.
+  const { isError: rolesUnavailable } = useOrgRoles(myOrg?.id);
+  // Appelé ICI, avant les early returns `isLoading` / `!myOrg` : un hook placé
+  // plus bas ne serait pas monté sur tous les rendus.
+  const { data: orgSubscription } = useOrgSubscription(myOrg?.id);
+  // Statistiques (M3) : ouvertes aussi aux responsables d'équipe, qui n'ont
+  // pas forcément de subordonné dans la pyramide.
+  const { data: teams = [], isLoading: teamsLoading } = useOrgTeams(myOrg?.id);
+  const { data: teamMembers = [] } = useOrgTeamMembers(myOrg?.id);
+
+  // Ancienne forme `/entreprise?tab=X` → `/entreprise/X`, les autres
+  // paramètres conservés. ⚠️ À GARDER POUR TOUJOURS : Stripe renvoie sur
+  // `/entreprise?tab=billing&checkout=success`, et les e-mails de
+  // `renewal-notice` déjà envoyés portent `?tab=billing`. Placé avant l'attente
+  // de l'organisation : rien à charger pour réécrire une URL.
+  // Passe par `safeRedirectPath` comme toute destination lue dans l'URL,
+  // même si le chemin vient ici d'une liste fermée (cf. no-open-redirect.test.ts).
+  const legacyTarget = safeRedirectPath(legacyOrgTabRedirect(searchParams));
+  if (legacyTarget) return <Navigate to={legacyTarget} replace />;
+  // Segment inconnu (`/entreprise/xyz`, `/entreprise/overview`) : l'aperçu,
+  // à sa vraie adresse plutôt qu'un contenu d'aperçu sous une URL fausse.
+  if (section !== undefined && !isOrgSectionSegment(section)) {
+    return <Navigate to="/entreprise" replace />;
+  }
+  // Un second segment n'a de sens que sous `teams`, et seulement s'il a la
+  // forme d'un id : sinon, la section elle-même.
+  const teamId = section === 'teams' ? readTeamIdSegment(entityId) : null;
+  if (entityId !== undefined && !teamId) {
+    return <Navigate to={orgSectionPath(section)} replace />;
+  }
 
   if (isLoading) {
     return (
@@ -94,36 +246,130 @@ const OrganizationPage = () => {
   // Non-membre : pas d'espace entreprise → dashboard.
   if (!myOrg) return <Navigate to="/dashboard" replace />;
 
+  const isOwner = user?.id === myOrg.ownerId;
   const isAdmin = myOrg.myRole === 'admin';
   // « Manager » est dérivé de la pyramide : a ≥ 1 subordonné direct (v2).
   const isManager = isAdmin || (user?.id ? isManagerOf(members, user.id) : false);
-
-  let bannerDismissed = seatsBannerDismissed;
-  try {
-    bannerDismissed = bannerDismissed || !!localStorage.getItem(seatsBannerKey(myOrg.id));
-  } catch { /* localStorage indisponible : bannière visible */ }
-
-  const dismissSeatsBanner = () => {
-    setSeatsBannerDismissed(true);
-    try { localStorage.setItem(seatsBannerKey(myOrg.id), '1'); } catch { /* no-op */ }
+  // Droits explicites (mig. 115). `isManager` reste la clé des surfaces
+  // HIÉRARCHIQUES (onglets Pyramide et Statistiques) : voir l'équipe qu'on
+  // encadre n'est pas une permission réglable, c'est une position.
+  const canInvite = myPermissions.can['member.invite'];
+  const guideViewer: GuideViewer = {
+    can: myPermissions.can,
+    isAdmin,
+    isManager,
+    isOwner,
+    customRolesAvailable: !rolesUnavailable,
   };
+  // La pyramide dit qui encadre qui, l'équipe qui travaille ensemble (M3) :
+  // un responsable d'équipe regarde les statistiques de SON équipe.
+  // Tant que les équipes chargent, un lien vers `stats` n'est pas renvoyé
+  // à l'aperçu (le droit n'est pas encore connu).
+  // Rapports : droit `report.org` / `report.allTeams`, ou responsable d'une équipe.
+  const canReports = teamsLoading || myPermissions.isLoading
+    || canSeeReports(reportAccess(myPermissions.can, teams, teamMembers, user?.id));
+  const canStats = teamsLoading || canSeeStats(teams, { members, teamMembers, currentUserId: user?.id, isAdmin });
+  // Un membre qui arrive sur `/entreprise/billing` (lien partagé, ancien
+  // favori) ou sur `pyramid` / `stats` (favori d'un ancien manager, lien
+  // copié) sans en avoir le droit ne voit pas un écran vide : il retombe sur
+  // l'aperçu.
+  const tab: OrgTab =
+    (urlTab === 'billing' && !isOwner) || (urlTab === 'pyramid' && !isManager) || (urlTab === 'stats' && !canStats)
+      ? 'overview'
+      : urlTab === 'reports' ? 'settings' : urlTab;
 
-  let launchDismissed = launchBannerDismissed;
-  try {
-    launchDismissed = launchDismissed || !!localStorage.getItem(launchBannerKey(myOrg.id));
-  } catch { /* localStorage indisponible : bannière visible */ }
-
-  const dismissLaunchBanner = () => {
-    setLaunchBannerDismissed(true);
-    try { localStorage.setItem(launchBannerKey(myOrg.id), '1'); } catch { /* no-op */ }
+  // Entrées de navigation, partagées par le panneau desktop et le sélecteur
+  // mobile. Projets (tâches nouvellement assignées) et Membres (demandes
+  // d'adhésion) ont leur compteur dérivé ; depuis l'audit du 2026-09-24, les
+  // autres sections comptent leurs notifications non lues (aucune requête de
+  // plus : la boîte de réception les porte déjà).
+  const sectionBadges = sectionNotificationBadges(orgNotifications);
+  const badgeOf = (id: OrgSection): { count: number; items: string[] } => {
+    const extra = (id in sectionBadges) ? sectionBadges[id as BadgeSection] : null;
+    const extraItems = extra ? extra.kinds.map((k) => tOrgAdmin(`notifSettings.kind.${k}` as KeyOf<'orgAdmin'>)) : [];
+    if (id === 'projects') return { count: badges.projects + (extra?.count ?? 0), items: [...badges.projectItems, ...extraItems] };
+    if (id === 'members') return { count: badges.members, items: badges.memberItems };
+    return { count: extra?.count ?? 0, items: extraItems };
   };
+  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => !item.hidden).filter((item) => (item.id === 'stats' ? canStats : !item.managerOnly || isManager)).map(
+    ({ id, labelKey, Icon, group }) => {
+      const { count: badgeCount, items } = badgeOf(id);
+      const badgeAriaLabel = badgeCount > 0 ? tpOrgAdmin('page.badgeCount', badgeCount) : undefined;
+      return {
+        id,
+        label: t(labelKey),
+        Icon,
+        group,
+        badgeCount,
+        badgeAriaLabel,
+        badge: badgeCount > 0 ? (
+          <OrgTabBadge
+            count={badgeCount}
+            items={items}
+            title={tOrgAdmin(id === 'members' ? 'page.badgePreviewMembers' : id === 'projects' ? 'page.badgePreviewProjects' : 'page.badgePreviewSection')}
+            ariaLabel={badgeAriaLabel ?? ''}
+            side="left"
+            onAccent={tab === id}
+          />
+        ) : undefined,
+      };
+    },
+  );
 
-  const showLaunchBanner = !launchDismissed && Date.now() < LAUNCH_FREE_UNTIL.getTime();
+  // Quota de sièges RÉELLEMENT bloquant : le gate serveur (`org_seats_allowed`,
+  // mig. 067) ne refuse que si le drapeau `enterprise_seat_limit` est activé en
+  // base. Tant que la facturation est dormante, les portes d'entrée restent
+  // ouvertes — mais le jour où le drapeau passe à true, un clic sur « inviter »
+  // partirait vers un `seat_limit_reached` sans que rien ne l'ait annoncé.
+  //
+  // ⚠️ Le seuil est celui de l'ABONNEMENT, jamais `ORG_FREE_SEATS` en dur : une
+  // organisation qui a payé le palier « Département » a 20 sièges, et un gate
+  // client resté bloqué à 5 rendrait le paiement sans effet visible — on
+  // encaisserait sans rien débloquer. `isQuotaReached` porte exactement la même
+  // règle que `org_seats_allowed()` (dont le repli sans abonnement actif EST
+  // `ORG_FREE_SEATS`), pour que le client annonce ce que le serveur appliquera.
+  const seatsQuota = effectiveQuota(orgSubscription ?? null);
+  // Démo : pas de facturation réelle, la bannière n'appelle aucune action.
+  const seatsFull = !isDemo && ENTERPRISE_BILLING_ENFORCED && isQuotaReached(members.length, orgSubscription ?? null);
+
+  const hasEntityParam = ['task', 'member', 'project', 'okr', 'team'].some((k) => searchParams.has(k));
+  const glossaryButton = (
+    <button
+      type="button"
+      onClick={() => setGlossary(true)}
+      aria-label={t('glossary.open')}
+      className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
+    >
+      <BookOpen size={18} />
+    </button>
+  );
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
-      {/* En-tête */}
-      <header className="flex items-center gap-3 mb-6">
+    // `md:pr-[232px]` = carte (208) + ses deux marges (12 + 12). La transition
+    // suit la même courbe que la carte, pour que les deux bougent ensemble.
+    <div
+      className={`max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:transition-[padding] md:duration-300 motion-reduce:transition-none ${
+        sideNavMode === 'open' ? 'md:pr-[232px]' : ''
+      }`}
+      style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
+    >
+      {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
+          L'avatar de l'organisation n'y est PAS repris : une vignette de 48 px
+          dans une barre qui se compacte à 17 px ne tient pas, et la réduire
+          la rendrait illisible. Elle reste dans le bloc desktop. La pastille
+          de forfait non plus : elle a déjà sa logique de passage à la ligne
+          sur mobile, juste en dessous. */}
+      <MobileHeader
+        title={myOrg.name}
+        subtitle={`${tpOrgAdmin('page.memberCount', members.length)}${myOrg.industry ? ` · ${myOrg.industry}` : ''}`}
+        // Maquette 236 (2026-10-10) : une seule icône, la cloche. Le crayon
+        // menait à Paramètres, qui est une section ; le glossaire passe dans
+        // la feuille des sections (`OrgSectionSwitcher`, `onGlossary`).
+        actions={<OrgNotificationsBell orgId={myOrg.id} members={members} />}
+      />
+
+      {/* En-tête desktop (rendu historique, inchangé) */}
+      <header className="hidden md:flex flex-wrap items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-primary))] shrink-0 overflow-hidden">
           {myOrg.avatarUrl ? (
             <img src={myOrg.avatarUrl} alt="" className="w-full h-full object-cover" />
@@ -137,8 +383,8 @@ const OrganizationPage = () => {
             {isAdmin && (
               <button
                 type="button"
-                onClick={() => setEditProfile(true)}
-                aria-label={t('page.editProfile')}
+                onClick={() => setTab('settings')}
+                aria-label={tOrgAdmin('page.editProfile')}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
               >
                 <Pencil size={14} aria-hidden="true" />
@@ -146,86 +392,57 @@ const OrganizationPage = () => {
             )}
           </div>
           <p className="text-sm text-[rgb(var(--color-text-muted))] truncate">
-            {tp('page.memberCount', members.length)}
+            {tpOrgAdmin('page.memberCount', members.length)}
             {myOrg.industry ? ` · ${myOrg.industry}` : ''}
           </p>
           {myOrg.description && (
             <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5 line-clamp-1">{myOrg.description}</p>
           )}
         </div>
+        {/* La pastille « Forfait » est retirée de l'en-tête (maquette du
+            2026-09-27) : le forfait reste atteignable, pour le seul
+            propriétaire, depuis Paramètres (`OrgSettingsSection`, section
+            « Forfait et facturation »), qui est une section de navigation
+            ordinaire, donc accessible en desktop comme en mobile. */}
+        {/* Les triggers de la mig. 095 et le job pg_cron de la 096 ecrivaient
+            dans `org_notifications` sans qu'aucun ecran ne les lise. */}
+        {/* Glossaire (cohérence globale) : les mots du mode entreprise, définis. */}
+        {glossaryButton}
+        <OrgNotificationsBell orgId={myOrg.id} members={members} />
       </header>
 
-      {editProfile && <OrgProfileSheet org={myOrg} onClose={() => setEditProfile(false)} />}
-
-      {/* Bannière lancement — gratuit pour tout le monde jusqu'au 1er août,
-          quel que soit le nombre de membres. Se masque d'elle-même après
-          cette date (et reste dismissible avant). */}
-      {showLaunchBanner && (
-        <div className="mb-5 rounded-2xl border border-[rgb(var(--color-accent)/0.3)] bg-[rgb(var(--color-accent)/0.08)] px-4 py-3 flex items-start justify-between gap-3">
+      {/* Bannière sièges : affichée UNIQUEMENT quand il faut changer de plan
+          (facturation active ET quota atteint). Le simple constat « gratuit
+          jusqu'à 5, rien ne change » n'appelait aucune action : retiré. */}
+      {seatsFull && (
+        <div className="mb-5 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] px-4 py-3">
           <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-            <span className="font-semibold text-[rgb(var(--color-text-primary))]">{t('page.launchFree')}</span>
-            {t('page.launchFreeRest')}
+            <span className="font-semibold text-[rgb(var(--color-text-primary))]">{tpOrgAdmin('page.memberCountDot', members.length)}</span>{' '}
+            {tOrgAdmin('page.freemiumOver')}
           </p>
-          <button
-            type="button"
-            onClick={dismissLaunchBanner}
-            aria-label={t('page.hideInfo')}
-            className="shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
-          >
-            <X size={14} aria-hidden="true" />
-          </button>
         </div>
       )}
 
-      {/* Bannière freemium — informative tant que ENTERPRISE_BILLING_ENFORCED
-          est false (gate dormant ; le vrai blocage sera côté serveur).
-          #5 : dismissible (persistant par org) tant qu'elle est informative. */}
-      {members.length >= ORG_FREE_SEATS && (ENTERPRISE_BILLING_ENFORCED || !bannerDismissed) && (
-        <div className="mb-5 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] px-4 py-3 flex items-start justify-between gap-3">
-          <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-            <span className="font-semibold text-[rgb(var(--color-text-primary))]">{tp('page.memberCountDot', members.length)}</span>{' '}
-            {ENTERPRISE_BILLING_ENFORCED
-              ? t('page.freemiumOver')
-              : t('page.freemiumInfo')}
-          </p>
-          {!ENTERPRISE_BILLING_ENFORCED && (
-            <button
-              type="button"
-              onClick={dismissSeatsBanner}
-              aria-label={t('page.hideInfo')}
-              className="shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Onglets */}
-      <div className="flex gap-1 border-b border-[rgb(var(--color-border))] mb-6 overflow-x-auto overflow-y-hidden hide-scrollbar">
-        {TABS.filter((tab) => !tab.managerOnly || isManager).map(({ id, labelKey, Icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setTab(id)}
-            aria-current={tab === id ? 'page' : undefined}
-            className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
-              tab === id
-                ? 'border-[rgb(var(--color-accent))] text-[rgb(var(--color-text-primary))]'
-                : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
-            }`}
-          >
-            <Icon size={16} aria-hidden="true" /> {t(labelKey)}
-          </button>
-        ))}
-      </div>
+      {/* Mobile : la section courante devient un sélecteur (maquette M1).
+          Desktop : la navigation vit à droite, dans `OrgSideNav`. */}
+      <OrgSectionSwitcher
+        fallbackActive={(() => { const s = ORG_SECTIONS.find((x) => x.id === tab); return s ? { label: t(s.labelKey), Icon: s.Icon } : undefined; })()}
+        items={navItems} activeId={tab} shortcuts={shortcuts} onSearch={openSearch} onGlossary={() => setGlossary(true)} />
 
       {/* Contenu */}
-      {tab === 'overview' && <MyWorkTab orgId={myOrg.id} members={members} currentUserId={user?.id} />}
-      {tab === 'stats' && isManager && (
+      {/* Une seule frontière Suspense pour tout le contenu : les onglets sont
+          exclusifs, et le fallback est choisi d'après l'onglet demandé — celui
+          de l'onglet Tâches ressemble à sa table, celui des Statistiques à ses
+          tuiles. Un fallback générique pour tous aurait fait clignoter une
+          forme qui n'est pas celle qui arrive. */}
+      <Suspense fallback={tabFallback(tab, tOrgAdmin)}>
+      {tab === 'overview' && (
+        <MyWorkTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} />
+      )}
+      {tab === 'stats' && canStats && (
         <TeamOverviewTab orgId={myOrg.id} members={members} isAdmin={isAdmin} currentUserId={user?.id} />
       )}
-      {tab === 'pyramid' && (
+      {tab === 'pyramid' && isManager && (
         <PyramidTab
           orgId={myOrg.id}
           ownerId={myOrg.ownerId}
@@ -235,130 +452,116 @@ const OrganizationPage = () => {
           loading={membersLoading}
         />
       )}
-      {tab === 'projects' && (
-        <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} />
+      {tab === 'tasks' && (
+        <TeamTasksTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} isAdmin={isAdmin} />
       )}
-      {tab === 'okr' && <TeamOKRTab orgId={myOrg.id} isManager={isManager} />}
+      {tab === 'projects' && (
+        <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} isAdmin={isAdmin} />
+      )}
+      {tab === 'okr' && <TeamOKRTab orgId={myOrg.id} />}
+      {tab === 'billing' && (
+        <OrgBillingTab
+          orgId={myOrg.id}
+          isOwner={isOwner}
+          onBack={() => setTab('overview')}
+        />
+      )}
 
       {tab === 'members' && (
-        <div className="space-y-6">
-          {/* Inviter : par code (validation admin) ou par lien direct — deux
-              moyens côte à côte pour ne plus occuper toute la largeur.
-
-              AUD-02 — le lien direct fait entrer quelqu'un SANS validation
-              admin. Il n'est donc proposé qu'aux admins et aux managers
-              (= au moins un subordonné), exactement comme la policy
-              `org_invite_links_insert` de la mig. 084. Sans ce garde, la carte
-              restait visible pour tout le monde et un simple membre recevrait
-              désormais une erreur 403 au clic. */}
-          <div className={`grid gap-4 items-start ${isManager ? 'md:grid-cols-2' : ''}`}>
-            <OrgJoinCodeCard code={myOrg.joinCode ?? ''} orgId={myOrg.id} isAdmin={isAdmin} />
-            {isManager && <OrgInviteLinkCard orgId={myOrg.id} managerId={user?.id} />}
-          </div>
-
-          <TeamsSection
-            orgId={myOrg.id}
-            members={members}
-            currentUserId={user?.id}
-            isAdmin={isAdmin}
-            isManager={isManager}
-          />
-
-          <div>
-            <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-              Annuaire ({members.length})
-            </h2>
-            <MemberDirectory
-              orgId={myOrg.id}
-              ownerId={myOrg.ownerId}
-              members={members}
-              currentUserId={user?.id}
-              isAdmin={isAdmin}
-            />
-          </div>
-
-          {/* #5 : un admin ne « quitte » pas — il peut supprimer l'entreprise
-              (confirmation extrême, façon GitHub). Les autres membres quittent. */}
-          {isAdmin ? (
-            <div className="mt-2 rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/40 dark:bg-red-900/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-bold text-red-600 dark:text-red-400">{t('page.dangerZone')}</h3>
-                <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                  {t('page.dangerHint')}
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-                {user?.id === myOrg.ownerId && members.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setTransferring(true)}
-                    disabled={transferMutation.isPending}
-                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-60 transition-colors"
-                  >
-                    <ArrowRightLeft size={15} aria-hidden="true" /> {t('page.transferOwnership')}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setConfirmingDelete(true)}
-                  disabled={deleteMutation.isPending}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60 transition-colors"
-                >
-                  <Trash2 size={15} aria-hidden="true" /> Supprimer l'entreprise
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => setConfirmingLeave(true)}
-                disabled={leaveMutation.isPending}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-red-500 hover:text-red-600 transition-colors disabled:opacity-60"
-              >
-                <LogOut size={15} aria-hidden="true" /> Quitter l'entreprise
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {transferring && (
-        <TransferOwnershipDialog
-          orgName={myOrg.name}
-          candidates={members.filter((m) => m.userId !== myOrg.ownerId)}
-          pending={transferMutation.isPending}
-          onConfirm={(newOwnerId) =>
-            transferMutation.mutate(
-              { orgId: myOrg.id, newOwnerId },
-              { onSuccess: () => setTransferring(false) },
-            )
-          }
-          onCancel={() => setTransferring(false)}
-        />
-      )}
-
-      {confirmingLeave && (
-        <ConfirmLeaveOrgDialog
-          orgName={myOrg.name}
-          pending={leaveMutation.isPending}
-          onConfirm={() =>
-            leaveMutation.mutate(myOrg.id, { onSettled: () => setConfirmingLeave(false) })
-          }
-          onCancel={() => setConfirmingLeave(false)}
-        />
-      )}
-
-      {confirmingDelete && (
-        <DeleteOrganizationDialog
+        <OrgMembersSection
           org={myOrg}
-          memberCount={members.length}
-          pending={deleteMutation.isPending}
-          onConfirm={() =>
-            deleteMutation.mutate(myOrg.id, { onSuccess: () => setConfirmingDelete(false) })
-          }
-          onCancel={() => setConfirmingDelete(false)}
+          members={members}
+          currentUserId={user?.id}
+          isAdmin={isAdmin}
+          isManager={isManager}
+          canInvite={canInvite}
+          seatsFull={seatsFull}
         />
+      )}
+      {tab === 'teams' && (teamId ? (
+        <TeamPage orgId={myOrg.id} teamId={teamId} members={members} currentUserId={user?.id} isAdmin={isAdmin} />
+      ) : (
+        <TeamsSection
+          orgId={myOrg.id}
+          members={members}
+          currentUserId={user?.id}
+          isAdmin={isAdmin}
+          canCreateTeam={myPermissions.can['team.create']}
+        />
+      ))}
+      {tab === 'settings' && (
+        <OrgSettingsSection
+          org={myOrg}
+          members={members}
+          currentUserId={user?.id}
+          isOwner={isOwner}
+          isAdmin={isAdmin}
+          isManager={isManager}
+          canInvite={canInvite}
+          seatsFull={seatsFull}
+          seatsQuota={seatsQuota}
+          canReports={canReports && !teamsLoading && !myPermissions.isLoading}
+          initialPanel={urlTab === 'reports' ? 'reports' : undefined}
+        />
+      )}
+      </Suspense>
+
+      {/* Feuilles et dialogues : leur propre frontière, avec un fallback nul.
+          Ils s'ouvrent par-dessus l'écran ; y poser un squelette ferait
+          clignoter une carte fantôme au milieu de la page pendant que le
+          chunk arrive. */}
+      <Suspense fallback={null}>
+      </Suspense>
+
+      {/* Desktop : la navigation vit à DROITE, hors de la zone qui défile.
+          Rendue par portail dans l'emplacement de `Layout`, donc sa place
+          dans cet arbre ne dit rien de sa place à l'écran. */}
+      {/* Guide entreprise : bouton flottant desktop, le reste arrive en lazy. */}
+      <Suspense fallback={null}>
+        <OrgGuideFab viewer={guideViewer} openSignal={guideOpenSignal} />
+      </Suspense>
+
+      <OrgSideNav
+        items={navItems}
+        activeId={tab}
+        mode={sideNavMode}
+        onModeChange={setNavMode}
+        shortcuts={shortcuts}
+        onTogglePin={togglePin}
+        onSearch={openSearch}
+      />
+
+      {/* Premier passage dans CETTE entreprise (créateur comme membre) : la
+          vidéo d'accueil, seulement à une arrivée sans paramètre : qui arrive
+          par un lien (fiche, réglages, retour de paiement) vient pour cet
+          écran, pas pour une visite. En démo aussi depuis le 2026-10-19 (demande
+          d'Axel) : le visiteur démo est un prospect, la vidéo lui fait le tour.
+          La date d'arrivée n'y compte pas (membres seedés), le drapeau « vu »
+          tombe avec le reste des clés `cosmo_*` à chaque nouvelle démo. */}
+      {arrivedBare && !welcomeClosed && !hasEntityParam && user?.id && (isDemo || joinedSinceWelcome(members, user.id)) && !readMemberWelcomeSeen(myOrg.id, user.id) && (
+        <Suspense fallback={null}>
+          <OrgWelcomeVideo
+            orgName={myOrg.name}
+            onClose={() => {
+              markMemberWelcomeSeen(myOrg.id, user.id);
+              setWelcomeClosed(true);
+            }}
+          />
+        </Suspense>
+      )}
+
+      {/* Liens profonds : `?task=`, `?member=`, `?project=`, `?okr=`, `?team=`
+          ouvrent leur fiche quelle que soit la section affichée. */}
+      {(glossary || hasEntityParam) && (
+        <Suspense fallback={null}>
+          <OrgPageOverlays
+            glossaryOpen={glossary}
+            onCloseGlossary={() => setGlossary(false)}
+            deepLink={hasEntityParam
+              ? { orgId: myOrg.id, section: teamId ? 'teams' : tab, members, currentUserId: user?.id, isAdmin, isManager }
+              : null}
+          />
+        </Suspense>
       )}
     </div>
   );

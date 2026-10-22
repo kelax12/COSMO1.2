@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { EventRecurrence } from '@/modules/events';
 import { DAY_ORDER } from './helpers';
 import { useT } from '@/i18n/useT';
+import { useSheetDrag, useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface RecurrenceDaysModalProps {
   isOpen: boolean;
@@ -17,6 +19,15 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
   isOpen, onClose, recurrenceDays, setRecurrenceDays, setRecurrence,
 }) => {
   const { t } = useT('eventModal');
+  const { t: tCommon } = useT('common');
+  const sheetDrag = useSheetDrag(onClose);
+  const sheetMotion = useSheetMotion();
+  // C-53 — feuille montee par-dessus EventModal, en FRERE de son overlay.
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose,
+    label: t('repeatDays'),
+  });
   return (
       <AnimatePresence>
         {isOpen && (
@@ -24,14 +35,17 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            ref={overlayRef}
+            {...dialogProps}
             className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-end sm:items-center justify-center z-[70] sm:p-4"
             onClick={() => onClose()}
           >
             <motion.div
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              {...sheetMotion}
+              // La poignee ci-dessous promettait un geste qui n existait pas
+              // (audit mobile 2026-08-14 : cinq feuilles dans ce cas). Une
+              // affordance qui ment est pire que pas d affordance.
+              {...sheetDrag}
               className="rounded-t-[28px] sm:rounded-2xl shadow-2xl w-full sm:max-w-md"
               style={{ backgroundColor: 'rgb(var(--color-surface))', paddingBottom: 'env(safe-area-inset-bottom)' }}
               onClick={(e) => e.stopPropagation()}
@@ -71,7 +85,7 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
                           }`}
                         >
                           {checked && (
-                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <svg className="w-4 h-4 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
                           )}
@@ -90,7 +104,7 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
                   }}
                   className="mt-5 w-full min-h-11 rounded-lg text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
                 >
-                  Valider
+                  {tCommon('actions.confirm')}
                 </button>
               </div>
             </motion.div>

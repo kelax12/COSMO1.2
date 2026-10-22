@@ -1,11 +1,19 @@
 {
+  "noCategory": "No category",
+  "listActions": {
+    "removeDefault": "Remove from favorites",
+    "setDefault": "Pin by default"
+  },
   "language": {
     "label": "Language",
     "description": "Interface language",
     "sectionSubtitle": "Choose the language the app is displayed in.",
-    "reloadNotice": "The page reloads to apply the language everywhere — including dates and number formats."
+    "reloadNotice": "The page reloads to apply the language everywhere, including dates and number formats."
   },
   "nav": {
+    "demoCreateAccount": "Demo mode · create an account",
+    "objectivesAria": "Objectives (OKR)",
+    "objectives": "Objectives",
     "dashboard": "Home",
     "tasks": "Tasks",
     "agenda": "Calendar",
@@ -16,12 +24,14 @@
     "premium": "Premium",
     "settings": "Settings",
     "admin": "Admin",
+    "persoGuide": "Open the guide",
     "more": "More",
     "moreOptions": "More options",
     "sectionOther": "OTHER",
     "mobileNavLabel": "Mobile navigation",
     "documentTitle": "{{page}} – Cosmo",
     "createTask": "Create a task",
+    "skipToContent": "Skip to main content",
     "goToSettings": "Go to settings",
     "logout": "Sign out",
     "premiumActive": "Active",
@@ -41,26 +51,57 @@
       "taskDueToday_one": "{{count}} task due today",
       "taskDueToday_other": "{{count}} tasks due today",
       "orgNotification_one": "{{count}} company notification",
-      "orgNotification_other": "{{count}} company notifications"
+      "orgNotification_other": "{{count}} company notifications",
+      "orgJoinRequest_one": "{{count}} join request to review",
+      "orgJoinRequest_other": "{{count}} join requests to review",
+      "orgNews": "New activity in the company space"
     },
     "descriptions": {
       "okr": "Objectives & key results",
+      "habits": "Daily tracking",
       "statistics": "Progress tracking",
       "premium": "Unlock every feature",
       "settings": "Account & preferences",
-      "enterprise": "Team & collaboration"
-    }
+      "enterprise": "Team & collaboration",
+      "bugReport": "Help us fix Cosmo"
+    },
+    "bugReport": "Report a bug",
+    "seePremium": "See Premium",
+    "sheetGoTo": "Go to",
+    "sheetOther": "Other"
   },
   "actions": {
-    "all": "All"
+    "all": "All",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "remove": "Remove",
+    "add": "Add",
+    "confirm": "Done",
+    "close": "Close",
+    "duplicate": "Duplicate",
+    "changeColor": "Change color",
+    "newList": "New list",
+    "createCategory": "Create a category",
+    "undo": "Undo",
+    "save": "Save",
+    "refuse": "Decline"
   },
   "auth": {
+    "legalConsentTermsShort": "terms",
+    "legalConsentShort": "By creating an account, you accept the {{terms}} and have read the {{privacy}}.",
+    "legalConsentLogin": "New to Cosmo? Continuing with Google creates your account: you then accept the {{terms}} and acknowledge that you have read the {{privacy}}.",
+    "createAccountTitle": "Create an account",
+    "signInTitle": "Sign in",
+    "modalAria": "Sign in or sign up",
     "loginSubtitle": "Sign in to your account",
     "registerSubtitle": "Create your free account",
-    "orEmail": "or continue with an email",
+    "orEmail": "or continue with email",
     "accountBusiness": "Company",
     "accountBusinessDesc": "Team & collaboration",
     "forgotPassword": "Forgot your password?",
+    "sendResetLink": "Send the link",
+    "sendingEllipsis": "Sending...",
     "minChars": "{{count}} characters minimum",
     "signingInSlow": "Signing in… the server is taking a while",
     "signIn": "Sign in",
@@ -71,6 +112,9 @@
     "createOne": "Create an account",
     "backHome": "Back to the Cosmo home page",
     "backToLogin": "Back to sign in",
+    "confirmTitle": "Check your inbox",
+    "confirmBody": "Your account has been created. Open the link we just sent to {{email}} to activate it.",
+    "confirmSpam": "Nothing after a few minutes? Have a look in your spam folder.",
     "passwordTooShort": "Your password must be at least {{count}} characters long.",
     "serverTimeout": "The server isn't responding. Try again in a moment.",
     "badCredentials": "Wrong email or password. Check your details and try again.",
@@ -82,32 +126,66 @@
     "sendFailed": "Sending failed. Try again in a moment.",
     "resetTitle": "New password",
     "resetLinkInvalid": "This link is invalid or has expired.",
-    "resetFailed": "Couldn't update your password. The link may have expired — request a new one.",
+    "resetFailed": "Couldn't update your password. The link may have expired. Request a new one.",
     "welcomeBack": "Welcome back!",
     "joinCosmo": "Join Cosmo",
     "redirecting": "Redirecting...",
     "continueGoogle": "Continue with Google",
     "email": "Email",
-    "password": "Password"
+    "password": "Password",
+    "fullName": "Full name",
+    "yourNamePlaceholder": "Your name",
+    "oauthFailed": "That sign-in didn't go through.",
+    "oauthRedirectLostTitle": "Signed in, but your destination was lost.",
+    "oauthRedirectLostBody": "You landed on the home page instead of the page you asked for. Open your invitation link again to pick up where you left off.",
+    "resetIntro": "Choose the new password for your account.",
+    "confirmPassword": "Confirm the password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "savePassword": "Save password",
+    "savingEllipsis": "Saving...",
+    "passwordMismatch": "The two passwords don't match.",
+    "requestAgain": "Request a new link",
+    "backToSignIn": "Back to sign-in",
+    "forgotIntro": "Enter your email and we'll send you a link to choose a new password.",
+    "resetSentBefore": "If an account exists for",
+    "resetSentAfter": "you'll get a link to choose a new password. Do check your spam folder.",
+    "supabaseMissing": "Supabase is not configured. Check the environment variables.",
+    "invalidEmail": "Please enter a valid email address.",
+    "reservedEmail": "This email is reserved. Choose another address.",
+    "googleFailed": "Signing in with Google failed.",
+    "defaultUserName": "User",
+    "accountType": "Account type",
+    "accountPersonal": "Individual",
+    "accountPersonalDesc": "Personal use",
+    "registerGeneric": "We could not complete the sign-up. Check your details and try again.",
+    "loginGeneric": "Incorrect email or password.",
+    "tooManyAttempts": "Too many attempts. Try again in a few minutes.",
+    "weakPassword": "Password too weak. Choose a longer, more varied one.",
+    "invalidEmailAddress": "This email address is not valid.",
+    "captchaFailed": "The anti-robot check failed. Try again.",
+    "legalConsent": "By creating an account, including with Google, you accept the {{terms}} and acknowledge that you have read the {{privacy}}.",
+    "legalConsentTerms": "terms of use",
+    "legalConsentPrivacy": "privacy policy"
   },
   "cookies": {
     "banner": "Cookie banner",
-    "strictlyNecessary": "strictly necessary",
-    "purpose": " for the app to work (session, preferences). ",
     "title": "Cookies",
-    "noTracking": "No advertising tracking",
-    "onlyCookies": "Only cookies ",
-    "learnMore": "Learn more",
+    "noTracking": "No advertising, no profiling",
+    "body": "Cosmo measures traffic on its public pages and where its sign-ups come from. If you accept, a random identifier is stored on your device to link the pages of a single visit, and the channel that brought you here (campaign link, demo) is attached to your account if you create one.",
+    "ifYouRefuse": "If you decline, none of this is stored or sent: only what is strictly necessary for the service is used (session, preferences).",
+    "learnMore": "Read our privacy policy",
     "decline": "Decline",
-    "accept": "Accept"
+    "accept": "Accept",
+    "manage": "Manage cookies"
   },
   "theme": {
     "label": "Interface theme",
-    "title": "Theme: {{name}} — click to change",
+    "title": "Theme: {{name}}, click to change",
     "aria": "Current theme: {{name}}. Click to change.",
     "light": "Light",
     "dark": "Dark",
-    "grey": "Grey",
+    "grey": "Gray",
     "black": "Black"
   },
   "errorBoundary": {
@@ -117,15 +195,28 @@
   },
   "pageError": {
     "hint": "Check your internet connection, then try again.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "title": "Couldn't load {{subject}}",
+    "subjectAgenda": "your calendar",
+    "subjectOkr": "your OKRs"
   },
   "demoBanner": {
     "aria": "Demo mode",
     "label": "Demo mode",
-    "text": " — sample data, local to this device. ",
+    "text": ": sample data, local to this device. ",
     "createAccount": "Create an account",
     "rest": " to start with your real data, synced everywhere.",
     "hide": "Hide the demo banner"
+  },
+  "demoBridge": {
+    "short": "Demo: nothing is kept",
+    "aria": "Create a COSMO account",
+    "title": "Keep your setup",
+    "text": "You've just built yourself a real system. Create your account to have it on every device, it's free.",
+    "disclaimer": "This demo's data isn't transferred: your account starts from a clean slate.",
+    "cta": "Create my account",
+    "later": "Later",
+    "dismiss": "Hide this prompt"
   },
   "notFound": {
     "title": "Page not found",
@@ -133,75 +224,22 @@
     "home": "Back to home",
     "guide": "See the guide"
   },
-  "palette": {
-    "groupNavigation": "Navigation",
-    "groupActions": "Actions",
-    "groupPreferences": "Preferences",
-    "events": "Events",
-    "teamTasks": "Team tasks",
-    "team": "Team",
-    "teamProjects": "Team projects",
-    "goHome": "Go to home",
-    "goAgenda": "Go to the calendar",
-    "goSettings": "Go to settings",
-    "themeLight": "Light theme",
-    "themeDark": "Dark theme",
-    "themeGrey": "Grey theme",
-    "themeBlack": "Black theme",
-    "quickTask": "Create a quick task",
-    "createEvent": "Create an event",
-    "createHabit": "Create a habit",
-    "createObjective": "Create an objective",
-    "logout": "Sign out",
-    "noResult": "No results",
-    "searchPlaceholder": "Search a task, a page, a command...",
-    "goTasks": "Go to tasks",
-    "goHabits": "Go to habits",
-    "goOkr": "Go to OKRs",
-    "goStats": "Go to statistics",
-    "showShortcuts": "Show keyboard shortcuts",
-    "navigate": "navigate",
-    "open": "open",
-    "close": "close"
-  },
-  "moduleOnboarding": {
-    "question": "What do you want to manage?",
-    "hint": "Pick your modules. You can turn them back on any time in Settings."
-  },
   "shareInvite": {
     "alreadyCollab": "You already collaborate on “{{name}}”.",
     "expired": "This invitation link has expired. Ask for a new one.",
     "invalid": "This invitation link is invalid or has been revoked.",
     "accepted": "Task “{{name}}” accepted!",
     "refused": "Invitation declined.",
-    "sharedWithYou": "Task shared with you"
-  },
-  "shareLink": {
-    "availableAfterCreate": "Available once created",
-    "generatingLink": "Generating the link…",
-    "copied": "Invitation link copied!",
-    "copyFailed": "Couldn't copy — select the link manually.",
-    "hint": "Anyone with this link can join the task, even without an account (valid for 7 days).",
-    "creating": "Creating…",
-    "generate": "Generate the link",
-    "willSave": "The task will be saved to create a shareable link.",
-    "aria": "Invitation link to copy",
-    "copiedShort": "Copied!",
-    "copy": "Copy",
-    "saveFirst": "Save the task to generate a shareable invitation link."
-  },
-  "removeFriend": {
-    "confirm": "Are you sure you want to remove",
-    "bodyBefore": "This person will be removed from ",
-    "bodyAllYours": "all your tasks",
-    "bodyMiddle": ", and you will be removed from ",
-    "bodyAllTheirs": "all of theirs",
-    "bodyAfter": ".",
-    "losesAccess": "Tasks they'll lose access to",
-    "youLoseAccess": "Shared tasks you'll lose access to"
+    "sharedWithYou": "Task shared with you",
+    "proposes": "**{{name}}** would like to collaborate with you on **“{{task}}”**.",
+    "accept": "Accept the task",
+    "ownLink": "This invitation link points to your own task.",
+    "unverified": "We couldn't verify this invitation link. Try again in a moment."
   },
   "discard": {
-    "body": "Unsaved changes will be lost."
+    "body": "Unsaved changes will be lost.",
+    "title": "Discard your changes?",
+    "keepEditing": "Keep editing"
   },
   "loading": "Loading...",
   "tasksSummary": {
@@ -210,32 +248,112 @@
   },
   "tutorial": {
     "skip": "Skip the tutorial",
+    "skipShort": "Skip",
     "done": "Done",
     "next": "Next",
     "previous": "← Previous"
   },
-  "inbox": {
-    "friendAccepted": "Friend request accepted",
-    "requestRefused": "Request declined",
-    "removedFriend": "{{name}} removed from your friends",
-    "friendRequestSent": "Friend request sent",
-    "backToInbox": "Back to the inbox",
-    "myFriends": "My friends",
-    "manageFriends": "Manage my friends",
-    "noFriend": "No friends yet",
-    "noFriendHint": "Add a friend to start collaborating.",
-    "receivedFrom": "From {{name}}",
-    "receivedFromWithCount_one": "From {{name}} · {{count}} task",
-    "receivedFromWithCount_other": "From {{name}} · {{count}} tasks",
-    "joinRequests": "Join requests ({{count}})",
-    "acceptJoin": "Accept the join request from {{name}}",
-    "refuseJoin": "Decline the join request from {{name}}",
-    "someone": "this user",
-    "friendEmailAria": "Friend's email to invite"
-  },
   "collaborator": {
     "sent": "Sent",
     "requestSent": "⏳ Friend request sent",
-    "awaiting": "Awaiting acceptance"
+    "awaiting": "Awaiting acceptance",
+    "generic": "Collaborator",
+    "removeAria": "Remove",
+    "addAria": "Add",
+    "removeNamedAria": "Remove {{name}}",
+    "addNamedAria": "Add {{name}}"
+  },
+  "orgTier": {
+    "free": "Free",
+    "t10": "Team",
+    "t20": "Department",
+    "t50": "Business",
+    "tmax": "Unlimited"
+  },
+  "appVersion": {
+    "available": "A new version of COSMO is available.",
+    "reload": "Reload",
+    "dismiss": "Later"
+  },
+  "colorLegend": {
+    "edit": "Edit the color legend"
+  },
+  "loadingLabel": {
+    "tasks": "Loading tasks",
+    "habits": "Loading habits",
+    "okrs": "Loading OKRs"
+  },
+  "description": {
+    "expand": "Expand the description",
+    "collapse": "Close and go back to the form",
+    "expandedTitle": "Description"
+  },
+  "rootError": {
+    "title": "COSMO couldn't start",
+    "signOut": "Sign out",
+    "body": "An error interrupted the application while it was loading. Reload the page. If the problem persists, sign out to start from a clean session.",
+    "reload": "Reload"
+  },
+  "period": {
+    "day": "Day",
+    "week": "Week",
+    "month": "Month",
+    "quarter": "Quarter",
+    "year": "Year"
+  },
+  "priority": {
+    "p1": "P1 Highest",
+    "p2": "P2 High",
+    "p3": "P3 Medium",
+    "p4": "P4 Low",
+    "p5": "P5 Lowest",
+    "dotP1": "P1 · Critical",
+    "dotP2": "P2 · High",
+    "dotP3": "P3 · Normal",
+    "dotP4": "P4 · Low",
+    "dotP5": "P5 · Lowest"
+  },
+  "summary": {
+    "openTasks": "Open tasks: {{count}}",
+    "todayLoad": "≈ {{load}} planned today"
+  },
+  "weekday": {
+    "0": "Sunday",
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday"
+  },
+  "deadlineReminder": {
+    "dueToday_one": "{{count}} task due today",
+    "dueToday_other": "{{count}} tasks due today",
+    "overdue": "{{count}} overdue",
+    "description": "Tap to see your tasks",
+    "action": "View"
+  },
+  "relativeDay": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}}d ago",
+    "overdueBy_one": "{{count}}d late",
+    "overdueBy_other": "{{count}}d late"
+  },
+  "offline": {
+    "label": "Offline",
+    "text": " · you can keep browsing, but your changes will not be saved until the network is back.",
+    "back": "Back online"
+  },
+  "sync": {
+    "offline": "Offline",
+    "syncing": "Syncing…",
+    "synced": "Synced",
+    "savedLocal": "Saved (local)"
+  },
+  "showcase": {
+    "pause": "Pause the animation",
+    "play": "Play the animation"
   }
 }

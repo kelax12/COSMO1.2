@@ -65,14 +65,27 @@ test('mobile : swipe droit sur une TaskCard la complète', async ({ demoPage: pa
 
   // Swipe droit > 80 px (seuil onDragEnd) — rapide (< 500 ms) pour ne pas
   // déclencher le long-press.
-  await page.mouse.move(x, y);
-  await page.mouse.down();
-  for (let i = 1; i <= 6; i++) {
-    await page.mouse.move(x + (i * 130) / 6, y, { steps: 2 });
-  }
-  await page.mouse.up();
+  const swipe = async () => {
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    for (let i = 1; i <= 6; i++) {
+      await page.mouse.move(x + (i * 130) / 6, y, { steps: 2 });
+    }
+    await page.mouse.up();
+  };
+  await swipe();
 
   // La complétion passe par isExiting (300 ms) puis la mutation — on poll.
+  // 🔴 UNE seconde tentative de geste, bornée : sous WebKit en CI, le premier
+  // glissé n'était parfois pas reconnu (compteur inchangé à 7 s, instable le
+  // 2026-10-09). Un geste reconnu ne se rejoue PAS (le compteur a bougé, on
+  // ne retente que s'il est resté à `before`), et une carte qui ne se complète
+  // jamais échoue toujours.
+  const completed = await expect
+    .poll(() => unchecked.count(), { timeout: 7_000 })
+    .toBe(before - 1)
+    .then(() => true, () => false);
+  if (!completed && (await unchecked.count()) === before) await swipe();
   await expect.poll(() => unchecked.count(), { timeout: 7_000 }).toBe(before - 1);
   await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
 });

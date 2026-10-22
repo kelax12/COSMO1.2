@@ -33,32 +33,48 @@ const inviteRow = {
 beforeEach(() => supabaseMock.reset());
 
 describe('SupabaseOrganizationsRepository — lecture', () => {
-  it('getMyOrganizations: memberships (scopés user_id) puis orgs par in(id), avec myRole', async () => {
-    supabaseMock.queueTable('organization_members', { data: [{ org_id: 'org1', role: 'admin' }] });
-    supabaseMock.queueTable('organizations', { data: [orgRow] });
+  it('getMyOrganizations: UNE seule requête, memberships scopés user_id avec org jointe', async () => {
+    supabaseMock.queueTable('organization_members', { data: [{ role: 'admin', organizations: orgRow }] });
 
     const result = await repo.getMyOrganizations();
 
-    expect(supabaseMock.argsOf('organization_members', 'select')).toEqual(['org_id, role']);
+    expect(supabaseMock.argsOf('organization_members', 'select')).toEqual(['role, organizations(*)']);
     expect(supabaseMock.argsOf('organization_members', 'eq')).toEqual(['user_id', supabaseMock.user?.id]);
     expect(supabaseMock.argsOf('organization_members', 'limit')).toEqual([50]);
-    expect(supabaseMock.argsOf('organizations', 'in')).toEqual(['id', ['org1']]);
+    // Le coeur du correctif : plus de second aller-retour sur `organizations`,
+    // qui ne pouvait même pas partir avant le retour du premier.
+    expect(supabaseMock.queries).toHaveLength(1);
     expect(result).toEqual([{
       id: 'org1', name: 'ACME', joinCode: 'ABC123', ownerId: 'u1',
       createdAt: orgRow.created_at, description: 'desc', industry: 'tech', myRole: 'admin',
     }]);
   });
 
+  it('getMyOrganizations: trie par createdAt et écarte une org illisible (jointure nulle)', async () => {
+    supabaseMock.queueTable('organization_members', { data: [
+      { role: 'member', organizations: { ...orgRow, id: 'org2', created_at: '2026-07-05T10:00:00.000Z' } },
+      { role: 'admin', organizations: orgRow },
+      // La RLS d'`organizations` peut masquer la ligne jointe : elle revient à
+      // null, et l'org doit disparaître au lieu de faire planter le mapping.
+      { role: 'member', organizations: null },
+    ] });
+
+    const result = await repo.getMyOrganizations();
+
+    expect(result.map((o) => o.id)).toEqual(['org1', 'org2']);
+  });
+
   it('getMyOrganizations: rôle inconnu → fallback "member" ; description/industry null → undefined', async () => {
-    supabaseMock.queueTable('organization_members', { data: [{ org_id: 'org1', role: 'member' }] });
-    supabaseMock.queueTable('organizations', { data: [{ ...orgRow, id: 'org1', description: null, industry: null }] });
+    supabaseMock.queueTable('organization_members', { data: [
+      { role: 'inconnu', organizations: { ...orgRow, id: 'org1', description: null, industry: null } },
+    ] });
     const [org] = await repo.getMyOrganizations();
-    expect(org.myRole).toBe('member');
+    expect(org.myRole).toBe('inconnu');
     expect(org.description).toBeUndefined();
     expect(org.industry).toBeUndefined();
   });
 
-  it('getMyOrganizations: [] sans requête orgs si aucun membership ; [] si non authentifié', async () => {
+  it('getMyOrganizations: [] si aucun membership ; [] et AUCUNE requête si non authentifié', async () => {
     supabaseMock.queueTable('organization_members', { data: [] });
     expect(await repo.getMyOrganizations()).toEqual([]);
     expect(supabaseMock.queries.filter((q) => q.table === 'organizations')).toHaveLength(0);
@@ -69,13 +85,8 @@ describe('SupabaseOrganizationsRepository — lecture', () => {
     expect(supabaseMock.queries).toHaveLength(0);
   });
 
-  it('getMyOrganizations: normalise les erreurs DB (memberships et orgs)', async () => {
+  it('getMyOrganizations: normalise erreur DB de la requete jointe', async () => {
     supabaseMock.queueTable('organization_members', { data: null, error: { message: 'boom', code: '42P01' } });
-    await expect(repo.getMyOrganizations()).rejects.toBeTruthy();
-
-    supabaseMock.reset();
-    supabaseMock.queueTable('organization_members', { data: [{ org_id: 'org1', role: 'member' }] });
-    supabaseMock.queueTable('organizations', { data: null, error: { message: 'boom', code: '42P01' } });
     await expect(repo.getMyOrganizations()).rejects.toBeTruthy();
   });
 
@@ -86,19 +97,24 @@ describe('SupabaseOrganizationsRepository — lecture', () => {
     const result = await repo.getMembers('org1');
 
     expect(supabaseMock.argsOf('organization_members', 'eq')).toEqual(['org_id', 'org1']);
-    expect(supabaseMock.argsOf('organization_members', 'order')).toEqual(['joined_at', { ascending: true }]);
-    expect(supabaseMock.argsOf('organization_members', 'limit')).toEqual([500]);
+    const orders = supabaseMock.callsFor('organization_members').filter((c) => c.method === 'order').map((c) => c.args);
+    expect(orders).toEqual([['joined_at', { ascending: false }], ['user_id', { ascending: true }]]);
+    expect(supabaseMock.argsOf('organization_members', 'range')).toEqual([0, 999]);
     expect(supabaseMock.argsOf('profiles', 'select')).toEqual(['id, email, display_name, avatar_url']);
     expect(supabaseMock.argsOf('profiles', 'in')).toEqual(['id', ['u2']]);
     expect(result).toEqual([{
       orgId: 'org1', userId: 'u2', role: 'member', joinedAt: memberRow.joined_at,
       managerId: 'u1', displayName: 'Bob', email: 'bob@test.dev', avatar: 'https://a.io/b.png',
+      // Mig. 161 : ni suspendu ni borné quand la ligne ne le dit pas.
+      suspendedAt: null, accessExpiresAt: null,
     }]);
   });
 
   it('getMembers: fallbacks displayName — préfixe email sans display_name, "Membre" sans profil', async () => {
+    // Le serveur rend les plus récents d'abord (`joined_at` desc) ; u3 est donc
+    // en tête de la réponse et en queue du résultat.
     supabaseMock.queueTable('organization_members', {
-      data: [memberRow, { ...memberRow, user_id: 'u3' }],
+      data: [{ ...memberRow, user_id: 'u3' }, memberRow],
     });
     supabaseMock.queueTable('profiles', { data: [{ ...profileRow, display_name: null }] });
 
@@ -137,6 +153,44 @@ describe('SupabaseOrganizationsRepository — lecture', () => {
       status: 'pending', requesterName: 'Bob', requesterEmail: 'bob@test.dev',
       requesterAvatar: 'https://a.io/b.png',
     }]);
+  });
+
+  // Audit du 2026-09-24 : « membres, 500 ». Une page PLEINE en appelle une
+  // suivante ; la 1 001e personne existe pour l'annuaire.
+  it('getMembers: lit la page suivante tant que la précédente est pleine', async () => {
+    const page1 = Array.from({ length: 1000 }, (_, i) => ({ ...memberRow, user_id: `a${i}` }));
+    supabaseMock.queueTable('organization_members', { data: page1 });
+    supabaseMock.queueTable('organization_members', { data: [{ ...memberRow, user_id: 'last' }] });
+    supabaseMock.queueTable('profiles', { data: [] });
+    const result = await repo.getMembers('org1');
+    expect(result).toHaveLength(1001);
+    expect(supabaseMock.argsOf('organization_members', 'range', 0)).toEqual([0, 999]);
+    expect(supabaseMock.argsOf('organization_members', 'range', 1)).toEqual([1000, 1999]);
+    // Page incomplète : pas de troisième lecture.
+    expect(supabaseMock.callsFor('organization_members', 2)).toEqual([]);
+  });
+
+  // Témoin du défaut relevé le 2026-09-24 : trié croissant sous `limit(500)`,
+  // c'est la personne arrivée EN DERNIER qui disparaissait de l'annuaire.
+  it("getMembers: garde l'ordre d'arrivée alors que le serveur lit les plus récents", async () => {
+    const newer = { ...memberRow, user_id: 'u3', joined_at: '2026-08-02T10:00:00.000Z' };
+    supabaseMock.queueTable('organization_members', { data: [newer, memberRow] });
+    supabaseMock.queueTable('profiles', { data: [profileRow] });
+    const result = await repo.getMembers('org1');
+    expect(result.map((m) => m.userId)).toEqual(['u2', 'u3']);
+  });
+
+  it("getPendingJoinRequests: lit les plus récentes (desc), rend l'ordre chronologique", async () => {
+    supabaseMock.queueTable('organization_join_requests', {
+      data: [
+        { id: 'r2', org_id: 'org1', user_id: 'u2', requested_at: '2026-07-04T10:00:00.000Z' },
+        { id: 'r1', org_id: 'org1', user_id: 'u2', requested_at: '2026-07-03T10:00:00.000Z' },
+      ],
+    });
+    supabaseMock.queueTable('profiles', { data: [profileRow] });
+    const result = await repo.getPendingJoinRequests('org1');
+    expect(supabaseMock.argsOf('organization_join_requests', 'order')).toEqual(['requested_at', { ascending: false }]);
+    expect(result.map((r) => r.id)).toEqual(['r1', 'r2']);
   });
 
   it('getPendingJoinRequests: [] si aucune demande ; erreur DB → rejet', async () => {
@@ -283,7 +337,7 @@ describe('SupabaseOrganizationsRepository — invitations placées', () => {
 
   it('createInviteLink: rejette si non authentifié, sans INSERT', async () => {
     supabaseMock.user = null;
-    await expect(repo.createInviteLink('org1', null)).rejects.toThrow('Not authenticated');
+    await expect(repo.createInviteLink('org1', null)).rejects.toMatchObject({ code: 'not_authenticated' });
     expect(supabaseMock.queries).toHaveLength(0);
   });
 
@@ -312,12 +366,209 @@ describe('SupabaseOrganizationsRepository — invitations placées', () => {
     expect(supabaseMock.rpcCalls[0]).toEqual({ fn: 'claim_org_invite', args: { p_token: 'tok' } });
 
     supabaseMock.queueRpc('claim_org_invite', { data: null });
-    await expect(repo.claimInviteLink('bad')).rejects.toThrow('invalid_link');
+    await expect(repo.claimInviteLink('bad')).rejects.toMatchObject({ code: 'invalid_link' });
   });
 
   it('regenerateJoinCode: RPC regenerate_join_code renvoie le nouveau code', async () => {
     supabaseMock.queueRpc('regenerate_join_code', { data: 'NEW999' });
     expect(await repo.regenerateJoinCode('org1')).toBe('NEW999');
     expect(supabaseMock.rpcCalls[0]).toEqual({ fn: 'regenerate_join_code', args: { p_org: 'org1' } });
+  });
+});
+
+describe('SupabaseOrganizationsRepository — permissions par membre (mig. 115)', () => {
+  const permRow = {
+    org_id: 'org1',
+    user_id: 'u2',
+    can_create_task: false,
+    can_edit_any_task: null,
+    can_delete_task: null,
+    can_create_project: true,
+    can_edit_project: null,
+    can_delete_project: null,
+    can_create_okr: null,
+    can_delete_okr: null,
+    can_manage_category: null,
+    can_create_team: null,
+    can_invite_member: null,
+    assign_targets: ['self'],
+  };
+
+  it('getMemberPermissions: lit la table filtrée sur l’org, NULL → « pas de décision »', async () => {
+    supabaseMock.queueTable('org_member_permissions', { data: [permRow] });
+    const result = await repo.getMemberPermissions('org1');
+
+    expect(supabaseMock.argsOf('org_member_permissions', 'eq')).toEqual(['org_id', 'org1']);
+    expect(result).toEqual([
+      {
+        orgId: 'org1',
+        userId: 'u2',
+        overrides: {
+          'task.create': false,
+          'task.editAny': null,
+          'task.deleteAny': null,
+          'project.create': true,
+          'project.edit': null,
+          'project.delete': null,
+          'okr.create': null,
+          'okr.delete': null,
+          'category.manage': null,
+          'team.create': null,
+          'member.invite': null,
+          // Colonnes de la mig. 202 absentes de la ligne : `null`, jamais `false`.
+          'report.org': null,
+          'report.allTeams': null,
+          // Mig. 219, même règle.
+          'role.manage': null,
+        },
+        assignTargets: ['self'],
+      },
+    ]);
+  });
+
+  it('getMemberPermissions: un `assign_targets` absent reste null, jamais []', async () => {
+    // `null` (aucune décision → tout le monde) et `[]` (personne) sont deux
+    // états OPPOSÉS : les confondre couperait l'assignation à des membres qui
+    // n'ont jamais été restreints.
+    supabaseMock.queueTable('org_member_permissions', {
+      data: [{ ...permRow, assign_targets: null }],
+    });
+    const result = await repo.getMemberPermissions('org1');
+    expect(result[0].assignTargets).toBeNull();
+  });
+
+  it('setMemberPermissions: whitelist stricte — les quatorze colonnes (mig. 153, 202, 219), rien d’autre', async () => {
+    supabaseMock.queueTable('org_member_permissions', { data: null });
+    await repo.setMemberPermissions('org1', 'u2', {
+      // Une clé inconnue soumise par un appelant négligent ne doit pas
+      // atteindre PostgREST : on part des clés connues, jamais de l'objet reçu.
+      overrides: { 'project.create': true, 'task.create': false } as never,
+      assignTargets: ['self', 'manager'],
+    });
+
+    const upserted = supabaseMock.argsOf('org_member_permissions', 'upsert')?.[0] as Record<string, unknown>;
+    expect(upserted).toEqual({
+      org_id: 'org1',
+      user_id: 'u2',
+      can_create_task: false,
+      can_edit_any_task: null,
+      can_delete_task: null,
+      can_create_project: true,
+      can_edit_project: null,
+      can_delete_project: null,
+      can_create_okr: null,
+      can_delete_okr: null,
+      can_manage_category: null,
+      can_create_team: null,
+      can_invite_member: null,
+      can_view_org_report: null,
+      can_view_all_team_reports: null,
+      can_manage_roles: null,
+      assign_targets: ['self', 'manager'],
+    });
+    expect(supabaseMock.argsOf('org_member_permissions', 'upsert')?.[1]).toEqual({
+      onConflict: 'org_id,user_id',
+    });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// getMyOrgInbox — l'agrégat de la mig. 129, élargi par la mig. 142.
+//
+// Il remplace cinq lectures qui partaient à chaque ouverture de l'app, sur
+// TOUTES les pages protégées (`Layout` monte `useOrgBadges`). Livré après la
+// campagne du 2026-08-25, jamais couvert : il fait partie du code qui a fait
+// tomber la marge `functions` du glob.
+// ═══════════════════════════════════════════════════════════════════
+describe('SupabaseOrganizationsRepository — getMyOrgInbox (mig. 129 + 142)', () => {
+  // ❌ Ne JAMAIS lui donner un `p_org`. Le périmètre vient de `auth.uid()`
+  // seul : un paramètre d'organisation forcerait le client à attendre que
+  // l'organisation active soit résolue, et sérialiserait ce qui part en
+  // parallèle. Les sections couvrent TOUTES mes organisations, le client filtre.
+  it('appelle la RPC SANS aucun paramètre, et ne touche aucune des cinq tables', async () => {
+    supabaseMock.queueRpc('get_my_org_inbox', { data: {} });
+    await repo.getMyOrgInbox();
+
+    expect(supabaseMock.rpcCalls).toHaveLength(1);
+    expect(supabaseMock.rpcCalls[0].fn).toBe('get_my_org_inbox');
+    expect(supabaseMock.rpcCalls[0].args).toBeUndefined();
+    for (const table of ['org_invitations', 'org_join_requests', 'org_notifications', 'profiles', 'team_tasks']) {
+      expect(supabaseMock.queries.filter((q) => q.table === table)).toHaveLength(0);
+    }
+  });
+
+  it('une réponse vide rend six sections vides, jamais undefined', async () => {
+    supabaseMock.queueRpc('get_my_org_inbox', { data: null });
+    const inbox = await repo.getMyOrgInbox();
+
+    expect(inbox).toEqual({
+      invitations: [],
+      removalNotices: [],
+      myJoinRequest: null,
+      joinRequests: [],
+      notifications: [],
+      badgeTasks: [],
+    });
+  });
+
+  it('traduit les six sections, et ne laisse jamais un UUID nu à l’écran', async () => {
+    supabaseMock.queueRpc('get_my_org_inbox', {
+      data: {
+        invitations: [{
+          id: 'i1', org_id: 'org1', org_name: 'ACME',
+          inviter_id: 'u1', inviter_name: null, created_at: '2026-09-01T10:00:00.000Z',
+        }],
+        removal_notices: [{
+          id: 'r1', org_id: 'org1', org_name: 'ACME',
+          actor_name: 'Alice', created_at: '2026-09-02T10:00:00.000Z',
+        }],
+        my_join_request: { id: 'j0', org_id: 'org2', user_id: 'u2', requested_at: '2026-09-03T10:00:00.000Z' },
+        join_requests: [{
+          id: 'j1', org_id: 'org1', user_id: 'u3', requested_at: '2026-09-04T10:00:00.000Z',
+          requester_name: null, requester_email: 'carol@test.dev',
+        }],
+        notifications: [{
+          id: 'n1', org_id: 'org1', actor_id: 'u1', kind: 'task_assigned',
+          task_id: 'tk1', read_at: null, created_at: '2026-09-05T10:00:00.000Z',
+        }],
+        badge_tasks: [
+          { org_id: 'org1', id: 'tk1', name: 'Maquette', created_at: '2026-09-05T10:00:00.000Z', kind: 'assigned' },
+        ],
+      },
+    });
+    const inbox = await repo.getMyOrgInbox();
+
+    // Repli de nom : jamais l'identifiant de l'inviteur.
+    expect(inbox.invitations[0].inviterName).toBe('Un collaborateur');
+    expect(inbox.invitations[0].orgId).toBe('org1');
+    expect(inbox.removalNotices[0].actorName).toBe('Alice');
+    expect(inbox.myJoinRequest).toMatchObject({ id: 'j0', orgId: 'org2', status: 'pending' });
+    // Sans display_name, on montre la partie locale de l'email, pas l'UUID.
+    expect(inbox.joinRequests[0].requesterName).toBe('carol');
+    expect(inbox.notifications[0].taskId).toBe('tk1');
+    expect(inbox.badgeTasks[0].kind).toBe('assigned');
+  });
+
+  // 🔴 `kind` vient d'une colonne TEXT. Un libellé inconnu ne doit JAMAIS
+  // pouvoir gonfler le compteur de la pastille : il retombe sur `notified`,
+  // qui n'est jamais compté (une tâche peut sortir dans les DEUX branches).
+  it('un `kind` inconnu retombe sur `notified`, il ne compte pas comme une assignation', async () => {
+    supabaseMock.queueRpc('get_my_org_inbox', {
+      data: {
+        badge_tasks: [
+          { org_id: 'org1', id: 'tk9', name: 'X', created_at: '2026-09-05T10:00:00.000Z', kind: 'assigned_v2' },
+        ],
+      },
+    });
+    const inbox = await repo.getMyOrgInbox();
+    expect(inbox.badgeTasks[0].kind).toBe('notified');
+  });
+
+  it('remonte une erreur normalisée', async () => {
+    supabaseMock.queueRpc('get_my_org_inbox', {
+      data: null,
+      error: { message: 'permission denied', code: '42501' },
+    });
+    await expect(repo.getMyOrgInbox()).rejects.toBeTruthy();
   });
 });

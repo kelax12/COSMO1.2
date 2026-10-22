@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Building2, Users, ArrowLeft, Copy, Check, Clock } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import {
   useCreateOrganization,
   useRequestJoinOrganization,
@@ -14,14 +14,20 @@ import { useT } from '@/i18n/useT';
 interface CreateOrJoinOrganizationProps {
   /** Appelé quand l'utilisateur vient de créer une entreprise (nav vers /entreprise). */
   onCreated?: (org: Organization) => void;
+  /** Appelé quand la demande d'adhésion vient de partir. */
+  onJoinRequested?: () => void;
 }
 
 const cardBase =
   'flex flex-col items-start gap-2 rounded-2xl border p-5 text-left transition-all w-full';
 const inputClasses =
-  'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-3 text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all';
+  'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] h-11 px-3.5 rounded-lg text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all';
+// `to-indigo-600` / `hover:to-indigo-500` retirés : reliquat d'un dégradé
+// supprimé. Sans utilitaire `bg-gradient-*` sur le même élément, `to-*` ne
+// fait que poser `--tw-gradient-to`, que rien ne consomme. Zéro pixel de
+// différence — vérifié : aucun `bg-gradient` sur cette classe.
 const primaryBtn =
-  'w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20';
+  'w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20';
 
 /**
  * Choix « Créer une entreprise » ou « Rejoindre via code ». Réutilisé par la
@@ -34,7 +40,7 @@ const primaryBtn =
  *   • join : saisie du code → écran « demande envoyée » (piloté par
  *     getMySentJoinRequest, poll 20 s → l'écran d'attente reste après reload)
  */
-const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onCreated }) => {
+const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onCreated, onJoinRequested }) => {
   const { t } = useT('org');
   const [mode, setMode] = useState<'choice' | 'create' | 'join'>('choice');
   const [name, setName] = useState('');
@@ -60,7 +66,10 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
 
   const handleJoin = () => {
     requestJoinMutation.mutate(code.trim(), {
-      onSuccess: () => setCode(''),
+      onSuccess: () => {
+        setCode('');
+        onJoinRequested?.();
+      },
     });
   };
 
@@ -71,7 +80,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
       toast.success(t('createJoin.codeCopied'));
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error('Impossible de copier le code');
+      toast.error(t('createJoin.copyFailed'));
     }
   };
 
@@ -98,7 +107,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
             type="button"
             onClick={() => createdOrg.joinCode && copyCode(createdOrg.joinCode)}
             className="w-11 h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] transition-colors"
-            aria-label="Copier le code d'invitation"
+            aria-label={t('invite.copyCodeAria')}
           >
             {copied ? <Check size={18} className="text-green-500" aria-hidden="true" /> : <Copy size={18} aria-hidden="true" />}
           </button>
@@ -132,7 +141,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
           disabled={cancelMutation.isPending}
           className="text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:text-red-500 transition-colors underline underline-offset-2 disabled:opacity-60"
         >
-          Annuler ma demande
+          {t('common.cancelRequest')}
         </button>
       </div>
     );
@@ -176,13 +185,13 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
         onClick={() => setMode('choice')}
         className="inline-flex items-center gap-1.5 text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
       >
-        <ArrowLeft size={15} aria-hidden="true" /> Retour
+        <ArrowLeft size={15} aria-hidden="true" /> {t('common.backToChoice')}
       </button>
 
       {mode === 'create' ? (
         <div className="space-y-3">
           <label htmlFor="org-name" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))]">
-            Nom de l'entreprise
+            {t('common.orgNameLabel')}
           </label>
           <input
             id="org-name"
@@ -207,7 +216,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
       ) : (
         <div className="space-y-3">
           <label htmlFor="org-code" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))]">
-            Code d'invitation
+            {t('invite.codeTitle')}
           </label>
           <input
             id="org-code"
@@ -217,7 +226,12 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
             onKeyDown={(e) => e.key === 'Enter' && code.trim() && consent && handleJoin()}
             placeholder="COSMO-XXXXXXXXXX"
             className={`${inputClasses} tracking-widest font-mono`}
-            maxLength={12}
+            // 'COSMO-' + 10 caractères depuis la mig. 083 (faille M-7) = 16.
+            // La valeur précédente (12, longueur des codes hérités à 6 chars)
+            // TRONQUAIT tout code récent à la saisie : le regex de
+            // joinCodeSchema échouait ensuite et l'utilisateur voyait « Code
+            // invalide » sur un code parfaitement valide.
+            maxLength={16}
             autoFocus
           />
           <OrgConsentNotice checked={consent} onChange={setConsent} />
@@ -227,7 +241,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
             disabled={!code.trim() || !consent || requestJoinMutation.isPending}
             className={primaryBtn}
           >
-            {requestJoinMutation.isPending ? 'Envoi…' : 'Envoyer la demande'}
+            {requestJoinMutation.isPending ? t('createJoin.sending') : t('createJoin.sendRequest')}
           </button>
         </div>
       )}

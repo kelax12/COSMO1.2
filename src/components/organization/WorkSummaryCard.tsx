@@ -7,10 +7,13 @@ interface WorkSummaryCardProps {
   completed: number;
   inProgress: number;
   overdue: number;
-  /** Taux de complétion 0..100 → sous-titre « X% terminées ». */
-  completionRate: number;
-  /** Colonne de droite : anneau OKR (Statistiques) ou prochaine échéance (Aperçu). */
-  aside: ReactNode;
+  /* ⚠️ `completionRate` a été RETIRÉ (maquette 106) : le sous-titre dit
+     maintenant « X terminée(s) sur N », qui se dérive de `completed` et du
+     total. Garder un pourcentage en prop, c'était garder deux définitions du
+     même chiffre. */
+  /** Colonne de droite : anneau OKR (Statistiques). Absente sur l'Aperçu, où
+   *  la prochaine échéance est une tuile du bandeau de chiffres. */
+  aside?: ReactNode;
   /** Message affiché quand il n'y a aucune tâche. */
   emptyLabel?: string;
 }
@@ -26,7 +29,7 @@ const LegendDot = ({ colorClass, label, value, valueClass }: {
   colorClass: string; label: string; value: number; valueClass?: string;
 }) => (
   <div className="flex items-center gap-1.5">
-    <span className={`w-2.5 h-2.5 rounded-[3px] shrink-0 ${colorClass}`} aria-hidden="true" />
+    <span className={`max-md:hidden w-2.5 h-2.5 rounded-[3px] shrink-0 ${colorClass}`} aria-hidden="true" />
     <span className="text-xs text-[rgb(var(--color-text-secondary))]">
       <span className={`font-semibold ${valueClass ?? 'text-[rgb(var(--color-text-primary))]'}`}>{value}</span>{' '}
       {label}
@@ -69,43 +72,64 @@ export const ProgressRing = ({ value, label }: { value: number; label: string })
  * Statistiques du mode entreprise.
  */
 const WorkSummaryCard = ({
-  title, completed, inProgress, overdue, completionRate, aside, emptyLabel,
+  title, completed, inProgress, overdue, aside, emptyLabel,
 }: WorkSummaryCardProps) => {
-  const { t } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const total = completed + inProgress + overdue;
-  const barLabel = t('summary.barLabel', { completed, inProgress, overdue });
+  const barLabel = tOrgAdmin('summary.barLabel', { completed, inProgress, overdue });
 
   return (
-    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-5 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-5 sm:gap-6 items-center">
+    <div className={`min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-5 grid grid-cols-1 gap-5 sm:gap-6 items-center ${aside ? 'sm:grid-cols-[1fr_auto]' : ''}`}>
       <div>
         <div className="flex items-baseline justify-between gap-3 mb-3.5">
           <span className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{title}</span>
+          {/* « 0 terminée sur 3 » plutôt que « 0 % terminées » : sur trois
+              éléments, le pourcentage est une précision que personne n'a
+              demandée, et il efface le nombre qu'on cherchait. */}
           {total > 0 && (
-            <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0 tabular-nums">{t('summary.completedPercent', { percent: completionRate })}</span>
+            <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0 tabular-nums">{tpOrgAdmin('summary.completedOf', completed, { total })}</span>
           )}
         </div>
 
         {total === 0 ? (
-          <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{emptyLabel ?? t('summary.empty')}</p>
+          <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{emptyLabel ?? tOrgAdmin('summary.empty')}</p>
         ) : (
           <>
-            <div className="flex h-3 rounded-full overflow-hidden gap-0.5" role="img" aria-label={barLabel}>
-              <Segment ratio={completed / total} colorClass="bg-emerald-500" />
-              <Segment ratio={inProgress / total} colorClass="bg-[rgb(var(--color-text-muted))]" />
-              <Segment ratio={overdue / total} colorClass="bg-red-500" />
+            {/* ── Maquette 106 : une barre d'avancement montre l'avancement ──
+                La barre était SEGMENTÉE (terminées / en cours / en retard) et
+                remplissait donc toute sa largeur en permanence. Mesuré le
+                2026-09-20 sur l'onglet Aperçu : « Mes 3 tâches assignées ·
+                0 % terminées » s'illustrait d'une barre PLEINE, grise puis
+                rouge. Une barre pleine se lit comme un avancement ; celle-ci
+                était pleine alors que rien n'était fait, et sa légende disait
+                le contraire d'elle.
+
+                Elle ne porte plus que la part TERMINÉE, sur une piste neutre.
+                À 0 %, elle est vide, et c'est exactement l'information.
+                « En cours » et « en retard » sont des ÉTATS, pas des portions
+                d'avancement : ils restent dans la légende, où le rouge garde
+                son sens.
+
+                ❌ Ne pas y remettre de segment : le jour où les trois couleurs
+                reviennent dans la barre, « 0 % » redevient illisible. */}
+            <div className="h-3 rounded-full overflow-hidden bg-[rgb(var(--color-border))]" role="img" aria-label={barLabel}>
+              {/* Maquette 280 : sur mobile, une teinte ; la légende dit le reste. */}
+              <Segment ratio={completed / total} colorClass="bg-emerald-500 max-md:bg-[rgb(var(--color-accent-solid))]" />
             </div>
             <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3.5">
-              <LegendDot colorClass="bg-emerald-500" label={t('summary.legendCompleted')} value={completed} />
-              <LegendDot colorClass="bg-[rgb(var(--color-text-muted))]" label={t('summary.legendInProgress')} value={inProgress} />
-              <LegendDot colorClass="bg-red-500" label={t('summary.legendOverdue')} value={overdue} valueClass="text-red-500" />
+              <LegendDot colorClass="bg-emerald-500" label={tOrgAdmin('summary.legendCompleted')} value={completed} />
+              <LegendDot colorClass="bg-[rgb(var(--color-text-muted))]" label={tOrgAdmin('summary.legendInProgress')} value={inProgress} />
+              <LegendDot colorClass="bg-red-500" label={tOrgAdmin('summary.legendOverdue')} value={overdue} valueClass="text-red-500" />
             </div>
           </>
         )}
       </div>
 
-      <div className="border-t sm:border-t-0 sm:border-l border-[rgb(var(--color-border))] pt-4 sm:pt-0 sm:pl-6 flex justify-center">
-        {aside}
-      </div>
+      {aside && (
+        <div className="max-md:hidden border-t sm:border-t-0 sm:border-l border-[rgb(var(--color-border))] pt-4 sm:pt-0 sm:pl-6 flex justify-center">
+          {aside}
+        </div>
+      )}
     </div>
   );
 };

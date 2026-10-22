@@ -4,7 +4,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IEventsRepository } from './repository';
 import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
 import { mapEventFromDb, mapEventToDb } from './mappers';
@@ -12,6 +12,7 @@ import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 import { buildWindowOrFilter } from './window';
+import type { CreateOptions } from '@/lib/restore-id';
 
 export class SupabaseEventsRepository implements IEventsRepository {
   // Id de l'utilisateur courant, lu depuis la session (pas de round-trip).
@@ -22,7 +23,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { data } = await supabase.auth.getSession();
     const uid = data.session?.user?.id;
-    if (!uid) throw new Error('Not authenticated');
+    if (!uid) throw makeApiError('not_authenticated');
     return uid;
   }
 
@@ -129,21 +130,6 @@ export class SupabaseEventsRepository implements IEventsRepository {
     return warnIfTruncated(rows, MAX_ROWS, 'events:window:member').map(mapEventFromDb);
   }
 
-  async getById(id: string): Promise<CalendarEvent | null> {
-    if (!supabase) throw new Error('Supabase not configured');
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      throw normalizeApiError(error);
-    }
-    return data ? mapEventFromDb(data) : null;
-  }
-
   async getByTaskId(taskId: string): Promise<CalendarEvent[]> {
     if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
@@ -191,11 +177,19 @@ export class SupabaseEventsRepository implements IEventsRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateEventInput): Promise<CalendarEvent> {
+  async create(input: CreateEventInput, options?: CreateOptions): Promise<CalendarEvent> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
-    const dbInput = { ...mapEventToDb(input), user_id: user.id };
+    if (!user) throw makeApiError('not_authenticated');
+    // `options.restoreId` ne vient JAMAIS d'un payload de formulaire :
+    // c'est un second argument, reserve aux « Annuler » (R-08). La
+    // whitelist `mapToDb` et le `user_id` pose depuis la session sont
+    // inchanges.
+    const dbInput = {
+      ...mapEventToDb(input),
+      user_id: user.id,
+      ...(options?.restoreId ? { id: options.restoreId } : {}),
+    };
 
     const { data, error } = await supabase
       .from('events')

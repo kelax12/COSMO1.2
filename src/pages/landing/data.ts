@@ -16,10 +16,10 @@ export interface UseCase {
 }
 
 export const USE_CASES: UseCase[] = [
-  { profileKey: 'useCases.students.profile', accent: '#A78BFA', titleKey: 'useCases.students.title', descriptionKey: 'useCases.students.description', featureKeys: ['useCases.students.f1', 'useCases.students.f2', 'useCases.students.f3'], path: '/tasks' },
-  { profileKey: 'useCases.professionals.profile', accent: '#60A5FA', titleKey: 'useCases.professionals.title', descriptionKey: 'useCases.professionals.description', featureKeys: ['useCases.professionals.f1', 'useCases.professionals.f2', 'useCases.professionals.f3'], path: '/dashboard' },
-  { profileKey: 'useCases.teams.profile', accent: '#34D399', titleKey: 'useCases.teams.title', descriptionKey: 'useCases.teams.description', featureKeys: ['useCases.teams.f1', 'useCases.teams.f2', 'useCases.teams.f3'], path: '/okr' },
-  { profileKey: 'useCases.founders.profile', accent: '#FB923C', titleKey: 'useCases.founders.title', descriptionKey: 'useCases.founders.description', featureKeys: ['useCases.founders.f1', 'useCases.founders.f2', 'useCases.founders.f3'], path: '/okr' },
+  { profileKey: 'useCases.students.profile', accent: '#7C3AED', titleKey: 'useCases.students.title', descriptionKey: 'useCases.students.description', featureKeys: ['useCases.students.f1', 'useCases.students.f2', 'useCases.students.f3'], path: '/tasks' },
+  { profileKey: 'useCases.professionals.profile', accent: '#2563EB', titleKey: 'useCases.professionals.title', descriptionKey: 'useCases.professionals.description', featureKeys: ['useCases.professionals.f1', 'useCases.professionals.f2', 'useCases.professionals.f3'], path: '/dashboard' },
+  { profileKey: 'useCases.teams.profile', accent: '#047857', titleKey: 'useCases.teams.title', descriptionKey: 'useCases.teams.description', featureKeys: ['useCases.teams.f1', 'useCases.teams.f2', 'useCases.teams.f3'], path: '/okr' },
+  { profileKey: 'useCases.founders.profile', accent: '#C2410C', titleKey: 'useCases.founders.title', descriptionKey: 'useCases.founders.description', featureKeys: ['useCases.founders.f1', 'useCases.founders.f2', 'useCases.founders.f3'], path: '/okr' },
 ];
 
 export const ENTRY_OFFSETS = [
@@ -35,7 +35,11 @@ export interface FaqItemData {
 }
 
 // ── FAQ data ──────────────────────────────────────────────────────────────
-export const FAQ_ITEMS: FaqItemData[] = Array.from({ length: 10 }, (_, i) => ({
+// 12 items : les deux derniers portent sur la confidentialité en entreprise
+// (surveillance, cloisonnement entre équipes). Ils alimentent aussi le JSON-LD
+// FAQPage — c'est aujourd'hui la seule surface publique qui répond à ces deux
+// objections, systématiques dès qu'une organisation dépasse quelques personnes.
+export const FAQ_ITEMS: FaqItemData[] = Array.from({ length: 12 }, (_, i) => ({
   questionKey: `faq.q${i + 1}` as KeyOf<'landing'>,
   answerKey: `faq.a${i + 1}` as KeyOf<'landing'>,
 }));

@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { LocalStorageOKRsRepository } from './repository';
 import { OKRS_STORAGE_KEY } from './constants';
-import { KR_COMPLETIONS_STORAGE_KEY } from '@/modules/kr-completions/constants';
+import { KR_COMPLETIONS_STORAGE_KEY, MAX_REPS_PER_WRITE } from '@/modules/kr-completions/constants';
 import type { OKR, KeyResult } from './types';
 import type { KRCompletion } from '@/modules/kr-completions/types';
 
@@ -176,5 +176,92 @@ describe('updateKeyResult — journal symétrique + guards', () => {
     seedOkrs([okr({ id: 'o1', keyResults: [kr({ id: 'k1' })] })]);
     await expect(repo.updateKeyResult('absent', 'k1', {})).rejects.toThrow();
     await expect(repo.updateKeyResult('o1', 'absent', {})).rejects.toThrow();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// PARITÉ AVEC LE REPOSITORY SUPABASE (audit A-2)
+//
+// Deux règles du journal n'existaient que côté serveur. Une règle métier
+// portée par un seul des deux repositories diverge en silence : c'est
+// exactement ce que CLAUDE.md protège déjà pour `recordKRCompletion`.
+// ═══════════════════════════════════════════════════════════════════
+describe('journal KR — parité démo ↔ Supabase', () => {
+  it('borne les reps à MAX_REPS_PER_WRITE au lieu de saturer localStorage (B18)', async () => {
+    seedOkrs([okr({ id: 'o1', keyResults: [kr({ id: 'k1', currentValue: 0, targetValue: 100 })] })]);
+    // Le champ de progression est un `input[type=number]` sans `max` qui
+    // remonte à chaque frappe : cette valeur est atteignable à la saisie.
+    // Sans clamp, la boucle levait un QuotaExceededError après ~20 s.
+    await expect(repo.updateKeyResult('o1', 'k1', { currentValue: 50_000 })).resolves.toBeTruthy();
+    expect(journal()).toHaveLength(MAX_REPS_PER_WRITE);
+  });
+
+  // ── C-01 : le rejeu du journal a la restauration ───────────────────
+  //
+  // 🔴 L'ecriture du journal appartient au REPOSITORY, pas au client :
+  // l'arbitrage du 2026-09-03 supprime `useCreateKRCompletion` parce qu'un
+  // INSERT client libre dans un journal append-only est interdit. La borne
+  // B18 doit donc vivre ICI, avec celle de `appendKRReps`.
+
+  it('rejoue le journal d un OKR restaure, en conservant les horodatages', async () => {
+    // Les reecrire a `now()` remettrait les N points d'un coup sur
+    // aujourd'hui : ce n'est pas restaurer un graphique, c'est en inventer un.
+    await repo.restoreCompletions([
+      {
+        id: 'ignore', krId: 'k1', okrId: 'o1', userId: 'demo-user',
+        completedAt: '2026-06-01T10:00:00.000Z', krTitle: 'K', okrTitle: 'O',
+      },
+      {
+        id: 'ignore2', krId: 'k1', okrId: 'o1', userId: 'demo-user',
+        completedAt: '2026-07-01T10:00:00.000Z', krTitle: 'K', okrTitle: 'O',
+      },
+    ]);
+    const rows = journal();
+    expect(rows).toHaveLength(2);
+    expect(rows.map((r) => r.completedAt)).toEqual([
+      '2026-06-01T10:00:00.000Z',
+      '2026-07-01T10:00:00.000Z',
+    ]);
+    // Identifiant NEUF : rien ne reference une ligne de journal, seul son
+    // contenu alimente le graphique.
+    expect(rows.map((r) => r.id)).not.toContain('ignore');
+  });
+
+  it('borne AUSSI le rejeu de restauration a MAX_REPS_PER_WRITE (B18)', async () => {
+    // Le tableau vient d'une lecture, mais il traverse l'etat d'un composant :
+    // sans borne, on rouvrirait par la porte de l'annulation le trou que le
+    // cap a ferme cote ecriture.
+    const flood = Array.from({ length: MAX_REPS_PER_WRITE + 250 }, (_, i) => ({
+      id: `c-${i}`, krId: 'k1', okrId: 'o1', userId: 'demo-user',
+      completedAt: '2026-06-01T10:00:00.000Z', krTitle: 'K', okrTitle: 'O',
+    }));
+    await repo.restoreCompletions(flood);
+    expect(journal()).toHaveLength(MAX_REPS_PER_WRITE);
+  });
+
+  it('un journal vide n ecrit rien', async () => {
+    await repo.restoreCompletions([]);
+    expect(journal()).toHaveLength(0);
+  });
+
+  it('borne aussi le retrait symétrique', async () => {
+    seedOkrs([okr({ id: 'o1', keyResults: [kr({ id: 'k1', currentValue: 0, targetValue: 100 })] })]);
+    await repo.updateKeyResult('o1', 'k1', { currentValue: 50 });
+    expect(journal()).toHaveLength(50);
+    await expect(repo.updateKeyResult('o1', 'k1', { currentValue: 0 })).resolves.toBeTruthy();
+    expect(journal()).toHaveLength(0);
+  });
+
+  it('date les reps de MAINTENANT, jamais de la date d’achèvement du KR', async () => {
+    // `completedAt` dit quand le KR a été ACHEVÉ, pas quand la rep est faite.
+    // L'utiliser datait les reps d'un KR terminé au jour de son achèvement,
+    // donc le graphique « KR réalisés » ne montrait rien pour aujourd'hui.
+    const old = '2020-01-01T00:00:00.000Z';
+    seedOkrs([okr({ id: 'o1', keyResults: [kr({ id: 'k1', currentValue: 1, completed: true, completedAt: old })] })]);
+    await repo.updateKeyResult('o1', 'k1', { currentValue: 2 });
+    const rows = journal();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].completedAt).not.toBe(old);
+    expect(new Date(rows[0].completedAt).getUTCFullYear()).toBeGreaterThan(2020);
   });
 });

@@ -7,11 +7,16 @@ import React, { useMemo } from 'react';
 import type { Task } from '@/modules/tasks';
 import type { Habit } from '@/modules/habits';
 import type { CalendarEvent } from '@/modules/events';
-import type { OKR, KeyResult } from '@/modules/okrs';
-import { parseLocalDate } from '../../lib/workTimeCalculator';
-import type { WorkTimePeriodData, KeyResultHistory } from './types';
+import type { OKR } from '@/modules/okrs';
+import type { KRCompletion } from '@/modules/kr-completions/types';
+import { okrTimeByObjective, parseLocalDate } from '@/lib/workTimeCalculator';
+import type { WorkTimePeriodData } from './types';
+import { okrProgressSplit } from './okr-progress';
+import { completionColor } from './completion-color';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { formatDurationMinutes } from '@/lib/duration';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 // ═══════════════════════════════════════════════════════════════════
 // COMPOSANT MÉMOÏSÉ — Habit Stat Item
@@ -44,17 +49,26 @@ const HabitStatItem = React.memo<HabitStatItemProps>(({ habit, formatTime }) => 
           <span className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
             {habit.name}
           </span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-            {habit.periodCompletions} fois
+          {/* Maquette 204 : « 7/7 » en gris, plus une pastille verte « 7 fois ». */}
+          <span className="text-xs tabular-nums" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            {habit.periodCompletions}/{expectedCompletions}
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-emerald-600">{formatTime(habit.periodTime)}</span>
+          <span className="text-sm font-semibold tabular-nums" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(habit.periodTime)}</span>
           <span className="text-xs font-bold" style={{ color: 'rgb(var(--color-text-muted))' }}>{rate}%</span>
         </div>
       </div>
-      <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-        <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${rate}%` }} />
+      {/* La barre suit le taux en teinte continue, rouge → vert : un vert fixe
+          rendait 20 % et 100 % identiques à l'œil. La couleur est REDONDANTE
+          avec le pourcentage affiché juste au-dessus (WCAG 1.4.1) — elle ne
+          porte rien à elle seule, et ne touche donc aucun texte. */}
+      {/* Maquette 204 : sur mobile, « 7/7 » dit tout, la barre est de trop. */}
+      <div className="hidden md:block w-full h-2 rounded-full bg-muted overflow-hidden">
+        <div
+          className="h-full transition-all duration-1000"
+          style={{ width: `${rate}%`, backgroundColor: completionColor(rate) }}
+        />
       </div>
     </div>
   );
@@ -89,16 +103,13 @@ export const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[] }
   const totalTime = totalDetails.tasksTime + totalDetails.eventsTime + totalDetails.habitsTime + totalDetails.okrTime;
   const maxTime = Math.max(totalDetails.tasksTime, totalDetails.eventsTime, totalDetails.habitsTime, totalDetails.okrTime, 1);
 
-  const formatTime = (m: number) => {
-    const h = Math.floor(m / 60), mins = Math.round(m % 60);
-    return h === 0 ? `${mins}min` : `${h}h${mins < 10 ? '0' : ''}${mins}`;
-  };
+  const formatTime = formatDurationMinutes;
 
   const breakdown = [
-    { id: 'tasks', label: 'Tâches', time: totalDetails.tasksTime, color: '#3B82F6' },
-    { id: 'agenda', label: 'Agenda', time: totalDetails.eventsTime, color: '#ef4444' },
-    { id: 'habits', label: 'Habitudes', time: totalDetails.habitsTime, color: '#EAB308' },
-    { id: 'okr', label: 'OKR', time: totalDetails.okrTime, color: '#22C55E' },
+    { id: 'tasks', label: t('breakdown.tasks'), time: totalDetails.tasksTime, color: '#3B82F6' },
+    { id: 'agenda', label: t('breakdown.agenda'), time: totalDetails.eventsTime, color: '#ef4444' },
+    { id: 'habits', label: t('breakdown.habits'), time: totalDetails.habitsTime, color: '#EAB308' },
+    { id: 'okr', label: t('breakdown.okr'), time: totalDetails.okrTime, color: '#22C55E' },
   ].sort((a, b) => b.time - a.time);
 
   return (
@@ -113,18 +124,20 @@ export const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[] }
               <div key={item.id} className="space-y-2">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                    <div className="hidden md:block w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
                     <span className="font-bold text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>{item.label}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(item.time)}</span>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-muted" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                      {totalTime > 0 ? Math.round((item.time / totalTime) * 100) : 0}%
+                    <span className="text-xs font-medium tabular-nums md:px-2 md:py-0.5 md:rounded-full md:bg-muted" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                      {totalTime > 0 ? Math.round((item.time / totalTime) * 100) : 0} %
                     </span>
                   </div>
                 </div>
                 <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-1000"
+                  {/* Maquette 197 : sur mobile, la barre est bleue ; le libellé
+                      nomme le module (Agenda était en ROUGE, couleur du retard). */}
+                  <div className="h-full rounded-full transition-all duration-1000 max-md:!bg-[rgb(var(--color-accent-solid))]"
                     style={{ backgroundColor: item.color, width: `${(item.time / maxTime) * 100}%` }} />
                 </div>
               </div>
@@ -132,7 +145,9 @@ export const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[] }
           </div>
         </div>
 
-        <div className="card p-6 flex flex-col items-center justify-center text-center">
+        {/* Maquette 196 : l'anneau répétait les barres juste au-dessus. Il
+            reste sur desktop, il part du mobile. */}
+        <div className="card p-6 hidden md:flex flex-col items-center justify-center text-center">
           <div className="relative w-36 h-36 sm:w-48 sm:h-48 mb-6">
             <svg viewBox="-1.1 -1.1 2.2 2.2" className="w-full h-full rotate-[-90deg]">
               {totalTime > 0 ? (() => {
@@ -176,8 +191,8 @@ export const TasksStatistics: React.FC<{
   colorSettings: Record<string, string>;
   categories: Array<{ id: string; color: string; name: string }>;
 }> = ({ tasks, colorSettings, categories }) => {
-  const { t } = useT('statistics');
-  const getColorValue = (catId: string | undefined) => categories.find(c => c.id === catId)?.color || '#64748B';
+  const { t, tp } = useT('statistics');
+  const getColorValue = (catId: string | undefined) => categories.find(c => c.id === catId)?.color || NO_CATEGORY_COLOR;
   // Fix dots gris : itérer sur les VRAIES catégories (UUIDs), pas sur colorSettings (clés hardcodées cat-1...).
   // Fallback aux entrées colorSettings si aucune catégorie chargée (mode démo très précoce).
   const colorDistribution = (categories.length > 0
@@ -202,12 +217,18 @@ export const TasksStatistics: React.FC<{
     : '0';
   const priorityColors = ['#DC2626', '#F97316', '#F59E0B', '#3B82F6', '#6B7280'];
 
+  // Maquette 198 : sans tâche terminée sur la période, une phrase qui dit
+  // pourquoi, au lieu d'une carte vide et de cinq barres à zéro.
+  if (tasks.length === 0) {
+    return <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('details.noTaskDone')}</p>;
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="card p-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('details.byColor')}</h3>
-          <span className="text-sm font-medium px-2 py-1 rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">{tasks.length} tâches</span>
+          <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{tp('details.taskCount', tasks.length)}</span>
         </div>
         <div className="space-y-4">
           {colorDistribution.map(item => (
@@ -230,7 +251,7 @@ export const TasksStatistics: React.FC<{
       <div className="card p-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('details.byPriority')}</h3>
-          <span className="text-sm font-medium px-2 py-1 rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">Moy. {avgPriority}</span>
+          <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('details.avgPriority', { value: avgPriority })}</span>
         </div>
         <div className="space-y-4">
           {priorityDistribution.map((item, idx) => (
@@ -260,10 +281,7 @@ export const AgendaStatistics: React.FC<{
 }> = ({ events, categories }) => {
   const { t } = useT('statistics');
   const getColorValue = (hex: string | undefined) => hex || '#64748B';
-  const formatTime = (minutes: number) => {
-    const h = Math.floor(minutes / 60), m = Math.round(minutes % 60);
-    return h === 0 ? `${m}min` : `${h}h${m < 10 ? '0' : ''}${m}`;
-  };
+  const formatTime = formatDurationMinutes;
 
   const timeByColor = useMemo(() => {
     const uniqueHexColors = [...new Set(events.map(e => e.color).filter((c): c is string => Boolean(c)))];
@@ -293,7 +311,7 @@ export const AgendaStatistics: React.FC<{
         <div className="card p-6">
           <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('details.byCategory')}</h3>
           <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-16">
-            <div className="relative w-44 h-44 sm:w-56 sm:h-56 shrink-0">
+            <div className="relative w-44 h-44 sm:w-56 sm:h-56 shrink-0 hidden md:block">
               <svg viewBox="-1.1 -1.1 2.2 2.2" className="w-full h-full">
                 {timeByColor.length > 0 ? timeByColor.map((item, idx) => {
                   const pct = item.minutes / totalMinutesAll;
@@ -320,7 +338,7 @@ export const AgendaStatistics: React.FC<{
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-caption md:text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-[rgb(var(--color-text-secondary))]">{formatTime(item.minutes)}</span>
-                      <span className="font-black text-violet-500">{Math.round((item.minutes / totalMinutesAll) * 100)}%</span>
+                      <span className="font-medium tabular-nums" style={{ color: 'rgb(var(--color-text-secondary))' }}>{Math.round((item.minutes / totalMinutesAll) * 100)} %</span>
                     </div>
                   </div>
                   <div className="w-full h-2 rounded-full bg-muted/50 overflow-hidden">
@@ -345,13 +363,13 @@ export const AgendaStatistics: React.FC<{
                   </div>
                   <div className="overflow-hidden min-w-0">
                     <p className="font-semibold text-sm truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{event.title}</p>
-                    <p className="text-caption md:text-[10px] uppercase tracking-wider font-bold truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    <p className="text-caption md:text-[10px] md:uppercase md:tracking-wider md:font-bold truncate" style={{ color: 'rgb(var(--color-text-muted))' }}>
                       {categories.find(c => c.color.toLowerCase() === event.color?.toLowerCase())?.name || event.color}
                       <span className="hidden sm:inline"> · {formatDate(new Date(event.start), { day: 'numeric', month: 'short' })}</span>
                     </p>
                   </div>
                 </div>
-                <p className="font-black text-sm shrink-0 ml-3" style={{ color: getColorValue(event.color) }}>{formatTime(event.duration)}</p>
+                <p className="font-semibold text-sm tabular-nums shrink-0 ml-3" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(event.duration)}</p>
               </div>
             )) : <div className="py-8 text-center text-[rgb(var(--color-text-secondary))]">{t('details.noEvent')}</div>}
           </div>
@@ -364,64 +382,103 @@ export const AgendaStatistics: React.FC<{
 // ═══════════════════════════════════════════════════════════════════
 // OKR
 // ═══════════════════════════════════════════════════════════════════
-export const OKRStatistics: React.FC<{ objectives: OKR[]; rollingRange: { start: Date; end: Date } }> = ({ objectives, rollingRange }) => {
-  const { t } = useT('statistics');
-  const okrWorkTime = objectives.map(okr => {
-    let workedTime = 0;
-    okr.keyResults.forEach((kr: KeyResult) => {
-      const history = (kr as KeyResult & { history?: KeyResultHistory[] }).history || [];
-      const total = history.reduce((sum: number, h: KeyResultHistory) => {
-        const hDate = parseLocalDate(h.date);
-        const norm = new Date(hDate.getFullYear(), hDate.getMonth(), hDate.getDate());
-        return norm >= rollingRange.start && norm <= rollingRange.end ? sum + h.increment : sum;
-      }, 0);
-      workedTime += total * kr.estimatedTime;
-    });
-    return { id: okr.id, title: okr.title, workedTime };
-  }).filter(o => o.workedTime > 0);
+export const OKRStatistics: React.FC<{
+  objectives: OKR[];
+  krCompletions: KRCompletion[];
+  rollingRange: { start: Date; end: Date };
+}> = ({ objectives, krCompletions, rollingRange }) => {
+  const { t, tp } = useT('statistics');
+  // ⚠️ Le temps investi vient du journal `kr_completions`, jamais d'un champ
+  // `kr.history` : ce champ n'existe pas dans le modele, et le lire rendait
+  // toujours 0 (cf. src/lib/workTimeCalculator.ts). Meme parcours que le total
+  // affiche au-dessus, pour que le detail somme exactement au total.
+  const byObjective = okrTimeByObjective(
+    rollingRange.start,
+    rollingRange.end,
+    krCompletions,
+    objectives,
+  );
+  const okrWorkTime = objectives
+    .map(okr => ({ id: okr.id, title: okr.title, workedTime: byObjective.get(okr.id) ?? 0 }))
+    .filter(o => o.workedTime > 0);
+
+  // Avancement scindé « avant la période / gagné depuis » (cf. okr-progress.ts).
+  // ⚠️ La liste ne se filtre PAS sur le seul temps investi : un KR sans
+  // `estimated_time` vaut 0 minute (c'est juste, cf. CLAUDE.md), donc un OKR
+  // peut avoir progressé sans peser une minute. Le filtrer sur le temps le
+  // ferait disparaître d'une carte qui parle désormais d'AVANCEMENT.
+  const progressRows = okrProgressSplit(
+    rollingRange.start,
+    rollingRange.end,
+    krCompletions,
+    objectives,
+    byObjective,
+  )
+    .filter(o => o.workedTime > 0 || o.progressGained > 0)
+    .sort((a, b) => b.progressGained - a.progressGained || b.workedTime - a.workedTime);
 
   const totalWorkedTime = okrWorkTime.reduce((sum, o) => sum + o.workedTime, 0);
-  const maxWorkedTime = Math.max(...okrWorkTime.map(o => o.workedTime), 1);
-  const formatTime = (m: number) => {
-    const h = Math.floor(m / 60), mins = Math.round(m % 60);
-    return h === 0 ? `${mins}min` : `${h}h${mins < 10 ? '0' : ''}${mins}`;
-  };
+  const formatTime = formatDurationMinutes;
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] mb-1">{t('details.totalObjectives')}</p>
-          <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{objectives.length}</p>
-        </div>
-        <div className="card p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] mb-1">{t('details.workedObjectives')}</p>
-          <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{okrWorkTime.length}</p>
-        </div>
-        <div className="card p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] mb-1">{t('details.totalRealTime')}</p>
-          <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(totalWorkedTime)}</p>
-        </div>
+      {/* Maquettes 201 et 203 : trois chiffres sur UNE ligne (trois cartes
+          pleine largeur sur mobile), libellés en casse normale sous le chiffre. */}
+      <div className="grid grid-cols-3 gap-3 md:gap-6">
+        {[
+          { label: t('details.totalObjectives'), value: String(objectives.length) },
+          { label: t('details.workedObjectives'), value: String(okrWorkTime.length) },
+          { label: t('details.totalRealTime'), value: formatTime(totalWorkedTime) },
+        ].map((kpi) => (
+          <div key={kpi.label} className="md:card md:p-5 flex flex-col-reverse md:flex-col gap-0.5">
+            <p className="text-caption md:text-xs md:font-bold md:uppercase md:tracking-widest text-[rgb(var(--color-text-secondary))] md:mb-1">{kpi.label}</p>
+            <p className="text-title md:text-2xl font-bold md:font-black tabular-nums" style={{ color: 'rgb(var(--color-text-primary))' }}>{kpi.value}</p>
+          </div>
+        ))}
       </div>
+      {/* ── Avancement par OKR ───────────────────────────────────────────
+          La barre montrait la PART du temps investi, normalisée au maximum :
+          elle disait qui avait consommé le plus de minutes, jamais où en était
+          l'objectif. Elle porte maintenant l'avancement de l'OKR sur 100, en
+          deux intensités d'accent (maquette 199, 2026-10-10 ; c'était vert et
+          violet) : pâle, déjà acquis au début de la période ; plein, gagné depuis.
+          Le temps investi reste affiché, en chiffre. */}
       <div className="card p-6">
-        <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>
-          {t('details.effortByOkr')}
+        <h3 className="text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
+          {t('details.progressByOkr')}
         </h3>
+        {/* Légende : sans elle, deux couleurs dans une barre sont une devinette. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-6 text-caption md:text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[rgb(var(--color-accent-solid)/0.45)]" aria-hidden="true" />
+            {t('details.progressBefore')}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[rgb(var(--color-accent-solid))]" aria-hidden="true" />
+            {t('details.progressGained')}
+          </span>
+        </div>
         <div className="space-y-6">
-          {okrWorkTime.length > 0 ? okrWorkTime.sort((a, b) => b.workedTime - a.workedTime).map(okr => (
+          {progressRows.length > 0 ? progressRows.map(okr => (
             <div key={okr.id} className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{okr.title}</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-violet-500">{formatTime(okr.workedTime)}</span>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
-                    {Math.round((okr.workedTime / totalWorkedTime) * 100)}%
+              <div className="flex justify-between items-center gap-3">
+                <span className="font-medium min-w-0 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{okr.title}</span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-sm font-bold" style={{ color: 'rgb(var(--color-text-secondary))' }}>{formatTime(okr.workedTime)}</span>
+                  <span className="text-xs font-medium tabular-nums" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                    {okr.progress} %
                   </span>
                 </div>
               </div>
-              <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                <div className="h-full bg-violet-500 transition-all duration-1000"
-                  style={{ width: `${(okr.workedTime / maxWorkedTime) * 100}%` }} />
+              {/* La barre entière vaut 100 % de l'objectif : ce qui reste en
+                  gris est ce qui reste à faire, pas un écart à un autre OKR. */}
+              <div
+                className="w-full h-2 rounded-full bg-muted overflow-hidden flex"
+                role="img"
+                aria-label={tp('details.progressBarAria', okr.progressGained, { total: okr.progress, gained: okr.progressGained })}
+              >
+                <div className="h-full bg-[rgb(var(--color-accent-solid)/0.45)] transition-all duration-1000" style={{ width: `${okr.progressBefore}%` }} />
+                <div className="h-full bg-[rgb(var(--color-accent-solid))] transition-all duration-1000" style={{ width: `${okr.progressGained}%` }} />
               </div>
             </div>
           )) : <div className="py-8 text-center text-[rgb(var(--color-text-secondary))]">{t('details.noEffort')}</div>}
@@ -470,10 +527,7 @@ export const HabitsStatistics: React.FC<{
     [habitsStats]
   );
 
-  const formatTime = (m: number) => {
-    const h = Math.floor(m / 60), mins = Math.round(m % 60);
-    return h === 0 ? `${mins}min` : `${h}h${mins < 10 ? '0' : ''}${mins}`;
-  };
+  const formatTime = formatDurationMinutes;
 
   const periodSuffix =
     selectedPeriod === 'day' ? t('details.periodDay') :

@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
+import { useSheetDrag, useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface DeleteObjectiveConfirmProps {
   deletingObjective: string | null;
@@ -13,6 +15,16 @@ interface DeleteObjectiveConfirmProps {
 
 const DeleteObjectiveConfirm: React.FC<DeleteObjectiveConfirmProps> = ({ deletingObjective, setDeletingObjective, deleteObjective }) => {
   const { t } = useT('okr');
+  const sheetDrag = useSheetDrag(() => setDeletingObjective(null));
+  const sheetMotion = useSheetMotion();
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: Boolean(deletingObjective),
+    onClose: () => setDeletingObjective(null),
+    label: t('deleteObjective.title'),
+    role: 'alertdialog',
+  });
   return (
         <AnimatePresence>
           {deletingObjective && (
@@ -20,14 +32,17 @@ const DeleteObjectiveConfirm: React.FC<DeleteObjectiveConfirmProps> = ({ deletin
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              ref={modalA11yRef}
+              {...modalA11yProps}
               className="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/50 backdrop-blur-md flex items-end sm:items-center justify-center z-[60] sm:p-4"
               onClick={() => setDeletingObjective(null)}
             >
               <motion.div
-                initial={{ y: '100%', opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
-                transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+                {...sheetMotion}
+                // La poignee ci-dessous promettait un geste qui n existait pas
+                // (audit mobile 2026-08-14 : cinq feuilles dans ce cas). Une
+                // affordance qui ment est pire que pas d affordance.
+                {...sheetDrag}
                 className="bg-[rgb(var(--color-surface))] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"
                 style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
                 onClick={(e) => e.stopPropagation()}
@@ -36,7 +51,10 @@ const DeleteObjectiveConfirm: React.FC<DeleteObjectiveConfirmProps> = ({ deletin
                   <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
                 </div>
                 <div className="p-5 sm:p-6">
-                  <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                  {/* Icône retirée sur mobile (demande utilisateur) : le
+                      titre + le corps portent déjà l'information. Desktop
+                      inchangé. */}
+                  <div className="hidden sm:flex w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 items-center justify-center mb-4">
                     <Trash2 className="text-red-600 dark:text-red-400" size={24} />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('deleteObjective.title')}</h3>

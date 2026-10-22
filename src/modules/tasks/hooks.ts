@@ -1,18 +1,18 @@
-import { useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from '@/lib/toast';
 import { showUndoToast } from '@/lib/undo-toast';
 import { getTasksRepository } from '@/lib/repository.factory';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { withTimeout } from '@/lib/withTimeout';
 import { ITasksRepository } from './repository';
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { nextOccurrenceDeadline } from './recurrence';
+import { applyStatusSync } from './status-sync';
 import { taskKeys } from './constants';
-import { PaginationParams } from '@/lib/pagination.types';
-import { validateOrThrow } from '@/lib/validation/validate';
-import { createTaskSchema, updateTaskSchema } from './task.schema';
+import { dependencyErrorCode } from './dependency-errors';
+import { validateAsync } from '@/lib/validation/lazy';
 import { translator } from '@/i18n/useT';
+import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
 
 /**
  * Filet de sécurité si le canal Realtime tombe sans se reconnaître déconnecté.
@@ -22,15 +22,15 @@ import { translator } from '@/i18n/useT';
  */
 const COLLAB_POLL_INTERVAL_MS = 5 * 60_000;
 
-// ═══════════════════════════════════════════════════════════════════
-// Repository - Via centralized factory (demo/production mode)
-// ═══════════════════════════════════════════════════════════════════
-const useTasksRepository = (): ITasksRepository => {
-  const isDemo = useIsDemo();
-  // isDemo dependency is intentional: re-select repository on mode switch
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(() => getTasksRepository(), [isDemo]);
-};
+// Sélection du repository : le factory est déjà un singleton paramétré par
+// `appModeStore.isDemo`, et `resetRepositories()` le vide à chaque bascule
+// (AuthContext). Le `useMemo(..., [isDemo])` qui vivait ici était donc
+// redondant, et son commentaire était faux : `resetRepositories()` est aussi
+// appelé sur des chemins où `isDemo` NE change pas (déconnexion d'une vraie
+// session), où la mémo rendait alors l'instance que le factory venait de
+// jeter. Six modules (events, lists, categories, friends, team-projects,
+// organizations) font déjà cet appel direct. Audit A-2, item C-06.
+const useTasksRepository = (): ITasksRepository => getTasksRepository();
 
 // ═══════════════════════════════════════════════════════════════════
 // READ HOOKS (Phase 1)
@@ -92,6 +92,32 @@ export const useTasks = (options?: { enabled?: boolean }) => {
 };
 
 /**
+ * Boite de reception : taches partagees avec moi et pas encore acceptees.
+ *
+ * Depuis la mig. 103 ces taches ne sont PLUS dans `useTasks()` — elles n'y
+ * entrent qu'apres acceptation. Sans ce hook, il n'y aurait plus aucun moyen
+ * de les voir ni de les accepter.
+ *
+ * Meme cadence que les autres surfaces collaboratives (20 s), et desactive en
+ * demo ou le partage cross-compte n'existe pas.
+ */
+export const usePendingSharedTasks = () => {
+  const repository = useTasksRepository();
+  const isDemo = useIsDemo();
+  return useQuery({
+    queryKey: taskKeys.pendingShared(),
+    queryFn: () => repository.getPendingSharedTasks(),
+    enabled: !isDemo,
+    // Plus de sondage : `useSharedTasksRealtime` (App.tsx) écoute déjà
+    // `shared_tasks` dans les deux directions et invalide cette clé. Ce hook
+    // est monté par `InboxMenu`, il sondait donc en permanence — c'était le
+    // dernier `refetchInterval` inconditionnel de l'application.
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: !isDemo,
+  });
+};
+
+/**
  * Fetch a single task by ID
  */
 export const useTask = (id: string, options?: { enabled?: boolean }) => {
@@ -100,18 +126,6 @@ export const useTask = (id: string, options?: { enabled?: boolean }) => {
     queryKey: taskKeys.detail(id),
     queryFn: () => repository.getById(id),
     enabled: (options?.enabled ?? true) && !!id,
-  });
-};
-
-/**
- * Fetch tasks by date (deadline)
- */
-export const useTasksByDate = (date: string, options?: { enabled?: boolean }) => {
-  const repository = useTasksRepository();
-  return useQuery({
-    queryKey: taskKeys.byDate(date),
-    queryFn: () => repository.getByDate(date),
-    enabled: (options?.enabled ?? true) && !!date,
   });
 };
 
@@ -131,35 +145,20 @@ export const useFilteredTasks = (filters: TaskFilters, options?: { enabled?: boo
 // Computed Hooks (derived data)
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Get today's tasks
- */
-export const useTodaysTasks = () => {
-  // Date locale (en-CA → YYYY-MM-DD), pas toISOString (UTC) — sinon le jour
-  // courant est décalé entre minuit et ~2h en France (UTC+1/+2).
-  const today = new Date().toLocaleDateString('en-CA');
-  return useTasksByDate(today);
-};
+// 🗑️ Supprimés le 2026-09-05 (C-49), aucun consommateur : `useTasksByDate`,
+// `useTodaysTasks`, `useBookmarkedTasks`, `useCompletedTasks`.
+//
+// 🔴 `useFilteredTasks` RESTE, et c'est le piège de cet item : le balayage le
+// comptait orphelin parce qu'aucun ÉCRAN ne l'importe. Mais `usePendingTasks`
+// l'appelle, dans ce fichier, et `usePendingTasks` sert `DeadlineCalendar` et
+// `TasksSummary`. Une liste de « noms sans consommateur direct » n'est pas une
+// liste de suppressions sûres.
 
 /**
  * Get pending tasks (not completed)
  */
 export const usePendingTasks = () => {
   return useFilteredTasks({ completed: false });
-};
-
-/**
- * Get bookmarked tasks
- */
-export const useBookmarkedTasks = () => {
-  return useFilteredTasks({ bookmarked: true });
-};
-
-/**
- * Get completed tasks
- */
-export const useCompletedTasks = () => {
-  return useFilteredTasks({ completed: true });
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -182,12 +181,14 @@ export const useCreateTask = () => {
   const repository = useTasksRepository();
 
   return useMutation({
-    mutationFn: (input: CreateTaskInput) => {
+    mutationFn: async (input: CreateTaskInput) => {
       // Garde UX : message FR lisible avant l'appel réseau (cf. lib/validation).
-      validateOrThrow(createTaskSchema, input);
+      await validateAsync('task.create', input);
       return repository.create(input);
     },
     onSuccess: (newTask) => {
+      // Engagement démo (src/lib/demo-engagement.ts) : no-op hors démo.
+      recordDemoCreationIfDemo();
       // Injecte directement dans le cache sans refetch réseau
       queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) => {
         if (!old) return [newTask];
@@ -213,8 +214,8 @@ export const useUpdateTask = () => {
   const repository = useTasksRepository();
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: UpdateTaskInput }) => {
-      validateOrThrow(updateTaskSchema, updates);
+    mutationFn: async ({ id, updates }: { id: string; updates: UpdateTaskInput }) => {
+      await validateAsync('task.update', updates);
       return repository.update(id, updates);
     },
 
@@ -224,7 +225,8 @@ export const useUpdateTask = () => {
       const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
       if (previousTasks) {
         queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
-          old?.map((task) => (task.id === id ? { ...task, ...updates } : task))
+          // Mig. 214 : la carte change de colonne tout de suite, et du bon côté.
+          old?.map((task) => (task.id === id ? { ...task, ...applyStatusSync(task, updates) } : task))
         );
       }
       return { previousTasks };
@@ -242,7 +244,7 @@ export const useUpdateTask = () => {
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
       }
-      toast.error(`Impossible de modifier la tâche : ${error.message}`);
+      toast.error(translator('errors').t('mutation.updateTask2', { message: error.message }));
     },
   });
 };
@@ -281,7 +283,7 @@ export const useDeleteTask = () => {
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
       }
-      toast.error(`Impossible de supprimer la tâche : ${error.message}`);
+      toast.error(translator('errors').t('mutation.deleteTask', { message: error.message }));
     },
   });
 };
@@ -298,10 +300,12 @@ export const useToggleTaskComplete = () => {
     // puis transmise au repository qui bascule ET génère dans la MÊME
     // opération (mig. 086, audit archi H1).
     //
-    // Pourquoi le calcul reste client : `nextOccurrenceDeadline()` raisonne en
-    // date CALENDAIRE LOCALE de l'utilisateur (convention du projet). Le
-    // serveur ne connaît pas son fuseau ; refaire ce calcul en SQL décalerait
-    // les échéances d'un jour pour une partie des utilisateurs.
+    // Pourquoi le calcul reste client : `nextOccurrenceDeadline()` raisonne sur
+    // le JOUR CALENDAIRE vécu par l'utilisateur (`@/lib/deadline`), qui dépend
+    // du fuseau qu'il a réglé. Le serveur ne le connaît pas ; refaire ce calcul
+    // en SQL décalerait les échéances d'un jour pour tout le monde à l'ouest de
+    // Greenwich — c'est exactement ce que faisait le cast `::timestamptz` du
+    // paramètre `DATE`, refermé par la mig. 133.
     //
     // Ce qui a changé, c'est la GARANTIE : avant, la création était un
     // `create()` fire-and-forget dans `onSuccess`, avec un `.catch(() => {})`.
@@ -342,7 +346,7 @@ export const useToggleTaskComplete = () => {
         queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
           old
             ?.filter((t) => t.recurrenceParentId !== updatedTask.id)
-            .map((t) => (t.id === updatedTask.id ? { ...t, completed: false, completedAt: undefined } : t))
+            .map((t) => (t.id === updatedTask.id ? { ...t, ...applyStatusSync(t, { completed: false }) } : t))
         );
         repository
           // `null` = ne rien générer : on dé-valide, donc le serveur retire
@@ -374,8 +378,10 @@ export const useToggleTaskComplete = () => {
             task.id === id
               ? {
                   ...task,
-                  completed: !task.completed,
-                  completedAt: !task.completed ? new Date().toISOString() : undefined,
+                  ...applyStatusSync(task, {
+                    completed: !task.completed,
+                    completedAt: !task.completed ? new Date().toISOString() : undefined,
+                  }),
                 }
               : task
           )
@@ -441,7 +447,7 @@ export const useToggleTaskBookmark = () => {
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
       }
-      toast.error(`Impossible de modifier le signet : ${error.message}`);
+      toast.error(translator('errors').t('mutation.toggleBookmark', { message: error.message }));
     },
 
     // Invalidation sélective post-toggle
@@ -457,29 +463,103 @@ export const useToggleTaskBookmark = () => {
   });
 };
 
+// ═══════════════════════════════════════════════════════════════════
+// `useTasksInfinite` a été SUPPRIMÉ le 2026-08-25. Ne pas le recréer sans
+// avoir d'abord réglé ce qui suit.
+//
+// Il était livré depuis des mois avec ZÉRO consommateur (vérifié : aucune
+// occurrence hors sa propre définition et le barrel). C'est le motif que
+// `docs/ARCHITECTURE.md` §4 documente : on construit la brique générique, on
+// ne migre jamais l'écran, et la doc finit par décrire une architecture qui
+// n'existe pas.
+//
+// ⚠️ CE N'EST PAS LE HOOK QUI MANQUAIT, C'EST LE PRÉREQUIS.
+// `TasksPage` calcule ses compteurs par chip, ses smart lists (`overdue` /
+// `this-week` / `high-priority`) et son tri EN MÉMOIRE, sur le dataset
+// complet. Paginer sans pousser filtres, tri et comptage côté SQL donnerait
+// des compteurs FAUX et des smart lists incomplètes — un bug bien pire que le
+// payload qu'on cherchait à réduire.
+//
+// L'ordre de travail, le jour où le volume le justifie :
+//   1. une RPC d'agrégats (compteurs par chip, calculés en SQL) ;
+//   2. filtres et tri poussés côté serveur ;
+//   3. alors seulement, la pagination de la liste.
+//
+// Marge actuelle : plafond `MAX_ROWS` = 5 000 par compte, maximum observé en
+// prod = 289 tâches. Facteur ×17. Le rendu est déjà virtualisé au-delà de
+// 50 items — l'affichage n'a jamais été le problème.
+//
+// `getPage()` est CONSERVÉ sur le repository : ce n'est pas du code mort mais
+// une capacité d'interface, implémentée et testée sur tous les modules
+// (tasks, events, habits, okrs…). C'est la brique de l'étape 3.
+// ═══════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════
+// DÉPENDANCES (mig. 132)
+// ═══════════════════════════════════════════════════════════════════
+
 /**
- * Hook de pagination infinie pour les tâches
- * Utilise cursor-based pagination pour des performances optimales
+ * Tout le graphe de dépendances du compte, en une requête.
+ *
+ * `enabled` parce que ce hook est monté par le modal de tâche : le charger
+ * depuis la page Tâches ferait payer le graphe à des écrans qui ne
+ * l'affichent jamais.
  */
-export const useTasksInfinite = (pageSize = 50) => {
+export const useTaskDependencies = (options?: { enabled?: boolean }) => {
   const repository = useTasksRepository();
+  return useQuery<TaskDependency[]>({
+    queryKey: taskKeys.dependencies(),
+    queryFn: () => repository.getDependencies(),
+    enabled: options?.enabled ?? true,
+    staleTime: 1000 * 30,
+  });
+};
 
-  type PageCursor = { cursor: string; cursorDate: string };
+/**
+ * Message d'un refus de dépendance. Un refus NOMMÉ est rendu tel quel (il est
+ * déjà une phrase de catalogue, actionnable) ; tout le reste passe par le
+ * gabarit générique, qui dit au moins de quoi il s'agit.
+ */
+const dependencyErrorMessage = (error: Error): string => {
+  const t = translator('errors').t;
+  const code = dependencyErrorCode(error);
+  if (code) return t(`api.${code}` as never);
+  return t('mutation.taskDependency', { message: error.message });
+};
 
-  return useInfiniteQuery({
-    queryKey: [...taskKeys.all, 'infinite', pageSize],
-    queryFn: ({ pageParam }) => {
-      const params: PaginationParams = { limit: pageSize };
-      if (pageParam) {
-        params.cursor = pageParam.cursor;
-        params.cursorDate = pageParam.cursorDate;
-      }
-      return repository.getPage(params);
+/**
+ * Le refus le plus courant est un CYCLE, rejeté par le trigger (mig. 132).
+ * On veut le DIRE plutôt qu'un « une erreur est survenue » : l'utilisateur
+ * peut agir sur un cycle, pas sur une erreur anonyme.
+ *
+ * 🔴 C-48 — cette intention était contredite par les deux modes. En prod, la
+ * phrase anglaise du `RAISE` ne matchait pas `BUSINESS_CODE_RE`, donc le refus
+ * retombait sur le message générique ; en démo, elle arrivait telle quelle
+ * dans le gabarit français. Les deux passent désormais par un IDENTIFIANT
+ * catalogué (`dependency-errors.ts`, mig. 137).
+ */
+export const useAddTaskDependency = () => {
+  const queryClient = useQueryClient();
+  const repository = useTasksRepository();
+  return useMutation({
+    mutationFn: ({ taskId, dependsOnId }: TaskDependency) =>
+      repository.addDependency(taskId, dependsOnId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.dependencies() });
     },
-    initialPageParam: null as PageCursor | null,
-    getNextPageParam: (lastPage): PageCursor | undefined => {
-      if (!lastPage.hasMore || !lastPage.nextCursor || !lastPage.nextCursorDate) return undefined;
-      return { cursor: lastPage.nextCursor, cursorDate: lastPage.nextCursorDate };
+    onError: (error: Error) => toast.error(dependencyErrorMessage(error)),
+  });
+};
+
+export const useRemoveTaskDependency = () => {
+  const queryClient = useQueryClient();
+  const repository = useTasksRepository();
+  return useMutation({
+    mutationFn: ({ taskId, dependsOnId }: TaskDependency) =>
+      repository.removeDependency(taskId, dependsOnId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.dependencies() });
     },
+    onError: (error: Error) => toast.error(dependencyErrorMessage(error)),
   });
 };

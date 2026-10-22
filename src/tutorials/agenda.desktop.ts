@@ -55,7 +55,7 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
     ghostAnimation: 'drag-place',
     placeTarget: WED_COLUMN,
     dragTo: CALENDAR_GRID,
-    ghostLabel: 'Travail',
+    ghostLabelKey: 'agendaDesktop.ghostWork',
     dimLevel: 'light',
   },
   {
@@ -66,7 +66,7 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
     ghostAnimation: 'resize-grow',
     placeTarget: WED_COLUMN,
     dragTo: CALENDAR_GRID,
-    ghostLabel: 'Travail',
+    ghostLabelKey: 'agendaDesktop.ghostWork',
     dimLevel: 'light',
   },
   {
@@ -77,7 +77,7 @@ export const agendaTutorialStepsDesktop: TutorialStep[] = [
     ghostAnimation: 'select-create',
     placeTarget: WED_COLUMN,
     dragTo: CALENDAR_GRID,
-    ghostLabel: 'Pause café',
+    ghostLabelKey: 'agendaDesktop.ghostCoffee',
     dimLevel: 'light',
   },
 ];

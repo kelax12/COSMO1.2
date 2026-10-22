@@ -1,0 +1,278 @@
+// Carte d'un objectif d'entreprise. Extraite de `TeamOKRTab` quand l'OKR a
+// rejoint l'exécution (mig. 160) : cycle, objectif auquel il contribue, KR
+// reliés à des projets et points d'étape. L'onglet garde le filtrage et les
+// catégories ; la carte, la lecture d'UN objectif.
+
+import { useEffect, useState } from 'react';
+import { Target, Trash2, Pencil, Building2, CornerLeftUp } from 'lucide-react';
+import HealthStateMenu from './HealthStateMenu';
+import type { KRProjectLink, ProjectHealth, TeamKeyResult, TeamOKR } from '@/modules/team-okrs';
+import type { TeamProjectTaskStats } from '@/modules/team-projects';
+import type { OrgMember } from '@/modules/organizations';
+import MemberAvatar from './MemberAvatar';
+import VisibilityPill from './VisibilityPill';
+import { PermissionGate } from './permission-hints';
+import TeamColorDot from './TeamColorDot';
+import { useT } from '@/i18n/useT';
+import { useLocale } from '@/i18n/store';
+import { effectiveKrRatio, krTaskProgress, krWeight, okrRatioPercent } from './okr-execution.helpers';
+import { ProjectHealthBadge } from './ProjectHealthSection';
+
+// ─── Ligne KR : input contrôlé → la barre suit la saisie en direct ─────
+interface TeamKRRowProps {
+  kr: TeamKeyResult;
+  links: KRProjectLink[];
+  statsById: Map<string, TeamProjectTaskStats>;
+  onCommit: (value: number) => void;
+  /** Change l'état du KR : pose un point d'étape à la valeur courante. */
+  onSetHealth: (status: ProjectHealth, value: number) => void;
+  personOf?: (userId: string) => OrgMember | undefined;
+  /** Mobile (253) : toucher la ligne ouvre la fiche, où la valeur se met à jour. */
+  onOpen?: () => void;
+}
+
+const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf, onOpen }: TeamKRRowProps) => {
+  const { t: tOrgAdmin } = useT('orgAdmin');
+  const { t: pf } = useT('portfolio');
+  const [value, setValue] = useState<string>(String(kr.currentValue));
+  const locale = useLocale();
+
+  // Resynchronise si la valeur serveur change (mutation d'un autre client / refetch).
+  useEffect(() => {
+    setValue(String(kr.currentValue));
+  }, [kr.currentValue]);
+
+  // Mode `tasks` (mig. 160) : l'avancement se MESURE sur les projets reliés,
+  // la valeur ne se saisit plus.
+  const taskProgress = kr.progressMode === 'tasks' ? krTaskProgress(kr.id, links, statsById) : null;
+  const measured = !!taskProgress && taskProgress.projectCount > 0;
+  const numeric = Number(value);
+  const liveValue = Number.isNaN(numeric) ? kr.currentValue : numeric;
+  const ratio = measured
+    ? effectiveKrRatio(kr, links, statsById)
+    : kr.targetValue > 0 ? Math.max(0, Math.min(1, liveValue / kr.targetValue)) : 0;
+  const pct = Math.round(ratio * 100);
+  const done = ratio >= 1;
+
+  const commit = () => {
+    const v = Number(value);
+    if (!Number.isNaN(v) && v !== kr.currentValue) onCommit(v);
+  };
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex-1 min-w-0" onClick={onOpen ? () => { if (window.matchMedia('(max-width: 767px)').matches) onOpen(); } : undefined}>
+        <div className="flex items-center gap-2">
+          <p className={`text-sm md:truncate max-md:min-w-0 ${kr.completed ? 'line-through text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-primary))]'}`}>
+            {kr.title}
+          </p>
+          {krWeight(kr) !== 1 && (
+            <span
+              className="shrink-0 text-caption font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400"
+              title={pf('okrCard.weightTitle', { weight: krWeight(kr) })}
+            >
+              ×{krWeight(kr)}
+            </span>
+          )}
+          {kr.health && <span className="shrink-0 text-caption"><ProjectHealthBadge health={kr.health} /></span>}
+          {/* Porteurs du KR : responsable puis contributeurs (mig. 160). */}
+          {personOf && (() => {
+            const ids = [...new Set([kr.assigneeId, ...(kr.contributorIds ?? [])].filter((x): x is string => !!x))];
+            const people = ids.map(personOf).filter((m): m is OrgMember => !!m);
+            if (people.length === 0) return null;
+            return (
+              <span className="flex -space-x-1.5 shrink-0" title={pf('krContrib.carriers', { names: people.map((m) => m.displayName).join(', ') })}>
+                {people.slice(0, 4).map((m) => (
+                  <span key={m.userId} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
+                    <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
+                  </span>
+                ))}
+              </span>
+            );
+          })()}
+          <span data-guide-id="okr-kr-progress" className="ml-auto text-xs max-md:font-sans font-mono tabular-nums text-[rgb(var(--color-text-muted))] shrink-0">
+            {measured && taskProgress
+              ? pf('krExec.tasksShort', { done: taskProgress.done, total: taskProgress.total })
+              : `${liveValue.toLocaleString(locale)}/${kr.targetValue.toLocaleString(locale)}${kr.unit ? ` ${kr.unit}` : ''}`}
+          </span>
+        </div>
+        <div className="mt-2 h-2 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${done ? 'max-md:bg-[rgb(var(--color-accent-solid))] bg-green-500' : 'bg-[rgb(var(--color-accent-solid))]'}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        {/* Maquette 260 : l'atteinte s'écrit, elle ne tient plus à un vert. */}
+        {done && <p className="md:hidden mt-1 text-caption font-semibold text-[rgb(var(--color-accent))]">{pf('okrCard.reached')}</p>}
+      </div>
+      {/* Maquette 253 : sur mobile la valeur se met à jour dans la fiche. */}
+      {!measured && (
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={commit}
+          data-guide-id="okr-kr-value"
+          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+          aria-label={tOrgAdmin('okrTab.currentValueAria', { title: kr.title })}
+          className="max-md:hidden w-16 h-8 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+        />
+      )}
+      {/* Menu d'état, même vocabulaire que le filtre « État » : changer l'état
+          pose un point d'étape à la valeur courante ; le détail reste à un clic. */}
+      {/* Maquette 261 : plus d'icône « activité » par ligne sur mobile. */}
+      <span className="max-md:hidden contents">
+      <HealthStateMenu
+        health={kr.health}
+        done={done}
+        onSetHealth={(h) => onSetHealth(h, measured && taskProgress ? taskProgress.done : kr.currentValue)}
+        onMarkDone={measured ? undefined : () => onCommit(kr.targetValue)}
+        ariaLabel={pf('krExec.openAria', { title: kr.title })}
+      />
+      </span>
+    </div>
+  );
+};
+
+interface TeamOKRCardProps {
+  okr: TeamOKR;
+  okrs: TeamOKR[];
+  links: KRProjectLink[];
+  statsById: Map<string, TeamProjectTaskStats>;
+  category?: { name: string; color: string };
+  teamName: (teamId: string) => string;
+  /** Couleur CHOISIE de l'équipe (cohérence globale : elle se voit partout où l'équipe est nommée). */
+  teamColor: (teamId: string) => string | undefined;
+  /** Pourquoi modifier est refusé, quand il l'est : le bouton se grise et le dit. */
+  editDeniedReason?: string;
+  deleteDeniedReason?: string;
+  highlighted: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  onCommitKR: (kr: TeamKeyResult, value: number) => void;
+  onSetKRHealth: (kr: TeamKeyResult, status: ProjectHealth, value: number) => void;
+  onOpenOkr: (okrId: string) => void;
+  personOf?: (userId: string) => OrgMember | undefined;
+}
+
+const TeamOKRCard = ({
+  okr, okrs, links, statsById, category, teamName, teamColor, editDeniedReason, deleteDeniedReason, highlighted,
+  onEdit, onDelete, onCommitKR, onSetKRHealth, onOpenOkr, personOf,
+}: TeamOKRCardProps) => {
+  const { t } = useT('org');
+  const { t: pf, tp: tpf } = useT('portfolio');
+  const avg = okrRatioPercent(okr.keyResults, links, statsById);
+  const parent = okr.parentOkrId ? okrs.find((o) => o.id === okr.parentOkrId) : undefined;
+  const children = okrs.filter((o) => o.parentOkrId === okr.id);
+
+  return (
+    <section
+      id={`okr-${okr.id}`}
+      className={`rounded-2xl border bg-[rgb(var(--color-surface))] p-5 sm:p-6 scroll-mt-24 transition-shadow ${
+        highlighted ? 'border-indigo-500 ring-2 ring-indigo-500/30' : 'border-[rgb(var(--color-border))]'
+      }`}
+    >
+      <div className="flex items-start gap-3 pb-4 mb-4 border-b border-[rgb(var(--color-border))]">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            {category && (
+              <span
+                className="inline-flex max-md:w-full items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded md:uppercase md:tracking-wide max-md:!bg-transparent max-md:!px-0"
+                style={{ backgroundColor: `${category.color}1a`, color: category.color }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: category.color }} aria-hidden="true" />
+                {category.name}
+              </span>
+            )}
+            <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))] md:truncate">
+              {/* Maquette 252 : sur mobile, pas de crayon au repos, le titre ouvre la fiche. */}
+              <button type="button" onClick={editDeniedReason ? undefined : onEdit} className="text-left md:pointer-events-none">{okr.title}</button>
+            </h3>
+          </div>
+          {okr.description && (
+            <p className="text-sm text-[rgb(var(--color-text-muted))] mt-1">{okr.description}</p>
+          )}
+          <div className="flex flex-wrap items-center gap-1.5 mt-3">
+            {okr.teamIds.length === 0 && (okr.audience ?? 'org') === 'org' ? (
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 max-md:px-0 max-md:py-0 max-md:border-0 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))]">
+                <Building2 size={13} aria-hidden="true" /> {t('common.orgWideBadge')}
+              </span>
+            ) : (
+              okr.teamIds.map((tid) => (
+                <span key={tid} className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 max-md:px-0 max-md:py-0 max-md:bg-transparent rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
+                  <TeamColorDot color={teamColor(tid)} size={8} /> {teamName(tid)}
+                </span>
+              ))
+            )}
+            {/* Qui voit cet objectif, et pourquoi (M12). */}
+            <span className="md:contents max-md:w-full max-md:[&>*]:!max-w-none max-md:[&>*]:!border-0 max-md:[&>*]:!bg-transparent max-md:[&>*]:!px-0"><VisibilityPill orgId={okr.orgId} teamIds={okr.teamIds} closed={(okr.audience ?? 'org') !== 'org'} namedIds={okr.memberIds} size="md" /></span>
+            {parent && (
+              <button
+                type="button"
+                onClick={() => onOpenOkr(parent.id)}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
+              >
+                <CornerLeftUp size={13} aria-hidden="true" /> {pf('okrCard.contributesTo', { title: parent.title })}
+              </button>
+            )}
+            {children.length > 0 && (
+              <span className="text-xs text-[rgb(var(--color-text-muted))]">
+                {tpf('okrCard.childrenCount', children.length)}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <span className="text-lg max-md:text-base tabular-nums font-bold text-[rgb(var(--color-accent))]">{avg}%</span>
+        </div>
+        {/* Toujours présents : grisés avec leur raison plutôt que masqués
+            (cohérence globale, « droits »). */}
+        <div className="flex items-center gap-1 shrink-0">
+            <PermissionGate reason={editDeniedReason}>
+              <button
+                type="button"
+                onClick={onEdit}
+                aria-label={t('common.editOkrAria', { title: okr.title })}
+                className="max-md:hidden w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:bg-[rgb(var(--color-accent-solid-hover))]/10 transition-colors"
+              >
+                <Pencil size={15} aria-hidden="true" />
+              </button>
+            </PermissionGate>
+            <PermissionGate reason={deleteDeniedReason}>
+              <button
+                type="button"
+                onClick={onDelete}
+                aria-label={t('common.deleteOkrAria', { title: okr.title })}
+                className="max-md:hidden w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+              >
+                <Trash2 size={15} aria-hidden="true" />
+              </button>
+            </PermissionGate>
+        </div>
+      </div>
+
+      {okr.keyResults.length === 0 ? (
+        <p className="flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-muted))]">
+          <Target size={12} aria-hidden="true" /> {pf('okrCard.noKr')}
+        </p>
+      ) : (
+        <div className="space-y-5">
+          {okr.keyResults.map((kr) => (
+            <TeamKRRow
+              key={kr.id}
+              kr={kr}
+              links={links}
+              statsById={statsById}
+              onCommit={(v) => onCommitKR(kr, v)}
+              onSetHealth={(status, value) => onSetKRHealth(kr, status, value)}
+              personOf={personOf}
+              onOpen={editDeniedReason ? undefined : onEdit}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};
+
+export default TeamOKRCard;

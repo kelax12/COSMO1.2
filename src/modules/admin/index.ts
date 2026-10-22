@@ -1,12 +1,15 @@
-export { useAdminStats, useIsAdmin } from './hooks';
-export { adminKeys } from './constants';
+export { useAdminStats, useIsAdmin, useAdminGate, useSupportStats, useOnboardingFunnel } from './hooks';
+export { adminKeys, ACQUISITION_GOALS } from './constants';
 export { AdminForbiddenError } from './repository';
 export {
   chooseGranularity,
   fillMissingDays,
   aggregateWeekly,
   toCumulative,
+  rankSources,
+  stackBySource,
   DAY_THRESHOLD,
+  OTHER_SOURCE,
 } from './aggregate';
 export type { Granularity } from './aggregate';
 export type {
@@ -21,4 +24,10 @@ export type {
   AdminStickiness,
   RetentionCohort,
   DailyPoint,
+  SourceDailyPoint,
+  AdminActivation48h,
+  SourceRetention,
+  AdminOrgs,
+  AdminOnboardingFunnel,
+  AdminSupport,
 } from './types';

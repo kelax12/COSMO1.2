@@ -3,10 +3,13 @@
 import React from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { X, Plus, Pencil, Trash2, Sparkles, Pin, PinOff, Share2 } from 'lucide-react';
-import SmartListMenu from '../../components/SmartListMenu';
-import { useCreateList, useDeleteList, type SmartRulePreset, type TaskList } from '@/modules/lists';
+import SmartListMenu from '@/components/SmartListMenu';
+import CreateListForm from './CreateListForm';
+import CreateListSheet from './CreateListSheet';
+import type { SmartRulePreset, TaskList } from '@/modules/lists';
 import { VIRTUAL_TODAY_ID } from './task-page-filter';
 import { useT } from '@/i18n/useT';
+import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
 interface ColorOption { value: string; color: string; name: string }
 
@@ -39,8 +42,13 @@ interface TaskListsBarProps {
   selectedTasksForList: string[];
   /** Déclenche la suppression (directe + toast « Annuler ») de la liste. */
   setListToDeleteId: (listId: string) => void;
-  createListMutation: ReturnType<typeof useCreateList>;
-  deleteListMutation: ReturnType<typeof useDeleteList>;
+  /**
+   * Contrats STRUCTURELS, pas les types des hooks perso : l'onglet Tâches du
+   * mode entreprise pilote la même barre avec ses listes d'organisation
+   * (mig. 203, `@/modules/team-lists`).
+   */
+  createListMutation: { mutate(input: { name: string; color: string }, options?: { onSuccess?: () => void }): void };
+  deleteListMutation: { mutate(listId: string): void };
   clearListFilter: () => void;
   handleListSelect: (listId: string) => void;
   startSelectingTasks: (listId: string) => void;
@@ -56,8 +64,11 @@ interface TaskListsBarProps {
   handleCreateSmartList: (presetKey: SmartRulePreset) => void;
   startChipLongPress: (listId: string) => void;
   cancelChipLongPress: () => void;
-  /** Ouvre le partage de la liste (bottom-sheet ShareListSheet). */
-  onShareList: (list: TaskList) => void;
+  /**
+   * Ouvre le partage de la liste (bottom-sheet ShareListSheet). Absent = pas
+   * de bouton : une liste d'entreprise est déjà partagée par toute l'organisation.
+   */
+  onShareList?: (list: TaskList) => void;
 }
 
 const TaskListsBar: React.FC<TaskListsBarProps> = ({
@@ -76,6 +87,19 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
 }) => {
   const { t, tp } = useT('tasks');
 
+  // Une seule création, deux emplacements (desktop inline, mobile empilé) :
+  // les deux formulaires partagent ces gestes plutôt que d'en recopier un.
+  const submitNewList = () => {
+    createListMutation.mutate({ name: newListName.trim(), color: newListColor }, {
+      onSuccess: () => {
+        setNewListName('');
+        setNewListColor('blue');
+        setShowCreateList(false);
+      },
+    });
+  };
+  const cancelNewList = () => { setShowCreateList(false); setNewListName(''); };
+
   return (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -84,37 +108,54 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                   className="mb-2 sm:mb-8"
                   data-tutorial-id="tasks-lists"
                 >
-                  <div className="mb-2 sm:mb-4">
-                    <div className="flex items-center justify-between mb-1 sm:mb-4">
-                      <h2 className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-300">{t('lists.sectionTitle')}</h2>
-                      {!showCreateList && (
-                        <button
-                          onClick={() => setShowCreateList(true)}
-                          aria-label={t('lists.newList')}
-                          className="sm:hidden flex items-center justify-center min-w-touch min-h-touch rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 active:bg-blue-100 dark:active:bg-blue-900/40 transition-colors"
-                        >
-                          <Plus size={20} />
-                        </button>
-                      )}
+                  <div className="mb-1 sm:mb-4">
+                    {/* Libellé court « Listes » partout, sans marge sous le titre : le
+                        `pt-*` des chips suffit (2026-10-01). */}
+                    {/* Maquette 142 (2026-10-10) : sur mobile, le titre « Listes »
+                        et son « + » coûtaient une rangée de 60 px au-dessus des
+                        pastilles. Le titre reste pour les lecteurs d'écran, le
+                        « + » devient la dernière pastille de la rangée. */}
+                    <div className="flex items-center justify-between">
+                      <h2 className="sr-only sm:not-sr-only text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        {t('lists.sectionTitleShort')}
+                      </h2>
                     </div>
 
-                    {/* `pt-8` sur desktop réserve l'espace du survol (boutons
-                        +/corbeille de la chip « Aujourd'hui », en -top-8). Ce
-                        survol n'existe pas au tactile → `pt-2` sur mobile,
-                        ~24px d'espace vide en moins. */}
-                    <div className="flex sm:flex-wrap gap-3 pt-2 sm:pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]">
+                    {/* `pt-*` réserve l'espace des boutons +/corbeille de la
+                        chip « Aujourd'hui » (en `-top-*`, ligne plus bas) —
+                        nécessaire sur mobile AUSSI : `selectedListId ===
+                        VIRTUAL_TODAY_ID` (ligne plus bas) les révèle aussi
+                        bien au TAP qu'au survol, et ce conteneur est en
+                        `overflow-x-auto` — qui, sans `overflow-y` explicite,
+                        calcule l'axe Y en `auto` lui aussi (règle CSS :
+                        "visible" ne peut pas cohabiter avec un axe
+                        non-visible). Les deux valeurs (`pt-2` ici et
+                        `-top-2` plus bas) DOIVENT rester égales en valeur
+                        absolue : un `pt-2` avec des boutons à `-top-4`
+                        (l'ancien réglage) les rognerait à nouveau, invisibles
+                        plutôt que juste discrets — c'est le bug qui a motivé
+                        `pt-8` avant que le couple ne soit réduit de moitié
+                        (2026-09-16, gap « Liste » → chips jugé trop grand). */}
+                    {/* 🔴 `overflow-y-hidden` + `pb-1` (2026-10-11) : la zone tactile de 44 px
+                        débordait de 4 px, la rangée défilait en Y et volait le geste à la page. */}
+                    <div className="flex sm:flex-wrap gap-3 pt-2 pb-1 sm:pt-8 sm:pb-0 overflow-x-auto overflow-y-hidden sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => {
                           clearListFilter();
                         }}
-                        // Chips mobile : 40px de haut (assez pour le pouce,
-                        // volontairement plus compactes que 44px sur demande).
-                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-3.5 h-10 sm:h-auto sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all shadow-sm border ${
+                        // Chip Spotify (docs/MOBILE.md § Chips de filtre) — MOBILE
+                        // UNIQUEMENT : pilule pleine, sans bordure. `h-9` réduit
+                        // (2026-09-06) : 44px de haut faisait une pilule
+                        // disproportionnée une fois pleine au lieu de bordée —
+                        // Spotify tourne autour de 36-40px.
+                        // Desktop (sm+) : forme d'origine inchangée (rounded-lg,
+                        // bordure, shadow-sm) — jamais migrée sur le pattern Spotify.
+                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 ${TAP_AREA_44_Y} rounded-full sm:rounded-lg text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
                           !selectedListId
-                            ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
-                            : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
+                            ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] sm:border-[rgb(var(--color-accent-solid))] sm:shadow-md'
+                            : 'bg-[rgb(var(--color-chip-bg))] sm:bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] sm:border-[rgb(var(--color-border))]'
                         }`}
                       >
                         <span className="hidden sm:inline">{t('filters.allTasks')}</span>
@@ -140,7 +181,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: 4 }}
                               transition={{ duration: 0.15 }}
-                              className="absolute -top-8 inset-x-0 flex justify-center gap-2.5 z-10"
+                              className="absolute -top-2 sm:-top-8 inset-x-0 flex justify-center gap-2.5 z-20"
                             >
                               <button
                                 onClick={(e) => { e.stopPropagation(); startSelectingTasks(VIRTUAL_TODAY_ID); }}
@@ -165,16 +206,24 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => setSelectedListId(selectedListId === VIRTUAL_TODAY_ID ? null : VIRTUAL_TODAY_ID)}
-                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-3.5 h-10 sm:h-auto sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all shadow-sm border ${
+                          // Chip Spotify — MOBILE UNIQUEMENT : pilule pleine
+                          // sans bordure, pas de pastille colorée (« Aujourd'hui »
+                          // est une smart list, pas une liste).
+                          // Desktop (sm+) : forme d'origine inchangée, y compris
+                          // le traitement vert dédié à cette chip.
+                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 ${TAP_AREA_44_Y} rounded-full sm:rounded-lg text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
                             selectedListId === VIRTUAL_TODAY_ID
-                              ? 'bg-emerald-600 text-white border-emerald-700 dark:bg-emerald-500 shadow-md'
-                              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50 dark:border-emerald-800'
+                              ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] sm:bg-emerald-600 sm:text-white sm:border-emerald-700 dark:sm:bg-emerald-500 sm:shadow-md'
+                              : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] sm:bg-emerald-50 sm:text-emerald-700 sm:hover:bg-emerald-100 sm:border-emerald-200 dark:sm:bg-emerald-900/30 dark:sm:text-emerald-300 dark:sm:hover:bg-emerald-900/50 dark:sm:border-emerald-800'
                           }`}
                           title={t('lists.todayChipTitle')}
                         >
-                          <Sparkles size={13} />
+                          {/* Maquette 143 : l'étincelle n'est qu'un décor sur mobile. */}
+                          <Sparkles size={13} className="hidden sm:block" />
                           <span>{t('filters.today')}</span>
-                          <span className="text-caption sm:text-xs opacity-70 ml-0.5">{tasksCountByListId.get(VIRTUAL_TODAY_ID) ?? 0}</span>
+                          {/* Compte masqué sur mobile (souci d'espace, 2026-09-06) : chaque
+                              chip mobile n'a déjà que la place pour son nom. */}
+                          <span className="hidden sm:inline text-xs opacity-70 ml-0.5">{tasksCountByListId.get(VIRTUAL_TODAY_ID) ?? 0}</span>
                         </motion.button>
                       </div>
                       )}
@@ -210,9 +259,13 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                             //     = scroll attendu ; drag-to-reorder rentrerait en conflit avec le scroll).
                             // En usage desktop, framer-motion distingue click (mouvement < 4px) du drag.
                             drag={isEditing || isMobile ? false : 'x'}
+                            dragDirectionLock
                             onDragEnd={commitReorderLists}
                             whileDrag={{ scale: 1.05, zIndex: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}
                             className={`relative shrink-0 ${isMobile ? '' : 'cursor-grab active:cursor-grabbing'}`}
+                            // ❌ Pas de `pan-y` sur mobile : il bloquait le glissé horizontal
+                            // de la rangée (0 px depuis une liste, mesuré 2026-10-11).
+                            style={isMobile ? undefined : { touchAction: 'pan-y' }}
                             onMouseEnter={() => setHoveredListId(list.id)}
                             onMouseLeave={() => setHoveredListId(null)}
                           >
@@ -223,7 +276,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, y: 4 }}
                                   transition={{ duration: 0.15 }}
-                                  className="absolute -top-8 inset-x-0 flex justify-center gap-2.5 z-10"
+                                  className="absolute -top-8 inset-x-0 flex justify-center gap-2.5 z-20"
                                 >
                                   {/* Bouton "épingler par défaut" — seul un peut être actif */}
                                   <button
@@ -261,7 +314,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                     </button>
                                   )}
                                   {/* Partager — listes manuelles uniquement (les smart sont des filtres) */}
-                                  {list.type !== 'smart' && (
+                                  {list.type !== 'smart' && onShareList && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); onShareList(list); }}
                                       className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 shadow-sm transition-colors"
@@ -357,15 +410,25 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 onPointerCancel={cancelChipLongPress}
                                 onPointerLeave={cancelChipLongPress}
                                 onContextMenu={(e) => { if (isMobile) e.preventDefault(); }}
-                                className={`flex items-center gap-2 px-3.5 h-10 sm:h-auto sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all border shadow-sm ${
+                                // Chip Spotify — MOBILE UNIQUEMENT : pilule pleine
+                                // sans bordure. La pastille de couleur de la liste
+                                // (juste en dessous) reste — seule exception au
+                                // remplacement, demandée explicitement.
+                                // Desktop (sm+) : forme d'origine inchangée
+                                // (rounded-lg, bordure, shadow-sm).
+                                className={`flex items-center gap-1.5 px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 ${TAP_AREA_44_Y} rounded-full sm:rounded-lg text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
                                   isSelected
-                                    ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
-                                    : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
+                                    ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] sm:border-[rgb(var(--color-accent-solid))] sm:shadow-md'
+                                    : 'bg-[rgb(var(--color-chip-bg))] sm:bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] sm:border-[rgb(var(--color-border))]'
                                 }`}
                               >
                                 {/* Indicateur visuel : pastille couleur, ou icône Sparkles si smart */}
                                 {list.type === 'smart' ? (
-                                  <Sparkles size={13} style={{ color: isSelected ? 'currentColor' : resolveListColor(list.color) }} />
+                                  <>
+                                    {/* Maquette 143 : sur mobile, le point de couleur suffit. */}
+                                    <Sparkles size={13} className="hidden sm:block" style={{ color: isSelected ? 'currentColor' : resolveListColor(list.color) }} />
+                                    <div className="sm:hidden w-3 h-3 rounded-full" style={{ backgroundColor: resolveListColor(list.color) }} />
+                                  </>
                                 ) : (
                                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: resolveListColor(list.color) }} />
                                 )}
@@ -375,10 +438,13 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   <Pin
                                     size={11}
                                     fill="currentColor"
-                                    className={isSelected ? 'opacity-80' : 'text-amber-500'}
+                                    // Maquette 143 : punaise ambre retirée sur
+                                    // mobile (l'épinglage reste dans l'appui long).
+                                    className={`hidden sm:block ${isSelected ? 'opacity-80' : 'text-amber-500'}`}
                                   />
                                 )}
-                                <span className="text-caption sm:text-xs opacity-60 ml-1">
+                                {/* Compte masqué sur mobile (souci d'espace, 2026-09-06). */}
+                                <span className="hidden sm:inline text-xs opacity-60 ml-1">
                                   {tasksCountByListId.get(list.id) ?? 0}
                                 </span>
                                 {isSelected && (
@@ -414,6 +480,23 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         />
                       )}
 
+                      {/* Maquette 142 : « + » de nouvelle liste, dernière pastille
+                          sur mobile (il vivait à côté du titre « Listes »). */}
+                      {!showCreateList && (
+                        <button
+                          type="button"
+                          onClick={() => setShowCreateList(true)}
+                          aria-label={t('lists.newList')}
+                          // `w-11` : 44 px de LARGE réels (36 × 44 mesurés en CI le
+                          // 2026-10-10). Pas `TAP_AREA_44` : dernière pastille d'une
+                          // rangée défilante, son débord horizontal chevaucherait la
+                          // voisine et serait rogné par le conteneur (tap-area.ts).
+                          className={`sm:hidden shrink-0 inline-flex items-center justify-center h-9 w-11 ${TAP_AREA_44_Y} rounded-full bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] active:bg-[rgb(var(--color-hover))]`}
+                        >
+                          <Plus size={18} aria-hidden="true" />
+                        </button>
+                      )}
+
                       {/* Bouton + nouvelle liste — desktop uniquement inline dans le scroll */}
                       <div className="hidden sm:contents">
                         <AnimatePresence mode="wait">
@@ -423,157 +506,53 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               initial={{ opacity: 0, scale: 0.9 }}
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.9 }}
+                              type="button"
                               onClick={() => setShowCreateList(true)}
+                              data-guide-id="task-lists-new"
+                              // Nom explicite : la bascule de vue Liste / Tableau
+                              // porte AUSSI un bouton « Liste » depuis le
+                              // 2026-10-09. Deux commandes au même nom, l'une qui
+                              // crée et l'autre qui change de vue, se confondent
+                              // au lecteur d'écran. « Liste » reste dans le nom
+                              // (WCAG 2.5.3, l'étiquette visible dans le nom).
+                              aria-label={t('lists.manualListTitle')}
                               className="inline-flex shrink-0 items-center gap-1.5 min-h-touch sm:min-h-0 sm:h-9 px-3 rounded-lg border-2 border-dashed border-[rgb(var(--color-border))] bg-transparent text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-[rgb(var(--color-border-strong))] hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
                               title={t('lists.manualListTitle')}
                             >
                               <Plus size={16} /> {t('lists.chipLabel')}
                             </motion.button>
                           ) : (
-                            <motion.form
+                            <CreateListForm
                               key="add-form"
-                              initial={{ opacity: 0, width: 0 }}
-                              animate={{ opacity: 1, width: 'auto' }}
-                              exit={{ opacity: 0, width: 0 }}
-                              className="flex items-center gap-2"
-                              onSubmit={(e) => {
-                                e.preventDefault();
-                                if (!newListName.trim()) return;
-                                createListMutation.mutate({ name: newListName.trim(), color: newListColor }, {
-                                  onSuccess: () => {
-                                    setNewListName('');
-                                    setNewListColor('blue');
-                                    setShowCreateList(false);
-                                  }
-                                });
-                              }}
-                            >
-                              {/* Pastille cyclique : click rapide passe à la couleur suivante.
-                                  Long-press / Shift-click ouvre le color picker hex natif via le input HTML5. */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  // Shift+clic ou clic droit → ouvre le color picker natif
-                                  if (e.shiftKey) {
-                                    e.currentTarget.nextElementSibling?.dispatchEvent(new MouseEvent('click'));
-                                    return;
-                                  }
-                                  const idx = colorOptions.findIndex(c => c.value === newListColor);
-                                  setNewListColor(colorOptions[(idx + 1) % colorOptions.length].value);
-                                }}
-                                className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
-                                style={{ backgroundColor: resolveListColor(newListColor) }}
-                                title={t('lists.colorCycleTitle')}
-                              />
-                              {/* Color picker hex caché — déclenché par Shift+clic sur la pastille */}
-                              <input
-                                type="color"
-                                value={resolveListColor(newListColor)}
-                                onChange={(e) => setNewListColor(e.target.value)}
-                                className="sr-only"
-                                aria-label={t('lists.customColorAria')}
-                                tabIndex={-1}
-                              />
-                              <input
-                                autoFocus
-                                type="text"
-                                value={newListName}
-                                onChange={(e) => setNewListName(e.target.value)}
-                                placeholder={t('lists.namePlaceholder')}
-                                size={Math.max(newListName.length + 2, 14)}
-                                className="px-3 py-1.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
-                                style={{
-                                  backgroundColor: 'rgb(var(--color-surface))',
-                                  borderColor: 'rgb(var(--color-border))',
-                                  color: 'rgb(var(--color-text-primary))',
-                                  fieldSizing: 'content',
-                                } as React.CSSProperties}
-                                onKeyDown={(e) => { if (e.key === 'Escape') { setShowCreateList(false); setNewListName(''); } }}
-                              />
-                              <button
-                                type="submit"
-                                disabled={!newListName.trim()}
-                                className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
-                              >
-                                {t('lists.create')}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => { setShowCreateList(false); setNewListName(''); }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                              >
-                                <X size={14} />
-                              </button>
-                            </motion.form>
+                              variant="inline"
+                              name={newListName}
+                              onNameChange={setNewListName}
+                              color={newListColor}
+                              onColorChange={setNewListColor}
+                              colorOptions={colorOptions}
+                              resolveColor={resolveListColor}
+                              onSubmit={submitNewList}
+                              onCancel={cancelNewList}
+                            />
                           )}
                         </AnimatePresence>
                       </div>
                     </div>
 
-                    {/* Formulaire nouvelle liste — mobile (déclenché par l'icône + dans l'en-tête) */}
-                    <div className="sm:hidden mt-2">
-                      <AnimatePresence mode="wait">
-                        {showCreateList && (
-                          <motion.form
-                            key="add-form-mobile"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex items-center gap-2"
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              if (!newListName.trim()) return;
-                              createListMutation.mutate({ name: newListName.trim(), color: newListColor }, {
-                                onSuccess: () => {
-                                  setNewListName('');
-                                  setNewListColor('blue');
-                                  setShowCreateList(false);
-                                }
-                              });
-                            }}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const idx = colorOptions.findIndex(c => c.value === newListColor);
-                                setNewListColor(colorOptions[(idx + 1) % colorOptions.length].value);
-                              }}
-                              className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
-                              style={{ backgroundColor: colorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' }}
-                              title={t('lists.changeColor')}
-                            />
-                            <input
-                              autoFocus
-                              type="text"
-                              value={newListName}
-                              onChange={(e) => setNewListName(e.target.value)}
-                              placeholder={t('lists.namePlaceholder')}
-                              className="flex-1 px-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              style={{
-                                backgroundColor: 'rgb(var(--color-surface))',
-                                borderColor: 'rgb(var(--color-border))',
-                                color: 'rgb(var(--color-text-primary))'
-                              }}
-                              onKeyDown={(e) => { if (e.key === 'Escape') { setShowCreateList(false); setNewListName(''); } }}
-                            />
-                            <button
-                              type="submit"
-                              disabled={!newListName.trim()}
-                              className="px-3 py-2 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
-                            >
-                              {t('lists.create')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => { setShowCreateList(false); setNewListName(''); }}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                            >
-                              <X size={14} />
-                            </button>
-                          </motion.form>
-                        )}
-                      </AnimatePresence>
-                    </div>
+                    {/* Nouvelle liste — mobile (déclenché par l'icône + dans l'en-tête) :
+                        une feuille du bas, pas un formulaire poussé sous l'en-tête. Même
+                        geste que les autres confirmations/créations mobiles de l'app. */}
+                    <CreateListSheet
+                      isOpen={showCreateList}
+                      onClose={cancelNewList}
+                      name={newListName}
+                      onNameChange={setNewListName}
+                      color={newListColor}
+                      onColorChange={setNewListColor}
+                      colorOptions={colorOptions}
+                      resolveColor={resolveListColor}
+                      onSubmit={submitNewList}
+                    />
 
                     <AnimatePresence>
                       {selectingTasksForListId && (

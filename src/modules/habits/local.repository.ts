@@ -1,6 +1,10 @@
 import { IHabitsRepository } from './repository';
+import type { CreateOptions } from '@/lib/restore-id';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
+import { localizeSeed } from '@/lib/seed-i18n';
+import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 const STORAGE_KEY = 'cosmo_demo_habits';
 
@@ -73,35 +77,48 @@ const DEMO_HABITS: Habit[] = [
   h('h010','Veille technologique', 'Lire Hacker News + Reddit tech',        '#F97316','🔭',  15,  -80, 0.82, 287),
 ];
 
+// Overlay anglais — cf. src/lib/seed-i18n.ts.
+const DEMO_HABITS_EN: Record<string, Partial<Habit>> = {
+  h001: { name: 'Meditation', description: '15 min of mindfulness' },
+  h002: { name: 'Journaling', description: "Write down today's thoughts" },
+  h003: { name: 'Running', description: '30 min run' },
+  h004: { name: 'Daily walk', description: '8000 steps minimum' },
+  h005: { name: 'Drink 2L of water', description: '2 liters of water a day' },
+  h006: { name: '5 fruits & veggies', description: 'At least 5 servings a day' },
+  h007: { name: 'Pomodoro technique', description: '4 sessions of 25 min focus' },
+  h008: { name: 'Morning agenda review', description: 'Plan the day in 5 min' },
+  h009: { name: 'Duolingo', description: '15 min of language practice' },
+  h010: { name: 'Tech watch', description: 'Read Hacker News + tech Reddit' },
+};
+
 export class LocalStorageHabitsRepository implements IHabitsRepository {
   private getHabits(): Habit[] {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) {
-      this.saveHabits(DEMO_HABITS);
-      return DEMO_HABITS;
+    const stored = safeParseArray<Habit>(safeGetItem(STORAGE_KEY));
+    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
+    // tomber la page (regle B14, helper `safeParseArray`).
+    if (!stored) {
+      const seeded = localizeSeed(DEMO_HABITS, DEMO_HABITS_EN);
+      this.saveHabits(seeded);
+      return seeded;
     }
-    return JSON.parse(data);
+    return stored;
   }
 
   private saveHabits(habits: Habit[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+    writeJsonOrThrow(STORAGE_KEY, habits);
   }
 
   async fetchHabits(): Promise<Habit[]> {
     return this.getHabits();
   }
 
-  async getById(id: string): Promise<Habit | null> {
-    const habits = this.getHabits();
-    const habit = habits.find(h => h.id === id);
-    return habit || null;
-  }
-
-  async createHabit(input: CreateHabitInput): Promise<Habit> {
+  async createHabit(input: CreateHabitInput, options?: CreateOptions): Promise<Habit> {
     const habits = this.getHabits();
     const newHabit: Habit = {
       ...input,
-      id: crypto.randomUUID(),
+      // Parite avec le repository Supabase : `restoreId` vient d'un second
+      // argument reserve aux « Annuler », jamais du payload (R-08).
+      id: options?.restoreId ?? crypto.randomUUID(),
       completions: input.completions || {},
       createdAt: new Date().toISOString(),
     };
@@ -112,7 +129,7 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
   async updateHabit(id: string, updates: UpdateHabitInput): Promise<Habit> {
     const habits = this.getHabits();
     const index = habits.findIndex(h => h.id === id);
-    if (index === -1) throw new Error('Habit not found');
+    if (index === -1) throw makeApiError('not_found');
 
     const updatedHabit = { ...habits[index], ...updates };
     habits[index] = updatedHabit;
@@ -129,7 +146,7 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
   async toggleCompletion(id: string, date: string): Promise<Habit> {
     const habits = this.getHabits();
     const index = habits.findIndex(h => h.id === id);
-    if (index === -1) throw new Error('Habit not found');
+    if (index === -1) throw makeApiError('not_found');
 
     const habit = habits[index];
     const completions = { ...habit.completions };

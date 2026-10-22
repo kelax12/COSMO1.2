@@ -3,19 +3,24 @@ import { useSeoMeta } from '@/lib/useSeoMeta';
 import { Link } from 'react-router';
 import {
   CheckSquare, Calendar, Repeat, Target, BarChart2,
-  Rocket, Star, ArrowRight, ChevronRight,
+  Rocket, ArrowRight, ChevronRight, ChevronLeft, ChevronDown,
   BookOpen, Clock, Flag, Bookmark, Users, TrendingUp,
-  Flame, Layers, Filter, Bell, List,
-  GripVertical, PlayCircle
+  Flame, Layers, Filter, Inbox, List,
+  GripVertical, Building2, Network, FolderKanban, ListTodo,
+  ShieldCheck, UserPlus, BarChart3, Columns3, ListChecks, Link2,
+  Sparkles, Pin, Share2, CalendarCheck, PauseCircle, Image, UsersRound
 } from 'lucide-react';
-import TaskTableShowcase from '../components/showcase/TaskTableShowcase';
-import AgendaShowcase from '../components/showcase/AgendaShowcase';
-import OKRCardShowcase from '../components/showcase/OKRCardShowcase';
-import HabitHeatmapShowcase from '../components/showcase/HabitHeatmapShowcase';
+import TaskTableShowcase from '@/components/showcase/TaskTableShowcase';
+import AgendaShowcase from '@/components/showcase/AgendaShowcase';
+import OKRCardShowcase from '@/components/showcase/OKRCardShowcase';
+import HabitHeatmapShowcase from '@/components/showcase/HabitHeatmapShowcase';
+import ShowcaseTheme from '@/components/showcase/ShowcaseTheme';
+import { useDocumentTheme } from '@/hooks/useDocumentTheme';
+import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 // Audit perf 2026-05-29 — lazy-load Recharts wrapper (same rationale as LandingPage).
-const StatsShowcase = lazy(() => import('../components/showcase/StatsShowcase'));
+const StatsShowcase = lazy(() => import('@/components/showcase/StatsShowcase'));
 const StatsShowcaseFallback = () => (
-  <div className="w-full rounded-2xl bg-slate-800/80 border border-white/10 shadow-2xl p-5 h-[340px] animate-pulse" />
+  <div className="w-full rounded-2xl bg-[rgb(var(--color-surface))]/80 border border-[rgb(var(--color-border))] shadow-2xl p-5 h-[340px] animate-pulse" />
 );
 
 // Atomes présentationnels + nav + schémas SEO extraits dans ./guide/primitives.
@@ -40,6 +45,9 @@ const GuidePage: React.FC = () => {
     canonical: 'https://thecosmo.app/guide',
   });
   useGuideSchemas();
+  // Les vitrines suivent le thème de l'app : des captures sombres faisaient
+  // des trous dans la page en thème clair.
+  const theme = useDocumentTheme();
   const [activeSection, setActiveSection] = useState<SectionId>('demarrage');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -69,27 +77,32 @@ const GuidePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div className="min-h-[100dvh] bg-[rgb(var(--color-background))] text-[rgb(var(--color-text-primary))]">
 
       {/* ── Top bar ── */}
-      <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-white/10">
+      <header className="sticky top-0 z-50 bg-[rgb(var(--color-surface))]/80 backdrop-blur-xl border-b border-[rgb(var(--color-border))]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
-              <img src="/logo.png" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
-              <span className="font-semibold text-white">Cosmo</span>
+            {/* Maquette 369 : sur mobile, une ligne « ‹ Retour » puis le titre. */}
+            <Link to="/" className="md:hidden -ml-1 flex items-center gap-1 min-h-touch text-sm text-[rgb(var(--color-accent))]">
+              <ChevronLeft size={18} aria-hidden="true" />
+              {t('chrome.backHome')}
             </Link>
-            <ChevronRight size={14} className="text-slate-600" />
+            <Link to="/" className="max-md:hidden flex items-center gap-2 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors text-sm">
+              <img src="/logo-128.webp" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
+              <span className="font-semibold text-[rgb(var(--color-text-primary))]">Cosmo</span>
+            </Link>
+            <ChevronRight size={14} className="max-md:hidden text-[rgb(var(--color-text-muted))]" />
             {/* h1 sémantique (SEO) — rendu identique au span grâce au preflight
                 Tailwind (les headings héritent font-size/weight) */}
-            <h1 className="text-sm text-slate-400 flex items-center gap-1.5 font-normal">
+            <h1 className="max-md:sr-only text-sm text-[rgb(var(--color-text-secondary))] flex items-center gap-1.5 font-normal">
               <BookOpen size={14} />
               {t('chrome.heading')}
             </h1>
           </div>
           <Link
             to="/"
-            className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"
+            className="max-md:hidden text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors flex items-center gap-1.5"
           >
             {t('chrome.backHome')}
             <ArrowRight size={14} />
@@ -103,7 +116,7 @@ const GuidePage: React.FC = () => {
           {/* ── Sidebar ── */}
           <aside className="hidden lg:block w-56 shrink-0">
             <div className="sticky top-24">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">{t('chrome.summary')}</p>
+              <p className="text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-widest mb-4">{t('chrome.summary')}</p>
               <nav className="space-y-1">
                 {NAV_ITEMS.map(({ id, labelKey, icon, color }) => {
                   const isActive = activeSection === id;
@@ -114,10 +127,10 @@ const GuidePage: React.FC = () => {
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all text-left"
                       style={{
                         backgroundColor: isActive ? color + '15' : 'transparent',
-                        color: isActive ? color : '#94A3B8',
+                        color: isActive ? color : 'rgb(var(--color-text-secondary))',
                       }}
                     >
-                      <span style={{ color: isActive ? color : '#64748B' }}>{icon}</span>
+                      <span style={{ color: isActive ? color : 'rgb(var(--color-text-muted))' }}>{icon}</span>
                       {t(labelKey)}
                     </button>
                   );
@@ -127,10 +140,29 @@ const GuidePage: React.FC = () => {
           </aside>
 
           {/* ── Content ── */}
-          <main className="flex-1 min-w-0 space-y-24">
+          <ShowcaseTheme theme={theme}>
+          <main className="flex-1 min-w-0 space-y-24 max-md:space-y-16 max-md:[&_strong]:font-medium">
+
+            {/* Maquette 370 : sur mobile, un sommaire repliable en tête. */}
+            <details className="lg:hidden rounded-xl bg-[rgb(var(--color-surface))] px-4 [&_summary::-webkit-details-marker]:hidden">
+              <summary className="flex items-center justify-between min-h-touch cursor-pointer text-sm font-medium">
+                {t('chrome.summary')} · {NAV_ITEMS.length}
+                <ChevronDown size={16} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
+              </summary>
+              <nav className="pb-2">
+                {NAV_ITEMS.map(({ id, labelKey }) => (
+                  <button key={id} type="button" onClick={() => scrollTo(id)} className="w-full text-left min-h-touch text-sm text-[rgb(var(--color-text-secondary))] border-t border-[rgb(var(--color-border))]">
+                    {t(labelKey)}
+                  </button>
+                ))}
+              </nav>
+            </details>
 
             {/* ══ PRISE EN MAIN ══════════════════════════════════════════ */}
-            <section>
+            {/* `lg:!mt-0` : le sommaire mobile ci-dessus est masqué par CLASSE dès lg,
+                et `space-y-24` le compte quand même : la section recevait 96 px de vide
+                en tête sur desktop (capture Visual du 2026-10-11). */}
+            <section className="lg:!mt-0">
               <SectionHeader
                 id="demarrage"
                 icon={<Rocket size={24} />}
@@ -158,13 +190,13 @@ const GuidePage: React.FC = () => {
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
                   { icon: <Layers size={18} />, label: t('start.cardDashboard'), desc: t('start.cardDashboardDesc') },
-                  { icon: <Bell size={18} />, label: t('start.cardNotifications'), desc: t('start.cardNotificationsDesc') },
+                  { icon: <Inbox size={18} />, label: t('start.cardInbox'), desc: t('start.cardInboxDesc') },
                   { icon: <Flag size={18} />, label: t('start.cardSettings'), desc: t('start.cardSettingsDesc') },
                 ].map((item) => (
-                  <div key={item.label} className="bg-slate-800/60 border border-white/8 rounded-xl p-4">
-                    <div className="text-slate-400 mb-2">{item.icon}</div>
-                    <p className="font-semibold text-white text-sm">{item.label}</p>
-                    <p className="text-slate-400 text-xs mt-1">{item.desc}</p>
+                  <div key={item.label} className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl p-4">
+                    <div className="text-[rgb(var(--color-text-secondary))] mb-2">{item.icon}</div>
+                    <p className="font-semibold text-[rgb(var(--color-text-primary))] text-sm">{item.label}</p>
+                    <p className="text-[rgb(var(--color-text-secondary))] text-xs mt-1">{item.desc}</p>
                   </div>
                 ))}
               </div>
@@ -180,7 +212,7 @@ const GuidePage: React.FC = () => {
                 subtitle={t('tasks.subtitle')}
               />
 
-              <div className="mb-8 rounded-2xl overflow-hidden border border-white/8 shadow-2xl">
+              <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
                 <TaskTableShowcase />
               </div>
 
@@ -196,13 +228,21 @@ const GuidePage: React.FC = () => {
                 </Step>
               </div>
 
-              <div className="mt-8 space-y-0 bg-slate-800/40 border border-white/8 rounded-2xl overflow-hidden divide-y divide-white/5">
+              <div className="mt-8 space-y-0 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl overflow-hidden divide-y divide-[rgb(var(--color-border-muted))]">
                 <FeatureRow icon={<Bookmark size={15} />}   label={t('tasks.featBookmark')}   desc={t('tasks.featBookmarkDesc')} />
                 <FeatureRow icon={<Clock size={15} />}      label={t('tasks.featDuration')}   desc={t('tasks.featDurationDesc')} />
                 <FeatureRow icon={<Filter size={15} />}     label={t('tasks.featFilters')}    desc={t('tasks.featFiltersDesc')} />
+                <FeatureRow icon={<Columns3 size={15} />}   label={t('tasks.featBoard')}      desc={t('tasks.featBoardDesc')} />
+                <FeatureRow icon={<ListChecks size={15} />} label={t('tasks.featSubtasks')}   desc={t('tasks.featSubtasksDesc')} />
+                <FeatureRow icon={<Link2 size={15} />}      label={t('tasks.featDependencies')} desc={t('tasks.featDependenciesDesc')} />
+                <FeatureRow icon={<Repeat size={15} />}     label={t('tasks.featRecurrence')} desc={t('tasks.featRecurrenceDesc')} />
                 <FeatureRow icon={<Users size={15} />}      label={t('tasks.featCollab')}     desc={t('tasks.featCollabDesc')} />
                 <FeatureRow icon={<Flag size={15} />}       label={t('tasks.featCategories')} desc={t('tasks.featCategoriesDesc')} />
               </div>
+
+              <Tip>
+                <RichText strongClassName="font-semibold">{t('tasks.tip')}</RichText>
+              </Tip>
             </section>
 
             {/* ══ LISTES ═════════════════════════════════════════════════ */}
@@ -227,10 +267,11 @@ const GuidePage: React.FC = () => {
                 </Step>
               </div>
 
-              <div className="mt-8 space-y-0 bg-slate-800/40 border border-white/8 rounded-2xl overflow-hidden divide-y divide-white/5">
-                <FeatureRow icon={<List size={15} />}       label={t('lists.featView')}  desc={t('lists.featViewDesc')} />
-                <FeatureRow icon={<Flag size={15} />}       label={t('lists.featColor')} desc={t('lists.featColorDesc')} />
-                <FeatureRow icon={<Filter size={15} />}     label={t('lists.featAll')}   desc={t('lists.featAllDesc')} />
+              <div className="mt-8 space-y-0 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl overflow-hidden divide-y divide-[rgb(var(--color-border-muted))]">
+                <FeatureRow icon={<Sparkles size={15} />}   label={t('lists.featSmart')}   desc={t('lists.featSmartDesc')} />
+                <FeatureRow icon={<Pin size={15} />}        label={t('lists.featDefault')} desc={t('lists.featDefaultDesc')} />
+                <FeatureRow icon={<Share2 size={15} />}     label={t('lists.featShare')}   desc={t('lists.featShareDesc')} />
+                <FeatureRow icon={<Flag size={15} />}       label={t('lists.featColor')}   desc={t('lists.featColorDesc')} />
               </div>
 
               <Tip>
@@ -248,7 +289,7 @@ const GuidePage: React.FC = () => {
                 subtitle={t('agenda.subtitle')}
               />
 
-              <div className="mb-8 rounded-2xl overflow-hidden border border-white/8 shadow-2xl">
+              <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
                 <AgendaShowcase />
               </div>
 
@@ -264,11 +305,11 @@ const GuidePage: React.FC = () => {
                 </Step>
               </div>
 
-              <div className="mt-8 space-y-0 bg-slate-800/40 border border-white/8 rounded-2xl overflow-hidden divide-y divide-white/5">
+              <div className="mt-8 space-y-0 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl overflow-hidden divide-y divide-[rgb(var(--color-border-muted))]">
                 <FeatureRow icon={<GripVertical size={15} />} label={t('agenda.featDrag')}      desc={t('agenda.featDragDesc')} />
                 <FeatureRow icon={<Repeat size={15} />}       label={t('agenda.featRecurring')} desc={t('agenda.featRecurringDesc')} />
                 <FeatureRow icon={<Flag size={15} />}         label={t('agenda.featColors')}    desc={t('agenda.featColorsDesc')} />
-                <FeatureRow icon={<Clock size={15} />}        label={t('agenda.featCompact')}   desc={t('agenda.featCompactDesc')} />
+                <FeatureRow icon={<CalendarCheck size={15} />} label={t('agenda.featSlotReview')} desc={t('agenda.featSlotReviewDesc')} />
               </div>
 
               <Tip>
@@ -290,7 +331,7 @@ const GuidePage: React.FC = () => {
                 subtitle={t('habits.subtitle')}
               />
 
-              <div className="mb-8 rounded-2xl overflow-hidden border border-white/8 shadow-2xl">
+              <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
                 <HabitHeatmapShowcase />
               </div>
 
@@ -307,19 +348,33 @@ const GuidePage: React.FC = () => {
               </div>
 
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-slate-800/40 border border-white/8 rounded-xl p-4">
+                <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Flame size={16} className="text-orange-400" />
-                    <p className="font-semibold text-white text-sm">{t('habits.streakTitle')}</p>
+                    <Flame size={16} className="text-[rgb(var(--color-warning))]" />
+                    <p className="font-semibold text-[rgb(var(--color-text-primary))] text-sm">{t('habits.streakTitle')}</p>
                   </div>
-                  <p className="text-xs text-slate-400">{t('habits.streakDesc')}</p>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('habits.streakDesc')}</p>
                 </div>
-                <div className="bg-slate-800/40 border border-white/8 rounded-xl p-4">
+                <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp size={16} className="text-green-400" />
-                    <p className="font-semibold text-white text-sm">{t('habits.rateTitle')}</p>
+                    <TrendingUp size={16} className="text-[rgb(var(--color-success))]" />
+                    <p className="font-semibold text-[rgb(var(--color-text-primary))] text-sm">{t('habits.rateTitle')}</p>
                   </div>
-                  <p className="text-xs text-slate-400">{t('habits.rateDesc')}</p>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('habits.rateDesc')}</p>
+                </div>
+                <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <PauseCircle size={16} className="text-[rgb(var(--color-text-secondary))]" />
+                    <p className="font-semibold text-[rgb(var(--color-text-primary))] text-sm">{t('habits.pauseTitle')}</p>
+                  </div>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('habits.pauseDesc')}</p>
+                </div>
+                <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Image size={16} className="text-[rgb(var(--color-accent))]" />
+                    <p className="font-semibold text-[rgb(var(--color-text-primary))] text-sm">{t('habits.recapTitle')}</p>
+                  </div>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('habits.recapDesc')}</p>
                 </div>
               </div>
 
@@ -338,20 +393,20 @@ const GuidePage: React.FC = () => {
                 subtitle={t('okr.subtitle')}
               />
 
-              <div className="mb-8 rounded-2xl overflow-hidden border border-white/8 shadow-2xl">
+              <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
                 <OKRCardShowcase />
               </div>
 
-              <div className="mb-8 bg-slate-800/40 border border-white/8 rounded-2xl p-5">
-                <p className="text-sm font-semibold text-white mb-3">{t('okr.whatIs')}</p>
+              <div className="mb-8 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl p-5">
+                <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))] mb-3">{t('okr.whatIs')}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-green-400 font-medium mb-1">{t('okr.objectiveLabel')}</p>
-                    <p className="text-slate-400">{t('okr.objectiveDesc')} <em>{t('okr.objectiveExample')}</em></p>
+                    <p className="text-[rgb(var(--color-success))] font-medium mb-1">{t('okr.objectiveLabel')}</p>
+                    <p className="text-[rgb(var(--color-text-secondary))]">{t('okr.objectiveDesc')} <em>{t('okr.objectiveExample')}</em></p>
                   </div>
                   <div>
-                    <p className="text-blue-400 font-medium mb-1">{t('okr.krLabel')}</p>
-                    <p className="text-slate-400">{t('okr.krDesc')} <em>{t('okr.krExample')}</em></p>
+                    <p className="text-[rgb(var(--color-accent))] font-medium mb-1">{t('okr.krLabel')}</p>
+                    <p className="text-[rgb(var(--color-text-secondary))]">{t('okr.krDesc')} <em>{t('okr.krExample')}</em></p>
                   </div>
                 </div>
               </div>
@@ -368,10 +423,12 @@ const GuidePage: React.FC = () => {
                 </Step>
               </div>
 
-              <div className="mt-8 space-y-0 bg-slate-800/40 border border-white/8 rounded-2xl overflow-hidden divide-y divide-white/5">
-                <FeatureRow icon={<TrendingUp size={15} />} label={t('okr.featHealth')}     desc={t('okr.featHealthDesc')} />
-                <FeatureRow icon={<Clock size={15} />}      label={t('okr.featDaysLeft')}  desc={t('okr.featDaysLeftDesc')} />
-                <FeatureRow icon={<Flag size={15} />}       label={t('okr.featCategories')} desc={t('okr.featCategoriesDesc')} />
+              <div className="mt-8 space-y-0 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl overflow-hidden divide-y divide-[rgb(var(--color-border-muted))]">
+                <FeatureRow icon={<TrendingUp size={15} />}    label={t('okr.featHealth')}     desc={t('okr.featHealthDesc')} />
+                <FeatureRow icon={<CalendarCheck size={15} />} label={t('okr.featCheckin')}    desc={t('okr.featCheckinDesc')} />
+                <FeatureRow icon={<Clock size={15} />}         label={t('okr.featLinked')}     desc={t('okr.featLinkedDesc')} />
+                <FeatureRow icon={<Bookmark size={15} />}      label={t('okr.featCompleted')}  desc={t('okr.featCompletedDesc')} />
+                <FeatureRow icon={<Flag size={15} />}          label={t('okr.featCategories')} desc={t('okr.featCategoriesDesc')} />
               </div>
 
               <Tip>
@@ -389,7 +446,7 @@ const GuidePage: React.FC = () => {
                 subtitle={t('stats.subtitle')}
               />
 
-              <div className="mb-8 rounded-2xl overflow-hidden border border-white/8 shadow-2xl">
+              <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
                 <Suspense fallback={<StatsShowcaseFallback />}>
                   <StatsShowcase />
                 </Suspense>
@@ -414,11 +471,11 @@ const GuidePage: React.FC = () => {
                   { color: '#22c55e', label: t('stats.legendOkr'),    desc: t('stats.legendOkrDesc') },
                   { color: '#eab308', label: t('stats.legendHabits'), desc: t('stats.legendHabitsDesc') },
                 ].map((item) => (
-                  <div key={item.label} className="flex items-start gap-3 bg-slate-800/40 border border-white/8 rounded-xl p-4">
+                  <div key={item.label} className="flex items-start gap-3 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl p-4">
                     <div className="w-3 h-3 rounded-full mt-1 shrink-0" style={{ backgroundColor: item.color }} />
                     <div>
-                      <p className="text-sm font-semibold text-white">{item.label}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
+                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{item.label}</p>
+                      <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -429,78 +486,52 @@ const GuidePage: React.FC = () => {
               </Note>
             </section>
 
-            {/* ══ PREMIUM ════════════════════════════════════════════════ */}
+            {/* ══ ENTREPRISE ═════════════════════════════════════════════ */}
             <section>
               <SectionHeader
-                id="premium"
-                icon={<Star size={24} />}
-                color="#eab308"
-                title={t('premium.title')}
-                subtitle={t('premium.subtitle')}
+                id="entreprise"
+                icon={<Building2 size={24} />}
+                color="#6366f1"
+                title={t('entreprise.title')}
+                subtitle={t('entreprise.subtitle')}
               />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                {[
-                  {
-                    icon: <PlayCircle size={18} />,
-                    label: t('premium.cardAd'),
-                    desc: t('premium.cardAdDesc'),
-                    highlight: true,
-                  },
-                  {
-                    icon: <Users size={18} />,
-                    label: t('premium.cardCollab'),
-                    desc: t('premium.cardCollabDesc'),
-                    highlight: false,
-                  },
-                  {
-                    icon: <Star size={18} />,
-                    label: t('premium.cardSupport'),
-                    desc: t('premium.cardSupportDesc'),
-                    highlight: false,
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex items-start gap-3 rounded-xl p-4 border"
-                    style={{
-                      backgroundColor: item.highlight ? 'rgba(234,179,8,0.08)' : 'rgba(30,41,59,0.4)',
-                      borderColor: item.highlight ? 'rgba(234,179,8,0.25)' : 'rgba(255,255,255,0.06)',
-                    }}
-                  >
-                    <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{
-                        backgroundColor: item.highlight ? 'rgba(234,179,8,0.15)' : 'rgba(234,179,8,0.08)',
-                        color: '#eab308',
-                      }}
-                    >
-                      {item.icon}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">{item.label}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="space-y-6">
+                <Step n={1} title={t('entreprise.step1Title')}>
+                  <RichText>{t('entreprise.step1')}</RichText>
+                </Step>
+                <Step n={2} title={t('entreprise.step2Title')}>
+                  <RichText>{t('entreprise.step2')}</RichText>
+                </Step>
+                <Step n={3} title={t('entreprise.step3Title')}>
+                  <RichText>{t('entreprise.step3')}</RichText>
+                </Step>
               </div>
 
-              <div className="space-y-6">
-                <Step n={1} title={t('premium.step1Title')}>
-                  <RichText>{t('premium.step1')}</RichText>
-                </Step>
-                <Step n={2} title={t('premium.step2Title')}>
-                  <RichText>{t('premium.step2')}</RichText>
-                </Step>
-                <Step n={3} title={t('premium.step3Title')}>
-                  <RichText>{t('premium.step3')}</RichText>
-                </Step>
+              <div className="mt-8 space-y-0 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl overflow-hidden divide-y divide-[rgb(var(--color-border-muted))]">
+                <FeatureRow icon={<Network size={15} />}      label={t('entreprise.featPyramid')}     desc={t('entreprise.featPyramidDesc')} />
+                <FeatureRow icon={<Users size={15} />}        label={t('entreprise.featRoles')}       desc={t('entreprise.featRolesDesc')} />
+                <FeatureRow icon={<ShieldCheck size={15} />}  label={t('entreprise.featPermissions')} desc={t('entreprise.featPermissionsDesc')} />
+                <FeatureRow icon={<UsersRound size={15} />}   label={t('entreprise.featTeams')}       desc={t('entreprise.featTeamsDesc')} />
+                <FeatureRow icon={<FolderKanban size={15} />} label={t('entreprise.featProjects')}    desc={t('entreprise.featProjectsDesc')} />
+                <FeatureRow icon={<ListTodo size={15} />}     label={t('entreprise.featTasks')}       desc={t('entreprise.featTasksDesc')} />
+                <FeatureRow icon={<Target size={15} />}       label={t('entreprise.featOkr')}         desc={t('entreprise.featOkrDesc')} />
+                <FeatureRow icon={<BarChart3 size={15} />}    label={t('entreprise.featReports')}     desc={t('entreprise.featReportsDesc')} />
+                <FeatureRow icon={<UserPlus size={15} />}     label={t('entreprise.featInvite')}      desc={t('entreprise.featInviteDesc')} />
               </div>
+
+              <Tip>
+                <RichText strongClassName="font-semibold">{t('entreprise.tip')}</RichText>
+              </Tip>
+
+              <Note>
+                {t('entreprise.note')}
+              </Note>
             </section>
 
             {/* ── Footer guide ── */}
-            <div className="border-t border-white/10 pt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-slate-500 text-sm">{t('chrome.contact')} <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a></p>
+            <div className="border-t border-[rgb(var(--color-border))] pt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-[rgb(var(--color-text-muted))] text-sm">{t('chrome.contact')} <a href={`mailto:${CONTACT_EMAIL}`} className="text-[rgb(var(--color-accent))] hover:underline">{CONTACT_EMAIL}</a></p>
               <Link
                 to="/"
                 className="flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
@@ -511,6 +542,7 @@ const GuidePage: React.FC = () => {
             </div>
 
           </main>
+          </ShowcaseTheme>
         </div>
       </div>
     </div>

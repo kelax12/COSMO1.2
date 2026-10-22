@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getFriendsRepository, getListsRepository, getTasksRepository } from '@/lib/repository.factory';
 import { listKeys } from '@/modules/lists';
 import { taskKeys, type CreateTaskInput } from '@/modules/tasks';
@@ -9,7 +9,6 @@ import type {
   FriendRequestInput,
   ShareTaskInput,
   PendingFriendRequest,
-  TaskShare,
   ShareListInput,
   SharedListGrant,
 } from './types';
@@ -46,8 +45,14 @@ export const useFriendRequests = () => {
   return useQuery({
     queryKey: friendKeys.requests(),
     queryFn: () => repository.getPendingRequests(),
-    refetchInterval: 15000, // polling toutes les 15s pour recevoir les demandes en temps réel
-    staleTime: 1000 * 60 * 2, // 2 minutes — doit rester réactif (notifications)
+    // Plus de sondage : `useFriendsInboxRealtime` (monté une seule fois dans
+    // `App.tsx`, mig. 120) écoute la table et invalide cette clé. Ce hook est
+    // monté en PERMANENCE par `InboxMenu` : le sondage rejouait la requête
+    // 240 fois par heure d'onglet ouvert pour apprendre qu'il n'y avait rien
+    // de neuf. `refetchOnWindowFocus` reste le filet quand le WebSocket est
+    // indisponible (navigation privée, anti-pistage strict).
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -56,8 +61,14 @@ export const useSentFriendRequests = () => {
   return useQuery({
     queryKey: friendKeys.sentRequests(),
     queryFn: () => repository.getSentRequests(),
-    refetchInterval: 15000,
-    staleTime: 1000 * 60 * 2, // 2 minutes — doit rester réactif (notifications)
+    // Plus de sondage : `useFriendsInboxRealtime` (monté une seule fois dans
+    // `App.tsx`, mig. 120) écoute la table et invalide cette clé. Ce hook est
+    // monté en PERMANENCE par `InboxMenu` : le sondage rejouait la requête
+    // 240 fois par heure d'onglet ouvert pour apprendre qu'il n'y avait rien
+    // de neuf. `refetchOnWindowFocus` reste le filet quand le WebSocket est
+    // indisponible (navigation privée, anti-pistage strict).
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -71,15 +82,6 @@ export const useTaskShares = (taskId: string | undefined) => {
     queryKey: friendKeys.taskShares(taskId ?? ''),
     queryFn: () => repository.getTaskShares(taskId as string),
     enabled: !!taskId,
-    staleTime: 1000 * 60 * 2, // 2 minutes — doit rester réactif (partages)
-  });
-};
-
-export const useMyTaskShares = () => {
-  const repository = useFriendsRepository();
-  return useQuery({
-    queryKey: friendKeys.myTaskShares(),
-    queryFn: () => repository.getMyTaskShares(),
     staleTime: 1000 * 60 * 2, // 2 minutes — doit rester réactif (partages)
   });
 };
@@ -100,7 +102,7 @@ export const useSendFriendRequest = () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.sentRequests() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible d'envoyer la demande d'ami : ${error.message}`);
+      toast.error(translator('errors').t('mutation.sendFriendRequest', { message: error.message }));
     },
   });
 };
@@ -116,7 +118,30 @@ export const useAcceptFriendRequest = () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.lists() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible d'accepter la demande d'ami : ${error.message}`);
+      toast.error(translator('errors').t('mutation.acceptFriendRequest', { message: error.message }));
+    },
+  });
+};
+
+/**
+ * Annulation par l'EXPÉDITEUR de sa propre demande.
+ *
+ * Distinct de `useRejectFriendRequest` (refus par le destinataire) : la RLS
+ * n'accepte pas le même statut selon le côté. Les confondre faisait échouer
+ * silencieusement l'annulation.
+ */
+export const useCancelFriendRequest = () => {
+  const queryClient = useQueryClient();
+  const repository = useFriendsRepository();
+
+  return useMutation({
+    mutationFn: (requestId: string) => repository.cancelFriendRequest(requestId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: friendKeys.requests() });
+      queryClient.invalidateQueries({ queryKey: friendKeys.sentRequests() });
+    },
+    onError: (error: Error) => {
+      toast.error(translator('errors').t('mutation.cancelFriendRequest', { message: error.message }));
     },
   });
 };
@@ -132,7 +157,7 @@ export const useRejectFriendRequest = () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.sentRequests() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de refuser la demande d'ami : ${error.message}`);
+      toast.error(translator('errors').t('mutation.declineFriendRequest', { message: error.message }));
     },
   });
 };
@@ -159,7 +184,7 @@ export const useRemoveFriend = () => {
       if (context?.previousFriends) {
         queryClient.setQueryData(friendKeys.lists(), context.previousFriends);
       }
-      toast.error(`Impossible de supprimer l'ami : ${error.message}`);
+      toast.error(translator('errors').t('mutation.removeFriend', { message: error.message }));
     },
 
     onSettled: () => {
@@ -178,7 +203,7 @@ export const useShareTask = () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.sharedTasks() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de partager la tâche : ${error.message}`);
+      toast.error(translator('errors').t('mutation.shareTask', { message: error.message }));
     },
   });
 };
@@ -191,9 +216,16 @@ export const useAcceptSharedTask = () => {
     mutationFn: (taskId: string) => repository.acceptSharedTask(taskId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.sharedTasks() });
+      // Depuis la mig. 103, l acceptation FAIT ENTRER la tache dans la liste
+      // (get_my_tasks ne renvoie que les partages acceptes) et la fait sortir
+      // de la boite de reception. Sans ces deux invalidations, la tache
+      // disparaissait de l inbox sans apparaitre nulle part ailleurs jusqu au
+      // prochain refetch.
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.pendingShared() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible d'accepter la tâche : ${error.message}`);
+      toast.error(translator('errors').t('mutation.acceptTask', { message: error.message }));
     },
   });
 };
@@ -207,9 +239,14 @@ export const useUnshareTask = () => {
       repository.unshareTask(taskId, friendId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.sharedTasks() });
+      // Refuser une tache partagee supprime la grant : elle doit quitter la
+      // boite de reception ET la liste (cas ou elle avait ete acceptee puis
+      // le partage revoque).
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.pendingShared() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible d'annuler le partage de la tâche : ${error.message}`);
+      toast.error(translator('errors').t('mutation.unshareTask', { message: error.message }));
     },
   });
 };
@@ -229,7 +266,7 @@ export const useShareList = () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.incomingSharedLists() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de partager la liste : ${error.message}`);
+      toast.error(translator('errors').t('mutation.shareList', { message: error.message }));
     },
   });
 };
@@ -239,8 +276,13 @@ export const useIncomingSharedLists = () => {
   return useQuery({
     queryKey: friendKeys.incomingSharedLists(),
     queryFn: () => repository.getIncomingSharedLists(),
-    // Même cadence que useRelatedTaskShares : collaboration sans realtime.
-    refetchInterval: 20_000,
+    // Plus de sondage : `useFriendsInboxRealtime` (monté une seule fois dans
+    // `App.tsx`, mig. 120) écoute la table et invalide cette clé. Ce hook est
+    // monté en PERMANENCE par `InboxMenu` : le sondage rejouait la requête
+    // 240 fois par heure d'onglet ouvert pour apprendre qu'il n'y avait rien
+    // de neuf. `refetchOnWindowFocus` reste le filet quand le WebSocket est
+    // indisponible (navigation privée, anti-pistage strict).
+    staleTime: 1000 * 30,
     refetchOnWindowFocus: true,
   });
 };
@@ -288,7 +330,7 @@ export const useAcceptSharedList = () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible d'accepter la liste : ${error.message}`);
+      toast.error(translator('errors').t('mutation.acceptList', { message: error.message }));
     },
   });
 };
@@ -303,7 +345,7 @@ export const useRefuseSharedList = () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.incomingSharedLists() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de refuser la liste : ${error.message}`);
+      toast.error(translator('errors').t('mutation.declineList', { message: error.message }));
     },
   });
 };
@@ -312,31 +354,12 @@ export const useRefuseSharedList = () => {
 // DERIVED HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
-export const useFriendCount = () => {
-  const { data: friends = [] } = useFriends();
-  return useMemo(() => friends.length, [friends]);
-};
-
 export const usePendingRequestCount = () => {
   const { data: requests = [] } = useFriendRequests();
   return useMemo(
     () => requests.filter((r: PendingFriendRequest) => r.status === 'pending').length,
     [requests]
   );
-};
-
-/** Map of taskId -> friendIds shared with, for list-view avatar badges. */
-export const useSharesByTask = (): Map<string, string[]> => {
-  const { data: shares = [] } = useMyTaskShares();
-  return useMemo(() => {
-    const m = new Map<string, string[]>();
-    for (const s of shares as TaskShare[]) {
-      const arr = m.get(s.taskId) ?? [];
-      arr.push(s.friendId);
-      m.set(s.taskId, arr);
-    }
-    return m;
-  }, [shares]);
 };
 
 /**
@@ -351,12 +374,16 @@ export const useRelatedTaskShares = () => {
   return useQuery({
     queryKey: friendKeys.relatedTaskShares(),
     queryFn: () => repository.getRelatedTaskShares(),
-    // Collaboration sans realtime : poll régulier pour que la boîte de réception
-    // (tâches reçues en attente) et les avatars de collaborateurs reflètent un
-    // partage / une acceptation récents. getRelatedTaskShares retourne [] sans
-    // amis ni partages, donc coût négligeable.
-    refetchInterval: 20_000,
+    // Plus de sondage : `useSharedTasksRealtime` (monté une seule fois dans
+    // `App.tsx`) écoute déjà `shared_tasks` sur les deux directions
+    // (`friend_id` et `shared_by`) et invalide cette clé — c'est exactement
+    // l'événement qui change cette liste. Le sondage à 20 s rejouait la même
+    // requête 180 fois par heure d'onglet ouvert pour apprendre qu'il n'y avait
+    // rien de neuf, alors que le canal qui porte l'information était ouvert.
+    // `refetchOnWindowFocus` reste le filet quand le WebSocket est indisponible
+    // (navigation privée, anti-pistage strict — cf. useSharedTasksRealtime).
     refetchOnWindowFocus: true,
+    staleTime: 1000 * 30,
   });
 };
 

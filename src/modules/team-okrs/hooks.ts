@@ -3,10 +3,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getTeamOKRsRepository } from '@/lib/repository.factory';
-import { validateOrThrow } from '@/lib/validation/validate';
-import { createTeamOKRSchema, updateTeamOKRSchema, updateTeamKRSchema } from './team-okr.schema';
+import { validateAsync } from '@/lib/validation/lazy';
 import { teamOkrKeys } from './constants';
 import type {
   CreateTeamOKRInput,
@@ -18,25 +17,68 @@ import { translator } from '@/i18n/useT';
 
 const useRepo = () => getTeamOKRsRepository();
 
-export const useTeamOKRs = (orgId: string | undefined) => {
+/**
+ * OKR d'équipe.
+ *
+ * `live` distingue les deux usages, exactement comme `useTeamTasks` et
+ * `useOrgMembers` — et pour la même raison : ce hook est monté par
+ * `CommandPalette`, une surface PERMANENTE. Un `refetchInterval` inconditionnel
+ * faisait donc payer à tout membre d'une organisation une lecture org-wide
+ * toutes les 30 s, sur TOUTES les pages, sans que personne ne regarde les OKR.
+ */
+export const useTeamOKRs = (
+  orgId: string | undefined,
+  options?: { live?: boolean },
+) => {
   const repository = useRepo();
   return useQuery({
     queryKey: teamOkrKeys.list(orgId ?? ''),
     queryFn: () => repository.getAll(orgId as string),
     enabled: !!orgId,
-    refetchInterval: 30_000,
+    ...(options?.live ? { refetchInterval: 30_000 } : {}),
     staleTime: 1000 * 60 * 2,
     // Donnée partagée : au retour sur l'onglet, on resynchronise (reco #12).
     refetchOnWindowFocus: true,
   });
 };
 
+/**
+ * OKR d'équipe de PLUSIEURS organisations (mode perso : OKR pro de toutes
+ * mes entreprises). Chaque liste passe par `fetchQuery` sur la clé de
+ * `useTeamOKRs` : le cache par organisation reste partagé.
+ *
+ * UNE requête, pas `useQueries` : ce dernier tire `QueriesObserver` dans le
+ * lot `vendor-query`, sur le CHEMIN CRITIQUE de tout visiteur (+3 ko bruts
+ * mesurés le 2026-09-29), pour une seule section qui s'en sert. Même
+ * arbitrage que `useGroupEventsWindow` (module events).
+ */
+export const useTeamOKRsAcrossOrgs = (orgIds: string[]) => {
+  const repository = useRepo();
+  const queryClient = useQueryClient();
+  const ids = [...orgIds].sort();
+  const query = useQuery({
+    queryKey: [...teamOkrKeys.all, 'across', ids.join(',')] as const,
+    queryFn: async () => {
+      // `allSettled` : une organisation qui refuse ne vide pas les autres.
+      const lists = await Promise.allSettled(ids.map((orgId) => queryClient.fetchQuery({
+        queryKey: teamOkrKeys.list(orgId),
+        queryFn: () => repository.getAll(orgId),
+        staleTime: 1000 * 60 * 2,
+      })));
+      return lists.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
+    },
+    enabled: ids.length > 0,
+    staleTime: 1000 * 60 * 2,
+  });
+  return query.data ?? [];
+};
+
 export const useCreateTeamOKR = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: (input: CreateTeamOKRInput) => {
-      const valid = validateOrThrow(createTeamOKRSchema, input);
+    mutationFn: async (input: CreateTeamOKRInput) => {
+      const valid = await validateAsync('teamOkr.create', input);
       return repository.create(orgId, valid as CreateTeamOKRInput);
     },
     onSuccess: () => {
@@ -44,22 +86,6 @@ export const useCreateTeamOKR = (orgId: string) => {
       queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
     },
     onError: (error: Error) => toast.error(translator('errors').t('mutation.createObjective', { message: error.message })),
-  });
-};
-
-export const useUpdateTeamOKR = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: ({ okrId, input }: { okrId: string; input: UpdateTeamOKRInput }) => {
-      const valid = validateOrThrow(updateTeamOKRSchema, input);
-      return repository.update(okrId, valid as UpdateTeamOKRInput);
-    },
-    onSuccess: () => {
-      toast.success(translator('errors').t('success.objectiveUpdated'));
-      queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
-    },
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateObjective', { message: error.message })),
   });
 };
 
@@ -80,7 +106,7 @@ export const useEditTeamOKR = (orgId: string) => {
       meta: UpdateTeamOKRInput;
       keyResults: SyncTeamKRInput[];
     }) => {
-      const validMeta = validateOrThrow(updateTeamOKRSchema, meta);
+      const validMeta = await validateAsync('teamOkr.update', meta);
       await repository.update(okrId, validMeta as UpdateTeamOKRInput);
       await repository.syncKeyResults(okrId, orgId, keyResults);
     },
@@ -93,36 +119,54 @@ export const useEditTeamOKR = (orgId: string) => {
 };
 
 /**
- * Réétiquette la catégorie d'un lot d'OKR (cascade au renommage d'une catégorie
- * d'entreprise — team_okrs.category stocke le NOM). Silencieux (pas de toast par
- * OKR), une seule invalidation en fin.
+ * « Supprimer » met l'objectif à la CORBEILLE (mig. 193) : 30 jours pour le
+ * restaurer, KR, points d'étape et liens de projets compris.
  */
-export const useReassignTeamOKRCategory = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: async ({ okrIds, category }: { okrIds: string[]; category: string }) => {
-      for (const okrId of okrIds) {
-        await repository.update(okrId, { category });
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
-    },
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.relabelObjectives', { message: error.message })),
-  });
-};
-
 export const useDeleteTeamOKR = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
     mutationFn: (okrId: string) => repository.remove(okrId),
     onSuccess: () => {
-      toast.success(translator('errors').t('success.objectiveDeleted'));
+      toast.success(translator('errors').t('success.objectiveTrashed'));
       queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
+      queryClient.invalidateQueries({ queryKey: teamOkrKeys.trash(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de supprimer l'objectif : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteTeamObjective', { message: error.message })),
+  });
+};
+
+export const useTeamOKRTrash = (orgId: string | undefined, options?: { enabled?: boolean }) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamOkrKeys.trash(orgId ?? ''),
+    queryFn: () => repository.getTrash(orgId as string),
+    enabled: !!orgId && (options?.enabled ?? true),
+    staleTime: 1000 * 30,
+  });
+};
+
+export const useRestoreTeamOKR = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (okrId: string) => repository.restore(okrId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
+      queryClient.invalidateQueries({ queryKey: teamOkrKeys.trash(orgId) });
+    },
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.restoreTeamOkr', { message: error.message })),
+  });
+};
+
+/** Suppression définitive depuis la corbeille (admin). */
+export const usePurgeTeamOKR = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (okrId: string) => repository.purge(okrId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: teamOkrKeys.trash(orgId) }),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.trashTeamOkr', { message: error.message })),
   });
 };
 
@@ -130,8 +174,8 @@ export const useUpdateTeamKR = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: ({ krId, input }: { krId: string; input: UpdateTeamKRInput }) => {
-      const valid = validateOrThrow(updateTeamKRSchema, input);
+    mutationFn: async ({ krId, input }: { krId: string; input: UpdateTeamKRInput }) => {
+      const valid = await validateAsync('teamKr.update', input);
       return repository.updateKeyResult(krId, valid as UpdateTeamKRInput);
     },
     onSuccess: () => {

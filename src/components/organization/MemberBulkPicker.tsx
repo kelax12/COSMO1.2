@@ -1,0 +1,164 @@
+import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { X, Search, ArrowUpFromLine, Plus } from 'lucide-react';
+import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
+import { normalize } from './pyramid.helpers';
+import MemberAvatar from './MemberAvatar';
+
+export interface BulkPickerOption {
+  /** `null` : « détacher » (changement de manager, admins seulement). */
+  id: string | null;
+  label: string;
+  /** Pastille de couleur (équipe) ou avatar (manager). */
+  color?: string;
+  avatar?: string;
+  /** Membres sélectionnés sur qui le geste s'appliquerait vraiment. */
+  eligible: number;
+}
+
+interface MemberBulkPickerProps {
+  mode: 'team' | 'manager';
+  selectedCount: number;
+  options: BulkPickerOption[];
+  pending: boolean;
+  onPick: (id: string | null) => void;
+  onClose: () => void;
+  /**
+   * Mode équipe : ouvre LE formulaire « Nouvelle équipe » avec la sélection
+   * précochée et la recherche en guise de nom. Absent sans le droit `team.create`.
+   */
+  onCreateTeam?: (name: string) => void;
+}
+
+/**
+ * Choisir la cible d'une action groupée : une équipe, ou un manager. Chaque
+ * option annonce combien de membres sélectionnés sont RÉELLEMENT concernés
+ * (miroir de la RLS, cf. `member-bulk.helpers.ts`) ; une option à zéro est
+ * désactivée plutôt que de promettre un geste que le serveur refuserait.
+ */
+const MemberBulkPicker = ({ mode, selectedCount, options, pending, onPick, onClose, onCreateTeam }: MemberBulkPickerProps) => {
+  const { t } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
+  const [query, setQuery] = useState('');
+  const shown = useMemo(() => {
+    const q = normalize(query.trim());
+    return q ? options.filter((o) => o.id === null || normalize(o.label).includes(q)) : options;
+  }, [options, query]);
+
+  const title = mode === 'team'
+    ? tpOrgAdmin('directory.bulk.pickTeamTitle', selectedCount)
+    : tpOrgAdmin('directory.bulk.pickManagerTitle', selectedCount);
+
+  const { ref, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    // Même règle que le voile et la croix : rien ne ferme pendant l'envoi.
+    onClose: () => { if (!pending) onClose(); },
+    label: title,
+  });
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
+      onClick={pending ? undefined : onClose}
+    >
+      <div
+        className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        ref={ref}
+        {...dialogProps}
+      >
+        <div className="flex items-start justify-between gap-2 p-5 pb-3 border-b border-[rgb(var(--color-border))]">
+          <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={pending}
+            aria-label={t('common.cancel')}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0 disabled:opacity-50"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="relative px-3 pt-3">
+          <Search size={15} className="absolute left-6 top-1/2 translate-y-[-10%] text-[rgb(var(--color-text-muted))] pointer-events-none" aria-hidden="true" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={mode === 'team' ? tOrgAdmin('directory.bulk.searchTeam') : tOrgAdmin('directory.bulk.searchManager')}
+            aria-label={mode === 'team' ? tOrgAdmin('directory.bulk.searchTeam') : tOrgAdmin('directory.bulk.searchManager')}
+            className="w-full h-10 pl-9 pr-3 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400"
+          />
+        </div>
+
+        <div className="overflow-y-auto p-3 space-y-1">
+          {shown.length === 0 && !(mode === 'team' && onCreateTeam) && (
+            <p className="text-sm text-[rgb(var(--color-text-muted))] py-6 text-center">
+              {mode === 'team' ? tOrgAdmin('directory.bulk.noTeam') : tOrgAdmin('directory.bulk.noManager')}
+            </p>
+          )}
+          {shown.map((o) => (
+            <button
+              key={o.id ?? '__detach__'}
+              type="button"
+              disabled={pending || o.eligible === 0}
+              onClick={() => onPick(o.id)}
+              className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[rgb(var(--color-hover))] border ${
+                o.id === null ? 'border-dashed border-[rgb(var(--color-border))]' : 'border-transparent hover:border-indigo-400'
+              }`}
+            >
+              {o.id === null ? (
+                <span className="w-7 h-7 rounded-full border border-dashed border-[rgb(var(--color-border))] flex items-center justify-center shrink-0">
+                  <ArrowUpFromLine size={14} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+                </span>
+              ) : mode === 'team' ? (
+                <span className="w-3 h-3 rounded-full shrink-0 ml-2 mr-2" style={{ backgroundColor: o.color }} aria-hidden="true" />
+              ) : (
+                <MemberAvatar avatar={o.avatar} name={o.label} size={28} />
+              )}
+              <span className="min-w-0 flex-1 text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">{o.label}</span>
+              <span className="text-xs text-[rgb(var(--color-text-muted))] whitespace-nowrap tabular-nums">
+                {tpOrgAdmin('directory.bulk.eligible', o.eligible)}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {mode === 'team' && onCreateTeam && (
+          <div className="px-3 pb-3 pt-1 border-t border-[rgb(var(--color-border))]">
+            {shown.length === 0 && (
+              <p className="text-xs text-[rgb(var(--color-text-muted))] px-2.5 pt-2">{tOrgAdmin('directory.bulk.noTeamMatch')}</p>
+            )}
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => onCreateTeam(query.trim())}
+              className="mt-2 w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left text-sm font-semibold text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-40 transition-colors"
+            >
+              <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-[rgb(var(--color-accent)/0.12)]">
+                <Plus size={15} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 truncate">
+                {query.trim()
+                  ? tOrgAdmin('directory.bulk.createNamedTeam', { name: query.trim() })
+                  : tpOrgAdmin('directory.bulk.createTeamWith', selectedCount)}
+              </span>
+            </button>
+          </div>
+        )}
+
+        {pending && (
+          <div className="px-5 py-3 border-t border-[rgb(var(--color-border))] text-xs text-[rgb(var(--color-text-muted))] inline-flex items-center gap-2">
+            <span className="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-b-2 border-indigo-500" />
+            {tOrgAdmin('directory.bulk.applying')}
+          </div>
+        )}
+      </div>
+    </div>,
+    document.body,
+  );
+};
+
+export default MemberBulkPicker;

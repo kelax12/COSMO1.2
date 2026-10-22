@@ -1,21 +1,33 @@
-import { toast } from 'sonner';
-import * as Sentry from '@sentry/react';
+import { toast } from '@/lib/toast';
+// Sentry n'est PLUS importe statiquement : il est charge apres le premier
+// rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
+// tamponne ce qui arrive avant le chargement.
+import * as monitoring from '@/lib/monitoring';
+import { translator } from '@/i18n/useT';
 
 const warned = new Set<string>();
 
 // User-friendly labels for the truncation toast. Keep keys aligned with the
 // `table` argument passed by each repository.
-const TABLE_LABELS: Record<string, string> = {
-  tasks: 'tâches',
-  habits: 'habitudes',
-  events: 'événements',
-  okrs: 'OKR',
-  kr_completions: 'complétions de KR',
-  categories: 'catégories',
-  lists: 'listes',
-  friends: 'amis',
-  team_tasks: 'tâches d\'équipe',
-};
+// Libelles lisibles du toast de troncature. Les cles suivent l'argument
+// `table` passe par chaque repository.
+//
+// ⚠️ Ils vivent dans le catalogue `common` (`pagination.tables.*`) et non ici :
+// le toast est traduit, donc un libelle francais en dur au milieu produirait
+// une phrase moitie anglaise moitie francaise (R-05). Une table absente de
+// cette liste retombe sur son nom technique, ce qui reste comprehensible.
+const TABLE_LABEL_KEYS: readonly string[] = [
+  'tasks', 'habits', 'events', 'okrs', 'kr_completions',
+  'categories', 'lists', 'friends', 'team_tasks',
+  // Mode entreprise — dix lectures bornees en dur qui tronquaient en silence
+  // (revue du 2026-09-02, point 13). C'est exactement ce que ce module existe
+  // pour empecher : une liste coupee a 200 sans que personne, ni l'utilisateur
+  // ni l'equipe, n'apprenne qu'elle l'a ete.
+  'team_projects', 'org_members', 'org_teams', 'team_members',
+  'team_task_comments', 'org_join_requests', 'team_okrs',
+  'team_task_activity', 'team_task_dependencies', 'org_invite_links',
+  'organizations',
+];
 
 /**
  * Avertit quand un getAll() Supabase atteint sa limite et que les données
@@ -43,14 +55,17 @@ export function warnIfTruncated<T>(rows: T[], limit: number, table: string): T[]
       `[pagination] ${table}: ${rows.length} lignes (limite ${limit}). ` +
       `Données potentiellement tronquées — implémenter pagination UI.`,
     );
-    Sentry.captureMessage(`pagination truncated: ${table}`, {
+    monitoring.captureMessage(`pagination truncated: ${table}`, {
       level: 'warning',
       tags: { pagination_table: table },
       extra: { rows: rows.length, limit },
     });
-    const label = TABLE_LABELS[table] ?? table;
-    toast.warning(`Plus de ${limit} ${label} détectées`, {
-      description: 'Seules les plus récentes sont affichées. Utilisez les filtres pour réduire la liste.',
+    const t = translator('overlays').t;
+    const label = TABLE_LABEL_KEYS.includes(table)
+      ? t(`pagination.tables.${table}` as Parameters<typeof t>[0])
+      : table;
+    toast.warning(t('pagination.truncated', { limit: String(limit), label }), {
+      description: t('pagination.truncatedHint'),
       duration: 8000,
     });
   }

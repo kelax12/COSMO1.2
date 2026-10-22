@@ -36,3 +36,26 @@ describe('DialogOverlay', () => {
     consoleSpy.mockRestore();
   });
 });
+
+// ── A-3 (2026-09-03) — le bouton de fermeture par défaut parlait anglais ──
+//
+// `DialogContent` monte, quand `showCloseButton` n'est pas désactivé, une
+// croix dont le SEUL nom accessible était `<span class="sr-only">Close</span>`,
+// écrit en dur dans la source shadcn amont. Sept composants du produit
+// utilisent ce défaut : un lecteur d'écran francophone entendait « Close ».
+// `i18n:scan` ne pouvait pas le voir — il cherche du FRANÇAIS en dur.
+describe('DialogContent — bouton de fermeture par défaut', () => {
+  it('porte un nom accessible traduit, jamais « Close »', async () => {
+    const { DialogContent, DialogTitle } = await import('./dialog');
+    const { getByRole } = render(
+      <DialogPrimitive.Root open>
+        <DialogContent>
+          <DialogTitle>Titre</DialogTitle>
+        </DialogContent>
+      </DialogPrimitive.Root>,
+    );
+    const close = getByRole('button', { name: /fermer/i });
+    expect(close).toBeTruthy();
+    expect(close.textContent).not.toMatch(/close/i);
+  });
+});

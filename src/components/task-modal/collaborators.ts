@@ -1,3 +1,5 @@
+import { translator } from '@/i18n/useT';
+
 // Helpers purs d'identité/affichage des collaborateurs de TaskModal — extraits
 // pour être testables indépendamment du composant. Comportement déplacé verbatim
 // depuis TaskModal.tsx (aucun durcissement).
@@ -103,7 +105,7 @@ export function resolveCollaboratorDisplay(
   // résolution friend_id → ami échoue (ex. ami non enrichi, ou partage dont
   // le destinataire ouvre la tâche). On affiche un libellé générique.
   if (UUID_REGEX.test(id)) {
-    return { name: 'Collaborateur', email: undefined, avatar: undefined, isPending };
+    return { name: translator('common').t('collaborator.generic'), email: undefined, avatar: undefined, isPending };
   }
   return { name: id, email: undefined, avatar: undefined, isPending };
 }
