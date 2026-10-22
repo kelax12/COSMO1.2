@@ -47,6 +47,19 @@ Conséquences pratiques, à tenir :
 
 ## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → 81 → 82 → 82 → 82 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → **2026-10-20**)
 
+> ### 🟢 2026-10-22 · 0 : les widgets suivent enfin `prefers-reduced-motion`
+>
+> L'arbitrage « à revoir » du 2026-10-20 est soldé. `ApercuWidgetGrid` (Aperçu entreprise **et** tableau de bord perso au bureau, même composant depuis `b7d2ec97`) ne pose plus `MotionConfig reducedMotion="never"` : il suit celui d'`App.tsx` (`"user"`).
+>
+> | Item | Effet | Fait le 2026-10-22 |
+> |---|---|---|
+> | ✅ Vibration en boucle (±0,45°) en édition | 0 | coupée sous mouvement réduit par `useReducedMotion()` : une boucle rendue instantanée par Framer (`{ type: false }`) laisserait un `rotate` **résiduel**, d'où la coupe à la main plutôt que de s'en remettre au `MotionConfig` |
+> | ✅ Réordonnancement (flèches et glisser) | 0 | Framer rend `layout` et les transforms instantanés sous mouvement réduit : le bloc **saute** à sa place, le glisser marche (le geste n'est pas une animation), `dragSnapToOrigin` revient sans ressort. Défilement vers un bloc ajouté : `auto` au lieu de `smooth` |
+> | ✅ Garde | 0 | `e2e/reduced-motion-widgets.spec.ts` lit `transform` à chaque frame pendant l'édition, un déplacement au clavier et un glisser à la souris ; il exige aucun transform **et** l'ordre attendu (sans déplacement, « aucun transform » ne dirait rien). Vu rouge sur la version d'avant, vert après, en CI (PR de ce correctif) |
+> | ⚠️ Reste une exception écrite | 0 | `GuideCursor` (guide entreprise) garde `never` : son trajet EST le contenu de la démo, demande d'Axel du 2026-10-12. C'est désormais le seul |
+>
+> Note inchangée : l'item valait 0 le 2026-10-20 (non débité).
+
 > ### 🟠 2026-10-20 · −1 : `/dashboard` déborde à 200 % de police
 >
 > **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
@@ -54,7 +67,7 @@ Conséquences pratiques, à tenir :
 > | Item | Effet | Mesuré le 2026-10-20 |
 > |---|---|---|
 > | 🔴 C-97 · `/dashboard` à 200 % de police, `mobile-chrome` | **−1** | débordement latéral de **13 px**, trois essais sur trois, à chaque run depuis le 2026-10-19 (WCAG 1.4.4 et 1.4.10). N'apparaît que certains jours : la démo date ses données, voir [`TESTING.md`](./TESTING.md) |
-> | ⚠️ Mode édition de l'Aperçu · `MotionConfig reducedMotion="never"` | 0 | vibration en boucle des widgets (±0,45°) **même quand le système demande moins d'animation**. Arbitrage écrit dans `ApercuWidgetGrid.tsx` (mode ouvert par la personne, même choix que `GuideCursor`) : non débité, mais c'est le seul endroit hors guide où la préférence est ignorée. À rouvrir au premier retour |
+> | ⚠️ Mode édition de l'Aperçu · `MotionConfig reducedMotion="never"` | 0 | **soldé le 2026-10-22, voir plus haut.** vibration en boucle des widgets (±0,45°) **même quand le système demande moins d'animation**. Arbitrage écrit dans `ApercuWidgetGrid.tsx` (mode ouvert par la personne, même choix que `GuideCursor`) : non débité, mais c'est le seul endroit hors guide où la préférence est ignorée. À rouvrir au premier retour |
 > | ✅ Widgets | 0 | chaque widget est une `section` nommée (`WidgetShell`), le contenu passe `inert` en édition, flèches et formats au clavier ; C-57 (cibles 44 px) vert sur `/entreprise` après `f0c2a433` |
 >
 > **82 → 81.**
