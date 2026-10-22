@@ -17,11 +17,13 @@ import type { OrgMember } from '@/modules/organizations';
 
 export type StatsPeriod = '7' | '30' | '90' | 'all';
 
-export const STATS_PERIODS: { id: StatsPeriod; label: string; days: number | null }[] = [
-  { id: '7', label: '7 j', days: 7 },
-  { id: '30', label: '30 j', days: 30 },
-  { id: '90', label: '90 j', days: 90 },
-  { id: 'all', label: 'Tout', days: null },
+// `days` porte le CHIFFRE, l'ecran porte la phrase : « 7 j » et « Tout »
+// etaient en dur, donc affiches en francais a un anglophone.
+export const STATS_PERIODS: { id: StatsPeriod; days: number | null }[] = [
+  { id: '7', days: 7 },
+  { id: '30', days: 30 },
+  { id: '90', days: 90 },
+  { id: 'all', days: null },
 ];
 
 /** Début de la fenêtre (minuit) ; null = pas de borne (« Tout »). */
@@ -208,6 +210,125 @@ export function overdueByMember(
     .sort((a, b) => b.count - a.count);
 }
 
+// ─── Charge d'équipe ──────────────────────────────────────────────────
+
+export interface MemberWorkload {
+  userId: string;
+  name: string;
+  /** Tâches ouvertes assignées. */
+  open: number;
+  /** Dont en retard. */
+  overdue: number;
+  /** Minutes estimées restantes (tâches ouvertes uniquement). */
+  estimatedMinutes: number;
+  /**
+   * Charge relative à la MÉDIANE de l'équipe (1 = dans la norme).
+   * 0 quand aucune estimation n'existe — on ne prétend pas mesurer une charge
+   * qu'on n'a pas.
+   */
+  loadRatio: number;
+}
+
+/** Médiane d'une liste de nombres (0 si vide). */
+const median = (values: number[]): number => {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+};
+
+/**
+ * Charge par membre : combien de tâches ouvertes, combien en retard, combien de
+ * temps estimé restant, et où cela se situe par rapport au reste de l'équipe.
+ *
+ * La référence est la MÉDIANE, pas la moyenne : dans une petite équipe, une
+ * seule personne écrasée tire la moyenne vers le haut et fait passer tous les
+ * autres pour sous-chargés — exactement le contresens qu'un manager ne doit
+ * pas lire ici. Une tâche multi-assignée compte pour chacun de ses assignés :
+ * elle occupe bien deux personnes.
+ */
+export function memberWorkload(
+  tasks: TeamTask[],
+  members: OrgMember[],
+  now: Date = new Date(),
+): MemberWorkload[] {
+  const open = new Map<string, number>();
+  const overdue = new Map<string, number>();
+  const minutes = new Map<string, number>();
+
+  for (const t of tasks) {
+    if (t.completed) continue;
+    const late = isOverdue(t, now);
+    for (const uid of t.assigneeIds) {
+      open.set(uid, (open.get(uid) ?? 0) + 1);
+      if (late) overdue.set(uid, (overdue.get(uid) ?? 0) + 1);
+      minutes.set(uid, (minutes.get(uid) ?? 0) + (t.estimatedTime ?? 0));
+    }
+  }
+
+  const rows = members.map((m) => ({
+    userId: m.userId,
+    name: firstName(m.displayName),
+    open: open.get(m.userId) ?? 0,
+    overdue: overdue.get(m.userId) ?? 0,
+    estimatedMinutes: minutes.get(m.userId) ?? 0,
+    loadRatio: 0,
+  }));
+  return rankWorkload(rows);
+}
+
+/**
+ * Même charge, à partir des chiffres COMPTÉS PAR LE SERVEUR (mig. 191) sur
+ * toutes les tâches ouvertes : le calcul local ci-dessus ne voit que l'extrait
+ * que le client a pu lire.
+ */
+export function memberWorkloadFromServer(
+  server: { userId: string; openTasks: number; overdue: number; estimatedMinutes: number }[],
+  members: OrgMember[],
+): MemberWorkload[] {
+  const byUser = new Map(server.map((w) => [w.userId, w]));
+  return rankWorkload(members.map((m) => {
+    const w = byUser.get(m.userId);
+    return {
+      userId: m.userId,
+      name: firstName(m.displayName),
+      open: w?.openTasks ?? 0,
+      overdue: w?.overdue ?? 0,
+      estimatedMinutes: w?.estimatedMinutes ?? 0,
+      loadRatio: 0,
+    };
+  }));
+}
+
+function rankWorkload(rows: MemberWorkload[]): MemberWorkload[] {
+  // La médiane ne porte que sur les personnes qui ont effectivement de la
+  // charge estimée : inclure les zéros ferait passer la médiane à 0 dès qu'une
+  // moitié de l'équipe n'a rien, et tout le monde deviendrait « en surcharge ».
+  const withLoad = rows.map((r) => r.estimatedMinutes).filter((v) => v > 0);
+  const ref = median(withLoad);
+  if (ref > 0) {
+    for (const row of rows) row.loadRatio = row.estimatedMinutes / ref;
+  }
+
+  return rows.sort(
+    (a, b) => b.estimatedMinutes - a.estimatedMinutes || b.open - a.open,
+  );
+}
+
+/** Qualification d'une charge relative — seuils volontairement larges. */
+export type WorkloadTone = 'under' | 'normal' | 'over';
+
+/**
+ * `0` renvoie 'normal' et non 'under' : un ratio nul signifie « aucune donnée
+ * d'estimation dans l'équipe », pas « cette personne n'a rien à faire ».
+ */
+export const workloadTone = (ratio: number): WorkloadTone => {
+  if (ratio <= 0) return 'normal';
+  if (ratio > 1.5) return 'over';
+  if (ratio < 0.5) return 'under';
+  return 'normal';
+};
+
 // ─── Par projet ───────────────────────────────────────────────────────
 
 export interface ProjectStat {
@@ -342,3 +463,35 @@ export function okrBreakdown(okrs: TeamOKR[]): OkrStat[] {
     }))
     .sort((a, b) => a.progress - b.progress);
 }
+
+// ─── Comparaison de période (reco UI n° 38) ───────────────────────────
+//
+// Deux flux comparables d'une fenêtre à l'autre : ce qui a été CRÉÉ et ce
+// qui a été TERMINÉ dedans. Le stock (ouvertes, en retard) ne se compare
+// pas : on ne sait pas ce qu'il valait il y a trente jours.
+
+export interface PeriodFlow { created: number; completed: number }
+
+export function periodFlow(tasks: TeamTask[], from: Date, to: Date): PeriodFlow {
+  const within = (s: string | null | undefined) => {
+    const d = parse(s);
+    return !!d && d >= from && d < to;
+  };
+  return {
+    created: tasks.filter((t) => within(t.createdAt)).length,
+    completed: tasks.filter((t) => t.completed && within(t.completedAt)).length,
+  };
+}
+
+/** Fenêtre courante et fenêtre précédente de même durée ; null pour « Tout ». */
+export function comparedWindows(period: StatsPeriod, now: Date = new Date()):
+  { current: [Date, Date]; previous: [Date, Date] } | null {
+  const start = periodStart(period, now);
+  if (!start) return null;
+  const span = now.getTime() - start.getTime();
+  return { current: [start, now], previous: [new Date(start.getTime() - span), start] };
+}
+
+/** Variation en % arrondie ; null quand la base est nulle (« +∞ » ne dit rien). */
+export const percentDelta = (current: number, previous: number): number | null =>
+  previous === 0 ? null : Math.round(((current - previous) / previous) * 100);

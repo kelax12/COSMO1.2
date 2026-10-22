@@ -1,4 +1,6 @@
 import { Plus } from 'lucide-react';
+import { useT } from '@/i18n/useT';
+import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
 /**
  * Bouton « + Ajouter » à côté d'un label « Catégorie » / « Couleur » dans les
@@ -10,20 +12,27 @@ import { Plus } from 'lucide-react';
  */
 interface AddCategoryButtonProps {
   onClick: () => void;
-  /** Libellé accessible — défaut : « Créer une catégorie ». */
+  /** Libellé accessible. Défaut traduit : « Créer une catégorie ». */
   ariaLabel?: string;
 }
 
-const AddCategoryButton = ({ onClick, ariaLabel = 'Créer une catégorie' }: AddCategoryButtonProps) => (
-  <button
-    type="button"
-    onClick={onClick}
-    aria-label={ariaLabel}
-    className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-  >
-    <Plus size={12} aria-hidden="true" />
-    Ajouter
-  </button>
-);
+const AddCategoryButton = ({ onClick, ariaLabel }: AddCategoryButtonProps) => {
+  const { t } = useT('common');
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel ?? t('actions.createCategory')}
+      // 16 px de haut mesurés (C-70). Ce bouton est monté par TaskModal,
+      // OKRModalSheet, EventModal et la modale d'équipe : la cible se corrige
+      // ici une fois, pour les quatre. Vertical seulement — il vit au bout
+      // d'une ligne de label, un débord horizontal mordrait sur le label.
+      className={`flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors ${TAP_AREA_44_Y}`}
+    >
+      <Plus size={12} aria-hidden="true" />
+      {t('actions.add')}
+    </button>
+  );
+};
 
 export default AddCategoryButton;

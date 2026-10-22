@@ -1,0 +1,171 @@
+# ══════════════════════════════════════════════════════════════════
+# Mesure de scalabilite du mode entreprise : A VOLUME (T-41) et EN
+# CONCURRENCE (C-16). Deux questions distinctes, une seule stack jetable.
+#
+# POURQUOI ICI ET PAS AILLEURS. `docs/SCALABILITY.md` §9bis nomme ce qui
+# manque : le comportement du PLANIFICATEUR a volume. Un basculement de plan ne
+# se deduit d'aucun ratio, il exige un vrai jeu de donnees. Or la prod compte
+# une dizaine de `team_tasks`, y ecrire 2 000 lignes est interdit par ce depot,
+# Docker n'est pas disponible sur le poste de dev, et une branche Supabase se
+# paie. Le runner de CI, lui, monte deja une stack Supabase complete pour
+# `rls-integration` : base jetable, volume libre, aucun euro.
+#
+# CE N'EST PAS UNE GATE. Le job ne tourne QUE sur declenchement manuel : il
+# seme des milliers de lignes et prend plusieurs minutes. Le rendre bloquant
+# ajouterait de l'attente a chaque push pour une question qu'on se pose une
+# fois par trimestre. L'etape de concurrence peut par ailleurs echouer sur son
+# propre TEMOIN, ce qui n'est pas un defaut du produit — cf. son commentaire.
+#
+# OU LIRE LE RESULTAT : dans le RESUME du job, pas dans les logs. Les logs d'un
+# run exigent une authentification meme sur un depot public, le resume non.
+# ══════════════════════════════════════════════════════════════════
+name: scalability-volume
+
+# 🔴 C-86 · CE WORKFLOW NE TOURNAIT JAMAIS TOUT SEUL.
+# Vérifié le 2026-09-20 sur les onze workflows du dépôt : avec `restore-drill`,
+# c'était le seul à n'avoir ni `schedule` ni `push`. La charge n'était donc
+# mesurée que si quelqu'un y pensait, et personne n'y pense — la dernière
+# mesure du §9ter de `docs/SCALABILITY.md` date du 2026-08-14.
+#
+# L'en-tête ci-dessus dit « on se pose la question une fois par trimestre ».
+# Le `schedule` ci-dessous dit la même chose, mais il le FAIT : mensuel, le 3 à
+# 03:11 UTC (minute décalée des autres crons, cf. `uptime.yml`). Un mois plutôt
+# qu'un trimestre parce que la valeur de cette mesure est une PENTE, pas un
+# point : quatre points par an ne dessinent rien.
+#
+# ⚠️ CE N'EST TOUJOURS PAS UNE GATE : le cron ne s'exécute que sur `main`, ce
+# job ne bloque aucune PR, et il ne touche QUE la stack jetable du runner.
+# Ses échecs remontent par `ci-alert.yml` comme les autres.
+#
+# ⚠️ Sur un déclenchement `schedule`, `inputs.*` est VIDE : les valeurs par
+# défaut déclarées ci-dessous ne s'appliquent qu'au `workflow_dispatch`. Les
+# étapes utilisent donc `${{ inputs.x || '<defaut>' }}`, et les deux listes de
+# valeurs par défaut doivent rester identiques. Sans cette précaution, le run
+# planifié passerait `--steps=` vide et mesurerait zéro palier en sortant vert :
+# exactement la garde qui répond sans mesurer.
+on:
+  schedule:
+    - cron: '11 3 3 * *'
+  workflow_dispatch:
+    inputs:
+      steps:
+        description: 'Paliers de volume (team_tasks), separes par des virgules'
+        required: false
+        default: '200,2000'
+      members:
+        description: "Taille de l'organisation de test"
+        required: false
+        default: '50'
+      sessions:
+        description: 'Paliers de CONCURRENCE (sessions simultanees), separes par des virgules'
+        required: false
+        default: '1,2,4,8,16'
+      iterations:
+        description: 'Requetes par session et par palier de concurrence'
+        required: false
+        default: '30'
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: latest
+      - run: npm ci
+      - name: Start Supabase stack (local)
+        run: supabase start
+
+      - name: Export DATABASE_URL
+        run: |
+          supabase status -o env > supabase.env
+          set -a; . ./supabase.env; set +a
+          # Meme garde que `rls-integration` : un remap qui ne trouve rien ecrit
+          # une valeur VIDE sans faire echouer l'etape, et le job meurt deux
+          # etapes plus loin sur une cause invisible.
+          if [ -z "$DB_URL" ]; then
+            KEYS=$(sed -n 's/^\([A-Z_][A-Z0-9_]*\)=.*/\1/p' supabase.env | paste -sd, -)
+            echo "::warning::DB_URL absent de 'supabase status -o env' (cles vues : ${KEYS:-aucune}) — repli sur l'URL locale standard"
+            DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          fi
+          echo "DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
+
+      - name: Apply migrations on fresh DB
+        run: |
+          set -o pipefail
+          if node scripts/apply-migrations.mjs 2>&1 | tee migrate.log; then
+            exit 0
+          fi
+          {
+            echo '### ✖ Replay des migrations — echec'
+            echo ''
+            echo '```'
+            tail -n 60 migrate.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+      - name: Mesurer a volume
+        run: |
+          set -o pipefail
+          if node scripts/scalability-volume.mjs \
+               --steps="${{ inputs.steps || '200,2000' }}" \
+               --members="${{ inputs.members || '50' }}" 2>&1 | tee volume.log; then
+            exit 0
+          fi
+          {
+            echo '### ✖ Mesure de volume — echec'
+            echo ''
+            echo '```'
+            tail -n 60 volume.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+      # ── La CONCURRENCE (C-16) ────────────────────────────────────
+      #
+      # La mesure de volume ci-dessus repond a « combien coute UNE lecture ».
+      # Celle-ci repond a « a partir de combien de lecteurs simultanes la base
+      # cesse de rendre du debit », qui n'en decoule pas : le §9ter etait
+      # mono-session, et c'est la concurrence qui decide de C-15.
+      #
+      # 🔴 CETTE ETAPE PEUT ECHOUER SANS QUE LA BASE AILLE MAL : le harnais
+      # rejoue le meme balayage sur un TEMOIN dont on sait qu'il sature, et
+      # sort en erreur si ce temoin ne sature PAS. Un harnais qui rend toujours
+      # « ca tient » ne mesure rien.
+      - name: Mesurer en concurrence
+        run: |
+          set -o pipefail
+          if node scripts/scalability-concurrency.mjs \
+               --sessions="${{ inputs.sessions || '1,2,4,8,16' }}" \
+               --iterations="${{ inputs.iterations || '30' }}" \
+               --members="${{ inputs.members || '50' }}" 2>&1 | tee concurrency.log; then
+            exit 0
+          fi
+          {
+            echo '### ✖ Mesure de concurrence — echec'
+            echo ''
+            echo '```'
+            tail -n 60 concurrency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+      - name: Joindre les plans complets
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: scalability-volume-log
+          path: |
+            volume.log
+            concurrency.log
+          retention-days: 30

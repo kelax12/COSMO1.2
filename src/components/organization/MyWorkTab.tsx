@@ -1,331 +1,242 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
-import { format, parseISO, isPast, isToday } from 'date-fns';
-import { getDateLocale } from '@/i18n/format';
-import {
-  ListTodo, AlertTriangle, CalendarDays, Check, Target, CircleCheck, ChevronRight,
-} from 'lucide-react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { parseISO, isPast, isToday, startOfDay, subDays } from 'date-fns';
 import {
   useTeamProjects,
-  useTeamTasks,
+  useTeamTaskSlice,
+  useTeamTaskDependencies,
+  useOrgActivity,
+  TEAM_TASKS_READ_LIMIT,
   useUpdateTeamTask,
   type TeamTask,
   type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
-import type { OrgMember } from '@/modules/organizations';
-import { projectColor, PRIORITY_META, sortOpenTasks } from './team-projects.helpers';
-import WorkSummaryCard from './WorkSummaryCard';
+import { useOrgTeams } from '@/modules/org-teams';
+import { useUpcomingEvents } from '@/modules/events';
+import { useOrgNotifications, type OrgMember } from '@/modules/organizations';
+import { sortOpenTasks, sumEstimatedTime } from './team-projects.helpers';
+import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTaskModal from './TeamTaskModal';
-import TeamActivityFeed from './TeamActivityFeed';
+import { MyWorkSkeleton } from './OrgLoadingSkeletons';
+import type { StartStep } from './MyWorkStartHints';
 import { useT } from '@/i18n/useT';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { loadLayout, saveLayout, type PlacedWidget } from './apercu-widgets';
+import { TEMPLATES, templateForRole } from './apercu-templates';
+import { postponedDeadline } from './apercu-new-widgets.helpers';
 
 interface MyWorkTabProps {
   orgId: string;
   members: OrgMember[];
   currentUserId?: string;
+  /**
+   * Dérivé par la PAGE, comme pour Projets et Tâches. Transmis tel quel à la
+   * modale de tâche : c'est ce qui y ouvre les dépendances.
+   */
+  isManager: boolean;
 }
 
-const isOverdue = (t: TeamTask): boolean => {
-  if (t.completed || !t.deadline) return false;
-  const d = parseISO(t.deadline);
-  return isPast(d) && !isToday(d);
-};
-
-/** Bloc latéral « prochaine échéance » de la carte de synthèse Aperçu. */
-const NextDeadline = ({ task }: { task: TeamTask | null }) => {
-  const { t } = useT('org');
-  if (!task || !task.deadline) {
-    return (
-      <div className="flex flex-col items-center text-[rgb(var(--color-text-muted))]">
-        <CalendarDays size={22} aria-hidden="true" />
-        <span className="text-xs mt-1.5">{t('myWork.upToDate')}</span>
-      </div>
-    );
-  }
-  const d = parseISO(task.deadline);
-  const late = isOverdue(task);
-  return (
-    <div className="flex flex-col items-center max-w-[130px]">
-      <div className={`flex flex-col items-center leading-none ${late ? 'text-red-500' : 'text-[rgb(var(--color-accent))]'}`}>
-        <span className="text-xl font-bold">{format(d, 'd', { locale: getDateLocale() })}</span>
-        <span className="text-[10px] uppercase mt-0.5">{format(d, 'MMM', { locale: getDateLocale() })}</span>
-      </div>
-      <span className="text-xs text-[rgb(var(--color-text-primary))] mt-2 text-center truncate max-w-full">{task.name}</span>
-      <span className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">{t('myWork.nextDeadline')}</span>
-    </div>
-  );
-};
 
 /**
  * Onglet Aperçu (#7) — MON travail dans l'entreprise : mes tâches assignées
  * (cochables), mes échéances à venir et mes projets. Les statistiques
  * collectives ont déménagé dans l'onglet Statistiques (#13, managers/admin).
  */
-/** Étape de la checklist de démarrage (reco #3, admins d'une org jeune). */
-interface StartStep { id: string; label: string; done: boolean; tab: string; }
 
-const StartChecklist = ({ steps }: { steps: StartStep[] }) => {
-  const { t } = useT('org');
-  const navigate = useNavigate();
-  const doneCount = steps.filter((s) => s.done).length;
-  return (
-    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('myWork.getStarted')}</h3>
-        <span className="text-xs text-[rgb(var(--color-text-muted))]">{doneCount}/{steps.length}</span>
-      </div>
-      <ul className="space-y-1">
-        {steps.map((s) => (
-          <li key={s.id}>
-            <button
-              type="button"
-              disabled={s.done}
-              onClick={() => navigate(`/entreprise?tab=${s.tab}`)}
-              className={`w-full flex items-center gap-2.5 py-2 px-2 rounded-xl text-left transition-colors ${
-                s.done ? 'opacity-60' : 'hover:bg-[rgb(var(--color-hover))]'
-              }`}
-            >
-              <CircleCheck
-                size={17}
-                className={s.done ? 'text-emerald-500 shrink-0' : 'text-[rgb(var(--color-text-muted))] shrink-0'}
-                aria-hidden="true"
-              />
-              <span className={`flex-1 text-sm ${s.done ? 'line-through text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-primary))]'}`}>
-                {s.label}
-              </span>
-              {!s.done && <ChevronRight size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+
+// Blocs peints de l'Aperçu : chunk à part, PRÉCHARGÉ dès l'évaluation de ce
+// module, donc en parallèle des requêtes (cf. `MyWorkSections` pour le pourquoi
+// de ce découpage). Sans catalogue demandé : ceux de /entreprise sont déclarés
+// par la ROUTE (`App.tsx`), la seule que lit `lazy-namespaces.guard.test.ts`.
+const loadSections = () => import('./MyWorkSections');
+const MyWorkSections = lazyWithRetry(loadSections);
+void loadSections().catch(() => { /* rejoué par lazyWithRetry au rendu */ });
+// Checklist de démarrage et accueil du nouvel arrivant : rares, donc à la demande.
+const MyWorkStartHints = lazyWithRetry(() => import('./MyWorkStartHints'));
+
+// Dupliqué de `isOverdue` (my-work.helpers) exprès : l'importer tirerait les
+// helpers de l'Aperçu hors du chunk paresseux `MyWorkSections`.
+const isOverdue = (t: TeamTask): boolean => {
+  if (t.completed || !t.deadline) return false;
+  const d = parseISO(t.deadline);
+  return isPast(d) && !isToday(d);
 };
 
-const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
-  // `tt` est un alias de `t` : dans ce fichier, `t` est aussi le nom de la
-  // variable de tâche des callbacks (`open.filter((t) => …)`). `tt` sert là où
-  // le traducteur est appelé À L'INTÉRIEUR d'un de ces callbacks, où `t`
-  // désigne la tâche.
-  const { t, tp } = useT('org');
-  const tt = t;
-  const { data: projects = [] } = useTeamProjects(orgId);
-  const { data: tasks = [] } = useTeamTasks(orgId);
-  const { data: okrs = [] } = useTeamOKRs(orgId);
+/** Widgets qui lisent les tâches ouvertes de toute l'organisation. */
+const TEAM_TASK_WIDGETS = new Set<PlacedWidget['id']>(['teamLoad', 'teamOverdue', 'orgHealth', 'riskProjects', 'unassigned']);
+
+/** Fenêtre du fil d'activité : 14 jours, comme avant le passage au journal. */
+const ACTIVITY_DAYS = 14;
+
+const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps) => {
+  const { t: tOrgAdmin } = useT('orgAdmin');
+  const me = currentUserId ?? '';
+  const { data: projects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
+  const { data: okrs = [], isLoading: loadingOkrs } = useTeamOKRs(orgId);
+  const { data: teams = [], isLoading: loadingTeams } = useOrgTeams(orgId);
+  const upcomingEvents = useUpcomingEvents(5);
   const updateTask = useUpdateTeamTask(orgId);
   const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
+  // Disposition des widgets : une par entreprise et par personne. Relue quand
+  // l'une ou l'autre change (la session peut arriver après le premier rendu).
+  // Sans disposition enregistrée : le modèle du rôle (admin, chef d'équipe, membre).
+  const roleIsAdmin = members.find((m) => m.userId === currentUserId)?.role === 'admin';
+  const roleTemplateId = templateForRole(roleIsAdmin, isManager);
+  const roleTemplate = TEMPLATES[roleTemplateId];
+  const [layout, setLayout] = useState<PlacedWidget[]>(() => loadLayout(orgId, me, roleTemplate));
+  useEffect(() => { setLayout(loadLayout(orgId, me, roleTemplate)); }, [orgId, me, roleTemplate]);
+  const changeLayout = (next: PlacedWidget[]) => {
+    setLayout(next);
+    saveLayout(orgId, me, next);
+  };
+
+  // Bornes figées au montage : elles entrent dans les clés de cache.
+  const bounds = useMemo(() => {
+    const now = new Date();
+    return {
+      today: now.toLocaleDateString('en-CA'),
+      workingSince: startOfDay(subDays(now, 30)).toISOString(),
+      activitySince: startOfDay(subDays(now, ACTIVITY_DAYS)).toISOString(),
+    };
+  }, []);
+
+  // ── Lectures CIBLÉES (audit du 2026-09-24) ─────────────────────────
+  // L'Aperçu lisait tout l'ensemble de travail de l'organisation (plafond
+  // 1 000) pour n'en garder que MES tâches : dans une grande organisation, une
+  // tâche à moi pouvait tomber sous le plafond. Chaque bloc demande désormais
+  // ses lignes au serveur, qui filtre AVANT de plafonner. Elles partent ici,
+  // avec la page, pas après le chunk des blocs (`MyWorkSections`).
+  // `live` : onglet de travail quotidien, on y attend l'arrivée d'une tâche.
+  const { data: mine = [], isLoading: loadingMine } = useTeamTaskSlice(
+    orgId,
+    { assigneeId: me, openOrCompletedSince: bounds.workingSince },
+    { live: true, enabled: !!me },
+  );
+  // Prochaines échéances de l'ENTREPRISE (frise) : les 30 plus proches.
+  // Tâches ouvertes de l'organisation (ce que la RLS me laisse voir), pour les
+  // widgets d'équipe et d'administration. Lues seulement si l'un d'eux est
+  // posé, ou pour qui encadre : un membre ne paie pas cette lecture.
+  const needsTeamTasks = roleIsAdmin || isManager
+    || layout.some((w) => TEAM_TASK_WIDGETS.has(w.id));
+  const { data: teamOpen = [] } = useTeamTaskSlice(
+    orgId,
+    { completed: false, limit: TEAM_TASKS_READ_LIMIT },
+    { enabled: needsTeamTasks },
+  );
+  const { data: upcoming = [] } = useTeamTaskSlice(orgId, {
+    completed: false, deadlineFrom: bounds.today, orderBy: 'deadline', limit: 30,
+  });
+  // Ce que j'ai confié et qui revient en revue.
+  const { data: createdInReview = [] } = useTeamTaskSlice(
+    orgId,
+    { createdBy: me, status: 'review', limit: 50 },
+    { enabled: !!me },
+  );
+  // Ce que j'ai confié et qui reste ouvert (« J'attends quelqu'un ») : la
+  // dérivation ne garde que ce qui dort depuis trois jours.
+  const { data: delegated = [] } = useTeamTaskSlice(
+    orgId,
+    { createdBy: me, completed: false, limit: 50 },
+    { enabled: !!me },
+  );
+  // Créations : dans le journal depuis la mig. 181, plus relues à part.
+  const { data: activity = [] } = useOrgActivity(orgId, bounds.activitySince);
+  const { data: deps = [] } = useTeamTaskDependencies(orgId);
+  const { data: notifications = [] } = useOrgNotifications(orgId);
 
   const activeProjects = useMemo(() => projects.filter((p) => !p.archivedAt), [projects]);
   const activeProjectIds = useMemo(() => new Set(activeProjects.map((p) => p.id)), [activeProjects]);
 
-  const mine = useMemo(
-    () =>
-      currentUserId
-        ? tasks.filter((t) => t.assigneeIds.includes(currentUserId) && activeProjectIds.has(t.projectId))
-        : [],
-    [tasks, currentUserId, activeProjectIds],
-  );
-  const open = useMemo(() => sortOpenTasks(mine.filter((t) => !t.completed)), [mine]);
-  const done = mine.filter((t) => t.completed);
+  const myTasks = useMemo(() => mine.filter((task) => activeProjectIds.has(task.projectId)), [mine, activeProjectIds]);
+  const open = useMemo(() => sortOpenTasks(myTasks.filter((task) => !task.completed)), [myTasks]);
+  const done = myTasks.filter((task) => task.completed);
   const overdue = open.filter(isOverdue);
-  const completionRate = mine.length ? Math.round((done.length / mine.length) * 100) : 0;
+  /** Mon reste à faire estimé — le champ était saisi puis jamais restitué. */
+  const myEstimated = useMemo(() => sumEstimatedTime(open), [open]);
 
-  // Échéances à venir (mes tâches ouvertes datées, triées).
-  const scheduled = useMemo(
-    () => open.filter((t) => !!t.deadline).sort((a, b) => (a.deadline! < b.deadline! ? -1 : 1)),
-    [open],
-  );
-
-  const nextDeadline = useMemo(
-    () => scheduled.find((t) => !isOverdue(t)) ?? scheduled[0] ?? null,
-    [scheduled],
-  );
-
-  const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
-
-  // Prochaines échéances de l'ENTREPRISE (reco #2, Option A) : deadlines des
-  // tâches d'équipe ouvertes (tous assignés) + échéances des OKR, à venir,
-  // triées, 6 max. Zéro modèle d'événement partagé nécessaire.
-  const orgDeadlines = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const items: { id: string; date: Date; name: string; kind: 'task' | 'okr'; projectName?: string }[] = [];
-    for (const t of tasks) {
-      if (t.completed || !t.deadline || !activeProjectIds.has(t.projectId)) continue;
-      const d = parseISO(t.deadline);
-      if (Number.isNaN(d.getTime()) || d < today) continue;
-      items.push({ id: `task-${t.id}`, date: d, name: t.name, kind: 'task', projectName: projectById.get(t.projectId)?.name });
-    }
-    for (const o of okrs) {
-      if (!o.endDate) continue;
-      const d = parseISO(o.endDate);
-      if (Number.isNaN(d.getTime()) || d < today) continue;
-      items.push({ id: `okr-${o.id}`, date: d, name: o.title, kind: 'okr' });
-    }
-    return items.sort((a, b) => a.date.getTime() - b.date.getTime()).slice(0, 6);
-  }, [tasks, okrs, activeProjectIds, projectById]);
+  const nextDeadline = useMemo(() => {
+    const scheduled = open.filter((task) => !!task.deadline).sort((a, b) => (a.deadline! < b.deadline! ? -1 : 1));
+    return scheduled.find((task) => !isOverdue(task)) ?? scheduled[0] ?? null;
+  }, [open]);
 
   // Checklist de démarrage (reco #3) — admins uniquement, masquée dès que
-  // les 4 étapes sont faites.
+  // toutes les étapes sont faites. « Créer une équipe » passe AVANT « créer
+  // un projet » : c'est le rattachement qui porte le cloisonnement.
   const isAdmin = members.find((m) => m.userId === currentUserId)?.role === 'admin';
   const startSteps = useMemo<StartStep[]>(() => [
-    { id: 'project', label: t('myWork.stepProject'), done: activeProjects.length > 0, tab: 'projects' },
-    { id: 'invite', label: t('myWork.stepInvite'), done: members.length > 1, tab: 'members' },
-    { id: 'pyramid', label: t('myWork.stepPyramid'), done: members.some((m) => !!m.managerId), tab: 'pyramid' },
-    { id: 'okr', label: t('myWork.stepOkr'), done: okrs.length > 0, tab: 'okr' },
-    // `t` en dépendance : les libellés de la checklist sont traduits ici.
-  ], [activeProjects.length, members, okrs.length, t]);
+    { id: 'invite', label: tOrgAdmin('myWork.stepInvite'), done: members.length > 1, tab: 'members' },
+    { id: 'team', label: tOrgAdmin('myWork.stepTeam'), done: teams.length > 0, tab: 'members' },
+    { id: 'project', label: tOrgAdmin('myWork.stepProject'), done: activeProjects.length > 0, tab: 'projects' },
+    { id: 'pyramid', label: tOrgAdmin('myWork.stepPyramid'), done: members.some((m) => !!m.managerId), tab: 'pyramid' },
+    { id: 'okr', label: tOrgAdmin('myWork.stepOkr'), done: okrs.length > 0, tab: 'okr' },
+  ], [activeProjects.length, members, okrs.length, teams.length, tOrgAdmin]);
   const showChecklist = isAdmin && startSteps.some((s) => !s.done);
+  // Un membre non-admin sans tâche arrive sur un écran vide : on lui dit au
+  // moins où regarder (la checklist ci-dessus lui est fermée).
+  const hasAnyTask = myTasks.length !== 0;
+  const showNewcomerHints = !isAdmin && !hasAnyTask;
 
   const toggleComplete = (task: TeamTask) =>
     updateTask.mutate({ taskId: task.id, input: { completed: !task.completed } });
+  // Validation sur place (maquette 2 B) : `completed` et `status` sont
+  // synchronisés côté serveur (mig. 091), on écrit les deux pour l'optimiste.
+  const approve = (task: TeamTask) =>
+    updateTask.mutate({ taskId: task.id, input: { completed: true, status: 'done' } });
+  const postpone = (task: TeamTask) =>
+    updateTask.mutate({ taskId: task.id, input: { deadline: postponedDeadline(task.deadline) } });
+  const sendBack = (task: TeamTask) =>
+    updateTask.mutate({ taskId: task.id, input: { status: 'in_progress' } });
   const modalUpdate = (taskId: string, input: UpdateTeamTaskInput) =>
     updateTask.mutateAsync({ taskId, input });
 
+  // Premier chargement : ne RIEN affirmer. Sans ce garde, l'écran annonçait
+  // « Aucune tâche » et une synthèse à 0 % le temps du fetch, et la checklist
+  // montrait ses 5 étapes non faites à un admin qui les avait toutes faites.
+  if (loadingProjects || (loadingMine && !!me) || loadingOkrs || loadingTeams) {
+    return <MyWorkSkeleton label={tOrgAdmin('myWork.loading')} />;
+  }
+
   return (
     <div className="space-y-5">
-      {showChecklist && <StartChecklist steps={startSteps} />}
-
-      {/* Carte de synthèse « progress-first » */}
-      <WorkSummaryCard
-        title={tp('myWork.myTasks', mine.length)}
-        completed={done.length}
-        inProgress={Math.max(0, open.length - overdue.length)}
-        overdue={overdue.length}
-        completionRate={completionRate}
-        emptyLabel={t('myWork.emptyLabel')}
-        aside={<NextDeadline task={nextDeadline} />}
-      />
-
-      {mine.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-14 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
-            <ListTodo size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-          </div>
-          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('myWork.emptyTitle')}</p>
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1 max-w-xs">
-            {t('myWork.emptyHint')}
-          </p>
-        </div>
-      ) : (
-        <div className="grid lg:grid-cols-2 gap-5 items-start">
-          {/* Mes tâches */}
-          <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-            <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-              {t('myWork.myTasksSection', { count: open.length })}
-            </h3>
-            {open.length === 0 ? (
-              <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{t('myWork.allDone')}</p>
-            ) : (
-              <ul className="space-y-1">
-                {open.map((t) => {
-                  const project = projectById.get(t.projectId);
-                  const pColor = project ? projectColor(project.color) : null;
-                  const late = isOverdue(t);
-                  const priority = PRIORITY_META[t.priority] ?? PRIORITY_META[3];
-                  return (
-                    <li key={t.id} className="flex items-center gap-2.5 py-1.5 px-1 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors">
-                      <button
-                        type="button"
-                        onClick={() => toggleComplete(t)}
-                        aria-label={tt('myWork.markDone', { name: t.name })}
-                        className="w-5 h-5 rounded-md border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] flex items-center justify-center shrink-0 transition-colors"
-                      >
-                        {t.completed && <Check size={13} aria-hidden="true" />}
-                      </button>
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} title={priority.label} aria-hidden="true" />
-                      <button
-                        type="button"
-                        onClick={() => setEditingTask(t)}
-                        className="flex-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 rounded-md"
-                      >
-                        <span className="block text-sm text-[rgb(var(--color-text-primary))] truncate">{t.name}</span>
-                      </button>
-                      {project && pColor && (
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 truncate max-w-[110px] ${pColor.soft}`}>
-                          {project.name}
-                        </span>
-                      )}
-                      {t.deadline && (
-                        <span className={`text-[10px] shrink-0 ${late ? 'text-red-500 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
-                          {format(parseISO(t.deadline), 'd MMM', { locale: getDateLocale() })}
-                        </span>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-
-          {/* Mes échéances (agenda entreprise) */}
-          <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-            <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-              {t('myWork.myDeadlines', { count: scheduled.length })}
-            </h3>
-            {scheduled.length === 0 ? (
-              <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{t('myWork.noDeadline')}</p>
-            ) : (
-              <ul className="space-y-1.5">
-                {scheduled.map((t) => {
-                  const late = isOverdue(t);
-                  const d = parseISO(t.deadline!);
-                  const today = isToday(d);
-                  return (
-                    <li
-                      key={t.id}
-                      className={`flex items-center gap-3 p-2 rounded-xl border ${
-                        late ? 'border-red-300/60 bg-red-50/40 dark:bg-red-900/10' : 'border-[rgb(var(--color-border))]'
-                      }`}
-                    >
-                      <div className={`flex flex-col items-center justify-center w-10 shrink-0 ${late ? 'text-red-500' : today ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`}>
-                        <span className="text-sm font-bold leading-none">{format(d, 'd', { locale: getDateLocale() })}</span>
-                        <span className="text-[10px] uppercase">{format(d, 'MMM', { locale: getDateLocale() })}</span>
-                      </div>
-                      <span className="text-sm text-[rgb(var(--color-text-primary))] flex-1 truncate">{t.name}</span>
-                      {late && <AlertTriangle size={14} className="text-red-500 shrink-0" aria-hidden="true" />}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </div>
+      {mine.length >= TEAM_TASKS_READ_LIMIT && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
+      {(showChecklist || showNewcomerHints) && (
+        <Suspense fallback={null}>
+          <MyWorkStartHints steps={startSteps} showChecklist={showChecklist} showNewcomerHints={showNewcomerHints} />
+        </Suspense>
       )}
 
-      {/* Activité de l'équipe (reco #11) — dérivée des tâches, 14 derniers jours. */}
-      <TeamActivityFeed tasks={tasks} projects={projects} members={members} />
-
-      {/* Prochaines échéances de l'entreprise (reco #2) — visibles par tous,
-          même sans tâche assignée. */}
-      {orgDeadlines.length > 0 && (
-        <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-          <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-            Prochaines échéances de l'entreprise
-          </h3>
-          <ul className="space-y-1.5">
-            {orgDeadlines.map((item) => (
-              <li key={item.id} className="flex items-center gap-3 p-2 rounded-xl border border-[rgb(var(--color-border))]">
-                <div className="flex flex-col items-center justify-center w-10 shrink-0 text-[rgb(var(--color-text-secondary))]">
-                  <span className="text-sm font-bold leading-none">{format(item.date, 'd', { locale: getDateLocale() })}</span>
-                  <span className="text-[10px] uppercase">{format(item.date, 'MMM', { locale: getDateLocale() })}</span>
-                </div>
-                <span className="text-sm text-[rgb(var(--color-text-primary))] flex-1 truncate">{item.name}</span>
-                {item.kind === 'okr' ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
-                    <Target size={10} aria-hidden="true" /> OKR
-                  </span>
-                ) : item.projectName ? (
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 truncate max-w-[110px] bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
-                    {item.projectName}
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <Suspense fallback={<MyWorkSkeleton label={tOrgAdmin('myWork.loading')} />}>
+        <MyWorkSections
+          orgId={orgId}
+          currentUserId={currentUserId}
+          open={open}
+          mine={mine}
+          upcoming={upcoming}
+          createdInReview={createdInReview}
+          delegated={delegated}
+          activity={activity}
+          deps={deps}
+          notifications={notifications}
+          okrs={okrs}
+          projects={projects}
+          members={members}
+          hasAny={hasAnyTask}
+          estimated={myEstimated}
+          agendaEvents={upcomingEvents}
+          overdueCount={overdue.length}
+          doneCount={done.length}
+          nextDeadline={nextDeadline}
+          onToggle={toggleComplete}
+          onOpenTask={setEditingTask}
+          onApprove={approve}
+          onSendBack={sendBack}
+          layout={layout}
+          onLayoutChange={changeLayout}
+          onPostpone={postpone}
+          teamOpen={teamOpen}
+          roleTemplate={roleTemplateId}
+        />
+      </Suspense>
 
       {editingTask && (
         <TeamTaskModal
@@ -333,6 +244,10 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
           projects={activeProjects}
           members={members}
           onUpdate={modalUpdate}
+          // Même valeur que Projets et Tâches : c'est la PAGE qui la dérive.
+          // Elle recevait `isAdmin` ici, donc un manager non admin perdait sur
+          // l'Aperçu des droits qu'il avait sur les autres écrans.
+          isManager={isManager}
           onClose={() => setEditingTask(null)}
         />
       )}

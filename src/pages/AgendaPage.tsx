@@ -1,67 +1,47 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router';
 import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin, { Draggable, EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
-import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput } from '@fullcalendar/core';
-// Données de locale FullCalendar. SANS elles, une locale non enregistrée
-// retombe sur les défauts anglais pour `firstDay` : l'agenda français
-// commençait la semaine le DIMANCHE. (Le bug pré-existait — `locale="fr"` sans
-// ces données ne valait pas mieux.)
-//
-// `locales-all` (3,3 kB, dans le chunk lazy `vendor-calendar`) plutôt qu'un
-// import par langue : importer `locales/fr` + `locales/en` + `locales/es`
-// obligerait à éditer ce fichier à chaque nouvelle langue — exactement ce que
-// le reste du socle i18n évite. Ici, toute langue future fonctionne sans code.
-import allCalendarLocales from '@fullcalendar/core/locales-all';
-import { findNextFreeSlot } from './agenda/free-slot';
-import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent } from '@/modules/events';
-import { showUndoToast } from '@/lib/undo-toast';
+import { DateSelectArg, EventClickArg, DatesSetArg } from '@fullcalendar/core';
+import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, useRestoreEvent, CalendarEvent } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
-import { useAuth } from '@/modules/auth/AuthContext';
-import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
-import MemberAvatar from '@/components/organization/MemberAvatar';
-import TaskSidebar from '../components/TaskSidebar';
-import TaskModal from '../components/TaskModal';
-import EventModal from '../components/EventModal';
-import AgendaEventToTaskConfirm from './agenda/AgendaEventToTaskConfirm';
-import ColorSettingsModal from '../components/ColorSettingsModal';
+import { categoryColorSet } from '@/lib/category-colors';
+import TaskSidebar from '@/components/TaskSidebar';
+import { MobileScheduleSheet, QuickEventCard, RecurringEventsManager } from './agenda/lazy-overlays';
+import TaskModal from '@/components/TaskModal';
+import EventModal from '@/components/EventModal';
+import ColorSettingsModal from '@/components/ColorSettingsModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format } from 'date-fns';
-import { getDateLocale, getIntlTag } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { agendaTutorialStepsDesktop } from '@/tutorials/agenda.desktop';
 import { agendaTutorialStepsMobile } from '@/tutorials/agenda.mobile';
-import { getInitialScrollTime, buildCalendarEvents, shiftEventsForDisplay, defaultEventsWindow, bufferedWindow, taskEventDurationMinutes } from './agenda/calendar-events';
-import { useTimezonePref, fromDisplayISO, displayNow } from '@/lib/timezone';
-import AgendaSlotReviewModal from './agenda/AgendaSlotReviewModal';
-import { findOverdueTaskSlots, type OverdueTaskSlot } from './agenda/overdue-slots';
-import { useTasks, useToggleTaskComplete, useDeleteTask } from '@/modules/tasks';
-import { type MobileView, mobileCalendarStyles, MobileAgendaHeader, MobileDayStrip } from './agenda/MobileAgenda';
+import { buildCalendarEvents, defaultEventsWindow, bufferedWindow } from './agenda/calendar-events';
+import { useExternalTaskDrag } from './agenda/use-external-task-drag';
+import { useTimezonePref, fromDisplayISO } from '@/lib/timezone';
+import SlotReviewMenu from './agenda/SlotReviewMenu';
+import SlotReviewPanel from './agenda/SlotReviewPanel';
+import { useOverdueSlotReview } from './agenda/useOverdueSlotReview';
+import { useTasks, useToggleTaskComplete, useDeleteTask, useRestoreTask } from '@/modules/tasks';
+import { MobileAgendaHeader } from './agenda/MobileAgenda';
 import AgendaDesktopHeader from './agenda/AgendaDesktopHeader';
-import RecurringEventsManager from './agenda/RecurringEventsManager';
-import QuickEventCard from './agenda/QuickEventCard';
 import { useAgendaEventDrag } from './agenda/useAgendaEventDrag';
 import { findSourceEvent } from './agenda/find-event';
 import PageErrorState from '@/components/PageErrorState';
+import SkipLink from '@/components/SkipLink';
+import { deadlineDayKey } from '@/lib/deadline';
+import { useAgendaEventActions } from './agenda/useAgendaEventActions';
+import AgendaCalendarSection, { AGENDA_CALENDAR_ID } from './agenda/AgendaCalendarSection';
+import { useAgendaMobileView } from './agenda/useAgendaMobileView';
+import { useCalendarGridGestures } from './agenda/useCalendarGridGestures';
 
 // ── Page principale ──────────────────────────────────────────────────────────
 const AgendaPage: React.FC = () => {
   const { t } = useT('agenda');
-  // Locale FullCalendar — était figée à `"fr"` sur les DEUX calendriers, donc
-  // les en-têtes de jour et le format d'heure restaient français quelle que
-  // soit la langue de l'app. L'étiquette BCP 47 pilote aussi le PREMIER JOUR
-  // de la semaine (lundi en `fr-FR`, dimanche en `en-US`) : c'est voulu, une
-  // semaine qui commence le mauvais jour est une erreur de localisation à part
-  // entière. `headerToolbar` étant à `false`, aucun `buttonText` n'est à
-  // traduire — les boutons sont les nôtres (`AgendaDesktopHeader`).
-  const calendarLocale = getIntlTag();
+  const { t: tCommon } = useT('common');
   const tutorialIsMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const tutorial = useTutorial(tutorialIsMobile ? 'agenda_mobile' : 'agenda_desktop', 800);
+  const tutorial = useTutorial(tutorialIsMobile ? 'agenda_mobile' : 'agenda_desktop', 800, !tutorialIsMobile);
   const tutorialSteps = tutorialIsMobile ? agendaTutorialStepsMobile : agendaTutorialStepsDesktop;
   // Pagination serveur de l'agenda : on ne charge que les événements de la
   // fenêtre visible (+ tous les récurrents, cf. window.ts). La fenêtre est
@@ -77,41 +57,15 @@ const AgendaPage: React.FC = () => {
   const createEventMutation = useCreateEvent();
   const updateEventMutation = useUpdateEvent();
   const deleteEventMutation = useDeleteEvent();
+  const restoreEventMutation = useRestoreEvent();
   // Feature « revue de créneau » : tâches + mutations pour valider/supprimer.
   const { data: tasks = [] } = useTasks();
   const toggleTaskComplete = useToggleTaskComplete();
   const deleteTaskMutation = useDeleteTask();
-  // Créneaux « écartés » pour cette session (fermeture sans décision) : ils
-  // réapparaîtront au prochain retour sur l'agenda.
-  const [snoozedSlotIds, setSnoozedSlotIds] = useState<Set<string>>(new Set());
+  // Sert UNIQUEMENT a l'annulation de l'abandon d'un creneau (R-07).
+  const restoreTaskMutation = useRestoreTask();
   const { data: categories = [] } = useCategories();
   const { pref: tzPref } = useTimezonePref();
-  const { user } = useAuth();
-  const { activeOrg } = useActiveOrganization();
-  // Membres de l'org active : sert à résoudre l'avatar de l'AUTEUR d'un
-  // événement (créé par un manager) pour distinguer perso / pro dans l'agenda.
-  const { data: orgMembers = [] } = useOrgMembers(activeOrg?.id);
-  const memberById = React.useMemo(() => {
-    const m = new Map<string, (typeof orgMembers)[number]>();
-    for (const om of orgMembers) m.set(om.userId, om);
-    return m;
-  }, [orgMembers]);
-  // Rendu du contenu d'un événement : titre + avatar de l'auteur si l'événement
-  // a été ajouté par quelqu'un d'autre que moi (mon manager, mode entreprise).
-  const renderEventInner = (title: string, createdBy: string | undefined, centered: boolean) => {
-    const author = createdBy && createdBy !== user?.id ? memberById.get(createdBy) : undefined;
-    return (
-      <div className={`h-full w-full flex items-center gap-1 p-1 text-xs cursor-pointer ${centered ? 'justify-center' : ''}`}>
-        {author && (
-          <span className="shrink-0 rounded-full ring-1 ring-white/70" title={t('event.addedBy', { name: author.displayName })}>
-            <MemberAvatar avatar={author.avatar} name={author.displayName} size={16} />
-          </span>
-        )}
-        <span className={`font-medium text-white truncate leading-tight ${centered ? 'text-center' : ''}`}>{title}</span>
-      </div>
-    );
-  };
-
   const isMobile = useIsMobile();
 
   const [currentView, setCurrentView] = useState('timeGridWeek');
@@ -136,10 +90,12 @@ const AgendaPage: React.FC = () => {
   // l'ouverture d'EventModal, jugé trop lourd visuellement).
   const [quickSlot, setQuickSlot] = useState<{ start: string; end: string; x: number; y: number } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  // Event sans tâche liée déposé sur la sidebar (feature création tâche depuis event) :
-  // 1) popup de choix (supprimer / transformer en tâche), 2) si "transformer",
-  // TaskModal pré-rempli avec les infos de l'événement.
-  const [eventPendingDecision, setEventPendingDecision] = useState<CalendarEvent | null>(null);
+  // ⚠️ `eventPendingDecision` / `AgendaEventToTaskConfirm` ont disparu le
+  // 2026-09-13 : déposer un événement SANS tâche sur la sidebar ouvrait une
+  // popup « Que faire de cet événement ? ». C'était la seule surface de
+  // validation qui visait des événements non liés à une tâche, et elle se
+  // déclenchait sur un geste qui ne demandait rien. Le drop est désormais
+  // simplement refusé (FullCalendar ramène le bloc à sa place).
   const [eventForTaskCreation, setEventForTaskCreation] = useState<CalendarEvent | null>(null);
   // Date YYYY-MM-DD de l'instance cliquée (null si event non-récurrent ou master)
   const [selectedInstanceDate, setSelectedInstanceDate] = useState<string | null>(null);
@@ -149,107 +105,8 @@ const AgendaPage: React.FC = () => {
   const [desktopVisibleRange, setDesktopVisibleRange] = useState<{ start: Date; end: Date } | null>(null);
   const calendarRef = useRef<FullCalendar>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const draggableRef = useRef<Draggable | null>(null);
-  const categoriesRef = useRef(categories);
-  // Même raison que `categoriesRef` : le callback `eventData` du `Draggable`
-  // est créé UNE fois et vit aussi longtemps que lui. Le mettre en dépendance
-  // de l'effet reconstruirait le Draggable à chaque changement de `t`, alors
-  // qu'un ref lui donne simplement la valeur fraîche au moment de l'appel.
-  const tRef = useRef(t);
   const [zoomLevel, setZoomLevel] = useState(3);
   const zoomDurations = ['00:05:00', '00:10:00', '00:15:00', '00:30:00', '01:00:00'];
-
-  // Mobile state
-  const mobileCalendarRef = useRef<FullCalendar>(null);
-  const [mobileSelectedDate, setMobileSelectedDate] = useState<Date>(() => new Date());
-  const [mobileCalendarKey, setMobileCalendarKey] = useState(0);
-  const [mobileViewMode, setMobileViewMode] = useState<MobileView>('timeGridDay');
-
-  const handleZoomIn = () => {
-    if (zoomLevel > 0) { setZoomLevel(prev => prev - 1); setCalendarKey(prev => prev + 1); }
-  };
-
-  const handleZoomOut = () => {
-    if (zoomLevel < zoomDurations.length - 1) { setZoomLevel(prev => prev + 1); setCalendarKey(prev => prev + 1); }
-  };
-
-  useEffect(() => { categoriesRef.current = categories; }, [categories]);
-  useEffect(() => { tRef.current = t; }, [t]);
-
-  // Draggable init (desktop + mobile sidebar)
-  useEffect(() => {
-    if (!showTaskSidebar) return;
-    const timer = setTimeout(() => {
-      const container = document.getElementById('external-events-container');
-      if (container && !draggableRef.current) {
-        draggableRef.current = new Draggable(container, {
-          itemSelector: '.external-event',
-          // 250ms (au lieu de 50) : un swipe vertical rapide scrolle la liste
-          // au lieu de démarrer un drag → permet de scroller sans sélectionner
-          // une tâche sur mobile (combiné à touch-action: pan-y sur les cartes).
-          longPressDelay: 250,
-          eventData: function (eventEl) {
-            const taskData = JSON.parse(eventEl.getAttribute('data-task') || '{}');
-            const catColor = categoriesRef.current.find(cat => cat.id === taskData.category)?.color || '#6B7280';
-            return {
-              title: taskData.name,
-              // Garde anti-aperçu-invisible : une tâche sans durée estimée
-              // (estimatedTime = 0, défaut du formulaire) donnerait duration:0 →
-              // mirror FullCalendar de hauteur nulle. On retombe sur 60 min.
-              duration: { minutes: taskEventDurationMinutes(taskData.estimatedTime) },
-              backgroundColor: catColor,
-              borderColor: catColor,
-              textColor: '#ffffff',
-              extendedProps: {
-                taskId: taskData.id,
-                priority: taskData.priority,
-                category: taskData.category,
-                estimatedTime: taskData.estimatedTime,
-                categoryName: categoriesRef.current.find(c => c.id === taskData.category)?.name || tRef.current('event.uncategorized'),
-              },
-            };
-          },
-        });
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [showTaskSidebar, categories, events]);
-
-  useEffect(() => {
-    if (!showTaskSidebar && !isDraggingTask && draggableRef.current) {
-      try { draggableRef.current.destroy(); } catch { /* ignore */ }
-      draggableRef.current = null;
-    }
-  }, [showTaskSidebar, isDraggingTask]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      calendarRef.current?.getApi().updateSize();
-      mobileCalendarRef.current?.getApi().updateSize();
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [showTaskSidebar]);
-
-  useEffect(() => {
-    if (!isDraggingTask) return;
-    const handleMove = (x: number) => {
-      const sidebarWidth = sidebarRef.current?.offsetWidth || 224;
-      if (x > sidebarWidth && window.innerWidth < 768) setShowTaskSidebar(false);
-    };
-    const handlePointerMove = (e: PointerEvent) => { if (isDraggingTask) handleMove(e.clientX); };
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', () => setIsDraggingTask(false));
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', () => setIsDraggingTask(false));
-    };
-  }, [isDraggingTask]);
-
-  const handleViewChange = (newView: string) => {
-    setCurrentView(newView);
-    setCalendarKey(prev => prev + 1);
-    setTimeout(() => { calendarRef.current?.getApi().changeView(newView); }, 100);
-  };
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     const je = selectInfo.jsEvent as MouseEvent | null;
@@ -262,6 +119,52 @@ const AgendaPage: React.FC = () => {
       x: je?.clientX ?? Math.round(window.innerWidth / 2),
       y: je?.clientY ?? Math.round(window.innerHeight / 2),
     });
+  };
+
+  // Quel jour et sous quelle forme le calendrier mobile affiche — état, clé de
+  // remontage et navigation vivent dans `useAgendaMobileView`.
+  const {
+    mobileCalendarRef,
+    mobileSelectedDate,
+    mobileCalendarKey,
+    setMobileCalendarKey,
+    mobileViewMode,
+    mobileZoom,
+    handleMobileSetView,
+    handleMobileSelectDate,
+    handleMobileDateClick,
+    handleMobileDateSelect,
+    handleMobileMonthPrev,
+    handleMobileMonthNext,
+    handleMobileDatesSet,
+  } = useAgendaMobileView({ onDateSelect: handleDateSelect, applyVisibleRange });
+
+  const handleZoomIn = () => {
+    if (zoomLevel > 0) { setZoomLevel(prev => prev - 1); setCalendarKey(prev => prev + 1); }
+  };
+
+  const handleZoomOut = () => {
+    if (zoomLevel < zoomDurations.length - 1) { setZoomLevel(prev => prev + 1); setCalendarKey(prev => prev + 1); }
+  };
+
+  useExternalTaskDrag({ showTaskSidebar, setShowTaskSidebar, isDraggingTask, setIsDraggingTask, sidebarRef, categories, events, t });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      calendarRef.current?.getApi().updateSize();
+      mobileCalendarRef.current?.getApi().updateSize();
+    }, 400);
+    return () => clearTimeout(timer);
+    // `mobileCalendarRef` vient de `useAgendaMobileView` : c'est un ref, donc
+    // une identité stable. Il est dans les dépendances parce qu'ESLint ne peut
+    // plus le prouver depuis qu'il traverse une frontière de hook.
+  }, [showTaskSidebar, mobileCalendarRef]);
+
+
+  const handleViewChange = (newView: string) => {
+    setCurrentView(newView);
+    setCalendarKey(prev => prev + 1);
+    setTimeout(() => { calendarRef.current?.getApi().changeView(newView); }, 100);
   };
 
   const handleQuickCreate = (title: string, color?: string) => {
@@ -306,245 +209,88 @@ const AgendaPage: React.FC = () => {
     setShowEditEventModal,
     setCalendarKey,
     setMobileCalendarKey,
-    onDropUnlinkedEvent: setEventPendingDecision,
   });
-
-  const handleEventDrop = (dropInfo: EventDropArg) => {
-    const taskId = dropInfo.event.extendedProps?.taskId;
-    const event = findSourceEvent(events, dropInfo.event.id, taskId);
-    if (!event) return;
-    const rawStart = dropInfo.event.start?.toISOString();
-    if (!rawStart) return;
-    const rawEnd = dropInfo.event.end
-      ? dropInfo.event.end.toISOString()
-      : new Date((dropInfo.event.start?.getTime() ?? Date.now()) + 3600000).toISOString();
-    // Retire le décalage d'affichage avant de persister l'instant « vrai ».
-    const newStart = fromDisplayISO(rawStart, tzPref);
-    const newEnd = fromDisplayISO(rawEnd, tzPref);
-    updateEventMutation.mutate({ id: event.id, updates: { start: newStart, end: newEnd } });
-  };
-
-  // Persiste un redimensionnement (resize) d'event — tactile mobile ET souris
-  // desktop. Sans ce handler, FullCalendar applique le resize visuellement mais
-  // ne le persiste jamais : au prochain rendu l'event revient à sa durée initiale.
-  const handleEventResize = (resizeInfo: EventResizeDoneArg) => {
-    const taskId = resizeInfo.event.extendedProps?.taskId;
-    const event = findSourceEvent(events, resizeInfo.event.id, taskId);
-    if (!event) { resizeInfo.revert(); return; }
-    const rawStart = resizeInfo.event.start?.toISOString();
-    const rawEnd = resizeInfo.event.end?.toISOString();
-    if (!rawStart || !rawEnd) { resizeInfo.revert(); return; }
-    const newStart = fromDisplayISO(rawStart, tzPref);
-    const newEnd = fromDisplayISO(rawEnd, tzPref);
-    updateEventMutation.mutate({ id: event.id, updates: { start: newStart, end: newEnd } });
-  };
-
-  const handleEventReceive = (receiveInfo: EventReceiveArg) => {
-    const eventData = receiveInfo.event;
-    const rawStart = eventData.start?.toISOString() ?? new Date().toISOString();
-    const rawEnd = eventData.end
-      ? eventData.end.toISOString()
-      : new Date((eventData.start?.getTime() ?? Date.now()) + taskEventDurationMinutes(eventData.extendedProps.estimatedTime as number) * 60000).toISOString();
-    const newEvent: CreateEventInput = {
-      title: eventData.title,
-      // Retire le décalage d'affichage (la tâche est déposée sur la grille
-      // décalée) pour stocker l'instant « vrai ».
-      start: fromDisplayISO(rawStart, tzPref),
-      end: fromDisplayISO(rawEnd, tzPref),
-      color: eventData.backgroundColor ?? undefined,
-      notes: `Priorité: ${eventData.extendedProps.priority} | Catégorie: ${eventData.extendedProps.categoryName}`,
-      taskId: eventData.extendedProps.taskId as string,
-    };
-    const isDuplicate = events.some(e =>
-      (newEvent.taskId && e.taskId === newEvent.taskId) ||
-      (e.title === newEvent.title && e.start === newEvent.start && e.end === newEvent.end)
-    );
-    if (isDuplicate) { receiveInfo.event.remove(); return; }
-    createEventMutation.mutate(newEvent);
-  };
 
   // L'agenda personnel n'affiche que les événements (pas de rangée all-day) :
   // ni les tâches perso à deadline (#20 retiré), ni les tâches d'équipe — ces
   // dernières se gèrent dans l'espace entreprise / To-Do.
-  const calendarEvents = buildCalendarEvents(events);
-  // Décale les instants dans le fuseau d'affichage choisi (feature « heure
-  // personnalisée »). Le reste de la page (conflits, prochain créneau libre,
-  // EventModal) raisonne sur les instants « vrais » : seul le calendrier voit
-  // les instants décalés, et ses callbacks retirent le décalage (fromDisplayISO).
-  const allCalendarEvents = shiftEventsForDisplay(calendarEvents, tzPref) as EventInput[];
-  // « Maintenant » et heure de scroll dans le fuseau choisi pour rester cohérent
-  // avec les événements décalés (l'indicateur d'heure courante suit le fuseau).
-  const calendarNow = tzPref.mode === 'manual' ? () => displayNow(tzPref) : undefined;
-  const calendarScrollTime = getInitialScrollTime(displayNow(tzPref));
+  // Calculé ici parce que le flux d'édition (`useAgendaEventActions`) en a
+  // besoin autant que la grille : la section calendrier le reçoit.
+  // ── Créneaux de tâche terminés qui attendent une décision ──────────────────
+  // Le corps vit dans `agenda/useOverdueSlotReview.ts`. Il ne rend plus « le
+  // créneau courant » d'une popup mais l'ENSEMBLE des créneaux en attente : la
+  // demande est désormais peinte sur les blocs concernés (pastille ambre) et
+  // reprise dans l'EventModal, au lieu de s'imposer en plein écran à l'arrivée.
+  const {
+    reviewEventIds,
+    doneEventIds,
+    findSlot,
+    handleSlotValidate,
+    handleSlotPostpone,
+    handleSlotDelete,
+    handleSlotIgnore,
+  } = useOverdueSlotReview({
+    events,
+    tasks,
+    toggleTaskComplete: (taskId) => toggleTaskComplete.mutate(taskId),
+    updateEvent: (id, updates) => updateEventMutation.mutate({ id, updates }),
+    deleteEvent: (id) => deleteEventMutation.mutate(id),
+    deleteTask: (taskId) => deleteTaskMutation.mutate(taskId),
+    restoreEvent: (event) => restoreEventMutation.mutate(event),
+    restoreTask: (task) => restoreTaskMutation.mutate(task),
+    deletedLabel: t('slotReview.deleted'),
+    postponedLabel: t('slotReview.postponed'),
+  });
 
-  // Conflits (#21) : ids des événements horaires qui se chevauchent.
-  const conflictIds = React.useMemo(() => {
-    const ids = new Set<string>();
-    const sorted = [...calendarEvents].sort((a, b) => a.start.localeCompare(b.start));
-    for (let i = 0; i < sorted.length; i++) {
-      for (let j = i + 1; j < sorted.length; j++) {
-        if (sorted[j].start >= sorted[i].end) break;
-        ids.add(sorted[i].id);
-        ids.add(sorted[j].id);
-      }
-    }
-    return ids;
-  }, [calendarEvents]);
-
-  const handleAddEvent = (eventData: CreateEventInput) => {
-    createEventMutation.mutate({ ...eventData, taskId: eventData.taskId || undefined });
-    setShowAddEventModal(false);
-    setSelectedTimeSlot(null);
-    setTimeout(() => { calendarRef.current?.getApi().unselect(); }, 100);
+  /** Les quatre actions, passées telles quelles aux DEUX accès. */
+  const slotReviewActions = {
+    onValidate: handleSlotValidate,
+    onPostpone: handleSlotPostpone,
+    onIgnore: handleSlotIgnore,
+    onDelete: handleSlotDelete,
   };
 
-  const handleUpdateEvent = (eventId: string, eventData: UpdateEventInput) => {
-    updateEventMutation.mutate({ id: eventId, updates: eventData });
-    setShowEditEventModal(false);
-    setSelectedEvent(null);
-    setSelectedInstanceDate(null);
-  };
+  const categoryColors = useMemo(() => categoryColorSet(categories), [categories]);
+  const calendarEvents = buildCalendarEvents(events, new Date(), reviewEventIds, doneEventIds, categoryColors);
 
-  const handleDeleteEvent = (eventId: string) => {
-    const master = events.find(e => e.id === eventId);
-    const isRecurring = master && (master.recurrence ?? 'none') !== 'none';
-    const instanceDate = selectedInstanceDate;
+  // Déplacer, redimensionner, déposer une tâche : les trois gestes qui écrivent
+  // depuis la grille retirent le décalage du fuseau d'affichage au même endroit.
+  const { handleEventDrop, handleEventResize, handleEventReceive } = useCalendarGridGestures({
+    events,
+    tzPref,
+    createEvent: (input) => createEventMutation.mutate(input),
+    updateEvent: (id, updates) => updateEventMutation.mutate({ id, updates }),
+  });
 
-    if (isRecurring && instanceDate && master) {
-      // Suppression d'une seule occurrence : ajouter la date dans les exceptions du master
-      const prevExceptions = master.exceptions ?? [];
-      updateEventMutation.mutate({ id: eventId, updates: { exceptions: [...prevExceptions, instanceDate] } });
-      showUndoToast(t('event.occurrenceDeleted'), () => {
-        // Annulation : retire la date des exceptions → l'occurrence réapparaît.
-        updateEventMutation.mutate({ id: eventId, updates: { exceptions: prevExceptions } });
-      });
-    } else if (master) {
-      const { id: _id, ...rest } = master;
-      deleteEventMutation.mutate(eventId);
-      showUndoToast(t('event.eventDeleted'), () => {
-        createEventMutation.mutate(rest as CreateEventInput);
-      });
-    }
-    setShowEditEventModal(false);
-    setSelectedEvent(null);
-    setSelectedInstanceDate(null);
-  };
-
-  // Dupliquer un événement (#3) : copie « (copie) » aux mêmes horaires.
-  const handleDuplicateEvent = (eventId: string) => {
-    const source = events.find(e => e.id === eventId);
-    if (!source) return;
-    // taskId retiré : la copie n'est PAS le même créneau de la même tâche.
-    // Le conserver ferait exister deux événements avec le même taskId, ce qui
-    // fait échouer la résolution par id+taskId ailleurs (drag/click/resize) —
-    // un des deux se retrouve silencieusement modifié à la place de l'autre.
-    const { id: _id, taskId: _taskId, ...rest } = source;
-    createEventMutation.mutate({ ...rest, title: `${source.title} (copie)` } as CreateEventInput);
-    setShowEditEventModal(false);
-    setSelectedEvent(null);
-    setSelectedInstanceDate(null);
-  };
-
-  // « Nouveau » sans plage sélectionnée : propose le prochain créneau libre (#19).
-  const handleOpenAddModal = () => {
-    setSelectedTimeSlot(findNextFreeSlot(calendarEvents));
-    setShowAddEventModal(true);
-  };
-
-  // FAB global (Layout.tsx) : sur /agenda il n'y a plus de « + » dans l'en-tête
-  // mobile (doublon retiré) — le FAB devient l'unique point de création.
-  useEffect(() => {
-    const handler = () => handleOpenAddModal();
-    window.addEventListener('open-agenda-create', handler);
-    return () => window.removeEventListener('open-agenda-create', handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [calendarEvents]);
-
-  const handleCloseAddModal = () => {
-    setShowAddEventModal(false);
-    setSelectedTimeSlot(null);
-    setTimeout(() => { calendarRef.current?.getApi().unselect(); }, 100);
-  };
-
-  // ── Revue des créneaux de tâche terminés (feature 2) ───────────────────────
-  // File des créneaux passés à traiter, écartés de cette session retirés.
-  const overdueSlots = React.useMemo(
-    () => findOverdueTaskSlots(events, tasks).filter((s) => !snoozedSlotIds.has(s.event.id)),
-    [events, tasks, snoozedSlotIds],
-  );
-  const currentReviewSlot = overdueSlots[0] ?? null;
-
-  const dismissReviewSlot = (eventId: string) =>
-    setSnoozedSlotIds((prev) => new Set(prev).add(eventId));
-
-  // Réalisée → valide la tâche côté tâche (comme partout ailleurs : toggle +
-  // toast d'annulation). Filtrée à « non complétée », donc le toggle = valider.
-  const handleSlotValidate = (slot: OverdueTaskSlot) => {
-    if (!slot.task.completed) toggleTaskComplete.mutate(slot.task.id);
-    dismissReviewSlot(slot.event.id);
-  };
-
-  // Reporter → replace le créneau à DEMAIN (relatif à maintenant) en conservant
-  // l'heure de début et la durée d'origine. Toujours dans le futur, même pour un
-  // créneau en retard de plusieurs jours (sinon le modal réapparaîtrait).
-  const handleSlotPostpone = (slot: OverdueTaskSlot) => {
-    const origStart = new Date(slot.event.start);
-    const durationMs = new Date(slot.event.end).getTime() - origStart.getTime();
-    const next = new Date();
-    next.setDate(next.getDate() + 1);
-    next.setHours(origStart.getHours(), origStart.getMinutes(), 0, 0);
-    const newStart = next.toISOString();
-    const newEnd = new Date(next.getTime() + Math.max(durationMs, 0)).toISOString();
-    updateEventMutation.mutate({ id: slot.event.id, updates: { start: newStart, end: newEnd } });
-    dismissReviewSlot(slot.event.id);
-  };
-
-  // Abandonner → supprime la tâche et son créneau agenda.
-  const handleSlotDelete = (slot: OverdueTaskSlot) => {
-    deleteEventMutation.mutate(slot.event.id);
-    deleteTaskMutation.mutate(slot.task.id);
-    dismissReviewSlot(slot.event.id);
-  };
-
-  const handleSlotSnooze = () => {
-    if (currentReviewSlot) dismissReviewSlot(currentReviewSlot.event.id);
-  };
-
-  // ── Mobile handlers ───────────────────────────────────────────────────────
-  const handleMobileSetView = (view: MobileView) => {
-    setMobileViewMode(view);
-    mobileCalendarRef.current?.getApi().changeView(view);
-    setMobileCalendarKey(prev => prev + 1);
-  };
-
-  const handleMobileSelectDate = (date: Date) => {
-    setMobileSelectedDate(date);
-    const api = mobileCalendarRef.current?.getApi();
-    if (!api) return;
-    if (mobileViewMode !== 'timeGridDay' && mobileViewMode !== 'timeGrid2Day') {
-      handleMobileSetView('timeGridDay');
-    }
-    api.gotoDate(date);
-  };
-
-  // Vue Mois : un clic sur un jour bascule en vue Jour sur cette date, au lieu
-  // d'ouvrir la carte de création rapide (comportement `handleDateSelect`).
-  const handleMobileDateSelect = (selectInfo: DateSelectArg) => {
-    if (mobileViewMode === 'dayGridMonth') {
-      mobileCalendarRef.current?.getApi().unselect();
-      handleMobileSelectDate(selectInfo.start);
-      return;
-    }
-    handleDateSelect(selectInfo);
-  };
-
-  const handleMobileMonthPrev = () => { mobileCalendarRef.current?.getApi().prev(); };
-  const handleMobileMonthNext = () => { mobileCalendarRef.current?.getApi().next(); };
-
-  const handleMobileDatesSet = (info: DatesSetArg) => {
-    setMobileSelectedDate(info.view.currentStart);
-    applyVisibleRange(info.start, info.end);
-  };
+  const {
+    handleAddEvent,
+    handleUpdateEvent,
+    handleDeleteEvent,
+    handleDuplicateEvent,
+    handleOpenAddModal,
+    handleCloseAddModal,
+  } = useAgendaEventActions({
+    events,
+    calendarEvents,
+    selectedInstanceDate,
+    createEvent: (input) => createEventMutation.mutate(input),
+    updateEvent: (id, updates) => updateEventMutation.mutate({ id, updates }),
+    deleteEvent: (id) => deleteEventMutation.mutate(id),
+    restoreEvent: (event) => restoreEventMutation.mutate(event),
+    closeAddModal: () => { setShowAddEventModal(false); setSelectedTimeSlot(null); },
+    closeEditModal: () => {
+      setShowEditEventModal(false);
+      setSelectedEvent(null);
+      setSelectedInstanceDate(null);
+    },
+    openAddModal: (slot) => { setSelectedTimeSlot(slot); setShowAddEventModal(true); },
+    unselectCalendar: () => calendarRef.current?.getApi().unselect(),
+    labels: {
+      occurrenceDeleted: t('event.occurrenceDeleted'),
+      eventDeleted: t('event.eventDeleted'),
+      copySuffix: t('event.copySuffix'),
+    },
+  });
 
   // Desktop : met à jour la fenêtre chargée selon la plage visible.
   const handleDesktopDatesSet = (info: DatesSetArg) => {
@@ -556,18 +302,10 @@ const AgendaPage: React.FC = () => {
     && new Date() >= desktopVisibleRange.start
     && new Date() < desktopVisibleRange.end;
 
-  const isMonthView = mobileViewMode === 'dayGridMonth';
-
-  // Label du jour sélectionné
-  const mobileDayLabel = (() => {
-    const raw = format(mobileSelectedDate, 'EEEE - d MMMM yyyy', { locale: getDateLocale() });
-    return raw.charAt(0).toUpperCase() + raw.slice(1);
-  })();
-
   // État d'erreur (#39) : sans lui, un échec réseau affichait un calendrier
   // vide — indistinguable d'une semaine sans événement.
   if (isEventsError && events.length === 0) {
-    return <PageErrorState subject="l'agenda" error={eventsError as Error | null} onRetry={() => refetchEvents()} />;
+    return <PageErrorState subject={tCommon('pageError.subjectAgenda')} error={eventsError as Error | null} onRetry={() => refetchEvents()} />;
   }
 
   return (
@@ -577,9 +315,31 @@ const AgendaPage: React.FC = () => {
       className="h-full flex overflow-hidden"
       style={{ backgroundColor: 'rgb(var(--color-background))' }}
     >
+      {/* Second lien d'évitement (WCAG 2.4.1). Celui de `Layout` saute la barre
+          latérale de l'APPLICATION ; celui-ci saute le panneau des tâches, ses
+          filtres et ses onze boutons « Options de la tâche » tous nommés
+          pareil, qui séparaient le haut de page du premier événement (finding
+          C-54 : 38 tabulations mesurées). Desktop seulement : sur mobile le
+          panneau est un calque, il se ferme par Échap et ne s'interpose pas
+          dans l'ordre de tabulation quand il est fermé. */}
+      {showTaskSidebar && (
+        <SkipLink
+          targetId={AGENDA_CALENDAR_ID}
+          label={t('nav.skipToCalendar')}
+          className="hidden md:block"
+        />
+      )}
+
+      {/* Maquette 170 (2026-10-10) : sur mobile, les tâches à planifier
+          s'ouvrent dans une feuille du bas (`MobileScheduleSheet`), plus dans
+          le tiroir latéral, qui reste le panneau desktop. */}
+      {isMobile && (
+        <MobileScheduleSheet open={showTaskSidebar} onClose={() => setShowTaskSidebar(false)} />
+      )}
+
       {/* Task Sidebar & Backdrop */}
       <AnimatePresence mode="wait">
-        {showTaskSidebar && (
+        {showTaskSidebar && !isMobile && (
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -635,161 +395,39 @@ const AgendaPage: React.FC = () => {
           isTodayVisible={isDesktopTodayVisible}
         />
 
-        {/* ── MOBILE : bandeau jours + label (masqué en vue mois) ── */}
-        {!isMonthView && (
-          <div
-            data-tutorial-id="agenda-mobile-day-strip"
-            className="md:hidden border-b shrink-0"
-            style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
-          >
-            <MobileDayStrip
-              selectedDate={mobileSelectedDate}
-              onSelectDate={handleMobileSelectDate}
-            />
-            <p
-              className="text-center pb-2 text-sm font-medium"
-              style={{ color: 'rgb(var(--color-text-secondary))' }}
-            >
-              {mobileDayLabel}
-            </p>
-          </div>
-        )}
+        {/* Bandeau jours mobile + les deux grilles FullCalendar. Cette page ne
+            connaît plus une seule prop de FullCalendar. */}
+        <AgendaCalendarSection
+          calendarEvents={calendarEvents}
+          isMobile={isMobile}
+          desktopKey={calendarKey}
+          mobileKey={mobileCalendarKey}
+          desktopRef={calendarRef}
+          mobileRef={mobileCalendarRef}
+          currentView={currentView}
+          mobileViewMode={mobileViewMode}
+          mobileSelectedDate={mobileSelectedDate}
+          onMobileSelectDate={handleMobileSelectDate}
+          mobileZoom={mobileZoom}
+          slotDuration={zoomDurations[zoomLevel]}
+          slotLabelInterval={zoomLevel === zoomDurations.length - 1 ? '02:00:00' : '01:00:00'}
+          onDateSelect={handleDateSelect}
+          onMobileDateSelect={handleMobileDateSelect}
+          onMobileDateClick={handleMobileDateClick}
+          onEventClick={handleEventClick}
+          onEventDragStart={handleEventDragStart}
+          onEventDragStop={handleEventDragStop}
+          onEventDrop={handleEventDrop}
+          onEventResize={handleEventResize}
+          onEventReceive={handleEventReceive}
+          onDesktopDatesSet={handleDesktopDatesSet}
+          onMobileDatesSet={handleMobileDatesSet}
+          renderReviewBadge={(eventId) => {
+            const slot = findSlot(eventId);
+            return slot ? <SlotReviewMenu slot={slot} {...slotReviewActions} /> : null;
+          }}
+        />
 
-        {/* ── MOBILE CALENDAR ── */}
-        {isMobile && (
-          <div
-            data-tutorial-id="agenda-mobile-calendar"
-            // Pas de `pb` : le conteneur `flex-1` s'arrête déjà pile au-dessus
-            // de la tab bar. L'ancien `pb-64px` (réservé pour dégager le FAB)
-            // volait ~64px à la grille sans raison — le FAB étant `fixed`, il
-            // flotte au-dessus du coin bas-droit sans réduire le calendrier.
-            className="md:hidden mobile-calendar flex-1 overflow-hidden"
-          >
-            <FullCalendar
-              key={mobileCalendarKey}
-              ref={mobileCalendarRef}
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-              initialView={mobileViewMode}
-              initialDate={mobileSelectedDate}
-              headerToolbar={false}
-              views={{
-                timeGrid2Day: { type: 'timeGrid', duration: { days: 2 } },
-              }}
-              events={allCalendarEvents}
-              editable={true}
-              droppable={true}
-              selectable={true}
-              selectMirror={true}
-              height="100%"
-              locales={allCalendarLocales}
-              locale={calendarLocale}
-              slotMinTime="00:00:00"
-              slotMaxTime="24:00:00"
-              scrollTime={calendarScrollTime}
-              now={calendarNow}
-              allDaySlot={false}
-              nowIndicator={true}
-              eventDisplay="block"
-              eventLongPressDelay={250}
-              selectLongPressDelay={250}
-              slotDuration="00:30:00"
-              slotLabelInterval="01:00:00"
-              snapDuration="00:15:00"
-              slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
-              select={handleMobileDateSelect}
-              eventClick={handleEventClick}
-              eventDragStart={handleEventDragStart}
-              eventDragStop={handleEventDragStop}
-              eventDrop={handleEventDrop}
-              eventResize={handleEventResize}
-              eventReceive={handleEventReceive}
-              unselectAuto={true}
-              unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,.fc-event,[data-radix-popper-content-wrapper]"
-              datesSet={handleMobileDatesSet}
-              eventContent={(eventInfo) =>
-                renderEventInner(eventInfo.event.title, eventInfo.event.extendedProps?.createdBy as string | undefined, false)
-              }
-              eventClassNames={(arg) => [
-                'rounded-lg shadow-sm border-0 cursor-pointer',
-                conflictIds.has(arg.event.id) ? 'event-conflict' : '',
-              ]}
-            />
-            <style>{mobileCalendarStyles}</style>
-          </div>
-        )}
-
-        {/* ── DESKTOP CALENDAR (hidden on mobile) ── */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}
-          className="hidden md:flex flex-1 p-2 lg:p-6 min-w-0 overflow-hidden"
-        >
-          <div className="rounded-xl shadow-lg border h-full w-full overflow-hidden"
-            data-tutorial-id="agenda-calendar-grid"
-            style={{ backgroundColor: 'rgb(var(--calendar-bg))', borderColor: 'rgb(var(--calendar-border))' }}>
-            <div className="p-2 lg:p-6 h-full w-full overflow-hidden">
-              <FullCalendar
-                key={calendarKey}
-                ref={calendarRef}
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                initialView={currentView}
-                headerToolbar={false}
-                events={allCalendarEvents}
-                editable={true}
-                droppable={true}
-                eventStartEditable={true}
-                eventDurationEditable={true}
-                selectable={true}
-                selectMirror={true}
-                dayMaxEvents={false}
-                weekends={true}
-                height="100%"
-                locales={allCalendarLocales}
-              locale={calendarLocale}
-                slotMinTime="00:00:00"
-                slotMaxTime="24:00:00"
-                scrollTime={calendarScrollTime}
-                now={calendarNow}
-                allDaySlot={false}
-                nowIndicator={true}
-                eventDisplay="block"
-                eventLongPressDelay={250}
-                selectLongPressDelay={250}
-                dayHeaderFormat={{ weekday: 'short', day: 'numeric' }}
-                slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
-                slotDuration={zoomDurations[zoomLevel]}
-                slotLabelInterval={zoomLevel === zoomDurations.length - 1 ? '02:00:00' : '01:00:00'}
-                snapDuration={zoomDurations[zoomLevel]}
-                select={handleDateSelect}
-                eventClick={handleEventClick}
-                eventDragStart={handleEventDragStart}
-                eventDragStop={handleEventDragStop}
-                eventDrop={handleEventDrop}
-                eventResize={handleEventResize}
-                eventReceive={handleEventReceive}
-                datesSet={handleDesktopDatesSet}
-                unselectAuto={true}
-                unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,.fc-event,[data-radix-popper-content-wrapper]"
-                eventContent={(eventInfo) =>
-                  renderEventInner(eventInfo.event.title, eventInfo.event.extendedProps?.createdBy as string | undefined, true)
-                }
-                eventClassNames={(arg) => [
-                  'rounded-lg shadow-sm border-0 cursor-pointer hover:shadow-md transition-all hover:scale-105',
-                  conflictIds.has(arg.event.id) ? 'event-conflict' : '',
-                ]}
-              />
-              <style>{`
-                .dark .fc-theme-standard td.fc-day:hover,
-                .dark .fc-theme-standard .fc-timegrid-col:hover { background-color: rgba(255,255,255,0.06) !important; }
-                .dark .fc-theme-standard td.fc-day,
-                .dark .fc-theme-standard .fc-timegrid-col { background-color: transparent !important; }
-                .fc-event { transition: all 0.2s ease; }
-                .fc-event:hover { transform: scale(1.02); z-index: 999; }
-                /* Conflit d'horaires (#21) : liseré d'alerte discret — bordure fine sur tout le contour plutôt qu'un bandeau épais d'un seul côté */
-                .fc-event.event-conflict { box-shadow: inset 0 0 0 2px #ef4444, 0 1px 2px rgba(0,0,0,0.1); }
-              `}</style>
-            </div>
-          </div>
-        </motion.div>
       </div>
 
       {quickSlot && (
@@ -838,22 +476,21 @@ const AgendaPage: React.FC = () => {
           onUpdateEvent={handleUpdateEvent}
           onDeleteEvent={handleDeleteEvent}
           onDuplicateEvent={handleDuplicateEvent}
+          sidePanel={(() => {
+            // Même source que la pastille (`findSlot` lit la liste dérivée) :
+            // le panneau ne peut donc pas apparaître sur un créneau qui
+            // n'attend rien, ni manquer sur un créneau qui attend.
+            const slot = findSlot(selectedEvent.id);
+            return slot ? (
+              <SlotReviewPanel
+                slot={slot}
+                onValidate={slotReviewActions.onValidate}
+                onPostpone={slotReviewActions.onPostpone}
+              />
+            ) : null;
+          })()}
         />
       )}
-
-      {/* Event sans tâche liée déposé sur la sidebar → choix supprimer / transformer en tâche */}
-      <AgendaEventToTaskConfirm
-        event={eventPendingDecision}
-        onCancel={() => setEventPendingDecision(null)}
-        onDelete={() => {
-          if (eventPendingDecision) deleteEventMutation.mutate(eventPendingDecision.id);
-          setEventPendingDecision(null);
-        }}
-        onConvertToTask={() => {
-          setEventForTaskCreation(eventPendingDecision);
-          setEventPendingDecision(null);
-        }}
-      />
 
       {/* Transformer en tâche confirmé → ouvre TaskModal pré-rempli */}
       {eventForTaskCreation && (
@@ -864,7 +501,9 @@ const AgendaPage: React.FC = () => {
           initialData={{
             name: eventForTaskCreation.title,
             category: categories.find(cat => cat.color === eventForTaskCreation.color)?.id,
-            deadline: eventForTaskCreation.start.slice(0, 10),
+            // `.slice(0, 10)` prenait le jour UTC de l'instant : un créneau de
+            // fin de nuit créait une tâche datée de la veille (risque R-15).
+            deadline: deadlineDayKey(eventForTaskCreation.start),
             estimatedTime: Math.max(
               1,
               Math.round(
@@ -875,24 +514,12 @@ const AgendaPage: React.FC = () => {
         />
       )}
 
-      {/* Revue des créneaux de tâche terminés (feature 2) */}
-      <AgendaSlotReviewModal
-        slot={currentReviewSlot}
-        remaining={overdueSlots.length}
-        tzPref={tzPref}
-        onValidate={handleSlotValidate}
-        onPostpone={handleSlotPostpone}
-        onDelete={handleSlotDelete}
-        onSnooze={handleSlotSnooze}
-      />
-
       {/* Tutoriel page Agenda — variante adaptée au viewport */}
-      {/* accentColor en rouge foncé : #EF4444 ne passait pas le contraste AA (3.8:1) avec le texte blanc du bouton "Suivant" */}
       <PageTutorial
         steps={tutorialSteps}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
-        accentColor="#DC2626"
+        accentColor="#EF4444"
       />
     </motion.div>
   );

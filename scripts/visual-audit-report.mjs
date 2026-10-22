@@ -418,7 +418,6 @@ table.cov td{padding:8px 10px;border-bottom:1px solid var(--bd);vertical-align:t
   <p class="note">Ces surfaces nécessitent un état production spécifique — elles ne s'affichent pas en mode démo.</p>
   <div>
     <span class="cov-miss">PremiumGateModal — mode démo = toujours bypasse les gates premium</span>
-    <span class="cov-miss">AdModal / HabitsAdGate — mode démo = mur pub jamais affiché (isDemo = true)</span>
     <span class="cov-miss">RecurrenceDaysModal — nécessite la création d'un événement récurrent (hors script)</span>
     <span class="cov-miss">InboxMenu notifications réelles — mode démo n'a pas de messages entrants Supabase</span>
   </div>

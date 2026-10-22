@@ -8,10 +8,13 @@ import {
   useRemoveTaskFromList,
   useCreateList,
   useUpdateList,
-  useDeleteList,
+  useDeleteListWithUndo,
 } from '@/modules/lists';
+import { useTasks } from '@/modules/tasks';
 import { AddToListModalProps, COLOR_PALETTE, resolveColor } from './shared';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
 
 // ════════════════════════════════════════════════════════════════════════
 // Mobile : version iOS-style sheet avec brouillon inline,
@@ -20,18 +23,32 @@ import { useT } from '@/i18n/useT';
 
 const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId }) => {
   const { t } = useT('tasks');
-  const { data: lists = [] } = useLists();
+  const { t: tCommon } = useT('common');
+  // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
+  // encore : le premier rendu arrive avant la reponse, et la valeur par defaut
+  // `[]` est indistinguable d'un compte reellement vide.
+  const { data: lists = [], isLoading: loadingLists } = useLists();
   const addTaskToListMutation      = useAddTaskToList();
   const removeTaskFromListMutation = useRemoveTaskFromList();
   const createListMutation         = useCreateList();
   const updateListMutation         = useUpdateList();
-  const deleteListMutation         = useDeleteList();
+  const { deleteList }             = useDeleteListWithUndo();
+  // Le compteur n'affiche que les tâches actives : ni terminées, ni
+  // fantômes. `list.taskIds` peut contenir l'id d'une tâche supprimée
+  // depuis — rien ne purge ce tableau à la suppression d'une tâche — donc
+  // on ne compte que les ids qui désignent encore une tâche réelle et non
+  // terminée, jamais "tout ce qui n'est pas explicitement complété".
+  const { data: tasks = [] } = useTasks();
+  const activeTaskIds = new Set(tasks.filter((t) => !t.completed).map((t) => t.id));
+  const activeTaskCount = (list: { taskIds: string[] }) =>
+    list.taskIds.filter((id) => activeTaskIds.has(id)).length;
 
   const [editMode, setEditMode]               = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [draftList, setDraftList]             = useState<{ name: string; color: string } | null>(null);
   const draftInputRef = useRef<HTMLInputElement>(null);
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+  const sheetMotion = useSheetMotion();
 
   const hasDraft = draftList !== null;
 
@@ -47,23 +64,30 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
     if (hasDraft) requestAnimationFrame(() => draftInputRef.current?.focus());
   }, [hasDraft]);
 
+  // C-53 — Echap est desormais porte par `useModalA11y`, qui vient AVEC le
+  // piege de focus et la restitution au declencheur. L'escalade par couches
+  // (brouillon, confirmation de suppression, mode edition) est conservee : elle
+  // decrit ce que « fermer » veut dire ici, pas comment la touche est captee.
+  const escalatingClose = () => {
+    if (draftList)       { setDraftList(null);       return; }
+    if (confirmDeleteId) { setConfirmDeleteId(null); return; }
+    if (editMode)        { setEditMode(false);       return; }
+    onClose();
+  };
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: escalatingClose,
+    labelledBy: 'add-to-list-title-mobile',
+  });
+
   useEffect(() => {
     if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      if (draftList)       { setDraftList(null);       return; }
-      if (confirmDeleteId) { setConfirmDeleteId(null); return; }
-      if (editMode)        { setEditMode(false);       return; }
-      onClose();
-    };
-    document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
-      document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [isOpen, onClose, editMode, draftList, confirmDeleteId]);
+  }, [isOpen]);
 
   const handleToggle = (listId: string) => {
     if (editMode) return;
@@ -97,9 +121,12 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
     });
   };
 
+  // C-41 — meme defaut que `DesktopAddToList` : la suppression n'etait pas
+  // annulable ici, alors qu'elle l'est sur `/tasks`.
   const handleConfirmDelete = (listId: string) => {
-    deleteListMutation.mutate(listId);
+    const list = lists.find((l) => l.id === listId);
     setConfirmDeleteId(null);
+    if (list) deleteList(list);
   };
 
   const manualLists = lists.filter((l) => l.type !== 'smart');
@@ -112,19 +139,15 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
+          ref={overlayRef}
+          {...dialogProps}
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
           onClick={onClose}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="add-to-list-title-mobile"
         >
           <motion.div
             ref={sheetRef}
             {...sheetDragProps}
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+            {...sheetMotion}
             onClick={(e) => e.stopPropagation()}
             className="w-full rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh] bg-[rgb(var(--color-surface))]"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
@@ -141,7 +164,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                 <button
                   type="button"
                   onClick={() => setDraftList(hasDraft ? null : { name: '', color: 'blue' })}
-                  aria-label="Nouvelle liste"
+                  aria-label={tCommon('actions.newList')}
                   className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
                     hasDraft
                       ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
@@ -166,7 +189,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
             </div>
 
             <div data-scroll-area className="flex-1 overflow-y-auto px-4">
-              {manualLists.length === 0 && !hasDraft && (
+              {!loadingLists && manualLists.length === 0 && !hasDraft && (
                 <div className="py-8 text-center">
                   <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('addToList.noList')}</p>
                 </div>
@@ -184,7 +207,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                         <button
                           type="button"
                           onClick={() => cycleListColor(list)}
-                          aria-label="Changer la couleur"
+                          aria-label={tCommon('actions.changeColor')}
                           className="w-5 h-5 rounded-full shrink-0 transition-transform active:scale-90"
                           style={{ backgroundColor: color }}
                         />
@@ -218,14 +241,14 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                               onClick={() => handleConfirmDelete(list.id)}
                               className="h-7 px-2.5 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
                             >
-                              Supprimer
+                              {tCommon('actions.delete')}
                             </button>
                           </div>
                         ) : (
                           <button
                             type="button"
                             onClick={() => setConfirmDeleteId(list.id)}
-                            aria-label={`Supprimer ${list.name}`}
+                            aria-label={t('addToList.deleteNamed', { name: list.name })}
                             className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0"
                           >
                             <Trash2 size={13} />
@@ -271,7 +294,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                         {list.name}
                       </span>
                       <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
-                        {list.taskIds.length} tâche{list.taskIds.length !== 1 ? 's' : ''}
+                        {activeTaskCount(list)} tâche{activeTaskCount(list) !== 1 ? 's' : ''}
                       </span>
                     </div>
                   );
@@ -282,7 +305,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                     <button
                       type="button"
                       onClick={cycleDraftColor}
-                      aria-label="Changer la couleur"
+                      aria-label={tCommon('actions.changeColor')}
                       className="w-5 h-5 rounded-full shrink-0 transition-transform active:scale-90"
                       style={{ backgroundColor: resolveColor(draftList!.color) }}
                     />
@@ -295,7 +318,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                         if (e.key === 'Enter'  && draftList!.name.trim()) handleCreate();
                         if (e.key === 'Escape') setDraftList(null);
                       }}
-                      placeholder="Nom de la liste…"
+                      placeholder={t('addToList.namePlaceholderShort')}
                       className="flex-1 min-w-0 text-sm bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-gray-400 dark:placeholder-gray-600"
                       style={{ border: 'none' }}
                     />
@@ -304,7 +327,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                         <Check size={16} />
                       </button>
                     ) : (
-                      <button type="button" onClick={() => setDraftList(null)} aria-label="Annuler" className="text-gray-400 shrink-0">
+                      <button type="button" onClick={() => setDraftList(null)} aria-label={tCommon('actions.cancel')} className="text-gray-400 shrink-0">
                         <X size={14} />
                       </button>
                     )}

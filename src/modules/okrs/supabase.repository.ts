@@ -4,7 +4,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { normalizeApiError, makeApiError } from '@/lib/normalizeApiError';
 import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters, KeyResult } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
@@ -12,6 +12,7 @@ import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 // Source unique du calcul de progression OKR — fonction pure testable.
 import { recalcProgress } from './progress';
+import type { CreateOptions } from '@/lib/restore-id';
 import {
   OKRRow,
   KRRow,
@@ -20,6 +21,8 @@ import {
   mapOkrFromDb,
   mapOkrToDb,
 } from './mappers';
+import { MAX_REPS_PER_WRITE } from '@/modules/kr-completions/constants';
+import type { KRCompletion } from '@/modules/kr-completions/types';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -94,7 +97,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const keepIds = keyResults.map(kr => kr.id);
       if (keepIds.some(id => !UUID_RE.test(id))) {
-        throw new Error('Invalid key result id');
+        throw makeApiError('invalid_input');
       }
       const { error: deleteError } = await supabase
         .from('key_results')
@@ -157,7 +160,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$/;
       if (!UUID_RE.test(params.cursor) || !ISO_RE.test(params.cursorDate)) {
-        throw new Error('Invalid pagination cursor');
+        throw makeApiError('invalid_input');
       }
       query = query.or(
         `created_at.lt.${params.cursorDate},and(created_at.eq.${params.cursorDate},id.lt.${params.cursor})`
@@ -235,12 +238,20 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateOKRInput): Promise<OKR> {
+  async create(input: CreateOKRInput, options?: CreateOptions): Promise<OKR> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw makeApiError('not_authenticated');
 
-    const dbInput = { ...mapOkrToDb(input), user_id: user.id };
+    // `options.restoreId` ne vient JAMAIS d'un payload de formulaire :
+    // c'est un second argument, reserve aux « Annuler » (R-08). La
+    // whitelist `mapToDb` et le `user_id` pose depuis la session sont
+    // inchanges.
+    const dbInput = {
+      ...mapOkrToDb(input),
+      user_id: user.id,
+      ...(options?.restoreId ? { id: options.restoreId } : {}),
+    };
 
     const { data, error } = await supabase
       .from('okrs')
@@ -430,9 +441,9 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (!supabase || count <= 0) return;
     // Clamp the row count: a client setting currentValue to e.g. 100_000 would
     // otherwise insert 100k rows in one call (storage abuse + dashboard
-    // overcount). 100 reps per write is more than enough for any real use.
-    // Faille B18.
-    const MAX_REPS_PER_WRITE = 100;
+    // overcount). Faille B18. La borne est PARTAGEE avec le repository
+    // localStorage (`@/modules/kr-completions/constants`) : elle avait diverge,
+    // seul ce chemin-ci clampait (audit A-2).
     const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
     const user = await getCurrentUser();
     if (!user) {
@@ -455,6 +466,43 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   }
 
   /**
+   * C-01 — rejoue le journal d'un OKR restauré. Contrat et raison dans
+   * `IOKRsRepository.restoreCompletions`.
+   *
+   * ⚠️ Les horodatages d'ORIGINE sont conservés, contrairement à
+   * `recordKRReps` qui timestampe à l'instant : c'est tout l'intérêt. Les
+   * réécrire à `now()` remettrait les N points d'un coup sur aujourd'hui, ce
+   * qui n'est pas restaurer un graphique mais en inventer un autre.
+   *
+   * ⚠️ `user_id` vient de la SESSION, jamais du tableau : restaurer ne doit
+   * pas devenir un chemin pour écrire dans le journal de quelqu'un d'autre.
+   * La RLS le vérifie de toute façon.
+   */
+  async restoreCompletions(completions: KRCompletion[]): Promise<void> {
+    if (!supabase || completions.length === 0) return;
+    const user = await getCurrentUser();
+    // C-62 — identifiant CATALOGUE, pas un littéral anglais. Les voisins de ce
+    // fichier écrivent encore `throw makeApiError('not_authenticated')`, et c'est
+    // exactement le tuyau que C-62 doit fermer : le message atterrit tel quel
+    // dans le gabarit français `mutation.*`. Ne pas en ajouter un de plus par
+    // \« parité \» avec un défaut.
+    if (!user) throw makeApiError('not_authenticated');
+
+    // Même borne que l'écriture normale (faille B18).
+    const rows = completions.slice(0, MAX_REPS_PER_WRITE).map((c) => ({
+      user_id: user.id,
+      kr_id: c.krId,
+      okr_id: c.okrId,
+      completed_at: c.completedAt,
+      kr_title: c.krTitle,
+      okr_title: c.okrTitle,
+    }));
+
+    const { error } = await supabase.from('kr_completions').insert(rows);
+    if (error) throw normalizeApiError(error);
+  }
+
+  /**
    * Symétrique de recordKRReps : retire les `count` reps les plus récentes
    * pour ce KR (ORDER BY completed_at DESC, LIMIT count). Appelé quand
    * currentValue diminue, pour que le graphique dashboard reflète bien
@@ -462,7 +510,6 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
    */
   private async removeKRReps(krId: string, count: number): Promise<void> {
     if (!supabase || count <= 0) return;
-    const MAX_REPS_PER_WRITE = 100;
     const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
     const user = await getCurrentUser();
     if (!user) return;
@@ -493,10 +540,10 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (!supabase) throw new Error('Supabase not configured');
 
     const okr = await this.getById(okrId);
-    if (!okr) throw new Error(`OKR with id ${okrId} not found`);
+    if (!okr) throw makeApiError('not_found');
 
     const krIndex = okr.keyResults.findIndex(kr => kr.id === keyResultId);
-    if (krIndex === -1) throw new Error(`KeyResult with id ${keyResultId} not found`);
+    if (krIndex === -1) throw makeApiError('not_found');
 
     const previousCurrentValue = okr.keyResults[krIndex].currentValue;
 

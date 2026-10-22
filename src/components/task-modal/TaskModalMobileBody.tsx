@@ -10,18 +10,27 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { Bookmark, Check, Loader2, Minus, Plus, Search, UserPlus, X } from 'lucide-react';
+import { Bookmark, UserPlus } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useCreateCategory } from '@/modules/categories';
-import AddToListModal from '../AddToListModal';
-import ShareLinkField from '@/components/ShareLinkField';
-import { SectionTitle, SectionCard, CellSeparator, Cell } from './primitives';
+import type { Category } from '@/modules/categories';
+import AddToListModal from '@/components/AddToListModal';
+import { SectionCard, CellSeparator, Cell } from './primitives';
+import { MobileChoiceSheet } from './MobileActionSheet';
+import TaskModalCategorySheet from './TaskModalCategorySheet';
+import MobileCollaboratorsSheet from './MobileCollaboratorsSheet';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import { buildDatePresets } from '@/lib/date-presets';
 import SubtaskChecklist from './SubtaskChecklist';
+import TaskStateFields from './TaskStateFields';
+import TaskDependenciesSection from './TaskDependenciesSection';
 import DescriptionField from '@/components/DescriptionField';
-import { PRIORITY_OPTIONS, priorityColor } from './constants';
+import { RECURRENCE_OPTIONS } from './constants';
+import TaskDurationField from './TaskDurationField';
+import TaskPrioritySegmented from './TaskPrioritySegmented';
 import { useT } from '@/i18n/useT';
 
 export interface MobileBodyProps {
@@ -41,7 +50,7 @@ export interface MobileBodyProps {
   setShowDescription: React.Dispatch<React.SetStateAction<boolean>>;
   /** Création : remonte les sous-tâches saisies vers le formData parent (#12). */
   onSubtasksChange?: (subtasks: import('@/modules/tasks').Subtask[]) => void;
-  categories: Array<{ id: string; name: string; color: string }>;
+  categories: Category[];
   lists: Array<{ id: string; name: string; color: string; taskIds: string[]; type?: string; smartRule?: string; isDefault?: boolean; position?: number }>;
   selectedListIds: string[];
   listColorOptions: { value: string; color: string }[];
@@ -78,6 +87,23 @@ export interface MobileBodyProps {
   onGenerateShareLink: () => Promise<string | null>;
 }
 
+/** Petit avatar rond (photo, emoji ou initiales) — devant un nom de
+ *  collaborateur/ami dans les listes de la feuille Collaborateurs. */
+const MiniAvatar: React.FC<{ name: string; avatar?: string }> = ({ name, avatar }) => {
+  const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  return (
+    <Avatar className="size-7 shrink-0">
+      {isImageAvatar(avatar) ? <AvatarImage src={avatar} alt="" /> : null}
+      <AvatarFallback className="bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] text-caption font-bold">
+        {isEmojiAvatar(avatar) ? <span className="text-xs">{avatar}</span> : initials}
+      </AvatarFallback>
+    </Avatar>
+  );
+};
+
+/** Valeur d'une ligne : gris, pas bleu (maquette 151). Le bleu reste aux actions. */
+const valueClass = 'text-[rgb(var(--color-text-secondary))]';
+
 const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   formData, handleInputChange, onSubtasksChange,
   showDescription, setShowDescription,
@@ -89,9 +115,12 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   handleSave, handleClose, handleDelete, isCreating, isLoading, isFormValid,
   taskId, autoOpenCollaborators, isTaskOwner, ownerId, pendingShareIds, onGenerateShareLink,
 }) => {
-  const { t } = useT('taskModal');
-  const [showPrioritySheet, setShowPrioritySheet] = useState(false);
+  const { t, tp } = useT('taskModal');
+  const { t: tCommon } = useT('common');
+  const { t: tOv } = useT('overlays');
   const [showCategorySheet, setShowCategorySheet] = useState(false);
+  const [showRecurrenceSheet, setShowRecurrenceSheet] = useState(false);
+  const nameRef = React.useRef<HTMLInputElement>(null);
   const [showListsModal, setShowListsModal] = useState(false);
   const [showCollabSheet, setShowCollabSheet] = useState(false);
   // Ouvre directement la feuille Collaborateurs quand le modal est demandé
@@ -101,10 +130,6 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   }, [autoOpenCollaborators]);
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
   const [cellErrors, setCellErrors] = useState<Record<string, boolean>>({});
-  const [showNewCatInput, setShowNewCatInput] = useState(false);
-  const [newCatName, setNewCatName] = useState('');
-  const [newCatColor, setNewCatColor] = useState('blue');
-  const [stepperDir, setStepperDir] = useState<1 | -1 | 0>(0);
   const { sheetRef, sheetDragProps } = useBottomSheet(handleClose);
   const { register, trigger, clear, isInvalid } = useInvalidShake();
 
@@ -119,6 +144,8 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
       return;
     }
     trigger(['name']);
+    // Maquette 154 : « Créer » grisé ne dit pas pourquoi ; le curseur, si.
+    nameRef.current?.focus();
   };
 
   return (
@@ -130,19 +157,22 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
           <div className="w-9 h-1 rounded-full bg-[rgb(var(--color-border-strong))]" />
         </div>
         <div className="flex items-center justify-between px-4 h-11">
-          <button type="button" onClick={handleClose} className="text-blue-500 text-[15px] min-w-[64px] text-left">
-            Annuler
+          <button type="button" onClick={handleClose} className="text-[rgb(var(--color-accent))] text-[15px] min-w-[64px] text-left">
+            {tCommon('actions.cancel')}
           </button>
           <span className="text-[17px] font-semibold text-[rgb(var(--color-text-primary))]">
-            {isCreating ? 'Nouvelle tâche' : 'Modifier'}
+            {isCreating ? t('form.headingCreate') : t('form.headingEditShort')}
           </span>
           <button
             type="button"
             onClick={handleCreateOrSave}
             disabled={isLoading}
-            className={`text-[15px] font-semibold min-w-[64px] text-right transition-colors ${isValid ? 'text-blue-500' : 'text-blue-300 dark:text-blue-700'}`}
+            // Maquette 154 : sans nom, « Créer » passe au gris (et non à un
+            // bleu pâle qui se lisait encore comme une action disponible).
+            aria-disabled={!isValid}
+            className={`text-[15px] font-semibold min-w-[64px] text-right transition-colors ${isValid ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-muted))]'}`}
           >
-            {isLoading ? '…' : isCreating ? t('common.create') : t('common.ok')}
+            {isLoading ? '…' : isCreating ? t('common.create') : t('common.validate')}
           </button>
         </div>
       </div>
@@ -151,20 +181,23 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
       <div className="flex-1 overflow-y-auto" data-scroll-area>
         <div className="px-4 py-4 flex flex-col gap-0">
 
-          {/* ── Groupe 1 : Nom ── */}
+          {/* ── Nom ── Maquette 152 (2026-10-10) : le nom est le titre de la
+              fiche, sans cadre (c'était un champ encadré de 48 px). Le cadre
+              rouge d'erreur reste porté par le conteneur. */}
           <div
             ref={register('name')}
-            className={`bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm transition-[box-shadow] ${
-              isInvalid('name') ? 'ring-2 ring-red-500' : ''
-            }`}
+            className={`rounded-xl transition-[box-shadow] ${isInvalid('name') ? 'ring-2 ring-red-500' : ''}`}
           >
             <input
+              ref={nameRef}
               type="text"
               value={formData.name}
               onChange={(e) => { handleInputChange('name', e.target.value); clear('name'); }}
-              placeholder="Nom de la tâche"
+              placeholder={t('form.namePlaceholder')}
+              aria-label={t('form.namePlaceholder')}
               autoFocus={isCreating}
-              className={`w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 ${
+              style={{ border: 'none' }}
+              className={`no-input-chrome w-full min-h-12 text-title font-semibold bg-transparent focus:outline-none focus:ring-0 ${
                 cellErrors.name
                   ? 'text-red-500 placeholder-red-300'
                   : 'text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]'
@@ -172,43 +205,41 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             />
           </div>
 
-          {/* ── Section DÉTAILS ── */}
-          <SectionTitle>{t('sections.details')}</SectionTitle>
-          <div ref={register('details')} className={`rounded-2xl transition-[box-shadow] ${isInvalid('details') ? 'ring-2 ring-red-500' : ''}`}>
+          {/* ── Note ── Maquette 155 : sous le nom, une ligne qui grandit avec
+              le texte. En modification elle réservait ~170 px pour une ligne. */}
+          {showDescription ? (
+            <DescriptionField
+              value={formData.description ?? ''}
+              onChange={(value) => handleInputChange('description', value)}
+              autoGrow
+              autoFocus={!formData.description}
+              placeholder={t('form.descriptionPlaceholder')}
+              className="w-full text-body bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] resize-none py-1"
+              style={{ border: 'none' }}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowDescription(true)}
+              className="flex items-center min-h-11 w-full text-body text-[rgb(var(--color-text-muted))]"
+            >
+              {t('form.addNote')}
+            </button>
+          )}
+
+          {/* Maquette 156 : plus d'intitulés en capitales (DÉTAILS,
+              DESCRIPTION, ORGANISATION, SOUS-TÂCHES, COLLABORATION). Trois
+              groupes séparés par l'espace : planifier, ranger, associer. */}
+          <div className="h-4" />
+
+          {/* ── Planifier ── */}
           <SectionCard>
-            {/* Priorité */}
-            <Cell
-              label={<span className={cellErrors.priority ? 'text-red-500' : ''}>{t('fields.priority')}</span>}
-              value={
-                formData.priority !== 0
-                  ? <span className={priorityColor(formData.priority)}>P{formData.priority}</span>
-                  : <span className="text-[rgb(var(--color-text-muted))]">{t('common.choose')}</span>
-              }
-              onTap={() => setShowPrioritySheet(true)}
-            />
-            <CellSeparator />
-            {/* Catégorie */}
-            <Cell
-              label={<span className={cellErrors.category ? 'text-red-500' : ''}>{t('fields.category')}</span>}
-              value={(() => {
-                const cat = categories.find(c => c.id === formData.category);
-                if (!cat) return <span className="text-[rgb(var(--color-text-muted))]">{t('common.choose')}</span>;
-                return (
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: cat.color }} />
-                    <span className="text-blue-500">{cat.name}</span>
-                  </span>
-                );
-              })()}
-              onTap={() => setShowCategorySheet(true)}
-            />
-            <CellSeparator />
             {/* Échéance */}
             <Cell
               label={t('fields.deadline')}
               value={
                 formData.deadline
-                  ? <span className="text-blue-500">{format(new Date(formData.deadline + 'T12:00:00'), 'd MMM', { locale: getDateLocale() })}</span>
+                  ? <span className={valueClass}>{format(new Date(formData.deadline + 'T12:00:00'), 'd MMM', { locale: getDateLocale() })}</span>
                   : <span className="text-[rgb(var(--color-text-muted))]">{t('common.none')}</span>
               }
               onTap={() => setShowDeadlinePicker(prev => !prev)}
@@ -227,12 +258,12 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     <div className="flex flex-wrap gap-1.5 px-4 pt-3">
                       {buildDatePresets().map((preset) => (
                         <button
-                          key={preset.label}
+                          key={preset.labelKey}
                           type="button"
                           onClick={() => { handleInputChange('deadline', preset.value); setShowDeadlinePicker(false); }}
                           className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]"
                         >
-                          {preset.label}
+                          {tOv(preset.labelKey)}
                         </button>
                       ))}
                     </div>
@@ -257,118 +288,83 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                         onClick={() => { handleInputChange('deadline', ''); setShowDeadlinePicker(false); }}
                         className="w-full text-center text-[14px] text-red-500 py-3 border-t border-[rgb(var(--color-border))]"
                       >
-                        Effacer la date
+                        {t('form.clearDate')}
                       </button>
                     )}
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
-            {/* Récurrence (#26) — visible dès qu'une échéance est posée */}
+            {/* Récurrence (#26) — visible dès qu'une échéance est posée.
+                🔴 Un `<select>` natif ne s'aligne pas de façon fiable sur les
+                autres lignes malgré `appearance-none` : l'UA stylesheet garde
+                un padding/line-height propre à `<select>` que rien ne
+                garantit identique à celui d'un `<span>` — vérifié « pas
+                aligné » sur un vrai iPhone alors que la capture avait l'air
+                bonne. Un `Cell` + feuille d'options, comme Priorité et
+                Catégorie juste au-dessus, RÉUTILISE le même composant :
+                l'alignement ne peut pas diverger, c'est le même code qui le
+                rend. */}
             {formData.deadline && (
               <>
                 <CellSeparator />
-                <div className="flex items-center justify-between px-4 min-h-11 gap-3">
-                  <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{t('fields.repeat')}</span>
-                  <select
-                    value={formData.recurrence}
-                    onChange={(e) => handleInputChange('recurrence', e.target.value)}
-                    aria-label={t('fields.recurrenceAria')}
-                    className="text-[15px] bg-transparent text-right text-blue-500 focus:outline-none"
-                  >
-                    <option value="none">{t('fields.recurrenceNever')}</option>
-                    <option value="daily">{t('fields.recurrenceDaily')}</option>
-                    <option value="weekly">{t('fields.recurrenceWeekly')}</option>
-                    <option value="monthly">{t('fields.recurrenceMonthly')}</option>
-                  </select>
-                </div>
+                <Cell
+                  label={t('fields.repeat')}
+                  value={
+                    <span className={valueClass}>
+                      {t(RECURRENCE_OPTIONS.find(o => o.value === formData.recurrence)?.labelKey ?? 'fields.recurrenceNever')}
+                    </span>
+                  }
+                  onTap={() => setShowRecurrenceSheet(true)}
+                />
               </>
             )}
             <CellSeparator />
-            {/* Durée */}
-            <div className="flex items-center justify-between px-4 min-h-11">
-              <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{t('fields.duration')}</span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const cur = typeof formData.estimatedTime === 'number' ? formData.estimatedTime : 0;
-                    handleInputChange('estimatedTime', Math.max(0, cur - 5));
-                    setStepperDir(-1); setTimeout(() => setStepperDir(0), 80);
-                  }}
-                  className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-[rgb(var(--color-text-secondary))]"
-                  aria-label="Diminuer de 5 minutes"
-                >
-                  <Minus size={14} />
-                </button>
-                <motion.span
-                  key={String(formData.estimatedTime)}
-                  initial={{ y: stepperDir * -4, opacity: 0.6 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.08 }}
-                  className="text-[15px] text-blue-500 w-16 text-center"
-                >
-                  {formData.estimatedTime ? `${formData.estimatedTime} min` : '—'}
-                </motion.span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const cur = typeof formData.estimatedTime === 'number' ? formData.estimatedTime : 0;
-                    handleInputChange('estimatedTime', cur + 5);
-                    setStepperDir(1); setTimeout(() => setStepperDir(0), 80);
-                  }}
-                  className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-[rgb(var(--color-text-secondary))]"
-                  aria-label="Augmenter de 5 minutes"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
-            </div>
-          </SectionCard>
-          </div>
-
-          {/* ── Section DESCRIPTION ── masquée par défaut, même système que
-              le corps desktop et EventModal (bouton « + Ajouter » tant que
-              vide, textarea auto-affiché si la tâche en a déjà une — cf.
-              useTaskModal.ts, effet de sync sur `fullTask`). */}
-          <SectionTitle>{t('sections.description')}</SectionTitle>
-          <SectionCard>
-            {showDescription ? (
-              <div className="px-4 py-3">
-                <DescriptionField
-                  value={formData.description ?? ''}
-                  onChange={(value) => handleInputChange('description', value)}
-                  rows={4}
-                  autoFocus={!formData.description}
-                  placeholder="Description de la tâche"
-                  className="w-full text-[15px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] resize-none"
-                  style={{ border: 'none' }}
-                />
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowDescription(true)}
-                className="flex items-center px-4 min-h-11 w-full"
-              >
-                <span className="text-[15px] text-blue-600 dark:text-blue-400">
-                  + Ajouter une description
-                </span>
-              </button>
-            )}
+            {/* Durée — maquette 153 (cf. `TaskDurationField`). */}
+            <TaskDurationField
+              value={formData.estimatedTime}
+              onChange={(minutes) => handleInputChange('estimatedTime', minutes)}
+            />
           </SectionCard>
 
-          {/* ── Section ORGANISATION ── */}
-          <SectionTitle>{t('sections.organisation')}</SectionTitle>
+          <div className="h-4" />
+
+          {/* ── Ranger ── */}
+          <div ref={register('details')} className={`rounded-2xl transition-[box-shadow] ${isInvalid('details') ? 'ring-2 ring-red-500' : ''}`}>
           <SectionCard>
+            {/* Priorité — maquette 157 : choisie sur place (elle ouvrait une
+                sous-feuille pour un chiffre). Facultative : retoucher le cran
+                choisi l'efface. Seuls P1 et P2 se teintent (maquette 145). */}
+            <TaskPrioritySegmented
+              value={formData.priority}
+              invalid={!!cellErrors.priority}
+              onChange={(level) => { handleInputChange('priority', level); setCellErrors((prev) => ({ ...prev, priority: false })); }}
+            />
+            <CellSeparator />
+            {/* Catégorie — maquette 158 : le point suffit, le nom en clair. */}
+            <Cell
+              label={<span className={cellErrors.category ? 'text-red-500' : ''}>{t('fields.category')}</span>}
+              value={(() => {
+                const cat = categories.find(c => c.id === formData.category);
+                if (!cat) return <span className="text-[rgb(var(--color-text-muted))]">{t('common.choose')}</span>;
+                return (
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: cat.color }} />
+                    <span className="text-[rgb(var(--color-text-primary))]">{cat.name}</span>
+                  </span>
+                );
+              })()}
+              onTap={() => setShowCategorySheet(true)}
+            />
+            <CellSeparator />
             {/* Listes */}
             <Cell
-              label="Listes"
+              label={t('form.lists')}
               value={(() => {
                 const inLists = taskId ? lists.filter(l => l.taskIds.includes(taskId)) : lists.filter(l => selectedListIds.includes(l.id));
                 if (inLists.length === 0) return <span className="text-[rgb(var(--color-text-muted))]">{t('common.none')}</span>;
-                if (inLists.length === 1) return <span className="text-blue-500">{inLists[0].name}</span>;
-                return <span className="text-blue-500">{inLists.length} listes</span>;
+                if (inLists.length === 1) return <span className={valueClass}>{inLists[0].name}</span>;
+                return <span className={valueClass}>{tp('form.listsCount', inLists.length)}</span>;
               })()}
               onTap={() => setShowListsModal(true)}
               showChevron={!!taskId}
@@ -380,16 +376,31 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             <div className="flex items-center justify-between px-4 min-h-11">
               <span className="flex items-center gap-2 text-[15px] text-[rgb(var(--color-text-primary))]">
                 <Bookmark size={16} className="text-[rgb(var(--color-text-muted))]" />
-                Favori
+                {/* 🔴 Ce libellé était écrit EN DUR, en français, au milieu
+                    d'un corps de modale par ailleurs entièrement traduit.
+                    `i18n:scan` ne pouvait pas le voir : il exige une PHRASE
+                    (au moins deux mots) pour ne pas remonter la moitié de la
+                    configuration du dépôt. Un mot seul lui échappe. */}
+                {t('form.bookmark')}
               </span>
               <button
                 type="button"
                 role="switch"
                 aria-checked={formData.bookmarked}
-                aria-label={formData.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                aria-label={formData.bookmarked ? t('form.bookmarkRemove') : t('form.bookmarkAdd')}
                 onClick={() => handleInputChange('bookmarked', !formData.bookmarked)}
+                // Maquette 98 : la piste ÉTEINTE était `--color-hover`
+                // (#2f353b en thème Gris) sur une surface de carte à #2b3137,
+                // soit quatre points d'écart : les deux états ne se
+                // distinguaient que par la POSITION de la pastille, un écart
+                // de 20 px sur le seul interrupteur de l'écran. La piste
+                // éteinte passe à `--color-border-strong`, qui se voit.
+                // ❌ Ne pas la remettre sur `--color-hover` : c'est la couleur
+                // d'un survol, pas celle d'un contour.
                 className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                  formData.bookmarked ? 'bg-[rgb(var(--color-accent-solid))]' : 'bg-[rgb(var(--color-hover))]'
+                  formData.bookmarked
+                    ? 'bg-[rgb(var(--color-accent-solid))]'
+                    : 'bg-[rgb(var(--color-border-strong))]'
                 }`}
               >
                 <motion.span
@@ -401,39 +412,55 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               </button>
             </div>
           </SectionCard>
+          </div>
 
-          {/* ── Section SOUS-TÂCHES (#12) — édition : persistance immédiate ;
-                création : contrôlé, incluses dans le payload createTask. ── */}
-          {((!isCreating && taskId) || (isCreating && onSubtasksChange)) && (
-            <>
-              <SectionTitle>{t('sections.subtasks')}</SectionTitle>
-              <SectionCard>
-                <div className="px-4 py-3">
-                  {!isCreating && taskId ? (
-                    <SubtaskChecklist taskId={taskId} hideLabel />
-                  ) : (
-                    <SubtaskChecklist hideLabel value={formData.subtasks ?? []} onChange={onSubtasksChange} />
-                  )}
-                </div>
-              </SectionCard>
-            </>
+          {/* Statut et État (mig. 214) — édition : enregistrés à chaque choix. */}
+          {!isCreating && taskId && (
+            <SectionCard className="mt-4"><div className="px-4 py-3"><TaskStateFields taskId={taskId} /></div></SectionCard>
           )}
+          <div className="h-4" />
 
-          {/* ── Section COLLABORATION ── */}
-          <SectionTitle>{t('sections.collaboration')}</SectionTitle>
+          {/* ── Associer ── sous-tâches (maquette 159 : une ligne, plus un
+              carré bleu plein) et personnes (maquette 160). */}
           <SectionCard>
-            <Cell
-              label="Collaborateurs"
-              value={
-                collaborators.length > 0
-                  ? <span className="text-blue-500">{collaborators.length}</span>
-                  : <span className="text-[rgb(var(--color-text-muted))]">0</span>
-              }
-              onTap={() => setShowCollabSheet(true)}
-            />
+            {((!isCreating && taskId) || (isCreating && onSubtasksChange)) && (
+              <>
+                <div className="px-4">
+                  {!isCreating && taskId ? (
+                    <SubtaskChecklist taskId={taskId} hideLabel variant="line" />
+                  ) : (
+                    <SubtaskChecklist hideLabel variant="line" value={formData.subtasks ?? []} onChange={onSubtasksChange} />
+                  )}
+                  {/* Dépendances (édition seulement : une arête référence deux
+                      tâches, la seconde n'existe pas encore en création). */}
+                  {!isCreating && taskId && <TaskDependenciesSection taskId={taskId} />}
+                </div>
+                <CellSeparator />
+              </>
+            )}
+            {/* Maquette 160 : « Collaborateurs 0 › » se lisait comme un compte
+                de rien. Sans personne : « Inviter quelqu'un ». */}
+            {collaborators.length > 0 ? (
+              <Cell
+                label={t('form.collaborators')}
+                value={<span className={valueClass}>{collaborators.length}</span>}
+                onTap={() => setShowCollabSheet(true)}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowCollabSheet(true)}
+                className="w-full flex items-center gap-2.5 px-4 min-h-11 text-body text-[rgb(var(--color-accent))] active:bg-[rgb(var(--color-hover))]"
+              >
+                <UserPlus size={18} aria-hidden="true" />
+                {t('form.inviteSomeone')}
+              </button>
+            )}
           </SectionCard>
 
-          {/* ── Supprimer (édition uniquement) ── */}
+          {/* ── Supprimer (édition uniquement) — remis le 2026-09-17 à la
+              demande utilisateur, après Collaboration, même gabarit que la
+              cellule Collaborateurs ci-dessus (min-h-11, pleine largeur). */}
           {!isCreating && (
             <>
               <div className="h-2" />
@@ -444,151 +471,44 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   disabled={isLoading}
                   className="w-full flex items-center justify-center min-h-11 text-red-500 text-[15px] active:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors"
                 >
-                  Supprimer la tâche
+                  {t('form.deleteTask')}
                 </button>
               </SectionCard>
             </>
           )}
 
-          <div className="h-4" />
+          <div style={{ height: 'max(env(safe-area-inset-bottom), 16px)' }} />
         </div>
       </div>
 
-      {/* ── Footer CTA ── */}
-      <div
-        className="shrink-0 px-4 pt-3 border-t border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))]/95 backdrop-blur-sm"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
-      >
-        <button
-          type="button"
-          onClick={handleCreateOrSave}
-          disabled={isLoading}
-          className={`w-full h-[50px] rounded-2xl text-white text-[17px] font-semibold transition-colors ${
-            isValid && !isLoading ? 'bg-[rgb(var(--color-accent-solid))] active:bg-[rgb(var(--color-accent-solid))]' : 'bg-blue-200 dark:bg-blue-900/40'
-          }`}
-        >
-          {isLoading ? (
-            <span className="flex items-center justify-center gap-2">
-              <Loader2 size={18} className="animate-spin" />
-              {isCreating ? t('common.creatingEllipsis') : t('common.saving')}
-            </span>
-          ) : (
-            isCreating ? t('mobile.createTask') : t('common.save')
-          )}
-        </button>
-      </div>
+      {/* ── Action sheet : Répéter ── */}
+      <MobileChoiceSheet
+        open={showRecurrenceSheet}
+        title={t('fields.repeat')}
+        onClose={() => setShowRecurrenceSheet(false)}
+        options={RECURRENCE_OPTIONS.map((opt) => ({ value: opt.value, label: t(opt.labelKey) }))}
+        selected={formData.recurrence}
+        onSelect={(value) => { handleInputChange('recurrence', value); setShowRecurrenceSheet(false); }}
+      />
 
-      {/* ── Action sheet : Priorité ── */}
-      <AnimatePresence>
-        {showPrioritySheet && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-[60] flex items-end"
-            onClick={() => setShowPrioritySheet(false)}
-          >
-            <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full bg-[rgb(var(--color-surface))] rounded-t-2xl overflow-hidden"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-            >
-              <div className="flex justify-center pt-3 pb-2"><div className="w-9 h-1 rounded-full bg-[rgb(var(--color-border-strong))]" /></div>
-              <p className="text-[13px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-2">{t('fields.priority')}</p>
-              {PRIORITY_OPTIONS.map((opt, i) => (
-                <React.Fragment key={opt.value}>
-                  {i > 0 && <CellSeparator />}
-                  <button
-                    type="button"
-                    onClick={() => { handleInputChange('priority', opt.value); setCellErrors(prev => ({ ...prev, priority: false })); setShowPrioritySheet(false); }}
-                    className="w-full flex items-center justify-between px-4 min-h-11 active:bg-[rgb(var(--color-hover))]"
-                  >
-                    <span className={`text-[15px] ${opt.color}`}>{opt.label}</span>
-                    {formData.priority === opt.value && <Check size={16} className="text-blue-500" />}
-                  </button>
-                </React.Fragment>
-              ))}
-              <div className="h-3" />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Action sheet : Catégorie ── */}
-      <AnimatePresence>
-        {showCategorySheet && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-[60] flex items-end"
-            onClick={() => { setShowCategorySheet(false); setShowNewCatInput(false); }}
-          >
-            <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full bg-[rgb(var(--color-surface))] rounded-t-2xl overflow-hidden max-h-[70vh] flex flex-col"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-            >
-              <div className="flex justify-center pt-3 pb-2 shrink-0"><div className="w-9 h-1 rounded-full bg-[rgb(var(--color-border-strong))]" /></div>
-              <p className="text-[13px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-2 shrink-0">{t('fields.category')}</p>
-              <div className="flex-1 overflow-y-auto">
-                {categories.map((cat, i) => (
-                  <React.Fragment key={cat.id}>
-                    {i > 0 && <CellSeparator />}
-                    <button
-                      type="button"
-                      onClick={() => { handleInputChange('category', formData.category === cat.id ? '' : cat.id); setShowCategorySheet(false); }}
-                      className="w-full flex items-center justify-between px-4 min-h-11 active:bg-[rgb(var(--color-hover))]"
-                    >
-                      <span className="flex items-center gap-2.5">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
-                        <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{cat.name}</span>
-                      </span>
-                      {formData.category === cat.id && <Check size={16} className="text-blue-500" />}
-                    </button>
-                  </React.Fragment>
-                ))}
-                {categories.length > 0 && <CellSeparator />}
-                {!showNewCatInput ? (
-                  <button type="button" onClick={() => setShowNewCatInput(true)} className="w-full flex items-center gap-2 px-4 min-h-11 text-blue-500">
-                    <Plus size={16} /><span className="text-[15px]">{t('fields.createCategory')}</span>
-                  </button>
-                ) : (
-                  <div className="px-4 py-3 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => { const idx = listColorOptions.findIndex(c => c.value === newCatColor); setNewCatColor(listColorOptions[(idx + 1) % listColorOptions.length].value); }}
-                      className="w-6 h-6 rounded-full shrink-0"
-                      style={{ backgroundColor: listColorOptions.find(c => c.value === newCatColor)?.color ?? '#3B82F6' }}
-                    />
-                    <input
-                      autoFocus type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)}
-                      placeholder={t('fields.categoryNamePlaceholder')}
-                      className="flex-1 text-[15px] bg-transparent focus:outline-none text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
-                    />
-                    <button
-                      type="button"
-                      disabled={newCatName.trim().length < 2 || createCategoryMutation.isPending}
-                      onClick={() => {
-                        const name = newCatName.trim();
-                        if (name.length < 2) return;
-                        createCategoryMutation.mutate(
-                          { name, color: listColorOptions.find(c => c.value === newCatColor)?.color ?? '#3B82F6' },
-                          { onSuccess: (created) => { handleInputChange('category', created.id); setCellErrors(prev => ({ ...prev, category: false })); setShowNewCatInput(false); setNewCatName(''); setNewCatColor('blue'); setShowCategorySheet(false); } }
-                        );
-                      }}
-                      className="text-[15px] text-blue-500 font-semibold disabled:text-blue-300"
-                    >
-                      {createCategoryMutation.isPending ? '…' : t('common.create')}
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="h-3 shrink-0" />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ── Action sheet : Catégorie — arbre repliable (chevron bleu, indenté),
+          contrairement aux feuilles Priorité/Répéter ci-dessus qui restent des
+          listes plates : seule celle-ci a une hiérarchie à représenter, et c'est
+          ce qui lui vaut son propre fichier (C-75). */}
+      <TaskModalCategorySheet
+        open={showCategorySheet}
+        onClose={() => setShowCategorySheet(false)}
+        categories={categories}
+        selectedId={formData.category}
+        onSelect={(categoryId) => { handleInputChange('category', categoryId); setShowCategorySheet(false); }}
+        onCreated={(categoryId) => {
+          handleInputChange('category', categoryId);
+          setCellErrors((prev) => ({ ...prev, category: false }));
+          setShowCategorySheet(false);
+        }}
+        createCategoryMutation={createCategoryMutation}
+        listColorOptions={listColorOptions}
+      />
 
       {/* ── Modal Listes (composant existant) ── */}
       {taskId && (
@@ -600,96 +520,26 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
       )}
 
       {/* ── Action sheet : Collaborateurs ── */}
-      <AnimatePresence>
-        {showCollabSheet && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-[60] flex items-end"
-            onClick={() => setShowCollabSheet(false)}
-          >
-            <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full bg-[rgb(var(--color-surface))] rounded-t-2xl overflow-hidden max-h-[80vh] flex flex-col"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-            >
-              <div className="flex justify-center pt-3 pb-2 shrink-0"><div className="w-9 h-1 rounded-full bg-[rgb(var(--color-border-strong))]" /></div>
-              <p className="text-[13px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-2 shrink-0">{t('mobile.collaborators')}</p>
-              {!isTaskOwner && (
-                <p className="px-4 pb-2 text-[13px] text-[rgb(var(--color-text-muted))] shrink-0">
-                  {t('mobile.notOwner')}
-                </p>
-              )}
-              {isTaskOwner && (
-                <div className="px-4 pb-3 shrink-0">
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" />
-                      <input
-                        type="text" value={emailInput}
-                        onChange={(e) => setEmailInput(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
-                        placeholder="Email ou nom…"
-                        className="w-full pl-9 pr-3 py-2 text-[15px] bg-[rgb(var(--color-hover))] rounded-xl focus:outline-none text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
-                      />
-                    </div>
-                    <button type="button" onClick={handleAddEmail} disabled={!emailInput.trim()} className="px-3 py-2 bg-[rgb(var(--color-accent-solid))] disabled:bg-blue-300 text-[rgb(var(--color-accent-solid-foreground))] rounded-xl">
-                      <UserPlus size={16} />
-                    </button>
-                  </div>
-                  {inputError && <p className="mt-1 text-[13px] text-red-500">{inputError}</p>}
-                  {/* Lien d'invitation copiable (Supabase only) */}
-                  <ShareLinkField taskId={taskId} ownerCanShare={isTaskOwner} onGenerate={onGenerateShareLink} className="pt-3" />
-                </div>
-              )}
-              {collaborators.length > 0 && (
-                <div className="px-4 pb-2 shrink-0 border-b border-[rgb(var(--color-border))]">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] pb-1">{isTaskOwner ? t('mobile.selected', { count: collaborators.length }) : t('mobile.participants')}</p>
-                  {collaborators.map((id) => {
-                    const info = displayInfo(id);
-                    const isSent = isTaskOwner && !info.isPending && pendingShareIds.has(id);
-                    return (
-                      <div key={id} className="flex items-center justify-between py-1.5 gap-2">
-                        <span className="text-[14px] text-[rgb(var(--color-text-primary))] truncate flex-1">
-                          {info.name}{!isTaskOwner && id === ownerId ? t('mobile.owner') : ''}
-                        </span>
-                        {isSent && (
-                          <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{t('mobile.sent')}</span>
-                        )}
-                        {isTaskOwner && (
-                          <button type="button" onClick={() => handleRemoveCollaborator(id)} className="p-1 text-red-400" aria-label="Retirer"><X size={14} /></button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              {isTaskOwner && (
-                <div className="flex-1 overflow-y-auto px-4">
-                  {filteredFriends.map((friend) => {
-                    const cId = collabIdOf(friend);
-                    const isSelected = collaborators.includes(cId);
-                    return (
-                      <button
-                        key={friend.id} type="button" onClick={() => toggleCollaborator(cId)}
-                        className="w-full flex items-center justify-between py-2.5 border-b border-[rgb(var(--color-border))] last:border-0"
-                      >
-                        <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{friend.name}</span>
-                        {isSelected ? <Check size={16} className="text-blue-500" /> : <Plus size={16} className="text-[rgb(var(--color-text-muted))]" />}
-                      </button>
-                    );
-                  })}
-                  {filteredFriends.length === 0 && (
-                    <p className="text-center py-6 text-[14px] text-[rgb(var(--color-text-muted))]">{t('mobile.noFriend')}</p>
-                  )}
-                </div>
-              )}
-              <div className="h-3 shrink-0" />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <MobileCollaboratorsSheet
+        open={showCollabSheet}
+        onClose={() => setShowCollabSheet(false)}
+        isTaskOwner={isTaskOwner}
+        ownerId={ownerId}
+        collaborators={collaborators}
+        displayInfo={displayInfo}
+        pendingShareIds={pendingShareIds}
+        filteredFriends={filteredFriends}
+        collabIdOf={collabIdOf}
+        emailInput={emailInput}
+        setEmailInput={setEmailInput}
+        inputError={inputError}
+        onAddEmail={handleAddEmail}
+        onRemoveCollaborator={handleRemoveCollaborator}
+        onToggleCollaborator={toggleCollaborator}
+        taskId={taskId}
+        onGenerateShareLink={onGenerateShareLink}
+        renderAvatar={(name, avatar) => <MiniAvatar name={name} avatar={avatar} />}
+      />
 
     </motion.div>
   );

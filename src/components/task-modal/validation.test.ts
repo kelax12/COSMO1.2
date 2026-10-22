@@ -5,22 +5,28 @@ import {
   isStep1Valid,
   missingStep1Fields,
 } from './validation';
+import { translator } from '@/i18n/useT';
+
+// On compare au CATALOGUE, pas à une phrase recopiée : réécrire le français
+// dans le test, c'est refiger ici ce qu'on vient de sortir du code.
+const err = (key: Parameters<ReturnType<typeof translator<'errors'>>['t']>[0]) =>
+  translator('errors').t(key);
 
 describe('TaskModal validation', () => {
   describe('computeValidationErrors', () => {
     it('flags an empty name as required', () => {
       const errors = computeValidationErrors({ name: '   ', estimatedTime: '' });
-      expect(errors.name).toBe('Le nom de la tâche est obligatoire');
+      expect(errors.name).toBe(err('validation.taskForm.nameRequired'));
     });
 
     it('flags a name shorter than 3 characters', () => {
       const errors = computeValidationErrors({ name: 'ab', estimatedTime: '' });
-      expect(errors.name).toBe('Le nom doit contenir au moins 3 caractères');
+      expect(errors.name).toBe(err('validation.taskForm.nameTooShort'));
     });
 
     it('flags a name longer than 100 characters', () => {
       const errors = computeValidationErrors({ name: 'x'.repeat(101), estimatedTime: '' });
-      expect(errors.name).toBe('Le nom ne peut pas dépasser 100 caractères');
+      expect(errors.name).toBe(err('validation.taskForm.nameTooLong'));
     });
 
     it('accepts a valid name with no errors', () => {
@@ -35,12 +41,12 @@ describe('TaskModal validation', () => {
 
     it('rejects a negative estimatedTime', () => {
       const errors = computeValidationErrors({ name: 'Valid name', estimatedTime: -5 });
-      expect(errors.estimatedTime).toBe('La durée ne peut pas être négative');
+      expect(errors.estimatedTime).toBe(err('validation.taskForm.durationNegative'));
     });
 
     it('rejects a non-numeric estimatedTime', () => {
       const errors = computeValidationErrors({ name: 'Valid name', estimatedTime: 'abc' });
-      expect(errors.estimatedTime).toBe('Veuillez entrer un nombre valide');
+      expect(errors.estimatedTime).toBe(err('validation.taskForm.durationNaN'));
     });
 
     it('accepts a positive numeric estimatedTime', () => {

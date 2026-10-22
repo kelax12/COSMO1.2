@@ -5,7 +5,7 @@
 // AdminForbiddenError pour que la page redirige silencieusement.
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
-import type { AdminStats, DailyPoint } from './types';
+import type { AdminStats, AdminSupport, DailyPoint, AdminOnboardingFunnel } from './types';
 
 /** Signal de routing (compte non admin) — jamais toasté ni affiché. */
 export class AdminForbiddenError extends Error {
@@ -55,6 +55,31 @@ interface RawAdminStats {
   };
   retention_j7?: Array<{ week?: string; signups?: number; retained?: number }>;
   stickiness?: { dau?: number; mau?: number };
+  // ── v3 (mig. 099) ───────────────────────────────────────────────────
+  signups_by_source?: Record<string, number>;
+  signups_by_source_by_day?: Array<{ day?: string; source?: string; count?: number }>;
+  activation_48h?: {
+    activated?: number;
+    total?: number;
+    by_source?: Record<string, { activated?: number; total?: number }>;
+  };
+  retention_d7_by_source?: Record<string, { signups?: number; retained?: number }>;
+  orgs?: {
+    total?: number;
+    with_3plus_members?: number;
+    created_30d?: number;
+    with_3plus_members_30d?: number;
+  };
+}
+
+/** Mappe un Record<string, T> en normalisant chaque valeur (jamais de spread). */
+function mapRecord<TRaw, TOut>(
+  raw: Record<string, TRaw> | undefined,
+  map: (value: TRaw) => TOut
+): Record<string, TOut> {
+  const out: Record<string, TOut> = {};
+  for (const [key, value] of Object.entries(raw ?? {})) out[key] = map(value);
+  return out;
 }
 
 function mapDailyPoints(raw: RawDailyPoint[] | undefined): DailyPoint[] {
@@ -120,19 +145,159 @@ export async function fetchAdminStats(): Promise<AdminStats> {
       dau: raw.stickiness?.dau ?? 0,
       mau: raw.stickiness?.mau ?? 0,
     },
+    signupsBySource: mapRecord(raw.signups_by_source, (n) => Number(n) || 0),
+    signupsBySourceByDay: (raw.signups_by_source_by_day ?? []).map((p) => ({
+      day: p.day ?? '',
+      source: p.source ?? 'unknown',
+      count: p.count ?? 0,
+    })),
+    activation48h: {
+      activated: raw.activation_48h?.activated ?? 0,
+      total: raw.activation_48h?.total ?? 0,
+      bySource: mapRecord(raw.activation_48h?.by_source, (v) => ({
+        activated: v?.activated ?? 0,
+        total: v?.total ?? 0,
+      })),
+    },
+    retentionD7BySource: mapRecord(raw.retention_d7_by_source, (v) => ({
+      signups: v?.signups ?? 0,
+      retained: v?.retained ?? 0,
+    })),
+    orgs: {
+      total: raw.orgs?.total ?? 0,
+      with3plusMembers: raw.orgs?.with_3plus_members ?? 0,
+      created30d: raw.orgs?.created_30d ?? 0,
+      with3plusMembers30d: raw.orgs?.with_3plus_members_30d ?? 0,
+    },
+    // Renseigné par `fetchSupportStats`, qui est une SECONDE RPC : cf. son
+    // en-tête pour la raison.
+    support: null,
+  };
+}
+
+interface RawSupportStats {
+  totals?: {
+    received?: number;
+    received_30d?: number;
+    answered?: number;
+    resolved?: number;
+    awaiting?: number;
+    oldest_awaiting_days?: number;
+  };
+  median_response_hours?: number;
+  by_category?: Record<string, number>;
+  by_day?: RawDailyPoint[];
+}
+
+/**
+ * Compteurs du support (C-110, mig. 150).
+ *
+ * 🔴 POURQUOI UNE SECONDE RPC ET PAS UNE CLÉ DE `get_admin_stats`. Parce que
+ * la mig. 150 peut ne pas être appliquée. Le dépôt a déjà payé ce cas au prix
+ * fort : la mig. 136 est restée commitée et dormante DIX-SEPT JOURS, et
+ * `okrTime` a valu 0 pour tous les comptes réels pendant ce temps (C-77).
+ * Greffer ces compteurs dans `get_admin_stats` aurait fait échouer TOUTE la
+ * console tant que la migration n'est pas appliquée — un tableau de bord
+ * entier perdu pour un encart.
+ *
+ * `null` est donc une valeur de retour légitime, et la console l'affiche
+ * comme telle. ❌ Ne jamais la remplacer par des zéros : un zéro se lit
+ * « aucun rapport », un `null` se lit « on ne sait pas encore ».
+ */
+export async function fetchSupportStats(): Promise<AdminSupport | null> {
+  const { data, error } = await supabase.rpc('get_support_stats');
+  if (error) {
+    if (error.code === '42501') throw new AdminForbiddenError();
+    // 🔴 `42883` = la fonction n'existe pas : la mig. 150 n'est pas appliquée.
+    // C'est le SEUL code qu'on traduit en `null` — tous les autres remontent,
+    // parce qu'une panne de base ne doit pas se déguiser en « pas encore
+    // installé ».
+    if (error.code === '42883' || error.code === 'PGRST202') return null;
+    throw normalizeApiError(error);
+  }
+  const raw = (data ?? {}) as RawSupportStats;
+  return {
+    received: raw.totals?.received ?? 0,
+    received30d: raw.totals?.received_30d ?? 0,
+    answered: raw.totals?.answered ?? 0,
+    resolved: raw.totals?.resolved ?? 0,
+    awaiting: raw.totals?.awaiting ?? 0,
+    oldestAwaitingDays: raw.totals?.oldest_awaiting_days ?? 0,
+    medianResponseHours: Number(raw.median_response_hours ?? 0),
+    byCategory: raw.by_category ?? {},
+    byDay: mapDailyPoints(raw.by_day),
   };
 }
 
 /**
- * Statut admin de l'utilisateur courant (RPC is_admin, mig. 056).
+ * Ce compte est-il dans l'allowlist admin (RPC admin_allowlisted, mig. 131) ?
+ *
+ * Question d'AFFICHAGE, pas une garde : elle ignore volontairement le niveau
+ * d'assurance de la session, sinon l'écran d'enrôlement TOTP deviendrait
+ * inatteignable pour un admin qui n'a pas encore de second facteur. La garde
+ * réelle est `is_admin()`, appelée par `get_admin_stats()` côté serveur.
+ *
+ * Repli sur `is_admin` tant que la mig. 131 n'est pas appliquée, pour que
+ * l'ordre entre le déploiement du front et la migration n'ait pas d'importance.
+ * Ce repli ne relâche aucune garde : les deux RPC ne décident que d'un
+ * affichage, et `is_admin` est la plus stricte des deux.
+ *
  * Ne doit JAMAIS bloquer l'UI : toute erreur ⇒ false silencieux.
  */
 export async function fetchIsAdmin(): Promise<boolean> {
   try {
-    const { data, error } = await supabase.rpc('is_admin');
-    if (error) return false;
-    return data === true;
+    const { data, error } = await supabase.rpc('admin_allowlisted');
+    if (!error) return data === true;
+    const legacy = await supabase.rpc('is_admin');
+    return !legacy.error && legacy.data === true;
   } catch {
     return false;
   }
+}
+
+interface RawOnboardingFunnel {
+  window_days?: number;
+  perso?: Record<string, number>;
+  business_signups?: number;
+  orgs?: Record<string, number>;
+}
+
+/**
+ * Entonnoir des accueils (mig. 213). Même contrat que `fetchSupportStats` :
+ * `null` quand la fonction n'existe pas encore (migration non appliquée), et
+ * SEULEMENT dans ce cas, pour ne jamais afficher des zéros qui se liraient
+ * « personne ne termine l'accueil ».
+ */
+export async function fetchOnboardingFunnel(): Promise<AdminOnboardingFunnel | null> {
+  const { data, error } = await supabase.rpc('get_admin_onboarding_funnel', { p_days: 30 });
+  if (error) {
+    if (error.code === '42501') throw new AdminForbiddenError();
+    if (error.code === '42883' || error.code === 'PGRST202') return null;
+    throw normalizeApiError(error);
+  }
+  const raw = (data ?? {}) as RawOnboardingFunnel;
+  const p = raw.perso ?? {};
+  const o = raw.orgs ?? {};
+  return {
+    windowDays: raw.window_days ?? 30,
+    perso: {
+      signups: p.signups ?? 0,
+      withTask: p.with_task ?? 0,
+      withSlot: p.with_slot ?? 0,
+      withHabit: p.with_habit ?? 0,
+      withOkr: p.with_okr ?? 0,
+      mature: p.mature ?? 0,
+      cameBack: p.came_back ?? 0,
+      matureWithTask: p.mature_with_task ?? 0,
+      cameBackWithTask: p.came_back_with_task ?? 0,
+    },
+    businessSignups: raw.business_signups ?? 0,
+    orgs: {
+      created: o.created ?? 0,
+      withTeam: o.with_team ?? 0,
+      withMember: o.with_member ?? 0,
+      withProject: o.with_project ?? 0,
+      withOkr: o.with_okr ?? 0,
+    },
+  };
 }

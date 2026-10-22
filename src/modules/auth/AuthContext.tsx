@@ -1,68 +1,52 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { resetRepositories, clearDemoStorage, getTasksRepository, getHabitsRepository } from '../../lib/repository.factory';
-import { appModeStore, useIsDemo, wasDemoPersisted } from '../../lib/app-mode.store';
-import { taskKeys } from '../../modules/tasks/constants';
-import { habitKeys } from '../../modules/habits/constants';
-import { withTimeout } from '../../lib/withTimeout';
-import { sanitizeEmail, isValidEmail } from '../../lib/email';
-import { recordDemoVisit, recordDemoConversionIfAny } from '../../lib/demo-metrics';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { resetRepositories, clearDemoStorage, getTasksRepository, getHabitsRepository } from '@/lib/repository.factory';
+import { appModeStore, useIsDemo, wasDemoPersisted } from '@/lib/app-mode.store';
+import { taskKeys } from '@/modules/tasks/constants';
+import { habitKeys } from '@/modules/habits/constants';
+import { withTimeout } from '@/lib/withTimeout';
+import { sanitizeEmail, isValidEmail } from '@/lib/email';
+import { recordDemoVisit, recordDemoConversionIfAny } from '@/lib/demo-metrics';
+import { resetDemoEngagementMemory } from '@/lib/demo-engagement';
+import { readFirstTouch } from '@/lib/attribution';
+import { claimAcquisitionSource } from './acquisition-claim';
+import { recordSeedLocale, seedLocaleMatchesCurrent } from '@/lib/seed-i18n';
+import {
+  DEMO_SENTINEL_EMAIL,
+  buildDemoUser,
+  persistDemoProfile,
+  type DemoProfilePatch,
+} from './demo-profile';
+import { authLoginGeneric, authRegisterGeneric, safeAuthError } from './auth-errors';
 import { User as SupabaseUser } from '@supabase/supabase-js';
-import * as Sentry from '@sentry/react';
+// Sentry n'est PLUS importe statiquement : il est charge apres le premier
+// rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
+// tamponne ce qui arrive avant le chargement.
+import * as monitoring from '@/lib/monitoring';
+import { toast } from '@/lib/toast';
+import { translator } from '@/i18n/useT';
+import {
+  readLocalCache,
+  writeLocalCache,
+  clearLocalCache,
+  purgeAllLocalCache,
+} from './session-cache';
+import { localeStore } from '@/i18n/store';
+import { DEFAULT_LOCALE } from '@/i18n/locale';
+import { postAuthRoute } from '@/lib/safe-redirect';
+import {
+  recordOAuthRedirectIntent,
+  clearOAuthRedirectIntent,
+} from './oauth-landing';
+// Les deux sondes qui lisent le retour OAuth dans l'URL : un échec OAuth est
+// silencieux par défaut, et ce sont elles qui le rendent visible.
+import { consumeOAuthErrorFromUrl, checkOAuthLanding } from './oauth-url-probes';
 
 const DEBUG = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
 const dlog = (msg: string) => {
   if (DEBUG) console.warn(`[AUTH] @${Math.round(performance.now())}ms ${msg}`);
 };
-
-// ─── Offline-first cache helpers ─────────────────────────────────────────────
-// Persist tasks/habits to localStorage so the app feels instant on cold start.
-// Each entry is keyed by userId to avoid cross-user leakage.
-// Max age: 24 h — stale data is shown immediately then silently replaced.
-
-const CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
-
-function readLocalCache<T>(userId: string, key: string): T | null {
-  try {
-    const raw = localStorage.getItem(`cosmo:qcache:${userId}:${key}`);
-    if (!raw) return null;
-    const { data, at } = JSON.parse(raw) as { data: T; at: number };
-    if (Date.now() - at > CACHE_MAX_AGE) return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-function writeLocalCache(userId: string, key: string, data: unknown): void {
-  try {
-    localStorage.setItem(`cosmo:qcache:${userId}:${key}`, JSON.stringify({ data, at: Date.now() }));
-  } catch {
-    // localStorage full — ignore silently
-  }
-}
-
-function clearLocalCache(userId: string): void {
-  try {
-    localStorage.removeItem(`cosmo:qcache:${userId}:tasks`);
-    localStorage.removeItem(`cosmo:qcache:${userId}:habits`);
-  } catch { /* ignore */ }
-}
-
-// L-11 — On a shared device, signing out one user must not leave another
-// user's cache reachable via devtools (cosmo:qcache:* survives 24 h TTL).
-// Sweep every cache entry on SIGNED_OUT, not just the current userId.
-function purgeAllLocalCache(): void {
-  try {
-    const toRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('cosmo:qcache:')) toRemove.push(key);
-    }
-    toRemove.forEach(k => localStorage.removeItem(k));
-  } catch { /* ignore */ }
-}
 
 // Dernière connexion — ping fire-and-forget de la RPC touch_last_seen()
 // (migration 054, timestamp pris côté serveur). Dédupliqué par utilisateur et
@@ -81,8 +65,8 @@ function touchLastSeen(userId: string): void {
 }
 
 // User type — identity fields only.
-// Premium/financial state (premiumTokens, subscriptionEndDate, win_streak, …) lives
-// exclusively in the Supabase `subscriptions` table and is consumed via useBilling().
+// Premium/financial state (plan, status, période Stripe) lives exclusively in the
+// Supabase `subscriptions` table and is consumed via useBilling().
 // `autoValidation` is a UI preference stored locally in demo mode (see user/hooks.ts).
 export type User = {
   id: string;
@@ -102,57 +86,21 @@ export type User = {
 // handle_new_user_profile re-valide la valeur (jamais de confiance brute).
 export type AccountType = 'personal' | 'business';
 
-// Sentinel email reserved for the local demo session. We block it at signup so an
-// attacker can't register a real Supabase account using this address (faille B0).
-const DEMO_SENTINEL_EMAIL = 'demo@cosmo.app';
-
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   isDemo: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string, captchaToken?: string) => Promise<{ success: boolean; error?: string }>;
   loginDemo: () => void;
-  register: (name: string, email: string, password: string, accountType?: AccountType) => Promise<{ success: boolean; error?: string }>;
-  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, password: string, accountType?: AccountType, captchaToken?: string) => Promise<{ success: boolean; error?: string; needsEmailConfirmation?: boolean }>;
+  loginWithGoogle: (redirectPath?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// AUD-05 — Ne jamais renvoyer `error.message` brut à l'UI
-//
-// `login` et `register` étaient les deux derniers chemins à échapper à la
-// règle V7/N1 appliquée partout ailleurs via `normalizeApiError`. Le cas qui
-// compte est `signUp` sur une adresse déjà enregistrée : Supabase répond
-// « User already registered » (code `user_already_exists`), ce qui transforme
-// le formulaire d'inscription en oracle d'existence de compte — de quoi
-// vérifier en masse quelles adresses d'une fuite tierce ont un compte COSMO,
-// puis cibler le credential stuffing.
-//
-// Contrat : seuls des codes explicitement whitelistés produisent un message
-// spécifique ; tout le reste retombe sur un texte générique identique.
-// ═══════════════════════════════════════════════════════════════════
-
-const AUTH_LOGIN_GENERIC = 'Email ou mot de passe incorrect.';
-const AUTH_REGISTER_GENERIC =
-  "Impossible de finaliser l'inscription. Vérifiez vos informations et réessayez.";
-
-type SupabaseAuthErrorLike = { code?: string; status?: number; message?: string };
-
-const safeAuthError = (error: SupabaseAuthErrorLike, fallback: string): string => {
-  // Loggé pour l'ops (droppé du bundle prod par esbuild, remonté par Sentry).
-  console.error('[auth]', error.code ?? error.status ?? 'unknown', error.message);
-  const code = error.code;
-  if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit' || error.status === 429) {
-    return 'Trop de tentatives. Réessayez dans quelques minutes.';
-  }
-  if (code === 'weak_password') {
-    return 'Mot de passe trop faible. Choisissez-en un plus long et plus varié.';
-  }
-  if (code === 'email_address_invalid') {
-    return "Cette adresse email n'est pas valide.";
-  }
-  return fallback;
+  /**
+   * Met à jour le profil de la session DÉMO uniquement. No-op hors démo — un
+   * vrai compte passe par `supabase.auth.updateUser`, jamais par le client.
+   */
+  updateDemoProfile: (patch: DemoProfilePatch) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -161,6 +109,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Miroir de `isLoading` lisible depuis un timer : le watchdog doit savoir si
+  // la session était ENCORE non résolue au moment où il tire, sans faire de ce
+  // constat un effet de bord glissé dans un updater de `setState`.
+  const isLoadingRef = useRef(true);
+  isLoadingRef.current = isLoading;
 
   // Source de vérité unique : appModeStore (faille B0 — l'ancien check sur l'email
   // était contournable en s'inscrivant avec demo@cosmo.app via supabase.auth.signUp).
@@ -170,7 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Observabilité : corrèle les erreurs/transactions Sentry à l'utilisateur.
   // Id uniquement — pas d'email ni de PII (cohérent avec sendDefaultPii:false).
   useEffect(() => {
-    Sentry.setUser(user ? { id: user.id } : null);
+    monitoring.setUser(user ? { id: user.id } : null);
   }, [user]);
 
   // Map a Supabase session user to our App user type.
@@ -179,7 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // (which is user-writable from the client and trivially spoofable). Faille N5/N6.
   const mapSupabaseUserToAppUser = (supabaseUser: SupabaseUser): User => ({
     id: supabaseUser.id,
-    name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'Utilisateur',
+    name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || translator('common').t('auth.defaultUserName'),
     email: supabaseUser.email || '',
     avatar: supabaseUser.user_metadata?.avatar_url,
     provider: supabaseUser.app_metadata?.provider,
@@ -250,12 +203,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // clearDemoStorage ici — seul un loginDemo() explicite réinitialise).
       if (wasDemoPersisted()) {
         dlog('initializeAuth: restoring persisted demo session');
+        // Langue changée depuis le seed (bascule FR↔EN, ou arrivée sur `/en`
+        // après avoir lancé la démo depuis `/`) : les données en place sont
+        // dans l'ancienne langue et ne se retraduisent pas — elles sont
+        // modifiables, donc relues telles quelles. On les régénère, sinon
+        // l'interface et le contenu parlent deux langues différentes.
+        if (!seedLocaleMatchesCurrent()) {
+          dlog('initializeAuth: demo seed locale stale — reseeding');
+          clearDemoStorage(); // efface aussi cosmo_demo_active…
+          appModeStore.setDemo(true); // …que ce setter réécrit aussitôt.
+          resetRepositories();
+          queryClient.clear();
+          recordSeedLocale();
+        }
         appModeStore.setDemo(true);
-        setUser({
-          id: 'demo-user',
-          name: 'Utilisateur Démo',
-          email: DEMO_SENTINEL_EMAIL,
-        });
+        setUser(buildDemoUser());
         setIsLoading(false);
         return;
       }
@@ -274,22 +236,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         dlog(`initializeAuth: getSession() resolved — session=${!!session?.user}`);
         if (session?.user) {
+          checkOAuthLanding();
           setUser(mapSupabaseUserToAppUser(session.user));
           touchLastSeen(session.user.id);
+          claimAcquisitionSource(session.user);
           dlog('initializeAuth: calling restoreAndRefresh()');
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
           dlog('initializeAuth: restoreAndRefresh() returned');
         }
       } catch (err) {
         dlog(`initializeAuth: caught error after retry — ${(err as Error)?.message}`);
-        Sentry.captureException(err, { tags: { context: 'auth-init-getSession-retry-failed' } });
+        monitoring.captureException(err, { tags: { context: 'auth-init-getSession-retry-failed' } });
       } finally {
         dlog('initializeAuth: setIsLoading(false) — done');
         setIsLoading(false);
       }
     };
 
+    // Message d'erreur OAuth eventuel, lu AVANT initializeAuth : c'est lui
+    // qui nettoie l'URL, et getSession() n'a de toute facon rien a en tirer.
+    const oauthError = consumeOAuthErrorFromUrl();
+    if (oauthError) {
+      // Toast differe : Sonner est monte par App, sous ce provider.
+      setTimeout(() => {
+        toast.error(translator('common').t('auth.oauthFailed'), { description: oauthError });
+      }, 0);
+    }
+
     initializeAuth();
+
+    // GARDE-FOU — `ProtectedRoute` ne rend RIEN tant que `isLoading` est vrai,
+    // et `RootRoute` non plus. Si la resolution de session ne se termine
+    // jamais (socket morte sur mobile Safari, echange PKCE bloque, onglet
+    // reveille apres un long arriere-plan), l'utilisateur reste devant un
+    // ecran vide — noir ou blanc selon son theme — sans le moindre bouton,
+    // deconnexion comprise.
+    //
+    // Au-dela de ce delai on tranche : pas de session resolue = non
+    // authentifie. L'utilisateur retombe sur la landing, d'ou il peut se
+    // reconnecter. Un `onAuthStateChange` tardif corrigera le tir tout seul.
+    const loadingWatchdog = window.setTimeout(() => {
+      // Les effets de bord (log, Sentry) sont HORS de l'updater : React peut
+      // rejouer un updater de `setState` — c'est explicitement autorisé, et il
+      // le fait en StrictMode — ce qui dédoublait l'événement Sentry. Un
+      // updater doit rester une fonction pure de l'état précédent, et il ne
+      // s'exécute d'ailleurs PAS au moment de l'appel : lire son argument pour
+      // décider ici n'aurait rien décidé du tout. D'où le ref.
+      const fired = isLoadingRef.current;
+      setIsLoading(false);
+      if (fired) {
+        dlog('watchdog: session non resolue apres 12 s — on debloque l UI');
+        monitoring.captureMessage('auth: isLoading watchdog fired', {
+          level: 'warning',
+          tags: { context: 'auth-watchdog' },
+        });
+      }
+    }, 12_000);
 
     // Track the previous user id so we only blow away the cache when the
     // user identity actually changes. Supabase JS fires SIGNED_IN on token
@@ -319,8 +321,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (event === 'INITIAL_SESSION') {
         lastUserId = currentUserId;
         if (session?.user) {
+          checkOAuthLanding();
           setUser(mapSupabaseUserToAppUser(session.user));
           touchLastSeen(session.user.id);
+          claimAcquisitionSource(session.user);
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
         }
         setIsLoading(false);
@@ -339,8 +343,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (session?.user) {
+        // `checkOAuthLanding` consomme l'intention : les trois points d'appel
+        // couvrent les trois ordres possibles (getSession, INITIAL_SESSION,
+        // SIGNED_IN), le premier arrivé gagne, les suivants sont des no-op.
+        checkOAuthLanding();
         setUser(mapSupabaseUserToAppUser(session.user));
         touchLastSeen(session.user.id);
+        // Inscription Google : `signInWithOAuth` ne porte pas la source
+        // first-touch, on la rattache ici (mig. 217, acquisition-claim.ts).
+        claimAcquisitionSource(session.user);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         // Un re-login dans le même chargement de page doit re-pinger last_seen_at.
@@ -353,11 +364,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => {
+      window.clearTimeout(loadingWatchdog);
       subscription.unsubscribe();
       cacheWriteUnsub?.();
     };
     // Abonnement auth monté une seule fois ; queryClient et les autres deps sont stables.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    abonnement monte UNE FOIS pour la vie de l application : le remonter
+       rejouerait la sequence de session. `queryClient` vient d un provider
+       stable, les autres valeurs lues sont des setters de state, stables par
+       contrat React. */
   }, []);
 
   // Sort proprement du mode démo avant une authentification réelle. Sans ça,
@@ -372,23 +388,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     queryClient.clear();
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, captchaToken?: string) => {
     if (!isSupabaseConfigured) {
-      return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
+      return { success: false, error: translator('common').t('auth.supabaseMissing') };
     }
     exitDemoIfActive();
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return { success: false, error: safeAuthError(error, AUTH_LOGIN_GENERIC) };
+      const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } });
+      if (error) return { success: false, error: safeAuthError(error, authLoginGeneric()) };
       return { success: true };
     } catch {
-      return { success: false, error: 'Une erreur est survenue' };
+      return { success: false, error: translator('common').t('auth.genericError') };
     }
   };
 
-  const register = async (name: string, email: string, password: string, accountType: AccountType = 'personal') => {
+  const register = async (name: string, email: string, password: string, accountType: AccountType = 'personal', captchaToken?: string) => {
     if (!isSupabaseConfigured) {
-      return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
+      return { success: false, error: translator('common').t('auth.supabaseMissing') };
     }
     // Sanitize (strip copy-paste invisible chars) then enforce a real email
     // format BEFORE signUp. HTML5 `type=email` and Supabase both accept
@@ -397,31 +413,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // address. Validating at this chokepoint blocks the problem at the source.
     const cleanEmail = sanitizeEmail(email);
     if (!isValidEmail(cleanEmail)) {
-      return { success: false, error: 'Veuillez saisir une adresse email valide.' };
+      return { success: false, error: translator('common').t('auth.invalidEmail') };
     }
     // Block the sentinel email at signup to prevent the email-based isDemo bypass
     // even on Supabase projects where email confirmation is disabled. Faille B0.
     if (cleanEmail.toLowerCase() === DEMO_SENTINEL_EMAIL) {
-      return { success: false, error: 'Cet email est réservé. Choisissez une autre adresse.' };
+      return { success: false, error: translator('common').t('auth.reservedEmail') };
     }
     exitDemoIfActive();
+    // Source d'acquisition first-touch (src/lib/attribution.ts). Déjà normalisée
+    // et validée : le trigger la re-valide de son côté (mig. 097), la metadata
+    // étant contrôlée par le client.
+    const firstTouch = readFirstTouch();
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
         options: {
+          captchaToken,
           data: {
             name: name,
             // Lu par le trigger handle_new_user_profile (mig. 060) avec garde
             // stricte : toute valeur ≠ 'business' retombe en 'personal'.
             account_type: accountType === 'business' ? 'business' : 'personal',
+            ...(firstTouch
+              ? {
+                  acquisition_source: firstTouch.source,
+                  ...(firstTouch.campaign ? { acquisition_campaign: firstTouch.campaign } : {}),
+                }
+              : {}),
           },
         },
       });
-      if (error) return { success: false, error: safeAuthError(error, AUTH_REGISTER_GENERIC) };
-      return { success: true };
+      if (error) return { success: false, error: safeAuthError(error, authRegisterGeneric()) };
+      return { success: true, needsEmailConfirmation: !data.session }; // pas de session = confirmation exigée
     } catch {
-      return { success: false, error: 'Une erreur est survenue' };
+      return { success: false, error: translator('common').t('auth.genericError') };
     }
   };
 
@@ -429,16 +456,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set demo state synchronously so callers can navigate immediately
     // (existing callsites do not await this function).
     clearDemoStorage();
+    // Repli EN MÉMOIRE des compteurs de démo (sans consentement) : remis à zéro
+    // comme les clés que `clearDemoStorage()` vient d'effacer.
+    resetDemoEngagementMemory();
     appModeStore.setDemo(true);
     resetRepositories();
     queryClient.clear();
+    // Langue du seed qu'on vient d'invalider — relue au prochain démarrage
+    // pour détecter un changement de langue (cf. initializeAuth).
+    recordSeedLocale();
     // Compteur d'appareils distincts ayant testé la démo (fire-and-forget).
     recordDemoVisit();
-    setUser({
-      id: 'demo-user',
-      name: 'Utilisateur Démo',
-      email: DEMO_SENTINEL_EMAIL,
-    });
+    // `clearDemoStorage()` vient d'effacer `cosmo_demo_profile` : une nouvelle
+    // démo repart d'un profil neuf, pas de celui du visiteur précédent.
+    setUser(buildDemoUser());
     setIsLoading(false);
     // Sign out any real Supabase session in the background. Without this we'd
     // leave the device in a hybrid state where `appModeStore.isDemo === true`
@@ -451,16 +482,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const loginWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
+  /**
+   * @param redirectPath Destination interne après retour de Google. À défaut,
+   *   le `?redirect=` de l'URL courante — le départ OAuth se fait toujours
+   *   depuis `/login` ou `/signup`, qui le portent déjà. Validée par
+   *   `postAuthRoute` : une valeur forgée retombe sur `/dashboard`.
+   */
+  const loginWithGoogle = async (redirectPath?: string): Promise<{ success: boolean; error?: string }> => {
     if (!isSupabaseConfigured) {
-      return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
+      return { success: false, error: translator('common').t('auth.supabaseMissing') };
     }
     exitDemoIfActive();
     try {
+      // Deux choses que `${origin}/dashboard` perdait :
+      //   1. le PRÉFIXE DE LOCALE — le `basename` du routeur porte `/en`, donc
+      //      un anglophone revenait sur la version française du produit ;
+      //   2. le `?redirect=` de la garde R-04 — une invitation d'entreprise
+      //      réclamée via Google perdait sa destination, et son jeton à usage
+      //      unique avec elle.
+      // 🔴 CÔTÉ SUPABASE : la « Redirect URL allow list » du projet doit couvrir
+      //    ces destinations, pas seulement `/dashboard`. Un motif large comme
+      //    `https://thecosmo.app/**` suffit ; sans lui, GoTrue renvoie sur le
+      //    Site URL par défaut et le retour d'invitation se reperd — vérifier
+      //    ce réglage AVANT de déployer ce changement.
+      const localePrefix = localeStore.locale === DEFAULT_LOCALE ? '' : `/${localeStore.locale}`;
+      const requested =
+        redirectPath ??
+        (typeof window === 'undefined'
+          ? null
+          : new URLSearchParams(window.location.search).get('redirect'));
+      const destination = postAuthRoute(requested);
+      const redirectTo = `${window.location.origin}${localePrefix}${destination}`;
+      // Sonde C-45 : on note où on a demandé à revenir. Au retour, si
+      // l'atterrissage ne correspond pas, `checkOAuthLanding` le dit au lieu
+      // de laisser la destination se perdre en silence (cf. oauth-landing.ts).
+      recordOAuthRedirectIntent(redirectTo);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -468,11 +528,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
       if (error) {
-        return { success: false, error: error.message || 'Erreur lors de la connexion Google' };
+        // Départ avorté : l'intention n'a plus de retour à décrire, et la
+        // laisser traîner ferait accuser la prochaine navigation.
+        clearOAuthRedirectIntent();
+        return { success: false, error: error.message || translator('common').t('auth.googleFailed') };
       }
       return { success: true };
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Une erreur est survenue';
+      clearOAuthRedirectIntent();
+      const message = err instanceof Error ? err.message : translator('common').t('auth.genericError');
       return { success: false, error: message };
     }
   };
@@ -498,8 +562,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  // Mutation du profil DÉMO. Trois gardes, dans cet ordre :
+  //   1. hors démo, no-op — un vrai profil ne se modifie pas côté client ;
+  //   2. whitelist de champs — `id` n'est jamais modifiable, sinon la session
+  //      démo pourrait usurper un identifiant utilisé comme clé des seeds ;
+  //   3. persistance ET `setUser` — l'écran doit changer TOUT DE SUITE (c'est
+  //      le bug corrigé) et survivre au rechargement (`buildDemoUser`).
+  const updateDemoProfile = (patch: DemoProfilePatch): void => {
+    if (!appModeStore.isDemo) return;
+    const applied = persistDemoProfile(patch);
+    if (!applied) return;
+    // Persistance ET `setUser` : l'écran doit changer TOUT DE SUITE (c'est le
+    // bug corrigé) et survivre au rechargement (`buildDemoUser`).
+    setUser((prev) => (prev ? { ...prev, ...applied } : prev));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isDemo, isLoading, login, loginDemo, register, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isDemo, isLoading, login, loginDemo, register, loginWithGoogle, logout, updateDemoProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,0 +1,186 @@
+// ═══════════════════════════════════════════════════════════════════
+// TEAM-PROJECTS — lignes brutes Supabase et mappers vers le modèle métier
+//
+// Extrait de `supabase.repository.ts` le 2026-08-24. Ce n'est pas un
+// rangement esthétique : le fichier d'origine était à 601 lignes, donc dans
+// la liste `KNOWN_OVERSIZED` du cliquet de `src/architecture.guard.test.ts`,
+// et le correctif de scalabilité (mig. 113) le faisait grossir encore. Le
+// cliquet a fait exactement ce pour quoi il a été écrit : il a refusé la
+// croissance nette et imposé la découpe qu'aucune revue n'avait demandée.
+//
+// Le partage est celui qui coûte le moins à relire : d'un côté la FORME des
+// lignes (`snake_case` de Postgres) et leur traduction, de l'autre les accès.
+// Aucune logique n'a changé.
+// ═══════════════════════════════════════════════════════════════════
+
+import {
+  TeamProject,
+  TeamTask,
+  TeamTaskComment,
+  TeamSubtask,
+  TeamTaskActivity,
+  TeamProjectStatus,
+  TeamProjectHealth,
+  TeamProjectTemplatePayload,
+} from './types';
+
+export interface ProjectRow {
+  id: string;
+  org_id: string;
+  name: string;
+  color: string;
+  created_by: string;
+  archived_at: string | null;
+  created_at: string;
+  team_id: string | null;
+  category_id: string | null;
+  // Mig. 153 — optionnelles : une ligne lue avant son application ne les a pas.
+  description?: string | null;
+  owner_id?: string | null;
+  status?: string | null;
+  start_date?: string | null;
+  due_date?: string | null;
+  is_template?: boolean | null;
+  template_payload?: TeamProjectTemplatePayload | null;
+  health?: string | null;
+  health_note?: string | null;
+  health_updated_at?: string | null;
+  health_updated_by?: string | null;
+}
+
+export interface TaskRow {
+  id: string;
+  org_id: string;
+  project_id: string;
+  name: string;
+  description: string | null;
+  priority: number;
+  deadline: string | null;
+  estimated_time: number | null;
+  assignee_ids: string[] | null;
+  created_by: string;
+  completed: boolean;
+  status: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  category_id: string | null;
+  start_date?: string | null;
+  /** Mig. 197 : absente tant qu'elle n'est pas appliquée. */
+  custom_status_id?: string | null;
+  /** Mig. 204 : absente tant qu'elle n'est pas appliquée. */
+  health?: string | null;
+}
+
+export const mapProject = (r: ProjectRow): TeamProject => ({
+  id: r.id,
+  orgId: r.org_id,
+  name: r.name,
+  color: r.color,
+  createdBy: r.created_by,
+  archivedAt: r.archived_at,
+  createdAt: r.created_at,
+  teamId: r.team_id,
+  categoryId: r.category_id,
+  description: r.description ?? null,
+  ownerId: r.owner_id ?? null,
+  status: (r.status as TeamProjectStatus | null | undefined) ?? 'active',
+  startDate: r.start_date ?? null,
+  dueDate: r.due_date ?? null,
+  isTemplate: r.is_template ?? false,
+  templatePayload: r.template_payload ?? null,
+  health: (r.health as TeamProjectHealth | null | undefined) ?? null,
+  healthNote: r.health_note ?? null,
+  healthUpdatedAt: r.health_updated_at ?? null,
+  healthUpdatedBy: r.health_updated_by ?? null,
+});
+
+export interface CommentRow {
+  id: string;
+  task_id: string;
+  author_id: string | null;
+  body: string;
+  mentions: string[] | null;
+  created_at: string;
+}
+
+export const mapComment = (r: CommentRow): TeamTaskComment => ({
+  id: r.id,
+  taskId: r.task_id,
+  authorId: r.author_id,
+  body: r.body,
+  mentions: r.mentions ?? [],
+  createdAt: r.created_at,
+});
+
+export const mapTask = (r: TaskRow): TeamTask => ({
+  id: r.id,
+  orgId: r.org_id,
+  projectId: r.project_id,
+  name: r.name,
+  description: r.description ?? undefined,
+  priority: r.priority,
+  deadline: r.deadline ?? '',
+  startDate: r.start_date ?? '',
+  estimatedTime: r.estimated_time ?? undefined,
+  assigneeIds: r.assignee_ids ?? [],
+  createdBy: r.created_by,
+  completed: r.completed,
+  // Repli sur `completed` : une ligne lue depuis un cache antérieur à la
+  // mig. 091 n'a pas encore de `status`, et un `undefined` casserait le
+  // groupement du kanban.
+  status: (r.status as TeamTask['status'] | null) ?? (r.completed ? 'done' : 'todo'),
+  completedAt: r.completed_at,
+  createdAt: r.created_at,
+  updatedAt: r.updated_at,
+  categoryId: r.category_id,
+  customStatusId: r.custom_status_id ?? null,
+  health: (r.health as TeamTask['health'] | null | undefined) ?? null,
+});
+
+
+// ─── Sous-tâches (mig. 092) ──────────────────────────────────────────
+
+export interface SubtaskRow {
+  id: string;
+  task_id: string;
+  title: string;
+  completed: boolean;
+  position: number;
+  created_by: string | null;
+  created_at: string;
+}
+
+export const mapSubtask = (r: SubtaskRow): TeamSubtask => ({
+  id: r.id,
+  taskId: r.task_id,
+  title: r.title,
+  completed: r.completed,
+  position: r.position,
+  createdBy: r.created_by,
+  createdAt: r.created_at,
+});
+
+// ─── Historique : lignes brutes ─────────────────────────────
+
+export interface ActivityRow {
+  id: string;
+  task_id: string;
+  org_id: string;
+  actor_id: string | null;
+  field: string;
+  old_value: string | null;
+  new_value: string | null;
+  created_at: string;
+}
+
+export const mapActivity = (r: ActivityRow): TeamTaskActivity => ({
+  id: r.id,
+  taskId: r.task_id,
+  orgId: r.org_id,
+  actorId: r.actor_id,
+  field: r.field as TeamTaskActivity['field'],
+  oldValue: r.old_value,
+  newValue: r.new_value,
+  createdAt: r.created_at,
+});

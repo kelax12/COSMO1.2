@@ -1,9 +1,10 @@
 // Types partagés entre EventModalForm (wrapper) et ses deux corps
 // (EventModalFormMobile / EventModalFormDesktop).
 import type React from 'react';
+import type { EventDuration } from './helpers';
 import type { MotionValue } from 'framer-motion';
 import type { EventRecurrence } from '@/modules/events';
-import type { EventModalMode } from '../EventModal';
+import type { EventModalMode } from '@/components/EventModal';
 
 export interface EventModalFormProps {
   mode: EventModalMode;
@@ -30,7 +31,14 @@ export interface EventModalFormProps {
   setShowDescription: React.Dispatch<React.SetStateAction<boolean>>;
   setIsColorSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   prefilledFields: Set<string>;
-  categories: Array<{ id: string; name: string; color: string }>;
+  /**
+   * `parentId` porte l'arbre (perso : mig. 143 ; entreprise : mig. 148) — les
+   * deux jeux de catégories possibles (`useCategories()` / `categoriesOverride`
+   * en mode entreprise) le portent déjà. Les corps mobile/desktop n'affichent
+   * que les RACINES dans la grille ; les sous-catégories n'apparaissent que
+   * dans la bulle ouverte depuis leur racine.
+   */
+  categories: Array<{ id: string; name: string; color: string; parentId: string | null }>;
   lockedSet: Set<string>;
   register: (name: string) => (el: HTMLElement | null) => void;
   isInvalid: (name: string) => boolean;
@@ -42,7 +50,8 @@ export interface EventModalFormProps {
   handleDuplicate?: () => void;
   getHeaderTitle: () => string;
   getSubmitButtonText: () => string;
-  duration: string | null;
+  /** Fait mesuré, jamais une phrase : « fin avant début » vit au catalogue. */
+  duration: EventDuration | null;
   isMobileFormValid: boolean;
   isPrefilledMode: boolean;
 }

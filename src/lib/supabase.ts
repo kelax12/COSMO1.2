@@ -59,7 +59,7 @@ export const supabase: SupabaseClient = hasSupabaseConfig
         // OAuth, les magic links et le lien de réinitialisation renvoient
         // l'utilisateur avec `#access_token=…&refresh_token=…` dans le
         // FRAGMENT d'URL. Le fragment n'est pas envoyé au serveur, mais il est
-        // lisible par tout script de l'origine (AdSense injecté par AdModal,
+        // lisible par tout script de l'origine (mesure d'audience,
         // Sentry, Vercel Analytics) et persisté dans l'historique du
         // navigateur — un refresh token qui fuit = prise de contrôle du compte.
         // En PKCE, l'URL de retour ne porte qu'un `?code=` à usage unique,

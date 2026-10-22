@@ -85,4 +85,76 @@ describe('mapTaskToDb (whitelist / anti-mass-assignment)', () => {
       is_collaborative: true, pending_invites: ['a'], collaborator_validations: { x: true },
     });
   });
+
+  it('mappe subtasks, krId et recurrence (colonnes ajoutées après la whitelist initiale)', () => {
+    const subtasks = [{ id: 's1', name: 'Étape', completed: false }];
+    const out = mapTaskToDb({ subtasks, krId: 'kr1', recurrence: 'weekly' });
+
+    expect(out).toEqual({ subtasks, kr_id: 'kr1', recurrence: 'weekly' });
+  });
+
+  it('krId vide = « délié » → NULL en base (jamais la chaîne vide)', () => {
+    expect(mapTaskToDb({ krId: '' })).toEqual({ kr_id: null });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// La bascule `''` ↔ NULL de la mig. 145
+// ═══════════════════════════════════════════════════════════════════
+//
+// 🔴 La base porte NULL depuis que `tasks.category` est une clé étrangère : une
+// FK ne peut pas référencer la chaîne vide. Le MODÈLE, lui, garde `''`
+// (`NO_CATEGORY`). Ces tests gardent la frontière : la conversion vit dans les
+// mappers, et nulle part ailleurs. Deux marqueurs d'absence à vérifier partout,
+// c'est ce que le commentaire d'`impact.ts` interdit.
+describe('category — la frontière `` ↔ NULL (mig. 145)', () => {
+  it('lit NULL comme la chaîne vide', () => {
+    expect(mapTaskFromDb({ ...baseRow, category: null }).category).toBe('');
+  });
+
+  it('écrit la chaîne vide comme NULL', () => {
+    expect(mapTaskToDb({ category: '' }).category).toBeNull();
+  });
+
+  it('laisse passer un identifiant tel quel, dans les deux sens', () => {
+    expect(mapTaskFromDb({ ...baseRow, category: 'cat-1' }).category).toBe('cat-1');
+    expect(mapTaskToDb({ category: 'cat-1' }).category).toBe('cat-1');
+  });
+
+  // ⚠️ `category` absent n'est PAS `category: ''`. Le premier veut dire « ne
+  // touche pas à cette colonne », le second « retire la catégorie ». Les
+  // confondre effacerait la catégorie à chaque mise à jour partielle.
+  it('n envoie pas la colonne quand `category` est absent', () => {
+    expect('category' in mapTaskToDb({ name: 'X' })).toBe(false);
+  });
+});
+
+// ═══ Statut et État (mig. 214) ═══
+describe('statut et état (mig. 214)', () => {
+  it('lit status et health tels quels', () => {
+    expect(mapTaskFromDb({ ...baseRow, status: 'blocked', health: 'at_risk' }))
+      .toMatchObject({ status: 'blocked', health: 'at_risk' });
+  });
+
+  // Un statut fabriqué à la lecture repartirait en base avec la tâche entière
+  // (« Annuler », dupliquer), y compris avant que la colonne n'existe.
+  it('ligne antérieure à la migration : ni statut ni état inventés', () => {
+    const t = mapTaskFromDb({ ...baseRow, completed: true });
+    expect(t.status).toBeUndefined();
+    expect(t.health).toBeUndefined();
+    expect('status' in mapTaskToDb(t)).toBe(false);
+    expect(mapTaskFromDb({ ...baseRow, health: null }).health).toBeUndefined();
+  });
+
+  it('whitelist : status et health partent, un état effacé devient NULL', () => {
+    expect(mapTaskToDb({ status: 'in_progress', health: 'on_track' }))
+      .toEqual({ status: 'in_progress', health: 'on_track' });
+    expect(mapTaskToDb({ health: null })).toEqual({ health: null });
+  });
+
+  it('n envoie ni status ni health quand ils sont absents', () => {
+    const out = mapTaskToDb({ name: 'X' });
+    expect('status' in out).toBe(false);
+    expect('health' in out).toBe(false);
+  });
 });

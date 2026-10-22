@@ -2,7 +2,8 @@
 // ORGANIZATIONS MODULE - Repository Interface
 // ═══════════════════════════════════════════════════════════════════
 
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice, OrgInbox } from './types';
+import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
 
 export interface IOrganizationsRepository {
   // Read operations
@@ -16,12 +17,44 @@ export interface IOrganizationsRepository {
   getPendingJoinRequests(orgId: string): Promise<OrgJoinRequest[]>;
   /** La demande envoyée par l'utilisateur courant, s'il en a une (0..1). */
   getMySentJoinRequest(): Promise<OrgJoinRequest | null>;
+  /**
+   * Les CINQ lectures de la boite de reception en une seule (mig. 129).
+   *
+   * Les methodes unitaires ci-dessus restent le contrat : celle-ci ne
+   * remplace rien, elle regroupe. En demo elle les rappelle simplement, il
+   * n'y a pas de reseau a economiser.
+   */
+  getMyOrgInbox(): Promise<OrgInbox>;
 
   // Write operations (prod : RPC SECURITY DEFINER uniquement)
   /** Crée l'org (code généré serveur) et fait de l'appelant l'admin. */
   createOrganization(name: string): Promise<Organization>;
   /** Envoie une demande d'adhésion via le code. Renvoie le nom de l'org. */
   requestJoin(code: string): Promise<{ orgName: string }>;
+
+  /** Invite un AMI (amitie confirmee) dans une organisation dont je suis membre. */
+  inviteFriendToOrg(orgId: string, friendUserId: string): Promise<void>;
+
+  /**
+   * auth.users.id des amis que J'AI invités dans cette org et qui n'ont ni
+   * accepté ni refusé — sert uniquement à distinguer « jamais invité » de
+   * « invitation en attente » dans InviteFriendsToOrg (le bouton se grise).
+   * La policy `org_invitations_select` (mig. 105) autorise déjà tout membre
+   * de l'org à lire ces lignes ; pas de RPC dédiée nécessaire.
+   */
+  getPendingSentInvitationIds(orgId: string): Promise<string[]>;
+
+  /** Mes invitations d'entreprise en attente (boite de reception). */
+  getMyOrgInvitations(): Promise<OrgInvitation[]>;
+
+  /** J'accepte ou je refuse une invitation qui m'est adressee. */
+  respondOrgInvitation(invitationId: string, accept: boolean): Promise<void>;
+
+  /** Les retraits d'entreprise dont je n'ai pas encore accuse reception. */
+  getMyOrgRemovalNotices(): Promise<OrgRemovalNotice[]>;
+
+  /** J'accuse reception d'un retrait (la notification disparait). */
+  dismissOrgRemovalNotice(noticeId: string): Promise<void>;
   /** Admin : accepte ou refuse une demande d'adhésion. */
   respondJoinRequest(requestId: string, accept: boolean): Promise<void>;
   /** Demandeur : annule sa demande en attente. */
@@ -58,4 +91,18 @@ export interface IOrganizationsRepository {
   claimInviteLink(token: string): Promise<{ orgId: string; orgName: string }>;
   /** Régénère le code permanent de l'org (admin) — l'ancien est invalidé. */
   regenerateJoinCode(orgId: string): Promise<string>;
+
+  // Permissions explicites par membre (mig. 115) — SURCHARGES uniquement.
+  /**
+   * Les surcharges posées dans cette org. Un membre absent de la liste suit
+   * les défauts dérivés (admin / manager / membre) : ne jamais interpréter
+   * une absence comme « aucun droit ».
+   */
+  getMemberPermissions(orgId: string): Promise<OrgMemberPermissions[]>;
+  /**
+   * Pose ou met à jour la surcharge d'un membre. Le plafond (« ne pas
+   * accorder un droit qu'on n'a pas ») est appliqué par le SERVEUR
+   * (`enforce_org_permission_ceiling`) — ce chemin n'est qu'une façade.
+   */
+  setMemberPermissions(orgId: string, userId: string, input: SetOrgPermissionsInput): Promise<void>;
 }

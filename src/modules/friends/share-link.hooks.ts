@@ -8,9 +8,9 @@
 // ═══════════════════════════════════════════════════════════════════
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { friendKeys } from './constants';
+import { getOrCreateShareLink } from './share-link.repository';
 
 export const PENDING_INVITE_STORAGE_KEY = 'cosmo_pending_share_invite';
 
@@ -40,39 +40,71 @@ export function buildInviteUrl(token: string): string {
 export const useShareLink = (taskId: string, enabled: boolean) => {
   return useQuery({
     queryKey: [...friendKeys.all, 'shareLink', taskId],
-    queryFn: async (): Promise<string> => {
-      const { data: existing, error: selectError } = await supabase
-        .from('share_links')
-        .select('id, expires_at')
-        .eq('task_id', taskId)
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (selectError) throw normalizeApiError(selectError);
-      if (existing) return existing.id as string;
-
-      const user = await getCurrentUser();
-      if (!user) throw new Error('Not authenticated');
-      const { data: created, error: insertError } = await supabase
-        .from('share_links')
-        .insert([{ task_id: taskId, owner_id: user.id }])
-        .select('id')
-        .single();
-      if (insertError) throw normalizeApiError(insertError);
-      return created.id as string;
-    },
+    queryFn: () => getOrCreateShareLink(taskId),
     enabled,
     staleTime: 1000 * 60 * 5,
   });
 };
 
-/** Claim d'un lien d'invitation (RPC SECURITY DEFINER, mig. 046). */
+export interface PreviewShareLinkResult {
+  expired: boolean;
+  /** `profiles.display_name` du partageur — jamais son email. NULL si non renseigné. */
+  owner_name: string | null;
+  task_name: string | null;
+}
+
+/**
+ * Aperçu ANONYME d'un lien d'invitation (RPC `preview_share_link`, mig. 098).
+ *
+ * Sert à afficher « X vous invite à collaborer sur Y » AVANT l'inscription.
+ * Ne consomme pas le lien : le claim reste à `useClaimShareLink`, déclenché
+ * par `ShareInviteClaimer` une fois l'utilisateur authentifié.
+ *
+ * Un lien inconnu et un lien expiré renvoient la même réponse (`expired`) —
+ * la RPC ne distingue volontairement pas les deux.
+ */
+export const usePreviewShareLink = (token: string | undefined, enabled: boolean) => {
+  return useQuery({
+    queryKey: [...friendKeys.all, 'shareLinkPreview', token],
+    queryFn: async (): Promise<PreviewShareLinkResult> => {
+      const { data, error } = await supabase.rpc('preview_share_link', { p_token: token });
+      if (error) throw normalizeApiError(error);
+      const result = data as Partial<PreviewShareLinkResult> | null;
+      return {
+        expired: result?.expired !== false,
+        owner_name: result?.owner_name ?? null,
+        task_name: result?.task_name ?? null,
+      };
+    },
+    enabled: enabled && isValidInviteToken(token),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+  });
+};
+
+/**
+ * Claim d'un lien d'invitation (RPC SECURITY DEFINER, mig. 046).
+ *
+ * 🔴 C-63 — ce hook lancait l'erreur PostgREST BRUTE (`throw error`), et
+ * `ShareInviteClaimer` triait ensuite sur le TEXTE du message. Le reseau qui
+ * tombe, un `42501`, un 500 de PostgREST : aucun de ces messages ne contient
+ * `own_link` ni `expired_link`, donc l'utilisateur lisait « ce lien
+ * d'invitation est invalide » — une affirmation DEFINITIVE et FAUSSE, sur le
+ * chemin d'acquisition que `CLAUDE.md` protege explicitement, et il n'avait
+ * plus aucune raison de reessayer.
+ *
+ * `normalizeApiError` sait deja promouvoir `own_link` / `expired_link` /
+ * `invalid_link` en `ApiError.code` : les trois sont catalogues en `api.*`,
+ * en `fr` comme en `en`. L'appelant branche donc sur un CODE, jamais sur une
+ * phrase, et sa branche par defaut ne peut plus se faire passer pour un refus
+ * nomme. Les trois identifiants sont ceux des `RAISE EXCEPTION` de la mig. 046
+ * / 047 — verifies dans le SQL, pas supposes.
+ */
 export const useClaimShareLink = () => {
   return useMutation({
     mutationFn: async (token: string): Promise<ClaimShareLinkResult> => {
       const { data, error } = await supabase.rpc('claim_share_link', { p_token: token });
-      if (error) throw error; // message technique (invalid_link/expired_link/own_link) géré par l'appelant
+      if (error) throw normalizeApiError(error);
       return data as ClaimShareLinkResult;
     },
   });

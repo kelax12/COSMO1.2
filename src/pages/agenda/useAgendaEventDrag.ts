@@ -15,9 +15,6 @@ interface UseAgendaEventDragParams {
   setShowEditEventModal: (open: boolean) => void;
   setCalendarKey: React.Dispatch<React.SetStateAction<number>>;
   setMobileCalendarKey: React.Dispatch<React.SetStateAction<number>>;
-  // Événement SANS tâche liée déposé sur la sidebar → au lieu de le supprimer,
-  // on propose de créer une tâche à partir de ses infos (nom, horaires…).
-  onDropUnlinkedEvent?: (event: CalendarEvent) => void;
 }
 
 // Gère le cycle de vie d'un drag d'event sur l'agenda (FullCalendar) : drop sur
@@ -31,7 +28,6 @@ export function useAgendaEventDrag({
   setShowEditEventModal,
   setCalendarKey,
   setMobileCalendarKey,
-  onDropUnlinkedEvent,
 }: UseAgendaEventDragParams) {
   // Timestamp pour suppression du clic résiduel après un drag — auto-expire après 300ms
   // (jamais "stuck" même si le cleanup ne tourne pas).
@@ -85,10 +81,16 @@ export function useAgendaEventDrag({
             const masterId = getMasterId(draggedId);
             const ev = events.find(e2 => e2.id === masterId);
             if (ev && !ev.taskId) {
-              // Event non rattaché à une tâche → propose la création d'une
-              // tâche à partir de ses infos, sans le supprimer (FC le fait
-              // revenir naturellement à sa position d'origine).
-              onDropUnlinkedEvent?.(ev);
+              // Événement non rattaché à une tâche : le drop est REFUSÉ, et
+              // FullCalendar ramène le bloc à sa position d'origine.
+              //
+              // ⚠️ Il ouvrait jusqu'au 2026-09-13 une popup « Que faire de cet
+              // événement ? » proposant de le supprimer ou d'en faire une
+              // tâche. C'était la seule surface de décision du produit qui
+              // visait des événements SANS tâche, et elle surgissait sur un
+              // geste qui ne demandait rien. La sidebar n'accepte donc plus
+              // que les créneaux de tâche, pour qui le drop reste une
+              // suppression.
               return;
             }
             if (ev) {

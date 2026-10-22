@@ -12,6 +12,10 @@ import type { Task } from '@/modules/tasks';
 import { useFriends, useShareList, type TaskSnapshot } from '@/modules/friends';
 import { collabIdOf, filterFriendsForCollab } from './task-modal/collaborators';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
+import { useT } from '@/i18n/useT';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface ShareListSheetProps {
   /** Liste à partager (null = fermé). */
@@ -22,7 +26,24 @@ interface ShareListSheetProps {
 }
 
 const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose }) => {
-  const { data: friends = [] } = useFriends();
+  const { t } = useT('tasks');
+  const sheetMotion = useSheetMotion();
+  // La poignee de glissement ci-dessous promettait un geste inexistant
+  // (audit mobile 2026-08-14). `useBottomSheet` plutot que `useSheetDrag` :
+  // il est MOBILE seulement et cede le geste a la liste d'amis des qu'elle
+  // est defilee, la ou un `drag='y'` nu empecherait de la faire defiler.
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+  // C-53 — la feuille se declarait `role="dialog"` sans `aria-modal`, sans
+  // piege de focus et sans Echap.
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: Boolean(list),
+    onClose,
+    label: list ? t('shareList.sheetLabel', { name: list.name }) : undefined,
+  });
+  // C-40 — sans `isLoading`, la feuille AFFIRMAIT « Ajoute d'abord un ami »
+  // a quelqu'un qui en a : le premier rendu arrive avant la reponse, et la
+  // valeur par defaut `[]` est indistinguable d'un carnet reellement vide.
+  const { data: friends = [], isLoading: loadingFriends } = useFriends();
   const shareListMutation = useShareList();
   const [search, setSearch] = useState('');
 
@@ -75,14 +96,15 @@ const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose })
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          ref={overlayRef}
+          {...dialogProps}
           className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-[2px] sm:p-4"
           onClick={onClose}
         >
           <motion.div
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 32, stiffness: 340, mass: 0.65 }}
+            ref={sheetRef}
+            {...sheetDragProps}
+            {...sheetMotion}
             onClick={(e) => e.stopPropagation()}
             className="w-full sm:max-w-md flex flex-col overflow-hidden rounded-t-[20px] sm:rounded-[20px] border-t sm:border"
             style={{
@@ -91,12 +113,10 @@ const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose })
               paddingBottom: 'env(safe-area-inset-bottom)',
               maxHeight: '80vh',
             }}
-            role="dialog"
-            aria-label={`Partager la liste ${list.name}`}
           >
             {/* Drag handle (mobile) */}
             <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
-              <div className="w-9 h-[4px] rounded-full" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+              <motion.div className="h-[4px] rounded-full" style={{ width: handleBarWidth, backgroundColor: 'rgb(var(--color-border))' }} />
             </div>
 
             {/* Header teal — identité « listes partagées » */}
@@ -121,7 +141,7 @@ const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose })
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Rechercher un ami…"
+                  placeholder={t('shareList.searchFriend')}
                   className="w-full bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl pl-9 pr-4 py-2 text-sm text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-teal-500 transition-all"
                 />
               </div>
@@ -129,13 +149,11 @@ const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose })
 
             {/* Liste des amis */}
             <div className="px-3 pb-3 overflow-y-auto">
-              {selectableFriends.length === 0 ? (
+              {loadingFriends ? null : selectableFriends.length === 0 ? (
                 <div className="px-2 py-8 text-center">
                   <UserPlus size={22} className="mx-auto mb-2 text-slate-400" aria-hidden="true" />
                   <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                    {friends.length === 0
-                      ? 'Ajoute d’abord un ami pour partager une liste.'
-                      : 'Aucun ami ne correspond à ta recherche.'}
+                    {friends.length === 0 ? t('shareList.noFriendYet') : t('shareList.noMatch')}
                   </p>
                 </div>
               ) : (

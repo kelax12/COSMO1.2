@@ -1,0 +1,267 @@
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { X, Link as LinkIcon, UserRound, ListTodo, TrendingUp, CalendarDays, Briefcase, History, MoreHorizontal } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { getDateLocale } from '@/i18n/format';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { toast } from '@/lib/toast';
+import { isManagerOf, useOrgMemberLastActivity, type OrgMember } from '@/modules/organizations';
+import type { OrgTeam } from '@/modules/org-teams';
+import MemberAvatar from './MemberAvatar';
+import { useT } from '@/i18n/useT';
+import RoleTerm from './RoleTerm';
+import type { KeyOf } from '@/i18n/catalog';
+import { buildOrgLink } from './deep-link.helpers';
+import {
+  MEMBER_TAB_PARAM,
+  resolveMemberTab,
+  visibleMemberTabs,
+  type MemberTab,
+} from './member-sheet.helpers';
+import { MemberProfileBody } from './MemberProfileBody';
+import { MemberTasksBody, MemberContributionBody } from './MemberInsightsBodies';
+import { MemberAgendaBody } from './MemberAgendaBody';
+import { MemberWorkBody, MemberHistoryBody } from './MemberWorkBodies';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
+
+interface MemberSheetProps {
+  orgId: string;
+  member: OrgMember;
+  members: OrgMember[];
+  /** Équipes transverses du membre. */
+  teams: OrgTeam[];
+  currentUserId?: string;
+  /** Le membre peut-il être déplacé par l'utilisateur courant ? */
+  canMove: boolean;
+  /** Peut-on ajouter un collaborateur sous ce membre ? */
+  canAddUnder: boolean;
+  /** Supérieur hiérarchique : onglets Tâches et Contribution. */
+  canSeeInsights: boolean;
+  /** Agenda éditable — droit distinct (mig. 077, agenda manager). */
+  canSeeAgenda: boolean;
+  /** Onglet demandé par l'URL (`?memberTab=`) — validé contre les droits. */
+  initialTab?: string | null;
+  onClose: () => void;
+  onMove: (m: OrgMember) => void;
+  onAddUnder: (m: OrgMember) => void;
+}
+
+// Libellés venus de deux catalogues (2026-10-01 : `member.*` est passé dans `orgAdmin`).
+type TabLabel = { ns: 'org'; key: KeyOf<'org'> } | { ns: 'orgAdmin'; key: KeyOf<'orgAdmin'> };
+const TAB_META: Record<MemberTab, { label: TabLabel; Icon: typeof UserRound }> = {
+  profile: { label: { ns: 'orgAdmin', key: 'member.tabProfile' }, Icon: UserRound },
+  work: { label: { ns: 'org', key: 'popups.member.tabWork' }, Icon: Briefcase },
+  tasks: { label: { ns: 'orgAdmin', key: 'member.tabTasks' }, Icon: ListTodo },
+  contribution: { label: { ns: 'orgAdmin', key: 'member.tabContribution' }, Icon: TrendingUp },
+  history: { label: { ns: 'org', key: 'popups.member.tabHistory' }, Icon: History },
+  agenda: { label: { ns: 'orgAdmin', key: 'member.tabAgenda' }, Icon: CalendarDays },
+};
+
+/**
+ * Fiche membre unifiée (item #18) — une seule vue à onglets pour tout ce qu'on
+ * peut savoir d'une personne : profil, tâches, contribution, agenda.
+ *
+ * Avant, trois sheets distincts montraient la même personne depuis trois
+ * entrées de menu différentes : un manager devait choisir À L'AVANCE lequel
+ * ouvrir, et rouvrir un menu pour passer de l'un à l'autre.
+ *
+ * Cet hôte possède TOUT le chrome (portal, overlay, en-tête, barre d'onglets)
+ * et ne monte que le corps de l'onglet actif. Il ne décide rien lui-même : les
+ * onglets visibles viennent de `visibleMemberTabs`, testé à part.
+ */
+const MemberSheet = ({
+  orgId, member, members, teams, currentUserId,
+  canMove, canAddUnder, canSeeInsights, canSeeAgenda,
+  initialTab, onClose, onMove, onAddUnder,
+}: MemberSheetProps) => {
+  const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
+
+  const tabs = useMemo(
+    () => visibleMemberTabs({ canSeeInsights, canSeeAgenda }),
+    [canSeeInsights, canSeeAgenda],
+  );
+  const [tab, setTab] = useState<MemberTab>(() => resolveMemberTab(initialTab, tabs));
+
+  // Dernière activité (mig. 170) : mêmes ayants droit que les onglets Tâches
+  // et Contribution. Même clé de cache que l'annuaire : aucune lecture de plus
+  // quand la fiche s'ouvre depuis lui.
+  const { data: lastActivity } = useOrgMemberLastActivity(orgId, {
+    enabled: canSeeInsights,
+    members,
+    viewerId: currentUserId,
+  });
+  const memberActivity = canSeeInsights
+    ? lastActivity?.find((a) => a.userId === member.userId)
+    : undefined;
+
+  // Les droits peuvent rétrécir pendant que la fiche est ouverte (un membre
+  // sort du sous-arbre après un déplacement dans la pyramide) : on ne laisse
+  // pas un onglet devenu interdit affiché.
+  useEffect(() => {
+    setTab((current) => resolveMemberTab(current, tabs));
+  }, [tabs]);
+
+  // Échap ferme la fiche — les trois sheets d'origine ne le faisaient pas.
+  // La touche appartient maintenant a useModalA11y (appele plus bas).
+
+  /**
+   * URL absolue : le lien part dans une conversation, un chemin relatif n'y
+   * serait pas cliquable. Il embarque l'onglet courant — partager « sa
+   * contribution » et devoir dire « puis clique sur Contribution » annulerait
+   * l'intérêt du lien. `writeText` peut échouer (permission refusée, page non
+   * sécurisée) : on ne prétend pas avoir copié dans ce cas.
+   */
+  const copyProfileLink = async () => {
+    const path = buildOrgLink('pyramid', { member: member.userId }, { [MEMBER_TAB_PARAM]: tab });
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}${path}`);
+      toast.success(ta('member.copyLinkDone'));
+    } catch {
+      toast.error(ta('member.copyLink'));
+    }
+  };
+
+  const isMe = member.userId === currentUserId;
+  // Mêmes mots que l'annuaire et le glossaire (cohérence globale, 2026-09-25).
+  const roleTerm = member.role === 'admin' ? 'admin' : isManagerOf(members, member.userId) ? 'manager' : 'member';
+  const roleLabel = <RoleTerm term={roleTerm}>{t(`roles.${roleTerm}`)}</RoleTerm>;
+
+  // L'agenda est un calendrier plein écran, pas une carte : FullCalendar ne
+  // sait se dimensionner que dans un conteneur à hauteur DÉFINIE. Le panneau
+  // s'agrandit donc pour cet onglet — sans quoi la grille se rend écrasée.
+  // Les autres onglets sont en grand format aussi (maquettes du 2026-09-28) :
+  // colonnes et tableaux, plus une colonne étroite de téléphone.
+  const wide = tab === 'agenda';
+
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onClose,
+    label: ta('member.sheetAria', { name: member.displayName }),
+  });
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        className={`bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] w-full shadow-2xl flex flex-col rounded-t-[24px] sm:rounded-2xl ${
+          wide ? 'h-[92dvh] sm:h-[90vh] sm:max-w-6xl' : 'max-h-[88vh] sm:max-w-3xl'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+        ref={modalA11yRef}
+        {...modalA11yProps}
+      >
+        {/* En-tête */}
+        <div className="flex items-start justify-between gap-3 p-5 pb-3 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <MemberAvatar avatar={member.avatar} name={member.displayName} size={40} />
+            <div className="min-w-0">
+              <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">
+                {isMe ? ta('pyramid.you') : member.displayName}
+              </h2>
+              {/* Maquettes 305 et 309 : rôle en casse normale, dernière activité sous le nom. */}
+              <p className="text-caption font-semibold md:uppercase md:tracking-wide max-md:text-label max-md:font-normal text-[rgb(var(--color-text-muted))]">
+                {roleLabel}
+                {memberActivity?.lastActivityAt && (
+                  <span className="md:hidden"> · {formatDistanceToNow(new Date(memberActivity.lastActivityAt), { addSuffix: true, locale: getDateLocale() })}</span>
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Maquette 313 : sur mobile, le lien passe dans un menu « … ». */}
+            <DropdownMenu>
+              <DropdownMenuTrigger aria-label={t('common.actionsFor', { name: member.displayName })} className="md:hidden w-10 h-10 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))]">
+                <MoreHorizontal size={20} aria-hidden="true" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onClick={copyProfileLink}><LinkIcon size={14} aria-hidden="true" /> {ta('member.copyLink')}</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <button
+              type="button"
+              onClick={copyProfileLink}
+              aria-label={ta('member.copyLink')}
+              title={ta('member.copyLink')}
+              className="max-md:hidden w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
+            >
+              <LinkIcon size={16} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t('common.close')}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+
+        {/* Barre d'onglets — inutile pour un pair, qui ne voit que le profil. */}
+        {tabs.length > 1 && (
+          <div
+            role="tablist"
+            aria-label={ta('member.tabsAria')}
+            className="flex gap-1 px-3 overflow-x-auto border-b border-[rgb(var(--color-border))] shrink-0"
+          >
+            {tabs.map((id) => {
+              const { label, Icon } = TAB_META[id];
+              const active = tab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setTab(id)}
+                  className={`inline-flex items-center gap-1.5 px-3 max-md:px-2.5 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                    active
+                      ? 'border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-text-primary))]'
+                      : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
+                  }`}
+                >
+                  {/* Maquette 306 : sans icône sur mobile, les onglets tiennent entiers. */}
+                  <Icon size={15} aria-hidden="true" className="max-md:hidden" /> {label.ns === 'org' ? t(label.key) : ta(label.key)}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Corps — un seul onglet monté à la fois (cf. FullCalendar ci-dessus). */}
+        <div
+          role="tabpanel"
+          className={wide ? 'flex-1 min-h-0 flex flex-col' : 'flex-1 min-h-0 overflow-y-auto p-5 pt-4'}
+        >
+          {tab === 'profile' && (
+            <MemberProfileBody
+              member={member}
+              members={members}
+              teams={teams}
+              currentUserId={currentUserId}
+              lastActivity={memberActivity}
+              canMove={canMove}
+              canAddUnder={canAddUnder}
+              onClose={onClose}
+              onMove={onMove}
+              onAddUnder={onAddUnder}
+            />
+          )}
+          {tab === 'work' && <MemberWorkBody orgId={orgId} member={member} teams={teams} canSeeInsights={canSeeInsights} />}
+          {tab === 'history' && <MemberHistoryBody orgId={orgId} member={member} />}
+          {tab === 'tasks' && <MemberTasksBody orgId={orgId} member={member} canEdit={canSeeInsights} />}
+          {tab === 'contribution' && <MemberContributionBody orgId={orgId} member={member} />}
+          {tab === 'agenda' && <MemberAgendaBody member={member} />}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+};
+
+export default MemberSheet;

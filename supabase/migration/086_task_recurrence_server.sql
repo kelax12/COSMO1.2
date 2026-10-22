@@ -84,8 +84,22 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_tasks_recurrence_parent
 -- Pourquoi une v2 plutôt qu'une modification en place : `toggle_task_complete`
 -- renvoie `SETOF tasks`. Changer son type de retour casserait tout client
 -- encore en vol pendant le déploiement. Convention déjà utilisée par le projet
--- (`accept_friend_request_v2`). La v1 pourra être supprimée une fois le front
--- déployé et stabilisé.
+-- (`accept_friend_request_v2`).
+--
+-- ⚠️ DETTE DE TRANSITION — `toggle_task_complete` (v1) est DÉPRÉCIÉE.
+--
+-- Elle n'a plus aucun appelant dans le dépôt depuis le 2026-08-07 : elle n'est
+-- conservée QUE pour la fenêtre de déploiement (un onglet resté ouvert sur
+-- l'ancien front continue de l'appeler) et pour permettre un rollback front
+-- sans rollback DB.
+--
+-- ➜ À SUPPRIMER une fois le front déployé et stabilisé (~1 semaine) :
+--
+--     DROP FUNCTION IF EXISTS public.toggle_task_complete(UUID);
+--
+-- Ne pas l'oublier : la laisser en place, c'est garder un second chemin
+-- d'écriture sur `tasks` qui ne génère PAS l'occurrence récurrente. Un futur
+-- appelant qui la choisirait par erreur réintroduirait la faille H1 en silence.
 --
 -- SECURITY INVOKER (défaut) — volontaire : la RLS de `tasks` s'applique
 -- normalement, et le `user_id = auth.uid()` explicite du UPDATE reste la garde

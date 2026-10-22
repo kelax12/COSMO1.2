@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSheetDrag } from '@/components/mobile/mobile-motion';
 import { CheckCircle2, X, Clock } from 'lucide-react';
 import type { OKR, KeyResult } from '@/modules/okrs';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
+import { formatDurationMinutes } from '@/lib/duration';
 
 type Category = { id: string; name: string; color: string };
 
@@ -46,7 +49,11 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
     validatedRef.current = false;
     // Init uniquement sur okr.id (voir commentaire ci-dessus) — pas l'objet okr
     // entier, sinon double-commit pendant l'animation fly.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `okr` entier omis : le brouillon s initialise a l OUVERTURE d un
+       objectif. Sur l objet, une invalidation du cache pendant l animation
+       `fly` relancerait l init, donc un second commit et un double toast.
+       L identite de l objectif suffit a dire qu il faut reinitialiser. */
   }, [okr?.id]);
 
   useEffect(() => {
@@ -56,12 +63,33 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
     return () => { document.body.style.overflow = prev; };
   }, [okr]);
 
-  useEffect(() => {
-    if (!okr || phase !== 'edit') return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [okr, phase, onClose]);
+  // Echap appartient desormais a useModalA11y, avec la MEME garde de phase
+  // (`phase === 'edit'') : voir l'appel du hook plus bas.
+
+  // C-53 — appele AVANT le return anticipe.
+  //
+  // Le nom accessible est le TITRE AFFICHE de l'objectif : il n'existait pas de
+  // cle dediee, et le titre EST le sujet de cette revue.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: Boolean(okr && draft),
+    // Le voile ne ferme que pendant la phase d'edition, jamais pendant
+    // l'animation de validation : Echap suit exactement la meme regle.
+    onClose: () => { if (phase === 'edit') onClose(); },
+    labelledBy: 'okr-deadline-review-title',
+  });
+
+  // C-07 · la poignée dessinée sur mobile (« Drag handle mobile », plus bas)
+  // ne faisait RIEN. Elle promettait un geste inexistant, ce que le module
+  // interdit explicitement : on tire, rien ne bouge, et on en conclut que
+  // l'app est cassée. Même course que toutes les feuilles (80 px ou 500 px/s).
+  //
+  // ⚠️ Le geste suit la MÊME règle que le voile et qu'Échap : il ne ferme que
+  // pendant la phase d'édition. Pendant l'animation de validation, la carte
+  // porte un `animate` qui la fait voler vers sa cible — y laisser un `drag`
+  // ferait lutter deux sources pour le même transform, et l'utilisateur
+  // pourrait interrompre une validation déjà décidée. Le spread est donc
+  // conditionnel, pas le helper.
+  const sheetDrag = useSheetDrag(() => { if (phase === 'edit') onClose(); });
 
   if (!okr || !draft) return null;
 
@@ -82,13 +110,8 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
     return Math.round(sum / krs.length);
   };
 
-  const formatTime = (minutes: number) => {
-    if (minutes === 0) return '0min';
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h === 0) return `${m}min`;
-    return m > 0 ? `${h}h ${m}min` : `${h}h`;
-  };
+  // Maquette 139 : une seule écriture des durées (`@/lib/duration`).
+  const formatTime = formatDurationMinutes;
 
   const handleValidate = () => {
     const commit = () => {
@@ -129,6 +152,8 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
         exit={{ opacity: 0 }}
         transition={{ duration: phase === 'flying' ? 0.45 : 0.2 }}
         onClick={() => phase === 'edit' && onClose()}
+        ref={modalA11yRef}
+        {...modalA11yProps}
         className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-slate-950/60 backdrop-blur-sm sm:p-4"
       >
         <motion.div
@@ -146,6 +171,7 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
               : { type: 'spring', stiffness: 240, damping: 22 }
           }
           onAnimationComplete={() => { if (phase === 'flying') handleFlyEnd(); }}
+          {...(phase === 'edit' ? sheetDrag : {})}
           onClick={(e) => e.stopPropagation()}
           className="relative w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92dvh]"
           style={{
@@ -192,7 +218,7 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
                   <span>→</span>
                   <span>{formatDate(new Date(draft.endDate), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                 </div>
-                <h3 className="text-base sm:text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>{draft.title}</h3>
+                <h3 id="okr-deadline-review-title" className="text-base sm:text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>{draft.title}</h3>
                 <p className="text-xs sm:text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{draft.description}</p>
               </div>
             </div>

@@ -1,16 +1,18 @@
 // ═══════════════════════════════════════════════════════════════════
-// TasksInboxMenu — bouton boîte de réception mobile pour la page Tâches.
-// Regroupe les tâches partagées + listes partagées en attente (contenu
-// identique à PendingSharedTasks / PendingSharedLists) dans un popover,
-// sur le même modèle que InboxMenu (Dashboard). Mobile only : ces bandeaux
-// restent affichés inline sur desktop.
+// TasksInboxMenu — bouton boîte de réception pour la page Tâches.
+// Regroupe les tâches partagées + listes partagées en attente dans un
+// popover, sur le même modèle que InboxMenu (Dashboard). Un seul composant,
+// deux rendus de déclencheur : `variant="mobile"` (icône seule, TouchTarget,
+// dans MobileHeader) et `variant="desktop"` (pastille avec libellé, à côté
+// du bouton Calendrier) — la logique de données et le popover sont
+// partagés, seul le bouton qui l'ouvre change.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Inbox, Check, X, Bell, ListChecks } from 'lucide-react';
-import { toast } from 'sonner';
-import { useTasks, type Task, taskKeys } from '@/modules/tasks';
+import { Inbox, Check, X } from 'lucide-react';
+import { toast } from '@/lib/toast';
+import { useTasks, usePendingSharedTasks, type Task, taskKeys } from '@/modules/tasks';
 import {
   useFriends,
   useRelatedTaskShares,
@@ -28,12 +30,17 @@ import { getAcknowledgedShares, acknowledgeShare } from '@/lib/acknowledged-shar
 import TouchTarget from '@/components/mobile/TouchTarget';
 import { useT } from '@/i18n/useT';
 
-const TasksInboxMenu: React.FC = () => {
+interface TasksInboxMenuProps {
+  variant?: 'mobile' | 'desktop';
+}
+
+const TasksInboxMenu: React.FC<TasksInboxMenuProps> = ({ variant = 'mobile' }) => {
   const { t, tp } = useT('tasks');
   const { user } = useAuth();
   const isDemo = useIsDemo();
   const queryClient = useQueryClient();
   const { data: tasks = [] } = useTasks();
+  const { data: pendingShared = [] } = usePendingSharedTasks();
   const { data: friends = [] } = useFriends();
   const { data: relatedShares = [] } = useRelatedTaskShares();
   const unshareTaskMutation = useUnshareTask();
@@ -56,12 +63,23 @@ const TasksInboxMenu: React.FC = () => {
         (t) => !!t.sharedBy && t.sharedBy !== user?.name && !t.completed && !ack.has(t.id)
       );
     }
-    const pendingReceived = new Set(
+    // Prod : la RPC dediee (mig. 103). `useTasks()` ne contient PLUS les
+    // partages non acceptes — les filtrer depuis cette liste ne renverrait
+    // jamais rien. Le filtre `relatedShares` reste en garde-fou pour une
+    // instance ou la migration n'est pas encore appliquee : la RPC et le
+    // filtre disent alors la meme chose, et l'union ne double aucune ligne.
+    const pendingIds = new Set(
       relatedShares.filter((s) => s.friendId === user?.id && !s.accepted).map((s) => s.taskId)
     );
-    return tasks.filter((t) => pendingReceived.has(t.id) && !t.completed);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasks, relatedShares, isDemo, user?.name, user?.id, ackVersion]);
+    const byId = new Map<string, Task>();
+    for (const t of pendingShared) if (!t.completed) byId.set(t.id, t);
+    for (const t of tasks) if (pendingIds.has(t.id) && !t.completed) byId.set(t.id, t);
+    return [...byId.values()];
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `ackVersion` est declare EN TROP, pas en moins : compteur d invalidation
+       du mode demo, qu ESLint ne peut pas relier au corps. Les trois sources
+       reelles sont toutes dans la liste, aucune valeur lue ne peut perimer. */
+  }, [tasks, pendingShared, relatedShares, isDemo, user?.name, user?.id, ackVersion]);
 
   const sharerName = (task: Task): string =>
     (task.userId ? friends.find((f) => f.userId === task.userId)?.name : undefined) ??
@@ -146,73 +164,67 @@ const TasksInboxMenu: React.FC = () => {
           exit={{ opacity: 0, scale: 0.95, y: -8 }}
           transition={{ duration: 0.12 }}
           style={{ position: 'fixed', top: popoverPos.top, left: popoverPos.left, zIndex: 9999 }}
-          className="w-80 max-w-[calc(100vw-16px)] bg-[rgb(var(--color-background))] rounded-2xl shadow-md border border-[rgb(var(--color-border))] overflow-hidden"
+          className="w-80 max-w-[calc(100vw-16px)] bg-[rgb(var(--color-background))] rounded-xl shadow-md border border-[rgb(var(--color-border))] overflow-hidden"
           role="dialog"
           aria-label={t('inbox.label')}
         >
-          <div className="px-4 py-3 border-b border-[rgb(var(--color-border))] flex items-center gap-2">
-            <Inbox size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-            <span className="font-bold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{t('inbox.label')}</span>
+          {/* Sobre : pas d'icône dans l'en-tête (déjà sur le déclencheur, la
+              répéter ici est décoratif), pas de badge coloré — le compte reste
+              lisible en chiffre neutre. */}
+          <div className="px-4 py-3 border-b border-[rgb(var(--color-border))] flex items-center justify-between">
+            <span className="font-semibold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{t('inbox.label')}</span>
             {total > 0 && (
-              <span className="ml-auto text-caption font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                {total} en attente
-              </span>
+              <span className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] tabular-nums">{total}</span>
             )}
           </div>
 
           <div className="max-h-[60vh] overflow-y-auto">
             {total === 0 && (
-              <div className="px-4 py-8 text-center">
-                <div className="w-11 h-11 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center mx-auto mb-2.5">
-                  <Bell size={18} className="text-slate-400" aria-hidden="true" />
-                </div>
-                <p className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-200">{t('inbox.allClear')}</p>
-                <p className="text-caption sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <div className="px-4 py-9 text-center">
+                <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-secondary))]">{t('inbox.allClear')}</p>
+                <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
                   {t('inbox.allClearHint')}
                 </p>
               </div>
             )}
 
             {pendingTasks.length > 0 && (
-              <div className="px-3 pt-3 pb-1">
-                <p className="px-1 text-caption sm:text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-2">
+              <div>
+                <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
                   {t('inbox.sharedTasks', { count: pendingTasks.length })}
                 </p>
-                <div className="space-y-2">
+                <div className="divide-y divide-[rgb(var(--color-border))]">
                   {pendingTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="p-3 rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-label sm:text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
-                            {task.name}
-                          </p>
-                          <p className="text-caption sm:text-xs truncate text-amber-700 dark:text-amber-300">
-                            {t('inbox.sharedBy', { name: sharerName(task) })}
-                          </p>
-                        </div>
-                        <div className="flex gap-1.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleAcceptTask(task)}
-                            disabled={acceptSharedTaskMutation.isPending}
-                            className="w-11 h-11 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                            aria-label={t('inbox.acceptTask', { name: task.name })}
-                          >
-                            <Check size={15} aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRejectTask(task)}
-                            disabled={unshareTaskMutation.isPending}
-                            className="w-11 h-11 rounded-lg border border-amber-300 dark:border-amber-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                            aria-label={t('inbox.refuseTask', { name: task.name })}
-                          >
-                            <X size={15} aria-hidden="true" />
-                          </button>
-                        </div>
+                    <div key={task.id} className="flex items-center gap-3 px-4 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
+                          {task.name}
+                        </p>
+                        <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
+                          {sharerName(task)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleAcceptTask(task)}
+                          disabled={acceptSharedTaskMutation.isPending}
+                          title={t('inbox.accept')}
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          aria-label={t('inbox.acceptTask', { name: task.name })}
+                        >
+                          <Check size={15} aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRejectTask(task)}
+                          disabled={unshareTaskMutation.isPending}
+                          title={t('inbox.refuse')}
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          aria-label={t('inbox.refuseTask', { name: task.name })}
+                        >
+                          <X size={15} aria-hidden="true" />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -221,48 +233,42 @@ const TasksInboxMenu: React.FC = () => {
             )}
 
             {incomingLists.length > 0 && (
-              <div className="px-3 pt-3 pb-3">
-                <p className="px-1 text-caption sm:text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wide mb-2">
+              <div>
+                <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
                   {t('inbox.sharedLists', { count: incomingLists.length })}
                 </p>
-                <div className="space-y-2">
+                <div className="divide-y divide-[rgb(var(--color-border))]">
                   {incomingLists.map((grant) => (
-                    <div
-                      key={grant.id}
-                      className="p-3 rounded-xl border border-teal-300 dark:border-teal-700/60 bg-teal-50 dark:bg-teal-900/20"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center shrink-0">
-                          <ListChecks size={15} className="text-teal-600 dark:text-teal-300" aria-hidden="true" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-label sm:text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
-                            {grant.name}
-                          </p>
-                          <p className="text-caption sm:text-xs truncate text-teal-700 dark:text-teal-300">
-                            {tp('inbox.sharedListBy', grant.tasks.length, { name: grant.sharedByName ?? t('inbox.anonymousSharer') })}
-                          </p>
-                        </div>
-                        <div className="flex gap-1.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleAcceptList(grant)}
-                            disabled={acceptSharedListMutation.isPending}
-                            className="w-11 h-11 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
-                            aria-label={t('inbox.acceptList', { name: grant.name })}
-                          >
-                            <Check size={15} aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRejectList(grant)}
-                            disabled={refuseSharedListMutation.isPending}
-                            className="w-11 h-11 rounded-lg border border-teal-300 dark:border-teal-700 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 text-slate-500 hover:text-red-500 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                            aria-label={t('inbox.refuseList', { name: grant.name })}
-                          >
-                            <X size={15} aria-hidden="true" />
-                          </button>
-                        </div>
+                    <div key={grant.id} className="flex items-center gap-3 px-4 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
+                          {grant.name}
+                        </p>
+                        <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
+                          {tp('inbox.sharedListBy', grant.tasks.length, { name: grant.sharedByName ?? t('inbox.anonymousSharer') })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleAcceptList(grant)}
+                          disabled={acceptSharedListMutation.isPending}
+                          title={t('inbox.accept')}
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          aria-label={t('inbox.acceptList', { name: grant.name })}
+                        >
+                          <Check size={15} aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRejectList(grant)}
+                          disabled={refuseSharedListMutation.isPending}
+                          title={t('inbox.refuse')}
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                          aria-label={t('inbox.refuseList', { name: grant.name })}
+                        >
+                          <X size={15} aria-hidden="true" />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -275,31 +281,68 @@ const TasksInboxMenu: React.FC = () => {
     </AnimatePresence>
   );
 
+  const ariaLabel = total > 0 ? t('inbox.withCount', { count: total }) : t('inbox.label');
+
+  // Le badge est identique dans les deux variantes : seul le bouton qui le
+  // porte change de forme.
+  const badge = total > 0 && (
+    <span
+      // Taille via `text-caption` (11px), le plancher de l'échelle mobile —
+      // pas une valeur arbitraire plus petite. Un badge de notification est
+      // précisément ce qu'on ne doit pas rendre illisible pour gagner un
+      // pixel (cf. design-system.guard.test.ts).
+      className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-600 text-white text-caption font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
+      aria-hidden="true"
+    >
+      {total > 9 ? '9+' : total}
+    </span>
+  );
+
   return (
     <>
-      <TouchTarget
-        ref={triggerRef}
-        onClick={() => setOpen((v) => !v)}
-        className="relative"
-        aria-label={total > 0 ? t('inbox.withCount', { count: total }) : t('inbox.label')}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        data-tutorial-id="tasks-inbox-toggle"
-      >
-        <Inbox size={20} aria-hidden="true" />
-        {total > 0 && (
-          <span
-            // Taille via `text-caption` (11px), le plancher de l'échelle
-            // mobile — pas une valeur arbitraire plus petite. Un badge de
-            // notification est précisément ce qu'on ne doit pas rendre
-            // illisible pour gagner un pixel (cf. design-system.guard.test.ts).
-            className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-600 text-white text-caption font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
+      {variant === 'desktop' ? (
+        // Même gabarit que le bouton Calendrier voisin (TasksHeader) : pastille
+        // bordée, icône + libellé masqué sous `sm`, hauteur 44px identique.
+        <motion.button
+          ref={triggerRef}
+          type="button"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setOpen((v) => !v)}
+          aria-label={ariaLabel}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          data-tutorial-id="tasks-inbox-toggle"
+          className={`relative flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm ${
+            open
+              ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))] shadow-md'
+              : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] hover:border-[rgb(var(--color-border-strong))]'
+          }`}
+        >
+          {/* Ouvert, le fond du bouton est --color-accent-solid : quasi-blanc
+              en thème Noir. Un `text-white` en dur y rendait l'icône invisible. */}
+          <Inbox
+            size={18}
+            className={open ? 'text-[rgb(var(--color-accent-solid-foreground))]' : 'text-blue-600'}
             aria-hidden="true"
-          >
-            {total > 9 ? '9+' : total}
-          </span>
-        )}
-      </TouchTarget>
+          />
+          <span className="hidden sm:inline">{t('inbox.label')}</span>
+          {badge}
+        </motion.button>
+      ) : (
+        <TouchTarget
+          ref={triggerRef}
+          onClick={() => setOpen((v) => !v)}
+          className="relative"
+          aria-label={ariaLabel}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          data-tutorial-id="tasks-inbox-toggle"
+        >
+          <Inbox size={20} aria-hidden="true" />
+          {badge}
+        </TouchTarget>
+      )}
       {typeof document !== 'undefined' && createPortal(popoverContent, document.body)}
     </>
   );

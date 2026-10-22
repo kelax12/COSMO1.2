@@ -57,6 +57,18 @@ describe('compareTasks', () => {
   it('sorts by priority numerically', () => {
     expect(compareTasks(t({ priority: 1 }), t({ priority: 5 }), 'priority', 'asc', false)).toBeLessThan(0);
   });
+  it('always sorts an unset priority (0) last, regardless of direction', () => {
+    const none = t({ priority: 0 });
+    const low = t({ priority: 1 });
+    const high = t({ priority: 5 });
+    expect(compareTasks(none, low, 'priority', 'asc', false)).toBeGreaterThan(0);
+    expect(compareTasks(none, high, 'priority', 'asc', false)).toBeGreaterThan(0);
+    expect(compareTasks(low, none, 'priority', 'asc', false)).toBeLessThan(0);
+    expect(compareTasks(none, low, 'priority', 'desc', false)).toBeGreaterThan(0);
+    expect(compareTasks(none, high, 'priority', 'desc', false)).toBeGreaterThan(0);
+    expect(compareTasks(low, none, 'priority', 'desc', false)).toBeLessThan(0);
+    expect(compareTasks(none, t({ priority: 0 }), 'priority', 'asc', false)).toBe(0);
+  });
   it('ignores completedAt unless showCompleted', () => {
     const a = t({ completedAt: '2026-01-01T00:00:00Z' });
     const b = t({ completedAt: '2026-02-01T00:00:00Z' });

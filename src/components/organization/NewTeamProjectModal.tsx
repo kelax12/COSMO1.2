@@ -1,51 +1,144 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Plus, Loader2, Trash2, ListTodo } from 'lucide-react';
+import { X, Plus, Loader2, Trash2, ListTodo, LayoutTemplate, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
 import type { OrgMember } from '@/modules/organizations';
-import type { OrgTeam } from '@/modules/org-teams';
-import type { CreateTeamProjectInput } from '@/modules/team-projects';
-import { PROJECT_COLOR_NAMES, PROJECT_COLORS, PRIORITY_META } from './team-projects.helpers';
+import { useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
+import { useOrgSettings } from '@/modules/org-config';
+import type {
+  CreateTeamProjectInput,
+  DraftProjectTask,
+  TeamProject,
+  TeamProjectTemplatePayload,
+} from '@/modules/team-projects';
+import { PRIORITY_META } from './team-projects.helpers';
+import { instantiateTemplate, todayLocal } from './portfolio.helpers';
+import { BUILT_IN_TEMPLATES, builtInPayload } from './project-templates';
 import AssigneesPicker from './AssigneesPicker';
+import MemberMultiSelectField from './MemberMultiSelectField';
+import { projectAudience } from './audience.helpers';
+import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
+import { ProjectColorPicker } from './ProjectEditDialog';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
+import MenuSelect from '@/components/organization/MenuSelect';
 
-/** Tâche initiale saisie dans le popup (créée après le projet). */
+/** Tâche initiale saisie dans le popup. */
 export interface DraftTask {
   name: string;
   assigneeIds: string[];
 }
 
 interface NewTeamProjectModalProps {
+  orgId: string;
   teams: OrgTeam[];
   members: OrgMember[];
+  /** Responsable par défaut : celui qui crée le projet en répond. */
+  currentUserId?: string;
   /** Équipe présélectionnée (depuis le filtre courant) — '' = toute l'entreprise. */
   defaultTeamId?: string;
-  /** Crée le projet PUIS ses tâches initiales. Rejette en cas d'échec. */
-  onSubmit: (input: CreateTeamProjectInput, tasks: DraftTask[]) => Promise<void>;
+  /** Modèles enregistrés par l'entreprise (mig. 153). */
+  templates: TeamProject[];
+  /** Modèle présélectionné (« Nouveau projet depuis ce modèle »). */
+  initialTemplateId?: string;
+  /**
+   * Crée le projet, ses tâches et ses jalons en UNE transaction
+   * (`create_team_project_with_tasks`). Rejette en cas d'échec : rien n'est créé.
+   */
+  onSubmit: (
+    input: CreateTeamProjectInput,
+    tasks: DraftProjectTask[],
+    /** Responsables en plus du premier : membres du projet au rôle `lead` (mig. 190). */
+    coLeadIds: string[],
+  ) => Promise<void>;
   onClose: () => void;
 }
 
-const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
+const labelClass = 'block text-caption font-semibold uppercase tracking-wide mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 const inputClass =
-  'w-full px-4 h-12 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-base';
+  'w-full px-3.5 h-11 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-sm';
 const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' };
+
+/** Valeur du sélecteur de modèle : `org:<id>`, `builtin:<clé>` ou ''. */
+type TemplateChoice = string;
 
 /**
  * Popup de création de projet d'équipe (même langage visuel que TeamTaskModal) :
- * nom, couleur, équipe de rattachement (= collaborateurs qui y ont accès) et une
- * liste de tâches initiales, chacune assignable à des membres.
+ * nom, couleur, catégorie, équipe, responsable, dates, description, un modèle
+ * de départ éventuel et des tâches initiales assignables.
+ *
+ * La couleur est CHOISIE, plus dérivée de la catégorie : la dériver écrasait
+ * le choix de l'équipe à chaque changement de catégorie (audit 2026-09-24).
  */
-const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose }: NewTeamProjectModalProps) => {
-  const { t } = useT('org');
+const NewTeamProjectModal = ({
+  orgId, teams, members, currentUserId, defaultTeamId, templates, initialTemplateId, onSubmit, onClose,
+}: NewTeamProjectModalProps) => {
+  const { t, tp } = useT('org');
+  const { t: pf } = useT('portfolio');
+  const initialOrgTemplate = templates.find((tpl) => tpl.id === initialTemplateId);
   const [name, setName] = useState('');
-  const [color, setColor] = useState('blue');
-  const [teamId, setTeamId] = useState(defaultTeamId ?? '');
+  const [color, setColor] = useState(initialOrgTemplate?.color ?? 'blue');
+  const [categoryId, setCategoryId] = useState<string | null>(initialOrgTemplate?.categoryId ?? null);
+  const [teamId, setTeamId] = useState(initialOrgTemplate?.teamId ?? defaultTeamId ?? '');
+  // Le premier coché est le responsable principal (`owner_id`), les autres co-pilotent.
+  const [ownerIds, setOwnerIds] = useState<string[]>(currentUserId ? [currentUserId] : []);
+  const [description, setDescription] = useState(initialOrgTemplate?.description ?? '');
+  const [dueDate, setDueDate] = useState('');
+  const [templateChoice, setTemplateChoice] = useState<TemplateChoice>(initialOrgTemplate ? `org:${initialOrgTemplate.id}` : '');
+  const [templateTasks, setTemplateTasks] = useState<TeamProjectTemplatePayload['tasks']>(
+    initialOrgTemplate?.templatePayload?.tasks ?? [],
+  );
   const [tasks, setTasks] = useState<DraftTask[]>([]);
   const [composerName, setComposerName] = useState('');
   const [composerAssignees, setComposerAssignees] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // Audience DITE, chiffrée (audit des popups, 2026-09-25) : la visibilité ne
+  // se devinait qu'à l'option « Toute l'entreprise » du sélecteur d'équipe.
+  const { data: teamMembers = [] } = useOrgTeamMembers(orgId);
+  // Audience PROPOSÉE (mig. 195) : « une équipe » présélectionne la première
+  // équipe du créateur, une seule fois, sans écraser un choix, un modèle ou une
+  // équipe imposée. L'audience reste affichée et modifiable (M12).
+  const { data: orgSettings } = useOrgSettings(orgId);
+  const [teamTouched, setTeamTouched] = useState(false);
+  useEffect(() => {
+    if (teamTouched || teamId || initialOrgTemplate || defaultTeamId) return;
+    if (orgSettings?.defaultProjectAudience !== 'team') return;
+    const mine = teamMembers.find((tm) => tm.userId === currentUserId);
+    if (mine) setTeamId(mine.teamId);
+  }, [orgSettings?.defaultProjectAudience, teamMembers, currentUserId, teamTouched, teamId, initialOrgTemplate, defaultTeamId]);
+  const audience = projectAudience(
+    members,
+    teamId ? teamMembers.filter((tm) => tm.teamId === teamId).map((tm) => tm.userId) : null,
+  );
+
+  const payloadOf = (choice: TemplateChoice): TeamProjectTemplatePayload | null => {
+    if (choice.startsWith('org:')) return templates.find((tpl) => `org:${tpl.id}` === choice)?.templatePayload ?? null;
+    if (choice.startsWith('builtin:')) {
+      const def = BUILT_IN_TEMPLATES.find((b) => `builtin:${b.key}` === choice);
+      return def ? builtInPayload(def, (key) => pf(key as 'builtIn.sprint')) : null;
+    }
+    return null;
+  };
+  // Recalculé à chaque rendu : quelques entrées, et un `useMemo` sur une
+  // fonction non stable n'aurait rien mémorisé.
+  const selectedPayload = payloadOf(templateChoice);
+
+  const pickTemplate = (choice: TemplateChoice) => {
+    setTemplateChoice(choice);
+    const payload = payloadOf(choice);
+    setTemplateTasks(payload?.tasks ?? []);
+    const orgTpl = choice.startsWith('org:') ? templates.find((tpl) => `org:${tpl.id}` === choice) : undefined;
+    if (orgTpl) {
+      setColor(orgTpl.color);
+      // L'audience du modèle est une proposition, visible et modifiable ici.
+      setTeamId(orgTpl.teamId ?? '');
+      setCategoryId(orgTpl.categoryId ?? null);
+      if (!description) setDescription(orgTpl.description ?? '');
+    }
+  };
 
   const addTask = () => {
     const n = composerName.trim();
@@ -56,23 +149,50 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
   };
 
   const removeTask = (i: number) => setTasks((prev) => prev.filter((_, idx) => idx !== i));
+  const removeTemplateTask = (i: number) => setTemplateTasks((prev) => prev.filter((_, idx) => idx !== i));
+  const taskTotal = tasks.length + templateTasks.length;
 
   const handleSubmit = async () => {
     if (pending) return;
-    if (!name.trim()) { setError('Le nom du projet est requis'); return; }
+    if (!name.trim()) { setError(t('project.nameRequired')); return; }
     setPending(true);
     setError(null);
     // Une tâche en cours de saisie non ajoutée est incluse (évite la perte).
-    const pendingDraft = composerName.trim()
+    const manual = composerName.trim()
       ? [...tasks, { name: composerName.trim(), assigneeIds: composerAssignees }]
       : tasks;
+    // Le modèle se DATE au moment de créer, à partir d'aujourd'hui (plus de date de début de projet).
+    const fromTemplate = selectedPayload
+      ? instantiateTemplate({ ...selectedPayload, tasks: templateTasks }, todayLocal())
+      : { tasks: [], dueDate: null };
     try {
-      await onSubmit({ name: name.trim(), color, teamId: teamId || null }, pendingDraft);
+      await onSubmit(
+        {
+          name: name.trim(),
+          color,
+          teamId: teamId || null,
+          categoryId,
+          ownerId: ownerIds[0] ?? null,
+          description: description.trim() || null,
+          startDate: null,
+          dueDate: dueDate || fromTemplate.dueDate,
+        },
+        [...fromTemplate.tasks, ...manual.map((d) => ({ name: d.name, assigneeIds: d.assigneeIds }))],
+        ownerIds.slice(1),
+      );
       onClose();
     } catch {
-      setPending(false); // erreur déjà notifiée par les hooks (toast)
+      setPending(false); // erreur déjà notifiée par le hook (toast) — rien n'a été créé
     }
   };
+
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le voile refuse de fermer pendant l'envoi : Echap aussi.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: () => { if (!pending) onClose(); },
+    label: t('project.newAria'),
+  });
 
   return createPortal(
     <div
@@ -83,21 +203,18 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
         className="flex flex-col w-full sm:max-w-xl max-h-[92vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
         style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-label={t('project.newAria')}
+        ref={modalA11yRef}
+        {...modalA11yProps}
       >
-        {/* Poignée mobile */}
-        <div className="sm:hidden flex justify-center pt-4 pb-2 shrink-0">
-          <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
-        </div>
+        {/* Poignée de glissement RETIRÉE, pas oubliée : elle ne faisait rien, et le geste n'a pas sa place sur un formulaire (docs/MOBILE.md §3). */}
+        <div className="sm:hidden pt-3 shrink-0" aria-hidden="true" />
 
-        {/* Header */}
         <div
-          className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b gap-2 shrink-0"
+          className="flex justify-between items-center px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b gap-2 shrink-0"
           style={{ borderColor: 'rgb(var(--color-border))' }}
         >
           <h2 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            Nouveau projet
+            {t('common.newProject')}
           </h2>
           <button
             onClick={onClose}
@@ -110,7 +227,6 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
           </button>
         </div>
 
-        {/* Corps */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-5" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
           {error && (
             <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300 font-medium" role="alert">
@@ -118,8 +234,36 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
             </div>
           )}
 
-          {/* Nom */}
-          <div>
+          {/* Modèle de départ (mig. 153) : ceux de l'entreprise, puis ceux de COSMO. */}
+          <div data-guide-id="project-form-template">
+            <label htmlFor="new-project-template" className={labelClass} style={labelStyle}>
+              <LayoutTemplate size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />
+              {pf('builtIn.pickLabel')}
+            </label>
+            <MenuSelect
+              id="new-project-template"
+              value={templateChoice}
+              onChange={(e) => pickTemplate(e.target.value)}
+              className={inputClass}
+              style={inputStyle}
+            >
+              <option value="">{pf('builtIn.clear')}</option>
+              {templates.length > 0 && (
+                <optgroup label={pf('templates.orgGroup')}>
+                  {templates.map((tpl) => (
+                    <option key={tpl.id} value={`org:${tpl.id}`}>{tpl.name}</option>
+                  ))}
+                </optgroup>
+              )}
+              <optgroup label={pf('templates.builtInGroup')}>
+                {BUILT_IN_TEMPLATES.map((b) => (
+                  <option key={b.key} value={`builtin:${b.key}`}>{pf(`builtIn.${b.key}`)}</option>
+                ))}
+              </optgroup>
+            </MenuSelect>
+          </div>
+
+          <div data-guide-id="project-form-name">
             <label htmlFor="new-project-name" className={labelClass} style={labelStyle}>{t('project.name')}</label>
             <input
               id="new-project-name"
@@ -135,58 +279,101 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
             />
           </div>
 
-          {/* Couleur */}
           <div>
-            <span className={labelClass} style={labelStyle}>{t('project.color')}</span>
-            <div className="flex items-center gap-2 flex-wrap" role="radiogroup" aria-label={t('project.colorAria')}>
-              {PROJECT_COLOR_NAMES.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  role="radio"
-                  aria-checked={color === c}
-                  aria-label={`Couleur ${c}`}
-                  onClick={() => setColor(c)}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${color === c ? 'ring-2 ring-offset-2 ring-offset-[rgb(var(--color-background))] ring-blue-500' : ''}`}
-                >
-                  <span className={`w-5 h-5 rounded-full ${PROJECT_COLORS[c].dot}`} />
-                </button>
-              ))}
+            <span className={labelClass} style={labelStyle}>{pf('new.color')}</span>
+            <ProjectColorPicker value={color} onChange={setColor} label={pf('new.color')} />
+          </div>
+
+          {/* Catégorie — une étiquette transverse (mig. 111), affichée en
+              pastille. Elle ne décide plus de la couleur. */}
+          <div>
+            <span className={labelClass} style={labelStyle}>{t('project.category')}</span>
+            <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={setCategoryId} />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div data-guide-id="project-form-team">
+              <label htmlFor="new-project-team" className={labelClass} style={labelStyle}>{t('project.team')}</label>
+              <MenuSelect
+                id="new-project-team"
+                value={teamId}
+                onChange={(e) => { setTeamTouched(true); setTeamId(e.target.value); }}
+                className={inputClass}
+                style={inputStyle}
+              >
+                <option value="">{t('project.wholeOrg')}</option>
+                {teams.map((team) => (
+                  <option key={team.id} value={team.id}>{t('project.teamOption', { name: team.name })}</option>
+                ))}
+              </MenuSelect>
+            </div>
+            <MemberMultiSelectField
+              label={pf('new.owners')}
+              members={members}
+              value={ownerIds}
+              onChange={setOwnerIds}
+              emptyLabel={pf('noOwner')}
+            />
+            <p
+              className={`sm:col-span-2 -mt-2 flex items-start gap-1.5 rounded-lg px-2.5 py-2 text-xs ${
+                audience.wholeOrg ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]'
+              }`}
+              role="status"
+            >
+              <Eye size={13} className="mt-px shrink-0" aria-hidden="true" />
+              <span>
+                {audience.wholeOrg
+                  ? tp('popups.project.audienceOrg', audience.count)
+                  : tp('popups.project.audienceTeam', audience.count, { team: teams.find((tm) => tm.id === teamId)?.name ?? '' })}
+              </span>
+            </p>
+            <div data-guide-id="project-form-due">
+              <label htmlFor="new-project-due" className={labelClass} style={labelStyle}>{pf('new.dueDate')}</label>
+              <DatePicker id="new-project-due" value={dueDate} onChange={(v) => { setDueDate(v); setError(null); }} className="h-[2.626275rem]" popoverClassName="z-[10000]" minDate={selectedPayload ? todayLocal() : undefined} />
             </div>
           </div>
 
-          {/* Équipe / collaborateurs */}
           <div>
-            <label htmlFor="new-project-team" className={labelClass} style={labelStyle}>{t('project.team')}</label>
-            <select
-              id="new-project-team"
-              value={teamId}
-              onChange={(e) => setTeamId(e.target.value)}
-              className={inputClass}
+            <label htmlFor="new-project-description" className={labelClass} style={labelStyle}>{pf('new.description')}</label>
+            <textarea
+              id="new-project-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={5000}
+              rows={2}
+              placeholder={pf('edit.descriptionPlaceholder')}
+              className={`${inputClass} h-auto py-2.5 resize-y`}
               style={inputStyle}
-            >
-              <option value="">{t('project.wholeOrg')}</option>
-              {teams.map((team) => (
-                <option key={team.id} value={team.id}>{t('project.teamOption', { name: team.name })}</option>
-              ))}
-            </select>
-            <p className="mt-1.5 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-              {teamId
-                ? t('project.teamHint')
-                : 'Visible par toute l\'entreprise.'}
-            </p>
+            />
           </div>
 
-          {/* Tâches initiales */}
-          <div>
+          <div data-guide-id="project-form-tasks">
             <span className={labelClass} style={labelStyle}>
               <ListTodo size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />
-              Tâches initiales (optionnel)
+              {t('project.initialTasks')}
             </span>
 
-            {tasks.length > 0 && (
+            {(templateTasks.length > 0 || tasks.length > 0) && (
               <ul className="space-y-1.5 mb-2">
-                {tasks.map((t, i) => (
+                {templateTasks.map((draft, i) => (
+                  <li
+                    key={`tpl-${i}`}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed"
+                    style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}
+                  >
+                    <LayoutTemplate size={12} className="shrink-0 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+                    <span className="flex-1 min-w-0 truncate text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>{draft.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeTemplateTask(i)}
+                      aria-label={t('projects.removeTaskAria', { name: draft.name })}
+                      className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 shrink-0"
+                    >
+                      <Trash2 size={14} aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+                {tasks.map((draft, i) => (
                   <li
                     key={i}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg border"
@@ -194,17 +381,17 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
                   >
                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_META[3].dot}`} aria-hidden="true" />
                     <span className="flex-1 min-w-0 truncate text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                      {t.name}
+                      {draft.name}
                     </span>
-                    {t.assigneeIds.length > 0 && (
+                    {draft.assigneeIds.length > 0 && (
                       <span className="text-[11px] shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                        {t.assigneeIds.length} assigné{t.assigneeIds.length > 1 ? 's' : ''}
+                        {tp('assign.assigneeCount', draft.assigneeIds.length)}
                       </span>
                     )}
                     <button
                       type="button"
                       onClick={() => removeTask(i)}
-                      aria-label={`Retirer la tâche ${t.name}`}
+                      aria-label={t('projects.removeTaskAria', { name: draft.name })}
                       className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 shrink-0"
                     >
                       <Trash2 size={14} aria-hidden="true" />
@@ -214,7 +401,6 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
               </ul>
             )}
 
-            {/* Composer d'ajout de tâche */}
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -238,20 +424,22 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
                 <Plus size={15} aria-hidden="true" />
               </button>
             </div>
+            {taskTotal > 0 && (
+              <p className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{pf('new.atomicHint')}</p>
+            )}
           </div>
         </div>
 
-        {/* Footer */}
         <div
-          className="px-4 sm:px-6 pt-3 pb-3 sm:pb-4 border-t flex flex-col-reverse sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-3 shrink-0"
+          className="px-4 sm:px-6 pt-[0.6555rem] pb-[0.6555rem] sm:pb-[0.874rem] border-t flex flex-col-reverse sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-3 shrink-0"
           style={{
             borderColor: 'rgb(var(--color-border))',
             backgroundColor: 'rgb(var(--color-surface))',
-            paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
+            paddingBottom: 'max(env(safe-area-inset-bottom), 0.6555rem)',
           }}
         >
           <Button type="button" variant="outline" size="lg" onClick={onClose} disabled={pending} className="min-h-11 w-full sm:w-auto">
-            Annuler
+            {t('common.cancel')}
           </Button>
           <Button
             type="button"
@@ -260,8 +448,8 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
             disabled={pending || !name.trim()}
             className={`min-h-11 w-full sm:w-auto ${
               pending || !name.trim()
-                ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100'
-                : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-0'
+                ? '!bg-[rgb(var(--color-accent-solid))] !text-[rgb(var(--color-accent-solid-foreground))] !opacity-40 !border-0'
+                : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0'
             }`}
           >
             {pending ? (
@@ -270,7 +458,7 @@ const NewTeamProjectModal = ({ teams, members, defaultTeamId, onSubmit, onClose 
                 <span>{t('project.creating')}</span>
               </>
             ) : (
-              tasks.length > 0 ? `Créer le projet (${tasks.length} tâche${tasks.length > 1 ? 's' : ''})` : 'Créer le projet'
+              taskTotal > 0 ? tp('project.createWithTasks', taskTotal) : t('project.create')
             )}
           </Button>
         </div>

@@ -4,10 +4,11 @@
 
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IListsRepository } from './repository';
 import { TaskList, CreateListInput, UpdateListInput } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import type { CreateOptions } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // DB ROW TYPES (snake_case - matches Supabase table schema)
@@ -35,6 +36,7 @@ interface ListRow {
  * DB input type for insert/update operations
  */
 interface ListDbInput {
+  id?: string;
   name?: string;
   color?: string;
   task_ids?: string[];
@@ -69,26 +71,6 @@ export class SupabaseListsRepository implements IListsRepository {
     return warnIfTruncated(data || [], 200, 'lists').map(this.mapFromDb);
   }
 
-  async getById(id: string): Promise<TaskList | null> {
-    if (!supabase) throw new Error('Supabase not configured');
-    // Defense-in-depth: also scope by user_id even though RLS already does.
-    // Faille V15.
-    const user = await getCurrentUser();
-    if (!user) return null;
-    const { data, error } = await supabase
-      .from('lists')
-      .select('*')
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') return null; // Not found
-      throw normalizeApiError(error);
-    }
-    return data ? this.mapFromDb(data) : null;
-  }
-
   async getByTaskId(taskId: string): Promise<TaskList[]> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
@@ -107,10 +89,10 @@ export class SupabaseListsRepository implements IListsRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateListInput): Promise<TaskList> {
+  async create(input: CreateListInput, options?: CreateOptions): Promise<TaskList> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw makeApiError('not_authenticated');
 
     // Backfill (#XX) : les listes jamais réordonnées manuellement n'ont pas
     // de `position` et retombent sur le tri alphabétique (cf. mig. 021). Sans
@@ -137,6 +119,8 @@ export class SupabaseListsRepository implements IListsRepository {
       position: nextPosition,
       task_ids: [],
       user_id: user.id,
+      // Second argument, jamais un champ du payload (R-08).
+      ...(options?.restoreId ? { id: options.restoreId } : {}),
     };
 
     const { data, error } = await supabase
@@ -152,7 +136,7 @@ export class SupabaseListsRepository implements IListsRepository {
   async update(id: string, updates: UpdateListInput): Promise<TaskList> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw makeApiError('not_authenticated');
     const dbUpdates = this.mapToDb(updates);
 
     const { data, error } = await supabase
@@ -170,7 +154,7 @@ export class SupabaseListsRepository implements IListsRepository {
   async delete(id: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw makeApiError('not_authenticated');
     const { error } = await supabase
       .from('lists')
       .delete()

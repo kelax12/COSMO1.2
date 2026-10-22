@@ -4,16 +4,15 @@
 
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getOKRsRepository } from '@/lib/repository.factory';
-import { useIsDemo } from '@/lib/app-mode.store';
 import { IOKRsRepository } from './repository';
-import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
+import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput } from './types';
 import { okrsKeys } from './constants';
 import { krCompletionKeys } from '@/modules/kr-completions/constants';
-import { validateOrThrow } from '@/lib/validation/validate';
-import { createOKRSchema, updateOKRSchema } from './okr.schema';
+import { validateAsync } from '@/lib/validation/lazy';
 import { translator } from '@/i18n/useT';
+import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY - Via centralized factory (demo/production mode)
@@ -23,11 +22,15 @@ import { translator } from '@/i18n/useT';
  * Factory hook to get the OKRs repository
  * Uses centralized factory for demo/production mode switching
  */
-const useOKRsRepository = (): IOKRsRepository => {
-  const isDemo = useIsDemo();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(() => getOKRsRepository(), [isDemo]);
-};
+// Sélection du repository : le factory est déjà un singleton paramétré par
+// `appModeStore.isDemo`, et `resetRepositories()` le vide à chaque bascule
+// (AuthContext). Le `useMemo(..., [isDemo])` qui vivait ici était donc
+// redondant, et son commentaire était faux : `resetRepositories()` est aussi
+// appelé sur des chemins où `isDemo` NE change pas (déconnexion d'une vraie
+// session), où la mémo rendait alors l'instance que le factory venait de
+// jeter. Six modules (events, lists, categories, friends, team-projects,
+// organizations) font déjà cet appel direct. Audit A-2, item C-06.
+const useOKRsRepository = (): IOKRsRepository => getOKRsRepository();
 
 // ═══════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -60,58 +63,28 @@ export const useOkrs = (options?: { enabled?: boolean }) => {
   });
 };
 
-/**
- * Fetch a single OKR by ID
- */
-export const useOkr = (id: string, options?: { enabled?: boolean }) => {
-  const repository = useOKRsRepository();
-  return useQuery({
-    queryKey: okrsKeys.detail(id),
-    queryFn: () => repository.getById(id),
-    enabled: (options?.enabled ?? true) && !!id,
-  });
-};
-
-/**
- * Fetch OKRs by category
- */
-export const useOkrsByCategory = (category: string, options?: { enabled?: boolean }) => {
-  const repository = useOKRsRepository();
-  return useQuery({
-    queryKey: okrsKeys.byCategory(category),
-    queryFn: () => repository.getByCategory(category),
-    enabled: (options?.enabled ?? true) && !!category,
-  });
-};
-
-/**
- * Fetch OKRs with filters
- */
-export const useFilteredOkrs = (filters: OKRFilters, options?: { enabled?: boolean }) => {
-  const repository = useOKRsRepository();
-  return useQuery({
-    queryKey: okrsKeys.list(filters),
-    queryFn: () => repository.getFiltered(filters),
-    enabled: options?.enabled ?? true,
-  });
-};
-
 // ═══════════════════════════════════════════════════════════════════
 // COMPUTED HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
 /**
- * Get active (not completed) OKRs
+ * OKR actifs / terminés, DÉRIVÉS de `useOkrs()`, jamais refetchés.
+ *
+ * ❌ Ne pas les rebrancher sur `useFilteredOkrs`. Une clé React Query
+ * différente = une requête réseau de plus, et le repository Supabase enchaîne
+ * ensuite un second appel à `key_results` pour hydrater les OKR lus : deux
+ * requêtes, pas une. `useWeeklyCheckin()` est monté par le tableau de bord à
+ * CHAQUE ouverture, et ne s'en sert que pour tester `length > 0` un lundi ou
+ * un mardi. Ces deux requêtes partaient donc tous les jours pour rien
+ * (mesuré le 2026-08-26 : 32 requêtes à l'ouverture, dont celles-ci).
+ *
+ * `completed` est une colonne déjà présente sur chaque OKR chargé : le filtre
+ * se fait en mémoire, sur une liste qui tient en dizaines d'éléments.
  */
 export const useActiveOkrs = () => {
-  return useFilteredOkrs({ completed: false });
-};
-
-/**
- * Get completed OKRs
- */
-export const useCompletedOkrs = () => {
-  return useFilteredOkrs({ completed: true });
+  const { data, ...rest } = useOkrs();
+  const filtered = useMemo(() => (data ?? []).filter((okr) => !okr.completed), [data]);
+  return { ...rest, data: filtered };
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -126,11 +99,13 @@ export const useCreateOkr = () => {
   const repository = useOKRsRepository();
 
   return useMutation({
-    mutationFn: (input: CreateOKRInput) => {
-      validateOrThrow(createOKRSchema, input);
+    mutationFn: async (input: CreateOKRInput) => {
+      await validateAsync('okr.create', input);
       return repository.create(input);
     },
     onSuccess: () => {
+      // Engagement démo (src/lib/demo-engagement.ts) : no-op hors démo.
+      recordDemoCreationIfDemo();
       invalidateAllOKRQueries(queryClient);
     },
     onError: (error: Error) => {
@@ -147,8 +122,8 @@ export const useUpdateOkr = () => {
   const repository = useOKRsRepository();
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: UpdateOKRInput }) => {
-      validateOrThrow(updateOKRSchema, updates);
+    mutationFn: async ({ id, updates }: { id: string; updates: UpdateOKRInput }) => {
+      await validateAsync('okr.update', updates);
       return repository.update(id, updates);
     },
 
@@ -177,7 +152,7 @@ export const useUpdateOkr = () => {
       if (context?.previousOKRs) {
         queryClient.setQueryData(okrsKeys.lists(), context.previousOKRs);
       }
-      toast.error(`Impossible de modifier l'OKR : ${error.message}`);
+      toast.error(translator('errors').t('mutation.updateOkr', { message: error.message }));
     },
 
     // Refetch on settle
@@ -224,7 +199,7 @@ export const useDeleteOkr = () => {
       if (context?.previousOKRs) {
         queryClient.setQueryData(okrsKeys.lists(), context.previousOKRs);
       }
-      toast.error(`Impossible de supprimer l'OKR : ${error.message}`);
+      toast.error(translator('errors').t('mutation.deleteOkr', { message: error.message }));
     },
 
     // Cleanup on settle
@@ -320,3 +295,14 @@ export const useUpdateKeyResult = () => {
 
 export type { OKR, KeyResult, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
 export { okrsKeys } from './constants';
+
+// ═══════════════════════════════════════════════════════════════════
+// RESTAURATION (« Annuler ») — recree l'objet sous SON identifiant
+// ═══════════════════════════════════════════════════════════════════
+//
+// Separe de `useCreateOkr` a dessein : l'identifiant passe par le second
+// argument de `create()`, hors du payload, donc hors de portee d'un objet de
+// formulaire enrichi depuis les devtools. Contrat complet et raison de ce
+// decoupage : `src/lib/restore-id.ts` (R-08).
+//
+// ⚠️ N'appeler QUE depuis un toast d'annulation.

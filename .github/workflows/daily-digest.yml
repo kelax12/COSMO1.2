@@ -1,0 +1,31 @@
+name: Daily digest
+
+# Résumé de la veille (inscriptions, actifs, trafic, organisations,
+# abonnements payants), comparée à l'avant-veille, posté chaque matin sur le
+# canal d'alerte. Lecture seule (transaction READ ONLY).
+# Même script que le résumé hebdomadaire : scripts/weekly-digest.mjs --days=1.
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Envoyer le résumé
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          WEBHOOK: ${{ secrets.OPS_ALERT_WEBHOOK_URL }}
+        run: node scripts/weekly-digest.mjs --days=1

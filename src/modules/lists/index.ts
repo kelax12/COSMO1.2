@@ -14,7 +14,7 @@ export type {
 } from './types';
 
 export { SMART_PRESETS, tasksInList, tasksDueToday } from './smart-rules';
-export type { SmartPresetDef } from './smart-rules';
+export type { SmartPresetDef, SmartRuleTask } from './smart-rules';
 
 // ═══════════════════════════════════════════════════════════════════
 // CONSTANTS & QUERY KEYS
@@ -36,8 +36,6 @@ export { SupabaseListsRepository } from './supabase.repository';
 
 export {
   useLists,
-  useList,
-  useListsForTask,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -48,6 +46,10 @@ export {
   useCreateList,
   useUpdateList,
   useDeleteList,
+  useRestoreList,
   useAddTaskToList,
   useRemoveTaskFromList,
 } from './hooks';
+
+// Flux « supprimer avec Annuler » partage par les trois ecrans (C-41).
+export { useDeleteListWithUndo } from './delete-flow.hooks';

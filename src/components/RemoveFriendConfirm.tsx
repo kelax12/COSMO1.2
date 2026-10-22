@@ -1,5 +1,6 @@
 import React from 'react';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface RemoveFriendConfirmProps {
   open: boolean;
@@ -57,10 +58,26 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
   onConfirm,
 }) => {
   const { t } = useT('common');
+  const ov = useT('overlays');
+  // C-53 — appele AVANT le return anticipe : ESLint refuse (a juste titre) un
+  // hook qui disparait quand la boite est fermee.
+  //
+  // `alertdialog` et non `dialog` : cette confirmation etait deja annoncee
+  // comme telle, et la rétrograder ferait perdre la lecture automatique du
+  // contenu a l'ouverture.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open,
+    onClose: onCancel,
+    label: ov.t('removeFriend.ariaConfirm'),
+    role: 'alertdialog',
+  });
+
   if (!open) return null;
 
   return (
     <div
+      ref={modalA11yRef}
+      {...modalA11yProps}
       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[10000] sm:p-4 animate-in fade-in duration-150"
       onClick={onCancel}
     >
@@ -73,34 +90,43 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
         role="alertdialog"
-        aria-label="Confirmer la suppression de l'ami"
+        aria-label={ov.t('removeFriend.ariaConfirm')}
       >
-        <div className="sm:hidden flex justify-center pt-3 pb-2">
-          <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-        </div>
+        {/* 🗑️ C-07 · LA POIGNÉE DE GLISSEMENT EST RETIRÉE, pas câblée.
+            Elle dessinait l'affordance d'un geste qui n'existait pas : on
+            tire, rien ne bouge, et on en conclut que l'app est cassée. La
+            règle du module est écrite dans `useSheetDrag` — « une affordance
+            qui promet un geste inexistant est moins bonne que pas
+            d'affordance du tout ».
+            🔴 Et ici elle mentait DEUX fois : cette surface est un
+            `alertdialog`, c'est-à-dire une confirmation de SUPPRESSION qui
+            demande un choix explicite. Une poignée la présente comme une
+            feuille qu'on chasse d'un revers de pouce.
+            ❌ Ne pas la remettre en câblant `useSheetDrag` : ce serait donner
+            à un geste approximatif le pouvoir d'annuler une décision. */}
         <div className="p-5 sm:p-6">
           <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            Retirer cet ami
+            {ov.t('removeFriend.title')}
           </h3>
           <p className="text-sm leading-relaxed mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            {t('removeFriend.confirm')}{' '}
+            {ov.t('removeFriend.confirm')}{' '}
             <strong style={{ color: 'rgb(var(--color-text-primary))' }}>
               {friendName}
             </strong>
             {' de vos amis ?'}
           </p>
           <p className="text-sm leading-relaxed mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            {t('removeFriend.bodyBefore')}<strong style={{ color: 'rgb(var(--color-text-primary))' }}>{t('removeFriend.bodyAllYours')}</strong>{t('removeFriend.bodyMiddle')}<strong style={{ color: 'rgb(var(--color-text-primary))' }}>{t('removeFriend.bodyAllTheirs')}</strong>{t('removeFriend.bodyAfter')}
+            {ov.t('removeFriend.bodyBefore')}<strong style={{ color: 'rgb(var(--color-text-primary))' }}>{ov.t('removeFriend.bodyAllYours')}</strong>{ov.t('removeFriend.bodyMiddle')}<strong style={{ color: 'rgb(var(--color-text-primary))' }}>{ov.t('removeFriend.bodyAllTheirs')}</strong>{ov.t('removeFriend.bodyAfter')}
           </p>
 
           {(ownedSharedTasks.length > 0 || receivedSharedTasks.length > 0) && (
             <div className="mb-5 sm:mb-6 max-h-52 overflow-y-auto">
               <TaskPreviewList
-                title={t('removeFriend.losesAccess')}
+                title={ov.t('removeFriend.losesAccess')}
                 tasks={ownedSharedTasks}
               />
               <TaskPreviewList
-                title={t('removeFriend.youLoseAccess')}
+                title={ov.t('removeFriend.youLoseAccess')}
                 tasks={receivedSharedTasks}
               />
             </div>
@@ -114,13 +140,13 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
                 color: 'rgb(var(--color-text-primary))',
               }}
             >
-              Annuler
+              {t('actions.cancel')}
             </button>
             <button
               onClick={onConfirm}
               className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all"
             >
-              Retirer
+              {t('actions.remove')}
             </button>
           </div>
         </div>

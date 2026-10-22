@@ -79,15 +79,28 @@ export function useSeoMeta({ title, description, canonical, ogTitle, ogDescripti
 }
 
 /**
- * Applique les méta de la RACINE (titre, description, canonical) à la page.
+ * Méta de la landing selon son parcours.
  *
- * Pour la landing, qui n'a pas de méta propres : sans ce hook, le `<title>`
- * statique d'`index.html` — écrit en français — restait affiché sur `/en/`.
- * `useSeoMeta` ne les posait qu'au DÉMONTAGE, pour restaurer l'état d'origine.
+ * Sans ce hook, le `<title>` statique d'`index.html`, écrit en français,
+ * restait affiché sur `/en/` : `useSeoMeta` ne pose les méta racine qu'au
+ * DÉMONTAGE, pour restaurer l'état d'origine.
+ *
+ * `/` et `/entreprise-presentation` rendent le MÊME composant. Avant le
+ * 2026-10-12, les deux posaient les méta de la racine : le HTML prérendu de la
+ * page entreprise était juste, puis React réécrivait son titre, sa description
+ * et son canonical vers la HOME. Google, qui rend le JS, voyait donc la page
+ * qui porte l'offre payante se déclarer doublon de l'accueil (Lighthouse :
+ * audit `canonical` en échec, SEO 92). Le parcours perso garde les méta racine.
  */
-export function useRootSeoMeta() {
+export function useLandingSeoMeta(track: 'perso' | 'entreprise') {
   const root = rootMeta();
-  useSeoMeta({ title: root.title, description: root.description, canonical: root.canonical });
+  const enterprise = track === 'entreprise';
+  const key = enterprise ? 'enterprisePresentation' : 'root';
+  useSeoMeta({
+    title: resolveMessage('seo', `${key}.title`, root.locale) ?? root.title,
+    description: resolveMessage('seo', `${key}.description`, root.locale) ?? root.description,
+    canonical: enterprise ? canonicalUrl('/entreprise-presentation', root.locale) : root.canonical,
+  });
 }
 
 /** Étiquette BCP 47 de la locale courante — pour les JSON-LD construits côté client. */

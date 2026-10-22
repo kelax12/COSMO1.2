@@ -1,25 +1,23 @@
 import { useState, useEffect } from 'react';
 import { PageHeading } from '@/components/ui/typography';
 import { motion } from 'framer-motion';
-import { Crown, Zap, Play, Check, Sparkles, Loader2, X, Minus } from 'lucide-react';
-import { useAuth } from '../modules/auth/AuthContext';
-import AdModal from '../components/AdModal';
+import { Crown, Check, Sparkles, Loader2, Minus } from 'lucide-react';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { useBilling } from '@/modules/billing/billing.context';
-import { isDailyAdLimitError } from '@/modules/billing/ad-limit';
 import { PREMIUM_MONTHLY_EUR } from '@/modules/billing/premium-config';
 import { formatCurrency } from '@/i18n/format';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { containerVariants, itemVariants, features, COMPARISON_ROWS } from './premium/data';
-import { BottomSheet } from '@/components/mobile';
+import { toast } from '@/lib/toast';
+import { features, COMPARISON_ROWS } from './premium/data';
+import { useRevealVariants } from '@/components/mobile/mobile-motion';
 import { useT } from '@/i18n/useT';
 
 export function PremiumPage() {
   const { t } = useT('premium');
+  // Cf. DashboardPage : variantes derivees, jamais ecrites en dur (mouvement reduit).
+  const { container: containerVariants, item: itemVariants } = useRevealVariants(20);
   const { user } = useAuth();
-  const { isPremium, addTokens, subscription, refreshBillingStatus } = useBilling();
-  const [showAdModal, setShowAdModal] = useState(false);
-  const [showChoiceModal, setShowChoiceModal] = useState(false);
+  const { isPremium, refreshBillingStatus } = useBilling();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
   // Handle return from Stripe Checkout
@@ -52,7 +50,7 @@ export function PremiumPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error('Veuillez vous reconnecter.');
+        toast.error(t('page.signInAgain'));
         return;
       }
 
@@ -80,20 +78,6 @@ export function PremiumPage() {
     }
   };
 
-  const handleAdComplete = async () => {
-    try {
-      await addTokens(1);
-      toast.success(t('page.dayCredited'));
-    } catch (err) {
-      if (isDailyAdLimitError(err)) {
-        toast.error('Limite quotidienne de pubs atteinte (20/jour). Revenez demain ou passez Premium.');
-      } else {
-        toast.error(t('page.creditError'));
-      }
-    }
-    setShowAdModal(false);
-  };
-
   return (
     <div className="p-4 sm:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8 h-fit font-sans">
       <motion.div
@@ -108,7 +92,7 @@ export function PremiumPage() {
             >
               <Crown size={36} style={{ color: '#eab308' }} />
               <PageHeading variant="standard" className="sm:text-4xl">
-                Cosmo Premium
+                {t('page.heroTitle')}
               </PageHeading>
             </motion.div>
           <p className="text-lg sm:text-xl text-slate-600 dark:text-blue-200/80 mb-12">
@@ -129,27 +113,10 @@ export function PremiumPage() {
                 ) : (
                   <>
                     <span className="text-[rgb(var(--color-text-muted))]"></span>
-                    Version Gratuite
+                    {t('page.freeVersion')}
                   </>
                 )}
               </h2>
-              <div className="space-y-3">
-                <div className="flex items-center gap-4">
-                  <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">{t('page.premiumDays')}</span>
-                  <div className="flex items-center gap-2 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-400/30">
-                    <Zap size={18} className="text-amber-500" />
-                    <span className="font-bold text-xl text-amber-600 dark:text-amber-300">{subscription?.premiumTokens ?? 0}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">{t('page.winStreak')}</span>
-                  <div className="flex items-center gap-2 bg-orange-500/10 px-3 py-1 rounded-full border border-orange-400/30">
-                    <span className="text-lg">🔥</span>
-                    <span className="font-bold text-xl text-orange-600 dark:text-orange-300">{subscription?.winStreak ?? 0}</span>
-                    <span className="text-orange-500 dark:text-orange-400/70 text-sm font-medium">{t('page.days')}</span>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div className="w-full sm:w-auto">
@@ -174,17 +141,18 @@ export function PremiumPage() {
                             >
                   <span className="flex items-center gap-2 justify-center">
                     <Sparkles className="w-5 h-5" />
-                    PREMIUM ACTIF
+                    {t('page.activeBadge')}
                   </span>
                 </motion.div>
               ) : (
                 <motion.button
-                  onClick={() => setShowChoiceModal(true)}
-                  className="w-full sm:w-auto px-8 py-4 bg-[rgb(var(--color-accent))] text-white rounded-xl font-bold text-lg shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-3 justify-center"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  onClick={handleCheckout}
+                  disabled={isCheckoutLoading}
+                  className="w-full sm:w-auto px-8 py-4 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] rounded-xl font-bold text-lg shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-3 justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+                  whileHover={{ scale: isCheckoutLoading ? 1 : 1.02 }}
+                  whileTap={{ scale: isCheckoutLoading ? 1 : 0.98 }}
                 >
-                  <Crown size={24} />
+                  {isCheckoutLoading ? <Loader2 size={24} className="animate-spin" /> : <Crown size={24} />}
                   <span>{t('page.goPremium')}</span>
                 </motion.button>
               )}
@@ -197,36 +165,9 @@ export function PremiumPage() {
           variants={itemVariants}
         >
           <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6">
-            Obtenir un jour Premium
+            {t('page.getOneDay')}
           </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                <motion.div
-                    className="relative overflow-hidden bg-emerald-500/10 p-6 rounded-2xl border border-emerald-500/30"
-                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(16, 185, 129, 0.15)' }}
-                  >
-                    <div className="relative">
-                      <div className="flex items-center gap-3 mb-4">
-                        <h4 className="font-bold text-emerald-700 dark:text-emerald-300">{t('page.watchAdTitle')}</h4>
-                      </div>
-                      <p className="text-emerald-600 dark:text-emerald-400/80 mb-4 text-sm font-medium">
-                        {t('page.watchAdDesc')}
-                      </p>
-                      <div className="text-center mb-4">
-                        <div className="text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">+1</div>
-                        <div className="text-sm text-emerald-500">{t('page.premiumDay')}</div>
-                      </div>
-                        <motion.button
-                          onClick={() => setShowAdModal(true)}
-                          className="w-full bg-emerald-600 text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                        <Play size={18} />
-                        <span>{t('page.watchAdCta')}</span>
-                      </motion.button>
-                    </div>
-                  </motion.div>
-
+            <div className="grid grid-cols-1 gap-4 sm:gap-6">
                 <motion.div
                     className="relative overflow-hidden bg-[rgb(var(--color-accent)/0.1)] p-6 rounded-2xl border border-[rgb(var(--color-accent)/0.3)]"
                     whileHover={{ scale: 1.02, backgroundColor: 'rgb(var(--color-accent)/0.15)' }}
@@ -236,7 +177,7 @@ export function PremiumPage() {
                         <h4 className="font-bold text-[rgb(var(--color-text-primary))]">{t('page.monthlyTitle')}</h4>
                       </div>
                       <p className="text-[rgb(var(--color-text-secondary))] mb-4 text-sm font-medium">
-                        Souscrivez pour 30 jours de statut Premium complet.
+                        {t('page.subscribe30')}
                       </p>
                       <div className="text-center mb-4">
                         <div className="text-4xl font-bold text-[rgb(var(--color-accent))] mb-1">{formatCurrency(PREMIUM_MONTHLY_EUR)}</div>
@@ -245,7 +186,7 @@ export function PremiumPage() {
                         <motion.button
                           onClick={handleCheckout}
                           disabled={isCheckoutLoading}
-                          className="w-full bg-[rgb(var(--color-accent))] text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-[rgb(var(--color-accent)/0.2)] disabled:opacity-70 disabled:cursor-not-allowed"
+                          className="w-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-[rgb(var(--color-accent)/0.2)] disabled:opacity-70 disabled:cursor-not-allowed"
                           whileHover={{ scale: isCheckoutLoading ? 1 : 1.02 }}
                           whileTap={{ scale: isCheckoutLoading ? 1 : 0.98 }}
                         >
@@ -296,13 +237,13 @@ export function PremiumPage() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-bold text-[rgb(var(--color-text-primary))]">{feature.title}</h4>
+                          <h4 className="font-bold text-[rgb(var(--color-text-primary))]">{t(feature.titleKey)}</h4>
                           {premium && <Check size={18} className="text-emerald-600 dark:text-emerald-400" />}
                         </div>
-                        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{feature.description}</p>
+                        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t(feature.descriptionKey)}</p>
                         {!premium && (
                           <div className="mt-2 text-xs font-bold text-amber-600">
-                            🔒 Premium requis
+                            {t('page.requiredBadge')}
                           </div>
                         )}
                       </div>
@@ -338,9 +279,9 @@ export function PremiumPage() {
 
                   {[
                     {
-                      icon: Play,
-                      title: 'Accumulez',
-                      desc: 'Regardez des pubs ou souscrivez pour obtenir des jours Premium',
+                      icon: Crown,
+                      title: t('page.stepSubscribeTitle'),
+                      desc: t('page.stepSubscribeDesc'),
                       color: 'from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600',
                       glow: 'group-hover:shadow-emerald-500/40',
                       iconColor: 'text-emerald-50',
@@ -350,8 +291,8 @@ export function PremiumPage() {
                       borderHover: 'hover:border-emerald-400 dark:hover:border-emerald-400'
                     },
                     {
-                      icon: Zap,
-                      title: 'Activation',
+                      icon: Sparkles,
+                      title: t('page.stepActivateTitle'),
                       desc: t('page.consumeDesc'),
                       color: 'bg-[rgb(var(--color-accent-solid))] to-indigo-500 dark:from-blue-600 dark:to-indigo-600',
                       glow: 'group-hover:shadow-blue-500/40',
@@ -362,7 +303,7 @@ export function PremiumPage() {
                       borderHover: 'hover:border-[rgb(var(--color-accent-solid-hover))] dark:hover:border-[rgb(var(--color-accent-solid-hover))]'
                     },
                     {
-                      icon: Crown,
+                      icon: Check,
                       title: t('page.freedomTitle'),
                       desc: t('page.freedomDesc'),
                       color: 'from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600',
@@ -415,7 +356,7 @@ export function PremiumPage() {
           variants={itemVariants}
         >
           <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-2">
-            Gratuit ou Premium ?
+            {t('page.compareTitle')}
           </h3>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
             {t('page.freeNotice')}
@@ -443,7 +384,7 @@ export function PremiumPage() {
                       <th className="py-3 px-2 sm:px-4 font-bold text-amber-600 dark:text-amber-400 text-center w-24 sm:w-32">
                         <span className="inline-flex items-center gap-1.5">
                           <Crown size={14} />
-                          Premium
+                          {t('page.proColumn')}
                         </span>
                       </th>
                     </tr>
@@ -456,7 +397,7 @@ export function PremiumPage() {
                           row.free === false ? 'bg-amber-500/[0.03]' : ''
                         }`}
                       >
-                        <td className="py-3 px-2 text-[rgb(var(--color-text-primary))]">{row.label}</td>
+                        <td className="py-3 px-2 text-[rgb(var(--color-text-primary))]">{t(row.labelKey)}</td>
                         <td className="py-3 px-2 sm:px-4 text-center"><Cell value={row.free} /></td>
                         <td className="py-3 px-2 sm:px-4 text-center"><Cell value={row.pro} /></td>
                       </tr>
@@ -470,95 +411,20 @@ export function PremiumPage() {
           {!premium && (
             <div className="mt-6 flex justify-center">
               <motion.button
-                onClick={() => setShowChoiceModal(true)}
-                className="px-6 py-3 bg-[rgb(var(--color-accent))] text-white rounded-xl font-bold text-sm shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-2"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                onClick={handleCheckout}
+                disabled={isCheckoutLoading}
+                className="px-6 py-3 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] rounded-xl font-bold text-sm shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                whileHover={{ scale: isCheckoutLoading ? 1 : 1.02 }}
+                whileTap={{ scale: isCheckoutLoading ? 1 : 0.98 }}
               >
-                <Crown size={18} />
-                Passer Premium
+                {isCheckoutLoading ? <Loader2 size={18} className="animate-spin" /> : <Crown size={18} />}
+                {t('page.goPremium')}
               </motion.button>
             </div>
           )}
         </motion.div>
       </motion.div>
 
-      {/* Choice modal — bottom-sheet on mobile, centered on desktop */}
-      <BottomSheet
-        open={showChoiceModal}
-        onClose={() => setShowChoiceModal(false)}
-        ariaLabel="Comment veux-tu passer Premium ?"
-      >
-        {/* Header */}
-        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[rgb(var(--color-border))] shrink-0 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
-            Comment veux-tu passer Premium ?
-          </h2>
-          <button
-            onClick={() => setShowChoiceModal(false)}
-            className="min-w-touch min-h-touch flex items-center justify-center rounded-lg hover:bg-[rgb(var(--color-surface-hover,var(--color-border)))] transition-colors"
-            aria-label="Fermer"
-          >
-            <X size={20} className="text-[rgb(var(--color-text-muted))]" />
-          </button>
-        </div>
-
-        {/* Body — two choices */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 flex flex-col gap-4">
-          {/* Option 1 — Pub */}
-          <motion.button
-            onClick={() => {
-              setShowChoiceModal(false);
-              setShowAdModal(true);
-            }}
-            className="w-full text-left p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-4 hover:bg-emerald-500/20 transition-colors"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
-              <Play size={24} className="text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <p className="font-bold text-emerald-700 dark:text-emerald-300 text-base">{t('page.watchAdShort')}</p>
-              <p className="text-sm text-emerald-600 dark:text-emerald-400/80 mt-0.5">
-                Gratuit · Gagne +1 jour Premium
-              </p>
-            </div>
-          </motion.button>
-
-          {/* Option 2 — Abonnement */}
-          <motion.button
-            onClick={() => {
-              setShowChoiceModal(false);
-              void handleCheckout();
-            }}
-            disabled={isCheckoutLoading}
-            className="w-full text-left p-5 rounded-2xl bg-[rgb(var(--color-accent)/0.1)] border border-[rgb(var(--color-accent)/0.3)] flex items-center gap-4 hover:bg-[rgb(var(--color-accent)/0.18)] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-            whileHover={{ scale: isCheckoutLoading ? 1 : 1.02 }}
-            whileTap={{ scale: isCheckoutLoading ? 1 : 0.97 }}
-          >
-            <div className="w-12 h-12 rounded-xl bg-[rgb(var(--color-accent)/0.15)] flex items-center justify-center shrink-0">
-              {isCheckoutLoading ? (
-                <Loader2 size={24} className="text-[rgb(var(--color-accent))] animate-spin" />
-              ) : (
-                <Crown size={24} className="text-[rgb(var(--color-accent))]" />
-              )}
-            </div>
-            <div>
-              <p className="font-bold text-[rgb(var(--color-text-primary))] text-base">{t('page.subscribeShort')}</p>
-              <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">
-                {formatCurrency(PREMIUM_MONTHLY_EUR)} / mois · 30 jours Premium
-              </p>
-            </div>
-          </motion.button>
-        </div>
-      </BottomSheet>
-
-      <AdModal
-        isOpen={showAdModal}
-        onClose={() => setShowAdModal(false)}
-        onAdComplete={handleAdComplete}
-      />
     </div>
   );
 }

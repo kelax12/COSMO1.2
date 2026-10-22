@@ -6,9 +6,11 @@
 // TaskModal) affiche la seule description en beaucoup plus grand, avec une
 // croix pour revenir au modal. La valeur reste contrôlée par le formulaire :
 // tout ce qui est tapé en plein écran est déjà dans `formData.description`.
-import React, { useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Maximize2, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { useT } from '@/i18n/useT';
+import { TAP_AREA_44 } from '@/components/mobile/tap-area';
 
 export interface DescriptionFieldProps {
   value: string;
@@ -20,6 +22,12 @@ export interface DescriptionFieldProps {
   /** Classes du textarea inline (le mode plein écran a les siennes). */
   className?: string;
   style?: React.CSSProperties;
+  /**
+   * Une ligne qui grandit avec le texte (maquette 155, fiche mobile) : la zone
+   * réservait ~170 px pour une seule ligne. Le bouton d'agrandissement passe
+   * alors en haut à droite, la place réservée en bas (`pb-10`) disparaît.
+   */
+  autoGrow?: boolean;
   /** Titre affiché en haut de la vue plein écran. */
   expandedTitle?: string;
 }
@@ -33,32 +41,55 @@ const DescriptionField: React.FC<DescriptionFieldProps> = ({
   autoFocus,
   className = '',
   style,
-  expandedTitle = 'Description',
+  expandedTitle,
+  autoGrow = false,
 }) => {
+  const { t } = useT('common');
+  // Idem : defaut traduit au rendu, pas dans la signature.
+  const dialogTitle = expandedTitle ?? t('description.expandedTitle');
   const [isExpanded, setIsExpanded] = useState(false);
   const expandedRef = useRef<HTMLTextAreaElement>(null);
+  const inlineRef = useRef<HTMLTextAreaElement>(null);
+
+  // Hauteur = contenu : remise à `auto` avant de lire `scrollHeight`, sinon
+  // le champ ne rétrécit jamais après un effacement.
+  useLayoutEffect(() => {
+    const el = inlineRef.current;
+    if (!autoGrow || !el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [autoGrow, value]);
 
   return (
     <>
       <div className="relative">
         <textarea
+          ref={inlineRef}
           id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          rows={rows}
+          rows={autoGrow ? 1 : rows}
           autoFocus={autoFocus}
           placeholder={placeholder}
           // pb-10 : réserve la place du bouton pour que le texte ne passe
           // jamais dessous en fin de champ.
-          className={`${className} pb-10`}
+          className={autoGrow ? `${className} pr-10 overflow-hidden` : `${className} pb-10`}
           style={style}
         />
         <button
           type="button"
           onClick={() => setIsExpanded(true)}
-          aria-label="Agrandir la description"
-          title="Agrandir la description"
-          className="absolute bottom-2 right-2 p-1.5 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+          aria-label={t('description.expand')}
+          title={t('description.expand')}
+          // 28 x 28 px mesurés (C-70). Commande ISOLÉE, dans le coin d'un
+          // textarea : rien ne vit à moins de 22 px autour, la variante deux
+          // axes est donc utilisable. L'agrandir pour de vrai mangerait la zone
+          // de saisie qu'elle sert à agrandir.
+          // `!absolute` : TAP_AREA_44 porte sa propre `relative` (nécessaire à
+          // son pseudo-élément avant), qui gagne sinon la cascade sur `absolute`
+          // — le bouton retombait dans le flux normal, sous le textarea au lieu
+          // du coin bas-droit (C-74).
+          className={`!absolute ${autoGrow ? 'top-0 right-0' : 'bottom-2 right-2'} p-1.5 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] ${TAP_AREA_44}`}
           style={{ color: 'rgb(var(--color-text-secondary))', backgroundColor: 'rgb(var(--color-surface))' }}
         >
           <Maximize2 size={16} />
@@ -77,17 +108,22 @@ const DescriptionField: React.FC<DescriptionFieldProps> = ({
             el.focus();
             el.setSelectionRange(el.value.length, el.value.length);
           }}
-          className="max-w-[calc(100%-1.5rem)] sm:max-w-3xl w-full h-[85vh] p-0 gap-0 flex flex-col overflow-hidden border-[rgb(var(--color-border))]"
+          // z-[10000] (overlay ET contenu) : ce champ peut être imbriqué dans
+          // une modale entreprise custom (TeamTaskModal, hors Radix) montée à
+          // z-[9999] — sans ça, cette popup s'ouvrait bien mais restait
+          // invisible derrière elle.
+          overlayClassName="z-[10000]"
+          className="z-[10000] max-w-[calc(100%-1.5rem)] sm:max-w-3xl w-full h-[85vh] p-0 gap-0 flex flex-col overflow-hidden border-[rgb(var(--color-border))]"
           style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         >
           <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
             <DialogTitle className="text-base font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              {expandedTitle}
+              {dialogTitle}
             </DialogTitle>
             <button
               type="button"
               onClick={() => setIsExpanded(false)}
-              aria-label="Fermer et revenir au formulaire"
+              aria-label={t('description.collapse')}
               className="p-2 rounded-lg transition-colors hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
               style={{ color: 'rgb(var(--color-text-secondary))' }}
             >

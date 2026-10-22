@@ -4,8 +4,10 @@
 
 import { supabase } from '@/lib/supabase';
 import { getCurrentUserId } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import { TEAM_TASKS_READ_LIMIT, TEAM_PROJECTS_PAGE, TEAM_PROJECTS_READ_LIMIT } from './constants';
+import type { RestoreCommentOptions } from './repository';
 import { ITeamProjectsRepository } from './repository';
 import {
   TeamProject,
@@ -17,101 +19,85 @@ import {
   TeamTaskFilters,
   TeamTaskComment,
   CreateTeamTaskCommentInput,
+  TeamSubtask,
+  CreateTeamSubtaskInput,
+  UpdateTeamSubtaskInput,
+  TeamTaskActivity,
+  TeamTaskDependency,
+  TeamTrashedTask,
+  DraftProjectTask,
+  TeamProjectDependency,
+  TeamProjectTeam,
+  TeamProjectMember,
+  TeamProjectRole,
+  TeamProjectTaskStats,
+  TeamMemberWorkload,
 } from './types';
+import * as portfolio from './supabase.portfolio';
+// Chargés à la demande : ce repository vit dans le chunk d'ENTRÉE (il sert
+// l'Aperçu), pas les étiquettes (fiche de tâche) ni les rôles et chiffres
+// serveur (Projets, OKR, Pyramide). Même règle que `audience.repository`.
+const activity = () => import('./supabase.activity');
+const access = () => import('./supabase.access');
 
-interface ProjectRow {
-  id: string;
-  org_id: string;
-  name: string;
-  color: string;
-  created_by: string;
-  archived_at: string | null;
-  created_at: string;
-  team_id: string | null;
-}
-
-interface TaskRow {
-  id: string;
-  org_id: string;
-  project_id: string;
-  name: string;
-  description: string | null;
-  priority: number;
-  deadline: string | null;
-  estimated_time: number | null;
-  assignee_ids: string[] | null;
-  created_by: string;
-  completed: boolean;
-  completed_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-const mapProject = (r: ProjectRow): TeamProject => ({
-  id: r.id,
-  orgId: r.org_id,
-  name: r.name,
-  color: r.color,
-  createdBy: r.created_by,
-  archivedAt: r.archived_at,
-  createdAt: r.created_at,
-  teamId: r.team_id,
-});
-
-interface CommentRow {
-  id: string;
-  task_id: string;
-  author_id: string | null;
-  body: string;
-  mentions: string[] | null;
-  created_at: string;
-}
-
-const mapComment = (r: CommentRow): TeamTaskComment => ({
-  id: r.id,
-  taskId: r.task_id,
-  authorId: r.author_id,
-  body: r.body,
-  mentions: r.mentions ?? [],
-  createdAt: r.created_at,
-});
-
-const mapTask = (r: TaskRow): TeamTask => ({
-  id: r.id,
-  orgId: r.org_id,
-  projectId: r.project_id,
-  name: r.name,
-  description: r.description ?? undefined,
-  priority: r.priority,
-  deadline: r.deadline ?? '',
-  estimatedTime: r.estimated_time ?? undefined,
-  assigneeIds: r.assignee_ids ?? [],
-  createdBy: r.created_by,
-  completed: r.completed,
-  completedAt: r.completed_at,
-  createdAt: r.created_at,
-  updatedAt: r.updated_at,
-});
+const audience = () => import('./audience.repository');
+import {
+  mapProject,
+  mapComment,
+  mapTask,
+  mapSubtask,
+  mapActivity,
+  type ProjectRow,
+  type TaskRow,
+  type CommentRow,
+  type SubtaskRow,
+  type ActivityRow,
+} from './supabase.mappers';
 
 export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   // ─── Projets ───────────────────────────────────────────────────────
 
   async getProjects(orgId: string): Promise<TeamProject[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data, error } = await supabase
-      .from('team_projects')
-      .select('*')
-      .eq('org_id', orgId)
-      .order('created_at', { ascending: true })
-      .limit(200);
-    if (error) throw normalizeApiError(error);
-    return ((data ?? []) as ProjectRow[]).map(mapProject);
+    // ⚡ Lecture via la RPC `get_my_team_projects()` et NON `.from(...)` —
+    // correctif du finding §2 de SCALABILITY.md (mig. 113).
+    //
+    // La policy `team_projects_select` filtre par `can_access_team_project(id)`,
+    // une fonction appelée SUR UNE COLONNE : aucun index ne peut la servir, donc
+    // Seq Scan de toute la table + une CTE récursive (`get_subtree`) évaluée
+    // PAR LIGNE. Mesuré en prod : ≈ 60× le coût par ligne du prédicat de `tasks`.
+    //
+    // La RPC exprime le même ensemble en trois branches indexables et n'évalue
+    // le sous-arbre managérial qu'UNE fois par organisation. Les policies restent
+    // en place sur la table (défense en profondeur), et `p_org` est un filtre :
+    // le périmètre vient de `auth.uid()` seul.
+    // Tri DÉCROISSANT puis inversion : avec `limit`, un tri croissant garde les
+    // lignes les PLUS ANCIENNES et fait disparaître les derniers projets créés
+    // dès qu'on passe le plafond. L'affichage reste chronologique.
+    //
+    // Lecture PAGINÉE (audit du 2026-09-24, « entreprise avec 500 projets ») :
+    // un plafond unique de 200 masquait le reste du portefeuille. Des pages de
+    // 500 jusqu'à la dernière, bornées à `TEAM_PROJECTS_READ_LIMIT` pour qu'une
+    // base anormale ne fasse pas tourner la boucle sans fin.
+    const rows: ProjectRow[] = [];
+    for (let from = 0; from < TEAM_PROJECTS_READ_LIMIT; from += TEAM_PROJECTS_PAGE) {
+      const { data, error } = await supabase
+        .rpc('get_my_team_projects', { p_org: orgId })
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, from + TEAM_PROJECTS_PAGE - 1);
+      if (error) throw normalizeApiError(error);
+      const page = (data ?? []) as unknown as ProjectRow[];
+      rows.push(...page);
+      if (page.length < TEAM_PROJECTS_PAGE) break;
+    }
+    return warnIfTruncated(rows, TEAM_PROJECTS_READ_LIMIT, 'team_projects').reverse().map(mapProject);
   }
 
   async createProject(orgId: string, input: CreateTeamProjectInput): Promise<TeamProject> {
     if (!supabase) throw new Error('Supabase not configured');
     const uid = await getCurrentUserId();
-    if (!uid) throw new Error('Not authenticated');
+    if (!uid) throw makeApiError('not_authenticated');
     // Whitelist explicite — org_id/created_by injectés serveur-side, jamais input.
     // Id généré client : pas de `.select()` de représentation après l'insert —
     // un manager non-admin rattachant le projet à une équipe hors de son
@@ -127,6 +113,15 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
         name: input.name,
         color: input.color ?? 'blue',
         team_id: input.teamId ?? null,
+        category_id: input.categoryId ?? null,
+        // Mig. 153 — n'envoie que ce qui est RENSEIGNÉ : la création rapide
+        // (« + projet » depuis une tâche) ne doit pas dépendre de colonnes
+        // qu'elle n'utilise pas.
+        ...(input.description ? { description: input.description } : {}),
+        ...(input.ownerId ? { owner_id: input.ownerId } : {}),
+        ...(input.status ? { status: input.status } : {}),
+        ...(input.startDate ? { start_date: input.startDate } : {}),
+        ...(input.dueDate ? { due_date: input.dueDate } : {}),
       });
     if (error) throw normalizeApiError(error);
     return {
@@ -138,8 +133,43 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       archivedAt: null,
       createdAt: new Date().toISOString(),
       teamId: input.teamId ?? null,
+      categoryId: input.categoryId ?? null,
+      description: input.description ?? null,
+      ownerId: input.ownerId ?? null,
+      status: input.status ?? 'active',
+      startDate: input.startDate ?? null,
+      dueDate: input.dueDate ?? null,
+      isTemplate: false,
+      templatePayload: null,
     };
   }
+
+  createProjectWithTasks(
+    orgId: string,
+    input: CreateTeamProjectInput,
+    tasks?: DraftProjectTask[],
+  ): Promise<string> {
+    return portfolio.createProjectWithTasks(orgId, input, tasks);
+  }
+
+  // ─── Dépendances entre projets (mig. 153) ─────────────────────────
+  getProjectDependencies(orgId: string): Promise<TeamProjectDependency[]> { return portfolio.getProjectDependencies(orgId); }
+  addProjectDependency(projectId: string, dependsOnId: string, orgId: string): Promise<void> { return portfolio.addProjectDependency(projectId, dependsOnId, orgId); }
+  removeProjectDependency(projectId: string, dependsOnId: string): Promise<void> { return portfolio.removeProjectDependency(projectId, dependsOnId); }
+
+  // Équipes associées et purge (mig. 164) — chargées à la demande : ce
+  // repository vit dans le chunk d'entrée, pas ces quatre gestes.
+  async getProjectTeams(orgId: string): Promise<TeamProjectTeam[]> { return (await audience()).getProjectTeams(orgId); }
+  async addProjectTeam(orgId: string, projectId: string, teamId: string): Promise<void> { return (await audience()).addProjectTeam(orgId, projectId, teamId); }
+  async removeProjectTeam(projectId: string, teamId: string): Promise<void> { return (await audience()).removeProjectTeam(projectId, teamId); }
+  async purgeArchivedProject(projectId: string): Promise<void> { return (await audience()).purgeArchivedProject(projectId); }
+
+  // ─── Membres de projet et chiffres serveur (mig. 190, 191) ─────────
+  async getProjectMembers(orgId: string): Promise<TeamProjectMember[]> { return (await access()).getProjectMembers(orgId); }
+  async setProjectMember(projectId: string, userId: string, role: TeamProjectRole): Promise<void> { return (await access()).setProjectMember(projectId, userId, role); }
+  async removeProjectMember(projectId: string, userId: string): Promise<void> { return (await access()).removeProjectMember(projectId, userId); }
+  async getProjectTaskStats(orgId: string, today: string): Promise<TeamProjectTaskStats[]> { return (await access()).getProjectTaskStats(orgId, today); }
+  async getMemberWorkload(orgId: string, today: string): Promise<TeamMemberWorkload[]> { return (await access()).getMemberWorkload(orgId, today); }
 
   async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {
     if (!supabase) throw new Error('Supabase not configured');
@@ -148,7 +178,16 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (input.name !== undefined) patch.name = input.name;
     if (input.color !== undefined) patch.color = input.color;
     if (input.teamId !== undefined) patch.team_id = input.teamId;
+    if (input.categoryId !== undefined) patch.category_id = input.categoryId;
     if (input.archived !== undefined) patch.archived_at = input.archived ? new Date().toISOString() : null;
+    if (input.description !== undefined) patch.description = input.description || null;
+    if (input.ownerId !== undefined) patch.owner_id = input.ownerId;
+    if (input.status !== undefined) patch.status = input.status;
+    if (input.startDate !== undefined) patch.start_date = input.startDate || null;
+    if (input.dueDate !== undefined) patch.due_date = input.dueDate || null;
+    // Santé (mig. 190) : l'horodatage et l'auteur sont posés par le trigger.
+    if (input.health !== undefined) patch.health = input.health;
+    if (input.healthNote !== undefined) patch.health_note = input.healthNote || null;
     const { data, error } = await supabase
       .from('team_projects')
       .update(patch)
@@ -159,34 +198,57 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     return mapProject(data as ProjectRow);
   }
 
-  async archiveProject(projectId: string): Promise<void> {
-    if (!supabase) throw new Error('Supabase not configured');
-    const { error } = await supabase
-      .from('team_projects')
-      .update({ archived_at: new Date().toISOString() })
-      .eq('id', projectId);
-    if (error) throw normalizeApiError(error);
-  }
-
   // ─── Tâches ────────────────────────────────────────────────────────
 
   async getTasks(orgId: string, filters?: TeamTaskFilters): Promise<TeamTask[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    let query = supabase.from('team_tasks').select('*').eq('org_id', orgId);
+    // ⚡ Même correctif que `getProjects` (mig. 113) : la policy `team_tasks_select`
+    // filtre par `can_access_team_project(project_id)`, non indexable. Les filtres
+    // applicatifs restent côté PostgREST — ils s'appliquent au résultat d'une RPC
+    // `SETOF` exactement comme à une table.
+    // Aucun identifiant demandé : rien à lire, aucune requête.
+    if (filters?.ids && filters.ids.length === 0) return [];
+    let query = supabase.rpc('get_my_team_tasks', { p_org: orgId }).select('*');
     if (filters?.projectId) query = query.eq('project_id', filters.projectId);
     if (filters?.assigneeId) query = query.contains('assignee_ids', [filters.assigneeId]);
     if (filters?.completed !== undefined) query = query.eq('completed', filters.completed);
-    const { data, error } = await query.order('created_at', { ascending: false }).limit(1000);
+    // Valeur entre guillemets : un horodatage ISO porte des `:` et des `.`, que
+    // la grammaire de `or=()` de PostgREST ne doit pas avoir à deviner.
+    if (filters?.openOrCompletedSince) {
+      query = query.or(`completed.eq.false,completed_at.gte."${filters.openOrCompletedSince}"`);
+    }
+    if (filters?.ids) query = query.in('id', filters.ids);
+    if (filters?.createdBy) query = query.eq('created_by', filters.createdBy);
+    if (filters?.status) query = query.eq('status', filters.status);
+    if (filters?.deadlineFrom) query = query.gte('deadline', filters.deadlineFrom);
+    if (filters?.createdSince) query = query.gte('created_at', filters.createdSince);
+    // `%`, `_` et `\` sont des jokers d'ILIKE : échappés, ils cherchent
+    // littéralement ce qu'on a tapé.
+    if (filters?.search) query = query.ilike('name', `%${filters.search.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
+    const limit = Math.min(filters?.limit ?? TEAM_TASKS_READ_LIMIT, TEAM_TASKS_READ_LIMIT);
+    // Clé de départage `id` : sans elle, deux tâches créées dans la même
+    // milliseconde peuvent changer de page d'une lecture à l'autre.
+    const ordered = (filters?.orderBy === 'deadline'
+      ? query.order('deadline', { ascending: true })
+      : query.order('created_at', { ascending: false })).order('id', { ascending: true });
+    // Page (mig. 191) : `range` plutôt que `limit` dès qu'un décalage est demandé.
+    const offset = Math.max(0, Math.floor(filters?.offset ?? 0));
+    const { data, error } = offset > 0
+      ? await ordered.range(offset, offset + limit - 1)
+      : await ordered.limit(limit);
     if (error) throw normalizeApiError(error);
     // Reco #20 : la limite 1000 était silencieuse — au-delà, on prévient
     // (console dev + toast une fois par session) au lieu de tronquer sans bruit.
-    return warnIfTruncated((data ?? []) as TaskRow[], 1000, 'team_tasks').map(mapTask);
+    // Une lecture à plafond propre (« les 20 prochaines échéances ») est
+    // tronquée PAR CONSTRUCTION : elle ne doit pas déclencher l'avertissement.
+    const rows = (data ?? []) as unknown as TaskRow[];
+    return (filters?.limit ? rows : warnIfTruncated(rows, TEAM_TASKS_READ_LIMIT, 'team_tasks')).map(mapTask);
   }
 
   async createTask(orgId: string, input: CreateTeamTaskInput): Promise<TeamTask> {
     if (!supabase) throw new Error('Supabase not configured');
     const uid = await getCurrentUserId();
-    if (!uid) throw new Error('Not authenticated');
+    if (!uid) throw makeApiError('not_authenticated');
     const { data, error } = await supabase
       .from('team_tasks')
       .insert({
@@ -197,8 +259,12 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
         description: input.description ?? null,
         priority: input.priority ?? 3,
         deadline: input.deadline || null,
+        // N'envoie la colonne que si elle est renseignée (mig. 153).
+        ...(input.startDate ? { start_date: input.startDate } : {}),
         estimated_time: input.estimatedTime ?? null,
         assignee_ids: input.assigneeIds ?? [],
+        status: input.status ?? 'todo',
+        category_id: input.categoryId ?? null,
       })
       .select('*')
       .single();
@@ -214,10 +280,21 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (input.description !== undefined) patch.description = input.description || null;
     if (input.priority !== undefined) patch.priority = input.priority;
     if (input.deadline !== undefined) patch.deadline = input.deadline || null;
+    if (input.startDate !== undefined) patch.start_date = input.startDate || null;
     if (input.estimatedTime !== undefined) patch.estimated_time = input.estimatedTime;
     if (input.assigneeIds !== undefined) patch.assignee_ids = input.assigneeIds;
     if (input.projectId !== undefined) patch.project_id = input.projectId;
-    if (input.completed !== undefined) {
+    if (input.categoryId !== undefined) patch.category_id = input.categoryId;
+    // Statut propre (mig. 197) : le trigger en déduit `status`, puis `completed`.
+    if (input.customStatusId !== undefined) patch.custom_status_id = input.customStatusId;
+    if (input.health !== undefined) patch.health = input.health;
+    // `status` et `completed` sont synchronisés par le trigger de la mig. 091.
+    // On n'envoie donc JAMAIS les deux dans le même patch : le trigger traite
+    // `status` en priorité, et un `completed` contradictoire serait écrasé
+    // sans erreur — un bug silencieux plutôt qu'un échec visible.
+    if (input.status !== undefined) {
+      patch.status = input.status;
+    } else if (input.completed !== undefined) {
       patch.completed = input.completed;
       patch.completed_at = input.completed ? new Date().toISOString() : null;
     }
@@ -233,8 +310,41 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
 
   async deleteTask(taskId: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { error } = await supabase.from('team_tasks').delete().eq('id', taskId);
+    // Corbeille (mig. 152), jamais `.delete()` : un DELETE emportait en cascade
+    // commentaires, sous-tâches et historique, et la policy ne l'ouvre plus
+    // qu'aux admins. La RPC porte l'autorisation (`task.deleteAny` ou créateur).
+    const { error } = await supabase.rpc('trash_team_task', { p_task: taskId });
     if (error) throw normalizeApiError(error);
+  }
+
+  async restoreTask(taskId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('restore_team_task', { p_task: taskId });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async purgeTask(taskId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('purge_team_task', { p_task: taskId });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async getTrash(orgId: string): Promise<TeamTrashedTask[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase.rpc('get_team_trash', { p_org: orgId });
+    if (error) throw normalizeApiError(error);
+    const rows = (data ?? []) as {
+      id: string; project_id: string; name: string;
+      deleted_at: string; deleted_by: string | null; created_by: string | null;
+    }[];
+    return rows.map((r) => ({
+      id: r.id,
+      projectId: r.project_id,
+      name: r.name,
+      deletedAt: r.deleted_at,
+      deletedBy: r.deleted_by,
+      createdBy: r.created_by,
+    }));
   }
 
   // ─── Commentaires (mig. 082) ───────────────────────────────────────
@@ -245,26 +355,38 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       .from('team_task_comments')
       .select('*')
       .eq('task_id', taskId)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    return ((data ?? []) as CommentRow[]).map(mapComment);
+    // Même règle que `getProjects` : au-delà de 200, ce sont les plus anciens
+    // commentaires qui sortent, jamais celui qu'on vient d'écrire.
+    return warnIfTruncated((data ?? []) as CommentRow[], 200, 'team_task_comments').reverse().map(mapComment);
   }
 
-  async addComment(input: CreateTeamTaskCommentInput): Promise<TeamTaskComment> {
+  async addComment(
+    input: CreateTeamTaskCommentInput,
+    options?: RestoreCommentOptions,
+  ): Promise<TeamTaskComment> {
     if (!supabase) throw new Error('Supabase not configured');
     const { data: session } = await supabase.auth.getSession();
     const uid = session.session?.user?.id;
-    if (!uid) throw new Error('Not authenticated');
+    if (!uid) throw makeApiError('not_authenticated');
     // Whitelist explicite (anti mass-assignment V1) ; author_id = self,
     // vérifié aussi par la policy WITH CHECK.
     const { data, error } = await supabase
       .from('team_task_comments')
       .insert({
         task_id: input.taskId,
+        // `author_id` vient de la SESSION, jamais de l'input — y compris sur
+        // une restauration : « Annuler » ne doit pas permettre d'ecrire au nom
+        // de quelqu'un d'autre. La policy WITH CHECK le verifie aussi.
         author_id: uid,
         body: input.body,
         mentions: input.mentions ?? [],
+        // C-42 — restauration seulement. La whitelist reste explicite : on
+        // n'etend pas le spread de l'input, on ajoute deux champs nommes.
+        ...(options?.restoreId ? { id: options.restoreId } : {}),
+        ...(options?.restoreCreatedAt ? { created_at: options.restoreCreatedAt } : {}),
       })
       .select('*')
       .single();
@@ -275,6 +397,133 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   async deleteComment(commentId: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase.from('team_task_comments').delete().eq('id', commentId);
+    if (error) throw normalizeApiError(error);
+  }
+
+  // ─── Sous-tâches (mig. 092) ──────────────────────────────────────
+
+  async getSubtasks(taskId: string): Promise<TeamSubtask[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .from('team_task_subtasks')
+      .select('*')
+      .eq('task_id', taskId)
+      // Même ordre que l'index (task_id, position) — pas de tri en mémoire.
+      .order('position', { ascending: true })
+      .order('created_at', { ascending: true });
+    if (error) throw normalizeApiError(error);
+    return (data as SubtaskRow[]).map(mapSubtask);
+  }
+
+  async createSubtask(input: CreateTeamSubtaskInput): Promise<TeamSubtask> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: auth } = await supabase.auth.getUser();
+    const uid = auth.user?.id;
+    if (!uid) throw makeApiError('not_authenticated');
+    const { data, error } = await supabase
+      .from('team_task_subtasks')
+      .insert({
+        task_id: input.taskId,
+        title: input.title,
+        position: input.position ?? 0,
+        // La policy INSERT exige created_by = auth.uid() : l'omettre serait un 403.
+        created_by: uid,
+      })
+      .select('*')
+      .single();
+    if (error) throw normalizeApiError(error);
+    return mapSubtask(data as SubtaskRow);
+  }
+
+  async updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // Whitelist champ-par-champ — jamais task_id ni created_by (mass-assignment).
+    const patch: Record<string, unknown> = {};
+    if (input.title !== undefined) patch.title = input.title;
+    if (input.completed !== undefined) patch.completed = input.completed;
+    if (input.position !== undefined) patch.position = input.position;
+    const { data, error } = await supabase
+      .from('team_task_subtasks')
+      .update(patch)
+      .eq('id', subtaskId)
+      .select('*')
+      .single();
+    if (error) throw normalizeApiError(error);
+    return mapSubtask(data as SubtaskRow);
+  }
+
+  async deleteSubtask(subtaskId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.from('team_task_subtasks').delete().eq('id', subtaskId);
+    if (error) throw normalizeApiError(error);
+  }
+
+  // ─── Étiquettes et historique par tâche (mig. 093, 094) ──────────
+  async getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> { return (await activity()).getTaskActivity(taskId); }
+
+  // ─── Historique (mig. 094) — lecture seule ───────────────────────
+
+  /**
+   * Journal de l'organisation depuis `since` — revue hebdomadaire (#26).
+   *
+   * Le filtre `(org_id, created_at DESC)` suit exactement l'index
+   * `idx_team_task_activity_org` de la mig. 094c : sans lui, la requête
+   * scannerait le journal complet de l'entreprise à chaque ouverture.
+   * La RLS reste la frontière — elle borne déjà le journal à l'org du lecteur.
+   */
+  async getOrgActivity(orgId: string, since: string): Promise<TeamTaskActivity[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .from('team_task_activity')
+      .select('*')
+      .eq('org_id', orgId)
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(500);
+    if (error) throw normalizeApiError(error);
+    return warnIfTruncated((data ?? []) as ActivityRow[], 500, 'team_task_activity').map(mapActivity);
+  }
+
+  // ─── Dépendances (mig. 108) ────────────────────────────────────────
+
+  async getTaskDependencies(orgId: string): Promise<TeamTaskDependency[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // ⚡ RPC indexable (mig. 117), pas `.from(...)` : la policy delegue son
+    // perimetre a `team_tasks`, donc elle payait `can_access_team_project`
+    // (et sa CTE recursive) UNE FOIS PAR ARETE. Cf. SCALABILITY.md 2bis.
+    const { data, error } = await supabase
+      .rpc('get_my_team_task_dependencies', { p_org: orgId })
+      .select('task_id, depends_on_id')
+      .limit(5000);
+    if (error) throw normalizeApiError(error);
+    return warnIfTruncated(
+      (data ?? []) as unknown as { task_id: string; depends_on_id: string }[],
+      5000,
+      'team_task_dependencies',
+    ).map((r) => ({
+      taskId: r.task_id,
+      dependsOnId: r.depends_on_id,
+    }));
+  }
+
+  async addTaskDependency(taskId: string, dependsOnId: string, orgId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // `org_id` est réécrit par le trigger de cohérence (mig. 108) depuis la
+    // tâche elle-même ; on l'envoie parce que la colonne est NOT NULL, jamais
+    // comme une source de vérité.
+    const { error } = await supabase
+      .from('team_task_dependencies')
+      .insert({ task_id: taskId, depends_on_id: dependsOnId, org_id: orgId });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async removeTaskDependency(taskId: string, dependsOnId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase
+      .from('team_task_dependencies')
+      .delete()
+      .eq('task_id', taskId)
+      .eq('depends_on_id', dependsOnId);
     if (error) throw normalizeApiError(error);
   }
 }

@@ -21,15 +21,23 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_shared_tasks_task_friend
 --    `collaborators` qui est un vrai auth.users.id (UUID existant) et qui
 --    n'a pas encore de ligne. Les emails non résolus restent dans
 --    pending_invites (intentionnellement non migrés — pas de FK possible).
---    NB drift schéma : en prod `tasks.collaborators` est `uuid[]` (pas `text[]`),
---    donc on caste `::text` avant la regex (l'opérateur `~` n'existe pas sur uuid)
---    et on insère `c.collab` tel quel (déjà uuid).
+--    NB drift schéma : la mig. 001 déclare `tasks.collaborators` en `text[]`,
+--    mais la colonne a été passée en `uuid[]` en prod hors migration. Les deux
+--    formes existent donc selon la base : la prod, et une base reconstruite à
+--    partir des migrations (job CI `rls-integration`).
+--    D'où les DEUX casts explicites, seule écriture valable dans les deux cas :
+--      - `::text` avant la regex, car l'opérateur `~` n'existe pas sur uuid ;
+--      - `::uuid` pour la comparaison et l'insertion, car `u.id` est un uuid et
+--        `uuid = text` n'existe pas non plus (42883). Sur une base déjà en
+--        `uuid[]`, `::uuid` est un no-op.
+--    La regex du WHERE garantit que le cast ne peut pas échouer sur une valeur
+--    qui n'est pas un UUID (un email non résolu reste dans pending_invites).
 INSERT INTO public.shared_tasks (task_id, friend_id, shared_by, role)
-SELECT t.id, c.collab, t.user_id, 'editor'
+SELECT t.id, c.collab::uuid, t.user_id, 'editor'
 FROM public.tasks t
 CROSS JOIN LATERAL unnest(t.collaborators) AS c(collab)
 WHERE c.collab::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-  AND EXISTS (SELECT 1 FROM auth.users u WHERE u.id = c.collab)
+  AND EXISTS (SELECT 1 FROM auth.users u WHERE u.id = c.collab::uuid)
 ON CONFLICT (task_id, friend_id) DO NOTHING;
 
 -- 2) Drop la policy legacy qui référence la colonne (sinon DROP COLUMN échoue).

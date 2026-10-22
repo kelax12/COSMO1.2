@@ -11,6 +11,11 @@
 //   table and (b) `auth.admin.deleteUser(user.id)`.
 // - The caller can only delete THEIR OWN account: the user id we delete is
 //   the id resolved from the JWT, never an id sent in the request body.
+// - Seule exception, C-121 (2026-10-22) : `inactive-accounts` désigne un compte
+//   inactif depuis 3 ans, averti depuis 30 jours. Il faut le `x-cron-secret`
+//   ET que `account_inactivity_deletion_due()` (mig. 226) le confirme : le
+//   secret seul n'efface rien. L'effacement suit ensuite EXACTEMENT le même
+//   chemin, transfert de propriété d'organisation compris.
 //
 // Deployment: `supabase functions deploy delete-account --no-verify-jwt=false`
 // then add it to the project's Edge Functions environment. Without this, the
@@ -22,6 +27,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
+
+/** Secret partagé avec `inactive-accounts` (C-121). Voir le mode cron plus bas. */
+const CRON_SECRET = Deno.env.get('CRON_SECRET')
 
 // Allowlist of origins permitted to call this function. Same defense-in-depth
 // as stripe-create-checkout (faille N7): never echo back a wildcard for an
@@ -43,6 +51,9 @@ function corsHeadersFor(req: Request) {
 // exist. `auth.admin.deleteUser` will cascade through `auth.users` references
 // where they exist; we explicitly clean tables that store `user_id` as a UUID
 // column rather than an FK to auth.users.
+// NOTE: `friends` and `friend_requests` are in this list for documentation but
+// are SKIPPED by the generic loop — both are symmetric (the deleted account can
+// appear as `friend_user_id` / `receiver_id`) and are handled explicitly above.
 // NOTE: `shared_tasks` is intentionally NOT in this list — its columns are
 // `friend_id` / `shared_by`, not `user_id`. It's handled separately below.
 // NOTE: `chat_messages` was removed (2026-06-07). The table does not exist in
@@ -90,38 +101,94 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...cors, 'Content-Type': 'application/json' },
-      })
-    }
-
-    const supabaseUser = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } },
-    )
-
-    const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...cors, 'Content-Type': 'application/json' },
-      })
-    }
-
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
+    // Le compte à effacer. Deux chemins, et seulement deux :
+    //   · une personne connectée efface SON compte : l'id vient du JWT ;
+    //   · le cron des comptes inactifs (C-121, `inactive-accounts`) désigne un
+    //     compte dans le corps, ce que le chemin utilisateur n'accepte jamais.
+    let userId: string
+
+    const cronHeader = req.headers.get('x-cron-secret')
+    if (cronHeader !== null) {
+      // ÉCHEC FERMÉ : secret absent ⇒ refus, jamais « pas de garde ».
+      if (!CRON_SECRET) {
+        await opsAlert('delete-account', 'CRON_SECRET absent — effacement des comptes inactifs (C-121) refuse')
+        return new Response(JSON.stringify({ error: 'cron_secret_not_configured' }), {
+          status: 503,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+      if (cronHeader !== CRON_SECRET) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+      const payload = await req.json().catch(() => null) as { userId?: unknown } | null
+      const candidate = payload?.userId
+      if (typeof candidate !== 'string' || !UUID_RE.test(candidate)) {
+        return new Response(JSON.stringify({ error: 'Invalid user id' }), {
+          status: 400,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+      // 🔴 Le secret ne suffit pas : la BASE doit confirmer que ce compte est
+      // dû (averti depuis 30 jours, aucune activité depuis, ne paie pas,
+      // mig. 226). Un secret volé ne peut donc effacer qu'un compte que le
+      // cron aurait effacé de toute façon. Cette lecture décide d'un
+      // effacement : son erreur arrête tout, elle n'est jamais un « non dû »
+      // ni un « dû » deviné.
+      const { data: due, error: dueError } = await supabaseAdmin.rpc('account_inactivity_deletion_due', {
+        p_user: candidate,
+      })
+      if (dueError) {
+        console.error('delete-account: account_inactivity_deletion_due failed:', dueError.message)
+        return new Response(JSON.stringify({ error: 'due_check_failed' }), {
+          status: 500,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+      if (due !== true) {
+        return new Response(JSON.stringify({ error: 'not_due' }), {
+          status: 409,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+      userId = candidate
+    } else {
+      const authHeader = req.headers.get('Authorization')
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+
+      const supabaseUser = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        { global: { headers: { Authorization: authHeader } } },
+      )
+
+      const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        })
+      }
+      userId = user.id
+    }
+
     // M-6 — Defense-in-depth: validate the resolved user id is a UUID before
     // template-interpolating it into PostgREST `.or()` filters. The id comes
     // from a verified JWT so it should always be valid, but the contract is
     // "never inline string into PostgREST filters without a guard".
-    if (!UUID_RE.test(user.id)) {
+    if (!UUID_RE.test(userId)) {
       return new Response(JSON.stringify({ error: 'Invalid user id' }), {
         status: 400,
         headers: { ...cors, 'Content-Type': 'application/json' },
@@ -136,11 +203,34 @@ Deno.serve(async (req) => {
     // receiver_id; clean both before the main loop.
     {
       const { error } = await supabaseAdmin.from('friend_requests').delete().or(
-        `sender_id.eq.${user.id},receiver_id.eq.${user.id}`,
+        `sender_id.eq.${userId},receiver_id.eq.${userId}`,
       )
       if (error) {
         console.error('delete-account: failed to clean friend_requests:', error.message)
         failedTables.push('friend_requests')
+      }
+    }
+
+    // RGPD §2 — `friends` stocke le nom, l'email et l'avatar de l'ami DANS la
+    // ligne de l'autre utilisateur. La boucle generique ne filtre que
+    // `user_id`, donc les lignes ou le compte supprime est `friend_user_id`
+    // survivaient, avec l'email et le nom en clair.
+    //
+    // ⚠️ Corrige le 2026-09-03 (audit A-1) : ce commentaire affirmait que la FK
+    // `friends_friend_user_id_fkey` etait `ON DELETE SET NULL`, « verifie le
+    // 2026-08-24 ». Remesure sur `pg_constraint` : elle est `ON DELETE CASCADE`
+    // depuis la migration 116, qui l'a explicitement basculee. La purge
+    // explicite reste, et c'est volontaire : elle ne depend d'aucune FK, donc
+    // elle survit a un changement de schema fait ailleurs — c'est justement ce
+    // qui vient d'arriver au commentaire.
+    // Meme traitement symetrique que `friend_requests` et `shared_tasks`.
+    {
+      const { error } = await supabaseAdmin.from('friends').delete().or(
+        `user_id.eq.${userId},friend_user_id.eq.${userId}`,
+      )
+      if (error) {
+        console.error('delete-account: failed to clean friends:', error.message)
+        failedTables.push('friends')
       }
     }
 
@@ -149,7 +239,7 @@ Deno.serve(async (req) => {
     // share this user issued (and received) in the database after deletion.
     {
       const { error } = await supabaseAdmin.from('shared_tasks').delete().or(
-        `friend_id.eq.${user.id},shared_by.eq.${user.id}`,
+        `friend_id.eq.${userId},shared_by.eq.${userId}`,
       )
       if (error) {
         console.error('delete-account: failed to clean shared_tasks:', error.message)
@@ -167,7 +257,7 @@ Deno.serve(async (req) => {
       const { data: ownedOrgs, error: ownedErr } = await supabaseAdmin
         .from('organizations')
         .select('id')
-        .eq('owner_id', user.id)
+        .eq('owner_id', userId)
       if (ownedErr) {
         console.error('delete-account: failed to read owned organizations:', ownedErr.message)
         failedTables.push('organizations')
@@ -175,12 +265,27 @@ Deno.serve(async (req) => {
         for (const org of ownedOrgs ?? []) {
           const orgId = org.id as string
           // Candidats = autres membres, admins d'abord, puis ancienneté.
-          const { data: others } = await supabaseAdmin
+          // A-1 (2026-09-03) — cette lecture DÉCIDE d'un routage, donc son
+          // erreur ne peut pas être avalée (famille S-1 / S-2). Elle l'était :
+          // sur panne, `others` valait `null`, donc « aucun autre membre »,
+          // donc aucun transfert — et `auth.admin.deleteUser` détruisait
+          // ensuite l'organisation entière, `organizations.owner_id` étant
+          // `ON DELETE CASCADE` (22 clés étrangères mesurées en prod le
+          // 2026-09-03, dont 21 en CASCADE, y compris les preuves
+          // `renewal_notices` et `withdrawal_consents`).
+          // En cas de doute : faire échouer l'effacement, qui est rejouable,
+          // jamais deviner que l'organisation est vide.
+          const { data: others, error: membersErr } = await supabaseAdmin
             .from('organization_members')
             .select('user_id, role, joined_at')
             .eq('org_id', orgId)
-            .neq('user_id', user.id)
+            .neq('user_id', userId)
             .order('joined_at', { ascending: true })
+          if (membersErr) {
+            console.error('delete-account: failed to read org members:', membersErr.message)
+            failedTables.push('organization_members')
+            continue
+          }
           const successor =
             (others ?? []).find((m) => m.role === 'admin') ?? (others ?? [])[0]
           if (!successor) continue // seul membre → cascade s'en charge
@@ -194,19 +299,27 @@ Deno.serve(async (req) => {
             failedTables.push('organizations')
             continue
           }
-          // S'assurer que le successeur est admin.
-          await supabaseAdmin
+          // S'assurer que le successeur est admin. L'échec comptait pour rien :
+          // la propriété était déjà transférée, et une organisation dont le
+          // propriétaire n'est pas admin n'a plus personne pour inviter, gérer
+          // les droits ni résilier. On abandonne donc l'effacement, qui est
+          // rejouable — le transfert, lui, est déjà fait et ne sera pas rejoué.
+          const { error: promoteErr } = await supabaseAdmin
             .from('organization_members')
             .update({ role: 'admin' })
             .eq('org_id', orgId)
             .eq('user_id', successorId)
+          if (promoteErr) {
+            console.error('delete-account: failed to promote successor:', promoteErr.message)
+            failedTables.push('organization_members')
+          }
         }
       }
     }
 
     for (const table of USER_OWNED_TABLES) {
-      if (table === 'friend_requests') continue
-      const { error } = await supabaseAdmin.from(table).delete().eq('user_id', user.id)
+      if (table === 'friend_requests' || table === 'friends') continue
+      const { error } = await supabaseAdmin.from(table).delete().eq('user_id', userId)
       if (error) {
         if (isMissingTableError(error)) {
           // Table absent from this project → nothing to purge. Do NOT fail the
@@ -226,11 +339,47 @@ Deno.serve(async (req) => {
     // (RGPD art. 17). Table absente d'un projet démo/local → no-op toléré.
     {
       const { error } = await supabaseAdmin.rpc('purge_user_from_team_assignments', {
-        p_user: user.id,
+        p_user: userId,
       })
       if (error && !isMissingTableError(error)) {
         console.error('delete-account: failed to purge team assignments:', error.message)
         failedTables.push('team_tasks')
+      }
+    }
+
+    // R-06 — `payment_records` N'EST PAS PURGÉ, ET C'EST DÉLIBÉRÉ.
+    //
+    // CLAUDE.md demandait « anonymiser user_id, jamais supprimer la ligne ».
+    // Mesuré le 2026-09-02 : cette consigne est INAPPLICABLE. `row_hash`
+    // (mig. 125) scelle `user_id` dans le chaînage, et `verify_payment_chain()`
+    // recalcule chaque hash depuis les colonnes stockées. Écrire NULL dans
+    // `user_id` casserait la chaîne, donc produirait exactement le signal de
+    // falsification qu'on montre à un contrôleur. Le trigger d'immuabilité
+    // refuse d'ailleurs l'UPDATE, service_role compris.
+    //
+    // Ce qui rend la conservation acceptable, c'est que `user_id` cesse d'être
+    // une donnée identifiante à l'instant où la ligne `auth.users` disparaît :
+    // il ne reste qu'un UUID que COSMO ne sait plus rattacher à personne. Sa
+    // conservation est imposée par le CGI (art. L102 B) et permise par le RGPD
+    // (art. 17.3.b, obligation légale).
+    //
+    // ❌ Ne jamais « corriger » ce commentaire en ajoutant un UPDATE ici.
+
+    // R-03 — Le bucket `avatars` est PUBLIC : tant que le fichier existe, la
+    // photo reste accessible sans authentification à une URL stable et
+    // devinable (`<uid>/avatar.jpg`), même après la suppression du compte.
+    // Effacer les lignes sans effacer le fichier n'est pas un effacement.
+    //
+    // `remove` sur un objet absent n'est pas une erreur : la fonction reste
+    // rejouable, ce qui est la condition pour pouvoir réessayer après un échec
+    // partiel.
+    {
+      const { error } = await supabaseAdmin.storage
+        .from('avatars')
+        .remove([`${userId}/avatar.jpg`])
+      if (error) {
+        console.error('delete-account: failed to remove avatar object:', error.message)
+        failedTables.push('storage:avatars')
       }
     }
 
@@ -249,7 +398,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
+    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
     if (authDeleteError) {
       console.error('delete-account: failed to drop auth user:', authDeleteError.message)
       await opsAlert('delete-account', 'auth.admin.deleteUser failed after successful data purge — manual follow-up required (RGPD)')

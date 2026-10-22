@@ -1,3 +1,5 @@
+import { deadlineDayKey } from './deadline.mjs';
+
 // Rendu texte du CLI. Extrait de cli.mjs pour etre testable : cli.mjs lance
 // `run(process.argv)` a l'import, donc l'importer depuis un test executerait
 // la commande.
@@ -22,13 +24,15 @@ export function formatLine(item) {
     return `${item.completed ? '[x]' : '[ ]'} ${item.title} — ${item.progress}%  (${item.id})`;
   }
   const mark = item.completed ? '[x]' : '[ ]';
-  const deadline = item.deadline ? ` echeance ${item.deadline.slice(0, 10)}` : '';
+  const deadline = item.deadline ? ` echeance ${deadlineDayKey(item.deadline)}` : '';
   return `${mark} P${item.priority} ${item.name}${deadline}  (${item.id})`;
 }
 
 /** `2026-08-01T00:00:00+00:00` -> `2026-08-01`. Tolere les valeurs absentes. */
 function dateOnly(value) {
-  return value ? String(value).slice(0, 10) : '';
+  // Jour VECU, pas jour UTC : une echeance ecrite a minuit local ressort
+  // 'YYYY-MM-(D-1)' si on la tronque a dix caracteres.
+  return deadlineDayKey(value);
 }
 
 const LABEL_WIDTH = 12;

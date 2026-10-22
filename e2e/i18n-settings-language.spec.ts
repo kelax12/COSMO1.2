@@ -16,8 +16,11 @@ import { test, expect, navTo } from './fixtures';
 /** Ouvre Réglages › Apparence. */
 async function openAppearanceTab(page: import('@playwright/test').Page) {
   await navTo(page, /param(è|e)tres|settings/i, /\/settings/);
+  // Sur téléphone, les Réglages s'ouvrent sur une liste (maquette 205,
+  // 415b856e) : c'est la ligne « Langue » qui mène à l'apparence.
   await page
     .getByRole('button', { name: /apparence|appearance/i })
+    .or(page.getByRole('button', { name: /^(langue|language)/i }))
     .filter({ visible: true })
     .first()
     .click();

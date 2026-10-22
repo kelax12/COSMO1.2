@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateStreak } from './streak';
+import { calculateStreak, habitStreak } from './streak';
 
 const NOW = new Date(2026, 6, 10, 12, 0, 0); // 10 juillet 2026
 
@@ -32,5 +32,42 @@ describe('calculateStreak', () => {
 
   it('vieille série interrompue depuis longtemps → streak 0', () => {
     expect(calculateStreak(completionsFor([10, 11, 12]), NOW)).toBe(0);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// habitStreak — le chiffre serveur prime sur le calcul local (mig. 119)
+//
+// Depuis que `completions` est borné à une fenêtre glissante, calculer la
+// série dessus plafonnerait silencieusement le compteur d'un utilisateur
+// assidu. Ces tests verrouillent la priorité ET le repli.
+// ═══════════════════════════════════════════════════════════════════
+describe('habitStreak', () => {
+  const dayKey = (offset: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - offset);
+    return d.toLocaleDateString('en-CA');
+  };
+
+  it('prefere streakCurrent (historique complet) au calcul sur la fenetre', () => {
+    // La fenêtre ne contient que 2 jours, le serveur en a compté 1 200.
+    const habit = {
+      completions: { [dayKey(0)]: true, [dayKey(1)]: true },
+      streakCurrent: 1200,
+    };
+    expect(habitStreak(habit)).toBe(1200);
+  });
+
+  it('retombe sur le calcul local quand le serveur ne fournit rien (demo/local)', () => {
+    const habit = { completions: { [dayKey(0)]: true, [dayKey(1)]: true } };
+    expect(habitStreak(habit)).toBe(2);
+  });
+
+  it('respecte un streakCurrent a 0 et ne le confond pas avec absent', () => {
+    // `?? ` et non `|| ` : une série RÉELLEMENT nulle (habitude abandonnée)
+    // ne doit pas déclencher le repli, qui recalculerait la même chose mais
+    // masquerait un éventuel désaccord entre serveur et client.
+    const habit = { completions: { [dayKey(0)]: true }, streakCurrent: 0 };
+    expect(habitStreak(habit)).toBe(0);
   });
 });

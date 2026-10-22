@@ -1,3 +1,5 @@
+import { translator } from '@/i18n/useT';
+
 /**
  * Code d'erreur stable d'un dépassement de délai.
  *
@@ -49,11 +51,17 @@ export function isTimeoutError(error: unknown): boolean {
 export function withTimeout<T>(
   promise: Promise<T>,
   ms: number = 10_000,
-  message = 'Délai d\'attente dépassé. Vérifie ta connexion.'
+  message?: string,
 ): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new TimeoutError(message)), ms);
+    timer = setTimeout(() => {
+      // Message résolu DANS le timer, et non en valeur par défaut de
+      // paramètre : ce module est importé au démarrage, et le littéral
+      // français en dur s'affichait tel quel à un anglophone (revue du
+      // 2026-09-02, point 24). `errors.api.TIMEOUT` porte déjà la phrase.
+      reject(new TimeoutError(message ?? translator('errors').t('api.TIMEOUT')));
+    }, ms);
   });
   return Promise.race([promise, timeout]).finally(() => {
     if (timer !== undefined) clearTimeout(timer);

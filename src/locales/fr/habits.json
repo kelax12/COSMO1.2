@@ -3,13 +3,21 @@
     "new": "Nouvelle",
     "newHabit": "Nouvelle habitude",
     "errorTitle": "Impossible de charger les habitudes",
-    "errorHint": "Vérifie ta connexion internet, puis réessaie."
+    "errorHint": "Vérifie ta connexion internet, puis réessaie.",
+    "subtitle": "Développez de bonnes habitudes au quotidien",
+    "emptyTitle": "Aucune habitude",
+    "emptyBody": "Commencez par créer votre première habitude",
+    "emptyCta": "Créer une habitude",
+    "viewTable": "Tableau",
+    "viewList": "Liste",
+    "viewGlobal": "Suivi global"
   },
   "card": {
     "paused": "En pause",
     "pausedUntil": "En pause jusqu'au {{date}}",
     "history": "Historique",
-    "deleted": "Habitude supprimée"
+    "deleted": "Habitude supprimée",
+    "detailedTracking": "Suivi détaillé (30 jours)"
   },
   "table": {
     "title": "Tableau de suivi",
@@ -19,10 +27,11 @@
     "nextPeriod": "Période suivante",
     "sinceCreation": "Depuis la création",
     "weekOf": "Semaine du {{date}}",
-    "dayCell": "{{name}} — {{date}}",
-    "dayCellDone": "{{name}} — {{date}} (complétée)"
+    "dayCell": "{{name}}, {{date}}",
+    "dayCellDone": "{{name}}, {{date}} (complétée)"
   },
   "modal": {
+    "newCategory": "Nouvelle catégorie",
     "namePlaceholder": "Nom de l'habitude",
     "descriptionPlaceholder": "Ex: Lire 30 minutes...",
     "duration": "Durée",
@@ -36,7 +45,12 @@
     "ok": "OK",
     "save": "Sauvegarder",
     "createHabit": "Créer l'habitude",
-    "editHabit": "Modifier l'habitude"
+    "editHabit": "Modifier l'habitude",
+    "details": "Détails",
+    "nameLabel": "Nom de l'habitude",
+    "legend": "Légende",
+    "category": "Catégorie",
+    "customize": "Personnaliser"
   },
   "actions": {
     "more": "Plus d'actions",
@@ -44,7 +58,6 @@
     "pauseHint": "Vacances, maladie… streak conservé",
     "pauseKeepsStreak": "Le streak reste intact jusqu'à reprise",
     "indefinite": "indéfinie",
-    "duplicated": "Habitude « {{name}} » dupliquée",
     "scheduled": "Habitude « {{name}} » planifiée",
     "taskCreated": "Tâche « {{name}} » créée",
     "resumed": "« {{name}} » a repris",
@@ -60,14 +73,37 @@
     "globalTracking": "Suivi Global",
     "trackingFor": "Suivi pour : {{name}}"
   },
-  "adGate": {
-    "support": "Soutenir Cosmo",
-    "hideForToday": "Masquer pour aujourd'hui",
-    "credited": "+1 jour Premium crédité ! Bonne journée.",
-    "dailyLimit": "Limite quotidienne de pubs atteinte — accès accordé pour aujourd'hui.",
-    "creditError": "Erreur lors du crédit — accès accordé tout de même.",
-    "reconnect": "Veuillez vous reconnecter.",
-    "alreadySubscribed": "Vous avez déjà un abonnement actif.",
-    "paymentError": "Erreur paiement — réessayez."
+  "recapCta": "Bilan",
+  "recapSheetTitle": "Bilan de la semaine",
+  "recapSheetSubtitle": "Une image prête à partager. Aucun nom de tâche ni d'habitude n'y figure.",
+  "recapTitle": "Ma semaine",
+  "recapTasks": "tâches terminées",
+  "recapStreak": "série en cours",
+  "recapStreakUnit": "jours",
+  "recapTime": "temps investi",
+  "recapHabits": "habitudes suivies",
+  "recapShare": "Partager",
+  "recapDownload": "Télécharger",
+  "recapClose": "Fermer",
+  "recapRendering": "Génération de l'image…",
+  "recapEmpty": "Image indisponible",
+  "recapAlt": "Bilan de la semaine : heatmap d'habitudes, tâches terminées, série en cours",
+  "recapShareText": "Mon bilan de la semaine sur Cosmo.",
+  "recapImageCta": "Essayez sans inscription",
+  "actionsMenu": {
+    "createTask": "Créer une tâche",
+    "scheduleInAgenda": "Planifier dans l'agenda",
+    "scheduleHint": "Événement avec heure ajustable",
+    "createTaskHint": "Aujourd'hui · {{minutes}} min",
+    "dueTodayDuration": "Échéance aujourd'hui · {{minutes}} min"
+  },
+  "globalTracking": {
+    "empty": "Créez des habitudes pour voir le suivi global"
+  },
+  "period": {
+    "week": "Semaine",
+    "month": "Mois",
+    "all": "Tout",
+    "weekOf": "Semaine du {{date}}"
   }
 }

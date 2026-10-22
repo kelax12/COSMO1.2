@@ -36,9 +36,9 @@ export { LocalStorageEventsRepository } from './repository';
 export {
   useEvents,
   useEventsWindow,
-  useEvent,
-  useEventsByTask,
   useMemberEventsWindow,
+  useUpcomingEvents,
+  useGroupEventsWindow,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -49,7 +49,10 @@ export {
   useCreateEvent,
   useUpdateEvent,
   useDeleteEvent,
+  useRestoreEvent,
   useCreateMemberEvent,
   useUpdateMemberEvent,
   useDeleteMemberEvent,
+  useCreateGroupEvent,
 } from './hooks';
+export type { GroupEventResult } from './hooks';

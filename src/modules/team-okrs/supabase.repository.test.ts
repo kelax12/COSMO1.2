@@ -12,7 +12,7 @@ import { SupabaseTeamOKRsRepository } from './supabase.repository';
 const repo = new SupabaseTeamOKRsRepository();
 
 const okrRow = {
-  id: 'o1', org_id: 'org1', title: 'Croissance', description: 'desc', category: 'business',
+  id: 'o1', org_id: 'org1', title: 'Croissance', description: 'desc', category_id: 'cat1',
   start_date: '2026-07-01', end_date: '2026-09-30', created_by: 'u1',
   created_at: '2026-07-01T10:00:00.000Z',
 };
@@ -30,24 +30,33 @@ describe('SupabaseTeamOKRsRepository — getAll', () => {
     supabaseMock.queueTable('team_okrs', { data: [okrRow] });
     supabaseMock.queueTable('team_key_results', { data: [krRow] });
     supabaseMock.queueTable('team_okr_teams', { data: [{ okr_id: 'o1', team_id: 't1' }] });
+    supabaseMock.queueTable('team_okr_members', { data: [] });
 
     const result = await repo.getAll('org1');
 
     expect(supabaseMock.argsOf('team_okrs', 'eq')).toEqual(['org_id', 'org1']);
     expect(supabaseMock.argsOf('team_okrs', 'order')).toEqual(['created_at', { ascending: false }]);
-    expect(supabaseMock.argsOf('team_okrs', 'limit')).toEqual([200]);
+    // M1 (audit 2026-09-23) : plus de plafond silencieux à 200, une lecture paginée.
+    expect(supabaseMock.argsOf('team_okrs', 'range')).toEqual([0, 999]);
     expect(supabaseMock.argsOf('team_key_results', 'eq')).toEqual(['org_id', 'org1']);
     expect(supabaseMock.argsOf('team_okr_teams', 'select')).toEqual(['okr_id, team_id']);
     expect(supabaseMock.argsOf('team_okr_teams', 'eq')).toEqual(['org_id', 'org1']);
 
     expect(result).toEqual([{
-      id: 'o1', orgId: 'org1', title: 'Croissance', description: 'desc', category: 'business',
+      id: 'o1', orgId: 'org1', title: 'Croissance', description: 'desc', categoryId: 'cat1',
       startDate: '2026-07-01', endDate: '2026-09-30', createdBy: 'u1',
       createdAt: okrRow.created_at, teamIds: ['t1'],
+      // Mig. 205 : colonne absente de la ligne, audience déduite des liens.
+      audience: 'teams', memberIds: [],
+      // Mig. 160 : absent de la ligne, rendu neutre.
+      parentOkrId: null,
       keyResults: [{
         id: 'kr1', okrId: 'o1', orgId: 'org1', title: 'MRR', currentValue: 5,
         targetValue: 10, unit: 'k€', assigneeId: 'u2', completed: false,
         completedAt: null, weight: 3, estimatedTime: 45,
+        progressMode: 'manual', contributorIds: [],
+        // Mig. 160 : état du dernier point d'étape — null tant qu'aucun n'est posé.
+        health: null, healthUpdatedAt: null,
       }],
     }]);
   });
@@ -104,7 +113,7 @@ describe('SupabaseTeamOKRsRepository — create', () => {
     supabaseMock.queueTable('team_key_results', { data: [krRow] });
 
     const result = await repo.create('org1', {
-      title: 'Croissance', description: 'desc', category: 'business',
+      title: 'Croissance', description: 'desc', categoryId: 'cat1',
       startDate: '2026-07-01', endDate: '2026-09-30',
       teamIds: ['t1', 't1', 't2'], // doublon : dédupliqué
       keyResults: [{ title: 'MRR', targetValue: 10, currentValue: 25, unit: 'k€', weight: 3, estimatedTime: 45.4 }],
@@ -116,7 +125,9 @@ describe('SupabaseTeamOKRsRepository — create', () => {
     expect(okrInsert).toEqual({
       id: okrInsert.id,
       org_id: 'org1', created_by: supabaseMock.user?.id, title: 'Croissance',
-      description: 'desc', category: 'business', start_date: '2026-07-01', end_date: '2026-09-30',
+      description: 'desc', category_id: 'cat1', start_date: '2026-07-01', end_date: '2026-09-30',
+      // Mig. 205 : l'audience part avec l'insertion, jamais après les liens.
+      audience: 'teams',
     });
 
     const links = supabaseMock.argsOf('team_okr_teams', 'insert')?.[0] as Record<string, unknown>[];
@@ -179,7 +190,7 @@ describe('SupabaseTeamOKRsRepository — create', () => {
 
   it('create: rejette si non authentifié, sans INSERT ; erreur DB → rejet normalisé', async () => {
     supabaseMock.user = null;
-    await expect(repo.create('org1', { title: 'X', keyResults: [] })).rejects.toThrow('Not authenticated');
+    await expect(repo.create('org1', { title: 'X', keyResults: [] })).rejects.toMatchObject({ code: 'not_authenticated' });
     expect(supabaseMock.queries).toHaveLength(0);
 
     supabaseMock.reset();
@@ -191,11 +202,11 @@ describe('SupabaseTeamOKRsRepository — create', () => {
 describe('SupabaseTeamOKRsRepository — update / remove', () => {
   it('update: patch whitelisté ciblé par id ; "" → null sur les champs optionnels', async () => {
     supabaseMock.queueTable('team_okrs', { data: null });
-    await repo.update('o1', { title: 'Nouveau', description: '', category: 'ops', startDate: '', endDate: '2026-12-31' });
+    await repo.update('o1', { title: 'Nouveau', description: '', categoryId: 'cat2', startDate: '', endDate: '2026-12-31' });
 
     const patch = supabaseMock.argsOf('team_okrs', 'update')?.[0] as Record<string, unknown>;
     expect(patch).toEqual({
-      title: 'Nouveau', description: null, category: 'ops', start_date: null, end_date: '2026-12-31',
+      title: 'Nouveau', description: null, category_id: 'cat2', start_date: null, end_date: '2026-12-31',
     });
     expect(supabaseMock.argsOf('team_okrs', 'eq')).toEqual(['id', 'o1']);
   });
@@ -205,38 +216,56 @@ describe('SupabaseTeamOKRsRepository — update / remove', () => {
     expect(supabaseMock.queries).toHaveLength(0);
   });
 
-  it('update: teamIds remplace l\'ensemble (org_id relu en DB, delete puis insert dédupliqué/cap 20)', async () => {
-    supabaseMock.queueTable('team_okrs', { data: { org_id: 'org1' } }); // lecture org_id
-    supabaseMock.queueTable('team_okr_teams', { data: null });          // delete
-    supabaseMock.queueTable('team_okr_teams', { data: null });          // insert
+  // Mig. 212 (E-3) : l'audience se remplace d'UN bloc, par la RPC qui vérifie
+  // le droit AVANT tout changement. En deux requêtes (supprimer, réinsérer), un
+  // manager qui ne voyait l'OKR que par son audience perdait ce droit entre les
+  // deux et l'OKR se refermait.
+  it('update: teamIds remplace l\'ensemble par set_team_okr_links (dédupliqué, cap 20), jamais en écriture directe', async () => {
     await repo.update('o1', { teamIds: ['t2', 't2', 't3'] });
 
-    expect(supabaseMock.argsOf('team_okrs', 'select')).toEqual(['org_id']);
-    expect(supabaseMock.callsFor('team_okr_teams', 0).map((c) => c.method)).toEqual(['delete', 'eq']);
-    expect(supabaseMock.argsOf('team_okr_teams', 'eq', 0)).toEqual(['okr_id', 'o1']);
-    const inserted = supabaseMock.argsOf('team_okr_teams', 'insert', 1)?.[0] as Record<string, unknown>[];
-    expect(inserted).toEqual([
-      { okr_id: 'o1', org_id: 'org1', team_id: 't2' },
-      { okr_id: 'o1', org_id: 'org1', team_id: 't3' },
-    ]);
+    expect(supabaseMock.rpcCalls.find((c) => c.fn === 'set_team_okr_links')?.args).toEqual({
+      p_okr: 'o1',
+      p_team_ids: ['t2', 't3'],
+      p_member_ids: null,
+    });
+    expect(supabaseMock.queries.filter((q) => q.table === 'team_okr_teams' || q.table === 'team_okr_members')).toHaveLength(0);
   });
 
-  it('update: teamIds [] → delete sans insert', async () => {
-    supabaseMock.queueTable('team_okrs', { data: { org_id: 'org1' } });
-    supabaseMock.queueTable('team_okr_teams', { data: null });
-    await repo.update('o1', { teamIds: [] });
+  it('update: personnes nommées seulement en audience custom ; [] vide la liste ; erreur RPC → rejet normalisé', async () => {
+    await repo.update('o1', { audience: 'custom', memberIds: ['u1', 'u1', 'u2'] });
+    expect(supabaseMock.rpcCalls.at(-1)?.args).toEqual({ p_okr: 'o1', p_team_ids: null, p_member_ids: ['u1', 'u2'] });
 
-    expect(supabaseMock.queries.filter((q) => q.table === 'team_okr_teams')).toHaveLength(1);
+    await repo.update('o1', { audience: 'teams', memberIds: ['u1'], teamIds: [] });
+    expect(supabaseMock.rpcCalls.at(-1)?.args).toEqual({ p_okr: 'o1', p_team_ids: [], p_member_ids: [] });
+
+    supabaseMock.queueRpc('set_team_okr_links', { error: { code: '42501', message: 'not_allowed' } });
+    await expect(repo.update('o1', { teamIds: ['t1'] })).rejects.toBeTruthy();
   });
 
-  it('remove: delete ciblé par id ; erreur DB → rejet normalisé', async () => {
-    supabaseMock.queueTable('team_okrs', { data: null });
+  // Mig. 193 : « supprimer » passe par la CORBEILLE. Un DELETE direct
+  // effacerait KR, points d'étape et liens de projets sans retour possible.
+  it('remove: met à la corbeille par RPC, jamais de DELETE ; erreur DB → rejet normalisé', async () => {
+    supabaseMock.queueRpc('trash_team_okr', { data: null });
     await repo.remove('o1');
-    expect(supabaseMock.callsFor('team_okrs').map((c) => c.method)).toEqual(['delete', 'eq']);
-    expect(supabaseMock.argsOf('team_okrs', 'eq')).toEqual(['id', 'o1']);
+    expect(supabaseMock.rpcCalls.find((c) => c.fn === 'trash_team_okr')?.args).toEqual({ p_okr: 'o1' });
+    expect(supabaseMock.callsFor('team_okrs')).toHaveLength(0);
 
-    supabaseMock.queueTable('team_okrs', { data: null, error: { message: 'denied', code: '42501' } });
+    supabaseMock.queueRpc('trash_team_okr', { data: null, error: { message: 'forbidden', code: '42501' } });
     await expect(repo.remove('o1')).rejects.toBeTruthy();
+  });
+
+  it('getTrash / restore / purge : trois RPC, mappage camelCase', async () => {
+    supabaseMock.queueRpc('get_team_okr_trash', {
+      data: [{ id: 'o1', title: 'T4', deleted_at: '2026-09-20T10:00:00Z', deleted_by: 'u1', created_by: 'u2' }],
+    });
+    expect(await repo.getTrash('org1')).toEqual([
+      { id: 'o1', title: 'T4', deletedAt: '2026-09-20T10:00:00Z', deletedBy: 'u1', createdBy: 'u2' },
+    ]);
+    supabaseMock.queueRpc('restore_team_okr', { data: null });
+    await repo.restore('o1');
+    supabaseMock.queueRpc('purge_team_okr', { data: null });
+    await repo.purge('o1');
+    expect(supabaseMock.rpcCalls.map((c) => c.fn)).toEqual(['get_team_okr_trash', 'restore_team_okr', 'purge_team_okr']);
   });
 });
 
@@ -335,5 +364,53 @@ describe('SupabaseTeamOKRsRepository — key results', () => {
   it('syncKeyResults: normalise les erreurs DB (lecture des existants)', async () => {
     supabaseMock.queueTable('team_key_results', { data: null, error: { message: 'boom', code: '42P01' } });
     await expect(repo.syncKeyResults('o1', 'org1', [])).rejects.toBeTruthy();
+  });
+});
+
+describe('SupabaseTeamOKRsRepository — audience (mig. 205)', () => {
+  it('create « Personnaliser » : audience posée à l’insertion, personnes insérées', async () => {
+    supabaseMock.queueTable('team_okrs', { data: okrRow });
+    supabaseMock.queueTable('team_okr_members', { data: null });
+
+    await repo.create('org1', { title: 'Confidentiel', audience: 'custom', memberIds: ['u2', 'u2', 'u3'], keyResults: [] });
+
+    const okrInsert = supabaseMock.argsOf('team_okrs', 'insert')?.[0] as Record<string, unknown>;
+    expect(okrInsert.audience).toBe('custom');
+    expect(supabaseMock.argsOf('team_okr_members', 'insert')?.[0]).toEqual([
+      { okr_id: okrInsert.id, org_id: 'org1', user_id: 'u2' },
+      { okr_id: okrInsert.id, org_id: 'org1', user_id: 'u3' },
+    ]);
+  });
+
+  it('personnes ignorées hors « Personnaliser »', async () => {
+    supabaseMock.queueTable('team_okrs', { data: okrRow });
+    await repo.create('org1', { title: 'Public', audience: 'org', memberIds: ['u2'], keyResults: [] });
+    expect(supabaseMock.queries.map((q) => q.table)).toEqual(['team_okrs']);
+  });
+
+  // Ordre GLOBAL entre `from()` et `rpc()` : les liens passent par une RPC
+  // depuis la mig. 212, et le mock range tables et RPC dans deux listes.
+  // `invocationCallOrder` des deux espions est la seule horloge commune.
+  const ordreRpcLiens = () => {
+    const i = supabaseMock.rpcCalls.findIndex((c) => c.fn === 'set_team_okr_links');
+    return supabaseMock.client.rpc.mock.invocationCallOrder[i];
+  };
+
+  it('🔴 fermer : l’audience part dans le PREMIER update, avant les liens', async () => {
+    await repo.update('o1', { title: 'x', audience: 'custom', teamIds: [], memberIds: ['u2'] });
+
+    expect(supabaseMock.queries[0].table).toBe('team_okrs');
+    expect(supabaseMock.argsOf('team_okrs', 'update')?.[0]).toEqual({ title: 'x', audience: 'custom' });
+    expect(supabaseMock.client.from.mock.invocationCallOrder[0]).toBeLessThan(ordreRpcLiens());
+  });
+
+  it('🔴 rouvrir à toute l’entreprise : l’audience part en DERNIER, liens déjà retirés', async () => {
+    await repo.update('o1', { audience: 'org', teamIds: [], memberIds: [] });
+
+    expect(supabaseMock.rpcCalls.find((c) => c.fn === 'set_team_okr_links')?.args)
+      .toEqual({ p_okr: 'o1', p_team_ids: [], p_member_ids: [] });
+    const ordresFrom = supabaseMock.client.from.mock.invocationCallOrder;
+    expect(ordresFrom.at(-1)).toBeGreaterThan(ordreRpcLiens());
+    expect(supabaseMock.queries.at(-1)?.calls.find((c) => c.method === 'update')?.args[0]).toEqual({ audience: 'org' });
   });
 });

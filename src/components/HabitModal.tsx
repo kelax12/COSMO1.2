@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Check } from 'lucide-react';
+import { X, Plus, Check, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 import { useCreateHabit, useUpdateHabit, Habit } from '@/modules/habits';
 import ColorSettingsModal from './ColorSettingsModal';
 import ConfirmDiscardDialog from './ConfirmDiscardDialog';
 import { Button } from '@/components/ui/button';
+import { formatDurationMinutes } from '@/lib/duration';
 import { useT } from '@/i18n/useT';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
 
 interface HabitModalProps {
   isOpen: boolean;
@@ -18,14 +22,32 @@ interface HabitModalProps {
   habit?: Habit;
 }
 
+/** Minutes → `HH:MM` pour l'input natif `type="time"` (roue OS), même
+ *  pattern que le champ Durée de TaskModalMobileBody. */
+const minutesToTimeValue = (minutes: number | string): string => {
+  const total = typeof minutes === 'number' ? minutes : Number(minutes) || 0;
+  const h = Math.floor(total / 60).toString().padStart(2, '0');
+  const m = (total % 60).toString().padStart(2, '0');
+  return `${h}:${m}`;
+};
+
+const timeValueToMinutes = (value: string): number => {
+  const [h, m] = value.split(':').map((n) => Number(n) || 0);
+  return h * 60 + m;
+};
+
 const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
   const { t } = useT('habits');
+  const { t: tCommon } = useT('common');
   const { favoriteColors } = useFavoriteColors();
   const { data: categories = [] } = useCategories();
   const createHabitMutation = useCreateHabit();
   const updateHabitMutation = useUpdateHabit();
   const isEditing = !!habit;
   const isMobile = useIsMobile();
+  // Maquette 329 : la catégorie se choisit par identifiant ; plusieurs
+  // catégories partagent une couleur, la couleur seule ne la désigne pas.
+  const [categoryId, setCategoryId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -53,6 +75,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
             color: categories[0]?.color || favoriteColors[0] || '#3B82F6',
           };
       setFormData(initial);
+      setCategoryId(null);
       initialSnapshotRef.current = JSON.stringify(initial);
     }
   }, [isOpen, habit, categories, favoriteColors]);
@@ -93,11 +116,22 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
     doSave();
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') guardedClose();
-  };
-
+  // C-53 — l'ancien gestionnaire d'Echap etait un `onKeyDown` React pose sur
+  // l'overlay : il dependait de la remontee d'un evenement depuis l'element
+  // focalise, donc il mourait des que le focus sortait de la modale. Il n'y
+  // avait par ailleurs aucun piege, aucune restitution du focus, aucun role.
+  // Tout cela vient maintenant de `useModalA11y`, qui ecoute `document`.
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(guardedClose);
+  const sheetMotion = useSheetMotion();
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: guardedClose,
+    label: isEditing ? t('modal.editHabit') : t('modal.createHabit'),
+  });
+
+  // `'__none'` : « Sans catégorie » choisi explicitement (couleur grise).
+  const noCategory = categoryId === '__none' || (!categoryId && formData.color === NO_CATEGORY_COLOR);
+  const selectedCategory = noCategory ? undefined : (categories.find((c) => c.id === categoryId) ?? categories.find((c) => c.color === formData.color));
 
   return (
     <>
@@ -107,17 +141,15 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            ref={overlayRef}
+            {...dialogProps}
             className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-end sm:items-center justify-center z-50 sm:p-4"
             onClick={guardedClose}
-            onKeyDown={handleKeyDown}
           >
             <motion.div
               ref={sheetRef}
               {...sheetDragProps}
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              {...sheetMotion}
               className="w-full sm:max-w-lg sm:rounded-2xl rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh]"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',
@@ -140,7 +172,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       onClick={guardedClose}
                       className="text-blue-500 text-[15px] min-w-16 min-h-11 flex items-center"
                     >
-                      Annuler
+                      {tCommon('actions.cancel')}
                     </button>
                     <span className="text-[17px] font-semibold text-[rgb(var(--color-text-primary))]">
                       {isEditing ? t('modal.edit') : t('modal.newHabit')}
@@ -149,20 +181,27 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       type="button"
                       onClick={doSave}
                       className={`text-[15px] font-semibold min-w-16 min-h-11 flex items-center justify-end ${
-                        formData.name.trim() ? 'text-blue-500' : 'text-blue-300'
+                        formData.name.trim() ? 'text-blue-500' : 'text-[rgb(var(--color-text-muted))]'
                       }`}
                     >
                       {isEditing ? t('modal.ok') : t('modal.create')}
                     </button>
                   </div>
 
-                  {/* Scroll area */}
-                  <div data-scroll-area className="flex-1 overflow-y-auto px-4 py-4">
+                  {/* Scroll area — le padding bas remplace celui de l'ancien
+                      CTA plein-largeur (supprimé) pour garder le contenu au-
+                      dessus de l'indicateur d'accueil iOS. */}
+                  <div
+                    data-scroll-area
+                    className="flex-1 overflow-y-auto px-4 pt-4"
+                    style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
+                  >
 
                     {/* Groupe 1 — Nom (sans overflow-hidden pour iOS selection handles) */}
                     <div
                       ref={register('name')}
-                      className={`bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm transition-[box-shadow] ${
+                      // Maquette 325 : le nom sans cadre, en titre.
+                      className={`rounded-xl transition-[box-shadow] ${
                         isInvalid('name') ? 'ring-2 ring-red-500' : ''
                       }`}
                     >
@@ -171,137 +210,70 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         value={formData.name}
                         onChange={(e) => { setFormData({ ...formData, name: e.target.value }); clear('name'); }}
                         placeholder={t('modal.namePlaceholder')}
-                        autoFocus
-                        className="w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
+                        // Maquette 331 : le clavier s'ouvre sur le nom.
+                        autoFocus={!isEditing}
+                        className="no-input-chrome w-full px-1 min-h-12 text-title font-semibold bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
                         style={{ border: 'none' }}
                       />
                     </div>
 
-                    {/* Section DÉTAILS */}
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
-                      Détails
+                    {/* Maquettes 326 à 334 (2026-10-11) : un seul groupe, comme la
+                        fiche tâche (332). Durée lue « 30 min » (326) ; catégorie en
+                        une ligne point et nom (328), choisie PAR IDENTIFIANT : par
+                        couleur, trois catégories bleues paraissaient choisies (329). */}
+                    <p className="text-label font-semibold text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
+                      {t('modal.details')}
                     </p>
                     <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
-                      <div className="flex items-center px-4 min-h-11">
-                        <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('modal.duration')}</span>
-                        <div className="flex items-center gap-2.5">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setFormData({ ...formData, estimatedTime: Math.max(5, formData.estimatedTime - 5) })
-                            }
-                            aria-label={t('modal.decreaseDuration')}
-                            className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] text-lg leading-none"
-                          >
-                            −
-                          </button>
-                          <span className="text-[15px] text-blue-500 w-16 text-center">
-                            {formData.estimatedTime} min
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setFormData({ ...formData, estimatedTime: formData.estimatedTime + 5 })
-                            }
-                            aria-label={t('modal.increaseDuration')}
-                            className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] text-lg leading-none"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section COULEUR — affichage par CATÉGORIE (nom + swatch)
-                        pour que l'utilisateur sache à quelle catégorie chaque
-                        couleur appartient. Fallback sur favoriteColors si aucune
-                        catégorie n'existe encore. */}
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
-                      Couleur
-                    </p>
-                    <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden px-4 py-4">
-                      {categories.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-2">
-                          {categories.map((cat) => {
-                            const isSelected = formData.color === cat.color;
-                            return (
-                              <button
-                                key={cat.id}
-                                type="button"
-                                onClick={() => setFormData({ ...formData, color: cat.color })}
-                                aria-label={cat.name}
-                                aria-pressed={isSelected}
-                                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all active:scale-95 ${
-                                  isSelected
-                                    ? 'border-[rgb(var(--color-accent-solid))] bg-blue-50 dark:bg-blue-900/20'
-                                    : 'border-[rgb(var(--color-border))]'
-                                }`}
-                              >
-                                <span
-                                  className="w-6 h-6 rounded-lg shrink-0"
-                                  style={{ backgroundColor: cat.color }}
-                                />
-                                <span className="flex-1 text-left text-[13px] font-medium text-[rgb(var(--color-text-primary))] truncate">
-                                  {cat.name}
-                                </span>
-                              </button>
-                            );
-                          })}
-                          <button
-                            type="button"
-                            onClick={() => setIsColorSettingsOpen(true)}
-                            aria-label="Personnaliser les couleurs"
-                            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgb(var(--color-border-strong))] text-blue-500 text-[13px] font-medium"
-                          >
-                            <Plus className="w-4 h-4" />
-                            Personnaliser
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-wrap gap-3">
-                          {favoriteColors.map((favColor, index) => (
-                            <button
-                              key={`${favColor}-${index}`}
-                              type="button"
-                              onClick={() => setFormData({ ...formData, color: favColor })}
-                              aria-label={`Couleur ${favColor}`}
-                              className={`w-10 h-10 rounded-xl transition-transform active:scale-90 ${
-                                formData.color === favColor
-                                  ? 'ring-2 ring-offset-2 ring-gray-900 dark:ring-white scale-110'
-                                  : ''
-                              }`}
-                              style={{ backgroundColor: favColor }}
-                            />
+                      <label className="relative flex items-center justify-between px-4 min-h-11">
+                        <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{t('modal.duration')}</span>
+                        <span className="text-[15px] text-[rgb(var(--color-text-secondary))]">{formatDurationMinutes(formData.estimatedTime)}</span>
+                        <input
+                          type="time"
+                          aria-label={t('modal.duration')}
+                          value={minutesToTimeValue(formData.estimatedTime)}
+                          onChange={(e) => setFormData({ ...formData, estimatedTime: timeValueToMinutes(e.target.value) })}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          style={{ border: 'none' }}
+                        />
+                      </label>
+                      <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
+                      <label className="relative flex items-center justify-between gap-3 px-4 min-h-11">
+                        <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{t('modal.category')}</span>
+                        <span className="flex items-center gap-2 min-w-0 text-[15px] text-[rgb(var(--color-text-secondary))]">
+                          {selectedCategory ? (
+                            <>
+                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedCategory.color }} aria-hidden="true" />
+                              <span className="truncate">{selectedCategory.name}</span>
+                            </>
+                          ) : noCategory ? (
+                            <span className="truncate">{tCommon('noCategory')}</span>
+                          ) : (
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: formData.color }} aria-hidden="true" />
+                          )}
+                          <ChevronRight size={16} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
+                        </span>
+                        <select
+                          aria-label={t('modal.category')}
+                          value={selectedCategory?.id ?? (noCategory ? '__none' : '')}
+                          onChange={(e) => {
+                            if (e.target.value === '__new') { setIsColorSettingsOpen(true); return; }
+                            if (e.target.value === '__none') { setCategoryId('__none'); setFormData({ ...formData, color: NO_CATEGORY_COLOR }); return; }
+                            const cat = categories.find((c) => c.id === e.target.value);
+                            if (cat) { setCategoryId(cat.id); setFormData({ ...formData, color: cat.color }); }
+                          }}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        >
+                          {!selectedCategory && !noCategory && <option value="">{t('modal.category')}</option>}
+                          <option value="__none">{tCommon('noCategory')}</option>
+                          {categories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
                           ))}
-                          <button
-                            type="button"
-                            onClick={() => setIsColorSettingsOpen(true)}
-                            aria-label="Personnaliser les couleurs"
-                            className="w-10 h-10 rounded-xl border-2 border-dashed border-[rgb(var(--color-border-strong))] flex items-center justify-center"
-                          >
-                            <Plus className="w-4 h-4 text-blue-500" />
-                          </button>
-                        </div>
-                      )}
+                          {/* Maquette 334 : « Nouvelle catégorie », plus « + Personnaliser » en pointillés. */}
+                          <option value="__new">{t('modal.newCategory')}</option>
+                        </select>
+                      </label>
                     </div>
-                  </div>
-
-                  {/* Footer CTA */}
-                  <div
-                    className="px-4 pt-3 border-t border-[rgb(var(--color-border))] shrink-0"
-                    style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
-                  >
-                    <button
-                      type="button"
-                      onClick={doSave}
-                      className={`w-full h-[50px] rounded-2xl text-[17px] font-semibold text-white transition-colors ${
-                        formData.name.trim()
-                          ? 'bg-[rgb(var(--color-accent-solid))] active:bg-[rgb(var(--color-accent-solid))]'
-                          : 'bg-blue-200 dark:bg-blue-900/40'
-                      }`}
-                    >
-                      {isEditing ? 'Sauvegarder' : "Créer l'habitude"}
-                    </button>
                   </div>
                 </div>
               ) : (
@@ -314,7 +286,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
 
                   {/* Sticky header */}
                   <div
-                    className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0"
+                    className="flex justify-between items-center px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b shrink-0"
                     style={{ borderColor: 'rgb(var(--color-border))' }}
                   >
                     <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
@@ -328,15 +300,15 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                   {/* Scrollable body */}
                   <form id="habit-form" onSubmit={handleSubmit} data-scroll-area className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="sm:col-span-2" ref={register('name')}>
+                      <div className="sm:col-span-2" ref={register('name')} data-guide-id="perso-habit-form-name">
                         <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          Nom de l'habitude
+                          {t('modal.nameLabel')}
                         </label>
                         <input
                           type="text"
                           value={formData.name}
                           onChange={(e) => { setFormData({ ...formData, name: e.target.value }); clear('name'); }}
-                          className={`w-full px-4 h-11 border rounded-lg focus:outline-none focus:ring-2 transition-colors text-sm ${
+                          className={`w-full px-[0.875425rem] h-[2.407419rem] border rounded-lg focus:outline-none focus:ring-2 transition-colors text-[0.765997rem] ${
                             isInvalid('name') ? 'border-red-500 focus:ring-red-500/40' : 'focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))]'
                           }`}
                           style={{
@@ -348,7 +320,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                           autoFocus
                         />
                       </div>
-                      <div>
+                      <div data-guide-id="perso-habit-form-time">
                         <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Temps (min)
                         </label>
@@ -356,7 +328,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                           type="number"
                           value={formData.estimatedTime}
                           onChange={(e) => setFormData({ ...formData, estimatedTime: Number(e.target.value) })}
-                          className="w-full px-4 h-11 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] transition-colors text-sm"
+                          className="w-full px-[0.875425rem] h-[2.407419rem] border rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] transition-colors text-[0.765997rem]"
                           style={{
                             backgroundColor: 'rgb(var(--color-surface))',
                             color: 'rgb(var(--color-text-primary))',
@@ -368,7 +340,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       </div>
                     </div>
 
-                    <div>
+                    <div data-guide-id="perso-habit-form-color">
                       <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                         Couleur
                       </label>
@@ -406,7 +378,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                             className="text-[10px] font-bold uppercase tracking-widest mb-2"
                             style={{ color: 'rgb(var(--color-text-muted))' }}
                           >
-                            Légende
+                            {t('modal.legend')}
                           </h4>
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 max-h-[80px] overflow-y-auto">
                             {categories.map((cat) => (
@@ -425,20 +397,20 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
 
                   {/* Sticky footer */}
                   <div
-                    className="px-4 sm:px-6 pt-3 pb-3 border-t shrink-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2"
+                    className="px-4 sm:px-6 pt-[0.6555rem] pb-[0.6555rem] border-t shrink-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2"
                     style={{ borderColor: 'rgb(var(--color-border))' }}
                   >
                     <Button type="button" variant="outline" size="lg" onClick={guardedClose} className="sm:w-auto">
-                      Annuler
+                      {tCommon('actions.cancel')}
                     </Button>
                     <Button
                       type="submit"
                       form="habit-form"
                       size="lg"
-                      className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-0 gap-2 sm:w-auto"
+                      className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0 gap-2 sm:w-auto"
                     >
                       <Check size={16} />
-                      {isEditing ? 'Sauvegarder' : "Créer l'habitude"}
+                      {isEditing ? t('modal.save') : t('modal.createHabit')}
                     </Button>
                   </div>
                 </>

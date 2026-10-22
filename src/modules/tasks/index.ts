@@ -3,19 +3,24 @@
 // ═══════════════════════════════════════════════════════════════════
 
 // Types
-export type { Task, Subtask, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskStatus, TaskRecurrence } from './types';
+export type { Task, Subtask, TaskDependency, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskStatus, TaskHealth, TaskRecurrence } from './types';
+
+// Statut <-> terminee (mig. 214) : miroir pur du trigger, cf. son en-tete.
+export { applyStatusSync, effectiveStatus } from './status-sync';
 
 // Récurrence (#26) — helpers purs
 export { nextOccurrenceDeadline, buildNextOccurrence } from './recurrence';
 
 // Constants
-export { taskKeys, TASKS_STORAGE_KEY } from './constants';
+export { taskKeys, TASKS_STORAGE_KEY, TASK_DEPENDENCIES_STORAGE_KEY } from './constants';
 
 // Repository interface
 export type { ITasksRepository } from './repository';
 
 // Repository implementations
-export { LocalStorageTasksRepository } from './local.repository';
+// Dépôt de démo NON réexporté (2026-10-01) : le baril est importé par le shell,
+// la réexportation ramenait le dépôt dans le chunk d'ENTRÉE alors que la fabrique
+// le charge à la demande (`src/lib/demo-repositories.ts`).
 export { SupabaseTasksRepository } from './supabase.repository';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -24,12 +29,10 @@ export { SupabaseTasksRepository } from './supabase.repository';
 export {
   useTasks,
   useTask,
-  useTasksByDate,
+  usePendingSharedTasks,
   useFilteredTasks,
-  useTodaysTasks,
   usePendingTasks,
-  useBookmarkedTasks,
-  useCompletedTasks,
+  useTaskDependencies,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -41,19 +44,21 @@ export {
   useDeleteTask,
   useToggleTaskComplete,
   useToggleTaskBookmark,
-  useTasksInfinite,
+  useAddTaskDependency,
+  useRemoveTaskDependency,
 } from './hooks';
 
-// ═══════════════════════════════════════════════════════════════════
-// DERIVED HOOKS (Performance Optimized)
-// ═══════════════════════════════════════════════════════════════════
-export {
-  useTasksByStatus,
-  useTasksByCategory,
-  useTasksByPriority,
-  useTaskStats,
-  useSearchTasks,
-  useTasksInPriorityRange,
-  useTasksDueWithinDays,
-  useTaskLookup,
-} from './hooks.derived';
+// 🗑️ `hooks.derived.ts` a été SUPPRIMÉ le 2026-09-05 (C-49). Ses huit
+// sélecteurs — `useTasksByStatus`, `useTasksByCategory`, `useTasksByPriority`,
+// `useTaskStats`, `useSearchTasks`, `useTasksInPriorityRange`,
+// `useTasksDueWithinDays`, `useTaskLookup` — étaient exportés sans qu'aucun
+// écran ne les monte. Le fichier était orphelin EN ENTIER.
+//
+// ❌ Ne pas les recréer « pour la performance ». C'était l'intitulé de la
+// section (« Performance Optimized ») et c'est un contresens : un `useMemo`
+// sur une donnée déjà chargée ne fait économiser aucune requête. Un écran qui
+// a besoin d'un sous-ensemble le calcule là où il l'affiche, et le jour où
+// deux écrans veulent le MÊME sous-ensemble, il se factorise contre eux deux.
+
+// Restauration d'un « Annuler » — fichier separe, cf. son en-tete.
+export { useRestoreTask } from './restore.hooks';

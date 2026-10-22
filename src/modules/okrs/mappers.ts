@@ -39,7 +39,7 @@ export interface KRRow {
 export interface OKRDbInput {
   title?: string;
   description?: string;
-  category?: string;
+  category?: string | null;
   progress?: number;
   completed?: boolean;
   key_results?: KeyResult[];
@@ -79,7 +79,8 @@ export const mapOkrFromDb = (row: OKRRow, keyResults: KeyResult[]): OKR => ({
   id: row.id,
   title: row.title,
   description: row.description,
-  category: row.category,
+  // Lecture symetrique : la base rend NULL, le modele porte `''`.
+  category: row.category ?? '',
   progress: row.progress,
   completed: row.completed,
   keyResults,
@@ -93,7 +94,14 @@ export const mapOkrToDb = (input: Partial<OKR>): OKRDbInput => {
   const result: OKRDbInput = {};
   if (input.title !== undefined) result.title = input.title;
   if (input.description !== undefined) result.description = input.description;
-  if (input.category !== undefined) result.category = input.category;
+  // 🔴 `''` (NO_CATEGORY côté TypeScript) devient NULL en base depuis la
+  // mig. 145 : une clé étrangère ne peut pas référencer la chaîne vide.
+  // ⚠️ La conversion vit ICI, et NULLE PART AILLEURS. Propager `null` jusqu'aux
+  // composants imposerait de revoir des dizaines de comparaisons
+  // `t.category === ...` pour un gain nul, et créerait DEUX marqueurs d'absence
+  // à vérifier partout — exactement ce que le commentaire d'`impact.ts`
+  // interdit.
+  if (input.category !== undefined) result.category = input.category === '' ? null : input.category;
   if (input.progress !== undefined) result.progress = input.progress;
   if (input.completed !== undefined) result.completed = input.completed;
   if (input.keyResults !== undefined) result.key_results = input.keyResults;

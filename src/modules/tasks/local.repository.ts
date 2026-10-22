@@ -1,6 +1,15 @@
 import { ITasksRepository, ToggleCompleteResult } from './repository';
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
+import { localizeSeed } from '@/lib/seed-i18n';
+import { reachableSets } from '@/lib/dependency-graph';
+import { TASK_DEPENDENCIES_STORAGE_KEY } from './constants';
+import { deadlineDayKey } from '@/lib/deadline';
+import type { CreateOptions } from '@/lib/restore-id';
+import { DEPENDENCY_ERRORS, makeDependencyError } from './dependency-errors';
+import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
+import { applyStatusSync, effectiveStatus } from './status-sync';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
 // Helper pour générer des dates
@@ -30,20 +39,23 @@ const t = (
   pendingInvites: [],
 });
 
-// 10 tâches — 2 par catégorie, variété de statuts et priorités
+// 10 tâches — variété de statuts, priorités et catégories
+// ⚠️ Les tâches auparavant rangées sous TRAVAIL (cat-1) sont réaffectées sur
+// ses sous-catégories (cat-6 SEO, cat-7 Backlinks) : la hiérarchie doit se
+// VOIR dans les données de démo, pas seulement dans l'arbre de gestion.
+// Filtrer « Travail » remonte toujours ces tâches (descendants inclus).
 const DEMO_TASKS: Task[] = [
-  // ── TRAVAIL (cat-1) ───────────────────────────────────────────────────
-  t('t001','Bilan annuel 2025',               'Revue complète + plan 2026',               5,'cat-1',-105,-97, -99, true, 120),
-  t('t002','Préparer présentation Q1 2026',   'Résultats 3 mois + projections',           5,'cat-1',-5,   3,  null, true, 90),
-  t('t013','Envoyer facture client Dupont',   'Facture en retard, relance client',        4,'cat-1',-10,  -3, null, false, 30),
+  // ── TRAVAIL / SEO (cat-6) ─────────────────────────────────────────────
+  t('t002','Préparer présentation Q1 2026',   'Résultats 3 mois + projections',           5,'cat-6',-5,   3,  null, true, 90),
+
+  // ── TRAVAIL / SEO / BACKLINKS (cat-7) ─────────────────────────────────
+  t('t013','Envoyer facture client Dupont',   'Facture en retard, relance client',        4,'cat-7',-10,  -3, null, false, 30),
 
   // ── PROJETS (cat-5) ───────────────────────────────────────────────────
   t('t003','Audit sécurité Q1 2026',          'Pentest + correctifs CVE',                 5,'cat-5',-12,  5,  null),
-  t('t004','Mettre à jour dépendances npm',   'Màj majeure + breaking changes',           3,'cat-5',-3,   4,  null, false, 60),
 
   // ── APPRENTISSAGE (cat-4) ─────────────────────────────────────────────
-  t('t005','Lire "Accelerate"',               'Forsgren — DevOps metrics DORA',           3,'cat-4',-28, -5,  -8, true, 360),
-  t('t006','Cours deep learning Coursera',    'Réseaux neuronaux + CNN + RNN',            3,'cat-4',-10,  50, null, false, 2400),
+  t('t005','Lire "Accelerate"',               'Forsgren, DevOps metrics DORA',           3,'cat-4',-28, -5,  -8, true, 360),
 
   // ── PERSONNEL (cat-2) ─────────────────────────────────────────────────
   t('t007','Préparer dossier crédit immo',    'Documents + simulation + banques',         5,'cat-2',-15,  10, null),
@@ -63,7 +75,7 @@ const DEMO_TASKS: Task[] = [
     name: 'Réviser le rapport mensuel',
     description: 'Vérifier les chiffres et commenter',
     priority: 3,
-    category: 'cat-1',
+    category: 'cat-6',
     deadline: getDate(5),
     estimatedTime: 45,
     createdAt: getDate(-1),
@@ -90,18 +102,38 @@ const DEMO_TASKS: Task[] = [
   },
 ];
 
+// Overlay anglais — cf. src/lib/seed-i18n.ts. `sharedBy` (nom de personne)
+// n'est PAS traduit : un nom propre n'est pas une langue.
+const DEMO_TASKS_EN: Record<string, Partial<Task>> = {
+  t002: { name: 'Prepare Q1 2026 presentation', description: '3-month results + projections' },
+  t013: { name: 'Send invoice to Dupont client', description: 'Overdue invoice, follow up with client' },
+  t003: { name: 'Q1 2026 security audit', description: 'Pentest + CVE fixes' },
+  t005: { name: 'Read "Accelerate"', description: 'Forsgren, DORA DevOps metrics' },
+  t007: { name: 'Prepare mortgage application', description: 'Documents + simulation + banks' },
+  t008: { name: 'Look for a new apartment', description: 'Criteria + viewings + budget cap' },
+  t009: { name: '2026 annual check-up', description: 'Check-up + vaccines + renewals' },
+  t010: { name: 'Daily stretching routine', description: 'Mobility + post-workout recovery' },
+  t011: { name: 'Review the pitch deck', description: 'Incorporate feedback before Monday' },
+  t012: { name: 'Test the mobile prototype', description: 'Onboarding flow + UX feedback' },
+  'shared-001': { name: 'Review the monthly report', description: 'Check figures and add comments' },
+  'shared-002': { name: 'Prepare the kickoff meeting', description: 'Agenda + slides + invitations' },
+};
+
 export class LocalStorageTasksRepository implements ITasksRepository {
   private getTasks(): Task[] {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) {
-      this.saveTasks(DEMO_TASKS);
-      return DEMO_TASKS;
+    const stored = safeParseArray<Task>(safeGetItem(STORAGE_KEY));
+    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
+    // tomber la page (regle B14, helper `safeParseArray`).
+    if (!stored) {
+      const seeded = localizeSeed(DEMO_TASKS, DEMO_TASKS_EN);
+      this.saveTasks(seeded);
+      return seeded;
     }
-    return JSON.parse(data);
+    return stored;
   }
 
   private saveTasks(tasks: Task[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    writeJsonOrThrow(STORAGE_KEY, tasks);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -112,6 +144,15 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     return this.getTasks();
   }
 
+  /**
+   * Mode démo : le partage cross-compte n'existe pas en LocalStorage, la
+   * boîte de réception démo s'appuie sur `task.sharedBy` + les acquittements
+   * locaux (cf. InboxMenu). Rien à renvoyer ici.
+   */
+  async getPendingSharedTasks(): Promise<Task[]> {
+    return [];
+  }
+
   async getById(id: string): Promise<Task | null> {
     const tasks = this.getTasks();
     return tasks.find(t => t.id === id) || null;
@@ -119,8 +160,10 @@ export class LocalStorageTasksRepository implements ITasksRepository {
 
   async getByDate(date: string): Promise<Task[]> {
     const tasks = this.getTasks();
-    const targetDate = date.split('T')[0];
-    return tasks.filter(t => t.deadline.split('T')[0] === targetDate);
+    // `.split('T')[0]` rendait le jour UTC des deux côtés : deux instants du
+    // même jour vécu pouvaient ne pas se répondre (risque R-01).
+    const targetDate = deadlineDayKey(date);
+    return tasks.filter(t => deadlineDayKey(t.deadline) === targetDate);
   }
 
   async getFiltered(filters: TaskFilters): Promise<Task[]> {
@@ -146,12 +189,16 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       tasks = tasks.filter(t => t.priority <= filters.priorityMax!);
     }
 
+    // Comparaison de JOURS, jamais de chaînes hétérogènes : `t.deadline` est un
+    // instant ISO, `deadlineBefore` une clé de jour. `'2026-09-02T22:00:00.000Z'
+    // <= '2026-09-03'` est vrai par hasard lexicographique, et faux dès que
+    // l'instant du 3 est stocké en heure locale négative.
     if (filters.deadlineBefore) {
-      tasks = tasks.filter(t => t.deadline <= filters.deadlineBefore!);
+      tasks = tasks.filter(t => !!t.deadline && deadlineDayKey(t.deadline) <= filters.deadlineBefore!);
     }
 
     if (filters.deadlineAfter) {
-      tasks = tasks.filter(t => t.deadline >= filters.deadlineAfter!);
+      tasks = tasks.filter(t => !!t.deadline && deadlineDayKey(t.deadline) >= filters.deadlineAfter!);
     }
 
     return tasks;
@@ -161,14 +208,22 @@ export class LocalStorageTasksRepository implements ITasksRepository {
   // WRITE OPERATIONS (Phase 2)
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateTaskInput): Promise<Task> {
+  async create(input: CreateTaskInput, options?: CreateOptions): Promise<Task> {
     const tasks = this.getTasks();
-    const newTask: Task = {
+    // Mig. 214 : même règle que le trigger à l'INSERT. Une tâche née cochée
+    // est `done`, une tâche née `done` est cochée.
+    const synced = applyStatusSync({}, {
       ...input,
-      id: crypto.randomUUID(),
+      status: input.status ?? (input.completed ? 'done' : 'todo'),
+    });
+    const newTask: Task = {
+      ...synced,
+      // Parite avec le repository Supabase : `restoreId` vient d'un
+      // « Annuler », jamais d'un formulaire (R-08).
+      id: options?.restoreId ?? crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       bookmarked: input.bookmarked ?? false,
-      completed: input.completed ?? false,
+      completed: synced.completed ?? false,
       isCollaborative: input.isCollaborative ?? false,
       pendingInvites: input.pendingInvites ?? [],
     };
@@ -181,10 +236,11 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     const index = tasks.findIndex(t => t.id === id);
     
     if (index === -1) {
-      throw new Error(`Task with id ${id} not found`);
+      throw makeApiError('not_found');
     }
     
-    const updatedTask: Task = { ...tasks[index], ...updates };
+    // Mig. 214 : `status` et `completed` restent d'accord, comme sous le trigger.
+    const updatedTask: Task = { ...tasks[index], ...applyStatusSync(tasks[index], updates) };
     tasks[index] = updatedTask;
     this.saveTasks(tasks);
     return updatedTask;
@@ -195,10 +251,15 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     const filtered = tasks.filter(t => t.id !== id);
     
     if (filtered.length === tasks.length) {
-      throw new Error(`Task with id ${id} not found`);
+      throw makeApiError('not_found');
     }
     
     this.saveTasks(filtered);
+    // Parité avec le `ON DELETE CASCADE` de la mig. 132 : sans ça, une arête
+    // survit à sa tâche et le graphe compte une dépendance qui n'existe plus.
+    const deps = this.getDependencyEdges();
+    const kept = deps.filter(d => d.taskId !== id && d.dependsOnId !== id);
+    if (kept.length !== deps.length) this.saveDependencyEdges(kept);
   }
 
   /**
@@ -219,7 +280,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     const index = tasks.findIndex(t => t.id === id);
 
     if (index === -1) {
-      throw new Error(`Task with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     const task = tasks[index];
@@ -227,6 +288,9 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       ...task,
       completed: !task.completed,
       completedAt: !task.completed ? new Date().toISOString() : undefined,
+      // Mig. 214 : décocher une tâche `done` la rend `todo` ; décocher une
+      // tâche restée dans un statut ouvert (cas impossible en base) le garde.
+      status: !task.completed ? 'done' : (effectiveStatus(task) === 'done' ? 'todo' : effectiveStatus(task)),
     };
     tasks[index] = updatedTask;
 
@@ -248,6 +312,10 @@ export class LocalStorageTasksRepository implements ITasksRepository {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         subtasks: (task.subtasks ?? []).map(s => ({ ...s, completed: false })),
+        // Parité avec l'INSERT de `toggle_task_complete_v2` : sa liste de
+        // colonnes n'a ni `status` ni `health`, l'occurrence naît `todo`.
+        status: 'todo',
+        health: undefined,
         // Le partage ne se propage pas à l'occurrence suivante.
         isCollaborative: undefined,
         pendingInvites: undefined,
@@ -281,7 +349,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     const index = tasks.findIndex(t => t.id === id);
 
     if (index === -1) {
-      throw new Error(`Task with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     const task = tasks[index];
@@ -312,5 +380,66 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       nextCursor: hasMore ? items[items.length - 1]?.id ?? null : null,
       nextCursorDate: null,
     };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DÉPENDANCES (parité avec la mig. 132)
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // ⚠️ PARITÉ OBLIGATOIRE avec les triggers `validate_task_dependency` et
+  // `prevent_task_dependency_cycle` — même règle que `recordKRCompletion`
+  // (cf. CLAUDE.md) : un invariant qui n'existe que d'un côté diverge en
+  // silence, et c'est le mode démo qui laisse alors créer un graphe que la
+  // production refuserait.
+
+  private getDependencyEdges(): TaskDependency[] {
+    const raw = safeGetItem(TASK_DEPENDENCIES_STORAGE_KEY);
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? (parsed as TaskDependency[]) : [];
+    } catch {
+      // Donnée corrompue : on repart d'un graphe vide plutôt que de faire
+      // planter toute la page Tâches (garde-fou B14).
+      return [];
+    }
+  }
+
+  private saveDependencyEdges(edges: TaskDependency[]): void {
+    writeJsonOrThrow(TASK_DEPENDENCIES_STORAGE_KEY, edges);
+  }
+
+  async getDependencies(): Promise<TaskDependency[]> {
+    return this.getDependencyEdges();
+  }
+
+  async addDependency(taskId: string, dependsOnId: string): Promise<void> {
+    // C-48 — les refus passent par un IDENTIFIANT catalogue, jamais par une
+    // phrase anglaise : elle ne matchait pas `BUSINESS_CODE_RE` en prod (refus
+    // generique) et arrivait telle quelle dans un gabarit francais en demo.
+    // Une auto-dependance EST un cycle de longueur 1 : meme identifiant que la
+    // contrainte `task_dependencies_no_self` de la mig. 132.
+    if (taskId === dependsOnId) {
+      throw makeDependencyError(DEPENDENCY_ERRORS.cycle);
+    }
+    const tasks = this.getTasks();
+    if (!tasks.some(t => t.id === taskId) || !tasks.some(t => t.id === dependsOnId)) {
+      throw makeDependencyError(DEPENDENCY_ERRORS.taskMissing);
+    }
+    const edges = this.getDependencyEdges();
+    if (edges.some(d => d.taskId === taskId && d.dependsOnId === dependsOnId)) return;
+    // Le cycle se teste depuis la BLOQUANTE : si elle dépend déjà, même
+    // indirectement, de la bloquée, l'arête refermerait la boucle.
+    if (reachableSets(edges, dependsOnId).upstream.has(taskId)) {
+      throw makeDependencyError(DEPENDENCY_ERRORS.cycle);
+    }
+    this.saveDependencyEdges([...edges, { taskId, dependsOnId }]);
+  }
+
+  async removeDependency(taskId: string, dependsOnId: string): Promise<void> {
+    const edges = this.getDependencyEdges();
+    this.saveDependencyEdges(
+      edges.filter(d => !(d.taskId === taskId && d.dependsOnId === dependsOnId)),
+    );
   }
 }

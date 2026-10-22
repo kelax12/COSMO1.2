@@ -10,9 +10,13 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
 import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
+// InertiaPlugin : requis par le fond `DotGrid` (src/components/reactbits/) du
+// track entreprise, qui projette les points avec de l'inertie après une
+// impulsion du curseur. Gratuit depuis GSAP 3.13.
+import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import { useGSAP } from '@gsap/react';
 
-gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin, useGSAP);
+gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin, InertiaPlugin, useGSAP);
 
 // Debug dev uniquement : inspection des triggers depuis la console.
 if (import.meta.env.DEV) {
@@ -20,4 +24,4 @@ if (import.meta.env.DEV) {
   (window as unknown as Record<string, unknown>).__gsap = gsap;
 }
 
-export { gsap, ScrollTrigger, SplitText, useGSAP };
+export { gsap, ScrollTrigger, SplitText, InertiaPlugin, useGSAP };

@@ -1,10 +1,62 @@
+<!-- note-audit: non-note -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — **NON NOTÉ** : runbook opératoire. Les gardes qu'il décrit sont notées ailleurs (`uptime.yml`, `check:deploy`, `restore-drill` → Tests / CI), le document lui-même ne l'est pas.
+
 # Déploiement & Runbook — COSMO
 
 Procédures opérationnelles : déployer, appliquer une migration DB, rollback,
 réagir à un incident. À lire avant toute mise en prod.
 
-> Sécurité des secrets & rotation : voir `CLAUDE.md → Rotation des secrets`.
+> Sécurité des secrets & rotation : voir [`SECURITY.md → Rotation des secrets`](./SECURITY.md#rotation-des-secrets).
 > Failles connues / posture : `faille.md`.
+
+---
+
+
+## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
+
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
+>
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
+>
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
+
+
+> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
+> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
+> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
+>
+> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
+> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
+> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
+> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
+> sans que rien ne vérifie**.
+>
+> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
+> **reconduit avec sa date**, jamais ne se recopie.
+
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+|---|---|---|---|
+| AM-1 | ✅ **COMBLÉ le 2026-09-16 par `npm run check:deploy`** (job `Deploy SHA drift`, horaire, branché sur `ci-alert.yml`). Était : **rien ne comparait le commit déployé sur Vercel à `main`.** C'est exactement le défaut C-35 des Edge Functions, **côté front**, et il n'a jamais été nommé. `check:edge` compare le code déployé des fonctions au dépôt ; **aucun équivalent n'existe pour l'application elle-même** | la garde lit `/version.json` **sur la production**, écrit au build par `VERCEL_GIT_COMMIT_SHA`, et distingue **à jour / retard / dérive** : un `!=` confondrait un déploiement en vol avec une dérive, et une prod **en avance** avec un simple retard | ✅ **COMBLÉ le 2026-09-16** · `npm run check:deploy` (`T-8`), job horaire branché sur `ci-alert.yml`. Cycle complet observé le même jour |
+| AM-2 | 🔴 **Le ROLLBACK n'a jamais été éprouvé.** Le runbook le décrit ; `restore-drill.yml` n'a qu'un `workflow_dispatch` avec confirmation. **Un chemin de récupération qui n'a pas été parcouru est une hypothèse**, et ce dépôt l'a déjà appris au prix fort avec la mig. `131` (`/admin` inaccessible deux jours) | `restore-drill.yml` : `on: workflow_dispatch` | ✅ **OUTILLÉ le 2026-09-20** · `dump-check` **trimestriel et automatique** (`C-86`) · 🔴 ne prouve PAS : qu'un dump soit restaurable, et surtout pas que le **rollback** fonctionne : personne ne l'a jamais parcouru, c'est **`M-47`** · 🔎 🔴 **2026-10-15 : l'outil lui-même ne tourne pas.** `restore-drill.yml` est désactivé à la main depuis le 2026-09-01 : `dump-check` n'a jamais été joué, et `gh run list` ne montre même pas qu'il manque |
+| AM-3 | **Les variables d'environnement Vercel ne sont comparées à rien.** Une `VITE_*` manquante ou périmée ne se voit qu'à l'exécution. Le cas a déjà mordu : `VITE_SENTRY_DSN` absente changeait la forme du bundle et rendait la garde de budget aveugle à ~45 ko | aucun job ne lit la configuration Vercel | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:env` · contrat statique des 8 `VITE_*` avec l'**effet d'absence** de chacune (`C-105`) — 🔴 ne prouve PAS : les **valeurs** : la moitié Vercel vérifie une présence, jamais un contenu. ⚠️ Et elle dort tant que `VERCEL_TOKEN` / `VERCEL_PROJECT_ID` ne sont pas posés (**`M-59`**) |
+| AM-4 | **L'état réel de Turnstile n'est écrit nulle part de vérifiable.** Le code existe (`TurnstileWidget.tsx`, `AuthForm.tsx`) ; son activation dépend d'une variable posée **hors du dépôt**. Ce document le dit « inerte au 2026-08-28 », et rien ne dirait qu'il a changé | 3 fichiers sources le référencent, 0 garde | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:env` (`C-105`) — 🔴 ne prouve PAS : rien de plus qu'AM-3 : même garde, même réserve |
+| AM-5 | **`uptime.yml` mesure qu'une page RÉPOND, jamais qu'elle FONCTIONNE.** Un HTTP 200 sur une coquille SPA vide est vert. C'est le même piège que la garde Lighthouse qui mesurait une 404 (`T-50`, corrigé le 2026-08-29) | `uptime.yml` : `-w '%{http_code}'` sur `/` et `/auth/v1/health` | ✅ **OUTILLÉ le 2026-09-20** · 3 marqueurs **absents de la coquille SPA** + une 2ᵉ page prérendue sondée + le corps de `/auth/v1/health` (`C-104`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé dans l'autre sens** : `uptime.yml` avait un marqueur (`grep -i cosmo`) qui **ne pouvait pas échouer**, la coquille contenant le mot 21 fois |
 
 ---
 
@@ -20,15 +72,393 @@ réagir à un incident. À lire avant toute mise en prod.
 Un `git push origin main` déclenche la CI **et** le déploiement Vercel du
 **front uniquement**. La base de données n'est **jamais** touchée par ce push.
 
-### Gates locales avant push (cf. `CLAUDE.md → Checklist avant push prod`)
+### Gates locales avant push (cf. [`TESTING.md → Checklist avant push prod`](./TESTING.md#checklist-avant-push-prod))
 ```bash
 npm run lint            # 0 erreur
 npx tsc -b              # 0 erreur
 npm run validate:migrations
+npm run check:rls       # invariants RLS (bloquant CI depuis le 2026-08-07)
 npm run test:coverage   # thresholds respectés
+npm run i18n:check
 npm run build
 npx playwright test --project=chromium
 ```
+
+### Vérifier la dérive repo ↔ prod (avant tout déploiement avec migration)
+
+`check:drift` ne peut pas être une gate CI : elle a besoin d'une introspection
+**live** de la base, donc de secrets que la CI n'a pas (et un check qui exige
+des secrets finit désactivé). C'est une étape manuelle en 2 temps :
+
+```bash
+npm run check:drift -- --print-sql
+```
+
+Exécuter le SQL affiché sur la prod (SQL editor ou MCP `execute_sql` — lecture
+seule), sauver la réponse JSON, puis :
+
+```bash
+npm run check:drift -- introspection.json
+```
+
+Sortie ≠ 0 si un objet attendu par le dépôt **manque** en prod (= migration non
+appliquée). Un objet EN TROP est un simple avertissement (héritage dashboard).
+
+> Historique : ce script existait depuis juin 2026 et n'avait jamais été
+> exécuté. Premier passage le 2026-08-07 — il a révélé une vraie dérive
+> (mig. 090) **et** un faux positif de son propre SQL (le schéma `storage`
+> était ignoré). Un détecteur jamais lancé ne détecte rien.
+
+---
+
+## 2bis. Déployer les Edge Functions
+
+⚠️ **Vercel ne déploie PAS les Edge Functions.** Un `git push` livre le front ;
+les fonctions Deno restent dans leur version précédente jusqu'à un déploiement
+explicite :
+
+```bash
+supabase functions deploy stripe-webhook stripe-create-checkout delete-account
+```
+
+La CLI est la voie recommandée : elle résout seule l'arborescence des imports
+relatifs (`../_shared/alert.ts`) et préserve le réglage `verify_jwt`.
+
+Un déploiement par l'API (MCP `deploy_edge_function`) est possible mais exige
+de reproduire l'arborescence **à la main** — il faut passer `_shared/alert.ts`
+dans `files` ET viser `entrypoint_path: '<fonction>/index.ts'`, sinon l'import
+relatif ne résout pas. Et il faut re-préciser `verify_jwt` à chaque fois.
+
+### Smoke test après déploiement (sans effet de bord)
+
+Une erreur d'import ne se voit PAS dans la réponse du déploiement : la fonction
+est marquée `ACTIVE` et échoue au premier appel. Toujours vérifier :
+
+```bash
+BASE="https://<ref>.supabase.co/functions/v1"
+curl -s -w "
+%{http_code}
+" -X GET  "$BASE/stripe-webhook"           # 405
+curl -s -w "
+%{http_code}
+" -X POST "$BASE/stripe-webhook" -d '{}'   # 400 Invalid signature
+curl -s -w "
+%{http_code}
+" -X POST "$BASE/delete-account" -H "Authorization: Bearer <anon>"  # 401
+curl -s -w "
+%{http_code}
+" -X POST "$BASE/stripe-create-checkout" -H "Authorization: Bearer <anon>" # 401
+```
+
+Ces appels **ne suppriment rien et ne facturent rien** : ils s'arrêtent au
+contrôle de méthode ou d'authentification. Mais ils prouvent que la fonction
+démarre (imports résolus) — un échec de boot renverrait un 5xx `BOOT_ERROR`.
+Un corps de réponse applicatif (`{"error":"Unauthorized"}`) confirme qu'on a
+bien atteint le code de la fonction, et non la passerelle.
+
+Réglages actuels, à ne PAS changer :
+
+| Fonction | `verify_jwt` | Pourquoi |
+|---|---|---|
+| `stripe-webhook` | **false** | Stripe n'envoie pas de JWT — l'authentification est la signature du webhook |
+| `stripe-create-checkout` | true | Appelée par un utilisateur connecté |
+| `delete-account` | true | Idem, et l'id supprimé est celui du JWT |
+| `report-bug` | true | Le gateway accepte aussi la clé anon : un visiteur non connecté doit pouvoir signaler un bug, il reste juste anonyme dans le mail |
+
+### `report-bug` — formulaire « Signaler un bug » (2026-08-24)
+
+L'icône insecte de la barre de navigation ouvre un formulaire (titre,
+description, pièce jointe) que cette fonction relaie **par e-mail** à
+`contact@thecosmo.app` via l'API Resend. Elle ne touche pas à la base.
+
+Mise en service, dans cet ordre :
+
+1. Créer un compte Resend et **vérifier le domaine `thecosmo.app`** (SPF +
+   DKIM). Tant que le domaine n'est pas vérifié, Resend n'accepte que l'adresse
+   de test `onboarding@resend.dev` en expéditeur.
+2. Poser les secrets :
+
+```bash
+supabase secrets set RESEND_API_KEY=re_xxx
+supabase secrets set BUG_REPORT_TO=contact@thecosmo.app
+supabase secrets set BUG_REPORT_FROM="Cosmo <bug@thecosmo.app>"
+```
+
+3. Déployer : `supabase functions deploy report-bug`
+
+> ✅ **Déployée en production le 2026-08-29** (version 1, `verify_jwt` actif), après six
+> jours où `SECURITY.md` et ce fichier la décrivaient comme livrée sans qu'elle le soit.
+> Fumée passée en prod : `POST` sans corps → `503 mail_not_configured`, `GET` → `405`,
+> sans JWT → `401` du gateway. **Les secrets ne sont toujours pas posés**, donc le repli
+> `mailto` est ce que voit un utilisateur aujourd'hui. L'étape 1 ci-dessus dépend du même
+> domaine vérifié que §2ter : les deux se débloquent ensemble.
+
+**Tant que `RESEND_API_KEY` est absente**, la fonction répond `503
+mail_not_configured` — et c'est un état prévu, pas une panne : le formulaire
+affiche alors « écrivez-nous directement à contact@thecosmo.app » avec un lien
+`mailto:` pré-rempli. Aucun message n'est perdu en silence.
+
+⚠️ `BUG_REPORT_FROM` doit être une adresse **du domaine vérifié**, jamais
+l'adresse de destination d'un fournisseur tiers (Gmail refuserait de signer).
+L'auteur du rapport, lui, arrive en `Reply-To` — répondre au mail répond bien à
+l'utilisateur, et son identité vient du JWT, jamais du corps de la requête.
+
+---
+
+## 2ter. Emails d'authentification (Supabase Auth) · **SMTP EN SERVICE depuis le 2026-08-29 au soir ; les confirmations restent désactivées**
+
+> 🔴 **CE TITRE A DIT « NON CONFIGURÉS » PENDANT SEIZE JOURS APRÈS LA MISE EN SERVICE.**
+> Corrigé le 2026-09-14 au soir. La section qui suit décrit l'état du **27-29 août au matin** ;
+> la mise en service a eu lieu **le 29 au soir**, et elle est inscrite dans `faille.md` (ligne
+> 1quater de l'ordre de priorité) sans que ce runbook soit repassé derrière.
+>
+> **Mesuré ce soir, `npm run check:mail`** : DKIM Resend présent sur `send.thecosmo.app`, SPF du
+> Return-Path `v=spf1 include:amazonses.com ~all`, MX `feedback-smtp.eu-west-1.amazonses.com`, MX et
+> SPF de la racine intacts, DMARC présent. **Un seul avertissement : `p=none`**, surveillance seule,
+> correct pour démarrer. Le domaine d'envoi est donc en état de signer.
+>
+> ⚠️ **Ce qui reste VRAI dans la section ci-dessous, et ne doit pas être lu comme corrigé** : les
+> **confirmations d'inscription sont toujours désactivées**, par décision d'Axel (finding `G-2`).
+> Remesuré ce soir : **28 comptes sur 28 portent `email_confirmed_at`, dont 26 à la seconde même de
+> leur création**, et **18 comptes sont créés par email + mot de passe**. Aucune de ces 18 adresses
+> n'a jamais été prouvée : la colonne dit « confirmé » parce que personne n'a demandé de
+> confirmation. Le point 1 des « deux conséquences » ci-dessous tient donc intégralement ; le
+> point 2, lui, ne tient plus : **le SMTP qui manquait est là**, activer les confirmations ne
+> dépend plus que d'une décision.
+>
+> ⚠️ Le DNS ne prouve toujours pas qu'un email ARRIVE. La preuve reste un compte jetable vérifié
+> sur Gmail ET Outlook (§ « Vérification » plus bas).
+
+> 🔴 **Ce sont les emails que Supabase envoie AUX UTILISATEURS**, pas ceux qu'envoient les Edge
+> Functions. Les deux passent par Resend, mais ce sont deux chemins distincts, avec deux
+> configurations distinctes : `report-bug` et `renewal-notice` appellent l'API Resend depuis du
+> code que nous écrivons ; GoTrue, lui, envoie en **SMTP** depuis un serveur que nous ne
+> contrôlons pas. Poser `RESEND_API_KEY` ne configure QUE le premier.
+
+### Ce qui était vrai les 27-29 août au matin · *état conservé à sa date, cf. l'encadré ci-dessus*
+
+> **Re-mesuré le 2026-08-29** : rien n'a changé. Même `28 / 1 / 3` en base, même DKIM absent.
+> Le sous-domaine d'envoi `send.thecosmo.app` **n'existe pas encore du tout** : ni `MX`, ni `SPF`,
+> ni `DKIM`, donc les trois `FAIL` de `npm run check:mail` sont **le même fait**, pas trois
+> problèmes. La dernière inscription en prod date du 2026-08-21 : le compteur n'a pas bougé parce
+> que personne ne s'est inscrit, pas parce que quelque chose a été réparé.
+
+| Fait | Mesure du 2026-08-27, inchangée au 2026-08-29 |
+|---|---|
+| **Aucun SMTP applicatif n'est configuré.** GoTrue utilise donc l'expéditeur intégré de Supabase, plafonné à quelques envois par heure et explicitement présenté par Supabase comme non destiné à la production | Zéro occurrence de « SMTP » dans le dépôt et la doc |
+| **Les confirmations d'inscription sont DÉSACTIVÉES** | 28 comptes, `confirmation_sent_at` renseigné sur **1** seul, délai création → confirmation de **15 ms** au minimum et < 10 min sur 27 comptes : c'est de l'auto-confirmation, pas un clic |
+| **Les réinitialisations de mot de passe, elles, partent bien** par cet expéditeur | `recovery_sent_at` renseigné sur **3** comptes |
+| **Le domaine n'est pas vérifié chez Resend** | `resend._domainkey.thecosmo.app` → **absent** |
+| Le domaine reçoit du courrier chez IONOS | `MX` → `mx00/mx01.ionos.fr`, `SPF` → `include:_spf-eu.ionos.com`, `_dmarc` → CNAME vers `dmarc.ionos.fr` (`p=none`) |
+
+**Les deux conséquences, dans l'ordre de gravité :**
+
+1. **Personne ne vérifie qu'une adresse d'inscription existe.** N'importe qui peut créer un compte
+   avec l'adresse d'un tiers, et une faute de frappe crée un compte définitivement injoignable —
+   sans email valide, la réinitialisation de mot de passe ne peut plus rien pour lui.
+2. **On ne peut pas corriger le point 1 sans SMTP.** Activer les confirmations aujourd'hui ferait
+   passer chaque inscription par un expéditeur plafonné : au-delà de quelques inscriptions par
+   heure, GoTrue répond `over_email_send_rate_limit`, que l'application traduit par
+   « **Trop de tentatives. Réessayez dans quelques minutes.** » (`safeAuthError`). Le message est
+   exact du point de vue du serveur et **trompeur** du point de vue de l'inscrit : il n'a rien
+   fait de trop, c'est le quota du projet — éventuellement consommé par quelqu'un d'autre — qui
+   est épuisé. Il réessaie, échoue encore, et part.
+
+⚠️ **C'est un mode de défaillance corrélé** : il ne se déclenche que sous trafic, c'est-à-dire
+exactement le jour d'une campagne, et il ressemble à « la campagne n'a pas converti ».
+
+### Mise en service — l'ordre compte
+
+**Le SMTP d'abord, les confirmations ensuite.** Inverser les deux, c'est ouvrir l'inscription sur
+un expéditeur plafonné.
+
+1. **Créer le sous-domaine d'envoi chez Resend** — `send.thecosmo.app`, **pas** `thecosmo.app`.
+   C'est le point technique de cette procédure : la racine porte déjà les MX et le SPF d'IONOS,
+   qui servent la boîte `contact@thecosmo.app`. Un sous-domaine d'envoi donne à Resend son propre
+   `MX` et son propre SPF de *Return-Path* **sans toucher** à ce qui reçoit.
+   ⚠️ Ne pas remplacer le SPF de la racine par celui de Resend : le courrier entrant continuerait
+   d'arriver, mais IONOS cesserait d'être autorisé à émettre.
+
+   **Les trois enregistrements à créer, tels que la console IONOS les demande** (Domaines & SSL →
+   `thecosmo.app` → DNS → Ajouter un enregistrement). Resend affiche les mêmes en écriture
+   absolue ; c'est la traduction qui fait perdre du temps, pas la décision :
+
+   | Type | Champ « Nom d'hôte » chez IONOS | Valeur | D'où vient la valeur |
+   |---|---|---|---|
+   | `MX` | **`send.send`** | `feedback-smtp.eu-west-1.amazonses.com`, priorité `10` | Recopier depuis Resend (région lue dans la console, pas devinée) |
+   | `TXT` | **`send.send`** | `v=spf1 include:amazonses.com ~all` | Dicté par Resend, identique pour tous les comptes |
+   | `TXT` | `resend._domainkey.send` | `p=MIGfMA0GCSq...` (clé publique longue) | **Propre à ce domaine, uniquement lisible dans Resend.** Aucun moyen de la reconstituer |
+
+   🔴 **`send.send`, ce n'est pas une faute de frappe.** Le Return-Path de Resend vit sur un
+   sous-domaine `send.` **du domaine d'envoi** : domaine `send.thecosmo.app` → rebonds sur
+   `send.send.thecosmo.app`. Seul le DKIM se pose sur le domaine d'envoi lui-même. La console
+   Resend affiche déjà les noms **relatifs à `thecosmo.app`**, donc ils se recopient tels quels
+   chez IONOS, sans rien retirer.
+   ⚠️ `npm run check:mail` cherchait le MX et le SPF sur le domaine d'envoi : il aurait affiché
+   deux échecs sur une configuration correcte. Corrigé le 2026-08-29, il interroge les deux
+   emplacements.
+
+   🔴 **IONOS ajoute le domaine tout seul.** Saisir `send`, jamais `send.thecosmo.app` : la
+   seconde forme crée `send.thecosmo.app.thecosmo.app`, qui ne résout nulle part et donne
+   exactement la même sortie `check:mail` qu'un enregistrement oublié. Même piège pour le DKIM :
+   `resend._domainkey.send`, sans le domaine.
+
+   ⚠️ Ces trois lignes se posent **ensemble**. Un domaine à moitié vérifié chez Resend n'envoie
+   rien du tout : ce n'est pas dégradé, c'est bloqué.
+2. **Attendre la validation** dans Resend (les trois enregistrements au vert). Vérifier depuis
+   ici : `npm run check:mail`.
+3. **Créer une clé SMTP** dans Resend (Settings → SMTP). Hôte `smtp.resend.com`, port `465`,
+   utilisateur `resend`, mot de passe = la clé.
+4. **Poser le SMTP dans Supabase** : Dashboard → Project Settings → Authentication → SMTP Settings.
+   Expéditeur **en service depuis le 2026-08-29** : `COSMO <thecosmo@send.thecosmo.app>`.
+   La partie locale est libre ; le domaine, lui, doit être celui vérifié chez Resend, sans quoi
+   l'envoi est refusé. ⚠️ Cette adresse ne reçoit rien : les réponses des utilisateurs vont sur
+   `contact@thecosmo.app`, qui vit chez IONOS. Les Edge Functions doivent porter le **même**
+   expéditeur (`BUG_REPORT_FROM`), leur valeur par défaut `bug@thecosmo.app` étant sur un
+   domaine que Resend ne signera jamais.
+5. **Relever la limite d'envoi** : Authentication → Rate Limits → *Emails per hour*. Le défaut est
+   celui de l'expéditeur intégré et **ne bouge pas tout seul** quand on branche un SMTP : sans ce
+   réglage, on paie un SMTP et on garde le plafond qu'on voulait fuir.
+6. **Coller les quatre gabarits** de [`supabase/templates/`](../supabase/templates/) dans
+   Authentication → Emails. Ils ne se déploient pas depuis le dépôt, cf. le README du dossier.
+7. **Seulement maintenant**, activer *Confirm email* (Authentication → Providers → Email).
+   Le front est déjà prêt : `register()` rapporte `needsEmailConfirmation` quand `signUp` ne
+   renvoie pas de session, et `AuthForm` affiche « Vérifiez votre boîte mail » au lieu de pousser
+   l'inscrit vers un écran protégé qui le rejetterait. Verrouillé par
+   `src/components/AuthForm.confirmation.test.tsx`, **avec son témoin**.
+
+### Vérification — quatre gestes, aucun n'est facultatif
+
+```bash
+npm run check:mail          # DNS : MX, SPF, DKIM Resend, DMARC
+```
+
+1. `npm run check:mail` sort **0**.
+2. Créer un compte jetable sur la prod : l'email arrive **en moins d'une minute**, depuis
+   `@send.thecosmo.app`, et **hors dossier indésirables sur Gmail ET sur Outlook** — deux
+   fournisseurs, parce qu'ils ne jugent pas de la même façon.
+3. Demander une réinitialisation de mot de passe sur ce compte : même vérification.
+4. Supprimer le compte jetable par le bouton de suppression de compte. Ça teste au passage
+   `delete-account`, donc le droit à l'effacement, en conditions réelles.
+
+> ⚠️ **Ne pas valider la délivrabilité sur une seule boîte, et surtout pas sur une adresse du
+> domaine.** Un email envoyé depuis `thecosmo.app` vers une boîte `thecosmo.app` ne traverse
+> aucun filtre anti-spam : il prouve que le SMTP répond, pas qu'un inconnu recevra quoi que ce
+> soit.
+
+### Passer DMARC en quarantaine, plus tard
+
+`_dmarc.thecosmo.app` est aujourd'hui un **CNAME vers IONOS** qui publie `p=none` : le domaine est
+surveillé, rien n'est rejeté. C'est le bon réglage pour démarrer. Le durcir (`p=quarantine`) exige
+de retirer ce CNAME pour poser un enregistrement propre, donc de reprendre à sa charge ce qu'IONOS
+gère — à faire **après** avoir constaté plusieurs semaines d'envois alignés, jamais en même temps
+que la mise en service.
+
+---
+
+## 2quater. Protection anti-robot (Cloudflare Turnstile) — **inerte au 2026-08-28**
+
+Le code est livré et **ne fait rien** tant que deux réglages ne sont pas posés, dans cet ordre.
+Fournisseur arbitré par Axel le 2026-08-28 : **Turnstile**, moins intrusif que hCaptcha sur un
+entonnoir d'inscription déjà fragile.
+
+### Pourquoi, et pourquoi c'est lié aux emails
+
+Le risque n'est pas le faux compte, c'est le **quota d'envoi**. Une vague de robots vide le
+plafond d'emails du projet, et les inscriptions légitimes échouent alors avec « Trop de
+tentatives » sans que personne ne comprenne pourquoi. C'est le même mode de défaillance que §2ter,
+et les deux se corrigent ensemble ou pas du tout.
+
+### Mise en service — l'ordre est impératif
+
+1. **Créer un widget Turnstile** sur le compte Cloudflare (mode *Managed*). Il produit une clé
+   **publique** (site key) et une clé **secrète**.
+2. **Poser `VITE_TURNSTILE_SITE_KEY`** dans les variables Vercel, puis **redéployer**. À partir de
+   là le widget s'affiche et produit des jetons, que le serveur **ignore encore**. Rien ne casse.
+3. **Seulement ensuite**, activer côté Supabase : Authentication → Attack Protection → *Enable
+   CAPTCHA protection*, fournisseur Turnstile, avec la clé **secrète**.
+
+> 🔴 **Inverser 2 et 3 rend l'inscription ET la connexion impossibles pour tout le monde**, parce
+> que GoTrue exigerait un jeton que personne n'envoie encore. C'est une panne totale de
+> l'authentification, pas une dégradation.
+
+### 🔴 Activer le CAPTCHA cassera `npm run cosmo:login`
+
+La protection Supabase couvre aussi `signInWithOtp`, qu'utilise le **CLI agent**
+(`scripts/cosmo/login.mjs`). Un script Node ne peut pas résoudre un challenge : la connexion du
+CLI échouera, et avec elle tout accès agent aux données réelles.
+
+**À savoir avant de basculer le réglage, pas à découvrir le jour où le CLI s'arrête.** Il n'y a pas
+de contournement propre côté client ; les sorties sont de garder une session CLI valide (elle
+survit à l'activation, seule la *reconnexion* casse), ou d'accepter que le CLI se reconnecte
+depuis un navigateur.
+
+### Ce que le code fait déjà
+
+- `src/lib/turnstile.ts` — **aucun script tiers n'est chargé** tant que la clé publique est
+  absente. Vérifié par test : un visiteur ne paie aujourd'hui aucune requête vers Cloudflare.
+- Le jeton est joint à `signUp`, `signInWithPassword` **et** `resetPasswordForEmail` — les trois
+  points d'entrée que Supabase protège. En oublier un le rendrait inutilisable après activation.
+- Le jeton est **à usage unique** : il est réarmé après chaque tentative, sinon la deuxième
+  échouerait pour une raison sans rapport avec ce que l'utilisateur vient de corriger.
+- Un échec de chargement (extension, réseau filtrant, panne Cloudflare) **ne bloque pas** le
+  formulaire : on laisse soumettre, et c'est le serveur qui tranche. Un CAPTCHA injoignable ne doit
+  jamais devenir une porte fermée.
+- `captcha_failed` est traduit dans `src/modules/auth/auth-errors.ts`.
+- CSP : `challenges.cloudflare.com` est autorisé en `script-src`, `connect-src` et `frame-src`.
+
+---
+
+## 2quinquies. Second facteur sur `/admin` · **EN VIGUEUR : mig. `131` appliquée le 2026-08-31, TOTP enrôlé le 2026-09-01**
+
+> 🔴 **CE TITRE A DIT « NON APPLIQUéE » PENDANT QUINZE JOURS.** Corrigé le 2026-09-14 au soir.
+> La mig. `131` est au ledger de production, et `auth.mfa_factors` porte un facteur `totp` en statut
+> `verified` sur le compte admin depuis le 2026-09-01 à 14:20:27 UTC.
+>
+> 🔴 **Et elle a été appliquée dans l'ordre que la procédure ci-dessous déconseille**, à la
+> demande explicite d'Axel : migration d'abord, enrôlement ensuite. Le coût a été réel et il est
+> exactement celui que l'avertissement de bas de section annonçait à moitié : `/admin` est resté
+> **inaccessible du 2026-08-31 au 2026-09-01**, parce que l'écran d'enrôlement, censé rester
+> atteignable, levait en phase de rendu. La procédure ci-dessous reste la bonne ; c'est de ne pas
+> l'avoir suivie qui a coûté une journée.
+
+`/admin` rend toute la volumétrie business du produit. Depuis T-06 (b), la garde serveur
+`public.is_admin()` exige que la **session** ait présenté un second facteur (`aal2`), pas
+seulement que le compte figure dans `admin_users`.
+
+### Mise en service — l'ordre évite toute coupure
+
+1. **Déployer le front.** `/admin` affiche alors un écran d'enrôlement : bouton, QR code, et une
+   clé en clair si le QR ne passe pas.
+2. **Enrôler un authentificateur** (Google Authenticator, Aegis, 1Password, Bitwarden…) et saisir
+   le code à six chiffres. La session passe en `aal2` et les statistiques s'affichent.
+3. **Appliquer la migration `131`.** Rien ne change à l'écran : la session est déjà `aal2`.
+
+Fait dans l'autre sens, rien n'est cassé, mais `/admin` ne rend plus de statistiques entre
+l'application de la migration et le premier code vérifié. L'écran d'enrôlement, lui, reste
+atteignable : il ne dépend ni de la migration ni de `is_admin()`.
+
+### Vérification
+
+```sql
+-- Depuis l'application, connecté en admin, APRÈS enrôlement :
+SELECT auth.jwt() ->> 'aal';   -- attendu : 'aal2'
+SELECT public.is_admin();      -- attendu : true
+```
+
+Et le contrôle qui prouve vraiment la garde : se déconnecter, se reconnecter par mot de passe
+seul, s'arrêter avant de saisir le code. `/admin` doit demander le code et **ne rien afficher**.
+
+### 🔑 Téléphone perdu
+
+Aucun verrouillage définitif, donc aucun code de récupération à conserver :
+
+```sql
+-- SQL editor Supabase (rôle service_role, hors de portée de la garde)
+DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';
+```
+
+La session retombe en `aal1` et l'écran d'enrôlement reparaît au prochain passage sur `/admin`.
 
 ---
 
@@ -47,7 +477,7 @@ supabase db push
 #   apply_migration(project_id, name, query)  puis vérifier le schéma.
 ```
 
-Règles (cf. `CLAUDE.md → Avant tout commit qui touche supabase/migration`) :
+Règles (cf. [`SECURITY.md → Avant tout commit qui touche supabase/migration`](./SECURITY.md#avant-tout-commit-qui-touche-supabasemigrationsql)) :
 - Idempotent : `CREATE OR REPLACE`, `ADD COLUMN IF NOT EXISTS`, `DROP POLICY IF EXISTS … CREATE POLICY`.
 - `WITH CHECK` sur tout `UPDATE` ; `SET search_path` sur tout `SECURITY DEFINER`.
 - Après application : `get_advisors(security)` ne doit pas révéler de **nouveau** warning.
@@ -65,6 +495,49 @@ déploiement précédent** :
 - Dashboard Vercel → Deployments → déploiement vert précédent → *Promote to Production*.
 - Ou `vercel rollback <deployment-url>` (CLI).
 - Aucun rebuild : bascule instantanée de l'alias prod.
+
+### ✅ Répété le 2026-10-16 : le retour arrière par `git revert` (moitié de `M-47`)
+
+Fait par un agent, sur `main`, avec un commit sans effet : `42ee5006` ajoute
+`public/repetition-retour-arriere.txt`, `2b9ad9d` le défait. Heures lues dans les statuts de
+déploiement que Vercel publie sur GitHub (`gh api repos/.../deployments?sha=…`) :
+
+| | Poussé (UTC) | Servi en production | Délai |
+|---|---|---|---|
+| Commit A | 19:01:16 | 19:01:56 | **40 s** |
+| Revert | 19:13:09 | 19:13:42 | **33 s** |
+
+Vérifié de l'extérieur : `version.json` rend le nouveau commit, et l'URL du fichier renvoie
+ensuite la page d'app générique.
+
+**Ce que la répétition a appris :**
+- 🔴 **Vercel déploie sans attendre la CI.** Un revert est en ligne en ~35 s, mais un mauvais
+  commit l'est tout aussi vite : la CI (25 min) juge APRÈS la mise en production. Le retour
+  arrière est donc le vrai filet, pas la CI.
+- ⚠️ **Une URL inconnue répond 200** (repli SPA, limite assumée) : pour prouver qu'un fichier a
+  disparu, lire son contenu, jamais son code HTTP.
+- ❌ **Ne pas enchaîner `git revert -q` et `git commit --amend`** : si le revert échoue en silence,
+  l'amend réécrit le commit précédent. C'est arrivé ici ; le push a été refusé (pas d'avance
+  rapide) et rien de faux n'est parti. Lancer le revert sans `-q`, lire sa sortie, puis seulement
+  pousser.
+
+### À faire par Axel : l'autre moitié de `M-47`, le « Promote » de Vercel (5 min)
+
+Pas de jeton Vercel côté agent (`M-59`) : ce geste est le tien. À jouer une fois, à froid :
+
+1. Vercel → projet COSMO → **Deployments**. Repérer le déploiement de production courant et le
+   précédent (vert).
+2. Sur le précédent : **⋯ → Promote to Production** (ou « Instant Rollback »). Noter l'heure.
+3. Vérifier : `curl -s https://thecosmo.app/version.json` doit rendre le commit du déploiement
+   promu. Noter l'heure : c'est le délai réel.
+4. ⚠️ Après un « Promote », Vercel **ne redéploie plus automatiquement** les pushs suivants tant
+   que le déploiement courant n'est pas re-promu. Re-promouvoir le plus récent, puis revérifier
+   `version.json`, et attendre le prochain run `Deploy SHA drift` (vert attendu).
+5. Écrire les deux heures ici, sous ce paragraphe, et fermer `M-47` dans `a-faire-manuel.md`.
+
+La contrepartie base de données n'a rien à rejouer tant qu'aucune migration n'accompagne le
+déploiement défait : les migrations sont additives (ci-dessous), et un retour arrière du front ne
+touche pas la base.
 
 ### Base de données
 Postgres n'a pas de « rollback » automatique. Les migrations doivent donc être
@@ -86,7 +559,7 @@ Postgres n'a pas de « rollback » automatique. Les migrations doivent donc êtr
 3. **Erreurs DB / RLS** → logs Supabase (`get_logs`) + `get_advisors`.
 4. **Webhook Stripe** → table `processed_stripe_events` + logs de l'Edge
    Function `stripe-webhook`.
-5. **Fuite de secret suspectée** → `CLAUDE.md → Rotation des secrets` (rotation
+5. **Fuite de secret suspectée** → [`SECURITY.md → Rotation des secrets`](./SECURITY.md#rotation-des-secrets) (rotation
    immédiate + invalidation des sessions).
 
 ---
@@ -98,6 +571,7 @@ Postgres n'a pas de « rollback » automatique. Les migrations doivent donc êtr
 | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | ✅ | — |
 | `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_SENTRY_DSN` | ✅ | — |
 | `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `APP_URL` | ❌ jamais côté client | ✅ `supabase secrets set …` |
+| `SUPABASE_SECRET_KEY` (clé secrète, rôle `service_role`) | ⚠️ **serveur seulement** : lue par la fonction `api/collect.ts`, jamais préfixée `VITE_`. Posée par l'intégration Vercel ↔ Supabase, en `production` seulement. Sans elle, la mesure d'audience n'écrit plus rien (mig. `223`, `TR-1`) ; `check:env --vercel` vérifie sa présence | — |
 
 Les mêmes secrets `VITE_*` doivent exister en **GitHub Actions secrets** (job
 `build` / `e2e`).
@@ -150,32 +624,122 @@ passer par `apply_migration` (MCP) ou le SQL editor avec le fichier versionné.
 
 ## 7. Backup & Disaster Recovery (runbook)
 
-**État** : backups automatiques Supabase quotidiens (rétention selon plan ;
-PITR seulement à partir du plan Pro + add-on). **Aucune restauration n'a encore
-été testée** — un backup non testé n'est pas un backup.
+> 🔎 **État au 2026-10-15.** `db-backup` est vert tous les jours, **chiffré** depuis le 2026-10-13.
+> `restore-drill.yml` était **désactivé à la main du 2026-09-01 au 2026-10-15** (rangement
+> d'après-drill, rendu caduc par `C-86`) : le premier `dump-check` trimestriel, le 2026-10-05,
+> n'a pas eu lieu. ✅ **Réactivé le 2026-10-15**, et la relecture passe par
+> `scripts/dump-check.mjs` (témoin `dump-check.guard.test.mjs`) : elle refusait mal un `.gpg`
+> non chiffré et un clair posé à côté du chiffré.
+> ✅ **2026-10-15, run [`38787097174`](https://github.com/kelax12/COSMO1.2/actions/runs/38787097174)** :
+> `dump-check` **vert sur le dump CHIFFRÉ** du run db-backup `38711418682` (déchiffré,
+> 1 594 147 octets en clair, 2 214 objets, toutes les tables attendues). `drill` arrêté à sa
+> première garde (confirmation absente), rien écrit : c'est le rouge attendu.
 
-### Restauration (procédure)
-1. `Dashboard → Database → Backups` → choisir le snapshot → **Restore**
-   (⚠️ écrase l'instance ; pour un test, restaurer vers un **nouveau projet**).
-2. Vérifier post-restore : `select count(*) from tasks;` + spot-check RLS
-   (`select * from subscriptions` avec un JWT user → ne doit voir que sa ligne).
-3. Re-pointer le front si projet différent : Vercel env `VITE_SUPABASE_URL` /
-   `VITE_SUPABASE_ANON_KEY` + redeploy.
-4. Redéployer les Edge Functions + `supabase secrets set …` sur le nouveau ref.
+**État au 2026-09-01** : le plan Free n'offre **aucune sauvegarde native**, et le PITR a été
+écarté avec le plan Pro (T-01). La seule copie de la base qui existe est le dump quotidien de
+`.github/workflows/db-backup.yml`. **La restauration a été testée le 2026-09-01** (drill
+ci-dessous) : le dump se restaure, en 163 s, et l'isolation RLS survit.
 
-### Drill trimestriel (à planifier — non fait à ce jour)
-- [ ] Restaurer le dernier backup vers un projet jetable.
-- [ ] Dérouler les vérifs du §2 ci-dessus + login réel + création d'une tâche.
-- [ ] Chronométrer (objectif RTO < 2 h) et noter la date du drill ici.
-- [ ] Supprimer le projet jetable.
+### Restauration réelle (sinistre)
+1. Créer un projet Supabase neuf, récupérer sa chaîne de connexion en mode **session**.
+2. Déchiffrer puis restaurer le dernier dump (chiffré depuis le 2026-10-13) :
+   `gpg --batch --passphrase-file <fichier> -o cosmo.dump -d cosmo-<date>.dump.gpg`, puis
+   `pg_restore --no-owner --no-privileges --dbname "<url>" cosmo.dump`
+   (client PostgreSQL **17** obligatoire, cf. le piège de version plus bas).
+3. Re-pointer le front : Vercel `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`, puis redéployer.
+4. Redéployer les Edge Functions et reposer les secrets sur le nouveau ref : **le dump ne les
+   contient pas**. C'est la partie que personne n'anticipe le jour J.
 
-### Export hors-fournisseur (complément au backup Supabase)
+### Drill — `.github/workflows/restore-drill.yml` (livré le 2026-08-30, exécuté avec succès le 2026-09-01)
+
+Le drill tourne **dans GitHub Actions**, pas sur un poste : c'est là que vivent déjà le dump et un
+client PostgreSQL 17, et le chronomètre y devient une mesure machine. Il restaure, mesure, puis
+juge sur ce qui compte vraiment.
+
+| Ce qu'il vérifie | Pourquoi |
+|---|---|
+| `pg_restore --list` | un fichier tronqué échoue à l'en-tête, pas au milieu |
+| durée de la restauration | c'est le RTO, la seule raison de faire un drill |
+| volumes par table | des lignes sont revenues |
+| **0 table publique sans RLS**, et > 50 policies | une restauration qui rend les données mais perd l'isolation est une fuite totale, invisible sur un compteur de volume |
+| **un utilisateur ne voit que ses tâches** | l'isolation est *effective*, pas seulement déclarée : on se place dans le rôle `authenticated` avec ses claims, `postgres` contournant la RLS |
+
+**Marche à suivre** (et à défaire juste après) :
+
+1. créer un projet Supabase jetable. ⚠️ Le plan Free plafonne à **2 projets actifs** : il faudra le
+   supprimer, pas l'oublier ;
+2. poser sa chaîne de connexion en mode session dans le secret de dépôt `DRILL_DB_URL` ;
+3. Actions → **restore-drill** → *Run workflow*, en tapant `RESTAURER` ;
+4. reporter le tableau du résumé de job ci-dessous, avec sa date ;
+5. **supprimer le projet jetable ET le secret `DRILL_DB_URL`.**
+
+> 🔴 **Trois gardes s'exécutent avant la moindre connexion** : la confirmation tapée, le refus
+> catégorique si l'URL désigne le projet de production (par l'hôte **ou** par l'utilisateur), et
+> l'obligation d'une chaîne en mode session. Testées sur cinq cibles, dont deux formes de l'URL de
+> production. Un drill qui se trompe de cible ne perd pas un projet jetable, il perd la seule base
+> qui existe.
+
+**Ce que le workflow ne prouve pas**, et qui reste un geste humain : pointer l'application sur le
+projet restauré, se connecter, créer une tâche. Un `select` réussi ne dit rien du parcours réel.
+
+> ⚠️ **Le tout premier run (2026-09-01, avant celui du tableau) a réussi avec un chiffre faux.**
+> `VISIBLES=$(tail -1 iso.txt)` capturait le mot `ROLLBACK` (tag de commande imprimé par `psql`
+> après `BEGIN`/`SET`/`SELECT`/`ROLLBACK`, même en `-tA`), jamais le compte réel : la comparaison
+> `VISIBLES = TOTAL` était donc garantie fausse quel que soit le vrai résultat, et ce contrôle ne
+> pouvait **jamais** déclencher — même si l'isolation avait été cassée par la restauration.
+> Corrigé par `grep -E '^[0-9]+$' iso.txt | tail -1`. Le run rejoué ensuite (celui du tableau) a
+> mesuré un vrai chiffre.
+
+**Résultat du dernier drill** : ✅ réussi. RTO mesuré 163 s, objectif < 2 h très large.
+
+| Date | Run db-backup | Durée | Tables sans RLS | Policies | Tâches visibles / total |
+|---|---|---|---|---|---|
+| 2026-09-01 | `33384797200` | 163 s | 0 | 129 | 289 / 724 |
+
+Le test humain (login + création d'une tâche sur le projet restauré) a été **volontairement
+sauté** (décision d'Axel, 2026-09-01) : l'app a chargé sans erreur sur le projet restauré
+(écran de connexion atteint, aucune erreur réseau/RLS), et le contrôle d'isolation automatisé
+avait déjà prouvé qu'un utilisateur authentifié ne voit que ses propres tâches. Le risque résiduel
+non couvert : un parcours applicatif complet (mutation, pas seulement lecture) n'a pas été rejoué.
+
+**Reste à faire, à la main, avant de clore le drill** : **supprimer le projet jetable ET le secret
+`DRILL_DB_URL`.**
+
+### Export hors-fournisseur — automatisé le 2026-08-28
+
+`.github/workflows/db-backup.yml`, **tous les jours à 04:26 UTC** (mensuel jusqu'au 2026-08-29,
+passé en quotidien le jour où il est devenu la seule sauvegarde). Il produit un dump `pg_dump` au
+format custom, vérifie qu'il n'est ni vide ni tronqué (`pg_restore --list`), et le dépose en
+artefact avec **30 jours de rétention**.
+
+**Mise en service** : poser le secret GitHub `SUPABASE_DB_URL` (Dashboard → Settings → Database →
+Connection string, mode « session »). Sans lui le job s'arrête en **avertissement**, pas en échec —
+une CI rouge en permanence finit ignorée, règle déjà appliquée à `renewal-notice`.
+**Depuis le 2026-10-13**, le secret `BACKUP_PASSPHRASE` (32 caractères au moins) est obligatoire :
+sans lui le job **échoue**, parce que c'est la seule absence qui exposerait. Sa copie hors de
+GitHub est le geste `M-71` : un secret Actions ne se relit pas, et sans elle aucune sauvegarde ne
+se restaure.
+
+> ⚠️ **Ce n'est PAS l'équivalent d'un PITR.** Un dump quotidien a un RPO de 24 h : il sert à ne
+> pas TOUT perdre, pas à revenir à l'état d'il y a une heure, et il ne se restaure pas en un clic. Ce qu'il couvre et que le PITR ne couvre pas, c'est
+> la perte du **compte** — suspension, litige, ou décision de partir. Les deux répondent à des
+> risques différents, aucun ne dispense de l'autre.
+>
+> 🔴 **L'artefact contient des données personnelles** (noms, emails, empreintes de mots de passe,
+> contenu des tâches). ❌ **Corrigé le 2026-10-15 : ce paragraphe disait « le dépôt est public, mais
+> les artefacts d'un run exigent une authentification ».** C'est faux : sur un dépôt public,
+> **n'importe quel compte GitHub connecté** télécharge un artefact. Cette phrase, recopiée du
+> commentaire du workflow, est exactement ce qui a produit la violation **`BK-1`** (dumps en clair
+> exposés du 2026-08-29 au 2026-10-13, cf. [`../faille.md`](../faille.md)). Depuis `8c6a971d`
+> (2026-10-13), **seul un dump chiffré** (`gpg`, AES-256, phrase secrète `BACKUP_PASSPHRASE`) part
+> en artefact, relu à l'identique par sha256 avant dépôt ; sans la phrase secrète, le job
+> **échoue**. Ne **jamais** committer un dump. Pour une vraie copie longue durée, la télécharger et
+> la garder sur un disque chiffré : GitHub n'est pas un coffre.
+
+Manuellement, si besoin :
 ```bash
-# Dump logique complet (schéma + données), stockable hors Supabase :
 pg_dump "$SUPABASE_DB_URL" --no-owner --format=custom -f cosmo-$(date +%F).dump
 ```
-À automatiser (cron mensuel) si le produit dépasse le stade early — voir aussi
-`docs/SCALABILITY.md §6` (plan de sortie fournisseur).
 
 ## 8. Alerting backend (Edge Functions)
 
@@ -195,3 +759,47 @@ supabase secrets set OPS_ALERT_WEBHOOK_URL=https://hooks.slack.com/services/…
 2026-06-10) : `supabase secrets set APP_URL=https://<domaine-prod>` d'abord —
 sans lui l'allowlist CORS ne contient que localhost et le bouton « Supprimer le
 compte » échoue au lieu de tomber sur le fallback email.
+
+---
+
+## 9. Sonde de disponibilité (`.github/workflows/uptime.yml`) — depuis le 2026-08-29
+
+Le §8 alerte sur une Edge Function qui échoue. Il ne dit rien du cas où **plus rien ne
+répond** : jusqu'au 2026-08-29, une panne du site ou du projet Supabase ne prévenait
+personne, et se serait découverte par un utilisateur.
+
+- **Ce qu'elle sonde**, deux fois par heure : `https://thecosmo.app/` (HTTP 200 **et** contenu
+  prérendu présent, parce que Vercel sert la SPA sur toutes les URLs et qu'une page d'erreur
+  répond 200 comme le reste), et `$SUPABASE_URL/auth/v1/health`. Sur ce second point, **401 est
+  une preuve de vie** : sans `apikey`, GoTrue répond 401 quand il va bien. Ce qui signale une
+  panne est un 5xx ou un 000.
+- **Ce qu'elle fait** en cas d'échec : ouvre une issue `uptime-red`, donc un mail. Elle se
+  **referme seule** au retour du vert, ce qui réarme l'alerte sans geste manuel. Même mécanique
+  que `ci-alert.yml`, même raison.
+- **Secret** : `SUPABASE_URL` uniquement, déjà posé pour `renewal-notice`. Sans lui, seule la
+  moitié site est sondée, avec un avertissement, jamais un échec.
+
+🔴 **Ce n'est PAS la sonde externe de T-17.** Le cron de GitHub Actions est mis en file
+d'attente : il dérive de dizaines de minutes et peut sauter une exécution. Surtout, une sonde
+hébergée chez GitHub ne détecte pas une panne de GitHub. La granularité réelle est « prévenu
+dans l'heure ». C'est le passage de « personne n'est prévenu » à « quelqu'un est prévenu », pas
+la fin du sujet.
+
+---
+
+## Délivrabilité des emails Auth · repris de `CLAUDE.md` (déplacé le 2026-09-16)
+
+> Commentaires de la section `## Scripts` de `CLAUDE.md`, où ils étaient chargés à chaque
+> session. Déplacés ici **sans une coupe**. La racine ne garde que la commande.
+
+```bash
+npm run check:mail          # Délivrabilité des emails Auth : MX, SPF, DKIM Resend, DMARC.
+                            # ✅ VERT au 2026-09-02 (remesuré) : DKIM, SPF et MX du Return-Path
+                            # en place sur `send.thecosmo.app`. Reste 1 avertissement, DMARC
+                            # `p=none` (surveillance seule), correct pour démarrer.
+                            # ⚠️ Le DNS ne prouve pas qu'un email ARRIVE : la preuve reste un
+                            # compte jetable vérifié sur Gmail ET Outlook (docs/DEPLOYMENT.md §2ter).
+                            # 🔴 Les confirmations d'inscription restent DÉSACTIVÉES, décision
+                            # d'Axel — cf. finding G-2 de faille.md.
+                            # PAS une gate CI — dépend d'un état DNS externe.
+```

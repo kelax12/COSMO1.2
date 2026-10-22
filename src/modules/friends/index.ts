@@ -48,12 +48,9 @@ export {
   useFriendRequests,
   useSentFriendRequests,
   useTaskShares,
-  useMyTaskShares,
-  useSharesByTask,
   useCollaboratorsByTask,
   usePendingCollaboratorTaskIds,
   useRelatedTaskShares,
-  useFriendCount,
   usePendingRequestCount,
   useIncomingSharedLists,
 } from './hooks';
@@ -66,6 +63,7 @@ export {
   useSendFriendRequest,
   useAcceptFriendRequest,
   useRejectFriendRequest,
+  useCancelFriendRequest,
   useRemoveFriend,
   useShareTask,
   useUnshareTask,
@@ -82,8 +80,9 @@ export {
 export {
   useShareLink,
   useClaimShareLink,
+  usePreviewShareLink,
   buildInviteUrl,
   isValidInviteToken,
   PENDING_INVITE_STORAGE_KEY,
 } from './share-link.hooks';
-export type { ClaimShareLinkResult } from './share-link.hooks';
+export type { ClaimShareLinkResult, PreviewShareLinkResult } from './share-link.hooks';

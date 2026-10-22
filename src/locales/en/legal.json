@@ -1,0 +1,50 @@
+{
+  "back": "Back",
+  "updated": "Last updated: {{date}}",
+  "notice": {
+    "seoTitle": "Legal notice – Cosmo App",
+    "seoDescription": "Legal notice for the Cosmo productivity app: publisher, host, intellectual property and responsibilities.",
+    "title": "Legal notice",
+    "updatedAt": "21 October 2026",
+    "s1": {
+      "title": "1. Site publisher",
+      "intro": "The **Cosmo** website and application are published by:",
+      "li1": "**Publisher:** Axel Longatte, sole proprietor (entrepreneur individuel, EI), trading as COSMO",
+      "liRegistration": "**Registration:** French National Business Register (RNE) since 20 October 2026, SIREN 131 769 317, SIRET 131 769 317 00010, APE code 62.01Z",
+      "liVat": "**VAT:** VAT not applicable, article 293 B of the French General Tax Code",
+      "liAddress": "**Address:** 138 avenue Victor Hugo, 75116 Paris, France (registered address provided by Les Tricolores)",
+      "li2": "**Email address:** contact@thecosmo.app",
+      "liPhone": "**Phone:** [+33 7 54 36 29 17](tel:+33754362917)",
+      "li3": "**Publication director:** Axel Longatte"
+    },
+    "s2": {
+      "title": "2. Hosting",
+      "intro": "The Cosmo application is hosted by:",
+      "li1": "**Frontend:** Vercel Inc., 440 N Barranca Avenue #4133, Covina, CA 91723, USA",
+      "li2": "**Database:** Supabase Inc., 970 Toa Payoh North, #07-04, Singapore 318992, on Amazon Web Services infrastructure located in Ireland (eu-west-1 region)"
+    },
+    "s3": {
+      "title": "3. Intellectual property",
+      "p1": "All editorial content on Cosmo (text, graphics, logos, icons, images, sounds) belongs to its publisher, Axel Longatte, or to his partners, and is protected by intellectual property law. The data you enter in Cosmo remains yours (section 6 of the terms of use).",
+      "p2": "Any reproduction, representation, modification, publication or adaptation of all or part of this content, by any means or process, is prohibited without the publisher's prior written permission.",
+      "p3": "Cosmo relies on open source components. Their list and the text of their licences are available in [this file](https://thecosmo.app/third-party-notices.txt), regenerated at every release."
+    },
+    "s4": {
+      "title": "4. Liability",
+      "p1": "The publisher strives to keep the information published on the site and in the application accurate and up to date, without being able to guarantee that it is complete.",
+      "p2": "The publisher's liability towards users of the service is governed by section 9 of the terms of use. Nothing in this notice limits it further, and the rights you hold under the law, in particular as a consumer, remain intact."
+    },
+    "s5": {
+      "title": "5. Governing law",
+      "p1": "This legal notice is governed by French law. If you are a consumer, you keep the right to bring proceedings before the courts of the place where you live."
+    },
+    "s6": {
+      "title": "6. Language of this document",
+      "p1": "This document is available in French and in English. **If the two versions differ, the French version prevails**: it is the original version."
+    },
+    "s7": {
+      "title": "7. Contact",
+      "p1": "For any question about this legal notice, you can contact us at the following address: [contact@thecosmo.app](mailto:contact@thecosmo.app)"
+    }
+  }
+}

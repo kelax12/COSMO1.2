@@ -4,6 +4,9 @@
 
 import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, TaskShare, RelatedTaskShare, ShareListInput, SharedListGrant } from './types';
 import { FRIENDS_STORAGE_KEY, FRIEND_REQUESTS_STORAGE_KEY, SHARED_TASKS_STORAGE_KEY, SHARED_LISTS_STORAGE_KEY } from './constants';
+import { isEnglishSeed } from '@/lib/seed-i18n';
+import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 /** Id de l'utilisateur démo — utilisé pour distinguer partages entrants/sortants. */
 const DEMO_USER_ID = 'demo-user';
@@ -59,6 +62,27 @@ const DEMO_INCOMING_SHARED_LISTS: SharedListGrant[] = [
   },
 ];
 
+/**
+ * Overlay anglais de la liste partagée entrante — cf. src/lib/seed-i18n.ts.
+ * Les noms de personnes (`sharedByName`) ne sont PAS traduits : un nom propre
+ * n'est pas une langue.
+ */
+function localizeIncomingSharedLists(lists: SharedListGrant[]): SharedListGrant[] {
+  if (!isEnglishSeed()) return lists;
+  return lists.map((list) => {
+    if (list.id !== 'shared-list-demo-1') return list;
+    return {
+      ...list,
+      name: 'Weekend groceries',
+      tasks: [
+        { ...list.tasks[0], name: 'Fruits & vegetables', category: 'Personal' },
+        { ...list.tasks[1], name: 'Bread & pastries', category: 'Personal' },
+        { ...list.tasks[2], name: 'Household supplies', category: 'Personal' },
+      ],
+    };
+  });
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY INTERFACE
 // ═══════════════════════════════════════════════════════════════════
@@ -66,8 +90,6 @@ const DEMO_INCOMING_SHARED_LISTS: SharedListGrant[] = [
 export interface IFriendsRepository {
   // Read operations
   getAll(): Promise<Friend[]>;
-  getById(id: string): Promise<Friend | null>;
-  getByEmail(email: string): Promise<Friend | null>;
   getPendingRequests(): Promise<PendingFriendRequest[]>;
   getSentRequests(): Promise<PendingFriendRequest[]>;
 
@@ -75,6 +97,8 @@ export interface IFriendsRepository {
   sendFriendRequest(input: FriendRequestInput): Promise<PendingFriendRequest>;
   acceptFriendRequest(requestId: string): Promise<Friend>;
   rejectFriendRequest(requestId: string): Promise<void>;
+  /** L'EXPÉDITEUR retire sa propre demande — DELETE (cf. implémentation). */
+  cancelFriendRequest(requestId: string): Promise<void>;
   removeFriend(id: string): Promise<void>;
 
   // Task sharing operations
@@ -112,7 +136,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
    * Get all friends from localStorage (or initialize with demo data)
    */
   private getFriends(): Friend[] {
-    const data = localStorage.getItem(FRIENDS_STORAGE_KEY);
+    const data = safeGetItem(FRIENDS_STORAGE_KEY);
     if (!data) {
       // Defensive clone — DEMO_FRIENDS is a module-level constant. The old
       // code returned it directly and later code mutated the result, leaving
@@ -136,14 +160,14 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
    * Save friends to localStorage
    */
   private saveFriends(friends: Friend[]): void {
-    localStorage.setItem(FRIENDS_STORAGE_KEY, JSON.stringify(friends));
+    writeJsonOrThrow(FRIENDS_STORAGE_KEY, friends);
   }
 
   /**
    * Get pending friend requests
    */
   private getRequests(): PendingFriendRequest[] {
-    const data = localStorage.getItem(FRIEND_REQUESTS_STORAGE_KEY);
+    const data = safeGetItem(FRIEND_REQUESTS_STORAGE_KEY);
     if (!data) {
       // Defensive clone — see getFriends() above. Faille B12.
       const seed = JSON.parse(JSON.stringify(DEMO_INCOMING_REQUESTS)) as PendingFriendRequest[];
@@ -163,7 +187,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
    * Save pending friend requests
    */
   private saveRequests(requests: PendingFriendRequest[]): void {
-    localStorage.setItem(FRIEND_REQUESTS_STORAGE_KEY, JSON.stringify(requests));
+    writeJsonOrThrow(FRIEND_REQUESTS_STORAGE_KEY, requests);
   }
 
   /**
@@ -172,7 +196,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
    */
   private getSharedTasksMap(): Record<string, { friendId: string; role?: 'viewer' | 'editor'; accepted?: boolean }[]> {
     try {
-      return JSON.parse(localStorage.getItem(SHARED_TASKS_STORAGE_KEY) || '{}');
+      return JSON.parse(safeGetItem(SHARED_TASKS_STORAGE_KEY) || '{}');
     } catch {
       return {};
     }
@@ -184,11 +208,6 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
 
   async getAll(): Promise<Friend[]> {
     return this.getFriends();
-  }
-
-  async getById(id: string): Promise<Friend | null> {
-    const friends = this.getFriends();
-    return friends.find(f => f.id === id) || null;
   }
 
   async getByEmail(email: string): Promise<Friend | null> {
@@ -234,13 +253,13 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
     const request = requests.find(r => r.id === requestId);
 
     if (!request) {
-      throw new Error(`Friend request ${requestId} not found`);
+      throw makeApiError('not_found');
     }
     // Only incoming requests carry `senderEmail`. Outgoing demo requests have
     // only the recipient's email and must not be acceptable as "you befriend
     // yourself" — reject those explicitly. Faille B13.
     if (!request.senderEmail) {
-      throw new Error('Cannot accept an outgoing friend request');
+      throw makeApiError('invalid_input');
     }
 
     // Update request status
@@ -262,11 +281,18 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
   async rejectFriendRequest(requestId: string): Promise<void> {
     const requests = this.getRequests();
     const request = requests.find(r => r.id === requestId);
-    
+
     if (request) {
       request.status = 'rejected';
       this.saveRequests(requests);
     }
+  }
+
+  async cancelFriendRequest(requestId: string): Promise<void> {
+    // Suppression, pas un statut : parité exacte avec la prod, où la demande
+    // est DELETE (la contrainte CHECK de la table ne connaît pas 'cancelled').
+    const requests = this.getRequests();
+    this.saveRequests(requests.filter(r => r.id !== requestId));
   }
 
   async removeFriend(id: string): Promise<void> {
@@ -295,7 +321,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
       sharedTasks[input.taskId].push({ friendId: input.friendId, role: input.role || 'viewer' });
     }
     
-    localStorage.setItem(SHARED_TASKS_STORAGE_KEY, JSON.stringify(sharedTasks));
+    writeJsonOrThrow(SHARED_TASKS_STORAGE_KEY, sharedTasks);
   }
 
   async unshareTask(taskId: string, friendId: string): Promise<void> {
@@ -305,7 +331,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
       sharedTasks[taskId] = sharedTasks[taskId].filter(
         (s: { friendId: string }) => s.friendId !== friendId
       );
-      localStorage.setItem(SHARED_TASKS_STORAGE_KEY, JSON.stringify(sharedTasks));
+      writeJsonOrThrow(SHARED_TASKS_STORAGE_KEY, sharedTasks);
     }
   }
 
@@ -314,7 +340,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
     const sharedTasks = this.getSharedTasksMap();
     if (sharedTasks[taskId]) {
       sharedTasks[taskId] = sharedTasks[taskId].map((s) => ({ ...s, accepted: true }));
-      localStorage.setItem(SHARED_TASKS_STORAGE_KEY, JSON.stringify(sharedTasks));
+      writeJsonOrThrow(SHARED_TASKS_STORAGE_KEY, sharedTasks);
     }
   }
 
@@ -360,23 +386,23 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
    * JSON.parse protégé — faille B14).
    */
   private getSharedListsArray(): SharedListGrant[] {
-    const data = localStorage.getItem(SHARED_LISTS_STORAGE_KEY);
+    const data = safeGetItem(SHARED_LISTS_STORAGE_KEY);
     if (!data) {
-      const seed = JSON.parse(JSON.stringify(DEMO_INCOMING_SHARED_LISTS)) as SharedListGrant[];
-      localStorage.setItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(seed));
+      const seed = localizeIncomingSharedLists(JSON.parse(JSON.stringify(DEMO_INCOMING_SHARED_LISTS)) as SharedListGrant[]);
+      safeSetItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(seed));
       return seed;
     }
     try {
       return JSON.parse(data) as SharedListGrant[];
     } catch {
-      const seed = JSON.parse(JSON.stringify(DEMO_INCOMING_SHARED_LISTS)) as SharedListGrant[];
-      localStorage.setItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(seed));
+      const seed = localizeIncomingSharedLists(JSON.parse(JSON.stringify(DEMO_INCOMING_SHARED_LISTS)) as SharedListGrant[]);
+      safeSetItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(seed));
       return seed;
     }
   }
 
   private saveSharedListsArray(grants: SharedListGrant[]): void {
-    localStorage.setItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(grants));
+    writeJsonOrThrow(SHARED_LISTS_STORAGE_KEY, grants);
   }
 
   async shareList(input: ShareListInput): Promise<void> {

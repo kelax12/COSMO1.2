@@ -29,6 +29,9 @@ export const createTaskSchema = z.object({
   krId: z.string().max(100).optional(),
   // Récurrence (#26) — l'occurrence suivante est générée à la complétion.
   recurrence: z.enum(['none', 'daily', 'weekly', 'monthly']).optional(),
+  // Statut et État (mig. 214) — mêmes vocabulaires fermés que les CHECK SQL.
+  status: z.enum(['todo', 'in_progress', 'blocked', 'done']).optional(),
+  health: z.enum(['on_track', 'at_risk', 'off_track']).nullable().optional(),
   isCollaborative: z.boolean().optional(),
   pendingInvites: z.array(z.string()).optional(),
   collaboratorValidations: z.record(z.boolean()).optional(),

@@ -80,7 +80,7 @@ describe('SupabaseEventsRepository', () => {
 
     supabaseMock.reset();
     supabaseMock.user = null;
-    await expect(repo.create({ title: 'X', start: 'a', end: 'b' })).rejects.toThrow('Not authenticated');
+    await expect(repo.create({ title: 'X', start: 'a', end: 'b' })).rejects.toMatchObject({ code: 'not_authenticated' });
   });
 
   it('update: mapEventToDb whitelist drops forged user_id (anti-mass-assignment V1)', async () => {
@@ -94,11 +94,4 @@ describe('SupabaseEventsRepository', () => {
     expect(supabaseMock.argsOf('events', 'eq')).toEqual(['id', 'e1']);
   });
 
-  it('getById: PGRST116 → null, other errors → normalized throw', async () => {
-    supabaseMock.queueTable('events', { data: null, error: { code: 'PGRST116' } });
-    expect(await repo.getById('missing')).toBeNull();
-
-    supabaseMock.queueTable('events', { data: null, error: { code: '42501', message: 'denied' } });
-    await expect(repo.getById('e1')).rejects.toBeTruthy();
-  });
 });

@@ -5,13 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { HabitListSkeleton } from '@/components/skeletons';
 
 type PeriodType = 'week' | 'month' | 'all';
 
-const periodOptions: { value: PeriodType; label: string; days: number }[] = [
-  { value: 'week', label: 'Semaine', days: 7 },
-  { value: 'month', label: 'Mois', days: 30 },
-  { value: 'all', label: 'Tout', days: 0 },
+// Les libelles vivent dans le catalogue, pas ici : une constante de module fige
+// la langue au premier import. Seule la structure (valeur, fenetre) reste fixe.
+const periodOptions: { value: PeriodType; labelKey: 'period.week' | 'period.month' | 'period.all'; days: number }[] = [
+  { value: 'week', labelKey: 'period.week', days: 7 },
+  { value: 'month', labelKey: 'period.month', days: 30 },
+  { value: 'all', labelKey: 'period.all', days: 0 },
 ];
 
 const getSuccessColor = (percentage: number): string => {
@@ -30,7 +33,10 @@ const getSuccessColor = (percentage: number): string => {
 
 const HabitGlobalTracking: React.FC = () => {
   const { t } = useT('habits');
-  const { data: habits = [] } = useHabits();
+  // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
+  // encore : le premier rendu arrive avant la reponse, et la valeur par defaut
+  // `[]` est indistinguable d'un compte reellement vide.
+  const { data: habits = [], isLoading: loadingHabits } = useHabits();
   const [period, setPeriod] = useState<PeriodType>('all');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [globalPage, setGlobalPage] = useState(0);
@@ -48,11 +54,25 @@ const HabitGlobalTracking: React.FC = () => {
       }
       // Une complétion peut être antérieure à la création (un jour passé peut
       // être coché librement) — la fenêtre « Tout » doit alors remonter jusqu'à elle.
-      Object.keys(h.completions).forEach((dateStr) => {
+      //
+      // ⚠️ `firstCompletionDate` d'abord : depuis la mig. 119, `h.completions`
+      // est borné à une fenêtre glissante en mode Supabase, et remonter par ses
+      // clés ferait démarrer « Tout » à la fenêtre au lieu du vrai début.
+      // Le champ est calculé serveur sur l'historique entier.
+      const parseDay = (dateStr: string) => {
         const [y, m, dd] = dateStr.split('-').map(Number);
-        const d = new Date(y, m - 1, dd);
+        return new Date(y, m - 1, dd);
+      };
+      if (h.firstCompletionDate) {
+        const d = parseDay(h.firstCompletionDate);
+        d.setHours(0, 0, 0, 0);
         if (d < oldest) oldest = d;
-      });
+      } else {
+        Object.keys(h.completions).forEach((dateStr) => {
+          const d = parseDay(dateStr);
+          if (d < oldest) oldest = d;
+        });
+      }
     });
     const sevenAgo = new Date();
     sevenAgo.setDate(sevenAgo.getDate() - 7);
@@ -129,17 +149,19 @@ const HabitGlobalTracking: React.FC = () => {
 
   const getPeriodLabel = (): string => {
     if (period === 'week')
-      return `Semaine du ${formatDate(currentDate, { day: 'numeric', month: 'short' })}`;
+      return t('period.weekOf', { date: formatDate(currentDate, { day: 'numeric', month: 'short' }) });
     if (period === 'month')
       return formatDate(currentDate, { month: 'long', year: 'numeric' });
     return t('table.sinceCreation');
   };
 
+  if (loadingHabits) return <HabitListSkeleton count={2} />;
+
   if (habits.length === 0) {
     return (
       <div className="card p-12 text-center">
         <p style={{ color: 'rgb(var(--color-text-secondary))' }}>
-          Créez des habitudes pour voir le suivi global
+          {t('globalTracking.empty')}
         </p>
       </div>
     );
@@ -225,7 +247,7 @@ const HabitGlobalTracking: React.FC = () => {
                   color: period === opt.value ? 'white' : 'rgb(var(--color-text-secondary))',
                 }}
               >
-                {opt.label}
+                {t(opt.labelKey)}
               </button>
             ))}
           </div>

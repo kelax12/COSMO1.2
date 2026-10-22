@@ -82,4 +82,43 @@ describe('useClaimShareLink', () => {
     expect(res.task_id).toBe('t1');
     expect(supabaseMock.rpcCalls.map((c) => c.fn)).toContain('claim_share_link');
   });
+  // ── C-63 ────────────────────────────────────────────────────────────
+  //
+  // Le hook lancait l'erreur PostgREST BRUTE, et `ShareInviteClaimer` triait
+  // ensuite sur le TEXTE du message. Une panne reseau ou un 500 ne contient
+  // aucun identifiant : l'utilisateur lisait « ce lien d'invitation est
+  // invalide », une affirmation definitive et FAUSSE, sur le chemin
+  // d'acquisition, apres laquelle personne ne reessaie.
+
+  it('promeut les trois refus NOMMES en code metier', async () => {
+    // Les trois identifiants sont ceux des `RAISE EXCEPTION` de la mig. 046/047.
+    for (const code of ['own_link', 'expired_link', 'invalid_link']) {
+      supabaseMock.reset();
+      supabaseMock.queueRpc('claim_share_link', {
+        error: { code: 'P0001', message: code },
+      });
+      const { wrapper } = makeWrapper();
+      const { result } = renderHook(() => useClaimShareLink(), { wrapper });
+      await expect(result.current.mutateAsync('tok')).rejects.toMatchObject({
+        name: 'ApiError',
+        code,
+      });
+    }
+  });
+
+  it('une panne ne se fait PAS passer pour un refus nomme', async () => {
+    // C'est tout le defaut : ce message ne contient ni `own_link` ni
+    // `expired_link`, donc l'ancien tri par texte le classait « invalide ».
+    supabaseMock.reset();
+    supabaseMock.queueRpc('claim_share_link', {
+      error: { code: '500', message: 'Internal Server Error' },
+    });
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useClaimShareLink(), { wrapper });
+    const err = await result.current.mutateAsync('tok').catch((e) => e);
+    expect(err.name).toBe('ApiError');
+    expect(['own_link', 'expired_link', 'invalid_link']).not.toContain(err.code);
+    // Et le message rendu a l'ecran ne vient jamais du serveur (V7/N1).
+    expect(err.message).not.toContain('Internal Server Error');
+  });
 });

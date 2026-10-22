@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Edit2, Trash2, Calendar, CheckCircle, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useShowcasePalette } from './showcase-theme';
 
 // ─── Real OKR-style data ────────────────────────────────────────────
 type KR = {
@@ -61,6 +62,7 @@ const fmtDate = (iso: string) => {
 };
 
 const OKRCardShowcase: React.FC = () => {
+  const P = useShowcasePalette();
   const [phaseIdx, setPhaseIdx] = useState(0);
 
   useEffect(() => {
@@ -129,8 +131,8 @@ const OKRCardShowcase: React.FC = () => {
       <div
         className="rounded-lg border p-6 relative overflow-hidden shadow-xl"
         style={{
-          backgroundColor: 'rgba(30, 41, 59, 0.85)',
-          borderColor: 'rgba(255, 255, 255, 0.08)',
+          backgroundColor: P.surface,
+          borderColor: P.hairline,
         }}
       >
         {/* Header row */}
@@ -141,7 +143,7 @@ const OKRCardShowcase: React.FC = () => {
                 className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium whitespace-nowrap"
                 style={{
                   backgroundColor: OBJECTIVE.categoryColor + '20',
-                  color: OBJECTIVE.categoryColor,
+                  color: P.tintText(OBJECTIVE.categoryColor),
                 }}
               >
                 <span
@@ -156,7 +158,7 @@ const OKRCardShowcase: React.FC = () => {
               <span>→</span>
               <span>{fmtDate(OBJECTIVE.endDate)}</span>
             </div>
-            <h3 className="text-base sm:text-lg font-semibold mb-1 truncate text-white">
+            <h3 className="text-base sm:text-lg font-semibold mb-1 truncate text-white sc-ink">
               {OBJECTIVE.title}
             </h3>
             <p className="text-xs sm:text-sm line-clamp-2 text-slate-400">
@@ -198,7 +200,7 @@ const OKRCardShowcase: React.FC = () => {
                 cx="40"
                 cy="40"
                 r={r}
-                stroke="rgba(255,255,255,0.08)"
+                stroke={P.track}
                 strokeWidth="8"
                 fill="none"
               />
@@ -221,7 +223,7 @@ const OKRCardShowcase: React.FC = () => {
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="text-xl font-bold text-white"
+                className="text-xl font-bold text-white sc-ink"
               >
                 {progress}%
               </motion.span>
@@ -231,11 +233,11 @@ const OKRCardShowcase: React.FC = () => {
           <div className="flex-1 w-full">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-slate-400">Progression globale</span>
-              <span className="text-sm font-bold text-white">{progress}%</span>
+              <span className="text-sm font-bold text-white sc-ink">{progress}%</span>
             </div>
             <div
               className="w-full rounded-full h-2 overflow-hidden"
-              style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+              style={{ backgroundColor: P.track }}
             >
               <motion.div
                 className="h-2 rounded-full"
@@ -259,7 +261,7 @@ const OKRCardShowcase: React.FC = () => {
                 style={{
                   backgroundColor: kr.completed
                     ? 'rgba(34,197,94,0.08)'
-                    : 'rgba(255,255,255,0.04)',
+                    : P.hairlineSoft,
                 }}
               >
                 <div className="flex justify-between items-center mb-3 gap-2">
@@ -276,7 +278,7 @@ const OKRCardShowcase: React.FC = () => {
                     )}
                     <span
                       className={`text-sm font-medium truncate ${
-                        kr.completed ? 'text-green-300' : 'text-white'
+                        kr.completed ? 'text-green-300' : 'text-white sc-ink'
                       }`}
                     >
                       {kr.title}
@@ -299,10 +301,10 @@ const OKRCardShowcase: React.FC = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                   <div className="flex items-center gap-2 w-full sm:w-auto">
                     <div
-                      className="w-20 px-2 py-1 text-sm border rounded text-white tabular-nums"
+                      className="w-20 px-2 py-1 text-sm border rounded text-white sc-ink tabular-nums"
                       style={{
-                        backgroundColor: 'rgba(15,23,42,0.6)',
-                        borderColor: 'rgba(255,255,255,0.08)',
+                        backgroundColor: P.field,
+                        borderColor: P.hairline,
                       }}
                     >
                       <motion.span
@@ -322,7 +324,7 @@ const OKRCardShowcase: React.FC = () => {
                   <div className="flex items-center gap-3 w-full">
                     <div
                       className="flex-1 rounded-full h-1.5 overflow-hidden"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+                      style={{ backgroundColor: P.track }}
                     >
                       <motion.div
                         className={`h-1.5 rounded-full ${
@@ -345,13 +347,13 @@ const OKRCardShowcase: React.FC = () => {
         {totalMins > 0 && (
           <div
             className="mt-4 pt-4 border-t flex items-center justify-between"
-            style={{ borderColor: 'rgba(255,255,255,0.08)' }}
+            style={{ borderColor: P.hairline }}
           >
             <div className="flex items-center gap-1.5">
               <Clock size={13} className="text-slate-500" />
               <span className="text-xs text-slate-500">Temps effectué</span>
             </div>
-            <span className="text-xs font-semibold text-white tabular-nums">
+            <span className="text-xs font-semibold text-white sc-ink tabular-nums">
               {formatTime(doneMins)}{' '}
               <span className="text-slate-500">/ {formatTime(totalMins)}</span>
             </span>

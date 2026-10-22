@@ -43,7 +43,7 @@ describe('AdminCharts (smoke)', () => {
 
   it('Donut monte et affiche sa légende avec les pourcentages', () => {
     const { getByText } = render(<Donut data={labeled} />);
-    expect(getByText('Tâches —')).toBeTruthy();
+    expect(getByText('Tâches :')).toBeTruthy();
     expect(getByText('(62%)')).toBeTruthy(); // 42/68 arrondi
   });
 

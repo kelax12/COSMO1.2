@@ -42,11 +42,7 @@ export type { OKRProgress } from './progress';
 
 export {
   useOkrs,
-  useOkr,
-  useOkrsByCategory,
-  useFilteredOkrs,
   useActiveOkrs,
-  useCompletedOkrs,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -64,14 +60,10 @@ export {
 // DERIVED HOOKS (Performance Optimized)
 // ═══════════════════════════════════════════════════════════════════
 
-export {
-  useOkrsWithProgress,
-  useOkrsByStatus,
-  useOkrStats,
-  useOkrsEndingSoon,
-  useAtRiskOkrs,
-  useKeyResults,
-  useCompletedKeyResults,
-} from './hooks.derived';
+// 🗑️ `hooks.derived.ts` a été SUPPRIMÉ le 2026-09-05 (C-49) : ses sept
+// sélecteurs et le type `EnrichedKeyResult` n'avaient aucun consommateur. Le
+// fichier était orphelin EN ENTIER. Cf. la note du baril `tasks`.
 
-export type { EnrichedKeyResult } from './hooks.derived';
+// Restauration AVEC le journal des completions (C-01).
+export { useRestoreOkrWithJournal } from './restore-journal.hooks';
+export type { RestoreOkrPayload } from './restore-journal.hooks';

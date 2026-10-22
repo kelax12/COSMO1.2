@@ -8,10 +8,12 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  EAGER_NAMESPACES,
+  ensureNamespaces,
   getCatalog,
   getFallbackCatalog,
   hasCatalog,
-  listLazyLocales,
+  listLoaderKeys,
   listNamespaces,
   loadCatalogs,
   registerCatalog,
@@ -28,6 +30,10 @@ describe('découverte automatique des catalogues', () => {
     // dès que le dossier existera.
     for (const locale of SUPPORTED_LOCALES) {
       await loadCatalogs(locale);
+      // Depuis le découpage du 2026-08-25, `loadCatalogs` ne charge que les
+      // namespaces eager : les autres arrivent avec leur page, via
+      // `ensureNamespaces`. On demande donc tout explicitement.
+      await ensureNamespaces(listNamespaces(), locale);
       for (const namespace of listNamespaces()) {
         expect(
           hasCatalog(locale, namespace),
@@ -37,24 +43,33 @@ describe('découverte automatique des catalogues', () => {
     }
   });
 
-  it('exclut la locale de référence du chargement paresseux, et elle seule', () => {
-    // Le motif du glob exclut `fr` en dur. Si `DEFAULT_LOCALE` change sans que
-    // le motif suive, l'ancienne référence serait chargée deux fois (statique +
-    // dynamique) et la nouvelle n'aurait aucun chargeur. Rien ne casserait
-    // visiblement — d'où ce test.
-    const lazy = listLazyLocales();
-    expect(lazy).not.toContain(DEFAULT_LOCALE);
+  it('a un chargeur pour chaque couple (locale, namespace) sauf les eager en `fr`', () => {
+    // Le motif du glob exclut en dur les DEUX namespaces eager de `fr`, ceux
+    // qui sont importés statiquement. Un fichier à la fois statique et dans le
+    // glob ferait avertir Rollup et ré-enregistrerait un catalogue déjà en
+    // mémoire. Ce test attrape le désalignement entre `EAGER_NAMESPACES` et le
+    // motif, qui ne casserait rien de visible.
+    const keys = new Set(listLoaderKeys());
     for (const locale of SUPPORTED_LOCALES) {
-      if (locale === DEFAULT_LOCALE) continue;
-      expect(lazy, `\`${locale}\` est servie mais n'a aucun chargeur`).toContain(locale);
+      for (const namespace of listNamespaces()) {
+        const key = `${locale}/${namespace}`;
+        const isEagerFr =
+          locale === DEFAULT_LOCALE && (EAGER_NAMESPACES as readonly string[]).includes(namespace);
+        expect(
+          keys.has(key),
+          isEagerFr
+            ? `\`${key}\` est importé statiquement, il ne doit PAS être dans le glob`
+            : `\`${key}\` n'a aucun chargeur`
+        ).toBe(!isEagerFr);
+      }
     }
   });
 
-  it('résout immédiatement pour la locale de référence, déjà en mémoire', async () => {
-    // `fr` est importé statiquement : il ne doit JAMAIS passer par le glob,
-    // sinon le repli ne serait pas disponible au premier rendu synchrone.
+  it('garde les namespaces eager en mémoire, sans aucun chargement', async () => {
+    // C'est la propriété qui rend `t()` utilisable synchroniquement au premier
+    // rendu : ces deux-là sont dans le chunk d'entrée, pas derrière un `await`.
     await expect(loadCatalogs(DEFAULT_LOCALE)).resolves.toBeUndefined();
-    for (const namespace of listNamespaces()) {
+    for (const namespace of EAGER_NAMESPACES) {
       expect(getCatalog(DEFAULT_LOCALE, namespace)).not.toBeNull();
     }
   });
@@ -66,13 +81,35 @@ describe('découverte automatique des catalogues', () => {
     const untranslated = ALL_LOCALES.filter((l) => !SUPPORTED_LOCALES.includes(l));
     for (const locale of untranslated) {
       await expect(loadCatalogs(locale)).resolves.toBeUndefined();
+      await expect(ensureNamespaces(listNamespaces(), locale)).resolves.toBeUndefined();
     }
   });
 
-  it('partage un seul chargement entre appels concurrents', () => {
-    const [locale] = SUPPORTED_LOCALES.filter((l) => l !== DEFAULT_LOCALE);
-    if (!locale) return;
-    expect(loadCatalogs(locale)).toBe(loadCatalogs(locale));
+  it('ne charge un couple (locale, namespace) qu’une seule fois', async () => {
+    // Deux routes qui demandent le même catalogue, une navigation rapide, un
+    // préchargement au survol, doivent partager le chargement. La preuve est
+    // l'IDENTITÉ de l'objet enregistré : un second chargement produirait un
+    // nouvel objet JSON.
+    const namespace = listNamespaces().find(
+      (ns) => !(EAGER_NAMESPACES as readonly string[]).includes(ns)
+    );
+    if (!namespace) return;
+
+    await Promise.all([
+      ensureNamespaces([namespace], DEFAULT_LOCALE),
+      ensureNamespaces([namespace], DEFAULT_LOCALE),
+    ]);
+    const first = getCatalog(DEFAULT_LOCALE, namespace);
+    await ensureNamespaces([namespace], DEFAULT_LOCALE);
+    expect(getCatalog(DEFAULT_LOCALE, namespace)).toBe(first);
+  });
+
+  it('n’essaie même pas de charger un namespace eager', async () => {
+    // `ensureNamespaces` les filtre en amont : ils sont déjà là, et le glob
+    // n'a pas de chargeur pour eux. Sans ce filtre, l'appel partirait chercher
+    // un module qui n'existe pas.
+    await expect(ensureNamespaces(['common', 'errors'], DEFAULT_LOCALE)).resolves.toBeUndefined();
+    expect(getCatalog(DEFAULT_LOCALE, 'common')).not.toBeNull();
   });
 });
 

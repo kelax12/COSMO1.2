@@ -19,6 +19,10 @@ import {
   CalendarPlus,
   Keyboard,
   FolderKanban,
+  UserRound,
+  UsersRound,
+  Building2,
+  Crosshair,
 } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useDarkMode } from '@/hooks/useDarkMode';
@@ -28,11 +32,17 @@ import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
+import { parseISO } from 'date-fns';
 import { useActiveOrganization } from '@/modules/organizations';
-import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
+import { useOrgSearch } from '@/modules/organizations/search.hooks';
+import type { OrgSearchKind, OrgSearchResult } from '@/modules/organizations/governance.types';
+import {
+  ORG_SEARCH_ORDER, groupOrgResults, orgSearchLink, isProjectDetail, isTaskDetail, isDayKey,
+} from '@/components/organization/org-search.helpers';
+import { buildOrgLink } from '@/components/organization/deep-link.helpers';
 import { formatDate } from '@/i18n/format';
-import { useActiveModules } from '@/modules/ui-states';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface PaletteCommand {
   id: string;
@@ -43,6 +53,16 @@ interface PaletteCommand {
   run: () => void;
   keywords?: string[];
 }
+
+/** Icône de chaque groupe de la recherche d'entreprise. */
+const ORG_SEARCH_ICON: Record<OrgSearchKind, typeof CheckSquare> = {
+  project: FolderKanban,
+  task: CheckSquare,
+  okr: Target,
+  kr: Crosshair,
+  member: UserRound,
+  team: UsersRound,
+};
 
 /** Normalisation accent/casse-insensible pour la recherche. */
 const normalize = (s: string) =>
@@ -57,17 +77,26 @@ const MAX_DATA_RESULTS = 8;
  * caractères, pour ne pas alourdir le DOM ni déclencher de fetch hors session.
  */
 const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, onDone }) => {
-  const { t } = useT('common');
+  const ov = useT('overlays');
   const navigate = useNavigate();
   const { data: tasks = [] } = useTasks();
   const { data: habits = [] } = useHabits();
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
-  // Périmètre équipe (#8 v2) : tâches et projets de l'org active — hooks
-  // no-op (enabled: !!orgId) pour un utilisateur sans entreprise.
+  // Périmètre entreprise : UNE recherche SERVEUR (mig. 191, `search_org`),
+  // sous les droits de qui cherche. Projets, membres, équipes et OKR étaient
+  // filtrés ici dans des caches que la palette faisait CHARGER EN ENTIER à la
+  // première frappe (jusqu'à 1 000 tâches, 500 membres, 5 000 OKR) ; les
+  // résultats clés n'étaient pas cherchables du tout. 250 ms d'attente : une
+  // requête par pause de frappe, pas une par touche.
   const { activeOrg } = useActiveOrganization();
-  const { data: teamTasks = [] } = useTeamTasks(activeOrg?.id);
-  const { data: teamProjects = [] } = useTeamProjects(activeOrg?.id);
+  const [serverQuery, setServerQuery] = useState(query.trim());
+  useEffect(() => {
+    const id = window.setTimeout(() => setServerQuery(query.trim()), 250);
+    return () => window.clearTimeout(id);
+  }, [query]);
+  const { data: orgResults = [] } = useOrgSearch(activeOrg?.id, serverQuery);
+  const orgGroups = useMemo(() => groupOrgResults(orgResults), [orgResults]);
 
   const q = normalize(query);
 
@@ -87,14 +116,18 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
     () => okrs.filter((o) => normalize(o.title).includes(q)).slice(0, MAX_DATA_RESULTS),
     [okrs, q]
   );
-  const matchedTeamTasks = useMemo(
-    () => teamTasks.filter((t) => normalize(t.name).includes(q)).slice(0, MAX_DATA_RESULTS),
-    [teamTasks, q]
-  );
-  const matchedTeamProjects = useMemo(
-    () => teamProjects.filter((p) => !p.archivedAt && normalize(p.name).includes(q)).slice(0, MAX_DATA_RESULTS),
-    [teamProjects, q]
-  );
+  // Le détail vient du serveur : il n'est affiché que traduit, jamais brut
+  // (un statut inconnu d'une base plus récente ne s'affiche pas).
+  const orgDetail = (r: OrgSearchResult): string => {
+    switch (r.kind) {
+      case 'member': return r.detail ?? '';
+      case 'okr': return isDayKey(r.detail) ? formatDate(parseISO(r.detail), { day: 'numeric', month: 'short' }) : '';
+      case 'project': return isProjectDetail(r.detail) ? ov.t(`palette.orgSearch.projectStatus.${r.detail}`) : '';
+      case 'task': return isTaskDetail(r.detail) ? ov.t(`palette.orgSearch.taskStatus.${r.detail}`) : '';
+      case 'kr': return ov.t('palette.orgSearch.keyResult');
+      default: return '';
+    }
+  };
 
   const go = (path: string, state?: Record<string, string>) => {
     navigate(path, state ? { state } : undefined);
@@ -104,7 +137,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
   return (
     <>
       {matchedTasks.length > 0 && (
-        <CommandGroup heading="Tâches">
+        <CommandGroup heading={ov.t('palette.tasks')}>
           {matchedTasks.map((t) => (
             <CommandItem key={`task-${t.id}`} value={`task-${t.id}`} onSelect={() => go('/tasks', { openTaskId: t.id })}>
               <CheckSquare size={16} className={t.completed ? 'opacity-40' : ''} aria-hidden="true" />
@@ -124,7 +157,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
         </CommandGroup>
       )}
       {matchedEvents.length > 0 && (
-        <CommandGroup heading={t('palette.events')}>
+        <CommandGroup heading={ov.t('palette.events')}>
           {matchedEvents.map((e) => (
             <CommandItem key={`event-${e.id}`} value={`event-${e.id}`} onSelect={() => go('/agenda')}>
               <Calendar size={16} aria-hidden="true" />
@@ -146,27 +179,22 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
           ))}
         </CommandGroup>
       )}
-      {matchedTeamTasks.length > 0 && (
-        <CommandGroup heading={t('palette.teamTasks')}>
-          {matchedTeamTasks.map((teamTask) => (
-            <CommandItem key={`team-task-${teamTask.id}`} value={`team-task-${teamTask.id}`} onSelect={() => go('/entreprise?tab=projects')}>
-              <CheckSquare size={16} className={teamTask.completed ? 'opacity-40' : ''} aria-hidden="true" />
-              <span className={`flex-1 ${teamTask.completed ? 'line-through opacity-60' : ''}`}>{teamTask.name}</span>
-              <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('palette.team')}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      )}
-      {matchedTeamProjects.length > 0 && (
-        <CommandGroup heading={t('palette.teamProjects')}>
-          {matchedTeamProjects.map((p) => (
-            <CommandItem key={`team-project-${p.id}`} value={`team-project-${p.id}`} onSelect={() => go('/entreprise?tab=projects')}>
-              <FolderKanban size={16} aria-hidden="true" />
-              <span>{p.name}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      )}
+      {ORG_SEARCH_ORDER.map((kind) => {
+        const rows = orgGroups.get(kind);
+        if (!rows || rows.length === 0) return null;
+        const Icon = ORG_SEARCH_ICON[kind];
+        return (
+          <CommandGroup key={kind} heading={ov.t(`palette.orgSearch.${kind}`)}>
+            {rows.map((r) => (
+              <CommandItem key={`org-${kind}-${r.id}`} value={`org-${kind}-${r.id}`} onSelect={() => go(orgSearchLink(r))}>
+                <Icon size={16} className={r.detail === 'done' ? 'opacity-40' : ''} aria-hidden="true" />
+                <span className={`flex-1 truncate ${r.detail === 'done' ? 'line-through opacity-60' : ''}`}>{r.label}</span>
+                <span className="text-xs text-[rgb(var(--color-text-muted))] truncate max-w-[40%]">{orgDetail(r)}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        );
+      })}
     </>
   );
 };
@@ -183,12 +211,14 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
  */
 export function CommandPalette() {
   const { t } = useT('common');
+  const ov = useT('overlays');
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
   const { logout, isAuthenticated } = useAuth();
   const { theme, setTheme } = useDarkMode();
-  const activeModules = useActiveModules();
+  const { activeOrg } = useActiveOrganization();
+  const hasOrg = isAuthenticated && !!activeOrg;
 
   const commands: PaletteCommand[] = useMemo(() => {
     const nav = (path: string, state?: Record<string, boolean>) => () => {
@@ -196,28 +226,39 @@ export function CommandPalette() {
       setIsOpen(false);
     };
     const base: PaletteCommand[] = [
-      { id: 'nav-dashboard', label: t('palette.goHome'), group: t('palette.groupNavigation'), icon: <LayoutDashboard size={16} />, run: nav('/dashboard'), keywords: ['dashboard', 'accueil', 'home', 'tableau de bord'] },
-      { id: 'nav-tasks', label: t('palette.goTasks'), group: t('palette.groupNavigation'), icon: <CheckSquare size={16} />, run: nav('/tasks'), keywords: ['tasks', 'todo', 'todolist'] },
-      // Modules optionnels (AM10) — masqués de la palette si désactivés, sinon
-      // l'entrée serait une impasse (RequireModule redirige vers le dashboard).
-      ...(activeModules.agenda ? [{ id: 'nav-agenda', label: t('palette.goAgenda'), group: t('palette.groupNavigation'), icon: <Calendar size={16} />, run: nav('/agenda'), keywords: ['calendar', 'événements', 'events'] }] : []),
-      ...(activeModules.habits ? [{ id: 'nav-habits', label: t('palette.goHabits'), group: t('palette.groupNavigation'), icon: <Repeat size={16} />, run: nav('/habits'), keywords: ['habits', 'routines'] }] : []),
-      ...(activeModules.okr ? [{ id: 'nav-okr', label: t('palette.goOkr'), group: t('palette.groupNavigation'), icon: <Target size={16} />, run: nav('/okr'), keywords: ['objectives', 'key results', 'objectifs'] }] : []),
-      ...(activeModules.statistics ? [{ id: 'nav-statistics', label: t('palette.goStats'), group: t('palette.groupNavigation'), icon: <TrendingUp size={16} />, run: nav('/statistics'), keywords: ['stats', 'analytics', 'analyses'] }] : []),
-      { id: 'nav-settings', label: t('palette.goSettings'), group: t('palette.groupNavigation'), icon: <SettingsIcon size={16} />, run: nav('/settings'), keywords: ['settings', 'config', 'réglages'] },
+      { id: 'nav-dashboard', label: ov.t('palette.goHome'), group: ov.t('palette.groupNavigation'), icon: <LayoutDashboard size={16} />, run: nav('/dashboard'), keywords: ['dashboard', 'accueil', 'home', 'tableau de bord'] },
+      { id: 'nav-tasks', label: ov.t('palette.goTasks'), group: ov.t('palette.groupNavigation'), icon: <CheckSquare size={16} />, run: nav('/tasks'), keywords: ['tasks', 'todo', 'todolist'] },
+      { id: 'nav-agenda', label: ov.t('palette.goAgenda'), group: ov.t('palette.groupNavigation'), icon: <Calendar size={16} />, run: nav('/agenda'), keywords: ['calendar', 'événements', 'events'] },
+      { id: 'nav-habits', label: ov.t('palette.goHabits'), group: ov.t('palette.groupNavigation'), icon: <Repeat size={16} />, run: nav('/habits'), keywords: ['habits', 'routines'] },
+      { id: 'nav-okr', label: ov.t('palette.goOkr'), group: ov.t('palette.groupNavigation'), icon: <Target size={16} />, run: nav('/okr'), keywords: ['objectives', 'key results', 'objectifs'] },
+      { id: 'nav-statistics', label: ov.t('palette.goStats'), group: ov.t('palette.groupNavigation'), icon: <TrendingUp size={16} />, run: nav('/statistics'), keywords: ['stats', 'analytics', 'analyses'] },
+      { id: 'nav-settings', label: ov.t('palette.goSettings'), group: ov.t('palette.groupNavigation'), icon: <SettingsIcon size={16} />, run: nav('/settings'), keywords: ['settings', 'config', 'réglages'] },
       ...(PREMIUM_ENFORCED
-        ? [{ id: 'nav-premium', label: 'Voir Premium', group: 'Navigation' as const, icon: <Crown size={16} />, run: nav('/premium'), keywords: ['premium', 'subscription', 'abonnement'] }]
+        ? [{ id: 'nav-premium', label: t('nav.seePremium'), group: 'Navigation' as const, icon: <Crown size={16} />, run: nav('/premium'), keywords: ['premium', 'subscription', 'abonnement'] }]
         : []),
-      { id: 'pref-theme-light', label: t('palette.themeLight'), group: t('palette.groupPreferences'), icon: <Sun size={16} />, run: () => { setTheme('light'); setIsOpen(false); }, keywords: ['theme', 'light', 'jour', 'clair'] },
-      { id: 'pref-theme-dark', label: t('palette.themeDark'), group: t('palette.groupPreferences'), icon: <Moon size={16} />, run: () => { setTheme('dark'); setIsOpen(false); }, keywords: ['theme', 'dark', 'nuit', 'sombre'] },
-      { id: 'pref-theme-gris', label: t('palette.themeGrey'), group: t('palette.groupPreferences'), icon: <Circle size={16} />, run: () => { setTheme('gris'); setIsOpen(false); }, keywords: ['theme', 'gris', 'graphite', 'github'] },
-      { id: 'pref-theme-noir', label: t('palette.themeBlack'), group: t('palette.groupPreferences'), icon: <MoonStar size={16} />, run: () => { setTheme('noir'); setIsOpen(false); }, keywords: ['theme', 'noir', 'oled', 'amoled', 'monochrome'] },
+      { id: 'pref-theme-light', label: ov.t('palette.themeLight'), group: ov.t('palette.groupPreferences'), icon: <Sun size={16} />, run: () => { setTheme('light'); setIsOpen(false); }, keywords: ['theme', 'light', 'jour', 'clair'] },
+      { id: 'pref-theme-dark', label: ov.t('palette.themeDark'), group: ov.t('palette.groupPreferences'), icon: <Moon size={16} />, run: () => { setTheme('dark'); setIsOpen(false); }, keywords: ['theme', 'dark', 'nuit', 'sombre'] },
+      { id: 'pref-theme-gris', label: ov.t('palette.themeGrey'), group: ov.t('palette.groupPreferences'), icon: <Circle size={16} />, run: () => { setTheme('gris'); setIsOpen(false); }, keywords: ['theme', 'gris', 'graphite', 'github'] },
+      { id: 'pref-theme-noir', label: ov.t('palette.themeBlack'), group: ov.t('palette.groupPreferences'), icon: <MoonStar size={16} />, run: () => { setTheme('noir'); setIsOpen(false); }, keywords: ['theme', 'noir', 'oled', 'amoled', 'monochrome'] },
     ];
+    // Sections de l'espace entreprise (M7) : atteignables au clavier depuis
+    // n'importe quelle page, pour qui appartient à une organisation.
+    if (hasOrg) {
+      const org = ov.t('palette.groupOrg');
+      base.push(
+        { id: 'org-overview', label: ov.t('palette.goOrgOverview'), group: org, icon: <Building2 size={16} />, run: nav(buildOrgLink('overview')), keywords: ['entreprise', 'company', 'aperçu', 'overview', 'mon travail'] },
+        { id: 'org-tasks', label: ov.t('palette.goOrgTasks'), group: org, icon: <CheckSquare size={16} />, run: nav(buildOrgLink('tasks')), keywords: ['entreprise', 'company', 'tâches', 'tasks'] },
+        { id: 'org-projects', label: ov.t('palette.goOrgProjects'), group: org, icon: <FolderKanban size={16} />, run: nav(buildOrgLink('projects')), keywords: ['entreprise', 'company', 'projets', 'projects'] },
+        { id: 'org-okr', label: ov.t('palette.goOrgOkr'), group: org, icon: <Target size={16} />, run: nav(buildOrgLink('okr')), keywords: ['entreprise', 'company', 'okr', 'objectifs'] },
+        { id: 'org-members', label: ov.t('palette.goOrgMembers'), group: org, icon: <UsersRound size={16} />, run: nav(buildOrgLink('members')), keywords: ['entreprise', 'company', 'membres', 'members', 'équipes', 'teams', 'inviter'] },
+        { id: 'org-settings', label: ov.t('palette.goOrgSettings'), group: org, icon: <SettingsIcon size={16} />, run: nav(buildOrgLink('settings')), keywords: ['entreprise', 'company', 'paramètres', 'settings', 'profil', 'quitter', 'supprimer'] },
+      );
+    }
     if (isAuthenticated) {
       base.push(
         {
           id: 'action-quick-add',
-          label: t('palette.quickTask'),
+          label: ov.t('palette.quickTask'),
           hint: 'N',
           group: 'Actions',
           icon: <Plus size={16} />,
@@ -231,7 +272,7 @@ export function CommandPalette() {
         // création via location.state.openCreate, lu par chaque page.
         {
           id: 'action-create-event',
-          label: t('palette.createEvent'),
+          label: ov.t('palette.createEvent'),
           group: 'Actions',
           icon: <CalendarPlus size={16} />,
           run: nav('/agenda', { openCreate: true }),
@@ -239,7 +280,7 @@ export function CommandPalette() {
         },
         {
           id: 'action-create-habit',
-          label: t('palette.createHabit'),
+          label: ov.t('palette.createHabit'),
           group: 'Actions',
           icon: <Repeat size={16} />,
           run: nav('/habits', { openCreate: true }),
@@ -247,7 +288,7 @@ export function CommandPalette() {
         },
         {
           id: 'action-create-okr',
-          label: t('palette.createObjective'),
+          label: ov.t('palette.createObjective'),
           group: 'Actions',
           icon: <Target size={16} />,
           run: nav('/okr', { openCreate: true }),
@@ -255,7 +296,7 @@ export function CommandPalette() {
         },
         {
           id: 'action-shortcuts',
-          label: t('palette.showShortcuts'),
+          label: ov.t('palette.showShortcuts'),
           hint: '?',
           group: 'Actions',
           icon: <Keyboard size={16} />,
@@ -267,7 +308,7 @@ export function CommandPalette() {
         },
         {
           id: 'action-logout',
-          label: t('palette.logout'),
+          label: ov.t('palette.logout'),
           group: 'Actions',
           icon: <LogOut size={16} />,
           run: () => { logout(); setIsOpen(false); },
@@ -277,7 +318,7 @@ export function CommandPalette() {
     }
     return base;
     // `t` en dépendance : toutes les commandes portent un libellé traduit.
-  }, [navigate, setTheme, logout, isAuthenticated, activeModules, t]);
+  }, [navigate, setTheme, logout, isAuthenticated, hasOrg, t]);
 
   // Filtrage manuel : substring insensible aux accents sur label + keywords.
   const filteredCommands = useMemo(() => {
@@ -321,10 +362,19 @@ export function CommandPalette() {
 
   const showDataResults = isAuthenticated && query.trim().length >= 2;
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: () => setIsOpen(false),
+    label: ov.t('palette.searchPlaceholder'),
+  });
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          ref={modalA11yRef}
+          {...modalA11yProps}
           className="fixed inset-0 z-[200] flex items-start justify-center pt-[12vh] bg-black/50 backdrop-blur-sm p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -351,11 +401,11 @@ export function CommandPalette() {
                 autoFocus
                 value={query}
                 onValueChange={setQuery}
-                placeholder={t('palette.searchPlaceholder')}
+                placeholder={ov.t('palette.searchPlaceholder')}
                 className="text-[rgb(var(--color-text-primary))]"
               />
               <CommandList className="max-h-none flex-1">
-                <CommandEmpty>{t('palette.noResult')}</CommandEmpty>
+                <CommandEmpty>{ov.t('palette.noResult')}</CommandEmpty>
                 {showDataResults && (
                   <DataResults query={query} onDone={() => setIsOpen(false)} />
                 )}
@@ -377,15 +427,15 @@ export function CommandPalette() {
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 rounded border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))]">↑↓</kbd>
-                    {t('palette.navigate')}
+                    {ov.t('palette.navigate')}
                   </span>
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 rounded border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))]">↵</kbd>
-                    {t('palette.open')}
+                    {ov.t('palette.open')}
                   </span>
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 rounded border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))]">ESC</kbd>
-                    {t('palette.close')}
+                    {ov.t('palette.close')}
                   </span>
                 </div>
                 <span className="hidden sm:inline">

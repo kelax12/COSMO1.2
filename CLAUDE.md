@@ -1,73 +1,116 @@
 # CLAUDE.md — COSMO 1.2
 
-Ce fichier guide Claude Code dans ce projet. Lis-le entièrement avant toute modification.
+Guide de travail dans ce dépôt. **Ce fichier est chargé à CHAQUE session : il reste court.**
 
-**Plan du fichier** : [Docs détaillées](#-documentation-détaillée) · [Stack](#stack-technique) · [Scripts](#scripts) · [Env](#variables-denvironnement) · [Architecture double mode](#architecture--double-mode-démo--production) · [Modules](#structure-des-modules) · [Hooks](#hooks-essentiels) · [Providers / User / Routing](#hiérarchie-des-providers-srcapptsx) · [Supabase](#base-de-données-supabase) · [Conventions](#conventions-de-code) · [Deploy / i18n](#déploiement-vercel) · [🚫 Garde-fous](#-garde-fous--à-ne-jamais-faire)
+🔴 **Il a pesé 2 070 lignes et ~43 000 tokens le 2026-09-16**, contre 17,8 ko dix semaines plus tôt.
+Tout son contenu de niche est descendu d un cran, **sans une coupe** : dans le `CLAUDE.md` du
+dossier concerné (chargé seulement quand ce code est touché) ou dans le doc de `docs/` qui fait
+déjà foi. La table ci-dessous dit où.
+
+❌ **Ne jamais réécrire un récit d incident ici.** Un incident s écrit **une fois**, dans le doc de
+son domaine. Le `CLAUDE.md` concerné n en garde que l interdit, en une ligne. C est l absence de
+cette règle qui a produit 78 commits sur ce seul fichier en trente jours, et des affirmations
+fausses restées en place pendant des jours parce que le fichier était trop gros pour être relu.
+
+✅ Cliquet : `npm run check:docs` refuse ce fichier au-delà de son plafond.
+
+🗺️ **Pour trouver un fichier, une table ou un écran : [`docs/MODULES.md`](./docs/MODULES.md).**
+À ouvrir avant de chercher à l'aveugle.
 
 ---
 
-## 📚 Documentation détaillée
+## 🗺️ Où est écrit le reste
 
-À charger **à la demande**, selon la zone touchée :
+**Avant de toucher à ce code, ce `CLAUDE.md` se charge tout seul.** Ne pas le recopier ici.
 
-| Doc | Quand la lire |
+| Zone | Fichier |
 |---|---|
+| Providers, routing, type `User` | [`src/CLAUDE.md`](./src/CLAUDE.md) |
+| Tout module (double mode, repositories, RPC indexables, Realtime) | [`src/modules/CLAUDE.md`](./src/modules/CLAUDE.md) |
+| Premium, Stripe, facturation entreprise, remboursement | [`src/modules/billing/CLAUDE.md`](./src/modules/billing/CLAUDE.md) |
+| Tâches, récurrence | [`src/modules/tasks/CLAUDE.md`](./src/modules/tasks/CLAUDE.md) |
+| Habitudes, `completions`, fuseaux gelés | [`src/modules/habits/CLAUDE.md`](./src/modules/habits/CLAUDE.md) |
+| OKR, journal `kr_completions` | [`src/modules/okrs/CLAUDE.md`](./src/modules/okrs/CLAUDE.md) |
+| Catégories, arbre, impact de suppression | [`src/modules/categories/CLAUDE.md`](./src/modules/categories/CLAUDE.md) |
+| Catégories d'ENTREPRISE (table unique, mig. `148`) | [`src/modules/team-categories/CLAUDE.md`](./src/modules/team-categories/CLAUDE.md) |
+| Mode entreprise, permissions, boîte de réception | [`src/modules/organizations/CLAUDE.md`](./src/modules/organizations/CLAUDE.md) |
+| Modales a11y, animations, design system mobile, onboarding | [`src/components/CLAUDE.md`](./src/components/CLAUDE.md) |
+| Landing, deux parcours, GSAP, shader | [`src/pages/landing/CLAUDE.md`](./src/pages/landing/CLAUDE.md) |
+| Toasts, échéances, fuseau horaire, `safeParse` | [`src/lib/CLAUDE.md`](./src/lib/CLAUDE.md) |
+| i18n, slugs localisés, locales indexables | [`src/i18n/CLAUDE.md`](./src/i18n/CLAUDE.md) |
+| Migrations SQL, RLS, ledger | [`supabase/migration/CLAUDE.md`](./supabase/migration/CLAUDE.md) |
+| Edge Functions, drift déployé | [`supabase/functions/CLAUDE.md`](./supabase/functions/CLAUDE.md) |
+| Fonctions Vercel (`api/`), collecteur d'audience, clé secrète | [`api/CLAUDE.md`](./api/CLAUDE.md) |
+| Playwright | [`e2e/CLAUDE.md`](./e2e/CLAUDE.md) |
+| Gardes CI, témoins, alerting | [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) |
+
+## 📚 Carte de la documentation
+
+**Deux statuts, ne jamais les confondre :**
+
+- **Vivant** — maintenu, décrit l'état courant. Ce fichier, `faille.md`, et `docs/*.md`.
+- **Archive** — `docs/archive/**` : instantanés datés (audits, rapports, plans exécutés),
+  **non maintenus**, chacun coiffé d'un bandeau ⚠️. À lire pour le *pourquoi* d'une décision
+  passée, **jamais** comme état courant. Le code fait foi contre une archive.
+
+| Doc vivant | Quand la lire |
+|---|---|
+| [`docs/README.md`](./docs/README.md) | Carte complète + **tableau de bord des notes d'audit** (avant/après daté) |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Invariants du projet et leur état vérifié (audit 2026-08-14) |
+| [`docs/MODULES.md`](./docs/MODULES.md) | **Carte** : module → fichiers, tables, RPC, écran |
 | [`docs/SECURITY.md`](./docs/SECURITY.md) | RLS, migrations SQL, repositories Supabase, Edge Functions, Stripe, CSP, secrets |
 | [`docs/MOBILE.md`](./docs/MOBILE.md) | Toute page/composant mobile, bottom-sheets, bug iOS Safari WebKit |
-| [`docs/UI-PATTERNS.md`](./docs/UI-PATTERNS.md) | Listes/SmartListMenu, EventModal, tutoriels, onboarding, shadcn exceptions, thèmes (palette GitHub, bordures) |
+| [`docs/UI-PATTERNS.md`](./docs/UI-PATTERNS.md) | Listes/SmartListMenu, EventModal, tutoriels, onboarding, shadcn, thèmes |
 | [`docs/PERFORMANCE.md`](./docs/PERFORMANCE.md) | `manualChunks`, lazy loading, pagination, budget bundle |
+| [`docs/SEO.md`](./docs/SEO.md) | Prérendu, sitemap, `robots.txt`, hreflang, ouvrir une langue à l'indexation, `lastmod`, maillage du blog |
+| [`docs/ACQUISITION-BACKLINKS.md`](./docs/ACQUISITION-BACKLINKS.md) | Backlinks : le seul levier qui débloque le SEO aujourd'hui (actions manuelles d'Axel) |
+| [`docs/I18N.md`](./docs/I18N.md) | Qualité des traductions, périmètre réellement bilingue |
+| [`docs/RGPD.md`](./docs/RGPD.md) | Données personnelles, effacement, rétention, conformité B2B |
+| [`docs/LEGAL.md`](./docs/LEGAL.md) | **Obligations légales** : statut juridique, TVA, droit de la consommation, marque, sous-traitants. Tout client est un consommateur (décision 2026-08-26) |
+| [`docs/RGPD-REGISTRE.md`](./docs/RGPD-REGISTRE.md) | **Registre art. 30** : dix traitements, base légale, destinataires, durées. Pièce à produire en contrôle CNIL ou en due diligence |
+| [`docs/RGPD-VIOLATION.md`](./docs/RGPD-VIOLATION.md) | **Procédure 72 h** : qualification, marche à suivre, arbre de notification, registre des violations |
+| [`docs/STRIPE-LIVE.md`](./docs/STRIPE-LIVE.md) | Compte Stripe **live** : les 8 prix, `tax_behavior: inclusive` définitif, ce qui reste avant d'encaisser |
 | [`docs/ACCESSIBILITY.md`](./docs/ACCESSIBILITY.md) | a11y WCAG/EAA, aria, contraste |
-| [`docs/TESTING.md`](./docs/TESTING.md) | Vitest, Playwright, a11y scan, CI, **checklist avant push prod** |
+| [`docs/TESTING.md`](./docs/TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** |
 | [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) | Runbook deploy/rollback Vercel + Supabase |
 | [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) | Montée en charge, limites Supabase/localStorage |
 | [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md) | Réactivation premium (`PREMIUM_ENFORCED`), finalisation Stripe |
-| [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE.md) | **Mémo court** : ajouter une tâche dans le vrai compte COSMO d'Axel |
-| [`docs/COSMO-CLI.md`](./docs/COSMO-CLI.md) | Accès agent aux données COSMO réelles (`scripts/cosmo/`) : lecture tâches/habitudes/agenda/OKR, écriture complète sur les tâches |
-| [`faille.md`](./faille.md) | Failles de sécurité (archive + roadmap, **source de vérité**) |
-| [`AUDIT-ARCHITECTURE-2026-08-07.md`](./AUDIT-ARCHITECTURE-2026-08-07.md) | Audit architecture + 20 correctifs livrés ; scalabilité, RLS indexable, récurrence serveur |
-| [`a-faire.md`](./a-faire.md) | Bugs/régressions mobile non résolus |
+| [`docs/MIGRATION-REACT19.md`](./docs/MIGRATION-REACT19.md) | Étude de faisabilité React 19 + `react-router` 8 : chronologie CVE, composants shadcn ref par ref, chiffrage |
+| [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE.md) | **Mémo court** : ajouter une tâche dans le vrai compte COSMO |
+| [`docs/COSMO-CLI.md`](./docs/COSMO-CLI.md) | CLI d'accès aux données COSMO réelles (`scripts/cosmo/`) |
+| [`faille.md`](./faille.md) | Sécurité : **source de vérité**, findings ouverts + ordre de priorité avant prod |
 
-> **Source de vérité sécurité = `faille.md`.** CLAUDE.md ne duplique PAS les statuts de failles ; en cas de divergence, `faille.md` fait foi.
->
-> **Avant un déploiement** : consulter `faille.md`. **Aucun bloquant technique restant.** `APP_URL` configuré sur les 2 Edge Functions (2026-06-11). Stripe à finaliser si activé.
+> **Sécurité : `faille.md` fait foi.** CLAUDE.md ne duplique pas les statuts de failles.
+> Avant tout déploiement : `faille.md` → « Ordre de priorité avant déploiement prod ».
 
 ---
 
 ## ✅ Tu peux écrire dans le vrai compte COSMO d'Axel
 
-Un CLI local (`scripts/cosmo/`) donne accès à ses **données de production** :
-lecture tâches / habitudes / agenda / OKR, et **écriture complète sur les tâches**.
-Authentifié par sa session, filtré par la RLS — jamais de `service_role`.
+Le CLI `scripts/cosmo/` donne accès à ses **données de production** : lecture tâches /
+habitudes / agenda / OKR, **écriture complète sur les tâches**. Authentifié par sa session,
+filtré par la RLS — jamais de `service_role`.
 
 ```bash
 npm run cosmo -- tasks add --input '{"name":"Ma tache","description":"Contexte detaille.","category":"SEO","priority":4}'
 ```
 
-| Commande | Effet |
-|---|---|
-| `tasks list [--full] [--all] [--limit n]` | Lister (`--full` inclut la description) |
-| `tasks show <id>` | Détail complet d'une tâche |
-| `tasks add … / tasks update <id> …` | Créer / modifier (`--input` JSON accepté) |
-| `tasks done <id>` / `tasks reopen <id>` | Cocher / ré-ouvrir |
-| `tasks delete <id> --confirm` | Supprimer (**irréversible**) |
-| `categories` | Noms de catégories valides |
+Domaines : `tasks` (list / show / add / update / done / reopen / delete), `categories`,
+`habits today|done`, `agenda --days N`, `okr` (lecture seule).
+Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE.md) (mémo) ·
+[`docs/COSMO-CLI.md`](./docs/COSMO-CLI.md) (complet).
 
 **Règles non négociables :**
 
-- 🔴 **Toujours quoter une valeur contenant des espaces**, ou passer par
-  `--input '<json>'`. Sans guillemets, les mots suivants sont rattachés au nom
-  de la tâche et la valeur est tronquée au premier mot. Le CLI refuse ce cas,
-  mais la forme JSON l'évite complètement — **c'est la forme à préférer**.
-- 🔴 **`tasks list` ne renvoie pas `description`** (liste allégée, parité avec
-  l'app). Ce n'est pas un échec d'écriture : relis avec `tasks show <id>`.
-- 🔴 **Ne jamais lancer `npm run cosmo:login`** — il est interactif et attend un
-  code reçu par email. Si la session a expiré, **demande à Axel** de le lancer.
-- 🔴 **Ne jamais écrire via le MCP Supabase** (`execute_sql` contourne la RLS et
-  est bloqué de toute façon). Le CLI est le seul chemin d'écriture.
+- 🔴 **Toujours quoter une valeur contenant des espaces**, ou passer par `--input '<json>'` —
+  forme à préférer. Sans guillemets, la valeur est tronquée au premier mot.
+- 🔴 **`tasks list` ne renvoie pas `description`** (liste allégée, parité avec l'app).
+  Ce n'est pas un échec d'écriture : relire avec `tasks show <id>`.
+- 🔴 **Ne jamais lancer `npm run cosmo:login`** — interactif, attend un code reçu par email.
+  Session expirée → demander à Axel de le lancer.
+- 🔴 **Ne jamais écrire via le MCP Supabase** (`execute_sql` contourne la RLS, et est bloqué).
+  Le CLI est le seul chemin d'écriture.
 - 🔴 **Confirmer avant toute suppression** qu'Axel n'a pas explicitement demandée.
-
-Détails : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE.md) (mémo court) ·
-[`docs/COSMO-CLI.md`](./docs/COSMO-CLI.md) (complet).
 
 ---
 
@@ -77,50 +120,72 @@ Détails : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE.md) (mémo
 |---|---|
 | Framework | React 18 + TypeScript 5.5 (strict) |
 | Build | Vite 7 (+ prérendu `prerender.mjs` dans `npm run build`) |
-| Routing | React Router 7 (paquet `react-router`, imports depuis `react-router`) |
+| Routing | React Router 7 (imports depuis `react-router`) |
 | State serveur | TanStack React Query 5 |
 | Backend / Auth | Supabase 2 |
-| UI Components | shadcn/ui (Radix UI + Tailwind CSS 3) |
+| UI | shadcn/ui (Radix UI + Tailwind CSS 3) |
 | Toasts | Sonner |
-| Animations | Framer Motion (app) + GSAP 3 (**landing page uniquement** — voir [règle GSAP](#gsap--landing-page-uniquement-réintroduit-2026-07)) |
-| Graphiques | recharts (`DashboardChart`, `DashboardBarChart`, `StatisticsPage`) |
-| Paiement | Stripe (`@stripe/react-stripe-js`) — **non finalisé**, voir `faille.md` |
+| Animations | Framer Motion (app) + GSAP 3 (**landing uniquement**, cf. [règle GSAP](#gsap--landing-page-uniquement)) |
+| Graphiques | recharts |
+| PDF | jsPDF (`vendor-pdf`, `import()` au clic sur « Exporter en PDF » seulement) |
+| i18n | **Catalogues JSON maison** (`src/i18n/` + `src/locales/{fr,en}/`) — pas d'i18next |
+| Paiement | Stripe (`@stripe/react-stripe-js`) — **non finalisé** |
 | Icônes | lucide-react (imports nominaux uniquement) |
-| Dates | date-fns 3 (locale `fr` toujours importé nominalement) |
+| Dates | date-fns 3 (locale `fr` importée nominalement) |
 | Calendrier | FullCalendar |
-| Virtualisation | `@tanstack/react-virtual` (TaskList mobile au-delà de 50 items) |
-| Validation | `zod` (garde UX côté client — `src/lib/validation/`) |
-| Tests unitaires | Vitest (`*.test.ts` à côté du code) |
-| Tests E2E | Playwright (parcours démo + scan a11y axe-core dans `e2e/`) |
-| Monitoring | Sentry (`@sentry/react`) — `beforeSend` strip emails/UUIDs (M-9) |
-| Hosting | Vercel (`vercel.json` + headers de sécurité + CSP) |
+| Virtualisation | `@tanstack/react-virtual` (TaskList mobile > 50 items) |
+| Validation | `zod` (garde UX client — `src/lib/validation/`) |
+| Tests | Vitest (`*.test.ts` à côté du code) + Playwright (`e2e/`) |
+| Monitoring | Sentry (`beforeSend` strip emails/UUIDs) |
+| Hosting | Vercel (`vercel.json` + headers de sécurité + CSP) + fonctions `api/` (runtime edge) |
+| Audience | maison : `src/lib/traffic.ts` → `api/collect.ts` → `traffic_hits` ; Vercel Analytics sous consentement. Aucun script tiers de mesure |
+
+---
+
 
 ---
 
 ## Scripts
 
+> ⚠️ **Cette liste ne porte que les commandes du QUOTIDIEN.** Les **34 gardes** (`check:*`,
+> `i18n:*`, `validate:*`) sont descendues dans [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) le
+> 2026-09-21, avec ce que chacune regarde et où est son détail : la racine était à 96,7 % de son
+> plafond et **24 gardes posées le 2026-09-21 n'y figuraient pas**. Cette section a pesé 281 lignes
+> pour 20 commandes.
+
 ```bash
 npm run dev        # Serveur dev local (port 5173)
-npm start          # Serveur dev réseau (port 3000)
-npm run build      # Build production → dist/ (vite build + node prerender.mjs)
+npm start          # Serveur dev réseau (port 3000) — port utilisé par Playwright
+npm run build      # Build prod → dist/ (vite build + node prerender.mjs)
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
 npm run typecheck  # tsc -b (doit retourner 0 erreur)
-npm test           # Vitest — tests unitaires (run once)
+npm test           # Vitest (run once)                          → docs/TESTING.md
 npm run test:watch # Vitest en mode watch
-npm run test:coverage       # Vitest + couverture v8 (seuils par fichier — bloquant CI)
-npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
-npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE (CI)
-npm run check:drift         # Dérive repo ↔ prod (2 étapes : --print-sql puis <introspection.json>)
-npm run test:rls   # Tests d'intégration RLS (vitest.integration.config.ts — nécessite pg)
-npm run test:e2e   # Playwright — inclut e2e/a11y-audit.spec.ts (+ :ui, :report)
+npm run test:coverage       # + couverture v8, seuils par fichier → docs/TESTING.md
+npm run test:rls            # Intégration RLS (stack locale)      → docs/TESTING.md
+npm run test:e2e            # Playwright (+ :ui, :report)         → e2e/CLAUDE.md
+npm run cosmo               # CLI données réelles (cf. plus haut)
 ```
 
-> Le build prod **drope automatiquement** `console.*` et `debugger` (via `vite.config.ts → esbuild.pure/drop`). Les erreurs sont remontées via Sentry (`VITE_SENTRY_DSN`).
->
-> Détails tests + **checklist avant push prod** → [`docs/TESTING.md`](./docs/TESTING.md).
+> 🛡️ **Les 34 gardes, une ligne chacune** (recomptées dans `package.json` le 2026-10-20) :
+> [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) § Inventaire. Les trois qui attendaient un geste manuel
+> (`C-88`, `C-89`, `C-105`) mesurent toutes depuis le 2026-10-16.
 
----
+> Le build prod **drope** `console.*` et `debugger` (`vite.config.ts → esbuild.pure/drop`).
+> Les erreurs remontent via Sentry (`VITE_SENTRY_DSN`).
+
+🔴 **Trois règles de lecture, chacune payée d une erreur réelle :**
+
+1. ❌ **Ne JAMAIS conclure d une ligne de résumé.** Lire `$?`, **puis** comparer le nombre de
+   fichiers annoncé au périmètre du glob. Le 2026-09-15, une suite a rendu « 225 passed (225) »
+   et **exit 1**, quatre fichiers n ayant jamais démarré, dont un qui porte trois témoins.
+2. 🔴 **Ne JAMAIS passer `--maxWorkers` en ligne de commande.** `vitest.config.ts` fixe
+   `maxWorkers: 2` exprès (C-47) ; l écraser sature la machine et compte comme échec un worker
+   qui n a exécuté aucun cas. Ce conseil a vécu dans ce fichier et a désarmé sa propre garde.
+3. ❌ **Ne JAMAIS relever un seuil ou un plafond pour faire passer la CI**, ni ajouter une entrée
+   d allowlist pour la même raison. Un dépassement dit qu un contenu doit bouger, pas que la borne
+   est trop basse.
 
 ## Variables d'environnement
 
@@ -129,278 +194,23 @@ npm run test:e2e   # Playwright — inclut e2e/a11y-audit.spec.ts (+ :ui, :repor
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 VITE_STRIPE_PUBLISHABLE_KEY=
-VITE_SENTRY_DSN=  # DSN Sentry (public, write-only) — si absent, monitoring désactivé
+VITE_SENTRY_DSN=  # public, write-only — si absent, monitoring désactivé
 ```
 
-- Si `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY` sont absentes → mode démo automatique (LocalStorage)
-- Toutes les variables exposées au navigateur doivent être préfixées `VITE_`
-- **Ne jamais** utiliser `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client
-- **`.env` est gitignored** — vérifier `git status` avant chaque commit
+- `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY` absentes → **mode démo automatique** (localStorage).
+- Toute variable exposée au navigateur doit être préfixée `VITE_`.
+- **Ne jamais** utiliser `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client.
+- **`.env` est gitignored** — vérifier `git status` avant chaque commit.
+- `.env.cosmo-cli` (gitignored) : config du CLI agent, distincte de `.env`.
+- `SUPABASE_SECRET_KEY` : **serveur seulement**, lue par `api/collect.ts`, posée sur Vercel par
+  l'intégration Supabase (production). ❌ Jamais préfixée `VITE_` → [`api/CLAUDE.md`](./api/CLAUDE.md).
 
 ---
 
-## Architecture : double mode (démo / production)
-
-L'app fonctionne en deux modes transparents :
-
-- **Mode démo** : pas de Supabase, données en `localStorage`. Activé automatiquement si les env vars sont absentes, ou via `loginDemo()`.
-- **Mode production** : Supabase. Activé si `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` sont définis.
-
-Store de mode dans `src/lib/app-mode.store.ts` :
-```typescript
-appModeStore.isDemo          // getter
-appModeStore.setDemo(bool)   // setter
-useIsDemo()                  // hook React
-```
-
-Les repositories sont sélectionnés dynamiquement via `src/lib/repository.factory.ts` :
-```typescript
-getTasksRepository() / getHabitsRepository() / getEventsRepository()
-getCategoriesRepository() / getListsRepository() / getFriendsRepository()
-getOKRsRepository() / getKRCompletionsRepository() / getStatsRepository()
-resetRepositories()     // nullifie les singletons (changement de mode)
-clearDemoStorage()      // efface les clés localStorage démo (sweep par prefix cosmo_*)
-```
-
-### loginDemo() — séquence exacte (`src/modules/auth/AuthContext.tsx`)
-
-```typescript
-loginDemo() {
-  clearDemoStorage()            // 1. Efface l'ancien localStorage démo
-  appModeStore.setDemo(true)    // 2. Active le flag global démo
-  resetRepositories()           // 3. Nullifie les singletons
-  queryClient.clear()           // 4. Vide le cache React Query
-  setUser({ id: 'demo-user', email: 'demo@cosmo.app', ... })
-  setIsLoading(false)
-  // 6. navigate('/dashboard') dans le composant appelant (setTimeout 0ms)
-}
-```
-
-> `navigate('/dashboard')` doit toujours être appelé avec `setTimeout(() => navigate('/dashboard'), 0)` pour laisser React commiter `setUser()` avant que `ProtectedRoute` vérifie `isAuthenticated`.
-
-### Données seed démo
-
-Rechargées à chaque `loginDemo()` grâce à `clearDemoStorage()`.
-
-| Module | Fichier seed | Volume |
-|---|---|---|
-| Tasks | `src/modules/tasks/local.repository.ts` | 100 tâches / 12 mois |
-| Habits | `src/modules/habits/local.repository.ts` | 100 habitudes / 30–120 j |
-| Events | `src/modules/events/repository.ts` | ~150 événements |
-| OKRs | `src/modules/okrs/repository.ts` | 8 OKRs |
-
-Helpers : dates relatives (`getDate`, `getDateString`), historique déterministe (`generateCompletions` — pas de `Math.random()`), raccourcis `t(...)` / `h(...)`.
-
-> Les interdits du mode démo sont regroupés dans [🚫 Garde-fous](#-garde-fous--à-ne-jamais-faire).
-
----
-
-## Structure des modules
-
-```
-src/modules/{module}/
-├── types.ts               # Interfaces TypeScript
-├── constants.ts           # Clés React Query (factory) + clés localStorage
-├── repository.ts          # Interface I{Module}Repository (+ LocalStorage pour certains)
-├── local.repository.ts    # Implémentation LocalStorage dédiée (tasks, habits)
-├── supabase.repository.ts # Implémentation Supabase
-├── hooks.ts               # Hooks React Query (lecture + écriture)
-├── hooks.derived.ts       # Hooks calculés (useMemo) — quand pertinent
-└── index.ts               # Export public (barrel)
-```
-
-| Module | Chemin | Usage |
-|---|---|---|
-| auth | `src/modules/auth/` | Authentification, session, AuthContext |
-| billing | `src/modules/billing/` | Abonnement premium (⚠️ Stripe non finalisé) |
-| tasks | `src/modules/tasks/` | Tâches |
-| events | `src/modules/events/` | Événements calendrier |
-| habits | `src/modules/habits/` | Habitudes |
-| categories | `src/modules/categories/` | Catégories de tâches |
-| lists | `src/modules/lists/` | Listes de tâches |
-| friends | `src/modules/friends/` | Collaboration sociale |
-| okrs | `src/modules/okrs/` | OKR |
-| kr-completions | `src/modules/kr-completions/` | Journal append-only des complétions de KR |
-| stats | `src/modules/stats/` | Agrégats « temps investi » (RPC SQL `get_work_time_stats` en prod, calcul local en démo) |
-| ui-states | `src/modules/ui-states/` | État UI persistant (couleurs, priorités) |
-| user | `src/modules/user/` | Profil utilisateur, messages inbox |
-
-### Règle d'import par zone
-
-| Zone | Modules à importer |
-|---|---|
-| Tâches | `tasks`, `categories`, `lists` |
-| Agenda | `events`, `tasks` |
-| Habitudes | `habits`, `categories` |
-| OKR | `okrs` |
-| Amis / Collaboration | `friends` |
-| UI / Filtres | `ui-states` |
-| Auth | `auth` |
-| Premium | `billing` |
-| Dashboard | `tasks`, `habits`, `events`, `kr-completions`, `okrs`, `auth` |
-
----
-
-## Hooks essentiels
-
-### Auth — source de vérité unique
-
-```typescript
-import { useAuth } from '@/modules/auth/AuthContext';
-const { user, isAuthenticated, isDemo, isLoading, login, logout, register, loginWithGoogle } = useAuth();
-```
-
-> **Ne jamais importer `useAuth` depuis `@/modules/user`** — source unique = `@/modules/auth/AuthContext`.
-
-### Billing — vérification premium
-
-```typescript
-import { useBilling } from '@/modules/billing/billing.context';
-const { isPremium, addTokens, subscription, stats, isLoading } = useBilling();
-// isPremium est une FONCTION : isPremium() retourne boolean
-```
-
-> `useBilling()` doit être utilisé uniquement à l'intérieur de `BillingProvider`.
-
-#### Modèle Premium
-
-> 🟢 **Premium NON APPLIQUÉ depuis 2026-06-21** — kill-switch `PREMIUM_ENFORCED` dans `src/modules/billing/premium-config.ts` (= `false`). Tant qu'il vaut `false` : `isPremium()` renvoie `true` pour tous et le mur-pub Habitudes est masqué. **Aucun code premium n'est supprimé** (dormant). Pour réactiver : passer le flag à `true` (puis finaliser Stripe — cf. `docs/POST-AUDIT-GUIDE.md`).
-
-Comportement **quand `PREMIUM_ENFORCED=true`** :
-
-- **Partage de tâches → 100 % gratuit** (acquisition virale). Aucun gate `isPremium()` sur la collaboration. **Ne PAS réintroduire** ces gates.
-- **Statistiques → restent premium** (`StatisticsPage`).
-- **Habitudes → mur-pub quotidien** : `HabitsPage` monte `<HabitsAdGate>` pour les non-abonnés une fois par jour. Piloté par un flag localStorage daté (`useDailyAdGate('habits')` → `cosmo_adwall_habits`), **PAS** par `isPremium()` (dette : `consume_premium_token` non câblé client).
-- **Abonnés payants** (`subscription.current_period_end` futur) et **mode démo** ne voient JAMAIS le mur.
-- Depuis mig. `015`, le client ne peut PLUS écrire `subscriptions` directement. `addTokens(1)` passe par la RPC `credit_premium_token_from_ad` (cap 20 crédits/24 h). Détails : [`docs/SECURITY.md`](./docs/SECURITY.md).
-
-### UI States
-
-```typescript
-import { useFavoriteColors, usePriorityRange, useColorSettings } from '@/modules/ui-states';
-```
-
-### Friends
-
-```typescript
-import { useFriends, useSendFriendRequest, useShareTask, useFriendRequests } from '@/modules/friends';
-sendFriendRequestMutation.mutate({ email });
-shareTaskMutation.mutate({ taskId, friendId, role: 'editor' });
-```
-
-### Messages inbox & données métier
-
-```typescript
-import { useMessages } from '@/modules/user';
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/modules/tasks';
-import { useHabits } from '@/modules/habits';
-import { useEvents } from '@/modules/events';
-import { useOkrs, useUpdateKeyResult } from '@/modules/okrs';
-import { useKRCompletions } from '@/modules/kr-completions';
-import { useCategories } from '@/modules/categories';
-import { useLists } from '@/modules/lists';
-```
-
----
-
-## Hiérarchie des providers (`src/App.tsx`)
-
-```
-QueryClientProvider
-  AuthProvider
-    BillingProvider        ← dépend de useAuth
-      TooltipProvider
-        Routes
-```
-
-React Query : 5 min stale, 30 min gc, retry 1, no refetchOnWindowFocus. Le `Toaster` Sonner est en `theme="system"`.
-
-### Type User — source de vérité
-
-Défini **uniquement** dans `src/modules/auth/AuthContext.tsx` (`src/modules/user/types.ts` le ré-exporte sans le redéfinir) :
-
----
-
-## Modules actifs / onboarding progressif (AM10)
-
-Système « simple vs avancé » : l'utilisateur réel choisit quels modules optionnels
-afficher. Store : `src/modules/ui-states/active-modules.store.ts`.
-
-```typescript
-import { useActiveModules, setActiveModules, isModuleActive } from '@/modules/ui-states';
-
-const activeModules = useActiveModules();   // Record<ModuleKey, boolean>
-// ModuleKey = 'agenda' | 'habits' | 'okr' | 'statistics'
-```
-
-Règles non négociables :
-- **Dashboard + Tâches = socle, TOUJOURS actifs** (non désactivables — dépendances
-  tâches↔agenda↔dashboard). Seuls `agenda`, `habits`, `okr`, `statistics` sont optionnels.
-- **En mode démo → tous les modules forcés actifs** (override dans `getSnapshot`).
-  La démo ne doit jamais voir l'onboarding ni perdre d'onglet (fixtures E2E `loginDemo()`).
-- Persistance **localStorage** (clé `cosmo_active_modules`), défaut = tout actif
-  (rétro-compat : un utilisateur existant ne perd aucun onglet).
-- L'onboarding (`src/components/onboarding/ModuleOnboarding.tsx`, monté lazy au niveau
-  **App**) s'affiche une seule fois au 1er login réel (flag `cosmo_onboarding_modules_done`).
-  Ne jamais le déclencher en démo.
-- Toute nouvelle surface de nav qui liste les modules optionnels doit filtrer via
-  `useActiveModules()` : `Layout.tsx` (sidebar), `MobileTabBar.tsx`, `MobileMoreSheet.tsx`.
-- Les routes des modules optionnels sont gardées par `RequireModule` dans `src/App.tsx`
-  (redirect `/dashboard` si désactivé — bloque l'accès URL directe).
-- Réactivation : onglet « Modules » de `SettingsPage` (`ModulesTab`).
-- Module masqué ≠ donnée supprimée : on cache seulement nav + route.
-
-Pour ré-afficher l'onboarding en debug :
-`localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
-
----
-
-```typescript
-export type User = {
-  id: string; name: string; email: string;
-  avatar?: string; premiumTokens?: number; premiumWinStreak?: number;
-  lastTokenConsumption?: string; subscriptionEndDate?: string; autoValidation?: boolean;
-};
-```
-
-### Routing
-
-```
-/welcome → LandingPage (public)    | /login → LoginPage (public)
-/signup → SignupPage (public)      | / → DashboardPage (protégé)
-/tasks → TasksPage                 | /agenda → AgendaPage
-/habits → HabitsPage               | /okr → OKRPage
-/statistics → StatisticsPage       | /settings → SettingsPage
-/premium → PremiumPage             | /* → redirect /welcome
-```
-
-Toutes les pages sont lazy-loadées (`React.lazy`) et enveloppées dans `AppErrorBoundary`.
-
----
-
-## Base de données Supabase
-
-Migrations SQL dans `supabase/migration/*.sql` (numérotées 001+, convention `NNN_<feature>.sql`). `ls supabase/migration/` pour lister.
-
-Toutes les tables ont **RLS activée** avec policies `auth.uid() = user_id`. **Pattern obligatoire + checklist migration → [`docs/SECURITY.md`](./docs/SECURITY.md).**
-
-Fonctions SECURITY DEFINER clés (toutes versionnées) : `accept_friend_request_v2`, `accept_shared_task`, `consume_premium_token` / `credit_premium_token_from_ad`, `remove_friendship` / `resolve_profile_by_email`, `handle_new_user_profile`, `prevent_user_id_change`, `owns_task`, `claim_share_link`, `sanitize_display_name`. Schéma `friend_requests` = `sender_id` / `receiver_id`.
-
-> **Policies RLS — une seule PERMISSIVE par rôle+action** (mig. 049, advisor `multiple_permissive_policies`). Les anciens splits `tasks` (own / collaborator) et `friend_requests` (sender / receiver) sont **fusionnés en une policy `OR` unique** — sémantique strictement préservée (cf. `docs/SECURITY.md`). **Ne JAMAIS recréer deux policies permissives** pour le même rôle+action : élargir le `OR` de la policy existante. (Remplace la règle « split sender/receiver CONSERVÉ » de la mig. 043.)
-
-### Pattern critique : journal append-only `kr_completions`
-
-Quand un KR transitionne `completed: false → true`, **les deux repositories OKR (LocalStorage + Supabase) doivent insérer une ligne dans `kr_completions`** atomiquement. Cette table alimente le graphique « KR réalisés » de `DashboardPage` (+ `DashboardChart` / `DashboardBarChart`).
-
-- **LocalStorage** : `src/modules/okrs/repository.ts → updateKeyResult`
-- **Supabase** : `src/modules/okrs/supabase.repository.ts → recordKRCompletion()` (appelé depuis `updateKeyResult` ET `updateKeyResultViaJsonb`)
-
-> **Ne jamais retirer cette logique** : sans elle, le graphique dashboard reste à 0 en production.
 
 ---
 
 ## Conventions de code
-
 ### Imports — toujours l'alias `@/`
 
 ```typescript
@@ -408,154 +218,106 @@ import { supabase } from '@/lib/supabase';      // ✅
 import { supabase } from '../../lib/supabase';   // ❌
 ```
 
-### GSAP — landing page uniquement (réintroduit 2026-07)
+⚠️ Seule exception : `api/` (NodeNext), où l'alias ne résout pas → [`api/CLAUDE.md`](./api/CLAUDE.md).
 
-```typescript
-import { gsap, ScrollTrigger, SplitText, useGSAP } from '@/lib/gsap';  // ✅
-import { gsap } from 'gsap';                                            // ❌ jamais
-```
 
-- **Point d'entrée unique** : `src/lib/gsap.ts` (registration des plugins + isolation du chunk `vendor-gsap`, chargé seulement par la LandingPage lazy).
-- **Périmètre** : `src/pages/LandingPage.tsx` + `src/pages/landing/*` + `src/lib/hooks/use-magnetic.ts`. Le reste de l'app reste sur **Framer Motion** — ne pas étendre GSAP hors landing.
-- Toute animation doit respecter `prefers-reduced-motion` (via `gsap.matchMedia()` ou guard équivalent).
+### GSAP, toasts
 
-### Toasts
-
-```typescript
-import { toast } from 'sonner';
-toast.success('Message'); toast.error('Erreur');
-// Ne jamais appeler toast depuis les repositories ou normalizeApiError
-```
-
+- `gsap` s importe **uniquement** depuis `@/lib/gsap`, et **uniquement** dans la landing.
+  Le reste de l app est sur Framer Motion. → [`src/pages/landing/CLAUDE.md`](./src/pages/landing/CLAUDE.md)
+- `toast` s importe **uniquement** depuis `@/lib/toast` (façade différée), jamais depuis `sonner`,
+  y compris dans une page lazy. Jamais depuis un repository ni depuis `normalizeApiError`.
+  → [`src/lib/CLAUDE.md`](./src/lib/CLAUDE.md)
 ### TypeScript
 
-- Strict mode (`noUnusedLocals`, `noUnusedParameters`)
-- **Pas de `as any`** — typer correctement
+- Strict (`noUnusedLocals`, `noUnusedParameters`) · **pas de `as any`**
 - `interface` pour les objets, `type` pour les unions
 - Variables/args/catch inutilisés intentionnellement → préfixer par `_`
 
-### Validation zod — garde UX côté client
+### Validation zod
 
-`src/lib/validation/validate.ts` (`validateOrThrow` / `safeValidate` + `ValidationError`) + schémas par module (`task.schema.ts`, `okr.schema.ts`). Câblé dans les `mutationFn` create/update.
+`src/lib/validation/validate.ts` (`validateOrThrow` / `safeValidate` + `ValidationError`) +
+schémas par module. Câblé dans les `mutationFn` create/update.
 
-- ⚠️ **Ce n'est PAS la frontière de sécurité** — celle-ci reste RLS + whitelist `mapToDb`. zod = garde UX + defense-in-depth.
+- ⚠️ **Ce n'est PAS la frontière de sécurité** — celle-ci reste RLS + whitelist `mapToDb`.
 
 ### ESLint
 
-- Config `eslint.config.js`. Lint **doit retourner 0 erreur** avant chaque commit.
-- **Ignorés** : `dist`, `src/__test__/**`, `src/components/showcase/**`, `e2e/**`, `playwright.config.ts`
-- Warnings autorisés : Fast refresh sur les contextes (Auth, Billing) + fichiers ui shadcn (préexistants OK)
-
-> Bundle/perf → [`docs/PERFORMANCE.md`](./docs/PERFORMANCE.md) · Mobile → [`docs/MOBILE.md`](./docs/MOBILE.md) · Patterns UI → [`docs/UI-PATTERNS.md`](./docs/UI-PATTERNS.md) · a11y → [`docs/ACCESSIBILITY.md`](./docs/ACCESSIBILITY.md).
+- Config `eslint.config.js`. **0 erreur** avant chaque commit.
+- Ignorés : `dist`, `coverage`, `coverage-tooling`, `src/__test__/**`, `.agents/**`, `.claude/**`, `.worktrees/**`
+  🔴 **Relu dans `eslint.config.js` le 2026-09-21 : cette ligne disait l'inverse.** `e2e/**`,
+  `src/components/showcase/**` et `supabase/functions/**` **ENTRENT** dans ESLint depuis `C-102`
+  (2026-09-20). La dette a été mesurée avant de les faire entrer : 1 erreur, 1 avertissement.
+- Warnings tolérés : Fast refresh sur les contextes + fichiers ui shadcn (préexistants)
 
 ---
 
+
+---
 ## Déploiement Vercel
 
-`vercel.json` : SPA rewrite, headers de sécurité (HSTS, X-Frame-Options, CSP…), cache immuable `/assets/*`. Variables à configurer sur Vercel : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_STRIPE_PUBLISHABLE_KEY` (quand Stripe finalisé). Runbook : [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
-
-## i18n
-
-L'app est **100 % français** (UI, copy, dates via `date-fns/locale/fr`). Pas de framework i18n. Si on ajoute une langue : `i18next` + `react-i18next`, ne jamais concaténer des strings, le mode démo reste en FR.
-
----
-
-## ⚡ Lecture des tâches — passer par `get_my_tasks()`
-
-**Ne JAMAIS lire `tasks` en direct pour une vue de liste.** La policy
-`tasks_select_own_or_shared` (mig. 049) est un `OR` entre une égalité et un
-`EXISTS` : Postgres ne peut alors pas utiliser `idx_tasks_user_id` et fait un
-**`Seq Scan` de la table globale** — vérifié par `EXPLAIN` en prod le
-2026-08-07. Le coût d'une lecture croît avec le volume de TOUTE la plateforme,
-pas avec celui de l'utilisateur.
-
-```typescript
-supabase.from('tasks').select(...)          // ❌ Seq Scan global
-supabase.rpc('get_my_tasks').select(...)    // ✅ Index Scan (mig. 085)
-```
-
-`get_my_tasks()` exprime « mes tâches UNION celles partagées avec moi » en deux
-branches indexables. Elle ne prend **aucun paramètre** : son périmètre vient de
-`auth.uid()` seul. Les policies RLS restent en place sur la table (défense en
-profondeur), et l'isolation est prouvée par `e2e/rls/get-my-tasks.test.ts`.
-
-Exception légitime : `getById` (une ligne, accès par clé primaire).
+`vercel.json` : SPA rewrite, headers de sécurité (HSTS, X-Frame-Options, CSP…), cache immuable
+`/assets/*`. Variables à configurer sur Vercel : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
+`VITE_STRIPE_PUBLISHABLE_KEY` (quand Stripe sera finalisé), et côté serveur `SUPABASE_SECRET_KEY`
+(intégration Supabase). Runbook : [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
 
 ---
 
-## 🔁 Récurrence des tâches — serveur uniquement
-
-La génération de l'occurrence suivante appartient à `toggle_task_complete_v2`
-(mig. 086), **pas au client**. Elle est atomique (même transaction que la
-bascule) et idempotente (index unique `ux_tasks_recurrence_parent`).
-
-Le client ne fournit QUE la date suivante, calculée en date locale de
-l'utilisateur (`nextOccurrenceDeadline`) — le serveur ne connaît pas son fuseau.
-
-- ❌ Ne jamais recréer un `repository.create(nextOccurrence)` côté client :
-  c'était la faille H1 (occurrence perdue si l'onglet se ferme, doublon si on
-  décoche puis recoche, échec avalé par un `.catch(() => {})`).
-- ❌ Ne jamais écrire `recurrence_parent_id` depuis le client — c'est la clé
-  d'idempotence, `mapTaskToDb` ne l'émet volontairement pas.
 
 ---
 
-## 📡 Synchronisation de la collaboration — Realtime, pas sondage
+## 🚫 Garde-fous transversaux
 
-`useSharedTasksRealtime` (monté **une seule fois** dans `App.tsx`) écoute
-`shared_tasks` et invalide la liste au moment du partage. Le `refetchInterval`
-de `useTasks` n'est plus qu'un filet de sécurité à 5 min.
-
-- ❌ Ne pas remonter la cadence du sondage : chaque tick est un `getAll()`
-  complet. La version à 15 s coûtait ≈ 58 Mo/mois/utilisateur d'egress.
-- ❌ Ne pas monter le canal Realtime dans un composant de page : c'est un
-  WebSocket, il s'en ouvrirait un par écran affiché.
-- ⚠️ Toute nouvelle table écoutée en Realtime doit être ajoutée à la
-  publication `supabase_realtime` **et** passée en `REPLICA IDENTITY FULL`
-  (sinon les événements DELETE ne portent que la clé primaire et les filtres
-  côté client ne matchent jamais) — cf. mig. 087.
-
----
-
-## 🚫 Garde-fous — à ne jamais faire
-
-Tous les interdits du projet, regroupés par thème. Les codes entre parenthèses (B0, N5…) renvoient aux bugs historiques qui ont motivé la règle.
-
-### Mode démo
-
-- ❌ Appeler `login(email, password)` pour l'utilisateur démo — utiliser `loginDemo()`
-- ❌ `navigate('/dashboard')` directement après `loginDemo()` sans `setTimeout(…, 0)`
-- ❌ Oublier `clearDemoStorage()` avant de modifier les seeds
-- ❌ Dériver `isDemo` de l'email — utiliser `useIsDemo()` / `appModeStore.isDemo` (B0)
-- ❌ Muter `DEMO_FRIENDS` / `DEMO_INCOMING_REQUESTS` en place — `JSON.parse(JSON.stringify(...))` avant retour (B12)
-
-### Champs canoniques du modèle (ne jamais réintroduire)
-
-- ❌ Lire `habit.completedDates` — champ canonique : `habit.completions: Record<string, boolean>` (B5)
-- ❌ Lire `task.status` / `task.title` / `task.dueDate` / `task.isBookmarked` — utiliser `task.completed` / `task.name` / `task.deadline` / `task.bookmarked` (B6)
-- ❌ Réintroduire `premiumTokens` / `subscriptionEndDate` / `premiumWinStreak` dans le type `User` — `useBilling()` only (N5)
-- ❌ Stocker un collaborateur par `friend.name` — utiliser `friend.id` partout (B6, B22)
-
+> Les garde-fous propres à une zone vivent dans le `CLAUDE.md` de cette zone (table plus haut).
+> Ceux-ci valent partout.
 ### Architecture & imports
 
 - ❌ Importer depuis `src/context/TaskContext` — **fichier supprimé**
 - ❌ Recréer un contexte/façade global qui agrège plusieurs modules
-- ❌ Importer `useAuth` depuis `@/modules/user` — source unique = `@/modules/auth/AuthContext`
+- ❌ Importer `useAuth` depuis `@/modules/user`
 - ❌ Appeler `repository.getFriends()` depuis un hook — l'interface expose `getAll()` (B3)
-- ❌ Importer `gsap` directement depuis `'gsap'` ou l'utiliser hors landing — passer par `@/lib/gsap`
+- ❌ Importer `gsap` directement ou l'utiliser hors landing — passer par `@/lib/gsap`
 - ❌ Appeler `toast` depuis les repositories ou `normalizeApiError`
 
 ### Logique métier
 
 - ❌ Modifier `recordKRCompletion()` sans vérifier le graphique dashboard (démo ET prod)
 - ❌ `kr.currentValue / kr.targetValue` sans guard `targetValue > 0` (B17)
-- ❌ Insérer N lignes dans `kr_completions` à partir d'un `count` client non clampé — cap 100/write (B18)
+- ❌ Insérer N lignes dans `kr_completions` depuis un `count` client non clampé — cap 100/write (B18)
 - ❌ `JSON.parse(localStorage.getItem(...))` sans `try/catch` — utiliser `safeParse<T>` (B14)
-- ❌ Réintroduire des gates `isPremium()` sur le partage de tâches / la collaboration (gratuit par design)
+- ❌ Réintroduire des gates `isPremium()` sur le partage de tâches / la collaboration
+
+### Journal fiscal et consentement
+
+- ❌ **Jamais de policy UPDATE/DELETE ni de purge sur `payment_records` / `payment_closures`**
+  (journal inaltérable, mig. `125`, trigger). **Jamais anonymiser `user_id`** : `row_hash` le
+  scelle. Une erreur se corrige par une ligne compensatoire.
+- ❌ Lire `cosmo_cookie_consent` ailleurs que par `src/lib/cookie-consent.ts` / `useCookieConsent()`.
+  Tout nouveau traceur est conditionné : `null` n'est pas une acceptation.
+- ❌ Une garde conditionnelle à la présence de son propre secret (`if (SECRET && …)`).
+- ⚠️ `renewal_notices` est une PREUVE (L215-1) : ne jamais la purger.
 
 ### Sécurité & env
 
-- ❌ Utiliser `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client
-- ❌ Committer sans vérifier que `.env` reste gitignored (`git status`)
+- ❌ `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client · committer sans vérifier que `.env` reste ignoré
+- ❌ Écrire en base via le MCP Supabase (contourne la RLS)
+- ❌ Appeler `get_subtree` / `has_subordinates` / `org_admin_count` depuis une policy
+  (`EXECUTE` révoqué, mig. `100`) : utiliser `is_above()` ou `i_have_subordinates()`.
+- ❌ Garder une surface admin par `admin_allowlisted()` (affichage). La garde est `is_admin()`
+  (allowlist ET session `aal2`, mig. `131`).
+- ❌ Une fonction de trigger en `SECURITY DEFINER` : `INVOKER` + `REVOKE` pour `anon` (mig. `108`).
+- 🔴 En CSP, `https:` ne couvre PAS `wss:`. Garde : `src/csp.guard.test.ts`.
+- 🔴 Une migration qui crée une dépendance à un chemin de récupération : PARCOURIR ce chemin avant.
+- ⚠️ Le dépôt est **PUBLIC**. Retirer un fichier du suivi n'efface pas l'historique.
 
-> **Sécurité (RLS, mass-assignment, Stripe, secrets) → [`docs/SECURITY.md`](./docs/SECURITY.md). Toujours la consulter avant de toucher `supabase/`, le billing, ou un repository.**
+### Documentation
+
+- ❌ Traiter `docs/archive/**` comme l'état courant · citer un numéro de ligne d'un autre `.md`
+- ❌ Recopier un « avant » : il se reconstruit à un commit nommé, jamais depuis un tableau ancien.
+- ❌ Chercher le symptôme cité par la doc plutôt que la chose décrite.
+
+> Le **pourquoi** de chacune de ces lignes (incident, date, mesure) est dans
+> [`docs/SECURITY.md`](./docs/SECURITY.md) § « Garde-fous transversaux, récits repris de `CLAUDE.md` ».
+
+> **Sécurité (RLS, mass-assignment, Stripe, secrets) → [`docs/SECURITY.md`](./docs/SECURITY.md).
+> Toujours la consulter avant de toucher `supabase/`, le billing, ou un repository.**

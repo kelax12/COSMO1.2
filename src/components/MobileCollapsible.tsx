@@ -39,7 +39,7 @@ const MobileCollapsible: React.FC<MobileCollapsibleProps> = ({
         <span className="flex items-center gap-2 font-bold text-body text-[rgb(var(--color-text-primary))]">
           {title}
           {badge !== undefined && badge !== 0 && badge !== '0' && (
-            <span className="text-caption font-semibold px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent))] text-white">
+            <span className="text-caption font-semibold px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]">
               {badge}
             </span>
           )}

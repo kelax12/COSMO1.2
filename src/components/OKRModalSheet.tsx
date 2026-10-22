@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2, ArrowUpDown } from 'lucide-react';
 import ColorSettingsModal from './ColorSettingsModal';
 import AddCategoryButton from './AddCategoryButton';
+import OKRSheetMobileBar, { KrAdvancedMobile } from './OKRSheetMobileBar';
 import {
   Sheet,
   SheetContent,
@@ -21,17 +22,13 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import CategoryTreeSelect from '@/components/category/CategoryTreeSelect';
+import { SectionCard, CellSeparator, Cell } from '@/components/task-modal/primitives';
 import type { Category } from '@/modules/categories';
 import type { KeyResult } from '@/modules/okrs';
 import { getProgress, type Objective } from '@/pages/okr/okr-page-logic';
 import { useT } from '@/i18n/useT';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 
 interface OKRModalSheetProps {
   isOpen: boolean;
@@ -58,7 +55,9 @@ const newKR = (): KRDraft => ({
   title: '',
   currentValue: 0,
   targetValue: 100,
-  unit: '%',
+  // Pas d'unité par défaut (cf. TeamOKRModal, même raison) — « % » n'a de
+  // sens que pour une partie des KR.
+  unit: '',
   estimatedTime: 0,
   completed: false,
   weight: 1,
@@ -70,7 +69,8 @@ const toDateInput = (iso: string) => (iso ? new Date(iso).toISOString().slice(0,
 const fromDateInput = (v: string) => (v ? new Date(v + 'T00:00:00').toISOString() : '');
 
 export default function OKRModalSheet({ isOpen, onClose, categories, editingObjective, onSubmit }: OKRModalSheetProps) {
-  const { t } = useT('okr');
+  const { t, tp } = useT('okr');
+  const { t: tCommon } = useT('common');
   const isEdit = !!editingObjective;
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -78,6 +78,15 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
   const [endDate, setEndDate] = useState('');
   const [keyResults, setKeyResults] = useState<KRDraft[]>([newKR()]);
   const [showColorSettings, setShowColorSettings] = useState(false);
+  // Repli mobile de la description (redesign 2026-09-19, cf. TaskModalMobileBody) :
+  // masquée tant qu'elle est vide, auto-affichée si l'objectif édité en a déjà
+  // une. Desktop inchangé (toujours visible).
+  const [showDescriptionMobile, setShowDescriptionMobile] = useState(false);
+  // Repli mobile de Durée/Coef. par KR (redesign 2026-09-19) derrière
+  // « Fonctionnalité avancée » — un Set plutôt qu'un booléen unique : chaque
+  // résultat clé garde son propre état de repli. Desktop inchangé (toujours
+  // visibles dans la grille à 4 colonnes).
+  const [advancedKrIds, setAdvancedKrIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!isOpen) return;
@@ -91,14 +100,19 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
           ? editingObjective.keyResults.map((k) => ({ ...k, weight: k.weight ?? 1, completedAt: k.completedAt ?? undefined }))
           : [newKR()]
       );
+      setShowDescriptionMobile(!!editingObjective.description?.trim());
     } else {
       setTitle('');
       setDescription('');
       setCategory(categories[0]?.id ?? '');
       setEndDate(toDateInput(plusDaysIso(90)));
       setKeyResults([newKR()]);
+      setShowDescriptionMobile(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `categories` omis : il ne sert qu a choisir une categorie PAR DEFAUT a
+       la creation. L ajouter reecrirait le formulaire sous la personne a
+       chaque refetch de categories, y compris apres qu elle a choisi. */
   }, [isOpen, editingObjective]);
 
   const setKR = (id: string, patch: Partial<KRDraft>) =>
@@ -116,8 +130,12 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
   };
 
   // Un objectif sans résultat clé n'est pas mesurable : au moins 1 KR nommé requis.
+  const isMobile = useIsMobile();
   const hasKeyResult = keyResults.some((k) => k.title.trim().length > 0);
   const canSave = title.trim().length > 0 && hasKeyResult;
+  // Badge mobile à côté de « Résultats clés » (redesign 2026-09-19) : ne
+  // compte que les KR effectivement nommés, comme `hasKeyResult`.
+  const filledKrCount = keyResults.filter((k) => k.title.trim().length > 0).length;
 
   const handleSave = () => {
     if (!canSave) return;
@@ -139,7 +157,14 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
         title: title.trim(),
         description: description.trim(),
         category,
-        progress: getProgress(krs),
+        // `getProgress` rend volontairement une moyenne BRUTE (un KR
+        // sur-atteint peut la faire dépasser 100, cf. okr-page-logic.test.ts) :
+        // c'est le bon calcul pour l'AFFICHAGE, mais `updateOKRSchema` borne
+        // `progress` à [0, 100] (okr.schema.ts). Sans ce clamp, sauvegarder
+        // N'IMPORTE QUELLE modification d'un OKR dont un KR dépasse sa cible
+        // échouait avec « La progression doit être entre 0 et 100 » — y
+        // compris repousser sa deadline pour le rouvrir.
+        progress: Math.min(100, getProgress(krs)),
         completed: editingObjective?.completed ?? false,
         keyResults: krs,
         // Date de début non éditable : aujourd'hui à la création, préservée en édition.
@@ -153,73 +178,187 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
   return (
     <Sheet open={isOpen} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg rounded-l-2xl border-l-0 overflow-hidden">
-        <SheetHeader>
-          <SheetTitle>{isEdit ? "Modifier l'objectif" : 'Nouvel objectif'}</SheetTitle>
-          <SheetDescription>{t('modal.description')}</SheetDescription>
+      {/* Plein écran sur mobile (redesign 2026-09-19), desktop inchangé
+          (sheet latérale). Coin haut arrondi (2e retouche) — un plein écran
+          à angle droit collait directement sous la barre de statut du
+          téléphone, transition brutale ; même traitement que le coin
+          arrondi de TaskModalMobileBody (`rounded-t-3xl`). */}
+      <SheetContent
+        className="flex w-full flex-col gap-0 p-0 border-0 rounded-t-3xl sm:rounded-tr-none sm:rounded-tl-2xl sm:rounded-bl-2xl sm:max-w-lg sm:border-l-0 overflow-hidden"
+        // Croix de fermeture agrandie sur mobile (2026-09-19), desktop inchangé.
+        closeButtonClassName="max-sm:hidden"
+        closeIconClassName="max-sm:size-6"
+      >
+        {/* Maquette 335 : sur mobile, la même tête que la fiche tâche. */}
+        <OKRSheetMobileBar
+          cancelLabel={t('modal.cancel')}
+          submitLabel={isEdit ? t('modal.save') : t('modal.create')}
+          canSubmit={canSave}
+          onCancel={onClose}
+          onSubmit={handleSave}
+        />
+        <SheetHeader className="max-sm:pt-0 max-sm:-mt-12 max-sm:pointer-events-none max-sm:items-center">
+          {/* Titre agrandi sur mobile (redesign 2026-09-19), desktop inchangé. */}
+          <SheetTitle className="max-sm:text-body max-sm:font-semibold">{isEdit ? t('card.editObjective') : t('page.newObjective')}</SheetTitle>
+          <SheetDescription className="max-sm:sr-only">{t('modal.description')}</SheetDescription>
         </SheetHeader>
 
         {/* min-h-0 : sans lui, l'enfant flex-1 garde sa hauteur de contenu et le
             viewport Radix ne scrolle jamais (flexbox min-height:auto). */}
         <ScrollArea className="flex-1 min-h-0">
           <div className="grid gap-4 px-4 pb-4">
-            <div className="grid gap-2">
-              <Label htmlFor="okr-title">{t('modal.objective')}</Label>
-              <Input id="okr-title" value={title} autoFocus placeholder="Ex. Lancer la v2 du produit" onChange={(e) => setTitle(e.target.value)} />
+            <div className="grid gap-2" data-guide-id="perso-okr-form-title">
+              <Label htmlFor="okr-title" className="max-sm:sr-only">{t('modal.objective')}</Label>
+              <Input
+                id="okr-title"
+                // Sur mobile, le champ sort du style global des champs (`data-slot`),
+                // dont le `!important` gagnait sur le « sans cadre » de la maquette 338.
+                {...(isMobile ? { 'data-slot': 'input-bare' } : {})}
+                value={title}
+                autoFocus
+                placeholder={t('modalSheet.titlePlaceholder')}
+                onChange={(e) => setTitle(e.target.value)}
+                // Fond éclairci et taille agrandie sur mobile (redesign
+                // 2026-09-19) : `bg-transparent` se confondait avec le fond du
+                // sheet, comme l'input « Choix catégorie »
+                // (`bg-[rgb(var(--color-surface))]`) juste en dessous. Desktop
+                // inchangé.
+                // Maquette 338 : le nom sans cadre, en titre.
+                className="no-input-chrome max-sm:!bg-transparent max-sm:!border-0 max-sm:!shadow-none max-sm:px-1 max-sm:h-12 max-sm:!text-title max-sm:font-semibold"
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Desktop (sm+, inchangé) : grille de deux champs encadrés. */}
+            <div className="hidden sm:grid sm:grid-cols-2 gap-3">
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="okr-cat">{t('modal.category')}</Label>
+                  <Label>{t('modal.category')}</Label>
                   {/* Créer une catégorie sans quitter le modal (pattern unifié). */}
                   <AddCategoryButton onClick={() => setShowColorSettings(true)} />
                 </div>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger id="okr-cat" className="w-full">
-                    <SelectValue placeholder="Choisir…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CategoryTreeSelect value={category} onChange={setCategory} categories={categories} />
               </div>
-              <div className="grid gap-2">
+              <div className="grid gap-2" data-guide-id="perso-okr-form-deadline">
                 <Label>{t('modal.deadline')}</Label>
-                <DatePicker
-                  value={endDate}
-                  onChange={setEndDate}
-                  displayFormat="d MMMM yyyy"
-                  allowClear={false}
-                />
+                <DatePicker value={endDate} onChange={setEndDate} displayFormat="d MMMM yyyy" allowClear={false} />
               </div>
             </div>
 
-            <div className="grid gap-2">
+            {/* Mobile (redesign 2026-09-19) : catégorie + échéance en lignes
+                « cellule » dans une carte, pattern repris de
+                TaskModalMobileBody (task-modal/primitives) — remplace la
+                grille de deux champs encadrés. Desktop inchangé ci-dessus. */}
+            {/* Espacement resserré (2026-09-19, 2e passe) : `pt-2` au lieu de
+                `pt-5` (moins d'écart avec le champ Objectif au-dessus), et la
+                carte juste en dessous colle à cette ligne (`-mt-4` annule le
+                `gap-4` du parent — ne reste que le `pb-1` de la ligne). */}
+            <div className="sm:hidden flex items-center justify-between px-4 pb-1 pt-2">
+              <span className="text-label font-semibold text-[rgb(var(--color-text-muted))]">
+                {t('modal.detailsSection')}
+              </span>
+            </div>
+            <SectionCard className="sm:hidden max-sm:-mt-4">
+              <CategoryTreeSelect
+                value={category}
+                onChange={setCategory}
+                categories={categories}
+                cellLabel={t('modal.category')}
+              />
+              <CellSeparator />
+              <DatePicker
+                value={endDate}
+                onChange={setEndDate}
+                displayFormat="d MMMM yyyy"
+                allowClear={false}
+                cellLabel={t('modal.deadline')}
+              />
+            </SectionCard>
+
+            {/* Desktop (sm+, inchangé) : champ toujours visible. */}
+            <div className="hidden sm:grid gap-2">
               <Label htmlFor="okr-desc">{t('modal.descriptionLabel')}</Label>
-              <Textarea id="okr-desc" rows={2} value={description} placeholder="Facultatif…" onChange={(e) => setDescription(e.target.value)} />
+              <Textarea
+                id="okr-desc"
+                rows={2}
+                value={description}
+                placeholder="Facultatif…"
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            {/* Mobile (redesign 2026-09-19, resserré) : même carte « cellule »
+                que Catégorie/Échéance ci-dessus — repliée derrière un lien
+                tant qu'elle est vide, comme TaskModalMobileBody. Label
+                propre (pas `SectionTitle`, dont le `pt-5` intégré double
+                l'écart déjà posé par le `-mt-2` ci-dessous) pour resserrer
+                l'espace avec la carte Catégorie/Échéance au-dessus. */}
+            <div className="sm:hidden max-sm:-mt-2">
+              <SectionCard>
+                {showDescriptionMobile ? (
+                  <div className="px-4 py-3">
+                    <Textarea
+                      id="okr-desc-mobile"
+                      rows={2}
+                      autoFocus={!description}
+                      value={description}
+                      placeholder="Facultatif…"
+                      onChange={(e) => setDescription(e.target.value)}
+                      // `no-input-chrome` (index.css) : classe dédiée aux
+                      // champs imbriqués dans un conteneur déjà bordé (ici la
+                      // `SectionCard`) — sans elle, le style global focus
+                      // `input/textarea:focus` (plus spécifique, en
+                      // `!important`) continue de poser sa bordure + son
+                      // ring bleus malgré des classes `!border-0`/`!ring-0`
+                      // locales (mesuré). Même classe que DescriptionField.
+                      className="no-input-chrome resize-none bg-transparent p-0"
+                    />
+                  </div>
+                ) : (
+                  <Cell
+                    label={
+                      <span className="flex items-center gap-1.5 font-semibold text-[rgb(var(--color-accent-solid))]">
+                        <Plus size={16} aria-hidden="true" />
+                        {t('modal.addDescription')}
+                      </span>
+                    }
+                    onTap={() => setShowDescriptionMobile(true)}
+                    showChevron={false}
+                  />
+                )}
+              </SectionCard>
             </div>
 
             <Separator />
 
-            <div className="flex items-center justify-between">
-              <Label>{t('modal.keyResults')}</Label>
+            <div className="flex items-center justify-between" data-guide-id="perso-okr-form-krs">
+              <div className="flex items-center gap-2">
+                <Label className="max-sm:text-label max-sm:text-[rgb(var(--color-text-muted))]">{t('modal.keyResults')}</Label>
+                {/* Repère mobile (redesign 2026-09-19) : combien de KR sont
+                    déjà nommés, utile dès qu'on en empile plusieurs — remplace
+                    en partie le message d'erreur qui n'apparaît qu'au pied du
+                    formulaire. Desktop inchangé. */}
+                {filledKrCount > 0 && (
+                  <span className="sm:hidden text-[11px] font-bold px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent-solid))]/10 text-[rgb(var(--color-accent-solid))]">
+                    {tp('modal.krCount', filledKrCount)}
+                  </span>
+                )}
+              </div>
               <Button
                 type="button"
                 size="sm"
                 onClick={() => setKeyResults((p) => [...p, newKR()])}
-                className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0"
+                // Maquette 339 : sur mobile, un lien « + Ajouter », plus un bouton plein.
+                className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0 max-sm:!bg-transparent max-sm:!text-[rgb(var(--color-accent))] max-sm:px-0"
               >
-                <Plus aria-hidden="true" /> Ajouter
+                <Plus aria-hidden="true" /> {tCommon('actions.add')}
               </Button>
             </div>
 
             <div className="grid gap-3">
               {keyResults.map((kr, index) => (
                 <div key={kr.id} className="border-border grid gap-3 rounded-lg border p-3">
-                  <div className="flex items-center gap-2">
+                  {/* Desktop (sm+, inchangé) : nom seul sur sa ligne. */}
+                  <div className="hidden sm:flex items-end gap-2">
                     <Input value={kr.title} placeholder={t('modal.keyResultPlaceholder')} className="h-8 min-w-0" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
                     {index > 0 && (
                       <Button
@@ -234,12 +373,79 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       </Button>
                     )}
                     {keyResults.length > 1 && (
-                      <Button type="button" variant="destructive" size="icon-sm" aria-label="Retirer" onClick={() => setKeyResults((p) => p.filter((k) => k.id !== kr.id))}>
+                      <Button type="button" variant="destructive" size="icon-sm" aria-label={tCommon('actions.remove')} onClick={() => setKeyResults((p) => p.filter((k) => k.id !== kr.id))}>
                         <Trash2 aria-hidden="true" />
                       </Button>
                     )}
                   </div>
-                  <div className="grid gap-1.5">
+
+                  {/* Mobile (redesign 2026-09-19) : nom (80%) + cible/unité
+                      fusionnés dans un seul champ (20%) sur la même ligne —
+                      Cible et Unité n'ont plus de ligne à elles. */}
+                  <div className="flex sm:hidden items-end gap-2">
+                    <div className="flex-[7] min-w-0 grid gap-1">
+                      <Label className="text-muted-foreground text-xs">{t('modal.keyResultName')}</Label>
+                      <Input value={kr.title} placeholder={t('modal.keyResultPlaceholder')} className="h-8 min-w-0 !bg-[rgb(var(--color-surface))]" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
+                    </div>
+                    {/* Plus de bordure commune : Cible et Unité reprennent
+                        chacun leur propre `Input` bordé au lieu d'un seul
+                        cadre partagé. Taille HORIZONTALE (pas verticale,
+                        hauteur h-8 inchangée) : la colonne passe de 20% à
+                        30% de la ligne (flex-[3] contre flex-[7] pour le nom,
+                        soit 70/30) — +50% de largeur pour cette colonne. */}
+                    <div className="flex-[3] min-w-0 flex items-end gap-1">
+                      <div className="min-w-0 flex-1 grid gap-1">
+                        <Label className="text-muted-foreground text-xs">{t('modal.target')}</Label>
+                        <Input
+                          type="number"
+                          aria-label={t('modal.target')}
+                          value={kr.targetValue}
+                          onChange={(e) => setKR(kr.id, { targetValue: Number(e.target.value) })}
+                          className="h-8 min-w-0 px-1 text-center !bg-[rgb(var(--color-surface))]"
+                        />
+                      </div>
+                      {/* Unité : largeur auto-ajustée au contenu — `size`
+                          (fallback universel, en caractères) + `field-sizing:
+                          content` (Chrome 123+, natif), même duo que
+                          TaskListsBar/CategoryFilterBar. `2` = la largeur
+                          d'origine pour 0 ou 1 caractère (« laisse-le comme
+                          ça ») ; au-delà, l'input grandit avec le texte. */}
+                      <div className="shrink-0 grid gap-1">
+                        <Label className="sr-only">{t('modal.unit')}</Label>
+                        <Input
+                          aria-label={t('modal.unit')}
+                          data-slot="input-bare"
+                          value={kr.unit}
+                          placeholder="%"
+                          onChange={(e) => setKR(kr.id, { unit: e.target.value })}
+                          size={Math.max(kr.unit.length, 2)}
+                          // Maquette 341 : l'unité se lit après la cible, sans pastille.
+                          className="no-input-chrome h-8 px-1 text-center !bg-transparent !border-0 !shadow-none"
+                          style={{ fieldSizing: 'content' } as React.CSSProperties}
+                        />
+                      </div>
+                    </div>
+                    {index > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        aria-label={t('modal.moveUp')}
+                        title="Faire remonter"
+                        onClick={() => moveKR(index, index - 1)}
+                      >
+                        <ArrowUpDown aria-hidden="true" />
+                      </Button>
+                    )}
+                    {keyResults.length > 1 && (
+                      <Button type="button" variant="destructive" size="icon-sm" aria-label={tCommon('actions.remove')} onClick={() => setKeyResults((p) => p.filter((k) => k.id !== kr.id))}>
+                        <Trash2 aria-hidden="true" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Maquette 340 : à la création, on part de 0 ; pas de curseur sur mobile. */}
+                  <div className={`grid gap-1.5 ${isEdit ? '' : 'max-sm:hidden'}`}>
                     <div className="text-muted-foreground flex items-center justify-between text-xs">
                       <span>{t('modal.progress')}</span>
                       <span className="tabular-nums">{kr.currentValue} / {kr.targetValue} {kr.unit}</span>
@@ -253,7 +459,9 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       className="[&_[data-slot=slider-track]]:bg-blue-200 dark:[&_[data-slot=slider-track]]:bg-blue-900/40 [&_[data-slot=slider-range]]:bg-blue-500 [&_[data-slot=slider-thumb]]:border-blue-500 [&_[data-slot=slider-thumb]]:bg-blue-500"
                     />
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+
+                  {/* Desktop (sm+, inchangé) : grille à 4 colonnes complète. */}
+                  <div className="hidden sm:grid sm:grid-cols-4 gap-2">
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs">{t('modal.target')}</Label>
                       <Input type="number" className="h-8" value={kr.targetValue} onChange={(e) => setKR(kr.id, { targetValue: Number(e.target.value) })} />
@@ -285,15 +493,26 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       />
                     </div>
                   </div>
+
+                  <KrAdvancedMobile
+                    kr={kr}
+                    open={advancedKrIds.has(kr.id)}
+                    onOpenChange={(open) => setAdvancedKrIds((prev) => { const next = new Set(prev); if (open) next.add(kr.id); else next.delete(kr.id); return next; })}
+                    onChange={(patch) => setKR(kr.id, patch)}
+                  />
                 </div>
               ))}
             </div>
           </div>
+          {!hasKeyResult && (
+            <p className="sm:hidden px-5 pb-4 text-label text-[rgb(var(--color-text-muted))]">{t('modal.needOneKr')}</p>
+          )}
         </ScrollArea>
 
-        <SheetFooter className="flex-row items-center justify-end gap-2 border-t">
+        {/* Maquette 343 : sur mobile, plus de pied ; l'aide grise vit sous la liste. */}
+        <SheetFooter className="flex-row items-center justify-end gap-2 border-t max-sm:hidden">
           {!hasKeyResult && (
-            <span className="text-xs text-amber-600 dark:text-amber-400 mr-auto" role="status">
+            <span className="text-xs text-amber-600 dark:text-amber-400 max-sm:text-[rgb(var(--color-text-muted))] mr-auto" role="status">
               {t('modal.needOneKr')}
             </span>
           )}
@@ -302,10 +521,13 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
             type="button"
             disabled={!canSave}
             onClick={handleSave}
-            className={`!text-white !border-0 ${
+            // `!text-white` sur un fond --color-accent-solid était blanc sur
+            // blanc en thème Noir (l'accent plein y vaut 240,240,240). Le duo
+            // correct est accent-solid / accent-solid-foreground.
+            className={`!border-0 ${
               !canSave
-                ? '!bg-blue-300 dark:!bg-blue-900/60 !opacity-100'
-                : '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))]'
+                ? '!bg-[rgb(var(--color-accent-solid))] !text-[rgb(var(--color-accent-solid-foreground))] !opacity-40'
+                : '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))]'
             }`}
           >
             {isEdit ? t('modal.save') : t('modal.create')}

@@ -4,6 +4,7 @@
 // toggles, pagination.
 import { describe, it, expect, beforeEach } from 'vitest';
 import { LocalStorageTasksRepository } from './local.repository';
+import { dependencyErrorCode, DEPENDENCY_ERRORS } from './dependency-errors';
 
 let repo: LocalStorageTasksRepository;
 beforeEach(() => {
@@ -15,7 +16,7 @@ describe('lecture & seeds', () => {
   it('seede les tâches démo au premier accès', async () => {
     const all = await repo.getAll();
     expect(all.length).toBeGreaterThanOrEqual(10);
-    expect((await repo.getById('t001'))?.name).toBe('Bilan annuel 2025');
+    expect((await repo.getById('t002'))?.name).toBe('Préparer présentation Q1 2026');
     expect(await repo.getById('absent')).toBeNull();
   });
 
@@ -77,8 +78,8 @@ describe('écriture', () => {
 
   it('toggleBookmark bascule bookmarked', async () => {
     await repo.getAll();
-    const before = (await repo.getById('t004'))!.bookmarked;
-    const after = await repo.toggleBookmark('t004');
+    const before = (await repo.getById('t003'))!.bookmarked;
+    const after = await repo.toggleBookmark('t003');
     expect(after.bookmarked).toBe(!before);
     await expect(repo.toggleBookmark('absent')).rejects.toThrow();
   });
@@ -166,5 +167,127 @@ describe('récurrence : génération de l\'occurrence suivante', () => {
     expect(survivor).not.toBeNull();
     // Détachée du parent, mais conservée.
     expect(survivor!.recurrenceParentId).toBeUndefined();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Dépendances (mig. 132) — parité démo / production
+//
+// Les invariants sont tenus par des TRIGGERS en production. Le mode démo n'en
+// a pas : s'ils ne sont pas reproduits ici, la démo laisse construire un
+// graphe que la production refuserait, et le bug ne se voit qu'à la
+// conversion en compte réel.
+// ═══════════════════════════════════════════════════════════════════
+
+describe('dépendances', () => {
+  it('ajoute une arête, la relit, et ignore un doublon', async () => {
+    await repo.getAll();
+    expect(await repo.getDependencies()).toEqual([]);
+
+    await repo.addDependency('t013', 't002');
+    await repo.addDependency('t013', 't002');
+
+    expect(await repo.getDependencies()).toEqual([{ taskId: 't013', dependsOnId: 't002' }]);
+  });
+
+  // ⚠️ C-48 — ces trois refus s'assertaient sur le TEXTE anglais du message
+  // (`/itself/`, `/must exist/`, `/cycle/`). C'est exactement ce que la règle
+  // « ne jamais identifier une erreur par son message » interdit : le message
+  // vient désormais du catalogue, donc il est TRADUIT, et un test qui le lit
+  // casserait au premier changement de langue ou de formulation. On asserte
+  // l'IDENTIFIANT, qui est le contrat partagé avec les triggers (mig. 137).
+
+  it('refuse une tâche qui dépendrait d elle-même', async () => {
+    await repo.getAll();
+    // Une auto-dépendance EST un cycle de longueur 1 : même identifiant que la
+    // contrainte `task_dependencies_no_self` de la mig. 132.
+    const err = await repo.addDependency('t013', 't013').catch((e) => e);
+    expect(dependencyErrorCode(err)).toBe(DEPENDENCY_ERRORS.cycle);
+  });
+
+  it('refuse une arête vers une tâche inexistante', async () => {
+    await repo.getAll();
+    const err = await repo.addDependency('t013', 'absente').catch((e) => e);
+    expect(dependencyErrorCode(err)).toBe(DEPENDENCY_ERRORS.taskMissing);
+  });
+
+  it('refuse un cycle INDIRECT, comme le trigger', async () => {
+    await repo.getAll();
+    // t013 ← t002 ← t003 : rendre t013 dépendante de t003 referme la boucle.
+    await repo.addDependency('t002', 't013');
+    await repo.addDependency('t003', 't002');
+    const err = await repo.addDependency('t013', 't003').catch((e) => e);
+    expect(dependencyErrorCode(err)).toBe(DEPENDENCY_ERRORS.cycle);
+    expect(await repo.getDependencies()).toHaveLength(2);
+  });
+
+  it('retire une arête, et ne se plaint pas d une arête absente', async () => {
+    await repo.getAll();
+    await repo.addDependency('t013', 't002');
+    await repo.removeDependency('t013', 't002');
+    await repo.removeDependency('t013', 't002');
+    expect(await repo.getDependencies()).toEqual([]);
+  });
+
+  it('supprimer une tâche emporte ses arêtes (parité ON DELETE CASCADE)', async () => {
+    await repo.getAll();
+    await repo.addDependency('t013', 't002');
+    await repo.addDependency('t003', 't013');
+
+    await repo.delete('t013');
+
+    expect(await repo.getDependencies()).toEqual([]);
+  });
+
+  it('repart d un graphe vide si le stockage est corrompu (B14)', async () => {
+    localStorage.setItem('cosmo_demo_task_dependencies', '{pas du json');
+    expect(await repo.getDependencies()).toEqual([]);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Statut ↔ terminée (mig. 214) : la démo applique la règle du trigger.
+// Sans ça, le Tableau afficherait juste en démo et faux en prod, ou l'inverse.
+// ═══════════════════════════════════════════════════════════════════
+describe('statut et état (mig. 214)', () => {
+  const base = {
+    name: 'Carte', priority: 3, category: '', deadline: '', estimatedTime: 0,
+    bookmarked: false, completed: false,
+  };
+
+  it('create pose un statut cohérent avec completed', async () => {
+    await repo.getAll();
+    expect((await repo.create(base)).status).toBe('todo');
+    expect((await repo.create({ ...base, completed: true })).status).toBe('done');
+    expect((await repo.create({ ...base, status: 'in_progress' })).status).toBe('in_progress');
+  });
+
+  it('update vers done coche la tâche, en sortir la décoche', async () => {
+    await repo.getAll();
+    const t = await repo.create(base);
+    const done = await repo.update(t.id, { status: 'done' });
+    expect(done).toMatchObject({ completed: true, status: 'done' });
+    expect(done.completedAt).toBeTruthy();
+    const back = await repo.update(t.id, { status: 'blocked' });
+    expect(back).toMatchObject({ completed: false, status: 'blocked', completedAt: undefined });
+  });
+
+  it('update de l’état seul ne touche pas au statut', async () => {
+    await repo.getAll();
+    const t = await repo.create({ ...base, status: 'blocked' });
+    expect(await repo.update(t.id, { health: 'at_risk' })).toMatchObject({ status: 'blocked', health: 'at_risk' });
+  });
+
+  it('toggleComplete suit le statut, et l’occurrence générée naît todo sans état', async () => {
+    await repo.getAll();
+    const t = await repo.create({
+      ...base, deadline: '2026-10-08', recurrence: 'daily', status: 'blocked', health: 'off_track',
+    });
+    const { task, spawned } = await repo.toggleComplete(t.id, '2026-10-09');
+    expect(task.status).toBe('done');
+    expect(spawned).toMatchObject({ status: 'todo', completed: false });
+    expect(spawned?.health).toBeUndefined();
+    const { task: reopened } = await repo.toggleComplete(t.id, null);
+    expect(reopened.status).toBe('todo');
   });
 });

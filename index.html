@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- Icons & PWA -->
-    <link rel="icon" type="image/png" href="/logo.png" />
+    <!-- Favicon 64 px (5 ko) et non le logo 512 (255 ko) : `rel="icon"` est
+         telecharge a CHAQUE page. L'apple-touch-icon, lui, n'est lu que lors
+         d'un ajout a l'ecran d'accueil, il peut rester en pleine taille. -->
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png" />
     <link rel="apple-touch-icon" sizes="512x512" href="/logo.png" />
     <link rel="manifest" href="/manifest.json" />
     <!-- Mobile (<768px) démarre toujours en thème Noir (palette GitHub), cf.
@@ -22,7 +25,7 @@
     <meta name="format-detection" content="telephone=no" />
 
     <!-- Primary SEO -->
-    <title>Cosmo — Tâches, habitudes et OKR dans une seule app gratuite</title>
+    <title>Cosmo, Tâches, habitudes et OKR dans une seule app gratuite</title>
     <meta name="description" content="Tâches, habitudes, agenda et OKR réunis dans une seule application gratuite. Essayez la démo sans inscription, avec 12 mois de données pré-remplies." />
     <meta name="author" content="Cosmo" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
@@ -33,7 +36,7 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Cosmo" />
-    <meta property="og:title" content="Cosmo — Tâches, habitudes et OKR dans une seule app gratuite" />
+    <meta property="og:title" content="Cosmo, Tâches, habitudes et OKR dans une seule app gratuite" />
     <meta property="og:description" content="Tâches, habitudes, agenda et OKR réunis dans une seule application gratuite. Essayez la démo sans inscription." />
     <meta property="og:url" content="https://thecosmo.app/" />
     <meta property="og:image" content="https://thecosmo.app/og-card.png" />
@@ -54,49 +57,123 @@
     <!-- Inter self-hosted (déclaré dans src/index.css) — préload du subset latin -->
     <link rel="preload" href="/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 
+    <!-- 2026-10-16 · Une personne CONNECTÉE ne voit jamais le prérendu.
+         `/` est servi par la home prérendue (Vercel sert le fichier avant le
+         rewrite) : ouvrir ou rafraîchir l'app à la racine (raccourci, PWA
+         `start_url: "/"`, favori) peignait le texte SEO de la landing jusqu'à
+         ce que React redirige vers le dashboard. Avec une session Supabase ou
+         une démo persistée, on retire `data-prerendered` AVANT la première
+         peinture : spinner, et `boot.ts` charge l'app sans attendre.
+         2026-10-21 : il pose aussi `data-boot-theme` depuis le thème enregistré
+         (mêmes alias que resolveInitialTheme), pour que le spinner en ait les
+         couleurs dès la première image.
+         Seul <script> inline exécutable du dépôt, autorisé par son empreinte
+         sha256 dans `script-src` (vercel.json). ❌ Le modifier d'un octet
+         sans recalculer l'empreinte le fait bloquer en prod, en silence :
+         `src/boot-screen.test.ts` compare les deux. Une seule ligne exprès :
+         des fins de ligne CRLF changeraient l'empreinte. -->
+    <script>(function(){try{var s=localStorage,a=s.getItem('cosmo_demo_active')==='1';for(var i=0;!a&&i<s.length;i++)a=/^sb-.+-auth-token$/.test(s.key(i)||'');var h=document.documentElement,t=s.getItem('theme');if(a)h.removeAttribute('data-prerendered');if(t==='black'||t==='midnight'||t==='monochrome')t='gris';if(/^(light|dark|gris|noir)$/.test(t||''))h.setAttribute('data-boot-theme',t)}catch(e){}})()</script>
+
     <!-- ───────────────────────────────────────────────────────────────────
          Écran de démarrage + contenu SEO. 100 % CSS, AUCUN JS.
 
-         La CSP de vercel.json est `script-src 'self'` — sans 'unsafe-inline'
+         La CSP de vercel.json est `script-src 'self'`, sans 'unsafe-inline'
          ni nonce : tout <script> inline est bloqué en prod (et seulement en
          prod, le serveur de dev n'envoie pas la CSP). Masquer le bloc SEO en
          JS marcherait donc en local et échouerait silencieusement en ligne.
          D'où le choix du CSS pur : `style-src` autorise bien 'unsafe-inline'.
+         Seule exception : le script juste au-dessus, autorisé par empreinte.
 
          Règle du jeu :
          - #boot-screen est peint immédiatement (overlay opaque plein écran),
-           puis React l'efface tout seul — createRoot().render() vide les
+           puis React l'efface tout seul, createRoot().render() vide les
            enfants de #root au premier commit. Aucun code à synchroniser.
-         - #seo-fallback (injecté par prerender.mjs dans dist/) reste dans le
-           HTML pour les crawlers qui ne lancent pas le JS (GPTBot, ClaudeBot,
-           PerplexityBot…) — ils lisent le balisage, pas le CSS — mais n'est
-           jamais peint par un navigateur.
+         - #seo-fallback (injecté par prerender.mjs dans dist/) est lu par les
+           crawlers qui ne lancent pas le JS (GPTBot, ClaudeBot,
+           PerplexityBot…). Depuis C-116 (2026-09-29) il est AUSSI peint, et
+           le spinner masqué, sur les seules pages prérendues
+           (`html[data-prerendered]`) : c'est leur premier rendu. Les routes
+           de l'app reçoivent app.html, sans l'attribut, donc le spinner.
          - <noscript> ci-dessous : JS désactivé = pas de SPA possible, on rend
            donc le contenu SEO visible et on retire le spinner (sinon l'écran
            de chargement tournerait indéfiniment).
          ─────────────────────────────────────────────────────────────────── -->
     <style>
-      #boot-screen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#ffffff}
-      #boot-screen .ring{width:32px;height:32px;border:3px solid rgba(15,23,42,.14);border-top-color:#6366f1;border-radius:50%;animation:boot-spin .7s linear infinite}
+      /* 2026-10-21 · Le spinner prend les couleurs EXACTES du thème (fond
+         --color-background, accent --color-accent-solid de src/index.css) :
+         #boot-screen avant React, puis .boot-screen (`BootScreen`, fallback des
+         pages publiques) pendant le chargement de la page. Les deux doivent
+         être indiscernables, sinon on voit un spinner en remplacer un autre.
+         Sans thème enregistré : celui de defaultTheme() (src/lib/theme.ts),
+         donc Clair ou Sombre selon le système, et Gris sous 768 px, d'où la
+         règle mobile APRÈS celle du système. Un thème enregistré arrive par
+         html[data-boot-theme], posé par le script inline puis par applyTheme(). */
+      #boot-screen,.boot-screen{--bs-bg:#f8fafc;--bs-ring:rgba(15,23,42,.14);--bs-accent:#2563eb;position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bs-bg)}
+      #boot-screen .ring,.boot-screen .ring{width:32px;height:32px;border:3px solid var(--bs-ring);border-top-color:var(--bs-accent);border-radius:50%;animation:boot-spin .7s linear infinite}
       @keyframes boot-spin{to{transform:rotate(360deg)}}
-      @media (prefers-color-scheme:dark){#boot-screen{background:#0f172a}#boot-screen .ring{border-color:rgba(255,255,255,.16);border-top-color:#818cf8}}
-      /* Mobile démarre toujours en thème Noir (palette GitHub), cf. src/lib/theme.ts →
-         defaultTheme() — indépendant de la préférence système, d'où la règle après
-         (et non combinée avec prefers-color-scheme:dark) pour gagner y compris en clair. */
-      @media (max-width:767px){#boot-screen{background:#24292e}#boot-screen .ring{border-color:rgba(255,255,255,.16);border-top-color:#58a6ff}}
-      @media (prefers-reduced-motion:reduce){#boot-screen .ring{animation-duration:2.4s}}
+      @media (prefers-color-scheme:dark){#boot-screen,.boot-screen{--bs-bg:#0f172a;--bs-ring:rgba(255,255,255,.16);--bs-accent:#3472d8}}
+      @media (max-width:767px){#boot-screen,.boot-screen{--bs-bg:#24292e;--bs-ring:rgba(255,255,255,.16);--bs-accent:#2f75d5}}
+      html[data-boot-theme=light] :is(#boot-screen,.boot-screen){--bs-bg:#f8fafc;--bs-ring:rgba(15,23,42,.14);--bs-accent:#2563eb}
+      html[data-boot-theme=dark] :is(#boot-screen,.boot-screen){--bs-bg:#0f172a;--bs-ring:rgba(255,255,255,.16);--bs-accent:#3472d8}
+      html[data-boot-theme=gris] :is(#boot-screen,.boot-screen){--bs-bg:#24292e;--bs-ring:rgba(255,255,255,.16);--bs-accent:#2f75d5}
+      html[data-boot-theme=noir] :is(#boot-screen,.boot-screen){--bs-bg:#080808;--bs-ring:rgba(255,255,255,.16);--bs-accent:#f0f0f0}
+      @media (prefers-reduced-motion:reduce){#boot-screen .ring,.boot-screen .ring{animation-duration:2.4s}}
       #seo-fallback{display:none;font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b}
+      /* C-116 · 2026-09-29 : une page PRÉRENDUE (prerender.mjs pose
+         data-prerendered sur <html>) peint son contenu au lieu du spinner,
+         jusqu'au premier commit de React. Sans ça FCP = LCP = premier rendu
+         React, 5,4 à 8,3 s en 4G lente. La coquille de l'app (app.html,
+         servie à /dashboard, /tasks…) n'a pas l'attribut et garde le spinner.
+         Styles écrits en entier : le preflight Tailwind remet h1/p à zéro, et
+         le thème mobile sombre colorerait le fond. Police système : attendre
+         la police web retarderait le rendu qu'on cherche à avancer. */
+      html[data-prerendered] #boot-screen{display:none}
+      html[data-prerendered] #seo-fallback{display:block;box-sizing:border-box;max-width:none;min-height:100vh;margin:0;padding:32px max(16px,calc((100% - 760px) / 2));background:#fff;color:#1e293b;font:18px/1.75 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+      /* C-116 · 2026-10-10 : typographie alignée sur celle des articles React
+         (18-19 px, marge 16 px). Le LCP ne change de candidat que pour un
+         élément PLUS GRAND : un fallback en 16 px laissait le paragraphe React
+         reprendre le LCP sur /pour-freelances/ et les articles du blog.
+         L'interligne est volontairement PLUS large que celui des articles
+         (1,75 et 2 contre 1,625 et 1,75) : la police système est plus étroite
+         qu'Inter sous Windows et Android, le même texte y tient en une ligne
+         de moins, et l'élément React redevenait le plus grand. */
+      html[data-prerendered] #seo-fallback .lead{font-size:19px;line-height:2}
+      html[data-prerendered] #seo-fallback h1{font-size:2rem;line-height:1.2;font-weight:700;margin:0 0 16px}
+      html[data-prerendered] #seo-fallback h2{font-size:1.3rem;line-height:1.3;font-weight:600;margin:28px 0 8px}
+      html[data-prerendered] #seo-fallback p,html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{margin:0 0 12px}
+      html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{padding-left:24px;list-style:revert}
+      html[data-prerendered] #seo-fallback a{color:#4f46e5;text-decoration:underline}
+      html[data-prerendered] #seo-fallback img{max-width:100%;height:auto;border-radius:8px}
+      /* C-116 · 2026-10-10 : les captures du fallback ne sont PAS montrées.
+         React remplace ce contenu quelques instants après, avec ses propres
+         captures : les afficher ici faisait télécharger ~350 ko d'images
+         jetées aussitôt, et Lighthouse mobile les comptait dans le chemin du
+         LCP (5,1 s sur /entreprise-presentation/). Une image `loading=lazy`
+         en display:none n'est jamais demandée. Les robots lisent toujours
+         src et alt ; le <noscript> plus bas les réaffiche sans JS. */
+      html[data-prerendered] #seo-fallback img{display:none}
+      /* 2026-10-21 · Sur la HOME et l'ENTREPRISE, ce premier rendu n'est plus le
+         texte SEO : c'est #lp-hero, une copie du header et du hero du
+         parcours (prerender.mjs, `scripts/capture-landing-hero.mjs`), avec sa
+         propre CSS confinée. Un visiteur voyait un mur de texte, puis un
+         squelette gris, puis la landing. Elle vit HORS de #root, en calque :
+         createRoot ne l'efface pas, et la landing la retire dans l'image où
+         elle peint son hero. Pourquoi et sorties : src/lib/prerender-hero.ts.
+         Le texte SEO reste dans le balisage, pour les robots. */
+      #lp-hero{display:none}
+      html[data-prerendered] #lp-hero{display:block;position:fixed;inset:0;z-index:10000;overflow:hidden;background:#fff}
+      html[data-prerendered] #lp-hero[data-track=entreprise]{background:#08090C}
+      html[data-prerendered] #lp-hero ~ #root #seo-fallback{display:none}
     </style>
     <noscript>
-      <style>#boot-screen{display:none}#seo-fallback{display:block}</style>
+      <style>#boot-screen{display:none}#seo-fallback{display:block!important}html[data-prerendered] #seo-fallback img{display:inline}#lp-hero{display:none!important}</style>
     </noscript>
 
-    <!-- AdSense — chargé À LA DEMANDE par AdModal (cf. src/components/AdModal.tsx).
-         Ne PAS remettre le script ici : chargé globalement, il active les
-         « Auto ads » (vignettes interstitielles déclenchées au changement de
-         page, dont le clic ouvre un nouvel onglet). Le mur-pub étant dormant
-         (PREMIUM_ENFORCED=false), le script n'est injecté que lorsque l'AdModal
-         s'ouvre réellement. -->
+    <!-- ❌ Aucun script publicitaire, nulle part. Le mur-pub et le système de
+         jetons premium ont été supprimés le 2026-09-04 (C-04) : COSMO ne charge
+         plus AdSense, ni ici ni à la demande. Remettre ce script activerait les
+         « Auto ads » (vignettes interstitielles au changement de page, dont le
+         clic ouvre un nouvel onglet), et il n'a plus rien à financer. -->
 
     <!-- JSON-LD : SoftwareApplication -->
     <script type="application/ld+json">
@@ -109,6 +186,11 @@
       "applicationCategory": "ProductivityApplication",
       "applicationSubCategory": "Task Management",
       "operatingSystem": "Web, iOS, Android",
+      "screenshot": [
+        "https://thecosmo.app/screenshots/dashboard.webp",
+        "https://thecosmo.app/screenshots/taches.webp",
+        "https://thecosmo.app/screenshots/habitudes.webp"
+      ],
       "description": "Application de productivité tout-en-un : gestion de tâches avec priorités, suivi d'habitudes avec heatmap, agenda avec time-blocking, OKR (Objectives & Key Results) et statistiques multi-modules.",
       "inLanguage": "fr-FR",
       "datePublished": "2025-01-01",
@@ -124,7 +206,7 @@
         "Gestion de tâches avec priorités 1-5 et catégories colorées",
         "Suivi d'habitudes avec heatmap 26 semaines et streaks",
         "Agenda intégré avec time-blocking par glisser-déposer",
-        "OKR (Objectives & Key Results) — méthode Google, Intel, Netflix",
+        "OKR (Objectives & Key Results) : méthode Google, Intel, Netflix",
         "Statistiques multi-modules : tâches, habitudes, agenda, OKR",
         "Collaboration et partage de tâches en équipe",
         "Mode démo sans inscription avec 100 tâches et données réalistes",
@@ -219,16 +301,19 @@
         <p>Cosmo est une application de productivité gratuite qui centralise la gestion de tâches, le suivi d'habitudes, l'agenda avec time-blocking et la méthode OKR (Objectives &amp; Key Results).</p>
         <h2>Fonctionnalités principales</h2>
         <ul>
-          <li><strong>Gestionnaire de tâches</strong> — priorités, catégories colorées, deadlines, listes et filtres avancés</li>
-          <li><strong>Suivi d'habitudes</strong> — heatmap 26 semaines style GitHub, streaks et taux de complétion</li>
-          <li><strong>Agenda avec time-blocking</strong> — glisser-déposer des tâches dans le calendrier, vues jour/semaine/mois</li>
-          <li><strong>OKR (Objectives &amp; Key Results)</strong> — méthode utilisée par Google, Intel et Netflix</li>
-          <li><strong>Statistiques multi-modules</strong> — analysez votre temps sur tâches, habitudes, agenda et OKR</li>
-          <li><strong>Mode démo instantané</strong> — aucune inscription requise, 100 tâches et 100 habitudes pré-remplies</li>
+          <li><strong>Gestionnaire de tâches</strong> : priorités, catégories colorées, deadlines, listes et filtres avancés</li>
+          <li><strong>Suivi d'habitudes</strong> : heatmap 26 semaines style GitHub, streaks et taux de complétion</li>
+          <li><strong>Agenda avec time-blocking</strong> : glisser-déposer des tâches dans le calendrier, vues jour/semaine/mois</li>
+          <li><strong>OKR (Objectives &amp; Key Results)</strong> : méthode utilisée par Google, Intel et Netflix</li>
+          <li><strong>Statistiques multi-modules</strong> : analysez votre temps sur tâches, habitudes, agenda et OKR</li>
+          <li><strong>Mode démo instantané</strong> : aucune inscription requise, 100 tâches et 100 habitudes pré-remplies</li>
         </ul>
         <p><a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a></p>
       </div>
     </noscript>
-    <script type="module" src="/src/main.tsx"></script>
+    <!-- `boot.ts` et non `main.tsx` : l'app n'est chargée qu'après la première
+         peinture du prérendu, pour que son JS et sa CSS sortent du chemin du
+         LCP. Pourquoi : en-tête de src/boot.ts. -->
+    <script type="module" src="/src/boot.ts"></script>
   </body>
 </html>

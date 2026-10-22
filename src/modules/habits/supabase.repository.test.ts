@@ -23,18 +23,63 @@ const VALID_ISO = '2026-01-01T00:00:00.000Z';
 beforeEach(() => supabaseMock.reset());
 
 describe('SupabaseHabitsRepository', () => {
-  it('fetchHabits: paginates via range with stable id tiebreak ordering', async () => {
-    supabaseMock.queueTable('habits', { data: [row] });
+  // ⚠️ Verrou de CHEMIN D'ACCES (mig. 119). `habits.completions` gagnait une
+  // entree PAR JOUR et par habitude, sans borne : 12,7 o/jour mesures, soit
+  // ~280 ko par lecture de liste a trois ans pour 20 habitudes. La RPC borne
+  // la fenetre ET renvoie les agregats calcules sur l'historique complet.
+  // Un retour a `.from('habits')` reintroduirait la croissance sans borne,
+  // sans aucun symptome avant que les comptes n'aient un an.
+  it('fetchHabits: passe par la RPC bornee get_my_habits (pas de SELECT direct)', async () => {
+    supabaseMock.queueRpc('get_my_habits', { data: [row] });
+    await repo.fetchHabits();
+
+    expect(supabaseMock.rpcCalls.map((c) => c.fn)).toContain('get_my_habits');
+    expect(supabaseMock.queries.filter((q) => q.table === 'habits')).toHaveLength(0);
+  });
+
+  it('fetchHabits: demande une fenetre bornee et garde le tri stable', async () => {
+    supabaseMock.queueRpc('get_my_habits', { data: [row] });
     const result = await repo.fetchHabits();
 
-    const orders = supabaseMock.callsFor('habits').filter((c) => c.method === 'order');
+    const args = supabaseMock.rpcCalls.find((c) => c.fn === 'get_my_habits')?.args as
+      | { p_days: number; p_today?: string }
+      | undefined;
+    expect(args?.p_days).toBe(400);
+    // Même verrou que sur le toggle : sans `p_today`, série fausse hors UTC.
+    expect(args?.p_today).toBe(new Date().toLocaleDateString('en-CA'));
+    // La fenetre ne doit jamais devenir illimitee par inadvertance.
+    expect(args?.p_days).toBeLessThanOrEqual(3650);
+
+    const orders = supabaseMock.callsFor('get_my_habits').filter((c) => c.method === 'order');
     expect(orders.map((c) => c.args)).toEqual([
       ['created_at', { ascending: false }],
       ['id', { ascending: false }],
     ]);
-    expect(supabaseMock.argsOf('habits', 'range')).toEqual([0, 999]);
+    expect(supabaseMock.argsOf('get_my_habits', 'range')).toEqual([0, 999]);
     expect(result[0].id).toBe('h1');
     expect(result[0].name).toBe('Lire');
+  });
+
+  it('fetchHabits: expose les agregats calcules serveur', async () => {
+    supabaseMock.queueRpc('get_my_habits', {
+      data: [{
+        ...row,
+        streak_current: 137,
+        streak_best: 200,
+        completions_total: 900,
+        first_completion_date: '2024-01-15',
+        window_days: 400,
+      }],
+    });
+    const [habit] = await repo.fetchHabits();
+
+    // Ces quatre champs sont ce qui rend la troncature acceptable : sans eux,
+    // un utilisateur assidu depuis trois ans verrait sa serie plafonner a 400.
+    expect(habit.streakCurrent).toBe(137);
+    expect(habit.streakBest).toBe(200);
+    expect(habit.completionsTotal).toBe(900);
+    expect(habit.firstCompletionDate).toBe('2024-01-15');
+    expect(habit.completionsWindowDays).toBe(400);
   });
 
   it('getPage without cursor: never emits a .or() filter', async () => {
@@ -73,27 +118,78 @@ describe('SupabaseHabitsRepository', () => {
     supabaseMock.user = null;
     await expect(
       repo.createHabit({ name: 'X', frequency: 'daily', estimatedTime: 0, color: 'c', icon: 'i' }),
-    ).rejects.toThrow('Not authenticated');
+    ).rejects.toMatchObject({ code: 'not_authenticated' });
   });
 
-  it('getById: PGRST116 → null', async () => {
-    supabaseMock.queueTable('habits', { data: null, error: { code: 'PGRST116' } });
-    expect(await repo.getById('missing')).toBeNull();
-  });
-
-  it('toggleCompletion: goes through the atomic RPC (TOCTOU-1), not a read-then-write', async () => {
-    supabaseMock.queueRpc('toggle_habit_completion', { data: { ...row, completions: { '2026-06-10': true } } });
+  it('toggleCompletion: passe par la RPC atomique BORNEE (TOCTOU-1 + mig. 121)', async () => {
+    // `RETURNS TABLE` -> PostgREST renvoie un TABLEAU, la v1 renvoyait un objet.
+    supabaseMock.queueRpc('toggle_habit_completion_v2', {
+      data: [{ ...row, completions: { '2026-06-10': true }, streak_current: 7, window_days: 400 }],
+    });
     const result = await repo.toggleCompletion('h1', '2026-06-10');
 
-    expect(supabaseMock.rpcCalls).toEqual([
-      { fn: 'toggle_habit_completion', args: { p_habit_id: 'h1', p_date: '2026-06-10' } },
-    ]);
+    const call = supabaseMock.rpcCalls[0];
+    expect(supabaseMock.rpcCalls).toHaveLength(1);
+    expect(call.fn).toBe('toggle_habit_completion_v2');
+    expect(call.args).toMatchObject({ p_habit_id: 'h1', p_date: '2026-06-10', p_days: 400 });
+    // 🔴 `p_today` est la date LOCALE du client, et son absence est un BUG
+    // (mig. 122) : la base est en UTC, donc sans elle le serveur jugeait
+    // « aujourd'hui » à côté et renvoyait une série fausse hors UTC —
+    // zéro en Amérique le soir, un compteur qui baisse en France après minuit.
+    expect((call.args as { p_today?: string }).p_today)
+      .toBe(new Date().toLocaleDateString('en-CA'));
     expect(supabaseMock.queries).toHaveLength(0); // zéro SELECT/UPDATE direct
     expect(result.completions['2026-06-10']).toBe(true);
+    // C'est ce champ qui permet au hook de se passer d'un refetch de liste.
+    expect(result.streakCurrent).toBe(7);
+  });
+
+  it('toggleCompletion: leve si la RPC ne renvoie aucune ligne', async () => {
+    // `RETURNS TABLE` peut renvoyer zéro ligne (habitude supprimée entre-temps).
+    // Sans cette garde, `mapHabitFromDb(undefined)` planterait sur une lecture
+    // de propriété, loin de la cause.
+    supabaseMock.queueRpc('toggle_habit_completion_v2', { data: [] });
+    await expect(repo.toggleCompletion('h1', '2026-06-10')).rejects.toBeTruthy();
   });
 
   it('deleteHabit: surfaces normalized error on failure', async () => {
     supabaseMock.queueTable('habits', { data: null, error: { message: 'permission denied', code: '42501' } });
     await expect(repo.deleteHabit('h1')).rejects.toBeTruthy();
+  });
+});
+
+describe('SupabaseHabitsRepository — updateHabit', () => {
+  // 🔴 FRONTIÈRE DE SÉCURITÉ. `mapHabitToDb` est une whitelist : `user_id`
+  // n'en sort jamais (faille V1). Un champ inconnu envoyé par un appelant
+  // — ou par des devtools — ne doit pas traverser jusqu'à PostgREST.
+  it('n’émet que les colonnes whitelistées, jamais user_id ni un champ inconnu', async () => {
+    supabaseMock.queueTable('habits', { data: { ...row, name: 'Lire plus' } });
+    await repo.updateHabit('h1', {
+      name: 'Lire plus',
+      user_id: 'someone-else',
+      id: 'forged',
+    } as never);
+
+    const patch = supabaseMock.argsOf('habits', 'update')?.[0] as Record<string, unknown>;
+    expect(patch).toEqual({ name: 'Lire plus' });
+    expect(Object.keys(patch)).not.toContain('user_id');
+    expect(Object.keys(patch)).not.toContain('id');
+  });
+
+  it('cible l’habitude par son id et rend le modèle mappé', async () => {
+    supabaseMock.queueTable('habits', { data: { ...row, estimated_time: 45 } });
+    const result = await repo.updateHabit('h1', { estimatedTime: 45 });
+
+    expect(supabaseMock.argsOf('habits', 'eq')).toEqual(['id', 'h1']);
+    expect(result.estimatedTime).toBe(45);
+    expect(result.id).toBe('h1');
+  });
+
+  it('remonte une erreur normalisée', async () => {
+    supabaseMock.queueTable('habits', {
+      data: null,
+      error: { message: 'permission denied', code: '42501' },
+    });
+    await expect(repo.updateHabit('h1', { name: 'X' })).rejects.toBeTruthy();
   });
 });

@@ -73,12 +73,64 @@ const EXCLUDED_DIRS = new Set(['ui', 'showcase']);
  *    fichier à moitié sur chaque échelle — pire que le statu quo.
  *
  * Le budget monte donc de 2, pas de 4, et l'écart est tracé plutôt que masqué.
+ *
+ * ── Puis 204 → 203 : la dernière violation FRANCHE du plancher ──
+ *
+ * `TaskModalMobileBody.tsx` contenait aussi un `text-[10px]` (badge « Envoyé »),
+ * SOUS le plancher de 11px. Contrairement à ses 15/17px — cohérents entre eux
+ * et alignés sur les métriques natives iOS — une taille sous le plancher n'est
+ * la cohérence de rien : c'est juste illisible. Migrée en `text-caption`.
  * ➜ DETTE OUVERTE : migrer TaskModalMobileBody.tsx en entier
  *   (`text-[15px]` → `text-body`, `text-[17px]` → `text-headline` — mêmes px,
  *   line-height différente, donc à vérifier visuellement). Ce jour-là, ce
  *   budget doit tomber d'environ 30.
+ *
+ * ── 2026-08-24 : 205 (ROUGE) → 202 ──
+ *
+ * La vague entreprise du 2026-08-23/24 avait fait remonter le stock à 205 et
+ * `main` était rouge. Les quatre ajouts étaient tous des violations FRANCHES
+ * (deux `text-[10px]`, un `text-[9px]`, tous sous le plancher de 11px, dans
+ * des fichiers qui n'ont aucun système local à préserver — contrairement à
+ * `TaskModalMobileBody`) : migrés en `text-caption`.
+ *   • TeamAssigneeGroups.tsx  `text-[10px]` → `text-caption`
+ *   • TeamsSection.tsx        `text-[10px]` → `text-caption`
+ *   • TeamTasksTab.tsx        `text-[10px]` et `text-[9px]` → `text-caption`
+ * Le budget descend donc à 202 et le plancher sub-11px à 82, conformément à
+ * la règle « chaque migration doit faire BAISSER ces nombres ».
  */
-const ARBITRARY_BUDGET = 204;
+// 2026-08-24 (2e passe) : 202 -> 199, plancher sub-11px 82 -> 79.
+// La garde etait ROUGE a l'arrivee de cette passe (203 > 202) : un badge
+// `text-[10px]` etait entre par la vague entreprise APRES que le budget ait
+// ete pose. Les quatre badges de `TeamProjectCard.tsx` sont passes en
+// `text-caption`. C'est la deuxieme fois en une journee que cette garde
+// attrape la meme chose au meme endroit : le mode entreprise n'a jamais ete
+// migre sur l'echelle typographique, il la contourne badge par badge.
+// 2026-08-27 : 202 -> 196, et sous-11px 79 -> 75. Les 6 tailles arbitraires
+// d'`OrgEventsTimeline` (frise de l'Apercu, arrivee le 2026-08-26) passent sur
+// `text-caption`. Elles avaient fait franchir le budget de 3 sans que personne
+// ne le voie : la garde etait rouge depuis la veille.
+// ⚠️ Les quatre `text-[10px]` passent donc de 10 a 11 px. Changement voulu :
+// 11 px EST le plancher lisible de l'echelle, c'est tout l'objet de ce budget.
+// 2026-09-14 (C-75) : 200 (ROUGE) -> 192, et sous-11px 76 -> 69.
+// La garde etait rouge sur `main` depuis le 2026-09-13 a 21:38, SEPT runs CI
+// d'affilee, sur la vague sous-categories / agenda. Sept tailles migrees, et le
+// tri suit exactement la regle des passes precedentes — on migre les violations
+// FRANCHES (sous le plancher), on ne casse pas un systeme LOCAL coherent :
+//   • EventModalDesktopCategoryPicker  2x text-[10px] -> text-caption
+//     (etiquette au survol d'une pastille, titre de la bulle de sous-categories)
+//   • EventModalFormMobile             1x text-[10px] -> text-caption
+//   • TeamOKRTab                       1x text-[9px] + 3x text-[10px] -> text-caption
+//   • QuickEventCard                   1x text-[11px] -> text-caption (0 px d'ecart)
+// 🔴 TROISIEME fois que le mode entreprise contourne l'echelle badge par badge
+// (TeamProjectCard le 2026-08-24, OrgEventsTimeline le 08-27, TeamOKRTab
+// aujourd'hui) : il n'a jamais ete migre, il est rattrape a chaque vague.
+// ⚠️ NON migrees, et c'est motive : les 4 `text-[15px]` arrives dans
+// `TaskModalCategorySheet` (extrait de TaskModalMobileBody) et les 2
+// `text-[12px]` / 1 `text-[13px]` d'`EventModalFormMobile`. Ces deux fichiers
+// portent un systeme local aligne sur les metriques natives iOS (11/12/13/15/17)
+// — les migrer isolement produirait un fichier a moitie sur chaque echelle,
+// pire que le statu quo. Meme arbitrage qu'au 2026-08-07.
+const ARBITRARY_BUDGET = 191;
 
 /** `text-[10px]` → capture "10". Ignore rem/%/var — seul le px pose problème. */
 const ARBITRARY_TEXT_SIZE = /text-\[(\d+(?:\.\d+)?)px\]/g;
@@ -132,7 +184,9 @@ describe('design system mobile — échelle typographique', () => {
     // Le plancher bas s'applique même hors zone migrée : personne ne doit
     // AJOUTER un nouveau text-[8px]. Les occurrences historiques sont listées
     // ici — cette liste ne doit que rétrécir.
-    const KNOWN_SUB_11PX = 85;
+    // 2026-09-14 (C-75) : 76 (ROUGE) -> 69. Sept migrations, detail au-dessus
+    // de `ARBITRARY_BUDGET`. Ce nombre ne peut que baisser.
+    const KNOWN_SUB_11PX = 69;
 
     const count = files.reduce(
       (sum, file) =>
@@ -162,5 +216,295 @@ describe('design system mobile — échelle typographique', () => {
         "Utiliser l'échelle mobile. Si une migration fait baisser ce nombre, " +
         'baisser aussi ARBITRARY_BUDGET dans ce fichier.',
     ).toBeLessThanOrEqual(ARBITRARY_BUDGET);
+  });
+});
+
+
+// ═══════════════════════════════════════════════════════════════════
+// Échelle z-index — liste FERMÉE (cf. docs/UI-PATTERNS.md)
+// ═══════════════════════════════════════════════════════════════════
+//
+// L'audit UI du 2026-08-14 a compté « 8 valeurs hors barème » et proposé de
+// les rabattre sur les 7 paliers publiés. En les relisant une par une, ce
+// n'était pas le bon diagnostic : ces valeurs ne sont pas des accidents, elles
+// portent un ORDRE réel et voulu — `PremiumGateModal` (200) doit passer
+// devant le chrome, `PageTutorial` (500) devant tout, un popover
+// ouvert DANS une feuille portalisée (10000) devant la feuille (9999). Les
+// rabattre sur 7 paliers aurait créé des collisions d'empilement pour faire
+// entrer la réalité dans un tableau.
+//
+// Le vrai défaut était donc l'inverse de celui écrit : le barème publié ne
+// décrivait que la moitié des couches réelles. On publie l'échelle COMPLÈTE et
+// on la ferme ici. Deux valeurs seulement étaient de vrais accidents et ont été
+// migrées : `z-[3]` (décor du hero entreprise, dans un parent `opacity-60` qui
+// crée son propre contexte d'empilement — la valeur n'avait aucun effet) et
+// `z-[75]` (`CompletedOKRsModal`, ramené sur le cran `z-[70]` voisin).
+//
+// La leçon est celle du reste du dossier : une échelle publiée sans outil ne
+// tient pas. Elle avait été écrite en juillet 2026 et chaque composant livré
+// depuis avait repris l'habitude de choisir sa valeur.
+const Z_LADDER = new Set([
+  60, 70, 80, 90,   // couches successives AU-DESSUS d'un modal ouvert
+  100, 110,         // popovers Radix par-dessus un modal (110 = imbriqué dans 100)
+  150,              // modal plein écran au-dessus du chrome applicatif
+  190, 200,         // surfaces système (bannières, CommandPalette, PremiumGate)
+  250, 300,         // interstitiels au-dessus des surfaces système
+  500,              // tutoriel de page — au-dessus de tout le chrome
+  9999, 10000,      // createPortal + fixed (feuille, puis popover dans la feuille)
+  10001,            // popover dans une popup elle-même à 10000 (calendrier des
+                    // popups de dépendances) — troisième étage réel du portail,
+                    // ajouté le 2026-08-30 avec sa justification d'ordre.
+  10010, 10020, 10030, // guide entreprise : capteur de clics (10010) sous le curseur et
+                    // la bulle (10020), sous la barre de contrôle (10030). AU-DESSUS
+                    // des modales maison (9999) et de leurs popovers : la démo ouvre
+                    // ces modales, et à 510/520/530 elle se jouait derrière elles,
+                    // invisible (mesuré dans le navigateur le 2026-10-12).
+]);
+
+const ARBITRARY_Z = /z-\[(\d+)\]/g;
+
+describe('design system — échelle z-index', () => {
+  it("n'utilise aucune valeur de z-index hors de l'échelle publiée", () => {
+    const offenders: string[] = [];
+    for (const file of files) {
+      const src = readFileSync(file, 'utf8');
+      for (const m of src.matchAll(ARBITRARY_Z)) {
+        const value = Number(m[1]);
+        if (!Z_LADDER.has(value)) offenders.push(`${rel(file)} → z-[${value}]`);
+      }
+    }
+    expect(
+      offenders,
+      [
+        'Valeur(s) de z-index hors échelle :',
+        ...offenders,
+        'Choisir un cran existant (docs/UI-PATTERNS.md → Échelle z-index).',
+        "Si aucun cran ne convient, AJOUTER le cran ici ET dans la doc — mais justifier l'ordre voulu :",
+        'un z-index inventé au cas par cas est exactement ce qui a produit 16 valeurs pour 7 paliers documentés.',
+      ].join('\n'),
+    ).toEqual([]);
+  });
+});
+
+
+// ═══════════════════════════════════════════════════════════════════
+// Mouvement des feuilles — `useSheetMotion`, pas un `y` en dur
+// ═══════════════════════════════════════════════════════════════════
+//
+// `App.tsx` monte `<MotionConfig reducedMotion="user">`. MESURÉ dans le
+// navigateur le 2026-08-24 (viewport 375x812, `prefers-reduced-motion: reduce`
+// réellement actif, mode démo) : une feuille écrite
+// `initial={{ y: '100%' }} animate={{ y: 0 }}` reste à
+// `transform: matrix(1, 0, 0, 1, 0, 510)` — `top: 812` pour un viewport de 812,
+// soit **0 px visible**. Le voile s'affiche, la feuille non.
+//
+// Le cas mesuré était `MobileMoreSheet` : le SEUL accès mobile à OKR,
+// Statistiques, Paramètres et à la déconnexion. La navigation mobile était donc
+// sans issue pour les utilisateurs en mouvement réduit — et invisible pour tous
+// les autres, ce qui explique que ça ait tenu si longtemps.
+//
+// FORME : CLIQUET, ET IL EST MAINTENANT A ZERO (C-07, 2026-09-04).
+//
+// Il a vecu avec une liste de 17 fichiers geles : les rendre rouges d'un coup
+// aurait produit une gate rouge en permanence, donc ignoree. Les 16 qui
+// restaient (`AdModal` ayant disparu avec le mur-pub) passent desormais par
+// `useSheetMotion()`, et la liste est vide. La regle devient donc simple :
+// plus AUCUN `y: '100%'` ecrit a la main, nulle part, hors du helper.
+//
+// ⚠️ CE FICHIER-CI NE PEUT PAS TRANCHER LA QUESTION. Il compte des chaines de
+// caracteres ; il ne sait pas si une feuille s'OUVRE. Ne jamais lui faire dire
+// qu'une feuille fonctionne : c'est le role de `e2e/reduced-motion-sheets.spec.ts`,
+// qui MESURE l'etat peint sous `reducedMotion: 'reduce'` reellement emule.
+//
+// 🔴 LE DETECTEUR IGNORE LES COMMENTAIRES, et ce n'etait pas le cas avant.
+// `LoginModal.tsx` a ete migre le 2026-08-27 et est reste dans la liste des
+// fichiers fautifs jusqu'au 2026-09-04 : la seule occurrence qu'il portait
+// encore etait le COMMENTAIRE expliquant pourquoi il avait ete migre. Une
+// garde qui compte ses propres explications ne mesure pas le produit — meme
+// classe de defaut que les quatre gardes reprises le 2026-09-03.
+const stripComments = (src: string) =>
+  src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+
+// Le seul endroit ou `y: '100%'` est LEGITIME : le helper lui-meme, qui ne
+// l'emet que lorsque le mouvement n'est PAS reduit.
+const SHEET_MOTION_HOME = 'src/components/mobile/mobile-motion.ts';
+
+const SHEET_SLIDE = /y:\s*['"]100%['"]/;
+
+describe('design system — mouvement des feuilles sous mouvement réduit', () => {
+  it("n'écrit aucune feuille avec un `y: '100%'` à la main", () => {
+    const offenders = files
+      .filter((file) => SHEET_SLIDE.test(stripComments(readFileSync(file, 'utf8'))))
+      .map(rel)
+      .filter((file) => file !== SHEET_MOTION_HOME);
+
+    expect(
+      offenders,
+      [
+        'Feuille(s) animée(s) à la main :',
+        ...offenders,
+        'Utiliser `useSheetMotion()` (src/components/mobile/mobile-motion.ts).',
+        'Le cliquet est à ZÉRO depuis le 2026-09-04 : il ne se rouvre pas.',
+        "Sous `prefers-reduced-motion`, la position d'arrivée doit venir du CSS,",
+        "l'animation ne portant que sur l'opacité.",
+      ].join('\n'),
+    ).toEqual([]);
+  });
+
+  // TÉMOIN. Une garde à zéro qui ne détecterait plus rien rend le MÊME verdict
+  // qu'une garde saine : « aucune violation ». Les deux ne se distinguent qu'en
+  // donnant au détecteur une violation à trouver. Sans ces deux cas, casser le
+  // regex ci-dessus laisserait la suite verte.
+  it("détecte réellement une feuille écrite à la main (témoin)", () => {
+    const sample = [
+      '<motion.div',
+      "  initial={{ y: '100%', opacity: 0 }}",
+      '  animate={{ y: 0, opacity: 1 }}',
+      '/>',
+    ].join('\n');
+
+    expect(SHEET_SLIDE.test(stripComments(sample))).toBe(true);
+  });
+
+  // TÉMOIN, second volet : ignorer les commentaires ne doit pas devenir un
+  // trou. Le filtre enlève une explication, jamais du code voisin.
+  it("ne laisse pas un commentaire masquer le code voisin (témoin)", () => {
+    const withCodeAfterComment = [
+      "// une feuille s'écrivait initial={{ y: '100%' }}",
+      "const real = { y: '100%' };",
+    ].join('\n');
+
+    expect(SHEET_SLIDE.test(stripComments("// y: '100%'"))).toBe(false);
+    expect(SHEET_SLIDE.test(stripComments(withCodeAfterComment))).toBe(true);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// C-07, SECONDE MOITIÉ — une POIGNÉE promet un geste. Elle doit le tenir.
+//
+// 🔴 CE QUE LA PREMIÈRE MOITIÉ NE COUVRAIT PAS. Le cliquet ci-dessus est à
+// zéro depuis le 2026-09-04 : plus aucune feuille n'écrit `y: '100%'` à la
+// main. Mais il ne regarde que le MOUVEMENT D'OUVERTURE. L'énoncé de C-07
+// portait sur DEUX helpers, et l'audit mobile du 2026-08-14 avait compté
+// **cinq feuilles affichant une poignée de glissement qui ne faisait rien**.
+// Cette moitié-là n'a jamais eu de garde, et elle s'est donc reconstituée.
+//
+// Remesuré le 2026-09-22 par un balayage de `src/components` et `src/pages` :
+// **trois** surfaces dessinaient une poignée sans aucun geste —
+// `MobileActionSheet`, `OKRDeadlineReviewModal` et `RemoveFriendConfirm`.
+// Les deux premières sont câblées sur `useSheetDrag`, la troisième a vu sa
+// poignée RETIRÉE (c'est un `alertdialog` de suppression : une poignée y
+// présente une décision comme une feuille qu'on chasse au pouce).
+//
+// LA RÈGLE : « une affordance qui promet un geste inexistant est moins bonne
+// que pas d'affordance du tout » — elle est écrite dans `useSheetDrag`, elle
+// est désormais mesurée.
+//
+// ⚠️ CE QUE CETTE GARDE NE PEUT PAS DIRE. Elle compte des chaînes de
+// caractères : elle ne sait pas si un glissement FERME réellement la feuille,
+// ni si la poignée est visible. Elle dit qu'une poignée dessinée s'accompagne
+// d'un geste déclaré, et rien de plus.
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Une poignée de feuille, cherchée DANS UNE SEULE valeur de `className`.
+ *
+ * 🔴 La première écriture de ce détecteur raisonnait sur le FICHIER entier, et
+ * elle rougissait sur `PyramidNodeCard` et `TeamProjectCard` — dont la barre
+ * de progression a exactement la forme d'une poignée. L'exclusion
+ * « `overflow-hidden` quelque part dans le fichier » ne pouvait pas marcher :
+ * les deux mots vivaient dans des éléments différents. Une garde qui accuse
+ * deux fichiers justes est une garde qu'on finit par ignorer.
+ */
+const HANDLE_IN_CLASS = [
+  /\bh-1(?:\.5)?\b[^"'`]*\bw-(?:8|9|10|12|14|16)\b/,
+  /\bw-(?:8|9|10|12|14|16)\b[^"'`]*\bh-1(?:\.5)?\b/,
+];
+
+/**
+ * Une BARRE DE PROGRESSION a la même forme qu'une poignée : c'est son
+ * `overflow-hidden` — sur le MÊME élément — qui la distingue, parce qu'elle
+ * contient un remplissage. Ce n'est pas une affordance.
+ */
+const isProgressBar = (cls: string): boolean => /overflow-hidden/.test(cls);
+
+/** Les valeurs de `className` qui dessinent une poignée, élément par élément. */
+function sheetHandleClasses(src: string): string[] {
+  const out: string[] = [];
+  for (const m of src.matchAll(/className=(?:"([^"]*)"|{`([^`]*)`}|{'([^']*)'})/g)) {
+    const cls = m[1] ?? m[2] ?? m[3] ?? '';
+    if (!/rounded-full/.test(cls)) continue;
+    if (!HANDLE_IN_CLASS.some((r) => r.test(cls))) continue;
+    if (isProgressBar(cls)) continue;
+    out.push(cls);
+  }
+  return out;
+}
+
+/**
+ * Le geste, sous l'une de ses trois formes réelles dans ce dépôt :
+ * le helper, le hook de `BottomSheet`, ou un `drag="y"` écrit sur place.
+ */
+const HAS_DRAG = /useSheetDrag|sheetDragProps|drag=["'{]?y|drag="y"/;
+
+describe('design system — une poignée de feuille promet un geste (C-07)', () => {
+  it("n'affiche aucune poignée sans geste de glissement", () => {
+    const offenders = files
+      .filter((file) => {
+        const src = stripComments(readFileSync(file, 'utf8'));
+        return sheetHandleClasses(src).length > 0 && !HAS_DRAG.test(src);
+      })
+      .map(rel);
+
+    expect(
+      offenders,
+      [
+        'Poignée(s) de feuille sans geste :',
+        ...offenders,
+        'Câbler `useSheetDrag(onClose)` (src/components/mobile/mobile-motion.ts),',
+        'OU retirer la poignée.',
+        "Une affordance qui promet un geste inexistant est moins bonne que pas",
+        "d'affordance du tout : on tire, rien ne bouge, et on en conclut que",
+        "l'app est cassée.",
+      ].join('\n'),
+    ).toEqual([]);
+  });
+
+  // TÉMOIN. Une garde à zéro qui ne détecte plus rien rend le MÊME verdict
+  // qu'une garde saine. Sans ces cas, casser les regex laisserait la suite
+  // verte — c'est la leçon des quatre gardes reprises le 2026-09-03.
+  it('détecte réellement une poignée sans geste (témoin)', () => {
+    const sansGeste = '<div className="w-10 h-1 rounded-full bg-slate-300" />';
+    expect(sheetHandleClasses(sansGeste)).toHaveLength(1);
+    expect(HAS_DRAG.test(sansGeste)).toBe(false);
+  });
+
+  it('ne rougit PAS sur une poignée correctement câblée (témoin)', () => {
+    const avecGeste = [
+      'const drag = useSheetDrag(onClose);',
+      '<motion.div {...drag}>',
+      '  <div className="w-9 h-1 rounded-full bg-slate-400" />',
+      '</motion.div>',
+    ].join('\n');
+    expect(sheetHandleClasses(avecGeste)).toHaveLength(1);
+    expect(HAS_DRAG.test(avecGeste)).toBe(true);
+  });
+
+  it("ne confond pas une BARRE DE PROGRESSION avec une poignée (témoin)", () => {
+    // Le cas EXACT qui a fait rougir la première écriture de cette garde, sur
+    // deux fichiers parfaitement justes.
+    const barre = '<span className="w-16 h-1.5 rounded-full bg-slate-200 overflow-hidden">';
+    expect(sheetHandleClasses(barre)).toHaveLength(0);
+  });
+
+  it("voit la poignée même quand la barre de progression est dans le MÊME fichier (témoin)", () => {
+    // 🔴 C'est ce cas qui distingue un détecteur par ÉLÉMENT d'un détecteur
+    // par FICHIER : le second se taisait dès qu'un `overflow-hidden` traînait
+    // quelque part, donc il aurait dispensé une vraie poignée par accident.
+    const melange = [
+      '<span className="w-16 h-1.5 rounded-full bg-slate-200 overflow-hidden" />',
+      '<div className="w-10 h-1 rounded-full bg-slate-300" />',
+    ].join('\n');
+    expect(sheetHandleClasses(melange)).toHaveLength(1);
   });
 });

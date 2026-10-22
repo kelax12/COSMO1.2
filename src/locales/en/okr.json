@@ -1,6 +1,14 @@
 {
+  "pro": {
+    "sectionTitle": "Work OKRs",
+    "sectionSubtitle": "{{org}} objectives you contribute to",
+    "you": "You",
+    "openInOrg": "Open in the company space",
+    "personalSectionTitle": "Personal OKRs"
+  },
   "page": {
     "title": "OKRs - Objectives & Key Results",
+    "titleShort": "Objectives",
     "subtitle": "Set and track your objectives with measurable results",
     "completedOkrs": "Completed OKRs",
     "seeCompleted": "See the completed OKRs",
@@ -19,9 +27,17 @@
       "noneDescription": "Create your first objective to structure your key results and track your progress.",
       "filteredDescription": "Change your filter, or create a new objective in this category.",
       "allTitle": "No OKRs yet"
-    }
+    },
+    "openCheckinAria": "Open the weekly check-in",
+    "openCheckinTitle": "Review your OKRs. It also opens on its own on Monday and Tuesday from the dashboard.",
+    "activeCount_one": "{{count}} active objective",
+    "activeCount_other": "{{count}} active objectives"
   },
   "card": {
+    "reached": "Reached",
+    "tasksCount_other": "{{count}} tasks",
+    "tasksCount_one": "{{count}} task",
+    "endsOn": "ends {{date}}",
     "uncategorized": "Uncategorized",
     "timeElapsed": "{{percent}}% of time elapsed",
     "overallProgress": "Overall progress",
@@ -35,24 +51,38 @@
     "weight": "Importance weight ×{{weight}}",
     "decrease": "Decrease {{title}}",
     "increase": "Increase {{title}}",
-    "progressOf": "{{title}} progress out of {{target}}"
+    "progressOf": "{{title}} progress out of {{target}}",
+    "objectiveActions": "Objective actions"
   },
   "categories": {
+    "manage": "Manage categories",
+    "allLong": "All categories",
+    "mobileLabel": "Category:",
+    "all": "All",
     "edit": "Edit category",
     "delete": "Delete category",
     "new": "New category",
     "namePlaceholder": "Category name…",
     "create": "Create",
     "cancel": "Cancel",
-    "changeColor": "Change colour",
-    "customColor": "Pick a custom colour",
-    "colorHint": "Click: cycle colours · Shift+click: hex palette"
+    "changeColor": "Change color",
+    "customColor": "Pick a custom color",
+    "colorHint": "Click: cycle colors · Shift+click: hex palette"
   },
   "deleteCategory": {
-    "title": "Confirm deletion",
+    "title": "Delete “{{name}}”?",
     "cancel": "Cancel",
     "confirm": "Delete",
-    "body": "Are you sure you want to delete the category “{{name}}”? The linked OKRs keep their category but can no longer be filtered."
+    "working": "Deleting…",
+    "noImpact": "No team objective uses this category, so deleting it affects nothing.",
+    "impactOkrs_one": "{{count}} team objective uses this category.",
+    "impactOkrs_other": "{{count}} team objectives use this category.",
+    "reassignLabel": "What should happen to them?",
+    "reassignNone": "Leave them without a category",
+    "reassignTo": "Move them to another category",
+    "reassignPick": "Pick a category",
+    "doneReassigned_one": "{{count}} objective moved",
+    "doneReassigned_other": "{{count}} objectives moved"
   },
   "deleteObjective": {
     "title": "Delete objective",
@@ -65,8 +95,13 @@
     "objective": "Objective",
     "category": "Category",
     "deadline": "Due date",
+    "detailsSection": "Details",
     "descriptionLabel": "Description",
+    "addDescription": "Add a description",
     "keyResults": "Key results",
+    "keyResultName": "Key result",
+    "krCount_one": "{{count}} set",
+    "krCount_other": "{{count}} set",
     "keyResultPlaceholder": "Measurable key result",
     "moveUp": "Move key result up",
     "progress": "Progress",
@@ -74,6 +109,8 @@
     "unit": "Unit",
     "duration": "Duration",
     "optional": "(Optional)",
+    "advancedFeature": "More options",
+    "advancedFeatureHide": "Hide",
     "weight": "Weight (1–10)",
     "weightHint": "How much this KR counts towards overall progress",
     "needOneKr": "Add at least 1 key result to create the objective.",
@@ -98,7 +135,7 @@
   },
   "checkin": {
     "close": "Close",
-    "question": "Where are you at?",
+    "question": "Where do things stand?",
     "previous": "Previous",
     "next": "Next",
     "finish": "Finish",
@@ -106,6 +143,11 @@
     "savedCount_one": "{{count}} KR updated",
     "savedCount_other": "{{count}} KRs updated",
     "error": "Something went wrong while updating",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "krProgress": "KR {{index}} of {{total}}"
+  },
+  "modalSheet": {
+    "titlePlaceholder": "e.g. Launch product v2",
+    "pickPlaceholder": "Pick one…"
   }
 }

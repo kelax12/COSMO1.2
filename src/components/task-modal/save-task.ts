@@ -1,4 +1,6 @@
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
+import { translator } from '@/i18n/useT';
+import { deadlineFromDayKey } from '@/lib/deadline';
 import type {
   useCreateTask,
   useUpdateTask,
@@ -69,7 +71,10 @@ export function buildCreateTaskInput(
     description: formData.description.trim() || undefined,
     priority: formData.priority,
     category: formData.category,
-    deadline: formData.deadline ? new Date(formData.deadline).toISOString() : '',
+    // Le champ porte un JOUR ; on stocke l'instant de minuit dans le fuseau
+    // de la personne. `new Date(jour).toISOString()` donnait minuit UTC, donc
+    // la veille pour tout décalage négatif (risque R-01).
+    deadline: deadlineFromDayKey(formData.deadline),
     estimatedTime: Number(formData.estimatedTime),
     completed: formData.completed,
     bookmarked: formData.bookmarked,
@@ -151,7 +156,7 @@ export async function runTaskSave(deps: TaskSaveDeps) {
       onCreated(newTask);
     } catch (err) {
       console.error('Error creating task:', err);
-      setErrors({ general: 'Erreur lors de la création. Veuillez réessayer.' });
+      setErrors({ general: translator('tasks').t('modal.createError') });
     }
   } else if (task) {
     const taskData: UpdateTaskInput = {
@@ -159,9 +164,13 @@ export async function runTaskSave(deps: TaskSaveDeps) {
       description: formData.description.trim() || undefined,
       priority: formData.priority,
       category: formData.category,
-      deadline: formData.deadline ? new Date(formData.deadline).toISOString() : '',
+      deadline: deadlineFromDayKey(formData.deadline),
       estimatedTime: Number(formData.estimatedTime),
-      completed: formData.completed,
+      // 🔴 `completed` ne part PAS : la fiche ne l'édite pas, elle en garde la
+      // valeur À L'OUVERTURE. Depuis la mig. 214, le Statut de la fiche peut
+      // cocher la tâche entre-temps ; renvoyer la valeur périmée la décocherait,
+      // et le trigger la ramènerait en « À faire ». La case et la bascule sont
+      // les seuls chemins qui écrivent `completed`.
       bookmarked: formData.bookmarked,
       krId: formData.krId,
       recurrence: formData.recurrence ?? 'none',
@@ -231,7 +240,7 @@ export async function runTaskSave(deps: TaskSaveDeps) {
         },
         onError: (err) => {
           console.error('Error saving task:', err);
-          setErrors({ general: 'Erreur lors de la sauvegarde. Veuillez réessayer.' });
+          setErrors({ general: translator('tasks').t('modal.saveError') });
         }
       }
     );

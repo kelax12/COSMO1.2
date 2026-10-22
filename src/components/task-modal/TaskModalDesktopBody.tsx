@@ -8,14 +8,19 @@
 // verbatim). Étape 1 (détails) extraite dans DesktopDetailsStep ; étape 2
 // (collaborateurs) dans DesktopCollaboratorsStep. Ce fichier = chrome
 // (header, footer wizard) + aiguillage des deux étapes.
-import React from 'react';
-import { X, AlertCircle, ChevronRight, Loader2 } from 'lucide-react';
+import React, { Suspense, useState } from 'react';
+import type { DetailsTab } from './DesktopDetailsStep';
+import { X, AlertCircle, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import DesktopCollaboratorsStep from './DesktopCollaboratorsStep';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+// L'onglet « Partager » (~16 ko de source) ne s'affiche qu'à la demande :
+// chargé alors, il sort du chunk `TaskModal`, qui n'avait plus que 1,4 ko de
+// marge sous son plafond (2026-10-10). Catalogue `tasks` déjà chargé.
+const DesktopCollaboratorsStep = lazyWithRetry(() => import('./DesktopCollaboratorsStep'));
 import DesktopDetailsStep from './DesktopDetailsStep';
-import { useCreateCategory } from '@/modules/categories';
+import { useCreateCategory, type Category } from '@/modules/categories';
 import { useCreateList } from '@/modules/lists';
-import { useRejectFriendRequest } from '@/modules/friends';
+import { useCancelFriendRequest } from '@/modules/friends';
 import type { Task } from '@/modules/tasks';
 import { useT } from '@/i18n/useT';
 
@@ -54,7 +59,7 @@ export interface DesktopBodyProps {
   isStep1Valid: () => boolean;
   isFormValid: () => boolean;
   missingStep1Fields: () => string[];
-  categories: Array<{ id: string; name: string; color: string }>;
+  categories: Category[];
   createCategoryMutation: ReturnType<typeof useCreateCategory>;
   listColorOptions: { value: string; color: string }[];
   lists: Array<{ id: string; name: string; color: string; taskIds: string[]; type?: string; smartRule?: string; isDefault?: boolean; position?: number }>;
@@ -91,14 +96,13 @@ export interface DesktopBodyProps {
   sentRequests: Array<{ id: string; email: string; receiverId?: string }>;
   pendingInvitesLocal: string[];
   friends: Array<{ id: string; userId?: string; name: string; email: string; avatar?: string }>;
-  cancelFriendRequestMutation: ReturnType<typeof useRejectFriendRequest>;
+  cancelFriendRequestMutation: ReturnType<typeof useCancelFriendRequest>;
 }
 
 const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   formData, setFormData, handleInputChange,
   errors, setErrors, okrFields,
   hasChanges, setHasChanges,
-  step, setStep,
   dRegister, dTrigger, dClear, dInvalid,
   collaboratorRef,
   validateForm, isFormValid, missingStep1Fields,
@@ -114,6 +118,9 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   sentRequests, pendingInvitesLocal, friends, cancelFriendRequestMutation,
 }) => {
   const { t } = useT('taskModal');
+  // Onglets Détails / Options avancées / Sous-tâches / Dépendances / Partager.
+  const [tab, setTab] = useState<DetailsTab>('details');
+  const { t: tCommon } = useT('common');
   // Enregistrement principal (bouton + touche Entrée dans un champ) : les
   // boutons vivent hors du <form> (footer sticky), donc on partage cette
   // logique entre onSubmit du form et onClick du bouton pour préserver la
@@ -121,6 +128,8 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   const handlePrimarySubmit = () => {
     const missing = missingStep1Fields();
     if (missing.length > 0) {
+      // Les champs requis vivent dans « Détails » : y ramener pour montrer l'erreur.
+      setTab('details');
       validateForm();
       dTrigger(missing);
       return;
@@ -141,12 +150,12 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
         <div className="md:rounded-2xl md:shadow-2xl w-full transition-colors flex-1 min-h-0 flex flex-col" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
           {/* Header — sticky */}
           <div
-            className="sticky top-0 z-10 flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b transition-colors gap-2"
+            className="sticky top-0 z-10 flex justify-between items-center px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b transition-colors gap-2"
             style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}
           >
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <h2 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                {collaboratorsOnly ? 'Partager la tâche' : isCreating ? 'Nouvelle tâche' : 'Modifier la tâche'}
+                {collaboratorsOnly ? t('form.headingShare') : isCreating ? t('form.headingCreate') : t('form.headingEdit')}
               </h2>
               {hasChanges && !collaboratorsOnly &&
                 <div className="hidden xs:flex items-center gap-1 text-orange-500 text-xs font-medium bg-orange-500/10 px-2 py-1 rounded-md shrink-0">
@@ -165,7 +174,39 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
             </button>
           </div>
 
-          <div className="p-6 overflow-y-auto flex-1 min-h-0" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+          {!collaboratorsOnly && (
+            <div role="tablist" aria-label={t('tabs.aria')} className="flex gap-1 px-3 overflow-x-auto overflow-y-hidden border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}>
+              {(['details', 'advanced', 'subtasks', 'dependencies', 'share'] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  id={`task-tab-${id}`}
+                  aria-selected={tab === id}
+                  aria-controls="task-tabpanel"
+                  onClick={() => setTab(id)}
+                  // 44 px (WCAG 2.5.5). La barre de défilement que 290e2599 a fait
+                  // disparaître venait du `-mb-px` dans un conteneur overflow-x-auto :
+                  // `overflow-y-hidden` la règle seul, la hauteur n'y était pour rien.
+                  className={`min-h-11 px-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                    tab === id
+                      ? 'border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-text-primary))]'
+                      : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
+                  }`}
+                >
+                  {id === 'subtasks' && isCreating && formData.subtasks.length > 0
+                    ? `${t('tabs.subtasks')} (${formData.subtasks.length})`
+                    : id === 'share' && collaborators.length > 0
+                      ? `${t('tabs.share')} (${collaborators.length})`
+                      : t(`tabs.${id}`)}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div
+            {...(!collaboratorsOnly ? { id: 'task-tabpanel', role: 'tabpanel', 'aria-labelledby': `task-tab-${tab}` } : {})}
+            className={`p-6 overflow-y-auto flex-1 ${collaboratorsOnly ? 'min-h-0' : 'min-h-[22rem]'}`} style={{ backgroundColor: 'rgb(var(--color-background))' }}>
             {/* Error display */}
             {errors.general &&
               <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg" role="alert">
@@ -181,28 +222,30 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                 {collaboratorsOnly ? (
                   /* Ouverture ciblée « Partager » (menu ⋯ → Collaborateur) :
                      UNIQUEMENT la section collaboration, sans les champs tâche. */
-                  <DesktopCollaboratorsStep
-                    collaboratorRef={collaboratorRef}
-                    isTaskOwner={isTaskOwner}
-                    task={task}
-                    onGenerateShareLink={onGenerateShareLink}
-                    collaborators={collaborators}
-                    displayInfo={displayInfo}
-                    pendingShareIds={pendingShareIds}
-                    handleRemoveCollaborator={handleRemoveCollaborator}
-                    emailInput={emailInput}
-                    setEmailInput={setEmailInput}
-                    inputError={inputError}
-                    setInputError={setInputError}
-                    handleAddEmail={handleAddEmail}
-                    filteredFriends={filteredFriends}
-                    collabIdOf={collabIdOf}
-                    toggleCollaborator={toggleCollaborator}
-                    sentRequests={sentRequests}
-                    pendingInvitesLocal={pendingInvitesLocal}
-                    friends={friends}
-                    cancelFriendRequestMutation={cancelFriendRequestMutation}
-                  />
+                  <Suspense fallback={null}>
+                    <DesktopCollaboratorsStep
+                      collaboratorRef={collaboratorRef}
+                      isTaskOwner={isTaskOwner}
+                      task={task}
+                      onGenerateShareLink={onGenerateShareLink}
+                      collaborators={collaborators}
+                      displayInfo={displayInfo}
+                      pendingShareIds={pendingShareIds}
+                      handleRemoveCollaborator={handleRemoveCollaborator}
+                      emailInput={emailInput}
+                      setEmailInput={setEmailInput}
+                      inputError={inputError}
+                      setInputError={setInputError}
+                      handleAddEmail={handleAddEmail}
+                      filteredFriends={filteredFriends}
+                      collabIdOf={collabIdOf}
+                      toggleCollaborator={toggleCollaborator}
+                      sentRequests={sentRequests}
+                      pendingInvitesLocal={pendingInvitesLocal}
+                      friends={friends}
+                      cancelFriendRequestMutation={cancelFriendRequestMutation}
+                    />
+                  </Suspense>
                 ) : (
                   <>
                 {/* ── Vue unique (#29) : le wizard 2 étapes est remplacé par une
@@ -227,62 +270,39 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                     setSelectedListIds={setSelectedListIds}
                     createListMutation={createListMutation}
                     isCreating={isCreating}
-                    isLoading={isLoading}
-                    handleDelete={handleDelete}
                     task={task}
                     showDescription={showDescription}
                     setShowDescription={setShowDescription}
+                    tab={tab}
                   />
 
-                {/* ── Collaborateurs en disclosure (#29) — repliés par défaut,
-                    dépliés via « Partager » ou l'ouverture ciblée (step===2). ── */}
-                <div className="mt-6 border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                  <button
-                    type="button"
-                    onClick={() => setStep(step === 2 ? 1 : 2)}
-                    aria-expanded={step === 2}
-                    className="flex items-center gap-2 text-sm font-semibold hover:text-blue-500 transition-colors"
-                    style={{ color: 'rgb(var(--color-text-secondary))' }}
-                  >
-                    <ChevronRight
-                      size={16}
-                      aria-hidden="true"
-                      className={`transition-transform ${step === 2 ? 'rotate-90' : ''}`}
+                {/* Partager : la section collaboration, dans son propre onglet. */}
+                {tab === 'share' && (
+                  <Suspense fallback={null}>
+                    <DesktopCollaboratorsStep
+                      collaboratorRef={collaboratorRef}
+                      isTaskOwner={isTaskOwner}
+                      task={task}
+                      onGenerateShareLink={onGenerateShareLink}
+                      collaborators={collaborators}
+                      displayInfo={displayInfo}
+                      pendingShareIds={pendingShareIds}
+                      handleRemoveCollaborator={handleRemoveCollaborator}
+                      emailInput={emailInput}
+                      setEmailInput={setEmailInput}
+                      inputError={inputError}
+                      setInputError={setInputError}
+                      handleAddEmail={handleAddEmail}
+                      filteredFriends={filteredFriends}
+                      collabIdOf={collabIdOf}
+                      toggleCollaborator={toggleCollaborator}
+                      sentRequests={sentRequests}
+                      pendingInvitesLocal={pendingInvitesLocal}
+                      friends={friends}
+                      cancelFriendRequestMutation={cancelFriendRequestMutation}
                     />
-                    Partager la tâche
-                    {collaborators.length > 0 && (
-                      <span className="px-1.5 py-0.5 rounded-full text-xs bg-[rgb(var(--color-accent-solid))]/10 text-blue-500">
-                        {collaborators.length}
-                      </span>
-                    )}
-                  </button>
-                  {step === 2 && (
-                    <div className="mt-4">
-                      <DesktopCollaboratorsStep
-                        collaboratorRef={collaboratorRef}
-                        isTaskOwner={isTaskOwner}
-                        task={task}
-                        onGenerateShareLink={onGenerateShareLink}
-                        collaborators={collaborators}
-                        displayInfo={displayInfo}
-                        pendingShareIds={pendingShareIds}
-                        handleRemoveCollaborator={handleRemoveCollaborator}
-                        emailInput={emailInput}
-                        setEmailInput={setEmailInput}
-                        inputError={inputError}
-                        setInputError={setInputError}
-                        handleAddEmail={handleAddEmail}
-                        filteredFriends={filteredFriends}
-                        collabIdOf={collabIdOf}
-                        toggleCollaborator={toggleCollaborator}
-                        sentRequests={sentRequests}
-                        pendingInvitesLocal={pendingInvitesLocal}
-                        friends={friends}
-                        cancelFriendRequestMutation={cancelFriendRequestMutation}
-                      />
-                    </div>
-                  )}
-                </div>
+                  </Suspense>
+                )}
                   </>
                 )}
             </form>
@@ -290,25 +310,37 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
 
           {/* ── Action Buttons — sticky, hors zone de scroll ── */}
           <div
-            className="px-4 sm:px-6 pt-3 pb-3 sm:pb-4 border-t flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 sm:gap-3 shrink-0"
+            className="px-4 sm:px-6 pt-[0.6555rem] pb-[0.6555rem] sm:pb-[0.874rem] border-t flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 sm:gap-3 shrink-0"
             style={{
               borderColor: 'rgb(var(--color-border))',
               backgroundColor: 'rgb(var(--color-surface))',
-              paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
+              paddingBottom: 'max(env(safe-area-inset-bottom), 0.6555rem)',
             }}
           >
-            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:ml-auto sm:w-auto">
+            {!collaboratorsOnly && !isCreating && task ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                onClick={handleDelete}
+                disabled={isLoading}
+                className="min-h-11 w-full sm:w-auto text-red-500 hover:text-red-600 hover:bg-red-500/10"
+              >
+                <Trash2 size={16} data-icon="inline-start" /> {tCommon('actions.delete')}
+              </Button>
+            ) : <span className="hidden sm:block" />}
+            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
               {collaboratorsOnly ? (
                 /* Vue « Partager » : destinataire → simple « Fermer » ;
                    propriétaire → « Enregistrer » les partages modifiés. */
                 !isTaskOwner ? (
-                  <Button type="button" size="lg" onClick={handleClose} className="min-h-11 w-full sm:w-auto bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-0">
+                  <Button type="button" size="lg" onClick={handleClose} className="min-h-11 w-full sm:w-auto bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0">
                     Fermer
                   </Button>
                 ) : (
                   <>
                     <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
-                      Annuler
+                      {tCommon('actions.cancel')}
                     </Button>
                     <Button
                       type="button"
@@ -317,8 +349,8 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                       disabled={isLoading || !hasChanges}
                       className={`min-h-11 w-full sm:w-auto ${
                         isLoading || !hasChanges
-                          ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100'
-                          : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-0'
+                          ? '!bg-[rgb(var(--color-accent-solid))] !text-[rgb(var(--color-accent-solid-foreground))] !opacity-40 !border-0'
+                          : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0'
                       }`}
                     >
                       {isLoading ? (
@@ -335,7 +367,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
               ) : (
                 <>
               <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
-                Annuler
+                {tCommon('actions.cancel')}
               </Button>
               <Button
                 type="button"
@@ -344,8 +376,8 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                 disabled={isLoading || (!hasChanges && !isCreating)}
                 className={`min-h-11 w-full sm:w-auto ${
                   isLoading || !isFormValid() || (!hasChanges && !isCreating)
-                    ? '!bg-blue-300 dark:!bg-blue-900/60 !text-white !border-0 !opacity-100'
-                    : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-white !border-0'
+                    ? '!bg-[rgb(var(--color-accent-solid))] !text-[rgb(var(--color-accent-solid-foreground))] !opacity-40 !border-0'
+                    : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0'
                 }`}
               >
                 {isLoading ? (

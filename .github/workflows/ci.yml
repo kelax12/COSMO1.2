@@ -10,11 +10,37 @@ on:
 permissions:
   contents: read
 
-# A newer push to the same ref cancels the in-progress run — saves runner
-# minutes and gives faster feedback on the latest commit.
+# ⚠️ Les `uses:` sont pinnés sur un SHA de commit 40 caractères, JAMAIS sur un
+# tag ni une branche. Un tag est repointable par le propriétaire de l'action
+# sans que rien ne bouge chez nous — c'est le vecteur des compromissions
+# tj-actions/changed-files et trivy-action. `supabase/setup-cli@v1` était même
+# une BRANCHE (refs/heads/v1), qui avance à chaque release.
+# Le dégât ici n'est pas le vol de secret (seuls l'URL et l'anon key Supabase,
+# publiques par conception, sont exposées, et aucun job ne déploie) : c'est une
+# CI qui ment. Une action compromise peut neutraliser check:rls, i18n:check ou
+# validate:migrations et faire passer un build rouge pour vert — or ces gates
+# sont la seule chose qui empêche une régression RLS de partir en prod.
+# Le commentaire `# vX.Y.Z` en fin de ligne est la version lisible ; c'est aussi
+# ce que Dependabot (ecosystem github-actions) met à jour en bumpant le SHA.
+
+# 🔴 SUR `main`, AUCUN RUN N'EN ANNULE UN AUTRE (2026-10-16). Le groupe y est
+# le COMMIT : chaque push a le sien, donc son verdict complet. Avant, le push
+# suivant annulait le run en cours : sur les 141 runs `CI` de `main` créés du
+# 10-09 au 10-16, 108 annulés, `e2e` (23 min) le premier, et quatre sessions
+# ont dû ouvrir une PR brouillon jetable (n° 71, 72, 74, 76) pour un verdict.
+# Sur une PR, le push suivant annule toujours le précédent : seul son dernier
+# commit compte.
+# Coût : 0 minute facturée (dépôt public, runners standard ; `timing` du run
+# 38907264016 : `total_ms: 0`). Le vrai prix est le parallélisme : rejoué sur
+# ces 141 runs, le pic aurait été de 6 runs et 16 jobs simultanés, sous les 20
+# du plan gratuit. ⚠️ Si `e2e` redevient lent (4,3 h le 10-02, quand il était
+# rouge), le pic monte à 28 jobs : ils attendent en file, aucun n'est annulé.
+# ⚠️ Un rouge peut donc finir APRÈS le vert qui l'a réparé : `ci-alert.yml` ne
+# le pousse plus (`scripts/ci-alert-perime.mjs`).
+# Témoin : `ci-toutes-les-gardes.guard.test.mjs` (« concurrency »).
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # ──────────────────────────────────────────────────────────────────
@@ -25,23 +51,56 @@ jobs:
   # ⚠️ `npm run build` (Vite/esbuild) NE type-check PAS. Sans `tsc -b`
   # ci-dessous, des erreurs de type partent en prod. Ne pas retirer.
   # ──────────────────────────────────────────────────────────────────
+  # ⚠️ Node 22 minimum, et ce n'est pas cosmetique : depuis la 2.112,
+  # `@supabase/supabase-js` exige un WebSocket NATIF, absent avant Node 22.
+  # En Node 20 le simple `createClient()` de src/lib/supabase.ts jette, et
+  # toute la suite de tests tombe. Ne pas redescendre.
+  #
+  # 🔴 TOUTES LES GARDES JOUENT, MÊME APRÈS UN ROUGE (2026-10-15).
+  # Le 2026-10-12, l'étape 2 sur 23 (`check:docs`) est passée au rouge, et un
+  # job s'arrête au premier échec : les 21 suivantes n'ont plus été jouées
+  # pendant trois jours, dont dix étaient rouges elles aussi (effacement,
+  # portabilité, sept gardes unitaires, budget de bundle). Un job qui s'arrête
+  # au premier rouge ne mesure que le premier rouge. Désormais :
+  #   · `npm ci` (`id: deps`) reste BLOQUANT : sans dépendances, rien ne mesure ;
+  #   · chaque étape suivante porte `if: ${{ !cancelled() && steps.deps.outcome == 'success' }}`
+  #     et un `id`, et AUCUNE ne porte `continue-on-error` : un échec garde le
+  #     job rouge ;
+  #   · une étape qui lit la sortie d'une autre (`dist/`, `coverage/`) échoue
+  #     en le disant quand cette sortie manque, jamais à vide ;
+  #   · la dernière étape liste TOUTES les étapes rouges (résumé du job + une
+  #     annotation) et sort en 1 s'il y en a une.
+  # Témoin : `scripts/ci-toutes-les-gardes.guard.test.mjs`. ❌ Une nouvelle
+  # étape sans cette condition ou sans `id` le fait rougir.
   lint-test-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
       - run: npm ci
+        id: deps
 
       - name: Lint
+        id: lint
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run lint
 
+      - name: Budget des CLAUDE.md
+        id: docs
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:docs
+
       - name: Type-check (tsc -b)
+        id: typecheck
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npx tsc -b
 
       - name: Validate SQL migrations
+        id: migrations
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run validate:migrations
 
       # Les invariants RLS (auth.uid() wrappé, une seule policy PERMISSIVE par
@@ -49,30 +108,219 @@ jobs:
       # (mig. 059, 077, 082). Une règle non vérifiée n'est pas une règle.
       # Ce check est un cliquet : il n'audite que les migrations ≥ 043.
       - name: Validate RLS invariants
+        id: rls
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:rls
+
+      # ═══ LES GARDES POSÉES LE 2026-09-20 (§ 12 d'a-faire-code.md) ═══
+      #
+      # Toutes statiques : aucune ne demande de secret, aucune ne touche au
+      # réseau. Elles tiennent dans le job existant plutôt que d'en ouvrir un,
+      # parce qu'un job de plus est un job de plus à surveiller.
+
+      # C-103 — un cycle d'imports ne casse ni le build ni un test : il rend
+      # un `undefined` à l'exécution, au moment où un module lit l'export d'un
+      # module pas encore évalué. Sept cycles existaient le jour de la pose.
+      - name: Cycles d imports
+        id: cycles
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:cycles
+
+      # C-83 — un test supprimé avec le code qu'il gardait ne laisse aucune
+      # trace : le total baisse, et un total qui baisse ne fait rougir rien.
+      - name: Plancher de tests
+        id: test-floor
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:test-floor
+
+      # C-92 — aucune table portant `user_id` ne peut exister sans décision
+      # d'effacement écrite (RGPD art. 17). Le périmètre est DÉRIVÉ des
+      # migrations, pas recopié.
+      - name: Effacement de compte (perimetre derive)
+        id: erasure
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:erasure
+
+      # C-94 — l'export de portabilité (art. 20) confronté au schéma : une
+      # colonne ajoutée à une table exportée doit y entrer ou être déclarée
+      # exclue. Trois colonnes saisies manquaient à la pose.
+      - name: Export de portabilite
+        id: portability
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:portability
+
+      # C-82 — aucune Edge Function déployée sans au moins un témoin qui la
+      # nomme. `stripe-create-checkout` était à zéro.
+      - name: Temoins des Edge Functions
+        id: edge-coverage
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:edge-coverage
+
+      # C-105 — le contrat des variables `VITE_*`. Moitié STATIQUE seulement
+      # ici (la moitié Vercel demande un jeton, cf. `env-drift.yml`).
+      - name: Contrat des variables d environnement
+        id: env
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:env
+
+      # C-108 — une étude périme sans que rien ne le signale. Échoue si une
+      # majeure citée par `docs/MIGRATION-REACT19.md` a bougé.
+      - name: Fraicheur des etudes
+        id: study
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:study
+
+      # C-107 — les CGU vivent dans un catalogue i18n ordinaire pour la CI.
+      # Une modification de fond est un changement de CONTRAT (préavis de
+      # 30 jours, CGU art. 11) : elle doit passer par le journal.
+      - name: Journal des documents contractuels
+        id: legal-journal
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:legal-journal
+
+      # C-99, PREMIÈRE MOITIÉ — les pluriels et les locales déclarées. Le
+      # moteur retombe clé par clé sur le français : une forme plurielle
+      # anglaise manquante affiche une phrase FRANÇAISE dans l'interface
+      # anglaise, sans jamais ressembler à une clé brute. `i18n:check`
+      # vérifiait déjà la complétude ; ce qu'il ne voyait pas, ce sont les
+      # formes MORTES — 23 `_many` recopiés du français, que
+      # `Intl.PluralRules('en')` ne demandera jamais.
+      # ⚠️ La SECONDE moitié (volume par page) exige un build : elle tourne
+      # dans le job `lighthouse`, à côté de `check:seo`.
+      - name: i18n · pluriels et locales declarees
+        id: i18n-pages
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run i18n:pages
+
+      # C-109 — douze documents de fond n'étaient notés par RIEN, donc ils ne
+      # pouvaient ni monter ni baisser : rien ne signalait qu'ils avaient
+      # vieilli. Chacun déclare désormais sa note, celle qui le couvre, ou
+      # qu'il n'est pas noté ET pourquoi.
+      # ❌ `non-note` est une réponse honnête ; un chiffre inventé sans audit
+      #    ne l'est pas — il vivrait dans un document qu'on produit en contrôle.
+      - name: Notes d audit declarees
+        id: docs-scored
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:docs-scored
+
+      # C-101 — une liste d'actions manuelles sans colonne d'état ne distingue
+      # pas « pas encore tenté » de « tenté sans effet », et les deux appellent
+      # des décisions opposées. Vérifie aussi que les chiffres d'acquisition
+      # n'ont pas plus de 45 jours.
+      # ⚠️ La moitié qui REJOUE les compteurs en base est dans `posture.yml`.
+      - name: Acquisition · etats et fraicheur
+        id: acquisition
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:acquisition
 
       # Le moteur de traduction retombe sur le français clé par clé : un
       # catalogue traduit incomplet ne casse rien visiblement et partirait donc
       # en prod à moitié traduit. Ce check est la seule protection réelle.
       - name: Validate i18n catalogs
+        id: i18n-check
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run i18n:check
 
+      # Cliquet de dette : `i18n:check` ne voit que les clés, donc jamais une
+      # chaîne restée en dur. Sans cette étape, la dette remonte en silence.
+      - name: No new hardcoded strings
+        id: i18n-scan
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run i18n:scan
+
+      # Second angle mort du meme mecanisme : le moteur retombe sur le francais
+      # cle par cle, donc une valeur `en` jamais traduite s affiche en francais
+      # dans une interface anglaise, sans jamais ressembler a une cle brute.
+      # `i18n:check` ne voit que les CLES. Ce cliquet compte les valeurs
+      # identiques qui ne sont pas declarees legitimes.
+      - name: No untranslated en values
+        id: i18n-identical
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run i18n:identical
+
       - name: Unit tests + coverage (enforced thresholds)
+        id: tests
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run test:coverage
 
+      # C-82 — la couverture s'arrêtait à `src/`. En étaient absents
+      # `scripts/` (le code qui décide si la CI est verte) et
+      # `supabase/functions/`. Périmètre et seuils PROPRES, jamais mêlés à
+      # ceux de `src/` : les mêler aurait obligé à BAISSER les seuils
+      # existants pour absorber le nouveau périmètre.
+      #
+      # ⚠️ Le script qui suit ne juge pas que les seuils : il vérifie d'abord
+      # que le rapport est COMPLET. Trois fichiers en étaient sortis en
+      # silence à la pose (shebang non analysable par le provider v8), et le
+      # pourcentage affiché en était plus FLATTEUR que la réalité.
+      - name: Couverture de l outillage (scripts/)
+        id: tooling-coverage
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run test:coverage:tooling
+
+      # Son ENTRÉE est `coverage/`, écrit par l'étape `tests`, et vitest ne
+      # l'écrit pas quand un test échoue. `if-no-files-found: error` : un envoi
+      # sans fichier ÉCHOUE au lieu de passer à vide avec un simple warning.
       - name: Upload coverage report
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        id: coverage-upload
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: coverage
           path: coverage/
+          if-no-files-found: error
           retention-days: 7
 
       - name: Build
+        id: build
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # 🔴 SANS cette variable, la CI ne mesure PAS le bundle qui part en
+          # production. `main.tsx` garde son `Sentry.init` derriere
+          # `if (sentryDsn)` ; Vite remplace la variable absente par `undefined`
+          # a la compilation, la branche devient du code mort, et Rollup jette
+          # presque tout `@sentry/react`. Mesure du 2026-09-02, meme arbre et
+          # meme node_modules, seule la variable change :
+          #     avec DSN  -> vendor-sentry 145 740 o brut, 49 276 o gzip
+          #     sans DSN  -> vendor-sentry  11 633 o brut,  3 818 o gzip
+          # La garde de budget sous-estimait donc le chemin critique reel de
+          # ~45 ko gzip, et les attributions de bootup du job `lighthouse`
+          # etaient structurellement AVEUGLES a Sentry. Vercel, lui, construit
+          # avec la variable posee.
+          # La valeur n'a pas besoin d'etre un vrai DSN : seule sa presence
+          # decide de la forme du bundle, et cet artefact n'est jamais deploye.
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN || 'https://ci@example.invalid/0' }}
+
+      # Le seul budget du dépôt qui n'avait aucune garde · et le seul qui ait
+      # reculé sans que personne le voie (+5 ko gzip sur le chemin critique en
+      # une journée, le 2026-08-25). Mesure le build RÉEL, pas une estimation.
+      # 🔴 Ne jamais remonter un plafond pour faire passer ce job.
+      # Son ENTRÉE est `dist/`, écrit par l'étape `build`. Un Build rouge laisse
+      # un `dist/` absent ou partiel : la garde ÉCHOUE alors en le disant, au
+      # lieu de mesurer un reste.
+      - name: Budget de bundle
+        id: bundle
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        env:
+          ENTREE_BUILD: ${{ steps.build.outcome }}
+        run: |
+          if [ "$ENTREE_BUILD" != success ]; then
+            echo "::error title=Budget de bundle::entree absente, l etape Build a rendu '$ENTREE_BUILD' : dist/ ne decrit aucun build complet, rien a mesurer"
+            exit 1
+          fi
+          npm run check:bundle
+
+      # Dernière étape : TOUTES les étapes rouges, en un endroit. Elle joue même
+      # si `npm ci` a échoué, pour le dire, et sort en 1 s'il y a un rouge ou
+      # une étape sautée alors que `npm ci` est vert.
+      - name: Resume des gardes (toutes les etapes rouges)
+        if: ${{ !cancelled() }}
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: node scripts/ci-toutes-les-gardes.mjs --job lint-test-build
 
   # ──────────────────────────────────────────────────────────────────
   # Garde sécurité dépendances : échoue si une vulnérabilité high/critical
@@ -83,14 +331,75 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
       - run: npm ci
+        id: deps
+      # Même dispositif que `lint-test-build` : un rouge sur les dépendances de
+      # prod ne doit pas masquer la lecture de la chaîne de build.
       - name: npm audit (prod deps, high+)
+        id: audit-prod
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm audit --omit=dev --audit-level=high
+
+      # ── C-90 · le second passage, sur la chaine de BUILD ─────────
+      #
+      # L'etape ci-dessus ne regarde que ce qui part dans le navigateur. La
+      # chaine de build (vite, vitest, jsdom, playwright) n'etait vue par RIEN,
+      # sur un depot PUBLIC qui publie ses artefacts : une dependance de build
+      # compromise reecrit le bundle sans toucher une ligne de `src/`.
+      #
+      # 🔴 NON BLOQUANTE, et c'est un arbitrage ecrit, pas un oubli (cf. C-18) :
+      # les advisories dev-only de ce depot demandent des majeures cassantes,
+      # et une gate rouge en permanence finit ignoree — la regle du dossier.
+      # Ce qui CHANGE par rapport a l'absence de garde, c'est que le resultat
+      # est LU : compte par severite dans le resume du job, et une annotation
+      # quand il y en a. Un « 0 » ici est une mesure, pas un silence.
+      #
+      # ⚠️ `|| true` sur `npm audit` seul : il sort en 1 des qu'il trouve
+      # quelque chose. C'est `node` qui juge ensuite, et LUI doit echouer si le
+      # JSON est illisible — sinon cette etape deviendrait la garde qui repond
+      # sans mesurer que `scripts/CLAUDE.md` decrit.
+      - name: npm audit (chaine de build, non bloquant, resultat LU)
+        id: audit-build
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: |
+          set -uo pipefail
+          npm audit --json > audit-all.json || true
+          node -e '
+            const fs = require("fs");
+            const NL = String.fromCharCode(10);
+            let j;
+            try { j = JSON.parse(fs.readFileSync("audit-all.json", "utf8")); }
+            catch (e) {
+              console.log("::error title=audit-dev::sortie de npm audit illisible : " + e.message);
+              process.exit(1);
+            }
+            const v = (j.metadata && j.metadata.vulnerabilities) || null;
+            if (!v) {
+              console.log("::error title=audit-dev::npm audit n a pas rendu metadata.vulnerabilities");
+              process.exit(1);
+            }
+            const ordre = ["critical", "high", "moderate", "low", "info"];
+            const ligne = ordre.map((k) => k + "=" + (v[k] ?? 0)).join(" ");
+            const graves = (v.critical ?? 0) + (v.high ?? 0);
+            const noms = Object.keys(j.vulnerabilities || {})
+              .filter((n) => ["critical", "high"].includes(j.vulnerabilities[n].severity))
+              .sort();
+            console.log("::notice title=audit-dev::toutes deps · " + ligne);
+            if (graves > 0) {
+              console.log("::warning title=audit-dev::" + graves +
+                " advisory high/critical sur la chaine de build (non bloquant) : " + noms.join(", "));
+            }
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+              "### npm audit · toutes dependances (non bloquant)" + NL + NL +
+              "```" + NL + ligne + NL +
+              (noms.length ? "high/critical : " + noms.join(", ") + NL : "aucun high/critical" + NL) +
+              "```" + NL);
+          '
 
   # ──────────────────────────────────────────────────────────────────
   # Tests E2E Playwright (3 parcours démo + scan a11y axe-core, bloquant
@@ -99,22 +408,62 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
       - run: npm ci
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-      - name: Run E2E (Chromium)
-        run: npx playwright test --project=chromium
+      - name: Install Playwright Chromium + WebKit
+        run: npx playwright install --with-deps chromium webkit
+      # 🔴 `supabase-stub` DOIT figurer ici. Il utilise Desktop Chrome, donc
+      # l'installation ci-dessus suffit, et il porte les parcours qui ne sont
+      # PAS atteignables en mode démo (`FirstRunSetup`, retour OAuth) : le
+      # laisser hors de la CI reviendrait à poser sur `main` des gardes qui ne
+      # tournent nulle part — la faute que ce dépôt s'est déjà faite deux fois.
+      #
+      # 🔴 `mobile-safari` A REJOINT CETTE LIGNE LE 2026-09-15 (C-78), et il y
+      # manquait depuis la CRÉATION de ce job, le 2026-06-06 (`a163c2b3`). Le
+      # project, lui, existe depuis le 2026-05-21 : **trois mois sans jamais
+      # tourner**, soit 96 cas sur 220 joués par aucun des neuf workflows.
+      #
+      # Ce qui était sans filet : les feuilles mobiles, les gestes tactiles,
+      # `reduced-motion-sheets`, les cibles tactiles WCAG et les deux suites
+      # d'accessibilité au clavier. Donc tout le périmètre iOS Safari, et le
+      # moteur sur lequel tourne VoiceOver.
+      #
+      # ⚠️ Le motif de l'exclusion (« WebKit, ~1 min d'installation en plus »)
+      # était écrit TROIS LIGNES sous la règle inverse, posée pour
+      # `supabase-stub` dans le même diff. Le raisonnement juste et son
+      # exception ont vécu côte à côte pendant dix jours.
+      #
+      # ⚠️ L'ordre des `--project` compte : `workers: 1` et
+      # `fullyParallel: false` les jouent l'un après l'autre, donc `chromium`
+      # chauffe le serveur du port 3000 avant que WebKit n'y touche. Le project
+      # `mobile-safari-warmup` rend ce bénéfice explicite au lieu de le faire
+      # dépendre de l'ordre.
+      #
+      # 🔴 `mobile-chrome` A REJOINT CETTE LIGNE LE 2026-09-20 (C-97). Jusque-là
+      # tout ce que le dépôt mesurait en mobile tournait sur UN modèle
+      # (iPhone 12), UN moteur (WebKit), et AUCUN Android — alors que Chrome
+      # Android est le premier navigateur mobile du marché.
+      #
+      # Il porte ce que WebKit ne peut pas porter : le mode PAYSAGE, une taille
+      # de police système à 200 %, et surtout un CPU BRIDÉ par CDP, protocole
+      # que WebKit n'expose pas. Sans ce dernier, la classe de défaut de C-68
+      # (fil principal bloqué 3 637 ms sur 4 000) reste hors de portée de la
+      # CI : elle avait été trouvée à la main.
+      - name: Run E2E (Chromium + supabase-stub + mobile-safari + mobile-chrome)
+        run: >-
+          npx playwright test
+          --project=chromium --project=supabase-stub
+          --project=mobile-safari --project=mobile-chrome
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-report
           path: playwright-report/
@@ -130,12 +479,13 @@ jobs:
   rls-integration:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
-      - uses: supabase/setup-cli@v1
+      # `@v1` était une branche, pas un tag — pinné sur le commit de v1.7.1.
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
         with:
           version: latest
       - run: npm ci
@@ -147,6 +497,19 @@ jobs:
           # `supabase status -o env` émet API_URL/ANON_KEY/SERVICE_ROLE_KEY/DB_URL.
           # On les remappe vers les noms attendus par le loader et le harnais.
           set -a; . ./supabase.env; set +a
+
+          # ⚠️ Un remap qui ne trouve rien écrit une valeur VIDE sans faire
+          # échouer l'étape : le job mourait deux étapes plus loin sur un
+          # « DATABASE_URL manquant » invisible sans accès aux logs. On vérifie
+          # donc ici, et on annote les CLÉS trouvées (jamais les valeurs, qui
+          # contiennent la service_role key) pour voir tout de suite si la CLI
+          # a renommé sa sortie — le job installe `version: latest`.
+          if [ -z "$DB_URL" ]; then
+            KEYS=$(sed -n 's/^\([A-Z_][A-Z0-9_]*\)=.*/\1/p' supabase.env | paste -sd, -)
+            echo "::warning::DB_URL absent de 'supabase status -o env' (cles vues : ${KEYS:-aucune}) — repli sur l'URL locale standard"
+            DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          fi
+
           {
             echo "DATABASE_URL=$DB_URL"
             echo "SUPABASE_URL=$API_URL"
@@ -154,9 +517,377 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
           } >> "$GITHUB_ENV"
       - name: Apply migrations on fresh DB
-        run: node scripts/apply-migrations.mjs
+        id: migrate
+        run: |
+          set -o pipefail   # sans ça, le statut serait celui de `tee`, jamais celui de node
+          # Les LOGS d'un run exigent une authentification, même sur un dépôt
+          # public ; le RÉSUMÉ du job, lui, est visible de tous. Sans ce report,
+          # un échec ici n'affiche que « Process completed with exit code 1 » —
+          # c'est ce qui a rendu ce job indiagnosticable depuis le 2026-06-21.
+          # `2>&1` capture aussi un crash de Node (module absent, parse), qui
+          # sort AVANT toute annotation applicative.
+          if node scripts/apply-migrations.mjs 2>&1 | tee migrate.log; then
+            exit 0
+          fi
+          {
+            echo '### ✖ Replay des migrations sur base vierge — échec'
+            echo ''
+            echo '```'
+            tail -n 60 migrate.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+      # Décrit l'état RLS réellement obtenu par le replay, en annotations. Le
+      # job échoue depuis des semaines sur un message qui dit qu'une policy a
+      # refusé sans dire laquelle, alors que les deux moitiés du prédicat sont
+      # vraies quand on les évalue séparément. Ce que le dépôt DÉCRIT a été
+      # compare a la prod ; il reste a voir ce que la base CONTIENT.
+      # 🔴 Ce diagnostic ne teste rien, il DÉCRIT ; il peut pourtant sortir en
+      # non-zéro (connexion, requête). Il ne doit jamais masquer les tests :
+      # les deux étapes ne dépendent que du replay (`migrate`), pas l'une de
+      # l'autre (même défaut que `lint-test-build` le 2026-10-12).
+      - name: Etat RLS de la base fraiche
+        if: ${{ !cancelled() && steps.migrate.outcome == 'success' }}
+        run: node scripts/diagnose-rls-state.mjs
+
       - name: Run RLS integration tests
-        run: npm run test:rls
+        if: ${{ !cancelled() && steps.migrate.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          if npm run test:rls 2>&1 | tee rls.log; then exit 0; fi
+          # GoTrue masque les erreurs SQL derriere « Database error creating
+          # new user » : la vraie cause n'existe que dans le journal Postgres
+          # du conteneur. Sans ce vidage dans le resume (public), un echec ici
+          # est indiagnosticable — meme piege que pour le replay.
+          {
+            echo '### Tests RLS en echec'
+            echo
+            echo '```'
+            tail -n 40 rls.log
+            echo '```'
+            echo
+            echo '#### Journal Postgres (erreurs)'
+            echo '```'
+            docker ps --filter name=supabase_db --format '{{.Names}}' | head -1               | xargs -r -I{} docker logs --tail 200 {} 2>&1               | grep -iE 'error|fatal|exception' | tail -n 30
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # ⚠️ Le resume de job ne se lit QUE dans l interface, connecte. Vitest
+          # annote chaque test en echec, mais une sortie non nulle SANS test en
+          # echec (crash a l import, rejet non gere, hook casse) ne produit
+          # alors AUCUNE annotation : le job est rouge et muet. Mesure le
+          # 2026-08-29, run #896. On emet donc la fin du journal, en une seule
+          # annotation — GitHub en plafonne le NOMBRE a dix par etape, jamais la
+          # longueur.
+          TAIL=$(tail -n 25 rls.log | sed 's/%/%25/g; s/\r//g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=rls-tail::${TAIL}"
+          exit 1
       - name: Stop Supabase stack
         if: ${{ always() }}
         run: supabase stop
+
+  # ──────────────────────────────────────────────────────────────────
+  # Lighthouse CI — LCP / TBT / CLS / a11y / SEO par route publique.
+  #
+  # Comblé le 2026-08-24. `docs/PERFORMANCE.md` listait « Lighthouse CI
+  # toujours absent » depuis l'audit perf du 2026-05-29 : AUCUN job ne mesurait
+  # les Core Web Vitals, alors que le budget bundle, lui, était surveillé. On
+  # gardait donc un oeil sur ce qu'on expédie et aucun sur ce que ça donne.
+  #
+  # Périmètre : les routes PRÉRENDUES uniquement. Les routes protégées
+  # demandent une session, donc un parcours de connexion — ce serait un job
+  # Playwright, pas Lighthouse.
+  #
+  # ⚠️ SEUILS PROVISOIRES, à resserrer après la PREMIÈRE mesure réelle.
+  # Ils n'ont pas pu être posés « au réel mesuré » comme le reste des budgets
+  # du dépôt : Lighthouse a besoin d'un Chrome exécutable, absent de la machine
+  # de développement. Ils sont donc prudents à dessein. Le jour où le premier
+  # run donne les vrais chiffres, RABAISSER `lighthouserc.json` juste en
+  # dessous — un budget très au-dessus du réel ne mesure rien.
+  #
+  # Bloquant sur a11y, SEO et CLS (des régressions franches, faciles à
+  # attribuer). Avertissement sur la performance : elle varie avec le runner,
+  # et une gate rouge en permanence finit ignorée — c'est la règle du dossier.
+  # ──────────────────────────────────────────────────────────────────
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+
+      # Le prérendu fait partie du build : sans lui, les routes publiques
+      # renvoient la coquille SPA et Lighthouse mesurerait une page vide.
+      #
+      # 🔴 Après le Build, chaque étape porte `!cancelled()` : un `check:seo`
+      # rouge masquait jusqu'ici le volume i18n ET la passe Lighthouse desktop
+      # (même défaut que `lint-test-build` le 2026-10-12). Les lectrices de
+      # `dist/` dépendent du Build, chaque assert de SON collect.
+      - name: Build (avec prérendu)
+        id: build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # 🔴 SANS cette variable, la CI ne mesure PAS le bundle qui part en
+          # production. `main.tsx` garde son `Sentry.init` derriere
+          # `if (sentryDsn)` ; Vite remplace la variable absente par `undefined`
+          # a la compilation, la branche devient du code mort, et Rollup jette
+          # presque tout `@sentry/react`. Mesure du 2026-09-02, meme arbre et
+          # meme node_modules, seule la variable change :
+          #     avec DSN  -> vendor-sentry 145 740 o brut, 49 276 o gzip
+          #     sans DSN  -> vendor-sentry  11 633 o brut,  3 818 o gzip
+          # La garde de budget sous-estimait donc le chemin critique reel de
+          # ~45 ko gzip, et les attributions de bootup du job `lighthouse`
+          # etaient structurellement AVEUGLES a Sentry. Vercel, lui, construit
+          # avec la variable posee.
+          # La valeur n'a pas besoin d'etre un vrai DSN : seule sa presence
+          # decide de la forme du bundle, et cet artefact n'est jamais deploye.
+          # ⚠️ Ici, PAS de valeur de repli — asymetrie voulue, et payee une fois.
+          # Le job `lint-test-build` PESE l'artefact : un faux DSN y suffit, rien
+          # ne s'execute. Ce job-ci EXECUTE la page. Avec un DSN bidon, Sentry
+          # s'initialise vraiment et tente d'emettre vers un hote qui n'existe
+          # pas ; la console se remplit d'erreurs et « best practices » tombe de
+          # 100 a 96 sur les QUATRE pages, sous le seuil de 0,97. Mesure du
+          # 2026-09-02, run 33671417915, rouge a cause de ce repli.
+          # Sans secret pose, ce build reste donc sans Sentry : les attributions
+          # de bootup restent aveugles a lui, et c'est ecrit noir sur blanc
+          # plutot que corrige par un faux qui fausserait le score.
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+
+      # C-98 — rien ne reliait le SITEMAP aux pages réellement PRÉRENDUES, et
+      # aucune garde ne vérifiait les balises par page. Une route ajoutée à
+      # l'un sans l'autre ne faisait échouer aucun job ; le 2026-09-14, dix
+      # pages prérendues hors sitemap ont dû être expliquées À LA MAIN.
+      #
+      # Ici plutôt que dans `lint-test-build` : la garde lit `dist/**`, et ce
+      # job est le seul qui construise AVEC le prérendu déjà en place.
+      - name: Sitemap, prerendu et balises par page
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: npm run check:seo
+
+      # C-99, SECONDE MOITIÉ — le volume de texte indexable par page ET par
+      # locale. Les 50 pages avaient été mesurées UNE fois avant l'ouverture
+      # d'`en` à l'indexation (C-20), jamais depuis. Une traduction tronquée
+      # ne casse rien : la page s'affiche, le prérendu tourne, `i18n:check`
+      # est vert. Google, lui, la traite comme du contenu mince.
+      # ⚠️ Les slugs LOCALISÉS sont appariés par `route-slugs.json` : sans ça
+      # le rapport fr↔en ne se calculerait jamais sur les neuf pages
+      # éditoriales, c'est-à-dire celles qui portent le contenu.
+      - name: i18n · volume de texte par page et par locale
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: npm run i18n:pages -- --pages
+
+      # Quel Chrome, et existe-t-il ? Une phase `collect` qui ne produit AUCUN
+      # rapport echoue le plus souvent avant d'ouvrir un navigateur, et la
+      # difference entre « Chrome absent » et « Chrome refuse de demarrer » ne
+      # se devine pas depuis l'exterieur. Trois lignes dans le resume valent
+      # mieux qu'une hypothese.
+      - name: Chrome disponible ?
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          VU=""
+          for BIN in google-chrome google-chrome-stable chromium chromium-browser; do
+            P=$(command -v "$BIN" 2>/dev/null) && VU="$VU $BIN=$("$BIN" --version 2>&1 | head -1)"
+          done
+          echo "::notice title=chrome::${VU:-aucun binaire Chrome trouve} | CHROME_PATH=${CHROME_PATH:-vide}"
+          {
+            echo '### Chrome vu par le job lighthouse'
+            echo ''
+            echo '```'
+            for BIN in google-chrome google-chrome-stable chromium chromium-browser; do
+              P=$(command -v "$BIN" 2>/dev/null) && echo "$BIN -> $P ($("$BIN" --version 2>&1 | head -1))"
+            done
+            echo "CHROME_PATH=${CHROME_PATH:-<vide>}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ⚠️ Le log d'un run exige une authentification, meme sur un depot public,
+      # et le RESUME du job ne l'exige pas. Sans ce report, un echec ici n'affiche
+      # que « Process completed with exit code 1 » : c'est exactement ce qui a
+      # rendu ce job indiagnosticable depuis son ajout le 2026-08-24, et ce qui a
+      # fait porter la tache T-50 sur un `gh auth login` au lieu d'un correctif.
+      # Meme dispositif que le replay de migrations, pour la meme raison.
+      # ⚠️ `autorun` enchaine collect → assert → upload, donc une assertion
+      # rouge empeche l upload : le job qui MESURE ne rend alors AUCUN chiffre,
+      # exactement quand on en a besoin. Les trois phases sont donc separees,
+      # et le releve des scores tourne en `always()`. Sans ca, T-28 (resserrer
+      # les seuils sur le reel) ne peut jamais lire le reel.
+      - name: Lighthouse collect
+        id: lhci-desktop
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          npx --yes @lhci/cli@0.15.x collect 2>&1 | tee lhci.log
+
+      - name: Scores mesures
+        if: ${{ !cancelled() }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const d = ".lighthouseci";
+            if (!fs.existsSync(d)) { console.log("::warning title=lhci::aucun rapport produit"); process.exit(0); }
+            const lignes = [];
+            for (const f of fs.readdirSync(d).filter((f) => f.startsWith("lhr-") && f.endsWith(".json"))) {
+              const r = JSON.parse(fs.readFileSync(`${d}/${f}`, "utf8"));
+              const c = r.categories;
+              const n = (k) => (c[k] ? Math.round(c[k].score * 100) : "-");
+              lignes.push(`${r.finalDisplayedUrl} perf=${n("performance")} a11y=${n("accessibility")} bp=${n("best-practices")} seo=${n("seo")} lcp=${Math.round(r.audits["largest-contentful-paint"].numericValue)}ms tbt=${Math.round(r.audits["total-blocking-time"].numericValue)}ms cls=${r.audits["cumulative-layout-shift"].numericValue}`);
+            }
+            for (const l of lignes) console.log(`::notice title=lhci-score::${l}`);
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Scores Lighthouse\n\n\`\`\`\n${lignes.join("\n")}\n\`\`\`\n`);
+          '
+
+      # T-51 : un SCORE dit qu'une page est lente, jamais ce qui la ralentit.
+      # Mesure du 2026-08-30 : sur un poste de developpement, la landing (55 en
+      # CI) et le guide (96 en CI) rendent le MEME score, parce que la charge de
+      # la machine domine tout. L'ecart ne se reproduit que sur ce runner, donc
+      # c'est ici, et nulle part ailleurs, qu'il faut lire l'attribution.
+      #
+      # `NL` plutot qu'une sequence d'echappement : ce bloc traverse YAML puis
+      # le shell avant d'atteindre node, et un antislash n'y survit pas toujours.
+      - name: Repartition du fil principal
+        if: ${{ !cancelled() }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const NL = String.fromCharCode(10);
+            const d = ".lighthouseci";
+            if (!fs.existsSync(d)) process.exit(0);
+            const bloc = ["### Ou passe le fil principal", ""];
+            const notes = [];
+            for (const f of fs.readdirSync(d).filter((x) => x.startsWith("lhr-") && x.endsWith(".json"))) {
+              const r = JSON.parse(fs.readFileSync(d + "/" + f, "utf8"));
+              const boot = (r.audits["bootup-time"].details?.items ?? []).slice(0, 6)
+                .map((i) => (String(i.url).split("/").pop() || "(document)") + " " + Math.round(i.total) + "ms");
+              const fil = (r.audits["mainthread-work-breakdown"].details?.items ?? [])
+                .map((i) => i.groupLabel + " " + Math.round(i.duration) + "ms");
+              bloc.push("**" + r.finalDisplayedUrl + "**", "", "- bootup : " + boot.join(" · "), "- fil : " + fil.join(" · "), "");
+              notes.push(r.finalDisplayedUrl + " | " + boot.slice(0, 3).join(" · "));
+            }
+            for (const n of notes.slice(0, 8)) console.log("::notice title=lhci-bootup::" + n);
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, bloc.join(NL) + NL);
+          '
+
+      - name: Lighthouse assert
+        if: ${{ !cancelled() && steps.lhci-desktop.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          if npx --yes @lhci/cli@0.15.x assert 2>&1 | tee -a lhci.log; then exit 0; fi
+          {
+            echo '### ✖ Lighthouse CI : echec'
+            echo ''
+            echo '```'
+            tail -n 80 lhci.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # ⚠️ Le resume de job n'est PAS expose par l'API : il se lit dans
+          # l'interface, donc par un humain connecte. Les ANNOTATIONS, elles, se
+          # lisent sans authentification sur un depot public. On emet donc les
+          # dernieres lignes en annotation : c'est la seule forme de diagnostic
+          # qu'un agent sans compte GitHub puisse relire.
+          tail -n 25 lhci.log | while IFS= read -r LIGNE; do
+            case "$LIGNE" in *LH:status*) continue;; esac
+            echo "::error title=lhci::${LIGNE}"
+          done
+          exit 1
+
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lighthouse
+          path: .lighthouseci/
+          # Dossier CACHÉ : sans ce drapeau, upload-artifact l'ignore en silence
+          # (« No files were found »), et aucun rapport n'a jamais été archivé.
+          include-hidden-files: true
+          retention-days: 7
+
+      # ═══ C-84 · LA PASSE MOBILE ════════════════════════════
+      #
+      # 🔴 Jusqu'au 2026-09-20, la SEULE mesure continue de perf, d'a11y et de
+      # SEO en conditions reelles tournait en preset DESKTOP. Elle ignorait donc
+      # le terminal du trafic vise, et ne pouvait structurellement pas voir la
+      # classe de defaut de C-68 : un preset desktop ne bride ni le CPU ni le
+      # reseau.
+      #
+      # `!cancelled()` sur le collect : la passe desktop peut echouer sur une
+      # assertion, et c'est exactement le moment ou l'on veut AUSSI le chiffre
+      # mobile. Meme raison que la separation collect/assert/upload au-dessus.
+      - name: Lighthouse collect (mobile)
+        id: lhci-mobile
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          npx --yes @lhci/cli@0.15.x collect --config=lighthouserc.mobile.json 2>&1 | tee lhci-mobile.log
+
+      - name: Scores mesures (mobile)
+        if: ${{ !cancelled() }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const NL = String.fromCharCode(10);
+            // 🔴 C-116 · `.lighthouseci`, PAS `.lighthouseci-mobile` : ce dernier
+            // n est ecrit que par un `lhci upload`, qui n existe pas pour la passe
+            // mobile. Le resume ecrivait donc « aucun rapport mobile produit »
+            // depuis sa pose (2026-09-20), alors que le LCP mobile etait MAUVAIS
+            // sur les 8 URLs : mesure, et lu par personne. Le collect mobile
+            // remplace le dossier du collect desktop, donc ce qu on lit ici est
+            // bien la passe mobile.
+            const d = ".lighthouseci";
+            if (!fs.existsSync(d)) { console.log("::error title=lhci-mobile::aucun rapport mobile produit"); process.exit(1); }
+            const lignes = [];
+            for (const f of fs.readdirSync(d).filter((f) => f.startsWith("lhr-") && f.endsWith(".json"))) {
+              const r = JSON.parse(fs.readFileSync(d + "/" + f, "utf8"));
+              const c = r.categories;
+              const n = (k) => (c[k] ? Math.round(c[k].score * 100) : "-");
+              lignes.push(r.finalDisplayedUrl + " perf=" + n("performance") + " a11y=" + n("accessibility") +
+                " bp=" + n("best-practices") + " seo=" + n("seo") +
+                " lcp=" + Math.round(r.audits["largest-contentful-paint"].numericValue) + "ms" +
+                " tbt=" + Math.round(r.audits["total-blocking-time"].numericValue) + "ms" +
+                " cls=" + r.audits["cumulative-layout-shift"].numericValue);
+              // L element LCP et ses phases : sans eux, un LCP a 6 s ne dit pas
+              // s il attend le reseau, le JS ou une police.
+              const el = r.audits["largest-contentful-paint-element"];
+              const items = (el && el.details && el.details.items) || [];
+              const noeud = items[0] && items[0].items && items[0].items[0] && items[0].items[0].node;
+              const phases = items[1] && items[1].items ? items[1].items.map((p) => p.phase + "=" + Math.round(p.timing) + "ms").join(" ") : "";
+              if (noeud) lignes.push("   element LCP : " + (noeud.snippet || noeud.selector || "?").slice(0, 140));
+              if (phases) lignes.push("   phases : " + phases);
+            }
+            if (lignes.length === 0) { console.log("::error title=lhci-mobile::dossier present mais aucun lhr-*.json"); process.exit(1); }
+            for (const l of lignes) console.log("::notice title=lhci-mobile::" + l);
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+              "### Scores Lighthouse — MOBILE" + NL + NL + "```" + NL + lignes.join(NL) + NL + "```" + NL);
+          '
+
+      - name: Lighthouse assert (mobile)
+        if: ${{ !cancelled() && steps.lhci-mobile.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          if npx --yes @lhci/cli@0.15.x assert --config=lighthouserc.mobile.json 2>&1 | tee -a lhci-mobile.log; then exit 0; fi
+          {
+            echo '### ✖ Lighthouse CI MOBILE : echec'
+            echo ''
+            echo '```'
+            tail -n 80 lhci-mobile.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          tail -n 25 lhci-mobile.log | while IFS= read -r LIGNE; do
+            case "$LIGNE" in *LH:status*) continue;; esac
+            echo "::error title=lhci-mobile::${LIGNE}"
+          done
+          exit 1
+
+      - name: Upload Lighthouse reports (mobile)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lighthouse-mobile
+          path: .lighthouseci/
+          # Dossier CACHÉ : sans ce drapeau, upload-artifact l'ignore en silence
+          # (« No files were found »), et aucun rapport n'a jamais été archivé.
+          include-hidden-files: true
+          retention-days: 7

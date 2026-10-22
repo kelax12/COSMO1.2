@@ -55,7 +55,46 @@ describe('buildCalendarEvents', () => {
 
   it('carries notes and taskId into extendedProps', () => {
     const [out] = buildCalendarEvents([ev({ notes: 'hello', taskId: 't9' })], now);
-    expect(out.extendedProps).toEqual({ notes: 'hello', taskId: 't9', isRecurringInstance: false });
+    expect(out.extendedProps).toEqual({
+      notes: 'hello',
+      taskId: 't9',
+      isRecurringInstance: false,
+      needsReview: false,
+      taskDone: false,
+    });
+  });
+
+  // La pastille « ce créneau attend une décision » est peinte à partir de ce
+  // seul drapeau. L'ensemble est passé en argument parce que le calcul a besoin
+  // des TÂCHES, que ce module ne connaît pas : une seconde dérivation ici
+  // finirait par diverger de celle qui peint le panneau de l'EventModal.
+  it('marque needsReview pour les seuls identifiants fournis', () => {
+    const events = [ev({ id: 'a', taskId: 't1' }), ev({ id: 'b', taskId: 't2' })];
+    const out = buildCalendarEvents(events, now, new Set(['a']));
+    expect(out.find((e) => e.id === 'a')!.extendedProps.needsReview).toBe(true);
+    expect(out.find((e) => e.id === 'b')!.extendedProps.needsReview).toBe(false);
+  });
+
+  it('sans ensemble fourni, aucun evenement n attend de decision', () => {
+    // Cas de `MemberAgendaBody` : un manager qui consulte l'agenda d'un
+    // subordonne ne doit voir aucune pastille, il n'a pas a trancher a sa place.
+    const out = buildCalendarEvents([ev({ id: 'a', taskId: 't1' })], now);
+    expect(out[0].extendedProps.needsReview).toBe(false);
+  });
+
+  // Même motif que needsReview : calculé par `findDoneTaskEvents`, qui a
+  // besoin des tâches. Un check vert remplace la pastille une fois la tâche
+  // validée — jamais les deux en même temps (vérifié côté rendu, pas ici).
+  it('marque taskDone pour les seuls identifiants fournis', () => {
+    const events = [ev({ id: 'a', taskId: 't1' }), ev({ id: 'b', taskId: 't2' })];
+    const out = buildCalendarEvents(events, now, new Set(), new Set(['a']));
+    expect(out.find((e) => e.id === 'a')!.extendedProps.taskDone).toBe(true);
+    expect(out.find((e) => e.id === 'b')!.extendedProps.taskDone).toBe(false);
+  });
+
+  it('sans ensemble taskDone fourni, aucun evenement n est marque valide', () => {
+    const out = buildCalendarEvents([ev({ id: 'a', taskId: 't1' })], now);
+    expect(out[0].extendedProps.taskDone).toBe(false);
   });
 
   it('returns an array', () => {

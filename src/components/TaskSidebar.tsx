@@ -1,51 +1,58 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info, ChevronDown, Pencil, Trash2, CalendarX, MoreHorizontal, Copy, Lightbulb } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Search, Filter, X, Info, ChevronDown, Lightbulb, Plus } from 'lucide-react';
 import TaskModal from './TaskModal';
-import CollaboratorAvatars from './CollaboratorAvatars';
+import PersonalTaskCard from './task-sidebar/PersonalTaskCard';
+import TeamTaskCard from './task-sidebar/TeamTaskCard';
+import TaskContextMenu, { type ContextMenuState } from './task-sidebar/TaskContextMenu';
 import { showUndoToast } from '@/lib/undo-toast';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useTasks, useDeleteTask, useCreateTask, Task } from '@/modules/tasks';
+import { useTasks, useDeleteTask, useCreateTask, useRestoreTask, Task } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module events - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useEvents, useDeleteEvent } from '@/modules/events';
+import { useEvents, useDeleteEvent, useRestoreEvent } from '@/modules/events';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module categories - (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useCategories } from '@/modules/categories';
+import { useCategories, buildTree } from '@/modules/categories';
+import type { Category, CategoryNode } from '@/modules/categories';
 
 import { useColorSettings, usePriorityRange } from '@/modules/ui-states';
 import { useFriends, useCollaboratorsByTask } from '@/modules/friends';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+
+// ═══════════════════════════════════════════════════════════════════
+// Tâches d'équipe assignées — mode entreprise (item 4)
+// ═══════════════════════════════════════════════════════════════════
+import { useActiveOrganization } from '@/modules/organizations';
+import { useTeamTasks, type TeamTask } from '@/modules/team-projects';
+import { useTeamCategories } from '@/modules/team-categories';
+import { myAssignedTasks } from './organization/team-projects.helpers';
+import { formatDurationMinutes } from '@/lib/duration';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 type TaskSidebarProps = {
   onClose?: () => void;
   onDragStart?: () => void;
 };
 
-// Durée « 40 h » / « 1 h 30 min » / « 45 min » — cohérent avec la TaskCard
+// Durée « 40 h » / « 1 h 30 » / « 45 min », la même que la TaskCard
 // (bug B10 : la sidebar affichait « 2400 min » au lieu de « 40 h »).
 const formatDuration = (minutes: number | undefined): string => {
   if (!minutes || minutes <= 0) return '—';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m} min`;
-  if (m === 0) return `${h} h`;
-  return `${h} h ${String(m).padStart(2, '0')} min`;
+  return formatDurationMinutes(minutes);
 };
 
 const TUTORIAL_KEY = 'cosmo_agenda_tutorial_open';
 
 const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
-  const { t } = useT('agenda');
+  const { t, tp } = useT('agenda');
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -56,13 +63,28 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   // ═══════════════════════════════════════════════════════════════════
   const { data: events = [] } = useEvents();
   const deleteEventMutation = useDeleteEvent();
+  // « Annuler » de la suppression des evenements lies (C-43) : rend chaque
+  // evenement sous SON identifiant, comme le fait deja `useAgendaEventActions`.
+  const restoreEventMutation = useRestoreEvent();
   const deleteTaskMutation = useDeleteTask();
   const createTaskMutation = useCreateTask();
+  // « Annuler » d'une suppression de tache : SON identifiant, pas un neuf (R-08).
+  const restoreTaskMutation = useRestoreTask();
 
   // ═══════════════════════════════════════════════════════════════════
   // CATEGORIES - Depuis le module categories (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
   const { data: categories = [] } = useCategories();
+  // Ordre parent-puis-enfants pour l'indentation du <select> natif du filtre
+  // (aucun repli possible dans un <option>, cf. le commentaire au rendu).
+  const categoryOptionRows: Array<{ category: Category; depth: number }> = [];
+  const flattenCategoryOptions = (nodes: CategoryNode[], depth: number) => {
+    for (const node of nodes) {
+      categoryOptionRows.push({ category: node.category, depth });
+      flattenCategoryOptions(node.children, depth + 1);
+    }
+  };
+  flattenCategoryOptions(buildTree(categories), 0);
 
   const { colorSettings } = useColorSettings();
   const { priorityRange } = usePriorityRange();
@@ -72,9 +94,25 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   // propriétaire, propriétaire si je suis destinataire d'une tâche partagée.
   const collaboratorsByTask = useCollaboratorsByTask(user?.id);
 
+  // ═══════════════════════════════════════════════════════════════════
+  // TÂCHES D'ÉQUIPE ASSIGNÉES (mode entreprise) — scope à l'organisation
+  // ACTIVE, comme `useTodayItems` (src/modules/today/hooks.ts). `[]` sans
+  // organisation active : le hook reste inerte (`enabled: !!orgId`).
+  // ═══════════════════════════════════════════════════════════════════
+  const { activeOrg } = useActiveOrganization();
+  const orgId = activeOrg?.id;
+  const { data: allTeamTasks = [] } = useTeamTasks(orgId);
+  const { data: teamCategories = [] } = useTeamCategories(orgId);
+  const myTeamTasks = useMemo(
+    () => (user ? myAssignedTasks(allTeamTasks, user.id).filter((t) => !t.completed) : []),
+    [allTeamTasks, user],
+  );
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
+  /** Chips « Tout / Perso / Pro » — origine des tâches affichées. */
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'perso' | 'pro'>('all');
   const [showTutorial, setShowTutorialState] = useState<boolean>(() => {
     try { return localStorage.getItem(TUTORIAL_KEY) === '1'; } catch { return false; }
   });
@@ -83,9 +121,10 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
     try { localStorage.setItem(TUTORIAL_KEY, next ? '1' : '0'); } catch { /* ignore */ }
   }, []);
   const [selectedTaskForModal, setSelectedTaskForModal] = useState<Task | null>(null);
+  const [showCreateTask, setShowCreateTask] = useState(false);
 
   // ── Menu contextuel (long-press mobile / maintien-clic desktop) ──────────
-  const [contextMenu, setContextMenu] = useState<{ task: Task; x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFired = useRef(false);
   const pressStart = useRef<{ x: number; y: number } | null>(null);
@@ -119,6 +158,14 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
     }
   }, [cancelLongPress]);
 
+  // Ouverture du menu contextuel depuis le clic droit ou le bouton "..." de
+  // la carte (PersonalTaskCard) : marque `longPressFired` pour empêcher le
+  // `onClick` du parent d'ouvrir la modale d'édition juste après.
+  const openContextMenu = useCallback((task: Task, x: number, y: number) => {
+    longPressFired.current = true;
+    setContextMenu({ task, x, y });
+  }, []);
+
   // Ferme le menu sur clic extérieur / Échap / scroll.
   useEffect(() => {
     if (!contextMenu) return;
@@ -143,17 +190,24 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
     setContextMenu(null);
     deleteTaskMutation.mutate(task.id, {
       onSuccess: () => {
-        const { id: _id, createdAt: _ca, ...rest } = task;
-        showUndoToast(t('sidebar.taskDeleted'), () => { createTaskMutation.mutate(rest); });
+        showUndoToast(t('sidebar.taskDeleted'), () => { restoreTaskMutation.mutate(task); });
       },
     });
   };
 
+  const linkedEventCount = (taskId: string) => events.filter(ev => ev.taskId === taskId).length;
+
+  // C-43 — une entree de menu supprimait N evenements sans rien demander, sans
+  // rien dire et sans retour possible. On dit COMBIEN, et on offre « Annuler »,
+  // qui les rend sous LEURS identifiants (meme contrat que useAgendaEventActions).
   const handleDeleteLinkedEvent = (task: Task) => {
     setContextMenu(null);
     const linked = events.filter(ev => ev.taskId === task.id);
     if (linked.length === 0) return;
     linked.forEach(ev => deleteEventMutation.mutate(ev.id));
+    showUndoToast(tp('sidebar.linkedEventsDeleted', linked.length), () => {
+      linked.forEach(ev => restoreEventMutation.mutate(ev));
+    });
   };
 
   const handleDuplicateTask = (task: Task) => {
@@ -170,7 +224,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   };
 
   // Filter tasks (exclude completed ones and respect priority range)
-  const availableTasks = tasks.filter(task => 
+  const availableTasks = tasks.filter(task =>
     !task.completed &&
     task.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (filterCategory === '' || task.category === filterCategory) &&
@@ -179,9 +233,34 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
     (task.priority === 0 || (task.priority >= priorityRange[0] && task.priority <= priorityRange[1]))
   );
 
+  // Tâches d'équipe assignées — mêmes filtres de recherche/priorité que les
+  // tâches perso ; `filterCategory` référence un id de catégorie PERSO, donc
+  // il ne matche jamais une tâche d'équipe (sa catégorie vient d'une autre
+  // table) — comportement voulu : filtrer par catégorie perso exclut le pro.
+  const availableTeamTasks = filterCategory === '' ? myTeamTasks.filter(task =>
+    task.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (filterPriority === '' || task.priority.toString() === filterPriority) &&
+    (task.priority === 0 || (task.priority >= priorityRange[0] && task.priority <= priorityRange[1]))
+  ) : [];
+
+  type SidebarItem =
+    | { source: 'perso'; id: string; task: Task }
+    | { source: 'pro'; id: string; task: TeamTask };
+
+  const sidebarItems: SidebarItem[] = [
+    ...(sourceFilter !== 'pro' ? availableTasks.map((task): SidebarItem => ({ source: 'perso', id: task.id, task })) : []),
+    ...(sourceFilter !== 'perso' ? availableTeamTasks.map((task): SidebarItem => ({ source: 'pro', id: task.id, task })) : []),
+  ];
+
   const getCategoryColor = (category: string) => {
-    return categories.find(cat => cat.id === category)?.color || '#6B7280';
+    return categories.find(cat => cat.id === category)?.color || NO_CATEGORY_COLOR;
   };
+
+  const getTeamCategoryColor = (categoryId: string | null | undefined) =>
+    teamCategories.find(cat => cat.id === categoryId)?.color || NO_CATEGORY_COLOR;
+
+  const getTeamCategoryName = (categoryId: string | null | undefined) =>
+    teamCategories.find(cat => cat.id === categoryId)?.name || t('sidebar.uncategorized');
 
   const getPriorityColor = (priority: number) => {
     const colors = {
@@ -208,16 +287,21 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
       <div className="p-4 border-b" style={{ borderColor: 'rgb(var(--nav-border))' }}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('sidebar.title')}</h2>
-          {onClose && (
-            <button
-              onClick={onClose}
-              aria-label={t('sidebar.close')}
-              className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              style={{ color: 'rgb(var(--color-text-secondary))' }}
-            >
-              <X size={20} aria-hidden="true" />
-            </button>
-          )}
+          <div className="flex items-center gap-1">
+            {/* Le bouton d'ajout n'est plus ici : il vit maintenant en haut à
+                droite de la section où les tâches s'affichent (juste au-dessus
+                de la liste), à côté des chips Tout/Perso/Pro. */}
+            {onClose && (
+              <button
+                onClick={onClose}
+                aria-label={t('sidebar.close')}
+                className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                style={{ color: 'rgb(var(--color-text-secondary))' }}
+              >
+                <X size={20} aria-hidden="true" />
+              </button>
+            )}
+          </div>
         </div>
         
         {/* Search */}
@@ -252,8 +336,15 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
               }}
             >
               <option value="">{t('sidebar.allCategories')}</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>{category.name}</option>
+              {/* Un `<option>` natif ne peut porter ni icône ni bouton : un
+                  chevron repliable est impossible ici, contrairement aux
+                  autres sélecteurs de catégorie de l'app. Seule l'indentation
+                  (espaces insécables, `depth * 2`) reste possible pour
+                  signaler une sous-catégorie. */}
+              {categoryOptionRows.map(({ category, depth }) => (
+                <option key={category.id} value={category.id}>
+                  {'  '.repeat(depth)}{category.name}
+                </option>
               ))}
             </select>
             <ChevronDown size={16} className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none" style={{ color: 'rgb(var(--color-text-muted))' }} />
@@ -283,156 +374,99 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
         </div>
       </div>
 
+      {/* Barre « Tout / Perso / Pro » + ajout — au-dessus de la liste, pas
+          dans l'en-tête (déplacement demandé : le + reste près de ce sur
+          quoi il agit). */}
+      <div className="px-4 pt-3 pb-1 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1" role="group" aria-label={t('sidebar.sourceFilterAria')}>
+          {([
+            ['all', t('sidebar.sourceAll')],
+            ['perso', t('sidebar.sourcePerso')],
+            ['pro', t('sidebar.sourcePro')],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setSourceFilter(value)}
+              aria-pressed={sourceFilter === value}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                sourceFilter === value
+                  ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
+                  : 'hover:bg-[rgb(var(--color-hover))]'
+              }`}
+              style={sourceFilter === value ? undefined : { color: 'rgb(var(--color-text-secondary))' }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowCreateTask(true)}
+          aria-label={t('sidebar.addTask')}
+          title={t('sidebar.addTask')}
+          className="shrink-0 p-1.5 rounded-md hover:bg-[rgb(var(--color-hover))] transition-colors"
+          style={{ color: 'rgb(var(--color-text-secondary))' }}
+        >
+          <Plus size={20} aria-hidden="true" />
+        </button>
+      </div>
+
       {/* Tasks List Container for External Events */}
-      <div id="external-events-container" className="flex-1 overflow-y-auto p-4 space-y-3">
-        {availableTasks.length === 0 ? (
+      <div id="external-events-container" className="flex-1 overflow-y-auto p-4 pt-2 space-y-3">
+        {sidebarItems.length === 0 ? (
           <div className="text-center py-8" style={{ color: 'rgb(var(--color-text-muted))' }}>
             <Filter size={48} className="mx-auto mb-2" style={{ color: 'rgb(var(--color-text-muted))' }} />
             <p>{t('sidebar.noResults')}</p>
           </div>
         ) : (
-          availableTasks.map((task, idx) => {
+          sidebarItems.map((item, idx) => {
+            if (item.source === 'pro') {
+              const task = item.task;
+              return (
+                <TeamTaskCard
+                  key={task.id}
+                  task={task}
+                  categoryColor={getTeamCategoryColor(task.categoryId)}
+                  categoryName={getTeamCategoryName(task.categoryId)}
+                  priorityClassName={getPriorityColor(task.priority)}
+                  formatDuration={formatDuration}
+                  onDragStart={onDragStart}
+                  isFirst={idx === 0}
+                />
+              );
+            }
+
+            const task = item.task;
             const isPlaced = isTaskPlacedInCalendar(task.id);
 
             return (
-                  <div
-                    key={task.id}
-                    data-tutorial-id={idx === 0 ? 'agenda-first-task' : undefined}
-                    onClick={() => {
-                      // Un long-press vient d'ouvrir le menu : ne pas ouvrir la modale.
-                      if (longPressFired.current) { longPressFired.current = false; return; }
-                      setSelectedTaskForModal(task);
-                    }}
-                    onContextMenu={(e) => {
-                      // Clic droit (desktop) → menu contextuel.
-                      e.preventDefault();
-                      longPressFired.current = true;
-                      const x = Math.min(e.clientX, window.innerWidth - 220);
-                      const y = Math.min(e.clientY, window.innerHeight - 200);
-                      setContextMenu({ task, x: Math.max(8, x), y: Math.max(8, y) });
-                    }}
-                    className={`external-event rounded-lg p-3 border group select-none ${
-                      isPlaced ? 'opacity-50 cursor-not-allowed' : 'cursor-move hover:shadow-md'
-                    }`}
-                    style={{
-                      backgroundColor: isPlaced ? 'rgb(var(--color-hover))' : 'rgb(var(--color-surface))',
-                      borderColor: 'rgb(var(--color-border))',
-                      borderLeft: `4px solid ${getCategoryColor(task.category)}`,
-                      position: 'relative',
-                      // pan-y : permet le scroll vertical tactile de la liste sans
-                      // capturer le geste comme une sélection/drag (bug scroll mobile).
-                      touchAction: 'pan-y',
-                      transition: isPlaced ? 'none' : 'background-color 0.2s, border-color 0.2s, box-shadow 0.2s'
-                    }}
-
-                  onMouseEnter={(e) => !isPlaced && (e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))')}
-                    onMouseLeave={(e) => !isPlaced && (e.currentTarget.style.backgroundColor = 'rgb(var(--color-surface))')}
-                    onPointerDown={(e) => { if (!isPlaced) onDragStart?.(); startLongPress(e, task); }}
-                    onPointerMove={onPressMove}
-                    onPointerUp={cancelLongPress}
-                    onPointerCancel={cancelLongPress}
-                    data-task={JSON.stringify(task)}
-                  >
-                {isPlaced && (
-                  <div className="absolute inset-0 bg-black bg-opacity-10 rounded-lg flex items-center justify-center pointer-events-none">
-                    <div className="bg-[rgb(var(--color-surface))] rounded-full p-2 shadow-lg">
-                      <CheckCircle2 size={24} className="text-green-500" />
-                    </div>
-                  </div>
-                )}
-                
-                    <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div
-                        className="w-3 h-3 rounded-full shrink-0"
-                        style={{ backgroundColor: getCategoryColor(task.category) }}
-                      />
-                      <span className={`font-medium text-sm truncate ${isPlaced ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>{task.name}</span>
-                        {task.bookmarked && (
-                          <Bookmark size={14} className="favorite-icon filled shrink-0" />
-                        )}
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      {task.priority > 0 && (
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
-                          P{task.priority}
-                        </span>
-                      )}
-                      {(collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (
-                        <CollaboratorAvatars collaboratorIds={collaboratorsByTask.get(task.id) ?? []} friends={friends} size="sm" />
-                      )}
-                    </div>
-                  </div>
-
-                
-                <div className="flex items-center justify-between text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  <div className="flex items-center gap-1">
-                    <Clock size={12} />
-                    <span>{formatDuration(task.estimatedTime)}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs px-2 py-1 rounded border" style={{
-                      backgroundColor: 'rgb(var(--color-surface))',
-                      borderColor: 'rgb(var(--color-border))',
-                      color: 'rgb(var(--color-text-secondary))'
-                    }}>
-                      {colorSettings[task.category] || t('sidebar.uncategorized')}
-                    </span>
-                    {/* Point d'entrée VISIBLE vers le menu d'options (= long-press / clic droit).
-                        Toujours visible sur mobile, au survol sur desktop. */}
-                    <button
-                      type="button"
-                      aria-label={t('sidebar.taskOptions')}
-                      onPointerDown={(e) => { e.stopPropagation(); }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        longPressFired.current = true; // empêche l'ouverture de la modale par le onClick parent
-                        const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                        const x = Math.min(r.right - 200, window.innerWidth - 220);
-                        const y = Math.min(r.bottom + 4, window.innerHeight - 220);
-                        setContextMenu({ task, x: Math.max(8, x), y: Math.max(8, y) });
-                      }}
-                      className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md transition-opacity opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-[rgb(var(--color-hover))]"
-                      style={{ color: 'rgb(var(--color-text-muted))' }}
-                    >
-                      <MoreHorizontal size={16} />
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  {task.deadline
-                    ? t('sidebar.deadline', { date: formatDate(new Date(task.deadline)) })
-                    : t('sidebar.noDeadline')}
-                </div>
-                
-                {/* Drag indicator — masqué par défaut (n'occupe aucune place) et
-                    révélé au survol de la carte, pour supprimer l'espace vide
-                    sous la deadline hors survol. Animation grid-rows 0fr→1fr
-                    (+ fondu) pour une apparition/disparition progressive plutôt
-                    qu'un hidden/block abrupt. */}
-                {!isPlaced ? (
-                  <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-200 ease-out">
-                    <div className="overflow-hidden">
-                      <div
-                        className="mt-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-150 group-hover:delay-75"
-                        style={{ color: 'rgb(var(--color-accent))' }}
-                      >
-                        {t('sidebar.dragHint')}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-2 text-xs font-semibold" style={{ color: 'rgb(var(--color-success))' }}>
-                    ✓ Déjà planifiée
-                  </div>
-                )}
-              </div>
+              <PersonalTaskCard
+                key={task.id}
+                task={task}
+                isPlaced={isPlaced}
+                isFirst={idx === 0}
+                categoryColor={getCategoryColor(task.category)}
+                categoryLabel={colorSettings[task.category] || t('sidebar.uncategorized')}
+                priorityClassName={getPriorityColor(task.priority)}
+                collaboratorIds={collaboratorsByTask.get(task.id) ?? []}
+                friends={friends}
+                formatDuration={formatDuration}
+                onOpen={() => {
+                  // Un long-press vient d'ouvrir le menu : ne pas ouvrir la modale.
+                  if (longPressFired.current) { longPressFired.current = false; return; }
+                  setSelectedTaskForModal(task);
+                }}
+                onOpenContextMenu={(x, y) => openContextMenu(task, x, y)}
+                onDragStart={onDragStart}
+                onLongPressStart={(e) => startLongPress(e, task)}
+                onPressMove={onPressMove}
+                onPressEnd={cancelLongPress}
+              />
             );
           })
         )}
       </div>
-
       {/* Instructions */}
       {showTutorial ? (
         <div className="p-4 border-t relative group/tuto" style={{ borderColor: 'rgb(var(--nav-border))', backgroundColor: 'rgb(var(--color-hover))' }}>
@@ -473,57 +507,16 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
         </div>
       )}
 
-        {contextMenu && createPortal(
-          <div
-            className="fixed z-[9999] min-w-[200px] rounded-xl border shadow-2xl overflow-hidden py-1"
-            style={{
-              top: contextMenu.y,
-              left: contextMenu.x,
-              backgroundColor: 'rgb(var(--color-surface))',
-              borderColor: 'rgb(var(--color-border))',
-            }}
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={() => handleEditTask(contextMenu.task)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors hover:bg-[rgb(var(--color-hover))]"
-              style={{ color: 'rgb(var(--color-text-primary))' }}
-            >
-              <Pencil size={16} className="text-blue-500 shrink-0" />
-              {t('sidebar.editTask')}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDuplicateTask(contextMenu.task)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors hover:bg-[rgb(var(--color-hover))]"
-              style={{ color: 'rgb(var(--color-text-primary))' }}
-            >
-              <Copy size={16} className="text-blue-500 shrink-0" />
-              {t('sidebar.duplicateTask')}
-            </button>
-            {isTaskPlacedInCalendar(contextMenu.task.id) && (
-              <button
-                type="button"
-                onClick={() => handleDeleteLinkedEvent(contextMenu.task)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors hover:bg-[rgb(var(--color-hover))]"
-                style={{ color: 'rgb(var(--color-text-primary))' }}
-              >
-                <CalendarX size={16} className="text-orange-500 shrink-0" />
-                {t('sidebar.deleteLinkedEvent')}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => handleDeleteTask(contextMenu.task)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
-            >
-              <Trash2 size={16} className="shrink-0" />
-              {t('sidebar.deleteTask')}
-            </button>
-          </div>,
-          document.body
+        {contextMenu && (
+          <TaskContextMenu
+            contextMenu={contextMenu}
+            isLinkedToCalendar={isTaskPlacedInCalendar(contextMenu.task.id)}
+            linkedEventCount={linkedEventCount(contextMenu.task.id)}
+            onEdit={handleEditTask}
+            onDuplicate={handleDuplicateTask}
+            onDeleteLinkedEvents={handleDeleteLinkedEvent}
+            onDelete={handleDeleteTask}
+          />
         )}
 
         {selectedTaskForModal && (
@@ -533,6 +526,12 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
             onClose={() => setSelectedTaskForModal(null)}
           />
         )}
+
+        <TaskModal
+          isOpen={showCreateTask}
+          onClose={() => setShowCreateTask(false)}
+          isCreating={true}
+        />
       </div>
     );
   };

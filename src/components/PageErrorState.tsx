@@ -2,7 +2,7 @@ import React from 'react';
 import { useT } from '@/i18n/useT';
 
 interface PageErrorStateProps {
-  /** Ce qui n'a pas pu charger : « les tâches », « l'agenda », « les OKR »… */
+  /** Ce qui n'a pas pu charger, DÉJÀ TRADUIT : « l'agenda », « les OKR »… */
   subject: string;
   error?: Error | null;
   onRetry: () => void;
@@ -15,14 +15,21 @@ interface PageErrorStateProps {
  */
 const PageErrorState: React.FC<PageErrorStateProps> = ({ subject, error, onRetry }) => {
   const { t } = useT('common');
+  // ❌ Le message brut du backend ne s'affiche JAMAIS (règle « faille V7 »,
+  // déjà appliquée dans SettingsPage) : il nomme des tables, des contraintes
+  // ou des policies, et il est en anglais quelle que soit la langue de l'app.
+  // On le journalise pour le diagnostic, on montre une phrase traduite.
+  React.useEffect(() => {
+    if (error) console.error('[PageErrorState]', subject, error);
+  }, [error, subject]);
   return (
     <div className="p-4 sm:p-8 flex flex-col items-center justify-center min-h-[60vh] text-center gap-4">
       <div className="text-5xl" aria-hidden="true">⚠️</div>
       <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">
-        Impossible de charger {subject}
+        {t('pageError.title', { subject })}
       </h2>
       <p className="text-sm text-[rgb(var(--color-text-secondary))] max-w-md">
-        {error?.message || t('pageError.hint')}
+        {t('pageError.hint')}
       </p>
       <button
         onClick={onRetry}

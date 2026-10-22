@@ -1,8 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Outlet, NavLink, useMatch, useResolvedPath, useLocation } from 'react-router';
+import { Outlet, useLocation, useNavigate } from 'react-router';
 import { useLastVisitedPage } from '@/modules/ui-states';
 import { useTasks } from '@/modules/tasks';
-import { prefetchRoute } from '@/lib/route-prefetch';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import {
   LayoutDashboard,
@@ -17,33 +16,52 @@ import {
   ChevronLeft,
   ChevronRight,
   Building2,
-  Plus } from
+  Plus,
+  Bug,
+  Check } from
   'lucide-react';
 import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import { usePendingRequestCount } from '@/modules/friends';
 import { useActiveOrganization } from '@/modules/organizations';
 import { useOrgNotificationCount } from '@/lib/hooks/use-org-notifications';
-import OrgSwitcher from '@/components/organization/OrgSwitcher';
-import { useActiveModules } from '@/modules/ui-states';
 import MobileTabBar from './layout/MobileTabBar';
 import DemoConversionBanner from './DemoConversionBanner';
+import OfflineBanner from './OfflineBanner';
+import DemoBridgePrompt from './DemoBridgePrompt';
 import GlobalNavShortcuts from './GlobalNavShortcuts';
+import InviteOrJoinModal from './organization/InviteOrJoinModal';
 import DeadlineReminder from './DeadlineReminder';
 import SyncStatusIndicator from './SyncStatusIndicator';
+import SkipLink, { MAIN_CONTENT_ID } from './SkipLink';
+import PersoGuideFab from './perso-guide/PersoGuideFab';
+import { isDueToday } from '@/lib/deadline';
+import { readJson, safeSetItem } from '@/lib/safe-json';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { readFirstRunDone } from './onboarding/first-run';
 
 // Quick-add global — lazy : ne se charge qu'au premier rendu du Layout.
 const QuickAddBar = lazy(() => import('./QuickAddBar'));
 // Rappel habitudes du soir (#24) — lazy également.
-const HabitEveningReminder = lazy(() => import('./HabitEveningReminder'));
 // Aide raccourcis clavier (#48) — touche « ? ».
 const ShortcutsHelp = lazy(() => import('./ShortcutsHelp'));
-// Tâches d'exemple au premier login (#49) — headless.
-const OnboardingExampleTasks = lazy(() => import('./OnboardingExampleTasks'));
+// Accueil du premier compte (T-23, planétaire du 2026-10-03). Son catalogue
+// `onboarding` voyage AVEC lui (`lazyWithRetry`, hôte déclaré dans
+// `scripts/i18n-shell-namespaces.mjs`), et il n'est même pas téléchargé une
+// fois l'accueil vu sur cet appareil (`firstRunDone`, plus bas).
+const FirstRunSetup = lazyWithRetry(() => import('./onboarding/FirstRunSetup'), ['onboarding', 'overlays']);
+// Formulaire « Signaler un bug » — lazy : la très grande majorité des
+// sessions ne l'ouvre jamais, son chunk n'a pas à peser sur le Layout.
+const BugReportModal = lazy(() => import('./BugReportModal'));
 
 // Détection plateforme pour afficher le bon badge de raccourci (⌘K vs Ctrl K).
 const IS_MAC =
@@ -63,87 +81,8 @@ const CHART_COLORS = {
   habits: '#eab308',
 } as const;
 
-interface NavItemLinkProps {
-  to: string;
-  label: string;
-  icon: React.ReactNode;
-  hoverColor: string;
-  collapsed: boolean;
-  onMouseEnterExtra?: () => void;
-  badge?: number;
-  /** 'alert' = pastille rouge (notifications) ; 'neutral' = compteur sobre (#49). */
-  badgeVariant?: 'alert' | 'neutral';
-  /**
-   * Libellé accessible COMPLET du badge, compte inclus.
-   *
-   * i18n — l'appelant fournit la chaîne entière (via `tp()`) plutôt qu'un
-   * fragment que ce composant concaténerait à `badge`. Un `${n} ${label}` codé
-   * ici imposerait l'ordre « nombre puis texte » à toutes les langues et
-   * empêcherait tout accord au pluriel.
-   */
-  badgeAriaLabel?: string;
-  end?: boolean;
-}
-
-const NavItemLink: React.FC<NavItemLinkProps> = ({
-  to,
-  label,
-  icon,
-  hoverColor,
-  collapsed,
-  onMouseEnterExtra,
-  badge,
-  badgeVariant = 'alert',
-  badgeAriaLabel,
-  end,
-}) => {
-  const [iconHovered, setIconHovered] = useState(false);
-  const [groupHovered, setGroupHovered] = useState(false);
-  const resolved = useResolvedPath(to);
-  const match = useMatch({ path: resolved.pathname, end: end ?? false });
-  const isActive = !!match;
-  const isColored = iconHovered || groupHovered || isActive;
-
-  return (
-    <NavLink
-      to={to}
-      end={end}
-      className={({ isActive }) =>
-        `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : ''}`
-      }
-      style={groupHovered ? { transform: 'translateX(8px) scale(1.15)' } : undefined}
-      onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); prefetchRoute(to); }}
-      onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
-    >
-      <div
-        className="nav-item-icon min-w-[20px] flex items-center justify-center relative"
-        onMouseEnter={() => setIconHovered(true)}
-        onMouseLeave={() => setIconHovered(false)}
-        style={{
-          transition: 'transform 0.2s ease, color 0.2s ease',
-          transform: (iconHovered || groupHovered) ? 'scale(1.2)' : 'scale(1)',
-          color: isColored ? hoverColor : undefined,
-        }}
-      >
-        {icon}
-        {badge !== undefined && badge > 0 && (
-          <span
-            aria-label={badgeAriaLabel}
-            className={`absolute ${collapsed ? '-top-1 -right-1' : '-top-2 -right-2'} ${
-              badgeVariant === 'alert'
-                ? 'bg-red-500 text-white'
-                : 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] border border-[rgb(var(--color-border))]'
-            } text-[10px] rounded-full ${collapsed ? 'min-w-4 h-4' : 'min-w-5 h-5'} px-1 flex items-center justify-center`}
-          >
-            {badge}
-          </span>
-        )}
-      </div>
-      {!collapsed && <span className="ml-3 truncate">{label}</span>}
-    </NavLink>
-  );
-};
-
+import NavItemLink from './layout/NavItemLink';
+import { PAGE_RIGHT_RAIL_ID } from './layout/page-right-rail';
 // Titres d'onglet par route (#15) — « Tâches – Cosmo » plutôt qu'un titre
 // statique : retrouvable parmi les onglets du navigateur.
 //
@@ -166,27 +105,105 @@ const PAGE_TITLE_KEYS: Record<string, KeyOf<'common'>> = {
   '/entreprise': 'nav.enterprise',
 };
 
+// Sections entreprise (`/entreprise/projects`) : « Projets – Entreprise – Cosmo ».
+// `billing` n'a pas d'entrée ici : il retombe sur « Entreprise – Cosmo ».
+const ORG_SECTION_TITLE_KEYS: Record<string, KeyOf<'org'>> = {
+  '/entreprise/tasks': 'tabs.tasks',
+  '/entreprise/projects': 'tabs.projects',
+  '/entreprise/okr': 'tabs.okr',
+  '/entreprise/stats': 'tabs.stats',
+  '/entreprise/pyramid': 'tabs.pyramid',
+  '/entreprise/members': 'tabs.members',
+};
+
+/**
+ * ── Maquette 83 : le FAB ne recouvre plus le contenu ──────────────────────
+ *
+ * Le FAB global était rendu par une liste NOIRE (« partout sauf dashboard,
+ * habitudes, OKR »). Une liste noire accueille par défaut toute route future,
+ * et c'est ce qui l'avait posé sur des pages où « créer une tâche » n'a aucun
+ * sens. Mesuré le 2026-09-19 en 390 × 844, thème Gris :
+ *
+ * - `/settings` : le FAB recouvre le bouton **Sauvegarder** du formulaire de
+ *   profil. L'action principale d'un écran était cachée sous une action qui
+ *   n'appartient pas à cet écran.
+ * - `/statistics` : il recouvre une valeur du graphique, sur une page de
+ *   LECTURE, qui ne crée rien.
+ * - `/premium`, `/admin`, `/entreprise` : même chose, sans le dommage visible.
+ *
+ * D'où une liste BLANCHE : le FAB n'existe que là où créer une tâche est
+ * l'action attendue. `/habits` et `/okr` n'y sont pas parce qu'ils portent
+ * DÉJÀ leur propre FAB dédié (z-30) ; ce FAB-ci (z-40) passait au-dessus et
+ * interceptait leurs taps.
+ *
+ * ❌ Ne pas revenir à une liste noire : une route ajoutée demain hériterait
+ * d'un bouton que personne n'a décidé d'y mettre.
+ */
+// `/tasks` en est sorti le 2026-10-10 (maquette 150) : son « + » vit dans la
+// barre de recherche du bas (`MobileTaskSearch`), une couche flottante de moins.
+const FAB_ROUTES = new Set(['/agenda']);
+
 const Layout: React.FC = () => {
   const { t, tp } = useT('common');
+  const { t: tOrg } = useT('org');
   const isMobile = useIsMobile();
   const pendingRequestCount = usePendingRequestCount();
   const orgNotificationCount = useOrgNotificationCount();
   // Entrée « Entreprise » visible uniquement pour les membres d'une organisation.
-  const { activeOrg: myOrg, organizations } = useActiveOrganization();
+  const { activeOrg: myOrg, organizations, setActiveOrgId, isLoading: orgLoading, wasOrgMember } =
+    useActiveOrganization();
+  // Place RÉSERVÉE pendant que la requête vole, si cet appareil a déjà vu cet
+  // utilisateur dans une organisation. Sans ça, la barre se peignait sans
+  // l'entrée puis la faisait apparaître, et tout ce qui suit sautait d'une
+  // ligne à chaque chargement de page. L'indice ne débloque rien : la route
+  // redirige toujours si `activeOrg` est nul une fois la requête résolue.
+  const showOrgEntry = !!myOrg || (orgLoading && wasOrgMember);
+  const navigate = useNavigate();
   // Compteur de tâches restantes aujourd'hui (#49) — badge neutre sur l'item
   // Tâches. La disparition du badge (0 restant) est la récompense.
   const { data: allTasks = [] } = useTasks();
-  const todayStr = new Date().toLocaleDateString('en-CA');
   const tasksDueTodayCount = allTasks.filter(
-    (t) => !t.completed && t.deadline && t.deadline.slice(0, 10) === todayStr
+    (t) => !t.completed && isDueToday(t.deadline)
   ).length;
-  const activeModules = useActiveModules();
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    const saved = localStorage.getItem('sidebar-collapsed');
-    return saved ? JSON.parse(saved) : false;
-  });
+  // Cet initialiseur s'exécute EN PHASE DE RENDU, et `Layout` est le parent de
+  // toutes les pages protégées : ce qui lève ici ne remonte dans aucun
+  // `onError`, ça remonte à l'`AppErrorBoundary`. Mesuré le 2026-09-03 (audit
+  // A-7) : une valeur non-JSON, OU un navigateur qui refuse le stockage
+  // (navigation privée stricte), rendaient « Une erreur inattendue s'est
+  // produite » sur toute l'app authentifiée — et « Rafraîchir la page », seule
+  // sortie proposée, relisait la même clé et rendait le même écran.
+  // Un repli d'agrément ne doit jamais pouvoir fermer le produit (règle B14).
+  const [isCollapsed, setIsCollapsed] = useState(
+    () => readJson<boolean>('sidebar-collapsed') ?? false,
+  );
+  // « + » de la nav : inviter un ami / rejoindre une entreprise avec un code.
+  // Monte dans `globalOverlays`, donc partage par les rendus mobile ET desktop.
+  const [inviteOpen, setInviteOpen] = useState(false);
+  // Lu une fois par montage : l'écran lui-même relit le drapeau et pose le
+  // verrou. Ce test ne sert qu'à épargner son chunk et son catalogue aux
+  // personnes déjà accueillies, soit presque tout le monde.
+  const [firstRunDone] = useState(readFirstRunDone);
+  // « Signaler un bug » — même schéma que le « + » ci-dessus : l'état vit ici,
+  // la feuille « Plus » du mobile l'ouvre par événement custom.
+  const [bugOpen, setBugOpen] = useState(false);
+
+  // La feuille « Plus » du mobile vit sous MobileTabBar, plusieurs niveaux
+  // sous cet etat. Meme convention que la palette de commandes : un evenement
+  // custom, plutot qu un contexte de plus pour un seul booleen.
   useEffect(() => {
-    localStorage.setItem('sidebar-collapsed', JSON.stringify(isCollapsed));
+    const open = () => setInviteOpen(true);
+    window.addEventListener("open-invite-join", open);
+    return () => window.removeEventListener("open-invite-join", open);
+  }, []);
+  useEffect(() => {
+    const open = () => setBugOpen(true);
+    window.addEventListener('open-bug-report', open);
+    return () => window.removeEventListener('open-bug-report', open);
+  }, []);
+  useEffect(() => {
+    // Même raison qu'à la lecture : une exception dans un effet remonte elle
+    // aussi à la frontière d'erreur, pas dans un `catch` d'appelant.
+    safeSetItem('sidebar-collapsed', JSON.stringify(isCollapsed));
   }, [isCollapsed]);
 
   // Raccourci « [ » : replie/déplie la sidebar (#14) — convention Linear.
@@ -209,12 +226,21 @@ const Layout: React.FC = () => {
   useEffect(() => {
     setLastVisitedPage(location.pathname);
   }, [location.pathname, setLastVisitedPage]);
+  // Maquette 83 — cf. FAB_ROUTES.
+  const showGlobalFab = FAB_ROUTES.has(location.pathname);
 
   // Titre d'onglet par page (#15).
   useEffect(() => {
     const key = PAGE_TITLE_KEYS[location.pathname];
-    document.title = key ? t('nav.documentTitle', { page: t(key) }) : 'Cosmo';
-  }, [location.pathname, t]);
+    const orgKey = ORG_SECTION_TITLE_KEYS[location.pathname];
+    if (orgKey) {
+      document.title = t('nav.documentTitle', { page: `${tOrg(orgKey)} – ${t('nav.enterprise')}` });
+    } else if (location.pathname.startsWith('/entreprise/')) {
+      document.title = t('nav.documentTitle', { page: t('nav.enterprise') });
+    } else {
+      document.title = key ? t('nav.documentTitle', { page: t(key) }) : 'Cosmo';
+    }
+  }, [location.pathname, t, tOrg]);
 
 const NavItems = () =>
   <>
@@ -222,41 +248,81 @@ const NavItems = () =>
         hoverColor="#94a3b8" collapsed={isCollapsed} badge={pendingRequestCount}
         badgeAriaLabel={tp('nav.badge.pendingRequest', pendingRequestCount)} end />
 
-      <NavItemLink to="/tasks" label={t('nav.tasks')} icon={<CheckSquare size={20} aria-hidden="true" />}
+      <NavItemLink to="/tasks" guideId="perso-nav-tasks" label={t('nav.tasks')} icon={<CheckSquare size={20} aria-hidden="true" />}
         hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed}
         badge={tasksDueTodayCount} badgeVariant="neutral"
         badgeAriaLabel={tp('nav.badge.taskDueToday', tasksDueTodayCount)} />
 
-      {activeModules.agenda && (
-        <NavItemLink to="/agenda" label={t('nav.agenda')} icon={<Calendar size={20} aria-hidden="true" />}
+      <NavItemLink to="/agenda" guideId="perso-nav-agenda" label={t('nav.agenda')} icon={<Calendar size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.events} collapsed={isCollapsed} />
-      )}
 
-      {activeModules.okr && (
-        <NavItemLink to="/okr" label={t('nav.okr')} icon={<Target size={20} aria-hidden="true" />}
+      <NavItemLink to="/okr" guideId="perso-nav-okr" label={t('nav.okr')} icon={<Target size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.okrs} collapsed={isCollapsed} />
-      )}
 
-      {activeModules.habits && (
-        <NavItemLink to="/habits" label={t('nav.habits')} icon={<Repeat size={20} aria-hidden="true" />}
+      <NavItemLink to="/habits" guideId="perso-nav-habits" label={t('nav.habits')} icon={<Repeat size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
-      )}
 
-      {activeModules.statistics && (
-        <NavItemLink to="/statistics" label={t('nav.statistics')} icon={<BarChart2 size={20} aria-hidden="true" />}
+      <NavItemLink to="/statistics" label={t('nav.statistics')} icon={<BarChart2 size={20} aria-hidden="true" />}
           hoverColor="#8b5cf6" collapsed={isCollapsed} />
+
+      {showOrgEntry && (
+        <NavItemLink to="/entreprise" label={t('nav.enterprise')} icon={<Building2 size={20} aria-hidden="true" />}
+          hoverColor="#6366f1" collapsed={isCollapsed}
+          badge={orgNotificationCount}
+          badgeAriaLabel={tp('nav.badge.orgNotification', orgNotificationCount)}
+          // Plusieurs organisations : le clic ouvre le choix au lieu de naviguer
+          // directement (une seule icône « Entreprise » dans la nav — #plan).
+          menuContent={organizations.length > 1 ? (
+            <>
+              <DropdownMenuLabel>{tOrg('switcher.myOrgs')}</DropdownMenuLabel>
+              {organizations.map((org) => (
+                <DropdownMenuItem
+                  key={org.id}
+                  onClick={() => { setActiveOrgId(org.id); navigate('/entreprise'); }}
+                >
+                  <span className="truncate">{org.name}</span>
+                  <span className="ml-auto flex items-center gap-1.5">
+                    {org.myRole === 'admin' && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                        {tOrg('common.adminBadge')}
+                      </span>
+                    )}
+                    {org.id === myOrg?.id && <Check size={14} aria-hidden="true" />}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/entreprise/onboarding')}>
+                <Plus size={14} aria-hidden="true" /> {tOrg('switcher.createOrJoin')}
+              </DropdownMenuItem>
+            </>
+          ) : undefined} />
       )}
 
-      {myOrg && (
-        <>
-          <NavItemLink to="/entreprise" label={t('nav.enterprise')} icon={<Building2 size={20} aria-hidden="true" />}
-            hoverColor="#6366f1" collapsed={isCollapsed}
-            badge={orgNotificationCount}
-            badgeAriaLabel={tp('nav.badge.orgNotification', orgNotificationCount)} />
-          {/* Switcher multi-org — affiché seulement si plusieurs entreprises */}
-          {organizations.length > 1 && <OrgSwitcher collapsed={isCollapsed} />}
-        </>
-      )}
+      {/* « + » — inviter un ami / rejoindre une entreprise avec un code.
+          Monte INCONDITIONNELLEMENT, que l'entree « Entreprise » ci-dessus
+          soit affichee ou non : c'est justement le point d'entree de
+          quelqu'un qui n'appartient encore a aucune organisation. */}
+      {/* Alignement : memes classes que NavItemLink, plus une largeur explicite.
+          Les autres entrees sont des <a> — elements de bloc qui REMPLISSENT la
+          largeur disponible. Un <button> non : l'UA le reduit a son contenu,
+          et l'icone se retrouvait 8 px a cote de la colonne formee par les
+          autres. `w-full` ne marche pas ici : `.sidebar-item` pose
+          `margin: 0.25rem 0.5rem`, et une marge s'ajoute EN DEHORS de la
+          largeur — le bouton depassait alors de 16 px, decale de 8 px vers la
+          droite. Le `1rem` soustrait est donc exactement ces deux marges. */}
+      <button
+        type="button"
+        onClick={() => setInviteOpen(true)}
+        title={tOrg('inviteJoin.navAria')}
+        aria-label={tOrg('inviteJoin.navAria')}
+        className={`sidebar-item w-[calc(100%-1rem)] ${isCollapsed ? 'justify-center px-0' : '!ml-1 !py-[0.7rem]'}`}
+      >
+        <div className="nav-item-icon min-w-[20px] flex items-center justify-center">
+          <Plus size={20} aria-hidden="true" />
+        </div>
+        {!isCollapsed && <span className="truncate">{tOrg('inviteJoin.navLabel')}</span>}
+      </button>
     </>;
 
 
@@ -273,12 +339,31 @@ const NavItems = () =>
         hoverColor="#94a3b8" collapsed={isCollapsed} />
     </>;
 
+  // « Signaler un bug » — plus une entrée de nav pleine largeur : une simple
+  // icône, accolée à SyncStatusIndicator sur la même ligne (cf. rendu
+  // desktop ci-dessous). Taille alignée sur l'icône du sync (13px).
+  const BugReportButton = () => (
+    <button
+      type="button"
+      onClick={() => setBugOpen(true)}
+      title={t('nav.bugReport')}
+      aria-label={t('nav.bugReport')}
+      className="flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 transition-colors"
+    >
+      <Bug size={13} aria-hidden="true" />
+    </button>
+  );
+
 
   // Composants globaux montés dans les DEUX variantes du Layout (mobile a son
   // propre return early — sans ce bloc partagé, quick-add/rappel/onboarding
   // n'existaient tout simplement pas sur mobile).
   const globalOverlays = (
     <>
+      {/* Pont démo → compte : proposé au visiteur démo engagé (90 s ou 3ᵉ
+          création). Monté ici pour n'exister qu'une fois, mobile et desktop
+          partageant ce fragment. */}
+      <DemoBridgePrompt />
       {/* Quick-add global (touche N / FAB éclair) — lazy */}
       <Suspense fallback={null}>
         <QuickAddBar />
@@ -287,14 +372,27 @@ const NavItems = () =>
       <Suspense fallback={null}>
         <ShortcutsHelp />
       </Suspense>
-      {/* Tâches d'exemple au premier login prod (#49) */}
-      <Suspense fallback={null}>
-        <OnboardingExampleTasks />
-      </Suspense>
+      {/* Premier écran d'un compte réel et vide (T-23) */}
+      {!firstRunDone && (
+        <Suspense fallback={null}>
+          <FirstRunSetup />
+        </Suspense>
+      )}
       {/* Raccourcis « g puis lettre » (#44) */}
       <GlobalNavShortcuts />
       {/* Rappel deadlines du jour à l'ouverture (#30) — headless, 1×/jour */}
       <DeadlineReminder />
+      <InviteOrJoinModal open={inviteOpen} onOpenChange={setInviteOpen} />
+      {/* Signalement de bug — monté ici, donc disponible depuis la sidebar
+          desktop ET la feuille « Plus » du mobile, sur toutes les pages. */}
+      {/* Rendu conditionnel et pas seulement `open={bugOpen}` : un composant
+          `lazy()` toujours rendu télécharge son chunk au montage du Layout,
+          ce qui annule tout l'intérêt du lazy. */}
+      {bugOpen && (
+        <Suspense fallback={null}>
+          <BugReportModal open onOpenChange={setBugOpen} />
+        </Suspense>
+      )}
     </>
   );
 
@@ -304,45 +402,54 @@ const NavItems = () =>
         className="flex flex-col h-[100dvh] overflow-hidden"
         style={{ backgroundColor: 'rgb(var(--color-background))' }}
       >
+        {/* Lien d'évitement (WCAG 2.4.1) — premier arrêt de tabulation. */}
+        <SkipLink targetId={MAIN_CONTENT_ID} label={t('nav.skipToContent')} />
         {/* Bannière conversion démo → compte (#9) */}
-        <DemoConversionBanner />
+        <OfflineBanner />
+        {/* Maquette 222 (2026-10-10) : sur mobile, plus de bandeau « Mode démo »
+            en tête de chaque page (une ligne de liste en permanence) ; la
+            mention vit dans la feuille « Plus » (`MobileMoreSheet`). */}
         {/* État sync mobile (#37) — visible uniquement hors ligne / en cours */}
         <div className="fixed top-2 right-2 z-40 rounded-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] px-2.5 py-1 shadow-sm empty:hidden">
           <SyncStatusIndicator hideWhenSynced />
         </div>
         <main
-          className="flex-1 overflow-auto pb-20"
+          id={MAIN_CONTENT_ID}
+          tabIndex={-1}
+          // Agenda : le SEUL scroll voulu est celui interne à FullCalendar
+          // (`.fc-scroller`). `overflow-y-auto` ici en faisait un second —
+          // seul l'overflow change pour l'agenda.
+          //
+          // `pb-20` reste constant (dégage la tab bar `fixed`).
+          //
+          // ⚠️ Maquette 83 : NE PAS y ajouter de padding pour le FAB. Chaque
+          // page qui en porte un réserve déjà `64px + safe-area + 88px` en bas
+          // (TasksPage, HabitsPage, OKRPage) : le faire une seconde fois ici
+          // empilerait 232 px de vide en fin de liste. Le seul endroit où le
+          // FAB recouvrait vraiment du contenu était `/settings`, qui ne
+          // réserve rien — et qui n'a plus de FAB du tout.
+          className={`flex-1 overflow-x-hidden pb-20 focus:outline-none ${
+            location.pathname === '/agenda' ? 'overflow-hidden' : 'overflow-y-auto'
+          }`}
           style={{ backgroundColor: 'rgb(var(--color-background))' }}
         >
-          {/* Rappel habitudes de fin de journée (#24) — opt-in dans Réglages */}
-          <Suspense fallback={null}>
-            <HabitEveningReminder />
-          </Suspense>
           <Outlet />
         </main>
-        {/* FAB de capture rapide global (#43) — au-dessus de la tab bar, sur
-            toutes les pages protégées SAUF le Dashboard (déjà un widget
-            "Tâches prioritaires" en haut, pas besoin d'un raccourci flottant
-            en plus), et SAUF Habitudes/OKR qui ont déjà leur propre FAB dédié
-            (même position, z-30) — le garder ici les rendait inutilisables :
-            ce FAB (z-40) passait au-dessus et interceptait tous les taps,
-            ouvrant la capture rapide générique au lieu du bon modal. */}
-        {location.pathname !== '/dashboard' && location.pathname !== '/habits' && location.pathname !== '/okr' && (
+        {/* FAB de capture rapide global (#43) — au-dessus de la tab bar.
+            Maquette 83 : LISTE BLANCHE, plus liste noire. */}
+        {showGlobalFab && (
           <button
             type="button"
             onClick={() => {
-              // Sur /tasks, la capture rapide (QuickAddBar) n'est pas la bonne
-              // popup : on ouvre le formulaire de création complet, comme le
-              // bouton « Nouvelle tâche » du desktop. TasksPage écoute cet
-              // événement. Ailleurs, capture rapide globale inchangée.
-              const evt = location.pathname === '/tasks' ? 'open-task-create'
-                : location.pathname === '/agenda' ? 'open-agenda-create'
+              // Sur /agenda, la création d'évènement ; ailleurs, la capture
+              // rapide globale. (`/tasks` a son « + » dans sa barre du bas.)
+              const evt = location.pathname === '/agenda' ? 'open-agenda-create'
                 : 'open-quick-add';
               window.dispatchEvent(new CustomEvent(evt));
             }}
             data-tutorial-id="global-quick-add-fab"
             aria-label={t('nav.createTask')}
-            className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center active:scale-95 transition-transform"
+            className={`fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center active:scale-95 transition-transform`}
             style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
           >
             <Plus size={26} aria-hidden="true" />
@@ -356,15 +463,19 @@ const NavItems = () =>
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+      {/* Lien d'évitement (WCAG 2.4.1) — premier arrêt de tabulation, il saute
+          la barre latérale entière (logo, thème, recherche, dix entrées de
+          nav, état de sync, signalement de bug). */}
+      <SkipLink targetId={MAIN_CONTENT_ID} label={t('nav.skipToContent')} />
       {/* Sidebar */}
       <aside
-        className={`${isCollapsed ? 'w-20' : 'w-64'} relative transition-all duration-300 ease-in-out nav-container border-r flex flex-col group`}>
+        className={`${isCollapsed ? 'w-20' : 'w-[205px]'} relative transition-all duration-300 ease-in-out nav-container border-r flex flex-col group`}>
 
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 border rounded-full shadow-sm hover:shadow-md z-50 md:opacity-40 md:group-hover:opacity-100 opacity-100 hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-opacity"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 bg-[rgb(var(--color-surface))] border rounded-full shadow-sm hover:shadow-md z-50 md:opacity-40 md:group-hover:opacity-100 opacity-100 hover:text-[rgb(var(--color-accent-solid))] hover:border-[rgb(var(--color-accent-solid-hover))] transition-opacity"
           style={{ borderColor: 'rgb(var(--nav-border))' }}
           title={t('nav.sidebar.toggleTitle')}
           aria-label={isCollapsed ? t('nav.sidebar.expand') : t('nav.sidebar.collapse')}
@@ -377,15 +488,21 @@ const NavItems = () =>
             <Logo showText={!isCollapsed} />
           </div>
 
-            {/* Thème + Recherche (loupe juste en dessous) */}
-            <div className="mt-6 flex flex-col items-center gap-3 w-full">
+            {/* Thème + Recherche : côte à côte quand la nav est ouverte,
+                empilés (repliés au centre) quand elle est réduite. */}
+            <div className={`mt-6 flex items-center gap-3 w-full ${isCollapsed ? 'flex-col' : 'flex-row justify-center'}`}>
               <ThemeToggle />
+              {/* Raccourci Ctrl/Cmd+K : masqué sous `lg`. C'est une affordance
+                  purement clavier — elle n'a aucun sens sur un écran tactile,
+                  où la barre latérale s'affiche encore (entre 768 et 1024 px)
+                  alors qu'il n'y a pas de clavier. La palette reste ouvrable au
+                  clavier partout où un clavier existe. */}
               <button
                 type="button"
                 onClick={openCommandPalette}
                 aria-label={t('nav.search.ariaLabel', { shortcut: IS_MAC ? 'Cmd+K' : 'Ctrl+K' })}
                 title={t('nav.search.title', { shortcut: IS_MAC ? '⌘K' : 'Ctrl K' })}
-                className="p-3 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]/40"
+                className="hidden lg:block p-3 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]/40"
               >
                 <Search size={18} className="text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
               </button>
@@ -400,9 +517,11 @@ const NavItems = () =>
         <div className={`border-t ${isCollapsed ? 'p-2' : 'p-4'}`} style={{ borderColor: 'rgb(var(--nav-border))' }}>
           {!isCollapsed && <div className="text-xs font-semibold uppercase mb-4 px-2 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('nav.sectionOther')}</div>}
           {CompanyItems()}
-          {/* État de synchronisation (#37) */}
-          <div className={`mt-3 ${isCollapsed ? 'flex justify-center' : 'px-2'}`}>
+          {/* État de synchronisation (#37) + signaler un bug, sur la même
+              ligne : deux indicateurs secondaires, pas deux entrées de nav. */}
+          <div className={`mt-3 flex items-center gap-2 ${isCollapsed ? 'justify-center' : 'justify-between px-2'}`}>
             <SyncStatusIndicator compact={isCollapsed} />
+            <BugReportButton />
           </div>
         </div>
       </aside>
@@ -412,16 +531,23 @@ const NavItems = () =>
         {/* Bannière conversion démo → compte (#9) */}
         <DemoConversionBanner />
         <main
-          className="flex-1 overflow-auto relative"
+          id={MAIN_CONTENT_ID}
+          tabIndex={-1}
+          className="flex-1 overflow-y-auto overflow-x-hidden relative focus:outline-none"
           style={{ backgroundColor: 'rgb(var(--color-background))' }}>
 
-          {/* Rappel habitudes de fin de journée (#24) — opt-in dans Réglages */}
-          <Suspense fallback={null}>
-            <HabitEveningReminder />
-          </Suspense>
           <Outlet />
         </main>
       </div>
+
+      {/* Navigation propre à une page, collée au bord droit de la fenêtre et
+          hors de la zone qui défile (cf. page-right-rail.ts). Vide, il ne
+          prend aucune place. */}
+      <div id={PAGE_RIGHT_RAIL_ID} className="flex shrink-0" />
+
+      {/* Guide perso (boussole), desktop seulement. `/entreprise` a le sien
+          au même endroit (`OrgGuideFab`) : deux boussoles s'y superposeraient. */}
+      {!location.pathname.startsWith('/entreprise') && <PersoGuideFab />}
 
       {globalOverlays}
     </div>);

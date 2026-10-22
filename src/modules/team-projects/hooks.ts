@@ -2,19 +2,28 @@
 // TEAM-PROJECTS MODULE - React Query hooks
 // ═══════════════════════════════════════════════════════════════════
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from '@/lib/toast';
 import { getTeamProjectsRepository } from '@/lib/repository.factory';
-import { validateOrThrow } from '@/lib/validation/validate';
-import { createTeamProjectSchema, updateTeamProjectSchema, createTeamTaskSchema, updateTeamTaskSchema } from './team-task.schema';
-import { teamProjectKeys } from './constants';
-import type { CreateTeamProjectInput, UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters } from './types';
+import { validateAsync } from '@/lib/validation/lazy';
+import { teamProjectKeys, TEAM_TASKS_READ_LIMIT } from './constants';
+import type { UpdateTeamSubtaskInput } from './types';
+import type { UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters, TeamProject } from './types';
 import { translator } from '@/i18n/useT';
+import { dependencyErrorCode } from '@/modules/tasks/dependency-errors';
 
 const useRepo = () => getTeamProjectsRepository();
 
 // ─── Read ────────────────────────────────────────────────────────────
 
+/**
+ * Projets de l'organisation, archivés compris, MODÈLES EXCLUS (mig. 153).
+ *
+ * Un modèle est une ligne de `team_projects` : sans ce filtre, il apparaîtrait
+ * dans chaque sélecteur de projet, chaque statistique et la palette de
+ * commandes comme un projet en cours. Les modèles se lisent par
+ * `useTeamProjectTemplates`, sur la MÊME clé de cache (une seule requête).
+ */
 export const useTeamProjects = (orgId: string | undefined) => {
   const repository = useRepo();
   return useQuery({
@@ -24,10 +33,68 @@ export const useTeamProjects = (orgId: string | undefined) => {
     staleTime: 1000 * 60 * 5,
     // Donnée partagée : au retour sur l'onglet, on resynchronise (reco #12).
     refetchOnWindowFocus: true,
+    select: selectRealProjects,
   });
 };
 
-export const useTeamTasks = (orgId: string | undefined, filters?: TeamTaskFilters) => {
+const selectRealProjects = (projects: TeamProject[]) => projects.filter((p) => !p.isTemplate);
+const selectTemplates = (projects: TeamProject[]) => projects.filter((p) => p.isTemplate && !p.archivedAt);
+
+/** Modèles de projet de l'organisation (mig. 153), hors archivés. */
+export const useTeamProjectTemplates = (orgId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.projects(orgId ?? ''),
+    queryFn: () => repository.getProjects(orgId as string),
+    enabled: !!orgId,
+    staleTime: 1000 * 60 * 5,
+    select: selectTemplates,
+  });
+};
+
+/**
+ * Tâches d'équipe de l'organisation.
+ *
+ * `live` distingue les deux usages, exactement comme `useOrgMembers` — et pour
+ * la même raison, en plus cher.
+ *
+ * Ce hook est monté par des surfaces PERMANENTES (`CommandPalette`, `TaskTable`,
+ * la vue « Aujourd'hui »), pas seulement par /entreprise. Un `refetchInterval`
+ * inconditionnel faisait donc payer à tout membre d'une organisation une lecture
+ * org-wide de `team_tasks` toutes les 20 s, sur TOUTES les pages, sans que
+ * personne ne regarde la liste — et c'est la lecture la plus chère du produit
+ * (prédicat RLS non indexable, cf. `SCALABILITY.md` §2 et mig. 113).
+ *
+ * Par défaut : pas de sondage, `refetchOnWindowFocus` suffit (le retour d'onglet
+ * est le bon déclencheur — garde-fou egress, CLAUDE.md § synchronisation de la
+ * collaboration). `live: true` est réservé aux écrans de /entreprise où l'on
+ * REGARDE la liste et où l'on attend de voir une tâche arriver.
+ *
+ * Le cache étant partagé (même `queryKey`), il suffit qu'UN observateur demande
+ * `live` pour que la donnée reste fraîche pour tous les autres montés en même
+ * temps : le sondage suit donc l'écran affiché, pas le nombre de consommateurs.
+ *
+ * `background` est le symétrique de `live`, pour l'usage inverse : un
+ * consommateur qui n'AFFICHE pas la liste et n'en dérive qu'un compteur.
+ * Il en existe un seul, mais c'est le pire possible — `useOrgBadges`, monté par
+ * `Layout`, donc sur TOUTES les pages protégées, pour tout membre d'une
+ * organisation. Avec la politique par défaut, chaque retour d'onglet et chaque
+ * navigation espacée de plus de 30 s relançait la lecture la plus chère du
+ * produit (`get_my_team_tasks`, cf. SCALABILITY.md §2) pour repeindre une
+ * pastille. Le compteur ne perd rien à attendre : sa source qui fait autorité
+ * est la boîte de réception (`unreadNotifications`), tenue à jour en Realtime
+ * par `useOrgInboxRealtime` ; les tâches ne servent que de filet pour les
+ * organisations d'avant la mig. 095.
+ *
+ * ⚠️ `background` n'éteint rien pour les autres : `staleTime` et
+ * `refetchOnWindowFocus` sont PAR OBSERVATEUR. Sur /entreprise, les écrans qui
+ * regardent la liste gardent leur politique, et c'est la leur qui déclenche.
+ */
+export const useTeamTasks = (
+  orgId: string | undefined,
+  filters?: TeamTaskFilters,
+  options?: { live?: boolean; background?: boolean },
+) => {
   const repository = useRepo();
   return useQuery({
     // Le cache est indexé sur l'org ; le filtrage se fait côté client dans l'UI
@@ -35,8 +102,9 @@ export const useTeamTasks = (orgId: string | undefined, filters?: TeamTaskFilter
     queryKey: teamProjectKeys.tasks(orgId ?? ''),
     queryFn: () => repository.getTasks(orgId as string),
     enabled: !!orgId,
-    refetchInterval: 20_000,
-    refetchOnWindowFocus: true,
+    staleTime: options?.background ? 1000 * 60 * 5 : 1000 * 30,
+    ...(options?.live ? { refetchInterval: 20_000 } : {}),
+    refetchOnWindowFocus: !options?.background,
     select: filters
       ? (tasks) =>
           tasks.filter((tk) => {
@@ -49,52 +117,130 @@ export const useTeamTasks = (orgId: string | undefined, filters?: TeamTaskFilter
   });
 };
 
-// ─── Mutations ───────────────────────────────────────────────────────
-
-export const useCreateTeamProject = (orgId: string) => {
-  const queryClient = useQueryClient();
+/**
+ * « Ensemble de travail » d'une organisation : toutes les tâches OUVERTES, plus
+ * celles terminées depuis `since` (ISO). `since = null` rend la lecture complète
+ * de `useTeamTasks`, sous la même clé de cache.
+ *
+ * Pourquoi un hook séparé : `useTeamTasks` lit les 1 000 dernières tâches
+ * CRÉÉES, terminées comprises, et filtre ensuite côté client. Passé ce volume,
+ * une vieille tâche encore ouverte sortait de « Mes tâches », et les
+ * statistiques se calculaient sur un extrait (audit du 2026-09-24). Ici le tri
+ * se fait côté serveur, AVANT le plafond : ce qui reste est ce dont l'écran a
+ * besoin, et le plafond ne coupe plus que du travail réellement en cours.
+ *
+ * ⚠️ `since` doit être STABLE d'un rendu à l'autre (un début de jour, pas
+ * `new Date()`) : il entre dans la clé de cache. La clé est un sous-chemin de
+ * `teamProjectKeys.tasks(orgId)`, donc les invalidations existantes des
+ * mutations la couvrent sans rien ajouter.
+ */
+export const useTeamTaskWorkingSet = (
+  orgId: string | undefined,
+  since: string | null,
+  options?: { live?: boolean },
+) => {
   const repository = useRepo();
-  return useMutation({
-    mutationFn: (input: CreateTeamProjectInput) => {
-      const valid = validateOrThrow(createTeamProjectSchema, input);
-      return repository.createProject(orgId, valid);
-    },
-    onSuccess: () => {
-      toast.success(translator('errors').t('success.projectCreated'));
-      queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
-    },
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.createProject', { message: error.message })),
+  return useQuery({
+    queryKey: since
+      ? [...teamProjectKeys.tasks(orgId ?? ''), 'working-set', since]
+      : teamProjectKeys.tasks(orgId ?? ''),
+    queryFn: () =>
+      repository.getTasks(orgId as string, since ? { openOrCompletedSince: since } : undefined),
+    enabled: !!orgId,
+    staleTime: 1000 * 30,
+    ...(options?.live ? { refetchInterval: 20_000 } : {}),
+    refetchOnWindowFocus: true,
   });
 };
+
+/**
+ * Ensemble de travail PAGINÉ (mig. 191, « lectures côté serveur ») : même
+ * lecture que `useTeamTaskWorkingSet`, par pages de `TEAM_TASKS_READ_LIMIT`,
+ * dans l'ordre serveur (création décroissante, puis id). Au-delà de mille
+ * tâches, l'écran montrait un bandeau « liste tronquée » et rien d'autre :
+ * les suivantes étaient lisibles par personne. `fetchNextPage` les charge.
+ *
+ * La clé est un sous-chemin de `teamProjectKeys.tasks(orgId)` : toute mutation
+ * de tâche l'invalide déjà, et React Query relit alors CHAQUE page chargée.
+ */
+export const useTeamTaskPages = (
+  orgId: string | undefined,
+  since: string | null,
+  options?: { live?: boolean },
+) => {
+  const repository = useRepo();
+  return useInfiniteQuery({
+    queryKey: [...teamProjectKeys.tasks(orgId ?? ''), 'pages', since ?? 'all'],
+    queryFn: ({ pageParam }) =>
+      repository.getTasks(orgId as string, {
+        ...(since ? { openOrCompletedSince: since } : {}),
+        limit: TEAM_TASKS_READ_LIMIT,
+        offset: pageParam,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.length < TEAM_TASKS_READ_LIMIT ? undefined : pages.length * TEAM_TASKS_READ_LIMIT,
+    enabled: !!orgId,
+    staleTime: 1000 * 30,
+    ...(options?.live ? { refetchInterval: 20_000 } : {}),
+    refetchOnWindowFocus: true,
+  });
+};
+
+/**
+ * Lecture CIBLÉE : le serveur filtre, trie et plafonne avant de répondre.
+ *
+ * C'est la lecture de l'Aperçu (audit du 2026-09-24). Il lisait tout
+ * l'ensemble de travail de l'organisation, plafonné à 1 000 lignes, pour n'en
+ * garder que MES tâches : dans une grande organisation, une tâche à moi
+ * pouvait tomber sous le plafond et disparaître de mon propre écran d'accueil.
+ * Ici chaque bloc demande ses lignes (`assigneeId: moi`, « les 20 prochaines
+ * échéances »…), et le plafond ne s'applique qu'à elles.
+ *
+ * ⚠️ Les filtres entrent dans la clé de cache : ils doivent être STABLES d'un
+ * rendu à l'autre (dates figées au début du jour, `ids` triés). La clé est un
+ * sous-chemin de `teamProjectKeys.tasks(orgId)`, donc toute mutation de tâche
+ * l'invalide déjà.
+ */
+export const useTeamTaskSlice = (
+  orgId: string | undefined,
+  filters: TeamTaskFilters,
+  options?: { live?: boolean; enabled?: boolean },
+) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: [...teamProjectKeys.tasks(orgId ?? ''), 'slice', filters],
+    queryFn: () => repository.getTasks(orgId as string, filters),
+    enabled: !!orgId && (options?.enabled ?? true),
+    staleTime: 1000 * 30,
+    ...(options?.live ? { refetchInterval: 20_000 } : {}),
+    refetchOnWindowFocus: true,
+  });
+};
+
+// ─── Mutations ───────────────────────────────────────────────────────
+
+// 🗑️ `useCreateTeamProject` retiré le 2026-09-25 : un projet ne se crée plus
+// que par LE formulaire (`OrgCreateForms`), qui passe par
+// `useCreateTeamProjectWithTasks` (une transaction). Les champs « nom seul »
+// qui l'appelaient créaient des projets gris, sans équipe ni responsable.
 
 export const useUpdateTeamProject = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: ({ projectId, input }: { projectId: string; input: UpdateTeamProjectInput }) => {
-      const valid = validateOrThrow(updateTeamProjectSchema, input);
+    mutationFn: async ({ projectId, input }: { projectId: string; input: UpdateTeamProjectInput }) => {
+      const valid = await validateAsync('teamProject.update', input);
       return repository.updateProject(projectId, valid as UpdateTeamProjectInput);
     },
     onSuccess: (_project, { input }) => {
-      if (input.archived === true) toast.success(translator('errors').t('success.projectArchived'));
-      else if (input.archived === false) toast.success(translator('errors').t('success.projectRestored'));
+      // Archiver ne toaste PLUS ici : l'écran qui archive montre un toast
+      // « Annuler » (audit Projets, 2026-09-24), et deux toasts pour un geste
+      // en feraient un de trop.
+      if (input.archived === false) toast.success(translator('errors').t('success.projectRestored'));
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de modifier le projet : ${error.message}`),
-  });
-};
-
-export const useArchiveTeamProject = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: (projectId: string) => repository.archiveProject(projectId),
-    onSuccess: () => {
-      toast.success(translator('errors').t('success.projectArchived'));
-      queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
-      queryClient.invalidateQueries({ queryKey: teamProjectKeys.tasks(orgId) });
-    },
-    onError: (error: Error) => toast.error(`Impossible d'archiver le projet : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateProject', { message: error.message })),
   });
 };
 
@@ -102,8 +248,8 @@ export const useCreateTeamTask = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: (input: CreateTeamTaskInput) => {
-      const valid = validateOrThrow(createTeamTaskSchema, input);
+    mutationFn: async (input: CreateTeamTaskInput) => {
+      const valid = await validateAsync('teamTask.create', input);
       return repository.createTask(orgId, valid as CreateTeamTaskInput);
     },
     onSuccess: () => {
@@ -117,8 +263,8 @@ export const useUpdateTeamTask = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: ({ taskId, input }: { taskId: string; input: UpdateTeamTaskInput }) => {
-      const valid = validateOrThrow(updateTeamTaskSchema, input);
+    mutationFn: async ({ taskId, input }: { taskId: string; input: UpdateTeamTaskInput }) => {
+      const valid = await validateAsync('teamTask.update', input);
       return repository.updateTask(taskId, valid as UpdateTeamTaskInput);
     },
     onSuccess: () => {
@@ -135,8 +281,50 @@ export const useDeleteTeamTask = (orgId: string) => {
     mutationFn: (taskId: string) => repository.deleteTask(taskId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.tasks(orgId) });
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.trash(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de supprimer la tâche : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteTask', { message: error.message })),
+  });
+};
+
+/**
+ * Sort une tâche de la corbeille (mig. 152). C'est le « Annuler » de toutes
+ * les suppressions : la tâche revient À L'IDENTIQUE, avec son statut, sa
+ * catégorie, ses sous-tâches, ses dépendances, ses commentaires et son
+ * historique. L'ancien « Annuler » recréait une tâche neuve avec sept champs.
+ */
+export const useRestoreTeamTask = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (taskId: string) => repository.restoreTask(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.tasks(orgId) });
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.trash(orgId) });
+    },
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.restoreTask', { message: error.message })),
+  });
+};
+
+/** Suppression définitive d'une tâche à la corbeille (admin, mig. 193). */
+export const usePurgeTeamTask = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (taskId: string) => repository.purgeTask(taskId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: teamProjectKeys.trash(orgId) }),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.purgeTask', { message: error.message })),
+  });
+};
+
+/** La corbeille de l'organisation : ce que l'appelant peut restaurer (30 jours). */
+export const useTeamTrash = (orgId: string | undefined, enabled = true) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.trash(orgId ?? ''),
+    queryFn: () => repository.getTrash(orgId as string),
+    enabled: !!orgId && enabled,
+    staleTime: 0,
   });
 };
 
@@ -162,7 +350,7 @@ export const useAddTeamTaskComment = (taskId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.comments(taskId) });
     },
-    onError: (error: Error) => toast.error(`Impossible d'ajouter le commentaire : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.addComment', { message: error.message })),
   });
 };
 
@@ -174,6 +362,167 @@ export const useDeleteTeamTaskComment = (taskId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.comments(taskId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de supprimer le commentaire : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteComment', { message: error.message })),
+  });
+};
+
+// ─── Sous-tâches (mig. 092) ──────────────────────────────────────────
+
+export const useTeamSubtasks = (taskId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.subtasks(taskId ?? ''),
+    queryFn: () => repository.getSubtasks(taskId as string),
+    enabled: !!taskId,
+    staleTime: 1000 * 15,
+  });
+};
+
+/**
+ * Les trois mutations invalident la même clé plutôt que de patcher le cache :
+ * `position` est réattribuée côté serveur à la création, une mise à jour
+ * optimiste ferait donc scintiller l'ordre de la liste.
+ */
+export const useCreateTeamSubtask = (taskId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (input: { title: string; position?: number }) =>
+      repository.createSubtask({ taskId, title: input.title, position: input.position }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.subtasks(taskId) });
+    },
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.addSubtask', { message: error.message })),
+  });
+};
+
+export const useUpdateTeamSubtask = (taskId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ subtaskId, input }: { subtaskId: string; input: UpdateTeamSubtaskInput }) =>
+      repository.updateSubtask(subtaskId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.subtasks(taskId) });
+    },
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateSubtask', { message: error.message })),
+  });
+};
+
+export const useDeleteTeamSubtask = (taskId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (subtaskId: string) => repository.deleteSubtask(subtaskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.subtasks(taskId) });
+    },
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteSubtask', { message: error.message })),
+  });
+};
+
+// 🗑️ Les SIX hooks d'etiquettes d'equipe (mig. 093) ont ete supprimes le
+// 2026-09-05 (C-49) : `useTeamLabels`, `useTeamTaskLabels`, `useCreateTeamLabel`,
+// `useUpdateTeamLabel`, `useDeleteTeamLabel`, `useToggleTaskLabel`. Une
+// fonctionnalite ENTIERE — hooks, cles de cache, methodes des deux
+// repositories — livree sans qu'aucun ecran ne la monte.
+//
+// Rebranches le 2026-09-25 (fiche de tache, filtre), puis retires DE NOUVEAU
+// du mode entreprise le 2026-09-28 a la demande d Axel. Meme regle : les tables
+// restent, seul le front part.
+//
+// ⚠️ La TABLE `team_labels` et sa jonction RESTENT en base : supprimer des
+// donnees pour du code mort serait irreversible, et la mig. 093 est appliquee
+// en prod. Le jour ou les etiquettes reviennent, le back-end est la ; c'est
+// le front qui se reecrira, contre un ecran.
+
+// ─── Historique (mig. 094) — lecture seule ───────────────────────────
+
+/**
+ * Journal de l'organisation depuis `since` — revue hebdomadaire (#26).
+ *
+ * `since` doit être STABLE d'un rendu à l'autre : il entre dans la clé de
+ * cache, et une borne recalculée à chaque rendu (`new Date()`) créerait une
+ * entrée de cache par rendu, donc une requête par rendu.
+ */
+export const useOrgActivity = (orgId: string | undefined, since: string) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.orgActivity(orgId ?? '', since),
+    queryFn: () => repository.getOrgActivity(orgId as string, since),
+    enabled: !!orgId,
+    staleTime: 1000 * 60,
+  });
+};
+
+// 🗑️ `useTeamTaskActivity` supprime le 2026-09-05 (C-49) : le journal PAR
+// TACHE n'etait monte par aucun ecran. `useOkrActivity`/`useOrgActivity`
+
+// ci-dessus, lui, sert la revue hebdomadaire — le journal reste lisible.
+// ─── Dépendances entre tâches (mig. 108) ─────────────────────────────
+
+/**
+ * Toutes les arêtes de l'organisation, en une requête.
+ *
+ * Même raison que `useTeamTaskLabels` : le chemin critique se calcule sur un
+ * projet entier et le surlignage s'applique à chaque carte affichée — une
+ * requête par tâche multiplierait les allers-retours par le nombre de cartes.
+ */
+export const useTeamTaskDependencies = (orgId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.dependencies(orgId ?? ''),
+    queryFn: () => repository.getTaskDependencies(orgId as string),
+    enabled: !!orgId,
+    staleTime: 1000 * 30,
+  });
+};
+
+/**
+ * Message d'un refus de dépendance d'équipe (C-48).
+ *
+ * Un refus NOMMÉ est rendu tel quel — c'est déjà une phrase de catalogue,
+ * actionnable. Avant, la phrase anglaise du `RAISE` (mig. 108/109) ne matchait
+ * pas `BUSINESS_CODE_RE` : le refus retombait sur le message générique en
+ * production, et arrivait en anglais dans le gabarit français en démo.
+ *
+ * ⚠️ « tâche introuvable » et « tâche hors périmètre » rendent volontairement
+ * le MÊME texte : les distinguer rouvrirait l'oracle d'existence refermé par
+ * la mig. 109.
+ */
+const dependencyErrorMessage = (error: Error): string => {
+  const code = dependencyErrorCode(error);
+  if (code) return translator('errors').t(`api.${code}` as never);
+  return translator('org').t('projects.dependencyFailed', { message: error.message });
+};
+
+export const useAddTaskDependency = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ taskId, dependsOnId }: { taskId: string; dependsOnId: string }) =>
+      repository.addTaskDependency(taskId, dependsOnId, orgId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.dependencies(orgId) });
+    },
+    // Le refus le plus courant est un CYCLE, rejeté par le trigger (mig. 108).
+    // On remonte le message tel quel plutôt qu'un « une erreur est survenue » :
+    // l'utilisateur peut agir sur un cycle, pas sur une erreur anonyme.
+    onError: (error: Error) =>
+      toast.error(dependencyErrorMessage(error)),
+  });
+};
+
+export const useRemoveTaskDependency = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ taskId, dependsOnId }: { taskId: string; dependsOnId: string }) =>
+      repository.removeTaskDependency(taskId, dependsOnId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.dependencies(orgId) });
+    },
+    onError: (error: Error) =>
+      toast.error(dependencyErrorMessage(error)),
   });
 };

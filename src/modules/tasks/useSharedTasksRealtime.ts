@@ -34,9 +34,14 @@
 // ═══════════════════════════════════════════════════════════════════
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+// Sentry n'est PLUS importe statiquement : il est charge apres le premier
+// rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
+// tamponne ce qui arrive avant le chargement.
+import * as monitoring from '@/lib/monitoring';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { taskKeys } from './constants';
+import { friendKeys } from '@/modules/friends/constants';
 
 /**
  * Abonne la session courante aux partages de tâches la concernant et invalide
@@ -55,30 +60,75 @@ export function useSharedTasksRealtime(userId: string | undefined): void {
 
     const invalidate = () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+      // Même événement, même vérité : une ligne de `shared_tasks` qui bouge
+      // change AUSSI la boîte de réception et les avatars de collaborateurs
+      // (`useRelatedTaskShares`). Cette liste se sondait toutes les 20 s alors
+      // que le canal qui porte l'information était déjà ouvert, juste à côté.
+      // On importe la clé du module `friends` plutôt que d'ouvrir un second
+      // canal : un canal Realtime est un WebSocket, pas un abonnement gratuit.
+      queryClient.invalidateQueries({ queryKey: friendKeys.relatedTaskShares() });
+      // Même événement encore : une ligne de `shared_tasks` qui bouge change la
+      // liste des tâches REÇUES en attente (`usePendingSharedTasks`, montée par
+      // `InboxMenu`). C'était le dernier sondage permanent de l'app.
+      queryClient.invalidateQueries({ queryKey: taskKeys.pendingShared() });
     };
 
-    const channel = supabase
-      .channel(`shared-tasks:${userId}`)
-      // Destinataire : quelqu'un vient de me partager (ou de me retirer) une tâche.
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'shared_tasks', filter: `friend_id=eq.${userId}` },
-        invalidate,
-      )
-      // Émetteur : l'état de mes propres partages a changé (acceptation, retrait).
-      // Utile pour rafraîchir les marqueurs de collaboration sur MES tâches.
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'shared_tasks', filter: `shared_by=eq.${userId}` },
-        invalidate,
-      )
-      .subscribe();
+    // ⚠️ `subscribe()` construit un WebSocket, et le constructeur `WebSocket`
+    // LÈVE de façon SYNCHRONE dans les navigateurs qui les bloquent :
+    // « SecurityError: The operation is insecure » (navigation privée, blocage
+    // total des données de site, protection anti-pistage stricte — Safari et
+    // Firefox notamment).
+    //
+    // Ce hook étant monté dans `App.tsx`, AU-DESSUS de tout boundary de page,
+    // cette exception démontait l'application ENTIÈRE : écran noir en thème
+    // sombre, page blanche en clair, à CHAQUE visite depuis ce navigateur — et
+    // plus aucun bouton pour se déconnecter. C'est la cause des symptômes
+    // « écran noir à la connexion sur mobile » et « page blanche automatique ».
+    //
+    // Le temps réel est un CONFORT, pas une dépendance : `useTasks` garde son
+    // sondage de secours à 5 min. Une connexion impossible doit donc dégrader
+    // la synchronisation, jamais empêcher l'application de démarrer.
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`shared-tasks:${userId}`)
+        // Destinataire : quelqu'un vient de me partager (ou de me retirer) une tâche.
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'shared_tasks', filter: `friend_id=eq.${userId}` },
+          invalidate,
+        )
+        // Émetteur : l'état de mes propres partages a changé (acceptation, retrait).
+        // Utile pour rafraîchir les marqueurs de collaboration sur MES tâches.
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'shared_tasks', filter: `shared_by=eq.${userId}` },
+          invalidate,
+        )
+        .subscribe();
+    } catch (err) {
+      // Remonté en `warning` et non en erreur : l'app fonctionne, elle est
+      // simplement moins réactive. Le savoir reste utile pour mesurer combien
+      // d'utilisateurs sont dans ce cas.
+      console.warn('[realtime] canal indisponible, repli sur le sondage', err);
+      monitoring.captureException(err, {
+        level: 'warning',
+        tags: { context: 'realtime-websocket-unavailable' },
+      });
+      return;
+    }
 
     return () => {
       // `removeChannel` ferme l'abonnement ET libère le socket s'il ne reste
       // aucun canal — indispensable pour ne pas fuir une connexion à chaque
       // changement d'utilisateur sur un appareil partagé.
-      void supabase.removeChannel(channel);
+      const opened = channel;
+      if (!opened) return;
+      try {
+        void supabase.removeChannel(opened);
+      } catch {
+        /* le socket n'a jamais existé — rien à libérer */
+      }
     };
   }, [userId, isDemo, queryClient]);
 }

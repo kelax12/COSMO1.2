@@ -12,8 +12,6 @@ export const FAVORITE_COLORS_KEY = 'cosmo_favorite_colors';
 export const PRIORITY_RANGE_KEY = 'cosmo_priority_range';
 export const TASK_SORT_PREFS_KEY = 'cosmo_task_sort_prefs';
 export const LAST_VISITED_PAGE_KEY = 'cosmo_last_visited_page';
-export const HABIT_REMINDER_KEY = 'cosmo_habit_reminder_enabled';
-
 /** Clé de tri utilisée quand aucune liste n'est sélectionnée. */
 export const SORT_PREF_ALL_TASKS_KEY = '__all__';
 
@@ -39,4 +37,21 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
   'cat-3': 'Santé',
   'cat-4': 'Apprentissage',
   'cat-5': 'Projets',
+};
+
+/**
+ * Overlay anglais — ce registre est un DOUBLON du nom de catégorie (déjà
+ * porté par `src/modules/categories/repository.ts`, seeded en localStorage et
+ * localisé via `seed-i18n.ts`), gardé ici pour compat descendante. Sans cette
+ * variante, un visiteur anglophone voyait « Travail »/« Projets » dans le
+ * panneau « Tâches disponibles » de l'Agenda alors que le reste de l'app
+ * (filtre catégories, tâches, OKR) était bien en anglais — cf.
+ * `useColorSettings()`, seul point de lecture de ce registre.
+ */
+export const DEFAULT_COLOR_SETTINGS_EN: ColorSettings = {
+  'cat-1': 'Work',
+  'cat-2': 'Personal',
+  'cat-3': 'Health',
+  'cat-4': 'Learning',
+  'cat-5': 'Projects',
 };

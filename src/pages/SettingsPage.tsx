@@ -1,34 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   User, LogOut,
-  HelpCircle, Monitor, Camera,
-  Mail, ChevronRight, Repeat, BarChart3, Keyboard, Clock, Languages,
-  Calendar, Target, BarChart2,
+  HelpCircle, Camera,
+  Mail, ChevronRight, BarChart3,
 } from 'lucide-react';
-import { useTimezonePref, clampOffsetHours } from '@/lib/timezone';
-import { ShortcutsList } from '../components/keyboard-shortcuts';
+import { ShortcutsList } from '@/components/keyboard-shortcuts';
 import { useIsAdmin } from '@/modules/admin';
-import { useHabitReminderPref } from '@/modules/ui-states';
 import { useNavigate } from 'react-router';
-import { useAuth } from '../modules/auth/AuthContext';
-import { useUpdateUserSettings } from '../modules/user';
-import ThemeToggle from '../components/ThemeToggle';
-import LocaleToggle from '../components/LocaleToggle';
+import { useAuth } from '@/modules/auth/AuthContext';
+import ThemeToggle from '@/components/ThemeToggle';
+import LocaleToggle from '@/components/LocaleToggle';
 import { SUPPORTED_LOCALES } from '@/i18n/locale';
 import { useT } from '@/i18n/useT';
-import {
-  OPTIONAL_MODULES,
-  type ModuleKey,
-  useActiveModules,
-  activeModulesStore,
-} from '@/modules/ui-states';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-import { getCurrentUser } from '@/lib/auth-user';
-import { sanitizeEmail, isValidEmail } from '@/lib/email';
-import { validateAvatarFile, computeAvatarDimensions, canvasToAvatarBlob, uploadAvatar } from '@/lib/avatar-upload';
-import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
+import { TAP_AREA_44_Y, TAP_AREA_44_ANCRE } from '@/components/mobile/tap-area';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +24,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "../components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 
 // Atomes présentationnels + nav extraits dans ./settings/primitives.
 // Onglet « Mes données » extrait dans ./settings/DataTab.
@@ -50,36 +36,89 @@ import {
   SectionCard,
 } from './settings/primitives';
 import { DataTab } from './settings/DataTab';
+import TimezoneSection from './settings/TimezoneSection';
+import MobileSettingsHome, { MobileSettingsBack, MobileThemeList, type MobileSettingsPage } from './settings/MobileSettingsHome';
+import ReplayTutorialsCard from './settings/ReplayTutorialsCard';
+import { useAvatarActions } from './settings/useAvatarUpload';
+import { useAccountActions } from './settings/useAccountActions';
 import OrganizationSettingsCard from '@/components/organization/OrganizationSettingsCard';
 import { PageHeading } from '@/components/ui/typography';
+import { MobileHeader } from '@/components/mobile';
+import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 
 /* ─── main component ───────────────────────────────────────────── */
 const SettingsPage: React.FC = () => {
-  const { habitReminderEnabled, setHabitReminderEnabled } = useHabitReminderPref();
-
   // `tCommon` et non `t` : le reste de cette page n'est pas encore extrait,
   // le nom explicite évite toute ambiguïté quand elle le sera.
   const { t: tCommon } = useT('common');
   const { t } = useT('settings');
-  const { user, logout, isDemo } = useAuth();
-  const { pref: tzPref, setMode: setTzMode, setOffsetHours: setTzOffset } = useTimezonePref();
+  const { user, logout, isDemo, updateDemoProfile } = useAuth();
   const isAdmin = useIsAdmin();
-  const updateUserSettings = useUpdateUserSettings();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  // Mobile (maquette 205) : `null` = l'accueil en liste groupée.
+  const [mobilePage, setMobilePage] = useState<MobileSettingsPage | null>(null);
+  const openMobile = (page: MobileSettingsPage | null) => {
+    setMobilePage(page);
+    if (page && page !== 'timezone' && page !== 'org') setActiveTab(page);
+    window.scrollTo(0, 0);
+  };
+  const showTabContent = !isMobile || (mobilePage !== null && mobilePage !== 'timezone' && mobilePage !== 'org');
+  // Sous prefers-reduced-motion, l'exit d'un onglet ne signale jamais sa fin
+  // à AnimatePresence (bug Framer Motion) : le panneau sortant reste dans le
+  // DOM (invisible mais toujours focusable) et bloque le nouvel onglet en
+  // mode="wait". Sans `exit`/`initial`, le montage/démontage redevient
+  // synchrone — comportement identique à un rendu conditionnel classique.
+  const prefersReducedMotion = useReducedMotion();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [savingPassword, setSavingPassword] = useState(false);
-  const [deletingAccount, setDeletingAccount] = useState(false);
-
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
-  const [confirmConfig, setConfirmConfig] = useState<{
-    isOpen: boolean; title: string; description: string; onConfirm: () => void;
-    variant: 'default' | 'destructive'; showInput?: boolean; confirmationText?: string;
-  }>({ isOpen: false, title: '', description: '', onConfirm: () => {}, variant: 'default' });
-  const [confirmInput, setConfirmInput] = useState('');
+  const { handleAvatarUpload, removeAvatarEverywhere } = useAvatarActions({
+    isDemo,
+    updateDemoProfile,
+    t,
+  });
+
+  // Third-party (OAuth) accounts manage their email upstream (e.g. Google) —
+  // editing it here is locked. Native email/password (and demo) accounts can
+  // change their email inline. `provider` comes from Supabase app_metadata.
+  const isThirdParty = !isDemo && !!user?.provider && user.provider !== 'email';
+
+  // Les cinq gestes qui touchent au compte, et l'unique boîte de confirmation
+  // qu'ils partagent — cf. `useAccountActions` pour les deux règles de sécurité
+  // qu'ils portent (vérification de l'ancien mot de passe, révocation des
+  // autres sessions).
+  const {
+    savingProfile,
+    savingPassword,
+    deletingAccount,
+    confirmConfig,
+    closeConfirm,
+    confirmInput,
+    setConfirmInput,
+    saveProfile,
+    updatePassword,
+    deleteAccount,
+    removeAvatar,
+    confirmLogout,
+  } = useAccountActions({
+    user,
+    isDemo,
+    isThirdParty,
+    logout,
+    navigate,
+    updateDemoProfile,
+    removeAvatarEverywhere,
+    t,
+  });
+
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (await updatePassword(passwords)) setPasswords({ current: '', new: '', confirm: '' });
+  };
 
   // Local edit state for the profile form. The inputs are now controlled
   // independently from `user.*` (which is the Supabase session truth) so
@@ -90,248 +129,17 @@ const SettingsPage: React.FC = () => {
   useEffect(() => {
     if (user) setProfileDraft({ name: user.name, email: user.email });
     // Deps primitives volontaires (plus précises que l'objet user entier).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    deps primitives plutot que l objet `user` entier : strictement PLUS
+       precises que ce qu ESLint demande. Les trois champs lus (`id`, `name`,
+       `email`) y figurent nommement, aucun ne peut perimer ; l objet, lui,
+       churne a chaque rafraichissement de session. */
   }, [user?.id, user?.name, user?.email]);
 
   if (!user) return null;
 
-  // Third-party (OAuth) accounts manage their email upstream (e.g. Google) —
-  // editing it here is locked. Native email/password (and demo) accounts can
-  // change their email inline. `provider` comes from Supabase app_metadata.
-  const isThirdParty = !isDemo && !!user.provider && user.provider !== 'email';
-
-  const handleSaveProfile = async () => {
-    const name = profileDraft.name.trim();
-    // sanitizeEmail strips copy-paste invisible chars (zero-width, NBSP, BOM)
-    // that would otherwise make a visually-correct address fail validation.
-    const email = sanitizeEmail(profileDraft.email);
-    if (!name) { toast.error(t('profile.nameEmpty')); return; }
-    if (!email) { toast.error(t('profile.emailEmpty')); return; }
-    // Validate the format before the round-trip when the email is actually
-    // changing, so the user gets an instant, explicit message instead of a
-    // generic failure coming back from Supabase (error_code email_address_invalid).
-    if (!isThirdParty && email !== user.email && !isValidEmail(email)) {
-      toast.error("Cette adresse email n'est pas valide.");
-      return;
-    }
-    setSavingProfile(true);
-    try {
-      if (isDemo) {
-        // Demo mode: persist locally so the UI reflects the change for the
-        // session. Real users go through Supabase.
-        updateUserSettings({ name, email });
-        toast.success(t('profile.updatedDemo'));
-        return;
-      }
-      const payload: { data: { name: string }; email?: string } = { data: { name } };
-      // Never attempt an email change on a third-party (OAuth) account — its
-      // email is owned by the provider. Defensive: the input is also disabled.
-      if (!isThirdParty && email !== user.email) payload.email = email;
-      const { error } = await supabase.auth.updateUser(payload);
-      if (error) {
-        console.error('[SettingsPage] updateUser:', error);
-        // Map known Supabase auth error codes to explicit, safe French copy.
-        // We never surface the raw error.message in the UI (faille V7).
-        const code = (error as { code?: string }).code;
-        const status = (error as { status?: number }).status;
-        let message = t('profile.updateFailed');
-        if (code === 'email_exists' || status === 422) {
-          message = t('profile.emailTaken');
-        } else if (code === 'email_address_invalid') {
-          message = "Cette adresse email n'est pas valide.";
-        } else if (code === 'over_email_send_rate_limit' || status === 429) {
-          message = t('profile.tooManyAttempts');
-        }
-        toast.error(message);
-        return;
-      }
-      if (payload.email) {
-        toast.success(t('profile.updatedCheckMail'));
-      } else {
-        toast.success(t('profile.updated'));
-      }
-    } catch { toast.error('Une erreur inattendue est survenue'); }
-    finally { setSavingProfile(false); }
-  };
-
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!passwords.current || !passwords.new || !passwords.confirm) { toast.error('Veuillez remplir tous les champs'); return; }
-    if (passwords.new !== passwords.confirm) { toast.error('Les nouveaux mots de passe ne correspondent pas'); return; }
-    if (passwords.new.length < MIN_PASSWORD_LENGTH) { toast.error(t('security.tooShort', { count: MIN_PASSWORD_LENGTH })); return; }
-    if (passwords.current === passwords.new) { toast.error(t('security.mustDiffer')); return; }
-    setSavingPassword(true);
-    try {
-      if (!supabase) { toast.error('Service non disponible'); return; }
-      if (isDemo) { toast.info(t('security.demoDisabled')); return; }
-      // Verify the current password before rotating. supabase.auth.updateUser
-      // does NOT enforce knowledge of the current password — without this step
-      // anyone with a hijacked session can lock the user out. Faille B8.
-      const { error: reauthError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: passwords.current,
-      });
-      if (reauthError) {
-        toast.error('Mot de passe actuel incorrect');
-        return;
-      }
-      const { error } = await supabase.auth.updateUser({ password: passwords.new });
-      if (error) { console.error('[SettingsPage] password update:', error); toast.error(t('security.updateError')); return; }
-      toast.success(t('security.updated'));
-      setPasswords({ current: '', new: '', confirm: '' });
-    } catch { toast.error('Une erreur inattendue est survenue'); }
-    finally { setSavingPassword(false); }
-  };
-
-  const handleDeleteAccount = () => {
-    setConfirmConfig({
-      isOpen: true, title: t('security.deleteAccountTitle'),
-      description: t('security.deleteAccountBody'),
-      variant: 'destructive', showInput: true, confirmationText: 'DELETE',
-      onConfirm: async () => {
-        setDeletingAccount(true);
-        try {
-          if (isDemo) {
-            toast.success(t('security.demoAccountCleared'));
-            await logout();
-            navigate('/');
-            return;
-          }
-          // Call the `delete-account` Edge Function (uses service_role to
-          // remove the auth user + all user-owned rows). Falls back to a
-          // support-email message if the function isn't deployed yet —
-          // honest copy rather than silently doing nothing. Faille B9.
-          const { error } = await supabase.functions.invoke('delete-account');
-          if (error) {
-            toast.error(t('security.deleteFailed'), {
-              description: t('security.deleteFailedHint'),
-            });
-            return;
-          }
-          toast.success(t('security.accountDeleted'));
-          await logout();
-          navigate('/');
-        } catch {
-          toast.error(t('security.networkError'), {
-            description: t('security.networkErrorHint'),
-          });
-        } finally {
-          setDeletingAccount(false);
-        }
-      },
-    });
-    setConfirmInput('');
-  };
-
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validation extraite dans lib/avatar-upload.ts (pur, testé — faille V5).
-    const verdict = validateAvatarFile(file);
-    if (!verdict.ok) {
-      if (verdict.reason === 'type') {
-        toast.error(t('profile.unsupportedFormat'), { description: t('profile.unsupportedFormatHint') });
-      } else {
-        toast.error('Image trop grande', { description: 'Taille maximale : 500 Ko.' });
-      }
-      e.target.value = '';
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = typeof reader.result === 'string' ? reader.result : '';
-      if (!result.startsWith('data:image/')) {
-        toast.error('Fichier invalide');
-        return;
-      }
-      const img = new Image();
-      img.onload = async () => {
-        const dims = computeAvatarDimensions(img.width, img.height);
-        const canvas = document.createElement('canvas');
-        canvas.width = dims.width;
-        canvas.height = dims.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { toast.error(t('profile.photoUpdateFailed')); return; }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        // Persist avatar to the same source the UI reads from. In demo mode
-        // that's localStorage via useUpdateUserSettings; in prod that's le
-        // bucket Storage `avatars`. L'ancien chemin écrivait toujours dans
-        // localStorage, que `useAuth` ne lit jamais → perte silencieuse au
-        // rechargement. Faille B7.
-        if (isDemo) {
-          // La démo n'a pas de backend : la data URL reste locale et ne part
-          // dans aucun JWT — le problème AUD-04 ne s'y pose pas.
-          updateUserSettings({ avatar: canvas.toDataURL('image/jpeg', 0.85) });
-        } else {
-          // AUD-04 — on n'écrit PLUS la data URL dans user_metadata (elle
-          // finissait dans le JWT de chaque requête). On uploade dans Storage
-          // et on ne persiste que l'URL publique, courte et sur un hôte
-          // autorisé par l'allowlist serveur d'AUD-03 (mig. 084).
-          const blob = await canvasToAvatarBlob(canvas);
-          if (!blob) { toast.error(t('profile.photoUpdateFailed')); return; }
-          const authUser = await getCurrentUser();
-          if (!authUser) { toast.error(t('profile.photoUpdateFailed')); return; }
-
-          const publicUrl = await uploadAvatar(supabase, authUser.id, blob);
-          if (!publicUrl) { toast.error(t('profile.photoUpdateFailed')); return; }
-
-          const { error } = await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
-          if (error) { toast.error(t('profile.photoUpdateFailed')); return; }
-          // Mirror to `profiles` so other users can see the updated avatar
-          // (auth.user_metadata is private and not visible to other users).
-          // `profiles.id` / `.email` / `.account_type` sont verrouillés côté
-          // serveur (mig. 083, faille H-1) : seul l'avatar est modifiable ici.
-          // La ligne existe toujours (créée par le trigger sur auth.users).
-          await supabase.from('profiles')
-            .update({ avatar_url: publicUrl })
-            .eq('id', authUser.id);
-        }
-        toast.success(t('profile.photoUpdated'));
-      };
-      img.onerror = () => toast.error('Image illisible');
-      img.src = result;
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemoveAvatar = () => {
-    setConfirmConfig({
-      isOpen: true, title: t('profile.deletePhotoTitle'),
-      description: t('profile.deletePhotoBody'),
-      variant: 'destructive',
-      onConfirm: async () => {
-        if (isDemo) {
-          updateUserSettings({ avatar: undefined });
-        } else {
-          const { error } = await supabase.auth.updateUser({ data: { avatar_url: null } });
-          if (error) { toast.error('Impossible de supprimer la photo'); return; }
-          // Also clear in profiles so friends see the removal immediately.
-          // Idem : colonnes d'identité verrouillées (mig. 083, faille H-1).
-          const authUser = await getCurrentUser();
-          if (authUser) {
-            await supabase.from('profiles')
-              .update({ avatar_url: null })
-              .eq('id', authUser.id);
-          }
-        }
-        toast.success(t('profile.photoDeleted'));
-      },
-    });
-  };
-
-  const handleLogout = () => {
-    setConfirmConfig({
-      isOpen: true, title: t('logout.title'), description: t('logout.body'),
-      variant: 'default',
-      onConfirm: () => { logout(); toast.success(t('logout.success')); navigate('/'); },
-    });
-  };
-
   const handleOpenSupport = () => {
-    window.location.href = 'mailto:axellongattepro@gmail.com';
+    window.location.href = `mailto:${CONTACT_EMAIL}`;
   };
 
   const initials = user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
@@ -344,7 +152,7 @@ const SettingsPage: React.FC = () => {
 
       {/* ──────── SIDEBAR ──────── */}
       <motion.aside
-        className="hidden lg:flex w-72 shrink-0 border-r border-[rgb(var(--color-border))] flex-col sticky top-0 h-full max-h-full overflow-y-auto"
+        className="hidden lg:flex w-72 shrink-0 border-r border-[rgb(var(--color-border))] flex-col sticky top-0"
         style={{ background: 'rgb(var(--color-surface))' }}
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
@@ -398,7 +206,7 @@ const SettingsPage: React.FC = () => {
         </nav>
 
         <div className="p-3 border-t border-[rgb(var(--color-border))]">
-          <button onClick={handleLogout} style={{ minHeight: '44px' }}
+          <button onClick={confirmLogout} style={{ minHeight: '44px' }}
             className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-red-500/8 hover:text-red-500 transition-all duration-150 group">
             <LogOut size={15} className="group-hover:-translate-x-0.5 transition-transform" />
             {t('page.logout')}
@@ -407,8 +215,16 @@ const SettingsPage: React.FC = () => {
       </motion.aside>
 
       {/* ──────── MAIN CONTENT ──────── */}
-      <main className="flex-1 min-w-0 py-10 px-5 sm:px-8 lg:px-12">
-        <div className="mb-8 max-w-3xl">
+      <main className="flex-1 min-w-0 pt-4 pb-10 md:py-10 px-gutter sm:px-8 lg:px-12">
+        {/* Maquette 206 : plus de sous-titre générique sur mobile. */}
+        {(!isMobile || mobilePage === null) && <MobileHeader title={t('page.title')} />}
+        {isMobile && mobilePage === null && (
+          <MobileSettingsHome user={user} initials={initials} hasOrganization onOpen={openMobile} onLogout={confirmLogout} />
+        )}
+        {isMobile && mobilePage !== null && <MobileSettingsBack onBack={() => openMobile(null)} />}
+        {isMobile && mobilePage === 'timezone' && <TimezoneSection />}
+        {isMobile && mobilePage === 'org' && <SectionCard><OrganizationSettingsCard /></SectionCard>}
+        <div className="mb-8 max-w-3xl hidden md:block">
           <PageHeading variant="standard" className="tracking-tight">
             {t('page.title')}
           </PageHeading>
@@ -418,31 +234,64 @@ const SettingsPage: React.FC = () => {
         </div>
 
         {/* mobile nav tabs */}
-        <div className="lg:hidden flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl mb-6 overflow-x-auto">
+        {/* ── Maquette 83 : la bande de pilules commune ─────────────────
+            Les onglets vivaient dans une boîte bordée qui défile, dont le
+            quatrième élément (« Mes données ») était coupé net par le bord de
+            l'écran, sans rien pour dire qu'il y en avait d'autres. Ils
+            reprennent la forme utilisée par /tasks, /okr, /statistics et
+            l'espace entreprise : des pilules pleines, hauteur 36 px, cible
+            tactile 44 portée par `TAP_AREA_44_Y`.
+            ❌ Ne pas remettre de conteneur bordé : c'est lui qui donnait
+            l'impression d'un cadre dont le contenu dépasse. */}
+        {!isMobile && <div className="lg:hidden flex gap-2 mb-6 overflow-x-auto hide-scrollbar -mx-gutter px-gutter">
           {NAV_GROUPS.flatMap(g => g.items).map((item) => {
             const Icon = item.icon;
             const active = activeTab === item.id;
             return (
               <button key={item.id} onClick={() => setActiveTab(item.id)}
-                className={`shrink-0 flex items-center gap-1.5 px-3 min-h-touch rounded-lg text-xs font-semibold transition-all duration-150 ${
-                  active ? 'bg-[#1f6feb] text-white shadow-sm' // #58a6ff ne passe pas le contraste AA (2.5:1) avec du texte blanc
-                    : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'}`}>
-                <Icon size={13} />
+                aria-current={active ? 'page' : undefined}
+                className={`${TAP_AREA_44_Y} shrink-0 flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-label font-medium transition-colors ${
+                  active
+                    ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
+                    : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]'}`}>
+                <Icon size={14} aria-hidden="true" />
                 {t(item.labelKey)}
               </button>
             );
           })}
-        </div>
+        </div>}
 
-        <AnimatePresence mode="wait">
+        {/* `mode="wait"` retiré : sous prefers-reduced-motion, l'exit de
+            l'onglet sortant ne signale jamais sa fin à AnimatePresence (bug
+            Framer Motion), donc le nouvel onglet ne montait jamais — les
+            onglets restaient bloqués sur Profil. Sans `wait`, le nouvel
+            onglet monte immédiatement ; l'ancien continue son exit en
+            parallèle (ou reste figé sans bloquer l'affichage si son
+            exit-complete ne se déclenche pas). */}
+        {showTabContent && <AnimatePresence mode={prefersReducedMotion ? undefined : 'wait'}>
 
           {/* ── PROFIL ── */}
           {activeTab === 'profile' && (
-            <motion.div key="profile" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl flex flex-col gap-5">
+            <motion.div key="profile" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }}
+              // Deux colonnes à partir de `lg` : le groupe Entreprise vit à
+              // DROITE des cartes d'identité, pas empilé sous le fuseau
+              // horaire où il fallait scroller pour le trouver. `items-start`
+              // pour que la colonne courte ne s'étire pas à la hauteur de
+              // l'autre. Une seule colonne sous `lg` (ordre inchangé).
+              className="max-w-2xl lg:max-w-5xl grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] gap-5 items-start">
+              <div className="flex flex-col gap-5">
               <SectionCard>
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                {/* ── Maquette 83 : le profil en une rangée sur mobile ───────
+                    Le bloc faisait ~155 px : un carré d'avatar de 80, le nom,
+                    l'email et un bouton « Changer la photo », tous CENTRÉS,
+                    pour trois informations qu'on ne vient pas lire. Sur mobile
+                    il redevient une rangée : avatar 48, nom et email à gauche,
+                    la photo se change par l'avatar lui-même (la pastille
+                    d'appareil photo, désormais toujours visible au doigt).
+                    `sm:` rend le bloc centré d'origine. */}
+                <div className="flex flex-row sm:flex-col md:flex-row items-center sm:items-start gap-3.5 sm:gap-5">
                   <div className="relative group/av shrink-0">
-                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-violet-600 flex items-center justify-center text-[rgb(var(--color-accent-solid-foreground))] text-2xl font-bold shadow-sm select-none">
+                    <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-violet-600 flex items-center justify-center text-[rgb(var(--color-accent-solid-foreground))] text-headline sm:text-2xl font-bold shadow-sm select-none">
                       {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                         : <span>{initials}</span>}
                     </div>
@@ -450,23 +299,38 @@ const SettingsPage: React.FC = () => {
                         en violation `button-name` d'impact CRITICAL (WCAG 4.1.2)
                         et le guard a11y CI casse. */}
                     <button onClick={() => fileInputRef.current?.click()}
-                      aria-label="Changer la photo de profil"
-                      className="absolute inset-0 rounded-2xl bg-black/45 opacity-0 group-hover/av:opacity-100 transition-opacity flex items-center justify-center">
-                      <Camera size={18} className="text-white" aria-hidden="true" />
+                      aria-label={t('profile.changePhotoAria')}
+                      // Sur mobile il n'y a pas de survol : la pastille est
+                      // toujours là, en bas à droite de l'avatar. Au-delà de
+                      // `sm`, le voile au survol reprend la main, inchangé.
+                      // C-111 · la pastille MESURAIT 24 x 24 px, soit la plus
+                      // petite commande des huit routes protégées. Le dessin
+                      // ne peut pas grandir — une pastille de 44 px avalerait
+                      // l'avatar de 48 —, donc la zone tactile passe par un
+                      // pseudo-élément, qui ne prend aucune place dans le flux.
+                      // ⚠️ `TAP_AREA_44_ANCRE` et non `TAP_AREA_44` : ce
+                      // dernier porte `relative`, qui écraserait l'`absolute`
+                      // ci-dessous et décrocherait la pastille du coin.
+                      className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[rgb(var(--color-accent-solid))] border-2 border-[rgb(var(--color-surface))] flex items-center justify-center ${TAP_AREA_44_ANCRE} sm:inset-0 sm:w-auto sm:h-auto sm:rounded-2xl sm:border-0 sm:bg-black/45 sm:opacity-0 sm:group-hover/av:opacity-100 sm:transition-opacity`}>
+                      <Camera size={12} className="text-white sm:hidden" aria-hidden="true" />
+                      <Camera size={18} className="text-white hidden sm:block" aria-hidden="true" />
                     </button>
                   </div>
-                  <div className="flex-1 text-center sm:text-left">
-                    <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{user.name}</h2>
-                    <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">{user.email}</p>
-                    <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-3">
+                  <div className="flex-1 min-w-0 text-left sm:text-center md:text-left">
+                    <h2 className="text-body sm:text-lg font-bold text-[rgb(var(--color-text-primary))] truncate">{user.name}</h2>
+                    <p className="text-caption sm:text-sm text-[rgb(var(--color-text-secondary))] mt-0.5 truncate">{user.email}</p>
+                    <div className="flex flex-wrap justify-start sm:justify-center md:justify-start gap-2 mt-3">
+                      {/* Le bouton « Changer la photo » disparaît sous `sm` :
+                          la pastille sur l'avatar fait la même chose, à deux
+                          centimètres du regard. */}
                       <button onClick={() => fileInputRef.current?.click()}
-                        className="inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-[36px] border border-[rgb(var(--color-border))] rounded-lg text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent))] transition-all duration-150">
-                        <Camera size={12} /> Changer la photo
+                        className="hidden sm:inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-[36px] border border-[rgb(var(--color-border))] rounded-lg text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent))] transition-all duration-150">
+                        <Camera size={12} /> {t('profile.changePhoto')}
                       </button>
                       {user.avatar && (
-                        <button onClick={handleRemoveAvatar}
+                        <button onClick={removeAvatar}
                           className="inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-[36px] border border-red-200 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-500 hover:border-red-500 hover:text-white transition-all duration-150">
-                          Supprimer
+                          {tCommon('actions.delete')}
                         </button>
                       )}
                     </div>
@@ -476,168 +340,65 @@ const SettingsPage: React.FC = () => {
               <SectionCard>
                 <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-5">{t('profile.heading')}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <LabeledInput label="Nom complet" icon={User} value={profileDraft.name} onChange={(e) => setProfileDraft(p => ({ ...p, name: e.target.value }))} placeholder="Votre nom" />
+                  <LabeledInput label={t('profile.fullName')} icon={User} value={profileDraft.name} onChange={(e) => setProfileDraft(p => ({ ...p, name: e.target.value }))} placeholder={t('profile.yourNamePlaceholder')} />
                   <LabeledInput label={t('profile.emailLabel')} type="email" icon={Mail} value={profileDraft.email} onChange={(e) => setProfileDraft(p => ({ ...p, email: e.target.value }))} placeholder={t('profile.emailPlaceholder')} disabled={isThirdParty} hint={isThirdParty ? t('profile.emailManaged') : undefined} />
                 </div>
-                <div className="flex justify-end mt-5">
-                  <PrimaryButton onClick={handleSaveProfile} loading={savingProfile}>{savingProfile ? 'Sauvegarde…' : 'Sauvegarder'}</PrimaryButton>
-                </div>
+                {/* Maquette 83 : pleine largeur sur mobile. C'est l'action
+                    principale de l'écran, et c'est elle que le FAB recouvrait
+                    avant d'être retiré de cette route — un bouton aligné à
+                    droite sur 390 px est exactement ce qu'un bouton flottant
+                    vient masquer. */}
+                {/* Maquette 208 : le bouton n'apparaît que si quelque chose a changé. */}
+                {(profileDraft.name !== user.name || profileDraft.email !== user.email) && <div className="flex justify-stretch sm:justify-end mt-5 [&>button]:w-full [&>button]:sm:w-auto">
+                  <PrimaryButton onClick={() => saveProfile(profileDraft)} loading={savingProfile}>{savingProfile ? t('profile.saving') : t('profile.save')}</PrimaryButton>
+                </div>}
               </SectionCard>
 
-              {/* ── Fuseau horaire d'affichage ── */}
-              <SectionCard>
-                <div className="flex items-center gap-2 mb-1">
-                  <Clock size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
-                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">{t('timezone.heading')}</h2>
-                </div>
-                <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-4">
-                  {t('timezone.description')}
-                </p>
-                <div className="flex flex-col gap-2.5">
-                  {/* Option : heure par défaut (locale) */}
-                  <button
-                    type="button"
-                    onClick={() => setTzMode('default')}
-                    style={{ minHeight: '56px' }}
-                    className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition-colors ${
-                      tzPref.mode === 'default'
-                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]/8'
-                        : 'border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/40'
-                    }`}
-                    aria-pressed={tzPref.mode === 'default'}
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('timezone.defaultTitle')}</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{t('timezone.defaultHint')}</p>
-                    </div>
-                    <span className={`shrink-0 w-4 h-4 rounded-full border-2 ${
-                      tzPref.mode === 'default'
-                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]'
-                        : 'border-[rgb(var(--color-border))]'
-                    }`} />
-                  </button>
+              {/* ── Fuseau horaire d'affichage (sa propre ligne sur mobile) ── */}
+              {!isMobile && <TimezoneSection />}
 
-                  {/* Option : heure personnalisée (UTC+N) */}
-                  <button
-                    type="button"
-                    onClick={() => setTzMode('manual')}
-                    style={{ minHeight: '56px' }}
-                    className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition-colors ${
-                      tzPref.mode === 'manual'
-                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]/8'
-                        : 'border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/40'
-                    }`}
-                    aria-pressed={tzPref.mode === 'manual'}
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('timezone.customTitle')}</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{t('timezone.customHint')}</p>
-                    </div>
-                    <span className={`shrink-0 w-4 h-4 rounded-full border-2 ${
-                      tzPref.mode === 'manual'
-                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]'
-                        : 'border-[rgb(var(--color-border))]'
-                    }`} />
-                  </button>
-
-                  {tzPref.mode === 'manual' && (() => {
-                    // Signe + magnitude dérivés du décalage signé stocké (ex. -5 →
-                    // signe '-', magnitude 5). L'utilisateur choisit le signe via
-                    // un toggle +/− et la magnitude via le champ numérique ; les
-                    // deux se recombinent en un offsetHours signé unique.
-                    const sign: '+' | '-' = tzPref.offsetHours < 0 ? '-' : '+';
-                    const magnitude = Math.abs(tzPref.offsetHours);
-                    const applySign = (nextSign: '+' | '-') =>
-                      setTzOffset(clampOffsetHours(nextSign === '-' ? -magnitude : magnitude));
-                    const applyMagnitude = (nextMagnitude: number) =>
-                      setTzOffset(clampOffsetHours(sign === '-' ? -nextMagnitude : nextMagnitude));
-                    return (
-                      <div className="flex items-center gap-2 pl-1 pt-1">
-                        <label htmlFor="tz-offset" className="text-sm text-[rgb(var(--color-text-secondary))]">{t('timezone.offsetLabel')}</label>
-
-                        {/* Toggle du signe : UTC+ (est de Greenwich) / UTC- (ouest) */}
-                        <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden" role="group" aria-label={t('timezone.offsetSign')}>
-                          <button
-                            type="button"
-                            onClick={() => applySign('+')}
-                            aria-pressed={sign === '+'}
-                            className={`px-3 min-h-touch sm:min-h-9 text-sm font-semibold transition-colors ${
-                              sign === '+'
-                                ? 'bg-[rgb(var(--color-accent))] text-white'
-                                : 'bg-[rgb(var(--color-background))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
-                            }`}
-                          >
-                            +
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => applySign('-')}
-                            aria-pressed={sign === '-'}
-                            className={`px-3 min-h-touch sm:min-h-9 text-sm font-semibold border-l border-[rgb(var(--color-border))] transition-colors ${
-                              sign === '-'
-                                ? 'bg-[rgb(var(--color-accent))] text-white'
-                                : 'bg-[rgb(var(--color-background))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
-                            }`}
-                          >
-                            −
-                          </button>
-                        </div>
-
-                        <div className="inline-flex items-stretch rounded-lg border border-[rgb(var(--color-border))] overflow-hidden focus-within:ring-2 focus-within:ring-[rgb(var(--color-accent))]/30">
-                          <span className="inline-flex items-center px-3 bg-[rgb(var(--color-hover))] text-sm font-semibold text-[rgb(var(--color-text-primary))] select-none">
-                            UTC{sign}
-                          </span>
-                          <input
-                            id="tz-offset"
-                            type="number"
-                            inputMode="numeric"
-                            min={0}
-                            max={sign === '-' ? 12 : 14}
-                            step={1}
-                            value={magnitude}
-                            onChange={(e) => applyMagnitude(Number(e.target.value))}
-                            className="w-16 px-3 min-h-touch sm:min-h-9 bg-[rgb(var(--color-background))] text-sm font-semibold text-[rgb(var(--color-text-primary))] outline-none"
-                          />
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </SectionCard>
+              </div>
 
               {/* Mode entreprise : carte info (membre) ou conversion (particulier). */}
-              <SectionCard>
-                <OrganizationSettingsCard />
-              </SectionCard>
+              {!isMobile && <div className="flex flex-col gap-5">
+                <SectionCard>
+                  <OrganizationSettingsCard />
+                </SectionCard>
+              </div>}
             </motion.div>
           )}
 
           {/* ── SÉCURITÉ ── */}
           {activeTab === 'security' && (
-            <motion.div key="security" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl flex flex-col gap-5">
+            <motion.div key="security" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl flex flex-col gap-5">
               <SectionCard>
                 <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('security.heading')}</h2>
                 <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">{t('security.hint')}</p>
                 <form onSubmit={handleUpdatePassword} className="flex flex-col gap-4">
-                  <LabeledInput label="Mot de passe actuel" showToggle value={passwords.current} onChange={(e) => setPasswords(p => ({ ...p, current: e.target.value }))} placeholder="••••••••••••" />
+                  <LabeledInput label="Mot de passe actuel" showToggle showPasswordLabel={tCommon('auth.showPassword')} hidePasswordLabel={tCommon('auth.hidePassword')} value={passwords.current} onChange={(e) => setPasswords(p => ({ ...p, current: e.target.value }))} placeholder="••••••••••••" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <LabeledInput label="Nouveau mot de passe" showToggle value={passwords.new} onChange={(e) => setPasswords(p => ({ ...p, new: e.target.value }))} placeholder="••••••••••••" />
-                    <LabeledInput label="Confirmer" showToggle value={passwords.confirm} onChange={(e) => setPasswords(p => ({ ...p, confirm: e.target.value }))} placeholder="••••••••••••" />
+                    <LabeledInput label={t('security.newPasswordLabel')} showToggle showPasswordLabel={tCommon('auth.showPassword')} hidePasswordLabel={tCommon('auth.hidePassword')} value={passwords.new} onChange={(e) => setPasswords(p => ({ ...p, new: e.target.value }))} placeholder="••••••••••••" />
+                    <LabeledInput label="Confirmer" showToggle showPasswordLabel={tCommon('auth.showPassword')} hidePasswordLabel={tCommon('auth.hidePassword')} value={passwords.confirm} onChange={(e) => setPasswords(p => ({ ...p, confirm: e.target.value }))} placeholder="••••••••••••" />
                   </div>
                   <div className="flex justify-end pt-1">
                     <PrimaryButton type="submit" loading={savingPassword}>{savingPassword ? t('security.updating') : t('security.update')}</PrimaryButton>
                   </div>
                 </form>
               </SectionCard>
-              <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-2xl p-6">
+              {/* Maquette 212 : sur mobile, une ligne en texte rouge ; la
+                  confirmation (saisie du mot) porte le poids. */}
+              <button type="button" onClick={deleteAccount} className="md:hidden w-full min-h-touch rounded-2xl bg-[rgb(var(--color-surface))] text-body text-[rgb(var(--color-danger-text))]">
+                {t('security.deleteAccount')}
+              </button>
+              <div className="hidden md:block bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-2xl p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h2 className="text-sm font-bold text-red-600 dark:text-red-500">{t('security.dangerZone')}</h2>
                     <p className="text-xs text-red-500/70 mt-1">{t('security.dangerHint')}</p>
                   </div>
-                  <button onClick={handleDeleteAccount} style={{ minHeight: '44px' }}
+                  <button onClick={deleteAccount} style={{ minHeight: '44px' }}
                     className="shrink-0 inline-flex items-center justify-center px-5 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 active:scale-[0.97] transition-all duration-150">
-                    Supprimer le compte
+                    {t('security.deleteAccount')}
                   </button>
                 </div>
               </div>
@@ -646,51 +407,18 @@ const SettingsPage: React.FC = () => {
 
           {/* ── APPARENCE ── */}
           {activeTab === 'appearance' && (
-            <motion.div key="appearance" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl">
-              <SectionCard>
+            <motion.div key="appearance" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl">
+              {isMobile && <MobileThemeList />}
+              <SectionCard className="hidden md:flex">
                 <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('appearance.heading')}</h2>
                 <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">{t('appearance.hint')}</p>
                 <div style={{ minHeight: '72px' }}
-                  className="flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
-                  <div className="flex items-center gap-3.5">
-                    <div className="p-2.5 rounded-lg bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-accent))] group-hover:scale-105 transition-transform">
-                      <Monitor size={18} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('appearance.displayMode')}</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? t('appearance.themeListTest') : t('appearance.themeList')}</p>
-                    </div>
+                  className="flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors">
+                  <div>
+                    <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('appearance.displayMode')}</p>
+                    <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? t('appearance.themeListTest') : t('appearance.themeList')}</p>
                   </div>
                   <ThemeToggle showLabel />
-                </div>
-
-                {/* Rappel habitudes du soir (#24) — opt-in */}
-                <div style={{ minHeight: '72px' }}
-                  className="mt-3 flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
-                  <div className="flex items-center gap-3.5">
-                    <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-500 group-hover:scale-105 transition-transform">
-                      <Repeat size={18} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('appearance.eveningReminder')}</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{t('appearance.eveningReminderHint')}</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={habitReminderEnabled}
-                    aria-label="Activer le rappel habitudes du soir"
-                    onClick={() => setHabitReminderEnabled(!habitReminderEnabled)}
-                    className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                      habitReminderEnabled ? 'bg-[rgb(var(--color-accent-solid))]' : 'bg-gray-200 dark:bg-gray-700'
-                    }`}
-                  >
-                    <span
-                      className="absolute top-[2px] w-[27px] h-[27px] rounded-full bg-white shadow-md transition-all duration-200"
-                      style={{ left: habitReminderEnabled ? 'calc(100% - 29px)' : '2px' }}
-                    />
-                  </button>
                 </div>
               </SectionCard>
 
@@ -705,23 +433,15 @@ const SettingsPage: React.FC = () => {
                   seul), sinon on afficherait un titre au-dessus du vide. */}
               {SUPPORTED_LOCALES.length > 1 && (
                 <SectionCard className="mt-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Languages size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
-                    <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">{tCommon('language.label')}</h2>
-                  </div>
-                  <p className="text-xs text-[rgb(var(--color-text-secondary))] -mt-2 mb-3">
+                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{tCommon('language.label')}</h2>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-3">
                     {tCommon('language.sectionSubtitle')}
                   </p>
                   <div style={{ minHeight: '72px' }}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors group">
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div className="p-2.5 rounded-lg bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-accent))] group-hover:scale-105 transition-transform shrink-0">
-                        <Languages size={18} aria-hidden="true" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{tCommon('language.description')}</p>
-                        <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{tCommon('language.reloadNotice')}</p>
-                      </div>
+                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{tCommon('language.description')}</p>
+                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{tCommon('language.reloadNotice')}</p>
                     </div>
                     <LocaleToggle />
                   </div>
@@ -730,33 +450,31 @@ const SettingsPage: React.FC = () => {
 
               {/* Raccourcis clavier — copie du contenu du popup « ? »,
                   consultable sans avoir à ouvrir la palette. Source partagée
-                  (components/keyboard-shortcuts) pour ne jamais diverger. */}
-              <SectionCard className="mt-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Keyboard size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
-                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">{t('appearance.shortcuts')}</h2>
-                </div>
-                <p className="text-xs text-[rgb(var(--color-text-secondary))] -mt-2 mb-3">
-                  {t('appearance.shortcutsHint')} <kbd className="px-1.5 py-0.5 rounded border text-caption" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>?</kbd>.
-                </p>
-                <ShortcutsList compact />
-              </SectionCard>
+                  (components/keyboard-shortcuts) pour ne jamais diverger.
+                  Masqué en mobile : une liste de raccourcis clavier sur un
+                  écran sans clavier n'est que du remplissage. */}
+              {!isMobile && (
+                <SectionCard className="mt-4">
+                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('appearance.shortcuts')}</h2>
+                  <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-3">
+                    {t('appearance.shortcutsHint')} <kbd className="px-1.5 py-0.5 rounded border text-caption" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>?</kbd>.
+                  </p>
+                  <ShortcutsList compact />
+                </SectionCard>
+              )}
             </motion.div>
           )}
-
-          {/* ── MODULES ── */}
-          {activeTab === 'modules' && <ModulesTab isDemo={isDemo} />}
 
           {/* ── DONNÉES ── */}
           {activeTab === 'data' && <DataTab />}
 
           {/* ── GUIDE ── */}
           {activeTab === 'guide' && (
-            <motion.div key="guide" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-3xl flex flex-col gap-4">
+            <motion.div key="guide" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-3xl flex flex-col gap-4">
 
               <div>
                 <h2 className="text-xl font-extrabold text-[rgb(var(--color-text-primary))] mb-1">
-                  Guide d'utilisation
+                  {t('help.heading')}
                 </h2>
                 <p className="text-sm text-[rgb(var(--color-text-secondary))]">
                   {t('help.intro')}
@@ -776,15 +494,17 @@ const SettingsPage: React.FC = () => {
                   style={{ minHeight: '48px' }}
                   className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] rounded-xl text-sm font-semibold active:scale-[0.97] transition-all duration-150"
                 >
-                  Ouvrir le guide <ChevronRight size={15} />
+                  {t('help.openGuide')} <ChevronRight size={15} />
                 </button>
               </div>
+
+              <ReplayTutorialsCard />
 
               {/* support card */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-violet-600 flex items-center justify-center shrink-0">
-                    <HelpCircle size={15} className="text-white" />
+                  <div className="w-9 h-9 rounded-xl bg-[rgb(var(--color-accent-solid))] flex items-center justify-center shrink-0">
+                    <HelpCircle size={15} className="text-[rgb(var(--color-accent-solid-foreground))]" />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('help.supportTitle')}</p>
@@ -793,7 +513,7 @@ const SettingsPage: React.FC = () => {
                 </div>
                 <button onClick={handleOpenSupport}
                   className="inline-flex items-center justify-center gap-1.5 px-4 min-h-touch sm:min-h-[40px] rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
-                  Contacter le support <ChevronRight size={12} />
+                  {t('help.contactSupport')} <ChevronRight size={12} />
                 </button>
               </div>
 
@@ -812,17 +532,17 @@ const SettingsPage: React.FC = () => {
                   </div>
                   <button onClick={() => navigate('/admin')}
                     className="inline-flex items-center justify-center gap-1.5 px-4 min-h-touch sm:min-h-[40px] rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
-                    Ouvrir le dashboard <ChevronRight size={12} />
+                    {t('help.openDashboard')} <ChevronRight size={12} />
                   </button>
                 </div>
               )}
             </motion.div>
           )}
-        </AnimatePresence>
+        </AnimatePresence>}
       </main>
 
       {/* ── confirm dialog ── */}
-      <AlertDialog open={confirmConfig.isOpen} onOpenChange={(open) => setConfirmConfig(prev => ({ ...prev, isOpen: open }))}>
+      <AlertDialog open={confirmConfig.isOpen} onOpenChange={(open) => { if (!open) closeConfirm(); }}>
         <AlertDialogContent
           className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
           <AlertDialogHeader>
@@ -844,7 +564,7 @@ const SettingsPage: React.FC = () => {
                 deletingAccount ||
                 (confirmConfig.showInput && confirmInput !== confirmConfig.confirmationText)
               }
-              onClick={() => { confirmConfig.onConfirm(); setConfirmConfig(prev => ({ ...prev, isOpen: false })); }}
+              onClick={() => { confirmConfig.onConfirm(); closeConfirm(); }}
               className="rounded-xl font-semibold text-sm bg-red-500 hover:bg-red-600 text-white disabled:opacity-50">
               {deletingAccount ? 'Suppression…' : 'Confirmer'}
             </AlertDialogAction>
@@ -857,95 +577,3 @@ const SettingsPage: React.FC = () => {
 
 export default SettingsPage;
 
-/* ─── Onglet "Modules" — activer/désactiver (AM10) ─────────────── */
-const MODULE_META: Record<ModuleKey, { label: string; description: string; icon: React.ElementType; accent: string }> = {
-  agenda:     { label: 'Agenda',       description: 'Planifiez vos tâches en blocs horaires', icon: Calendar,  accent: '#ef4444' },
-  habits:     { label: 'Habitudes',    description: 'Suivez vos routines quotidiennes',        icon: Repeat,    accent: '#eab308' },
-  okr:        { label: 'OKR',          description: 'Objectifs & résultats clés',              icon: Target,    accent: '#22c55e' },
-  statistics: { label: 'Statistiques', description: 'Analysez votre progression',              icon: BarChart2, accent: '#8b5cf6' },
-};
-
-function ModulesTab({ isDemo }: { isDemo: boolean }) {
-  const { t } = useT('settings');
-  const activeModules = useActiveModules();
-
-  const toggle = (key: ModuleKey) => {
-    if (isDemo) {
-      toast.info(t('modules.demoToast'));
-      return;
-    }
-    const next = !activeModules[key];
-    activeModulesStore.setModule(key, next);
-    toast.success(next ? t('modules.enabled', { module: t(`modules.${key}.label`) }) : t('modules.hidden', { module: t(`modules.${key}.label`) }));
-  };
-
-  return (
-    <motion.div
-      key="modules"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.2 }}
-      className="max-w-2xl flex flex-col gap-5"
-    >
-      <SectionCard>
-        <div>
-          <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }} className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">
-            Modules de l'application
-          </h3>
-          <p className="text-xs text-[rgb(var(--color-text-muted))]">
-            {t('modules.hint')}
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2.5">
-          {OPTIONAL_MODULES.map((key) => {
-            const meta = MODULE_META[key];
-            const Icon = meta.icon;
-            const isOn = activeModules[key];
-            return (
-              <div
-                key={key}
-                className="flex items-center gap-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] px-4 py-3"
-              >
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: isOn ? meta.accent : 'rgb(var(--color-hover))' }}
-                >
-                  <Icon size={18} className={isOn ? 'text-white' : 'text-[rgb(var(--color-text-muted))]'} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t(`modules.${key}.label`)}</p>
-                  <p className="text-xs text-[rgb(var(--color-text-muted))] truncate">{meta.description}</p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={isOn}
-                  aria-label={isOn ? t('modules.hidden', { module: t(`modules.${key}.label`) }) : t('modules.enabled', { module: t(`modules.${key}.label`) })}
-                  onClick={() => toggle(key)}
-                  disabled={isDemo}
-                  className={`relative w-11 h-6 rounded-full shrink-0 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/50 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isOn ? 'bg-[rgb(var(--color-accent))]' : 'bg-[rgb(var(--color-border))]'
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
-                      isOn ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-
-        {isDemo && (
-          <p className="text-[11px] text-[rgb(var(--color-text-muted))]">
-            {t('modules.demoNotice')}
-          </p>
-        )}
-      </SectionCard>
-    </motion.div>
-  );
-}

@@ -1,0 +1,326 @@
+import type { Page } from '@playwright/test';
+import { test, expect, navTo, openOrgSection, dismissFirstSightBubble } from './fixtures';
+
+/**
+ * Dépendances entre tâches + chemin critique (mig. 108) et responsable
+ * d'équipe (mig. 107), en mode démo sur l'org seedée « Nova Studio ».
+ *
+ * Ces tests visent ce que les tests unitaires ne peuvent pas voir : que le
+ * graphe seedé arrive bien jusqu'au rendu, dans les deux sens de lecture, et
+ * que le chemin critique se RECALCULE après une écriture. La régression qui a
+ * motivé ce fichier — une tâche isolée masquant une vraie chaîne — était
+ * invisible en test unitaire parce que toutes les tâches y étaient connectées.
+ *
+ * ⚠️ Même précaution que `demo-entreprise.spec.ts` : on ancre les onglets au
+ * DÉBUT du libellé, jamais à la fin — le badge de nouveautés entre dans le nom
+ * accessible du bouton (« Projets 3 nouveautés »).
+ */
+
+/** Passe la vue Projets sur l'un des trois modes de la barre d'outils. */
+const switchView = async (page: Page, name: 'Liste' | 'Tableau' | 'Planning') => {
+  // Sur téléphone, la barre « Vue » vit dans la feuille « Filtres » depuis la
+  // refonte mobile (maquettes 242 et 250, 29ceaa6c) : on l'ouvre d'abord, et
+  // on la referme après le choix.
+  // 🔴 Décidé par la LARGEUR (seuil `useIsMobile`, 768 px), pas par la
+  // visibilité de la barre : lue avant son rendu, celle-ci faisait croire à
+  // un téléphone sur desktop, et le test cherchait un « Filtres » inexistant
+  // (six échecs chromium, 2026-10-11).
+  const dansFeuille = (page.viewportSize()?.width ?? 1280) < 768;
+  if (dansFeuille) await page.getByRole('button', { name: /^filtres$/i }).click();
+  await page.getByRole('group', { name: /vue/i }).filter({ visible: true }).first().getByRole('button', { name }).click();
+  if (dansFeuille) {
+    const feuille = page.getByRole('dialog', { name: /^filtres$/i });
+    if (await feuille.isVisible().catch(() => false)) await page.keyboard.press('Escape');
+    await expect(feuille).toBeHidden({ timeout: 5_000 });
+  }
+};
+
+/**
+ * DEUX dialogues coexistent dès que le sélecteur de dépendances est ouvert :
+ * la modale de tâche et le sélecteur. Un `getByRole('dialog')` nu devient donc
+ * ambigu (violation du mode strict), d'où ces deux accesseurs nommés.
+ *
+ * ⚠️ Ces tests cherchaient `getByRole('menuitem')`, hérité d'une époque où le
+ * sélecteur était un menu déroulant. Il est devenu un dialogue avec une LISTE
+ * À COCHER (`<ul><li><button aria-pressed>`), qui ne porte aucun `menuitem` :
+ * la requête ne pouvait donc plus rien trouver, et les deux tests échouaient
+ * en CI depuis le 2026-08-30 sans que le produit ait quoi que ce soit. Le
+ * parcours réel est désormais : cocher, PUIS confirmer.
+ */
+const taskDialog = (page: Page) => page.getByRole('dialog', { name: /modifier la tâche/i });
+const pickerDialog = (page: Page) =>
+  page.getByRole('dialog', { name: /ajouter une dépendance/i });
+
+/**
+ * Les dépendances sont un ONGLET de la fiche depuis l'audit des popups du
+ * 2026-09-25 (f3a49583), plus une section repliable : ces cas cherchaient le
+ * bouton `aria-expanded` de l'ancienne section et expiraient à 2 min.
+ */
+const openDependenciesTab = (dialog: ReturnType<Page['getByRole']>) =>
+  dialog.getByRole('tab', { name: /^dépendances/i }).click();
+
+test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
+  test.describe.configure({ timeout: 120_000 });
+
+  test('Planning : le chemin critique est signalé et chiffré', async ({ demoPage: page }) => {
+    await navTo(page, /entreprise/i, /\/entreprise/);
+    await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
+
+    await openOrgSection(page, /^projets/i);
+    await page.waitForURL(/\/entreprise\/projects/);
+    await switchView(page, 'Planning');
+
+    // La légende n'existe QUE s'il y a un chemin — sa présence prouve déjà que
+    // le graphe seedé a traversé repository → hook → calcul → rendu.
+    const legend = page.getByTitle(/plus longue chaîne de tâches/i);
+    await expect(legend).toBeVisible({ timeout: 15_000 });
+    // Et qu'il est chiffré : un chemin sans durée signalerait un graphe relié
+    // à des tâches sans estimation, donc un calcul qui ne sert à rien.
+    await expect(legend).toContainText(/\d/);
+
+    await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
+  });
+
+  test('Planning : le chemin retenu est la branche la plus LONGUE, pas la plus fournie', async ({ demoPage: page }) => {
+    await navTo(page, /entreprise/i, /\/entreprise/);
+    await openOrgSection(page, /^projets/i);
+    await page.waitForURL(/\/entreprise\/projects/);
+    await switchView(page, 'Planning');
+    await expect(page.getByTitle(/plus longue chaîne de tâches/i)).toBeVisible({ timeout: 15_000 });
+
+    const ringed = await page.evaluate(() =>
+      [...document.querySelectorAll('button.ring-amber-500')]
+        .map((b) => (b.getAttribute('aria-label') ?? '').split(',')[0]));
+
+    // Seed « Refonte du site » : Maquettes → Intégration → { Optimisation →
+    // Analytics | Audit WCAG }. La branche Optimisation/Analytics est plus
+    // lourde, l'Audit ne doit donc PAS être surligné.
+    expect(ringed).toContain('Setup analytics');
+    expect(ringed).not.toContain('Audit accessibilité WCAG');
+
+    // Régression : le projet « Lancement produit » contient une tâche isolée
+    // aussi longue que sa chaîne. Elle masquait tout le chemin de ce projet.
+    expect(ringed).toContain('Kit presse');
+  });
+
+  test('Modale : les deux sens de dépendance, et l’alerte de blocage', async ({ demoPage: page }) => {
+    await navTo(page, /entreprise/i, /\/entreprise/);
+    await openOrgSection(page, /^projets/i);
+    await page.waitForURL(/\/entreprise\/projects/);
+    await switchView(page, 'Liste');
+
+    // « Kit presse » est bloquée par « Plan de communication » dans le seed.
+    await page.getByRole('button', { name: /Modifier la tâche Kit presse/i }).click();
+    const dialog = taskDialog(page);
+    await expect(dialog).toBeVisible({ timeout: 10_000 });
+
+    // L'alerte doit être lisible SANS déplier : c'est elle qui change la
+    // décision de démarrer la tâche. Depuis que les dépendances ont leur
+    // onglet, elle vit en tête de l'onglet Détails, celui qui s'ouvre
+    // (`TeamTaskBlockedNote`) : elle avait disparu avec la section.
+    await expect(dialog.getByRole('tab', { name: /^détails/i })).toHaveAttribute('aria-selected', 'true');
+    await expect(dialog.getByText(/en attente de \d+ tâche/i)).toBeVisible();
+
+    await openDependenciesTab(dialog);
+    await expect(dialog.getByText(/bloquée par/i)).toBeVisible();
+    await expect(dialog.getByText('Plan de communication')).toBeVisible();
+  });
+
+  test('Modale : une tâche sans blocage annonce qu’elle peut démarrer', async ({ demoPage: page }) => {
+    await navTo(page, /entreprise/i, /\/entreprise/);
+    await openOrgSection(page, /^projets/i);
+    await page.waitForURL(/\/entreprise\/projects/);
+    await switchView(page, 'Liste');
+
+    // « Plan de communication » ne dépend de rien mais bloque « Kit presse » :
+    // le sens « Bloque » est celui qu'on oublie, il doit être visible.
+    await page.getByRole('button', { name: /Modifier la tâche Plan de communication/i }).click();
+    const dialog = taskDialog(page);
+    await expect(dialog).toBeVisible({ timeout: 10_000 });
+
+    await openDependenciesTab(dialog);
+    await expect(dialog.getByText(/peut démarrer dès maintenant/i)).toBeVisible();
+    await expect(dialog.getByText(/^Bloque$/)).toBeVisible();
+  });
+
+  test('Ajout : le sélecteur reste dans le projet, et désactive un lien déjà posé', async ({ demoPage: page }) => {
+    await navTo(page, /entreprise/i, /\/entreprise/);
+    await openOrgSection(page, /^projets/i);
+    await page.waitForURL(/\/entreprise\/projects/);
+    await switchView(page, 'Liste');
+
+    await page.getByRole('button', { name: /Modifier la tâche Plan de communication/i }).click();
+    const dialog = taskDialog(page);
+    await openDependenciesTab(dialog);
+    await dialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
+
+    const picker = pickerDialog(page);
+    await expect(picker).toBeVisible();
+
+    // Une tâche d'un AUTRE projet est absente : la base impose le même projet,
+    // il n'y a donc rien à expliquer, seulement à ne pas proposer.
+    const items = (await picker.getByRole('listitem').allInnerTexts()).join('\n');
+    expect(items).not.toContain('Setup analytics');
+
+    // « Kit presse » est déjà reliée dans l'autre sens : la choisir créerait un
+    // cycle que la base refuserait. Elle reste AFFICHÉE, avec sa raison, mais
+    // n'est pas sélectionnable — montrer pourquoi une option est indisponible
+    // vaut mieux que la faire disparaître sans rien dire. C'est la propriété
+    // qui compte ; l'ancienne version de ce test exigeait sa disparition pure
+    // et simple, ce que le produit ne fait plus.
+    const dejaLiee = picker.getByRole('listitem').filter({ hasText: 'Kit presse' });
+    await expect(dejaLiee).toBeVisible();
+    await expect(dejaLiee.getByRole('button')).toBeDisabled();
+
+    // Et il reste bien des candidats réellement sélectionnables.
+    const selectionnables = picker.getByRole('listitem').getByRole('button', { disabled: false });
+    expect(await selectionnables.count()).toBeGreaterThan(0);
+  });
+
+  test('Écriture : ajouter une dépendance rallonge le chemin critique', async ({ demoPage: page }) => {
+    await navTo(page, /entreprise/i, /\/entreprise/);
+    await openOrgSection(page, /^projets/i);
+    await page.waitForURL(/\/entreprise\/projects/);
+
+    const readCritical = async () => {
+      await switchView(page, 'Planning');
+      const legend = page.getByTitle(/plus longue chaîne de tâches/i);
+      await expect(legend).toBeVisible({ timeout: 15_000 });
+      return page.evaluate(() =>
+        document.querySelectorAll('button.ring-amber-500').length);
+    };
+
+    const before = await readCritical();
+
+    await switchView(page, 'Liste');
+    await page.getByRole('button', { name: /Modifier la tâche Plan de communication/i }).click();
+    const dialog = taskDialog(page);
+    await openDependenciesTab(dialog);
+    await dialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
+
+    // Le picker est une liste à cocher, pas un menu : on sélectionne, PUIS on
+    // confirme. Le bouton de confirmation porte le nombre choisi, ce qui le
+    // distingue du déclencheur resté dans la modale de tâche.
+    const picker = pickerDialog(page);
+    await picker.getByRole('listitem').first().getByRole('button').click();
+    await picker.getByRole('button', { name: /^ajouter 1 dépendance$/i }).click();
+    await expect(picker).toBeHidden();
+
+    await expect(dialog.getByText(/bloquée par/i)).toBeVisible();
+    await dialog.getByRole('button', { name: /^annuler$/i }).click();
+
+    // Un maillon de plus dans la chaîne : le surlignage doit suivre. C'est ce
+    // qui prouve que le calcul est bien dérivé de la donnée, pas figé au 1er
+    // rendu.
+    const after = await readCritical();
+    expect(after).toBeGreaterThan(before);
+  });
+});
+
+/**
+ * Les responsables vivent sur la PAGE D'ÉQUIPE (« Responsables et membres »)
+ * depuis l'audit Membres du 2026-09-24 (9bc73f5e) : la section Membres n'est
+ * plus que l'annuaire. Ces cas lisaient l'annuaire et n'y trouvaient plus
+ * aucun badge.
+ *
+ * `exact` : sans lui, « Responsables et membres » (le titre) compte aussi.
+ */
+const leadBadges = (page: Page) => page.getByText('Responsable', { exact: true });
+
+async function openTeam(page: Page, name: 'Design' | 'Dev') {
+  await openOrgSection(page, /^équipes/i);
+  await page.waitForURL(/\/entreprise\/teams$/);
+  await page.getByRole('link', { name: new RegExp(`^${name}$`, 'i') }).click();
+  await expect(page.getByRole('heading', { name: /responsables et membres/i })).toBeVisible({ timeout: 15_000 });
+}
+
+test.describe('Entreprise — responsable d’équipe (démo)', () => {
+  test.describe.configure({ timeout: 120_000 });
+
+  test('Le responsable est visible par tous, pas seulement par ceux qui peuvent le changer', async ({ demoPage: page }) => {
+    await navTo(page, /entreprise/i, /\/entreprise/);
+
+    // Le seed nomme Marie (Design) et Jean (Dev) responsables : un badge par
+    // équipe, chacun sur sa page.
+    await openTeam(page, 'Design');
+    await expect(leadBadges(page).first()).toBeVisible({ timeout: 15_000 });
+    await openTeam(page, 'Dev');
+    await expect(leadBadges(page).first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('Nommer un responsable : plusieurs par équipe, et scopé à cette équipe', async ({ demoPage: page }) => {
+    await navTo(page, /entreprise/i, /\/entreprise/);
+    await openTeam(page, 'Design');
+    await expect(leadBadges(page).first()).toBeVisible({ timeout: 15_000 });
+
+    // On compte les responsables par LEUR commande (« Retirer le rôle de
+    // responsable », une par responsable), pas par le texte « Responsable » :
+    // la bulle de premier affichage du rôle porte le même mot, et elle se
+    // referme au clic qui suit. Mesuré : 2 avant, 2 après, promotion pourtant
+    // faite (bulle comptée avant, plus après).
+    const leads = page.getByRole('button', { name: /^retirer le rôle de responsable/i });
+    const before = await leads.count();
+    expect(before).toBeGreaterThan(0);
+
+    // La bulle de premier affichage du rôle (71f65211) s'ouvre d'elle-même sous
+    // le badge, une fois. À 390 px (mobile-safari), ses 288 px couvrent les
+    // boutons des rangées suivantes et prennent le tap (CI, run 37069364236).
+    // On la referme comme une personne le ferait avant d'agir.
+    await dismissFirstSightBubble(page);
+
+    // Les responsables des AUTRES équipes, photographiés avant la promotion.
+    // Comparer à une photo plutôt qu'à une borne : « au plus 2 équipes avec
+    // un responsable » était juste avec deux équipes de démo, et faux dès la
+    // troisième (Marketing, 1284a5f5), sans que rien n'ait régressé.
+    const leadsOutsideDesign = () =>
+      page.evaluate(() => {
+        const raw = localStorage.getItem('cosmo_org_team_members');
+        const rows = raw ? (JSON.parse(raw) as { teamId: string; userId: string; isLead: boolean }[]) : [];
+        return rows
+          .filter((m) => m.isLead && m.teamId !== 'team-design')
+          .map((m) => `${m.teamId}:${m.userId}`)
+          .sort();
+      });
+    const othersBefore = await leadsOutsideDesign();
+    expect(othersBefore.length).toBeGreaterThan(0);
+
+    await page.getByRole('button', { name: /nommer responsable de l'équipe/i }).first().click();
+
+    // Le rôle est multiple : nommer un second responsable ne révoque pas le
+    // premier — c'est la différence avec `created_by`, qui était unique.
+    await expect(leads).toHaveCount(before + 1, { timeout: 10_000 });
+
+    // Et il reste porté par l'appartenance à UNE équipe : la promotion n'a
+    // rien changé aux responsables des autres équipes.
+    expect(await leadsOutsideDesign()).toEqual(othersBefore);
+  });
+});
+
+test.describe('Entreprise — aperçu des badges de nouveautés (démo)', () => {
+  test.describe.configure({ timeout: 120_000 });
+
+  test('Le badge dit CE QUI a changé, pas seulement combien', async ({ demoPage: page }) => {
+    // L'aperçu au survol vit dans le panneau DESKTOP (`OrgSideNav`). Sous `md`,
+    // la navigation est le sélecteur + feuille, dont le total est `aria-hidden` :
+    // le badge y est dans le DOM mais caché (mobile-safari, run 37069364236).
+    // Largeur posée par le cas lui-même, comme le cas desktop de navigation.
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await navTo(page, /entreprise/i, /\/entreprise/);
+    await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
+
+    // Ouvrir /entreprise marque l'org comme vue : on rembobine pour que les
+    // badges existent encore au moment de l'assertion.
+    await page.evaluate(() => localStorage.setItem('cosmo_org_last_seen_org-demo-1', '0'));
+    await page.reload();
+    await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
+
+    const badge = page.locator('span[aria-label*="nouveaut"]').first();
+    await expect(badge).toBeVisible({ timeout: 15_000 });
+
+    // Le survol doit produire une liste nommée — un compteur seul obligeait à
+    // ouvrir l'onglet juste pour savoir de quoi il parlait.
+    await badge.hover();
+    await expect(page.getByRole('tooltip').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('tooltip').first()).toContainText(/·/);
+  });
+});

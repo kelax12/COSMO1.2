@@ -1,19 +1,31 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Line, LineChart } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import WorkSummaryCard, { ProgressRing } from './WorkSummaryCard';
-import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
+import { startOfWeek } from 'date-fns';
+import { useTeamTaskWorkingSet, useTeamProjects, TEAM_TASKS_READ_LIMIT } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
-import { subtreeOf, type OrgMember } from '@/modules/organizations';
+import { isManagerOf, type OrgMember } from '@/modules/organizations';
+import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import { projectColor } from './team-projects.helpers';
-import { Download } from 'lucide-react';
-import { downloadCSV } from '@/lib/csv-export';
+import { Download, ClipboardCheck } from 'lucide-react';
 import {
   STATS_PERIODS, type StatsPeriod, periodStart, filterByActivity, scopeOkrs,
   summarize, overallOkrProgress, memberLoad, overdueByMember,
-  projectBreakdown, velocityByWeek, completionTrend, okrBreakdown, isOverdue,
+  projectBreakdown, velocityByWeek, comparedWindows, periodFlow, completionTrend, okrBreakdown, isOverdue,
+  memberWorkload,
 } from './team-stats.helpers';
+import TeamWorkloadCard from './TeamWorkloadCard';
+import PeriodCompareCard from './PeriodCompareCard';
+import TruncatedDataNotice from './TruncatedDataNotice';
+import WeeklyReviewSheet from './WeeklyReviewSheet';
+import { buildOrgLink } from './deep-link.helpers';
+import { TeamOverviewSkeleton } from './OrgLoadingSkeletons';
+import StatsScopeSelect from './StatsScopeSelect';
+import { defaultScope, scopeMembers, scopeTasks, type StatsScope } from './stats-scope.helpers';
 import { useT } from '@/i18n/useT';
+import { SectionDivider } from '@/components/mobile';
 
 interface TeamOverviewTabProps {
   orgId: string;
@@ -29,6 +41,7 @@ const firstName = (name: string) => name.split(' ')[0];
 // figée au premier import (cf. src/i18n/catalog.ts).
 const velocityColor = '#10b981';
 const trendColor = '#6366f1';
+
 
 const SectionCard = ({ title, children, aside }: {
   title: string; children: React.ReactNode; aside?: React.ReactNode;
@@ -64,38 +77,68 @@ const MiniBar = ({ ratio, colorClass }: { ratio: number; colorClass: string }) =
  * direct » (jauge de l'état courant, pas une activité datée).
  */
 const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOverviewTabProps) => {
-  const { t } = useT('org');
+  const { t: ta, tp: tpOrgAdmin } = useT('orgAdmin');
   // Configs de graphique construites au RENDU : elles portent des libellés
   // traduits, une constante de module les figerait au premier import.
-  const velocityConfig = { completed: { label: t('overview.completed'), color: velocityColor } } satisfies ChartConfig;
-  const trendConfig = { rate: { label: t('overview.completionRate'), color: trendColor } } satisfies ChartConfig;
-  const { data: allTasks = [] } = useTeamTasks(orgId);
-  const { data: projects = [] } = useTeamProjects(orgId);
-  const { data: allOkrs = [] } = useTeamOKRs(orgId);
+  const velocityConfig = { completed: { label: ta('overview.completed'), color: velocityColor } } satisfies ChartConfig;
+  const trendConfig = { rate: { label: ta('overview.completionRate'), color: trendColor } } satisfies ChartConfig;
   const [period, setPeriod] = useState<StatsPeriod>('30');
+  const start = useMemo(() => periodStart(period), [period]);
+  // Lecture ciblée sur la période (audit du 2026-09-24) : les tâches OUVERTES,
+  // plus celles terminées depuis le lundi de la semaine où commence la
+  // fenêtre (premier seau de `weekBuckets`, et la semaine précédente que lit
+  // la revue hebdomadaire). Avant, l'onglet lisait les 1 000 dernières tâches
+  // CRÉÉES de l'organisation et calculait tout sur cet extrait.
+  // Sur 7, 30 et 90 jours, cartes, charge, répartitions, retards et vélocité
+  // sont exacts. La tendance se calcule sur la même population que les
+  // cartes (les tâches actives dans la fenêtre) : une tâche close avant la
+  // fenêtre n'y figure plus. « Tout » reste une lecture complète, plafonnée,
+  // et le dit par un bandeau.
+  // Comparaison de période (reco UI n° 38) : la lecture remonte à la fenêtre
+  // PRÉCÉDENTE, sinon ses complétions manqueraient et la variation serait
+  // fausse. Tout le reste filtre déjà sur `start`.
+  const windows = useMemo(() => comparedWindows(period), [period]);
+  const since = useMemo(
+    () => (windows ? startOfWeek(windows.previous[0], { weekStartsOn: 1 }).toISOString() : null),
+    [windows],
+  );
+  const { data: allTasks = [], isLoading: loadingTasks } = useTeamTaskWorkingSet(orgId, since);
+  const { data: projects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
+  const { data: allOkrs = [], isLoading: loadingOkrs } = useTeamOKRs(orgId);
+  const isLoading = loadingTasks || loadingProjects || loadingOkrs;
+  const truncated = allTasks.length >= TEAM_TASKS_READ_LIMIT;
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const navigate = useNavigate();
+  const { data: teams = [] } = useOrgTeams(orgId);
+  const { data: teamMembers = [] } = useOrgTeamMembers(orgId);
+  const scopeCtx = useMemo(
+    () => ({ members, teamMembers, currentUserId, isAdmin }),
+    [members, teamMembers, currentUserId, isAdmin],
+  );
+  // Périmètre (M3) : hiérarchie, équipe ou projet. `null` = pas encore choisi,
+  // on suit le défaut (qui dépend des équipes, chargées après le premier rendu).
+  const [chosenScope, setChosenScope] = useState<StatsScope | null>(null);
+  const scope = chosenScope ?? defaultScope(teams, scopeCtx);
 
-  // Périmètre : admin → tous les membres ; manager → soi + sous-arbre.
-  const scopedMembers = useMemo(() => {
-    if (isAdmin || !currentUserId) return members;
-    const mine = subtreeOf(members, currentUserId);
-    return members.filter((m) => m.userId === currentUserId || mine.has(m.userId));
-  }, [members, isAdmin, currentUserId]);
+  // Revue hebdomadaire (#26) : elle sert a arbitrer la charge d'AUTRES
+  // personnes. Un membre sans subordonne n'a rien a y arbitrer — le bouton ne
+  // lui est donc pas propose.
+  const canReview = isAdmin || (!!currentUserId && isManagerOf(members, currentUserId));
 
-  // Tâches du périmètre (tous horizons) — base des séries temporelles.
-  const scopedTasks = useMemo(() => {
-    if (isAdmin) return allTasks;
-    const scope = new Set(scopedMembers.map((m) => m.userId));
-    return allTasks.filter((t) => t.assigneeIds.some((id) => scope.has(id)));
-  }, [allTasks, scopedMembers, isAdmin]);
+  // Membres et tâches du périmètre choisi (règles : stats-scope.helpers.ts).
+  const scopedMembers = useMemo(() => scopeMembers(scope, scopeCtx, allTasks), [scope, scopeCtx, allTasks]);
+  const scopedTasks = useMemo(
+    () => scopeTasks(scope, scopeCtx, allTasks, scopedMembers),
+    [scope, scopeCtx, allTasks, scopedMembers],
+  );
 
   // OKR du périmètre : admin → tout ; manager → KR assignés à son sous-arbre
   // + objectifs collectifs (reco #15, cohérence avec tâches/membres).
   const okrs = useMemo(() => {
-    const scope = new Set(scopedMembers.map((m) => m.userId));
-    return scopeOkrs(allOkrs, scope, isAdmin);
-  }, [allOkrs, scopedMembers, isAdmin]);
+    const memberIds = new Set(scopedMembers.map((m) => m.userId));
+    return scopeOkrs(allOkrs, memberIds, isAdmin && chosenScope?.kind !== 'team' && chosenScope?.kind !== 'project');
+  }, [allOkrs, scopedMembers, isAdmin, chosenScope]);
 
-  const start = useMemo(() => periodStart(period), [period]);
   // Tâches « actives » dans la fenêtre (ouvertes, créées ou terminées dedans) —
   // base des cartes et répartitions (reco #13 : plus de biais createdAt).
   const periodTasks = useMemo(() => filterByActivity(scopedTasks, start), [scopedTasks, start]);
@@ -103,6 +146,10 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   const summary = useMemo(() => summarize(periodTasks), [periodTasks]);
   const okrProgress = useMemo(() => overallOkrProgress(okrs), [okrs]);
   const load = useMemo(() => memberLoad(periodTasks, scopedMembers), [periodTasks, scopedMembers]);
+  // Charge : calculée sur les tâches du périmètre SANS filtre de période — une
+  // tâche ouverte pèse sur l'équipe qu'elle ait été créée hier ou il y a six
+  // mois. La borner à la fenêtre affichée sous-estimerait la charge réelle.
+  const workload = useMemo(() => memberWorkload(scopedTasks, scopedMembers), [scopedTasks, scopedMembers]);
   const overdueMembers = useMemo(() => overdueByMember(periodTasks, scopedMembers), [periodTasks, scopedMembers]);
   const byProject = useMemo(() => projectBreakdown(periodTasks, projects), [periodTasks, projects]);
   const velocity = useMemo(() => velocityByWeek(scopedTasks, start), [scopedTasks, start]);
@@ -120,41 +167,76 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   const hasVelocity = velocity.some((v) => v.completed > 0);
   const hasTrend = trend.some((t) => t.rate > 0);
 
-  const periodLabel = STATS_PERIODS.find((p) => p.id === period)?.label ?? '';
-  const periodHint = period === 'all' ? t('overview.sinceStart') : t('overview.activeOver', { period: periodLabel });
+  const periodDays = STATS_PERIODS.find((p) => p.id === period)?.days ?? null;
+  const periodLabel = periodDays === null
+    ? ta('overview.periodAll')
+    : ta('overview.periodDays', { count: periodDays });
+  const periodHint = period === 'all' ? ta('overview.sinceStart') : ta('overview.activeOver', { period: periodLabel });
 
-  // Export CSV (reco #14) — membres, projets, OKR (3 fichiers espacés,
-  // Safari refuse plusieurs .click() simultanés, cf. exportAllCSV).
-  const handleExport = () => {
+  const flows = useMemo(() => {
+    if (!windows) return null;
+    return {
+      current: periodFlow(scopedTasks, windows.current[0], windows.current[1]),
+      previous: periodFlow(scopedTasks, windows.previous[0], windows.previous[1]),
+    };
+  }, [scopedTasks, windows]);
+
+  // Rapport en un clic (reco UI n° 40) : UN fichier, format « long »
+  // (section, élément, mesure, valeur), qui s'ouvre tel quel dans un tableur.
+  // Trois fichiers successifs étaient bloqués par Safari au-delà du premier.
+  // `csv-export` chargé AU CLIC : importé en dur, il devenait un lot partagé
+  // de plus dans les préchargements de `OrganizationPage` (à son plafond).
+  const handleExport = async () => {
+    const { downloadCSV } = await import('@/lib/csv-export');
+    const S = { summary: ta('ui.report.summary'), member: ta('ui.report.members'), project: ta('ui.report.projects'), okr: ta('ui.report.okr') };
+    const rows: (string | number)[][] = [
+      [S.summary, periodLabel, ta('overview.csvTotal'), summary.total],
+      [S.summary, periodLabel, ta('overview.csvDone'), summary.completed],
+      [S.summary, periodLabel, ta('overview.csvOverdue'), summary.overdueCount],
+      [S.summary, periodLabel, ta('overview.csvRate'), summary.completionRate],
+      [S.summary, periodLabel, ta('overview.okrProgressLabel'), okrProgress],
+    ];
+    if (flows) {
+      rows.push(
+        [S.summary, ta('ui.compare.previous'), ta('ui.compare.created'), flows.previous.created],
+        [S.summary, ta('ui.compare.previous'), ta('ui.compare.completed'), flows.previous.completed],
+        [S.summary, periodLabel, ta('ui.compare.created'), flows.current.created],
+        [S.summary, periodLabel, ta('ui.compare.completed'), flows.current.completed],
+      );
+    }
+    for (const m of load) {
+      const overdue = overdueMembers.find((o) => o.userId === m.userId)?.count ?? 0;
+      rows.push(
+        [S.member, m.name, ta('overview.csvOpen'), m.open],
+        [S.member, m.name, ta('overview.csvDone'), m.done],
+        [S.member, m.name, ta('overview.csvRate'), m.completionRate],
+        [S.member, m.name, ta('overview.csvOverdue'), overdue],
+      );
+    }
+    for (const p of byProject) {
+      rows.push([S.project, p.name, ta('overview.openShort'), p.open], [S.project, p.name, ta('overview.overdueShort'), p.overdue]);
+    }
+    for (const o of okrStats) rows.push([S.okr, o.title, ta('overview.csvProgress'), o.progress]);
     downloadCSV(
-      'cosmo-stats-membres',
-      [t('overview.csvMember'), t('overview.csvOpen'), t('overview.csvDone'), t('overview.csvTotal'), t('overview.csvRate'), t('overview.csvOverdue')],
-      load.map((m) => [
-        m.name, m.open, m.done, m.total, m.completionRate,
-        overdueMembers.find((o) => o.userId === m.userId)?.count ?? 0,
-      ]),
+      'cosmo-rapport-entreprise',
+      [ta('ui.report.colSection'), ta('ui.report.colItem'), ta('ui.report.colMeasure'), ta('ui.report.colValue')],
+      rows,
     );
-    setTimeout(() => downloadCSV(
-      'cosmo-stats-projets',
-      ['Projet', 'Ouvertes', 'En retard', 'Total'],
-      byProject.map((p) => [p.name, p.open, p.overdue, p.total]),
-    ), 150);
-    setTimeout(() => downloadCSV(
-      'cosmo-stats-okr',
-      ['Objectif', 'Progression (%)', 'Nb KR'],
-      okrStats.map((o) => [o.title, o.progress, o.krCount]),
-    ), 300);
   };
 
   return (
     <div className="space-y-5">
       {/* En-tête : sélecteur de période */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">
-          {isAdmin ? t('overview.scopeAdmin') : t('overview.scopeMember')}
-        </p>
-        <div className="flex items-center gap-2">
-          <div className="inline-flex items-center rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5" role="tablist" aria-label={t('overview.period')}>
+        <StatsScopeSelect
+          orgId={orgId}
+          scope={scope}
+          onScope={setChosenScope}
+          teams={teams}
+          ctx={scopeCtx}
+        />
+        <div className="flex items-center gap-2 flex-wrap max-md:w-full">
+          <div className="inline-flex items-center rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5" role="tablist" aria-label={ta('overview.period')}>
             {STATS_PERIODS.map((p) => (
               <button
                 key={p.id}
@@ -162,56 +244,98 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                 role="tab"
                 aria-selected={period === p.id}
                 onClick={() => setPeriod(p.id)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                className={`px-3 max-md:px-2.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors ${
                   period === p.id
                     ? 'bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))]'
                     : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
                 }`}
               >
-                {p.label}
+                {p.days === null ? ta('overview.periodAll') : ta('overview.periodDays', { count: p.days })}
               </button>
             ))}
           </div>
+          {canReview && (
+            <button
+              type="button"
+              onClick={() => setReviewOpen(true)}
+              data-guide-id="overview-weekly-review"
+              // Maquette 277 : sur mobile, un lien, plus un bloc violet sur trois lignes.
+              className="max-md:order-last max-md:basis-full max-md:justify-start max-md:px-0 max-md:text-[rgb(var(--color-accent))] max-md:bg-transparent inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-colors whitespace-nowrap"
+            >
+              <ClipboardCheck size={13} aria-hidden="true" className="max-md:hidden" /> {ta('weeklyReview.open')}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleExport}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+            disabled={isLoading}
+            // Maquette 278 : sur mobile, l'icône seule.
+            aria-label={ta('ui.report.export')}
+            className="max-md:border-0 max-md:px-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors disabled:opacity-50"
           >
-            <Download size={13} aria-hidden="true" /> Exporter CSV
+            <Download size={13} aria-hidden="true" className="max-md:w-[18px] max-md:h-[18px]" /> <span className="max-md:hidden">{ta('ui.report.export')}</span>
           </button>
         </div>
       </div>
 
+      {/* Le sélecteur de période reste utilisable pendant le chargement ; tout
+          ce qui porte un CHIFFRE attend. C'est l'onglet où le zéro faux coûte
+          le plus cher : un manager y voyait son équipe à 0 tâche / 0 % avant de
+          la voir à ses vrais chiffres. */}
+      {isLoading ? (
+        <TeamOverviewSkeleton label={ta('overview.loading')} />
+      ) : (
+      <>
+      {truncated && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
       {/* Carte de synthèse « progress-first » */}
       <WorkSummaryCard
-        title={`${summary.total} tâche${summary.total > 1 ? 's' : ''} · ${periodHint}`}
+        title={tpOrgAdmin('summary.taskTotal', summary.total, { period: periodHint })}
         completed={summary.completed}
         inProgress={Math.max(0, summary.total - summary.completed - summary.overdueCount)}
         overdue={summary.overdueCount}
-        completionRate={summary.completionRate}
-        emptyLabel={t('overview.emptyPeriod')}
-        aside={<ProgressRing value={okrProgress} label="Progression OKR" />}
+        emptyLabel={ta('overview.emptyPeriod')}
+        aside={<ProgressRing value={okrProgress} label={ta('overview.okrProgressLabel')} />}
       />
 
+      {/* Maquette 281 : sur mobile, la progression OKR en chiffre, plus un anneau. */}
+      <div className="md:hidden flex items-center justify-between px-1 text-sm">
+        <span className="text-[rgb(var(--color-text-secondary))]">{ta('overview.okrProgressLabel')}</span>
+        <span className="font-semibold tabular-nums text-[rgb(var(--color-text-primary))]">{okrProgress} %</span>
+      </div>
+
+      {flows && (
+        <PeriodCompareCard
+          periodLabel={periodLabel}
+          current={flows.current}
+          previous={flows.previous}
+        />
+      )}
+
+      <SectionDivider />
+      {/* Charge de l'équipe — placée juste sous la synthèse : c'est la question
+          la plus opérationnelle de l'onglet, elle ne doit pas se mériter. */}
+      <TeamWorkloadCard rows={workload} members={scopedMembers} />
+
+      <SectionDivider />
       {/* Par membre + Par projet */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
-        <SectionCard title="Par membre">
+        <SectionCard title={ta('overview.byMember')}>
           {load.every((m) => m.total === 0) ? (
-            <EmptyRow>{t('overview.emptyAssigned')}</EmptyRow>
+            <EmptyRow>{ta('overview.emptyAssigned')}</EmptyRow>
           ) : (
             <ul className="space-y-2.5">
               {load.filter((m) => m.total > 0).map((m) => (
                 <li key={m.userId} className="flex items-center gap-3">
                   <span className="w-20 shrink-0 text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{m.name}</span>
                   <MiniBar ratio={m.open / maxOpen} colorClass="bg-[rgb(var(--color-accent-solid))]" />
-                  <span className="w-9 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title="Tâches ouvertes">
+                  <span className="w-9 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title={ta('overview.openTasks')}>
                     {m.open}
                   </span>
                   <span
                     className={`w-11 shrink-0 text-right text-xs font-semibold tabular-nums ${
-                      m.completionRate >= 66 ? 'text-emerald-500' : m.completionRate >= 33 ? 'text-amber-500' : 'text-[rgb(var(--color-text-muted))]'
+                      m.completionRate >= 66 ? 'md:text-emerald-500 text-[rgb(var(--color-text-muted))]' : m.completionRate >= 33 ? 'md:text-amber-500 text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-muted))]'
                     }`}
-                    title={t('overview.doneRatio', { done: m.done, total: m.total })}
+                    title={ta('overview.doneRatio', { done: m.done, total: m.total })}
                   >
                     {m.completionRate}%
                   </span>
@@ -221,9 +345,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
           )}
         </SectionCard>
 
-        <SectionCard title={t('overview.byProject')}>
+        <SectionCard title={ta('overview.byProject')}>
           {byProject.length === 0 ? (
-            <EmptyRow>{t('overview.emptyByProject')}</EmptyRow>
+            <EmptyRow>{ta('overview.emptyByProject')}</EmptyRow>
           ) : (
             <ul className="space-y-2.5">
               {byProject.map((p) => (
@@ -231,9 +355,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                   <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${projectColor(p.color).dot}`} aria-hidden="true" />
                   <span className="w-24 shrink-0 text-xs font-semibold text-[rgb(var(--color-text-primary))] truncate">{p.name}</span>
                   <MiniBar ratio={p.open / maxProjectOpen} colorClass={projectColor(p.color).dot} />
-                  <span className="w-8 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title="Ouvertes">{p.open}</span>
+                  <span className="w-8 shrink-0 text-right text-xs tabular-nums text-[rgb(var(--color-text-muted))]" title={ta('overview.openShort')}>{p.open}</span>
                   {p.overdue > 0 ? (
-                    <span className="w-14 shrink-0 text-right text-[10px] font-semibold text-red-500" title="En retard">{p.overdue} retard</span>
+                    <span className="w-14 shrink-0 text-right text-[10px] font-semibold text-red-500" title={ta('overview.overdueShort')}>{p.overdue} retard</span>
                   ) : (
                     <span className="w-14 shrink-0" />
                   )}
@@ -244,11 +368,12 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         </SectionCard>
       </div>
 
+      <SectionDivider />
       {/* Vélocité + Tendance */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">
-        <SectionCard title={t('overview.velocity')}>
+        <SectionCard title={ta('overview.velocity')}>
           {!hasVelocity ? (
-            <EmptyRow>{t('overview.emptyVelocity')}</EmptyRow>
+            <EmptyRow>{ta('overview.emptyVelocity')}</EmptyRow>
           ) : (
             <ChartContainer config={velocityConfig} className="h-[200px] w-full">
               <BarChart data={velocity} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -262,9 +387,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
           )}
         </SectionCard>
 
-        <SectionCard title={t('overview.trend')}>
+        <SectionCard title={ta('overview.trend')}>
           {!hasTrend ? (
-            <EmptyRow>{t('overview.emptyTrend')}</EmptyRow>
+            <EmptyRow>{ta('overview.emptyTrend')}</EmptyRow>
           ) : (
             <ChartContainer config={trendConfig} className="h-[200px] w-full">
               <LineChart data={trend} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -279,10 +404,11 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         </SectionCard>
       </div>
 
+      <SectionDivider />
       {/* Avancement OKR détaillé */}
-      <SectionCard title="Avancement des OKR">
+      <SectionCard title={ta('overview.okrProgressTitle')}>
         {okrStats.length === 0 ? (
-          <EmptyRow>{t('overview.emptyOkr')}</EmptyRow>
+          <EmptyRow>{ta('overview.emptyOkr')}</EmptyRow>
         ) : (
           <ul className="space-y-3">
             {okrStats.map((o) => (
@@ -306,9 +432,10 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       </SectionCard>
 
       {/* Retards par membre + liste des tâches en retard */}
+      {summary.overdueCount > 0 && <SectionDivider />}
       {summary.overdueCount > 0 && (
         <div className="grid lg:grid-cols-2 gap-5 items-start">
-          <SectionCard title="Retards par membre">
+          <SectionCard title={ta('overview.overdueByMember')}>
             <ul className="space-y-2.5">
               {overdueMembers.map((m) => (
                 <li key={m.userId} className="flex items-center gap-3">
@@ -322,7 +449,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
 
           <div className="rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/50 dark:bg-red-900/10 p-4 sm:p-5">
             <h3 className="text-sm font-bold text-red-600 dark:text-red-400 mb-3">
-              Tâches en retard ({overdueTasks.length})
+              {ta('summary.overdueTasks', { count: overdueTasks.length })}
             </h3>
             <ul className="space-y-1.5">
               {overdueTasks.slice(0, 6).map((t) => {
@@ -331,19 +458,47 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                   .filter((m): m is OrgMember => !!m)
                   .map((m) => firstName(m.displayName));
                 return (
-                  <li key={t.id} className="flex items-center justify-between text-sm gap-3">
-                    <span className="text-[rgb(var(--color-text-primary))] truncate">{t.name}</span>
-                    {names.length > 0 && (
-                      <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
-                        {names.slice(0, 2).join(', ')}{names.length > 2 ? ` +${names.length - 2}` : ''}
-                      </span>
-                    )}
+                  <li key={t.id}>
+                    {/* Cliquable — ouvre la tâche pour la modifier (même
+                        deep-link `?task=` que la revue hebdomadaire). */}
+                    <button
+                      type="button"
+                      onClick={() => navigate(buildOrgLink('projects', { task: t.id }))}
+                      className="w-full flex items-center justify-between text-sm gap-3 rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
+                      aria-label={t.name}
+                    >
+                      <span className="text-[rgb(var(--color-text-primary))] truncate">{t.name}</span>
+                      {names.length > 0 && (
+                        <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
+                          {names.slice(0, 2).join(', ')}{names.length > 2 ? ` +${names.length - 2}` : ''}
+                        </span>
+                      )}
+                    </button>
                   </li>
                 );
               })}
             </ul>
           </div>
         </div>
+      )}
+
+      </>
+      )}
+
+      {reviewOpen && (
+        <WeeklyReviewSheet
+          orgId={orgId}
+          // Meme perimetre que les statistiques affichees au-dessus : la revue
+          // ne doit pas montrer une equipe plus large que l'onglet qui la porte.
+          tasks={scopedTasks}
+          members={scopedMembers}
+          baseScope={isAdmin ? 'org' : 'subtree'}
+          onOpenTask={(taskId) => {
+            setReviewOpen(false);
+            navigate(buildOrgLink('projects', { task: taskId }));
+          }}
+          onClose={() => setReviewOpen(false)}
+        />
       )}
     </div>
   );

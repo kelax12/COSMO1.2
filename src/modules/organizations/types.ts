@@ -53,7 +53,15 @@ export interface OrgMember {
   avatar?: string;
   /** Supérieur direct dans la pyramide (auth.users.id) — null = non placé. */
   managerId?: string | null;
+  /** Accès coupé, appartenance conservée (mig. 161). */
+  suspendedAt?: string | null;
+  /** Accès temporaire : il cesse à cette date (mig. 161). */
+  accessExpiresAt?: string | null;
 }
+
+/** Un membre a-t-il ACCÈS aujourd'hui ? Miroir de `is_org_member` (mig. 161). */
+export const isMemberActive = (m: Pick<OrgMember, 'suspendedAt' | 'accessExpiresAt'>, now = Date.now()): boolean =>
+  !m.suspendedAt && (!m.accessExpiresAt || Date.parse(m.accessExpiresAt) > now);
 
 /** Nœud de l'arbre hiérarchique (construit côté client depuis managerId). */
 export interface OrgTreeNode {
@@ -138,6 +146,39 @@ export interface OrgInviteLink {
   claimedAt?: string | null;
 }
 
+/**
+ * Invitation NOMINATIVE d'un ami dans une organisation (mig. 105).
+ *
+ * A ne pas confondre avec OrgJoinRequest, qui va dans l'autre sens : la
+ * demande part de la personne qui veut entrer et un admin l'approuve. Ici
+ * c'est un membre qui invite, et le destinataire repond depuis sa boite de
+ * reception.
+ */
+export interface OrgInvitation {
+  id: string;
+  orgId: string;
+  orgName: string;
+  inviterId: string;
+  inviterName: string;
+  createdAt: string;
+}
+
+/**
+ * « Vous avez ete retire de X » — notification lue par un EX-membre.
+ *
+ * Portee par `org_notifications` (kind = 'org_removed', mig. 106), dont la
+ * policy SELECT est `user_id = auth.uid()` et non `is_org_member` : c'est ce
+ * qui permet a quelqu'un qui n'est plus dans l'organisation de la lire.
+ */
+export interface OrgRemovalNotice {
+  id: string;
+  orgId: string;
+  orgName: string;
+  /** Admin ayant procede au retrait (null si son profil a disparu). */
+  actorName: string | null;
+  createdAt: string;
+}
+
 export type OrgJoinRequestStatus = 'pending' | 'accepted' | 'rejected';
 
 /**
@@ -158,4 +199,51 @@ export interface OrgJoinRequest {
   /** Nom de l'org — renseigné en démo ; en prod la RPC de demande le renvoie
    *  au moment de l'envoi (non re-lisible ensuite : RLS membres-only). */
   orgName?: string;
+}
+
+/**
+ * Boite de reception d'entreprise, telle que la rend `get_my_org_inbox()`
+ * (mig. 129) : ce que cinq requetes distinctes lisaient a chaque ouverture de
+ * l'application, sur toutes les pages protegees.
+ *
+ * `joinRequests` et `notifications` couvrent TOUTES mes organisations, pas
+ * seulement l'active : c'est ce qui permet a la lecture de partir sans
+ * attendre que l'organisation active soit resolue. Le filtrage par
+ * organisation se fait cote client, sur une liste deja bornee par la RPC.
+ */
+/**
+ * Une tache d'equipe telle que la pastille en a besoin, et rien de plus
+ * (mig. 142). `kind` dit POURQUOI elle est la :
+ *
+ *   • `assigned` — assignation en cours qui ne vient pas de moi. C'est le
+ *     comptage derive, celui que le client filtre ensuite par `lastSeen`.
+ *   • `notified` — tache visee par une de mes notifications non lues. Elle ne
+ *     sert qu'a NOMMER l'apercu, jamais a compter : sans elle, la pastille
+ *     afficherait un nombre qu'aucune liste ne peut expliquer.
+ *
+ * ❌ Ne pas la confondre avec `TeamTask`, et ne pas l'elargir « tant qu'on y
+ * est » : c'est precisement la lecture org-wide de `team_tasks`, montee par
+ * `Layout` sur toutes les pages protegees, que cette section a remplacee.
+ */
+export interface OrgBadgeTask {
+  orgId: string;
+  id: string;
+  name: string;
+  createdAt: string;
+  kind: 'assigned' | 'notified';
+}
+
+export interface OrgInbox {
+  invitations: OrgInvitation[];
+  removalNotices: OrgRemovalNotice[];
+  /** Ma demande d'adhesion en attente, ou null. */
+  myJoinRequest: OrgJoinRequest | null;
+  /** Vue ADMIN : les demandes adressees aux organisations que j'administre. */
+  joinRequests: OrgJoinRequest[];
+  notifications: import('./notifications').OrgNotification[];
+  /**
+   * De quoi peindre la pastille d'entreprise sans lire la liste des taches
+   * d'equipe (mig. 142). Vide en mode demo, ou la source reste locale.
+   */
+  badgeTasks: OrgBadgeTask[];
 }

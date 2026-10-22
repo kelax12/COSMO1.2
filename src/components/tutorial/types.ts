@@ -57,8 +57,15 @@ export interface TutorialStep {
    *   - 'custom'        : appelle customAction(target)
    */
   action?: 'click' | 'pulse' | 'drag-ghost' | 'drag-and-resize' | 'type' | 'custom';
-  /** Label affiché dans le fantôme de drag pour le rendre parlant (ex. « Réviser maths ») */
-  ghostLabel?: string;
+  /**
+   * CLÉ du catalogue `tutorials` pour le libellé du fantôme de drag.
+   *
+   * Même raison que `titleKey` : les tutoriels sont des constantes de MODULE,
+   * évaluées au premier import. Et c'était une chaîne FRANÇAISE en dur,
+   * affichée telle quelle à un visiteur anglophone — invisible à
+   * `i18n:scan` jusqu'au motif (9) du 2026-09-12.
+   */
+  ghostLabelKey?: KeyOf<'tutorials'>;
   /** Pour action='drag-ghost' : sélecteur de la cible du drag */
   dragTo?: string;
   /** Pour action='type' : texte à taper */

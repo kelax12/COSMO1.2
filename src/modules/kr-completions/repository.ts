@@ -4,6 +4,9 @@
 
 import { KRCompletion, CreateKRCompletionInput, KRCompletionFilters } from './types';
 import { KR_COMPLETIONS_STORAGE_KEY } from './constants';
+import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
+import { isEnglishSeed } from '@/lib/seed-i18n';
+import { demoOkrTitlesEn } from '@/modules/okrs/repository';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA — Seeds matching the completed KRs in OKR demo data
@@ -20,34 +23,40 @@ const getDate = (daysFromNow: number): string => {
  * Dates are computed fresh relative to today.
  */
 function createDemoCompletions(): KRCompletion[] {
-  return [
+  return localizeCompletions([
     // ── KRs complétés récemment (aujourd'hui / cette semaine) ──────────
-    { id: 'krc-1',  krId: 'kr-1',  okrId: 'okr-1', userId: 'demo-user', completedAt: getDate(0),   krTitle: 'Compléter 90% des tâches planifiées', okrTitle: 'Améliorer ma productivité Q2 2026' },
-    { id: 'krc-2',  krId: 'kr-4',  okrId: 'okr-2', userId: 'demo-user', completedAt: getDate(-2),  krTitle: 'Terminer la spécialisation Coursera',  okrTitle: 'Maîtriser le machine learning' },
-    { id: 'krc-3',  krId: 'kr-7',  okrId: 'okr-3', userId: 'demo-user', completedAt: getDate(-1),  krTitle: 'Sport 4x par semaine',                okrTitle: 'Santé et bien-être 2026' },
-    { id: 'krc-4',  krId: 'kr-9',  okrId: 'okr-3', userId: 'demo-user', completedAt: getDate(-3),  krTitle: '5 fruits/légumes par jour',            okrTitle: 'Santé et bien-être 2026' },
+    { id: 'krc-1', krId: 'kr-1', okrId: 'okr-1', userId: 'demo-user', completedAt: getDate(0),   krTitle: 'Compléter 90 tâches',                                 okrTitle: 'Améliorer ma productivité Q2 2026' },
+    { id: 'krc-2', krId: 'kr-7', okrId: 'okr-3', userId: 'demo-user', completedAt: getDate(-1),  krTitle: 'Sport 4x par semaine',                                okrTitle: 'Santé et bien-être 2026' },
+    { id: 'krc-3', krId: 'kr-9', okrId: 'okr-3', userId: 'demo-user', completedAt: getDate(-3),  krTitle: '5 fruits/légumes par jour',                            okrTitle: 'Santé et bien-être 2026' },
 
     // ── KRs complétés ce mois ──────────────────────────────────────────
-    { id: 'krc-5',  krId: 'kr-10', okrId: 'okr-4', userId: 'demo-user', completedAt: getDate(-5),  krTitle: 'Livrer les 5 nouvelles features',      okrTitle: 'Lancer COSMO v1.2 en production' },
-    { id: 'krc-6',  krId: 'kr-11', okrId: 'okr-4', userId: 'demo-user', completedAt: getDate(-4),  krTitle: 'Déployer sur Vercel',                  okrTitle: 'Lancer COSMO v1.2 en production' },
-    { id: 'krc-7',  krId: 'kr-12', okrId: 'okr-4', userId: 'demo-user', completedAt: getDate(-6),  krTitle: 'Atteindre 100 utilisateurs beta',      okrTitle: 'Lancer COSMO v1.2 en production' },
-    { id: 'krc-8',  krId: 'kr-13', okrId: 'okr-5', userId: 'demo-user', completedAt: getDate(-8),  krTitle: 'Score Lighthouse > 90',                okrTitle: 'Optimisation performances app' },
-    { id: 'krc-9',  krId: 'kr-14', okrId: 'okr-5', userId: 'demo-user', completedAt: getDate(-10), krTitle: 'Réduire bundle size de 30%',            okrTitle: 'Optimisation performances app' },
-    { id: 'krc-10', krId: 'kr-15', okrId: 'okr-5', userId: 'demo-user', completedAt: getDate(-9),  krTitle: 'TTI < 2s sur mobile',                  okrTitle: 'Optimisation performances app' },
-
-    // ── KRs complétés le mois dernier ──────────────────────────────────
-    { id: 'krc-11', krId: 'kr-16', okrId: 'okr-6', userId: 'demo-user', completedAt: getDate(-18), krTitle: 'Atteindre 200 utilisateurs actifs',    okrTitle: 'Croissance utilisateurs COSMO v1' },
-    { id: 'krc-12', krId: 'kr-17', okrId: 'okr-6', userId: 'demo-user', completedAt: getDate(-20), krTitle: 'NPS score supérieur à 40',             okrTitle: 'Croissance utilisateurs COSMO v1' },
-    { id: 'krc-13', krId: 'kr-18', okrId: 'okr-6', userId: 'demo-user', completedAt: getDate(-22), krTitle: 'Rétention J30 > 40%',                  okrTitle: 'Croissance utilisateurs COSMO v1' },
+    { id: 'krc-4', krId: 'kr-5', okrId: 'okr-2', userId: 'demo-user', completedAt: getDate(-10), krTitle: 'Livrer les 8 fonctionnalités clés du MVP',            okrTitle: 'Lancer mon projet' },
+    { id: 'krc-5', krId: 'kr-4', okrId: 'okr-2', userId: 'demo-user', completedAt: getDate(-30), krTitle: 'Recueillir 10 retours utilisateurs sur le concept',   okrTitle: 'Lancer mon projet' },
 
     // ── KRs complétés il y a longtemps ─────────────────────────────────
-    { id: 'krc-14', krId: 'kr-19', okrId: 'okr-7', userId: 'demo-user', completedAt: getDate(-90),  krTitle: 'Couverture de tests > 80%',           okrTitle: 'Excellence technique Q3 2025' },
-    { id: 'krc-15', krId: 'kr-20', okrId: 'okr-7', userId: 'demo-user', completedAt: getDate(-95),  krTitle: 'Temps de chargement < 1.5s',          okrTitle: 'Excellence technique Q3 2025' },
-    { id: 'krc-16', krId: 'kr-21', okrId: 'okr-7', userId: 'demo-user', completedAt: getDate(-100), krTitle: 'Zéro vulnérabilité critique',         okrTitle: 'Excellence technique Q3 2025' },
-    { id: 'krc-17', krId: 'kr-22', okrId: 'okr-8', userId: 'demo-user', completedAt: getDate(-160), krTitle: 'Sport 3x par semaine pendant 6 mois', okrTitle: 'Bien-être et santé H1 2025' },
-    { id: 'krc-18', krId: 'kr-23', okrId: 'okr-8', userId: 'demo-user', completedAt: getDate(-165), krTitle: '5000 pages lues en 6 mois',           okrTitle: 'Bien-être et santé H1 2025' },
-    { id: 'krc-19', krId: 'kr-24', okrId: 'okr-8', userId: 'demo-user', completedAt: getDate(-170), krTitle: 'Méditation quotidienne — streak 90j', okrTitle: 'Bien-être et santé H1 2025' },
-  ];
+    { id: 'krc-6', krId: 'kr-22', okrId: 'okr-8', userId: 'demo-user', completedAt: getDate(-160), krTitle: 'Sport 3x par semaine pendant 6 mois', okrTitle: 'Bien-être et santé H1 2025' },
+    { id: 'krc-7', krId: 'kr-23', okrId: 'okr-8', userId: 'demo-user', completedAt: getDate(-165), krTitle: '5000 pages lues en 6 mois',           okrTitle: 'Bien-être et santé H1 2025' },
+    { id: 'krc-8', krId: 'kr-24', okrId: 'okr-8', userId: 'demo-user', completedAt: getDate(-170), krTitle: 'Méditation quotidienne — streak 90j', okrTitle: 'Bien-être et santé H1 2025' },
+  ]);
+}
+
+/**
+ * Overlay anglais du journal de démo — cf. `src/lib/seed-i18n.ts`.
+ *
+ * Ces onze titres s'affichaient en FRANÇAIS dans le graphique « KR réalisés »
+ * du tableau de bord d'un visiteur anglophone : ce module était le seul seed de
+ * démo à n'être branché sur aucun overlay. Trouvé le 2026-09-12 par le motif
+ * (9) d'`i18n:scan`, qui regarde enfin les valeurs de propriété.
+ *
+ * Les titres ne sont pas réécrits ici : ils sont REPRIS de `DEMO_OKRS_EN` par
+ * (okrId, krId), pour qu'un libellé n'ait jamais deux traductions.
+ */
+function localizeCompletions(items: KRCompletion[]): KRCompletion[] {
+  if (!isEnglishSeed()) return items;
+  return items.map((c) => {
+    const en = demoOkrTitlesEn(c.okrId, c.krId);
+    return en ? { ...c, krTitle: en.krTitle, okrTitle: en.okrTitle } : c;
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -70,17 +79,19 @@ export interface IKRCompletionsRepository {
 export class LocalStorageKRCompletionsRepository implements IKRCompletionsRepository {
 
   private getCompletions(): KRCompletion[] {
-    const data = localStorage.getItem(KR_COMPLETIONS_STORAGE_KEY);
-    if (!data) {
+    const stored = safeParseArray<KRCompletion>(safeGetItem(KR_COMPLETIONS_STORAGE_KEY));
+    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
+    // tomber la page (regle B14, helper `safeParseArray`).
+    if (!stored) {
       const demo = createDemoCompletions();
       this.saveCompletions(demo);
       return demo;
     }
-    return JSON.parse(data);
+    return stored;
   }
 
   private saveCompletions(completions: KRCompletion[]): void {
-    localStorage.setItem(KR_COMPLETIONS_STORAGE_KEY, JSON.stringify(completions));
+    writeJsonOrThrow(KR_COMPLETIONS_STORAGE_KEY, completions);
   }
 
   // ═══════════════════════════════════════════════════════════════════

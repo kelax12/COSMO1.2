@@ -1,0 +1,141 @@
+{
+  "common": {
+    "skipAll": "Skip the welcome",
+    "skipStep": "Skip this step",
+    "next": "Continue",
+    "back": "Back",
+    "progress": "Step {{current}} of {{total}}",
+    "add": "Add",
+    "remove": "Remove: {{name}}",
+    "creating": "Creating…",
+    "ideas": "Ideas"
+  },
+  "perso": {
+    "dialogLabel": "Welcome to COSMO",
+    "planets": {
+      "you": "You",
+      "tasks": "Tasks",
+      "agenda": "Calendar",
+      "habits": "Habits",
+      "okr": "Goals"
+    },
+    "intro": {
+      "hello": "Hello {{name}}.",
+      "helloAnon": "Hello.",
+      "title": "Let's build your <em>system</em>.",
+      "body": "COSMO brings your tasks, calendar, habits and goals together. In four steps you write down what is on your mind, fit it into your week, and pick a habit and a goal. Everything you write is saved.",
+      "duration": "Two minutes · everything is optional",
+      "cta": "Get started",
+      "legendTitle": "The four orbits of COSMO",
+      "legendTasks": "what you have to do",
+      "legendAgenda": "when you do it",
+      "legendHabits": "what you keep up every day",
+      "legendOkr": "where you are heading",
+      "businessTitle": "Your company space is waiting",
+      "businessBody": "You started setting up a company space. You can pick it up now, or later from the Company entry in the menu.",
+      "businessCta": "Resume my company"
+    },
+    "tasks": {
+      "title": "What do you need to do this week?",
+      "body": "Everything starts with a task: one specific thing you check off once it's done. Write down what's on your mind. Priority, category and due date can come later.",
+      "placeholder": "e.g. Call the accountant",
+      "listLabel": "Tasks to create",
+      "idea1": "Answer pending emails",
+      "idea2": "Prepare Monday's meeting",
+      "idea3": "Get groceries",
+      "limit": "Five to start with is plenty.",
+      "tip": "In COSMO, the N key adds a task from any page.",
+      "previewTitle": "Your list",
+      "previewEmpty": "Your tasks will show up here as you type.",
+      "alreadyCreated": "Already in your list",
+      "alreadyHint": "You can edit them in Tasks. Add more if you like."
+    },
+    "agenda": {
+      "title": "Give your tasks a <em>place</em>.",
+      "body": "The calendar shows your week hour by hour. Put a task on it and it becomes a time slot, so you know exactly when you'll do it.",
+      "point1": "Drag a task from the calendar's side panel.",
+      "point2": "Stretch the slot to give it its real duration.",
+      "point3": "A task without a slot stays in your list: nothing gets lost.",
+      "cta": "Got it",
+      "fallbackTask": "Prepare the presentation",
+      "previewCaption": "One task, one slot.",
+      "slotTitle": "Block an hour for “{{name}}”?",
+      "slotHint": "Optional. The slot will show up in your calendar, linked to the task.",
+      "slotDay": "Day of the slot",
+      "slotHour": "Time of the slot",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "slotCreated": "Slot booked: {{when}}.",
+      "noTask": "Add a task in the previous step to try it with your own.",
+      "ctaSlot": "Book this slot"
+    },
+    "habits": {
+      "title": "A habit you want to keep up?",
+      "body": "Tick a habit off every day you keep it. COSMO tracks your streak and shows you, week after week, what you really stick to.",
+      "placeholder": "e.g. Walk for 30 minutes",
+      "idea1": "Read for 20 minutes",
+      "idea2": "Walk for 30 minutes",
+      "idea3": "Meditate for 10 minutes",
+      "idea4": "Go to bed before 11 pm",
+      "previewFallback": "Your habit",
+      "previewStreak": "Your streak starts today",
+      "previewCaption": "Every checked box makes the streak longer.",
+      "durationLabel": "How long, each day?",
+      "minutes": "{{minutes}} min",
+      "previewEvery": "{{minutes}} min · every day",
+      "alreadyCreated": "Habit added: {{name}}. You can edit it in Habits."
+    },
+    "okr": {
+      "title": "A goal for the next three months?",
+      "body": "A goal sets the direction. The key result, optional, tells you how you'll know you got there. Link your tasks to it: each one you finish moves the gauge.",
+      "placeholder": "e.g. Launch v2 of the product",
+      "krLabel": "Key result (optional)",
+      "krPlaceholder": "e.g. Publish the sales page",
+      "previewFallback": "Your goal",
+      "previewKrFallback": "Your key result",
+      "previewPeriod": "Over 90 days",
+      "previewCaption": "A linked task gets done, and the gauge moves.",
+      "targetLabel": "Target (optional)",
+      "targetPlaceholder": "e.g. 10",
+      "targetHint": "Without a number, the key result is simply ticked off once reached.",
+      "alreadyCreated": "Goal added: {{name}}. You can flesh it out in Goals."
+    },
+    "done": {
+      "title": "Your system is <em>up and running</em>.",
+      "body": "Everything you created is already in COSMO. Every task you tick off and every habit you keep feeds your statistics.",
+      "recapTitle": "What you just created",
+      "recapTasks_one": "{{count}} task in your list",
+      "recapTasks_other": "{{count}} tasks in your list",
+      "recapHabit": "Habit tracked: {{name}}",
+      "recapOkr": "Goal: {{name}}",
+      "recapNothing": "Nothing yet, and that is fine: you can add anything in a few taps from the app.",
+      "next": "Each page will walk you through its main features the first time you open it.",
+      "cta": "Enter COSMO",
+      "recapSlot": "Slot booked: {{when}}",
+      "statsTitle": "Your statistics, this week",
+      "statsToday_one": "{{count}} item added today: your week is underway.",
+      "statsToday_other": "{{count}} items added today: your week is underway.",
+      "statsEmpty": "They will fill up as soon as you tick off your first task.",
+      "nextTitle": "Where to start",
+      "goTasks": "See my tasks",
+      "goAgenda": "Open the calendar",
+      "goHabits": "See my habits"
+    },
+    "motion": {
+      "play": "Animate",
+      "stop": "Stop the animation"
+    }
+  },
+  "ent": {
+    "video": {
+      "dialogLabel": "Welcome to the company space",
+      "title": "Welcome to <em>{{org}}</em>.",
+      "subtitle": "A two-and-a-half-minute tour of your company space (in French, with subtitles).",
+      "unmute": "Turn sound on",
+      "skip": "Skip the video",
+      "cta": "Get started",
+      "close": "Close",
+      "captionsLabel": "French"
+    }
+  }
+}

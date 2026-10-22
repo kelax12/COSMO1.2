@@ -3,12 +3,14 @@
     "tasks": "Tâches",
     "recurrences": "Récurrences",
     "new": "Nouveau",
+    "skipToCalendar": "Aller au calendrier",
     "zoomIn": "Zoomer le calendrier",
     "zoomOut": "Dézoomer le calendrier",
     "prevPeriod": "Période précédente",
     "nextPeriod": "Période suivante",
     "backToToday": "Revenir à aujourd'hui",
-    "today": "Aujourd'hui"
+    "today": "Aujourd'hui",
+    "calendarScroller": "Grille du calendrier"
   },
   "view": {
     "day": "Jour",
@@ -20,35 +22,36 @@
     "uncategorized": "Sans catégorie",
     "addedBy": "Ajouté par {{name}}",
     "occurrenceDeleted": "Occurrence supprimée",
-    "eventDeleted": "Événement supprimé"
+    "eventDeleted": "Événement supprimé",
+    "copySuffix": "(copie)",
+    "linkedToTask": "Lié à une tâche",
+    "taskDone": "Tâche réalisée"
   },
   "quickCreate": {
+    "aria": "Création rapide d'un événement",
     "titlePlaceholder": "Titre de l'événement",
     "categoryPlaceholder": "Catégorie",
     "addCategory": "Ajouter une catégorie",
     "cancel": "Annuler",
     "create": "Créer"
   },
-  "eventToTask": {
-    "title": "Que faire de cet événement ?",
-    "subtitle": "Il n'est rattaché à aucune tâche",
-    "close": "Fermer",
-    "delete": "Supprimer",
-    "convert": "Transformer en tâche"
-  },
   "slotReview": {
-    "title": "Créneau terminé",
     "question": "Cette tâche a-t-elle été réalisée ?",
-    "snooze": "Plus tard",
-    "remaining_one": "{{count}} créneau à passer en revue",
-    "remaining_many": "{{count}} de créneaux à passer en revue",
-    "remaining_other": "{{count}} créneaux à passer en revue",
     "validate": "Oui, valider la tâche",
     "postpone": "Reporter",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "deleted": "Tâche et créneau supprimés",
+    "postponed": "Créneau retiré, à replanifier",
+    "ignore": "Tâche non réalisée",
+    "badgeAria": "Ce créneau attend une décision : {{title}}",
+    "panelTitle": "Créneau terminé",
+    "panelAction": "Que faire de ce créneau ?"
   },
   "sidebar": {
     "title": "Tâches disponibles",
+    "scheduleTitle": "Planifier une tâche",
+    "scheduleHint": "Maintenez une tâche pour la glisser dans l'agenda, ou touchez-la pour choisir un créneau.", "dropHere": "Lâchez sur un créneau",
+    "addTask": "Ajouter une tâche",
     "close": "Fermer le panneau des tâches",
     "search": "Rechercher une tâche...",
     "filterCategory": "Filtrer par catégorie",
@@ -64,10 +67,20 @@
     "taskOptions": "Options de la tâche",
     "editTask": "Modifier la tâche",
     "duplicateTask": "Dupliquer la tâche",
-    "deleteLinkedEvent": "Supprimer l'événement associé",
+    "deleteLinkedEvents_one": "Supprimer l'événement associé",
+    "deleteLinkedEvents_many": "Supprimer les {{count}} d'événements associés",
+    "deleteLinkedEvents_other": "Supprimer les {{count}} événements associés",
+    "linkedEventsDeleted_one": "Événement associé supprimé",
+    "linkedEventsDeleted_many": "{{count}} d'événements associés supprimés",
+    "linkedEventsDeleted_other": "{{count}} événements associés supprimés",
     "deleteTask": "Supprimer la tâche",
     "taskDeleted": "Tâche supprimée",
     "copySuffix": "{{name}} (copie)",
+    "sourceFilterAria": "Filtrer par origine des tâches",
+    "sourceAll": "Tout",
+    "sourcePerso": "Perso",
+    "sourcePro": "Pro",
+    "proTaskBadge": "Tâche d'équipe",
     "help": {
       "closeTutorial": "Fermer le tutoriel",
       "showGuide": "Afficher le guide",
@@ -76,7 +89,8 @@
       "step1": "• Glissez une tâche vers le calendrier",
       "step2": "• Les propriétés se transfèrent automatiquement",
       "step3": "• La durée définit la longueur de l'événement"
-    }
+    },
+    "alreadyScheduled": "✓ Déjà planifiée"
   },
   "recurrence": {
     "title": "Événements récurrents",

@@ -20,9 +20,12 @@ export function isTheme(value: unknown): value is Theme {
  * Thème appliqué quand l'utilisateur n'a jamais choisi.
  *
  * Sur mobile on part sur `gris` (fond graphite + accent bleu, palette GitHub) :
- * c'est la base du design system mobile. Sur desktop on conserve le
- * comportement historique (préférence système) — le desktop n'est pas
- * concerné par la refonte mobile.
+ * c'est la base du design system mobile. Sur desktop on suit la préférence
+ * système (`dark` générique) — c'est ce défaut qui s'applique aussi à la
+ * landing publique (`resolveInitialTheme()` tourne avant même le routing,
+ * dans `main.tsx`), donc il ne doit pas imposer une DA produit spécifique.
+ * Le thème `noir` reste un choix explicite de l'utilisateur (`ThemeToggle`)
+ * ou d'un point d'entrée précis (démo entreprise, cf. `LandingPage.tsx`).
  */
 export function defaultTheme(): Theme {
   if (typeof window === 'undefined') return 'light';
@@ -69,4 +72,8 @@ export function applyTheme(root: HTMLElement, theme: Theme): void {
   if (theme !== 'light') root.classList.add('dark');
   if (theme === 'gris') root.classList.add('gris');
   if (theme === 'noir') root.classList.add('noir');
+  // Lu par la CSS du spinner de démarrage (index.html), que le script inline
+  // pose AVANT React depuis le thème enregistré : le spinner, puis celui des
+  // pages publiques (`BootScreen`), prennent les couleurs du thème.
+  root.setAttribute('data-boot-theme', theme);
 }

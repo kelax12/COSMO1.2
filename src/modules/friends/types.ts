@@ -132,6 +132,14 @@ export interface SharedListGrant {
 /**
  * Friend request status
  */
+// Les trois seuls statuts que la contrainte `friend_requests_status_check`
+// accepte en base. `rejected` = le DESTINATAIRE refuse.
+//
+// ⚠️ Pas de 'cancelled' ici, malgré ce que laisse croire la policy
+// `friend_requests_update_sender_or_receiver` (mig. 049) qui l'autorise à
+// l'expéditeur : la contrainte CHECK de la table ne le connaît pas, donc
+// l'écrire échoue. L'expéditeur qui retire sa demande la SUPPRIME
+// (cf. `cancelFriendRequest`), ce que la policy DELETE autorise.
 export type FriendRequestStatus = 'pending' | 'accepted' | 'rejected';
 
 /**

@@ -35,13 +35,6 @@ describe('lecture & seeds', () => {
     expect(a.length).toBe(3);
   });
 
-  it('getById / getByEmail (insensible à la casse)', async () => {
-    await repo.getAll();
-    expect((await repo.getById('friend-1'))?.name).toBe('Marie Dupont');
-    expect(await repo.getById('absent')).toBeNull();
-    expect((await repo.getByEmail('MARIE.DUPONT@email.com'))?.id).toBe('friend-1');
-  });
-
   it('getPendingRequests / getSentRequests', async () => {
     const pending = await repo.getPendingRequests();
     expect(pending.length).toBe(2); // 2 demandes entrantes démo
@@ -85,7 +78,7 @@ describe('demandes d’amis', () => {
   it('removeFriend retire un ami', async () => {
     await repo.getAll();
     await repo.removeFriend('friend-1');
-    expect(await repo.getById('friend-1')).toBeNull();
+    expect((await repo.getAll()).some((f) => f.id === 'friend-1')).toBe(false);
   });
 });
 

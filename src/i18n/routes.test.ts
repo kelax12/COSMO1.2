@@ -89,6 +89,18 @@ describe('stripLocalePrefix', () => {
   it('ne prend pas un token d’invitation pour une locale', () => {
     expect(stripLocalePrefix('/invite/abc123')).toEqual({ locale: null, path: '/invite/abc123' });
   });
+
+  // Vercel sert `/entreprise-presentation/` en 200 sans rediriger, et c'est
+  // l'URL que mesure Lighthouse CI : la barre finale ne doit pas changer le chemin.
+  it('retire la barre oblique finale', () => {
+    expect(stripLocalePrefix('/entreprise-presentation/')).toEqual({
+      locale: null,
+      path: '/entreprise-presentation',
+    });
+    expect(stripLocalePrefix('/en/for-companies/')).toEqual({ locale: 'en', path: '/for-companies' });
+    expect(stripLocalePrefix('/en/')).toEqual({ locale: 'en', path: '/' });
+    expect(stripLocalePrefix('/tasks//')).toEqual({ locale: null, path: '/tasks' });
+  });
 });
 
 describe('localizePath', () => {
@@ -150,5 +162,14 @@ describe('canonicalUrl', () => {
     // `prerender.mjs` et `useSeoMeta` doivent produire exactement la même
     // chaîne, sinon le canonical et le hreflang se contredisent.
     expect(canonicalUrl('/', DEFAULT_LOCALE)).toBe(`${SITE_ORIGIN}/`);
+  });
+
+  it('locale inconnue → chemin rendu tel quel, sans préfixe inventé', () => {
+    // Garde de robustesse : `localizePath` est une fonction PURE appelée avec
+    // des valeurs qui peuvent venir d'une URL ou d'un localStorage trafiqué.
+    // Elle doit rendre le chemin inchangé plutôt que fabriquer un `/de/…`
+    // qui n'existe dans aucune table de slugs.
+    expect(localizePath('/tasks', 'de' as Locale)).toBe('/tasks');
+    expect(localizePath('/', '' as Locale)).toBe('/');
   });
 });

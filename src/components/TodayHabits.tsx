@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router';
 import { Clock, Check, ChevronDown, ChevronUp } from 'lucide-react';
 
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
+import { habitStreak } from '@/modules/habits/streak';
 import { useT } from '@/i18n/useT';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { formatDurationMinutes } from '@/lib/duration';
 
 // Hauteur approximative d'une carte habitude (p-4 + contenu + gap)
 const HABIT_ITEM_HEIGHT = 100;
@@ -19,11 +22,13 @@ const getVisibleLimit = () => {
 const TodayHabits: React.FC = () => {
   const { t, tp } = useT('dashboard');
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { data: habits = [], isLoading } = useHabits();
   const toggleCompletionMutation = useToggleHabitCompletion();
   const today = new Date().toLocaleDateString('en-CA');
   const [visibleLimit, setVisibleLimit] = useState(getVisibleLimit);
   const [showAll, setShowAll] = useState(false);
+  const [showDone, setShowDone] = useState(false);
 
   useEffect(() => {
     const onResize = () => setVisibleLimit(getVisibleLimit());
@@ -45,13 +50,66 @@ const TodayHabits: React.FC = () => {
     toggleCompletionMutation.mutate({ id: habitId, date: today });
   };
 
+  const pendingHabits = todayHabits.filter((h) => !h.completedToday);
+  const doneHabits = todayHabits.filter((h) => h.completedToday);
+
+  // Une ligne d'habitude sur mobile (filet, pas de carte : arbitrage du
+  // 2026-09-05), partagée entre la liste « à faire » et le repli « faites ».
+  const renderMobileRow = (habit: (typeof todayHabits)[number]) => (
+    <li
+      key={habit.id}
+      className="flex items-center gap-2.5 border-b border-[rgb(var(--color-border))] last:border-b-0 py-2.5"
+    >
+      <button
+        type="button"
+        onClick={() => handleToggle(habit.id)}
+        aria-label={habit.completedToday ? t('today.markUndone', { name: habit.name }) : t('today.markDone', { name: habit.name })}
+        aria-pressed={habit.completedToday}
+        className="min-w-11 min-h-11 -my-2 -ml-2 p-2 flex items-center justify-center shrink-0"
+      >
+        <span
+          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+            habit.completedToday
+              ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
+              : 'border-[rgb(var(--color-text-muted))]'
+          }`}
+        >
+          {habit.completedToday && (
+            <Check size={14} strokeWidth={3} className="text-[rgb(var(--color-accent-solid-foreground))]" />
+          )}
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={() => navigate('/habits')}
+        className="flex-1 min-w-0 min-h-touch flex flex-col justify-center text-left"
+      >
+        <span className={`block text-label text-[rgb(var(--color-text-primary))] truncate ${habit.completedToday ? 'line-through text-[rgb(var(--color-text-muted))]' : ''}`}>
+          {habit.name}
+        </span>
+        <span className="flex items-center gap-3 text-caption text-[rgb(var(--color-text-muted))]">
+          <span className="flex items-center gap-1">
+            <Clock size={12} aria-hidden="true" />
+            {formatDurationMinutes(habit.estimatedTime)}
+          </span>
+          <span className="flex items-center gap-1 font-medium text-orange-600 dark:text-orange-400">
+            <span aria-hidden="true">🔥</span>
+            {/* Une SEULE logique de streak dans l'app : celle de
+                modules/habits/streak.ts. */}
+            {tp('habits.streak', habitStreak(habit))}
+          </span>
+        </span>
+      </button>
+    </li>
+  );
+
   if (isLoading) {
     return (
       <div className="card card-plain-mobile p-gutter md:p-6">
         <div className="flex items-center gap-3 mb-6">
           <div>
-            <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Habitudes du jour</h2>
-            <p className="text-[rgb(var(--color-text-secondary))] text-sm">Chargement...</p>
+            <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{t('todayHabits.heading')}</h2>
+            <p className="text-[rgb(var(--color-text-secondary))] text-sm">{t('todayHabits.loading')}</p>
           </div>
         </div>
         <div className="animate-pulse space-y-4">
@@ -78,15 +136,44 @@ const TodayHabits: React.FC = () => {
             t('habits.progress', {
               done: completedCount,
               total: todayHabits.length,
-              duration: `${Math.floor(totalTime / 60)}h${totalTime % 60}min`,
+              duration: formatDurationMinutes(totalTime),
             })
           )}
         </p>
       </div>
     </div>
 
-    <div className="space-y-4">
-        {(showAll ? todayHabits : todayHabits.slice(0, visibleLimit)).map((habit) =>
+    <div className={isMobile ? '' : 'space-y-4'}>
+        {isMobile ? (
+          /* Mobile : tableau à une colonne, séparateur entre lignes — même
+             traitement que le fil « Aujourd'hui » (TodayMoments), plus de
+             carte individuelle par habitude (arbitrage du 2026-09-05). */
+          /* Maquette 136 : ce qui RESTE d'abord. Les habitudes faites se
+             replient en une ligne « N faites » ; elles passaient devant la
+             seule qui restait, barrées, et « Voir plus (4 restantes) »
+             contredisait « 1 habitude restante » juste au-dessus. */
+          <>
+            <ul>
+              {pendingHabits.map(renderMobileRow)}
+            </ul>
+            {doneHabits.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowDone((v) => !v)}
+                  aria-expanded={showDone}
+                  className="w-full flex items-center gap-2.5 min-h-touch border-t border-[rgb(var(--color-border))] text-label text-[rgb(var(--color-text-secondary))]"
+                >
+                  <Check size={16} className="text-[rgb(var(--color-accent))]" aria-hidden="true" />
+                  <span className="flex-1 text-left">{tp('habits.doneCount', doneHabits.length)}</span>
+                  {showDone ? <ChevronUp size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
+                </button>
+                {showDone && <ul>{doneHabits.map(renderMobileRow)}</ul>}
+              </>
+            )}
+          </>
+        ) : (
+        (showAll ? todayHabits : todayHabits.slice(0, visibleLimit)).map((habit) =>
         <div
           key={habit.id}
             className={`p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg ${
@@ -101,15 +188,15 @@ const TodayHabits: React.FC = () => {
                       <div
                         onClick={() => handleToggle(habit.id)}
                         className={`h-11 w-11 md:h-7 md:w-7 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
-                          habit.completedToday 
-                            ? 'bg-white text-blue-600 border-white dark:bg-[rgb(var(--color-accent-solid))] dark:text-[rgb(var(--color-accent-solid-foreground))] dark:border-[rgb(var(--color-accent-solid))] shadow-md' 
+                          habit.completedToday
+                            ? 'bg-white text-blue-600 border-white dark:bg-[rgb(var(--color-accent-solid))] dark:text-[rgb(var(--color-accent-solid-foreground))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
                             : 'bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border-strong))] text-transparent hover:border-[rgb(var(--color-accent-solid-hover))] hover:bg-blue-100'
                         }`}
                       >
                       <Check className="h-4 w-4" strokeWidth={4} />
                     </div>
                   </div>
-                
+
                   <div className="flex-1">
                     <h3 className={`font-bold text-body sm:text-base ${habit.completedToday ? 'text-white dark:text-blue-300 line-through' : 'text-[rgb(var(--color-text-primary))]'}`}>
                       {habit.name}
@@ -117,16 +204,23 @@ const TodayHabits: React.FC = () => {
                 <div className="flex items-center gap-4 mt-1">
                   <div className={`flex items-center gap-1 text-label sm:text-sm ${habit.completedToday ? 'text-blue-50 dark:text-blue-400/80' : 'text-[rgb(var(--color-text-secondary))]'}`}>
                     <Clock size={14} />
-                    <span>{t('habits.minutes', { count: habit.estimatedTime })}</span>
+                    <span>{formatDurationMinutes(habit.estimatedTime)}</span>
                   </div>
                   <div className={`flex items-center gap-1 text-label sm:text-sm font-medium ${habit.completedToday ? 'text-white dark:text-orange-400' : 'text-orange-600 dark:text-orange-400'}`}>
                     <span>🔥</span>
-                    <span>{tp('habits.streak', Object.values(habit.completions).filter(Boolean).length)}</span>
+                    {/* Une SEULE logique de streak dans l'app : celle de
+                        modules/habits/streak.ts, déjà utilisée par HabitCard et
+                        HabitTable. Le comptage précédent
+                        (`Object.values(completions).filter(Boolean).length`)
+                        était le TOTAL de complétions, donc il ne retombait
+                        jamais à zéro après un jour manqué. */}
+                    <span>{tp('habits.streak', habitStreak(habit))}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        )
         )}
 
         {todayHabits.length === 0 && (
@@ -143,7 +237,7 @@ const TodayHabits: React.FC = () => {
           </div>
         )}
 
-        {todayHabits.length > visibleLimit && (
+        {!isMobile && todayHabits.length > visibleLimit && (
           <button
             onClick={() => setShowAll((v) => !v)}
             className="w-full flex items-center justify-center gap-2 min-h-touch md:min-h-0 md:py-2.5 rounded-xl text-sm font-semibold transition-colors text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"

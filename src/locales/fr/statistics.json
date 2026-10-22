@@ -1,4 +1,10 @@
 {
+  "delta": {
+    "up": "+{{pct}} % par rapport à la période précédente",
+    "down": "−{{pct}} % par rapport à la période précédente",
+    "same": "Comme la période précédente",
+    "noBase": "Pas de période précédente à comparer"
+  },
   "page": {
     "title": "Statistiques",
     "subtitle": "Analysez votre productivité et vos performances",
@@ -7,7 +13,7 @@
     "calendar": "Calendrier"
   },
   "sections": {
-    "all": "Vue d'ensemble",
+    "all": "Vue globale",
     "tasks": "Tâches",
     "agenda": "Agenda",
     "okr": "OKR",
@@ -32,15 +38,18 @@
     "goal": "Objectif",
     "minutes": "min",
     "timeSeries": "Temps (min)",
-    "weekRange": "du {{start}} au {{end}}"
+    "weekRange": "du {{start}} au {{end}}",
+    "goalValueAria": "Objectif, en minutes"
   },
   "gate": {
     "title": "Analyses détaillées",
     "description": "Accédez aux graphiques et aux statistiques avancées avec un compte Premium.",
-    "cta": "Débloquer — pub ou abonnement",
+    "cta": "Débloquer : pub ou abonnement",
     "featureName": "les analyses détaillées"
   },
   "details": {
+    "noTaskDone": "Aucune tâche terminée sur la période.",
+    "avgPriority": "Moy. {{value}}",
     "globalTimeSplit": "Répartition globale du temps",
     "total": "Total",
     "byColor": "Répartition par couleur",
@@ -52,18 +61,49 @@
     "totalObjectives": "Total Objectifs",
     "workedObjectives": "Objectifs travaillés",
     "totalRealTime": "Temps total réel",
-    "effortByOkr": "Répartition de l'effort par OKR",
+    "progressByOkr": "Avancement par OKR",
+    "progressBefore": "Acquis avant la période",
+    "progressGained": "Gagné sur la période",
+    "progressBarAria_one": "Avancement {{total}} %, dont {{gained}} point gagné sur la période.",
+    "progressBarAria_many": "Avancement {{total}} %, dont {{gained}} de points gagnés sur la période.",
+    "progressBarAria_other": "Avancement {{total}} %, dont {{gained}} points gagnés sur la période.",
     "noEffort": "Aucun effort enregistré.",
     "byHabit": "Détail par habitude {{period}}",
     "noHabit": "Aucune habitude complétée ou active sur cette période.",
     "periodDay": "aujourd'hui",
     "periodWeek": "(7 j)",
     "periodMonth": "(30 j)",
-    "periodYear": "(365 j)"
+    "periodYear": "(365 j)",
+    "taskCount_one": "{{count}} tâche",
+    "taskCount_many": "{{count}} de tâches",
+    "taskCount_other": "{{count}} tâches"
   },
   "heatmap": {
     "less": "Moins",
     "more": "Plus",
     "title": "Calendrier de complétion"
+  },
+  "periodDescription": {
+    "day": "aujourd'hui",
+    "week": "7 derniers jours",
+    "month": "30 derniers jours",
+    "year": "365 derniers jours"
+  },
+  "overview": {
+    "showAll": "Tout"
+  },
+  "breakdown": {
+    "tasks": "Tâches",
+    "agenda": "Agenda",
+    "habits": "Habitudes",
+    "okr": "OKR"
+  },
+  "insights": {
+    "bestDay": "Votre meilleur jour : {{day}} ({{share}} % de vos tâches complétées sur 30 jours).",
+    "fragileHabit": "Habitude la plus fragile : « {{name}} », {{missed}} oublis cette semaine.",
+    "momentumFirst": "{{count}} tâches complétées cette semaine.",
+    "momentumUp": "En progression : {{count}} tâches complétées cette semaine (+{{delta}} % vs la semaine dernière).",
+    "momentumDown": "En baisse : {{count}} tâches complétées cette semaine ({{delta}} % vs la semaine dernière).",
+    "momentumStable": "Rythme stable : {{count}} tâches complétées cette semaine."
   }
 }

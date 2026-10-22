@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import type { MyOrganization } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface DeleteOrganizationDialogProps {
   org: MyOrganization;
@@ -18,12 +19,23 @@ interface DeleteOrganizationDialogProps {
  * EXACT de l'entreprise pour déverrouiller le bouton.
  */
 const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCancel }: DeleteOrganizationDialogProps) => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: ta, tp: tpa } = useT('orgAdmin');
   const [typed, setTyped] = useState('');
   const match = typed === org.name;
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onCancel,
+    label: t('common.deleteOrgTitle', { name: org.name }),
+    role: 'alertdialog',
+  });
   return createPortal(
     <div
+      ref={modalA11yRef}
+      {...modalA11yProps}
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4"
       onClick={pending ? undefined : onCancel}
     >
@@ -32,17 +44,17 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
         onClick={(e) => e.stopPropagation()}
         role="alertdialog"
         aria-modal="true"
-        aria-label={`Supprimer l'entreprise ${org.name}`}
+        aria-label={t('common.deleteOrgAria', { name: org.name })}
       >
         <div className="flex items-center gap-3 px-5 py-4 border-b border-[rgb(var(--color-border))]">
           <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] flex-1">
-            Supprimer {org.name} ?
+            {t('common.deleteOrgTitle', { name: org.name })}
           </h2>
           <button
             type="button"
             onClick={onCancel}
             disabled={pending}
-            aria-label="Fermer"
+            aria-label={t('common.close')}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0"
           >
             <X size={18} aria-hidden="true" />
@@ -52,19 +64,26 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
         <div className="p-5 space-y-4">
           <div className="rounded-xl border border-red-300/60 dark:border-red-700/40 bg-red-50/60 dark:bg-red-900/10 px-4 py-3">
             <p className="text-sm font-semibold text-red-600 dark:text-red-400 mb-1">
-              {t('deleteOrg.irreversible')}
+              {ta('deleteOrg.irreversible')}
             </p>
             <ul className="text-xs text-[rgb(var(--color-text-secondary))] space-y-1 list-disc pl-4">
-              <li>{tp('deleteOrg.membersLose', memberCount)}</li>
-              <li>{t('deleteOrg.projectsDeleted')}</li>
-              <li>{t('deleteOrg.teamsErased')}</li>
-              <li>{t('deleteOrg.personalSafe')}</li>
+              <li>{tpa('deleteOrg.membersLose', memberCount)}</li>
+              <li>{ta('deleteOrg.projectsDeleted')}</li>
+              <li>{ta('deleteOrg.teamsErased')}</li>
+              {/* C-39 — la liste ne mentionnait NI l'abonnement NI les preuves.
+                  L'abonnement Stripe continue de courir apres la suppression
+                  de la ligne : `delete_organization` (mig. 138) refuse
+                  desormais tant qu'il est actif, et cette ligne dit pourquoi
+                  AVANT qu'on se heurte au refus. */}
+              <li>{ta('deleteOrg.subscriptionFirst')}</li>
+              <li>{ta('deleteOrg.evidenceKept')}</li>
+              <li>{ta('deleteOrg.personalSafe')}</li>
             </ul>
           </div>
 
           <div>
             <label htmlFor="delete-org-confirm" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-              Pour confirmer, tapez <strong className="text-[rgb(var(--color-text-primary))] select-all">{org.name}</strong> ci-dessous :
+              {ta('deleteOrg.confirmPrefix')} <strong className="text-[rgb(var(--color-text-primary))] select-all">{org.name}</strong> {ta('deleteOrg.confirmSuffix')}
             </label>
             <input
               id="delete-org-confirm"
@@ -84,7 +103,7 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
             disabled={!match || pending}
             className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            {pending ? 'Suppression…' : 'Supprimer cette entreprise'}
+            {pending ? ta('deleteOrg.deleting') : ta('deleteOrg.confirmAction')}
           </button>
         </div>
       </div>

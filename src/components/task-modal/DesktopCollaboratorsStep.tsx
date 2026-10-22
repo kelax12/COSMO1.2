@@ -9,7 +9,7 @@
 // input recherche/ajout → grille d'amis → demandes d'amis pending (mig. 036).
 import React from 'react';
 import { X, Search, UserPlus, Clock, Plus, Check } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import CollaboratorItem from '@/components/CollaboratorItem';
 import ShareLinkField from '@/components/ShareLinkField';
@@ -39,7 +39,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                     <div>
                       <div className="flex items-center mb-3">
                         <label className="block text-sm font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          Collaborateurs
+                          {t('collaborators.heading')}
                         </label>
                       </div>
 
@@ -49,7 +49,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                              Seul le propriétaire gère les collaborateurs. */
                           <div className="space-y-3">
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                              Cette tâche t'a été partagée. Seul le propriétaire peut gérer les collaborateurs.
+                              {t('collaborators.sharedWithYou')}
                             </p>
                             <div className="grid grid-cols-2 gap-2">
                               {collaborators.map((id) => {
@@ -85,7 +85,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                               <div className="mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
                                 <div className="flex items-center justify-between mb-3">
                                   <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                    Sélectionnés ({collaborators.length})
+                                    {t('collaborators.selectedCount', { count: collaborators.length })}
                                   </h4>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
@@ -135,7 +135,7 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                                   size="icon"
                                   onClick={handleAddEmail}
                                   disabled={!emailInput.trim()}
-                                  className={emailInput.trim() ? 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0' : 'bg-blue-300 dark:bg-blue-900/50 text-[rgb(var(--color-accent-solid-foreground))] border-0 !opacity-100'}
+                                  className={emailInput.trim() ? 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0' : 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-0 !opacity-40'}
                                 >
                                   <UserPlus size={16} />
                                 </Button>
@@ -210,8 +210,8 @@ const DesktopCollaboratorsStep: React.FC<DesktopCollaboratorsStepProps> = ({
                                           disabled={!canSelect}
                                           onClick={() => canSelect && toggleCollaborator(req.receiverId as string)}
                                           className="flex items-center gap-2 flex-1 min-w-0 text-left disabled:cursor-default"
-                                          aria-label={canSelect ? (selected ? `Retirer ${req.email}` : `Ajouter ${req.email} comme collaborateur`) : undefined}
-                                          title={canSelect ? undefined : "Ce contact doit d'abord se connecter à Cosmo"}
+                                          aria-label={canSelect ? (selected ? t('collaborators.removeNamed', { name: req.email }) : t('collaborators.addNamed', { name: req.email })) : undefined}
+                                          title={canSelect ? undefined : t('collaborators.mustSignIn')}
                                         >
                                           <div className="w-7 h-7 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
                                             <Clock size={12} className="text-amber-600 dark:text-amber-400" />

@@ -1,0 +1,203 @@
+# ──────────────────────────────────────────────────────────────────────
+# Alerte quand une garde automatique passe au rouge sur `main`.
+# Couvre `CI` et
+# `Edge deploy drift` (le code deploye des Edge Functions contre le depot).
+#
+# POURQUOI : les quatre gardes de `ci.yml` sont restées rouges des mois sans
+# que personne ne réagisse — `rls-integration` n'avait JAMAIS été verte depuis
+# sa création. Une garde rouge est une garde muette : elle ne protège plus de
+# rien, et elle rend inaudibles les autres gardes du même job. Un résultat
+# affiché sur une page que personne n'ouvre n'est pas une alerte.
+#
+# CE QUE ÇA FAIT : ouvre une issue GitHub — donc une notification par mail, on
+# est abonné d'office à son propre dépôt — au premier échec, puis se contente
+# de commenter tant qu'elle reste ouverte. Pas de spam. Refermer l'issue une
+# fois la CI verte réarme l'alerte. ET pousse l'alerte sur le webhook ops.
+#
+# 🔴 L'ISSUE SEULE NE SUFFIT PAS, c'est mesuré : `Vendor script watch` a échoué
+# chaque jour du 2026-08-29 au 2026-09-01, l'issue #44 s'est bien mise à jour à
+# chaque fois, et personne ne l'a lue pendant quatre jours — pendant que le
+# script tiers captait des adresses email. D'où le webhook, qui POUSSE au lieu
+# d'attendre qu'on vienne voir.
+#
+# ⚠️ Un canal d'alerte jamais testé ne vaut pas mieux qu'une page jamais
+# ouverte. D'où `workflow_dispatch` : « Run workflow » envoie un message de
+# TEST sur le webhook, sans toucher aux issues. À rejouer après tout changement
+# de webhook ou de salon.
+# ──────────────────────────────────────────────────────────────────────
+name: CI alert
+
+on:
+  workflow_run:
+    # 🔴 CETTE LISTE EST LA MOITIÉ DU DISPOSITIF. Un workflow qui n'y figure
+    # pas peut rester rouge des semaines sans que personne le sache — c'est
+    # exactement ce qui est arrivé à `rls-integration`, jamais verte depuis sa
+    # création. Les six ajoutés le 2026-09-20 sont ceux du § 12
+    # d'`a-faire-code.md` : ils tournent tous SANS déclencheur humain, donc
+    # leur rouge n'a aucun autre chemin pour se faire voir.
+    # ⚠️ `Grille Stripe` n'y est PAS, et c'est cohérent : il n'est pas encore
+    # planifié (cf. son en-tête). Il y entre AVEC la bascule live.
+    workflows:
+      - CI
+      - Edge deploy drift
+      - Migration coverage
+      - Deploy SHA drift
+      - CodeQL
+      - Posture
+      - Sabotages
+      - Visual
+      - scalability-volume
+      - restore-drill
+      - Grille Stripe
+      # ⚠️ `Uptime` n'y est PAS NON PLUS, et ce n'est pas un oubli : il ouvre
+      # DÉJÀ sa propre issue, qui se referme seule au retour du vert.
+      # L'ajouter ici doublerait chaque panne d'une seconde alerte, et deux
+      # alertes pour un incident apprennent à en ignorer une.
+    types: [completed]
+  # Exercice à blanc du canal d'alerte, sans casser une garde pour le tester.
+  workflow_dispatch:
+
+# Seul droit élevé du dépôt, strictement borné à l'ouverture d'issues.
+# `actions: read` (lecture seule, 2026-10-16) : lister les runs verts de `main`,
+# pour ne pas pousser un rouge déjà réparé (`scripts/ci-alert-perime.mjs`).
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  open-issue:
+    # Uniquement les échecs sur main : un run annulé par un push suivant ou une
+    # PR rouge n'ont pas à réveiller qui que ce soit.
+    # Le déclenchement manuel passe aussi, pour l'exercice à blanc du canal.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'failure' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    steps:
+      # Le depot d'abord : les deux scripts de ce job en viennent.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # ── Ce rouge est-il deja repare ? (2026-10-16) ──
+      #
+      # Les runs `CI` de `main` ne s'annulent plus entre eux (un groupe de
+      # concurrence par commit, cf. `ci.yml`). Un `e2e` rouge dure des heures
+      # (4,3 h le 10-02), un vert 23 min : le rouge d'un commit A peut donc
+      # finir APRES le vert du commit B qui l'a repare. Sans ce controle, il
+      # rouvrait l'issue et sonnait le webhook apres la reparation.
+      #
+      # ✅ Dans le doute, l'alerte part. Les deux sorties ne se taisent que sur
+      # `perime == 'true'`, ecrit seulement quand un run vert du MEME workflow,
+      # cree apres ce rouge, est prouve par l'API. Script qui plante, API en
+      # panne, jeton refuse : sortie vide ou `false`, l'alerte part.
+      # Temoin : `scripts/ci-alert-perime.guard.test.mjs`.
+      - name: Ce rouge est-il deja repare par un run plus recent ?
+        id: perime
+        if: github.event_name == 'workflow_run'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          WF_ID: ${{ github.event.workflow_run.workflow_id }}
+          CREE: ${{ github.event.workflow_run.created_at }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: node scripts/ci-alert-perime.mjs
+
+      - name: Ouvrir ou mettre a jour l'issue « CI rouge »
+        # Jamais sur un exercice : un test du canal ne doit pas polluer le
+        # journal des vrais incidents. `always()` : elle part meme si le
+        # controle ci-dessus a plante.
+        if: always() && github.event_name == 'workflow_run' && steps.perime.outputs.perime != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_NUM: ${{ github.event.workflow_run.run_number }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          WF: ${{ github.event.workflow_run.name }}
+          COMMIT_MSG: ${{ github.event.workflow_run.head_commit.message }}
+        run: |
+          set -euo pipefail
+
+          # Le label peut ne pas exister au premier passage, et `gh issue
+          # create` echoue sur un label inconnu — d'ou cette creation
+          # idempotente.
+          gh label create ci-red --repo "$REPO" --color b60205 \
+            --description "CI en echec sur main" 2>/dev/null || true
+
+          SUBJECT=$(printf '%s' "$COMMIT_MSG" | head -n 1 | cut -c1-60)
+
+          # printf plutot qu'un bloc de texte : dans un `run:` indente, le
+          # marqueur de fin d'un heredoc devrait etre en debut de ligne, ce que
+          # l'indentation YAML interdit — et les espaces de tete finiraient
+          # dans le corps de l'issue.
+          BODY=$(printf '%s\n' \
+            "**$WF** est en echec sur \`main\`." \
+            "" \
+            "- Run : $RUN_URL (#$RUN_NUM)" \
+            "- Commit : \`${SHA:0:7}\` · $SUBJECT" \
+            "" \
+            "Une garde rouge ne protege plus rien et rend muettes les autres" \
+            "gardes du meme job. A traiter avant de livrer autre chose." \
+            "" \
+            "Cette issue se met a jour a chaque nouvel echec." \
+            "**La refermer une fois au vert** : c'est ce qui rearme l'alerte.")
+
+          EXISTING=$(gh issue list --repo "$REPO" --state open --label ci-red \
+                       --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --repo "$REPO" --body "$BODY"
+            echo "Commentaire ajoute sur l'issue #$EXISTING"
+          else
+            gh issue create --repo "$REPO" \
+              --title "$WF en echec sur main (run #$RUN_NUM)" \
+              --label ci-red --body "$BODY"
+            echo "Issue creee"
+          fi
+
+      # ── Pousser l'alerte, au lieu d'attendre qu'on vienne la chercher ──
+      #
+      # POURQUOI CETTE ETAPE EXISTE : l'issue ci-dessus a parfaitement
+      # fonctionne, et n'a servi a RIEN. `Vendor script watch` a echoue chaque
+      # jour du 2026-08-29 au 2026-09-01 — le script tiers charge sur les pages
+      # publiques avait ete modifie pour capter l'email et le nom saisis a
+      # l'inscription — et l'issue #44 s'est bien mise a jour a chaque fois.
+      # Personne ne l'a lue pendant quatre jours.
+      #
+      # Une alerte qui attend d'etre consultee n'est pas une alerte, c'est une
+      # archive. Celle-ci est POUSSEE vers le meme canal que `opsAlert()` des
+      # Edge Functions (`supabase/functions/_shared/alert.ts`), et reprend son
+      # format : `text` ET `content` dans le meme corps, pour couvrir Slack et
+      # Discord sans savoir lequel est branche.
+      #
+      # 🔴 LA DECISION DU 2026-09-13 : cette etape ECHOUE quand rien n'est
+      # parti — secret absent, ou webhook qui refuse apres trois tentatives.
+      # Elle sortait en 0 dans les deux cas, avec un `::warning::` que personne
+      # ne lit dans un run vert : le motif exact retire d'`uptime.yml` le
+      # 09-03 et de `renewal-notice.yml` le 09-04, reste dans le seul fichier
+      # dont le metier EST d'alerter. L'ancienne justification (« on ne peut
+      # pas alerter sur l'alerting ») ne tient pas : un job ROUGE est l'alerte
+      # sur l'alerting, GitHub notifiant l'echec d'un run sur son propre depot.
+      # Le vert, lui, ne notifie rien.
+      #
+      # ⚠️ `if: always()` : cette etape doit partir MEME si l'ecriture de
+      # l'issue a echoue. C'est justement quand le premier canal casse que le
+      # second compte — et l'issue etant ecrite AVANT, echouer ici ne fait
+      # perdre aucun filet.
+      #
+      # La logique vit dans `scripts/ops-alert.mjs` et non dans ce `run:`,
+      # pour une seule raison : en shell elle n'avait pas de temoin jouable.
+      # Temoin : `scripts/ops-alert.guard.test.mjs` (14 cas).
+      # Seul silence admis : `perime == 'true'`, un rouge deja repare (cf. plus haut).
+      - name: Pousser l'alerte sur le webhook ops
+        if: always() && steps.perime.outputs.perime != 'true'
+        env:
+          WEBHOOK: ${{ secrets.OPS_ALERT_WEBHOOK_URL }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          WF: ${{ github.event.workflow_run.name }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        # Node est preinstalle sur les runners GitHub : pas de `setup-node`,
+        # ce script n'a aucune dependance hors bibliotheque standard.
+        run: node scripts/ops-alert.mjs

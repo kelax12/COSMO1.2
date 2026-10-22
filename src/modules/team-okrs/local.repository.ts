@@ -13,8 +13,32 @@ import {
   UpdateTeamOKRInput,
   UpdateTeamKRInput,
   SyncTeamKRInput,
+  TrashedTeamOKR,
 } from './types';
-import { TEAM_OKRS_STORAGE_KEY } from './constants';
+import { TEAM_OKRS_STORAGE_KEY, TEAM_OKR_TRASH_DAYS, TEAM_OKR_TRASH_STORAGE_KEY } from './constants';
+import { isEnglishSeed } from '@/lib/seed-i18n';
+import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
+
+/** Qui a supprimé, en démo : l'unique utilisateur de démonstration. */
+const DEMO_TRASH_USER_ID = 'demo-user';
+
+interface TrashEntry {
+  okr: TeamOKR;
+  deletedAt: string;
+  deletedBy: string | null;
+}
+
+const readTrash = (): TrashEntry[] => {
+  const raw = safeGetItem(TEAM_OKR_TRASH_STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as TrashEntry[]) : [];
+  } catch {
+    return [];
+  }
+};
 
 const DEMO_ORG_ID = 'org-demo-1';
 const DEMO_USER_ID = 'demo-user';
@@ -25,7 +49,7 @@ const DEMO_OKRS: TeamOKR[] = [
     orgId: DEMO_ORG_ID,
     title: 'Réussir le lancement produit',
     description: 'Faire du lancement un succès mesurable sur le trimestre.',
-    category: 'Croissance',
+    categoryId: 'teamcat-croissance',
     startDate: new Date(Date.now() - 20 * 86400000).toISOString().slice(0, 10),
     endDate: new Date(Date.now() + 40 * 86400000).toISOString().slice(0, 10),
     createdBy: DEMO_USER_ID,
@@ -42,7 +66,7 @@ const DEMO_OKRS: TeamOKR[] = [
     orgId: DEMO_ORG_ID,
     title: 'Livrer la refonte du site',
     description: 'Mettre en ligne le nouveau site, rapide et accessible.',
-    category: 'Produit',
+    categoryId: 'teamcat-produit',
     startDate: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10),
     endDate: new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10),
     createdBy: 'friend-1',
@@ -58,7 +82,7 @@ const DEMO_OKRS: TeamOKR[] = [
     orgId: DEMO_ORG_ID,
     title: 'Renforcer la culture d\'équipe',
     description: 'Améliorer l\'engagement et l\'onboarding interne.',
-    category: 'Interne',
+    categoryId: 'teamcat-interne',
     startDate: new Date(Date.now() - 10 * 86400000).toISOString().slice(0, 10),
     endDate: new Date(Date.now() + 50 * 86400000).toISOString().slice(0, 10),
     createdBy: DEMO_USER_ID,
@@ -69,27 +93,133 @@ const DEMO_OKRS: TeamOKR[] = [
       { id: 'tkr-7', okrId: 'tokr-3', orgId: DEMO_ORG_ID, title: 'Score eNPS ≥ 40', currentValue: 34, targetValue: 40, unit: 'pts', assigneeId: 'user-lucas', completed: false, estimatedTime: 30 },
     ],
   },
+  {
+    id: 'tokr-4',
+    orgId: DEMO_ORG_ID,
+    title: 'Doubler le trafic qualifié',
+    description: 'Faire croître l\'acquisition sans faire exploser le coût par lead.',
+    categoryId: 'teamcat-croissance',
+    startDate: new Date(Date.now() - 15 * 86400000).toISOString().slice(0, 10),
+    endDate: new Date(Date.now() + 45 * 86400000).toISOString().slice(0, 10),
+    createdBy: 'user-manon',
+    createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
+    teamIds: ['team-marketing'],
+    keyResults: [
+      { id: 'tkr-8', okrId: 'tokr-4', orgId: DEMO_ORG_ID, title: '20 000 visites organiques par mois', currentValue: 12400, targetValue: 20000, unit: 'visites', assigneeId: 'user-paul', completed: false, estimatedTime: 60 },
+      { id: 'tkr-9', okrId: 'tokr-4', orgId: DEMO_ORG_ID, title: '300 leads qualifiés', currentValue: 185, targetValue: 300, unit: 'leads', assigneeId: 'user-karim', completed: false, estimatedTime: 45 },
+      { id: 'tkr-10', okrId: 'tokr-4', orgId: DEMO_ORG_ID, title: '2 000 abonnés à la newsletter', currentValue: 2000, targetValue: 2000, unit: 'abonnés', assigneeId: 'user-lea', completed: true, completedAt: new Date(Date.now() - 2 * 86400000).toISOString(), estimatedTime: 30 },
+    ],
+  },
+  {
+    id: 'tokr-5',
+    orgId: DEMO_ORG_ID,
+    title: 'Sortir la bêta de l\'app mobile',
+    description: 'Une première version stable entre les mains de vrais utilisateurs.',
+    categoryId: 'teamcat-produit',
+    startDate: new Date(Date.now() - 5 * 86400000).toISOString().slice(0, 10),
+    endDate: new Date(Date.now() + 75 * 86400000).toISOString().slice(0, 10),
+    createdBy: 'user-lucas',
+    createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+    teamIds: ['team-dev'],
+    keyResults: [
+      { id: 'tkr-11', okrId: 'tokr-5', orgId: DEMO_ORG_ID, title: '50 bêta-testeurs actifs', currentValue: 18, targetValue: 50, unit: 'testeurs', assigneeId: 'user-ines', completed: false, estimatedTime: 90 },
+      { id: 'tkr-12', okrId: 'tokr-5', orgId: DEMO_ORG_ID, title: '12 écrans maquettés', currentValue: 7, targetValue: 12, unit: 'écrans', assigneeId: 'user-chloe', completed: false, estimatedTime: 60 },
+      { id: 'tkr-13', okrId: 'tokr-5', orgId: DEMO_ORG_ID, title: '100 tests automatisés', currentValue: 42, targetValue: 100, unit: 'tests', assigneeId: 'user-antoine', completed: false, estimatedTime: 120 },
+    ],
+  },
 ];
 
+// Overlay anglais — cf. src/lib/seed-i18n.ts. `TeamOKR` imbrique `keyResults`
+// (chacun avec son propre `id`), ce que `localizeSeed` ne parcourt pas : patch
+// ad hoc à deux niveaux plutôt que forcer le helper générique.
+// `categoryId` n'a pas d'overlay ici : c'est un identifiant, pas du texte —
+// sa traduction vit dans l'overlay de `team-categories/repository.ts`
+// (DEMO_CATEGORIES_EN), une seule fois pour tous les modules qui le portent.
+const DEMO_OKRS_EN: Record<string, {
+  title?: string; description?: string;
+  keyResults?: Record<string, { title?: string; unit?: string }>;
+}> = {
+  'tokr-1': {
+    title: 'Make the product launch a success',
+    description: 'Turn the launch into a measurable success this quarter.',
+    keyResults: {
+      'tkr-1': { title: 'Reach 1,000 sign-ups', unit: 'sign-ups' },
+      'tkr-2': { title: 'Get 15 press mentions', unit: 'articles' },
+      'tkr-3': { title: '5% conversion rate', unit: '%' },
+    },
+  },
+  'tokr-2': {
+    title: 'Ship the website redesign',
+    description: 'Launch the new site, fast and accessible.',
+    keyResults: {
+      'tkr-4': { title: 'Lighthouse score ≥ 95', unit: 'pts' },
+      'tkr-5': { title: '100% of pages migrated', unit: '%' },
+    },
+  },
+  'tokr-3': {
+    title: 'Strengthen team culture',
+    description: 'Improve engagement and internal onboarding.',
+    keyResults: {
+      'tkr-6': { title: 'Onboard 3 new hires', unit: 'people' },
+      'tkr-7': { title: 'eNPS score ≥ 40', unit: 'pts' },
+    },
+  },
+  'tokr-4': {
+    title: 'Double qualified traffic',
+    description: 'Grow acquisition without blowing up the cost per lead.',
+    keyResults: {
+      'tkr-8': { title: '20,000 organic visits per month', unit: 'visits' },
+      'tkr-9': { title: '300 qualified leads', unit: 'leads' },
+      'tkr-10': { title: '2,000 newsletter subscribers', unit: 'subscribers' },
+    },
+  },
+  'tokr-5': {
+    title: 'Ship the mobile app beta',
+    description: 'A first stable release in the hands of real users.',
+    keyResults: {
+      'tkr-11': { title: '50 active beta testers', unit: 'testers' },
+      'tkr-12': { title: '12 screens designed', unit: 'screens' },
+      'tkr-13': { title: '100 automated tests', unit: 'tests' },
+    },
+  },
+};
+
+function localizeOkrs(okrs: TeamOKR[]): TeamOKR[] {
+  if (!isEnglishSeed()) return okrs;
+  return okrs.map((okr) => {
+    const patch = DEMO_OKRS_EN[okr.id];
+    if (!patch) return okr;
+    return {
+      ...okr,
+      title: patch.title ?? okr.title,
+      description: patch.description ?? okr.description,
+      keyResults: okr.keyResults.map((kr) => {
+        const krPatch = patch.keyResults?.[kr.id];
+        return krPatch ? { ...kr, ...krPatch } : kr;
+      }),
+    };
+  });
+}
+
 function readOrSeed(): TeamOKR[] {
-  const data = localStorage.getItem(TEAM_OKRS_STORAGE_KEY);
+  const data = safeGetItem(TEAM_OKRS_STORAGE_KEY);
   if (!data) {
-    const clone = JSON.parse(JSON.stringify(DEMO_OKRS)) as TeamOKR[];
-    localStorage.setItem(TEAM_OKRS_STORAGE_KEY, JSON.stringify(clone));
+    const clone = JSON.parse(JSON.stringify(localizeOkrs(DEMO_OKRS))) as TeamOKR[];
+    safeSetItem(TEAM_OKRS_STORAGE_KEY, JSON.stringify(clone));
     return clone;
   }
   try {
     return JSON.parse(data) as TeamOKR[];
   } catch {
     const clone = JSON.parse(JSON.stringify(DEMO_OKRS)) as TeamOKR[];
-    localStorage.setItem(TEAM_OKRS_STORAGE_KEY, JSON.stringify(clone));
+    safeSetItem(TEAM_OKRS_STORAGE_KEY, JSON.stringify(clone));
     return clone;
   }
 }
 
 export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
   private save(okrs: TeamOKR[]): void {
-    localStorage.setItem(TEAM_OKRS_STORAGE_KEY, JSON.stringify(okrs));
+    writeJsonOrThrow(TEAM_OKRS_STORAGE_KEY, okrs);
   }
 
   async getAll(orgId: string): Promise<TeamOKR[]> {
@@ -97,7 +227,16 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
     // n'ont pas `teamIds` — on garantit un tableau ([] = objectif d'entreprise).
     return readOrSeed()
       .filter((o) => o.orgId === orgId)
-      .map((o) => ({ ...o, teamIds: Array.isArray(o.teamIds) ? o.teamIds : [] }));
+      .map((o) => {
+        const teamIds = Array.isArray(o.teamIds) ? o.teamIds : [];
+        // Seeds et stockages d'avant la mig. 205 : audience déduite des liens.
+        return {
+          ...o,
+          teamIds,
+          audience: o.audience ?? (teamIds.length > 0 ? 'teams' : 'org'),
+          memberIds: Array.isArray(o.memberIds) ? o.memberIds : [],
+        };
+      });
   }
 
   async create(orgId: string, input: CreateTeamOKRInput): Promise<TeamOKR> {
@@ -108,12 +247,14 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
       orgId,
       title: input.title,
       description: input.description,
-      category: input.category,
+      categoryId: input.categoryId ?? null,
       startDate: input.startDate,
       endDate: input.endDate,
       createdBy: DEMO_USER_ID,
       createdAt: new Date().toISOString(),
       teamIds: input.teamIds ?? [],
+      audience: input.audience ?? ((input.teamIds ?? []).length > 0 ? 'teams' : 'org'),
+      memberIds: input.audience === 'custom' ? input.memberIds ?? [] : [],
       keyResults: input.keyResults.map((kr) => {
         const target = kr.targetValue > 0 ? kr.targetValue : 1;
         const current = Math.max(0, Math.min(kr.currentValue ?? 0, target));
@@ -130,8 +271,11 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
           completedAt: current >= target ? new Date().toISOString() : null,
           weight: kr.weight && kr.weight >= 1 ? Math.min(10, Math.round(kr.weight)) : 1,
           estimatedTime: kr.estimatedTime && kr.estimatedTime > 0 ? Math.round(kr.estimatedTime) : 30,
+          progressMode: kr.progressMode ?? 'manual',
+          contributorIds: kr.contributorIds ?? [],
         };
       }),
+      parentOkrId: input.parentOkrId ?? null,
     };
     this.save([okr, ...okrs]);
     return okr;
@@ -140,18 +284,70 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
   async update(okrId: string, input: UpdateTeamOKRInput): Promise<void> {
     const okrs = readOrSeed();
     const okr = okrs.find((o) => o.id === okrId);
-    if (!okr) throw new Error('OKR introuvable');
+    if (!okr) throw makeApiError('not_found');
     if (input.title !== undefined) okr.title = input.title;
     if (input.description !== undefined) okr.description = input.description;
-    if (input.category !== undefined) okr.category = input.category;
+    if (input.categoryId !== undefined) okr.categoryId = input.categoryId;
     if (input.startDate !== undefined) okr.startDate = input.startDate;
     if (input.endDate !== undefined) okr.endDate = input.endDate;
     if (input.teamIds !== undefined) okr.teamIds = input.teamIds;
+    if (input.audience !== undefined) okr.audience = input.audience;
+    if (input.memberIds !== undefined) okr.memberIds = okr.audience === 'custom' ? input.memberIds : [];
+    if (input.parentOkrId !== undefined) {
+      // Miroir du trigger `validate_team_okr_parent` (mig. 153) : ni soi-même,
+      // ni un descendant.
+      let cursor = input.parentOkrId;
+      for (let depth = 0; cursor && depth < 20; depth++) {
+        if (cursor === okrId) throw makeApiError('okr_parent_cycle');
+        cursor = okrs.find((o) => o.id === cursor)?.parentOkrId ?? null;
+      }
+      okr.parentOkrId = input.parentOkrId;
+    }
     this.save(okrs);
   }
 
   async remove(okrId: string): Promise<void> {
-    this.save(readOrSeed().filter((o) => o.id !== okrId));
+    // Corbeille (mig. 193) : l'objectif ENTIER (KR compris) attend 30 jours.
+    const okrs = readOrSeed();
+    const okr = okrs.find((o) => o.id === okrId);
+    if (!okr) throw makeApiError('not_found');
+    writeJsonOrThrow(TEAM_OKR_TRASH_STORAGE_KEY, [
+      { okr, deletedAt: new Date().toISOString(), deletedBy: DEMO_TRASH_USER_ID },
+      ...readTrash(),
+    ]);
+    this.save(okrs.filter((o) => o.id !== okrId));
+  }
+
+  /** Démo seulement : recopie l'état du dernier point d'étape sur le KR, comme `post_kr_checkin`. */
+  setKeyResultHealth(krId: string, health: TeamKeyResult['health']): void {
+    const okrs = readOrSeed();
+    for (const okr of okrs) {
+      const kr = okr.keyResults.find((k) => k.id === krId);
+      if (!kr) continue;
+      kr.health = health;
+      kr.healthUpdatedAt = new Date().toISOString();
+      this.save(okrs);
+      return;
+    }
+  }
+
+  async getTrash(orgId: string): Promise<TrashedTeamOKR[]> {
+    const since = Date.now() - TEAM_OKR_TRASH_DAYS * 86_400_000;
+    return readTrash()
+      .filter((e) => e.okr.orgId === orgId && Date.parse(e.deletedAt) > since)
+      .map((e) => ({ id: e.okr.id, title: e.okr.title, deletedAt: e.deletedAt, deletedBy: e.deletedBy, createdBy: e.okr.createdBy }));
+  }
+
+  async restore(okrId: string): Promise<void> {
+    const trash = readTrash();
+    const entry = trash.find((e) => e.okr.id === okrId);
+    if (!entry) throw makeApiError('not_found');
+    this.save([entry.okr, ...readOrSeed()]);
+    writeJsonOrThrow(TEAM_OKR_TRASH_STORAGE_KEY, trash.filter((e) => e.okr.id !== okrId));
+  }
+
+  async purge(okrId: string): Promise<void> {
+    writeJsonOrThrow(TEAM_OKR_TRASH_STORAGE_KEY, readTrash().filter((e) => e.okr.id !== okrId));
   }
 
   async updateKeyResult(krId: string, input: UpdateTeamKRInput): Promise<void> {
@@ -166,6 +362,8 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
       if (input.assigneeId !== undefined) kr.assigneeId = input.assigneeId;
       if (input.weight !== undefined) kr.weight = input.weight >= 1 ? Math.min(10, Math.round(input.weight)) : 1;
       if (input.estimatedTime !== undefined) kr.estimatedTime = input.estimatedTime > 0 ? Math.round(input.estimatedTime) : 30;
+      if (input.progressMode !== undefined) kr.progressMode = input.progressMode;
+      if (input.contributorIds !== undefined) kr.contributorIds = [...new Set(input.contributorIds)];
       if (input.completed !== undefined) {
         kr.completed = input.completed;
         kr.completedAt = input.completed ? new Date().toISOString() : null;
@@ -173,13 +371,13 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
       this.save(okrs);
       return;
     }
-    throw new Error('Key result introuvable');
+    throw makeApiError('not_found');
   }
 
   async syncKeyResults(okrId: string, orgId: string, krs: SyncTeamKRInput[]): Promise<void> {
     const okrs = readOrSeed();
     const okr = okrs.find((o) => o.id === okrId);
-    if (!okr) throw new Error('OKR introuvable');
+    if (!okr) throw makeApiError('not_found');
     const existing = new Map(okr.keyResults.map((k) => [k.id, k]));
     const next: TeamKeyResult[] = krs.slice(0, 10).map((input) => {
       const target = input.targetValue > 0 ? input.targetValue : 1;
@@ -199,6 +397,8 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
         completedAt: completed ? (prev?.completed ? prev.completedAt : new Date().toISOString()) : null,
         weight: input.weight && input.weight >= 1 ? Math.min(10, Math.round(input.weight)) : 1,
         estimatedTime: input.estimatedTime && input.estimatedTime > 0 ? Math.round(input.estimatedTime) : 30,
+        progressMode: input.progressMode ?? prev?.progressMode ?? 'manual',
+        contributorIds: input.contributorIds ?? prev?.contributorIds ?? [],
       };
     });
     okr.keyResults = next;

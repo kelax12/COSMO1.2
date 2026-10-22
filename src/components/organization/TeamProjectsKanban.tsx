@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react';
-import { CalendarClock, UserRound, Plus } from 'lucide-react';
+import { CalendarClock, UserRound, Plus, Check } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
-import type { TeamProject, TeamTask } from '@/modules/team-projects';
-import { projectColor, PRIORITY_META, isTaskOverdue, sortOpenTasks } from './team-projects.helpers';
+import type { TeamProject, TeamTask, TeamTaskStatus } from '@/modules/team-projects';
+import {
+  projectColor, PRIORITY_META, isTaskOverdue, sortOpenTasks, sortCompletedTasks,
+  STATUS_ORDER, STATUS_META, priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
+import { usePermissionHints } from './permission-hints';
 
 interface TeamProjectsKanbanProps {
   projects: TeamProject[];
@@ -16,8 +19,40 @@ interface TeamProjectsKanbanProps {
   /** Remplace la liste des assignés d'une tâche. */
   onSetAssignees: (task: TeamTask, assigneeIds: string[]) => void;
   onOpenTask: (task: TeamTask) => void;
-  /** Ouvre le sheet « attribuer / créer » pour une colonne (null = non assignées). */
-  onAddToColumn: (memberId: string | null) => void;
+  /**
+   * « + » d'une colonne. Par personne : `memberId` (null = non assignées).
+   * Par statut : `status` de la colonne, pour que la tâche naisse LÀ où on a
+   * cliqué. Le projet, lui, n'est jamais deviné ici (audit 2026-09-24) : il
+   * vient du filtre actif, sinon la fiche le demande.
+   */
+  onAddToColumn: (target: { memberId: string | null; status?: TeamTaskStatus }) => void;
+  /**
+   * Mode sélection (actions groupées, toutes vues). Une carte n'est plus
+   * glissable : un clic la coche. Superposer les deux gestes rendrait le
+   * clic ambigu.
+   */
+  selectable?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (task: TeamTask) => void;
+  /**
+   * Portée d'assignation de l'utilisateur courant (mig. 115). Une colonne
+   * « personne » hors portée refuse le dépôt et n'affiche pas son « + » :
+   * laisser le geste aboutir pour finir sur une erreur RLS donnerait
+   * l'impression d'un kanban cassé.
+   */
+  canAssign: (userId: string) => boolean;
+  /** Axe des colonnes : charge par personne, ou flux par statut (mig. 091).
+   *  Le contrôle qui le change vit dans ProjectsToolbar, juste à côté de
+   *  l'onglet « Tableau » — pas ici : loin sous les colonnes, il passait
+   *  inaperçu (l'utilisateur pouvait rater la fonctionnalité en entier). */
+  groupBy: 'assignee' | 'status';
+  /** Change le statut d'une tâche (glisser-déposer en mode `status`). */
+  onSetStatus: (task: TeamTask, status: TeamTaskStatus) => void;
+  /** Filtre « assigné » actif (ProjectsToolbar) — null = tout le monde. En mode
+   *  `assignee`, réduit les colonnes à la seule personne filtrée : sinon le
+   *  Tableau réaffichait TOUTES les colonnes (toutes vides sauf une), rendant
+   *  le filtre actif illisible à côté d'un mur de colonnes non pertinentes. */
+  assigneeFilter?: string | null;
 }
 
 export const KANBAN_UNASSIGNED = '__unassigned__';
@@ -33,15 +68,47 @@ interface DragPayload {
  * assignées). Une tâche multi-assignée apparaît dans chaque colonne de ses
  * assignés. Glisser une carte déplace l'assignation d'une colonne à l'autre.
  */
-const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn }: TeamProjectsKanbanProps) => {
+const TeamProjectsKanban = ({
+  projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, canAssign, groupBy, onSetStatus, assigneeFilter,
+  selectable = false, selectedIds, onToggleSelect,
+}: TeamProjectsKanbanProps) => {
   const { t } = useT('org');
+  const { t: pf, tp: tpf } = useT('portfolio');
+  // Une carte qu'on n'a pas le droit de modifier ne se glisse pas : le serveur
+  // refuserait le déplacement APRÈS coup. Elle le dit au survol.
+  const hints = usePermissionHints(projects[0]?.orgId ?? tasks[0]?.orgId);
   const [dragOver, setDragOver] = useState<string | null>(null);
 
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((t) => !t.completed)), [tasks]);
+  // La colonne « Terminée » (mode Statut) montre les tâches COMPLÉTÉES —
+  // `openTasks` les exclut par construction. Sans cette liste séparée, tout
+  // dépôt dans « Terminée » faisait disparaître la carte du kanban entier :
+  // la mutation passait bien `status: 'done'` (le repository synchronise
+  // `completed: true`), mais `tasksOf('done')` filtrait sur `openTasks`, qui
+  // ne contient jamais rien de complété.
+  const doneTasks = useMemo(() => sortCompletedTasks(tasks.filter((t) => t.completed)), [tasks]);
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
 
-  // Colonnes : non assignées + tous les membres (les plus chargés d'abord).
+  // Colonnes : par statut (flux) ou par personne (charge).
   const columns = useMemo(() => {
+    if (groupBy === 'status') {
+      // Colonnes vides comprises : un kanban dont les colonnes apparaissent
+      // selon le contenu empêche de déposer une carte dans un état encore
+      // inutilisé — exactement là où on veut la mettre.
+      return STATUS_ORDER.map((st) => ({
+        id: st as string,
+        label: t(STATUS_META[st].labelKey as Parameters<typeof t>[0]),
+        member: null as OrgMember | null,
+      }));
+    }
+    // Une personne filtrée (ProjectsToolbar) : une seule colonne, la sienne.
+    // `tasks` est déjà réduit à cette personne en amont (visibleTasks) — sans
+    // ce court-circuit, toutes les autres colonnes restaient affichées, mais
+    // vides, à côté de l'unique colonne pertinente.
+    if (assigneeFilter) {
+      const member = members.find((m) => m.userId === assigneeFilter) ?? null;
+      return [{ id: assigneeFilter, label: member?.displayName ?? assigneeFilter, member }];
+    }
     const counts = new Map<string, number>();
     for (const t of openTasks) {
       if (t.assigneeIds.length === 0) counts.set(KANBAN_UNASSIGNED, (counts.get(KANBAN_UNASSIGNED) ?? 0) + 1);
@@ -51,16 +118,21 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
       (a, b) => (counts.get(b.userId) ?? 0) - (counts.get(a.userId) ?? 0),
     );
     return [
-      { id: KANBAN_UNASSIGNED, label: t('kanban.unassigned'), member: null as OrgMember | null },
+      { id: KANBAN_UNASSIGNED, label: pf('kanban.unassigned'), member: null as OrgMember | null },
       ...memberCols.map((m) => ({ id: m.userId, label: m.displayName, member: m as OrgMember | null })),
     ];
-    // `t` en dépendance : la colonne « non assignées » porte un libellé traduit.
-  }, [members, openTasks, t]);
+    // `t` en dépendance : les libellés de colonne sont traduits ici.
+  }, [members, openTasks, t, pf, groupBy, assigneeFilter]);
 
-  const tasksOf = (colId: string) =>
-    colId === KANBAN_UNASSIGNED
+  const tasksOf = (colId: string) => {
+    if (groupBy === 'status') {
+      if (colId === 'done') return doneTasks;
+      return openTasks.filter((t) => t.status === colId);
+    }
+    return colId === KANBAN_UNASSIGNED
       ? openTasks.filter((t) => t.assigneeIds.length === 0)
       : openTasks.filter((t) => t.assigneeIds.includes(colId));
+  };
 
   const handleDrop = (colId: string, e: React.DragEvent) => {
     e.preventDefault();
@@ -68,17 +140,30 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
     let payload: DragPayload | null = null;
     try { payload = JSON.parse(e.dataTransfer.getData('text/plain')) as DragPayload; } catch { /* drag externe */ }
     if (!payload) return;
-    const task = openTasks.find((t) => t.id === payload!.taskId);
+    // Cherche dans TOUTES les tâches, pas seulement `openTasks` : une carte
+    // tirée depuis « Terminée » est complétée, donc absente d'`openTasks` —
+    // la chercher là la rendait introuvable, et le drop ne faisait rien.
+    const task = tasks.find((t) => t.id === payload!.taskId);
     if (!task || colId === payload.from) return;
 
+    // En mode flux, déposer change le STATUT et rien d'autre : l'assignation
+    // ne doit pas bouger parce qu'on a fait avancer une tâche.
+    if (groupBy === 'status') {
+      onSetStatus(task, colId as TeamTaskStatus);
+      return;
+    }
+
     // Déplace l'assignation : retire la colonne d'origine, ajoute la cible.
+    // Retirer est toujours permis (le serveur ne contrôle que les AJOUTS),
+    // ajouter suppose que la colonne cible soit à portée.
+    if (colId !== KANBAN_UNASSIGNED && !task.assigneeIds.includes(colId) && !canAssign(colId)) return;
     let next = task.assigneeIds.filter((id) => id !== payload!.from);
     if (colId !== KANBAN_UNASSIGNED && !next.includes(colId)) next = [...next, colId];
     onSetAssignees(task, next);
   };
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" role="list" aria-label={t('kanban.aria')}>
+    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" role="list" aria-label={pf('kanban.aria')}>
       {columns.map((col) => {
         const colTasks = tasksOf(col.id);
         const overdue = colTasks.filter(isTaskOverdue).length;
@@ -95,7 +180,7 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
           >
             <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[rgb(var(--color-border))]">
               {col.member ? (
-                <MemberAvatar avatar={col.member.avatar} name={col.member.displayName} size={22} />
+                <MemberAvatar avatar={col.member.avatar} name={col.member.displayName} size={20} />
               ) : (
                 <span className="w-[22px] h-[22px] rounded-full border border-dashed border-[rgb(var(--color-border))] flex items-center justify-center">
                   <UserRound size={12} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
@@ -105,24 +190,37 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
               <span className="ml-auto flex items-center gap-1 shrink-0">
                 <span className="text-xs text-[rgb(var(--color-text-muted))] tabular-nums">
                   {colTasks.length}
-                  {overdue > 0 && <span className="text-red-500 font-semibold" title={`${overdue} tâche${overdue > 1 ? 's' : ''} en retard`}> · {overdue} retard</span>}
+                  {overdue > 0 && (
+                    <span className="text-red-500 font-semibold" title={tpf('kanban.overdueTitle', overdue)}>
+                      {' · '}
+                      {pf('kanban.overdueBadge', { count: overdue })}
+                    </span>
+                  )}
                 </span>
+                {(!col.member || canAssign(col.id)) && (
                 <button
                   type="button"
-                  onClick={() => onAddToColumn(col.member ? col.id : null)}
-                  aria-label={col.member ? t('kanban.assignTo', { name: col.label }) : t('kanban.addUnassigned')}
-                  title={t('kanban.assignOrCreate')}
+                  onClick={() =>
+                    onAddToColumn(
+                      groupBy === 'status'
+                        ? { memberId: null, status: col.id as TeamTaskStatus }
+                        : { memberId: col.member ? col.id : null },
+                    )
+                  }
+                  aria-label={col.member ? pf('kanban.assignTo', { name: col.label }) : pf('kanban.addUnassigned')}
+                  title={pf('kanban.assignOrCreate')}
                   className="w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 >
                   <Plus size={14} aria-hidden="true" />
                 </button>
+                )}
               </span>
             </div>
 
             <div className="p-2 space-y-1.5 min-h-[64px] max-h-[60vh] overflow-y-auto">
               {colTasks.length === 0 && (
                 <p className="text-xs text-[rgb(var(--color-text-muted))] text-center py-4">
-                  {t('kanban.dropHere')}
+                  {pf('kanban.dropHere')}
                 </p>
               )}
               {colTasks.map((task) => {
@@ -133,25 +231,48 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
                 const coAssignees = col.member
                   ? task.assigneeIds.filter((id) => id !== col.id)
                   : [];
+                const isSelected = !!selectedIds?.has(task.id);
                 return (
                   <button
                     key={task.id}
                     type="button"
-                    draggable
+                    draggable={!selectable && !hints.taskEditReason(task)}
+                    title={selectable ? undefined : hints.taskEditReason(task)}
                     onDragStart={(e) =>
                       e.dataTransfer.setData('text/plain', JSON.stringify({ taskId: task.id, from: col.id } satisfies DragPayload))
                     }
-                    onClick={() => onOpenTask(task)}
-                    aria-label={`Modifier la tâche ${task.name}${overdueTask ? ' (en retard)' : ''}`}
-                    className={`w-full text-left rounded-xl border px-3 py-2 transition-colors cursor-grab active:cursor-grabbing ${
-                      overdueTask
-                        ? 'border-red-400/60 dark:border-red-700/60 bg-red-50 dark:bg-red-900/25 hover:border-red-500'
-                        : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] hover:border-indigo-400'
+                    onClick={() => (selectable ? onToggleSelect?.(task) : onOpenTask(task))}
+                    aria-pressed={selectable ? isSelected : undefined}
+                    aria-label={
+                      selectable
+                        ? t('projects.selectTask', { name: task.name })
+                        : overdueTask
+                          ? pf('kanban.editTaskOverdue', { name: task.name })
+                          : pf('kanban.editTask', { name: task.name })
+                    }
+                    className={`w-full text-left rounded-xl border px-3 py-2 transition-colors ${selectable ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'} ${
+                      isSelected
+                        ? 'border-indigo-500 ring-2 ring-indigo-500/40 bg-indigo-500/5'
+                        : overdueTask
+                          ? 'border-red-400/60 dark:border-red-700/60 bg-red-50 dark:bg-red-900/25 hover:border-red-500'
+                          : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] hover:border-indigo-400'
                     }`}
                   >
-                    <p className="text-sm text-[rgb(var(--color-text-primary))] line-clamp-2">{task.name}</p>
+                    <p className="flex items-start gap-2 text-sm text-[rgb(var(--color-text-primary))]">
+                      {selectable && (
+                        <span
+                          className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                            isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-[rgb(var(--color-border))]'
+                          }`}
+                          aria-hidden="true"
+                        >
+                          {isSelected && <Check size={11} />}
+                        </span>
+                      )}
+                      <span className="line-clamp-2">{task.name}</span>
+                    </p>
                     <div className="flex items-center gap-2 mt-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} title={priority.label} aria-hidden="true" />
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priorityLabelOf(task.priority)} title={priorityLabelOf(task.priority)} />
                       {project && pColor && (
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full truncate ${pColor.soft}`}>
                           {project.name}
@@ -159,15 +280,20 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
                       )}
                       {/* Co-assignés (tâche partagée entre plusieurs personnes) */}
                       {coAssignees.length > 0 && (
-                        <span className="flex -space-x-1 shrink-0" title={`Aussi assignée à ${coAssignees
-                          .map((id) => members.find((m) => m.userId === id)?.displayName)
-                          .filter(Boolean)
-                          .join(', ')}`}>
+                        <span
+                          className="flex -space-x-1 shrink-0"
+                          title={pf('kanban.alsoAssigned', {
+                            names: coAssignees
+                              .map((id) => members.find((m) => m.userId === id)?.displayName)
+                              .filter(Boolean)
+                              .join(', '),
+                          })}
+                        >
                           {coAssignees.slice(0, 2).map((id) => {
                             const m = members.find((x) => x.userId === id);
                             return m ? (
                               <span key={id} className="rounded-full ring-1 ring-[rgb(var(--color-surface))]">
-                                <MemberAvatar avatar={m.avatar} name={m.displayName} size={16} />
+                                <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
                               </span>
                             ) : null;
                           })}

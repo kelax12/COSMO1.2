@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Zap, CalendarDays, Tag, Flag, Clock, CornerDownLeft, Repeat } from 'lucide-react';
 import { parseQuickAdd } from '@/lib/quick-add-parser';
+import { QUICK_ADD_EXAMPLES, QUICK_ADD_EXAMPLES_MOBILE, QUICK_ADD_DATE_TOKEN } from '@/lib/quick-add-examples';
 import { useCreateTask } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 /**
  * Quick-add global (#1) — capture une tâche en langage naturel depuis
@@ -22,18 +24,9 @@ import { useT } from '@/i18n/useT';
 // Placeholders-exemples rotatifs (#21) : enseignent la syntaxe par l'exemple,
 // un différent à chaque ouverture. Variante courte sur mobile : le champ fait
 // ~180px à côté du bouton « Créer », un exemple long serait tronqué.
-const PLACEHOLDER_EXAMPLES = [
-  'Appeler le dentiste jeudi 10h #santé !! ~30m',
-  'Préparer la réunion demain 9h ~1h',
-  'Faire les courses samedi #maison',
-  'Relire le rapport !! ~45m',
-];
-const PLACEHOLDER_EXAMPLES_MOBILE = [
-  'Dentiste jeudi 10h',
-  'Réunion demain 9h',
-  'Courses samedi',
-  'Rapport !! ~45m',
-];
+// Volontairement en FRANÇAIS dans les deux langues — cf. quick-add-examples.ts.
+const PLACEHOLDER_EXAMPLES = QUICK_ADD_EXAMPLES;
+const PLACEHOLDER_EXAMPLES_MOBILE = QUICK_ADD_EXAMPLES_MOBILE;
 
 const QuickAddBar = () => {
   const { t } = useT('tasks');
@@ -75,7 +68,7 @@ const QuickAddBar = () => {
     } else {
       setValue('');
     }
-  }, [isOpen]);
+  }, [isOpen, PLACEHOLDER_EXAMPLES.length]);
 
   // Tokens cliquables de la ligne d'aide (#21) : insèrent l'exemple dans le
   // champ pour apprendre la syntaxe en la manipulant.
@@ -130,6 +123,13 @@ const QuickAddBar = () => {
     return formatDate(new Date(y, m - 1, day), { weekday: 'short', day: 'numeric', month: 'short' });
   };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: () => setIsOpen(false),
+    label: t('quickAdd.createAria'),
+  });
   return (
     <AnimatePresence>
       {isOpen && (
@@ -138,6 +138,8 @@ const QuickAddBar = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
+          ref={modalA11yRef}
+          {...modalA11yProps}
           className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-sm flex items-start justify-center pt-[18vh] px-4"
           onClick={() => setIsOpen(false)}
         >
@@ -233,7 +235,7 @@ const QuickAddBar = () => {
               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-muted))' }}
             >
               {([
-                ['demain 10h', 'date'],
+                [QUICK_ADD_DATE_TOKEN, 'date'],
                 ['#santé', t('quickAdd.tokenCategory')],
                 ['!!', t('quickAdd.tokenPriority')],
                 ['~30m', t('quickAdd.tokenDuration')],

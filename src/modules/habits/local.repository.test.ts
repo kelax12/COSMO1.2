@@ -20,12 +20,6 @@ describe('LocalStorageHabitsRepository', () => {
     expect(b[0].completions).toEqual(a[0].completions);
   });
 
-  it('getById renvoie l’habitude ou null', async () => {
-    await repo.fetchHabits();
-    expect((await repo.getById('h001'))?.name).toBe('Méditation');
-    expect(await repo.getById('absent')).toBeNull();
-  });
-
   it('createHabit préfixe la liste avec un id généré et completions par défaut', async () => {
     await repo.fetchHabits();
     const created = await repo.createHabit({
@@ -56,7 +50,7 @@ describe('LocalStorageHabitsRepository', () => {
   it('deleteHabit retire l’habitude', async () => {
     await repo.fetchHabits();
     await repo.deleteHabit('h001');
-    expect(await repo.getById('h001')).toBeNull();
+    expect((await repo.fetchHabits()).some((h) => h.id === 'h001')).toBe(false);
   });
 
   it('getPage pagine avec curseur', async () => {

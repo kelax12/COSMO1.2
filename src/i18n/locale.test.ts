@@ -67,6 +67,32 @@ describe('detectLocale', () => {
     expect(detectLocale(['fr-CA'])).toBe('fr');
   });
 
+  it('sans argument : lit navigator.languages', () => {
+    vi.stubGlobal('navigator', { languages: ['en-GB', 'fr'], language: 'en-GB' });
+    expect(detectLocale()).toBe('en');
+    vi.unstubAllGlobals();
+  });
+
+  it('sans argument : retombe sur navigator.language quand languages est vide (vieux WebKit)', () => {
+    vi.stubGlobal('navigator', { languages: [], language: 'en-US' });
+    expect(detectLocale()).toBe('en');
+    vi.unstubAllGlobals();
+  });
+
+  it('sans argument : navigator.language vide → défaut', () => {
+    vi.stubGlobal('navigator', { languages: undefined, language: '' });
+    expect(detectLocale()).toBe(DEFAULT_LOCALE);
+    vi.unstubAllGlobals();
+  });
+
+  it('sans navigator du tout (prérendu Node) → défaut, sans planter', () => {
+    // `prerender.mjs` tourne en Node brut : la fonction doit rester appelable
+    // hors navigateur, sinon le build casse au lieu de rendre du français.
+    vi.stubGlobal('navigator', undefined);
+    expect(detectLocale()).toBe(DEFAULT_LOCALE);
+    vi.unstubAllGlobals();
+  });
+
   it('retombe sur le défaut quand aucune langue ne convient', () => {
     expect(detectLocale(['de', 'ja'])).toBe(DEFAULT_LOCALE);
     expect(detectLocale([])).toBe(DEFAULT_LOCALE);

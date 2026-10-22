@@ -1,8 +1,14 @@
 {
+  "delta": {
+    "up": "+{{pct}}% vs the previous period",
+    "down": "−{{pct}}% vs the previous period",
+    "same": "Same as the previous period",
+    "noBase": "No previous period to compare"
+  },
   "page": {
     "title": "Statistics",
-    "subtitle": "Analyse your productivity and performance",
-    "analyse": "Analyse:",
+    "subtitle": "Analyze your productivity and performance",
+    "analyse": "Analyze:",
     "seeDetail": "See details",
     "calendar": "Calendar"
   },
@@ -32,18 +38,21 @@
     "goal": "Target",
     "minutes": "min",
     "timeSeries": "Time (min)",
-    "weekRange": "{{start}} to {{end}}"
+    "weekRange": "{{start}} to {{end}}",
+    "goalValueAria": "Goal, in minutes"
   },
   "gate": {
     "title": "Detailed analytics",
     "description": "Unlock charts and advanced statistics with a Premium account.",
-    "cta": "Unlock — ad or subscription",
+    "cta": "Unlock: ad or subscription",
     "featureName": "detailed analytics"
   },
   "details": {
+    "noTaskDone": "No task completed in this period.",
+    "avgPriority": "Avg. {{value}}",
     "globalTimeSplit": "Overall time split",
     "total": "Total",
-    "byColor": "Split by colour",
+    "byColor": "Split by color",
     "byPriority": "Split by priority",
     "priority": "Priority {{level}}",
     "byCategory": "Split by category",
@@ -52,18 +61,47 @@
     "totalObjectives": "Total objectives",
     "workedObjectives": "Objectives worked on",
     "totalRealTime": "Total actual time",
-    "effortByOkr": "Effort split by OKR",
+    "progressByOkr": "Progress by OKR",
+    "progressBefore": "Reached before the period",
+    "progressGained": "Gained over the period",
+    "progressBarAria_one": "Progress {{total}}%, including {{gained}} point gained over the period.",
+    "progressBarAria_other": "Progress {{total}}%, including {{gained}} points gained over the period.",
     "noEffort": "No effort recorded yet.",
     "byHabit": "Habit breakdown {{period}}",
     "noHabit": "No habit completed or active over this period.",
     "periodDay": "today",
     "periodWeek": "(7d)",
     "periodMonth": "(30d)",
-    "periodYear": "(365d)"
+    "periodYear": "(365d)",
+    "taskCount_one": "{{count}} task",
+    "taskCount_other": "{{count}} tasks"
   },
   "heatmap": {
     "less": "Less",
     "more": "More",
     "title": "Completion calendar"
+  },
+  "periodDescription": {
+    "day": "today",
+    "week": "the last 7 days",
+    "month": "the last 30 days",
+    "year": "the last 365 days"
+  },
+  "overview": {
+    "showAll": "All"
+  },
+  "breakdown": {
+    "tasks": "Tasks",
+    "agenda": "Calendar",
+    "habits": "Habits",
+    "okr": "OKRs"
+  },
+  "insights": {
+    "bestDay": "Your best day: {{day}} ({{share}}% of your tasks completed over 30 days).",
+    "fragileHabit": "Most fragile habit: “{{name}}”, missed {{missed}} times this week.",
+    "momentumFirst": "{{count}} tasks completed this week.",
+    "momentumUp": "Trending up: {{count}} tasks completed this week (+{{delta}}% vs last week).",
+    "momentumDown": "Trending down: {{count}} tasks completed this week ({{delta}}% vs last week).",
+    "momentumStable": "Steady pace: {{count}} tasks completed this week."
   }
 }

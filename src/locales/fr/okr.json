@@ -1,12 +1,20 @@
 {
+  "pro": {
+    "sectionTitle": "OKR pro",
+    "sectionSubtitle": "Objectifs de {{org}} sur lesquels vous contribuez",
+    "you": "Vous",
+    "openInOrg": "Ouvrir dans l'espace entreprise",
+    "personalSectionTitle": "OKR perso"
+  },
   "page": {
     "title": "OKR - Objectifs & Résultats Clés",
+    "titleShort": "Objectifs",
     "subtitle": "Définissez et suivez vos objectifs avec des résultats mesurables",
     "completedOkrs": "OKR terminés",
     "seeCompleted": "Voir la liste des OKR terminés",
     "weeklyCheckin": "Check-in hebdo",
     "openWeeklyCheckin": "Ouvrir le check-in hebdo",
-    "newObjective": "Nouvel Objectif",
+    "newObjective": "Nouvel objectif",
     "createObjective": "Créer un nouvel objectif",
     "createOkr": "Créer un OKR",
     "okrDeleted": "OKR supprimé",
@@ -19,13 +27,23 @@
       "noneDescription": "Créez votre premier objectif pour structurer vos résultats clés et suivre votre progression.",
       "filteredDescription": "Modifiez votre filtre ou créez un nouvel objectif dans cette catégorie.",
       "allTitle": "Aucun OKR pour le moment"
-    }
+    },
+    "openCheckinAria": "Ouvrir le check-in hebdo",
+    "openCheckinTitle": "Faire le point sur vos OKR : s'ouvre aussi automatiquement lundi/mardi depuis le Dashboard",
+    "activeCount_one": "{{count}} objectif actif",
+    "activeCount_many": "{{count}} d’objectifs actifs",
+    "activeCount_other": "{{count}} objectifs actifs"
   },
   "card": {
+    "reached": "Atteint",
+    "tasksCount_other": "{{count}} tâches",
+    "tasksCount_many": "{{count}} de tâches",
+    "tasksCount_one": "{{count}} tâche",
+    "endsOn": "fin le {{date}}",
     "uncategorized": "Sans catégorie",
     "timeElapsed": "{{percent}}% du temps écoulé",
     "overallProgress": "Progression globale",
-    "keyResults": "Résultats Clés",
+    "keyResults": "Résultats clés",
     "timeSpent": "Temps effectué",
     "editObjective": "Modifier l'objectif",
     "deleteObjective": "Supprimer l'objectif",
@@ -35,9 +53,14 @@
     "weight": "Coefficient d'importance ×{{weight}}",
     "decrease": "Diminuer {{title}}",
     "increase": "Augmenter {{title}}",
-    "progressOf": "Avancement de {{title}} sur {{target}}"
+    "progressOf": "Avancement de {{title}} sur {{target}}",
+    "objectiveActions": "Actions de l'objectif"
   },
   "categories": {
+    "manage": "Gérer les catégories",
+    "allLong": "Toutes les catégories",
+    "mobileLabel": "Catégorie :",
+    "all": "Tous",
     "edit": "Modifier la catégorie",
     "delete": "Supprimer la catégorie",
     "new": "Nouvelle catégorie",
@@ -49,10 +72,21 @@
     "colorHint": "Clic : cycle couleurs · Shift+clic : palette hex"
   },
   "deleteCategory": {
-    "title": "Confirmer la suppression",
+    "title": "Supprimer « {{name}} » ?",
     "cancel": "Annuler",
     "confirm": "Supprimer",
-    "body": "Êtes-vous sûr de vouloir supprimer la catégorie « {{name}} » ? Les OKR associés conserveront leur catégorie mais ne seront plus filtrables."
+    "working": "Suppression…",
+    "noImpact": "Aucun objectif d'équipe ne porte cette catégorie : la supprimer n'affecte rien.",
+    "impactOkrs_one": "{{count}} objectif d'équipe porte cette catégorie.",
+    "impactOkrs_many": "{{count}} d'objectifs d'équipe portent cette catégorie.",
+    "impactOkrs_other": "{{count}} objectifs d'équipe portent cette catégorie.",
+    "reassignLabel": "Que faire de ces objectifs ?",
+    "reassignNone": "Les laisser sans catégorie",
+    "reassignTo": "Les reclasser dans une autre catégorie",
+    "reassignPick": "Choisir une catégorie",
+    "doneReassigned_one": "{{count}} objectif reclassé",
+    "doneReassigned_many": "{{count}} d'objectifs reclassés",
+    "doneReassigned_other": "{{count}} objectifs reclassés"
   },
   "deleteObjective": {
     "title": "Supprimer l'objectif",
@@ -61,12 +95,18 @@
     "confirm": "Supprimer"
   },
   "modal": {
-    "description": "Définis un objectif et ses résultats clés mesurables.",
+    "description": "Définissez un objectif et ses résultats clés mesurables.",
     "objective": "Objectif",
     "category": "Catégorie",
     "deadline": "Échéance",
+    "detailsSection": "Détails",
     "descriptionLabel": "Description",
+    "addDescription": "Ajouter une description",
     "keyResults": "Résultats clés",
+    "keyResultName": "Sous-objectif",
+    "krCount_one": "{{count}} défini",
+    "krCount_many": "{{count}} définis",
+    "krCount_other": "{{count}} définis",
     "keyResultPlaceholder": "Résultat clé mesurable",
     "moveUp": "Faire remonter le résultat clé",
     "progress": "Avancement",
@@ -74,9 +114,11 @@
     "unit": "Unité",
     "duration": "Durée",
     "optional": "(Facultatif)",
+    "advancedFeature": "Plus d'options",
+    "advancedFeatureHide": "Masquer",
     "weight": "Coef. (1–10)",
     "weightHint": "Importance du KR dans la progression globale",
-    "needOneKr": "Ajoute au moins 1 résultat clé pour créer l'objectif.",
+    "needOneKr": "Ajoutez au moins un résultat clé pour créer l'objectif.",
     "cancel": "Annuler",
     "save": "Enregistrer",
     "create": "Créer"
@@ -108,6 +150,11 @@
     "savedCount_many": "{{count}} de KR mis à jour",
     "savedCount_other": "{{count}} KR mis à jour",
     "error": "Erreur lors de la mise à jour",
-    "saving": "Enregistrement…"
+    "saving": "Enregistrement…",
+    "krProgress": "KR {{index}} sur {{total}}"
+  },
+  "modalSheet": {
+    "titlePlaceholder": "Ex. Lancer la v2 du produit",
+    "pickPlaceholder": "Choisir…"
   }
 }

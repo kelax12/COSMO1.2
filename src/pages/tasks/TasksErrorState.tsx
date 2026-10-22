@@ -11,6 +11,10 @@ interface TasksErrorStateProps {
 // loading skeleton, looking blank to the user.
 const TasksErrorState: React.FC<TasksErrorStateProps> = ({ error, onRetry }) => {
   const { t } = useT('tasks');
+  // Règle « faille V7 » : le message brut du backend est journalisé, pas rendu.
+  React.useEffect(() => {
+    if (error) console.error('[TasksErrorState]', error);
+  }, [error]);
   return (
     <div className="p-4 sm:p-8 flex flex-col items-center justify-center min-h-[60vh] text-center gap-4">
       <div className="text-5xl">⚠️</div>
@@ -18,7 +22,7 @@ const TasksErrorState: React.FC<TasksErrorStateProps> = ({ error, onRetry }) => 
         {t('error.title')}
       </h2>
       <p className="text-sm text-[rgb(var(--color-text-secondary))] max-w-md">
-        {error?.message || t('error.fallback')}
+        {t('error.fallback')}
       </p>
       <button
         onClick={onRetry}
