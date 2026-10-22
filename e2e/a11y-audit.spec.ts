@@ -12,7 +12,9 @@
 //
 // ⚠️ CE QUE CE FICHIER NE MESURE PAS, et il faut le savoir avant de lire ses
 // chiffres : axe ne scanne que l'ÉTAT INITIAL de chaque route. Aucune modale,
-// aucun menu, aucun calendrier ouvert n'entre dans ces totaux.
+// aucun menu, aucun calendrier ouvert n'entre dans ces totaux. Seule
+// exception : `/agenda`, scanné en plus dans chaque vue du sélecteur
+// (2026-10-22).
 // ═══════════════════════════════════════════════════════════════════
 
 import { test, expect, navTo } from './fixtures';
