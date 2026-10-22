@@ -200,6 +200,9 @@ export const CONTACTS_PROD = {
   'org-digest.yml › send › Envoyer les notifications par e-mail': {
     affiche: 'code HTTP et réponse `{mode, recipients, sent, failed}` : compteurs',
   },
+  'inactive-accounts.yml › run › Avertir puis effacer les comptes inactifs': {
+    affiche: 'code HTTP et réponse `{toWarn, warned, toDelete, deleted, …}` : compteurs, aucun e-mail',
+  },
   'org-webhook-dispatch.yml › dispatch › Envoyer les webhooks en attente': {
     affiche: 'code HTTP et réponse `{delivered, failed}` : compteurs',
   },
