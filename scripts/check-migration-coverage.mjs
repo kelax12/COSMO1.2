@@ -34,8 +34,8 @@
 //   SANS OBJET     GRANT ou migration de donnees : le catalogue n'en garde
 //   VERIFIABLE     aucune trace. DECLARE un par un, avec son motif, parce
 //                  qu'un fichier qu'on ne sait pas verifier doit se voir.
-//   NON APPLIQUEE  absence DELIBEREE et declaree (mig. 140, qui se joue dans
-//   (declaree)     la fenetre de bascule Stripe live).
+//   NON APPLIQUEE  absence DELIBEREE et declaree dans
+//   (declaree)     NON_APPLIQUEES_DELIBEREMENT (vide depuis le 2026-10-22).
 //   ABSENT DES DEUX -> ECHEC. Le depot decrit un objet que la prod n'a pas.
 //
 // ── CE QUE CE SCRIPT NE PROUVE PAS, ET IL FAUT LE DIRE ──────────────
@@ -93,12 +93,11 @@ const MIGRATION_DIR =
  * qu'on veut appliquer s'applique ; une migration qu'on ne veut pas appliquer
  * se declare ici, avec la raison.
  */
-const NON_APPLIQUEES_DELIBEREMENT = {
-  '140_stripe_identifiers_reset':
-    "Se joue DANS la fenetre de bascule Stripe live, jamais avant : tant que la "
-    + "cle est une cle de test, chaque checkout reecrit un identifiant de test. "
-    + "Declare le 2026-09-15 (cf. CLAUDE.md, section facturation entreprise).",
-};
+// ✅ Vide depuis le 2026-10-22. Sa seule entree, `140_stripe_identifiers_reset`
+// (declaree le 2026-09-15), est tombee : la mig. 140 est appliquee depuis la
+// bascule Stripe live du 2026-10-20 (ledger `20261020204838`), et la garde l'a
+// signale chaque jour comme dispense perimee jusqu'a son retrait.
+const NON_APPLIQUEES_DELIBEREMENT = {};
 
 /**
  * Migrations qui ne creent ni ne suppriment AUCUN objet de catalogue.
@@ -350,8 +349,12 @@ export const VERDICT = {
  *
  * @param {{name: string, sql: string}[]} fichiers
  * @param {object} intro  l'introspection de prod
+ * @param {Record<string, string>} [dispenses]  les non-appliquees declarees.
+ *   ⚠️ Parametre pour le SEUL temoin, qui doit pouvoir exercer le verdict
+ *   « declaree » et la dispense perimee quand la vraie table est vide. Le CLI
+ *   ne le passe jamais : il lit `NON_APPLIQUEES_DELIBEREMENT`.
  */
-export function classer(fichiers, intro) {
+export function classer(fichiers, intro, dispenses = NON_APPLIQUEES_DELIBEREMENT) {
   const ledger = new Set([
     ...(intro.ledger ?? []).map((s) => String(s).toLowerCase()),
     ...(intro.ledger_names ?? []).map((s) => String(s).toLowerCase()),
@@ -398,7 +401,7 @@ export function classer(fichiers, intro) {
   for (const { name, sql } of fichiers) {
     const cles = clesLedger(name);
     const auLedger = cles.some((c) => ledger.has(c));
-    const cleDeclaree = cles.find((c) => NON_APPLIQUEES_DELIBEREMENT[c]);
+    const cleDeclaree = cles.find((c) => dispenses[c]);
 
     const objets = objetsCrees(sql);
     const total = KINDS.reduce((n, k) => n + objets[k].length, 0);
@@ -430,7 +433,7 @@ export function classer(fichiers, intro) {
       } else {
         resultats.push({
           name, verdict: VERDICT.DECLAREE, total, trouves, manquants, retires,
-          raison: NON_APPLIQUEES_DELIBEREMENT[cleDeclaree],
+          raison: dispenses[cleDeclaree],
         });
       }
       continue;
