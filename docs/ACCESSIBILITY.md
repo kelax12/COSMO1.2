@@ -55,7 +55,7 @@ Conséquences pratiques, à tenir :
 > |---|---|---|
 > | ✅ Vibration en boucle (±0,45°) en édition | 0 | coupée sous mouvement réduit par `useReducedMotion()` : une boucle rendue instantanée par Framer (`{ type: false }`) laisserait un `rotate` **résiduel**, d'où la coupe à la main plutôt que de s'en remettre au `MotionConfig` |
 > | ✅ Réordonnancement (flèches et glisser) | 0 | Framer rend `layout` et les transforms instantanés sous mouvement réduit : le bloc **saute** à sa place, le glisser marche (le geste n'est pas une animation), `dragSnapToOrigin` revient sans ressort. Défilement vers un bloc ajouté : `auto` au lieu de `smooth` |
-> | ✅ Garde | 0 | `e2e/reduced-motion-widgets.spec.ts` lit `transform` à chaque frame pendant l'édition, un déplacement au clavier et un glisser à la souris ; il exige aucun transform **et** l'ordre attendu (sans déplacement, « aucun transform » ne dirait rien). Vu rouge sur la version d'avant, vert après, en CI (PR de ce correctif) |
+> | ✅ Garde | 0 | `e2e/reduced-motion-widgets.spec.ts` lit `transform` à chaque frame pendant l'édition, un déplacement au clavier et un glisser à la souris ; il exige aucun transform **et** l'ordre attendu (sans déplacement, « aucun transform » ne dirait rien). 🟡 **Verdict CI en attente au 2026-10-22** : kelax12/COSMO1.2#90 joue le test seul sur le composant d'avant (doit être ROUGE), kelax12/COSMO1.2#89 le correctif (doit être vert). Rien n'a pu tourner en local (machine à ~300 Mo libres) |
 > | ⚠️ Reste une exception écrite | 0 | `GuideCursor` (guide entreprise) garde `never` : son trajet EST le contenu de la démo, demande d'Axel du 2026-10-12. C'est désormais le seul |
 >
 > Note inchangée : l'item valait 0 le 2026-10-20 (non débité).
