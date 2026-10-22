@@ -59,7 +59,11 @@ const CLASSES: Record<Theme, string[]> = {
   noir: ['dark', 'noir'],
 };
 
-test.use({ reducedMotion: 'reduce' });
+// 1 600 px et non les 1 280 de Desktop Chrome : à 1 280, le tableau de
+// `/tasks` déborde à droite, et un texte dont le milieu sort de la page fait
+// LEVER axe (« Element midpoint exceeds the grid bounds », vu en CI le
+// 2026-10-22) : la règle entière part en `incomplete`, zéro texte mesuré.
+test.use({ reducedMotion: 'reduce', viewport: { width: 1600, height: 900 } });
 // 7 routes rechargées par cas, plus la fixture démo.
 test.describe.configure({ timeout: 300_000 });
 
@@ -126,13 +130,25 @@ for (const theme of THEMES) {
       let diagnostic = '';
       if (passes <= 10) {
         const incomplete = res.incomplete.find((p) => p.id === 'color-contrast');
+        const horsPage = await page.evaluate(() => {
+          const w = document.documentElement.scrollWidth;
+          const h = document.documentElement.scrollHeight;
+          return [...document.querySelectorAll('body *')].filter((e) => {
+            if (![...e.childNodes].some((n) => n.nodeType === 3 && n.textContent?.trim())) return false;
+            const r = e.getBoundingClientRect();
+            const x = r.left + scrollX + r.width / 2;
+            const y = r.top + scrollY + r.height / 2;
+            return r.width > 0 && (x < 0 || y < 0 || x > w || y > h);
+          }).slice(0, 5).map((e) => e.outerHTML.slice(0, 140)).join('\n    ');
+        });
         const dessus = await page.evaluate(() =>
           document.elementsFromPoint(innerWidth / 2, innerHeight / 2).slice(0, 4)
             .map((e) => e.outerHTML.slice(0, 160)).join('\n    '));
         // Une règle qui LÈVE rend un seul nœud `incomplete` sans motif : on
         // garde l'objet brut, c'est lui qui porte l'erreur d'axe.
         diagnostic = `\n  incomplete : ${incomplete?.nodes.length ?? 0}, brut : `
-          + `${JSON.stringify(incomplete ?? null).slice(0, 1500)}\n  au centre :\n    ${dessus}`;
+          + `${JSON.stringify(incomplete?.error ?? incomplete ?? null).slice(0, 300)}`
+          + `\n  textes hors page :\n    ${horsPage || '-'}\n  au centre :\n    ${dessus}`;
       }
       expect.soft(passes, `${route} · ${theme} : axe n'a mesuré aucun texte${diagnostic}`).toBeGreaterThan(10);
       expect.soft(
