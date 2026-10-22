@@ -90,11 +90,13 @@ describe('export des dépendances entre tâches (mig. 132)', () => {
       okrs: [],
       categories: [],
       lists: [],
+      krCompletions: [],
+      orgRoles: [],
       profile: { id: 'u1', name: 'A', email: 'a@example.com' },
     });
     vi.runAllTimers();
 
-    expect(telecharges).toHaveLength(8);
+    expect(telecharges).toHaveLength(10);
     const fichier = telecharges.find((d) => d.name.startsWith('cosmo-dependances-'));
     expect(fichier).toBeDefined();
     expect(await fichier!.text).toContain('t-article,Rédiger article,t-interview,Transcrire interview');

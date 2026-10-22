@@ -130,7 +130,7 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   `kr_completions`, `categories`, `lists`, `user_activity_days`.
 - **Destinataires** : Supabase. Aucun autre.
 - **Conservation** : durée de vie du compte. Effacement immédiat à la demande.
-- **Portabilité** : export CSV depuis Paramètres, onglet Mes données (8 fichiers, dont les dépendances entre tâches depuis le 2026-10-22).
+- **Portabilité** : export CSV depuis Paramètres, onglet Mes données (10 fichiers depuis le 2026-10-22, dont les dépendances entre tâches, le journal des résultats clés `kr_completions` et les rôles reçus en entreprise `org_member_roles`).
 
 ## T3 · Collaboration entre particuliers
 

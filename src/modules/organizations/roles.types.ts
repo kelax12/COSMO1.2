@@ -70,3 +70,12 @@ export const ROLE_COLORS = [
 
 /** Longueur maximale d'un nom, miroir du `CHECK` SQL. */
 export const ROLE_NAME_MAX = 40;
+
+/**
+ * Une attribution reçue par la personne connectée, jointe au rôle qu'elle
+ * désigne : la forme de l'export de portabilité (RGPD art. 20).
+ */
+export interface MyOrgRoleAssignment extends OrgRoleAssignment {
+  roleName: string;
+  grantedKeys: OrgPermissionKey[];
+}

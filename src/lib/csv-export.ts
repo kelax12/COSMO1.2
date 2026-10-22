@@ -11,6 +11,8 @@ import { effectiveStatus, type Task, type TaskDependency } from '@/modules/tasks
 import type { Habit } from '@/modules/habits';
 import type { CalendarEvent } from '@/modules/events';
 import type { OKR } from '@/modules/okrs';
+import type { KRCompletion } from '@/modules/kr-completions';
+import type { MyOrgRoleAssignment } from '@/modules/organizations/roles.types';
 import type { Category } from '@/modules/categories';
 import type { TaskList } from '@/modules/lists';
 import { translator } from '@/i18n/useT';
@@ -311,6 +313,50 @@ export function exportOKRsCSV(okrs: OKR[]): void {
 }
 
 /**
+ * Journal des complétions de résultats clés (`kr_completions`).
+ *
+ * 🔴 Déclaré « non exporté » jusqu'au 2026-10-22 dans
+ * `check-portability-export.mjs`, avec la mention « discutable ». C'est
+ * pourtant la seule trace de QUAND chaque résultat clé a été atteint : le
+ * fichier des OKR ne dit que l'état présent. Même raisonnement que
+ * `completedAt` des tâches, ajouté le 2026-09-02.
+ *
+ * Les titres sont les instantanés pris à la complétion (un OKR renommé depuis
+ * garde ici le nom qu'il portait ce jour-là), c'est ce qui rend le fichier
+ * lisible même après la suppression de l'objectif.
+ */
+export function exportKRCompletionsCSV(completions: KRCompletion[]): void {
+  const headers = cols('completedAt', 'okrId', 'okrTitle', 'krId', 'krTitle');
+  const rows = completions.map((c) => [c.completedAt, c.okrId, c.okrTitle, c.krId, c.krTitle]);
+  download(fileName('krCompletions'), rowsToCSV(headers, rows));
+}
+
+/**
+ * Rôles personnalisés reçus dans une organisation (`org_member_roles`, mig. 219).
+ *
+ * 🔴 Déclarés « non exportés » du 2026-10-15 au 2026-10-22. Le rôle est
+ * attribué PAR l'organisation, mais il concerne la personne : quels droits elle
+ * a détenus, et de quand à quand. L'article 15 l'y donnerait accès de toute
+ * façon ; l'export est l'endroit où elle le lit.
+ *
+ * ❌ `grantedBy` ne sort JAMAIS : il désigne une AUTRE personne. Seules les
+ *    attributions de la personne connectée arrivent ici (filtre dans
+ *    `getMyAssignments`, la RLS laissant lire toute l'organisation).
+ */
+export function exportOrgRolesCSV(assignments: MyOrgRoleAssignment[]): void {
+  const headers = cols('organization', 'role', 'roleName', 'permissions', 'startsAt', 'endsAt');
+  const rows = assignments.map((a) => [
+    a.orgId,
+    a.roleId,
+    a.roleName,
+    a.grantedKeys.join(' '),
+    a.startsAt,
+    a.endsAt ?? '',
+  ]);
+  download(fileName('orgRoles'), rowsToCSV(headers, rows));
+}
+
+/**
  * Profil — identité et préférences fournies par la personne.
  *
  * Absent de l'export jusqu'au 2026-08-26, alors que c'est la donnée la plus
@@ -376,7 +422,8 @@ export function exportListsCSV(lists: TaskList[]): void {
  * Export combiné — déclenche les téléchargements en séquence (Safari refuse
  * souvent plusieurs `.click()` simultanés, on les espace de 150 ms).
  *
- * ⚠️ Huit fichiers depuis le 2026-10-22 (dépendances entre tâches), sept
+ * ⚠️ Dix fichiers depuis le 2026-10-22 (dépendances entre tâches, journal des
+ * KR, rôles reçus), sept
  * depuis le 2026-08-26, quatre avant : profil, catégories et listes
  * manquaient. Toute nouvelle donnée SAISIE par
  * l'utilisateur doit rejoindre cette fonction, sinon l'export cesse
@@ -398,6 +445,8 @@ export function exportAllCSV(data: {
   okrs: OKR[];
   categories: Category[];
   lists: TaskList[];
+  krCompletions: KRCompletion[];
+  orgRoles: MyOrgRoleAssignment[];
   profile: { id: string; name: string; email: string; avatar?: string; autoValidation?: boolean };
 }): void {
   exportTasksCSV(data.tasks);
@@ -408,4 +457,6 @@ export function exportAllCSV(data: {
   setTimeout(() => exportListsCSV(data.lists), 750);
   setTimeout(() => exportProfileCSV(data.profile), 900);
   setTimeout(() => exportTaskDependenciesCSV(data.taskDependencies, data.tasks), 1050);
+  setTimeout(() => exportKRCompletionsCSV(data.krCompletions), 1200);
+  setTimeout(() => exportOrgRolesCSV(data.orgRoles), 1350);
 }

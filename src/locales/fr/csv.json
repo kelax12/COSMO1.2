@@ -11,7 +11,9 @@
     "profile": "cosmo-profil",
     "categories": "cosmo-categories",
     "lists": "cosmo-listes",
-    "taskDependencies": "cosmo-dependances"
+    "taskDependencies": "cosmo-dependances",
+    "krCompletions": "cosmo-okr-historique",
+    "orgRoles": "cosmo-roles"
   },
   "col": {
     "id": "ID",
@@ -69,6 +71,13 @@
     "blockedTask": "Tâche bloquée (ID)",
     "blockedTaskName": "Tâche bloquée",
     "blockingTask": "Bloquée par (ID)",
-    "blockingTaskName": "Bloquée par"
+    "blockingTaskName": "Bloquée par",
+    "krId": "KR ID",
+    "organization": "Organisation (ID)",
+    "role": "Rôle (ID)",
+    "roleName": "Rôle",
+    "permissions": "Droits accordés",
+    "startsAt": "Début",
+    "endsAt": "Fin"
   }
 }
