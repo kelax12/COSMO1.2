@@ -59,8 +59,11 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                 title={t('nav.tasks')}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all shadow-sm shrink-0 border ${showTaskSidebar ? 'shadow-md' : ''}`}
                 style={{
-                  backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
-                  borderColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-border))',
+                  // AM-5 : fond PLEIN = --color-accent-solid, le seul accent prévu
+                  // pour porter son texte (blanc sur --color-accent : 3,67:1 en
+                  // Sombre, 2,52:1 en Gris).
+                  backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent-solid))' : 'rgb(var(--color-chip-bg))',
+                  borderColor: showTaskSidebar ? 'rgb(var(--color-accent-solid))' : 'rgb(var(--color-chip-border))',
                   // 'white' en dur était illisible en thème Noir : --color-accent
                   // y est quasi-blanc (texte/liens), pas bleu comme Sombre/Gris/Clair.
                   // --color-accent-solid-foreground existe pour ce pairage.

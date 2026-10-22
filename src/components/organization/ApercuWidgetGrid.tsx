@@ -272,7 +272,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                 whileTap={{ scale: 0.94 }}
                 onClick={startEditing}
                 data-testid="apercu-edit"
-                className={`${toolbarButton} px-4 border border-[rgb(var(--color-accent)/0.4)] bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent)/0.16)]`}
+                className={`${toolbarButton} px-4 border border-[rgb(var(--color-accent)/0.4)] bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-accent-text))] hover:bg-[rgb(var(--color-accent)/0.16)]`}
               >
                 <Pencil size={15} aria-hidden="true" />
                 {t('apercu.widgets.edit')}

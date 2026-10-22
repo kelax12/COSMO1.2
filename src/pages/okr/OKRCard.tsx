@@ -100,7 +100,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   </div>
 
                   <div className="hidden sm:flex justify-between items-center mb-4 gap-4">
-                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-caption sm:text-xs font-medium whitespace-nowrap shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : NO_CATEGORY_COLOR + '40', color: category ? resolveColor(category.color) : 'rgb(var(--color-text-secondary))' }}>
+                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-caption sm:text-xs font-medium whitespace-nowrap shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : NO_CATEGORY_COLOR + '40', color: 'rgb(var(--color-text-primary))' }}>
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) : NO_CATEGORY_COLOR }} />
                       <span>{category?.name ?? t('card.uncategorized')}</span>
                     </span>
@@ -174,7 +174,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                           style={{
                             backgroundColor: 'rgb(var(--color-accent) / 0.1)',
                             borderColor: 'rgb(var(--color-accent) / 0.2)',
-                            color: 'rgb(var(--color-accent))'
+                            color: 'rgb(var(--color-accent-text))'
                           }}
                         >
                           <span className="whitespace-nowrap">{remainingDays}j restants</span>

@@ -123,7 +123,16 @@ for (const theme of THEMES) {
       bilan[route] = { violations: res.violations.reduce((s, v) => s + v.nodes.length, 0), passes };
 
       // TÉMOIN DU TÉMOIN : une route où axe n'a mesuré AUCUN texte serait verte à vide.
-      expect.soft(passes, `${route} · ${theme} : axe n'a mesuré aucun texte`).toBeGreaterThan(10);
+      let diagnostic = '';
+      if (passes <= 10) {
+        const incomplete = res.incomplete.find((p) => p.id === 'color-contrast');
+        const dessus = await page.evaluate(() =>
+          document.elementsFromPoint(innerWidth / 2, innerHeight / 2).slice(0, 4)
+            .map((e) => e.outerHTML.slice(0, 160)).join('\n    '));
+        diagnostic = `\n  incomplete : ${incomplete?.nodes.length ?? 0}, motif : `
+          + `${incomplete?.nodes[0]?.any[0]?.message ?? '-'}\n  au centre :\n    ${dessus}`;
+      }
+      expect.soft(passes, `${route} · ${theme} : axe n'a mesuré aucun texte${diagnostic}`).toBeGreaterThan(10);
       expect.soft(
         res.violations,
         `[AM-5] ${route} · thème ${theme} : contraste sous le seuil WCAG 1.4.3\n${decrire(res.violations)}\n`

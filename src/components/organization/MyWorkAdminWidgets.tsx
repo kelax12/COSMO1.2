@@ -93,7 +93,7 @@ export const RiskProjectsWidget = ({ size, rows, onOpen }: { size: WidgetSize; r
               </div>
               <p className="mt-0.5 ml-[22px] text-sm text-[rgb(var(--color-text-muted))] truncate">
                 {t('apercu.widgets.c.projOpen', { count: open })}
-                {overdue > 0 && <span className="text-red-500"> · {t('apercu.widgets.c.projLate', { count: overdue })}</span>}
+                {overdue > 0 && <span className="text-[rgb(var(--color-danger-text))]"> · {t('apercu.widgets.c.projLate', { count: overdue })}</span>}
               </p>
             </li>
           ))}

@@ -348,7 +348,7 @@ const OKRPage: React.FC = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowCheckin(true)}
-          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm border border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm border border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-text))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] transition-colors"
           aria-label={t('page.openCheckinAria')}
           title={t('page.openCheckinTitle')}
         >

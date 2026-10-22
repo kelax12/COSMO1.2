@@ -94,7 +94,7 @@ export const WidgetShell = ({
             <button
               type="button"
               onClick={onSeeAll}
-              className="ml-auto min-h-[36px] px-2.5 rounded-lg text-xs font-semibold text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))]"
+              className="ml-auto min-h-[36px] px-2.5 rounded-lg text-xs font-semibold text-[rgb(var(--color-accent-text))] hover:bg-[rgb(var(--color-hover))]"
             >
               {t('apercu.widgets.pager.seeAll')}
             </button>

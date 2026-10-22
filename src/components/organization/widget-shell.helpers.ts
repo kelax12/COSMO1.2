@@ -8,9 +8,9 @@ export type WidgetTone = 'neutral' | 'danger' | 'warning' | 'success' | 'accent'
 export const TONE_BADGE: Record<WidgetTone, string> = {
   neutral: 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]',
   danger: 'bg-red-500/15 text-red-700 dark:text-red-300',
-  warning: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+  warning: 'bg-amber-500/15 text-amber-800 dark:text-amber-300', // AM-5 : amber-700 rendait 4,46:1 sur sa teinte
   success: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-  accent: 'bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]',
+  accent: 'bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent-text))]',
 };
 
 export const TONE_TEXT: Record<WidgetTone, string> = {
