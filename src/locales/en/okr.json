@@ -77,7 +77,7 @@
     "noImpact": "No team objective uses this category, so deleting it affects nothing.",
     "impactOkrs_one": "{{count}} team objective uses this category.",
     "impactOkrs_other": "{{count}} team objectives use this category.",
-    "reassignLabel": "What should happen to them?",
+    "reassignLabel": "What should happen to these objectives?",
     "reassignNone": "Leave them without a category",
     "reassignTo": "Move them to another category",
     "reassignPick": "Pick a category",

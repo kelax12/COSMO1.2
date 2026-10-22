@@ -147,7 +147,7 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 
 ## Scripts
 
-> ⚠️ **Cette liste ne porte que les commandes du QUOTIDIEN.** Les **34 gardes** (`check:*`,
+> ⚠️ **Cette liste ne porte que les commandes du QUOTIDIEN.** Les **35 gardes** (`check:*`,
 > `i18n:*`, `validate:*`) sont descendues dans [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) le
 > 2026-09-21, avec ce que chacune regarde et où est son détail : la racine était à 96,7 % de son
 > plafond et **24 gardes posées le 2026-09-21 n'y figuraient pas**. Cette section a pesé 281 lignes
@@ -168,7 +168,7 @@ npm run test:e2e            # Playwright (+ :ui, :report)         → e2e/CLAUDE
 npm run cosmo               # CLI données réelles (cf. plus haut)
 ```
 
-> 🛡️ **Les 34 gardes, une ligne chacune** (recomptées dans `package.json` le 2026-10-20) :
+> 🛡️ **Les 35 gardes, une ligne chacune** (recomptées dans `package.json` le 2026-10-22) :
 > [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) § Inventaire. Les trois qui attendaient un geste manuel
 > (`C-88`, `C-89`, `C-105`) mesurent toutes depuis le 2026-10-16.
 

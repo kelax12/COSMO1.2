@@ -52,7 +52,7 @@
     "title": "Edit project",
     "aria": "Edit project {{name}}",
     "description": "Project description",
-    "descriptionPlaceholder": "Goal, scope, useful links…",
+    "descriptionPlaceholder": "Objective, scope, useful links…",
     "owner": "Owner",
     "ownerHint": "The owner runs the project: they edit it and set dependencies. They can't change its team or its owner.",
     "status": "Status",
