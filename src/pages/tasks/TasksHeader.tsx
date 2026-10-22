@@ -168,6 +168,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
               whileTap={{ scale: 0.95 }}
               onClick={onToggleCalendar}
               data-tutorial-id="tasks-calendar-toggle"
+              data-guide-id="perso-tasks-calendar"
               aria-label={showDeadlineCalendar ? t('header.hideCalendar') : t('header.showCalendar')}
               className={`flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm ${
                 showDeadlineCalendar

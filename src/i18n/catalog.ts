@@ -69,6 +69,7 @@ interface FrModules {
   orgAdmin: typeof import('@/locales/fr/orgAdmin.json');
   orgConfig: typeof import('@/locales/fr/orgConfig.json');
   orgGuide: typeof import('@/locales/fr/orgGuide.json');
+  persoGuide: typeof import('@/locales/fr/persoGuide.json');
   agenda: typeof import('@/locales/fr/agenda.json');
   dashboard: typeof import('@/locales/fr/dashboard.json');
   bugReport: typeof import('@/locales/fr/bugReport.json');
@@ -240,6 +241,8 @@ interface CatalogShapes {
    */
   orgConfig: Shape<'orgConfig'>;
   orgGuide: Shape<'orgGuide'>;
+  /** Guide perso (boussole du `Layout` desktop), chargé au premier clic avec `PersoGuideHost`. */
+  persoGuide: Shape<'persoGuide'>;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
   seo: Shape<'seo'>;
   /** Réglages — profil, sécurité, apparence, modules, données, aide. */
@@ -331,7 +334,7 @@ registry[DEFAULT_LOCALE] = {
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
-  'habits', 'invite', 'landing', 'landingEnterprise', 'legal', 'legalPrivacy', 'legalTerms', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgConfig', 'orgGuide', 'portfolio', 'premium', 'seo',
+  'habits', 'invite', 'landing', 'landingEnterprise', 'legal', 'legalPrivacy', 'legalTerms', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgConfig', 'orgGuide', 'persoGuide', 'portfolio', 'premium', 'seo',
   'onboarding',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',

@@ -22,7 +22,15 @@ const SECTIONS: LegalSection<KeyOf<'legal'>>[] = [
       { kind: 'p', key: 'notice.s1.intro' },
       {
         kind: 'ul',
-        items: ['notice.s1.li1', 'notice.s1.liAddress', 'notice.s1.li2', 'notice.s1.li3'],
+        items: [
+          'notice.s1.li1',
+          'notice.s1.liRegistration',
+          'notice.s1.liVat',
+          'notice.s1.liAddress',
+          'notice.s1.li2',
+          'notice.s1.liPhone',
+          'notice.s1.li3',
+        ],
         bullets: false,
       },
     ],

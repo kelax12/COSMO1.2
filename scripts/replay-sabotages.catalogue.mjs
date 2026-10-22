@@ -92,6 +92,58 @@ export const CATALOGUE = [
       "`'unsafe-eval'` rouvre l'exécution de chaînes arbitraires : la CSP cesse "
       + "d'être une défense contre le XSS et devient une décoration.",
   },
+  // ── Collecteur de la mesure d'audience (TR-1, mig. 223) : le SEUL chemin
+  //    d'écriture de `track_hit`, donc ses refus et sa clé sont la frontière.
+  {
+    id: 'collect-cle-publique',
+    famille: 'produit',
+    garde: 'api/__tests__/collect.test.ts',
+    modifs: [r('api/collect.ts', '  const key = process.env.SUPABASE_SECRET_KEY;', '  const key = process.env.VITE_SUPABASE_ANON_KEY;')],
+    attendu: ['appelle track_hit avec la clé SECRÈTE, jamais avec la clé publique'],
+    pourquoi:
+      'Le défaut TR-1 lui-même : avec la clé publique, la 223 appliquée, plus rien '
+      + "n'est écrit ; et sans elle, n'importe qui joint `track_hit` sans passer par le collecteur.",
+  },
+  {
+    id: 'collect-repli-cle-publique',
+    famille: 'produit',
+    garde: 'api/__tests__/collect.test.ts',
+    modifs: [r('api/collect.ts', '  const key = process.env.SUPABASE_SECRET_KEY;', '  const key = process.env.SUPABASE_SECRET_KEY || process.env.VITE_SUPABASE_ANON_KEY;')],
+    attendu: ['503 sans clé secrète, sans repli sur la clé publique'],
+    pourquoi:
+      'Un repli sur la clé publique rend la garde conditionnelle à la présence de son '
+      + 'propre secret : la variable perdue, la mesure échoue en silence au lieu de répondre 503.',
+  },
+  {
+    id: 'collect-secret-en-bearer',
+    famille: 'produit',
+    garde: 'api/__tests__/collect.test.ts',
+    modifs: [r('api/collect.ts', "  return key.startsWith('sb_') ? { apikey: key } : { apikey: key, Authorization: `Bearer ${key}` };", '  return { apikey: key, Authorization: `Bearer ${key}` };')],
+    attendu: ['appelle track_hit avec la clé SECRÈTE, jamais avec la clé publique'],
+    pourquoi:
+      'Une clé `sb_secret_` en `Authorization: Bearer` est lue comme un JWT et rejetée '
+      + '(« Invalid JWT ») : chaque visite répondrait 502, aucune ne serait comptée.',
+  },
+  {
+    id: 'collect-origine-null',
+    famille: 'produit',
+    garde: 'api/__tests__/collect.test.ts',
+    modifs: [r('api/collect.ts', '  try { return new URL(origin).host === host; } catch { return false; }', '  return new URL(origin).host === host;')],
+    attendu: ['403 sans origine, pour une origine étrangère ou illisible'],
+    pourquoi:
+      "`Origin: null` (iframe isolée) levait une TypeError dans le collecteur en ligne jusqu'au "
+      + '2026-10-18 : un 500 au lieu d un refus.',
+  },
+  {
+    id: 'collect-taille-en-caracteres',
+    famille: 'produit',
+    garde: 'api/__tests__/collect.test.ts',
+    modifs: [r('api/collect.ts', '  if (new TextEncoder().encode(raw).length > MAX_BODY) return status(413);', '  if (raw.length > MAX_BODY) return status(413);')],
+    attendu: ['413 au-delà de 2 Ko, comptés en octets et non en caractères'],
+    pourquoi:
+      'Compter des caractères laisse passer jusqu au triple d octets : la borne de 2 Ko '
+      + 'que la RPC suppose ne tiendrait plus.',
+  },
   {
     id: 'rate-limit-borne',
     famille: 'produit',
@@ -703,7 +755,7 @@ export const CATALOGUE = [
       'un statut inattendu et une panne réseau sont distingués',
       'Une fonction injoignable et une fonction qui répond mal ne se corrigent pas de la même façon : le rapport doit le dire.'],
     ['smoke-destructrice-en-post', 'produit', r('scripts/check-edge-smoke.mjs', "    fonction: 'delete-account',\n    methode: 'GET',", "    fonction: 'delete-account',\n    methode: 'POST',"),
-      'les douze fonctions sont sondées, et aucune en écriture',
+      'les treize fonctions sont sondées, et aucune en écriture',
       "`delete-account` SUPPRIME un compte : sondée en POST chaque jour, la sonde deviendrait l'incident."],
     ['anon-mauvaise-cle', 'detecteur', r('scripts/check-edge-smoke.mjs', "  const anon = Array.isArray(cles) ? cles.find((c) => c.name === 'anon') : null;", '  const anon = Array.isArray(cles) ? cles[0] : null;'),
       'lit la clé nommée « anon » par l API Management',
@@ -721,9 +773,18 @@ export const CATALOGUE = [
     ['env-exemple-sans-sentry', 'produit', r('.env.example', 'VITE_SENTRY_DSN=', '# VITE_SENTRY_DSN='),
       '`.env.example` est lu, et une variable REQUISE y figure',
       'Sans `VITE_SENTRY_DSN` au build, Rollup élimine tout le chargement de Sentry : le monitoring disparaît du bundle.'],
-    ['env-arbre-oublie', 'detecteur', r('scripts/check-env-contract.mjs', "const ARBRES = ['src', 'prerender.mjs', 'vite.config.ts'];", "const ARBRES = ['prerender.mjs', 'vite.config.ts'];"),
+    ['env-arbre-oublie', 'detecteur', r('scripts/check-env-contract.mjs', "const ARBRES = ['src', 'prerender.mjs', 'vite.config.ts', 'api'];", "const ARBRES = ['prerender.mjs', 'vite.config.ts', 'api'];"),
       'toutes les `VITE_*` du code sont vues',
       'Une garde qui ne lit plus `src/` compare le contrat à presque rien, et le déclare tenu.'],
+    ['env-api-oublie', 'detecteur', r('scripts/check-env-contract.mjs', "const ARBRES = ['src', 'prerender.mjs', 'vite.config.ts', 'api'];", "const ARBRES = ['src', 'prerender.mjs', 'vite.config.ts'];"),
+      'TEMOIN : la clé serveur du collecteur est lue par son fichier, et une entrée morte se voit',
+      'Les fonctions de `api/` hors du parcours : un collecteur qui lirait une `VITE_*` absente du contrat passerait sans un mot.'],
+    ['env-secret-vite-accepte', 'detecteur', r('scripts/check-env-contract.mjs', 'return [...lues].filter((v) => /SECRET|SERVICE_ROLE/.test(v)).sort();', 'return [];'),
+      'TEMOIN : un nom de secret sous le préfixe `VITE_` est signalé (il partirait dans le bundle)',
+      'Une `VITE_SUPABASE_SECRET_KEY` part dans le bundle servi à chaque visiteur : la clé qui contourne la RLS, publiée.'],
+    ['env-serveur-jamais-morte', 'detecteur', r('scripts/check-env-contract.mjs', "return !existsSync(chemin) || !readFileSync(chemin, 'utf8').includes(`process.env.${v}`);", 'return false;'),
+      'TEMOIN : la clé serveur du collecteur est lue par son fichier, et une entrée morte se voit',
+      'Une entrée de contrat que plus rien ne lit fait vérifier chez Vercel une variable inutile, et cache celle qui manque.'],
     // ── check:acquisition (C-101)
     ['acquisition-etat-sans-backticks', 'detecteur', r('scripts/check-acquisition.mjs', '\\s*`?([a-z-]+)`?\\s*', '\\s*([a-z-]+)\\s*'),
       'les lignes du tableau des annuaires sont lues avec leur état',

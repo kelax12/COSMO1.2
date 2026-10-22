@@ -141,12 +141,19 @@ export default {
 					'0%, 100%': { transform: 'translateX(0)' },
 					'15%, 55%': { transform: 'translateX(-6px)' },
 					'35%, 75%': { transform: 'translateX(6px)' },
+				},
+				// Mode édition de l'Aperçu (widgets façon iPhone). Rotation
+				// seulement : la position finale ne dépend jamais de l'animation.
+				'jiggle': {
+					'0%, 100%': { transform: 'rotate(-0.5deg)' },
+					'50%': { transform: 'rotate(0.5deg)' },
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'shake': 'shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97)'
+				'shake': 'shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97)',
+				'jiggle': 'jiggle 0.32s ease-in-out infinite'
 			}
 		}
 	},

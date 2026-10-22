@@ -3,6 +3,7 @@ import { ChevronDown, CircleCheckBig, Link2, UserRoundCheck } from 'lucide-react
 import type { TeamTask } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
+import { InfoButton } from './WidgetShell';
 import { formatDuration } from './team-projects.helpers';
 import { WEEK_CAPACITY_MINUTES, type ActivityDigest, type WaitingOnEntry, type WeekLoad } from './my-work.helpers';
 import { CARD, MemberInitials, TaskLink, TITLE } from './MyWorkCards';
@@ -27,7 +28,10 @@ export const WeekLoadCard = ({ load }: { load: WeekLoad }) => {
   const tone = ratio > 1 ? 'bg-red-500' : ratio > 0.8 ? 'bg-amber-500' : 'bg-emerald-500';
   return (
     <div className={CARD}>
-      <h3 className={`${TITLE} mb-2`}>{tOrgAdmin('apercu.weekLoad.title')}</h3>
+      <div className="flex items-center gap-2 mb-2">
+        <h3 className={`${TITLE} flex-1`}>{tOrgAdmin('apercu.weekLoad.title')}</h3>
+        <InfoButton text={tOrgAdmin('apercu.widgets.loadInfo')} />
+      </div>
       <p className="text-sm text-[rgb(var(--color-text-secondary))]">
         <span className="text-lg font-bold tabular-nums text-[rgb(var(--color-text-primary))]">{formatDuration(load.minutes) || '0 min'}</span>{' '}
         {tOrgAdmin('apercu.weekLoad.ofCapacity')}

@@ -43,6 +43,7 @@ import InviteOrJoinModal from './organization/InviteOrJoinModal';
 import DeadlineReminder from './DeadlineReminder';
 import SyncStatusIndicator from './SyncStatusIndicator';
 import SkipLink, { MAIN_CONTENT_ID } from './SkipLink';
+import PersoGuideFab from './perso-guide/PersoGuideFab';
 import { isDueToday } from '@/lib/deadline';
 import { readJson, safeSetItem } from '@/lib/safe-json';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
@@ -247,18 +248,18 @@ const NavItems = () =>
         hoverColor="#94a3b8" collapsed={isCollapsed} badge={pendingRequestCount}
         badgeAriaLabel={tp('nav.badge.pendingRequest', pendingRequestCount)} end />
 
-      <NavItemLink to="/tasks" label={t('nav.tasks')} icon={<CheckSquare size={20} aria-hidden="true" />}
+      <NavItemLink to="/tasks" guideId="perso-nav-tasks" label={t('nav.tasks')} icon={<CheckSquare size={20} aria-hidden="true" />}
         hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed}
         badge={tasksDueTodayCount} badgeVariant="neutral"
         badgeAriaLabel={tp('nav.badge.taskDueToday', tasksDueTodayCount)} />
 
-      <NavItemLink to="/agenda" label={t('nav.agenda')} icon={<Calendar size={20} aria-hidden="true" />}
+      <NavItemLink to="/agenda" guideId="perso-nav-agenda" label={t('nav.agenda')} icon={<Calendar size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.events} collapsed={isCollapsed} />
 
-      <NavItemLink to="/okr" label={t('nav.okr')} icon={<Target size={20} aria-hidden="true" />}
+      <NavItemLink to="/okr" guideId="perso-nav-okr" label={t('nav.okr')} icon={<Target size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.okrs} collapsed={isCollapsed} />
 
-      <NavItemLink to="/habits" label={t('nav.habits')} icon={<Repeat size={20} aria-hidden="true" />}
+      <NavItemLink to="/habits" guideId="perso-nav-habits" label={t('nav.habits')} icon={<Repeat size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
 
       <NavItemLink to="/statistics" label={t('nav.statistics')} icon={<BarChart2 size={20} aria-hidden="true" />}
@@ -543,6 +544,10 @@ const NavItems = () =>
           hors de la zone qui défile (cf. page-right-rail.ts). Vide, il ne
           prend aucune place. */}
       <div id={PAGE_RIGHT_RAIL_ID} className="flex shrink-0" />
+
+      {/* Guide perso (boussole), desktop seulement. `/entreprise` a le sien
+          au même endroit (`OrgGuideFab`) : deux boussoles s'y superposeraient. */}
+      {!location.pathname.startsWith('/entreprise') && <PersoGuideFab />}
 
       {globalOverlays}
     </div>);

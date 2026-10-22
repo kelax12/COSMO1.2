@@ -132,7 +132,7 @@
     "video": {
       "dialogLabel": "Bienvenue dans l'espace entreprise",
       "title": "Bienvenue chez <em>{{org}}</em>.",
-      "subtitle": "Trois minutes pour faire le tour de votre espace entreprise.",
+      "subtitle": "Deux minutes et demie pour faire le tour de votre espace entreprise.",
       "unmute": "Activer le son",
       "skip": "Passer la vidéo",
       "cta": "Commencer",

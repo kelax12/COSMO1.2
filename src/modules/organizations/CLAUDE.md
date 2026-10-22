@@ -47,6 +47,10 @@ récentes, et une lecture par `ids` pour nommer le reste. Le serveur filtre AVAN
 - Le fil d'activité lit `team_task_activity` (mig. 094). Le journal ne voit que les UPDATE :
   les créations viennent des tâches récentes. Dérivations pures : `my-work.helpers.ts`.
 - `isManager` vient de la PAGE, comme pour Projets et Tâches (l'Aperçu passait `isAdmin`).
+- Depuis le 2026-10-19 l'Aperçu est une grille de widgets ([`src/components/CLAUDE.md`](../../components/CLAUDE.md)) :
+  les tâches sont lues dans `MyWorkTab` / `MyWorkSections` et passées aux widgets ; un widget peut
+  lire une source ÉTROITE (invitations, commentaires d'une tâche), jamais l'ensemble de travail
+  (relu le 2026-10-20 : aucun widget n'appelle `useTeamTasks`).
 
 ---
 
@@ -112,7 +116,7 @@ Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `i
 
 Spec : [`docs/superpowers/specs/2026-10-12-roles-personnalises-design.md`](../../../docs/superpowers/specs/2026-10-12-roles-personnalises-design.md).
 `org_roles` (paquet nommé de droits) + `org_member_roles` (attribution, `ends_at` NULL = sans limite).
-Fichiers : `roles.*` ; écrans `OrgRolesSettings`, `RoleEditorSheet`, `AssignRoleDialog`.
+Fichiers : `roles.*` ; écrans `OrgRolesSettings`, `RoleEditorSheet` (une modale centrée depuis le 2026-10-19, malgré son nom), `AssignRoleDialog` (crée aussi un rôle depuis l'attribution).
 
 - 🔴 **Ordre de résolution, non-admin** : rôles actifs (OU logique) > fiche individuelle > défaut.
   Un rôle actif ÉCRASE tout : une clé absente est refusée, même `task.create`.
@@ -126,7 +130,9 @@ Fichiers : `roles.*` ; écrans `OrgRolesSettings`, `RoleEditorSheet`, `AssignRol
 - `role.manage` : défaut admin seul, droit de CONFIANCE (aucun plafond sur le contenu d'un rôle).
 - Le départ d'un membre emporte ses attributions (FK composite vers `organization_members`).
 
-### 🧭 Étape 6 (mig. 190-193, 2026-09-25, NON appliquées) : rôles de projet, recherche, vues
+### 🧭 Étape 6 (mig. 190-193, 2026-09-25) : rôles de projet, recherche, vues
+
+En prod **sans ligne au ledger** (relu au catalogue le 2026-09-30, cf. `supabase/migration/CLAUDE.md`).
 
 - 🔴 `team_project_members` : `lead`/`contributor`/`viewer`. Le lecteur est refusé par TRIGGER
   (une policy PERMISSIVE ne retire rien) ; un admin n'est jamais restreint ; tout helper exige un

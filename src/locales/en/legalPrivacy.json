@@ -3,10 +3,10 @@
     "seoTitle": "Privacy policy – Cosmo App",
     "seoDescription": "Cosmo's privacy policy: data collected, secure Supabase storage, Row Level Security, GDPR rights and contact.",
     "title": "Privacy policy",
-    "updatedAt": "13 October 2026",
+    "updatedAt": "21 October 2026",
     "s1": {
       "title": "1. Data controller",
-      "p1": "The controller of the personal data collected through the Cosmo application is Axel Longatte, publisher of Cosmo, reachable at [contact@thecosmo.app](mailto:contact@thecosmo.app)."
+      "p1": "The controller of the personal data collected through the Cosmo application is Axel Longatte, sole proprietor (EI, SIREN 131 769 317), publisher of Cosmo, 138 avenue Victor Hugo, 75116 Paris, France, reachable at [contact@thecosmo.app](mailto:contact@thecosmo.app)."
     },
     "s2": {
       "title": "2. Data collected",
@@ -83,6 +83,16 @@
       "p1": "Your database is hosted in Ireland, within the European Union.",
       "p2": "However, several providers are companies established outside the Union or may access data from outside it: **Vercel**, **Sentry**, **Resend**, **Cloudflare**, **Stripe**, **Google** (Google sign-in), **GitHub** (encrypted backups), and **Supabase Inc.**, whose teams may access the infrastructure for maintenance and support. The data they process on our behalf may therefore be transferred outside the Union. These transfers are covered by the European Commission's adequacy decision on the EU-US Data Privacy Framework, where the provider is certified under it, or otherwise by the Commission's standard contractual clauses (Articles 45 and 46 GDPR).",
       "p3": "You can ask us for a copy of the applicable safeguards at the address given below."
+    },
+    "s7ter": {
+      "title": "7b. Business prospecting",
+      "p1": "Cosmo may contact professionals by email to present its business offer. This section is addressed to the people contacted in this way, who are not necessarily Cosmo users.",
+      "li1": "**Data processed:** business email address, name, company, job title, source of the contact (company website, professional directory or network), history of our exchanges and replies received",
+      "li2": "**Purpose:** presenting Cosmo to you and following up on our exchanges. Messages relate only to your professional activity",
+      "li3": "**Legal basis:** Cosmo's legitimate interest in making its offer known to professionals (article 6.1.f GDPR and article L34-5 of the French Postal and Electronic Communications Code). No prior consent is required for prospecting related to your role, but you may object at any time",
+      "li4": "**Recipients:** Supabase (data hosting, in Ireland), IONOS (sending mailboxes, in Germany) and Anthropic (automatic sorting of replies received, a company established in the United States, transfer governed by the standard contractual clauses). Your data is never sold or transferred",
+      "li5": "**Retention period:** three years from our last contact, then deletion",
+      "p2": "**Objecting to prospecting.** Every email includes a simple, free way to stop being contacted. You can also write to [contact@thecosmo.app](mailto:contact@thecosmo.app). Your address is then added to an objection list, kept to ensure we do not contact you again. You also have the rights described in section 8, including the right to obtain a copy of the data concerning you."
     },
     "s8": {
       "title": "8. Your rights (GDPR)",

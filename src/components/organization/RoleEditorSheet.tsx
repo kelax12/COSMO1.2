@@ -97,11 +97,11 @@ const RoleEditorSheet = ({ initial, editing, pending, onSave, onClose }: RoleEdi
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-end sm:items-stretch sm:justify-end bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center sm:justify-center sm:p-6 bg-black/40 backdrop-blur-sm"
       onClick={() => { if (!pending) onClose(); }}
     >
       <div
-        className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] w-full sm:max-w-xl max-h-[92vh] sm:max-h-none sm:h-full shadow-2xl flex flex-col rounded-t-[24px] sm:rounded-none sm:rounded-l-2xl"
+        className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] w-full sm:max-w-3xl max-h-[92vh] sm:max-h-[88vh] shadow-2xl flex flex-col rounded-t-[24px] sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
         ref={ref}
         {...dialogProps}

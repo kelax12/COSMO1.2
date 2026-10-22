@@ -15,12 +15,13 @@
 // (le filesystem est vérifié avant les rewrites). Aucun navigateur requis
 // au build → compatible avec l'image de build Vercel.
 // ─────────────────────────────────────────────────────────────────────────
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ARTICLES, articlesFor, relatedArticles } from './src/content/blog/index.mjs';
 import { USE_CASES } from './src/content/use-cases.mjs';
 import { CONTACT_EMAIL } from './src/lib/contact.mjs';
+import { scopedCssFor } from './scripts/landing-hero-css.mjs';
 import {
   BCP47_TAG,
   DEFAULT_LOCALE,
@@ -55,7 +56,7 @@ const BASE = 'https://thecosmo.app';
 // Node ne lit pas le TypeScript. Prix masqués depuis le 2026-10-16 (acquisition
 // sans monétisation) ; le paragraphe « Tarifs » reste écrit plus bas, il n'est
 // juste plus servi. Garde de parité : src/modules/billing/prices-visible.guard.test.ts.
-const PRIX_VISIBLES = false;
+const PRIX_VISIBLES = true;
 
 // ── Catalogues SEO par locale ─────────────────────────────────────────────
 // Mêmes fichiers que ceux consommés par l'app (src/lib/useSeoMeta.ts) : le
@@ -406,6 +407,8 @@ const ROUTES = [
     // (src/pages/landing/entreprise/) : à retoucher si la copie change.
     path: '/entreprise-presentation',
     meta: fromCatalog('enterprisePresentation'),
+    // Peint une copie du hero entreprise avant React (cf. injectHeroCopy).
+    heroTrack: 'entreprise',
     extraLd: (locale) => [
       {
         obj: breadcrumb('Cosmo Entreprise', '/entreprise-presentation', locale),
@@ -893,9 +896,14 @@ function buildPage(route, locale, alternates) {
   // Langue du document — lue par les lecteurs d'écran et les moteurs.
   out = out.replace(/<html([^>]*)\slang="[^"]*"/, `<html$1 lang="${locale}"`);
 
-  // C-116 : marque la page comme prérendue, ce qui peint #seo-fallback à la
-  // place du spinner jusqu'au premier commit de React (LCP mobile).
-  out = out.replace(/<html(?![^>]*data-prerendered)/, '<html data-prerendered');
+  // C-116 : marque la page comme prérendue, ce qui la peint avant React (LCP
+  // mobile). 2026-10-21 : SEULEMENT les pages qui ont une copie de leur hero
+  // (`heroTrack` : la home et l'entreprise). Les autres peignaient leur texte
+  // SEO brut, sur fond blanc, puis un second spinner, puis la page : elles
+  // gardent désormais le spinner de démarrage, aux couleurs du thème, que
+  // `BootScreen` prolonge jusqu'à la page. Arbitré par Axel, LCP mobile de ces
+  // pages rendu en connaissance de cause (docs/PERFORMANCE.md).
+  if (route.heroTrack) out = out.replace(/<html(?![^>]*data-prerendered)/, '<html data-prerendered');
 
   out = out.replace(/<title>[\s\S]*?<\/title>/, `<title>${title}</title>`);
   out = out.replace(/<meta name="description" content="[\s\S]*?" \/>/, `<meta name="description" content="${esc(description)}" />`);
@@ -937,6 +945,57 @@ function buildPage(route, locale, alternates) {
   return out;
 }
 
+// ── Copie du hero peinte avant React (home, entreprise · 2026-10-21) ────
+// Le premier rendu de la home et de l'entreprise n'est plus le texte SEO brut
+// (C-116) mais une COPIE du header et du hero de leur parcours, capturée sur le rendu React
+// (`scripts/capture-landing-hero.mjs`), avec SA CSS sortie de la feuille
+// buildée et confinée sous `#lp-hero` (`scripts/landing-hero-css.mjs`).
+// Posée HORS de #root, en calque : React ne l'efface pas, la landing la retire
+// dans l'image où elle peint son hero. Pourquoi : `src/lib/prerender-hero.ts`.
+// `inert` : ni focus ni lecteur d'écran sur une copie aux boutons morts.
+// ❌ Pas de copie absente qui passerait en silence : le build échoue, sinon la
+// home repeindrait le mur de texte sans que rien ne le signale.
+let landingCss = null;
+function heroCssSource() {
+  if (landingCss !== null) return landingCss;
+  const assets = join(DIST, 'assets');
+  const sheets = readdirSync(assets).filter((f) => f.endsWith('.css'))
+    .filter((f) => readFileSync(join(assets, f), 'utf8').includes('.hero-line-mask'));
+  if (sheets.length !== 1) {
+    throw new Error(`prerender: feuille du hero introuvable ou ambiguë dans dist/assets (${sheets.join(', ') || 'aucune'})`);
+  }
+  landingCss = readFileSync(join(assets, sheets[0]), 'utf8');
+  return landingCss;
+}
+
+function injectHeroCopy(out, locale, track) {
+  const file = join(__dirname, 'scripts', 'landing-hero', `${track}-${locale}.html`);
+  if (!existsSync(file)) {
+    throw new Error(`prerender: ${file} absent, lancer npm run capture:landing-hero (cf. son en-tête)`);
+  }
+  let fragment = readFileSync(file, 'utf8').trim();
+  // Un hero rendu AUTREMENT sous 768 px (`useIsMobile`, parcours entreprise) a
+  // sa seconde capture : les deux vues sont posées, une media query choisit,
+  // au même seuil que le hook. Une image `eager` de la vue masquée part quand
+  // même : c'est la même URL dans les deux (premier écran de la pile).
+  const mobileFile = join(__dirname, 'scripts', 'landing-hero', `${track}-${locale}-mobile.html`);
+  const mediaVues = '#lp-hero>.lp-vue-mobile{display:none}@media (max-width:767px){#lp-hero>.lp-vue-bureau{display:none}#lp-hero>.lp-vue-mobile{display:block}}';
+  let css;
+  if (existsSync(mobileFile)) {
+    const mobile = readFileSync(mobileFile, 'utf8').trim();
+    css = `${scopedCssFor(`${fragment}${mobile}`, heroCssSource())}\n${mediaVues}`;
+    fragment = `<div class="lp-vue-bureau">${fragment}</div><div class="lp-vue-mobile">${mobile}</div>`;
+  } else {
+    css = scopedCssFor(fragment, heroCssSource());
+  }
+  if (!out.includes('<div id="root">')) throw new Error('prerender: <div id="root"> introuvable, copie du hero non posée');
+  out = out.replace('</head>', () => `    <style id="lp-hero-css">${css}</style>
+  </head>`);
+  out = out.replace('<div id="root">', () => `<div id="lp-hero" inert data-locale="${locale}" data-track="${track}">${fragment}</div>
+    <div id="root">`);
+  return out;
+}
+
 // ── Génération ──────────────────────────────────────────────────────────
 let count = 0;
 for (const route of ROUTES) {
@@ -949,7 +1008,8 @@ for (const route of ROUTES) {
     const path = localizePath(route.path, locale);
     const dir = join(DIST, path);
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, 'index.html'), buildPage(route, locale, alternates), 'utf8');
+    const page = buildPage(route, locale, alternates);
+    writeFileSync(join(dir, 'index.html'), route.heroTrack ? injectHeroCopy(page, locale, route.heroTrack) : page, 'utf8');
     count++;
     console.log(`  prerendered ${path}/index.html`);
   }
@@ -961,11 +1021,12 @@ for (const route of ROUTES) {
 // page anglaise ferait diverger le schéma et le contenu visible.
 const homeRoute = {
   path: '/',
+  heroTrack: 'perso',
   meta: fromCatalog('root'),
   content: { fr: HOME_STATIC, en: HOME_STATIC_EN },
 };
 for (const locale of availableLocales(homeRoute)) {
-  let home = buildPage(homeRoute, locale, availableLocales(homeRoute));
+  let home = injectHeroCopy(buildPage(homeRoute, locale, availableLocales(homeRoute)), locale, homeRoute.heroTrack);
   if (!home.includes('"FAQPage"')) {
     home = home.replace('</head>', `    ${ld(faqSchemaFor(locale), 'faq-schema')}\n  </head>`);
     console.log(`  injected FAQPage JSON-LD (${locale}) into index.html`);

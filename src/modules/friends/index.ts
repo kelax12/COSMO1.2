@@ -48,7 +48,6 @@ export {
   useFriendRequests,
   useSentFriendRequests,
   useTaskShares,
-  useSharesByTask,
   useCollaboratorsByTask,
   usePendingCollaboratorTaskIds,
   useRelatedTaskShares,
