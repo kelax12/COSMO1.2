@@ -30,6 +30,7 @@ import { PRIORITY_META, isTaskOverdue, sortOpenTasks, priorityLabelOf } from './
 import type { OrgMember } from '@/modules/organizations';
 import TeamTaskModal from './TeamTaskModal';
 import { useT } from '@/i18n/useT';
+import { getIntlTag } from '@/i18n/format';
 import type { KeyOf } from '@/i18n/catalog';
 
 interface MemberAgendaBodyProps {
@@ -405,7 +406,7 @@ export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) 
               dayMaxEvents={false}
               weekends={true}
               height="100%"
-              locale="fr"
+              locale={getIntlTag()}
               firstDay={1}
               slotMinTime="00:00:00"
               slotMaxTime="24:00:00"
