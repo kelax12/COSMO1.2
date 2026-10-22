@@ -374,6 +374,13 @@ devant de 440 à 639 px. Ce serait faire passer la mesure, pas corriger la page.
 | 3. **Texte plus court**, chaque paragraphe sous ~20 000 px² (trois lignes à 412 px) | la copie, ~1,5 s | relecture juridique de la surface de recueil (A4 de `LEGAL.md`, `LEGAL-JOURNAL.md`) ; reste lié à la longueur du titre |
 | 4. Couper en trois | vert en CI seulement | rejeté ci-dessus |
 
+**Option 1, appliquée en attendant l'arbitrage** (`CookieBanner.tsx`) : plus de minuterie, le
+bandeau se monte au premier `pointerdown`, `keydown`, `wheel` ou `touchstart`. Pas `scroll`, qu'un
+défilement programmatique émet sans geste. `largest-contentful-paint` passe en `error` à
+2 000 ms sur `/en/`, comme sur `/`. La garde visuelle des pages publiques émet une touche neutre
+avant de chercher le bandeau. Le chiffre CI de `/en/` s'écrit ici à la fusion. Pour revenir à
+l'option 2 ou 3, retirer aussi le cliquet `/en/` le temps de la mesure.
+
 **Pages de contenu : l'arbitrage de `26a0faac` reposait sur 2,4 à 3,4 s mesurés en local, la CI
 mesure 4,5 à 5,6 s.** Même bridage (412 px, CPU ×4, 4G lente simulée), quatre runs concordants.
 Le spinner fait demander **531 à 720 ko avant le LCP**, contre **84 à 88 ko** quand le texte
