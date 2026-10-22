@@ -169,7 +169,7 @@ const TodayUnified = ({ compact = false }: TodayUnifiedProps) => {
 
       {overdue.length > 0 && (
         <div className="flex items-center gap-3 mb-3 px-3 py-2 rounded-xl bg-[rgb(var(--color-error)/0.08)]">
-          <span className="flex-1 min-w-0 text-sm font-medium text-[rgb(var(--color-error))]">
+          <span className="flex-1 min-w-0 text-sm font-medium text-[rgb(var(--color-danger-text))]">
             {tp('today.overdueBanner', overdue.length)}
           </span>
           <button

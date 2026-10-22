@@ -51,7 +51,7 @@ const DemoConversionBanner: React.FC = () => {
           type="button"
           onClick={() => navigate('/signup')}
           data-c23-dispense=""
-          className="font-semibold text-[rgb(var(--color-accent-solid))] underline underline-offset-2"
+          className="font-semibold text-[rgb(var(--color-accent-solid))] dark:text-[rgb(var(--color-accent-text))] underline underline-offset-2"
         >
           {t('demoBanner.createAccount')}
         </button>
@@ -65,10 +65,10 @@ const DemoConversionBanner: React.FC = () => {
           type="button"
           onClick={() => navigate('/signup')}
           // C-23 : SEULE paire dispensée de l'audit de contraste, et en thème
-          // clair seulement (e2e/a11y-contrast-themes.spec.ts). Cliquet du
+          // clair seulement (les thèmes sombres lisent --color-accent-text, AM-5) (e2e/a11y-contrast-themes.spec.ts). Cliquet du
           // ratio : src/theme-contrast.guard.test.ts.
           data-c23-dispense=""
-          className="font-semibold text-[rgb(var(--color-accent-solid))] hover:text-[rgb(var(--color-accent-solid-hover))] underline underline-offset-2 transition-colors"
+          className="font-semibold text-[rgb(var(--color-accent-solid))] hover:text-[rgb(var(--color-accent-solid-hover))] dark:text-[rgb(var(--color-accent-text))] dark:hover:text-[rgb(var(--color-accent-text))] underline underline-offset-2 transition-colors"
         >
           {t('demoBanner.createAccount')}
         </button>

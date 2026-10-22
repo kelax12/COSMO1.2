@@ -48,6 +48,7 @@ import { useOrgMembers, useActiveOrganization } from '@/modules/organizations';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { getInitialScrollTime, shiftEventsForDisplay, type FullCalendarEvent } from './calendar-events';
 import { useTimezonePref, displayNow } from '@/lib/timezone';
+import { textOnColor } from '@/lib/category-colors';
 import { type MobileView, mobileCalendarStyles, MobileDayStrip } from './MobileAgenda';
 import type { MobileZoomOrder } from './useAgendaMobileView';
 import { useFocusableScrollers } from './useFocusableScrollers';
@@ -113,19 +114,11 @@ interface AgendaCalendarSectionProps {
 
 /**
  * Couleur du titre d'un événement mobile, posé sur l'aplat de sa couleur.
- * Bug rapporté le 2026-10-11 : un bloc blanc sans titre. Le titre était
- * TOUJOURS blanc ; sur une couleur claire, ou sur l'accent de repli (presque
- * blanc dans les thèmes Gris et Noir), il disparaissait. Hex : luminance
- * relative ; au-delà de 0,6, texte sombre.
+ * Bug rapporté le 2026-10-11 : un bloc blanc sans titre (titre TOUJOURS blanc).
+ * AM-5 (2026-10-22) : le seuil « luminance > 0,6 » laissait encore le blanc à
+ * 2,15:1 sur l'orange ; le choix vit dans `textOnColor` (4,5:1).
  */
-function eventTextColor(color: string): string {
-  const m = /^#([0-9a-f]{6})$/i.exec(color.trim());
-  if (!m) return '#ffffff';
-  const n = parseInt(m[1], 16);
-  const lin = (c: number) => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
-  const lum = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
-  return lum > 0.6 ? '#1f2937' : '#ffffff';
-}
+const eventTextColor = textOnColor;
 
 /** Repli d'un événement sans couleur : l'accent PLEIN et son texte prévu. */
 const FALLBACK_EVENT_BG = 'rgb(var(--color-accent-solid))';
@@ -247,7 +240,9 @@ const AgendaCalendarSection = ({
           </span>
         )}
         <span
-          className={`font-medium ${tint ? '' : 'text-white'} truncate leading-tight ${centered ? 'text-center' : ''} ${hasTask ? 'pr-5' : ''}`}
+          // Bureau : la couleur vient de `textColor` (calendar-events.ts), que
+          // FullCalendar pose sur le bloc ; un `text-white` ici l'écrasait.
+          className={`font-medium truncate leading-tight ${centered ? 'text-center' : ''} ${hasTask ? 'pr-5' : ''}`}
         >
           {title}
         </span>
@@ -261,7 +256,7 @@ const AgendaCalendarSection = ({
                 côté → 14,4px) — demandé explicitement, la pastille en dessous
                 reçoit le même facteur. */}
             <CheckSquare
-              className={`h-[14.4px] w-[14.4px] shrink-0 pointer-events-none ${tint ? 'text-[rgb(var(--color-text-secondary))]' : 'text-white/75'}`}
+              className={`h-[14.4px] w-[14.4px] shrink-0 pointer-events-none ${tint ? 'text-[rgb(var(--color-text-secondary))]' : 'opacity-75'}`}
               aria-label={t('event.linkedToTask')}
             />
             {/* Le clic ne doit pas remonter au bloc : il ouvrirait l'EventModal

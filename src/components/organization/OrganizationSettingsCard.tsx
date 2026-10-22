@@ -86,7 +86,7 @@ const OrganizationSettingsCard = () => {
           <button
             type="button"
             onClick={() => navigate('/entreprise')}
-            className="shrink-0 inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-0 sm:py-2.5 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[#1f6feb] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-all" // --color-accent-solid (#388bfd) ne passe pas le contraste AA (3.3:1) avec du texte blanc
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-0 sm:py-2.5 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-all" // AM-5 : le #1f6feb en dur datait d'avant C-25 ; en Noir il portait le texte quasi noir du jeton (4,32:1)
           >
             {t('settingsCard.access')} <ArrowRight size={15} aria-hidden="true" />
           </button>
