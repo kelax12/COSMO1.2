@@ -843,19 +843,24 @@ jobs:
               const r = JSON.parse(fs.readFileSync(d + "/" + f, "utf8"));
               const c = r.categories;
               const n = (k) => (c[k] ? Math.round(c[k].score * 100) : "-");
-              lignes.push(r.finalDisplayedUrl + " perf=" + n("performance") + " a11y=" + n("accessibility") +
-                " bp=" + n("best-practices") + " seo=" + n("seo") +
-                " lcp=" + Math.round(r.audits["largest-contentful-paint"].numericValue) + "ms" +
-                " tbt=" + Math.round(r.audits["total-blocking-time"].numericValue) + "ms" +
-                " cls=" + r.audits["cumulative-layout-shift"].numericValue);
               // L element LCP et ses phases : sans eux, un LCP a 6 s ne dit pas
               // s il attend le reseau, le JS ou une police.
+              // 🔴 UNE ligne par URL, pas trois : GitHub ne garde que DIX
+              // annotations par etape. Le 2026-10-22, 8 URLs x 3 lignes en
+              // perdaient quatorze, dont l element LCP de `/en/` (le bandeau
+              // cookies, lu dans l artefact). « detache » = l element a quitte
+              // le DOM, c est le cas normal de la copie `#lp-hero`.
               const el = r.audits["largest-contentful-paint-element"];
               const items = (el && el.details && el.details.items) || [];
               const noeud = items[0] && items[0].items && items[0].items[0] && items[0].items[0].node;
               const phases = items[1] && items[1].items ? items[1].items.map((p) => p.phase + "=" + Math.round(p.timing) + "ms").join(" ") : "";
-              if (noeud) lignes.push("   element LCP : " + (noeud.snippet || noeud.selector || "?").slice(0, 140));
-              if (phases) lignes.push("   phases : " + phases);
+              lignes.push(r.finalDisplayedUrl + " perf=" + n("performance") + " a11y=" + n("accessibility") +
+                " bp=" + n("best-practices") + " seo=" + n("seo") +
+                " lcp=" + Math.round(r.audits["largest-contentful-paint"].numericValue) + "ms" +
+                " tbt=" + Math.round(r.audits["total-blocking-time"].numericValue) + "ms" +
+                " cls=" + r.audits["cumulative-layout-shift"].numericValue +
+                " | LCP " + (noeud ? (noeud.selector || noeud.snippet || "?").slice(0, 90) : "detache") +
+                (phases ? " | " + phases : ""));
             }
             if (lignes.length === 0) { console.log("::error title=lhci-mobile::dossier present mais aucun lhr-*.json"); process.exit(1); }
             for (const l of lignes) console.log("::notice title=lhci-mobile::" + l);
