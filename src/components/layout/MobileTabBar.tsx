@@ -65,8 +65,18 @@ const ENTERPRISE_TAB: TabConfig = { to: '/entreprise', labelKey: 'nav.enterprise
 // la zone tactile d'un onglet doit couvrir la hauteur entière de la barre.
 // Libellé en `text-caption` (11px) — le `text-[10px]` d'avant passait sous le
 // plancher lisible de l'échelle mobile.
+// `min-w-0` (sur le `li` aussi) et un libellé qui passe à la ligne : C-97.
+// À 200 % de police et 375 px, « Entreprise » mesurait 108 px dans une case de
+// 75 : la largeur minimale d'un enfant flex est celle de son contenu, la
+// barre sortait de 13 px à droite et « Plus » était coupé (racine en
+// `overflow-x: hidden`, donc rien ne le signalait). Le libellé passe à la
+// ligne plutôt que d'être tronqué (WCAG 1.4.4 interdit la perte de contenu) :
+// césure là où le navigateur a le dictionnaire français (Chrome Android,
+// Safari), coupure simple ailleurs. À taille normale, rien ne change.
 const tabBaseClasses =
-  'flex flex-col items-center justify-center gap-0.5 flex-1 min-h-touch text-caption font-medium transition-colors active:scale-95 transform-gpu';
+  'flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 min-h-touch text-caption font-medium transition-colors active:scale-95 transform-gpu';
+
+const tabLabelClasses = 'leading-tight max-w-full text-center hyphens-auto [overflow-wrap:anywhere]';
 
 /**
  * ── Maquette 84 : la barre dit QUOI, pas COMBIEN ──────────────────────────
@@ -159,7 +169,7 @@ const MobileTabBar: React.FC = () => {
       >
         <ul className="flex items-stretch h-16">
           {tabs.map(({ to, labelKey, icon: Icon, end }) => (
-            <li key={to} className="flex-1 flex">
+            <li key={to} className="flex-1 flex min-w-0">
               <NavLink
                 to={to!}
                 end={end}
@@ -219,14 +229,14 @@ const MobileTabBar: React.FC = () => {
                         </span>
                       )}
                     </span>
-                    <span className="leading-tight">{t(labelKey)}</span>
+                    <span className={tabLabelClasses}>{t(labelKey)}</span>
                   </>
                 )}
               </NavLink>
             </li>
           ))}
 
-          <li className="flex-1 flex">
+          <li className="flex-1 flex min-w-0">
             <button
               type="button"
               onClick={() => setMoreOpen(true)}
@@ -239,7 +249,7 @@ const MobileTabBar: React.FC = () => {
               )}
             >
               <MoreHorizontal size={24} />
-              <span className="leading-tight">{t('nav.more')}</span>
+              <span className={tabLabelClasses}>{t('nav.more')}</span>
             </button>
           </li>
         </ul>

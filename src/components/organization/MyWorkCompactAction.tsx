@@ -11,6 +11,8 @@ import type { WidgetSize } from './apercu-widgets';
 import type { BlockingEntry } from './my-work.helpers';
 import { ItemAction, WidgetEmpty, WidgetShell } from './WidgetShell';
 import { TONE_BADGE, TONE_TEXT, usePager, lateDays, type WidgetTone } from './widget-shell.helpers';
+import { deadlineKind, type DeadlineKind } from './apercu-new-widgets.helpers';
+import { deadlineDayKey } from '@/lib/deadline';
 
 /**
  * Formats petit et moyen des widgets « d'action » de l'Aperçu : chiffres
@@ -160,7 +162,7 @@ export const WaitingCompact = ({ size, reviews, mentions, blocking, members, onO
 /* ─────────────────────────── Mes tâches ─────────────────────────────── */
 
 interface TasksCompactProps {
-  size: CompactSize;
+  size: WidgetSize;
   open: TeamTask[];
   projectById: Map<string, TeamProject>;
   onToggle: (task: TeamTask) => void;
@@ -168,13 +170,40 @@ interface TasksCompactProps {
   onSeeAll: () => void;
 }
 
+const TASKS_PER_PAGE: Record<WidgetSize, number> = { small: 1, medium: 3, large: 8 };
+const DEADLINE_TONE: Record<DeadlineKind, WidgetTone> = {
+  past: 'danger', yesterday: 'danger', today: 'warning', tomorrow: 'accent', later: 'neutral',
+};
+
+/** Pastille d'échéance : hier, aujourd'hui, demain, sinon « 24 octobre ». */
+const DeadlinePill = ({ deadline }: { deadline?: string }) => {
+  const { t } = useT('orgAdmin');
+  const kind = deadlineKind(deadline);
+  if (!kind || !deadline) return null;
+  const label = kind === 'yesterday' ? t('apercu.widgets.c.yesterday')
+    : kind === 'today' ? t('apercu.widgets.c.today')
+      : kind === 'tomorrow' ? t('apercu.widgets.c.tomorrow')
+        : format(parseISO(deadlineDayKey(deadline)), 'd MMMM', { locale: getDateLocale() });
+  return (
+    <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${TONE_BADGE[DEADLINE_TONE[kind]]}`}>
+      {label}
+    </span>
+  );
+};
+
+/**
+ * Mes tâches (refait le 2026-10-20) : une pastille d'échéance par tâche.
+ * Moyen et grand partagent la même liste (le grand en montre plus), sans case
+ * à cocher : la ligne ouvre la tâche. Le petit garde « Terminer » sur place.
+ */
 export const TasksCompact = ({ size, open, projectById, onToggle, onOpenTask, onSeeAll }: TasksCompactProps) => {
   const { t } = useT('orgAdmin');
-  const pager = usePager(open, perPage(size));
+  const per = TASKS_PER_PAGE[size];
+  const pager = usePager(open, per);
   const overdue = open.filter((task) => lateDays(task.deadline) > 0).length;
   const range = size === 'small'
     ? undefined
-    : `${pager.page * 3 + 1}-${Math.min(open.length, pager.page * 3 + 3)} / ${open.length}`;
+    : `${pager.page * per + 1}-${Math.min(open.length, pager.page * per + per)} / ${open.length}`;
 
   return (
     <WidgetShell
@@ -189,23 +218,32 @@ export const TasksCompact = ({ size, open, projectById, onToggle, onOpenTask, on
       {open.length === 0 ? <WidgetEmpty>{t('apercu.widgets.c.noTasks')}</WidgetEmpty> : (
         <ul className={size === 'small' ? '' : 'divide-y divide-[rgb(var(--color-border))]'}>
           {pager.slice.map((task) => {
-            const late = lateDays(task.deadline);
             const project = projectById.get(task.projectId);
             return (
-              <li key={task.id} className={`flex items-center gap-2.5 min-w-0 ${size === 'small' ? '' : 'py-2 first:pt-0'}`}>
-                <ItemAction iconOnly icon={Check} label={t('apercu.widgets.c.done')} onClick={() => onToggle(task)} />
-                <button type="button" onClick={() => onOpenTask(task)} className="flex-1 min-w-0 text-left rounded-lg hover:bg-[rgb(var(--color-hover))] px-1">
-                  <span className="block truncate text-sm font-semibold text-[rgb(var(--color-text-primary))]">{task.name}</span>
-                  <span className="block truncate text-xs text-[rgb(var(--color-text-muted))]">
-                    {project?.name}
-                    {task.deadline && late === 0 && ` · ${shortDay(task.deadline)}`}
-                  </span>
+              <li key={task.id} className={`flex items-center gap-2.5 min-w-0 ${size === 'small' ? '' : 'py-1 first:pt-0'}`}>
+                {/* Case à cocher devant chaque tâche, dans tous les formats (2026-10-20) :
+                    elle termine la tâche ; la ligne, elle, l'ouvre. */}
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={false}
+                  aria-label={t('apercu.widgets.c.doneTask', { name: task.name })}
+                  onClick={() => onToggle(task)}
+                  className="group shrink-0 w-6 h-6 rounded-md border-2 border-[rgb(var(--color-border-strong))] flex items-center justify-center hover:border-emerald-500 hover:bg-emerald-500/10 transition-colors"
+                >
+                  <Check size={14} strokeWidth={3} className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
                 </button>
-                {late > 0 && (
-                  <span className={`shrink-0 px-2 py-0.5 rounded-md text-xs font-bold ${TONE_BADGE.danger}`}>
-                    {t('apercu.widgets.c.late', { count: late })}
+                <button
+                  type="button"
+                  onClick={() => onOpenTask(task)}
+                  className="flex-1 min-w-0 flex items-center gap-2.5 text-left rounded-lg hover:bg-[rgb(var(--color-hover))] px-1.5 py-1.5"
+                >
+                  <span className="flex-1 min-w-0">
+                    <span className="block truncate text-sm font-semibold text-[rgb(var(--color-text-primary))]">{task.name}</span>
+                    {project && <span className="block truncate text-xs text-[rgb(var(--color-text-muted))]">{project.name}</span>}
                   </span>
-                )}
+                  <DeadlinePill deadline={task.deadline} />
+                </button>
               </li>
             );
           })}

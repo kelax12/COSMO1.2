@@ -28,7 +28,7 @@ const STEP_GAP_MS = 1100;
 
 class Quit extends Error {}
 
-export const createGuideRun = (steps: GuideStep[], deps: GuideRunDeps) => {
+export const createGuideRun = (steps: GuideStep<string>[], deps: GuideRunDeps) => {
   let quitted = false;
   let paused = false;
   let skipDwell: (() => void) | null = null;

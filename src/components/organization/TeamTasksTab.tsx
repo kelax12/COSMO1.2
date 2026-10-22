@@ -521,6 +521,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           unreadCommentsByTask={unreadCommentsByTask}
           selectMode={bulk.selectMode}
           selectedIds={bulk.selectedIds}
+          blockedTaskIds={blockedTaskIds}
           handlers={handlers}
           groupLabel={groupLabel}
           onToggleGroup={toggleGroup}

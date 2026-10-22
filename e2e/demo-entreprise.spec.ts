@@ -20,22 +20,14 @@ test.describe('Espace entreprise (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
     await expectOrgSectionOffered(page, /^aperçu/i);
 
-    // Sections de l'Aperçu (reco #2 + #11). L'activité de l'équipe est devenue
-    // un digest des dernières 24 h, « Depuis hier dans l’équipe », à la refonte
-    // de l'Aperçu du 2026-10-02 (3609210c, décision produit). Apostrophe
-    // typographique : même précaution que plus bas.
-    await expect(page.getByRole('heading', { name: /depuis hier dans l[’']équipe/i })).toBeVisible();
-    // Renommé le 2026-08-27 : la liste « Mes échéances » a été remplacée par la
-    // frise « Prochains événements de l'entreprise » (commits ce8ac2c, e6a873a).
-    // Ce test n'a pas suivi, et le job e2e est rouge sur `main` depuis.
-    //
-    // ⚠️ La classe [’'] n'est pas de la prudence décorative : le catalogue écrit
-    // « l’entreprise » avec l'apostrophe TYPOGRAPHIQUE (U+2019). Une regex avec
-    // l'apostrophe droite ne matcherait jamais, et l'échec ressemblerait à une
-    // section absente — c'est-à-dire à un bug produit qui n'existe pas.
-    await expect(
-      page.getByRole('heading', { name: /prochains événements de l[’']entreprise/i }),
-    ).toBeVisible();
+    // Aperçu en widgets (2026-10-19) : le compte démo est ADMIN de Nova
+    // Studio, il arrive donc sur le modèle « Administrateur ». Chaque widget est
+    // une `section` nommée par son titre (WidgetShell). On vérifie le bouton
+    // d'édition et deux widgets du modèle : l'activité et les événements.
+    // ⚠️ Apostrophe TYPOGRAPHIQUE possible dans le catalogue : classe [’'].
+    await expect(page.getByTestId('apercu-edit')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('region', { name: /activité de l[’']équipe/i })).toBeVisible();
+    await expect(page.getByRole('region', { name: /événements de l[’']entreprise/i })).toBeVisible();
 
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });
@@ -62,18 +54,12 @@ test.describe('Espace entreprise (démo)', () => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
-    // Aperçu → « Mes tâches » : ouvrir la première tâche assignée au compte démo
-    //
-    // ⚠️ Le titre vit dans sa propre rangée depuis edcfd61f (bouton
-    // « Sélectionner » à côté) : le `div` le plus profond qui porte le titre
-    // est cette rangée, pas la carte. On exige donc aussi la liste.
-    const tasksCard = page
-      .locator('div')
-      .filter({ has: page.getByRole('heading', { name: /^mes tâches/i }) })
-      .filter({ has: page.getByRole('list') })
-      .last();
-    // Bouton du nom de tâche (ouvre TeamTaskModal en édition)
-    const taskButton = tasksCard.locator('button:has(span.block)').first();
+    // Aperçu en widgets (2026-10-19) : le modèle « Administrateur » du compte
+    // démo n'a plus « Mes tâches ». On ouvre une tâche depuis le widget
+    // « Événements de l'entreprise » : une ligne de TÂCHE porte son projet
+    // (« · Projet »), une fin d'OKR non, et elle mènerait à l'onglet OKR.
+    const events = page.getByRole('region', { name: /événements de l[’']entreprise/i });
+    const taskButton = events.getByRole('button').filter({ hasText: ' · ' }).first();
     await taskButton.click({ timeout: 10_000 });
 
     const dialog = page.getByRole('dialog', { name: /modifier la tâche/i });

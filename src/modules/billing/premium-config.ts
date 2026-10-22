@@ -35,7 +35,7 @@ export const PREMIUM_ENFORCED = false;
 // lui, n'est atteignable que si `PREMIUM_ENFORCED` est vrai (`/premium`
 // redirige, la modale ne s'ouvre pas). Garde : `prices-visible.guard.test.ts`.
 // ═══════════════════════════════════════════════════════════════════
-export const PRICES_VISIBLE = false;
+export const PRICES_VISIBLE = true;
 
 // ─── Tarifs, en euros ────────────────────────────────────────────────
 //
@@ -181,5 +181,6 @@ export function displayedMonthlyEur(
 // live est vide). Passer en live = recréer les 4 prix sur le compte live,
 // réenregistrer un endpoint webhook live, puis remplacer STRIPE_SECRET_KEY /
 // STRIPE_WEBHOOK_SECRET / les 4 STRIPE_ORG_PRICE_*.
-export const ENTERPRISE_BILLING_ENFORCED = false;
+// ✅ 2026-10-20 : REARME (SIREN obtenu, Stripe en compte LIVE, mig. 224 en meme temps).
+export const ENTERPRISE_BILLING_ENFORCED = true;
 export const ORG_FREE_SEATS = 5;

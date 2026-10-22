@@ -359,7 +359,7 @@ export const MyProjectsCard = ({ summaries, orgId, userId, people, members }: My
   return (
     <div className={CARD}>
       <h3 className={`${TITLE} mb-2`}>{tOrgAdmin('myProjects.title')}</h3>
-      <ul className="space-y-1">
+      <ul className="divide-y divide-[rgb(var(--color-border))]">
         {summaries.slice(0, 6).map(({ project, open, overdue, nextDeadline }) => {
           const color = projectColor(project.color);
           const isPinned = pinned.includes(project.id);
@@ -367,7 +367,7 @@ export const MyProjectsCard = ({ summaries, orgId, userId, people, members }: My
           const others = people.get(project.id) ?? [];
           const elapsed = projectElapsed(project.startDate, project.dueDate);
           return (
-            <li key={project.id} className="flex items-start">
+            <li key={project.id} className="flex items-start py-1">
               <button
                 type="button"
                 onClick={() => navigate(buildOrgLink('projects', { project: project.id }))}

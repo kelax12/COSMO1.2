@@ -31,6 +31,7 @@
     "i18n:scan": "node scripts/i18n-scan.mjs",
     "i18n:identical": "node scripts/i18n-identical.mjs",
     "i18n:namespaces": "node scripts/i18n-shell-namespaces.mjs",
+    "capture:landing-hero": "node scripts/capture-landing-hero.mjs",
     "profile:landing": "node scripts/profile-landing.mjs",
     "check:bundle": "node scripts/check-bundle-budget.mjs",
     "analyze:entry": "node scripts/analyze-entry.mjs",

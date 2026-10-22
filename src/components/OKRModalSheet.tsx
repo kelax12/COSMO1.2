@@ -207,7 +207,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
             viewport Radix ne scrolle jamais (flexbox min-height:auto). */}
         <ScrollArea className="flex-1 min-h-0">
           <div className="grid gap-4 px-4 pb-4">
-            <div className="grid gap-2">
+            <div className="grid gap-2" data-guide-id="perso-okr-form-title">
               <Label htmlFor="okr-title" className="max-sm:sr-only">{t('modal.objective')}</Label>
               <Input
                 id="okr-title"
@@ -238,7 +238,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 </div>
                 <CategoryTreeSelect value={category} onChange={setCategory} categories={categories} />
               </div>
-              <div className="grid gap-2">
+              <div className="grid gap-2" data-guide-id="perso-okr-form-deadline">
                 <Label>{t('modal.deadline')}</Label>
                 <DatePicker value={endDate} onChange={setEndDate} displayFormat="d MMMM yyyy" allowClear={false} />
               </div>
@@ -330,7 +330,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
             <Separator />
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between" data-guide-id="perso-okr-form-krs">
               <div className="flex items-center gap-2">
                 <Label className="max-sm:text-label max-sm:text-[rgb(var(--color-text-muted))]">{t('modal.keyResults')}</Label>
                 {/* Repère mobile (redesign 2026-09-19) : combien de KR sont

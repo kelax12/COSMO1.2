@@ -118,6 +118,10 @@ const DECISIONS = {
   // `organization_members`, qui part avec le compte. Vérifié en base le même
   // jour (`team_okr_members_member_fkey`). Rien à garder une fois le compte parti.
   team_okr_members: { decision: 'cascade', via: 'organization_members' },
+  // Avertissement de suppression pour inactivité (mig. 226, C-121), décidé le
+  // 2026-10-22 : la ligne ne sert qu'à ouvrir l'effacement 30 jours plus tard.
+  // Le compte parti, elle n'a plus d'objet ; aucune adresse n'y est stockée.
+  account_inactivity_notices: { decision: 'cascade' },
 
   // ── Conservées, par obligation légale ───────────────────────────
   payment_records: {

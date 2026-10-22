@@ -32,17 +32,5 @@ export {
   type EventGroup,
   type PersonActivity,
 } from './aggregate';
-export {
-  eventMinutes,
-  totalEventMinutes,
-  previousPeriod,
-  trendOf,
-  dailySeries,
-  sortProjectsByGain,
-  sortKrsByGain,
-  buildHighlights,
-  type Trend,
-  type DailySeries,
-  type Highlights,
-} from './insights';
+export { eventMinutes } from './insights';
 export { useActivityReports } from './hooks';

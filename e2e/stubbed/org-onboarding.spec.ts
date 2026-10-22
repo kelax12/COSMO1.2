@@ -68,7 +68,7 @@ test.describe('accueil entreprise (vidéo OrgWelcomeVideo)', () => {
     stub.reply('organization_members', membership('member'));
 
     await gotoStubbed(page, '/entreprise', page.getByRole('dialog', { name: MEMBER_WELCOME }));
-    await expect(page.locator('video[src="/videos/onboarding-entreprise.mp4"]')).toBeAttached();
+    await expect(page.locator('video[src="/videos/onboarding-entreprise-v2.mp4"]')).toBeAttached();
     // Focus d'entrée sur l'action, pas sur la croix : Entrée valide l'accueil.
     await expect(page.getByRole('button', { name: /^commencer/i })).toBeFocused();
     await expectTabTrapped(page, page.getByRole('dialog', { name: MEMBER_WELCOME }));
