@@ -510,7 +510,7 @@
     /* Navigation specific colors */
     --nav-bg: 22 22 22;
     --nav-border: 46 46 46;
-    --nav-item-text: 145 145 145;             /* AM-5 : 110 rendait 3,54:1 sur la barre latérale ; 5,74:1, 5,17:1 au survol */
+    --nav-item-text: 60 60 60;                /* TEMOIN AM-5, NE PAS FUSIONNER. AM-5 : 110 rendait 3,54:1 sur la barre latérale ; 5,74:1, 5,17:1 au survol */
     --nav-item-hover-bg: 32 32 32;
     --nav-item-hover-text: 210 210 210;
     --nav-item-active-bg: 240 240 240;
