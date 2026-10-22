@@ -65,27 +65,30 @@ test('mobile : swipe droit sur une TaskCard la complète', async ({ demoPage: pa
 
   // Swipe droit > 80 px (seuil onDragEnd) — rapide (< 500 ms) pour ne pas
   // déclencher le long-press.
-  const swipe = async () => {
-    await page.mouse.move(x, y);
-    await page.mouse.down();
-    for (let i = 1; i <= 6; i++) {
-      await page.mouse.move(x + (i * 130) / 6, y, { steps: 2 });
-    }
-    await page.mouse.up();
-  };
-  await swipe();
+  //
+  // 🔴 LE GESTE DOIT DURER AU MOINS UNE FRAME, et c'était la cause des
+  // instables WebKit (2026-10-09, 10-20, 10-21 : compteur inchangé, même après
+  // un second glissé). Framer Motion (`PanSession`, v12) ne reconnaît le
+  // glissé qu'à la frame SUIVANT le mouvement (`frame.update(updatePoint)`), et
+  // `pointerup` annule cette frame : si le moteur traite `down`, les 12
+  // `move` et `up` sans rendre une seule frame, ce qui arrive sous WebKit
+  // chargé en CI, `onDragEnd` n'est jamais appelé et le geste compte pour un
+  // simple appui. Un doigt reste au moins une frame sur l'écran : on attend
+  // donc deux frames rendues après le premier mouvement, puis avant de lever.
+  // ❌ Ne pas remettre de « seconde tentative » : la cause est traitée, et une
+  // carte qui ne se complète pas doit échouer du premier coup.
+  const deuxFrames = () =>
+    page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  for (let i = 1; i <= 6; i++) {
+    await page.mouse.move(x + (i * 130) / 6, y, { steps: 2 });
+    if (i === 1) await deuxFrames();
+  }
+  await deuxFrames();
+  await page.mouse.up();
 
   // La complétion passe par isExiting (300 ms) puis la mutation — on poll.
-  // 🔴 UNE seconde tentative de geste, bornée : sous WebKit en CI, le premier
-  // glissé n'était parfois pas reconnu (compteur inchangé à 7 s, instable le
-  // 2026-10-09). Un geste reconnu ne se rejoue PAS (le compteur a bougé, on
-  // ne retente que s'il est resté à `before`), et une carte qui ne se complète
-  // jamais échoue toujours.
-  const completed = await expect
-    .poll(() => unchecked.count(), { timeout: 7_000 })
-    .toBe(before - 1)
-    .then(() => true, () => false);
-  if (!completed && (await unchecked.count()) === before) await swipe();
   await expect.poll(() => unchecked.count(), { timeout: 7_000 }).toBe(before - 1);
   await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
 });
