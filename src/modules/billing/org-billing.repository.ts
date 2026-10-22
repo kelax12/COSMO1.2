@@ -3,6 +3,7 @@
 //
 // LECTURE SEULE, par construction : `org_subscriptions` n'a aucune policy
 // d'écriture (mig. 101). Toute mutation passe par Stripe puis par le webhook.
+// Historique et contact de facturation : `org-billing-account.repository.ts`.
 // ═══════════════════════════════════════════════════════════════════
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';

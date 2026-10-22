@@ -20,7 +20,7 @@
 // Extrait le 2026-09-05 (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
 import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';

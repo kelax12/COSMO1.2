@@ -5,10 +5,10 @@ import TaskModal from '@/components/TaskModal';
 import TasksSummary from '@/components/TasksSummary';
 import DeadlineCalendar from '@/components/DeadlineCalendar';
 import ListActionsSheet from '@/components/ListActionsSheet';
-import ShareListSheet from '@/components/ShareListSheet';
-import { Plus, X } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';
+import { useLazyMount } from '@/hooks/use-lazy-mount';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
@@ -34,25 +34,33 @@ import { tasksTutorialStepsDesktop } from '@/tutorials/tasks.desktop';
 import { tasksTutorialStepsMobile } from '@/tutorials/tasks.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { TaskListSkeleton } from '@/components/skeletons';
-import { usePullToRefresh } from '@/lib/hooks/use-pull-to-refresh';
-import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 import { filterTasksForPage, VIRTUAL_TODAY_ID } from './tasks/task-page-filter';
 import TaskListsBar from './tasks/TaskListsBar';
 import { colorOptions, resolveListColor } from './tasks/list-colors';
 import TasksHeader from './tasks/TasksHeader';
 import { isTaskOverdue } from '@/components/task-table/helpers';
 import TasksErrorState from './tasks/TasksErrorState';
+import MobileTaskSearch from './tasks/MobileTaskSearch';
+import ActiveFiltersRow from './tasks/ActiveFiltersRow';
+import { useHiddenWhileSearching } from './tasks/search-open.store';
 import { useChipLongPress } from './tasks/useChipLongPress';
 import { useTaskLists } from './tasks/useTaskLists';
 import { useT } from '@/i18n/useT';
+import { useTasksView } from '@/components/task-board/view-mode.store';
+
+// C-117 · feuille ouverte à la demande : son code ne pèse plus sur l'ouverture de /tasks.
+const ShareListSheet = React.lazy(() => import('@/components/ShareListSheet'));
+// Vue Tableau (mig. 214) : la vue Liste ne paie rien pour elle.
+const TaskBoard = React.lazy(() => import('@/components/task-board/TaskBoard'));
 
 const TasksPage: React.FC = () => {
-  const { t, tp } = useT('tasks');
+  const { t } = useT('tasks');
   const isMobile = useIsMobile();
+  const tasksView = useTasksView();
   // Tutoriel séparé desktop / mobile : flag localStorage distinct par variante
   // pour que basculer de l'un à l'autre (rotation tablette) ré-affiche le tour
   // adapté au viewport courant.
-  const tutorial = useTutorial(isMobile ? 'tasks_mobile' : 'tasks_desktop');
+  const tutorial = useTutorial(isMobile ? 'tasks_mobile' : 'tasks_desktop', 600, !isMobile);
   const tutorialSteps = isMobile ? tasksTutorialStepsMobile : tasksTutorialStepsDesktop;
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
@@ -62,7 +70,6 @@ const TasksPage: React.FC = () => {
   // « Travail » doit aussi remonter les tâches de ses sous-catégories.
   const { data: categories = [] } = useCategories();
   const updateTaskMutation = useUpdateTask();
-  const { pullY, isRefreshing, threshold } = usePullToRefresh(() => refetchTasks());
 
 
   // ═══════════════════════════════════════════════════════════════════
@@ -106,11 +113,19 @@ const TasksPage: React.FC = () => {
   const deleteListMutation = useDeleteList();
   // Liste en cours de partage (ouvre ShareListSheet). null = fermé.
   const [shareListTarget, setShareListTarget] = useState<TaskList | null>(null);
+  const shareSheetMounted = useLazyMount(shareListTarget !== null);
 
   // Menu d'actions de liste (mobile) — ouvert par appui long sur une chip.
   const { actionSheetListId, setActionSheetListId, chipLongPressFired, startChipLongPress, cancelChipLongPress } = useChipLongPress(isMobile);
 
   const { priorityRange } = usePriorityRange();
+
+  // Recherche mobile ouverte : tout ce qui vit AU-DESSUS de la première tâche
+  // s'efface (en-tête, listes, tri, pilules de filtre). Sans ça, la liste
+  // filtrée est repoussée sous le champ et il n'en reste qu'une ligne et demie
+  // entre le dernier bandeau et le clavier. `md:block` : le desktop n'ouvre
+  // jamais cet écran, mais une largeur qui change ne doit rien pouvoir cacher.
+  const { block: hiddenWhileSearching, flex: hiddenWhileSearchingFlex } = useHiddenWhileSearching();
 
   // ═══════════════════════════════════════════════════════════════════
   // État de filtrage LOCAL (migrés depuis TaskContext)
@@ -137,7 +152,6 @@ const TasksPage: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [showCompleted, setShowCompleted] = useState(false);
   const [showDeadlineCalendar, setShowDeadlineCalendar] = useState(false);
-  const [showQuickFilters, setShowQuickFilters] = useState(false);
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [summaryAtBottom, setSummaryAtBottom] = useState(true);
@@ -255,22 +269,33 @@ const TasksPage: React.FC = () => {
     return <TasksErrorState error={tasksError as Error} onRetry={() => refetchTasks()} />;
   }
 
+  const activeFiltersProps = {
+    selectedListId,
+    lists,
+    selectedCategories,
+    searchTerm,
+    onClearList: clearListFilter,
+    onClearCategories: () => setSelectedCategories([]),
+    onClearSearch: () => setSearchTerm(''),
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       // Gouttière mobile = --gutter (16px), unique pour toute l'app.
       // `sm:p-8` reprend la main dès 640px : le desktop est inchangé.
-      className="p-gutter sm:p-8 h-fit pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8"
+      className="p-gutter sm:p-8 h-fit pb-[calc(64px+env(safe-area-inset-bottom)+144px)] md:pb-8"
     >
-      <PullToRefreshIndicator pullY={pullY} isRefreshing={isRefreshing} threshold={threshold} />
       <div className="flex flex-col gap-row sm:gap-8">
+        <div className={hiddenWhileSearching}>
         <TasksHeader
           showDeadlineCalendar={showDeadlineCalendar}
           onToggleCalendar={() => setShowDeadlineCalendar(!showDeadlineCalendar)}
           openCount={headerCounts.openCount}
           overdueCount={headerCounts.overdueCount}
         />
+        </div>
 
         <AnimatePresence>
           {showDeadlineCalendar && (
@@ -279,6 +304,7 @@ const TasksPage: React.FC = () => {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
+              className={hiddenWhileSearching}
             >
               <DeadlineCalendar />
             </motion.div>
@@ -297,6 +323,7 @@ const TasksPage: React.FC = () => {
                 2ᵉ gouttière et volait ~24px de largeur utile par ligne. */}
             <div className="card card-plain-mobile p-0 sm:p-6">
               {!showCompleted && !showAddTaskForm && (
+              <div className={hiddenWhileSearching}>
               <TaskListsBar
                 lists={lists}
                 orderedLists={orderedLists}
@@ -343,6 +370,7 @@ const TasksPage: React.FC = () => {
                 startChipLongPress={startChipLongPress}
                 cancelChipLongPress={cancelChipLongPress}
               />
+              </div>
               )}
 
               {!showAddTaskForm && (
@@ -350,9 +378,12 @@ const TasksPage: React.FC = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 }}
-                  className="flex flex-col md:flex-row justify-between items-stretch md:items-start mb-3 sm:mb-8 gap-6"
+                  // `hidden md:flex` : sur mobile cette rangee ne contient plus
+                  // rien. La recherche est descendue en bas d'ecran, « + d'options »
+                  // a ete retire, et le tri est passe dans la barre ancree.
+                  className="hidden md:flex flex-col md:flex-row justify-between items-stretch md:items-start mb-3 sm:mb-8 gap-6"
                 >
-                  <div className="flex-1 w-full" data-tutorial-id="tasks-filter">
+                  <div className="flex-1 w-full" data-tutorial-id="tasks-filter" data-guide-id="perso-tasks-filter">
                     <TaskFilter
                       onFilterChange={handleFilterChange}
                       currentFilter={filter}
@@ -364,8 +395,6 @@ const TasksPage: React.FC = () => {
                       onSearchTermChange={setSearchTerm}
                       selectedCategories={selectedCategories}
                       onSelectedCategoriesChange={setSelectedCategories}
-                      showQuickFilters={showQuickFilters}
-                      onShowQuickFiltersChange={setShowQuickFilters}
                     />
                   </div>
                   {!showCompleted && (
@@ -374,6 +403,7 @@ const TasksPage: React.FC = () => {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setShowAddTaskForm(true)}
                       data-tutorial-id="tasks-create-button"
+                      data-guide-id="perso-tasks-new"
                       className="hidden md:flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
                       aria-label={t('actions.newTaskAria')}
                     >
@@ -384,54 +414,14 @@ const TasksPage: React.FC = () => {
                 </motion.div>
               )}
 
-              {/* Chip de filtre actif (#35) : rend visible tout filtre qui réduit
-                  la liste (liste, catégories, recherche) + compteur n/N, avec un
-                  ✕ pour le retirer — évite le « où sont passées mes tâches ? ». */}
-              {!showAddTaskForm && (selectedListId || selectedCategories.length > 0 || searchTerm.trim() !== '') && (
-                <div className="flex flex-wrap items-center gap-2 mb-4" role="status">
-                  {selectedListId && (
-                    <button
-                      type="button"
-                      onClick={clearListFilter}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-[rgb(var(--color-accent-solid))]/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))]/30 hover:bg-blue-100 dark:hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
-                      aria-label={t('actions.clearListFilter')}
-                    >
-                      {t('filters.listPrefix', {
-                        name: selectedListId === VIRTUAL_TODAY_ID
-                          ? t('filters.today')
-                          : lists.find(l => l.id === selectedListId)?.name ?? t('filters.list'),
-                      })}
-                      <X size={14} aria-hidden="true" />
-                    </button>
-                  )}
-                  {selectedCategories.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedCategories([])}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-[rgb(var(--color-accent-solid))]/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))]/30 hover:bg-blue-100 dark:hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
-                      aria-label={t('actions.clearCategoryFilter')}
-                    >
-                      {selectedCategories.length === 1
-                        ? t('filters.category')
-                        : t('filters.categoriesCount', { count: selectedCategories.length })}
-                      <X size={14} aria-hidden="true" />
-                    </button>
-                  )}
-                  {searchTerm.trim() !== '' && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchTerm('')}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-[rgb(var(--color-accent-solid))]/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))]/30 hover:bg-blue-100 dark:hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
-                      aria-label={t('actions.clearSearch')}
-                    >
-                      {t('filters.searchPrefix', { term: searchTerm.trim() })}
-                      <X size={14} aria-hidden="true" />
-                    </button>
-                  )}
-                  <span className="text-sm text-[rgb(var(--color-text-secondary))]">
-                    {tp('filters.shown', tasks.length, { shown: filteredTasks.length })}
-                  </span>
-                </div>
+              {/* Ce qui réduit la liste, dit à l'écran (#35) — cf. ActiveFiltersRow.
+                  Vue Liste sur desktop : rendue au bout de la rangée Favoris /
+                  Terminées (cf. `activeFilters` passé à TaskTable), pas ici. */}
+              {!showAddTaskForm && (
+                <ActiveFiltersRow
+                  {...activeFiltersProps}
+                  className={`${hiddenWhileSearchingFlex} ${tasksView === 'board' || selectingTasksForListId ? '' : 'md:hidden'}`}
+                />
               )}
 
               <TaskModal
@@ -448,6 +438,10 @@ const TasksPage: React.FC = () => {
               >
                 {isTasksLoading && tasks.length === 0 ? (
                   <TaskListSkeleton count={6} />
+                ) : tasksView === 'board' && !selectingTasksForListId ? (
+                  <React.Suspense fallback={<TaskListSkeleton count={6} />}>
+                    <TaskBoard tasks={filteredTasks} />
+                  </React.Suspense>
                 ) : (
                 <TaskTable
                   tasks={filteredTasks}
@@ -461,8 +455,14 @@ const TasksPage: React.FC = () => {
                   addToListMode={!!selectingTasksForListId}
                   selectedForListIds={selectedTasksForList}
                   onToggleTaskForList={toggleTaskForList}
-                  showQuickFilters={showQuickFilters}
+                  // Mobile : la barre de pastilles ne s'ouvre plus par « + d'options »
+                  // (retiré) — ses cinq entrées sont les suggestions de
+                  // MobileTaskSearch. `md:flex` la garde intacte sur desktop.
+                  showQuickFilters={false}
                   searchTerm={searchTerm}
+                  listFilterActive={!!selectedListId}
+                  hasActiveFilter={!!selectedListId || selectedCategories.length > 0 || searchTerm.trim() !== ''}
+                  quickFiltersTrailing={<ActiveFiltersRow {...activeFiltersProps} className="!mb-0" />}
                 />
                 )}
               </motion.div>
@@ -490,7 +490,10 @@ const TasksPage: React.FC = () => {
             initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="xl:col-span-1 xl:hidden"
+            // Masque sous 768 px : la legende des categories poussait la liste
+            // vers le bas pour une information de second plan. Son engrenage
+            // (reglages de couleurs) est repris dans l'en-tete mobile.
+            className="xl:col-span-1 hidden md:block xl:hidden"
           >
             <TasksSummary />
           </motion.div>
@@ -515,12 +518,20 @@ const TasksPage: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* Création mobile (#22) : point d'entrée unique = FAB quick-add global
-          monté dans Layout (data-tutorial-id="global-quick-add-fab"). Les deux FABs
+      {/* Création mobile (#22) : point d'entrée unique = le « + » de la barre
+          du bas (`MobileTaskSearch`, data-tutorial-id="tasks-create", maquette
+          150 ; c'était le FAB global de Layout jusqu'au 2026-10-10). Les deux FABs
           locaux (éclair + plus) ont été retirés : deux affordances pour une
           même intention créaient une hésitation à chaque création. Le modal
           complet reste accessible en tapant une tâche existante (enrichir
           après capture). */}
+
+      {/* Recherche ancrée en bas (mobile) — hors du flux, ne défile jamais.
+          Montée ici et pas dans `TaskFilter` : une barre `fixed` n'a rien à
+          faire dans une rangée qui défile avec la page. */}
+      <MobileTaskSearch searchTerm={searchTerm} onSearchTermChange={setSearchTerm}
+        listPicker={{ lists: orderedLists, selectedListId, onSelect: handleListSelect, todayHidden }}
+        sort={{ field: filter, direction: sortDirection, onFieldChange: handleFilterChange, onToggleDirection: toggleSortDirection }} />
 
       {/* Menu d'actions de liste (mobile) — appui long sur une chip */}
       <ListActionsSheet
@@ -536,11 +547,16 @@ const TasksPage: React.FC = () => {
       />
 
       {/* Partage de liste — bottom-sheet avec sélecteur d'ami */}
-      <ShareListSheet
-        list={shareListTarget}
-        tasks={tasks}
-        onClose={() => setShareListTarget(null)}
-      />
+      {/* C-117 · paresseuse : hors du chunk `TasksPage` tant qu'on ne partage rien */}
+      {shareSheetMounted && (
+        <React.Suspense fallback={null}>
+          <ShareListSheet
+            list={shareListTarget}
+            tasks={tasks}
+            onClose={() => setShareListTarget(null)}
+          />
+        </React.Suspense>
+      )}
 
       {/* Tutoriel page Tâches — variante adaptée au viewport */}
       {/* accentColor en bleu foncé : #3B82F6 ne passait pas le contraste AA (3.7:1) avec le texte blanc du bouton "Suivant" */}

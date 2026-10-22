@@ -2,6 +2,8 @@ import React from 'react';
 import { Bookmark, BookmarkCheck, CheckCircle2, CheckSquare, AlertTriangle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
+import { useOverdueFocus } from '@/lib/hooks/use-overdue-focus';
+import { useSelectModeBridge } from './select-mode.store';
 import type { KeyOf } from '@/i18n/catalog';
 
 export type QuickFilter = 'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration';
@@ -20,6 +22,8 @@ interface Props {
   orgId?: string;
   scope: ScopeFilter;
   onScope: (scope: ScopeFilter) => void;
+  /** Posé en bout de rangée, à droite : les filtres actifs de la page. */
+  trailing?: React.ReactNode;
 }
 
 /** Chip Spotify (docs/MOBILE.md § Chips de filtre) : pilule pleine, sans
@@ -59,9 +63,37 @@ const TaskQuickFilters: React.FC<Props> = ({
   orgId,
   scope,
   onScope,
+  trailing,
 }) => {
   const { t } = useT('tasks');
   const { t: tCommon } = useT('common');
+
+  // ── Maquette 122 : « N en retard » mène à la liste qu'il compte ──────
+  //
+  // L'en-tête mobile émet `focus-overdue-tasks` ; c'est ICI qu'on l'écoute,
+  // dans le composant qui porte déjà la pastille « Retard » — et non dans
+  // `TaskTable`, qui détient l'état mais se trouvait à UNE ligne de son
+  // plafond de 600 (`architecture.guard`). Un budget se respecte en déplaçant,
+  // jamais en relevant la borne.
+  //
+  // ⚠️ `onToggle` bascule : appelé alors que le filtre est déjà actif, il
+  // l'éteindrait. On ne l'appelle donc que si « Retard » n'est pas déjà
+  // sélectionné — un appui sur « 1 en retard » demande à VOIR le retard, pas
+  // à l'inverser.
+  useOverdueFocus(React.useCallback(() => {
+    if (active !== 'overdue') onToggle('overdue');
+  }, [active, onToggle]));
+
+  // Pont avec la barre de recherche mobile : elle DEMANDE l'entrée en mode
+  // sélection (suggestion « Sélectionner »), et elle LIT l'état pour s'effacer
+  // pendant la sélection — la barre d'actions groupées occupe sa place exacte.
+  // Ici et pas dans `TaskTable`, à son plafond de LOC ; ce composant porte déjà
+  // la pastille et reçoit `selectMode`.
+  // ⚠️ On n'ENTRE que si on n'y est pas déjà : `onToggleSelectMode` bascule, et
+  // une demande d'entrée qui ferait SORTIR du mode serait un contresens.
+  useSelectModeBridge(selectMode, React.useCallback(() => {
+    if (!selectMode) onToggleSelectMode();
+  }, [selectMode, onToggleSelectMode]));
 
   return (
     <div className={`${visible ? 'flex' : 'hidden'} md:flex flex-col gap-4 mb-6`}>
@@ -142,6 +174,7 @@ const TaskQuickFilters: React.FC<Props> = ({
             ))}
           </div>
         )}
+        {trailing && <div className="ml-auto">{trailing}</div>}
       </div>
     </div>
   );

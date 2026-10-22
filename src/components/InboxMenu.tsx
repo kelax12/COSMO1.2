@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { Inbox, UserPlus, Send, Settings, Trash2, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import {
   useFriendRequests,
   useAcceptFriendRequest,
@@ -112,6 +113,7 @@ const InboxMenu: React.FC = () => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const addInputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
   const [popoverPos, setPopoverPos] = useState<{ top: number; right: number } | null>(null);
 
   const incomingRequests = useMemo(() => {
@@ -369,14 +371,14 @@ const InboxMenu: React.FC = () => {
           </>
         ) : (
           <>
-            <span className="font-semibold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{tTasks('inbox.label')}</span>
+            <span className="font-semibold text-label sm:text-sm max-md:text-title text-[rgb(var(--color-text-primary))]">{tTasks('inbox.label')}</span>
             <div className="ml-auto flex items-center gap-2">
               {total > 0 && (
                 <span className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] tabular-nums">{total}</span>
               )}
               <button
                 onClick={() => setShowManageFriends(true)}
-                className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                className="max-md:hidden w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                 aria-label={ov.t('inbox.manageFriends')}
                 title={ov.t('inbox.manageFriends')}
               >
@@ -387,7 +389,7 @@ const InboxMenu: React.FC = () => {
         )}
       </div>
 
-      <div className="max-h-[60vh] overflow-y-auto">
+      <div className="max-h-[60vh] max-md:max-h-[70vh] overflow-y-auto">
         {/* ── Gérer mes amis ── */}
         {showManageFriends && (
           loadingFriends ? null : friends.length === 0 ? (
@@ -495,12 +497,23 @@ const InboxMenu: React.FC = () => {
             </button>
           </div>
         ) : (
+          <>
+          {/* Maquettes 351 et 352 : sur mobile, deux liens discrets en pied. */}
+          <div className="md:hidden flex items-center justify-between text-label">
+            <button type="button" onClick={() => setShowManageFriends(true)} className="min-h-touch px-1 text-[rgb(var(--color-text-secondary))]">
+              {ov.t('inbox.manageFriends')}
+            </button>
+            <button type="button" onClick={() => setShowAddFriend(true)} className="min-h-touch px-1 font-medium text-[rgb(var(--color-accent))]">
+              {ov.t('inbox.addFriend')}
+            </button>
+          </div>
           <button
             onClick={() => setShowAddFriend(true)}
-            className="w-full h-11 md:h-9 rounded-lg border border-dashed border-[rgb(var(--color-chip-border))] text-slate-600 dark:text-slate-300 hover:border-[rgb(var(--color-accent-solid-hover))] hover:text-blue-600 dark:hover:text-blue-400 text-label sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="max-md:hidden w-full h-11 md:h-9 rounded-lg border border-dashed border-[rgb(var(--color-chip-border))] text-slate-600 dark:text-slate-300 hover:border-[rgb(var(--color-accent-solid-hover))] hover:text-blue-600 dark:hover:text-blue-400 text-label sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             <UserPlus size={14} aria-hidden="true" /> {ov.t('inbox.addFriend')}
           </button>
+          </>
         )}
       </div>
     </>
@@ -511,12 +524,19 @@ const InboxMenu: React.FC = () => {
       {open && popoverPos && (
         <motion.div
           ref={popoverRef}
-          initial={{ opacity: 0, scale: 0.95, y: -8 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: -8 }}
+          initial={isMobile ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: -8 }}
+          animate={isMobile ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+          exit={isMobile ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: -8 }}
           transition={{ duration: 0.12 }}
-          style={{ position: 'fixed', top: popoverPos.top, right: popoverPos.right, zIndex: 9999 }}
-          className="w-[22rem] max-w-[calc(100vw-24px)] bg-[rgb(var(--color-background))] rounded-2xl shadow-md border border-[rgb(var(--color-border))] overflow-hidden"
+          // Maquette 345 : sur mobile, une feuille du bas, plus un panneau collé
+          // sous l'en-tête. La position vient du style, jamais d'une animation
+          // de transform (mouvement réduit : cf. components/CLAUDE.md).
+          style={isMobile
+            ? { position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 9999, paddingBottom: 'env(safe-area-inset-bottom)' }
+            : { position: 'fixed', top: popoverPos.top, right: popoverPos.right, zIndex: 9999 }}
+          className={isMobile
+            ? 'w-full bg-[rgb(var(--color-background))] rounded-t-3xl shadow-2xl border-t border-[rgb(var(--color-border))] overflow-hidden'
+            : 'w-[22rem] max-w-[calc(100vw-24px)] bg-[rgb(var(--color-background))] rounded-2xl shadow-md border border-[rgb(var(--color-border))] overflow-hidden'}
           role="dialog"
           aria-label={tTasks('inbox.label')}
         >

@@ -4,7 +4,7 @@
 
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getOrganizationsRepository } from '@/lib/repository.factory';
 import { validateAsync } from '@/lib/validation/lazy';
 import { orgKeys } from './constants';
@@ -260,21 +260,10 @@ export const useSetMemberRole = () => {
   });
 };
 
-export const useRemoveMember = () => {
-  const queryClient = useQueryClient();
-  const repository = useOrgRepository();
-  return useMutation({
-    mutationFn: ({ orgId, userId }: { orgId: string; userId: string }) =>
-      repository.removeMember(orgId, userId),
-    onSuccess: () => {
-      toast.success(translator('errors').t('success.memberRemoved'));
-      queryClient.invalidateQueries({ queryKey: orgKeys.all });
-    },
-    onError: (error: Error) => {
-      toast.error(translator('errors').t('mutation.removeMember', { message: error.message }));
-    },
-  });
-};
+// Plus de `useRemoveMember` (2026-09-25) : retirer quelqu'un passe par
+// l'assistant de départ (`useOffboardMember`, `offboard_org_member`, mig. 161),
+// qui transmet tâches, subordonnés, rôles et KR avant le retrait. Un retrait
+// nu depuis l'écran les laissait orphelins (M10).
 
 export const useLeaveOrganization = () => {
   const queryClient = useQueryClient();
@@ -326,14 +315,17 @@ export const useSetMemberManager = () => {
   const queryClient = useQueryClient();
   const repository = useOrgRepository();
   return useMutation({
-    mutationFn: ({ orgId, userId, managerId }: { orgId: string; userId: string; managerId: string | null; silent?: boolean }) =>
+    mutationFn: ({ orgId, userId, managerId }: { orgId: string; userId: string; managerId: string | null; silent?: boolean; bulk?: boolean }) =>
       repository.setMemberManager(orgId, userId, managerId),
     onSuccess: (_d, variables) => {
       // silent : l'appelant affiche son propre feedback (ex. toast d'annulation pyramide).
-      if (!variables.silent) toast.success(translator('errors').t('success.positionUpdated'));
+      if (!variables.silent && !variables.bulk) toast.success(translator('errors').t('success.positionUpdated'));
       queryClient.invalidateQueries({ queryKey: orgKeys.members(variables.orgId) });
     },
-    onError: (error: Error) => {
+    onError: (error: Error, variables) => {
+      // bulk : actions groupées de l'annuaire, qui résument succès ET échecs
+      // en un seul toast. `silent` ne coupe QUE le succès (pyramide).
+      if (variables.bulk) return;
       toast.error(translator('errors').t('mutation.moveMember', { message: error.message }));
     },
   });

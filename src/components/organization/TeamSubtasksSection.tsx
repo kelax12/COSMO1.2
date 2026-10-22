@@ -45,7 +45,7 @@ const TeamSubtasksSection = ({ taskId }: TeamSubtasksSectionProps) => {
   return (
     <div>
       <div className="flex items-center justify-between gap-2 mb-2">
-        <span className="block text-xs font-semibold uppercase tracking-wider text-[rgb(var(--color-text-secondary))]">
+        <span className="block text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
           {t('taskModal.subtasksTitle')}
         </span>
         {progress !== null && (

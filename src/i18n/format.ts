@@ -11,20 +11,29 @@
 // ressusciterait la classe de bugs de décalage de fuseau déjà éradiquée
 // (cf. src/i18n/en-ca-guard.test.ts, qui échoue si l'idiome disparaît).
 
-import { enUS, es, fr } from 'date-fns/locale';
+import { enUS, fr } from 'date-fns/locale';
 import type { Locale as DateFnsLocale } from 'date-fns';
 import { BCP47_TAG, DEFAULT_LOCALE, type Locale } from './locale';
 import { localeStore } from './store';
 
-const DATE_LOCALES: Record<Locale, DateFnsLocale> = {
+/**
+ * Seules les locales SERVIES (`SUPPORTED_LOCALES`) ont leur locale `date-fns`.
+ *
+ * 🔴 `es` en a été retirée le 2026-10-03 : ce module est dans le chemin
+ * critique (`vendor-utils`, chargé par tout le monde), et l'espagnol n'est ni
+ * servi ni traduit (phase 6). Il coûtait ~3 ko gzip à chaque visiteur pour une
+ * langue qu'aucun ne peut obtenir, et faisait déborder le cliquet de
+ * `vendor-utils`. Ouvrir `es` = le remettre ici, avec `SUPPORTED_LOCALES`.
+ * Une locale absente retombe sur la locale par défaut.
+ */
+const DATE_LOCALES: Partial<Record<Locale, DateFnsLocale>> = {
   fr,
   en: enUS,
-  es,
 };
 
 /** Locale `date-fns` correspondante. Sans argument : la locale courante. */
 export function getDateLocale(locale?: Locale): DateFnsLocale {
-  return DATE_LOCALES[locale ?? localeStore.locale] ?? DATE_LOCALES[DEFAULT_LOCALE];
+  return DATE_LOCALES[locale ?? localeStore.locale] ?? fr;
 }
 
 /** Étiquette BCP 47 pour les API `Intl` / `toLocale*String`. */

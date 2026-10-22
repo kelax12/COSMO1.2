@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { test, expect, navTo } from './fixtures';
+import { test, expect, navTo, openOrgSection } from './fixtures';
 
 /**
  * Régression des correctifs mode entreprise livrés en session (2026-08-24) :
@@ -15,18 +15,37 @@ import { test, expect, navTo } from './fixtures';
  * ⚠️ Même précaution que les autres specs entreprise : ancrer les onglets au
  * DÉBUT du libellé (le badge de nouveautés entre dans le nom accessible).
  */
-const orgTab = (page: Page, label: RegExp) =>
-  page.getByRole('button', { name: label }).filter({ visible: true }).first();
+
+// « Pyramide » s'appelle « Organigramme » depuis le 2026-09-28 (93a4ad91,
+// décision produit) ; la route reste `/entreprise/pyramid`.
+
+/**
+ * La liste de tâches de l'agenda d'un membre est REPLIÉE par défaut sous
+ * 640 px (`MemberAgendaBody` : `showTasks` initialisé sur la largeur), derrière
+ * le bouton bascule « Tâches ». Sous `mobile-safari` (390 px), les deux cas qui
+ * la lisent expiraient sur une liste que personne n'avait ouverte, depuis que
+ * le project tourne en CI (2026-09-16). On l'ouvre comme une personne le
+ * ferait sur téléphone ; au-dessus de 640 px elle l'est déjà, on n'y touche pas.
+ */
+async function ouvrirListeDesTachesSiRepliee(page: Page) {
+  const liste = page.locator('#member-external-events');
+  if (await liste.isVisible().catch(() => false)) return;
+  await page.getByRole('button', { name: /^tâches$/i }).filter({ visible: true }).last().click();
+  await expect(liste).toBeVisible({ timeout: 5_000 });
+}
 
 test.describe('Entreprise — correctifs de session (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
 
   test('Description en grand : la popup s\'ouvre au-dessus du modal et reste synchronisée', async ({ demoPage: page }) => {
+    // Mesure le TABLEAU des tâches : largeur d'ordinateur, la refonte mobile
+    // (29ceaa6c) affichant une liste de cartes sur téléphone.
+    await page.setViewportSize({ width: 1280, height: 900 });
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
-    await orgTab(page, /^tâches/i).click();
-    await page.waitForURL(/tab=tasks/);
+    await openOrgSection(page, /^tâches/i);
+    await page.waitForURL(/\/entreprise\/tasks/);
     await expect(page.getByRole('columnheader', { name: 'PROJET', exact: true })).toBeVisible({ timeout: 15_000 });
 
     // Ouvre la première tâche (clic sur la ligne, hors cases à stopPropagation).
@@ -59,29 +78,33 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });
 
-  test('Pyramide : la charge par membre s\'affiche au format x/y', async ({ demoPage: page }) => {
+  test('Organigramme : la charge par membre s\'affiche (en cours, en retard)', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
-    await orgTab(page, /^pyramide/i).click();
-    await page.waitForURL(/tab=pyramid/);
+    await openOrgSection(page, /^organigramme/i);
+    await page.waitForURL(/\/entreprise\/pyramid/);
 
     await page.getByRole('button', { name: /afficher la charge/i }).click();
 
-    // Le "/" est un séparateur littéral entre deux entiers, jamais un symbole
-    // de division — au moins un membre avec de la charge doit l'afficher.
-    const badge = page.getByText(/^\d+\/\d+$/).first();
-    await expect(badge).toBeVisible({ timeout: 10_000 });
+    // Le format « x/y » a été remplacé le 2026-09-27 par DEUX pastilles, en
+    // cours et en retard (8898416e, décision produit) : chacune porte son
+    // nombre dans son nom. Au moins un membre de la démo a les deux.
+    await expect(page.getByLabel(/^\d+ tâches? en cours$/).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByLabel(/^\d+ tâches? en retard$/).first()).toBeVisible();
 
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });
 
   test('Assigner l\'événement : la sidebar ne montre que la tâche ciblée', async ({ demoPage: page }) => {
+    // Mesure le TABLEAU des tâches : largeur d'ordinateur, la refonte mobile
+    // (29ceaa6c) affichant une liste de cartes sur téléphone.
+    await page.setViewportSize({ width: 1280, height: 900 });
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
-    await orgTab(page, /^tâches/i).click();
-    await page.waitForURL(/tab=tasks/);
+    await openOrgSection(page, /^tâches/i);
+    await page.waitForURL(/\/entreprise\/tasks/);
     await expect(page.getByRole('columnheader', { name: 'PROJET', exact: true })).toBeVisible({ timeout: 15_000 });
 
     const actionsBtn = page.getByRole('button', { name: /^Actions pour/ }).first();
@@ -90,6 +113,7 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
 
     await actionsBtn.click();
     await page.getByRole('menuitem', { name: /assigner l'événement/i }).click();
+    await ouvrirListeDesTachesSiRepliee(page);
 
     const sidebarItems = page.locator('#member-external-events .member-external-event');
     await expect(sidebarItems).toHaveCount(1, { timeout: 10_000 });
@@ -102,8 +126,8 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
-    await orgTab(page, /^pyramide/i).click();
-    await page.waitForURL(/tab=pyramid/);
+    await openOrgSection(page, /^organigramme/i);
+    await page.waitForURL(/\/entreprise\/pyramid/);
 
     // Menu « Actions pour X » → « Voir son agenda » (pyramid.tsx,
     // onOpenMember(m, 'agenda')) — c'est le chemin réel de la fonctionnalité,
@@ -111,6 +135,7 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
     await page.getByRole('button', { name: /^Actions pour Jean Martin/ }).click();
     await page.getByRole('menuitem', { name: /voir son agenda/i }).click();
     await page.getByRole('tab', { name: /^agenda$/i }).click();
+    await ouvrirListeDesTachesSiRepliee(page);
 
     const sidebarItems = page.locator('#member-external-events .member-external-event');
     await expect(sidebarItems.first()).toBeVisible({ timeout: 10_000 });
@@ -127,8 +152,11 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
-    await orgTab(page, /^statistiques/i).click();
-    await page.waitForURL(/tab=stats/);
+    // Statistiques est MASQUÉE de la navigation depuis le 2026-09-30
+    // (`hidden: true` dans org-sections.ts, 92c99b31) ; code et route
+    // conservés. On y arrive donc par l'URL, comme le ferait un lien.
+    await page.goto('/entreprise/stats');
+    await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 20_000 });
 
     // Sanity : l'onglet a bien rendu (sélecteur de période) avant de vérifier
     // l'absence — sinon un onglet vide donnerait un faux positif.

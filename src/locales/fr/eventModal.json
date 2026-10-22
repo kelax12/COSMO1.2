@@ -14,6 +14,9 @@
   "descriptionPlaceholder": "description de l'événement",
   "descriptionTitle": "Description de l'événement",
   "color": "Couleur de l'événement",
+  "subcategoriesOf": "Sous-catégories de {{name}}",
+  "subcategoryNone": "Aucune",
+  "subcategoryNoneAria": "Rester sur {{name}}, sans sous-catégorie",
   "showLegend": "Voir la légende des catégories",
   "hideLegend": "Masquer la légende des catégories",
   "legend": "Légende des catégories",
@@ -36,6 +39,8 @@
     "noTask": "Aucune tâche ce jour-là."
   },
   "form": {
+    "timeRange": "Horaire",
+    "recurrenceNever": "Jamais",
     "recurrenceCustom": "Personnaliser",
     "addComment": "+ Ajouter un commentaire",
     "customizeColors": "Personnaliser les couleurs",

@@ -17,6 +17,14 @@ import {
   UpdateTeamSubtaskInput,
   TeamTaskDependency,
   TeamTaskActivity,
+  TeamTrashedTask,
+  DraftProjectTask,
+  TeamProjectDependency,
+  TeamProjectTeam,
+  TeamProjectMember,
+  TeamProjectRole,
+  TeamProjectTaskStats,
+  TeamMemberWorkload,
 } from './types';
 import type { CreateOptions } from '@/lib/restore-id';
 
@@ -35,12 +43,57 @@ export interface ITeamProjectsRepository {
   // `enforce_team_project_archive_scope`). Une méthode `archiveProject`
   // dédiée a coexisté sans consommateur jusqu'au 2026-09-04 (C-66).
   updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject>;
+  /**
+   * Projet + tâches en UNE transaction (mig. 153). Rend l'id du
+   * projet. Sert aussi à dupliquer un projet et à partir d'un modèle.
+   */
+  createProjectWithTasks(
+    orgId: string,
+    input: CreateTeamProjectInput,
+    tasks?: DraftProjectTask[],
+  ): Promise<string>;
+
+  // Dépendances entre projets (mig. 153) — `projectId` BLOQUÉ par `dependsOnId`.
+  getProjectDependencies(orgId: string): Promise<TeamProjectDependency[]>;
+  addProjectDependency(projectId: string, dependsOnId: string, orgId: string): Promise<void>;
+  removeProjectDependency(projectId: string, dependsOnId: string): Promise<void>;
+
+  // Équipes associées (mig. 164) — un projet mené par plusieurs équipes.
+  // Associer ou retirer une équipe change QUI LIT le projet : `project.edit`.
+  getProjectTeams(orgId: string): Promise<TeamProjectTeam[]>;
+  addProjectTeam(orgId: string, projectId: string, teamId: string): Promise<void>;
+  removeProjectTeam(projectId: string, teamId: string): Promise<void>;
+  /**
+   * Supprime DÉFINITIVEMENT un projet déjà archivé, ses tâches et jalons avec
+   * lui (`purge_archived_team_project`, mig. 164). Refusé sur un projet actif.
+   */
+  purgeArchivedProject(projectId: string): Promise<void>;
+  // Membres d'un projet et leur rôle (mig. 190) — toute l'organisation en UNE lecture.
+  getProjectMembers(orgId: string): Promise<TeamProjectMember[]>;
+  /** Ajoute la personne au projet, ou change son rôle. */
+  setProjectMember(projectId: string, userId: string, role: TeamProjectRole): Promise<void>;
+  removeProjectMember(projectId: string, userId: string): Promise<void>;
+
+  // Chiffres comptés par le SERVEUR (mig. 191) — `today` : date locale 'YYYY-MM-DD'.
+  getProjectTaskStats(orgId: string, today: string): Promise<TeamProjectTaskStats[]>;
+  getMemberWorkload(orgId: string, today: string): Promise<TeamMemberWorkload[]>;
 
   // Tâches d'équipe
   getTasks(orgId: string, filters?: TeamTaskFilters): Promise<TeamTask[]>;
   createTask(orgId: string, input: CreateTeamTaskInput): Promise<TeamTask>;
   updateTask(taskId: string, input: UpdateTeamTaskInput): Promise<TeamTask>;
+  /**
+   * Met la tâche à la CORBEILLE (mig. 152), jamais un DELETE : commentaires,
+   * sous-tâches, étiquettes, dépendances et historique restent attachés, et
+   * reviennent intacts avec `restoreTask`. Purge définitive à 30 jours.
+   */
   deleteTask(taskId: string): Promise<void>;
+  /** Sort une tâche de la corbeille, à l'identique (M4). */
+  restoreTask(taskId: string): Promise<void>;
+  /** Les tâches que l'appelant peut restaurer, les plus récentes d'abord. */
+  getTrash(orgId: string): Promise<TeamTrashedTask[]>;
+  /** Suppression DÉFINITIVE depuis la corbeille — admin seulement (mig. 193). */
+  purgeTask(taskId: string): Promise<void>;
 
   // Commentaires (mig. 082) — journal immuable, delete auteur only.
   getComments(taskId: string): Promise<TeamTaskComment[]>;
@@ -68,14 +121,9 @@ export interface ITeamProjectsRepository {
   updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask>;
   deleteSubtask(subtaskId: string): Promise<void>;
 
-  // 🗑️ Les étiquettes (mig. 093) ont été retirées de cette interface le
-  // 2026-09-05 (C-49) : `getLabels`, `createLabel`, `updateLabel`,
-  // `deleteLabel`, `getTaskLabels`, `addTaskLabel`, `removeTaskLabel`. Aucun
-  // écran ne montait leurs hooks, donc aucun appelant. La TABLE reste en base.
-
-  // Historique (mig. 094) — lecture seule : la table est append-only, écrite par trigger.
-  // 🗑️ `getTaskActivity` (journal PAR TÂCHE) retiré le 2026-09-05 (C-49) :
-  // sans appelant. `getOrgActivity` ci-dessous sert la revue hebdomadaire.
+  // Historique (mig. 094) : lecture seule, la table est append-only, écrite par trigger.
+  /** Journal d'UNE tâche, onglet Historique de la fiche (100 dernières entrées). */
+  getTaskActivity(taskId: string): Promise<TeamTaskActivity[]>;
   /**
    * Journal de TOUTE l'organisation depuis `since` (ISO) — revue hebdomadaire
    * (#26). Borné côté serveur : la revue lit deux semaines, pas l'historique.

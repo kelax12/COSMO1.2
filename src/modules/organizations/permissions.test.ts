@@ -6,6 +6,9 @@ import {
   canAssignTo,
   canGrant,
   canEditPermissionsOf,
+  canEditTeamTask,
+  canDeleteTeamTask,
+  type EffectiveOrgPermissions,
   type OrgMemberPermissions,
 } from './permissions';
 import type { OrgMember } from './types';
@@ -43,26 +46,55 @@ const overrides = (
   ...patch,
 });
 
-describe('effectivePermissions — les défauts reproduisent l’avant-migration 115', () => {
-  it('un membre simple crée/modifie/supprime des tâches, rien d’autre', () => {
+describe('effectivePermissions — les défauts (mig. 115, puis 152)', () => {
+  it('un membre simple crée et modifie des tâches, ne supprime que les siennes (M4)', () => {
     const p = effectivePermissions({ member: CARL, members: MEMBERS });
     expect(p['task.create']).toBe(true);
     expect(p['task.editAny']).toBe(true);
-    expect(p['task.deleteAny']).toBe(true);
+    // mig. 152 : supprimer la tâche d'un autre devient un droit de manager.
+    expect(p['task.deleteAny']).toBe(false);
     expect(p['project.create']).toBe(false);
+    // Mig. 153 : modifier un projet est un droit à part, défaut manager.
+    expect(p['project.edit']).toBe(false);
     expect(p['okr.create']).toBe(false);
     expect(p['category.manage']).toBe(false);
     expect(p['team.create']).toBe(false);
     expect(p['member.invite']).toBe(false);
   });
 
-  it('un manager (≥ 1 subordonné) a tout, comme is_org_manager()', () => {
+  it('un manager (≥ 1 subordonné) a tout, comme is_org_manager(), sauf les rapports et role.manage (admin seul)', () => {
     const p = effectivePermissions({ member: ALICE, members: MEMBERS });
-    for (const key of ORG_PERMISSION_KEYS) expect(p[key]).toBe(true);
+    for (const key of ORG_PERMISSION_KEYS) {
+      expect(p[key]).toBe(!key.startsWith('report.') && key !== 'role.manage');
+    }
+  });
+
+  it('rapports (mig. 202) : défaut admin seulement, réglables par surcharge', () => {
+    expect(effectivePermissions({ member: CARL, members: MEMBERS })['report.org']).toBe(false);
+    expect(effectivePermissions({ member: ALICE, members: MEMBERS })['report.allTeams']).toBe(false);
+    const p = effectivePermissions({
+      member: CARL,
+      members: MEMBERS,
+      overrides: overrides('carl', { overrides: { 'report.allTeams': true } }),
+    });
+    expect(p['report.allTeams']).toBe(true);
+    expect(p['report.org']).toBe(false);
   });
 
   it('un membre non placé n’est pas manager', () => {
     expect(effectivePermissions({ member: SOLO, members: MEMBERS })['project.create']).toBe(false);
+  });
+});
+
+describe('project.edit (mig. 153)', () => {
+  it('se règle indépendamment de project.create', () => {
+    const p = effectivePermissions({
+      member: CARL,
+      members: MEMBERS,
+      overrides: overrides('carl', { overrides: { 'project.edit': true } }),
+    });
+    expect(p['project.edit']).toBe(true);
+    expect(p['project.create']).toBe(false);
   });
 });
 
@@ -201,5 +233,88 @@ describe('canEditPermissionsOf', () => {
 
   it('jamais sur soi-même', () => {
     expect(canEditPermissionsOf({ actorId: 'boss', actorIsAdmin: true, target: BOSS, members: MEMBERS })).toBe(false);
+  });
+});
+
+// ─── Droits sur UNE tâche (cohérence globale, 2026-09-25) ─────────────
+// Miroirs de `team_tasks_update` (mig. 115) et `delete_team_task` (mig. 152) :
+// sans eux, l'interface proposait des gestes que le serveur refusait après coup.
+describe('canEditTeamTask / canDeleteTeamTask', () => {
+  const none = Object.fromEntries(ORG_PERMISSION_KEYS.map((k) => [k, false])) as EffectiveOrgPermissions;
+  const task = { createdBy: 'author', assigneeIds: ['doer'] };
+
+  it('modifier : créateur, assigné, ou task.editAny ; personne d autre', () => {
+    expect(canEditTeamTask(none, 'author', task)).toBe(true);
+    expect(canEditTeamTask(none, 'doer', task)).toBe(true);
+    expect(canEditTeamTask(none, 'stranger', task)).toBe(false);
+    expect(canEditTeamTask({ ...none, 'task.editAny': true }, 'stranger', task)).toBe(true);
+    expect(canEditTeamTask(none, undefined, task)).toBe(false);
+  });
+
+  it('supprimer : créateur ou task.deleteAny — un assigné NE supprime PAS', () => {
+    expect(canDeleteTeamTask(none, 'author', task)).toBe(true);
+    expect(canDeleteTeamTask(none, 'doer', task)).toBe(false);
+    expect(canDeleteTeamTask({ ...none, 'task.deleteAny': true }, 'doer', task)).toBe(true);
+  });
+});
+
+describe('rôles personnalisés (mig. 219) : le rôle écrase tout, les rôles s’additionnent', () => {
+  const STAGIAIRE = { grantedKeys: ['okr.create'] as const, assignTargets: ['self'] as const };
+  const CHEF = { grantedKeys: ['project.create', 'report.org'] as const, assignTargets: ['subordinates'] as const };
+
+  it('role.manage : défaut admin seulement, réglable par surcharge', () => {
+    expect(effectivePermissions({ member: BOSS, members: MEMBERS })['role.manage']).toBe(false);
+    expect(effectivePermissions({ member: ADMIN, members: MEMBERS })['role.manage']).toBe(true);
+    const granted = effectivePermissions({
+      member: CARL, members: MEMBERS, overrides: overrides('carl', { overrides: { 'role.manage': true } }),
+    });
+    expect(granted['role.manage']).toBe(true);
+  });
+
+  it('un rôle actif retire même un droit par défaut de membre', () => {
+    const p = effectivePermissions({ member: CARL, members: MEMBERS, roles: [STAGIAIRE] });
+    expect(p['task.create']).toBe(false);
+    expect(p['task.editAny']).toBe(false);
+    expect(p['okr.create']).toBe(true);
+  });
+
+  it('un rôle actif prime sur la surcharge individuelle', () => {
+    const p = effectivePermissions({
+      member: CARL, members: MEMBERS,
+      overrides: overrides('carl', { overrides: { 'project.create': true } }),
+      roles: [STAGIAIRE],
+    });
+    expect(p['project.create']).toBe(false);
+  });
+
+  it('deux rôles : un droit accordé par l’un suffit', () => {
+    const p = effectivePermissions({ member: CARL, members: MEMBERS, roles: [STAGIAIRE, CHEF] });
+    expect(p['okr.create']).toBe(true);
+    expect(p['project.create']).toBe(true);
+    expect(p['report.org']).toBe(true);
+    expect(p['report.allTeams']).toBe(false);
+  });
+
+  it('sans rôle actif, rien ne change (liste vide)', () => {
+    expect(effectivePermissions({ member: CARL, members: MEMBERS, roles: [] }))
+      .toEqual(effectivePermissions({ member: CARL, members: MEMBERS }));
+  });
+
+  it('un admin reste insensible à un rôle', () => {
+    const p = effectivePermissions({ member: ADMIN, members: MEMBERS, roles: [STAGIAIRE] });
+    for (const key of ORG_PERMISSION_KEYS) expect(p[key]).toBe(true);
+    expect(effectiveAssignTargets({ member: ADMIN, roles: [STAGIAIRE] })).toEqual(['everyone']);
+  });
+
+  it('portée : union des rôles actifs, prioritaire sur la surcharge', () => {
+    expect(effectiveAssignTargets({
+      member: CARL,
+      overrides: overrides('carl', { assignTargets: ['everyone'] }),
+      roles: [STAGIAIRE, CHEF],
+    })).toEqual(['self', 'subordinates']);
+  });
+
+  it('un rôle à la portée vide ne laisse assigner à personne', () => {
+    expect(effectiveAssignTargets({ member: CARL, roles: [{ grantedKeys: [], assignTargets: [] }] })).toEqual([]);
   });
 });

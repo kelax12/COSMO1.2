@@ -8,7 +8,9 @@ import { habitKeys } from '@/modules/habits/constants';
 import { withTimeout } from '@/lib/withTimeout';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
 import { recordDemoVisit, recordDemoConversionIfAny } from '@/lib/demo-metrics';
+import { resetDemoEngagementMemory } from '@/lib/demo-engagement';
 import { readFirstTouch } from '@/lib/attribution';
+import { claimAcquisitionSource } from './acquisition-claim';
 import { recordSeedLocale, seedLocaleMatchesCurrent } from '@/lib/seed-i18n';
 import {
   DEMO_SENTINEL_EMAIL,
@@ -22,7 +24,7 @@ import { User as SupabaseUser } from '@supabase/supabase-js';
 // rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
 // tamponne ce qui arrive avant le chargement.
 import * as monitoring from '@/lib/monitoring';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { translator } from '@/i18n/useT';
 import {
   readLocalCache,
@@ -237,6 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           checkOAuthLanding();
           setUser(mapSupabaseUserToAppUser(session.user));
           touchLastSeen(session.user.id);
+          claimAcquisitionSource(session.user);
           dlog('initializeAuth: calling restoreAndRefresh()');
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
           dlog('initializeAuth: restoreAndRefresh() returned');
@@ -321,6 +324,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           checkOAuthLanding();
           setUser(mapSupabaseUserToAppUser(session.user));
           touchLastSeen(session.user.id);
+          claimAcquisitionSource(session.user);
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
         }
         setIsLoading(false);
@@ -345,6 +349,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         checkOAuthLanding();
         setUser(mapSupabaseUserToAppUser(session.user));
         touchLastSeen(session.user.id);
+        // Inscription Google : `signInWithOAuth` ne porte pas la source
+        // first-touch, on la rattache ici (mig. 217, acquisition-claim.ts).
+        claimAcquisitionSource(session.user);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         // Un re-login dans le même chargement de page doit re-pinger last_seen_at.
@@ -449,6 +456,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set demo state synchronously so callers can navigate immediately
     // (existing callsites do not await this function).
     clearDemoStorage();
+    // Repli EN MÉMOIRE des compteurs de démo (sans consentement) : remis à zéro
+    // comme les clés que `clearDemoStorage()` vient d'effacer.
+    resetDemoEngagementMemory();
     appModeStore.setDemo(true);
     resetRepositories();
     queryClient.clear();

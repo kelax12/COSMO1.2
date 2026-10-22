@@ -9,7 +9,8 @@ import type { OrgMember } from '@/modules/organizations';
 import {
   timelineRange, timelineWindow, timelineWeeks, timelineMonths, timelineRows,
   timelineRowsByAssignee, todayOffsetPercent, inWindowOrUnscheduled, UNASSIGNED_ID,
-  type TimelineZoom, type TimelineMarker,
+  type TimelineZoom, type TimelineMarker, type TimelineSpan,
+  projectSpanStart,
 } from './timeline.helpers';
 import { projectColor, PRIORITY_META, formatDuration, priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
@@ -23,6 +24,10 @@ interface TeamProjectsTimelineProps {
   /** Axe des lignes : par projet (défaut) ou par personne — cf. ProjectsToolbar. */
   groupBy: 'project' | 'assignee';
   onOpenTask: (task: TeamTask) => void;
+  /** Mode sélection (actions groupées) : un clic coche la tâche au lieu de l'ouvrir. */
+  selectable?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (task: TeamTask) => void;
 }
 
 /** Largeur de colonne (label + éventuelle pastille « sans date »), alignée
@@ -41,7 +46,7 @@ const HOVER_OPEN_DELAY_MS = 120;
 const HOVER_CLOSE_DELAY_MS = 150;
 
 const zoomBtn = 'h-7 px-2 rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
-const zoomOn = 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]';
+const zoomOn = 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm';
 const zoomOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
 
 /** Ligne affichée — même gabarit qu'elle vienne d'un projet ou d'une personne. */
@@ -53,6 +58,8 @@ interface RowDescriptor {
   isUnassigned?: boolean;
   markers: TimelineMarker[];
   unscheduled: TeamTask[];
+  /** Bandeau du projet (début → fin), en mode « par projet » seulement. */
+  span?: TimelineSpan | null;
 }
 
 /**
@@ -62,8 +69,12 @@ interface RowDescriptor {
  * Volontairement PAS un Gantt — cf. l'en-tête de `timeline.helpers.ts` : sans
  * date de début sur `TeamTask`, des barres seraient de la donnée inventée.
  */
-const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }: TeamProjectsTimelineProps) => {
-  const { t, tp } = useT('org');
+const TeamProjectsTimeline = ({
+  projects, tasks, members, groupBy, onOpenTask,
+  selectable = false, selectedIds, onToggleSelect,
+}: TeamProjectsTimelineProps) => {
+  const { t } = useT('org');
+  const { t: pf, tp: tpf } = useT('portfolio');
   const [zoom, setZoom] = useState<TimelineZoom>('default');
   const [openUnscheduled, setOpenUnscheduled] = useState<string | null>(null);
   const [hoverTaskId, setHoverTaskId] = useState<string | null>(null);
@@ -116,7 +127,13 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
     setHoverTaskId(null);
   };
 
-  const fullRange = useMemo(() => timelineRange(tasks), [tasks]);
+  // « Tout » couvre aussi les dates des projets (mig. 153).
+  const fullRange = useMemo(
+    () => timelineRange(tasks, new Date(), [
+      ...projects.flatMap((p) => [projectSpanStart(p), p.dueDate]),
+    ]),
+    [tasks, projects],
+  );
   const range = useMemo(() => timelineWindow(fullRange, zoom), [fullRange, zoom]);
   const weeks = useMemo(() => timelineWeeks(range), [range]);
   const months = useMemo(() => timelineMonths(range), [range]);
@@ -135,7 +152,7 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
   /** Avatars + libellé pour la card de survol — jusqu'à 2 avatars, `+N` au-delà. */
   const assigneeSummary = (assigneeIds: string[]) => {
     const resolved = assigneeIds.map((id) => memberById.get(id)).filter((m): m is OrgMember => !!m);
-    if (resolved.length === 0) return { avatars: [] as OrgMember[], overflow: 0, label: t('projects.timelineUnassignedTask') };
+    if (resolved.length === 0) return { avatars: [] as OrgMember[], overflow: 0, label: pf('timeline.unassignedTask') };
     return {
       avatars: resolved.slice(0, 2),
       overflow: Math.max(0, resolved.length - 2),
@@ -151,7 +168,7 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
           const member = row.assigneeId === UNASSIGNED_ID ? null : memberById.get(row.assigneeId);
           return {
             key: row.assigneeId,
-            label: member ? member.displayName : t('kanban.unassigned'),
+            label: member ? member.displayName : pf('kanban.unassigned'),
             avatar: member?.avatar ?? null,
             isUnassigned: !member,
             markers: row.markers,
@@ -161,14 +178,15 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
         // Charge décroissante : la personne la plus chargée se lit en premier.
         .sort((a, b) => (b.markers.length + b.unscheduled.length) - (a.markers.length + a.unscheduled.length));
     }
-    return timelineRows(windowedTasks, projects, range).map((row) => ({
+    return timelineRows(windowedTasks, projects, range, new Date()).map((row) => ({
       key: row.project.id,
       label: row.project.name,
       dotClass: projectColor(row.project.color).dot,
       markers: row.markers,
       unscheduled: row.unscheduled,
+      span: row.span,
     }));
-  }, [groupBy, windowedTasks, projects, range, memberById, t]);
+  }, [groupBy, windowedTasks, projects, range, memberById, pf]);
 
   const minWidthPx = Math.max(MIN_WIDTH_PX, weeks.length * PX_PER_WEEK);
 
@@ -192,7 +210,7 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
           <CalendarRange size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
         </div>
         <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-          {t('projects.timelineEmpty')}
+          {pf('timeline.empty')}
         </p>
       </div>
     );
@@ -203,7 +221,7 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
       <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
         <div className="flex items-center gap-3 flex-wrap">
           <p className="text-xs text-[rgb(var(--color-text-muted))]">
-            {t('projects.timelineNotGantt')}
+            {pf('timeline.legend')}
           </p>
           {/* Légende montée UNIQUEMENT s'il existe un chemin critique : sans
               dépendance, l'anneau n'apparaît nulle part et expliquer un
@@ -230,18 +248,18 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
             Aucun n'est actif tant que rien n'a été choisi : le défaut n'est
             littéralement aucun des trois. */}
         <div
-          className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5 shrink-0"
+          className="inline-flex rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5 gap-0.5 shrink-0"
           role="group"
-          aria-label={t('projects.timelineZoomLabel')}
+          aria-label={pf('timeline.zoomLabel')}
         >
           <button type="button" onClick={() => setZoom('month')} aria-pressed={zoom === 'month'} className={`${zoomBtn} ${zoom === 'month' ? zoomOn : zoomOff}`}>
-            {t('projects.timelineZoomMonth')}
+            {pf('timeline.zoomMonth')}
           </button>
           <button type="button" onClick={() => setZoom('quarter')} aria-pressed={zoom === 'quarter'} className={`${zoomBtn} ${zoom === 'quarter' ? zoomOn : zoomOff}`}>
-            {t('projects.timelineZoomQuarter')}
+            {pf('timeline.zoomQuarter')}
           </button>
           <button type="button" onClick={() => setZoom('all')} aria-pressed={zoom === 'all'} className={`${zoomBtn} ${zoom === 'all' ? zoomOn : zoomOff}`}>
-            {t('projects.timelineZoomAll')}
+            {pf('timeline.zoomAll')}
           </button>
         </div>
       </div>
@@ -297,7 +315,7 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                 <span
                   className="absolute top-0 bottom-0 w-0.5 bg-[rgb(var(--color-accent))]"
                   style={{ left: `${todayOffset}%` }}
-                  title={t('projects.timelineToday')}
+                  title={pf('timeline.today')}
                 />
               )}
             </div>
@@ -314,7 +332,7 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                             <UserRound size={10} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
                           </span>
                         ) : (
-                          <MemberAvatar avatar={row.avatar ?? undefined} name={row.label} size={18} />
+                          <MemberAvatar avatar={row.avatar ?? undefined} name={row.label} size={20} />
                         )
                       )}
                       <span className="text-xs text-[rgb(var(--color-text-primary))] truncate">
@@ -333,16 +351,16 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                         <PopoverTrigger asChild>
                           <button
                             type="button"
-                            aria-label={t('projects.timelineUnscheduledAria', { count: row.unscheduled.length })}
+                            aria-label={pf('timeline.unscheduledAria', { count: row.unscheduled.length })}
                             className="self-start inline-flex items-center gap-1 pl-1.5 pr-2 h-[18px] rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-caption font-semibold whitespace-nowrap hover:bg-amber-500/25 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                           >
                             <CalendarOff size={10} aria-hidden="true" />
-                            {tp('projects.timelineUnscheduled', row.unscheduled.length)}
+                            {tpf('timeline.unscheduled', row.unscheduled.length)}
                           </button>
                         </PopoverTrigger>
                         <PopoverContent align="start" className="w-64 p-2">
                           <p className="text-xs font-semibold text-[rgb(var(--color-text-muted))] px-1 pb-1">
-                            {t('projects.timelineUnscheduledTitle')}
+                            {pf('timeline.unscheduledTitle')}
                           </p>
                           <ul className="max-h-56 overflow-y-auto space-y-0.5">
                             {row.unscheduled.map((task) => {
@@ -369,6 +387,20 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                   </span>
 
                   <span className="relative flex-1 h-8 rounded-lg bg-[rgb(var(--color-hover))]/60">
+                    {/* Bandeau du projet (mig. 153) : de son début à sa fin,
+                        SOUS les tâches. Seulement s'il a ses deux dates. */}
+                    {row.span && (
+                      <span
+                        className={`absolute top-0 bottom-0 rounded-lg opacity-20 ${row.dotClass ?? 'bg-slate-400'}`}
+                        style={{ left: `${row.span.startPercent}%`, width: `${Math.max(0.5, row.span.endPercent - row.span.startPercent)}%` }}
+                        role="img"
+                        aria-label={pf('timeline.projectSpan', {
+                          name: row.label,
+                          start: format(parseISO(projectById.has(row.key) ? projectSpanStart(projectById.get(row.key)!) : ''), 'd MMMM', { locale: getDateLocale() }),
+                          end: format(parseISO(projectById.get(row.key)?.dueDate ?? ''), 'd MMMM', { locale: getDateLocale() }),
+                        })}
+                      />
+                    )}
                     {row.markers.map((marker, i) => {
                       const deadline = parseISO(marker.task.deadline!);
                       const markerProject = projectById.get(marker.task.projectId);
@@ -384,6 +416,7 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                       const priority = PRIORITY_META[marker.task.priority] ?? PRIORITY_META[3];
                       const onCriticalPath = criticalIds.has(marker.task.id);
                       const assignees = assigneeSummary(marker.task.assigneeIds);
+                      const isSelected = !!selectedIds?.has(marker.task.id);
 
                       return (
                         <span
@@ -402,21 +435,32 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                             <PopoverTrigger asChild>
                               <button
                                 type="button"
-                                onClick={() => onOpenTask(marker.task)}
+                                // La card se referme au clic : elle ne doit pas rester
+                                // ouverte par-dessus la modale de la tâche (2026-10-01).
+                                onClick={() => { closeHoverNow(); if (selectable) onToggleSelect?.(marker.task); else onOpenTask(marker.task); }}
+                                aria-pressed={selectable ? isSelected : undefined}
                                 onMouseEnter={() => scheduleHoverOpen(marker.task.id)}
                                 onMouseLeave={scheduleHoverClose}
-                                onFocus={() => { cancelHoverTimer(); setHoverTaskId(marker.task.id); }}
+                                // Focus CLAVIER seulement : un clic souris donne aussi le
+                                // focus, et rouvrait la card en même temps que la modale.
+                                onFocus={(e) => { if (!e.currentTarget.matches(':focus-visible')) return; cancelHoverTimer(); setHoverTaskId(marker.task.id); }}
                                 onBlur={closeHoverNow}
-                                aria-label={t('projects.timelineMarker', {
-                                  name: marker.task.name,
-                                  date: format(deadline, 'd MMMM', { locale: getDateLocale() }),
-                                })}
+                                aria-label={
+                                  selectable
+                                    ? t('projects.selectTask', { name: marker.task.name })
+                                    : pf('timeline.marker', {
+                                        name: marker.task.name,
+                                        date: format(deadline, 'd MMMM', { locale: getDateLocale() }),
+                                      })
+                                }
                                 // Le chemin critique se signale par un ANNEAU,
                                 // pas par une couleur de pastille : la couleur
                                 // porte déjà le projet et le retard, la
                                 // surcharger rendrait les trois illisibles.
                                 className={`relative block w-3.5 h-3.5 rounded-full border-2 border-[rgb(var(--color-surface))] transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] ${dotClass} ${
-                                  onCriticalPath ? 'ring-2 ring-offset-1 ring-amber-500 ring-offset-[rgb(var(--color-surface))]' : ''
+                                  isSelected
+                                    ? 'ring-2 ring-offset-1 ring-indigo-500 ring-offset-[rgb(var(--color-surface))] scale-125'
+                                    : onCriticalPath ? 'ring-2 ring-offset-1 ring-amber-500 ring-offset-[rgb(var(--color-surface))]' : ''
                                 }`}
                               >
                                 {/* Nom en clair quand la place le permet (point 2) —

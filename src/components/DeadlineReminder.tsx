@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { translator } from '@/i18n/useT';
 import { useNavigate } from 'react-router';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useTasks } from '@/modules/tasks';
 import { isDueToday, isOverdue } from '@/lib/deadline';
 

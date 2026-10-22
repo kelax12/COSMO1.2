@@ -62,7 +62,7 @@ describe('demo-profile — une modification est réellement visible', () => {
 
 describe('demo-profile — ce qui ne doit PAS être modifiable', () => {
   it('ignore un champ hors whitelist à l’écriture', () => {
-    persistDemoProfile({ id: 'admin', premiumTokens: 999 } as never);
+    persistDemoProfile({ id: 'admin', role: 'owner' } as never);
     expect(buildDemoUser().id).toBe('demo-user');
     expect(readDemoProfile()).toEqual({});
   });

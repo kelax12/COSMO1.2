@@ -18,14 +18,30 @@ export interface TeamKeyResult {
   weight?: number;
   /** Durée estimée par unité (min) — parité avec l'OKR perso. Défaut 30. */
   estimatedTime?: number;
+  /**
+   * `tasks` : la progression se CALCULE par les tâches terminées des projets
+   * reliés (mig. 160) ; `manual` : elle se saisit. Absent = `manual`.
+   */
+  progressMode?: KRProgressMode;
+  /** Contributeurs, en plus du responsable `assigneeId` (mig. 160). */
+  contributorIds?: string[];
+  /** État du DERNIER point d'étape (mig. 160), recopié sur le KR par `post_kr_checkin`. */
+  health?: 'on_track' | 'at_risk' | 'off_track' | null;
+  healthUpdatedAt?: string | null;
 }
+
+export type KRProgressMode = 'manual' | 'tasks';
+
+/** Visibilité d'un OKR d'équipe (mig. 205). */
+export type TeamOKRAudience = 'org' | 'teams' | 'custom';
 
 export interface TeamOKR {
   id: string;
   orgId: string;
   title: string;
   description?: string;
-  category?: string;
+  /** Catégorie d'entreprise (mig. 148) — FK vers `team_categories`. null/absent = aucune. */
+  categoryId?: string | null;
   startDate?: string;
   endDate?: string;
   createdBy: string;
@@ -36,7 +52,17 @@ export interface TeamOKR {
    * les membres de ces équipes (+ leur hiérarchie) et les admins.
    */
   teamIds: string[];
+  /**
+   * Choix de visibilité fait à l'écran (mig. 205). 'custom' ajoute des
+   * personnes nommées (`memberIds`) aux équipes. Un OKR 'teams' ou 'custom'
+   * qui perd tous ses liens se referme, il ne s'ouvre jamais à l'entreprise.
+   */
+  audience?: TeamOKRAudience;
+  /** Personnes nommées d'un OKR 'custom' (mig. 205). */
+  memberIds?: string[];
   keyResults: TeamKeyResult[];
+  /** Objectif auquel celui-ci CONTRIBUE (un objectif d'entreprise, le plus souvent). */
+  parentOkrId?: string | null;
 }
 
 export interface CreateTeamKRInput {
@@ -48,6 +74,8 @@ export interface CreateTeamKRInput {
   assigneeId?: string | null;
   weight?: number;
   estimatedTime?: number;
+  progressMode?: KRProgressMode;
+  contributorIds?: string[];
 }
 
 /** Entrée de synchronisation d'un KR en édition (id présent = KR existant). */
@@ -58,21 +86,27 @@ export interface SyncTeamKRInput extends CreateTeamKRInput {
 export interface CreateTeamOKRInput {
   title: string;
   description?: string;
-  category?: string;
+  categoryId?: string | null;
   startDate?: string;
   endDate?: string;
   /** [] ou absent = objectif d'entreprise (toutes équipes). */
   teamIds?: string[];
+  audience?: TeamOKRAudience;
+  memberIds?: string[];
   keyResults: CreateTeamKRInput[];
+  parentOkrId?: string | null;
 }
 
 export interface UpdateTeamOKRInput {
   title?: string;
   description?: string;
-  category?: string;
+  categoryId?: string | null;
   startDate?: string;
   endDate?: string;
   teamIds?: string[];
+  audience?: TeamOKRAudience;
+  memberIds?: string[];
+  parentOkrId?: string | null;
 }
 
 export interface UpdateTeamKRInput {
@@ -84,4 +118,18 @@ export interface UpdateTeamKRInput {
   completed?: boolean;
   weight?: number;
   estimatedTime?: number;
+  progressMode?: KRProgressMode;
+  contributorIds?: string[];
+}
+
+/**
+ * Objectif à la corbeille (mig. 193) : intitulé et métadonnées de suppression
+ * seulement. Le contenu revient avec la restauration, jamais avant.
+ */
+export interface TrashedTeamOKR {
+  id: string;
+  title: string;
+  deletedAt: string;
+  deletedBy: string | null;
+  createdBy: string | null;
 }

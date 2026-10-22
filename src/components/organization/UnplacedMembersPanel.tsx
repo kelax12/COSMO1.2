@@ -13,7 +13,7 @@
 //
 // Extrait le 2026-09-05 (C-09).
 // ═══════════════════════════════════════════════════════════════════
-import { UserPlus, GripVertical } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
@@ -42,50 +42,65 @@ const UnplacedMembersPanel = ({
   draggingId,
   isDragging = false,
 }: UnplacedMembersPanelProps) => {
-  const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
 
   if (members.length === 0) return null;
 
   if (variant === 'section') {
     return (
-      <section className="rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4">
-        <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1 inline-flex items-center gap-1.5">
-          <UserPlus size={15} aria-hidden="true" /> {t('pyramid.unplaced', { count: members.length })}
+      <>
+      {/* Maquette 271 : sur mobile, une ligne plutôt qu'une carte ambre. */}
+      <div className="md:hidden flex items-center gap-2 py-2 border-b border-[rgb(var(--color-border))] text-label">
+        <span className="flex-1 min-w-0 truncate text-[rgb(var(--color-text-secondary))]">
+          {ta('pyramid.unplaced', { count: members.length })} · {members.map((m) => m.displayName).join(', ')}
+        </span>
+        {isAdmin && (
+          <button type="button" onClick={() => onPlace(members[0])} className="shrink-0 min-h-touch px-1 font-semibold text-[rgb(var(--color-accent))]">
+            {ta('pyramid.place')}
+          </button>
+        )}
+      </div>
+      <section data-guide-id="pyramid-unplaced" className="max-md:hidden rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4">
+        <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1">
+          {ta('pyramid.unplaced', { count: members.length })}
         </h3>
         <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
-          {isAdmin ? t('pyramid.unplacedHintAdmin') : t('pyramid.unplacedHintMember')}
+          {isAdmin ? ta('pyramid.unplacedHintAdmin') : ta('pyramid.unplacedHintMember')}
         </p>
         <div className="flex flex-wrap gap-2">
           {members.map((m) => (
             <div key={m.userId} className="flex items-center gap-2 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2">
-              <MemberAvatar avatar={m.avatar} name={m.displayName} size={30} />
+              <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
               <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{m.displayName}</span>
               {isAdmin && (
                 <button
                   type="button"
                   onClick={() => onPlace(m)}
+                  data-guide-item
                   className="ml-1 text-xs font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
                 >
-                  {t('pyramid.place')}
+                  {ta('pyramid.place')}
                 </button>
               )}
             </div>
           ))}
         </div>
       </section>
+      </>
     );
   }
 
   return (
     <aside
+      data-guide-id="pyramid-unplaced"
       className="w-60 shrink-0 sticky top-4 rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4"
-      aria-label={t('pyramid.toPlaceAria')}
+      aria-label={ta('pyramid.toPlaceAria')}
     >
-      <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1 inline-flex items-center gap-1.5">
-        <UserPlus size={15} aria-hidden="true" /> {t('pyramid.toPlace', { count: members.length })}
+      <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1">
+        {ta('pyramid.toPlace', { count: members.length })}
       </h3>
       <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
-        {isAdmin ? t('pyramid.dragEachHint') : t('pyramid.unplacedHintMember')}
+        {isAdmin ? ta('pyramid.dragEachHint') : ta('pyramid.unplacedHintMember')}
       </p>
       <ul className="space-y-2">
         {members.map((m) => {
@@ -104,7 +119,7 @@ const UnplacedMembersPanel = ({
                     : undefined
                 }
                 style={isAdmin ? { touchAction: 'none' } : undefined}
-                title={isAdmin ? t('pyramid.dragHint', { name: m.displayName }) : undefined}
+                title={isAdmin ? ta('pyramid.dragHint', { name: m.displayName }) : undefined}
                 className={`flex items-center gap-2 rounded-xl border bg-[rgb(var(--color-surface))] px-2.5 py-2 transition-colors ${
                   isBeingDragged
                     ? 'border-indigo-400 ring-2 ring-indigo-400/30 opacity-40'
@@ -122,9 +137,10 @@ const UnplacedMembersPanel = ({
                   <button
                     type="button"
                     onClick={() => onPlace(m)}
+                    data-guide-item
                     className="text-[11px] font-semibold text-indigo-500 hover:text-indigo-600 transition-colors shrink-0"
                   >
-                    {t('pyramid.place')}
+                    {ta('pyramid.place')}
                   </button>
                 )}
               </div>

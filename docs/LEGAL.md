@@ -1,7 +1,22 @@
+<!-- note-audit: non-note -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — 🔴 **NON NOTÉ, et c'est le plus coûteux des douze.** Ce document porte les obligations dont le non-respect se paie le plus cher (TVA, droit de la consommation, marque, sous-traitants), et il ne peut donc ni monter ni baisser : **rien ne signale qu'il a vieilli**. Lui inventer une note sans auditer le domaine serait un chiffre faux dans le document qu'on produit en contrôle. Ouvrir cet audit est un geste, pas du code.
+
 # LEGAL.md — obligations légales de COSMO
 
 > **Vivant.** Établi le 2026-08-26 à partir de l'état réel du code, de la base et des comptes
-> Stripe et Supabase. Décrit la situation courante, pas une cible.
+> Stripe et Supabase. Décrit la situation courante, pas une cible. **Repassé le 2026-09-14** sur
+> le seul point de la chaîne de paiement entreprise (§ État au 2026-09-14 et ligne E9) : la
+> facturation est désarmée, vérifiée en base. Les autres sections n'ont pas été revérifiées à
+> cette date et portent encore le statut du 2026-08-26.
 
 > 🔴 **Ce document n'est pas un avis juridique.** Il est rédigé par un assistant, pas par un
 > avocat ni un expert-comptable. Il sert à ne rien oublier et à savoir quoi demander. Aucune
@@ -13,6 +28,103 @@
 · [Au premier euro](#3-au-premier-euro-encaissé) · [Droit de la consommation](#4-droit-de-la-consommation)
 · [Produit et marque](#5-produit-marque-et-dépendances) · [Sous-traitants](#6-sous-traitants-et-transferts)
 · [Garde-fous](#-garde-fous-techniques) · [**Ce sur quoi tu es engagé**](#-ce-sur-quoi-tu-es-engagé) · [Annexe art. 32](#annexe--mesures-techniques-et-organisationnelles-art-32) · [Décisions ouvertes](#décisions-encore-ouvertes)
+
+---
+
+
+## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
+
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
+>
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
+>
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
+
+
+> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
+> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
+> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
+>
+> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
+> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
+> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
+> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
+> sans que rien ne vérifie**.
+>
+> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
+> **reconduit avec sa date**, jamais ne se recopie.
+
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+|---|---|---|---|
+| AM-1 | 🔴 **`npm run check:legal` vérifie l'ARITHMÉTIQUE du tableau, jamais la CONFORMITÉ.** Il recompte les lignes et refuse un total faux, parce que ce total l'a été trois fois dans la même journée. Mais **une ligne marquée ✅ à tort laisse la garde verte** : rien ne confronte une ligne à la réalité | en-tête de `scripts/check-legal-table.mjs` : « Garde du tableau de conformité », sur le **bloc de synthèse** | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:legal-journal` · une ligne ✅ doit porter une **date** (`C-107`) — 🔴 ne prouve PAS : 🔴 **la CONFORMITÉ.** Une ligne ✅ à tort **et datée** reste verte. 1ʳᵉ exécution : `C10` était la seule sans date, et sa relecture a trouvé une affirmation **fausse** |
+| AM-2 | **Les échéances légales ne sont surveillées par rien.** 15 lignes sont ❌ au tableau ; aucune ne porte de date butoir opposable dans un outil | tableau : ✅ 13 · 🟡 13 · ❌ 15 · ⬜ 5 | ✅ **OUTILLÉ le 2026-09-20** · cliquet à **21 lignes datées** (`C-107`) — 🔴 ne prouve PAS : idem AM-1 : la traçabilité, jamais le fond |
+| AM-3 | **Rien ne relie une modification des documents contractuels à leur préavis de 30 jours.** Les CGU, la politique de confidentialité et les mentions légales vivent dans le namespace `legal` : une modification de fond est un **changement de contrat**, et le préavis de l'article 11 ne se déclenche pas tout seul | `src/locales/{fr,en}/legal.json` est un catalogue i18n ordinaire pour la CI | ✅ **OUTILLÉ le 2026-09-20** · `docs/LEGAL-JOURNAL.md` + empreinte de `src/locales/{fr,en}/legal.json` exigée à chaque modification (`C-107`) — 🔴 ne prouve PAS : que le préavis de 30 jours de l'article 11 ait été servi : le journal date le changement, il ne notifie personne |
+| AM-4 | **Ce document n'a pas de note**, donc il ne peut ni monter ni baisser, alors qu'il porte les obligations dont le non-respect coûte le plus cher | absent du tableau de bord de [`README.md`](./README.md) | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:docs-scored` (`C-109`) — 🔴 ne prouve PAS : ⚠️ `LEGAL.md` reste **le plus coûteux des onze** documents non notés : `non-note` OUVRE un audit, il ne le remplace pas |
+
+---
+
+## 🔎 Audit du 2026-10-13 · « si je déploie maintenant »
+
+> Repart du **produit publié** (textes, code client, Edge Functions, workflows), pas de ce tableau.
+> Toujours pas un avis juridique.
+
+**Trouvé et corrigé le jour même** :
+
+- 🔴 **Violation de données** : les sauvegardes quotidiennes de la base partaient en clair en
+  artefacts GitHub d'un dépôt public. Chiffrées avant dépôt (`8c6a971d`), anciennes copies
+  supprimées, nouvelle sauvegarde chiffrée vérifiée. Registre tenu **hors dépôt** (dossier privé
+  d'Axel), procédure : [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md). Lignes A7, A9.
+- Deux traceurs et deux compteurs posés sans consentement, bandeau inexact (A4).
+- Inscription Google depuis l'écran de connexion sans mention des CGU (A11, E10).
+- Politique de confidentialité inexacte sur Sentry, les transferts, les durées (A2, A15).
+- Mentions légales : clause d'irresponsabilité, adresse de Vercel (A3).
+- Identité de l'éditeur et garantie de conformité absentes des CGU (E14) ; clauses 9 et 12 (E11).
+- FAQ et article comparatif (F10) ; notice d'adhésion entreprise incomplète (F10).
+- Sentry recevait les jetons d'invitation et codes OAuth des adresses de page (A9).
+- Liens vers les documents légaux absents de l'application connectée (LCEN) : ajoutés dans
+  Paramètres, onglet « Mes données ».
+- Pied d'e-mail d'invitation : information art. 14 pour la personne invitée.
+- `public/ads.txt` (éditeur AdSense) supprimé.
+
+**Ce qui n'appartient qu'à Axel**, par ordre d'urgence : [`a-faire-manuel.md`](../a-faire-manuel.md) § 11.
+
+---
+
+## 🔎 Audit du 2026-09-24 · confrontation aux textes, pas à ce document
+
+> Première passe qui part du **produit publié** (textes réels de `legal.json`, formulaire
+> d'inscription, bandeau, Edge Functions) et non de ce tableau, dont 44 lignes n'avaient pas été
+> revérifiées depuis le 2026-08-26. **Seize manques n'y figuraient pas.** Toujours pas un avis
+> juridique.
+
+**Corrigé le jour même, dans le code et les textes** : A4 (retrait et expiration du
+consentement), A11 et E10 (CGU et politique présentées à l'inscription), A12 (âge), A13 (clause
+de sous-traitance), A14 (post mortem), E11 (clauses abusives), E12 (formulaire de rétractation),
+F7 (signalement DSA), F8 (clause d'export), F9 (notices open source), A2 et A1 (Resend et Turnstile déclarés, textes
+périmés retirés), et la ligne « anonymise » des engagements, restée fausse depuis le 2026-09-02.
+Détail des clauses : [`LEGAL-JOURNAL.md`](./LEGAL-JOURNAL.md) § 2026-09-24.
+
+**Ce qui n'appartient qu'à Axel**, par ordre d'urgence :
+
+| # | Geste | Pourquoi maintenant |
+|---|---|---|
+| 1 | Mettre son **nom** comme éditeur, directeur de la publication (mentions légales) et responsable de traitement (politique, section 1) | A2, A3 : exigible sans structure, et le registre le nomme déjà dans un dépôt public |
+| 2 | Envoyer le **préavis de 30 jours** des CGU aux comptes existants (clauses 3.3, 6.3, 9) | CGU art. 11 : sans lui, ces trois clauses ne sont pas opposables aux inscrits d'avant le 2026-09-24 |
+| 3 | Accepter le DPA **Sentry**, vérifier le plan **Vercel**, obtenir celui de **Resend** | A5, A6 |
+| 4 | Trouver et publier le **téléphone** des hébergeurs | A3 (LCEN 6-III-1) |
+| 5 | Consulter un conseil en propriété industrielle sur **COSMO** | F1, F2 |
+| 6 | Faire relire les CGU (6.3 surtout) et qualifier le **Data Act** | E11, A13, F8 |
+
+**Dormant, à régler avant de réarmer la facturation** : E4 (médiateur), E13 (bouton de
+rétractation), E5 (portail de résiliation), et tout le bloc B à D. Le lien vers la plateforme
+européenne de règlement en ligne des litiges n'est **plus** exigé : elle a fermé le 20/07/2025.
 
 ---
 
@@ -66,14 +178,19 @@ limité. Ce n'est pas la même dépense qu'une mission annuelle.
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
 | A1 | Registre des activités de traitement (art. 30) | ✅ | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md), établi le 2026-08-26. **Dix traitements** organisés par finalité comme l'exige l'article, pas par table, sur les 47 tables applicatives réellement présentes en base. Chacun porte sa base légale, ses destinataires, sa durée et son cloisonnement. Il manque les DPA (A5), et le registre le dit. |
-| A2 | Politique de confidentialité (art. 12 à 14) | ✅ | Complétée le 2026-08-26. Trois trous comblés : **Sentry et Vercel Analytics** étaient absents de la liste des sous-traitants, une section **7 bis sur les transferts hors UE** manquait entièrement (art. 13.1.f), et la section Cookies affirmait que Vesk ne requiert pas de consentement, phrase devenue **fausse** depuis A4. **Reprise le 2026-09-01** : la politique affirmait encore « Vesk n'écrit rien sur votre appareil » et rangeait la mesure d'audience sous l'**intérêt légitime**, alors que le script dépose un identifiant persistant en `localStorage` et que la base retenue est le **consentement** — deux sections du même document se contredisaient. La section Cookies distingue désormais ce qui est strictement nécessaire de ce qui n'est déposé qu'après acceptation, et les pages exclues de la mesure sont nommées. Détail : `faille.md` § V-1. Délai de réponse aligné sur « un mois » (art. 12) au lieu de 30 jours. |
-| A3 | Mentions légales (LCEN art. 6-III) | 🟡 | `MentionsLegalesPage.tsx` existe, avec email éditeur et les deux hébergeurs. Manque l'identité complète, à ajouter **après immatriculation** (dénomination, SIREN, RCS, TVA, directeur de publication). |
-| A4 | Consentement aux traceurs (art. 82) | ✅ | Corrigé le 2026-08-26. Un store unique (`src/lib/cookie-consent.ts`) conditionne les **trois** surfaces : le script Vesk (`audience.ts`), `<Analytics />` de Vercel (`App.tsx`) et le bandeau. Rien ne se charge tant que la réponse n'est pas donnée, `null` n'étant pas une acceptation tacite ; accepter monte la mesure sans rechargement ; refuser ne la monte jamais. 5 tests dédiés. |
-| A5 | Contrats de sous-traitance (art. 28) | ❌ | Aucun DPA collecté ni archivé. Voir §6 pour la liste. |
+| A2 | Politique de confidentialité (art. 12 à 14) | ✅ | ✅ **Repassé au vert le 2026-10-13** (audit juridique) : la politique NIAIT que l'identifiant du compte parte chez Sentry (il part, `monitoring.setUser`), omettait l'origine des inscriptions, l'identifiant de démo, la finalité des jours de connexion, les invitations par e-mail, GitHub, Stripe, Google et Supabase Inc. dans les transferts, et ne bornait pas la durée d'un compte abandonné. Tout est désormais décrit ; durées ajoutées (comptes inactifs 3 ans, bugs 12 mois, sauvegardes 30 jours). ⚠️ La suppression des comptes inactifs est annoncée mais **pas encore automatisée** (A15). 🔴 **Redescendu à 🟡 le 2026-09-24.** Reprise ce jour : Resend et Cloudflare Turnstile ajoutés aux destinataires et aux transferts, « statut Premium, tokens » et « messagerie » retirés (fonctionnalités inexistantes), données de l'espace entreprise et signalements de bug décrits, directives post mortem (loi I&L art. 85), âge de 15 ans, retrait du consentement. ❌ **Reste** : le responsable de traitement est « l'équipe Cosmo », ce qui n'identifie personne (art. 13.1.a), alors que le registre nomme Axel Longatte. Geste d'Axel. Historique : complétée le 2026-08-26. Trois trous comblés : **Sentry et Vercel Analytics** étaient absents de la liste des sous-traitants, une section **7 bis sur les transferts hors UE** manquait entièrement (art. 13.1.f), et la section Cookies affirmait que la mesure tierce ne requiert pas de consentement, phrase devenue **fausse** depuis A4. **Reprise le 2026-09-01** : la politique affirmait encore que la mesure tierce n'écrivait rien sur l'appareil et rangeait la mesure d'audience sous l'**intérêt légitime**, alors que le script dépose un identifiant persistant en `localStorage` et que la base retenue est le **consentement** — deux sections du même document se contredisaient. La section Cookies distingue désormais ce qui est strictement nécessaire de ce qui n'est déposé qu'après acceptation, et les pages exclues de la mesure sont nommées. Détail : `faille.md` § V-1. Délai de réponse aligné sur « un mois » (art. 12) au lieu de 30 jours. |
+| A3 | Mentions légales (LCEN art. 6-III) | 🟡 | **2026-10-13** : adresse de Vercel mise à jour (Covina), clause « ne saurait être tenu responsable des dommages directs ou indirects » **supprimée** (clause noire, contraire aux CGU art. 9), propriété des contenus attribuée à l'éditeur. ❌ Restent l'**adresse (domicile) et le téléphone de l'éditeur** (LCEN art. 1-1, ex-6-III depuis la loi SREN du 21/05/2024) et le téléphone des hébergeurs : sans immatriculation ni domiciliation, la seule voie est de publier le domicile. ✅ **2026-10-10 : éditeur et directeur de la publication nommés (Axel Longatte), responsable de traitement aussi (A2)**, entrée de `LEGAL-JOURNAL.md`. ❌ Restent SIREN, RCS, TVA, adresse (après `M-01`/`M-02`) et téléphone des hébergeurs (`M-65`). 🔴 **Dégradé le 2026-09-24.** « Dénomination : Cosmo » n'est ni une personne ni une société, et le directeur de la publication est « L'équipe Cosmo », alors que la loi de 1982 (art. 93-2) exige une personne physique. Les CGU annonçant des forfaits payants, l'activité se présente comme professionnelle : l'anonymat du non-professionnel (LCEN 6-III-2) n'est pas ouvert. **Le nom d'Axel est exigible dès maintenant, sans attendre l'immatriculation.** Le téléphone des hébergeurs manque aussi (6-III-1), aucun numéro public trouvé le 2026-09-24. Corrigé ce jour : juridiction du consommateur (s5), localisation AWS Irlande. Historique : `MentionsLegalesPage.tsx` existe, avec email éditeur et les deux hébergeurs. Manque l'identité complète, à ajouter **après immatriculation** (dénomination, SIREN, RCS, TVA, directeur de publication). |
+| A4 | Consentement aux traceurs (art. 82) | ✅ | 🔴 **Ce ✅ était faux jusqu'au 2026-10-13.** Deux traceurs étaient posés SANS consentement et finissaient rattachés au compte : l'identifiant d'appareil de la démo (`cosmo_demo_device_id`, mig. 055) et la source d'acquisition (`cosmo_first_touch`, mig. 097/217), plus deux compteurs locaux de la démo. Le bandeau affirmait qu'un refus s'en tenait au strict nécessaire. **Corrigé le 2026-10-13** : rien n'est écrit ni envoyé sans « Accepter » (source gardée en mémoire puis posée à l'acceptation, compteurs en mémoire), tout est effacé au refus, et une valeur posée avant le correctif n'est jamais rattachée. Tests : `attribution.test.ts`, `demo-metrics.test.ts`, `demo-engagement.test.ts`, `acquisition-claim.test.ts`. **Complété le 2026-09-24 : le RETRAIT n'existait pas.** Une fois « Accepter » cliqué, rien ne rouvrait le bandeau, et la politique disait « effacez les données du site » (RGPD art. 7.3 : retirer doit être aussi simple que donner). « Gérer les cookies » est désormais dans le pied de page, les Paramètres et la politique ; refuser après avoir accepté efface `_a_cid`, `_a_sid`, `_a_sact` et recharge la page. Le choix expire au bout de six mois (`cosmo_cookie_consent_at`, recommandation CNIL). En réouverture, la croix ne retire pas un accord en silence. Tests : `cookie-consent.test.ts`. Historique : corrigé le 2026-08-26. Un store unique (`src/lib/cookie-consent.ts`) conditionne les surfaces : `<Analytics />` de Vercel (`App.tsx`) et le bandeau (le script de mesure tiers est débranché depuis le 2026-10-18). Rien ne se charge tant que la réponse n'est pas donnée, `null` n'étant pas une acceptation tacite ; accepter monte la mesure sans rechargement ; refuser ne la monte jamais. 5 tests dédiés. |
+| A5 | Contrats de sous-traitance (art. 28) | 🟡 | **2026-10-13** : ⚠️ l'idée qu'un DPA « ne s'obtient qu'en tant qu'entreprise » est **fausse pour Sentry** (le propriétaire du compte l'accepte en deux minutes). **Vercel** : l'équipe porte le nom par défaut d'un compte personnel, plan probablement Hobby (non commercial, sans DPA), à vérifier. ⚠️ **Au 2026-09-24, la liste compte deux sous-traitants de plus que ce relevé** : Resend (e-mails de service) et Cloudflare Turnstile (si activé), jamais recensés jusqu'ici. **Vérifié pour les 3 sous-traitants critiques le 2026-09-14** (lecture des DPA publics, pas déduit). Détail : § « DPA des sous-traitants — vérifié le 2026-09-14 » sous le tableau F. |
 | A6 | Transferts hors UE (chap. V) | 🟡 | ✅ Supabase en `eu-west-1`, donc dans l'Union, et l'**information** due à la personne est faite (section 7 bis de la politique, art. 13.1.f). ❌ Reste la **preuve contractuelle** : les clauses types vivent dans les DPA de Vercel et Sentry, qu'il faut accepter et archiver en tant qu'entreprise. Dépend donc de A5, donc de l'immatriculation. |
 | A7 | Notification de violation sous 72 h (art. 33) | ✅ | [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md), rédigée **à froid** le 2026-08-26. Qualification des trois types d'atteinte, six heures de marche à suivre, arbre de décision de notification, sources à consulter, et registre des violations (obligatoire même sans notification, art. 33.5). Recense trois manques réels : pas d'astreinte, pas d'exercice de restauration, pas de DPA pour être alerté d'une violation chez un sous-traitant. |
 | A8 | Droits des personnes (art. 15 à 22) | ✅ | Complété le 2026-08-26. L'export ne couvrait que tâches, habitudes, événements et OKR : **profil, catégories et listes manquaient**, alors que le nom et l'adresse sont les données les plus évidemment « fournies par la personne ». Sept fichiers désormais, et le périmètre exact est annoncé dans la politique. Effacement par `delete-account`. Délai d'un mois documenté, prolongation de deux mois prévue. |
-| A9 | Sécurité du traitement (art. 32) | ✅ | Mesures formalisées en [annexe](#annexe--mesures-techniques-et-organisationnelles-art-32), limites comprises. Vérifiées dans `vercel.json`, `src/main.tsx` et les migrations. Formalisé le 2026-08-26. |
+| A9 | Sécurité du traitement (art. 32) | 🟡 | 🔴 **Redescendu à 🟡 le 2026-10-13.** Les sauvegardes quotidiennes de la base partaient EN CLAIR en artefacts GitHub d'un dépôt public, téléchargeables par tout compte GitHub (violation de données, registre privé hors dépôt). Corrigé le jour même : chiffrement avant dépôt (`8c6a971d`), anciennes sauvegardes supprimées. Restent : révoquer les sessions et changer le mot de passe de la base (gestes d'Axel). Sentry : jetons retirés des adresses de page (`src/lib/sentry-scrub.ts`). Mesures formalisées en [annexe](#annexe--mesures-techniques-et-organisationnelles-art-32), limites comprises. Vérifiées dans `vercel.json`, `src/main.tsx` et les migrations. Formalisé le 2026-08-26. |
+| A11 | Information au point de collecte (art. 13) | ✅ | 🔴 **Partiellement faux jusqu'au 2026-10-13** : le bouton « Continuer avec Google » est aussi rendu en mode CONNEXION, où la mention n'existait pas, alors que 6 inscriptions sur 7 passent par Google. Corrigé : une mention dédiée en mode connexion (`auth.legalConsentLogin`), test `AuthForm.legal.test.tsx`. **Corrigé le 2026-09-24.** Le formulaire d'inscription (`AuthForm.tsx`) ne montrait **ni** la politique **ni** les CGU. Une phrase sous le bouton, en mode inscription, les lie toutes deux (nouvel onglet, pour ne pas perdre la saisie dans la modale) et couvre aussi l'inscription par Google. |
+| A12 | Mineurs (RGPD art. 8, loi I&L art. 45) | ✅ | **Posé le 2026-09-24** : âge minimum de 15 ans dans les CGU (3.3) et accord parental conjoint pour la mesure d'audience en dessous (politique, section 5). Aucun contrôle d'âge technique, ce qui est l'usage pour un service non destiné aux enfants. |
+| A13 | COSMO sous-traitant des organisations clientes (art. 28) | 🟡 | **Clause posée le 2026-09-24** (CGU 6.3), qui couvre les huit éléments de l'art. 28.3. Le mode entreprise traite des données de salariés pour le compte de l'employeur (activité, vélocité, commentaires), et **aucune clause ne le disait** jusqu'ici. Reste : relecture juridique, et un DPA séparé et signable, que réclamera un acheteur B2B. Préavis de 30 jours dû (cf. `LEGAL-JOURNAL.md`). |
+| A14 | Directives post mortem (loi I&L art. 85) | ✅ | **Ajouté à la politique le 2026-09-24** (section 8). Absent jusqu'ici, alors que c'est une mention propre au droit français. |
+| A15 | Durée de conservation des comptes inactifs (art. 5.1.e) | 🟡 | **Posé le 2026-10-13** dans la politique : un compte sans connexion pendant 3 ans est supprimé après un e-mail d'avertissement 30 jours avant. Jusqu'ici, un compte abandonné était gardé sans limite. ❌ Le traitement qui l'applique n'existe pas : à construire avant le premier anniversaire de 3 ans (2029 au plus tôt). |
 | A10 | Analyse d'impact (art. 35) | ⬜ | Probablement non requise pour ce traitement. À confirmer, et à réexaminer si des agents IA traitent du contenu utilisateur. |
 
 ### B. Structure juridique — **se déclenche à la création**
@@ -100,7 +217,7 @@ limité. Ce n'est pas la même dépense qu'une mission annuelle.
 | C7 | Facturation électronique | ❌ | ⚠️ Calendrier décalé plusieurs fois. Chantier plus lourd que C9. |
 | C8 | Guichet OSS (ventes B2C dans l'UE) | ⬜ | Sans objet tant que le marché reste français. Se déclenche au-delà de 10 000 € de ventes numériques à des consommateurs européens. |
 | C9 | Conformité du logiciel d'encaissement | ✅ | Journal append-only livré le 2026-08-26 (**mig. 125, appliquée en prod**). **I** : trigger `BEFORE UPDATE OR DELETE` qui lève, choisi plutôt que la RLS parce que `service_role` contourne la RLS mais pas les triggers. **S** : chaînage de hash SHA-256, `verify_payment_chain()` détecte toute altération. **C** : aucune purge possible par construction. **A** : `seal_payment_period()` fige un total mensuel, et refuse le mois en cours. Webhook câblé et redéployé. Prouvé en transaction annulée : UPDATE bloqué, DELETE bloqué, rejeu bloqué, falsification détectée. |
-| C10 | Conservation des pièces | ✅ | Garantie **par construction** depuis la mig. 125 : le journal n'accepte ni UPDATE ni DELETE, donc aucune purge ne peut l'atteindre, RGPD comprise. La migration porte le garde-fou explicite : le droit à l'effacement cède devant l'obligation de conservation (RGPD art. 17.3.b), une purge de compte doit **anonymiser** `user_id`, jamais supprimer la ligne. |
+| C10 | Conservation des pièces | ✅ | **Vérifié le 2026-09-20**, en relisant `supabase/migration/125_payment_journal_inalterable.sql`. Garantie **par construction** : `trg_forbid_payment_mutation` et `trg_forbid_closure_mutation` sont des triggers `BEFORE UPDATE OR DELETE` qui lèvent (« journal append-only : ni UPDATE ni DELETE. Pour corriger, inserer une ligne compensatoire »). C'est un TRIGGER et pas la RLS, parce que `service_role` contourne la RLS et pas les triggers. Le droit à l'effacement cède devant l'obligation de conservation (RGPD art. 17.3.b). 🔴 **Cette ligne disait « une purge doit anonymiser `user_id` » — c'est FAUX et inapplicable**, corrigé ici le 2026-09-20 pour s'aligner sur `CLAUDE.md` § Journal fiscal, qui l'a redressé le 2026-09-02 : `row_hash` scelle `user_id` dans le chaînage et `verify_payment_chain()` recalcule chaque hash depuis les colonnes, donc écrire NULL casserait la chaîne et produirait le signal de falsification qu'on montre à un contrôleur. Le trigger refuse d'ailleurs l'UPDATE. Ce qui rend la conservation acceptable est ailleurs : `user_id` cesse d'identifier quiconque dès que la ligne `auth.users` disparaît. `delete-account` ne touche donc PAS cette table. |
 | C11 | Comptabilité (livre des recettes ou complète) | 🟡 | **Livre des recettes** seul, conséquence du régime micro. Le journal d'encaissement (C9) en fournit désormais la matière, horodatée et scellée. Reste à tenir le registre lui-même après immatriculation. |
 | C12 | Déclarations fiscales annuelles | ❌ | Selon la forme retenue en B1. |
 
@@ -122,22 +239,46 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | E2 | Information précontractuelle | ✅ | Ajoutée le 2026-08-26 au-dessus des cases de consentement, là où le regard se pose avant l'engagement, et non seulement dans des CGU que personne n'ouvre : durée indéterminée, prix TTC, reconduction automatique, résiliation sans motif ni frais. Le montant exact est porté par la carte de palier juste en dessous. |
 | E3 | Rétractation 14 jours et double consentement | ✅ | Implémenté le 2026-08-26 dans `OrgBillingTab` : **deux cases distinctes**, jamais pré-cochées, demande expresse d'exécution immédiate **et** reconnaissance de renonciation. Sans les deux, `onSelect` n'est pas monté, donc aucun paiement ne peut être engagé. Recueilli côté COSMO et non via `consent_collection` de Stripe, qui exige une URL de CGV au Dashboard dont l'absence ferait **échouer** la création de session. CGU alignées (section 5 bis). |
 | E4 | Médiateur de la consommation | ❌ | Adhésion **payante et obligatoire**, coordonnées à publier dans les CGV et sur le site. Oubli classique, sanctionné par la DGCCRF. |
-| E5 | Résiliation en ligne (L215-1-1) | ❌ | 🔴 **Dégradé de 🟡 à ❌ le 2026-08-26 après vérification.** `/v1/billing_portal/configurations` renvoie **vide sur les DEUX comptes**, test et live : le portail client n'a jamais été configuré. `stripe-org-portal` ne passe aucun `configuration`, il compte donc sur un défaut inexistant, et Stripe refuse de créer la session tant que les réglages n'ont pas été enregistrés au Dashboard. La fonction porte d'ailleurs déjà l'alerte « customer cannot manage or cancel ». **Le bouton existe, la résiliation ne marche pas.** Correctif : Dashboard Stripe → Settings → Billing → Customer portal, activer l'annulation d'abonnement, enregistrer, sur les deux comptes. Non faisable par API depuis ici. |
+| E5 | Résiliation en ligne (L215-1-1) | ❌ | 🔴 **Dégradé de 🟡 à ❌ le 2026-08-26 après vérification.** `/v1/billing_portal/configurations` renvoie **vide sur les DEUX comptes**, test et live : le portail client n'a jamais été configuré. `stripe-org-portal` ne passe aucun `configuration`, il compte donc sur un défaut inexistant, et Stripe refuse de créer la session tant que les réglages n'ont pas été enregistrés au Dashboard. La fonction porte d'ailleurs déjà l'alerte « customer cannot manage or cancel ». **Le bouton existe, la résiliation ne marche pas.** Correctif : Dashboard Stripe → Settings → Billing → Customer portal, activer l'annulation d'abonnement, enregistrer, sur les deux comptes. Non faisable par API depuis ici. ⚠️ **Dormant depuis le 2026-09-14** (`ENTERPRISE_BILLING_ENFORCED = false`, vérifié en base) : aucun abonnement Stripe n'existe, donc personne ne peut se heurter à ce défaut aujourd'hui. Le défaut lui-même n'a pas été corrigé — voir § État au 2026-09-14. |
 | E6 | Information de reconduction tacite | 🟡 | Construit et **déployé** le 2026-08-26. Mig. 126 appliquée (`renewal_notices`, clé primaire `(org_id, period_end)` qui rend l'envoi idempotent) + Edge Function `renewal-notice` + workflow CI quotidien. Fenêtre J+30 à J+60, dans les bornes légales de 1 à 3 mois. Preuve enregistrée **après** l'envoi, jamais avant. ⚠️ **Passe au vert quand deux secrets sont posés** : `CRON_SECRET` (Supabase et GitHub) et `RESEND_API_KEY`. Sans eux la fonction refuse tout appel, en échec fermé. |
 | E7 | Affichage des prix TTC | ✅ | Les 8 prix live sont en `tax_behavior: inclusive`, et la mention « Tous les prix sont affichés TTC » est rendue sous la grille publique (`PricingSection.tsx`) **et** sous la grille produit (`OrgBillingTab.tsx`), en fr et en en. Corrigé le 2026-08-26. |
 | E8 | Bouton de commande explicite | 🟡 | `custom_text.submit.message` ajouté dans `stripe-org-checkout` le 2026-08-26 : « commande avec obligation de paiement », reconduction et résiliation annoncées avant le clic. `submit_type` n'existe pas en `mode: 'subscription'`, le libellé du bouton Stripe n'est donc pas réécrivable. ⚠️ **Passe au vert au redéploiement de la fonction**, la prod tourne encore sur l'ancienne version. |
-| E9 | Garantie de conformité du service numérique | 🟡 | Audit fait le 2026-08-26 sur les 216 chaînes du parcours entreprise. **Bonne nouvelle** : aucune intégration inexistante n'est promise (ni SSO, ni API, ni Slack), et les réponses de la FAQ sur le cloisonnement et le non-retrait de membres sont exactes. **Deux promesses non tenues** : `pricing.i5` « résiliable à tout moment » et `hero.reassurance` « réversible à tout moment », alors que la résiliation ne fonctionne pas (E5). Le correctif est E5, pas un retrait de la phrase. |
+| E10 | Opposabilité des CGU (C. civ. art. 1119) | ✅ | **2026-10-13** : même trou qu'A11 (inscription Google depuis l'écran de connexion), corrigé le même jour. Les comptes créés ainsi avant cette date n'ont pas vu les CGU : le préavis de `M-63` est l'occasion de les leur présenter. **Corrigé le 2026-09-24.** Les CGU se disaient acceptées « en créant un compte » sans jamais avoir été présentées à l'inscription. Même correctif que A11 : lien sous le bouton de création de compte. |
+| E11 | Clauses abusives (C. conso R212-1, liste noire) | 🟡 | **2026-10-13** : 9.p1 « du fait d'un tiers » restreint au fait imprévisible et insurmontable d'un tiers étranger au service (L221-15) ; 12.p3 « dans la mesure où la loi le permet » (CPC art. 48 : clause attributive entre commerçants seulement). **Réécrites le 2026-09-24**, non relues par un juriste. Le plafond de responsabilité aux sommes versées valait **0 €** pour un utilisateur gratuit (R212-1 6°) : il est réservé aux professionnels. « Décline toute responsabilité » (8) retiré. Suspension « sans préavis » (3.2) remplacée par information préalable, motif et contestation. Modification unilatérale (11) : préavis de 30 jours et droit de partir sans frais. |
+| E12 | Formulaire type de rétractation (L221-5, R221-1) | ✅ | **Ajouté le 2026-09-24** (CGU 5 bis.4), avec la renonciation réécrite selon L221-25 : pour un abonnement continu, le consommateur qui se rétracte doit le prorata, il ne perd son droit qu'à exécution complète. Dormant tant que rien n'est vendu. |
+| E14 | Information précontractuelle du service GRATUIT (directive 2019/2161, C. conso L111-1, L221-5) | 🟡 | **2026-10-13** : le service gratuit est fourni contre des données personnelles, le droit de la consommation à distance s'applique donc sans attendre le premier euro. Ajoutés aux CGU : identité de l'éditeur (1.3), garantie légale de conformité et ses modalités (9.4). ❌ Restent l'adresse et le téléphone (cf. A3) et la qualification d'un **médiateur** pour un service gratuit (E4). |
+| E13 | Fonction de rétractation en ligne (directive 2023/2673) | ❌ | Applicable depuis le 19/06/2026 aux contrats conclus en ligne : un bouton qui permet de se rétracter pendant les 14 jours. Absent. `stripe-org-refund` (C-65) en fait l'essentiel, sans le libellé attendu. ⚠️ Transposition française à vérifier. **Dormant** (`ENTERPRISE_BILLING_ENFORCED = false`, relevé le 2026-09-24). |
+| E9 | Garantie de conformité du service numérique | ✅ | Audit fait le 2026-08-26 sur les 216 chaînes du parcours entreprise. **Bonne nouvelle** : aucune intégration inexistante n'est promise (ni SSO, ni API, ni Slack), et les réponses de la FAQ sur le cloisonnement et le non-retrait de membres sont exactes. **Deux promesses citées comme non tenues à l'époque** : `pricing.i5` « résiliable à tout moment » et `hero.reassurance` « réversible à tout moment », parce que la résiliation Stripe ne fonctionnait pas (E5). ✅ **Repassé au vert le 2026-09-14** : ces deux phrases sont désormais **vraies par construction**, le mode entreprise étant gratuit et sans abonnement (`ENTERPRISE_BILLING_ENFORCED = false` vérifié en base) — il n'y a rien à résilier, donc pas besoin du portail Stripe pour que la promesse tienne. Le jour où la facturation est réarmée, cette ligne redevient 🟡 tant qu'E5 n'est pas corrigé. |
 
 ### F. Produit, marque et dépendances
 
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
-| F1 | Recherche d'antériorité sur le nom | 🟡 | **Faite le 2026-08-28 via TMview** (portail EUIPO qui agrège INPI-FR **et** EUIPO, exactement les deux registres que cette ligne exigeait). Périmètre : marques verbales `COSMO` exactes, offices **FR** et **EM**, **classes 9 et 42**. Résultat : **11 marques `COSMO` ACTIVES**, dont **4 en classe 42** (Cosmo Technologies ×2, ISTITUTO VENETO DI TERAPIA FAMIGLIARE, COSMO PHARMACEUTICALS) et **8 en classe 9** (dont **TANAZA S.p.A.**, éditeur de logiciel en nuage, et Hearst Communications). La question que posait cette ligne — « une marque COSMO couvre-t-elle le logiciel ? » — a donc une réponse : **oui, plusieurs, et en vigueur dans l'Union**. Détail et méthode en §7. ❌ Reste : l'arbitrage, qui n'est pas technique. TMview avertit lui-même que ses données **n'ont aucun effet juridique** ; seul un conseil en propriété industrielle peut dire si ces antériorités bloquent un dépôt ou un usage. |
+| F1 | Recherche d'antériorité sur le nom | 🟡 | **2026-10-13** : inchangé, toujours aucun conseil consulté. **Faite le 2026-08-28 via TMview** (portail EUIPO qui agrège INPI-FR **et** EUIPO, exactement les deux registres que cette ligne exigeait). Périmètre : marques verbales `COSMO` exactes, offices **FR** et **EM**, **classes 9 et 42**. Résultat : **11 marques `COSMO` ACTIVES**, dont **4 en classe 42** (Cosmo Technologies ×2, ISTITUTO VENETO DI TERAPIA FAMIGLIARE, COSMO PHARMACEUTICALS) et **8 en classe 9** (dont **TANAZA S.p.A.**, éditeur de logiciel en nuage, et Hearst Communications). La question que posait cette ligne — « une marque COSMO couvre-t-elle le logiciel ? » — a donc une réponse : **oui, plusieurs, et en vigueur dans l'Union**. Détail et méthode en §7. ❌ Reste : l'arbitrage, qui n'est pas technique. TMview avertit lui-même que ses données **n'ont aucun effet juridique** ; seul un conseil en propriété industrielle peut dire si ces antériorités bloquent un dépôt ou un usage. |
 | F2 | Dépôt de marque INPI | ❌ | Pas obligatoire, mais sans dépôt aucun droit exclusif sur le nom. Dépend de F1. |
 | F3 | Conformité des licences open source | ✅ | Inventaire du 2026-08-26 sur **644 paquets** : 548 MIT, 36 ISC, 23 Apache-2.0, 25 BSD, toutes permissives. **Aucune licence à réciprocité forte** (ni GPL, ni AGPL, ni SSPL), et **aucune licence non déclarée**. Les MPL-2.0 (`axe-core`) et CC-BY-4.0 (`caniuse-lite`) sont des dépendances de build ou de test, non embarquées. GSAP a sa propre licence : vérifiée à la source, **libre d'usage commercial, plugins `SplitText`, `ScrambleText` et `Inertia` compris, sans attribution obligatoire**, la seule interdiction visant les outils d'animation sans code concurrents de Webflow. |
 | F4 | Accessibilité (législation européenne) | 🟡 | Un travail a été engagé côté produit (`docs/ACCESSIBILITY.md`). ⚠️ Exemption microentreprise à vérifier, et seuil à surveiller. Demandé par les acheteurs B2B de toute façon. |
 | F5 | Transparence des systèmes d'IA | ⬜ | ⚠️ Se déclenche si la direction produit vers des agents IA se concrétise. À prévoir dès la conception. |
+| F7 | Hébergeur de contenus (DSA, règl. 2022/2065 art. 11, 12, 14, 16, 17) | 🟡 | **Posé le 2026-09-24** (CGU 4 bis) : procédure de signalement de contenu illicite avec les éléments de l'art. 16, motivation et contestation des restrictions (art. 17), point de contact unique `contact@thecosmo.app` (art. 11 et 12). Les tâches partagées et les commentaires d'équipe font de COSMO un hébergeur, et l'exemption des micro-entreprises (art. 19) ne couvre pas l'art. 16. Reste : un signalement par e-mail est un minimum ; un formulaire dans l'app serait plus sûr. |
+| F8 | Changement de fournisseur (Data Act, règl. 2023/2854 chap. VI) | 🟡 | ⚠️ À qualifier par un juriste (relevé le 2026-09-24) : un SaaS est un « service de traitement de données ». Export CSV sans frais, clause posée ce jour (CGU 6.4). L'art. 25 demande davantage (préavis maximal, période de récupération), et la suppression de compte est immédiate. |
+| F9 | Notices des licences open source | ✅ | **Corrigé le 2026-09-24.** MIT, BSD, ISC et Apache exigent de reproduire leur mention de copyright dans les copies distribuées, et le bundle servi au navigateur en est une : aucun fichier ne le faisait. `scripts/third-party-notices.mjs` écrit `dist/third-party-notices.txt` à chaque build (145 paquets, fermeture transitive des `dependencies`, donc un sur-ensemble de ce que Vite embarque), lié depuis les mentions légales (s3). Généré, jamais commité : il ne peut pas vieillir. Voir F3 pour la compatibilité, qui, elle, est bonne. |
+| F10 | Allégations et publicité comparative (C. conso L121-2, L122-1 à L122-7) | ✅ | **Corrigé le 2026-10-13.** « Cosmo est la seule application qui… » (FAQ) retiré ; FAQ entreprise « pas d'activité individuelle » réécrite (un responsable voit la dernière activité et qui a terminé quoi) et la notice d'adhésion complétée (`org.consent.reports`) ; FAQ « personne d'autre ne peut accéder » réécrite ; article Cosmo vs Todoist daté, sourcé, et sa phrase « aucune intégration » corrigée (l'espace entreprise envoie vers Slack). Les faits sur Todoist sont à relire à chaque mise à jour. |
+| F11 | Conditions d'usage de l'hébergeur (Vercel) | ❌ | **Relevé le 2026-10-13.** L'équipe Vercel porte le nom par défaut d'un compte personnel : plan probablement **Hobby**, réservé à un usage non commercial et non couvert par le DPA de Vercel. Une page de tarifs publiée en fait un usage commercial. À vérifier, et passer en Pro si c'est Hobby. Non vérifiable par l'API (le plan n'y figure pas). |
 | F6 | Obligations liées au partage entre utilisateurs | ⬜ | Micro et petites entreprises largement exemptées, mais pas de tout. Qualification à faire. |
+
+### DPA des sous-traitants — vérifié le 2026-09-14
+
+> Lecture des trois DPA publics (Supabase, Vercel, Sentry), pas déduite d'une note antérieure.
+> **Les trois fonctionnent différemment** : un seul reste réellement à faire.
+
+| Sous-traitant | Ce que dit leur DPA | Action requise |
+|---|---|---|
+| **Supabase** | Le DPA (`supabase.com/legal/dpa`, clause 12.2) dit explicitement : *« acceptance of the Agreement shall have the same effect as signing the SCCs »*. Il « forme partie » des Terms of Service dès leur acceptation. **Aucune signature séparée n'est requise** : avoir un compte Supabase suffit à le rendre contractuellement applicable. | ✅ **Rien à faire.** Juste archiver une copie/capture du DPA daté comme preuve documentaire (ce que réclame un acheteur B2B). |
+| **Sentry** | Leur DPA dit l'inverse : *« entered into by ... the party that electronically accepts or otherwise agrees or opts-in »* — il faut un **acte d'acceptation explicite**, disponible dans Sentry (section « Legal & Compliance » du menu de l'organisation) ou par un lien DocuSign. **Seul un membre au rôle Owner ou Billing peut l'accepter/signer** ; les autres membres peuvent seulement le consulter. | ❌ **Manuel, pour Axel seul** : se connecter au compte Sentry (rôle Owner), ouvrir Legal & Compliance, accepter le DPA (ou signer via DocuSign). Deux minutes, aucune donnée sensible à saisir. |
+| **Vercel** | Leur DPA (`vercel.com/legal/dpa`) dit explicitement : *« forms part of Vercel Enterprise Terms and Conditions ... for Customers who are on Enterprise and Pro plans »* — **le texte ne mentionne pas le plan Hobby (gratuit)**. Si le projet `cosmo1` tourne sur Hobby, rien ne dit que ce DPA s'applique contractuellement aujourd'hui. | ⚠️ **À vérifier par Axel** : quel plan Vercel héberge `cosmo1` ? Si Hobby, contacter le support Vercel ou passer sur Pro pour obtenir une couverture DPA contractuelle. Non vérifiable depuis ici (accès au compte Vercel refusé, cf. état des lieux). |
+
+- ❌ **Ne pas conclure que A5 est réglée** : sur les trois, une seule (Supabase) l'est réellement sans action ; Sentry et Vercel restent, pour des raisons différentes, entre les mains d'Axel.
+- Ce relevé ne couvre que les **trois sous-traitants cités par ce document** (Supabase, Vercel, Sentry) — pas Stripe (DPA propre à leur relation processeur de paiement) ni un futur sous-traitant.
 
 ### Où en es-tu
 
@@ -148,14 +289,29 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 | Statut | Nombre |
 |---|---|
-| ✅ Bon | **12** |
-| 🟡 Partiellement bon | **13** |
-| ❌ À faire | **16** |
+| ✅ Bon | **19** |
+| 🟡 Partiellement bon | **20** |
+| ❌ À faire | **17** |
 | ⬜ Sans objet aujourd'hui | **5** |
-| **Total** | **46** |
+| **Total** | **61** |
+
+> 🔎 **Recompté par `node scripts/check-legal-table.mjs` le 2026-10-13**, après l'audit du jour :
+> quatre lignes nouvelles (A15, E14, F10, F11), A2 remontée à ✅, A9 redescendue à 🟡. La garde
+> était ROUGE en arrivant : A3 était passée à 🟡 le 2026-10-10 sans que la synthèse suive.
+
+> 🔎 **Recompté par `node scripts/check-legal-table.mjs` le 2026-09-24**, après l'audit du jour :
+> onze lignes nouvelles (A11 à A14, E10 à E13, F7 à F9), A2 redescendue à 🟡, A3 dégradée à ❌, F9 refermée le jour même.
+> Le total monte parce que l'audit a **trouvé** des obligations, pas parce que la situation
+> s'est dégradée : dix des onze lignes nouvelles sont refermées ou avancées le jour même.
+
+> ⚠️ Seules les lignes E9 (🟡 → ✅) et A5 (❌ → 🟡) ont été revérifiées et recomptées le
+> 2026-09-14 (cf. § État au 2026-09-14 et § DPA des sous-traitants). Les 44 autres lignes portent
+> encore leur statut du 2026-08-26, **non revérifié** depuis : ne pas les lire comme un état
+> courant sans repasser par leur source.
 
 **Point de départ le matin du 2026-08-26 : 0 vert.** Sont passées au vert dans la journée :
-A1, A2, A4, A7, A8, A9, C9, C10, E2, E3, E7, F3.
+A1, A2, A4, A7, A8, A9, C9, C10, E2, E3, E7, F3. **E9 les a rejointes le 2026-09-14** (A5 reste
+🟡 : le DPA Supabase est acquis sans action, mais Sentry et Vercel dépendent encore d'Axel).
 
 **Les 16 lignes rouges se répartissent en trois familles**, et une seule dépend encore de moi :
 
@@ -171,38 +327,67 @@ médiateur, ou un déploiement.
 
 ---
 
-## 🔴 État d'alerte au 2026-08-26 : la chaîne de paiement est ARMÉE
+## 🟢 État au 2026-09-14 : la chaîne de paiement est DÉSARMÉE, mode entreprise gratuit sans plafond
 
-Vérifié en base et dans le code le même jour, pas déduit :
+> Remplace la section « État d'alerte au 2026-08-26 » ci-dessous, conservée pour l'historique.
+> Reverifié le 2026-09-14 par lecture du code (`src/modules/billing/premium-config.ts`) **et**
+> requête SQL en lecture seule sur la base de prod (`SELECT key, enabled FROM billing_flags`) —
+> pas déduit d'une note plus ancienne.
 
 | Vérification | Valeur réelle |
 |---|---|
-| `ENTERPRISE_BILLING_ENFORCED` (client) | **`true`** |
-| `billing_flags.enterprise_seat_limit` (serveur) | **`true`** |
-| `STRIPE_SECRET_KEY` en prod | clé de **TEST** |
-| Configuration du portail de résiliation | **absente**, sur les deux comptes |
-| Organisations | 4, dont **1 déjà au plafond** |
-| Abonnements souscrits | **0** |
+| `ENTERPRISE_BILLING_ENFORCED` (client) | **`false`** |
+| `billing_flags.enterprise_seat_limit` (serveur) | **`false`** |
+| Quota de sièges appliqué | **Aucun** — `org_seats_allowed()` ne bloque plus personne |
+| Landing entreprise (`ENTERPRISE_FREE_OFFER`) | Affiche « Gratuit » partout, offre de lancement en cours |
+| CTA de paiement (Stripe Checkout) | **Non monté** — personne ne peut arriver sur un Stripe Checkout |
+| Abonnements souscrits | 0 |
 
-**Le parcours réel d'un client aujourd'hui :** son organisation atteint cinq membres, l'invitation
+**Conséquence directe sur ce document.** Tant que ce couple de drapeaux reste à `false`, tout le
+bloc « premier euro encaissé » et le droit de la consommation lié au **paiement** (§3, E1, E4 à
+E8) sont **dormants, pas résolus** : rien ne les déclenche parce qu'aucune transaction ne peut
+avoir lieu. Ce n'est pas une mise en conformité, c'est l'absence du fait générateur — le jour où
+`ENTERPRISE_BILLING_ENFORCED` repasse à `true`, la liste de réserves ci-dessous (E5 portail de
+résiliation non configuré, STRIPE_SECRET_KEY de test, etc.) redevient intégralement valable.
+
+- ✅ **E9 (garantie de conformité) n'est plus en défaut pour les deux phrases citées** :
+  `enterprise.hero.reassuranceFree` et `enterprise.pricing.i5` (« résiliable/réversible à tout
+  moment ») sont désormais **vraies par construction** — il n'y a pas d'abonnement à quitter,
+  donc pas besoin d'un portail Stripe pour ça. La fonctionnalité de sortie (quitter/supprimer une
+  organisation) existe indépendamment de la facturation (`src/modules/organizations/`).
+- ⚠️ **Ne pas en conclure que E5/E6/E8 sont corrigées** : elles sont sans objet **aujourd'hui**
+  parce qu'il n'y a rien à vendre, pas parce que le portail Stripe a été configuré ou que le
+  webhook annuel a été câblé. Rien n'a changé côté Stripe depuis le 2026-08-26.
+- ❌ **Ne jamais réarmer `ENTERPRISE_BILLING_ENFORCED` sans repasser par ce document.** Le
+  réarmer sans avoir réglé E5 (portail) reproduit exactement l'impasse du 2026-08-26 : un client
+  qui grandit se voit proposer de payer, tombe sur une clé Stripe de TEST, et ne peut pas non
+  plus résilier.
+
+### Historique — État d'alerte au 2026-08-26 (chaîne de paiement ARMÉE, depuis corrigé)
+
+Vérifié en base et dans le code le même jour, pas déduit :
+
+| Vérification | Valeur réelle au 2026-08-26 |
+|---|---|
+| `ENTERPRISE_BILLING_ENFORCED` (client) | `true` |
+| `billing_flags.enterprise_seat_limit` (serveur) | `true` |
+| `STRIPE_SECRET_KEY` en prod | clé de TEST |
+| Configuration du portail de résiliation | absente, sur les deux comptes |
+| Organisations | 4, dont 1 déjà au plafond |
+| Abonnements souscrits | 0 |
+
+**Le parcours réel d'un client à cette date :** son organisation atteint cinq membres, l'invitation
 suivante est refusée par `org_seats_allowed`, l'écran lui propose de payer, il clique, arrive sur
 un Stripe Checkout en **mode test**, et sa vraie carte est refusée. Il ne peut ni grandir, ni
 payer. Et s'il voulait partir, la résiliation échouerait aussi.
 
-Une seule organisation est concernée à cette date, mais le chemin est ouvert pour toutes.
+**Issue retenue** : l'option 1 des trois proposées alors (« repasser `ENTERPRISE_BILLING_ENFORCED`
+à `false` et le drapeau serveur à `false` ») a été appliquée — c'est l'état décrit dans la section
+du dessus, vérifié à nouveau le 2026-09-14.
 
-**Trois issues, à choisir en connaissance de cause :**
-
-1. **Repasser `ENTERPRISE_BILLING_ENFORCED` à `false` et le drapeau serveur à `false`** en attendant
-   l'immatriculation. Les deux se déplacent ENSEMBLE, jamais l'un sans l'autre. C'est le retour
-   à l'état sûr, et c'est réversible en deux minutes.
-2. **Configurer le portail Stripe** pour qu'au moins la résiliation fonctionne, en acceptant que
-   le paiement reste en mode test.
-3. **Immatriculer, passer Stripe en live**, et tout devient cohérent.
-
-> ⚠️ Aucune de ces issues n'est urgente au sens du risque juridique : **aucun euro n'est encaissé**,
-> donc il n'y a ni travail dissimulé ni TVA due. Le problème est d'abord une impasse produit pour
-> le client qui essaie de payer, et une promesse de résiliation non tenue.
+> ⚠️ Cet épisode n'a jamais présenté de risque juridique au sens strict : **aucun euro n'a été
+> encaissé**, donc ni travail dissimulé ni TVA due. Le problème était une impasse produit pour le
+> client qui essayait de payer, et une promesse de résiliation non tenue.
 
 ---
 
@@ -431,10 +616,10 @@ le statut est « Enregistrée » ou « Déposée ».
 
 | Prestataire | Rôle | Localisation | À faire |
 |---|---|---|---|
-| Supabase | base de données, auth | **`eu-west-1`, Irlande** | DPA à archiver. Données dans l'UE, c'est le point le plus confortable du dossier. |
-| Vercel | hébergement front | société américaine, région du projet non vérifiée | DPA + mécanisme de transfert. Traite au minimum les adresses IP et les logs, qui sont des données personnelles. |
+| Supabase | base de données, auth | **`eu-west-1`, Irlande** | ✅ **DPA déjà applicable** (vérifié 2026-09-14) : auto-incorporé aux ToS dès l'acceptation du compte, rien à signer. Reste à en archiver une copie datée comme preuve. Données dans l'UE, c'est le point le plus confortable du dossier. |
+| Vercel | hébergement front | société américaine, région du projet non vérifiée | ⚠️ **Le DPA publié ne couvre explicitement que les plans Enterprise et Pro** (vérifié 2026-09-14). À vérifier : plan Vercel du projet `cosmo1` — si Hobby, la couverture contractuelle n'est pas acquise. Traite au minimum les adresses IP et les logs, qui sont des données personnelles. |
 | Stripe | paiement | Irlande et États-Unis | DPA. Devient responsable de traitement pour ses propres finalités antifraude. |
-| Sentry | monitoring | société américaine | DPA + transfert. `beforeSend` retire déjà emails et UUID, à documenter comme mesure de minimisation. |
+| Sentry | monitoring | société américaine | ❌ **Signature manuelle requise** (vérifié 2026-09-14) : DPA disponible dans Sentry → Legal & Compliance, acceptable uniquement par un membre au rôle Owner/Billing (ou via DocuSign). `beforeSend` retire déjà emails et UUID, à documenter comme mesure de minimisation. |
 | Analytics | mesure d'audience | à qualifier | Déterminer si l'exemption CNIL de consentement s'applique, sinon passer derrière le bandeau. |
 
 - ❌ **Ne jamais ajouter un prestataire traitant des données sans archiver son DPA.** C'est la
@@ -493,13 +678,18 @@ sont connues et documentées dans le code :
    JavaScript exécuté. Fenêtre étroite mais réelle, décrite dans `src/lib/audience.ts`.
 2. **`style-src 'unsafe-inline'`** reste nécessaire à la chaîne de styles. C'est un
    assouplissement conscient de la CSP.
-3. **La CSP autorise les domaines publicitaires Google.** Aucun n'est chargé aujourd'hui,
-   `AdModal` injectant le script à la demande et `PREMIUM_ENFORCED` valant `false`. 🔴 **Le jour
-   où ce drapeau passe à `true`, de la publicité se charge, et la publicité n'est JAMAIS
-   exemptée de consentement** : voir la ligne A4.
+3. ~~**La CSP autorise les domaines publicitaires Google.**~~ **Refermé le 2026-09-04** (C-04) :
+   le système de jetons et le mur-pub ont été supprimés, AdSense n'est plus chargé nulle part, et
+   les origines publicitaires ont été **retirées de la CSP** de `vercel.json`. La réserve portait
+   sur ce qui se serait passé le jour où `PREMIUM_ENFORCED` serait passé à `true` ; il n'y a plus
+   de publicité à charger. ❌ Réintroduire un script publicitaire rouvrirait la question du
+   consentement (ligne A4) : la publicité n'en est JAMAIS exemptée.
 4. **Aucun exercice de restauration n'a été conduit.** Les sauvegardes dépendent du plan
    Supabase souscrit ; leur existence et leur délai de restauration restent à vérifier.
 5. **Pas de journal d'accès applicatif** distinct des logs d'infrastructure.
+6. **Sauvegardes chez GitHub** (2026-10-13) : chiffrées (AES-256) avant dépôt, phrase secrète en secret
+   GitHub et copie hors dépôt chez Axel. Elles ont été publiques et en clair du 2026-08-29 au
+   2026-10-13 : c'est la violation consignée au registre.
 
 ---
 
@@ -519,10 +709,19 @@ existe pour qu'aucun de ces engagements ne soit découvert le jour où il est in
 | **Maintenir les mesures de sécurité déclarées** | HSTS, CSP stricte, RLS sur toutes les tables, scrubbing Sentry. Les assouplir sans mettre à jour l'annexe retourne le document contre toi. | Le document art. 32 devient une preuve à charge |
 | **Ne charger aucun traceur sans consentement** | Tout nouvel outil de mesure ou de publicité passe par le store de consentement. | Le bandeau redevient mensonger, ce qui est pire que son absence |
 | **Purger les comptes clos sous 90 jours** | C'est la durée que la politique annonce désormais. | Conservation excessive, et contradiction avec ta propre politique |
+| **Supprimer les comptes inactifs depuis 3 ans** (2026-10-13) | Avertir par e-mail 30 jours avant, puis supprimer. Le traitement reste à construire, avant 2029. | Promesse de la politique non tenue |
+| **Ne jamais déposer une donnée personnelle en clair hors de la base** (2026-10-13) | Sauvegardes chiffrées avant tout dépôt ; aucun export, log ou artefact public qui en contienne. | C'est exactement la violation du 2026-10-13 |
+| **Ne poser aucun identifiant ni aucune source d'acquisition sans « Accepter »** (2026-10-13) | Tout nouveau stockage local qui n'est pas strictement nécessaire passe par `hasConsented()` et s'efface au refus. | Traceur illicite, bandeau mensonger |
 | **Faire entrer toute nouvelle donnée saisie dans l'export** | Sept fichiers aujourd'hui. Une nouvelle table utilisateur non exportée rend la portabilité fausse. | La portabilité devient une promesse creuse |
-| **Conserver le journal d'encaissement dix ans** | Aucune suppression, jamais. Une purge de compte **anonymise** `user_id`. | Perte d'une pièce comptable obligatoire |
+| **Conserver le journal d'encaissement dix ans** | Aucune suppression, jamais, et aucune anonymisation : `row_hash` scelle `user_id` (cf. C10, corrigé ici le 2026-09-24, cette ligne disait encore « anonymise »). `user_id` cesse d'identifier quiconque quand le compte disparaît. | Perte d'une pièce comptable obligatoire |
+| **Laisser retirer le consentement** | « Gérer les cookies » doit rester atteignable partout où le bandeau peut apparaître. Tout nouveau traceur doit effacer ses traces au retrait (`clearAudienceTraces`). | Consentement non valable, donc traceur illicite |
+| **Traiter un signalement de contenu** | Répondre à `contact@thecosmo.app`, motiver toute restriction, permettre la contestation (CGU 4 bis). | Manquement au DSA, art. 16 et 17 |
 
 ### Engagements envers tes clients, dès le premier paiement
+
+> ⚠️ **Sans objet aujourd'hui** : `ENTERPRISE_BILLING_ENFORCED = false` (vérifié le 2026-09-14),
+> aucun paiement n'est possible, donc aucun de ces engagements n'est actuellement dû. Ce tableau
+> redevient actif le jour où la facturation est réarmée — voir § État au 2026-09-14.
 
 | Engagement | Ce que ça t'oblige à faire | Coût si tu l'oublies |
 |---|---|---|
@@ -572,3 +771,17 @@ existe pour qu'aucun de ces engagements ne soit découvert le jour où il est in
 5. Création de la structure.
 6. Bloc consommation du §4, avant tout paiement réel.
 7. Bascule Stripe en live, selon [`STRIPE-LIVE.md`](./STRIPE-LIVE.md).
+
+---
+
+## Garde du tableau de conformité · repris de `CLAUDE.md` (déplacé le 2026-09-16)
+
+> Commentaires de la section `## Scripts` de `CLAUDE.md`, où ils étaient chargés à chaque
+> session. Déplacés ici **sans une coupe**. La racine ne garde que la commande.
+
+```bash
+npm run check:legal         # Cohérence du tableau de conformité de docs/LEGAL.md :
+                            # lignes collées, identifiants en double, et surtout que la
+                            # synthèse corresponde aux lignes. Ce total a été faux TROIS
+                            # fois le 2026-08-26, toujours pour l'avoir additionné de tête.
+```

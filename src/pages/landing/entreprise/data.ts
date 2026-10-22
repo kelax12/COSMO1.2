@@ -4,167 +4,22 @@
 // import, donc il ne contient AUCUN texte traduisible — uniquement des clés de
 // catalogue, de la géométrie et des chemins d'images.
 //
-// ⚠️ Les membres et les captures décrivent la MÊME organisation de démonstration
-// (« Nova Studio », seed de `src/modules/organizations/local.repository.ts`) que
-// celle ouverte par le bouton « Ouvrir la démo entreprise ». C'est volontaire :
-// le visiteur retrouve exactement les écrans et les noms qu'il vient de voir.
-// Si le seed démo change, cette liste et les captures doivent suivre.
+// ⚠️ Les captures décrivent la MÊME organisation de démonstration (« Nova
+// Studio », seed de `src/modules/organizations/local.repository.ts`) que celle
+// ouverte par le bouton « Ouvrir la démo entreprise ». C'est volontaire : le
+// visiteur retrouve exactement les écrans et les noms qu'il vient de voir. Si
+// le seed démo change, les captures doivent suivre.
 
 import type { KeyOf } from '@/i18n/catalog';
 import { ENTERPRISE_FREE_OFFER } from './free-offer';
 
-/** Un nœud de l'organigramme — calqué sur un membre réel du seed démo. */
-export interface PyramidNode {
-  id: string;
-  /**
-   * `userId` du membre correspondant dans le seed démo
-   * (`src/modules/organizations/local.repository.ts`) — c'est ce qui permet à
-   * un clic ici d'ouvrir la VRAIE fiche du VRAI membre une fois en démo,
-   * via le même deep-link `?member=&memberTab=` que la pyramide réelle.
-   */
-  demoUserId: string;
-  /**
-   * Nom propre affiché, identique au seed démo. ABSENT sur la racine, dont le
-   * « nom » est un pronom : voir `nameKey`. Passer par {@link nodeName}, jamais
-   * lire l'un des deux champs directement.
-   */
-  name?: string;
-  /**
-   * Clé de catalogue quand le « nom » n'est PAS un nom propre.
-   *
-   * Seule la racine est concernée : « Vous » est un pronom, il se traduit ;
-   * « Marie Dupont » est un nom propre, il ne se traduit pas. C'est la
-   * distinction que le libellé en dur écrasait.
-   */
-  nameKey?: KeyOf<'landing'>;
-  /** Initiales de l'avatar, comme dans l'application. */
-  initials: string;
-  /** Classes Tailwind de l'avatar, reprises des couleurs de l'app. */
-  avatarClass: string;
-  /** Clé du rôle (`admin` / `manager` / `membre`). */
-  roleKey: KeyOf<'landing'>;
-  /** Équipe d'appartenance — la pastille de couleur à droite du rôle. */
-  teamClass: string;
-  /** `null` pour la racine. */
-  parent: string | null;
-  /** Position dans le cadre, en pourcentage (x = centre de la carte). */
-  x: number;
-  y: number;
-}
-
-/**
- * Pyramide « Nova Studio » telle qu'elle est livrée en démo :
- *   Vous (admin)
- *   ├── Marie Dupont (manager)
- *   │   ├── Jean Martin
- *   │   └── Sophie Bernard
- *   └── Lucas Moreau
- *
- * Camille Richard, non placée dans le seed, est volontairement absente : la
- * landing montre la règle de périmètre, pas le flux de placement.
- */
-export const PYRAMID_NODES: PyramidNode[] = [
-  {
-    id: 'vous',
-    demoUserId: 'demo-user',
-    // Seul noeud dont le nom est un PRONOM et non un nom propre : les autres
-    // ne se traduisent pas, celui-ci si.
-    nameKey: 'enterprise.pyramid.nameYou',
-    initials: 'V',
-    avatarClass: 'bg-emerald-500',
-    roleKey: 'enterprise.pyramid.roleAdmin',
-    teamClass: 'bg-transparent',
-    parent: null,
-    x: 50,
-    y: 8,
-  },
-  {
-    id: 'marie',
-    demoUserId: 'friend-1',
-    name: 'Marie Dupont',
-    initials: 'MD',
-    avatarClass: 'bg-emerald-500',
-    roleKey: 'enterprise.pyramid.roleLead',
-    teamClass: 'bg-fuchsia-500',
-    parent: 'vous',
-    x: 30,
-    y: 45,
-  },
-  {
-    id: 'lucas',
-    demoUserId: 'user-lucas',
-    name: 'Lucas Moreau',
-    initials: 'LM',
-    avatarClass: 'bg-pink-600',
-    roleKey: 'enterprise.pyramid.roleMember',
-    teamClass: 'bg-blue-500',
-    parent: 'vous',
-    x: 74,
-    y: 45,
-  },
-  {
-    id: 'jean',
-    demoUserId: 'friend-2',
-    name: 'Jean Martin',
-    initials: 'JM',
-    avatarClass: 'bg-blue-600',
-    roleKey: 'enterprise.pyramid.roleMember',
-    teamClass: 'bg-blue-500',
-    parent: 'marie',
-    x: 15,
-    y: 82,
-  },
-  {
-    id: 'sophie',
-    demoUserId: 'friend-3',
-    name: 'Sophie Bernard',
-    initials: 'SB',
-    avatarClass: 'bg-emerald-500',
-    roleKey: 'enterprise.pyramid.roleMember',
-    teamClass: 'bg-fuchsia-500',
-    parent: 'marie',
-    x: 45,
-    y: 82,
-  },
-];
-
-/**
- * Nœuds en parcours préfixe, avec leur profondeur.
- *
- * Sert au rendu mobile de l'organigramme : sous 768 px, les cartes positionnées
- * en pourcentage se chevauchent (mesuré à 390 px), donc la pyramide s'y déplie
- * en arbre indenté. Même information, même règle de périmètre.
- */
-export function pyramidTree(): { node: PyramidNode; depth: number }[] {
-  const out: { node: PyramidNode; depth: number }[] = [];
-  const visit = (parentId: string | null, depth: number) => {
-    for (const node of PYRAMID_NODES) {
-      if (node.parent !== parentId) continue;
-      out.push({ node, depth });
-      visit(node.id, depth + 1);
-    }
-  };
-  visit(null, 0);
-  return out;
-}
-
-/** Descendants d'un nœud, lui-même inclus — le « périmètre » d'un manager. */
-export function subtreeOf(nodeId: string): Set<string> {
-  const scope = new Set<string>([nodeId]);
-  // L'organigramme est ordonné parent avant enfant : une seule passe suffit.
-  for (const node of PYRAMID_NODES) {
-    if (node.parent && scope.has(node.parent)) scope.add(node.id);
-  }
-  return scope;
-}
-
 /** Une capture réelle d'un onglet de l'espace entreprise. */
 export interface AppShotRef {
   id: string;
-  labelKey: KeyOf<'landing'>;
+  labelKey: KeyOf<'landingEnterprise'>;
   /** Capture réelle de l'onglet (mode démo, thème noir). */
   image: string;
-  altKey: KeyOf<'landing'>;
+  altKey: KeyOf<'landingEnterprise'>;
 }
 
 const shot = (name: string) => `/screenshots/entreprise/${name}.webp`;
@@ -181,20 +36,94 @@ export const SHOTS: Record<string, AppShotRef> = {
   pyramid: { id: 'pyramid', labelKey: 'enterprise.shot.pyramid', image: shot('pyramide'), altKey: 'enterprise.shot.pyramidAlt' },
   members: { id: 'members', labelKey: 'enterprise.shot.members', image: shot('membres'), altKey: 'enterprise.shot.membersAlt' },
   projects: { id: 'projects', labelKey: 'enterprise.shot.projects', image: shot('projets'), altKey: 'enterprise.shot.projectsAlt' },
-  projectsKanban: { id: 'projectsKanban', labelKey: 'enterprise.shot.projectsKanban', image: shot('projets-kanban'), altKey: 'enterprise.shot.projectsKanbanAlt' },
   projectsPlanning: { id: 'projectsPlanning', labelKey: 'enterprise.shot.projectsPlanning', image: shot('projets-planning'), altKey: 'enterprise.shot.projectsPlanningAlt' },
+  projectsPortfolio: { id: 'projectsPortfolio', labelKey: 'enterprise.shot.projectsPortfolio', image: shot('projets-portefeuille'), altKey: 'enterprise.shot.projectsPortfolioAlt' },
   okr: { id: 'okr', labelKey: 'enterprise.shot.okr', image: shot('okr'), altKey: 'enterprise.shot.okrAlt' },
-  stats: { id: 'stats', labelKey: 'enterprise.shot.stats', image: shot('statistiques'), altKey: 'enterprise.shot.statsAlt' },
+  // L'onglet Statistiques est masqué de la navigation depuis le 2026-09-30 :
+  // l'étape « Suivi » montre les rapports d'activité, qu'on atteint vraiment.
+  reports: { id: 'reports', labelKey: 'enterprise.shot.reports', image: shot('rapports'), altKey: 'enterprise.shot.reportsAlt' },
   tasks: { id: 'tasks', labelKey: 'enterprise.shot.tasks', image: shot('taches'), altKey: 'enterprise.shot.tasksAlt' },
+  // Étape 3 : le Tableau par statut, et la fiche d'une tâche bloquée (onglet
+  // Dépendances), affichée en surimpression par `ExecutionSection`.
+  tasksBoard: { id: 'tasksBoard', labelKey: 'enterprise.shot.tasksBoard', image: shot('taches-tableau'), altKey: 'enterprise.shot.tasksBoardAlt' },
+  tasksDeps: { id: 'tasksDeps', labelKey: 'enterprise.shot.tasksDeps', image: shot('taches-dependances'), altKey: 'enterprise.shot.tasksDepsAlt' },
 };
 
 /** Les trois écrans qui défilent dans le hero. */
-export const HERO_SHOTS = [SHOTS.projects, SHOTS.okr, SHOTS.stats];
+export const HERO_SHOTS = [SHOTS.overview, SHOTS.projects, SHOTS.okr];
+
+/**
+ * Les vingt fonctionnalités de la section « Plus », en quatre familles de cinq.
+ *
+ * Uniquement ce que les cinq étapes ne montrent PAS, et uniquement ce qui est
+ * atteignable dans le produit aujourd'hui (relu dans le code le 2026-10-02).
+ * Une fonctionnalité qu'on retire du produit sort d'ici le même jour. L'icône
+ * est un NOM, résolu par le composant : ce module n'importe rien de lourd.
+ */
+export type MoreFeatureIcon =
+  | 'KeyRound' | 'UserCog' | 'UsersRound' | 'CalendarPlus' | 'Rocket'
+  | 'Copy' | 'Link2' | 'ListChecks' | 'Filter' | 'Search'
+  | 'Zap' | 'Webhook' | 'Download' | 'BellRing' | 'Target'
+  | 'ScrollText' | 'BadgeCheck' | 'Timer' | 'UserMinus' | 'ArchiveRestore';
+
+export interface MoreFeature {
+  /** Rang 1 à 20 : les clés sont `enterprise.more.f{n}t` / `f{n}d`. */
+  n: number;
+  icon: MoreFeatureIcon;
+}
+
+export interface MoreFeatureGroup {
+  titleKey: KeyOf<'landingEnterprise'>;
+  features: MoreFeature[];
+}
+
+export const MORE_FEATURE_GROUPS: MoreFeatureGroup[] = [
+  {
+    titleKey: 'enterprise.more.g1',
+    features: [
+      { n: 1, icon: 'KeyRound' },
+      { n: 2, icon: 'UserCog' },
+      { n: 3, icon: 'UsersRound' },
+      { n: 4, icon: 'CalendarPlus' },
+      { n: 5, icon: 'Rocket' },
+    ],
+  },
+  {
+    titleKey: 'enterprise.more.g2',
+    features: [
+      { n: 6, icon: 'Copy' },
+      { n: 7, icon: 'Link2' },
+      { n: 8, icon: 'ListChecks' },
+      { n: 9, icon: 'Filter' },
+      { n: 10, icon: 'Search' },
+    ],
+  },
+  {
+    titleKey: 'enterprise.more.g3',
+    features: [
+      { n: 11, icon: 'Zap' },
+      { n: 12, icon: 'Webhook' },
+      { n: 13, icon: 'Download' },
+      { n: 14, icon: 'BellRing' },
+      { n: 15, icon: 'Target' },
+    ],
+  },
+  {
+    titleKey: 'enterprise.more.g4',
+    features: [
+      { n: 16, icon: 'ScrollText' },
+      { n: 17, icon: 'BadgeCheck' },
+      { n: 18, icon: 'Timer' },
+      { n: 19, icon: 'UserMinus' },
+      { n: 20, icon: 'ArchiveRestore' },
+    ],
+  },
+];
 
 /** Les quatre garanties de la section sécurité. */
 export interface SecurityPoint {
-  titleKey: KeyOf<'landing'>;
-  bodyKey: KeyOf<'landing'>;
+  titleKey: KeyOf<'landingEnterprise'>;
+  bodyKey: KeyOf<'landingEnterprise'>;
 }
 
 export const SECURITY_POINTS: SecurityPoint[] = [
@@ -222,18 +151,7 @@ export const ENTERPRISE_FAQ = Array.from({ length: 5 }, (_, i) => {
   const n = i + 1;
   const free = ENTERPRISE_FREE_OFFER && FREE_OFFER_ANSWERS.has(n);
   return {
-    questionKey: `enterprise.faq.q${n}` as KeyOf<'landing'>,
-    answerKey: `enterprise.faq.a${n}${free ? 'Free' : ''}` as KeyOf<'landing'>,
+    questionKey: `enterprise.faq.q${n}` as KeyOf<'landingEnterprise'>,
+    answerKey: `enterprise.faq.a${n}${free ? 'Free' : ''}` as KeyOf<'landingEnterprise'>,
   };
 });
-
-/**
- * Nom affiché d'un nœud de la pyramide.
- *
- * Un nom PROPRE ne se traduit pas, un PRONOM si. Ce helper est le seul chemin :
- * lire `node.name` directement rendait « Vous » en français à un anglophone.
- */
-export const nodeName = (
-  node: PyramidNode,
-  t: (key: KeyOf<'landing'>) => string,
-): string => (node.nameKey ? t(node.nameKey) : node.name ?? '');

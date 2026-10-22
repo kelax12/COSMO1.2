@@ -32,14 +32,14 @@ const FaqSection: React.FC = () => {
   );
 
   return (
-      <section ref={sectionRef} id="faq" className="py-24 bg-black/20">
+      <section ref={sectionRef} id="faq" className="py-24 bg-slate-50">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <motion.span
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="text-xs font-mono tracking-[0.3em] uppercase text-blue-400 mb-4 block"
+              className="text-xs font-mono tracking-[0.3em] uppercase text-blue-600 mb-4 block"
             >
               {t('faq.eyebrow')}
             </motion.span>
@@ -47,11 +47,11 @@ const FaqSection: React.FC = () => {
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-3xl lg:text-4xl font-bold text-white mb-4"
+              className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4"
             >
               {t('faq.headingLine1')}
               <br />
-              <span className="bg-gradient-to-r from-[rgb(var(--color-accent-solid))] to-purple-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
                 {t('faq.headingLine2')}
               </span>
             </motion.h2>
@@ -60,7 +60,7 @@ const FaqSection: React.FC = () => {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.15 }}
-              className="text-slate-400 text-lg"
+              className="text-slate-600 text-lg"
             >
               {t('faq.subtitle')}
             </motion.p>
@@ -71,7 +71,7 @@ const FaqSection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="faq-card bg-slate-900/60 border border-white/8 rounded-2xl px-6 sm:px-8"
+            className="faq-card bg-white border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-24px_rgba(15,23,42,0.35)] rounded-2xl px-6 sm:px-8"
           >
             {FAQ_ITEMS.map((item, i) => (
               <div key={i} className="faq-row">
@@ -84,7 +84,7 @@ const FaqSection: React.FC = () => {
             {t('faq.notListed')}{' '}
             <a
               href={`mailto:${CONTACT_EMAIL}`}
-              className="text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-2"
+              className="text-blue-600 hover:text-blue-700 transition-colors underline underline-offset-2"
             >
               {t('faq.writeUs')}
             </a>

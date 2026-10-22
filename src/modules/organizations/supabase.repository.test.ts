@@ -97,19 +97,24 @@ describe('SupabaseOrganizationsRepository — lecture', () => {
     const result = await repo.getMembers('org1');
 
     expect(supabaseMock.argsOf('organization_members', 'eq')).toEqual(['org_id', 'org1']);
-    expect(supabaseMock.argsOf('organization_members', 'order')).toEqual(['joined_at', { ascending: true }]);
-    expect(supabaseMock.argsOf('organization_members', 'limit')).toEqual([500]);
+    const orders = supabaseMock.callsFor('organization_members').filter((c) => c.method === 'order').map((c) => c.args);
+    expect(orders).toEqual([['joined_at', { ascending: false }], ['user_id', { ascending: true }]]);
+    expect(supabaseMock.argsOf('organization_members', 'range')).toEqual([0, 999]);
     expect(supabaseMock.argsOf('profiles', 'select')).toEqual(['id, email, display_name, avatar_url']);
     expect(supabaseMock.argsOf('profiles', 'in')).toEqual(['id', ['u2']]);
     expect(result).toEqual([{
       orgId: 'org1', userId: 'u2', role: 'member', joinedAt: memberRow.joined_at,
       managerId: 'u1', displayName: 'Bob', email: 'bob@test.dev', avatar: 'https://a.io/b.png',
+      // Mig. 161 : ni suspendu ni borné quand la ligne ne le dit pas.
+      suspendedAt: null, accessExpiresAt: null,
     }]);
   });
 
   it('getMembers: fallbacks displayName — préfixe email sans display_name, "Membre" sans profil', async () => {
+    // Le serveur rend les plus récents d'abord (`joined_at` desc) ; u3 est donc
+    // en tête de la réponse et en queue du résultat.
     supabaseMock.queueTable('organization_members', {
-      data: [memberRow, { ...memberRow, user_id: 'u3' }],
+      data: [{ ...memberRow, user_id: 'u3' }, memberRow],
     });
     supabaseMock.queueTable('profiles', { data: [{ ...profileRow, display_name: null }] });
 
@@ -148,6 +153,44 @@ describe('SupabaseOrganizationsRepository — lecture', () => {
       status: 'pending', requesterName: 'Bob', requesterEmail: 'bob@test.dev',
       requesterAvatar: 'https://a.io/b.png',
     }]);
+  });
+
+  // Audit du 2026-09-24 : « membres, 500 ». Une page PLEINE en appelle une
+  // suivante ; la 1 001e personne existe pour l'annuaire.
+  it('getMembers: lit la page suivante tant que la précédente est pleine', async () => {
+    const page1 = Array.from({ length: 1000 }, (_, i) => ({ ...memberRow, user_id: `a${i}` }));
+    supabaseMock.queueTable('organization_members', { data: page1 });
+    supabaseMock.queueTable('organization_members', { data: [{ ...memberRow, user_id: 'last' }] });
+    supabaseMock.queueTable('profiles', { data: [] });
+    const result = await repo.getMembers('org1');
+    expect(result).toHaveLength(1001);
+    expect(supabaseMock.argsOf('organization_members', 'range', 0)).toEqual([0, 999]);
+    expect(supabaseMock.argsOf('organization_members', 'range', 1)).toEqual([1000, 1999]);
+    // Page incomplète : pas de troisième lecture.
+    expect(supabaseMock.callsFor('organization_members', 2)).toEqual([]);
+  });
+
+  // Témoin du défaut relevé le 2026-09-24 : trié croissant sous `limit(500)`,
+  // c'est la personne arrivée EN DERNIER qui disparaissait de l'annuaire.
+  it("getMembers: garde l'ordre d'arrivée alors que le serveur lit les plus récents", async () => {
+    const newer = { ...memberRow, user_id: 'u3', joined_at: '2026-08-02T10:00:00.000Z' };
+    supabaseMock.queueTable('organization_members', { data: [newer, memberRow] });
+    supabaseMock.queueTable('profiles', { data: [profileRow] });
+    const result = await repo.getMembers('org1');
+    expect(result.map((m) => m.userId)).toEqual(['u2', 'u3']);
+  });
+
+  it("getPendingJoinRequests: lit les plus récentes (desc), rend l'ordre chronologique", async () => {
+    supabaseMock.queueTable('organization_join_requests', {
+      data: [
+        { id: 'r2', org_id: 'org1', user_id: 'u2', requested_at: '2026-07-04T10:00:00.000Z' },
+        { id: 'r1', org_id: 'org1', user_id: 'u2', requested_at: '2026-07-03T10:00:00.000Z' },
+      ],
+    });
+    supabaseMock.queueTable('profiles', { data: [profileRow] });
+    const result = await repo.getPendingJoinRequests('org1');
+    expect(supabaseMock.argsOf('organization_join_requests', 'order')).toEqual(['requested_at', { ascending: false }]);
+    expect(result.map((r) => r.id)).toEqual(['r1', 'r2']);
   });
 
   it('getPendingJoinRequests: [] si aucune demande ; erreur DB → rejet', async () => {
@@ -341,6 +384,7 @@ describe('SupabaseOrganizationsRepository — permissions par membre (mig. 115)'
     can_edit_any_task: null,
     can_delete_task: null,
     can_create_project: true,
+    can_edit_project: null,
     can_delete_project: null,
     can_create_okr: null,
     can_delete_okr: null,
@@ -364,12 +408,18 @@ describe('SupabaseOrganizationsRepository — permissions par membre (mig. 115)'
           'task.editAny': null,
           'task.deleteAny': null,
           'project.create': true,
+          'project.edit': null,
           'project.delete': null,
           'okr.create': null,
           'okr.delete': null,
           'category.manage': null,
           'team.create': null,
           'member.invite': null,
+          // Colonnes de la mig. 202 absentes de la ligne : `null`, jamais `false`.
+          'report.org': null,
+          'report.allTeams': null,
+          // Mig. 219, même règle.
+          'role.manage': null,
         },
         assignTargets: ['self'],
       },
@@ -387,7 +437,7 @@ describe('SupabaseOrganizationsRepository — permissions par membre (mig. 115)'
     expect(result[0].assignTargets).toBeNull();
   });
 
-  it('setMemberPermissions: whitelist stricte — les dix colonnes, rien d’autre', async () => {
+  it('setMemberPermissions: whitelist stricte — les quatorze colonnes (mig. 153, 202, 219), rien d’autre', async () => {
     supabaseMock.queueTable('org_member_permissions', { data: null });
     await repo.setMemberPermissions('org1', 'u2', {
       // Une clé inconnue soumise par un appelant négligent ne doit pas
@@ -404,12 +454,16 @@ describe('SupabaseOrganizationsRepository — permissions par membre (mig. 115)'
       can_edit_any_task: null,
       can_delete_task: null,
       can_create_project: true,
+      can_edit_project: null,
       can_delete_project: null,
       can_create_okr: null,
       can_delete_okr: null,
       can_manage_category: null,
       can_create_team: null,
       can_invite_member: null,
+      can_view_org_report: null,
+      can_view_all_team_reports: null,
+      can_manage_roles: null,
       assign_targets: ['self', 'manager'],
     });
     expect(supabaseMock.argsOf('org_member_permissions', 'upsert')?.[1]).toEqual({

@@ -6,7 +6,7 @@
 // TaskModal) affiche la seule description en beaucoup plus grand, avec une
 // croix pour revenir au modal. La valeur reste contrôlée par le formulaire :
 // tout ce qui est tapé en plein écran est déjà dans `formData.description`.
-import React, { useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Maximize2, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useT } from '@/i18n/useT';
@@ -22,6 +22,12 @@ export interface DescriptionFieldProps {
   /** Classes du textarea inline (le mode plein écran a les siennes). */
   className?: string;
   style?: React.CSSProperties;
+  /**
+   * Une ligne qui grandit avec le texte (maquette 155, fiche mobile) : la zone
+   * réservait ~170 px pour une seule ligne. Le bouton d'agrandissement passe
+   * alors en haut à droite, la place réservée en bas (`pb-10`) disparaît.
+   */
+  autoGrow?: boolean;
   /** Titre affiché en haut de la vue plein écran. */
   expandedTitle?: string;
 }
@@ -36,26 +42,38 @@ const DescriptionField: React.FC<DescriptionFieldProps> = ({
   className = '',
   style,
   expandedTitle,
+  autoGrow = false,
 }) => {
   const { t } = useT('common');
   // Idem : defaut traduit au rendu, pas dans la signature.
   const dialogTitle = expandedTitle ?? t('description.expandedTitle');
   const [isExpanded, setIsExpanded] = useState(false);
   const expandedRef = useRef<HTMLTextAreaElement>(null);
+  const inlineRef = useRef<HTMLTextAreaElement>(null);
+
+  // Hauteur = contenu : remise à `auto` avant de lire `scrollHeight`, sinon
+  // le champ ne rétrécit jamais après un effacement.
+  useLayoutEffect(() => {
+    const el = inlineRef.current;
+    if (!autoGrow || !el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [autoGrow, value]);
 
   return (
     <>
       <div className="relative">
         <textarea
+          ref={inlineRef}
           id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          rows={rows}
+          rows={autoGrow ? 1 : rows}
           autoFocus={autoFocus}
           placeholder={placeholder}
           // pb-10 : réserve la place du bouton pour que le texte ne passe
           // jamais dessous en fin de champ.
-          className={`${className} pb-10`}
+          className={autoGrow ? `${className} pr-10 overflow-hidden` : `${className} pb-10`}
           style={style}
         />
         <button
@@ -67,7 +85,11 @@ const DescriptionField: React.FC<DescriptionFieldProps> = ({
           // textarea : rien ne vit à moins de 22 px autour, la variante deux
           // axes est donc utilisable. L'agrandir pour de vrai mangerait la zone
           // de saisie qu'elle sert à agrandir.
-          className={`absolute bottom-2 right-2 p-1.5 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] ${TAP_AREA_44}`}
+          // `!absolute` : TAP_AREA_44 porte sa propre `relative` (nécessaire à
+          // son pseudo-élément avant), qui gagne sinon la cascade sur `absolute`
+          // — le bouton retombait dans le flux normal, sous le textarea au lieu
+          // du coin bas-droit (C-74).
+          className={`!absolute ${autoGrow ? 'top-0 right-0' : 'bottom-2 right-2'} p-1.5 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] ${TAP_AREA_44}`}
           style={{ color: 'rgb(var(--color-text-secondary))', backgroundColor: 'rgb(var(--color-surface))' }}
         >
           <Maximize2 size={16} />

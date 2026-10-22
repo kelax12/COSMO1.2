@@ -66,13 +66,25 @@ const parse = (s: string | null | undefined): Date | null => {
   return isValid(d) ? d : null;
 };
 
-/** Terminées dans [start, end[ — d'après `completedAt`, pas `updatedAt`. */
-const completedBetween = (tasks: TeamTask[], start: Date, end: Date): number =>
-  tasks.filter((t) => {
-    if (!t.completed) return false;
-    const d = parse(t.completedAt);
-    return !!d && d >= start && d < end;
-  }).length;
+/**
+ * Terminées dans [start, end[ — lues dans le JOURNAL (transition vers `done`),
+ * comme le fil de l'Aperçu : une seule source pour « ce qui s'est passé »
+ * (cohérence globale, 2026-09-25). Une tâche terminée deux fois compte à sa
+ * DERNIÈRE complétion, une seule fois.
+ */
+const completedBetween = (activity: TeamTaskActivity[], start: Date, end: Date): number => {
+  const lastDone = new Map<string, Date>();
+  for (const e of activity) {
+    if (e.field !== 'status' || e.newValue !== 'done') continue;
+    const d = parse(e.createdAt);
+    if (!d) continue;
+    const prev = lastDone.get(e.taskId);
+    if (!prev || d > prev) lastDone.set(e.taskId, d);
+  }
+  let n = 0;
+  for (const d of lastDone.values()) if (d >= start && d < end) n++;
+  return n;
+};
 
 /**
  * Une entrée du journal est-elle un REPORT d'échéance ?
@@ -105,8 +117,8 @@ export function buildWeeklyReview(
 ): WeeklyReview {
   const { thisWeekStart, lastWeekStart } = reviewWindow(now);
 
-  const completedThisWeek = completedBetween(tasks, thisWeekStart, now);
-  const completedLastWeek = completedBetween(tasks, lastWeekStart, thisWeekStart);
+  const completedThisWeek = completedBetween(activity, thisWeekStart, now);
+  const completedLastWeek = completedBetween(activity, lastWeekStart, thisWeekStart);
 
   // ─── 2. Ce qui a dérapé ────────────────────────────────────────────
   // Une tâche reportée trois fois est UN dérapage, pas trois : on ne garde que
@@ -156,3 +168,60 @@ export function buildWeeklyReview(
     needsArbitration,
   };
 }
+
+// ─── Périmètre de la revue (audit du 2026-09-24, étape 3) ────────────
+//
+// « Limitée au sous-arbre, pas enregistrée. » La revue se fait désormais aussi
+// PAR ÉQUIPE ou PAR PROJET, et chacune est enregistrée (mig. 162,
+// `org_weekly_reviews`) pour qu'on retrouve la semaine d'avant.
+
+export type ReviewScope =
+  | { kind: 'base' }
+  | { kind: 'team'; teamId: string }
+  | { kind: 'project'; projectId: string };
+
+interface ScopeInput {
+  scope: ReviewScope;
+  /** Tâches et membres du périmètre du lecteur : un périmètre ne l'élargit JAMAIS. */
+  tasks: TeamTask[];
+  members: OrgMember[];
+  /** Appartenances d'équipe de l'organisation. */
+  memberships: { teamId: string; userId: string }[];
+  /** Équipes (principale + associées) de chaque projet. */
+  teamsOfProject: (projectId: string) => Set<string>;
+}
+
+/**
+ * Restreint les tâches et les membres de la revue au périmètre choisi.
+ *
+ * - équipe : les tâches des projets de l'équipe (principale ou associée), et
+ *   les membres de l'équipe ;
+ * - projet : les tâches du projet, et les personnes qui y sont assignées.
+ */
+export function scopeReview({ scope, tasks, members, memberships, teamsOfProject }: ScopeInput): {
+  tasks: TeamTask[];
+  members: OrgMember[];
+} {
+  if (scope.kind === 'base') return { tasks, members };
+  if (scope.kind === 'project') {
+    const scoped = tasks.filter((t) => t.projectId === scope.projectId);
+    const ids = new Set(scoped.flatMap((t) => t.assigneeIds));
+    return { tasks: scoped, members: members.filter((m) => ids.has(m.userId)) };
+  }
+  const teamMembers = new Set(memberships.filter((m) => m.teamId === scope.teamId).map((m) => m.userId));
+  return {
+    tasks: tasks.filter((t) => teamsOfProject(t.projectId).has(scope.teamId)),
+    members: members.filter((m) => teamMembers.has(m.userId)),
+  };
+}
+
+/** Le résumé FIGÉ qu'on enregistre : des nombres, jamais des noms (RGPD, mig. 162). */
+export const reviewSummary = (review: WeeklyReview): {
+  completed: number; previousCompleted: number; slipped: number; blocked: number; overloaded: number;
+} => ({
+  completed: review.completedThisWeek,
+  previousCompleted: review.completedLastWeek,
+  slipped: review.slipped.length,
+  blocked: review.needsArbitration.length,
+  overloaded: review.overloaded.length,
+});

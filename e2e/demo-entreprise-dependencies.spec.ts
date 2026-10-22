@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { test, expect, navTo } from './fixtures';
+import { test, expect, navTo, openOrgSection, dismissFirstSightBubble } from './fixtures';
 
 /**
  * Dépendances entre tâches + chemin critique (mig. 108) et responsable
@@ -15,12 +15,24 @@ import { test, expect, navTo } from './fixtures';
  * DÉBUT du libellé, jamais à la fin — le badge de nouveautés entre dans le nom
  * accessible du bouton (« Projets 3 nouveautés »).
  */
-const orgTab = (page: Page, label: RegExp) =>
-  page.getByRole('button', { name: label }).filter({ visible: true }).first();
 
 /** Passe la vue Projets sur l'un des trois modes de la barre d'outils. */
 const switchView = async (page: Page, name: 'Liste' | 'Tableau' | 'Planning') => {
-  await page.getByRole('group', { name: /vue/i }).getByRole('button', { name }).click();
+  // Sur téléphone, la barre « Vue » vit dans la feuille « Filtres » depuis la
+  // refonte mobile (maquettes 242 et 250, 29ceaa6c) : on l'ouvre d'abord, et
+  // on la referme après le choix.
+  // 🔴 Décidé par la LARGEUR (seuil `useIsMobile`, 768 px), pas par la
+  // visibilité de la barre : lue avant son rendu, celle-ci faisait croire à
+  // un téléphone sur desktop, et le test cherchait un « Filtres » inexistant
+  // (six échecs chromium, 2026-10-11).
+  const dansFeuille = (page.viewportSize()?.width ?? 1280) < 768;
+  if (dansFeuille) await page.getByRole('button', { name: /^filtres$/i }).click();
+  await page.getByRole('group', { name: /vue/i }).filter({ visible: true }).first().getByRole('button', { name }).click();
+  if (dansFeuille) {
+    const feuille = page.getByRole('dialog', { name: /^filtres$/i });
+    if (await feuille.isVisible().catch(() => false)) await page.keyboard.press('Escape');
+    await expect(feuille).toBeHidden({ timeout: 5_000 });
+  }
 };
 
 /**
@@ -39,6 +51,14 @@ const taskDialog = (page: Page) => page.getByRole('dialog', { name: /modifier la
 const pickerDialog = (page: Page) =>
   page.getByRole('dialog', { name: /ajouter une dépendance/i });
 
+/**
+ * Les dépendances sont un ONGLET de la fiche depuis l'audit des popups du
+ * 2026-09-25 (f3a49583), plus une section repliable : ces cas cherchaient le
+ * bouton `aria-expanded` de l'ancienne section et expiraient à 2 min.
+ */
+const openDependenciesTab = (dialog: ReturnType<Page['getByRole']>) =>
+  dialog.getByRole('tab', { name: /^dépendances/i }).click();
+
 test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
 
@@ -46,8 +66,8 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
-    await orgTab(page, /^projets/i).click();
-    await page.waitForURL(/tab=projects/);
+    await openOrgSection(page, /^projets/i);
+    await page.waitForURL(/\/entreprise\/projects/);
     await switchView(page, 'Planning');
 
     // La légende n'existe QUE s'il y a un chemin — sa présence prouve déjà que
@@ -63,8 +83,8 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
 
   test('Planning : le chemin retenu est la branche la plus LONGUE, pas la plus fournie', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
-    await orgTab(page, /^projets/i).click();
-    await page.waitForURL(/tab=projects/);
+    await openOrgSection(page, /^projets/i);
+    await page.waitForURL(/\/entreprise\/projects/);
     await switchView(page, 'Planning');
     await expect(page.getByTitle(/plus longue chaîne de tâches/i)).toBeVisible({ timeout: 15_000 });
 
@@ -85,50 +105,53 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
 
   test('Modale : les deux sens de dépendance, et l’alerte de blocage', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
-    await orgTab(page, /^projets/i).click();
-    await page.waitForURL(/tab=projects/);
+    await openOrgSection(page, /^projets/i);
+    await page.waitForURL(/\/entreprise\/projects/);
     await switchView(page, 'Liste');
 
     // « Kit presse » est bloquée par « Plan de communication » dans le seed.
     await page.getByRole('button', { name: /Modifier la tâche Kit presse/i }).click();
-    const dialog = page.getByRole('dialog');
+    const dialog = taskDialog(page);
     await expect(dialog).toBeVisible({ timeout: 10_000 });
 
     // L'alerte doit être lisible SANS déplier : c'est elle qui change la
-    // décision de démarrer la tâche.
+    // décision de démarrer la tâche. Depuis que les dépendances ont leur
+    // onglet, elle vit en tête de l'onglet Détails, celui qui s'ouvre
+    // (`TeamTaskBlockedNote`) : elle avait disparu avec la section.
+    await expect(dialog.getByRole('tab', { name: /^détails/i })).toHaveAttribute('aria-selected', 'true');
     await expect(dialog.getByText(/en attente de \d+ tâche/i)).toBeVisible();
 
-    await dialog.getByRole('button', { expanded: false }).filter({ hasText: /dépendances/i }).click();
+    await openDependenciesTab(dialog);
     await expect(dialog.getByText(/bloquée par/i)).toBeVisible();
     await expect(dialog.getByText('Plan de communication')).toBeVisible();
   });
 
   test('Modale : une tâche sans blocage annonce qu’elle peut démarrer', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
-    await orgTab(page, /^projets/i).click();
-    await page.waitForURL(/tab=projects/);
+    await openOrgSection(page, /^projets/i);
+    await page.waitForURL(/\/entreprise\/projects/);
     await switchView(page, 'Liste');
 
     // « Plan de communication » ne dépend de rien mais bloque « Kit presse » :
     // le sens « Bloque » est celui qu'on oublie, il doit être visible.
     await page.getByRole('button', { name: /Modifier la tâche Plan de communication/i }).click();
-    const dialog = page.getByRole('dialog');
+    const dialog = taskDialog(page);
     await expect(dialog).toBeVisible({ timeout: 10_000 });
 
-    await dialog.getByRole('button', { expanded: false }).filter({ hasText: /dépendances/i }).click();
+    await openDependenciesTab(dialog);
     await expect(dialog.getByText(/peut démarrer dès maintenant/i)).toBeVisible();
     await expect(dialog.getByText(/^Bloque$/)).toBeVisible();
   });
 
   test('Ajout : le sélecteur reste dans le projet, et désactive un lien déjà posé', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
-    await orgTab(page, /^projets/i).click();
-    await page.waitForURL(/tab=projects/);
+    await openOrgSection(page, /^projets/i);
+    await page.waitForURL(/\/entreprise\/projects/);
     await switchView(page, 'Liste');
 
     await page.getByRole('button', { name: /Modifier la tâche Plan de communication/i }).click();
     const dialog = taskDialog(page);
-    await dialog.getByRole('button', { expanded: false }).filter({ hasText: /dépendances/i }).click();
+    await openDependenciesTab(dialog);
     await dialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
 
     const picker = pickerDialog(page);
@@ -156,8 +179,8 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
 
   test('Écriture : ajouter une dépendance rallonge le chemin critique', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
-    await orgTab(page, /^projets/i).click();
-    await page.waitForURL(/tab=projects/);
+    await openOrgSection(page, /^projets/i);
+    await page.waitForURL(/\/entreprise\/projects/);
 
     const readCritical = async () => {
       await switchView(page, 'Planning');
@@ -172,7 +195,7 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
     await switchView(page, 'Liste');
     await page.getByRole('button', { name: /Modifier la tâche Plan de communication/i }).click();
     const dialog = taskDialog(page);
-    await dialog.getByRole('button', { expanded: false }).filter({ hasText: /dépendances/i }).click();
+    await openDependenciesTab(dialog);
     await dialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
 
     // Le picker est une liste à cocher, pas un menu : on sélectionne, PUIS on
@@ -194,43 +217,82 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
   });
 });
 
+/**
+ * Les responsables vivent sur la PAGE D'ÉQUIPE (« Responsables et membres »)
+ * depuis l'audit Membres du 2026-09-24 (9bc73f5e) : la section Membres n'est
+ * plus que l'annuaire. Ces cas lisaient l'annuaire et n'y trouvaient plus
+ * aucun badge.
+ *
+ * `exact` : sans lui, « Responsables et membres » (le titre) compte aussi.
+ */
+const leadBadges = (page: Page) => page.getByText('Responsable', { exact: true });
+
+async function openTeam(page: Page, name: 'Design' | 'Dev') {
+  await openOrgSection(page, /^équipes/i);
+  await page.waitForURL(/\/entreprise\/teams$/);
+  await page.getByRole('link', { name: new RegExp(`^${name}$`, 'i') }).click();
+  await expect(page.getByRole('heading', { name: /responsables et membres/i })).toBeVisible({ timeout: 15_000 });
+}
+
 test.describe('Entreprise — responsable d’équipe (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
 
   test('Le responsable est visible par tous, pas seulement par ceux qui peuvent le changer', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
-    await orgTab(page, /^membres/i).click();
-    await page.waitForURL(/tab=members/);
 
-    // Le seed nomme Marie (Design) et Jean (Dev) responsables.
-    await expect(page.getByText('Responsable').first()).toBeVisible({ timeout: 15_000 });
-    const badges = await page.getByText('Responsable').count();
-    expect(badges).toBeGreaterThanOrEqual(2);
+    // Le seed nomme Marie (Design) et Jean (Dev) responsables : un badge par
+    // équipe, chacun sur sa page.
+    await openTeam(page, 'Design');
+    await expect(leadBadges(page).first()).toBeVisible({ timeout: 15_000 });
+    await openTeam(page, 'Dev');
+    await expect(leadBadges(page).first()).toBeVisible({ timeout: 15_000 });
   });
 
   test('Nommer un responsable : plusieurs par équipe, et scopé à cette équipe', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
-    await orgTab(page, /^membres/i).click();
-    await page.waitForURL(/tab=members/);
-    await expect(page.getByText('Responsable').first()).toBeVisible({ timeout: 15_000 });
+    await openTeam(page, 'Design');
+    await expect(leadBadges(page).first()).toBeVisible({ timeout: 15_000 });
 
-    const before = await page.getByText('Responsable').count();
+    // On compte les responsables par LEUR commande (« Retirer le rôle de
+    // responsable », une par responsable), pas par le texte « Responsable » :
+    // la bulle de premier affichage du rôle porte le même mot, et elle se
+    // referme au clic qui suit. Mesuré : 2 avant, 2 après, promotion pourtant
+    // faite (bulle comptée avant, plus après).
+    const leads = page.getByRole('button', { name: /^retirer le rôle de responsable/i });
+    const before = await leads.count();
+    expect(before).toBeGreaterThan(0);
+
+    // La bulle de premier affichage du rôle (71f65211) s'ouvre d'elle-même sous
+    // le badge, une fois. À 390 px (mobile-safari), ses 288 px couvrent les
+    // boutons des rangées suivantes et prennent le tap (CI, run 37069364236).
+    // On la referme comme une personne le ferait avant d'agir.
+    await dismissFirstSightBubble(page);
+
+    // Les responsables des AUTRES équipes, photographiés avant la promotion.
+    // Comparer à une photo plutôt qu'à une borne : « au plus 2 équipes avec
+    // un responsable » était juste avec deux équipes de démo, et faux dès la
+    // troisième (Marketing, 1284a5f5), sans que rien n'ait régressé.
+    const leadsOutsideDesign = () =>
+      page.evaluate(() => {
+        const raw = localStorage.getItem('cosmo_org_team_members');
+        const rows = raw ? (JSON.parse(raw) as { teamId: string; userId: string; isLead: boolean }[]) : [];
+        return rows
+          .filter((m) => m.isLead && m.teamId !== 'team-design')
+          .map((m) => `${m.teamId}:${m.userId}`)
+          .sort();
+      });
+    const othersBefore = await leadsOutsideDesign();
+    expect(othersBefore.length).toBeGreaterThan(0);
+
     await page.getByRole('button', { name: /nommer responsable de l'équipe/i }).first().click();
 
     // Le rôle est multiple : nommer un second responsable ne révoque pas le
     // premier — c'est la différence avec `created_by`, qui était unique.
-    await expect(async () => {
-      expect(await page.getByText('Responsable').count()).toBe(before + 1);
-    }).toPass({ timeout: 10_000 });
+    await expect(leads).toHaveCount(before + 1, { timeout: 10_000 });
 
-    // Et il reste porté par l'appartenance à UNE équipe : la promotion n'a pas
-    // ajouté de responsable ailleurs.
-    const stored = await page.evaluate(() => {
-      const raw = localStorage.getItem('cosmo_org_team_members');
-      return raw ? (JSON.parse(raw) as { teamId: string; isLead: boolean }[]) : [];
-    });
-    const leadTeams = new Set(stored.filter((m) => m.isLead).map((m) => m.teamId));
-    expect(leadTeams.size).toBeLessThanOrEqual(2);
+    // Et il reste porté par l'appartenance à UNE équipe : la promotion n'a
+    // rien changé aux responsables des autres équipes.
+    expect(await leadsOutsideDesign()).toEqual(othersBefore);
   });
 });
 
@@ -238,6 +300,11 @@ test.describe('Entreprise — aperçu des badges de nouveautés (démo)', () => 
   test.describe.configure({ timeout: 120_000 });
 
   test('Le badge dit CE QUI a changé, pas seulement combien', async ({ demoPage: page }) => {
+    // L'aperçu au survol vit dans le panneau DESKTOP (`OrgSideNav`). Sous `md`,
+    // la navigation est le sélecteur + feuille, dont le total est `aria-hidden` :
+    // le badge y est dans le DOM mais caché (mobile-safari, run 37069364236).
+    // Largeur posée par le cas lui-même, comme le cas desktop de navigation.
+    await page.setViewportSize({ width: 1280, height: 800 });
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 

@@ -3,7 +3,9 @@ import { createPortal } from 'react-dom';
 import { X, ShieldCheck, RotateCcw } from 'lucide-react';
 import {
   ORG_ASSIGN_TARGETS,
+  ORG_PERMISSION_KEYS,
   DEFAULT_ASSIGN_TARGETS,
+  canAssignTo,
   canGrant,
   effectivePermissions,
   type EffectiveOrgPermissions,
@@ -13,7 +15,12 @@ import {
   type OrgPermissionKey,
   type SetOrgPermissionsInput,
 } from '@/modules/organizations';
+import { useTeamProjects } from '@/modules/team-projects';
+import { useTeamOKRs } from '@/modules/team-okrs';
+import { useOrgTeamMembers } from '@/modules/org-teams';
 import MemberAvatar from './MemberAvatar';
+import PermissionSwitch from './PermissionSwitch';
+import { memberReach } from './audience.helpers';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 
@@ -27,19 +34,21 @@ interface MemberPermissionsSheetProps {
   actorIsAdmin: boolean;
   /** Cibles d'assignation de l'utilisateur courant — plafond de la portée. */
   actorAssignTargets: OrgAssignTarget[];
+  /** Rôles personnalisés actifs du membre (mig. 219) : ils priment sur cette fiche. */
+  activeRoleNames?: string[];
   pending: boolean;
   onSave: (input: SetOrgPermissionsInput) => void;
   onClose: () => void;
 }
 
-/** Les trois sections de droits booléens, dans l'ordre d'affichage. */
+/** Les quatre sections de droits booléens, dans l'ordre d'affichage. */
 const SECTIONS: {
-  titleKey: 'permissions.sectionCreate' | 'permissions.sectionDelete' | 'permissions.sectionOrg';
+  titleKey: 'permissions.sectionCreate' | 'permissions.sectionDelete' | 'permissions.sectionOrg' | 'permissions.sectionReports';
   keys: OrgPermissionKey[];
 }[] = [
   {
     titleKey: 'permissions.sectionCreate',
-    keys: ['task.create', 'project.create', 'okr.create', 'category.manage', 'team.create'],
+    keys: ['task.create', 'project.create', 'project.edit', 'okr.create', 'category.manage', 'team.create'],
   },
   {
     titleKey: 'permissions.sectionDelete',
@@ -47,7 +56,11 @@ const SECTIONS: {
   },
   {
     titleKey: 'permissions.sectionOrg',
-    keys: ['member.invite', 'task.editAny'],
+    keys: ['member.invite', 'task.editAny', 'role.manage'],
+  },
+  {
+    titleKey: 'permissions.sectionReports',
+    keys: ['report.org', 'report.allTeams'],
   },
 ];
 
@@ -58,27 +71,6 @@ const labelKey = (key: OrgPermissionKey) => `permissions.key.${key}` as const;
 const hintKey = (key: OrgPermissionKey) => `permissions.key.${key}Hint` as const;
 const targetKey = (target: OrgAssignTarget) => `permissions.target.${target}` as const;
 const targetHintKey = (target: OrgAssignTarget) => `permissions.target.${target}Hint` as const;
-
-const Switch = ({
-  checked, disabled, label, onToggle,
-}: { checked: boolean; disabled: boolean; label: string; onToggle: () => void }) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    aria-label={label}
-    disabled={disabled}
-    onClick={onToggle}
-    className={`relative shrink-0 w-[44px] h-[26px] rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed ${
-      checked ? 'bg-[rgb(var(--color-accent-solid))]' : 'bg-gray-200 dark:bg-gray-700'
-    }`}
-  >
-    <span
-      className="absolute top-[2px] w-[22px] h-[22px] rounded-full bg-white shadow-md transition-all duration-200"
-      style={{ left: checked ? 'calc(100% - 24px)' : '2px' }}
-    />
-  </button>
-);
 
 /**
  * Fiche « Modifier les permissions » d'un membre (mig. 115).
@@ -97,9 +89,21 @@ const Switch = ({
  */
 const MemberPermissionsSheet = ({
   member, members, current, actorPermissions, actorIsAdmin,
-  actorAssignTargets, pending, onSave, onClose,
+  actorAssignTargets, activeRoleNames = [], pending, onSave, onClose,
 }: MemberPermissionsSheetProps) => {
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
+
+  // Aperçu de l'EFFET (audit des popups, 2026-09-25) : un interrupteur
+  // « supprimer n'importe quelle tâche » ne dit pas sur combien de projets il
+  // porte. On compte ce que CETTE personne voit : c'est là que le droit s'exerce.
+  const { data: projects = [] } = useTeamProjects(member.orgId);
+  const { data: okrs = [] } = useTeamOKRs(member.orgId);
+  const { data: memberships = [] } = useOrgTeamMembers(member.orgId);
+  const reach = useMemo(
+    () => memberReach({ member, members, memberships, projects, okrs }),
+    [member, members, memberships, projects, okrs],
+  );
+  const { t: ta } = useT('orgAdmin');
 
   const [overrides, setOverrides] = useState<Partial<Record<OrgPermissionKey, boolean | null>>>(
     () => ({ ...(current?.overrides ?? {}) }),
@@ -125,8 +129,23 @@ const MemberPermissionsSheet = ({
     [member, members],
   );
 
-  const effectiveTargets = targets ?? [...DEFAULT_ASSIGN_TARGETS];
+  const effectiveTargets = useMemo(() => targets ?? [...DEFAULT_ASSIGN_TARGETS], [targets]);
   const targetsDecided = targets !== null;
+  const assignableCount = useMemo(
+    () => members.filter((target) => canAssignTo({ actor: member, target, members, targets: effectiveTargets })).length,
+    [member, members, effectiveTargets],
+  );
+
+  const impactOf = (key: OrgPermissionKey): string | null => {
+    switch (key) {
+      case 'task.editAny': return tp('popups.perms.taskEditAny', reach.projects);
+      case 'task.deleteAny': return tp('popups.perms.taskDeleteAny', reach.projects);
+      case 'project.edit': return tp('popups.perms.projectEdit', reach.projects);
+      case 'project.delete': return tp('popups.perms.projectDelete', reach.projects);
+      case 'okr.delete': return tp('popups.perms.okrDelete', reach.okrs);
+      default: return null;
+    }
+  };
 
   const toggle = (key: OrgPermissionKey) => {
     setOverrides((prev) => ({ ...prev, [key]: !effective[key] }));
@@ -141,6 +160,21 @@ const MemberPermissionsSheet = ({
       ? effectiveTargets.filter((x) => x !== target)
       : [...effectiveTargets, target];
     setTargets(next);
+  };
+
+  /**
+   * Profils prêts à l'emploi (audit du 2026-09-24, « accès temporaire : ni
+   * invité ni expiration »). « Invité » ne crée, ne supprime et n'invite rien,
+   * et ne s'assigne qu'à lui-même ; la durée se règle dans « Accès et
+   * suspension ». Ce sont des SURCHARGES, donc réversibles ligne à ligne.
+   */
+  const applyGuestPreset = () => {
+    setOverrides(Object.fromEntries(ORG_PERMISSION_KEYS.map((key) => [key, false])));
+    setTargets(['self']);
+  };
+  const applyDefaults = () => {
+    setOverrides(Object.fromEntries(ORG_PERMISSION_KEYS.map((key) => [key, null])));
+    setTargets(null);
   };
 
   const save = () => {
@@ -158,12 +192,15 @@ const MemberPermissionsSheet = ({
       <div key={key} className="flex items-start gap-3 py-3 border-b border-[rgb(var(--color-border))] last:border-0">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-            {t(labelKey(key))}
+            {ta(labelKey(key))}
           </p>
           <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">{t(hintKey(key))}</p>
+          {effective[key] && impactOf(key) && (
+            <p className="text-xs font-semibold text-[rgb(var(--color-accent))] mt-0.5">{impactOf(key)}</p>
+          )}
           <div className="flex items-center gap-2 mt-1">
             <span className="text-caption text-[rgb(var(--color-text-muted))]">
-              {inherited[key] ? t('permissions.inheritedOn') : t('permissions.inheritedOff')}
+              {inherited[key] ? ta('permissions.inheritedOn') : ta('permissions.inheritedOff')}
             </span>
             {decided && (
               <button
@@ -172,20 +209,20 @@ const MemberPermissionsSheet = ({
                 disabled={pending}
                 className="inline-flex items-center gap-1 text-caption font-semibold text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-50"
               >
-                <RotateCcw size={11} aria-hidden="true" /> {t('permissions.reset')}
+                <RotateCcw size={11} aria-hidden="true" /> {ta('permissions.reset')}
               </button>
             )}
             {!allowed && !effective[key] && (
               <span className="text-caption text-amber-600 dark:text-amber-400">
-                {t('permissions.ceiling')}
+                {ta('permissions.ceiling')}
               </span>
             )}
           </div>
         </div>
-        <Switch
+        <PermissionSwitch
           checked={effective[key]}
           disabled={disabled}
-          label={t(labelKey(key))}
+          label={ta(labelKey(key))}
           onToggle={() => toggle(key)}
         />
       </div>
@@ -197,7 +234,7 @@ const MemberPermissionsSheet = ({
   const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
     open: true,
     onClose: onClose,
-    label: t('permissions.aria', { name: member.displayName }),
+    label: ta('permissions.aria', { name: member.displayName }),
   });
 
   return createPortal(
@@ -216,7 +253,7 @@ const MemberPermissionsSheet = ({
             <MemberAvatar avatar={member.avatar} name={member.displayName} size={40} />
             <div className="min-w-0">
               <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate flex items-center gap-1.5">
-                <ShieldCheck size={16} aria-hidden="true" /> {t('permissions.title', { name: member.displayName })}
+                <ShieldCheck size={16} aria-hidden="true" /> {ta('permissions.title', { name: member.displayName })}
               </h2>
             </div>
           </div>
@@ -230,21 +267,46 @@ const MemberPermissionsSheet = ({
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-4">
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mb-4">{t('permissions.intro')}</p>
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-1 pb-4">
+          {activeRoleNames.length > 0 && (
+            <p className="mb-4 rounded-xl bg-amber-500/10 px-3 py-2.5 text-xs text-amber-800 dark:text-amber-200" role="note">
+              {ta('customRoles.sheetBanner', { names: activeRoleNames.join(', ') })}
+            </p>
+          )}
+          <div data-guide-id="member-permissions-default" className="flex flex-wrap gap-2 mb-4" role="group" aria-label={ta('permissions.presets')}>
+            <button
+              type="button"
+              onClick={applyGuestPreset}
+              disabled={pending}
+              title={ta('permissions.presetGuestHint')}
+              className="px-3 min-h-9 rounded-lg text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50"
+            >
+              {ta('permissions.presetGuest')}
+            </button>
+            <button
+              type="button"
+              onClick={applyDefaults}
+              disabled={pending}
+              className="px-3 min-h-9 rounded-lg text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50"
+            >
+              {ta('permissions.presetDefaults')}
+            </button>
+          </div>
 
+          <div data-guide-id="member-permissions-matrix">
           {SECTIONS.map(({ titleKey, keys }) => (
             <section key={titleKey} className="mb-5">
-              <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
-                {t(titleKey)}
+              <h3 className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
+                {ta(titleKey)}
               </h3>
               {keys.map(renderRow)}
             </section>
           ))}
+          </div>
 
           <section>
-            <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
-              {t('permissions.sectionAssign')}
+            <h3 className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
+              {ta('permissions.sectionAssign')}
             </h3>
             {ORG_ASSIGN_TARGETS.map((target) => {
               const checked = effectiveTargets.includes(target);
@@ -269,18 +331,21 @@ const MemberPermissionsSheet = ({
                   />
                   <span className="min-w-0">
                     <span className="block text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-                      {t(targetKey(target))}
+                      {ta(targetKey(target))}
                     </span>
                     <span className="block text-xs text-[rgb(var(--color-text-muted))]">
-                      {t(targetHintKey(target))}
+                      {ta(targetHintKey(target))}
                     </span>
                   </span>
                 </label>
               );
             })}
+            <p className="text-xs font-semibold text-[rgb(var(--color-accent))] mt-2" role="status">
+              {tp('popups.perms.assignCount', assignableCount)}
+            </p>
             {targetsDecided && effectiveTargets.length === 0 && (
               <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mt-2">
-                {t('permissions.assignNobody')}
+                {ta('permissions.assignNobody')}
               </p>
             )}
           </section>
@@ -293,7 +358,7 @@ const MemberPermissionsSheet = ({
             disabled={pending}
             className="px-4 py-2 text-sm font-semibold rounded-xl text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50"
           >
-            {t('permissions.cancel')}
+            {ta('permissions.cancel')}
           </button>
           <button
             type="button"
@@ -301,7 +366,7 @@ const MemberPermissionsSheet = ({
             disabled={pending}
             className="px-4 py-2 text-sm font-semibold rounded-xl bg-[rgb(var(--color-accent-solid))] text-white hover:opacity-90 disabled:opacity-50"
           >
-            {pending ? t('permissions.saving') : t('permissions.save')}
+            {pending ? ta('permissions.saving') : ta('permissions.save')}
           </button>
         </div>
       </div>

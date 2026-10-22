@@ -2,6 +2,7 @@ import React from 'react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { useT } from '@/i18n/useT';
 import LegalDocument, { type LegalSection } from './legal/LegalDocument';
+import type { KeyOf } from '@/i18n/catalog';
 
 /**
  * Mentions légales.
@@ -14,14 +15,22 @@ import LegalDocument, { type LegalSection } from './legal/LegalDocument';
  * librement : une adresse d'hébergeur inexacte est un défaut de mention légale,
  * pas une maladresse de rédaction.
  */
-const SECTIONS: LegalSection[] = [
+const SECTIONS: LegalSection<KeyOf<'legal'>>[] = [
   {
     title: 'notice.s1.title',
     blocks: [
       { kind: 'p', key: 'notice.s1.intro' },
       {
         kind: 'ul',
-        items: ['notice.s1.li1', 'notice.s1.li2', 'notice.s1.li3'],
+        items: [
+          'notice.s1.li1',
+          'notice.s1.liRegistration',
+          'notice.s1.liVat',
+          'notice.s1.liAddress',
+          'notice.s1.li2',
+          'notice.s1.liPhone',
+          'notice.s1.li3',
+        ],
         bullets: false,
       },
     ],
@@ -35,7 +44,13 @@ const SECTIONS: LegalSection[] = [
   },
   {
     title: 'notice.s3.title',
-    blocks: [{ kind: 'p', key: 'notice.s3.p1' }, { kind: 'p', key: 'notice.s3.p2' }],
+    blocks: [
+      { kind: 'p', key: 'notice.s3.p1' },
+      { kind: 'p', key: 'notice.s3.p2' },
+      // Notices des licences tierces (F9), générées au build par
+      // `scripts/third-party-notices.mjs`.
+      { kind: 'p', key: 'notice.s3.p3' },
+    ],
   },
   {
     title: 'notice.s4.title',
@@ -56,6 +71,7 @@ const MentionsLegalesPage: React.FC = () => {
 
   return (
     <LegalDocument
+      text={t}
       titleKey="notice.title"
       updatedAtKey="notice.updatedAt"
       sections={SECTIONS}

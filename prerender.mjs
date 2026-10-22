@@ -15,12 +15,13 @@
 // (le filesystem est vérifié avant les rewrites). Aucun navigateur requis
 // au build → compatible avec l'image de build Vercel.
 // ─────────────────────────────────────────────────────────────────────────
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ARTICLES, articlesFor, relatedArticles } from './src/content/blog/index.mjs';
 import { USE_CASES } from './src/content/use-cases.mjs';
 import { CONTACT_EMAIL } from './src/lib/contact.mjs';
+import { scopedCssFor } from './scripts/landing-hero-css.mjs';
 import {
   BCP47_TAG,
   DEFAULT_LOCALE,
@@ -50,6 +51,12 @@ const byLocale = (entry, build) =>
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, 'dist');
 const BASE = 'https://thecosmo.app';
+
+// Miroir de `PRICES_VISIBLE` (src/modules/billing/premium-config.ts) : ce script
+// Node ne lit pas le TypeScript. Prix masqués depuis le 2026-10-16 (acquisition
+// sans monétisation) ; le paragraphe « Tarifs » reste écrit plus bas, il n'est
+// juste plus servi. Garde de parité : src/modules/billing/prices-visible.guard.test.ts.
+const PRIX_VISIBLES = true;
 
 // ── Catalogues SEO par locale ─────────────────────────────────────────────
 // Mêmes fichiers que ceux consommés par l'app (src/lib/useSeoMeta.ts) : le
@@ -82,13 +89,38 @@ const TODAY = new Date().toISOString().slice(0, 10);
 const CONTENT_LASTMOD = {
   site: '2026-08-17', // JSON-LD global (SoftwareApplication, Organization)
   '/': '2026-08-17',
-  '/guide': '2026-08-02',
+  '/guide': '2026-10-12',
   '/a-propos': '2026-08-03',
-  '/entreprise-presentation': '2026-08-17',
+  '/entreprise-presentation': '2026-10-02',
 };
 
 let html = readFileSync(join(DIST, 'index.html'), 'utf8');
 html = html.replace(/"dateModified":\s*"[\d-]+"/g, `"dateModified": "${CONTENT_LASTMOD.site}"`);
+
+// C-116 · 2026-09-29 — coquille VIERGE de l'application, servie par le
+// rewrite SPA de vercel.json à toute URL sans fichier prérendu (/dashboard,
+// /tasks…). Avant, ce rewrite servait dist/index.html, c'est-à-dire la HOME
+// prérendue : impossible alors de peindre le prérendu sans montrer la landing
+// à un utilisateur qui rafraîchit /dashboard. Chaque page prérendue porte
+// désormais `data-prerendered` sur <html>, et SEULE elle peint son contenu
+// (cf. le <style> d'index.html) ; app.html garde le spinner.
+//
+// 2026-10-09 · la coquille sort en `noindex` et SANS cible de canonical. Copie
+// brute d'index.html, elle déclarait toute URL inconnue indexable et canonique
+// de `/` : un soft-404 vu tel quel par Bing et les crawlers IA, qui
+// n'exécutent pas le JS de NotFoundPage. Aucune page qu'on veut voir classée
+// ne passe par ici, elles ont toutes leur fichier prérendu. Le <link> reste
+// (sans href, donc ignoré par les moteurs) parce que `setCanonical()` de
+// useSeoMeta en modifie un existant et n'en crée pas.
+const ROBOTS_INDEX = /<meta name="robots" content="index[^"]*" \/>/;
+const CANONICAL_HOME = /<link rel="canonical" href="https:\/\/thecosmo\.app\/" \/>/;
+if (!ROBOTS_INDEX.test(html) || !CANONICAL_HOME.test(html)) {
+  throw new Error('prerender: robots/canonical introuvables dans index.html, app.html resterait indexable');
+}
+const appShell = html
+  .replace(ROBOTS_INDEX, '<meta name="robots" content="noindex" />')
+  .replace(CANONICAL_HOME, '<link rel="canonical" />');
+writeFileSync(join(DIST, 'app.html'), appShell, 'utf8');
 
 // ── FAQ ───────────────────────────────────────────────────────────────────
 // LUE dans le catalogue que rend l'application (`faq.q1…qN`), pas recopiée ici.
@@ -202,7 +234,7 @@ const guideArticle = (locale) => ({
   '@type': 'TechArticle',
   headline: seoFor('guide', locale).title,
   description: seoFor('guide', locale).description,
-  image: `${BASE}/og-card.png`,
+  image: ogImageFor('/guide', locale),
   url: canonicalUrl('/guide', locale),
   inLanguage: BCP47_TAG[locale],
   datePublished: '2025-01-01',
@@ -212,6 +244,17 @@ const guideArticle = (locale) => ({
   mainEntityOfPage: canonicalUrl('/guide', locale),
   articleSection: ['Prise en main', 'Tâches', 'Habitudes', 'Agenda', 'OKR', 'Statistiques'],
 });
+
+// ── Image Open Graph par page (2026-10-12) ─────────────────────────────────
+// `scripts/capture-og-images.mjs` rend `public/og/<clé>.jpg` (commitées : le
+// build Vercel n'a pas de navigateur). Une page sans image retombe sur
+// og-card.png, la vignette de l'accueil : jamais d'image cassée. La clé doit
+// rester celle d'`ogKey()` du script.
+const ogKey = (path) => path.replace(/^\/+|\/+$/g, '').replace(/\//g, '_') || 'home';
+const ogImageFor = (path, locale) => {
+  const key = ogKey(localizePath(path, locale));
+  return existsSync(join(DIST, 'og', `${key}.jpg`)) ? `${BASE}/og/${key}.jpg` : `${BASE}/og-card.png`;
+};
 
 const ld = (obj, id) => `<script type="application/ld+json"${id ? ` id="${id}"` : ''}>${JSON.stringify(obj)}</script>`;
 
@@ -252,11 +295,11 @@ const ROUTES = [
       fr: `<h1>Guide d'utilisation de Cosmo</h1>
         <p>Ce guide couvre les six zones de Cosmo, dans l'ordre où on les découvre en pratique. Comptez une quinzaine de minutes pour tout parcourir, mais rien n'oblige à tout mettre en place le premier jour : les tâches seules suffisent à démarrer utilement.</p>
         <h2>Prise en main</h2>
-        <p>Deux entrées possibles. Le <strong>mode démo</strong> ouvre l'application complète sans inscription, pré-remplie de 12 mois de données : c'est la bonne façon d'explorer sans rien construire. Le <strong>compte gratuit</strong> se crée en trente secondes, par email ou via Google, et vos données vous suivent alors d'un appareil à l'autre. Au premier login, Cosmo demande quels modules afficher : gardez-en peu au début, tout se réactive plus tard dans Réglages → Modules.</p>
+        <p>Deux entrées possibles. Le <strong>mode démo</strong> ouvre l'application complète sans inscription, pré-remplie de 12 mois de données : c'est la bonne façon d'explorer sans rien construire. Le <strong>compte gratuit</strong> se crée en trente secondes, par email ou via Google, et vos données vous suivent alors d'un appareil à l'autre.</p>
         <h2>Tâches</h2>
-        <p>Le socle. Une tâche porte un nom, une description, une priorité de 1 à 5, une catégorie colorée, une échéance et une liste. Les filtres se combinent pour isoler ce qui compte maintenant ; les listes servent aux regroupements durables (un client, un projet, un cours). Une tâche récurrente se régénère automatiquement quand vous la cochez, et les sous-tâches découpent ce qui est trop gros pour être commencé. Le partage se fait par email, en rôle Lecteur ou Éditeur, gratuitement.</p>
+        <p>Le socle. Une tâche porte un nom, une description, une priorité de 1 à 5, une catégorie colorée, une échéance et une ou plusieurs listes. Les filtres se combinent pour isoler ce qui compte maintenant ; les listes servent aux regroupements durables (un client, un projet, un cours). Une tâche récurrente se régénère automatiquement quand vous la cochez, et les sous-tâches découpent ce qui est trop gros pour être commencé. Le partage se fait par email, en rôle Lecteur ou Éditeur, gratuitement.</p>
         <h2>Habitudes</h2>
-        <p>Créez l'habitude, choisissez sa fréquence (quotidienne, hebdomadaire ou jours précis), puis cochez au fil des jours. La heatmap 26 semaines montre la régularité réelle, le streak compte les jours consécutifs et le taux de complétion situe la période en cours. Conseil qui change tout : deux ou trois habitudes maximum au démarrage, quitte à en ajouter dans un mois. Une liste de quinze habitudes se solde à peu près toujours par un abandon global.</p>
+        <p>Créez l'habitude, donnez-lui une durée, puis cochez-la au fil des jours. Une pause (vacances, maladie) préserve votre série. La heatmap 26 semaines montre la régularité réelle, le streak compte les jours consécutifs et le taux de complétion situe la période en cours. Conseil qui change tout : deux ou trois habitudes maximum au démarrage, quitte à en ajouter dans un mois. Une liste de quinze habitudes se solde à peu près toujours par un abandon global.</p>
         <h2>Agenda</h2>
         <p>L'agenda accepte des événements classiques, mais son intérêt est ailleurs : glissez une tâche depuis le panneau latéral vers un créneau, l'événement se crée et reste lié à la tâche. C'est le <a href="/blog/time-blocking-guide">time-blocking</a>, et c'est ce qui transforme une liste d'intentions en semaine réaliste. Vues jour, semaine et mois ; les événements récurrents se gèrent depuis la même fiche.</p>
         <h2>OKR</h2>
@@ -269,9 +312,9 @@ const ROUTES = [
         <h2>Getting started</h2>
         <p>There are two ways in. <strong>Demo mode</strong> opens the complete application with no sign-up, pre-filled with 12 months of data: that is the right way to explore without building anything. A <strong>free account</strong> takes thirty seconds to create, by email or through Google, and your data then follows you from one device to another.</p>
         <h2>Tasks</h2>
-        <p>The foundation. A task carries a name, a description, a priority from 1 to 5, a coloured category, a deadline and a list. Filters combine to isolate what matters now, and lists serve lasting groupings (a client, a project, a course). A recurring task regenerates itself automatically when you tick it, and subtasks break down whatever is too big to start. Sharing is done by email, as Viewer or Editor, free of charge.</p>
+        <p>The foundation. A task carries a name, a description, a priority from 1 to 5, a coloured category, a deadline and one or more lists. Filters combine to isolate what matters now, and lists serve lasting groupings (a client, a project, a course). A recurring task regenerates itself automatically when you tick it, and subtasks break down whatever is too big to start. Sharing is done by email, as Viewer or Editor, free of charge.</p>
         <h2>Habits</h2>
-        <p>Create the habit, choose its frequency (daily, weekly or specific days), then tick it off as the days go by. The 26-week heatmap shows your real consistency, the streak counts consecutive days, and the completion rate situates the current period. The advice that changes everything: two or three habits at most when you start, even if you add more in a month. A list of fifteen habits almost always ends in giving up on all of them.</p>
+        <p>Create the habit, give it a duration, then tick it off as the days go by. A pause (holiday, illness) keeps your streak intact. The 26-week heatmap shows your real consistency, the streak counts consecutive days, and the completion rate situates the current period. The advice that changes everything: two or three habits at most when you start, even if you add more in a month. A list of fifteen habits almost always ends in giving up on all of them.</p>
         <h2>Calendar</h2>
         <p>The calendar accepts ordinary events, but its value lies elsewhere: drag a task from the side panel onto a slot and the event is created and stays linked to the task. That is <a href="/en/blog/time-blocking-guide">time-blocking</a>, and it is what turns a list of intentions into a realistic week. Day, week and month views, with recurring events managed from the same panel.</p>
         <h2>OKRs</h2>
@@ -331,7 +374,7 @@ const ROUTES = [
         <p>Les trois désignent la même application : Cosmo, accessible à l'adresse thecosmo.app. On nous cherche aussi sous « Cosmo app », « The Cosmo » ou « thecosmo app », c'est toujours nous. Plusieurs autres produits sans rapport portent le nom « Cosmo » (une radio allemande, des applications mobiles diverses) : Cosmo est une application web de productivité, sans téléchargement, et son seul site officiel est thecosmo.app.</p>
 
         <h2>Nous écrire</h2>
-        <p>Le projet est développé par une équipe indépendante, en France. Une question, un bug, une idée de fonctionnalité, une demande presse : écrivez à axellongattepro@gmail.com : les retours d'utilisateurs orientent réellement la feuille de route.</p>
+        <p>Le projet est développé par une équipe indépendante, en France. Une question, un bug, une idée de fonctionnalité, une demande presse : écrivez à contact@thecosmo.app : les retours d'utilisateurs orientent réellement la feuille de route.</p>
         <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/blog">Blog</a> · <a href="/guide">Guide d'utilisation</a></p>`,
       en: `<h1>About Cosmo</h1>
         <p>Cosmo is a free, all-in-one productivity application built in France: tasks, habits, a calendar with time-blocking and OKRs connected in a single ecosystem. An independent product, developed in France.</p>
@@ -352,7 +395,7 @@ const ROUTES = [
         <p>All three refer to the same application: Cosmo, available at thecosmo.app. People also look for us as "Cosmo app", "The Cosmo" or "thecosmo app", and that is always us. Several unrelated products carry the name Cosmo (a German radio station, various mobile apps): Cosmo is a web productivity application, with nothing to download, and its only official site is thecosmo.app.</p>
 
         <h2>Write to us</h2>
-        <p>The project is developed by an independent team, in France. A question, a bug, a feature idea, a press request: write to axellongattepro@gmail.com, because user feedback genuinely steers the roadmap.</p>
+        <p>The project is developed by an independent team, in France. A question, a bug, a feature idea, a press request: write to contact@thecosmo.app, because user feedback genuinely steers the roadmap.</p>
         <p><a href="/en/">Home</a> · <a href="/en/signup">Create a free account</a> · <a href="/en/blog">Blog</a> · <a href="/en/guide">User guide</a></p>`,
     },
   },
@@ -364,65 +407,88 @@ const ROUTES = [
     // (src/pages/landing/entreprise/) : à retoucher si la copie change.
     path: '/entreprise-presentation',
     meta: fromCatalog('enterprisePresentation'),
+    // Peint une copie du hero entreprise avant React (cf. injectHeroCopy).
+    heroTrack: 'entreprise',
     extraLd: (locale) => [
       {
         obj: breadcrumb('Cosmo Entreprise', '/entreprise-presentation', locale),
         id: 'entreprise-breadcrumb',
       },
     ],
+    // C-116 · 2026-10-10 : captures en `loading="lazy"`, comme celles de la home
+    // (cf. le commentaire « loading=lazy n'est PAS une micro-optimisation »).
+    // Le fallback est désormais PEINT avant React : sans lazy, les sept captures
+    // (~350 ko) partaient avant le LCP, et Lighthouse mobile les comptait dans
+    // son chemin (5,1 s ici, 3,3 s sur les pages sans image).
     content: {
       fr: `<h1>Cosmo Entreprise, votre organigramme est votre moteur d'exécution</h1>
-        <p>Dans Cosmo Entreprise, le périmètre de chacun découle de votre organigramme : ce qu'il voit, ce qu'on lui assigne, ce qu'on mesure. Chaque collaborateur garde par ailleurs le Cosmo personnel qu'il utilise déjà, ce qui évite d'avoir un outil de plus à faire adopter. La mise en place tient en quatre étapes.</p>
+        <p>Dans Cosmo Entreprise, le périmètre de chacun découle de votre organigramme : ce qu'il voit, ce qu'on lui assigne, ce qu'on mesure. Chaque collaborateur garde par ailleurs le Cosmo personnel qu'il utilise déjà, ce qui évite d'avoir un outil de plus à faire adopter. La mise en place tient en cinq étapes.</p>
 
         <h2>Étape 1 : invitez votre équipe et regroupez-la</h2>
-        <p>Chacun rejoint l'organisation avec le compte Cosmo qu'il a déjà, par code d'organisation ou par lien à usage unique, et vous le rattachez à son responsable. Vous créez ensuite autant d'équipes que nécessaire et y placez les personnes que vous voulez, une même personne pouvant appartenir à plusieurs équipes. De ce seul lien de rattachement découlent les accès : un responsable voit son sous-arbre complet (ses équipes, leurs projets, leurs objectifs, leurs statistiques) sans qu'aucun droit n'ait à être coché à la main. Un changement de rattachement suffit à réorganiser, parce que les droits ne sont recopiés nulle part : ils sont recalculés depuis le lien.</p>
-        <p>L'organigramme n'est pas un trombinoscope, c'est l'écran depuis lequel on suit chaque personne : ouvrir sa fiche donne ses tâches en cours, sa charge et son agenda. Un responsable peut créer, déplacer et modifier les événements de l'agenda des personnes qui lui reportent ; ce qu'elles ont marqué comme personnel reste privé, seul le créneau apparaît. Deux branches sœurs de l'organigramme, elles, sont cloisonnées, et la règle est appliquée en base de données, pas seulement masquée dans l'interface.</p>
-        <p><img src="/screenshots/entreprise/pyramide.webp" width="1500" height="938" alt="Onglet Pyramide de Cosmo Entreprise : l'organigramme de l'organisation, chaque membre rattaché à son manager" /></p>
+        <p>Chacun rejoint l'organisation avec le compte Cosmo qu'il a déjà, invité par e-mail, par code d'organisation, par lien ou parmi vos contacts, et arrive directement sous son responsable et dans ses équipes. Vous créez autant d'équipes que nécessaire, une même personne pouvant appartenir à plusieurs. Le rattachement décide par défaut de ce que chacun voit et peut faire : un responsable voit son sous-arbre complet sans qu'aucun droit n'ait à être coché. Quand il le faut, vous ajustez les droits membre par membre, et un changement de rattachement suffit à réorganiser.</p>
+        <p>L'organigramme est l'écran depuis lequel on suit chaque personne : ouvrir sa fiche donne ses tâches en cours, sa charge, son agenda et sa contribution. Un responsable peut créer, déplacer et modifier les événements de l'agenda des personnes qui lui reportent ; ce qu'elles ont marqué comme personnel reste privé, seul le créneau apparaît. Deux branches sœurs de l'organigramme sont cloisonnées, et la règle est appliquée en base de données, pas seulement masquée dans l'interface.</p>
+        <p><img src="/screenshots/entreprise/pyramide.webp" width="1600" height="667" loading="lazy" decoding="async" alt="Onglet Organigramme de Cosmo Entreprise : chaque membre rattaché à son responsable, avec ses tâches ouvertes et ses retards" /></p>
 
-        <h2>Étape 2 : créez vos projets et attribuez-les à l'échelle voulue</h2>
-        <p>Un projet appartient à une équipe et rassemble ses tâches. Vous les assignez à une personne ou à plusieurs, dans tout votre périmètre, et chacune les retrouve dans son propre Cosmo à côté de ses tâches personnelles. Kanban pour savoir où en est chaque tâche, frise chronologique pour voir arriver les échéances, avec sous-tâches, labels, commentaires à mentions et historique des modifications.</p>
-        <p><img src="/screenshots/entreprise/projets.webp" width="1500" height="938" alt="Onglet Projets de Cosmo Entreprise : les projets par équipe avec leurs tâches, échéances et personnes assignées" /></p>
+        <h2>Étape 2 : suivez l'exécution, pas seulement les échéances</h2>
+        <p>Chaque tâche porte un statut (à faire, en cours, en relecture, bloquée, terminée) et peut en bloquer une autre. Le planning calcule le chemin critique, la chaîne de tâches dont le moindre retard décale la livraison. L'onglet Tâches réunit les tâches de tous les projets de votre périmètre, avec préréglages, listes partagées, tri et regroupement, en liste ou en kanban.</p>
+        <p><img src="/screenshots/entreprise/taches-tableau.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Onglet Tâches de Cosmo Entreprise en vue Tableau : une colonne par statut, de à faire à terminée, avec les retards signalés" /></p>
 
-        <h2>Étape 3 : posez vos objectifs, à toutes les échelles</h2>
-        <p>Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés : le même mécanisme à chaque niveau, dans les catégories que vous définissez. Chaque résultat clé atteint est journalisé à la date où il l'a été, dans un journal qui ne se réécrit pas après coup, c'est ce qui rend la courbe du tableau de bord opposable en comité.</p>
-        <p><img src="/screenshots/entreprise/okr.webp" width="1500" height="938" alt="Onglet OKR de Cosmo Entreprise : les objectifs d'équipe et leurs résultats clés chiffrés, avec leur progression" /></p>
+        <h2>Étape 3 : créez vos projets et attribuez-les à l'échelle voulue</h2>
+        <p>Un projet appartient à une équipe et rassemble ses tâches. Vous les assignez à une personne ou à plusieurs, dans tout votre périmètre, et chacune les retrouve dans son propre Cosmo à côté de ses tâches personnelles. Trois vues : la liste pour le détail, le planning pour voir arriver les échéances et le chemin critique, le portefeuille pour comparer statut, responsable et avancement de tous les projets. Sous-tâches, commentaires à mentions et historique des modifications sont dans chaque tâche.</p>
+        <p><img src="/screenshots/entreprise/projets.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Onglet Projets de Cosmo Entreprise en vue Liste : les projets d'équipe avec leurs tâches, échéances, statuts et personnes assignées" /></p>
+        <p><img src="/screenshots/entreprise/projets-portefeuille.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Onglet Projets en vue Portefeuille : chaque projet avec son responsable, son statut, son avancement et ce qui le bloque" /></p>
 
-        <h2>Étape 4 : suivez la progression de chacun</h2>
-        <p>L'onglet Statistiques répond à la question du lundi matin : qui avance, qui décroche, qui est surchargé. Vélocité et tendance sur la période comparée aux précédentes, tâches ouvertes et retards de chaque membre, temps investi agrégé par équipe et par projet. Une direction lit toute l'organisation, un responsable lit son périmètre, et c'est le rattachement posé à l'étape 1 qui le décide. L'aperçu, lui, ouvre chaque journée : vos tâches assignées, vos échéances et ce qui vient de bouger chez vos équipes.</p>
-        <p><img src="/screenshots/entreprise/statistiques.webp" width="1500" height="938" alt="Onglet Statistiques de Cosmo Entreprise : progression des OKR et charge de travail de chaque membre de l'équipe" /></p>
+        <h2>Étape 4 : posez vos objectifs, à toutes les échelles</h2>
+        <p>Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés avec leur porteur. Un objectif peut être visible par toute l'entreprise, par certaines équipes ou par les seules personnes choisies. Chaque résultat clé atteint est journalisé à la date où il l'a été, dans un journal qui ne se réécrit pas après coup.</p>
+        <p><img src="/screenshots/entreprise/okr.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Onglet OKR de Cosmo Entreprise : les objectifs et leurs résultats clés chiffrés avec leur porteur et leur progression" /></p>
+
+        <h2>Étape 5 : suivez la progression de chacun</h2>
+        <p>Les rapports d'activité répondent à la question du lundi matin : ce qui a avancé, et grâce à qui. Chaque nuit, Cosmo fige ce que l'entreprise et chaque équipe ont fait (tâches terminées, projets et OKR qui ont progressé, événements tenus), lisible au jour, à la semaine ou au mois, avec le détail par personne. L'aperçu ouvre chaque journée : les tâches à valider, les mentions, les personnes que vous bloquez, votre charge de la semaine, votre agenda et vos résultats clés.</p>
+        <p><img src="/screenshots/entreprise/rapports.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Rapports d'activité de Cosmo Entreprise : tâches terminées, projets et OKR qui ont avancé, et qui a fait quoi" /></p>
+        <p><img src="/screenshots/entreprise/apercu.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Aperçu de Cosmo Entreprise : tâches à valider, mentions, charge de la semaine, agenda et résultats clés" /></p>
+
+        <h2>Vingt fonctionnalités en plus</h2>
+        <p>Rôles et permissions réglables membre par membre, rôles par projet (responsable, contributeur, lecteur), une page par équipe avec la charge de chaque membre, événements d'équipe, assistant de démarrage. Modèles de projet, dépendances entre projets, actions groupées, listes et préréglages partagés par lien, recherche dans toute l'entreprise. Automatisations, envoi vers Slack ou webhooks signés, export complet en CSV, alertes réglables par type, résultats clés d'entreprise visibles dans vos OKR personnels. Journal d'audit conservé un an, domaines vérifiés, accès à durée limitée, assistant de départ et suspension, corbeille de trente jours pour les tâches et les objectifs.</p>
 
         <h2>Sécurité, confidentialité et réversibilité</h2>
-        <p>Chaque table est protégée par des politiques d'accès évaluées côté serveur : une requête forgée depuis le navigateur ne rapporte rien de plus qu'une requête légitime. Un manager voit le travail de son périmètre, jamais les tâches, habitudes ou agenda personnels de ses collaborateurs. Effacement du compte réellement exécuté côté serveur, consentement explicite à l'entrée dans une organisation, aucune donnée revendue. Transfert de propriété et suppression de l'organisation sont dans l'interface, pas dans un ticket de support.</p>
-
-        <h2>Tarifs</h2>
-        <p>Un forfait pour toute l'organisation, quel que soit le nombre de projets, et non un tarif par personne : gratuit jusqu'à 5 membres, 20 € par mois de 5 à 10 membres, 50 € de 10 à 20, 100 € de 20 à 50, et 200 € au-delà de 50. Le forfait s'ajuste tout seul quand l'organisation grandit et redescend si l'effectif baisse. Sans engagement, résiliable à tout moment, sans carte bancaire pour démarrer.</p>
+        <p>Chaque table est protégée par des politiques d'accès évaluées côté serveur : une requête forgée depuis le navigateur ne rapporte rien de plus qu'une requête légitime. Un manager voit le travail de son périmètre, jamais les tâches, habitudes ou agenda personnels de ses collaborateurs. Effacement du compte réellement exécuté côté serveur, consentement explicite à l'entrée dans une organisation, aucune donnée revendue. Transfert de propriété, départ d'un membre avec transmission de son travail et suppression de l'organisation sont dans l'interface, pas dans un ticket de support.</p>
+        ${PRIX_VISIBLES ? `<h2>Tarifs</h2>
+        <p>Un forfait pour toute l'organisation, quel que soit le nombre de projets, et non un tarif par personne : gratuit jusqu'à 5 membres, 20 € par mois de 5 à 10 membres, 50 € de 10 à 20, 100 € de 20 à 50, et 200 € au-delà de 50. Le forfait s'ajuste tout seul quand l'organisation grandit et redescend si l'effectif baisse. Sans engagement, résiliable à tout moment, sans carte bancaire pour démarrer.</p>` : ''}
 
         <p><a href="/">Cosmo pour moi</a> · <a href="/signup">Créer mon organisation</a> · <a href="/guide">Guide d'utilisation</a></p>`,
       en: `<h1>Cosmo for companies: your org chart is your execution engine</h1>
-        <p>In Cosmo for companies, everyone's scope follows from your org chart: what they see, what gets assigned to them, what gets measured. Each colleague also keeps the personal Cosmo they already use, which avoids having one more tool to get adopted. Setting it up takes four steps.</p>
+        <p>In Cosmo for companies, everyone's scope follows from your org chart: what they see, what gets assigned to them, what gets measured. Each colleague also keeps the personal Cosmo they already use, which avoids having one more tool to get adopted. Setting it up takes five steps.</p>
 
         <h2>Step 1: invite your team and group them</h2>
-        <p>Everyone joins the organisation with the Cosmo account they already have, by organisation code or by single-use link, and you attach them to their manager. You then create as many teams as you need and place whoever you want in them, and one person can belong to several teams. Access follows from that single attachment: a manager sees their complete subtree (their teams, their projects, their goals, their statistics) without a single permission having to be ticked by hand. Changing an attachment is enough to reorganise, because rights are not copied anywhere: they are recomputed from the link.</p>
-        <p>The org chart is not a staff directory, it is the screen from which you follow each person: opening their card shows their current tasks, their load and their schedule. A manager can create, move and edit calendar events for the people who report to them; what those people have marked as personal stays private, and only the slot appears. Two sibling branches of the org chart, on the other hand, are partitioned, and the rule is enforced in the database, not merely hidden in the interface.</p>
-        <p><img src="/screenshots/entreprise/pyramide.webp" width="1500" height="938" alt="The Pyramid tab in Cosmo for companies: the organisation's org chart, each member attached to their manager" /></p>
+        <p>Everyone joins the organisation with the Cosmo account they already have, invited by email, organisation code, link or from your contacts, and lands straight under their manager and in their teams. You create as many teams as you need, and one person can belong to several. The attachment decides by default what each person sees and can do: a manager sees their complete subtree without a single permission having to be ticked. When needed, you adjust rights member by member, and changing an attachment is enough to reorganise.</p>
+        <p>The org chart is the screen from which you follow each person: opening their card shows their current tasks, their workload, their calendar and their contribution. A manager can create, move and edit calendar events for the people who report to them; what those people have marked as personal stays private, and only the slot appears. Two sibling branches of the org chart are partitioned, and the rule is enforced in the database, not merely hidden in the interface.</p>
+        <p><img src="/screenshots/entreprise/pyramide.webp" width="1600" height="667" loading="lazy" decoding="async" alt="The Org chart tab in Cosmo for companies: each member attached to their manager, with their open and overdue tasks" /></p>
 
-        <h2>Step 2: create your projects and assign them at the right scale</h2>
-        <p>A project belongs to a team and gathers its tasks. You assign them to one person or several, anywhere in your scope, and each of them finds those tasks in their own Cosmo alongside their personal ones. A kanban to know where each task stands, a timeline to see deadlines coming, with subtasks, labels, comments with mentions and a change history.</p>
-        <p><img src="/screenshots/entreprise/projets.webp" width="1500" height="938" alt="The Projects tab in Cosmo for companies: projects by team with their tasks, deadlines and assignees" /></p>
+        <h2>Step 2: follow execution, not just deadlines</h2>
+        <p>Every task carries a status (to do, in progress, in review, blocked, done) and can block another. The timeline computes the critical path, the chain of tasks where the slightest delay pushes back delivery. The Tasks tab gathers the tasks of every project in your scope, with presets, shared lists, sorting and grouping, as a list or a board.</p>
+        <p><img src="/screenshots/entreprise/taches-tableau.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="The Tasks tab in Cosmo for companies in Board view: one column per status, from to do to done, with overdue tasks flagged" /></p>
 
-        <h2>Step 3: set your goals, at every scale</h2>
-        <p>An organisation goal cascades into team OKRs, each OKR into numeric key results: the same mechanism at every level, in the categories you define. Each key result achieved is logged on the date it was achieved, in a journal that cannot be rewritten afterwards, and that is what makes the dashboard curve defensible in a steering committee.</p>
-        <p><img src="/screenshots/entreprise/okr.webp" width="1500" height="938" alt="The OKR tab in Cosmo for companies: team goals and their numeric key results, with their progress" /></p>
+        <h2>Step 3: create your projects and assign them at the right scale</h2>
+        <p>A project belongs to a team and gathers its tasks. You assign them to one person or several, anywhere in your scope, and each of them finds those tasks in their own Cosmo alongside their personal ones. Three views: the list for detail, the timeline to see deadlines and the critical path coming, the portfolio to compare status, lead and progress across all projects. Subtasks, comments with mentions and a change history live in every task.</p>
+        <p><img src="/screenshots/entreprise/projets.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="The Projects tab in Cosmo for companies in List view: team projects with their tasks, deadlines, statuses and assignees" /></p>
+        <p><img src="/screenshots/entreprise/projets-portefeuille.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="The Projects tab in Portfolio view: each project with its lead, status, progress and what is blocking it" /></p>
 
-        <h2>Step 4: follow everyone's progress</h2>
-        <p>The Statistics tab answers the Monday morning question: who is moving, who is falling behind, who is overloaded. Velocity and trend over the period compared with previous ones, open tasks and delays for each member, time invested aggregated by team and by project. Leadership reads the whole organisation, a manager reads their scope, and the attachment set up in step 1 is what decides that. The overview, meanwhile, opens each day: your assigned tasks, your deadlines and what has just moved in your teams.</p>
-        <p><img src="/screenshots/entreprise/statistiques.webp" width="1500" height="938" alt="The Statistics tab in Cosmo for companies: OKR progress and workload for each team member" /></p>
+        <h2>Step 4: set your goals, at every scale</h2>
+        <p>An organisation goal cascades into team OKRs, each OKR into numeric key results with their owner. An objective can be visible to the whole company, to some teams or only to the people you pick. Each key result achieved is logged on the date it was achieved, in a journal that cannot be rewritten afterwards.</p>
+        <p><img src="/screenshots/entreprise/okr.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="The OKR tab in Cosmo for companies: objectives and their numeric key results with their owner and progress" /></p>
+
+        <h2>Step 5: follow everyone's progress</h2>
+        <p>Activity reports answer the Monday morning question: what moved forward, and thanks to whom. Every night, Cosmo records what the company and each team did (completed tasks, projects and OKRs that progressed, events held), readable by day, week or month, with the detail per person. The overview opens each day: tasks to approve, mentions, the people you are blocking, your workload for the week, your calendar and your key results.</p>
+        <p><img src="/screenshots/entreprise/rapports.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Activity reports in Cosmo for companies: completed tasks, projects and OKRs that moved forward, and who did what" /></p>
+        <p><img src="/screenshots/entreprise/apercu.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="The Overview in Cosmo for companies: tasks to approve, mentions, weekly workload, calendar and key results" /></p>
+
+        <h2>Twenty more features</h2>
+        <p>Rights set member by member, project roles (lead, contributor, viewer), a page per team with each member's workload, team events, a getting-started assistant. Project templates, dependencies between projects, bulk actions, lists and presets shared by link, search across the whole company. Automations, delivery to Slack or signed webhooks, full CSV export, alerts set type by type, company key results shown in your personal OKRs. An audit log kept for a year, verified domains, time-limited access, a departure assistant and suspension, a thirty-day trash for tasks and objectives.</p>
 
         <h2>Security, privacy and reversibility</h2>
-        <p>Every table is protected by access policies evaluated server side: a request forged from the browser brings back nothing more than a legitimate one. A manager sees the work in their scope, never the personal tasks, habits or calendar of their colleagues. Account deletion is genuinely executed server side, consent to joining an organisation is explicit, and no data is resold. Transferring ownership and deleting the organisation are in the interface, not in a support ticket.</p>
-
-        <h2>Pricing</h2>
-        <p>One plan for the whole organisation, whatever the number of projects, rather than a per-person price: free up to 5 members, 20 € a month from 5 to 10 members, 50 € from 10 to 20, 100 € from 20 to 50, and 200 € beyond 50. The plan adjusts itself as the organisation grows and comes back down if headcount falls. No commitment, cancellable at any time, no credit card to start.</p>
+        <p>Every table is protected by access policies evaluated server side: a request forged from the browser brings back nothing more than a legitimate one. A manager sees the work in their scope, never the personal tasks, habits or calendar of their colleagues. Account deletion is genuinely executed server side, consent to joining an organisation is explicit, and no data is resold. Transferring ownership, a member's departure with their work handed over, and deleting the organisation are in the interface, not in a support ticket.</p>
+        ${PRIX_VISIBLES ? `<h2>Pricing</h2>
+        <p>One plan for the whole organisation, whatever the number of projects, rather than a per-person price: free up to 5 members, 20 € a month from 5 to 10 members, 50 € from 10 to 20, 100 € from 20 to 50, and 200 € beyond 50. The plan adjusts itself as the organisation grows and comes back down if headcount falls. No commitment, cancellable at any time, no credit card to start.</p>` : ''}
 
         <p><a href="/en/">Cosmo for me</a> · <a href="/en/signup">Create my organisation</a> · <a href="/en/guide">User guide</a></p>`,
     },
@@ -446,7 +512,7 @@ const ROUTES = [
           blogPost: articlesFor(locale).map((a) => ({
             '@type': 'BlogPosting',
             headline: a.title,
-            image: `${BASE}/og-card.png`,
+            image: ogImageFor(`/blog/${a.slug}`, locale),
             url: canonicalUrl(`/blog/${a.slug}`, locale),
             datePublished: a.datePublished,
           })),
@@ -512,7 +578,7 @@ const ROUTES = [
             '@type': 'BlogPosting',
             headline: c.title,
             description: c.description,
-            image: `${BASE}/og-card.png`,
+            image: ogImageFor(`/blog/${a.slug}`, locale),
             url,
             inLanguage: BCP47_TAG[locale],
             datePublished: a.datePublished,
@@ -830,6 +896,15 @@ function buildPage(route, locale, alternates) {
   // Langue du document — lue par les lecteurs d'écran et les moteurs.
   out = out.replace(/<html([^>]*)\slang="[^"]*"/, `<html$1 lang="${locale}"`);
 
+  // C-116 : marque la page comme prérendue, ce qui la peint avant React (LCP
+  // mobile). 2026-10-21 : SEULEMENT les pages qui ont une copie de leur hero
+  // (`heroTrack` : la home et l'entreprise). Les autres peignaient leur texte
+  // SEO brut, sur fond blanc, puis un second spinner, puis la page : elles
+  // gardent désormais le spinner de démarrage, aux couleurs du thème, que
+  // `BootScreen` prolonge jusqu'à la page. Arbitré par Axel, LCP mobile de ces
+  // pages rendu en connaissance de cause (docs/PERFORMANCE.md).
+  if (route.heroTrack) out = out.replace(/<html(?![^>]*data-prerendered)/, '<html data-prerendered');
+
   out = out.replace(/<title>[\s\S]*?<\/title>/, `<title>${title}</title>`);
   out = out.replace(/<meta name="description" content="[\s\S]*?" \/>/, `<meta name="description" content="${esc(description)}" />`);
   out = out.replace(/<link rel="canonical" href="[\s\S]*?" \/>/, `<link rel="canonical" href="${url}" />`);
@@ -839,6 +914,17 @@ function buildPage(route, locale, alternates) {
   out = out.replace(/<meta property="og:locale" content="[\s\S]*?" \/>/, `<meta property="og:locale" content="${OG_LOCALE[locale]}" />`);
   out = out.replace(/<meta name="twitter:title" content="[\s\S]*?" \/>/, `<meta name="twitter:title" content="${esc(title)}" />`);
   out = out.replace(/<meta name="twitter:description" content="[\s\S]*?" \/>/, `<meta name="twitter:description" content="${esc(description)}" />`);
+
+  // Image de partage propre à la page, si `capture-og-images.mjs` l'a rendue.
+  const ogImage = ogImageFor(route.path, locale);
+  if (!ogImage.endsWith('/og-card.png')) {
+    out = out.replace(/<meta property="og:image" content="[^"]*" \/>/, `<meta property="og:image" content="${ogImage}" />`);
+    out = out.replace(/<meta property="og:image:secure_url" content="[^"]*" \/>/, `<meta property="og:image:secure_url" content="${ogImage}" />`);
+    out = out.replace(/<meta property="og:image:type" content="[^"]*" \/>/, '<meta property="og:image:type" content="image/jpeg" />');
+    out = out.replace(/<meta property="og:image:alt" content="[^"]*" \/>/, `<meta property="og:image:alt" content="${esc(title)}" />`);
+    out = out.replace(/<meta name="twitter:image" content="[^"]*" \/>/, `<meta name="twitter:image" content="${ogImage}" />`);
+    out = out.replace(/<meta name="twitter:image:alt" content="[^"]*" \/>/, `<meta name="twitter:image:alt" content="${esc(title)}" />`);
+  }
 
   // `inLanguage` des JSON-LD génériques d'index.html (Organization, WebSite…).
   out = out.replace(/"inLanguage":\s*"[^"]*"/g, `"inLanguage": "${BCP47_TAG[locale]}"`);
@@ -859,6 +945,57 @@ function buildPage(route, locale, alternates) {
   return out;
 }
 
+// ── Copie du hero peinte avant React (home, entreprise · 2026-10-21) ────
+// Le premier rendu de la home et de l'entreprise n'est plus le texte SEO brut
+// (C-116) mais une COPIE du header et du hero de leur parcours, capturée sur le rendu React
+// (`scripts/capture-landing-hero.mjs`), avec SA CSS sortie de la feuille
+// buildée et confinée sous `#lp-hero` (`scripts/landing-hero-css.mjs`).
+// Posée HORS de #root, en calque : React ne l'efface pas, la landing la retire
+// dans l'image où elle peint son hero. Pourquoi : `src/lib/prerender-hero.ts`.
+// `inert` : ni focus ni lecteur d'écran sur une copie aux boutons morts.
+// ❌ Pas de copie absente qui passerait en silence : le build échoue, sinon la
+// home repeindrait le mur de texte sans que rien ne le signale.
+let landingCss = null;
+function heroCssSource() {
+  if (landingCss !== null) return landingCss;
+  const assets = join(DIST, 'assets');
+  const sheets = readdirSync(assets).filter((f) => f.endsWith('.css'))
+    .filter((f) => readFileSync(join(assets, f), 'utf8').includes('.hero-line-mask'));
+  if (sheets.length !== 1) {
+    throw new Error(`prerender: feuille du hero introuvable ou ambiguë dans dist/assets (${sheets.join(', ') || 'aucune'})`);
+  }
+  landingCss = readFileSync(join(assets, sheets[0]), 'utf8');
+  return landingCss;
+}
+
+function injectHeroCopy(out, locale, track) {
+  const file = join(__dirname, 'scripts', 'landing-hero', `${track}-${locale}.html`);
+  if (!existsSync(file)) {
+    throw new Error(`prerender: ${file} absent, lancer npm run capture:landing-hero (cf. son en-tête)`);
+  }
+  let fragment = readFileSync(file, 'utf8').trim();
+  // Un hero rendu AUTREMENT sous 768 px (`useIsMobile`, parcours entreprise) a
+  // sa seconde capture : les deux vues sont posées, une media query choisit,
+  // au même seuil que le hook. Une image `eager` de la vue masquée part quand
+  // même : c'est la même URL dans les deux (premier écran de la pile).
+  const mobileFile = join(__dirname, 'scripts', 'landing-hero', `${track}-${locale}-mobile.html`);
+  const mediaVues = '#lp-hero>.lp-vue-mobile{display:none}@media (max-width:767px){#lp-hero>.lp-vue-bureau{display:none}#lp-hero>.lp-vue-mobile{display:block}}';
+  let css;
+  if (existsSync(mobileFile)) {
+    const mobile = readFileSync(mobileFile, 'utf8').trim();
+    css = `${scopedCssFor(`${fragment}${mobile}`, heroCssSource())}\n${mediaVues}`;
+    fragment = `<div class="lp-vue-bureau">${fragment}</div><div class="lp-vue-mobile">${mobile}</div>`;
+  } else {
+    css = scopedCssFor(fragment, heroCssSource());
+  }
+  if (!out.includes('<div id="root">')) throw new Error('prerender: <div id="root"> introuvable, copie du hero non posée');
+  out = out.replace('</head>', () => `    <style id="lp-hero-css">${css}</style>
+  </head>`);
+  out = out.replace('<div id="root">', () => `<div id="lp-hero" inert data-locale="${locale}" data-track="${track}">${fragment}</div>
+    <div id="root">`);
+  return out;
+}
+
 // ── Génération ──────────────────────────────────────────────────────────
 let count = 0;
 for (const route of ROUTES) {
@@ -871,7 +1008,8 @@ for (const route of ROUTES) {
     const path = localizePath(route.path, locale);
     const dir = join(DIST, path);
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, 'index.html'), buildPage(route, locale, alternates), 'utf8');
+    const page = buildPage(route, locale, alternates);
+    writeFileSync(join(dir, 'index.html'), route.heroTrack ? injectHeroCopy(page, locale, route.heroTrack) : page, 'utf8');
     count++;
     console.log(`  prerendered ${path}/index.html`);
   }
@@ -883,11 +1021,12 @@ for (const route of ROUTES) {
 // page anglaise ferait diverger le schéma et le contenu visible.
 const homeRoute = {
   path: '/',
+  heroTrack: 'perso',
   meta: fromCatalog('root'),
   content: { fr: HOME_STATIC, en: HOME_STATIC_EN },
 };
 for (const locale of availableLocales(homeRoute)) {
-  let home = buildPage(homeRoute, locale, availableLocales(homeRoute));
+  let home = injectHeroCopy(buildPage(homeRoute, locale, availableLocales(homeRoute)), locale, homeRoute.heroTrack);
   if (!home.includes('"FAQPage"')) {
     home = home.replace('</head>', `    ${ld(faqSchemaFor(locale), 'faq-schema')}\n  </head>`);
     console.log(`  injected FAQPage JSON-LD (${locale}) into index.html`);

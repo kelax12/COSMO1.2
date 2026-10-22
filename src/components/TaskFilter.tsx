@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, SlidersHorizontal, X, Search, Plus, ArrowUpDown } from 'lucide-react';
+import { ChevronDown, SlidersHorizontal, X, Search, ArrowUpDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Slider } from './ui/slider';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
 import CategoryFilterTree from './task-filter/CategoryFilterTree';
 
-import { useCategories } from '@/modules/categories';
+import { useCategories, descendantIds } from '@/modules/categories';
 import { usePriorityRange } from '@/modules/ui-states';
 import { useT } from '@/i18n/useT';
 
@@ -23,9 +23,6 @@ type TaskFilterProps = {
   onSearchTermChange?: (value: string) => void;
   selectedCategories?: string[];
   onSelectedCategoriesChange?: (categories: string[]) => void;
-  // Toggle visibility of TaskTable's quick filter buttons
-  showQuickFilters?: boolean;
-  onShowQuickFiltersChange?: (show: boolean) => void;
 };
 
 const TaskFilter: React.FC<TaskFilterProps> = ({
@@ -40,9 +37,6 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
   onSearchTermChange,
   selectedCategories: controlledSelectedCategories,
   onSelectedCategoriesChange,
-  // Toggle visibility of TaskTable's quick filter buttons
-  showQuickFilters = false,
-  onShowQuickFiltersChange,
 }) => {
   const { t } = useT('tasks');
   const { data: categories = [] } = useCategories();
@@ -61,9 +55,13 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const toggleCategory = (category: string) => {
-    const newCategories = selectedCategories.includes(category) 
-      ? selectedCategories.filter(c => c !== category)
-      : [...selectedCategories, category];
+    // Cocher/décocher un parent entraîne toute sa branche : sans ça,
+    // sélectionner un parent laissait ses enfants visuellement décochés
+    // alors que le filtre (descendantIdSet) les incluait déjà.
+    const branch = [category, ...descendantIds(category, categories)];
+    const newCategories = selectedCategories.includes(category)
+      ? selectedCategories.filter(c => !branch.includes(c))
+      : [...new Set([...selectedCategories, ...branch])];
     setSelectedCategories(newCategories);
   };
 
@@ -85,8 +83,16 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
       <div className="space-y-3">
         {/* Single row: Search + Sort + Filters + Reset */}
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          {/* Search Bar — flexible : absorbe l'espace restant et repousse les contrôles à droite */}
-          <div className="relative flex-1 min-w-[150px]">
+          {/* ── Recherche : DESKTOP uniquement ─────────────────────────
+              Sur mobile elle est descendue tout en bas de l'écran, ancrée et
+              non défilante (`MobileTaskSearch`, modèle Notes d'iOS) : ici,
+              en haut de page, elle était hors de portée du pouce et poussait
+              la liste vers le bas. `hidden md:block` et non un `isMobile` en
+              JS — le rendu ne doit pas dépendre d'une mesure de viewport qui
+              n'existe qu'après le premier rendu.
+              ⚠️ Le raccourci « / » vise `#search-tasks-main`, qui reste ICI :
+              il n'y a pas de clavier physique en face de la barre mobile. */}
+          <div className="relative flex-1 min-w-[150px] hidden md:block">
             <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: 'rgb(var(--color-text-muted))' }} aria-hidden="true" />
             <input
               id="search-tasks-main"
@@ -177,10 +183,26 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
               >
+                {/* ── Maquette 101 : un filtre se dit une fois ───────────
+                    Dès qu'une recherche était saisie, l'écran ajoutait d'un
+                    coup TROIS objets qui disent la même chose : ce bouton
+                    rouge, une pilule « Recherche : … ✕ » et une ligne
+                    « 0 / 12 tâches affichées ». Trois rangées, ~150 px, pour
+                    « un filtre est actif et tu peux l'enlever ».
+
+                    Sur mobile il disparaît : la pilule porte déjà sa croix, et
+                    « tout retirer » vit désormais en fin de ligne de compte
+                    (TasksPage), à partir de DEUX filtres seulement.
+                    Desktop inchangé : la place ne manque pas, et la rangée de
+                    commandes y est déjà horizontale.
+
+                    ❌ Et il n'était pas rouge par hasard nulle part : retirer
+                    un filtre est ANNULABLE. Le rouge est réservé à ce qui est
+                    irréversible ou en retard (maquette 121). */}
                 <Button
                   variant="outline"
                   onClick={clearAllFilters}
-                  className="flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 border-red-200 dark:border-red-800/50 shrink-0"
+                  className="hidden sm:flex items-center justify-center gap-2 text-[rgb(var(--color-text-secondary))] shrink-0"
                   aria-label={t('sort.resetAria')}
                 >
                   <X size={16} data-icon="inline-start" aria-hidden="true" />
@@ -254,23 +276,6 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
               </div>
             </PopoverContent>
           </Popover>
-
-          {/* + d'options — mobile only, clickable blue text */}
-          <button
-            type="button"
-            onClick={() => onShowQuickFiltersChange?.(!showQuickFilters)}
-            aria-label={showQuickFilters ? t('sort.hideOptions') : t('sort.showOptions')}
-            aria-pressed={showQuickFilters}
-            className={`md:hidden shrink-0 flex items-center gap-1 px-2 min-h-touch text-label font-medium transition-colors hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded ${
-              showQuickFilters
-                ? 'text-blue-700 dark:text-blue-300'
-                : 'text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'
-            }`}
-          >
-            <Plus size={14} aria-hidden="true" />
-            <span>d'options</span>
-            <ChevronDown size={14} aria-hidden="true" className={`transition-transform ${showQuickFilters ? 'rotate-180' : ''}`} />
-          </button>
 
         </div>
 

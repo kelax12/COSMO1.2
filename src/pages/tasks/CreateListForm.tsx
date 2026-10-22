@@ -85,6 +85,7 @@ const CreateListForm = ({
           }
           cycleColor();
         }}
+        data-guide-id={isInline ? 'task-list-form-color' : undefined}
         className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
         style={{ backgroundColor: resolveColor(color) }}
         title={isInline ? t('lists.colorCycleTitle') : t('lists.changeColor')}
@@ -102,6 +103,7 @@ const CreateListForm = ({
       <input
         autoFocus
         type="text"
+        data-guide-id={isInline ? 'task-list-form-name' : undefined}
         value={name}
         onChange={(e) => onNameChange(e.target.value)}
         placeholder={t('lists.namePlaceholder')}

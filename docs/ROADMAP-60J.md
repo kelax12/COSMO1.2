@@ -1,3 +1,15 @@
+<!-- note-audit: non-note -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — **NON NOTÉ** : document de planification. Ce qu'il planifie est noté dans les domaines correspondants.
+
 # Roadmap 60 jours — du lancement à 10 000 utilisateurs
 
 **Établie le 2026-08-27, consolidée le 2026-08-28, dédoublonnée le 2026-08-30.** Source de vérité
@@ -32,6 +44,30 @@ garde que ce qui reste à faire.
 ## 1. Tableau récapitulatif — 52 tâches, la seule table qui porte un statut
 
 **Décompte au 2026-09-02**, recompté **par script** sur les tableaux ci-dessous, jamais de tête.
+
+> ### 🔄 Correction du 2026-09-21 · **trois lignes seulement, et il faut dire lesquelles**
+>
+> ⚠️ **Ce n'est PAS un recomptage.** La règle 4 de ce document exige un script ; celui-ci n'a pas
+> tourné. Trois tâches ont été **relues une par une** contre `a-faire-code.md` et les commits, et
+> elles seules. Les 49 autres gardent l'état du 2026-09-02, **sans avoir été revérifiées**.
+>
+> | Tâche | État au 09-02 | Relu le 2026-09-21 |
+> |---|---|---|
+> | **T-40** · poser `CRON_SECRET` | ⬜ ouvert | ✅ **FAIT le 2026-09-13 à 16:21 UTC**, des deux côtés, prouvé par les trois cas (sans en-tête → 401, **mauvais secret → 401**, bon secret → 200) et par un `workflow_dispatch` vert. `a-faire-code.md` `C-34` |
+> | **T-47** · trancher `vendor-sentry` | ⬜ ouvert | ✅ **TRANCHÉ ET EXÉCUTÉ le 2026-09-04** : Sentry différé après le premier rendu, chemin critique **366,3 → 317,2 ko** sur un build avec `VITE_SENTRY_DSN`. `a-faire-code.md` `C-13` |
+> | **T-51** · la landing est la seule page lente | 🟡 partiel | ✅ **critère TENU le 2026-09-12**, quatre runs consécutifs. `a-faire-code.md` `C-12` |
+>
+> **Décompte qui en découle, à la main et dit comme tel** : ✅ **34** · 🟡 **4** (T-05, T-09, T-14,
+> T-23) · ⚪ 3 · ⬜ **11** (T-17, T-21, T-22, T-32, T-33, T-34, T-36, T-37, T-38, T-39, T-43).
+>
+> ⚠️ **T-43 (DPA des sous-traitants) reste ouvert** bien que les DPA Supabase / Vercel / Sentry
+> aient été **vérifiés** le 2026-09-14 (`5d773af9`, A5 passe à 🟡) : les collecter et les archiver
+> exige d'être une entreprise, donc T-32. Le geste vit en `M-04`.
+>
+> 🔴 **Et le vrai décalage de ce document n'est pas dans ses cases** : il planifie 2026-08-28 →
+> 2026-10-26 « du lancement à 10 000 utilisateurs », et **rien n'est lancé**. La production tourne
+> sur une clé Stripe de **test**, les cinq bloquants de `M-01` → `M-05` sont administratifs, et
+> la mesure la plus récente de `SEO.md` donne **1 inscription sur 30 jours**.
 
 | | Nombre | Lesquelles |
 |---|---|---|
@@ -121,7 +157,7 @@ les porte, jamais ici.
 | T-40 | Emails | Poser `CRON_SECRET` (Supabase **et** GitHub) pour armer les avis de reconduction tacite | E6. Un avis non envoyé rend l'abonnement résiliable à tout moment, remboursement compris. Sans objet tant qu'aucun abonnement annuel n'existe, donc juste après T-39. ⚠️ **Il manquait en réalité DEUX secrets, pas un** (trouvé le 2026-09-02) : `renewal-notice.yml` exigeait aussi `SUPABASE_URL`, absent du dépôt, et cette ligne ne le disait pas. Refermé par le même repli d'URL que `uptime.yml` (commit `05add6d`) : il ne reste bien que `CRON_SECRET`, le seul des deux qui soit un vrai secret, sa valeur devant être identique côté GitHub et côté Supabase | P2 | XS | T-39 | X | S7 |
 | ✅ T-41 | Scalabilité | ✅ **FERMÉE le 2026-09-02** : mesure à volume faite, `SCALABILITY.md` §9ter. Elle tourne sur le runner de CI, qui monte déjà une stack Supabase pour `rls-integration` — les trois portes qu'on croyait seules (prod interdite, Docker absent, branche payante) en cachaient une quatrième, ouverte depuis le début. Organisation de 50 membres, 5 équipes, 20 projets rattachés, paliers 200 et 2 000 `team_tasks`. **Aucun basculement de plan** (`Seq Scan` / `Function Scan` identiques aux deux paliers) : c'était LA question. Le chemin direct est linéaire en la table entière, ratio stable à 9,0 pendant que les buffers font ×10 ; le rapport entre les deux chemins atteint **354×** à 2 000 lignes, soit **2,7× pire que la projection** du §9bis, parce qu'elle extrapolait depuis une organisation dégénérée. Et le piège du chronomètre se referme : à 2 000 lignes le temps concorde enfin avec les buffers (704 ms contre 1,84 ms), donc le croisement se produit **en dessous** d'une organisation ordinaire. Rejouable par le workflow `scalability-volume`. ~~Coût par ligne mesuré le 2026-08-28~~ (SCALABILITY §9bis), le rapport de 54× confirme l'audit du 14 août. ~~Reste le comportement du planificateur, qui exige un vrai jeu de données. Mesurer à volume réel : injecter ~2 000 `team_tasks` dans une organisation de test de 50 membres et rejouer le runbook `SCALABILITY.md` §10~~ | Les correctifs 113/117/128 sont vérifiés en plan et en test, **jamais contre du volume**. C'est exactement la confiance non vérifiée qui a laissé passer un `Seq Scan` global pendant six semaines | P2 | M | — | A | S6 |
 | ✅ T-42 | Infrastructure | Confirmer que la prod utilise l'URL du pooler (PgBouncer 6543, mode transaction) | Jamais vérifié depuis le dépôt, et d'autant plus important vu le coût par ligne des prédicats RLS | P2 | XS | — | A | S5 |
-| T-43 | Legal | Collecter et archiver les DPA des sous-traitants (Supabase, Vercel, Sentry, Stripe, Resend, **Vesk**) | A5 et A6. Chaînon obligatoire pour vendre à une entreprise, et il ne s'obtient qu'en tant qu'entreprise. ⚠️ **Vesk manquait à cette liste** (ajouté le 2026-09-01) : il reçoit de la donnée personnelle depuis les pages publiques, il lui faut donc un DPA comme aux autres. Un sous-traitant qu'on oublie de lister est un sous-traitant sans contrat | P2 | M | T-32 | X | S7 |
+| T-43 | Legal | Collecter et archiver les DPA des sous-traitants (Supabase, Vercel, Sentry, Stripe, Resend) | A5 et A6. Chaînon obligatoire pour vendre à une entreprise, et il ne s'obtient qu'en tant qu'entreprise. | P2 | M | T-32 | X | S7 |
 | ✅ T-44 | Legal | Recherche d'antériorité « COSMO » sur `data.inpi.fr` **et** `euipo.europa.eu`, classes 9 et 42. **Faite le 2026-08-28** via TMview, qui agrège les deux registres : 11 marques `COSMO` actives, dont TANAZA S.p.A., éditeur de logiciel. ⚠️ **`LEGAL.md` F1 reste 🟡, et ce n'est pas une contradiction** (levée le 2026-09-02) : cette tâche-ci ne porte que la RECHERCHE, qui est faite ; F1 porte aussi l'**arbitrage** (garder le nom ou consulter un conseil en PI), qui n'est pas technique et n'appartient pas à cette roadmap. Ne pas « aligner » les deux en cochant F1 | Nom très générique, antériorités quasi certaines. La question n'est pas « existe-t-il une marque COSMO » mais « une marque COSMO couvre-t-elle le logiciel ». Se lancer sans le savoir, c'est risquer de devoir renommer après acquisition | P2 | S | — | X | S6 |
 
 ### PHASE 4 — 1 000 → 10 000 utilisateurs
@@ -329,7 +365,7 @@ drapeaux ne bougent qu'ici, et ensemble.
   palier et le bon `billing_interval` ; un changement de palier depuis le portail se reflète en
   base (le palier se redérive du **price ID**, jamais des metadata) ; une résiliation fonctionne ;
   `verify_payment_chain()` renvoie vrai.
-- [ ] **T-40** — poser `CRON_SECRET` · P2 · XS · X
+- [x] **T-40** — poser `CRON_SECRET` · P2 · XS · X — fait le 2026-09-13
 - [ ] **T-43** — collecter les DPA · P2 · M · X
 - [ ] **T-27** — frise entreprise, exclure `currentUserId` · P3 · S · B
 
@@ -352,7 +388,7 @@ question redevient « à quelle vitesse peut-on avancer », donc la dette du soc
 - [x] **T-46** — sauvegarde `pg_dump` hors fournisseur · P0 · S · A livre / X pose le secret
   **Done** : secret `SUPABASE_DB_URL` posé le 2026-08-29, et **4 exécutions quotidiennes vertes**
   vérifiées le 2026-09-02 (dernière le jour même à 08:51 UTC), artefact produit à chaque fois.
-- [ ] **T-47** — trancher `vendor-sentry` · P3 · S · X décide
+- [x] **T-47** — trancher `vendor-sentry` · P3 · S · X décide — tranché et exécuté le 2026-09-04
 - [ ] **Revue de fin de cycle** : remesurer les dix notes d'audit, mettre à jour
   `docs/README.md`, archiver cette roadmap et en écrire une nouvelle. Une roadmap ne se met pas à
   jour, c'est un instantané — même règle que les audits.

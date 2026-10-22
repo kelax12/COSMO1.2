@@ -1,0 +1,94 @@
+# ══════════════════════════════════════════════════════════════════
+# C-89 · ANALYSE STATIQUE DE SÉCURITÉ (CodeQL)
+#
+# POURQUOI. Les 39 témoins du dépôt vérifient des invariants NOMMÉS : « la CSP
+# porte wss », « aucune fonction de trigger en SECURITY DEFINER », « aucun
+# repository n'importe toast ». Ils ne peuvent rien dire d'un motif que
+# personne n'a encore pensé à nommer. C'est précisément ce que fait un SAST, et
+# le dépôt n'en avait AUCUN — vérifié le 2026-09-20 sur tout `.github/`.
+#
+# Le dépôt est PUBLIC : CodeQL y est gratuit, sans quota de minutes.
+#
+# 🔴 CE QUI FERME CET ITEM N'EST PAS UN JOB VERT. Un SAST rend du bruit. Tant
+# qu'une alerte reste ouverte sans décision écrite, l'item n'est pas fini : le
+# tri des alertes est le travail, l'outil n'est que ce qui le rend possible.
+# Les alertes se lisent dans Security → Code scanning, et chacune se ferme soit
+# par un correctif, soit par un « Dismiss » MOTIVÉ.
+#
+# ⚠️ CE QU'IL NE VOIT PAS, et qu'il ne faut pas croire couvert :
+#   · le SQL des migrations (`supabase/migration/**`) — CodeQL n'analyse pas
+#     PL/pgSQL. C'est `validate:migrations` et `check:rls` qui y répondent ;
+#   · la RLS, qui est un modèle de données, pas un flux de code ;
+#   · les Edge Functions telles que DÉPLOYÉES — `check:edge` seul les compare.
+#
+# ⚠️ `actions` dans la matrice : les workflows de ce dépôt sont eux-mêmes du
+# code exécutable, et le motif « expression non fiable dans un `run:` » est une
+# vraie classe d'injection. Le dépôt pinne déjà ses `uses:` sur des SHA pour la
+# raison voisine.
+# ══════════════════════════════════════════════════════════════════
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Hebdomadaire : les requêtes CodeQL évoluent sans que le code bouge, donc
+    # un motif nouvellement détecté doit pouvoir sortir sur un dépôt au repos.
+    # Minute décalée des autres crons du dépôt (cf. `uptime.yml`).
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyser (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      # Le minimum pour publier dans l'onglet Security.
+      security-events: write
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: javascript-typescript
+            build-mode: none
+          - language: actions
+            build-mode: none
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Initialiser CodeQL
+        uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          # `security-extended` plutôt que le jeu par défaut : le jeu par défaut
+          # privilégie le zéro faux positif, ce qui est le bon réglage sur un
+          # dépôt qui reçoit cent PR par jour et le mauvais ici — on préfère
+          # trier du bruit une fois que de ne jamais voir une classe entière.
+          queries: security-extended
+          config: |
+            paths-ignore:
+              - dist
+              - coverage
+              - node_modules
+              - src/components/showcase
+              - '**/*.test.ts'
+              - '**/*.test.tsx'
+              - '**/*.test.mjs'
+              - '**/*.spec.ts'
+
+      - name: Analyse
+        uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          category: /language:${{ matrix.language }}

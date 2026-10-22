@@ -274,7 +274,33 @@ export function memberWorkload(
     estimatedMinutes: minutes.get(m.userId) ?? 0,
     loadRatio: 0,
   }));
+  return rankWorkload(rows);
+}
 
+/**
+ * Même charge, à partir des chiffres COMPTÉS PAR LE SERVEUR (mig. 191) sur
+ * toutes les tâches ouvertes : le calcul local ci-dessus ne voit que l'extrait
+ * que le client a pu lire.
+ */
+export function memberWorkloadFromServer(
+  server: { userId: string; openTasks: number; overdue: number; estimatedMinutes: number }[],
+  members: OrgMember[],
+): MemberWorkload[] {
+  const byUser = new Map(server.map((w) => [w.userId, w]));
+  return rankWorkload(members.map((m) => {
+    const w = byUser.get(m.userId);
+    return {
+      userId: m.userId,
+      name: firstName(m.displayName),
+      open: w?.openTasks ?? 0,
+      overdue: w?.overdue ?? 0,
+      estimatedMinutes: w?.estimatedMinutes ?? 0,
+      loadRatio: 0,
+    };
+  }));
+}
+
+function rankWorkload(rows: MemberWorkload[]): MemberWorkload[] {
   // La médiane ne porte que sur les personnes qui ont effectivement de la
   // charge estimée : inclure les zéros ferait passer la médiane à 0 dès qu'une
   // moitié de l'équipe n'a rien, et tout le monde deviendrait « en surcharge ».
@@ -437,3 +463,35 @@ export function okrBreakdown(okrs: TeamOKR[]): OkrStat[] {
     }))
     .sort((a, b) => a.progress - b.progress);
 }
+
+// ─── Comparaison de période (reco UI n° 38) ───────────────────────────
+//
+// Deux flux comparables d'une fenêtre à l'autre : ce qui a été CRÉÉ et ce
+// qui a été TERMINÉ dedans. Le stock (ouvertes, en retard) ne se compare
+// pas : on ne sait pas ce qu'il valait il y a trente jours.
+
+export interface PeriodFlow { created: number; completed: number }
+
+export function periodFlow(tasks: TeamTask[], from: Date, to: Date): PeriodFlow {
+  const within = (s: string | null | undefined) => {
+    const d = parse(s);
+    return !!d && d >= from && d < to;
+  };
+  return {
+    created: tasks.filter((t) => within(t.createdAt)).length,
+    completed: tasks.filter((t) => t.completed && within(t.completedAt)).length,
+  };
+}
+
+/** Fenêtre courante et fenêtre précédente de même durée ; null pour « Tout ». */
+export function comparedWindows(period: StatsPeriod, now: Date = new Date()):
+  { current: [Date, Date]; previous: [Date, Date] } | null {
+  const start = periodStart(period, now);
+  if (!start) return null;
+  const span = now.getTime() - start.getTime();
+  return { current: [start, now], previous: [new Date(start.getTime() - span), start] };
+}
+
+/** Variation en % arrondie ; null quand la base est nulle (« +∞ » ne dit rien). */
+export const percentDelta = (current: number, previous: number): number | null =>
+  previous === 0 ? null : Math.round(((current - previous) / previous) * 100);

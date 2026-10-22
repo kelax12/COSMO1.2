@@ -6,12 +6,10 @@ import { appModeStore } from './app-mode.store';
 
 // Tasks
 import { ITasksRepository } from '@/modules/tasks/repository';
-import { LocalStorageTasksRepository } from '@/modules/tasks/local.repository';
 import { SupabaseTasksRepository } from '@/modules/tasks/supabase.repository';
 
 // Habits
 import { IHabitsRepository } from '@/modules/habits/repository';
-import { LocalStorageHabitsRepository } from '@/modules/habits/local.repository';
 import { SupabaseHabitsRepository } from '@/modules/habits/supabase.repository';
 
 // Events
@@ -52,6 +50,13 @@ import { SupabaseOrganizationsRepository } from '@/modules/organizations/supabas
 import { ITeamProjectsRepository } from '@/modules/team-projects/repository';
 import { SupabaseTeamProjectsRepository } from '@/modules/team-projects/supabase.repository';
 
+// Gouvernance d'organisation et exécution des OKR (audit entreprise
+// 2026-09-23, mig. 160 à 162) : deux dépôts de plus plutôt que deux dépôts
+// existants gonflés au-delà de 600 lignes.
+import type { IOrgGovernanceRepository } from '@/modules/organizations/governance.repository';
+import type { IOrgRolesRepository } from '@/modules/organizations/roles.repository';
+import type { IOkrExecutionRepository } from '@/modules/team-okrs/execution.repository';
+
 // Team OKRs (mode entreprise)
 import { ITeamOKRsRepository } from '@/modules/team-okrs/repository';
 import { SupabaseTeamOKRsRepository } from '@/modules/team-okrs/supabase.repository';
@@ -60,19 +65,18 @@ import { SupabaseTeamOKRsRepository } from '@/modules/team-okrs/supabase.reposit
 import { IOrgTeamsRepository } from '@/modules/org-teams/repository';
 import { SupabaseOrgTeamsRepository } from '@/modules/org-teams/supabase.repository';
 
-// Org OKR categories (catégories d'OKR d'entreprise, partagées)
-import {
-  IOrgOKRCategoriesRepository,
-  LocalStorageOrgOKRCategoriesRepository,
-} from '@/modules/org-okr-categories/repository';
-import { SupabaseOrgOKRCategoriesRepository } from '@/modules/org-okr-categories/supabase.repository';
-
-// Team categories (catégories d'entreprise — distinctes des projets, mig. 111)
+// Team categories (catégories d'entreprise, hiérarchiques — mig. 111 + 148 :
+// partagées par tâches/projets/OKR d'équipe. Fusionne l'ancien
+// org-okr-categories, mig. 148.)
 import {
   ITeamCategoriesRepository,
   LocalStorageTeamCategoriesRepository,
 } from '@/modules/team-categories/repository';
 import { SupabaseTeamCategoriesRepository } from '@/modules/team-categories/supabase.repository';
+
+// Team lists (listes d'entreprise, mig. 203 : classement partagé des tâches d'équipe)
+import { ITeamListsRepository, LocalStorageTeamListsRepository } from '@/modules/team-lists/repository';
+import { SupabaseTeamListsRepository } from '@/modules/team-lists/supabase.repository';
 
 // Stats (agrégats « temps investi » — RPC SQL en prod, calcul local en démo)
 import { IStatsRepository, LocalStatsRepository } from '@/modules/stats/repository';
@@ -100,8 +104,12 @@ import { SupabaseStatsRepository } from '@/modules/stats/supabase.repository';
 // synchrone — une propriété, un getter — et le mandataire cesse d'être
 // transparent pour lui : il faudra alors renoncer au différé pour ce module.
 //
-// ⚠️ Le mode PRODUCTION ne passe jamais ici : il instancie directement sa
-// classe Supabase, importée statiquement comme avant.
+// ⚠️ Le mode PRODUCTION ne passe ici que pour DEUX dépôts : gouvernance et
+// exécution des OKR (2026-09-25). Leurs écrans sont rares (départ, journal,
+// vues, cycles, points d'étape), leurs interfaces 100 % asynchrones, et leurs
+// classes Supabase pesaient dans le chunk d'ENTRÉE, payé par toutes les pages.
+// Les autres instancient directement leur classe Supabase, importée
+// statiquement comme avant.
 
 /**
  * Mandataire synchrone d'un dépôt dont le module arrive plus tard.
@@ -134,7 +142,7 @@ function lazyDemoRepository<T extends object>(load: () => Promise<T>): T {
           const method = (repo as Record<string | symbol, unknown>)[prop];
           if (typeof method !== 'function') {
             throw new Error(
-              `demo-repositories: « ${String(prop)} » n'est pas une méthode. ` +
+              `dépôt différé : « ${String(prop)} » n'est pas une méthode. ` +
                 'Le chargement différé suppose une interface 100 % asynchrone.',
             );
           }
@@ -160,8 +168,11 @@ let organizationsRepository: IOrganizationsRepository | null = null;
 let teamProjectsRepository: ITeamProjectsRepository | null = null;
 let teamOKRsRepository: ITeamOKRsRepository | null = null;
 let orgTeamsRepository: IOrgTeamsRepository | null = null;
-let orgOKRCategoriesRepository: IOrgOKRCategoriesRepository | null = null;
 let teamCategoriesRepository: ITeamCategoriesRepository | null = null;
+let teamListsRepository: ITeamListsRepository | null = null;
+let orgGovernanceRepository: IOrgGovernanceRepository | null = null;
+let orgRolesRepository: IOrgRolesRepository | null = null;
+let okrExecutionRepository: IOkrExecutionRepository | null = null;
 let statsRepository: IStatsRepository | null = null;
 
 // Auto-reset singletons whenever the demo flag flips. Without this, any
@@ -180,8 +191,11 @@ appModeStore.subscribe(() => {
   teamProjectsRepository = null;
   teamOKRsRepository = null;
   orgTeamsRepository = null;
-  orgOKRCategoriesRepository = null;
   teamCategoriesRepository = null;
+  teamListsRepository = null;
+  orgGovernanceRepository = null;
+  orgRolesRepository = null;
+  okrExecutionRepository = null;
   statsRepository = null;
 });
 
@@ -195,7 +209,8 @@ appModeStore.subscribe(() => {
 export function getTasksRepository(): ITasksRepository {
   if (!tasksRepository) {
     tasksRepository = appModeStore.isDemo
-      ? new LocalStorageTasksRepository()
+      ? lazyDemoRepository<ITasksRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoTasksRepository()))
       : new SupabaseTasksRepository();
   }
   return tasksRepository;
@@ -207,7 +222,8 @@ export function getTasksRepository(): ITasksRepository {
 export function getHabitsRepository(): IHabitsRepository {
   if (!habitsRepository) {
     habitsRepository = appModeStore.isDemo
-      ? new LocalStorageHabitsRepository()
+      ? lazyDemoRepository<IHabitsRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoHabitsRepository()))
       : new SupabaseHabitsRepository();
   }
   return habitsRepository;
@@ -346,16 +362,51 @@ export function getOrgTeamsRepository(): IOrgTeamsRepository {
   return orgTeamsRepository;
 }
 
-/**
- * Get the Org OKR categories repository based on current mode.
- */
-export function getOrgOKRCategoriesRepository(): IOrgOKRCategoriesRepository {
-  if (!orgOKRCategoriesRepository) {
-    orgOKRCategoriesRepository = appModeStore.isDemo
-      ? new LocalStorageOrgOKRCategoriesRepository()
-      : new SupabaseOrgOKRCategoriesRepository();
+/** Gouvernance d'organisation (cycle de vie des membres, audit, préférences). */
+export function getOrgGovernanceRepository(): IOrgGovernanceRepository {
+  if (!orgGovernanceRepository) {
+    orgGovernanceRepository = appModeStore.isDemo
+      ? lazyDemoRepository<IOrgGovernanceRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoOrgGovernanceRepository()),
+        )
+      // Chargé à la demande AUSSI en production (2026-09-25) : importé en dur,
+      // ce repository entrait dans le chunk d'ENTRÉE dès qu'un écran lazy s'en
+      // servait (+1,9 ko gzip), pour des gestes d'admin que la plupart des
+      // visites ne font jamais. L'interface est 100 % asynchrone.
+      : lazyDemoRepository<IOrgGovernanceRepository>(() =>
+          import('@/modules/organizations/governance.supabase.repository').then((m) => new m.SupabaseOrgGovernanceRepository()),
+        );
   }
-  return orgOKRCategoriesRepository;
+  return orgGovernanceRepository;
+}
+
+/** Rôles personnalisés à durée limitée (mig. 219). Chargé à la demande, comme la gouvernance. */
+export function getOrgRolesRepository(): IOrgRolesRepository {
+  if (!orgRolesRepository) {
+    orgRolesRepository = appModeStore.isDemo
+      ? lazyDemoRepository<IOrgRolesRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoOrgRolesRepository()),
+        )
+      : lazyDemoRepository<IOrgRolesRepository>(() =>
+          import('@/modules/organizations/roles.supabase.repository').then((m) => new m.SupabaseOrgRolesRepository()),
+        );
+  }
+  return orgRolesRepository;
+}
+
+/** Exécution des OKR (cycles, points d'étape, projets reliés). */
+export function getOkrExecutionRepository(): IOkrExecutionRepository {
+  if (!okrExecutionRepository) {
+    okrExecutionRepository = appModeStore.isDemo
+      ? lazyDemoRepository<IOkrExecutionRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoOkrExecutionRepository()),
+        )
+      // Même raison que la gouvernance : hors du chunk d'entrée.
+      : lazyDemoRepository<IOkrExecutionRepository>(() =>
+          import('@/modules/team-okrs/execution.supabase.repository').then((m) => new m.SupabaseOkrExecutionRepository()),
+        );
+  }
+  return okrExecutionRepository;
 }
 
 /**
@@ -368,6 +419,18 @@ export function getTeamCategoriesRepository(): ITeamCategoriesRepository {
       : new SupabaseTeamCategoriesRepository();
   }
   return teamCategoriesRepository;
+}
+
+/**
+ * Get the Team lists repository based on current mode.
+ */
+export function getTeamListsRepository(): ITeamListsRepository {
+  if (!teamListsRepository) {
+    teamListsRepository = appModeStore.isDemo
+      ? new LocalStorageTeamListsRepository()
+      : new SupabaseTeamListsRepository();
+  }
+  return teamListsRepository;
 }
 
 /**
@@ -415,8 +478,8 @@ export function resetRepositories(): void {
   teamProjectsRepository = null;
   teamOKRsRepository = null;
   orgTeamsRepository = null;
-  orgOKRCategoriesRepository = null;
   teamCategoriesRepository = null;
+  teamListsRepository = null;
   statsRepository = null;
 }
 
@@ -460,6 +523,7 @@ export function clearDemoStorage(): void {
   // visiteur, son engagement repart de zéro.
   const PRESERVE_KEYS = new Set([
     'cosmo_cookie_consent',
+    'cosmo_cookie_consent_at',
     'cosmo_demo_device_id',
     'cosmo_first_touch',
     'cosmo_demo_bridge_snooze',

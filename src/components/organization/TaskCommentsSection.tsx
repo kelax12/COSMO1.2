@@ -143,7 +143,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
             const author = c.authorId ? memberById.get(c.authorId) : undefined;
             return (
               <li key={c.id} className="flex items-start gap-2.5">
-                <MemberAvatar avatar={author?.avatar} name={author?.displayName ?? '?'} size={26} />
+                <MemberAvatar avatar={author?.avatar} name={author?.displayName ?? '?'} size={28} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2">
                     <span className="text-xs font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
@@ -203,7 +203,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
                   onClick={() => pickMention(m)}
                   className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
                 >
-                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
+                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
                   <span className="text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>{m.displayName}</span>
                 </button>
               </li>

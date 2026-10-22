@@ -184,14 +184,54 @@ export function namespacesForEntry(entryRelative, stopAt = gatedModules()) {
   return found;
 }
 
-/** Chemins absolus des modules déjà gatés par `lazyWithRetry` dans `App.tsx`. */
+/**
+ * Pages qui gatent ELLES-MÊMES certains de leurs sous-arbres (2026-09-25).
+ *
+ * Dans ces fichiers, SEUL un `lazyWithRetry(() => import('…'), [catalogues])`
+ * qui DÉCLARE une liste est une frontière : ce sous-arbre porte ses propres
+ * catalogues, chargés avec lui, et la route parente n'a plus à les déclarer.
+ * Un appel sans liste reste couvert par la route, comme avant.
+ *
+ * Premier cas : l'onglet Projets et le namespace `portfolio`, qui dans `org`
+ * était payé par toute visite de /entreprise.
+ */
+export const TAB_GATE_HOSTS = [
+  'pages/OrganizationPage.tsx',
+  // 2026-09-25 (cohérence globale) : le formulaire unique de création de projet,
+  // monté aussi depuis le modal de tâche de /tasks, et la barre d'actions
+  // groupées chargent `portfolio` AVEC eux, au lieu de le faire payer à la route.
+  'components/organization/org-create.context.tsx',
+  'components/organization/team-tasks-bulk.lazy.ts',
+  // Définitions du glossaire, dans `orgAccount`, chargées à l'ouverture d'une info-bulle.
+  'components/organization/RoleTerm.tsx',
+  // Configuration d'entreprise (mig. 195-199) : `orgConfig` voyage avec ses écrans.
+  'components/organization/org-config.lazy.ts',
+  'components/organization/TeamTaskModal.tsx',
+  // 2026-10-03 : le texte du parcours entreprise de la landing (`landingEnterprise`)
+  // charge avec le parcours, plus avec toute visite de `/`.
+  'pages/LandingPage.tsx',
+  // Accueil du premier compte : `onboarding` voyage avec lui (2026-10-03).
+  'components/Layout.tsx',
+  // Guide perso (boussole du Layout desktop) : `persoGuide` voyage avec son tiroir (2026-10-19).
+  'components/perso-guide/PersoGuideFab.tsx',
+];
+
+/** Chemins absolus des modules gatés : routes d'`App.tsx`, onglets déclarants. */
 export function gatedModules() {
-  const app = readFileSync(join(SRC, 'App.tsx'), 'utf8');
   const out = new Set();
+  const app = readFileSync(join(SRC, 'App.tsx'), 'utf8');
   const re = /lazyWithRetry\(\s*\(\)\s*=>\s*import\(\s*['"]([^'"]+)['"]\s*\)/g;
   for (const m of app.matchAll(re)) {
     const target = resolveImport(m[1], join(SRC, 'App.tsx'));
     if (target) out.add(target);
+  }
+  const declaring = /lazyWithRetry\(\s*\(\)\s*=>\s*import\(\s*['"]([^'"]+)['"]\s*\)\s*,\s*\[/g;
+  for (const host of TAB_GATE_HOSTS) {
+    const file = join(SRC, host);
+    for (const m of readFileSync(file, 'utf8').matchAll(declaring)) {
+      const target = resolveImport(m[1], file);
+      if (target) out.add(target);
+    }
   }
   return out;
 }

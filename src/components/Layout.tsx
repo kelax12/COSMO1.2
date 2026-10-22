@@ -43,16 +43,22 @@ import InviteOrJoinModal from './organization/InviteOrJoinModal';
 import DeadlineReminder from './DeadlineReminder';
 import SyncStatusIndicator from './SyncStatusIndicator';
 import SkipLink, { MAIN_CONTENT_ID } from './SkipLink';
+import PersoGuideFab from './perso-guide/PersoGuideFab';
 import { isDueToday } from '@/lib/deadline';
 import { readJson, safeSetItem } from '@/lib/safe-json';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { readFirstRunDone } from './onboarding/first-run';
 
 // Quick-add global — lazy : ne se charge qu'au premier rendu du Layout.
 const QuickAddBar = lazy(() => import('./QuickAddBar'));
 // Rappel habitudes du soir (#24) — lazy également.
 // Aide raccourcis clavier (#48) — touche « ? ».
 const ShortcutsHelp = lazy(() => import('./ShortcutsHelp'));
-// Tâches d'exemple au premier login (#49) — headless.
-const FirstRunSetup = lazy(() => import('./onboarding/FirstRunSetup'));
+// Accueil du premier compte (T-23, planétaire du 2026-10-03). Son catalogue
+// `onboarding` voyage AVEC lui (`lazyWithRetry`, hôte déclaré dans
+// `scripts/i18n-shell-namespaces.mjs`), et il n'est même pas téléchargé une
+// fois l'accueil vu sur cet appareil (`firstRunDone`, plus bas).
+const FirstRunSetup = lazyWithRetry(() => import('./onboarding/FirstRunSetup'), ['onboarding', 'overlays']);
 // Formulaire « Signaler un bug » — lazy : la très grande majorité des
 // sessions ne l'ouvre jamais, son chunk n'a pas à peser sur le Layout.
 const BugReportModal = lazy(() => import('./BugReportModal'));
@@ -76,6 +82,7 @@ const CHART_COLORS = {
 } as const;
 
 import NavItemLink from './layout/NavItemLink';
+import { PAGE_RIGHT_RAIL_ID } from './layout/page-right-rail';
 // Titres d'onglet par route (#15) — « Tâches – Cosmo » plutôt qu'un titre
 // statique : retrouvable parmi les onglets du navigateur.
 //
@@ -97,6 +104,44 @@ const PAGE_TITLE_KEYS: Record<string, KeyOf<'common'>> = {
   '/admin': 'nav.admin',
   '/entreprise': 'nav.enterprise',
 };
+
+// Sections entreprise (`/entreprise/projects`) : « Projets – Entreprise – Cosmo ».
+// `billing` n'a pas d'entrée ici : il retombe sur « Entreprise – Cosmo ».
+const ORG_SECTION_TITLE_KEYS: Record<string, KeyOf<'org'>> = {
+  '/entreprise/tasks': 'tabs.tasks',
+  '/entreprise/projects': 'tabs.projects',
+  '/entreprise/okr': 'tabs.okr',
+  '/entreprise/stats': 'tabs.stats',
+  '/entreprise/pyramid': 'tabs.pyramid',
+  '/entreprise/members': 'tabs.members',
+};
+
+/**
+ * ── Maquette 83 : le FAB ne recouvre plus le contenu ──────────────────────
+ *
+ * Le FAB global était rendu par une liste NOIRE (« partout sauf dashboard,
+ * habitudes, OKR »). Une liste noire accueille par défaut toute route future,
+ * et c'est ce qui l'avait posé sur des pages où « créer une tâche » n'a aucun
+ * sens. Mesuré le 2026-09-19 en 390 × 844, thème Gris :
+ *
+ * - `/settings` : le FAB recouvre le bouton **Sauvegarder** du formulaire de
+ *   profil. L'action principale d'un écran était cachée sous une action qui
+ *   n'appartient pas à cet écran.
+ * - `/statistics` : il recouvre une valeur du graphique, sur une page de
+ *   LECTURE, qui ne crée rien.
+ * - `/premium`, `/admin`, `/entreprise` : même chose, sans le dommage visible.
+ *
+ * D'où une liste BLANCHE : le FAB n'existe que là où créer une tâche est
+ * l'action attendue. `/habits` et `/okr` n'y sont pas parce qu'ils portent
+ * DÉJÀ leur propre FAB dédié (z-30) ; ce FAB-ci (z-40) passait au-dessus et
+ * interceptait leurs taps.
+ *
+ * ❌ Ne pas revenir à une liste noire : une route ajoutée demain hériterait
+ * d'un bouton que personne n'a décidé d'y mettre.
+ */
+// `/tasks` en est sorti le 2026-10-10 (maquette 150) : son « + » vit dans la
+// barre de recherche du bas (`MobileTaskSearch`), une couche flottante de moins.
+const FAB_ROUTES = new Set(['/agenda']);
 
 const Layout: React.FC = () => {
   const { t, tp } = useT('common');
@@ -134,6 +179,10 @@ const Layout: React.FC = () => {
   // « + » de la nav : inviter un ami / rejoindre une entreprise avec un code.
   // Monte dans `globalOverlays`, donc partage par les rendus mobile ET desktop.
   const [inviteOpen, setInviteOpen] = useState(false);
+  // Lu une fois par montage : l'écran lui-même relit le drapeau et pose le
+  // verrou. Ce test ne sert qu'à épargner son chunk et son catalogue aux
+  // personnes déjà accueillies, soit presque tout le monde.
+  const [firstRunDone] = useState(readFirstRunDone);
   // « Signaler un bug » — même schéma que le « + » ci-dessus : l'état vit ici,
   // la feuille « Plus » du mobile l'ouvre par événement custom.
   const [bugOpen, setBugOpen] = useState(false);
@@ -177,12 +226,21 @@ const Layout: React.FC = () => {
   useEffect(() => {
     setLastVisitedPage(location.pathname);
   }, [location.pathname, setLastVisitedPage]);
+  // Maquette 83 — cf. FAB_ROUTES.
+  const showGlobalFab = FAB_ROUTES.has(location.pathname);
 
   // Titre d'onglet par page (#15).
   useEffect(() => {
     const key = PAGE_TITLE_KEYS[location.pathname];
-    document.title = key ? t('nav.documentTitle', { page: t(key) }) : 'Cosmo';
-  }, [location.pathname, t]);
+    const orgKey = ORG_SECTION_TITLE_KEYS[location.pathname];
+    if (orgKey) {
+      document.title = t('nav.documentTitle', { page: `${tOrg(orgKey)} – ${t('nav.enterprise')}` });
+    } else if (location.pathname.startsWith('/entreprise/')) {
+      document.title = t('nav.documentTitle', { page: t('nav.enterprise') });
+    } else {
+      document.title = key ? t('nav.documentTitle', { page: t(key) }) : 'Cosmo';
+    }
+  }, [location.pathname, t, tOrg]);
 
 const NavItems = () =>
   <>
@@ -190,18 +248,18 @@ const NavItems = () =>
         hoverColor="#94a3b8" collapsed={isCollapsed} badge={pendingRequestCount}
         badgeAriaLabel={tp('nav.badge.pendingRequest', pendingRequestCount)} end />
 
-      <NavItemLink to="/tasks" label={t('nav.tasks')} icon={<CheckSquare size={20} aria-hidden="true" />}
+      <NavItemLink to="/tasks" guideId="perso-nav-tasks" label={t('nav.tasks')} icon={<CheckSquare size={20} aria-hidden="true" />}
         hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed}
         badge={tasksDueTodayCount} badgeVariant="neutral"
         badgeAriaLabel={tp('nav.badge.taskDueToday', tasksDueTodayCount)} />
 
-      <NavItemLink to="/agenda" label={t('nav.agenda')} icon={<Calendar size={20} aria-hidden="true" />}
+      <NavItemLink to="/agenda" guideId="perso-nav-agenda" label={t('nav.agenda')} icon={<Calendar size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.events} collapsed={isCollapsed} />
 
-      <NavItemLink to="/okr" label={t('nav.okr')} icon={<Target size={20} aria-hidden="true" />}
+      <NavItemLink to="/okr" guideId="perso-nav-okr" label={t('nav.okr')} icon={<Target size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.okrs} collapsed={isCollapsed} />
 
-      <NavItemLink to="/habits" label={t('nav.habits')} icon={<Repeat size={20} aria-hidden="true" />}
+      <NavItemLink to="/habits" guideId="perso-nav-habits" label={t('nav.habits')} icon={<Repeat size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
 
       <NavItemLink to="/statistics" label={t('nav.statistics')} icon={<BarChart2 size={20} aria-hidden="true" />}
@@ -315,9 +373,11 @@ const NavItems = () =>
         <ShortcutsHelp />
       </Suspense>
       {/* Premier écran d'un compte réel et vide (T-23) */}
-      <Suspense fallback={null}>
-        <FirstRunSetup />
-      </Suspense>
+      {!firstRunDone && (
+        <Suspense fallback={null}>
+          <FirstRunSetup />
+        </Suspense>
+      )}
       {/* Raccourcis « g puis lettre » (#44) */}
       <GlobalNavShortcuts />
       {/* Rappel deadlines du jour à l'ouverture (#30) — headless, 1×/jour */}
@@ -346,7 +406,9 @@ const NavItems = () =>
         <SkipLink targetId={MAIN_CONTENT_ID} label={t('nav.skipToContent')} />
         {/* Bannière conversion démo → compte (#9) */}
         <OfflineBanner />
-        <DemoConversionBanner />
+        {/* Maquette 222 (2026-10-10) : sur mobile, plus de bandeau « Mode démo »
+            en tête de chaque page (une ligne de liste en permanence) ; la
+            mention vit dans la feuille « Plus » (`MobileMoreSheet`). */}
         {/* État sync mobile (#37) — visible uniquement hors ligne / en cours */}
         <div className="fixed top-2 right-2 z-40 rounded-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] px-2.5 py-1 shadow-sm empty:hidden">
           <SyncStatusIndicator hideWhenSynced />
@@ -354,34 +416,40 @@ const NavItems = () =>
         <main
           id={MAIN_CONTENT_ID}
           tabIndex={-1}
-          className="flex-1 overflow-y-auto overflow-x-hidden pb-20 focus:outline-none"
+          // Agenda : le SEUL scroll voulu est celui interne à FullCalendar
+          // (`.fc-scroller`). `overflow-y-auto` ici en faisait un second —
+          // seul l'overflow change pour l'agenda.
+          //
+          // `pb-20` reste constant (dégage la tab bar `fixed`).
+          //
+          // ⚠️ Maquette 83 : NE PAS y ajouter de padding pour le FAB. Chaque
+          // page qui en porte un réserve déjà `64px + safe-area + 88px` en bas
+          // (TasksPage, HabitsPage, OKRPage) : le faire une seconde fois ici
+          // empilerait 232 px de vide en fin de liste. Le seul endroit où le
+          // FAB recouvrait vraiment du contenu était `/settings`, qui ne
+          // réserve rien — et qui n'a plus de FAB du tout.
+          className={`flex-1 overflow-x-hidden pb-20 focus:outline-none ${
+            location.pathname === '/agenda' ? 'overflow-hidden' : 'overflow-y-auto'
+          }`}
           style={{ backgroundColor: 'rgb(var(--color-background))' }}
         >
           <Outlet />
         </main>
-        {/* FAB de capture rapide global (#43) — au-dessus de la tab bar, sur
-            toutes les pages protégées SAUF le Dashboard (déjà un widget
-            "Tâches prioritaires" en haut, pas besoin d'un raccourci flottant
-            en plus), et SAUF Habitudes/OKR qui ont déjà leur propre FAB dédié
-            (même position, z-30) — le garder ici les rendait inutilisables :
-            ce FAB (z-40) passait au-dessus et interceptait tous les taps,
-            ouvrant la capture rapide générique au lieu du bon modal. */}
-        {location.pathname !== '/dashboard' && location.pathname !== '/habits' && location.pathname !== '/okr' && (
+        {/* FAB de capture rapide global (#43) — au-dessus de la tab bar.
+            Maquette 83 : LISTE BLANCHE, plus liste noire. */}
+        {showGlobalFab && (
           <button
             type="button"
             onClick={() => {
-              // Sur /tasks, la capture rapide (QuickAddBar) n'est pas la bonne
-              // popup : on ouvre le formulaire de création complet, comme le
-              // bouton « Nouvelle tâche » du desktop. TasksPage écoute cet
-              // événement. Ailleurs, capture rapide globale inchangée.
-              const evt = location.pathname === '/tasks' ? 'open-task-create'
-                : location.pathname === '/agenda' ? 'open-agenda-create'
+              // Sur /agenda, la création d'évènement ; ailleurs, la capture
+              // rapide globale. (`/tasks` a son « + » dans sa barre du bas.)
+              const evt = location.pathname === '/agenda' ? 'open-agenda-create'
                 : 'open-quick-add';
               window.dispatchEvent(new CustomEvent(evt));
             }}
             data-tutorial-id="global-quick-add-fab"
             aria-label={t('nav.createTask')}
-            className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center active:scale-95 transition-transform"
+            className={`fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center active:scale-95 transition-transform`}
             style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
           >
             <Plus size={26} aria-hidden="true" />
@@ -471,6 +539,15 @@ const NavItems = () =>
           <Outlet />
         </main>
       </div>
+
+      {/* Navigation propre à une page, collée au bord droit de la fenêtre et
+          hors de la zone qui défile (cf. page-right-rail.ts). Vide, il ne
+          prend aucune place. */}
+      <div id={PAGE_RIGHT_RAIL_ID} className="flex shrink-0" />
+
+      {/* Guide perso (boussole), desktop seulement. `/entreprise` a le sien
+          au même endroit (`OrgGuideFab`) : deux boussoles s'y superposeraient. */}
+      {!location.pathname.startsWith('/entreprise') && <PersoGuideFab />}
 
       {globalOverlays}
     </div>);

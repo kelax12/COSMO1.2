@@ -16,6 +16,7 @@ import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { isResourceMissing } from '../_shared/stripe-errors.ts'
+import { customerContactFields } from '../_shared/org-billing-contact.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 const ALLOWED_ORIGINS = new Set([APP_URL])
@@ -92,8 +93,27 @@ Deno.serve(async (req) => {
     // le jour du passage en compte live, ou d'un customer supprimé côté
     // Stripe après coup. Il n'y a alors rien à gérer : on le dit clairement,
     // jamais un 500 opaque. Toute AUTRE erreur Stripe continue de relancer.
+    // ── Contact de facturation (mig. 180) ──
+    //
+    // Reporté sur le customer à chaque ouverture du portail : c'est le seul
+    // chemin par lequel un abonnement DÉJÀ en cours apprend qu'un contact a
+    // été posé ou changé. Sans contact, on ne touche à rien : le propriétaire
+    // a pu corriger son adresse dans le portail lui-même.
+    const { data: billingContact, error: contactError } = await supabaseAdmin
+      .from('org_billing_contacts')
+      .select('name, email')
+      .eq('org_id', orgId)
+      .maybeSingle()
+    if (contactError) throw contactError
+
     let session: Awaited<ReturnType<typeof stripe.billingPortal.sessions.create>>
     try {
+      if (billingContact) {
+        await stripe.customers.update(
+          sub.stripe_customer_id,
+          customerContactFields(billingContact, user.email),
+        )
+      }
       session = await stripe.billingPortal.sessions.create({
         customer: sub.stripe_customer_id,
         return_url: `${APP_URL}/entreprise?tab=billing`,

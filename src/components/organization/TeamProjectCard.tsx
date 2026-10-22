@@ -1,8 +1,13 @@
 import { useMemo, useState } from 'react';
 import {
   Plus, ChevronDown, ChevronRight, UsersRound, MoreHorizontal,
-  Pencil, Archive, ArchiveRestore, Palette, Clock, ListChecks, Tag,
+  Pencil, Archive, ArchiveRestore, Clock, ListChecks, Tag,
+  ExternalLink, Settings2, Copy, LayoutTemplate, CalendarRange,
 } from 'lucide-react';
+import { SAVE_AS_TEMPLATE_ENABLED } from './projectTemplatesFlag';
+import { format, parseISO } from 'date-fns';
+import { getDateLocale } from '@/i18n/format';
+import { getColorHex } from '@/lib/category-colors';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -17,14 +22,17 @@ import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import type { TeamProject, TeamTask, UpdateTeamProjectInput } from '@/modules/team-projects';
 import {
-  projectColor, PROJECT_COLOR_NAMES, PROJECT_COLORS,
+  projectColor,
   sortOpenTasks, sortCompletedTasks, isTaskOverdue,
   sumEstimatedTime, formatDuration,
 } from './team-projects.helpers';
+import { PROJECT_STATUS_META, isProjectLate } from './portfolio.helpers';
 import MemberAvatar from './MemberAvatar';
 import TeamTaskRow from './TeamTaskRow';
+import ConfirmProjectAudienceDialog from './ConfirmProjectAudienceDialog';
 import { useTeamCategories } from '@/modules/team-categories';
 import { useT } from '@/i18n/useT';
+import TeamColorDot from './TeamColorDot';
 
 interface TeamProjectCardProps {
   project: TeamProject;
@@ -32,8 +40,27 @@ interface TeamProjectCardProps {
   tasks: TeamTask[];
   members: OrgMember[];
   teams: OrgTeam[];
-  /** Renommer, recolorer, rattacher à une équipe/catégorie (`project.create`). */
+  /**
+   * Renommer, décrire, planifier, recolorer, catégoriser : `project.edit`
+   * (mig. 153) OU responsable du projet. Jusque-là, c'était `project.create`,
+   * dont le nom ne disait pas l'action.
+   */
   canEditProject: boolean;
+  /**
+   * Changer l'ÉQUIPE (donc l'audience, M5) : `project.edit` seul. Le
+   * responsable pilote son projet sans pouvoir l'ouvrir à d'autres (trigger
+   * `enforce_team_project_edit_scope`).
+   */
+  canChangeTeam: boolean;
+  /** Dupliquer / enregistrer comme modèle CRÉENT un projet : `project.create`. */
+  canCreateProject: boolean;
+  /** Ouvre la page du projet (`?project=<id>`). */
+  onOpenProject: () => void;
+  onEditProject: () => void;
+  onDuplicate: () => void;
+  onSaveTemplate: () => void;
+  /** Archive avec « Annuler » : c'est le parent qui montre le toast. */
+  onArchive: () => void;
   /** Archiver ou restaurer (`project.delete` — l'archivage EST la suppression ici). */
   canArchiveProject: boolean;
   collapsed: boolean;
@@ -59,21 +86,36 @@ interface TeamProjectCardProps {
 /** Carte d'un projet : header (couleur, progression, contributeurs, retard, menu) + tâches triées. */
 const TeamProjectCard = ({
   project, tasks, members, teams, canEditProject, canArchiveProject,
+  canChangeTeam, canCreateProject, onOpenProject, onEditProject, onDuplicate, onSaveTemplate, onArchive,
   collapsed, onToggleCollapse, assigneeFiltered,
   onAddTask, onToggleComplete, onReassign, onDelete, onOpenTask,
   onUpdateProject, onStartSelect,
   selectable = false, selectedIds, onToggleSelect,
 }: TeamProjectCardProps) => {
   const { t, tp } = useT('org');
+  const { t: pf } = useT('portfolio');
   const [renaming, setRenaming] = useState(false);
+  // M5 : un changement d'équipe change QUI LIT le projet. Il passe par une
+  // confirmation qui nomme la nouvelle audience, jamais par un clic sec.
+  // `undefined` = rien en attente ; `null` = vers toute l'organisation.
+  const [pendingTeamId, setPendingTeamId] = useState<string | null | undefined>(undefined);
+  const requestTeamChange = (teamId: string | null) => {
+    if (teamId === (project.teamId ?? null)) return;
+    setPendingTeamId(teamId);
+  };
   const [renameValue, setRenameValue] = useState(project.name);
   const [showCompleted, setShowCompleted] = useState(false);
   const { data: categories = [] } = useTeamCategories(project.orgId);
 
   const color = projectColor(project.color);
-  const teamName = teams.find((t) => t.id === project.teamId)?.name;
-  const categoryName = categories.find((c) => c.id === project.categoryId)?.name;
+  const projectTeam = teams.find((t) => t.id === project.teamId);
+  const teamName = projectTeam?.name;
+  const category = categories.find((c) => c.id === project.categoryId);
   const archived = !!project.archivedAt;
+  const status = project.status ?? 'active';
+  const owner = project.ownerId ? members.find((m) => m.userId === project.ownerId) : undefined;
+  const late = isProjectLate(project);
+  const shortDate = (d: string) => format(parseISO(d), 'd MMM', { locale: getDateLocale() });
 
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((t) => !t.completed)), [tasks]);
   const completedTasks = useMemo(() => sortCompletedTasks(tasks.filter((t) => t.completed)), [tasks]);
@@ -110,6 +152,13 @@ const TeamProjectCard = ({
   };
 
   return (
+    <div className="space-y-3">
+    {/* Le nom du projet titre le groupe, au-dessus de la carte (2026-10-01) :
+        il n'est plus répété dans l'en-tête, sauf pendant un renommage. */}
+    <h3 className="flex items-center gap-1.5 text-caption font-semibold md:uppercase md:tracking-wide max-md:text-label max-md:text-[rgb(var(--color-text-secondary))] text-[rgb(var(--color-text-muted))] px-1 pt-1">
+      <span className={`w-2 h-2 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
+      {project.name}
+    </h3>
     <section className={`rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] overflow-hidden ${archived ? 'opacity-70' : ''}`}>
       {/* Header */}
       <div className="flex items-center gap-2 px-2 py-1.5">
@@ -117,11 +166,10 @@ const TeamProjectCard = ({
           type="button"
           onClick={onToggleCollapse}
           aria-expanded={!collapsed}
-          className="flex-1 min-w-0 flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
+          className="flex-1 min-w-0 flex max-md:flex-wrap items-center gap-2 max-md:gap-y-1 px-2 py-1.5 rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
         >
           {collapsed ? <ChevronRight size={16} className="shrink-0" aria-hidden="true" /> : <ChevronDown size={16} className="shrink-0" aria-hidden="true" />}
-          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
-          {renaming ? (
+          {renaming && (
             <input
               type="text"
               value={renameValue}
@@ -137,17 +185,40 @@ const TeamProjectCard = ({
               aria-label={t('project.renameAria')}
               className="h-7 px-2 rounded-md border border-indigo-400 bg-[rgb(var(--color-background))] text-sm font-bold focus:outline-none min-w-0 flex-1"
             />
-          ) : (
-            <span className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">{project.name}</span>
           )}
           {teamName && (
-            <span className={`inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${color.soft}`}>
-              <UsersRound size={10} aria-hidden="true" /> {teamName}
+            // Couleur de l'ÉQUIPE, pas du projet : c'était la couleur du projet
+            // qui habillait le nom de l'équipe (cohérence globale, 2026-09-25).
+            <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
+              <TeamColorDot color={projectTeam?.color} size={6} /> {teamName}
             </span>
           )}
-          {categoryName && (
-            <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]">
-              <Tag size={10} aria-hidden="true" /> {categoryName}
+          {/* La catégorie est une PASTILLE à sa propre couleur : elle n'écrase
+              plus la couleur du projet (audit 2026-09-24). */}
+          {category && (
+            <span className="hidden sm:inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]">
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ backgroundColor: category.color.startsWith('#') ? category.color : getColorHex(category.color) }}
+                aria-hidden="true"
+              />
+              <Tag size={10} aria-hidden="true" /> {category.name}
+            </span>
+          )}
+          {status !== 'active' && !archived && (
+            <span className={`text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${PROJECT_STATUS_META[status].soft}`}>
+              {pf(`status.${status}`)}
+            </span>
+          )}
+          {late && !archived && (
+            <span className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500 shrink-0">
+              {pf('late')}
+            </span>
+          )}
+          {project.dueDate && !archived && (
+            <span className="hidden md:inline-flex items-center gap-1 text-caption text-[rgb(var(--color-text-muted))] shrink-0">
+              <CalendarRange size={10} aria-hidden="true" />
+              {pf('dueOn', { date: shortDate(project.dueDate) })}
             </span>
           )}
           {archived && (
@@ -173,10 +244,15 @@ const TeamProjectCard = ({
           )}
 
           {/* Contributeurs (avatars empilés + charge au survol) */}
-          <span className="ml-auto flex items-center gap-2 shrink-0">
+          <span className="ml-auto max-md:ml-6 max-md:basis-full flex items-center gap-2 shrink-0">
+            {owner && (
+              <span className="hidden sm:inline-flex rounded-full ring-2 ring-[rgb(var(--color-border-strong))]" title={`${pf('col.owner')} : ${owner.displayName}`}>
+                <MemberAvatar avatar={owner.avatar} name={owner.displayName} size={20} />
+              </span>
+            )}
             {contributors.length > 0 && (
               <span className="flex -space-x-1.5" aria-label={`${contributors.length} contributeurs`}>
-                {contributors.slice(0, 4).map(({ member, open, overdue }) => (
+                {contributors.slice(0, 2).map(({ member, open, overdue }) => (
                   <span
                     key={member.userId}
                     className="rounded-full ring-2 ring-[rgb(var(--color-surface))]"
@@ -186,12 +262,12 @@ const TeamProjectCard = ({
                         : tp('project.memberOpen', open, { name: member.displayName })
                     }
                   >
-                    <MemberAvatar avatar={member.avatar} name={member.displayName} size={22} />
+                    <MemberAvatar avatar={member.avatar} name={member.displayName} size={24} />
                   </span>
                 ))}
-                {contributors.length > 4 && (
+                {contributors.length > 2 && (
                   <span className="w-[22px] h-[22px] rounded-full bg-[rgb(var(--color-hover))] ring-2 ring-[rgb(var(--color-surface))] flex items-center justify-center text-[9px] font-bold text-[rgb(var(--color-text-muted))]">
-                    +{contributors.length - 4}
+                    +{contributors.length - 2}
                   </span>
                 )}
               </span>
@@ -211,53 +287,45 @@ const TeamProjectCard = ({
             bouton ⋯ de la barre d'outils — un contributeur doit garder l'accès
             aux actions groupées. Les entrées d'administration restent gardées
             par les droits une à une. */}
-        {(canEditProject || canArchiveProject || !!onStartSelect) && (
+        {/* « Ouvrir la page » existe pour tous : le menu est toujours monté. */}
+        {(
           <DropdownMenu>
             <DropdownMenuTrigger
+              // Guide entreprise : en vue liste, ouvrir un projet passe par ce menu.
+              data-guide-item
               aria-label={t('project.actionsAria', { name: project.name })}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
               <MoreHorizontal size={16} aria-hidden="true" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={onOpenProject} data-guide-id="project-menu-open">
+                <ExternalLink size={14} aria-hidden="true" /> {pf('actions.open')}
+              </DropdownMenuItem>
+              {canEditProject && (
+                <DropdownMenuItem onClick={onEditProject}>
+                  <Settings2 size={14} aria-hidden="true" /> {pf('actions.edit')}
+                </DropdownMenuItem>
+              )}
               {canEditProject && (
                 <DropdownMenuItem onClick={() => { setRenameValue(project.name); setRenaming(true); }}>
                   <Pencil size={14} aria-hidden="true" /> {t('project.rename')}
                 </DropdownMenuItem>
               )}
-              {canEditProject && (
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <Palette size={14} aria-hidden="true" /> {t('project.color')}
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="grid grid-cols-3 gap-1 p-2">
-                  {PROJECT_COLOR_NAMES.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => onUpdateProject({ color: c })}
-                      aria-label={t('project.colorAria', { name: c })}
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[rgb(var(--color-hover))] ${project.color === c ? 'ring-2 ring-indigo-500' : ''}`}
-                    >
-                      <span className={`w-4 h-4 rounded-full ${PROJECT_COLORS[c].dot}`} />
-                    </button>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-              )}
-              {canEditProject && teams.length > 0 && (
+              {canChangeTeam && teams.length > 0 && (
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <UsersRound size={14} aria-hidden="true" /> {t('project.teamBadge')}
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="w-48">
-                    <DropdownMenuItem onClick={() => onUpdateProject({ teamId: null })}>
-                      Toute l'entreprise {!project.teamId && <span className="ml-auto text-xs">✓</span>}
+                    <DropdownMenuItem onClick={() => requestTeamChange(null)}>
+                      {t('project.wholeOrg')} {!project.teamId && <span className="ml-auto text-xs">✓</span>}
                     </DropdownMenuItem>
-                    {teams.map((t) => (
-                      <DropdownMenuItem key={t.id} onClick={() => onUpdateProject({ teamId: t.id })}>
-                        <span className="truncate">{t.name}</span>
-                        {project.teamId === t.id && <span className="ml-auto text-xs">✓</span>}
+                    {teams.map((team) => (
+                      <DropdownMenuItem key={team.id} onClick={() => requestTeamChange(team.id)}>
+                        <TeamColorDot color={team.color} />
+                        <span className="truncate">{team.name}</span>
+                        {project.teamId === team.id && <span className="ml-auto text-xs">✓</span>}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuSubContent>
@@ -269,6 +337,8 @@ const TeamProjectCard = ({
                     <Tag size={14} aria-hidden="true" /> {t('project.category')}
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="w-48">
+                    {/* La catégorie ne touche PLUS à `color` : la réécrire ici
+                        effaçait la couleur choisie par l'équipe (audit 2026-09-24). */}
                     <DropdownMenuItem onClick={() => onUpdateProject({ categoryId: null })}>
                       {t('project.noCategory')} {!project.categoryId && <span className="ml-auto text-xs">✓</span>}
                     </DropdownMenuItem>
@@ -282,11 +352,24 @@ const TeamProjectCard = ({
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
               )}
+              {canCreateProject && !archived && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={onDuplicate}>
+                    <Copy size={14} aria-hidden="true" /> {pf('actions.duplicate')}
+                  </DropdownMenuItem>
+                  {SAVE_AS_TEMPLATE_ENABLED && (
+                    <DropdownMenuItem onClick={onSaveTemplate}>
+                      <LayoutTemplate size={14} aria-hidden="true" /> {pf('actions.saveTemplate')}
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
               {/* Actions groupées — ouvertes à tous, et seulement quand il y a
                   des tâches à cocher. */}
               {onStartSelect && tasks.length > 0 && (
                 <>
-                  {canEditProject && <DropdownMenuSeparator />}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={onStartSelect}>
                     <ListChecks size={14} aria-hidden="true" /> {t('projects.selectMultiple')}
                   </DropdownMenuItem>
@@ -298,7 +381,7 @@ const TeamProjectCard = ({
                   <ArchiveRestore size={14} aria-hidden="true" /> {t('project.restore')}
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={() => onUpdateProject({ archived: true })}>
+                <DropdownMenuItem onClick={onArchive}>
                   <Archive size={14} aria-hidden="true" /> {t('project.archive')}
                 </DropdownMenuItem>
               ))}
@@ -383,7 +466,17 @@ const TeamProjectCard = ({
           )}
         </div>
       )}
+      {pendingTeamId !== undefined && (
+        <ConfirmProjectAudienceDialog
+          projectName={project.name}
+          targetTeamName={pendingTeamId ? teams.find((team) => team.id === pendingTeamId)?.name ?? null : null}
+          orgMemberCount={members.length}
+          onConfirm={() => { onUpdateProject({ teamId: pendingTeamId }); setPendingTeamId(undefined); }}
+          onCancel={() => setPendingTeamId(undefined)}
+        />
+      )}
     </section>
+    </div>
   );
 };
 

@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router';
+import { useLazyMount } from '@/hooks/use-lazy-mount';
+import { BulkAddToListModal, ScheduleEventModal } from './task-table/lazy-dialogs';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskModal from './TaskModal';
-import BulkAddToListModal from './add-to-list/BulkAddToListModal';
-import ScheduleEventModal from './ScheduleEventModal';
 import AddToListModal from './AddToListModal';
 import { VirtualizedTaskList } from './task-table/list';
 import { useUnifiedTaskRows } from './task-table/useUnifiedTaskRows';
+import { useTeamTasksInList } from './task-table/useTeamTasksInList';
 import TaskTableDesktop from './task-table/TaskTableDesktop';
 import ConfirmDeleteSheet from './task-table/ConfirmDeleteSheet';
 import TaskListPlaceholders from './task-table/TaskListPlaceholders';
 import { useTaskSelection } from './task-table/useTaskSelection';
 import TaskQuickFilters from './task-table/TaskQuickFilters';
+import { useQuickFilter } from './task-table/quick-filter.store';
 import OverdueBanner from './task-table/OverdueBanner';
 import SwipeHintBanner from './task-table/SwipeHintBanner';
 import TaskBulkActionsBar from './task-table/TaskBulkActionsBar';
@@ -22,7 +24,7 @@ import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { showUndoToast } from '@/lib/undo-toast';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useTasks,
@@ -45,8 +47,6 @@ import { useFriends, useCollaboratorsByTask, usePendingCollaboratorTaskIds, useU
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useT } from '@/i18n/useT';
-import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
-import { useTeamProjects, useTeamTasks, useUpdateTeamTask, type TeamTask, type UpdateTeamTaskInput } from '@/modules/team-projects';
 
 type TaskTableProps = {
   tasks?: Task[];
@@ -64,8 +64,13 @@ type TaskTableProps = {
   searchTerm?: string;
   /** Bascule « voir les terminées », proposée par le marqueur de fin de liste. */
   onShowCompletedChange?: (value: boolean) => void;
+  /** Une liste perso filtre la page : aucune tâche d'équipe n'en fait jamais partie. */
+  listFilterActive?: boolean;
+  /** Liste, catégorie(s) OU recherche active — gate « Voir les terminées ». */
+  hasActiveFilter?: boolean;
+  /** Filtres actifs de la page, rendus au bout de la rangée des pastilles. */
+  quickFiltersTrailing?: React.ReactNode;
 };
-
 
 const TaskTable: React.FC<TaskTableProps> = ({
   tasks: propTasks,
@@ -81,6 +86,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
   showQuickFilters = true,
   searchTerm = '',
   onShowCompletedChange,
+  listFilterActive = false,
+  hasActiveFilter = false,
+  quickFiltersTrailing,
 }) => {
   const { t, tp } = useT('tasks');
 
@@ -107,36 +115,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const pendingCollaboratorTaskIds = usePendingCollaboratorTaskIds(user?.id);
   const unshareTaskMutation = useUnshareTask();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Fusion tâches d'équipe (mode entreprise) — assignées à moi, injectées
-  // dans la même liste que les tâches perso avec une distinction visuelle
-  // forte (fond indigo) et un jeu d'actions restreint (cf. TeamTaskRowLite).
-  // ═══════════════════════════════════════════════════════════════════
-  const { activeOrg } = useActiveOrganization();
-  const orgId = activeOrg?.id;
-  const { data: teamProjects = [] } = useTeamProjects(orgId);
-  const { data: allTeamTasks = [] } = useTeamTasks(orgId);
-  const { data: orgMembers = [] } = useOrgMembers(orgId);
-  const updateTeamTaskMutation = useUpdateTeamTask(orgId ?? '');
-  const [editingTeamTask, setEditingTeamTask] = useState<TeamTask | null>(null);
+  // Tâches d'équipe assignées à moi, fusionnées dans la liste perso
+  // (cf. `task-table/useTeamTasksInList`).
+  const team = useTeamTasksInList();
+  const { orgId, teamProjects, allTeamTasks, orgMembers, teamProjectsById, editingTeamTask, setEditingTeamTask } = team;
   const [scopeFilter, setScopeFilter] = useState<'all' | 'perso' | 'entreprise'>('all');
-
-  const teamProjectsById = useMemo(
-    () => new Map(teamProjects.map((p) => [p.id, p])),
-    [teamProjects],
-  );
-
-  const handleToggleTeamComplete = useCallback((task: TeamTask) => {
-    updateTeamTaskMutation.mutate({ taskId: task.id, input: { completed: !task.completed } });
-    /* eslint-disable-next-line react-hooks/exhaustive-deps --
-    `updateTeamTaskMutation` est recree a chaque rendu alors que son
-       `.mutate` est stable (React Query) : le mettre en dependance recreerait
-       ce callback a chaque rendu. `orgId` est la seule valeur dont depend la
-       mutation, et elle y est. */
-  }, [orgId]);
-
-  const modalUpdateTeamTask = (taskId: string, input: UpdateTeamTaskInput) =>
-    updateTeamTaskMutation.mutateAsync({ taskId, input });
 
   // Utiliser propTasks si fourni, sinon les tasks du module
   const tasks = propTasks || moduleTasks;
@@ -180,6 +163,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     confirmBulkDelete,
     bulkSetCategory,
     bulkSetDeadline,
+    bulkSetHealth,
   } = useTaskSelection({
     tasks,
     lists: allLists,
@@ -192,17 +176,17 @@ const TaskTable: React.FC<TaskTableProps> = ({
     restoreTask: (task) => restoreMutation.mutate(task),
     unshareTask: (taskId, friendId) => unshareTaskMutation.mutate({ taskId, friendId }),
   });
+  const bulkListModalMounted = useLazyMount(showBulkListModal);
 
   // Les deux feuilles de confirmation ci-dessous affichaient une poignee de
   // glissement qui ne declenchait rien (audit mobile 2026-08-14). Un helper
   // par feuille : `useBottomSheet` ne sait fermer qu'une seule surface.
   const deleteSheet = useBottomSheet(useCallback(() => setTaskToDelete(null), []));
   const bulkDeleteSheet = useBottomSheet(useCallback(() => setShowBulkDeleteConfirm(false), [setShowBulkDeleteConfirm]));
-  const [activeQuickFilter, setActiveQuickFilter] = useState<'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration'>('none');
-
-  const toggleQuickFilter = (filter: 'bookmarked' | 'completed' | 'overdue' | 'collaboration') => {
-    setActiveQuickFilter(prev => prev === filter ? 'none' : filter);
-  };
+  // Filtre rapide : store externe, et non `useState` local. La barre de
+  // recherche mobile (`MobileTaskSearch`, ancree hors de cet arbre) le pilote
+  // ET le lit pour marquer la suggestion active. Cf. `quick-filter.store.ts`.
+  const { activeQuickFilter, toggleQuickFilter } = useQuickFilter();
 
   useEffect(() => {
     if (externalSelectedTaskId) {
@@ -266,6 +250,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     sortField: localSortField,
     sortDirection,
     searchTerm,
+    listFilterActive,
   });
 
   const selectedTaskData = tasks.find(task => task.id === selectedTask);
@@ -394,6 +379,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         orgId={orgId}
         scope={scopeFilter}
         onScope={setScopeFilter}
+        trailing={quickFiltersTrailing}
       />
 
       {/* Bandeau « En retard » (#9) : visible dès qu'une tâche a dépassé sa
@@ -435,8 +421,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
         collaboratorsByTask={collaboratorsByTask}
         pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}
         friends={friends}
-        onToggleTeamComplete={handleToggleTeamComplete}
+        onToggleTeamComplete={team.toggleComplete}
         onEditTeamTask={setEditingTeamTask}
+        onSetTeamHealth={team.setHealth}
+        teamEditReason={team.editReason}
       />
 
       {/* Mobile View (Cards) — virtualisé au-delà de 50 items */}
@@ -459,7 +447,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           collaboratorsByTask={collaboratorsByTask}
           pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}
           friends={friends}
-          onToggleTeamComplete={handleToggleTeamComplete}
+          onToggleTeamComplete={team.toggleComplete}
           onEditTeamTask={setEditingTeamTask}
         />
 
@@ -476,7 +464,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 ? tp('table.endOfListCompleted', unifiedRows.length)
                 : tp('table.endOfList', unifiedRows.length)}
             </p>
-            {hiddenCompletedCount > 0 && onShowCompletedChange && (
+            {hasActiveFilter && hiddenCompletedCount > 0 && onShowCompletedChange && (
               <button
                 type="button"
                 onClick={() => onShowCompletedChange(true)}
@@ -506,16 +494,17 @@ const TaskTable: React.FC<TaskTableProps> = ({
         onDelete={() => setShowBulkDeleteConfirm(true)}
         onSetCategory={bulkSetCategory}
         onSetDeadline={bulkSetDeadline}
+        onSetHealth={bulkSetHealth}
         onExit={exitSelectMode}
       />
 
       {/* Modal d'ajout groupé à une liste (#23) */}
-      <BulkAddToListModal
+      {bulkListModalMounted && <React.Suspense fallback={null}><BulkAddToListModal
         isOpen={showBulkListModal}
         onClose={() => setShowBulkListModal(false)}
         count={bulkModalCount}
         onAddToList={bulkAddToList}
-      />
+      /></React.Suspense>}
 
       {/* Création directe depuis l'état vide (#45) */}
       <TaskModal
@@ -542,11 +531,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
       )}
 
       {taskToEventModal && (
-        <ScheduleEventModal
+        <React.Suspense fallback={null}><ScheduleEventModal
           open={true}
           onOpenChange={(o) => { if (!o) setTaskToEventModal(null); }}
           task={taskToEventModal}
-        />
+        /></React.Suspense>
       )}
 
         <ConfirmDeleteSheet
@@ -581,7 +570,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             task={editingTeamTask}
             projects={teamProjects.filter((p) => !p.archivedAt)}
             members={orgMembers}
-            onUpdate={modalUpdateTeamTask}
+            onUpdate={team.updateFromModal}
             onClose={() => setEditingTeamTask(null)}
           />
         )}

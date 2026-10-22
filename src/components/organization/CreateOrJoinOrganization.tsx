@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Building2, Users, ArrowLeft, Copy, Check, Clock } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import {
   useCreateOrganization,
   useRequestJoinOrganization,
@@ -14,12 +14,14 @@ import { useT } from '@/i18n/useT';
 interface CreateOrJoinOrganizationProps {
   /** Appelé quand l'utilisateur vient de créer une entreprise (nav vers /entreprise). */
   onCreated?: (org: Organization) => void;
+  /** Appelé quand la demande d'adhésion vient de partir. */
+  onJoinRequested?: () => void;
 }
 
 const cardBase =
   'flex flex-col items-start gap-2 rounded-2xl border p-5 text-left transition-all w-full';
 const inputClasses =
-  'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-3 text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all';
+  'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] h-11 px-3.5 rounded-lg text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all';
 // `to-indigo-600` / `hover:to-indigo-500` retirés : reliquat d'un dégradé
 // supprimé. Sans utilitaire `bg-gradient-*` sur le même élément, `to-*` ne
 // fait que poser `--tw-gradient-to`, que rien ne consomme. Zéro pixel de
@@ -38,7 +40,7 @@ const primaryBtn =
  *   • join : saisie du code → écran « demande envoyée » (piloté par
  *     getMySentJoinRequest, poll 20 s → l'écran d'attente reste après reload)
  */
-const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onCreated }) => {
+const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onCreated, onJoinRequested }) => {
   const { t } = useT('org');
   const [mode, setMode] = useState<'choice' | 'create' | 'join'>('choice');
   const [name, setName] = useState('');
@@ -64,7 +66,10 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
 
   const handleJoin = () => {
     requestJoinMutation.mutate(code.trim(), {
-      onSuccess: () => setCode(''),
+      onSuccess: () => {
+        setCode('');
+        onJoinRequested?.();
+      },
     });
   };
 

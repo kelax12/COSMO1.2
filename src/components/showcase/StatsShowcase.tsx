@@ -1,5 +1,6 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useShowcasePalette } from './showcase-theme';
 
 const CHART_DATA = [
   { label: 'LUN', tasks: 95, events: 60, okrs: 40, habits: 25 },
@@ -38,23 +39,25 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
             <span className="w-2 h-2 rounded-[2px]" style={{ backgroundColor: p.color }} />
             <span className="text-slate-300">{LEGEND.find(l => l.key === p.name)?.label ?? p.name}</span>
           </div>
-          <span className="font-mono font-bold text-white">{fmtMin(p.value)}</span>
+          <span className="font-mono font-bold text-white sc-ink">{fmtMin(p.value)}</span>
         </div>
       ))}
       <div className="border-t border-white/10 mt-2 pt-2 flex justify-between">
         <span className="text-slate-400 font-semibold">Total</span>
-        <span className="font-mono font-bold text-white">{fmtMin(total)}</span>
+        <span className="font-mono font-bold text-white sc-ink">{fmtMin(total)}</span>
       </div>
     </div>
   );
 };
 
-const StatsShowcase: React.FC = () => (
+const StatsShowcase: React.FC = () => {
+  const P = useShowcasePalette();
+  return (
   <div className="w-full rounded-2xl overflow-hidden bg-slate-800/80 border border-white/10 shadow-2xl p-5">
     {/* Header */}
     <div className="flex items-center justify-between mb-5">
       <div>
-        <h3 className="text-white font-bold text-base">Répartition du temps</h3>
+        <h3 className="text-white sc-ink font-bold text-base">Répartition du temps</h3>
         <p className="text-slate-500 text-xs mt-0.5">7 derniers jours</p>
       </div>
       <div className="flex items-center gap-3">
@@ -70,15 +73,15 @@ const StatsShowcase: React.FC = () => (
     {/* Chart */}
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={CHART_DATA} margin={{ top: 4, right: 0, left: -20, bottom: 0 }}>
-        <CartesianGrid vertical={false} strokeOpacity={0.15} stroke="#fff" />
+        <CartesianGrid vertical={false} strokeOpacity={P.gridOpacity} stroke={P.gridStroke} />
         <XAxis
           dataKey="label"
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tick={{ fontSize: 11, fontWeight: 600, fill: '#94A3B8' }}
+          tick={{ fontSize: 11, fontWeight: 600, fill: P.chartTick }}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: P.chartCursor }} />
         <Bar dataKey="tasks"  stackId="a" fill="#3B82F6" radius={[0,0,0,0]} />
         <Bar dataKey="events" stackId="a" fill="#EF4444" radius={[0,0,0,0]} />
         <Bar dataKey="okrs"   stackId="a" fill="#22C55E" radius={[0,0,0,0]} />
@@ -92,13 +95,14 @@ const StatsShowcase: React.FC = () => (
         const total = CHART_DATA.reduce((s, d) => s + (d as unknown as Record<string, number>)[l.key], 0);
         return (
           <div key={l.key} className="text-center">
-            <p className="text-xs font-bold" style={{ color: l.color }}>{fmtMin(total)}</p>
+            <p className="text-xs font-bold" style={{ color: P.tintText(l.color) }}>{fmtMin(total)}</p>
             <p className="text-slate-500 text-xs mt-0.5">{l.label}</p>
           </div>
         );
       })}
     </div>
   </div>
-);
+  );
+};
 
 export default StatsShowcase;

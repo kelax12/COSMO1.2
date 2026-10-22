@@ -14,9 +14,11 @@ import CollaboratorAvatars from "@/components/CollaboratorAvatars";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
 import { Friend } from "@/modules/friends";
-import { formatDate, formatDuration } from "./helpers";
+import { formatDeadlineSmart, formatDuration, formatOverdueSince } from "./helpers";
 import { useT } from '@/i18n/useT';
-import { isTaskOverdue } from './helpers';
+import { isTaskOverdue, priorityPillClass } from './helpers';
+import TaskStateBadges from './TaskStateBadges';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 interface TaskCardProps {
   task: Task;
@@ -65,7 +67,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const category = getCategoryById(task.category);
   // Fallback gris neutre (pas bleu = couleur Travail par défaut) pour
   // signaler une catégorie manquante au lieu de la masquer.
-  const categoryColor = category?.color || '#94a3b8';
+  const categoryColor = category?.color || NO_CATEGORY_COLOR;
   const { t } = useT('tasks');
 
   const [actionsVisible, setActionsVisible] = useState(false);
@@ -248,7 +250,60 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       onPointerDown={startLongPress}
       onPointerUp={cancelLongPress}
       onPointerCancel={cancelLongPress}
-      onContextMenu={(e) => { e.preventDefault(); }}
+      // ═══ C-111 · LE SEUL CHEMIN CLAVIER VERS LES ACTIONS ═══
+      //
+      // 🔴 CE QUI ÉTAIT FAUX, mesuré dans le navigateur le 2026-09-22
+      // (viewport 375, mode démo) : les trois chemins vers `TaskActionsSheet`
+      // que la maquette 86 a laissés — appui long, glissement à gauche, menu
+      // de la ligne DESKTOP — sont tous des gestes de POINTEUR, et le
+      // quatrième vit dans `div.hidden md:block`, donc à `0 x 0 px` sur
+      // téléphone. Modifier, supprimer, partager ou planifier une tâche était
+      // donc **inatteignable au clavier** sur mobile : WCAG 2.1.1 (A), le
+      // critère le plus élémentaire du référentiel.
+      //
+      // Cette ligne ne faisait qu'un `preventDefault()` : elle SUPPRIMAIT le
+      // menu du navigateur sans rien offrir à la place. Elle ouvre désormais
+      // la feuille, ce qui donne d'un coup le clic droit ET le clavier — la
+      // touche « menu contextuel » et `Shift+F10` émettent toutes deux un
+      // évènement `contextmenu` sur l'élément focalisé, et la carte porte déjà
+      // `tabIndex={0}`.
+      //
+      // ✅ Elle ne reprend RIEN à la colonne du pouce : aucun pixel n'est
+      // ajouté, donc l'arbitrage de la maquette 86 (« plus de ⋯ au repos »)
+      // tient entier. C'est précisément pour ça que l'interdit écrit plus bas
+      // — ne pas réintroduire le « ⋯ » sans retirer autre chose — n'est pas
+      // enfreint ici.
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (addToListMode) return;
+        cancelLongPress();
+        setActionsVisible(true);
+      }}
+      // ═══ C-118 · SAFARI N'ÉMET PAS `contextmenu` AU CLAVIER ═══
+      //
+      // 🔴 Mesuré le 2026-10-16 sous WebKit (Safari 26.5), carte focalisée à
+      // 375 px : `Shift+F10` puis la touche « Menu » arrivent bien en `keydown`
+      // (`F10` avec `shiftKey`, `ContextMenu`), et AUCUN évènement `contextmenu`
+      // ne suit. La ligne `onContextMenu` ci-dessus ne s'exécute donc jamais :
+      // sous Safari, le chemin clavier de C-111 était mort, et les actions
+      // d'une tâche redevenaient inatteignables au clavier (WCAG 2.1.1, A).
+      // Chromium et Firefox, eux, synthétisent l'évènement, d'où un audit vert
+      // qui ne mesurait qu'un moteur sur deux.
+      //
+      // On ne dépend donc plus de la synthèse : les deux touches sont lues en
+      // `keydown`, et `preventDefault` empêche le menu natif de s'ouvrir par-
+      // dessus la feuille là où le navigateur le synthétise quand même.
+      // ⚠️ Même garde qu'`onContextMenu` : rien en mode « ajout à une liste ».
+      onKeyDown={(e) => {
+        if (e.key !== 'ContextMenu' && !(e.key === 'F10' && e.shiftKey)) return;
+        e.preventDefault();
+        if (addToListMode) return;
+        cancelLongPress();
+        setActionsVisible(true);
+      }}
+      // Annonce le raccourci aux technologies d'assistance : sans lui, le
+      // chemin existe mais rien ne le dit.
+      aria-keyshortcuts="Shift+F10"
       style={{
         x,
         backgroundColor: addToListMode && selectedForListIds.includes(task.id)
@@ -317,17 +372,6 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         </button>
       )}
 
-      {/* Pin de couleur — catégorie, entre la case à cocher et le titre
-          (remplace l'ancienne bande colorée pleine hauteur, cf. demande
-          redesign mobile 2026-09-07). */}
-      {!addToListMode && (
-        <span
-          className="self-center shrink-0 w-2 h-2 rounded-full"
-          style={{ backgroundColor: categoryColor }}
-          aria-hidden="true"
-        />
-      )}
-
       {/* Title + meta */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
         {/* Titre */}
@@ -342,63 +386,70 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         {/* Maquette 16 — « Le retard porte sa solution » : la tâche en retard
             est la SEULE à s'agrandir. Un cran d'échelle suffit à la faire
             sortir de la liste sans la déguiser en bloc à part. */}
-        <div className="flex items-start gap-1.5">
-          <p
-            className={`flex-1 min-w-0 font-medium leading-tight line-clamp-2 ${
-              isOverdue ? 'text-body' : 'text-label'
-            } ${task.completed ? 'line-through' : ''}`}
-            style={{ color: 'rgb(var(--color-text-primary))' }}
-          >
-            {task.name}
-          </p>
+        {/* ── Maquette 85 (mix arbitré par Axel le 2026-09-19) ─────────────
+            Le titre reprend la LARGEUR ENTIÈRE de la ligne. Mesuré la veille
+            en 390 px : la pilule de catégorie prenait ~80 px, celle de
+            priorité ~48, le « ⋯ » ~56 — il restait 150 px sur 390 pour le
+            seul élément qui permet de reconnaître sa tâche, d'où « Préparer
+            la réunion de… » coupé.
 
-          {/* Maquette 15 — « Le collaborateur en avatar, pas en texte ».
-              « Reçu de Jean Martin » prenait une ligne entière sous le titre,
-              sur toutes les tâches partagées. Le rond porte les initiales ; la
-              phrase complète reste le nom accessible, elle n'est pas perdue —
-              elle cesse juste d'occuper une ligne de liste. */}
-          {task.sharedBy && (
-            <span
-              className="mt-0.5 shrink-0 inline-flex size-4 items-center justify-center rounded-full bg-[rgb(var(--color-accent))]/15 text-caption font-bold leading-none text-[rgb(var(--color-accent))]"
-              title={t('card.receivedFrom', { name: task.sharedBy })}
-              aria-hidden="true"
-            >
-              {sharedByInitials}
-            </span>
-          )}
-          {task.sharedBy && (
-            <span className="sr-only">{t('card.receivedFrom', { name: task.sharedBy })}</span>
-          )}
-        </div>
-        {!task.sharedBy && task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (
-          <span className="inline-flex items-center gap-1.5">
-            <CollaboratorAvatars
-              collaboratorIds={collaboratorsByTask.get(task.id)}
-              friends={friends}
-              size="md"
-              maxVisible={3}
-            />
-            {pendingCollaboratorTaskIds.has(task.id) && (
-              <span title="En attente d'acceptation" className="inline-flex shrink-0">
-                <Hourglass
-                  size={13}
-                  className="text-amber-500"
-                  aria-label={t('card.pendingInvite')}
+            La catégorie descend dans la ligne méta, en point + nom (elle ne
+            vole plus de largeur au titre) et l'avatar passe à droite de la
+            ligne, dans la colonne libérée par le « ⋯ » (maquette 86).
+
+            ❌ PAS de liseré de priorité à gauche : arbitrage explicite
+            d'Axel, « garder l'absence de barre colorée ». La priorité reste
+            dite par sa pilule `P{n}`, plus bas. */}
+        <p
+          // `task-title-boost` (index.css) : +1px sur le cran applique, sous
+          // 768 px seulement. Le titre d'une tache est ce qu'on lit en
+          // premier dans la liste ; il gagne un pixel sans deplacer l'echelle
+          // pour tout le reste de l'app.
+          className={`task-title-boost min-w-0 font-medium leading-tight line-clamp-2 ${
+            isOverdue ? 'text-body' : 'text-label'
+          } ${task.completed ? 'line-through' : ''}`}
+          style={{ color: 'rgb(var(--color-text-primary))' }}
+        >
+          {task.name}
+        </p>
+
+        {/* Méta : catégorie · échéance · durée, sur une ligne propre à taille normale.
+            `flex-wrap` : à 200 % de police (WCAG 1.4.4), la rangée sortait de
+            l'écran de 218 px, durée comprise, sans défilement pour l'atteindre. */}
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
+          {!addToListMode && category && (
+            <>
+              <span className="inline-flex min-w-0 items-center gap-1">
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: categoryColor }}
+                  aria-hidden="true"
                 />
+                <span className="truncate">{category.name}</span>
               </span>
-            )}
-          </span>
-        )}
-
-        {/* Méta : date · durée — toujours sur une ligne propre */}
-        <div className="flex items-center gap-1.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          <span className={isOverdue ? 'text-red-500 font-semibold inline-flex items-center gap-0.5' : ''}>
+              <span aria-hidden="true">·</span>
+            </>
+          )}
+          {/* Maquette 87 — l'échéance en français, pas en chiffres.
+              `formatDate` rendait « 26/09/2026 » : dix caractères pour dire
+              « vendredi », dont quatre d'année que TOUTES les tâches
+              partagent. `formatDeadlineSmart` existait déjà et servait
+              partout ailleurs (ligne desktop, onglet équipe) — cette carte
+              était la seule à ne pas l'utiliser.
+              En retard, le calcul est fait pour le lecteur : « en retard de
+              2 j » au lieu d'une date rouge à soustraire soi-même. */}
+          {/* Maquette 146 : `--color-danger-text`, lisible en 11 px
+              (`text-red-500` mesurait 3,9:1 sur le fond Gris). */}
+          <span className={isOverdue ? 'text-[rgb(var(--color-danger-text))] font-semibold inline-flex items-center gap-0.5' : ''}>
             {isOverdue && <AlertTriangle size={12} aria-hidden="true" />}
-            {task.deadline ? formatDate(task.deadline) : "Pas d'échéance"}
+            {task.deadline
+              ? (isOverdue ? formatOverdueSince(task.deadline) : formatDeadlineSmart(task.deadline))
+              : t('card.noDeadline')}
             {isOverdue && <span className="sr-only"> {t('card.overdue')}</span>}
           </span>
           <span aria-hidden="true">·</span>
           <span>{formatDuration(task.estimatedTime)}</span>
+          <TaskStateBadges task={task} />
           {/* Compteur sous-tâches (#12) */}
           {(task.subtasks?.length ?? 0) > 0 && (
             <>
@@ -424,35 +475,72 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           jaune→bleu→gris), distincte de la couleur de catégorie (la barre gauche).
           Réutilise les classes du tableau desktop pour une sémantique cohérente
           mobile/desktop + dark mode. Masqué si priorité facultative (0). */}
+      {/* Maquette 145 (2026-10-10) : la pilule reste (arbitrage 85), mais
+          seules P1 et P2 gardent leur teinte. P3 à P5 passent en gris : quatre
+          couleurs pour quatre crans faisaient de chaque ligne un nuancier, et
+          la chaleur ne signalait plus rien. */}
       {task.priority > 0 && (
         <div
-          className={`self-center shrink-0 px-1.5 py-0.5 rounded-md font-bold text-caption task-priority-${task.priority}`}
+          className={`self-center shrink-0 px-1.5 py-0.5 rounded-md font-bold text-caption ${priorityPillClass(task.priority)}`}
         >
           P{task.priority}
         </div>
       )}
 
       {task.bookmarked && (
-        <Bookmark size={16} className="self-center shrink-0 text-amber-500" fill="currentColor" />
+        // Maquette 149 : contour gris, plus un marque-page ambre plein (une
+        // cinquième couleur sur la ligne). Le nom accessible dit l'état.
+        <Bookmark size={16} className="self-center shrink-0 text-[rgb(var(--color-text-muted))]" aria-label={t('card.bookmarked')} />
       )}
 
-      {/* Affordance permanente — bouton "…" pour révéler les actions sans devoir swipe/long-press.
-          Améliore la découvrabilité tout en gardant l'épuration : icône discrète, taille 44×44. */}
-      {!addToListMode && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            cancelLongPress();
-            setActionsVisible(v => !v);
-          }}
-          onPointerDown={(e) => { e.stopPropagation(); }}
-          className="self-center shrink-0 min-w-11 min-h-11 -my-1 -mr-1 p-2 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          aria-label={actionsVisible ? t('card.hideActions') : t('card.showActions')}
-          aria-expanded={actionsVisible}
+      {/* ── Maquette 85 : le partage se dit à DROITE, par un seul signe ────
+          L'avatar vivait sous le titre, dans la colonne du texte, où il
+          poussait la ligne méta vers le bas et rognait le titre. Il occupe
+          maintenant la colonne libérée par le « ⋯ » : même information,
+          zéro largeur prise au libellé. */}
+      {task.sharedBy && (
+        <span
+          // Maquette 148 : avatar neutre, la couleur reste aux catégories.
+          className="self-center shrink-0 inline-flex size-7 items-center justify-center rounded-full bg-[rgb(var(--color-border))] text-xs font-bold leading-none text-[rgb(var(--color-text-secondary))]"
+          title={t('card.receivedFrom', { name: task.sharedBy })}
+          aria-hidden="true"
         >
-          <MoreHorizontal size={18} />
-        </button>
+          {sharedByInitials}
+        </span>
       )}
+      {task.sharedBy && (
+        <span className="sr-only">{t('card.receivedFrom', { name: task.sharedBy })}</span>
+      )}
+      {!task.sharedBy && task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (
+        <span className="self-center shrink-0 inline-flex items-center gap-1.5">
+          <CollaboratorAvatars
+            collaboratorIds={collaboratorsByTask.get(task.id)}
+            friends={friends}
+            size="lg"
+            maxVisible={3}
+          />
+          {pendingCollaboratorTaskIds.has(task.id) && (
+            <span title={t('card.pendingInvite')} className="inline-flex shrink-0">
+              <Hourglass
+                size={13}
+                className="text-amber-500"
+                aria-label={t('card.pendingInvite')}
+              />
+            </span>
+          )}
+        </span>
+      )}
+
+      {/* ── Maquette 86 : plus de « ⋯ » au repos ──────────────────────────
+          Il était présent sur CHAQUE ligne — onze cibles permanentes pour
+          une action rare — et occupait la colonne la plus précieuse, celle
+          du pouce droit, en doublant un geste que l'app enseigne elle-même
+          dans son bandeau d'astuce.
+          Les trois chemins vers `TaskActionsSheet` subsistent : appui long,
+          glissement vers la gauche, et le menu de la ligne desktop
+          (`TaskTableDesktop`), où la souris n'a pas d'appui long.
+          ❌ Ne pas le réintroduire « pour la découvrabilité » sans retirer
+          d'abord quelque chose d'autre de cette colonne. */}
     </motion.div>
     </div>
 

@@ -1,5 +1,6 @@
 import type { KeyOf } from '@/i18n/catalog';
 import type { LandingTrack } from './use-landing-track';
+import { ENTERPRISE_PRICES_SHOWN } from './entreprise/free-offer';
 
 /** Une entrée du sommaire d'un parcours. */
 export interface TrackAnchor {
@@ -27,11 +28,16 @@ export const TRACK_ANCHORS: Record<LandingTrack, TrackAnchor[]> = {
   // l'ordre : le sommaire doit se lire comme la marche à suivre.
   entreprise: [
     { href: '#equipes', labelKey: 'enterprise.nav.teams' },
-    { href: '#projets', labelKey: 'enterprise.nav.projects' },
     { href: '#execution', labelKey: 'enterprise.nav.execution' },
+    { href: '#projets', labelKey: 'enterprise.nav.projects' },
     { href: '#okr', labelKey: 'enterprise.nav.okr' },
     { href: '#statistiques', labelKey: 'enterprise.nav.progress' },
+    { href: '#fonctionnalites', labelKey: 'enterprise.nav.more' },
     { href: '#securite', labelKey: 'enterprise.nav.security' },
-    { href: '#tarifs', labelKey: 'enterprise.nav.pricing' },
+    // Retirée du sommaire tant que les prix sont masqués : elle viserait une
+    // section absente (`PRICES_VISIBLE`, 2026-10-16).
+    ...(ENTERPRISE_PRICES_SHOWN
+      ? [{ href: '#tarifs', labelKey: 'enterprise.nav.pricing' } as TrackAnchor]
+      : []),
   ],
 };

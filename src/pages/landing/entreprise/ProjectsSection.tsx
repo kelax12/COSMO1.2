@@ -1,27 +1,28 @@
 import React, { useRef, useState } from 'react';
 import { useReducedMotion } from 'framer-motion';
-import { LayoutList, SquareKanban, CalendarRange } from 'lucide-react';
+import { LayoutList, CalendarRange, Table2 } from 'lucide-react';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { TAP_AREA_44_Y } from '@/components/mobile';
 import AppShot from './AppShot';
 import ScrollHighlight from './ScrollHighlight';
 import StepSection from './StepSection';
 import { SHOTS, type AppShotRef } from './data';
 
 /** Ce qu'on peut faire d'un projet une fois l'organisation en place. */
-const POINTS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> }[] = [
+const POINTS: { titleKey: KeyOf<'landingEnterprise'>; bodyKey: KeyOf<'landingEnterprise'> }[] = [
   { titleKey: 'enterprise.projects.p1t', bodyKey: 'enterprise.projects.p1d' },
   { titleKey: 'enterprise.projects.p2t', bodyKey: 'enterprise.projects.p2d' },
   { titleKey: 'enterprise.projects.p3t', bodyKey: 'enterprise.projects.p3d' },
 ];
 
 /** Les trois lectures d'un même projet, dans l'ordre où le scroll les montre. */
-const VIEWS: { shot: AppShotRef; labelKey: KeyOf<'landing'>; Icon: typeof LayoutList }[] = [
+const VIEWS: { shot: AppShotRef; labelKey: KeyOf<'landingEnterprise'>; Icon: typeof LayoutList }[] = [
   { shot: SHOTS.projects, labelKey: 'enterprise.projects.viewList', Icon: LayoutList },
-  { shot: SHOTS.projectsKanban, labelKey: 'enterprise.projects.viewKanban', Icon: SquareKanban },
   { shot: SHOTS.projectsPlanning, labelKey: 'enterprise.projects.viewPlanning', Icon: CalendarRange },
+  { shot: SHOTS.projectsPortfolio, labelKey: 'enterprise.projects.viewPortfolio', Icon: Table2 },
 ];
 
 /** Unités de timeline : 1 maintien par vue, un fondu à cheval sur chaque frontière. */
@@ -29,7 +30,7 @@ const HOLD = 1;
 const FADE = 0.5;
 
 /**
- * Étape 2 — les projets, et surtout l'échelle à laquelle on les attribue.
+ * Étape 3 — les projets, et surtout l'échelle à laquelle on les attribue.
  *
  * Le point que la page ne disait pas : une tâche de projet s'assigne à qui on
  * veut dans son périmètre, d'une personne à toute une équipe, et la personne
@@ -37,7 +38,7 @@ const FADE = 0.5;
  * entreprise d'un tableau partagé de plus.
  *
  * La scène est un DECK ÉPINGLÉ : le scroll est capturé le temps de dérouler les
- * trois lectures d'un même projet — Liste, Tableau, Planning — puis rendu au
+ * trois vues de l'onglet Projets (Liste, Planning, Portefeuille) puis rendu au
  * défilement normal une fois la 3ᵉ atteinte. Même mécanique que
  * `landing/FeaturesSection`, dont ce composant reprend le schéma de timeline.
  *
@@ -56,7 +57,7 @@ const FADE = 0.5;
  *   • non épinglé (mobile) → aucun ScrollTrigger, React possède l'opacité.
  */
 const ProjectsSection: React.FC = () => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
   const isMobile = useIsMobile();
   const reduceMotion = useReducedMotion();
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -159,7 +160,7 @@ const ProjectsSection: React.FC = () => {
   return (
     <StepSection
       id="projets"
-      step={2}
+      step={3}
       titleKey="enterprise.projects.title"
       subtitleKey="enterprise.projects.subtitle"
     >
@@ -213,7 +214,13 @@ const ProjectsSection: React.FC = () => {
                     type="button"
                     aria-pressed={index === viewIndex}
                     onClick={() => goToView(index)}
-                    className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-mono text-caption uppercase tracking-[0.16em] transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 ${
+                    /* `TAP_AREA_44_Y` (C-80) : ces trois onglets mesuraient
+                       28 px de haut. Ils sont VOISINS dans une rangée, donc le
+                       débord doit rester vertical (`inset-x-0`) : l'élargir
+                       poserait « Planning » par-dessus « Liste ». Et leur donner
+                       44 px pour de vrai ferait une rangée d'onglets plus haute
+                       que la capture qu'elle légende. */
+                    className={`${TAP_AREA_44_Y} inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-mono text-caption uppercase tracking-[0.16em] transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 ${
                       index === viewIndex
                         ? 'border-cyan-300/40 bg-cyan-400/10 text-cyan-200'
                         : 'border-white/[0.08] text-slate-500 hover:text-slate-300'

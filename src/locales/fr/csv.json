@@ -25,6 +25,8 @@
     "linkedKr": "KR lié",
     "completed": "Complétée",
     "completedAt": "Complétée le",
+    "status": "Statut",
+    "health": "État",
     "bookmarked": "Favori",
     "createdAt": "Créée le",
     "frequency": "Fréquence",
@@ -58,6 +60,10 @@
     "autoValidation": "Validation automatique",
     "type": "Type",
     "smartRule": "Règle intelligente",
-    "taskCount": "Nombre de tâches"
+    "taskCount": "Nombre de tâches",
+    "icon": "Icône",
+    "parent": "Catégorie parente",
+    "krDurationMin": "KR Durée (min)",
+    "krWeight": "KR Pondération"
   }
 }

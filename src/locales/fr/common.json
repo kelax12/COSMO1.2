@@ -1,4 +1,5 @@
 {
+  "noCategory": "Sans catégorie",
   "listActions": {
     "removeDefault": "Retirer des favoris",
     "setDefault": "Épingler par défaut"
@@ -10,6 +11,9 @@
     "reloadNotice": "La page est rechargée pour appliquer la langue partout, dates et formats de nombres compris."
   },
   "nav": {
+    "demoCreateAccount": "Mode démo · créer un compte",
+    "objectivesAria": "Objectifs (OKR)",
+    "objectives": "Objectifs",
     "dashboard": "Accueil",
     "tasks": "Tâches",
     "agenda": "Agenda",
@@ -20,6 +24,7 @@
     "premium": "Premium",
     "settings": "Paramètres",
     "admin": "Admin",
+    "persoGuide": "Ouvrir le guide",
     "more": "Plus",
     "moreOptions": "Plus d'options",
     "sectionOther": "AUTRE",
@@ -49,7 +54,11 @@
       "taskDueToday_other": "{{count}} tâches pour aujourd'hui",
       "orgNotification_one": "{{count}} notification entreprise",
       "orgNotification_many": "{{count}} de notifications entreprise",
-      "orgNotification_other": "{{count}} notifications entreprise"
+      "orgNotification_other": "{{count}} notifications entreprise",
+      "orgJoinRequest_one": "{{count}} demande d’adhésion à traiter",
+      "orgJoinRequest_many": "{{count}} de demandes d’adhésion à traiter",
+      "orgJoinRequest_other": "{{count}} demandes d’adhésion à traiter",
+      "orgNews": "Nouveautés dans l’espace entreprise"
     },
     "descriptions": {
       "okr": "Objectifs & résultats",
@@ -61,7 +70,9 @@
       "bugReport": "Nous aider à corriger Cosmo"
     },
     "bugReport": "Signaler un bug",
-    "seePremium": "Voir Premium"
+    "seePremium": "Voir Premium",
+    "sheetGoTo": "Aller à",
+    "sheetOther": "Autre"
   },
   "actions": {
     "all": "Tous",
@@ -81,6 +92,11 @@
     "refuse": "Refuser"
   },
   "auth": {
+    "legalConsentTermsShort": "CGU",
+    "legalConsentShort": "En créant un compte, vous acceptez les {{terms}} et avez lu la {{privacy}}.",
+    "legalConsentLogin": "Nouveau sur Cosmo ? Continuer avec Google crée votre compte : vous acceptez alors les {{terms}} et reconnaissez avoir pris connaissance de la {{privacy}}.",
+    "createAccountTitle": "Créer un compte",
+    "signInTitle": "Connexion",
     "modalAria": "Connexion ou inscription",
     "loginSubtitle": "Connectez-vous à votre compte",
     "registerSubtitle": "Créez votre compte gratuitement",
@@ -151,17 +167,21 @@
     "tooManyAttempts": "Trop de tentatives. Réessayez dans quelques minutes.",
     "weakPassword": "Mot de passe trop faible. Choisissez-en un plus long et plus varié.",
     "invalidEmailAddress": "Cette adresse email n'est pas valide.",
-    "captchaFailed": "La vérification anti-robot a échoué. Réessayez."
+    "captchaFailed": "La vérification anti-robot a échoué. Réessayez.",
+    "legalConsent": "En créant un compte, y compris avec Google, vous acceptez les {{terms}} et reconnaissez avoir pris connaissance de la {{privacy}}.",
+    "legalConsentTerms": "conditions générales d'utilisation",
+    "legalConsentPrivacy": "politique de confidentialité"
   },
   "cookies": {
     "banner": "Bannière cookies",
     "title": "Cookies",
     "noTracking": "Aucune publicité, aucun profil",
-    "body": "Cosmo mesure la fréquentation de ses pages publiques. Si vous acceptez, un identifiant aléatoire est déposé sur votre appareil pour relier les pages d'une même visite.",
-    "ifYouRefuse": "Si vous refusez, seuls les éléments strictement nécessaires au service sont utilisés (session, préférences).",
-    "learnMore": "En savoir plus",
+    "body": "Cosmo mesure la fréquentation de ses pages publiques et l'origine de ses inscriptions. Si vous acceptez, un identifiant aléatoire est déposé sur votre appareil pour relier les pages d'une même visite, et le canal qui vous a amené (lien de campagne, démo) est rattaché à votre compte si vous en créez un.",
+    "ifYouRefuse": "Si vous refusez, rien de tout cela n'est déposé ni transmis : seuls les éléments strictement nécessaires au service sont utilisés (session, préférences).",
+    "learnMore": "Lire notre politique de confidentialité",
     "decline": "Refuser",
-    "accept": "Accepter"
+    "accept": "Accepter",
+    "manage": "Gérer les cookies"
   },
   "theme": {
     "label": "Thème de l'interface",
@@ -193,6 +213,7 @@
     "hide": "Masquer la bannière démo"
   },
   "demoBridge": {
+    "short": "Démo : rien n'est gardé",
     "aria": "Créer un compte COSMO",
     "title": "Gardez votre organisation",
     "text": "Vous venez de vous construire un vrai système. Créez votre compte pour l'avoir sur tous vos appareils, c'est gratuit.",
@@ -231,6 +252,7 @@
   },
   "tutorial": {
     "skip": "Passer le tutoriel",
+    "skipShort": "Passer",
     "done": "Terminé",
     "next": "Suivant",
     "previous": "← Précédent"
@@ -320,21 +342,24 @@
     "today": "Aujourd'hui",
     "tomorrow": "Demain",
     "yesterday": "Hier",
-    "daysAgo": "il y a {{count}} j"
-  },
-  "pullToRefresh": {
-    "pull": "Tirer pour actualiser",
-    "release": "Relâcher pour actualiser",
-    "refreshing": "Actualisation…"
+    "daysAgo": "il y a {{count}} j",
+    "overdueBy_one": "en retard de {{count}} j",
+    "overdueBy_many": "en retard de {{count}} j",
+    "overdueBy_other": "en retard de {{count}} j"
   },
   "offline": {
     "label": "Hors ligne",
-    "text": " · vos modifications ne seront pas enregistrées tant que le réseau n'est pas revenu."
+    "text": " · vous pouvez consulter vos données, mais vos modifications ne seront pas enregistrées tant que le réseau n'est pas revenu.",
+    "back": "Connexion rétablie"
   },
   "sync": {
     "offline": "Hors ligne",
     "syncing": "Synchronisation…",
     "synced": "Synchronisé",
     "savedLocal": "Enregistré (local)"
+  },
+  "showcase": {
+    "pause": "Mettre l'animation en pause",
+    "play": "Lancer l'animation"
   }
 }

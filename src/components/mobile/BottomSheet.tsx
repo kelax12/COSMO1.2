@@ -11,6 +11,13 @@ interface BottomSheetProps {
   /** Libellé accessible du panneau (role="dialog"). */
   ariaLabel: string;
   className?: string;
+  /**
+   * Feuille ouverte mais INVISIBLE et traversable : un geste parti d'elle
+   * continue au-dessus de l'écran (appui long d'une tâche à glisser dans
+   * l'agenda, 2026-10-11). La démonter perdrait la cible du doigt, et avec
+   * elle la fin du geste.
+   */
+  concealed?: boolean;
 }
 
 /**
@@ -20,7 +27,7 @@ interface BottomSheetProps {
  * reprise à l'identique par les feuilles maison, au lieu de deux copies qui
  * divergeraient avec le temps, une seule brique. Cf. docs/MOBILE.md.
  */
-export default function BottomSheet({ open, onClose, children, ariaLabel, className }: BottomSheetProps) {
+export default function BottomSheet({ open, onClose, children, ariaLabel, className, concealed = false }: BottomSheetProps) {
   // Mouvement ET geste viennent des helpers du design system : c'est la
   // primitive, elle ne peut pas etre l'endroit ou la convention se reecrit
   // a la main. `useSheetDrag` porte les memes seuils (80 px OU 500 px/s) et
@@ -42,11 +49,13 @@ export default function BottomSheet({ open, onClose, children, ariaLabel, classN
         <motion.div
           key="sheet-backdrop"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          // `concealed` passe par l'animation : framer pose l'opacité en style
+          // en ligne, qu'une classe `opacity-0` ne recouvrirait pas.
+          animate={{ opacity: concealed ? 0 : 1 }}
           exit={{ opacity: 0 }}
           transition={FADE_TRANSITION}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4"
-          onClick={onClose}
+          className={cn('fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4', concealed && 'pointer-events-none')}
+          onClick={concealed ? undefined : onClose}
           role="presentation"
         >
           <motion.div
@@ -54,7 +63,7 @@ export default function BottomSheet({ open, onClose, children, ariaLabel, classN
             ref={panelRef}
             {...dialogProps}
             {...sheetMotion}
-            {...sheetDrag}
+            {...(concealed ? {} : sheetDrag)}
             onClick={(e) => e.stopPropagation()}
             className={cn(
               'w-full sm:max-w-md bg-[rgb(var(--color-surface))] sm:rounded-2xl rounded-t-sheet shadow-2xl flex flex-col max-h-[92vh]',

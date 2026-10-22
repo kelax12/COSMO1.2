@@ -12,7 +12,7 @@
 // libellés d'état vide, pas sur la présence du placeholder seul.
 // ═══════════════════════════════════════════════════════════════════
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { ensureNamespaces } from '@/i18n/catalog';
 
@@ -24,11 +24,30 @@ const q = <T,>(data: T) => ({ data, isLoading: loading });
 vi.mock('@/modules/team-projects', () => ({
   useTeamProjects: () => q([]),
   useTeamTasks: () => q([]),
+  useTeamTaskWorkingSet: () => q([]),
+  // Lectures ciblées de l'Aperçu (2026-09-24).
+  useTeamTaskSlice: () => q([]),
+  useTeamTaskDependencies: () => q([]),
+  useOrgActivity: () => q([]),
+  TEAM_TASKS_READ_LIMIT: 1000,
   useUpdateTeamTask: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+  // Actions groupées de « Mes tâches » (cohérence globale, 2026-09-25).
+  useDeleteTeamTask: () => ({ mutate: vi.fn() }),
+  useRestoreTeamTask: () => ({ mutate: vi.fn() }),
 }));
 vi.mock('@/modules/team-okrs', () => ({ useTeamOKRs: () => q([]) }));
-vi.mock('@/modules/org-teams', () => ({ useOrgTeams: () => q([]) }));
+vi.mock('@/modules/org-teams', () => ({ useOrgTeams: () => q([]), useOrgTeamMembers: () => q([]) }));
 vi.mock('@/modules/events', () => ({ useUpcomingEvents: () => [] }));
+// Widget « Invitations en attente » du modèle administrateur (Aperçu en widgets, 2026-10-19).
+vi.mock('@/modules/organizations/governance.hooks', () => ({
+  useEmailInvitations: () => q([]),
+  useResendInvitation: () => ({ mutate: vi.fn() }),
+}));
+vi.mock('@/modules/organizations', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/modules/organizations')>()),
+  useOrgNotifications: () => ({ data: [] }),
+  useMyOrgPermissions: () => ({ can: {}, canAssign: () => true }),
+}));
 
 // Importés APRÈS les mocks (hoistés par vitest, mais l'ordre reste lisible).
 const { default: MyWorkTab } = await import('./MyWorkTab');
@@ -45,6 +64,11 @@ describe('onglets entreprise — aucune affirmation pendant le chargement', () =
   // rend les clés brutes et les assertions porteraient sur « myWork.emptyTitle ».
   beforeAll(async () => {
     await ensureNamespaces(['org'], 'fr');
+    // Le chunk paresseux des blocs de l'Aperçu se transforme en plus d'1 s sous
+    // charge : plus que le délai par défaut de `waitFor`, qui lisait alors le
+    // squelette du Suspense et échouait sans que rien ne soit cassé. Préchargé
+    // ici, `lazy` se résout au tick suivant ; l'assertion reste la même.
+    await import('./MyWorkSections');
   });
 
   beforeEach(() => {
@@ -52,20 +76,24 @@ describe('onglets entreprise — aucune affirmation pendant le chargement', () =
   });
 
   it('Aperçu : pas d’état vide tant que les requêtes n’ont pas répondu', () => {
-    renderIn(<MyWorkTab orgId="o1" members={MEMBERS} currentUserId="u1" />);
+    renderIn(<MyWorkTab orgId="o1" members={MEMBERS} currentUserId="u1" isManager />);
 
     expect(screen.queryByText(/Aucune tâche/i)).toBeNull();
     expect(screen.getByRole('status')).toBeTruthy();
   });
 
-  it('Aperçu : l’état vide revient une fois le chargement terminé', () => {
+  it('Aperçu : l’état vide revient une fois le chargement terminé', async () => {
     loading = false;
-    renderIn(<MyWorkTab orgId="o1" members={MEMBERS} currentUserId="u1" />);
+    renderIn(<MyWorkTab orgId="o1" members={MEMBERS} currentUserId="u1" isManager />);
 
     // Données réellement vides : là, le message est VRAI, il doit s'afficher.
     // `getAllBy` : l'écran vide et la checklist de démarrage le disent tous deux.
-    expect(screen.queryByRole('status')).toBeNull();
-    expect(screen.getAllByText(/Aucune tâche/i).length).toBeGreaterThan(0);
+    // Les blocs peints arrivent dans leur propre chunk (`MyWorkSections`) : on
+    // attend qu'il soit là, sinon on lirait le squelette de son Suspense.
+    await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
+    // Aperçu en widgets (2026-10-19) : un admin arrive sur le modèle
+    // administrateur, dont les états vides sont ceux de SES widgets.
+    expect(screen.getAllByText(/Rien ne coince|Aucun projet à risque|Aucune invitation/i).length).toBeGreaterThan(0);
   });
 
   it('Statistiques : aucun chiffre affiché tant que les requêtes chargent', () => {

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // check-edge-deploy.mjs · le code DEPLOYE des Edge Functions contre le depot
 //
@@ -68,7 +67,7 @@
 //   node scripts/check-edge-deploy.mjs --list    (que la liste deployee)
 // ═══════════════════════════════════════════════════════════════════
 
-import { readFileSync, existsSync, readdirSync, statSync, mkdtempSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, statSync, mkdtempSync, rmSync, mkdirSync, writeFileSync, chmodSync } from 'node:fs';
 import { join, resolve, dirname, relative, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
@@ -129,11 +128,18 @@ export function compareFunction({ slug, repoFiles, deployedFiles }) {
     const servi = normalizeContent(deployedFiles.get(chemin));
     if (attendu === servi) continue;
 
+    const ecart = premiereLigneDifferente(attendu, servi);
     divergences.push({
       slug,
       chemin,
       genre: 'contenu-different',
-      premiereLigne: premiereLigneDifferente(attendu, servi),
+      premiereLigne: ecart.numero,
+      ligneDepot: ecart.depot,
+      ligneProd: ecart.prod,
+      // Les tailles NORMALISEES des deux cotes : un ecart franc denonce une
+      // troncature ou un encodage, qu'un numero de ligne seul ne montre pas.
+      octetsDepot: attendu.length,
+      octetsProd: servi.length,
     });
   }
 
@@ -141,14 +147,31 @@ export function compareFunction({ slug, repoFiles, deployedFiles }) {
 }
 
 /** Numero de la premiere ligne qui differe · pour rendre l'echec lisible. */
-function premiereLigneDifferente(a, b) {
+export function premiereLigneDifferente(a, b) {
   const la = a.split('\n');
   const lb = b.split('\n');
   const n = Math.max(la.length, lb.length);
   for (let i = 0; i < n; i += 1) {
-    if (la[i] !== lb[i]) return i + 1;
+    if (la[i] !== lb[i]) {
+      return { numero: i + 1, depot: extrait(la[i]), prod: extrait(lb[i]) };
+    }
   }
-  return 0;
+  return { numero: 0, depot: '', prod: '' };
+}
+
+/**
+ * Une ligne rendue lisible dans un log : bornee, et les caracteres invisibles
+ * rendus visibles. Un ecart d'espaces ou de fin de ligne ne se voit pas
+ * autrement, et c'est exactement la classe d'ecart qu'on n'a pas su nommer
+ * pendant une heure le 2026-09-13.
+ */
+function extrait(ligne) {
+  // Vide et absente sont deux diagnostics : un ecart de contenu d'un cote,
+  // une troncature de l'autre. Affiches pareil, ils se confondent.
+  if (ligne === undefined) return '<ligne absente>';
+  if (ligne === '') return '<ligne vide>';
+  const visible = String(ligne).split('\t').join('\\t').split('\r').join('\\r');
+  return visible.length > 140 ? visible.slice(0, 140) + '...' : visible;
 }
 
 /**
@@ -255,6 +278,67 @@ export function cleDeployee(nom, slug) {
  * rend zero fichier donneraient « aucune divergence » avec la meme serenite.
  * Une lecture vide est donc une ERREUR, jamais un succes.
  */
+/**
+ * Marqueurs que la TRANSPILATION efface. Ils ne servent pas a juger du code :
+ * ils servent a savoir dans quel LANGAGE on vient de lire.
+ */
+const MARQUEURS_TS = [
+  /:\s*(?:string|number|boolean|void|unknown|Request|Response)/,
+  /interface\s+\w+\s*\{/,
+  /as\s+const/,
+  /Promise<[^>\s]/,
+];
+
+/** Combien de marqueurs TypeScript ce texte porte-t-il ? */
+export function compteMarqueursTs(source) {
+  const texte = String(source);
+  return MARQUEURS_TS.filter((motif) => motif.test(texte)).length;
+}
+
+/**
+ * 🔴 LE SECOND GARDE-FOU CENTRAL · refuse une comparaison entre deux LANGAGES.
+ *
+ * Mesure du 2026-09-13, premier jour ou la CI a pu lire la prod : elle
+ * annoncait 24 divergences sur 8 fonctions, dont `_shared/alert.ts` que DEUX
+ * lecteurs locaux independants — la CLI Supabase 2.117.0 et l'API Management —
+ * rendaient identique au depot. La CLI installee par `version: latest` rendait
+ * le bundle TRANSPILE :
+ *
+ *   depot | export async function opsAlert(source: string, summary: string)
+ *   prod  | export async function opsAlert(source, summary) {
+ *
+ * La garde comparait du TypeScript a du JavaScript. Elle « trouvait » donc une
+ * derive sur presque chaque fichier, ce qui est la pire forme d'echec possible
+ * ici : elle noyait les 4 vraies derives dans 20 fausses, et aucun operateur
+ * ne distingue les unes des autres dans une liste de 24.
+ *
+ * La version de la CLI est desormais epinglee dans le workflow. Ce detecteur
+ * est ce qui rend le pin VERIFIABLE : le jour ou une CLI se remet a transpiler,
+ * le job dit « lecture transpilee », il n'invente pas vingt derives.
+ *
+ * ❌ Ne jamais assouplir ca en normalisant le TypeScript avant comparaison.
+ * Retirer les types des deux cotes rendrait la garde AVEUGLE a toute derive
+ * portant sur un type — et un type est du code : c'est lui qui dit qu'un
+ * montant est un nombre.
+ */
+export function assertMemeLangage(slug, repoFiles, deployedFiles) {
+  for (const [chemin, attendu] of repoFiles) {
+    const servi = deployedFiles.get(chemin);
+    // Un fichier present d'un seul cote est une DIVERGENCE, pas un probleme de
+    // lecture : c'est le travail du comparateur, pas le notre.
+    if (servi === undefined) continue;
+    if (compteMarqueursTs(attendu) > 0 && compteMarqueursTs(servi) === 0) {
+      throw new Error(
+        `Lecture TRANSPILEE pour « ${slug} » (${chemin}) : le depot porte du TypeScript, ` +
+          `le cote prod n'en porte AUCUNE trace. Ce n'est pas une derive, c'est un lecteur ` +
+          `qui rend autre chose que la source — verifier la version de la CLI epinglee dans ` +
+          `.github/workflows/edge-deploy-drift.yml. Comparer deux langages « trouve » une ` +
+          `derive sur presque chaque fichier et noie les vraies.`,
+      );
+    }
+  }
+}
+
 export function assertReadSomething(slug, deployedFiles) {
   if (!(deployedFiles instanceof Map) || deployedFiles.size === 0) {
     throw new Error(
@@ -313,6 +397,33 @@ async function listerDeployees(projectRef, token) {
  * `supabase functions download` ecrit dans `<cwd>/supabase/functions/<slug>`,
  * d'ou le repertoire temporaire : on ne touche jamais l'arbre de travail.
  */
+/**
+ * Ce fichier vient-il du BUNDLE, ou la CLI l'a-t-elle depose elle-meme ?
+ *
+ * 🔴 POURQUOI · le premier run qui a compare pour de bon (2026-09-13) a
+ * signale `supabase/.temp/linked-project.json` comme « absent-du-depot »
+ * pour TROIS fonctions. Or ce fichier n'est pas du code deploye : c'est la
+ * CLI qui l'ecrit dans le bac a sable en s'y liant, avec `.temp/cli-latest`.
+ *
+ * Ce n'etait pas un faux positif anodin : « absent du depot » est le verdict
+ * que ce script documente comme le plus grave — du code qui s'execute en
+ * production sans source versionnee. Une garde qui crie au loup sur ses
+ * propres dechets finit par etre lue en diagonale, puis plus du tout.
+ *
+ * Le critere est POSITIF, jamais une liste de choses a ignorer : seul ce que
+ * la CLI ecrit sous `supabase/functions/` fait partie du bundle. Une liste
+ * noire aurait demande de deviner les prochains fichiers de service ; ici,
+ * un nouveau dechet est hors perimetre d'office. Et si la CLI se mettait un
+ * jour a ecrire ailleurs, la lecture deviendrait VIDE, donc une erreur franche
+ * (`assertReadSomething`) — jamais un « identique au depot ».
+ */
+export function estFichierDuBundle(cheminRelatif) {
+  const parts = String(cheminRelatif).split(/[\\/]/).filter((p) => p && p !== '.');
+  if (parts.length < 3) return false;
+  if (parts[0] !== 'supabase' || parts[1] !== 'functions') return false;
+  return /\.(ts|tsx|js|mjs|json)$/.test(parts[parts.length - 1]);
+}
+
 function telechargerBundle(slug, projectRef, token) {
   const bac = mkdtempSync(join(tmpdir(), `edge-deploy-${slug}-`));
   try {
@@ -326,7 +437,21 @@ function telechargerBundle(slug, projectRef, token) {
 
     const r = spawnSync(
       'supabase',
-      ['functions', 'download', slug, '--project-ref', projectRef],
+      // 🔴 `--use-api` N'EST PAS UNE OPTIMISATION, c'est la CORRECTION du
+      // 2026-09-13. Sans lui, la CLI debundle LOCALEMENT avec Docker et rend
+      // du code TRANSPILE ; avec lui, le debundling est fait cote serveur et
+      // rend la SOURCE. Le comportement par defaut depend donc de la presence
+      // de Docker sur la machine :
+      //
+      //   poste de dev (pas de Docker) → source      → 4 divergences
+      //   runner GitHub (Docker)       → transpile   → 24 divergences, dont 20
+      //                                                fausses
+      //
+      // C'est ce qui a fait dire a la CI qu'elle trouvait une derive sur
+      // presque chaque fichier pendant que deux lecteurs locaux les trouvaient
+      // identiques. Une garde dont le VERDICT depend d'un docker installe a
+      // cote ne mesure pas la production, elle mesure son runner.
+      ['functions', 'download', slug, '--project-ref', projectRef, '--use-api'],
       {
         cwd: bac,
         encoding: 'utf8',
@@ -344,12 +469,98 @@ function telechargerBundle(slug, projectRef, token) {
 
     const fichiers = new Map();
     for (const chemin of parcourir(join(bac, 'supabase'))) {
-      if (!/\.(ts|tsx|js|mjs|json)$/.test(chemin)) continue;
+      if (!estFichierDuBundle(relative(bac, chemin))) continue;
       fichiers.set(cleDeployee(relative(bac, chemin), slug), readFileSync(chemin, 'utf8'));
     }
     return fichiers;
   } finally {
-    rmSync(bac, { recursive: true, force: true });
+    nettoyerBac(bac);
+  }
+}
+
+/**
+ * Efface le bac a sable, et ne peut JAMAIS faire echouer la comparaison.
+ *
+ * 🔴 POURQUOI CE CODE EXISTE · le premier run qui a REELLEMENT lu la prod
+ * (2026-09-13, apres la pose de `SUPABASE_ACCESS_TOKEN`) a perdu ses HUIT
+ * fonctions sur la meme erreur, et aucune ne portait sur la lecture :
+ *
+ *   EACCES: permission denied, unlink
+ *   '/tmp/edge-deploy-delete-account-VJgasB/supabase/functions/_shared/alert.ts'
+ *
+ * `supabase functions download` ecrit ses repertoires en lecture seule, et
+ * sous Linux un `unlink` demande le droit d'ecriture sur le REPERTOIRE
+ * parent, jamais sur le fichier. Le menage echouait donc, et comme il vivait
+ * dans un `finally`, il detruisait un resultat DEJA CALCULE : les fichiers
+ * etaient lus, compares... et jetes. Le job annoncait « 8 problemes de
+ * garde » pour une comparaison qui avait marche.
+ *
+ * D'ou les deux regles portees ici :
+ *   1. on RELACHE les permissions avant d'effacer, sinon l'effacement ne
+ *      peut pas aboutir ;
+ *   2. un menage rate ne remonte JAMAIS. Un repertoire temporaire oublie sur
+ *      un runner jetable ne coute rien ; confondre « je n'ai pas su ranger »
+ *      avec « je n'ai pas su mesurer » coute une garde entiere.
+ *
+ * ❌ Ne jamais elargir cette indulgence a la LECTURE : une lecture vide reste
+ * une erreur (`assertReadSomething`). Ce qui est avale ici, c'est le menage,
+ * et rien d'autre.
+ *
+ * Les dependances sont injectables pour que le temoin puisse provoquer les
+ * deux echecs sans dependre des permissions POSIX, absentes sous Windows.
+ */
+export function nettoyerBac(bac, io = {}) {
+  const relacher = io.relacher ?? rendreEffacable;
+  const rm = io.rm ?? ((c) => rmSync(c, { recursive: true, force: true }));
+  const journal = io.journal ?? ((m) => annoter('notice', m));
+
+  // Best effort : un chmod refuse ne doit pas empecher d'ESSAYER d'effacer.
+  try {
+    relacher(bac);
+  } catch {
+    /* voir plus bas : seul le resultat de `rm` merite d'etre dit */
+  }
+
+  try {
+    rm(bac);
+  } catch (e) {
+    journal(
+      `Bac a sable non efface (${e?.message ?? e}). Sans effet sur la comparaison : ` +
+        `les fichiers ont deja ete lus, et ce repertoire est temporaire.`,
+    );
+  }
+}
+
+/**
+ * Rend un arbre effacable : `chmod 0700` sur chaque entree, du haut vers le
+ * bas. C'est le repertoire `_shared/` imbrique qui bloquait, pas la racine —
+ * un chmod sur le seul bac aurait laisse exactement l'erreur mesuree.
+ *
+ * Sous Windows `chmod` est un quasi no-op ; ce code n'y sert a rien et n'y
+ * nuit pas. Le bac est temporaire et nous appartient : il n'y a aucune
+ * permission d'autrui a pietiner.
+ */
+export function rendreEffacable(racine, io = {}) {
+  const existe = io.existe ?? ((c) => existsSync(c));
+  const lister = io.lister ?? ((c) => readdirSync(c));
+  const estDossier = io.estDossier ?? ((c) => statSync(c).isDirectory());
+  const chmod = io.chmod ?? ((c, mode) => chmodSync(c, mode));
+
+  if (!existe(racine)) return;
+
+  const pile = [racine];
+  while (pile.length > 0) {
+    const chemin = pile.pop();
+    try {
+      chmod(chemin, 0o700);
+    } catch {
+      /* on continue : les autres entrees restent a relacher */
+    }
+    try {
+      if (estDossier(chemin)) for (const e of lister(chemin)) pile.push(join(chemin, e));
+    } catch {
+      /* un repertoire illisible ne bloque pas le reste de l'arbre */
+    }
   }
 }
 
@@ -474,6 +685,7 @@ async function main() {
       repoFiles = repoFilesFor(slug);
       deployedFiles = telechargerBundle(slug, projectRef, token);
       assertReadSomething(slug, deployedFiles);
+      assertMemeLangage(slug, repoFiles, deployedFiles);
     } catch (e) {
       problemes.push(`« ${slug} » (${version}) : ${e.message}`);
       continue;
@@ -517,6 +729,32 @@ async function main() {
   for (const d of divergences.slice(0, 8)) {
     const ou = d.genre === 'contenu-different' ? ` (1re ligne differente : ${d.premiereLigne})` : '';
     annoter('error', `Derive ${d.slug} · ${d.chemin} · ${d.genre}${ou}`);
+  }
+
+  // ⚠️ Les annotations sont PLAFONNEES — GitHub n'en rend qu'une dizaine par
+  // etape, et ce script s'arrete a huit pour laisser la place aux problemes de
+  // garde. Le 2026-09-13, un run a rendu 24 divergences : seize etaient donc
+  // invisibles a qui lit le job, et le resume d'etape n'est pas consultable en
+  // ligne de commande. Une garde qui cache les deux tiers de ce qu'elle a
+  // trouve fait agir sur une image partielle.
+  //
+  // La sortie standard, elle, n'est pas plafonnee. On y ecrit la liste
+  // ENTIERE, avec la taille de chaque cote : un ecart de taille saute aux yeux
+  // quand un fichier est tronque ou lu dans un autre encodage, deux causes qui
+  // ne se lisent pas dans un numero de ligne.
+  if (divergences.length > 0) {
+    console.error('');
+    console.error('Liste complete des divergences :');
+    for (const d of divergences) {
+      const ou = d.genre === 'contenu-different' ? ` · 1re ligne ${d.premiereLigne}` : '';
+      const tailles =
+        d.genre === 'contenu-different' ? ` · depot ${d.octetsDepot} o / prod ${d.octetsProd} o` : '';
+      console.error(`  ${d.slug} · ${d.chemin} · ${d.genre}${ou}${tailles}`);
+      if (d.genre === 'contenu-different') {
+        console.error(`      depot | ${d.ligneDepot}`);
+        console.error(`      prod  | ${d.ligneProd}`);
+      }
+    }
   }
 
   if (divergences.length > 0) {

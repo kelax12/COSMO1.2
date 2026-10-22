@@ -2,6 +2,7 @@ import React from 'react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { useT } from '@/i18n/useT';
 import LegalDocument, { type LegalSection } from './legal/LegalDocument';
+import type { KeyOf } from '@/i18n/catalog';
 
 /**
  * Conditions Générales d'Utilisation.
@@ -16,10 +17,15 @@ import LegalDocument, { type LegalSection } from './legal/LegalDocument';
  *   - l'article 11 prévoit un préavis de 30 jours par e-mail pour toute
  *     modification substantielle.
  */
-const SECTIONS: LegalSection[] = [
+const SECTIONS: LegalSection<KeyOf<'legalTerms'>>[] = [
   {
     title: 'terms.s1.title',
-    blocks: [{ kind: 'p', key: 'terms.s1.p1' }, { kind: 'p', key: 'terms.s1.p2' }],
+    blocks: [
+      { kind: 'p', key: 'terms.s1.p1' },
+      { kind: 'p', key: 'terms.s1.p2' },
+      // Identité du professionnel (C. conso L111-1, L221-5) : « Cosmo » n'est personne.
+      { kind: 'p', key: 'terms.s1.p3' },
+    ],
   },
   {
     title: 'terms.s2.title',
@@ -31,7 +37,11 @@ const SECTIONS: LegalSection[] = [
   },
   {
     title: 'terms.s3.title',
-    blocks: [{ kind: 'p', key: 'terms.s3.p1' }, { kind: 'p', key: 'terms.s3.p2' }],
+    blocks: [
+      { kind: 'p', key: 'terms.s3.p1' },
+      { kind: 'p', key: 'terms.s3.p2' },
+      { kind: 'p', key: 'terms.s3.p3' },
+    ],
   },
   {
     title: 'terms.s4.title',
@@ -44,6 +54,16 @@ const SECTIONS: LegalSection[] = [
           'terms.s4.li4', 'terms.s4.li5', 'terms.s4.li6',
         ],
       },
+    ],
+  },
+  {
+    // DSA art. 11, 12, 16 et 17 : COSMO héberge des contenus que ses
+    // utilisateurs partagent entre eux (tâches, commentaires d'équipe).
+    title: 'terms.s4bis.title',
+    blocks: [
+      { kind: 'p', key: 'terms.s4bis.p1' },
+      { kind: 'p', key: 'terms.s4bis.p2' },
+      { kind: 'p', key: 'terms.s4bis.p3' },
     ],
   },
   {
@@ -65,11 +85,19 @@ const SECTIONS: LegalSection[] = [
       { kind: 'p', key: 'terms.s5bis.p1' },
       { kind: 'p', key: 'terms.s5bis.p2' },
       { kind: 'p', key: 'terms.s5bis.p3' },
+      // Modèle de formulaire de rétractation (C. conso L221-5, annexe R221-1).
+      { kind: 'note', key: 'terms.s5bis.p4' },
     ],
   },
   {
     title: 'terms.s6.title',
-    blocks: [{ kind: 'p', key: 'terms.s6.p1' }, { kind: 'p', key: 'terms.s6.p2' }],
+    blocks: [
+      { kind: 'p', key: 'terms.s6.p1' },
+      { kind: 'p', key: 'terms.s6.p2' },
+      // Clause de sous-traitance (RGPD art. 28) pour l'espace entreprise.
+      { kind: 'p', key: 'terms.s6.p3' },
+      { kind: 'p', key: 'terms.s6.p4' },
+    ],
   },
   { title: 'terms.s7.title', blocks: [{ kind: 'p', key: 'terms.s7.p1' }] },
   { title: 'terms.s8.title', blocks: [{ kind: 'p', key: 'terms.s8.p1' }] },
@@ -81,6 +109,7 @@ const SECTIONS: LegalSection[] = [
       // Les garanties légales du consommateur ne se limitent pas : les omettre
       // rendait la clause abusive, donc réputée non écrite (2026-09-02).
       { kind: 'p', key: 'terms.s9.p3' },
+      { kind: 'p', key: 'terms.s9.p4' },
     ],
   },
   {
@@ -107,7 +136,7 @@ const SECTIONS: LegalSection[] = [
 ];
 
 const CGUPage: React.FC = () => {
-  const { t } = useT('legal');
+  const { t } = useT('legalTerms');
   useSeoMeta({
     title: t('terms.seoTitle'),
     description: t('terms.seoDescription'),
@@ -116,6 +145,7 @@ const CGUPage: React.FC = () => {
 
   return (
     <LegalDocument
+      text={t}
       titleKey="terms.title"
       updatedAtKey="terms.updatedAt"
       sections={SECTIONS}

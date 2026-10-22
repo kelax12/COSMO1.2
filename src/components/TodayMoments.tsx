@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { AlertTriangle, Check } from 'lucide-react';
+import { formatOverdueSince } from '@/components/task-table/helpers';
 import { useEvents } from '@/modules/events';
 import { useHabits } from '@/modules/habits';
 import { useTasks, type Task } from '@/modules/tasks';
@@ -11,7 +12,9 @@ import { useTodayItems, useCompleteTodayItem, type TodayItem } from '@/modules/t
 import { useT } from '@/i18n/useT';
 import { showUndoToast } from '@/lib/undo-toast';
 import TaskModal from '@/components/TaskModal';
-import { buildMoments, todayCompletionReport } from './today-moments.helpers';
+import { buildMoments, isEventPast, todayCompletionReport } from './today-moments.helpers';
+import { NO_CATEGORY_COLOR, categoryColorSet, displayCategoryColor } from '@/lib/category-colors';
+import { useCategories } from '@/modules/categories';
 
 /**
  * « Matin · après-midi · soir » — maquette 28, l'accueil MOBILE.
@@ -43,6 +46,8 @@ const TodayMoments = () => {
   const navigate = useNavigate();
   const { items, isLoading } = useTodayItems();
   const { data: events = [] } = useEvents();
+  const { data: categories = [] } = useCategories();
+  const categoryColors = useMemo(() => categoryColorSet(categories), [categories]);
   const { data: allTasks = [] } = useTasks();
   const { data: habits = [] } = useHabits();
   const { user } = useAuth();
@@ -96,6 +101,9 @@ const TodayMoments = () => {
   );
 
   const groups = useMemo(() => buildMoments({ events, tasks: items }), [events, items]);
+  // Relu à chaque rendu : la vue se rafraîchit avec ses données, une heure
+  // figée au montage laisserait un rendez-vous fini au premier plan.
+  const now = new Date();
   const report = useMemo(
     () => todayCompletionReport({ tasks: allTasks, teamTasks: myTeamTasks, habits, events }),
     [allTasks, myTeamTasks, habits, events],
@@ -176,7 +184,9 @@ const TodayMoments = () => {
                 key={entry.key}
                 // Le filet plutôt que la carte, comme les lignes de tâches
                 // (arbitrage du 2026-09-05).
-                className="flex items-center gap-2.5 border-b border-[rgb(var(--color-border))] last:border-b-0"
+                // `py-2` (tâches uniquement) : +20% de hauteur demandé côté
+                // mobile — desktop n'affiche pas ce composant (cf. TodayUnified).
+                className={`flex items-center gap-2.5 border-b border-[rgb(var(--color-border))] last:border-b-0 ${entry.task ? 'py-2' : ''}`}
               >
                 {entry.task ? (
                   <>
@@ -210,29 +220,29 @@ const TodayMoments = () => {
                       onClick={() => handleOpen(entry.task!)}
                       className="flex-1 min-w-0 min-h-touch flex flex-col justify-center text-left"
                     >
-                      <span className="block text-label text-[rgb(var(--color-text-primary))] truncate">
+                      <span className="block text-body text-[rgb(var(--color-text-primary))] truncate">
                         {entry.task.name}
                       </span>
-                      <span className="flex items-center gap-1.5 text-caption text-[rgb(var(--color-text-muted))]">
-                        {/* Catégorie plutôt que perso/équipe (icône Building2/
-                            User) : le rond reprend la couleur EXACTE de la
-                            catégorie — même code que les autres écrans
-                            (TaskCard, TeamCategoryPicker) — au lieu de
-                            distinguer seulement la source. */}
-                        <span
-                          className="size-2 rounded-full shrink-0"
-                          style={{ backgroundColor: entry.task.categoryColor ?? 'rgb(var(--color-text-muted))' }}
-                          aria-hidden="true"
-                        />
-                        <span className="truncate">
-                          {entry.task.categoryName ?? t('today.noCategory')}
+                      {/* Maquette 134 : « Sans catégorie » derrière un point
+                          gris n'apprenait rien. Pas de catégorie, pas de
+                          ligne de méta. Le rond reprend la couleur EXACTE de
+                          la catégorie (même code que TaskCard). */}
+                      {entry.task.categoryName && (
+                        <span className="flex items-center gap-1.5 text-caption text-[rgb(var(--color-text-muted))]">
+                          <span
+                            className="size-2 rounded-full shrink-0"
+                            style={{ backgroundColor: entry.task.categoryColor ?? NO_CATEGORY_COLOR }}
+                            aria-hidden="true"
+                          />
+                          <span className="truncate">{entry.task.categoryName}</span>
                         </span>
-                      </span>
+                      )}
                     </button>
                     {entry.task.overdue && (
-                      <span className="flex shrink-0 items-center gap-1 text-caption font-semibold text-[rgb(var(--color-error))]">
+                      <span className="flex shrink-0 items-center gap-1 text-caption font-semibold text-[rgb(var(--color-danger-text))]">
                         <AlertTriangle size={12} aria-hidden="true" />
-                        {entry.task.deadline}
+                        {/* Maquette 87 — cf. TodayUnified : clé de jour brute. */}
+                        {formatOverdueSince(entry.task.deadline)}
                       </span>
                     )}
                   </>
@@ -240,7 +250,10 @@ const TodayMoments = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/agenda')}
-                    className="flex-1 min-w-0 min-h-touch flex items-center gap-2.5 text-left"
+                    // Maquette 135 : un rendez-vous passé s'estompe, il ne
+                    // pèse plus autant que celui qui vient.
+                    data-past={entry.event && isEventPast(entry.event, now) ? '' : undefined}
+                    className="flex-1 min-w-0 min-h-touch flex items-center gap-2.5 text-left data-[past]:opacity-55"
                   >
                     {/* L'heure est la seule donnée temporelle réelle de
                         l'écran : elle n'apparaît que sur les rendez-vous. */}
@@ -249,7 +262,7 @@ const TodayMoments = () => {
                     </span>
                     <span
                       className="h-4 w-0.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: entry.event?.color || 'rgb(var(--color-accent))' }}
+                      style={{ backgroundColor: displayCategoryColor(entry.event?.color, categoryColors) }}
                       aria-hidden="true"
                     />
                     <span className="min-w-0 flex-1 truncate text-label text-[rgb(var(--color-text-primary))]">

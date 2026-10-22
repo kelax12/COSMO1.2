@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
-import { BarChart3, Target, CheckSquare, Repeat, CalendarDays } from 'lucide-react';
+import { BarChart3, Target, CheckSquare, Repeat, CalendarDays, ChevronRight } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ReferenceLine } from 'recharts';
 import {
   ChartContainer,
@@ -25,6 +25,10 @@ import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useBilling } from '@/modules/billing/billing.context';
 import PremiumGateModal from '@/components/PremiumGateModal';
 import { formatTime, formatTimeShort } from './statistics/format';
+import PeriodSummaryCard from './statistics/PeriodSummaryCard';
+import StatSectionHeading from './statistics/StatSectionHeading';
+import MobilePeriodTotal from './statistics/MobilePeriodTotal';
+import { rollingPair } from './statistics/period-delta';
 import { buildInsights } from '@/lib/stats-insights';
 import { useInsightText } from './statistics/insights';
 
@@ -40,7 +44,7 @@ import {
   OKRStatistics,
   HabitsStatistics,
 } from './statistics/sections';
-import type { StatSection, TimePeriod, WorkTimePeriodData } from './statistics/types';
+import type { TimePeriod, WorkTimePeriodData } from './statistics/types';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 
@@ -63,7 +67,6 @@ export default function StatisticsPage() {
   const { data: categories = [] } = useCategories();
   const { data: habits = [] } = useHabits();
   const { isPremium } = useBilling();
-  const [selectedSection, setSelectedSection] = useState<StatSection>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('week');
   // Vue d'ensemble : bascule entre le graphique « Tout » (une courbe agrégée)
   // et « voir le détail » (multi-courbes par catégorie, ex-Dashboard).
@@ -138,23 +141,27 @@ export default function StatisticsPage() {
     ];
   }, [now]);
 
-  // Un seul appel pour tout : 4 plages fixes + 5 à 12 buckets de graphique.
+  // Maquette 194 : la période choisie et la précédente, pour le grand nombre
+  // mobile et son écart. Mêmes totaux (RPC) que la synthèse desktop.
+  const pairRanges = useMemo<WorkTimeRange[]>(() => {
+    const days = { day: 1, week: 7, month: 30, year: 365 }[selectedPeriod];
+    const { current, previous } = rollingPair(now, days);
+    return [current, previous].map((r) => ({ start: getLocalDateString(r.start), end: getLocalDateString(r.end) }));
+  }, [selectedPeriod, now]);
+
+  // Un seul appel pour tout : 4 plages fixes + 5 à 12 buckets de graphique + 2.
   const allRanges = useMemo(
-    () => [...fixedRanges, ...chartRangeDefs.map(d => d.range)],
-    [fixedRanges, chartRangeDefs]
+    () => [...fixedRanges, ...chartRangeDefs.map(d => d.range), ...pairRanges],
+    [fixedRanges, chartRangeDefs, pairRanges]
   );
   const { data: workTimeBuckets } = useWorkTimeStats(allRanges);
   const fixedBuckets = workTimeBuckets?.slice(0, fixedRanges.length);
-  const chartBuckets = workTimeBuckets?.slice(fixedRanges.length);
+  const chartBuckets = workTimeBuckets?.slice(fixedRanges.length, fixedRanges.length + chartRangeDefs.length);
+  const pairBuckets = workTimeBuckets?.slice(fixedRanges.length + chartRangeDefs.length);
 
-  const pickBucketTime = useCallback((bucket?: WorkTimeBucket) => {
-    if (!bucket) return 0;
-    if (selectedSection === 'tasks') return bucket.tasksTime;
-    if (selectedSection === 'agenda') return bucket.eventsTime;
-    if (selectedSection === 'habits') return bucket.habitsTime;
-    if (selectedSection === 'okr') return bucket.okrTime;
-    return bucket.totalTime;
-  }, [selectedSection]);
+  // La page n'a plus de sélecteur de section (cf. plus bas) : le graphique
+  // principal porte le TOTAL, et chaque famille a sa propre section empilée.
+  const pickBucketTime = useCallback((bucket?: WorkTimeBucket) => bucket?.totalTime ?? 0, []);
 
   const workTimeData = useMemo(
     () => chartRangeDefs.map((def, index) => ({ label: def.label, tooltipLabel: def.tooltipLabel, totalTime: pickBucketTime(chartBuckets?.[index]) })),
@@ -243,11 +250,8 @@ export default function StatisticsPage() {
     { id: 'year', label: t('periods.year') },
   ];
 
-  const sectionColor =
-    selectedSection === 'tasks' ? '#3B82F6' :
-    selectedSection === 'agenda' ? '#ef4444' :
-    selectedSection === 'habits' ? '#EAB308' :
-    selectedSection === 'okr' ? '#22C55E' : '#8B5CF6';
+  // Violet de la vue d'ensemble : c'est désormais la seule série tracée.
+  const sectionColor = '#8B5CF6';
 
   const areaChartData = workTimeData.map(d => ({ label: d.label, tooltipLabel: d.tooltipLabel ?? d.label, minutes: d.totalTime }));
 
@@ -258,11 +262,15 @@ export default function StatisticsPage() {
   }), [sectionColor, t]);
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+    // Maquette 83 : les 88 px du fond réservaient la place du FAB « créer une
+    // tâche ». Il n'existe plus ici — c'est une page de LECTURE, elle ne crée
+    // rien, et il recouvrait une valeur du graphique. Reste la tab bar.
+    <div className="p-4 md:p-8 max-w-7xl mx-auto pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
       {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
           Titre grand au repos, compacté au scroll. Le bloc desktop ci-dessous
           est l'ancien rendu, masqué sous `md`. */}
-      <MobileHeader title={t('page.title')} subtitle={t('page.subtitle')} />
+      {/* Maquette 195 : sur mobile, plus de sous-titre générique. */}
+      <MobileHeader title={t('page.title')} />
 
       <div className="mb-8 hidden md:block">
         <PageHeading variant="standard" className="mb-2">{t('page.title')}</PageHeading>
@@ -270,8 +278,16 @@ export default function StatisticsPage() {
       </div>
 
       {/* Insights en langage naturel (#34) — la conclusion avant les graphes */}
+      {/* ── Insights (#34) : retirés du MOBILE, arbitrage d'Axel le 2026-09-21 ──
+          « Habitude la plus fragile : Méditation, 7 oublis cette semaine »
+          occupait une carte pleine largeur au-dessus des chiffres, sur un
+          écran qu'on ouvre pour lire un total. C'est un commentaire, pas une
+          donnée, et il passait avant la donnée.
+          ⚠️ Le bloc VIT TOUJOURS au-delà de `md` : rien n'a été mesuré ni
+          reproché côté desktop, où il ne pousse rien hors de l'écran.
+          `buildInsights` et `insightText` restent donc montés. */}
       {insights.length > 0 && (
-        <div className="card p-4 mb-8 space-y-1.5" role="status">
+        <div className="hidden md:block card p-4 mb-8 space-y-1.5" role="status">
           {insights.map((insight) => (
             <p key={insight.kind} className="text-sm flex items-start gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
               <span className="text-blue-500 shrink-0" aria-hidden="true">→</span>
@@ -281,39 +297,7 @@ export default function StatisticsPage() {
         </div>
       )}
 
-      {/* Synthèse temps par période — tableau à barres (barre = part relative au max) */}
-      <div className="card p-4 md:p-6 mb-8">
-        {(() => {
-          // Libellés courts : la colonne fait 84-120px — « 365 derniers jours »
-          // était tronqué en « 365 derniers jo… » sur mobile.
-          const rows = [
-            { label: t('summary.today'), val: fixedStats.today },
-            { label: t('summary.days7'), val: fixedStats.week },
-            { label: t('summary.days30'), val: fixedStats.month },
-            { label: t('summary.days365'), val: fixedStats.year },
-          ];
-          const max = Math.max(rows[0].val, rows[1].val, rows[2].val, rows[3].val);
-          return rows.map((r, idx) => {
-            const pct = max > 0 ? (r.val / max) * 100 : 0;
-            const width = r.val > 0 ? Math.max(pct, 2) : 0;
-            return (
-              <div
-                key={idx}
-                className="grid grid-cols-[minmax(84px,120px)_1fr_auto] items-center gap-3 md:gap-4 py-3"
-                style={idx < rows.length - 1 ? { borderBottom: '1px solid rgb(var(--color-border-muted))' } : undefined}
-              >
-                <span className="text-sm truncate" style={{ color: 'rgb(var(--color-text-secondary))' }}>{r.label}</span>
-                <span aria-hidden="true" className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-                  <span className="block h-full rounded-full transition-[width] duration-500" style={{ width: `${width}%`, backgroundColor: sectionColor }} />
-                </span>
-                <span className="text-sm font-semibold tabular-nums text-right tracking-tight" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                  {formatTimeShort(r.val)}
-                </span>
-              </div>
-            );
-          });
-        })()}
-      </div>
+      <div className="hidden md:block"><PeriodSummaryCard fixedStats={fixedStats} sectionColor={sectionColor} /></div>
 
       {/* Gate premium — graphiques et détails */}
       {!isPremium() ? (
@@ -354,34 +338,28 @@ export default function StatisticsPage() {
         </div>
       ) : (
       <>
-      <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
-        {/* Sélecteur de section */}
-        <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
-          <span className="hidden md:inline text-sm font-medium shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('page.analyse')}</span>
-          <div className="flex rounded-xl p-1 overflow-x-auto flex-nowrap flex-1 md:flex-none" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-            {sections.map(section => {
-              const Icon = section.icon;
-              const isSelected = selectedSection === section.id;
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => setSelectedSection(section.id as StatSection)}
-                  aria-label={section.label}
-                  aria-pressed={isSelected}
-                  className={`flex items-center gap-2 px-3 min-h-touch md:min-h-0 md:py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${isSelected ? 'shadow-sm' : ''}`}
-                  style={{
-                    backgroundColor: isSelected ? 'rgb(var(--color-surface))' : 'transparent',
-                    color: isSelected ? section.color : 'rgb(var(--color-text-secondary))',
-                  }}
-                >
-                  <Icon size={16} aria-hidden="true" style={{ color: isSelected ? section.color : 'rgb(var(--color-text-secondary))' }} />
-                  <span>{section.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+      {/* ── Une seule commande de page (arbitrage d'Axel, 2026-09-21) ─────
+          La page portait DEUX sélecteurs empilés qui ne règlent pas la même
+          chose : la période (un réglage, il vaut pour tout) et la section
+          (une navigation entre cinq jeux de données). Empilés, ils avaient le
+          même poids visuel, d'où l'impression de doublon, pour 118 px.
 
+          La navigation par section disparaît : la page DÉFILE à travers ses
+          cinq familles, chacune avec son en-tête. Il ne reste que la période.
+
+          ⚠️ J'avais écrit ici que les empiler « monterait cinq graphiques
+          recharts d'un coup ». C'était FAUX, vérifié le 2026-09-21 :
+          `statistics/sections.tsx` n'importe pas recharts du tout. Le seul
+          graphique lourd est celui de cette page, et il reste unique.
+
+          ❌ Ne pas réintroduire un sélecteur de section : ce qui rendait les
+          cinq vues nécessaires, c'était l'idée qu'un écran ne montre qu'une
+          famille à la fois. Elles tiennent à la suite. */}
+      <div className="mb-4 md:mb-6 flex items-center justify-between gap-3 md:gap-4">
+        {/* « Analyser : » présentait le sélecteur de SECTION, qui n'existe
+            plus. Devant « Jour / Semaine / Mois / Année » il annonçait autre
+            chose que ce qui suit. Un segmented de quatre durées n'a besoin
+            d'aucune étiquette. La clé `page.analyse` reste au catalogue. */}
         {/* Sélecteur de période — droite, style Agenda */}
         <div className="flex gap-1 p-1 rounded-xl border flex-nowrap overflow-x-auto w-full md:w-auto"
           style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
@@ -404,40 +382,44 @@ export default function StatisticsPage() {
         </div>
       </div>
 
-      {/* Vue d'ensemble : toggle Tout / voir le détail */}
-      {selectedSection === 'all' && (
-        <div className="flex justify-end mb-3">
-          <div className="inline-flex rounded-xl border p-1" style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
-            <button
-              type="button"
-              onClick={() => setOverviewDetail(false)}
-              aria-pressed={!overviewDetail}
-              className="px-4 min-h-touch md:min-h-0 md:py-1.5 rounded-lg text-sm font-medium transition-all"
-              style={{
-                backgroundColor: !overviewDetail ? '#1f6feb' : 'transparent', // #58a6ff ne passe pas le contraste AA avec du texte blanc
-                color: !overviewDetail ? 'white' : 'rgb(var(--color-text-secondary))',
-              }}
-            >
-              {t('overview.showAll')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setOverviewDetail(true)}
-              aria-pressed={overviewDetail}
-              className="px-4 min-h-touch md:min-h-0 md:py-1.5 rounded-lg text-sm font-medium transition-all"
-              style={{
-                backgroundColor: overviewDetail ? '#1f6feb' : 'transparent', // #58a6ff ne passe pas le contraste AA avec du texte blanc
-                color: overviewDetail ? 'white' : 'rgb(var(--color-text-secondary))',
-              }}
-            >
-              {t('page.seeDetail')}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* ── Maquette 91 : une seule rangée avant les données ─────────────
+          Il y avait ici DEUX blocs pour presque rien : une rangée de 44 px ne
+          portant qu'un lien, puis un titre « 7 DERNIERS JOURS » en capitales
+          noires centrées de 20 px, le texte le plus fort de la page pour son
+          étiquette la moins actionnable. Mesuré le 2026-09-21 en 390 px :
+          73 px de hauteur et 44 px de gouttières, avant le premier graphique.
+
+          Sur mobile les deux fusionnaient : la période à gauche en `caption`
+          sourd, le lien à droite. La période a changé de porteur depuis :
+          l'en-tête « Vue globale · 7 derniers jours », qui vaut aux DEUX
+          largeurs. La garder ici l'écrivait deux fois à deux lignes d'écart,
+          sur mobile où le graphique ne s'intercale même pas. Il ne reste que
+          le lien, aligné à droite.
+
+          Le troisième sélecteur encadré, lui, était devenu ce lien le 20 :
+          il ne change que le graphique juste en dessous, pas la page. */}
+      <MobilePeriodTotal
+        current={pickBucketTime(pairBuckets?.[0])}
+        previous={pickBucketTime(pairBuckets?.[1])}
+        periodLabel={periodDescriptiveText[selectedPeriod]}
+      />
+      <div className="flex items-center justify-end gap-3 mb-3 md:mb-0">
+        {(
+          <button
+            type="button"
+            onClick={() => setOverviewDetail(!overviewDetail)}
+            aria-pressed={overviewDetail}
+            className="inline-flex items-center gap-1 min-h-touch md:min-h-0 px-1 text-sm font-medium underline-offset-4 hover:underline transition-colors shrink-0"
+            style={{ color: 'rgb(var(--color-accent))' }}
+          >
+            {overviewDetail ? t('overview.showAll') : t('page.seeDetail')}
+            <ChevronRight size={15} aria-hidden="true" />
+          </button>
+        )}
+      </div>
 
       {/* Graphique principal */}
-      {selectedSection === 'all' && overviewDetail ? (
+      {overviewDetail ? (
         <div className="mb-8">
           <React.Suspense fallback={<div className="card p-6 h-[340px] animate-pulse" />}>
             {/* `TimePeriod` a un cran de plus que `ViewMode` (`year`), rabattu
@@ -446,13 +428,13 @@ export default function StatisticsPage() {
             <DashboardChart viewMode={selectedPeriod === 'year' ? 'month' : selectedPeriod} />
           </React.Suspense>
         </div>
-      ) : (
+      ) : !isMobile ? (
       <div className="card p-6 mb-8">
-        <div className={(!isMobile && selectedSection === 'habits') ? 'relative' : ''} style={(!isMobile && selectedSection === 'habits') ? { paddingRight: 'calc(25% + 20px)' } : undefined}>
+        <div>
         <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
           <div>
             <h2 className="text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              {selectedSection === 'agenda' ? t('chart.eventsDuration') : t('chart.timeInvested')}
+              {t('chart.timeInvested')}
             </h2>
             <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
               {t('chart.averageAndTotal', { average: formatTime(avgWorkTime), total: formatTime(totalWorkTime) })}
@@ -551,38 +533,38 @@ export default function StatisticsPage() {
             />
           </AreaChart>
         </ChartContainer>
-        {!isMobile && selectedSection === 'habits' && (
-          <div className="absolute top-0 right-0 bottom-0 border-l pl-5 flex flex-col overflow-hidden"
-            style={{ width: '25%', borderColor: 'rgb(var(--color-border))' }}>
-            <p className="text-sm font-semibold mb-3 flex-shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('page.calendar')}</p>
-            <div className="flex-1 min-h-0 flex flex-col">
-              <HabitHeatmap habits={habits} now={now} embedded />
-            </div>
-          </div>
-        )}
         </div>
-
       </div>
-      )}
+      ) : null}
 
-      {/* Heatmap habitudes sur mobile — card standalone sous le graphique */}
-      {isMobile && selectedSection === 'habits' && (
-        <div className="mb-6">
-          <HabitHeatmap habits={habits} now={now} />
-        </div>
-      )}
 
-      <div className="mb-8 text-center">
-        <span className="text-xl md:text-2xl font-black text-slate-400 dark:text-white not-italic uppercase tracking-tight">
-          {periodDescriptiveText[selectedPeriod]}
-        </span>
+      {/* Les cinq familles, à la suite. Chaque en-tête porte l'icône et la
+          couleur que le sélecteur donnait à son onglet : ce qui distinguait
+          les vues devient ce qui sépare les sections.
+
+          ── La vue globale a désormais SON en-tête, comme les quatre autres ──
+          Elle ouvrait sur ses deux cartes sans être nommée, précédée d'une
+          étiquette centrée en capitales de 20 px portant la seule période. Ce
+          bloc était à la fois le texte le plus fort de la page et son moins
+          actionnable, et il n'appartenait à aucune section. La période le
+          suit, en qualificatif du titre. */}
+      <StatSectionHeading section={sections[0]} suffix={periodDescriptiveText[selectedPeriod]} />
+      <OverviewStatistics workTimeData={rollingWorkTimeData} />
+
+      <StatSectionHeading section={sections[1]} />
+      <TasksStatistics tasks={rollingTasks} colorSettings={colorSettings} categories={categories} />
+
+      <StatSectionHeading section={sections[2]} />
+      <AgendaStatistics events={rollingEvents} categories={categories} />
+
+      <StatSectionHeading section={sections[3]} />
+      <OKRStatistics objectives={okrs} krCompletions={krCompletions} rollingRange={rollingRange} />
+
+      <StatSectionHeading section={sections[4]} />
+      <HabitsStatistics habits={habits} rollingRange={rollingRange} selectedPeriod={selectedPeriod} now={now} />
+      <div className="mt-6">
+        <HabitHeatmap habits={habits} now={now} />
       </div>
-
-      {selectedSection === 'tasks' && <TasksStatistics tasks={rollingTasks} colorSettings={colorSettings} categories={categories} />}
-      {selectedSection === 'agenda' && <AgendaStatistics events={rollingEvents} categories={categories} />}
-      {selectedSection === 'okr' && <OKRStatistics objectives={okrs} krCompletions={krCompletions} rollingRange={rollingRange} />}
-      {selectedSection === 'habits' && <HabitsStatistics habits={habits} rollingRange={rollingRange} selectedPeriod={selectedPeriod} now={now} />}
-      {selectedSection === 'all' && <OverviewStatistics workTimeData={rollingWorkTimeData} />}
       </>
       )}
 

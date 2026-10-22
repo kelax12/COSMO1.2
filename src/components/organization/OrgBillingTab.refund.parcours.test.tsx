@@ -61,6 +61,15 @@ vi.mock('@/lib/supabase', () => ({
   isSupabaseConfigured: true,
 }));
 
+vi.mock('@/modules/auth/AuthContext', () => ({
+  useAuth: () => ({ user: { id: 'u-0', email: 'owner@acme.fr' } }),
+}));
+vi.mock('@/modules/organizations', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/modules/organizations')>()),
+  useActiveOrganization: () => ({ activeOrg: { id: 'org-1', ownerId: 'u-0' } }),
+  useOrgMembers: () => ({ data: SEVEN_MEMBERS }),
+}));
+
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
 vi.mock('sonner', () => ({
@@ -85,9 +94,22 @@ vi.mock('@/modules/billing/org-billing.repository', () => ({
     stripeSubscriptionId: 'sub_test',
   }),
 }));
+// Mig. 180 : historique et contact, hors du parcours de remboursement.
+vi.mock('@/modules/billing/org-billing-account.repository', () => ({
+  getOrgBillingHistory: async () => [],
+  getOrgBillingContact: async () => null,
+}));
 
 import { appModeStore } from '@/lib/app-mode.store';
 import { OrgBillingTab } from './OrgBillingTab';
+
+const SEVEN_MEMBERS = Array.from({ length: 7 }, (_, i) => ({
+  orgId: 'org-1',
+  userId: `u-${i}`,
+  role: i === 0 ? ('admin' as const) : ('member' as const),
+  joinedAt: `2026-09-0${i + 1}T00:00:00.000Z`,
+  displayName: `Membre ${i}`,
+}));
 
 function renderTab(isOwner = true) {
   const qc = new QueryClient({
@@ -96,7 +118,7 @@ function renderTab(isOwner = true) {
   return render(
     <MemoryRouter>
       <QueryClientProvider client={qc}>
-        <OrgBillingTab orgId="org-1" isOwner={isOwner} memberCount={7} />
+        <OrgBillingTab orgId="org-1" isOwner={isOwner} />
       </QueryClientProvider>
     </MemoryRouter>,
   );

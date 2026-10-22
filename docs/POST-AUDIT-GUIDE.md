@@ -1,3 +1,15 @@
+<!-- note-audit: non-note -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — **NON NOTÉ** : guide de remise en service, pas un domaine. ⚠️ Il porte des ✅ datés sur des réglages du Dashboard Supabase — désormais surveillés par `npm run check:supabase-posture` (C-88), parce qu'un ✅ daté décrit un instant, pas un état.
+
 # Guide opérationnel — 4 chantiers post-audit COSMO
 
 > **Toujours d'actualité au 2026-08-14** : `PREMIUM_ENFORCED` vaut bien `false`
@@ -17,6 +29,44 @@
 > Issu de l'audit technique du 2026-06-21. Guide pas-à-pas pour exécuter les 4
 > actions prioritaires identifiées comme **hors du périmètre d'un fix automatique**.
 > Voir aussi : `docs/DEPLOYMENT.md`, `faille.md`, `CLAUDE.md → Modèle Premium`.
+
+
+## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
+
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
+>
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
+>
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
+
+
+> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
+> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
+> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
+>
+> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
+> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
+> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
+> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
+> sans que rien ne vérifie**.
+>
+> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
+> **reconduit avec sa date**, jamais ne se recopie.
+
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+|---|---|---|---|
+| AM-1 | 🔴 **Les points cochés ✅ sont des réglages de DASHBOARD, et rien ne vérifie qu'ils le sont ENCORE.** « Leaked Password Protection », l'index `048` : tout cela vit hors du dépôt, se désactive en deux clics, sans commit et sans trace. Un ✅ daté décrit un instant, pas un état | aucun workflow ne lit les réglages Supabase (cf. [`SECURITY.md`](./SECURITY.md) AM-2) | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` (`C-88`) — 🔴 ne prouve PAS : 🔴 elle échoue tant que la référence n'est pas posée (**`M-58`**). Le volet purement manuel reste `M-15` / `M-16` / `M-17` |
+| AM-2 | **Un guide de chantiers ne dit pas lesquels sont périmés.** Le point 3 a été tranché le 2026-09-03 et exécuté le 09-04 (suppression des jetons, C-04) : ce qui reste ici en décrit le **contexte**, pas l'état | « Point 3 · TRANCHÉE le 2026-09-03 » | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** Un guide de chantiers ne dit toujours pas lesquels sont périmés, et le point 3 en est l'exemple : tranché le 09-03, exécuté le 09-04 — *(jugé outillable le 09-16 : oui : une date de dernière revérification par point)* |
+| AM-3 | **Ce document n'a pas de note et n'entre dans aucun tableau de bord**, alors qu'il porte la séquence de réactivation du premium | absent du tableau de bord de [`README.md`](./README.md) | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:docs-scored` (`C-109`) — 🔴 ne prouve PAS : que les notes soient justes ni fraîches |
+
+---
 
 ## Deux corrections importantes (lire en premier)
 
@@ -89,65 +139,30 @@ de config Auth, **pas du code** → rien à committer.
 
 ---
 
-## Point 3 — Trancher la décision produit Premium
+## Point 3 — Décision produit Premium · **TRANCHÉE le 2026-09-03, exécutée le 2026-09-04**
 
-**Problème** : le revenu est aujourd'hui structurellement nul. Cause technique
-(documentée, assumée) : `consume_premium_token` n'est **pas câblé** côté client
-(`incrementTokenUsage` est un no-op), et le mur-pub Habitudes est piloté par un
-flag `localStorage` daté (`useDailyAdGate('habits')`), pas par `isPremium()`.
-Conséquence : un gratuit qui regarde **une** pub gagne un token **permanent** →
-débloque aussi les **stats** à vie. Le seul vrai différenciateur payant actuel est
-« sans pub ». Réf. : `CLAUDE.md → Modèle Premium`.
+🟢 **Décision d'Axel** : *« Ce système est une archive du passé, supprime-le afin de ne pas
+complexifier le code avec des choses inutiles. »* Les jetons premium et le mur-pub des Habitudes
+ont été **supprimés** (item C-04). Les Habitudes sont gratuites pour tout le monde et la
+monétisation ne repose plus que sur l'abonnement. C'est l'option C des trois que ce guide
+proposait ; les deux autres (garder la pub, ou câbler des jetons consommables) sont écartées.
 
-⚠️ Ce point est une **décision de produit**, pas un bug à patcher. Ce guide structure
-la décision ; il ne tranche pas à ta place.
+**Le défaut qui a motivé la décision, et qu'elle referme** : `consume_premium_token` n'était pas
+câblé, le mur était piloté par un flag `localStorage` daté, et un gratuit qui regardait UNE pub
+gagnait un jeton permanent, donc les statistiques à vie. Le jour où `PREMIUM_ENFORCED` serait
+passé à `true`, c'était un contournement de paywall en une manipulation.
 
-### Fichiers concernés (pour situer l'impact de chaque option)
-- `src/modules/billing/billing.context.tsx` — `isPremium()`, `addTokens`.
-- `src/components/HabitsAdGate.tsx` — mur-pub quotidien, appelle `addTokens(1)`.
-- `src/lib/hooks/useDailyAdGate.ts` (clé `cosmo_adwall_habits`) — le flag daté.
-- `src/modules/billing/subscription.logic.ts` — logique premium pure (testée 100 %).
-- RPC SQL : `consume_premium_token` / `credit_premium_token_from_ad` (mig. 015/016/039).
-- `src/pages/StatisticsPage.tsx` — gate `isPremium()` (stats).
+**Ce qui est parti** : `HabitsAdGate`, `AdModal` et tout AdSense (script, et ses origines dans la
+CSP de `vercel.json`), `useDailyAdGate` et la clé `cosmo_adwall_habits`, `addTokens`, les RPC
+`consume_premium_token` / `credit_premium_token_from_ad` / `bump_win_streak`, et les colonnes
+`premium_tokens` / `win_streak` / `ad_credits_*` de `subscriptions` (mig. **141**).
 
-### Trois options (choisir UNE)
+**Ce qui reste**, et n'est PAS dans ce périmètre : `PREMIUM_ENFORCED`, qui garde les statistiques
+premium et la route `/premium`. Le reste de ce guide en décrit toujours la réactivation.
 
-**Option A — « Sans pub » assumé (le moins de travail, cohérent avec l'existant)**
-- On accepte que les stats soient gratuites après 1 pub ; le payant = *aucune pub*.
-- Action : **retirer l'appel `addTokens(1)` dans `HabitsAdGate`** pour que la pub ne
-  crédite plus un token permanent (sinon « gratuit » = « premium » après 1 pub).
-  Le mur reste piloté par le flag daté (1×/jour). Les stats redeviennent réellement
-  premium (gate `isPremium()` non franchi par la pub).
-- Risque : faible. Pas de SQL. Bien tester `StatisticsPage` gate + abonnés payants
-  (Stripe `current_period_end` futur) qui ne voient jamais le mur.
-
-**Option B — Tokens consommables réels (modèle « freemium à crédits »)**
-- Câbler `consume_premium_token` côté client (aujourd'hui no-op) + repenser la
-  péremption. ⚠️ CLAUDE.md avertit : le premium des abonnés payants dépend AUSSI de
-  `tokens > 0` → brancher la consommation peut casser leur accès. **Ne pas faire
-  sans** dissocier « premium par abonnement » (Stripe) de « premium par tokens ».
-- Action : refonte de `subscription.logic.ts` pour séparer les deux sources de
-  vérité, migration SQL pour le décompte atomique, tests unitaires + intégration.
-- Risque : élevé. Effort : 2–4 j. À ne lancer qu'après le harnais RLS (point 4).
-
-**Option C — Stripe d'abord (monétisation directe)**
-- Finaliser le flux Stripe (Edge Functions déjà solides : checkout + webhook +
-  idempotence) et faire du **paiement** le seul différenciateur ; la pub disparaît.
-- Action : configurer `VITE_STRIPE_PUBLISHABLE_KEY` (Vercel) + secrets Edge
-  (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `APP_URL`), déployer les 3 Edge
-  Functions (avec `supabase/config.toml`), tester un checkout réel en mode test
-  Stripe, puis retirer le mur-pub + le crédit token.
-- Risque : moyen (paiement réel). Prérequis fort : **tests sur les Edge Functions**
-  (gap actuel = 0 test sur le code financier).
-
-### Recommandation de séquencement
-A (quick win cohérent) **maintenant** → puis C (Stripe) quand on veut encaisser →
-B seulement si le modèle à crédits devient un vrai besoin. **Ne pas** câbler les
-tokens (B) tant que premium-abonnement et premium-token ne sont pas dissociés.
-
-### Décision à acter
-Écrire le choix retenu dans `CLAUDE.md → Modèle Premium`
-avec la date, pour que la dette « assumée » devienne une décision tracée.
+⚠️ **La définition de « premium » a changé** : `plan='premium'` + `status='active'` + période non
+dépassée. Vérifiée ligne par ligne contre les 54 lignes de `subscriptions` en prod avant la
+bascule, verdict identique pour chacune.
 
 ---
 
@@ -334,10 +349,34 @@ avec la périodicité ET la dérivation du prix annuel. `stripe-org-portal` n'a 
 reste valide. Il ne reste que la création des 4 prix annuels dans Stripe (§5.1) : aucun secret,
 aucun redéploiement derrière.
 
+> ⚠️ **Ces trois numéros de version sont ceux du 2026-08-25 et ne décrivent plus la production.**
+> Relevés par l'API le 2026-09-14 au soir : `stripe-org-checkout` **v15**, `stripe-webhook` **v33**,
+> `stripe-org-portal` **v12**. Ils sont conservés ici parce qu'ils datent le geste, pas l'état.
+
 `supabase/config.toml` déclare déjà les deux nouvelles fonctions en `verify_jwt = true`.
-Ajouter à l'endpoint webhook, s'ils n'y sont pas : `checkout.session.completed`,
-`customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`,
-`invoice.payment_failed`.
+
+🔴 **SIX events à souscrire sur l'endpoint webhook, pas cinq.** Recomptés dans
+`supabase/functions/stripe-webhook/index.ts` le 2026-09-14 (`grep "case '"`, six branches
+d'événement Stripe) :
+
+- `checkout.session.completed`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+- `invoice.payment_succeeded`
+- `invoice.payment_failed`
+- **`charge.refunded`**
+
+⚠️ **Cette liste en comptait CINQ jusqu'au 2026-09-14**, et c'est le seul endroit du dépôt où elle
+était encore fausse : `CLAUDE.md` et [`STRIPE-LIVE.md`](./STRIPE-LIVE.md) avaient été corrigés le
+2026-09-12, **pas le runbook**, c'est-à-dire le document qu'on suit le jour de la bascule. Le
+chiffre est devenu faux le 2026-09-06, quand la v27 du webhook a ajouté la branche de
+remboursement. En réenregistrer cinq laisserait `charge.refunded` non souscrit : un remboursement
+réellement versé, et **aucune ligne compensatoire au journal d'encaissement**, donc un journal qui
+ne montre que l'encaissement. C'est exactement ce qu'on ne veut pas produire en contrôle fiscal.
+
+❌ **Ne jamais corriger un chiffre dans les documents d'explication sans le corriger dans le
+runbook.** Une note périmée dans un document qu'on lit coûte une relecture ; une note périmée dans
+un document qu'on EXÉCUTE coûte l'opération.
 
 ### 5.4 — Recette en mode test (`stripe listen --forward-to ...`)
 

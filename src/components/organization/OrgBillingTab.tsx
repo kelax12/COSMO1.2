@@ -1,22 +1,27 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { ArrowLeft, CreditCard } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
-import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
+import { ENTERPRISE_BILLING_ENFORCED, PRICES_VISIBLE } from '@/modules/billing/premium-config';
 import type { OrgBillingInterval } from '@/modules/billing/premium-config';
-import { useOrgSubscription, useStartOrgCheckout, useOpenOrgPortal, useCancelAndRefundOrg, orgBillingKeys } from '@/modules/billing/org-billing.hooks';
+import { useOrgSubscription, orgBillingKeys } from '@/modules/billing/org-billing.hooks';
+import { useStartOrgCheckout, useOpenOrgPortal, useCancelAndRefundOrg } from '@/modules/billing/org-billing.mutations';
 import { effectiveQuota, effectiveTierKey } from '@/modules/billing/org-billing.logic';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { EnterpriseTierGrid } from './EnterpriseTierGrid';
 import { BillingIntervalToggle } from './BillingIntervalToggle';
+import { OrgBillingSeats } from './OrgBillingSeats';
+import { OrgBillingHistory } from './OrgBillingHistory';
+import { OrgBillingContactCard } from './OrgBillingContactCard';
+import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
+import { useAuth } from '@/modules/auth/AuthContext';
 
 interface Props {
   orgId: string;
   isOwner: boolean;
-  memberCount: number;
   /** Retour à l'espace entreprise — cette vue n'a plus d'onglet actif. */
   onBack?: () => void;
 }
@@ -29,8 +34,18 @@ interface Props {
  * condition — pas « actif si les variables d'environnement existent » : on doit
  * pouvoir dire d'un coup d'œil si le produit facture ou non.
  */
-export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
+export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
+  // Lus ici plutôt que passés par la page : le chunk `OrganizationPage` est à
+  // son cliquet (18 ko), et ces valeurs ne servent qu'à cet écran. Les membres
+  // viennent du cache que la page a déjà rempli (même clé React Query) :
+  // aucune requête de plus. Chaque membre occupe un siège.
+  const { data: members = [] } = useOrgMembers(orgId);
+  const memberCount = members.length;
+  const { user } = useAuth();
+  const { activeOrg } = useActiveOrganization();
+  const ownerId = activeOrg?.ownerId ?? '';
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const { t: tc } = useT('common');
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: subscription } = useOrgSubscription(orgId);
@@ -80,18 +95,21 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
   const checkoutResult = searchParams.get('checkout');
   useEffect(() => {
     if (!checkoutResult) return;
-    if (checkoutResult === 'success') toast.success(t('billing.checkoutSuccess'));
-    if (checkoutResult === 'cancelled') toast.info(t('billing.checkoutCancelled'));
+    if (checkoutResult === 'success') toast.success(tOrgAdmin('billing.checkoutSuccess'));
+    if (checkoutResult === 'cancelled') toast.info(tOrgAdmin('billing.checkoutCancelled'));
     const next = new URLSearchParams(searchParams);
     next.delete('checkout');
     setSearchParams(next, { replace: true });
-  }, [checkoutResult, searchParams, setSearchParams, t]);
+  }, [checkoutResult, searchParams, setSearchParams, t, tOrgAdmin]);
 
   const quota = effectiveQuota(subscription ?? null);
-  const planName = t('billing.planNamed', {
+  const planName = tOrgAdmin('billing.planNamed', {
     name: tc(ORG_TIER_LABEL_KEYS[effectiveTierKey(subscription ?? null)]),
   });
   const canPay = ENTERPRISE_BILLING_ENFORCED && isOwner;
+  // Grille de paliers masquée depuis le 2026-10-16 (`PRICES_VISIBLE`), sauf si
+  // la facturation est réactivée : on ne vend pas sans afficher de prix.
+  const showPrices = PRICES_VISIBLE || ENTERPRISE_BILLING_ENFORCED;
 
   return (
     <div className="flex flex-col gap-6">
@@ -102,19 +120,19 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
             onClick={onBack}
             className="self-start -ml-1 mb-1 inline-flex items-center gap-1.5 rounded-lg px-1 py-1 text-sm text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
           >
-            <ArrowLeft size={15} aria-hidden /> {t('billing.back')}
+            <ArrowLeft size={15} aria-hidden /> {tOrgAdmin('billing.back')}
           </button>
         )}
         <h2 className="flex items-center gap-2 text-lg font-semibold text-[rgb(var(--color-text-primary))]">
           <CreditCard size={18} aria-hidden />
-          {t('billing.title')}
+          {tOrgAdmin('billing.title')}
         </h2>
-        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('billing.subtitle')}</p>
+        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('billing.subtitle')}</p>
       </header>
 
       <section className="rounded-xl border border-[rgb(var(--color-border))] p-4 flex flex-col gap-2">
-        <span className="text-xs uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
-          {t('billing.currentTier')}
+        <span className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
+          {tOrgAdmin('billing.currentTier')}
         </span>
         {/* Le nom du forfait est ce que la pastille de l'en-tête annonce : les
             deux doivent dire le même mot, sinon le clic donne l'impression
@@ -122,12 +140,12 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
         <p className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">{planName}</p>
         <p className="text-sm text-[rgb(var(--color-text-primary))]">
           {quota === null
-            ? t('billing.seatsUnlimited', { count: memberCount })
-            : t('billing.seatsUsed', { count: memberCount, quota })}
+            ? tOrgAdmin('billing.seatsUnlimited', { count: memberCount })
+            : tOrgAdmin('billing.seatsUsed', { count: memberCount, quota })}
         </p>
         {subscription?.status === 'active' && subscription.currentPeriodEnd && (
           <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-            {t('billing.renewsOn', { date: formatDate(new Date(subscription.currentPeriodEnd)) })}
+            {tOrgAdmin('billing.renewsOn', { date: formatDate(new Date(subscription.currentPeriodEnd)) })}
           </p>
         )}
         {/* La périodicité est dite explicitement : « Renouvellement le 12
@@ -138,22 +156,27 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
         {subscription?.status === 'active' && subscription.tierKey !== 'free' && (
           <p className="text-sm text-[rgb(var(--color-text-secondary))]">
             {subscription.billingInterval === 'yearly'
-              ? t('billing.billedYearly')
-              : t('billing.billedMonthly')}
+              ? tOrgAdmin('billing.billedYearly')
+              : tOrgAdmin('billing.billedMonthly')}
           </p>
         )}
         {subscription?.status === 'past_due' && (
-          <p className="text-sm text-[rgb(var(--color-text-primary))]">{t('billing.statusPastDue')}</p>
+          <p className="text-sm text-[rgb(var(--color-text-primary))]">{tOrgAdmin('billing.statusPastDue')}</p>
         )}
         {subscription?.status === 'cancelled' && (
-          <p className="text-sm text-[rgb(var(--color-text-primary))]">{t('billing.statusCancelled')}</p>
+          <p className="text-sm text-[rgb(var(--color-text-primary))]">{tOrgAdmin('billing.statusCancelled')}</p>
         )}
         {subscription?.discountCode && (
           <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-            {t('billing.discountApplied', { code: subscription.discountCode })}
+            {tOrgAdmin('billing.discountApplied', { code: subscription.discountCode })}
           </p>
         )}
       </section>
+
+      {/* Qui compte : les sièges nommés, pas seulement leur nombre. Visible
+          de tout ce qui atteint cet écran (le propriétaire, cf. la page) :
+          l'annuaire les montre déjà à tous les membres. */}
+      <OrgBillingSeats members={members} ownerId={ownerId} quota={quota} />
 
       {/* Une seule rangée au-dessus de la grille : le statut de l'offre à
           gauche, le sélecteur de périodicité à droite. Les deux commentent le
@@ -166,17 +189,17 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
               {/* Même badge que la landing entreprise (`PricingSection.tsx`) :
                   annoncer la nature temporaire de l'offre AVANT le premier prix
                   barré, pas seulement dans la phrase qui suit. */}
-              <span className="inline-flex w-fit items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-1 text-caption font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                {t('billing.promoBadge')}
+              <span className="inline-flex w-fit items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-caption font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                {tOrgAdmin('billing.promoBadge')}
               </span>
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-                {t('billing.dormant')}
+                {tOrgAdmin('billing.dormant')}
               </p>
             </>
           )}
           {ENTERPRISE_BILLING_ENFORCED && !isOwner && (
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-              {t('billing.ownerOnly')}
+              {tOrgAdmin('billing.ownerOnly')}
             </p>
           )}
         </div>
@@ -198,7 +221,7 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
 
       {ENTERPRISE_BILLING_ENFORCED && billingInterval === 'yearly' && (
         <p className="-mt-3 text-xs text-[rgb(var(--color-text-secondary))]">
-          {t('billing.intervalYearlyHint')}
+          {tOrgAdmin('billing.intervalYearlyHint')}
         </p>
       )}
 
@@ -207,7 +230,7 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
       {canPay && (
         <fieldset className="flex flex-col gap-2 rounded-lg border border-[rgb(var(--color-border))] p-3">
           <legend className="px-1 text-xs font-semibold text-[rgb(var(--color-text-secondary))]">
-            {t('billing.withdrawalLegend')}
+            {tOrgAdmin('billing.withdrawalLegend')}
           </legend>
           {/* Information precontractuelle (Conso. art. L111-1) — les
               caracteristiques essentielles doivent etre portees a la
@@ -218,7 +241,7 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
               motif. Le montant exact, lui, est affiche par la carte que
               l utilisateur choisit juste en dessous. */}
           <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-            {t('billing.precontractual')}
+            {tOrgAdmin('billing.precontractual')}
           </p>
           <label className="flex items-start gap-2 text-xs text-[rgb(var(--color-text-secondary))]">
             <input
@@ -227,7 +250,7 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
               onChange={(e) => setImmediateExecution(e.target.checked)}
               className="mt-0.5 shrink-0"
             />
-            <span>{t('billing.withdrawalImmediate')}</span>
+            <span>{tOrgAdmin('billing.withdrawalImmediate')}</span>
           </label>
           <label className="flex items-start gap-2 text-xs text-[rgb(var(--color-text-secondary))]">
             <input
@@ -236,16 +259,17 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
               onChange={(e) => setWaivesWithdrawal(e.target.checked)}
               className="mt-0.5 shrink-0"
             />
-            <span>{t('billing.withdrawalWaiver')}</span>
+            <span>{tOrgAdmin('billing.withdrawalWaiver')}</span>
           </label>
           {!withdrawalConsentGiven && (
             <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-              {t('billing.withdrawalHint')}
+              {tOrgAdmin('billing.withdrawalHint')}
             </p>
           )}
         </fieldset>
       )}
 
+      {showPrices && (
       <EnterpriseTierGrid
         currentTier={subscription?.tierKey}
         onSelect={
@@ -278,6 +302,7 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
         dormant={!ENTERPRISE_BILLING_ENFORCED}
         interval={billingInterval}
       />
+      )}
 
       {/* Affichage TTC — obligation d'affichage au consommateur (Code de la
           consommation art. L112-1). Rien ne vérifie qu'un acheteur est un
@@ -286,9 +311,11 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
           `EnterpriseTierGrid` : elle porte sur la grille entière, pas sur une
           carte, et la grille est un conteneur de mise en page dont la racine ne
           doit pas gagner de frère. Voir docs/LEGAL.md ligne E7. */}
+      {showPrices && (
       <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-        {t('billing.vatIncluded')}
+        {tOrgAdmin('billing.vatIncluded')}
       </p>
+      )}
 
       {canPay && subscription && (
         <div className="flex flex-col gap-1">
@@ -298,9 +325,9 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
             onClick={() => portal.mutate({ orgId })}
             className="self-start rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm disabled:opacity-60"
           >
-            {t('billing.manage')}
+            {tOrgAdmin('billing.manage')}
           </button>
-          <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('billing.manageHint')}</p>
+          <p className="text-xs text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('billing.manageHint')}</p>
         </div>
       )}
 
@@ -329,10 +356,10 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
       {canPay && subscription && effectiveTierKey(subscription) !== 'free' && (
         <div className="flex flex-col gap-2 rounded-lg border border-[rgb(var(--color-border))] p-3">
           <h3 className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-            {t('billing.refundTitle')}
+            {tOrgAdmin('billing.refundTitle')}
           </h3>
           <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-            {t('billing.refundExplain')}
+            {tOrgAdmin('billing.refundExplain')}
           </p>
           <button
             type="button"
@@ -340,8 +367,19 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
             onClick={() => refund.mutate({ orgId })}
             className="self-start rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm disabled:opacity-60 hover:border-red-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
           >
-            {refund.isPending ? t('billing.refundPending') : t('billing.refundCta')}
+            {refund.isPending ? tOrgAdmin('billing.refundPending') : tOrgAdmin('billing.refundCta')}
           </button>
+        </div>
+      )}
+
+      {/* Historique et destinataire des factures : propriétaire seul, les
+          deux lectures le refusent à tout autre compte (mig. 180). Montés
+          même quand la facturation dort : l'historique dit alors « aucun
+          paiement », ce qui est exact, et le contact se prépare d'avance. */}
+      {isOwner && (
+        <div className="grid gap-4 md:grid-cols-2 items-start">
+          <OrgBillingHistory orgId={orgId} />
+          <OrgBillingContactCard orgId={orgId} ownerEmail={user?.email} userId={user?.id} />
         </div>
       )}
     </div>

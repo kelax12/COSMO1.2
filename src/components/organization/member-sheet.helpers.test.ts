@@ -3,19 +3,24 @@ import { visibleMemberTabs, isValidMemberTab, resolveMemberTab, MEMBER_TAB_PARAM
 import { buildOrgLink } from './deep-link.helpers';
 
 describe('visibleMemberTabs', () => {
-  it('un pair ne voit que le profil', () => {
+  it('un pair voit le profil, les équipes et les projets, rien de plus', () => {
     expect(visibleMemberTabs({ canSeeInsights: false, canSeeAgenda: false }))
-      .toEqual(['profile']);
+      .toEqual(['profile', 'work']);
   });
 
-  it('un supérieur voit tout', () => {
+  it('un supérieur voit tout, historique compris', () => {
     expect(visibleMemberTabs({ canSeeInsights: true, canSeeAgenda: true }))
-      .toEqual(['profile', 'tasks', 'contribution', 'agenda']);
+      .toEqual(['profile', 'work', 'tasks', 'contribution', 'history', 'agenda']);
   });
 
   it("l'agenda peut être refusé indépendamment des tâches", () => {
     expect(visibleMemberTabs({ canSeeInsights: true, canSeeAgenda: false }))
-      .toEqual(['profile', 'tasks', 'contribution']);
+      .toEqual(['profile', 'work', 'tasks', 'contribution', 'history']);
+  });
+
+  it("l'historique ne s'ouvre jamais à un pair par l'URL", () => {
+    expect(resolveMemberTab('history', visibleMemberTabs({ canSeeInsights: false, canSeeAgenda: false })))
+      .toBe('profile');
   });
 });
 
@@ -59,7 +64,7 @@ describe("contrat d'URL de la fiche membre", () => {
     // si le nom du paramètre change d'un côté, le lien partagé ouvre le
     // mauvais onglet sans que rien n'échoue visiblement.
     const link = buildOrgLink('pyramid', { member: 'u1' }, { [MEMBER_TAB_PARAM]: 'contribution' });
-    expect(link).toBe('/entreprise?tab=pyramid&member=u1&memberTab=contribution');
+    expect(link).toBe('/entreprise/pyramid?member=u1&memberTab=contribution');
     const params = new URLSearchParams(link.split('?')[1]);
     expect(resolveMemberTab(params.get(MEMBER_TAB_PARAM), ['profile', 'tasks', 'contribution'])).toBe(
       'contribution',

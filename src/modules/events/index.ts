@@ -38,6 +38,7 @@ export {
   useEventsWindow,
   useMemberEventsWindow,
   useUpcomingEvents,
+  useGroupEventsWindow,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -52,4 +53,6 @@ export {
   useCreateMemberEvent,
   useUpdateMemberEvent,
   useDeleteMemberEvent,
+  useCreateGroupEvent,
 } from './hooks';
+export type { GroupEventResult } from './hooks';

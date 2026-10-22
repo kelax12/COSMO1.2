@@ -31,9 +31,10 @@ import { localeStore } from '@/i18n/store';
  *
  * ⚠️ `src/i18n/lazy-namespaces.guard.test.ts` lit les appels `lazyWithRetry`
  * **dans `App.tsx`** pour vérifier que chaque route déclare les catalogues de
- * son sous-arbre. Un appel posé ailleurs (comme dans OrganizationPage) n'est
- * pas vu par cette garde : ne jamais y compter sur le second argument pour
- * charger un catalogue que la ROUTE ne déclare pas déjà.
+ * son sous-arbre, et, depuis le 2026-09-25, ceux des pages listées dans
+ * `TAB_GATE_HOSTS` (`scripts/i18n-shell-namespaces.mjs`) QUI DÉCLARENT une
+ * liste. Partout ailleurs, un second argument n'est vu par aucune garde : ne
+ * jamais y compter pour charger un catalogue que la ROUTE ne déclare pas.
  */
 export const lazyWithRetry = <P extends object>(
   factory: () => Promise<{ default: ComponentType<P> }>,

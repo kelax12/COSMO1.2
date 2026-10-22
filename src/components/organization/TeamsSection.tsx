@@ -1,24 +1,33 @@
-import { useState } from 'react';
-import { Plus, Trash2, UserMinus, Crown } from 'lucide-react';
-import {
-  useOrgTeams,
-  useOrgTeamMembers,
-  useCreateOrgTeam,
-  useDeleteOrgTeam,
-  useAddTeamMember,
-  useRemoveTeamMember,
-  useSetTeamLead,
-} from '@/modules/org-teams';
-import type { OrgMember } from '@/modules/organizations';
+import { OrgEmptyState } from './OrgPagePrimitives';
+import { OrgTabSkeleton } from './OrgLoadingSkeletons';
+import { Suspense, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { Plus, Trash2, Search, ChevronRight, MoreHorizontal, Pencil, Users, UsersRound } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { useCreateTeamTask, useUpdateTeamTask } from '@/modules/team-projects';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import {
+  useOrgTeams,
+  useOrgTeamMembers,
+  type OrgTeam,
+} from '@/modules/org-teams';
+import type { OrgMember } from '@/modules/organizations';
+import { useTeamProjects } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
-import CreateTeamModal from './CreateTeamModal';
+import { OrgCreateBoundary, useOrgCreate } from './org-create.context';
+import { PermissionGate, usePermissionHints } from './permission-hints';
+import DeleteTeamDialog from './DeleteTeamDialog';
+import { orgTeamPath } from './deep-link.helpers';
+import { teamProjectsOf, canManageTeam } from './team-page.helpers';
+import TeamAssignMenus from './TeamAssignMenus';
+import TeamProfileEditor from './TeamProfileEditor';
+import { normalize } from './pyramid.helpers';
 import { useT } from '@/i18n/useT';
 
 interface TeamsSectionProps {
@@ -26,58 +35,61 @@ interface TeamsSectionProps {
   members: OrgMember[];
   currentUserId?: string;
   isAdmin: boolean;
-  /** Manager dérivé (a des subordonnés) — peut créer des équipes. */
   /** Droit `team.create` (mig. 115) — remplace l'ancien « est manager ». */
   canCreateTeam: boolean;
 }
 
-/** Sous-arbre strict (ids) de `root`. */
-function subtreeOf(members: OrgMember[], root: string): Set<string> {
-  const out = new Set<string>();
-  let frontier = [root];
-  for (let depth = 0; depth < 50 && frontier.length > 0; depth++) {
-    const next: string[] = [];
-    for (const m of members) {
-      if (m.managerId && frontier.includes(m.managerId) && !out.has(m.userId)) {
-        out.add(m.userId);
-        next.push(m.userId);
-      }
-    }
-    frontier = next;
-  }
-  return out;
-}
+/**
+ * Audit « passage à l'échelle » du 2026-09-24 : à cent équipes, la section
+ * empilait cent cartes. Au-delà de ce seuil, la liste se replie et se cherche.
+ */
+const TEAMS_LIMIT = 6;
+/** Responsables nommés sur la carte ; au-delà, « +N ». */
+const LEADS_SHOWN = 3;
+/** Avatars empilés sur la carte (responsables d'abord) ; au-delà, « +N ». */
+const AVATARS_SHOWN = 6;
+
+// Fiche de tâche : chargée seulement quand « Assigner une tâche » est choisi.
+const TeamTaskModal = lazyWithRetry(() => import('./TeamTaskModal'));
 
 /**
- * Équipes transverses de l'entreprise. Tout manager crée des équipes et y
- * ajoute SES subordonnés (+ lui-même) ; l'admin gère tout. Les projets
- * rattachés à une équipe sont cloisonnés à ses membres + leur hiérarchie.
+ * Équipes transverses de l'entreprise, section `/entreprise/teams`. Une carte
+ * par équipe, qui ouvre sa page (`/entreprise/teams/:id`) : description,
+ * responsables, membres, projets, OKR, statistiques. La gestion des membres
+ * vit sur cette page (`TeamMembersPanel`), plus dans la liste.
  */
 const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }: TeamsSectionProps) => {
-  const { t } = useT('org');
-  const [showNewTeam, setShowNewTeam] = useState(false);
+  const { t, tp } = useT('org');
+  const { t: ta } = useT('orgAdmin');
+  const create = useOrgCreate();
+  const hints = usePermissionHints(orgId);
 
   // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
   // encore : le premier rendu arrive avant la reponse, et la valeur par defaut
   // `[]` est indistinguable d'un compte reellement vide.
   const { data: teams = [], isLoading: loadingTeams } = useOrgTeams(orgId);
   const { data: memberships = [] } = useOrgTeamMembers(orgId);
-  const createTeam = useCreateOrgTeam(orgId);
-  const deleteTeam = useDeleteOrgTeam(orgId);
-  const addMember = useAddTeamMember(orgId);
-  const removeMember = useRemoveTeamMember(orgId);
-  const setLead = useSetTeamLead(orgId);
+  const { data: projects = [] } = useTeamProjects(orgId);
+  // M5 : la suppression passe par une modale d'impact, jamais par un confirm().
+  const [teamToDelete, setTeamToDelete] = useState<OrgTeam | null>(null);
+  const [teamQuery, setTeamQuery] = useState('');
+  const [showAllTeams, setShowAllTeams] = useState(false);
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [taskForTeam, setTaskForTeam] = useState<OrgTeam | null>(null);
+  const navigate = useNavigate();
+  const createTask = useCreateTeamTask(orgId);
+  const updateTask = useUpdateTeamTask(orgId);
 
-  const mySubtree = currentUserId ? subtreeOf(members, currentUserId) : new Set<string>();
-  const memberOf = (userId: string) => members.find((m) => m.userId === userId);
-
-  // Crée l'équipe (nom + couleur) PUIS y ajoute les membres choisis (#2).
-  const handleCreateFull = async (input: { name: string; color: string }, memberIds: string[]) => {
-    const team = await createTeam.mutateAsync(input);
-    for (const userId of memberIds) {
-      await addMember.mutateAsync({ teamId: team.id, userId });
-    }
-  };
+  const teamsSearchable = teams.length > TEAMS_LIMIT;
+  const q = normalize(teamQuery.trim());
+  const matchingTeams = teamsSearchable && q
+    ? teams.filter((tm) => normalize(tm.name).includes(q) || normalize(tm.description ?? '').includes(q))
+    : teams;
+  // Une recherche montre tous ses résultats : la couper à six cacherait
+  // précisément l'équipe qu'on cherche.
+  const shownTeams = showAllTeams || q ? matchingTeams : matchingTeams.slice(0, TEAMS_LIMIT);
+  const hiddenTeams = matchingTeams.length - shownTeams.length;
+  const memberById = new Map(members.map((m) => [m.userId, m]));
 
   return (
     <div>
@@ -85,163 +97,232 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
         <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
           {t('team.sectionTitle', { count: teams.length })}
         </h2>
-        {canCreateTeam && (
+        <PermissionGate reason={hints.deniedReason('team.create')}>
           <button
             type="button"
-            onClick={() => setShowNewTeam(true)}
+            onClick={() => create.openTeam()}
+            data-guide-id="teams-new"
             className="inline-flex items-center gap-1 text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors"
           >
-            <Plus size={14} aria-hidden="true" /> {t('team.add')}
+            <Plus size={14} aria-hidden="true" className="max-md:w-5 max-md:h-5" /> <span className="max-md:sr-only">{t('team.add')}</span>
           </button>
-        )}
+        </PermissionGate>
       </div>
 
-      {showNewTeam && (
-        <CreateTeamModal
-          members={members}
-          currentUserId={currentUserId}
-          isAdmin={isAdmin}
-          onSubmit={handleCreateFull}
-          onClose={() => setShowNewTeam(false)}
-        />
-      )}
 
-      {loadingTeams ? null : teams.length === 0 ? (
-        <p className="text-xs text-[rgb(var(--color-text-muted))] py-3">
-          {canCreateTeam ? t('team.emptyManager') : t('team.empty')}
-        </p>
+      {loadingTeams ? (
+        <OrgTabSkeleton label={ta('page.tabLoading')} />
+      ) : teams.length === 0 ? (
+        <OrgEmptyState
+          Icon={UsersRound}
+          title={ta('ui.empty.teamsTitle')}
+          body={canCreateTeam ? t('team.emptyManager') : t('team.empty')}
+          action={canCreateTeam ? (
+            <button
+              type="button"
+              onClick={() => create.openTeam()}
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold"
+            >
+              <Plus size={15} aria-hidden="true" /> {t('team.add')}
+            </button>
+          ) : undefined}
+        />
       ) : (
         <div className="space-y-3">
-          {teams.map((team) => {
-            const teamMemberships = memberships.filter((m) => m.teamId === team.id);
-            const teamMemberIds = teamMemberships.map((m) => m.userId);
-            const leadIds = new Set(teamMemberships.filter((m) => m.isLead).map((m) => m.userId));
-            // Miroir EXACT de `can_manage_team` (mig. 107) : admin, créateur,
-            // ou responsable de cette équipe. Toute divergence ferait afficher
-            // des actions que le serveur refusera.
-            const canManageThisTeam =
-              isAdmin
-              || team.createdBy === currentUserId
-              || (!!currentUserId && leadIds.has(currentUserId));
-            // Ajoutables : membres de l'org pas encore dans l'équipe ; un
-            // non-admin ne propose que soi + ses subordonnés (miroir RLS).
-            const addable = members.filter((m) => {
-              if (teamMemberIds.includes(m.userId)) return false;
-              if (!canManageThisTeam) return false;
-              if (isAdmin) return true;
-              return m.userId === currentUserId || mySubtree.has(m.userId);
-            });
-            return (
-              <div key={team.id} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-3.5">
-                <div className="flex items-center gap-2 mb-2.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[rgb(var(--color-accent-solid))] shrink-0" aria-hidden="true" />
-                  <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] flex-1 truncate">{team.name}</h3>
-                  <span className="text-xs text-[rgb(var(--color-text-muted))]">{teamMemberIds.length} membre{teamMemberIds.length > 1 ? 's' : ''}</span>
-                  {canManageThisTeam && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (window.confirm(t('team.deleteConfirm', { name: team.name }))) {
-                          deleteTeam.mutate(team.id);
-                        }
-                      }}
-                      aria-label={t('team.deleteAria', { name: team.name })}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+          {teamsSearchable && (
+            <label className="relative block">
+              <span className="sr-only">{t('team.searchTeams')}</span>
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+              <input
+                type="search"
+                value={teamQuery}
+                onChange={(e) => setTeamQuery(e.target.value)}
+                placeholder={t('team.searchTeams')}
+                className="w-full h-10 pl-9 pr-3 text-sm rounded-xl border bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
+              />
+            </label>
+          )}
+          {matchingTeams.length === 0 && (
+            <p className="text-xs text-[rgb(var(--color-text-muted))] py-3">{t('team.noTeamMatch')}</p>
+          )}
+          <ul data-guide-id="teams-list" className="grid gap-3 max-md:gap-0 md:grid-cols-2">
+            {shownTeams.map((team) => {
+              const teamMemberships = memberships.filter((m) => m.teamId === team.id);
+              // Responsables d'abord, puis le reste de l'équipe.
+              const ordered = [...teamMemberships]
+                .sort((a, b) => Number(b.isLead) - Number(a.isLead))
+                .map((m) => ({ member: memberById.get(m.userId), isLead: m.isLead }))
+                .filter((x): x is { member: OrgMember; isLead: boolean } => !!x.member);
+              const leads = ordered.filter((x) => x.isLead).map((x) => x.member);
+              const projectCount = teamProjectsOf(team, projects).filter((p) => !p.archivedAt).length;
+              const leadNames = leads
+                .slice(0, LEADS_SHOWN)
+                .map((m) => (m.userId === currentUserId ? t('common.youBadge') : m.displayName))
+                .join(', ');
+              const canManage = canManageTeam(team, teamMemberships, currentUserId, isAdmin);
+              const canDelete = isAdmin || team.createdBy === currentUserId;
+              if (editingTeamId === team.id) {
+                return (
+                  <li key={team.id}>
+                    <TeamProfileEditor orgId={orgId} team={team} onDone={() => setEditingTeamId(null)} />
+                  </li>
+                );
+              }
+              return (
+                <li
+                  key={team.id}
+                  className="relative rounded-2xl max-md:rounded-none border max-md:border-0 max-md:border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] max-md:bg-transparent p-3.5 max-md:px-1 [@media(hover:hover)]:hover:border-[rgb(var(--color-accent)/0.5)] transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    {/* La couleur CHOISIE à la création : la pastille prenait
+                        la couleur d'accent, la même pour toutes les équipes. */}
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: team.color }}
+                      aria-hidden="true"
+                    />
+                    {/* Le lien couvre toute la carte (`after:inset-0`) ; le
+                        bouton de suppression passe au-dessus (`relative z-10`). */}
+                    <Link
+                      to={orgTeamPath(team.id)}
+                      data-guide-item
+                      className="text-sm font-bold text-[rgb(var(--color-text-primary))] flex-1 truncate after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-[rgb(var(--color-accent))]"
                     >
-                      <Trash2 size={13} aria-hidden="true" />
-                    </button>
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {teamMemberIds.map((uid) => {
-                    const m = memberOf(uid);
-                    if (!m) return null;
-                    const isLead = leadIds.has(uid);
-                    return (
-                      <span
-                        key={uid}
-                        className={`inline-flex items-center gap-1.5 rounded-full border pl-1 pr-2 py-0.5 ${
-                          isLead
-                            ? 'border-amber-400/60 bg-amber-400/10'
-                            : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))]'
-                        }`}
-                      >
-                        <MemberAvatar avatar={m.avatar} size={20} />
-                        <span className="text-xs text-[rgb(var(--color-text-primary))]">
-                          {uid === currentUserId ? t('common.youBadge') : m.displayName.split(' ')[0]}
-                        </span>
-                        {/* Le badge est rendu pour TOUS, pas seulement les
-                            gestionnaires : savoir à qui s'adresser dans une
-                            équipe est une information de lecture. */}
-                        {isLead && (
-                          <span
-                            title={t('teams.leadHint')}
-                            className="inline-flex items-center gap-0.5 text-caption font-semibold text-amber-600 dark:text-amber-400"
-                          >
-                            <Crown size={10} aria-hidden="true" /> {t('teams.leadBadge')}
-                          </span>
-                        )}
-                        {canManageThisTeam && (
-                          <button
-                            type="button"
-                            onClick={() => setLead.mutate({ teamId: team.id, userId: uid, isLead: !isLead })}
-                            aria-label={
-                              isLead
-                                ? t('teams.removeLead')
-                                : t('teams.makeLead')
-                            }
-                            className={`transition-colors ${
-                              isLead
-                                ? 'text-amber-500 hover:text-amber-600'
-                                : 'text-[rgb(var(--color-text-muted))] hover:text-amber-500'
-                            }`}
-                          >
-                            <Crown size={11} aria-hidden="true" />
-                          </button>
-                        )}
-                        {canManageThisTeam && (
-                          <button
-                            type="button"
-                            onClick={() => removeMember.mutate({ teamId: team.id, userId: uid })}
-                            aria-label={t('team.removeMemberAria', { member: m.displayName, team: team.name })}
-                            className="text-[rgb(var(--color-text-muted))] hover:text-red-500"
-                          >
-                            <UserMinus size={11} aria-hidden="true" />
-                          </button>
-                        )}
-                      </span>
-                    );
-                  })}
-                  {addable.length > 0 && (
+                      {team.name}
+                    </Link>
+                    <span className="max-md:hidden text-xs text-[rgb(var(--color-text-muted))] shrink-0">
+                      {tp('team.memberCount', teamMemberships.length)}
+                    </span>
+                    {/* Options. Suppression : admin ou créateur SEULEMENT, miroir
+                        exact de la policy `org_teams_delete`. Un responsable
+                        gère son équipe, il ne la supprime pas. */}
                     <DropdownMenu>
-                      <DropdownMenuTrigger
-                        className="inline-flex items-center gap-1 rounded-full border border-dashed border-[rgb(var(--color-chip-border))] px-2 py-0.5 text-xs text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors"
-                        aria-label={t('team.addMemberAria', { team: team.name })}
-                      >
-                        <Plus size={11} aria-hidden="true" /> {t('common.add')}
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label={t('team.optionsAria', { name: team.name })}
+                          className="max-md:hidden relative z-10 w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] data-[state=open]:bg-[rgb(var(--color-hover))] transition-colors"
+                        >
+                          <MoreHorizontal size={15} aria-hidden="true" />
+                        </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-52 max-h-64 overflow-y-auto">
-                        <DropdownMenuLabel>{t('team.addTo', { name: team.name })}</DropdownMenuLabel>
-                        {addable.map((m) => (
-                          <DropdownMenuItem
-                            key={m.userId}
-                            onClick={() => addMember.mutate({ teamId: team.id, userId: m.userId })}
-                          >
-                            <MemberAvatar avatar={m.avatar} size={20} />
-                            <span className="truncate">{m.userId === currentUserId ? t('common.youBadge') : m.displayName}</span>
+                      <DropdownMenuContent align="end" className="w-56">
+                        {canManage && (
+                          <DropdownMenuItem onClick={() => setEditingTeamId(team.id)}>
+                            <Pencil size={14} aria-hidden="true" /> {t('team.menu.edit')}
                           </DropdownMenuItem>
-                        ))}
+                        )}
+                        <DropdownMenuItem onClick={() => navigate(orgTeamPath(team.id))}>
+                          <Users size={14} aria-hidden="true" /> {t('team.menu.members')}
+                        </DropdownMenuItem>
+                        <TeamAssignMenus
+                          orgId={orgId}
+                          team={team}
+                          projects={projects}
+                          onNewProject={() => create.openProject({ defaultTeamId: team.id })}
+                          onNewTask={() => setTaskForTeam(team)}
+                        />
+                        {canDelete && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => setTeamToDelete(team)}
+                              className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
+                            >
+                              <Trash2 size={14} className="text-red-500" aria-hidden="true" /> {t('team.menu.delete')}
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    <ChevronRight size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+                  </div>
+                  {team.description && (
+                    <p className="mt-1.5 text-xs text-[rgb(var(--color-text-secondary))] line-clamp-2">{team.description}</p>
                   )}
-                </div>
-              </div>
-            );
-          })}
+                  <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[rgb(var(--color-text-muted))]">
+                    {ordered.length > 0 && (
+                      <span className="flex items-center shrink-0" aria-hidden="true">
+                        {ordered.slice(0, AVATARS_SHOWN).map(({ member, isLead }, i) => (
+                          <span
+                            key={member.userId}
+                            title={member.displayName}
+                            className={`relative flex rounded-full border-2 border-[rgb(var(--color-surface))] ${i > 0 ? '-ml-1.5' : ''} ${i >= 2 ? 'max-md:hidden' : ''} ${isLead ? 'z-10 md:ring-2 md:ring-amber-400' : ''}`}
+                          >
+                            <MemberAvatar avatar={member.avatar} name={member.displayName} size={20} />
+                          </span>
+                        ))}
+                        {ordered.length > 2 && (
+                          <span className="md:hidden -ml-1.5 w-[26px] h-[26px] rounded-full border-2 border-[rgb(var(--color-surface))] bg-[rgb(var(--color-hover))] text-[10px] font-semibold text-[rgb(var(--color-text-secondary))] flex items-center justify-center">+{ordered.length - 2}</span>
+                        )}
+                        {ordered.length > AVATARS_SHOWN && (
+                          <span className="max-md:hidden -ml-1.5 w-[26px] h-[26px] rounded-full border-2 border-[rgb(var(--color-surface))] bg-[rgb(var(--color-hover))] text-[10px] font-semibold text-[rgb(var(--color-text-secondary))] flex items-center justify-center">
+                            +{ordered.length - AVATARS_SHOWN}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                    {leads.length > 0 ? (
+                      <span className="truncate text-[rgb(var(--color-text-secondary))]">
+                        {leads.length > LEADS_SHOWN
+                          ? t('team.leadsMore', { names: leadNames, count: leads.length - LEADS_SHOWN })
+                          : leadNames}
+                        {/* Maquette 287 : le responsable écrit, plus un anneau doré. */}
+                        <span className="md:hidden">{t('team.leadSuffix')}</span>
+                      </span>
+                    ) : (
+                      <span>{t('teamPage.noLead')}</span>
+                    )}
+                    <span>{tp('team.projectCount', projectCount)}</span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          {!q && teams.length > TEAMS_LIMIT && (
+            <button
+              type="button"
+              onClick={() => setShowAllTeams((v) => !v)}
+              aria-expanded={showAllTeams}
+              className="w-full py-2 text-sm font-medium rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+            >
+              {showAllTeams ? t('team.showFewerTeams') : tp('team.showMoreTeams', hiddenTeams)}
+            </button>
+          )}
         </div>
+      )}
+      {taskForTeam && (
+        <Suspense fallback={null}>
+          <TeamTaskModal
+            isCreating
+            projects={teamProjectsOf(taskForTeam, projects).filter((p) => !p.archivedAt)}
+            members={members}
+            requireProjectChoice
+            onCreate={(input) => createTask.mutateAsync(input)}
+            onUpdate={(taskId, input) => updateTask.mutateAsync({ taskId, input })}
+            onClose={() => setTaskForTeam(null)}
+            isManager={isAdmin}
+          />
+        </Suspense>
+      )}
+      {teamToDelete && (
+        <DeleteTeamDialog
+          orgId={orgId}
+          team={teamToDelete}
+          teams={teams}
+          onClose={() => setTeamToDelete(null)}
+        />
       )}
     </div>
   );
 };
 
-export default TeamsSection;
+// Frontière du formulaire unique de création (org-create.context) : posée par
+// chaque écran qui crée, pas par la page, dont le chunk a un cliquet.
+const TeamsSectionWithCreate = (props: TeamsSectionProps) => (
+  <OrgCreateBoundary orgId={props.orgId}>
+    <TeamsSection {...props} />
+  </OrgCreateBoundary>
+);
+
+export default TeamsSectionWithCreate;

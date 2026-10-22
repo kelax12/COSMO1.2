@@ -5,7 +5,7 @@ import React from 'react';
 import { ChevronRight } from 'lucide-react';
 
 export const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
+  <p className="text-[11px] font-semibold md:uppercase md:tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
     {children}
   </p>
 );

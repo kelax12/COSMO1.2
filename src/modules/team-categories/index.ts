@@ -13,3 +13,24 @@ export {
   useUpdateTeamCategory,
   useDeleteTeamCategory,
 } from './hooks';
+
+// ─── Arbre — logique pure (mig. 148) ───────────────────────────────
+export {
+  TEAM_CATEGORY_MAX_DEPTH,
+  TEAM_CATEGORY_PATH_SEPARATOR,
+  buildTree,
+  categoryPath,
+  childrenOf,
+  descendantIds,
+  descendantIdSet,
+  ancestorIds,
+  formatPath,
+  treeDepth,
+  wouldCreateCycle,
+  wouldExceedMaxDepth,
+} from './tree';
+export type { TeamCategoryNode } from './tree';
+
+// ─── Impact d'une suppression ──────────────────────────────────────
+export { teamCategoryImpact, EMPTY_TEAM_CATEGORY_IMPACT } from './impact';
+export type { TeamCategoryImpact } from './impact';

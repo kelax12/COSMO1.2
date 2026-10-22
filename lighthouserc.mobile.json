@@ -1,0 +1,78 @@
+{
+  "_comment": [
+    "C-84 · LE PASSAGE MOBILE, absent jusqu'au 2026-09-20.",
+    "Lighthouse ne tournait qu'en preset DESKTOP, alors que le mobile est le",
+    "terminal du trafic visé et que docs/MOBILE.md est le document le moins bien",
+    "noté du dépôt. Un preset desktop ne bride ni le CPU ni le réseau : il ne peut",
+    "structurellement pas voir la classe de défaut de C-68 (fil principal bloqué",
+    "3 637 ms sur 4 000), trouvée à la main.",
+    "",
+    "POURQUOI UN SECOND FICHIER et pas une seconde entrée : `lhci collect` lit UNE",
+    "config. Deux presets = deux passes, donc deux fichiers et deux étapes.",
+    "",
+    "POURQUOI numberOfRuns 1 : le preset mobile applique 4× de throttling CPU, donc",
+    "chaque run coûte ~3× le desktop. 8 URLs × 1 run ≈ le budget de temps des 4",
+    "URLs × 2 runs qu'on avait avant. L'arbitrage est là, et il s'écrit.",
+    "",
+    "LES SEUILS SONT PLUS BAS QUE LE DESKTOP, ET CE N'EST PAS UN ABAISSEMENT :",
+    "c'est une PREMIÈRE pose, sur un périmètre qui n'était mesuré par rien. Ils sont",
+    "prudents à dessein, faute de Chrome sur la machine de développement — même",
+    "situation qu'à la pose des seuils desktop le 2026-08-24.",
+    "🔴 Au PREMIER run réel, les rabaisser juste sous le mesuré. Un budget très",
+    "au-dessus du réel ne mesure rien : c'est la faute que ce fichier hérite.",
+    "",
+    "a11y et SEO restent BLOQUANTS : ils ne dépendent pas du runner, et un écart",
+    "mobile y est un vrai défaut (cibles tactiles, viewport, contraste).",
+    "La performance reste un AVERTISSEMENT : elle varie avec le runner, et une gate",
+    "rouge en permanence finit ignorée (règle de scripts/CLAUDE.md)."
+  ],
+  "ci": {
+    "collect": {
+      "staticDistDir": "dist",
+      "numberOfRuns": 1,
+      "url": [
+        "http://localhost/",
+        "http://localhost/guide/",
+        "http://localhost/blog/",
+        "http://localhost/blog/methode-okr-exemples/",
+        "http://localhost/pour-freelances/",
+        "http://localhost/entreprise-presentation/",
+        "http://localhost/a-propos/",
+        "http://localhost/en/"
+      ],
+      "settings": {
+        "preset": "perf",
+        "formFactor": "mobile",
+        "screenEmulation": {
+          "mobile": true,
+          "width": 412,
+          "height": 823,
+          "deviceScaleFactor": 1.75,
+          "disabled": false
+        },
+        "emulatedUserAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+        "throttlingMethod": "simulate",
+        "onlyCategories": ["performance", "accessibility", "best-practices", "seo"],
+        "chromeFlags": "--no-sandbox --disable-dev-shm-usage --lang=fr-FR --accept-lang=fr-FR"
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:accessibility": ["error", { "minScore": 0.9 }],
+        "categories:seo": ["error", { "minScore": 0.92 }],
+        "categories:best-practices": ["warn", { "minScore": 0.9 }],
+        "categories:performance": ["warn", { "minScore": 0.4 }],
+        "largest-contentful-paint": ["warn", { "maxNumericValue": 4500 }],
+        "total-blocking-time": ["warn", { "maxNumericValue": 4000 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+        "unused-javascript": "off",
+        "uses-long-cache-ttl": "off",
+        "csp-xss": "off"
+      }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": ".lighthouseci-mobile"
+    }
+  }
+}

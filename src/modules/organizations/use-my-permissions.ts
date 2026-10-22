@@ -11,10 +11,16 @@ import { useMemo } from 'react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useOrgMemberPermissions } from './hooks';
 import { useOrgMembers } from './hooks';
+import { useOrgRoleAssignments, useOrgRoles } from './roles.queries';
+import { activeRolesOf } from './roles.helpers';
+import type { OrgCustomRole } from './roles.types';
 import {
   DEFAULT_ASSIGN_TARGETS,
   ORG_PERMISSION_KEYS,
   canAssignTo,
+  canDeleteTeamTask,
+  canEditTeamTask,
+  type TaskOwnership,
   effectiveAssignTargets,
   effectivePermissions,
   type EffectiveOrgPermissions,
@@ -31,7 +37,13 @@ export interface MyOrgPermissions {
   canAssign: (targetUserId: string) => boolean;
   /** Les membres à qui il peut assigner une tâche (annuaire filtré). */
   assignableMembers: OrgMember[];
-  /** `true` tant que l'annuaire ou les surcharges ne sont pas chargés. */
+  /** Puis-je modifier cette tâche ? (miroir de `team_tasks_update`) */
+  canEditTask: (task: TaskOwnership) => boolean;
+  /** Puis-je supprimer cette tâche ? (miroir de `delete_team_task`) */
+  canDeleteTask: (task: TaskOwnership) => boolean;
+  /** Mes rôles personnalisés ACTIFS (mig. 219), qui priment sur ma fiche. */
+  activeRoles: OrgCustomRole[];
+  /** `true` tant que l'annuaire, les surcharges ou les rôles ne sont pas chargés. */
   isLoading: boolean;
 }
 
@@ -53,8 +65,12 @@ export const useMyOrgPermissions = (orgId: string | undefined): MyOrgPermissions
   const currentUserId = user?.id;
   const { data: members = [], isLoading: membersLoading } = useOrgMembers(orgId);
   const { data: overrides = [], isLoading: permsLoading } = useOrgMemberPermissions(orgId);
+  // Mig. 219. Une lecture en ÉCHEC (migration pas encore appliquée) rend une
+  // liste vide : les droits retombent sur la fiche et le défaut, comme avant.
+  const { data: roles = [], isLoading: rolesLoading } = useOrgRoles(orgId);
+  const { data: roleAssignments = [], isLoading: assignmentsLoading } = useOrgRoleAssignments(orgId);
 
-  const isLoading = membersLoading || permsLoading;
+  const isLoading = membersLoading || permsLoading || rolesLoading || assignmentsLoading;
 
   return useMemo(() => {
     const me = currentUserId ? members.find((m) => m.userId === currentUserId) : undefined;
@@ -67,13 +83,19 @@ export const useMyOrgPermissions = (orgId: string | undefined): MyOrgPermissions
         assignTargets: [...DEFAULT_ASSIGN_TARGETS],
         canAssign: () => true,
         assignableMembers: members,
+        canEditTask: () => true,
+        canDeleteTask: () => true,
+        activeRoles: [],
         isLoading,
       };
     }
 
     const mine = overrides.find((o) => o.userId === me.userId) ?? null;
-    const can = effectivePermissions({ member: me, members, overrides: mine });
-    const assignTargets = effectiveAssignTargets({ member: me, overrides: mine });
+    // « Actif » est jugé au rendu : un rôle qui finit pendant la visite tombe
+    // au prochain rendu. Le serveur, lui, le refuse à la seconde.
+    const activeRoles = activeRolesOf(roles, roleAssignments, me.userId, new Date());
+    const can = effectivePermissions({ member: me, members, overrides: mine, roles: activeRoles });
+    const assignTargets = effectiveAssignTargets({ member: me, overrides: mine, roles: activeRoles });
 
     const canAssign = (targetUserId: string) => {
       const target = members.find((m) => m.userId === targetUserId);
@@ -88,7 +110,10 @@ export const useMyOrgPermissions = (orgId: string | undefined): MyOrgPermissions
       assignableMembers: members.filter((m) =>
         canAssignTo({ actor: me, target: m, members, targets: assignTargets }),
       ),
+      canEditTask: (task: TaskOwnership) => canEditTeamTask(can, me.userId, task),
+      canDeleteTask: (task: TaskOwnership) => canDeleteTeamTask(can, me.userId, task),
+      activeRoles,
       isLoading,
     };
-  }, [members, overrides, currentUserId, isLoading]);
+  }, [members, overrides, roles, roleAssignments, currentUserId, isLoading]);
 };

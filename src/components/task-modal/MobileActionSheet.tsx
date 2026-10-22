@@ -20,7 +20,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check } from 'lucide-react';
-import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useSheetMotion, useSheetDrag } from '@/components/mobile/mobile-motion';
 import { CellSeparator } from './primitives';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 
@@ -38,6 +38,11 @@ interface MobileActionSheetProps {
 
 export const MobileActionSheet = ({ open, title, onClose, scrollable = false, maxHeightClass = 'max-h-[70vh]', children }: MobileActionSheetProps) => {
   const sheetMotion = useSheetMotion();
+  // C-07 · la poignee dessinee juste en dessous PROMETTAIT un geste qui
+  // n existait pas. Une affordance qui ne repond pas est pire que pas
+  // d affordance : on tire, rien ne bouge, et on en conclut que l app est
+  // cassee. Meme course que toutes les feuilles (80 px ou 500 px/s).
+  const sheetDrag = useSheetDrag(onClose);
 
   // C-53 — piege de focus, restitution du focus au declencheur, Echap et
   // semantique ARIA. Cette surface n'en portait aucune.
@@ -58,6 +63,7 @@ export const MobileActionSheet = ({ open, title, onClose, scrollable = false, ma
         >
           <motion.div
             {...sheetMotion}
+            {...sheetDrag}
             onClick={(e) => e.stopPropagation()}
             className={`w-full bg-[rgb(var(--color-surface))] rounded-t-2xl overflow-hidden${
               scrollable ? ` ${maxHeightClass} flex flex-col` : ''

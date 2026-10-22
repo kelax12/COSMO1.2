@@ -18,7 +18,7 @@
 // parent le construit, la carte s'en sert. Le mettre ailleurs obligerait les
 // deux fichiers à importer un troisième.
 // ═══════════════════════════════════════════════════════════════════
-import { useRef } from 'react';
+import { useRef, type CSSProperties } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -30,6 +30,7 @@ import {
   ListTodo,
   CalendarDays,
   TrendingUp,
+  AlarmClock,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { type OrgTeam } from '@/modules/org-teams';
@@ -49,11 +50,12 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { workloadTone, type MemberWorkload } from './team-stats.helpers';
+import { type MemberWorkload } from './team-stats.helpers';
 import { formatDuration } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import { type MemberTab } from './member-sheet.helpers';
 import { useT } from '@/i18n/useT';
+import RoleTerm from './RoleTerm';
 
 // Logique pure extraite dans `pyramid.helpers.ts` (audit archi 2026-08-07, M1) :
 // ce sont les seules fonctions de ce fichier qui DÉCIDENT quelque chose
@@ -114,7 +116,8 @@ export interface NodeCardProps {
 }
 
 export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onRemove, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenMember, editMode, depth, mobile, workloadByUser }: NodeCardProps) => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: ta, tp: tpa } = useT('orgAdmin');
   const collapsed = collapsedIds.has(node.member.userId);
   // Radix ferme le menu sur pointerup PUIS le navigateur émet un `click` sur
   // l'élément sous le pointeur (la carte) → sinon la fiche s'ouvrait en plus de
@@ -179,6 +182,9 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
                 ? 'border-[rgb(var(--color-accent-solid))]/50'
                 : 'border-[rgb(var(--color-border))]';
 
+  // Maquettes 273-274 : sur mobile, au repos, un nœud sans cadre ni anneau ;
+  // le rôle écrit (« Manager · 4 ») dit déjà qui encadre.
+  const plain = mobile && !editMode && !drag && !isDropTarget && !isMatch && flashId !== m.userId;
   const myTeams = teamsByUser.get(m.userId) ?? [];
   const myWorkload = workloadByUser?.get(m.userId);
 
@@ -266,17 +272,17 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
       data-card="true"
       aria-label={
         isDropTarget
-          ? t('pyramid.placeUnder', { member: drag.member.displayName, target: m.displayName })
-          : t('pyramid.cardAria', {
-              name: isMe ? t('pyramid.you') : m.displayName,
-              role: m.role === 'admin' ? t('pyramid.roleAdmin') : manager ? t('pyramid.roleManager') : t('pyramid.roleMember'),
-              reports: node.children.length > 0 ? tp('pyramid.directReports', node.children.length) : '',
+          ? ta('pyramid.placeUnder', { member: drag.member.displayName, target: m.displayName })
+          : ta('pyramid.cardAria', {
+              name: isMe ? ta('pyramid.you') : m.displayName,
+              role: m.role === 'admin' ? ta('pyramid.roleAdmin') : manager ? ta('pyramid.roleManager') : ta('pyramid.roleMember'),
+              reports: node.children.length > 0 ? tpa('pyramid.directReports', node.children.length) : '',
             })
       }
       style={isDragSource || editDraggable ? { touchAction: 'none' } : undefined}
       className={`inline-flex items-center rounded-2xl border bg-[rgb(var(--color-surface))] transition-colors ${
         isDropTarget && mobile ? 'gap-2.5 px-3 py-3.5' : 'gap-2.5 px-3 py-2'
-      } ${borderClass} ${
+      } ${plain ? 'border-transparent bg-transparent' : borderClass} ${
         isDragSource ? `cursor-grab select-none ${drag.pointerActive ? 'opacity-40' : ''}` : ''
       } ${isDropTarget ? 'cursor-pointer animate-wiggle' : ''} ${
         editDraggable ? 'cursor-grab select-none animate-wiggle' : ''
@@ -290,7 +296,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
             e.preventDefault();
             onGrab(m, e);
           }}
-          title={t('pyramid.dragToMove', { name: m.displayName })}
+          title={ta('pyramid.dragToMove', { name: m.displayName })}
           data-grip="true"
           className="cursor-grab text-[rgb(var(--color-text-muted))]/50 hover:text-indigo-500 -ml-1 shrink-0 touch-none"
           aria-hidden="true"
@@ -305,17 +311,17 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
             e.stopPropagation();
             onToggleCollapse(m.userId);
           }}
-          aria-label={collapsed ? t('pyramid.expandTeam', { name: m.displayName }) : t('pyramid.collapseTeam', { name: m.displayName })}
+          aria-label={collapsed ? ta('pyramid.expandTeam', { name: m.displayName }) : ta('pyramid.collapseTeam', { name: m.displayName })}
           aria-expanded={!collapsed}
           className="w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0"
         >
           {collapsed ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
         </button>
       )}
-      <MemberAvatar avatar={m.avatar} name={m.displayName} size={34} />
+      <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} />
       <div className="min-w-0">
           <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate max-w-[140px]">
-            {isMe ? t('pyramid.you') : m.displayName}
+            {isMe ? ta('pyramid.you') : m.displayName}
           </p>
           {/* Calque de charge : voir l'organisation ET sa santé sur le même
               écran. Rendu seulement si la personne a des tâches ouvertes —
@@ -325,50 +331,47 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
               className="flex items-center gap-1 mt-0.5"
               title={
                 myWorkload.overdue > 0
-                  ? tp('pyramid.workloadTitleOverdue', myWorkload.open, {
+                  ? tpa('pyramid.workloadTitleOverdue', myWorkload.open, {
                       duration: formatDuration(myWorkload.estimatedMinutes),
                       overdue: myWorkload.overdue,
                     })
-                  : tp('pyramid.workloadTitle', myWorkload.open, {
+                  : tpa('pyramid.workloadTitle', myWorkload.open, {
                       duration: formatDuration(myWorkload.estimatedMinutes),
                     })
               }
             >
-              <span className="w-10 h-1 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden shrink-0">
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-caption tabular-nums font-semibold leading-none bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]"
+                aria-label={tpa('pyramid.workloadOpenAria', myWorkload.open, { count: myWorkload.open })}
+              >
+                <ListTodo className="w-3 h-3" aria-hidden="true" />
+                {myWorkload.open}
+              </span>
+              {myWorkload.overdue > 0 && (
                 <span
-                  className={`block h-full rounded-full ${
-                    workloadTone(myWorkload.loadRatio) === 'over'
-                      ? 'bg-red-500'
-                      : workloadTone(myWorkload.loadRatio) === 'under'
-                        ? 'bg-[rgb(var(--color-text-muted))]'
-                        : 'bg-[rgb(var(--color-accent))]'
-                  }`}
-                  style={{ width: `${Math.min(100, Math.round(myWorkload.loadRatio * 66))}%` }}
-                />
-              </span>
-              {/* Format x/y : x = tâches ouvertes non en retard, y = en
-                  retard. Le "/" est un séparateur littéral, pas un symbole
-                  de division. */}
-              <span className="text-caption tabular-nums" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                {myWorkload.open - myWorkload.overdue}
-                <span className={myWorkload.overdue > 0 ? 'font-bold text-red-500' : ''}>
-                  /{myWorkload.overdue}
+                  className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-caption tabular-nums font-semibold leading-none bg-red-500/10 text-red-600 dark:text-red-400"
+                  aria-label={tpa('pyramid.workloadOverdueAria', myWorkload.overdue, { count: myWorkload.overdue })}
+                >
+                  <AlarmClock className="w-3 h-3" aria-hidden="true" />
+                  {myWorkload.overdue}
                 </span>
-              </span>
+              )}
             </span>
           )}
           <p
-            className="text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] inline-flex items-center gap-1.5"
+            className="text-caption font-semibold md:uppercase md:tracking-wide text-[rgb(var(--color-text-muted))] inline-flex items-center gap-1.5"
             title={
               totalReports > node.children.length
-                ? tp('pyramid.directCount', node.children.length) + t('pyramid.totalSuffix', { count: totalReports })
+                ? tpa('pyramid.directCount', node.children.length) + ta('pyramid.totalSuffix', { count: totalReports })
                 : undefined
             }
           >
             <span>
-              {m.role === 'admin' ? t('pyramid.badgeAdmin') : manager ? t('pyramid.badgeManager') : t('pyramid.badgeMember')}
+              <RoleTerm term={m.role === 'admin' ? 'admin' : manager ? 'manager' : 'member'}>
+                {m.role === 'admin' ? ta('pyramid.badgeAdmin') : manager ? ta('pyramid.badgeManager') : ta('pyramid.badgeMember')}
+              </RoleTerm>
               {node.children.length > 0 ? ` · ${node.children.length}` : ''}
-              {totalReports > node.children.length ? t('pyramid.totalSuffix', { count: totalReports }) : ''}
+              {totalReports > node.children.length ? ta('pyramid.totalSuffix', { count: totalReports }) : ''}
             </span>
             {myTeams.length > 0 && (
               <span className="inline-flex items-center gap-1 shrink-0">
@@ -376,8 +379,9 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
                   <span
                     key={t.id}
                     title={t.name}
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: t.color }}
+                    // Maquette 269 : sur mobile, la teinte d'équipe adoucie.
+                    className="w-2 h-2 rounded-full max-md:bg-[color-mix(in_srgb,var(--tc)_55%,#8b949e)] md:bg-[var(--tc)]"
+                    style={{ '--tc': t.color } as CSSProperties}
                   />
                 ))}
               </span>
@@ -411,7 +415,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
             {movable && (
               <DropdownMenuItem onClick={() => onStartDrag(m)}>
                 <Move size={14} aria-hidden="true" />
-                {t('pyramid.move')}
+                {ta('pyramid.move')}
               </DropdownMenuItem>
             )}
             {canSeeInsights && (
@@ -419,7 +423,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onOpenMember(m, 'tasks')}>
                   <ListTodo size={14} aria-hidden="true" />
-                  {t('pyramid.seeTasksAction')}
+                  {ta('pyramid.seeTasksAction')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onOpenMember(m, 'agenda')}>
                   <CalendarDays size={14} aria-hidden="true" />

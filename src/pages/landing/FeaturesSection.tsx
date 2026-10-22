@@ -12,15 +12,24 @@ import TaskTableShowcase from '@/components/showcase/TaskTableShowcase';
 import AgendaShowcase from '@/components/showcase/AgendaShowcase';
 import OKRCardShowcase from '@/components/showcase/OKRCardShowcase';
 import HabitHeatmapShowcase from '@/components/showcase/HabitHeatmapShowcase';
-import {
-  TaskCardMobileShowcase,
-  AgendaMobileShowcase,
-  HabitMobileShowcase,
-  OKRMobileShowcase,
-  StatsMobileShowcase,
-} from '@/components/showcase/MobileShowcases';
+// Vitrines MOBILES chargées à la demande (2026-09-23) : 17,5 ko minifiés, soit
+// le plus gros poste du chunk `LandingPage`, qui dépassait son cliquet de
+// budget (21,3 ko pour 21,0). Elles ne sont rendues que sous `isMobile` : un
+// visiteur sur ordinateur les téléchargeait sans jamais les voir. Sur
+// téléphone, l'import part au premier rendu de la section, bien avant que le
+// défilement l'atteigne ; le conteneur qui les porte n'apparaît de toute façon
+// qu'en entrant dans l'écran (`whileInView`). L'écran ne change pas.
+const vitrineMobile = (nom: 'TaskCardMobileShowcase' | 'AgendaMobileShowcase' | 'HabitMobileShowcase' | 'OKRMobileShowcase' | 'StatsMobileShowcase') =>
+  lazy(() => import('@/components/showcase/MobileShowcases').then((m) => ({ default: m[nom] })));
+const TaskCardMobileShowcase = vitrineMobile('TaskCardMobileShowcase');
+const AgendaMobileShowcase = vitrineMobile('AgendaMobileShowcase');
+const HabitMobileShowcase = vitrineMobile('HabitMobileShowcase');
+const OKRMobileShowcase = vitrineMobile('OKRMobileShowcase');
+const StatsMobileShowcase = vitrineMobile('StatsMobileShowcase');
 import { useT } from '@/i18n/useT';
 import WhenVisible from '@/components/showcase/WhenVisible';
+import ShowcaseTheme from '@/components/showcase/ShowcaseTheme';
+import { basisColonneAgenda } from '@/components/showcase/agenda-geometrie';
 
 // Audit perf 2026-05-29 — StatsShowcase pulls Recharts (≈ 320 kB). Landing
 // page should never block on it: lazy-load with a lightweight skeleton so
@@ -75,17 +84,25 @@ interface Feature {
   Mobile: React.ComponentType;
   /** sens d'entrée du texte en mode empilé */
   fromRight?: boolean;
+  /**
+   * `flex-basis` de la colonne de la vitrine quand elle ne doit PAS prendre
+   * la moitié de la rangée. Absent : les deux colonnes se partagent la place.
+   */
+  basisMaquette?: string;
 }
+
+/** `gap-16` : l'écart entre le texte et la vitrine, dans les deux mises en page. */
+const ECART_COLONNES_PX = 64;
 
 const FEATURES: Feature[] = [
   {
     id: 'tasks',
     path: '/tasks',
     icon: CheckCircle,
-    gradient: 'from-[rgb(var(--color-accent-solid))] to-cyan-500',
+    gradient: 'from-blue-600 to-cyan-500',
     shadow: 'shadow-blue-500/30',
-    glow: 'from-[rgb(var(--color-accent-solid))]/20 to-cyan-500/20',
-    accentText: 'from-[rgb(var(--color-accent-solid))] to-cyan-400',
+    glow: 'from-blue-500/15 to-cyan-500/15',
+    accentText: 'from-blue-600 to-cyan-600',
     Desktop: TaskTableShowcase,
     Mobile: TaskCardMobileShowcase,
   },
@@ -95,11 +112,14 @@ const FEATURES: Feature[] = [
     icon: Calendar,
     gradient: 'from-red-500 to-rose-500',
     shadow: 'shadow-red-500/30',
-    glow: 'from-red-500/20 to-rose-500/20',
-    accentText: 'from-red-400 to-rose-400',
+    glow: 'from-red-500/15 to-rose-500/15',
+    accentText: 'from-red-600 to-rose-600',
     Desktop: AgendaShowcase,
     Mobile: AgendaMobileShowcase,
     fromRight: true,
+    // Le calendrier est 30 % plus large ; la barre des tâches garde sa taille.
+    // C'est le texte d'à côté qui cède la place (cf. `agenda-geometrie.ts`).
+    basisMaquette: basisColonneAgenda(ECART_COLONNES_PX),
   },
   {
     id: 'okr',
@@ -107,8 +127,8 @@ const FEATURES: Feature[] = [
     icon: Target,
     gradient: 'from-green-500 to-emerald-500',
     shadow: 'shadow-green-500/30',
-    glow: 'from-green-500/20 to-emerald-500/20',
-    accentText: 'from-green-400 to-emerald-400',
+    glow: 'from-green-500/15 to-emerald-500/15',
+    accentText: 'from-green-600 to-emerald-600',
     Desktop: OKRCardShowcase,
     Mobile: OKRMobileShowcase,
   },
@@ -118,8 +138,8 @@ const FEATURES: Feature[] = [
     icon: Repeat,
     gradient: 'from-yellow-500 to-amber-500',
     shadow: 'shadow-yellow-500/30',
-    glow: 'from-yellow-500/20 to-amber-500/20',
-    accentText: 'from-yellow-400 to-amber-400',
+    glow: 'from-yellow-500/15 to-amber-500/15',
+    accentText: 'from-yellow-600 to-amber-600',
     Desktop: HabitHeatmapShowcase,
     Mobile: HabitMobileShowcase,
     fromRight: true,
@@ -130,8 +150,8 @@ const FEATURES: Feature[] = [
     icon: BarChart2,
     gradient: 'from-violet-500 to-purple-600',
     shadow: 'shadow-violet-500/30',
-    glow: 'from-violet-500/20 to-purple-600/20',
-    accentText: 'from-violet-400 to-purple-400',
+    glow: 'from-violet-500/15 to-purple-600/15',
+    accentText: 'from-violet-600 to-purple-600',
     Desktop: () => (
       <WhenVisible fallback={<ShowcaseSkeleton />}>
         <Suspense fallback={<ShowcaseSkeleton />}>
@@ -162,27 +182,27 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
       <div className={`inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r ${feature.gradient} rounded-2xl shadow-lg ${feature.shadow}`}>
         <Icon size={28} className="text-white" />
       </div>
-      <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
+      <h3 className="text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
         {t(key('titleTop'))}
         <br />
         <span className={`bg-gradient-to-r ${feature.accentText} bg-clip-text text-transparent`}>
           {t(key('titleAccent'))}
         </span>
       </h3>
-      <p className="text-lg text-slate-300 leading-relaxed">{t(key('description'))}</p>
+      <p className="text-lg text-slate-600 leading-relaxed">{t(key('description'))}</p>
       <div className="space-y-3">
         {(['b1', 'b2', 'b3', 'b4'] as const).map((b, i) => (
           <div key={i} className="flex items-center gap-3">
             <div className={`w-5 h-5 bg-gradient-to-r ${feature.gradient} rounded-full flex items-center justify-center flex-shrink-0`}>
               <CheckCircle size={11} className="text-white" />
             </div>
-            <span className="text-slate-300 font-medium text-sm">{t(key(b))}</span>
+            <span className="text-slate-700 font-medium text-sm">{t(key(b))}</span>
           </div>
         ))}
       </div>
       <button
         onClick={onCta}
-        className={`group bg-gradient-to-r ${feature.gradient} hover:shadow-lg text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2`}
+        className={`group bg-gradient-to-r ${feature.gradient} text-white px-8 py-4 rounded-xl font-semibold shadow-sm hover:shadow-lg ${feature.shadow} transition-all duration-300 hover:scale-105 transform flex items-center gap-2`}
       >
         {t(key('cta'))} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
       </button>
@@ -213,9 +233,9 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
 
       const setActiveDot = (index: number) => {
         dots.forEach((dot, i) => {
-          dot.classList.toggle('bg-white', i === index);
+          dot.classList.toggle('bg-blue-600', i === index);
           dot.classList.toggle('scale-125', i === index);
-          dot.classList.toggle('bg-white/25', i !== index);
+          dot.classList.toggle('bg-slate-900/20', i !== index);
         });
       };
       setActiveDot(0);
@@ -269,11 +289,11 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
             viewport={{ once: true }}
             className="text-4xl lg:text-5xl font-bold mb-6"
           >
-            <span className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
               {t('features.headingLine1')}
             </span>
             <br />
-            <span className="bg-gradient-to-r from-[rgb(var(--color-accent-solid))] to-purple-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
               {t('features.headingLine2')}
             </span>
           </motion.h2>
@@ -282,7 +302,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-slate-400 max-w-3xl mx-auto"
+            className="text-xl text-slate-600 max-w-3xl mx-auto"
           >
             {t('features.modulesSubtitle')}
           </motion.p>
@@ -307,7 +327,10 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                   >
                     <FeatureCopy feature={feature} onCta={() => handleFeatureClick(feature.path)} />
                   </motion.div>
-                  <div className="flex-1 w-full px-4 lg:px-0" style={{ perspective: 1200 }}>
+                  <div
+                    className={`flex-1 w-full px-4 lg:px-0 ${feature.basisMaquette ? 'lg:flex-none lg:basis-[var(--basis-maquette)]' : ''}`}
+                    style={{ perspective: 1200, ['--basis-maquette' as string]: feature.basisMaquette }}
+                  >
                     <motion.div
                       initial={reduceMotion ? false : { rotateY: feature.fromRight ? -48 : 48, opacity: 0, scale: 0.78, y: 50 }}
                       whileInView={{ rotateY: 0, opacity: 1, scale: 1, y: 0 }}
@@ -317,7 +340,14 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                     >
                       <div className={`absolute -inset-3 bg-gradient-to-r ${feature.glow} rounded-3xl blur-2xl`} />
                       <div className="relative">
-                        <Showcase />
+                        {/* Parcours perso BLANC : les vitrines passent en clair.
+                            Sans ce fournisseur elles restent sombres, comme sur
+                            `/guide`. */}
+                        <ShowcaseTheme theme="light">
+                          <Suspense fallback={null}>
+                            <Showcase />
+                          </Suspense>
+                        </ShowcaseTheme>
                       </div>
                     </motion.div>
                   </div>
@@ -337,7 +367,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
               {FEATURES.map((f) => (
                 <span
                   key={f.id}
-                  className="feature-dot w-2 h-2 rounded-full bg-white/25 transition-all duration-300"
+                  className="feature-dot w-2 h-2 rounded-full bg-slate-900/20 transition-all duration-300"
                 />
               ))}
             </div>
@@ -351,16 +381,27 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                     // Panneaux 2-5 masqués dès le rendu (les 5 partagent la
                     // même cellule de grid) : sans ça, ils se chevauchent
                     // visiblement pendant la frame avant le gsap.set.
-                    className={`feature-panel col-start-1 row-start-1 flex flex-row items-center gap-16 pl-10 ${i > 0 ? 'opacity-0' : ''}`}
+                    // Quinconce (2026-09-23) : même ordre que le layout empilé,
+                    // vitrine à gauche pour Agenda et Habitudes (`fromRight`).
+                    // Le deck imposait `flex-row` à tous les panneaux depuis
+                    // juillet, alors que l'inclinaison GSAP ci-dessus alterne
+                    // déjà selon `i % 2`. `pl-10` reste : c'est la place du
+                    // rail de points, toujours à gauche.
+                    className={`feature-panel col-start-1 row-start-1 flex ${feature.fromRight ? 'flex-row-reverse' : 'flex-row'} items-center gap-16 pl-10 ${i > 0 ? 'opacity-0' : ''}`}
                   >
                     <div className="flex-1">
                       <FeatureCopy feature={feature} onCta={() => handleFeatureClick(feature.path)} />
                     </div>
-                    <div className="flex-1 w-full" style={{ perspective: 1200 }}>
+                    <div
+                      className="flex-1 w-full"
+                      style={{ perspective: 1200, ...(feature.basisMaquette ? { flex: `0 0 ${feature.basisMaquette}` } : {}) }}
+                    >
                       <div className="feature-mockup relative">
                         <div className={`absolute -inset-3 bg-gradient-to-r ${feature.glow} rounded-3xl blur-2xl`} />
                         <div className="relative">
-                          <Showcase />
+                          <ShowcaseTheme theme="light">
+                            <Showcase />
+                          </ShowcaseTheme>
                         </div>
                       </div>
                     </div>

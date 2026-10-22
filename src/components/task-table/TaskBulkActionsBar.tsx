@@ -1,27 +1,27 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Trash2, ListPlus, MoreHorizontal, Tag, CalendarClock, ArrowLeft, X } from 'lucide-react';
+import { CheckCircle2, Trash2, ListPlus, MoreHorizontal, Tag, CalendarClock, Activity, ArrowLeft, X, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DateCalendarPanel } from '@/components/ui/date-picker';
+import { buildTree, type Category, type CategoryNode } from '@/modules/categories';
+import { useCollapsedCategories } from '@/modules/categories/collapsed.store';
+import NoCategoryOption from '@/components/category/NoCategoryOption';
+import { HEALTH_DOT, HEALTHS } from '@/components/organization/health-state.helpers';
+import type { TaskHealth } from '@/modules/tasks';
 import { useT } from '@/i18n/useT';
-
-interface CategoryOption {
-  id: string;
-  name: string;
-  color: string;
-}
 
 interface Props {
   /** Le mode sélection est-il actif ? Pilote l'entrée et la sortie animées. */
   open: boolean;
   /** Nombre de tâches sélectionnées. Zéro désactive les actions, sans masquer la barre. */
   count: number;
-  categories: CategoryOption[];
+  categories: Category[];
   onComplete: () => void;
   onAddToList: () => void;
   onDelete: () => void;
   onSetCategory: (categoryId: string, categoryName: string) => void;
   onSetDeadline: (deadline: string) => void;
+  onSetHealth: (health: TaskHealth | null) => void;
   onExit: () => void;
 }
 
@@ -56,11 +56,25 @@ const TaskBulkActionsBar: React.FC<Props> = ({
   onDelete,
   onSetCategory,
   onSetDeadline,
+  onSetHealth,
   onExit,
 }) => {
   const { t, tp } = useT('tasks');
+  const { t: tCommon } = useT('common');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuView, setMenuView] = useState<'root' | 'category' | 'date'>('root');
+  const [menuView, setMenuView] = useState<'root' | 'category' | 'date' | 'health'>('root');
+  // Partagé avec ColorSettingsModal / CategoryFilterTree : un même compte a un
+  // seul état de pliage, pas un par sélecteur.
+  const { isCollapsed, setCollapsed } = useCollapsedCategories();
+  const categoryRows: Array<{ node: CategoryNode; depth: number; hasChildren: boolean }> = [];
+  const flattenCategoryRows = (nodes: CategoryNode[], depth: number) => {
+    for (const node of nodes) {
+      const hasChildren = node.children.length > 0;
+      categoryRows.push({ node, depth, hasChildren });
+      if (hasChildren && !isCollapsed(node.category.id)) flattenCategoryRows(node.children, depth + 1);
+    }
+  };
+  flattenCategoryRows(buildTree(categories), 0);
   // Le calendrier COSMO est une VUE du menu, comme la liste des catégories —
   // pas une seconde couche par-dessus. Même raison que dans `OverdueBanner`
   // (cf. son commentaire) : une couche ouverte pendant que le menu se ferme
@@ -100,7 +114,7 @@ const TaskBulkActionsBar: React.FC<Props> = ({
             <Trash2 size={16} data-icon="inline-start" />
             <span className="hidden sm:inline">{t('table.delete')}</span>
           </Button>
-          {/* « ⋯ » — actions supplémentaires : catégorie / deadline */}
+          {/* « ⋯ » — actions supplémentaires : catégorie / deadline / état */}
           <div className="relative">
             <Button
               size="sm"
@@ -133,7 +147,35 @@ const TaskBulkActionsBar: React.FC<Props> = ({
                     role="menu"
                     aria-label={t('table.moreActions')}
                   >
-                    {menuView === 'date' ? (
+                    {menuView === 'health' ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setMenuView('root')}
+                          className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-[rgb(var(--color-hover))] transition-colors"
+                          style={{ color: 'rgb(var(--color-text-muted))' }}
+                          aria-label={t('table.backAria')}
+                        >
+                          <ArrowLeft size={13} aria-hidden="true" /> {t('table.back')}
+                        </button>
+                        <div className="h-px" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+                        {([...HEALTHS, null] as Array<TaskHealth | null>).map((h) => (
+                          <button
+                            key={h ?? 'none'}
+                            type="button"
+                            role="menuitem"
+                            onClick={() => { setMenuOpen(false); onSetHealth(h); }}
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
+                            style={{ color: 'rgb(var(--color-text-primary))' }}
+                          >
+                            {h
+                              ? <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${HEALTH_DOT[h]}`} aria-hidden="true" />
+                              : <span className="w-2.5 h-2.5 rounded-full shrink-0 border" style={{ borderColor: 'rgb(var(--color-text-muted))' }} aria-hidden="true" />}
+                            {h ? t(`board.health.${h}`) : t('board.health.unset')}
+                          </button>
+                        ))}
+                      </>
+                    ) : menuView === 'date' ? (
                       <>
                         <button
                           type="button"
@@ -177,6 +219,17 @@ const TaskBulkActionsBar: React.FC<Props> = ({
                           <CalendarClock size={15} style={{ color: 'rgb(var(--color-text-secondary))' }} aria-hidden="true" />
                           {t('table.editDeadline')}
                         </button>
+                        <div className="h-px" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => setMenuView('health')}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
+                          style={{ color: 'rgb(var(--color-text-primary))' }}
+                        >
+                          <Activity size={15} style={{ color: 'rgb(var(--color-text-secondary))' }} aria-hidden="true" />
+                          {t('table.editHealth')}
+                        </button>
                       </>
                     ) : (
                       <>
@@ -191,28 +244,47 @@ const TaskBulkActionsBar: React.FC<Props> = ({
                         </button>
                         <div className="h-px" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
                         <div className="max-h-56 overflow-y-auto">
+                          <NoCategoryOption onSelect={() => { setMenuOpen(false); onSetCategory('', tCommon('noCategory')); }} selected={false} />
                           {categories.length === 0 ? (
                             <p className="px-3.5 py-3 text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
                               {t('table.noCategory')}
                             </p>
                           ) : (
-                            categories.map((cat) => (
-                              <button
-                                key={cat.id}
-                                type="button"
-                                role="menuitem"
-                                onClick={() => { setMenuOpen(false); onSetCategory(cat.id, cat.name); }}
-                                className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
-                                style={{ color: 'rgb(var(--color-text-primary))' }}
-                              >
-                                <span
-                                  className="w-3 h-3 rounded-full shrink-0"
-                                  style={{ backgroundColor: cat.color }}
-                                  aria-hidden="true"
-                                />
-                                <span className="truncate">{cat.name}</span>
-                              </button>
-                            ))
+                            categoryRows.map(({ node, depth, hasChildren }) => {
+                              const cat = node.category;
+                              return (
+                                <div key={cat.id} className="flex items-center gap-1" style={{ paddingInlineStart: `${8 + depth * 16}px` }}>
+                                  {hasChildren ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setCollapsed(cat.id, !isCollapsed(cat.id))}
+                                      aria-label={isCollapsed(cat.id) ? t('colorModal.expand') : t('colorModal.collapse')}
+                                      className="p-1 shrink-0 text-blue-600 dark:text-blue-400"
+                                    >
+                                      {isCollapsed(cat.id)
+                                        ? <ChevronRight size={14} aria-hidden="true" />
+                                        : <ChevronDown size={14} aria-hidden="true" />}
+                                    </button>
+                                  ) : (
+                                    <span className="w-6 shrink-0" aria-hidden="true" />
+                                  )}
+                                  <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => { setMenuOpen(false); onSetCategory(cat.id, cat.name); }}
+                                    className="flex-1 min-w-0 flex items-center gap-2.5 pr-3.5 py-2.5 text-sm text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
+                                    style={{ color: 'rgb(var(--color-text-primary))' }}
+                                  >
+                                    <span
+                                      className="w-3 h-3 rounded-full shrink-0"
+                                      style={{ backgroundColor: cat.color }}
+                                      aria-hidden="true"
+                                    />
+                                    <span className="truncate">{cat.name}</span>
+                                  </button>
+                                </div>
+                              );
+                            })
                           )}
                         </div>
                       </>

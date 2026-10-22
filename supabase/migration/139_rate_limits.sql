@@ -161,15 +161,42 @@ $fn$;
 
 REVOKE ALL ON FUNCTION public.consume_rate_limit(TEXT, INTEGER, INTERVAL) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.consume_rate_limit(TEXT, INTEGER, INTERVAL) FROM anon;
--- ❌ PAS de GRANT à `authenticated` : seul `service_role`, depuis une Edge
---    Function, décide d'un plafond. Un client qui pourrait appeler cette
---    fonction pourrait épuiser le compteur de quelqu'un d'autre en devinant sa
---    clé — un déni de service ciblé offert par la défense elle-même.
+-- 🔴 `REVOKE ... FROM PUBLIC` NE SUFFIT PAS, et cette migration l'a cru.
+--    Mesuré en prod le 2026-09-12, dans une transaction annulée : le schéma
+--    `public` porte un privilège par défaut (`pg_default_acl`) qui accorde
+--    `EXECUTE` à `anon`, `authenticated` ET `service_role` NOMMÉMENT, à la
+--    création. L'ACL d'une fonction fraîchement créée vaut donc
+--    `{=X/postgres,postgres=X,anon=X,authenticated=X,service_role=X}`, et
+--    retirer `PUBLIC` puis `anon` y laisse `authenticated=X`.
+--
+--    La version précédente de ce bloc disait « PAS de GRANT à `authenticated` »
+--    et s'arrêtait là : ne pas accorder n'est pas retirer. Elle aurait livré
+--    en production exactement le déni de service ciblé décrit ci-dessous, et
+--    la checklist de vérification de cette même migration (« `authenticated` ne
+--    peut PAS appeler la fonction ») serait sortie ROUGE.
+REVOKE ALL ON FUNCTION public.consume_rate_limit(TEXT, INTEGER, INTERVAL) FROM authenticated;
+--    Un client qui pourrait appeler cette fonction pourrait épuiser le compteur
+--    de quelqu'un d'autre en devinant sa clé — un déni de service ciblé offert
+--    par la défense elle-même.
+--
+-- ✅ `service_role` est accordé EXPLICITEMENT, et non laissé à l'ACL par défaut :
+--    c'est lui que la Edge Function présente, et un plafond qui dépend d'un
+--    privilège implicite est un plafond qui tombe le jour où ce défaut change.
+--    ⚠️ Un échec de la RPC n'est PAS bloquant côté Deno (`consumeRateLimits`
+--    laisse passer et alerte) : sans ce GRANT, le plafond ne refuserait jamais
+--    rien et rien ne le dirait à l'écran.
+GRANT EXECUTE ON FUNCTION public.consume_rate_limit(TEXT, INTEGER, INTERVAL) TO service_role;
 
 -- ─── Purge des compteurs morts ──────────────────────────────────────
 --
--- Appelée opportunément par la Edge Function (une fois sur cent, sans bloquer
--- la réponse) : pas de cron à poser, et la table reste bornée.
+-- Appelée opportunément par la Edge Function, une fois sur cent : pas de cron
+-- à poser, et la table reste bornée.
+--
+-- ⚠️ Cette ligne disait « sans bloquer la réponse », et le code ne l'appelait
+--    pas du tout. Les deux sont corrigés le 2026-09-12 : l'appel existe, et il
+--    est ATTENDU. Une promesse laissée flottante dans une Edge Function n'a
+--    aucune garantie de survivre au retour de la réponse — la purge qu'on
+--    croirait posée ne tournerait jamais.
 
 CREATE OR REPLACE FUNCTION public.purge_stale_rate_limits()
 RETURNS INTEGER
@@ -189,3 +216,4 @@ $fn$;
 REVOKE ALL ON FUNCTION public.purge_stale_rate_limits() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.purge_stale_rate_limits() FROM anon;
 REVOKE ALL ON FUNCTION public.purge_stale_rate_limits() FROM authenticated;
+GRANT EXECUTE ON FUNCTION public.purge_stale_rate_limits() TO service_role;

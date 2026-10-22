@@ -16,7 +16,7 @@ export type {
   UpdateOrganizationInput,
   OrgInviteLink,
 } from './types';
-export { buildOrgTree, isManagerOf, subtreeOf } from './types';
+export { buildOrgTree, isManagerOf, subtreeOf, isMemberActive } from './types';
 
 // ─── Permissions par membre (mig. 115) ───────────────────────────────
 export type {
@@ -35,6 +35,8 @@ export {
   canAssignTo,
   canGrant,
   canEditPermissionsOf,
+  canEditTeamTask,
+  canDeleteTeamTask,
 } from './permissions';
 
 // ─── Constants & query keys ──────────────────────────────────────────
@@ -57,7 +59,9 @@ export { ActiveOrgProvider, useActiveOrganization } from './ActiveOrgContext';
 
 // ─── Repository ──────────────────────────────────────────────────────
 export type { IOrganizationsRepository } from './repository';
-export { LocalStorageOrganizationsRepository } from './local.repository';
+// Dépôt de démo NON réexporté (2026-10-01) : le baril est importé par le shell,
+// la réexportation ramenait le dépôt dans le chunk d'ENTRÉE alors que la fabrique
+// le charge à la demande (`src/lib/demo-repositories.ts`).
 export { SupabaseOrganizationsRepository } from './supabase.repository';
 
 // ─── Hooks ───────────────────────────────────────────────────────────
@@ -77,7 +81,6 @@ export {
   useRespondJoinRequest,
   useCancelJoinRequest,
   useSetMemberRole,
-  useRemoveMember,
   useLeaveOrganization,
   useDeleteOrganization,
   useTransferOwnership,
@@ -91,6 +94,34 @@ export {
 } from './hooks';
 export { useMyOrgPermissions } from './use-my-permissions';
 
+// ─── Rôles personnalisés à durée limitée (mig. 219) ──────────────────
+export type { ActiveRoleGrant } from './permissions';
+export type {
+  OrgCustomRole,
+  OrgRoleAssignment,
+  SaveCustomRoleInput,
+  AssignRoleInput,
+  RoleDuration,
+} from './roles.types';
+export { ROLE_COLORS, ROLE_DURATIONS, ROLE_NAME_MAX } from './roles.types';
+export {
+  isAssignmentActive,
+  activeAssignmentsOf,
+  activeRolesOf,
+  computeEndsAt,
+  holdersCount,
+  expiringSoonCount,
+} from './roles.helpers';
+export {
+  rolesKeys,
+  useOrgRoles,
+  useOrgRoleAssignments,
+  useSaveOrgRole,
+  useDeleteOrgRole,
+  useAssignOrgRole,
+  useRevokeOrgRole,
+} from './roles.hooks';
+
 // Notifications d'entreprise (mig. 095) — lecture seule côté client.
 export {
   useOrgNotifications,
@@ -103,4 +134,8 @@ export {
 export type { OrgNotification, OrgNotificationKind } from './notifications';
 
 export { useOrgInbox, useOrgBadgeTasks } from './inbox';
+
+// Dernière activité des membres (mig. 170) — admins et managers seulement.
+export { useOrgMemberLastActivity, lastActivityScope } from './member-activity';
+export type { MemberLastActivity, MemberActivitySource } from './member-activity.types';
 export { mapOrgInbox, type OrgInboxRow } from './inbox.repository';

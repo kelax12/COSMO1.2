@@ -49,6 +49,15 @@ export default {
 				DEFAULT: 'hsl(var(--border))',
 			},
 			colors: {
+				// Hero de la landing ENTREPRISE (maquette 124, 2026-09-23) : cinq
+				// couleurs nommées. Le cyan n'a que deux rôles, la lumière et le CTA.
+				ent: {
+					nuit: '#08090C', // fond
+					faisceau: '#22D3EE', // lumière + CTA, seul accent
+					lune: '#EDF2F7', // titres, texte appuyé
+					brume: '#8B96A8', // texte courant : 6,5:1 sur la nuit
+					acier: '#1A1F27', // chrome des fenêtres
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -107,6 +116,11 @@ export default {
 			},
 			fontFamily: {
 				sans: ['Inter', 'system-ui', 'sans-serif'],
+				// Titre du hero ENTREPRISE uniquement. Auto-hébergée (CSP
+				// `font-src 'self'`), cf. `src/index.css` § polices d'affichage.
+				display: ['"Instrument Serif"', 'Georgia', '"Times New Roman"', 'serif'],
+				// Petites mentions « données » du même hero (réassurance, adresses).
+				data: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
 			},
 			boxShadow: {
 				'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
@@ -127,12 +141,19 @@ export default {
 					'0%, 100%': { transform: 'translateX(0)' },
 					'15%, 55%': { transform: 'translateX(-6px)' },
 					'35%, 75%': { transform: 'translateX(6px)' },
+				},
+				// Mode édition de l'Aperçu (widgets façon iPhone). Rotation
+				// seulement : la position finale ne dépend jamais de l'animation.
+				'jiggle': {
+					'0%, 100%': { transform: 'rotate(-0.5deg)' },
+					'50%': { transform: 'rotate(0.5deg)' },
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'shake': 'shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97)'
+				'shake': 'shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97)',
+				'jiggle': 'jiggle 0.32s ease-in-out infinite'
 			}
 		}
 	},

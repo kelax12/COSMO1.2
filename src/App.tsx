@@ -1,9 +1,9 @@
 import React, { Suspense, lazy } from 'react';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
-import { Routes, Route, Navigate } from 'react-router';
+import { Routes, Route, Navigate, useLocation } from 'react-router';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
+import { loadSonner } from '@/lib/toast';
 import { MotionConfig } from 'framer-motion';
 import { installMobileFocusRecovery } from '@/lib/mobileFocus';
 import { shouldRetryQuery } from '@/lib/query-retry';
@@ -33,11 +33,44 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
 import NewVersionBanner from '@/components/NewVersionBanner';
 import ShareInviteClaimer from '@/components/ShareInviteClaimer';
+import { releasePrerenderHero } from '@/lib/prerender-hero';
+import BootScreen from '@/components/BootScreen';
+import { isOrgPath } from '@/components/organization/deep-link.helpers';
 // Audit perf 2026-05-29 — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
 // it so its imports (framer-motion subset, lucide icons, fuzzy search) don't
 // land in the entry chunk. Suspense fallback is null because the palette
 // itself is invisible until opened.
 const CommandPalette = lazy(() => import('@/components/CommandPalette'));
+
+// Sonner sort du chemin critique (66,6 ko bruts dans l'entrée, payés par tout
+// visiteur qui arrive sur la landing et repart). Le `<Toaster>` ne peint rien
+// tant qu'aucun toast n'est émis : le monter un tick plus tard ne change rien à
+// l'écran. L'import passe par `loadSonner()`, le MÊME que la façade
+// `@/lib/toast`, donc un seul chunk et une seule instance du store de toasts.
+// ⚠️ Il lui faut son PROPRE `<Suspense>` : suspendre sur la frontière qui
+// enveloppe les routes cacherait la page pendant le chargement.
+const Toaster = lazy(() => loadSonner().then((m) => ({ default: m.Toaster })));
+
+/**
+ * L'accueil entreprise (`/entreprise/onboarding`) a une DA nuit FIXE : un toast
+ * clair (« Équipe créée ») y tombait comme une carte blanche sur la nuit
+ * (relevé le 2026-10-04). Ses toasts sont donc sombres ; partout ailleurs, le
+ * réglage d'origine (`system`).
+ */
+const ThemedToaster = () => {
+  const { pathname } = useLocation();
+  return (
+    <Toaster
+      position="top-right"
+      richColors
+      closeButton
+      theme={pathname.endsWith('/entreprise/onboarding') ? 'dark' : 'system'}
+      toastOptions={{
+        duration: 3000,
+      }}
+    />
+  );
+};
 
 // Lazy load pages for code splitting.
 //
@@ -48,11 +81,11 @@ const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'), ['overlays', 
 const SignupPage = lazyWithRetry(() => import('@/pages/SignupPage'), ['overlays', 'seo']);
 const ForgotPasswordPage = lazyWithRetry(() => import('@/pages/ForgotPasswordPage'), ['seo']);
 const ResetPasswordPage = lazyWithRetry(() => import('@/pages/ResetPasswordPage'), ['seo']);
-const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'), ['dashboard', 'eventModal', 'okr', 'org', 'overlays', 'taskModal', 'tasks']);
+const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'), ['dashboard', 'eventModal', 'okr', 'org', 'orgAdmin', 'overlays', 'taskModal', 'tasks']);
 const TasksPage = lazyWithRetry(() => import('@/pages/TasksPage'), ['eventModal', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
 const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'), ['agenda', 'eventModal', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
 const HabitsPage = lazyWithRetry(() => import('@/pages/HabitsPage'), ['eventModal', 'habits', 'overlays', 'premium', 'tasks', 'tutorials']);
-const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'), ['eventModal', 'okr', 'overlays', 'taskModal', 'tasks', 'tutorials']);
+const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'), ['eventModal', 'okr', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
 const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'), ['dashboard', 'overlays', 'premium', 'statistics']);
 // `tasks` : DataTab (export CSV) et `csv-export.ts` importent le BARREL
 // `@/modules/lists` pour `listKeys`, qui réexporte aussi `useDeleteListWithUndo`
@@ -63,16 +96,16 @@ const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['csv',
 const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'), ['overlays', 'premium']);
 const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'), ['guide', 'seo']);
 const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'), ['legal', 'seo']);
-const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['legal', 'seo']);
-const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['legal', 'seo']);
+const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['legal', 'legalPrivacy', 'seo']);
+const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['legal', 'legalTerms', 'seo']);
 // `tasks` : même mécanisme que `SettingsPage` ci-dessus, un cran plus loin —
 // `usePreviewShareLink` (`@/modules/friends`) importe `listKeys` du barrel
 // `@/modules/lists`, qui traîne `delete-flow.hooks.ts` et son
 // `translator('tasks')`.
 const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'), ['invite', 'overlays', 'tasks']);
 const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'), ['admin', 'overlays']);
-const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'), ['org', 'overlays']);
-const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'), ['csv', 'eventModal', 'okr', 'org', 'overlays', 'tasks']);
+const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'), ['onboarding', 'org', 'overlays', 'portfolio']);
+const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'), ['csv', 'eventModal', 'okr', 'org', 'orgAdmin', 'orgGuide', 'overlays', 'portfolio', 'tasks']);
 const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'), ['org', 'overlays']);
 const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'), ['seo']);
 const BlogIndexPage = lazyWithRetry(() => import('@/pages/BlogIndexPage'), ['landing', 'seo']);
@@ -139,6 +172,16 @@ const LayoutWithSuspense = () => (
   </AppErrorBoundary>
 );
 
+// Page PUBLIQUE : son chunk se charge derrière le spinner de démarrage, rendu
+// par React à l'identique (`BootScreen`) : pas un second spinner différent.
+const PublicPageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <AppErrorBoundary>
+    <Suspense fallback={<BootScreen />}>
+      {children}
+    </Suspense>
+  </AppErrorBoundary>
+);
+
 // Page wrapper with Suspense
 const PageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <AppErrorBoundary>
@@ -150,6 +193,11 @@ const PageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children })
 
 // Pages protégées éligibles à la réouverture « dernière page visitée » (#34).
 const RESUMABLE_PAGES = ['/dashboard', '/tasks', '/agenda', '/habits', '/okr', '/statistics', '/settings', '/entreprise'];
+
+// Les sections entreprise sont des routes (`/entreprise/projects`) : validées
+// contre la liste des sections, jamais contre un préfixe libre — la valeur
+// relue vient du stockage local (cf. no-open-redirect.test.ts).
+const isResumablePage = (path: string) => RESUMABLE_PAGES.includes(path) || isOrgPath(path);
 
 /**
  * Squelette de la landing — le fallback qu'elle mérite.
@@ -171,34 +219,44 @@ const RESUMABLE_PAGES = ['/dashboard', '/tasks', '/agenda', '/habits', '/okr', '
  */
 const LandingSkeleton = () => (
   <div
-    className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+    className="min-h-[100dvh] bg-white"
     aria-hidden="true"
   >
     <div className="mx-auto max-w-5xl px-4 pt-6">
-      <div className="h-14 rounded-2xl bg-white/[0.04]" />
+      <div className="h-14 rounded-2xl bg-slate-900/[0.04]" />
     </div>
+    {/* 🔴 CE SQUELETTE DOIT DÉCALQUER LE HERO, pas seulement en occuper la
+        place. Il a décrit une mise en page à DEUX COLONNES — texte à gauche,
+        fenêtre produit à droite — jusqu'au 2026-09-22, c'est-à-dire pendant
+        que le hero, lui, était déjà centré. Un squelette qui annonce autre
+        chose que ce qui arrive produit un saut de mise en page à l'endroit
+        exact où il est censé l'éviter : la promesse glisse de la gauche vers
+        le centre sous les yeux du visiteur.
+        ⚠️ Il est peint AVANT le chunk de la page : le relire ne suffit pas à
+        savoir s'il est juste, il faut le regarder pendant qu'il s'affiche
+        (bridage CPU, onglet rechargé). */}
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 lg:pt-16">
-      <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-        <div className="space-y-4">
-          <div className="h-12 lg:h-16 w-11/12 rounded-xl bg-white/[0.06]" />
-          <div className="h-12 lg:h-16 w-10/12 rounded-xl bg-white/[0.06]" />
-          <div className="h-12 lg:h-16 w-8/12 rounded-xl bg-blue-500/10" />
-          <div className="pt-6 space-y-2.5">
-            <div className="h-4 w-11/12 rounded bg-white/[0.04]" />
-            <div className="h-4 w-9/12 rounded bg-white/[0.04]" />
-          </div>
-          <div className="pt-6 flex gap-3.5">
-            <div className="h-14 w-52 rounded-2xl bg-blue-500/20" />
-            <div className="h-14 w-48 rounded-2xl bg-white/[0.05]" />
-          </div>
+      <div className="mx-auto flex max-w-4xl flex-col items-center">
+        {/* La rangée de puces (< xl) puis la tuile produit. Au-delà de `xl`
+            les puces partent dans les marges : le squelette ne les y suit pas,
+            elles n'y pèsent aucune hauteur. */}
+        <div className="mb-6 flex gap-2.5 xl:invisible">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-7 w-24 rounded-full bg-slate-900/[0.05]" />
+          ))}
         </div>
-        <div className="hidden lg:block">
-          <div className="mb-3 flex justify-center gap-2.5">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-7 w-24 rounded-full bg-white/[0.05]" />
-            ))}
-          </div>
-          <div className="h-[26rem] rounded-2xl bg-white/[0.04]" />
+        <div className="mb-8 sm:mb-10 h-24 w-24 rounded-[1.7rem] bg-slate-900/[0.06]" />
+        <div className="w-full space-y-3">
+          <div className="mx-auto h-[2.35rem] lg:h-[3.75rem] xl:h-[4.25rem] w-11/12 rounded-xl bg-slate-900/[0.06]" />
+          <div className="mx-auto h-[2.35rem] lg:h-[3.75rem] xl:h-[4.25rem] w-10/12 rounded-xl bg-blue-600/10" />
+        </div>
+        <div className="mt-8 w-full max-w-xl space-y-2.5">
+          <div className="mx-auto h-4 w-11/12 rounded bg-slate-900/[0.05]" />
+          <div className="mx-auto h-4 w-9/12 rounded bg-slate-900/[0.05]" />
+        </div>
+        <div className="mt-9 flex gap-3">
+          <div className="h-[3.25rem] w-52 rounded-full bg-blue-600/20" />
+          <div className="h-[3.25rem] w-48 rounded-full bg-slate-900/[0.06]" />
         </div>
       </div>
     </div>
@@ -218,10 +276,13 @@ const RootRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) return null;
   if (isAuthenticated) {
+    // Une session que le script inline d'index.html n'a pas vue (retour OAuth
+    // sur `/`) : la copie du hero du prérendu couvrirait l'app.
+    releasePrerenderHero();
     // Rouvre l'app sur la dernière page quittée (mémorisée par Layout),
     // fallback dashboard si inconnue ou invalide.
     const last = getLastVisitedPage();
-    const target = last && RESUMABLE_PAGES.includes(last) ? last : '/dashboard';
+    const target = last && isResumablePage(last) ? last : '/dashboard';
     return <Navigate to={target} replace />;
   }
   // Fallback dédié : la landing est sombre, le fallback par défaut est clair.
@@ -297,13 +358,13 @@ const AppRoutes = () => {
 
     {/* Public pages — accessibles sans authentification */}
     <Route path="welcome" element={<Navigate to="/" replace />} />
-    <Route path="login" element={<PageWithSuspense><LoginPage /></PageWithSuspense>} />
-    <Route path="signup" element={<PageWithSuspense><SignupPage /></PageWithSuspense>} />
-    <Route path="forgot-password" element={<PageWithSuspense><ForgotPasswordPage /></PageWithSuspense>} />
-    <Route path="reset-password" element={<PageWithSuspense><ResetPasswordPage /></PageWithSuspense>} />
-    <Route path="guide" element={<PageWithSuspense><GuidePage /></PageWithSuspense>} />
-    <Route path="blog" element={<PageWithSuspense><BlogIndexPage /></PageWithSuspense>} />
-    <Route path="blog/:slug" element={<PageWithSuspense><BlogArticlePage /></PageWithSuspense>} />
+    <Route path="login" element={<PublicPageWithSuspense><LoginPage /></PublicPageWithSuspense>} />
+    <Route path="signup" element={<PublicPageWithSuspense><SignupPage /></PublicPageWithSuspense>} />
+    <Route path="forgot-password" element={<PublicPageWithSuspense><ForgotPasswordPage /></PublicPageWithSuspense>} />
+    <Route path="reset-password" element={<PublicPageWithSuspense><ResetPasswordPage /></PublicPageWithSuspense>} />
+    <Route path="guide" element={<PublicPageWithSuspense><GuidePage /></PublicPageWithSuspense>} />
+    <Route path="blog" element={<PublicPageWithSuspense><BlogIndexPage /></PublicPageWithSuspense>} />
+    <Route path="blog/:slug" element={<PublicPageWithSuspense><BlogArticlePage /></PublicPageWithSuspense>} />
     {/* Slugs publics localisés — cf. src/i18n/routes.ts.
         `basename` retire déjà le préfixe de locale, donc ces chemins restent
         relatifs ; seul le SLUG change selon la langue servie. Conséquence
@@ -313,20 +374,20 @@ const AppRoutes = () => {
       path={routeSlug('enterprisePresentation', activeLocale)}
       element={<RootRoute />}
     />
-    <Route path={routeSlug('about', activeLocale)} element={<PageWithSuspense><AProposPage /></PageWithSuspense>} />
-    <Route path={routeSlug('freelancers', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('students', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('managers', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('teams', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('legalNotice', activeLocale)} element={<PageWithSuspense><MentionsLegalesPage /></PageWithSuspense>} />
-    <Route path={routeSlug('privacy', activeLocale)} element={<PageWithSuspense><PolitiqueConfidentialitePage /></PageWithSuspense>} />
-    <Route path={routeSlug('terms', activeLocale)} element={<PageWithSuspense><CGUPage /></PageWithSuspense>} />
+    <Route path={routeSlug('about', activeLocale)} element={<PublicPageWithSuspense><AProposPage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('freelancers', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('students', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('managers', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('teams', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('legalNotice', activeLocale)} element={<PublicPageWithSuspense><MentionsLegalesPage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('privacy', activeLocale)} element={<PublicPageWithSuspense><PolitiqueConfidentialitePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('terms', activeLocale)} element={<PublicPageWithSuspense><CGUPage /></PublicPageWithSuspense>} />
     {/* Lien d'invitation de partage — public : pose le token puis redirige
         (login/signup si déconnecté) ; ShareInviteClaimer fait le claim. */}
-    <Route path="invite/:token" element={<PageWithSuspense><InvitePage /></PageWithSuspense>} />
+    <Route path="invite/:token" element={<PublicPageWithSuspense><InvitePage /></PublicPageWithSuspense>} />
     {/* Lien d'invitation entreprise placé (v2) — public : la page gère
         elle-même l'état connecté/déconnecté + consentement RGPD. */}
-    <Route path="org-invite/:token" element={<PageWithSuspense><ClaimOrgInvitePage /></PageWithSuspense>} />
+    <Route path="org-invite/:token" element={<PublicPageWithSuspense><ClaimOrgInvitePage /></PublicPageWithSuspense>} />
 
     {/* Protected routes — require authentication */}
     <Route element={<ProtectedRoute />}>
@@ -341,7 +402,15 @@ const AppRoutes = () => {
         <Route path="statistics" element={<PageWithSuspense><StatisticsPage /></PageWithSuspense>} />
         <Route path="settings" element={<PageWithSuspense><SettingsPage /></PageWithSuspense>} />
         {/* Espace entreprise — visible pour les membres d'une organisation */}
-        <Route path="entreprise" element={<PageWithSuspense><OrganizationPage /></PageWithSuspense>} />
+        {/* Une section = une route (`/entreprise/projects`), segment OPTIONNEL :
+            une seule route, donc changer de section ne remonte pas la page.
+            `entreprise/onboarding`, plus haut, est un segment STATIQUE : le
+            routeur le préfère toujours à ce segment dynamique. */}
+        {/* Second segment optionnel : la page d'une équipe,
+            `/entreprise/teams/<id>` (audit Membres du 2026-09-24). Toujours la
+            MÊME route, pour qu'ouvrir une équipe ne remonte pas la page ;
+            `OrganizationPage` renvoie tout autre `/<section>/<x>` à la section. */}
+        <Route path="entreprise/:section?/:entityId?" element={<PageWithSuspense><OrganizationPage /></PageWithSuspense>} />
         {/* Admin — URL non référencée (aucun lien dans l'UI), gating réel
             côté serveur : la RPC get_admin_stats rejette les non-admins. */}
         <Route path="admin" element={<PageWithSuspense><AdminPage /></PageWithSuspense>} />
@@ -352,7 +421,7 @@ const AppRoutes = () => {
     </Route>
 
     {/* Fallback */}
-    <Route path="*" element={<PageWithSuspense><NotFoundPage /></PageWithSuspense>} />
+    <Route path="*" element={<PublicPageWithSuspense><NotFoundPage /></PublicPageWithSuspense>} />
   </Routes>
   );
 };
@@ -361,8 +430,7 @@ const AppRoutes = () => {
  * Mesure d'audience Vercel — montée UNIQUEMENT après acceptation explicite.
  *
  * `<Analytics />` était monté inconditionnellement, alors que le bandeau
- * proposait de refuser. C'est le même manquement que celui corrigé dans
- * `src/lib/audience.ts` : deux traceurs, une seule promesse, non tenue.
+ * proposait de refuser : une promesse affichée, non tenue.
  *
  * Le composant réagit au store, donc accepter le monte sans rechargement.
  * Refuser ne le monte jamais : on ne charge pas pour démonter ensuite, car on
@@ -393,15 +461,9 @@ const App: React.FC = () => {
                 pour TOUTES les animations Framer Motion (transforms réduits, pas
                 de mouvement décoratif). Exigence WCAG 2.3.3 / EAA. */}
             <MotionConfig reducedMotion="user">
-            <Toaster
-              position="top-right"
-              richColors
-              closeButton
-              theme="system"
-              toastOptions={{
-                duration: 3000,
-              }}
-            />
+            <Suspense fallback={null}>
+              <ThemedToaster />
+            </Suspense>
             {/* Défense en profondeur autour des SATELLITES de l'app.
                 Ces trois-là sont montés au niveau App, donc au-dessus de tout
                 boundary de page : un throw dans l'un d'eux emportait

@@ -49,13 +49,43 @@
 // plutôt que recopié : une mesure se refait, elle ne se reprend pas.
 // ═══════════════════════════════════════════════════════════════════
 
-import { test, expect } from './fixtures';
+import { test, expect, gotoTolerant } from './fixtures';
 import type { Page } from '@playwright/test';
 
 test.describe.configure({ timeout: 180_000 });
 
 /** Cible minimale WCAG 2.5.5 (AA), en pixels CSS. */
 const TARGET = 44;
+
+// ═══════════════════════════════════════════════════════════════════
+// LA GRILLE DE 7 JOURS DE `HabitCard` — écart DÉCLARÉ (C-111, 2026-09-22)
+//
+// 🔴 CE N'EST PAS UN ARBITRAGE DE GOÛT, C'EST DE L'ARITHMÉTIQUE. Mesuré dans
+// le navigateur le 2026-09-22 (viewport 375 x 812, mode démo, dix cartes) : la
+// grille `grid-cols-7` fait **301,6 px** de large, gap de 6 px, donc des
+// cellules de **37,94 x 37,94**. Sept cellules de 44 px en exigeraient
+// 7 x 44 + 6 x 6 = **344 px** ; même avec un gap NUL il en faudrait **308**.
+// La largeur ne peut pas atteindre la cible sans refaire la carte.
+//
+// CE QUI A ÉTÉ FAIT, parce que c'était récupérable : `min-h-11` porte la
+// HAUTEUR à 44 px. La cible passe de 1 444 à 1 672 px², et l'axe vertical —
+// celui où le pouce dérape sur une rangée dense — est désormais conforme.
+//
+// CE QUI RESTE, et son critère :
+//   • la LARGEUR (~38 px) échoue au critère **AAA 2.5.5** (44 px), qui est
+//     celui que ce fichier vise et annonce dans son titre ;
+//   • elle tient le critère **AA 2.5.8** (24 px), qui est le critère opposable
+//     sous l'EAA.
+// DÉCISION : dette assumée, PAS un blocage, et elle est bornée à cette grille.
+// ❌ Elle ne couvre RIEN d'autre : la vue détaillée 30 jours est déjà à
+//    44 x 44 (`w-11 h-11`), et toute autre commande sous la cible reste un
+//    échec. ❌ Ne jamais élargir cette dispense « par cohérence ».
+// ⚠️ Si la carte gagne 45 px de large (retrait de padding, pleine largeur),
+//    l'arithmétique change et la dispense doit TOMBER, pas être reconduite.
+//
+// La dispense est portée par un sélecteur NOMMÉ, jamais par un seuil abaissé.
+const HABIT_WEEK_CELL = '.grid.grid-cols-7 > div > button';
+// ═══════════════════════════════════════════════════════════════════
 
 interface UnderTarget {
   w: number;
@@ -73,8 +103,19 @@ interface UnderTarget {
   html: string;
 }
 
-async function commandsUnderTarget(page: Page, target: number): Promise<UnderTarget[]> {
-  return page.evaluate((min) => {
+async function commandsUnderTarget(
+  page: Page,
+  target: number,
+  /**
+   * Sélecteur des commandes dont la seule LARGEUR est dispensée (C-111).
+   *
+   * ❌ Ce n'est JAMAIS un seuil abaissé : la dispense porte un nom, un axe, et
+   * la HAUTEUR reste exigée. Une cellule qui perdrait ses 44 px de haut
+   * redeviendrait un échec, et c'est ce qui la distingue d'une allowlist.
+   */
+  dispenseLargeur = '',
+): Promise<UnderTarget[]> {
+  return page.evaluate(({ min, dispense }) => {
     /**
      * Exception « inline » de WCAG 2.5.5 : une cible prise DANS une phrase,
      * dont la taille est contrainte par l'interligne du texte autour.
@@ -178,10 +219,44 @@ async function commandsUnderTarget(page: Page, target: number): Promise<UnderTar
       return { width: x1 - x0, height: y1 - y0 };
     };
 
+    /**
+     * L'exemption « controle du navigateur » de WCAG 2.5.5 et 2.5.8.
+     *
+     * 🔴 Elle ne couvre QUE ce que l'auteur n'a pas redessine. Un
+     * `input[type=range]` laisse par defaut est peint par le moteur, qui
+     * choisit lui-meme sa zone tactile : le critere l'exempte, et exiger
+     * 44 px reviendrait a demander de le restyler, donc a sortir de
+     * l'exemption pour la respecter.
+     *
+     * Des que `appearance` vaut `none`, le dessin appartient a l'auteur, et
+     * la taille de la cible avec. C'est exactement le cas de `.ent-range`.
+     */
+    const isBrowserDefaultControl = (el: Element): boolean => {
+      if (!(el instanceof HTMLInputElement) || el.type !== 'range') return false;
+      const cs = getComputedStyle(el);
+      const appearance = cs.appearance || (cs as unknown as Record<string, string>).webkitAppearance;
+      return appearance !== 'none';
+    };
+
     const out: UnderTarget[] = [];
     const seen = new Set<Element>();
+    // Résolu UNE fois : le sélecteur est nommé en tête de ce fichier, avec sa
+    // mesure, son critère et la condition qui le fait tomber.
+    const largeurDispensee: Set<Element> = dispense
+      ? new Set(document.querySelectorAll(dispense))
+      : new Set();
     for (const control of document.querySelectorAll(
-      'button, [role="button"], input[type="checkbox"]',
+      // 🔴 `input[type="range"]` AJOUTE le 2026-09-15 (C-80). Sans lui, le
+      // detecteur ne pouvait pas voir le seul defaut de cette passe qui
+      // EMPECHE UN GESTE : le curseur de forfait de
+      // /entreprise-presentation, mesure 308 x 6 px contre la production.
+      //
+      // ⚠️ Un `input[type=range]` NON style reste un controle du navigateur,
+      // que WCAG 2.5.8 exempte explicitement. Celui-ci porte
+      // `appearance: none`, donc son dessin est celui de l'auteur, donc
+      // l'exemption tombe. La distinction est faite ci-dessous, pas ici :
+      // on collecte, et `isBrowserDefaultControl` dispense.
+      'button, [role="button"], input[type="checkbox"], input[type="range"]',
     )) {
       const el = effectiveTarget(control);
       if (seen.has(el)) continue;
@@ -190,7 +265,12 @@ async function commandsUnderTarget(page: Page, target: number): Promise<UnderTar
       // Élément non rendu : ni un défaut, ni une cible.
       if (box.width === 0 || box.height === 0) continue;
       if (isInline(el)) continue;
+      if (isBrowserDefaultControl(el)) continue;
       const r = effectiveRect(el);
+      // Dispense ÉTROITE : la largeur seule est pardonnée, et seulement si la
+      // hauteur, elle, tient la cible. C'est ce qui en fait un cliquet plutôt
+      // qu'une allowlist — la dispense ne peut pas masquer une régression.
+      if (largeurDispensee.has(el) && r.height >= min) continue;
       if (r.width < min || r.height < min) {
         out.push({
           w: Math.round(r.width),
@@ -203,7 +283,7 @@ async function commandsUnderTarget(page: Page, target: number): Promise<UnderTar
       }
     }
     return out;
-  }, target);
+  }, { min: target, dispense: dispenseLargeur });
 }
 
 test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
@@ -240,7 +320,19 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
         + '<button id="t-agrandi" style="width:14px;height:14px;position:relative"'
         + ' aria-label="temoin cible agrandie"></button>'
         + '<button id="t-decor" style="width:14px;height:14px"'
-        + ' aria-label="temoin before decoratif"></button>';
+        + ' aria-label="temoin before decoratif"></button>'
+        // ── Les deux temoins ajoutes par C-80 ──────────────────────
+        //
+        // 🔴 `input[type=range]` entre dans le detecteur le 2026-09-15, et
+        // avec lui une DISPENSE (« controle du navigateur »). Une dispense
+        // sans temoin est un trou qu'on ouvre en croyant elargir une mesure.
+        // Sa paire est donc ici : le cas qu'elle doit laisser passer, et le
+        // cas voisin que le detecteur doit desormais VOIR.
+        + '<input type="range" id="t-range-natif" style="height:6px"'
+        + ' aria-label="temoin range natif">'
+        + '<input type="range" id="t-range-style"'
+        + ' style="-webkit-appearance:none;appearance:none;height:6px"'
+        + ' aria-label="temoin range style">';
       document.body.appendChild(host);
     });
 
@@ -259,7 +351,57 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
     // …un `::before` decoratif, non positionne, n'agrandit RIEN.
     expect(names).toContain('temoin before decoratif');
 
+    // Un curseur laisse au navigateur est EXEMPTE par WCAG 2.5.5 / 2.5.8…
+    expect(names).not.toContain('temoin range natif');
+    // …un curseur redessine par l'auteur (`appearance: none`) ne l'est PLUS.
+    expect(names).toContain('temoin range style');
+
     await demoPage.evaluate(() => document.getElementById('c57-temoin')?.remove());
+  });
+
+  test('TEMOIN : la dispense de largeur ne masque pas une regression de hauteur', async ({
+    demoPage,
+  }) => {
+    // 🔴 POURQUOI CE TEMOIN. C-111 introduit une DISPENSE (la grille de 7 jours
+    // de `HabitCard`, trop etroite par arithmetique : 7 x 44 ne tient pas dans
+    // 301,6 px). Une dispense sans temoin est une allowlist deguisee — et ce
+    // depot s'interdit d'ajouter une entree d'allowlist pour faire passer la
+    // CI. Ce qui l'en distingue est verifie ici : elle porte sur la LARGEUR
+    // SEULE, et la hauteur reste exigee.
+    await demoPage.evaluate(() => {
+      const host = document.createElement('div');
+      host.id = 'c111-temoin';
+      // Le meme selecteur que la dispense reelle, reproduit a l'identique :
+      // `.grid.grid-cols-7 > div > button`.
+      host.innerHTML =
+        '<div class="grid grid-cols-7">'
+        + '<div><button style="width:38px;height:44px"'
+        + ' aria-label="temoin dispense large 38 haute 44"></button></div>'
+        + '<div><button style="width:38px;height:30px"'
+        + ' aria-label="temoin dispense large 38 haute 30"></button></div>'
+        + '</div>'
+        // Hors de la grille : la dispense ne doit PAS deborder sur son voisin.
+        + '<button style="width:38px;height:44px"'
+        + ' aria-label="temoin hors grille"></button>';
+      document.body.appendChild(host);
+    });
+
+    const seen = await commandsUnderTarget(demoPage, TARGET, HABIT_WEEK_CELL);
+    const names = seen.map((s) => s.name);
+
+    // La cellule conforme en HAUTEUR est dispensee de sa largeur…
+    expect(names).not.toContain('temoin dispense large 38 haute 44');
+    // …celle qui perd sa hauteur redevient un ECHEC, dispense ou pas.
+    expect(names).toContain('temoin dispense large 38 haute 30');
+    // …et une commande de meme taille HORS de la grille n'est pas couverte.
+    expect(names).toContain('temoin hors grille');
+
+    // Et sans la dispense, la cellule conforme en hauteur est bien vue : la
+    // dispense FAIT quelque chose, elle n'est pas decorative.
+    const sansDispense = (await commandsUnderTarget(demoPage, TARGET)).map((s) => s.name);
+    expect(sansDispense).toContain('temoin dispense large 38 haute 44');
+
+    await demoPage.evaluate(() => document.getElementById('c111-temoin')?.remove());
   });
 
   for (const route of [
@@ -283,13 +425,115 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
       await demoPage.waitForLoadState('networkidle');
       await demoPage.waitForTimeout(1500);
 
-      const under = await commandsUnderTarget(demoPage, TARGET);
+      const under = await commandsUnderTarget(demoPage, TARGET, HABIT_WEEK_CELL);
       expect(
         under.map((u) => `${u.w}x${u.h} « ${u.name} » ${u.html}`),
         'La zone tactile doit faire 44 px dans les DEUX dimensions. L ICONE, '
           + 'elle, reste petite : c est le contrat de `TouchTarget` '
           + '(src/components/mobile/). Marges negatives pour que la rangee ne '
           + 'grandisse pas avec la cible.',
+      ).toEqual([]);
+    });
+  }
+
+  // ── Les pages PUBLIQUES ────────────────────────────────────────────
+  //
+  // 🔴 AJOUTEES LE 2026-09-15 (C-80). Jusqu'a cette date, la boucle ci-dessus
+  // etait TOUTE la garde, et ses huit routes sont toutes PROTEGEES. Le spec
+  // est ne le 2026-09-04 avec cette liste : il n'a jamais regarde une seule
+  // page publique. Son « 0 » etait donc lu comme une propriete du produit
+  // alors qu'il ne disait rien que de ses huit routes.
+  //
+  // C'est la lecon « une garde se verifie sur ce qu'elle REGARDE, pas sur le
+  // fait qu'elle tourne » appliquee a ce fichier meme.
+  //
+  // Mesure contre la PRODUCTION le 2026-09-14, WebKit / iPhone 12, bandeau
+  // cookies refuse, qui a motive l'elargissement :
+  //   /                        24 cibles sous 44 x 44 px
+  //   /entreprise-presentation 23
+  //   /blog                     2
+  //
+  // ── CE QUI EST COMPTE ICI, ET CE QUI NE L'EST PAS ──────────────────
+  //
+  // ⚠️ Ce relevé de 24 / 23 / 2 a ete pris par une sonde AD HOC qui comptait
+  // aussi les LIENS. Le detecteur de ce fichier n'en compte aucun, et c'est
+  // une decision, pas un oubli : cf. son en-tete, « uniquement les VRAIES
+  // commandes ». Les chiffres ci-dessus ne sont donc PAS ce que cette boucle
+  // mesure, et il ne faut pas les lire comme une cible a ramener a zero.
+  //
+  // 🔴 LE SORT DES LIENS DE PIED DE PAGE, TRANCHE ICI, PAR SON NOM (C-80).
+  // La majorite du releve ci-dessus, sur les trois pages, sont les liens du
+  // pied de page : environ 20 px de haut, empiles en colonnes.
+  //   • Ils ECHOUENT au critere AAA 2.5.5 (44 px), qui est celui que ce
+  //     fichier vise et annonce dans son titre.
+  //   • Ils tiennent le critere AA 2.5.8 (24 px) par son exception
+  //     d'ESPACEMENT, pas par leur taille : ce sont des liens de texte, dont
+  //     la hauteur est celle de leur interligne.
+  //   • Les corriger voudrait dire poser 44 px de hauteur sur chaque ligne
+  //     d'un pied de page de plusieurs dizaines de liens, ce qui le
+  //     transformerait en un ecran entier sur telephone.
+  // DECISION : dette de confort assumee, PAS un blocage. Elle est portee par
+  // le perimetre du detecteur (aucun lien n'est compte), et elle vaut pour le
+  // seul critere AAA. ❌ Si un lien de pied de page devient un BOUTON, il
+  // rentre dans la mesure et cette dispense ne le couvre plus.
+  //
+  // ⚠️ Ce que cette boucle ne fait PAS : elle mesure l'etat de repos de
+  // chaque page, comme celle des routes protegees. Rien de ce qui s'ouvre au
+  // clic sur une page publique n'est ici.
+  for (const route of [
+    '/',
+    '/entreprise-presentation',
+    '/guide',
+    '/blog',
+    // Les quatre pages « cas d'usage », servies par leurs slugs FR.
+    '/pour-freelances',
+    '/pour-etudiants',
+    '/pour-managers',
+    '/pour-equipes',
+  ]) {
+    test(`page publique ${route} : aucune commande sous 44 x 44 px`, async ({ page, context }) => {
+      await context.clearCookies();
+      // `gotoTolerant`, jamais `page.goto` nu : sous WebKit, Vite se
+      // ré-empaquette au premier passage d'une page lazy et RECHARGE, ce qui
+      // annule la navigation (« interrupted by another navigation »). Le
+      // 2026-10-03, ce cas a épuisé ses trois essais et mis `main` au rouge
+      // sur un commit de documentation (run `37135662759`).
+      await gotoTolerant(page, route);
+      // 🔴 Le bandeau cookies RECOUVRE des commandes sur telephone
+      // (`left-4 right-4`, z-[200], ancre en bas) : mesurer sans l'ecarter
+      // rend un comptage faux dans les deux sens, en cachant des cibles et en
+      // en ajoutant les siennes. On le REFUSE, l'option la plus protectrice,
+      // puis on recharge pour partir d'une page propre.
+      await page.evaluate(() => {
+        try {
+          localStorage.setItem('cosmo_cookie_consent', 'refused');
+        } catch { /* ignore */ }
+      });
+      await gotoTolerant(page, route);
+      // Borne a 15 s : sous WebKit le reseau de la landing ne se calme pas
+      // toujours, et l'attente filait jusqu'au delai du test (180 s, instable
+      // le 2026-10-10). L'attente d'animation ci-dessous suit de toute facon.
+      await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+      // 🔴 Le bas de la landing ne monte qu'au premier geste (`BelowFold.tsx`,
+      // TBT mobile). Sans ce défilement d'un pixel, le relevé ne compterait
+      // que les commandes du hero. Sans effet sur les autres routes.
+      await page.evaluate(() => window.scrollBy(0, 1));
+      await page.waitForTimeout(500);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      // La landing est lazy-loadee et animee : son etat final n'est pas celui
+      // du premier rendu, et une cible mesuree en cours d'animation ment.
+      await page.waitForTimeout(2500);
+
+      const under = await commandsUnderTarget(page, TARGET);
+      expect(
+        under.map((u) => `${u.w}x${u.h} « ${u.name} » ${u.html}`),
+        'Page PUBLIQUE : c est la premiere chose qu un visiteur touche, et la '
+          + 'seule qu il touche avant d avoir un compte. Memes quatre gestes '
+          + 'que pour les routes protegees, par ordre de preference : hauteur '
+          + 'reelle (`min-h-touch`), puis `TAP_AREA_44_Y`, puis `TAP_AREA_44`, '
+          + 'puis la taille reelle des que deux commandes sont voisines. '
+          + 'Un element qui n est PAS une commande (une maquette, un dessin) se '
+          + 'retire de l arbre d accessibilite, il ne se met pas aux normes.',
       ).toEqual([]);
     });
   }
@@ -310,12 +554,35 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
     await demoPage.waitForLoadState('networkidle');
     await demoPage.waitForTimeout(2000);
 
-    const taskButton = demoPage.locator('button[aria-label^="Marquer"]').first();
-    await expect(taskButton).toBeVisible({ timeout: 15_000 });
-    // Le bouton VOISIN de la case ouvre la tâche (la case, elle, la coche).
-    await demoPage.locator('li:has(button[aria-label^="Marquer"]) button').nth(1).click();
+    // Aperçu en widgets (2026-10-19) : le compte démo (admin) arrive sur le
+    // modèle « Administrateur », sans « Mes tâches ». Une ligne de TÂCHE du
+    // widget « Événements de l'entreprise » ouvre la modale (elle porte son
+    // projet, « · Projet » ; une fin d'OKR non).
+    // Délai propre puis clic forcé, comme `navTo` : sous WebKit la rangée
+    // était jugée instable jusqu'au délai du test (180 s), instable le
+    // 2026-10-09. L'élément doit quand même exister et être visible.
+    const ouvrir = demoPage
+      .getByRole('region', { name: /événements de l[’']entreprise/i })
+      .getByRole('button')
+      .filter({ hasText: ' · ' })
+      .first();
+    await expect(ouvrir).toBeVisible({ timeout: 15_000 });
+    try {
+      await ouvrir.click({ timeout: 15_000 });
+    } catch {
+      await ouvrir.click({ force: true, timeout: 10_000 });
+    }
 
     const dialog = demoPage.getByRole('dialog');
+    // Un clic forcé pouvait tomber à côté (aucune modale, instable le
+    // 2026-10-10) : seconde tentative au clavier, sans dépendre de la géométrie.
+    const ouverte = await expect(dialog.first())
+      .toBeVisible({ timeout: 5_000 })
+      .then(() => true, () => false);
+    if (!ouverte) {
+      await ouvrir.focus();
+      await demoPage.keyboard.press('Enter');
+    }
     await expect(dialog.first()).toBeVisible({ timeout: 10_000 });
     await demoPage.waitForTimeout(1200);
 

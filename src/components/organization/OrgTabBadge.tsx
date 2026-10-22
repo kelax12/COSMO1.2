@@ -10,6 +10,13 @@ interface OrgTabBadgeProps {
   title: string;
   /** Nom accessible du compteur (« 3 nouveautés »). */
   ariaLabel: string;
+  /** Côté de l’aperçu. `left` pour la navigation collée au bord droit. */
+  side?: 'bottom' | 'left';
+  /**
+   * Posée sur une entrée ACTIVE, dont le fond est déjà `accent-solid` : la
+   * pastille inverse ses couleurs, sinon elle se fond dans l’entrée.
+   */
+  onAccent?: boolean;
 }
 
 /**
@@ -25,15 +32,15 @@ interface OrgTabBadgeProps {
  * focus, donc l'aperçu reste atteignable au clavier ; l'`aria-label` porte le
  * compteur pour les lecteurs d'écran, qui n'ont pas besoin du survol.
  */
-const OrgTabBadge = ({ count, items, title, ariaLabel }: OrgTabBadgeProps) => {
-  const { tp } = useT('org');
+const OrgTabBadge = ({ count, items, title, ariaLabel, side = 'bottom', onAccent = false }: OrgTabBadgeProps) => {
+  const { tp: tpOrgAdmin } = useT('orgAdmin');
   // Les notifications serveur donnent le compte sans les libellés : dans ce
   // cas on n'affiche aucun aperçu plutôt qu'un « et 3 autres » sans rien avant.
   const hidden = Math.max(0, count - items.length);
 
   const badge = (
     <span
-      className="ml-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] text-caption font-bold inline-flex items-center justify-center"
+      className={`ml-0.5 min-w-[18px] h-[18px] px-1 rounded-full ${onAccent ? 'bg-[rgb(var(--color-accent-solid-foreground))] text-[rgb(var(--color-accent-solid))]' : 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'} text-caption font-bold inline-flex items-center justify-center`}
       aria-label={ariaLabel}
     >
       {count}
@@ -45,7 +52,7 @@ const OrgTabBadge = ({ count, items, title, ariaLabel }: OrgTabBadgeProps) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>{badge}</TooltipTrigger>
-      <TooltipContent side="bottom" className="max-w-[260px]">
+      <TooltipContent side={side} className="max-w-[260px]">
         <p className="font-semibold mb-1">{title}</p>
         <ul className="space-y-0.5">
           {items.map((label) => (
@@ -53,7 +60,7 @@ const OrgTabBadge = ({ count, items, title, ariaLabel }: OrgTabBadgeProps) => {
           ))}
         </ul>
         {hidden > 0 && (
-          <p className="mt-1 opacity-70">{tp('page.badgePreviewMore', hidden)}</p>
+          <p className="mt-1 opacity-70">{tpOrgAdmin('page.badgePreviewMore', hidden)}</p>
         )}
       </TooltipContent>
     </Tooltip>

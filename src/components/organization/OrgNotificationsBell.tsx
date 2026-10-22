@@ -1,33 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
-import { formatDistanceToNow, parseISO } from 'date-fns';
-import { getDateLocale } from '@/i18n/format';
-import { Bell, UserPlus, AtSign, AlarmClock, MessageSquare } from 'lucide-react';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { Bell } from 'lucide-react';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import {
   useOrgNotifications,
   useMarkNotificationsRead,
   unreadCount,
-  type OrgNotification,
-  type OrgNotificationKind,
   type OrgMember,
 } from '@/modules/organizations';
-import { buildOrgLink } from './deep-link.helpers';
-import { groupNotifications } from './notifications.helpers';
 import { useT } from '@/i18n/useT';
-import type { KeyOf } from '@/i18n/catalog';
+
+// Chargés à l'ouverture seulement : la cloche est montée sur chaque visite.
+const OrgNotificationsPanel = lazyWithRetry(() => import('./OrgNotificationsPanel'));
+const OrgNotificationSettingsDialog = lazyWithRetry(() => import('./OrgNotificationSettingsDialog'));
 
 interface OrgNotificationsBellProps {
   orgId: string;
   members: OrgMember[];
 }
-
-/** Icône et libellé par type — le trigger n'écrit que ceux-là. */
-const KIND_META: Record<OrgNotificationKind, { Icon: typeof Bell; labelKey: KeyOf<'org'> }> = {
-  task_assigned: { Icon: UserPlus, labelKey: 'notifications.kindAssigned' },
-  mention: { Icon: AtSign, labelKey: 'notifications.kindMention' },
-  task_overdue: { Icon: AlarmClock, labelKey: 'notifications.kindOverdue' },
-  comment: { Icon: MessageSquare, labelKey: 'notifications.kindComment' },
-};
 
 /**
  * Cloche de notifications d'entreprise (mig. 095 + 096).
@@ -44,23 +33,13 @@ const KIND_META: Record<OrgNotificationKind, { Icon: typeof Bell; labelKey: KeyO
  * cloche est donc masquée plutôt qu'affichée à zéro.
  */
 const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => {
-  const { t, tp } = useT('org');
-  const navigate = useNavigate();
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const [open, setOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
-
   const { data: notifications = [] } = useOrgNotifications(orgId);
   const markRead = useMarkNotificationsRead(orgId);
   const unread = unreadCount(notifications);
-
-  const nameById = useMemo(
-    () => new Map(members.map((m) => [m.userId, m.displayName])),
-    [members],
-  );
-
-  // Sections de récence. Recalculées à chaque changement de la liste — donc au
-  // plus une fois par poll, jamais à chaque rendu du panneau.
-  const groups = useMemo(() => groupNotifications(notifications), [notifications]);
 
   // Fermeture au clic extérieur et à Échap — un panneau ancré qui ne se ferme
   // que par son propre bouton piège le pointeur.
@@ -94,83 +73,43 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
     });
   };
 
-  const openNotification = (notification: OrgNotification) => {
-    setOpen(false);
-    if (notification.taskId) navigate(buildOrgLink('projects', { task: notification.taskId }));
-  };
-
   return (
     <div className="relative shrink-0" ref={panelRef}>
       <button
         type="button"
         onClick={toggle}
         aria-expanded={open}
-        aria-label={unread > 0 ? tp('notifications.bellUnread', unread) : t('notifications.bell')}
+        aria-label={unread > 0 ? tpOrgAdmin('notifications.bellUnread', unread) : tOrgAdmin('notifications.bell')}
         className="relative w-11 h-11 rounded-xl flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
       >
         <Bell size={18} aria-hidden="true" />
+        {/* Maquette 226 (2026-10-10) : sur mobile, un point (« du nouveau »),
+            plus un nombre de plus sur l'écran ; le nom accessible garde le
+            compte. Desktop garde le nombre. */}
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] text-caption font-bold inline-flex items-center justify-center">
-            {unread > 9 ? '9+' : unread}
-          </span>
+          <>
+            <span aria-hidden="true" className="md:hidden absolute top-2.5 right-2.5 size-2 rounded-full bg-[rgb(var(--color-accent))] ring-2 ring-[rgb(var(--color-background))]" />
+            <span className="hidden md:inline-flex absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] text-caption font-bold items-center justify-center">
+              {unread > 9 ? '9+' : unread}
+            </span>
+          </>
         )}
       </button>
 
       {open && (
-        <div
-          role="dialog"
-          aria-label={t('notifications.title')}
-          className="absolute right-0 top-11 z-50 w-[min(22rem,calc(100vw-2rem))] max-h-[24rem] overflow-y-auto rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-2xl p-2"
-        >
-          <p className="px-2 py-1.5 text-caption font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
-            {t('notifications.title')}
-          </p>
-          {groups.map((group) => (
-          <section key={group.period} aria-label={t(group.labelKey)}>
-            {/* Un flux plat ne dit pas si « il y a 2 jours » est récent ou
-                vieux pour cette organisation. Les sections donnent l'échelle. */}
-            <p className="px-2 pt-2 pb-1 text-caption font-semibold text-[rgb(var(--color-text-muted))]">
-              {t(group.labelKey)}
-            </p>
-            <ul className="space-y-1">
-            {group.items.map((notification) => {
-              const { Icon, labelKey } = KIND_META[notification.kind];
-              // `task_overdue` vient de pg_cron : son `actorId` est TOUJOURS
-              // null. Afficher un auteur serait un mensonge — c'est le temps
-              // qui passe, personne ne l'a fait.
-              const actor = notification.actorId ? nameById.get(notification.actorId) : null;
-              return (
-                <li key={notification.id}>
-                  <button
-                    type="button"
-                    onClick={() => openNotification(notification)}
-                    disabled={!notification.taskId}
-                    className={`w-full flex items-start gap-2.5 p-2.5 rounded-xl text-left transition-colors ${
-                      notification.taskId ? 'hover:bg-[rgb(var(--color-hover))]' : 'cursor-default'
-                    } ${notification.readAt === null ? 'bg-[rgb(var(--color-accent)/0.08)]' : ''}`}
-                  >
-                    <Icon size={15} className="mt-0.5 shrink-0 text-[rgb(var(--color-accent))]" aria-hidden="true" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-label text-[rgb(var(--color-text-primary))]">
-                        {actor
-                          ? t('notifications.byActor', { actor, label: t(labelKey) })
-                          : t(labelKey)}
-                      </span>
-                      <span className="block text-caption text-[rgb(var(--color-text-muted))]">
-                        {formatDistanceToNow(parseISO(notification.createdAt), {
-                          addSuffix: true,
-                          locale: getDateLocale(),
-                        })}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-            </ul>
-          </section>
-          ))}
-        </div>
+        <Suspense fallback={null}>
+          <OrgNotificationsPanel
+            notifications={notifications}
+            members={members}
+            onClose={() => setOpen(false)}
+            onOpenSettings={() => { setOpen(false); setSettingsOpen(true); }}
+          />
+        </Suspense>
+      )}
+      {settingsOpen && (
+        <Suspense fallback={null}>
+          <OrgNotificationSettingsDialog orgId={orgId} open={settingsOpen} onOpenChange={setSettingsOpen} />
+        </Suspense>
       )}
     </div>
   );

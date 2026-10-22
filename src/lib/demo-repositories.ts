@@ -46,6 +46,12 @@ import { LocalStorageOrganizationsRepository } from '@/modules/organizations/loc
 import { LocalStorageTeamProjectsRepository } from '@/modules/team-projects/local.repository';
 import { LocalStorageTeamOKRsRepository } from '@/modules/team-okrs/local.repository';
 import { LocalStorageOrgTeamsRepository } from '@/modules/org-teams/local.repository';
+import { LocalStorageOrgGovernanceRepository } from '@/modules/organizations/governance.local.repository';
+import { LocalStorageOkrExecutionRepository } from '@/modules/team-okrs/execution.local.repository';
+import type { IOrgGovernanceRepository } from '@/modules/organizations/governance.repository';
+import { LocalStorageOrgRolesRepository } from '@/modules/organizations/roles.local.repository';
+import type { IOrgRolesRepository } from '@/modules/organizations/roles.repository';
+import type { IOkrExecutionRepository } from '@/modules/team-okrs/execution.repository';
 
 import type { IOrganizationsRepository } from '@/modules/organizations/repository';
 import type { ITeamProjectsRepository } from '@/modules/team-projects/repository';
@@ -54,6 +60,19 @@ import type { IOrgTeamsRepository } from '@/modules/org-teams/repository';
 
 import type { ICategoriesRepository } from '@/modules/categories/repository';
 import { LocalStorageCategoriesRepository } from '@/modules/categories/local.repository';
+
+import type { ITasksRepository } from '@/modules/tasks/repository';
+import { LocalStorageTasksRepository } from '@/modules/tasks/local.repository';
+import type { IHabitsRepository } from '@/modules/habits/repository';
+import { LocalStorageHabitsRepository } from '@/modules/habits/local.repository';
+
+// Tâches et habitudes (2026-10-01) : interfaces 100 % asynchrones, vérifiées
+// avant la coupe. 19 ko bruts de démo de moins dans le chunk d'entrée.
+export const createDemoTasksRepository = (): ITasksRepository =>
+  new LocalStorageTasksRepository();
+
+export const createDemoHabitsRepository = (): IHabitsRepository =>
+  new LocalStorageHabitsRepository();
 
 export const createDemoCategoriesRepository = (): ICategoriesRepository =>
   new LocalStorageCategoriesRepository();
@@ -69,3 +88,12 @@ export const createDemoTeamOKRsRepository = (): ITeamOKRsRepository =>
 
 export const createDemoOrgTeamsRepository = (): IOrgTeamsRepository =>
   new LocalStorageOrgTeamsRepository();
+
+export const createDemoOrgGovernanceRepository = (): IOrgGovernanceRepository =>
+  new LocalStorageOrgGovernanceRepository();
+
+export const createDemoOrgRolesRepository = (): IOrgRolesRepository =>
+  new LocalStorageOrgRolesRepository();
+
+export const createDemoOkrExecutionRepository = (): IOkrExecutionRepository =>
+  new LocalStorageOkrExecutionRepository();

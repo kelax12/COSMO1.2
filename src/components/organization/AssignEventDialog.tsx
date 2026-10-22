@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, X } from 'lucide-react';
+import { BellRing, Search, X } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
@@ -34,6 +34,7 @@ interface AssignEventDialogProps {
  */
 const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEventDialogProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -100,6 +101,16 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
           </button>
         </div>
 
+        {/* Planifier dans l'agenda d'autrui : la personne est PRÉVENUE et peut
+            refuser (mig. 162, `notify_event_scheduled`). Audit des popups du
+            2026-09-25 : rien ne le disait à celui qui planifie. */}
+        {selectedMember && selectedMember.userId !== currentUserId && (
+          <p className="flex items-center gap-2 px-4 sm:px-6 py-2 text-xs border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] shrink-0" role="status">
+            <BellRing size={14} className="shrink-0 text-[rgb(var(--color-accent))]" aria-hidden="true" />
+            {t('popups.event.willBeNotified', { name: selectedMember.displayName })}
+          </p>
+        )}
+
         {/* Corps : agenda de la personne sélectionnée + panneau de choix */}
         <div className="flex-1 min-h-0 flex overflow-hidden">
           <div className="flex-1 min-w-0 flex flex-col min-h-0">
@@ -127,9 +138,9 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t('directory.searchPlaceholder')}
-                  aria-label={t('directory.searchAria')}
-                  className="w-full h-9 pl-9 pr-3 rounded-lg border text-sm focus:outline-none focus:border-indigo-400 transition-colors"
+                  placeholder={tOrgAdmin('directory.searchPlaceholder')}
+                  aria-label={tOrgAdmin('directory.searchAria')}
+                  className="w-full h-10 pl-9 pr-3 rounded-xl border text-sm focus:outline-none focus:border-indigo-400 transition-colors"
                   style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-background))', color: 'rgb(var(--color-text-primary))' }}
                 />
               </div>
@@ -137,7 +148,7 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
             <div className="flex-1 overflow-y-auto p-2 space-y-1 min-h-0">
               {filtered.length === 0 ? (
                 <p className="text-xs text-center py-6" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  {t('directory.noMatch', { query })}
+                  {tOrgAdmin('directory.noMatch', { query })}
                 </p>
               ) : (
                 filtered.map((m) => {
@@ -153,7 +164,7 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
                         active ? 'bg-indigo-500/10' : 'hover:bg-[rgb(var(--color-hover))]'
                       }`}
                     >
-                      <MemberAvatar avatar={m.avatar} name={m.displayName} size={30} />
+                      <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
                       <span className="min-w-0 flex-1">
                         <span
                           className="block text-sm font-medium truncate"

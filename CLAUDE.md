@@ -1,14 +1,48 @@
 # CLAUDE.md — COSMO 1.2
 
-Guide de travail dans ce dépôt. **Vérifié dans le code et contre la prod le 2026-08-24**, relu
-contre le code de `main` et les 71 commits des 08-30 → 09-03 lors de la **passe d'audit du
-2026-09-03** (chiffres des scripts, gardes, CSP, saisie de date). ⚠️ Cette relecture-là **n'a pas
-remesuré la production** : ce qui en vient porte la date du commit qui l'a mesuré. Détail et notes
-par domaine : [`docs/README.md`](./docs/README.md).
+Guide de travail dans ce dépôt. **Ce fichier est chargé à CHAQUE session : il reste court.**
 
-**Plan** : [Docs](#-carte-de-la-documentation) · [CLI données réelles](#-tu-peux-écrire-dans-le-vrai-compte-cosmo-daxel) · [Stack](#stack-technique) · [Scripts](#scripts) · [Env](#variables-denvironnement) · [Double mode](#architecture--double-mode-démo--production) · [Modules](#structure-des-modules) · [Hooks](#hooks-essentiels) · [Providers / Routing](#hiérarchie-des-providers-srcapptsx) · [Supabase](#base-de-données-supabase) · [Conventions](#conventions-de-code) · [i18n](#i18n--catalogues-maison-fr--en) · [🚫 Garde-fous](#-garde-fous--à-ne-jamais-faire)
+🔴 **Il a pesé 2 070 lignes et ~43 000 tokens le 2026-09-16**, contre 17,8 ko dix semaines plus tôt.
+Tout son contenu de niche est descendu d un cran, **sans une coupe** : dans le `CLAUDE.md` du
+dossier concerné (chargé seulement quand ce code est touché) ou dans le doc de `docs/` qui fait
+déjà foi. La table ci-dessous dit où.
+
+❌ **Ne jamais réécrire un récit d incident ici.** Un incident s écrit **une fois**, dans le doc de
+son domaine. Le `CLAUDE.md` concerné n en garde que l interdit, en une ligne. C est l absence de
+cette règle qui a produit 78 commits sur ce seul fichier en trente jours, et des affirmations
+fausses restées en place pendant des jours parce que le fichier était trop gros pour être relu.
+
+✅ Cliquet : `npm run check:docs` refuse ce fichier au-delà de son plafond.
+
+🗺️ **Pour trouver un fichier, une table ou un écran : [`docs/MODULES.md`](./docs/MODULES.md).**
+À ouvrir avant de chercher à l'aveugle.
 
 ---
+
+## 🗺️ Où est écrit le reste
+
+**Avant de toucher à ce code, ce `CLAUDE.md` se charge tout seul.** Ne pas le recopier ici.
+
+| Zone | Fichier |
+|---|---|
+| Providers, routing, type `User` | [`src/CLAUDE.md`](./src/CLAUDE.md) |
+| Tout module (double mode, repositories, RPC indexables, Realtime) | [`src/modules/CLAUDE.md`](./src/modules/CLAUDE.md) |
+| Premium, Stripe, facturation entreprise, remboursement | [`src/modules/billing/CLAUDE.md`](./src/modules/billing/CLAUDE.md) |
+| Tâches, récurrence | [`src/modules/tasks/CLAUDE.md`](./src/modules/tasks/CLAUDE.md) |
+| Habitudes, `completions`, fuseaux gelés | [`src/modules/habits/CLAUDE.md`](./src/modules/habits/CLAUDE.md) |
+| OKR, journal `kr_completions` | [`src/modules/okrs/CLAUDE.md`](./src/modules/okrs/CLAUDE.md) |
+| Catégories, arbre, impact de suppression | [`src/modules/categories/CLAUDE.md`](./src/modules/categories/CLAUDE.md) |
+| Catégories d'ENTREPRISE (table unique, mig. `148`) | [`src/modules/team-categories/CLAUDE.md`](./src/modules/team-categories/CLAUDE.md) |
+| Mode entreprise, permissions, boîte de réception | [`src/modules/organizations/CLAUDE.md`](./src/modules/organizations/CLAUDE.md) |
+| Modales a11y, animations, design system mobile, onboarding | [`src/components/CLAUDE.md`](./src/components/CLAUDE.md) |
+| Landing, deux parcours, GSAP, shader | [`src/pages/landing/CLAUDE.md`](./src/pages/landing/CLAUDE.md) |
+| Toasts, échéances, fuseau horaire, `safeParse` | [`src/lib/CLAUDE.md`](./src/lib/CLAUDE.md) |
+| i18n, slugs localisés, locales indexables | [`src/i18n/CLAUDE.md`](./src/i18n/CLAUDE.md) |
+| Migrations SQL, RLS, ledger | [`supabase/migration/CLAUDE.md`](./supabase/migration/CLAUDE.md) |
+| Edge Functions, drift déployé | [`supabase/functions/CLAUDE.md`](./supabase/functions/CLAUDE.md) |
+| Fonctions Vercel (`api/`), collecteur d'audience, clé secrète | [`api/CLAUDE.md`](./api/CLAUDE.md) |
+| Playwright | [`e2e/CLAUDE.md`](./e2e/CLAUDE.md) |
+| Gardes CI, témoins, alerting | [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) |
 
 ## 📚 Carte de la documentation
 
@@ -23,6 +57,7 @@ par domaine : [`docs/README.md`](./docs/README.md).
 |---|---|
 | [`docs/README.md`](./docs/README.md) | Carte complète + **tableau de bord des notes d'audit** (avant/après daté) |
 | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Invariants du projet et leur état vérifié (audit 2026-08-14) |
+| [`docs/MODULES.md`](./docs/MODULES.md) | **Carte** : module → fichiers, tables, RPC, écran |
 | [`docs/SECURITY.md`](./docs/SECURITY.md) | RLS, migrations SQL, repositories Supabase, Edge Functions, Stripe, CSP, secrets |
 | [`docs/MOBILE.md`](./docs/MOBILE.md) | Toute page/composant mobile, bottom-sheets, bug iOS Safari WebKit |
 | [`docs/UI-PATTERNS.md`](./docs/UI-PATTERNS.md) | Listes/SmartListMenu, EventModal, tutoriels, onboarding, shadcn, thèmes |
@@ -92,6 +127,7 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 | Toasts | Sonner |
 | Animations | Framer Motion (app) + GSAP 3 (**landing uniquement**, cf. [règle GSAP](#gsap--landing-page-uniquement)) |
 | Graphiques | recharts |
+| PDF | jsPDF (`vendor-pdf`, `import()` au clic sur « Exporter en PDF » seulement) |
 | i18n | **Catalogues JSON maison** (`src/i18n/` + `src/locales/{fr,en}/`) — pas d'i18next |
 | Paiement | Stripe (`@stripe/react-stripe-js`) — **non finalisé** |
 | Icônes | lucide-react (imports nominaux uniquement) |
@@ -101,11 +137,21 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 | Validation | `zod` (garde UX client — `src/lib/validation/`) |
 | Tests | Vitest (`*.test.ts` à côté du code) + Playwright (`e2e/`) |
 | Monitoring | Sentry (`beforeSend` strip emails/UUIDs) |
-| Hosting | Vercel (`vercel.json` + headers de sécurité + CSP) |
+| Hosting | Vercel (`vercel.json` + headers de sécurité + CSP) + fonctions `api/` (runtime edge) |
+| Audience | maison : `src/lib/traffic.ts` → `api/collect.ts` → `traffic_hits` ; Vercel Analytics sous consentement. Aucun script tiers de mesure |
+
+---
+
 
 ---
 
 ## Scripts
+
+> ⚠️ **Cette liste ne porte que les commandes du QUOTIDIEN.** Les **34 gardes** (`check:*`,
+> `i18n:*`, `validate:*`) sont descendues dans [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) le
+> 2026-09-21, avec ce que chacune regarde et où est son détail : la racine était à 96,7 % de son
+> plafond et **24 gardes posées le 2026-09-21 n'y figuraient pas**. Cette section a pesé 281 lignes
+> pour 20 commandes.
 
 ```bash
 npm run dev        # Serveur dev local (port 5173)
@@ -114,152 +160,32 @@ npm run build      # Build prod → dist/ (vite build + node prerender.mjs)
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
 npm run typecheck  # tsc -b (doit retourner 0 erreur)
-npm test           # Vitest (run once), 2051 tests / 179 fichiers (mesure du 2026-09-02)
+npm test           # Vitest (run once)                          → docs/TESTING.md
 npm run test:watch # Vitest en mode watch
-npm run test:coverage       # + couverture v8, seuils globaux et par fichier
-                            # ✅ VERTE au 2026-09-11 : 31,32 L · 30,91 S · 24,56 F · 26,37 B
-                            # (2 470 tests / 221 fichiers, zero echec). Mesure precedente,
-                            # le 2026-08-29 : 29,17 L · 28,81 S · 23,41 F · 24,17 B.
-                            # ❌ NE JAMAIS baisser un seuil pour repasser au vert.
-                            # 🔴 Le cliquet du glob `supabase.repository.ts` A MORDU le
-                            # 2026-09-08 : `functions` est tombe a 89,83 %, sous son seuil
-                            # de 90. Il a fait son travail, et les fonctions manquantes
-                            # etaient DATEES, pas dispersees : dependances de taches
-                            # personnelles (mig. 132), `restoreCompletions` (R-08),
-                            # `getMyOrgInbox` (mig. 129 + 142), et les deux ecritures de
-                            # dependances d'equipe. Du code de septembre livre sans test
-                            # de repository. 13 fonctions couvertes (126 tests), glob
-                            # remonte a 95,34 % ; AUCUN seuil baisse.
-                            # ⚠️ La marge la plus serree reste `functions`, mais elle n'est
-                            # plus critique : 3,56 pt contre 0,32 le 2026-08-25. La relancer
-                            # APRES chaque vague de features, pas quand on y pense.
-                            # ⚠️ Sur cette machine le run prend ~11 min et MEURT en silence
-                            # si une autre session fait tourner sa suite en parallele (pas
-                            # de resume, pas de rapport). Mesurer quand la machine est libre,
-                            # ou dans un worktree isole ; `--maxWorkers=4` tient mieux.
-                            # Voir docs/TESTING.md
-npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
-npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE,
-                            # + toute fonction citée par une policy exécutable par authenticated (CI)
-npm run check:drift         # Dérive repo ↔ prod (2 étapes : --print-sql puis <introspection.json>)
-npm run i18n:check          # Parité des clés fr ↔ en (CI, bloquant)
-npm run check:legal         # Cohérence du tableau de conformité de docs/LEGAL.md :
-                            # lignes collées, identifiants en double, et surtout que la
-                            # synthèse corresponde aux lignes. Ce total a été faux TROIS
-                            # fois le 2026-08-26, toujours pour l'avoir additionné de tête.
-npm run check:edge          # Le code DÉPLOYÉ des Edge Functions contre le dépôt (finding C-35).
-                            # Job `Edge deploy drift` : quotidien 05:41 UTC + à chaque push
-                            # touchant `supabase/functions/`. Branché sur `ci-alert.yml`.
-                            # 🔴 EXIGE `SUPABASE_ACCESS_TOKEN`. Secret absent = ÉCHEC, jamais
-                            # un `::warning::` dans un run vert.
-                            # ⚠️ Le 2026-09-03, les TROIS sources déployées lisibles
-                            # divergeaient de `main`, de trois façons différentes. Tant que
-                            # rien ne comparait, toute conclusion tirée en lisant
-                            # `supabase/functions/` était fausse d'avance, y compris les
-                            # statuts de `faille.md`. **Un « ✅ corrigé » sur une Edge Function
-                            # ne veut rien dire sans sa date de déploiement.**
-                            # `.github/edge-deploy.json` ne déclare que l'EXISTENCE (quelle
-                            # fonction n'est pas encore en ligne, pourquoi, depuis quand).
-                            # ❌ Il ne peut pas faire taire une divergence de CONTENU, et une
-                            # fonction qu'il dit non déployée alors qu'elle est en ligne fait
-                            # échouer la garde : sinon la note périme en silence.
-                            # Témoin : `scripts/check-edge-deploy.guard.test.mjs`.
-npm run check:mail          # Délivrabilité des emails Auth : MX, SPF, DKIM Resend, DMARC.
-                            # ✅ VERT au 2026-09-02 (remesuré) : DKIM, SPF et MX du Return-Path
-                            # en place sur `send.thecosmo.app`. Reste 1 avertissement, DMARC
-                            # `p=none` (surveillance seule), correct pour démarrer.
-                            # ⚠️ Le DNS ne prouve pas qu'un email ARRIVE : la preuve reste un
-                            # compte jetable vérifié sur Gmail ET Outlook (docs/DEPLOYMENT.md §2ter).
-                            # 🔴 Les confirmations d'inscription restent DÉSACTIVÉES, décision
-                            # d'Axel — cf. finding G-2 de faille.md.
-                            # PAS une gate CI — dépend d'un état DNS externe.
-npm run i18n:scan           # Chaînes en dur non externalisées — **GATE CI depuis le 2026-09-02**
-                            # Cliquet à **0** (`MAX_STRINGS`) : plus une chaîne détectée.
-                            # `-- --list` dit LESQUELLES.
-                            # 🔴 Le seuil a valu 4 pendant une journée, sur une heuristique
-                            # aveugle à QUATRE formes entières : texte JSX contenant une
-                            # interpolation, texte sur plusieurs lignes, propriété d'objet
-                            # `label:` (vs attribut `label=`), et valeur par défaut de prop.
-                            # Le rapport certifiait « plus aucune chaîne en dur » pendant
-                            # qu'il en restait des dizaines dans le produit. Les quatre sont
-                            # couvertes ; le chiffre était monté à 25 parce que la MESURE a
-                            # changé, puis les 25 ont été extraites à leur tour.
-                            # ❌ Ne jamais reprendre l'ancienne phrase « plus une seule chaîne
-                            # d'interface en dur dans src/ » : elle a été VRAIE de la mesure et
-                            # FAUSSE du produit pendant une journée. Le seul énoncé vérifiable
-                            # est la sortie de `-- --list`, jamais un chiffre de tête.
-                            # Deux exclusions ASSUMÉES : les commentaires de code (ce dépôt
-                            # commente en français) et les seeds de démo, dont le français
-                            # est la forme de référence recouverte par `localizeSeed` /
-                            # `isEnglishSeed`.
-                            # ❌ Ne JAMAIS relever le seuil pour faire passer la CI.
-npm run i18n:identical      # Valeurs `en` IDENTIQUES au `fr` non declarees legitimes.
-                            # GATE CI depuis le 2026-09-08, cliquet a **0**.
-                            # `-- --list` dit LESQUELLES.
-                            # Angle mort qu'il ferme : le moteur retombe cle par cle sur `fr`,
-                            # donc une valeur jamais traduite s'affiche EN FRANCAIS dans une
-                            # interface anglaise, sans jamais ressembler a une cle brute.
-                            # `i18n:check` ne voit que les CLES, jamais leur contenu.
-                            # 🔴 Le chiffre historique (« 71 valeurs, 3 % ») datait du
-                            # 2026-08-14 et n'a jamais ete remesure pendant que le catalogue
-                            # gagnait 1 403 cles. Remesure du 2026-09-08 : **92 / 3 808
-                            # (2,4 %)**, dont **2 vraiment non traduites** ; les 90 autres
-                            # etaient legitimes et n'avaient jamais ete triees.
-                            # Les legitimes sont DECLAREES une fois pour toutes dans
-                            # `scripts/i18n-identical-allowlist.json` (categorie + valeur `fr`
-                            # EPINGLEE), sinon le prochain audit refait le meme tri a la main.
-                            # L'allowlist est VERIFIEE : une entree dont la cle a disparu, qui
-                            # a fini par etre traduite, dont la valeur `fr` a change, ou dont
-                            # la categorie n'existe pas, fait ECHOUER la garde. Sans la valeur
-                            # epinglee, renommer un libelle ferait heriter la nouvelle chaine
-                            # de la dispense accordee a l'ancienne.
-                            # ❌ Ne JAMAIS relever le seuil pour faire passer la CI.
-                            # ❌ Ne jamais declarer legitime une PHRASE : les six categories
-                            # couvrent des mots, des sigles, des formats et des noms.
-                            # Temoin : `scripts/i18n-identical.guard.test.mjs` (9 cas), vu
-                            # echouer sur trois sabotages du script avant d'etre committe.
-npm run i18n:namespaces     # Quels catalogues le SHELL rend (donc eager) ; --pages
-                            # donne la liste à déclarer par route dans App.tsx
-npm run profile:landing     # Profil du fil principal d'une page (CPU bride, via Playwright).
-                            # ⚠️ Mesure du 2026-08-30 : sur un poste de dev, la landing (55 en CI)
-                            # et le guide (96 en CI) rendent le MEME score, la charge machine
-                            # dominant tout. Un ecart entre deux PAGES ne se lit donc que sur le
-                            # runner ; l'outil sert a comparer un AVANT/APRES sur la meme page.
-npm run check:bundle        # Budget de bundle sur le build reel (CI, apres npm run build)
-                            # Plafonds au 2026-09-02 : chemin critique < 379 000 o gzip
-                            # (mesure 367,1 ko, marge 11,9), entree < 79 000 o (mesure 78,4).
-                            # ❌ Ne jamais remonter un plafond.
-                            # 🔴 EXIGE `VITE_SENTRY_DSN` AU BUILD. Sans elle, Vite remplace la
-                            # variable A LA COMPILATION, la branche `if (sentryDsn)` de main.tsx
-                            # devient du code mort, et Rollup jette presque tout @sentry/react :
-                            # vendor-sentry passe de 49,3 a 3,8 ko gzip. La garde sous-estimait
-                            # alors le chemin critique de ~45 ko, et annoncait 57,8 ko de marge
-                            # la ou il en restait 11,9. Elle REFUSE desormais de valider un build
-                            # dont vendor-sentry pese moins de 20 ko (`SENTRY_FLOOR`).
-                            # ⚠️ Un job qui PESE un artefact et un job qui l'EXECUTE n'ont pas
-                            # les memes besoins : un faux DSN suffit a peser, mais il fait
-                            # s'initialiser Sentry pour de bon, qui emet vers un hote inexistant
-                            # et fait tomber `best-practices` de 100 a 96 dans lighthouse.
-npm run test:rls   # Tests d'intégration RLS (stack Supabase locale), 7 fichiers verts
-npm run test:e2e   # Playwright (+ :ui, :report)
-                   # 210 cas / 25 specs / 4 projects — RECOMPTE le 2026-09-11 par
-                   # `npx playwright test --list`. Repartition : 103 chromium,
-                   # 94 mobile-safari, 12 supabase-stub, 1 prealable de chauffe.
-                   # ⚠️ La commande affiche 212 en local : `e2e/_tmp-probe.spec.ts`
-                   # est une sonde jetable NON SUIVIE par git (2 cas). Le chiffre
-                   # opposable est celui du depot.
-                   # ❌ Ne JAMAIS ecrire ce total en « N x 2 » : les projects ne
-                   # jouent plus le meme ensemble. C'est exactement comme ca que le
-                   # precedent (« 62 x 2 = 124 », du 2026-08-25) est devenu faux, et
-                   # il a ete RECOPIE pendant onze jours au lieu d'etre remesure.
-                   # Methode et detail par project : docs/TESTING.md § Playwright
-npm run cosmo      # CLI données réelles (cf. plus haut)
+npm run test:coverage       # + couverture v8, seuils par fichier → docs/TESTING.md
+npm run test:rls            # Intégration RLS (stack locale)      → docs/TESTING.md
+npm run test:e2e            # Playwright (+ :ui, :report)         → e2e/CLAUDE.md
+npm run cosmo               # CLI données réelles (cf. plus haut)
 ```
+
+> 🛡️ **Les 34 gardes, une ligne chacune** (recomptées dans `package.json` le 2026-10-20) :
+> [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) § Inventaire. Les trois qui attendaient un geste manuel
+> (`C-88`, `C-89`, `C-105`) mesurent toutes depuis le 2026-10-16.
 
 > Le build prod **drope** `console.*` et `debugger` (`vite.config.ts → esbuild.pure/drop`).
 > Les erreurs remontent via Sentry (`VITE_SENTRY_DSN`).
 
----
+🔴 **Trois règles de lecture, chacune payée d une erreur réelle :**
+
+1. ❌ **Ne JAMAIS conclure d une ligne de résumé.** Lire `$?`, **puis** comparer le nombre de
+   fichiers annoncé au périmètre du glob. Le 2026-09-15, une suite a rendu « 225 passed (225) »
+   et **exit 1**, quatre fichiers n ayant jamais démarré, dont un qui porte trois témoins.
+2. 🔴 **Ne JAMAIS passer `--maxWorkers` en ligne de commande.** `vitest.config.ts` fixe
+   `maxWorkers: 2` exprès (C-47) ; l écraser sature la machine et compte comme échec un worker
+   qui n a exécuté aucun cas. Ce conseil a vécu dans ce fichier et a désarmé sa propre garde.
+3. ❌ **Ne JAMAIS relever un seuil ou un plafond pour faire passer la CI**, ni ajouter une entrée
+   d allowlist pour la même raison. Un dépassement dit qu un contenu doit bouger, pas que la borne
+   est trop basse.
 
 ## Variables d'environnement
 
@@ -276,942 +202,15 @@ VITE_SENTRY_DSN=  # public, write-only — si absent, monitoring désactivé
 - **Ne jamais** utiliser `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client.
 - **`.env` est gitignored** — vérifier `git status` avant chaque commit.
 - `.env.cosmo-cli` (gitignored) : config du CLI agent, distincte de `.env`.
+- `SUPABASE_SECRET_KEY` : **serveur seulement**, lue par `api/collect.ts`, posée sur Vercel par
+  l'intégration Supabase (production). ❌ Jamais préfixée `VITE_` → [`api/CLAUDE.md`](./api/CLAUDE.md).
 
 ---
 
-## Architecture : double mode (démo / production)
-
-- **Mode démo** : pas de Supabase, données en `localStorage`. Automatique si les env vars
-  sont absentes, ou via `loginDemo()`.
-- **Mode production** : Supabase, si les deux env vars sont définies.
-
-```typescript
-// src/lib/app-mode.store.ts
-appModeStore.isDemo          // getter
-appModeStore.setDemo(bool)   // setter
-useIsDemo()                  // hook React
-```
-
-Repositories sélectionnés dynamiquement via `src/lib/repository.factory.ts`
-(`getTasksRepository()`, `getHabitsRepository()`, … `resetRepositories()`, `clearDemoStorage()`).
-
-### loginDemo() — séquence exacte (`src/modules/auth/AuthContext.tsx`)
-
-```typescript
-loginDemo() {
-  clearDemoStorage()            // 1. Efface l'ancien localStorage démo
-  appModeStore.setDemo(true)    // 2. Active le flag global
-  resetRepositories()           // 3. Nullifie les singletons
-  queryClient.clear()           // 4. Vide le cache React Query
-  setUser({ id: 'demo-user', email: 'demo@cosmo.app', ... })
-  setIsLoading(false)
-  // 6. navigate('/dashboard') dans le composant appelant, en setTimeout(…, 0)
-}
-```
-
-> `setTimeout(() => navigate('/dashboard'), 0)` est **obligatoire** : il laisse React commiter
-> `setUser()` avant que `ProtectedRoute` vérifie `isAuthenticated`.
-
-### Données seed démo
-
-Rechargées à chaque `loginDemo()` grâce à `clearDemoStorage()`.
-
-| Module | Fichier seed | Volume |
-|---|---|---|
-| Tasks | `src/modules/tasks/local.repository.ts` | **12 tâches** (recompté le 2026-09-10 ; « ~100 » était faux) |
-| Habits | `src/modules/habits/local.repository.ts` | ~100 habitudes / 30–120 j |
-| Events | `src/modules/events/repository.ts` | ~150 événements |
-| OKRs | `src/modules/okrs/repository.ts` | 8 OKRs |
-| Entreprise | `src/modules/{organizations,org-teams,team-projects}/local.repository.ts` | organisation, équipes, projets |
-
-Helpers : dates relatives (`getDate`, `getDateString`), historique déterministe
-(`generateCompletions` — **pas de `Math.random()`**), raccourcis `t(...)` / `h(...)`.
-
----
-
-## Structure des modules
-
-```
-src/modules/{module}/
-├── types.ts               # Interfaces TypeScript
-├── constants.ts           # Clés React Query (factory) + clés localStorage
-├── repository.ts          # Interface I{Module}Repository
-├── local.repository.ts    # Implémentation LocalStorage (quand dédiée)
-├── supabase.repository.ts # Implémentation Supabase
-├── hooks.ts               # Hooks React Query (lecture + écriture)
-├── hooks.derived.ts       # Hooks calculés (useMemo) — quand pertinent
-└── index.ts               # Export public (barrel)
-```
-
-| Module | Usage |
-|---|---|
-| `auth` | Authentification, session, AuthContext |
-| `billing` | Abonnement premium (⚠️ Stripe non finalisé) |
-| `tasks` / `categories` / `lists` | Tâches et leur classement |
-| `events` | Événements calendrier |
-| `habits` | Habitudes |
-| `okrs` / `kr-completions` | OKR + journal append-only des complétions de KR |
-| `today` | Vue « aujourd'hui » (agrégat tâches/habitudes/événements) |
-| `friends` | Collaboration sociale (partage entre comptes perso) |
-| `stats` | Agrégats « temps investi » (RPC `get_work_time_stats` en prod, calcul local en démo) |
-| `ui-states` | État UI persistant (couleurs, priorités, modules actifs) |
-| `user` | Profil utilisateur, messages inbox |
-| `admin` | Console `/admin` (RPC `get_admin_stats`) |
-| `organizations` / `org-teams` | **Mode entreprise** : organisation, pyramide managériale, équipes |
-| `team-projects` / `team-okrs` / `org-okr-categories` | **Mode entreprise** : projets, OKR d'équipe |
-
-### Règle d'import par zone
-
-| Zone | Modules |
-|---|---|
-| Tâches | `tasks`, `categories`, `lists` |
-| Agenda | `events`, `tasks` |
-| Habitudes | `habits`, `categories` |
-| OKR | `okrs`, `kr-completions` |
-| Amis / Collaboration | `friends` |
-| Entreprise | `organizations`, `org-teams`, `team-projects`, `team-okrs` |
-| UI / Filtres | `ui-states` |
-| Dashboard | `tasks`, `habits`, `events`, `kr-completions`, `okrs`, `auth` |
-
----
-
-## Hooks essentiels
-
-### Auth — source de vérité unique
-
-```typescript
-import { useAuth } from '@/modules/auth/AuthContext';
-const { user, isAuthenticated, isDemo, isLoading, login, logout, register, loginWithGoogle,
-        updateDemoProfile } = useAuth();
-```
-
-> **Ne jamais importer `useAuth` depuis `@/modules/user`** — source unique = `@/modules/auth/AuthContext`.
->
-> `updateDemoProfile(patch)` est le **seul** chemin pour modifier le profil en mode démo
-> (`name` / `email` / `avatar` / `autoValidation`, whitelistés). Hors démo, c'est un no-op :
-> un vrai profil passe par `supabase.auth.updateUser`. Écrire dans `localStorage` en espérant
-> que l'écran suive est exactement le bug corrigé le 2026-08-24 (faille B7, 2ᵉ occurrence).
-
-### Billing — vérification premium
-
-```typescript
-import { useBilling } from '@/modules/billing/billing.context';
-const { isPremium, addTokens, subscription, stats, isLoading } = useBilling();
-// isPremium est une FONCTION : isPremium() retourne boolean
-```
-
-#### Modèle Premium
-
-> 🟢 **Premium NON APPLIQUÉ** — kill-switch `PREMIUM_ENFORCED = false` dans
-> `src/modules/billing/premium-config.ts` (vérifié 2026-08-14). Tant qu'il vaut `false` :
-> `isPremium()` renvoie `true` pour tous, le mur-pub Habitudes est masqué, et la route
-> `/premium` **redirige vers `/`**. Aucun code premium n'est supprimé (dormant).
-> Réactivation : passer le flag à `true`, puis finaliser Stripe (`docs/POST-AUDIT-GUIDE.md`).
-
-Comportement **quand `PREMIUM_ENFORCED = true`** :
-
-- **Partage de tâches → 100 % gratuit** (acquisition virale). Aucun gate `isPremium()` sur la
-  collaboration. **Ne PAS réintroduire** ces gates.
-- **Statistiques → premium** (`StatisticsPage`).
-- **Habitudes → mur-pub quotidien** : `HabitsPage` monte `<HabitsAdGate>` une fois par jour pour
-  les non-abonnés. Piloté par un flag localStorage daté
-  (`useDailyAdGate('habits')` → `src/lib/hooks/use-daily-ad-gate.ts`, clé `cosmo_adwall_habits`),
-  **pas** par `isPremium()` (dette : `consume_premium_token` non câblé client).
-- **Abonnés payants** et **mode démo** ne voient jamais le mur.
-- Le client ne peut plus écrire `subscriptions` (mig. 015) : `addTokens(1)` passe par la RPC
-  `credit_premium_token_from_ad` (cap 20 crédits/24 h).
-
-#### Facturation entreprise — plomberie Stripe COMPLÈTE, facturation DÉSACTIVÉE (2026-08-24)
-
-`org_subscriptions` (mig. 101) porte l'abonnement d'une **organisation** : un palier
-(`ENTERPRISE_PRICING_TIERS`), un quota de sièges (`max_members`), un statut. Ne jamais la
-confondre avec `subscriptions`, qui porte l'abonnement **particulier** (jetons, `win_streak`) —
-les deux ne partagent aucune colonne.
-
-- La table n'a **aucune policy d'écriture**. Seul le webhook Stripe (`service_role`) écrit ;
-  la lecture est réservée aux membres. Pas de trigger-guard : rien n'est écrivable, il n'y a
-  rien à garder.
-- Souscription et gestion : **propriétaire de l'org uniquement**, vérifié dans
-  `stripe-org-checkout` / `stripe-org-portal`. Le front ne fait que masquer un onglet.
-- Coupons : **promotion codes Stripe natifs** (`allow_promotion_codes`). COSMO ne valide aucun
-  code et ne recalcule aucun montant — donc aucune surface de brute-force côté COSMO.
-- **Périodicité mensuelle ou annuelle** (2026-08-25), sélecteur dans `/entreprise?tab=billing`.
-  L'annuel vaut le mensuel **moins 30 %** (`ENTERPRISE_YEARLY_DISCOUNT`) : 14/35/70/140 € par mois
-  en équivalent, débités 168/420/840/1 680 € une fois par an. Huit price IDs Stripe au total
-  (`STRIPE_ORG_PRICE_*` et `STRIPE_ORG_PRICE_*_YEARLY`). La colonne descriptive
-  `org_subscriptions.billing_interval` (mig. **123**) dit laquelle est facturée.
-- Le quota réel est `org_seats_allowed()` (mig. 101), déjà appelé par `claim_org_invite` et
-  `respond_join_request`. Un abonnement `past_due` ou `cancelled` retombe au palier gratuit
-  **sans jamais retirer de membre** : on bloque la croissance, on ne retire rien.
-- UI : vue `/entreprise?tab=billing` (`OrgBillingTab`), grille `EnterpriseTierGrid`. **Ce n'est
-  pas un onglet** — la barre d'onglets est lue par toute l'organisation alors qu'un seul compte
-  peut payer. L'entrée est la pastille de forfait de l'en-tête (`OrgPlanChip`), montée pour le
-  seul propriétaire ; `?tab=billing` reste une valeur d'URL valide (les Edge Functions Stripe y
-  renvoient) et un non-propriétaire qui l'ouvre retombe sur l'aperçu.
-  Le CTA de paiement n'est monté que si `ENTERPRISE_BILLING_ENFORCED === true` — le flag est la
-  **seule** condition, jamais « actif si les variables d'environnement existent ».
-
-Garde-fous propres à cette zone :
-
-- 🟢 **Le price ID ANNUEL se dérive, il ne se configure pas** (`_shared/org-stripe-prices.ts`) :
-  c'est le prix récurrent `year`, actif, de la devise du mensuel et **du montant exact annoncé**,
-  porté par le MÊME produit Stripe que le prix mensuel. Zéro candidate ou plusieurs → on n'ouvre
-  aucune session de paiement (`yearly_unavailable`). Conséquence directe : les 4
-  `STRIPE_ORG_PRICE_*_YEARLY` ne sont **pas** nécessaires, et le jour du passage en compte live il
-  n'y a que les 4 mensuels à re-poser. Le secret annuel reste lu en premier, comme porte de sortie
-  pour épingler un prix qui vivrait ailleurs.
-- ❌ **Ne jamais faire deviner un prix à la résolution annuelle.** Le montant est vérifié contre
-  `yearlyTotalEur` AVANT toute session, dans les deux sens (checkout et webhook). C'est le seul
-  endroit où COSMO choisit un prix au lieu de se le faire désigner, donc le seul endroit où il
-  peut se tromper de montant.
-- ❌ **Ne jamais écrire une grille de tarifs annuels à la main.** Le montant annuel est DÉRIVÉ du
-  mensuel, front et Deno, par la même formule. Deux grilles, c'est une seconde occasion d'annoncer
-  un prix et d'en facturer un autre, le risque qui a déjà imposé `org-tiers.parity.test.ts`.
-- ❌ **Ne jamais faire dépendre le quota de sièges de la périodicité.** `max_members` est porté par
-  le palier SEUL : un client annuel achète le même palier moins cher, pas plus de sièges. Un
-  « palier annuel » distinct côté Stripe casserait `tierFromPriceId`, donc le portail.
-- ❌ **Ne jamais dériver le palier des metadata Stripe.** Un changement de palier OU DE PÉRIODICITÉ
-  fait depuis le Billing Portal ne repasse pas par notre checkout : les deux se redérivent du
-  **price ID** (`tierFromPriceId`, `supabase/functions/_shared/org-tiers.ts`, qui rend le palier ET
-  la périodicité). Sans ça, un client paie 100 € et reste bloqué au quota de 20 sièges.
-- ❌ **Ne jamais avaler l'erreur d'une lecture qui décide d'un routage** (audit Stripe 2026-09-02).
-  `getUidFromCustomer` et le pré-contrôle d'idempotence jetaient tous deux leur `error`. Une panne
-  de lecture devenait « pas d'utilisateur » ou « jamais traité » : dans le premier cas un paiement
-  encaissé sans abonnement appliqué et un marqueur d'idempotence écrit, donc aucune re-livraison ;
-  dans le second le rejeu d'un handler non idempotent (à l'époque `bump_win_streak`, qui
-  incrémentait ; supprimé depuis par C-04). Les deux relancent maintenant, comme `orgIdFromInvoice`
-  le faisait déjà. **En cas de doute, faire retenter Stripe, jamais deviner.**
-- ❌ **Un event Stripe qui DÉGRADE ne s'applique qu'à l'abonnement enregistré** (finding S-5).
-  La garde d'`applyOrgSubscription` est asymétrique, et c'est voulu : un event qui **active** fait
-  autorité d'où qu'il vienne (une nouvelle souscription supersède la précédente) ; un event
-  `cancelled` ou `past_due` venant d'un AUTRE abonnement que celui en base parle d'un abonnement
-  abandonné, et remettrait au gratuit une organisation qui vient de repayer. Ne pas remplacer par
-  un `.eq()` sur l'upsert : il empêcherait la toute première écriture.
-- ❌ **AUCUN REJEU AUTOMATIQUE sur une mutation qui déplace de l'argent.** Le `QueryClient` de
-  l'app pose `mutations: { retry: 1 }` pour tout le monde : un `refund_failed` faisait donc repartir
-  un **second** appel à `stripe-org-refund`, sans que personne ne clique et sans que rien ne le dise
-  (mesuré le 2026-09-08 par `e2e/stubbed/refund.spec.ts` : deux appels pour un clic).
-  `useCancelAndRefundOrg` pose `retry: 0`. Ce que la borne serveur absorbe (clé d'idempotence sur
-  l'`invoice_id`, pré-contrôle qui retranche) ne rend pas ce rejeu anodin : l'échec arrive **après**
-  le point de non-retour, donc le second appel peut trouver le remboursement déjà posé et résilier
-  un abonnement dont l'écran vient d'annoncer que rien n'avait été résilié. **On fait retenter la
-  PERSONNE, jamais le navigateur.**
-- ⚠️ **Après un remboursement, l'abonnement se RELIT.** Sans invalidation, l'écran continuait
-  d'afficher le forfait payant *et* son bouton de remboursement : il invitait exactement le rejeu
-  que la borne serveur existe pour absorber. Le bloc est par ailleurs conditionné à
-  `effectiveTierKey(subscription)`, pas à `subscription.tierKey` — un abonnement résilié retombe à
-  « Gratuit », il n'y a plus rien à y résilier.
-- ❌ **Ne JAMAIS ouvrir une session de paiement sans la preuve de renonciation** (finding S-6).
-  `stripe-org-checkout` exige `immediateExecution` ET `waivesWithdrawal` strictement à `true`, puis
-  écrit une ligne dans `withdrawal_consents` (mig. `135`) **avant** de créer la session : l'ordre
-  est la preuve. Les deux drapeaux sont exigés SÉPARÉMENT — l'art. L221-28, 13° demande deux
-  manifestations distinctes, pas un accord global. La table est append-only, immuable par trigger,
-  et se lit comme `renewal_notices` : **c'est une pièce à produire, jamais un cache.**
-- 🔴 **Le passage en compte live doit remettre à zéro les identifiants Stripe en base.**
-  `stripe-org-checkout` et `stripe-org-portal` réutilisent `stripe_customer_id` et
-  `stripe_subscription_id` tels quels ; un identifiant du compte de TEST présenté à une clé live
-  répond 404, donc 500. Les tables sont vides aujourd'hui — c'est le moment le moins cher.
-- ❌ **Ne jamais laisser un event d'organisation retomber sur la branche particulier.** Le
-  customer Stripe d'une org porte `org_owner_uid` (jamais `supabase_uid`) et
-  `getUidFromCustomer` refuse tout customer portant `org_id` — sinon la facture d'une entreprise
-  écrit dans l'abonnement personnel de son propriétaire, et le marqueur d'idempotence empêche
-  Stripe de réessayer.
-- ❌ **Ne jamais écrire un montant en dur** côté Deno : `_shared/org-tiers.ts` est verrouillé sur
-  `ENTERPRISE_PRICING_TIERS` par `src/modules/billing/org-tiers.parity.test.ts`.
-- Les **noms** des paliers (Gratuit · Équipe · Département · Entreprise · Illimité) vivent dans le
-  namespace `common` (`orgTier.*`), pas dans `org` ni `landing` : la landing et le produit doivent
-  dire le même mot pour le même palier, comme ils annoncent déjà le même montant. Le mapping
-  palier → clé est `src/modules/billing/org-tier-labels.ts` (`Record<OrgTierKey, …>`, donc un
-  palier ajouté sans nom ne compile pas).
-- 🔴 **DÉSARMÉ le 2026-08-26** (mig. `124` appliquée en prod). `ENTERPRISE_BILLING_ENFORCED = false`
-  **et** `billing_flags.enterprise_seat_limit = false`, rebasculés ensemble. **Pourquoi** : les
-  deux étaient à `true` avec une clé Stripe de TEST, et une organisation sur quatre était déjà au
-  plafond. Son parcours : invitation refusée, écran qui propose de payer, clic, checkout en mode
-  test, vraie carte refusée. Ni grandir, ni payer, ni résilier. Impasse produit, pas risque
-  juridique — aucun euro n'étant encaissé, ni travail dissimulé ni TVA due.
-  Réarmement : les deux drapeaux, **après** immatriculation et passage de Stripe en compte live.
-  Contexte du 2026-08-25 conservé ci-dessous pour mémoire, il décrivait l'état activé où
-  `org_seats_allowed()` renvoyait `false` pour la seule
-  organisation qui dépasse le palier gratuit. Aucun membre n'est retiré, c'est la croissance qui
-  est bloquée.
-- 🔴 **Deux réserves restent ouvertes à cette date :**
-  1. `STRIPE_SECRET_KEY` est une clé de TEST, donc le checkout n'accepte que des cartes de test.
-     **Le quota est réel, l'encaissement ne l'est pas.**
-  2. Les 4 prix ANNUELS n'existent pas encore côté Stripe. Il n'y a **aucun secret à poser** (cf.
-     règle de dérivation ci-dessous) : il suffit d'ajouter, sur chacun des 4 produits qui portent
-     déjà un prix mensuel, un prix récurrent `year` de 168 / 420 / 840 / 1 680 €. Le checkout
-     annuel répond `yearly_unavailable` d'ici là, la grille rebascule seule sur le mensuel, et
-     l'annuel se met à marcher tout seul dès que les prix existent.
-- **La plomberie reste entière et déployée** : `stripe-org-checkout` / `stripe-org-portal`, les
-  `org_subscriptions` (mig. 101 + 123), `org_seats_allowed()`, et `stripe-webhook`. Les deux
-  fonctions qui portent la périodicité, `stripe-org-checkout` (v2) et `stripe-webhook` (v17), ont
-  été **redéployées en prod le 2026-08-25** et fument-testées (webhook : 400 « Invalid
-  signature » ; checkout : 401 JSON de la fonction elle-même, donc les modules `_shared` se
-  chargent). Réactiver = rebasculer les deux drapeaux, rien à reconstruire.
-- ⚠️ **Corrigé le 2026-08-26 : les 4 prix ANNUELS existent bel et bien** dans le compte de test
-  (168 / 420 / 840 / 1 680 €), contrairement à ce que ce fichier affirmait depuis le 2026-08-25.
-  Vérifié par API, pas déduit. La dérivation `resolveYearlyPriceId` n'a donc pas besoin des
-  secrets `STRIPE_ORG_PRICE_*_YEARLY`.
-- 🔴 **Le compte Stripe LIVE est désormais équipé** (2026-08-26) : 4 produits et 8 prix créés,
-  tous en `tax_behavior: inclusive`, réglage **DÉFINITIF** chez Stripe. Les 8 prix du compte de
-  TEST restent sur `unspecified`, valeur à ne jamais reproduire. Détail et identifiants :
-  [`docs/STRIPE-LIVE.md`](./docs/STRIPE-LIVE.md).
-  ❌ **Ne jamais créer un prix Stripe sans `tax_behavior` explicite** : il ne se modifie plus, il
-  faut créer un nouveau prix et migrer les abonnements.
-- 🔴 **Les deux drapeaux se déplacent ensemble.** Le flag TS ne masque que les CTA ; le blocage
-  réel est `billing_flags.enterprise_seat_limit`. Serveur `true` + client `false` = un
-  propriétaire se voit refuser une invitation (`seat_limit_reached`) sans qu'aucun écran ne lui
-  propose de payer : impasse. Client `true` + serveur `false` = on encaisse sans rien débloquer.
-- 🔴 **La grille branchée est celle du SANDBOX DE TEST.** `STRIPE_SECRET_KEY` en prod est une
-  clé de test — les customers des vrais utilisateurs vivent dans le compte « Environnement de
-  test COSMO », le compte live est vide. Un checkout n'accepte donc que des **cartes de test**
-  : le quota de sièges est réel, l'encaissement ne l'est pas. Passage en live = recréer les 8
-  prix sur le compte live (4 mensuels + 4 annuels), réenregistrer un endpoint webhook live (mêmes 5 events), puis
-  remplacer `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` et les 8 `STRIPE_ORG_PRICE_*`.
-- ⚠️ `APP_URL` vaut `https://thecosmo.app` et **est la seule origine CORS autorisée** par les
-  deux Edge Functions org : le checkout entreprise **ne peut pas être testé depuis
-  `localhost:5173`**. Tester depuis la prod, ou changer `APP_URL` le temps du test.
-- Réactivation (immédiate, réversible) : `ENTERPRISE_BILLING_ENFORCED = true` +
-  `UPDATE billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit'` — **après** la
-  création de la micro-entreprise et le passage du compte Stripe en live.
-  Contexte historique : [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md).
-
-### Données métier
-
-```typescript
-import { useFavoriteColors, usePriorityRange, useColorSettings } from '@/modules/ui-states';
-import { useFriends, useSendFriendRequest, useShareTask, useFriendRequests } from '@/modules/friends';
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/modules/tasks';
-import { useHabits } from '@/modules/habits';
-import { useEvents } from '@/modules/events';
-import { useOkrs, useUpdateKeyResult } from '@/modules/okrs';
-import { useKRCompletions } from '@/modules/kr-completions';
-import { useCategories } from '@/modules/categories';
-import { useLists } from '@/modules/lists';
-```
-
----
-
-## Hiérarchie des providers (`src/App.tsx`)
-
-```
-QueryClientProvider
-  AuthProvider
-    ActiveOrgProvider        ← organisation courante (mode entreprise)
-      BillingProvider        ← dépend de useAuth
-        TooltipProvider
-          MotionConfig reducedMotion="user"   ← WCAG 2.3.3 pour tout Framer Motion
-            Toaster (Sonner, theme="system") + Routes
-```
-
-React Query : 5 min stale, 30 min gc, retry 1, pas de `refetchOnWindowFocus`.
-
-`useSharedTasksRealtime` est monté **une seule fois** ici (composant `SharedTasksRealtime`).
-
-### Type User — source de vérité
-
-Défini **uniquement** dans `src/modules/auth/AuthContext.tsx` (`src/modules/user/types.ts` le
-ré-exporte sans le redéfinir) :
-
-```typescript
-export type User = {
-  id: string; name: string; email: string;
-  avatar?: string; premiumTokens?: number; premiumWinStreak?: number;
-  lastTokenConsumption?: string; subscriptionEndDate?: string; autoValidation?: boolean;
-};
-```
-
-### Routing (`src/App.tsx`)
-
-| Route | Page | Accès |
-|---|---|---|
-| `/` | LandingPage — **parcours perso**, redirige `/dashboard` si connecté | public |
-| `/entreprise-presentation` (slug localisé) | **même composant `LandingPage`**, parcours entreprise | public |
-| `/login` · `/signup` · `/forgot-password` · `/reset-password` | Auth | public |
-| `/guide` · `/blog` · `/blog/:slug` | Contenu SEO | public |
-| slugs localisés (à-propos, freelances, étudiants, managers, équipes, mentions légales, confidentialité, CGU) | via `routeSlug(key, locale)` — cf. `src/i18n/routes.ts` | public |
-| `/invite/:token` · `/org-invite/:token` | Claim d'invitation (partage / entreprise) | public |
-| `/dashboard` · `/tasks` · `/settings` | Socle | protégé |
-| `/agenda` · `/habits` · `/okr` · `/statistics` | **Toujours visibles pour tout le monde** depuis le 2026-08-23, plus aucun réglage ne les masque | protégé |
-| `/entreprise` · `/entreprise/onboarding` | Mode entreprise (onboarding hors Layout) | protégé |
-| `/admin` | Console admin — URL non référencée, gating **serveur** (`get_admin_stats` rejette les non-admins) | protégé |
-| `/premium` | Redirige `/` tant que `PREMIUM_ENFORCED = false` | protégé |
-| `/welcome` | Redirection permanente vers `/` (ancienne URL) | public |
-| `*` | **NotFoundPage** (pas de redirect) | — |
-
-Toutes les pages sont lazy-loadées (`React.lazy`) et enveloppées dans `AppErrorBoundary`.
-
-### Landing — deux parcours exclusifs (2026-08-15)
-
-La landing n'est plus une page linéaire. Après le header, un **aiguillage**
-(`landing/LandingGateway`) fait choisir entre deux parcours **mutuellement exclusifs** :
-
-| Parcours | Composant | Servi par | DA |
-|---|---|---|---|
-| perso | `landing/PersoTrack` | `/` | slate-900, bleu → violet → fuchsia |
-| entreprise | `landing/entreprise/EnterpriseTrack` (lazy) | `/entreprise-presentation` | `#08090C`, cyan `#22D3EE`, or `#F5B942` |
-
-- Le parcours affiché est **dérivé de l'URL**, pas d'un état local (`useLandingTrack`) : le
-  bouton retour marche sans code de synchronisation. Les deux routes rendent le **même
-  composant à la même profondeur**, donc basculer ne remonte pas la page.
-- `TrackSwitcher` (header) et `TrackAnchors` (sommaire collant, par parcours) garantissent
-  qu'on ne peut jamais rester coincé dans un parcours. Les listes d'ancres vivent dans
-  `landing/anchors.ts` — une par track, pour qu'aucun lien ne vise une section absente.
-- ❌ **Ne jamais ajouter une section entreprise dans `PersoTrack`** (ni l'inverse) : la
-  séparation des deux parcours EST la structure de la page.
-- 🔴 **L'entrée du hero perso est en CSS, et elle doit le rester** (refonte du 2026-08-30).
-  Mesuré à 4× de bridage CPU : la landing affichait **deux secondes d'écran blanc avec un
-  spinner**, puis le hero apparaissait déjà fini. Le fallback de page était clair sur une page
-  sombre, et toute la chorégraphie GSAP jouait derrière lui. Trois règles en sont sorties :
-  **(1)** l'entrée du hero ne dépend ni de GSAP, ni du chunk de page, ni des fontes — elle est en
-  keyframes CSS (`src/index.css`, section « Hero de la landing ») pilotées par `--d` / `--tx` ;
-  **(2)** chaque règle n'a qu'un `from`, donc **l'état final est l'état par défaut** : une
-  animation qui ne joue pas laisse le contenu visible ; **(3)** la route `/` a son propre
-  squelette sombre (`LandingSkeleton` dans `App.tsx`), jamais le `PageLoader` clair.
-- ❌ **Ne jamais remettre `SplitText` sur le H1 du parcours perso.** Il imposait une re-découpe au
-  chargement des fontes et une recopie des classes de gradient sur chaque mot, `bg-clip-text` ne
-  survivant pas aux transforms des ENFANTS. Le titre est maintenant révélé ligne par ligne, le
-  gradient et le transform portés par le **même** élément — le seul cas que `bg-clip-text`
-  supporte. C'est ce qui a fait réapparaître le dégradé bleu → fuchsia, affiché en bleu plat
-  depuis le passage à SplitText.
-- 🔴 **Le shader du hero ENTREPRISE se règle tout seul, et il ne doit jamais redevenir fixe**
-  (finding C-68, corrigé le 2026-09-05). `LightRays` peint le viewport entier dans un fragment
-  shader à chaque frame, indéfiniment. Quand la machine ne tient pas la frame, les commandes
-  s'empilent, le tampon se remplit, et **le fil principal BLOQUE** dans
-  `CommandBufferProxyImpl::WaitForGetOffset` en attendant qu'il se vide. Mesuré sur le build de
-  prod, rastérisation logicielle : **3 637 ms bloquées sur 4 000 au repos**, dont ~2 800 de pure
-  attente. **Aucun de nos JavaScript ne tournait** — c'est pour ça que couper les flous, les 23
-  `ScrollTrigger` et les 8 tweens infinis ne déplaçait pas la mesure d'un point, et pourquoi la
-  cause a mis quatre jours à être nommée. Le composant mesure désormais la cadence qu'il obtient et
-  le temps qu'il passe **dans** `render`, et descend d'un palier tant que ça ne tient pas :
-  demi-résolution (le **départ**) → un huitième des pixels → 20 img/s → **gel**, la dernière frame
-  restant affichée. **Les rayons restent visibles dans tous les cas** ; c'est le mouvement qui se
-  retire, jamais l'image. Le mécanisme et ses mesures vivent dans
-  `src/components/reactbits/light-rays-budget.ts`, avec leurs tests.
-  ❌ **Ne jamais remplacer ça par une détection de rastériseur logiciel** (`SwiftShader`,
-  `llvmpipe`) : ça verdit la sonde sans rien rendre à un téléphone d'entrée de gamme, qui a bien un
-  GPU et n'en sature pas moins.
-  ❌ **Ne jamais faire repartir l'échelle de la pleine résolution.** Descendre depuis le haut coûte
-  la descente : mesuré, un résidu **stable** de 315 à 393 ms sur six passes, là où la même page
-  sans canvas rendait 0 sur six. Ces frames-là tombent dans les premières secondes, le seul moment
-  où quelqu'un regarde.
-  ⚠️ **Une file qui sature n'a pas un coût progressif, elle a deux états.** C'est ce qui rendait la
-  mesure BIMODALE, et aucune moyenne ne pouvait l'expliquer. Toute mesure de cette page se lit
-  passe par passe, jamais en médiane.
-- ⚠️ **`HeroModuleDock` n'est pas une décoration** : les quatre puces suivent la vue affichée par
-  `AppWindowShowcase` (`onSlideChange`), et c'est ce qui fait comprendre que Tâches, Habitudes,
-  Agenda et OKR sont quatre vues de la MÊME application. Sous `prefers-reduced-motion` elles sont
-  déjà arrimées et libellées : **le sens survit à l'absence de mouvement**, c'est le critère qui a
-  fait retenir cette idée plutôt qu'un effet.
-- ⚠️ Les tarifs affichés viennent de `ENTERPRISE_PRICING_TIERS` — **jamais de montant en dur** :
-  la landing et le produit doivent annoncer le même prix le jour de l'activation du paywall.
-  Et le montant n'est **pas** animé par un compteur à ressort (il passerait par 48 € avant de
-  se poser sur 50 €).
-- **Offre de lancement (2026-08-24)** : `landing/entreprise/free-offer.ts` expose
-  `ENTERPRISE_FREE_OFFER`, **dérivé de `ENTERPRISE_BILLING_ENFORCED`** — jamais une constante
-  indépendante, sinon la landing et le produit peuvent diverger. Tant qu'il est vrai, la section
-  tarifs affiche « Gratuit » à la place de chaque montant, le tarif d'après restant visible barré
-  (« au lieu de 20 € / mois »), sous un badge « Offre de lancement ». Les textes payants ne sont
-  pas remplacés : les variantes `promo*` / `*Free` **s'ajoutent** dans les catalogues, donc
-  rebasculer le drapeau restitue la page d'origine mot pour mot.
-- ⚠️ **Une page qui dit « gratuit » ne doit plus annoncer de plafond nulle part.** Quatre textes
-  décrivaient une limite de sièges qui n'est plus appliquée (`hero.reassurance`,
-  `pricing.ctaNote`, `cta.note`, `faq.a4`/`a5`) : tous ont leur variante d'offre. Toute nouvelle
-  phrase qui promet « jusqu'à 5 membres » doit en avoir une aussi.
-
----
-
-## Onboarding du premier compte
-
-🔴 **La sélection de modules N'EXISTE PLUS.** Elle a été supprimée le 2026-08-23 (`acf29b7`,
-bug 6 sur 10), et ce fichier a continué à la décrire pendant dix jours. Vérifié dans tout le
-dépôt le 2026-09-02, en cherchant le code et pas seulement le nom : `active-modules.store.ts`,
-`useActiveModules`, `isModuleActive`, `ModuleOnboarding.tsx`, `RequireModule` et la clé
-`cosmo_active_modules` rendent **zéro occurrence**. Agenda, Habitudes, OKR et Statistiques sont
-visibles par tout le monde, tout le temps.
-
-> ⚠️ **Une note ajoutée le 2026-09-02 sur cette même section n'a corrigé qu'un nom sur six** :
-> elle constatait l'absence de `RequireModule` et concluait « écrire la garde OU retirer
-> l'affirmation », sans voir que la fonctionnalité entière avait disparu. Chercher le symptôme
-> cité par la doc plutôt que la chose décrite laisse la dérive presque intacte, et la fait
-> paraître vérifiée.
-
-**Ce qui se passe réellement après une inscription** (parcours personnel) :
-
-1. `SignupPage` renvoie sur `/dashboard` (`postAuthRoute`) — `/entreprise/onboarding` pour un
-   compte professionnel, qui est le seul onboarding restant.
-2. `FirstRunSetup` (`src/components/onboarding/`, monté dans `Layout`) pose **trois questions
-   passables** à un compte VIDE : des tâches, une habitude, un objectif. Ce qui est écrit devient
-   de vraies données. Une fois par appareil (`cosmo_first_run_done`), jamais en mode démo.
-
-Livré le 2026-09-02 (T-23). Il remplace `OnboardingExampleTasks`, qui créait 3 tâches d'exemple
-sans écran, **écrites en dur en français** hors des catalogues i18n.
-
-- ❌ **Ne jamais différer les créations à la dernière étape.** Chaque étape crée au moment où elle
-  est validée : quelqu'un qui répond à la première question puis ferme l'onglet garde sa tâche, et
-  c'est exactement la population que l'écran existe pour retenir (50 % des inscrits ne revenaient
-  jamais après leur session d'inscription).
-- ❌ **Ne jamais le déplacer sur une route.** Une inscription par Google ne repasse pas par
-  `SignupPage` : un accueil monté sur une route n'accueillerait qu'un des deux chemins.
-- ❌ **Ne jamais poser d'échéance sur la première tâche.** La personne a donné un intitulé, pas une
-  date ; en inventer une la ferait apparaître « en retard » dès le lendemain.
-- 🔴 **UNE GARDE D'ENTRÉE SE FIGE À L'ENTRÉE.** `shouldOfferFirstRun` décide d'OUVRIR l'écran ; elle
-  ne doit pas décider de le garder ouvert. `alreadyDone` était déjà figé pour cette raison exacte
-  (« relire à chaque rendu ferait disparaître l'écran sous les doigts de la personne ») ;
-  `taskCount` ne l'était pas. Or `useCreateTask` écrit la tâche créée dans le cache React Query
-  (`setQueryData`) : dès la PREMIÈRE réponse, `tasks.length` passait à 1, la garde se refermait, et
-  **l'accueil disparaissait entre la question des tâches et celle de l'habitude**. La personne ne
-  voyait jamais les deux dernières questions, et l'écran ne revenait plus — son compte n'était
-  désormais plus vide. Corrigé le 2026-09-08 par un verrou (`latched`).
-  ⚠️ **Aucun test unitaire ne pouvait le voir** : ils passent des valeurs figées aux hooks. C'est le
-  parcours `e2e/stubbed/first-run.spec.ts` qui l'a trouvé, et seulement une fois qu'il a attendu que
-  les écritures atterrissent. Un écran qui se referme **sur son propre effet** ne se voit qu'en le
-  parcourant.
-- ⚠️ L'ancien drapeau `cosmo_onboarding_examples_created` reste **lu, jamais écrit** : qui a eu
-  l'ancien accueil puis supprimé ses tâches n'est pas accueilli une seconde fois.
-- Debug : `localStorage.removeItem('cosmo_first_run_done')`, supprimer ses tâches, puis recharger.
-  ⚠️ **Le compte doit être vide** : la garde est `taskCount === 0`, pas « compte récent ».
-
----
-
-## Base de données Supabase
-
-Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**149 fichiers de migration** (recompté le 2026-09-10). La dernière APPLIQUÉE est la
-`144_categories_tree_depth_ambiguity.sql` (le 2026-09-09).
-
-### Sous-catégories hiérarchiques (mig. `143`, `144`, `145`)
-
-✅ **La `143` est APPLIQUÉE en prod le 2026-09-09** : `categories` gagne `parent_id` et
-`position`, l'unicité par nom devient **deux index partiels** (en Postgres deux `NULL` ne
-sont jamais égaux, donc une unicité sur `(user_id, parent_id, name)` ne contraint RIEN
-entre racines), et un trigger `enforce_category_tree` refuse l'auto-parentage, un parent
-inexistant, un parent d'un autre compte, les cycles et une profondeur au-delà de 10.
-
-🔴 **`ON DELETE NO ACTION` sur `parent_id`, ni `CASCADE` ni `RESTRICT`.** `RESTRICT` se
-vérifie ligne par ligne et ne voit pas que l'enfant part dans la MÊME requête : or
-`delete-account` et la cascade depuis `auth.users` suppriment les catégories d'un compte
-en un seul `DELETE` groupé. Avec `RESTRICT`, la suppression de compte devenait impossible
-dès qu'un compte avait une sous-catégorie — la régression B9 (RGPD art. 17). `NO ACTION`
-vérifie en fin de requête : même garantie, sans le blocage.
-
-🔴 **La `144` corrige un défaut que la `143` avait mis EN PRODUCTION.** Sa CTE récursive
-déclarait `branch(id, depth)` pendant que le bloc PL/pgSQL déclarait une variable `depth` :
-`column reference "depth" is ambiguous`, et **toute création de sous-catégorie échouait**.
-⚠️ La `143` avait passé `validate:migrations`, `check:rls`, les gardes de
-`migration-guards.test.mjs`, une revue de conformité et une revue de qualité. **Aucune de
-ces cinq vérifications n'exécute le SQL.** Seule la vérification acteur par acteur en
-transaction annulée l'a trouvée. Onze cas y ont été rejoués, prod inchangée.
-
-⚠️ **La `145` est ÉCRITE et NON APPLIQUÉE.** Elle pose la clé étrangère de
-`tasks.category` / `okrs.category` vers `categories` (`ON DELETE SET NULL`), après
-nettoyage des orphelins et conversion `TEXT` → `UUID`. C'est une **conversion de type sur
-`tasks`**, qui prend un `ACCESS EXCLUSIVE` et réécrit la table : à jouer hors heure de
-pointe, et sa preuve en transaction annulée reste à jouer.
-📊 Mesuré en prod le 2026-09-10 : `tasks` **749 lignes**, 125 sans catégorie, **13
-orphelines** ; `okrs` 12 lignes, 0 orpheline. ⚠️ Le chiffre de « 611 tâches » cité
-ailleurs dans ce fichier date du 2026-09-02 et n'est plus vrai.
-
-❌ **Ne jamais dériver une branche par un aller-retour serveur.** Aucune RPC n'est créée :
-un compte porte quelques dizaines de catégories et le client les charge déjà toutes. Les
-règles de l'arbre vivent dans `src/modules/categories/tree.ts`, miroir client du trigger.
-
-⚠️ **Le repository démo des catégories est chargé À LA DEMANDE** (`local.repository.ts` +
-`src/lib/demo-repositories.ts`). Le remettre dans `repository.ts` ferait repartir ses seeds
-dans le chunk d'entrée, payé par chaque visiteur de la landing.
-⚠️ La `136_work_time_stats_okr_from_completions.sql` est présente dans l'arbre mais **non
-versionnée et NON appliquée** : c'est un travail en cours d'une autre session. Ne pas
-l'appliquer sans l'avoir relue.
-✅ **Tout le dépôt est appliqué en prod**, ledger relu le 2026-09-02 : la `133` (échéance récurrente
-en INSTANT, R-01), la `134` (un customer Stripe ne désigne qu'un seul compte, S-3) et la `135`
-(preuve de renonciation au droit de rétractation, S-6) sont en base, vérifiées acteur par acteur
-dans des transactions annulées.
-🔴 **`stripe-org-checkout` ne peut PAS créer de session sans la table `withdrawal_consents`.** Elle
-existe désormais ; mais un environnement monté sans elle coupe l'encaissement. C'est le bon sens de
-l'échec, il faut juste le savoir.
-⚠️ **Lire le ledger AVANT d'appliquer une migration, pas seulement après.** Le 2026-09-02, les `134`
-et `135` ont été appliquées DEUX fois : une session voisine les avait déjà passées à 16:24 UTC, et
-une seconde application a suivi à 21:14. Sans effet sur le schéma — elles sont idempotentes — mais
-le ledger a porté les seuls doublons de ses 127 entrées, retirés depuis. Ce dépôt a plusieurs
-sessions actives : l'état de la prod n'est jamais celui qu'on a laissé.
-Ledger prod relu le 2026-08-31 : **tout le dépôt est appliqué**, `131` et `132` comprises.
-⚠️ Elles l'ont été dans l'ordre INVERSE de leur numéro (la `132` le 08-30, la `131` le 08-31) —
-elles ne se touchent pas, mais le ledger ne se lit donc pas comme une suite croissante.
-✅ **La `132` a été appliquée en prod le 2026-08-30** (dépendances entre tâches PERSONNELLES,
-jumelle de la `108`), et vérifiée invariant par invariant plutôt que sur un « success » :
-`user_id` bien redérivé alors qu'on envoyait exprès celui d'un autre compte, doublon refusé
-par la PK (23505), auto-dépendance et cycles direct **et indirect à trois maillons** refusés,
-arête inter-comptes refusée, tâche inexistante refusée, `ON DELETE CASCADE` vérifié (2 arêtes
-→ 0). Isolation mesurée acteur par acteur : le propriétaire voit son arête, un autre compte
-en voit **zéro**, et son insertion est refusée. Tests joués dans une transaction annulée par
-un `RAISE` final — la table est restée à 0 ligne. Zéro advisor de sécurité sur cette table.
-Elle n'a modifié aucune table existante.
-✅ **La `131` a été appliquée en prod le 2026-08-31** (`/admin` exige une session `aal2`),
-et vérifiée acteur par acteur dans une transaction annulée : admin en `aal1` →
-`admin_allowlisted()` vrai mais `is_admin()` FAUX et `get_admin_stats()` refusée **42501** ;
-admin dont le jeton n'a **aucune** claim `aal` → `is_admin()` faux (la garde ne se relâche pas
-sur une valeur manquante) ; admin en `aal2` → garde ouverte, statistiques rendues ; compte non
-admin en `aal2` → tout faux, inchangé.
-🔴 **ELLE A ÉTÉ APPLIQUÉE AVANT L'ENRÔLEMENT**, à la demande explicite d'Axel, donc dans
-l'ordre que l'en-tête de la migration déconseille. Mesuré juste avant : le compte admin a
-**zéro facteur MFA**. Conséquence, tant qu'aucun code TOTP n'a été vérifié : `/admin`
-n'affiche plus de statistiques. Ce n'est pas un verrouillage — `AdminMfaGate` reste
-atteignable parce que `admin_allowlisted()` ignore volontairement le niveau d'assurance.
-✅ **L'enrôlement a eu lieu le 2026-09-01**, mesuré en base le 2026-09-02 : `auth.mfa_factors`
-porte **1 facteur `totp` en statut `verified`** sur le compte admin, créé à 14:20:27 UTC et
-vérifié 46 secondes plus tard. Accès à `/admin` confirmé le 2026-09-02. Le verrouillage
-a donc duré **du 2026-08-31 au 2026-09-01**, pas au-delà.
-⚠️ **Un seul compte au monde ouvre cette console** : `public.admin_users` ne contient qu'une
-ligne, l'adresse Gmail personnelle d'Axel, pas l'adresse pro. Téléphone perdu →
-`DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';` depuis le SQL editor, seule porte de
-sortie, et elle n'a pas d'autre gardien.
-🔴 **La porte de sortie était elle-même cassée, et ça a bel et bien produit un verrouillage
-(2026-09-01).** Le raisonnement ci-dessus — « ce n'est pas un verrouillage, `AdminMfaGate`
-reste atteignable » — était juste sur la garde et faux dans les faits : l'écran d'enrôlement
-levait une exception **en phase de rendu**, donc l'`AppErrorBoundary` affichait « Une erreur
-inattendue s'est produite » au lieu du QR code. Atteignable, mais inutilisable : `/admin` est
-resté inaccessible du 2026-08-31 au 2026-09-01, mesuré (`auth.mfa_factors` = 0 ligne).
-Corrigé (`formatSecret` rendue totale, réponse d'enrôlement validée à la frontière), avec les
-tests de régression qui manquaient — ils mockaient `startTotpEnrolment` sans jamais le
-résoudre, donc le QR n'était **jamais rendu**.
-**La leçon, qui vaut au-delà de cet écran** : quand une migration crée une dépendance à un
-chemin de récupération, ce chemin se PARCOURT avant d'appliquer la migration, il ne se
-raisonne pas. Ici il suffisait d'ouvrir l'écran une fois. ✅ La `130` a été appliquée
-le 2026-08-29, vérifiée acteur par acteur (membre simple : 0 ligne).
-✅ **Les `127`, `128` et `129` ont été appliquées en prod le 2026-08-27**, dans cet ordre, chacune
-vérifiée après coup : la `127` rend un résultat identique pour les 18 comptes qui ont des données
-(comparaison par empreinte, prise avant application), la `128` laisse **une seule policy
-PERMISSIVE** sur `events`, et un manager voit toujours exactement les 30 événements non privés de
-son subordonné, zéro de celui qu’il ne gère pas ; la `129` est `SECURITY INVOKER` et un membre
-simple ne voit toujours aucune des demandes d’adhésion réservées aux admins.
-**Tout le reste est en prod**, ledger relu en base le 2026-08-27 : la `129` est la dernière
-appliquée. La `123` l’a été avant le redéploiement de `stripe-webhook`, qui écrit
-désormais `billing_interval`.
-
-> ⚠️ **Le ledger porte une entrée de plus que le dépôt** :
-> `119b_habits_bounded_payload_future_guard`, appliquée en prod, sans fichier correspondant. Son
-> contenu a été relu et comparé au fichier `119` du dépôt : **identique**, le correctif a été
-> replié dans le fichier d'origine au lieu d'être versionné à part. Rejouer le dépôt sur base
-> vierge donne donc le même état final. **Règle : un correctif appliqué en prod se versionne sous
-> son propre numéro**, jamais par édition d'un fichier déjà appliqué.
-
-> ⚠️ Quatre migrations ne portent pas de fonctionnalité : elles **formalisent
-> l'existant**. `subscriptions`, trois colonnes et les privilèges par défaut du
-> schéma `public` existaient en prod sans qu'aucune migration ne les crée — le
-> dépôt ne décrivait donc pas la base qu'il prétend reconstruire, et le replay
-> sur base vierge échouait. Elles sont **no-op en production** (`IF NOT EXISTS`,
-> `CREATE OR REPLACE`) : elles alignent le dépôt sur la prod, jamais l'inverse.
-> Deux d'entre elles sont numérotées `000_` parce qu'elles précèdent réellement
-> l'historique. Le job CI `rls-integration` est vert depuis (run #713) — il ne
-> l'avait **jamais** été depuis sa création le 2026-06-21.
->
-> 🔴 **Ne jamais ajouter une colonne ou un GRANT depuis le dashboard Supabase.**
-> C'est ce qui a produit cette dérive : la prod avance, le dépôt non, et
-> personne ne le voit tant que rien ne rejoue les migrations à blanc.
-
-Toutes les tables ont **RLS activée**. Pattern obligatoire + checklist migration →
-[`docs/SECURITY.md`](./docs/SECURITY.md).
-
-Fonctions SECURITY DEFINER clés : `accept_friend_request_v2`, `accept_shared_task`,
-`consume_premium_token` / `credit_premium_token_from_ad`, `remove_friendship` /
-`resolve_profile_by_email`, `handle_new_user_profile`, `prevent_user_id_change`, `owns_task`,
-`claim_share_link`, `sanitize_display_name`, `get_my_tasks`, `toggle_task_complete_v2`,
-`get_work_time_stats`, `get_admin_stats`. Schéma `friend_requests` = `sender_id` / `receiver_id`.
-
-> **Une seule policy PERMISSIVE par rôle+action** (mig. 049). Les anciens splits `tasks`
-> (own / collaborator) et `friend_requests` (sender / receiver) sont **fusionnés en une policy
-> `OR` unique**, sémantique préservée. **Ne jamais recréer deux policies permissives** pour le
-> même rôle+action : élargir le `OR` existant. `npm run check:rls` est la gate.
-
-### Pattern critique : journal append-only `kr_completions`
-
-Quand un KR passe `completed: false → true`, **les deux repositories OKR doivent insérer une
-ligne dans `kr_completions`** atomiquement. Cette table alimente le graphique « KR réalisés » du
-Dashboard.
-
-- **LocalStorage** : `src/modules/okrs/repository.ts → updateKeyResult`
-- **Supabase** : `src/modules/okrs/supabase.repository.ts → recordKRCompletion()`
-  (appelé depuis `updateKeyResult` ET `updateKeyResultViaJsonb`)
-
-> **Ne jamais retirer cette logique** : sans elle, le graphique reste à 0 en production.
-
----
-
-## ⚡ Lecture des tâches — passer par `get_my_tasks()`
-
-**Ne jamais lire `tasks` en direct pour une vue de liste.** La policy
-`tasks_select_own_or_shared` (mig. 049) est un `OR` entre une égalité et un `EXISTS` : Postgres
-ne peut pas utiliser `idx_tasks_user_id` et fait un **`Seq Scan` de la table globale** (vérifié
-par `EXPLAIN` en prod le 2026-08-07). Le coût d'une lecture croît alors avec le volume de TOUTE
-la plateforme, pas avec celui de l'utilisateur.
-
-```typescript
-supabase.from('tasks').select(...)          // ❌ Seq Scan global
-supabase.rpc('get_my_tasks').select(...)    // ✅ Index Scan (mig. 085)
-```
-
-`get_my_tasks()` ne prend **aucun paramètre** : son périmètre vient de `auth.uid()` seul. Les
-policies RLS restent en place (défense en profondeur) ; l'isolation est prouvée par
-`e2e/rls/get-my-tasks.test.ts`. Exception légitime : `getById` (accès par clé primaire).
-
-> ⚠️ **`task_dependencies` (mig. 132) se lit en direct, et c'est voulu.** Sa policy est
-> `(SELECT auth.uid()) = user_id`, pas un `EXISTS` sur `tasks` : le périmètre est porté par une
-> colonne dénormalisée (redérivée par trigger, jamais envoyée par le client), donc indexable dès
-> le premier jour. Déléguer à `tasks` aurait payé le `OR` ci-dessus **par arête** — l'erreur que
-> la mig. 117 a dû rattraper côté entreprise. Second motif, suffisant à lui seul : une tâche
-> personnelle peut être **partagée**, et déléguer à « les tâches que je vois » ferait entrer dans
-> le graphe des arêtes entre deux tâches d'un autre compte. Le graphe personnel est celui de son
-> propriétaire ; la version partagée du graphe, c'est le mode entreprise.
-
-### ⚡ Tables entreprise — même règle, même correctif (mig. 113)
-
-`team_tasks` et `team_projects` avaient exactement le même défaut : les policies les filtrent par
-`USING (can_access_team_project(...))`, un prédicat-fonction sur une colonne, qui **ne peut pas
-utiliser d'index** — donc `Seq Scan` de toute la table et une CTE récursive (`get_subtree`)
-évaluée **par ligne**. Mesuré en prod le 2026-08-14 : **≈ 60× le coût par ligne** du prédicat de
-`tasks`.
-
-```typescript
-supabase.from('team_tasks').select(...)                                // ❌ Seq Scan + CTE par ligne
-supabase.rpc('get_my_team_tasks',             { p_org: orgId })        // ✅ mig. 113
-supabase.rpc('get_my_team_projects',          { p_org: orgId })        // ✅ mig. 113
-supabase.rpc('get_my_team_task_dependencies', { p_org: orgId })        // ✅ mig. 117
-```
-
-- Le périmètre vient de `auth.uid()` seul : **`p_org` est un filtre, pas une portée.** Forger un
-  `p_org` étranger renvoie 0 ligne (les trois branches exigent l'appartenance de l'appelant).
-- Le gain tient en une phrase : `get_subtree()` est appelée **une fois par organisation** au lieu
-  d'une fois par ligne lue.
-- Les policies restent en place, inchangées (défense en profondeur). Le déploiement est donc
-  réversible sans downtime — mais la **mig. 113 doit être appliquée AVANT** de déployer le front,
-  sinon la RPC n'existe pas. **Appliquée en prod le 2026-08-24**, avant que `main` (qui appelle
-  déjà ces RPC) ne soit déployé sur Vercel.
-- Le chemin d'accès est verrouillé par test (`src/modules/team-projects/supabase.repository.test.ts`) :
-  un retour à `.from('team_tasks')` échoue en CI.
-
-> ⚠️ **Ne pas ajouter de nouvelle table entreprise sur le modèle prédicat-fonction.** Exprimer
-> l'appartenance en **jointure indexable** dans une RPC, en réutilisant `my_team_project_ids()`
-> plutôt qu'en déléguant à `team_tasks` : c'est la délégation qui a fait hériter
-> `team_task_dependencies` du coût qu'on venait d'éliminer (mig. 108, refermé par la mig. 117).
-> Détail et projections : [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) §2.
-
-### ⚡ `events` : un ensemble calculé une fois, jamais une fonction par ligne (mig. 128)
-
-Troisième occurrence de la même classe, la première hors du mode entreprise. La policy de lecture
-d'`events` appelait `manages_user(user_id)`, donc une fonction **sur une colonne**, donc un appel
-par ligne examinée, chacun joignant deux fois `organization_members` puis évaluant `get_subtree`.
-
-```sql
--- ❌ dépend de la ligne : rappelée pour chaque ligne, index inutilisable
-USING ((SELECT auth.uid()) = user_id OR (manages_user(user_id) AND NOT is_private))
--- ✅ ne dépend PAS de la ligne : hissée en InitPlan, et devient condition d'index
-USING ((SELECT auth.uid()) = user_id
-       OR (NOT is_private AND user_id = ANY (public.my_managed_user_ids())))
-```
-
-Mesuré en prod le 2026-08-26, lecture de l'agenda d'un membre non géré : **17,19 ms → 0,61 ms**,
-et zéro ligne remontée du tas pour être rejetée ensuite (`Rows Removed by Filter: 128` → BitmapOr
-de deux Index Scan). Lire son propre agenda ne changeait rien et ne change rien : la branche
-« own » court-circuitait déjà le `OR`.
-
-- ❌ **Ne jamais faire dépendre un prédicat de policy d'un argument pris dans la ligne.** La règle
-  couvre `tasks` (085), `team_tasks` / `team_projects` (113), `team_task_dependencies` (117) et
-  maintenant `events` (128). Un helper sans argument, dont le périmètre vient de `auth.uid()`
-  seul, est évalué une fois par requête, exactement comme `(SELECT auth.uid())` depuis la 043.
-- 🔴 **Une policy réécrite « pour aller plus vite » se prouve AVANT d'être écrite.** Pour la 128 :
-  parité booléenne sur chaque couple (acteur, cible) de `organization_members`, puis égalité de
-  l'ensemble des `events.id` visibles pour **chaque** compte de `auth.users`. C'est une frontière
-  de sécurité, pas un plan d'exécution.
-- ⚠️ `manages_user` survit, redéfinie **en fonction** de `my_managed_user_ids()` : deux
-  définitions concurrentes de « qui je gère » finiraient par diverger.
-- Garde : `scripts/migration-guards.test.mjs`, vue rouge sur la régression avant d'être committée.
-
-### 📬 Agréger des lectures, oui. Agréger des AUTORISATIONS, jamais (mig. 129)
-
-`get_my_org_inbox()` remplace **cinq** lectures qui partaient à chaque ouverture de
-l'application, sur toutes les pages protégées, parce que `Layout` monte `useOrgBadges` pour
-peindre une pastille : invitations, avis de retrait, ma demande d'adhésion, demandes reçues côté
-admin, notifications, plus un sixième appel conditionnel à `profiles`.
-
-- 🔴 **Une RPC d'agrégat est `SECURITY INVOKER`.** En `DEFINER`, agréger cinq lectures revient à
-  réécrire cinq autorisations à la main dans une fonction qui contourne la RLS : c'est là qu'une
-  agrégation « de performance » devient une fuite. Les deux sections qui ont besoin de privilèges
-  élevés ne sont pas réécrites, elles **appellent** les fonctions `DEFINER` existantes
-  (`get_my_org_invitations`, `get_my_org_removal_notices`), inchangées.
-- ❌ **Ne jamais lui donner un `p_org`.** Le périmètre vient de `auth.uid()` seul, comme
-  `get_my_tasks`. Un paramètre d'organisation forcerait le client à attendre que l'organisation
-  active soit résolue : on échangerait quatre requêtes contre du délai, en sérialisant ce qui
-  partait en parallèle. Les sections par organisation couvrent TOUTES mes organisations, le
-  client filtre.
-- ❌ **Ne jamais borner globalement.** 200 demandes et 50 notifications, **par organisation**
-  (window function). Une borne globale tronquerait la troisième organisation d'un compte avec les
-  lignes des deux premières, et ça ne se verrait que chez lui.
-- ❌ **Ne jamais réintroduire une invalidation par section** dans `useOrgInboxRealtime` : ces clés
-  ne portent plus de donnée, l'écran cesserait de se rafraîchir **en silence**. Une seule clé,
-  `orgKeys.inbox()`.
-- Les cinq hooks gardent leur nom et leur forme de retour : ce sont des sélecteurs `useMemo`.
-  Garde : `src/modules/organizations/inbox.hooks.test.tsx`.
-
-### 🔢 La pastille COMPTE, elle ne lit pas la liste (mig. 142, finding C-05)
-
-La même boîte de réception porte depuis le 2026-09-05 une section `badge_tasks`. `useOrgBadges`
-montait `useTeamTasks`, donc `get_my_team_tasks` + `.limit(1000)` — la lecture la plus chère du
-produit — sur **toutes les pages protégées**, pour peindre un nombre. Le rechargement avait été
-coupé le 2026-08-27 (`background`), la **lecture** pas.
-
-- Le serveur rend les **seules** lignes utiles : assignations en cours qui ne viennent pas de moi
-  (`kind = 'assigned'`), et noms des tâches visées par mes notifications non lues
-  (`kind = 'notified'`). Bornes : 200 et 50 **par organisation**, jamais globalement.
-- ❌ **Ne jamais faire compter une ligne `notified`.** Une tâche peut sortir dans les DEUX branches ;
-  le client leur retire toute assignation pour cette raison précise. Sans ça, elle compte deux fois
-  et le nombre affiché change.
-- ❌ **Ne jamais passer `lastSeen` au serveur.** Il vit dans `localStorage`, il est **par
-  organisation**, et il change à chaque visite de /entreprise : en paramètre, il ferait dépendre la
-  clé de cache d'une valeur mouvante, et un seul horodatage ne pourrait pas servir plusieurs
-  organisations. La borne reste côté client, sur un ensemble déjà réduit.
-- ✅ `my_org_badge_tasks()` est `SECURITY DEFINER` pour la SEULE raison qui vaut ici : appeler
-  `my_team_project_ids`, dont `EXECUTE` est révoqué à `authenticated` (mig. 100/113). L'autorisation
-  est celle de `get_my_team_tasks`, reprise mot pour mot. La RPC d'agrégat, elle, reste
-  `SECURITY INVOKER` — agréger des lectures, oui ; agréger des autorisations, jamais.
-- ⚠️ En **démo** la source reste `useTeamTasks` : c'est du `localStorage`, donc gratuit, et écrire
-  une seconde dérivation de « nouvelle assignation » dans le repository local aurait fait deux
-  définitions du même chiffre. Hors démo l'identifiant vaut `undefined` et rien ne part.
-- Gardes : `src/lib/hooks/org-badges.server-count.test.tsx` (dont un témoin qui exige que le
-  compteur TOMBE quand la source serveur est vidée — sans lui, le fichier passerait encore si plus
-  aucune source n'alimentait rien).
-
-
-## 🔐 Permissions entreprise — surcharge, jamais remplacement (mig. 115)
-
-Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `is_org_manager`) et
-**surchargeables par membre** depuis l'annuaire → menu « … » → **Modifier les permissions**.
-
-- Table `org_member_permissions (org_id, user_id)`, colonnes booléennes **NULLables** :
-  `NULL` = suit le défaut dérivé, `true`/`false` = décision explicite. Une organisation sans
-  aucune ligne se comporte **exactement** comme avant la mig. 115 — c'est ce qui rend le
-  déploiement réversible.
-- Dix droits (`task.create` · `task.editAny` · `task.deleteAny` · `project.create` ·
-  `project.delete` · `okr.create` · `okr.delete` · `category.manage` · `team.create` ·
-  `member.invite`) + une portée d'assignation cumulable
-  (`self` · `peers` · `manager` · `subordinates` · `everyone`, `{}` = personne).
-- Côté client, **une seule source de vérité** : `src/modules/organizations/permissions.ts`
-  (fonctions pures, miroir du SQL) exposé par `useMyOrgPermissions(orgId)`. Aucun composant ne
-  recalcule un droit ; le hook lit l'utilisateur via `useAuth`, jamais via une prop.
-
-- ❌ **Ne jamais gater une création/suppression par `isManager`.** `isManager` ne désigne plus
-  qu'une **position** (onglets Pyramide et Statistiques, dépendances de tâches) ; un droit passe
-  par `can['<clé>']`.
-- ❌ **Ne jamais enregistrer un instantané des dix droits.** La fiche n'écrit que les lignes
-  DÉCIDÉES : figer les droits d'un manager le jour où on ouvre sa fiche ferait qu'un
-  déplacement dans la pyramide ne les lui retirerait plus jamais.
-- ❌ **Ne jamais confondre `assign_targets = NULL` (aucune décision → tout le monde) et `{}`
-  (personne).** Ce sont deux états opposés.
-- ❌ **Ne jamais poser de ligne sur un admin** : `my_org_perm` court-circuite sur
-  `is_org_admin`, et le trigger la refuse. Sans cette règle, un admin peut se retirer un droit
-  et bloquer son organisation sans chemin de retour.
-- ⚠️ Le contrôle des assignations ne porte que sur les **AJOUTS** : retirer un assigné reste
-  toujours permis, sinon une tâche héritée devient ingérable et les purges RGPD cassent. Les
-  sélecteurs de membres appliquent la même règle (`canAssign(id) || déjà assigné`).
-- ⚠️ **L'archivage d'un projet est un UPDATE**, pas un DELETE, et l'application ne supprime
-  jamais un projet : c'est le trigger `enforce_team_project_archive_scope` qui rattache
-  l'archivage à `project.delete`. Une policy, qui juge la ligne entière, ne sait pas le faire.
-
-## 📉 Habitudes — `completions` est BORNÉ à la lecture (mig. 119)
-
-`habits.completions` est un JSONB qui gagnait une entrée **par jour et par habitude**,
-sans aucune borne : 12,7 octets/jour mesurés, soit ~280 ko par ouverture de la page
-Habitudes à trois ans pour 20 habitudes.
-
-```typescript
-supabase.from('habits').select('*')                       // ❌ payload sans borne
-supabase.rpc('get_my_habits', { p_days: 400 })            // ✅ mig. 119
-```
-
-La RPC renvoie `completions` **filtré aux 400 derniers jours**, ET quatre agrégats
-calculés **serveur sur l'historique entier** : `streak_current`, `streak_best`,
-`completions_total`, `first_completion_date`. C'est ce qui rend la troncature acceptable.
-
-- 🔴 **Ne jamais faire juger « aujourd'hui » par le serveur.** La base est en **UTC**, les clés
-  de `completions` sont écrites en date LOCALE (`toLocaleDateString('en-CA')`). Toute fonction qui
-  raisonne sur un jour prend `p_today` du client (`get_my_habits`, `toggle_habit_completion_v2`).
-  Utiliser `CURRENT_DATE` a produit une série affichée à **zéro** en Amérique du Nord entre 19 h
-  et minuit, et un compteur qui **baissait** en cochant entre 00 h et 02 h en France (mig. 119,
-  corrigé par la mig. 122). C'est la même classe de bug que celle éradiquée en juin 2026, revenue
-  par le SQL.
-- ❌ **Ne jamais dériver une série ou un total de `habit.completions`.** Utiliser
-  `habitStreak(habit)` (`src/modules/habits/streak.ts`), `habit.completionsTotal` et
-  `habit.firstCompletionDate`. Sur la fenêtre, un utilisateur assidu depuis trois ans
-  verrait sa série plafonner à 400 — un chiffre faux, affiché comme s'il était juste.
-- ❌ **Ne jamais compter les complétions dans un export.** L'export est le support du
-  droit à la portabilité (RGPD art. 20) : il utilise `completionsTotal`.
-- ⚠️ Les agrégats sont **absents en mode démo et local** (le repository local a toute la
-  donnée) : chaque helper retombe alors sur le calcul JS. Garder ce repli.
-- ⚠️ Augmenter la fenêtre réintroduit le problème proportionnellement (+12,7 o/jour et
-  par habitude). La RPC plafonne à 3 650 quoi qu'on demande.
-- La table n'est PAS modifiée : rien n'est supprimé, c'est la LECTURE qui est bornée.
-
-## 🔁 Récurrence des tâches — serveur uniquement
-
-La génération de l'occurrence suivante appartient à `toggle_task_complete_v2` (mig. 086), **pas
-au client**. Elle est atomique (même transaction que la bascule) et idempotente (index unique
-`ux_tasks_recurrence_parent`). Le client ne fournit QUE la date suivante, calculée en date locale
-(`nextOccurrenceDeadline`) — le serveur ne connaît pas son fuseau.
-
-- ❌ Ne jamais recréer un `repository.create(nextOccurrence)` côté client (faille H1 : occurrence
-  perdue si l'onglet se ferme, doublon si on décoche puis recoche, échec avalé).
-- ❌ Ne jamais écrire `recurrence_parent_id` depuis le client — c'est la clé d'idempotence,
-  `mapTaskToDb` ne l'émet volontairement pas.
-
-## 📡 Synchronisation de la collaboration — Realtime, pas sondage
-
-Trois canaux, tous montés **une seule fois** dans `App.tsx` :
-`useSharedTasksRealtime` (`shared_tasks`), `useOrgInboxRealtime` (mig. 118 : notifications,
-invitations et demandes d'adhésion d'organisation) et `useFriendsInboxRealtime` (mig. 120 :
-demandes d'amis reçues/envoyées, listes partagées).
-
-Ensemble, ils ont remplacé **huit** sondages permanents, soit environ 30 requêtes par minute et
-par utilisateur connecté avant toute interaction.
-
-**Il reste QUATRE déclarations de `refetchInterval`, et aucune n'est permanente** (vérifié le
-2026-08-25) :
-
-| Où | Nature |
-|---|---|
-| `organizations/hooks.ts` · `useOrgMembers` | conditionnelle (`live`) |
-| `team-projects/hooks.ts` · `useTeamTasks` | conditionnelle (`live`) |
-| `team-okrs/hooks.ts` · `useTeamOKRs` | conditionnelle (`live`) |
-| `tasks/hooks.ts` · `useTasks` | filet à 5 min, et seulement si une collaboration est active |
-
-> ⚠️ **Compter les `refetchInterval` ne suffit pas : il faut qualifier chacun.** Une première
-> version de ce paragraphe annonçait « aucun permanent » alors que deux l'étaient encore, dont
-> `useOrgJoinRequests`, monté par `Layout` donc actif sur TOUTES les pages protégées pour tout
-> admin d'organisation. Un audit indépendant l'a trouvé. Le décompte ci-dessus est nominatif
-> exprès : un total ne prouve rien. Le `refetchInterval` de `useTasks` n'est plus qu'un filet
-de sécurité à 5 min.
-
-- ❌ Ne pas remonter la cadence du sondage : chaque tick est un `getAll()` complet. La version à
-  15 s coûtait ≈ 58 Mo/mois/utilisateur d'egress.
-- ❌ Ne pas monter le canal Realtime dans un composant de page : c'est un WebSocket, il s'en
-  ouvrirait un par écran affiché.
-- ❌ **Ne pas rajouter un `refetchInterval` « juste pour être sûr ».** Chaque tick est une requête
-  pour tout le monde, en permanence. Si une donnée doit se rafraîchir toute seule, elle passe par
-  Realtime (publication `supabase_realtime` + `REPLICA IDENTITY FULL`) ; sinon
-  `refetchOnWindowFocus` suffit.
-- ⚠️ Toute nouvelle table écoutée en Realtime doit être ajoutée à la publication
-  `supabase_realtime` **et** passée en `REPLICA IDENTITY FULL` (sinon les DELETE ne portent que
-  la clé primaire et les filtres client ne matchent jamais) — cf. mig. 087.
-- ✅ **Le décompte nominatif est MÉCANISÉ depuis le 2026-09-02** : `src/modules/polling.guard.test.ts`
-  nomme les quatre fichiers qui doivent garder un `refetchInterval` conditionnel, et embarque un
-  témoin qui refuse une détection qui ne détecterait plus rien. Un checkpoint qu'on rejoue à la
-  main est un checkpoint qu'on oubliera, et **celui-ci a déjà été faux une fois**.
-- 🔴 **Ces canaux ont été COUPÉS en production sans que rien ne le dise**, du fait d'un `wss://`
-  manquant dans `connect-src` (corrigé le 2026-09-01, cf. garde-fous § Sécurité & env). Un canal
-  Realtime qui remplace un sondage supprime aussi le filet qui rattrapait sa panne.
 
 ---
 
 ## Conventions de code
-
 ### Imports — toujours l'alias `@/`
 
 ```typescript
@@ -1219,27 +218,16 @@ import { supabase } from '@/lib/supabase';      // ✅
 import { supabase } from '../../lib/supabase';   // ❌
 ```
 
-### GSAP — landing page uniquement
+⚠️ Seule exception : `api/` (NodeNext), où l'alias ne résout pas → [`api/CLAUDE.md`](./api/CLAUDE.md).
 
-```typescript
-import { gsap, ScrollTrigger, SplitText, useGSAP } from '@/lib/gsap';  // ✅
-import { gsap } from 'gsap';                                            // ❌ jamais
-```
 
-- **Point d'entrée unique** : `src/lib/gsap.ts` (registration des plugins + isolation du chunk
-  `vendor-gsap`, chargé seulement par la LandingPage lazy).
-- **Périmètre** : `src/pages/LandingPage.tsx`, `src/pages/landing/*`, `src/lib/hooks/use-magnetic.ts`.
-  Le reste de l'app reste sur **Framer Motion**.
-- Toute animation doit respecter `prefers-reduced-motion` (`gsap.matchMedia()` ou guard équivalent).
+### GSAP, toasts
 
-### Toasts
-
-```typescript
-import { toast } from 'sonner';
-toast.success('Message'); toast.error('Erreur');
-// Jamais depuis un repository ni depuis normalizeApiError
-```
-
+- `gsap` s importe **uniquement** depuis `@/lib/gsap`, et **uniquement** dans la landing.
+  Le reste de l app est sur Framer Motion. → [`src/pages/landing/CLAUDE.md`](./src/pages/landing/CLAUDE.md)
+- `toast` s importe **uniquement** depuis `@/lib/toast` (façade différée), jamais depuis `sonner`,
+  y compris dans une page lazy. Jamais depuis un repository ni depuis `normalizeApiError`.
+  → [`src/lib/CLAUDE.md`](./src/lib/CLAUDE.md)
 ### TypeScript
 
 - Strict (`noUnusedLocals`, `noUnusedParameters`) · **pas de `as any`**
@@ -1256,202 +244,32 @@ schémas par module. Câblé dans les `mutationFn` create/update.
 ### ESLint
 
 - Config `eslint.config.js`. **0 erreur** avant chaque commit.
-- Ignorés : `dist`, `src/components/showcase/**`, `e2e/**`, `playwright.config.ts`
+- Ignorés : `dist`, `coverage`, `coverage-tooling`, `src/__test__/**`, `.agents/**`, `.claude/**`, `.worktrees/**`
+  🔴 **Relu dans `eslint.config.js` le 2026-09-21 : cette ligne disait l'inverse.** `e2e/**`,
+  `src/components/showcase/**` et `supabase/functions/**` **ENTRENT** dans ESLint depuis `C-102`
+  (2026-09-20). La dette a été mesurée avant de les faire entrer : 1 erreur, 1 avertissement.
 - Warnings tolérés : Fast refresh sur les contextes + fichiers ui shadcn (préexistants)
 
 ---
 
-## i18n — catalogues maison (fr + en)
-
-L'app est **bilingue fr/en**, sans framework i18n (pas d'i18next). Socle dans `src/i18n/`,
-catalogues JSON par namespace dans `src/locales/{fr,en}/*.json` (19 namespaces : `common`,
-`tasks`, `org`, `landing`, `seo`, `settings`…).
-
-```typescript
-import { useT } from '@/i18n/useT';
-const { t, tp } = useT('org');   // tp = pluriel
-t('project.name')                // clé plate dans le namespace
-```
-
-- **`fr` est le catalogue de référence** : le moteur retombe clé par clé sur lui. Un catalogue
-  traduit incomplet n'affiche donc jamais de clé brute — et ne se voit pas non plus.
-  `npm run i18n:check` (bloquant CI) est la seule protection réelle **sur les clés**.
-  ⚠️ Il ne regarde jamais le CONTENU d'une valeur : une valeur `en` recopiée du français passe
-  sans bruit. C'est `npm run i18n:identical` (bloquant CI, cliquet à **0**) qui ferme cet
-  angle-là. ❌ Ne jamais conclure d'un `i18n:check` vert que l'anglais est traduit.
-- **Slugs de routes localisés** : `src/i18n/routes.ts` + `route-slugs.json`. Une seule URL
-  canonique par langue et par page (`/en/about` répond, `/en/a-propos` → 404, voulu).
-- Le préfixe de locale est porté par le `basename` du routeur, **figé au montage** — changer de
-  langue implique un rechargement complet (cf. `src/i18n/bootstrap.ts`).
-- Les dates passent par `src/i18n/format.ts` (locale date-fns alignée sur la locale active).
-- ⚠️ **« Servie » ≠ « indexable »** : `SUPPORTED_LOCALES` (`src/i18n/locale.ts`) ouvre une langue
-  aux utilisateurs ; `INDEXABLE_LOCALES` (`src/i18n/seo-urls.mjs`) l'ouvre à Google. Les deux
-  valent aujourd'hui `fr` + `en` : **l'anglais est indexable depuis le 2026-09-08** (C-20). `es`
-  n'est ni servie ni indexable, alors qu'elle figure dans `route-slugs.json` : c'est le mécanisme
-  prévu, pas un oubli.
-  ❌ **Ne jamais ajouter une locale à `INDEXABLE_LOCALES` avant d'avoir traduit le CORPS des
-  pages**, pas seulement les métas : c'est le duplicate content que toute l'architecture i18n
-  existe pour empêcher. Pour `en`, les 50 pages ont été mesurées une par une avant la bascule.
-  🔴 **Les trois fichiers se commitent ENSEMBLE** (`src/i18n/seo-urls.mjs`, `prerender.mjs`,
-  `vercel.json`) : l'état à moitié ouvert, où le `noindex` est retiré mais la locale absente
-  d'`INDEXABLE_LOCALES`, est le PIRE des trois, Google indexant alors `/en` sans `hreflang` ni
-  sitemap. `npm run i18n:check` est la gate qui refuse cet état.
-  ⚠️ Ouvrir une locale découvre aussi les routes applicatives sous son préfixe : `Disallow:`
-  est un **préfixe**, `/dashboard` ne couvre pas `/en/dashboard`, et c'est le `noindex` retiré
-  qui les bouchait. Procédure complète dans [`docs/SEO.md`](./docs/SEO.md).
-- ❌ **Ne jamais écrire un slug localisé en dur dans un `to=`.** Le préfixe de locale est porté par
-  le `basename` : `<Link to="/politique-confidentialite">` devient `/en/politique-confidentialite`,
-  qui rend une **404** (une seule URL canonique par langue, comportement voulu). Mesuré dans le
-  navigateur le 2026-09-02 : les quatre liens vers les pages contractuelles (bandeau cookies + pied
-  de landing) tombaient tous sur une 404 en anglais. Passer par `useLocalizedPath()`
-  (`src/i18n/useLocalizedPath.ts`).
-- 📄 **Les trois pages contractuelles vivent dans le namespace `legal`**, en français et en anglais
-  (CGU, confidentialité, mentions légales). Les pages ne portent plus que la STRUCTURE du document
-  (`src/pages/legal/LegalDocument.tsx`) ; le gras et les liens sont dans le catalogue, en
-  `**gras**` et `[libellé](url)`, rendus par `RichText`.
-  🔴 **Le français fait foi** : chaque document porte une clause de langue disant que la version
-  française prévaut. Modifier le fond d'un de ces documents n'est pas une tâche de traduction —
-  c'est modifier un contrat, avec le préavis de 30 jours prévu à son article 11.
-- ❌ **Ne jamais identifier une erreur par son message en français** — il est traduit.
-- ❌ Ne jamais concaténer des fragments traduits : une clé = une phrase complète.
 
 ---
-
 ## Déploiement Vercel
 
 `vercel.json` : SPA rewrite, headers de sécurité (HSTS, X-Frame-Options, CSP…), cache immuable
 `/assets/*`. Variables à configurer sur Vercel : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
-`VITE_STRIPE_PUBLISHABLE_KEY` (quand Stripe sera finalisé).
-Runbook : [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
+`VITE_STRIPE_PUBLISHABLE_KEY` (quand Stripe sera finalisé), et côté serveur `SUPABASE_SECRET_KEY`
+(intégration Supabase). Runbook : [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
 
 ---
 
-## 🚫 Garde-fous — à ne jamais faire
 
-Codes entre parenthèses = bugs historiques ayant motivé la règle.
+---
 
-### Mode démo
+## 🚫 Garde-fous transversaux
 
-- ❌ Appeler `login(email, password)` pour l'utilisateur démo — utiliser `loginDemo()`
-- ❌ `navigate('/dashboard')` après `loginDemo()` sans `setTimeout(…, 0)`
-- ❌ Oublier `clearDemoStorage()` avant de modifier les seeds
-- ❌ Dériver `isDemo` de l'email — utiliser `useIsDemo()` / `appModeStore.isDemo` (B0)
-- ❌ Muter `DEMO_FRIENDS` / `DEMO_INCOMING_REQUESTS` en place — `JSON.parse(JSON.stringify(...))` (B12)
-
-### 📅 Échéances — un jour, pas un instant (revue du 2026-09-02, R-01)
-
-`tasks.deadline` est un `timestamptz`, mais ce que la personne saisit est un **jour**. Les deux ne
-se convertissent ni par `new Date('YYYY-MM-DD')` (qui parse en **UTC**) ni par `.slice(0, 10')`
-(qui rend le jour **UTC** de l'instant). Un seul module fait foi : **`src/lib/deadline.ts`**.
-
-```typescript
-new Date(formData.deadline).toISOString()   // ❌ minuit UTC → la veille à l'ouest
-task.deadline.slice(0, 10)                  // ❌ jour UTC, pas le jour vécu
-deadlineFromDayKey(formData.deadline)       // ✅ écriture
-deadlineDayKey(task.deadline)               // ✅ lecture
-isDueToday(...) / isOverdue(...)            // ✅ comparaisons
-```
-
-- 🔴 **Trois écritures divergentes coexistaient** (`save-task`, `snooze`, `TasksPage`), pour trois
-  valeurs différentes du même jour choisi. Mesuré en prod : **467 des 601 échéances** portaient
-  00:00:00 UTC. Conséquence, pour tout fuseau à décalage négatif : une tâche datée du jour même
-  était classée « En retard » et absente de « Aujourd'hui ». **Invisible depuis la métropole**, ce
-  qui la rendait introuvable en regardant l'application fonctionner.
-- ❌ **Ne jamais comparer des INSTANTS pour décider « en retard ».** `new Date(deadline) < new Date()`
-  faisait basculer en rouge une tâche due aujourd'hui dès 00 h 01. On compare des **jours**.
-- ⚠️ **Les lignes écrites avant le correctif ne sont pas migrées, et c'est volontaire** : relues par
-  `deadlineDayKey`, elles rendent exactement ce qu'elles rendaient avant (juste en métropole, fausses
-  ailleurs). Aucune régression, et surtout aucune migration de données qui devrait deviner le fuseau
-  de chaque compte — la base ne le connaît pas.
-- ✅ **`team_tasks.deadline` est une `date`** et traverse sans conversion : elle ne porte aucun
-  instant. `deadlineDayKey` gère les deux formes, c'est sa raison d'être.
-
-### 🌍 Fuseau horaire — la préférence pilote AUSSI les journées
-
-`src/lib/timezone.ts` portait un décalage d'**affichage** pour le seul agenda. Il porte désormais
-le découpage des **journées** (`dayKeyInTz`, `todayKeyInTz`, `dayStartInTz`), ce qui permet à
-quelqu'un en Guadeloupe, à La Réunion ou en Nouvelle-Calédonie de se détacher du découpage
-métropolitain : réglage `manual` + décalage, et ses échéances, ses reports et ses listes
-« Aujourd'hui » suivent SON jour.
-
-- ❌ **Ne jamais faire dépendre un jour de `toLocaleDateString('en-CA')` seul** dans un chemin qui
-  touche aux échéances : c'est le fuseau de la MACHINE, pas celui que la personne a choisi.
-- 🔴 **GELÉ le 2026-09-12 (C-03) : les clés de `habits.completions` restent en date MACHINE**, et
-  ce n'est plus « à traiter par une migration dédiée », c'est une décision rendue. Les quatre
-  lectures qui les produisent (`habits/streak.ts`, `habits/supabase.repository.ts`,
-  `HabitCard`, `HabitGlobalTracking`, `HabitTable`, `TodayHabits`) appellent délibérément
-  `toLocaleDateString('en-CA')` et **doivent continuer**.
-
-  **Pourquoi le gel plutôt que la migration.** Convertir une clé de jour d'un fuseau vers un autre
-  demande de savoir dans quel fuseau était la personne **ce jour-là**. La base ne le sait pas : elle
-  ne stocke qu'une préférence COURANTE, posée aujourd'hui, qui ne dit rien des trois ans
-  d'historique derrière. Migrer reviendrait donc à appliquer le décalage d'aujourd'hui à des
-  journées vécues ailleurs — et le prix se paie en **séries** : quelqu'un dont une seule journée se
-  décale perd sa série entière, et `streak_best` avec. On casserait la donnée que les gens ont
-  construite pour corriger une incohérence qu'ils ne voient pas.
-
-  **Ce que la personne voit quand les deux découpages divergent.** Uniquement en réglage `manual`,
-  et uniquement si le décalage choisi la fait changer de jour par rapport à sa machine — donc
-  jamais en métropole, où les deux coïncident. Dans ce cas : sur le même écran, une tâche peut être
-  « due aujourd'hui » pendant qu'une habitude cochée compte pour la veille (ou l'inverse), et la
-  case du jour dans la grille d'habitudes ne correspond pas à la colonne « Aujourd'hui » de la
-  liste de tâches. La série, elle, reste **cohérente avec elle-même** : elle est calculée de bout en
-  bout en date machine, donc elle ne saute pas, elle est seulement calée sur un autre jour.
-
-  ❌ **Ne jamais « corriger » une seule des deux moitiés.** Basculer l'affichage sur
-  `dayKeyInTz` en laissant l'écriture en date machine ferait apparaître des jours cochés **décalés
-  d'une case** dans la grille, c'est-à-dire un historique faux présenté comme juste — strictement
-  pire que la divergence actuelle, qui est au moins interne à chaque module.
-
-  ✅ **Ce qui rouvrirait la question** : une colonne qui enregistrerait le décalage AU MOMENT de la
-  complétion. À partir de là, et seulement à partir de là, une migration saurait ce qu'elle
-  convertit. Rien dans le produit ne l'écrit aujourd'hui.
-
-### ↩️ « Annuler » restaure l'identifiant (revue du 2026-09-02, R-08)
-
-Cinq chemins d'annulation écrivaient le même déstructurage, qui perdait l'identité de l'objet :
-
-```typescript
-const { id: _id, ...rest } = snapshot;   // ❌ revient sous un NOUVEL id
-createMutation.mutate(rest);
-restoreCategoryMutation.mutate(snapshot); // ✅ useRestoreX, id d'origine conservé
-```
-
-- Un `useRestoreX` existe pour `tasks`, `categories`, `events`, `lists` et `okrs`. Il passe
-  l'identifiant par le **second argument** de `create()`, jamais par le payload.
-- 🔴 **Pourquoi pas un champ `id` dans l'input** : le payload vient d'un état de formulaire, donc
-  d'un objet que des devtools peuvent enrichir. Un `id` forgé y ouvrait un **oracle d'existence**
-  (collision de clé primaire = 23505 au lieu d'un succès, donc la ligne d'autrui existe). Le test
-  de garde `categories/supabase.repository.test.ts` a refusé la première version du correctif, et
-  il avait raison. Contrat complet : `src/lib/restore-id.ts`.
-- ⚠️ **Ce que ça ne rattrape pas** : `kr_completions` cascade depuis `okrs` ET `key_results`.
-  Restaurer un OKR ramène l'objectif, ses KR et les `task.krId` qui les visent, mais pas le
-  journal des complétions. Le graphique « KR réalisés » garde son trou.
-
-### 🗂️ Supprimer une catégorie annonce son impact (R-02)
-
-Aucune clé étrangère ne pointe vers `categories` (vérifié en prod : zéro contrainte enfant).
-Mesuré avant correctif : **13 tâches sur 611 et 2 objectifs sur 14 déjà orphelins**.
-
-- `categoryImpact()` (`modules/categories/impact.ts`) compte les dépendants, `useReassignCategory`
-  les déplace. Les deux points d'entrée (`ColorSettingsModal`, `OKRPage`) réaffectent **avant** de
-  supprimer.
-- ❌ **Ne jamais inverser l'ordre.** Supprimer d'abord laisse une fenêtre où les éléments pointent
-  dans le vide, et un échec du reclassement devient irrattrapable : plus rien ne dit quels
-  éléments portaient la catégorie disparue.
-- ⚠️ `DeleteCategoryConfirm` (`pages/okr/`) ne sert plus qu'aux catégories d'ÉQUIPE
-  (`org_okr_categories`), dont l'impact n'a pas été mesuré. Ne pas le confondre avec
-  `components/category/DeleteCategoryDialog`.
-
-### Champs canoniques du modèle
-
-- ❌ `habit.completedDates` — canonique : `habit.completions: Record<string, boolean>` (B5)
-- ❌ `task.status` / `task.title` / `task.dueDate` / `task.isBookmarked` — utiliser
-  `task.completed` / `task.name` / `task.deadline` / `task.bookmarked` (B6)
-- ❌ Réintroduire `premiumTokens` / `subscriptionEndDate` / `premiumWinStreak` en source de
-  vérité dans le type `User` — `useBilling()` only (N5)
-- ❌ Stocker un collaborateur par `friend.name` — utiliser `friend.id` partout (B6, B22)
-
+> Les garde-fous propres à une zone vivent dans le `CLAUDE.md` de cette zone (table plus haut).
+> Ceux-ci valent partout.
 ### Architecture & imports
 
 - ❌ Importer depuis `src/context/TaskContext` — **fichier supprimé**
@@ -1461,112 +279,6 @@ Mesuré avant correctif : **13 tâches sur 611 et 2 objectifs sur 14 déjà orph
 - ❌ Importer `gsap` directement ou l'utiliser hors landing — passer par `@/lib/gsap`
 - ❌ Appeler `toast` depuis les repositories ou `normalizeApiError`
 
-### Animations
-
-- ❌ **Ne jamais écrire à la main le mouvement d'une feuille.** Utiliser `useSheetMotion()` et
-  `useSheetDrag()` (`src/components/mobile/mobile-motion.ts`). **Mesuré dans le navigateur le
-  2026-08-24**, `prefers-reduced-motion: reduce` réellement actif : `MobileMoreSheet` s'ouvrait à
-  `transform: matrix(1, 0, 0, 1, 0, 510)` — `top: 812` pour un viewport de 812, soit **0 px
-  visible**. Le voile s'affichait, la feuille non. Or c'est le SEUL accès mobile à OKR,
-  Statistiques, Paramètres et à la déconnexion : la navigation mobile était **sans issue** pour ces
-  utilisateurs. Même mécanisme sur les cascades `staggerChildren` (dix blocs du dashboard figés
-  20 px trop bas). Garde : `src/design-system.guard.test.ts`.
-- ❌ **Ne jamais faire dépendre une position finale d'une animation de transform.**
-  `App.tsx` monte `<MotionConfig reducedMotion="user">` : chez un utilisateur en
-  `prefers-reduced-motion`, les animations de transform ne jouent pas et la valeur `initial`
-  **reste appliquée**. Un `initial={{ y: 120 }} animate={{ y: 0 }}` sur un élément `fixed` le
-  laisse 120 px trop bas, définitivement. Mesuré le 2026-08-14 sur `CookieBanner` et
-  `DemoBridgePrompt` : leur CTA sortait de l'écran. La position vient du CSS, l'animation ne
-  porte que sur l'opacité. Détail : [`docs/MOBILE.md`](./docs/MOBILE.md).
-- ⚠️ `prefers-reduced-motion` est **actif sur la machine d'Axel** : si une animation « ne
-  s'affiche pas », vérifier ce réglage avant de suspecter le code.
-
-### 🛡️ Une garde se vérifie sur ce qu'elle REGARDE (passe du 2026-09-03)
-
-**En cinq jours, QUATRE gardes ont été prises en train de répondre sans mesurer.** C'est le constat
-le plus lourd de la fenêtre 08-30 → 09-03, et il ne porte pas sur le produit :
-
-| Garde | Ce qu'elle affirmait | Ce qu'elle regardait vraiment |
-|---|---|---|
-| `check:bundle` | chemin critique à 321,2 ko | un build sans Sentry, ~45 ko de moins que ce qui part en prod |
-| `uptime.yml` | run **vert**, « tout va bien » | le site répond ; la moitié backend était sautée sur un secret inexistant |
-| `restore-drill.yml` | isolation vérifiée | `tail -1` capturait le mot `ROLLBACK`, jamais le compte : le contrôle **ne pouvait pas** échouer |
-| `i18n:scan` | « plus aucune chaîne d'interface en dur » | une heuristique aveugle à quatre formes entières |
-
-- ❌ **Ne jamais conclure d'un « exit 0 » qu'une garde a mesuré.** La question n'est pas « tourne-t-elle ? »
-  (règle du 2026-08-29, insuffisante) mais **« sur quoi ? »**. Les quatre ci-dessus tournaient.
-- ❌ **Ne jamais laisser une garde sauter silencieusement une moitié de son travail.** Un secret
-  absent se solde par un **échec**, jamais par un `::warning::` dans un run vert.
-- ✅ **Toute garde corrigée repart avec un TÉMOIN** : une sonde qui refuse un parseur, un détecteur
-  ou une mesure qui ne détecterait plus rien. Trois des quatre en ont un aujourd'hui.
-- 🔴 **Une garde qui se trompe dans le sens rassurant est pire qu'une garde absente : elle donne
-  une réponse, et on la croit.**
-
-#### Le cas symétrique : ce que AUCUNE garde ne regardait (C-35)
-
-Les quatre lignes ci-dessus sont des gardes qui mesuraient à côté. Le défaut jumeau est une zone
-que **rien** ne mesure, et il est plus difficile à voir : il n'y a pas de run vert à mettre en
-cause, juste un silence qu'on prend pour un accord.
-
-**Le code déployé des Edge Functions était cette zone.** Le 2026-09-03, les trois sources en ligne
-ont été relues via l'API Management et comparées à `main` : les trois divergeaient, de trois façons
-différentes. `delete-account` exécutait une variante **absente du dépôt** ; `renewal-notice` et
-`report-bug` portaient le défaut S-4 que `faille.md` déclare corrigé. Remesuré le 2026-09-04 : la
-`report-bug` v8 en ligne porte toujours `?? 'Cosmo <bug@thecosmo.app>'` là où le dépôt ne porte plus
-de valeur par défaut.
-
-- ❌ **Ne jamais conclure d'une lecture de `supabase/functions/` qu'une Edge Function fait ce que le
-  dépôt dit.** Le dépôt décrit ce qu'on a écrit, pas ce qui s'exécute. `npm run check:edge` est le
-  seul lien entre les deux.
-- ❌ **Ne jamais écrire un statut de finding sur une Edge Function sans citer sa version déployée.**
-  Un « ✅ corrigé » qui ne dit pas *déployé le …* décrit un commit, pas la production.
-- ⚠️ Un déploiement n'événemente rien dans la CI : c'est pour ça que le job tourne aussi **à
-  l'heure**, et pas seulement sur `push`. La dérive du 09-03 est née d'un déploiement, pas d'un
-  commit.
-
-### 📣 Une alerte que personne ne lit est une archive, pas une alerte
-
-`vendor-watch.yml` a fait exactement son travail : il a détecté que le script de mesure d'audience
-chargé sur les pages publiques s'était mis à extraire **l'adresse email et le nom** saisis à
-l'inscription, il a échoué **chaque jour du 2026-08-29 au 2026-09-01**, il a mis son issue à jour à
-chaque fois, et personne ne l'a ouverte pendant quatre jours.
-
-- Les échecs de garde sont désormais **poussés** sur `OPS_ALERT_WEBHOOK_URL` (`ci-alert.yml`), même
-  format que `opsAlert()` des Edge Functions, avec un exercice à blanc en `workflow_dispatch`.
-- ⚠️ **Le canal reste INERTE** tant que ce secret n'est pas posé dans les secrets **Actions** du
-  dépôt : il n'existe aujourd'hui que côté Supabase.
-- ❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre secret** (règle déjà
-  écrite le 2026-08-26, re-vérifiée ici) : secret absent = avertissement **visible**, jamais un
-  silence.
-
-### 📆 Saisie de date — le calendrier COSMO, sauf sur téléphone
-
-Six surfaces ouvraient encore le calendrier du navigateur : hors thème, hors locale de l'app, sans
-les presets. Elles passent toutes par `DatePicker` / `DateCalendarPanel` (un seul corps de
-calendrier, deux façons de l'ouvrir, dont les entrées de menu qui n'ont aucun champ où s'ancrer).
-
-- ✅ **Les deux `input[type=date]` d'`EventModalForm` restent natifs, et c'est un arbitrage** : sur
-  mobile la roue système vaut mieux que n'importe quel calendrier maison.
-- ❌ **Ne jamais réintroduire `filter: invert(1)` sur l'icône d'un sélecteur de date natif.** La
-  règle datait d'avant que `.dark` pose `color-scheme: dark` ; depuis, le navigateur dessine déjà
-  l'icône en clair et l'inversion la repeignait **en noir sur fond noir**, soit exactement le
-  défaut qu'elle prétendait corriger. Mesuré côte à côte dans le navigateur. Un garde-fou est posé
-  dans `index.css`.
-- ❌ **Ne jamais oublier `minDate` sur un report d'échéance** : sans lui on peut reporter une tâche
-  en retard **vers hier**.
-
-### ⌨️ `Button` est un `forwardRef`, et le projet est sur React 18
-
-L'avertissement « Function components cannot be given refs » n'était pas du bruit : la source
-shadcn amont est écrite pour **React 19**, où `ref` est une prop ordinaire. Ici elle ne l'est pas,
-le `ref` n'était donc **jamais attaché**, et le `ref.current?.focus()` de `CalendarDayButton` ne
-faisait rien : **les flèches ne déplaçaient pas le focus dans le calendrier** (WCAG 2.1.1).
-
-- ❌ **Ne jamais recopier un composant shadcn amont sans vérifier sa cible React.** C'est la classe
-  de bug, pas le cas particulier.
-- ⚠️ Prouvé dans le navigateur après correctif (Tab atteint la grille, Flèche droite passe du 30 au
-  31 août), et pas déduit de la lecture du code.
-
 ### Logique métier
 
 - ❌ Modifier `recordKRCompletion()` sans vérifier le graphique dashboard (démo ET prod)
@@ -1575,88 +287,37 @@ faisait rien : **les flèches ne déplaçaient pas le focus dans le calendrier**
 - ❌ `JSON.parse(localStorage.getItem(...))` sans `try/catch` — utiliser `safeParse<T>` (B14)
 - ❌ Réintroduire des gates `isPremium()` sur le partage de tâches / la collaboration
 
-### Journal fiscal et consentement (2026-08-26)
+### Journal fiscal et consentement
 
-- ❌ **Ne JAMAIS ajouter de policy UPDATE ou DELETE sur `payment_records` ou `payment_closures`,
-  ni les inclure dans une purge.** C'est le journal d'encaissement inaltérable (mig. `125`,
-  CGI art. 286-I-3° bis). L'immuabilité est portée par un **trigger**, pas par la RLS, parce que
-  `service_role` contourne la RLS mais pas les triggers.
-  🔴 **CORRIGÉ le 2026-09-02** : ce paragraphe demandait d'« anonymiser `user_id` » à la purge.
-  C'est **inapplicable**. `row_hash` scelle `user_id` dans le chaînage, et
-  `verify_payment_chain()` recalcule chaque hash depuis les colonnes : écrire NULL casserait la
-  chaîne, donc produirait exactement le signal de falsification qu'on montre à un contrôleur.
-  Le trigger refuse d'ailleurs l'UPDATE. Ce qui rend la conservation acceptable est ailleurs :
-  `user_id` cesse d'identifier quiconque dès que la ligne `auth.users` disparaît, il ne reste
-  qu'un UUID que COSMO ne sait plus rattacher. `delete-account` ne touche donc PAS cette table,
-  et le commentaire qui l'explique est dans la fonction.
-  Une erreur se corrige par une ligne compensatoire, comme en comptabilité.
-- ❌ **Ne jamais lire `cosmo_cookie_consent` directement.** Passer par
-  `src/lib/cookie-consent.ts`, et par `useCookieConsent()` dans React. La dispersion est
-  exactement ce qui a permis au bandeau de proposer un choix qu'aucune ligne de code
-  n'appliquait. **Tout nouveau traceur doit être conditionné** : `null` n'est pas une
-  acceptation tacite.
-- ❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre secret.**
-  `if (SECRET && header !== SECRET)` laisse passer tout le monde tant que le secret n'est pas
-  posé : on ne se protège que quand on est déjà protégé. Bug introduit puis corrigé le
-  2026-08-26 dans `renewal-notice`.
-- ⚠️ **`renewal_notices` est une PREUVE**, pas un cache. Ne jamais la purger : c'est ce qu'on
-  produit si un client conteste une reconduction (Conso. art. L215-1).
+- ❌ **Jamais de policy UPDATE/DELETE ni de purge sur `payment_records` / `payment_closures`**
+  (journal inaltérable, mig. `125`, trigger). **Jamais anonymiser `user_id`** : `row_hash` le
+  scelle. Une erreur se corrige par une ligne compensatoire.
+- ❌ Lire `cosmo_cookie_consent` ailleurs que par `src/lib/cookie-consent.ts` / `useCookieConsent()`.
+  Tout nouveau traceur est conditionné : `null` n'est pas une acceptation.
+- ❌ Une garde conditionnelle à la présence de son propre secret (`if (SECRET && …)`).
+- ⚠️ `renewal_notices` est une PREUVE (L215-1) : ne jamais la purger.
 
 ### Sécurité & env
 
-- ❌ `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client
-- ❌ Committer sans vérifier que `.env` reste gitignored
+- ❌ `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client · committer sans vérifier que `.env` reste ignoré
 - ❌ Écrire en base via le MCP Supabase (contourne la RLS)
-- ❌ **Appeler `get_subtree` / `has_subordinates` / `org_admin_count` depuis une policy.** La
-  mig. `100` leur a révoqué `EXECUTE` à `authenticated` pour fermer une fuite inter-organisations,
-  et une policy s'évalue avec le **rôle courant** : l'appel échoue par `permission denied`. Dans
-  une policy, utiliser `is_above(org_id, user_id)` ou `i_have_subordinates(org_id)`. À l'intérieur
-  d'une fonction `SECURITY DEFINER`, les helpers restent appelables (rôle = propriétaire).
-  Régression en cours en prod : mig. `107`, finding B-1 de [`faille.md`](./faille.md).
-- ❌ **Garder une surface admin par `admin_allowlisted()`.** Depuis la mig. `131`, deux fonctions
-  répondent à deux questions différentes : `admin_allowlisted()` dit « ce compte est admin »
-  (AFFICHAGE, ignore volontairement le niveau d'assurance, sinon l'écran d'enrôlement TOTP
-  devient inatteignable) et `is_admin()` dit « cette requête est autorisée » (GARDE : allowlist
-  ET `auth.jwt() ->> 'aal' = 'aal2'`). Les intervertir annule la migration. Et ne jamais tester
-  « ce compte a activé la 2FA » : `aal2` porte sur la SESSION, or c'est précisément la session
-  ouverte avec un mot de passe volé qu'il faut refuser. Détail : `docs/SECURITY.md`.
-- ❌ **Une fonction de trigger en `SECURITY DEFINER`.** Une garde doit être `SECURITY INVOKER`
-  (défaut) et `REVOKE`-ée pour `anon` (mig. `064b` / `094b`). Un trigger `BEFORE` s'exécutant
-  **avant** le `WITH CHECK` de la RLS, en DEFINER ses messages d'erreur deviennent un oracle sur
-  des lignes non lisibles (mig. `108`, finding B-3).
-- 🔴 **En CSP, un schéma écrit explicitement doit correspondre : `https:` ne couvre PAS `wss:`.**
-  `connect-src` autorisait `https://*.supabase.co` sans `wss://*.supabase.co` : le navigateur
-  bloquait **toutes** les connexions Realtime **en production**, en silence (la console disait
-  « The action has been blocked », l'écran ne disait rien). Les trois canaux d'`App.tsx` étaient
-  coupés, et comme ils ont justement REMPLACÉ huit sondages, il n'y avait plus aucun filet
-  derrière eux : une tâche partagée n'arrivait jamais. Trouvé le 2026-09-01 dans la console
-  d'Axel, **en cherchant autre chose**. Garde : `src/csp.guard.test.ts` (schéma `wss`, directives
-  de confinement, absence d'`unsafe-eval`, et `data:` dans `img-src` dont dépend le QR code TOTP).
-- 🔴 **Une migration qui crée une dépendance à un chemin de récupération : PARCOURIR ce chemin
-  avant de l'appliquer.** La mig. `131` exige une session `aal2` ; l'écran d'enrôlement TOTP levait
-  en phase de rendu et son QR portait un double préfixe `data:`. `/admin` est resté inaccessible du
-  2026-08-31 au 2026-09-01, et **un seul compte au monde** ouvre cette console. Le raisonnement
-  « ce n'est pas un verrouillage, l'écran reste atteignable » était juste sur la garde et faux dans
-  les faits. Il suffisait d'ouvrir l'écran une fois.
-- ⚠️ **Le dépôt est PUBLIC**, avec secret scanning, push protection et Dependabot actifs depuis le
-  2026-09-01. Une fuite réelle est confirmée dans l'historique (`.env` au commit initial), **inerte**
-  car elle vise un projet supprimé depuis. Retirer un fichier du suivi n'efface pas l'historique.
+- ❌ Appeler `get_subtree` / `has_subordinates` / `org_admin_count` depuis une policy
+  (`EXECUTE` révoqué, mig. `100`) : utiliser `is_above()` ou `i_have_subordinates()`.
+- ❌ Garder une surface admin par `admin_allowlisted()` (affichage). La garde est `is_admin()`
+  (allowlist ET session `aal2`, mig. `131`).
+- ❌ Une fonction de trigger en `SECURITY DEFINER` : `INVOKER` + `REVOKE` pour `anon` (mig. `108`).
+- 🔴 En CSP, `https:` ne couvre PAS `wss:`. Garde : `src/csp.guard.test.ts`.
+- 🔴 Une migration qui crée une dépendance à un chemin de récupération : PARCOURIR ce chemin avant.
+- ⚠️ Le dépôt est **PUBLIC**. Retirer un fichier du suivi n'efface pas l'historique.
 
 ### Documentation
 
-- ❌ Traiter un fichier de `docs/archive/**` comme l'état courant du projet
-- ❌ Citer un numéro de ligne d'un autre fichier `.md` — les fichiers bougent, les liens de
-  section survivent
-- ❌ **Recopier un « avant » au lieu de le relire à sa source.** Le tableau de bord des audits est
-  parti d'une note RGPD de 84 le 2026-09-02 alors qu'elle valait 86 depuis le 08-29 : la colonne
-  avait été reprise du tableau du 25. Troisième occurrence, après les `refetchInterval` du 08-25 et
-  la garde `architecture.guard` du 08-27 (« antérieure à mon travail », déclarée depuis un
-  `git stash` qui contenait déjà le commit fautif). **Un « avant » se reconstruit à un commit
-  nommé, jamais dans un arbre de travail ni depuis un tableau plus ancien.**
-- ❌ **Chercher le symptôme cité par la doc plutôt que la chose décrite.** Une note du 2026-09-02
-  n'a corrigé qu'un nom sur six sur la sélection de modules : elle constatait l'absence de
-  `RequireModule` sans voir que la fonctionnalité entière avait disparu, ce qui laisse la dérive
-  presque intacte **et la fait paraître vérifiée**.
+- ❌ Traiter `docs/archive/**` comme l'état courant · citer un numéro de ligne d'un autre `.md`
+- ❌ Recopier un « avant » : il se reconstruit à un commit nommé, jamais depuis un tableau ancien.
+- ❌ Chercher le symptôme cité par la doc plutôt que la chose décrite.
+
+> Le **pourquoi** de chacune de ces lignes (incident, date, mesure) est dans
+> [`docs/SECURITY.md`](./docs/SECURITY.md) § « Garde-fous transversaux, récits repris de `CLAUDE.md` ».
 
 > **Sécurité (RLS, mass-assignment, Stripe, secrets) → [`docs/SECURITY.md`](./docs/SECURITY.md).
 > Toujours la consulter avant de toucher `supabase/`, le billing, ou un repository.**

@@ -13,7 +13,7 @@ import { ENTERPRISE_FAQ } from './data';
  * voudra faire remonter ces questions-ci dans les résultats enrichis.
  */
 const EnterpriseFaqSection: React.FC = () => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
 
   return (
     <section
@@ -30,7 +30,7 @@ const EnterpriseFaqSection: React.FC = () => {
 
         <div className="rounded-2xl border border-white/[0.08] bg-[#0A0C11] px-6 sm:px-8">
           {ENTERPRISE_FAQ.map(({ questionKey, answerKey }, index) => (
-            <FaqItem key={questionKey} index={index} question={t(questionKey)} answer={t(answerKey)} />
+            <FaqItem key={questionKey} index={index} theme="dark" question={t(questionKey)} answer={t(answerKey)} />
           ))}
         </div>
       </div>

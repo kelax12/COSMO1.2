@@ -1,6 +1,293 @@
+<!-- note-audit: note=85 -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — Note **85 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03)
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → 84 → 86 → 86 → 85 → **85 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → **2026-10-22**)
+
+> ### ⚪ 2026-10-22 · 0 : `AssignRoleDialog` remesuré, la garde vue mordre
+>
+> Le −1 du 2026-10-15 est remboursé depuis le 2026-10-16 ; ce jour le vérifie au lieu de le reprendre.
+> Mesures du 2026-10-22, dépôt à `HEAD` (branche de la PR).
+>
+> | Item | Avant | Après |
+> |---|---|---|
+> | `loading-empty-state` (C-40) sur `AssignRoleDialog` | vert : `isLoading` des deux lectures (`roles`, `assignments`) lu, squelette `aria-busy` tant que l'une manque (`origin/main` à `5eaa8b8c`) | inchangé ; **vu rouge** sur la version fautive remise exprès (`data: roles = []` sans `isLoading`) : la garde nomme `AssignRoleDialog.tsx → roles`. Vert sur la vraie |
+> | Squelette observé | jamais regardé par un parcours | le cas clavier attend la fin d'`aria-busy` avant de mesurer, sur `chromium` et `mobile-safari`. ⚠️ En démo, la lecture répond tout de suite : le squelette n'a pas été vu à l'œil |
+>
+> **85 → 85.**
+
+> ### 🟠 2026-10-20 · −1 : la refonte de l'Aperçu passée sans référence visuelle
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | 🔴 `Visual` rouge depuis `a9db6f2c` | **−1** | six captures : `/dashboard` dans les quatre thèmes (contenu daté, voir [`TESTING.md`](./TESTING.md)), `/entreprise` Aperçu (refonte attendue, référence à régénérer), **l'état ERREUR de la frontière d'erreur** (non identifié). La refonte d'écran la plus large depuis septembre (Aperçu en widgets, modèles par rôle, « Ajouter un widget ») est donc arrivée sans aucune comparaison visuelle |
+> | Produit | 0 | Aperçu en grille de widgets éditable (S/M/L, modèles membre, chef d'équipe, admin) ; éditeur de rôle en modale centrée ; invitation une adresse à la fois ; boussole du guide en mode perso ; rapport d'activité refondu puis **rétabli** (`45b2d7fd`), export PDF conservé. Crédité quand `Visual` le verra |
+>
+> **86 → 85.**
+
+> ### ⚪ 2026-10-18 · 0 : vérifiée inchangée
+>
+> Dernière passe avant l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | `Visual` | 0 | vert sur `e69cb729`, `8b253a1b` et `5f8ecbdb` |
+> | ✅ `8b253a1b` · l'État choisi dans le tableau disparaissait au bout de 2 s | 0 | vu et corrigé le même jour, jamais débité : `TASK_LIST_COLUMNS` ne relisait pas `status` ni `health` |
+> | `5f8ecbdb`, `a82c28f8` | 0 | compte retiré, pastille de filtre au bout de la rangée Favoris. `a82c28f8` est arrivé pendant la passe : non mesuré |
+>
+> **86 → 86.**
+
+> ### 🟢 2026-10-16 · +2 : `Visual` compare de nouveau, et le dialogue des rôles attend sa réponse
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab`, dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `Visual` rouge depuis le 2026-10-12 (−1) | **+1** | les quatre cas tranchés (`477e2fc8`, `22a00936`) ; vert **en comparaison** deux fois de suite (`38730049045`, `38731274622` : 18 références, 20 cas, production de références sautée), et vert à `HEAD` |
+> | ✅ `AssignRoleDialog` affirmait l'absence de rôles avant la réponse (−1) | **+1** | `loading-empty-state.guard` vert en CI et en local |
+> | Page entreprise avec barre oblique | 0 | elle sert l'accueil perso : débité dans [`SEO.md`](./SEO.md), une seule fois |
+>
+> **84 → 86.**
+
+> ### 🟠 2026-10-15 · −2 : `Visual` rouge trois jours, et un dialogue qui affirme avant de savoir
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> dépôt à `HEAD` rejoué étape par étape. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | 🔴 `Visual` rouge depuis le 2026-10-12 | **−1** | dernier vert : `9f6595b5` (10-11). À `HEAD` (run `38476034115`) : **4 cas sur 20**, `/entreprise · Aperçu` (la surface remboursée le 10-03), `/`, `/guide`, `/blog`, trois tentatives chacun. Depuis le dernier vert, l'Aperçu et les pages publiques ont changé plusieurs fois (avatars en couleur, « Valider / Renvoyer » sur la ligne de la tâche, captures et images OG) : rien ne dit lesquelles des quatre différences sont voulues. **Une garde rouge trois jours ne compare plus rien**, elle sonne |
+> | 🔴 `AssignRoleDialog` affirme l'absence de rôles avant la réponse | **−1** | `loading-empty-state.guard` (C-40) rouge en local à `HEAD` : lecture « à l'aveugle » de `roles`, l'état vide s'affiche pendant le chargement (`a6562733`) |
+> | Guide entreprise (30 scénarios, 10-12 et 10-13) | 0 | livré avec ses ancrages `data-guide-id` et la garde de ses scénarios ; son e2e est rouge (cf. [`TESTING.md`](./TESTING.md)) |
+>
+> **86 → 84.**
+>
+> 🔎 **2026-10-15 (jour) · les quatre rouges de `Visual` tranchés** (artefacts du run `38650837007`) :
+> · `/entreprise · Aperçu` : **voulu**. Trois changements, écart identique sur trois essais (9 330 px) :
+> « Valider / Renvoyer » sur la ligne de la tâche (`8df06f57`), badge Ctrl K retiré (`fd4adabf`),
+> bouton flottant du guide (`c651ba18`). Référence régénérée.
+> · `/`, `/guide`, `/blog` : **défaut de la GARDE**, puis changement voulu. Le spec posait
+> `cosmo_cookie_consent = 'rejected'`, valeur que le produit ne connaît pas (`'refused'`) : le
+> bandeau cookies n'a jamais été neutralisé, et les trois références le contenaient depuis leur
+> création. L'allongement de son texte par l'audit juridique (`79c0f0b3`) les a rendues rouges ;
+> `/guide` porte en plus le guide remis à jour (`a0dc4990`). Valeur corrigée et témoin à deux sens
+> posé (bandeau vu, puis absent), `477e2fc8` ; références régénérées par `visual.yml`
+> (run `38728499545`, deux passes, `22a00936`). Aucune tolérance touchée. **Comparaison verte**
+> sur `main` : run `38730049045` (`6f6ec984`), 20 cas, étape « Comparer aux références ».
+
+> ### 🟢 2026-10-03 · +1 : l'Aperçu de `/entreprise` sous `Visual`
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Verdict : run `CI`
+> `37109937640` sur `c7fb936c`, **les cinq jobs verts**, le premier `CI` entièrement vert sur `main`
+> depuis le 2026-09-23 (`869fb05a`). Correctifs : `d8b1584b`, `16fbaae9`, `ac1e8c40`, `59aa4fd8`,
+> `315804df` (autres sessions) et `d8c215ad`, `290d6f51`, `c7fb936c` (celle-ci).
+>
+> | Item | Effet | Mesuré le 2026-10-03 |
+> |---|---|---|
+> | ✅ Aucun écran `/entreprise` sous `Visual` (−1 le 10-02) | **+1** | `entreprise-apercu-light` ajouté (`c7fb936c`) ; référence produite par `visual.yml` (run `37135216156`), **deux passes vertes**, la seconde comparant à la première, committée (`cd80c2b`). Une première tentative (`37109961426`) avait refusé de committer : `/settings` en thème gris différait d'une passe à l'autre, instabilité de la garde, pas de l'Aperçu |
+> | Références publiques réécrites | 0 | `publique-home`, `-guide`, `-blog` réencodées par la régénération, écarts sous la tolérance (0,2 % de pixels) |
+>
+> **85 → 86.** ⚠️ Le thème gris est instable deux jours de suite (`/dashboard` le 10-02, `/settings` le 10-03) : à diagnostiquer avant qu'il ne désarme la garde.
+
+> ### 🟠 2026-10-02 (soir) · −1 : la surface la plus retouchée n'est comparée par rien
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | `Visual` | 0 | **vert** à `9ea33927` : 18 cas, `/dashboard` en thème gris instable au premier essai. Il compare `/dashboard`, `/tasks`, `/settings` dans les quatre thèmes, les états vide et erreur, `/`, `/guide`, `/blog` |
+> | 🔴 Angle mort nommé : **aucun écran `/entreprise` sous `Visual`** | **−1** | le 2026-10-02, **37** fichiers de `src/components/organization` ont changé (Aperçu refait, organigramme, onglet Projets, rapport d'activité, dates de début retirées) et aucune capture ne les a comparés. La seule régression vue sur ces écrans l'a été par un test fonctionnel (cibles tactiles de l'Aperçu, cf. [`ACCESSIBILITY.md`](./ACCESSIBILITY.md)). Barème du 09-16 : angle mort réel, partiellement couvert. Il complète AM-1, dont la portée était déclarée (« 3 routes ») mais jamais comptée |
+> | AM-4, AM-5 | 0 | toujours ouverts, déjà payés |
+>
+> **86 → 85.** Le point revient quand l'Aperçu de `/entreprise` entre dans `visual-regression.spec.ts`
+> et qu'un run `Visual` l'a comparé.
+
+> ### 🟢 2026-10-01 · +3
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du jour : CI de `main` (`43fed445` à
+> `7cd73d24`), production (catalogue, advisors), dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | AM-1 · garde de régression visuelle | **+2** | `Visual` a **comparé** : rouge le 2026-09-30 sur une vraie régression, vert le 10-01 après correction, références régénérées par le chemin prévu (`bde05f5c`, deux passes vertes) |
+> | AM-2 · les quatre thèmes | **+1** | balayés dans chaque run, et le témoin « fonds différents » rendu fiable (il lisait la couleur pendant la transition CSS) |
+> | `/settings` : « Accéder » hors de la carte et de l'écran | 0 | vraie régression trouvée par `Visual` (bouton « Abonnement et factures »), corrigée le 10-01 (`OrganizationSettingsCard`), vérifiée dans le navigateur |
+> | Bruit de la garde | 0 | `/dashboard` (prochain événement selon l'HEURE du run) et `/tasks` (échéances relatives) masqués ; toasts retirés des captures |
+>
+> **83 → 86.** Détail : [tableau de bord](./README.md).
+
+> ### 🟢 2026-09-22 (soir) · +2 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | `C-77` (−2 le 09-14 soir, série OKR plate) | **+2** | fermé et vérifié par sa sortie : `okrTime = 480` pour un compte réel |
+> | AM-1 à AM-3 · régression visuelle, thèmes, états | **0** | 🔴 **non remboursés** : `Visual` a tourné **19 fois, échoué 19 fois**, et n'a **jamais produit une seule référence**. Le project `visual` dépend de `mobile-safari-warmup`, et `visual.yml` n'installe que Chromium (`Executable doesn't exist ... webkit`). → `C-115` |
+> | AM-4, AM-5 | **0** | toujours ouverts, aucun item |
+>
+> **81 → 83.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
+
+> ### 🟠 2026-09-16 · -4 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
+>
+> **Ce n'est pas une régression.** Rien n'a cassé depuis la dernière passe. Les angles morts
+> listés juste en dessous **existaient tous** pendant que cette note montait : elle était
+> surévaluée parce qu'elle ne comptait que ce que les gardes regardent. C'est exactement ce qui
+> s'est produit le 2026-09-14, où cinq notes ont baissé sans qu'aucun défaut ne soit récent.
+>
+> **Barème, déclaré pour être contestable ligne par ligne :**
+>
+> | Situation | Effet |
+> |---|---|
+> | angle mort **structurel**, de portée large, qu'aucun outil ne regarde | −2 |
+> | angle mort réel mais de portée limitée, ou partiellement couvert | −1 |
+> | angle mort **assumé** (arbitrage documenté), ou déjà compté dans une passe antérieure | 0 |
+> | angle mort **comblé** le jour même, avec garde **et** témoin | +1 |
+>
+> **Le calcul pour cette note :**
+>
+> | Angle mort | Effet | Pourquoi |
+> |---|---|---|
+> | AM-1 · **aucune garde de régression VISUELLE en CI** | −2 | rien ne voit un écran qui se déforme tant qu'aucun test fonctionnel ne casse |
+> | AM-2 · les quatre thèmes ne sont balayés par aucun run | −1 | c'est la classe de bug du 2026-07-23, 17 fichiers |
+> | AM-5 · aucune mesure d'usage réel des écrans | −1 | un écran soigné que personne n'atteint pèse autant qu'un écran négligé très vu |
+> | AM-3 et AM-4 | 0 | gardés statiquement, ou partiellement couverts |
+>
+> 🔴 **Une note baisse UNE FOIS, quand l'angle mort est nommé ; elle remonte quand il est
+> outillé.** Sans cette règle, nommer un angle mort deviendrait punitif, et la passe du
+> 2026-09-16 serait la dernière à en chercher. Un angle mort reconduit sans être comblé ne
+> re-coûte rien : il est **déjà payé**.
+>
+> ⚠️ Un transversal (T-1 à T-10 du [tableau de bord](./README.md)) est compté dans **chaque** audit
+> qu'il touche, parce que chaque note prétend quelque chose de différent. Les 36 témoins jamais
+> rejoués coûtent donc à la fois aux tests et à la sécurité, et ce n'est pas un double comptage.
+
+
+
+### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
+
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
+>
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
+>
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
+
+
+> **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
+> retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
+> que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
+> n'est pas un oubli d'auditeur, c'est une propriété de la méthode de notation.
+>
+> Le prototype du problème est daté : `CLAUDE.md` a pesé 150 ko et ~43 000 tokens sans qu'aucune
+> note ne bouge, alors qu'il est cité **13 fois** dans [`ARCHITECTURE.md`](./ARCHITECTURE.md), dont **9**
+> dans la seule colonne « Où il est écrit » du tableau des invariants, et **jamais** dans ce
+> qui est mesuré. Il était le mètre,
+> jamais l'objet.
+>
+> Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
+> invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
+
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+|---|---|---|---|
+| AM-1 | 🔴 **Aucune garde de régression VISUELLE en CI.** C'est l'angle mort le plus large de ce document : rien ne voit un écran qui se déforme tant qu'aucun test fonctionnel ne casse | aucun workflow ne contient `visual-audit`, `percy`, `chromatic` ni comparaison de captures. `scripts/visual-audit*.mjs` existe et n'est lancé qu'à la main | ✅ **OUTILLÉ le 2026-09-20** · `e2e/visual-regression.spec.ts` · 4 thèmes × 3 routes + états vide et erreur + 3 pages publiques, project `visual` et `visual.yml` (`C-95`) — 🔴 ne prouve PAS : 🔴 **la première référence fige l'écran DÉFAUTS COMPRIS.** Elle ne dit pas qu'il est juste : elle dit qu'on saura qu'il a changé · 🔎 🔴 **2026-09-22 : `Visual` n'a JAMAIS produit une référence**, 19 runs, 19 échecs : le project `visual` dépend de la chauffe WebKit, et `visual.yml` n'installe que Chromium. → `C-115` · 🔎 🟠 **2026-09-24 : second défaut trouvé et corrigé.** Depuis le correctif du 09-23, `Visual` est VERT, mais à vide : 19 captures écrites à chaque run, aucune committée (`git diff --quiet` ne voit pas les fichiers non suivis). Corrigé par `git status` ; un bootstrap qui n'a rien à committer échoue désormais. ✅ Le premier run avec correctif (`35967753986`) a **committé 17 références** (`cae20b00`) ; la première comparaison est au run suivant |
+| AM-2 | **Les quatre thèmes ne sont balayés par aucun run.** Clair, sombre, gris et noir : les parcours e2e n'en jouent qu'un. C'est pourtant la classe de bug du 2026-07-23 (17 fichiers aux couleurs codées en dur) | aucun cas e2e ne change de thème | ✅ **OUTILLÉ le 2026-09-20** · `visual.yml`, qui **produit et commite** ses références au premier run (`C-95`) — 🔴 ne prouve PAS : idem AM-1 · 🔎 🔴 **2026-09-22 : idem AM-1, jamais joué avec succès** · 🔎 🟠 **2026-09-24 : idem AM-1**, vert à vide jusqu'ici, correctif poussé |
+| AM-3 | **Les états VIDES, de chargement et d'ERREUR ne sont vus qu'au hasard des parcours.** `loading-empty-state.guard.test.ts` vérifie leur présence statiquement, jamais leur rendu | garde statique | ✅ **OUTILLÉ le 2026-09-20** · états **vide** et **erreur** capturés, pas seulement l'état nominal (`C-95`) — 🔴 ne prouve PAS : idem AM-1 · 🔎 🔴 **2026-09-22 : idem AM-1, jamais joué avec succès** · 🔎 🟠 **2026-09-24 : idem AM-1**, vert à vide jusqu'ici, correctif poussé |
+| AM-4 | **La cohérence entre la landing et le produit n'est gardée que sur les PRIX et les NOMS de paliers.** Le reste (vocabulaire, promesses, captures) diverge sans alerte | `org-tiers.parity.test.ts` et `org-tier-labels.ts` ne couvrent que ça | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** Seuls les PRIX et les NOMS de paliers sont gardés (`org-tiers.parity.test.ts`, et `check:stripe-prices` depuis `C-106`) ; vocabulaire, promesses et captures divergent toujours sans alerte — *(jugé outillable le 09-16 : partiellement)* |
+| AM-5 | **Aucune mesure d'usage réel.** Le document note des écrans sans jamais savoir lesquels sont ouverts : un écran soigné que personne n'atteint et un écran négligé très fréquenté pèsent pareil | la mesure d'audience porte sur les pages publiques, pas les écrans protégés | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte**, et c'est délibéré : mesurer l'usage réel demande de l'analytique produit, que ce dépôt n'a pas voulue. Un écran soigné que personne n'atteint pèse toujours autant qu'un écran négligé très fréquenté — *(jugé outillable le 09-16 : partiellement)* |
+
+
+> ### 🔴 2026-09-14 (soir) · −2 : un écran du produit affiche un zéro qui n'est pas vrai
+>
+> **Sur `/statistics`, la série « OKR » du graphique « temps investi » est plate à zéro pour tous
+> les comptes réels, en production.** Ce n'est pas une impression : `okrTime` alimente cette série
+> (`DashboardBarChart.tsx`, `okrs: r.okrTime`, vert `#22c55e`), il vient de la RPC
+> `get_work_time_stats`, et cette fonction, **relue en base ce soir** par `pg_get_functiondef`, lit
+> toujours un champ JSON que rien n'écrit (`kr.elem->'history'`). Mécanique complète et preuve dans
+> [`PERFORMANCE.md`](./PERFORMANCE.md) § « okrTime ».
+>
+> 🔴 **Le mode démo, lui, affiche le bon chiffre depuis le 2026-09-02.** Le correctif de cette date
+> n'a touché que le calcul client (`workTimeCalculator.ts`), pas la RPC. La vitrine que voit un
+> visiteur est donc juste, et l'écran que voit un inscrit est faux. **Pour un audit d'interface,
+> c'est le pire des deux sens possibles** : le défaut est invisible de la seule surface qu'on
+> regarde en démonstration.
+>
+> **Pourquoi c'est compté ici et pas seulement en performance** : un écran qui affiche « 0 » là où
+> il y a du travail ne dit pas « je ne sais pas », il dit « tu n'as rien fait ». Une donnée fausse
+> présentée comme sûre est un défaut d'interface avant d'être un défaut de SQL, et aucune des
+> onze notes ne le portait.
+>
+> ### 🟢 Et M-44 est tranché : l'argument du retrait est faux, pas discutable
+>
+> `a-faire-manuel.md` pose M-44 comme indécidable par un agent : « ce sont deux lectures du
+> produit, pas deux états du code ». **Ce n'en est pas une** : le changement non commité retire la
+> pastille « Aujourd'hui » du report rapide avec ce motif, écrit en commentaire dans le fichier :
+>
+> > « Reporter une tâche en retard à AUJOURD'HUI n'a pas de sens (elle est déjà due aujourd'hui ou
+> > avant) »
+>
+> et la moitié qui porte l'argument est **fausse**. `isOverdue` (`src/lib/deadline.ts`) rend vrai
+> si et seulement si `daysUntilDeadline < 0`, **strictement avant aujourd'hui** ; `isDueToday` est
+> la fonction voisine, pour `=== 0`. Une tâche qui affiche ces raccourcis n'est donc **jamais** due
+> aujourd'hui, et « la reporter à aujourd'hui » est exactement le geste le plus courant : *je m'en
+> occupe aujourd'hui.*
+>
+> S'y ajoute l'intention du composant, écrite dans son propre en-tête (maquette 16, « Le retard
+> porte sa solution ») : sortir la tâche du rouge **en un geste**. Après le retrait, les deux
+> options restantes sont « Demain » et « Choisir » : la première laisse la tâche en retard pour
+> toute la journée en cours, la seconde coûte deux gestes de plus. Le raccourci qui remplissait
+> l'objectif du composant est précisément celui qu'on enlève.
+>
+> ✅ **Conclusion : C-72 avait raison, le produit est juste, la pastille reste.** Ce qui restait à
+> arbitrer n'était pas un goût mais un fait, et le fait est vérifiable en trois lignes de
+> `deadline.ts`. ⚠️ **Le fichier n'a PAS été modifié par cette session** : il appartient à l'arbre
+> de travail d'une autre, et indexer le fichier d'une autre session est la faute qui a produit
+> trois `fix(build)` les 09-13 et 09-14. Ce qui est livré ici, c'est l'élément qui rend la décision
+> possible ; le geste de revert reste à qui tient cet arbre.
+>
+> ⚠️ **Ce qui n'a PAS été remesuré ce soir** : aucune passe visuelle (`scripts/visual-audit.mjs`
+> non exécuté), aucune revue de pattern écran par écran. Le −2 porte sur un défaut trouvé en base,
+> pas sur une dégradation des patterns eux-mêmes.
+
+
+> ### ⚪ 2026-09-14 · non remesurée — et un changement PENDING mérite d'être nommé ici aussi
+>
+> Aucune revue de pattern n'a été rejouée aujourd'hui (pas de passe visuelle, `scripts/visual-audit.mjs`
+> non exécuté). La note reste celle du 09-03.
+>
+> ⚠️ **Un fichier non commité d'une autre session change un pattern d'interaction sans que
+> personne ne l'ait arbitré** : `OverdueQuickActions.tsx` retire le bouton de report rapide
+> « Aujourd'hui » du menu de retard, en tension directe avec la conclusion de C-72
+> (« le produit est juste ») documentée dans `a-faire-code.md`. Tant qu'il n'est pas commité, il
+> n'existe ni comme un gain ni comme une régression pour ce document. Décision suivie :
+> `a-faire-manuel.md` **M-44**.
 
 > ### 2026-09-03 · +3, et deux des trois défauts avaient été introduits par leur propre correctif
 >
@@ -313,7 +600,7 @@ utilise **21**. Les 8 valeurs hors barème, chacune dans un seul composant :
 | Valeur | Composant |
 |---|---|
 | `z-[90]` | `ColorSettingsModal.tsx` |
-| `z-[110]` | `CategoryManager.tsx` |
+| `z-[110]` | *(plus aucun consommateur : `CategoryManager.tsx` supprimée le 2026-09-14)* |
 | `z-[150]` | `WeeklyCheckinModal.tsx` |
 | `z-[190]` | `DemoBridgePrompt.tsx` |
 | `z-[250]` | `ShareInviteClaimer.tsx` |
@@ -478,9 +765,82 @@ Props : `icon: LucideIcon, title, description?, actionLabel?, onAction?, accentC
 
 ## Onboarding & Tutoriels
 
+### Les deux accueils (refaits le 2026-10-03)
+
+Les premières minutes doivent tout faire comprendre, et marquer. Chaque parcours continue la DA de
+la landing d'où vient la personne, quel que soit le thème de l'application.
+
+**Perso : le planétaire** (`src/components/onboarding/FirstRunSetup.tsx`, `perso/`). COSMO se
+présente comme un système dont la personne est le centre (la planète du logo) et dont chaque
+module est une orbite : Tâches, Agenda, Habitudes, Objectifs, du bleu au fuchsia comme les accents
+de la landing perso. Écran partagé : à gauche la question, à droite la scène (planétaire + aperçu
+de ce que l'étape va créer, sous la forme exacte d'une carte de l'app). Sur téléphone, le
+planétaire réduit passe au-dessus et l'aperçu disparaît. Six écrans : présentation, tâches (cinq
+au plus, idées cliquables, touche N), agenda (montre la PREMIÈRE tâche écrite posée dans un
+créneau, ne crée rien), habitude (idées), objectif + résultat clé facultatif, bilan.
+
+**Entreprise : la vidéo d'accueil** (refait le 2026-10-14, à la demande d'Axel, sur le modèle de
+RemNote). `/entreprise/onboarding` ne propose plus que le choix créer | rejoindre (`OrgChoice`).
+L'assistant de mise en place en constellation (équipe, invitations, projet, cap), qui demandait
+des informations avant d'avoir montré le produit, est supprimé avec `MemberWelcome`. À la place,
+`OrgWelcomeVideo` ouvre un lecteur au premier passage dans `/entreprise`, créateur comme membre :
+vidéo V2 du 2026-10-19, 2 min 24 (`public/videos/onboarding-entreprise-v2.mp4`, source
+`cockpit-marketing/videos/onboarding-entreprise`), sous-titres FR actifs d'office hors locale fr,
+démarrage avec le son et repli muet + bouton « Activer le son » si le navigateur refuse, aucun
+démarrage automatique sous mouvement réduit. Le guide (`?guide=1`, `OrgGuideFab`) est inchangé.
+Historique de la constellation : `git log -- src/components/onboarding/enterprise/Constellation.tsx`.
+
+**Règles communes**, et pourquoi :
+
+- Chaque étape crée au moment où elle est validée. Mesuré le 2026-08-28 : 50 % des inscrits ne
+  revenaient jamais après leur session d'inscription, c'est précisément la population qui ferme
+  l'onglet entre deux questions.
+- La garde d'ouverture est un verrou (`latched`). `useCreateTask` écrit la tâche créée dans le
+  cache : relue à chaque rendu, la garde se refermait entre la première et la deuxième question,
+  et l'écran ne revenait plus (le compte n'était plus vide). Seul le parcours
+  `e2e/stubbed/first-run.spec.ts` l'a vu, le 2026-09-08 : un écran qui se referme sur son propre
+  effet ne se voit qu'en le parcourant.
+- 🔴 **Bug trouvé en rejouant l'accueil hors démo (2026-10-03)** : le résultat clé de l'objectif
+  partait avec un id `kr-<horodatage>`. `syncKRsToTable` l'upserte, puis refuse tout id qui n'est
+  pas un UUID avant de l'interpoler dans un filtre PostgREST (M-1) : la personne lisait
+  « Impossible de créer l'OKR » à sa première minute. Le parcours e2e comptait les écritures sur
+  `okrs` et ne pouvait pas le voir ; son témoin est désormais le `DELETE` sur `key_results`, qui
+  n'existe que si la garde a laissé passer l'id (vérifié rouge en remettant l'ancien id).
+- Le perso ne s'ouvre jamais sur `/entreprise` : il s'empilait sur l'accueil entreprise à la
+  sortie de celui-ci.
+- L'accueil vidéo (ex-`MemberWelcome`) ne s'ouvre qu'à une ARRIVÉE sur l'Aperçu nu (`/entreprise` sans section ni
+  paramètre), décision prise une fois (`arrivedOnOverview`). Relue à chaque rendu, la garde
+  laissait l'accueil s'ouvrir après coup, une fois `?tab=settings` réécrit en section, le retour
+  Stripe `?tab=billing` traité ou `?task=` retiré par une fiche introuvable : il couvrait l'écran
+  visé et a mis 8 cas du job e2e au rouge le 2026-10-04 (`delete-org`, `refund`, et le sien).
+- Tailles de texte : l'échelle du projet uniquement (garde `design-system.guard.test.ts`, stock de
+  `text-[Npx]` plafonné).
+
+**Corrigé le 2026-10-05**, après une revue honnête de ses points faibles : retour arrière (une
+étape faite s'affiche enregistrée, rien n'est recréé) ; un VRAI créneau d'agenda, facultatif,
+relié à la première tâche ; l'aperçu sous le formulaire sur téléphone ; la durée de l'habitude
+choisie ; une cible chiffrée facultative au résultat clé ; un bilan avec une carte de
+statistiques et des sorties concrètes (tâches, agenda, habitudes) ; le thème de l'app suivi (plus
+d'éclair blanc en thème Noir) ; un bouton « Animer » sous mouvement réduit (WCAG 2.3.3 interdit le
+mouvement non demandé, pas le mouvement) ; un rappel de l'entreprise remise à plus tard. Côté
+entreprise : équipe AVANT invitations, pour que l'invitation emporte l'équipe et le manager ;
+constellation redessinée depuis les vraies données après un rechargement ; tâches du modèle de
+projet visibles ; résultat clé manquant expliqué ; attente nommée et datée ; toasts sombres ;
+reprise de l'assistant à la première étape non faite depuis l'Aperçu.
+⚠️ **Mesure** : la mig. `213` (`get_admin_onboarding_funnel`, carte « Accueils » de la console
+admin) est ÉCRITE, NON appliquée. Tant qu'elle dort, la carte le dit au lieu d'afficher des zéros.
+
+Le sélecteur de modules a été supprimé le 2026-08-23 (`acf29b7`) : Agenda, Habitudes, OKR et
+Statistiques sont visibles par tout le monde. `cosmo_onboarding_examples_created` (ancien accueil à
+trois tâches d'exemple, écrites en dur en français) reste LU, jamais écrit.
+
+Debug : `localStorage.removeItem('cosmo_first_run_done')` sur un compte SANS tâche, puis recharger ;
+`cosmo_org_welcome_seen_<org>_<user>` pour l'accueil membre. Hors démo, les écrans se jouent avec
+le harnais `e2e/supabase-stub.ts` (`first-run.spec.ts`, `org-onboarding.spec.ts`).
+
 ### OnboardingOverlay — supprimé (2026-07, commit c170e37)
 
-Le tutoriel 3 étapes affiché après `loginDemo()` a été **retiré volontairement** et le composant supprimé du repo (purge 2026-07-15). L'onboarding démo repose désormais sur `OnboardingExampleTasks` (tâches d'exemple au premier login) et les `PageTutorial` par page. Ne pas recréer d'overlay bloquant à l'entrée en démo.
+Le tutoriel 3 étapes affiché après `loginDemo()` a été **retiré volontairement** et le composant supprimé du repo (purge 2026-07-15). En démo, ce sont les `PageTutorial` par page qui guident (l'accueil perso ne s'ouvre jamais en démo). Exception voulue par Axel le 2026-10-19 : la vidéo d'accueil entreprise s'ouvre au premier passage sur `/entreprise` en démo (fermable en un geste, drapeau posé par la fixture e2e). Ne pas recréer d'autre overlay bloquant à l'entrée en démo.
 
 ### PageTutorial — tutoriel par page
 
@@ -512,6 +872,32 @@ Flags : `cosmo_tutorial_seen_tasks_(desktop|mobile)`, idem `agenda`, `habits`, `
 - OKRPage : `okr-category-filter`, `okr-create-button`, `okr-first-card`
 
 > **Ne pas renommer** un `data-tutorial-id` sans grep les tutorials d'abord.
+
+### Guide entreprise (2026-10-12)
+
+**Rôle** : sur `/entreprise`, un bouton flottant (boussole, en bas à droite) ouvre un tiroir de
+**28 actions** classées par catégorie, avec recherche. Chaque action joue une démo : un curseur
+animé se déplace vers les vraies cibles de l'écran, ouvre le formulaire **vide** et commente
+chaque étape dans une bulle. La démo **n'écrit jamais** : rien n'est saisi ni validé. Pause,
+Passer et Échap (quitter) dans la barre de contrôle. Une action hors des droits du lecteur
+s'affiche verrouillée et explique pourquoi. **Desktop uniquement** (le bouton n'est pas rendu
+sur mobile).
+
+**Fichiers** (`src/components/org-guide/`) : `OrgGuideFab` (seul morceau chargé d'emblée, monté
+par `OrganizationPage`) ; `OrgGuideHost` (lazy : tiroir, scénarios, démo) ; `OrgGuideDrawer` ;
+`GuideCursor`, `GuideBubble`, `GuideControlBar` ; `guide-runner.ts` (moteur), `guide-access.ts`
+(droits), `guide-search.ts`, `guide-click.ts` ; `scenarios/` (une liste par catégorie). Textes :
+namespace `orgGuide`. Entrée aussi depuis la fin de la constellation entreprise : « Découvrir le
+guide » mène à `/entreprise?guide=1`, la page ouvre le tiroir une fois et retire le paramètre.
+
+**Ancrages** : un scénario vise ses cibles par `data-guide-id`, jamais par un texte ou une
+classe. La garde `src/components/org-guide/guide-scenarios.guard.test.ts` vérifie que chaque
+`data-guide-id` cité par un scénario existe dans le code. ❌ Ne pas renommer ni déplacer un
+`data-guide-id` sans la relancer.
+
+**z-index** : 10010 (capteur de clics), 10020 (curseur, bulle), 10030 (barre de contrôle), voir la
+table plus bas. **Drapeau** : `cosmo_org_guide_seen` (pastille « nouveau » du bouton, posée au
+premier clic). **e2e** : `e2e/org-guide.spec.ts` (démo, aucune clé `cosmo_*` de données modifiée).
 
 ### Ré-afficher un tutoriel
 ```js
@@ -547,11 +933,12 @@ Paliers en usage — **choisir dans cette table**, ne pas inventer de nouvelle v
 | `z-40` | UI flottante de page : FAB quick-add, indicateur sync | `Layout.tsx` |
 | `z-50` | Modals/sheets standards + MobileTabBar | TaskModal, EventModal, HabitModal |
 | `z-[60]` `z-[70]` `z-[80]` `z-[90]` | Couches SUCCESSIVES au-dessus d'un modal ouvert. Quatre crans, pas un intervalle : `ColorSettingsModal` empile 80 puis 90 | QuickAddBar `z-[70]`, ColorSettingsModal 80/90 |
-| `z-[100]` `z-[110]` | Popovers Radix au-dessus d'un modal (110 = imbriqué dans 100) | `date-picker.tsx`, `CategoryManager` |
+| `z-[100]` `z-[110]` | Popovers Radix au-dessus d'un modal (110 = imbriqué dans 100) | `date-picker.tsx` (`CategoryManager` supprimée le 2026-09-14) |
 | `z-[150]` | Modal plein écran au-dessus du chrome applicatif | `WeeklyCheckinModal` |
 | `z-[190]` `z-[200]` | Surfaces système : bannières, CommandPalette, PremiumGateModal | `DemoBridgePrompt` 190, `CookieBanner` 200 |
 | `z-[250]` `z-[300]` | Interstitiels AU-DESSUS des surfaces système | `ShareInviteClaimer`, `AdModal` |
 | `z-[500]` | Tutoriel de page — au-dessus de tout le chrome | `PageTutorial` |
+| `z-[10010]` `z-[10020]` `z-[10030]` | Guide entreprise pendant une démo : capteur de clics (10010), curseur et bulle (10020), barre de contrôle et écran « accès refusé » (10030), au-dessus des modales maison (9999) et de leurs popovers (jusqu à 10001) | `OrgGuideHost`, `GuideCursor`, `GuideBubble`, `GuideControlBar` |
 | `z-[9999]` `z-[10000]` `z-[10001]` | `createPortal` + `position: fixed`. Trois étages réels : la feuille (9999), un popover DANS la feuille (10000), et un popover dans une popup elle-même montée à 10000 (10001) | SmartListMenu, `AssigneesPicker`, calendrier des popups de dépendances |
 
 > 🔒 **Liste fermée, vérifiée par `src/design-system.guard.test.ts`.** Toute valeur `z-[…]` hors
@@ -572,6 +959,69 @@ Les composants dans `src/components/ui/` sont normalement **non modifiés** (gé
 | `chart.tsx` | `ChartTooltipContent` / `ChartLegendContent` : types découplés de Recharts | Recharts v3 a remanié les types Tooltip/Legend → 8 erreurs `tsc`. Runtime inchangé | `pending` |
 
 Toute nouvelle modif doit s'ajouter dans cette table.
+
+## Mode entreprise : popups, confirmations, cas limites
+
+> Descendu de `src/modules/organizations/CLAUDE.md` le 2026-09-26 (plafond de 14 000 o dépassé
+> après la fusion des branches de l'audit du 2026-09-24). Le CLAUDE.md garde les interdits.
+
+### Archivage d'un projet
+
+- ⚠️ **L'archivage d'un projet est un UPDATE**, pas un DELETE, et l'application ne supprime
+  jamais un projet : c'est le trigger `enforce_team_project_archive_scope` qui rattache
+  l'archivage à `project.delete`. Une policy, qui juge la ligne entière, ne sait pas le faire.
+
+
+---
+
+### 📁 Projet riche, portefeuille, page projet (mig. 153, M2, 2026-09-24)
+
+Un projet porte `description`, `owner_id` (responsable), `status`, `start_date`, `due_date`,
+`is_template` + `template_payload`. Une tâche porte `start_date` (≤ `deadline`, CHECK). Jalons
+(`team_project_milestones`) et dépendances entre projets (`team_project_dependencies`, même
+vocabulaire que les tâches : `project_id` est BLOQUÉ par `depends_on_id`). Page projet :
+`/entreprise/projects?project=<id>`, le paramètre RESTE dans l'URL (palette et panneau l'émettent).
+
+
+### 🪟 Popups entreprise (audit du 2026-09-25)
+
+- ❌ **Un seul sélecteur de plusieurs personnes : `MemberPickList`** (recherche au-delà de
+  `MEMBER_SEARCH_THRESHOLD`, groupes d'équipe, affichage par tranches de 50). Fiche de tâche,
+  « Attribuer à quelqu'un » et création d'équipe l'utilisent ; ne pas en réécrire un quatrième.
+  Une personne cochée puis masquée reste choisie, et le compte des cochés masqués est affiché.
+- ❌ **Ne jamais recréer une tâche EN SILENCE.** Le premier commentaire d'une fiche en création
+  passe par « Créer et commenter » ; après, « Annuler » devient « Fermer ».
+- ❌ **Ne jamais remettre une création d'équipe ou de projet DANS une autre fiche** (tâche, OKR).
+  Ces chemins créaient une équipe vide ou un projet visible par toute l'entreprise.
+- ✅ Sous-tâches, dépendances (« bloquée par ») et étiquettes se saisissent DÈS la création :
+  brouillon appliqué par `useApplyTeamTaskDraft` une fois l'id connu.
+- ✅ Étiquettes (mig. 093) et historique par tâche (mig. 094) rebranchés : `task-extras.hooks.ts`.
+  La jonction se lit PAR TÂCHE (`eq('task_id')`, tête de PK), jamais pour toute l'organisation.
+- ✅ Audience d'un projet et portée d'un droit : `audience.helpers.ts` (`projectAudience`,
+  `memberReach`), miroir d'affichage de `can_access_team_project`. La RLS reste la frontière.
+- ⚠️ Les droits de `org_member_permissions` valent pour **toute l'organisation** ; la fiche le dit.
+  Des droits par projet demanderaient une migration et une réécriture des policies : non faits.
+- `PyramidPlacementSheet` remplace `MemberPlacementSheet` et `AddUnderSheet` (deux sens :
+  « son responsable », « sous cette personne » avec invitation).
+### 🧱 Cas limites et cohérence (audit 2026-09-24, étapes 3-4, mig. 164)
+
+- **Confirmer ou annuler, jamais les deux styles au hasard** : un geste réversible part tout de
+  suite avec `showUndoToast` ; un geste irréversible passe par `OrgConfirmDialog` (impact listé,
+  saisie du nom). ❌ `window.confirm` : refusé par `org-confirm.guard.test.ts`.
+- 🔴 **Un retrait passe TOUJOURS par l'assistant de départ** (`useMemberLifecycle`) : il annonce
+  l'impact et fait choisir qui reprend. Côté base, `release_member_work` libère tâches OUVERTES,
+  projets portés et abonnements au retrait et au départ volontaire (plus d'assigné fantôme).
+- Mode `transfer` de `offboard_org_member` : ne touche QUE les champs nommés ; la personne reste.
+  ❌ Ne jamais le proposer en `suspend`/`remove` sur soi-même (`modes={['transfer']}`).
+- **Équipes associées** (`team_project_teams`) : elles ÉLARGISSENT la lecture (CASCADE sûr,
+  contrairement à `team_id`, M5). Ajout/retrait = `project.edit`, jamais le responsable seul.
+- **Purge** : `purge_archived_team_project` (INVOKER), projet archivé seulement.
+- Droits d'une tâche (menus, glisser) : `team-task-rights.ts`, jamais recalculés à la main.
+- 🔴 **Namespace `orgAdmin`** : départs, invitations, lots, droits, pyramide, revue, corbeille.
+  Chaque section/dialogue qui s'en sert le DÉCLARE dans `OrganizationPage` (`lazyWithRetry(…,
+  [..., 'orgAdmin'])`). ❌ Ne pas remettre ces groupes dans `org` : plafond de 30 ko.
+- ⚠️ **Mig. `164` écrite le 2026-09-25, NON appliquée** : l'appliquer AVANT de déployer ce front
+  (équipes associées, purge, mode `transfer` en dépendent).
 
 ## Ne jamais faire — UI
 

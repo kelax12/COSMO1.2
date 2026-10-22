@@ -225,11 +225,27 @@ describe('garde — supprimer une entreprise est un geste de PROPRIETAIRE (C-39)
   it('l ecran monte la zone rouge sur le PROPRIETAIRE, pas sur isAdmin', () => {
     // Ce n'est que l'affichage — la regle vit dans la RPC — mais un ecran qui
     // propose un geste que le serveur refusera est une impasse.
+    //
+    // La zone a vécu dans `OrgMembersSection` (sortie de la page, 615 lignes),
+    // puis dans `OrgSettingsSection` (Paramètres, M13), le 2026-09-24. La garde
+    // suit donc les DEUX bouts : la section monte la zone sur `isOwner`, et la
+    // page lui passe bien le proprietaire, pas l'admin. Un seul des deux ne
+    // suffit pas : `isOwner={isAdmin}` dans la page rouvrirait exactement C-39
+    // avec une section parfaitement juste.
+    const section = readFileSync(
+      join(process.cwd(), 'src/components/organization/OrgSettingsSection.tsx'),
+      'utf-8',
+    );
+    expect(section).toContain('{isOwner ? (');
     const page = readFileSync(
       join(process.cwd(), 'src/pages/OrganizationPage.tsx'),
       'utf-8',
     );
-    expect(page).toContain('{isOwner ? (');
+    // Borné au bloc de la section : `OrgBillingTab` porte aussi
+    // `isOwner={isOwner}`, un `toContain` sur toute la page passerait seul.
+    const bloc = page.match(/<OrgSettingsSection[\s\S]*?\/>/)?.[0] ?? '';
+    expect(bloc).toContain('isOwner={isOwner}');
+    expect(page).toContain('const isOwner = user?.id === myOrg.ownerId;');
   });
 
   it('le dialogue dit ce qu il advient de l abonnement et des preuves', () => {
@@ -239,5 +255,47 @@ describe('garde — supprimer une entreprise est un geste de PROPRIETAIRE (C-39)
     );
     expect(dialog).toContain('deleteOrg.subscriptionFirst');
     expect(dialog).toContain('deleteOrg.evidenceKept');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// mig. 216 — le journal d'audit ne doit pas bloquer la suppression
+// ═══════════════════════════════════════════════════════════════════
+//
+// 🔴 Mesuré en prod le 2026-10-09 : `DELETE FROM organizations` cascade vers
+// des tables dont les triggers d'audit appellent `write_org_audit`. L'org n'y
+// existe déjà plus, l'INSERT viole `org_audit_log_org_id_fkey` (23503) et la
+// suppression ENTIÈRE est annulée. Toute réécriture future de
+// `write_org_audit` doit garder la condition d'existence de l'organisation.
+
+/** Le corps de la DERNIÈRE définition de `write_org_audit`, migrations dans l'ordre. */
+function lastWriteOrgAudit(): string {
+  let body = '';
+  for (const f of migrationFiles) {
+    const sql = readFileSync(join(MIGRATIONS, f), 'utf-8');
+    const re = /FUNCTION\s+public\.write_org_audit\s*\([\s\S]*?\$function\$([\s\S]*?)\$function\$/gi;
+    for (const m of sql.matchAll(re)) body = m[1];
+  }
+  return body;
+}
+
+const guardsOrgExists = (body: string): boolean =>
+  /WHERE\s+EXISTS\s*\(\s*SELECT\s+1\s+FROM\s+public\.organizations\s+WHERE\s+id\s*=\s*p_org\s*\)/i.test(body);
+
+describe('garde — l audit ne bloque pas la suppression d une org (mig. 216)', () => {
+  it('la derniere definition de write_org_audit n ecrit que si l org existe', () => {
+    const body = lastWriteOrgAudit();
+    expect(body, 'write_org_audit introuvable dans supabase/migration').not.toBe('');
+    expect(
+      guardsOrgExists(body),
+      'write_org_audit a perdu sa garde d existence : supprimer une entreprise echoue en 23503',
+    ).toBe(true);
+  });
+
+  it('TEMOIN : le detecteur refuse le corps fautif d avant la 216', () => {
+    const avant = `
+      INSERT INTO public.org_audit_log (org_id, actor_id, action, target_type, target_id, target_user_id, meta)
+      VALUES (p_org, auth.uid(), p_action, p_target_type, p_target_id, p_target_user, p_meta);`;
+    expect(guardsOrgExists(avant)).toBe(false);
   });
 });

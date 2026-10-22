@@ -2,7 +2,7 @@
 // ORG-TEAMS MODULE - Public API
 // ═══════════════════════════════════════════════════════════════════
 
-export type { OrgTeam, OrgTeamMember, CreateOrgTeamInput } from './types';
+export type { OrgTeam, OrgTeamMember, CreateOrgTeamInput, UpdateOrgTeamInput, TeamDeletionImpact, DeleteTeamInput } from './types';
 
 export {
   orgTeamKeys,
@@ -11,14 +11,20 @@ export {
 } from './constants';
 
 export type { IOrgTeamsRepository } from './repository';
-export { LocalStorageOrgTeamsRepository } from './local.repository';
+// Dépôt de démo NON réexporté (2026-10-01) : le baril est importé par le shell,
+// la réexportation ramenait le dépôt dans le chunk d'ENTRÉE alors que la fabrique
+// le charge à la demande (`src/lib/demo-repositories.ts`).
 export { SupabaseOrgTeamsRepository } from './supabase.repository';
 
 export {
   useOrgTeams,
   useOrgTeamMembers,
   useCreateOrgTeam,
+  useCreateTeamWithMembers,
+  type CreateTeamFullInput,
+  useUpdateOrgTeam,
   useDeleteOrgTeam,
+  useTeamDeletionImpact,
   useAddTeamMember,
   useRemoveTeamMember,
   useSetTeamLead,

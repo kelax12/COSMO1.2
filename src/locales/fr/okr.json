@@ -1,12 +1,20 @@
 {
+  "pro": {
+    "sectionTitle": "OKR pro",
+    "sectionSubtitle": "Objectifs de {{org}} sur lesquels vous contribuez",
+    "you": "Vous",
+    "openInOrg": "Ouvrir dans l'espace entreprise",
+    "personalSectionTitle": "OKR perso"
+  },
   "page": {
     "title": "OKR - Objectifs & Résultats Clés",
+    "titleShort": "Objectifs",
     "subtitle": "Définissez et suivez vos objectifs avec des résultats mesurables",
     "completedOkrs": "OKR terminés",
     "seeCompleted": "Voir la liste des OKR terminés",
     "weeklyCheckin": "Check-in hebdo",
     "openWeeklyCheckin": "Ouvrir le check-in hebdo",
-    "newObjective": "Nouvel Objectif",
+    "newObjective": "Nouvel objectif",
     "createObjective": "Créer un nouvel objectif",
     "createOkr": "Créer un OKR",
     "okrDeleted": "OKR supprimé",
@@ -21,13 +29,21 @@
       "allTitle": "Aucun OKR pour le moment"
     },
     "openCheckinAria": "Ouvrir le check-in hebdo",
-    "openCheckinTitle": "Faire le point sur vos OKR : s'ouvre aussi automatiquement lundi/mardi depuis le Dashboard"
+    "openCheckinTitle": "Faire le point sur vos OKR : s'ouvre aussi automatiquement lundi/mardi depuis le Dashboard",
+    "activeCount_one": "{{count}} objectif actif",
+    "activeCount_many": "{{count}} d’objectifs actifs",
+    "activeCount_other": "{{count}} objectifs actifs"
   },
   "card": {
+    "reached": "Atteint",
+    "tasksCount_other": "{{count}} tâches",
+    "tasksCount_many": "{{count}} de tâches",
+    "tasksCount_one": "{{count}} tâche",
+    "endsOn": "fin le {{date}}",
     "uncategorized": "Sans catégorie",
     "timeElapsed": "{{percent}}% du temps écoulé",
     "overallProgress": "Progression globale",
-    "keyResults": "Résultats Clés",
+    "keyResults": "Résultats clés",
     "timeSpent": "Temps effectué",
     "editObjective": "Modifier l'objectif",
     "deleteObjective": "Supprimer l'objectif",
@@ -37,9 +53,13 @@
     "weight": "Coefficient d'importance ×{{weight}}",
     "decrease": "Diminuer {{title}}",
     "increase": "Augmenter {{title}}",
-    "progressOf": "Avancement de {{title}} sur {{target}}"
+    "progressOf": "Avancement de {{title}} sur {{target}}",
+    "objectiveActions": "Actions de l'objectif"
   },
   "categories": {
+    "manage": "Gérer les catégories",
+    "allLong": "Toutes les catégories",
+    "mobileLabel": "Catégorie :",
     "all": "Tous",
     "edit": "Modifier la catégorie",
     "delete": "Supprimer la catégorie",
@@ -75,12 +95,18 @@
     "confirm": "Supprimer"
   },
   "modal": {
-    "description": "Définis un objectif et ses résultats clés mesurables.",
+    "description": "Définissez un objectif et ses résultats clés mesurables.",
     "objective": "Objectif",
     "category": "Catégorie",
     "deadline": "Échéance",
+    "detailsSection": "Détails",
     "descriptionLabel": "Description",
+    "addDescription": "Ajouter une description",
     "keyResults": "Résultats clés",
+    "keyResultName": "Sous-objectif",
+    "krCount_one": "{{count}} défini",
+    "krCount_many": "{{count}} définis",
+    "krCount_other": "{{count}} définis",
     "keyResultPlaceholder": "Résultat clé mesurable",
     "moveUp": "Faire remonter le résultat clé",
     "progress": "Avancement",
@@ -88,9 +114,11 @@
     "unit": "Unité",
     "duration": "Durée",
     "optional": "(Facultatif)",
+    "advancedFeature": "Plus d'options",
+    "advancedFeatureHide": "Masquer",
     "weight": "Coef. (1–10)",
     "weightHint": "Importance du KR dans la progression globale",
-    "needOneKr": "Ajoute au moins 1 résultat clé pour créer l'objectif.",
+    "needOneKr": "Ajoutez au moins un résultat clé pour créer l'objectif.",
     "cancel": "Annuler",
     "save": "Enregistrer",
     "create": "Créer"

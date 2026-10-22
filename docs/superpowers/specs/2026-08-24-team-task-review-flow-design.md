@@ -1,3 +1,16 @@
+> # 🟠 TOUJOURS VIVANT, non implémenté — relu le 2026-09-21
+>
+> **Vérifié dans le code, pas dans un statut** : aucune trace de ce flux. Le statut `review` de la
+> mig. `091` reste « une colonne parmi d'autres », rien n'oblige à y passer, et aucun composant ne
+> rend « Valider » / « Renvoyer ». Ce document décrit donc bien un travail **à faire**, treize mois
+> après sa validation — c'est sa seule péremption, et elle est dans sa date.
+>
+> 🔴 **UN NUMÉRO EST PÉRIMÉ, et il ferait échouer l'implémentation.** Ce document réclame une
+> « nouvelle migration `113_team_task_review_flow.sql` ». Le numéro **`113` est pris depuis** par
+> `113_team_reads_indexable.sql`, et le dépôt est allé jusqu'à `150`. La migration à écrire est
+> donc **`151`**, à confirmer contre `supabase/migration/` au moment de l'écrire : ce dépôt a
+> déjà payé une collision de numéro.
+
 # Flux de relecture des tâches d'équipe — design
 
 Statut : validé avec Axel le 2026-08-24. Vivant jusqu'à implémentation, puis archivable.

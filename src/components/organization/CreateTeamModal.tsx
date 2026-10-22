@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Loader2, Check } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { subtreeOf, type OrgMember } from '@/modules/organizations';
-import MemberAvatar from './MemberAvatar';
+import MemberPickList from './MemberPickList';
+import type { CreateTeamFullInput } from '@/modules/org-teams';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
@@ -20,30 +21,51 @@ export const TEAM_COLORS = [
   { value: '#ef4444', labelKey: 'colors.red' },
   { value: '#ec4899', labelKey: 'colors.pink' },
   { value: '#8b5cf6', labelKey: 'colors.violet' },
-] as const satisfies readonly { value: string; labelKey: KeyOf<'org'> }[];
+] as const satisfies readonly { value: string; labelKey: KeyOf<'orgAdmin'> }[];
 
 interface CreateTeamModalProps {
   members: OrgMember[];
   currentUserId?: string;
   /** Admin : peut ajouter n'importe qui ; manager : soi + son sous-arbre (miroir RLS). */
   isAdmin: boolean;
-  /** Crée l'équipe PUIS y ajoute les membres choisis. Rejette en cas d'échec. */
-  onSubmit: (input: { name: string; color: string }, memberIds: string[]) => Promise<void>;
+  /** Membres précochés, en plus de l'utilisateur courant. */
+  initialMemberIds?: string[];
+  /** Nom pré-rempli. */
+  initialName?: string;
+  /** Crée l'équipe, y ajoute les membres, nomme le responsable. Rejette en cas d'échec. */
+  onSubmit: (input: CreateTeamFullInput) => Promise<void>;
   onClose: () => void;
 }
 
-const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
+const labelClass = 'block text-caption font-semibold uppercase tracking-wide mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 
 /**
- * Formulaire de création d'équipe (#2) : nom, couleur, membres — même langage
- * visuel que NewTeamProjectModal (bottom-sheet mobile / modal desktop).
+ * LE formulaire de création d'équipe (#2) : nom, couleur, responsable, membres.
+ * Monté par la modale ci-dessous, ouverte de partout par `org-create.context`.
+ * Un seul formulaire, un seul résultat : `useCreateTeamWithMembers`
+ * (cohérence globale, 2026-09-25).
+ *
+ * Audit des popups du 2026-09-25 : le responsable se choisit ICI (il ne se
+ * nommait qu'après coup, depuis la section Équipes), et la liste des membres
+ * passe par `MemberPickList` : recherche et affichage par tranches, là où
+ * elle rendait mille lignes d'un bloc.
  */
-const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }: CreateTeamModalProps) => {
+export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberIds, initialName, onSubmit, onClose, inline = false }: CreateTeamModalProps & {
+  /** Intégré dans une autre surface : pas de défilement propre, bords arrondis. */
+  inline?: boolean;
+}) => {
   const { t } = useT('org');
-  const [name, setName] = useState('');
+  const { t: tOrgAdmin } = useT('orgAdmin');
+  const [name, setName] = useState(initialName ?? '');
   const [color, setColor] = useState<string>(TEAM_COLORS[0].value);
-  const [selected, setSelected] = useState<string[]>(currentUserId ? [currentUserId] : []);
+  const [selected, setSelected] = useState<string[]>(() => {
+    const ids = currentUserId ? [currentUserId] : [];
+    for (const id of initialMemberIds ?? []) if (!ids.includes(id)) ids.push(id);
+    return ids;
+  });
+  // Par défaut, celui qui crée l'équipe en répond : c'est le cas courant.
+  const [leadId, setLeadId] = useState(currentUserId ?? '');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -54,8 +76,16 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
     return members.filter((m) => m.userId === currentUserId || mine.has(m.userId));
   }, [members, currentUserId, isAdmin]);
 
-  const toggle = (userId: string) =>
-    setSelected((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
+  // Couronner quelqu'un l'ajoute aux membres (il le serait de toute façon).
+  const pickLead = (userId: string) => {
+    setLeadId(userId);
+    if (userId && !selected.includes(userId)) setSelected((prev) => [...prev, userId]);
+  };
+  // Décocher le responsable lui retire la couronne : il ne peut répondre d'une équipe dont il n'est pas.
+  const pickMembers = (next: string[]) => {
+    setSelected(next);
+    if (leadId && !next.includes(leadId)) setLeadId('');
+  };
 
   const handleSubmit = async () => {
     if (pending) return;
@@ -64,57 +94,17 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
     setPending(true);
     setError(null);
     try {
-      await onSubmit({ name: n, color }, selected);
+      await onSubmit({ name: n, color, memberIds: selected, leadId: leadId || null });
       onClose();
     } catch {
       setPending(false); // erreur déjà notifiée par les hooks (toast)
     }
   };
 
-  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
-  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
-  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
-    open: true,
-    onClose: onClose,
-    label: t('team.newTeam'),
-  });
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
-      onClick={pending ? undefined : onClose}
-    >
-      <div
-        className="flex flex-col w-full sm:max-w-md max-h-[92vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-2xl overflow-hidden"
-        style={{ backgroundColor: 'rgb(var(--color-surface))' }}
-        onClick={(e) => e.stopPropagation()}
-        ref={modalA11yRef}
-        {...modalA11yProps}
-      >
-        {/* Poignée de glissement RETIRÉE, pas oubliée : elle ne faisait rien, et le geste n'a pas sa place sur un formulaire (docs/MOBILE.md §3). */}
-        <div className="sm:hidden pt-3 shrink-0" aria-hidden="true" />
-
-        {/* Header */}
-        <div
-          className="flex justify-between items-center px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b gap-2 shrink-0"
-          style={{ borderColor: 'rgb(var(--color-border))' }}
-        >
-          <h2 className="text-base sm:text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            {t('team.newTeam')}
-          </h2>
-          <button
-            onClick={onClose}
-            disabled={pending}
-            aria-label={t('team.closeForm')}
-            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 disabled:opacity-50"
-            style={{ color: 'rgb(var(--color-text-muted))' }}
-          >
-            <X size={22} aria-hidden="true" />
-          </button>
-        </div>
-
+  return (
+    <div className={inline ? 'rounded-xl border border-[rgb(var(--color-border))] overflow-hidden' : 'contents'}>
         {/* Corps */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-5" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+        <div className={inline ? 'p-3 space-y-4' : 'p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-5'} style={{ backgroundColor: 'rgb(var(--color-background))' }}>
           {error && (
             <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300 font-medium" role="alert">
               {error}
@@ -122,7 +112,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
           )}
 
           {/* Nom */}
-          <div>
+          <div data-guide-id="team-form-name">
             <label htmlFor="new-team-name" className={labelClass} style={labelStyle}>{t('team.name')}</label>
             <input
               id="new-team-name"
@@ -148,7 +138,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
                   type="button"
                   role="radio"
                   aria-checked={color === c.value}
-                  aria-label={t('team.colorNamed', { name: t(c.labelKey) })}
+                  aria-label={t('team.colorNamed', { name: tOrgAdmin(c.labelKey) })}
                   onClick={() => setColor(c.value)}
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${color === c.value ? 'ring-2 ring-offset-2 ring-offset-[rgb(var(--color-background))] ring-blue-500' : ''}`}
                 >
@@ -159,48 +149,28 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
           </div>
 
           {/* Membres */}
-          <div>
+          <div data-guide-id="team-form-members">
             <span className={labelClass} style={labelStyle}>
               {t('team.membersCount', { count: selected.length })}
             </span>
+            {/* Responsable : gère les membres et les projets de l'équipe (mig. 107).
+                Il se désigne dans la liste même, par la couronne (maquette 1, 2026-09-27). */}
             {addable.length === 0 ? (
               <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                 {t('team.noMember')}
               </p>
             ) : (
-              <ul className="space-y-1.5">
-                {addable.map((m) => {
-                  const checked = selected.includes(m.userId);
-                  return (
-                    <li key={m.userId}>
-                      <button
-                        type="button"
-                        onClick={() => toggle(m.userId)}
-                        aria-pressed={checked}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border text-left transition-colors ${
-                          checked
-                            ? 'border-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-accent-solid))]/5'
-                            : 'border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]'
-                        }`}
-                        style={{ backgroundColor: checked ? undefined : 'rgb(var(--color-surface))' }}
-                      >
-                        <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
-                        <span className="flex-1 min-w-0 truncate text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                          {m.userId === currentUserId ? t('common.youBadge') : m.displayName}
-                        </span>
-                        <span
-                          className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 ${
-                            checked ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]' : 'border-[rgb(var(--color-border))]'
-                          }`}
-                          aria-hidden="true"
-                        >
-                          {checked && <Check size={13} />}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] max-h-72 overflow-y-auto">
+                <MemberPickList
+                  members={addable}
+                  value={selected}
+                  onChange={pickMembers}
+                  currentUserId={currentUserId}
+                  lead={{ id: leadId, onChange: pickLead }}
+                  alwaysSearchable
+                  label={t('team.membersCount', { count: selected.length })}
+                />
+              </div>
             )}
           </div>
         </div>
@@ -238,6 +208,57 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
             )}
           </Button>
         </div>
+    </div>
+  );
+};
+
+/** Modale autour de `CreateTeamForm` (bottom-sheet mobile / modal desktop). */
+const CreateTeamModal = (props: CreateTeamModalProps) => {
+  const { t } = useT('org');
+  const { onClose } = props;
+
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onClose,
+    label: t('team.newTeam'),
+  });
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="flex flex-col w-full sm:max-w-md max-h-[92vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-2xl overflow-hidden"
+        style={{ backgroundColor: 'rgb(var(--color-surface))' }}
+        onClick={(e) => e.stopPropagation()}
+        ref={modalA11yRef}
+        {...modalA11yProps}
+      >
+        {/* Poignée de glissement RETIRÉE, pas oubliée : elle ne faisait rien, et le geste n'a pas sa place sur un formulaire (docs/MOBILE.md §3). */}
+        <div className="sm:hidden pt-3 shrink-0" aria-hidden="true" />
+
+        {/* Header */}
+        <div
+          className="flex justify-between items-center px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b gap-2 shrink-0"
+          style={{ borderColor: 'rgb(var(--color-border))' }}
+        >
+          <h2 className="text-base sm:text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
+            {t('team.newTeam')}
+          </h2>
+          <button
+            onClick={onClose}
+            aria-label={t('team.closeForm')}
+            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 disabled:opacity-50"
+            style={{ color: 'rgb(var(--color-text-muted))' }}
+          >
+            <X size={22} aria-hidden="true" />
+          </button>
+        </div>
+
+        <CreateTeamForm {...props} />
       </div>
     </div>,
     document.body,

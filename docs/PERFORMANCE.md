@@ -1,6 +1,431 @@
+<!-- note-audit: note=95 -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — Note **95 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → **92 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → 96 → 96 → **95 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → **2026-10-20**)
+
+> ### 🟠 2026-10-20 · −1 : le cliquet de `OrganizationPage` dépassé depuis 26 h
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | 🔴 `OrganizationPage` au-dessus de son cliquet | **−1** | **18,2 ko** à `08bce3d4` (Aperçu en widgets), **19,1 ko** à `86ea357f`, pour un plafond de 18,0 ko posé au poids du 2026-09-20 (16,7 ko). Le chunk a continué de grossir sur 22 commits après le premier rouge. Levier : `AddWidgetPage`, `TemplatePicker` et le carrousel des formats ne servent qu'en mode édition, les charger en `lazy` |
+> | ✅ `vendor-pdf` (jsPDF) | 0 | **126,3 ko**, chargé par `import()` au clic sur « Exporter en PDF », jamais au chargement ; exempté **et** borné (133,0 ko), comme l'exige C-85 |
+> | Lighthouse | 0 | job vert à `86ea357f` ; TBT mobile de la page entreprise (399 ms le 10-18) toujours ouvert |
+> | Marges serrées | 0 | `vendor-utils` 0,5 %, `StatisticsPage` 0,2 %, `AgendaPage` 1,7 % : le prochain ajout dans l'un d'eux rougira la garde |
+>
+> **96 → 95.**
+
+> ### ⚪ 2026-10-18 · 0 : rien n'a bougé, la page entreprise reste le chantier
+>
+> Dernière passe avant l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | Chemin critique | 0 | **305,4 ko** pour 323 (304,5 le 10-16) : +0,9 ko, `traffic.ts` monté par `main.tsx`. Entrée 67,7 / 70,5. En échange, plus aucune origine tierce de mesure à résoudre au chargement |
+> | Lighthouse mobile (`e69cb729`) | 0 | LCP **1,36 à 1,52 s** sur les 8 URLs. 🟠 `/entreprise-presentation/` : perf **86**, TBT **399 ms** (350 à 934 le 10-16). La page où arrivent les prospects reste la seule sous 97 |
+> | Lighthouse desktop | 0 | LCP 0,33 s partout, 1,1 s sur l'article OKR |
+>
+> **96 → 96.**
+
+> ### ⚪ 2026-10-16 (soir) · 0 : la page entreprise enfin mesurée, et son TBT est trop haut
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-16
+> au soir : Lighthouse mobile des runs `38907264016` (`9dcaf94b`, première mesure du vrai parcours)
+> et `38941369233` (`4e6f4293`). Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 (soir) |
+> |---|---|---|
+> | ✅ La page entreprise n'était mesurée par rien (−1 le matin) | **+1** | `9dcaf94b` : `/entreprise-presentation/` sert le parcours entreprise, Lighthouse le mesure enfin |
+> | 🔴 TBT mobile du parcours entreprise au-dessus de la cible | **−1** | LCP **1,36 à 1,52 s** (bon), mais TBT **350 ms** puis **934 ms**, perf mobile **88** puis **75**, sur deux runs. La cible fixée le 2026-10-15 (TBT sous 300 ms) n'est tenue que sur le parcours perso : le gain de `c8591450` et suivants a été mesuré sur la mauvaise page pour celle-ci |
+>
+> **96 → 96.**
+
+> ### 🟢 2026-10-16 · +1 : LCP mobile sous 1,6 s partout, mais la page entreprise n'a jamais été mesurée
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : Lighthouse mobile du run `38902071817` (`a4878cab`), build local à `HEAD` avec Sentry
+> comme en CI, production au navigateur. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ LCP mobile, troisième point retenu le 10-15 | **+1** | à `HEAD` : LCP **1,22 à 1,52 s** sur les 8 URLs, TBT **90 à 300 ms**, perf **93 à 100** (le 10-15 : 3,26 à 3,40 s, TBT jusqu'à 1 049 ms, perf 62). Correctifs `c8591450`, `4eb34cb2`, `89ddecb9`, `65b8c87a` ; gain confirmé sur deux runs consécutifs (`38899945555`, `38901051072`) |
+> | ✅ Budget de bundle rouge sur deux cliquets (−1) | **+1** | `check:bundle` vert en CI et en local : `OrganizationPage` **17,6 / 18,0 ko** ; `TeamTaskModal` n'apparaît plus comme chunk propre au rapport. Chemin critique **304,5 ko** (plafond 323,0), entrée **66,8 / 70,5**. Marge sous 1 % : `StatisticsPage` 13,0 / 13,0 |
+> | 🔴 La page entreprise n'est mesurée par rien | **−1** | `lighthouserc.json` et `lighthouserc.mobile.json` mesurent `/entreprise-presentation/` **avec** barre oblique finale. À cette URL l'application sert le parcours **perso** (vérifié en production le 2026-10-16 : `h1` et titre de l'accueil perso, canonical réécrit vers `/`). Tous les chiffres « entreprise » de Lighthouse depuis l'origine sont donc ceux du parcours perso : le parcours entreprise, celui des prospects, n'a jamais été mesuré. Détection corrigée par `9dcaf94b` pendant la passe : le point revient quand un Lighthouse en CI aura mesuré le vrai parcours |
+>
+> **95 → 96.**
+
+> ### 🟢 2026-10-15 · +1 : le LCP mobile enfin crédité, le budget de nouveau rouge
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`
+> (Lighthouse du run `38476034238`), build local à `HEAD` avec Sentry comme en CI. Tableau de
+> bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | ✅ LCP mobile « mauvais » sur 8 URLs sur 8 (−3 le 09-22) | **+2** | `C-116` fermé le 2026-10-10 (run `38056459284`) et **jamais crédité depuis**. Relu à `HEAD`, Lighthouse mobile en CI : `/` **3,27 s** · `/guide/` 3,40 · `/blog/` 3,29 · article 3,31 · `/pour-freelances/` 3,39 · `/entreprise-presentation/` 3,26 · `/a-propos/` 3,37 · `/en/` 3,26. Tout sous 4 s : plus rien de « mauvais » |
+> | Le troisième point, retenu | 0 | 3,3 s reste au-dessus de 2,5 s (« à améliorer »), et le fil principal est chargé sur les pages animées : perf mobile **65** sur `/` (TBT 878 ms), **62** sur `/entreprise-presentation/` (1 049 ms), **64** sur `/en/` (949 ms). Desktop : LCP 0,65 à 1,34 s, perf 83 à 100 |
+> | 🔴 Budget de bundle rouge sur deux cliquets | **−1** | `OrganizationPage` **18,4 / 18,0 ko**, `TeamTaskModal` **12,3 / 12,0**. La CI n'atteint plus l'étape depuis le 2026-10-12 (cf. [`TESTING.md`](./TESTING.md)). Chemin critique **303,9 ko** (302,6 le 10-03, plafond 323,0), entrée 69,2 / 70,5. Marge sous 1 % : `StatisticsPage` 12,9 / 13,0 |
+>
+> **94 → 95.**
+
+> ### 🟢 2026-10-03 · +2 : budget de bundle vert en CI, sans remonter un plafond
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Verdict : run `CI`
+> `37109937640` sur `c7fb936c`, **les cinq jobs verts**, le premier `CI` entièrement vert sur `main`
+> depuis le 2026-09-23 (`869fb05a`). Correctifs : `d8b1584b`, `16fbaae9`, `ac1e8c40`, `59aa4fd8`,
+> `315804df` (autres sessions) et `d8c215ad`, `290d6f51`, `c7fb936c` (celle-ci).
+>
+> | Item | Effet | Mesuré le 2026-10-03 |
+> |---|---|---|
+> | ✅ Budget dépassé sur quatre cliquets (−1 le 10-02) | **+1** | `check:bundle` **vert en CI**. `OKRPage` 17,0 → **14,0** (deux modales rares à leur première ouverture), `landing` 25,4 → **13,1** (parcours entreprise dans `landingEnterprise`), `vendor-query` 18,9 → **12,1** (`@tanstack/virtual` dans `vendor-virtual`, lazy), `vendor-utils` 33,3 → **32,0** (locale `date-fns` `es` retirée, langue ni servie ni traduite). Cliquets **abaissés**. Chemin critique **310,6 → 302,6 ko** gzip, pour tout visiteur. `useTeamOKRsAcrossOrgs` sans `useQueries` (`d8c215ad`) : `QueriesObserver` hors du chemin critique |
+> | ✅ `TasksPage` au-delà de son cliquet (−1 le 09-22) | **+1** | non remboursé depuis le 09-22 faute de verdict CI sur l'étape ; le budget est atteint et vert, `TasksPage` à **29,8 / 37,0** |
+> | 🔴 `C-116` · LCP mobile | 0 | le bandeau cookies n'est plus l'élément LCP (texte coupé en deux paragraphes, `290d6f51`), mais le chiffre ne bouge presque pas : `/` **7,8 s** (8,1), `/guide/` **6,3** (6,6), le reste inchangé. L'élément LCP devient le paragraphe animé du héros (`data-hero-fade`, GSAP depuis l'opacité 0) ou un paragraphe rendu par React, plus grand que sa version prérendue. **La cause est une seule** : ce que React peint remplace un prérendu qui n'a pas sa mise en page. Déjà payé |
+>
+> **92 → 94.**
+
+> ### 🟠 2026-10-02 (soir) · −1 : le budget de bundle repasse au rouge, quatre cliquets
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | 🔴 Budget de bundle | **−1** | **vu rouge en CI** le 2026-10-02 au matin (run `36985012405`, `OKRPage` 16,1 / 15,0), la CI n'atteint plus l'étape depuis (tests unitaires rouges, cf. [`TESTING.md`](./TESTING.md)). Remesuré en local à `HEAD`, build **avec** Sentry comme en CI : **quatre** cliquets dépassés, `OKRPage` **17,0 / 15,0**, `landing` **25,4 / 24,0** (parcours entreprise de la landing, le soir même), `vendor-query` **18,9 / 18,5**, `vendor-utils` **33,3 / 33,0**. Chemin critique **310,6 ko** (plafond 323,0), entrée **67,1 ko** (70,5) : intacts |
+> | `TasksPage` au-delà de son cliquet (−1 le 09-22) | 0 | **29,8 / 37,0** en local à `HEAD`, mais aucun verdict CI sur l'étape depuis le 09-28 : non remboursé |
+> | `C-116` · LCP mobile | 0 | Lighthouse mobile en CI à `9ea33927` : `/` **8,1 s** (perf 50), `/guide/` 6,6, `/blog/` 6,1, article 5,9, `/pour-freelances/` 5,7, `/entreprise-presentation/` **8,4** (perf 47), `/a-propos/` 5,6, `/en/` 3,6. *Render Delay* de 5,1 à 7,9 s sur chaque URL : l'élément LCP est là, il attend le rendu. Inchangé depuis le 10-01, déjà payé |
+> | Desktop | 0 | LCP **0,7 à 1,8 s**, perf 91 à 99 sur les 8 URLs |
+> | AM-5 · coût serveur | 0 | `cout-db` vert le 2026-10-02 |
+>
+> ⚠️ Un premier relevé de ce soir montrait d'autres chiffres (`org` 37,3, `legal` 18,5) : c'était un
+> `bundle.log` du **2026-09-26**, laissé par une autre session dans le dossier temporaire commun.
+> Écarté avant toute conclusion ; les chiffres ci-dessus viennent du build de ce soir.
+>
+> **93 → 92.** ❌ Aucun cliquet remonté : ce sont les chunks qui doivent maigrir.
+
+> ### ⚪ 2026-10-01 · 0 : inchangée : le correctif LCP ne se voit pas en CI
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du jour : CI de `main` (`43fed445` à
+> `7cd73d24`), production (catalogue, advisors), dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | `C-116` · peindre le prérendu (`cf1cf753`, 2026-09-29) | 0 | annoncé **1,8 à 2,0 s** en mesure locale ; **Lighthouse mobile en CI, `43fed445`** : `/guide/` 6,6 s · `/blog/` 5,9 · article 5,9 · `/pour-freelances/` 5,7 · `/entreprise-presentation/` **8,1** · `/a-propos/` 5,4 · `/en/` 3,6. L'élément LCP reste un paragraphe du hero animé (`data-hero-fade`). Déjà payé (−3), rien de remboursé |
+> | `TasksPage` au-delà de son cliquet (−1 le 09-22) | 0 | le budget est dit respecté par `af622168` (mesure locale), mais **la CI n'a plus atteint `check:bundle` depuis le 2026-09-28** : non remboursé. ⚠️ En local, `OKRPage` (17,0 / 15,0) et `vendor-query` (18,9 / 18,5) débordent, sur le travail non commité d'une autre session |
+> | AM-5 · coût serveur | 0 | `cout-db` vert le 2026-10-01 |
+>
+> **93 → 93.** Détail : [tableau de bord](./README.md).
+
+> ### 🟠 2026-09-22 (soir) · +3 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | AM-1 · aucune mesure mobile | **+2** | `lighthouserc.mobile.json` joué dans le job `lighthouse`, 8 URLs, verdicts produits |
+> | AM-3 · plafonds par chunk | **+1** | **il a mordu** : voir la ligne `TasksPage` |
+> | AM-4 · 4 URLs sur 40 | **+1** | 8 URLs, une par gabarit, desktop et mobile |
+> | AM-5 · coût serveur en continu | **+1** | `check:db-cost`, job `cout-db` de `posture.yml`, vert le 09-21 et le 09-22 |
+> | `C-77` (−2 le 09-14 soir) | **+2** | fermé et vérifié par sa sortie : `okrTime = 480` pour un compte réel |
+> | 🔴 **LCP mobile « mauvais » sur 8 URLs sur 8** | **−3** | `/` **6,5 s** · `/guide/` 6,7 · `/blog/` 6,0 · article 6,0 · `/pour-freelances/` 5,6 · `/entreprise-presentation/` **8,3** · `/a-propos/` 5,7 · `/en/` 7,3. Seuil Google « mauvais » : 4 s. En `warn`, donc job vert, et le résumé écrit « aucun rapport mobile produit » : **mesuré depuis le 09-20, lu par personne**. → `C-116` |
+> | 🔴 `TasksPage` au-delà de son cliquet, sur `main` | **−1** | **37,7 ko** pour 37,0 (posé au poids du 09-20). → `C-117` |
+> | AM-2 · performance non bloquante | **0** | arbitrage toujours non rendu |
+>
+> ✅ Desktop, à `HEAD` : performance **92 à 97**, LCP **1,1 à 1,6 s**, TBT ≤ 131 ms, CLS 0. Chemin
+> critique **307,0 / 323,0 ko**, entrée **67,0 / 71,0 ko**. 🔴 L'écart desktop / mobile est le
+> renseignement de la passe : **la même page fait 1,4 s sur l'un et 6,5 s sur l'autre**.
+>
+> **90 → 93.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
+
+> ### 🟠 2026-09-16 · -5 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
+>
+> **Ce n'est pas une régression.** Rien n'a cassé depuis la dernière passe. Les angles morts
+> listés juste en dessous **existaient tous** pendant que cette note montait : elle était
+> surévaluée parce qu'elle ne comptait que ce que les gardes regardent. C'est exactement ce qui
+> s'est produit le 2026-09-14, où cinq notes ont baissé sans qu'aucun défaut ne soit récent.
+>
+> **Barème, déclaré pour être contestable ligne par ligne :**
+>
+> | Situation | Effet |
+> |---|---|
+> | angle mort **structurel**, de portée large, qu'aucun outil ne regarde | −2 |
+> | angle mort réel mais de portée limitée, ou partiellement couvert | −1 |
+> | angle mort **assumé** (arbitrage documenté), ou déjà compté dans une passe antérieure | 0 |
+> | angle mort **comblé** le jour même, avec garde **et** témoin | +1 |
+>
+> **Le calcul pour cette note :**
+>
+> | Angle mort | Effet | Pourquoi |
+> |---|---|---|
+> | AM-1 · **aucune mesure de performance MOBILE en continu** | −2 | `lighthouserc.json` est en preset `desktop`, et le trafic visé est mobile |
+> | AM-3 · les chunks lazy n'ont aucun plafond | −1 | `BUDGETS` ne porte que `critical` et `entry` |
+> | AM-4 · 4 URLs mesurées sur les 45 du sitemap | −1 | `lighthouserc.json` vs `dist/sitemap.xml` |
+> | AM-5 · aucune mesure du coût SERVEUR en continu | −1 | les plans sont rejoués à la main, à chaque passe |
+> | AM-2 · `categories:performance` en `warn` | 0 | arbitrage assumé : le runner varie |
+>
+> 🔴 **Une note baisse UNE FOIS, quand l'angle mort est nommé ; elle remonte quand il est
+> outillé.** Sans cette règle, nommer un angle mort deviendrait punitif, et la passe du
+> 2026-09-16 serait la dernière à en chercher. Un angle mort reconduit sans être comblé ne
+> re-coûte rien : il est **déjà payé**.
+>
+> ⚠️ Un transversal (T-1 à T-10 du [tableau de bord](./README.md)) est compté dans **chaque** audit
+> qu'il touche, parce que chaque note prétend quelque chose de différent. Les 36 témoins jamais
+> rejoués coûtent donc à la fois aux tests et à la sécurité, et ce n'est pas un double comptage.
+
+
+
+### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
+
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
+>
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
+>
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
+
+
+> **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
+> retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
+> que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
+> n'est pas un oubli d'auditeur, c'est une propriété de la méthode de notation.
+>
+> Le prototype du problème est daté : `CLAUDE.md` a pesé 150 ko et ~43 000 tokens sans qu'aucune
+> note ne bouge, alors qu'il est cité **13 fois** dans [`ARCHITECTURE.md`](./ARCHITECTURE.md), dont **9**
+> dans la seule colonne « Où il est écrit » du tableau des invariants, et **jamais** dans ce
+> qui est mesuré. Il était le mètre,
+> jamais l'objet.
+>
+> Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
+> invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
+
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+|---|---|---|---|
+| AM-1 | 🔴 **Lighthouse tourne en preset DESKTOP uniquement.** Aucune mesure de performance **mobile** en continu, alors que c'est le terminal du trafic visé et que [`MOBILE.md`](./MOBILE.md) est le document le moins bien noté du dépôt | `lighthouserc.json` : `"preset": "desktop"` | ✅ **OUTILLÉ le 2026-09-20** · `lighthouserc.mobile.json` + passe mobile de `ci.yml` (`C-84`) — 🔴 ne prouve PAS : que les seuils soient justes : **première pose**, prudente faute de Chrome sur le poste, à rabaisser au mesuré dès le 1ᵉʳ run réel · 🔎 🔴 **2026-09-22 : LCP mobile 5,6 à 8,3 s sur 8 URLs sur 8**, en `warn` donc job vert, et le résumé CI écrit « aucun rapport mobile produit » : jamais lu. → `C-116` · 🔎 ✅ **2026-09-24 : cause trouvée**, cf. § « C-116 » juste sous ce tableau. Le résumé lisait un dossier jamais écrit, et l'artefact ignorait un dossier caché : corrigés |
+| AM-2 | **La performance n'est PAS bloquante, et LCP / TBT non plus.** Seuls `accessibility`, `seo` et `cumulative-layout-shift` sont en `error` | `lighthouserc.json` : `"categories:performance": ["warn", …]`, `largest-contentful-paint` et `total-blocking-time` en `warn` | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **arbitrage assumé, non rendu** : rendre `performance`, LCP et TBT bloquants suppose d'accepter que le runner varie. Aucun item ne le porte — *(jugé outillable le 09-16 : arbitrage assumé (le runner varie), mais l'angle mort doit être nommé)* |
+| AM-3 | **Les chunks LAZY n'ont aucun plafond.** Le budget ne couvre que le chemin critique et l'entrée. Une page lazy peut grossir sans limite | `scripts/check-bundle-budget.mjs` : « Les chunks lazy ne sont payés que par ceux qui ouvrent l'écran correspondant ». `BUDGETS` ne porte que `critical` et `entry` | ✅ **OUTILLÉ le 2026-09-20** · **30 plafonds par chunk**, posés au poids du jour (`C-85`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé** : un plafond générique de 70 ko existait ; ce qui manquait était un plafond **par chunk** · 🔎 ✅ **2026-09-22 : il a mordu** : `TasksPage` 37,7 ko > 37,0 à `HEAD`. → `C-117` |
+| AM-4 | **4 URLs mesurées sur les 45 du sitemap** | `lighthouserc.json` : `/`, `/guide/`, `/blog/`, `/pour-freelances/`. `dist/sitemap.xml` en porte **45** | ✅ **OUTILLÉ le 2026-09-20** · passe mobile Lighthouse, 4 → **8 URLs** (`C-84`) — 🔴 ne prouve PAS : la couverture : 8 URLs restent 8 URLs, la proportion s'améliore sans se fermer |
+| AM-5 | **Aucune mesure du coût SERVEUR en continu.** Les plans d'exécution et les temps de RPC sont rejoués à la main, à chaque passe | aucun workflow ne joue d'`EXPLAIN` | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` · EXPLAIN sous RLS, rôle `authenticated`, transaction annulée (`C-87`) — 🔴 ne prouve PAS : le coût **facturé** (Supabase ne l'expose pas) ni la charge réelle (c'est `scalability-volume`) |
+
+### 🔎 C-116 · pourquoi le LCP mobile est lent (mesuré le 2026-09-24)
+
+**Mesuré sur la PRODUCTION** (`https://thecosmo.app`, Brotli, CDN Vercel) avec Chromium bridé par
+CDP comme Lighthouse (4G lente : 150 ms RTT, 1,6 Mbit/s ; CPU ×4), viewport 412 px :
+
+| Page | FCP | LCP | Élément LCP |
+|---|---|---|---|
+| `/guide/` | 5 784 ms | **5 784 ms** | un paragraphe du guide, rendu par React |
+| `/` | 5 372 ms | **5 372 ms** | 🔴 le paragraphe du **bandeau cookies** |
+
+🔴 **FCP = LCP partout : le contenu prérendu n'est JAMAIS peint.** Ce n'est pas un poids de
+contenu, c'est un choix de conception : `index.html` masque `#seo-fallback` (`display:none`) et
+n'affiche que `#boot-screen`, un spinner. Chrome ne compte pas une bordure animée comme du contenu,
+donc le premier rendu « contentful » attend le premier commit de React, et le LCP avec lui. Le
+bloc prérendu ne sert qu'aux robots qui n'appliquent pas la CSS.
+
+**La chaîne mesurée sur `/guide/`** (cascade réseau CDP) :
+
+| Instant | Ce qui se passe |
+|---|---|
+| 0,56 s | HTML reçu |
+| 2,3 s | CSS bloquante reçue (39 ko br), police à 2,5 s |
+| 2,8 s | les sept JS du chemin critique reçus, **dont `vendor-supabase` (56 ko br) et `vendor-animation` (51 ko br) sur une page de texte**, tous en priorité *High*, en concurrence avec la CSS sur le même lien |
+| 3,1 à 3,8 s | **seconde vague** : environ 25 petits chunks découverts seulement après l'exécution de l'entrée (`GuidePage`, `demo-seed`, `local.repository`, sept `hooks-*`…), plus `sentry-client` (50 ko) et deux requêtes Supabase (`/auth/v1/health`, `/rest/v1/`) |
+| 4,7 à 5,8 s | premier rendu React = FCP = LCP |
+
+**Trois leviers, par ordre de gain attendu, et le premier est une décision, pas un correctif :**
+
+1. **Peindre le prérendu.** Le rendre visible (et stylé) jusqu'au montage de React ramènerait le
+   premier rendu vers 2,5 s. ⚠️ Deux risques à peser : un saut visuel quand React remplace le bloc,
+   et un LCP qui peut **se redéclarer** plus tard si React peint un élément plus grand. Le masquage
+   actuel a une raison écrite dans `index.html` (la CSP interdit le script inline, donc tout doit
+   rester en CSS) ; peindre le prérendu reste faisable en CSS seul. ✅ **Arbitré par Axel et fait le 2026-09-29** :
+   `html[data-prerendered]` peint `#seo-fallback` ; le rewrite SPA sert `app.html` (coquille vierge),
+   pour que `/dashboard` n'hérite pas de la home prérendue. Mesuré en local (Brotli, même bridage) :
+   FCP 4,4-4,8 → 1,7-2,6 s, LCP médian → 1,8-2,0 s. Le bandeau cookies reprend le LCP une passe
+   sur trois (4,2-4,8 s) : c'est le reste de C-116.
+2. **Supprimer la seconde vague** : précharger (`modulepreload`) le chunk de la route prérendue dans
+   son HTML, et sortir `demo-seed` / `local.repository` du chemin d'une page publique. Environ un
+   aller-retour et demi gagné.
+3. **Alléger le chemin critique des pages publiques** : ni Supabase ni Framer Motion ne sont
+   nécessaires pour peindre un guide. Gain réseau d'environ 0,7 s, mais c'est l'architecture des
+   providers (`AuthProvider` à la racine) qui est en jeu.
+
+#### 🔴 2026-10-21 · la home peint une copie de la landing, plus le texte SEO
+
+Le levier 1 avait un coût que personne n'avait mis en face du gain : sur `/`, le « prérendu
+peint » était le **texte SEO brut**, sans mise en page. Filmé en local (412 et 1 440 px, CPU ×4,
+4G lente) : **mur de texte** de 0 à 1,7 s, puis **squelette gris** (`LandingSkeleton`) jusqu'à
+3,2 s, puis la landing. Signalé par Axel comme un bug « corrigé huit fois » : chaque correctif
+traitait un cas (CSP, personne connectée le 10-16) sans toucher la décision de C-116, qui le
+recréait pour tout visiteur sans session. Trois issues proposées (spinner partout, LCP mobile
+rendu ; copie habillée ; statu quo), **Axel a choisi la copie**.
+
+- `/` et `/en/` peignent `#lp-hero` : le header et le hero **capturés sur le rendu React**
+  (`npm run capture:landing-hero`), avec leur CSS sortie de la feuille buildée et confinée
+  (`scripts/landing-hero-css.mjs`). Calque fixe **hors de `#root`** : `createRoot` ne l'efface pas,
+  l'attente de l'auth et le squelette passent dessous. `PersoTrack` le retire dans un
+  `useLayoutEffect`, sans rejouer les entrées du titre, du header ni le voile de `#track`.
+  Mécanique et sorties : `src/lib/prerender-hero.ts`.
+- **Le LCP aurait régressé sans `font-display: block` sur la copie.** En `swap`, elle se peignait
+  en police système, plus étroite : un bloc de 55 024 px² contre 57 195 pour le même bloc React
+  en Inter, qui **reprenait le LCP** à la relève (412 px, 3 passes : 4,6 à 5,9 s). En `block`
+  (Inter est préchargée) : LCP **1,17 à 1,42 s**, sur la copie, à FCP inchangé (1,0 à 1,2 s).
+- ⚠️ La copie est un **instantané**. `src/prerender-hero.guard.test.ts` compare l'empreinte des
+  sources du header et du hero à celle de la capture : il échoue dès que l'une bouge sans nouvelle
+  capture (vu rouge sur la modification de `LandingPage.tsx` du jour).
+- **Même jour, les autres pages prérendues.** Filmé à 412 px : le guide, le blog, les articles,
+  les `/pour-*`, l'à-propos, les pages légales et la connexion peignaient le texte SEO **sur fond
+  blanc**, puis le `PageLoader` (un autre spinner, sombre, centré dans 60vh), puis la page sombre.
+  L'entreprise, texte blanc puis squelette blanc puis landing noire.
+  - `/entreprise-presentation/` (et `/en/for-companies/`) : même copie que la home, en **deux
+    vues** (bureau 1 440 px, mobile 412 px, media query au seuil de `useIsMobile`) parce que la
+    pile du hero s'y rend autrement. La pile garde son image dans la copie : masquée, React la
+    peignait plus grande et **reprenait le LCP à 6,4 s** ; visible, LCP **0,9 à 1,6 s** sur la copie.
+    `useIsMobile` calcule désormais son état au premier rendu (il rendait la version bureau une
+    image avant de basculer, sur toutes les pages qui l'utilisent).
+  - **Pages de contenu : spinner, arbitré par Axel** (le texte habillé gardait un saut, le vrai
+    prérendu React est un chantier à part). `prerender.mjs` ne leur pose plus `data-prerendered` :
+    spinner de démarrage, puis `BootScreen` (même classe, même CSS, plein écran) jusqu'à la page.
+    Le spinner prend les couleurs **exactes** du thème : `html[data-boot-theme]`, posé par le
+    script inline (thème enregistré) puis par `applyTheme()`.
+  - ⚠️ **Le LCP mobile de ces pages est rendu en connaissance de cause** : il n'est plus un
+    texte peint avant React. Mesuré en local (412 px, CPU ×4, 4G lente) : 2,4 à 3,4 s, **4,8 s sur
+    `/guide/`**, contre 0,6 à 1,2 s pour le texte brut. Moins que redouté, parce que l'app se charge
+    désormais sans attendre une peinture. À relire au prochain Lighthouse CI mobile.
+
+✅ **Corrigé le même jour, côté mesure** : le résumé CI mobile lisait `.lighthouseci-mobile`, un
+dossier jamais écrit (aucun `lhci upload` mobile), et `upload-artifact` ignorait `.lighthouseci/`
+parce que c'est un dossier caché (`include-hidden-files`). Aucun rapport Lighthouse, desktop ou
+mobile, n'avait donc jamais été archivé. Le résumé imprime désormais l'élément LCP et ses phases.
+❌ **Ne pas remonter le seuil de 4 500 ms** : il est dépassé pour une raison nommée.
+
+✅ **2026-10-16 · LCP sous 2,5 s et TBT sous 300 ms sur les trois pages animées, Lighthouse mobile en CI** (artefact `lighthouse-mobile`). Avant, run `38476034238` (`6847bbf3`) : `/` LCP 3,27 s, TBT 878 ms, perf 65 · `/en/` 3,26 s, 949 ms, 64 · `/entreprise-presentation/` 3,26 s, 1 049 ms, 62. Après, run `38899945555` (`65b8c87a`) : `/` **1,37 s, 54 ms, 100** · `/en/` **1,36 s, 77 ms, 100** · `/entreprise-presentation/` **1,51 s, 65 ms, 99** ; les 8 URLs sous 1,52 s et 182 ms. Confirmé au run suivant, `38901051072` (`93f6a035`) : `/` 1,22 s, 66 ms · `/en/` 1,52 s, 66 ms · `/entreprise-presentation/` 1,37 s, 111 ms. Quatre leviers : l'app chargée après la peinture du prérendu (`src/boot.ts`, son JS et sa CSS sortent du chemin du LCP), l'icône du manifeste à sa taille (`logo.png` de 255 ko, téléchargée pendant le chargement, ajoutait 1,3 s au LCP une passe sur deux), la rotation du hero qui ne re-rend plus le parcours (`hero-module-actif.ts`), le bas de la landing monté au premier geste (`BelowFold.tsx`, une tâche de ~1 s à CPU ×4). 🔴 **Les chiffres « entreprise » ci-dessus, et tous ceux de ce document jusqu'à `9dcaf94b`, mesurent le parcours PERSO.** `/entreprise-presentation/` (l'URL de `lighthouserc.mobile.json`, que Vercel sert aussi en 200 sans rediriger) gardait sa barre oblique finale dans `stripLocalePrefix`, et `useLandingTrack` ratait le slug : le prérendu était entreprise, l'hydratation rendait le perso, titre et canonical de l'accueil compris. Vu en production le 2026-10-16, en fr comme sur `/en/for-companies/`. Corrigé dans `normalizePath` (`src/i18n/routes.ts`), témoin `use-landing-track.test.ts`.
+
+📏 **2026-10-16 · première mesure du parcours ENTREPRISE, Lighthouse mobile en CI**, run `38907264016` (`9dcaf94b`), élément LCP vérifié dans l'artefact (H1 « Qui fait quoi. ») : perf **88**, LCP **1,36 s**, TBT **350 ms**, Speed Index 4,9 s, CLS 0,040, a11y **93**. Le LCP tient ; le TBT est le seul au-dessus de la cible des pages animées (300 ms). Fil principal : `styleLayout` 2,4 s, `vendor-react` 966 ms, `vendor-gsap` 936 ms, `vendor-animation` 666 ms ; tâches longues de 70 à 151 ms entre 8,2 et 10,6 s (sections épinglées, shader). Accessibilité : trois audits en échec, absents du parcours perso (`aria-prohibited-attr` sur les `ent-hero-line` du H1, `color-contrast` sur des `text-slate-500/600`, `label-content-name-mismatch` sur deux boutons). Seuils de `lighthouserc.mobile.json` inchangés.
+
+
+> ### 🔴 2026-09-14 (soir) · −2 : une RPC créditée d'un gain de 71× rend un chiffre faux en production
+>
+> **Le budget de bundle est revérifié et il tient** : `npm run check:bundle` rejoué ce soir sur un
+> build neuf (`npm run build`, exit 0, `VITE_SENTRY_DSN` posée, `vendor-sentry` à 49,3 ko donc
+> au-dessus du `SENTRY_FLOOR`) rend **306,6 ko de chemin critique pour 323,0 de plafond** et
+> **66,9 ko d'entrée pour 71,0**. Les marges annoncées ce matin sont exactes. Le −2 ne vient pas de
+> là.
+>
+> **Il vient de ce que cet audit a crédité sans jamais le vérifier.** La migration `127` a été
+> portée à cette note le 2026-08-27 pour avoir ramené la page Statistiques de **854 ms à 12,0 ms**.
+> Ce gain est réel. Ce que personne n'a mesuré, c'est si la fonction accélérée rendait des chiffres
+> justes : **elle en rend un faux, sur une de ses quatre colonnes, pour 100 % des comptes réels.**
+>
+> Mesuré ce soir directement en base, par `pg_get_functiondef` sur la fonction VIVANTE, pas par
+> lecture du dépôt :
+>
+> ```sql
+> okr_days AS MATERIALIZED (
+>   SELECT ... FROM okrs o
+>   CROSS JOIN LATERAL jsonb_array_elements(COALESCE(kr.elem->'history', '[]'::jsonb)) AS hist(elem)
+> ```
+>
+> Le champ `history` n'est écrit par aucun écrivain du produit : il est absent de l'interface
+> `KeyResult`, absent des mappers. `okr_days` est donc toujours vide et **`okrTime` vaut
+> structurellement 0** sur `/statistics` en production.
+>
+> 🔴 **Ce qui rend ce point coûteux, c'est qu'il a DÉJÀ été corrigé, à moitié.** La revue du
+> 2026-09-02 a trouvé ce défaut, l'a réparé côté client (`src/lib/workTimeCalculator.ts` lit
+> désormais `kr_completions`) et a écrit le constat **au passé** : « la page Statistiques affichait 0
+> pour les OKR en démo COMME en production ». La moitié production est restée vraie. Conséquence
+> exacte, et elle est la pire des deux :
+>
+> | Mode | Source de `okrTime` | État |
+> |---|---|---|
+> | **Démo** (ce que voit un visiteur) | `workTimeCalculator.ts` → `kr_completions` | ✅ juste depuis le 09-02 |
+> | **Production** (ce que voit un inscrit) | RPC `get_work_time_stats` (mig. 127) | 🔴 **0, toujours** |
+>
+> La vitrine montre le bon chiffre, le produit montre zéro. C'est littéralement la règle que
+> `CLAUDE.md` écrit pour les fuseaux des habitudes : *ne jamais corriger une seule des deux
+> moitiés*.
+>
+> ⚠️ **La migration qui répare est dans le dépôt et n'a jamais été appliquée** :
+> `136_work_time_stats_okr_from_completions.sql` est **commitée** (`31482a3f`, 2026-09-03) et présente
+> à `HEAD`, mais elle n'a jamais été jouée contre la base. Elle est décrite partout comme « travail
+> en cours d'une autre session », jamais comme **un défaut ouvert en production**, et aucun des onze
+> audits ne la portait.
+>
+> 🔴 **Correction du 2026-09-15 : ce paragraphe a d'abord écrit « ni versionnée ni appliquée »**,
+> en recopiant `CLAUDE.md` § Base de données au lieu de lancer `git ls-files`. La moitié « non
+> versionnée » était fausse. **C'est la même faute que celle que cette passe documente**, commise
+> pendant qu'elle la documentait : un fait repris d'un document voisin plutôt que mesuré à sa
+> source. La bonne nouvelle est pratique : le SQL est relu et dans le dépôt, fermer `C-77` ne
+> demande que de l'appliquer et de vérifier ce qu'elle rend.
+>
+> ⚠️ **Et sa propre prémisse est fausse d'un mot, ce qui ne change pas sa conclusion.** Son en-tête
+> affirme « ce champ n'existe pas », vérifié par `grep` dans `src` et jamais en base. Mesuré ce
+> soir : **12 Key Results sur 28 portent bien un `history` non vide**, avec exactement la forme
+> `{date, increment}` attendue. Ils appartiennent tous au compte de seed
+> `aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`, donc aucun compte réel n'est concerné et le verdict tient.
+> Mais l'argument « le champ n'existe pas » est un argument de code présenté comme un argument de
+> données, et il aurait suffi d'une requête pour le formuler juste.
+>
+> ❌ **Ne jamais créditer une RPC d'un gain de temps sans avoir comparé ce qu'elle REND.** La
+> mig. `127` a été mesurée sur son plan d'exécution et sur son temps, jamais sur ses valeurs. Une
+> fonction qui rend zéro très vite est la plus rapide de toutes.
+
+
+> ### 🟢 2026-09-14 · +5 : le défaut qui avait fait perdre les 2 points du 09-03 est refermé, et COMMITÉ
+>
+> Le 09-03, la note perdait 2 points parce que la marge réelle sous les deux plafonds n'était pas
+> celle annoncée : l'entrée était **ROUGE** (78,1 ko pour un plafond de 78,0), et le chemin
+> critique n'avait que 3,2 ko de marge. C'est exactement ce point qui se referme aujourd'hui :
+>
+> | | 09-03 | **09-14** | Plafond |
+> |---|---|---|---|
+> | Chunk d'entrée | **78,1 ko, ROUGE** (−0,1 ko) | **66,9 ko** (marge **5,78 %**) | 78 000 → **71 000** |
+> | Chemin critique | 366,8 ko (marge 3,2 ko) | **306,6 ko** (marge **5,16 %**) | 370 000 → **323 000** |
+>
+> Le levier n'est pas celui qui était prévu (scinder un catalogue i18n) : c'est `sonner`
+> (10,1 ko gzip) qui sort intégralement du chemin critique, derrière une façade `@/lib/toast` au
+> seul `import()` dynamique du dépôt. **Les deux plafonds ont été ABAISSÉS**, jamais relevés — le
+> critère de sortie (5 % de marge sur les deux) est tenu, pas contourné.
+>
+> ⚠️ **Ce gain a failli ne jamais compter.** Le travail a vécu **trois jours dans un arbre non
+> commité** : ce document l'annonçait comme acquis pendant que `main` portait encore 78 000 /
+> 370 000, et une branche entière (`feat/react-19`) a été arbitrée contre un plafond fictif. La note
+> ne monte qu'à partir du commit **`7134d7fe`** et du run CI **`34846164939`** (cinq jobs verts,
+> `Budget de bundle` compris) — la seule chose qui rend +5 opposable plutôt que déclaré.
+>
+> **Pourquoi +5 et pas seulement +2** (l'inverse exact de la baisse du 09-03) : la marge de sortie
+> n'est pas revenue au niveau d'avant, elle le dépasse — 5,78 % contre 0 (rouge) sur l'entrée, et le
+> défaut structurel (`sonner` statique dans des pages lazy, qui avait déjà produit un premier
+> « faux vert » à 66,9 ko d'entrée mais 316,2 ko de critique) est fermé par une garde dédiée
+> (`src/lib/toast.guard.test.ts`, vue rouge sur un import fautif) et non par une mesure ponctuelle.
+>
+> **Ce qui reste hors de portée d'une note** : les dépôts locaux/Supabase de quinze modules tirés
+> statiquement par `repository.factory.ts` (269 ko bruts dans l'entrée, ~72 ko de seeds démo jamais
+> exécutés en prod). C'est un chantier, pas un geste — non pris en compte dans ce +5.
 
 > ### 🟠 2026-09-03 · la note BAISSE de 2 : la garde mesurait un artefact qui n'existe nulle part
 >
@@ -398,6 +823,30 @@ cadrage n'a changé, aucune balise n'a bougé de place. Les captures restent en
   passante de crawl et risquerait de dégrader l'aperçu de partage, qui est la
   première impression du produit. Mauvais échange.
 
+### Instrument Serif, auto-hébergée (2026-10-04)
+
+`tailwind.config.js` déclarait `font-display: "Instrument Serif"` depuis le hero entreprise
+(2026-09-23), mais **aucun `@font-face` n'existait** et la CSP (`font-src 'self'`) interdit
+Google Fonts : tout titre `font-display` sortait en Georgia, le repli, sans erreur ni
+avertissement. Quatre fichiers dans `public/fonts/` (droit et italique, latin et latin-ext,
+licence OFL à côté), déclarés dans `src/index.css` § Polices d'affichage.
+
+Mesuré dans Chromium headless, `/entreprise-presentation` à 1440 × 900 :
+
+| | Georgia (police bloquée) | Instrument Serif |
+|---|---|---|
+| Fichiers téléchargés | aucun | `latin` droit (21 ko) + `latin` italique (22 ko) |
+| Boîte du `h1` | 960 × 199 px | **960 × 199 px** |
+| CLS de la page | 0,000006 | **0,0064** (seuil « bon » : 0,1) |
+
+- ✅ Le sous-ensemble `latin-ext` n'est PAS téléchargé : même ordre de déclaration qu'Inter
+  (latin en dernier, cf. la règle ci-dessus sur le chevauchement U+0152-0153).
+- ❌ **Pas de préchargement dans `index.html`** : la police ne sert qu'au parcours entreprise de la
+  landing et aux deux accueils ; la précharger ferait payer ~21 ko à chaque visiteur de l'app.
+- ✅ `font-data` (`"Geist Mono"`) était dans le même cas : déclarée, jamais servie, rendue en
+  `ui-monospace` (Consolas sous Windows). Auto-hébergée le 2026-10-05 (variable 100-900, latin
+  23 ko, latin-ext 15 ko, mêmes règles).
+
 Réencodage reproductible : `npm run images:check` (mesure) puis
 `node scripts/optimize-images.mjs`.
 
@@ -412,13 +861,79 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
 
 ## Budget bundle (objectif)
 
-- Chunk `index` : au 2026-08-27, **106,9 kB gzip** (2026-08-25 soir : 87,2 kB).
-- **Cliquet** : `npm run check:bundle` refuse un chunk d'entrée au-dessus de **112 kB gzip** et un
-  chemin critique au-dessus de **400 kB gzip**. Bloquant dans le job CI `lint-test-build`, juste
-  après le build.
+- **Mesure du 2026-09-11** (build avec `VITE_SENTRY_DSN`, arbre propre) : chunk d'entrée
+  **66 896 o gzip**, chemin critique **306 347 o gzip** sur 7 chunks.
+
+  ✅ **Ces deux chiffres sont COMMITÉS et vérifiés par la CI depuis le 2026-09-14** — commit
+  `7134d7fe`, run `34846164939` vert sur les cinq jobs, étape `Budget de bundle` comprise :
+  entrée **66,9 ko**, chemin critique **306,6 ko** sur le build du runner.
+  🔴 **Ils ont vécu trois jours dans un arbre de travail NON COMMITÉ**, pendant lesquels ce
+  document et `CLAUDE.md` les annonçaient comme en vigueur alors que `main` portait encore
+  78 000 / 370 000. Une branche entière (`feat/react-19`) a été arbitrée contre un plafond qui
+  n'existait nulle part, et trois commits `fix(build)` d'autres sessions sont revenus à `sonner`
+  faute de trouver la façade dans le dépôt. **Un plafond se relit dans le fichier commité.**
+- **Cliquet** : `npm run check:bundle` refuse un chunk d'entrée au-dessus de **70 500 o gzip** et
+  un chemin critique au-dessus de **323 000 o gzip**. Bloquant dans le job CI `lint-test-build`,
+  juste après le build.
 - 🔴 **Le plafond d'entrée est passé de 92 à 112 kB le 2026-08-26**, seule remontée de plafond du
   dépôt, justifiée en commentaire dans `scripts/check-bundle-budget.mjs`. Une seconde remontée
-  ferait du budget une formalité : la marge se regagne en descendant la mesure.
+  ferait du budget une formalité : la marge se regagne en descendant la mesure. Depuis, il n'a
+  fait que descendre : 112 000 → 79 000 → 78 000 → 71 000 → **70 500** (2026-10-01).
+
+### 🔴 2026-10-01 : `main` rouge sur le budget depuis le 2026-09-24, quatre chunks ramenés
+
+`check:bundle` échouait sur `main` depuis une semaine, sur quatre chunks à la fois, mesurés
+identiques sur un build de `HEAD` (`af4e885b`) en worktree avant toute retouche. Aucun plafond
+n'a été relevé ; quatre ont été **abaissés** derrière la mesure.
+
+| Chunk | Avant | Après | Plafond | Levier |
+|---|---|---|---|---|
+| Entrée | 73,2 ko | **67,1 ko** | 71 000 → 70 500 | Six barils (`tasks`, `habits`, `organizations`, `team-projects`, `team-okrs`, `org-teams`) **réexportaient** leur dépôt de démo : importés par le shell, ils le ramenaient dans l'entrée alors que la fabrique le charge à la demande. Réexportations retirées ; tâches et habitudes passent aussi par `demo-repositories.ts` |
+| Chemin critique | 315,3 ko | **309,3 ko** | 323 000 | même coupe : c'est ce qui prouve que l'entrée a maigri, et pas déplacé |
+| `org` (fr + en) | 40,6 ko | **23,7 ko** | 30 000 → 25 000 | `org` est chargé par `Layout`, donc par **tout** compte connecté. 34 sections que seul `/entreprise` affiche passent dans `orgAdmin`, que la route `/entreprise` charge déjà |
+| `legal` (fr + en) | 18,5 ko | **2,7 ko** | 15 500 → 3 000 | CGU et confidentialité dans `legalTerms` / `legalPrivacy` (9,2 et 9,4 ko), chacune chargée par sa seule page |
+| `TeamTaskModal` | 16,0 ko | **11,4 ko** | 14 500 → 12 000 | commentaires et arbre de catégories chargés à la demande |
+| `OrganizationPage` | 18,0 ko | **17,5 ko** | 18 000 | les mutations de facturation sortent dans `org-billing.mutations.ts` |
+
+⚠️ **Le piège de la première coupe, et il resservira.** Une réexportation dans un baril que le
+shell importe annule n'importe quel `import()` dynamique du même module : Rollup le place dans
+l'ancêtre commun, c'est-à-dire l'entrée. `demo-repositories.ts` chargeait le dépôt de démo des
+organisations à la demande depuis le 2026-09-02, et ses 17 ko bruts étaient pourtant dans
+l'entrée, par `export { LocalStorageOrganizationsRepository } from './local.repository'`.
+
+### 🔴 Le levier du 2026-09-11 : `sonner` sort du chemin critique (−10,1 ko pour tout le monde)
+
+| | Avant | Après | Plafond |
+|---|---|---|---|
+| Chunk d'entrée | 76 954 o (marge **1,34 %**) | **66 896 o** (marge 5,78 %) | 78 000 → 71 000 |
+| Chemin critique | 316 407 o (marge 14,48 %) | **306 347 o** (marge 5,16 %) | 370 000 → 323 000 |
+
+Le `<Toaster>` d'`App.tsx` et 58 modules appelaient `sonner` par un import statique. Or aucun de
+ces appels ne peut partir avant que la personne agisse : ce sont des `onSuccess` / `onError` de
+mutation et des gestionnaires d'évènement. Tout passe désormais par `src/lib/toast.ts`, qui porte
+le **seul** `import('sonner')` du dépôt, et le `<Toaster>` est monté en `lazy()` derrière son
+propre `<Suspense fallback={null}>`.
+
+⚠️ **Le piège, mesuré, parce qu'il se reproduira.** Nettoyer le SHELL ne suffit pas, et sortir le
+module par `manualChunks` non plus :
+
+| Forme | Entrée | Chemin critique |
+|---|---|---|
+| 57 imports statiques dans des pages lazy, shell nettoyé | 77 017 o | 316 470 o |
+| idem + `manualChunks` vers `vendor-toast` | 66 899 o | **316 245 o** |
+| **zéro import statique**, un seul `import()` | 66 896 o | **306 347 o** |
+
+La deuxième ligne est le piège : l'entrée maigrit de 10 ko et le chemin critique de **162
+octets**. Tant qu'une page lazy garde l'import statique, Rollup place le module dans l'ancêtre
+commun des chunks qui le partagent, c'est-à-dire l'entrée ; l'en sortir par un chunk nommé fait
+émettre à Vite un `<link rel="modulepreload">` dans `index.html`, donc le navigateur le télécharge
+exactement comme avant. **C'est le même piège que celui documenté pour `@sentry` dans
+`vite.config.ts`.** Cliquet : `src/lib/toast.guard.test.ts`.
+
+⚠️ **La mesure précédente (74 903 o, 3,97 % de marge, 2026-09-04) n'avait pas été refaite.** Entre
+les deux, l'entrée avait REPRIS 2 051 o (refonte mobile, extraction i18n, 53 surfaces modales).
+La marge réelle au moment de reprendre l'item n'était pas 3,97 % mais **1,34 %** : un budget qu'on
+ne remesure pas dérive dans le sens qui arrange.
 
 > ✅ **Ce budget a enfin sa garde (2026-08-25).** Il était le seul du dépôt à n'être mesuré par
 > aucun script, et le seul à avoir reculé sans que personne le voie : +5 kB gzip en une journée,
@@ -431,6 +946,11 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
 
 > ✅ **Le levier i18n est APPLIQUÉ (2026-08-25 soir).** Le catalogue `fr` était importé
 > **statiquement** en entier par `src/i18n/catalog.ts` : 19 namespaces, **178 ko de JSON brut**
+> *(chiffres du 2026-08-25, conservés à leur date : c'est l'état AVANT le levier. Remesuré le
+> 2026-09-14 : le dépôt porte désormais **23 namespaces** et **244 ko** de JSON `fr` sur disque,
+> 215 ko pour `en`. Le levier n'est donc pas « un gain de 178 ko » acquis une fois pour toutes,
+> c'est une digue dont la pression augmente : +66 ko de catalogue en vingt jours, tous tenus hors
+> du chunk d'entrée par la seule règle des deux namespaces eager.)*
 > dans le chunk `index`, dont `org` 50 ko, `landing` 34 ko, `guide` 14 ko, `tutorials` 8 ko, des
 > pages que la plupart des sessions n'ouvrent jamais.
 >
@@ -606,6 +1126,38 @@ portent plus de donnée, l'écran cesserait de se rafraîchir **en silence**. Ga
 requêtes (reçues, émises). La première paire ne peut pas devenir une jointure PostgREST, il n'y a
 pas de clé étrangère entre `friends.email` et `profiles.email`.
 
+#### La pastille COMPTE, elle ne lit pas la liste (mig. `142`, finding C-05)
+
+> Descendu de `src/modules/organizations/CLAUDE.md` le 2026-10-15 (plafond de 14 000 o dépassé),
+> sans une coupe. Le dossier n'en garde que les interdits. Trace « avant » et parité mesurée :
+> [`SCALABILITY.md`](./SCALABILITY.md) § « le rechargement était éteint, la LECTURE ne l'était pas ».
+
+La même boîte de réception porte depuis le 2026-09-05 une section `badge_tasks`. `useOrgBadges`
+montait `useTeamTasks`, donc `get_my_team_tasks` + `.limit(1000)`, la lecture la plus chère du
+produit, sur **toutes les pages protégées**, pour peindre un nombre. Le rechargement avait été
+coupé le 2026-08-27 (`background`), la **lecture** pas.
+
+- Le serveur rend les **seules** lignes utiles : assignations en cours qui ne viennent pas de moi
+  (`kind = 'assigned'`), et noms des tâches visées par mes notifications non lues
+  (`kind = 'notified'`). Bornes : 200 et 50 **par organisation**, jamais globalement.
+- ❌ **Ne jamais faire compter une ligne `notified`.** Une tâche peut sortir dans les DEUX branches ;
+  le client leur retire toute assignation pour cette raison précise. Sans ça, elle compte deux fois
+  et le nombre affiché change.
+- ❌ **Ne jamais passer `lastSeen` au serveur.** Il vit dans `localStorage`, il est **par
+  organisation**, et il change à chaque visite de /entreprise : en paramètre, il ferait dépendre la
+  clé de cache d'une valeur mouvante, et un seul horodatage ne pourrait pas servir plusieurs
+  organisations. La borne reste côté client, sur un ensemble déjà réduit.
+- ✅ `my_org_badge_tasks()` est `SECURITY DEFINER` pour la SEULE raison qui vaut ici : appeler
+  `my_team_project_ids`, dont `EXECUTE` est révoqué à `authenticated` (mig. 100/113). L'autorisation
+  est celle de `get_my_team_tasks`, reprise mot pour mot. La RPC d'agrégat, elle, reste
+  `SECURITY INVOKER` : agréger des lectures, oui ; agréger des autorisations, jamais.
+- ⚠️ En **démo** la source reste `useTeamTasks` : c'est du `localStorage`, donc gratuit, et écrire
+  une seconde dérivation de « nouvelle assignation » dans le repository local aurait fait deux
+  définitions du même chiffre. Hors démo l'identifiant vaut `undefined` et rien ne part.
+- Gardes : `src/lib/hooks/org-badges.server-count.test.tsx` (dont un témoin qui exige que le
+  compteur TOMBE quand la source serveur est vidée : sans lui, le fichier passerait encore si plus
+  aucune source n'alimentait rien).
+
 ### 🔴 Le correctif que personne ne reçoit : les onglets jamais rechargés
 
 **91,5 % du trafic Supabase du 2026-08-26 est venu de DEUX onglets** qui exécutaient encore le
@@ -708,3 +1260,200 @@ Les `getAll()` à fort volume (**tasks, events, habits, okrs**) utilisent l'auto
 | **Brotli + fonts** | Vérifié en prod le 2026-07-16 : `Content-Encoding: br` servi par Vercel sur `/assets/*` (fallback gzip), cache immuable 1 an. `display=swap` déjà présent sur la feuille Google Fonts (`index.html`). Rien à changer. |
 
 - ⚠️ La sémantique de la RPC `get_work_time_stats` doit rester **identique** à `calculateWorkTimeForPeriod` (dates locales inclusives via `p_tz`) — les deux modes démo/prod doivent afficher les mêmes chiffres à données égales.
+
+---
+
+## Chemins de lecture indexables · repris de `CLAUDE.md` (déplacé le 2026-09-16)
+
+> Ce bloc vivait dans `CLAUDE.md`, chargé à chaque session. Déplacé ici **sans une coupe**.
+> La règle courte vit dans [`src/modules/CLAUDE.md`](../src/modules/CLAUDE.md).
+
+## ⚡ Lecture des tâches — passer par `get_my_tasks()`
+
+**Ne jamais lire `tasks` en direct pour une vue de liste.** La policy
+`tasks_select_own_or_shared` (mig. 049) est un `OR` entre une égalité et un `EXISTS` : Postgres
+ne peut pas utiliser `idx_tasks_user_id` et fait un **`Seq Scan` de la table globale** (vérifié
+par `EXPLAIN` en prod le 2026-08-07). Le coût d'une lecture croît alors avec le volume de TOUTE
+la plateforme, pas avec celui de l'utilisateur.
+
+```typescript
+supabase.from('tasks').select(...)          // ❌ Seq Scan global
+supabase.rpc('get_my_tasks').select(...)    // ✅ Index Scan (mig. 085)
+```
+
+`get_my_tasks()` ne prend **aucun paramètre** : son périmètre vient de `auth.uid()` seul. Les
+policies RLS restent en place (défense en profondeur) ; l'isolation est prouvée par
+`e2e/rls/get-my-tasks.test.ts`. Exception légitime : `getById` (accès par clé primaire).
+
+> ⚠️ **`task_dependencies` (mig. 132) se lit en direct, et c'est voulu.** Sa policy est
+> `(SELECT auth.uid()) = user_id`, pas un `EXISTS` sur `tasks` : le périmètre est porté par une
+> colonne dénormalisée (redérivée par trigger, jamais envoyée par le client), donc indexable dès
+> le premier jour. Déléguer à `tasks` aurait payé le `OR` ci-dessus **par arête** — l'erreur que
+> la mig. 117 a dû rattraper côté entreprise. Second motif, suffisant à lui seul : une tâche
+> personnelle peut être **partagée**, et déléguer à « les tâches que je vois » ferait entrer dans
+> le graphe des arêtes entre deux tâches d'un autre compte. Le graphe personnel est celui de son
+> propriétaire ; la version partagée du graphe, c'est le mode entreprise.
+
+### ⚡ Tables entreprise — même règle, même correctif (mig. 113)
+
+`team_tasks` et `team_projects` avaient exactement le même défaut : les policies les filtrent par
+`USING (can_access_team_project(...))`, un prédicat-fonction sur une colonne, qui **ne peut pas
+utiliser d'index** — donc `Seq Scan` de toute la table et une CTE récursive (`get_subtree`)
+évaluée **par ligne**. Mesuré en prod le 2026-08-14 : **≈ 60× le coût par ligne** du prédicat de
+`tasks`.
+
+```typescript
+supabase.from('team_tasks').select(...)                                // ❌ Seq Scan + CTE par ligne
+supabase.rpc('get_my_team_tasks',             { p_org: orgId })        // ✅ mig. 113
+supabase.rpc('get_my_team_projects',          { p_org: orgId })        // ✅ mig. 113
+supabase.rpc('get_my_team_task_dependencies', { p_org: orgId })        // ✅ mig. 117
+```
+
+- Le périmètre vient de `auth.uid()` seul : **`p_org` est un filtre, pas une portée.** Forger un
+  `p_org` étranger renvoie 0 ligne (les trois branches exigent l'appartenance de l'appelant).
+- Le gain tient en une phrase : `get_subtree()` est appelée **une fois par organisation** au lieu
+  d'une fois par ligne lue.
+- Les policies restent en place, inchangées (défense en profondeur). Le déploiement est donc
+  réversible sans downtime — mais la **mig. 113 doit être appliquée AVANT** de déployer le front,
+  sinon la RPC n'existe pas. **Appliquée en prod le 2026-08-24**, avant que `main` (qui appelle
+  déjà ces RPC) ne soit déployé sur Vercel.
+- Le chemin d'accès est verrouillé par test (`src/modules/team-projects/supabase.repository.test.ts`) :
+  un retour à `.from('team_tasks')` échoue en CI.
+
+> ⚠️ **Ne pas ajouter de nouvelle table entreprise sur le modèle prédicat-fonction.** Exprimer
+> l'appartenance en **jointure indexable** dans une RPC, en réutilisant `my_team_project_ids()`
+> plutôt qu'en déléguant à `team_tasks` : c'est la délégation qui a fait hériter
+> `team_task_dependencies` du coût qu'on venait d'éliminer (mig. 108, refermé par la mig. 117).
+> Détail et projections : [`SCALABILITY.md`](./SCALABILITY.md) §2.
+
+### ⚡ `events` : un ensemble calculé une fois, jamais une fonction par ligne (mig. 128)
+
+Troisième occurrence de la même classe, la première hors du mode entreprise. La policy de lecture
+d'`events` appelait `manages_user(user_id)`, donc une fonction **sur une colonne**, donc un appel
+par ligne examinée, chacun joignant deux fois `organization_members` puis évaluant `get_subtree`.
+
+```sql
+-- ❌ dépend de la ligne : rappelée pour chaque ligne, index inutilisable
+USING ((SELECT auth.uid()) = user_id OR (manages_user(user_id) AND NOT is_private))
+-- ✅ ne dépend PAS de la ligne : hissée en InitPlan, et devient condition d'index
+USING ((SELECT auth.uid()) = user_id
+       OR (NOT is_private AND user_id = ANY (public.my_managed_user_ids())))
+```
+
+Mesuré en prod le 2026-08-26, lecture de l'agenda d'un membre non géré : **17,19 ms → 0,61 ms**,
+et zéro ligne remontée du tas pour être rejetée ensuite (`Rows Removed by Filter: 128` → BitmapOr
+de deux Index Scan). Lire son propre agenda ne changeait rien et ne change rien : la branche
+« own » court-circuitait déjà le `OR`.
+
+- ❌ **Ne jamais faire dépendre un prédicat de policy d'un argument pris dans la ligne.** La règle
+  couvre `tasks` (085), `team_tasks` / `team_projects` (113), `team_task_dependencies` (117) et
+  maintenant `events` (128). Un helper sans argument, dont le périmètre vient de `auth.uid()`
+  seul, est évalué une fois par requête, exactement comme `(SELECT auth.uid())` depuis la 043.
+- 🔴 **Une policy réécrite « pour aller plus vite » se prouve AVANT d'être écrite.** Pour la 128 :
+  parité booléenne sur chaque couple (acteur, cible) de `organization_members`, puis égalité de
+  l'ensemble des `events.id` visibles pour **chaque** compte de `auth.users`. C'est une frontière
+  de sécurité, pas un plan d'exécution.
+- ⚠️ `manages_user` survit, redéfinie **en fonction** de `my_managed_user_ids()` : deux
+  définitions concurrentes de « qui je gère » finiraient par diverger.
+- Garde : `scripts/migration-guards.test.mjs`, vue rouge sur la régression avant d'être committée.
+
+
+---
+
+## Budget de bundle · repris de `CLAUDE.md` (déplacé le 2026-09-16)
+
+> Commentaires de la section `## Scripts` de `CLAUDE.md`, où ils étaient chargés à chaque
+> session. Déplacés ici **sans une coupe**. La racine ne garde que la commande.
+
+```bash
+npm run check:bundle        # Budget de bundle sur le build reel (CI, apres npm run build)
+                            # Plafonds EN VIGUEUR DANS LE DEPOT depuis le 2026-09-14
+                            # (commit `7134d7fe`, run CI `34846164939` vert) :
+                            # chemin critique < 323 000 o gzip (mesure 306,6 ko,
+                            # marge 5,1 %), entree < 71 000 o (mesure 66,9 ko,
+                            # marge 5,8 %). Les deux ont ETE ABAISSES, la mesure
+                            # ayant baisse de 10,1 ko des deux cotes (sonner sort
+                            # du chemin critique, cf. § Toasts).
+                            # 🔴 CES DEUX CHIFFRES ONT VECU TROIS JOURS DANS UN
+                            # ARBRE NON COMMITE. Ce fichier les annoncait comme
+                            # en vigueur pendant que `main` portait encore
+                            # 78 000 / 370 000, et une branche a ete arbitree
+                            # contre un plafond qui n'existait nulle part
+                            # (cf. C-58). Un plafond se relit dans le fichier
+                            # COMMITE, jamais dans celui qu'on vient d'editer.
+                            # ⚠️ Ils sont poses a ~5 % au-dessus du mesure, pas
+                            # a ~1,5 % comme les precedents : le critere de sortie
+                            # de C-14 exige 5 % de marge sur les DEUX budgets, et
+                            # un cliquet a 1,5 % rouvrirait l'item le jour meme.
+                            # ❌ Ne jamais remonter un plafond.
+                            # 🔴 EXIGE `VITE_SENTRY_DSN` AU BUILD. Sans elle, Vite remplace la
+                            # variable A LA COMPILATION, la branche `if (sentryDsn)` de main.tsx
+                            # devient du code mort, et Rollup jette presque tout @sentry/react :
+                            # vendor-sentry passe de 49,3 a 3,8 ko gzip. La garde sous-estimait
+                            # alors le chemin critique de ~45 ko, et annoncait 57,8 ko de marge
+                            # la ou il en restait 11,9. Elle REFUSE desormais de valider un build
+                            # dont vendor-sentry pese moins de 20 ko (`SENTRY_FLOOR`).
+                            # ⚠️ Un job qui PESE un artefact et un job qui l'EXECUTE n'ont pas
+                            # les memes besoins : un faux DSN suffit a peser, mais il fait
+                            # s'initialiser Sentry pour de bon, qui emet vers un hote inexistant
+                            # et fait tomber `best-practices` de 100 a 96 dans lighthouse.
+```
+
+---
+
+## Shader du hero ENTREPRISE (C-68) — une file GPU qui sature bloque le fil principal
+
+> Descendu de [`src/pages/landing/CLAUDE.md`](../src/pages/landing/CLAUDE.md) le 2026-09-22,
+> **sans une coupe** : le fichier de dossier avait depasse son plafond, et ce recit est
+> une mesure de performance avant d'etre une regle de landing.
+
+🔴 **Le shader du hero ENTREPRISE se règle tout seul, et il ne doit jamais redevenir fixe**
+  (finding C-68, corrigé le 2026-09-05). `LightRays` peint le viewport entier dans un fragment
+  shader à chaque frame, indéfiniment. Quand la machine ne tient pas la frame, les commandes
+  s'empilent, le tampon se remplit, et **le fil principal BLOQUE** dans
+  `CommandBufferProxyImpl::WaitForGetOffset` en attendant qu'il se vide. Mesuré sur le build de
+  prod, rastérisation logicielle : **3 637 ms bloquées sur 4 000 au repos**, dont ~2 800 de pure
+  attente. **Aucun de nos JavaScript ne tournait** — c'est pour ça que couper les flous, les 23
+  `ScrollTrigger` et les 8 tweens infinis ne déplaçait pas la mesure d'un point, et pourquoi la
+  cause a mis quatre jours à être nommée. Le composant mesure désormais la cadence qu'il obtient et
+  le temps qu'il passe **dans** `render`, et descend d'un palier tant que ça ne tient pas :
+  demi-résolution (le **départ**) → un huitième des pixels → 20 img/s → **gel**, la dernière frame
+  restant affichée. **Les rayons restent visibles dans tous les cas** ; c'est le mouvement qui se
+  retire, jamais l'image.
+❌ **Ne jamais remplacer ça par une détection de rastériseur logiciel** (`SwiftShader`,
+  `llvmpipe`) : ça verdit la sonde sans rien rendre à un téléphone d'entrée de gamme, qui a bien un
+  GPU et n'en sature pas moins.
+❌ **Ne jamais faire repartir l'échelle de la pleine résolution.** Descendre depuis le haut coûte
+  la descente : mesuré, un résidu **stable** de 315 à 393 ms sur six passes, là où la même page
+  sans canvas rendait 0 sur six. Ces frames-là tombent dans les premières secondes, le seul moment
+  où quelqu'un regarde.
+⚠️ **Une file qui sature n'a pas un coût progressif, elle a deux états.** C'est ce qui rendait la
+  mesure BIMODALE, et aucune moyenne ne pouvait l'expliquer. Toute mesure de cette page se lit
+  passe par passe, jamais en médiane.
+- 🔴 **Le hero perso est CENTRÉ depuis le 2026-09-22** (DA de référence : Mobbin). Plus de
+  colonne de droite : une **tuile produit** (`HeroAppIcon`, 96 px, deux feuilles empilées
+  derrière) tourne sur les quatre modules au-dessus du H1, et les **quatre puces**
+  (`HeroModuleDock`) flottent dans les marges de part et d'autre du titre, chacune reliée au
+  centre par un filet d'encre (`.hero-link`). Les quatre modules sont décrits **une seule fois**,
+  dans `hero-modules.ts` : la tuile et les puces doivent toujours dire la même chose.
+⚠️ **`AppWindowShowcase` n'est plus dans le hero** — 540 px au-dessus du titre repoussaient la
+  promesse sous la ligne de flottaison. Les quatre vitrines qu'elle faisait tourner sont montrées
+  en grand, une par une, dès `FeaturesSection`.
+⚠️ **Deux dispositions, UN seul jeu de puces**, basculé par des classes `xl:`. Rendre deux jeux
+  et en masquer un coûterait soit un doublon annoncé aux lecteurs d'écran, soit un `aria-hidden`
+  sur la seule liste libellée, donc la disparition de `hero.modulesLabel` sur grand écran.
+🔴 **`LandingSkeleton` (dans `App.tsx`) DOIT décalquer ce hero**, pas seulement en occuper la
+  place. Il a décrit la mise en page à deux colonnes pendant que le hero était déjà centré : un
+  squelette qui annonce autre chose fabrique le saut de mise en page qu'il est censé éviter.
+- 🔴 **Les tailles du H1 perso sont ARBITRAIRES (`text-[4.25rem]`), jamais nommées.** Les classes
+  nommées de Tailwind (`text-6xl`, `text-7xl`…) posent **aussi** un `line-height`, et leurs
+  variantes responsives sont émises **après** `leading-[…]` dans la feuille : à poids égal, la
+  dernière gagne. Écrit `lg:text-6xl`, le titre rendait `line-height: 1` à partir de 1024 px —
+  mesuré à 68 px pour 68 px de corps, là où `leading-[0.98]` en demande 66,6. Aucune erreur,
+  aucun avertissement : la classe existe bien dans la feuille, elle est simplement recouverte.
+⚠️ Même piège sur le sous-titre (`sm:text-lg`), corrigé en même temps.
+- ⚠️ **Les alphas des aurores ont été divisés par deux une SECONDE fois** avec le hero centré, et
+  pour une raison distincte de la première : le titre porte lui-même un dégradé bleu → fuchsia et
+  s'affiche devant ces nappes. Un fond teinté dans les couleurs du texte qu'il porte enlève au
+  texte ce qu'il donne au fond — le coin haut-droit virait au rose franc. Si le fond commence à
+  se voir, c'est qu'il est déjà trop fort.

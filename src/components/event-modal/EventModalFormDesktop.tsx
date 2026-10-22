@@ -2,7 +2,7 @@
 // EventModalFormDesktop — corps desktop de EventModal
 // ═══════════════════════════════════════════════════════════════════
 // Extrait verbatim de EventModalForm (branche desktop), piloté par props.
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { X, Clock, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
@@ -10,8 +10,8 @@ import { getDateLocale } from '@/i18n/format';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import AddCategoryButton from '@/components/AddCategoryButton';
 import DescriptionField from '@/components/DescriptionField';
+import EventModalDesktopCategoryPicker from './EventModalDesktopCategoryPicker';
 import type { EventRecurrence } from '@/modules/events';
 import { DAY_LABEL_KEYS, formatEventDuration } from './helpers';
 import type { EventModalFormBodyProps } from './event-modal-form.types';
@@ -34,8 +34,6 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
   const durationText = duration === null
     ? null
     : duration.kind === 'invalid' ? t('endBeforeStart') : duration.text;
-  // Légende des catégories masquée par défaut (épure l'UI) — révélée à la demande.
-  const [showCategoryLegend, setShowCategoryLegend] = useState(false);
 
   return (
     <>
@@ -406,113 +404,13 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
             )}
           </div>
 
-          <div className="md:col-span-5 space-y-3">
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label
-                  className="block text-xs font-semibold uppercase tracking-wider"
-                  style={{ color: "rgb(var(--color-text-secondary))" }}
-                >
-                  {t('color')}
-                </label>
-                {/* Pattern unifié (audit UI §5) — remplace l'icône Plus nue
-                    non focusable qui vivait dans le <label>. */}
-                <AddCategoryButton onClick={() => setIsColorSettingsOpen(true)} />
-              </div>
-
-              <div className="grid grid-cols-4 gap-1.5 mb-6 pb-1 pr-1">
-                {categories.map((cat) => (
-                  <div key={cat.id} className="relative group" style={{ zIndex: 'auto' }}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleFieldChange("color", setColor, cat.color)
-                      }
-                      className="relative w-full h-10 rounded-lg border-2 transition-all hover:scale-105 shrink-0"
-                      style={{
-                        backgroundColor: cat.color,
-                        borderColor:
-                          color === cat.color
-                            ? "rgb(var(--color-text-primary))"
-                            : "rgb(var(--color-border))",
-                        boxShadow:
-                          color === cat.color
-                            ? "0 4px 10px rgba(0,0,0,0.15)"
-                            : "none",
-                      }}
-                      title={cat.name}
-                    >
-                      {color === cat.color && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div
-                            className="w-3.5 h-3.5 rounded-full"
-                            style={{
-                              backgroundColor: "rgb(var(--color-surface))",
-                              boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                            }}
-                          />
-                        </div>
-                      )}
-                    </button>
-                    <span
-                      className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none"
-                      style={{ color: "rgb(var(--color-text-muted))", zIndex: 9999 }}
-                    >
-                      {cat.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {categories.length > 0 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setShowCategoryLegend((v) => !v)}
-                    className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded px-1 -mx-1"
-                  >
-                    {showCategoryLegend ? t('hideLegend') : t('showLegend')}
-                  </button>
-                  {showCategoryLegend && (
-                    <div
-                      className="mt-2 p-2.5 rounded-xl border transition-colors overflow-hidden"
-                      style={{
-                        borderColor: "rgb(var(--color-border))",
-                        backgroundColor: "rgb(var(--color-surface))",
-                      }}
-                    >
-                      <h4
-                        className="text-[12px] font-bold uppercase tracking-widest mb-2"
-                        style={{ color: "rgb(var(--color-text-muted))" }}
-                      >
-                        {t('legend')}
-                      </h4>
-                      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 max-h-[100px] overflow-y-auto pr-1 custom-scrollbar">
-                        {categories.map((cat) => (
-                          <div key={cat.id} className="flex items-center gap-1.5 min-w-0">
-                            <div
-                              className="w-2 h-2 rounded-full shadow-sm shrink-0"
-                              style={{ backgroundColor: cat.color }}
-                            />
-                            <span
-                              className="text-[13px] font-medium truncate"
-                              style={{ color: "rgb(var(--color-text-primary))" }}
-                            >
-                              {cat.name}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Section "Aperçu" retirée — l'UI est suffisamment claire
-                sans : titre + couleur déjà visibles, durée affichée
-                ailleurs si besoin. */}
-          </div>
+          <EventModalDesktopCategoryPicker
+            categories={categories}
+            color={color}
+            setColor={setColor}
+            handleFieldChange={handleFieldChange}
+            setIsColorSettingsOpen={setIsColorSettingsOpen}
+          />
         </div>
 
         {/* Actions — footer fixe en bas à droite de la popup, indépendant de

@@ -18,8 +18,10 @@ import {
   TeamTask,
   TeamTaskComment,
   TeamSubtask,
-  TeamLabel,
   TeamTaskActivity,
+  TeamProjectStatus,
+  TeamProjectHealth,
+  TeamProjectTemplatePayload,
 } from './types';
 
 export interface ProjectRow {
@@ -32,6 +34,18 @@ export interface ProjectRow {
   created_at: string;
   team_id: string | null;
   category_id: string | null;
+  // Mig. 153 — optionnelles : une ligne lue avant son application ne les a pas.
+  description?: string | null;
+  owner_id?: string | null;
+  status?: string | null;
+  start_date?: string | null;
+  due_date?: string | null;
+  is_template?: boolean | null;
+  template_payload?: TeamProjectTemplatePayload | null;
+  health?: string | null;
+  health_note?: string | null;
+  health_updated_at?: string | null;
+  health_updated_by?: string | null;
 }
 
 export interface TaskRow {
@@ -51,6 +65,11 @@ export interface TaskRow {
   created_at: string;
   updated_at: string;
   category_id: string | null;
+  start_date?: string | null;
+  /** Mig. 197 : absente tant qu'elle n'est pas appliquée. */
+  custom_status_id?: string | null;
+  /** Mig. 204 : absente tant qu'elle n'est pas appliquée. */
+  health?: string | null;
 }
 
 export const mapProject = (r: ProjectRow): TeamProject => ({
@@ -63,6 +82,17 @@ export const mapProject = (r: ProjectRow): TeamProject => ({
   createdAt: r.created_at,
   teamId: r.team_id,
   categoryId: r.category_id,
+  description: r.description ?? null,
+  ownerId: r.owner_id ?? null,
+  status: (r.status as TeamProjectStatus | null | undefined) ?? 'active',
+  startDate: r.start_date ?? null,
+  dueDate: r.due_date ?? null,
+  isTemplate: r.is_template ?? false,
+  templatePayload: r.template_payload ?? null,
+  health: (r.health as TeamProjectHealth | null | undefined) ?? null,
+  healthNote: r.health_note ?? null,
+  healthUpdatedAt: r.health_updated_at ?? null,
+  healthUpdatedBy: r.health_updated_by ?? null,
 });
 
 export interface CommentRow {
@@ -91,6 +121,7 @@ export const mapTask = (r: TaskRow): TeamTask => ({
   description: r.description ?? undefined,
   priority: r.priority,
   deadline: r.deadline ?? '',
+  startDate: r.start_date ?? '',
   estimatedTime: r.estimated_time ?? undefined,
   assigneeIds: r.assignee_ids ?? [],
   createdBy: r.created_by,
@@ -103,6 +134,8 @@ export const mapTask = (r: TaskRow): TeamTask => ({
   createdAt: r.created_at,
   updatedAt: r.updated_at,
   categoryId: r.category_id,
+  customStatusId: r.custom_status_id ?? null,
+  health: (r.health as TeamTask['health'] | null | undefined) ?? null,
 });
 
 
@@ -128,25 +161,7 @@ export const mapSubtask = (r: SubtaskRow): TeamSubtask => ({
   createdAt: r.created_at,
 });
 
-// ─── Labels & historique : lignes brutes ─────────────────────────────
-
-export interface LabelRow {
-  id: string;
-  org_id: string;
-  name: string;
-  color: string;
-  created_by: string | null;
-  created_at: string;
-}
-
-export const mapLabel = (r: LabelRow): TeamLabel => ({
-  id: r.id,
-  orgId: r.org_id,
-  name: r.name,
-  color: r.color,
-  createdBy: r.created_by,
-  createdAt: r.created_at,
-});
+// ─── Historique : lignes brutes ─────────────────────────────
 
 export interface ActivityRow {
   id: string;

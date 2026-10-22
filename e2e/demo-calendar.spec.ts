@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { test, expect, navTo } from './fixtures';
+import { test, expect, navTo, openOrgSection } from './fixtures';
 
 /**
  * ═══════════════════════════════════════════════════════════════════
@@ -107,8 +107,20 @@ async function assertBulkSnoozeFloor(page: Page): Promise<void> {
   await expect(page.getByRole('button', { name: /^aujourd'hui$/i }).first()).toBeVisible();
 }
 
-const orgTab = (page: Page, label: RegExp) =>
-  page.getByRole('button', { name: label }).filter({ visible: true }).first();
+/**
+ * Ouvre la fiche de la première tâche de l'onglet Tâches d'entreprise.
+ *
+ * ⚠️ Le tableau s'ouvre GROUPÉ « Par priorité » depuis la fusion
+ * tri/regroupement du 2026-09-27 : la première ligne est un en-tête de groupe,
+ * qui se replie au clic au lieu d'ouvrir une fiche. On vise la cellule du NOM
+ * d'une ligne de tâche (3e colonne ; l'en-tête de groupe n'en a qu'une).
+ */
+async function openFirstTeamTask(page: Page) {
+  await page.locator('tbody tr td:nth-child(3)').first().click({ timeout: 15_000 });
+  const dialog = page.getByRole('dialog', { name: /modifier la tâche/i });
+  await expect(dialog).toBeVisible({ timeout: 10_000 });
+  return dialog;
+}
 
 /** Menu d'actions de la première tâche : `…` desktop ou « Options » mobile. */
 async function openFirstRowMenu(page: Page): Promise<void> {
@@ -142,9 +154,9 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
 
     const taskDialog = page.getByRole('dialog', { name: /modifier la tâche/i });
     await expect(taskDialog).toBeVisible({ timeout: 10_000 });
-    // ⚠️ La section « Dépendances » est REPLIÉE à l'ouverture : sans ce clic,
-    // le bouton d'ajout n'existe pas dans le DOM.
-    await taskDialog.getByRole('button', { name: /^dépendances/i }).first().click();
+    // ⚠️ « Dépendances » est un ONGLET de la modale depuis b2d79318 (avant :
+    // une section repliée). Sans ce clic, le bouton d'ajout n'est pas rendu.
+    await taskDialog.getByRole('tab', { name: /^dépendances/i }).click();
     await taskDialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
 
     const picker = page.getByRole('dialog', { name: /ajouter une dépendance/i });
@@ -200,24 +212,21 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
 
   test('surface 5 — l’échéance d’une tâche d’ÉQUIPE', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
-    await orgTab(page, /^tâches/i).click();
-    await page.waitForURL(/tab=tasks/);
-    await page.locator('tbody tr').first().click({ timeout: 15_000 });
-
-    const dialog = page.getByRole('dialog').filter({ visible: true }).first();
-    await expect(dialog).toBeVisible({ timeout: 10_000 });
+    await openOrgSection(page, /^tâches/i);
+    await page.waitForURL(/\/entreprise\/tasks/);
+    const dialog = await openFirstTeamTask(page);
     await dialog.getByRole('button', { name: /échéance|sélectionner une date/i }).first().click();
     await expectCosmoCalendar(page, dialog);
   });
 
   test('surface 6 — l’échéance de la popup de dépendances d’ÉQUIPE', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
-    await orgTab(page, /^tâches/i).click();
-    await page.waitForURL(/tab=tasks/);
-    await page.locator('tbody tr').first().click({ timeout: 15_000 });
-
-    const taskDialog = page.getByRole('dialog').filter({ visible: true }).first();
-    await taskDialog.getByRole('button', { name: /^dépendances/i }).first().click();
+    await openOrgSection(page, /^tâches/i);
+    await page.waitForURL(/\/entreprise\/tasks/);
+    const taskDialog = await openFirstTeamTask(page);
+    // Les dépendances sont un ONGLET de la fiche depuis l'audit des popups du
+    // 2026-09-25 (f3a49583), plus un bouton de section repliable.
+    await taskDialog.getByRole('tab', { name: /^dépendances/i }).click();
     await taskDialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
 
     const picker = page.getByRole('dialog', { name: /ajouter une dépendance/i });

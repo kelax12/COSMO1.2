@@ -105,23 +105,23 @@ const WhySection: React.FC = () => {
   // le blur ne changeait rien visuellement mais coûtait un repaint GPU
   // plein écran à chaque frame de scroll.
   return (
-      <section ref={sectionRef} id="why" className="py-24 bg-black/20 relative overflow-hidden">
+      <section ref={sectionRef} id="why" className="py-24 bg-white relative overflow-hidden">
         {/* Ambient blobs */}
-        <div className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-[rgb(var(--color-accent-solid))]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -right-20 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-blue-500/[0.07] rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 -right-20 w-[500px] h-[500px] bg-violet-500/[0.07] rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center mb-16 max-w-3xl mx-auto">
-            <span className="why-kicker text-xs font-mono tracking-[0.3em] uppercase text-blue-400 mb-5 block">
+            <span className="why-kicker text-xs font-mono tracking-[0.3em] uppercase text-blue-600 mb-5 block">
               {t('why.heading')}
             </span>
             <h2 className="why-title text-4xl lg:text-6xl font-bold mb-6 leading-[1.05] tracking-tight">
-              <span className="text-white">{t('why.titleTop')}</span>
+              <span className="text-slate-900">{t('why.titleTop')}</span>
               <br />
-              <span className="text-slate-500">{t('why.titleBottom')}</span>
+              <span className="text-slate-400">{t('why.titleBottom')}</span>
             </h2>
-            <p className="text-lg text-slate-400 leading-relaxed">
+            <p className="text-lg text-slate-600 leading-relaxed">
               {t('why.subtitle')}
               vos objectifs et vos habitudes. Une seule boucle, plus de copier-coller mental.
             </p>
@@ -138,15 +138,15 @@ const WhySection: React.FC = () => {
             <motion.div
               whileHover={{ y: -3 }}
               className="bento-tile md:col-span-4 md:row-span-2 relative overflow-hidden p-8 lg:p-10 group"
-              style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(15, 23, 42, 0.10)', boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -24px rgba(15, 23, 42, 0.35)' }}
             >
-              <div className="absolute top-0 left-0 right-0 h-px bg-[rgb(var(--color-accent-solid))]/40 group-hover:h-[3px] transition-all duration-500" />
+              <div className="absolute top-0 left-0 right-0 h-px bg-blue-600/70 group-hover:h-[3px] transition-all duration-500" />
 
               {/* Mini agenda visual */}
               <div className="absolute bottom-0 right-0 w-[70%] h-[55%] opacity-90 pointer-events-none" style={{ maskImage: 'linear-gradient(to top left, black 40%, transparent 90%)' }}>
                 <div className="absolute inset-4 grid grid-cols-5 grid-rows-6 gap-[2px]">
                   {Array.from({ length: 30 }).map((_, i) => (
-                    <div key={i} className="border border-white/[0.04] rounded-[2px]" />
+                    <div key={i} className="border border-slate-900/[0.06] rounded-[2px]" />
                   ))}
                   {/* Existing event */}
                   <motion.div
@@ -184,11 +184,11 @@ const WhySection: React.FC = () => {
               </div>
 
               <div className="relative z-10 max-w-md">
-                <span className="text-[10px] font-mono tracking-[0.25em] text-blue-400 uppercase">{t('why.tag1')}</span>
-                <h3 className="text-3xl lg:text-4xl font-semibold text-white mt-4 mb-4 leading-[1.1] tracking-tight">
+                <span className="text-[10px] font-mono tracking-[0.25em] text-blue-600 uppercase">{t('why.tag1')}</span>
+                <h3 className="text-3xl lg:text-4xl font-semibold text-slate-900 mt-4 mb-4 leading-[1.1] tracking-tight">
                   Glissez. Bloquez.<br />Avancez.
                 </h3>
-                <p className="text-slate-400 leading-relaxed text-base">
+                <p className="text-slate-600 leading-relaxed text-base">
                   {t('why.desc1')}
                   Plus de double saisie, plus de blocs orphelins. Votre planification devient une vraie
                   intention de temps.
@@ -200,14 +200,14 @@ const WhySection: React.FC = () => {
             <motion.div
               whileHover={{ y: -3 }}
               className="bento-tile md:col-span-2 relative overflow-hidden p-7 group"
-              style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(15, 23, 42, 0.10)', boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -24px rgba(15, 23, 42, 0.35)' }}
             >
-              <div className="absolute top-0 left-0 right-0 h-px bg-amber-400/40 group-hover:h-[3px] transition-all duration-500" />
-              <span className="text-[10px] font-mono tracking-[0.25em] text-amber-400 uppercase">{t('why.tag2')}</span>
-              <h3 className="text-xl font-semibold text-white mt-3 mb-3 leading-tight tracking-tight">
+              <div className="absolute top-0 left-0 right-0 h-px bg-amber-500/70 group-hover:h-[3px] transition-all duration-500" />
+              <span className="text-[10px] font-mono tracking-[0.25em] text-amber-600 uppercase">{t('why.tag2')}</span>
+              <h3 className="text-xl font-semibold text-slate-900 mt-3 mb-3 leading-tight tracking-tight">
                 {t('why.habitsLine1')}<br />{t('why.habitsLine2')}
               </h3>
-              <p className="text-sm text-slate-400 leading-relaxed mb-5">
+              <p className="text-sm text-slate-600 leading-relaxed mb-5">
                 {t('why.desc2')}
               </p>
               {/* Mini heatmap */}
@@ -225,7 +225,7 @@ const WhySection: React.FC = () => {
                           style={{
                             backgroundColor: intensity > 0
                               ? `rgba(245, 158, 11, ${intensity})`
-                              : 'rgba(255,255,255,0.05)',
+                              : 'rgba(15,23,42,0.06)',
                           }}
                         />
                       );
@@ -239,21 +239,21 @@ const WhySection: React.FC = () => {
             <motion.div
               whileHover={{ y: -3 }}
               className="bento-tile md:col-span-2 relative overflow-hidden p-7 group"
-              style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(15, 23, 42, 0.10)', boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -24px rgba(15, 23, 42, 0.35)' }}
             >
-              <div className="absolute top-0 left-0 right-0 h-px bg-emerald-400/40 group-hover:h-[3px] transition-all duration-500" />
-              <span className="text-[10px] font-mono tracking-[0.25em] text-emerald-400 uppercase">{t('why.tag3')}</span>
-              <h3 className="text-xl font-semibold text-white mt-3 mb-3 leading-tight tracking-tight">
+              <div className="absolute top-0 left-0 right-0 h-px bg-emerald-600/70 group-hover:h-[3px] transition-all duration-500" />
+              <span className="text-[10px] font-mono tracking-[0.25em] text-emerald-700 uppercase">{t('why.tag3')}</span>
+              <h3 className="text-xl font-semibold text-slate-900 mt-3 mb-3 leading-tight tracking-tight">
                 {t('why.title3')}<br />{t('why.title3b')}
               </h3>
-              <p className="text-sm text-slate-400 leading-relaxed mb-5">
+              <p className="text-sm text-slate-600 leading-relaxed mb-5">
                 {t('why.desc3')}
               </p>
               {/* Mini circular progress */}
               <div className="flex items-center gap-4">
                 <div className="relative w-16 h-16 shrink-0">
                   <svg className="transform -rotate-90" width="64" height="64" viewBox="0 0 64 64">
-                    <circle cx="32" cy="32" r="26" stroke="rgba(255,255,255,0.06)" strokeWidth="6" fill="none" />
+                    <circle cx="32" cy="32" r="26" stroke="rgba(15,23,42,0.08)" strokeWidth="6" fill="none" />
                     <motion.circle
                       cx="32" cy="32" r="26"
                       stroke="#34D399" strokeWidth="6" fill="none" strokeLinecap="round"
@@ -264,12 +264,12 @@ const WhySection: React.FC = () => {
                       transition={{ duration: 1.4, ease: 'easeOut', delay: 0.4 }}
                     />
                   </svg>
-                  <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">68%</div>
+                  <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-slate-900">68%</div>
                 </div>
                 <div className="space-y-1.5 flex-1 min-w-0">
-                  <div className="flex items-center gap-2 text-[11px] text-slate-300"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /><span className="truncate">3 200 / 10 000 users</span></div>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-300"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /><span className="truncate">NPS 38 → 50</span></div>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-300"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /><span className="truncate">{t('why.retention')}</span></div>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-600"><span className="w-1.5 h-1.5 rounded-full bg-emerald-600" /><span className="truncate">3 200 / 10 000 users</span></div>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-600"><span className="w-1.5 h-1.5 rounded-full bg-emerald-600" /><span className="truncate">NPS 38 → 50</span></div>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-600"><span className="w-1.5 h-1.5 rounded-full bg-emerald-600" /><span className="truncate">{t('why.retention')}</span></div>
                 </div>
               </div>
             </motion.div>
@@ -278,14 +278,14 @@ const WhySection: React.FC = () => {
             <motion.div
               whileHover={{ y: -3 }}
               className="bento-tile md:col-span-3 relative overflow-hidden p-8 group"
-              style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(15, 23, 42, 0.10)', boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -24px rgba(15, 23, 42, 0.35)' }}
             >
-              <div className="absolute top-0 left-0 right-0 h-px bg-violet-400/40 group-hover:h-[3px] transition-all duration-500" />
-              <span className="text-[10px] font-mono tracking-[0.25em] text-violet-400 uppercase">{t('why.tag4')}</span>
-              <h3 className="text-2xl lg:text-3xl font-semibold text-white mt-3 mb-3 leading-tight tracking-tight">
+              <div className="absolute top-0 left-0 right-0 h-px bg-violet-600/70 group-hover:h-[3px] transition-all duration-500" />
+              <span className="text-[10px] font-mono tracking-[0.25em] text-violet-600 uppercase">{t('why.tag4')}</span>
+              <h3 className="text-2xl lg:text-3xl font-semibold text-slate-900 mt-3 mb-3 leading-tight tracking-tight">
                 {t('why.title4')}
               </h3>
-              <p className="text-sm text-slate-400 leading-relaxed mb-6 max-w-md">
+              <p className="text-sm text-slate-600 leading-relaxed mb-6 max-w-md">
                 {t('why.desc4Intro')}{' '}{t('why.desc4')}
               </p>
               {/* Mini bar chart */}
@@ -317,19 +317,19 @@ const WhySection: React.FC = () => {
             <motion.div
               whileHover={{ y: -3 }}
               className="bento-tile md:col-span-3 relative overflow-hidden p-8 group"
-              style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(15, 23, 42, 0.10)', boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -24px rgba(15, 23, 42, 0.35)' }}
             >
-              <div className="absolute top-0 left-0 right-0 h-px bg-cyan-400/40 group-hover:h-[3px] transition-all duration-500" />
-              <span className="text-[10px] font-mono tracking-[0.25em] text-cyan-400 uppercase">{t('why.tag5')}</span>
-              <h3 className="text-2xl lg:text-3xl font-semibold text-white mt-3 mb-3 leading-tight tracking-tight">
+              <div className="absolute top-0 left-0 right-0 h-px bg-cyan-600/70 group-hover:h-[3px] transition-all duration-500" />
+              <span className="text-[10px] font-mono tracking-[0.25em] text-cyan-700 uppercase">{t('why.tag5')}</span>
+              <h3 className="text-2xl lg:text-3xl font-semibold text-slate-900 mt-3 mb-3 leading-tight tracking-tight">
                 {t('why.title5')}<br />{t('why.title5b')}
               </h3>
-              <p className="text-sm text-slate-400 leading-relaxed mb-5 max-w-md">
+              <p className="text-sm text-slate-600 leading-relaxed mb-5 max-w-md">
                 {t('why.desc5')}
               </p>
               <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono" style={{ backgroundColor: 'rgba(34, 211, 238, 0.08)', color: '#67E8F9', border: '1px solid rgba(34, 211, 238, 0.2)' }}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono" style={{ backgroundColor: 'rgba(8, 145, 178, 0.08)', color: '#0E7490', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 animate-pulse" />
                   {t('why.demoVolume')}
                 </div>
               </div>

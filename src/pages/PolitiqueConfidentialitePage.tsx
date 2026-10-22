@@ -2,6 +2,7 @@ import React from 'react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { useT } from '@/i18n/useT';
 import LegalDocument, { type LegalSection } from './legal/LegalDocument';
+import type { KeyOf } from '@/i18n/catalog';
 
 /**
  * Politique de confidentialité.
@@ -15,7 +16,7 @@ import LegalDocument, { type LegalSection } from './legal/LegalDocument';
  * modifier ce texte transforme une politique en fausse déclaration. Le registre
  * de l'article 30 (`docs/RGPD-REGISTRE.md`) est l'autre moitié de la paire.
  */
-const SECTIONS: LegalSection[] = [
+const SECTIONS: LegalSection<KeyOf<'legalPrivacy'>>[] = [
   { title: 'privacy.s1.title', blocks: [{ kind: 'p', key: 'privacy.s1.p1' }] },
   {
     title: 'privacy.s2.title',
@@ -25,12 +26,15 @@ const SECTIONS: LegalSection[] = [
         kind: 'ul',
         items: [
           'privacy.s2.li1', 'privacy.s2.li2', 'privacy.s2.li3',
-          'privacy.s2.li4', 'privacy.s2.li5',
+          'privacy.s2.li4', 'privacy.s2.li5', 'privacy.s2.li6', 'privacy.s2.li7',
+          'privacy.s2.li8',
         ],
       },
       { kind: 'p', key: 'privacy.s2.p1' },
       { kind: 'p', key: 'privacy.s2.p2' },
       { kind: 'p', key: 'privacy.s2.p3' },
+      { kind: 'p', key: 'privacy.s2.p4' },
+      { kind: 'p', key: 'privacy.s2.p5' },
       { kind: 'note', key: 'privacy.s2.note' },
     ],
   },
@@ -49,7 +53,7 @@ const SECTIONS: LegalSection[] = [
         kind: 'ul',
         items: [
           'privacy.s4.li1', 'privacy.s4.li2', 'privacy.s4.li3',
-          'privacy.s4.li4', 'privacy.s4.li5',
+          'privacy.s4.li4', 'privacy.s4.li5', 'privacy.s4.li6', 'privacy.s4.li7',
         ],
       },
     ],
@@ -59,6 +63,7 @@ const SECTIONS: LegalSection[] = [
     blocks: [
       { kind: 'p', key: 'privacy.s5.intro' },
       { kind: 'ul', items: ['privacy.s5.li1', 'privacy.s5.li2', 'privacy.s5.li3'] },
+      { kind: 'note', key: 'privacy.s5.note' },
     ],
   },
   {
@@ -69,6 +74,7 @@ const SECTIONS: LegalSection[] = [
         items: [
           'privacy.s6.li1', 'privacy.s6.li2', 'privacy.s6.li3',
           'privacy.s6.li4', 'privacy.s6.li5', 'privacy.s6.li6',
+          'privacy.s6.li7', 'privacy.s6.li8', 'privacy.s6.li9',
         ],
       },
       { kind: 'note', key: 'privacy.s6.note' },
@@ -82,7 +88,8 @@ const SECTIONS: LegalSection[] = [
         kind: 'ul',
         items: [
           'privacy.s7.li1', 'privacy.s7.li2', 'privacy.s7.li3', 'privacy.s7.li4',
-          'privacy.s7.li5', 'privacy.s7.li6', 'privacy.s7.li7',
+          'privacy.s7.li5', 'privacy.s7.li6', 'privacy.s7.li8',
+          'privacy.s7.li9', 'privacy.s7.li10',
         ],
       },
       { kind: 'p', key: 'privacy.s7.outro' },
@@ -97,6 +104,20 @@ const SECTIONS: LegalSection[] = [
     ],
   },
   {
+    title: 'privacy.s7ter.title',
+    blocks: [
+      { kind: 'p', key: 'privacy.s7ter.p1' },
+      {
+        kind: 'ul',
+        items: [
+          'privacy.s7ter.li1', 'privacy.s7ter.li2', 'privacy.s7ter.li3',
+          'privacy.s7ter.li4', 'privacy.s7ter.li5',
+        ],
+      },
+      { kind: 'p', key: 'privacy.s7ter.p2' },
+    ],
+  },
+  {
     title: 'privacy.s8.title',
     blocks: [
       { kind: 'p', key: 'privacy.s8.intro' },
@@ -104,7 +125,7 @@ const SECTIONS: LegalSection[] = [
         kind: 'ul',
         items: [
           'privacy.s8.li1', 'privacy.s8.li2', 'privacy.s8.li3',
-          'privacy.s8.li4', 'privacy.s8.li5', 'privacy.s8.li6',
+          'privacy.s8.li4', 'privacy.s8.li5', 'privacy.s8.li6', 'privacy.s8.li7',
         ],
       },
       { kind: 'p', key: 'privacy.s8.p1' },
@@ -119,9 +140,17 @@ const SECTIONS: LegalSection[] = [
       { kind: 'p', key: 'privacy.s10.intro' },
       { kind: 'ul', items: ['privacy.s10.li1', 'privacy.s10.li2', 'privacy.s10.li3'] },
       { kind: 'p', key: 'privacy.s10.consentIntro' },
-      { kind: 'ul', items: ['privacy.s10.consentLi1'] },
+      {
+        kind: 'ul',
+        items: [
+          'privacy.s10.consentLi2',
+          'privacy.s10.consentLi3', 'privacy.s10.consentLi4',
+        ],
+      },
       { kind: 'note', key: 'privacy.s10.note1' },
       { kind: 'note', key: 'privacy.s10.note2' },
+      // Retirer son consentement aussi simplement que le donner (RGPD art. 7.3).
+      { kind: 'cookie-settings' },
     ],
   },
   { title: 'privacy.s11.title', blocks: [{ kind: 'p', key: 'privacy.s11.p1' }] },
@@ -129,7 +158,7 @@ const SECTIONS: LegalSection[] = [
 ];
 
 const PolitiqueConfidentialitePage: React.FC = () => {
-  const { t } = useT('legal');
+  const { t } = useT('legalPrivacy');
   useSeoMeta({
     title: t('privacy.seoTitle'),
     description: t('privacy.seoDescription'),
@@ -138,6 +167,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
 
   return (
     <LegalDocument
+      text={t}
       titleKey="privacy.title"
       updatedAtKey="privacy.updatedAt"
       sections={SECTIONS}

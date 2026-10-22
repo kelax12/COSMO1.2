@@ -1,0 +1,88 @@
+// @vitest-environment jsdom
+import { beforeEach, describe, it, expect } from 'vitest';
+import { LocalStorageTeamProjectsRepository } from './local.repository';
+import { wouldCycle } from './local.portfolio';
+
+// Le mode démo rejoue les gardes de la mig. 153 : sans elles, il laisserait
+// construire ce que la production refuse.
+describe('portefeuille en démo (mig. 153)', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('wouldCycle voit un cycle indirect', () => {
+    const deps = [{ projectId: 'b', dependsOnId: 'a' }, { projectId: 'c', dependsOnId: 'b' }];
+    expect(wouldCycle(deps, 'a', 'c')).toBe(true);
+    expect(wouldCycle(deps, 'c', 'a')).toBe(false);
+  });
+
+  it('refuse une dépendance qui ferme un cycle', async () => {
+    const repo = new LocalStorageTeamProjectsRepository();
+    // Seed : tproj-2 attend tproj-1.
+    await expect(repo.addProjectDependency('tproj-1', 'tproj-2', 'org-demo-1')).rejects.toBeTruthy();
+    await repo.addProjectDependency('tproj-3', 'tproj-2', 'org-demo-1');
+    expect(await repo.getProjectDependencies('org-demo-1')).toContainEqual({ projectId: 'tproj-3', dependsOnId: 'tproj-2' });
+  });
+
+  it('création atomique : un début après l’échéance ne crée RIEN', async () => {
+    const repo = new LocalStorageTeamProjectsRepository();
+    const before = (await repo.getProjects('org-demo-1')).length;
+    await expect(repo.createProjectWithTasks('org-demo-1', { name: 'X' }, [
+      { name: 'ok' }, { name: 'ko', startDate: '2026-10-10', deadline: '2026-10-01' },
+    ])).rejects.toBeTruthy();
+    expect((await repo.getProjects('org-demo-1')).length).toBe(before);
+  });
+
+  it('création atomique : projet et tâches ensemble', async () => {
+    const repo = new LocalStorageTeamProjectsRepository();
+    const id = await repo.createProjectWithTasks(
+      'org-demo-1',
+      { name: 'Nouveau', ownerId: 'demo-user', startDate: '2026-10-01', dueDate: '2026-10-31' },
+      [{ name: 'a', startDate: '2026-10-01', deadline: '2026-10-05' }, { name: 'b' }],
+    );
+    const tasks = await repo.getTasks('org-demo-1', { projectId: id });
+    expect(tasks.map((t) => t.name).sort()).toEqual(['a', 'b']);
+    expect(tasks.find((t) => t.name === 'a')?.startDate).toBe('2026-10-01');
+    const project = (await repo.getProjects('org-demo-1')).find((p) => p.id === id);
+    expect(project).toMatchObject({ ownerId: 'demo-user', dueDate: '2026-10-31' });
+  });
+
+  it('un modèle ne crée aucune tâche réelle', async () => {
+    const repo = new LocalStorageTeamProjectsRepository();
+    const id = await repo.createProjectWithTasks('org-demo-1', {
+      name: 'Modèle', isTemplate: true, templatePayload: { tasks: [{ name: 't', deadlineOffset: 1 }] },
+    });
+    expect(await repo.getTasks('org-demo-1', { projectId: id })).toHaveLength(0);
+    const tpl = (await repo.getProjects('org-demo-1')).find((p) => p.id === id);
+    expect(tpl?.isTemplate).toBe(true);
+    expect(tpl?.templatePayload?.tasks).toHaveLength(1);
+  });
+});
+
+// Mig. 164 en démo : équipes associées, purge d'un projet archivé.
+describe('audience et purge en démo (mig. 164)', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('associe et retire une équipe, sans doublon', async () => {
+    const repo = new LocalStorageTeamProjectsRepository();
+    await repo.addProjectTeam('org-demo-1', 'tproj-1', 'team-x');
+    await repo.addProjectTeam('org-demo-1', 'tproj-1', 'team-x');
+    expect(await repo.getProjectTeams('org-demo-1')).toEqual([{ projectId: 'tproj-1', teamId: 'team-x' }]);
+    await repo.removeProjectTeam('tproj-1', 'team-x');
+    expect(await repo.getProjectTeams('org-demo-1')).toEqual([]);
+  });
+
+  it('refuse une association hors de l’organisation du projet', async () => {
+    const repo = new LocalStorageTeamProjectsRepository();
+    await expect(repo.addProjectTeam('autre-org', 'tproj-1', 'team-x')).rejects.toBeTruthy();
+  });
+
+  it('refuse de purger un projet ACTIF, purge un archivé avec ses tâches', async () => {
+    const repo = new LocalStorageTeamProjectsRepository();
+    await expect(repo.purgeArchivedProject('tproj-1')).rejects.toBeTruthy();
+    const tasksBefore = (await repo.getTasks('org-demo-1')).filter((t) => t.projectId === 'tproj-1');
+    expect(tasksBefore.length).toBeGreaterThan(0);
+    await repo.updateProject('tproj-1', { archived: true });
+    await repo.purgeArchivedProject('tproj-1');
+    expect((await repo.getProjects('org-demo-1')).some((p) => p.id === 'tproj-1')).toBe(false);
+    expect((await repo.getTasks('org-demo-1')).some((t) => t.projectId === 'tproj-1')).toBe(false);
+  });
+});

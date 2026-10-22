@@ -4,6 +4,8 @@
 
 export type {
   TeamOKR,
+  TeamOKRAudience,
+  TrashedTeamOKR,
   TeamKeyResult,
   CreateTeamOKRInput,
   CreateTeamKRInput,
@@ -20,14 +22,33 @@ export { teamOkrKeys, TEAM_OKRS_STORAGE_KEY } from './constants';
 // se chargent à la demande via `@/lib/validation/lazy` (cf. son en-tête).
 
 export type { ITeamOKRsRepository } from './repository';
-export { LocalStorageTeamOKRsRepository } from './local.repository';
+// Dépôt de démo NON réexporté (2026-10-01) : le baril est importé par le shell,
+// la réexportation ramenait le dépôt dans le chunk d'ENTRÉE alors que la fabrique
+// le charge à la demande (`src/lib/demo-repositories.ts`).
 export { SupabaseTeamOKRsRepository } from './supabase.repository';
 
 export {
   useTeamOKRs,
+  useTeamOKRsAcrossOrgs,
   useCreateTeamOKR,
   useEditTeamOKR,
-  useReassignTeamOKRCategory,
   useDeleteTeamOKR,
+  useTeamOKRTrash,
+  useRestoreTeamOKR,
+  usePurgeTeamOKR,
   useUpdateTeamKR,
 } from './hooks';
+
+// Exécution (mig. 160) : projets reliés à un KR, points d'étape.
+export type {
+  KRProjectLink,
+  KRCheckin,
+  PostKRCheckinInput,
+  ProjectHealth,
+} from './execution.types';
+export {
+  useKRProjects,
+  useSetKRProjects,
+  useKRCheckins,
+  usePostKRCheckin,
+} from './execution.hooks';

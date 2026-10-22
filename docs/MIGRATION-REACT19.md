@@ -1,3 +1,15 @@
+<!-- note-audit: non-note -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — **NON NOTÉ** : c'est une ÉTUDE, écrite contre les versions du 2026-09-03. Elle ne se note pas, elle périme — et `npm run check:study` échoue si une majeure qu'elle cite a bougé (C-108).
+
 # Étude de faisabilité — React 19 + `react-router` 8
 
 **Écrite le 2026-09-03**, audit **A-6** de `a-faire-code.md` §10. C'est une ÉTUDE : rien n'a été
@@ -7,6 +19,44 @@ correctifs bornés livrés dans la foulée (cf. `a-faire-code.md` C-58 → C-60)
 > ⚠️ **Le point le plus important de cette étude change la prémisse de `CLAUDE.md`/`faille.md`** :
 > la migration n'est **plus** forcée par un blocage sécurité. Elle redevient un chantier de
 > modernisation ordinaire, à planifier sans urgence. Détail au §1.
+
+---
+
+
+## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
+
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
+>
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
+>
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
+
+
+> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
+> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
+> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
+>
+> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
+> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
+> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
+> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
+> sans que rien ne vérifie**.
+>
+> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
+> **reconduit avec sa date**, jamais ne se recopie.
+
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+|---|---|---|---|
+| AM-1 | 🔴 **C'est une ÉTUDE, et une étude périme.** Écrite le 2026-09-03 contre les versions de ce jour-là. Les composants shadcn audités « ref par ref », le chiffrage et la chronologie CVE décrivent un instant. Rien ne signale qu'une version a bougé depuis | aucune garde ne relit `package.json` contre ce document | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:study` · échoue si une majeure citée ici bouge (`C-108`) — 🔴 ne prouve PAS : le coût de **ne pas** migrer, qui se compte en incidents. Relu le 2026-09-21 : **5 comparaisons sur 5**, l'étude décrit encore les versions installées |
+| AM-2 | **La chronologie CVE n'est surveillée par rien de ciblé.** Dependabot alerte sur une vulnérabilité déclarée, jamais sur « React 18 approche de sa fin de support », qui est l'argument central de cette étude | `npm audit --omit=dev` ne voit pas une fin de support | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:study` (`C-108`) — 🔴 ne prouve PAS : idem AM-1 |
+| AM-3 | **Le coût de NE PAS migrer n'est pas mesuré.** Le piège `Button`/`forwardRef` (les flèches qui ne déplaçaient pas le focus dans le calendrier) est venu d'une source shadcn écrite **pour React 19**. Rien ne compte ces incidents, donc l'étude n'a pas de contrepartie chiffrée | l'incident est documenté, jamais agrégé | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:study` (`C-108`) — 🔴 ne prouve PAS : idem AM-1 : l'étude est fraîche, la décision de migrer reste différée (seuil de reprise : 283,5 ko) |
 
 ---
 
@@ -170,6 +220,156 @@ pas un chantier — bump `package.json`, réinstalle, relance des tests.
 n'est alimentée par un paramètre lu depuis l'URL courante), pas une propriété de la bibliothèque.
 Rien dans la migration ne peut la faire régresser ; elle continuera de tourner à l'identique après
 comme avant.
+
+---
+
+## 4bis. 🔴 CE QUE CETTE ÉTUDE AVAIT MANQUÉ — mesuré en exécutant la migration (2026-09-12)
+
+L'étude ci-dessus a été écrite en **lisant** : le CHANGELOG de React 19, celui de `react-router` 8,
+et le code du dépôt au `grep`. Elle conclut « aucun pré-requis », « 0,5 à 1 jour », « fix mécanique
+de `useRef<T>()` ». La migration a ensuite été **jouée** sur la branche `feat/react-19`. Deux
+choses qu'aucune lecture n'avait vues, et la seconde bloque.
+
+### a. Une classe de rupture de TYPES que le §2 ne liste pas : `RefObject<T>`
+
+Sous les types React 19, `useRef<T>(null)` ne rend plus `RefObject<T>` mais **`RefObject<T | null>`**
+(`RefObject` y est devenu mutable, et la variante « read-only ref » a disparu). Toute PROP déclarée
+`React.RefObject<HTMLDivElement>` refuse donc le ref qu'on lui passe.
+
+**8 erreurs de compilation, 5 fichiers, 9 déclarations à élargir** :
+`OKRDeadlineReviewModal`, `reactbits/ScrollReveal`, `task-modal/TaskModalDesktopBody`,
+`hooks/use-bottom-sheet`, `hooks/use-modal-a11y` (×2), `pages/agenda/AgendaCalendarSection` (×2),
+`pages/agenda/AgendaDesktopHeader`.
+
+Le correctif est mécanique — `RefObject<T>` → `RefObject<T | null>` — et il est juste **sous React
+19**. Coût réel : quelques minutes. ⚠️ Mais le §2 affirmait « le seul site » à propos de
+`useRef<T>()` sans argument : c'était vrai de CE motif, et faux de la classe. Un `grep` sur un motif
+ne mesure pas une classe de rupture.
+
+> 🔴 **ET CES 9 CORRECTIONS NE SONT PAS PORTABLES SUR `main`.** Ce document a affirmé le contraire
+> (« elles ne dépendent pas de React 19 », « portées séparément pour réduire la dette de la
+> reprise ») — **mesuré le 2026-09-14, c'est faux** : les sept fichiers appliqués sur `main`, puis
+> `tsc -b`, rendent **72 erreurs** dans une soixantaine de fichiers. Sous les types **React 18**,
+> `RefObject<T | null>` n'est pas assignable à `LegacyRef<T>`, donc **chaque `ref={...}` qui
+> consomme un de ces refs élargis casse**. Le port a été tenté, mesuré, puis **défait** ; `main` est
+> propre (`tsc -b` sans erreur).
+>
+> ⚠️ **La leçon dépasse React 19** : « un correctif de types est mécanique, donc portable » est une
+> intuition, pas une mesure. Élargir un type de prop est une rupture de contrat dans le sens des
+> **consommateurs**, et ils étaient soixante. **Il n'y a donc aucun acompte à verser d'avance pour
+> alléger la reprise** : la migration se prend en bloc, ou pas.
+
+### b. 🔴 LE BLOCAGE : React 19 pèse **+23,3 ko gzip**, et il fait sauter le budget de bundle
+
+Mesuré sur le build de production, `npm run check:bundle` :
+
+| | React 18.3.1 | React 19.3.0 | Écart |
+|---|---|---|---|
+| `vendor-react` (gzip) | 72,1 ko | **95,4 ko** | **+23,3 ko (+32 %)** |
+| chemin critique | 306,3 ko | **329,8 ko** | plafond **323,0** → **dépassé de 6,8 ko** |
+| entrée | 66,9 ko | 67,0 ko | plafond 71,0 → tient |
+
+`check:bundle` rend **exit 1**. Le chunk a été ouvert pour écarter un artefact : aucune trace de
+`react-dom/server`, de `renderToString`, de `__DEV__` ni d'un build de développement. **Le surcoût
+est réel.**
+
+🔴 **Et il ne peut PAS se régler en remontant le plafond.** Ce plafond a été ABAISSÉ à 323,0 ko le
+2026-09-11 pour satisfaire le critère de sortie de C-14, qui exige 5 % de marge sur les deux
+budgets ; la marge était de 5,2 %. React 19 la consomme entièrement et déborde. Remonter le plafond
+rouvrirait C-14 le jour même, et c'est interdit par la règle 1 du dépôt.
+
+**Il faut donc trouver ~7 ko ailleurs sur le chemin critique, ou différer.** Les sept chunks :
+
+```
+95,4 vendor-react · 67,0 index · 56,3 vendor-supabase · 49,0 vendor-animation
+30,8 vendor-utils · 17,6 vendor-query · 13,7 vendor-router
+```
+
+Le seul candidat de taille est **`vendor-animation` (49,0 ko, framer-motion)**, tiré dans le chemin
+critique par un unique import statique : `MotionConfig` dans `src/App.tsx`.
+
+❌ **Et c'est précisément le levier à ne PAS tirer sans y réfléchir.** `MotionConfig
+reducedMotion="user"` est un fournisseur de CONTEXTE : le charger en différé ferait rendre les
+premiers écrans **sans** lui, donc sans respecter `prefers-reduced-motion` — exactement la classe de
+régression qui a déjà coûté deux fois à ce dépôt (feuilles mobiles à 0 px visible, cascades du
+dashboard figées 20 px trop bas). Et `CLAUDE.md` note déjà, à propos du `Toaster`, que suspendre sur
+la frontière qui enveloppe les routes **cacherait la page**.
+
+**Les trois issues, et aucune n'est technique** :
+
+1. **Différer la migration** jusqu'à ce que le chemin critique ait 7 ko de marge de plus par
+   ailleurs. C'est l'option par défaut : rien n'urge, la justification sécurité est tombée (§1).
+2. **Sortir framer-motion du chemin critique pour de vrai** — c'est-à-dire remplacer
+   `MotionConfig` par une lecture CSS/matchMedia de `prefers-reduced-motion`, sans contexte React.
+   Chantier à part entière, avec sa propre mesure au navigateur sous `reduce`.
+3. **Accepter de rouvrir C-14** en remontant le plafond. Décision d'Axel, pas une correction.
+
+⚠️ **Ce que l'échec du budget ne remet PAS en cause** : tout le reste de la migration est vert.
+`tsc -b` propre, `npm run lint` 0 erreur, **226 fichiers / 2 500 tests** au vert, `i18n:check`,
+`i18n:scan`, `i18n:identical`, `validate:migrations`, `check:rls`, `check:legal` vertes, le build
+lui-même réussit, et la suite **E2E** est verte : **104 passés, 3 ignorés, 0 échec** sur le project
+`chromium` (23,8 min). Le seul rouge du run est `e2e/_tmp-probe.spec.ts`, la sonde jetable **non
+suivie par git** que `CLAUDE.md` documente — elle n'appartient pas au dépôt. La branche `feat/react-19` porte ce travail, prêt à reprendre le jour où le
+budget le permet.
+
+### c. ARBITRAGE RENDU le 2026-09-13 : on DIFFÈRE (option 1)
+
+Décision d'Axel, en réponse à `a-faire-manuel.md` M-41. La branche `feat/react-19` reste poussée et
+non fusionnée. Rien n'est annulé, rien n'est fusionné.
+
+> ✅ **MISE À JOUR DU 2026-09-14 : le plafond de 323 000 o EST commité** (`7134d7fe`, run CI
+> `34846164939` vert sur les cinq jobs), avec la façade `toast` qui le finance. Le paragraphe qui
+> suit décrivait l'état du 09-13 et **ne décrit plus la réalité** : contre `main` tel qu'il est
+> commité aujourd'hui, React 19 à 329,8 ko **échouerait** à la garde, comme il le doit. Le blocage
+> n'est plus adossé à un cliquet fantôme — il est opposable, et **le seuil de reprise de 283,5 ko
+> reste la seule lecture valable**. Conservé ci-dessous à sa date.
+
+**Ce qui avait été REMESURÉ le 2026-09-13, et qui corrigeait la façon de lire le blocage.**
+Le plafond de 323 000 o n'existait alors dans **aucun commit** : `git log -S"323_000"` sur
+`scripts/check-bundle-budget.mjs` ne rend rien, et `git show HEAD:scripts/check-bundle-budget.mjs`
+porte encore `critical: 370_000` / `entry: 78_000`. L'abaissement du 2026-09-11, comme la sortie de
+`sonner` qui le finance, vit uniquement dans l'arbre de travail **non commité** d'une session
+voisine (86 fichiers modifiés au 2026-09-13).
+
+Conséquence à ne pas se cacher : contre `main` **tel qu'il est commité**, React 19 à 329,8 ko
+passerait la garde sans rien dire, le plafond commité étant 370 000. Le blocage est donc réel mais
+il s'appuie sur un cliquet qui n'est pas encore dans l'histoire du dépôt. C'est un argument de plus
+pour différer plutôt que pour fusionner : fusionner React 19 avant que le lot C-14 soit commité
+reviendrait à passer sous un plafond périmé.
+
+**Les deux seuils de reprise, calculés, parce qu'un seul ne suffit pas :**
+
+| Seuil | Chemin critique React 18 exigé | Coupe à trouver | Ce que ça obtient |
+|---|---|---|---|
+| `check:bundle` simplement VERTE | ≤ 299,7 ko (323 000 − 23 300) | **6,8 ko** | la garde passe, avec **0 %** de marge restante |
+| Critère de sortie de **C-14** préservé (5 %) | ≤ 283,5 ko (323 000 × 0,95 − 23 300) | **22,8 ko** | React 19 fusionné SANS rouvrir C-14 |
+
+Mesure de départ : 306,3 ko (2026-09-11). Le premier seuil est un piège : une garde qui passe à
+0,0 % de marge rouvre C-14 le jour même, exactement comme le ferait un plafond relevé. **Le seuil
+opposable est 283,5 ko.**
+
+Or le seul gisement de cette taille sur le chemin critique reste `vendor-animation` (49,0 ko).
+**L'option 2 n'est donc pas une alternative à l'option 1, c'est sa condition de reprise** : tant que
+`MotionConfig` n'est pas remplacé par une lecture CSS/`matchMedia` de `prefers-reduced-motion`, sans
+contexte React et avec sa mesure au navigateur **sous `reduce`**, il n'y a pas 22,8 ko à prendre
+ailleurs.
+
+**Ce que différer coûte, écrit pour que personne n'ait à le redécouvrir :**
+
+- `react-router` 8 (PR 2) reste bloqué derrière, peer `react >= 19.2.7`. Sans conséquence sécurité :
+  `react-router@7.18.2` est installé et ferme les deux CVE (§1).
+- La classe de bug « composant shadcn recopié depuis l'amont React 19, `ref` jamais attaché » reste
+  ouverte, et elle est **silencieuse par construction**. Elle a déjà coûté `Button` puis `Input`.
+  Tant que le dépôt est sous React 18, tout composant repris de l'amont se relit à la main.
+- La branche vieillit, et **rien ne peut être versé d'avance**. Elle porte 9 corrections de types
+  (§4bis.a) que ce document donnait comme portables sur `main` : **mesuré le 2026-09-14, elles ne le
+  sont pas** — appliquées sous React 18, `tsc -b` rend **72 erreurs**, `RefObject<T | null>` n'étant
+  pas assignable à `LegacyRef<T>`. Port tenté, défait, `main` propre. La reprise coûtera donc son
+  prix entier le jour venu, et le seul moyen de réduire la dette est de **rebaser régulièrement**,
+  pas d'extraire des morceaux.
+
+⚠️ **Ne pas relire ce § comme un abandon.** La migration est faite et verte sur onze gates ; ce qui
+est différé, c'est sa FUSION, et la condition est chiffrée ci-dessus.
 
 ---
 

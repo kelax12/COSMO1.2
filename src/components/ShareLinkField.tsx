@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link2, Copy, Check, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useShareLink, buildInviteUrl } from '@/modules/friends';

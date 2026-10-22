@@ -23,12 +23,26 @@ import {
   TeamTaskActivity,
   TeamTaskDependency,
   CreateTeamTaskCommentInput,
+  TeamTrashedTask,
+  DraftProjectTask,
+  TeamProjectDependency,
+  TeamProjectTeam,
+  TeamProjectMember,
+  TeamProjectRole,
+  TeamProjectTaskStats,
+  TeamMemberWorkload,
 } from './types';
+import * as portfolio from './local.portfolio';
+import * as activity from './local.activity';
+import { applyDemoTaskRules } from './local.task-rules';
+import * as subtasks from './local.subtasks';
+import * as access from './local.access';
 import {
   TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY, TEAM_TASK_COMMENTS_STORAGE_KEY,
-  TEAM_TASK_SUBTASKS_STORAGE_KEY,
   TEAM_TASK_ACTIVITY_STORAGE_KEY,
   TEAM_TASK_DEPENDENCIES_STORAGE_KEY,
+  TEAM_TASK_TRASH_STORAGE_KEY,
+  TEAM_TASK_TRASH_DAYS,
 } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
 import { DEPENDENCY_ERRORS, makeDependencyError } from '@/modules/tasks/dependency-errors';
@@ -41,7 +55,6 @@ import {
   DEMO_PROJECTS, DEMO_PROJECTS_EN,
   DEMO_TASKS, DEMO_TASKS_EN,
   DEMO_COMMENTS, DEMO_COMMENTS_EN,
-  DEMO_SUBTASKS, DEMO_SUBTASKS_EN,
   DEMO_ACTIVITY,
   DEMO_TASK_DEPENDENCIES,
 } from './demo-seed';
@@ -102,9 +115,97 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       createdAt: new Date().toISOString(),
       teamId: input.teamId ?? null,
       categoryId: input.categoryId ?? null,
+      description: input.description ?? null,
+      ownerId: input.ownerId ?? null,
+      status: input.status ?? 'active',
+      startDate: input.startDate || null,
+      dueDate: input.dueDate || null,
+      isTemplate: input.isTemplate ?? false,
+      templatePayload: input.isTemplate ? input.templatePayload ?? null : null,
     };
     this.saveProjects([...projects, project]);
     return project;
+  }
+
+  /**
+   * Même contrat que la RPC `create_team_project_with_tasks` : tout ou rien.
+   * Les projets ET les tâches sont relus, modifiés en mémoire, puis écrits
+   * seulement si chaque élément est valide.
+   */
+  async createProjectWithTasks(
+    orgId: string,
+    input: CreateTeamProjectInput,
+    drafts: DraftProjectTask[] = [],
+  ): Promise<string> {
+    for (const d of drafts) {
+      if (!d.name.trim()) throw makeApiError('invalid_input');
+      if (d.startDate && d.deadline && d.startDate > d.deadline) throw makeApiError('invalid_input');
+    }
+    if (input.startDate && input.dueDate && input.startDate > input.dueDate) throw makeApiError('invalid_input');
+    const project = await this.createProject(orgId, input);
+    const now = new Date().toISOString();
+    const created: TeamTask[] = drafts.map((d) => ({
+      id: crypto.randomUUID(),
+      orgId,
+      projectId: project.id,
+      name: d.name.trim(),
+      description: d.description,
+      priority: d.priority ?? 3,
+      deadline: d.deadline ?? '',
+      startDate: d.startDate ?? '',
+      estimatedTime: d.estimatedTime,
+      assigneeIds: d.assigneeIds ?? [],
+      createdBy: DEMO_USER_ID,
+      completed: false,
+      status: 'todo',
+      completedAt: null,
+      createdAt: now,
+      updatedAt: now,
+      categoryId: null,
+    }));
+    if (created.length > 0) this.saveTasks([...created, ...this.getTasksArray()]);
+    return project.id;
+  }
+
+  // ─── Dépendances entre projets (mig. 153) ─────────────────────────
+  async getProjectDependencies(orgId: string): Promise<TeamProjectDependency[]> {
+    return portfolio.getProjectDependencies(orgId, this.getProjectsArray());
+  }
+  async addProjectDependency(projectId: string, dependsOnId: string, _orgId: string): Promise<void> {
+    portfolio.addProjectDependency(projectId, dependsOnId, this.getProjectsArray());
+  }
+  async removeProjectDependency(projectId: string, dependsOnId: string): Promise<void> {
+    portfolio.removeProjectDependency(projectId, dependsOnId);
+  }
+
+  // Équipes associées et purge (mig. 164).
+  async getProjectTeams(orgId: string): Promise<TeamProjectTeam[]> { return portfolio.getProjectTeams(orgId); }
+  async addProjectTeam(orgId: string, projectId: string, teamId: string): Promise<void> {
+    portfolio.addProjectTeam(orgId, projectId, teamId, this.getProjectsArray());
+  }
+  async removeProjectTeam(projectId: string, teamId: string): Promise<void> { portfolio.removeProjectTeam(projectId, teamId); }
+  async purgeArchivedProject(projectId: string): Promise<void> {
+    const projects = this.getProjectsArray();
+    const project = projects.find((p) => p.id === projectId);
+    if (!project) throw makeApiError('not_found');
+    // Même refus que `purge_archived_team_project` : un projet actif ne se purge pas.
+    if (!project.archivedAt) throw makeApiError('invalid_input');
+    this.saveProjects(projects.filter((p) => p.id !== projectId));
+    this.saveTasks(this.getTasksArray().filter((t) => t.projectId !== projectId));
+    portfolio.purgeProjectPortfolio(projectId);
+  }
+
+  // ─── Membres de projet et chiffres (mig. 190, 191) ─────────────────
+  async getProjectMembers(orgId: string): Promise<TeamProjectMember[]> { return access.getProjectMembers(orgId); }
+  async setProjectMember(projectId: string, userId: string, role: TeamProjectRole): Promise<void> {
+    access.setProjectMember(projectId, userId, role, this.getProjectsArray());
+  }
+  async removeProjectMember(projectId: string, userId: string): Promise<void> { access.removeProjectMember(projectId, userId); }
+  async getProjectTaskStats(orgId: string, today: string): Promise<TeamProjectTaskStats[]> {
+    return access.computeProjectTaskStats(this.getTasksArray().filter((t) => t.orgId === orgId), today);
+  }
+  async getMemberWorkload(orgId: string, today: string): Promise<TeamMemberWorkload[]> {
+    return access.computeMemberWorkload(this.getTasksArray().filter((t) => t.orgId === orgId), today);
   }
 
   async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {
@@ -116,18 +217,60 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     if (input.teamId !== undefined) p.teamId = input.teamId;
     if (input.categoryId !== undefined) p.categoryId = input.categoryId;
     if (input.archived !== undefined) p.archivedAt = input.archived ? new Date().toISOString() : null;
+    if (input.description !== undefined) p.description = input.description || null;
+    if (input.ownerId !== undefined) p.ownerId = input.ownerId;
+    if (input.status !== undefined) p.status = input.status;
+    if (input.startDate !== undefined) p.startDate = input.startDate || null;
+    if (input.dueDate !== undefined) p.dueDate = input.dueDate || null;
+    // Santé (mig. 190) : horodatage et auteur posés comme par le trigger.
+    if (input.health !== undefined || input.healthNote !== undefined) {
+      const health = input.health !== undefined ? input.health : p.health ?? null;
+      const note = input.healthNote !== undefined ? input.healthNote || null : p.healthNote ?? null;
+      if (note && note.length > 1000) throw makeApiError('invalid_input');
+      if (health !== (p.health ?? null) || note !== (p.healthNote ?? null)) {
+        p.health = health;
+        p.healthNote = note;
+        p.healthUpdatedAt = new Date().toISOString();
+        p.healthUpdatedBy = DEMO_USER_ID;
+      }
+    }
+    // CHECK `team_projects_dates_order` (mig. 153), rejoué ici.
+    if (p.startDate && p.dueDate && p.startDate > p.dueDate) throw makeApiError('invalid_input');
     this.saveProjects(projects);
     return p;
   }
 
   async getTasks(orgId: string, filters?: TeamTaskFilters): Promise<TeamTask[]> {
-    return this.getTasksArray().filter((tk) => {
+    // Mêmes filtres, même tri et même plafond que le serveur : la démo doit
+    // montrer ce que la production montrerait, lectures ciblées comprises.
+    const ids = filters?.ids ? new Set(filters.ids) : null;
+    const matched = this.getTasksArray().filter((tk) => {
+      if (ids && !ids.has(tk.id)) return false;
+      if (filters?.createdBy && tk.createdBy !== filters.createdBy) return false;
+      if (filters?.status && tk.status !== filters.status) return false;
+      if (filters?.deadlineFrom && (!tk.deadline || tk.deadline < filters.deadlineFrom)) return false;
+      if (filters?.createdSince && tk.createdAt < filters.createdSince) return false;
+      if (filters?.search && !tk.name.toLowerCase().includes(filters.search.toLowerCase())) return false;
       if (tk.orgId !== orgId) return false;
       if (filters?.projectId && tk.projectId !== filters.projectId) return false;
       if (filters?.assigneeId && !tk.assigneeIds.includes(filters.assigneeId)) return false;
       if (filters?.completed !== undefined && tk.completed !== filters.completed) return false;
+      if (filters?.openOrCompletedSince && tk.completed) {
+        // Même règle que le serveur : une tâche terminée sans date de
+        // complétion ne passe pas `completed_at >= since` (NULL).
+        const done = tk.completedAt ? Date.parse(tk.completedAt) : NaN;
+        if (Number.isNaN(done) || done < Date.parse(filters.openOrCompletedSince)) return false;
+      }
       return true;
     });
+    // Sans tri ni plafond demandés, l'ordre historique de la démo est gardé.
+    if (!filters?.orderBy && !filters?.limit && !filters?.offset) return matched;
+    const sorted = filters.orderBy === 'deadline'
+      ? [...matched].sort((a, b) => (a.deadline ?? '').localeCompare(b.deadline ?? '') || a.id.localeCompare(b.id))
+      : [...matched].sort((a, b) => (a.createdAt === b.createdAt ? a.id.localeCompare(b.id) : a.createdAt > b.createdAt ? -1 : 1));
+    // Page (mig. 191) : même découpe que `range` côté serveur.
+    const offset = Math.max(0, Math.floor(filters.offset ?? 0));
+    return filters.limit ? sorted.slice(offset, offset + filters.limit) : sorted.slice(offset);
   }
 
   async createTask(orgId: string, input: CreateTeamTaskInput): Promise<TeamTask> {
@@ -141,6 +284,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       description: input.description,
       priority: input.priority ?? 3,
       deadline: input.deadline ?? '',
+      startDate: input.startDate ?? '',
       estimatedTime: input.estimatedTime,
       assigneeIds: input.assigneeIds ?? [],
       createdBy: DEMO_USER_ID,
@@ -151,18 +295,25 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       updatedAt: now,
       categoryId: input.categoryId ?? null,
     };
-    this.saveTasks([task, ...tasks]);
-    return task;
+    // Règles « à la création » (mig. 198), avant l'enregistrement comme en base.
+    const saved = applyDemoTaskRules(task, null);
+    this.saveTasks([saved, ...tasks]);
+    return saved;
   }
 
   async updateTask(taskId: string, input: UpdateTeamTaskInput): Promise<TeamTask> {
     const tasks = this.getTasksArray();
     const task = tasks.find((x) => x.id === taskId);
     if (!task) throw makeApiError('not_found');
+    const previousStatus = task.status;
+    const before = { ...task, assigneeIds: [...task.assigneeIds] };
     if (input.name !== undefined) task.name = input.name;
     if (input.description !== undefined) task.description = input.description;
     if (input.priority !== undefined) task.priority = input.priority;
     if (input.deadline !== undefined) task.deadline = input.deadline;
+    if (input.startDate !== undefined) task.startDate = input.startDate;
+    // CHECK `team_tasks_dates_order` (mig. 153), rejoué ici.
+    if (task.startDate && task.deadline && task.startDate > task.deadline) throw makeApiError('invalid_input');
     if (input.estimatedTime !== undefined) task.estimatedTime = input.estimatedTime;
     if (input.assigneeIds !== undefined) task.assigneeIds = input.assigneeIds;
     if (input.projectId !== undefined) task.projectId = input.projectId;
@@ -184,13 +335,88 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       task.status = input.completed ? 'done' : 'todo';
       task.completedAt = input.completed ? new Date().toISOString() : null;
     }
+    // Statut propre (mig. 197) puis règles (mig. 198), comme les triggers.
+    if (input.customStatusId !== undefined) task.customStatusId = input.customStatusId;
+    if (input.health !== undefined) task.health = input.health;
+    Object.assign(task, applyDemoTaskRules(task, before));
     task.updatedAt = new Date().toISOString();
     this.saveTasks(tasks);
+    // Miroir du trigger `log_team_task_activity` (mig. 094), pour le statut :
+    // la revue hebdomadaire et le fil de l'Aperçu lisent le journal, seul.
+    if (task.status !== previousStatus) {
+      const log = readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, DEMO_ACTIVITY);
+      log.push({
+        id: `act-${taskId}-${Date.now()}`,
+        taskId,
+        orgId: task.orgId,
+        actorId: DEMO_USER_ID,
+        field: 'status',
+        oldValue: previousStatus,
+        newValue: task.status,
+        createdAt: task.updatedAt,
+      });
+      safeSetItem(TEAM_TASK_ACTIVITY_STORAGE_KEY, JSON.stringify(log));
+    }
     return task;
   }
 
+  // ─── Corbeille (mig. 152) ──────────────────────────────────────────
+  //
+  // Miroir démo : la tâche SORT du tableau des tâches pour un tableau à part.
+  // Rien d'autre n'est touché (commentaires, sous-tâches, dépendances restent
+  // en place, rattachés à un id absent), donc tout revient à la restauration,
+  // et aucune lecture de tâches n'a à filtrer quoi que ce soit.
+
+  private getTrashArray(): (TeamTask & { deletedAt: string; deletedBy: string })[] {
+    try {
+      const parsed = JSON.parse(safeGetItem(TEAM_TASK_TRASH_STORAGE_KEY) ?? '[]');
+      if (!Array.isArray(parsed)) return [];
+      // Purge à la lecture : la démo n'a pas de pg_cron.
+      const cutoff = Date.now() - TEAM_TASK_TRASH_DAYS * 24 * 60 * 60 * 1000;
+      return parsed.filter((t) => Date.parse(t.deletedAt) > cutoff);
+    } catch {
+      return [];
+    }
+  }
+  private saveTrash(items: (TeamTask & { deletedAt: string; deletedBy: string })[]): void {
+    writeJsonOrThrow(TEAM_TASK_TRASH_STORAGE_KEY, items);
+  }
+
   async deleteTask(taskId: string): Promise<void> {
-    this.saveTasks(this.getTasksArray().filter((x) => x.id !== taskId));
+    const tasks = this.getTasksArray();
+    const task = tasks.find((x) => x.id === taskId);
+    if (!task) throw makeApiError('not_found');
+    this.saveTrash([
+      { ...task, deletedAt: new Date().toISOString(), deletedBy: DEMO_USER_ID },
+      ...this.getTrashArray(),
+    ]);
+    this.saveTasks(tasks.filter((x) => x.id !== taskId));
+  }
+
+  async restoreTask(taskId: string): Promise<void> {
+    const trash = this.getTrashArray();
+    const item = trash.find((x) => x.id === taskId);
+    if (!item) throw makeApiError('not_found');
+    const { deletedAt: _deletedAt, deletedBy: _deletedBy, ...task } = item;
+    this.saveTasks([...this.getTasksArray(), task]);
+    this.saveTrash(trash.filter((x) => x.id !== taskId));
+  }
+
+  async purgeTask(taskId: string): Promise<void> {
+    this.saveTrash(this.getTrashArray().filter((x) => x.id !== taskId));
+  }
+
+  async getTrash(orgId: string): Promise<TeamTrashedTask[]> {
+    return this.getTrashArray()
+      .filter((t) => t.orgId === orgId)
+      .map((t) => ({
+        id: t.id,
+        projectId: t.projectId,
+        name: t.name,
+        deletedAt: t.deletedAt,
+        deletedBy: t.deletedBy,
+        createdBy: t.createdBy ?? null,
+      }));
   }
 
   // ─── Commentaires (mig. 082) ───────────────────────────────────────
@@ -231,58 +457,50 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     this.saveComments(this.getCommentsArray().filter((c) => c.id !== commentId));
   }
 
-  // ─── Sous-tâches (mig. 092) ────────────────────────────────────────
+  // ─── Sous-tâches (mig. 092) : `local.subtasks.ts` ───────────────────
+  async getSubtasks(taskId: string): Promise<TeamSubtask[]> { return subtasks.getSubtasks(taskId); }
+  async createSubtask(input: CreateTeamSubtaskInput): Promise<TeamSubtask> { return subtasks.createSubtask(input); }
+  async updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask> { return subtasks.updateSubtask(subtaskId, input); }
+  async deleteSubtask(subtaskId: string): Promise<void> { subtasks.deleteSubtask(subtaskId); }
 
-  private getSubtasksArray(): TeamSubtask[] {
-    return readOrSeed<TeamSubtask[]>(TEAM_TASK_SUBTASKS_STORAGE_KEY, localizeSeed(DEMO_SUBTASKS, DEMO_SUBTASKS_EN));
-  }
-  private saveSubtasks(s: TeamSubtask[]): void {
-    writeJsonOrThrow(TEAM_TASK_SUBTASKS_STORAGE_KEY, s);
-  }
-
-  async getSubtasks(taskId: string): Promise<TeamSubtask[]> {
-    // Même ordre que la requête Supabase (position, puis création) : la démo
-    // et la prod doivent afficher la liste identiquement.
-    return this.getSubtasksArray()
-      .filter((s) => s.taskId === taskId)
-      .sort((a, b) => a.position - b.position || (a.createdAt < b.createdAt ? -1 : 1));
-  }
-
-  async createSubtask(input: CreateTeamSubtaskInput): Promise<TeamSubtask> {
-    const all = this.getSubtasksArray();
-    const subtask: TeamSubtask = {
-      id: crypto.randomUUID(),
-      taskId: input.taskId,
-      title: input.title,
-      completed: false,
-      position: input.position ?? all.filter((s) => s.taskId === input.taskId).length,
-      createdBy: DEMO_USER_ID,
-      createdAt: new Date().toISOString(),
-    };
-    this.saveSubtasks([...all, subtask]);
-    return subtask;
-  }
-
-  async updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask> {
-    const all = this.getSubtasksArray();
-    const subtask = all.find((s) => s.id === subtaskId);
-    if (!subtask) throw makeApiError('not_found');
-    if (input.title !== undefined) subtask.title = input.title;
-    if (input.completed !== undefined) subtask.completed = input.completed;
-    if (input.position !== undefined) subtask.position = input.position;
-    this.saveSubtasks(all);
-    return subtask;
-  }
-
-  async deleteSubtask(subtaskId: string): Promise<void> {
-    this.saveSubtasks(this.getSubtasksArray().filter((s) => s.id !== subtaskId));
-  }
+  // ─── Étiquettes et historique par tâche (mig. 093, 094) ────────────
+  async getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> { return activity.getTaskActivity(taskId); }
 
   // ─── Historique (mig. 094) ─────────────────────────────────────────
 
   /** Même contrat qu'en production : borné à l'org et à la fenêtre demandée. */
   async getOrgActivity(orgId: string, since: string): Promise<TeamTaskActivity[]> {
-    return readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, DEMO_ACTIVITY)
+    // Miroir du trigger AFTER INSERT de la mig. 181 (et de sa reprise) : chaque
+    // tâche a sa ligne `created`, datée de sa création, écrite par son auteur.
+    const created: TeamTaskActivity[] = this.getTasksArray()
+      .filter((tk) => tk.orgId === orgId && !!tk.createdAt)
+      .map((tk) => ({
+        id: `created-${tk.id}`,
+        taskId: tk.id,
+        orgId: tk.orgId,
+        actorId: tk.createdBy ?? null,
+        field: 'created' as const,
+        oldValue: null,
+        newValue: null,
+        createdAt: tk.createdAt,
+      }));
+    // Et, pour les tâches déjà terminées au chargement de la démo, la complétion
+    // que le journal de production aurait enregistrée.
+    const stored = readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, DEMO_ACTIVITY);
+    const loggedDone = new Set(stored.filter((a) => a.field === 'status' && a.newValue === 'done').map((a) => a.taskId));
+    const seededDone: TeamTaskActivity[] = this.getTasksArray()
+      .filter((tk) => tk.orgId === orgId && tk.completed && !!tk.completedAt && !loggedDone.has(tk.id))
+      .map((tk) => ({
+        id: `done-${tk.id}`,
+        taskId: tk.id,
+        orgId: tk.orgId,
+        actorId: tk.assigneeIds[0] ?? tk.createdBy ?? null,
+        field: 'status' as const,
+        oldValue: 'in_progress',
+        newValue: 'done',
+        createdAt: tk.completedAt as string,
+      }));
+    return [...stored, ...created, ...seededDone]
       .filter((a) => a.orgId === orgId && a.createdAt >= since)
       .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
   }

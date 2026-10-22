@@ -2,6 +2,7 @@
   "common": {
     "create": "Create",
     "ok": "OK",
+    "validate": "Confirm",
     "save": "Save",
     "creating": "Creating...",
     "creatingEllipsis": "Creating…",
@@ -11,6 +12,16 @@
     "none": "None",
     "optional": "(Optional)",
     "savingDots": "Saving..."
+  },
+  "tabs": {
+    "aria": "Task sections",
+    "details": "Details",
+    "advanced": "Advanced options",
+    "subtasks": "Subtasks",
+    "dependencies": "Dependencies",
+    "dependenciesAfterCreate": "Dependencies can be linked once the task is created.",
+    "share": "Share",
+    "stateAfterCreate": "Status and state can be set once the task is created."
   },
   "fields": {
     "moreOptions": "More options: due date, category, priority, duration, lists",
@@ -46,11 +57,7 @@
     "createList": "Create a list"
   },
   "sections": {
-    "details": "Details",
-    "description": "Description",
-    "organisation": "Organisation",
-    "subtasks": "Subtasks",
-    "collaboration": "Collaboration"
+    "detailsHint": "optional fields"
   },
   "mobile": {
     "createTask": "Create task",
@@ -65,7 +72,7 @@
   "desktop": {
     "closeForm": "Close the form",
     "unsaved": "Unsaved",
-    "changeColor": "Change colour",
+    "changeColor": "Change color",
     "namePlaceholder": "Enter the task name",
     "minuteEstimate": "Estimate in minutes",
     "listNamePlaceholder": "List name..."
@@ -81,6 +88,13 @@
     "bodyShared": "You'll leave this shared task: it will stay visible to its owner and the other collaborators."
   },
   "form": {
+    "addNote": "Add a note",
+    "durationOther": "Other duration",
+    "inviteSomeone": "Invite someone",
+    "collaborators": "Collaborators",
+    "lists": "List",
+    "listsCount_one": "{{count}} list",
+    "listsCount_other": "{{count}} lists",
     "nameRequired": "Task name *",
     "namePlaceholder": "Task name",
     "descriptionPlaceholder": "Task description",
@@ -96,6 +110,7 @@
     "deleteTask": "Delete this task",
     "collaboratorPlaceholder": "Email or name…",
     "addCollaborator": "Add",
-    "userNotFound": "User not found"
+    "userNotFound": "User not found",
+    "bookmark": "Favorite"
   }
 }

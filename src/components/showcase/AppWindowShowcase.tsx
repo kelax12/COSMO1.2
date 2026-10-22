@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence, useInView, type Variants } from 'framer-motion';
+import { motion, AnimatePresence, useInView, useReducedMotion, type Variants } from 'framer-motion';
+import { Pause, Play } from 'lucide-react';
+import { useT } from '@/i18n/useT';
+import { rotationDemandee, etatApresAppui, type EtatRotation } from './rotation-state';
 import TaskTableShowcase from './TaskTableShowcase';
 import AgendaShowcase from './AgendaShowcase';
 import OKRCardShowcase from './OKRCardShowcase';
@@ -96,7 +99,6 @@ const slideVariants: Variants = {
   },
 };
 
-
 interface AppWindowShowcaseProps {
   /** Variante condensée (mobile) : utilise les showcases mobiles. */
   compact?: boolean;
@@ -117,6 +119,13 @@ const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = fal
   const slides = compact ? MOBILE_SLIDES : DESKTOP_SLIDES;
   const containerRef = useRef<HTMLDivElement>(null);
   const inView = useInView(containerRef, { amount: 0.25 });
+  const { t } = useT('landing');
+
+  // C-69. `useReducedMotion` lit `prefers-reduced-motion` et se met à jour si
+  // le réglage change en cours de session — inutile de le figer au montage.
+  const mouvementReduit = useReducedMotion();
+  const [etat, setEtat] = useState<EtatRotation>('auto');
+  const [suspendu, setSuspendu] = useState(false);
 
   const [index, setIndex] = useState(0);
 
@@ -133,14 +142,26 @@ const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = fal
    */
   const [cleAnnoncee, setCleAnnoncee] = useState(slides[0].key);
 
-  // Rotation auto, uniquement quand le hero est visible (perf).
+  /**
+   * La rotation tourne-t-elle, à cet instant ?
+   *
+   * Quatre conditions, et il faut les quatre :
+   *   · `inView`   — hors écran, l'intervalle ne sert à rien (perf, déjà là) ;
+   *   · `!suspendu`— ni survol, ni focus dans la fenêtre ;
+   *   · l'état demandé par l'utilisateur ;
+   *   · `prefers-reduced-motion`, que seul l'état `lecture` outrepasse.
+   */
+  const tourneraitSansSuspension = rotationDemandee(etat, !!mouvementReduit);
+  const enRotation = inView && !suspendu && tourneraitSansSuspension;
+
   useEffect(() => {
-    if (!inView) return;
+    if (!enRotation) return;
     const id = setInterval(() => {
       setIndex((i) => (i + 1) % slides.length);
     }, ROTATE_MS);
     return () => clearInterval(id);
-  }, [inView, slides.length]);
+  }, [enRotation, slides.length]);
+
 
   const active = slides[index];
   const ActiveComp = active.Comp;
@@ -157,9 +178,30 @@ const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = fal
   }, [annonce.key, onSlideChange]);
 
   return (
-    <div ref={containerRef} className="w-full select-none" aria-hidden="true">
-      {/* Cadre fenêtre commun (chrome) — unifie la rotation */}
-      <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-slate-950/80 backdrop-blur-sm shadow-[0_30px_80px_-20px_rgba(0,0,0,0.75)]">
+    <div
+      ref={containerRef}
+      className="relative w-full select-none"
+      // C-69 · le survol et le focus SUSPENDENT, sans changer l'état demandé.
+      // `onFocusCapture` et non `onFocus` : le seul élément focalisable ici est
+      // le bouton de pause, et un `onFocus` sur le conteneur ne se
+      // déclencherait pas pour lui (React remonte le focus, mais la capture est
+      // la forme qui ne dépend pas de l'ordre du DOM).
+      onPointerEnter={() => setSuspendu(true)}
+      onPointerLeave={() => setSuspendu(false)}
+      onFocusCapture={() => setSuspendu(true)}
+      onBlurCapture={() => setSuspendu(false)}
+    >
+      {/* Cadre fenêtre commun (chrome) — unifie la rotation.
+          🔴 `aria-hidden` vit ICI, et plus sur le conteneur : le bouton de
+          pause de C-69 est le SEUL élément de ce composant qui doit rester
+          annoncé. Le laisser sous un `aria-hidden` en ferait une commande
+          invisible aux technologies d'assistance — c'est-à-dire un mécanisme
+          de pause que les personnes qui en ont le plus besoin ne trouvent
+          pas. */}
+      <div
+        className="relative rounded-2xl overflow-hidden border border-white/10 bg-slate-950/80 backdrop-blur-sm shadow-[0_30px_80px_-20px_rgba(0,0,0,0.75)]"
+        aria-hidden="true"
+      >
         {/* Chrome bar : l'URL change selon le showcase */}
         <div className="flex items-center gap-2 px-4 h-10 bg-slate-900/90 border-b border-white/10">
           <span className="w-3 h-3 rounded-full bg-[#FF5F57]" />
@@ -239,6 +281,29 @@ const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = fal
           ))}
         </div>
       </div>
+
+      {/* ═══ C-69 · le mécanisme de pause (WCAG 2.2.2) ═══
+          44 × 44 px RÉELS (`h-11 w-11`), et pas un débord de `tap-area` : `/`
+          est l'une des huit pages publiques mesurées par
+          `e2e/touch-targets.spec.ts`, et corriger un défaut d'accessibilité en
+          en créant un autre serait une drôle de façon de compter.
+          Il est en bas à DROITE : les points de rotation sont centrés, donc
+          rien ne se chevauche. */}
+      <button
+        type="button"
+        onClick={() => setEtat((e) => etatApresAppui(e, !!mouvementReduit))}
+        aria-pressed={!tourneraitSansSuspension}
+        className="absolute bottom-3 right-3 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-slate-950/85 text-slate-300 backdrop-blur-md transition-colors hover:text-white hover:border-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+      >
+        {tourneraitSansSuspension ? (
+          <Pause className="h-4 w-4" aria-hidden="true" />
+        ) : (
+          <Play className="h-4 w-4" aria-hidden="true" />
+        )}
+        <span className="sr-only">
+          {tourneraitSansSuspension ? t('hero.showcasePause') : t('hero.showcasePlay')}
+        </span>
+      </button>
     </div>
   );
 };

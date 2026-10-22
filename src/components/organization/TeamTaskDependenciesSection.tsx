@@ -14,6 +14,8 @@ interface TeamTaskDependenciesSectionProps {
   task: TeamTask;
   /** Seul un gestionnaire modifie le graphe ; tout le monde le lit. */
   isManager: boolean;
+  /** Ouverte d'emblée : dans l'onglet Dépendances de la fiche, la replier n'a pas de sens. */
+  defaultOpen?: boolean;
 }
 
 /**
@@ -25,9 +27,9 @@ interface TeamTaskDependenciesSectionProps {
  * retarde si je glisse ? » (bloque). La seconde est celle qu'on oublie, et
  * c'est celle qui coûte cher en réunion.
  */
-const TeamTaskDependenciesSection = ({ task, isManager }: TeamTaskDependenciesSectionProps) => {
+const TeamTaskDependenciesSection = ({ task, isManager, defaultOpen = false }: TeamTaskDependenciesSectionProps) => {
   const { t, tp } = useT('org');
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const { data: allTasks = [] } = useTeamTasks(task.orgId);
@@ -108,7 +110,7 @@ const TeamTaskDependenciesSection = ({ task, isManager }: TeamTaskDependenciesSe
         className={`w-full flex items-center gap-2 text-left ${TAP_AREA_44_Y}`}
       >
         <Link2 size={13} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-        <span className="text-caption font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
+        <span className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
           {t('projects.dependenciesTitle')}
         </span>
         <span className="text-caption text-[rgb(var(--color-text-muted))]">

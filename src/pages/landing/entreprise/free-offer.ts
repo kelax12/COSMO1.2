@@ -1,15 +1,18 @@
-import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
+import { ENTERPRISE_BILLING_ENFORCED, PRICES_VISIBLE } from '@/modules/billing/premium-config';
 
 /**
  * L'offre de lancement est-elle en cours — c'est-à-dire : tout est-il gratuit ?
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * ÉTAT AU 2026-08-25 : `false`. L'offre de lancement est TERMINÉE,
- * `ENTERPRISE_BILLING_ENFORCED` est repassé à `true` et la landing réaffiche
- * ses tarifs. Le paragraphe qui suit reste là parce qu'il explique pourquoi les
- * variantes `promo*` / `*Free` existent encore dans les catalogues : elles ne
- * remplacent rien, elles s'ajoutent, et rebasculer le drapeau restitue la page
- * gratuite mot pour mot.
+ * ÉTAT AU 2026-08-26 : `true`. `ENTERPRISE_BILLING_ENFORCED` a été RE-désarmé
+ * (mig. 124, `billing_flags.enterprise_seat_limit = false` en base — vérifié
+ * le 2026-09-14) après une brève réactivation le 2026-08-25 qui tournait sur
+ * une clé Stripe de TEST. L'offre de lancement est donc À NOUVEAU EN COURS, la
+ * landing entreprise affiche « Gratuit » partout et aucun plafond de sièges
+ * n'est appliqué. Le paragraphe qui suit reste là parce qu'il explique pourquoi
+ * les variantes `promo*` / `*Free` existent encore dans les catalogues : elles
+ * ne remplacent rien, elles s'ajoutent, et rebasculer le drapeau restitue la
+ * page payante mot pour mot.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * POURQUOI CE DRAPEAU EXISTE (2026-08-24)
@@ -49,3 +52,10 @@ import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
  * l'inverse) est un mensonge sur la page la plus lue du site.
  */
 export const ENTERPRISE_FREE_OFFER = !ENTERPRISE_BILLING_ENFORCED;
+
+/**
+ * Les prix entreprise sont-ils montrés sur la landing ? Masqués depuis le
+ * 2026-10-16 (`PRICES_VISIBLE`, acquisition sans monétisation), sauf si la
+ * facturation est réactivée : on ne vend pas sans afficher de prix.
+ */
+export const ENTERPRISE_PRICES_SHOWN = PRICES_VISIBLE || ENTERPRISE_BILLING_ENFORCED;

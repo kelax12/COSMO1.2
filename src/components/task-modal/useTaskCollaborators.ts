@@ -29,7 +29,7 @@
 // Extrait le 2026-09-05 (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import type { Task } from '@/modules/tasks';
 import {
   useFriends,

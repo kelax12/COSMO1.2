@@ -29,7 +29,31 @@ import {
 } from './constants';
 import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
 import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
-import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { readJsonArray, safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY } from '@/modules/team-projects/constants';
+import type { TeamProject, TeamTask } from '@/modules/team-projects/types';
+
+/**
+ * Miroir de `release_member_work` (mig. 164) : quelqu'un qui n'a plus accès ne
+ * reste assigné à aucune tâche OUVERTE, ni responsable d'aucun projet. Les
+ * tâches terminées gardent leur assigné : c'est l'historique.
+ */
+function releaseMemberWork(orgId: string, userId: string): void {
+  const tasks = readJsonArray<TeamTask>(TEAM_TASKS_STORAGE_KEY);
+  if (tasks) {
+    writeJsonOrThrow(TEAM_TASKS_STORAGE_KEY, tasks.map((t) =>
+      t.orgId === orgId && !t.completed && t.assigneeIds?.includes(userId)
+        ? { ...t, assigneeIds: t.assigneeIds.filter((id) => id !== userId) }
+        : t,
+    ));
+  }
+  const projects = readJsonArray<TeamProject>(TEAM_PROJECTS_STORAGE_KEY);
+  if (projects) {
+    writeJsonOrThrow(TEAM_PROJECTS_STORAGE_KEY, projects.map((p) =>
+      p.orgId === orgId && p.ownerId === userId ? { ...p, ownerId: null } : p,
+    ));
+  }
+}
 import { makeApiError } from '@/lib/normalizeApiError';
 
 const DEMO_USER_ID = 'demo-user';
@@ -71,9 +95,19 @@ const DEMO_ORGS: Organization[] = [
 //   demo-user (racine, admin)
 //   ├── Marie Dupont (manager dérivé)
 //   │   ├── Jean Martin
-//   │   └── Sophie Bernard
-//   └── Lucas Moreau
+//   │   ├── Sophie Bernard
+//   │   ├── Chloé Petit
+//   │   └── Emma Lambert
+//   ├── Lucas Moreau (manager dérivé)
+//   │   ├── Inès Benali
+//   │   └── Antoine Girard
+//   ├── Manon Faure (manager dérivé, Marketing)
+//   │   ├── Paul Mercier
+//   │   ├── Léa Fontaine
+//   │   └── Karim Haddad
+//   └── Yanis Chevalier
 //   Camille Richard = NON PLACÉE (montre le flux de placement).
+//   15 membres au total (2026-10-05) : une PME crédible, pas une équipe de six.
 const DEMO_MEMBERS: OrgMember[] = [
   // ── Nova Studio (demo-user admin) ──
   { orgId: DEMO_ORG_ID, userId: DEMO_USER_ID, role: 'admin', managerId: null, joinedAt: new Date(Date.now() - 90 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app' },
@@ -82,6 +116,15 @@ const DEMO_MEMBERS: OrgMember[] = [
   { orgId: DEMO_ORG_ID, userId: 'friend-3', role: 'member', managerId: 'friend-1', joinedAt: new Date(Date.now() - 60 * DAY).toISOString(), displayName: 'Sophie Bernard', email: 'sophie.bernard@email.com' },
   { orgId: DEMO_ORG_ID, userId: 'user-lucas', role: 'member', managerId: DEMO_USER_ID, joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Lucas Moreau', email: 'lucas.moreau@email.com' },
   { orgId: DEMO_ORG_ID, userId: 'user-camille', role: 'member', managerId: null, joinedAt: new Date(Date.now() - 30 * DAY).toISOString(), displayName: 'Camille Richard', email: 'camille.richard@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-manon', role: 'member', managerId: DEMO_USER_ID, joinedAt: new Date(Date.now() - 85 * DAY).toISOString(), displayName: 'Manon Faure', email: 'manon.faure@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-chloe', role: 'member', managerId: 'friend-1', joinedAt: new Date(Date.now() - 70 * DAY).toISOString(), displayName: 'Chloé Petit', email: 'chloe.petit@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-emma', role: 'member', managerId: 'friend-1', joinedAt: new Date(Date.now() - 28 * DAY).toISOString(), displayName: 'Emma Lambert', email: 'emma.lambert@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-ines', role: 'member', managerId: 'user-lucas', joinedAt: new Date(Date.now() - 40 * DAY).toISOString(), displayName: 'Inès Benali', email: 'ines.benali@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-antoine', role: 'member', managerId: 'user-lucas', joinedAt: new Date(Date.now() - 20 * DAY).toISOString(), displayName: 'Antoine Girard', email: 'antoine.girard@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-paul', role: 'member', managerId: 'user-manon', joinedAt: new Date(Date.now() - 65 * DAY).toISOString(), displayName: 'Paul Mercier', email: 'paul.mercier@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-lea', role: 'member', managerId: 'user-manon', joinedAt: new Date(Date.now() - 50 * DAY).toISOString(), displayName: 'Léa Fontaine', email: 'lea.fontaine@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-karim', role: 'member', managerId: 'user-manon', joinedAt: new Date(Date.now() - 14 * DAY).toISOString(), displayName: 'Karim Haddad', email: 'karim.haddad@email.com' },
+  { orgId: DEMO_ORG_ID, userId: 'user-yanis', role: 'member', managerId: DEMO_USER_ID, joinedAt: new Date(Date.now() - 55 * DAY).toISOString(), displayName: 'Yanis Chevalier', email: 'yanis.chevalier@email.com' },
 ];
 
 const DEMO_JOIN_REQUESTS: OrgJoinRequest[] = [
@@ -373,6 +416,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       )
       .filter((m) => !(m.orgId === orgId && m.userId === userId));
     this.saveMembers(next);
+    releaseMemberWork(orgId, userId);
   }
 
   async leaveOrganization(orgId: string): Promise<void> {
@@ -389,6 +433,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       )
       .filter((m) => !(m.orgId === orgId && m.userId === DEMO_USER_ID));
     this.saveMembers(next);
+    releaseMemberWork(orgId, DEMO_USER_ID);
   }
 
   // ─── Pyramide (v2) ────────────────────────────────────────────────

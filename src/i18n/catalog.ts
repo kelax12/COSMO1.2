@@ -28,14 +28,14 @@
 // `CatalogShapes` est ce qui donne à `t()` ses clés typées. Aucune des deux ne
 // peut être dérivée du glob, dont le type est `Record<string, unknown>`.
 //
-// ─── Chargement : deux namespaces eager, les 17 autres à la demande ───
+// ─── Chargement : deux namespaces eager, les 21 autres à la demande ───
 //
 // Le repli `fr` doit être disponible SYNCHRONIQUEMENT, `t()` ne renvoie pas de
 // promesse, donc un namespace absent afficherait sa clé brute. Mais tous les
 // namespaces ne sont pas nécessaires au même moment : seuls `common` et
 // `errors` sont atteignables depuis le SHELL de l'application (mesuré par
 // `scripts/i18n-shell-namespaces.mjs`, verrouillé par
-// `src/i18n/lazy-namespaces.guard.test.ts`). Les 17 autres appartiennent à une
+// `src/i18n/lazy-namespaces.guard.test.ts`). Les 21 autres appartiennent à une
 // page lazy, et sont chargés en même temps QU'ELLE.
 //
 // Ce que ça change, mesuré (docs/PERFORMANCE.md) : le catalogue `fr` pesait
@@ -64,6 +64,12 @@ import frErrors from '@/locales/fr/errors.json';
 type Shape<P extends string> = P extends keyof FrModules ? FrModules[P] : never;
 interface FrModules {
   admin: typeof import('@/locales/fr/admin.json');
+  portfolio: typeof import('@/locales/fr/portfolio.json');
+  orgAccount: typeof import('@/locales/fr/orgAccount.json');
+  orgAdmin: typeof import('@/locales/fr/orgAdmin.json');
+  orgConfig: typeof import('@/locales/fr/orgConfig.json');
+  orgGuide: typeof import('@/locales/fr/orgGuide.json');
+  persoGuide: typeof import('@/locales/fr/persoGuide.json');
   agenda: typeof import('@/locales/fr/agenda.json');
   dashboard: typeof import('@/locales/fr/dashboard.json');
   bugReport: typeof import('@/locales/fr/bugReport.json');
@@ -73,8 +79,12 @@ interface FrModules {
   habits: typeof import('@/locales/fr/habits.json');
   invite: typeof import('@/locales/fr/invite.json');
   landing: typeof import('@/locales/fr/landing.json');
+  landingEnterprise: typeof import('@/locales/fr/landingEnterprise.json');
   legal: typeof import('@/locales/fr/legal.json');
+  legalTerms: typeof import('@/locales/fr/legalTerms.json');
+  legalPrivacy: typeof import('@/locales/fr/legalPrivacy.json');
   okr: typeof import('@/locales/fr/okr.json');
+  onboarding: typeof import('@/locales/fr/onboarding.json');
   overlays: typeof import('@/locales/fr/overlays.json');
   org: typeof import('@/locales/fr/org.json');
   premium: typeof import('@/locales/fr/premium.json');
@@ -144,14 +154,95 @@ interface CatalogShapes {
    * eager, donc annulerait le gain en le déguisant.
    */
   overlays: Shape<'overlays'>;
+  /**
+   * Accueil des nouveaux comptes : planétaire du parcours perso
+   * (`FirstRunSetup`) et constellation du parcours entreprise
+   * (`/entreprise/onboarding`, accueil d'un membre). À PART pour ne partir
+   * qu'avec ces écrans : une personne déjà accueillie ne le télécharge jamais.
+   */
+  onboarding: Shape<'onboarding'>;
   /** Premium — page d'offre, mur de fonctionnalité, modale publicitaire. */
   premium: Shape<'premium'>;
   /** Landing publique + pages marketing (à propos, cas d'usage, blog). */
   landing: Shape<'landing'>;
-  /** Pages contractuelles : CGU, confidentialité, mentions légales. */
+  /**
+   * Parcours ENTREPRISE de la landing, chargé avec `EnterpriseTrack` (lazy) :
+   * la moitié du texte de la landing, que le parcours perso n'affiche jamais.
+   * L'aiguillage, le sélecteur et les ancres restent dans `landing`.
+   */
+  landingEnterprise: Shape<'landingEnterprise'>;
+  /**
+   * Pages contractuelles : libellés communs (retour, date de mise à jour) et
+   * mentions légales.
+   *
+   * 🔴 Les CGU et la politique de confidentialité vivent À PART depuis le
+   * 2026-10-01 (`legalTerms`, `legalPrivacy`), chacune chargée par SA page :
+   * ensemble dans ce catalogue, elles faisaient 18,5 ko gzip (fr + en) pour un
+   * plafond de 15,5, et chaque page légale téléchargeait les deux autres
+   * documents. ⚠️ Les trois fichiers d'une langue forment UN document au sens
+   * de `npm run check:legal-journal` : leur empreinte est calculée sur leur
+   * réunion, un découpage ne la change donc pas, une modification de texte si.
+   */
   legal: Shape<'legal'>;
+  /** Conditions générales d'utilisation (`/cgu`). */
+  legalTerms: Shape<'legalTerms'>;
+  /** Politique de confidentialité (`/politique-confidentialite`). */
+  legalPrivacy: Shape<'legalPrivacy'>;
   /** Mode entreprise — pyramide, équipes, projets, OKR d'équipe, invitations. */
   org: Shape<'org'>;
+  /**
+   * Portefeuille de projets (M2) : vues, page projet, jalons, modèles.
+   *
+   * 🔴 Namespace À PART, chargé avec le SEUL onglet Projets
+   * (`OrganizationPage`, `lazyWithRetry(…, ['portfolio'])`). Dans `org`, il
+   * faisait passer ce catalogue de 28,5 à 33,2 ko gzip, payés par toute visite
+   * de /entreprise, Aperçu et Pyramide compris, pour des textes qu'elles
+   * n'affichent jamais.
+   */
+  portfolio: Shape<'portfolio'>;
+  /**
+   * Surfaces RARES du propriétaire ou du créateur d'une entreprise : écran
+   * Facturation (sièges, historique, contact, mig. 180) et assistant de
+   * démarrage (/entreprise/onboarding?setup=).
+   *
+   * 🔴 À part de `org`, qui est payé par toute visite de /entreprise. Et UN
+   * seul namespace pour les deux, pas deux : chaque namespace ajoute ses
+   * chargeurs fr/en à la table `import.meta.glob` du chunk d'ENTRÉE (mesuré
+   * le 2026-09-25 : +0,14 ko gzip pour le second), payée par toutes les pages.
+   */
+  orgAccount: Shape<'orgAccount'>;
+  /**
+   * Gestes d'ADMINISTRATION du mode entreprise (2026-09-25) : départ et
+   * suspension, invitations par e-mail, actions en masse, droits, transfert de
+   * propriété, pyramide, revue hebdomadaire, corbeille.
+   *
+   * 🔴 Namespace À PART, pour la même raison que `portfolio` : l'audit du
+   * 2026-09-24 (étapes 3 et 4) et la branche gouvernance faisaient passer `org`
+   * à 41,3 ko gzip pour un plafond de 30. Chargé par les SEULES sections et
+   * dialogues qui s'en servent (`lazyWithRetry(…, [..., 'orgAdmin'])` dans
+   * `OrganizationPage`), jamais par l'Aperçu.
+   *
+   * 🔴 ÉLARGI le 2026-10-01 : la ROUTE /entreprise le charge pour toute visite,
+   * il porte donc aussi les textes que SEUL /entreprise affiche (annuaire,
+   * aperçu, notifications, réglages, facturation, navigation de la section,
+   * corbeille…, 34 sections). `org`, lui, est chargé par `Layout`, donc par
+   * TOUT compte connecté, entreprise ou non : il remontait à 40,6 ko gzip pour
+   * un plafond de 30, et il n'en garde que ce que le reste de l'app affiche
+   * (fiche de tâche d'équipe dans /tasks, invitations, pastilles…), 23,7 ko.
+   * ❌ Ne rien remettre dans `org` qu'un écran hors /entreprise n'affiche pas :
+   *    `lazy-namespaces.guard.test.ts` dira où chaque section est rendue.
+   */
+  orgAdmin: Shape<'orgAdmin'>;
+  /**
+   * Configuration d'entreprise (mig. 195-199, audit du 2026-09-24) : réglages,
+   * sécurité, champs et statuts, automatisations, intégrations, capacité,
+   * liens secondaires. À part d'`orgAdmin`, que la ROUTE /entreprise charge
+   * pour toute visite : ces écrans le chargent eux-mêmes (`org-config.lazy.ts`).
+   */
+  orgConfig: Shape<'orgConfig'>;
+  orgGuide: Shape<'orgGuide'>;
+  /** Guide perso (boussole du `Layout` desktop), chargé au premier clic avec `PersoGuideHost`. */
+  persoGuide: Shape<'persoGuide'>;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
   seo: Shape<'seo'>;
   /** Réglages — profil, sécurité, apparence, modules, données, aide. */
@@ -243,7 +334,8 @@ registry[DEFAULT_LOCALE] = {
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
-  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'premium', 'seo',
+  'habits', 'invite', 'landing', 'landingEnterprise', 'legal', 'legalPrivacy', 'legalTerms', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgConfig', 'orgGuide', 'persoGuide', 'portfolio', 'premium', 'seo',
+  'onboarding',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];

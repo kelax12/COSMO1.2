@@ -1,5 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useT } from '@/i18n/useT';
+import { useDelayed } from '@/lib/hooks/use-delayed';
 
 /**
  * Skeletons — placeholders affichés pendant le chargement initial des données.
@@ -23,7 +24,13 @@ import { useT } from '@/i18n/useT';
 export function TaskCardSkeleton() {
   return (
     <div className="flex items-center gap-3 px-3 py-2.5 min-h-[60px] border-b border-[rgb(var(--color-border))] md:min-h-0 md:p-3 md:rounded-xl md:border md:bg-[rgb(var(--color-surface))]">
-      <Skeleton className="w-1 self-stretch rounded-full shrink-0 md:h-10 md:self-auto" />
+      {/* 🔴 La barre de catégorie de 4 px qui vivait ici n'existe plus dans la
+          ligne : `TaskCard` commence par sa case à cocher. Le squelette avait
+          donc DÉRIVÉ une seconde fois, exactement comme l'avertit l'en-tête de
+          ce fichier, et pour la même raison — on ne le voit qu'une fraction de
+          seconde. Retirée le 2026-09-20 (maquette 103). Elle reste sur desktop,
+          où la ligne la porte encore. */}
+      <Skeleton className="hidden md:block md:h-10 w-1 rounded-full shrink-0" />
       <Skeleton className="w-6 h-6 rounded-full shrink-0 md:w-5 md:h-5 md:rounded-md" />
       <div className="flex-1 min-w-0 space-y-2">
         <Skeleton className="h-4 w-3/4" />
@@ -36,6 +43,10 @@ export function TaskCardSkeleton() {
 
 export function TaskListSkeleton({ count = 6 }: { count?: number }) {
   const { t } = useT('common');
+  // Maquette 103 : rien pendant 200 ms. En dessous de ce seuil l'attente ne se
+  // voit pas, et le squelette ne ferait que clignoter.
+  const show = useDelayed(true);
+  if (!show) return null;
   return (
     <div className="space-y-0 md:space-y-2" role="status" aria-label={t('loadingLabel.tasks')}>
       {Array.from({ length: count }).map((_, i) => (

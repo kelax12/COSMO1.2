@@ -1,0 +1,282 @@
+# ══════════════════════════════════════════════════════════════════
+# POSTURE DE PRODUCTION — ce qui vit HORS DU DÉPÔT
+# ══════════════════════════════════════════════════════════════════
+#
+# 🔴 CE QUE CES QUATRE JOBS ONT EN COMMUN. Ils regardent des choses qu'aucune
+# relecture de code ne peut voir, parce qu'elles ne sont pas dans le code :
+# un interrupteur du Dashboard Supabase, une variable posée chez Vercel, l'âge
+# d'une ligne en base, le plan d'exécution d'une requête. Elles se modifient
+# en deux clics, sans commit et sans trace, et plusieurs sont pourtant cochées
+# ✅ dans la documentation — or **un ✅ daté décrit un instant, pas un état**.
+#
+# Items fermés ici : C-87 (coût serveur et sa PENTE), C-88 (advisors Supabase
+# et réglages d'auth), C-93 (durées de conservation confrontées aux données),
+# C-105 (variables d'environnement Vercel).
+#
+# ⚠️ AUCUN de ces jobs n'écrit dans la base. Les requêtes de `check:retention`
+# et `check:db-cost` sont des `SELECT`, et les `EXPLAIN` tournent dans une
+# transaction annulée, sous le rôle `authenticated` — donc AVEC la RLS, parce
+# qu'un plan mesuré en superutilisateur n'est pas celui qu'un utilisateur
+# rencontre.
+#
+# 🔴 AUCUN NE SE REND CONDITIONNEL À LA PRÉSENCE DE SON PROPRE SECRET. Un
+# secret absent fait ÉCHOUER le job, jamais émettre un `::warning::` dans un
+# run vert — c'est le motif retiré d'`uptime.yml` le 2026-09-03, de
+# `renewal-notice.yml` le 09-04, et de `ci-alert.yml` lui-même le 09-13.
+#
+# Les échecs remontent par `ci-alert.yml`.
+# ══════════════════════════════════════════════════════════════════
+name: Posture
+
+on:
+  schedule:
+    # Tous les jours à 05:07 UTC. Minute décalée des autres crons du dépôt
+    # (`uptime` 17/47, `edge-deploy-drift` 41:05, `scalability` 11:03).
+    - cron: '7 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: posture
+  cancel-in-progress: false
+
+jobs:
+  # ── C-88 · advisors Supabase et réglages d'authentification ──────
+  supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      # Dans `ci.yml`, le mot « advisor » désigne `npm audit`. Les advisors
+      # Supabase, eux, sont la seule source qui voie une policy manquante ou
+      # une fonction SECURITY DEFINER exposée APRÈS COUP.
+      - name: Advisors et reglages d auth
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -o pipefail
+          if npm run check:supabase-posture 2>&1 | tee posture.log; then
+            {
+              echo '### Posture Supabase'
+              echo ''
+              echo '```'
+              cat posture.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo '### ✖ Posture Supabase — ecart a la reference'
+            echo ''
+            echo '```'
+            tail -n 60 posture.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # Les LOGS d'un run exigent une authentification même sur un dépôt
+          # public ; les ANNOTATIONS non. C'est la seule forme de diagnostic
+          # qu'un agent sans compte GitHub puisse relire.
+          tail -n 20 posture.log | while IFS= read -r LIGNE; do
+            echo "::error title=posture-supabase::${LIGNE}"
+          done
+          exit 1
+
+  # ── C-93 · les durées de conservation, confrontées aux données ───
+  retention:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      # `docs/RGPD-REGISTRE.md` est la pièce qu'on produit en contrôle CNIL.
+      # Rien n'avait jamais vérifié qu'une seule ligne de la base respecte ce
+      # qui y est écrit. Un registre faux est pire qu'un registre absent : il
+      # atteste qu'on savait.
+      - name: Durees de conservation (RGPD art. 5.1.e)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -o pipefail
+          if npm run check:retention 2>&1 | tee retention.log; then
+            {
+              echo '### Durees de conservation'
+              echo ''
+              echo '```'
+              cat retention.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo '### ✖ Durees de conservation'
+            echo ''
+            echo '```'
+            tail -n 60 retention.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          tail -n 20 retention.log | while IFS= read -r LIGNE; do
+            echo "::error title=retention::${LIGNE}"
+          done
+          exit 1
+
+  # ── C-105 · les variables d'environnement, chez Vercel ───────────
+  vercel-env:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      # 🔴 Le cas a déjà mordu : `VITE_SENTRY_DSN` absente CHANGE LA FORME DU
+      # BUNDLE (Rollup élimine Sentry, ~45 ko gzip), et la garde de budget
+      # mesurait alors un artefact qui n'existe nulle part.
+      # Seule la PRÉSENCE des variables est lue, jamais leur valeur.
+      - name: Variables d environnement Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+        run: |
+          set -o pipefail
+          if npm run check:env -- --vercel 2>&1 | tee env.log; then
+            {
+              echo '### Variables d environnement'
+              echo ''
+              echo '```'
+              cat env.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo '### ✖ Variables d environnement'
+            echo ''
+            echo '```'
+            tail -n 40 env.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          tail -n 20 env.log | while IFS= read -r LIGNE; do
+            echo "::error title=env-vercel::${LIGNE}"
+          done
+          exit 1
+
+  # ── C-101 · les compteurs d'acquisition, rejoués ─────────────────
+  acquisition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      # Les chiffres de `docs/ACQUISITION.md` dataient du 2026-08-14 et rien
+      # ne les rejouait. Un document de pilotage périmé est pire qu'absent :
+      # on décide sur un état qui n'existe plus.
+      # ⚠️ Le tracking `?ref=`, lui, N'EST PAS un chantier ouvert : la chaîne
+      # est complète depuis la mig. 097 (capture first-touch → metadata →
+      # trigger qui re-valide → `signups_by_source`). L'énoncé de C-101 était
+      # périmé sur ce point, vérifié bout en bout le 2026-09-20.
+      - name: Compteurs d acquisition
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -o pipefail
+          if npm run check:acquisition -- --live 2>&1 | tee acquisition.log; then
+            {
+              echo '### Acquisition'
+              echo ''
+              echo '```'
+              cat acquisition.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo '### ✖ Acquisition'
+            echo ''
+            echo '```'
+            tail -n 40 acquisition.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          tail -n 20 acquisition.log | while IFS= read -r LIGNE; do
+            echo "::error title=acquisition::${LIGNE}"
+          done
+          exit 1
+
+  # ── C-87 · le coût serveur, et sa PENTE ──────────────────────────
+  cout-db:
+    runs-on: ubuntu-latest
+    permissions:
+      # 🔴 Le seul job du dépôt qui ÉCRIVE dans le dépôt, et il faut dire
+      # pourquoi : une pente ne se lit pas sur un point. La série doit donc
+      # être conservée quelque part, et un artefact de run expire au bout de
+      # 90 jours — c'est-à-dire exactement la fenêtre sur laquelle on veut
+      # mesurer une croissance.
+      # Le job n'écrit QUE `docs/db-cost-series.json`, et le commit le dit.
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+
+      - name: EXPLAIN de reference, sous RLS
+        id: mesure
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -o pipefail
+          # ⚠️ `|| true` : on veut ÉCRIRE le point même quand un plafond est
+          # franchi — c'est précisément ce jour-là que la série a de la
+          # valeur. Le verdict est rendu par l'étape finale, pas ici.
+          if npm run check:db-cost 2>&1 | tee cout.log; then
+            echo "rouge=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "rouge=true" >> "$GITHUB_OUTPUT"
+          fi
+          {
+            echo '### Cout serveur (EXPLAIN sous RLS)'
+            echo ''
+            echo '```'
+            cat cout.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enregistrer le point dans la serie
+        if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- docs/db-cost-series.json; then
+            echo "Serie inchangee (point du jour deja enregistre)."
+            exit 0
+          fi
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add docs/db-cost-series.json
+          git commit -m 'chore(perf): point de cout serveur du jour (C-87)'
+          # `--rebase` : un autre commit a pu arriver sur main pendant le run.
+          git pull --rebase --autostash
+          git push
+
+      - name: Verdict
+        if: ${{ !cancelled() }}
+        run: |
+          if [ "${{ steps.mesure.outputs.rouge }}" = "true" ]; then
+            tail -n 20 cout.log | while IFS= read -r LIGNE; do
+              echo "::error title=cout-db::${LIGNE}"
+            done
+            exit 1
+          fi

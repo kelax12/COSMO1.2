@@ -1,6 +1,525 @@
+<!-- note-audit: note=95 -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — Note **95 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → 97 → 96 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**)
+
+> ### 🟠 2026-10-20 · −1 : `main` rouge 29 runs, et deux verdicts qui dépendent de la date
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | 🔴 `main` rouge depuis le 2026-10-19 à 12:06 UTC | **−1** | dernier vert `bf94958f` (10-18). `e2e` rouge depuis `a9db6f2c`, `lint-test-build` depuis `08bce3d4` (budget de bundle, seule étape rouge, débitée dans [`PERFORMANCE.md`](./PERFORMANCE.md)). **23 commits de code poussés sur du rouge** en 26 h, l'alerte Discord partie à chaque run. `f0c2a433` a réparé les deux parcours entreprise et C-57, pas le reste |
+> | 🟠 Deux verdicts liés au jour de la semaine | **−1** | rouges sur `a9db6f2c`, qui ne change **que deux commentaires** ; vert le dimanche 10-18, rouge le lundi 10-19. `e2e/visual-regression.spec.ts` et `e2e/mobile-android.spec.ts` ne figent pas l'horloge (aucun `page.clock`) alors que la démo date ses données par rapport à aujourd'hui. Correctif : `page.clock.install` à une date fixe |
+> | ✅ `api/collect.ts` hors `tsc` et hors tests (−1 le 10-18) | **+1** | `946046952` et `f2507e69` : `api/` dans `tsconfig.json` (NodeNext, comme le contrôle de Vercel) et dans `vitest.config.ts` ; cinq sabotages du collecteur au catalogue (`62f8ba98`). **Vert en CI** sur la PR n° 79 (run `39163166665`, cinq jobs). Chaîne vue écrire par le collecteur le 10-19 (204, une ligne) |
+> | Comptes à `HEAD` | 0 | 352 fichiers, **3 969** tests ; outillage 29 / 503 ; `e2e` 254 verts, 1 échec (C-97 `/dashboard`), 2 instables, 4 sautés, 22,7 min ; 5 fichiers de test neufs pour 33 fichiers source neufs (les helpers de l'Aperçu) |
+> | Planifiés | 0 | `Posture` rouge chaque matin, référence non recalée (débit nul, voir [`../faille.md`](../faille.md)) ; verts : `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest` |
+>
+> **96 → 95.**
+
+> ### 🟠 2026-10-18 · −1 : le premier code serveur du dépôt n'est vu par aucune garde
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Dernière passe avant
+> l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | ✅ CI de `main` à `e69cb729` | 0 | cinq jobs verts : **346** fichiers, **3 890** tests ; outillage 29 / 501 ; RLS 8 / 151 ; `e2e` **255 verts, 2 instables** (deux parcours démo `mobile-safari`), 4 sautés, en 23,6 min |
+> | ✅ `lint-test-build` rouge sur `8b253a1b` et `5f8ecbdb` | 0 | une seule garde, `scripts/cosmo/api.test.mjs` : `8b253a1b` ajoute `status,health` à `TASK_LIST_COLUMNS` sans reporter la copie du CLI. La garde anti-dérive a mordu au premier run, l'alerte est partie sur Discord. Corrigé par cette passe (`15d40bea`), rejoué seul 46 / 46, puis **vert en CI** (run `39156293593`). Rouge 2 h 30 : non débité |
+> | 🟠 `api/collect.ts` · hors `tsc` et hors tests | **−1** | premier fichier de `api/` (fonctions Vercel), créé le 2026-10-18 et exécuté en production. `tsconfig.app.json` n'inclut que `src`, `tsconfig.node.json` que `vite.config.ts` : `tsc -b` ne le compile pas. `vitest.config.ts` ne ramasse que `src/**`, `scripts/**` et `eslint-rules/**` : un test posé à côté ne tournerait jamais. Ses trois défenses (même origine, 2 Ko, robots) n'ont aucun test, seul ESLint le lit. Et la chaîne complète n'a jamais été vue écrire : `traffic_hits` vaut **0** ligne en production ~19 h après le branchement, la preuve `222` ne joue que la RPC |
+> | Planifiés | 0 | `Posture` rouge depuis 09:29 UTC : la garde a parlé, son objet est débité dans [`../faille.md`](../faille.md) (`TR-1`). Verts le 10-18 : `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest` (nouveau, `d9f10f4a`). `Sabotages` vert le 10-16. `restore-drill` : `dump-check` vert le 10-15, `drill` refusé faute de confirmation, comme prévu. `Weekly digest` pas encore joué (premier passage le 2026-10-19 à 7 h UTC). `vendor-watch.yml` retiré avec son fournisseur (`23a12fdb`) |
+>
+> **97 → 96.**
+
+> ### 🟢 2026-10-16 · +5 : `main` entièrement vert, et les deux instruments éteints rallumés
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab` (run `38902071817`, **les cinq jobs verts**), dépôt à `HEAD`
+> rejoué étape par étape dans un worktree propre, `npm ci` compris. Tableau de bord :
+> [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `main` rouge depuis le 2026-10-12 (−2 le 10-15) | **+2** | premier `CI` vert sur les cinq jobs le 2026-10-16 (`38870561074`, `89ddecb9`), puis à `HEAD` (`38902071817`) : `e2e` **254 verts, 3 instables, 0 échec**, en 22 min. En local à `HEAD`, les 23 étapes de `lint-test-build` sont vertes ; la suite unitaire rend **341 fichiers, 3 837 tests** verts (deux fichiers dont le worker n'avait pas démarré sous la charge, rejoués seuls : 46 / 46) |
+> | ✅ `org-guide.spec` rouge à chaque run (−1) | **+1** | `000cdcad` ; vert en CI depuis |
+> | ✅ `restore-drill` désactivé, `dump-check` jamais joué (−1) | **+1** | réactivé le 2026-10-15 ; `dump-check` **vert sur le dump chiffré** (run `38787097174`), le job `drill` arrêté à ses gardes comme voulu. Trois trous de `dump-check` corrigés en route (`d65420ef`), dont un faux `.gpg` en clair accepté comme déchiffré |
+> | ✅ AM-1 · 11 témoins rejoués sur 55 (« +1 et non +2 » le 10-01) | **+1** | `check:sabotages` étendu : **221 sabotages sur 55 gardes, 203 / 210 témoins rejoués (96,7 %)**, dans une copie temporaire ; `Sabotages` vert sur `main` (`66a8505c`). Deux témoins trop faibles trouvés et renforcés par le rejeu (`b8f0a435`) |
+> | Toutes les gardes jouées après un premier rouge | 0 | `10ba32f5`, avec témoin : le défaut qui a masqué dix rouges le 2026-10-12 ne peut plus se reproduire. Vu en vrai dès le 2026-10-16 : les runs `38873301698` et `38875691233` n'avaient qu'un rouge (`check:docs-scored`), et les 3 834 tests ont joué derrière lui. Prévention : rien à rembourser |
+> | Instables | 0 | 3 à `HEAD` (`touch-targets` et réglages sous WebKit). À suivre, non débités |
+>
+> **92 → 97.** ⚠️ Le run de `main` reste annulé à chaque poussée voisine : le 2026-10-16, plusieurs
+> sessions ont dû passer par une PR brouillon (n° 71, 72, 74, 76) pour obtenir un verdict `e2e`.
+>
+> ✅ **2026-10-16 (soir) · corrigé, les runs de `main` ne s'annulent plus** (`eb6ee7ba`) : un groupe de
+> concurrence par commit sur `main`, l'annulation gardée sur les PR. Avant : **108** runs `CI` de `main`
+> annulés sur **141** du 10-09 au 10-16. Vu sur deux pushs successifs : `38915680173` (`eb6ee7ba`, 33 min,
+> vert) et `38941369233` (`4e6f4293`, 26 min, vert), aucun annulé. Coût : **0** minute facturée (dépôt public) ;
+> pic rejoué sur l'historique, **6** runs et **16** jobs simultanés, **28** si `e2e` retombe à 4,3 h (en
+> file, sans annulation). `ci-alert.yml` tait désormais un rouge fini après le vert qui l'a réparé
+> (`scripts/ci-alert-perime.mjs`, push sur `main` de ce dépôt seulement). Témoins : « concurrency » dans
+> `ci-toutes-les-gardes.guard.test.mjs`, `ci-alert-perime.guard.test.mjs` ; sabotages `ci-main-annule`,
+> `perime-*`, `ci-alert-webhook-sourd` rejoués rouges.
+
+> ### 🟠 2026-10-15 · −4 : `main` rouge depuis trois jours, et le rouge de tête en cache dix autres
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`
+> (run `38476034238`), production, et dépôt à `HEAD` **rejoué étape par étape** dans un worktree
+> propre. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | 🔴 `main` rouge depuis le 2026-10-12 | **−2** | dernier `CI` vert : `9f6595b5` (2026-10-11, run `38151250177`). Depuis `93fac9aa` (10-12), `lint-test-build` s'arrête à l'**étape 2 sur 23**, `check:docs` (`src/modules/organizations/CLAUDE.md`, 15 378 o pour 14 000, entré avec `a6562733`) : **21 étapes jamais jouées en CI**, tests, build et budget compris. Rejouées en local à `HEAD` : `check:erasure`, `check:portability`, **sept gardes unitaires** et le budget de bundle sont rouges, chacun débité dans son domaine |
+> | Tests unitaires à `HEAD` | 0 | **3 762 tests, 338 fichiers** (3 395 et 306 le 10-03). Sous la charge : **13 échecs dans 12 fichiers**, exit 1. Six fichiers rejoués seuls, machine libre : **69 / 69 verts**, c'étaient des délais de 20 s dépassés (règle n° 1 du `CLAUDE.md` racine : le code de sortie, puis le décompte, puis l'attribution). Restent sept gardes, cf. tableau de bord. Couverture de l'outillage verte |
+> | 🔴 `e2e` · `org-guide.spec.ts` | **−1** | rouge à **chaque** run depuis le 2026-10-13, trois tentatives de 2 min : le test clique « Créer une équipe » dans le tiroir du guide, dont les catégories sont repliées depuis `c7051e19`. Test posé le 10-12 (`eb443737`), jamais vert depuis la refonte du tiroir. Le reste : **239 verts, 2 instables** (WebKit), en 39 min |
+> | 🔴 `restore-drill.yml` **désactivé à la main depuis le 2026-09-01** | **−1** | `C-86` (2026-09-20) l'avait coupé en deux, dont un `dump-check` **trimestriel et automatique**. Un workflow désactivé n'exécute pas son `schedule` : le premier passage, le 2026-10-05, n'a pas eu lieu, et `gh run list --workflow restore-drill` répond « could not find any workflows ». Depuis `BK-1` (10-13), le dump est chiffré : ce workflow est le seul qui le **déchiffre** pour le restaurer, et il n'a jamais tourné sous cette forme. Une garde qu'on ne peut voir ni rouge ni verte |
+> | `Visual` rouge depuis le 2026-10-12 | 0 | 4 cas sur 20, débité dans [`UI-PATTERNS.md`](./UI-PATTERNS.md) |
+> | CodeQL rouge du 10-13 au 10-14 | 0 | dépôt privé pendant l'épisode : pas un défaut de test (cf. [`../faille.md`](../faille.md)) |
+> | `Sabotages` (10-12), `Posture`, `Edge deploy drift`, `Migration coverage`, `Uptime`, `Deploy SHA drift` | 0 | verts |
+>
+> **96 → 92.** 🔴 **La leçon, et elle est outillable** : un job qui s'arrête au premier rouge ne
+> mesure que le premier rouge. Faire tourner toutes les étapes de garde (`if: ${{ !cancelled() }}`
+> sur chacune, puis une étape finale qui échoue si l'une a échoué) aurait montré les dix rouges le
+> jour même, au lieu de trois jours de silence.
+
+> ### 🟢 2026-10-03 · +3 : `main` entièrement vert en CI, `e2e` compris
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Verdict : run `CI`
+> `37109937640` sur `c7fb936c`, **les cinq jobs verts**, le premier `CI` entièrement vert sur `main`
+> depuis le 2026-09-23 (`869fb05a`). Correctifs : `d8b1584b`, `16fbaae9`, `ac1e8c40`, `59aa4fd8`,
+> `315804df` (autres sessions) et `d8c215ad`, `290d6f51`, `c7fb936c` (celle-ci).
+>
+> | Item | Effet | Mesuré le 2026-10-03 |
+> |---|---|---|
+> | ✅ CI de `main` rouge depuis le 2026-09-16 (−2 le 09-22) | **+2** | les cinq jobs verts sur `c7fb936c`. Tests unitaires **3 395** verts (306 fichiers), build et budget atteints et verts |
+> | ✅ Suite `e2e` entreprise en retard sur l'écran (−1 le 10-01) | **+1** | job `e2e` **vert** : **0 échec**, 11 instables, 226 verts, en **27 min** (4,3 h le 2026-10-02 : la durée venait bien des échecs et de leurs tentatives). Les trois derniers rouges WebKit étaient des tests en retard sur le mobile : compteur de liste masqué sous 640 px, aperçu au survol sans équivalent tactile, bulle de premier affichage par-dessus la commande |
+> | Onze cas instables | 0 | `touch-targets` sur quatre pages publiques WebKit (navigation interrompue par le serveur de dev), trois `a11y` / réglages WebKit, deux cas clavier chromium. Instables, pas rouges : à suivre, non débités |
+>
+> **93 → 96.** ⚠️ Un vert n'est pas un état acquis : une autre session travaille dans le même arbre
+> (onboarding), et le prochain push est le prochain verdict.
+
+> ### ⚪ 2026-10-02 (soir) · 0 : les tests unitaires de nouveau rouges, et c'est le produit qu'ils voient
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | Tests unitaires à `HEAD` | 0 | **3 échecs sur 3 395** (`9ea33927`, 306 fichiers sur 306), trois gardes qui mordent juste : `architecture.guard` (`OKRPage.tsx`, 617 lignes), `lazy-namespaces.guard` (`/okr` → `org`), et le témoin de `loading-empty-state.guard`, dont la dispense de `TeamProjectsTab` ne correspond plus à rien depuis la refonte de l'onglet (`28f4299d`) : dispense morte, à retirer. Les deux premiers sont débités dans [`ARCHITECTURE.md`](./ARCHITECTURE.md) et [`I18N.md`](./I18N.md), pas ici |
+> | `e2e` (−1 le 10-01) | 0 | dernier verdict complet `f301f0bf` : **57 échecs, 13 instables, 167 verts** (60 / 9 / 168 le 10-01 au soir). Les deux cas Agenda tombent ; restent `demo-entreprise-*`, `delete-org` (attend « Zone de danger »), `demo-calendar` surfaces 5 et 6 (tâche d'équipe), déjà rouges le 10-01, et les cibles tactiles de l'Aperçu. Déjà payé |
+> | 🔴 Un verdict `e2e` par jour, au mieux | 0 | le job dure **4,3 h** et `cancel-in-progress` l'annule à chaque push : le 2026-10-02, sur **18** runs `CI` de `main`, **16** annulés, **1** complet, 1 en cours. La durée vient surtout des échecs (57 cas × 3 tentatives, délais de 120 s) : réparer la suite entreprise la ramène. Conséquence de l'item déjà payé, nommée pour qu'elle ne se perde pas |
+> | ✅ Témoin de `check:supabase-posture` | 0 | la garde comptait **zéro** pour chaque advisor depuis sa pose (cf. [`../faille.md`](../faille.md)) : corrigée, cas ajouté à `gardes-posture.guard.test.mjs` à la forme réelle de l'API, **vu rouge sans le correctif, vert avec**. Jamais créditée : rien à rembourser |
+>
+> **93 → 93.** Dernier `CI` vert sur `main` : toujours le 2026-09-23 (`869fb05a`).
+
+> ### 🟢 2026-10-02 · +1 : la couverture des dépôts refermée, vérifiée en CI
+>
+> | Item | Effet | Mesuré le 2026-10-02 |
+> |---|---|---|
+> | Cinq dépôts livrés sans test | **+1** | remboursé : corrigé dans `2300fd62` et **vu vert en CI** (run `36985012405`, étape « Unit tests + coverage »). Le −1 du 2026-10-01 tombe |
+>
+> **Ce qui a été écrit.** Un fichier de test par dépôt, sur le modèle des `*.supabase.repository.test.ts` existants (mock `@/test/supabase-mock`, chaîne PostgREST assertée appel par appel) : `org-config` (29 cas, plus 8 pour les champs personnalisés, retirés le jour même avec la mig. `211`), `org-reports` (4), `team-lists` (14), `organizations/governance` (30), `team-okrs/execution` (9). Les cinq sont à **100 % de fonctions**. `functions.invoke`, absent du mock commun, est ajouté au client mocké du fichier qui s'en sert.
+>
+> 🔴 **Les cinq ne suffisaient pas, et la cause était ailleurs.** Après eux, le glob restait rouge sur un seul indicateur : fonctions à **90,84 %** pour 93. Deux raisons, mesurées fichier par fichier dans `coverage/coverage-summary.json` :
+>
+> - `governance.supabase.repository.ts` et `execution.supabase.repository.ts` **n'entrent pas dans le glob** : `**/supabase.repository.ts` exige ce nom exact. Leurs tests protègent le code, ils ne bougent pas le seuil. Le total recalculé sans eux (278 / 306) rend exactement le 90,84 % de vitest.
+> - Le vrai trou était **`team-projects`, 24 fonctions sur 41** : ses délégations vers `supabase.portfolio`, `audience.repository`, `supabase.access` et `supabase.activity` n'étaient appelées par aucun test. `supabase.repository.delegation.test.ts` les fige, **ordre des arguments compris** : il change d'un sous-module à l'autre (`addProjectDependency(projectId, dependsOnId, orgId)` contre `addProjectTeam(orgId, projectId, teamId)`) et tout est `string`, une inversion passerait `tsc`.
+>
+> Résultat, `npm run test:coverage`, exit 0, 305 fichiers sur 305 : glob à **93,90 L · 96,41 F · 80,91 S · 71,11 B** (seuils 90 / 93 / 76 / 65). **Aucun seuil touché**, ni à la baisse ni à la hausse : remonter le cliquet reste possible (~2 pt sous la mesure, convention du fichier), ce n'était pas la demande.
+>
+> ⚠️ **Deux pièges vus en route, sans effet sur la note** :
+>
+> - Isoler les tests d'une méthode qu'une autre session est en train de retirer a payé : `accca41d` a supprimé les cinq méthodes de champs personnalisés sans voir le fichier qui les testait, `main` ne compilait plus. Le fichier isolé a été supprimé seul (`f7ad34ea`), rien d'autre n'a bougé.
+> - Sous charge (CPU à 100 %, plusieurs sessions), `vitest` a rendu « 1 passed (1) » avec **exit 1** : `org-config.test.ts` n'avait jamais démarré (*Timeout waiting for worker*). Règle n° 1 du `CLAUDE.md` racine, rejouée telle quelle.
+>
+> **Étape suivante du job** : le build passe en CI, `check:bundle` tombe sur `OKRPage` (16,1 ko pour 15,0). C'est un défaut de Performance, pas de Tests.
+>
+> **92 → 93.** Détail : [tableau de bord](./README.md).
+
+> ### ⚪ 2026-10-01 · 0 : inchangée, pas pour les mêmes raisons
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du jour : CI de `main` (`43fed445` à
+> `7cd73d24`), production (catalogue, advisors), dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | AM-1 · témoins jamais rejoués | **+1** | `Sabotages` vert les 2026-09-24 et 09-28 : les 11 sabotages vus, arbre restauré. **+1 et non +2** : 11 témoins rejoués sur 55 |
+> | Quatre gardes du 09-20 sans verdict | **+1** | les quatre ont parlé : `edge-smoke` (12/12), `retention`, `Sabotages`, et `Visual`, qui a COMPARÉ (rouge le 09-30 sur une vraie régression, vert le 10-01) |
+> | 🔴 `e2e` : la suite ne suit plus l'interface entreprise | **−1** | **60 échecs, 9 instables** sur `43fed445` (23 le 09-22), presque tous `demo-entreprise-*` en chromium ET WebKit : les tests cherchent « Personnes » là où l'écran dit « Membres ». Des tests en retard sur le produit, pas des défauts produit |
+> | 🔴 Cinq dépôts livrés sans test | **−1** | `org-config`, `org-reports`, `organizations/governance`, `team-okrs/execution` à **0 %**, `team-lists` à 11 % : le seuil `src/modules/**/supabase.repository.ts` tombe (lignes 83,5 % pour 90). **Masqué** depuis des jours par les gardes placées AVANT les tests |
+> | Gardes en chaîne : quatre rouges cachés les uns derrière les autres | 0 | nommés et réparés le jour même, avec témoin vu rouge : `check:erasure` (cascade indirecte), `check:portability`, `check:env` (lisait `INVITE_ROW` comme `VITE_ROW`, et deux entrées du contrat n'étaient pas des variables), et un test d'agenda intermittent (`Date.now()` dans la même milliseconde). Après eux, **299 fichiers, 3 284 tests, tous verts** en CI |
+>
+> 🔴 **`main` n'a pas eu de CI verte depuis le 2026-09-23** (`869fb05a`). Déjà payé le 09-22 (−2), donc rien de plus, mais c'est l'état : le prochain blocage est la couverture des cinq dépôts ci-dessus, puis le build et le budget, que la CI n'a pas atteints depuis le 09-28.
+>
+> **92 → 92.** Détail : [tableau de bord](./README.md).
+
+> ### 🟠 2026-09-22 (soir) · +1 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | AM-2 · couverture des scripts et des fonctions | **+1** | `test:coverage:tooling` vert en CI à `HEAD` : **21 fichiers, 345 tests** ; `check:edge-coverage` vert |
+> | AM-5 · plancher de tests | **+1** | `check:test-floor` vert en CI |
+> | `C-78` · WebKit joué en CI | **+2** | `--project=mobile-safari` dans `ci.yml` et effectivement joué ; les 2 points dus depuis le 09-15 (« +1 et non +3 ») |
+> | AM-1 · témoins jamais rejoués | **0** | **non remboursé** : `Sabotages` a tourné une fois (09-21), les **11** sabotages ont été vus, mais le job est **rouge** sur son propre contrôle « arbre restauré » : le `sabotages.log` qu'il écrit dans l'arbre le fait échouer. Couverture **9 témoins sur 47**. → `C-113` |
+> | 🔴 **CI de `main` rouge depuis le 2026-09-16 07:11** | **−2** | **aucun des 60 runs suivants n'est vert.** `e2e` : 23 échecs, 13 instables, 214 passés (`806e7745`) ; `lint-test-build` : `check:bundle` à `HEAD`, `architecture.guard` à `806e7745`. Deux régressions sont entrées sans que personne ne les voie, alors que leurs gardes avaient mordu |
+> | 🔴 Quatre gardes du 09-20 n'ont jamais rendu un verdict | **−1** | `Visual` (19 échecs sur 19), `check:edge-smoke` (jamais sondé, clé absente du job), `check:retention` (plante), `Sabotages` (voir AM-1). **Rien ne vérifie qu'une garde neuve a été verte une fois** |
+> | AM-3 · force des assertions | **0** | toujours ouvert, aucun item |
+>
+> ✅ **Ce qui tient** : `npm test` en CI à `HEAD`, **243 fichiers, 2 790 tests**, tous verts ; 39 → **46**
+> fichiers `*.guard.test.*` suivis par git (`git ls-files`, 2026-09-22).
+> 🔴 **Ne pas relire « 5 jobs verts » dans ce document comme l'état courant** : c'est l'état du 09-16.
+>
+> **91 → 92.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
+
+> ### 🟠 2026-09-16 · -4 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
+>
+> **Ce n'est pas une régression.** Rien n'a cassé depuis la dernière passe. Les angles morts
+> listés juste en dessous **existaient tous** pendant que cette note montait : elle était
+> surévaluée parce qu'elle ne comptait que ce que les gardes regardent. C'est exactement ce qui
+> s'est produit le 2026-09-14, où cinq notes ont baissé sans qu'aucun défaut ne soit récent.
+>
+> **Barème, déclaré pour être contestable ligne par ligne :**
+>
+> | Situation | Effet |
+> |---|---|
+> | angle mort **structurel**, de portée large, qu'aucun outil ne regarde | −2 |
+> | angle mort réel mais de portée limitée, ou partiellement couvert | −1 |
+> | angle mort **assumé** (arbitrage documenté), ou déjà compté dans une passe antérieure | 0 |
+> | angle mort **comblé** le jour même, avec garde **et** témoin | +1 |
+>
+> **Le calcul pour cette note :**
+>
+> | Angle mort | Effet | Pourquoi |
+> |---|---|---|
+> | AM-1 · **les 36 témoins ne sont jamais rejoués**, aucun mutation testing | −2 | c'est le plus lourd du dépôt : la garde qui garde les gardes n'existe pas |
+> | AM-2 · la couverture ignore `scripts/**` et `supabase/functions/**` | −1 | le code qui décide si la CI est verte, et celui qui déplace de l'argent |
+> | AM-5 · aucun plancher sur le nombre de tests | −1 | un total qui baisse ne fait échouer aucun job |
+> | AM-3 · la couverture ne dit rien de la force des assertions | 0 | couvert par AM-1 |
+> | AM-4 · les 105 cas `mobile-safari` hors CI | 0 | déjà payé le 2026-09-14 (−3) |
+>
+> 🔴 **Une note baisse UNE FOIS, quand l'angle mort est nommé ; elle remonte quand il est
+> outillé.** Sans cette règle, nommer un angle mort deviendrait punitif, et la passe du
+> 2026-09-16 serait la dernière à en chercher. Un angle mort reconduit sans être comblé ne
+> re-coûte rien : il est **déjà payé**.
+>
+> ⚠️ Un transversal (T-1 à T-10 du [tableau de bord](./README.md)) est compté dans **chaque** audit
+> qu'il touche, parce que chaque note prétend quelque chose de différent. Les 36 témoins jamais
+> rejoués coûtent donc à la fois aux tests et à la sécurité, et ce n'est pas un double comptage.
+
+
+
+### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
+
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
+>
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
+>
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
+
+
+> **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
+> retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
+> que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
+> n'est pas un oubli d'auditeur, c'est une propriété de la méthode de notation.
+>
+> Le prototype du problème est daté : `CLAUDE.md` a pesé 150 ko et ~43 000 tokens sans qu'aucune
+> note ne bouge, alors qu'il est cité **13 fois** dans [`ARCHITECTURE.md`](./ARCHITECTURE.md), dont **9**
+> dans la seule colonne « Où il est écrit » du tableau des invariants, et **jamais** dans ce
+> qui est mesuré. Il était le mètre,
+> jamais l'objet.
+>
+> Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
+> invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
+
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+|---|---|---|---|
+| AM-1 | 🔴 **Les 39 témoins ne sont jamais rejoués** (« 36 » le 2026-09-16, **recomptés le 2026-09-20** : trois de plus en quatre jours, et aucun n'est rejoué davantage). Ce dépôt a une culture du témoin remarquable : chaque garde arrive avec un fichier `*.guard.test.*` **vu rouge sur des sabotages**. Mais ce sabotage est **manuel et unique**, joué le jour de sa création. Rien ne vérifie qu'un témoin détecte **encore** | `git ls-files` rend **39** fichiers `*.guard.test.{ts,tsx,mjs}` au 2026-09-20 (36 le 09-16). **Aucun mutation testing** : ni `stryker`, ni équivalent, dans `package.json` ni dans un workflow | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:sabotages` (`C-81`) — 🔴 ne prouve PAS : que les **39** témoins détectent ; le rapport couvert / total est imprimé exprès. À sa 1ʳᵉ exécution : `monitoring.guard.test.ts` ne détectait **plus rien** · 🔎 🔴 **2026-09-22 : job rouge**, 1 seul run (09-21) : les 11 sabotages vus, mais échec sur le contrôle « arbre restauré » (`sabotages.log` écrit dans l'arbre). Couverture **9 témoins sur 47**. → `C-113` · 🔎 ✅ **2026-09-24 : premier run VERT** (`35967766181`, lancé à la main), journal déplacé dans `$RUNNER_TEMP`. Les 11 sabotages vus, arbre intact. La couverture reste **9 témoins sur 47** · 🔎 ✅ **2026-10-15 : rejeu ÉTENDU, et dans une COPIE.** `check:sabotages` recompte les témoins à chaque run par l'AST (cas dont le titre, ou celui d'un `describe` porteur, a la marque `TÉMOIN`) : **210 témoins dans 47 fichiers**, 79 par leur propre nom. **203 / 210 rejoués (96,7 %)**, vus ROUGES par leur nom sous un sabotage et verts sans lui, dont **73 / 79** parmi les nommés ; **221 sabotages sur 55 gardes**, dont `check:rls`, `validate:migrations`, `check:erasure`, `check:portability`, `check:retention` (production simulée, aucun appel réseau), architecture, bundle et i18n. Plus aucune écriture dans l'arbre de travail : copie temporaire, `node_modules` par lien retiré avant tout effacement, 3 copies en parallèle. Le premier rejeu a trouvé **trois témoins qui ne voyaient pas leur défaut** (découpage de hash de `check-bundle-budget`, commentaires de `check-import-cycles`, marque `TÉMOIN` du compteur), renforcés le jour même. Run `Sabotages` `38810356599` **vert** (175 s). Les 7 non rejoués sont nommés à chaque run : aucun sabotage réaliste ne les fait rougir |
+| AM-2 | **La couverture ne porte que sur `src/**`.** En sont donc absents : `scripts/**` (les gardes elles-mêmes, c'est-à-dire le code qui décide si la CI est verte) et `supabase/functions/**` (le code qui déplace de l'argent) | `vitest.config.ts` : `include: ['src/**/*.{ts,tsx}']`. Les seuils par fichier ne visent que `src/` | ✅ **OUTILLÉ le 2026-09-20** · `npm run test:coverage:tooling` · `check:edge-coverage` (`C-82`) — 🔴 ne prouve PAS : `supabase/functions/**` en lignes — impossible (Deno, jamais importé) ; le plancher de témoins en tient lieu. 1ʳᵉ exécution : **3 scripts** sortaient du rapport en silence, à cause de leur shebang |
+| AM-3 | **Un taux de couverture ne dit rien de la force des assertions.** Une ligne exécutée par un test qui n'assure rien compte comme couverte | par construction de la couverture v8 | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte**, et c'est le dernier trou de ce tableau. `C-81` rejoue des témoins, ce qui n'est PAS du test de mutation : un témoin prouve qu'une garde mord, pas qu'une assertion est forte — *(jugé outillable le 09-16 : AM-1 y répond en partie : la mutation mesure ce que la couverture ne voit pas)* |
+| AM-4 | ✅ **COMBLÉ le 2026-09-16, vérifié le 2026-09-20.** Était : « les 105 cas `mobile-safari` ne tournent dans aucun workflow » (item `C-78`) | 🔴 **Périmé le jour même où il a été écrit** : `git show HEAD:.github/workflows/ci.yml` lance `--project=chromium --project=supabase-stub --project=mobile-safari` depuis `af0190bd`, 2026-09-16, et `e2e/_warmup-mobile.spec.ts` est suivi par git | ✅ **FERMÉ le 2026-09-16** · `C-78`, `af0190bd` — `mobile-safari` est joué en CI. 🔴 ne prouve PAS : ni appareil réel, ni Android, ni réseau bridé (`C-97`, `M-25`) |
+| AM-5 | **Aucune garde ne relie un test à sa raison d'être.** Un test supprimé avec le code qu'il gardait ne laisse aucune trace : le total baisse, et un total qui baisse ne fait échouer aucun job | il n'existe pas de plancher sur le nombre de fichiers ni de cas | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:test-floor` (`C-83`) — 🔴 ne prouve PAS : qu'un test teste quelque chose : un plancher interdit la disparition, pas la complaisance. 1ʳᵉ exécution : le plancher était posé **deux trop bas** (deux témoins portent un tiret) |
+
+
+> ### 🟡 2026-09-15 · +1 sur les 3 retirés, et le reste attend d'être COMMITÉ
+>
+> **Ce qui revient, et c'est mesuré** : la boucle de `e2e/touch-targets.spec.ts` passe de 8 à
+> **16 routes** (C-80, commit `ede8d7e6`), donc la suite E2E gagne de vrais cas sur de vraies pages
+> publiques, et un job CI s'ajoute, `couverture` (C-79, commit `52d23937`), avec **16 cas de témoin
+> vus rouges sur quatre sabotages** avant d'être commités.
+>
+> | | 09-14 soir | **09-15** |
+> |---|---|---|
+> | Fichiers de test unitaires, **en CI** | 228 | **229** |
+> | Cas unitaires, **en CI** | 2 586 | **2 603** |
+> | Couverture, en CI | 31,15 L · 30,73 S | **31,15 L · 30,73 S**, inchangée |
+> | Cas Playwright listés | 220 / 26 fichiers | **237 / 27**, arbre de travail |
+> | dont `chromium` | 107 | **115** |
+> | dont `mobile-safari` | 96 | **105** |
+> | dont `supabase-stub` | 17 | 17 |
+> | Jobs CI | 5 | **6** (`couverture` s'ajoute) |
+> | Dernier run vert | `34935509652` | **`34945082906`** sur `66c7d4ff`, les cinq jobs |
+>
+> ⚠️ **Le 237 est celui de l'ARBRE, pas du dépôt.** À `HEAD` le compte est **236 / 26** : le
+> project `mobile-safari-warmup` et son fichier `e2e/_warmup-mobile.spec.ts` (1 cas) ne sont connus
+> de git sur aucune branche. C'est une déduction, pas une mesure, et elle est écrite comme telle.
+>
+> ## 🔴 Le défaut trouvé en mesurant, et sa correction : un CONSEIL de `CLAUDE.md` désarmait C-47
+>
+> ⚠️ **Ce paragraphe a d'abord affirmé « `npm test` sort en exit 0 après avoir sauté des
+> fichiers ». C'est FAUX, et la correction est ci-dessous.** L'affirmation a vécu quelques minutes
+> dans trois documents avant que le code de sortie, pourtant imprimé par la commande elle-même, soit
+> relu : **`EXIT=1`**. Vitest signale. C'est la lecture qui avait failli, sur la seule ligne de
+> résumé.
+>
+> La suite lancée depuis ce poste ce jour a annoncé **« 225 passed (225) » et sorti en exit 1**.
+> La CI, sur le même commit, en joue **229**. Quatre fichiers n'ont jamais démarré :
+>
+> ```
+> Error: [vitest-pool]: Failed to start forks worker for test files
+>   src/components/AuthForm.confirmation.test.tsx
+>   src/components/onboarding/FirstRunSetup.test.tsx
+>   src/components/organization/OrgBillingTab.refund.parcours.test.tsx
+>   src/hooks/use-modal-a11y.guard.test.tsx
+> Caused by: [vitest-pool-runner]: Timeout waiting for worker to respond
+> ```
+>
+> ### La cause, et elle est dans la documentation de ce dépôt
+>
+> 🔴 **`CLAUDE.md` conseillait `--maxWorkers=4`**, et la session a suivi le conseil. Or
+> `vitest.config.ts` fixe **`maxWorkers: 2`**, et le commentaire qui l'accompagne explique
+> précisément pourquoi (finding **C-47**, 2026-09-03) : 4 cœurs et 8 Go, la majorité des fichiers
+> montent jsdom, et **quatre jsdom concurrents saturent la RAM**. Un worker qui ne répond plus est
+> alors compté comme un échec sans avoir exécuté un seul cas.
+>
+> Le conseil était **antérieur à C-47** et n'avait jamais été retiré. Un drapeau de ligne de
+> commande écrase la config : **suivre la documentation désarmait la garde**. Corrigé le
+> 2026-09-15, avec l'interdiction écrite à sa place.
+>
+> ### Ce qui reste vrai, et qui vaut d'être retenu
+>
+> ⚠️ **Le total affiché est celui des fichiers COLLECTÉS, pas des fichiers EXISTANTS.** « 225
+> passed (225) » ne dit pas qu'il en manque quatre : c'est le **code de sortie** qui le dit, et le
+> bloc `Unhandled Errors` plus haut. Un résumé ne remplace pas `$?`.
+>
+> ⚠️ **L'un des quatre fichiers sabordés est `use-modal-a11y.guard.test.tsx`**, qui porte les
+> **trois témoins** de `C-53`. Une session qui n'aurait lu que le résumé aurait conclu « suite
+> verte » sans avoir joué les témoins qui garantissent que la garde détecte encore quelque chose.
+>
+> ❌ **Ne jamais passer `--maxWorkers` en ligne de commande sur ce dépôt.** La borne est mesurée,
+> elle est dans la config, et elle a une raison écrite. Si la durée devient le problème, la remonter
+> **dans `vitest.config.ts` en remesurant la stabilité**, jamais par un drapeau.
+>
+> ✅ **La note s'appuie sur la CI** : run `34945082906`, 229 fichiers, 2 603 cas, couverture
+> 31,15 L. Et la suite relancée ici **sans drapeau** est complète, cf. l'encadré de vérification
+> ci-dessous.
+>
+> ### La preuve, avant et après, sur la même machine et le même arbre
+>
+> | | `npm test -- --maxWorkers=4` | **`npm test`** (borne de la config) |
+> |---|---|---|
+> | Code de sortie | **1** | **0** |
+> | Fichiers joués | **225** | **229**, le périmètre entier |
+> | Cas | 2 574 + 1 sauté | **2 603 + 1 sauté** |
+> | Workers morts | **4** | **0** |
+> | Blocs `Unhandled Errors` | 1 (« 4 unhandled errors ») | **0** |
+> | Durée | ~5 min, incomplète | **576,6 s**, complète |
+>
+> ✅ **Le compte local sans drapeau est exactement celui de la CI** : 229 fichiers, 2 603 cas. Le
+> seul écart restant est le cas POSIX de `check:edge`, sauté sur Windows par `it.skipIf(win32)` et
+> joué sur le runner Linux.
+>
+> ⚠️ **Le drapeau ne rendait pas la suite plus rapide, il la rendait incomplète.** Un run de 5 min
+> qui saute 4 fichiers n'est pas deux fois plus rapide qu'un run de 9,6 min : c'est un autre run.
+>
+> 🔴 **La leçon porte sur la méthode, pas sur vitest** : l'outil a signalé correctement, un
+> conseil périmé a créé la panne, et une lecture pressée a produit un diagnostic faux publié dans
+> trois documents. Les trois se corrigent ; le troisième est le plus coûteux, parce qu'il avait
+> l'air d'une découverte.
+>
+> ## 🔴 Pourquoi seulement +1 : C-78 est écrit et n'est PAS dans le dépôt
+>
+> Le travail existe et il est sérieux : `--project=mobile-safari` ajouté au job `e2e`, `webkit`
+> ajouté au `playwright install`, et un project de chauffe dédié (`mobile-safari-warmup`) qui
+> répond au vrai problème mesuré la veille, à savoir que le coût de compilation à froid de Vite
+> tombait entièrement sur le premier cas WebKit.
+>
+> **Mais `main` ne le portait pas au moment de la mesure.** Vérifié, pas déduit :
+>
+> ```
+> git show HEAD:.github/workflows/ci.yml | grep -A1 "Run E2E"
+>   run: npx playwright test --project=chromium --project=supabase-stub
+>
+> git ls-files --error-unmatch e2e/_warmup-mobile.spec.ts
+>   error: pathspec ... did not match any file(s) known to git
+> ```
+>
+> ⚠️ **ET LA MOITIÉ EN A ÉTÉ COMMITÉE PENDANT L'ÉCRITURE DE CE PARAGRAPHE**, par une autre
+> session : `a71180a0`, « trois causes racines qui rendaient WebKit injouable, et aucune n'était le
+> produit (**C-78, 1/2**) ». Remesuré immédiatement après :
+>
+> | | état |
+> |---|---|
+> | `e2e/_warmup-mobile.spec.ts` | ✅ **suivi par git** |
+> | `playwright.config.ts`, `e2e/fixtures.ts` | ✅ **commités** |
+> | `.github/workflows/ci.yml` | ❌ **toujours non commité** : `main` lance encore deux projects |
+>
+> **Le fond ne bouge pas, le détail si** : les 105 cas WebKit ne sont toujours joués par aucun
+> workflow, donc la note ne peut rien créditer de plus. Mais la phrase « inconnu de git » est
+> devenue fausse en une heure, et elle est corrigée plutôt que laissée. C'est la version dépôt de
+> la règle que ce projet applique à la production : **l'état n'est jamais celui qu'on a laissé**,
+> parce que plusieurs sessions travaillent dans le même arbre.
+>
+> ✅ **Ce que la moitié 1/2 a réellement résolu, et c'est important** : le project n'était pas
+> seulement absent de la CI, **il était injouable**. Un cas mesuré à **54,7 minutes** tourne
+> désormais en **3,4 s** (`navTo` 2 550 ms, `networkidle` 11 ms, `axe.analyze` 3 462 ms), et les
+> trois causes sont nommées : un `page.goto` à 30 s pendant que Vite compile la landing, un
+> `load` **qui n'arrive jamais** sous WebKit sur la landing, et le coût de chauffe non isolé.
+> ⚠️ Le deuxième point recoupe la mesure du 09-14 depuis un autre angle : contre la
+> **production**, `load` tombait en 2 159 ms. En **développement**, il n'arrive pas. La différence
+> n'est pas le moteur, c'est Vite qui compile à la demande.
+>
+> 🔴 **C'est la deuxième fois en cinq jours que ce dépôt se fait la même chose.** `C-14` avait vécu
+> trois jours dans un arbre non commité pendant que trois documents l'annonçaient acquis, et trois
+> `fix(build)` d'autres sessions ont payé la facture. La règle qui en était sortie est la sixième du
+> prompt de correction : **une preuve est opposable ou elle n'existe pas**. Elle vaut ici sans
+> atténuation : tant que `ci.yml` n'est pas commité, C-78 n'a rien changé pour personne.
+>
+> ⚠️ **Ce n'est pas un reproche au travail, c'est un constat sur son état.** Rien n'indique qu'il
+> soit fini : une session peut avoir été interrompue. Le point mesurable est que la note ne peut
+> pas le créditer, et que le jour où le commit arrive, le +2 restant suit dans la même heure.
+>
+> ✅ **Ce qui a été revérifié inchangé** : run CI `34945082906` vert sur `lint-test-build`, `audit`,
+> `e2e`, `rls-integration` et `lighthouse`. La boucle élargie de `touch-targets` passe donc bien en
+> CI, sur Chromium au viewport 375 x 812.
+
+
+> ### 🔴 2026-09-14 (soir) · −3 : 44 % des cas E2E ne tournent nulle part, et le commentaire qui l'acte contredit la règle écrite juste au-dessus
+>
+> **Tout ce que la note du matin affirme a d'abord été rejoué, et tient** :
+>
+> | Mesure | Résultat ce soir | Annoncé ce matin |
+> |---|---|---|
+> | `npm test` | **228 fichiers, 2 586 passés, 1 sauté**, exit 0, 305,65 s | 2 586 / 228 ✅ |
+> | `npm run test:coverage` | verte, exit 0 : **31,15 L · 30,73 S · 24,48 F · 26,35 B** | 24,41 F · 26,31 B (deux valeurs légèrement décalées) |
+> | `npx playwright test --list` | **220 cas / 26 fichiers** | 220 / 26 ✅ |
+> | `npm run typecheck` · `lint` | 0 erreur · 0 erreur, 31 warnings | ✅ / 35 warnings |
+> | `check:rls` · `validate:migrations` | 132 / 106, 0 violation · 152 fichiers, 0 erreur | ✅ |
+>
+> ⚠️ Le **1 test sauté** n'avait jamais été nommé : c'est le cas POSIX du témoin de `check:edge`
+> (`scripts/check-edge-deploy.guard.test.mjs:364`, `it.skipIf(process.platform === 'win32')`), qui
+> efface un arbre dont un sous-répertoire est en lecture seule. Il est justifié et commenté dans le
+> code ; il reste que sur la machine de développement, **la suite annonce « zéro échec » en ne
+> jouant pas le cas qui a effectivement échoué le 09-13**.
+>
+> ## 🔴 Le −3 : les 96 cas WebKit
+>
+> `playwright.config.ts` déclare quatre projects. Comptés un par un ce soir
+> (`--list --project=…`) :
+>
+> | Project | Cas | Fichiers | Joué par la CI ? |
+> |---|---|---|---|
+> | `chromium` | 107 | 21 | ✅ |
+> | `supabase-stub` (+ warmup) | 17 | 5 | ✅ |
+> | **`mobile-safari`** (iPhone 12, **WebKit**) | **96** | **19** | ❌ **jamais** |
+>
+> Le job `e2e` de `.github/workflows/ci.yml` lance exactement
+> `npx playwright test --project=chromium --project=supabase-stub`, soit **124 cas sur 220**.
+> **96 cas, soit 44 % de la suite E2E, ne sont joués par aucun workflow** : ni `ci.yml`, ni
+> `uptime`, ni `scalability-volume`, ni aucun autre (vérifié par `grep` sur
+> `.github/workflows/`, seule occurrence : le commentaire qui les exclut).
+>
+> 🔴 **Et le motif est écrit dans le même commentaire que la règle qu'il enfreint.** Trois lignes
+> plus haut, à propos de `supabase-stub` :
+>
+> > « le laisser hors de la CI reviendrait à poser sur `main` des gardes qui ne tournent nulle part
+> > la faute que ce dépôt s'est déjà faite deux fois. »
+>
+> Puis, immédiatement après :
+>
+> > « `mobile-safari` reste hors CI (WebKit, ~1 min d'installation en plus). »
+>
+> Le raisonnement est juste, il est appliqué à un project et pas à l'autre, et le prix est
+> **une minute d'installation** contre 96 cas. C'est la définition même du défaut que ce document
+> traque depuis le 2026-09-03 : non pas une garde qui mesure à côté, mais **une zone que rien ne
+> mesure**, sans run rouge pour la signaler.
+>
+> **Ce que ça laisse sans filet, nommément** : les 19 fichiers concernés portent les feuilles
+> mobiles, les gestes tactiles, `reduced-motion-sheets`, les cibles tactiles WCAG 2.5.5, et les
+> suites d'accessibilité au clavier, donc **tout le périmètre iOS Safari** que
+> [`MOBILE.md`](./MOBILE.md) documente sur des dizaines de pages, et le moteur sur lequel tourne
+> VoiceOver, plafond déclaré de [`ACCESSIBILITY.md`](./ACCESSIBILITY.md).
+>
+> ⚠️ **Rejoués depuis ce poste, et voici l'état HONNÊTE** : le run complet des 96 cas a été lancé
+> puis **interrompu** après 5 cas (2 échecs, tous deux `page.goto` en timeout de 120 s au démarrage
+> à froid du serveur Vite). **Ce n'est pas un défaut produit** : la même page, sur le même moteur
+> WebKit / iPhone 12, chargée depuis la **production**, rend `load` en **2 159 ms avec zéro requête
+> en vol** (sonde dédiée, `webkit.launch()` + `devices['iPhone 12']`). Le résultat utile est donc :
+> **personne ne sait si ces 96 cas passent**, et les rejouer à la main bute sur un coût de
+> démarrage que la CI, elle, absorberait sans s'en apercevoir.
+>
+> **Pourquoi −3 et pas −1** : ce n'est pas une lacune de couverture parmi d'autres, c'est la
+> couverture d'un des deux moteurs de rendu du web et de la totalité du périmètre mobile, dans un
+> produit dont la documentation mobile est le deuxième plus gros document du dépôt. Et c'est
+> réparable en une ligne (`--project=mobile-safari` ajouté au job `e2e`, plus `webkit` dans le
+> `playwright install`), donc le coût du défaut est très supérieur au coût du correctif.
+>
+> ✅ **Ce qui, en revanche, tourne vraiment et a été vu vert ce soir** : `a11y-audit`,
+> `a11y-keyboard-audit` et `touch-targets` sur Chromium, **37 cas, 37 passés, 8,9 min, exit 0**.
+
+
+> ### 🟢 2026-09-14 · +2 : une garde qui était écrite mais n'existait pas en CI y tourne enfin, et une autre a mordu SUR elle-même
+>
+> `src/lib/toast.guard.test.ts` (4 cas, dont un témoin) vivait depuis trois jours sur un disque,
+> non suivi par git : elle **ne tournait jamais** en CI. Commitée avec la façade qu'elle garde
+> (`7134d7fe`), elle tourne désormais à chaque run — et le job qu'elle protège (`Budget de bundle`)
+> est passé du rouge (3 fois, par d'autres sessions) au vert opposable.
+>
+> **220 cas Playwright** (210 → 220, +10) : `e2e/stubbed/delete-org.spec.ts` (4 cas) prouve pour la
+> première fois le parcours nominal « rembourser → résilier → supprimer » (C-39), en **retenant**
+> la réponse de l'Edge Function pour distinguer « avant » de « en même temps ». Vu rouge sur une
+> mutation du hook avant d'être commité.
+>
+> **`src/refund.guard.test.ts` a rougi SUR l'extraction du verrou anti-rejeu, et avait raison** : une
+> garde textuelle qui cherche du code à son ancien emplacement doit échouer quand le code déménage,
+> sinon elle passe au vert en ne regardant plus rien. Corrigée pour suivre le code — et
+> **renforcée** : un cas neuf interdit désormais explicitement de recopier l'arithmétique dans
+> l'entrypoint. Neuvième occurrence de cette classe de défaut en deux semaines, et la première où
+> c'est MOI qui l'ai provoquée en développant.
+>
+> Coverage : **2 586 tests / 228 fichiers**, zéro échec, `exit 0` — 31,15 L / 30,73 S / 24,41 F /
+> 26,31 B. ⚠️ Le pourcentage baisse légèrement malgré 116 tests de plus : le dénominateur a bougé
+> aussi. Un taux ne se lit jamais seul.
+>
+> **Pourquoi +2 et pas plus** : rien de tout ça n'est une capacité neuve du harnais — c'est la
+> correction d'une garde qui n'existait pas encore où on la croyait, et le comblement d'un trou de
+> couverture sur un chemin qui déplace de l'argent. Le mérite structurel appartient aux gardes du
+> 09-11/09-13 (`toast.guard`, `tracked-imports`), pas à cette passe.
 
 > ### 2026-09-03 · +1, quatre cliquets de plus et quatre gardes prises en défaut
 >
@@ -11,7 +530,7 @@
 >
 > | | 08-29 | **09-03** |
 > |---|---|---|
-> | Suite unitaire | 1 836 / 166, verte | **2 051 / 179, verte** (mesurée le 2026-09-02) |
+> | Suite unitaire | 1 836 / 166, verte | **2 051 / 179, verte** (mesurée le 2026-09-02) · ⚠️ **2 586 / 228 au 2026-09-14** — instantané daté, non réécrit |
 > | Jobs CI verts sur `main` | 5 sur 5 | **5 sur 5**, une rougeur `e2e` du 08-30 au 09-01 refermée |
 > | Fichiers de garde (`*guard*`, comptés dans l'arbre) | 6 | **9** |
 >
@@ -455,7 +974,15 @@ npm run test:coverage # + couverture v8 (seuils par fichier — bloquant CI)
 
 ### Couverture · mesure du 2026-09-11
 
-✅ **VERTE** : 2 470 tests / 221 fichiers, zéro échec, aucun seuil franchi.
+✅ **VERTE au 2026-09-14** : **2 586 tests / 228 fichiers**, zéro échec, `exit 0`, aucun seuil
+franchi — 31,15 L · 30,73 S · 24,41 F · 26,31 B.
+
+⚠️ **Les pourcentages BAISSENT alors que 116 tests ont été ajoutés** depuis le 09-11 (31,32 L pour
+2 470 / 221). Ce n'est pas une régression : le **dénominateur** bouge aussi, du code neuf étant
+arrivé avec. Un taux de couverture ne se lit jamais seul, toujours avec le nombre de lignes qu'il
+rapporte — sans quoi on « corrige » une baisse qui n'en est pas une, ou on rate une vraie.
+
+*Mesure précédente, conservée :* ✅ **VERTE** : 2 470 tests / 221 fichiers, zéro échec, aucun seuil franchi.
 
 | | 2026-08-29 | **2026-09-11** | Seuil global |
 |---|---|---|---|
@@ -541,23 +1068,31 @@ npm run test:e2e:report  # rapport HTML
 > project ne l'avait donc **jamais** été — la moitié mobile de chaque chiffre de
 > ce fichier venait de la CI, ou de nulle part. Installé depuis.
 
-### Décompte réel — mesuré le 2026-09-11 (`npx playwright test --list`)
+### Décompte réel — mesuré le 2026-09-14 (`npx playwright test --list`)
 
-**210 cas, 25 specs, 4 projects.**
+**220 cas, 26 specs, 4 projects.**
 
 | Project | Cas | Ce qu'il joue |
 |---|---|---|
-| `chromium` | **103** | Desktop Chrome, mode démo |
-| `mobile-safari` | **94** | iPhone 12 / WebKit, mode démo |
-| `supabase-stub` | **12** | Desktop Chrome, **hors mode démo** (cf. plus bas) |
+| `chromium` | **107** | Desktop Chrome, mode démo |
+| `mobile-safari` | **96** | iPhone 12 / WebKit, mode démo |
+| `supabase-stub` | **16** | Desktop Chrome, **hors mode démo** (cf. plus bas) |
 | `supabase-stub-warmup` | **1** | Préalable de chauffe, pas un parcours (cf. plus bas) |
 
-⚠️ **Ce que la commande affiche est 212, pas 210, et l'écart se dit.**
-`e2e/_tmp-probe.spec.ts` est une sonde jetable laissée par une autre session,
-**non suivie par git** : elle est collectée localement (2 cas, un par project
-démo) et n'existe ni dans le dépôt ni en CI. Le chiffre du tableau est celui du
-**dépôt**, seul chiffre opposable. Un décompte local qu'on recopie sans regarder
-ce qui est suivi est exactement la façon dont le précédent est devenu faux.
+**Ce que la passe du 2026-09-14 a ajouté** : `e2e/stubbed/delete-org.spec.ts`
+(4 cas), le parcours nominal de suppression d'entreprise — rembourser, résilier,
+supprimer — exigé par **C-39** et jamais joué jusque-là. Il prouve l'ordre en
+**retenant la réponse** de l'Edge Function : tant qu'elle ne part pas, aucune
+`rpc/delete_organization` ne doit exister. Vu ROUGE sur une mutation de
+`useDeleteOrgFlow` avant d'être commité.
+
+✅ **La sonde jetable `e2e/_tmp-probe.spec.ts` est SUPPRIMÉE** (2026-09-14). Elle
+était non suivie par git, rouge, et faussait de 2 cas tout recomptage local : la
+commande affichait 212 quand le dépôt en portait 210, et l'écart devait être
+expliqué à chaque mesure. Local et dépôt disent désormais le même nombre.
+⚠️ Ce que cet écart enseignait reste vrai : **un décompte local qu'on recopie
+sans regarder ce qui est SUIVI** est exactement la façon dont le précédent est
+devenu faux.
 
 ⚠️ **`supabase-stub-warmup` n'est pas un parcours** : il compile les deux écrans
 du harnais avant que les douze autres cas ne commencent. Le compter avec eux
@@ -713,6 +1248,30 @@ mobile n'offre pas de menu de ligne équivalent. 🔴 **C'est un écart de produ
 pas un verdict de conformité mobile** — il est nommé dans `playwright.config.ts`
 plutôt que caché derrière un `skip` silencieux.
 
+✅ **Depuis le 2026-10-16, `a11y-keyboard-audit` JOUE sous WebKit** (`C-118`, fermé). Il en était
+exclu depuis le 2026-09-23 (11 cas rouges, aucun audit clavier Safari). Triage des cas rouges, un par un :
+**un défaut produit** (Safari n'émet aucun `contextmenu` au clavier : `Shift+F10` et la touche Menu
+n'arrivent qu'en `keydown`, donc la feuille d'actions d'une tâche était inatteignable au clavier sur la
+carte mobile, WCAG 2.1.1 ; corrigé dans `TaskCard`, 6 cas unitaires dont trois témoins) ; **un écart
+Safari déclaré** (Tab saute les liens par défaut, Option+Tab les parcourt ; Playwright ne sait pas
+l'émuler, le cas du lien d'évitement mesure donc les mêmes propriétés sans passer par Tab, après une
+sonde de capacité) ; **le reste du harnais** (le fichier s'exécutait à 390 px tactile alors que ses
+déclencheurs sont de bureau, `/tasks` lu avant son rendu, barre mobile non attendue après un
+redimensionnement, 2 s de fermeture trop courtes pour une modale animée sous WebKit).
+⚠️ Le fichier impose lui-même un poste de bureau (`test.use`) : c'est l'audit d'une personne au
+clavier, et c'est ce qui permet de le jouer dans l'unique project WebKit du job `e2e` sans toucher à
+`ci.yml`. ❌ Ne pas lire « 16 cas verts sous WebKit » comme « Safari est accessible au clavier » :
+Option+Tab, VoiceOver et l'accès complet au clavier d'iOS ne sont pas émulés.
+
+⚠️ **Six autres specs supposaient le bureau, et ont été rendues adaptatives plutôt que retirées**
+(2026-09-23) : le bouton « Créer » de l'en-tête mobile (`demo-create-task`), un pourcentage OKR
+**visible** plutôt que le premier du DOM (`demo-journeys`), la liste de tâches repliée de l'agenda
+d'un membre (`demo-entreprise-session-fixes`), le bouton flottant « Nouvelle habitude » et un
+viewport de bureau porté par le test pour les deux déclencheurs qui n'existent qu'au-dessus de
+768 px (`reduced-motion-sheets`). Et un vrai défaut en est sorti : les cases de la grille
+d'habitudes mobile n'avaient **aucun nom accessible une fois cochées**, ni d'état exposé
+(`HabitCard`, corrigé : `role="checkbox"`, `aria-checked`, nommées par l'habitude et le jour).
+
 Les 4 specs de la vague entreprise couvrent le mode entreprise, arrivé jusque-là
 sans E2E : `demo-entreprise-dependencies` (9), `demo-entreprise-tasks-tab` (5),
 `demo-entreprise-session-fixes` (5), `demo-entreprise-okr-modal` (2).
@@ -724,7 +1283,7 @@ sans E2E : `demo-entreprise-dependencies` (9), `demo-entreprise-tasks-tab` (5),
 | `stubbed/first-run.spec.ts` | 5 | `FirstRunSetup` : la garde s'ouvre sur un compte vide, **chaque étape écrit au moment où elle est validée** (mesuré sur les requêtes parties, pas sur un état React), la première tâche part sans échéance, l'accueil ne revient pas |
 | `demo-calendar.spec.ts` | 7 | Le calendrier COSMO sur ses **six** surfaces, plus `minDate` du report en masse et le focus au clavier dans la grille (défaut React 18 / `forwardRef`) |
 | `demo-task-dependencies.spec.ts` | 2 | Graphe **personnel** (mig. 132) : poser une arête et la relire, refuser un cycle **indirect à trois maillons**, ne jamais se proposer soi-même, retirer ; « Créer et lier » |
-| `demo-billing-disarmed.spec.ts` | 1 | Tant que `ENTERPRISE_BILLING_ENFORCED` est `false`, aucun CTA de paiement ni de remboursement n'est atteignable |
+| `demo-billing-consent.spec.ts` | 1 | Facturation armée depuis la bascule live (`5bf21a50`) : prix TTC affichés, et aucun « Choisir ce palier » tant que les DEUX cases de rétractation ne sont pas cochées (S-6, L221-28). S'appelait `demo-billing-disarmed` et vérifiait l'inverse jusqu'au 2026-10-22 |
 
 Les quatre premiers cas ont été **vus rouges avant d'être verts** : différer les
 créations de `FirstRunSetup` à la dernière étape fait tomber le premier ; le
@@ -814,7 +1373,7 @@ npx playwright test e2e/a11y-audit.spec.ts --project=chromium
   développement, ils n'ont donc pas pu être posés « au réel mesuré » comme tous les autres budgets
   du dépôt. **À resserrer après le premier run réel**, un budget très au-dessus du réel ne mesure
   rien.
-- `concurrency` annule les runs obsolètes, `permissions: contents:read`. Dépendances : `.github/dependabot.yml`.
+- `concurrency` : sur une PR, le push suivant annule le run en cours ; sur `main`, un groupe par commit, aucun run annulé (2026-10-16). `permissions: contents:read`. Dépendances : `.github/dependabot.yml`.
 
 ### `edge-deploy-drift.yml` · le code déployé contre le dépôt *(ajouté le 2026-09-04, finding C-35)*
 
@@ -869,3 +1428,140 @@ Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
     exactement le finding C-35. `npm run check:edge` le dira, mais après coup.
 13. ✅ **Si touche un `<button>` icon-only, un `<input>`, ou ajoute une page publique** : relancer le scan a11y (Critical = 0).
 14. ✅ **Si suspicion de bug iOS Safari** : tester avec `?debug=1` (Eruda).
+
+---
+
+## Vitest, couverture, RLS et Playwright · repris de `CLAUDE.md` (déplacé le 2026-09-16)
+
+> Commentaires de la section `## Scripts` de `CLAUDE.md`, où ils étaient chargés à chaque
+> session. Déplacés ici **sans une coupe**. La racine ne garde que la commande.
+
+```bash
+npm test           # Vitest (run once) — CHAQUE chiffre ci-dessous porte sa date.
+                   # 🔴 2026-09-22 — LE PIEGE DU `$?` APRES UN PIPE A REJOUE,
+                   #    et il a laisse partir un commit qui NE COMPILE PAS.
+                   #    Forme fautive, repetee toute la session :
+                   #        npx tsc -b 2>&1 | tail -3 ; echo "TSC=$?"
+                   #    `$?` rend le code de sortie de `tail`, TOUJOURS 0.
+                   #    Le commit a33005b9 annonce « tsc 0 » et portait deux
+                   #    TS7006 dans design-system.guard.test.ts : le job CI
+                   #    lint-test-build aurait ete ROUGE. Corrige apres coup.
+                   #    ✅ La forme juste, et la seule :
+                   #        npx tsc -b > t.log 2>&1 ; echo "EXIT=$?"
+                   #    ⚠️ C'est la regle 1 de CLAUDE.md (« lire `$?` »), deja
+                   #    ecrite, deja payee. Une regle connue ne protege pas
+                   #    d'une COMMANDE qui la contourne sans en avoir l'air.
+                   # 🔵 MESURE DU 2026-09-22 (545 s) :
+                   #    243 fichiers, 2 789 cas + 1 saute, exit 0.
+                   #    +3 fichiers / +30 cas depuis la veille, dont le temoin
+                   #    de C-69 (rotation-state.guard.test.ts, 13 cas) et les
+                   #    4 cas de la garde « poignee sans geste » (C-07).
+                   #    ⚠️ Meme reserve qu au 09-21 : ARBRE SALE, cinq fichiers
+                   #    d une session voisine. Ce n est pas une mesure de main.
+                   # Mesure precedente : 2026-09-21, 09:44 -> 09:50 (379 s),
+                   #    240 fichiers, 2 759 cas + 1 saute, exit 0.
+                   #    ⚠️ MESUREE SUR UN ARBRE SALE, et ca compte : cinq fichiers d'une
+                   #    session voisine etaient modifies et non commités (HabitActionsMenu,
+                   #    les deux catalogues habits, demo-profile.test.ts, restore.hooks.ts,
+                   #    restore-id.guard.test.ts). Ce n'est donc PAS une mesure de `main`,
+                   #    et l'ecart avec les 239 / 2 720 annonces par 2b4c4304 s'explique
+                   #    par la, pas par une regression. Une mesure avant/apres ne vaut que
+                   #    si HEAD est identique aux deux bouts.
+                   # Mesure precedente : **2 603 tests / 229 fichiers**, ZERO echec
+                   # (mesure du 2026-09-15 EN CI, run 34945082906, job lint-test-build).
+                   # 🔴 LE TOTAL AFFICHE EST CELUI DES FICHIERS COLLECTES, PAS DES
+                   # FICHIERS EXISTANTS. Mesure du 2026-09-15 sur ce poste, avec un
+                   # `--maxWorkers=4` qui ecrasait la borne de C-47 : « 225 passed
+                   # (225) », **exit 1**, et QUATRE fichiers n'avaient jamais demarre :
+                   #   Failed to start forks worker ... Timeout waiting for worker
+                   #   AuthForm.confirmation · FirstRunSetup · OrgBillingTab.refund.parcours
+                   #   · use-modal-a11y.guard  (ce dernier porte les TROIS temoins de C-53)
+                   # ✅ VITEST FAIT SON TRAVAIL : il sort en **exit 1** et imprime un bloc
+                   # `Unhandled Errors` (« this might cause false positive tests »). Ce qui
+                   # a failli le 2026-09-15, c'est la LECTURE : la ligne de resume dit
+                   # « 225 passed » et ne dit pas qu'il en manque quatre. La meme session a
+                   # publie « exit 0 » dans trois documents avant de relire le `$?` qu'elle
+                   # avait elle-meme imprime.
+                   # ❌ NE JAMAIS conclure d'une ligne de resume. Lire `$?`, puis comparer
+                   # le nombre annonce au perimetre du glob (src/** + scripts/** +
+                   # eslint-rules/**), soit 229 a cette date.
+                   # 🔴 LA CAUSE ETAIT UN CONSEIL DE CE FICHIER : `--maxWorkers=4`,
+                   # ecrit plus bas, ecrasait le `maxWorkers: 2` que C-47 a pose exactement
+                   # pour empecher ca. Corrige le 2026-09-15.
+                   # Mesure precedente : 2 586 / 228, le 2026-09-14 au soir (suite complete).
+                   # (mesure du 2026-09-14 au soir, machine libre, ~5 min).
+                   # Mesure precedente : 2 051 / 179, le 2026-09-02.
+npm run test:coverage       # + couverture v8, seuils globaux et par fichier
+                            # ✅ VERTE au 2026-09-14 : 31,15 L · 30,73 S · 24,41 F · 26,31 B
+                            # (2 586 tests / 228 fichiers, zero echec, exit 0).
+                            # Mesures precedentes : 31,32 L le 2026-09-11 (2 470 / 221),
+                            # 29,17 L le 2026-08-29.
+                            # ⚠️ Les pourcentages BAISSENT legerement alors que 116 tests
+                            # ont ete AJOUTES : le denominateur a bouge aussi (code neuf
+                            # non couvert). Un taux de couverture ne se lit jamais seul,
+                            # toujours avec le nombre de lignes qu'il rapporte.
+                            # ❌ NE JAMAIS baisser un seuil pour repasser au vert.
+                            # 🔴 Le cliquet du glob `supabase.repository.ts` A MORDU le
+                            # 2026-09-08 : `functions` est tombe a 89,83 %, sous son seuil
+                            # de 90. Il a fait son travail, et les fonctions manquantes
+                            # etaient DATEES, pas dispersees : dependances de taches
+                            # personnelles (mig. 132), `restoreCompletions` (R-08),
+                            # `getMyOrgInbox` (mig. 129 + 142), et les deux ecritures de
+                            # dependances d'equipe. Du code de septembre livre sans test
+                            # de repository. 13 fonctions couvertes (126 tests), glob
+                            # remonte a 95,34 % ; AUCUN seuil baisse.
+                            # ⚠️ La marge la plus serree reste `functions`, mais elle n'est
+                            # plus critique : 3,56 pt contre 0,32 le 2026-08-25. La relancer
+                            # APRES chaque vague de features, pas quand on y pense.
+                            # ⚠️ Sur cette machine le run prend ~11 min. Mesurer quand la
+                            # machine est libre, ou dans un worktree isole.
+                            # 🔴 NE JAMAIS PASSER `--maxWorkers` EN LIGNE DE COMMANDE.
+                            # Cette ligne a conseille `--maxWorkers=4` jusqu'au 2026-09-15,
+                            # et c'est un conseil ANTERIEUR au finding C-47 qui ECRASE la
+                            # borne que C-47 a posee : `vitest.config.ts` fixe
+                            # `maxWorkers: 2` parce que 4 jsdom concurrents saturent les
+                            # 8 Go de cette machine, et qu'un worker qui ne repond plus est
+                            # compte comme un echec sans avoir execute un seul cas.
+                            # Le 2026-09-15, une session a suivi ce conseil : QUATRE fichiers
+                            # n'ont jamais demarre (`Failed to start forks worker ... Timeout
+                            # waiting for worker`), dont `use-modal-a11y.guard.test.tsx` qui
+                            # porte trois TEMOINS. La suite a rendu « 225 passed (225) » et
+                            # EXIT 1.
+                            # ✅ Vitest a fait son travail : il SIGNALE (exit 1, et un bloc
+                            # `Unhandled Errors`). C'est la lecture qui a failli, pas l'outil,
+                            # et la meme session a d'abord publie « exit 0 » dans trois
+                            # documents avant de relire le code de sortie qu'elle avait
+                            # elle-meme imprime.
+                            # ❌ Ne JAMAIS conclure d'une ligne de resume : lire `$?`.
+                            # ✅ PREUVE, meme machine, meme arbre, le 2026-09-15 :
+                            #   avec --maxWorkers=4 : exit 1, 225 fichiers, 4 workers morts
+                            #   sans drapeau        : exit 0, 229 fichiers, 2 603 cas,
+                            #                         0 unhandled error, 576,6 s
+                            # Le drapeau ne rendait pas la suite plus rapide, il la rendait
+                            # INCOMPLETE. Et le compte sans drapeau est exactement celui de
+                            # la CI.
+                            # Voir docs/TESTING.md
+npm run test:rls   # Tests d'intégration RLS (stack Supabase locale), 7 fichiers verts
+npm run test:e2e   # Playwright (+ :ui, :report)
+                   # 236 cas / 26 specs a HEAD, 237 / 27 dans l'arbre (le project
+                   # `mobile-safari-warmup` et son fichier ne sont pas suivis par git).
+                   # RECOMPTE le 2026-09-15 : chromium 115, mobile-safari 105,
+                   # supabase-stub 17. Les +16 viennent de C-80 : 8 pages publiques
+                   # entrent dans `touch-targets.spec.ts`.
+                   # 🔴 LES 105 CAS `mobile-safari` NE TOURNENT DANS AUCUN WORKFLOW a
+                   # cette date. C-78 est ECRIT mais PAS COMMITE : `git show
+                   # HEAD:.github/workflows/ci.yml` lance toujours
+                   # `--project=chromium --project=supabase-stub`.
+                   # Mesure precedente : 220 cas / 26 specs / 4 projects, RECOMPTE le 2026-09-14 par
+                   # `npx playwright test --list`. Repartition : 107 chromium,
+                   # 96 mobile-safari, 16 supabase-stub, 1 prealable de chauffe.
+                   # Mesure precedente, le 2026-09-11 : 210 / 25 (103 / 94 / 12 / 1).
+                   # ⚠️ La sonde jetable `e2e/_tmp-probe.spec.ts`, non suivie par
+                   # git, a ete SUPPRIMEE le 2026-09-14 : elle faussait tout
+                   # recomptage local de 2 cas, et elle etait rouge.
+                   # ❌ Ne JAMAIS ecrire ce total en « N x 2 » : les projects ne
+                   # jouent plus le meme ensemble. C'est exactement comme ca que le
+                   # precedent (« 62 x 2 = 124 », du 2026-08-25) est devenu faux, et
+                   # il a ete RECOPIE pendant onze jours au lieu d'etre remesure.
+                   # Methode et detail par project : docs/TESTING.md § Playwright
+```

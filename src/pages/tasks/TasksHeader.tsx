@@ -1,10 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CalendarDays } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
-import { MobileHeader, TouchTarget } from '@/components/mobile';
+import { MobileHeader } from '@/components/mobile';
+import MobileDisplaySheet from './MobileDisplaySheet';
 import TasksInboxMenu from '@/components/task-table/TasksInboxMenu';
+import InboxMenu from '@/components/InboxMenu';
+import ColorSettingsModal from '@/components/ColorSettingsModal';
 import { useT } from '@/i18n/useT';
+import { OVERDUE_FOCUS_EVENT } from '@/lib/hooks/use-overdue-focus';
+import ViewModeToggle from '@/components/task-board/ViewModeToggle';
 
 interface TasksHeaderProps {
   showDeadlineCalendar: boolean;
@@ -27,8 +32,8 @@ interface TasksHeaderProps {
  * ne satisfait ni l'un ni l'autre — c'est ce compromis qui donnait au mobile
  * son allure de « desktop rétréci ».
  *
- * `data-tutorial-id` est porté par les DEUX boutons calendrier ; `findTarget`
- * (page-tutorial-helpers) sélectionne celui qui est réellement visible.
+ * `data-tutorial-id="tasks-calendar-toggle"` ne vit plus que sur desktop ;
+ * le tutoriel mobile vise `tasks-display` (feuille « Affichage », maquette 140).
  */
 const TasksHeader: React.FC<TasksHeaderProps> = ({
   showDeadlineCalendar,
@@ -37,20 +42,52 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
   overdueCount,
 }) => {
   const { t, tp } = useT('tasks');
+  // Reglages de couleurs des categories. L'engrenage vivait dans le coin de la
+  // carte « Taches en cours », masquee sur mobile depuis le 2026-09-22 : sans
+  // ce report, la seule porte vers ces reglages disparaissait avec elle.
+  const [showColorSettings, setShowColorSettings] = useState(false);
 
   // Maquette 04 — « En-tête large qui se rétracte » : au repos le titre porte
   // ce qu'il y a à faire, au premier défilement il ne reste que « Tâches ».
   // Deux phrases complètes séparées par un point médian, jamais une phrase
   // recousue à partir de fragments : « en retard » n'existe pas seul.
+  //
+  // ── Maquette 122 : un nombre nu ne mène nulle part ───────────────────
+  //
+  // Relevé sur les captures du 2026-09-20 : la barre d'onglets affiche « 2 »
+  // et « 1 », l'en-tête entreprise « 3 », la boîte de réception « 5 » ici et
+  // « 8 » sur l'accueil, et ce sous-titre dit « 1 en retard ». Tous ces
+  // compteurs portent déjà un libellé accessible complet — vérifié un par un
+  // le 2026-09-21 : `MobileTabBar`, `TasksInboxMenu` (`inbox.withCount`, badge
+  // `aria-hidden`) et `OrgNotificationsBell` (`notifications.bellUnread`).
+  // La moitié accessibilité de la maquette était donc DÉJÀ faite.
+  //
+  // Ce qui manquait est l'autre moitié : « 1 en retard » obligeait à chercher
+  // soi-même ce qu'il désignait. Il devient TAPABLE et applique le filtre
+  // rapide « Retard », qui existait déjà dans `TaskQuickFilters`.
+  //
+  // ⚠️ L'état de ce filtre vit dans `TaskTable`, deux niveaux plus bas. On
+  // passe donc par un évènement, comme `open-task-create` ou `open-quick-add`
+  // le font déjà dans ce dépôt, plutôt que de remonter l'état jusqu'ici pour
+  // un seul appui.
+  const focusOverdue = () => {
+    window.dispatchEvent(new CustomEvent(OVERDUE_FOCUS_EVENT));
+  };
+
   const mobileSummary = (
     <>
       <span>{tp('header.openCount', openCount)}</span>
       {overdueCount > 0 && (
         <>
           <span aria-hidden="true"> · </span>
-          <span className="text-red-500 font-medium">
+          <button
+            type="button"
+            onClick={focusOverdue}
+            className="text-[rgb(var(--color-danger-text))] font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:underline"
+            aria-label={tp('header.overdueFilter', overdueCount)}
+          >
             {tp('header.overdueCount', overdueCount)}
-          </span>
+          </button>
         </>
       )}
     </>
@@ -69,22 +106,27 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
                 accessible via la palette (Cmd/Ctrl+K) et l'onglet « Plus ». */}
             {/* Tâches/listes partagées en attente, regroupées ici plutôt
                 qu'en bandeaux inline (cf. TaskTable, masqués sur mobile). */}
-            <TasksInboxMenu />
-            <TouchTarget
-              aria-label={showDeadlineCalendar ? t('header.hideCalendar') : t('header.showCalendar')}
-              aria-pressed={showDeadlineCalendar}
-              onClick={onToggleCalendar}
-              data-tutorial-id="tasks-calendar-toggle"
-              className={
-                showDeadlineCalendar
-                  ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
-                  : ''
-              }
-            >
-              <CalendarDays size={20} aria-hidden="true" />
-            </TouchTarget>
+            {/* Maquette 217 (2026-10-10) : la MÊME boîte que l'accueil. La
+                même icône affichait 8 sur l'accueil (`InboxMenu`) et 5 ici
+                (`TasksInboxMenu`, qui n'en voit qu'une partie : tâches et
+                listes partagées). `InboxMenu` les contient aussi. Desktop
+                garde `TasksInboxMenu` dans sa propre barre. */}
+            <InboxMenu />
+            {/* Maquette 140 : vue tableau, couleurs et mini-calendrier
+                règlent tous trois la façon dont la liste se montre. Ils
+                quittent l'en-tête (quatre icônes) pour la feuille « Affichage ». */}
+            <MobileDisplaySheet
+              showDeadlineCalendar={showDeadlineCalendar}
+              onToggleCalendar={onToggleCalendar}
+              onOpenColorSettings={() => setShowColorSettings(true)}
+            />
           </>
         }
+      />
+
+      <ColorSettingsModal
+        isOpen={showColorSettings}
+        onClose={() => setShowColorSettings(false)}
       />
 
       {/* ── Desktop (inchangé) ── */}
@@ -119,12 +161,14 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
                 dans le tableau (cf. TaskTable), tout passe par cette boîte de
                 réception — comme sur mobile, avec un déclencheur en pastille
                 assortie au bouton Calendrier. */}
+            <ViewModeToggle />
             <TasksInboxMenu variant="desktop" />
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onToggleCalendar}
               data-tutorial-id="tasks-calendar-toggle"
+              data-guide-id="perso-tasks-calendar"
               aria-label={showDeadlineCalendar ? t('header.hideCalendar') : t('header.showCalendar')}
               className={`flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm ${
                 showDeadlineCalendar

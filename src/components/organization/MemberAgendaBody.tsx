@@ -72,6 +72,7 @@ const PROJECT_HEX: Record<string, string> = {
  */
 export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) => {
   const { t } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const calendarRef = useRef<FullCalendar>(null);
   const draggableRef = useRef<Draggable | null>(null);
   const [view, setView] = useState<ViewName>('timeGridWeek');
@@ -278,17 +279,17 @@ export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) 
             color: showTasks ? 'rgb(var(--color-accent-solid-foreground))' : 'rgb(var(--color-text-primary))',
           }}
         >
-          <ListChecks size={16} aria-hidden="true" /> {t('agendaSheet.tasksTitle')}
+          <ListChecks size={16} aria-hidden="true" /> {tOrgAdmin('agendaSheet.tasksTitle')}
         </button>
 
         <div className="inline-flex items-center gap-1">
-          <button type="button" onClick={() => nav('prev')} aria-label={t('agendaSheet.prevPeriod')} className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-accent-solid))] transition-colors">
+          <button type="button" onClick={() => nav('prev')} aria-label={tOrgAdmin('agendaSheet.prevPeriod')} className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-accent-solid))] transition-colors">
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
           <button type="button" onClick={() => nav('today')} className="px-3 h-8 rounded-lg text-sm font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-accent-solid))] hover:border-[rgb(var(--color-accent-solid-hover))]/60 transition-colors">
-            {t('agendaSheet.today')}
+            {tOrgAdmin('agendaSheet.today')}
           </button>
-          <button type="button" onClick={() => nav('next')} aria-label={t('agendaSheet.nextPeriod')} className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-accent-solid))] transition-colors">
+          <button type="button" onClick={() => nav('next')} aria-label={tOrgAdmin('agendaSheet.nextPeriod')} className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-accent-solid))] transition-colors">
             <ChevronRight size={16} aria-hidden="true" />
           </button>
         </div>
@@ -320,7 +321,7 @@ export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) 
             className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-[rgb(var(--color-accent-solid))]/25 transition-all bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] shrink-0"
           >
             <Plus size={18} aria-hidden="true" />
-            <span className="font-medium text-sm">{t('agendaSheet.new')}</span>
+            <span className="font-medium text-sm">{tOrgAdmin('agendaSheet.new')}</span>
           </button>
         </div>
       </div>
@@ -334,16 +335,16 @@ export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) 
           >
             <div className="p-4 border-b border-[rgb(var(--color-border))] flex items-start justify-between gap-2">
               <div>
-                <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('agendaSheet.teamTasks')}</h3>
+                <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('agendaSheet.teamTasks')}</h3>
                 <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                  {t('agendaSheet.dragHint')}
+                  {tOrgAdmin('agendaSheet.dragHint')}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setCreatingTask(true)}
-                aria-label={t('agendaSheet.addTaskFor', { name: member.displayName })}
-                title={t('agendaSheet.addTask')}
+                aria-label={tOrgAdmin('agendaSheet.addTaskFor', { name: member.displayName })}
+                title={tOrgAdmin('agendaSheet.addTask')}
                 className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors"
               >
                 <Plus size={15} aria-hidden="true" />
@@ -352,7 +353,7 @@ export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) 
             <div id="member-external-events" className="flex-1 overflow-y-auto p-3 space-y-2">
               {memberTasks.length === 0 ? (
                 <p className="text-xs text-[rgb(var(--color-text-muted))] text-center py-8">
-                  {t('agendaSheet.noTasks')}
+                  {tOrgAdmin('agendaSheet.noTasks')}
                 </p>
               ) : (
                 memberTasks.map((task: TeamTask) => {

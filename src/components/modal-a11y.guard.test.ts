@@ -41,10 +41,12 @@ const EXEMPTS: Record<string, string> = {
   'components/InboxMenu.tsx':
     "POPOVER ancre au declencheur, non modal : pas de voile, pas d'aria-modal. Piéger le focus dans un popover empêcherait d'en sortir en tabulant, ce qui est justement sa maniere de se fermer.",
   'components/task-table/TasksInboxMenu.tsx': 'meme popover, cote page Taches.',
-  'components/organization/OrgNotificationsBell.tsx':
-    'popover de notifications ancre a la cloche, non modal.',
-  'components/organization/TeamCategoryPicker.tsx':
-    "confirmation EN LIGNE (une bande dans le flux, pas un calque) : elle porte alertdialog pour etre annoncee, mais elle ne recouvre rien.",
+  'components/organization/OrgNotificationsPanel.tsx':
+    'popover de notifications ancre a la cloche, non modal (sorti de OrgNotificationsBell le 2026-09-25, charge a l ouverture).',
+  'components/organization/TeamCategoryTreeSelect.tsx':
+    "confirmation EN LIGNE (une bande dans le flux d'un Popover Radix deja piege, pas un calque) : elle porte alertdialog pour etre annoncee, mais elle ne recouvre rien et un second piege se disputerait le focus avec celui du Popover.",
+  'components/org-guide/use-guide-demo.tsx':
+    "le `fixed inset-0` est un bouclier de clics transparent et aria-hidden, pose pendant la demo automatique des deux guides (entreprise, perso) : il empeche l'utilisateur de cliquer l'ecran dessous, il n'expose aucune boite de dialogue et n'a rien a focaliser. Le tiroir (Sheet Radix) piege deja le focus ; la barre de controle et les panneaux de fin sont des role=status/toolbar hors calque.",
   'components/tutorial/TutorialCard.tsx':
     'carton de tutoriel ancre, rendu dans PageTutorial qui est en pointer-events-none : il commente la page, il ne la capture pas.',
 };

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // i18n-identical.mjs — cliquet sur les valeurs `en` restées en français
 //

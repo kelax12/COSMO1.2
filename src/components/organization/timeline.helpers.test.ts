@@ -3,6 +3,7 @@ import {
   timelineRange, timelineWeeks, timelineRows, todayOffsetPercent,
   timelineWindow, timelineMonths, timelineRowsByAssignee, inWindowOrUnscheduled,
   UNASSIGNED_ID,
+  projectSpanStart,
 } from './timeline.helpers';
 import type { TeamTask, TeamProject } from '@/modules/team-projects';
 
@@ -295,5 +296,56 @@ describe('todayOffsetPercent', () => {
   it("renvoie null quand aujourd'hui sort de la fenêtre", () => {
     const range = timelineRange([], NOW);
     expect(todayOffsetPercent(range, new Date(2027, 0, 1))).toBeNull();
+  });
+});
+
+// ─── Mig. 153 (M2) : dates de début, bandeaux de projet, jalons ──────
+describe('frise avec dates de début', () => {
+  const range = timelineRange([], NOW);
+
+  it('une tâche avec un début devient une BARRE, sans début un point', () => {
+    const rows = timelineRows(
+      [
+        task({ id: 'bar', startDate: '2026-07-16', deadline: '2026-07-20' }),
+        task({ id: 'dot', deadline: '2026-07-22' }),
+      ],
+      [project({})],
+      range,
+      NOW,
+    );
+    const bar = rows[0].markers.find((m) => m.task.id === 'bar')!;
+    const dot = rows[0].markers.find((m) => m.task.id === 'dot')!;
+    expect(bar.startOffsetPercent).not.toBeNull();
+    expect(bar.startOffsetPercent!).toBeLessThan(bar.offsetPercent);
+    expect(dot.startOffsetPercent).toBeNull();
+  });
+
+  it('une barre qui CROISE la fenêtre reste visible', () => {
+    const window = timelineWindow(range, 'month', NOW);
+    expect(inWindowOrUnscheduled(task({ startDate: '2026-01-01', deadline: '2026-12-31' }), window)).toBe(true);
+    expect(inWindowOrUnscheduled(task({ startDate: '2026-01-01', deadline: '2026-01-10' }), window)).toBe(false);
+  });
+
+  it('un projet daté a son bandeau et garde sa ligne sans tâche ouverte', () => {
+    const rows = timelineRows([], [project({ startDate: '2026-07-14', dueDate: '2026-07-28' })], range, NOW);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].span!.startPercent).toBeLessThan(rows[0].span!.endPercent);
+  });
+
+  it('sans date de début, le bandeau part de la création du projet', () => {
+    const rows = timelineRows([task({ deadline: '2026-07-20' })], [project({ dueDate: '2026-07-28' })], range, NOW);
+    expect(rows[0].span).not.toBeNull();
+    expect(projectSpanStart(project({ dueDate: '2026-07-28' }))).toBe('2026-07-01');
+    expect(projectSpanStart(project({ startDate: '2026-07-14' }))).toBe('2026-07-14');
+  });
+
+  it('un projet sans échéance n’a pas de bandeau (jamais inventé)', () => {
+    const rows = timelineRows([task({ deadline: '2026-07-20' })], [project({})], range, NOW);
+    expect(rows[0].span).toBeNull();
+  });
+
+  it('« Tout » couvre aussi les dates de projets', () => {
+    const r = timelineRange([], NOW, ['2027-03-01']);
+    expect(r.end.getTime()).toBeGreaterThanOrEqual(new Date(2027, 2, 1).getTime());
   });
 });

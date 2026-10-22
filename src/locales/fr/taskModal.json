@@ -2,6 +2,7 @@
   "common": {
     "create": "Créer",
     "ok": "OK",
+    "validate": "Valider",
     "save": "Sauvegarder",
     "creating": "Création...",
     "creatingEllipsis": "Création…",
@@ -11,6 +12,16 @@
     "none": "Aucune",
     "optional": "(Facultatif)",
     "savingDots": "Enregistrement..."
+  },
+  "tabs": {
+    "aria": "Sections de la tâche",
+    "details": "Détails",
+    "advanced": "Options avancées",
+    "subtasks": "Sous-tâches",
+    "dependencies": "Dépendances",
+    "dependenciesAfterCreate": "Les dépendances se relient une fois la tâche créée.",
+    "share": "Partager",
+    "stateAfterCreate": "Le statut et l'état se règlent une fois la tâche créée."
   },
   "fields": {
     "moreOptions": "Plus d'options : échéance, catégorie, priorité, durée, listes",
@@ -46,11 +57,7 @@
     "createList": "Créer une liste"
   },
   "sections": {
-    "details": "Détails",
-    "description": "Description",
-    "organisation": "Organisation",
-    "subtasks": "Sous-tâches",
-    "collaboration": "Collaboration"
+    "detailsHint": "champs facultatifs"
   },
   "mobile": {
     "createTask": "Créer la tâche",
@@ -81,6 +88,14 @@
     "bodyShared": "Vous quitterez cette tâche partagée : elle restera visible pour son propriétaire et les autres collaborateurs."
   },
   "form": {
+    "addNote": "Ajouter une note",
+    "durationOther": "Autre durée",
+    "inviteSomeone": "Inviter quelqu'un",
+    "collaborators": "Collaborateurs",
+    "lists": "Liste",
+    "listsCount_one": "{{count}} liste",
+    "listsCount_many": "{{count}} de listes",
+    "listsCount_other": "{{count}} listes",
     "nameRequired": "Nom de la tâche *",
     "namePlaceholder": "Nom de la tâche",
     "descriptionPlaceholder": "Description de la tâche",
@@ -96,6 +111,7 @@
     "deleteTask": "Supprimer la tâche",
     "collaboratorPlaceholder": "Email ou nom…",
     "addCollaborator": "Ajouter",
-    "userNotFound": "Utilisateur introuvable"
+    "userNotFound": "Utilisateur introuvable",
+    "bookmark": "Favori"
   }
 }

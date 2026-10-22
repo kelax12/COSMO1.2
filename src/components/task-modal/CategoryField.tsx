@@ -27,7 +27,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { useState } from 'react';
 import { X, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import AddCategoryButton from '@/components/AddCategoryButton';
 import CategoryTreeSelect from '@/components/category/CategoryTreeSelect';
 import type { Category } from '@/modules/categories';

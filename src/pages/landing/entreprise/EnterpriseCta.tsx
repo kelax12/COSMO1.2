@@ -18,7 +18,7 @@ interface EnterpriseCtaProps {
  * les deux seules sorties possibles : créer l'organisation, ou voir la démo.
  */
 const EnterpriseCta: React.FC<EnterpriseCtaProps> = ({ onDemo, onRegister }) => {
-  const { t } = useT('landing');
+  const { t } = useT('landingEnterprise');
   const rootRef = useRef<HTMLElement>(null);
 
   useGSAP(

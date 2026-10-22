@@ -44,6 +44,14 @@ export interface CalendarEvent {
    * Défaut false. Sans effet hors organisation.
    */
   isPrivate?: boolean;
+  /**
+   * Instant où la personne a demandé de ne plus être relancée sur ce créneau
+   * de tâche terminé (bouton « Ignorer » du menu de revue, mig. 146).
+   * `undefined` / `null` = jamais ignoré, donc la pastille reste à afficher.
+   * Un report le remet à `null` : sinon un créneau ignoré puis reporté, puis
+   * raté de nouveau, ne redemanderait plus jamais rien.
+   */
+  reviewDismissedAt?: string | null;
 }
 
 /**

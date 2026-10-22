@@ -19,7 +19,8 @@ interface DeleteOrganizationDialogProps {
  * EXACT de l'entreprise pour déverrouiller le bouton.
  */
 const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCancel }: DeleteOrganizationDialogProps) => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: ta, tp: tpa } = useT('orgAdmin');
   const [typed, setTyped] = useState('');
   const match = typed === org.name;
 
@@ -63,26 +64,26 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
         <div className="p-5 space-y-4">
           <div className="rounded-xl border border-red-300/60 dark:border-red-700/40 bg-red-50/60 dark:bg-red-900/10 px-4 py-3">
             <p className="text-sm font-semibold text-red-600 dark:text-red-400 mb-1">
-              {t('deleteOrg.irreversible')}
+              {ta('deleteOrg.irreversible')}
             </p>
             <ul className="text-xs text-[rgb(var(--color-text-secondary))] space-y-1 list-disc pl-4">
-              <li>{tp('deleteOrg.membersLose', memberCount)}</li>
-              <li>{t('deleteOrg.projectsDeleted')}</li>
-              <li>{t('deleteOrg.teamsErased')}</li>
+              <li>{tpa('deleteOrg.membersLose', memberCount)}</li>
+              <li>{ta('deleteOrg.projectsDeleted')}</li>
+              <li>{ta('deleteOrg.teamsErased')}</li>
               {/* C-39 — la liste ne mentionnait NI l'abonnement NI les preuves.
                   L'abonnement Stripe continue de courir apres la suppression
                   de la ligne : `delete_organization` (mig. 138) refuse
                   desormais tant qu'il est actif, et cette ligne dit pourquoi
                   AVANT qu'on se heurte au refus. */}
-              <li>{t('deleteOrg.subscriptionFirst')}</li>
-              <li>{t('deleteOrg.evidenceKept')}</li>
-              <li>{t('deleteOrg.personalSafe')}</li>
+              <li>{ta('deleteOrg.subscriptionFirst')}</li>
+              <li>{ta('deleteOrg.evidenceKept')}</li>
+              <li>{ta('deleteOrg.personalSafe')}</li>
             </ul>
           </div>
 
           <div>
             <label htmlFor="delete-org-confirm" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-              {t('deleteOrg.confirmPrefix')} <strong className="text-[rgb(var(--color-text-primary))] select-all">{org.name}</strong> {t('deleteOrg.confirmSuffix')}
+              {ta('deleteOrg.confirmPrefix')} <strong className="text-[rgb(var(--color-text-primary))] select-all">{org.name}</strong> {ta('deleteOrg.confirmSuffix')}
             </label>
             <input
               id="delete-org-confirm"
@@ -102,7 +103,7 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
             disabled={!match || pending}
             className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            {pending ? t('deleteOrg.deleting') : t('deleteOrg.confirmAction')}
+            {pending ? ta('deleteOrg.deleting') : ta('deleteOrg.confirmAction')}
           </button>
         </div>
       </div>

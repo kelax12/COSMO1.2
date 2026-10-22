@@ -17,6 +17,88 @@ export interface TeamProject {
    * projet lui-même. null = aucune catégorie.
    */
   categoryId?: string | null;
+  // ─── Projet riche (mig. 153, M2) ───────────────────────────────────
+  /** Texte libre, 5 000 caractères au plus. */
+  description?: string | null;
+  /** Responsable : pilote le projet (droits d'édition), sans en changer l'audience. */
+  ownerId?: string | null;
+  status?: TeamProjectStatus;
+  /** Date locale 'YYYY-MM-DD'. `startDate <= dueDate` (CHECK serveur). */
+  startDate?: string | null;
+  dueDate?: string | null;
+  /**
+   * Modèle : jamais affiché comme un projet en cours. Son contenu vit dans
+   * `templatePayload`, JAMAIS en vraies tâches (elles remonteraient dans
+   * « Mes tâches » et les statistiques).
+   */
+  isTemplate?: boolean;
+  templatePayload?: TeamProjectTemplatePayload | null;
+  // ─── Santé déclarée (mig. 190) ──────────────────────────────────────
+  /** null = jamais déclarée. Horodatage et auteur posés par le SERVEUR. */
+  health?: TeamProjectHealth | null;
+  healthNote?: string | null;
+  healthUpdatedAt?: string | null;
+  healthUpdatedBy?: string | null;
+}
+
+/** Santé déclarée d'un projet (mig. 190) — même vocabulaire que les KR (160). */
+export type TeamProjectHealth = 'on_track' | 'at_risk' | 'off_track';
+
+/**
+ * Rôle d'une personne sur UN projet (mig. 190). `lead` co-pilote ; `contributor`
+ * crée et modifie les tâches du projet même sans droit d'organisation ;
+ * `viewer` lit seulement (sauf une tâche qui lui est assignée).
+ */
+export type TeamProjectRole = 'lead' | 'contributor' | 'viewer';
+
+export interface TeamProjectMember {
+  projectId: string;
+  userId: string;
+  orgId: string;
+  role: TeamProjectRole;
+  addedBy: string | null;
+  addedAt: string;
+}
+
+/** Avancement d'un projet, COMPTÉ PAR LE SERVEUR (mig. 191), jamais sur un extrait. */
+export interface TeamProjectTaskStats {
+  projectId: string;
+  total: number;
+  completed: number;
+  overdue: number;
+  inReview: number;
+  /** Prochaine échéance ouverte, date locale 'YYYY-MM-DD'. */
+  nextDeadline: string | null;
+}
+
+/** Charge d'un membre, comptée par le serveur (mig. 191). */
+export interface TeamMemberWorkload {
+  userId: string;
+  openTasks: number;
+  overdue: number;
+  dueIn7Days: number;
+  /** Somme des durées estimées des tâches ouvertes, en minutes. */
+  estimatedMinutes: number;
+}
+
+/** Cycle de vie d'un projet (mig. 153). Défaut serveur : `active`. */
+export type TeamProjectStatus = 'planned' | 'active' | 'on_hold' | 'done';
+
+/**
+ * Contenu d'un modèle : les dates sont des DÉCALAGES en jours depuis le début
+ * du projet instancié, jamais des dates absolues (un modèle sert des mois).
+ */
+export interface TeamProjectTemplatePayload {
+  tasks: {
+    name: string;
+    description?: string;
+    priority?: number;
+    estimatedTime?: number;
+    startOffset?: number | null;
+    deadlineOffset?: number | null;
+  }[];
+  /** Durée du projet en jours (fin - début), si le projet source en avait une. */
+  durationDays?: number | null;
 }
 
 export interface CreateTeamProjectInput {
@@ -25,9 +107,30 @@ export interface CreateTeamProjectInput {
   /** null/absent = projet d'org visible par toute l'entreprise. */
   teamId?: string | null;
   categoryId?: string | null;
+  description?: string | null;
+  ownerId?: string | null;
+  status?: TeamProjectStatus;
+  startDate?: string | null;
+  dueDate?: string | null;
+  isTemplate?: boolean;
+  templatePayload?: TeamProjectTemplatePayload | null;
 }
 
-/** Patch projet (managers only — RLS team_projects_update, mig. 068). */
+/** Tâche initiale d'une création atomique (RPC `create_team_project_with_tasks`). */
+export interface DraftProjectTask {
+  name: string;
+  description?: string;
+  priority?: number;
+  estimatedTime?: number;
+  startDate?: string;
+  deadline?: string;
+  assigneeIds?: string[];
+}
+
+/**
+ * Patch projet — `project.edit` (mig. 153), ou responsable du projet. Le
+ * responsable ne change ni `teamId`, ni `ownerId`, ni `isTemplate` (trigger).
+ */
 export interface UpdateTeamProjectInput {
   name?: string;
   color?: string;
@@ -35,6 +138,33 @@ export interface UpdateTeamProjectInput {
   categoryId?: string | null;
   /** true = archiver (archived_at → now), false = désarchiver (→ null). */
   archived?: boolean;
+  description?: string | null;
+  ownerId?: string | null;
+  status?: TeamProjectStatus;
+  startDate?: string | null;
+  dueDate?: string | null;
+  health?: TeamProjectHealth | null;
+  healthNote?: string | null;
+}
+
+/**
+ * Équipe ASSOCIÉE à un projet (mig. 164) : un projet mené par plusieurs
+ * équipes. `TeamProject.teamId` reste l'équipe principale ; une équipe
+ * associée ne fait qu'ÉLARGIR la lecture, et la retirer la rétrécit.
+ */
+export interface TeamProjectTeam {
+  projectId: string;
+  teamId: string;
+}
+
+/**
+ * Arête entre projets (mig. 153) : `projectId` est BLOQUÉ par `dependsOnId`.
+ * Même vocabulaire que `TeamTaskDependency` ; relue à l'envers, elle inverse
+ * le plan sans qu'aucun type ne s'en aperçoive.
+ */
+export interface TeamProjectDependency {
+  projectId: string;
+  dependsOnId: string;
 }
 
 /**
@@ -57,6 +187,8 @@ export interface TeamTask {
   priority: number;
   /** Date locale 'YYYY-MM-DD' ou '' si aucune. */
   deadline?: string;
+  /** Début planifié (mig. 153), 'YYYY-MM-DD' ou '' ; jamais après `deadline`. */
+  startDate?: string;
   estimatedTime?: number;
   /** auth.users.id des assignés — [] si non assignée (multi-assignation, mig. 072). */
   assigneeIds: string[];
@@ -73,6 +205,10 @@ export interface TeamTask {
    * automatiquement). null = aucune catégorie.
    */
   categoryId?: string | null;
+  /** Statut propre au projet (mig. 197) ; il écrit `status`. null = aucun. */
+  customStatusId?: string | null;
+  /** État déclaré (mig. 204), même vocabulaire que les KR. null = aucun. */
+  health?: TeamProjectHealth | null;
 }
 
 export interface CreateTeamTaskInput {
@@ -81,6 +217,7 @@ export interface CreateTeamTaskInput {
   description?: string;
   priority?: number;
   deadline?: string;
+  startDate?: string;
   estimatedTime?: number;
   assigneeIds?: string[];
   status?: TeamTaskStatus;
@@ -93,12 +230,17 @@ export interface UpdateTeamTaskInput {
   description?: string;
   priority?: number;
   deadline?: string;
+  startDate?: string;
   estimatedTime?: number;
   assigneeIds?: string[];
   projectId?: string;
   completed?: boolean;
   status?: TeamTaskStatus;
   categoryId?: string | null;
+  /** Statut propre au projet (mig. 197). */
+  customStatusId?: string | null;
+  /** État déclaré (mig. 204). */
+  health?: TeamProjectHealth | null;
 }
 
 /** Commentaire sur une tâche d'équipe (journal immuable, mig. 082). */
@@ -124,6 +266,42 @@ export interface TeamTaskFilters {
   /** Filtre « assignée à » — matche si l'uid figure dans assigneeIds. */
   assigneeId?: string;
   completed?: boolean;
+  /**
+   * « Ensemble de travail » : les tâches OUVERTES, plus celles terminées depuis
+   * cet instant (ISO). C'est ce que lisent l'Aperçu et les Statistiques : la
+   * lecture par défaut (les 1 000 dernières CRÉÉES, terminées comprises) faisait
+   * sortir une vieille tâche encore ouverte dès que l'organisation en créait
+   * 1 000 autres, et calculait les chiffres sur un extrait.
+   */
+  openOrCompletedSince?: string;
+  /**
+   * Lectures ciblées de l'Aperçu (audit du 2026-09-24) : chaque bloc demande au
+   * serveur SES lignes au lieu de lire toute l'organisation pour en garder
+   * quelques-unes. Tous ces filtres s'appliquent AVANT le plafond.
+   */
+  /** Tâches précises (noms du fil d'activité, tâches qui attendent les miennes). */
+  ids?: string[];
+  createdBy?: string;
+  status?: TeamTaskStatus;
+  /** Échéance ≥ cette date locale 'YYYY-MM-DD'. */
+  deadlineFrom?: string;
+  /** Créées depuis cet instant (ISO). */
+  createdSince?: string;
+  /** Tri serveur : création décroissante (défaut) ou échéance croissante. */
+  orderBy?: 'created' | 'deadline';
+  /** Plafond propre à la lecture, borné par `TEAM_TASKS_READ_LIMIT`. */
+  limit?: number;
+  /**
+   * Recherche dans l'intitulé (palette Ctrl+K), insensible à la casse, faite
+   * par le SERVEUR : la palette cherchait dans le cache des 1 000 dernières
+   * tâches, donc une tâche plus ancienne était introuvable.
+   */
+  search?: string;
+  /**
+   * Pagination (mig. 191, « lectures côté serveur ») : saute les `offset`
+   * premières lignes de l'ordre demandé. Avec `limit`, lit une PAGE.
+   */
+  offset?: number;
 }
 
 /** Sous-tâche d'une tâche d'équipe (mig. 092) — un seul niveau, pas de récursion. */
@@ -152,35 +330,6 @@ export interface UpdateTeamSubtaskInput {
   position?: number;
 }
 
-// ─── Labels transverses (mig. 093) ───────────────────────────────────
-
-/** Label d'organisation — vocabulaire partagé, écriture réservée aux managers. */
-export interface TeamLabel {
-  id: string;
-  orgId: string;
-  name: string;
-  /** Hex `#rrggbb` (validé par CHECK côté base). */
-  color: string;
-  createdBy: string | null;
-  createdAt: string;
-}
-
-export interface CreateTeamLabelInput {
-  name: string;
-  color?: string;
-}
-
-export interface UpdateTeamLabelInput {
-  name?: string;
-  color?: string;
-}
-
-/** Ligne de jonction tâche ↔ label. */
-export interface TeamTaskLabel {
-  taskId: string;
-  labelId: string;
-}
-
 // ─── Dépendances entre tâches (mig. 108) ─────────────────────────────
 
 /**
@@ -198,9 +347,12 @@ export interface TeamTaskDependency {
 
 // ─── Historique (mig. 094) ───────────────────────────────────────────
 
-/** Champs journalisés par le trigger `log_team_task_activity`. */
+/**
+ * Champs journalisés par `log_team_task_activity` (UPDATE, mig. 094) et
+ * `log_team_task_creation` (INSERT, mig. 181 : `created`, valeurs nulles).
+ */
 export type TeamActivityField =
-  | 'status' | 'assignees' | 'deadline' | 'priority' | 'project' | 'name';
+  | 'created' | 'status' | 'assignees' | 'deadline' | 'priority' | 'project' | 'name';
 
 /**
  * Entrée du journal append-only. `oldValue`/`newValue` sont du texte : le
@@ -218,4 +370,18 @@ export interface TeamTaskActivity {
   oldValue: string | null;
   newValue: string | null;
   createdAt: string;
+}
+
+/**
+ * Une tâche à la corbeille (mig. 152), telle que la rend `get_team_trash` :
+ * l'intitulé et qui l'a supprimée, jamais la description. Le contenu revient
+ * avec la restauration.
+ */
+export interface TeamTrashedTask {
+  id: string;
+  projectId: string;
+  name: string;
+  deletedAt: string;
+  deletedBy: string | null;
+  createdBy: string | null;
 }

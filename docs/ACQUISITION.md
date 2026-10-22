@@ -1,3 +1,31 @@
+<!-- note-audit: non-note -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — **NON NOTÉ** : aucun audit du domaine acquisition n'a jamais été fait. Ses chiffres sont gardés autrement — `npm run check:acquisition` échoue quand ils dépassent 45 jours (C-101).
+
+<!-- chiffres-remesures: 2026-09-14 -->
+<!--
+  🔴 C-101 · CE MARQUEUR EST LU PAR `npm run check:acquisition`, qui ÉCHOUE
+  au-delà de 45 jours. Il porte la date de la dernière REMESURE DES CHIFFRES
+  contre la production, et rien d'autre.
+
+  ❌ Ne pas le confondre avec les autres dates de ce document. La garde a
+  d'abord été écrite pour prendre « la date la plus récente citée quelque
+  part » : elle trouvait alors le 2026-09-20 d'une note sur une migration, et
+  déclarait les chiffres frais alors qu'ils dataient du 09-14. Une garde qui
+  prend la première date venue répond sans mesurer.
+
+  ❌ Ne JAMAIS avancer cette date sans avoir rejoué les compteurs :
+       SUPABASE_ACCESS_TOKEN=… node scripts/check-acquisition.mjs --live
+-->
+
 # Acquisition — instrumentation, chiffres réels et runbook
 
 **Audit du 2026-08-14**, mesuré directement en prod (`ykeugqfgklejcdbrmawy`) et dans le code.
@@ -7,7 +35,99 @@ valable comme stratégie — ce document ne le refait pas. Il répond à une aut
 
 ---
 
-## 1. Les chiffres réels
+> ### 🔴 Remesure du 2026-09-14 (soir) · un mois plus tard, la machine marche et le funnel est vide
+>
+> L'audit du 2026-08-14 posait la bonne question : « est-ce que la machine à mesurer fonctionne, et
+> que dit-elle ? » Un mois plus tard, les deux moitiés ont été revérifiées **contre la production**,
+> et il faut les séparer, parce qu'elles ne disent pas la même chose.
+>
+> **La machine fonctionne, et ce n'est pas une déduction.** Le parcours d'entrée a été PARCOURU en
+> production, dans un navigateur, sur un iPhone 12 émulé : clic sur « Essayer la démo gratuite » sur
+> `/` → arrivée sur `/dashboard`, interface rendue, et **`POST record_demo_visit` part réellement**
+> (observé dans le trafic réseau). Le compteur d'appareils n'est donc pas en panne.
+>
+> ⚠️ **Cette vérification a elle-même écrit une ligne en production** : un appareil de plus dans
+> `demo_devices` (45 → 46, et septembre passe de 1 à 2). C'est une ligne anonyme, un UUID sans
+> rattachement, mais elle est de moi et pas d'un visiteur. **Tout chiffre de septembre ci-dessous
+> est donné hors cette ligne.**
+>
+> **Ce que la machine dit, elle, est mauvais :**
+>
+> | | Juillet 2026 | Août 2026 | **Sept. 2026** (1 au 14) |
+> |---|---|---|---|
+> | Appareils distincts ayant ouvert la démo | 19 | 25 | **1** |
+> | Dont convertis en compte | 14 | 8 | **1** |
+> | Inscriptions (`auth.users`) | 8 | · | **1 sur 30 jours glissants, 0 sur 7 jours** |
+> | Comptes actifs sur 30 jours | · | 15 | **9** (58 jours-activité cumulés) |
+> | Connexions sur 7 jours | · | 0 | **2** |
+>
+> 🔴 **Le chiffre à retenir n'est pas le taux de conversion, c'est le haut du funnel.** Un appareil
+> qui ouvre la démo en deux semaines, contre 25 le mois précédent : ce n'est pas un problème de
+> conversion, c'est une absence de visiteurs. Travailler la page, le CTA ou l'onboarding n'a aucune
+> prise sur ce chiffre-là.
+>
+> ⚠️ **Deux précautions de lecture, parce que ce compteur est facile à mal lire** :
+>
+> - `demo_devices` compte des appareils **distincts et une seule fois** (la clé est préservée par
+>   `clearDemoStorage`). Un visiteur d'août qui revient en septembre n'apparaît pas en septembre.
+>   Le chiffre mesure donc l'arrivée de NOUVEAUX visiteurs, ce qui est précisément ce qu'on veut
+>   ici, mais il ne dit rien de la rétention.
+> - **Deux des 28 comptes ne sont pas des utilisateurs** : `demo@cosmo.app`
+>   (`aaaaaaaa-aaaa-…`, créé le 2026-01-10, jamais connecté, et porteur de 120 tâches, 67 événements,
+>   6 habitudes et 4 OKR **en production**) et `testemail@gmail.com`. La base compte donc **26
+>   comptes réels**, et **16 % des tâches de la plateforme appartiennent au compte de
+>   démonstration**. 🔴 `get_admin_stats` **ne les exclut ni l'un ni l'autre** (vérifié dans sa
+>   définition en base) : la console `/admin` compte des fantômes, et toute décision prise sur ses
+>   chiffres avant une campagne est biaisée d'autant.
+>
+> ✅ **Ce qui n'est pas en cause** : la délivrabilité (`npm run check:mail` vert, DKIM, SPF et MX du
+> Return-Path en place, un seul avertissement DMARC `p=none`), la production (`/`,
+> `/entreprise-presentation`, `/en`, `/blog`, `/sitemap.xml` répondent **200**), ni le SEO technique
+> (40 URLs au sitemap, 80 `hreflang`, 0 page `noindex`, revérifiés sur un build neuf). **Tout est
+> prêt et personne ne vient.** Le levier reste celui nommé le 2026-08-19, et il est hors du dépôt :
+> [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md).
+
+---
+
+
+## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
+
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
+>
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
+>
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
+
+
+> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
+> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
+> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
+>
+> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
+> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
+> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
+> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
+> sans que rien ne vérifie**.
+>
+> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
+> **reconduit avec sa date**, jamais ne se recopie.
+
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+|---|---|---|---|
+| AM-1 | 🔴 **Les chiffres datent du 2026-08-14 et ne sont rejoués par rien.** Un audit d'acquisition dont les mesures ont un mois décrit un marché qui a bougé, et il n'existe aucun job qui les remesure | mesures datées dans l'en-tête, aucun workflow d'acquisition | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:acquisition` + marqueur `<!-- chiffres-remesures: -->` (`C-101`) — 🔴 ne prouve PAS : ⚠️ **un énoncé du 09-16 était FAUX** : « le tracking `?ref=` reste un développement ouvert ». La chaîne est complète depuis la mig. `097`, testée de bout en bout. Ce qui manquait était de **regarder les chiffres** |
+| AM-2 | **Aucune action n'est reliée à son résultat.** Ce document liste des leviers ; rien n'attribue une inscription à un levier. C'est le même motif que T-5 du tableau de bord : on mesure la conformité, pas le résultat | le tracking `?ref=` reste un développement ouvert | ✅ **OUTILLÉ le 2026-09-20** · colonne **État** (5 valeurs, date obligatoire sur `fait` / `refuse`) (`C-101`) — 🔴 ne prouve PAS : qu'un backlink posé **existe encore** : ça demande l'API Search Console, donc un geste — **`M-55`** |
+| AM-3 | ✅ **COMBLÉ le 2026-09-20.** Était : les comptes de TEST ne sont retranchés d'aucun chiffre, `demo@cosmo.app` portant **120 tâches** en production, soit 16 % des tâches de la plateforme | 🔴 Le 2026-09-20 au matin, **pire que « non appliquée » : la mig. `149` n'était pas COMMITÉE**, fichier non suivi de l'arbre de travail, et `admin_stats_excluded_uids()` absente de la base. ✅ **Commitée (`297ddd14`) puis appliquée le jour même** (ledger `20260920105522`), prouvée d'abord en transaction annulée : `/admin` passe de 30 · 779 · 454 · 32 à **28 utilisateurs · 658 tâches · 387 événements · 26 habitudes**, avec une clé `excluded_accounts = 2` qui **dit** la correction, et un non-admin toujours refusé en 42501 | ✅ **FERMÉ le 2026-09-20** · mig. `149` au ledger `20260920105522` (`C-100`, `M-46`) — `/admin` passe de 30·779·454·32 à 28·658·387·26, plus une clé `excluded_accounts = 2` qui **dit** la correction |
+
+---
+
+## 1. Les chiffres réels · *état du 2026-08-14, conservé à sa date*
 
 | Métrique | Valeur |
 |---|---|
@@ -77,6 +197,14 @@ prod depuis le 2026-08-13 et **aucun compte n'a été créé depuis**. La machin
 `profiles.acquisition_source = 'test_manuel'`. Sans ça, on lancera une campagne sur une chaîne
 jamais validée. La whitelist rejette silencieusement ce qui ne matche pas `^[a-z0-9_-]+$` : un
 `?ref=TikTok` (majuscules) ou `?ref=tik tok` ne serait **pas** stocké.
+
+> 🔴 **2026-10-10 · une deuxième explication, mesurée, et corrigée.** 35 comptes, **0** source, et
+> **6 des 7** inscriptions des 30 derniers jours passent par **Google**. Or `signInWithOAuth` ne
+> transporte aucune metadata : une inscription Google ne pouvait JAMAIS porter sa source, quelle
+> que soit l'URL d'arrivée. Corrigé par la RPC `claim_acquisition_source` (mig. `217`, ledger
+> `20261010121835`, preuve `supabase/proofs/217.proof.sql` 8/8, témoin rouge) que le client appelle
+> à l'ouverture de session d'un compte de moins d'une heure (`src/modules/auth/acquisition-claim.ts`).
+> Le test de bout en bout se joue donc **deux fois** : par e-mail ET par Google.
 
 ## 4. 🟠 La boucle de partage ne produit rien
 

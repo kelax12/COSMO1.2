@@ -7,6 +7,7 @@ import { useCallback, useState } from 'react';
 import { isPast, isToday, parseISO } from 'date-fns';
 import type { TeamActivityField, TeamTask, TeamTaskStatus } from '@/modules/team-projects';
 import { translator } from '@/i18n/useT';
+import { formatDurationMinutes } from '@/lib/duration';
 
 // ─── Couleurs de projet (champ TeamProject.color) ────────────────────
 
@@ -50,6 +51,13 @@ export const PROJECT_COLOR_HEX: Record<string, string> = {
 
 export const projectColorHex = (color: string): string =>
   PROJECT_COLOR_HEX[color] ?? PROJECT_COLOR_HEX.blue;
+
+// 🗑️ `projectColorFromCategory` / `nearestProjectColorName` retirés le
+// 2026-09-25 (cohérence globale, axe « Couleurs ») : la couleur d'un projet est
+// celle que l'utilisateur a CHOISIE (`ProjectColorPicker`), jamais dérivée de
+// sa catégorie, qui garde sa propre pastille. `project.color` reste un nom de
+// la palette fixe ci-dessus : Tailwind ne compile que les classes écrites
+// littéralement, un hex libre ne colorerait rien.
 
 // ─── Fusion avec la page Tâches perso ─────────────────────────────────
 
@@ -152,42 +160,46 @@ export const sumEstimatedTime = (tasks: TeamTask[]): number =>
  */
 export const formatDuration = (minutes: number): string => {
   if (!minutes || minutes <= 0) return '';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m} min`;
-  if (m === 0) return `${h} h`;
-  return `${h} h ${String(m).padStart(2, '0')}`;
+  return formatDurationMinutes(minutes);
 };
 
-// ─── Prefs UI persistées (filtres, vue, projets repliés) ─────────────
+// ─── Prefs UI persistées (vue, tri, projets repliés) ──────────────────
+// Les FILTRES n'y sont plus (2026-09-25) : ils vivent dans l'URL, partagés
+// avec l'onglet Tâches (`task-filters.ts`). Une ancienne valeur enregistrée
+// (`teamFilter`, `assigneeFilter`, `statusFilter`) est relue et ignorée.
 
 export interface ProjectsUiPrefs {
-  view: 'list' | 'kanban' | 'timeline';
-  /** null = toutes les tâches ; sinon userId de l'assigné filtré. */
-  assigneeFilter: string | null;
-  /** '' = toutes équipes, 'org' = sans équipe, sinon teamId. */
-  teamFilter: string;
+  /** `portfolio` (M2) : une ligne par projet, sans ses tâches. */
+  view: 'list' | 'kanban' | 'timeline' | 'portfolio';
+  /**
+   * La vue a-t-elle été CHOISIE ? Sans choix, au-delà de 20 projets, l'onglet
+   * ouvre sur le portefeuille : la liste de cartes y devient interminable.
+   */
+  viewChosen: boolean;
+  /** Tri du portefeuille et de la liste de cartes. */
+  sort: 'recent' | 'name' | 'dueDate' | 'progress' | 'status';
   collapsed: Record<string, boolean>;
   showArchived: boolean;
-  /** Pastille de synthèse active. */
-  statusFilter: TaskStatusFilter;
   /** Axe des colonnes du kanban : charge par personne, ou flux par statut. */
   kanbanGroupBy: 'assignee' | 'status';
+  /** Vue de l'onglet Tâches : la table, ou le Tableau (kanban, venu de
+   *  l'onglet Projets le 2026-09-27). */
+  tasksView: 'table' | 'kanban';
   /** Axe des lignes du Planning : une ligne par projet, ou par personne. */
   timelineGroupBy: 'project' | 'assignee';
 }
 
 const DEFAULT_PREFS: ProjectsUiPrefs = {
-  view: 'list',
-  assigneeFilter: null,
-  teamFilter: '',
+  view: 'portfolio',
+  viewChosen: false,
+  sort: 'recent',
   collapsed: {},
   showArchived: false,
-  statusFilter: 'all',
   // Par défaut le FLUX : c'est la lecture attendue d'un kanban. La vue par
   // personne reste à un clic, mais elle répond à « qui fait quoi », pas à
   // « où en est-on » — et c'est la seconde question qu'un kanban doit servir.
   kanbanGroupBy: 'status',
+  tasksView: 'table',
   // Par défaut, PAR PROJET : c'est la lecture qui répond à « où en est ce
   // projet », la question la plus fréquente en ouvrant le Planning. « Par
   // personne » répond à « qui est chargé quand » et reste à un clic.

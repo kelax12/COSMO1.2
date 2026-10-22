@@ -3,7 +3,10 @@
 // ═══════════════════════════════════════════════════════════════════
 
 // Types
-export type { Task, Subtask, TaskDependency, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskStatus, TaskRecurrence } from './types';
+export type { Task, Subtask, TaskDependency, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskStatus, TaskHealth, TaskRecurrence } from './types';
+
+// Statut <-> terminee (mig. 214) : miroir pur du trigger, cf. son en-tete.
+export { applyStatusSync, effectiveStatus } from './status-sync';
 
 // Récurrence (#26) — helpers purs
 export { nextOccurrenceDeadline, buildNextOccurrence } from './recurrence';
@@ -15,7 +18,9 @@ export { taskKeys, TASKS_STORAGE_KEY, TASK_DEPENDENCIES_STORAGE_KEY } from './co
 export type { ITasksRepository } from './repository';
 
 // Repository implementations
-export { LocalStorageTasksRepository } from './local.repository';
+// Dépôt de démo NON réexporté (2026-10-01) : le baril est importé par le shell,
+// la réexportation ramenait le dépôt dans le chunk d'ENTRÉE alors que la fabrique
+// le charge à la demande (`src/lib/demo-repositories.ts`).
 export { SupabaseTasksRepository } from './supabase.repository';
 
 // ═══════════════════════════════════════════════════════════════════

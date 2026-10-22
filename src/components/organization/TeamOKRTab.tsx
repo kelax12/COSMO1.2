@@ -1,398 +1,257 @@
+import { OrgEmptyState } from './OrgPagePrimitives';
+import { OrgTabSkeleton } from './OrgLoadingSkeletons';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import { Plus, Target, Trash2, Pencil, Users, Building2 } from 'lucide-react';
+import { useSearchParams } from 'react-router';
+import { Plus, Target } from 'lucide-react';
 import {
   useTeamOKRs,
   useUpdateTeamKR,
+  usePostKRCheckin,
   useDeleteTeamOKR,
-  useReassignTeamOKRCategory,
+  useKRProjects,
   type TeamOKR,
   type TeamKeyResult,
 } from '@/modules/team-okrs';
 import { useOrgTeams } from '@/modules/org-teams';
-import {
-  useOrgOKRCategories,
-  useCreateOrgOKRCategory,
-  useUpdateOrgOKRCategory,
-  OKR_CATEGORY_COLORS,
-} from '@/modules/org-okr-categories';
-import { orgOkrCategoryImpact } from '@/modules/org-okr-categories/impact';
-import { useDeleteOrgOKRCategoryFlow } from './useDeleteOrgOKRCategoryFlow';
-import { getColorHex } from '@/components/CategoryManager';
-import CategoryFilterBar from '@/pages/okr/CategoryFilterBar';
-import DeleteCategoryConfirm from '@/pages/okr/DeleteCategoryConfirm';
+import { useTeamCategories } from '@/modules/team-categories';
+import { useTeamProjects, useTeamProjectTaskStats } from '@/modules/team-projects';
+import { getColorHex } from '@/lib/category-colors';
 import TeamOKRModal from './TeamOKRModal';
-import { useMyOrgPermissions } from '@/modules/organizations';
+import DeleteTeamOkrConfirm from './DeleteTeamOkrConfirm';
+import TeamOKRCard from './TeamOKRCard';
+import TeamTrashDialog from './TeamTrashDialog';
+import { filterOkrs, OKR_STATES, type OkrState } from './okr-filters.helpers';
+import OkrFilterBar from './OkrFilterBar';
+import { useUrlFilters, anId, oneOf } from './use-url-filters';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { readEntityParam } from './deep-link.helpers';
+import { useMyOrgPermissions, useOrgMembers } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
+import { PermissionGate, usePermissionHints } from './permission-hints';
 
 interface TeamOKRTabProps {
   orgId: string;
 
 }
 
-// Palette hex (value === color) — les catégories d'entreprise stockent l'hex.
-const OKR_COLOR_OPTIONS = OKR_CATEGORY_COLORS.map((hex) => ({ value: hex, color: hex }));
+// Filtres équipe · porteur · état (audit 2026-09-24), dans l'URL : un lien
+// partage ce qu'on voit. Hors composant pour garder des spécifications stables.
+const OKR_FILTER_SPECS = {
+  team: { param: 'oTeam', defaultValue: '', parse: (raw: string) => (raw === 'org' ? 'org' : anId('')(raw) ?? '') },
+  person: { param: 'oPerson', defaultValue: '', parse: (raw: string) => anId('')(raw) ?? '' },
+  state: { param: 'oState', defaultValue: '' as OkrState | '', parse: oneOf<OkrState | ''>(['', ...OKR_STATES], '') },
+};
+
 // Résout une couleur : hex tel quel, sinon nom → hex (parité mode perso).
 const resolveColor = (color: string) => (color.startsWith('#') ? color : getColorHex(color));
 
-// Progression d'un KR, clampée [0,1] (garde B17 : targetValue > 0 garanti).
-const krProgress = (kr: TeamKeyResult): number => {
-  if (kr.completed) return 1;
-  if (kr.targetValue <= 0) return 0;
-  return Math.max(0, Math.min(1, kr.currentValue / kr.targetValue));
-};
-
-// Coefficient d'importance effectif : entier borné [1, 10], défaut 1.
-const krWeight = (kr: TeamKeyResult): number => {
-  const w = Math.round(Number(kr.weight));
-  if (!Number.isFinite(w) || w < 1) return 1;
-  return Math.min(w, 10);
-};
-
-// Progression globale (%) d'un OKR d'équipe : moyenne pondérée par le coefficient.
-const okrProgress = (keyResults: TeamKeyResult[]): number => {
-  let weightedSum = 0;
-  let totalWeight = 0;
-  for (const kr of keyResults) {
-    const w = krWeight(kr);
-    totalWeight += w;
-    weightedSum += krProgress(kr) * w;
-  }
-  return totalWeight > 0 ? Math.round((weightedSum / totalWeight) * 100) : 0;
-};
-
-// ─── Ligne KR : input contrôlé → la barre suit la saisie en direct ─────
-interface TeamKRRowProps {
-  kr: TeamKeyResult;
-  onCommit: (value: number) => void;
-}
-
-const TeamKRRow = ({ kr, onCommit }: TeamKRRowProps) => {
-  const { t } = useT('org');
-  const [value, setValue] = useState<string>(String(kr.currentValue));
-
-  // Resynchronise si la valeur serveur change (mutation d'un autre client / refetch).
-  useEffect(() => {
-    setValue(String(kr.currentValue));
-  }, [kr.currentValue]);
-
-  const numeric = Number(value);
-  const liveValue = Number.isNaN(numeric) ? kr.currentValue : numeric;
-  const pct = kr.targetValue > 0 ? Math.max(0, Math.min(100, Math.round((liveValue / kr.targetValue) * 100))) : 0;
-  const done = liveValue >= kr.targetValue;
-
-  const commit = () => {
-    const v = Number(value);
-    if (!Number.isNaN(v) && v !== kr.currentValue) onCommit(v);
-  };
-
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className={`text-sm truncate ${kr.completed ? 'line-through text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-primary))]'}`}>
-            {kr.title}
-          </p>
-          {krWeight(kr) !== 1 && (
-            <span
-              className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400"
-              title={`Coefficient d'importance ×${krWeight(kr)}`}
-            >
-              ×{krWeight(kr)}
-            </span>
-          )}
-          <span className="ml-auto text-xs font-mono text-[rgb(var(--color-text-muted))] shrink-0">
-            {liveValue}/{kr.targetValue}{kr.unit ? ` ${kr.unit}` : ''}
-          </span>
-        </div>
-        <div className="mt-1 h-1.5 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${done ? 'bg-green-500' : 'bg-[rgb(var(--color-accent-solid))]'}`}
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      </div>
-      {/* Édition rapide de la valeur courante */}
-      <input
-        type="number"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-        aria-label={t('okrTab.currentValueAria', { title: kr.title })}
-        className="w-16 h-8 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-      />
-    </div>
-  );
-};
-
 const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const { can } = useMyOrgPermissions(orgId);
-  const { t } = useT('org');
+  const hints = usePermissionHints(orgId);
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const [showCreate, setShowCreate] = useState(false);
   const [editingOKR, setEditingOKR] = useState<TeamOKR | null>(null);
+  const [deletingOKR, setDeletingOKR] = useState<TeamOKR | null>(null);
   // `live` : c'est l'écran où l'on regarde les OKR (cf. useTeamOKRs).
   const { data: okrs = [], isLoading } = useTeamOKRs(orgId, { live: true });
   const { data: teams = [] } = useOrgTeams(orgId);
-  const { data: categories = [] } = useOrgOKRCategories(orgId);
-  const createCategory = useCreateOrgOKRCategory(orgId);
-  const updateCategory = useUpdateOrgOKRCategory(orgId);
-  const reassignCategory = useReassignTeamOKRCategory(orgId);
+  const { data: categories = [] } = useTeamCategories(orgId);
   const updateKR = useUpdateTeamKR(orgId);
+  const postCheckin = usePostKRCheckin(orgId);
   const deleteOKR = useDeleteTeamOKR(orgId);
+  // Exécution (mig. 160) : KR reliés à des projets, avancement serveur.
+  const { data: krLinks = [] } = useKRProjects(orgId);
+  const { data: allProjects = [] } = useTeamProjects(orgId);
+  const { data: statsRows = [] } = useTeamProjectTaskStats(orgId);
+  const { data: members = [] } = useOrgMembers(orgId);
+  const statsById = useMemo(() => new Map(statsRows.map((r) => [r.projectId, r])), [statsRows]);
+  const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
+  const { user } = useAuth();
+  const { values: okrFilters, setFilters: setOkrFilters } = useUrlFilters(OKR_FILTER_SPECS);
+  // Lien profond `?okr=<id>` (recherche globale, mig. 191) : la carte est
+  // amenée à l'écran et soulignée.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focusedOkrId = readEntityParam(searchParams, 'okr');
+  const openOkr = (okrId: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('okr', okrId);
+    setSearchParams(next, { replace: true });
+  };
 
   // ── Filtre + gestion des catégories (UI identique au mode perso) ────
-  // Sélection = id de catégorie ('all' = toutes). Le filtrage des OKR se fait
-  // ensuite par NOM (team_okrs.category stocke le nom).
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null);
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
-  const [editCategoryName, setEditCategoryName] = useState('');
-  const [editCategoryColor, setEditCategoryColor] = useState<string>(OKR_CATEGORY_COLORS[0]);
-  const [showCreateCategory, setShowCreateCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState<string>(OKR_CATEGORY_COLORS[0]);
-  // Suppression d'une catégorie : réaffecter AVANT de supprimer (item C-02).
-  const {
-    categoryToDeleteId,
-    setCategoryToDeleteId,
-    isDeleting: isDeletingCategory,
-    confirmDelete: confirmDeleteCategory,
-  } = useDeleteOrgOKRCategoryFlow({
-    orgId,
-    categories,
-    okrs,
-    onDeleted: (deletedId) => {
-      if (selectedCategory === deletedId) setSelectedCategory('all');
-    },
-  });
+  // `team_categories` est hiérarchique depuis la mig. 148 : le filtre cascade
+  // désormais réellement sur les sous-catégories (cf. CategoryFilterBar).
+  // Une seule catégorie choisie dans la pastille de filtre ; le filtre couvre
+  // aussi ses sous-catégories.
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const categoryOptions = useMemo(() => {
+    const out: { id: string; name: string; color: string; depth: number }[] = [];
+    const walk = (parentId: string | null, depth: number) => {
+      for (const c of categories.filter((x) => (x.parentId ?? null) === parentId)) {
+        out.push({ id: c.id, name: c.name, color: resolveColor(c.color), depth });
+        walk(c.id, depth + 1);
+      }
+    };
+    walk(null, 0);
+    return out;
+  }, [categories]);
+  const activeCategoryIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!categoryFilter) return ids;
+    const add = (id: string) => {
+      ids.add(id);
+      for (const c of categories) if (c.parentId === id && !ids.has(c.id)) add(c.id);
+    };
+    add(categoryFilter);
+    return ids;
+  }, [categoryFilter, categories]);
 
-  const categoryToDelete = categories.find((c) => c.id === categoryToDeleteId);
-
-  const teamName = (id: string) => teams.find((x) => x.id === id)?.name ?? t('okrTab.fallbackTeam');
-  // Couleur d'une catégorie par son nom (badge coloré, parité mode perso).
-  const colorByName = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const c of categories) m.set(c.name, resolveColor(c.color));
+  const teamName = (id: string) => teams.find((x) => x.id === id)?.name ?? tOrgAdmin('okrTab.fallbackTeam');
+  const teamColor = (id: string) => teams.find((x) => x.id === id)?.color;
+  // Couleur d'une catégorie par son id (badge coloré, parité mode perso).
+  const colorById = useMemo(() => {
+    const m = new Map<string, { name: string; color: string }>();
+    for (const c of categories) m.set(c.id, { name: c.name, color: resolveColor(c.color) });
     return m;
   }, [categories]);
 
   const setCurrent = (kr: TeamKeyResult, value: number) =>
     updateKR.mutate({ krId: kr.id, input: { currentValue: value } });
 
-  // Filtrage par catégorie sélectionnée (id → nom).
-  const selectedName = selectedCategory === 'all'
-    ? null
-    : categories.find((c) => c.id === selectedCategory)?.name ?? null;
-  const visibleOKRs = useMemo(
-    () => (selectedCategory === 'all' ? okrs : okrs.filter((o) => o.category === selectedName)),
-    [okrs, selectedCategory, selectedName],
-  );
+  // Filtrage par catégories actives, par id — plus de détour par le nom
+  // depuis que `team_okrs.category_id` est un vrai FK (mig. 148).
+  const visibleOKRs = useMemo(() => {
+    const byCategory = activeCategoryIds.size === 0 ? okrs : okrs.filter((o) => !!o.categoryId && activeCategoryIds.has(o.categoryId));
+    return filterOkrs(byCategory, okrFilters, krLinks, statsById);
+  }, [okrs, activeCategoryIds, okrFilters, krLinks, statsById]);
 
-  // ── Handlers catégories (mêmes noms/comportements que OKRPage) ──────
-  const startEditCategory = (cat: { id: string; name: string; color: string }) => {
-    setEditingCategoryId(cat.id);
-    setEditCategoryName(cat.name);
-    setEditCategoryColor(cat.color);
-    setHoveredCategoryId(null);
-  };
-  const cancelEditCategory = () => {
-    setEditingCategoryId(null);
-    setEditCategoryName('');
-    setEditCategoryColor(OKR_CATEGORY_COLORS[0]);
-  };
-  const submitEditCategory = () => {
-    if (!editingCategoryId) return;
-    const name = editCategoryName.trim();
-    if (name.length < 2) {
-      toast.error(t('okrCategory.nameTooShort'));
-      return;
-    }
-    const oldName = categories.find((c) => c.id === editingCategoryId)?.name;
-    updateCategory.mutate(
-      { categoryId: editingCategoryId, input: { name, color: editCategoryColor } },
-      {
-        onSuccess: () => {
-          // Cascade : réétiqueter les OKR portant l'ancien nom (le champ
-          // team_okrs.category stocke le nom, pas un id).
-          if (oldName && oldName !== name) {
-            const ids = okrs.filter((o) => o.category === oldName).map((o) => o.id);
-            if (ids.length > 0) reassignCategory.mutate({ okrIds: ids, category: name });
-          }
-          cancelEditCategory();
-          toast.success(t('okrCategory.updated'));
-        },
-      },
-    );
-  };
+  // L'objectif demandé par l'URL : un filtre de catégorie qui le cacherait est
+  // levé, puis on l'amène à l'écran une fois les données arrivées.
+  const focusedLoaded = !!focusedOkrId && okrs.some((o) => o.id === focusedOkrId);
+  const focusedHidden = focusedLoaded && !visibleOKRs.some((o) => o.id === focusedOkrId);
+  useEffect(() => {
+    if (!focusedHidden) return;
+    setCategoryFilter('');
+    setOkrFilters({ team: '', person: '', state: '' });
+  }, [focusedHidden, setOkrFilters]);
+  useEffect(() => {
+    if (!focusedLoaded || focusedHidden) return;
+    document.getElementById(`okr-${focusedOkrId}`)?.scrollIntoView({ block: 'center' });
+  }, [focusedLoaded, focusedHidden, focusedOkrId]);
+
   if (isLoading) {
-    return <div className="py-10 text-center text-sm text-[rgb(var(--color-text-muted))]">{t('okrTab.loading')}</div>;
+    // Squelette (reco UI n° 47) : la forme de l'écran, pas une phrase.
+    return <OrgTabSkeleton label={tOrgAdmin('okrTab.loading')} />;
   }
 
   return (
     <div className="space-y-4">
-      {/* Filtre par catégorie — UI identique à la page OKR perso.
-          Les actions de gestion (créer/éditer/supprimer) sont réservées aux
-          managers ; un simple membre ne voit que « Tous » + les chips.
-          Toujours rendu (même sans catégorie) pour que la barre occupe sa place
-          normale : sinon les boutons/cartes en dessous remontaient (#4). */}
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        {(
-          <CategoryFilterBar
-            categories={categories.map((c) => ({ id: c.id, name: c.name, color: c.color }))}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-            hoveredCategoryId={hoveredCategoryId}
-            setHoveredCategoryId={setHoveredCategoryId}
-            editingCategoryId={editingCategoryId}
-            editCategoryName={editCategoryName}
-            setEditCategoryName={setEditCategoryName}
-            editCategoryColor={editCategoryColor}
-            setEditCategoryColor={setEditCategoryColor}
-            startEditCategory={startEditCategory}
-            cancelEditCategory={cancelEditCategory}
-            submitEditCategory={submitEditCategory}
-            setCategoryToDeleteId={setCategoryToDeleteId}
-            colorOptions={OKR_COLOR_OPTIONS}
-            resolveColor={resolveColor}
-            showCreateCategory={showCreateCategory}
-            setShowCreateCategory={setShowCreateCategory}
-            newCategoryName={newCategoryName}
-            setNewCategoryName={setNewCategoryName}
-            newCategoryColor={newCategoryColor}
-            setNewCategoryColor={setNewCategoryColor}
-            createCategoryMutation={createCategory}
-            canManage={can['category.manage']}
-            accentAllActive
-          />
-        )}
-        {can['okr.create'] && (
+      {/* La catégorie se filtre dans la barre de pastilles ci-dessous ;
+          sa gestion vit dans Paramètres → Catégories (M13). */}
+      <div className="flex items-start justify-end gap-3 flex-wrap">
+        <PermissionGate reason={hints.deniedReason('okr.create')}>
           <button
             type="button"
             onClick={() => setShowCreate(true)}
-            className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] shadow-sm transition-colors"
+            data-guide-id="okr-new"
+            // Maquette 259 : sur mobile, un « + » seul, nommé pour les lecteurs d'écran.
+            aria-label={tOrgAdmin('okrTab.newObjective')}
+            className="shrink-0 inline-flex items-center justify-center gap-1.5 h-9 max-md:w-9 max-md:px-0 max-md:rounded-xl px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] shadow-sm transition-colors"
           >
-            <Plus size={15} aria-hidden="true" /> {t('okrTab.newObjective')}
+            <Plus size={15} aria-hidden="true" /> <span className="max-md:hidden">{tOrgAdmin('okrTab.newObjective')}</span>
           </button>
-        )}
+        </PermissionGate>
+      </div>
+
+      {/* Filtres et corbeille des objectifs (mig. 193). */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <OkrFilterBar
+          filters={okrFilters}
+          setFilters={setOkrFilters}
+          teams={teams}
+          members={members}
+          currentUserId={user?.id}
+          categories={categoryOptions}
+          category={categoryFilter}
+          setCategory={setCategoryFilter}
+        />
+        <TeamTrashDialog orgId={orgId} projects={allProjects} members={members} />
       </div>
 
       {okrs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
-            <Target size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-          </div>
-          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('okrTab.empty')}</p>
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
-            {can['okr.create'] ? t('okrTab.emptyManager') : t('okrTab.emptyMember')}
-          </p>
-        </div>
+        <OrgEmptyState
+          Icon={Target}
+          title={tOrgAdmin('okrTab.empty')}
+          body={can['okr.create'] ? tOrgAdmin('okrTab.emptyManager') : tOrgAdmin('okrTab.emptyMember')}
+          action={can['okr.create'] ? (
+            <button
+              type="button"
+              onClick={() => setShowCreate(true)}
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold"
+            >
+              <Plus size={15} aria-hidden="true" /> {tOrgAdmin('okrTab.newObjective')}
+            </button>
+          ) : undefined}
+        />
       ) : visibleOKRs.length === 0 ? (
         <div className="py-12 text-center">
-          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('okrTab.emptyCategory')}</p>
+          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('okrTab.emptyCategory')}</p>
           <button
             type="button"
-            onClick={() => setSelectedCategory('all')}
+            onClick={() => {
+              setCategoryFilter('');
+              setOkrFilters({ team: '', person: '', state: '' });
+            }}
             className="mt-2 text-xs font-semibold text-blue-500 hover:text-blue-600"
           >
-            {t('okrTab.seeAll')}
+            {tOrgAdmin('okrTab.seeAll')}
           </button>
         </div>
       ) : (
-        visibleOKRs.map((okr) => {
-          const avg = okrProgress(okr.keyResults);
-          const catColor = okr.category ? colorByName.get(okr.category) : undefined;
-          return (
-            <section key={okr.id} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {okr.category && (
-                      <span
-                        className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide ${catColor ? '' : 'bg-[rgb(var(--color-accent-solid))]/10 text-blue-600 dark:text-blue-400'}`}
-                        style={catColor ? { backgroundColor: `${catColor}1a`, color: catColor } : undefined}
-                      >
-                        {catColor && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: catColor }} aria-hidden="true" />}
-                        {okr.category}
-                      </span>
-                    )}
-                    <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">{okr.title}</h3>
-                  </div>
-                  {okr.description && (
-                    <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">{okr.description}</p>
-                  )}
-                  {/* Rattachement d'équipes (cloisonnement) */}
-                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                    {okr.teamIds.length === 0 ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))]">
-                        <Building2 size={11} aria-hidden="true" /> {t('common.orgWideBadge')}
-                      </span>
-                    ) : (
-                      okr.teamIds.map((tid) => (
-                        <span key={tid} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent-solid))]/10 text-blue-600 dark:text-blue-400">
-                          <Users size={11} aria-hidden="true" /> {teamName(tid)}
-                        </span>
-                      ))
-                    )}
-                  </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{avg}%</span>
-                </div>
-                {(can['okr.create'] || can['okr.delete']) && (
-                  <div className="flex items-center gap-1 shrink-0">
-                    {can['okr.create'] && (
-                    <button
-                      type="button"
-                      onClick={() => setEditingOKR(okr)}
-                      aria-label={t('common.editOkrAria', { title: okr.title })}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:bg-[rgb(var(--color-accent-solid-hover))]/10 transition-colors"
-                    >
-                      <Pencil size={15} aria-hidden="true" />
-                    </button>
-                    )}
-                    {can['okr.delete'] && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (window.confirm(t('common.deleteOkrConfirm', { title: okr.title }))) deleteOKR.mutate(okr.id);
-                      }}
-                      aria-label={t('common.deleteOkrAria', { title: okr.title })}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                    >
-                      <Trash2 size={15} aria-hidden="true" />
-                    </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                {okr.keyResults.map((kr) => (
-                  <TeamKRRow key={kr.id} kr={kr} onCommit={(v) => setCurrent(kr, v)} />
-                ))}
-              </div>
-            </section>
-          );
-        })
+        visibleOKRs.map((okr) => (
+          <TeamOKRCard
+            key={okr.id}
+            okr={okr}
+            okrs={okrs}
+            links={krLinks}
+            statsById={statsById}
+            category={okr.categoryId ? colorById.get(okr.categoryId) : undefined}
+            teamName={teamName}
+            teamColor={teamColor}
+            editDeniedReason={hints.deniedReason('okr.create')}
+            deleteDeniedReason={hints.deniedReason('okr.delete')}
+            highlighted={focusedOkrId === okr.id}
+            onEdit={() => setEditingOKR(okr)}
+            onDelete={() => setDeletingOKR(okr)}
+            onCommitKR={setCurrent}
+            onSetKRHealth={(kr, status, value) => postCheckin.mutate({ krId: kr.id, value, status })}
+            onOpenOkr={openOkr}
+            personOf={(id) => memberById.get(id)}
+          />
+        ))
       )}
 
-      {/* Dialog suppression catégorie (même composant que la page OKR perso) */}
-      <DeleteCategoryConfirm
-        open={!!categoryToDeleteId}
-        categoryName={categoryToDelete?.name}
-        impactedOkrs={orgOkrCategoryImpact(categoryToDelete?.name, okrs).okrs}
-        targetNames={categories.filter((c) => c.id !== categoryToDeleteId).map((c) => c.name)}
-        onCancel={() => setCategoryToDeleteId(null)}
-        onConfirm={confirmDeleteCategory}
-        isWorking={isDeletingCategory}
-      />
 
       {showCreate && (
         <TeamOKRModal orgId={orgId} onClose={() => setShowCreate(false)} />
       )}
+      {deletingOKR && (
+        <DeleteTeamOkrConfirm
+          orgId={orgId}
+          okr={deletingOKR}
+          okrs={okrs}
+          pending={deleteOKR.isPending}
+          onConfirm={() => deleteOKR.mutate(deletingOKR.id, { onSuccess: () => setDeletingOKR(null) })}
+          onCancel={() => setDeletingOKR(null)}
+        />
+      )}
       {editingOKR && (
-        <TeamOKRModal orgId={orgId} editingOKR={editingOKR} onClose={() => setEditingOKR(null)} />
+        <TeamOKRModal
+          orgId={orgId}
+          editingOKR={editingOKR}
+          onClose={() => setEditingOKR(null)}
+          onDelete={hints.deniedReason('okr.delete') ? undefined : () => { setDeletingOKR(editingOKR); setEditingOKR(null); }}
+        />
       )}
     </div>
   );

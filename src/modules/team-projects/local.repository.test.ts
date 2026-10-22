@@ -12,15 +12,15 @@ describe('LocalStorageTeamProjectsRepository (démo)', () => {
     repo = new LocalStorageTeamProjectsRepository();
   });
 
-  it('seede 3 projets', async () => {
+  it('seede 5 projets', async () => {
     const projects = await repo.getProjects(ORG);
-    expect(projects.length).toBe(3);
+    expect(projects.length).toBe(5);
     expect(projects.map((p) => p.name)).toContain('Refonte du site');
   });
 
-  it('seede ~20 tâches réparties sur les projets et assignées (certaines multi)', async () => {
+  it('seede ~40 tâches réparties sur les projets et assignées (certaines multi)', async () => {
     const tasks = await repo.getTasks(ORG);
-    expect(tasks.length).toBe(20);
+    expect(tasks.length).toBe(39);
     expect(tasks.every((t) => t.assigneeIds.length > 0)).toBe(true);
     // La multi-assignation est représentée dans les seeds (1 tâche sur 4).
     expect(tasks.some((t) => t.assigneeIds.length > 1)).toBe(true);
@@ -30,6 +30,19 @@ describe('LocalStorageTeamProjectsRepository (démo)', () => {
     const mine = await repo.getTasks(ORG, { assigneeId: 'demo-user' });
     expect(mine.length).toBeGreaterThan(0);
     expect(mine.every((t) => t.assigneeIds.includes('demo-user'))).toBe(true);
+  });
+
+  it('openOrCompletedSince : garde les ouvertes et les terminées depuis, écarte les anciennes (même règle que le serveur)', async () => {
+    const base = { orgId: ORG, projectId: 'p', priority: 3, deadline: '', assigneeIds: [], createdBy: 'demo-user', createdAt: '', updatedAt: '' };
+    localStorage.setItem('cosmo_team_tasks', JSON.stringify([
+      { ...base, id: 'open-old', name: 'Ouverte ancienne', completed: false, completedAt: null },
+      { ...base, id: 'done-recent', name: 'Terminée récente', completed: true, completedAt: '2026-09-20T10:00:00.000Z' },
+      { ...base, id: 'done-old', name: 'Terminée ancienne', completed: true, completedAt: '2026-06-01T10:00:00.000Z' },
+      // completed_at NULL ne passe pas `>= since` côté SQL : pareil ici.
+      { ...base, id: 'done-nodate', name: 'Terminée sans date', completed: true, completedAt: null },
+    ]));
+    const tasks = await repo.getTasks(ORG, { openOrCompletedSince: '2026-09-01T00:00:00.000Z' });
+    expect(tasks.map((t) => t.id).sort()).toEqual(['done-recent', 'open-old']);
   });
 
   it('coerce le localStorage legacy (assigneeId → assigneeIds) — pas de crash', async () => {
@@ -90,6 +103,35 @@ describe('LocalStorageTeamProjectsRepository (démo)', () => {
     await repo.deleteTask(before[0].id);
     const after = await repo.getTasks(ORG);
     expect(after.length).toBe(before.length - 1);
+  });
+
+  // M4 (mig. 152) : la suppression est une corbeille, et l'« Annuler » rend la
+  // tâche À L'IDENTIQUE, pas une copie à sept champs.
+  it('corbeille : la tâche supprimée se restaure à l identique, commentaires compris', async () => {
+    const [task] = await repo.getTasks(ORG);
+    await repo.updateTask(task.id, { status: 'review' });
+    await repo.addComment({ taskId: task.id, body: 'retour client' });
+    const snapshot = (await repo.getTasks(ORG)).find((t) => t.id === task.id);
+
+    await repo.deleteTask(task.id);
+    expect((await repo.getTasks(ORG)).some((t) => t.id === task.id)).toBe(false);
+    const trash = await repo.getTrash(ORG);
+    expect(trash.map((t) => t.id)).toContain(task.id);
+
+    await repo.restoreTask(task.id);
+    expect((await repo.getTasks(ORG)).find((t) => t.id === task.id)).toEqual(snapshot);
+    expect((await repo.getComments(task.id)).some((c) => c.body === 'retour client')).toBe(true);
+    expect(await repo.getTrash(ORG)).toHaveLength(0);
+  });
+
+  it('corbeille : une tâche supprimée depuis plus de 30 jours ne se restaure plus', async () => {
+    const [task] = await repo.getTasks(ORG);
+    await repo.deleteTask(task.id);
+    const stored = JSON.parse(localStorage.getItem('cosmo_team_task_trash') ?? '[]');
+    stored[0].deletedAt = new Date(Date.now() - 31 * 24 * 3600 * 1000).toISOString();
+    localStorage.setItem('cosmo_team_task_trash', JSON.stringify(stored));
+    expect(await repo.getTrash(ORG)).toHaveLength(0);
+    await expect(repo.restoreTask(task.id)).rejects.toMatchObject({ code: 'not_found' });
   });
 
   it('crée puis archive un projet (archivedAt renseigné, toujours listé)', async () => {

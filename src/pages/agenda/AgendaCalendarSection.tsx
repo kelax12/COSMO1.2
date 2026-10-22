@@ -26,7 +26,7 @@ import React from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin, { EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
+import interactionPlugin, { DateClickArg, EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
 import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput, EventApi } from '@fullcalendar/core';
 // Données de locale FullCalendar. SANS elles, une locale non enregistrée
 // retombe sur les défauts anglais pour `firstDay` : l'agenda français
@@ -38,8 +38,9 @@ import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput, Ev
 // obligerait à éditer ce fichier à chaque nouvelle langue — exactement ce que
 // le reste du socle i18n évite. Ici, toute langue future fonctionne sans code.
 import allCalendarLocales from '@fullcalendar/core/locales-all';
-import { motion } from 'framer-motion';
+import { motion, useAnimationControls, useReducedMotion } from 'framer-motion';
 import { format } from 'date-fns';
+import { CheckSquare, Check } from 'lucide-react';
 import MemberAvatar from '@/components/organization/MemberAvatar';
 import { getDateLocale, getIntlTag } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
@@ -48,6 +49,8 @@ import { useAuth } from '@/modules/auth/AuthContext';
 import { getInitialScrollTime, shiftEventsForDisplay, type FullCalendarEvent } from './calendar-events';
 import { useTimezonePref, displayNow } from '@/lib/timezone';
 import { type MobileView, mobileCalendarStyles, MobileDayStrip } from './MobileAgenda';
+import type { MobileZoomOrder } from './useAgendaMobileView';
+import { useFocusableScrollers } from './useFocusableScrollers';
 
 /**
  * Cible du lien d'évitement du panneau des tâches. Portée par le conteneur du
@@ -75,11 +78,19 @@ interface AgendaCalendarSectionProps {
   mobileViewMode: MobileView;
   mobileSelectedDate: Date;
   onMobileSelectDate: (date: Date) => void;
+  /**
+   * Ordre de zoom Mois → Jour. Change à chaque bascule ; porte le point touché
+   * en coordonnées viewport, que ce composant — seul à connaître son DOM —
+   * convertit en origine de transformation.
+   */
+  mobileZoom: MobileZoomOrder | null;
   /** Pas de temps du zoom desktop, et son intervalle d'étiquettes. */
   slotDuration: string;
   slotLabelInterval: string;
   onDateSelect: (selectInfo: DateSelectArg) => void;
   onMobileDateSelect: (selectInfo: DateSelectArg) => void;
+  /** Tap sur une case : c'est LUI qui bascule Mois → Jour au doigt (cf. hook). */
+  onMobileDateClick: (info: DateClickArg) => void;
   onEventClick: (clickInfo: EventClickArg) => void;
   onEventDragStart: (info: EventDragArg) => void;
   onEventDragStop: (info: EventDragArg) => void;
@@ -88,7 +99,36 @@ interface AgendaCalendarSectionProps {
   onEventReceive: (receiveInfo: EventReceiveArg) => void;
   onDesktopDatesSet: (info: DatesSetArg) => void;
   onMobileDatesSet: (info: DatesSetArg) => void;
+  /**
+   * Pastille « ce créneau attend une décision », rendue par la PAGE.
+   *
+   * C'est un emplacement, pas un rappel : ce fichier place la pastille et ne
+   * sait rien de ce qu'elle ouvre. La frontière du haut de fichier tient donc
+   * toujours, alors qu'un `onReviewClick(eventId)` aurait fait entrer ici la
+   * notion de créneau à passer en revue. Rend `null` pour un événement qui
+   * n'attend rien.
+   */
+  renderReviewBadge?: (eventId: string) => React.ReactNode;
 }
+
+/**
+ * Couleur du titre d'un événement mobile, posé sur l'aplat de sa couleur.
+ * Bug rapporté le 2026-10-11 : un bloc blanc sans titre. Le titre était
+ * TOUJOURS blanc ; sur une couleur claire, ou sur l'accent de repli (presque
+ * blanc dans les thèmes Gris et Noir), il disparaissait. Hex : luminance
+ * relative ; au-delà de 0,6, texte sombre.
+ */
+function eventTextColor(color: string): string {
+  const m = /^#([0-9a-f]{6})$/i.exec(color.trim());
+  if (!m) return '#ffffff';
+  const n = parseInt(m[1], 16);
+  const lin = (c: number) => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const lum = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+  return lum > 0.6 ? '#1f2937' : '#ffffff';
+}
+
+/** Repli d'un événement sans couleur : l'accent PLEIN et son texte prévu. */
+const FALLBACK_EVENT_BG = 'rgb(var(--color-accent-solid))';
 
 const UNSELECT_CANCEL =
   '.modal-overlay,.modal-content,input,textarea,select,button,.fc-event,[data-radix-popper-content-wrapper]';
@@ -104,10 +144,12 @@ const AgendaCalendarSection = ({
   mobileViewMode,
   mobileSelectedDate,
   onMobileSelectDate,
+  mobileZoom,
   slotDuration,
   slotLabelInterval,
   onDateSelect,
   onMobileDateSelect,
+  onMobileDateClick,
   onEventClick,
   onEventDragStart,
   onEventDragStop,
@@ -116,6 +158,7 @@ const AgendaCalendarSection = ({
   onEventReceive,
   onDesktopDatesSet,
   onMobileDatesSet,
+  renderReviewBadge,
 }: AgendaCalendarSectionProps) => {
   const { t } = useT('agenda');
   const { user } = useAuth();
@@ -163,27 +206,157 @@ const AgendaCalendarSection = ({
     return ids;
   }, [calendarEvents]);
 
-  // Rendu du contenu d'un événement : titre + avatar de l'auteur si l'événement
-  // a été ajouté par quelqu'un d'autre que moi (mon manager, mode entreprise).
-  const renderEventInner = (title: string, createdBy: string | undefined, centered: boolean) => {
-    const author = createdBy && createdBy !== user?.id ? memberById.get(createdBy) : undefined;
+  // Rendu du contenu d'un événement : titre, avatar de l'auteur si l'événement a
+  // été ajouté par quelqu'un d'autre que moi (mon manager, mode entreprise), et
+  // la colonne d'indicateurs en haut à droite.
+  //
+  // Deux indicateurs empilés, jamais fusionnés :
+  //   • l'icône TÂCHE dit « cet événement est un créneau de travail sur une
+  //     tâche », elle est purement informative et ne se clique pas ;
+  //   • la pastille « ! » dit « ce créneau est terminé et personne n'a dit s'il
+  //     avait servi », elle PORTE une action.
+  // Les confondre ferait d'un état permanent (être lié à une tâche) et d'un état
+  // transitoire (attendre une décision) le même signal.
+  const renderEventInner = (
+    title: string,
+    createdBy: string | undefined,
+    centered: boolean,
+    eventId: string,
+    hasTask: boolean,
+    needsReview: boolean,
+    taskDone: boolean,
+    /**
+     * Mobile : couleur de l'événement en APLAT, texte blanc. La maquette 161
+     * (teinte à 18 %) a été retirée à la demande d'Axel le 2026-10-11. Le bloc
+     * FullCalendar reste transparent (`cosmo-event-tinted`) : c'est ce contenu
+     * qui porte la couleur, sans avatar (maquette 169).
+     */
+    tint?: string,
+  ) => {
+    // Maquette 169 : pas d'avatar dans le bloc sur mobile (deux couleurs dans
+    // un centimètre carré) ; l'auteur reste dans le détail de l'événement.
+    const author = !tint && createdBy && createdBy !== user?.id ? memberById.get(createdBy) : undefined;
     return (
-      <div className={`h-full w-full flex items-center gap-1 p-1 text-xs cursor-pointer ${centered ? 'justify-center' : ''}`}>
+      <div
+        className={`relative h-full w-full flex items-center gap-1 p-1 text-xs cursor-pointer ${centered ? 'justify-center' : ''} ${tint ? 'rounded-lg px-1.5' : ''}`}
+        style={tint ? { backgroundColor: tint, color: tint === FALLBACK_EVENT_BG ? 'rgb(var(--color-accent-solid-foreground))' : eventTextColor(tint) } : undefined}
+      >
         {author && (
           <span className="shrink-0 rounded-full ring-1 ring-white/70" title={t('event.addedBy', { name: author.displayName })}>
             <MemberAvatar avatar={author.avatar} name={author.displayName} size={16} />
           </span>
         )}
-        <span className={`font-medium text-white truncate leading-tight ${centered ? 'text-center' : ''}`}>{title}</span>
+        <span
+          className={`font-medium ${tint ? '' : 'text-white'} truncate leading-tight ${centered ? 'text-center' : ''} ${hasTask ? 'pr-5' : ''}`}
+        >
+          {title}
+        </span>
+        {hasTask && (
+          <span className="absolute top-0.5 right-0.5 flex flex-col items-center gap-0.5">
+            {/* Informatif : `pointer-events-none` pour que le clic traverse
+                jusqu'au bloc, qui ouvre l'événement comme partout ailleurs. */}
+            {/* Même icône que l'entrée « Tâches » de la barre de navigation
+                (`Layout.tsx`) : c'est la même notion, elle doit se reconnaître.
+                Taille +20% en diagonale par rapport au premier jet (12px de
+                côté → 14,4px) — demandé explicitement, la pastille en dessous
+                reçoit le même facteur. */}
+            <CheckSquare
+              className={`h-[14.4px] w-[14.4px] shrink-0 pointer-events-none ${tint ? 'text-[rgb(var(--color-text-secondary))]' : 'text-white/75'}`}
+              aria-label={t('event.linkedToTask')}
+            />
+            {/* Le clic ne doit pas remonter au bloc : il ouvrirait l'EventModal
+                par-dessus le menu qu'on vient juste de demander. */}
+            {needsReview && renderReviewBadge && (
+              <span onClick={(e) => e.stopPropagation()}>{renderReviewBadge(eventId)}</span>
+            )}
+            {/* Tâche déjà validée : check vert à la place de la pastille.
+                Les deux conditions ne sont jamais vraies ensemble
+                (`findDoneTaskEvents` exige `task.completed`,
+                `findOverdueTaskSlots` l'exclut) — pas de `!needsReview` requis
+                ici, mais explicite pour que ça reste vrai si l'une des deux
+                définitions bouge un jour. Purement informatif, comme l'icône
+                tâche au-dessus : pas de menu, rien à décider une fois la tâche
+                faite. */}
+            {!needsReview && taskDone && (
+              <span
+                className="flex h-[19.2px] w-[19.2px] shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow ring-1 ring-emerald-900/30"
+                title={t('event.taskDone')}
+                aria-label={t('event.taskDone')}
+              >
+                <Check className="h-3 w-3 pointer-events-none" aria-hidden="true" strokeWidth={3} />
+              </span>
+            )}
+          </span>
+        )}
       </div>
     );
   };
 
   const isMonthView = mobileViewMode === 'dayGridMonth';
 
+  // ── Animation de bascule Mois → Jour (MOBILE UNIQUEMENT) ───────────────────
+  //
+  // La grille du jour ENTRE en s'ouvrant depuis la case touchée : on part d'un
+  // agrandissement centré sur le doigt, et on revient à l'échelle 1. L'œil
+  // relie ainsi la case du mois à la journée qui la remplace, au lieu de subir
+  // un remplacement sec.
+  //
+  // Pourquoi des contrôles impératifs plutôt qu'une `key` sur un `motion.div` :
+  // une `key` qui change REMONTE `<FullCalendar>`, or la bascule s'appuie
+  // justement sur `api.changeView` pour ne PAS démonter (cf. le commentaire de
+  // `handleMobileSelectDate`). L'animation ne doit rien coûter à la correction
+  // qu'elle accompagne.
+  const mobileShellRef = React.useRef<HTMLDivElement>(null);
+  const zoomControls = useAnimationControls();
+  const reduceMotion = useReducedMotion();
+  const zoomToken = mobileZoom?.token ?? 0;
+  // Miroir du point touché. Il n'est lu QUE dans l'effet ci-dessous, déclenché
+  // par le token ; le mettre en dépendance rejouerait l'animation à chaque
+  // nouvel objet identique. Une ref ne peut pas périmer : elle est réassignée
+  // au rendu qui précède l'effet, donc toujours du même passage que le token.
+  const zoomPointRef = React.useRef(mobileZoom);
+  zoomPointRef.current = mobileZoom;
+
+  // C-119 : défileurs FullCalendar focalisables (WebKit ne le fait pas seul).
+  const desktopShellRef = React.useRef<HTMLDivElement>(null);
+  const scrollerLabel = t('nav.calendarScroller');
+  useFocusableScrollers(mobileShellRef, scrollerLabel, isMobile);
+  useFocusableScrollers(desktopShellRef, scrollerLabel);
+
+  React.useEffect(() => {
+    if (!zoomToken) return;
+    // 🔴 Sous `prefers-reduced-motion`, `<MotionConfig reducedMotion="user">`
+    // n'EXÉCUTE PAS les animations de transform mais laisse la valeur de
+    // départ posée : un `set({ scale: 1.6 })` resterait appliqué pour de bon,
+    // et la grille du jour resterait agrandie hors de l'écran. On ne pose donc
+    // aucune clé de transform dans ce cas (cf. src/lib/motion-safe.ts).
+    if (reduceMotion) {
+      zoomControls.set({ opacity: 1 });
+      return;
+    }
+    const shell = mobileShellRef.current;
+    const rect = shell?.getBoundingClientRect();
+    const point = zoomPointRef.current;
+    // Origine = le doigt, ramené dans le repère du conteneur. Sans point
+    // exploitable (clavier, ou tap hors cadre), on retombe au centre.
+    const origin =
+      rect && rect.width > 0 && rect.height > 0 && point && point.x >= 0
+        ? `${clampPercent(((point.x - rect.left) / rect.width) * 100)}% ${clampPercent(
+            ((point.y - rect.top) / rect.height) * 100,
+          )}%`
+        : '50% 50%';
+    zoomControls.set({ opacity: 0, scale: 1.14, transformOrigin: origin });
+    void zoomControls.start({
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] },
+    });
+  }, [zoomToken, reduceMotion, zoomControls]);
+
+
   // Label du jour sélectionné
   const mobileDayLabel = (() => {
-    const raw = format(mobileSelectedDate, 'EEEE - d MMMM yyyy', { locale: getDateLocale() });
+    const raw = format(mobileSelectedDate, 'EEEE d MMMM yyyy', { locale: getDateLocale() });
     return raw.charAt(0).toUpperCase() + raw.slice(1);
   })();
 
@@ -208,7 +381,9 @@ const AgendaCalendarSection = ({
 
       {/* ── MOBILE CALENDAR ── */}
       {isMobile && (
-        <div
+        <motion.div
+          ref={mobileShellRef}
+          animate={zoomControls}
           data-tutorial-id="agenda-mobile-calendar"
           // Pas de `pb` : le conteneur `flex-1` s'arrête déjà pile au-dessus
           // de la tab bar. L'ancien `pb-64px` (réservé pour dégager le FAB)
@@ -248,6 +423,12 @@ const AgendaCalendarSection = ({
             snapDuration="00:15:00"
             slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
             select={onMobileDateSelect}
+            // 🔴 Indispensable : au doigt, un tap court ne produit AUCUN
+            // `select` (`selectLongPressDelay={250}` exige un appui maintenu).
+            // C'est ce seul rappel qui fait basculer Mois → Jour sur un vrai
+            // téléphone. Ne pas le retirer en croyant `select` suffisant : à la
+            // souris il l'est, au doigt non.
+            dateClick={onMobileDateClick}
             eventClick={onEventClick}
             eventDragStart={onEventDragStart}
             eventDragStop={onEventDragStop}
@@ -258,15 +439,24 @@ const AgendaCalendarSection = ({
             unselectCancel={UNSELECT_CANCEL}
             datesSet={onMobileDatesSet}
             eventContent={(eventInfo) =>
-              renderEventInner(eventInfo.event.title, eventInfo.event.extendedProps?.createdBy as string | undefined, false)
+              renderEventInner(
+                eventInfo.event.title,
+                eventInfo.event.extendedProps?.createdBy as string | undefined,
+                false,
+                eventInfo.event.id,
+                Boolean(eventInfo.event.extendedProps?.taskId),
+                Boolean(eventInfo.event.extendedProps?.needsReview),
+                Boolean(eventInfo.event.extendedProps?.taskDone),
+                eventInfo.event.backgroundColor || FALLBACK_EVENT_BG,
+              )
             }
             eventClassNames={(arg) => [
-              'rounded-lg shadow-sm border-0 cursor-pointer',
+              'rounded-lg shadow-sm border-0 cursor-pointer cosmo-event-tinted',
               conflictIds.has(arg.event.id) ? 'event-conflict' : '',
             ]}
           />
           <style>{mobileCalendarStyles}</style>
-        </div>
+        </motion.div>
       )}
 
       {/* ── DESKTOP CALENDAR (hidden on mobile) ── */}
@@ -278,8 +468,9 @@ const AgendaCalendarSection = ({
           id={AGENDA_CALENDAR_ID}
           tabIndex={-1}
           data-tutorial-id="agenda-calendar-grid"
+          data-guide-id="perso-agenda-grid"
           style={{ backgroundColor: 'rgb(var(--calendar-bg))', borderColor: 'rgb(var(--calendar-border))' }}>
-          <div className="p-2 lg:p-6 h-full w-full overflow-hidden">
+          <div ref={desktopShellRef} className="p-2 lg:p-6 h-full w-full overflow-hidden">
             <FullCalendar
               key={desktopKey}
               ref={desktopRef}
@@ -323,7 +514,15 @@ const AgendaCalendarSection = ({
               unselectAuto={true}
               unselectCancel={UNSELECT_CANCEL}
               eventContent={(eventInfo) =>
-                renderEventInner(eventInfo.event.title, eventInfo.event.extendedProps?.createdBy as string | undefined, true)
+                renderEventInner(
+                  eventInfo.event.title,
+                  eventInfo.event.extendedProps?.createdBy as string | undefined,
+                  true,
+                  eventInfo.event.id,
+                  Boolean(eventInfo.event.extendedProps?.taskId),
+                  Boolean(eventInfo.event.extendedProps?.needsReview),
+                  Boolean(eventInfo.event.extendedProps?.taskDone),
+                )
               }
               eventClassNames={(arg) => [
                 'rounded-lg shadow-sm border-0 cursor-pointer hover:shadow-md transition-all hover:scale-105',
@@ -346,5 +545,11 @@ const AgendaCalendarSection = ({
     </>
   );
 };
+
+/** Borne un pourcentage d'origine de transformation dans [0, 100]. */
+function clampPercent(value: number): number {
+  if (!Number.isFinite(value)) return 50;
+  return Math.min(100, Math.max(0, Math.round(value)));
+}
 
 export default AgendaCalendarSection;

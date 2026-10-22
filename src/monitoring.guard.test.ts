@@ -153,11 +153,43 @@ describe('garde — Sentry reste hors du chemin critique (C-13 · C-14)', () => 
   it('les filets precoces sont poses AVANT le montage', () => {
     // L angle mort que l arbitrage nomme : les erreurs des premieres
     // millisecondes. `installEarlyHandlers` doit preceder `mount()`.
-    const src = readFileSync(join(SRC, 'main.tsx'), 'utf-8');
-    const install = src.indexOf('installEarlyHandlers()');
+    //
+    // 🔴 CE CAS NE MESURAIT RIEN, trouvé le 2026-09-20 par le rejeu de
+    // sabotages (C-81, `scripts/replay-sabotages.mjs`). Il cherchait
+    // `installEarlyHandlers()` par un `indexOf` sur la source BRUTE : la
+    // première occurrence est l'IMPORT, ligne 5, et un import est toujours
+    // avant `function mount()`. Commenter l'APPEL laissait donc le cas vert.
+    // Le détecteur répondait à « le nom apparaît-il quelque part » en croyant
+    // répondre à « l'appel précède-t-il le montage ».
+    //
+    // Deux corrections : on lit le CODE seul (un appel commenté n'est plus un
+    // appel), et on cherche l'INSTRUCTION, pas le nom.
+    const src = codeOnly(readFileSync(join(SRC, 'main.tsx'), 'utf-8'));
+    const appel = /^\s*installEarlyHandlers\s*\(\s*\)\s*;?/m.exec(src);
     const mount = src.indexOf('function mount()');
-    expect(install).toBeGreaterThan(-1);
+    expect(
+      appel,
+      'Aucun APPEL à `installEarlyHandlers()` dans main.tsx (un import ne compte pas).',
+    ).not.toBeNull();
     expect(mount).toBeGreaterThan(-1);
-    expect(install).toBeLessThan(mount);
+    expect(appel?.index ?? Infinity).toBeLessThan(mount);
+  });
+
+  it('TEMOIN : le detecteur des filets precoces voit un appel COMMENTE', () => {
+    // 🔴 Le sabotage exact qui a révélé le défaut ci-dessus. Il est conservé
+    // ici pour que la correction ne se reperde pas : un détecteur qui
+    // retomberait sur `indexOf` rendrait ce cas rouge.
+    const src = readFileSync(join(SRC, 'main.tsx'), 'utf-8');
+    const LF = String.fromCharCode(10);
+    const sabote = src.replace(
+      `${LF}installEarlyHandlers();`,
+      `${LF}// installEarlyHandlers();`,
+    );
+    expect(sabote, 'le sabotage n a rien remplace').not.toEqual(src);
+    const code = codeOnly(sabote);
+    expect(/^\s*installEarlyHandlers\s*\(\s*\)\s*;?/m.test(code)).toBe(false);
+    // …et le nom, lui, est toujours là : c'est ce qui trompait l'ancien
+    // détecteur.
+    expect(code).toContain('installEarlyHandlers');
   });
 });

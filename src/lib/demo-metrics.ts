@@ -11,8 +11,15 @@
 //
 // Tout est fire-and-forget : l'analytics ne doit jamais bloquer ni faire
 // échouer l'auth.
+//
+// 🔴 SOUS CONSENTEMENT depuis le 2026-10-13 (loi I&L art. 82). L'identifiant
+// est persistant, il part au serveur et finit RATTACHÉ AU COMPTE
+// (`converted_user_id`) : ce n'est pas une statistique anonyme, l'exemption
+// CNIL ne le couvre pas. Sans « Accepter », rien n'est créé ni envoyé, et un
+// identifiant posé avant cette date est effacé au lieu d'être rattaché.
 // ═══════════════════════════════════════════════════════════════════
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { hasConsented } from '@/lib/cookie-consent';
 
 export const DEMO_DEVICE_ID_KEY = 'cosmo_demo_device_id';
 
@@ -32,6 +39,7 @@ function getOrCreateDeviceId(): string | null {
 /** À appeler à chaque loginDemo(). Idempotent par appareil (PK côté serveur). */
 export function recordDemoVisit(): void {
   if (!isSupabaseConfigured) return;
+  if (!hasConsented()) return;
   const id = getOrCreateDeviceId();
   if (!id) return;
   void supabase.rpc('record_demo_visit', { p_device_id: id }).then(({ error }) => {
@@ -55,6 +63,12 @@ export function recordDemoConversionIfAny(): void {
     return;
   }
   if (!id) return;
+  if (!hasConsented()) {
+    // Posé avant le 2026-10-13, sans consentement : on l'efface, on ne le
+    // rattache jamais au compte.
+    clearDemoMetricsTraces(localStorage);
+    return;
+  }
   void supabase.rpc('record_demo_conversion', { p_device_id: id }).then(({ error }) => {
     if (!error) {
       try {
@@ -62,4 +76,9 @@ export function recordDemoConversionIfAny(): void {
       } catch { /* ignore */ }
     }
   });
+}
+
+/** Refus ou retrait du consentement : l'identifiant d'appareil disparaît. */
+export function clearDemoMetricsTraces(storage: Pick<Storage, 'removeItem'>): void {
+  try { storage.removeItem(DEMO_DEVICE_ID_KEY); } catch { /* stockage indisponible */ }
 }

@@ -61,7 +61,10 @@ export const MiniBarChart: React.FC<{ data: { value: number; label?: string; dat
     <div
       className="flex items-end gap-[3px] h-[56px] w-full pt-1 relative"
       role="img"
-      aria-label={summary}>
+      aria-label={summary}
+      // Masqué par la garde visuelle : les barres couvrent les 7 derniers
+      // jours, donc changent seules d'un jour à l'autre.
+      data-testid="mini-bar-chart">
       {data.map((d, i) => {
         const tooltipLabel = d.label ? d.label : d.date ? formatBarDate(d.date, t) : '';
         return (

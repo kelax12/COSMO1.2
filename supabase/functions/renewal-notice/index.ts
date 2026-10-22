@@ -19,8 +19,12 @@
 //
 // ── IDEMPOTENCE ────────────────────────────────────────────────────
 //
-// La clé primaire `(org_id, period_end)` de `renewal_notices` garantit un
-// avis par échéance. Le travail peut donc tourner tous les jours pendant les
+// La contrainte UNIQUE `(org_id, period_end)` de `renewal_notices` garantit un
+// avis par échéance. ⚠️ C'était la clé PRIMAIRE jusqu'à la mig. 138 : celle-ci
+// a posé une clé de substitution `id` pour rendre `org_id` nullable (les
+// preuves survivent à la suppression de l'organisation), et a redescendu le
+// couple en CONTRAINTE — pas en simple index, pour que le `23505` ci-dessous
+// continue d'arriver. Vérifié en base le 2026-09-12. Le travail peut donc tourner tous les jours pendant les
 // trente jours de la fenêtre sans que personne ne reçoive deux fois le même
 // message. C'est aussi ce qui rend un rattrapage sûr après une panne.
 //

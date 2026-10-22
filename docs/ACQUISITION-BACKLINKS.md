@@ -1,3 +1,15 @@
+<!-- note-audit: non-note -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — **NON NOTÉ** : ce document décrit des gestes hors dépôt (soumissions d'annuaires), pas du code. Son état est gardé par la colonne « État » de son tableau, vérifiée par `npm run check:acquisition` (C-101).
+
 # Backlinks — kit de soumission annuaires et places de marché
 
 **Créé le 2026-08-19**, après lecture des données Search Console sur 3 mois.
@@ -5,6 +17,44 @@
 > Ce document ne contient **aucune action que Claude puisse exécuter**. Tout ce qui suit
 > demande un compte, un formulaire et une validation humaine. Le kit existe pour qu'Axel
 > ne réécrive pas 14 fois la même description : elle est déjà écrite, il reste à coller.
+
+---
+
+
+## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
+
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
+>
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
+>
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
+
+
+> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
+> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
+> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
+>
+> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
+> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
+> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
+> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
+> sans que rien ne vérifie**.
+>
+> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
+> **reconduit avec sa date**, jamais ne se recopie.
+
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+|---|---|---|---|
+| AM-1 | 🔴 **Aucun suivi des backlinks obtenus ni PERDUS.** Ce document liste des actions manuelles ; rien ne vérifie qu'un lien posé existe encore. Un backlink retiré est invisible, alors que c'est le seul levier que ce document déclare débloquant | données Search Console lues à la main le 2026-08-19, jamais depuis | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-55`** : un lien retiré reste invisible sans l'API Search Console. `C-101` a posé la colonne d'état ; **la remplir est un geste**, et c'est le seul levier que ce document déclare débloquant — *(jugé outillable le 09-16 : partiellement : l'API GSC)* |
+| AM-2 | **L'autorité de domaine n'est mesurée par rien en continu**, alors que le document en fait le blocage principal | aucun job | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** L'autorité de domaine n'est mesurée par rien en continu, alors que ce document en fait le blocage principal — *(jugé outillable le 09-16 : partiellement)* |
+| AM-3 | **Les actions d'Axel n'ont ni date ni état.** Une liste d'actions manuelles sans colonne « fait le » ne permet pas de distinguer « pas encore tenté » de « tenté sans effet », et les deux appellent des décisions opposées | relevé dans ce document | ✅ **OUTILLÉ le 2026-09-20** · colonne **État** (5 valeurs, date obligatoire) + `npm run check:acquisition` (`C-101`) — 🔴 ne prouve PAS : que l'état déclaré soit vrai : la garde exige une date, pas une vérification |
 
 ---
 
@@ -142,16 +192,44 @@ Freelances · Étudiants · Managers · Petites équipes · TPE/PME · Particuli
 Classé par rapport valeur / effort. Les deux premières colonnes se remplissent en une
 session ; le reste s'étale.
 
-| # | Site | Coût | Ce qu'il faut préparer | Note |
-|---|---|---|---|---|
-| 1 | **Appvizer** (FR) | Gratuit | Fiche longue, tarifs, 3 captures | Le plus fort en SEO français sur les requêtes « logiciel + métier ». À faire en premier. |
-| 2 | **AlternativeTo** | Gratuit | Description moyenne, logo, alternatives déclarées (Todoist, Notion, TickTick) | Rapide, et alimente les requêtes « alternative à » que le blog vise déjà. |
-| 3 | **SaaSHub** | Gratuit | Description moyenne, catégories | Quelques minutes. |
-| 4 | **Capterra / GetApp / Software Advice** | Gratuit | Un seul dossier Gartner pour les trois, tarifs obligatoires, captures | Le plus long (validation manuelle, parfois un appel) mais trois domaines d'un coup. |
-| 5 | **Product Hunt** | Gratuit | Voir §4 | Le pic de visibilité le plus fort ; ne se joue qu'une fois, donc à préparer. |
-| 6 | **BetaList** | Gratuit | Description courte, capture | Accepte les produits jeunes ; complémentaire de Product Hunt. |
-| 7 | **IndieHackers** | Gratuit | Un post honnête, pas une annonce | Le lien vaut par la discussion, pas par la fiche. |
-| 8 | **Slant / Softpedia / Startupbase / annuaires FR de SaaS** | Gratuit | Description courte | Faible valeur unitaire, mais c'est le volume qui fait le seuil de 20. |
+### 🔴 La colonne « État » — pourquoi elle existe (C-101, AM-3)
+
+Une liste d'actions manuelles **sans colonne d'état ne distingue pas « pas encore tenté » de
+« tenté sans effet »**, et les deux appellent des décisions opposées : dans un cas il faut y
+aller, dans l'autre il faut arrêter d'y penser. Ce document a vécu un mois sans cette colonne,
+et la seule façon de savoir où on en était était de demander à Axel.
+
+**Cinq états, et cinq seulement.** `npm run check:acquisition` refuse une ligne qui n'en porte
+pas un, et refuse un `fait` ou un `refuse` sans date.
+
+| État | Ce qu'il veut dire | Ce qu'il appelle |
+|---|---|---|
+| `a-faire` | Jamais tenté. | Y aller. |
+| `en-cours` | Dossier déposé, en attente de validation. | Attendre, relancer après trois semaines. |
+| `fait` | Fiche en ligne. **Date obligatoire.** | Vérifier que le lien existe encore. |
+| `refuse` | Refusé, ou retiré après coup. **Date obligatoire.** | Ne plus y revenir sans raison neuve. |
+| `abandonne` | Décision de ne pas y aller. **Raison obligatoire dans la note.** | Rien. |
+
+❌ **Ne jamais écrire `fait` sans la date.** « Fait » sans date est le même défaut que le ✅ sans
+date du tableau de `LEGAL.md` : il décrit un instant qu'on ne peut plus situer, donc il n'appelle
+jamais de relecture. Un backlink RETIRÉ est invisible — et c'est AM-1 de ce document.
+
+| # | Site | Coût | État | Fait le | Ce qu'il faut préparer | Note |
+|---|---|---|---|---|---|---|
+| 1 | **Appvizer** (FR) | Gratuit | `a-faire` | — | Fiche longue, tarifs, 3 captures | Le plus fort en SEO français sur les requêtes « logiciel + métier ». À faire en premier. |
+| 2 | **AlternativeTo** | Gratuit | `a-faire` | — | Description moyenne, logo, alternatives déclarées (Todoist, Notion, TickTick) | Rapide, et alimente les requêtes « alternative à » que le blog vise déjà. |
+| 3 | **SaaSHub** | Gratuit | `a-faire` | — | Description moyenne, catégories | Quelques minutes. |
+| 4 | **Capterra / GetApp / Software Advice** | Gratuit | `a-faire` | — | Un seul dossier Gartner pour les trois, tarifs obligatoires, captures | Le plus long (validation manuelle, parfois un appel) mais trois domaines d'un coup. |
+| 5 | **Product Hunt** | Gratuit | `a-faire` | — | Voir §4 | Le pic de visibilité le plus fort ; ne se joue qu'une fois, donc à préparer. |
+| 6 | **BetaList** | Gratuit | `a-faire` | — | Description courte, capture | Accepte les produits jeunes ; complémentaire de Product Hunt. |
+| 7 | **IndieHackers** | Gratuit | `a-faire` | — | Un post honnête, pas une annonce | Le lien vaut par la discussion, pas par la fiche. |
+| 8 | **Slant / Softpedia / Startupbase / annuaires FR de SaaS** | Gratuit | `a-faire` | — | Description courte | Faible valeur unitaire, mais c'est le volume qui fait le seuil de 20. |
+
+⚠️ **Les huit sont à `a-faire` au 2026-09-20, et ce n'est pas une valeur par défaut posée à la
+légère** : aucune soumission n'est tracée nulle part dans le dépôt, et le relevé Search Console du
+2026-08-19 donne **0 clic non marqué** avec une position moyenne de 88 — ce qui est cohérent avec
+zéro backlink d'annuaire. Si l'une a été faite sans être notée, c'est ici qu'il faut la corriger,
+avec sa date.
 
 **Règles communes :**
 

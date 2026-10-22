@@ -19,18 +19,46 @@ const teamRow = {
 beforeEach(() => supabaseMock.reset());
 
 describe('SupabaseOrgTeamsRepository', () => {
-  it('getTeams: filtre par org_id, ordonne par created_at asc, cap 200, mappe en camelCase', async () => {
+  it('getTeams: filtre par org_id, lit les 200 plus récentes (created_at desc), mappe en camelCase', async () => {
     supabaseMock.queueTable('org_teams', { data: [teamRow] });
     const result = await repo.getTeams('org1');
 
     expect(supabaseMock.argsOf('org_teams', 'select')).toEqual(['*']);
     expect(supabaseMock.argsOf('org_teams', 'eq')).toEqual(['org_id', 'org1']);
-    expect(supabaseMock.argsOf('org_teams', 'order')).toEqual(['created_at', { ascending: true }]);
+    expect(supabaseMock.argsOf('org_teams', 'order')).toEqual(['created_at', { ascending: false }]);
     expect(supabaseMock.argsOf('org_teams', 'limit')).toEqual([200]);
     expect(result).toEqual([{
       id: 't1', orgId: 'org1', name: 'Design', color: 'purple',
+      // Mig. 163 : absente d'une réponse antérieure, rendue `null`.
+      description: null,
       createdBy: 'u1', createdAt: teamRow.created_at,
     }]);
+  });
+
+  // Témoin du défaut du 2026-09-24 : trié croissant sous `limit(200)`, la
+  // 201e équipe créée n'apparaissait nulle part. Le serveur rend désormais les
+  // plus récentes d'abord ; l'écran, lui, doit rester chronologique.
+  it("getTeams: rend l'ordre chronologique alors que le serveur lit les plus récentes", async () => {
+    const newer = { ...teamRow, id: 't2', name: 'Produit', created_at: '2026-08-01T10:00:00.000Z' };
+    supabaseMock.queueTable('org_teams', { data: [newer, teamRow] });
+    const result = await repo.getTeams('org1');
+    expect(result.map((t) => t.id)).toEqual(['t1', 't2']);
+  });
+
+  it('updateTeam: whitelist nom/couleur/description, jamais org_id ni created_by', async () => {
+    supabaseMock.queueTable('org_teams', { data: [{ id: 't1' }] });
+    await repo.updateTeam('t1', { name: '  Produit ', color: '#14b8a6', description: '  ' });
+    expect(supabaseMock.argsOf('org_teams', 'update')).toEqual([
+      { name: 'Produit', color: '#14b8a6', description: null },
+    ]);
+    expect(supabaseMock.argsOf('org_teams', 'eq')).toEqual(['id', 't1']);
+  });
+
+  // Une policy UPDATE qui refuse ne lève rien : elle ne modifie aucune ligne.
+  // Sans ce contrôle, l'écran annoncerait « enregistré » pour rien.
+  it('updateTeam: aucune ligne modifiée → erreur, pas un faux succès', async () => {
+    supabaseMock.queueTable('org_teams', { data: [] });
+    await expect(repo.updateTeam('t1', { description: 'x' })).rejects.toBeTruthy();
   });
 
   it('getTeams: data null → tableau vide', async () => {
@@ -116,18 +144,41 @@ describe('SupabaseOrgTeamsRepository', () => {
     await expect(repo.createTeam('org1', { name: 'X' })).rejects.toBeTruthy();
   });
 
-  it('deleteTeam: delete ciblé par id', async () => {
-    supabaseMock.queueTable('org_teams', { data: null });
-    await repo.deleteTeam('t1');
+  // M5 (mig. 151) : la suppression passe par une RPC atomique qui déplace
+  // projets et OKR avant de supprimer. Plus jamais de DELETE direct, qui
+  // laissait `ON DELETE SET NULL` rendre les projets visibles par toute l'org.
+  it('deleteTeam: passe par delete_team_with_transfer, jamais par un DELETE direct', async () => {
+    supabaseMock.queueRpc('delete_team_with_transfer', { data: null });
+    await repo.deleteTeam({ teamId: 't1', targetTeamId: 't2', archiveProjects: true });
 
-    const calls = supabaseMock.callsFor('org_teams');
-    expect(calls.map((c) => c.method)).toEqual(['delete', 'eq']);
-    expect(supabaseMock.argsOf('org_teams', 'eq')).toEqual(['id', 't1']);
+    expect(supabaseMock.rpcCalls).toEqual([
+      { fn: 'delete_team_with_transfer', args: { p_team: 't1', p_target: 't2', p_archive_projects: true } },
+    ]);
+    expect(supabaseMock.callsFor('org_teams')).toHaveLength(0);
   });
 
-  it('deleteTeam: normalise les erreurs DB', async () => {
-    supabaseMock.queueTable('org_teams', { data: null, error: { message: 'denied', code: '42501' } });
-    await expect(repo.deleteTeam('t1')).rejects.toBeTruthy();
+  it('deleteTeam: un refus de clé étrangère devient team_has_dependents', async () => {
+    supabaseMock.queueRpc('delete_team_with_transfer', { data: null, error: { message: 'fk', code: '23503' } });
+    await expect(
+      repo.deleteTeam({ teamId: 't1', targetTeamId: null, archiveProjects: false }),
+    ).rejects.toMatchObject({ code: 'team_has_dependents' });
+  });
+
+  it('deleteTeam: normalise les autres erreurs DB', async () => {
+    supabaseMock.queueRpc('delete_team_with_transfer', { data: null, error: { message: 'denied', code: '42501' } });
+    await expect(
+      repo.deleteTeam({ teamId: 't1', targetTeamId: 't2', archiveProjects: false }),
+    ).rejects.toBeTruthy();
+  });
+
+  it('getDeletionImpact: mappe la ligne de la RPC', async () => {
+    supabaseMock.queueRpc('get_team_deletion_impact', {
+      data: [{ active_projects: 3, archived_projects: 1, sole_okrs: 2, shared_okrs: 4 }],
+    });
+    await expect(repo.getDeletionImpact('t1')).resolves.toEqual({
+      activeProjects: 3, archivedProjects: 1, soleOkrs: 2, sharedOkrs: 4,
+    });
+    expect(supabaseMock.rpcCalls[0]).toEqual({ fn: 'get_team_deletion_impact', args: { p_team: 't1' } });
   });
 
   it('addTeamMember: insert avec les 3 clés explicites uniquement', async () => {

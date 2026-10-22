@@ -14,7 +14,7 @@ export type {
 } from './types';
 
 export { SMART_PRESETS, tasksInList, tasksDueToday } from './smart-rules';
-export type { SmartPresetDef } from './smart-rules';
+export type { SmartPresetDef, SmartRuleTask } from './smart-rules';
 
 // ═══════════════════════════════════════════════════════════════════
 // CONSTANTS & QUERY KEYS

@@ -31,7 +31,14 @@ export interface EventModalFormProps {
   setShowDescription: React.Dispatch<React.SetStateAction<boolean>>;
   setIsColorSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   prefilledFields: Set<string>;
-  categories: Array<{ id: string; name: string; color: string }>;
+  /**
+   * `parentId` porte l'arbre (perso : mig. 143 ; entreprise : mig. 148) — les
+   * deux jeux de catégories possibles (`useCategories()` / `categoriesOverride`
+   * en mode entreprise) le portent déjà. Les corps mobile/desktop n'affichent
+   * que les RACINES dans la grille ; les sous-catégories n'apparaissent que
+   * dans la bulle ouverte depuis leur racine.
+   */
+  categories: Array<{ id: string; name: string; color: string; parentId: string | null }>;
   lockedSet: Set<string>;
   register: (name: string) => (el: HTMLElement | null) => void;
   isInvalid: (name: string) => boolean;

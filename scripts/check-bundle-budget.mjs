@@ -64,7 +64,23 @@ const BUDGETS = {
   // sans jamais se connecter. Le reste des dépôts de démo, 72 ko bruts encore
   // dans l'entrée, attend la séparation interface / implémentation locale que
   // six modules n'ont pas.
-  critical: 370_000,
+  // 2026-09-11 : 316 407 → **306 347 o**, et le plafond REDESCEND de 370 000 à
+  // 323 000. `sonner` (10,1 ko gzip) sort du chemin critique : le `<Toaster>`
+  // d'`App.tsx` est différé et tous les appels passent par la façade
+  // `src/lib/toast.ts`, qui fait le SEUL `import('sonner')` du dépôt.
+  //
+  // 🔴 Le piège, mesuré, parce qu'il se reproduira : nettoyer le SHELL ne
+  // suffit pas. Tant qu'une page lazy garde un import statique de `sonner`,
+  // Rollup place le module dans l'ancêtre commun des chunks qui le partagent,
+  // c'est-à-dire l'ENTRÉE. Et l'en sortir par `manualChunks` fait émettre à
+  // Vite un `<link rel="modulepreload">` : l'entrée maigrit de 10 ko, le
+  // chemin critique de 162 OCTETS. Le gain n'existe qu'avec zéro import
+  // statique dans tout `src/`. Cliquet : `src/lib/toast.guard.test.ts`.
+  //
+  // ⚠️ Le plafond est posé ~5 % au-dessus du mesuré, et non ~1,5 % comme les
+  // précédents : le critère de sortie de C-14 exige 5 % de marge sur les DEUX
+  // budgets. Reposer le cliquet à 1,5 % rouvrirait l'item le jour même.
+  critical: 323_000,
 
   // Mesure secondaire, conservée pour attraper le cas inverse : une entrée qui
   // enfle sans que le nombre de préchargements bouge. Le plafond est passé de
@@ -92,18 +108,119 @@ const BUDGETS = {
   // a continué de grossir de 1,6 ko pendant la nuit. Un plafond posé sur une
   // mesure périmée est un plafond faux, même quand il est plus bas — celui-ci
   // aurait fait échouer la CI sur une valeur que plus rien ne mesurait.
-  entry: 78_000,
+  // 2026-09-11 : 76 954 → **66 896 o**, plafond de 78 000 à 71 000. Même coupe
+  // que ci-dessus, et `critique` a baissé d'autant (−10 060 o des deux côtés) :
+  // c'est ce qui la distingue d'un déplacement.
+  //
+  // ⚠️ La mesure du 2026-09-04 annonçait 74 903 o (3,97 % de marge). Elle
+  // n'avait pas été refaite depuis, et l'entrée avait REPRIS 2 051 o entre
+  // temps — marge réelle au 2026-09-11 avant coupe : **1,34 %**. Un budget
+  // qu'on ne remesure pas dérive dans le sens qui arrange.
+  // 2026-10-01 : 73 159 → **67 141 o**, plafond de 71 000 à 70 500. Cause de
+  // la dérive : les barils `tasks`, `habits`, `organizations`, `team-projects`,
+  // `team-okrs` et `org-teams` RÉEXPORTAIENT leur dépôt de démo ; importés par
+  // le shell, ils le ramenaient dans l'entrée alors que la fabrique le charge à
+  // la demande. Réexportations retirées, tâches et habitudes passées par
+  // `demo-repositories.ts`. `critique` a baissé d'autant (315,3 → 309,3 ko) :
+  // une coupe, pas un déplacement.
+  entry: 70_500,
 
   // Le plus gros chunk de page. `OrganizationPage` mesure ~64 ko.
   page: 70_000,
 };
 
 /**
- * Chunks vendor autorisés à dépasser le budget de page, avec la raison.
+ * ═══ C-85 · UN PLAFOND PAR CHUNK, POSÉ AU POIDS DU JOUR ═══════════
  *
- * Chacun est LAZY : il ne touche pas le chemin critique. La liste est
- * explicite pour qu'ajouter une grosse dépendance demande de l'écrire ici,
- * c'est-à-dire de la justifier.
+ * 🔴 CE QUI MANQUAIT. Avant le 2026-09-20, un chunk hors chemin critique était
+ * jugé par UN SEUL nombre (`BUDGETS.page`, 70 ko) — et cinq vendors en étaient
+ * carrément dispensés, donc sans aucune borne. Conséquence : `TasksPage`
+ * pouvait passer de 35 à 69 ko sans qu'un seul job bronche, et `vendor-charts`
+ * de 117 à 400 sans qu'aucun ne le puisse. Le budget protégeait ce que tout le
+ * monde télécharge, et laissait dériver ce que la moitié des visiteurs
+ * téléchargent.
+ *
+ * CE QUE C'EST : un CLIQUET par chunk, posé au poids MESURÉ le 2026-09-20,
+ * arrondi ~5 % au-dessus. Pas une cible ronde — la convention du dépôt, la
+ * même que `vitest.config.ts` et que `critical` ci-dessus. Un plafond très
+ * au-dessus du réel ne mesure rien.
+ *
+ * 🔴 NE JAMAIS REMONTER UN CHIFFRE POUR FAIRE PASSER LA CI. Il descend quand
+ * la mesure descend, jamais l'inverse. La seule remontée légitime est celle
+ * qu'`entry` documente : un chunk qui ABSORBE du code venu d'un autre, avec la
+ * preuve que le total, lui, a baissé.
+ *
+ * ⚠️ LA CLÉ EST LE NOM DE BASE, ET LA MESURE EST UNE SOMME. Vite émet
+ * plusieurs fichiers sous le même nom de base (huit `index-*`, deux `org-*`,
+ * deux `landing-*`, deux `legal-*` au 2026-09-20 : ce sont des barils de
+ * modules). Juger le plus gros laisserait un neuvième baril arriver
+ * gratuitement. On somme donc tous les fichiers d'un même nom, et le compte
+ * est affiché dans le rapport.
+ *
+ * ⚠️ LE CHUNK D'ENTRÉE EST EXCLU de cette somme : il a son propre budget
+ * (`BUDGETS.entry`), et il porte lui aussi le nom de base `index`. Le compter
+ * deux fois ferait échouer la garde sur une addition, pas sur une dérive.
+ *
+ * Un chunk SANS entrée ici reste jugé par `BUDGETS.page` : un écran neuf n'a
+ * pas à être déclaré pour exister, il a seulement à rester sous la borne
+ * générique. Le jour où il la dépasse, c'est ici qu'on décide.
+ */
+const PLAFONDS_PAR_CHUNK = {
+  'vendor-charts': 123_500, // 117 533 o — recharts + d3, lazy (Statistiques, dashboard, guide)
+  'vendor-calendar': 89_500, // 85 067 o — @fullcalendar + locales-all, lazy, /agenda
+  index: 89_500, // 84 893 o sur 8 barils de modules, chunk d'entrée EXCLU
+  'vendor-react': 76_000, // 72 074 o — socle non découpable
+  'vendor-supabase': 59_500, // 56 254 o — requis dès la première requête
+  'vendor-pdf': 133_000, // 126 418 o — jsPDF, chargé au seul clic sur « Exporter en PDF » du rapport d'activité (2026-10-19)
+  'vendor-gsap': 57_500, // 54 737 o — gsap + plugins, lazy, landing uniquement
+  'sentry-client': 52_000, // 49 320 o — chargé APRÈS le premier rendu (C-13 · C-14)
+  'vendor-animation': 52_000, // 49 245 o — framer-motion
+  TasksPage: 37_000, // 35 039 o — la plus grosse page du produit
+  'vendor-utils': 33_000, // 31 053 o
+  org: 25_000, // 23 722 o sur 2 chunks (2026-10-01 : 40 6xx → 23 722, sections de /entreprise passées dans `orgAdmin`)
+  TaskModal: 29_000, // 27 183 o
+  landing: 13_800, // 13 083 o sur 2 chunks (2026-10-03 : le parcours entreprise passe dans `landingEnterprise`, 24 000 avant)
+  landingEnterprise: 14_200, // 13 462 o sur 2 chunks — texte du parcours entreprise, chargé avec `EnterpriseTrack`
+  'dropdown-menu': 22_000, // 20 526 o
+  HabitsPage: 21_000, // 19 873 o
+  LandingPage: 21_000, // 19 740 o
+  DashboardPage: 20_500, // 19 175 o
+  'vendor-query': 12_700, // 12 066 o (2026-10-03 : la virtualisation sort dans `vendor-virtual`, 18 500 avant)
+  'vendor-virtual': 7_600, // 7 206 o — @tanstack/react-virtual + virtual-core, lazy (/tasks, Tâches entreprise)
+  AgendaPage: 18_500, // 17 468 o
+  OrganizationPage: 18_000, // 16 686 o
+  TeamProjectsTab: 17_000, // 15 992 o
+  UseCasePage: 16_500, // 15 591 o
+  // ⚖️ RELEVÉ SUR ARBITRAGE D'AXEL le 2026-10-22, comme le 2026-10-13 : identification de l'éditeur
+  // (EI, SIREN, téléphone, LCEN art. 1-1, `e2e7679f`). Chargé par la seule page mentions légales.
+  legal: 3_500, // ≈ 3 330 o sur 2 chunks le 2026-10-22 ; 3 000 jusque-là (2 693 o le 2026-10-01)
+  // ⚖️ RELEVÉS SUR ARBITRAGE D'AXEL le 2026-10-13, pas pour faire passer la CI : l'audit juridique
+  // du jour a ajouté de l'information DUE (RGPD art. 13, C. conso L111-1, L224-25-1). Ces deux
+  // catalogues ne sont chargés que par leur page légale, jamais sur le chemin critique.
+  // Relevé de nouveau sur arbitrage d'Axel le 2026-10-22 : section 7 ter « Prospection » (RGPD art. 14,
+  // `899f707f`) et identification du responsable (art. 13.1.a, `e2e7679f`).
+  legalPrivacy: 13_000, // ≈ 12 760 o sur 2 chunks le 2026-10-22 ; 12 200 du 2026-10-13 au 10-22, 9 900 avant
+  legalTerms: 10_300, // 9 824 o sur 2 chunks (4 693 + 5 131) — chargé par la seule page CGU ; 9 700 jusqu'au 2026-10-13
+  OKRPage: 15_000, // 14 192 o
+  'vendor-router': 14_500, // 13 729 o
+  TeamTaskModal: 12_000, // 11 437 o (2026-10-01 : commentaires et arbre de catégories chargés à la demande)
+  EnterpriseTrack: 13_500, // 12 790 o
+  'vendor-ogl': 13_500, // 12 643 o
+  types: 13_000, // 12 304 o
+  StatisticsPage: 13_000, // 12 015 o
+};
+
+/**
+ * Chunks vendor autorisés à dépasser `BUDGETS.page`, avec la raison.
+ *
+ * ⚠️ « Exempt » NE VEUT PLUS DIRE « sans borne » depuis C-85. Chacun de ces
+ * six a désormais son plafond dans `PLAFONDS_PAR_CHUNK`, et une exemption
+ * sans plafond est refusée par le contrôle de cohérence plus bas : c'était la
+ * porte par laquelle 117 ko pouvaient en devenir 400.
+ *
+ * Chacun est LAZY ou incompressible : il ne touche pas le chemin critique, ou
+ * il n'est pas découpable. La liste reste explicite pour qu'ajouter une grosse
+ * dépendance demande de l'écrire ici, c'est-à-dire de la justifier.
  */
 const EXEMPT = {
   'vendor-charts': 'recharts + d3, lazy : Statistiques, graphique du dashboard, guide',
@@ -111,6 +228,7 @@ const EXEMPT = {
   'vendor-gsap': 'gsap + plugins, lazy, landing uniquement',
   'vendor-react': 'react + react-dom, socle non découpable',
   'vendor-supabase': 'client Supabase, requis dès la première requête',
+  'vendor-pdf': 'jsPDF, import() au clic sur « Exporter en PDF » du rapport d activité, jamais au chargement',
 };
 
 const KB = (n) => `${(n / 1000).toFixed(1)} ko`;
@@ -157,7 +275,28 @@ const preloaded = [
   ...html.matchAll(/<link[^>]+rel="modulepreload"[^>]+href="\/assets\/([^"]+)"/g),
 ].map((m) => m[1]);
 
-const criticalNames = new Set(entry ? [entry.name, ...preloaded] : preloaded);
+// 🔴 2026-10-15 · L'ENTRÉE D'`index.html` EST UN AMORÇAGE (`src/boot.ts`) : elle
+// ne fait qu'un `import()` de l'application, après la première peinture du
+// prérendu (LCP mobile). Lu sur le seul HTML, le chemin critique serait tombé à
+// ~1 ko et la garde aurait répondu sans mesurer. Ce que l'amorçage charge
+// d'office se lit dans SON code : la cible de l'`import("./x.js")` et la liste
+// de préchargement que Vite y écrit (`__vite__mapDeps`, `"assets/x.js"`). Tout
+// cela est chargé par tout visiteur, donc compté dans le chemin critique, et le
+// chunk de l'application reprend le budget `entry` qu'il portait avant.
+const entrySource = entry ? readFileSync(join(ASSETS, entry.name), 'latin1') : '';
+const appMatch = /\bimport\(\s*["']\.\/([A-Za-z0-9_.-]+\.js)["']\s*\)/.exec(entrySource);
+const app = appMatch ? measured.find((m) => m.name === appMatch[1]) ?? null : null;
+const amorcees = [...entrySource.matchAll(/["']assets\/([A-Za-z0-9_.-]+\.js)["']/g)].map((m) => m[1]);
+if (appMatch && !app) {
+  errors.push(`L'amorçage importe \`${appMatch[1]}\`, introuvable dans dist/assets : le chemin critique ne mesure pas l'application.`);
+}
+
+const criticalNames = new Set([
+  ...(entry ? [entry.name] : []),
+  ...(app ? [app.name] : []),
+  ...preloaded,
+  ...amorcees,
+]);
 const critical = measured
   .filter((m) => criticalNames.has(m.name))
   .sort((a, b) => b.gzip - a.gzip);
@@ -183,28 +322,82 @@ if (criticalTotal > BUDGETS.critical) {
   );
 }
 
-if (entry) {
-  report.push(`entrée    ${KB(entry.gzip).padStart(9)}  (plafond ${KB(BUDGETS.entry)})`);
-  if (entry.gzip > BUDGETS.entry) {
+// Le budget `entry` juge le chunk de l'APPLICATION : celui qu'`index.html`
+// exécute directement, ou celui que l'amorçage importe (cf. plus haut).
+const entreeJugee = app ?? entry;
+if (entreeJugee) {
+  if (app && entry) report.push(`amorçage  ${KB(entry.gzip).padStart(9)}  (${entry.base}, compté dans le chemin critique)`);
+  report.push(`entrée    ${KB(entreeJugee.gzip).padStart(9)}  (plafond ${KB(BUDGETS.entry)})`);
+  if (entreeJugee.gzip > BUDGETS.entry) {
     errors.push(
-      `Chunk d'entrée : ${KB(entry.gzip)} > ${KB(BUDGETS.entry)}.\n` +
+      `Chunk d'entrée : ${KB(entreeJugee.gzip)} > ${KB(BUDGETS.entry)}.\n` +
         `  Vérifier d'abord \`critique\` ci-dessus : si le total a baissé, c'est\n` +
         `  que du code préchargé à côté a été absorbé, et c'est une bonne nouvelle.`
     );
   }
 }
 
+// ── C-85 · jugement PAR NOM DE BASE, somme des fichiers, entrée exclue ──
+const parBase = new Map();
 for (const m of measured) {
-  if (entry && m.name === entry.name) continue;
-  if (EXEMPT[m.base]) {
-    report.push(`exempt ${m.base.padEnd(22)} ${KB(m.gzip)}  (${EXEMPT[m.base]})`);
-    continue;
-  }
-  if (m.gzip > BUDGETS.page) {
+  if (entry && m.name === entry.name) continue; // budget propre : `BUDGETS.entry`
+  if (app && m.name === app.name) continue; // idem, derrière l'amorçage
+  const e = parBase.get(m.base) ?? { gzip: 0, fichiers: 0 };
+  e.gzip += m.gzip;
+  e.fichiers += 1;
+  parBase.set(m.base, e);
+}
+
+// Une exemption SANS plafond est le trou que C-85 vient de fermer : elle
+// rendait le chunk illimité. Ce contrôle interdit de le rouvrir par distraction.
+for (const base of Object.keys(EXEMPT)) {
+  if (!(base in PLAFONDS_PAR_CHUNK)) {
     errors.push(
-      `Chunk \`${m.base}\` : ${KB(m.gzip)} > ${KB(BUDGETS.page)}.\n` +
-        `  Soit il faut le découper, soit c'est une dépendance vendor à ajouter\n` +
-        `  à EXEMPT dans ce fichier : AVEC sa raison.`
+      `\`${base}\` est EXEMPT du budget de page sans plafond propre dans\n` +
+        `  PLAFONDS_PAR_CHUNK : il serait alors SANS AUCUNE BORNE. Lui poser un\n` +
+        `  plafond au poids mesuré, ou retirer son exemption.`
+    );
+  }
+}
+// Un plafond qui ne correspond plus à aucun chunk décrit un état périmé, et
+// une liste qu'on ne peut plus relire est une liste qu'on cesse de croire.
+//
+// ⚠️ Le contrôle d'EXISTENCE regarde TOUS les chunks, entrée comprise, alors
+// que la SOMME budgétée l'exclut. Sans cette distinction, le jour où Vite
+// n'émettrait plus qu'un seul `index-*` (celui de l'entrée), la garde
+// annoncerait que le chunk `index` « n'existe plus » alors qu'il est sous nos
+// yeux — et on retirerait son plafond pour faire taire la CI.
+const basesPresentes = new Set(measured.map((m) => m.base));
+for (const base of Object.keys(PLAFONDS_PAR_CHUNK)) {
+  if (!basesPresentes.has(base)) {
+    errors.push(
+      `\`${base}\` a un plafond dans PLAFONDS_PAR_CHUNK mais n'existe plus dans\n` +
+        `  le build : retirer la ligne (ou vérifier que le chunk n'a pas été renommé).`
+    );
+  }
+}
+
+for (const [base, { gzip, fichiers }] of [...parBase].sort((a, b) => b[1].gzip - a[1].gzip)) {
+  const propre = PLAFONDS_PAR_CHUNK[base];
+  const plafond = propre ?? BUDGETS.page;
+  const suffixe = fichiers > 1 ? ` (${fichiers} chunks)` : '';
+  if (propre && gzip >= 12_000) {
+    const marge = (((plafond - gzip) / plafond) * 100).toFixed(1);
+    report.push(
+      `chunk  ${base.padEnd(22)} ${KB(gzip).padStart(9)}${suffixe}  ` +
+        `(plafond ${KB(plafond)}, marge ${marge} %)${EXEMPT[base] ? ` — ${EXEMPT[base]}` : ''}`
+    );
+  }
+  if (gzip > plafond) {
+    errors.push(
+      propre
+        ? `Chunk \`${base}\` : ${KB(gzip)} > son plafond propre ${KB(plafond)}${suffixe}.\n` +
+            `  🔴 Ce plafond est un CLIQUET posé au poids mesuré le 2026-09-20.\n` +
+            `  Ne pas le remonter : c'est le chunk qui doit maigrir. Leviers dans\n` +
+            `  docs/PERFORMANCE.md.`
+        : `Chunk \`${base}\` : ${KB(gzip)} > ${KB(BUDGETS.page)}${suffixe}.\n` +
+            `  Soit il faut le découper, soit c'est une dépendance vendor à ajouter\n` +
+            `  à EXEMPT dans ce fichier : AVEC sa raison ET son plafond propre.`
     );
   }
 }

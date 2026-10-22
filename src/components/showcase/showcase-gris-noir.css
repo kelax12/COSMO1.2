@@ -1,0 +1,68 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Vitrines animées — THÈMES GRIS ET NOIR (2026-10-12)
+   ═══════════════════════════════════════════════════════════════════
+   Le guide monte les vitrines dans le thème de l'app du visiteur. Gris et
+   Noir sont des thèmes SOMBRES : le JSX sombre leur convient tel quel, seules
+   ses neutres changent. Les classes `slate-*` portent une teinte bleu nuit
+   (celle du thème Sombre) ; ici elles deviennent le graphite de `.gris` et les
+   gris sans teinte de `.noir` (variables de src/index.css).
+
+   Ce qui NE change PAS : les filets `white/x` et `black/x` (translucides, ils
+   tiennent sur n'importe quel fond sombre), `.text-white` / `.sc-ink` (encre
+   claire, déjà juste), les accents colorés (catégories, priorités).
+   L'accent plein n'est pas figé : il suit le thème de la page, comme dans
+   l'app (quasi blanc en Noir, avec son texte quasi noir).
+
+   Correspondance, du plus profond au plus clair :
+     slate-950  slate-900  slate-800  slate-700  slate-600  slate-500
+   gris  #1c2024 #24292e    #2b3137    #373e47    #444c56    #768390
+   noir  #000000 #080808    #161616    #2e2e2e    #464646    #808080
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── GRIS ── */
+[data-sc-theme='gris'] .text-slate-300 { color: #adbac7; }
+[data-sc-theme='gris'] .text-slate-400 { color: #8f99a4; }
+[data-sc-theme='gris'] .text-slate-500 { color: #768390; }
+[data-sc-theme='gris'] .text-slate-600 { color: #636e7b; }
+
+[data-sc-theme='gris'] .bg-slate-950\/40 { background-color: rgba(28, 32, 36, 0.4); }
+[data-sc-theme='gris'] .bg-slate-900 { background-color: #24292e; }
+[data-sc-theme='gris'] .bg-slate-900\/70 { background-color: rgba(36, 41, 46, 0.7); }
+[data-sc-theme='gris'] .bg-slate-900\/60 { background-color: rgba(36, 41, 46, 0.6); }
+[data-sc-theme='gris'] .bg-slate-800 { background-color: #2b3137; }
+[data-sc-theme='gris'] .bg-slate-800\/80 { background-color: rgba(43, 49, 55, 0.8); }
+[data-sc-theme='gris'] .bg-slate-800\/70 { background-color: rgba(43, 49, 55, 0.7); }
+[data-sc-theme='gris'] .bg-slate-800\/60 { background-color: rgba(43, 49, 55, 0.6); }
+[data-sc-theme='gris'] .bg-slate-800\/50 { background-color: rgba(43, 49, 55, 0.5); }
+[data-sc-theme='gris'] .bg-slate-700 { background-color: #373e47; }
+[data-sc-theme='gris'] .bg-slate-600 { background-color: #444c56; }
+
+[data-sc-theme='gris'] .border-slate-800 { border-color: #2b3137; }
+[data-sc-theme='gris'] .border-slate-800\/60 { border-color: rgba(43, 49, 55, 0.6); }
+[data-sc-theme='gris'] .border-slate-700 { border-color: #373e47; }
+[data-sc-theme='gris'] .border-slate-700\/60 { border-color: rgba(55, 62, 71, 0.6); }
+[data-sc-theme='gris'] .border-slate-500 { border-color: #768390; }
+
+/* ── NOIR ── */
+[data-sc-theme='noir'] .text-slate-300 { color: #c8c8c8; }
+[data-sc-theme='noir'] .text-slate-400 { color: #a8a8a8; }
+[data-sc-theme='noir'] .text-slate-500 { color: #808080; }
+[data-sc-theme='noir'] .text-slate-600 { color: #6e6e6e; }
+
+[data-sc-theme='noir'] .bg-slate-950\/40 { background-color: rgba(0, 0, 0, 0.4); }
+[data-sc-theme='noir'] .bg-slate-900 { background-color: #080808; }
+[data-sc-theme='noir'] .bg-slate-900\/70 { background-color: rgba(8, 8, 8, 0.7); }
+[data-sc-theme='noir'] .bg-slate-900\/60 { background-color: rgba(8, 8, 8, 0.6); }
+[data-sc-theme='noir'] .bg-slate-800 { background-color: #161616; }
+[data-sc-theme='noir'] .bg-slate-800\/80 { background-color: rgba(22, 22, 22, 0.8); }
+[data-sc-theme='noir'] .bg-slate-800\/70 { background-color: rgba(22, 22, 22, 0.7); }
+[data-sc-theme='noir'] .bg-slate-800\/60 { background-color: rgba(22, 22, 22, 0.6); }
+[data-sc-theme='noir'] .bg-slate-800\/50 { background-color: rgba(22, 22, 22, 0.5); }
+[data-sc-theme='noir'] .bg-slate-700 { background-color: #2e2e2e; }
+[data-sc-theme='noir'] .bg-slate-600 { background-color: #464646; }
+
+[data-sc-theme='noir'] .border-slate-800 { border-color: #161616; }
+[data-sc-theme='noir'] .border-slate-800\/60 { border-color: rgba(22, 22, 22, 0.6); }
+[data-sc-theme='noir'] .border-slate-700 { border-color: #2e2e2e; }
+[data-sc-theme='noir'] .border-slate-700\/60 { border-color: rgba(46, 46, 46, 0.6); }
+[data-sc-theme='noir'] .border-slate-500 { border-color: #808080; }

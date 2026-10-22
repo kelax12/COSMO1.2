@@ -11,7 +11,7 @@ import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Inbox, Check, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useTasks, usePendingSharedTasks, type Task, taskKeys } from '@/modules/tasks';
 import {
   useFriends,

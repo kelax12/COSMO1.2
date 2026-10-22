@@ -36,6 +36,7 @@ import {
 import RecurrenceDaysModal from './event-modal/RecurrenceDaysModal';
 import EventModalForm from './event-modal/EventModalForm';
 import { useT } from '@/i18n/useT';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 type EventData = {
   title: string;
@@ -63,6 +64,21 @@ type EventModalProps = {
   onDuplicateEvent?: (eventId: string) => void;
   onConvert?: (eventData: EventData) => void;
   /**
+   * Panneau rendu À GAUCHE du formulaire, sur écran large uniquement.
+   *
+   * C'est un emplacement, pas une fonctionnalité : l'EventModal ne sait pas ce
+   * qu'on y met (aujourd'hui, la décision à prendre sur un créneau de tâche
+   * terminé). Il est rendu DANS l'overlay, donc à l'intérieur du piège de focus
+   * déjà posé par cette modale. ❌ Ne jamais le sortir en frère de l'overlay
+   * avec son propre `useModalA11y` : la pile du hook fait que seule la
+   * dernière surface empilée réagit, et le panneau reprendrait le focus au
+   * formulaire (C-53).
+   *
+   * Masqué sous `md` : sur téléphone il n'y a pas de place à gauche, et la
+   * pastille du calendrier reste le seul accès.
+   */
+  sidePanel?: React.ReactNode;
+  /**
    * Liste des champs à verrouiller (lecture seule). Valeurs supportées :
    * 'title', 'startDate', 'endDate'. Permet à l'appelant de figer certains
    * champs pré-remplis (cas d'usage : planifier une habitude → titre +
@@ -84,7 +100,7 @@ type EventModalProps = {
    * n'ont rien à voir avec celles du manager qui planifie l'événement, elles
    * ne doivent donc jamais leur être substituées.
    */
-  categoriesOverride?: { id: string; name: string; color: string }[];
+  categoriesOverride?: { id: string; name: string; color: string; parentId: string | null }[];
 };
 
 const EventModal: React.FC<EventModalProps> = ({
@@ -99,6 +115,7 @@ const EventModal: React.FC<EventModalProps> = ({
   onDeleteEvent,
   onDuplicateEvent,
   onConvert,
+  sidePanel,
   lockedFields = [],
   enterprisePublic = false,
   categoriesOverride,
@@ -257,12 +274,9 @@ const EventModal: React.FC<EventModalProps> = ({
         setNotes("");
       }
 
-      if (task.category) {
-        const categoryColor = categories.find((cat) => cat.id === task.category)?.color;
-        setColor(categoryColor || categories[0]?.color || "#3B82F6");
-      } else {
-        setColor(categories[0]?.color || "#3B82F6");
-      }
+      // Tâche sans catégorie (ou catégorie disparue) → gris clair, jamais la
+      // première catégorie venue : elle n'en a pas.
+      setColor(categories.find((cat) => cat.id === task.category)?.color || NO_CATEGORY_COLOR);
 
       // Brouillon (#47) : restaure titre/notes d'une saisie interrompue
       // (uniquement en création libre — pas quand le titre est pré-rempli).
@@ -293,12 +307,9 @@ const EventModal: React.FC<EventModalProps> = ({
       setEndTime(endTimeDate.toTimeString().slice(0, 5));
       setEndDate(endTimeDate.toLocaleDateString("en-CA"));
 
-      if (task.category) {
-        const categoryColor = categories.find((cat) => cat.id === task.category)?.color;
-        setColor(categoryColor || categories[0]?.color || "#3B82F6");
-      } else {
-        setColor(categories[0]?.color || "#3B82F6");
-      }
+      // Tâche sans catégorie (ou catégorie disparue) → gris clair, jamais la
+      // première catégorie venue : elle n'en a pas.
+      setColor(categories.find((cat) => cat.id === task.category)?.color || NO_CATEGORY_COLOR);
     }
 
     setPrefilledFields(prefilled);
@@ -446,6 +457,14 @@ const EventModal: React.FC<EventModalProps> = ({
         className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/30 backdrop-blur-md md:p-4 opacity-0 animate-modal-backdrop"
         onClick={guardedClose}
       >
+        {sidePanel && (
+          <div
+            className="mr-3 hidden md:block"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {sidePanel}
+          </div>
+        )}
         <EventModalForm
           mode={mode}
           onClose={guardedClose}

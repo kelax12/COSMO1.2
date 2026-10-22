@@ -1,6 +1,361 @@
+<!-- note-audit: note=78 -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — Note **78 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → **76 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29) · inchangée au 2026-09-03
+## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → 75 → 76 → 78 → 78 → **78 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**)
+
+> ### 🔧 2026-10-22 · `/agenda` en paysage : 447 → 0 px (note non touchée)
+>
+> Le dernier cliquet non nul du paysage (`PLAFOND_PAYSAGE`, `e2e/mobile-android.spec.ts`). Mesuré sur `main` à `5eaa8b8c`, Pixel 7 tourné (863 × 360), démo, vues jour, semaine et mois.
+>
+> | | Avant | Après |
+> |---|---|---|
+> | Débordement de page, 863 × 360 (jour / semaine / mois) | **447 / 447 / 445 px** | **0 / 0 / 0 px** |
+> | Ce qui sortait | la barre d'outils de `AgendaDesktopHeader` (en `md:` et plus) : une rangée sans retour à la ligne, ~1 100 px de contenu dans une colonne de 434 px. « Mois » rogné ; flèches, « Récurrences » et « Nouveau » invisibles, sans trace | tout visible, sur 2 rangées (115 px de haut) |
+> | Même barre à 1 024 / 1 280 / 1 600 px de large | **386 / 130 / 0 px** coupés (« Nouveau » perdu sur un portable) | 0 / 0 / 0 px ; 1 600 px inchangé, sur une ligne |
+>
+> Pas la grille FullCalendar : elle tenait déjà dans sa colonne. Correctif : la rangée se replie (`flex-wrap`, groupe central en `contents`, deux `ml-auto` qui rendent l'ancien `justify-between` sur une ligne) ; sous `lg`, « Tâches », « Récurrences » et « Nouveau » passent en icône, le nom restant dans `aria-label`. Plafond `/agenda` abaissé à **0**. La note n'est pas recalculée ici : le remboursement attend la CI verte de la PR, puis la prochaine passe d'audit.
+
+> ### ⚪ 2026-10-20 · 0 : inchangée
+>
+> Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | WebKit | 0 | 2 instables `mobile-safari` (modal OKR, swipe de TaskCard), comme au 10-18 ; le débordement C-97 de `mobile-chrome` est débité une fois, en Accessibilité |
+>
+> **78 → 78.**
+
+> ### ⚪ 2026-10-18 · 0 : vérifiée inchangée
+>
+> Dernière passe avant l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | WebKit | 0 | `e2e` à `e69cb729` : 2 instables sur 255 verts, deux parcours démo `mobile-safari` de 3 min, comme au 10-16 |
+> | LCP mobile | 0 | **1,36 à 1,52 s** sur les 8 URLs |
+>
+> **78 → 78.**
+
+> ### 🟢 2026-10-16 · +2 : LCP mobile sous 1,6 s, et WebKit vert de bout en bout
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab` (run `38902071817`). Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ LCP mobile, point retenu le 10-15 (−2 le 09-22) | **+1** | LCP **1,22 à 1,52 s** sur les 8 URLs, TBT 90 à 300 ms (cf. [`PERFORMANCE.md`](./PERFORMANCE.md)) |
+> | ✅ Parcours rouges sur WebKit (−1 le 09-22, jamais remboursé) | **+1** | `e2e` vert en CI sur `mobile-safari` et `mobile-chrome` (`38870561074`, puis `38902071817` : 0 échec), et l'audit clavier y joue désormais (`C-118`) |
+> | `M-25` · essai sur un vrai téléphone | 0 | fermé le 2026-10-16 sur la parole d'Axel, sans modèle, OS ni navigateur relevé : `C-56` et `C-57` ne sont ni confirmés ni infirmés au doigt. Un constat, pas une mesure |
+>
+> **76 → 78.**
+
+> ### 🟢 2026-10-15 · +1 : le LCP mobile sort de « mauvais »
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | ✅ LCP mobile (−2 le 09-22) | **+1** | **3,26 à 3,40 s** sur les 8 URLs, Lighthouse mobile en CI à `HEAD` (5,6 à 8,4 s le 10-02). **Un point retenu** : au-dessus de 2,5 s, et le fil principal reste chargé sur les pages animées (TBT 878 à 1 049 ms sur `/`, `/en/`, `/entreprise-presentation/`) |
+> | Refonte « Une seule lumière » (maquettes 129 à 374, 10-10 et 10-11) | 0 | ses quatre rouges réparés (`8079039c`). À `HEAD`, aucun échec sur `mobile-safari` ni `mobile-chrome`, deux cas instables sur WebKit. `C-97` (texte à 200 % sur `/dashboard`), rouge sur `mobile-chrome` les 10-12 et 10-13, est absent des échecs à `HEAD` |
+>
+> **75 → 76.**
+
+> ### 🟢 2026-10-03 · +1 : les cibles de l'Aperçu à 44 px, vues vertes en CI
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Verdict : run `CI`
+> `37109937640` sur `c7fb936c`, **les cinq jobs verts**, le premier `CI` entièrement vert sur `main`
+> depuis le 2026-09-23 (`869fb05a`). Correctifs : `d8b1584b`, `16fbaae9`, `ac1e8c40`, `59aa4fd8`,
+> `315804df` (autres sessions) et `d8c215ad`, `290d6f51`, `c7fb936c` (celle-ci).
+>
+> | Item | Effet | Mesuré le 2026-10-03 |
+> |---|---|---|
+> | ✅ Trois commandes de l'Aperçu à 36 px (−1 le 10-02) | **+1** | `16fbaae9`, verts en CI sur WebKit (`mobile-safari`) |
+> | Specs WebKit en retard sur le mobile | 0 | trois tests réécrits (`315804df`) : ils supposaient un compteur de liste que le mobile masque, et un survol qui n'existe pas au doigt. Le produit, lui, était juste |
+>
+> **74 → 75.**
+
+> ### ⚪ 2026-10-02 (soir) · 0 : les cibles tactiles vérifiées en CI, puis une nouvelle rangée sous 44 px
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | ✅ Cibles tactiles du 2026-10-01 | **+1** | vérifié en CI (`f301f0bf`) : les quatre commandes corrigées sortent des listes de `touch-targets`. Le bloc 🟡 du matin, juste en dessous, est soldé |
+> | 🔴 « Valider », « Renvoyer », « Voir le détail » à 36 px de haut | **−1** | refonte de l'Aperçu (`3609210c`) : `/entreprise` et la modale de tâche d'équipe rouges en chromium **et** en WebKit, pour ces cinq commandes seulement. Détail : [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) |
+> | WebKit : `/` et `/entreprise-presentation` | 0 | navigation interrompue avant toute mesure : harnais, pas un verdict |
+>
+> **74 → 74.** Détail : [tableau de bord](./README.md).
+
+> ### 🟡 2026-10-02 · 0 : cibles tactiles corrigées, remboursement en attente de la CI
+>
+> | Item | Effet | Mesuré le 2026-10-02 |
+> |---|---|---|
+> | Cibles tactiles sous 44 px | **0** (+1 au verdict CI) | `TAP_AREA_44_Y` sur « Sélectionner plusieurs tâches » (106 × 32), « Suivre cette tâche » (149 × 36), « Gérer les cookies » (115 × 20, pied de page de la landing) et les pastilles de listes de la fiche de tâche d'équipe (36 px de haut, rangée passée à `gap-y-2` : 6 px entre rangées aurait fait chevaucher deux débords de 4 px). Le dessin ne bouge pas. `touch-targets` vert en local sous chromium à 375 px. Détail : `ACCESSIBILITY.md` |
+>
+> **74 → 74**, en attente de la CI.
+
+> ### 🟠 2026-10-01 · −1
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du jour : CI de `main` (`43fed445` à
+> `7cd73d24`), production (catalogue, advisors), dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | 🔴 Cibles tactiles sous 44 px | **−1** | « Sélectionner plusieurs tâches » 106 × 32, « Suivre cette tâche » 149 × 36 (cf. `ACCESSIBILITY.md`). Compté ici aussi : c'est un défaut au doigt |
+> | LCP mobile, parcours WebKit | 0 | déjà payés ; les échecs `mobile-safari` du jour sont ceux de chromium (suite entreprise en retard sur l'écran), comptés dans `TESTING.md` |
+>
+> **75 → 74.** Détail : [tableau de bord](./README.md).
+
+> ### 🟢 2026-09-22 (soir) · +2 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | `C-78` · WebKit en CI | **+1** | le point laissé le 09-15 (« +2 et non +3 ») |
+> | AM-2 · aucun Android | **+2** | project `mobile-chrome` (Pixel 7) joué dans le job `e2e` |
+> | AM-3 · perf mobile | **+1** | Lighthouse mobile joué (et il mesure mal, ligne suivante) |
+> | AM-4 · réseau / CPU bridés | **+1** | CPU ×4 par CDP, joué dans `mobile-android.spec.ts` |
+> | AM-5 · paysage et police 200 % | **+1** | joués |
+> | 🔴 LCP mobile « mauvais » sur 8 URLs sur 8 | **−2** | 5,6 à 8,3 s ; `/entreprise-presentation/` **8,3 s** |
+> | 🔴 Texte à 200 % : trois cas ROUGES, pas des cliquets | **−1** | `/dashboard` déborde de **12 px**, `/settings` de **649 px**, `/tasks` de **1 182 px**. Ce document les disait « cliquets posés au mesuré » : ils **échouent** en CI (WCAG 1.4.4) |
+> | 🔴 Parcours rouges sur WebKit | **−1** | **20** échecs `mobile-safari` à `806e7745`, dont créer une tâche, persistance d'une habitude, carte OKR, 3 `reduced-motion-sheets`. Part produit / harnais non triée, d'où −1 et non −2 |
+>
+> **73 → 75.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
+
+> ### 🟠 2026-09-16 · -5 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
+>
+> **Ce n'est pas une régression.** Rien n'a cassé depuis la dernière passe. Les angles morts
+> listés juste en dessous **existaient tous** pendant que cette note montait : elle était
+> surévaluée parce qu'elle ne comptait que ce que les gardes regardent. C'est exactement ce qui
+> s'est produit le 2026-09-14, où cinq notes ont baissé sans qu'aucun défaut ne soit récent.
+>
+> **Barème, déclaré pour être contestable ligne par ligne :**
+>
+> | Situation | Effet |
+> |---|---|
+> | angle mort **structurel**, de portée large, qu'aucun outil ne regarde | −2 |
+> | angle mort réel mais de portée limitée, ou partiellement couvert | −1 |
+> | angle mort **assumé** (arbitrage documenté), ou déjà compté dans une passe antérieure | 0 |
+> | angle mort **comblé** le jour même, avec garde **et** témoin | +1 |
+>
+> **Le calcul pour cette note :**
+>
+> | Angle mort | Effet | Pourquoi |
+> |---|---|---|
+> | AM-2 · **un seul téléphone, un seul moteur, aucun Android** | −2 | Chrome Android est le premier navigateur mobile du marché |
+> | AM-3 · la performance mobile n'est mesurée par rien | −1 | Lighthouse est en preset `desktop` |
+> | AM-4 · aucune mesure sur appareil réel ni réseau bridé | −1 | c'est la classe de défaut de `C-68`, trouvé en bridant à la main |
+> | AM-5 · ni paysage, ni grandes polices système | −1 | aucun cas ne change d'orientation |
+> | AM-1 · les 105 cas `mobile-safari` hors CI | 0 | déjà payé le 2026-09-14 (−3) |
+>
+> 🔴 **Une note baisse UNE FOIS, quand l'angle mort est nommé ; elle remonte quand il est
+> outillé.** Sans cette règle, nommer un angle mort deviendrait punitif, et la passe du
+> 2026-09-16 serait la dernière à en chercher. Un angle mort reconduit sans être comblé ne
+> re-coûte rien : il est **déjà payé**.
+>
+> ⚠️ Un transversal (T-1 à T-10 du [tableau de bord](./README.md)) est compté dans **chaque** audit
+> qu'il touche, parce que chaque note prétend quelque chose de différent. Les 36 témoins jamais
+> rejoués coûtent donc à la fois aux tests et à la sécurité, et ce n'est pas un double comptage.
+
+
+
+### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
+
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
+>
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
+>
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
+
+
+> **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
+> retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
+> que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
+> n'est pas un oubli d'auditeur, c'est une propriété de la méthode de notation.
+>
+> Le prototype du problème est daté : `CLAUDE.md` a pesé 150 ko et ~43 000 tokens sans qu'aucune
+> note ne bouge, alors qu'il est cité **13 fois** dans [`ARCHITECTURE.md`](./ARCHITECTURE.md), dont **9**
+> dans la seule colonne « Où il est écrit » du tableau des invariants, et **jamais** dans ce
+> qui est mesuré. Il était le mètre,
+> jamais l'objet.
+>
+> Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
+> invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
+
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+|---|---|---|---|
+| AM-1 | ✅ **COMBLÉ le 2026-09-16, vérifié le 2026-09-20.** Était : « les 105 cas `mobile-safari` ne tournent dans aucun workflow » (item `C-78`), le seul project qui mesure WebKit, donc iOS | 🔴 **Cet énoncé était périmé le jour où il a été écrit.** `git show HEAD:.github/workflows/ci.yml` lance `--project=chromium --project=supabase-stub --project=mobile-safari`, et `e2e/_warmup-mobile.spec.ts` est suivi par git : entré avec `af0190bd`, **le 2026-09-16**. ⚠️ Un moteur mobile joué en CI n'est ni un appareil réel, ni Android, ni un réseau bridé : cf. AM-2 et AM-4, ouverts | ✅ **FERMÉ le 2026-09-16** · `C-78`, `af0190bd`. ⚠️ L'énoncé « écrit, non commité » était périmé **le jour même de sa publication** |
+| AM-2 | **Un seul modèle de téléphone, un seul moteur.** Tout est mesuré sur iPhone 12 / WebKit. **Aucun Android réel**, alors que Chrome Android est le premier navigateur mobile du marché | `playwright.config.ts` : un seul device mobile | ✅ **OUTILLÉ le 2026-09-20** · project `mobile-chrome` (Pixel 7) + `e2e/mobile-android.spec.ts` (`C-97`) — 🔴 ne prouve PAS : un appareil **émulé** sur un runner : ni thermique, ni GPU mobile |
+| AM-3 | **La performance mobile n'est mesurée par rien en continu.** Lighthouse tourne en preset **desktop** (cf. [`PERFORMANCE.md`](./PERFORMANCE.md) AM-1) | `lighthouserc.json` : `"preset": "desktop"` | ✅ **OUTILLÉ le 2026-09-20** · `lighthouserc.mobile.json` (`C-84`) — 🔴 ne prouve PAS : que les seuils soient justes : première pose, à rabaisser au mesuré · 🔎 🔴 **2026-09-22 : il mesure, et c'est mauvais** : LCP 5,6 à 8,3 s sur les 8 URLs (cf. `PERFORMANCE.md`) · 🔎 **2026-09-24 : cause trouvée** (le HTML prérendu n'est jamais peint, le premier rendu attend React), cf. [`PERFORMANCE.md`](./PERFORMANCE.md) § « C-116 » |
+| AM-4 | **Aucune mesure sur appareil réel ni sur réseau bridé.** Un émulateur de bureau ne reproduit ni le GPU d'un téléphone d'entrée de gamme, ni la 4G. C'est précisément la classe de défaut de `C-68` (le shader qui saturait le tampon GPU) | `C-68` n'a été trouvé qu'en bridant le CPU à la main | ✅ **OUTILLÉ le 2026-09-20** · CPU bridé **×4 par CDP**, avec son témoin qui vérifie que le bridage s'applique (`C-97`) — 🔴 ne prouve PAS : l'appareil réel, qui reste **`M-25`** — un bridage n'est pas un téléphone |
+| AM-5 | **Le mode paysage et les grandes tailles de police système ne sont testés nulle part** | aucun cas ne change d'orientation ni de `font-size` racine | ✅ **OUTILLÉ le 2026-09-20** · paysage et police à **200 %** mesurés dans `e2e/mobile-android.spec.ts` (`C-97`) — 🔴 ne prouve PAS : rien de plus que ce qu'il mesure : 2 routes débordent en paysage et 3 à 200 %, cliquets posés **au mesuré**, ils ne peuvent que descendre · 🔎 🔴 **2026-09-22 : les trois cas « 200 % » sont ROUGES en CI**, pas des cliquets verts : débordement de 12 px (`/dashboard`), 649 px (`/settings`), 1 182 px (`/tasks`) |
+
+
+> ### 🟢 2026-09-15 · +2 sur les 3 retirés : le périmètre est élargi, le moteur mobile ne l'est pas encore
+>
+> **Deux des trois points reviennent, pas les trois**, et la différence se lit dans l'entrée
+> d'hier : elle retirait 3 points pour DEUX défauts distincts, le périmètre de la garde et le fait
+> qu'aucune suite mobile ne tourne sur un moteur mobile. Le premier est refermé (C-80), le second
+> ne l'est pas a cette date (C-78, en cours).
+>
+> `e2e/touch-targets.spec.ts` couvre désormais **8 pages publiques** en plus de ses 8 routes
+> protégées : `/`, `/entreprise-presentation`, `/guide`, `/blog` et les quatre pages cas d'usage.
+> **18 cas sur 18 verts** sur Chromium, contre 15 verts / 3 rouges au premier passage de la boucle
+> élargie.
+>
+> 🔴 **Le curseur de forfait est le correctif qui comptait, et il est MESURÉ dans WebKit / iPhone
+> 12, pas dans un Chrome rétréci** : `{"w":308,"h":6}` avant, `{"w":308,"h":44,"appearance":"none"}`
+> après. C'est l'outil avec lequel un prospect choisit son palier, sur la page qui vend l'offre.
+>
+> ✅ **La réserve d'hier est levée dans le sens qu'elle redoutait** : « la zone tactile réelle du
+> curseur peut excéder la piste selon le moteur, à vérifier avant de conclure ». Vérifié : elle ne
+> l'excédait pas.
+>
+> ❌ **La piste visuelle n'a PAS grossi**, et ne doit jamais grossir : c'est la hauteur de
+> l'ÉLÉMENT qui monte à 44 px, fond transparent, la piste descendant dans
+> `::-webkit-slider-runnable-track` / `::-moz-range-track` où elle garde ses 6 px. Capture WebKit à
+> l'appui.
+>
+> ⚠️ **Trois des huit défauts n'étaient pas des cibles trop petites, c'étaient de FAUSSES
+> COMMANDES** : un `button` de maquette à `tabIndex={-1}` sans `onClick`, et deux flèches « Semaine
+> (démo) » du `/guide`, dans des dessins de téléphone dont tous les autres éléments sont des `div`.
+> ❌ Ne jamais « corriger » ce cas-la en agrandissant a 44 px : ce serait poser une cible tactile
+> sur une image, donc promettre un appui qui ne fait rien. Un élément non interactif se retire de
+> l'arbre d'accessibilité, il ne se met pas aux normes.
+>
+> 🔴 **Ce qui NE bouge pas** : aucune de ces mesures n'est rejouée par la CI sur WebKit. Le project
+> `mobile-safari` reste hors CI à cette date. Le troisieme point ne reviendra qu'avec C-78.
+
+
+> ### 🔴 2026-09-14 (soir) · −3 : « 0 cible tactile trop petite » ne vaut que des 8 routes protégées, et les pages publiques en portent 24
+>
+> L'entrée de ce matin inscrit « **Cibles tactiles < 44×44 px : 0**, 10/10 cas E2E verts ». La
+> mesure est juste. **Ce qu'elle couvre ne l'est pas.** `e2e/touch-targets.spec.ts` boucle sur une
+> liste écrite en clair : `/dashboard`, `/entreprise`, `/okr`, `/tasks`, `/habits`, `/settings`,
+> `/agenda`, `/statistics`, soit **huit routes protégées, et aucune page publique**.
+>
+> **Mesuré ce soir contre la PRODUCTION**, WebKit / iPhone 12, bandeau cookies refusé, après
+> stabilisation :
+>
+> | Page publique | Cibles sous 44 × 44 px |
+> |---|---|
+> | `/` (landing, parcours perso) | **24** |
+> | `/entreprise-presentation` | **23** |
+> | `/blog` | 2 |
+>
+> ⚠️ **Toutes ne se valent pas, et il faut les trier au lieu d'agiter le total** :
+>
+> - **Les liens de pied de page** (~20 px de haut : « Guide d'utilisation », « Pour les
+>   freelances », « FAQ », …) représentent la majorité du compte. Ils échouent au critère AAA
+>   (2.5.5, 44 px) mais relèvent d'un usage courant et passent le critère AA (2.5.8, 24 px) sur leur
+>   largeur. C'est une dette de confort, pas un blocage.
+> - 🔴 **Le bouton « Commencer » du header fait 115 × 36 px**, et « Cosmo » 116 × 36. Ce sont les
+>   deux commandes les plus en vue de la page la plus visitée du produit, et elles sont **8 px sous
+>   le plancher** que le reste de l'application respecte partout.
+> - 🔴 **Le curseur « Nombre de membres de votre organisation » de `/entreprise-presentation` fait
+>   308 × 6 px** : `input[type=range]`, `appearance: none`, `height: 6px` en CSS calculé. Il est
+>   **stylé par l'auteur**, donc l'exemption « contrôle du navigateur » de WCAG 2.5.8 ne le couvre
+>   pas. ⚠️ Non mesuré : la zone tactile réelle du curseur peut excéder la piste selon le moteur.
+>   **À vérifier avant de conclure**, mais une piste de 6 px sur l'outil qui sert à choisir un
+>   forfait est au minimum un défaut d'ergonomie tactile.
+> - `16 × 24 px` pour un bouton « Plus d'options (démonstration) » : sous 24 px en largeur, donc
+>   sous le critère **AA**.
+>
+> 🔴 **Ce qui coûte les 3 points, ce n'est pas le nombre, c'est le périmètre.** La garde a été
+> élargie de six à huit routes le 2026-09-04, et son propre commentaire dit alors : « en couvrir six
+> et parler des routes protégées, c'est le même écart de langage que les énoncés que cette passe a
+> trouvés faux ». Le raisonnement a été appliqué **à l'intérieur** du périmètre et jamais **au
+> périmètre lui-même** : le tableau de bord lit « cibles tactiles : 0 » comme une propriété du
+> produit, alors que c'est une propriété de huit routes derrière authentification. Les pages non
+> couvertes sont exactement celles qui reçoivent le trafic d'acquisition.
+>
+> ### Et les cas mobiles, joués sur le moteur mobile, échouent à moitié
+>
+> Les trois specs les plus mobiles du dépôt rejouées sur le project `mobile-safari` (iPhone 12,
+> WebKit), dev-server chaud, 2 workers : **9 passés, 9 échoués, 11,4 min.**
+>
+> | Spec | Cas |
+> |---|---|
+> | `touch-targets.spec.ts` | 3 échecs (`/dashboard`, `/entreprise`, `/habits`) |
+> | `reduced-motion-sheets.spec.ts` | 4 échecs, dont le **TÉMOIN** de la suite |
+> | `demo-touch-gestures.spec.ts` | 2 échecs (swipe sur une TaskCard, bottom-sheet « Plus ») |
+>
+> ⚠️ **Ce ne sont pas des défauts produit démontrés, et il serait malhonnête de les présenter
+> ainsi.** Sept des neuf sont des attentes de fixture qui expirent : le CTA « Essayer la démo
+> gratuite » de la landing n'est pas visible dans les 30 s contre un serveur Vite de développement
+> sur WebKit. **Vérifié en contre-épreuve** : la même page, même moteur, même appareil émulé, mais
+> chargée depuis la **production**, rend ce CTA **visible, 358 × 56 px, en moins de 6 s**, et son
+> événement `load` tombe à **2 159 ms** avec zéro requête en vol.
+>
+> **Le fait établi est donc celui-ci, et il suffit** : ces cas ne sont joués par personne (cf.
+> [`TESTING.md`](./TESTING.md), les 96 cas hors CI), et dans leur état actuel ils ne peuvent pas
+> l'être sans travail. Une suite mobile qu'on ne peut pas lancer ne protège rien.
+>
+> ✅ **Ce qui reste vrai et vérifié ce soir** : `KNOWN_SUB_11PX = 69` et `ARBITRARY_BUDGET = 192`
+> sont bien les valeurs en vigueur dans `src/design-system.guard.test.ts`, et la suite unitaire
+> complète (2 586 cas) est verte, cliquets compris.
+
+> ### 🟢 2026-09-14 (matin) · +3, sur des métriques REJOUÉES, pas des affirmations
+>
+> Trois choses mesurées ce jour, sur le code réel, aucune sur un appareil (la limite « aucun
+> appareil réel accessible » reste entière, cf. A-4 / M-25) :
+>
+> | Métrique | 08-27 (dernière mesure) | **09-14** |
+> |---|---|---|
+> | Libellés sous le plancher de 11 px | 75 | **69** |
+> | Stock de tailles arbitraires | 196 | **192** |
+> | Cibles tactiles < 44×44 px (8 routes protégées + modale d'équipe) | — | **0**, 10/10 cas E2E verts |
+> | Consommateurs réels de `MobileHeader` (imports, pas mentions) | « 8 » (non recompté depuis) | **7**, recompté par import statement |
+>
+> Les deux premières viennent de **C-75** (fermé le 2026-09-14 au matin, avant cette passe) :
+> `src/design-system.guard.test.ts` porte désormais ces plafonds en dur (`KNOWN_SUB_11PX = 69`,
+> `ARBITRARY_BUDGET = 192`) et refuse toute remontée. Ce document ne les avait jamais absorbés —
+> sa dernière table de métriques s'arrêtait au 08-27. Les deux dernières sont une remesure propre
+> à cette passe : `e2e/touch-targets.spec.ts` rejoué en entier (10 cas, dont le témoin), et le
+> compte de `MobileHeader` refait par `import { MobileHeader } from` plutôt que par mention.
+>
+> ⚠️ **Le 7 n'est pas une régression du 8** : c'est un recomptage plus strict (imports réels, pas
+> `grep` sur le nom), et personne n'avait revérifié depuis le 2026-08-25. Sept pages : Dashboard,
+> Habitudes, OKR, Entreprise, Réglages, Statistiques, Tâches (via `TasksHeader`).
+>
+> 🔴 **Ce qui N'ENTRE PAS dans ce +3, et pourquoi** : un fichier non commité d'une autre session
+> (`OverdueQuickActions.tsx`) retire le report rapide « Aujourd'hui » du menu de retard, en
+> tension directe avec la conclusion de C-72 (« le produit est juste »). Tant qu'il n'est pas
+> commité, il n'existe pas pour ce document — ni en positif, ni en négatif. Décision suivie :
+> `a-faire-manuel.md` **M-44**.
+>
+> **Ce qui reste hors de portée d'ici, inchangé depuis le 08-27** : aucun appareil réel n'a été
+> ouvert. L'adhérence à l'échelle typographique (dernière mesure : 13 %, le 08-25) n'a pas été
+> recomptée — le script qui la produit n'a pas tourné aujourd'hui, faute de temps, pas faute
+> d'outil.
 
 > ### 2026-09-03 · note inchangée, et rien de mobile n'a été mesuré
 >
@@ -41,6 +396,11 @@
 >
 > Vérifié dans le navigateur et par deux tests Playwright, **avec témoin** : les deux échouent
 > contre l'ancienne barre.
+>
+> ⚠️ **Remplacé le 2026-09-23** : `OrgTabsBar` n'existe plus. Sur mobile, la section courante est
+> un bouton (`OrgSectionSwitcher`) qui ouvre une feuille en grille ; le défaut ci-dessus disparaît
+> par construction, puisque le libellé du bouton EST la section active. Sur desktop, la navigation
+> vit à droite (`OrgSideNav`). Détail : `src/modules/organizations/CLAUDE.md` § Navigation.
 
 | Ce qui compose la note | 08-24 | 08-25 | **08-27** |
 |---|---|---|---|
@@ -136,6 +496,49 @@ pour 760 px de hauteur. Mobile 375 × 812 : **694 = clientHeight**.
 > `CompletedOKRsModal` s'ouvrent, mesurées. Les 14 autres partagent le même `initial` mixte au
 > caractère près, ce qui rend leur bon fonctionnement très probable, **mais probable n'est pas
 > mesuré** : les ajouter au fichier est la dette ouverte de ce point.
+
+### 🔴 2026-09-22 · C-07 était clos à moitié, et l'autre moitié n'avait AUCUNE garde
+
+`C-07` annonçait « 17 feuilles n'utilisent toujours pas `useSheetMotion()` / `useSheetDrag()` ».
+**Remesuré avant d'écrire une ligne** : le volet `useSheetMotion` était fermé depuis le
+**2026-09-04** — cliquet à zéro, 23 fichiers consommateurs, la garde jouée et verte. L'énoncé
+était donc faux de moitié, et le rester lui donnait une taille qu'il n'avait pas.
+
+**Le défaut réel était l'autre helper.** `useSheetDrag` n'était mesuré nulle part, et l'audit
+mobile du 2026-08-14 avait pourtant compté **cinq feuilles affichant une poignée qui ne faisait
+rien**. Balayage du 2026-09-22 : **trois** l'avaient reconstitué.
+
+| Surface | Traitement |
+|---|---|
+| `task-modal/MobileActionSheet` | ✅ câblée sur `useSheetDrag(onClose)` |
+| `OKRDeadlineReviewModal` | ✅ câblée, **en phase `edit` seulement** : pendant l'animation de validation la carte porte un `animate`, et deux sources pour un même transform laisseraient interrompre une validation décidée |
+| `RemoveFriendConfirm` | 🗑️ poignée **RETIRÉE** : c'est un `alertdialog` de suppression, une poignée y présente une décision comme une feuille qu'on chasse au pouce |
+
+⚠️ **Deux faux positifs écartés à la mesure** : les « poignées » de `PyramidNodeCard` et
+`TeamProjectCard` sont des **barres de progression**, même forme, `overflow-hidden` en plus. La
+première écriture de la garde les accusait — une garde qui accuse deux fichiers justes est une
+garde qu'on finit par ignorer. Le détecteur raisonne désormais **par élément**, jamais par fichier.
+
+**Cliquet** : `src/design-system.guard.test.ts`, 4 témoins, **vu rouge sur les trois sabotages**.
+
+### 🔴 2026-09-22 · `/habits` ne peut PAS atteindre 44 px de large, et c'est de l'arithmétique
+
+Mesuré **dans le navigateur** (viewport 375 × 812, mode démo, dix cartes) : la grille des 7 jours
+de `HabitCard` fait **301,6 px**, gap de 6 px, donc des cellules de **37,94 × 37,94**.
+
+Sept cellules de 44 px en exigeraient **7 × 44 + 6 × 6 = 344 px**. Même avec un gap NUL, il en
+faudrait **308**. La largeur ne peut donc pas atteindre la cible sans refaire la carte.
+
+✅ Ce qui était récupérable l'est : `min-h-11` porte la **hauteur** à 44, la cible passe de 1 444
+à 1 672 px². L'écart restant est sur la seule largeur, **déclaré et daté** dans
+`e2e/touch-targets.spec.ts` avec son critère : échoue **2.5.5 (AAA)**, tient **2.5.8 (AA, 24 px)**.
+
+⚠️ **Ce n'est pas une allowlist** : la dispense porte sur la largeur SEULE, un témoin vérifie
+qu'une cellule perdant sa hauteur redevient un échec, et elle **doit tomber** si la carte gagne
+45 px de large.
+❌ **Ne pas « corriger » par un débord de `tap-area`** : sept cellules voisines agrandies chacune
+se chevaucheraient, et le dernier dans l'ordre du DOM volerait l'appui de son voisin. Une grille
+se corrige par sa taille, jamais par du débord.
 
 ### « 0 feuille cassée » : ce que dit la MESURE, et à quelle date (C-07, 2026-09-06)
 
@@ -434,6 +837,15 @@ Tokens dans `src/index.css` (`:root`), exposés en utilitaires Tailwind (`tailwi
 | `text-label` | `--t-label` | 13 px | Labels, boutons, chips |
 | `text-caption` | `--t-caption` | 11 px | Meta, badges, labels de tab bar |
 
+> **Deux sous-arbres montent d'un pixel, et c'est la SEULE façon de le faire.** `.dashboard-mobile-text-boost`
+> (accueil) et `.task-title-boost` (titre d'une tâche dans la liste mobile) redéfinissent les
+> **tokens** `--t-*` sous 768 px, hors de tout `@layer` : les classes `.text-*` de Tailwind vivent
+> dans son layer `utilities`, qui gagnerait quelle que soit la spécificité. Redéfinir le token
+> plutôt que `font-size` laisse la règle suivre le cran appliqué par le composant sans avoir à le
+> connaître. ❌ Ni `text-[14px]` (le cliquet le refuse), ni un 7ᵉ cran dans l'échelle.
+> ⚠️ `.task-title-boost` couvre `--t-label` ET `--t-body` : `TaskCard` monte d'un cran quand la
+> tâche est EN RETARD, n'en décaler qu'un effacerait ce signal.
+
 > **11 px est le plancher absolu.** Le test `src/design-system.guard.test.ts` échoue si une taille sous 11 px apparaît, et plafonne le stock de `text-[Npx]` restants (budget qui ne doit que baisser).
 
 ### Grille, rayons, cible tactile
@@ -534,6 +946,28 @@ Hover  : bg-[rgb(var(--color-hover))] (repos uniquement — l'état actif ne cha
 
 `src/pages/agenda/MobileAgenda.tsx` exporte `mobileCalendarStyles`, un bloc `<style>` brut injecté pour surcharger le CSS interne de FullCalendar (les classes `.fc-*` ne sont pas atteignables en Tailwind). Le garde-fou `design-system.guard.test.ts` ne voit **pas** ces occurrences (ce n'est pas la syntaxe `text-[Npx]`) — `font-size: 11px !important` sur `.fc-timegrid-slot-label` a été corrigé manuellement (était 10px). Si une autre valeur y est ajoutée, l'aligner à la main sur l'échelle mobile ; le garde-fou ne le fera pas pour vous.
 
+### FullCalendar · au doigt, `select` n'existe pas au tap court (2026-09-19)
+
+Les deux calendriers posent `selectLongPressDelay={250}`. Sur une surface tactile, cela veut dire
+qu'un `select` **n'est émis qu'après 250 ms d'appui MAINTENU** : le tap court, le seul geste qu'on
+fait sur une case de mois, ne produit aucun `select`. Une bascule Mois → Jour branchée sur `select`
+ne s'est donc jamais déclenchée sur un vrai téléphone, alors qu'à la souris `select` part au clic
+et que tout paraissait fonctionner.
+
+C'est un défaut **invisible en largeur mobile tant que l'émulation tactile n'est pas active** : il
+a survécu à trois tentatives de correction, chacune validée à la souris. Un geste tactile se
+vérifie avec des événements `Touch`, pas avec une fenêtre étroite.
+
+Un tap se branche sur **`dateClick`**, qui part au doigt comme à la souris. À la souris les deux
+rappels partent sur le même clic : la bascule a donc besoin d'un miroir **synchrone** du mode de
+vue (une ref, pas l'état React, encore périmé dans le second appel) pour ne pas s'exécuter deux
+fois. Câblage : `src/pages/agenda/useAgendaMobileView.ts`, témoin à côté.
+
+⚠️ Animer cette bascule ne doit **pas** passer par une `key` sur le conteneur : elle remonterait
+`<FullCalendar>`, alors que la bascule s'appuie justement sur `api.changeView` pour ne PAS
+démonter (la course qui laissait la vue Jour s'ouvrir sur le mauvais jour). Contrôles impératifs
+(`useAnimationControls`), et aucune clé de transform sous `prefers-reduced-motion`.
+
 ### Tutoriels et rendus mobile/desktop séparés
 
 Quand une page rend deux en-têtes (`md:hidden` + `hidden md:flex`), un même `data-tutorial-id` existe deux fois. `findTarget` (`src/components/tutorial/page-tutorial-helpers.ts`) renvoie le premier élément **visible** (rect non nul), pas le premier du DOM — sinon le spotlight vise la version masquée.
@@ -596,8 +1030,107 @@ Layout style "agenda" :
 
 ## TaskFilter mobile (`src/components/TaskFilter.tsx`)
 
-- Lien `+ d'options` (texte bleu, `md:hidden`) toggle `showQuickFilters` (Favoris/Terminées/Retard/Collaboration dans `<TaskTable>`).
-- Sur desktop (`md:flex`), ces 4 boutons sont **toujours** visibles.
+🔴 **Depuis le 2026-09-20, la recherche n'est plus dans cette rangée sur mobile**, et le lien
+`+ d'options` **n'existe plus** (il toggait `showQuickFilters`). Les deux étaient en HAUT de page,
+hors de portée du pouce, et poussaient la liste vers le bas. Modèle repris : Notes (iOS).
+
+- **`MobileTaskSearch`** (`src/pages/tasks/MobileTaskSearch.tsx`, `md:hidden`) : barre de recherche
+  `fixed` à `calc(4rem + safe-area + 0.5rem)`, **elle ne défile jamais**. Au tap, un écran de
+  recherche **plein et opaque** (`z-[195]`, fond de l'app) remplace la page ; **champ vide →
+  « Filtres suggérés »** (Favoris, Fait, Retard, Collaboration, Sélectionner), qui sont les
+  pastilles de `TaskQuickFilters` et rien d'autre. Une suggestion applique **et referme**. Sortie
+  par la **croix ronde**, par le repli du clavier ou par Échap.
+- 🔴 **L'UI a été refaite le 2026-09-21 en comparant les captures au modèle**, écart par écart, après
+  deux passes de consignes verbales qui n'avaient pas suffi. Ce qui doit rester : titre **hors** de
+  la carte, casse normale, `text-title` gras ; séparateurs **en retrait** (ils commencent à
+  l'aplomb du libellé, s'arrêtent à 16 px du bord droit, aucun sous la dernière ligne) ; champ en
+  **pilule pleine** ; carte **en haut**, champ **en bas**, le vide entre les deux.
+- ❌ **Ne jamais compter sur `focus:ring-*` ou `border-0` pour désarmer l'anneau bleu d'un champ.**
+  `index.css` impose à **tout** `input` une bordure 1px et, au focus, une bordure + un halo à la
+  couleur d'accent, en `!important`. L'échappatoire est la classe **`no-input-chrome`**, mais elle
+  force aussi `border-radius: 0` : un champ arrondi doit donc être **transparent à l'intérieur d'un
+  conteneur** qui porte la forme et le fond.
+- **Les LISTES suivent les cinq filtres dans la même carte** (2026-09-22) : « Aujourd'hui » avec son
+  icône, puis chaque liste avec sa pastille de couleur, celle des chips. Sans elles, choisir une
+  liste pendant une recherche obligeait à fermer l'écran d'abord, puisque la barre de chips
+  s'efface. Même geste que les filtres : la ligne applique **et referme**, et un second appui sur la
+  liste active la retire. ⚠️ La carte doit pouvoir **défiler** (`overflow-y-auto` + `min-h-0`) :
+  mesuré à 375x460, elle se réduit et défile au lieu de pousser le champ hors de l'écran.
+- **La barre ancrée porte AUSSI le tri** (2026-09-22) : `[🔍 Rechercher] [⇅ Priorité]`. Le
+  `<select>` de `TaskFilter` était le dernier rescapé d'une rangée dont la recherche et
+  « + d'options » étaient déjà partis ; cette rangée est donc `hidden md:flex`, elle n'a plus rien à
+  montrer sous 768 px. La pilule **affiche le critère courant** : une icône seule aurait retiré
+  l'information en même temps que la commande. Un appui ouvre une `BottomSheet` avec les cinq
+  critères et le sens.
+  ⚠️ **Ni le critère ni le sens ne referment la feuille**, contrairement aux suggestions de
+  recherche : trier est un choix en deux temps, et changer de critère remet le sens en croissant
+  (`handleFilterChange`). Refermer au premier appui obligerait à rouvrir pour la moitié du réglage.
+- **La carte « Tâches en cours » (légende des catégories) est masquée sous 768 px**, et son
+  engrenage est repris dans l'en-tête mobile, à côté de la boîte de réception. 🔴 Déplacer une
+  surface, c'est déplacer ses COMMANDES : masquée sans ce report, la seule porte vers les réglages
+  de couleurs des catégories disparaissait avec elle. Le libellé reste `common → colorLegend.edit`,
+  jamais recopié.
+- 🔴 **Pendant la recherche, tout ce qui vit AU-DESSUS de la première tâche s'efface** : en-tête de
+  page et compteurs, barre des listes, rangée de tri, pilules de filtre actif, et l'astuce de
+  balayage (`SwipeHintBanner`). Mesuré : la liste commence à **44 px** du haut au lieu de 267, soit
+  trois tâches de plus entre le haut de l'écran et le champ. L'état vit dans
+  `pages/tasks/search-open.store.ts` : `SwipeHintBanner` est deux niveaux plus bas, dans
+  `TaskTable`, qui ne peut pas recevoir une prop de plus sans dépasser son plafond de 600 lignes.
+  ⚠️ La classe de retour doit rendre à chaque bloc son affichage **naturel** (`md:flex` pour une
+  rangée `flex`, `md:block` sinon) : l'écran est `md:hidden`, mais l'état d'ouverture, lui, survit à
+  un élargissement de fenêtre.
+- ⚠️ **Dès la première frappe, le fond s'efface** (`pointer-events-none`, seule la rangée du champ
+  reste cliquable) : le modèle remplit cet espace avec ses résultats, COSMO ne le peut pas sans
+  remonter toute sa liste dans l'overlay. Chercher derrière un fond opaque revenait à chercher à
+  l'aveugle. Décision du 2026-09-21.
+- ⚠️ **`z-50`, le cran publié des modales**, et pas une valeur choisie pour l'occasion. En mode
+  démo, `DemoBridgePrompt` (`z-[190]`) flotte par-dessus : il flotte par-dessus **toutes** les
+  modales de l'app, c'est une propriété de ce composant. `z-[195]` a été écrit puis retiré le
+  2026-09-21, refusé par `design-system.guard` — l'échelle est fermée, et c'est ce qui l'empêche de
+  redevenir seize valeurs pour sept paliers.
+- 🔴 **Taper la barre doit LEVER le clavier, et un `focus()` dans un effet ne le fait pas.** Sur
+  iOS, le clavier ne s'ouvre que si `focus()` est appelé **pendant la tâche du geste**.
+  `useModalA11y` pose le focus dans un `useEffect`, donc après la peinture : le champ était
+  focalisé, curseur visible, clavier fermé, et il fallait un second appui pour écrire.
+  L'ouverture passe donc par `flushSync(() => setOpen(true))` **puis** `inputRef.current.focus()`,
+  dans le gestionnaire de clic. `useModalA11y` ne le déplace pas ensuite : il s'abstient quand le
+  focus est déjà dans la surface.
+- 🔴 **Replier le clavier referme la recherche**, comme dans Notes. Le signal est le champ qui
+  **perd le focus** (`onBlur`) : la touche « OK » de la barre d'accessoires iOS comme le repli du
+  clavier le déclenchent. ❌ **Un `blur` nu rendrait les suggestions intouchables** — sur un appui,
+  le champ se défocalise AVANT que le `click` n'atteigne la ligne : un garde posé au `pointerdown`
+  du panneau neutralise le blur pendant un appui.
+- 🔴 **`visualViewport` ne sert QU'À PLACER le champ, jamais à juger « clavier ouvert ».** Première
+  version livrée, puis retirée le 2026-09-21 : elle comparait `innerHeight - visualViewport.height`
+  à des constantes (`> 60` = clavier). **Cette mesure ne vaut pas 0 au repos** — la barre d'outils
+  de Safari en prend déjà ~60 à 100 px. Verte sur l'émulateur, qui repose à 0 ; sur un téléphone,
+  le champ flottait à l'ouverture et replier le clavier ne refermait plus rien. Ce qui reste est
+  **relatif** : une ligne de base mesurée à l'ouverture (`measureKeyboardInset()`, lecture
+  **synchrone** — l'état du hook vaut encore 0 à cet instant), et le clavier est tenu pour ouvert
+  au-delà de `ligne de base + 80 px`.
+- ⚠️ **Clavier ouvert, le champ se pose DESSUS sans gouttière** : la zone sûre est déjà couverte par
+  le clavier, l'additionner creusait une bande vide entre les deux.
+- ❌ **Ne pas laisser la barre fermée montée pendant l'overlay.** Elle réapparaît dès la première
+  frappe, quand la carte de suggestions qui la masquait disparaît, et on lit deux champs de
+  recherche empilés, dont un inerte.
+- ❌ **Ne jamais lever le garde de pointeur (`pointerInPanel`) sur le panneau lui-même.** Taper une
+  suggestion le DÉMONTE depuis le gestionnaire de clic : son `onPointerUp` n'arrive jamais, le
+  garde reste levé, et le repli du clavier ne referme plus rien pour le reste de la session. Il se
+  lève sur `window`, et se remet à zéro à chaque ouverture.
+- ❌ **Ne jamais dupliquer l'état du filtre rapide.** Il vit dans `quick-filter.store.ts`
+  (`useSyncExternalStore`), lu ET écrit par les deux surfaces. Un évènement `window` ne suffisait
+  pas : il ne va que dans un sens, la barre serait aveugle au filtre courant.
+- 🔴 **La pilule du filtre actif dans la barre est le SEUL moyen de l'enlever sur mobile** : la
+  rangée de pastilles y est masquée (`hidden md:flex`). La retirer enfermerait dans une liste
+  filtrée.
+- ⚠️ **Trois surfaces se disputent le bas de l'écran** : la barre de recherche (`safe + 72px`), la
+  barre d'actions groupées de la sélection (`safe + 84px`) et le FAB de `Layout`. La recherche
+  s'efface en mode sélection (`select-mode.store.ts`), et le FAB monte à `bottom-[8.5rem]` **sur
+  `/tasks` uniquement**. Toute 4ᵉ surface ancrée doit se placer dans cette liste, pas à côté.
+- ⚠️ Réserve de défilement de `/tasks` portée à `+144px` (au lieu de `+88px`) : la barre ancrée
+  masquerait sinon la dernière tâche.
+- ⚠️ `#search-tasks-main` (cible du raccourci « / ») reste le champ **desktop** : il n'y a pas de
+  clavier physique en face de la barre mobile.
 - Bouton "Filtres" caché sur mobile (`hidden sm:inline-flex`).
 - Label de tri compacté : `<span className="hidden sm:inline">Trier par :</span><span className="sm:hidden">Tri :</span>`.
 
@@ -688,6 +1221,8 @@ if (supabaseUrl) {
 - ❌ `100vh` pour un modal full-screen (utiliser `100dvh`)
 - ❌ Action (validation, suppression) accessible **que** par swipe — toujours un fallback visible
 - ❌ Faire diverger mobile/desktop dans le même composant sans `md:hidden` / `md:flex` / `useIsMobile()`
+- ❌ **Valider un geste tactile à la souris** — `selectLongPressDelay` rend `select` inatteignable
+  au tap ; vérifier avec de vrais événements `Touch` (cf. § FullCalendar ci-dessus)
 - ❌ Modifier `<TaskCard>` (`md:hidden`) sans vérifier que la table desktop reste intacte (`hidden md:block`)
 - ❌ Réintroduire `TaskCategoryIndicator` ou des icônes inline sur la TaskCard mobile
 - ❌ Retirer le warmup `fetch()` iOS Safari, le cache `cosmo:qcache:*`, ou le skip-retry sur timeout

@@ -20,8 +20,6 @@ import HabitTable from '@/components/HabitTable';
 import HabitGlobalTracking from '@/components/HabitGlobalTracking';
 import { useHabits } from '@/modules/habits';
 import { HabitListSkeleton } from '@/components/skeletons';
-import { usePullToRefresh } from '@/lib/hooks/use-pull-to-refresh';
-import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { useT } from '@/i18n/useT';
@@ -43,16 +41,19 @@ const HabitsPage: React.FC = () => {
   const { t } = useT('habits');
   const { t: tCommon } = useT('common');
   const isMobile = useIsMobile();
-  const tutorial = useTutorial(isMobile ? 'habits_mobile' : 'habits_desktop');
+  const tutorial = useTutorial(isMobile ? 'habits_mobile' : 'habits_desktop', 600, !isMobile);
   const tutorialSteps = isMobile ? habitsTutorialStepsMobile : habitsTutorialStepsDesktop;
   // `error` n'est volontairement plus destructuré : le message brut du backend
   // ne s'affiche jamais (règle « faille V7 »), seul un texte traduit est rendu.
   const { data: habits = [], isLoading, isError, refetch } = useHabits();
-  const { pullY, isRefreshing, threshold } = usePullToRefresh(() => refetch());
   const [showModal, setShowModal] = useState(false);
   const [showRecap, setShowRecap] = useState(false);
   // Vue par défaut = Tableau (vue dense, panorama 30 jours d'un coup d'œil)
   const [viewMode, setViewMode] = useState<ViewMode>('table');
+  // Mobile : une seule vue (Liste), sobre — le switcheur Tableau/Suivi global
+  // reste desktop uniquement. Ne PAS modifier `viewMode`/`setViewMode` eux-mêmes :
+  // le desktop doit garder son état et son comportement inchangés.
+  const effectiveViewMode: ViewMode = isMobile ? 'list' : viewMode;
 
   // Ouverture directe du modal de création depuis la palette ⌘K (#19).
   const location = useLocation();
@@ -93,7 +94,6 @@ const HabitsPage: React.FC = () => {
 
   return (
     <div className="min-h-[100dvh] p-4 md:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
-      <PullToRefreshIndicator pullY={pullY} isRefreshing={isRefreshing} threshold={threshold} />
 
       {/* ── Mobile : en-tête canonique, partagé par toutes les pages ──
           Le titre se compacte au scroll dans une barre collante. Le bloc
@@ -130,12 +130,13 @@ const HabitsPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           {habits.length > 0 && (
             <div
-              className="flex items-center rounded-xl p-1 border transition-colors"
+              className="hidden md:flex items-center rounded-xl p-1 border transition-colors"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',
                 borderColor: 'rgb(var(--color-border))',
               }}
               data-tutorial-id="habits-view-switcher"
+              data-guide-id="perso-habits-views"
             >
               {VIEW_TABS.map(({ mode, icon: Icon, labelKey }) => (
                 <motion.button
@@ -178,6 +179,7 @@ const HabitsPage: React.FC = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowModal(true)}
             data-tutorial-id="habits-create-button"
+            data-guide-id="perso-habits-new"
             className="hidden sm:flex flex-none items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
           >
             <Plus size={18} />
@@ -186,8 +188,8 @@ const HabitsPage: React.FC = () => {
         </div>
       </div>
 
-      {viewMode === 'list' && (
-        <div className="space-y-4 md:space-y-6" data-tutorial-id="habits-list">
+      {effectiveViewMode === 'list' && (
+        <div className="space-y-4 md:space-y-6" data-tutorial-id="habits-list" data-guide-id="perso-habits-list">
           {isLoading && habits.length === 0 && <HabitListSkeleton count={4} />}
 
           {habits.map(habit => (
@@ -224,7 +226,7 @@ const HabitsPage: React.FC = () => {
         </div>
       )}
 
-      {viewMode === 'table' && (
+      {effectiveViewMode === 'table' && (
         habits.length === 0 && !isLoading ? (
           <div className="card p-8 text-center">
             <div
@@ -251,9 +253,9 @@ const HabitsPage: React.FC = () => {
               {t('page.emptyCta')}
             </Button>
           </div>
-        ) : <HabitTable />
+        ) : <div data-guide-id="perso-habits-list"><HabitTable /></div>
       )}
-      {viewMode === 'global' && (
+      {effectiveViewMode === 'global' && (
         habits.length === 0 && !isLoading ? (
           <div className="card p-8 text-center">
             <div
@@ -280,7 +282,7 @@ const HabitsPage: React.FC = () => {
               {t('page.emptyCta')}
             </Button>
           </div>
-        ) : <HabitGlobalTracking />
+        ) : <div data-guide-id="perso-habits-list"><HabitGlobalTracking /></div>
       )}
 
       <HabitModal isOpen={showModal} onClose={() => setShowModal(false)} />
@@ -298,7 +300,7 @@ const HabitsPage: React.FC = () => {
         onClick={() => setShowModal(true)}
         data-tutorial-id="habits-fab"
         aria-label={t('page.newHabit')}
-        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
+        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
       >
         <Plus size={26} />
       </motion.button>

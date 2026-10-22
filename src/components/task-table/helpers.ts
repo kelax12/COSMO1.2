@@ -8,6 +8,7 @@ import { translator } from '@/i18n/useT';
 // accepte une chaîne et gère l'absence de date).
 import { formatDate as formatDateIntl, getDateLocale } from '@/i18n/format';
 import { daysUntilDeadline, deadlineDayKey, isOverdue } from '@/lib/deadline';
+import { formatDurationMinutes } from '@/lib/duration';
 
 /** Clé de jour → Date locale, pour formater le jour VÉCU et pas l'instant. */
 const dayKeyToLocalDate = (key: string): Date => {
@@ -50,14 +51,29 @@ export const formatDeadlineSmart = (dateString: string | undefined): string => {
   return formatDateIntl(d, { day: 'numeric', month: 'long' });
 };
 
-// Durée « x h xx min » / « 45 min » / « 2 h ».
+/**
+ * Retard EXPRIMÉ, pas déduit — maquette 87.
+ *
+ * La carte mobile affichait « 17/09/2026 » en rouge : elle demandait au
+ * lecteur de faire lui-même la soustraction pour savoir de combien il est en
+ * retard, sur chaque ligne. Le calcul est fait ici.
+ *
+ * ⚠️ N'a de sens que sur une tâche RÉELLEMENT en retard (`isTaskOverdue`) :
+ * appelée sur une échéance future, elle rendrait « en retard de -3 j ».
+ * L'appelant décide, cette fonction se contente de formater.
+ */
+export const formatOverdueSince = (dateString: string | null | undefined): string => {
+  if (!dateString) return '—';
+  const lateBy = -daysUntilDeadline(dateString);
+  if (!Number.isFinite(lateBy) || lateBy <= 0) return formatDeadlineSmart(dateString);
+  const { tp } = translator('common');
+  return tp('relativeDay.overdueBy', lateBy);
+};
+
+// Durée « 1 h 30 » / « 45 min » / « 2 h » (maquette 139, `@/lib/duration`).
 export const formatDuration = (minutes: number | undefined): string => {
   if (!minutes || minutes <= 0) return '—';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m} min`;
-  if (m === 0) return `${h} h`;
-  return `${h} h ${String(m).padStart(2, '0')} min`;
+  return formatDurationMinutes(minutes);
 };
 
 // En retard = échéance d'un JOUR RÉVOLU. L'ancienne comparaison d'instants
@@ -65,3 +81,14 @@ export const formatDuration = (minutes: number | undefined): string => {
 // aujourd'hui en rouge dès 00 h 01, puisque son minuit était déjà passé.
 export const isTaskOverdue = (deadline: string | undefined, completed: boolean): boolean =>
   isOverdue(deadline, completed);
+
+/**
+ * Classes de la pilule `P{n}` sur MOBILE (maquette 145, 2026-10-10).
+ * P1 et P2 gardent la teinte d'urgence (`task-priority-*`, partagée avec le
+ * tableau desktop) ; P3 à P5 passent en gris. La pilule reste partout
+ * (arbitrage 85) : seule sa couleur se réserve à ce qui presse.
+ */
+export const priorityPillClass = (priority: number): string =>
+  priority > 0 && priority <= 2
+    ? `task-priority-${priority}`
+    : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))]';

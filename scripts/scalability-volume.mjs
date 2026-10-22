@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // scalability-volume.mjs — mesurer le mode entreprise À VOLUME
 //

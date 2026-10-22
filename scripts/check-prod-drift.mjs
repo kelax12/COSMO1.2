@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // check-prod-drift.mjs — Garde anti-dérive repo ↔ prod (audit 2026-06-10)
 //

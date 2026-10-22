@@ -122,7 +122,7 @@ export function mergeTodayItems({
       contextLabel: projectNameById.get(t.projectId) ?? null,
       categoryName: category?.name ?? null,
       categoryColor: category?.color ?? null,
-      href: `/entreprise?tab=projects&task=${t.id}`,
+      href: `/entreprise/projects?task=${t.id}`,
       overdue: deadline < today,
     });
   }

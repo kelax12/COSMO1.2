@@ -1,0 +1,63 @@
+{
+  "_comment": [
+    "C-88 — référence de POSTURE Supabase : advisors de sécurité et réglages",
+    "d'authentification. Se recale par `node scripts/check-supabase-posture.mjs --update`,",
+    "jamais à la main.",
+    "🔴 La garde juge sur un ÉCART à ces valeurs, pas sur un absolu : les 52",
+    "fonctions SECURITY DEFINER exposées à `authenticated` sont un choix",
+    "🔴 La garde juge sur un ÉCART à ces valeurs, pas sur un absolu : les 82",
+    "est la 53e, ou une policy qui disparaît.",
+    "❌ Ne jamais relever un compte ici pour faire passer la CI : répondre",
+    "est la 83e, ou une policy qui disparaît."
+  ],
+  "pose_le": "2026-10-10",
+  "_securite_source": [
+    "Recalé le 2026-10-10 (81 → 82) : claim_acquisition_source (mig. 217), relue au catalogue. Les trois autres comptes inchangés (2 / 11 / 1).",
+    "Recalé le 2026-10-08 (advisors/security du projet ykeugqfgklejcdbrmawy), après",
+    "avoir répondu objet par objet à « qu'est-ce qui est apparu ? » depuis le 2026-09-20",
+    "(9 / 52 / 2 / 1 → 11 / 81 / 2 / 1). Les 29 fonctions et 2 tables nouvelles",
+    "viennent des mig. 150-213 ; détail dans chaque `_note`.",
+    "Précédent relevé : 2026-09-20, qui reproduisait l'audit manuel du 2026-09-14."
+  ],
+  "securite": {
+    "rls_enabled_no_policy": {
+      "niveau": "INFO",
+      "compte": 11,
+      "_note": "admin_users, demo_devices, email_lookup_global, email_lookup_quota, org_webhook_deliveries, payment_closures, payment_records, rate_limits, renewal_notices, support_reports, user_activity_days. Tables sans policy VOLONTAIREMENT : jamais lues par un client, seulement par service_role ou par une fonction SECURITY DEFINER. RLS activée sans policy = personne ne passe, ce qui est le réglage voulu. Ajoutées depuis le 2026-09-20 : org_webhook_deliveries (mig. 199, « aucune policy : ni lecture ni écriture depuis le client ») et support_reports (mig. 150, écrite par record_support_report)."
+    },
+    "anon_security_definer_function_executable": {
+      "niveau": "WARN",
+      "compte": 2,
+      "_note": "preview_share_link et record_demo_visit. Les deux sont appelées AVANT connexion par conception (aperçu d'un lien de partage, comptage d'une visite de démo)."
+    },
+    "authenticated_security_definer_function_executable": {
+      "niveau": "WARN",
+      "compte": 82,
+      "_note": "Les helpers RLS et les RPC métier. 🔴 C'est ce compte qu'il faut surveiller : la 83e fonction exposée est celle qu'on n'a pas décidée. ⚠️ Trois d'entre eux (get_subtree, has_subordinates, org_admin_count) ont eu leur EXECUTE révoqué par la mig. 100 pour fermer une fuite inter-organisations : ils ne doivent PAS réapparaître ici (absents au 2026-10-08). Recalage du 2026-10-08 (52 → 81) : chacune des 81 a été lue au catalogue. 67 testent auth.uid() ou un helper de garde (is_admin, is_org_member, my_org_perm, can_access_team_*…). Les autres délèguent à un helper lié à auth.uid() et NON exécutable par authenticated : get_my_team_* (7) → my_team_project_ids, get_team_trash / restore_team_task → can_restore_team_task, get_team_okr_trash / restore_team_okr → can_restore_team_okr. Deux sont publiques par conception (preview_share_link, record_demo_visit, cf. advisor anon). org_seats_allowed ne lit que des compteurs (quota de sièges), sans donnée de membre. La 81e est get_admin_onboarding_funnel (mig. 213), gardée par is_admin(). La 82e est claim_acquisition_source (mig. 217) : n'écrit que le profil de auth.uid(), compte de moins d'une heure, source jamais écrasée, valeur bornée par une regex, fermée à anon (relue le 2026-10-10)."
+    },
+    "auth_leaked_password_protection": {
+      "niveau": "WARN",
+      "compte": 1,
+      "_note": "🔴 La protection contre les mots de passe compromis (HaveIBeenPwned) est DÉSACTIVÉE. Ce n'est pas du code : c'est un interrupteur du Dashboard (Authentication → Attack Protection). Il reste ouvert tant que personne ne le ferme, et cette ligne est ce qui l'empêche d'être oublié."
+    }
+  },
+  "_reglages_auth_source": [
+    "Posée le 2026-10-08 à partir des valeurs LUES par le run Posture 37773471782",
+    "(GET /v1/projects/{ref}/config/auth, même jour), pas inventées.",
+    "🔴 password_hibp_enabled = false est l'état MESURÉ, pas l'état voulu : c'est le même",
+    "trou que l'advisor `auth_leaked_password_protection`. Le passer à true dans le Dashboard",
+    "fera échouer la garde sur un écart, et c'est alors cette valeur qu'on recale.",
+    "Se recale ensuite par `--update` (exige SUPABASE_ACCESS_TOKEN)."
+  ],
+  "reglages_auth": {
+    "password_hibp_enabled": false,
+    "mailer_otp_exp": 3600,
+    "security_update_password_require_reauthentication": true,
+    "refresh_token_rotation_enabled": true,
+    "security_refresh_token_reuse_interval": 10,
+    "mfa_totp_enroll_enabled": true,
+    "mfa_totp_verify_enabled": true,
+    "external_google_enabled": true,
+    "disable_signup": false
+  }
+}

@@ -10,6 +10,7 @@ import {
   useUpdateList,
   useDeleteListWithUndo,
 } from '@/modules/lists';
+import { useTasks } from '@/modules/tasks';
 import { AddToListModalProps, COLOR_PALETTE, resolveColor } from './shared';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
@@ -32,6 +33,15 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
   const createListMutation         = useCreateList();
   const updateListMutation         = useUpdateList();
   const { deleteList }             = useDeleteListWithUndo();
+  // Le compteur n'affiche que les tâches actives : ni terminées, ni
+  // fantômes. `list.taskIds` peut contenir l'id d'une tâche supprimée
+  // depuis — rien ne purge ce tableau à la suppression d'une tâche — donc
+  // on ne compte que les ids qui désignent encore une tâche réelle et non
+  // terminée, jamais "tout ce qui n'est pas explicitement complété".
+  const { data: tasks = [] } = useTasks();
+  const activeTaskIds = new Set(tasks.filter((t) => !t.completed).map((t) => t.id));
+  const activeTaskCount = (list: { taskIds: string[] }) =>
+    list.taskIds.filter((id) => activeTaskIds.has(id)).length;
 
   const [editMode, setEditMode]               = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -284,7 +294,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                         {list.name}
                       </span>
                       <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
-                        {list.taskIds.length} tâche{list.taskIds.length !== 1 ? 's' : ''}
+                        {activeTaskCount(list)} tâche{activeTaskCount(list) !== 1 ? 's' : ''}
                       </span>
                     </div>
                   );

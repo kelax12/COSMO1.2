@@ -81,3 +81,55 @@ describe('groupNotifications', () => {
     expect(groups[0].labelKey).toBe('notifications.periodToday');
   });
 });
+
+// ─── Filtres, libellés, pastilles de section (audit du 2026-09-24) ────
+import {
+  availableFilters,
+  filterNotifications,
+  notificationLabelKey,
+} from './notifications.helpers';
+import { sectionNotificationBadges } from './org-section-badges';
+import type { OrgNotificationKind } from '@/modules/organizations';
+
+const of = (id: string, kind: OrgNotificationKind, readAt: string | null = null, meta: Record<string, unknown> | null = null) =>
+  ({ ...notif(id, new Date().toISOString()), kind, readAt, meta }) as OrgNotification;
+
+describe('filtres de la cloche', () => {
+  const list = [of('1', 'mention'), of('2', 'task_assigned'), of('3', 'kr_due'), of('4', 'role_changed')];
+
+  it('« Tout » rend tout, un filtre ne rend que ses types', () => {
+    expect(filterNotifications(list, 'all')).toHaveLength(4);
+    expect(filterNotifications(list, 'mentions').map((n) => n.id)).toEqual(['1']);
+    expect(filterNotifications(list, 'deadlines').map((n) => n.id)).toEqual(['3']);
+    expect(filterNotifications(list, 'org').map((n) => n.id)).toEqual(['4']);
+  });
+
+  it('ne propose que les filtres qui ont quelque chose', () => {
+    expect(availableFilters(list)).toEqual(['all', 'work', 'mentions', 'deadlines', 'org']);
+    expect(availableFilters([])).toEqual(['all']);
+  });
+});
+
+describe('libellé de role_changed (mig. 164)', () => {
+  it('dit si l’on gagne ou perd la position, sinon le changement de supérieur', () => {
+    expect(notificationLabelKey(of('1', 'role_changed', null, { change: 'now_manager' }), 'notifications.title'))
+      .toBe('notifications.kindRoleNowManager');
+    expect(notificationLabelKey(of('2', 'role_changed', null, { change: 'no_longer_manager' }), 'notifications.title'))
+      .toBe('notifications.kindRoleNoLongerManager');
+    expect(notificationLabelKey(of('3', 'role_changed'), 'notifications.title')).toBe('notifications.kindRoleManagerChanged');
+    expect(notificationLabelKey(of('4', 'mention'), 'notifications.kindMention')).toBe('notifications.kindMention');
+  });
+});
+
+describe('pastilles de section', () => {
+  it('compte les NON LUES par section, sans jamais recompter task_assigned', () => {
+    const badges = sectionNotificationBadges([
+      of('1', 'mention'), of('2', 'mention', '2026-01-01'), of('3', 'task_assigned'),
+      of('4', 'kr_due'), of('5', 'project_archived'), of('6', 'role_changed'),
+    ]);
+    expect(badges.tasks).toEqual({ count: 1, kinds: ['mention'] });
+    expect(badges.okr.count).toBe(1);
+    expect(badges.projects).toEqual({ count: 1, kinds: ['project_archived'] });
+    expect(badges.pyramid.count).toBe(1);
+  });
+});

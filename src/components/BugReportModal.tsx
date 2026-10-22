@@ -18,8 +18,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bug, Paperclip, Loader2, CheckCircle2, Send } from 'lucide-react';
-import { toast } from 'sonner';
+import { X, Paperclip, Loader2, CheckCircle2, Send } from 'lucide-react';
+import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 import {
@@ -177,8 +177,7 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
         >
           {/* En-tête */}
           <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[rgb(var(--color-border))]">
-            <h2 className="text-base sm:text-lg font-bold text-[rgb(var(--color-text-primary))] inline-flex items-center gap-2">
-              <Bug size={18} className="text-red-500" aria-hidden="true" />
+            <h2 className="text-base sm:text-lg font-bold text-[rgb(var(--color-text-primary))]">
               {t('title')}
             </h2>
             <button

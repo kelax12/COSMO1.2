@@ -14,18 +14,28 @@
 
 import { isManagerOf, type OrgMember } from './types';
 
-/** Les dix droits réglables. La clé est identique côté SQL (`my_org_perm`). */
+/**
+ * Les onze droits réglables. La clé est identique côté SQL (`my_org_perm`).
+ * `project.edit` (mig. 153) : MODIFIER un projet exigeait jusque-là
+ * `project.create`, dont le nom ne disait pas l'action.
+ */
 export const ORG_PERMISSION_KEYS = [
   'task.create',
   'task.editAny',
   'task.deleteAny',
   'project.create',
+  'project.edit',
   'project.delete',
   'okr.create',
   'okr.delete',
   'category.manage',
   'team.create',
   'member.invite',
+  // Rapports d'activité (mig. 202) : défaut ADMIN SEULEMENT, jamais « manager ».
+  'report.org',
+  'report.allTeams',
+  // Rôles personnalisés (mig. 219) : défaut ADMIN SEULEMENT. Droit de confiance.
+  'role.manage',
 ] as const;
 
 export type OrgPermissionKey = (typeof ORG_PERMISSION_KEYS)[number];
@@ -33,11 +43,25 @@ export type OrgPermissionKey = (typeof ORG_PERMISSION_KEYS)[number];
 /**
  * Droits dont le défaut est « tout membre ». Tous les autres ont pour défaut
  * « manager » (admin, ou au moins un subordonné direct).
+ *
+ * ❌ `task.deleteAny` n'y est PLUS (mig. 152, M4) : par défaut un membre ne
+ * supprime que les tâches qu'il a créées. Miroir exact de `my_org_perm`.
  */
 const MEMBER_DEFAULT_KEYS: ReadonlySet<string> = new Set<OrgPermissionKey>([
   'task.create',
   'task.editAny',
-  'task.deleteAny',
+]);
+
+/**
+ * Droits dont le défaut est « personne » (hors admin). Miroir de
+ * `my_report_perm` (mig. 202) : encadrer quelqu'un ne donne pas la vue de
+ * toute l'entreprise. Un responsable d'équipe lit le rapport de SON équipe
+ * sans aucun de ces droits (cf. `reportableTeamIds`).
+ */
+const ADMIN_DEFAULT_KEYS: ReadonlySet<string> = new Set<OrgPermissionKey>([
+  'report.org',
+  'report.allTeams',
+  'role.manage',
 ]);
 
 /** Cibles d'assignation cumulables. Tableau vide = « personne ». */
@@ -79,6 +103,15 @@ export interface SetOrgPermissionsInput {
   assignTargets: OrgAssignTarget[] | null;
 }
 
+/**
+ * Ce qu'un rôle personnalisé ACTIF apporte (mig. 219). Un rôle définit tout :
+ * une clé absente est REFUSÉE, même un droit qu'un membre a par défaut.
+ */
+export interface ActiveRoleGrant {
+  grantedKeys: readonly OrgPermissionKey[];
+  assignTargets: readonly OrgAssignTarget[];
+}
+
 /** Droits effectifs d'un membre : les dix clés, résolues. */
 export type EffectiveOrgPermissions = Record<OrgPermissionKey, boolean>;
 
@@ -89,10 +122,15 @@ interface EffectiveInput {
   members: OrgMember[];
   /** Sa surcharge, si elle existe. */
   overrides?: OrgMemberPermissions | null;
+  /** Ses rôles personnalisés ACTIFS (mig. 219). Vide = aucun. */
+  roles?: readonly ActiveRoleGrant[];
 }
 
 /**
- * Droits effectifs = COALESCE(surcharge, défaut dérivé).
+ * Droits effectifs = rôles actifs, sinon COALESCE(surcharge, défaut dérivé).
+ *
+ * Miroir de `my_org_perm` (mig. 219) : au moins un rôle actif → OU logique des
+ * rôles, et rien d'autre n'est lu (le rôle écrase la fiche et le défaut).
  *
  * Un admin est TOUJOURS à `true` partout : le serveur court-circuite dessus
  * (mig. 115), et c'est ce qui empêche une organisation de se bloquer
@@ -103,6 +141,7 @@ export const effectivePermissions = ({
   member,
   members,
   overrides,
+  roles = [],
 }: EffectiveInput): EffectiveOrgPermissions => {
   const isAdmin = member.role === 'admin';
   const isManager = isAdmin || isManagerOf(members, member.userId);
@@ -113,21 +152,31 @@ export const effectivePermissions = ({
       out[key] = true;
       continue;
     }
+    if (roles.length > 0) {
+      out[key] = roles.some((r) => r.grantedKeys.includes(key));
+      continue;
+    }
     const override = overrides?.overrides?.[key];
-    out[key] = override ?? (MEMBER_DEFAULT_KEYS.has(key) ? true : isManager);
+    out[key] = override ?? (MEMBER_DEFAULT_KEYS.has(key) ? true : ADMIN_DEFAULT_KEYS.has(key) ? false : isManager);
   }
   return out;
 };
 
-/** Cibles d'assignation effectives d'un membre (miroir de `my_assign_targets`). */
+/**
+ * Cibles d'assignation effectives d'un membre (miroir de `my_assign_targets`).
+ * Avec au moins un rôle actif : UNION des portées des rôles (mig. 219).
+ */
 export const effectiveAssignTargets = ({
   member,
   overrides,
+  roles = [],
 }: {
   member: OrgMember;
   overrides?: OrgMemberPermissions | null;
+  roles?: readonly ActiveRoleGrant[];
 }): OrgAssignTarget[] => {
   if (member.role === 'admin') return [...DEFAULT_ASSIGN_TARGETS];
+  if (roles.length > 0) return ORG_ASSIGN_TARGETS.filter((t) => roles.some((r) => r.assignTargets.includes(t)));
   return overrides?.assignTargets ?? [...DEFAULT_ASSIGN_TARGETS];
 };
 
@@ -211,3 +260,24 @@ export const canEditPermissionsOf = ({
   if (target.role === 'admin') return false;
   return actorIsAdmin || isBelow(members, actorId, target.userId);
 };
+
+/** Ce qu'une règle de tâche a besoin de savoir d'une tâche d'équipe. */
+export interface TaskOwnership {
+  createdBy?: string | null;
+  assigneeIds: readonly string[];
+}
+
+/**
+ * « Puis-je MODIFIER cette tâche ? » — miroir exact de la policy
+ * `team_tasks_update` (mig. 115) : `task.editAny`, ou créateur, ou assigné.
+ *
+ * Sans lui, l'interface proposait de cocher, de changer le statut ou de
+ * glisser n'importe quelle tâche, et le serveur refusait après coup
+ * (cohérence globale, 2026-09-25 : « tantôt masqué, tantôt affiché puis refusé »).
+ */
+export const canEditTeamTask = (can: EffectiveOrgPermissions, userId: string | undefined, task: TaskOwnership): boolean =>
+  can['task.editAny'] || (!!userId && (task.createdBy === userId || task.assigneeIds.includes(userId)));
+
+/** « Puis-je supprimer cette tâche ? » — miroir de `team_tasks_delete` / `delete_team_task` (mig. 152). */
+export const canDeleteTeamTask = (can: EffectiveOrgPermissions, userId: string | undefined, task: TaskOwnership): boolean =>
+  can['task.deleteAny'] || (!!userId && task.createdBy === userId);

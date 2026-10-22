@@ -1,14 +1,14 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router';
 import FullCalendar from '@fullcalendar/react';
-import { Draggable } from '@fullcalendar/interaction';
 import { DateSelectArg, EventClickArg, DatesSetArg } from '@fullcalendar/core';
 import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, useRestoreEvent, CalendarEvent } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
+import { categoryColorSet } from '@/lib/category-colors';
 import TaskSidebar from '@/components/TaskSidebar';
+import { MobileScheduleSheet, QuickEventCard, RecurringEventsManager } from './agenda/lazy-overlays';
 import TaskModal from '@/components/TaskModal';
 import EventModal from '@/components/EventModal';
-import AgendaEventToTaskConfirm from './agenda/AgendaEventToTaskConfirm';
 import ColorSettingsModal from '@/components/ColorSettingsModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useT } from '@/i18n/useT';
@@ -17,15 +17,15 @@ import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { agendaTutorialStepsDesktop } from '@/tutorials/agenda.desktop';
 import { agendaTutorialStepsMobile } from '@/tutorials/agenda.mobile';
-import { buildCalendarEvents, defaultEventsWindow, bufferedWindow, taskEventDurationMinutes } from './agenda/calendar-events';
+import { buildCalendarEvents, defaultEventsWindow, bufferedWindow } from './agenda/calendar-events';
+import { useExternalTaskDrag } from './agenda/use-external-task-drag';
 import { useTimezonePref, fromDisplayISO } from '@/lib/timezone';
-import AgendaSlotReviewModal from './agenda/AgendaSlotReviewModal';
+import SlotReviewMenu from './agenda/SlotReviewMenu';
+import SlotReviewPanel from './agenda/SlotReviewPanel';
 import { useOverdueSlotReview } from './agenda/useOverdueSlotReview';
 import { useTasks, useToggleTaskComplete, useDeleteTask, useRestoreTask } from '@/modules/tasks';
 import { MobileAgendaHeader } from './agenda/MobileAgenda';
 import AgendaDesktopHeader from './agenda/AgendaDesktopHeader';
-import RecurringEventsManager from './agenda/RecurringEventsManager';
-import QuickEventCard from './agenda/QuickEventCard';
 import { useAgendaEventDrag } from './agenda/useAgendaEventDrag';
 import { findSourceEvent } from './agenda/find-event';
 import PageErrorState from '@/components/PageErrorState';
@@ -41,7 +41,7 @@ const AgendaPage: React.FC = () => {
   const { t } = useT('agenda');
   const { t: tCommon } = useT('common');
   const tutorialIsMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const tutorial = useTutorial(tutorialIsMobile ? 'agenda_mobile' : 'agenda_desktop', 800);
+  const tutorial = useTutorial(tutorialIsMobile ? 'agenda_mobile' : 'agenda_desktop', 800, !tutorialIsMobile);
   const tutorialSteps = tutorialIsMobile ? agendaTutorialStepsMobile : agendaTutorialStepsDesktop;
   // Pagination serveur de l'agenda : on ne charge que les événements de la
   // fenêtre visible (+ tous les récurrents, cf. window.ts). La fenêtre est
@@ -90,10 +90,12 @@ const AgendaPage: React.FC = () => {
   // l'ouverture d'EventModal, jugé trop lourd visuellement).
   const [quickSlot, setQuickSlot] = useState<{ start: string; end: string; x: number; y: number } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  // Event sans tâche liée déposé sur la sidebar (feature création tâche depuis event) :
-  // 1) popup de choix (supprimer / transformer en tâche), 2) si "transformer",
-  // TaskModal pré-rempli avec les infos de l'événement.
-  const [eventPendingDecision, setEventPendingDecision] = useState<CalendarEvent | null>(null);
+  // ⚠️ `eventPendingDecision` / `AgendaEventToTaskConfirm` ont disparu le
+  // 2026-09-13 : déposer un événement SANS tâche sur la sidebar ouvrait une
+  // popup « Que faire de cet événement ? ». C'était la seule surface de
+  // validation qui visait des événements non liés à une tâche, et elle se
+  // déclenchait sur un geste qui ne demandait rien. Le drop est désormais
+  // simplement refusé (FullCalendar ramène le bloc à sa place).
   const [eventForTaskCreation, setEventForTaskCreation] = useState<CalendarEvent | null>(null);
   // Date YYYY-MM-DD de l'instance cliquée (null si event non-récurrent ou master)
   const [selectedInstanceDate, setSelectedInstanceDate] = useState<string | null>(null);
@@ -103,13 +105,6 @@ const AgendaPage: React.FC = () => {
   const [desktopVisibleRange, setDesktopVisibleRange] = useState<{ start: Date; end: Date } | null>(null);
   const calendarRef = useRef<FullCalendar>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const draggableRef = useRef<Draggable | null>(null);
-  const categoriesRef = useRef(categories);
-  // Même raison que `categoriesRef` : le callback `eventData` du `Draggable`
-  // est créé UNE fois et vit aussi longtemps que lui. Le mettre en dépendance
-  // de l'effet reconstruirait le Draggable à chaque changement de `t`, alors
-  // qu'un ref lui donne simplement la valeur fraîche au moment de l'appel.
-  const tRef = useRef(t);
   const [zoomLevel, setZoomLevel] = useState(3);
   const zoomDurations = ['00:05:00', '00:10:00', '00:15:00', '00:30:00', '01:00:00'];
 
@@ -134,8 +129,10 @@ const AgendaPage: React.FC = () => {
     mobileCalendarKey,
     setMobileCalendarKey,
     mobileViewMode,
+    mobileZoom,
     handleMobileSetView,
     handleMobileSelectDate,
+    handleMobileDateClick,
     handleMobileDateSelect,
     handleMobileMonthPrev,
     handleMobileMonthNext,
@@ -150,54 +147,7 @@ const AgendaPage: React.FC = () => {
     if (zoomLevel < zoomDurations.length - 1) { setZoomLevel(prev => prev + 1); setCalendarKey(prev => prev + 1); }
   };
 
-  useEffect(() => { categoriesRef.current = categories; }, [categories]);
-  useEffect(() => { tRef.current = t; }, [t]);
-
-  // Draggable init (desktop + mobile sidebar)
-  useEffect(() => {
-    if (!showTaskSidebar) return;
-    const timer = setTimeout(() => {
-      const container = document.getElementById('external-events-container');
-      if (container && !draggableRef.current) {
-        draggableRef.current = new Draggable(container, {
-          itemSelector: '.external-event',
-          // 250ms (au lieu de 50) : un swipe vertical rapide scrolle la liste
-          // au lieu de démarrer un drag → permet de scroller sans sélectionner
-          // une tâche sur mobile (combiné à touch-action: pan-y sur les cartes).
-          longPressDelay: 250,
-          eventData: function (eventEl) {
-            const taskData = JSON.parse(eventEl.getAttribute('data-task') || '{}');
-            const catColor = categoriesRef.current.find(cat => cat.id === taskData.category)?.color || '#6B7280';
-            return {
-              title: taskData.name,
-              // Garde anti-aperçu-invisible : une tâche sans durée estimée
-              // (estimatedTime = 0, défaut du formulaire) donnerait duration:0 →
-              // mirror FullCalendar de hauteur nulle. On retombe sur 60 min.
-              duration: { minutes: taskEventDurationMinutes(taskData.estimatedTime) },
-              backgroundColor: catColor,
-              borderColor: catColor,
-              textColor: '#ffffff',
-              extendedProps: {
-                taskId: taskData.id,
-                priority: taskData.priority,
-                category: taskData.category,
-                estimatedTime: taskData.estimatedTime,
-                categoryName: categoriesRef.current.find(c => c.id === taskData.category)?.name || tRef.current('event.uncategorized'),
-              },
-            };
-          },
-        });
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [showTaskSidebar, categories, events]);
-
-  useEffect(() => {
-    if (!showTaskSidebar && !isDraggingTask && draggableRef.current) {
-      try { draggableRef.current.destroy(); } catch { /* ignore */ }
-      draggableRef.current = null;
-    }
-  }, [showTaskSidebar, isDraggingTask]);
+  useExternalTaskDrag({ showTaskSidebar, setShowTaskSidebar, isDraggingTask, setIsDraggingTask, sidebarRef, categories, events, t });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -210,24 +160,6 @@ const AgendaPage: React.FC = () => {
     // plus le prouver depuis qu'il traverse une frontière de hook.
   }, [showTaskSidebar, mobileCalendarRef]);
 
-  useEffect(() => {
-    if (!isDraggingTask) return;
-    const handleMove = (x: number) => {
-      const sidebarWidth = sidebarRef.current?.offsetWidth || 224;
-      if (x > sidebarWidth && window.innerWidth < 768) setShowTaskSidebar(false);
-    };
-    const handlePointerMove = (e: PointerEvent) => { if (isDraggingTask) handleMove(e.clientX); };
-    // `handlePointerUp` doit être une CONSTANTE : passer deux fonctions fléchées
-    // distinctes à add/removeEventListener ne retirait rien, et un écouteur
-    // s'accumulait à chaque glisser pour la durée de vie de la page (R-16).
-    const handlePointerUp = () => setIsDraggingTask(false);
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-    };
-  }, [isDraggingTask]);
 
   const handleViewChange = (newView: string) => {
     setCurrentView(newView);
@@ -277,7 +209,6 @@ const AgendaPage: React.FC = () => {
     setShowEditEventModal,
     setCalendarKey,
     setMobileCalendarKey,
-    onDropUnlinkedEvent: setEventPendingDecision,
   });
 
   // L'agenda personnel n'affiche que les événements (pas de rangée all-day) :
@@ -285,7 +216,42 @@ const AgendaPage: React.FC = () => {
   // dernières se gèrent dans l'espace entreprise / To-Do.
   // Calculé ici parce que le flux d'édition (`useAgendaEventActions`) en a
   // besoin autant que la grille : la section calendrier le reçoit.
-  const calendarEvents = buildCalendarEvents(events);
+  // ── Créneaux de tâche terminés qui attendent une décision ──────────────────
+  // Le corps vit dans `agenda/useOverdueSlotReview.ts`. Il ne rend plus « le
+  // créneau courant » d'une popup mais l'ENSEMBLE des créneaux en attente : la
+  // demande est désormais peinte sur les blocs concernés (pastille ambre) et
+  // reprise dans l'EventModal, au lieu de s'imposer en plein écran à l'arrivée.
+  const {
+    reviewEventIds,
+    doneEventIds,
+    findSlot,
+    handleSlotValidate,
+    handleSlotPostpone,
+    handleSlotDelete,
+    handleSlotIgnore,
+  } = useOverdueSlotReview({
+    events,
+    tasks,
+    toggleTaskComplete: (taskId) => toggleTaskComplete.mutate(taskId),
+    updateEvent: (id, updates) => updateEventMutation.mutate({ id, updates }),
+    deleteEvent: (id) => deleteEventMutation.mutate(id),
+    deleteTask: (taskId) => deleteTaskMutation.mutate(taskId),
+    restoreEvent: (event) => restoreEventMutation.mutate(event),
+    restoreTask: (task) => restoreTaskMutation.mutate(task),
+    deletedLabel: t('slotReview.deleted'),
+    postponedLabel: t('slotReview.postponed'),
+  });
+
+  /** Les quatre actions, passées telles quelles aux DEUX accès. */
+  const slotReviewActions = {
+    onValidate: handleSlotValidate,
+    onPostpone: handleSlotPostpone,
+    onIgnore: handleSlotIgnore,
+    onDelete: handleSlotDelete,
+  };
+
+  const categoryColors = useMemo(() => categoryColorSet(categories), [categories]);
+  const calendarEvents = buildCalendarEvents(events, new Date(), reviewEventIds, doneEventIds, categoryColors);
 
   // Déplacer, redimensionner, déposer une tâche : les trois gestes qui écrivent
   // depuis la grille retirent le décalage du fuseau d'affichage au même endroit.
@@ -326,29 +292,6 @@ const AgendaPage: React.FC = () => {
     },
   });
 
-  // ── Revue des créneaux de tâche terminés (feature 2) ───────────────────────
-  // Le corps de cette revue vit dans `agenda/useOverdueSlotReview.ts` : quatre
-  // gestionnaires, un état et un dérivé qui ne parlent qu'entre eux.
-  const {
-    overdueSlots,
-    currentReviewSlot,
-    handleSlotValidate,
-    handleSlotPostpone,
-    handleSlotDelete,
-    handleSlotSnooze,
-  } = useOverdueSlotReview({
-    events,
-    tasks,
-    tzPref,
-    toggleTaskComplete: (taskId) => toggleTaskComplete.mutate(taskId),
-    updateEvent: (id, updates) => updateEventMutation.mutate({ id, updates }),
-    deleteEvent: (id) => deleteEventMutation.mutate(id),
-    deleteTask: (taskId) => deleteTaskMutation.mutate(taskId),
-    restoreEvent: (event) => restoreEventMutation.mutate(event),
-    restoreTask: (task) => restoreTaskMutation.mutate(task),
-    deletedLabel: t('slotReview.deleted'),
-  });
-
   // Desktop : met à jour la fenêtre chargée selon la plage visible.
   const handleDesktopDatesSet = (info: DatesSetArg) => {
     applyVisibleRange(info.start, info.end);
@@ -387,9 +330,16 @@ const AgendaPage: React.FC = () => {
         />
       )}
 
+      {/* Maquette 170 (2026-10-10) : sur mobile, les tâches à planifier
+          s'ouvrent dans une feuille du bas (`MobileScheduleSheet`), plus dans
+          le tiroir latéral, qui reste le panneau desktop. */}
+      {isMobile && (
+        <MobileScheduleSheet open={showTaskSidebar} onClose={() => setShowTaskSidebar(false)} />
+      )}
+
       {/* Task Sidebar & Backdrop */}
       <AnimatePresence mode="wait">
-        {showTaskSidebar && (
+        {showTaskSidebar && !isMobile && (
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -458,10 +408,12 @@ const AgendaPage: React.FC = () => {
           mobileViewMode={mobileViewMode}
           mobileSelectedDate={mobileSelectedDate}
           onMobileSelectDate={handleMobileSelectDate}
+          mobileZoom={mobileZoom}
           slotDuration={zoomDurations[zoomLevel]}
           slotLabelInterval={zoomLevel === zoomDurations.length - 1 ? '02:00:00' : '01:00:00'}
           onDateSelect={handleDateSelect}
           onMobileDateSelect={handleMobileDateSelect}
+          onMobileDateClick={handleMobileDateClick}
           onEventClick={handleEventClick}
           onEventDragStart={handleEventDragStart}
           onEventDragStop={handleEventDragStop}
@@ -470,6 +422,10 @@ const AgendaPage: React.FC = () => {
           onEventReceive={handleEventReceive}
           onDesktopDatesSet={handleDesktopDatesSet}
           onMobileDatesSet={handleMobileDatesSet}
+          renderReviewBadge={(eventId) => {
+            const slot = findSlot(eventId);
+            return slot ? <SlotReviewMenu slot={slot} {...slotReviewActions} /> : null;
+          }}
         />
 
       </div>
@@ -520,22 +476,21 @@ const AgendaPage: React.FC = () => {
           onUpdateEvent={handleUpdateEvent}
           onDeleteEvent={handleDeleteEvent}
           onDuplicateEvent={handleDuplicateEvent}
+          sidePanel={(() => {
+            // Même source que la pastille (`findSlot` lit la liste dérivée) :
+            // le panneau ne peut donc pas apparaître sur un créneau qui
+            // n'attend rien, ni manquer sur un créneau qui attend.
+            const slot = findSlot(selectedEvent.id);
+            return slot ? (
+              <SlotReviewPanel
+                slot={slot}
+                onValidate={slotReviewActions.onValidate}
+                onPostpone={slotReviewActions.onPostpone}
+              />
+            ) : null;
+          })()}
         />
       )}
-
-      {/* Event sans tâche liée déposé sur la sidebar → choix supprimer / transformer en tâche */}
-      <AgendaEventToTaskConfirm
-        event={eventPendingDecision}
-        onCancel={() => setEventPendingDecision(null)}
-        onDelete={() => {
-          if (eventPendingDecision) deleteEventMutation.mutate(eventPendingDecision.id);
-          setEventPendingDecision(null);
-        }}
-        onConvertToTask={() => {
-          setEventForTaskCreation(eventPendingDecision);
-          setEventPendingDecision(null);
-        }}
-      />
 
       {/* Transformer en tâche confirmé → ouvre TaskModal pré-rempli */}
       {eventForTaskCreation && (
@@ -558,17 +513,6 @@ const AgendaPage: React.FC = () => {
           }}
         />
       )}
-
-      {/* Revue des créneaux de tâche terminés (feature 2) */}
-      <AgendaSlotReviewModal
-        slot={currentReviewSlot}
-        remaining={overdueSlots.length}
-        tzPref={tzPref}
-        onValidate={handleSlotValidate}
-        onPostpone={handleSlotPostpone}
-        onDelete={handleSlotDelete}
-        onSnooze={handleSlotSnooze}
-      />
 
       {/* Tutoriel page Agenda — variante adaptée au viewport */}
       <PageTutorial

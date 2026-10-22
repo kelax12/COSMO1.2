@@ -26,7 +26,23 @@ import {
  * sans le mentionner nommément (sinon c'est `mention`, jamais les deux à la
  * fois pour un même commentaire — cf. le trigger `notify_task_comment`).
  */
-export type OrgNotificationKind = 'task_assigned' | 'mention' | 'task_overdue' | 'comment';
+export type OrgNotificationKind =
+  | 'task_assigned' | 'mention' | 'task_overdue' | 'comment'
+  // Mig. 155 : statut d'une tâche suivie, tâche débloquée, projet à risque,
+  // échéance de KR, créneau posé dans MON agenda par un responsable.
+  | 'status_changed' | 'unblocked' | 'project_at_risk' | 'kr_due' | 'event_scheduled'
+  // Mig. 164 : un projet où j'ai du travail est archivé ; ma position dans la
+  // pyramide a changé (manager changé, je deviens ou cesse d'être manager).
+  | 'project_archived' | 'role_changed'
+  // Mig. 201 : une règle d'automatisation m'a notifié (`meta.rule`).
+  | 'automation';
+
+/** Tous les types, dans l'ordre des préférences (écran Notifications). */
+export const ORG_NOTIFICATION_KINDS: readonly OrgNotificationKind[] = [
+  'task_assigned', 'mention', 'comment', 'status_changed', 'unblocked',
+  'task_overdue', 'project_at_risk', 'project_archived', 'kr_due', 'event_scheduled',
+  'role_changed', 'automation',
+];
 
 export interface OrgNotification {
   id: string;
@@ -34,6 +50,12 @@ export interface OrgNotification {
   actorId: string | null;
   kind: OrgNotificationKind;
   taskId: string | null;
+  /** Mig. 155 — ce que vise une notification qui ne porte pas sur une tâche. */
+  projectId?: string | null;
+  krId?: string | null;
+  eventId?: string | null;
+  /** Détail libre (ancien → nouveau statut, titre du créneau, santé…). */
+  meta?: Record<string, unknown> | null;
   /** null = non lue. Une date plutôt qu'un booléen (cf. mig. 095). */
   readAt: string | null;
   createdAt: string;

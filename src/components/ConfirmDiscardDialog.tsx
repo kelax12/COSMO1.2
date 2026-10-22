@@ -53,7 +53,10 @@ const ConfirmDiscardDialog: React.FC<ConfirmDiscardDialogProps> = ({ isOpen, onC
               <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
             </div>
             <div className="p-5 sm:p-6">
-              <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
+              {/* Icône retirée sur mobile (demande utilisateur), même choix
+                  que DeleteTaskConfirm / ConfirmDeleteSheet / DeleteObjectiveConfirm :
+                  le titre porte déjà toute l'information. Desktop inchangé. */}
+              <div className="hidden sm:flex w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 items-center justify-center mb-4">
                 <AlertTriangle className="text-amber-600 dark:text-amber-400" size={24} />
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">

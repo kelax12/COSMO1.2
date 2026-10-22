@@ -31,6 +31,7 @@
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
+import { customerContactFields } from '../_shared/org-billing-contact.ts'
 import { priceIdForTier, tierByKey, FREE_TIER_MAX_MEMBERS } from '../_shared/org-tiers.ts'
 import type { OrgBillingInterval } from '../_shared/org-tiers.ts'
 import { resolveYearlyPriceId } from '../_shared/org-stripe-prices.ts'
@@ -165,12 +166,32 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Contact de facturation (mig. 180) ──
+    //
+    // Stripe envoie factures et reçus à `customer.email`. Un contact posé par
+    // le propriétaire (un service comptable) prend cette place ; sans contact,
+    // c'est l'adresse du propriétaire, comme avant. L'erreur de lecture n'est
+    // PAS avalée : elle déciderait en silence du destinataire des factures.
+    const { data: billingContact, error: contactError } = await supabaseAdmin
+      .from('org_billing_contacts')
+      .select('name, email')
+      .eq('org_id', orgId)
+      .maybeSingle()
+    if (contactError) throw contactError
+    const contactFields = customerContactFields(billingContact ?? null, user.email)
+
     let customerId = sub?.stripe_customer_id ?? null
+
+    if (customerId && billingContact) {
+      // Customer déjà créé (souscription précédente, résiliée) : on lui
+      // reporte le contact actuel avant de le renvoyer au paiement.
+      await stripe.customers.update(customerId, contactFields)
+    }
 
     if (!customerId) {
       const customer = await stripe.customers.create(
         {
-          email: user.email,
+          ...contactFields,
           // ⚠️ La clé s'appelle `org_owner_uid`, PAS `supabase_uid`. Ce nom est
           // délibérément évité ici : dans le webhook, `getUidFromCustomer` lit
           // `metadata.supabase_uid` comme MARQUEUR d'un customer PARTICULIER.

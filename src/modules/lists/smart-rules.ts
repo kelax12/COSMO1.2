@@ -1,7 +1,18 @@
-import type { Task } from '@/modules/tasks';
 import type { SmartRulePreset, TaskList } from './types';
 import { daysUntilDeadline, isDueToday } from '@/lib/deadline';
 import { getTimezonePref, type TimezonePref } from '@/lib/timezone';
+
+/**
+ * Ce que les règles lisent d'une tâche. Volontairement minimal : les tâches
+ * d'équipe (`TeamTask`, mig. 203) passent par les MÊMES règles que les tâches
+ * personnelles, sans conversion.
+ */
+export interface SmartRuleTask {
+  id: string;
+  completed: boolean;
+  deadline?: string | null;
+  priority: number;
+}
 
 /**
  * Définition des presets smart : label affiché, couleur suggérée, icône
@@ -20,7 +31,9 @@ export interface SmartPresetDef {
   labelKey: 'smartPreset.overdue' | 'smartPreset.thisWeek' | 'smartPreset.highPriority';
   color: string;       // valeur du champ color de la TaskList
   descriptionKey: string; // pour le sélecteur de preset
-  matches: (task: Task, now: Date, pref?: TimezonePref) => boolean;
+  matches: (task: SmartRuleTask, now: Date, pref?: TimezonePref) => boolean;
+  /** Tri optionnel appliqué APRÈS le filtre, propre à ce preset. */
+  sort?: (a: SmartRuleTask, b: SmartRuleTask) => number;
 }
 
 // 🔴 Les règles comparent des JOURS, pas des instants (risque R-01).
@@ -61,10 +74,16 @@ export const SMART_PRESETS: SmartPresetDef[] = [
     labelKey: 'smartPreset.highPriority',
     color: 'orange',
     descriptionKey: 'smartPreset.highPriorityDescription',
+    // Uniquement P1 et P2. 🔴 `task.priority <= 2` incluait aussi les tâches
+    // SANS priorité : `0` est la valeur « facultative, non renseignée »
+    // (convention du module, cf. `withinPriorityRange`), et `0 <= 2` est vrai
+    // en JS — une tâche sans priorité passait alors pour « haute priorité ».
     matches: (task) => {
       if (task.completed) return false;
-      return task.priority <= 2;
+      return task.priority === 1 || task.priority === 2;
     },
+    // P1 avant P2, indépendamment du tri choisi par ailleurs sur la page.
+    sort: (a, b) => a.priority - b.priority,
   },
 ];
 
@@ -72,16 +91,17 @@ export const SMART_PRESETS: SmartPresetDef[] = [
  * Helper utilisé par le composant TasksPage pour filtrer les tâches
  * appartenant à une liste, qu'elle soit manuelle ou smart.
  */
-export const tasksInList = (
+export const tasksInList = <T extends SmartRuleTask>(
   list: TaskList,
-  allTasks: Task[],
+  allTasks: T[],
   now: Date = new Date(),
   pref: TimezonePref = getTimezonePref(),
-): Task[] => {
+): T[] => {
   if (list.type === 'smart' && list.smartRule) {
     const preset = SMART_PRESETS.find(p => p.preset === list.smartRule);
     if (!preset) return [];
-    return allTasks.filter(t => preset.matches(t, now, pref));
+    const matched = allTasks.filter(t => preset.matches(t, now, pref));
+    return preset.sort ? [...matched].sort(preset.sort) : matched;
   }
   // Manuelle : intersection avec taskIds
   const ids = new Set(list.taskIds);
@@ -93,9 +113,9 @@ export const tasksInList = (
  * jamais stockée. C'est une smart-list de fait mais on ne la traite pas
  * comme une vraie liste pour ne pas polluer le repository.
  */
-export const tasksDueToday = (
-  allTasks: Task[],
+export const tasksDueToday = <T extends SmartRuleTask>(
+  allTasks: T[],
   now: Date = new Date(),
   pref: TimezonePref = getTimezonePref(),
-): Task[] =>
+): T[] =>
   allTasks.filter(t => !t.completed && isDueToday(t.deadline, pref, now));

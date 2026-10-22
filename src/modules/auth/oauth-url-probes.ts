@@ -21,7 +21,7 @@
 //
 // Extrait de `AuthContext.tsx` le 2026-09-05 (C-09).
 // ═══════════════════════════════════════════════════════════════════
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import * as monitoring from '@/lib/monitoring';
 import { reportOAuthLandingMismatch } from './oauth-landing';
 import { translator } from '@/i18n/useT';

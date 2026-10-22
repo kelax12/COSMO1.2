@@ -1,10 +1,272 @@
+<!-- note-audit: note=87 -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — Note **87 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+
 # RGPD — inventaire, droits des personnes et dette
 
 **Audit du 2026-08-14, inventaire complété le 2026-08-24, revérifié le 2026-08-25** (mig. 116 et
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03
+## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → 85 → 87 → 87 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → **2026-10-20**) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ⚪ 2026-10-20 · 0 : aucun traitement nouveau
+>
+> Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | Export PDF du rapport d'activité | 0 | généré dans le navigateur (jsPDF), rien n'est envoyé |
+> | Politique de confidentialité | 0 | toujours **sans section « Prospection »** (relue dans `src/locales/fr/legalPrivacy.json`) : déjà débitée au titre de T11 |
+> | `M-71` | 0 | `BACKUP_PASSPHRASE.txt` toujours présent dans le coffre hors dépôt le 2026-10-20 |
+>
+> **87 → 87.**
+
+> ### ⚪ 2026-10-18 · 0 : le plafond `V-1` tombe, un traitement neuf ouvre ses propres manques
+>
+> **Même règle** : un défaut ne se rembourse que corrigé et daté. Dernière passe avant
+> l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md). Registre et politique publiée relus.
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | ✅ `V-1` · fournisseur de mesure tiers sans DPA, « le plafond de cette note » depuis le 2026-09-14 | **+1** | débranché (`23a12fdb`) : plus de script tiers, plus d'identifiant `_a_cid` déposé. La mesure qui le remplace (T8, mig. `222`) ne stocke jamais l'IP, son sel du jour est supprimé le lendemain (job `cosmo-purge-traffic` actif, relu en base), le chemin est gardé sans query string, et elle n'écrit qu'après consentement |
+> | 🟠 T11 · prospection B2B par email, ouverte le 2026-10-18 | **−1** | déclarée au registre, et c'est juste. Mais quatre manques, écrits par le registre lui-même : la durée de 3 ans n'est appliquée par **aucun automatisme**, **aucune** sauvegarde, DPA **Anthropic** et **IONOS** non archivés ; et la politique de confidentialité publiée **ne dit pas un mot** de la prospection (aucune occurrence dans `legalPrivacy.json`). L'information due à une personne dont on n'a pas recueilli les données (art. 14) repose donc entièrement sur le texte de chaque email, qui vit dans le dépôt `analytics` et n'est pas relu ici |
+> | 🔴 `M-71` · phrase secrète des sauvegardes | 0 | **toujours présente** dans le coffre hors dépôt (existence relue le 2026-10-18, contenu non lu) |
+> | Production | 0 | **79** tables, toutes sous RLS ; `traffic_hits` à **0** ligne à 18 h 47 UTC |
+>
+> **87 → 87.**
+
+> ### ✅ 2026-10-16 (soir, plus tard) · +2 : `BK-1` décidé des deux côtés, le −2 est remboursé
+>
+> **Même règle** : un débit se rembourse quand le défaut est fermé et daté. Pour un geste de décision, fermé veut dire **fait ou décidé par écrit**, avec son motif. Source : parole d'Axel et registre privé, non mesurables par un agent.
+>
+> | Item | Effet | Constaté le 2026-10-16 (soir) |
+> |---|---|---|
+> | ✅ `BK-1` · notification CNIL et information des personnes (−2 du 10-15) | **+2** | `M-69` fait : notification initiale soumise, tardive, avec motifs du retard. `M-70` **décidé par écrit** : pas d'information des personnes, gravité déclarée « limitée », l'art. 34 ne l'impose qu'en cas de risque élevé ; consigné au registre privé avec ce qui rouvrirait la décision (indice d'usage, demande de la CNIL). ⚠️ Reste dû hors note : la notification complémentaire |
+>
+> **85 → 87.**
+
+> ### ⚪ 2026-10-16 (soir) · 0 : `M-69` fait, le −2 de `BK-1` attend `M-70`
+>
+> **Même règle** : un débit ne se rembourse que lorsque le défaut est corrigé et daté. Source : parole d'Axel, notification soumise le 2026-10-16 au soir (téléservice, non mesurable par un agent).
+>
+> | Item | Effet | Constaté le 2026-10-16 (soir) |
+> |---|---|---|
+> | 🟠 `BK-1` · notification CNIL et information des personnes | 0 (−2 maintenu) | ✅ `M-69` fait : notification initiale, tardive, avec motifs du retard, consignée au registre privé. 🔴 `M-70` ni fait ni décidé par écrit : le −2 se rembourse quand l'information des personnes est envoyée, ou quand la décision de ne pas informer est consignée avec son motif |
+>
+> **85 → 85.**
+
+> ### 🟠 2026-10-16 · +1 : `org_member_roles` déclarée, mais l'échéance CNIL est passée sans trace
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab`, dépôt à `HEAD`, registre privé relu à 14 h 50 (heure de
+> Paris). Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `org_member_roles` hors effacement déclaré et hors export (−1) | **+1** | `check:erasure` et `check:portability` verts en CI (`38902071817`) et en local à `HEAD` |
+> | 🔴 `BK-1` · notification CNIL et information des personnes | 0 (−2 maintenu) | **l'échéance de `M-69` est passée** : 72 h après la découverte, soit le 2026-10-16 vers 11 h 26 UTC. Le registre privé porte toujours « Notifiée le : _à remplir_ ». Soit la notification a été faite sans être consignée, soit elle reste due : une notification tardive se fait **avec les motifs du retard** (art. 33.1). `M-70`, l'information des personnes, n'est pas faite non plus. Les brouillons sont prêts depuis le 2026-10-15, dans le dossier privé. `M-68` (sessions) est fait et vérifié, c'est la note de sécurité qui le rembourse |
+> | ✅ Prévention de `BK-1` | 0 | `scripts/artefacts-donnees-prod.guard.test.mjs` (`467d5115`) refuse tout artefact de données de production non chiffré, témoin sur le `db-backup.yml` d'avant `8c6a971d` ; `restore-drill` réactivé, `dump-check` vert sur le dump chiffré. Nommés et outillés le même jour : aucun débit à rembourser |
+>
+> **84 → 85.**
+
+> ### 🔴 2026-10-15 · −3 : la première violation de données, et une table neuve hors effacement déclaré
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> production (catalogue), dépôt à `HEAD` rejoué étape par étape. Tableau de bord :
+> [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | 🔴 `BK-1` · dumps complets de la base, en clair, téléchargeables depuis un dépôt public, du 2026-08-29 au 2026-10-13 | **−2** | violation au sens de l'art. 4.12 (cf. [`../faille.md`](../faille.md) § `BK-1`). Le défaut technique est refermé et vérifié (`8c6a971d`). **Ouverts** : `M-69`, décision de notification à la CNIL (art. 33), **avant le 2026-10-16 vers 11 h UTC** ; `M-70`, information des personnes (art. 34) ; registre des violations tenu **hors dépôt**. [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md) a servi pour la première fois, en situation réelle et non à blanc |
+> | 🔴 `org_member_roles` (mig. `219`, en production depuis le 10-13) | **−1** | porte `user_id` sans décision écrite : `check:erasure` et `check:portability` **rouges à `HEAD`**, vus rouges en CI une seule fois (effacement, `8b791715`, 10-12), puis masqués par `check:docs`. Dans les faits, la FK `user_id` est `ON DELETE CASCADE` (lu dans le fichier de la migration, la lecture du catalogue ayant été refusée à l'agent) : l'effacement a lieu, il n'est pas déclaré. L'**export**, lui, manque : les rôles attribués à une personne ne sortent pas de son export |
+> | `C-121` · suppression des comptes inactifs depuis 3 ans | 0 | promesse publiée le 10-13 sans traitement ; aucun compte n'atteint le seuil avant 2029 |
+> | Export enrichi | 0 | statut et état des tâches dans l'export (mig. `214`, `d0ffbf2e`) ; la garde d'effacement lit désormais chaque clause d'un `ALTER TABLE` (`7d98cf78`) |
+> | Production | 0 | **77** tables, toutes sous RLS, **205** policies |
+>
+> **87 → 84.**
+
+> ### ⚪ 2026-10-02 (soir) · 0 : vérifiée inchangée
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du soir : CI de `main` à `9ea33927` (dernier
+> `e2e` complet : `f301f0bf`, run `37019682064`), production (advisors par l'API, catalogue, ledger),
+> dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-02 (soir) |
+> |---|---|---|
+> | mig. `211` · champs personnalisés retirés | 0 | appliquée (ledger `20261002090434`), relue au catalogue : `team_custom_fields` et `team_task_field_values` n'existent plus, aucune fonction ne les cite. **0 ligne** dans les deux avant retrait (relu le 10-01, écrit dans la migration) : aucune donnée personnelle détruite. `check:erasure` et `check:portability` verts en CI à `9ea33927` |
+> | AM-3 · rétention | 0 | `retention` vert le 2026-10-02 (`posture.yml`) |
+> | Production | 0 | **74** tables (76 → 74 par la `211`), toutes sous RLS, **194** policies |
+>
+> **87 → 87.** Détail : [tableau de bord](./README.md).
+
+> ### 🟢 2026-10-01 · +1
+>
+> **Même règle que le 2026-09-22** : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+> défaut que lorsqu'il est corrigé et vérifié. Mesures du jour : CI de `main` (`43fed445` à
+> `7cd73d24`), production (catalogue, advisors), dépôt à `HEAD`.
+>
+> | Item | Effet | Mesuré le 2026-10-01 |
+> |---|---|---|
+> | AM-3 · durées de rétention | **+1** | `retention` vert en CI depuis le 2026-09-24 (`0 orpheline sur 16 couples`), et encore le 2026-10-01 : remboursable depuis la passe du 09-24, crédité ce jour |
+> | 🔴 `team_okr_members` (mig. 205) sans décision d'effacement ni d'export | **−1** | du 2026-09-29 au 10-01 : `check:erasure` puis `check:portability` ont mordu, `main` rouge. Effacement réel vérifié en base (clé `(org_id, user_id)` → `organization_members` `ON DELETE CASCADE`) |
+> | ✅ … décidée et garde étendue le jour même | **+1** | `cascadeIndirecteProuvee` : une cascade par clé composite se prouve dans le texte, et la table relais doit cascader elle-même depuis `auth.users`. Témoin à quatre pièges, sabotage vu rouge. Déclarée non exportée, même motif que `team_project_members` |
+>
+> **86 → 87.** Détail : [tableau de bord](./README.md).
+
+> ### 🟢 2026-09-22 (soir) · +4 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | AM-1 · effacement sur liste en dur | **+2** | `check:erasure`, périmètre dérivé des migrations, vert en CI à `HEAD` |
+> | AM-2 · nouvelle table `user_id` sans décision | **+1** | même garde |
+> | AM-4 · portabilité sans inventaire | **+1** | `check:portability` vert en CI à `HEAD` |
+> | AM-3 · durées de rétention | **0** | 🔴 **non remboursé, et l'état écrit était faux** : `check:retention` **plante à chaque run** de `posture.yml` (09-21, 09-22) sur `column x.user_id does not exist` : `friend_requests` porte `sender_id` / `receiver_id`. Le « 0 orpheline en prod » n'a **jamais** été produit par la CI. → `C-112` |
+>
+> **82 → 86.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
+
+> ### 🟠 2026-09-16 · -5 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
+>
+> **Ce n'est pas une régression.** Rien n'a cassé depuis la dernière passe. Les angles morts
+> listés juste en dessous **existaient tous** pendant que cette note montait : elle était
+> surévaluée parce qu'elle ne comptait que ce que les gardes regardent. C'est exactement ce qui
+> s'est produit le 2026-09-14, où cinq notes ont baissé sans qu'aucun défaut ne soit récent.
+>
+> **Barème, déclaré pour être contestable ligne par ligne :**
+>
+> | Situation | Effet |
+> |---|---|
+> | angle mort **structurel**, de portée large, qu'aucun outil ne regarde | −2 |
+> | angle mort réel mais de portée limitée, ou partiellement couvert | −1 |
+> | angle mort **assumé** (arbitrage documenté), ou déjà compté dans une passe antérieure | 0 |
+> | angle mort **comblé** le jour même, avec garde **et** témoin | +1 |
+>
+> **Le calcul pour cette note :**
+>
+> | Angle mort | Effet | Pourquoi |
+> |---|---|---|
+> | AM-1 · **la garde d'effacement lit une liste EN DUR**, jamais le schéma | −2 | `SYMMETRIC_TABLES` décrit l'état du jour où elle a été tapée |
+> | AM-2 · rien ne relie une nouvelle table `user_id` à `delete-account` | −1 | art. 17, et aucun job ne pose la question |
+> | AM-3 · les durées de rétention ne sont confrontées à aucune donnée | −1 | pièce produite en contrôle CNIL |
+> | AM-4 · l'export de portabilité n'est comparé à aucun inventaire | −1 | art. 20 |
+>
+> 🔴 **Une note baisse UNE FOIS, quand l'angle mort est nommé ; elle remonte quand il est
+> outillé.** Sans cette règle, nommer un angle mort deviendrait punitif, et la passe du
+> 2026-09-16 serait la dernière à en chercher. Un angle mort reconduit sans être comblé ne
+> re-coûte rien : il est **déjà payé**.
+>
+> ⚠️ Un transversal (T-1 à T-10 du [tableau de bord](./README.md)) est compté dans **chaque** audit
+> qu'il touche, parce que chaque note prétend quelque chose de différent. Les 36 témoins jamais
+> rejoués coûtent donc à la fois aux tests et à la sécurité, et ce n'est pas un double comptage.
+
+
+
+### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
+
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
+>
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
+>
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
+
+
+> **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
+> retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
+> que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
+> n'est pas un oubli d'auditeur, c'est une propriété de la méthode de notation.
+>
+> Le prototype du problème est daté : `CLAUDE.md` a pesé 150 ko et ~43 000 tokens sans qu'aucune
+> note ne bouge, alors qu'il est cité **13 fois** dans [`ARCHITECTURE.md`](./ARCHITECTURE.md), dont **9**
+> dans la seule colonne « Où il est écrit » du tableau des invariants, et **jamais** dans ce
+> qui est mesuré. Il était le mètre,
+> jamais l'objet.
+>
+> Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
+> invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
+
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+|---|---|---|---|
+| AM-1 | 🔴 **La garde d'effacement s'appuie sur une LISTE EN DUR.** `SYMMETRIC_TABLES` est écrite à la main dans le test : une table symétrique ajoutée demain n'y entre pas toute seule, et la garde reste verte | `src/rgpd-erasure.guard.test.ts:42` : `const SYMMETRIC_TABLES: Record<string, [string, string]> = {` | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:erasure` · périmètre **dérivé des migrations**, 22 tables, 4 décisions possibles (`C-92`) — 🔴 ne prouve PAS : dérivé des **migrations**, pas de la base — et ce dépôt a déjà constaté des objets en base qu'aucune migration ne crée |
+| AM-2 | **Rien ne relie une NOUVELLE table portant `user_id` à `delete-account`.** Une migration peut créer une table de données personnelles sans qu'aucun job ne demande ce qu'il advient de ces lignes à la suppression du compte | ni `validate:migrations` ni `check:rls` ne testent ce lien | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:erasure` · `cascade` et `conserve` **vérifiées contre le SQL** (`C-92`) — 🔴 ne prouve PAS : idem AM-1 : la source est le dépôt, pas le catalogue |
+| AM-3 | **Les DURÉES de rétention ne sont vérifiées par rien.** Le registre art. 30 en annonce pour dix traitements ; aucune mesure ne confronte ces durées aux données réellement présentes | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) les déclare, aucun script ne les contrôle | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:retention` · orphelines (**0** en prod) + âges (`C-93`) — 🔴 ne prouve PAS : que le **registre** soit juste : ça dit que la base respecte ce qu'il déclare. ⚠️ `rate_limits` et `email_lookup_quota` n'y ont **aucune durée déclarée**, et la garde l'imprime au lieu d'en inventer une · 🔎 🔴 **2026-09-22 : FAUX à l'usage.** `check:retention` plante à chaque run de `posture.yml` (`friend_requests.user_id` n'existe pas : `sender_id` / `receiver_id`). « 0 en prod » n'a jamais été produit par la CI. → `C-112` · 🔎 ✅ **2026-09-24 : premier run VERT** (`35967769869`, job `retention`) : **0 orpheline sur 16 couples table/colonne**, `friend_requests` lue sur ses deux comptes. ⚠️ Au premier rejeu, 4 lignes de `friend_requests` avaient un `receiver_id` NULL : des invitations envoyées à une adresse sans compte (colonne `email`, la plus vieille du 2026-04-06). Ce ne sont pas des orphelines, la garde exige donc `IS NOT NULL`. Mais elles portent une adresse email **sans durée de conservation déclarée** : ligne de registre à décider (Axel), au même titre que `rate_limits` |
+| AM-4 | **L'export de portabilité (art. 20) n'est comparé à aucun inventaire.** Une colonne ajoutée à une table exportée n'entre pas dans l'export, et rien ne le signale | aucune garde ne confronte l'export au schéma | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:portability` · chaque colonne exportée **ou exclue avec sa raison** (`C-94`) — 🔴 ne prouve PAS : la **justesse** des valeurs : un export complet mais faux resterait vert. 1ʳᵉ exécution : **4 colonnes saisies** manquaient, dont `categories.parent_id`, donc l'arbre entier |
+
+
+> ### ⚪ 2026-09-14 (soir) · 0 : la sémantique d'effacement est relue EN BASE, une omission d'inventaire apparaît
+>
+> L'entrée de ce matin vérifiait que le code d'effacement **déployé** est celui du dépôt. Ce soir,
+> c'est la moitié qu'elle laissait de côté : ce que la BASE fait, elle, quand une ligne
+> `auth.users` disparaît. Relevé exhaustivement dans `pg_constraint` (jamais dans le dépôt) :
+>
+> | Règle sur les FK qui pointent vers `auth.users` | Nombre |
+> |---|---|
+> | `ON DELETE CASCADE` | **32** |
+> | `ON DELETE SET NULL` | **19** |
+> | Total des clés étrangères vers `auth.users` | **51** |
+>
+> **La répartition est la bonne, et elle est délibérée.** Les 32 CASCADE portent les données du
+> compte (`tasks`, `habits`, `events`, `okrs`, `categories`, `lists`, `profiles`, `friends` dans
+> les deux sens, `subscriptions`, …) : elles tombent avec lui. Les 19 SET NULL portent des colonnes
+> d'ATTRIBUTION dans le mode entreprise (`created_by`, `actor_id`, `author_id`, `assignee_id`,
+> `manager_id`, …) : un départ désattribue le travail d'équipe, il ne le détruit pas, ce qui est le
+> comportement attendu et l'équilibre art. 17 / intérêt légitime du responsable de traitement.
+>
+> 🟠 **Angle mort · trois tables de CONTENU LIBRE manquent à l'inventaire du §1.**
+> `team_task_comments` (texte écrit par une personne), `team_task_activity` et `org_notifications`
+> n'y figurent pas, alors que le §1 prend la peine d'y lister `team_task_dependencies` pour son
+> seul `created_by`. Elles portent pourtant plus : le contenu du commentaire **survit** au
+> départ de son auteur, `author_id` passant à NULL. Volumes en prod ce soir : **5** commentaires,
+> **8** lignes d'activité, **77** notifications.
+>
+> ✅ **Ce n'est pas une non-conformité** : [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md), qui est la
+> pièce opposable au titre de l'art. 30, **liste bien les trois**. C'est l'inventaire de cet audit
+> qui est en retard sur son propre registre, l'inverse serait grave, celui-ci est réparable, et
+> il l'est ci-dessous au §1.
+>
+> ⚠️ **Ce qui reste non remesuré ce soir, et doit se lire comme tel** : les durées de conservation,
+> l'export de portabilité, et le DPA du fournisseur d'analytics (V-1), qui reste le plafond de
+> cette note et ne se règle pas depuis un éditeur de code.
+
+
+> ### 🟢 2026-09-14 · +1, une garantie d'effacement enfin vérifiée contre le code DÉPLOYÉ
+>
+> Ce document décrit la purge par `delete-account` (12 tables) et sa garde de non-régression
+> (`src/rgpd-erasure.guard.test.ts`, 5 cas, rejouée aujourd'hui : verte), mais n'avait jamais dit
+> si le code **testé** est le code **en ligne**. C'est précisément le défaut que
+> [`faille.md`](../faille.md) documente ailleurs (« un ✅ corrigé qui ne dit pas déployé décrit un
+> commit, pas la production ») — jamais appliqué ici, sur le droit à l'effacement lui-même.
+>
+> **Vérifié aujourd'hui** : `delete-account` est en **v17** (2026-09-13, 10:16 UTC), et le job
+> `Edge deploy drift` du 09-14 (run `34861975638`) confirme les **8** fonctions identiques au
+> dépôt, `delete-account` comprise. La garantie d'effacement testée dans ce dépôt est bien celle
+> qui s'exécute pour un utilisateur réel qui demande la suppression de son compte.
+>
+> ⚠️ **Ce qui n'a pas bougé, et reste le plafond de la note** : le DPA du fournisseur d'analytics
+> (finding V-1) n'est toujours pas obtenu — c'est une pièce administrative, hors de portée d'une
+> session de code. Rien d'autre n'a été remesuré aujourd'hui dans ce domaine (registre, durées de
+> conservation, export de portabilité).
 
 > ### 🔴 2026-09-03 · une correction de base, puis une journée qui s'annule elle-même
 >
@@ -119,6 +381,15 @@ rédaction, et c'est le seul point qui sépare le dossier d'une réponse tenable
 | **`org_invitations`** *(mig. 105, 2026-08-23)* | **UUID d'un tiers invité, et trace d'un refus (`declined_at`)** | saisie d'un membre de l'organisation |
 | `org_removal_notices` *(mig. 106)* | UUID du membre retiré et de l'auteur du retrait | action d'un admin |
 | `team_task_dependencies` *(mig. 108)* | `created_by` | action utilisateur |
+| **`team_task_comments`** *(mig. 082)* | **contenu libre écrit par une personne** + `author_id` | saisie utilisateur |
+| `team_task_activity` *(mig. 094)* | `actor_id`, nature de l'action, horodatage | trace applicative |
+| `org_notifications` *(mig. 095, 110)* | `user_id`, `actor_id`, libellé de l'événement | trace applicative |
+
+> ⚠️ **Les trois dernières lignes ont été ajoutées le 2026-09-14 au soir.** Elles figuraient déjà
+> dans [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) (la pièce art. 30), jamais ici. Leur `author_id` /
+> `actor_id` est en `ON DELETE SET NULL`, donc **le contenu survit au départ de son auteur, désormais
+> anonyme**. C'est le régime voulu pour du travail d'équipe, et il n'est défendable que s'il est
+> écrit : une donnée dont on ne sait pas qu'on la garde n'a pas de durée de conservation.
 
 > ✅ **Traité et APPLIQUÉ en prod le 2026-08-24 — migration `112`.** Elle ajoute une purge
 > quotidienne (pg_cron, 03:30 UTC) des invitations **refusées** de plus de 30 jours, sur le

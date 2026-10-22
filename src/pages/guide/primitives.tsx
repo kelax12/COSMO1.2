@@ -43,8 +43,9 @@ export const NAV_ITEMS: NavItem[] = [
 // ─── Sub-components ───────────────────────────────────────────────────
 
 export const Tip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex gap-3 bg-[rgb(var(--color-accent-solid))]/10 border border-[rgb(var(--color-accent-solid))]/20 rounded-xl p-4 mt-6">
-    <Lightbulb size={16} className="text-[rgb(var(--color-accent))] shrink-0 mt-0.5" />
+  // Maquette 373 : sur mobile, sans ampoule ni fond bleu.
+  <div className="flex gap-3 bg-[rgb(var(--color-accent-solid))]/10 border border-[rgb(var(--color-accent-solid))]/20 max-md:bg-transparent max-md:border-[rgb(var(--color-border))] rounded-xl p-4 mt-6">
+    <Lightbulb size={16} className="max-md:hidden text-[rgb(var(--color-accent))] shrink-0 mt-0.5" />
     <p className="text-sm text-[rgb(var(--color-text-primary))] leading-relaxed">{children}</p>
   </div>
 );
@@ -58,7 +59,8 @@ export const Note: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 export const Step: React.FC<{ n: number; title: string; children: React.ReactNode }> = ({ n, title, children }) => (
   <div className="flex gap-4">
-    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[rgb(var(--color-accent-solid))] flex items-center justify-center text-xs font-bold text-[rgb(var(--color-accent-solid-foreground))] mt-0.5">
+    {/* Maquette 371 : étapes numérotées en gris sur mobile. */}
+    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[rgb(var(--color-accent-solid))] max-md:bg-transparent max-md:border max-md:border-[rgb(var(--color-border-strong))] flex items-center justify-center text-xs font-bold max-md:font-medium text-[rgb(var(--color-accent-solid-foreground))] max-md:text-[rgb(var(--color-text-secondary))] mt-0.5">
       {n}
     </div>
     <div>
@@ -118,7 +120,7 @@ export function useGuideSchemas() {
       url: 'https://thecosmo.app/guide',
       inLanguage: currentInLanguage(),
       datePublished: '2025-01-01',
-      dateModified: '2026-08-30',
+      dateModified: '2026-10-12',
       author: { '@type': 'Organization', name: 'Cosmo', url: 'https://thecosmo.app' },
       publisher: { '@type': 'Organization', name: 'Cosmo', url: 'https://thecosmo.app' },
       mainEntityOfPage: 'https://thecosmo.app/guide',

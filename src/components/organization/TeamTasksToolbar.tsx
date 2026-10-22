@@ -1,28 +1,39 @@
-import { Search, X, ArrowUpDown, ChevronDown, Plus } from 'lucide-react';
-import type { TaskStatusFilter } from './team-projects.helpers';
+import type { ReactNode } from 'react';
+import { ArrowUpDown, ListChecks, Plus } from 'lucide-react';
 import { useT } from '@/i18n/useT';
-
-export type SortField = 'priority' | 'deadline' | 'name' | 'estimatedTime' | 'project';
+import { PermissionGate } from './permission-hints';
+import { TASK_SORT_CRITERIA, GROUPABLE_SORT_CRITERIA, type TaskSortCriterion } from './task-filters';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface TeamTasksToolbarProps {
-  searchTerm: string;
-  onSearchTerm: (value: string) => void;
-  sortField: SortField;
-  onSortField: (value: SortField) => void;
+  sortField: TaskSortCriterion;
+  onSortField: (value: TaskSortCriterion) => void;
   sortDirection: 'asc' | 'desc';
   onToggleSortDirection: () => void;
-  statusFilter: TaskStatusFilter;
-  onStatusFilter: (value: TaskStatusFilter) => void;
   /** Nouvelle tâche : désactivée sans projet ou sans le droit `task.create`. */
   canCreate: boolean;
+  /** Pourquoi « Nouvelle tâche » est grisée : pas de projet, ou pas le droit. */
+  createDeniedReason?: string;
   onCreate: () => void;
-  /** Compteur « x sur y affichées », déjà résolu par l'appelant (ou null). */
-  shownLabel: string | null;
+  /**
+   * Vue, colonnes, export : à droite, avant « Nouvelle tâche » (2026-09-28).
+   * Ils partageaient la ligne des préréglages, qui passe désormais sur UNE
+   * ligne pleine largeur, comme les filtres rapides de la page Tâches perso.
+   */
+  viewControls?: ReactNode;
+  /** Périmètre (tout / moi / une personne / équipe), à droite du tri. */
+  scope?: ReactNode;
+  /** Mobile (maquette 241) : la création passe au « + » flottant, pas ici. */
+  hideCreate?: boolean;
 }
 
 /**
- * Barre d'outils de l'onglet Tâches : recherche, tri, création, filtres de
- * statut.
+ * Barre d'outils de l'onglet Tâches : tri + regroupement (UN seul critère,
+ * fusion du 2026-09-27) et création. La recherche et les filtres vivent dans
+ * `OrgTaskFilterBar`, la barre partagée avec Projets (cohérence globale,
+ * 2026-09-25). Sélection multiple et compteur : `TeamTasksSelectRow`
+ * ci-dessous, sur sa propre ligne au-dessus du tableau (même position que la
+ * page Tâches personnelle).
  *
  * ⚠️ Extraite de `TeamTasksTab.tsx` le 2026-08-27, pas par goût du découpage :
  * ce fichier avait dépassé l'invariant de 600 lignes du projet et faisait
@@ -31,133 +42,120 @@ interface TeamTasksToolbarProps {
  *
  * Composant PRÉSENTATIONNEL : aucun état, aucun hook de données. Tout l'état de
  * filtre reste dans `TeamTasksTab`, qui est le seul à savoir ce qu'il filtre.
- * Le compteur arrive déjà rédigé (`shownLabel`) parce que sa règle — ne rien
- * afficher pendant le chargement, « 0 sur 0 » étant une affirmation — appartient
- * à l'onglet, pas à sa barre d'outils.
  */
 const TeamTasksToolbar = ({
-  searchTerm,
-  onSearchTerm,
   sortField,
   onSortField,
   sortDirection,
   onToggleSortDirection,
-  statusFilter,
-  onStatusFilter,
   canCreate,
+  createDeniedReason,
   onCreate,
-  shownLabel,
+  viewControls,
+  scope,
+  hideCreate = false,
 }: TeamTasksToolbarProps) => {
   const { t } = useT('org');
+  const criterionLabel: Record<TaskSortCriterion, string> = {
+    priority: t('projects.tasksTabSortPriority'),
+    deadline: t('projects.tasksTabSortDeadline'),
+    project: t('projects.tasksTabSortProject'),
+    assignee: t('projects.tasksTabSortAssignee'),
+    status: t('projects.tasksTabSortStatus'),
+    name: t('projects.tasksTabSortName'),
+    estimatedTime: t('projects.tasksTabSortDuration'),
+  };
+  const grouped = TASK_SORT_CRITERIA.filter((c) => GROUPABLE_SORT_CRITERIA.includes(c));
+  const flat = TASK_SORT_CRITERIA.filter((c) => !GROUPABLE_SORT_CRITERIA.includes(c));
 
   return (
-    <>
-      {/* Recherche + tri + nouvelle tâche */}
-      <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[150px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => onSearchTerm(e.target.value)}
-            placeholder={t('projects.tasksTabSearchPlaceholder')}
-            aria-label={t('projects.tasksTabSearchAria')}
-            className="w-full pl-9 pr-9 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] transition-all shadow-sm text-sm"
-            style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
-          />
-          {searchTerm && (
-            <button
-              type="button"
-              onClick={() => onSearchTerm('')}
-              aria-label={t('projects.tasksTabClearSearch')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center hover:bg-[rgb(var(--color-hover))]"
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          )}
-        </div>
-
-        <div className="relative w-44 shrink-0">
-          <select
-            value={sortField}
-            onChange={(e) => onSortField(e.target.value as SortField)}
-            aria-label={t('projects.tasksTabSortAria')}
-            className="w-full appearance-none border rounded-lg pl-3 pr-16 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] transition-all cursor-pointer shadow-sm"
-            style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
-          >
-            <option value="priority">{t('projects.tasksTabSortPriority')}</option>
-            <option value="deadline">{t('projects.tasksTabSortDeadline')}</option>
-            <option value="name">{t('projects.tasksTabSortName')}</option>
-            <option value="estimatedTime">{t('projects.tasksTabSortDuration')}</option>
-            <option value="project">{t('projects.tasksTabSortProject')}</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-9 flex items-center" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            <ChevronDown size={16} aria-hidden="true" />
-          </div>
-          <button
-            type="button"
-            onClick={onToggleSortDirection}
-            aria-label={sortDirection === 'asc' ? t('projects.tasksTabSortAsc') : t('projects.tasksTabSortDesc')}
-            title={sortDirection === 'asc' ? t('projects.tasksTabSortAsc') : t('projects.tasksTabSortDesc')}
-            className="absolute inset-y-0 right-1 my-auto z-10 flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-[rgb(var(--color-hover))]"
-            style={{ color: sortDirection === 'desc' ? 'rgb(var(--color-accent))' : 'rgb(var(--color-text-muted))' }}
-          >
-            <ArrowUpDown size={15} aria-hidden="true" />
-          </button>
-        </div>
-
+    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+      <div className="relative w-48 shrink-0">
+        <MenuSelect
+          value={sortField}
+          onChange={(e) => onSortField(e.target.value as TaskSortCriterion)}
+          aria-label={t('projects.tasksTabSortAria')}
+          className="w-full appearance-none border rounded-lg pl-3 pr-16 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] transition-all cursor-pointer shadow-sm"
+          style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
+        >
+          <optgroup label={t('projects.tasksTabSortGroupedOptgroup')}>
+            {grouped.map((c) => <option key={c} value={c}>{criterionLabel[c]}</option>)}
+          </optgroup>
+          <optgroup label={t('projects.tasksTabSortFlatOptgroup')}>
+            {flat.map((c) => <option key={c} value={c}>{criterionLabel[c]}</option>)}
+          </optgroup>
+        </MenuSelect>
+        {/* Maquette 240 (2026-10-10) : `MenuSelect` dessine déjà son chevron ;
+            celui qu'on posait ici par-dessus donnait « Par priorité ˅ ˅ ⇅ ». */}
         <button
           type="button"
-          onClick={onCreate}
-          disabled={!canCreate}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-95 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 disabled:hover:scale-100"
+          onClick={onToggleSortDirection}
+          aria-label={sortDirection === 'asc' ? t('projects.tasksTabSortAsc') : t('projects.tasksTabSortDesc')}
+          title={sortDirection === 'asc' ? t('projects.tasksTabSortAsc') : t('projects.tasksTabSortDesc')}
+          className="absolute inset-y-0 right-1 my-auto z-10 flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-[rgb(var(--color-hover))]"
+          style={{ color: sortDirection === 'desc' ? 'rgb(var(--color-accent))' : 'rgb(var(--color-text-muted))' }}
         >
-          <Plus size={18} aria-hidden="true" />
-          {t('projects.tasksTabNewTask')}
+          <ArrowUpDown size={15} aria-hidden="true" />
         </button>
       </div>
 
-      {/* Filtres de statut — même sémantique ET, depuis le 2026-08-28, même
-          GESTE que les pastilles de synthèse de l'onglet Projets.
-          
-          Les deux onglets filtraient déjà la même donnée avec le même type
-          (`TaskStatusFilter`) et le même helper (`filterByStatus`) ; ce qui
-          divergeait, c'était le clic sur une pastille DÉJÀ active — côté
-          Projets il la désactive, ici il ne faisait rien. Même écran, même
-          objet, deux réponses au même geste : c'est le finding « deux
-          grammaires de filtre » de la critique UI du 2026-08-27.
-          
-          ⚠️ La pastille « Tout » est CONSERVÉE, et ce n'est pas une
-          redondance : elle est la seule affordance visible pour revenir à
-          l'ensemble. Un utilisateur qui ne devine pas qu'on peut re-cliquer
-          garde un chemin explicite — on ajoute un geste, on n'en retire
-          aucun. */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {(['open', 'overdue', 'doneThisWeek', 'all'] as TaskStatusFilter[]).map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => onStatusFilter(statusFilter === f && f !== 'all' ? 'all' : f)}
-            aria-pressed={statusFilter === f}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-              statusFilter === f
-                ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))]'
-                : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
-            }`}
-          >
-            {f === 'open' ? t('projects.tasksTabFilterOpen')
-              : f === 'overdue' ? t('projects.tasksTabFilterOverdue')
-              : f === 'doneThisWeek' ? t('projects.tasksTabFilterDone')
-              : t('projects.tasksTabFilterAll')}
-          </button>
-        ))}
+      {scope}
 
-        {shownLabel && (
-          <span className="text-xs text-[rgb(var(--color-text-muted))]">{shownLabel}</span>
-        )}
+      <div className="ml-auto flex items-center gap-2 flex-wrap justify-end">
+      {viewControls}
+      {!hideCreate && (
+      <PermissionGate reason={canCreate ? undefined : createDeniedReason}>
+      <button
+        type="button"
+        onClick={onCreate}
+        disabled={!canCreate}
+        data-guide-id="tasks-new"
+        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-95 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 disabled:hover:scale-100"
+      >
+        <Plus size={18} aria-hidden="true" />
+        {t('projects.tasksTabNewTask')}
+      </button>
+      </PermissionGate>
+      )}
       </div>
-    </>
+    </div>
   );
 };
 
 export default TeamTasksToolbar;
+
+interface TeamTasksSelectRowProps {
+  /** Entre en sélection multiple (actions groupées) ; absent si rien à sélectionner. */
+  onStartSelect?: () => void;
+  /** Compteur « x sur y affichées », déjà résolu par l'appelant (ou null). */
+  shownLabel: string | null;
+}
+
+/**
+ * Sélection multiple + compteur, sur leur propre ligne au-dessus du tableau
+ * (même position que `TaskQuickFilters`/`TaskTable` côté personnel).
+ * Déplacé hors de `TeamTasksToolbar` le 2026-09-27 : ce n'était pas un geste
+ * de tri ni de création, ça n'avait pas sa place dans cette ligne.
+ */
+export const TeamTasksSelectRow = ({ onStartSelect, shownLabel }: TeamTasksSelectRowProps) => {
+  const { t } = useT('org');
+  if (!onStartSelect && !shownLabel) return null;
+  return (
+    <div className="flex items-center gap-2 flex-wrap -mt-2">
+      {onStartSelect && (
+        <button
+          type="button"
+          onClick={onStartSelect}
+          aria-label={t('projects.selectMultiple')}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgb(var(--color-border))] text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+        >
+          <ListChecks size={16} aria-hidden="true" />
+          <span>{t('projects.selectMode')}</span>
+        </button>
+      )}
+      {shownLabel && (
+        <span className="text-xs text-[rgb(var(--color-text-muted))]">{shownLabel}</span>
+      )}
+    </div>
+  );
+};

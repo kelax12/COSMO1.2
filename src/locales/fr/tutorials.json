@@ -27,7 +27,7 @@
     "step1Desc": "Vue verticale par jour, optimisée pour le scroll au pouce. Touchez les zones surlignées pour découvrir l'essentiel.",
     "step2Desc": "Faites glisser horizontalement pour parcourir vos prochaines journées. Touchez une date pour la centrer dans la grille ci-dessous.",
     "step3Desc": "Jour pour le détail heure par heure, 2J pour comparer deux jours, Mois pour le contexte large. Bascule en un toucher.",
-    "step4Desc": "Ce bouton ouvre le panneau de vos tâches non planifiées. Touchez-en une puis « Planifier dans l'agenda ». Le glisser-déposer est réservé au desktop.",
+    "step4Desc": "Ce bouton ouvre vos tâches non planifiées. Touchez-en une pour lui choisir un créneau.",
     "step5Desc": "Le bouton « + » en bas de l'écran ouvre le formulaire en bottom-sheet, pré-rempli à l'heure courante du jour sélectionné.",
     "step6Desc": "Maintenez votre doigt sur une plage horaire vide dans la grille pour créer un événement directement à cette heure."
   },
@@ -43,12 +43,10 @@
   },
   "habitsMobile": {
     "step1Title": "Construire vos habitudes",
-    "step2Title": "Trois vues",
     "step3Title": "Créer une habitude",
     "step4Title": "Valider d'un tap",
     "step5Title": "Mini heatmap",
     "step1Desc": "Une habitude = un comportement à répéter chaque jour ou plusieurs fois par semaine. Un tap suffit pour valider la journée.",
-    "step2Desc": "Liste (recommandée mobile) : une carte par habitude. Tableau : grille 30 jours scrollable horizontalement. Suivi global : stats.",
     "step3Desc": "Le bouton flottant en bas à droite ouvre le formulaire. Nom, couleur, cadence : 30 secondes pour configurer.",
     "step4Desc": "Touchez le bouton ✓ sur une habitude pour marquer aujourd'hui comme fait. La carte change de couleur. Re-tapez pour défaire en cas d'erreur.",
     "step5Desc": "Sous chaque habitude, une bande montre vos 30 derniers jours : plus c'est rempli, plus votre constance est élevée. Coup d'œil rapide sur votre régularité."
@@ -93,16 +91,14 @@
     "step1Title": "Vos tâches en un endroit",
     "step2Title": "Listes personnelles",
     "step3Title": "Recherche & filtres",
-    "step4Title": "Mini-calendrier",
+    "step4Title": "Affichage",
     "step5Title": "Créer une tâche",
     "step6Title": "Geste : glisser à droite pour valider",
-    "step7Title": "Plus simple : le bouton « … »",
-    "step1Desc": "Ici vous gérez toutes vos tâches. 7 étapes pour découvrir les gestes mobiles : swipe, tap long, bouton « … ».",
+    "step1Desc": "Ici vous gérez toutes vos tâches. Glissez une ligne vers la droite pour la valider, vers la gauche pour les options.",
     "step2Desc": "Vos listes (Travail, Courses, Voyage…) se trouvent ici. Touchez une liste pour filtrer. Faites glisser le carrousel pour voir toutes vos listes.",
-    "step3Desc": "Tapez pour chercher. Touchez « + d'options » pour révéler les filtres rapides : Favoris, Terminées, En retard, Collaboration.",
-    "step4Desc": "Affiche vos échéances sur une semaine. Touchez ce bouton pour l'afficher ou le masquer.",
-    "step5Desc": "Ce bouton flottant est accessible depuis toutes les pages. Il ouvre la création rapide : tapez « Appeler le dentiste jeudi 10h » et la date est comprise automatiquement.",
-    "step6Desc": "Sur une tâche, glissez votre doigt vers la droite. Une zone verte « Valider » apparaît. Lâchez : la tâche est cochée (avec une légère vibration).",
-    "step7Desc": "Pas envie de glisser ? Le bouton « … » à droite de chaque tâche ouvre le panneau d'actions : favori, partage, planifier, supprimer."
+    "step3Desc": "La recherche vit en bas de l'écran, sous le pouce. Champ vide, elle propose ses filtres : Favoris, Fait, Retard, Collaboration, Sélectionner.",
+    "step4Desc": "Ce bouton règle la façon dont la liste se montre : vue liste ou tableau, mini-calendrier de vos échéances, couleurs des catégories.",
+    "step5Desc": "Le + en bas à droite ouvre la création d'une tâche. Un nom suffit, tout le reste est facultatif.",
+    "step6Desc": "Sur une tâche, glissez votre doigt vers la droite. Une zone verte « Valider » apparaît. Lâchez : la tâche est cochée (avec une légère vibration)."
   }
 }

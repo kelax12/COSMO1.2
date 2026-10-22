@@ -17,6 +17,7 @@ describe('mapEventFromDb', () => {
     expect(e.recurrence).toBe('none');
     expect(e.recurrenceDays).toEqual([]);
     expect(e.exceptions).toEqual([]);
+    expect(e.reviewDismissedAt).toBeNull();
   });
 
   it('preserves recurrence fields when present', () => {
@@ -48,5 +49,25 @@ describe('mapEventToDb (whitelist / anti-mass-assignment)', () => {
       title: 't', start_time: 's', end_time: 'e', color: '#fff', description: 'd', notes: 'n',
       task_id: 'tid', recurrence: 'custom', recurrence_days: [1, 2], exceptions: ['2026-06-14'],
     });
+  });
+  // ── reviewDismissedAt (mig. 146) ──────────────────────────────────────────
+  // Le seul champ du mapper pour lequel `null` est une VALEUR, pas une absence.
+  // Un report doit pouvoir effacer un « Ignorer » posé plus tôt : si la garde
+  // devenait un test de vérité (`if (input.reviewDismissedAt)`), le `null` ne
+  // partirait jamais et un créneau ignoré puis reporté ne redemanderait plus
+  // jamais rien. Ces trois cas sont là pour refuser cette réécriture.
+  it('émet review_dismissed_at quand un instant est fourni', () => {
+    expect(mapEventToDb({ reviewDismissedAt: '2026-09-13T10:00:00Z' }))
+      .toEqual({ review_dismissed_at: '2026-09-13T10:00:00Z' });
+  });
+
+  it('émet review_dismissed_at: null pour EFFACER (le report ré-arme)', () => {
+    const out = mapEventToDb({ reviewDismissedAt: null });
+    expect('review_dismissed_at' in out).toBe(true);
+    expect(out.review_dismissed_at).toBeNull();
+  });
+
+  it('n émet rien quand le champ est absent (mise à jour partielle)', () => {
+    expect('review_dismissed_at' in mapEventToDb({ title: 'x' })).toBe(false);
   });
 });

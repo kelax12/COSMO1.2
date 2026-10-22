@@ -7,13 +7,15 @@ import { warnIfTruncated } from '@/lib/pagination.warning';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrgTeamsRepository } from './repository';
-import { OrgTeam, OrgTeamMember, CreateOrgTeamInput } from './types';
+import { OrgTeam, OrgTeamMember, CreateOrgTeamInput, UpdateOrgTeamInput, TeamDeletionImpact, DeleteTeamInput } from './types';
 
 interface TeamRow {
   id: string;
   org_id: string;
   name: string;
   color: string;
+  // Mig. 163 : absente d'une réponse antérieure à son application.
+  description?: string | null;
   created_by: string | null;
   created_at: string;
 }
@@ -23,6 +25,7 @@ const mapTeam = (r: TeamRow): OrgTeam => ({
   orgId: r.org_id,
   name: r.name,
   color: r.color,
+  description: r.description ?? null,
   createdBy: r.created_by,
   createdAt: r.created_at,
 });
@@ -34,10 +37,12 @@ export class SupabaseOrgTeamsRepository implements IOrgTeamsRepository {
       .from('org_teams')
       .select('*')
       .eq('org_id', orgId)
-      .order('created_at', { ascending: true })
+      // Tri DÉCROISSANT puis inversion : un tri croissant sous `limit` garde les
+      // plus anciennes et fait disparaître l'équipe qu'on vient de créer.
+      .order('created_at', { ascending: false })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    return warnIfTruncated((data ?? []) as TeamRow[], 200, 'org_teams').map(mapTeam);
+    return warnIfTruncated((data ?? []) as TeamRow[], 200, 'org_teams').reverse().map(mapTeam);
   }
 
   async getTeamMembers(orgId: string): Promise<OrgTeamMember[]> {
@@ -76,10 +81,51 @@ export class SupabaseOrgTeamsRepository implements IOrgTeamsRepository {
     return mapTeam(data as TeamRow);
   }
 
-  async deleteTeam(teamId: string): Promise<void> {
+  async updateTeam(teamId: string, input: UpdateOrgTeamInput): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { error } = await supabase.from('org_teams').delete().eq('id', teamId);
+    // Whitelist explicite : jamais org_id ni created_by (figés par
+    // `org_team_before_update`, mig. 163), jamais un champ absent de l'input.
+    const patch: Record<string, unknown> = {};
+    if (input.name !== undefined) patch.name = input.name.trim();
+    if (input.color !== undefined) patch.color = input.color;
+    if (input.description !== undefined) patch.description = input.description?.trim() || null;
+    if (Object.keys(patch).length === 0) return;
+    // `.select('id')` : une policy UPDATE qui refuse ne lève rien, elle ne
+    // modifie simplement aucune ligne. Sans ce contrôle, l'écran annoncerait
+    // « enregistré » pour une fiche restée intacte.
+    const { data, error } = await supabase.from('org_teams').update(patch).eq('id', teamId).select('id');
     if (error) throw normalizeApiError(error);
+    if (!data || data.length === 0) throw makeApiError('not_allowed');
+  }
+
+  async getDeletionImpact(teamId: string): Promise<TeamDeletionImpact> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase.rpc('get_team_deletion_impact', { p_team: teamId });
+    if (error) throw normalizeApiError(error);
+    const row = (Array.isArray(data) ? data[0] : data) as
+      | { active_projects: number; archived_projects: number; sole_okrs: number; shared_okrs: number }
+      | undefined;
+    return {
+      activeProjects: row?.active_projects ?? 0,
+      archivedProjects: row?.archived_projects ?? 0,
+      soleOkrs: row?.sole_okrs ?? 0,
+      sharedOkrs: row?.shared_okrs ?? 0,
+    };
+  }
+
+  async deleteTeam({ teamId, targetTeamId, archiveProjects }: DeleteTeamInput): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('delete_team_with_transfer', {
+      p_team: teamId,
+      p_target: targetTeamId,
+      p_archive_projects: archiveProjects,
+    });
+    if (!error) return;
+    // 23503 = la clé étrangère (mig. 151) a refusé : il reste un projet ou un
+    // OKR rattaché, peut-être invisible pour l'appelant. On le dit en clair
+    // plutôt que « dépendances existantes ».
+    if (error.code === '23503') throw makeApiError('team_has_dependents', error.message);
+    throw normalizeApiError(error);
   }
 
   async addTeamMember(teamId: string, orgId: string, userId: string): Promise<void> {

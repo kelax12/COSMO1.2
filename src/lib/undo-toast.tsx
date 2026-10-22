@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Undo2 } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 

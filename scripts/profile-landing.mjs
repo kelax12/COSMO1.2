@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // Profil du fil principal d'une page du site, CPU bridé.
 //

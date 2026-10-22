@@ -1,45 +1,53 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
 import TouchTarget from '@/components/mobile/TouchTarget';
 import { Plus, Target, CalendarCheck, CheckCircle2 } from 'lucide-react';
-import WeeklyCheckinModal from '@/components/WeeklyCheckinModal';
-import { getColorHex } from '@/components/CategoryManager';
+import { getColorHex } from '@/lib/category-colors';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';
 import { useCreateEvent } from '@/modules/events';
 import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useRestoreOkrWithJournal, useUpdateKeyResult, KeyResult } from '@/modules/okrs';
 import { useKRCompletions } from '@/modules/kr-completions';
 import { showUndoToast } from '@/lib/undo-toast';
-import { useCategories, useCreateCategory, useUpdateCategory } from '@/modules/categories';
+import { useCategories, useCreateCategory } from '@/modules/categories';
 import PageErrorState from '@/components/PageErrorState';
 import TaskModal from '@/components/TaskModal';
 import EventModal from '@/components/EventModal';
-import OKRModalSheet from '@/components/OKRModalSheet';
-import OKRDeadlineReviewModal from '@/components/OKRDeadlineReviewModal';
-import CompletedOKRsModal from '@/components/CompletedOKRsModal';
-import { toast } from 'sonner';
+import ColorSettingsModal from '@/components/ColorSettingsModal';
+import { toast } from '@/lib/toast';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { okrTutorialStepsDesktop } from '@/tutorials/okr.desktop';
 import { okrTutorialStepsMobile } from '@/tutorials/okr.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import { filterObjectivesByCategory, type Objective } from './okr/okr-page-logic';
+import { filterObjectivesByCategories, shouldReopenOnDeadlineExtension, type Objective } from './okr/okr-page-logic';
 import OKRCard from './okr/OKRCard';
 import { OKRListSkeleton } from '@/components/skeletons';
-import DeleteObjectiveConfirm from './okr/DeleteObjectiveConfirm';
-import CategoryFilterBar from './okr/CategoryFilterBar';
+import { WeeklyCheckinModal, DeleteObjectiveConfirm, OKRModalSheet } from './okr/lazy-dialogs';
 import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
+import CategoryFilterBar from './okr/CategoryFilterBar';
+import OKRCategorySelect from './okr/OKRCategorySelect';
 import { useT } from '@/i18n/useT';
 import { useDeadlineReview } from './okr/useDeadlineReview';
 import { useDeleteCategoryFlow } from './okr/useDeleteCategoryFlow';
 import { useTasks } from '@/modules/tasks';
+import { useInlineCategoryEdit } from './okr/useInlineCategoryEdit';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { formatDurationMinutes } from '@/lib/duration';
+
+// OKR d'entreprise dont je porte un KR : section chargée à la demande (cf. ProOKRBlock).
+const ProOKRBlock = lazyWithRetry(() => import('./okr/ProOKRBlock'), ['okr', 'org']);
+// Deux modales qui ne s'ouvrent que sur un geste ou une échéance atteinte :
+// hors du chunk de la page (cliquet `check:bundle`, 2026-10-03).
+const OKRDeadlineReviewModal = lazyWithRetry(() => import('@/components/OKRDeadlineReviewModal'));
+const CompletedOKRsModal = lazyWithRetry(() => import('@/components/CompletedOKRsModal'));
 
 const OKRPage: React.FC = () => {
-  const { t } = useT('okr');
+  const { t, tp } = useT('okr');
   const { t: tCommon } = useT('common');
   const isMobile = useIsMobile();
-  const tutorial = useTutorial(isMobile ? 'okr_mobile' : 'okr_desktop');
+  const tutorial = useTutorial(isMobile ? 'okr_mobile' : 'okr_desktop', 600, !isMobile);
   const tutorialSteps = isMobile ? okrTutorialStepsMobile : okrTutorialStepsDesktop;
   const location = useLocation();
   // Le check-in hebdo peut aussi être ouvert manuellement (bouton), en plus de
@@ -60,10 +68,13 @@ const OKRPage: React.FC = () => {
   // Sert au décompte d'impact d'une suppression de catégorie (R-02).
   const { data: tasks = [] } = useTasks();
   const createCategoryMutation = useCreateCategory();
-  const updateCategoryMutation = useUpdateCategory();
   // Restauration d'un « Annuler » : recree la categorie sous SON identifiant,
   // sinon les taches et objectifs qui la portaient restent orphelins (R-08).
   const [showCreateCategory, setShowCreateCategory] = useState(false);
+  // Popup de gestion des catégories — seul chemin mobile pour ajouter,
+  // modifier ou supprimer une catégorie (redesign 2026-09-19). Desktop garde
+  // le formulaire inline + la barre flottante crayon/corbeille.
+  const [showCategoryManage, setShowCategoryManage] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('blue');
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
@@ -71,14 +82,13 @@ const OKRPage: React.FC = () => {
   const [selectedKeyResultForModal, setSelectedKeyResultForModal] = useState<{kr: KeyResult;obj: Objective;} | null>(null);
   const [editingObjective, setEditingObjective] = useState<Objective | null>(null);
   const [showAddObjective, setShowAddObjective] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  // Filtre multi-select hiérarchique (cf. CategoryFilterBar) : vide = tous.
+  const [activeCategoryIds, setActiveCategoryIds] = useState<Set<string>>(new Set());
   const [deletingObjective, setDeletingObjective] = useState<string | null>(null);
   const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null);
-  // États d'édition inline d'une catégorie (nom + couleur). Activés via le
-  // bouton crayon dans la barre flottante au-dessus d'une chip catégorie.
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
-  const [editCategoryName, setEditCategoryName] = useState('');
-  const [editCategoryColor, setEditCategoryColor] = useState('blue');
+  // Édition inline d'une catégorie (nom + couleur), via le crayon de la barre
+  // flottante au-dessus d'une pastille : cf. useInlineCategoryEdit.
+  const categoryEdit = useInlineCategoryEdit(() => setHoveredCategoryId(null));
 
   // ── Deadline review popup ───────────────────────────────────────────
   // À l'ouverture de la page : si un OKR non complété a une deadline atteinte
@@ -88,31 +98,6 @@ const OKRPage: React.FC = () => {
   const [showCompletedModal, setShowCompletedModal] = useState(false);
   const finishedButtonRef = useRef<HTMLButtonElement>(null);
 
-  const startEditCategory = (cat: { id: string; name: string; color: string }) => {
-    setEditingCategoryId(cat.id);
-    setEditCategoryName(cat.name);
-    setEditCategoryColor(cat.color);
-    setHoveredCategoryId(null);
-  };
-
-  const cancelEditCategory = () => {
-    setEditingCategoryId(null);
-    setEditCategoryName('');
-    setEditCategoryColor('blue');
-  };
-
-  const submitEditCategory = () => {
-    if (!editingCategoryId) return;
-    const name = editCategoryName.trim();
-    if (name.length < 2) {
-      toast.error(t('page.categoryNameTooShort'));
-      return;
-    }
-    updateCategoryMutation.mutate(
-      { id: editingCategoryId, updates: { name, color: editCategoryColor } },
-      { onSuccess: () => cancelEditCategory() }
-    );
-  };
   // Suppression d'une catégorie : réaffecter, supprimer, savoir annuler les
   // DEUX. La séquence vit dans son propre module (cf. useDeleteCategoryFlow).
   const {
@@ -125,7 +110,12 @@ const OKRPage: React.FC = () => {
     tasks,
     objectives,
     onDeleted: (deletedId) => {
-      if (selectedCategory === deletedId) setSelectedCategory('all');
+      setActiveCategoryIds((prev) => {
+        if (!prev.has(deletedId)) return prev;
+        const next = new Set(prev);
+        next.delete(deletedId);
+        return next;
+      });
     },
   });
 
@@ -172,7 +162,14 @@ const OKRPage: React.FC = () => {
 
     const handleModalSubmit = (data: Omit<Objective, 'id'>, isEditing: boolean) => {
     if (isEditing && editingObjective) {
-      updateOkrMutation.mutate({ id: editingObjective.id, updates: data });
+      // Un OKR complété parce qu'il était en retard doit redevenir « en
+      // cours » dès qu'on repousse sa deadline dans le futur — sinon il
+      // reste coincé dans « OKR terminés » (OKRModalSheet reconduit
+      // `completed` tel quel, aucune case à cocher pour le décompléter).
+      const updates = shouldReopenOnDeadlineExtension(editingObjective, data.endDate)
+        ? { ...data, completed: false }
+        : data;
+      updateOkrMutation.mutate({ id: editingObjective.id, updates });
     } else {
       createOkrMutation.mutate({
         title: data.title,
@@ -193,7 +190,7 @@ const OKRPage: React.FC = () => {
     setEditingObjective(null);
   };
 
-  const filteredObjectives = filterObjectivesByCategory(objectives, selectedCategory);
+  const filteredObjectives = filterObjectivesByCategories(objectives, activeCategoryIds);
 
   const colorOptions = [
     { value: 'blue', color: '#3B82F6' },
@@ -212,13 +209,8 @@ const OKRPage: React.FC = () => {
   const resolveColor = (color: string) =>
     color.startsWith('#') ? color : getColorHex(color);
 
-  const formatTime = (minutes: number) => {
-    if (minutes === 0) return '0min';
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h === 0) return `${m}min`;
-    return m > 0 ? `${h}h ${m}min` : `${h}h`;
-  };
+  // Maquette 139 : une seule écriture des durées (`@/lib/duration`).
+  const formatTime = formatDurationMinutes;
 
   useEffect(() => {
     const state = location.state as {selectedOKRId?: string; openCreate?: boolean;};
@@ -258,6 +250,13 @@ const OKRPage: React.FC = () => {
 
   const completedCount = objectives.filter(o => o.completed).length;
 
+  // Les deux modales lazy se montent à leur PREMIÈRE ouverture, puis restent
+  // montées : leur sortie animée (AnimatePresence) vit à l'intérieur.
+  const [completedMounted, setCompletedMounted] = useState(false);
+  if (showCompletedModal && !completedMounted) setCompletedMounted(true);
+  const [reviewMounted, setReviewMounted] = useState(false);
+  if (deadlineReview.okr && !reviewMounted) setReviewMounted(true);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -275,9 +274,19 @@ const OKRPage: React.FC = () => {
           bordure/pilule au profit d'un `TouchTarget` icône seule, même
           traitement que la boîte de réception du Dashboard et de
           `TasksInboxMenu`. */}
+      {/* Titre raccourci au repos (redesign 2026-09-19) : le titre complet
+          (`page.title`) ne tient pas dans le `text-display` du grand titre
+          et tronquait en « OKR - Objectifs & R... ». `page.titleShort` reste
+          seul, au repos ET compacté : maquette 182 (2026-10-10), la page
+          changeait de nom au premier défilement (« OKR - Objectifs &
+          Résultats Clés »). */}
+      {/* Maquette 110 : « OKR - Objectifs » disait deux fois la même chose,
+          avec un tiret en plein titre, et l'onglet dit déjà « OKR ». Le
+          sous-titre devient un ÉTAT (combien d'objectifs actifs) : une phrase
+          de brochure n'apprend rien à quelqu'un qui revient tous les jours. */}
       <MobileHeader
-        title={t('page.title')}
-        subtitle={t('page.subtitle')}
+        title={t('page.titleShort')}
+        subtitle={tp('page.activeCount', objectives.filter((o) => !o.completed).length)}
         actions={
           <TouchTarget
             // `flyTargetRef` (OKRDeadlineReviewModal, ligne plus bas) anime un
@@ -351,6 +360,7 @@ const OKRPage: React.FC = () => {
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowAddObjective(true)}
           data-tutorial-id="okr-create-button"
+          data-guide-id="perso-okr-new"
           className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm text-[rgb(var(--color-accent-solid-foreground))] shadow-sm bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-all"
           aria-label={t('page.createObjective')}
         >
@@ -359,32 +369,23 @@ const OKRPage: React.FC = () => {
         </motion.button>
       </div>
 
-      {/* Bouton mobile — affiché sous le H1, disponible en démo ET en production */}
-      <div className="sm:hidden mb-4">
-        <button
-          type="button"
-          onClick={() => setShowCheckin(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border-2 border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-surface))]"
-        >
-          <CalendarCheck size={18} />
-          <span>{t('page.openWeeklyCheckin')}</span>
-        </button>
-      </div>
-
+      {/* Mobile (2026-10-10, demande d'Axel) : un sélecteur unique au lieu
+          du libellé « Catégorie : » et de la rangée de pastilles. */}
+      <OKRCategorySelect
+        categories={categories}
+        activeCategoryIds={activeCategoryIds}
+        setActiveCategoryIds={setActiveCategoryIds}
+        resolveColor={resolveColor}
+        onManageCategories={() => setShowCategoryManage(true)}
+      />
+      <div className="hidden md:block">
       <CategoryFilterBar
         categories={categories}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+        activeCategoryIds={activeCategoryIds}
+        setActiveCategoryIds={setActiveCategoryIds}
         hoveredCategoryId={hoveredCategoryId}
         setHoveredCategoryId={setHoveredCategoryId}
-        editingCategoryId={editingCategoryId}
-        editCategoryName={editCategoryName}
-        setEditCategoryName={setEditCategoryName}
-        editCategoryColor={editCategoryColor}
-        setEditCategoryColor={setEditCategoryColor}
-        startEditCategory={startEditCategory}
-        cancelEditCategory={cancelEditCategory}
-        submitEditCategory={submitEditCategory}
+        {...categoryEdit}
         setCategoryToDeleteId={setCategoryToDeleteId}
         colorOptions={colorOptions}
         resolveColor={resolveColor}
@@ -397,6 +398,13 @@ const OKRPage: React.FC = () => {
         createCategoryMutation={createCategoryMutation}
         large
         accentAllActive
+        onManageCategories={() => setShowCategoryManage(true)}
+      />
+      </div>
+
+      <ColorSettingsModal
+        isOpen={showCategoryManage}
+        onClose={() => setShowCategoryManage(false)}
       />
 
       {/* État d'erreur (#39) : sans lui, un échec réseau laissait la page
@@ -418,14 +426,12 @@ const OKRPage: React.FC = () => {
             <Target className="w-10 h-10 text-green-500 dark:text-green-400" strokeWidth={1.75} />
           </div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            {selectedCategory === 'all'
+            {activeCategoryIds.size === 0
               ? t('page.empty.allTitle')
-              : selectedCategory === 'completed'
-              ? t('page.empty.noneTitle')
               : t('page.empty.filteredTitle')}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6">
-            {selectedCategory === 'all'
+            {activeCategoryIds.size === 0
               ? t('page.empty.noneDescription')
               : t('page.empty.filteredDescription')}
           </p>
@@ -438,6 +444,10 @@ const OKRPage: React.FC = () => {
           </button>
         </motion.div>
       )}
+
+      <Suspense fallback={null}>
+        <ProOKRBlock hasPersonal={filteredObjectives.length > 0} />
+      </Suspense>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AnimatePresence mode="popLayout">
@@ -529,7 +539,7 @@ const OKRPage: React.FC = () => {
         whileTap={{ scale: 0.95 }}
         onClick={() => setShowAddObjective(true)}
         aria-label="Nouvel objectif"
-        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-full bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
+        className="md:hidden fixed right-4 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] z-30 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center"
       >
         <Plus size={26} />
       </motion.button>
@@ -549,26 +559,26 @@ const OKRPage: React.FC = () => {
       {/* Popup deadline atteinte : affiché à l'ouverture pour les OKR non
           complétés dont endDate <= aujourd'hui. Au validate, la carte s'anime
           vers le bouton « OKR terminés ». */}
-      <OKRDeadlineReviewModal
+      {reviewMounted && <Suspense fallback={null}><OKRDeadlineReviewModal
         okr={deadlineReview.okr}
         categories={categories}
         flyTargetRef={finishedButtonRef}
         onClose={deadlineReview.close}
         onValidate={deadlineReview.validate}
         resolveColor={resolveColor}
-      />
+      /></Suspense>}
 
       {/* Liste des OKR terminés — ouverte par le bouton du header. Chaque
           item a un bouton "Modifier" qui referme cette modal et ouvre
           OKRModalSheet en mode édition. */}
-      <CompletedOKRsModal
+      {completedMounted && <Suspense fallback={null}><CompletedOKRsModal
         isOpen={showCompletedModal}
         onClose={() => setShowCompletedModal(false)}
         okrs={objectives.filter(o => o.completed)}
         categories={categories}
         resolveColor={resolveColor}
         onEdit={handleEditObjective}
-      />
+      /></Suspense>}
     </motion.div>);
 
 };

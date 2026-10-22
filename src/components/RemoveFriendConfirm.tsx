@@ -92,9 +92,18 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
         role="alertdialog"
         aria-label={ov.t('removeFriend.ariaConfirm')}
       >
-        <div className="sm:hidden flex justify-center pt-3 pb-2">
-          <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-        </div>
+        {/* 🗑️ C-07 · LA POIGNÉE DE GLISSEMENT EST RETIRÉE, pas câblée.
+            Elle dessinait l'affordance d'un geste qui n'existait pas : on
+            tire, rien ne bouge, et on en conclut que l'app est cassée. La
+            règle du module est écrite dans `useSheetDrag` — « une affordance
+            qui promet un geste inexistant est moins bonne que pas
+            d'affordance du tout ».
+            🔴 Et ici elle mentait DEUX fois : cette surface est un
+            `alertdialog`, c'est-à-dire une confirmation de SUPPRESSION qui
+            demande un choix explicite. Une poignée la présente comme une
+            feuille qu'on chasse d'un revers de pouce.
+            ❌ Ne pas la remettre en câblant `useSheetDrag` : ce serait donner
+            à un geste approximatif le pouvoir d'annuler une décision. */}
         <div className="p-5 sm:p-6">
           <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>
             {ov.t('removeFriend.title')}
