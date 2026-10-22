@@ -26,6 +26,10 @@
 >
 > Pas la grille FullCalendar : elle tenait déjà dans sa colonne. Correctif : la rangée se replie (`flex-wrap`, groupe central en `contents`, deux `ml-auto` qui rendent l'ancien `justify-between` sur une ligne) ; sous `lg`, « Tâches », « Récurrences » et « Nouveau » passent en icône, le nom restant dans `aria-label`. Plafond `/agenda` abaissé à **0**. La note n'est pas recalculée ici : le remboursement attend la CI verte de la PR, puis la prochaine passe d'audit.
 
+> ### ⚪ 2026-10-22 · remesure de C-57, note non rejouée (elle se rejoue à la passe d'audit)
+>
+> Le −1 « cibles tactiles sous 44 px » des 10-01 et 10-02 est déjà remboursé (+1 le 10-02 au soir, +1 le 10-03). Remesuré à `5eaa8b8c`, mode démo, 375 px : `touch-targets` **19/19 sur `chromium`, 20/20 sur `mobile-safari`** ; « Valider » **82 × 44**, « Renvoyer » **97 × 44**, rendus. Un défaut neuf, même classe, hors de la spec : « Filtres » (`MobileFiltersButton`, onglets Tâches, Projets, Membres de l'entreprise) à **42 × 40**, porté à 44 × 40 avec une zone de 44 × 44 ; `/entreprise/tasks` entre dans la spec. Spec modifiée : 20/20 et 21/21 en local. Reste hors spec : `/entreprise/projects`, tableau de bureau à 375 px, 11 commandes sous 44 px. Détail : [`ACCESSIBILITY.md`](./ACCESSIBILITY.md).
+
 > ### ⚪ 2026-10-20 · 0 : inchangée
 >
 > Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
