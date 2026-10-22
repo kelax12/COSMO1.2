@@ -9,10 +9,11 @@
 // figés par trigger, jamais par ce client.
 
 import { supabase } from '@/lib/supabase';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
+import { getCurrentUser } from '@/lib/auth-user';
 import type { IOrgRolesRepository } from './roles.repository';
 import type { OrgAssignTarget, OrgPermissionKey } from './permissions';
-import type { AssignRoleInput, OrgCustomRole, OrgRoleAssignment, SaveCustomRoleInput } from './roles.types';
+import type { AssignRoleInput, MyOrgRoleAssignment, OrgCustomRole, OrgRoleAssignment, SaveCustomRoleInput } from './roles.types';
 
 const db = () => {
   if (!supabase) throw new Error('Supabase not configured');
@@ -86,6 +87,33 @@ export class SupabaseOrgRolesRepository implements IOrgRolesRepository {
     const { data, error } = await db().from('org_member_roles').select(ASSIGNMENT_COLUMNS).eq('org_id', orgId);
     if (error) throw normalizeApiError(error);
     return ((data ?? []) as AssignmentRow[]).map(toAssignment);
+  }
+
+  async getMyAssignments(): Promise<MyOrgRoleAssignment[]> {
+    const user = await getCurrentUser();
+    if (!user) throw makeApiError('not_authenticated');
+    // 🔴 `.eq('user_id', …)` n'est pas une optimisation : la policy SELECT est
+    // `is_org_member(org_id)`, elle rend les attributions de TOUS les membres.
+    // Sans ce filtre, l'export d'une personne livrerait les rôles de ses collègues.
+    const { data, error } = await db().from('org_member_roles').select(ASSIGNMENT_COLUMNS).eq('user_id', user.id);
+    if (error) throw normalizeApiError(error);
+    const assignments = ((data ?? []) as AssignmentRow[]).map(toAssignment);
+    if (assignments.length === 0) return [];
+
+    const roleIds = [...new Set(assignments.map((a) => a.roleId))];
+    const { data: roles, error: rolesError } = await db()
+      .from('org_roles')
+      .select('id, name, granted_keys')
+      .in('id', roleIds);
+    if (rolesError) throw normalizeApiError(rolesError);
+    const byId = new Map(
+      ((roles ?? []) as Pick<RoleRow, 'id' | 'name' | 'granted_keys'>[]).map((r) => [r.id, r]),
+    );
+    return assignments.map((a) => ({
+      ...a,
+      roleName: byId.get(a.roleId)?.name ?? '',
+      grantedKeys: (byId.get(a.roleId)?.granted_keys ?? []) as OrgPermissionKey[],
+    }));
   }
 
   async createRole(orgId: string, input: SaveCustomRoleInput): Promise<OrgCustomRole> {

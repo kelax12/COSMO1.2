@@ -11,7 +11,7 @@ import { makeApiError } from '@/lib/normalizeApiError';
 import { localizeSeed } from '@/lib/seed-i18n';
 import { DEMO_ORG_ID, LocalStorageOrganizationsRepository } from './local.repository';
 import type { IOrgRolesRepository } from './roles.repository';
-import type { AssignRoleInput, OrgCustomRole, OrgRoleAssignment, SaveCustomRoleInput } from './roles.types';
+import type { AssignRoleInput, MyOrgRoleAssignment, OrgCustomRole, OrgRoleAssignment, SaveCustomRoleInput } from './roles.types';
 
 export const ORG_ROLES_STORAGE_KEY = 'cosmo_org_roles';
 export const ORG_MEMBER_ROLES_STORAGE_KEY = 'cosmo_org_member_roles';
@@ -88,6 +88,19 @@ export class LocalStorageOrgRolesRepository implements IOrgRolesRepository {
 
   async getAssignments(orgId: string): Promise<OrgRoleAssignment[]> {
     return this.assignments().filter((a) => a.orgId === orgId);
+  }
+
+  async getMyAssignments(): Promise<MyOrgRoleAssignment[]> {
+    // Même filtre que la production : le seed attribue des rôles à d'AUTRES
+    // membres de l'organisation démo, qui ne sortent jamais dans l'export.
+    const roles = new Map(this.roles().map((r) => [r.id, r]));
+    return this.assignments()
+      .filter((a) => a.userId === DEMO_USER_ID)
+      .map((a) => ({
+        ...a,
+        roleName: roles.get(a.roleId)?.name ?? '',
+        grantedKeys: roles.get(a.roleId)?.grantedKeys ?? [],
+      }));
   }
 
   async createRole(orgId: string, input: SaveCustomRoleInput): Promise<OrgCustomRole> {
