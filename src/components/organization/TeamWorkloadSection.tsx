@@ -125,7 +125,7 @@ const TeamWorkloadSection = ({ orgId, tasks, projectIds, members, currentUserId 
         <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('teamPage.loadEmpty')}</p>
       ) : (
         <>
-          <ul className="flex flex-wrap gap-x-5 gap-y-1 mb-5 text-sm text-[rgb(var(--color-text-secondary))]" aria-hidden="true">
+          <ul data-guide-id="team-workload-legend" className="flex flex-wrap gap-x-5 gap-y-1 mb-5 text-sm text-[rgb(var(--color-text-secondary))]" aria-hidden="true">
             {LOAD_BUCKETS.map((b) => (
               <li key={b} className="inline-flex items-center gap-1.5">
                 <span className={`w-2.5 h-2.5 rounded-sm ${BUCKET_COLOR[b]}`} />
@@ -134,7 +134,7 @@ const TeamWorkloadSection = ({ orgId, tasks, projectIds, members, currentUserId 
             ))}
           </ul>
 
-          <ul className="space-y-4 mb-6">
+          <ul data-guide-id="team-workload-members" className="space-y-4 mb-6">
             {visibleRows.map((row) => (
               <li key={row.userId ?? 'unassigned'} className="flex items-center gap-3 text-[15px]">
                 {avatarOf(row.userId, 28)}

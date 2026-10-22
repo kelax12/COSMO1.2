@@ -22,9 +22,21 @@
 // visiteur arrivé via `?ref=tiktok` qui clique sur « Essayer la démo » perd
 // son attribution instantanément — le parcours le plus fréquent du plan
 // d'acquisition.
+//
+// 🔴 SOUS CONSENTEMENT depuis le 2026-10-13 (loi I&L art. 82). La source finit
+// écrite sur le PROFIL : ce n'est pas une statistique anonyme, l'exemption
+// CNIL de mesure d'audience ne la couvre pas. Rien n'est écrit sur l'appareil
+// ni lu avant « Accepter » : la source de l'URL est gardée EN MÉMOIRE
+// (`pending`) et posée seulement si le visiteur accepte pendant la visite
+// (`persistPendingFirstTouch`). Refuser efface tout (`clearAttributionTraces`).
 // ═══════════════════════════════════════════════════════════════════
 
+import { hasConsented } from './cookie-consent';
+
 export const FIRST_TOUCH_STORAGE_KEY = 'cosmo_first_touch';
+
+/** Source lue dans l'URL avant toute réponse au bandeau. Jamais écrite sur l'appareil. */
+let pending: FirstTouch | null = null;
 
 /** 30 jours — au-delà, la visite d'origine n'explique plus l'inscription. */
 const TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -85,6 +97,9 @@ function readRaw(): FirstTouch | null {
  * nouvelle capture).
  */
 export function readFirstTouch(): FirstTouch | null {
+  // Une valeur posée AVANT le 2026-10-13, sans consentement, ne doit pas
+  // atteindre le profil : sans « Accepter », il n'y a pas d'attribution.
+  if (!hasConsented()) return null;
   const stored = readRaw();
   if (!stored) return null;
   if (Date.now() - stored.ts > TTL_MS) return null;
@@ -102,7 +117,11 @@ export function readFirstTouch(): FirstTouch | null {
  */
 export function recordFallbackSource(source: string): void {
   try {
-    if (readFirstTouch()) return;
+    if (!hasConsented()) return;
+    // `direct` dit seulement « aucun référent » : une source de repli plus
+    // précise (la démo) le remplace. Toute autre attribution prime.
+    const current = readFirstTouch();
+    if (current && current.source !== 'direct') return;
     const clean = normalizeSourceValue(source);
     if (!clean) return;
     const entry: FirstTouch = { source: clean, ts: Date.now() };
@@ -112,9 +131,64 @@ export function recordFallbackSource(source: string): void {
   }
 }
 
+/** Familles de sites référents, reconnues à leur nom d'hôte. */
+const REFERRER_SOURCES: ReadonlyArray<[RegExp, string]> = [
+  [/(^|\.)google\./, 'google'],
+  [/(^|\.)bing\.com$/, 'bing'],
+  [/(^|\.)duckduckgo\.com$/, 'duckduckgo'],
+  [/(^|\.)qwant\.com$/, 'qwant'],
+  [/(^|\.)ecosia\.org$/, 'ecosia'],
+  [/(^|\.)(chatgpt\.com|openai\.com)$/, 'chatgpt'],
+  [/(^|\.)perplexity\.ai$/, 'perplexity'],
+  [/(^|\.)instagram\.com$/, 'instagram'],
+  [/(^|\.)(facebook\.com|fb\.com|fb\.me)$/, 'facebook'],
+  [/(^|\.)tiktok\.com$/, 'tiktok'],
+  [/(^|\.)(linkedin\.com|lnkd\.in)$/, 'linkedin'],
+  [/(^|\.)(twitter\.com|x\.com|t\.co)$/, 'x'],
+  [/(^|\.)reddit\.com$/, 'reddit'],
+  [/(^|\.)(youtube\.com|youtu\.be)$/, 'youtube'],
+  [/(^|\.)producthunt\.com$/, 'producthunt'],
+];
+
 /**
- * Lit `?ref=` / `utm_*` dans l'URL courante et stocke la source si — et
- * seulement si — aucune attribution valide n'existe déjà.
+ * Hôtes qui ne sont PAS une arrivée : le retour d'une connexion Google ou de
+ * Supabase Auth. Les compter étiquetterait « google » un compte qui revient
+ * simplement de son écran de connexion.
+ */
+const NOT_A_SOURCE_RE = /(^|\.)(accounts\.google\.com|supabase\.co|stripe\.com)$/;
+
+/**
+ * Source déduite du site référent quand l'URL ne porte ni `?ref=` ni `utm_*` :
+ *   • famille connue (Google, Instagram…) → son nom ;
+ *   • autre site → son hôte, points remplacés par des tirets ;
+ *   • aucun référent externe → `direct`.
+ * `null` pour un retour d'authentification : on ne décide rien.
+ * Seul l'HÔTE est lu : jamais le chemin ni la query string du référent.
+ */
+export function sourceFromReferrer(referrer: string, ownHost: string): string | null {
+  if (!referrer) return 'direct';
+  let host: string;
+  try {
+    host = new URL(referrer).hostname.toLowerCase();
+  } catch {
+    return 'direct';
+  }
+  if (!host || host === ownHost.toLowerCase()) return 'direct';
+  if (NOT_A_SOURCE_RE.test(host)) return null;
+  for (const [re, name] of REFERRER_SOURCES) {
+    if (re.test(host)) return name;
+  }
+  return normalizeSourceValue(host.replace(/^www\./, '').replace(/\./g, '-'));
+}
+
+/**
+ * Lit `?ref=` / `utm_*` dans l'URL courante, à défaut le site référent, et
+ * stocke la source si — et seulement si — aucune attribution valide n'existe
+ * déjà.
+ *
+ * 2026-10-18 : AVANT, sans `?ref=` ni `utm_*`, rien n'était retenu. Une arrivée
+ * depuis une recherche Google ou un lien Instagram non balisé finissait donc
+ * « Non attribuée » : 11 inscriptions sur 11 en 60 jours.
  *
  * À appeler une fois, avant le montage de React (`src/main.tsx`).
  */
@@ -125,7 +199,12 @@ export function captureFirstTouch(): void {
     if (readFirstTouch()) return;
 
     const params = new URLSearchParams(window.location.search);
-    const source = normalizeSourceValue(params.get('ref') ?? params.get('utm_source'));
+    const explicit = params.get('ref') ?? params.get('utm_source');
+    // Un paramètre présent mais invalide n'est pas une arrivée directe : on ne
+    // devine rien du référent, la source reste inconnue.
+    const source = explicit !== null
+      ? normalizeSourceValue(explicit)
+      : sourceFromReferrer(document.referrer, window.location.hostname);
     if (!source) return;
 
     const campaign = normalizeSourceValue(
@@ -133,8 +212,41 @@ export function captureFirstTouch(): void {
     );
 
     const entry: FirstTouch = { source, ts: Date.now(), ...(campaign ? { campaign } : {}) };
+    if (!hasConsented()) {
+      // Pas de réponse au bandeau (ou un refus) : on retient en mémoire, rien
+      // n'est écrit. Perdu au rechargement, et c'est voulu.
+      pending = entry;
+      return;
+    }
     localStorage.setItem(FIRST_TOUCH_STORAGE_KEY, JSON.stringify(entry));
   } catch {
     /* localStorage indisponible ou URL illisible — l'app doit démarrer quand même. */
   }
+}
+
+/**
+ * À appeler quand le visiteur ACCEPTE : pose la source retenue en mémoire
+ * depuis l'arrivée sur la page. No-op sans consentement ou sans source.
+ */
+export function persistPendingFirstTouch(): void {
+  try {
+    if (!pending || !hasConsented()) return;
+    if (!readFirstTouch()) {
+      localStorage.setItem(FIRST_TOUCH_STORAGE_KEY, JSON.stringify(pending));
+    }
+    pending = null;
+  } catch {
+    /* stockage indisponible : pas d'attribution, pas d'erreur. */
+  }
+}
+
+/** Refus ou retrait du consentement : la source ne survit nulle part. */
+export function clearAttributionTraces(storage: Pick<Storage, 'removeItem'>): void {
+  pending = null;
+  try { storage.removeItem(FIRST_TOUCH_STORAGE_KEY); } catch { /* stockage indisponible */ }
+}
+
+/** Réservé aux tests. */
+export function _pendingFirstTouchForTests(): FirstTouch | null {
+  return pending;
 }

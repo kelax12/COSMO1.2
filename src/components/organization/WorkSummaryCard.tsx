@@ -29,7 +29,7 @@ const LegendDot = ({ colorClass, label, value, valueClass }: {
   colorClass: string; label: string; value: number; valueClass?: string;
 }) => (
   <div className="flex items-center gap-1.5">
-    <span className={`w-2.5 h-2.5 rounded-[3px] shrink-0 ${colorClass}`} aria-hidden="true" />
+    <span className={`max-md:hidden w-2.5 h-2.5 rounded-[3px] shrink-0 ${colorClass}`} aria-hidden="true" />
     <span className="text-xs text-[rgb(var(--color-text-secondary))]">
       <span className={`font-semibold ${valueClass ?? 'text-[rgb(var(--color-text-primary))]'}`}>{value}</span>{' '}
       {label}
@@ -113,7 +113,8 @@ const WorkSummaryCard = ({
                 ❌ Ne pas y remettre de segment : le jour où les trois couleurs
                 reviennent dans la barre, « 0 % » redevient illisible. */}
             <div className="h-3 rounded-full overflow-hidden bg-[rgb(var(--color-border))]" role="img" aria-label={barLabel}>
-              <Segment ratio={completed / total} colorClass="bg-emerald-500" />
+              {/* Maquette 280 : sur mobile, une teinte ; la légende dit le reste. */}
+              <Segment ratio={completed / total} colorClass="bg-emerald-500 max-md:bg-[rgb(var(--color-accent-solid))]" />
             </div>
             <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3.5">
               <LegendDot colorClass="bg-emerald-500" label={tOrgAdmin('summary.legendCompleted')} value={completed} />
@@ -125,7 +126,7 @@ const WorkSummaryCard = ({
       </div>
 
       {aside && (
-        <div className="border-t sm:border-t-0 sm:border-l border-[rgb(var(--color-border))] pt-4 sm:pt-0 sm:pl-6 flex justify-center">
+        <div className="max-md:hidden border-t sm:border-t-0 sm:border-l border-[rgb(var(--color-border))] pt-4 sm:pt-0 sm:pl-6 flex justify-center">
           {aside}
         </div>
       )}

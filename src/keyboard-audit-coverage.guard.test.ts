@@ -59,6 +59,11 @@ const MESUREES: Record<string, string> = {
   'pages/agenda/RecurringEventsManager.tsx': 'prend le piège, puis le rend',
   'components/ConfirmDiscardDialog.tsx': 'Échap passe par guardedClose',
   'components/task-modal/DeleteTaskConfirm.tsx': 'prend le piège, puis le rend',
+  // Rôles personnalisés (mig. 219) : déclarées « dette » du 2026-10-15 au
+  // 2026-10-22, mesurées depuis, ouvertes au clavier en démo. Le parcours
+  // empilé (l'éditeur ouvert depuis l'attribution) a sa propre garde.
+  'components/organization/AssignRoleDialog.tsx': 'MESURE — AssignRoleDialog',
+  'components/organization/RoleEditorSheet.tsx': 'MESURE — RoleEditorSheet',
 };
 
 /**
@@ -74,6 +79,12 @@ const MESUREES: Record<string, string> = {
  *   · NON MESURÉE, SANS OBSTACLE — la dette. Elle est nommée comme telle.
  */
 const NON_MESUREES: Record<string, string> = {
+  'components/organization/TemplatePicker.tsx':
+    'dette : choix d un modèle d Aperçu (2026-10-19), câblé sur useModalA11y, jamais parcouru '
+    + 'au clavier par le harnais.',
+  'components/organization/AddWidgetPage.tsx':
+    'dette : page « Ajouter un widget » de l Aperçu (2026-10-19), focus initial sur la recherche '
+    + 'vu dans le navigateur, jamais parcourue au clavier par le harnais.',
   'components/organization/OrgGlossarySheet.tsx':
     'dette : glossaire de /entreprise (bouton d en-tête, 2026-09-25), jamais parcouru au clavier.',
   'components/organization/InviteModeDialog.tsx':
@@ -88,8 +99,9 @@ const NON_MESUREES: Record<string, string> = {
     'dette, et la plus gênante des trois : une palette de commandes EST un '
     + 'geste clavier. Elle devrait être la première mesurée.',
   'components/CompletedOKRsModal.tsx': 'dette : atteignable depuis /okr.',
-  'components/organization/OrgSectionSwitcher.tsx':
-    'dette : atteignable en démo sur mobile (/entreprise, sélecteur de section). '
+  'components/organization/OrgSectionSheet.tsx':
+    'dette : atteignable en démo sur mobile (/entreprise, sélecteur de section ; feuille sortie '
+    + 'd OrgSectionSwitcher le 2026-10-15, chargée au premier toucher). '
     + 'Échap vérifié à la main le 2026-09-23, piège de focus jamais mesuré.',
   'components/organization/MemberBulkPicker.tsx':
     'dette : atteignable en démo (/entreprise/members, Sélectionner, puis une '
@@ -124,13 +136,12 @@ const NON_MESUREES: Record<string, string> = {
   'components/mobile/BottomSheet.tsx':
     'PRIMITIVE, pas une surface : c est elle que montent la plupart des '
     + 'feuilles ci-dessus, et quatre de ses consommatrices sont mesurées.',
-  'components/onboarding/enterprise/MemberWelcome.tsx':
-    'inatteignable en démo par conception (jamais en démo, 2026-10-03). Hors démo, '
-    + '`e2e/stubbed/org-onboarding.spec.ts` vérifie le focus d entrée et la sortie par Échap ; '
-    + 'le piège de Tab, lui, n est pas mesuré : dette.',
+  'components/onboarding/enterprise/OrgWelcomeVideo.tsx':
+    'inatteignable en démo par conception (jamais en démo). Hors démo, '
+    + '`e2e/stubbed/org-onboarding.spec.ts` mesure le focus d entrée et la sortie par Échap (2026-10-14).',
   'components/onboarding/FirstRunSetup.tsx':
-    'inatteignable en démo par conception (`!isDemo`) — c est même le parcours '
-    + 'qui a motivé la création du project `supabase-stub`.',
+    'inatteignable en démo par conception (`!isDemo`). Hors démo, '
+    + '`e2e/stubbed/first-run.spec.ts` mesure le piège de Tab (25 Tab) depuis le 2026-10-05.',
   'components/organization/AssignEventDialog.tsx': 'mode entreprise.',
   'components/organization/AssignTaskSheet.tsx': 'mode entreprise.',
   'components/organization/CreateTeamModal.tsx': 'mode entreprise.',
@@ -156,11 +167,17 @@ const NON_MESUREES: Record<string, string> = {
   'components/task-table/ConfirmDeleteSheet.tsx':
     'variante de `DeleteTaskConfirm`, mesurée depuis `EventModal`.',
   'components/ListActionsSheet.tsx': 'dette : atteignable par appui long sur une puce de liste.',
+  'components/task-board/MoveTaskSheet.tsx':
+    'dette : « Déplacer vers… » du Tableau perso (/tasks, vue Tableau, 2026-10-08). Câblée '
+    + 'par `BottomSheet`, jamais parcourue au clavier par le spec.',
   'pages/agenda/QuickEventCard.tsx': 'dette : atteignable sur /agenda.',
   'pages/okr/DeleteObjectiveConfirm.tsx':
     'atteignable, et déjà ouverte par `reduced-motion-sheets.spec.ts` — mais '
     + 'pour mesurer son ANIMATION, pas son clavier. Dette.',
   'pages/tasks/CreateListSheet.tsx': 'dette : atteignable sur /tasks.',
+  'pages/settings/ImportTasksDialog.tsx':
+    'dette : import de tâches (/settings, onglet Données, 2026-10-09). Câblée par '
+    + '`BottomSheet`, jamais parcourue au clavier par le spec.',
   'pages/tasks/MobileTaskSearch.tsx':
     'dette : atteignable sur /tasks sous 768 px. Le harnais clavier tourne '
     + 'en viewport desktop, où la surface est `md:hidden` : la mesurer demande '
@@ -251,11 +268,12 @@ describe('C-96 — couverture clavier des surfaces modales', () => {
     const mesurees = cablees.filter((f) => f in MESUREES).length;
     const dette = Object.values(NON_MESUREES).filter((r) => r.includes('dette')).length;
     const total = cablees.length;
-    // Un CLIQUET : la couverture ne peut que monter.
+    // Un CLIQUET : la couverture ne peut que monter. 10 au 2026-09-20, 12 au
+    // 2026-10-22 (rôles personnalisés mesurés).
     expect(
       mesurees,
       `Couverture clavier en BAISSE : ${mesurees} surfaces mesurées sur ${total}.`,
-    ).toBeGreaterThanOrEqual(10);
+    ).toBeGreaterThanOrEqual(12);
     // …et le chiffre est imprimé, pour qu'il soit lisible sans ouvrir ce fichier.
     console.log(
       `::notice title=c96::${mesurees} surface(s) modale(s) mesurée(s) au clavier sur `

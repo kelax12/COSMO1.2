@@ -69,22 +69,9 @@ src/modules/{module}/
 └── index.ts               # Export public (barrel)
 ```
 
-| Module | Usage |
-|---|---|
-| `auth` | Authentification, session, AuthContext |
-| `billing` | Abonnement premium (⚠️ Stripe non finalisé) |
-| `tasks` / `categories` / `lists` | Tâches et leur classement |
-| `events` | Événements calendrier |
-| `habits` | Habitudes |
-| `okrs` / `kr-completions` | OKR + journal append-only des complétions de KR |
-| `today` | Vue « aujourd'hui » (agrégat tâches/habitudes/événements) |
-| `friends` | Collaboration sociale (partage entre comptes perso) |
-| `stats` | Agrégats « temps investi » (RPC `get_work_time_stats` en prod, calcul local en démo) |
-| `ui-states` | État UI persistant (couleurs, priorités, modules actifs) |
-| `user` | Profil utilisateur, messages inbox |
-| `admin` | Console `/admin` (RPC `get_admin_stats`) |
-| `organizations` / `org-teams` | **Mode entreprise** : organisation, pyramide managériale, équipes |
-| `team-projects` / `team-okrs` / `team-categories` | **Mode entreprise** : projets, OKR d'équipe, catégories |
+**23 modules** (recomptés le 2026-10-20). Leur rôle, leurs tables et leurs RPC : une ligne chacun
+dans [`docs/MODULES.md`](../../docs/MODULES.md), la carte qui fait foi. Ce fichier listait
+18 modules sur 23 (`org-config`, `org-reports`, `team-lists` y manquaient).
 
 ### Règle d'import par zone
 
@@ -95,7 +82,7 @@ src/modules/{module}/
 | Habitudes | `habits`, `categories` |
 | OKR | `okrs`, `kr-completions` |
 | Amis / Collaboration | `friends` |
-| Entreprise | `organizations`, `org-teams`, `team-projects`, `team-okrs`, `team-categories` |
+| Entreprise | `organizations`, `org-teams`, `org-config`, `org-reports`, `team-projects`, `team-okrs`, `team-categories`, `team-lists` |
 | UI / Filtres | `ui-states` |
 | Dashboard | `tasks`, `habits`, `events`, `kr-completions`, `okrs`, `auth` |
 
@@ -256,8 +243,8 @@ restoreCategoryMutation.mutate(snapshot); // ✅ useRestoreX, id d'origine conse
 ## Champs canoniques du modèle
 
 - ❌ `habit.completedDates` — canonique : `habit.completions: Record<string, boolean>` (B5)
-- ❌ `task.status` / `task.title` / `task.dueDate` / `task.isBookmarked` — utiliser
-  `task.completed` / `task.name` / `task.deadline` / `task.bookmarked` (B6)
+- ❌ `task.title` / `task.dueDate` / `task.isBookmarked` → `name` / `deadline` / `bookmarked` (B6).
+  `task.status` n'est pas « terminée », c'est `completed` : [`tasks/CLAUDE.md`](tasks/CLAUDE.md)
 - ❌ Faire porter au type `User` un état d'abonnement — il ne porte QUE l'identité ; l'état
   premium vient de `useBilling()`, jamais d'ailleurs (ex-N5). Les champs que cette règle nommait
   (`premiumTokens`, `premiumWinStreak`, `lastTokenConsumption`) n'existent plus nulle part depuis

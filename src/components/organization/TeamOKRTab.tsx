@@ -153,9 +153,12 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
           <button
             type="button"
             onClick={() => setShowCreate(true)}
-            className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] shadow-sm transition-colors"
+            data-guide-id="okr-new"
+            // Maquette 259 : sur mobile, un « + » seul, nommé pour les lecteurs d'écran.
+            aria-label={tOrgAdmin('okrTab.newObjective')}
+            className="shrink-0 inline-flex items-center justify-center gap-1.5 h-9 max-md:w-9 max-md:px-0 max-md:rounded-xl px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] shadow-sm transition-colors"
           >
-            <Plus size={15} aria-hidden="true" /> {tOrgAdmin('okrTab.newObjective')}
+            <Plus size={15} aria-hidden="true" /> <span className="max-md:hidden">{tOrgAdmin('okrTab.newObjective')}</span>
           </button>
         </PermissionGate>
       </div>
@@ -243,7 +246,12 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
         />
       )}
       {editingOKR && (
-        <TeamOKRModal orgId={orgId} editingOKR={editingOKR} onClose={() => setEditingOKR(null)} />
+        <TeamOKRModal
+          orgId={orgId}
+          editingOKR={editingOKR}
+          onClose={() => setEditingOKR(null)}
+          onDelete={hints.deniedReason('okr.delete') ? undefined : () => { setDeletingOKR(editingOKR); setEditingOKR(null); }}
+        />
       )}
     </div>
   );

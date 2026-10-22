@@ -12,7 +12,9 @@
 //
 // ⚠️ CE QUE CE FICHIER NE MESURE PAS, et il faut le savoir avant de lire ses
 // chiffres : axe ne scanne que l'ÉTAT INITIAL de chaque route. Aucune modale,
-// aucun menu, aucun calendrier ouvert n'entre dans ces totaux.
+// aucun menu, aucun calendrier ouvert n'entre dans ces totaux. Seule
+// exception : `/agenda`, scanné en plus dans chaque vue du sélecteur
+// (2026-10-22).
 // ═══════════════════════════════════════════════════════════════════
 
 import { test, expect, navTo } from './fixtures';
@@ -137,10 +139,19 @@ test.describe('a11y audit', () => {
   // The first navigation triggers vite's on-demand compile of heavy pages
   // (LandingPage + showcases). Give the cold-start headroom so the suite
   // doesn't flake on the very first goto under CI/loaded machines.
-  test.describe.configure({ timeout: 120_000 });
+  // ⚠️ Plus de `describe.configure({ timeout: 120_000 })` ici : il écrasait
+  // les 180 s du project mobile-safari (playwright.config.ts), et « Settings »
+  // mourait à 120 s sous WebKit (2026-10-10). Sur les autres projects, 120 s
+  // est déjà le délai global : rien ne change pour eux.
 
   test('Landing (public)', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    // 🔴 Le bas de la landing ne monte qu'au premier geste (`BelowFold.tsx`,
+    // TBT mobile) : sans ce défilement, l'audit ne verrait que le hero.
+    await page.evaluate(() => window.scrollBy(0, 1));
+    await page.locator('#faq').first().waitFor({ state: 'attached', timeout: 15_000 }).catch(() => {});
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForLoadState('networkidle');
     const violations = await scan(page, 'landing');
     console.log(`[a11y] Landing: ${violations.length} violation(s)`);
@@ -202,6 +213,38 @@ test.describe('a11y audit', () => {
     const violations = await scan(demoPage, 'agenda');
     console.log(`[a11y] Agenda: ${violations.length} violation(s)`);
     assertNoCritical(violations, 'Agenda');
+
+    // 🔴 2026-10-22 · CHAQUE vue, pas seulement la vue d'arrivée. FullCalendar
+    // RECRÉE ses défileurs à chaque changement de vue, et `useFocusableScrollers`
+    // réécrit les rôles de la grille sur ceux qui débordent (C-119, puis la
+    // réparation `aria-required-children` / `aria-required-parent` du
+    // 2026-10-02). Le mois n'a pas la même structure que les grilles horaires :
+    // n'auditer que l'état initial laissait deux vues sur trois sans verdict.
+    // Bureau : Jour / Semaine / Mois. Mobile : Jour / 2J / Mois.
+    const switcher = demoPage
+      .locator('[data-tutorial-id="agenda-view-switcher"], [data-tutorial-id="agenda-mobile-view-switcher"]')
+      .filter({ visible: true })
+      .first();
+    const boutons = switcher.getByRole('button');
+    const nbVues = await boutons.count();
+    expect(nbVues, 'le sélecteur de vue de /agenda doit être visible').toBeGreaterThanOrEqual(3);
+    for (let i = 0; i < nbVues; i++) {
+      const bouton = boutons.nth(i);
+      const nom = ((await bouton.textContent()) ?? '').trim();
+      await bouton.click();
+      // Le rôle des défileurs se pose à la frame qui suit leur dimensionnement.
+      await demoPage.waitForTimeout(800);
+      const vue = await demoPage.evaluate(() => {
+        // Le calendrier de bureau et celui du mobile coexistent dans le DOM.
+        const el = [...document.querySelectorAll<HTMLElement>('.fc-view-harness .fc-view')]
+          .find(v => v.getClientRects().length > 0);
+        return [...(el?.classList ?? [])].find(c => /^fc-.+-view$/.test(c) && c !== 'fc-view') ?? '?';
+      });
+      const label = `agenda-${vue.replace(/^fc-|-view$/g, '')}`;
+      const parVue = await scan(demoPage, label);
+      console.log(`[a11y] Agenda, vue « ${nom} » (${vue}) : ${parVue.length} violation(s)`);
+      assertNoCritical(parVue, `Agenda, vue ${nom}`);
+    }
   });
 
   test('Entreprise (demo)', async ({ demoPage }) => {
@@ -222,8 +265,16 @@ test.describe('a11y audit', () => {
   });
 
   test('Settings (demo)', async ({ demoPage }) => {
-    await navTo(demoPage, /param[èe]tres?|settings/i, /\/settings/);
+    // `goto` direct (sûr en démo, cf. la note plus haut) : ce test audite la
+    // PAGE, pas le chemin. La feuille « Plus » qu'empruntait `navTo` était le
+    // point fragile sous WebKit (instable le 2026-10-10), et elle reste
+    // couverte par les parcours qui la testent pour elle-même.
+    await demoPage.goto('/settings');
+    await expect(demoPage).toHaveURL(/\/settings/);
     await demoPage.waitForLoadState('networkidle');
+    // Un audit sur une page pas encore peinte rendrait 0 violation : la page
+    // doit être LÀ avant de scanner.
+    await expect(demoPage.getByRole('heading', { level: 1 }).first()).toBeVisible({ timeout: 20_000 });
     const violations = await scan(demoPage, 'settings');
     console.log(`[a11y] Settings: ${violations.length} violation(s)`);
     assertNoCritical(violations, 'Settings');

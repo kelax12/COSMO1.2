@@ -14,8 +14,9 @@ import { useLandingTrack, type LandingTrack } from './landing/use-landing-track'
 import { TRACK_ANCHORS } from './landing/anchors';
 import { useT } from '@/i18n/useT';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
-import { useRootSeoMeta } from '@/lib/useSeoMeta';
+import { useLandingSeoMeta } from '@/lib/useSeoMeta';
 import { applyTheme, THEME_STORAGE_KEY } from '@/lib/theme';
+import { prerenderHeroShown } from '@/lib/prerender-hero';
 
 // Le track entreprise est un parcours entier (10 sections, un shader WebGL) que
 // la moitié des visiteurs ne verra jamais. Il est chargé à la demande, à la
@@ -38,10 +39,12 @@ const EnterpriseTrack = lazyWithRetry(() => import('./landing/entreprise/Enterpr
  */
 const LandingPage: React.FC = () => {
   const { t } = useT('landing');
-  useRootSeoMeta();
   const navigate = useNavigate();
   const { loginDemo } = useAuth();
   const reduceMotion = useReducedMotion();
+  // Le header était déjà à l'écran dans la copie du prérendu : il ne rejoue
+  // pas son entrée (`@/lib/prerender-hero`, relevée par `PersoTrack`).
+  const [reprise] = useState(prerenderHeroShown);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginMode, setLoginMode] = useState<'login' | 'register'>('login');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -49,6 +52,7 @@ const LandingPage: React.FC = () => {
 
   const { track, selectTrack, transitionKey } = useLandingTrack();
   const isEnterprise = track === 'entreprise';
+  useLandingSeoMeta(track);
 
   // Header en verre dépoli évolutif : transparent en haut, opacifié au scroll.
   const { scrollY } = useScroll();
@@ -260,7 +264,7 @@ const LandingPage: React.FC = () => {
           passait sous l'îlot au scroll (cf. `TrackAnchors`). */}
       <header ref={headerRef} className="sticky top-0 z-50 px-3 sm:px-4 pt-3 sm:pt-4">
         <motion.div
-          initial={reduceMotion ? false : { y: -24, opacity: 0 }}
+          initial={reduceMotion || reprise ? false : { y: -24, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className={`mx-auto max-w-6xl rounded-2xl transition-all duration-300 ${
@@ -490,9 +494,11 @@ const LandingPage: React.FC = () => {
               Il n'anime QUE l'opacité — un voile porté par un transform
               resterait à l'écran en `prefers-reduced-motion`. */}
           <AnimatePresence>
+            {/* Pas de voile au premier montage qui relève la copie du prérendu :
+                il blanchirait, puis referait apparaître, un hero déjà à l'écran. */}
             <motion.div
               key={transitionKey}
-              initial={{ opacity: 1 }}
+              initial={reprise && transitionKey === 0 ? false : { opacity: 1 }}
               animate={{ opacity: 0 }}
               transition={{ duration: 0.55, ease: 'easeOut' }}
               className={`pointer-events-none absolute inset-0 z-40 ${

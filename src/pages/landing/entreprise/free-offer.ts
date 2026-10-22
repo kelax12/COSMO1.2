@@ -1,4 +1,4 @@
-import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
+import { ENTERPRISE_BILLING_ENFORCED, PRICES_VISIBLE } from '@/modules/billing/premium-config';
 
 /**
  * L'offre de lancement est-elle en cours — c'est-à-dire : tout est-il gratuit ?
@@ -52,3 +52,10 @@ import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
  * l'inverse) est un mensonge sur la page la plus lue du site.
  */
 export const ENTERPRISE_FREE_OFFER = !ENTERPRISE_BILLING_ENFORCED;
+
+/**
+ * Les prix entreprise sont-ils montrés sur la landing ? Masqués depuis le
+ * 2026-10-16 (`PRICES_VISIBLE`, acquisition sans monétisation), sauf si la
+ * facturation est réactivée : on ne vend pas sans afficher de prix.
+ */
+export const ENTERPRISE_PRICES_SHOWN = PRICES_VISIBLE || ENTERPRISE_BILLING_ENFORCED;

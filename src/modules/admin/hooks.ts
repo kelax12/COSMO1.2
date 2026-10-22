@@ -11,8 +11,8 @@ import {
   type AssuranceLevel,
 } from '@/modules/auth/mfa';
 import { adminKeys } from './constants';
-import { fetchAdminStats, fetchIsAdmin, fetchSupportStats } from './repository';
-import type { AdminStats, AdminSupport } from './types';
+import { fetchAdminStats, fetchIsAdmin, fetchOnboardingFunnel, fetchSupportStats } from './repository';
+import type { AdminOnboardingFunnel, AdminStats, AdminSupport } from './types';
 
 /**
  * Stats globales du dashboard admin. La RPC rejette (42501 →
@@ -46,6 +46,22 @@ export function useSupportStats() {
   return useQuery<AdminSupport | null, Error>({
     queryKey: adminKeys.support(),
     queryFn: fetchSupportStats,
+    enabled: isAuthenticated && !isDemo && isSupabaseConfigured,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+}
+
+/**
+ * Entonnoir des accueils (mig. 213). Requête SÉPARÉE, même raison que
+ * `useSupportStats` : `null` tant que la migration n'est pas appliquée, et le
+ * reste de la console s'affiche quand même.
+ */
+export function useOnboardingFunnel() {
+  const { isAuthenticated, isDemo } = useAuth();
+  return useQuery<AdminOnboardingFunnel | null, Error>({
+    queryKey: adminKeys.onboarding(),
+    queryFn: fetchOnboardingFunnel,
     enabled: isAuthenticated && !isDemo && isSupabaseConfigured,
     staleTime: 5 * 60 * 1000,
     retry: false,

@@ -33,6 +33,8 @@ interface TeamTasksTableProps {
   unreadCommentsByTask: Map<string, number>;
   selectMode: boolean;
   selectedIds: ReadonlySet<string>;
+  /** Tâches qu'une dépendance non terminée bloque : statut affiché « Bloquée ». */
+  blockedTaskIds: ReadonlySet<string>;
   handlers: TeamTasksRowHandlers;
   /** Libellé d'un en-tête de groupe, et sa bascule repliée / dépliée. */
   groupLabel: (key: string) => { label: string; dot?: string };
@@ -46,7 +48,7 @@ const NO_STATUSES: ProjectStatus[] = [];
 
 const TeamTasksTable = ({
   lines, columns, projectById, memberById, categoryNameOf, statusesByProject, currentUserId, unreadCommentsByTask,
-  selectMode, selectedIds, handlers, groupLabel, onToggleGroup, sortIndicator, onSort,
+  selectMode, selectedIds, blockedTaskIds, handlers, groupLabel, onToggleGroup, sortIndicator, onSort,
 }: TeamTasksTableProps) => {
   const { t } = useT('org');
   const pf = useT('portfolio');
@@ -84,7 +86,7 @@ const TeamTasksTable = ({
   );
 
   return (
-    <div ref={tableRef} className="table-container shadow-sm overflow-x-auto">
+    <div ref={tableRef} data-guide-id="tasks-list" className="table-container shadow-sm overflow-x-auto">
       <table className="data-table w-full" style={{ minWidth: `${560 + columns.length * 110}px` }} aria-label={pf.t('taskTable.tableAria')} aria-rowcount={lines.length}>
         <thead>
           <tr>
@@ -143,6 +145,7 @@ const TeamTasksTable = ({
                 unreadComments={unreadCommentsByTask.get(task.id) ?? 0}
                 selectMode={selectMode}
                 selected={selectedIds.has(task.id)}
+                blocked={blockedTaskIds.has(task.id)}
                 handlers={handlers}
               />
             );

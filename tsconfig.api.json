@@ -1,0 +1,28 @@
+{
+  /* Fonctions Vercel de `api/` (runtime edge : API Web + `process.env`).
+     Sans ce fichier, `tsc -b` ne compilait pas `api/collect.ts`, premier code
+     serveur du dépôt, exécuté en production depuis le 2026-10-18 (audit du
+     même jour, docs/TESTING.md). */
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "types": ["node"],
+
+    /* Résolution de Node, celle du contrôle TypeScript que Vercel joue sur
+       `api/` au build (relevé le 2026-10-18 : TS2835 sur un import sans
+       extension, invisible en mode `bundler`). Même règle des deux côtés. */
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["api"]
+}

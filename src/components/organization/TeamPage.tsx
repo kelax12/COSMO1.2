@@ -1,6 +1,7 @@
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useMemo, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router';
-import { CalendarPlus, Pencil, Trash2, FolderKanban, Target, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { CalendarPlus, Pencil, Trash2, FolderKanban, Target, ChevronRight, ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { startOfDay, subDays } from 'date-fns';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
@@ -140,16 +141,49 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
                   <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] break-words">{team.name}</h2>
                   <p className="mt-0.5 text-sm text-[rgb(var(--color-text-muted))]">
                     {tp('team.memberCount', teamMemberships.length)} · {tp('team.projectCount', activeProjects.length)}
+                    {/* Maquette 294 : sur mobile, les chiffres dans la ligne de méta. */}
+                    {teamProjects.length > 0 && (
+                      <span className="md:hidden">
+                        {' · '}{tp('teamPage.openTasks', stats.open)}
+                        {stats.overdue > 0 && <span className="text-[rgb(var(--color-danger-text))]">{' · '}{stats.overdue} {t('teamPage.statOverdue').toLocaleLowerCase()}</span>}
+                      </span>
+                    )}
                   </p>
                   {team.description ? (
                     <p className="mt-3 text-sm text-[rgb(var(--color-text-secondary))] whitespace-pre-line">{team.description}</p>
                   ) : (
-                    <p className="mt-3 text-sm italic text-[rgb(var(--color-text-muted))]">
+                    <>
+                    <p className="max-md:hidden mt-3 text-sm italic text-[rgb(var(--color-text-muted))]">
                       {canManage ? t('teamPage.noDescriptionManager') : t('teamPage.noDescription')}
                     </p>
+                    {/* Maquette 292 : une invitation, plus une phrase en italique. */}
+                    {canManage && (
+                      <button type="button" onClick={() => setEditing(true)} className="md:hidden mt-2 min-h-touch text-sm font-medium text-[rgb(var(--color-accent))]">
+                        + {t('teamPage.addDescription')}
+                      </button>
+                    )}
+                    </>
                   )}
                 </div>
-                <div className="flex gap-1 shrink-0">
+                {/* Maquette 291 : sur mobile, un menu « … » au lieu de trois icônes au repos. */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    aria-label={t('team.optionsAria', { name: team.name })}
+                    className="md:hidden w-10 h-10 -mr-2 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-secondary))]"
+                  >
+                    <MoreHorizontal size={20} aria-hidden="true" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onClick={() => setPlanning(true)}><CalendarPlus size={14} aria-hidden="true" /> {ta('ui.event.open')}</DropdownMenuItem>
+                    {canManage && <DropdownMenuItem onClick={() => setEditing(true)}><Pencil size={14} aria-hidden="true" /> {t('teamPage.edit')}</DropdownMenuItem>}
+                    {canDelete && (
+                      <DropdownMenuItem onClick={() => setDeleting(true)} className="text-red-500 focus:text-red-500">
+                        <Trash2 size={14} className="text-red-500" aria-hidden="true" /> {t('team.menu.delete')}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <div className="max-md:hidden flex gap-1 shrink-0">
                   <button
                     type="button"
                     onClick={() => setPlanning(true)}
@@ -183,7 +217,7 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
               </div>
 
               {/* Tâches ouvertes et en retard des projets de l'équipe. */}
-              <section className="mt-5" aria-labelledby="team-stats-title">
+              <section className="mt-5 max-md:hidden" aria-labelledby="team-stats-title">
                 <h3 id="team-stats-title" className="sr-only">{t('teamPage.statsTitle', { days: TEAM_STATS_WINDOW_DAYS })}</h3>
                 {teamProjects.length === 0 ? (
                   <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('teamPage.statsEmpty')}</p>
@@ -242,7 +276,7 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
                   return (
                     <li key={o.id}>
                       <Link to={orgSectionPath('okr')} className={rowClass}>
-                        <span className="flex-1 truncate text-[15px] font-medium text-[rgb(var(--color-text-primary))]">{o.title}</span>
+                        <span className="flex-1 min-w-0 md:truncate text-[15px] font-medium text-[rgb(var(--color-text-primary))]">{o.title}</span>
                         <div
                           className="w-24 sm:w-40 h-2 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden shrink-0"
                           role="progressbar"
@@ -251,7 +285,7 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
                           aria-valuemax={100}
                           aria-label={t('teamPage.okrProgressAria', { title: o.title })}
                         >
-                          <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: team.color }} />
+                          <div className="h-full rounded-full bg-[rgb(var(--color-accent-solid))] md:bg-[var(--tc)]" style={{ width: `${pct}%`, '--tc': team.color } as CSSProperties} />
                         </div>
                         <span className="w-12 text-right text-sm font-medium tabular-nums text-[rgb(var(--color-text-muted))] shrink-0">{pct} %</span>
                       </Link>

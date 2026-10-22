@@ -23,10 +23,103 @@
 // donc devenues des assertions, sur les MÊMES détecteurs que le témoin Radix.
 // ═══════════════════════════════════════════════════════════════════
 
-import { test, expect, navTo } from './fixtures';
+import { test, expect, navTo, openOrgSection } from './fixtures';
 import type { Page, Locator } from '@playwright/test';
 
 test.describe.configure({ timeout: 180_000 });
+
+// ── C-118 · CE FICHIER JOUE AUSSI SOUS WEBKIT, EN CLAVIER DE BUREAU ─────────
+//
+// Le project `mobile-safari` (iPhone 12, 390 px, tactile) joue ce fichier, et
+// c'est le seul moteur WebKit du job `e2e`. Mais un audit CLAVIER est un audit
+// d'ordinateur : la personne qui navigue à la touche Tab est sur Safari macOS,
+// à 1 280 px, sans écran tactile. À 390 px, les déclencheurs de bureau
+// (« Nouveau », la création d'habitude) n'existent pas, et les cas expiraient
+// sur un élément jamais monté. Mesuré le 2026-10-16 sur un build de production.
+//
+// On remet donc le viewport, le tactile et l'échelle d'un poste de bureau POUR
+// CE FICHIER, quel que soit le project. Sous `chromium` ces trois valeurs sont
+// déjà celles par défaut : rien ne change pour lui. Les cas qui ont besoin
+// d'une feuille mobile redimensionnent eux-mêmes (`setViewportSize(375…)`),
+// comme avant.
+//
+// ⚠️ Le user-agent reste celui de l'iPhone : l'application ne le lit que pour
+// le libellé des raccourcis (⌘ ou Ctrl), identique pour Mac et iPhone.
+test.use({ viewport: { width: 1280, height: 720 }, isMobile: false, hasTouch: false, deviceScaleFactor: 1 });
+
+// ── ÉCART SAFARI N° 1 : Tab ne s'arrête pas sur les LIENS ───────────────────
+//
+// Safari (macOS) laisse désactivé par défaut « Appuyer sur Tab pour mettre en
+// évidence chaque élément d'une page » : Tab saute les liens et ne s'arrête que
+// sur les champs et les boutons ; Option+Tab parcourt tout. Mesuré le
+// 2026-10-16 sous WebKit (Safari 26.5, build Playwright pour Windows) : après un
+// chargement frais de /agenda, cinq Tab de suite traversent la barre latérale
+// sans toucher un seul de ses liens, ni le lien d'évitement.
+//
+// ❌ Ce n'est PAS un défaut du produit : c'est le réglage par défaut du
+// navigateur, et une personne qui navigue au clavier sous Safari connaît
+// Option+Tab. ⚠️ Playwright ne sait pas l'émuler : `Alt+Tab` n'y change rien
+// (mesuré), et sous le WebKit de Linux, qui est celui de la CI, ce serait
+// l'inverse d'un réglage qui parcourt déjà les liens. On ne simule donc pas la
+// touche : on SONDE le moteur (`tabAtteintLesLiens`) et le cas qui parcourt des
+// liens (le lien d'évitement) mesure alors les MÊMES propriétés du produit sans
+// passer par Tab : le lien est le premier focalisable dans l'ordre du document,
+// sa cible accepte le focus, et Entrée l'y déplace.
+// ❌ Ne pas appliquer ce repli aux cas qui mesurent des boutons et des champs
+// (pièges de focus des modales) : Tab seul est ce que Safari fait, et c'est ce
+// qu'ils doivent mesurer.
+
+/** Tab s'arrête-t-il sur un lien dans ce navigateur ? (Faux par défaut sous Safari macOS.) */
+async function tabAtteintLesLiens(page: Page): Promise<boolean> {
+  const sonde = await page.context().newPage();
+  try {
+    await sonde.setContent('<a href="#x">lien</a><button>bouton</button>');
+    await sonde.keyboard.press('Tab');
+    return await sonde.evaluate(() => document.activeElement?.tagName === 'A');
+  } finally {
+    await sonde.close();
+  }
+}
+
+const FOCALISABLES =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), '
+  + 'textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Le premier arrêt de tabulation d'un conteneur, lu dans l'ORDRE DU DOCUMENT, et
+ * le focus qui s'y pose : ce que ferait un Tab dans un moteur qui parcourt tout.
+ */
+async function premierArretDuDocument(page: Page, conteneurId?: string) {
+  return page.evaluate(
+    ({ sel, id }) => {
+      const racine = id ? document.getElementById(id) : document;
+      const el = racine?.querySelector<HTMLElement>(sel) ?? null;
+      el?.focus();
+      return {
+        id: el?.id ?? '',
+        tag: el?.tagName.toLowerCase() ?? '',
+        name: (el?.getAttribute('aria-label') || el?.textContent || '').trim().slice(0, 40),
+      };
+    },
+    { sel: FOCALISABLES, id: conteneurId },
+  );
+}
+
+/**
+ * Passe en gabarit téléphone ET attend que la barre d'onglets mobile soit
+ * montée.
+ *
+ * 🔴 Sans cette attente, `navTo` cherchait ses liens pendant que la mise en page
+ * bureau se démontait encore : sous WebKit, le lien « Tâches » n'était pas
+ * encore atteignable, la fixture retombait sur la feuille « Plus », qui ne le
+ * porte pas, et le cas expirait sur un élément qui n'existe pas dans cette
+ * feuille (échec constant le 2026-10-16, absent sous Chromium).
+ */
+async function passerEnMobile(page: Page): Promise<void> {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect(page.getByRole('button', { name: /plus d'options/i }).filter({ visible: true }).first())
+    .toBeVisible({ timeout: 20_000 });
+}
 
 interface FocusReport {
   focusMovedIn: boolean;
@@ -65,8 +158,15 @@ async function measureFocus(
   container: Locator,
   checkReturn = false,
 ): Promise<FocusReport> {
+  // ⚠️ Attendu jusqu'à 3 s, pas lu une fois : une surface pose son focus JUSTE
+  // APRÈS son affichage, et la lecture immédiate tombait parfois avant
+  // (MobileAddToList, instable en CI le 2026-10-10). Un focus qui n'entre
+  // jamais rend toujours `false`, au bout des 3 s.
+  const focusMovedIn = await expect
+    .poll(() => focusInside(container), { timeout: 3_000 })
+    .toBe(true)
+    .then(() => true, () => false);
   const focusedOnOpen = await describeFocus(page);
-  const focusMovedIn = await focusInside(container);
   const role = await container.getAttribute('role');
   const ariaModal = await container.getAttribute('aria-modal');
 
@@ -77,8 +177,13 @@ async function measureFocus(
   }
 
   await page.keyboard.press('Escape');
+  // 5 s et non 2 : sous WebKit, machine chargée ou runner CI, la sortie animée
+  // d'une modale dépasse 2 s (mesuré le 2026-10-16 : le TÉMOIN Radix lui-même
+  // rendait « Échap ne ferme pas » une fois sur trois alors qu'il se fermait).
+  // Le détecteur reste le même : une modale qu'Échap ne ferme JAMAIS échoue
+  // toujours, au bout des 5 s.
   const escClosed = await container
-    .waitFor({ state: 'hidden', timeout: 2_000 })
+    .waitFor({ state: 'hidden', timeout: 5_000 })
     .then(() => true)
     .catch(() => false);
 
@@ -223,10 +328,13 @@ test('GARDE — EventModal : Échap passe par guardedClose, et le piège suit la
   await expect(titleField).toHaveValue('Titre modifié au clavier');
 
   // ── Le piège est passé À L'ENFANT ────────────────────────────────
-  expect(
-    await focusInside(discard),
-    `focus non entré dans la confirmation: ${await describeFocus(page)}`,
-  ).toBe(true);
+  // Attendu 3 s, même raison que les frères ci-dessous (instable le 2026-10-10).
+  await expect
+    .poll(() => focusInside(discard), {
+      timeout: 3_000,
+      message: `focus non entré dans la confirmation: ${await describeFocus(page)}`,
+    })
+    .toBe(true);
   const escapee = await firstTabEscapee(page, discard);
   expect(escapee, `le focus a quitté la confirmation vers ${escapee}`).toBe(null);
 
@@ -258,7 +366,11 @@ for (const child of EVENT_MODAL_CHILDREN) {
     await navTo(page, /agenda/i, /\/agenda/);
     await page.waitForLoadState('networkidle');
     const trigger = page.getByRole('button', { name: /^nouveau$/i }).filter({ visible: true }).first();
-    await trigger.click({ timeout: 20_000 });
+    // `dispatchEvent`, comme `MESURE — EventModal` plus haut : sous WebKit le
+    // test « stable » de Playwright n'aboutit pas sur ce bouton animé (échec du
+    // 2026-10-16, un run sur trois). Le focus est posé d'abord, comme au clavier.
+    await trigger.focus({ timeout: 20_000 });
+    await trigger.dispatchEvent('click');
     const eventModal = page.getByRole('dialog', { name: /ajouter un événement/i });
     await expect(eventModal).toBeVisible({ timeout: 20_000 });
 
@@ -267,10 +379,15 @@ for (const child of EVENT_MODAL_CHILDREN) {
     await expect(sibling).toBeVisible({ timeout: 10_000 });
 
     // ── Le piège est passé À L'ENFANT ──────────────────────────────
-    expect(
-      await focusInside(sibling),
-      `focus non entré dans ${child.surface}: ${await describeFocus(page)}`,
-    ).toBe(true);
+    // ⚠️ Attendu, pas lu une fois : la modale pose le focus JUSTE APRÈS son
+    // affichage, et une lecture immédiate tombait parfois avant (instable en
+    // CI le 2026-10-09). Un focus qui n'entre JAMAIS échoue toujours, en 3 s.
+    await expect
+      .poll(() => focusInside(sibling), {
+        timeout: 3_000,
+        message: `focus non entré dans ${child.surface}: ${await describeFocus(page)}`,
+      })
+      .toBe(true);
     const escapee = await firstTabEscapee(page, sibling);
     expect(escapee, `le focus a quitté ${child.surface} vers ${escapee}`).toBe(null);
 
@@ -384,7 +501,7 @@ test('MESURE — TaskActionsSheet (feuille d\'actions d\'une tâche)', async ({ 
   // Au-dessus du point de rupture, le bouton « Actions pour … » existe encore
   // mais n'ouvre pas cette surface — mesuré le 2026-09-08, la garde cherchait
   // un `role="dialog"` qui n'était jamais monté.
-  await page.setViewportSize({ width: 375, height: 812 });
+  await passerEnMobile(page);
   await openTasksPage(page);
 
   const sheet = await ouvrirActionsAuClavier(page);
@@ -400,7 +517,7 @@ test('MESURE — MobileAddToList (« Ajouter à une liste »)', async ({ demoPag
   // au-dessus du point de rupture. Cette variante-là n'est PAS câblée sur
   // `useModalA11y` ; mesurée sur desktop, la garde parlerait d'un autre
   // composant que celui qu'elle nomme.
-  await page.setViewportSize({ width: 375, height: 812 });
+  await passerEnMobile(page);
   await openTasksPage(page);
 
   const actions = await ouvrirActionsAuClavier(page);
@@ -430,7 +547,10 @@ test('MESURE — ShareListSheet (partage d\'une liste manuelle)', async ({ demoP
   // pas une feuille, et son déclencheur est la puce « Liste » — le bouton
   // « Nouvelle liste » est `sm:hidden`, donc mobile uniquement. Viser ce
   // dernier ici faisait attendre 3 min un élément jamais monté.
-  await page.getByRole('button', { name: /^liste$/i }).filter({ visible: true }).first().click();
+  // 🔴 La puce porte le nom « Nouvelle liste manuelle » depuis le 2026-10-09 :
+  // la bascule de vue Liste / Tableau a aussi un bouton « Liste », et `^liste$`
+  // cliquait celle-là (la vue Liste, déjà active), donc rien ne s'ouvrait.
+  await page.getByRole('button', { name: /^nouvelle liste manuelle$/i }).filter({ visible: true }).first().click();
   const nameField = page.getByPlaceholder(/nom de la liste/i).first();
   await expect(nameField).toBeVisible({ timeout: 10_000 });
   await nameField.fill('Liste a11y');
@@ -477,6 +597,120 @@ test('MESURE — ShareListSheet (partage d\'une liste manuelle)', async ({ demoP
   const report = await measureFocus(page, sheet, true);
   console.log('[a11y-kbd] ShareListSheet', JSON.stringify(report));
   assertModalTrapsFocus('ShareListSheet', report);
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Rôles personnalisés (mig. 219, `a6562733`) : `AssignRoleDialog` et
+// `RoleEditorSheet`, déclarées « dette » par C-96 du 2026-10-15 au 2026-10-22.
+//
+// La démo sème « Nova Studio » et deux rôles : les deux surfaces s'atteignent
+// SANS le project `supabase-stub`. Les deux déclencheurs sont ouverts AU
+// CLAVIER (focus puis Entrée, y compris l'entrée de menu Radix) : un déclencheur
+// qu'on n'atteindrait qu'à la souris rendrait la mesure du piège sans objet.
+//
+// ⚠️ `RoleEditorSheet` est AUSSI ouverte depuis `AssignRoleDialog` (« Créer un
+// rôle » au bas du sélecteur), en portail, donc en FRÈRE DOM de son parent : le
+// cas de la pile (`openStack`) que `EventModal` couvre pour ses frères. La garde
+// qui suit mesure l'aller ET le retour du piège, pour la même raison qu'eux.
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Arrive sur `/entreprise` RENDUE. L'URL change avant que la page (lazy) ne
+ * remplace le tableau de bord : attendre le nom de l'organisation démo, comme
+ * `demo-entreprise.spec.ts`, sinon la navigation des sections n'existe pas encore.
+ */
+async function ouvrirEntreprise(page: Page): Promise<void> {
+  await navTo(page, /entreprise/i, /\/entreprise/);
+  await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 30_000 });
+}
+
+/** Ouvre `AssignRoleDialog` au clavier sur le premier membre qui le propose. */
+async function ouvrirAttribuerUnRole(page: Page): Promise<Locator> {
+  await ouvrirEntreprise(page);
+  await openOrgSection(page, /^membres/i);
+  const triggers = page.getByRole('button', { name: /^actions pour /i }).filter({ visible: true });
+  await expect(triggers.first()).toBeVisible({ timeout: 20_000 });
+  const item = page.locator('[data-guide-id="member-assign-role"]');
+  // Le menu d'un membre ne porte « Attribuer un rôle » que dans la portée de
+  // l'appelant : on prend le premier qui le propose, au lieu de supposer lequel.
+  const n = await triggers.count();
+  for (let i = 0; i < n; i++) {
+    const trigger = triggers.nth(i);
+    await trigger.focus();
+    // Marqué AVANT d'ouvrir : un menu Radix ouvert rend le reste de la page
+    // `aria-hidden`, et `getByRole` ne retrouverait plus ce bouton ensuite.
+    await markTrigger(page);
+    await page.keyboard.press('Enter');
+    const propose = await item.waitFor({ state: 'visible', timeout: 3_000 }).then(() => true, () => false);
+    if (propose) {
+      await item.focus();
+      await page.keyboard.press('Enter');
+      const dialog = page.getByRole('dialog', { name: /^attribuer un rôle à /i });
+      await expect(dialog).toBeVisible({ timeout: 20_000 });
+      // Le squelette (C-40) n'est pas focalisable : mesurer le piège APRÈS la réponse.
+      await expect(dialog.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 20_000 });
+      return dialog;
+    }
+    await page.keyboard.press('Escape');
+  }
+  throw new Error('aucun membre de la démo ne propose « Attribuer un rôle »');
+}
+
+test('MESURE — AssignRoleDialog (attribuer un rôle personnalisé)', async ({ demoPage: page }) => {
+  // Le déclencheur marqué est le bouton « Actions pour … » du membre : c'est
+  // lui qu'on attend au retour (l'entrée de menu, elle, a disparu).
+  const dialog = await ouvrirAttribuerUnRole(page);
+  const report = await measureFocus(page, dialog, true);
+  console.log('[a11y-kbd] AssignRoleDialog', JSON.stringify(report));
+  assertModalTrapsFocus('AssignRoleDialog', report);
+});
+
+test('MESURE — RoleEditorSheet (créer un rôle personnalisé)', async ({ demoPage: page }) => {
+  await ouvrirEntreprise(page);
+  await openOrgSection(page, /^paramètres/i);
+  const panneau = page.locator('[data-guide-id="settings-panel-roles"]').filter({ visible: true }).first();
+  await expect(panneau).toBeVisible({ timeout: 20_000 });
+  await panneau.focus();
+  await page.keyboard.press('Enter');
+  const trigger = page.locator('[data-guide-id="settings-roles-new"]').filter({ visible: true }).first();
+  await expect(trigger).toBeVisible({ timeout: 20_000 });
+  await trigger.focus();
+  await markTrigger(page);
+  await page.keyboard.press('Enter');
+
+  const sheet = page.getByRole('dialog', { name: /^éditeur du rôle/i });
+  await expect(sheet).toBeVisible({ timeout: 20_000 });
+  const report = await measureFocus(page, sheet, true);
+  console.log('[a11y-kbd] RoleEditorSheet', JSON.stringify(report));
+  assertModalTrapsFocus('RoleEditorSheet', report);
+});
+
+test('GARDE — AssignRoleDialog : RoleEditorSheet prend le piège, puis le rend', async ({ demoPage: page }) => {
+  const parent = await ouvrirAttribuerUnRole(page);
+  // « Créer un rôle » au bas du sélecteur, au clavier : Entrée ouvre le menu,
+  // Fin va au dernier item, Entrée le choisit.
+  await parent.locator('#assign-role-select').focus();
+  await page.keyboard.press('Enter');
+  const creer = page.getByRole('menuitem', { name: /^créer un rôle$/i });
+  await expect(creer).toBeVisible({ timeout: 10_000 });
+  await page.keyboard.press('End');
+  await expect(creer).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  const child = page.getByRole('dialog', { name: /^éditeur du rôle/i });
+  await expect(child).toBeVisible({ timeout: 20_000 });
+  await expect.poll(() => focusInside(child), { timeout: 3_000 }).toBe(true);
+  expect(await firstTabEscapee(page, child), 'RoleEditorSheet (enfant) : focus sorti').toBeNull();
+
+  // Échap ne ferme QUE l'enfant : le parent reste, et reprend le piège.
+  await page.keyboard.press('Escape');
+  await expect(child).toBeHidden({ timeout: 5_000 });
+  await expect(parent).toBeVisible();
+  expect(await firstTabEscapee(page, parent), 'AssignRoleDialog (parent rendu) : focus sorti').toBeNull();
+  expect(await focusInside(parent), 'AssignRoleDialog : le focus n est pas revenu au parent').toBe(true);
+
+  await page.keyboard.press('Escape');
+  await expect(parent).toBeHidden({ timeout: 5_000 });
 });
 
 test('MESURE — DatePicker ancré à un champ (modale OKR)', async ({ demoPage: page }) => {
@@ -609,6 +843,13 @@ test('MESURE — DatePicker ancré à un champ (modale OKR)', async ({ demoPage:
 async function openTasksBare(page: Page): Promise<void> {
   await page.goto('/tasks');
   await page.waitForLoadState('networkidle');
+  // 🔴 Attendre un élément DE LA PAGE, pas un délai : la page Tâches est lazy, et
+  // sous WebKit son rendu arrivait APRÈS le délai fixe ci-dessous. Les sondes
+  // qui suivent (`isVisible`, qui n'attend pas) lisaient alors un `<main>` vide
+  // et concluaient « mode sélection introuvable » (échec constant le 2026-10-16,
+  // alors que le bouton était là quelques secondes plus tard).
+  await expect(page.getByRole('button', { name: /^créer une (nouvelle )?tâche$/i }).first())
+    .toBeVisible({ timeout: 30_000 });
   await page.waitForTimeout(1_200);
 
   const skip = page.getByRole('button', { name: /passer le tutoriel/i }).first();
@@ -898,8 +1139,16 @@ test('GARDE — /agenda : les deux liens d\'évitement déplacent le focus', asy
   await page.waitForLoadState('networkidle');
   await page.locator('.fc').first().waitFor({ state: 'attached', timeout: 30_000 });
   await page.waitForTimeout(1_000);
-  await page.keyboard.press('Tab');
-  const first = await focusedIdentity(page);
+  const tabSurLesLiens = await tabAtteintLesLiens(page);
+  console.log("[a11y-kbd] C-118 Tab s'arrête sur les liens :", tabSurLesLiens);
+  let first;
+  if (tabSurLesLiens) {
+    await page.keyboard.press('Tab');
+    first = await focusedIdentity(page);
+  } else {
+    // Écart Safari n° 1 (cf. plus haut) : même propriété, lue sans Tab.
+    first = await premierArretDuDocument(page);
+  }
   expect(first.tag, `premier arrêt de tabulation: ${JSON.stringify(first)}`).toBe('a');
   expect(first.name).toMatch(/contenu principal/i);
 
@@ -909,8 +1158,13 @@ test('GARDE — /agenda : les deux liens d\'évitement déplacent le focus', asy
 
   // 3. Le premier arrêt À L'INTÉRIEUR du main est le second lien d'évitement,
   //    celui qui saute le panneau des tâches.
-  await page.keyboard.press('Tab');
-  const second = await focusedIdentity(page);
+  let second;
+  if (tabSurLesLiens) {
+    await page.keyboard.press('Tab');
+    second = await focusedIdentity(page);
+  } else {
+    second = await premierArretDuDocument(page, 'main-content');
+  }
   expect(second.name, `premier arrêt dans le main: ${JSON.stringify(second)}`).toMatch(/calendrier/i);
 
   // 4. Il pose le focus sur le conteneur du calendrier DESKTOP.

@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
-import { Routes, Route, Navigate } from 'react-router';
+import { Routes, Route, Navigate, useLocation } from 'react-router';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { loadSonner } from '@/lib/toast';
@@ -33,6 +33,8 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
 import NewVersionBanner from '@/components/NewVersionBanner';
 import ShareInviteClaimer from '@/components/ShareInviteClaimer';
+import { releasePrerenderHero } from '@/lib/prerender-hero';
+import BootScreen from '@/components/BootScreen';
 import { isOrgPath } from '@/components/organization/deep-link.helpers';
 // Audit perf 2026-05-29 — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
 // it so its imports (framer-motion subset, lucide icons, fuzzy search) don't
@@ -49,6 +51,27 @@ const CommandPalette = lazy(() => import('@/components/CommandPalette'));
 // enveloppe les routes cacherait la page pendant le chargement.
 const Toaster = lazy(() => loadSonner().then((m) => ({ default: m.Toaster })));
 
+/**
+ * L'accueil entreprise (`/entreprise/onboarding`) a une DA nuit FIXE : un toast
+ * clair (« Équipe créée ») y tombait comme une carte blanche sur la nuit
+ * (relevé le 2026-10-04). Ses toasts sont donc sombres ; partout ailleurs, le
+ * réglage d'origine (`system`).
+ */
+const ThemedToaster = () => {
+  const { pathname } = useLocation();
+  return (
+    <Toaster
+      position="top-right"
+      richColors
+      closeButton
+      theme={pathname.endsWith('/entreprise/onboarding') ? 'dark' : 'system'}
+      toastOptions={{
+        duration: 3000,
+      }}
+    />
+  );
+};
+
 // Lazy load pages for code splitting.
 //
 // Le second argument est la liste des catalogues i18n du SOUS-ARBRE de la page.
@@ -58,7 +81,7 @@ const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'), ['overlays', 
 const SignupPage = lazyWithRetry(() => import('@/pages/SignupPage'), ['overlays', 'seo']);
 const ForgotPasswordPage = lazyWithRetry(() => import('@/pages/ForgotPasswordPage'), ['seo']);
 const ResetPasswordPage = lazyWithRetry(() => import('@/pages/ResetPasswordPage'), ['seo']);
-const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'), ['dashboard', 'eventModal', 'okr', 'org', 'overlays', 'taskModal', 'tasks']);
+const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'), ['dashboard', 'eventModal', 'okr', 'org', 'orgAdmin', 'overlays', 'taskModal', 'tasks']);
 const TasksPage = lazyWithRetry(() => import('@/pages/TasksPage'), ['eventModal', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
 const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'), ['agenda', 'eventModal', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
 const HabitsPage = lazyWithRetry(() => import('@/pages/HabitsPage'), ['eventModal', 'habits', 'overlays', 'premium', 'tasks', 'tutorials']);
@@ -82,7 +105,7 @@ const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['legal', 'legalT
 const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'), ['invite', 'overlays', 'tasks']);
 const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'), ['admin', 'overlays']);
 const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'), ['onboarding', 'org', 'overlays', 'portfolio']);
-const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'), ['csv', 'eventModal', 'okr', 'org', 'orgAdmin', 'overlays', 'tasks']);
+const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'), ['csv', 'eventModal', 'okr', 'org', 'orgAdmin', 'orgGuide', 'overlays', 'portfolio', 'tasks']);
 const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'), ['org', 'overlays']);
 const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'), ['seo']);
 const BlogIndexPage = lazyWithRetry(() => import('@/pages/BlogIndexPage'), ['landing', 'seo']);
@@ -145,6 +168,16 @@ const LayoutWithSuspense = () => (
   <AppErrorBoundary>
     <Suspense fallback={null}>
       <Layout />
+    </Suspense>
+  </AppErrorBoundary>
+);
+
+// Page PUBLIQUE : son chunk se charge derrière le spinner de démarrage, rendu
+// par React à l'identique (`BootScreen`) : pas un second spinner différent.
+const PublicPageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <AppErrorBoundary>
+    <Suspense fallback={<BootScreen />}>
+      {children}
     </Suspense>
   </AppErrorBoundary>
 );
@@ -243,6 +276,9 @@ const RootRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) return null;
   if (isAuthenticated) {
+    // Une session que le script inline d'index.html n'a pas vue (retour OAuth
+    // sur `/`) : la copie du hero du prérendu couvrirait l'app.
+    releasePrerenderHero();
     // Rouvre l'app sur la dernière page quittée (mémorisée par Layout),
     // fallback dashboard si inconnue ou invalide.
     const last = getLastVisitedPage();
@@ -322,13 +358,13 @@ const AppRoutes = () => {
 
     {/* Public pages — accessibles sans authentification */}
     <Route path="welcome" element={<Navigate to="/" replace />} />
-    <Route path="login" element={<PageWithSuspense><LoginPage /></PageWithSuspense>} />
-    <Route path="signup" element={<PageWithSuspense><SignupPage /></PageWithSuspense>} />
-    <Route path="forgot-password" element={<PageWithSuspense><ForgotPasswordPage /></PageWithSuspense>} />
-    <Route path="reset-password" element={<PageWithSuspense><ResetPasswordPage /></PageWithSuspense>} />
-    <Route path="guide" element={<PageWithSuspense><GuidePage /></PageWithSuspense>} />
-    <Route path="blog" element={<PageWithSuspense><BlogIndexPage /></PageWithSuspense>} />
-    <Route path="blog/:slug" element={<PageWithSuspense><BlogArticlePage /></PageWithSuspense>} />
+    <Route path="login" element={<PublicPageWithSuspense><LoginPage /></PublicPageWithSuspense>} />
+    <Route path="signup" element={<PublicPageWithSuspense><SignupPage /></PublicPageWithSuspense>} />
+    <Route path="forgot-password" element={<PublicPageWithSuspense><ForgotPasswordPage /></PublicPageWithSuspense>} />
+    <Route path="reset-password" element={<PublicPageWithSuspense><ResetPasswordPage /></PublicPageWithSuspense>} />
+    <Route path="guide" element={<PublicPageWithSuspense><GuidePage /></PublicPageWithSuspense>} />
+    <Route path="blog" element={<PublicPageWithSuspense><BlogIndexPage /></PublicPageWithSuspense>} />
+    <Route path="blog/:slug" element={<PublicPageWithSuspense><BlogArticlePage /></PublicPageWithSuspense>} />
     {/* Slugs publics localisés — cf. src/i18n/routes.ts.
         `basename` retire déjà le préfixe de locale, donc ces chemins restent
         relatifs ; seul le SLUG change selon la langue servie. Conséquence
@@ -338,20 +374,20 @@ const AppRoutes = () => {
       path={routeSlug('enterprisePresentation', activeLocale)}
       element={<RootRoute />}
     />
-    <Route path={routeSlug('about', activeLocale)} element={<PageWithSuspense><AProposPage /></PageWithSuspense>} />
-    <Route path={routeSlug('freelancers', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('students', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('managers', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('teams', activeLocale)} element={<PageWithSuspense><UseCasePage /></PageWithSuspense>} />
-    <Route path={routeSlug('legalNotice', activeLocale)} element={<PageWithSuspense><MentionsLegalesPage /></PageWithSuspense>} />
-    <Route path={routeSlug('privacy', activeLocale)} element={<PageWithSuspense><PolitiqueConfidentialitePage /></PageWithSuspense>} />
-    <Route path={routeSlug('terms', activeLocale)} element={<PageWithSuspense><CGUPage /></PageWithSuspense>} />
+    <Route path={routeSlug('about', activeLocale)} element={<PublicPageWithSuspense><AProposPage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('freelancers', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('students', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('managers', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('teams', activeLocale)} element={<PublicPageWithSuspense><UseCasePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('legalNotice', activeLocale)} element={<PublicPageWithSuspense><MentionsLegalesPage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('privacy', activeLocale)} element={<PublicPageWithSuspense><PolitiqueConfidentialitePage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('terms', activeLocale)} element={<PublicPageWithSuspense><CGUPage /></PublicPageWithSuspense>} />
     {/* Lien d'invitation de partage — public : pose le token puis redirige
         (login/signup si déconnecté) ; ShareInviteClaimer fait le claim. */}
-    <Route path="invite/:token" element={<PageWithSuspense><InvitePage /></PageWithSuspense>} />
+    <Route path="invite/:token" element={<PublicPageWithSuspense><InvitePage /></PublicPageWithSuspense>} />
     {/* Lien d'invitation entreprise placé (v2) — public : la page gère
         elle-même l'état connecté/déconnecté + consentement RGPD. */}
-    <Route path="org-invite/:token" element={<PageWithSuspense><ClaimOrgInvitePage /></PageWithSuspense>} />
+    <Route path="org-invite/:token" element={<PublicPageWithSuspense><ClaimOrgInvitePage /></PublicPageWithSuspense>} />
 
     {/* Protected routes — require authentication */}
     <Route element={<ProtectedRoute />}>
@@ -385,7 +421,7 @@ const AppRoutes = () => {
     </Route>
 
     {/* Fallback */}
-    <Route path="*" element={<PageWithSuspense><NotFoundPage /></PageWithSuspense>} />
+    <Route path="*" element={<PublicPageWithSuspense><NotFoundPage /></PublicPageWithSuspense>} />
   </Routes>
   );
 };
@@ -394,8 +430,7 @@ const AppRoutes = () => {
  * Mesure d'audience Vercel — montée UNIQUEMENT après acceptation explicite.
  *
  * `<Analytics />` était monté inconditionnellement, alors que le bandeau
- * proposait de refuser. C'est le même manquement que celui corrigé dans
- * `src/lib/audience.ts` : deux traceurs, une seule promesse, non tenue.
+ * proposait de refuser : une promesse affichée, non tenue.
  *
  * Le composant réagit au store, donc accepter le monte sans rechargement.
  * Refuser ne le monte jamais : on ne charge pas pour démonter ensuite, car on
@@ -427,15 +462,7 @@ const App: React.FC = () => {
                 de mouvement décoratif). Exigence WCAG 2.3.3 / EAA. */}
             <MotionConfig reducedMotion="user">
             <Suspense fallback={null}>
-              <Toaster
-                position="top-right"
-                richColors
-                closeButton
-                theme="system"
-                toastOptions={{
-                  duration: 3000,
-                }}
-              />
+              <ThemedToaster />
             </Suspense>
             {/* Défense en profondeur autour des SATELLITES de l'app.
                 Ces trois-là sont montés au niveau App, donc au-dessus de tout

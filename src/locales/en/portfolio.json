@@ -86,6 +86,7 @@
   },
   "new": {
     "owner": "Owner",
+    "owners": "Owners",
     "dueDate": "End",
     "color": "Color",
     "description": "Description (optional)",
@@ -133,7 +134,7 @@
     "launchT4": "Go live",
     "launchT5": "Post-launch review",
     "sprint": "Sprint",
-    "sprintT1": "Scoping and prioritisation",
+    "sprintT1": "Scoping and prioritization",
     "sprintT2": "Development",
     "sprintT3": "Testing",
     "sprintT4": "Retrospective"
@@ -157,7 +158,7 @@
     "viewLabel": "View",
     "viewList": "List",
     "viewKanban": "Board",
-    "viewTimeline": "Schedule",
+    "viewTimeline": "Timeline",
     "columnsLabel": "Columns:",
     "rowsLabel": "Rows:",
     "groupByAssignee": "Person",
@@ -165,6 +166,7 @@
     "groupByStatus": "Status"
   },
   "filters": {
+    "mobileButton": "Filters",
     "barAria": "Task filters",
     "scopeAll": "All",
     "scopeMine": "Me",
@@ -208,8 +210,28 @@
     "cancel": "Cancel",
     "save": "Save"
   },
+  "statusChange": "Status: {{status}}. Click to change it",
+  "chat": {
+    "title": "Project chat",
+    "empty": "No messages yet. Start the conversation.",
+    "placeholder": "Write a message…",
+    "send": "Send",
+    "delete": "Delete this message"
+  },
   "members": {
     "title": "Add to project",
+    "open": "Add people to the project",
+    "viewersAria": "{{count}} people can see this project",
+    "extraHint": "{{count}} project member(s) outside these teams",
+    "rolesOpen": "See who has access to the project and their role",
+    "rolesTitle": "Project people",
+    "rolesHintManage": "Choose who is a lead and who is a member.",
+    "rolesHintRead": "Only the project leads can change these roles.",
+    "roleLabel": "Role",
+    "person": "Person",
+    "noCandidate": "Every active member is already in the project.",
+    "noTeam": "No other team to add.",
+    "wholeOrgTeam": "This project is already visible to the whole company.",
     "formerMember": "Former member",
     "you": "you",
     "roleOf": "Role of {{name}}",
@@ -219,8 +241,8 @@
     "addMember": "Add a member",
     "addTeam": "Add a team",
     "role": {
-      "lead": "Co-lead",
-      "contributor": "Contributor",
+      "lead": "Lead",
+      "contributor": "Member",
       "viewer": "Viewer"
     },
     "yourRole": "Your role: {{role}}"
@@ -253,6 +275,7 @@
     "byOn": "by {{name}}, on {{date}}"
   },
   "okrCard": {
+    "reached": "Reached",
     "weightTitle": "Importance weight ×{{weight}}",
     "contributesTo": "Contributes to: {{title}}",
     "childrenCount_one": "{{count}} objective contributes to it",
@@ -307,8 +330,8 @@
     "teamAria": "Filter by team",
     "allTeams": "All teams",
     "orgWide": "Company-wide objectives",
-    "person": "Carried by",
-    "personAria": "Filter by person carrying a key result",
+    "person": "Owned by",
+    "personAria": "Filter by key result owner",
     "anyone": "Everyone",
     "mine": "Me",
     "state": "Status",
@@ -326,7 +349,7 @@
     "aria": "Key result contributors",
     "max_one": "At most {{count}} contributor",
     "max_other": "At most {{count}} contributors",
-    "carriers": "Carried by {{names}}"
+    "carriers": "Owned by {{names}}"
   },
   "visibility": {
     "pill": "Visible to {{scope}}",

@@ -31,6 +31,7 @@ export const article = {
       ],
       html: `
 <p class="lead">« Il faut 21 jours pour prendre une habitude. » Vous avez lu ce chiffre partout, et il est faux. La recherche donne une réponse à la fois moins vendeuse et beaucoup plus utile : <strong>en moyenne 66 jours, avec d'énormes variations selon l'habitude et la personne (de 18 à 254 jours)</strong>. Comprendre pourquoi change complètement la façon de s'y prendre, et surtout, ça explique pourquoi vous n'avez jamais été « nul » : vous aviez juste un mauvais chiffre en tête.</p>
+<figure><img src="/screenshots/habitudes.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Le suivi d'habitudes de Cosmo : tableau hebdomadaire des habitudes cochées, avec la série de jours consécutifs de chacune." /><figcaption>Le suivi d'habitudes de Cosmo : tableau hebdomadaire des habitudes cochées, avec la série de jours consécutifs de chacune. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="mythe">D'où vient le mythe des 21 jours ?</h2>
 <p>D'un contresens. Dans les années 1960, le chirurgien esthétique Maxwell Maltz observe que ses patients mettent <em>« un minimum d'environ 21 jours »</em> à s'habituer à leur nouveau visage. Son livre <em>Psycho-Cybernetics</em> se vend à des millions d'exemplaires, la nuance saute en route, et « un minimum de 21 jours » devient « il faut 21 jours ». Aucune étude n'a jamais validé ce chiffre pour la formation d'habitudes.</p>
@@ -90,6 +91,7 @@ export const article = {
       ],
       html: `
 <p class="lead">"It takes 21 days to build a habit." You have read that number everywhere, and it is wrong. The research gives an answer that is both less marketable and far more useful: <strong>66 days on average, with enormous variation depending on the habit and the person, from 18 to 254 days</strong>. Understanding why changes how you go about it entirely, and above all it explains why you were never "bad at this": you just had the wrong number in your head.</p>
+<figure><img src="/screenshots/habitudes.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's habit tracker: a weekly grid of checked habits, with each habit's streak of consecutive days." /><figcaption>Cosmo's habit tracker: a weekly grid of checked habits, with each habit's streak of consecutive days. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="mythe">Where does the 21-day myth come from?</h2>
 <p>From a misreading. In the 1960s, the cosmetic surgeon Maxwell Maltz observed that his patients took <em>"a minimum of about 21 days"</em> to get used to their new face. His book <em>Psycho-Cybernetics</em> sold millions of copies, the qualifier fell away along the road, and "a minimum of about 21 days" became "it takes 21 days". No study has ever validated that figure for habit formation.</p>

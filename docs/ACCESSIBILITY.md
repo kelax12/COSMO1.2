@@ -1,4 +1,4 @@
-<!-- note-audit: note=82 -->
+<!-- note-audit: note=81 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **82 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **81 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
 
 # Accessibilité (a11y) — COSMO
 
@@ -45,7 +45,102 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → 81 → 82 → 82 → 82 → 81 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → **2026-10-22**)
+
+> ### ⚪ 2026-10-22 · 0 : les deux surfaces des rôles MESURÉES au clavier, et un vrai défaut corrigé
+>
+> Le −1 du 2026-10-15 a été remboursé le 2026-10-16 sur une **déclaration** (« dette », `c791eb55`).
+> Ce jour, la dette est payée par une **mesure**. La note ne bouge pas : rien n'était débité.
+> Mesures du 2026-10-22, dépôt à `HEAD` (branche de la PR), Playwright local sur un serveur démo.
+>
+> | Item | Avant (`origin/main` à `5eaa8b8c`) | Après |
+> |---|---|---|
+> | `keyboard-audit-coverage` (C-96) | vert **par déclaration** : `AssignRoleDialog`, `RoleEditorSheet` dans `NON_MESUREES` (« dette ») ; **10** mesurées sur 63 câblées | vert **en mesurant** : les deux dans `MESUREES`, chacune liée à son cas du spec ; **12** sur 63, cliquet relevé de 10 à 12 |
+> | `a11y-keyboard-audit`, trois cas neufs | absents | `MESURE — AssignRoleDialog`, `MESURE — RoleEditorSheet`, `GARDE — AssignRoleDialog : RoleEditorSheet prend le piège, puis le rend` : **6 / 6 verts**, `chromium` et `mobile-safari`. Déclencheurs ouverts au clavier (Entrée, entrée de menu comprise) |
+> | 🔴 Défaut produit trouvé par la mesure | `AssignRoleDialog` ouverte depuis « Actions pour … » : **le focus restait derrière le voile**, sur le bouton du membre (`focusMovedIn: false`, vu rouge). Radix rendait le focus au déclencheur du menu APRÈS que la modale l'avait pris | corrigé : `MemberDirectoryRow` empêche ce retour quand l'entrée ouvre une surface (`onCloseAutoFocus`) ; `useModalA11y` rend le focus au bouton qui a ouvert le menu (`aria-labelledby` du menu), plus à `body`. `focusReturned` (imprimé, non opposable) passe de `false` à `true` |
+> | `loading-empty-state` (C-40) | vert **en mesurant** depuis le 2026-10-16 | inchangé ; vu **rouge** ce jour sur la version fautive remise exprès (`AssignRoleDialog.tsx → roles`), vert sur la vraie |
+>
+> ⚠️ Vu en local seulement : le verdict opposable est la CI de la PR. Le même retour de focus
+> touche les autres entrées du menu d'un membre (fiche, attribution de tâche, droits) : corrigé par
+> le même geste, **mesuré seulement pour `AssignRoleDialog`**.
+>
+> **81 → 81.**
+
+> ### ⚪ 2026-10-22 · 0 : l'Agenda audité vue par vue, un défaut critique trouvé dans la vue Mois mobile et corrigé
+>
+> **Le débit « Agenda : deux violations axe critiques » du 2026-10-01 n'est plus dû** : corrigé par `5564445d` et remboursé le 2026-10-02 (soir), bloc plus bas. Remesuré le 2026-10-22, CI de `main` à `5eaa8b8c` (run `39668103160`) : `a11y-audit › Agenda` vert en chromium **et** mobile-safari, 2 violations non bloquantes, aucune critique ni sérieuse. Le rembourser une seconde fois serait compter deux fois le même correctif.
+>
+> En revanche, le cas ne scannait que la **vue d'arrivée** (Semaine en bureau, Jour en mobile), alors que FullCalendar recrée ses défileurs à chaque changement de vue et que `useFocusableScrollers` y réécrit les rôles de la grille. Il joue désormais chaque vue du sélecteur, même assertion, sans dispense nouvelle (PR #92).
+>
+> | Item | Effet | Mesuré le 2026-10-22, CI de la PR #92 |
+> |---|---|---|
+> | ✅ Le cas mord | 0 | sabotage temporaire (`role="region"` d'avant `5564445d`, commit `942d1992`, retiré ensuite) : `a11y-audit › Agenda` **rouge** en chromium et mobile-safari, 3 essais sur 3, `critical: aria-required-children, aria-required-parent` (run `39761357978`) |
+> | ✅ Bureau, chromium : Jour, Semaine, Mois | 0 | 2 violations par vue, aucune critique ni sérieuse (run `39764999252`) |
+> | 🔴→✅ Mobile, WebKit : vue **Mois** | 0 | `button-name` **critique** (WCAG 4.1.2, niveau A), 3 essais sur 3 : les chevrons « mois précédent / suivant » de l'en-tête mobile n'étaient qu'une icône, sans nom. Invisible tant que seule la vue d'arrivée était auditée. Corrigé dans la même PR (`nav.prevPeriod` / `nav.nextPeriod`, les libellés des mêmes boutons en bureau) ; Jour et 2J à 2 violations, non bloquantes |
+>
+> **81 → 81.** Le défaut Mois est trouvé et corrigé le même jour : il n'est pas débité, et ne se compte vérifié qu'au vert du job `e2e` de la PR.
+
+> ### 🟠 2026-10-20 · −1 : `/dashboard` déborde à 200 % de police
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | 🔴 C-97 · `/dashboard` à 200 % de police, `mobile-chrome` | **−1** | débordement latéral de **13 px**, trois essais sur trois, à chaque run depuis le 2026-10-19 (WCAG 1.4.4 et 1.4.10). N'apparaît que certains jours : la démo date ses données, voir [`TESTING.md`](./TESTING.md) |
+> | ⚠️ Mode édition de l'Aperçu · `MotionConfig reducedMotion="never"` | 0 | vibration en boucle des widgets (±0,45°) **même quand le système demande moins d'animation**. Arbitrage écrit dans `ApercuWidgetGrid.tsx` (mode ouvert par la personne, même choix que `GuideCursor`) : non débité, mais c'est le seul endroit hors guide où la préférence est ignorée. À rouvrir au premier retour |
+> | ✅ Widgets | 0 | chaque widget est une `section` nommée (`WidgetShell`), le contenu passe `inert` en édition, flèches et formats au clavier ; C-57 (cibles 44 px) vert sur `/entreprise` après `f0c2a433` |
+>
+> **82 → 81.**
+
+> ### ⚪ 2026-10-18 · 0 : vérifiée inchangée
+>
+> Dernière passe avant l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | Lighthouse a11y (`e69cb729`) | 0 | 100 sur quatre URLs, 99 sur trois, **92** sur `/guide/` et **93** sur `/entreprise-presentation/`, comme au 10-16 : audits toujours à identifier |
+> | `5f8ecbdb` retire le compte « n / N tâches affichées » | 0 | un `span` simple, pas une région `aria-live` : aucune annonce perdue |
+> | Bandeau de consentement réécrit (`23a12fdb`) | 0 | `e2e` verts ; aucune mesure clavier neuve |
+>
+> **82 → 82.**
+
+> ### ⚪ 2026-10-16 (soir) · 0 : l'accessibilité de la page entreprise, vue pour la première fois
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-16
+> au soir : Lighthouse des runs `38907264016` et `38941369233`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 (soir) |
+> |---|---|---|
+> | Parcours entreprise de la landing | 0 | mesuré pour la première fois (auparavant, l'URL testée servait l'accueil perso) : Lighthouse a11y **93**, contre 100 sur l'accueil. Au-dessus du seuil bloquant, donc vert ; les audits en échec restent à identifier dans l'artefact `lighthouse-mobile`. Non débité tant qu'ils ne sont pas nommés |
+>
+> **82 → 82.**
+
+> ### 🟢 2026-10-16 · +1 : les deux surfaces des rôles déclarées, et l'audit clavier joue sous WebKit
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : CI de `main` à `a4878cab`, dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ `AssignRoleDialog`, `RoleEditorSheet` ni mesurées ni déclarées (−1) | **+1** | déclarées (`c791eb55`) ; `keyboard-audit-coverage` vert en CI et en local |
+> | `C-118` · aucun audit clavier sous WebKit | 0 | **fermé** (`a47f1164`, `a4878cab`) : `a11y-keyboard-audit` joue sous `mobile-safari`, 16 cas, CI verte (PR n° 76). Un vrai défaut trouvé et corrigé (la feuille d'actions d'une tâche ne s'ouvrait pas au clavier sous Safari), un écart Safari déclaré (Tab saute les liens). Jamais débité à part : progrès réel, rien à rembourser |
+> | axe et Lighthouse | 0 | `a11y-audit` vert en CI ; Lighthouse a11y 92 à 100 sur les 8 URLs |
+>
+> **81 → 82.**
+
+> ### 🟠 2026-10-15 · −1 : deux surfaces modales neuves, ni mesurées ni déclarées
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`,
+> dépôt à `HEAD` rejoué étape par étape. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | 🔴 `AssignRoleDialog`, `RoleEditorSheet` (rôles personnalisés, `a6562733`) | **−1** | `keyboard-audit-coverage` (C-96) rouge en local à `HEAD`, jamais en CI (masqué par `check:docs`) : ni mesurées, ni déclarées « non mesurées » avec leur raison |
+> | axe et clavier en CI | 0 | `e2e` à `HEAD` : les 11 routes `a11y-audit` et les cas `a11y-keyboard-audit` verts sur chromium. Lighthouse a11y 92 à 100 sur les 8 URLs |
+> | Check-list VoiceOver | 0 | **60** surfaces câblées par `useModalA11y` (51 au 2026-09-14), dont **11** absentes de l'Annexe A de [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) : ajoutées ce jour. Non débité, `M-56` toujours pas arbitré |
+>
+> **82 → 81.**
 
 > ### 🟢 2026-10-03 · +1 : les cibles de l'Aperçu à 44 px, vues vertes en CI
 >
@@ -201,7 +296,7 @@ Conséquences pratiques, à tenir :
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
 | AM-1 | **axe-core ne couvre qu'une PARTIE des critères WCAG, et c'est structurel.** Les critères non automatisables (ordre de lecture, pertinence d'un libellé, sens d'une couleur) sont hors de portée de tout run vert | limite connue de l'outil, jamais écrite ici comme angle mort | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-51`**, et il n'est pas outillable **par nature** : ordre de lecture, pertinence d'un libellé, sens porté par une couleur seule. Aucun run vert ne les atteint — *(jugé outillable le 09-16 : non, par nature : seule une revue humaine datée le comble)* |
-| AM-2 | **10 surfaces modales mesurées au clavier sur 53.** Les 43 autres sont **câblées et gardées par un cliquet**, ce qui n'est pas la même chose que mesurées | `e2e/a11y-keyboard-audit.spec.ts` : 19 cas, 10 surfaces. `modal-a11y.guard.test.ts` câble les 53 | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:keyboard-coverage` · **51 surfaces**, 10 mesurées, 41 déclarées non mesurées **une par une avec leur raison** (`C-96`) — 🔴 ne prouve PAS : 🔴 **elle ne mesure AUCUNE accessibilité.** Elle CHIFFRE l'écart et l'empêche de grandir en silence. ⚠️ L'énoncé du 09-16 disait 53 surfaces : le détecteur en compte **51**. ⚠️ La couverture réelle est repassée à **10 sur 51 le 2026-09-22** : les deux cas qui expiraient (`TaskActionsSheet`, `MobileAddToList`) mesurent à nouveau, et par le chemin **clavier** cette fois. 🔴 **Sur `chromium` uniquement** — leurs homologues WebKit n'ont pas été rejoués, donc « 10 » vaut pour un moteur sur deux |
+| AM-2 | **10 surfaces modales mesurées au clavier sur 53.** Les 43 autres sont **câblées et gardées par un cliquet**, ce qui n'est pas la même chose que mesurées | `e2e/a11y-keyboard-audit.spec.ts` : 19 cas, 10 surfaces. `modal-a11y.guard.test.ts` câble les 53 | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:keyboard-coverage` · **51 surfaces**, 10 mesurées, 41 déclarées non mesurées **une par une avec leur raison** (`C-96`) — 🔴 ne prouve PAS : 🔴 **elle ne mesure AUCUNE accessibilité.** Elle CHIFFRE l'écart et l'empêche de grandir en silence. ⚠️ L'énoncé du 09-16 disait 53 surfaces : le détecteur en compte **51**. ⚠️ La couverture réelle est repassée à **10 sur 51 le 2026-09-22** : les deux cas qui expiraient (`TaskActionsSheet`, `MobileAddToList`) mesurent à nouveau, et par le chemin **clavier** cette fois. ✅ **Rejoué sous WebKit le 2026-10-16** (`C-118`) : les 16 cas de `e2e/a11y-keyboard-audit.spec.ts` jouent sous `mobile-safari` ET `chromium`, donc « 10 » vaut pour les deux moteurs. ⚠️ Pas pour Option+Tab ni VoiceOver, que Playwright n'émule pas |
 | AM-3 | **Aucun test avec un lecteur d'écran.** Ce que NVDA ou VoiceOver annonce réellement n'est vérifié nulle part | aucun outil de ce type dans le dépôt | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-40`** (l'exécution) et **`M-52`** (la date). Ce que VoiceOver ou NVDA **annonce** n'est vérifié nulle part, et aucune garde ne le fera — *(jugé outillable le 09-16 : difficilement : c'est un test manuel daté)* |
 | AM-4 | **WCAG 2.5.5 n'est mesuré que sur 8 routes protégées** (élargi à 8 pages publiques par `C-80`, à revérifier après coup) | `e2e/touch-targets.spec.ts`, cf. l'entrée du 2026-09-14 | ✅ **OUTILLÉ le 2026-09-20** · `C-80` a élargi la boucle à **8 pages publiques** en plus des 8 routes protégées (`C-80`) — 🔴 ne prouve PAS : 🔴 la revérification demandée par cet énoncé est **faite et elle est mauvaise** : le job `e2e` est rouge, 8 défauts de cibles tactiles mesurés (`/settings` 24 × 24 px, `/okr` 36 px, `/habits` 39 × 39 px). C'est `C-111` |
 | AM-5 | **Le contraste n'est vérifié que dans le thème par défaut.** Le dépôt porte quatre thèmes (clair, sombre, gris, noir) ; les runs axe n'en balaient qu'un | `theme-contrast.guard.test.ts` est statique, les runs e2e ne changent pas de thème | ✅ **OUTILLÉ le 2026-09-20** · `e2e/visual-regression.spec.ts` (`C-95`) — 🔴 ne prouve PAS : la première référence fige l'écran défauts compris · 🔎 🔴 **2026-09-22 : repose sur `Visual`, qui n'a jamais produit une référence** (cf. `UI-PATTERNS.md` AM-1) · 🔎 🟠 **2026-09-24 : `Visual` était vert à vide** (aucune référence committée), corrigé, cf. `UI-PATTERNS.md` AM-1 |
@@ -697,6 +792,14 @@ le détecteur rendrait le fichier **vert**. Et elle a été vue échouer, en ret
 | `TaskActionsSheet` | `/tasks` mobile, « Afficher les actions » | — |
 | `MobileAddToList` | `TaskActionsSheet` → « Ajouter à une liste » | relais de surface, pas empilement |
 | `ShareListSheet` | `/tasks` desktop, liste **manuelle** créée puis survolée | — |
+
+**Ajoutées le 2026-10-22** (`chromium` et `mobile-safari`, déclencheurs ouverts au clavier), ce qui
+porte le compte de la garde `C-96` à **12 mesurées sur 63 câblées** :
+
+| Surface | Chemin mesuré | En plus des cinq détecteurs |
+|---|---|---|
+| `AssignRoleDialog` | `/entreprise/members`, « Actions pour … » d'un membre, « Attribuer un rôle » | mesurée après la fin du squelette (`aria-busy`) |
+| `RoleEditorSheet` | `/entreprise/settings`, rubrique Rôles, « Créer un rôle » ; et depuis `AssignRoleDialog` | prend le piège au parent, le lui rend |
 
 **La 10ᵉ, `BottomSheet`, est mesurée en jsdom, et il faut dire pourquoi.** Aucun geste utilisateur
 ne l'ouvre : son unique consommateur produit est `WeeklyRecapSheet`, monté derrière

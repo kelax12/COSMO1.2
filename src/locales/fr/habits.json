@@ -31,6 +31,7 @@
     "dayCellDone": "{{name}}, {{date}} (complétée)"
   },
   "modal": {
+    "newCategory": "Nouvelle catégorie",
     "namePlaceholder": "Nom de l'habitude",
     "descriptionPlaceholder": "Ex: Lire 30 minutes...",
     "duration": "Durée",

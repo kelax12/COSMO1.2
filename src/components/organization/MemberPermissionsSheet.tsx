@@ -19,6 +19,7 @@ import { useTeamProjects } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
 import { useOrgTeamMembers } from '@/modules/org-teams';
 import MemberAvatar from './MemberAvatar';
+import PermissionSwitch from './PermissionSwitch';
 import { memberReach } from './audience.helpers';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
@@ -33,6 +34,8 @@ interface MemberPermissionsSheetProps {
   actorIsAdmin: boolean;
   /** Cibles d'assignation de l'utilisateur courant — plafond de la portée. */
   actorAssignTargets: OrgAssignTarget[];
+  /** Rôles personnalisés actifs du membre (mig. 219) : ils priment sur cette fiche. */
+  activeRoleNames?: string[];
   pending: boolean;
   onSave: (input: SetOrgPermissionsInput) => void;
   onClose: () => void;
@@ -53,7 +56,7 @@ const SECTIONS: {
   },
   {
     titleKey: 'permissions.sectionOrg',
-    keys: ['member.invite', 'task.editAny'],
+    keys: ['member.invite', 'task.editAny', 'role.manage'],
   },
   {
     titleKey: 'permissions.sectionReports',
@@ -68,27 +71,6 @@ const labelKey = (key: OrgPermissionKey) => `permissions.key.${key}` as const;
 const hintKey = (key: OrgPermissionKey) => `permissions.key.${key}Hint` as const;
 const targetKey = (target: OrgAssignTarget) => `permissions.target.${target}` as const;
 const targetHintKey = (target: OrgAssignTarget) => `permissions.target.${target}Hint` as const;
-
-const Switch = ({
-  checked, disabled, label, onToggle,
-}: { checked: boolean; disabled: boolean; label: string; onToggle: () => void }) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    aria-label={label}
-    disabled={disabled}
-    onClick={onToggle}
-    className={`relative shrink-0 w-[44px] h-[26px] rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed ${
-      checked ? 'bg-[rgb(var(--color-accent-solid))]' : 'bg-gray-200 dark:bg-gray-700'
-    }`}
-  >
-    <span
-      className="absolute top-[2px] w-[22px] h-[22px] rounded-full bg-white shadow-md transition-all duration-200"
-      style={{ left: checked ? 'calc(100% - 24px)' : '2px' }}
-    />
-  </button>
-);
 
 /**
  * Fiche « Modifier les permissions » d'un membre (mig. 115).
@@ -107,7 +89,7 @@ const Switch = ({
  */
 const MemberPermissionsSheet = ({
   member, members, current, actorPermissions, actorIsAdmin,
-  actorAssignTargets, pending, onSave, onClose,
+  actorAssignTargets, activeRoleNames = [], pending, onSave, onClose,
 }: MemberPermissionsSheetProps) => {
   const { t, tp } = useT('org');
 
@@ -237,7 +219,7 @@ const MemberPermissionsSheet = ({
             )}
           </div>
         </div>
-        <Switch
+        <PermissionSwitch
           checked={effective[key]}
           disabled={disabled}
           label={ta(labelKey(key))}
@@ -286,7 +268,12 @@ const MemberPermissionsSheet = ({
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-1 pb-4">
-          <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label={ta('permissions.presets')}>
+          {activeRoleNames.length > 0 && (
+            <p className="mb-4 rounded-xl bg-amber-500/10 px-3 py-2.5 text-xs text-amber-800 dark:text-amber-200" role="note">
+              {ta('customRoles.sheetBanner', { names: activeRoleNames.join(', ') })}
+            </p>
+          )}
+          <div data-guide-id="member-permissions-default" className="flex flex-wrap gap-2 mb-4" role="group" aria-label={ta('permissions.presets')}>
             <button
               type="button"
               onClick={applyGuestPreset}
@@ -306,6 +293,7 @@ const MemberPermissionsSheet = ({
             </button>
           </div>
 
+          <div data-guide-id="member-permissions-matrix">
           {SECTIONS.map(({ titleKey, keys }) => (
             <section key={titleKey} className="mb-5">
               <h3 className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
@@ -314,6 +302,7 @@ const MemberPermissionsSheet = ({
               {keys.map(renderRow)}
             </section>
           ))}
+          </div>
 
           <section>
             <h3 className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">

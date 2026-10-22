@@ -22,6 +22,11 @@
 > migration se joue en prod dans un bloc `DO` dont la seule issue est `RAISE EXCEPTION`, avec une
 > passe témoin SANS la migration. Détail : [`../faille.md`](../faille.md).
 >
+> 🔎 **Relu le 2026-10-15** : **77** tables dans `public`, toutes sous RLS, **205** policies, ledger
+> **170**, advisors **`11 / 82 / 2 / 1`** (égaux à la référence de `Posture`, vert chaque jour depuis
+> le 2026-10-08), douze Edge Functions. Les chiffres du corps de ce document restent ceux de leur
+> date ; l'état courant et la note sont dans [`../faille.md`](../faille.md).
+>
 > 🔴 **Relu le 2026-09-30 : les chiffres ci-dessous sont PÉRIMÉS.** La base porte **76 tables**
 > dans `public` (toutes sous RLS, relevé de la session d'audit du jour) et les advisors rendent
 > `11 / 78 / 2 / 1`. Douze Edge Functions, pas huit. Surface nouvelle et findings :
@@ -76,11 +81,11 @@
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
 | AM-1 | 🔴 **Les RÈGLES de sécurité ne sont notées nulle part.** La note de sécurité (88) vit dans [`../faille.md`](../faille.md), qui porte les **findings ouverts**. Ce document porte les **règles** : RLS, migrations, Edge Functions, secrets, CSP. Un finding se ferme et fait monter la note ; une règle qui se périme ici ne coûte rien à personne | `faille.md` porte la note, `SECURITY.md` n'en a aucune | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:docs-scored` (`C-109`) — 🔴 ne prouve PAS : que les notes soient **justes ni fraîches** : `non-note` OUVRE un audit, il ne le remplace pas · 🔎 2026-09-30 : le « (88) » de l'énoncé est la note du matin du 09-16 ; elle valait **83** du 09-16 au 09-30, **78** depuis ([`../faille.md`](../faille.md)). Et la preuve de la limite ci-dessus : ce document n'a pas bougé du 09-24 au 09-30, pendant que le mode entreprise ajoutait 25 tables et 4 Edge Functions |
-| AM-2 | 🔴 **Les réglages du Dashboard Supabase ne sont surveillés par AUCUNE garde.** Protection des mots de passe compromis, expiration des OTP, politiques d'auth : ils se modifient **hors du dépôt**, sans commit, sans revue et sans trace. Un réglage désactivé par erreur ne se voit qu'au prochain audit manuel | aucun workflow ni script ne lit ces réglages ; seul un commentaire contient le mot « dashboard » | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · juge un **écart** à une référence commitée, jamais un absolu (`C-88`) — 🔴 ne prouve PAS : 🔴 rien pour l'instant : `reglages_auth` est à `null`, la référence exige un jeton. **La garde ÉCHOUE tant que ce n'est pas fait, exprès** — c'est **`M-58`** |
+| AM-2 | 🔴 **Les réglages du Dashboard Supabase ne sont surveillés par AUCUNE garde.** Protection des mots de passe compromis, expiration des OTP, politiques d'auth : ils se modifient **hors du dépôt**, sans commit, sans revue et sans trace. Un réglage désactivé par erreur ne se voit qu'au prochain audit manuel | aucun workflow ni script ne lit ces réglages ; seul un commentaire contient le mot « dashboard » | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · juge un **écart** à une référence commitée, jamais un absolu (`C-88`) · 🔴 ne prouve PAS : 🔴 rien pour l'instant : `reglages_auth` est à `null`, la référence exige un jeton. **La garde ÉCHOUE tant que ce n'est pas fait, exprès** · c'est **`M-58`** · 🔎 ✅ **2026-10-15 : `M-58` fait le 2026-10-08.** La référence porte huit réglages d'Auth (`password_hibp_enabled`, expiration des OTP, rotation des jetons, MFA, Google…) et `Posture` est vert chaque jour depuis |
 | AM-3 | **La rotation des secrets n'a ni échéance ni rappel.** Le § « Rotation des secrets » dit comment faire, jamais quand, et rien ne mesure l'âge d'un secret | aucune date d'émission stockée, aucun job | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-54`** : le § dit *comment* faire tourner un secret, jamais *quand*, et rien ne mesure l'âge d'un secret. Tant que l'échéance n'est pas décidée, il n'y a rien à outiller — c'est une décision, pas un script — *(jugé outillable le 09-16 : oui : un job planifié qui rappelle l'âge)* |
 | AM-4 | **La checklist « avant tout commit qui touche `supabase/migration/*.sql` » est MANUELLE.** `validate:migrations` et `check:rls` en couvrent une partie ; le reste repose sur la lecture | les deux gardes vérifient des motifs nommés, pas la checklist entière | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** `validate:migrations` et `check:rls` en couvrent une partie ; le reste repose sur la lecture. ⚠️ La preuve en transaction annulée, elle, a servi le 2026-09-21 sur la mig. `150` — mais c'est une discipline, pas une garde — *(jugé outillable le 09-16 : partiellement)* |
-| AM-5 | **Les advisors Supabase ne sont lus qu'à la main** (T-7 du tableau de bord). Dans `ci.yml`, le mot « advisor » désigne `npm audit` | aucun workflow n'interroge l'API Management | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · advisors relus par l'API Management (`C-88`) — 🔴 ne prouve PAS : idem AM-2 : elle échoue tant que `M-58` n'est pas fait. ⚠️ Écart **attendu** depuis la mig. `150` : 9 → 10 et 52 → 53 · 🔎 🔴 **2026-10-02 : elle lisait ZÉRO partout depuis sa pose** (une entrée par occurrence dans la réponse de l'API, un `count` absent lu à la place) : corrigée, témoin à la forme réelle de l'API. Écart attendu au premier `--update` : **9 → 11** et **52 → 80**, objets identifiés dans `../faille.md` |
-| AM-6 | **Aucune analyse statique de sécurité (SAST).** Les gardes vérifient des invariants **nommés**, jamais des motifs inconnus. Le dépôt est **public**, donc CodeQL y serait gratuit | aucun CodeQL ni Semgrep dans `.github/workflows/` | ✅ **OUTILLÉ le 2026-09-20** · `codeql.yml`, `security-extended`, JS/TS **et** `actions` (`C-89`) — 🔴 ne prouve PAS : 🔴 un job vert. L'item n'est fini que quand **chaque alerte ouverte porte une décision** — c'est **`M-60`** |
+| AM-5 | **Les advisors Supabase ne sont lus qu'à la main** (T-7 du tableau de bord). Dans `ci.yml`, le mot « advisor » désigne `npm audit` | aucun workflow n'interroge l'API Management | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · advisors relus par l'API Management (`C-88`) · 🔴 ne prouve PAS : idem AM-2 : elle échoue tant que `M-58` n'est pas fait. ⚠️ Écart **attendu** depuis la mig. `150` : 9 → 10 et 52 → 53 · 🔎 🔴 **2026-10-02 : elle lisait ZÉRO partout depuis sa pose** (une entrée par occurrence dans la réponse de l'API, un `count` absent lu à la place) : corrigée, témoin à la forme réelle de l'API. Écart attendu au premier `--update` : **9 → 11** et **52 → 80**, objets identifiés dans `../faille.md` · 🔎 ✅ **2026-10-15 : remboursé** (+1 à la note de sécurité). Référence posée le 10-08, recalée le 10-10 à **82** (`claim_acquisition_source`, mig. `217`) ; relu par l'API ce jour : `11 / 82 / 2 / 1`, exactement la référence |
+| AM-6 | **Aucune analyse statique de sécurité (SAST).** Les gardes vérifient des invariants **nommés**, jamais des motifs inconnus. Le dépôt est **public**, donc CodeQL y serait gratuit | aucun CodeQL ni Semgrep dans `.github/workflows/` | ✅ **OUTILLÉ le 2026-09-20** · `codeql.yml`, `security-extended`, JS/TS **et** `actions` (`C-89`) · 🔴 ne prouve PAS : 🔴 un job vert. L'item n'est fini que quand **chaque alerte ouverte porte une décision** · c'est **`M-60`** · 🔎 **2026-10-15** : une alerte `high` sans décision depuis le 2026-10-12 (n° 13, `js/double-escaping`, `scripts/capture-og-images.mjs`, triée par lecture dans `../faille.md`, −1). Et la réciproque de l'énoncé s'est vérifiée : dépôt **privé** du 10-13 au 10-14, CodeQL rouge sur quatre pushs (« Code scanning is not enabled »), revenu avec le dépôt public |
 
 ---
 
@@ -675,6 +680,101 @@ Fonctions SECURITY DEFINER clés : `accept_friend_request_v2`, `accept_shared_ta
 
 ---
 
+### Journal d'application des migrations (`150` → `223`)
+
+> Descendu **sans une coupe** de [`supabase/migration/CLAUDE.md`](../supabase/migration/CLAUDE.md)
+> le 2026-10-20 : il pesait 13 945 o pour un plafond de 14 000, et ses lignes datées se
+> contredisaient (« `164` NON appliquée » puis « en prod »). L'état courant, en cinq lignes, reste
+> dans le `CLAUDE.md` du dossier. ⚠️ Lire chaque ligne à sa date : les plus anciennes sont
+> démenties par les suivantes.
+
+- ✅ **État au 2026-09-21** : la mig. **`150`** est **appliquée**, ledger `20260921075529`, et
+  vérifiée par le catalogue (table, RLS sans policy, deux fonctions, droits effectifs). Plus aucune
+  migration du dépôt ne dort. Le dépôt va de `000` à `150`.
+- ✅ **État au 2026-09-24** : la mig. **`151`** (suppression d équipe, M5) est **appliquée**, ledger
+  `20260924081357`, vérifiée par le catalogue (deux clés en `NO ACTION`, deux RPC `INVOKER`, `anon`
+  sans `EXECUTE`), après une preuve en transaction annulée (8 cas, dont la suppression d organisation
+  qui reste possible).
+- ✅ **La mig. `152`** (corbeille des tâches d équipe, M4) est **appliquée**, ledger `20260924131429`
+  (inscrit à la main après `db query -f`), vérifiée par le catalogue : colonnes, policies SELECT/DELETE,
+  six fonctions qui ignorent la corbeille, `task.deleteAny` en défaut manager, droits des cinq RPC,
+  job `cosmo-purge-team-task-trash`. Preuve en transaction annulée : 14 cas.
+- ✅ **La mig. `153`** (portefeuille de projets, M2) est **appliquée**, ledger `20260924121637`, AVANT
+  la `152`, relue au catalogue après elle : policy `team_projects_update`, plafond, `my_project_edit_perm`
+  intacts. Preuve en transaction annulée : 19 cas. 🔴 `project.edit` n est PAS une clé de `my_org_perm`
+  (que la 152 réécrit en entier) : une fonction dédiée, pour que l ordre d application n efface rien.
+- ✅ **État au 2026-09-25** : `160`, `161`, `162`, `170` (branches gouvernance et annuaire) et
+  `163` (page d équipe) sont **appliquées**, ledger `20260925063127`, `…063147`, `…063202`,
+  `…063218`, `…064540`, relues au catalogue après une preuve en transaction annulée (18 cas pour
+  les quatre premières, 8 pour la 163). La 161 a été corrigée AVANT application : elle
+  transmettait aussi les tâches à la corbeille (mig. 152).
+- ⚠️ **`164`** (cas limites du mode entreprise : équipes associées, purge d un projet archivé,
+  mode `transfer` du départ, `release_member_work`) est **écrite, NON appliquée** au 2026-09-26 :
+  ses corps de fonctions partent du catalogue relu le 2026-09-25, pas des fichiers `161`/`162`.
+- 🔴 **`194` réconcilie `164` et `190`** (2026-09-26) : écrites en parallèle, elles redéfinissent
+  toutes deux `can_access_team_project`, `my_team_project_ids`, `member_departure_impact` et
+  `offboard_org_member`, et la seconde appliquée effaçait l'ajout de l'autre (équipes associées OU
+  membres de projet, mode `transfer`). Ordre : `164`, `181`, `190` à `193`, **puis `194`**.
+  NON appliquée, NON prouvée.
+- 🔴 **`190` à `193` (étape 6, 2026-09-25) sont COMMITÉES, PAS APPLIQUÉES.** Ordre : 190, 191,
+  192, 193, AVANT le front qui les lit. Prouvées hors prod : les 167 fichiers rejoués sur un
+  Postgres 16 local (`supabase/proofs/supabase-shim.sql`), puis `190-193.proof.sql`, transaction
+  annulée, 55 cas acteur par acteur. ⚠️ Le shim imite `auth.uid()` et `pg_cron` : la preuve en
+  prod reste à faire, et le ledger à relire AVANT (d'autres sessions écrivent).
+- 🔴 **`195` à `199` (points rouges de l'audit entreprise, 2026-09-26) : écrites, NON appliquées,
+  NON prouvées.** Réglages et sécurité, capacité et lien secondaire, statuts et champs par projet,
+  automatisations, webhooks. Ordre : après `194`. Preuve prête, jamais jouée :
+  `supabase/proofs/195-199.proof.sql`. 🔴 Le lien secondaire (196) ne passe par AUCUNE policy.
+- ⚠️ **`200`** (2026-09-28) retire cycles d OKR (160), capacité et liens secondaires (196), sortis
+  du front le même jour. ✅ **Appliquée le 2026-09-28**, ledger `20260928071852`, relue au catalogue.
+- 🔴 **Relu au catalogue le 2026-09-28 : `164`, `190`, `194` et `195`-`199` sont EN PROD sans ligne
+  au ledger** (`can_access_team_project` porte déjà la réconciliation de la 194). Les notes
+  « non appliquée » ci-dessus sont périmées. ❌ **Ne jamais réappliquer la `164`** : elle retire la
+  branche « membre du projet » de la 190. `201` (action « Notifier » des automatisations) est
+  appliquée, ledger `20260928071259`.
+- ✅ **`202`** (rapports d activité) : **appliquée** le 2026-09-28, ledger `20260928081805` (inscrit à la main
+  après `db query -f`), relue au catalogue : table sous RLS, colonnes, plafond, droits, job `cosmo-activity-reports`.
+  Preuve : `supabase/proofs/202.proof.sql` (7 cas acteur par acteur).
+- ⚠️ **`206`** (2026-09-30) supprime les jalons de projet (table vide en prod, relue le même jour).
+  **Écrite, NON appliquée.** À appliquer APRÈS le déploiement du front qui ne les lit plus.
+- 🔴 **Relu au catalogue le 2026-09-30, objet par objet** : `164`, `181`, `190`-`195`, `197`-`199`
+  sont en prod sans ligne au ledger (les notes « NON appliquée » ci-dessus sont périmées) ; `196` est
+  retirée par la `200`. 🔴 **`204` (`team_tasks.health`) n'est PAS en prod**, alors que son commit
+  (`7a9b3db0`) la dit « appliquée » et que le front l écrit : le menu « État » des tâches pro échoue.
+  ⏳ **`207`** (webhooks : cible publique, enfilement par trigger seul) : écrite le 2026-09-30,
+  preuve `supabase/proofs/207.proof.sql` verte sur PGlite (10/10, 2026-10-01), **avant** tout redéploiement de
+  `org-webhook-dispatch`. Ordre et détail : [`faille.md`](../faille.md) § « Migrations ».
+- ✅ **État au 2026-10-01** : `204`, `207`, `208`, `209`, `210`, `212` (ledger `20261001132108`) **appliquées** par `apply_migration`,
+  ledger `20261001100113`, `…100535`, `…102420`, `…102425`, `…102453`, relues au catalogue (corps
+  comparés **octet pour octet** au fichier). Chacune jouée d'abord en prod dans un bloc qui ne peut
+  que s'annuler, avec une passe témoin SANS elle qui devait échouer. Détail : [`faille.md`](../faille.md)
+  § « Migrations ». ⏳ `206` reste non appliquée, délibérément.
+- ✅ **`214`** (statut et état des tâches perso) : **appliquée** le 2026-10-08, ledger `20261008210323`,
+  relue au catalogue (colonnes, deux `CHECK`, trigger `INVOKER` non exécutable par `anon` /
+  `authenticated`, corps identique au fichier, 0 tâche terminée hors `done`). Preuve
+  `proofs/214.proof.sql` jouée avant : 15 sur 15, témoin sans trigger rouge sur 3 cas.
+- ✅ **`215`** (un ami « editor » coche une tâche partagée) : **appliquée** le 2026-10-09, ledger
+  `20261009071902`, relue au catalogue. Preuve `proofs/215.proof.sql` : 8 sur 8 ; témoin = la reproduction
+  du défaut (`Task not found` pour l éditeur) jouée avant.
+- ✅ **`217`** (source d'acquisition rattachée après une inscription Google) : **appliquée** le
+  2026-10-10, ledger `20261010121835`, relue au catalogue (DEFINER, `search_path` vide, `anon` **f**,
+  `authenticated` **t**). Preuve `proofs/217.proof.sql` : 8 sur 8, témoin sans la fonction rouge.
+  ⚠️ C'est la **82e** fonction DEFINER exposée à `authenticated` : `check:supabase-posture` rougit
+  sur 81 → 82 jusqu'au `--update`, et ce rouge est légitime.
+- ✅ **`219`** (rôles personnalisés à durée limitée) : **appliquée** le 2026-10-13 par `db query -f`, ledger
+  `20261013093805` (inscrit à la main), relue au catalogue (2 tables sous RLS, 8 policies, 4 triggers `INVOKER`,
+  4 résolveurs avec la couche rôle, couche rôle et job non exécutables par `authenticated`, job `7 * * * *`).
+  Corps vivants des 6 fonctions réécrites relus AVANT : identiques à la base de la 219. Preuve `proofs/219.proof.sql`
+  rejouée en prod le même jour : 18 sur 18, rien laissé derrière.
+- ✅ **`223`** (`TR-1`) : **appliquée** le 2026-10-19 par `db query -f`, ledger `20261019122246` (même
+  transaction), relue au catalogue (md5 `2087347b…` de la preuve, ACL, `INVOKER`). Preuve 8 sur 8.
+- ✅ **`221`** (revenus admin) et **`222`** (mesure d'audience maison) : au ledger
+  `20261017220737` et `20261017230922`, relues au catalogue le 2026-10-18 (`get_admin_revenue`,
+  `get_admin_traffic`, `track_hit`, `traffic_hits`, `traffic_salts`). `track_hit` est le finding
+  `TR-1`, refermé par la `223`.
+
+---
+
 ## Gardes SQL et Edge Functions · repris de `CLAUDE.md` (déplacé le 2026-09-16)
 
 > Commentaires de la section `## Scripts` de `CLAUDE.md`, où ils étaient chargés à chaque
@@ -752,3 +852,91 @@ npm run check:edge          # Le code DÉPLOYÉ des Edge Functions contre le dé
                             # échouer la garde : sinon la note périme en silence.
                             # Témoin : `scripts/check-edge-deploy.guard.test.mjs`.
 ```
+
+## Garde-fous transversaux, récits repris de `CLAUDE.md` (déplacés le 2026-10-11)
+
+> Texte d'origine, **à l'identique**. `CLAUDE.md` n'en garde que l'interdit, en une ligne.
+> ⚠️ Une ligne a vieilli depuis : B-1 (mig. `107`) est **refermé** par la mig. `109`, cf. `faille.md`.
+
+### Journal fiscal et consentement (2026-08-26)
+
+- ❌ **Ne JAMAIS ajouter de policy UPDATE ou DELETE sur `payment_records` ou `payment_closures`,
+  ni les inclure dans une purge.** C'est le journal d'encaissement inaltérable (mig. `125`,
+  CGI art. 286-I-3° bis). L'immuabilité est portée par un **trigger**, pas par la RLS, parce que
+  `service_role` contourne la RLS mais pas les triggers.
+  🔴 **CORRIGÉ le 2026-09-02** : ce paragraphe demandait d'« anonymiser `user_id` » à la purge.
+  C'est **inapplicable**. `row_hash` scelle `user_id` dans le chaînage, et
+  `verify_payment_chain()` recalcule chaque hash depuis les colonnes : écrire NULL casserait la
+  chaîne, donc produirait exactement le signal de falsification qu'on montre à un contrôleur.
+  Le trigger refuse d'ailleurs l'UPDATE. Ce qui rend la conservation acceptable est ailleurs :
+  `user_id` cesse d'identifier quiconque dès que la ligne `auth.users` disparaît, il ne reste
+  qu'un UUID que COSMO ne sait plus rattacher. `delete-account` ne touche donc PAS cette table,
+  et le commentaire qui l'explique est dans la fonction.
+  Une erreur se corrige par une ligne compensatoire, comme en comptabilité.
+- ❌ **Ne jamais lire `cosmo_cookie_consent` directement.** Passer par
+  `src/lib/cookie-consent.ts`, et par `useCookieConsent()` dans React. La dispersion est
+  exactement ce qui a permis au bandeau de proposer un choix qu'aucune ligne de code
+  n'appliquait. **Tout nouveau traceur doit être conditionné** : `null` n'est pas une
+  acceptation tacite.
+- ❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre secret.**
+  `if (SECRET && header !== SECRET)` laisse passer tout le monde tant que le secret n'est pas
+  posé : on ne se protège que quand on est déjà protégé. Bug introduit puis corrigé le
+  2026-08-26 dans `renewal-notice`.
+- ⚠️ **`renewal_notices` est une PREUVE**, pas un cache. Ne jamais la purger : c'est ce qu'on
+  produit si un client conteste une reconduction (Conso. art. L215-1).
+
+### Sécurité & env
+
+- ❌ `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client
+- ❌ Committer sans vérifier que `.env` reste gitignored
+- ❌ Écrire en base via le MCP Supabase (contourne la RLS)
+- ❌ **Appeler `get_subtree` / `has_subordinates` / `org_admin_count` depuis une policy.** La
+  mig. `100` leur a révoqué `EXECUTE` à `authenticated` pour fermer une fuite inter-organisations,
+  et une policy s'évalue avec le **rôle courant** : l'appel échoue par `permission denied`. Dans
+  une policy, utiliser `is_above(org_id, user_id)` ou `i_have_subordinates(org_id)`. À l'intérieur
+  d'une fonction `SECURITY DEFINER`, les helpers restent appelables (rôle = propriétaire).
+  Régression en cours en prod : mig. `107`, finding B-1 de [`faille.md`](../faille.md).
+- ❌ **Garder une surface admin par `admin_allowlisted()`.** Depuis la mig. `131`, deux fonctions
+  répondent à deux questions différentes : `admin_allowlisted()` dit « ce compte est admin »
+  (AFFICHAGE, ignore volontairement le niveau d'assurance, sinon l'écran d'enrôlement TOTP
+  devient inatteignable) et `is_admin()` dit « cette requête est autorisée » (GARDE : allowlist
+  ET `auth.jwt() ->> 'aal' = 'aal2'`). Les intervertir annule la migration. Et ne jamais tester
+  « ce compte a activé la 2FA » : `aal2` porte sur la SESSION, or c'est précisément la session
+  ouverte avec un mot de passe volé qu'il faut refuser. Détail : `docs/SECURITY.md`.
+- ❌ **Une fonction de trigger en `SECURITY DEFINER`.** Une garde doit être `SECURITY INVOKER`
+  (défaut) et `REVOKE`-ée pour `anon` (mig. `064b` / `094b`). Un trigger `BEFORE` s'exécutant
+  **avant** le `WITH CHECK` de la RLS, en DEFINER ses messages d'erreur deviennent un oracle sur
+  des lignes non lisibles (mig. `108`, finding B-3).
+- 🔴 **En CSP, un schéma écrit explicitement doit correspondre : `https:` ne couvre PAS `wss:`.**
+  `connect-src` autorisait `https://*.supabase.co` sans `wss://*.supabase.co` : le navigateur
+  bloquait **toutes** les connexions Realtime **en production**, en silence (la console disait
+  « The action has been blocked », l'écran ne disait rien). Les trois canaux d'`App.tsx` étaient
+  coupés, et comme ils ont justement REMPLACÉ huit sondages, il n'y avait plus aucun filet
+  derrière eux : une tâche partagée n'arrivait jamais. Trouvé le 2026-09-01 dans la console
+  d'Axel, **en cherchant autre chose**. Garde : `src/csp.guard.test.ts` (schéma `wss`, directives
+  de confinement, absence d'`unsafe-eval`, et `data:` dans `img-src` dont dépend le QR code TOTP).
+- 🔴 **Une migration qui crée une dépendance à un chemin de récupération : PARCOURIR ce chemin
+  avant de l'appliquer.** La mig. `131` exige une session `aal2` ; l'écran d'enrôlement TOTP levait
+  en phase de rendu et son QR portait un double préfixe `data:`. `/admin` est resté inaccessible du
+  2026-08-31 au 2026-09-01, et **un seul compte au monde** ouvre cette console. Le raisonnement
+  « ce n'est pas un verrouillage, l'écran reste atteignable » était juste sur la garde et faux dans
+  les faits. Il suffisait d'ouvrir l'écran une fois.
+- ⚠️ **Le dépôt est PUBLIC**, avec secret scanning, push protection et Dependabot actifs depuis le
+  2026-09-01. Une fuite réelle est confirmée dans l'historique (`.env` au commit initial), **inerte**
+  car elle vise un projet supprimé depuis. Retirer un fichier du suivi n'efface pas l'historique.
+
+### Documentation
+
+- ❌ Traiter un fichier de `docs/archive/**` comme l'état courant du projet
+- ❌ Citer un numéro de ligne d'un autre fichier `.md` — les fichiers bougent, les liens de
+  section survivent
+- ❌ **Recopier un « avant » au lieu de le relire à sa source.** Le tableau de bord des audits est
+  parti d'une note RGPD de 84 le 2026-09-02 alors qu'elle valait 86 depuis le 08-29 : la colonne
+  avait été reprise du tableau du 25. Troisième occurrence, après les `refetchInterval` du 08-25 et
+  la garde `architecture.guard` du 08-27 (« antérieure à mon travail », déclarée depuis un
+  `git stash` qui contenait déjà le commit fautif). **Un « avant » se reconstruit à un commit
+  nommé, jamais dans un arbre de travail ni depuis un tableau plus ancien.**
+- ❌ **Chercher le symptôme cité par la doc plutôt que la chose décrite.** Une note du 2026-09-02
+  n'a corrigé qu'un nom sur six sur la sélection de modules : elle constatait l'absence de
+  `RequireModule` sans voir que la fonctionnalité entière avait disparu, ce qui laisse la dérive
+  presque intacte **et la fait paraître vérifiée**.

@@ -47,6 +47,10 @@ récentes, et une lecture par `ids` pour nommer le reste. Le serveur filtre AVAN
 - Le fil d'activité lit `team_task_activity` (mig. 094). Le journal ne voit que les UPDATE :
   les créations viennent des tâches récentes. Dérivations pures : `my-work.helpers.ts`.
 - `isManager` vient de la PAGE, comme pour Projets et Tâches (l'Aperçu passait `isAdmin`).
+- Depuis le 2026-10-19 l'Aperçu est une grille de widgets ([`src/components/CLAUDE.md`](../../components/CLAUDE.md)) :
+  les tâches sont lues dans `MyWorkTab` / `MyWorkSections` et passées aux widgets ; un widget peut
+  lire une source ÉTROITE (invitations, commentaires d'une tâche), jamais l'ensemble de travail
+  (relu le 2026-10-20 : aucun widget n'appelle `useTeamTasks`).
 
 ---
 
@@ -108,7 +112,27 @@ Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `i
 - ⚠️ `my_org_perm` de la 153 part du corps de la **152** (`task.deleteAny` = manager) : appliquer
   la 152 AVANT, sinon la 152 retirerait `project.edit`.
 
-### 🧭 Étape 6 (mig. 190-193, 2026-09-25, NON appliquées) : rôles de projet, recherche, vues
+### 🏷️ Rôles personnalisés à durée limitée (mig. 219, 2026-10-12)
+
+Spec : [`docs/superpowers/specs/2026-10-12-roles-personnalises-design.md`](../../../docs/superpowers/specs/2026-10-12-roles-personnalises-design.md).
+`org_roles` (paquet nommé de droits) + `org_member_roles` (attribution, `ends_at` NULL = sans limite).
+Fichiers : `roles.*` ; écrans `OrgRolesSettings`, `RoleEditorSheet` (une modale centrée depuis le 2026-10-19, malgré son nom), `AssignRoleDialog` (crée aussi un rôle depuis l'attribution).
+
+- 🔴 **Ordre de résolution, non-admin** : rôles actifs (OU logique) > fiche individuelle > défaut.
+  Un rôle actif ÉCRASE tout : une clé absente est refusée, même `task.create`.
+- 🔴 **La couche rôle s'insère dans les QUATRE résolveurs** (`my_org_perm`, `my_project_edit_perm`,
+  `my_report_perm`, `my_assign_targets`), juste après le court-circuit admin. ❌ Réécrire l'un d'eux
+  sans `my_role_perm` / `my_role_assign_targets` en tête rendrait les rôles inopérants sur ce droit.
+- 🔴 **L'expiration se juge à la lecture** (`ends_at > now()`), jamais par une purge. Le job
+  `cosmo-expire-org-roles` (horaire) ne fait que notifier (`role_changed`, `meta.change =
+  custom_role_expired`) et journaliser (`role.expired`).
+- ❌ Jamais de rôle sur un admin (trigger) ; un membre promu admin garde une ligne inerte.
+- `role.manage` : défaut admin seul, droit de CONFIANCE (aucun plafond sur le contenu d'un rôle).
+- Le départ d'un membre emporte ses attributions (FK composite vers `organization_members`).
+
+### 🧭 Étape 6 (mig. 190-193, 2026-09-25) : rôles de projet, recherche, vues
+
+En prod **sans ligne au ledger** (relu au catalogue le 2026-09-30, cf. `supabase/migration/CLAUDE.md`).
 
 - 🔴 `team_project_members` : `lead`/`contributor`/`viewer`. Le lecteur est refusé par TRIGGER
   (une policy PERMISSIVE ne retire rien) ; un admin n'est jamais restreint ; tout helper exige un
@@ -118,60 +142,17 @@ Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `i
 - La palette lit `search_org` par `search.hooks.ts` : ❌ jamais `governance.hooks` depuis l'entrée.
 - Une vue enregistrée ne DONNE rien : ses filtres se relisent sous la RLS, et se valident (URL).
 
-### 📬 Agréger des lectures, oui. Agréger des AUTORISATIONS, jamais (mig. 129)
+### 📬 Boîte de réception (mig. 129) et pastille (mig. 142)
 
-`get_my_org_inbox()` remplace **cinq** lectures qui partaient à chaque ouverture de
-l'application, sur toutes les pages protégées, parce que `Layout` monte `useOrgBadges` pour
-peindre une pastille : invitations, avis de retrait, ma demande d'adhésion, demandes reçues côté
-admin, notifications, plus un sixième appel conditionnel à `profiles`.
+Récit, preuves et règles complètes : [`docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md)
+§ « La boîte de réception d'entreprise » et « La pastille COMPTE ».
 
-- 🔴 **Une RPC d'agrégat est `SECURITY INVOKER`.** En `DEFINER`, agréger cinq lectures revient à
-  réécrire cinq autorisations à la main dans une fonction qui contourne la RLS : c'est là qu'une
-  agrégation « de performance » devient une fuite. Les deux sections qui ont besoin de privilèges
-  élevés ne sont pas réécrites, elles **appellent** les fonctions `DEFINER` existantes
-  (`get_my_org_invitations`, `get_my_org_removal_notices`), inchangées.
-- ❌ **Ne jamais lui donner un `p_org`.** Le périmètre vient de `auth.uid()` seul, comme
-  `get_my_tasks`. Un paramètre d'organisation forcerait le client à attendre que l'organisation
-  active soit résolue : on échangerait quatre requêtes contre du délai, en sérialisant ce qui
-  partait en parallèle. Les sections par organisation couvrent TOUTES mes organisations, le
-  client filtre.
-- ❌ **Ne jamais borner globalement.** 200 demandes et 50 notifications, **par organisation**
-  (window function). Une borne globale tronquerait la troisième organisation d'un compte avec les
-  lignes des deux premières, et ça ne se verrait que chez lui.
-- ❌ **Ne jamais réintroduire une invalidation par section** dans `useOrgInboxRealtime` : ces clés
-  ne portent plus de donnée, l'écran cesserait de se rafraîchir **en silence**. Une seule clé,
-  `orgKeys.inbox()`.
-- Les cinq hooks gardent leur nom et leur forme de retour : ce sont des sélecteurs `useMemo`.
-  Garde : `src/modules/organizations/inbox.hooks.test.tsx`.
-
-### 🔢 La pastille COMPTE, elle ne lit pas la liste (mig. 142, finding C-05)
-
-La même boîte de réception porte depuis le 2026-09-05 une section `badge_tasks`. `useOrgBadges`
-montait `useTeamTasks`, donc `get_my_team_tasks` + `.limit(1000)` — la lecture la plus chère du
-produit — sur **toutes les pages protégées**, pour peindre un nombre. Le rechargement avait été
-coupé le 2026-08-27 (`background`), la **lecture** pas.
-
-- Le serveur rend les **seules** lignes utiles : assignations en cours qui ne viennent pas de moi
-  (`kind = 'assigned'`), et noms des tâches visées par mes notifications non lues
-  (`kind = 'notified'`). Bornes : 200 et 50 **par organisation**, jamais globalement.
-- ❌ **Ne jamais faire compter une ligne `notified`.** Une tâche peut sortir dans les DEUX branches ;
-  le client leur retire toute assignation pour cette raison précise. Sans ça, elle compte deux fois
-  et le nombre affiché change.
-- ❌ **Ne jamais passer `lastSeen` au serveur.** Il vit dans `localStorage`, il est **par
-  organisation**, et il change à chaque visite de /entreprise : en paramètre, il ferait dépendre la
-  clé de cache d'une valeur mouvante, et un seul horodatage ne pourrait pas servir plusieurs
-  organisations. La borne reste côté client, sur un ensemble déjà réduit.
-- ✅ `my_org_badge_tasks()` est `SECURITY DEFINER` pour la SEULE raison qui vaut ici : appeler
-  `my_team_project_ids`, dont `EXECUTE` est révoqué à `authenticated` (mig. 100/113). L'autorisation
-  est celle de `get_my_team_tasks`, reprise mot pour mot. La RPC d'agrégat, elle, reste
-  `SECURITY INVOKER` — agréger des lectures, oui ; agréger des autorisations, jamais.
-- ⚠️ En **démo** la source reste `useTeamTasks` : c'est du `localStorage`, donc gratuit, et écrire
-  une seconde dérivation de « nouvelle assignation » dans le repository local aurait fait deux
-  définitions du même chiffre. Hors démo l'identifiant vaut `undefined` et rien ne part.
-- Gardes : `src/lib/hooks/org-badges.server-count.test.tsx` (dont un témoin qui exige que le
-  compteur TOMBE quand la source serveur est vidée — sans lui, le fichier passerait encore si plus
-  aucune source n'alimentait rien).
-
+- 🔴 `get_my_org_inbox()` est `SECURITY INVOKER` : agréger des lectures, oui ; des autorisations, jamais.
+- ❌ Jamais de `p_org`, jamais de borne globale (200 / 50 **par organisation**), jamais
+  d'invalidation par section dans `useOrgInboxRealtime` : une seule clé, `orgKeys.inbox()`.
+- ❌ Hors démo, `useOrgBadges` ne monte pas `useTeamTasks`. Ne jamais faire compter une ligne
+  `notified`, ne jamais passer `lastSeen` au serveur.
+- Gardes : `organizations/inbox.hooks.test.tsx`, `src/lib/hooks/org-badges.server-count.test.tsx`.
 
 ---
 

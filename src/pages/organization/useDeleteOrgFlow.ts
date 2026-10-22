@@ -35,6 +35,7 @@
 //    est la seule porte vers un DELETE sur `organizations`.
 
 import { useCancelAndRefundOrg } from '@/modules/billing/org-billing.mutations';
+import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
 import { useDeleteOrganization } from '@/modules/organizations';
 
 export interface DeleteOrgFlow {
@@ -49,17 +50,29 @@ export interface DeleteOrgFlow {
  *   à refermer le dialogue de confirmation. N'est PAS appelé si le
  *   remboursement a échoué.
  */
-export function useDeleteOrgFlow(onDeleted: () => void): DeleteOrgFlow {
+export function useDeleteOrgFlow(orgId: string | undefined, onDeleted: () => void): DeleteOrgFlow {
   const refund = useCancelAndRefundOrg();
   const remove = useDeleteOrganization();
+  // 🔴 Une entreprise SANS abonnement (palier gratuit, ou déjà résilié) n'a
+  // rien à rembourser. Appeler `stripe-org-refund` quand même rendait
+  // `no_subscription` (ou une erreur réseau), donc un toast « Impossible de
+  // contacter Stripe » et AUCUNE suppression possible. La règle « pas de
+  // débit orphelin » reste tenue côté serveur : `delete_organization`
+  // refuse tant qu'un abonnement actif existe.
+  const { data: subscription, isLoading: subLoading } = useOrgSubscription(orgId);
+  const hasPaidSubscription = !!subscription && subscription.status !== 'cancelled';
 
   return {
-    run: (orgId: string) => {
-      refund.mutate(
-        { orgId },
-        { onSuccess: () => remove.mutate(orgId, { onSuccess: onDeleted }) },
-      );
+    run: (id: string) => {
+      if (hasPaidSubscription) {
+        refund.mutate(
+          { orgId: id },
+          { onSuccess: () => remove.mutate(id, { onSuccess: onDeleted }) },
+        );
+        return;
+      }
+      remove.mutate(id, { onSuccess: onDeleted });
     },
-    isPending: refund.isPending || remove.isPending,
+    isPending: subLoading || refund.isPending || remove.isPending,
   };
 }

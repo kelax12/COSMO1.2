@@ -1,10 +1,11 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { ChevronLeft, ChevronRight, CircleCheck, FolderKanban, Target, UserRound, UsersRound } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CircleCheck, Download, FolderKanban, Target, UserRound, UsersRound } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import {
   aggregateReports,
+  eventMinutes,
   groupActivityByPerson,
   lastReportDay,
   periodBounds,
@@ -22,6 +23,8 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { projectColorHex } from './team-projects.helpers';
 import { reportAccess } from './report-access.helpers';
 import MenuSelect from '@/components/organization/MenuSelect';
+import { toast } from '@/lib/toast';
+import type { ReportPdfModel } from './report-pdf';
 
 interface OrgReportsSectionProps {
   orgId: string;
@@ -86,6 +89,7 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
   const [kind, setKind] = useState<ReportPeriodKind>('week');
   const [anchor, setAnchor] = useState(lastDay);
   const [custom, setCustom] = useState({ from: addDays(lastDay, -13), to: lastDay });
+  const [exporting, setExporting] = useState(false);
   const [pickedScope, setPickedScope] = useState<ReportScope | null>(initialTeamId ? { kind: 'team', teamId: initialTeamId } : null);
 
   // Périmètre effectif : le choix, s'il est encore permis, sinon le premier permis.
@@ -149,10 +153,71 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
       : `${primary} hover:bg-[rgb(var(--color-hover))]`}`;
   const input = 'px-2.5 py-1.5 text-sm rounded-lg border bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]';
 
+  /** Le PDF reprend l'écran tel quel : chiffres clés, projets, OKR, fiches par personne, équipes. */
+  const exportPdf = async () => {
+    setExporting(true);
+    try {
+      const { downloadReportPdf } = await import('./report-pdf');
+      const scopeName = scope.kind === 'org'
+        ? t('reports.scopeOrg')
+        : access.teams.find((tm) => tm.id === scope.teamId)?.name ?? t('reports.scopeTeam');
+      const progressDetail = (before: number | null, after: number, done: boolean, doneLabel: string) =>
+        `${before !== null ? `${before} → ` : ''}${after} %${done ? ` · ${doneLabel}` : before !== null ? ` · ${t('reports.projectDelta', { count: after - before })}` : ''}`;
+      const model: ReportPdfModel = {
+        fileName: `rapport-${scope.kind === 'org' ? 'entreprise' : scopeName.toLowerCase().replace(/[^a-z0-9]+/gi, '-')}-${from}_${to}.pdf`,
+        title: t('reports.title'),
+        scopeLabel: scopeName,
+        periodLabel: periodLabel.charAt(0).toUpperCase() + periodLabel.slice(1),
+        generatedLabel: t('reports.pdfGenerated', { date: new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(new Date()) }),
+        pageLabel: (page, total) => t('reports.pdfPage', { page, total }),
+        summaryTitle: '',
+        summary: [],
+        kpis: kpis.map((k) => ({ label: k.label, value: String(k.value), trend: null, tone: null, series: [] })),
+        projectsTitle: t('reports.projectsTitle'),
+        projects: report.projects.map((p) => ({
+          name: p.name, before: p.before, after: p.after, badge: null,
+          detail: progressDetail(p.before, p.after, p.after >= 100, t('reports.projectDone')),
+        })),
+        krsTitle: t('reports.krsTitle'),
+        krs: report.krs.map((k) => ({
+          name: k.title, sub: k.okrTitle, before: k.before ?? k.after, after: k.after, badge: null,
+          detail: progressDetail(k.before, k.after, k.completed, t('reports.krCompleted')),
+        })),
+        peopleTitle: t('reports.peopleTitle'),
+        people: people.map((person) => ({
+          name: personName(person.userId, person.userName),
+          meta: `${tp('reports.groupCount', person.tasks.length)} · ${tp('reports.eventCount', person.events.length)}`,
+          tasksTitle: t('reports.colTasks'),
+          eventsTitle: t('reports.colEvents'),
+          noTasks: t('reports.noPersonTasks'),
+          noEvents: t('reports.noPersonEvents'),
+          tasks: person.tasks.map((task) => ({
+            text: task.name,
+            when: multiDay ? fmtDay(toDayKey(new Date(task.at)), { day: 'numeric', month: 'short' }) : '',
+          })),
+          events: person.events.map((e) => ({
+            text: `${e.title} · ${fmtDuration(eventMinutes(e))}`,
+            when: `${multiDay ? `${fmtDay(toDayKey(new Date(e.start)), { weekday: 'short', day: 'numeric' })} ` : ''}${fmtTime(e.start)}`,
+          })),
+        })),
+        teamsTitle: t('reports.teamsTitle'),
+        teams: scope.kind === 'org'
+          ? report.teams.map((tm) => ({ name: tm.name, color: hexOf(tm.color), value: tm.tasksDone, label: tp('reports.teamsTasks', tm.tasksDone) }))
+          : [],
+        footer: t('reports.footer'),
+      };
+      await downloadReportPdf(model);
+    } catch {
+      toast.error(t('reports.exportError'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Périmètre */}
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('reports.scopeLabel')}>
+      <div data-guide-id="report-scope" className="flex flex-wrap items-center gap-2" role="group" aria-label={t('reports.scopeLabel')}>
         {access.canOrg && access.teams.length > 0 && (
           <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden">
             <button type="button" aria-pressed={scope.kind === 'org'} className={segBtn(scope.kind === 'org')} onClick={() => setPickedScope({ kind: 'org' })}>
@@ -209,13 +274,23 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
               onChange={(v) => v && setCustom((c) => ({ ...c, to: v > lastDay ? lastDay : v }))} />
           </div>
         )}
-        <div className="ml-auto inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden" role="group" aria-label={t('reports.periodLabel')}>
+        <div data-guide-id="report-period" className="ml-auto inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden" role="group" aria-label={t('reports.periodLabel')}>
           {(['day', 'week', 'month', 'custom'] as const).map((k) => (
             <button key={k} type="button" aria-pressed={kind === k} className={segBtn(kind === k)} onClick={() => setKind(k)}>
               {t(k === 'day' ? 'reports.periodDay' : k === 'week' ? 'reports.periodWeek' : k === 'month' ? 'reports.periodMonth' : 'reports.periodCustom')}
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={exportPdf}
+          disabled={exporting || isLoading || isError}
+          aria-label={exporting ? t('reports.exporting') : t('reports.exportPdf')}
+          title={t('reports.exportPdf')}
+          className={`p-2 rounded-lg border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-40 disabled:cursor-not-allowed ${primary}`}
+        >
+          <Download size={16} aria-hidden="true" className={exporting ? 'animate-pulse' : undefined} />
+        </button>
       </div>
 
       {isLoading ? (

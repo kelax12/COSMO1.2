@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
-import { BookOpen, Building2, Pencil, X } from 'lucide-react';
+import { BookOpen, Building2, Pencil } from 'lucide-react';
 import { useManagerSectionsToast, useOrgShortcuts } from '@/components/organization/org-page.hooks';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
@@ -9,6 +9,7 @@ import {
   useOrgMembers,
   useMyOrgPermissions,
   useOrgNotifications,
+  useOrgRoles,
   isManagerOf,
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
@@ -19,7 +20,9 @@ import { MobileHeader } from '@/components/mobile';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
 import OrgSideNav from '@/components/organization/OrgSideNav';
-import { useOrgNavMode } from '@/components/organization/use-org-nav-mode';
+import { useOrgGuideDemoPhase } from '@/components/org-guide/guide-demo-signal';
+import type { GuideViewer } from '@/components/org-guide/guide-types';
+import { useOrgNavMode, type OrgNavMode } from '@/components/organization/use-org-nav-mode';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
 import { sectionNotificationBadges, type BadgeSection } from '@/components/organization/org-section-badges';
@@ -38,7 +41,7 @@ import { MyWorkSkeleton, TeamTasksSkeleton, TeamOverviewSkeleton, OrgTabSkeleton
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
 import { useIsDemo } from '@/lib/app-mode.store';
-import { markMemberWelcomeSeen, readMemberWelcomeSeen } from '@/components/onboarding/enterprise/ent-onboarding';
+import { joinedSinceWelcome, markMemberWelcomeSeen, readMemberWelcomeSeen } from '@/components/onboarding/enterprise/ent-onboarding';
 import type { KeyOf } from '@/i18n/catalog';
 
 // ── Onglets chargés à la demande ──────────────────────────────────
@@ -62,7 +65,7 @@ import type { KeyOf } from '@/i18n/catalog';
 const PyramidTab = lazyWithRetry(() => import('@/components/organization/PyramidTab'), ['eventModal', 'org', 'orgAdmin', 'overlays', 'tasks']);
 // `portfolio` (M2) n'est payé que par qui ouvre Projets : dans `org`, il pesait
 // 4,7 ko gzip sur chaque visite de /entreprise.
-const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'orgAdmin', 'overlays', 'portfolio']);
+const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
 const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'), ['csv', 'eventModal', 'org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
 const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'), ['okr', 'org', 'orgAdmin', 'overlays', 'portfolio']);
 const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
@@ -86,7 +89,10 @@ const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization
 // chargée seulement quand l'un sert (cf. `OrgPageOverlays`).
 // Accueil d'un membre au premier passage (2026-10-03) : son catalogue
 // `onboarding` ne part qu'avec lui, soit une fois par entreprise et par appareil.
-const MemberWelcome = lazyWithRetry(() => import('@/components/onboarding/enterprise/MemberWelcome'), ['onboarding']);
+// Bouton flottant du guide (desktop) : lazy depuis le 2026-10-15, budget de ce
+// chunk. Il n'est pas nécessaire au premier rendu, et il arrive avec son catalogue.
+const OrgGuideFab = lazyWithRetry(() => import('@/components/org-guide/OrgGuideFab'), ['org', 'orgGuide', 'overlays']);
+const OrgWelcomeVideo = lazyWithRetry(() => import('@/components/onboarding/enterprise/OrgWelcomeVideo'), ['onboarding']);
 const OrgPageOverlays = lazyWithRetry(() => import('@/components/organization/OrgPageOverlays'), ['eventModal', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'tasks']);
 
 type OrgTab = OrgSection;
@@ -114,7 +120,6 @@ const tabFallback = (tab: OrgTab, tOrgAdmin: (key: KeyOf<'orgAdmin'>) => string)
 };
 
 /** Bannière sièges : dismiss persistant par org (informative, freemium dormant). */
-const seatsBannerKey = (orgId: string) => `cosmo_org_seats_banner_dismissed_${orgId}`;
 
 // 🗑️ Bannière « gratuit jusqu'au 1er août » retirée le 2026-09-24 : elle ne
 // s'affichait plus depuis le 2026-08-01, son code et ses libellés restaient.
@@ -131,7 +136,7 @@ const OrganizationPage = () => {
   // `entityId` : second segment, qui n'existe que pour la page d'une équipe
   // (`/entreprise/teams/<id>`).
   const { section, entityId } = useParams<{ section?: string; entityId?: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const urlTab: OrgTab = isOrgSectionSegment(section) ? section : 'overview';
   // Sans `replace` : chaque section est une page, le bouton précédent y revient.
@@ -139,19 +144,31 @@ const OrganizationPage = () => {
   // Glossaire (cohérence globale) : ouvert par le bouton d'en-tête. Les
   // info-bulles de rôle l'ouvrent elles-mêmes, sur leur terme (`RoleTerm`).
   const [glossary, setGlossary] = useState(false);
-  const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
   const isDemo = useIsDemo();
   // Fermé pendant cette visite ; le drapeau, lui, est posé par entreprise.
   const [welcomeClosed, setWelcomeClosed] = useState(false);
   // 🔴 DÉCIDÉ À L'ARRIVÉE, une seule fois : l'accueil membre ne s'ouvre que
-  // si l'on ARRIVE sur l'Aperçu nu (`/entreprise`, sans section ni paramètre).
+  // si l'on ARRIVE sans paramètre dans l'adresse. Toute section convient
+  // depuis le 2026-10-05 : limité à l'Aperçu nu, il ratait les personnes qui
+  // arrivent toujours par le menu sur Tâches ou Projets.
   // Relue à chaque rendu, la condition laissait l'accueil s'ouvrir APRÈS coup
   // par-dessus l'écran qu'on était venu voir : `?tab=settings` réécrit en
   // `/entreprise/settings`, retour Stripe `?tab=billing`, `?task=` retiré par
   // `DeepTaskModal` quand la tâche est introuvable. Mesuré le 2026-10-04 par
   // le job e2e (8 échecs `supabase-stub`, run 37138213107). Même règle que le
   // verrou de `FirstRunSetup` : une garde d'entrée se fige à l'entrée.
-  const [arrivedOnOverview] = useState(() => section === undefined && searchParams.toString() === '');
+  const [arrivedBare] = useState(() => searchParams.toString() === '');
+  // `?guide=1` (fin de la constellation) : ouvre le guide une seule fois,
+  // puis le paramètre quitte l'URL pour qu'un rechargement ne le rouvre pas.
+  const [guideOpenSignal] = useState(() => (searchParams.get('guide') === '1' ? Date.now() : undefined));
+  useEffect(() => {
+    if (searchParams.get('guide') !== '1') return;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('guide');
+      return next;
+    }, { replace: true });
+  }, [searchParams, setSearchParams]);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const badges = useOrgBadges();
   const { data: orgNotifications = [] } = useOrgNotifications(myOrg?.id);
@@ -159,6 +176,14 @@ const OrganizationPage = () => {
   // survol). Porté ici : la page réserve la place de la carte ouverte à
   // l'arrivée, sinon elle recouvrirait la colonne de droite du contenu.
   const [navMode, setNavMode] = useOrgNavMode();
+  // Démo du guide : visible pendant un changement de page (`peek` si elle
+  // était repliée, sans réserver de place), masquée une fois la page atteinte
+  // pour que le curseur ne clique jamais derrière elle (cf. guide-demo-signal).
+  const guidePhase = useOrgGuideDemoPhase();
+  const sideNavMode: OrgNavMode =
+    guidePhase === 'hide' ? 'collapsed'
+    : guidePhase === 'nav' && navMode === 'collapsed' ? 'peek'
+    : navMode;
 
   // Badge nav (reco #7) : on marque « vu » en QUITTANT la page, pas en y
   // arrivant. Marquer au montage remettait `lastSeen` à `now` avant le premier
@@ -178,6 +203,9 @@ const OrganizationPage = () => {
   // plusieurs onglets s'en servent — le hook ne déclenche qu'une requête,
   // partagée par React Query avec celles des composants enfants.
   const myPermissions = useMyOrgPermissions(myOrg?.id);
+  // Guide entreprise : les rôles personnalisés (mig. 219) n'existent que si
+  // leur lecture réussit. Même requête que `useMyOrgPermissions`, partagée.
+  const { isError: rolesUnavailable } = useOrgRoles(myOrg?.id);
   // Appelé ICI, avant les early returns `isLoading` / `!myOrg` : un hook placé
   // plus bas ne serait pas monté sur tous les rendus.
   const { data: orgSubscription } = useOrgSubscription(myOrg?.id);
@@ -226,6 +254,13 @@ const OrganizationPage = () => {
   // HIÉRARCHIQUES (onglets Pyramide et Statistiques) : voir l'équipe qu'on
   // encadre n'est pas une permission réglable, c'est une position.
   const canInvite = myPermissions.can['member.invite'];
+  const guideViewer: GuideViewer = {
+    can: myPermissions.can,
+    isAdmin,
+    isManager,
+    isOwner,
+    customRolesAvailable: !rolesUnavailable,
+  };
   // La pyramide dit qui encadre qui, l'équipe qui travaille ensemble (M3) :
   // un responsable d'équipe regarde les statistiques de SON équipe.
   // Tant que les équipes chargent, un lien vers `stats` n'est pas renvoyé
@@ -294,17 +329,8 @@ const OrganizationPage = () => {
   // règle que `org_seats_allowed()` (dont le repli sans abonnement actif EST
   // `ORG_FREE_SEATS`), pour que le client annonce ce que le serveur appliquera.
   const seatsQuota = effectiveQuota(orgSubscription ?? null);
-  const seatsFull = ENTERPRISE_BILLING_ENFORCED && isQuotaReached(members.length, orgSubscription ?? null);
-
-  let bannerDismissed = seatsBannerDismissed;
-  try {
-    bannerDismissed = bannerDismissed || !!localStorage.getItem(seatsBannerKey(myOrg.id));
-  } catch { /* localStorage indisponible : bannière visible */ }
-
-  const dismissSeatsBanner = () => {
-    setSeatsBannerDismissed(true);
-    try { localStorage.setItem(seatsBannerKey(myOrg.id), '1'); } catch { /* no-op */ }
-  };
+  // Démo : pas de facturation réelle, la bannière n'appelle aucune action.
+  const seatsFull = !isDemo && ENTERPRISE_BILLING_ENFORCED && isQuotaReached(members.length, orgSubscription ?? null);
 
   const hasEntityParam = ['task', 'member', 'project', 'okr', 'team'].some((k) => searchParams.has(k));
   const glossaryButton = (
@@ -323,7 +349,7 @@ const OrganizationPage = () => {
     // suit la même courbe que la carte, pour que les deux bougent ensemble.
     <div
       className={`max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:transition-[padding] md:duration-300 motion-reduce:transition-none ${
-        navMode === 'open' ? 'md:pr-[232px]' : ''
+        sideNavMode === 'open' ? 'md:pr-[232px]' : ''
       }`}
       style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
     >
@@ -336,22 +362,10 @@ const OrganizationPage = () => {
       <MobileHeader
         title={myOrg.name}
         subtitle={`${tpOrgAdmin('page.memberCount', members.length)}${myOrg.industry ? ` · ${myOrg.industry}` : ''}`}
-        actions={
-          <>
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={() => setTab('settings')}
-                aria-label={tOrgAdmin('page.editProfile')}
-                className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
-              >
-                <Pencil size={18} aria-hidden="true" />
-              </button>
-            )}
-            {glossaryButton}
-            <OrgNotificationsBell orgId={myOrg.id} members={members} />
-          </>
-        }
+        // Maquette 236 (2026-10-10) : une seule icône, la cloche. Le crayon
+        // menait à Paramètres, qui est une section ; le glossaire passe dans
+        // la feuille des sections (`OrgSectionSwitcher`, `onGlossary`).
+        actions={<OrgNotificationsBell orgId={myOrg.id} members={members} />}
       />
 
       {/* En-tête desktop (rendu historique, inchangé) */}
@@ -397,33 +411,23 @@ const OrganizationPage = () => {
         <OrgNotificationsBell orgId={myOrg.id} members={members} />
       </header>
 
-      {/* Bannière freemium — informative tant que ENTERPRISE_BILLING_ENFORCED
-          est false (gate dormant ; le vrai blocage sera côté serveur).
-          #5 : dismissible (persistant par org) tant qu'elle est informative. */}
-      {members.length >= (seatsQuota ?? Infinity) && (ENTERPRISE_BILLING_ENFORCED || !bannerDismissed) && (
-        <div className="mb-5 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] px-4 py-3 flex items-start justify-between gap-3">
+      {/* Bannière sièges : affichée UNIQUEMENT quand il faut changer de plan
+          (facturation active ET quota atteint). Le simple constat « gratuit
+          jusqu'à 5, rien ne change » n'appelait aucune action : retiré. */}
+      {seatsFull && (
+        <div className="mb-5 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] px-4 py-3">
           <p className="text-xs text-[rgb(var(--color-text-secondary))]">
             <span className="font-semibold text-[rgb(var(--color-text-primary))]">{tpOrgAdmin('page.memberCountDot', members.length)}</span>{' '}
-            {ENTERPRISE_BILLING_ENFORCED
-              ? tOrgAdmin('page.freemiumOver')
-              : tOrgAdmin('page.freemiumInfo')}
+            {tOrgAdmin('page.freemiumOver')}
           </p>
-          {!ENTERPRISE_BILLING_ENFORCED && (
-            <button
-              type="button"
-              onClick={dismissSeatsBanner}
-              aria-label={tOrgAdmin('page.hideInfo')}
-              className="shrink-0 w-11 h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          )}
         </div>
       )}
 
       {/* Mobile : la section courante devient un sélecteur (maquette M1).
           Desktop : la navigation vit à droite, dans `OrgSideNav`. */}
-      <OrgSectionSwitcher items={navItems} activeId={tab} shortcuts={shortcuts} onSearch={openSearch} />
+      <OrgSectionSwitcher
+        fallbackActive={(() => { const s = ORG_SECTIONS.find((x) => x.id === tab); return s ? { label: t(s.labelKey), Icon: s.Icon } : undefined; })()}
+        items={navItems} activeId={tab} shortcuts={shortcuts} onSearch={openSearch} onGlossary={() => setGlossary(true)} />
 
       {/* Contenu */}
       {/* Une seule frontière Suspense pour tout le contenu : les onglets sont
@@ -512,25 +516,32 @@ const OrganizationPage = () => {
       {/* Desktop : la navigation vit à DROITE, hors de la zone qui défile.
           Rendue par portail dans l'emplacement de `Layout`, donc sa place
           dans cet arbre ne dit rien de sa place à l'écran. */}
+      {/* Guide entreprise : bouton flottant desktop, le reste arrive en lazy. */}
+      <Suspense fallback={null}>
+        <OrgGuideFab viewer={guideViewer} openSignal={guideOpenSignal} />
+      </Suspense>
+
       <OrgSideNav
         items={navItems}
         activeId={tab}
-        mode={navMode}
+        mode={sideNavMode}
         onModeChange={setNavMode}
         shortcuts={shortcuts}
         onTogglePin={togglePin}
         onSearch={openSearch}
       />
 
-      {/* Premier passage dans CETTE entreprise : les lieux à connaître.
-          Jamais en démo, et seulement à une arrivée sur l'Aperçu nu : qui
-          arrive par un lien (fiche, réglages, retour de paiement) vient pour
-          cet écran, pas pour une visite. */}
-      {arrivedOnOverview && !welcomeClosed && !isDemo && !hasEntityParam && user?.id && !readMemberWelcomeSeen(myOrg.id, user.id) && (
+      {/* Premier passage dans CETTE entreprise (créateur comme membre) : la
+          vidéo d'accueil, seulement à une arrivée sans paramètre : qui arrive
+          par un lien (fiche, réglages, retour de paiement) vient pour cet
+          écran, pas pour une visite. En démo aussi depuis le 2026-10-19 (demande
+          d'Axel) : le visiteur démo est un prospect, la vidéo lui fait le tour.
+          La date d'arrivée n'y compte pas (membres seedés), le drapeau « vu »
+          tombe avec le reste des clés `cosmo_*` à chaque nouvelle démo. */}
+      {arrivedBare && !welcomeClosed && !hasEntityParam && user?.id && (isDemo || joinedSinceWelcome(members, user.id)) && !readMemberWelcomeSeen(myOrg.id, user.id) && (
         <Suspense fallback={null}>
-          <MemberWelcome
+          <OrgWelcomeVideo
             orgName={myOrg.name}
-            isAdmin={isAdmin}
             onClose={() => {
               markMemberWelcomeSeen(myOrg.id, user.id);
               setWelcomeClosed(true);

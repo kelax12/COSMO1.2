@@ -6,11 +6,26 @@ import {
   recordFallbackSource,
   normalizeSourceValue,
   FIRST_TOUCH_STORAGE_KEY,
+  persistPendingFirstTouch,
+  clearAttributionTraces,
+  _pendingFirstTouchForTests,
 } from './attribution';
+import { COOKIE_CONSENT_KEY, COOKIE_CONSENT_AT_KEY } from './cookie-consent';
+
+/** Les tests historiques supposent un visiteur qui a ACCEPTÉ (2026-10-13). */
+function accept(): void {
+  localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
+  localStorage.setItem(COOKIE_CONSENT_AT_KEY, String(Date.now()));
+}
 
 /** Réécrit window.location.search sans quitter la page (jsdom). */
 function setSearch(search: string): void {
   window.history.replaceState(null, '', `/${search}`);
+}
+
+/** Simule la page d'où vient le visiteur (jsdom laisse `referrer` vide). */
+function setReferrer(url: string): void {
+  Object.defineProperty(document, 'referrer', { value: url, configurable: true });
 }
 
 /**
@@ -27,7 +42,61 @@ function storeAged(source: string, ageDays: number): void {
 
 beforeEach(() => {
   localStorage.clear();
+  clearAttributionTraces(localStorage);
+  accept();
   setSearch('');
+  setReferrer('');
+});
+
+// 🔴 Loi I&L art. 82 : la source finit sur le PROFIL, elle exige le consentement.
+describe('sans consentement', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    clearAttributionTraces(localStorage);
+  });
+
+  it("captureFirstTouch n'écrit RIEN sur l'appareil, retient en mémoire", () => {
+    setSearch('?ref=tiktok');
+    captureFirstTouch();
+    expect(localStorage.getItem(FIRST_TOUCH_STORAGE_KEY)).toBeNull();
+    expect(_pendingFirstTouchForTests()?.source).toBe('tiktok');
+    expect(readFirstTouch()).toBeNull();
+  });
+
+  it('accepter ensuite pose la source retenue', () => {
+    setSearch('?ref=tiktok');
+    captureFirstTouch();
+    accept();
+    persistPendingFirstTouch();
+    expect(readFirstTouch()?.source).toBe('tiktok');
+    expect(_pendingFirstTouchForTests()).toBeNull();
+  });
+
+  it('refuser ensuite ne pose rien', () => {
+    setSearch('?ref=tiktok');
+    captureFirstTouch();
+    localStorage.setItem(COOKIE_CONSENT_KEY, 'refused');
+    persistPendingFirstTouch();
+    clearAttributionTraces(localStorage);
+    expect(localStorage.getItem(FIRST_TOUCH_STORAGE_KEY)).toBeNull();
+    expect(_pendingFirstTouchForTests()).toBeNull();
+  });
+
+  it("une valeur posée AVANT le correctif n'est pas lue sans consentement", () => {
+    storeAged('tiktok', 1);
+    expect(readFirstTouch()).toBeNull();
+  });
+
+  it("recordFallbackSource n'écrit rien", () => {
+    recordFallbackSource('demo');
+    expect(localStorage.getItem(FIRST_TOUCH_STORAGE_KEY)).toBeNull();
+  });
+
+  it('clearAttributionTraces efface la valeur stockée', () => {
+    storeAged('tiktok', 1);
+    clearAttributionTraces(localStorage);
+    expect(localStorage.getItem(FIRST_TOUCH_STORAGE_KEY)).toBeNull();
+  });
 });
 
 describe('normalizeSourceValue', () => {
@@ -73,11 +142,30 @@ describe('captureFirstTouch', () => {
     expect(readFirstTouch()).toMatchObject({ source: 'reddit', campaign: 'lancement' });
   });
 
-  it('ne fait rien sans paramètre de source', () => {
+  it('sans paramètre ni référent, note une arrivée directe (2026-10-18)', () => {
     setSearch('?foo=bar');
+    setReferrer('');
+    captureFirstTouch();
+    expect(readFirstTouch()?.source).toBe('direct');
+  });
+
+  it('sans paramètre, déduit la source du site référent', () => {
+    setReferrer('https://www.google.fr/');
+    captureFirstTouch();
+    expect(readFirstTouch()?.source).toBe('google');
+  });
+
+  it('un paramètre explicite prime sur le référent', () => {
+    setSearch('?ref=tiktok');
+    setReferrer('https://www.instagram.com/');
+    captureFirstTouch();
+    expect(readFirstTouch()?.source).toBe('tiktok');
+  });
+
+  it("un retour de connexion Google n'est pas une arrivée", () => {
+    setReferrer('https://accounts.google.com/o/oauth2/auth');
     captureFirstTouch();
     expect(readFirstTouch()).toBeNull();
-    expect(localStorage.getItem(FIRST_TOUCH_STORAGE_KEY)).toBeNull();
   });
 
   it("n'écrase JAMAIS une attribution existante (first-touch)", () => {
@@ -117,6 +205,20 @@ describe('recordFallbackSource', () => {
     captureFirstTouch();
     recordFallbackSource('demo');
     expect(readFirstTouch()?.source).toBe('tiktok');
+  });
+
+  it('remplace une simple arrivée directe : la démo est plus précise', () => {
+    captureFirstTouch();
+    expect(readFirstTouch()?.source).toBe('direct');
+    recordFallbackSource('demo');
+    expect(readFirstTouch()?.source).toBe('demo');
+  });
+
+  it('ne remplace pas une source déduite du référent', () => {
+    setReferrer('https://www.linkedin.com/feed/');
+    captureFirstTouch();
+    recordFallbackSource('demo');
+    expect(readFirstTouch()?.source).toBe('linkedin');
   });
 
   it('remplace une attribution expirée', () => {

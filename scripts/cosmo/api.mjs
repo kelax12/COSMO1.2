@@ -13,7 +13,7 @@ import { deadlineEndOfDay, deadlineToTimestamp } from './deadline.mjs';
  * Le test anti-dérive de api.test.mjs casse si les deux divergent.
  */
 export const TASK_COLUMNS =
-  'id,name,priority,category,deadline,estimated_time,created_at,updated_at,bookmarked,completed,completed_at,subtasks,kr_id,recurrence,is_collaborative,pending_invites,user_id';
+  'id,name,priority,category,deadline,estimated_time,created_at,updated_at,bookmarked,completed,completed_at,subtasks,kr_id,recurrence,is_collaborative,pending_invites,user_id,status,health';
 
 /**
  * Date locale YYYY-MM-DD. `en-CA` est la convention du projet : elle évite la

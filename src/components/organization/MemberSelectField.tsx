@@ -1,7 +1,5 @@
-import { useId, useMemo, useState } from 'react';
+import { useId } from 'react';
 import type { OrgMember } from '@/modules/organizations';
-import { filterMembersByQuery, MEMBER_SEARCH_THRESHOLD } from './member-search.helpers';
-import { useT } from '@/i18n/useT';
 import MenuSelect from '@/components/organization/MenuSelect';
 
 interface MemberSelectFieldProps {
@@ -15,37 +13,17 @@ interface MemberSelectFieldProps {
 }
 
 /**
- * Sélecteur d'UNE personne, avec recherche au-delà du seuil commun
- * (`MEMBER_SEARCH_THRESHOLD`) : à 1 000 membres, une liste déroulante brute
- * ne se parcourt plus. L'option choisie reste listée même si le filtre
- * l'exclut, pour qu'une recherche ne vide pas silencieusement le choix.
+ * Sélecteur d'UNE personne : un menu déroulant seul. Le champ de recherche
+ * posé au-dessus a été retiré le 2026-10-13 (demande d'Axel).
  */
 const MemberSelectField = ({ label, members, value, onChange, emptyLabel, hint }: MemberSelectFieldProps) => {
-  const { t: ta } = useT('orgAdmin');
   const id = useId();
-  const [query, setQuery] = useState('');
-  const searchable = members.length > MEMBER_SEARCH_THRESHOLD;
-  const options = useMemo(() => {
-    const found = filterMembersByQuery(members, query);
-    const selected = members.find((m) => m.userId === value);
-    return selected && !found.includes(selected) ? [selected, ...found] : found;
-  }, [members, query, value]);
 
   return (
     <div>
       <label htmlFor={id} className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">
         {label}
       </label>
-      {searchable && (
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={ta('lifecycle.searchPerson')}
-          aria-label={ta('lifecycle.searchPersonAria', { field: label })}
-          className="w-full mb-1.5 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2 text-sm text-[rgb(var(--color-text-primary))]"
-        />
-      )}
       <MenuSelect
         id={id}
         value={value}
@@ -53,7 +31,7 @@ const MemberSelectField = ({ label, members, value, onChange, emptyLabel, hint }
         className="w-full rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2.5 text-sm text-[rgb(var(--color-text-primary))]"
       >
         <option value="">{emptyLabel}</option>
-        {options.map((m) => (
+        {members.map((m) => (
           <option key={m.userId} value={m.userId}>{m.displayName}</option>
         ))}
       </MenuSelect>

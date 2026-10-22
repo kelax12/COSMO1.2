@@ -12,12 +12,10 @@ import { gotoStubbed, installSupabaseStub, STUB_USER_ID } from '../supabase-stub
  * atteindre.
  *
  * Ce que ces cas vérifient, et que les unités ne pouvaient pas vérifier :
- *  • que chaque étape de la mise en place ÉCRIT au moment où elle est validée,
- *    mesuré sur les requêtes réellement parties (invitations, équipe, projet
- *    depuis un modèle, objectif d'entreprise) ;
- *  • que la fin mène à l'espace entreprise SANS l'accueil membre (la personne
- *    vient de tout poser) ;
- *  • qu'un membre arrivé par invitation est accueilli UNE fois, et pas à la
+ *  • que la vidéo d'accueil s'ouvre au premier passage dans l'espace entreprise
+ *    (l'assistant de mise en place qui demandait des infos a été retiré le
+ *    2026-10-14) ;
+ *  • qu'une personne est accueillie UNE fois, et pas à la
  *    visite suivante.
  *
  * ⚠️ Rien ici ne prouve le serveur (RLS, triggers) : cf. l'en-tête de
@@ -33,65 +31,54 @@ const ORG = {
 };
 const MEMBER_WELCOME = /bienvenue dans l'espace entreprise/i;
 
-test.describe('accueil entreprise (EnterpriseOnboarding + MemberWelcome)', () => {
-  test('la mise en place écrit à chaque étape, puis ouvre l espace sans accueil membre', async ({ page }) => {
-    const stub = await installSupabaseStub(page);
-    stub.reply('rpc/get_my_org_inbox', {});
-    stub.reply('organization_members', [{ role: 'admin', organizations: ORG }]);
-    stub.reply('rpc/create_org_email_invitations', [
-      { email: 'marie@nova.fr', token: 't1', status: 'created' },
-      { email: 'paul@nova.fr', token: 't2', status: 'created' },
-    ]);
-    stub.reply('functions/v1/send-org-invite', { sent: 2, failed: 0 });
+/**
+ * Une ligne d'appartenance que les DEUX lectures de `organization_members`
+ * comprennent (le stub répond par chemin) : la liste de mes entreprises lit
+ * `role` + `organizations`, l'annuaire lit `user_id` + `joined_at`. L'accueil
+ * membre ne vise que les arrivés depuis sa sortie (2026-10-03).
+ */
+const membership = (role: 'admin' | 'member') => [
+  {
+    role,
+    organizations: ORG,
+    org_id: ORG.id,
+    user_id: STUB_USER_ID,
+    joined_at: new Date().toISOString(),
+    manager_id: null,
+  },
+];
 
-    await gotoStubbed(page, `/entreprise/onboarding?setup=${ORG.id}`, page.getByLabel(/adresses e-mail/i));
+/**
+ * Piège de focus mesuré au clavier (2026-10-05) : vingt-cinq Tab, et le focus
+ * ne quitte jamais la surface. `modal-a11y.guard` vérifie le CÂBLAGE de
+ * `useModalA11y` ; ceci vérifie son EFFET, hors démo, là où vivent ces écrans.
+ */
+async function expectTabTrapped(page: import('@playwright/test').Page, dialog: import('@playwright/test').Locator) {
+  for (let i = 0; i < 25; i += 1) {
+    await page.keyboard.press('Tab');
+    const inside = await dialog.evaluate((el) => el.contains(document.activeElement));
+    expect(inside, `Tab n°${i + 1} : le focus a quitté la surface`).toBe(true);
+  }
+}
 
-    // ── Invitations ──
-    await page.getByLabel(/adresses e-mail/i).fill('marie@nova.fr, paul@nova.fr');
-    await page.getByRole('button', { name: /envoyer les 2 invitations/i }).click();
-    await expect(page.getByRole('status').filter({ hasText: /2 invitations envoyées/i })).toBeVisible();
-    const invites = stub.writesTo('rpc/create_org_email_invitations');
-    expect(invites).toHaveLength(1);
-    expect(JSON.stringify(invites[0].body)).toContain('marie@nova.fr');
-    await page.getByRole('button', { name: /^continuer/i }).click();
-
-    // ── Équipe ──
-    await page.getByLabel(/nom de la première équipe/i).fill('Produit');
-    await page.getByRole('button', { name: /créer l'équipe/i }).click();
-    await expect.poll(() => stub.writesTo('org_teams').length, { timeout: 30_000 }).toBe(1);
-
-    // ── Projet, depuis un modèle ──
-    await page.getByRole('radio', { name: /sprint/i }).check();
-    await page.getByRole('button', { name: /créer le projet/i }).click();
-    await expect
-      .poll(() => stub.writesTo('rpc/create_team_project_with_tasks').length, { timeout: 30_000 })
-      .toBe(1);
-
-    // ── Cap : un objectif d'entreprise ──
-    await page.getByLabel(/objectif de l'entreprise/i).fill('Devenir la référence');
-    await page.getByLabel(/^résultat clé/i).fill('Signer de nouveaux clients');
-    await page.getByRole('button', { name: /fixer le cap/i }).click();
-    await expect.poll(() => stub.writesTo('team_okrs').length, { timeout: 30_000 }).toBe(1);
-
-    // ── Fin ──
-    await expect(page.getByText(/cap fixé : « devenir la référence »/i)).toBeVisible();
-    await page.getByRole('button', { name: /ouvrir l'espace entreprise/i }).click();
-    await expect(page).toHaveURL(/\/entreprise$/);
-    // Qui vient de tout mettre en place n'a pas besoin de la visite des lieux.
-    await page.waitForTimeout(1_500);
-    await expect(page.getByRole('dialog', { name: MEMBER_WELCOME })).toHaveCount(0);
-  });
-
+test.describe('accueil entreprise (vidéo OrgWelcomeVideo)', () => {
   test('un membre est accueilli une fois dans l espace entreprise, pas à la visite suivante', async ({ page }) => {
     const stub = await installSupabaseStub(page);
     stub.reply('rpc/get_my_org_inbox', {});
-    stub.reply('organization_members', [{ role: 'member', organizations: ORG }]);
+    stub.reply('organization_members', membership('member'));
 
     await gotoStubbed(page, '/entreprise', page.getByRole('dialog', { name: MEMBER_WELCOME }));
-    await expect(page.getByRole('list', { name: /les lieux à connaître/i })).toBeVisible();
+    await expect(page.locator('video[src="/videos/onboarding-entreprise-v2.mp4"]')).toBeAttached();
     // Focus d'entrée sur l'action, pas sur la croix : Entrée valide l'accueil.
-    await expect(page.getByRole('button', { name: /c'est parti/i })).toBeFocused();
-    // Échap emprunte le même chemin que « C'est parti » : l'accueil est vu.
+    await expect(page.getByRole('button', { name: /^commencer/i })).toBeFocused();
+    await expectTabTrapped(page, page.getByRole('dialog', { name: MEMBER_WELCOME }));
+    // Échap emprunte le même chemin que « Commencer » : l'accueil est vu.
+    // ⚠️ Focus ramené sur un bouton AVANT Échap. Après 25 Tab il peut être
+    // dans les commandes NATIVES du lecteur, et Chromium ne laisse alors sortir
+    // AUCUNE touche vers la page (mesuré le 2026-10-16 : Échap n'atteint ni
+    // `document` ni `window`, même en capture). Aucun écouteur de page ne peut
+    // l'entendre ; Tab, lui, ressort du lecteur. Rouge de `f74b0874` à `66a8505c`.
+    await page.getByRole('button', { name: /^commencer/i }).focus();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog', { name: MEMBER_WELCOME })).toBeHidden();
 
@@ -110,7 +97,7 @@ test.describe('accueil entreprise (EnterpriseOnboarding + MemberWelcome)', () =>
   test('l accueil membre ne s ouvre pas par-dessus un lien profond, même après coup', async ({ page }) => {
     const stub = await installSupabaseStub(page);
     stub.reply('rpc/get_my_org_inbox', {});
-    stub.reply('organization_members', [{ role: 'member', organizations: ORG }]);
+    stub.reply('organization_members', membership('member'));
 
     await gotoStubbed(page, '/entreprise/tasks?task=stub-task-1', page.getByRole('heading', { name: 'Nova Studio' }));
     // Le défaut se manifestait APRÈS le retrait du paramètre : on laisse à la
@@ -122,7 +109,7 @@ test.describe('accueil entreprise (EnterpriseOnboarding + MemberWelcome)', () =>
   test('une arrivée par ?tab= (ancien lien, retour de paiement) ne déclenche pas l accueil', async ({ page }) => {
     const stub = await installSupabaseStub(page);
     stub.reply('rpc/get_my_org_inbox', {});
-    stub.reply('organization_members', [{ role: 'admin', organizations: ORG }]);
+    stub.reply('organization_members', membership('admin'));
 
     await gotoStubbed(page, '/entreprise?tab=settings', page.getByRole('heading', { name: 'Nova Studio' }));
     await expect(page).toHaveURL(/\/entreprise\/settings/);

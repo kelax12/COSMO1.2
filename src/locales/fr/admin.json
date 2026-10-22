@@ -97,5 +97,21 @@
   "supportOldest": "Le plus ancien sans réponse attend depuis {{days}} jour(s).",
   "supportAllAnswered": "Tous les rapports ont reçu une réponse.",
   "supportMedian": "Délai médian de première réponse : {{hours}} h.",
-  "supportNoResponseRecorded": "Aucune date de réponse enregistrée : elle se pose à la main, la réponse partant d'une boîte mail."
+  "supportNoResponseRecorded": "Aucune date de réponse enregistrée : elle se pose à la main, la réponse partant d'une boîte mail.",
+  "onboarding": "Accueils (30 derniers jours)",
+  "onboardingNote": "Ce que les nouveaux comptes créent dans les 24 h après leur inscription, et ce que deviennent les entreprises créées. Mig. 213.",
+  "onboardingNotInstalled": "Mesure non installée : la migration 213 n'est pas appliquée.",
+  "onboardingNone": "Aucune inscription ni entreprise sur la période.",
+  "onboardingSignups": "Inscrits",
+  "onboardingTask": "Avec une tâche",
+  "onboardingSlot": "Avec un créneau",
+  "onboardingHabit": "Avec une habitude",
+  "onboardingOkr": "Avec un objectif",
+  "onboardingOrgs": "Entreprises créées",
+  "onboardingOrgTeam": "Avec une équipe",
+  "onboardingOrgMember": "Avec un 2e membre",
+  "onboardingOrgProject": "Avec un projet",
+  "onboardingOrgOkr": "Avec un cap",
+  "onboardingReturn": "Revenus entre J+7 et J+14 : {{all}} de tous les inscrits mûrs ({{mature}}), {{withTask}} de ceux qui ont créé une tâche à l'accueil.",
+  "onboardingReturnTooEarly": "Retour non mesurable : aucun inscrit de la période n'a encore 14 jours."
 }

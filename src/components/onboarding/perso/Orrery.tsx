@@ -12,9 +12,13 @@ import {
   type Planet,
 } from './orrery-geometry';
 
-const INK = '#0F172A';
-const HAIRLINE = '#CBD5E1';
-const MUTED = '#64748B';
+// Couleurs de surface lues dans la palette du conteneur (`perso-theme.ts`) :
+// passées en `style`, une variable CSS n'étant pas fiable dans un ATTRIBUT
+// de présentation SVG.
+const INK = 'var(--onb-ink)';
+const HAIRLINE = 'var(--onb-hair)';
+const MUTED = 'var(--onb-muted)';
+const STAGE = 'var(--onb-stage)';
 const TICKS = outerTicks();
 
 interface OrreryProps {
@@ -25,6 +29,12 @@ interface OrreryProps {
   taskCount: number;
   /** Version réduite du haut d'écran mobile : pas d'étiquettes, trop petites à cette échelle. */
   compact?: boolean;
+  /**
+   * Mouvement DEMANDÉ par la personne (bouton « Animer ») alors que son
+   * système le réduit. WCAG 2.3.3 interdit le mouvement non demandé, pas le
+   * mouvement : sans ce troisième état, la signature restait figée à vie.
+   */
+  forceMotion?: boolean;
 }
 
 /**
@@ -33,13 +43,13 @@ interface OrreryProps {
  * dans la colonne du formulaire.
  *
  * 🔴 Sous `prefers-reduced-motion` (actif sur la machine d'Axel), RIEN ne
- * bouge : les orbites sont rendues tracées, les comètes ne sont pas montées
- * (`<animateMotion>` est du SMIL, qui ignore ce réglage), et le halo de la
- * planète active est un anneau fixe. Le dessin final doit donc tenir seul :
- * c'est lui, et pas l'animation, qui porte la composition.
+ * bouge tant que la personne ne l'a pas demandé : orbites rendues tracées,
+ * comètes non montées (`<animateMotion>` est du SMIL, qui ignore ce réglage),
+ * halo fixe. Le dessin final doit donc tenir seul.
  */
-const Orrery = ({ step, labels, taskCount, compact = false }: OrreryProps) => {
-  const reduce = useReducedMotion() ?? false;
+const Orrery = ({ step, labels, taskCount, compact = false, forceMotion = false }: OrreryProps) => {
+  const prefersReduced = useReducedMotion() ?? false;
+  const reduce = prefersReduced && !forceMotion;
   const states = planetStates(step);
   const preview = step === 0;
   const complete = step >= PLANETS.length + 1;
@@ -54,13 +64,13 @@ const Orrery = ({ step, labels, taskCount, compact = false }: OrreryProps) => {
     >
       <defs>
         <radialGradient id="orrery-sun-halo" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#4F46E5" stopOpacity="0.16" />
+          <stop offset="0%" stopColor="#4F46E5" stopOpacity="0.18" />
           <stop offset="100%" stopColor="#4F46E5" stopOpacity="0" />
         </radialGradient>
       </defs>
 
       {/* Anneau gradué : l'instrument. Toujours là, toujours discret. */}
-      <g stroke={INK} strokeLinecap="round">
+      <g style={{ stroke: INK }} strokeLinecap="round">
         {TICKS.map((tick, i) => (
           <line
             key={i}
@@ -83,7 +93,7 @@ const Orrery = ({ step, labels, taskCount, compact = false }: OrreryProps) => {
           rx={ORBITS[planet].rx}
           ry={ORBITS[planet].ry}
           fill="none"
-          stroke={HAIRLINE}
+          style={{ stroke: HAIRLINE }}
           strokeWidth={1}
           strokeDasharray="2 5"
         />
@@ -95,7 +105,7 @@ const Orrery = ({ step, labels, taskCount, compact = false }: OrreryProps) => {
         const lit = preview || state !== 'idle';
         if (!lit) return null;
         const color = PLANET_COLOR[planet];
-        const opacity = preview ? 0.5 : state === 'active' ? 1 : 0.62;
+        const opacity = preview ? 0.55 : state === 'active' ? 1 : 0.65;
         const width = state === 'active' ? 1.8 : 1.25;
         const common = {
           cx: ORRERY_CENTER.x,
@@ -111,7 +121,7 @@ const Orrery = ({ step, labels, taskCount, compact = false }: OrreryProps) => {
           <ellipse key={`lit-${planet}`} {...common} />
         ) : (
           <motion.ellipse
-            key={`lit-${planet}-${preview ? 'p' : 'b'}`}
+            key={`lit-${planet}-${preview ? 'p' : 'b'}-${forceMotion ? 'f' : 'n'}`}
             {...common}
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
@@ -124,7 +134,7 @@ const Orrery = ({ step, labels, taskCount, compact = false }: OrreryProps) => {
       {!reduce &&
         PLANETS.map((planet) => {
           const state = states[planet];
-          if (!(complete || state === 'active')) return null;
+          if (!(complete || state === 'active' || preview)) return null;
           return (
             <circle key={`comet-${planet}`} r={2.6} fill={PLANET_COLOR[planet]}>
               <animateMotion dur={`${ORBITS[planet].period}s`} repeatCount="indefinite" path={orbitPath(planet)} />
@@ -134,13 +144,7 @@ const Orrery = ({ step, labels, taskCount, compact = false }: OrreryProps) => {
 
       {/* Le centre : vous, sous la forme de la planète du logo. */}
       <circle cx={ORRERY_CENTER.x} cy={ORRERY_CENTER.y} r={64} fill="url(#orrery-sun-halo)" />
-      <image
-        href="/logo.svg"
-        x={ORRERY_CENTER.x - 30}
-        y={ORRERY_CENTER.y - 31}
-        width={60}
-        height={57}
-      />
+      <image href="/logo.svg" x={ORRERY_CENTER.x - 30} y={ORRERY_CENTER.y - 31} width={60} height={57} />
       {!compact && (
         <text
           x={ORRERY_CENTER.x}
@@ -149,7 +153,7 @@ const Orrery = ({ step, labels, taskCount, compact = false }: OrreryProps) => {
           className="font-data"
           fontSize={10.5}
           letterSpacing="0.14em"
-          fill={MUTED}
+          style={{ fill: MUTED }}
         >
           {labels.you.toUpperCase()}
         </text>
@@ -167,7 +171,7 @@ const Orrery = ({ step, labels, taskCount, compact = false }: OrreryProps) => {
           <g key={`planet-${planet}`}>
             {state === 'active' &&
               (reduce ? (
-                <circle cx={x} cy={y} r={17} fill={color} fillOpacity={0.12} />
+                <circle cx={x} cy={y} r={17} fill={color} fillOpacity={0.14} />
               ) : (
                 <motion.circle
                   cx={x}
@@ -182,19 +186,11 @@ const Orrery = ({ step, labels, taskCount, compact = false }: OrreryProps) => {
               cx={x}
               cy={y}
               r={r}
-              fill={lit ? color : '#FFFFFF'}
-              stroke={lit ? '#FFFFFF' : HAIRLINE}
+              style={{ fill: lit ? color : STAGE, stroke: lit ? STAGE : HAIRLINE }}
               strokeWidth={lit ? 2.5 : 1.5}
             />
             {count > 0 && (
-              <text
-                x={x}
-                y={y + 3.4}
-                textAnchor="middle"
-                fontSize={9.5}
-                fontWeight={700}
-                fill="#FFFFFF"
-              >
+              <text x={x} y={y + 3.4} textAnchor="middle" fontSize={9.5} fontWeight={700} fill="#FFFFFF">
                 {count}
               </text>
             )}
@@ -207,10 +203,9 @@ const Orrery = ({ step, labels, taskCount, compact = false }: OrreryProps) => {
                 fontSize={11}
                 letterSpacing="0.12em"
                 fontWeight={state === 'active' ? 700 : 500}
-                fill={lit ? INK : MUTED}
-                stroke="#F6F7FB"
                 strokeWidth={4}
                 paintOrder="stroke"
+                style={{ fill: lit ? INK : MUTED, stroke: STAGE }}
               >
                 {labels[planet].toUpperCase()}
               </text>

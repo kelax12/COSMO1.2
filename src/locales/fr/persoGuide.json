@@ -1,0 +1,103 @@
+{
+  "drawer": {
+    "title": "Guide perso",
+    "close": "Fermer le guide",
+    "searchPlaceholder": "Tâche, habitude, objectif…",
+    "noResult": "Aucune action ne correspond. Essaie un autre mot."
+  },
+  "categories": {
+    "tasks": "Tâches et listes",
+    "agenda": "Agenda",
+    "habits": "Habitudes",
+    "okr": "Objectifs"
+  },
+  "control": {
+    "progress": "{{action}} · étape {{current}}/{{total}}",
+    "pause": "Mettre en pause",
+    "resume": "Reprendre",
+    "skip": "Passer",
+    "quit": "Quitter la démo"
+  },
+  "end": {
+    "missing": "Cet écran a changé depuis l'écriture du guide. Ouvre-le à la main.",
+    "openDirect": "Ouvrir l'écran"
+  },
+  "empty": {
+    "noHabit": "Il te faut d'abord une habitude : commence par « Créer une habitude ».",
+    "noOkr": "Il te faut d'abord un objectif : commence par « Créer un objectif »."
+  },
+  "actions": {
+    "task": {
+      "create": {
+        "label": "Créer une tâche",
+        "synonyms": "nouvelle tâche, ajouter, todo, à faire",
+        "b1": "Seul le nom est obligatoire. Une tâche peut s'enregistrer tout de suite.",
+        "b2": "La priorité range ta liste : les tâches importantes remontent en tête.",
+        "b3": "Avec une échéance, la tâche apparaît dans le calendrier et peut se répéter."
+      },
+      "find": {
+        "label": "Retrouver une tâche",
+        "synonyms": "chercher, filtrer, recherche, trier, catégorie",
+        "b1": "Cherche par nom, ou filtre par catégorie pour ne garder qu'un sujet.",
+        "b2": "Le calendrier montre tes tâches par jour d'échéance."
+      }
+    },
+    "list": {
+      "create": {
+        "label": "Créer une liste",
+        "synonyms": "liste, regrouper, dossier, projet perso",
+        "b1": "Donne un nom à ta liste : courses, projet, lectures…",
+        "b2": "La couleur la distingue d'un coup d'œil dans la barre des listes."
+      }
+    },
+    "agenda": {
+      "plan": {
+        "label": "Planifier une tâche",
+        "synonyms": "time blocking, créneau, glisser, programmer, caler",
+        "b1": "Ce bouton ouvre tes tâches à planifier, à côté du calendrier.",
+        "b2": "Glisse une tâche sur un créneau : elle devient un bloc de ton agenda."
+      },
+      "event": {
+        "label": "Créer un évènement",
+        "synonyms": "rendez-vous, réunion, évènement, créneau, bloc",
+        "b1": "Clique et glisse sur un créneau vide pour créer un évènement à cette heure."
+      },
+      "views": {
+        "label": "Changer de vue",
+        "synonyms": "jour, semaine, mois, zoom, affichage",
+        "b1": "Jour pour le détail, semaine pour l'ensemble, mois pour prendre du recul.",
+        "b2": "Le zoom resserre ou élargit les heures de la grille."
+      }
+    },
+    "habit": {
+      "create": {
+        "label": "Créer une habitude",
+        "synonyms": "nouvelle habitude, routine, rituel, quotidien",
+        "b1": "Le nom de l'habitude, à formuler comme une action : lire, marcher, méditer…",
+        "b2": "Le temps qu'elle te prend chaque jour, en minutes.",
+        "b3": "Sa couleur, reprise dans le suivi et les statistiques."
+      },
+      "track": {
+        "label": "Suivre ses habitudes",
+        "synonyms": "cocher, valider, série, streak, suivi, heatmap",
+        "b1": "Choisis la vue : la journée à cocher, ou l'historique de chaque habitude.",
+        "b2": "Coche une habitude pour valider la journée et allonger ta série."
+      }
+    },
+    "okr": {
+      "create": {
+        "label": "Créer un objectif",
+        "synonyms": "okr, objectif, but, résultat clé, ambition",
+        "b1": "L'objectif dit où tu veux aller : un cap clair, en une phrase.",
+        "b2": "L'échéance fixe quand tu fais le bilan.",
+        "b3": "Les résultats clés mesurent l'avancée : un nombre à atteindre, ou fait / pas fait."
+      },
+      "progress": {
+        "label": "Faire avancer un objectif",
+        "synonyms": "progression, mettre à jour, avancement, résultat clé, catégorie",
+        "b1": "Chaque résultat clé se met à jour depuis la carte : la jauge de l'objectif suit.",
+        "b2": "Filtre par catégorie pour ne voir qu'un pan de ta vie."
+      }
+    }
+  }
+}

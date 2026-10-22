@@ -32,4 +32,5 @@ export {
   type EventGroup,
   type PersonActivity,
 } from './aggregate';
+export { eventMinutes } from './insights';
 export { useActivityReports } from './hooks';

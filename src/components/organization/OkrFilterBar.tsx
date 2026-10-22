@@ -58,7 +58,7 @@ const OkrFilterBar = ({ filters, setFilters, teams, members, currentUserId, cate
       {setCategory && categories.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger aria-label={t('okrFilters.categoryAria')} className={`${trigger} ${category ? on : off}`}>
-            {cat ? <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} aria-hidden="true" /> : <Tag size={13} aria-hidden="true" />}
+            {cat ? <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} aria-hidden="true" /> : <Tag size={13} aria-hidden="true" className="max-md:hidden" />}
             <span className="max-w-[140px] truncate">{cat?.name ?? t('okrFilters.category')}</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
@@ -77,7 +77,7 @@ const OkrFilterBar = ({ filters, setFilters, teams, members, currentUserId, cate
 
       <DropdownMenu>
         <DropdownMenuTrigger aria-label={t('okrFilters.teamAria')} className={`${trigger} ${filters.team ? on : off}`}>
-          {team ? <TeamColorDot color={team.color} /> : <Users size={13} aria-hidden="true" />}
+          {team ? <TeamColorDot color={team.color} /> : <Users size={13} aria-hidden="true" className="max-md:hidden" />}
           <span className="max-w-[140px] truncate">
             {filters.team === 'org' ? t('okrFilters.orgWide') : team?.name ?? t('okrFilters.team')}
           </span>
@@ -98,7 +98,7 @@ const OkrFilterBar = ({ filters, setFilters, teams, members, currentUserId, cate
 
       <DropdownMenu>
         <DropdownMenuTrigger aria-label={t('okrFilters.personAria')} className={`${trigger} ${filters.person ? on : off}`}>
-          {person ? <MemberAvatar avatar={person.avatar} name={person.displayName} size={20} /> : <UserRound size={13} aria-hidden="true" />}
+          {person ? <MemberAvatar avatar={person.avatar} name={person.displayName} size={20} /> : <UserRound size={13} aria-hidden="true" className="max-md:hidden" />}
           <span className="max-w-[140px] truncate">{person ? personName(person) : t('okrFilters.person')}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
@@ -119,7 +119,7 @@ const OkrFilterBar = ({ filters, setFilters, teams, members, currentUserId, cate
 
       <DropdownMenu>
         <DropdownMenuTrigger aria-label={t('okrFilters.stateAria')} className={`${trigger} ${filters.state ? on : off}`}>
-          {filters.state ? <span className={`w-2 h-2 rounded-full ${STATE_DOT[filters.state]}`} aria-hidden="true" /> : <Activity size={13} aria-hidden="true" />}
+          {filters.state ? <span className={`w-2 h-2 rounded-full ${STATE_DOT[filters.state]}`} aria-hidden="true" /> : <Activity size={13} aria-hidden="true" className="max-md:hidden" />}
           {filters.state ? stateLabel[filters.state] : t('okrFilters.state')}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">

@@ -8,10 +8,15 @@
 // verbatim). Étape 1 (détails) extraite dans DesktopDetailsStep ; étape 2
 // (collaborateurs) dans DesktopCollaboratorsStep. Ce fichier = chrome
 // (header, footer wizard) + aiguillage des deux étapes.
-import React from 'react';
-import { X, AlertCircle, ChevronRight, Loader2, Trash2 } from 'lucide-react';
+import React, { Suspense, useState } from 'react';
+import type { DetailsTab } from './DesktopDetailsStep';
+import { X, AlertCircle, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import DesktopCollaboratorsStep from './DesktopCollaboratorsStep';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+// L'onglet « Partager » (~16 ko de source) ne s'affiche qu'à la demande :
+// chargé alors, il sort du chunk `TaskModal`, qui n'avait plus que 1,4 ko de
+// marge sous son plafond (2026-10-10). Catalogue `tasks` déjà chargé.
+const DesktopCollaboratorsStep = lazyWithRetry(() => import('./DesktopCollaboratorsStep'));
 import DesktopDetailsStep from './DesktopDetailsStep';
 import { useCreateCategory, type Category } from '@/modules/categories';
 import { useCreateList } from '@/modules/lists';
@@ -98,7 +103,6 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   formData, setFormData, handleInputChange,
   errors, setErrors, okrFields,
   hasChanges, setHasChanges,
-  step, setStep,
   dRegister, dTrigger, dClear, dInvalid,
   collaboratorRef,
   validateForm, isFormValid, missingStep1Fields,
@@ -114,6 +118,8 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   sentRequests, pendingInvitesLocal, friends, cancelFriendRequestMutation,
 }) => {
   const { t } = useT('taskModal');
+  // Onglets Détails / Options avancées / Sous-tâches / Dépendances / Partager.
+  const [tab, setTab] = useState<DetailsTab>('details');
   const { t: tCommon } = useT('common');
   // Enregistrement principal (bouton + touche Entrée dans un champ) : les
   // boutons vivent hors du <form> (footer sticky), donc on partage cette
@@ -122,6 +128,8 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   const handlePrimarySubmit = () => {
     const missing = missingStep1Fields();
     if (missing.length > 0) {
+      // Les champs requis vivent dans « Détails » : y ramener pour montrer l'erreur.
+      setTab('details');
       validateForm();
       dTrigger(missing);
       return;
@@ -166,7 +174,39 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
             </button>
           </div>
 
-          <div className="p-6 overflow-y-auto flex-1 min-h-0" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+          {!collaboratorsOnly && (
+            <div role="tablist" aria-label={t('tabs.aria')} className="flex gap-1 px-3 overflow-x-auto overflow-y-hidden border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}>
+              {(['details', 'advanced', 'subtasks', 'dependencies', 'share'] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  id={`task-tab-${id}`}
+                  aria-selected={tab === id}
+                  aria-controls="task-tabpanel"
+                  onClick={() => setTab(id)}
+                  // 44 px (WCAG 2.5.5). La barre de défilement que 290e2599 a fait
+                  // disparaître venait du `-mb-px` dans un conteneur overflow-x-auto :
+                  // `overflow-y-hidden` la règle seul, la hauteur n'y était pour rien.
+                  className={`min-h-11 px-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                    tab === id
+                      ? 'border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-text-primary))]'
+                      : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
+                  }`}
+                >
+                  {id === 'subtasks' && isCreating && formData.subtasks.length > 0
+                    ? `${t('tabs.subtasks')} (${formData.subtasks.length})`
+                    : id === 'share' && collaborators.length > 0
+                      ? `${t('tabs.share')} (${collaborators.length})`
+                      : t(`tabs.${id}`)}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div
+            {...(!collaboratorsOnly ? { id: 'task-tabpanel', role: 'tabpanel', 'aria-labelledby': `task-tab-${tab}` } : {})}
+            className={`p-6 overflow-y-auto flex-1 ${collaboratorsOnly ? 'min-h-0' : 'min-h-[22rem]'}`} style={{ backgroundColor: 'rgb(var(--color-background))' }}>
             {/* Error display */}
             {errors.general &&
               <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg" role="alert">
@@ -182,28 +222,30 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                 {collaboratorsOnly ? (
                   /* Ouverture ciblée « Partager » (menu ⋯ → Collaborateur) :
                      UNIQUEMENT la section collaboration, sans les champs tâche. */
-                  <DesktopCollaboratorsStep
-                    collaboratorRef={collaboratorRef}
-                    isTaskOwner={isTaskOwner}
-                    task={task}
-                    onGenerateShareLink={onGenerateShareLink}
-                    collaborators={collaborators}
-                    displayInfo={displayInfo}
-                    pendingShareIds={pendingShareIds}
-                    handleRemoveCollaborator={handleRemoveCollaborator}
-                    emailInput={emailInput}
-                    setEmailInput={setEmailInput}
-                    inputError={inputError}
-                    setInputError={setInputError}
-                    handleAddEmail={handleAddEmail}
-                    filteredFriends={filteredFriends}
-                    collabIdOf={collabIdOf}
-                    toggleCollaborator={toggleCollaborator}
-                    sentRequests={sentRequests}
-                    pendingInvitesLocal={pendingInvitesLocal}
-                    friends={friends}
-                    cancelFriendRequestMutation={cancelFriendRequestMutation}
-                  />
+                  <Suspense fallback={null}>
+                    <DesktopCollaboratorsStep
+                      collaboratorRef={collaboratorRef}
+                      isTaskOwner={isTaskOwner}
+                      task={task}
+                      onGenerateShareLink={onGenerateShareLink}
+                      collaborators={collaborators}
+                      displayInfo={displayInfo}
+                      pendingShareIds={pendingShareIds}
+                      handleRemoveCollaborator={handleRemoveCollaborator}
+                      emailInput={emailInput}
+                      setEmailInput={setEmailInput}
+                      inputError={inputError}
+                      setInputError={setInputError}
+                      handleAddEmail={handleAddEmail}
+                      filteredFriends={filteredFriends}
+                      collabIdOf={collabIdOf}
+                      toggleCollaborator={toggleCollaborator}
+                      sentRequests={sentRequests}
+                      pendingInvitesLocal={pendingInvitesLocal}
+                      friends={friends}
+                      cancelFriendRequestMutation={cancelFriendRequestMutation}
+                    />
+                  </Suspense>
                 ) : (
                   <>
                 {/* ── Vue unique (#29) : le wizard 2 étapes est remplacé par une
@@ -231,57 +273,36 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                     task={task}
                     showDescription={showDescription}
                     setShowDescription={setShowDescription}
+                    tab={tab}
                   />
 
-                {/* ── Collaborateurs en disclosure (#29) — repliés par défaut,
-                    dépliés via « Partager » ou l'ouverture ciblée (step===2). ── */}
-                <div className="mt-6 border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                  <button
-                    type="button"
-                    onClick={() => setStep(step === 2 ? 1 : 2)}
-                    aria-expanded={step === 2}
-                    className="flex items-center gap-2 text-sm font-semibold hover:text-blue-500 transition-colors"
-                    style={{ color: 'rgb(var(--color-text-secondary))' }}
-                  >
-                    <ChevronRight
-                      size={16}
-                      aria-hidden="true"
-                      className={`transition-transform ${step === 2 ? 'rotate-90' : ''}`}
+                {/* Partager : la section collaboration, dans son propre onglet. */}
+                {tab === 'share' && (
+                  <Suspense fallback={null}>
+                    <DesktopCollaboratorsStep
+                      collaboratorRef={collaboratorRef}
+                      isTaskOwner={isTaskOwner}
+                      task={task}
+                      onGenerateShareLink={onGenerateShareLink}
+                      collaborators={collaborators}
+                      displayInfo={displayInfo}
+                      pendingShareIds={pendingShareIds}
+                      handleRemoveCollaborator={handleRemoveCollaborator}
+                      emailInput={emailInput}
+                      setEmailInput={setEmailInput}
+                      inputError={inputError}
+                      setInputError={setInputError}
+                      handleAddEmail={handleAddEmail}
+                      filteredFriends={filteredFriends}
+                      collabIdOf={collabIdOf}
+                      toggleCollaborator={toggleCollaborator}
+                      sentRequests={sentRequests}
+                      pendingInvitesLocal={pendingInvitesLocal}
+                      friends={friends}
+                      cancelFriendRequestMutation={cancelFriendRequestMutation}
                     />
-                    Partager la tâche
-                    {collaborators.length > 0 && (
-                      <span className="px-1.5 py-0.5 rounded-full text-xs bg-[rgb(var(--color-accent-solid))]/10 text-blue-500">
-                        {collaborators.length}
-                      </span>
-                    )}
-                  </button>
-                  {step === 2 && (
-                    <div className="mt-4">
-                      <DesktopCollaboratorsStep
-                        collaboratorRef={collaboratorRef}
-                        isTaskOwner={isTaskOwner}
-                        task={task}
-                        onGenerateShareLink={onGenerateShareLink}
-                        collaborators={collaborators}
-                        displayInfo={displayInfo}
-                        pendingShareIds={pendingShareIds}
-                        handleRemoveCollaborator={handleRemoveCollaborator}
-                        emailInput={emailInput}
-                        setEmailInput={setEmailInput}
-                        inputError={inputError}
-                        setInputError={setInputError}
-                        handleAddEmail={handleAddEmail}
-                        filteredFriends={filteredFriends}
-                        collabIdOf={collabIdOf}
-                        toggleCollaborator={toggleCollaborator}
-                        sentRequests={sentRequests}
-                        pendingInvitesLocal={pendingInvitesLocal}
-                        friends={friends}
-                        cancelFriendRequestMutation={cancelFriendRequestMutation}
-                      />
-                    </div>
-                  )}
-                </div>
+                  </Suspense>
+                )}
                   </>
                 )}
             </form>

@@ -18,7 +18,21 @@ import { test, expect, navTo, openOrgSection, dismissFirstSightBubble } from './
 
 /** Passe la vue Projets sur l'un des trois modes de la barre d'outils. */
 const switchView = async (page: Page, name: 'Liste' | 'Tableau' | 'Planning') => {
-  await page.getByRole('group', { name: /vue/i }).getByRole('button', { name }).click();
+  // Sur téléphone, la barre « Vue » vit dans la feuille « Filtres » depuis la
+  // refonte mobile (maquettes 242 et 250, 29ceaa6c) : on l'ouvre d'abord, et
+  // on la referme après le choix.
+  // 🔴 Décidé par la LARGEUR (seuil `useIsMobile`, 768 px), pas par la
+  // visibilité de la barre : lue avant son rendu, celle-ci faisait croire à
+  // un téléphone sur desktop, et le test cherchait un « Filtres » inexistant
+  // (six échecs chromium, 2026-10-11).
+  const dansFeuille = (page.viewportSize()?.width ?? 1280) < 768;
+  if (dansFeuille) await page.getByRole('button', { name: /^filtres$/i }).click();
+  await page.getByRole('group', { name: /vue/i }).filter({ visible: true }).first().getByRole('button', { name }).click();
+  if (dansFeuille) {
+    const feuille = page.getByRole('dialog', { name: /^filtres$/i });
+    if (await feuille.isVisible().catch(() => false)) await page.keyboard.press('Escape');
+    await expect(feuille).toBeHidden({ timeout: 5_000 });
+  }
 };
 
 /**
@@ -253,20 +267,32 @@ test.describe('Entreprise — responsable d’équipe (démo)', () => {
     // boutons des rangées suivantes et prennent le tap (CI, run 37069364236).
     // On la referme comme une personne le ferait avant d'agir.
     await dismissFirstSightBubble(page);
+
+    // Les responsables des AUTRES équipes, photographiés avant la promotion.
+    // Comparer à une photo plutôt qu'à une borne : « au plus 2 équipes avec
+    // un responsable » était juste avec deux équipes de démo, et faux dès la
+    // troisième (Marketing, 1284a5f5), sans que rien n'ait régressé.
+    const leadsOutsideDesign = () =>
+      page.evaluate(() => {
+        const raw = localStorage.getItem('cosmo_org_team_members');
+        const rows = raw ? (JSON.parse(raw) as { teamId: string; userId: string; isLead: boolean }[]) : [];
+        return rows
+          .filter((m) => m.isLead && m.teamId !== 'team-design')
+          .map((m) => `${m.teamId}:${m.userId}`)
+          .sort();
+      });
+    const othersBefore = await leadsOutsideDesign();
+    expect(othersBefore.length).toBeGreaterThan(0);
+
     await page.getByRole('button', { name: /nommer responsable de l'équipe/i }).first().click();
 
     // Le rôle est multiple : nommer un second responsable ne révoque pas le
     // premier — c'est la différence avec `created_by`, qui était unique.
     await expect(leads).toHaveCount(before + 1, { timeout: 10_000 });
 
-    // Et il reste porté par l'appartenance à UNE équipe : la promotion n'a pas
-    // ajouté de responsable ailleurs.
-    const stored = await page.evaluate(() => {
-      const raw = localStorage.getItem('cosmo_org_team_members');
-      return raw ? (JSON.parse(raw) as { teamId: string; isLead: boolean }[]) : [];
-    });
-    const leadTeams = new Set(stored.filter((m) => m.isLead).map((m) => m.teamId));
-    expect(leadTeams.size).toBeLessThanOrEqual(2);
+    // Et il reste porté par l'appartenance à UNE équipe : la promotion n'a
+    // rien changé aux responsables des autres équipes.
+    expect(await leadsOutsideDesign()).toEqual(othersBefore);
   });
 });
 

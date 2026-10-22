@@ -22,7 +22,7 @@ type TaskDbCreateInput = Omit<TaskDbInput, 'user_id'> & { user_id: string };
  * Ne PAS y ajouter une colonne sans vérifier qu'un consommateur de liste la lit.
  */
 const TASK_LIST_COLUMNS =
-  'id,name,priority,category,deadline,estimated_time,created_at,updated_at,bookmarked,completed,completed_at,subtasks,kr_id,recurrence,is_collaborative,pending_invites,user_id' as const;
+  'id,name,priority,category,deadline,estimated_time,created_at,updated_at,bookmarked,completed,completed_at,subtasks,kr_id,recurrence,is_collaborative,pending_invites,user_id,status,health' as const;
 
 export class SupabaseTasksRepository implements ITasksRepository {
   // ═══════════════════════════════════════════════════════════════════

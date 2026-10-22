@@ -1,6 +1,7 @@
 // Logique pure de EventModal — extraite pour être testable indépendamment.
 // Comportement déplacé verbatim depuis EventModal.tsx.
 import type { EventModalMode } from '@/components/EventModal';
+import { formatDurationMinutes } from '@/lib/duration';
 
 // ⚠️ Ce module est PUR : il n'a pas de locale. Il rendait des libellés
 // FRANÇAIS EN DUR — jours abrégés, titres de la modale, bouton de validation —
@@ -36,9 +37,8 @@ export function formatEventDuration(
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
   if (diffMs <= 0) return { kind: 'invalid' };
-  if (diffHours === 0) return { kind: 'duration', text: `${diffMinutes} min` };
-  if (diffMinutes === 0) return { kind: 'duration', text: `${diffHours}h` };
-  return { kind: 'duration', text: `${diffHours}h${diffMinutes}min` };
+  // Maquette 139 : une seule écriture des durées (`@/lib/duration`).
+  return { kind: 'duration', text: formatDurationMinutes(diffHours * 60 + diffMinutes) };
 }
 
 /** Clé de catalogue du titre de la modale. */

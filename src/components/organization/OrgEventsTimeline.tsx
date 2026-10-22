@@ -8,17 +8,22 @@ interface OrgEventsTimelineProps {
   events: OrgEvent[];
 }
 
-/** Couleur d'une pastille : uniquement la distance à aujourd'hui. */
+/**
+ * Couleur d'une pastille : uniquement la distance à aujourd'hui.
+ * Maquette 231 (2026-10-10) : une échéance PROCHE n'est pas en retard, elle
+ * n'est donc plus rouge (« 12 oct. » l'était alors qu'il était à venir) ; le
+ * rouge est réservé au retard (règle 121).
+ */
 const TONE: Record<OrgEventUrgency, { text: string; dot: string; ring: string }> = {
   now: {
-    text: 'text-[rgb(var(--color-error))]',
-    dot: 'bg-[rgb(var(--color-error))]',
-    ring: 'border-[rgb(var(--color-error))]',
-  },
-  soon: {
     text: 'text-[rgb(var(--color-accent))]',
     dot: 'bg-[rgb(var(--color-accent))]',
     ring: 'border-[rgb(var(--color-accent))]',
+  },
+  soon: {
+    text: 'text-[rgb(var(--color-text-secondary))]',
+    dot: 'bg-[rgb(var(--color-text-secondary))]',
+    ring: 'border-[rgb(var(--color-text-secondary))]',
   },
   later: {
     text: 'text-[rgb(var(--color-text-muted))]',
@@ -54,7 +59,7 @@ const OrgEventsTimeline = ({ events }: OrgEventsTimelineProps) => {
   if (placed.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:px-0 max-md:py-2">
       <div className="flex items-baseline justify-between gap-3 mb-1">
         <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('myWork.orgEvents')}</h3>
         <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">

@@ -1,10 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { routeSlug, stripLocalePrefix } from '@/i18n/routes';
+import type { Locale } from '@/i18n/locale';
 import { useLocale } from '@/i18n/store';
 
 /** Les deux parcours de la landing. Ils sont mutuellement exclusifs. */
 export type LandingTrack = 'perso' | 'entreprise';
+
+/**
+ * Parcours servi par un chemin, préfixe de locale compris ou non. La barre
+ * oblique finale est tolérée : `stripLocalePrefix` la retire (cf. son
+ * `normalizePath`). Témoin : `use-landing-track.test.ts`.
+ */
+export function trackFromPathname(pathname: string, locale: Locale): LandingTrack {
+  const { path } = stripLocalePrefix(pathname);
+  return path === `/${routeSlug('enterprisePresentation', locale)}` ? 'entreprise' : 'perso';
+}
 
 /**
  * Parcours affiché, dérivé de l'URL.
@@ -24,10 +35,7 @@ export function useLandingTrack() {
   const locale = useLocale();
   const { pathname } = useLocation();
 
-  const track: LandingTrack = useMemo(() => {
-    const { path } = stripLocalePrefix(pathname);
-    return path === `/${routeSlug('enterprisePresentation', locale)}` ? 'entreprise' : 'perso';
-  }, [pathname, locale]);
+  const track = useMemo(() => trackFromPathname(pathname, locale), [pathname, locale]);
 
   // Compteur de bascules : sert de `key` au voile de transition, qui doit
   // rejouer à chaque changement, y compris au retour vers le parcours

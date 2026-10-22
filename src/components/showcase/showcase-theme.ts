@@ -21,7 +21,11 @@
 // classe `sc-ink`, et c'est elle seule que la feuille claire inverse.
 import { createContext, useContext } from 'react';
 
-export type ShowcaseTheme = 'dark' | 'light';
+// `gris` et `noir` (2026-10-12) : le guide monte les vitrines dans le thème de
+// l'app du visiteur. Ce sont deux thèmes SOMBRES : même JSX que `dark`, seules
+// les surfaces changent (graphite, noir pur), re-teintées par
+// `showcase-gris-noir.css` et par les palettes ci-dessous.
+export type ShowcaseTheme = 'dark' | 'light' | 'gris' | 'noir';
 
 export const ShowcaseThemeContext = createContext<ShowcaseTheme>('dark');
 
@@ -141,6 +145,61 @@ export const SHOWCASE_PALETTES: Record<ShowcaseTheme, ShowcasePalette> = {
     iconIdle: '#64748B',
     iconActive: '#2563EB',
     tintText: (hex) => CRAN_700[hex.toUpperCase()] ?? hex,
+  },
+  // Gris : les variables `.gris` de src/index.css (graphite GitHub).
+  gris: {
+    panel: '#24292E',
+    card: '#2B3137',
+    inset: '#24292E',
+    surface: 'rgba(43, 49, 55, 0.85)',
+    surfaceAlt: 'rgba(43, 49, 55, 0.92)',
+    field: 'rgba(36,41,46,0.6)',
+    hairline: 'rgba(255,255,255,0.08)',
+    hairlineSoft: 'rgba(255,255,255,0.04)',
+    zebra: 'rgba(255,255,255,0.015)',
+    textPrimary: '#FAFBFC',
+    textSecondary: '#ADBAC7',
+    textMuted: '#8F99A4',
+    accentText: '#58A6FF',
+    track: 'rgba(255,255,255,0.08)',
+    ringTrack: '#373E47',
+    dragShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(249,115,22,0.3)',
+    selectionShadow: '0 0 0 1px rgba(88,166,255,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+    gridStroke: '#fff',
+    gridOpacity: 0.15,
+    chartTick: '#ADBAC7',
+    chartCursor: 'rgba(255,255,255,0.04)',
+    iconIdle: '#8F99A4',
+    iconActive: '#58A6FF',
+    tintText: (hex) => hex,
+  },
+  // Noir : les variables `.noir` de src/index.css (OLED, gris sans teinte).
+  // Les teintes de catégorie restent en couleur, comme dans l'app.
+  noir: {
+    panel: '#080808',
+    card: '#161616',
+    inset: '#080808',
+    surface: 'rgba(22, 22, 22, 0.9)',
+    surfaceAlt: 'rgba(22, 22, 22, 0.96)',
+    field: 'rgba(8,8,8,0.6)',
+    hairline: 'rgba(255,255,255,0.08)',
+    hairlineSoft: 'rgba(255,255,255,0.04)',
+    zebra: 'rgba(255,255,255,0.015)',
+    textPrimary: '#F2F2F2',
+    textSecondary: '#A8A8A8',
+    textMuted: '#808080',
+    accentText: '#F0F0F0',
+    track: 'rgba(255,255,255,0.08)',
+    ringTrack: '#2E2E2E',
+    dragShadow: '0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(249,115,22,0.3)',
+    selectionShadow: '0 0 0 1px rgba(240,240,240,0.35), inset 0 1px 0 rgba(255,255,255,0.08)',
+    gridStroke: '#fff',
+    gridOpacity: 0.12,
+    chartTick: '#A8A8A8',
+    chartCursor: 'rgba(255,255,255,0.04)',
+    iconIdle: '#808080',
+    iconActive: '#F0F0F0',
+    tintText: (hex) => hex,
   },
 };
 

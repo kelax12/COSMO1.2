@@ -6,6 +6,10 @@
  * publique) et le rendu est reproductible d'une exécution à l'autre.
  *
  * Usage : npm start (port 3000) puis `node scripts/capture-screenshots.mjs`
+ *   `node scripts/capture-screenshots.mjs agenda okr` ne refait QUE ces fichiers
+ *   (les articles de blog les utilisent ; ne pas recapturer pour rien celles
+ *   de la home, dont le prérendu fige les dimensions).
+ *   `CAPTURE_BASE=http://localhost:5293` vise un autre serveur de dev.
  *
  * ⚠ Les dimensions écrites ici doivent rester synchronisées avec les attributs
  * width/height du bloc HOME_STATIC de prerender.mjs : ce sont eux qui réservent
@@ -18,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = join(__dirname, '..', 'public', 'screenshots');
-const BASE = 'http://localhost:3000';
+const BASE = process.env.CAPTURE_BASE ?? 'http://localhost:3000';
 const VIEWPORT = { width: 1280, height: 800 };
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -60,7 +64,14 @@ const SHOTS = [
   { path: /\/dashboard/, nav: /accueil/i, file: 'dashboard.png', ready: 'main h1, main h2' },
   { path: /\/tasks/, nav: /t[âa]ches/i, file: 'taches.png', ready: 'main table, main [role="list"], main h1' },
   { path: /\/habits/, nav: /habitudes/i, file: 'habitudes.png', ready: 'main h1, main h2' },
+  // 2026-10-12 · illustrations des articles time-blocking et OKR.
+  { path: /\/agenda/, nav: /agenda/i, file: 'agenda.png', ready: 'main .fc, main h1' },
+  { path: /\/okr/, nav: /^okr$/i, file: 'okr.png', ready: 'main h1, main h2' },
 ];
+
+// Filtre optionnel par nom de fichier : `agenda okr`.
+const ONLY = process.argv.slice(2);
+const selected = ONLY.length ? SHOTS.filter((s) => ONLY.includes(s.file.replace(/\.png$/, ''))) : SHOTS;
 
 const run = async () => {
   mkdirSync(OUT, { recursive: true });
@@ -72,7 +83,7 @@ const run = async () => {
   await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
   await wait(1500);
 
-  const btn = page.getByRole('button', { name: /essayer.*sans inscription/i }).first();
+  const btn = page.getByRole('button', { name: /essayer.*(sans inscription|la d[ée]mo)/i }).first();
   await btn.waitFor({ state: 'visible', timeout: 20000 });
   await btn.click();
   await page.waitForURL(/\/dashboard/, { timeout: 15000 });
@@ -88,7 +99,7 @@ const run = async () => {
   if (await hideBanner.isVisible().catch(() => false)) await hideBanner.click();
   await wait(3000);
 
-  for (const shot of SHOTS) {
+  for (const shot of selected) {
     if (!shot.path.test(page.url())) {
       const link = page.getByRole('link', { name: shot.nav }).filter({ visible: true }).first();
       await link.click({ force: true });

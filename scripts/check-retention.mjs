@@ -33,7 +33,7 @@
 // ⚠️ Que le registre est juste. Il dit que la BASE respecte ce que le
 // registre DÉCLARE. Si le registre déclare dix ans là où la loi en demande
 // six, cette garde le confirmera consciencieusement.
-// ⚠️ Rien sur les données hors base : Sentry (90 jours annoncés), Vesk,
+// ⚠️ Rien sur les données hors base : Sentry (90 jours annoncés),
 // Stripe. Elles relèvent de leurs fournisseurs et de leurs DPA.
 //
 // ❌ NE JAMAIS ALLONGER UNE DURÉE ICI POUR FAIRE PASSER LA GARDE. Un
@@ -61,6 +61,7 @@ export const DUREE_DE_VIE_DU_COMPTE = [
   { table: 'categories', colonne: 'user_id', traitement: 'T2' },
   { table: 'lists', colonne: 'user_id', traitement: 'T2' },
   { table: 'user_activity_days', colonne: 'user_id', traitement: 'T10' },
+  { table: 'account_inactivity_notices', colonne: 'user_id', traitement: 'T1' },
   { table: 'task_dependencies', colonne: 'user_id', traitement: 'T2' },
   { table: 'friends', colonne: 'user_id', traitement: 'T3' },
   // 🔴 C-112 · `friend_requests` n'a PAS de `user_id` : elle porte les DEUX
@@ -295,7 +296,7 @@ if (estLanceDirectement) {
 
   console.log(
     '\n⚠️ Ce que ça ne prouve pas : que le REGISTRE est juste. Ça dit que la base\n'
-      + '   respecte ce que le registre déclare. Et rien sur Sentry, Vesk ou Stripe,\n'
+      + '   respecte ce que le registre déclare. Et rien sur Sentry ou Stripe,\n'
       + '   qui relèvent de leurs fournisseurs.',
   );
 

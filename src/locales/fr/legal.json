@@ -5,30 +5,34 @@
     "seoTitle": "Mentions légales – Cosmo App",
     "seoDescription": "Mentions légales de l'application de productivité Cosmo : éditeur, hébergeur, propriété intellectuelle et responsabilités.",
     "title": "Mentions légales",
-    "updatedAt": "24 septembre 2026",
+    "updatedAt": "21 octobre 2026",
     "s1": {
       "title": "1. Éditeur du site",
       "intro": "Le site et l'application **Cosmo** sont édités par :",
-      "li1": "**Dénomination :** Cosmo",
-      "li2": "**Adresse e-mail :** axellongattepro@gmail.com",
-      "li3": "**Directeur de la publication :** L'équipe Cosmo"
+      "li1": "**Éditeur :** Axel Longatte, entrepreneur individuel (EI), nom commercial COSMO",
+      "liRegistration": "**Immatriculation :** Registre national des entreprises (RNE) depuis le 20 octobre 2026, SIREN 131 769 317, SIRET 131 769 317 00010, code APE 62.01Z",
+      "liVat": "**TVA :** TVA non applicable, article 293 B du Code général des impôts",
+      "liAddress": "**Adresse :** 138 avenue Victor Hugo, 75116 Paris, France (domiciliation : Les Tricolores)",
+      "li2": "**Adresse e-mail :** contact@thecosmo.app",
+      "liPhone": "**Téléphone :** [07 54 36 29 17](tel:+33754362917)",
+      "li3": "**Directeur de la publication :** Axel Longatte"
     },
     "s2": {
       "title": "2. Hébergement",
       "intro": "L'application Cosmo est hébergée par :",
-      "li1": "**Frontend :** Vercel Inc., 340 Pine Street, Suite 701, San Francisco, CA 94104, USA",
+      "li1": "**Frontend :** Vercel Inc., 440 N Barranca Avenue #4133, Covina, CA 91723, USA",
       "li2": "**Base de données :** Supabase Inc., 970 Toa Payoh North, #07-04, Singapore 318992, sur une infrastructure Amazon Web Services située en Irlande (région eu-west-1)"
     },
     "s3": {
       "title": "3. Propriété intellectuelle",
-      "p1": "L'ensemble des contenus présents sur Cosmo (textes, graphismes, logotypes, icônes, images, sons, données) est la propriété exclusive de Cosmo ou de ses partenaires et est protégé par les lois françaises et internationales relatives à la propriété intellectuelle.",
-      "p2": "Toute reproduction, représentation, modification, publication ou adaptation de tout ou partie des éléments du site, quel que soit le moyen ou le procédé utilisé, est interdite sans autorisation préalable écrite de Cosmo.",
+      "p1": "L'ensemble des contenus éditoriaux de Cosmo (textes, graphismes, logotypes, icônes, images, sons) est la propriété de son éditeur, Axel Longatte, ou de ses partenaires, et est protégé par le droit de la propriété intellectuelle. Les données que vous saisissez dans Cosmo restent les vôtres (article 6 des conditions générales d'utilisation).",
+      "p2": "Toute reproduction, représentation, modification, publication ou adaptation de tout ou partie de ces contenus, quel que soit le moyen ou le procédé utilisé, est interdite sans autorisation préalable écrite de l'éditeur.",
       "p3": "Cosmo s'appuie sur des composants open source. Leur liste et le texte de leurs licences figurent dans [ce fichier](https://thecosmo.app/third-party-notices.txt), régénéré à chaque mise en ligne."
     },
     "s4": {
       "title": "4. Responsabilité",
-      "p1": "Cosmo s'efforce d'assurer l'exactitude et la mise à jour des informations diffusées sur l'application. Toutefois, Cosmo ne peut garantir l'exactitude, la précision ou l'exhaustivité des informations mises à disposition.",
-      "p2": "Cosmo ne saurait être tenu responsable des dommages directs ou indirects résultant de l'utilisation de l'application ou de l'impossibilité d'y accéder."
+      "p1": "L'éditeur s'efforce d'assurer l'exactitude et la mise à jour des informations diffusées sur le site et dans l'application, sans pouvoir en garantir l'exhaustivité.",
+      "p2": "La responsabilité de l'éditeur envers les utilisateurs du service est régie par l'article 9 des conditions générales d'utilisation. Rien dans les présentes mentions ne la limite davantage, et les droits que vous tenez de la loi, notamment comme consommateur, restent entiers."
     },
     "s5": {
       "title": "5. Droit applicable",
@@ -40,7 +44,7 @@
     },
     "s7": {
       "title": "7. Contact",
-      "p1": "Pour toute question relative aux présentes mentions légales, vous pouvez nous contacter à l'adresse suivante : [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com)"
+      "p1": "Pour toute question relative aux présentes mentions légales, vous pouvez nous contacter à l'adresse suivante : [contact@thecosmo.app](mailto:contact@thecosmo.app)"
     }
   }
 }

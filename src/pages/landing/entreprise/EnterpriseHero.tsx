@@ -3,10 +3,11 @@ import { ArrowRight } from 'lucide-react';
 import { gsap, SplitText, useGSAP } from '@/lib/gsap';
 import HeroStack from './HeroStack';
 import { HERO_SHOTS } from './data';
-import { ENTERPRISE_FREE_OFFER } from './free-offer';
+import { ENTERPRISE_FREE_OFFER, ENTERPRISE_PRICES_SHOWN } from './free-offer';
 import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useMagnetic } from '@/lib/hooks/use-magnetic';
+import { usePrerenderHeroTakeover } from '../use-prerender-hero-takeover';
 
 // `LightRays` embarque `ogl` (chunk `vendor-ogl`, cf. vite.config.ts). Il est
 // chargé à la demande pour que le track perso, qui ne l'affiche jamais, ne
@@ -51,6 +52,9 @@ const avecAppui = (texte: string) =>
 const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => {
   const { t } = useT('landingEnterprise');
   const isMobile = useIsMobile();
+  // Retire la copie du hero peinte par le prérendu ; `reprise` : tout le hero,
+  // pile comprise, était déjà à l'écran, rien ne rejoue son entrée.
+  const reprise = usePrerenderHeroTakeover();
   const heroRef = useRef<HTMLElement>(null);
   const magneticDemo = useMagnetic<HTMLButtonElement>(0.16);
 
@@ -61,6 +65,7 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => 
         // Les deux lignes du titre montent mot par mot depuis leur masque.
         // Plus de dégradé sur le texte, donc plus de classes à recopier sur
         // chaque mot : c'était le correctif qu'imposait `bg-clip-text`.
+        if (reprise) return;
         SplitText.create('.ent-hero-line', {
           type: 'lines,words',
           mask: 'lines',
@@ -164,12 +169,16 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => 
             {t('enterprise.hero.cta')}
             <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
           </button>
+          {/* « Voir les tarifs » vise une section qui n'est plus montée tant
+              que les prix sont masqués (`PRICES_VISIBLE`). */}
+          {ENTERPRISE_PRICES_SHOWN && (
           <a
             href="#tarifs"
             className="inline-flex min-h-11 items-center rounded-md px-1 text-base font-medium text-ent-lune underline decoration-ent-lune/30 underline-offset-[6px] transition-colors hover:decoration-ent-lune/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           >
             {t('enterprise.hero.ctaSecondary')}
           </a>
+          )}
         </div>
 
         {/* « Jusqu'à 5 membres gratuitement » deviendrait faux pendant

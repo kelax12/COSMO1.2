@@ -5,7 +5,7 @@ import { toast } from '@/lib/toast';
 import { ArrowLeft, CreditCard } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
-import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
+import { ENTERPRISE_BILLING_ENFORCED, PRICES_VISIBLE } from '@/modules/billing/premium-config';
 import type { OrgBillingInterval } from '@/modules/billing/premium-config';
 import { useOrgSubscription, orgBillingKeys } from '@/modules/billing/org-billing.hooks';
 import { useStartOrgCheckout, useOpenOrgPortal, useCancelAndRefundOrg } from '@/modules/billing/org-billing.mutations';
@@ -107,6 +107,9 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
     name: tc(ORG_TIER_LABEL_KEYS[effectiveTierKey(subscription ?? null)]),
   });
   const canPay = ENTERPRISE_BILLING_ENFORCED && isOwner;
+  // Grille de paliers masquée depuis le 2026-10-16 (`PRICES_VISIBLE`), sauf si
+  // la facturation est réactivée : on ne vend pas sans afficher de prix.
+  const showPrices = PRICES_VISIBLE || ENTERPRISE_BILLING_ENFORCED;
 
   return (
     <div className="flex flex-col gap-6">
@@ -266,6 +269,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
         </fieldset>
       )}
 
+      {showPrices && (
       <EnterpriseTierGrid
         currentTier={subscription?.tierKey}
         onSelect={
@@ -298,6 +302,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
         dormant={!ENTERPRISE_BILLING_ENFORCED}
         interval={billingInterval}
       />
+      )}
 
       {/* Affichage TTC — obligation d'affichage au consommateur (Code de la
           consommation art. L112-1). Rien ne vérifie qu'un acheteur est un
@@ -306,9 +311,11 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
           `EnterpriseTierGrid` : elle porte sur la grille entière, pas sur une
           carte, et la grille est un conteneur de mise en page dont la racine ne
           doit pas gagner de frère. Voir docs/LEGAL.md ligne E7. */}
+      {showPrices && (
       <p className="text-xs text-[rgb(var(--color-text-secondary))]">
         {tOrgAdmin('billing.vatIncluded')}
       </p>
+      )}
 
       {canPay && subscription && (
         <div className="flex flex-col gap-1">

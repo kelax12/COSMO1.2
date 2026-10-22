@@ -1,4 +1,4 @@
-<!-- note-audit: note=94 -->
+<!-- note-audit: note=95 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,78 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **94 / 100** au 2026-10-03, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **95 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → **94 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → 96 → 96 → **95 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → **2026-10-20**)
+
+> ### 🟠 2026-10-20 · −1 : le cliquet de `OrganizationPage` dépassé depuis 26 h
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-20 |
+> |---|---|---|
+> | 🔴 `OrganizationPage` au-dessus de son cliquet | **−1** | **18,2 ko** à `08bce3d4` (Aperçu en widgets), **19,1 ko** à `86ea357f`, pour un plafond de 18,0 ko posé au poids du 2026-09-20 (16,7 ko). Le chunk a continué de grossir sur 22 commits après le premier rouge. Levier : `AddWidgetPage`, `TemplatePicker` et le carrousel des formats ne servent qu'en mode édition, les charger en `lazy` |
+> | ✅ `vendor-pdf` (jsPDF) | 0 | **126,3 ko**, chargé par `import()` au clic sur « Exporter en PDF », jamais au chargement ; exempté **et** borné (133,0 ko), comme l'exige C-85 |
+> | Lighthouse | 0 | job vert à `86ea357f` ; TBT mobile de la page entreprise (399 ms le 10-18) toujours ouvert |
+> | Marges serrées | 0 | `vendor-utils` 0,5 %, `StatisticsPage` 0,2 %, `AgendaPage` 1,7 % : le prochain ajout dans l'un d'eux rougira la garde |
+>
+> **96 → 95.**
+
+> ### ⚪ 2026-10-18 · 0 : rien n'a bougé, la page entreprise reste le chantier
+>
+> Dernière passe avant l'acquisition. Mesures du 2026-10-18 : CI de `main` à `e69cb729` (run `39139204925`, cinq jobs verts) et à `15d40bea` (`lint-test-build` vert, run `39156293593`), production (advisors par l'API, catalogue, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-18 |
+> |---|---|---|
+> | Chemin critique | 0 | **305,4 ko** pour 323 (304,5 le 10-16) : +0,9 ko, `traffic.ts` monté par `main.tsx`. Entrée 67,7 / 70,5. En échange, plus aucune origine tierce de mesure à résoudre au chargement |
+> | Lighthouse mobile (`e69cb729`) | 0 | LCP **1,36 à 1,52 s** sur les 8 URLs. 🟠 `/entreprise-presentation/` : perf **86**, TBT **399 ms** (350 à 934 le 10-16). La page où arrivent les prospects reste la seule sous 97 |
+> | Lighthouse desktop | 0 | LCP 0,33 s partout, 1,1 s sur l'article OKR |
+>
+> **96 → 96.**
+
+> ### ⚪ 2026-10-16 (soir) · 0 : la page entreprise enfin mesurée, et son TBT est trop haut
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-16
+> au soir : Lighthouse mobile des runs `38907264016` (`9dcaf94b`, première mesure du vrai parcours)
+> et `38941369233` (`4e6f4293`). Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 (soir) |
+> |---|---|---|
+> | ✅ La page entreprise n'était mesurée par rien (−1 le matin) | **+1** | `9dcaf94b` : `/entreprise-presentation/` sert le parcours entreprise, Lighthouse le mesure enfin |
+> | 🔴 TBT mobile du parcours entreprise au-dessus de la cible | **−1** | LCP **1,36 à 1,52 s** (bon), mais TBT **350 ms** puis **934 ms**, perf mobile **88** puis **75**, sur deux runs. La cible fixée le 2026-10-15 (TBT sous 300 ms) n'est tenue que sur le parcours perso : le gain de `c8591450` et suivants a été mesuré sur la mauvaise page pour celle-ci |
+>
+> **96 → 96.**
+
+> ### 🟢 2026-10-16 · +1 : LCP mobile sous 1,6 s partout, mais la page entreprise n'a jamais été mesurée
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du
+> 2026-10-16 : Lighthouse mobile du run `38902071817` (`a4878cab`), build local à `HEAD` avec Sentry
+> comme en CI, production au navigateur. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-16 |
+> |---|---|---|
+> | ✅ LCP mobile, troisième point retenu le 10-15 | **+1** | à `HEAD` : LCP **1,22 à 1,52 s** sur les 8 URLs, TBT **90 à 300 ms**, perf **93 à 100** (le 10-15 : 3,26 à 3,40 s, TBT jusqu'à 1 049 ms, perf 62). Correctifs `c8591450`, `4eb34cb2`, `89ddecb9`, `65b8c87a` ; gain confirmé sur deux runs consécutifs (`38899945555`, `38901051072`) |
+> | ✅ Budget de bundle rouge sur deux cliquets (−1) | **+1** | `check:bundle` vert en CI et en local : `OrganizationPage` **17,6 / 18,0 ko** ; `TeamTaskModal` n'apparaît plus comme chunk propre au rapport. Chemin critique **304,5 ko** (plafond 323,0), entrée **66,8 / 70,5**. Marge sous 1 % : `StatisticsPage` 13,0 / 13,0 |
+> | 🔴 La page entreprise n'est mesurée par rien | **−1** | `lighthouserc.json` et `lighthouserc.mobile.json` mesurent `/entreprise-presentation/` **avec** barre oblique finale. À cette URL l'application sert le parcours **perso** (vérifié en production le 2026-10-16 : `h1` et titre de l'accueil perso, canonical réécrit vers `/`). Tous les chiffres « entreprise » de Lighthouse depuis l'origine sont donc ceux du parcours perso : le parcours entreprise, celui des prospects, n'a jamais été mesuré. Détection corrigée par `9dcaf94b` pendant la passe : le point revient quand un Lighthouse en CI aura mesuré le vrai parcours |
+>
+> **95 → 96.**
+
+> ### 🟢 2026-10-15 · +1 : le LCP mobile enfin crédité, le budget de nouveau rouge
+>
+> **Même règle** : un angle mort ne se rembourse que sur un verdict rendu en CI, un défaut que
+> lorsqu'il est corrigé et vérifié. Mesures de la nuit du 14 au 15 : CI de `main` à `6847bbf3`
+> (Lighthouse du run `38476034238`), build local à `HEAD` avec Sentry comme en CI. Tableau de
+> bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-15 |
+> |---|---|---|
+> | ✅ LCP mobile « mauvais » sur 8 URLs sur 8 (−3 le 09-22) | **+2** | `C-116` fermé le 2026-10-10 (run `38056459284`) et **jamais crédité depuis**. Relu à `HEAD`, Lighthouse mobile en CI : `/` **3,27 s** · `/guide/` 3,40 · `/blog/` 3,29 · article 3,31 · `/pour-freelances/` 3,39 · `/entreprise-presentation/` 3,26 · `/a-propos/` 3,37 · `/en/` 3,26. Tout sous 4 s : plus rien de « mauvais » |
+> | Le troisième point, retenu | 0 | 3,3 s reste au-dessus de 2,5 s (« à améliorer »), et le fil principal est chargé sur les pages animées : perf mobile **65** sur `/` (TBT 878 ms), **62** sur `/entreprise-presentation/` (1 049 ms), **64** sur `/en/` (949 ms). Desktop : LCP 0,65 à 1,34 s, perf 83 à 100 |
+> | 🔴 Budget de bundle rouge sur deux cliquets | **−1** | `OrganizationPage` **18,4 / 18,0 ko**, `TeamTaskModal` **12,3 / 12,0**. La CI n'atteint plus l'étape depuis le 2026-10-12 (cf. [`TESTING.md`](./TESTING.md)). Chemin critique **303,9 ko** (302,6 le 10-03, plafond 323,0), entrée 69,2 / 70,5. Marge sous 1 % : `StatisticsPage` 12,9 / 13,0 |
+>
+> **94 → 95.**
 
 > ### 🟢 2026-10-03 · +2 : budget de bundle vert en CI, sans remonter un plafond
 >
@@ -207,11 +274,58 @@ bloc prérendu ne sert qu'aux robots qui n'appliquent pas la CSS.
    nécessaires pour peindre un guide. Gain réseau d'environ 0,7 s, mais c'est l'architecture des
    providers (`AuthProvider` à la racine) qui est en jeu.
 
+#### 🔴 2026-10-21 · la home peint une copie de la landing, plus le texte SEO
+
+Le levier 1 avait un coût que personne n'avait mis en face du gain : sur `/`, le « prérendu
+peint » était le **texte SEO brut**, sans mise en page. Filmé en local (412 et 1 440 px, CPU ×4,
+4G lente) : **mur de texte** de 0 à 1,7 s, puis **squelette gris** (`LandingSkeleton`) jusqu'à
+3,2 s, puis la landing. Signalé par Axel comme un bug « corrigé huit fois » : chaque correctif
+traitait un cas (CSP, personne connectée le 10-16) sans toucher la décision de C-116, qui le
+recréait pour tout visiteur sans session. Trois issues proposées (spinner partout, LCP mobile
+rendu ; copie habillée ; statu quo), **Axel a choisi la copie**.
+
+- `/` et `/en/` peignent `#lp-hero` : le header et le hero **capturés sur le rendu React**
+  (`npm run capture:landing-hero`), avec leur CSS sortie de la feuille buildée et confinée
+  (`scripts/landing-hero-css.mjs`). Calque fixe **hors de `#root`** : `createRoot` ne l'efface pas,
+  l'attente de l'auth et le squelette passent dessous. `PersoTrack` le retire dans un
+  `useLayoutEffect`, sans rejouer les entrées du titre, du header ni le voile de `#track`.
+  Mécanique et sorties : `src/lib/prerender-hero.ts`.
+- **Le LCP aurait régressé sans `font-display: block` sur la copie.** En `swap`, elle se peignait
+  en police système, plus étroite : un bloc de 55 024 px² contre 57 195 pour le même bloc React
+  en Inter, qui **reprenait le LCP** à la relève (412 px, 3 passes : 4,6 à 5,9 s). En `block`
+  (Inter est préchargée) : LCP **1,17 à 1,42 s**, sur la copie, à FCP inchangé (1,0 à 1,2 s).
+- ⚠️ La copie est un **instantané**. `src/prerender-hero.guard.test.ts` compare l'empreinte des
+  sources du header et du hero à celle de la capture : il échoue dès que l'une bouge sans nouvelle
+  capture (vu rouge sur la modification de `LandingPage.tsx` du jour).
+- **Même jour, les autres pages prérendues.** Filmé à 412 px : le guide, le blog, les articles,
+  les `/pour-*`, l'à-propos, les pages légales et la connexion peignaient le texte SEO **sur fond
+  blanc**, puis le `PageLoader` (un autre spinner, sombre, centré dans 60vh), puis la page sombre.
+  L'entreprise, texte blanc puis squelette blanc puis landing noire.
+  - `/entreprise-presentation/` (et `/en/for-companies/`) : même copie que la home, en **deux
+    vues** (bureau 1 440 px, mobile 412 px, media query au seuil de `useIsMobile`) parce que la
+    pile du hero s'y rend autrement. La pile garde son image dans la copie : masquée, React la
+    peignait plus grande et **reprenait le LCP à 6,4 s** ; visible, LCP **0,9 à 1,6 s** sur la copie.
+    `useIsMobile` calcule désormais son état au premier rendu (il rendait la version bureau une
+    image avant de basculer, sur toutes les pages qui l'utilisent).
+  - **Pages de contenu : spinner, arbitré par Axel** (le texte habillé gardait un saut, le vrai
+    prérendu React est un chantier à part). `prerender.mjs` ne leur pose plus `data-prerendered` :
+    spinner de démarrage, puis `BootScreen` (même classe, même CSS, plein écran) jusqu'à la page.
+    Le spinner prend les couleurs **exactes** du thème : `html[data-boot-theme]`, posé par le
+    script inline (thème enregistré) puis par `applyTheme()`.
+  - ⚠️ **Le LCP mobile de ces pages est rendu en connaissance de cause** : il n'est plus un
+    texte peint avant React. Mesuré en local (412 px, CPU ×4, 4G lente) : 2,4 à 3,4 s, **4,8 s sur
+    `/guide/`**, contre 0,6 à 1,2 s pour le texte brut. Moins que redouté, parce que l'app se charge
+    désormais sans attendre une peinture. À relire au prochain Lighthouse CI mobile.
+
 ✅ **Corrigé le même jour, côté mesure** : le résumé CI mobile lisait `.lighthouseci-mobile`, un
 dossier jamais écrit (aucun `lhci upload` mobile), et `upload-artifact` ignorait `.lighthouseci/`
 parce que c'est un dossier caché (`include-hidden-files`). Aucun rapport Lighthouse, desktop ou
 mobile, n'avait donc jamais été archivé. Le résumé imprime désormais l'élément LCP et ses phases.
 ❌ **Ne pas remonter le seuil de 4 500 ms** : il est dépassé pour une raison nommée.
+
+✅ **2026-10-16 · LCP sous 2,5 s et TBT sous 300 ms sur les trois pages animées, Lighthouse mobile en CI** (artefact `lighthouse-mobile`). Avant, run `38476034238` (`6847bbf3`) : `/` LCP 3,27 s, TBT 878 ms, perf 65 · `/en/` 3,26 s, 949 ms, 64 · `/entreprise-presentation/` 3,26 s, 1 049 ms, 62. Après, run `38899945555` (`65b8c87a`) : `/` **1,37 s, 54 ms, 100** · `/en/` **1,36 s, 77 ms, 100** · `/entreprise-presentation/` **1,51 s, 65 ms, 99** ; les 8 URLs sous 1,52 s et 182 ms. Confirmé au run suivant, `38901051072` (`93f6a035`) : `/` 1,22 s, 66 ms · `/en/` 1,52 s, 66 ms · `/entreprise-presentation/` 1,37 s, 111 ms. Quatre leviers : l'app chargée après la peinture du prérendu (`src/boot.ts`, son JS et sa CSS sortent du chemin du LCP), l'icône du manifeste à sa taille (`logo.png` de 255 ko, téléchargée pendant le chargement, ajoutait 1,3 s au LCP une passe sur deux), la rotation du hero qui ne re-rend plus le parcours (`hero-module-actif.ts`), le bas de la landing monté au premier geste (`BelowFold.tsx`, une tâche de ~1 s à CPU ×4). 🔴 **Les chiffres « entreprise » ci-dessus, et tous ceux de ce document jusqu'à `9dcaf94b`, mesurent le parcours PERSO.** `/entreprise-presentation/` (l'URL de `lighthouserc.mobile.json`, que Vercel sert aussi en 200 sans rediriger) gardait sa barre oblique finale dans `stripLocalePrefix`, et `useLandingTrack` ratait le slug : le prérendu était entreprise, l'hydratation rendait le perso, titre et canonical de l'accueil compris. Vu en production le 2026-10-16, en fr comme sur `/en/for-companies/`. Corrigé dans `normalizePath` (`src/i18n/routes.ts`), témoin `use-landing-track.test.ts`.
+
+📏 **2026-10-16 · première mesure du parcours ENTREPRISE, Lighthouse mobile en CI**, run `38907264016` (`9dcaf94b`), élément LCP vérifié dans l'artefact (H1 « Qui fait quoi. ») : perf **88**, LCP **1,36 s**, TBT **350 ms**, Speed Index 4,9 s, CLS 0,040, a11y **93**. Le LCP tient ; le TBT est le seul au-dessus de la cible des pages animées (300 ms). Fil principal : `styleLayout` 2,4 s, `vendor-react` 966 ms, `vendor-gsap` 936 ms, `vendor-animation` 666 ms ; tâches longues de 70 à 151 ms entre 8,2 et 10,6 s (sections épinglées, shader). Accessibilité : trois audits en échec, absents du parcours perso (`aria-prohibited-attr` sur les `ent-hero-line` du H1, `color-contrast` sur des `text-slate-500/600`, `label-content-name-mismatch` sur deux boutons). Seuils de `lighthouserc.mobile.json` inchangés.
 
 
 > ### 🔴 2026-09-14 (soir) · −2 : une RPC créditée d'un gain de 71× rend un chiffre faux en production
@@ -729,8 +843,9 @@ Mesuré dans Chromium headless, `/entreprise-presentation` à 1440 × 900 :
   (latin en dernier, cf. la règle ci-dessus sur le chevauchement U+0152-0153).
 - ❌ **Pas de préchargement dans `index.html`** : la police ne sert qu'au parcours entreprise de la
   landing et aux deux accueils ; la précharger ferait payer ~21 ko à chaque visiteur de l'app.
-- ⚠️ `font-data` (`"Geist Mono"`) est dans le même cas qu'Instrument Serif avant ce correctif :
-  déclarée, jamais servie, rendue en `ui-monospace` (Consolas sous Windows).
+- ✅ `font-data` (`"Geist Mono"`) était dans le même cas : déclarée, jamais servie, rendue en
+  `ui-monospace` (Consolas sous Windows). Auto-hébergée le 2026-10-05 (variable 100-900, latin
+  23 ko, latin-ext 15 ko, mêmes règles).
 
 Réencodage reproductible : `npm run images:check` (mesure) puis
 `node scripts/optimize-images.mjs`.
@@ -1010,6 +1125,38 @@ portent plus de donnée, l'écran cesserait de se rafraîchir **en silence**. Ga
 ⚪️ **Deuxième piste** : `friends` puis `profiles?email=in.(…)`, et `friend_requests` en deux
 requêtes (reçues, émises). La première paire ne peut pas devenir une jointure PostgREST, il n'y a
 pas de clé étrangère entre `friends.email` et `profiles.email`.
+
+#### La pastille COMPTE, elle ne lit pas la liste (mig. `142`, finding C-05)
+
+> Descendu de `src/modules/organizations/CLAUDE.md` le 2026-10-15 (plafond de 14 000 o dépassé),
+> sans une coupe. Le dossier n'en garde que les interdits. Trace « avant » et parité mesurée :
+> [`SCALABILITY.md`](./SCALABILITY.md) § « le rechargement était éteint, la LECTURE ne l'était pas ».
+
+La même boîte de réception porte depuis le 2026-09-05 une section `badge_tasks`. `useOrgBadges`
+montait `useTeamTasks`, donc `get_my_team_tasks` + `.limit(1000)`, la lecture la plus chère du
+produit, sur **toutes les pages protégées**, pour peindre un nombre. Le rechargement avait été
+coupé le 2026-08-27 (`background`), la **lecture** pas.
+
+- Le serveur rend les **seules** lignes utiles : assignations en cours qui ne viennent pas de moi
+  (`kind = 'assigned'`), et noms des tâches visées par mes notifications non lues
+  (`kind = 'notified'`). Bornes : 200 et 50 **par organisation**, jamais globalement.
+- ❌ **Ne jamais faire compter une ligne `notified`.** Une tâche peut sortir dans les DEUX branches ;
+  le client leur retire toute assignation pour cette raison précise. Sans ça, elle compte deux fois
+  et le nombre affiché change.
+- ❌ **Ne jamais passer `lastSeen` au serveur.** Il vit dans `localStorage`, il est **par
+  organisation**, et il change à chaque visite de /entreprise : en paramètre, il ferait dépendre la
+  clé de cache d'une valeur mouvante, et un seul horodatage ne pourrait pas servir plusieurs
+  organisations. La borne reste côté client, sur un ensemble déjà réduit.
+- ✅ `my_org_badge_tasks()` est `SECURITY DEFINER` pour la SEULE raison qui vaut ici : appeler
+  `my_team_project_ids`, dont `EXECUTE` est révoqué à `authenticated` (mig. 100/113). L'autorisation
+  est celle de `get_my_team_tasks`, reprise mot pour mot. La RPC d'agrégat, elle, reste
+  `SECURITY INVOKER` : agréger des lectures, oui ; agréger des autorisations, jamais.
+- ⚠️ En **démo** la source reste `useTeamTasks` : c'est du `localStorage`, donc gratuit, et écrire
+  une seconde dérivation de « nouvelle assignation » dans le repository local aurait fait deux
+  définitions du même chiffre. Hors démo l'identifiant vaut `undefined` et rien ne part.
+- Gardes : `src/lib/hooks/org-badges.server-count.test.tsx` (dont un témoin qui exige que le
+  compteur TOMBE quand la source serveur est vidée : sans lui, le fichier passerait encore si plus
+  aucune source n'alimentait rien).
 
 ### 🔴 Le correctif que personne ne reçoit : les onglets jamais rechargés
 

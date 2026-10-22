@@ -107,11 +107,21 @@ const DECISIONS = {
   // hebdomadaire et liens hiérarchiques secondaires. Rien à garder.
   org_member_capacity: { decision: 'cascade' },
   org_member_secondary_managers: { decision: 'cascade' },
+  // Rôles personnalisés (mig. 219, 2026-10-12), décidé le 2026-10-15 :
+  // attribuer un rôle à un compte parti n'a plus d'objet. `user_id` cascade
+  // vers `auth.users`, et la clé composite vers `organization_members` emporte
+  // déjà la ligne au départ de l'organisation. La trace des attributions
+  // (`role.assigned` / `role.revoked`) vit dans `org_audit_log`, pas ici.
+  org_member_roles: { decision: 'cascade' },
   // Audience « Personnaliser » d'un OKR (mig. 205, 2026-09-29), décidée le
   // 2026-10-01 : `user_id` est nu, la ligne part par sa clé composite vers
   // `organization_members`, qui part avec le compte. Vérifié en base le même
   // jour (`team_okr_members_member_fkey`). Rien à garder une fois le compte parti.
   team_okr_members: { decision: 'cascade', via: 'organization_members' },
+  // Avertissement de suppression pour inactivité (mig. 226, C-121), décidé le
+  // 2026-10-22 : la ligne ne sert qu'à ouvrir l'effacement 30 jours plus tard.
+  // Le compte parti, elle n'a plus d'objet ; aucune adresse n'y est stockée.
+  account_inactivity_notices: { decision: 'cascade' },
 
   // ── Conservées, par obligation légale ───────────────────────────
   payment_records: {
@@ -156,10 +166,22 @@ export function tablesAvecUserId(dossier = MIGRATIONS) {
       const ligne = corps.split('\n').find((l) => /^\s*user_id\b/i.test(l));
       if (ligne) out.set(nom, { fichier: f, ligne: ligne.trim(), corps });
     }
+    // 🔴 Un ALTER peut porter PLUSIEURS clauses. On lit l'instruction entière,
+    // on la coupe en clauses, et la `ligne` retenue est celle de `user_id`
+    // SEULE. L'ancienne expression ne voyait `user_id` qu'en première clause,
+    // et lui attribuait alors le texte des clauses suivantes : le
+    // `ON DELETE CASCADE` d'une autre colonne prouvait le sien (2026-10-09).
     for (const m of sql.matchAll(
-      /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:public\.)?([a-z_0-9]+)\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?(user_id\b[^;]*)/gi,
+      /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?(?:public\.)?([a-z_0-9]+)\s+([^;]*);/gi,
     )) {
-      if (!out.has(m[1])) out.set(m[1], { fichier: f, ligne: m[2].trim() });
+      if (out.has(m[1])) continue;
+      for (const clause of m[2].split(/,\s*(?=(?:ADD|DROP|ALTER|RENAME|VALIDATE)\b)/i)) {
+        const c = /^\s*ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?(user_id\b[\s\S]*)$/i.exec(clause);
+        if (c) {
+          out.set(m[1], { fichier: f, ligne: c[1].trim() });
+          break;
+        }
+      }
     }
   }
   return out;

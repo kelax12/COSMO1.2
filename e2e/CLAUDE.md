@@ -38,8 +38,17 @@
   · 🔴 Restent : 2 cas clavier **non diagnostiqués** (`ShareListSheet`, `DatePicker` OKR — ils
     tournent à 1440 px, donc leur cause n est pas celle des deux autres), 7 parcours de démo
     WebKit, et 3 `reduced-motion-sheets` sur les deux moteurs mobiles.
-  🔴 **RIEN N A ÉTÉ REJOUÉ SUR WEBKIT.** Les 14 échecs WebKit sont PRÉSUMÉS suivre leurs homologues
-  `chromium`, et une présomption n est pas une mesure.
+  ✅ **2026-10-16 (C-118) : l audit clavier JOUE sous WebKit** (`mobile-safari`, 16 cas), et la
+  présomption ci-dessus est soldée : sur 5 cas rouges, **un seul était un défaut produit**
+  (`TaskCard` : Safari n émet AUCUN `contextmenu` au clavier, `Shift+F10` et la touche Menu
+  n arrivent qu en `keydown`, la feuille d actions d une tâche était inatteignable au clavier),
+  **un écart Safari** déclaré dans le fichier (Tab saute les liens : le lien d évitement se mesure par
+  l ordre du document et Entrée, détecté par sonde, jamais par une touche simulée, Option+Tab
+  n étant pas émulable), et trois défauts de **harnais** (viewport mobile imposé à des cas de bureau,
+  `/tasks` lu avant son rendu, barre mobile non attendue).
+  ❌ Le fichier remet un poste de BUREAU pour lui-même (`test.use`, 1 280 px, sans tactile) : c est
+  l audit d une personne au clavier. ❌ Ne pas relâcher une assertion pour faire passer WebKit : déclarer
+  l écart avec sa raison, comme `tabAtteintLesLiens`.
 
 - 🔴 **UN TEST QUI EXPIRE NE DIT PAS CE QU IL CHERCHE**, et ce fichier vient de le payer.
   `a11y-keyboard-audit` cherchait un bouton « Actions pour … » VISIBLE à 375 px. Mesuré dans le

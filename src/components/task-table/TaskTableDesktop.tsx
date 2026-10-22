@@ -14,7 +14,7 @@
 import React from 'react';
 import { TaskRow, type UnifiedTaskRow } from './list';
 import { TeamTaskRowLite } from './TeamTaskRowLite';
-import type { TeamTask } from '@/modules/team-projects';
+import type { TeamProjectHealth, TeamTask } from '@/modules/team-projects';
 import { useT } from '@/i18n/useT';
 
 type TaskRowProps = React.ComponentProps<typeof TaskRow>;
@@ -26,6 +26,8 @@ interface TaskTableDesktopProps extends Omit<TaskRowProps, 'task'> {
   onSort: (field: string) => void;
   onToggleTeamComplete: (task: TeamTask) => void;
   onEditTeamTask: (task: TeamTask) => void;
+  onSetTeamHealth: (task: TeamTask, health: TeamProjectHealth | null) => void;
+  teamEditReason: (task: TeamTask) => string | undefined;
 }
 
 const TaskTableDesktop = ({
@@ -35,6 +37,8 @@ const TaskTableDesktop = ({
   onSort,
   onToggleTeamComplete,
   onEditTeamTask,
+  onSetTeamHealth,
+  teamEditReason,
   ...rowProps
 }: TaskTableDesktopProps) => {
   const { t } = useT('tasks');
@@ -53,6 +57,7 @@ const TaskTableDesktop = ({
               {t('table.colName')}
               {arrow('name')}
             </th>
+            <th className="px-2 py-3" style={{ width: '140px' }}>{t('table.colHealth')}</th>
             <th className="px-2 py-3" style={{ width: '150px' }}>{t('table.colCategory')}</th>
             <th
               className="cursor-pointer text-center px-1 py-3"
@@ -91,6 +96,8 @@ const TaskTableDesktop = ({
               project={row.project}
               onToggleComplete={onToggleTeamComplete}
               onEdit={onEditTeamTask}
+              onSetHealth={onSetTeamHealth}
+              editReason={teamEditReason(row.task)}
             />
           ))}
         </tbody>

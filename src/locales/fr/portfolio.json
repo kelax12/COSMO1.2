@@ -88,6 +88,7 @@
   },
   "new": {
     "owner": "Responsable",
+    "owners": "Responsables",
     "dueDate": "Fin",
     "color": "Couleur",
     "description": "Description (optionnel)",
@@ -172,6 +173,7 @@
     "groupByStatus": "Statut"
   },
   "filters": {
+    "mobileButton": "Filtres",
     "barAria": "Filtres des tâches",
     "scopeAll": "Tout",
     "scopeMine": "Moi",
@@ -215,8 +217,28 @@
     "cancel": "Annuler",
     "save": "Enregistrer"
   },
+  "statusChange": "Statut : {{status}}. Cliquer pour le changer",
+  "chat": {
+    "title": "Discussion du projet",
+    "empty": "Aucun message. Lancez la discussion.",
+    "placeholder": "Écrire un message…",
+    "send": "Envoyer",
+    "delete": "Supprimer ce message"
+  },
   "members": {
     "title": "Ajouter au projet",
+    "open": "Ajouter des personnes au projet",
+    "viewersAria": "{{count}} personnes voient ce projet",
+    "extraHint": "{{count}} membre(s) du projet hors de ces équipes",
+    "rolesOpen": "Voir qui a accès au projet et sa fonction",
+    "rolesTitle": "Personnes du projet",
+    "rolesHintManage": "Choisissez qui est responsable et qui est membre.",
+    "rolesHintRead": "Seuls les responsables du projet peuvent changer ces fonctions.",
+    "roleLabel": "Fonction",
+    "person": "Personne",
+    "noCandidate": "Tous les membres actifs font déjà partie du projet.",
+    "noTeam": "Aucune autre équipe à associer.",
+    "wholeOrgTeam": "Ce projet est déjà visible par toute l'entreprise.",
     "formerMember": "Ancien membre",
     "you": "vous",
     "roleOf": "Rôle de {{name}}",
@@ -226,8 +248,8 @@
     "addMember": "Ajouter un membre",
     "addTeam": "Ajouter une équipe",
     "role": {
-      "lead": "Co-pilote",
-      "contributor": "Contributeur",
+      "lead": "Responsable",
+      "contributor": "Membre",
       "viewer": "Lecteur"
     },
     "yourRole": "Votre rôle : {{role}}"
@@ -260,6 +282,7 @@
     "byOn": "par {{name}}, le {{date}}"
   },
   "okrCard": {
+    "reached": "Atteint",
     "weightTitle": "Coefficient d'importance ×{{weight}}",
     "contributesTo": "Contribue à : {{title}}",
     "childrenCount_one": "{{count}} objectif y contribue",

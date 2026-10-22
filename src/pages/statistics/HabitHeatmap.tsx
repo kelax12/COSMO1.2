@@ -128,15 +128,17 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
     }
   }, [weeksChrono]);
 
-  // Échelle rouge → vert (même logique que HabitGlobalTracking : haut taux = vert, bas taux = rouge).
+  // Maquette 202 (2026-10-10) : une seule teinte, l'accent, en intensité.
+  // L'échelle rouge → orange → jaune → vert se lisait comme un jugement
+  // (feu rouge) là où il n'y a qu'un taux. Le rouge reste au retard (121).
   const getCellColor = (rate: number) => {
     if (rate < 0) return 'transparent';
-    if (rate === 0) return '#991B1B'; // rouge foncé
-    if (rate <= 0.25) return '#EF4444'; // rouge
-    if (rate <= 0.5) return '#F97316'; // orange
-    if (rate <= 0.75) return '#EAB308'; // jaune
-    if (rate < 1) return '#22C55E'; // vert clair
-    return '#166534'; // vert foncé
+    if (rate === 0) return 'rgb(var(--color-hover))';
+    if (rate <= 0.25) return 'rgb(var(--color-accent-solid) / 0.25)';
+    if (rate <= 0.5) return 'rgb(var(--color-accent-solid) / 0.45)';
+    if (rate <= 0.75) return 'rgb(var(--color-accent-solid) / 0.65)';
+    if (rate < 1) return 'rgb(var(--color-accent-solid) / 0.85)';
+    return 'rgb(var(--color-accent-solid))';
   };
 
   const CELL_BORDER = 'rgb(var(--color-border-muted))';

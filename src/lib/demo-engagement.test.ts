@@ -9,8 +9,17 @@ import {
   isDemoEngaged,
   CREATIONS_THRESHOLD,
   DURATION_THRESHOLD_MS,
+  resetDemoEngagementMemory,
+  clearDemoEngagementTraces,
 } from './demo-engagement';
 import { appModeStore } from './app-mode.store';
+import { COOKIE_CONSENT_KEY, COOKIE_CONSENT_AT_KEY } from './cookie-consent';
+
+/** Les tests historiques supposent un visiteur qui a ACCEPTÉ (2026-10-13). */
+function accept(): void {
+  localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
+  localStorage.setItem(COOKIE_CONSENT_AT_KEY, String(Date.now()));
+}
 
 /** Antidate le début de session de `ms` millisecondes. */
 function ageSession(ms: number): void {
@@ -19,7 +28,34 @@ function ageSession(ms: number): void {
 
 beforeEach(() => {
   localStorage.clear();
+  resetDemoEngagementMemory();
+  accept();
   appModeStore.setDemo(false);
+});
+
+// 🔴 Loi I&L art. 82 : sans consentement, RIEN n'est écrit sur l'appareil.
+describe('sans consentement', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    resetDemoEngagementMemory();
+  });
+
+  it("n'écrit rien dans localStorage, et les seuils fonctionnent en mémoire", () => {
+    startDemoSession();
+    for (let i = 0; i < CREATIONS_THRESHOLD; i++) recordDemoCreation();
+    expect(localStorage.getItem('cosmo_demo_started_at')).toBeNull();
+    expect(localStorage.getItem('cosmo_demo_creations')).toBeNull();
+    expect(demoCreationCount()).toBe(CREATIONS_THRESHOLD);
+    expect(isDemoEngaged()).toBe(true);
+  });
+
+  it('clearDemoEngagementTraces retire les compteurs écrits sous un ancien accord', () => {
+    localStorage.setItem('cosmo_demo_started_at', '1');
+    localStorage.setItem('cosmo_demo_creations', '2');
+    clearDemoEngagementTraces(localStorage);
+    expect(localStorage.getItem('cosmo_demo_started_at')).toBeNull();
+    expect(localStorage.getItem('cosmo_demo_creations')).toBeNull();
+  });
 });
 
 afterEach(() => {

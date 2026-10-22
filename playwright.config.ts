@@ -111,6 +111,12 @@ export default defineConfig({
     },
     {
       name: 'mobile-safari',
+      // 180 s et non 120 : sous WebKit en CI, l'ENTRÉE dans la démo coûte à
+      // elle seule ~47 s (trace du 2026-10-09 : 16 s de chargement de la
+      // landing, 30 s avant que son CTA peigne), avant la première ligne du
+      // test, et la fixture peut recharger la landing une fois. Ce délai ne
+      // relâche aucune assertion : il borne le harnais, pas le produit.
+      timeout: 180_000,
       // ─── Deux specs ne sont PAS jouées ici, et il faut dire pourquoi ───
       //
       // `demo-calendar` et `demo-task-dependencies` visent un DOM qui n'est
@@ -138,18 +144,17 @@ export default defineConfig({
         // Son propre prealable : joue par le project `mobile-safari-warmup`,
         // dont celui-ci depend. L'inclure ici le rejouerait en plein milieu.
         '**/_warmup-mobile.spec.ts',
-        // 🔴 2026-09-23 · l'audit CLAVIER (A-3, C-53, C-55) ne se joue pas ici.
-        // Ses assertions encodent la navigation sequentielle de CHROMIUM : le
-        // point de depart de la tabulation apres un lien d'evitement, l'entree
-        // du focus dans une confirmation empilee. WebKit les implemente
-        // autrement : 11 cas rouges en CI depuis le 2026-09-16, dont des cas a
-        // 1 280 px, donc sur l'interface de BUREAU. Et sur iPhone, Tab n'existe
-        // qu'avec « Acces complet au clavier », que Playwright n'emule pas.
-        // ❌ Ce n'est PAS un constat que Safari est accessible au clavier :
-        // aucun audit clavier Safari n'existe, c'est `C-118`. Ses cas a 375 px
-        // restent joues sous `chromium`.
-        '**/a11y-keyboard-audit.spec.ts',
       ],
+      // 🔴 C-118 (2026-10-16) · `a11y-keyboard-audit` JOUE ICI, sous WebKit.
+      // Il en etait exclu depuis le 2026-09-23 (11 cas rouges), et aucun audit
+      // clavier Safari n'existait. Triage fait : un defaut PRODUIT (la feuille
+      // d'actions d'une tache ne s'ouvrait pas au clavier, Safari n'emettant
+      // pas `contextmenu`), deux ecarts SAFARI declares dans le fichier (Tab
+      // saute les liens, Option+Tab les parcourt), le reste du harnais.
+      // ⚠️ Le fichier remet un poste de BUREAU pour lui-meme (1 280 px, sans
+      // tactile) : l'audit est celui d'une personne au clavier, pas d'un
+      // iPhone. Ce project reste donc l'unique moteur WebKit du job `e2e`, et
+      // le seul moyen d'y jouer l'audit sans toucher `ci.yml`.
       dependencies: ['mobile-safari-warmup'],
       use: { ...devices['iPhone 12'] },
     },

@@ -4,6 +4,7 @@ import {
   Pencil, Archive, ArchiveRestore, Clock, ListChecks, Tag,
   ExternalLink, Settings2, Copy, LayoutTemplate, CalendarRange,
 } from 'lucide-react';
+import { SAVE_AS_TEMPLATE_ENABLED } from './projectTemplatesFlag';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import { getColorHex } from '@/lib/category-colors';
@@ -154,7 +155,7 @@ const TeamProjectCard = ({
     <div className="space-y-3">
     {/* Le nom du projet titre le groupe, au-dessus de la carte (2026-10-01) :
         il n'est plus répété dans l'en-tête, sauf pendant un renommage. */}
-    <h3 className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] px-1 pt-1">
+    <h3 className="flex items-center gap-1.5 text-caption font-semibold md:uppercase md:tracking-wide max-md:text-label max-md:text-[rgb(var(--color-text-secondary))] text-[rgb(var(--color-text-muted))] px-1 pt-1">
       <span className={`w-2 h-2 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
       {project.name}
     </h3>
@@ -165,7 +166,7 @@ const TeamProjectCard = ({
           type="button"
           onClick={onToggleCollapse}
           aria-expanded={!collapsed}
-          className="flex-1 min-w-0 flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
+          className="flex-1 min-w-0 flex max-md:flex-wrap items-center gap-2 max-md:gap-y-1 px-2 py-1.5 rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
         >
           {collapsed ? <ChevronRight size={16} className="shrink-0" aria-hidden="true" /> : <ChevronDown size={16} className="shrink-0" aria-hidden="true" />}
           {renaming && (
@@ -243,15 +244,15 @@ const TeamProjectCard = ({
           )}
 
           {/* Contributeurs (avatars empilés + charge au survol) */}
-          <span className="ml-auto flex items-center gap-2 shrink-0">
+          <span className="ml-auto max-md:ml-6 max-md:basis-full flex items-center gap-2 shrink-0">
             {owner && (
-              <span className="hidden sm:inline-flex rounded-full ring-2 ring-indigo-500/60" title={`${pf('col.owner')} : ${owner.displayName}`}>
+              <span className="hidden sm:inline-flex rounded-full ring-2 ring-[rgb(var(--color-border-strong))]" title={`${pf('col.owner')} : ${owner.displayName}`}>
                 <MemberAvatar avatar={owner.avatar} name={owner.displayName} size={20} />
               </span>
             )}
             {contributors.length > 0 && (
               <span className="flex -space-x-1.5" aria-label={`${contributors.length} contributeurs`}>
-                {contributors.slice(0, 4).map(({ member, open, overdue }) => (
+                {contributors.slice(0, 2).map(({ member, open, overdue }) => (
                   <span
                     key={member.userId}
                     className="rounded-full ring-2 ring-[rgb(var(--color-surface))]"
@@ -261,12 +262,12 @@ const TeamProjectCard = ({
                         : tp('project.memberOpen', open, { name: member.displayName })
                     }
                   >
-                    <MemberAvatar avatar={member.avatar} name={member.displayName} size={20} />
+                    <MemberAvatar avatar={member.avatar} name={member.displayName} size={24} />
                   </span>
                 ))}
-                {contributors.length > 4 && (
+                {contributors.length > 2 && (
                   <span className="w-[22px] h-[22px] rounded-full bg-[rgb(var(--color-hover))] ring-2 ring-[rgb(var(--color-surface))] flex items-center justify-center text-[9px] font-bold text-[rgb(var(--color-text-muted))]">
-                    +{contributors.length - 4}
+                    +{contributors.length - 2}
                   </span>
                 )}
               </span>
@@ -290,13 +291,15 @@ const TeamProjectCard = ({
         {(
           <DropdownMenu>
             <DropdownMenuTrigger
+              // Guide entreprise : en vue liste, ouvrir un projet passe par ce menu.
+              data-guide-item
               aria-label={t('project.actionsAria', { name: project.name })}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
               <MoreHorizontal size={16} aria-hidden="true" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={onOpenProject}>
+              <DropdownMenuItem onClick={onOpenProject} data-guide-id="project-menu-open">
                 <ExternalLink size={14} aria-hidden="true" /> {pf('actions.open')}
               </DropdownMenuItem>
               {canEditProject && (
@@ -355,9 +358,11 @@ const TeamProjectCard = ({
                   <DropdownMenuItem onClick={onDuplicate}>
                     <Copy size={14} aria-hidden="true" /> {pf('actions.duplicate')}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onSaveTemplate}>
-                    <LayoutTemplate size={14} aria-hidden="true" /> {pf('actions.saveTemplate')}
-                  </DropdownMenuItem>
+                  {SAVE_AS_TEMPLATE_ENABLED && (
+                    <DropdownMenuItem onClick={onSaveTemplate}>
+                      <LayoutTemplate size={14} aria-hidden="true" /> {pf('actions.saveTemplate')}
+                    </DropdownMenuItem>
+                  )}
                 </>
               )}
               {/* Actions groupées — ouvertes à tous, et seulement quand il y a

@@ -60,6 +60,7 @@ const OrgMembersSection = ({ org, members, currentUserId, isAdmin, isManager, ca
           <button
             type="button"
             onClick={() => setChoosingMode(true)}
+            data-guide-id="members-invite"
             className="inline-flex items-center gap-1.5 h-10 px-3 rounded-xl text-sm font-semibold whitespace-nowrap bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))]"
           >
             <UserPlus size={14} aria-hidden="true" /> {tOrgAdmin('settings.inviteTitle')}

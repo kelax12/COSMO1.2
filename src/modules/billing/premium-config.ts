@@ -15,6 +15,28 @@
 // ═══════════════════════════════════════════════════════════════════
 export const PREMIUM_ENFORCED = false;
 
+// ═══════════════════════════════════════════════════════════════════
+// Affichage des prix (décision d'Axel, 2026-10-16).
+//
+//  false → AUCUN montant n'est montré : ni la section tarifs de la landing
+//          entreprise (et son ancre, et le lien « Voir les tarifs » du héros),
+//          ni la grille de paliers de l'onglet Abonnement, ni le paragraphe
+//          « Tarifs » du prérendu (`prerender.mjs`, constante miroir). Rien
+//          n'est supprimé : textes, composants et montants restent ici et
+//          dans les catalogues, prêts à revenir.
+//  true  → les prix sont affichés comme avant.
+//
+// Pourquoi : acquisition sans monétisation. Une grille de prix publique fait
+// présumer une activité commerciale (cf. a-faire-manuel.md `M-72`, `M-73`).
+//
+// 🔴 On ne vend pas sans afficher de prix : dès que `ENTERPRISE_BILLING_ENFORCED`
+// passe à `true`, les prix entreprise réapparaissent d'office (les surfaces
+// testent `PRICES_VISIBLE || ENTERPRISE_BILLING_ENFORCED`). Le prix Premium,
+// lui, n'est atteignable que si `PREMIUM_ENFORCED` est vrai (`/premium`
+// redirige, la modale ne s'ouvre pas). Garde : `prices-visible.guard.test.ts`.
+// ═══════════════════════════════════════════════════════════════════
+export const PRICES_VISIBLE = true;
+
 // ─── Tarifs, en euros ────────────────────────────────────────────────
 //
 // Source de vérité unique des MONTANTS. Le prix était auparavant écrit en dur
@@ -159,5 +181,6 @@ export function displayedMonthlyEur(
 // live est vide). Passer en live = recréer les 4 prix sur le compte live,
 // réenregistrer un endpoint webhook live, puis remplacer STRIPE_SECRET_KEY /
 // STRIPE_WEBHOOK_SECRET / les 4 STRIPE_ORG_PRICE_*.
-export const ENTERPRISE_BILLING_ENFORCED = false;
+// ✅ 2026-10-20 : REARME (SIREN obtenu, Stripe en compte LIVE, mig. 224 en meme temps).
+export const ENTERPRISE_BILLING_ENFORCED = true;
 export const ORG_FREE_SEATS = 5;

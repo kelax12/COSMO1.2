@@ -1,8 +1,14 @@
 {
+  "delta": {
+    "up": "+{{pct}}% vs the previous period",
+    "down": "−{{pct}}% vs the previous period",
+    "same": "Same as the previous period",
+    "noBase": "No previous period to compare"
+  },
   "page": {
     "title": "Statistics",
-    "subtitle": "Analyse your productivity and performance",
-    "analyse": "Analyse:",
+    "subtitle": "Analyze your productivity and performance",
+    "analyse": "Analyze:",
     "seeDetail": "See details",
     "calendar": "Calendar"
   },
@@ -42,9 +48,11 @@
     "featureName": "detailed analytics"
   },
   "details": {
+    "noTaskDone": "No task completed in this period.",
+    "avgPriority": "Avg. {{value}}",
     "globalTimeSplit": "Overall time split",
     "total": "Total",
-    "byColor": "Split by colour",
+    "byColor": "Split by color",
     "byPriority": "Split by priority",
     "priority": "Priority {{level}}",
     "byCategory": "Split by category",
@@ -84,13 +92,13 @@
   },
   "breakdown": {
     "tasks": "Tasks",
-    "agenda": "Agenda",
+    "agenda": "Calendar",
     "habits": "Habits",
     "okr": "OKRs"
   },
   "insights": {
     "bestDay": "Your best day: {{day}} ({{share}}% of your tasks completed over 30 days).",
-    "fragileHabit": "Most fragile habit: “{{name}}”, {{missed}} misses this week.",
+    "fragileHabit": "Most fragile habit: “{{name}}”, missed {{missed}} times this week.",
     "momentumFirst": "{{count}} tasks completed this week.",
     "momentumUp": "Trending up: {{count}} tasks completed this week (+{{delta}}% vs last week).",
     "momentumDown": "Trending down: {{count}} tasks completed this week ({{delta}}% vs last week).",

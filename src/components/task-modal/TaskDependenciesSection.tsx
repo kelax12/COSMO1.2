@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { AlertTriangle, Link2, Plus, X } from 'lucide-react';
 import {
   useRemoveTaskDependency,
@@ -6,8 +6,15 @@ import {
   useTasks,
   type Task,
 } from '@/modules/tasks';
-import TaskDependencyPicker from './TaskDependencyPicker';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
+
+// Le sélecteur (~20 ko de source) ne s'ouvre qu'au clic sur « Ajouter une
+// dépendance » : chargé à la demande, il sort du chunk `TaskModal`, qui avait
+// franchi son plafond (29,3 ko > 29,0 ko, 2026-10-09). Même découpe que
+// `TeamTaskTabPanels` côté entreprise. Catalogue `tasks` déjà chargé par la
+// modale.
+const TaskDependencyPicker = lazyWithRetry(() => import('./TaskDependencyPicker'));
 
 interface TaskDependenciesSectionProps {
   /**
@@ -24,6 +31,11 @@ interface TaskDependenciesSectionProps {
    * pour que l'appelant puisse afficher sans risquer un 403.
    */
   readOnly?: boolean;
+  /**
+   * Toujours déplié, « Ajouter » au bout de la ligne de titre. Utilisé par
+   * l'onglet Dépendances du modal desktop, où replier n'a plus de sens.
+   */
+  alwaysOpen?: boolean;
 }
 
 /**
@@ -39,9 +51,10 @@ interface TaskDependenciesSectionProps {
  * `useTaskDependencies`. La page Tâches, ouverte bien plus souvent que le
  * modal, ne paie donc jamais cette requête.
  */
-const TaskDependenciesSection = ({ taskId, readOnly = false }: TaskDependenciesSectionProps) => {
+const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false }: TaskDependenciesSectionProps) => {
   const { t, tp } = useT('tasks');
-  const [open, setOpen] = useState(false);
+  const [openState, setOpen] = useState(false);
+  const open = alwaysOpen || openState;
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const { data: allTasks = [] } = useTasks();
@@ -50,6 +63,21 @@ const TaskDependenciesSection = ({ taskId, readOnly = false }: TaskDependenciesS
 
   const byId = useMemo(() => new Map(allTasks.map((x) => [x.id, x])), [allTasks]);
   const task = byId.get(taskId);
+  // `useTasks` rend aussi les tâches qu'un ami m'a partagées : elles vivent
+  // dans SON compte, et le trigger de la mig. 137 refuse une arête entre deux
+  // comptes (`dependency_cross_account`). On ne propose donc que les tâches du
+  // même propriétaire que la tâche ouverte.
+  const sameAccountTasks = useMemo(
+    () =>
+      task
+        ? allTasks.filter((x) =>
+            x.userId && task.userId ? x.userId === task.userId : !x.sharedBy === !task.sharedBy,
+          )
+        : [],
+    [allTasks, task],
+  );
+  // Une tâche partagée par un ami : son graphe appartient à son propriétaire.
+  const locked = readOnly || !!task?.sharedBy;
 
   const blockedBy = useMemo(
     () =>
@@ -88,7 +116,7 @@ const TaskDependenciesSection = ({ taskId, readOnly = false }: TaskDependenciesS
       >
         {item.name}
       </span>
-      {!readOnly && (
+      {!locked && (
         <button
           type="button"
           onClick={() =>
@@ -108,15 +136,16 @@ const TaskDependenciesSection = ({ taskId, readOnly = false }: TaskDependenciesS
   );
 
   return (
-    <div className="pt-3 border-t border-[rgb(var(--color-border))]">
+    <div className={alwaysOpen ? '' : 'pt-3 border-t border-[rgb(var(--color-border))]'}>
+      <div className="flex items-center gap-2">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="w-full flex items-center gap-2 text-left"
+        onClick={() => { if (!alwaysOpen) setOpen((v) => !v); }}
+        aria-expanded={alwaysOpen ? undefined : open}
+        className={`flex-1 min-w-0 flex items-center gap-2 text-left ${alwaysOpen ? 'cursor-default' : ''}`}
       >
         <Link2 size={13} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-        <span className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
+        <span className="text-xs font-bold md:uppercase md:tracking-wide text-[rgb(var(--color-text-muted))]">
           {t('dependencies.title')}
         </span>
         <span className="text-xs text-[rgb(var(--color-text-muted))]">
@@ -131,6 +160,16 @@ const TaskDependenciesSection = ({ taskId, readOnly = false }: TaskDependenciesS
           </span>
         )}
       </button>
+      {alwaysOpen && !locked && (
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors"
+        >
+          <Plus size={12} aria-hidden="true" /> {t('dependencies.add')}
+        </button>
+      )}
+      </div>
 
       {open && (
         <div className="mt-2 space-y-3">
@@ -160,7 +199,7 @@ const TaskDependenciesSection = ({ taskId, readOnly = false }: TaskDependenciesS
               popup sait en créer une, et un bouton qui disparaît quand il n'y
               a « rien à choisir » supprime précisément le chemin dont on a
               besoin ce jour-là. */}
-          {!readOnly && (
+          {!locked && !alwaysOpen && (
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
@@ -172,14 +211,16 @@ const TaskDependenciesSection = ({ taskId, readOnly = false }: TaskDependenciesS
         </div>
       )}
 
-      {!readOnly && pickerOpen && task && (
-        <TaskDependencyPicker
-          open={pickerOpen}
-          onClose={() => setPickerOpen(false)}
-          task={task}
-          tasks={allTasks}
-          dependencies={dependencies}
-        />
+      {!locked && pickerOpen && task && (
+        <Suspense fallback={null}>
+          <TaskDependencyPicker
+            open={pickerOpen}
+            onClose={() => setPickerOpen(false)}
+            task={task}
+            tasks={sameAccountTasks}
+            dependencies={dependencies}
+          />
+        </Suspense>
       )}
     </div>
   );

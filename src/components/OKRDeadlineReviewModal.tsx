@@ -7,6 +7,7 @@ import type { OKR, KeyResult } from '@/modules/okrs';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
+import { formatDurationMinutes } from '@/lib/duration';
 
 type Category = { id: string; name: string; color: string };
 
@@ -109,13 +110,8 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
     return Math.round(sum / krs.length);
   };
 
-  const formatTime = (minutes: number) => {
-    if (minutes === 0) return '0min';
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h === 0) return `${m}min`;
-    return m > 0 ? `${h}h ${m}min` : `${h}h`;
-  };
+  // Maquette 139 : une seule écriture des durées (`@/lib/duration`).
+  const formatTime = formatDurationMinutes;
 
   const handleValidate = () => {
     const commit = () => {

@@ -15,7 +15,7 @@
 import { useCallback, useState } from 'react';
 import { toast } from '@/lib/toast';
 import { showUndoToast } from '@/lib/undo-toast';
-import type { Task } from '@/modules/tasks';
+import type { Task, TaskHealth } from '@/modules/tasks';
 import type { TaskList } from '@/modules/lists';
 import { useT } from '@/i18n/useT';
 
@@ -27,7 +27,7 @@ interface Params {
   isDemo: boolean;
   toggleComplete: (taskId: string) => void;
   addTaskToList: (taskId: string, listId: string) => void;
-  updateTask: (taskId: string, updates: { category?: string; deadline?: string }) => void;
+  updateTask: (taskId: string, updates: { category?: string; deadline?: string; health?: TaskHealth | null }) => void;
   deleteTask: (taskId: string) => void;
   restoreTask: (task: Task) => void;
   unshareTask: (taskId: string, friendId: string) => void;
@@ -125,6 +125,12 @@ export function useTaskSelection({
     exitSelectMode();
   };
 
+  const bulkSetHealth = (health: TaskHealth | null) => {
+    selectedIds.forEach((id) => updateTask(id, { health }));
+    toast.success(tp('toast.healthUpdated', selectedIds.length));
+    exitSelectMode();
+  };
+
   return {
     selectMode,
     setSelectMode,
@@ -142,5 +148,6 @@ export function useTaskSelection({
     confirmBulkDelete,
     bulkSetCategory,
     bulkSetDeadline,
+    bulkSetHealth,
   };
 }

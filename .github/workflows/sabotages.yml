@@ -1,32 +1,39 @@
 # ══════════════════════════════════════════════════════════════════
-# C-81 — REJOUER LES SABOTAGES : qui garde les gardes ?
+# C-81 · AM-1 — REJOUER LES SABOTAGES : qui garde les gardes ?
 # ══════════════════════════════════════════════════════════════════
 #
-# 🔴 LE DÉFAUT QUE CE WORKFLOW FERME. Le dépôt compte 42 fichiers
-# `*guard.test.*`. Chacun est arrivé avec la même phrase : « vu rouge sur N
-# sabotages ». Ce sabotage a été joué UNE FOIS, à la main, le jour de
+# 🔴 LE DÉFAUT QUE CE WORKFLOW FERME. Un témoin est un cas de test qui prouve
+# qu'une garde mord encore. Chacun est arrivé avec la même phrase : « vu rouge
+# sur N sabotages ». Ce sabotage a été joué UNE FOIS, à la main, le jour de
 # l'écriture. Rien, ensuite, ne disait qu'un témoin détecte ENCORE.
 #
 # Un témoin qui ne détecte plus est pire qu'un témoin absent : il produit un
 # vert, et ce vert est lu comme une preuve.
 #
 # ⚠️ ET ÇA N'EST PAS THÉORIQUE. À la première exécution, le 2026-09-20, le
-# rejeu a trouvé `src/monitoring.guard.test.ts` VERT sur son sabotage : il
-# cherchait `installEarlyHandlers()` par un `indexOf` sur la source brute, et
-# la première occurrence est l'IMPORT — toujours avant `function mount()`.
-# Commenter l'APPEL laissait le cas vert. Le témoin a été corrigé le jour même.
+# rejeu a trouvé `src/monitoring.guard.test.ts` VERT sur son sabotage. Au
+# premier rejeu étendu, le 2026-10-15, `check-bundle-budget.guard.test.mjs`
+# restait VERT sur le défaut exact qu'il documente (`{8,}` dans le découpage
+# du hash). Les deux témoins ont été réparés le jour même.
+#
+# ── CE QUE LE SCRIPT FAIT ───────────────────────────────────────────
+#
+# Il recompte les témoins (cas nommés TÉMOIN, par l'AST), COPIE l'arbre dans
+# un dossier temporaire, et pour chaque sabotage du catalogue
+# (`scripts/replay-sabotages.catalogue.mjs`) : casse la chose gardée DANS LA
+# COPIE, rejoue la garde, exige qu'elle rougisse pour la raison nommée,
+# restaure la copie. Il imprime le ratio témoins rejoués / témoins du dépôt.
+# Trois copies jouent en parallèle sur le runner.
 #
 # ── POURQUOI PAS DANS `ci.yml` ──────────────────────────────────────
 #
-# Ce script ÉCRIT dans l'arbre de travail (il sabote un fichier, joue un
-# témoin, restaure). Sur une machine partagée par plusieurs sessions, c'est un
-# geste à faire dans un espace à soi — le runner en est un. Et il joue une
-# suite par sabotage : plusieurs minutes, pour une question qu'on se pose une
-# fois par semaine, pas à chaque push.
+# Plus de deux cents rejeux, chacun un vitest : une dizaine de minutes, pour
+# une question qu'on se pose une fois par semaine et à chaque PR qui touche
+# un témoin ou une garde, pas à chaque push.
 #
-# 🔴 Il REFUSE de démarrer si une cible est déjà modifiée, restaure dans un
-# `finally` ET sur signal, et vérifie à la fin que tout est revenu octet pour
-# octet.
+# 🔴 Le script n'écrit JAMAIS dans l'arbre de travail. Le contrôle « arbre
+# intact » ci-dessous le vérifie quand même : un `git status` sale en fin de
+# job dirait qu'il s'est trompé, et sur un runner personne ne le verrait.
 #
 # Les échecs remontent par `ci-alert.yml`.
 # ══════════════════════════════════════════════════════════════════
@@ -37,17 +44,22 @@ on:
     # Hebdomadaire, le lundi à 06:13 UTC. Minute décalée des autres crons.
     - cron: '13 6 * * 1'
   workflow_dispatch:
-  # 🔴 AUSSI SUR LES PULL REQUESTS QUI TOUCHENT UN TÉMOIN OU SA CIBLE.
-  # C'est le moment où un témoin se désarme : on le modifie, on le voit vert,
-  # on conclut. Attendre le lundi suivant, c'est laisser une garde morte sur
-  # `main` pendant six jours.
+  # 🔴 AUSSI SUR LES PULL REQUESTS QUI TOUCHENT UN TÉMOIN, UNE GARDE OU UNE
+  # CIBLE DU CATALOGUE. C'est le moment où un témoin se désarme : on le
+  # modifie, on le voit vert, on conclut. Attendre le lundi suivant, c'est
+  # laisser une garde morte sur `main` pendant six jours.
   pull_request:
     paths:
-      - '**/*guard.test.*'
-      - 'scripts/replay-sabotages.mjs'
+      - '**/*.test.*'
+      - 'scripts/**'
+      - 'eslint-rules/**'
       - 'vercel.json'
+      - '.env.example'
+      - 'vitest.tooling.config.ts'
       - 'src/main.tsx'
       - 'src/App.tsx'
+      - 'src/lib/csv-export.ts'
+      - 'src/locales/**'
       - 'supabase/functions/**'
       - 'supabase/migration/**'
 
@@ -83,7 +95,7 @@ jobs:
               echo '### Rejeu des sabotages'
               echo ''
               echo '```'
-              cat "$LOG"
+              sed -n '/── Ratio/,$p' "$LOG"
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
             exit 0
@@ -92,7 +104,7 @@ jobs:
             echo '### ✖ Un temoin ne detecte plus'
             echo ''
             echo '```'
-            tail -n 60 "$LOG"
+            tail -n 80 "$LOG"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           tail -n 25 "$LOG" | while IFS= read -r LIGNE; do
@@ -100,9 +112,10 @@ jobs:
           done
           exit 1
 
-      # 🔴 LE CONTRÔLE QUI COMPTE AUTANT QUE LE REJEU. Le script restaure ses
-      # cibles et le vérifie lui-même, mais un `git status` sale en fin de job
-      # dirait qu'il s'est trompé — et sur un runner, personne ne le verrait.
+      # 🔴 LE CONTRÔLE QUI COMPTE AUTANT QUE LE REJEU. Le script ne doit rien
+      # écrire dans l'arbre, et le vérifie lui-même ; un `git status` sale en
+      # fin de job dirait qu'il s'est trompé — et sur un runner, personne ne
+      # le verrait.
       - name: L arbre est-il revenu intact ?
         if: ${{ always() }}
         run: |

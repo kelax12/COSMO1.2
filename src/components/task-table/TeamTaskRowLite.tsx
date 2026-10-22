@@ -9,19 +9,23 @@
 import React from 'react';
 import { Link } from 'react-router';
 import { UsersRound, ArrowUpRight } from 'lucide-react';
-import type { TeamProject, TeamTask } from '@/modules/team-projects';
+import type { TeamProject, TeamProjectHealth, TeamTask } from '@/modules/team-projects';
 import { isTaskOverdue, projectColor, taskDisplayStatus } from '@/components/organization/team-projects.helpers';
 import { formatDeadlineSmart, formatDuration } from './helpers';
 import { useT } from '@/i18n/useT';
+import TaskHealthCell from './TaskHealthCell';
 
 interface TeamTaskRowLiteProps {
   task: TeamTask;
   project: TeamProject | undefined;
   onToggleComplete: (task: TeamTask) => void;
   onEdit: (task: TeamTask) => void;
+  onSetHealth: (task: TeamTask, health: TeamProjectHealth | null) => void;
+  /** Pourquoi modifier cette tâche est refusé (miroir de `team_tasks_update`). */
+  editReason?: string;
 }
 
-export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, onEdit }: TeamTaskRowLiteProps) => {
+export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, onEdit, onSetHealth, editReason }: TeamTaskRowLiteProps) => {
   const { t } = useT('tasks');
   const { t: tOrg } = useT('org');
   const overdue = isTaskOverdue(task);
@@ -73,6 +77,16 @@ export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, on
             {tOrg(status.labelKey as Parameters<typeof tOrg>[0])}
           </span>
         </div>
+      </td>
+      <td className="px-1 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+        <TaskHealthCell
+          name={task.name}
+          health={task.health}
+          done={task.completed}
+          onSetHealth={(h) => onSetHealth(task, h)}
+          onMarkDone={() => onToggleComplete(task)}
+          disabledReason={editReason}
+        />
       </td>
       <td className="px-2 py-4 whitespace-nowrap">
         <span className="inline-flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>

@@ -174,10 +174,7 @@ export function todayCompletionReport({
   // l'agenda contient quoi que ce soit — la condition aurait été morte, et le
   // seul moyen de s'en apercevoir aurait été de tomber sur une journée sans
   // aucun rendez-vous. On regarde donc la fin (à défaut le début).
-  const upcomingEvents = todaysEvents.filter((event) => {
-    const end = new Date(event.end || event.start);
-    return Number.isNaN(end.getTime()) ? false : end > now;
-  }).length;
+  const upcomingEvents = todaysEvents.filter((event) => !isEventPast(event, now)).length;
 
   return {
     tasksDone,
@@ -189,4 +186,14 @@ export function todayCompletionReport({
       : null,
     upcomingEvents,
   };
+}
+
+/**
+ * Un rendez-vous est PASSÉ quand sa fin (à défaut son début) est atteinte.
+ * Date illisible : considéré comme passé, il ne garde ni la journée ouverte
+ * ni le premier plan (maquette 135 : ce qui est passé s'estompe).
+ */
+export function isEventPast(event: Pick<CalendarEvent, 'start' | 'end'>, now: Date): boolean {
+  const end = new Date(event.end || event.start);
+  return Number.isNaN(end.getTime()) ? true : end <= now;
 }

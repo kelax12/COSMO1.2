@@ -15,6 +15,7 @@ import { Ban } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import AddCategoryButton from '@/components/AddCategoryButton';
 import { useT } from '@/i18n/useT';
+import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 interface EventModalDesktopCategoryPickerProps {
   /** Même forme structurelle que `EventModalFormBodyProps.categories` : le
@@ -34,6 +35,7 @@ const EventModalDesktopCategoryPicker: React.FC<EventModalDesktopCategoryPickerP
   categories, color, setColor, handleFieldChange, setIsColorSettingsOpen,
 }) => {
   const { t } = useT('eventModal');
+  const { t: tCommon } = useT('common');
   // Légende des catégories masquée par défaut (épure l'UI) — révélée à la demande.
   const [showCategoryLegend, setShowCategoryLegend] = useState(false);
   // Bulle de sous-catégories : ouverte pour AU PLUS une racine à la fois,
@@ -60,6 +62,22 @@ const EventModalDesktopCategoryPicker: React.FC<EventModalDesktopCategoryPickerP
         </div>
 
         <div className="grid grid-cols-4 gap-1.5 mb-6 pb-1 pr-1">
+          {/* « Sans catégorie » : l'événement ne porte qu'une couleur, la
+              grise neutre (`NO_CATEGORY_COLOR`). Toujours en premier. */}
+          <button
+            type="button"
+            onClick={() => { handleFieldChange("color", setColor, NO_CATEGORY_COLOR); setOpenSubcategoriesFor(null); }}
+            className="relative w-full h-10 rounded-lg border-2 transition-all hover:scale-105 shrink-0 flex items-center justify-center"
+            style={{
+              backgroundColor: "rgb(var(--color-hover))",
+              borderColor: color === NO_CATEGORY_COLOR ? "rgb(var(--color-text-primary))" : "rgb(var(--color-border))",
+            }}
+            title={tCommon('noCategory')}
+            aria-label={tCommon('noCategory')}
+            aria-pressed={color === NO_CATEGORY_COLOR}
+          >
+            <Ban size={16} style={{ color: "rgb(var(--color-text-muted))" }} aria-hidden="true" />
+          </button>
           {rootCategories.map((cat) => {
             const subs = subcategoriesOf(cat.id);
             const hasSubs = subs.length > 0;

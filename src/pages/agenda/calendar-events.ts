@@ -3,6 +3,7 @@
 // Comportement déplacé verbatim depuis AgendaPage.tsx.
 import { expandRecurringEvents, type CalendarEvent } from '@/modules/events';
 import { toDisplayISO, type TimezonePref } from '@/lib/timezone';
+import { NO_CATEGORY_COLOR, displayCategoryColor, textOnCategoryColor } from '@/lib/category-colors';
 
 // Durée par défaut (minutes) d'un événement créé en glissant une tâche depuis la
 // sidebar. Une tâche sans durée estimée a `estimatedTime = 0` (défaut du
@@ -87,6 +88,9 @@ export function buildCalendarEvents(
    * motif que `reviewEventIds` : calculé par `findDoneTaskEvents`, qui a
    * besoin des tâches. */
   doneEventIds: ReadonlySet<string> = new Set(),
+  /** Couleurs (MAJUSCULES) des catégories de l'utilisateur. Fourni : un
+   * événement dont la couleur n'en est plus une s'affiche en gris clair. */
+  categoryColors?: ReadonlySet<string>,
 ): FullCalendarEvent[] {
   const projectionFrom = new Date(now);
   projectionFrom.setMonth(projectionFrom.getMonth() - 13);
@@ -94,14 +98,16 @@ export function buildCalendarEvents(
   projectionTo.setMonth(projectionTo.getMonth() + 13);
   const expandedEvents = expandRecurringEvents(events, projectionFrom, projectionTo);
 
-  return expandedEvents.map(event => ({
+  return expandedEvents.map(event => {
+    const color = categoryColors ? displayCategoryColor(event.color, categoryColors) : event.color;
+    return {
     id: event.id,
     title: event.title,
     start: event.start,
     end: event.end,
-    backgroundColor: event.color,
-    borderColor: event.color,
-    textColor: '#ffffff',
+    backgroundColor: color,
+    borderColor: color,
+    textColor: textOnCategoryColor(color),
     editable: !event.id.includes('::'),
     extendedProps: {
       notes: event.notes,
@@ -111,7 +117,8 @@ export function buildCalendarEvents(
       needsReview: reviewEventIds.has(event.id),
       taskDone: doneEventIds.has(event.id),
     },
-  }));
+  };
+  });
 }
 
 /**
@@ -175,8 +182,8 @@ export function resolveDraggedTaskEventData(
   const isTeamTask = taskData.source === 'pro';
   const personalCategory = () => categories.find((cat) => cat.id === taskData.category);
   const catColor = isTeamTask
-    ? (taskData.categoryColor || '#6B7280')
-    : (personalCategory()?.color || '#6B7280');
+    ? (taskData.categoryColor || NO_CATEGORY_COLOR)
+    : (personalCategory()?.color || NO_CATEGORY_COLOR);
   const catName = isTeamTask
     ? (taskData.categoryName || uncategorizedLabel)
     : (personalCategory()?.name || uncategorizedLabel);
@@ -189,7 +196,7 @@ export function resolveDraggedTaskEventData(
     duration: { minutes: taskEventDurationMinutes(taskData.estimatedTime) },
     backgroundColor: catColor,
     borderColor: catColor,
-    textColor: '#ffffff',
+    textColor: textOnCategoryColor(catColor),
     extendedProps: {
       taskId: isTeamTask ? undefined : taskData.id,
       isTeamTask,

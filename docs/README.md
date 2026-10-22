@@ -62,6 +62,398 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-20 · **`main` rouge depuis 26 h, 963 → 959**
+
+Consigne d'Axel : « remet à jour tous les audits du dossier doc et indique les améliorations ayant
+le plus gros ROI ». **32 commits** relus depuis la passe du 2026-10-18 (`bf94958f` → `86ea357f`),
+dont la fermeture de `TR-1` (déjà portée à [`../faille.md`](../faille.md) le 10-19 : **962 → 963**)
+et la refonte de l'Aperçu entreprise en widgets (≈ 7 000 lignes, 33 fichiers neufs). Même méthode :
+CI réelle de `main`, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes
+HTTP), dépôt à `HEAD`. Même règle : un défaut ne se rembourse que corrigé **et vu vert en CI**.
+
+### Ce que la CI et la production disent
+
+| Source | Verdict | Mesuré le 2026-10-20 |
+|---|---|---|
+| `CI` à `86ea357f` (run `39408311331`) | 🔴 deux jobs sur cinq | `lint-test-build` : **une seule** étape rouge, le budget de bundle ; 352 fichiers, **3 969** tests verts, outillage 29 / 503. `e2e` : **254 verts, 1 échec, 2 instables**, 4 sautés (22,7 min). `rls-integration`, `lighthouse`, `audit` verts |
+| Historique `CI` de `main` | 🔴 **29 runs rouges de suite** | dernier vert : `bf94958f`, le 2026-10-18 à 19:04 UTC. `e2e` rouge depuis `a9db6f2c` (10-19, 12:06), `lint-test-build` depuis `08bce3d4` (10-19, 12:59). **23 commits de code poussés sur du rouge**, l'alerte Discord partie à chaque fois. `f0c2a433` (« remettre la CI au vert ») a réparé les parcours entreprise, pas le budget |
+| `Visual` | 🔴 depuis `a9db6f2c` | `/dashboard` dans les quatre thèmes, `/entreprise` Aperçu, l'état ERREUR de la frontière d'erreur |
+| `Posture` | 🔴 chaque matin | advisors **`13 / 84 / 2 / 1`**, identiques au 10-19 : la référence attend toujours son `--update` (geste d'Axel) |
+| Autres planifiés | ✅ | `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest`, `org-digest`, `org-webhook-dispatch` ; aucun workflow désactivé ; dépôt `public` ; **16** PR ouvertes |
+| Base | | **79** tables toutes sous RLS, **205** policies, ledger **173** (`20261019122246`, mig. `223`), 12 Edge Functions inchangées, **28 Mo**, **0** paiement |
+| Mesure d'audience | ⚠️ | `traffic_hits` = **3** lignes, les trois de test du 10-19 (`/verification-tr1…`). **Aucune visite réelle** enregistrée en 40 h ; `demo_devices` : 0 nouvel appareil sur 7 jours ; 6 comptes actifs sur 7 jours, 38 profils |
+| Site | ✅ | `/`, `/entreprise-presentation/` en 200 ; `/api/collect` en 405 sur GET |
+
+### 🔴 Trouvé en chemin : deux verdicts dépendent du jour de la semaine
+
+`e2e` et `Visual` sont passés au rouge sur `a9db6f2c`, un commit qui ne change **que deux
+commentaires** (`api/collect.ts`, `src/lib/traffic.ts`). Le dernier vert date du dimanche 10-18,
+le premier rouge du lundi 10-19. Ni `e2e/visual-regression.spec.ts` ni
+`e2e/mobile-android.spec.ts` ne fige l'horloge (aucun `page.clock`), et la démo date ses données
+par rapport à aujourd'hui : **le contenu de `/dashboard` change avec la date, donc le verdict
+aussi.** Le débordement de 13 px à 200 % de police (C-97) est peut-être un vrai défaut, mais il
+n'apparaît que certains jours ; la capture `Visual` de `/dashboard` ne peut pas rester stable.
+
+### Les notes
+
+| Audit | 10-18 | 10-19 | **10-20** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|---|
+| [Sécurité](../faille.md) | 86 | 87 | **87** | 0 | `TR-1` refermé le 10-19 (+1, compté ce jour-là) ; `Posture` rouge par référence non recalée, non débité |
+| [Tests / CI](./TESTING.md) | 96 | 96 | **95** | **−1** | `main` rouge 29 runs, 23 commits poussés dessus (−1) ; deux verdicts dépendants de la date, sans horloge figée (−1) ; `api/` dans `tsc` et `vitest`, vert en CI sur la PR n° 79, chaîne vue écrire par le collecteur (+1) |
+| [Performance](./PERFORMANCE.md) | 96 | 96 | **95** | **−1** | `OrganizationPage` **19,1 ko** pour un cliquet à 18,0 ko (+6 %), rouge depuis 26 h ; `vendor-pdf` (jsPDF, 126 ko) chargé au clic et borné (0) |
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | 82 | **81** | **−1** | `/dashboard` déborde de **13 px** à 200 % de police sur `mobile-chrome` (C-97, WCAG 1.4.4 et 1.4.10) ; le mode édition de l'Aperçu force `reducedMotion="never"` (0, arbitrage écrit, à revoir) |
+| [UI / UX](./UI-PATTERNS.md) | 86 | 86 | **85** | **−1** | la refonte d'écran la plus large depuis septembre (Aperçu en widgets) est passée **sans référence visuelle** : `Visual` rouge, six captures dont la frontière d'erreur, non identifiée |
+| [Architecture](./ARCHITECTURE.md) | 93 | 93 | **93** | 0 | 33 fichiers neufs, le plus gros 530 lignes (`ApercuWidgetGrid`) ; `OrgGuideHost` −180 lignes ; aucune garde d'architecture rouge |
+| [Scalabilité](./SCALABILITY.md) | 91 | 91 | **91** | 0 | `TR-1` fermé : seul le collecteur écrit, le plafond par visiteur tient de nouveau |
+| [RGPD](./RGPD.md) | 87 | 87 | **87** | 0 | export PDF généré dans le navigateur, aucun traitement nouveau ; politique toujours sans section « Prospection » (déjà débitée) |
+| [i18n](./I18N.md) | 88 | 88 | **88** | 0 | +249 clés `orgAdmin` et +103 `persoGuide`, en `fr` **et** `en`, gardes i18n vertes |
+| [SEO](./SEO.md) | 79 | 79 | **79** | 0 | aucune page publique touchée |
+| [Mobile / DA](./MOBILE.md) | 78 | 78 | **78** | 0 | `mobile-safari` : 2 instables (modal OKR, swipe), comme au 10-18 |
+
+**963 → 959 : −5 débités, +1 remboursé.** Aucun débit ne vient d'un défaut de conception : tous
+viennent de rouges **visibles et annoncés** que personne n'a arrêtés avant de pousser la suite.
+
+### 📈 Les améliorations au plus gros ROI
+
+> Classées par **gain ÷ effort**, mesurés ce jour. « Axel » = un geste que le code ne peut pas
+> faire. ⚠️ Rien ici n'est un avis juridique.
+
+| # | Amélioration | Effort | Qui | Ce que ça rapporte |
+|---|---|---|---|---|
+| 1 | **Remettre `main` au vert** : sortir de `OrganizationPage` ce qui ne s'affiche qu'en mode édition (`AddWidgetPage`, `TemplatePicker`, en `lazy`) pour repasser sous 18,0 ko ; figer l'horloge (`page.clock.install`) dans `Visual` et C-97, puis régénérer les références de l'Aperçu | ~2 h | code | **+4 points** récupérables (Tests, Performance, UI, peut-être a11y). Surtout : tant que `main` est rouge, **aucune garde ne voit la régression suivante**, et l'acquisition démarre |
+| 2 | **Ne plus pousser sur du rouge** : `pre-push` qui lit le dernier run de `main` et refuse s'il est rouge (contournable volontairement) | ~30 min | code | évite la répétition exacte de cette passe : 23 commits, 26 h, une alerte par run rouge |
+| 3 | **Recaler `Posture`** (`--update`, attendu `13 / 84 / 2 / 1`) | 1 commande | Axel | une alerte qui sonne chaque matin pour rien apprend à ne plus lire les alertes, juste avant d'en avoir besoin |
+| 4 | **Voir une vraie visite s'écrire** : fenêtre privée, accepter, deux pages, puis `/admin` (trafic). Et **l'attribution de bout en bout** : une inscription Google et une email, chacune avec `?ref=` | 10 min | Axel | `traffic_hits` ne contient que des tests ; sans mesure, chaque euro ou heure d'acquisition est dépensé à l'aveugle |
+| 5 | **Les trois bloquants légaux de la prospection** : immatriculation (`M-73`) puis SIREN aux mentions (`M-05`), téléphone (`M-72`), section « Prospection » dans la politique de confidentialité (relue ce jour : absente) | ½ journée hors démarches | Axel + code | condition pour envoyer le premier email de prospection sans risque CNIL ni L8221-4 |
+| 6 | **`M-71`** : ranger la phrase secrète, supprimer `BACKUP_PASSPHRASE.txt` (**toujours présent** le 2026-10-20) | 5 min | Axel | un fichier en clair ouvre toutes les sauvegardes chiffrées |
+| 7 | **Page entreprise sur mobile** : TBT 399 ms, perf 86, la page d'arrivée des prospects | ~1 jour | code | seul défaut de performance ouvert, sur la page qui convertit |
+| 8 | **DPA** (`M-64`, Sentry en 2 min, puis Resend, Vercel, Anthropic, IONOS) et **plan Vercel** (`M-74`) | ~1 h | Axel | demandés par tout acheteur B2B ; Hobby interdit l'usage commercial |
+
+Le reste de la liste du 10-18 (préavis CGU, délivrabilité `M-27`, purge T11) ne change pas d'ordre.
+
+---
+
+## Mise à jour du 2026-10-18 · **dernière passe avant l'acquisition : 964 → 962**
+
+Consigne d'Axel : « une dernière vérification de tous les audits, une dernière remise à jour des
+scores, parce qu'on va commencer l'acquisition ». **Quinze commits** relus depuis la note du
+2026-10-16 au soir (`2cd5b895` → `a82c28f8`), plus `15d40bea`, poussé par cette passe. Même
+méthode que les 10-15 et 10-16 : CI réelle de `main`, production (advisors par l'API, catalogue,
+cron, ledger, Edge Functions, sondes HTTP du site et du collecteur), dépôt à `HEAD`. Même règle :
+un défaut ne se rembourse que corrigé **et vu vert en CI**. Pas de rejeu local de
+`lint-test-build` : depuis le 2026-10-16 chaque étape joue après un rouge, un run vert couvre les
+23 étapes.
+
+### Ce que la CI et la production disent
+
+| Source | Verdict | Mesuré le 2026-10-18 |
+|---|---|---|
+| `CI` à `e69cb729` (run `39139204925`) | ✅ cinq jobs verts | 346 fichiers, **3 890** tests ; outillage 29 / 501 ; RLS 8 / 151 ; `e2e` **255 verts, 2 instables**, 4 sautés (23,6 min) ; Lighthouse mobile LCP **1,36 à 1,52 s** sur 8 URLs |
+| `CI` à `8b253a1b` et `5f8ecbdb` | 🔴 puis ✅ | une seule garde rouge, `scripts/cosmo/api.test.mjs` : la copie des colonnes du CLI n'avait pas suivi `status,health`. **Corrigé par cette passe** (`15d40bea`), `lint-test-build` vert (run `39156293593`) ; `e2e` de ce run en cours à l'écriture |
+| `Posture` (run `39115503952`) | 🔴 depuis 09:29 UTC | advisors **`13 / 85 / 3 / 1`** contre `11 / 82 / 2 / 1` : les six objets des mig. `221` et `222`, relus au catalogue. Cinq sont sains, le sixième est `TR-1` |
+| Autres planifiés | ✅ | `Edge deploy drift`, `Migration coverage`, `db-backup` chiffré, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest` (nouveau) ; `Visual` et `CodeQL` verts à chaque push ; aucun workflow désactivé |
+| Alertes GitHub | ✅ | 0 CodeQL, 0 Dependabot, secret scanning : la seule n° 1, connue ; dépôt `public` ; **13** PR ouvertes |
+| Base | | **79** tables toutes sous RLS, **205** policies, ledger **172** (`222` en dernier), 12 Edge Functions inchangées, **24 Mo**, **0** paiement |
+| Site | ✅ | `/`, `/entreprise-presentation/` (titre et canonical justes dans le HTML servi), `/en/`, `/blog/`, `sitemap.xml`, `robots.txt` en 200 ; CSP sans origine tierce de mesure ; collecteur `/api/collect` en ligne (405, 403, 400 sur trois sondes qui n'écrivent rien) |
+
+### 🔴 Trouvé en chemin : la mesure d'audience peut remplir la base
+
+`TR-1`, détail dans [`../faille.md`](../faille.md). `track_hit` est appelable par `anon` **sans
+passer par le collecteur**, et prend l'IP dans le corps de la requête : le seul plafond qui tient
+est global, **3 000 lignes par minute**, soit 4,3 M par jour gardées 13 mois. La base pèse 24 Mo,
+le plan Free plafonne à 500 Mo, et une base pleine passe en lecture seule : **toute l'application
+tomberait, pas seulement la mesure**. L'autre écriture anonyme (`record_demo_visit`) plafonne à
+60 par minute. Rien n'a fui : les deux tables ne se lisent que derrière `is_admin()`.
+
+Et la chaîne n'a encore **jamais été vue écrire** : `traffic_hits` vaut **0** ligne en production
+à 18 h 47 UTC, ~19 h après son branchement. Explication probable : peu de trafic, et une mesure qui
+n'écrit qu'après « accepter ». Mais rien ne l'a prouvé, et `api/collect.ts`, premier code serveur
+du dépôt, est hors de `tsc -b` et hors de tout test.
+
+### Les notes
+
+| Audit | 10-16 soir | **10-18** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 87 | **86** | **−1** | `TR-1` (−1) ; `V-1` refermé, sans débit en cours (0) ; `Posture` rouge non débité à part, son objet l'est |
+| [Tests / CI](./TESTING.md) | 97 | **96** | **−1** | `api/collect.ts` hors `tsc` et hors tests, chaîne jamais vue écrire (−1) ; le rouge du CLI, corrigé et vu vert dans la passe (0) |
+| [RGPD](./RGPD.md) | 87 | **87** | 0 | `V-1` levé, le plafond de cette note depuis le 09-14 (+1) ; T11 prospection : durée non appliquée, aucune sauvegarde, deux DPA, politique muette (−1) |
+| [Architecture](./ARCHITECTURE.md) | 93 | **93** | 0 | `api/` hors des deux `tsconfig`, débité une fois, en Tests |
+| [Performance](./PERFORMANCE.md) | 96 | **96** | 0 | chemin critique 305,4 ko (+0,9) ; TBT mobile de la page entreprise **399 ms**, le chantier reste ouvert |
+| [Scalabilité](./SCALABILITY.md) | 91 | **91** | 0 | croissance de `traffic_hits` débitée une fois, en Sécurité |
+| [i18n](./I18N.md) | 88 | **88** | 0 | catalogues légaux modifiés en `fr` et `en` dans les mêmes commits |
+| [SEO](./SEO.md) | 79 | **79** | 0 | production relue, SEO Lighthouse 100 sur 8 / 8 ; l'autorité de domaine reste le seul levier |
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | **82** | 0 | `/guide/` 92 et page entreprise 93 en Lighthouse, audits toujours à identifier |
+| [UI / UX](./UI-PATTERNS.md) | 86 | **86** | 0 | `Visual` vert ; « l'État disparaît après 2 s » vu et corrigé le même jour |
+| [Mobile / DA](./MOBILE.md) | 78 | **78** | 0 | WebKit : 2 instables sur 255, comme au 10-16 |
+
+**964 → 962 : −3 débités, +1 remboursé.** Neuf notes ne bougent pas, aucune ne monte. Les trois
+points débités viennent tous du 2026-10-18, et des deux outils de l'acquisition elle-même : la
+mesure d'audience maison (`57c7fa88`, `3438ff7e`) et la prospection par email (`563cb8a0`,
+`e69cb729`). Le point remboursé aussi : débrancher le fournisseur tiers (`23a12fdb`).
+
+### ✅ Avant l'acquisition : la liste
+
+> Ordre de priorité, pas de calendrier. « Axel » = un geste que le code ne peut pas faire
+> (détail dans [`../a-faire-manuel.md`](../a-faire-manuel.md)). ⚠️ Rien ici n'est un avis
+> juridique.
+
+#### 🔴 Avant le premier email de prospection ou la première campagne
+
+| # | À faire | Qui | Pourquoi |
+|---|---|---|---|
+| 1 | **T'immatriculer** (`M-73`, `M-01`), puis porter le SIREN aux mentions légales (`M-05`) | Axel | prospecter avec une page de tarifs : activité présumée lucrative (C. trav. L8221-4). Le cold email en est la forme la plus visible |
+| 2 | **Téléphone de l'éditeur** aux mentions légales (`M-72`, moitié restante : l'adresse de domiciliation est en ligne depuis `ab0ad655`) | Axel | LCEN art. 1-1 : nom, adresse **et** téléphone |
+| 3 | **Chaque email de prospection** : fonction professionnelle visée, identité de l'expéditeur, source de l'adresse, finalité, lien de désinscription simple et gratuit, lien vers une notice. Et **une section « Prospection » dans la politique de confidentialité**, qui n'en dit rien aujourd'hui | Axel (modèles), code (politique) | art. 14 RGPD et L34-5 CPCE. Les modèles vivent dans le dépôt `analytics`, non relus ici ([`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) T11) |
+| 4 | **Fermer `TR-1`** : collecteur avec un secret serveur, `REVOKE` de `track_hit` pour `anon` et `authenticated`, plafond global réaliste ; puis recaler `Posture` (attendu `13 / 84 / 2 / 1`) | code | une base pleine arrête toute l'application. Et tant que rien n'est décidé, `Posture` sonne chaque jour sur Discord : une alerte qui sonne chaque matin pour la même chose finit par ne plus être lue, au moment où on en aura le plus besoin |
+| 5 | **Voir la mesure écrire une fois** : fenêtre privée sur `thecosmo.app`, accepter, deux pages, un clic de bouton, puis `/admin` (trafic) | Axel | `traffic_hits` vaut 0 : acquérir sans mesure, c'est dépenser sans savoir où |
+| 6 | **Jouer l'attribution de bout en bout** : une inscription par Google ET une par email, chacune avec `?ref=` | Axel | ouvert depuis le 2026-09-30, jamais joué ; le correctif Google (mig. `217`) n'a jamais été vu porter une source ([`../faille.md`](../faille.md), ordre n° 4 ; [`ACQUISITION.md`](./ACQUISITION.md) § 3) |
+
+#### 🟠 Dans la première semaine, avant que le volume monte
+
+| # | À faire | Qui | Pourquoi |
+|---|---|---|---|
+| 7 | **`M-71`** : ranger la phrase secrète des sauvegardes, supprimer le fichier (toujours présent le 2026-10-18) | Axel | sans elle aucune sauvegarde ne se relit ; en clair sur le disque, elle les ouvre toutes |
+| 8 | **`M-74`** : vérifier le plan Vercel (illisible par l'API, relu encore ce jour) | Axel | Hobby = usage non commercial, hors DPA |
+| 9 | **DPA** (`M-64`) : Sentry (2 min), Resend, Vercel, et les deux neufs de T11, **Anthropic** et **IONOS** | Axel | art. 28 ; un acheteur B2B les demandera |
+| 10 | **T11, purge et sauvegarde** : durée de 3 ans appliquée par un job, export chiffré du projet `cosmo-prospection` | code (dépôt `analytics`) | ni l'une ni l'autre n'existe aujourd'hui |
+| 11 | **`M-63` et `M-75`** : préavis de 30 jours des CGU aux comptes existants | Axel | sans lui, les clauses 3.3, 6.3 et 9 ne sont pas opposables aux anciens inscrits |
+| 12 | **`M-27`** : un email de test vers Gmail ET Outlook, depuis les boîtes IONOS de prospection ET depuis `send.thecosmo.app` | Axel | un DNS vert ne prouve pas la délivrabilité ; une campagne qui atterrit en spam ne mesure rien |
+| 13 | **Page entreprise sur mobile** : TBT 399 ms, perf 86, la page où arrivent les prospects | code | seul défaut de performance ouvert, et il est sur la page de conversion |
+| 14 | **Lire les alertes** : salon Discord (`Daily digest` chaque matin), Sentry « api error non catalogué » (`M-36`) | Axel | le premier trafic réel est celui qui trouve les erreurs qu'aucun test ne voit |
+
+#### 🟡 Reportable sans risque, mais à savoir
+
+- **Facturation désarmée** (`ENTERPRISE_BILLING_ENFORCED = false`, clé Stripe de test). Ne jamais
+  la réarmer sans le médiateur (`M-03`), le portail de résiliation (E5), le bouton de rétractation
+  (E13) et la bascule live (`M-06` à `M-09`, `M-43`, `M-48`).
+- **Plan Supabase Free** : aucun PITR, le dump quotidien chiffré est la seule copie (`A-9`) ; la
+  protection des mots de passe compromis exige le plan Pro (`A-10`). À trancher au premier client
+  payant.
+- **Confirmation d'adresse email désactivée** (`G-2`, risque accepté) : à rouvrir au premier compte
+  injoignable ou au premier client payant.
+- **Annuaires et Search Console** (`M-23`, `M-24`) : le seul levier SEO, indépendant du reste.
+- **Marque et relecture juridique** (`M-66`, `M-67`) : après la bascule payante, décision du
+  2026-10-16.
+- **13 PR ouvertes**, dont la pile Dependabot : à trier.
+- **`M-77`** : la condition posée à la publication du rapport juridique du 2026-10-13 (`M-68`) est
+  remplie depuis le 2026-10-16. Le publier reste ta décision.
+
+---
+
+## Mise à jour du 2026-10-16 (soir, plus tard) · **`BK-1` décidé : 962 → 964**
+
+Notification CNIL (`M-69`) soumise par Axel le 2026-10-16 au soir ; information des personnes (`M-70`) **décidée par écrit** : non effectuée, gravité déclarée « limitée ». Détail : [`RGPD.md`](./RGPD.md).
+
+| Audit | Soir | **Plus tard** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [RGPD](./RGPD.md) | 85 | **87** | **+2** | `BK-1` : `M-69` fait, `M-70` décidé et motivé au registre privé |
+| Les neuf autres | | | 0 | inchangées |
+
+**962 → 964.** Reste dû hors note : la notification complémentaire à la CNIL, et `M-71`.
+
+---
+
+## Mise à jour du 2026-10-16 (soir) · **les quatre commits suivants : 960 → 962**
+
+Consigne d'Axel : « reprends le dernier commit et remets à jour les scores ». Commits relus : `9dcaf94b`,
+`9bd63d41`, `eb6ee7ba`, `4e6f4293` (et `b4092bbf`, documentation). CI de `main` : **quatre runs
+complets de suite, tous verts**, aucun annulé depuis `eb6ee7ba` ; `e2e` 256 verts, 1 instable.
+
+| Audit | Matin | **Soir** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 86 | **87** | **+1** | CodeQL n° 14 fermée : 0 alerte CodeQL, 0 Dependabot |
+| [SEO](./SEO.md) | 78 | **79** | **+1** | `/entreprise-presentation/` sert de nouveau la page entreprise, relu en production |
+| [Performance](./PERFORMANCE.md) | 96 | **96** | 0 | la page entreprise enfin mesurée (+1) ; son TBT mobile est de 350 à 934 ms, perf 75 à 88 (−1) |
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | **82** | 0 | Lighthouse a11y **93** sur le parcours entreprise, vu pour la première fois : audits à identifier |
+| Les sept autres | | | 0 | inchangées |
+
+**960 → 962.** 🔴 Ce que la bonne URL a révélé : le gain de TBT du 2026-10-16 matin avait été mesuré,
+pour la page entreprise, sur l'accueil perso. Le vrai parcours entreprise, celui des prospects,
+reste lourd sur mobile (TBT jusqu'à 934 ms). C'est le prochain chantier de performance.
+
+---
+
+## Mise à jour du 2026-10-16 · **passe complète après les corrections : 940 → 960**
+
+Consigne d'Axel : « rejoue la passe d'audit complète sur main pour rembourser les notes de ce qui a
+été corrigé, avec la même méthode que le 2026-10-15 ». **44 commits** depuis la passe précédente
+(`ab50c7fc` → `a4878cab`), dont ceux des onze sessions de correction lancées le 2026-10-15. Même
+méthode : CI réelle de `main`, production, dépôt à `HEAD` rejoué étape par étape dans un worktree
+propre (`npm ci` compris, le lockfile ayant changé). Même règle : un défaut ne se rembourse que
+corrigé **et vu vert en CI**.
+
+### Ce que la CI dit à `HEAD`
+
+| Job | Verdict | Mesuré le 2026-10-16 |
+|---|---|---|
+| `CI` (`a4878cab`, run `38902071817`) | ✅ **les cinq jobs verts** | `e2e` **254 verts, 3 instables, 0 échec** en 22 min ; Lighthouse mobile LCP **1,22 à 1,52 s** sur les 8 URLs. Premier `CI` entièrement vert depuis le 2026-10-11, d'abord à `89ddecb9` (`38870561074`) |
+| `lint-test-build` rejoué en local | ✅ 23 étapes sur 23 | 341 fichiers, 3 837 tests (deux workers non démarrés sous la charge, rejoués seuls : 46 / 46) ; budget : chemin critique 304,5 ko, `OrganizationPage` 17,6 / 18,0 |
+| `Visual`, `CodeQL`, `Posture`, `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `Sabotages` | ✅ | **aucun workflow désactivé** : `restore-drill` est actif, `dump-check` vert sur le dump chiffré |
+| Alertes | | Dependabot **0** ; CodeQL : n° 13 fermée, **n° 14 ouverte** (`high`, sans décision) ; secret scanning : la n° 1, connue |
+
+✅ **La garde « toutes les étapes jouées après un rouge » a servi dès le lendemain** : les runs
+`38873301698` et `38875691233` n'avaient qu'un rouge, `check:docs-scored` (un dossier `docs/marque`
+sans marqueur, corrigé par `64222e89`), et les 3 834 tests ont joué derrière lui. Le 2026-10-12, le
+même rouge de documentation en avait masqué dix.
+
+### Les notes
+
+| Audit | 10-15 | **10-16** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 82 | **86** | **+4** | `M-68` vérifié en base, 0 session et 0 jeton antérieurs au chiffrement (+2) ; AM-6, surface entreprise rejouée en CI, 624 cellules vues rouges sur sabotage (+2) ; CodeQL n° 13 fermée (+1) ; n° 14 ouverte, sans décision (−1) |
+| [UI / UX](./UI-PATTERNS.md) | 84 | **86** | **+2** | `Visual` vert en comparaison (+1) ; `AssignRoleDialog` attend sa réponse (+1) |
+| [RGPD](./RGPD.md) | 84 | **85** | **+1** | `org_member_roles` déclarée (+1) ; `BK-1` maintenu à −2 : **échéance CNIL passée sans trace au registre** |
+| [Tests / CI](./TESTING.md) | 92 | **97** | **+5** | `main` vert sur les cinq jobs (+2) ; `org-guide` (+1) ; `restore-drill` rallumé (+1) ; 203 / 210 témoins rejoués (+1) |
+| [Architecture](./ARCHITECTURE.md) | 90 | **93** | **+3** | `CLAUDE.md` d'organisations à 11 992 o, 544 lignes, hook orphelin réglé |
+| [Performance](./PERFORMANCE.md) | 95 | **96** | **+1** | LCP mobile 1,2 à 1,5 s (+1) ; budget vert (+1) ; **la page entreprise n'a jamais été mesurée** (−1) |
+| [Scalabilité](./SCALABILITY.md) | 90 | **91** | **+1** | plus de sondage permanent |
+| [i18n](./I18N.md) | 87 | **88** | **+1** | « Empty message » catalogué |
+| [SEO](./SEO.md) | 79 | **78** | **−1** | `/entreprise-presentation/` sert l'accueil perso, canonical réécrit vers `/` |
+| [Accessibilité](./ACCESSIBILITY.md) | 81 | **82** | **+1** | surfaces des rôles déclarées ; `C-118` fermé, jamais débité |
+| [Mobile / DA](./MOBILE.md) | 76 | **78** | **+2** | LCP mobile (+1) ; WebKit vert de bout en bout, débit du 09-22 enfin remboursé (+1) |
+
+**940 → 960 : +23 remboursés, −3 débités.** Dix notes montent, une baisse : exactement ce que la
+règle du 2026-08-25 dit de soupçonner. Ce qui l'explique : les débits du 2026-10-15 étaient des
+défauts **nommés et datés**, et chaque remboursement ci-dessus a son run vert. Ce qui a régressé est
+noté : une alerte CodeQL neuve posée par une session de correction, et un défaut de la page
+entreprise que la correction du LCP a fait voir.
+
+### 🔴 Trouvé en chemin : la page entreprise n'a jamais été mesurée
+
+`lighthouserc.json` et `lighthouserc.mobile.json` mesurent `/entreprise-presentation/` **avec** barre
+oblique finale. À cette URL, une fois React chargé, l'application sert le **parcours perso** (relu en
+production au navigateur : `h1` et titre de l'accueil, canonical réécrit vers `https://thecosmo.app/`).
+`useLandingTrack` compare le chemin sans tolérer la barre oblique. Conséquences : un prospect qui
+arrive par cette forme d'URL voit la mauvaise page, et **tous les chiffres « entreprise » de Lighthouse
+depuis l'origine sont ceux de l'accueil perso**. Débité une fois en SEO (la page servie), une fois en
+Performance (la mesure). **Corrigé sur `main` par `9dcaf94b` pendant la passe** (`use-landing-track.ts`,
+`routes.ts`, avec tests) : ni vu en CI ni relu en production à l'écriture, donc pas remboursé ici.
+
+### Ce qu'il faut faire, dans l'ordre
+
+1. **`M-69`** (Axel) : l'échéance de 72 h est passée le 2026-10-16 vers 11 h 26 UTC. Si la
+   notification n'a pas été faite, elle reste due **maintenant**, avec les motifs du retard
+   (art. 33.1) ; si elle l'a été, consigner la date au registre privé. Puis `M-70` et `M-71`.
+2. **La barre oblique de la page entreprise** : `9dcaf94b` est sur `main` ; vérifier son run CI et la
+   production, puis relire le Lighthouse du vrai parcours entreprise.
+3. ✅ **CodeQL n° 14** : `fixed` le 2026-10-16 à 14 h 27 UTC (`eb6ee7ba`), cf. [`../faille.md`](../faille.md).
+4. **PR n° 75** (`fast-uri`) et la pile de PR Dependabot ouvertes (n° 29 à 70) : à trier.
+
+---
+
+## Mise à jour du 2026-10-15 · **passe complète : les onze audits rejoués, 953 → 940**
+
+Consigne d'Axel : « remet à jour TOUS les audits en .md ». Même méthode que les passes du 10-01 et
+du 10-02 au soir, sur les **152 commits** arrivés depuis la dernière (`63573b39` → `6847bbf3`) :
+**CI réelle** de `main`, **production** (advisors par l'API, catalogue, ledger, Edge Functions),
+**dépôt à `HEAD`**. Même règle : un angle mort ne se rembourse que sur un verdict rendu en CI, un
+défaut que corrigé et vérifié. Mesures prises dans la nuit du 2026-10-14 au 2026-10-15.
+⚠️ **`f74b0874`** (onboarding entreprise : vidéo d'accueil, assistant en constellation retiré, 29
+fichiers) est arrivé **pendant** la passe : il n'est couvert par aucune mesure ci-dessous, sauf le
+recomptage VoiceOver. Les sept gardes rouges portent sur d'autres fichiers ; le budget de bundle
+de `OrganizationPage`, lui, est à remesurer.
+
+### 🔴 Le constat qui domine : un rouge de documentation cache dix rouges de produit
+
+| Job | Dernier verdict | Mesuré le 2026-10-15 |
+|---|---|---|
+| `lint-test-build` | 🔴 depuis le 2026-10-12 | s'arrête à l'**étape 2 sur 23**, `check:docs` : `src/modules/organizations/CLAUDE.md` pèse **15 378 o** pour 14 000 (`a6562733`, rôles personnalisés). Dernier `CI` vert : `9f6595b5`, le 2026-10-11 à 15:26 UTC. **Rien de ce qui suit l'étape 2 n'a tourné en CI depuis trois jours** |
+| `e2e` | 🔴 `6847bbf3` | **1 échec, 2 instables, 239 verts**, en 39 min (27 min le 10-03). L'échec : `org-guide.spec.ts`, rouge à chaque run depuis le 10-13 : il cherche « Créer une équipe » dans un tiroir dont les catégories sont repliées depuis `c7051e19`. Test en retard sur l'écran |
+| `lighthouse` | ✅ | desktop : LCP 0,65 à 1,34 s ; **mobile : 3,26 à 3,40 s sur les 8 URLs** (5,6 à 8,4 s le 10-02). `C-116` tient en CI depuis le 2026-10-10, et n'avait été crédité nulle part |
+| `rls-integration`, `audit` | ✅ | |
+| `Visual` | 🔴 depuis le 2026-10-12 | **4 cas sur 20** : `/entreprise · Aperçu`, `/`, `/guide`, `/blog`. Différences non triées entre changement voulu et régression |
+| `CodeQL` | 🔴 du 2026-10-13 au 2026-10-14 | « Code scanning is not enabled » : le dépôt était **privé** (ci-dessous). Une alerte ouverte, `high`, sans décision |
+| `Posture` | ✅ tous les jours depuis le 2026-10-08 | `M-58` fait : advisors `11 / 82 / 2 / 1`, égaux à la référence |
+| `Edge deploy drift`, `Migration coverage`, `db-backup` (chiffré), `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Sabotages` (10-12) | ✅ | |
+| `scalability-volume` | ✅ 2026-10-03 | **premier run planifié**, vert |
+| `restore-drill` | ⛔ **désactivé à la main depuis le 2026-09-01** | le contrôle trimestriel `dump-check` (`C-86`, 2026-09-20) n'a **jamais** tourné : son premier passage, le 2026-10-05, n'a pas eu lieu. Un workflow désactivé ne rend ni vert ni rouge, il disparaît de `gh run list` |
+
+**Rejoué en local**, sur un worktree propre de `HEAD` (aucun fichier d'une autre session), étape par
+étape et code de sortie lu, tout ce que la CI n'atteint plus :
+
+| Étape | À `HEAD` | Cause, et commit d'entrée |
+|---|---|---|
+| `check:erasure`, `check:portability` | 🔴 | `org_member_roles` (mig. `219`, appliquée le 10-13) porte `user_id` sans décision d'effacement ni d'export (`a6562733`). Vue rouge en CI **une fois**, le 10-12 (`8b791715`), puis masquée |
+| Tests unitaires | 🔴 **13 échecs sur 3 762**, 12 fichiers sur 338, exit 1 | six fichiers, rejoués seuls machine libre : **69 / 69 verts** (délais de 20 s dépassés sous la charge). Restent **7 gardes rouges pour de vrai**, ci-dessous |
+| Budget de bundle | 🔴 | `OrganizationPage` **18,4 / 18,0 ko**, `TeamTaskModal` **12,3 / 12,0**. Chemin critique 303,9 ko (302,6 le 10-03), entrée 69,2 / 70,5 |
+| Lint (0 erreur), `tsc`, migrations, RLS, cycles, plancher de tests, Edge, env, études, journal légal, i18n (×4), notes déclarées, acquisition, couverture de l'outillage, build, `check:seo` | ✅ | |
+
+Les sept gardes, toutes entrées les 12 et 13 octobre, aucune vue par la CI :
+
+| Garde | Ce qu'elle voit | Entré avec | Débité dans |
+|---|---|---|---|
+| `architecture.guard` | `organizations/supabase.repository.ts` à **602** lignes | `a6562733` | Architecture |
+| `orphan-hooks.guard` | `useRemoveProjectTeam` n'est plus monté par rien | `35942a7d` | Architecture |
+| `polling.guard` (2 cas) | `team-projects/messages.hooks.ts` sonde **toutes les 20 s, en permanence** (chat de projet) | `000eeedd` | Scalabilité |
+| `error-messages.guard` | `messages.repository.ts` lance « Empty message » en dur, affiché tel quel en français | `000eeedd` | i18n |
+| `keyboard-audit-coverage` | `AssignRoleDialog`, `RoleEditorSheet` ni mesurées ni déclarées | `a6562733` | Accessibilité |
+| `loading-empty-state` | `AssignRoleDialog` affirme l'absence de rôles avant la réponse | `a6562733` | UI / UX |
+
+🔴 **C'est le constat du 2026-09-22, en plus court et en plus dense.** Une garde de documentation
+placée en tête du job a coupé l'instrument : `a6562733` a fait entrer **six** défauts en un commit
+(budget du `CLAUDE.md`, 602 lignes, effacement, portabilité, deux surfaces au clavier), et seul le
+premier était visible. Chaque garde a mordu, aucune n'a parlé. La leçon outillable : **un job qui
+s'arrête au premier rouge ne mesure que le premier rouge**, les étapes de garde pourraient toutes
+tourner (`if: always()` ou `continue-on-error` suivi d'un verdict final).
+
+### 🔴 En production : la violation `BK-1` entre enfin dans les notes
+
+`db-backup.yml` déposait chaque jour un `pg_dump` complet **en clair** en artefact d'un dépôt public,
+du 2026-08-29 au 2026-10-13 (cf. [`../faille.md`](../faille.md) § `BK-1`). Le défaut est refermé et
+vérifié : dump chiffré avant dépôt (`8c6a971d`), `db-backup` vert les 10-13 et 10-14, dumps en clair
+supprimés. Restent quatre gestes d'Axel, dont **`M-69`, la décision de notifier la CNIL, avant le
+2026-10-16 vers 11 h UTC**. `faille.md` avait noté le 10-13 que la note de sécurité n'était « pas
+recalculée » : elle l'est ici, et la note RGPD aussi.
+
+⚠️ **Le dépôt a été privé du 2026-10-13 au 2026-10-14 (21:51 UTC), puis rendu public par Axel.**
+Effets mesurés pendant l'épisode : CodeQL rouge sur quatre pushs (« Code scanning is not enabled »),
+secret scanning coupé. Les deux sont revenus ; l'alerte de secret n° 1 (connue, inerte) est la
+seule. ❌ Ne pas lire les quatre rouges CodeQL de cette fenêtre comme des alertes.
+
+`docs/DEPLOYMENT.md` § 7 portait encore, ce matin, **la phrase exacte qui a produit `BK-1`** (« les
+artefacts d'un run exigent une authentification ») : corrigée dans cette passe.
+
+### Les notes
+
+| Audit | Avant | **2026-10-15** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 84 | **82** | **−2** | `M-58` fait, `Posture` vert chaque jour sur des comptes réels (+1) ; `BK-1` : sessions et mot de passe de la base pas encore changés (`M-68`) (−2) ; alerte CodeQL `high` sans décision depuis le 10-12 (−1) |
+| [UI / UX](./UI-PATTERNS.md) | 86 | **84** | **−2** | `Visual` rouge depuis trois jours, Aperçu compris (−1) ; `AssignRoleDialog` affirme une absence avant de savoir (−1) |
+| [RGPD](./RGPD.md) | 87 | **84** | **−3** | `BK-1`, violation au sens de l'art. 4.12, décision CNIL et information des personnes ouvertes (−2) ; `org_member_roles` hors effacement déclaré et hors export (−1) |
+| [Tests / CI](./TESTING.md) | 96 | **92** | **−4** | `main` rouge depuis le 2026-10-12, 21 étapes jamais jouées (−2) ; `org-guide.spec` rouge à chaque run (−1) ; `restore-drill` désactivé, `dump-check` jamais joué (−1) |
+| [Architecture](./ARCHITECTURE.md) | 93 | **90** | **−3** | `CLAUDE.md` d'organisations au-delà de son plafond, le référentiel d'AM-1 (−1) ; 602 lignes (−1) ; hook orphelin (−1) |
+| [Performance](./PERFORMANCE.md) | 94 | **95** | **+1** | LCP mobile 3,3 s sur 8 / 8 en CI (+2 sur le −3 du 09-22) ; budget rouge sur deux cliquets (−1) |
+| [Scalabilité](./SCALABILITY.md) | 90 | **90** | 0 | premier run de charge planifié, vert (+1) ; sondage permanent du chat de projet (−1) |
+| [i18n](./I18N.md) | 88 | **87** | **−1** | « Empty message » en dur |
+| [SEO](./SEO.md) | 78 | **79** | **+1** | LCP mobile sorti de « mauvais » (le −1 du 09-22) ; SEO Lighthouse 100 sur 8 / 8, `/en/` compris |
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | **81** | **−1** | deux surfaces modales neuves ni mesurées ni déclarées |
+| [Mobile / DA](./MOBILE.md) | 75 | **76** | **+1** | LCP mobile (+1 sur le −2 du 09-22, un point retenu : 3,3 s reste au-dessus de 2,5 s) |
+
+**953 → 940 : −19 débités, +6 remboursés.** Trois notes montent, sept baissent. Trois des six
+points remboursés le sont pour **une seule** correction, `C-116`, fermée le 10-10 et jamais
+créditée. **Neuf des dix-neuf points débités sont des défauts entrés les 12 et 13 octobre**, vus
+par des gardes qui n'ont pas pu parler en CI, et deux de plus sont le prix de cette CI muette. Le
+reste : `BK-1` (4), deux instruments éteints (`restore-drill`, `Visual`), deux rouges qui, eux,
+parlent (`org-guide.spec`, CodeQL).
+
+### Ce qu'il faut faire, dans l'ordre
+
+1. **`M-68` à `M-71`** (Axel) : révoquer les sessions et changer le mot de passe de la base, puis
+   **trancher la notification CNIL avant le 2026-10-16 vers 11 h UTC**, informer les personnes,
+   ranger la phrase secrète. Seule cette ligne a une échéance légale.
+2. **Rendre la main à la CI** : faire descendre ~1,4 ko de `src/modules/organizations/CLAUDE.md`
+   (jamais relever la borne). La CI verra alors, dans cet ordre, effacement et portabilité de
+   `org_member_roles`, les sept gardes et le budget : les traiter **avant** de pousser.
+3. **`org-guide.spec`** : déplier la catégorie avant de chercher « Créer une équipe ».
+4. **`Visual`** : trier les quatre différences, régénérer seulement ce qui est voulu.
+5. **Réactiver `restore-drill.yml`** et jouer `dump-check` une fois à la main : il doit désormais
+   **déchiffrer** le dump, chemin que rien n'a parcouru hors de `db-backup` lui-même.
+6. **CodeQL n° 13** (`scripts/capture-og-images.mjs`) : décoder `&amp;` en dernier, une ligne.
+7. Quatre alertes Dependabot de **développement** (`proxy-addr` critique, `source-map-js`,
+   `@modelcontextprotocol/sdk`, `postcss-selector-parser`), ouvertes le 10-13 : à trier.
+
+---
+
 ## Mise à jour du 2026-10-03 · **`main` entièrement vert en CI, 943 → 953**
 
 Consigne d'Axel : « fais tout ce que tu peux faire avec du code ». Trois sessions y ont travaillé en
@@ -853,7 +1245,7 @@ comblée, soit reconduite avec sa date.
 | T-2 | **14 gardes sur 36 reposent sur une liste ÉCRITE À LA MAIN.** Certaines sont des **dispenses assumées** et documentées (`modal-a11y.guard`), c'est légitime. D'autres devraient être **dérivées** du schéma ou du code, et décrivent l'état du jour où elles ont été tapées : `rgpd-erasure.guard` en est le cas net | relevé par `grep` sur les 36 témoins | RGPD, Architecture, UI |
 | T-3 | **Tout ce qui n'est pas `src/` échappe à presque tout.** `scripts/**` (le code qui décide si la CI est verte), `supabase/functions/**` (le code qui déplace de l'argent) et `e2e/**` sont hors couverture ; `e2e/**` et `showcase/**` sont hors ESLint | `vitest.config.ts` : `include: ['src/**']` · `eslint.config.js:15` | Tests, Architecture, Sécurité |
 | T-4 | **Lighthouse tourne en preset DESKTOP, sur 4 URLs.** C'est la seule mesure continue de perf, d'a11y et de SEO en conditions réelles, et elle ignore le mobile, qui est le terminal du trafic visé | `lighthouserc.json` : `"preset": "desktop"`, 4 URLs contre **40** dans le sitemap (⚠️ « 45 » écrit le 09-16, **recompté 40 le 2026-09-20** sur la production et sur le build du 09-17 ; cf. [`SEO.md`](./SEO.md) AM-1) | Performance, Mobile, SEO, Accessibilité |
-| T-5 | **La CONFORMITÉ est mesurée, le RÉSULTAT presque jamais.** Le SEO note 80 avec **0 clic non marqué** depuis le 2026-08-19 ; l'UI note 85 sans savoir quel écran est ouvert. Un audit peut monter pendant que rien ne se passe | notes contre GSC et Vesk | SEO, UI / UX, Mobile |
+| T-5 | **La CONFORMITÉ est mesurée, le RÉSULTAT presque jamais.** Le SEO note 80 avec **0 clic non marqué** depuis le 2026-08-19 ; l'UI note 85 sans savoir quel écran est ouvert. Un audit peut monter pendant que rien ne se passe | notes contre GSC et la mesure interne | SEO, UI / UX, Mobile |
 | T-6 | **Deux gardes ne tournent JAMAIS toutes seules.** `scalability-volume.yml` et `restore-drill.yml` n'ont qu'un `workflow_dispatch` : la charge et l'épreuve de restauration ne sont jouées que si quelqu'un y pense | relevé sur les 10 workflows | Scalabilité, Sécurité |
 | T-7 | **Les advisors Supabase ne sont lus qu'à la main.** Dans `ci.yml`, le mot « advisor » désigne `npm audit`, pas les advisors de la base | aucun workflow n'interroge l'API Management | Sécurité, RGPD |
 | T-8 | ✅ **COMBLÉ le 2026-09-16**, `npm run check:deploy` · job `Deploy SHA drift`, horaire. Était : **rien ne comparait le commit déployé sur Vercel à `main`.** C'est le défaut C-35 des Edge Functions, **côté front**, et il n'avait jamais été nommé. `check:edge` compare le code déployé des fonctions au dépôt ; **aucun équivalent n'existe pour l'application**. `uptime.yml` fait un `curl` et lit un **code HTTP**, jamais ce qui est servi | Cycle complet observé : `egal`, puis `ancetre` après un push, puis `egal` une fois Vercel passé. Run CI **`35075874315`** vert. Témoin à 17 cas, **vu rouge sur six sabotages** | Déploiement, Architecture, Sécurité |

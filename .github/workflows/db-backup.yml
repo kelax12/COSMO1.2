@@ -27,15 +27,26 @@
 # contenu des tâches. Trois conséquences, toutes appliquées ci-dessous :
 #   • rétention courte (30 jours), qui donne trente points de restauration
 #     glissants depuis le passage en quotidien ;
-#   • le dépôt est PUBLIC, mais les artefacts d'un run ne le sont pas — ils
-#     exigent une authentification. Ne JAMAIS committer le dump ;
-#   • à télécharger puis à conserver ailleurs (disque chiffré) si on veut une
-#     vraie copie longue durée. GitHub n'est pas un coffre.
+#   • 🔴 LE DUMP EST CHIFFRÉ AVANT TOUT DÉPÔT (2026-10-13). Le dépôt est PUBLIC,
+#     et un artefact d'un dépôt public se télécharge depuis N'IMPORTE QUEL
+#     compte GitHub connecté. Cette ligne affirmait l'inverse (« les artefacts
+#     ne le sont pas »), et 29 dumps EN CLAIR sont restés exposés du 2026-08-29
+#     au 2026-10-13 (violation de données, docs/RGPD-VIOLATION.md, registre).
+#     Seul `*.dump.gpg` (AES-256, phrase secrète `BACKUP_PASSPHRASE`) part en
+#     artefact ; le fichier en clair ne quitte jamais le runner ;
+#   • ❌ JAMAIS de repli « en clair » si la phrase secrète manque : le job
+#     ÉCHOUE. Une sauvegarde absente se voit ; une sauvegarde publique, non ;
+#   • Ne JAMAIS committer le dump. GitHub n'est pas un coffre.
 #
-# MISE EN SERVICE : poser le secret `SUPABASE_DB_URL` (Dashboard → Settings →
-# Database → Connection string, en mode « session »). Sans lui le job
-# s'arrête proprement en avertissement, il n'échoue pas — une CI rouge en
+# MISE EN SERVICE : poser les secrets `SUPABASE_DB_URL` (Dashboard → Settings →
+# Database → Connection string, en mode « session ») et `BACKUP_PASSPHRASE`
+# (copie hors dépôt chez Axel, sans laquelle aucun dump ne se relit). Sans
+# `SUPABASE_DB_URL` le job s'arrête en avertissement — une CI rouge en
 # permanence finit ignorée, c'est la règle déjà écrite pour `renewal-notice`.
+# Sans `BACKUP_PASSPHRASE`, il ÉCHOUE : c'est la seule absence qui exposerait.
+#
+# RELIRE UN DUMP À LA MAIN :
+#   gpg --batch --passphrase-file <fichier> -o cosmo.dump -d cosmo-AAAA-MM-JJ.dump.gpg
 # ══════════════════════════════════════════════════════════════════
 name: db-backup
 
@@ -57,7 +68,14 @@ jobs:
         id: guard
         env:
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
         run: |
+          # 🔴 Echec FERME : sans phrase secrete, aucun export du tout. Le
+          # depot est public, un dump non chiffre serait telechargeable.
+          if [ -n "$DB_URL" ] && [ "${#PASSPHRASE}" -lt 32 ]; then
+            echo "::error::BACKUP_PASSPHRASE absente ou trop courte : export refuse (le depot est public, un dump en clair serait expose)."
+            exit 1
+          fi
           if [ -z "$DB_URL" ]; then
             echo "::warning::SUPABASE_DB_URL absent — aucun export produit. Cf. l'en-tete de ce workflow."
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -179,11 +197,40 @@ jobs:
           # `pg_restore --list` relit l'en-tete : un fichier tronque echoue ici.
           /usr/lib/postgresql/17/bin/pg_restore --list "$NOM" | head -5
 
-      - name: Deposer l'artefact
+      # 🔴 Chiffrement AVANT le depot, puis preuve que le fichier se dechiffre
+      # a l'identique (sha256). Un chiffrement qu'on ne sait pas relire est une
+      # sauvegarde perdue ; on le decouvre ici, pas le jour de la restauration.
+      # La phrase passe par un fichier temporaire (mode 600), jamais en
+      # argument : elle apparaitrait dans la liste des process.
+      - name: Chiffrer le dump
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          umask 077
+          PF=$(mktemp)
+          printf '%s' "$PASSPHRASE" > "$PF"
+          gpg --batch --yes --pinentry-mode loopback --passphrase-file "$PF" \
+              --symmetric --cipher-algo AES256 -o "$NOM.gpg" "$NOM"
+          gpg --batch --yes --pinentry-mode loopback --passphrase-file "$PF" \
+              -o verif.dump -d "$NOM.gpg"
+          rm -f "$PF"
+          A=$(sha256sum "$NOM" | cut -d' ' -f1)
+          B=$(sha256sum verif.dump | cut -d' ' -f1)
+          [ "$A" = "$B" ] || { echo "::error::Le dump chiffre ne se relit pas a l'identique."; exit 1; }
+          # Le clair ne doit exister nulle part au moment du depot.
+          rm -f "$NOM" verif.dump
+          [ ! -e "$NOM" ] || { echo "::error::Le dump en clair est encore present."; exit 1; }
+          head -c 1 "$NOM.gpg" | od -An -tx1
+          echo "CHIFFRE=$NOM.gpg" >> "$GITHUB_ENV"
+          ls -lh "$NOM.gpg"
+
+      - name: Deposer l'artefact (chiffre uniquement)
         if: steps.guard.outputs.ready == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: db-dump
-          path: ${{ env.NOM }}
+          path: ${{ env.CHIFFRE }}
           retention-days: 30
           if-no-files-found: error

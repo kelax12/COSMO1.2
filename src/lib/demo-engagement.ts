@@ -16,9 +16,16 @@
 // balayée par clearDemoStorage() : une nouvelle session démo est un nouveau
 // visiteur, son engagement repart de zéro. C'est l'inverse du flag de rejet
 // (cosmo_demo_bridge_snooze), lui préservé — voir PRESERVE_KEYS.
+//
+// 🔴 SOUS CONSENTEMENT depuis le 2026-10-13 (loi I&L art. 82, qui vise aussi
+// une écriture purement locale). Ces compteurs servent à choisir le moment
+// d'une sollicitation d'inscription : ce n'est pas strictement nécessaire à la
+// démo. Sans « Accepter », ils vivent EN MÉMOIRE (`memory`) : même seuils,
+// remis à zéro au rechargement, rien d'écrit sur l'appareil.
 // ═══════════════════════════════════════════════════════════════════
 
 import { appModeStore } from '@/lib/app-mode.store';
+import { hasConsented } from '@/lib/cookie-consent';
 
 const CREATIONS_KEY = 'cosmo_demo_creations';
 const STARTED_AT_KEY = 'cosmo_demo_started_at';
@@ -27,9 +34,37 @@ const STARTED_AT_KEY = 'cosmo_demo_started_at';
 export const CREATIONS_THRESHOLD = 3;
 export const DURATION_THRESHOLD_MS = 90 * 1000;
 
+/** Repli sans consentement : jamais écrit sur l'appareil. */
+const memory = new Map<string, string>();
+
+function getItem(key: string): string | null {
+  if (!hasConsented()) return memory.get(key) ?? null;
+  return localStorage.getItem(key);
+}
+
+function setItem(key: string, value: string): void {
+  if (!hasConsented()) {
+    memory.set(key, value);
+    return;
+  }
+  localStorage.setItem(key, value);
+}
+
+/** Nouvelle démo = nouveau visiteur, comme `clearDemoStorage()` pour les clés. */
+export function resetDemoEngagementMemory(): void {
+  memory.clear();
+}
+
+/** Refus ou retrait du consentement : les compteurs déjà écrits quittent l'appareil. */
+export function clearDemoEngagementTraces(storage: Pick<Storage, 'removeItem'>): void {
+  for (const key of [CREATIONS_KEY, STARTED_AT_KEY]) {
+    try { storage.removeItem(key); } catch { /* stockage indisponible */ }
+  }
+}
+
 function readInt(key: string): number {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = getItem(key);
     if (!raw) return 0;
     const value = Number.parseInt(raw, 10);
     return Number.isFinite(value) && value >= 0 ? value : 0;
@@ -44,8 +79,8 @@ function readInt(key: string): number {
  */
 export function startDemoSession(): void {
   try {
-    if (!localStorage.getItem(STARTED_AT_KEY)) {
-      localStorage.setItem(STARTED_AT_KEY, String(Date.now()));
+    if (!getItem(STARTED_AT_KEY)) {
+      setItem(STARTED_AT_KEY, String(Date.now()));
     }
   } catch {
     /* localStorage indisponible — on retombera sur le seuil de créations. */
@@ -73,7 +108,7 @@ export function demoCreationCount(): number {
  */
 export function recordDemoCreation(): void {
   try {
-    localStorage.setItem(CREATIONS_KEY, String(demoCreationCount() + 1));
+    setItem(CREATIONS_KEY, String(demoCreationCount() + 1));
   } catch {
     /* localStorage indisponible — le seuil de durée reste opérant. */
   }

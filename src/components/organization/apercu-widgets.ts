@@ -1,0 +1,226 @@
+import { safeGetItem, safeParse, safeSetItem } from '@/lib/safe-json';
+
+/**
+ * Aperçu en widgets (2026-10-19) : chaque bloc de l'Aperçu devient un widget
+ * que la personne retire, ajoute, redimensionne et déplace.
+ *
+ * Trois formats, posés sur une grille de 6 colonnes (desktop) :
+ * petit = 1/3 de largeur, moyen = 1/2, grand = toute la largeur. La hauteur
+ * suit le contenu. Sur mobile, tout passe en pleine largeur.
+ *
+ * ⚠️ La disposition vit dans le navigateur (une par entreprise et par
+ * personne) : c'est une préférence d'affichage, pas une donnée. La perdre
+ * rend la disposition par défaut, jamais un écran vide.
+ */
+
+export type WidgetSize = 'small' | 'medium' | 'large';
+
+export const WIDGET_SIZES: readonly WidgetSize[] = ['small', 'medium', 'large'];
+
+export type WidgetId =
+  | 'kpi'
+  | 'waiting'
+  | 'tasks'
+  | 'load'
+  | 'agenda'
+  | 'krs'
+  | 'projects'
+  | 'waitingOn'
+  | 'activity'
+  | 'orgEvents'
+  | 'deadlines'
+  | 'mentions'
+  | 'blockedByMe'
+  | 'note'
+  | 'teamLoad'
+  | 'teamOverdue'
+  | 'orgHealth'
+  | 'riskProjects'
+  | 'companyOkrs'
+  | 'unassigned'
+  | 'invitations';
+
+export interface WidgetDef {
+  id: WidgetId;
+  /** Formats proposés, dans l'ordre petit → grand. */
+  sizes: readonly WidgetSize[];
+}
+
+/** Le catalogue. L'ordre est celui de la page « Ajouter un widget ». */
+export const WIDGET_DEFS: readonly WidgetDef[] = [
+  { id: 'kpi', sizes: ['small', 'medium', 'large'] },
+  { id: 'waiting', sizes: ['small', 'medium', 'large'] },
+  { id: 'tasks', sizes: ['small', 'medium', 'large'] },
+  { id: 'load', sizes: ['small', 'medium'] },
+  { id: 'agenda', sizes: ['small', 'medium', 'large'] },
+  { id: 'krs', sizes: ['small', 'medium', 'large'] },
+  { id: 'projects', sizes: ['small', 'medium', 'large'] },
+  { id: 'waitingOn', sizes: ['small', 'medium', 'large'] },
+  { id: 'activity', sizes: ['small', 'medium', 'large'] },
+  { id: 'orgEvents', sizes: ['small', 'medium', 'large'] },
+  // Nouveaux (2026-10-19) : hors disposition par défaut, à ajouter depuis la page.
+  { id: 'deadlines', sizes: ['small', 'medium', 'large'] },
+  { id: 'mentions', sizes: ['small', 'medium', 'large'] },
+  { id: 'blockedByMe', sizes: ['small', 'medium', 'large'] },
+  { id: 'note', sizes: ['small', 'medium', 'large'] },
+  // Chef d'équipe et administrateur (2026-10-19), posés par les modèles.
+  { id: 'teamLoad', sizes: ['small', 'medium', 'large'] },
+  { id: 'teamOverdue', sizes: ['small', 'medium', 'large'] },
+  { id: 'orgHealth', sizes: ['small', 'medium', 'large'] },
+  { id: 'riskProjects', sizes: ['small', 'medium', 'large'] },
+  { id: 'companyOkrs', sizes: ['small', 'medium', 'large'] },
+  { id: 'unassigned', sizes: ['small', 'medium', 'large'] },
+  { id: 'invitations', sizes: ['small', 'medium', 'large'] },
+];
+
+const DEF_BY_ID = new Map(WIDGET_DEFS.map((d) => [d.id, d]));
+
+export interface PlacedWidget {
+  id: WidgetId;
+  size: WidgetSize;
+}
+
+/** Reprend l'Aperçu d'avant les widgets, dans le même ordre de lecture. */
+export const DEFAULT_LAYOUT: readonly PlacedWidget[] = [
+  { id: 'kpi', size: 'large' },
+  { id: 'waiting', size: 'medium' },
+  { id: 'load', size: 'medium' },
+  { id: 'tasks', size: 'medium' },
+  { id: 'agenda', size: 'medium' },
+  { id: 'krs', size: 'medium' },
+  { id: 'projects', size: 'medium' },
+  { id: 'waitingOn', size: 'small' },
+  { id: 'activity', size: 'small' },
+  { id: 'orgEvents', size: 'small' },
+];
+
+export const widgetDef = (id: WidgetId): WidgetDef | undefined => DEF_BY_ID.get(id);
+
+export const allowsSize = (id: WidgetId, size: WidgetSize): boolean =>
+  !!DEF_BY_ID.get(id)?.sizes.includes(size);
+
+/**
+ * Catalogue générique (2026-10-21) : la même grille sert l'Aperçu entreprise
+ * et le tableau de bord perso. Chaque écran fournit SES widgets ; les
+ * opérations de disposition ne dépendent que de la liste des formats permis.
+ */
+export interface CatalogDef<Id extends string = string> {
+  id: Id;
+  sizes: readonly WidgetSize[];
+  /**
+   * Widget posable PLUSIEURS fois (2026-10-21, OKR du tableau de bord perso).
+   * Chaque exemplaire porte l'id `<base>~<suffixe>` ; le premier peut garder
+   * l'id nu.
+   */
+  multi?: boolean;
+  /** Section de la fenêtre d'ajout, quand le catalogue en déclare (`WidgetCatalog.groups`). */
+  group?: string;
+}
+
+/** `okrs~k3x9` → `okrs`. Un id sans `~` est sa propre base. */
+export const baseWidgetId = (id: string): string => id.split('~')[0];
+
+export const findDef = <Id extends string>(defs: readonly CatalogDef<Id>[], id: string): CatalogDef<Id> | undefined =>
+  defs.find((d) => d.id === baseWidgetId(id));
+
+export interface PlacedOf<Id extends string = string> {
+  id: Id;
+  size: WidgetSize;
+}
+
+const allows = <Id extends string>(defs: readonly CatalogDef<Id>[], id: Id, size: WidgetSize) =>
+  !!findDef(defs, id)?.sizes.includes(size);
+
+/**
+ * Relit une disposition venue du stockage : tout ce qui n'est pas reconnu
+ * (widget retiré du catalogue, format qu'il n'accepte plus, doublon) tombe
+ * sans bruit. `null` = rien d'exploitable, on prendra le défaut.
+ */
+export function sanitizeLayoutIn<Id extends string>(
+  defs: readonly CatalogDef<Id>[],
+  raw: unknown,
+  rename: (id: string) => string = (id) => id,
+): PlacedOf<Id>[] | null {
+  if (!Array.isArray(raw)) return null;
+  const seen = new Set<Id>();
+  const out: PlacedOf<Id>[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const { id: rawId, size } = item as { id?: unknown; size?: unknown };
+    if (typeof rawId !== 'string' || typeof size !== 'string') continue;
+    const renamed = rename(rawId);
+    const def = findDef(defs, renamed);
+    // Un exemplaire d'un widget multiple garde son id complet.
+    const id = (def?.multi ? renamed : def?.id) as Id | undefined;
+    if (!def || !id || seen.has(id) || !def.sizes.includes(size as WidgetSize)) continue;
+    seen.add(id);
+    out.push({ id, size: size as WidgetSize });
+  }
+  return out;
+}
+
+export function sanitizeLayout(raw: unknown): PlacedWidget[] | null {
+  // « OKR des équipes » a fusionné dans « OKR » (2026-10-20).
+  return sanitizeLayoutIn(WIDGET_DEFS, raw, (id) => (id === 'teamOkrs' ? 'companyOkrs' : id));
+}
+
+export const removeWidget = <Id extends string>(layout: readonly PlacedOf<Id>[], id: Id): PlacedOf<Id>[] =>
+  layout.filter((w) => w.id !== id);
+
+export function resizeWidgetIn<Id extends string>(
+  defs: readonly CatalogDef<Id>[], layout: readonly PlacedOf<Id>[], id: Id, size: WidgetSize,
+): PlacedOf<Id>[] {
+  if (!allows(defs, id, size)) return [...layout];
+  return layout.map((w) => (w.id === id ? { ...w, size } : w));
+}
+
+/** Ajoute en fin d'aperçu ; si le widget y est déjà, change seulement son format. */
+export function addWidgetIn<Id extends string>(
+  defs: readonly CatalogDef<Id>[], layout: readonly PlacedOf<Id>[], id: Id, size: WidgetSize,
+): PlacedOf<Id>[] {
+  if (!allows(defs, id, size)) return [...layout];
+  if (findDef(defs, id)?.multi) {
+    // Toujours un NOUVEL exemplaire : l'id nu s'il est libre, sinon suffixé.
+    const free = !layout.some((w) => w.id === id);
+    const instance = (free ? id : `${baseWidgetId(id)}~${Date.now().toString(36)}`) as Id;
+    return [...layout, { id: instance, size }];
+  }
+  if (layout.some((w) => w.id === id)) return resizeWidgetIn(defs, layout, id, size);
+  return [...layout, { id, size }];
+}
+
+export const addWidget = (layout: readonly PlacedWidget[], id: WidgetId, size: WidgetSize): PlacedWidget[] =>
+  addWidgetIn(WIDGET_DEFS, layout, id, size);
+
+export const resizeWidget = (layout: readonly PlacedWidget[], id: WidgetId, size: WidgetSize): PlacedWidget[] =>
+  resizeWidgetIn(WIDGET_DEFS, layout, id, size);
+
+/** Déplace `id` à l'index `to` (borné). */
+export function moveWidget<Id extends string>(layout: readonly PlacedOf<Id>[], id: Id, to: number): PlacedOf<Id>[] {
+  const from = layout.findIndex((w) => w.id === id);
+  if (from < 0) return [...layout];
+  const next = [...layout];
+  const [item] = next.splice(from, 1);
+  next.splice(Math.max(0, Math.min(to, next.length)), 0, item);
+  return next;
+}
+
+const storageKey = (orgId: string, userId: string) => `cosmo_apercu_layout_v1:${orgId}:${userId}`;
+
+/** `fallback` : la disposition d'arrivée (le modèle du rôle) quand rien n'est enregistré. */
+export function loadLayout(orgId: string, userId: string, fallback: readonly PlacedWidget[] = DEFAULT_LAYOUT): PlacedWidget[] {
+  const raw = safeGetItem(storageKey(orgId, userId));
+  const parsed = raw ? sanitizeLayout(safeParse<unknown>(raw)) : null;
+  return parsed ?? [...fallback];
+}
+
+export function saveLayout(orgId: string, userId: string, layout: readonly PlacedWidget[]): void {
+  safeSetItem(storageKey(orgId, userId), JSON.stringify(layout));
+}
+
+/** Largeur dans la grille de 6 colonnes (mobile : pleine largeur). */
+export const SIZE_SPAN_CLASS: Record<WidgetSize, string> = {
+  small: 'md:col-span-3 lg:col-span-2',
+  medium: 'md:col-span-3 lg:col-span-3',
+  large: 'md:col-span-6 lg:col-span-6',
+};

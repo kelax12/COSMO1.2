@@ -198,6 +198,14 @@ prod depuis le 2026-08-13 et **aucun compte n'a été créé depuis**. La machin
 jamais validée. La whitelist rejette silencieusement ce qui ne matche pas `^[a-z0-9_-]+$` : un
 `?ref=TikTok` (majuscules) ou `?ref=tik tok` ne serait **pas** stocké.
 
+> 🔴 **2026-10-10 · une deuxième explication, mesurée, et corrigée.** 35 comptes, **0** source, et
+> **6 des 7** inscriptions des 30 derniers jours passent par **Google**. Or `signInWithOAuth` ne
+> transporte aucune metadata : une inscription Google ne pouvait JAMAIS porter sa source, quelle
+> que soit l'URL d'arrivée. Corrigé par la RPC `claim_acquisition_source` (mig. `217`, ledger
+> `20261010121835`, preuve `supabase/proofs/217.proof.sql` 8/8, témoin rouge) que le client appelle
+> à l'ouverture de session d'un compte de moins d'une heure (`src/modules/auth/acquisition-claim.ts`).
+> Le test de bout en bout se joue donc **deux fois** : par e-mail ET par Google.
+
 ## 4. 🟠 La boucle de partage ne produit rien
 
 **15 liens de partage créés, 2 tâches effectivement partagées.** La collaboration est gratuite par

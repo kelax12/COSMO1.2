@@ -14,6 +14,7 @@ import VisibilityPill from './VisibilityPill';
 import { PermissionGate } from './permission-hints';
 import TeamColorDot from './TeamColorDot';
 import { useT } from '@/i18n/useT';
+import { useLocale } from '@/i18n/store';
 import { effectiveKrRatio, krTaskProgress, krWeight, okrRatioPercent } from './okr-execution.helpers';
 import { ProjectHealthBadge } from './ProjectHealthSection';
 
@@ -26,12 +27,15 @@ interface TeamKRRowProps {
   /** Change l'état du KR : pose un point d'étape à la valeur courante. */
   onSetHealth: (status: ProjectHealth, value: number) => void;
   personOf?: (userId: string) => OrgMember | undefined;
+  /** Mobile (253) : toucher la ligne ouvre la fiche, où la valeur se met à jour. */
+  onOpen?: () => void;
 }
 
-const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf }: TeamKRRowProps) => {
+const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf, onOpen }: TeamKRRowProps) => {
   const { t: tOrgAdmin } = useT('orgAdmin');
   const { t: pf } = useT('portfolio');
   const [value, setValue] = useState<string>(String(kr.currentValue));
+  const locale = useLocale();
 
   // Resynchronise si la valeur serveur change (mutation d'un autre client / refetch).
   useEffect(() => {
@@ -57,9 +61,9 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf }: Te
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0" onClick={onOpen ? () => { if (window.matchMedia('(max-width: 767px)').matches) onOpen(); } : undefined}>
         <div className="flex items-center gap-2">
-          <p className={`text-sm truncate ${kr.completed ? 'line-through text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-primary))]'}`}>
+          <p className={`text-sm md:truncate max-md:min-w-0 ${kr.completed ? 'line-through text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-primary))]'}`}>
             {kr.title}
           </p>
           {krWeight(kr) !== 1 && (
@@ -86,32 +90,38 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf }: Te
               </span>
             );
           })()}
-          <span className="ml-auto text-xs font-mono text-[rgb(var(--color-text-muted))] shrink-0">
+          <span data-guide-id="okr-kr-progress" className="ml-auto text-xs max-md:font-sans font-mono tabular-nums text-[rgb(var(--color-text-muted))] shrink-0">
             {measured && taskProgress
               ? pf('krExec.tasksShort', { done: taskProgress.done, total: taskProgress.total })
-              : `${liveValue}/${kr.targetValue}${kr.unit ? ` ${kr.unit}` : ''}`}
+              : `${liveValue.toLocaleString(locale)}/${kr.targetValue.toLocaleString(locale)}${kr.unit ? ` ${kr.unit}` : ''}`}
           </span>
         </div>
         <div className="mt-2 h-2 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${done ? 'bg-green-500' : 'bg-[rgb(var(--color-accent-solid))]'}`}
+            className={`h-full rounded-full transition-all ${done ? 'max-md:bg-[rgb(var(--color-accent-solid))] bg-green-500' : 'bg-[rgb(var(--color-accent-solid))]'}`}
             style={{ width: `${pct}%` }}
           />
         </div>
+        {/* Maquette 260 : l'atteinte s'écrit, elle ne tient plus à un vert. */}
+        {done && <p className="md:hidden mt-1 text-caption font-semibold text-[rgb(var(--color-accent))]">{pf('okrCard.reached')}</p>}
       </div>
+      {/* Maquette 253 : sur mobile la valeur se met à jour dans la fiche. */}
       {!measured && (
         <input
           type="number"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onBlur={commit}
+          data-guide-id="okr-kr-value"
           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
           aria-label={tOrgAdmin('okrTab.currentValueAria', { title: kr.title })}
-          className="w-16 h-8 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+          className="max-md:hidden w-16 h-8 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500/40"
         />
       )}
       {/* Menu d'état, même vocabulaire que le filtre « État » : changer l'état
           pose un point d'étape à la valeur courante ; le détail reste à un clic. */}
+      {/* Maquette 261 : plus d'icône « activité » par ligne sur mobile. */}
+      <span className="max-md:hidden contents">
       <HealthStateMenu
         health={kr.health}
         done={done}
@@ -119,6 +129,7 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf }: Te
         onMarkDone={measured ? undefined : () => onCommit(kr.targetValue)}
         ariaLabel={pf('krExec.openAria', { title: kr.title })}
       />
+      </span>
     </div>
   );
 };
@@ -166,32 +177,35 @@ const TeamOKRCard = ({
           <div className="flex flex-wrap items-center gap-2">
             {category && (
               <span
-                className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide"
+                className="inline-flex max-md:w-full items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded md:uppercase md:tracking-wide max-md:!bg-transparent max-md:!px-0"
                 style={{ backgroundColor: `${category.color}1a`, color: category.color }}
               >
                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: category.color }} aria-hidden="true" />
                 {category.name}
               </span>
             )}
-            <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">{okr.title}</h3>
+            <h3 className="text-base font-bold text-[rgb(var(--color-text-primary))] md:truncate">
+              {/* Maquette 252 : sur mobile, pas de crayon au repos, le titre ouvre la fiche. */}
+              <button type="button" onClick={editDeniedReason ? undefined : onEdit} className="text-left md:pointer-events-none">{okr.title}</button>
+            </h3>
           </div>
           {okr.description && (
             <p className="text-sm text-[rgb(var(--color-text-muted))] mt-1">{okr.description}</p>
           )}
           <div className="flex flex-wrap items-center gap-1.5 mt-3">
             {okr.teamIds.length === 0 && (okr.audience ?? 'org') === 'org' ? (
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))]">
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 max-md:px-0 max-md:py-0 max-md:border-0 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))]">
                 <Building2 size={13} aria-hidden="true" /> {t('common.orgWideBadge')}
               </span>
             ) : (
               okr.teamIds.map((tid) => (
-                <span key={tid} className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
+                <span key={tid} className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 max-md:px-0 max-md:py-0 max-md:bg-transparent rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
                   <TeamColorDot color={teamColor(tid)} size={8} /> {teamName(tid)}
                 </span>
               ))
             )}
             {/* Qui voit cet objectif, et pourquoi (M12). */}
-            <VisibilityPill orgId={okr.orgId} teamIds={okr.teamIds} closed={(okr.audience ?? 'org') !== 'org'} namedIds={okr.memberIds} size="md" />
+            <span className="md:contents max-md:w-full max-md:[&>*]:!max-w-none max-md:[&>*]:!border-0 max-md:[&>*]:!bg-transparent max-md:[&>*]:!px-0"><VisibilityPill orgId={okr.orgId} teamIds={okr.teamIds} closed={(okr.audience ?? 'org') !== 'org'} namedIds={okr.memberIds} size="md" /></span>
             {parent && (
               <button
                 type="button"
@@ -209,7 +223,7 @@ const TeamOKRCard = ({
           </div>
         </div>
         <div className="text-right shrink-0">
-          <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{avg}%</span>
+          <span className="text-lg max-md:text-base tabular-nums font-bold text-[rgb(var(--color-accent))]">{avg}%</span>
         </div>
         {/* Toujours présents : grisés avec leur raison plutôt que masqués
             (cohérence globale, « droits »). */}
@@ -219,7 +233,7 @@ const TeamOKRCard = ({
                 type="button"
                 onClick={onEdit}
                 aria-label={t('common.editOkrAria', { title: okr.title })}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:bg-[rgb(var(--color-accent-solid-hover))]/10 transition-colors"
+                className="max-md:hidden w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:bg-[rgb(var(--color-accent-solid-hover))]/10 transition-colors"
               >
                 <Pencil size={15} aria-hidden="true" />
               </button>
@@ -229,7 +243,7 @@ const TeamOKRCard = ({
                 type="button"
                 onClick={onDelete}
                 aria-label={t('common.deleteOkrAria', { title: okr.title })}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                className="max-md:hidden w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 transition-colors"
               >
                 <Trash2 size={15} aria-hidden="true" />
               </button>
@@ -252,6 +266,7 @@ const TeamOKRCard = ({
               onCommit={(v) => onCommitKR(kr, v)}
               onSetHealth={(status, value) => onSetKRHealth(kr, status, value)}
               personOf={personOf}
+              onOpen={editDeniedReason ? undefined : onEdit}
             />
           ))}
         </div>

@@ -39,6 +39,16 @@ export interface Task {
   collaboratorValidations?: Record<string, boolean>;
   sharedBy?: string;
   userId?: string;
+  /**
+   * Statut (mig. 214) : colonne du Tableau. Tenu d'accord avec `completed` par
+   * le trigger `sync_task_status`, et par `applyStatusSync` en démo et en
+   * optimiste. `completed` reste le champ canonique de « terminée » (B6) :
+   * `status === 'done'` en est le reflet, jamais une seconde vérité.
+   * Absent sur une ligne lue avant la mig. 214 : `effectiveStatus()`.
+   */
+  status?: TaskStatus;
+  /** État déclaré (mig. 214), même vocabulaire que les tâches d'équipe. `null` = aucun. */
+  health?: TaskHealth | null;
 }
 
 /**
@@ -55,9 +65,18 @@ export type CreateTaskInput = Omit<Task, 'id' | 'createdAt'>;
 
 export type UpdateTaskInput = Partial<Omit<Task, 'id' | 'createdAt'>>;
 
-// Derived bucket type for grouping. The canonical model stores a boolean
-// `completed`; status is computed from it (faille B6).
-export type TaskStatus = 'todo' | 'completed';
+/**
+ * Statut d'une tâche perso (mig. 214). Quatre valeurs et non cinq : `review`,
+ * qui existe en entreprise (mig. 091), est retiré exprès (décision d'Axel,
+ * 2026-10-08) : une relecture n'a pas de sens pour une personne seule.
+ *
+ * Remplace l'ancien type dérivé `'todo' | 'completed'` (B6), qui n'avait
+ * aucun lecteur.
+ */
+export type TaskStatus = 'todo' | 'in_progress' | 'blocked' | 'done';
+
+/** État déclaré, vocabulaire partagé avec `team_tasks.health` (mig. 204). */
+export type TaskHealth = 'on_track' | 'at_risk' | 'off_track';
 
 // Filter types for queries
 export interface TaskFilters {

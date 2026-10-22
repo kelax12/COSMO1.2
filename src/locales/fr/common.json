@@ -1,4 +1,5 @@
 {
+  "noCategory": "Sans catégorie",
   "listActions": {
     "removeDefault": "Retirer des favoris",
     "setDefault": "Épingler par défaut"
@@ -10,6 +11,9 @@
     "reloadNotice": "La page est rechargée pour appliquer la langue partout, dates et formats de nombres compris."
   },
   "nav": {
+    "demoCreateAccount": "Mode démo · créer un compte",
+    "objectivesAria": "Objectifs (OKR)",
+    "objectives": "Objectifs",
     "dashboard": "Accueil",
     "tasks": "Tâches",
     "agenda": "Agenda",
@@ -20,6 +24,7 @@
     "premium": "Premium",
     "settings": "Paramètres",
     "admin": "Admin",
+    "persoGuide": "Ouvrir le guide",
     "more": "Plus",
     "moreOptions": "Plus d'options",
     "sectionOther": "AUTRE",
@@ -87,6 +92,11 @@
     "refuse": "Refuser"
   },
   "auth": {
+    "legalConsentTermsShort": "CGU",
+    "legalConsentShort": "En créant un compte, vous acceptez les {{terms}} et avez lu la {{privacy}}.",
+    "legalConsentLogin": "Nouveau sur Cosmo ? Continuer avec Google crée votre compte : vous acceptez alors les {{terms}} et reconnaissez avoir pris connaissance de la {{privacy}}.",
+    "createAccountTitle": "Créer un compte",
+    "signInTitle": "Connexion",
     "modalAria": "Connexion ou inscription",
     "loginSubtitle": "Connectez-vous à votre compte",
     "registerSubtitle": "Créez votre compte gratuitement",
@@ -166,9 +176,9 @@
     "banner": "Bannière cookies",
     "title": "Cookies",
     "noTracking": "Aucune publicité, aucun profil",
-    "body": "Cosmo mesure la fréquentation de ses pages publiques. Si vous acceptez, un identifiant aléatoire est déposé sur votre appareil pour relier les pages d'une même visite.",
-    "ifYouRefuse": "Si vous refusez, seuls les éléments strictement nécessaires au service sont utilisés (session, préférences).",
-    "learnMore": "En savoir plus",
+    "body": "Cosmo mesure la fréquentation de ses pages publiques et l'origine de ses inscriptions. Si vous acceptez, un identifiant aléatoire est déposé sur votre appareil pour relier les pages d'une même visite, et le canal qui vous a amené (lien de campagne, démo) est rattaché à votre compte si vous en créez un.",
+    "ifYouRefuse": "Si vous refusez, rien de tout cela n'est déposé ni transmis : seuls les éléments strictement nécessaires au service sont utilisés (session, préférences).",
+    "learnMore": "Lire notre politique de confidentialité",
     "decline": "Refuser",
     "accept": "Accepter",
     "manage": "Gérer les cookies"
@@ -203,6 +213,7 @@
     "hide": "Masquer la bannière démo"
   },
   "demoBridge": {
+    "short": "Démo : rien n'est gardé",
     "aria": "Créer un compte COSMO",
     "title": "Gardez votre organisation",
     "text": "Vous venez de vous construire un vrai système. Créez votre compte pour l'avoir sur tous vos appareils, c'est gratuit.",
@@ -241,6 +252,7 @@
   },
   "tutorial": {
     "skip": "Passer le tutoriel",
+    "skipShort": "Passer",
     "done": "Terminé",
     "next": "Suivant",
     "previous": "← Précédent"

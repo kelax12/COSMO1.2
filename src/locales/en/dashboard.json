@@ -92,7 +92,8 @@
       "confirm": "Delete"
     },
     "collaboratorsTitle": "Collaborators",
-    "deleteTitle": "Delete"
+    "deleteTitle": "Delete",
+    "bookmark": "Bookmark"
   },
   "collaborative": {
     "shared_one": "{{count}} shared task",
@@ -113,16 +114,17 @@
     "progress": "{{done}}/{{total}} done • {{duration}}",
     "create": "+ New habit",
     "empty": "No habits for today",
-    "minutes": "{{count}} min",
     "streak_one": "{{count}} day",
     "streak_other": "{{count}} days",
+    "doneCount_one": "{{count}} done",
+    "doneCount_other": "{{count}} done",
     "showLess": "Show less",
     "showMore_one": "Show more ({{count}} left)",
     "showMore_other": "Show more ({{count}} left)"
   },
   "today": {
     "loading": "Loading…",
-    "empty": "Nothing due today, neither personal nor team.",
+    "empty": "Nothing due today, personal or team.",
     "summary_one": "{{count}} task today",
     "summary_other": "{{count}} tasks today",
     "overdue_one": "{{count}} overdue",
@@ -132,7 +134,13 @@
     "completedToast": "“{{name}}” completed",
     "sourcePersonal": "Personal",
     "sourceTeam": "Team",
-    "noCategory": "No category"
+    "overdueBanner_one": "{{count}} overdue task",
+    "overdueBanner_other": "{{count}} overdue tasks",
+    "replanAll": "Move all to today",
+    "plannedCount_one": "{{count}} task planned",
+    "plannedCount_other": "{{count}} tasks planned",
+    "nothingPlanned": "Nothing else planned today.",
+    "schedule": "Schedule"
   },
   "collab": {
     "removeShare": "Delete"
@@ -152,8 +160,81 @@
     "tasks_other": "{{count}} tasks",
     "habits_one": "{{count}} habit",
     "habits_other": "{{count}} habits",
-    "events_one": "{{count}} appointment",
-    "events_other": "{{count}} appointments",
+    "events_one": "{{count}} event",
+    "events_other": "{{count}} events",
     "at": "Day closed at {{time}}."
+  },
+  "widgets": {
+    "names": {
+      "stats": "Statistics",
+      "today": "Today",
+      "priorityTasks": "Priority tasks",
+      "collaborativeTasks": "Collaborative tasks",
+      "okrs": "Active OKRs",
+      "habits": "Today's habits",
+      "agenda": "Today's agenda",
+      "taskList": "Task list",
+      "teamTasks": "My team tasks",
+      "review": "To review"
+    },
+    "desc": {
+      "stats": "Tasks, events, habits and key results for the period.",
+      "today": "Your personal and team tasks for today, together.",
+      "priorityTasks": "The tasks to do first.",
+      "collaborativeTasks": "Tasks shared with your friends.",
+      "okrs": "Progress on your objectives.",
+      "habits": "Habits to check off today.",
+      "agenda": "Today's events, in order.",
+      "taskList": "One of your lists, your choice. Can be added several times.",
+      "teamTasks": "Company tasks assigned to you.",
+      "review": "Tasks your colleagues finished, waiting for your review."
+    },
+    "groups": {
+      "perso": "Personal widgets",
+      "pro": "Work widgets"
+    }
+  },
+  "okrWidget": {
+    "choose": "Objective shown",
+    "noKeyResult": "No key results for this objective."
+  },
+  "habitsWidget": {
+    "viewList": "List view",
+    "viewWeek": "Week view",
+    "dayCell": "{{name}}, {{date}}",
+    "done": "done",
+    "notDone": "not done"
+  },
+  "dw": {
+    "agenda": {
+      "count_one": "{{count}} event",
+      "count_other": "{{count}} events",
+      "empty": "No events today.",
+      "next": "Next",
+      "open": "Open agenda"
+    },
+    "list": {
+      "choose": "List shown",
+      "open_one": "{{count}} open task",
+      "open_other": "{{count}} open tasks",
+      "empty": "No open tasks in this list.",
+      "noLists": "No lists yet.",
+      "create": "Create a list"
+    },
+    "team": {
+      "open_one": "{{count}} open task",
+      "open_other": "{{count}} open tasks",
+      "empty": "No open team tasks.",
+      "seeAll": "See all"
+    },
+    "review": {
+      "count_one": "{{count}} task to review",
+      "count_other": "{{count}} tasks to review",
+      "empty": "Nothing to review.",
+      "approve": "Approve",
+      "sendBack": "Send back",
+      "approveName": "Approve \"{{name}}\"",
+      "sendBackName": "Send back \"{{name}}\""
+    }
   }
 }

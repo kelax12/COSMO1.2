@@ -22,6 +22,8 @@ interface Props {
   orgId?: string;
   scope: ScopeFilter;
   onScope: (scope: ScopeFilter) => void;
+  /** Posé en bout de rangée, à droite : les filtres actifs de la page. */
+  trailing?: React.ReactNode;
 }
 
 /** Chip Spotify (docs/MOBILE.md § Chips de filtre) : pilule pleine, sans
@@ -61,6 +63,7 @@ const TaskQuickFilters: React.FC<Props> = ({
   orgId,
   scope,
   onScope,
+  trailing,
 }) => {
   const { t } = useT('tasks');
   const { t: tCommon } = useT('common');
@@ -171,6 +174,7 @@ const TaskQuickFilters: React.FC<Props> = ({
             ))}
           </div>
         )}
+        {trailing && <div className="ml-auto">{trailing}</div>}
       </div>
     </div>
   );
