@@ -31,7 +31,9 @@ import { resolve } from 'node:path';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { classer, VERDICT, objetsCrees, objetsSupprimes } from './check-migration-coverage.mjs';
+import {
+  classer, VERDICT, objetsCrees, objetsSupprimes, NON_APPLIQUEES_DELIBEREMENT,
+} from './check-migration-coverage.mjs';
 
 /** Un catalogue de prod minimal mais NON VIDE. */
 const CATALOGUE_PLEIN = {
@@ -194,20 +196,62 @@ describe('check-migration-coverage · le classeur', () => {
     expect(verdictDe(out, '002_menage.sql')).toBe(VERDICT.ABSENT);
   });
 
-  it('TEMOIN : une dispense PERIMEE fait echouer la garde', () => {
-    // 🔴 La mig. 140 est declaree non appliquee. Le jour ou elle le sera, la
-    // declaration doit TOMBER, pas survivre en silence : c'est exactement le
-    // contrat de `.github/edge-deploy.json`, et la raison pour laquelle une
-    // dispense ne peut jamais faire taire un ecart de CONTENU.
+  // Une dispense FICTIVE, passee au classeur reel. La vraie table est vide
+  // depuis le 2026-10-22 (la mig. 140, sa seule entree, a ete appliquee le
+  // 2026-10-20) : s'appuyer sur elle laisserait ces temoins sans objet le jour
+  // ou elle se vide, et c'est exactement ce qui vient d'arriver.
+  const DISPENSE_FICTIVE = { '998_dispense_fictive': 'Motif fictif, declare pour le temoin.' };
+
+  it('une migration declaree et REELLEMENT non appliquee rend le verdict « declaree »', () => {
+    const out = classer(
+      [{ name: '998_dispense_fictive.sql', sql: 'CREATE TABLE public.table_pas_encore_la (id uuid);' }],
+      CATALOGUE_PLEIN,
+      DISPENSE_FICTIVE,
+    );
+    expect(verdictDe(out, '998_dispense_fictive.sql')).toBe(VERDICT.DECLAREE);
+    expect(out[0].raison).toBe(DISPENSE_FICTIVE['998_dispense_fictive']);
+  });
+
+  it('TEMOIN : une dispense PERIMEE (objet en base) fait echouer la garde', () => {
+    // 🔴 Le jour ou une migration declaree non appliquee l'est, la declaration
+    // doit TOMBER, pas survivre en silence : c'est exactement le contrat de
+    // `.github/edge-deploy.json`, et la raison pour laquelle une dispense ne
+    // peut jamais faire taire un ecart de CONTENU. Cas vecu avec la mig. 140,
+    // rouge chaque jour du 2026-10-20 au retrait de son entree.
     const out = classer(
       [{
-        name: '140_stripe_identifiers_reset.sql',
+        name: '998_dispense_fictive.sql',
         sql: 'CREATE OR REPLACE FUNCTION public.get_my_tasks() RETURNS void AS $$ $$ LANGUAGE sql;',
       }],
       CATALOGUE_PLEIN,
+      DISPENSE_FICTIVE,
     );
-    expect(verdictDe(out, '140_stripe_identifiers_reset.sql')).toBe(VERDICT.ABSENT);
-    expect(out[0].raison).toMatch(/DECLAREE non appliquee, mais elle L EST/);
+    expect(verdictDe(out, '998_dispense_fictive.sql')).toBe(VERDICT.ABSENT);
+    expect(out[0].raison).toMatch(/DECLAREE non appliquee, mais elle L EST : objet\(s\) en base/);
+  });
+
+  it('TEMOIN : une dispense PERIMEE (ligne au ledger) fait echouer la garde', () => {
+    // Le chemin de la mig. 140 : une ligne au ledger suffit, meme sans qu'un
+    // objet du fichier soit lisible au catalogue.
+    const out = classer(
+      [{ name: '998_dispense_fictive.sql', sql: 'CREATE TABLE public.table_pas_encore_la (id uuid);' }],
+      { ...CATALOGUE_PLEIN, ledger_names: [...CATALOGUE_PLEIN.ledger_names, 'dispense_fictive'] },
+      DISPENSE_FICTIVE,
+    );
+    expect(verdictDe(out, '998_dispense_fictive.sql')).toBe(VERDICT.ABSENT);
+    expect(out[0].raison).toMatch(/DECLAREE non appliquee, mais elle L EST : une ligne au ledger/);
+  });
+
+  it('sans dispense passee, le classeur lit la VRAIE table', () => {
+    // Le parametre `dispenses` ne doit pas devenir une porte ouverte : par
+    // defaut, c'est `NON_APPLIQUEES_DELIBEREMENT` qui fait foi, et le meme
+    // fichier non applique n'y figurant pas est reclame.
+    const out = classer(
+      [{ name: '998_dispense_fictive.sql', sql: 'CREATE TABLE public.table_pas_encore_la (id uuid);' }],
+      CATALOGUE_PLEIN,
+    );
+    expect(verdictDe(out, '998_dispense_fictive.sql')).toBe(VERDICT.ABSENT);
+    expect(NON_APPLIQUEES_DELIBEREMENT).not.toHaveProperty('140_stripe_identifiers_reset');
   });
 
   it('un fichier sans objet NI suppression, NON declare, echoue', () => {
