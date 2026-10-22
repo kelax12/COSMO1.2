@@ -17,6 +17,8 @@ export const rolesKeys = {
   all: ['org-roles'] as const,
   roles: (orgId: string) => [...rolesKeys.all, 'roles', orgId] as const,
   assignments: (orgId: string) => [...rolesKeys.all, 'assignments', orgId] as const,
+  /** Sous `all` : toute attribution qui change invalide aussi l'export. */
+  mine: () => [...rolesKeys.all, 'mine'] as const,
 };
 
 export const useOrgRoles = (orgId: string | undefined) => {
@@ -34,5 +36,17 @@ export const useOrgRoleAssignments = (orgId: string | undefined) => {
     queryKey: rolesKeys.assignments(orgId ?? ''),
     queryFn: () => repository.getAssignments(orgId as string),
     enabled: !!orgId,
+  });
+};
+
+/**
+ * Les rôles reçus par la personne connectée, toutes organisations : l'export de
+ * portabilité (« Mes données »). Hors mode entreprise, la liste est vide.
+ */
+export const useMyOrgRoleAssignments = () => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: rolesKeys.mine(),
+    queryFn: () => repository.getMyAssignments(),
   });
 };

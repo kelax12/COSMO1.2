@@ -14,6 +14,7 @@
 // #3b82f6 — le bilan couvre plusieurs modules, donc accent par défaut).
 // L'image a sa propre palette figée, volontairement indépendante du thème de
 // l'app : elle doit être identique pour tout le monde.
+import { getIntlTag } from '@/i18n/format';
 import { formatMinutes, type RecapData } from './recap-data';
 
 export const RECAP_WIDTH = 1080;
@@ -74,7 +75,7 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 }
 
 /** « 10 – 16 août 2026 » à partir des bornes 'YYYY-MM-DD' (dates locales). */
-export function formatWeekRange(weekStart: string, weekEnd: string, locale = 'fr-FR'): string {
+export function formatWeekRange(weekStart: string, weekEnd: string, locale = getIntlTag()): string {
   const toDate = (day: string) => {
     const [y, m, d] = day.split('-').map(Number);
     return new Date(y, (m ?? 1) - 1, d ?? 1);
@@ -82,6 +83,15 @@ export function formatWeekRange(weekStart: string, weekEnd: string, locale = 'fr
   const start = toDate(weekStart);
   const end = toDate(weekEnd);
   const sameMonth = start.getMonth() === end.getMonth();
+  // `formatRange` ordonne jour et mois selon la langue (« 12–18 octobre 2026 »
+  // / « October 12 – 18, 2026 ») : la concaténation ci-dessous, son repli pour
+  // un moteur qui ne la connaît pas, figeait l'ordre français.
+  const range = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: sameMonth ? 'long' : 'short',
+    year: 'numeric',
+  }) as Intl.DateTimeFormat & { formatRange?: (from: Date, to: Date) => string };
+  if (typeof range.formatRange === 'function') return range.formatRange(start, end);
   const startLabel = start.toLocaleDateString(locale, sameMonth ? { day: 'numeric' } : { day: 'numeric', month: 'short' });
   const endLabel = end.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
   return `${startLabel} – ${endLabel}`;
@@ -116,7 +126,7 @@ export function drawRecap(
   canvas: HTMLCanvasElement,
   recap: RecapData,
   labels: RecapLabels,
-  locale = 'fr-FR'
+  locale = getIntlTag()
 ): void {
   const text = { ...labels, signature: BRAND_SIGNATURE };
   canvas.width = RECAP_WIDTH;

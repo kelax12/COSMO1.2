@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { EventRecurrence } from '@/modules/events';
 import { DAY_ORDER } from './helpers';
 import { useT } from '@/i18n/useT';
+import { formatDate } from '@/i18n/format';
 import { useSheetDrag, useSheetMotion } from '@/components/mobile/mobile-motion';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 
@@ -14,6 +15,16 @@ interface RecurrenceDaysModalProps {
   setRecurrenceDays: React.Dispatch<React.SetStateAction<number[]>>;
   setRecurrence: React.Dispatch<React.SetStateAction<EventRecurrence>>;
 }
+
+/**
+ * Nom complet du jour `d` (0 = dimanche, comme `Date.getDay()`), dans la langue
+ * de l'app. Le 7 janvier 2024 est un dimanche : `+ d` donne le bon jour. Les
+ * noms étaient écrits en français à la main (garde `date-format.guard`, AM-3).
+ */
+const dayName = (d: number): string => {
+  const name = formatDate(new Date(2024, 0, 7 + d), { weekday: 'long' });
+  return name.charAt(0).toUpperCase() + name.slice(1);
+};
 
 const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
   isOpen, onClose, recurrenceDays, setRecurrenceDays, setRecurrence,
@@ -77,7 +88,7 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
                         className="w-full flex items-center justify-between px-3 min-h-11 rounded-lg transition-colors hover:bg-[rgb(var(--color-hover))]"
                       >
                         <span className="text-[15px]" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                          {['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'][d]}
+                          {dayName(d)}
                         </span>
                         <span
                           className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${

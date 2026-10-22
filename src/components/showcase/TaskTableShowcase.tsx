@@ -161,7 +161,7 @@ const JETONS: Record<ShowcaseTheme, Jetons> = {
     puce: 'rgb(51, 65, 85)', puceTexte: 'rgb(203, 213, 225)', accent: 'rgb(52, 114, 216)', surAccent: '#FFFFFF',
     caseBord: 'rgb(100, 116, 139)', survol: 'rgba(51, 65, 85, 0.55)',
     menu: 'rgb(30, 41, 59)', menuBord: 'rgb(71, 85, 105)', menuOmbre: '0 18px 40px -10px rgba(0,0,0,0.6)',
-    retardFond: 'rgba(239,68,68,0.1)', retardBord: 'rgba(239,68,68,0.3)', retardTexte: '#FCA5A5', retardIcone: '#EF4444', echeanceRetard: '#EF4444',
+    retardFond: 'rgba(239,68,68,0.1)', retardBord: 'rgba(239,68,68,0.3)', retardTexte: '#FCA5A5', retardIcone: '#EF4444', echeanceRetard: '#F87171',
     favoriFond: 'rgba(234,179,8,0.2)',
     curseur: '#F8FAFC', curseurBord: '#0F172A',
     priorites: {
@@ -201,8 +201,9 @@ const JETONS: Record<ShowcaseTheme, Jetons> = {
     puce: 'rgb(47, 53, 59)', puceTexte: 'rgb(173, 186, 199)', accent: 'rgb(47, 117, 213)', surAccent: '#FFFFFF',
     caseBord: 'rgb(118, 131, 144)', survol: 'rgba(47, 53, 59, 0.8)',
     menu: 'rgb(43, 49, 55)', menuBord: 'rgb(68, 76, 86)', menuOmbre: '0 18px 40px -10px rgba(0,0,0,0.6)',
-    retardFond: 'rgba(239,68,68,0.1)', retardBord: 'rgba(239,68,68,0.3)', retardTexte: '#FCA5A5', retardIcone: '#EF4444', echeanceRetard: '#EF4444',
-    favoriFond: 'rgba(234,179,8,0.2)',
+    retardFond: 'rgba(239,68,68,0.1)', retardBord: 'rgba(239,68,68,0.3)', retardTexte: '#FCA5A5', retardIcone: '#EF4444', echeanceRetard: '#F87171',
+    // 0,14 et pas 0,2 : l'encre secondaire y rendait 4,43:1 (2026-10-22).
+    favoriFond: 'rgba(234,179,8,0.14)',
     curseur: '#F8FAFC', curseurBord: '#24292E',
     priorites: {
       1: { fond: 'rgba(220,38,38,0.3)', texte: '#F87171', bord: '#B91C1C' },
@@ -220,7 +221,7 @@ const JETONS: Record<ShowcaseTheme, Jetons> = {
     puce: 'rgb(32, 32, 32)', puceTexte: 'rgb(168, 168, 168)', accent: 'rgb(240, 240, 240)', surAccent: '#080808',
     caseBord: 'rgb(110, 110, 110)', survol: 'rgba(32, 32, 32, 0.9)',
     menu: 'rgb(22, 22, 22)', menuBord: 'rgb(70, 70, 70)', menuOmbre: '0 18px 40px -10px rgba(0,0,0,0.8)',
-    retardFond: 'rgba(239,68,68,0.1)', retardBord: 'rgba(239,68,68,0.3)', retardTexte: '#FCA5A5', retardIcone: '#EF4444', echeanceRetard: '#EF4444',
+    retardFond: 'rgba(239,68,68,0.1)', retardBord: 'rgba(239,68,68,0.3)', retardTexte: '#FCA5A5', retardIcone: '#EF4444', echeanceRetard: '#F87171',
     favoriFond: 'rgba(234,179,8,0.2)',
     curseur: '#F8FAFC', curseurBord: '#080808',
     priorites: {
@@ -663,7 +664,7 @@ const TaskTableShowcase: React.FC = () => {
                 </motion.div>
               ))}
               <div className="my-1 h-px" style={{ backgroundColor: J.menuBord }} />
-              <div className="flex items-center gap-2 rounded-md px-2 text-[13px]" style={{ height: ITEM_H, color: '#EF4444' }}>
+              <div className="flex items-center gap-2 rounded-md px-2 text-[13px]" style={{ height: ITEM_H, color: J.echeanceRetard }}>
                 <Trash2 size={15} />
                 Supprimer
               </div>

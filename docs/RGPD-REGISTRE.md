@@ -126,11 +126,11 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
 - **Données** : contenu librement saisi par la personne. **Ce contenu peut contenir tout ce que
   l'utilisateur y met**, y compris des informations personnelles ou sensibles qu'il choisit
   d'inscrire dans une tâche. COSMO ne l'analyse pas et ne le lit pas.
-- **Tables** : `tasks`, `events`, `habits`, `okrs`, `key_results`, `kr_completions`,
-  `categories`, `lists`, `user_activity_days`.
+- **Tables** : `tasks`, `task_dependencies`, `events`, `habits`, `okrs`, `key_results`,
+  `kr_completions`, `categories`, `lists`, `user_activity_days`.
 - **Destinataires** : Supabase. Aucun autre.
 - **Conservation** : durée de vie du compte. Effacement immédiat à la demande.
-- **Portabilité** : export CSV depuis Paramètres, onglet Mes données (7 fichiers).
+- **Portabilité** : export CSV depuis Paramètres, onglet Mes données (10 fichiers depuis le 2026-10-22, dont les dépendances entre tâches, le journal des résultats clés `kr_completions` et les rôles reçus en entreprise `org_member_roles`).
 
 ## T3 · Collaboration entre particuliers
 
@@ -314,11 +314,33 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   **Anthropic** (classement de chaque réponse par Claude Haiku : objet et texte de la réponse,
   seulement si la clé API est posée). 🔴 DPA Anthropic et IONOS à archiver (ligne A5 de `LEGAL.md`).
 - **Conservation** : **3 ans après le dernier contact** (recommandation CNIL), puis effacement.
-  ⚠️ Au 2026-10-18 cette durée n'est appliquée par **aucun automatisme** ; la purge est à écrire.
-  L'effacement d'un prospect emporte son journal (cascade) ; son inscription en opposition
-  reste, puisque c'est elle qui garantit qu'on ne le recontacte pas.
-- **Sauvegardes** : 🔴 **aucune**. Le projet est en offre gratuite, qui n'en fournit pas de
-  téléchargeable. Un export chiffré hors dépôt reste à mettre en place.
+  Le « dernier contact » est la date la plus récente entre la création de la fiche, le dernier
+  envoi et la dernière réponse reçue. **Appliquée par** la fonction
+  `private.purge_prospects_expires()` du projet `cosmo-prospection`, lancée chaque jour à
+  03:17 UTC par la tâche `pg_cron` `prospection-purge-3-ans` (migration
+  `20261022000001_purge_conservation_3_ans.sql` du dépôt `analytics`). Chaque passage laisse
+  une trace sans donnée personnelle (date, nombre de fiches) dans `private.purge_runs`.
+  L'effacement d'une fiche emporte son journal, ses envois et ses réponses (cascade).
+  **La liste d'opposition n'est jamais purgée** : elle ne garde que l'adresse, le motif et la
+  date, et c'est elle qui garantit qu'on ne recontacte pas la personne (réimport refusé).
+  Preuve en transaction annulée le 2026-10-22 : une fiche à 3 ans et 1 jour est visée et
+  effacée avec son journal ; un envoi d'hier, une réponse d'hier et une fiche créée hier ne le
+  sont pas ; l'opposition d'une fiche purgée reste et bloque le réimport.
+  ⚠️ **Active seulement une fois la migration appliquée en production** (geste d'Axel). Tant
+  que `select * from cron.job where jobname = 'prospection-purge-3-ans'` ne renvoie rien, la
+  durée n'est pas appliquée.
+- **Sauvegardes** : export quotidien (04:41 UTC) par le workflow
+  `.github/workflows/prospection-backup.yml` du dépôt `analytics` (privé). Le dump est
+  **chiffré dans le même flux** (`pg_dump | gpg`, AES-256) : aucun octet en clair n'est écrit
+  sur le disque du runner ni déposé en artefact (leçon de `BK-1`, violation du 2026-10-13).
+  Seul `prospection-AAAA-MM-JJ.dump.gpg` est conservé, en artefact GitHub du dépôt
+  `analytics`, **30 jours**. Une fiche effacée (purge ou demande d'effacement) peut donc
+  survivre au plus 30 jours dans une sauvegarde chiffrée. Phrase de chiffrement propre à ce
+  projet (secret `PROSPECTION_BACKUP_PASSPHRASE`), copie hors dépôt chez Axel ; sans elle le
+  job échoue, jamais de repli en clair.
+  ⚠️ **Aucune sauvegarde n'existe encore** tant que les secrets `PROSPECTION_DB_URL` et
+  `PROSPECTION_BACKUP_PASSPHRASE` ne sont pas posés et qu'un premier passage n'a pas été
+  déchiffré pour vérification.
 
 ---
 

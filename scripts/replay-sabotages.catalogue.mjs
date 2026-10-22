@@ -963,13 +963,13 @@ export const CATALOGUE = [
     ['mcov-suppression-crue', r('scripts/check-migration-coverage.mjs', '      const survivantes = ciblesSup.filter(([k, n]) => catalogue[k].has(n));', '      const survivantes = [];'),
       'TEMOIN : une suppression dont la CIBLE EST TOUJOURS LA echoue', '« Suppression vérifiée » rendu sans rien vérifier : la cible est toujours en base.'],
     ['mcov-dispense-eternelle', r('scripts/check-migration-coverage.mjs', '      if (auLedger || trouves.length > 0) {', '      if (false) {'),
-      'TEMOIN : une dispense PERIMEE fait echouer la garde', 'Une dispense « non appliquée » qui survit à l`application cesse de décrire la base, et plus rien ne le dit.'],
+      ['TEMOIN : une dispense PERIMEE (objet en base) fait echouer la garde', 'TEMOIN : une dispense PERIMEE (ligne au ledger) fait echouer la garde'], 'Une dispense « non appliquée » qui survit à l`application cesse de décrire la base, et plus rien ne le dit.'],
     ['mcov-ledger-vide', r('scripts/check-migration-coverage.mjs', '  if ((intro.ledger ?? []).length === 0 && (intro.ledger_names ?? []).length === 0) {', '  if (false) {'),
       'TEMOIN : un LEDGER VIDE fait ECHOUER, il ne rend pas un verdict', 'La classe de défaut de `restore-drill.yml` : un contrôle qui ne pouvait pas échouer.'],
     ['mcov-catalogue-vide', r('scripts/check-migration-coverage.mjs', '  if ((intro.tables ?? []).length === 0) {', '  if (false) {'),
       'TEMOIN : un CATALOGUE VIDE fait ECHOUER aussi', 'Un catalogue vide rendrait « ABSENT » partout, ou un vert sur rien selon le ledger : aucun verdict ne vaut sans lecture.'],
   ].map(([id, modif, attendu, pourquoi]) => ({
-    id, famille: 'detecteur', garde: 'scripts/check-migration-coverage.guard.test.mjs', modifs: [modif], attendu: [attendu], pourquoi,
+    id, famille: 'detecteur', garde: 'scripts/check-migration-coverage.guard.test.mjs', modifs: [modif], attendu: [attendu].flat(), pourquoi,
   })),
 
   // ═════════════════════════════════════════════════════════════════

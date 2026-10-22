@@ -50,3 +50,12 @@ updates:
       default-days: 7
     labels:
       - ci
+    # `init` et `analyze` de codeql-action doivent porter la MEME version :
+    # `analyze` refuse une configuration ecrite par un `init` d'une autre
+    # version (« Loaded a configuration file for version '4.38.3', but running
+    # version '4.38.1' »). Bumpees separement (PR n° 80 et 82, 2026-10-19),
+    # chacune etait rouge sur CodeQL par construction. Un seul PR pour les deux.
+    groups:
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
