@@ -8,11 +8,24 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **95 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **95 / 100** au 2026-10-22, au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → 96 → 96 → **95 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → **2026-10-20**)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → 96 → 96 → 95 → **95 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → **2026-10-22**)
+
+> ### ⚪ 2026-10-22 · 0 : deux rouges réparés, le LCP mobile perdu sur six URLs
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-22 : CI de `main` à `d16de29a` (run `39843255180`, cinq jobs verts ; `main` rouge du 10-20 à 22:03 au 10-22 à 14:39, 19 runs), `Visual` vert à `fb83cd60`, production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-22 |
+> |---|---|---|
+> | ✅ `OrganizationPage` au-dessus de son cliquet (−1 le 10-20) | **+1** | `e4369b70` : ce qui ne sert qu'en mode édition chargé en `lazy`. **16,8 / 18,0 ko** à `d16de29a`, budget vert en CI |
+> | ✅ TBT mobile de la page entreprise (−1 le 2026-10-16 au soir, 350 à 934 ms) | **+1** | PR n° 91 (`263154b6`, bas du parcours monté au premier geste) : **30, 200 et 152 ms** sur les trois runs de `main` qui la portent (`c2959ded`, `1db47acf`, `d16de29a`), **927 ms** au dernier run sans elle (`1234f807`). Perf mobile 95 à 97 |
+> | 🔴 LCP mobile de 4,5 à 6,0 s sur six URLs sur huit | **−2** | **1,36 à 1,52 s sur les 8 URLs** le 2026-10-18 ; le 2026-10-22, quatre runs concordants : `/guide/` 5,4 à 5,6 s, `/blog/` 5,0, article OKR 5,3 à 5,4, `/pour-freelances/` et `/a-propos/` 4,5 à 4,6, **`/en/` 5,9 à 6,0 s** ; `/` 1,6 s, page entreprise 2,3 à 2,4 s. Cause : `26a0faac` remplace le texte peint des pages de contenu par un spinner, arbitré par Axel sur une mesure **locale** (« 2,4 à 3,4 s, 4,8 sur `/guide/` ») que la CI dément. `/en/` n'est couverte par aucun arbitrage : même copie `#lp-hero` que `/`, LCP ×4. La garde ne fait qu'**avertir** (`largest-contentful-paint` en `warn` à 4 500 ms), et cinq URLs dépassent même ce seuil. Le +1 « LCP mobile » du 10-16 est repris ici et dans [`MOBILE.md`](./MOBILE.md) |
+> | Marges serrées | 0 | `vendor-utils` 0,4 % ; la PR n° 113 les rouvre en **allégeant** les chunks (`StatisticsPage`, `AgendaPage`) et en **abaissant** deux cliquets, non fusionnée |
+>
+> **95 → 95.**
 
 > ### 🟠 2026-10-20 · −1 : le cliquet de `OrganizationPage` dépassé depuis 26 h
 >

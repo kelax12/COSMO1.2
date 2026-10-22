@@ -8,11 +8,25 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **95 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **95 / 100** au 2026-10-22, au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → 97 → 96 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → 97 → 96 → 95 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → **2026-10-22**)
+
+> ### ⚪ 2026-10-22 · 0 : l'horloge figée rembourse, une garde laissée rouge 41 h reprend le point
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-22 : CI de `main` à `d16de29a` (run `39843255180`, cinq jobs verts ; `main` rouge du 10-20 à 22:03 au 10-22 à 14:39, 19 runs), `Visual` vert à `fb83cd60`, production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-22 |
+> |---|---|---|
+> | ✅ Deux verdicts liés au jour de la semaine (−1 le 10-20) | **+1** | `c6e21b06` : `page.clock.install` à une date fixe dans `e2e/visual-regression.spec.ts` et `e2e/mobile-android.spec.ts`, références régénérées sous l'horloge figée (`29bd862d`, puis PR n° 101). `Visual` vert à `d16de29a` et `fb83cd60`, `e2e` vert à `d16de29a` |
+> | 🔴 `Migration coverage` rouge depuis le 2026-10-20 à 22:03 | **−1** | `140_stripe_identifiers_reset` est au ledger depuis la bascule (`20261020204838`) et reste déclarée dans `NON_APPLIQUEES_DELIBEREMENT` (`scripts/check-migration-coverage.mjs`). La garde le dit en clair (« Retirer l entree »), l'alerte part chaque jour, personne n'a retiré la ligne. Toujours rouge à `HEAD` |
+> | 🟠 Second épisode rouge de `main` | 0 | de `5bf21a50` (10-20, 22:03) à `1234f807` (10-22, 14:39) : **19 runs, 19 commits poussés directement dessus**. Le −1 du 10-20 n'est pas remboursé : le défaut s'est répété. Le hook `pre-push` annoncé contre lui (PR n° 86) **n'est pas fusionné** : `core.hooksPath` vise un `.githooks/` absent, aucun hook ne joue |
+> | ⚠️ Trois rouges qui ne sont pas des défauts | 0 | `rls-integration` ×4 à 18:33 : quota Docker (`toomanyrequests`) ; `Deploy SHA drift` à 18:38 : course, `main` a avancé pendant le run ; `Visual` à `f019249f` : `publique-home` instable (accueil animé pendant la capture) |
+> | Comptes à `HEAD` | 0 | 356 fichiers, **4 032** tests ; outillage 29 / 503 ; RLS 8 / 151 ; `e2e` **265 verts, 1 instable** (`org-guide`, chromium), 6 sautés, 21,2 min ; WebKit sans instable. `demo-billing-disarmed` remplacé par `demo-billing-consent`, vu rouge sur un sabotage du double consentement |
+>
+> **95 → 95.**
 
 > ### 🟠 2026-10-20 · −1 : `main` rouge 29 runs, et deux verdicts qui dépendent de la date
 >

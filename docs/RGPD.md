@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **87 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **87 / 100** au 2026-10-22, au tableau de bord de [`README.md`](./README.md).
 
 # RGPD — inventaire, droits des personnes et dette
 
@@ -16,7 +16,21 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → 85 → 87 → 87 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → **2026-10-20**) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → 85 → 87 → 87 → 87 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → 2026-10-20 → **2026-10-22**) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ⚪ 2026-10-22 · 0 : `C-121` en production, T11 à moitié
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-22 : CI de `main` à `d16de29a` (run `39843255180`, cinq jobs verts ; `main` rouge du 10-20 à 22:03 au 10-22 à 14:39, 19 runs), `Visual` vert à `fb83cd60`, production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-22 |
+> |---|---|---|
+> | ✅ `C-121` · comptes inactifs depuis 3 ans | 0 | mig. `226` appliquée (ledger `20261021225038`), fonction `inactive-accounts` v1, job quotidien ; registre T-tables mis à jour. Jamais débité : aucun compte n'atteint le seuil avant 2029 |
+> | 🟠 T11 · prospection B2B (−1 le 10-18) | 0 | ✅ section **7 ter** publiée (`899f707f`, art. 14). Restent : la purge à 3 ans est **écrite mais pas appliquée** (relu au catalogue de `cosmo-prospection` : seules `prospection-send` et `prospection-inbox` existent dans `cron.job`) ; la sauvegarde attend ses deux secrets ; DPA Anthropic et IONOS. Le −1 reste. ⚠️ **0** prospect et **0** envoi en base : rien n'est exposé tant qu'aucun import n'a lieu |
+> | Identification du responsable de traitement | 0 | statut (EI), SIREN et adresse dans la politique (art. 13.1.a), mentions légales complètes (`e2e7679f`) |
+> | `M-71` | 0 | `BACKUP_PASSPHRASE.txt` toujours présent dans le coffre hors dépôt le 2026-10-22 |
+> | Portabilité | 0 | PR n° 106 (`task_dependencies`, `kr_completions`, `org_member_roles` dans l'export) ouverte, non fusionnée : la dette reste déclarée dans `TABLES_NON_EXPORTEES` |
+>
+> **87 → 87.**
 
 > ### ⚪ 2026-10-20 · 0 : aucun traitement nouveau
 >
