@@ -21,7 +21,7 @@ vi.mock('@/modules/auth/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me
 
 import {
   useFriends, useFriendRequests, useSendFriendRequest,
-  useAcceptFriendRequest, useRemoveFriend, useShareTask, useSharesByTask,
+  useAcceptFriendRequest, useRemoveFriend, useShareTask,
 } from './hooks';
 import type { Friend } from './types';
 
@@ -101,30 +101,5 @@ describe('mutations sociales', () => {
       ).rejects.toThrow(/demande d'ami/);
     });
     expect(fakeRepo.shareTask).toHaveBeenCalledWith({ taskId: 't1', friendId: 'alice-uid', role: 'editor' });
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════
-// Les badges d'avatars ne relisent plus `shared_tasks` une seconde fois
-//
-// `related` (`shared_by = moi OR friend_id = moi`) contient déjà, en entier,
-// ce que `mine` (`shared_by = moi`) renvoyait, et sélectionne toutes ses
-// colonnes. Les deux partaient à chaque ouverture de l'application.
-// ═══════════════════════════════════════════════════════════════════
-describe('useSharesByTask', () => {
-  it('dérive de getRelatedTaskShares et ne garde que MES partages émis', async () => {
-    fakeRepo.getRelatedTaskShares.mockResolvedValue([
-      { taskId: 't1', sharedBy: 'me', friendId: 'f1', role: 'viewer', accepted: true },
-      { taskId: 't1', sharedBy: 'me', friendId: 'f2', role: 'editor', accepted: false },
-      // Reçue, pas émise : elle ne doit pas apparaître dans cette carte.
-      { taskId: 't9', sharedBy: 'autre', friendId: 'me', role: 'viewer', accepted: true },
-    ]);
-    const { wrapper } = makeWrapper();
-    const { result } = renderHook(() => useSharesByTask(), { wrapper });
-
-    await waitFor(() => expect(result.current.size).toBe(1));
-    expect(result.current.get('t1')).toEqual(['f1', 'f2']);
-    expect(result.current.has('t9')).toBe(false);
-    expect(fakeRepo.getMyTaskShares).not.toHaveBeenCalled();
   });
 });

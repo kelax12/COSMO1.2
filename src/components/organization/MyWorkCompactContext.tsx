@@ -164,24 +164,26 @@ export const ActivityCompact = ({ size, digest, onSeeAll }: { size: CompactSize;
 
 /* ─────────────────────────── Événements de l'entreprise ────────────── */
 
-export const OrgEventsCompact = ({ size, events, onOpen }: { size: CompactSize; events: OrgEvent[]; onOpen: (event: OrgEvent) => void }) => {
+/** Grand format inclus (2026-10-20) : le rail d'avant était trop discret. */
+export const OrgEventsCompact = ({ size, events, onOpen }: { size: WidgetSize; events: OrgEvent[]; onOpen: (event: OrgEvent) => void }) => {
   const { t } = useT('orgAdmin');
-  const pager = usePager(events, perPage(size));
+  const pager = usePager(events, size === 'large' ? 6 : perPage(size));
+  const big = size !== 'medium';
   const toneOf = (e: OrgEvent): WidgetTone => (e.urgency === 'now' ? 'danger' : e.urgency === 'soon' ? 'warning' : 'neutral');
   return (
     <WidgetShell icon={CalendarClock} title={t('apercu.widgets.names.orgEvents')} count={events.length} pager={pager}>
       {events.length === 0 ? <WidgetEmpty>{t('apercu.widgets.c.noOrgEvents')}</WidgetEmpty> : (
-        <ul className="space-y-2.5">
+        <ul className="divide-y divide-[rgb(var(--color-border))]">
           {pager.slice.map((e) => (
-            <li key={e.id}>
+            <li key={e.id} className="py-2 first:pt-0 last:pb-0">
               <button type="button" onClick={() => onOpen(e)} className="w-full flex items-center gap-3 text-left rounded-lg hover:bg-[rgb(var(--color-hover))] px-1 -mx-1 min-w-0">
-                <span className={`shrink-0 rounded-lg px-2 py-1 font-bold tabular-nums ${size === 'small' ? 'text-xl' : 'text-sm'} ${TONE_BADGE[toneOf(e)]}`}>
+                <span className={`shrink-0 rounded-lg text-center font-bold tabular-nums ${big ? 'min-w-[64px] px-2.5 py-1.5 text-xl' : 'px-2 py-1 text-sm'} ${TONE_BADGE[toneOf(e)]}`}>
                   {e.daysLeft === 0 ? t('apercu.widgets.c.dueToday') : t('apercu.widgets.c.inDays', { count: e.daysLeft })}
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-[rgb(var(--color-text-primary))]">{e.name}</span>
-                  <span className="block truncate text-xs text-[rgb(var(--color-text-muted))]">
-                    {format(e.date, 'EEE d MMM', { locale: getDateLocale() })}{e.projectName ? ` · ${e.projectName}` : ''}
+                  <span className={`block truncate font-semibold text-[rgb(var(--color-text-primary))] ${size === 'large' ? 'text-base' : 'text-sm'}`}>{e.name}</span>
+                  <span className={`block truncate text-[rgb(var(--color-text-secondary))] ${size === 'large' ? 'text-sm' : 'text-xs'}`}>
+                    {format(e.date, size === 'large' ? 'EEEE d MMMM' : 'EEE d MMM', { locale: getDateLocale() })}{e.projectName ? ` · ${e.projectName}` : ''}
                   </span>
                 </span>
               </button>

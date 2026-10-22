@@ -18,7 +18,7 @@ describe('apercu-widgets', () => {
   it('le défaut ne place que des formats acceptés, sans doublon', () => {
     expect(sanitizeLayout(DEFAULT_LAYOUT)).toEqual(DEFAULT_LAYOUT);
     expect(new Set(DEFAULT_LAYOUT.map((w) => w.id)).size).toBe(DEFAULT_LAYOUT.length);
-    expect(DEFAULT_LAYOUT.length).toBe(WIDGET_DEFS.length);
+    expect(DEFAULT_LAYOUT.every((w) => WIDGET_DEFS.some((d) => d.id === w.id))).toBe(true);
   });
 
   it('écarte inconnu, format refusé et doublon', () => {

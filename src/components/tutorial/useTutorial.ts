@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { isGuideDemoActive } from '@/lib/guide-demo-active';
 
 /**
  * Hook qui gère l'état "tutoriel vu ou non" pour une page donnée.
@@ -61,7 +62,9 @@ export const useTutorial = (storageKey: string, delayMs = 600, autoStart = true)
     try {
       const seen = localStorage.getItem(fullKey);
       if (seen === REPLAY || (autoStart && seen !== '1')) {
-        const t = setTimeout(() => setIsOpen(true), delayMs);
+        // Une démo du guide qui traverse la page ne déclenche rien : le
+        // tutoriel reste « non vu » et s'ouvrira à la prochaine vraie visite.
+        const t = setTimeout(() => { if (!isGuideDemoActive()) setIsOpen(true); }, delayMs);
         return () => clearTimeout(t);
       }
     } catch { /* localStorage indisponible */ }

@@ -7,6 +7,7 @@ import { appModeStore } from '@/lib/app-mode.store';
 import { getTranslator } from '@/i18n/useT';
 import { localeStore } from '@/i18n/store';
 import { hardSignOut } from '@/lib/hard-sign-out';
+import { releasePrerenderHero } from '@/lib/prerender-hero';
 
 interface Props {
   children: ReactNode;
@@ -29,6 +30,10 @@ export class AppErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('[ErrorBoundary]', error, info.componentStack);
+    // Un écran d'erreur visible ne doit pas rester sous la copie du hero du
+    // prérendu (calque au-dessus de React). Un `fallback` fourni est celui des
+    // canaux Realtime (`null`) : la page, elle, n'a pas planté.
+    if (!('fallback' in this.props)) releasePrerenderHero();
     monitoring.captureException(error, {
       contexts: { react: { componentStack: info.componentStack ?? undefined } },
       tags: { mode: appModeStore.isDemo ? 'demo' : 'prod' },
