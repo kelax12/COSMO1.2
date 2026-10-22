@@ -5,13 +5,16 @@
     "seoTitle": "Legal notice – Cosmo App",
     "seoDescription": "Legal notice for the Cosmo productivity app: publisher, host, intellectual property and responsibilities.",
     "title": "Legal notice",
-    "updatedAt": "18 October 2026",
+    "updatedAt": "21 October 2026",
     "s1": {
       "title": "1. Site publisher",
       "intro": "The **Cosmo** website and application are published by:",
-      "li1": "**Publisher:** Axel Longatte, natural person",
-      "liAddress": "**Address:** 138 avenue Victor Hugo, 75016 Paris, France (registered address provided by Les Tricolores)",
+      "li1": "**Publisher:** Axel Longatte, sole proprietor (entrepreneur individuel, EI), trading as COSMO",
+      "liRegistration": "**Registration:** French National Business Register (RNE) since 20 October 2026, SIREN 131 769 317, SIRET 131 769 317 00010, APE code 62.01Z",
+      "liVat": "**VAT:** VAT not applicable, article 293 B of the French General Tax Code",
+      "liAddress": "**Address:** 138 avenue Victor Hugo, 75116 Paris, France (registered address provided by Les Tricolores)",
       "li2": "**Email address:** contact@thecosmo.app",
+      "liPhone": "**Phone:** [+33 7 54 36 29 17](tel:+33754362917)",
       "li3": "**Publication director:** Axel Longatte"
     },
     "s2": {

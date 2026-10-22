@@ -4,13 +4,11 @@ import { ArrowLeft, Check, ChevronLeft, ChevronRight, Plus, Search, Trash2, X } 
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import {
-  WIDGET_DEFS,
   WIDGET_SIZES,
-  type PlacedWidget,
-  type WidgetId,
+  type PlacedOf,
   type WidgetSize,
-  widgetDef,
 } from './apercu-widgets';
+import type { WidgetCatalog } from './widget-catalog';
 
 /**
  * Largeur « réelle » d'un widget de chaque format sur l'Aperçu desktop : la
@@ -60,19 +58,20 @@ const WidgetPreview = ({ size, children }: { size: WidgetSize; children: ReactNo
  * Carrousel des formats d'un widget : on voit le MÊME widget en petit, moyen
  * et grand avant de choisir. Flèches, onglets, et ← → au clavier.
  */
-const FormatCarousel = ({
-  id, startIndex, placedSize, renderWidget, onAdd, onRemove, onBack,
+const FormatCarousel = <Id extends string>({
+  catalog, id, startIndex, placedSize, renderWidget, onAdd, onRemove, onBack,
 }: {
-  id: WidgetId;
+  catalog: WidgetCatalog<Id>;
+  id: Id;
   startIndex: number;
   placedSize: WidgetSize | undefined;
-  renderWidget: (id: WidgetId, size: WidgetSize) => ReactNode;
-  onAdd: (id: WidgetId, size: WidgetSize) => void;
-  onRemove: (id: WidgetId) => void;
+  renderWidget: (id: Id, size: WidgetSize) => ReactNode;
+  onAdd: (id: Id, size: WidgetSize) => void;
+  onRemove: (id: Id) => void;
   onBack: () => void;
 }) => {
   const { t } = useT('orgAdmin');
-  const sizes = widgetDef(id)?.sizes ?? [];
+  const sizes = catalog.defs.find((d) => d.id === id)?.sizes ?? [];
   const [[index, dir], setSlide] = useState<[number, number]>([Math.max(0, startIndex), 0]);
   const backRef = useRef<HTMLButtonElement>(null);
   useEffect(() => { backRef.current?.focus(); }, []);
@@ -106,8 +105,8 @@ const FormatCarousel = ({
           <ArrowLeft size={20} aria-hidden="true" />
         </button>
         <div className="min-w-0">
-          <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))] truncate">{t(`apercu.widgets.names.${id}`)}</h2>
-          <p className="text-sm text-[rgb(var(--color-text-muted))] truncate">{t(`apercu.widgets.desc.${id}`)}</p>
+          <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))] truncate">{catalog.name(id)}</h2>
+          <p className="text-sm text-[rgb(var(--color-text-muted))] truncate">{catalog.desc(id)}</p>
         </div>
       </div>
 
@@ -202,11 +201,12 @@ const FormatCarousel = ({
   );
 };
 
-interface AddWidgetPageProps {
-  layout: PlacedWidget[];
-  onAdd: (id: WidgetId, size: WidgetSize) => void;
-  onRemove: (id: WidgetId) => void;
-  renderWidget: (id: WidgetId, size: WidgetSize) => ReactNode;
+export interface AddWidgetPageProps<Id extends string> {
+  catalog: WidgetCatalog<Id>;
+  layout: PlacedOf<Id>[];
+  onAdd: (id: Id, size: WidgetSize) => void;
+  onRemove: (id: Id) => void;
+  renderWidget: (id: Id, size: WidgetSize) => ReactNode;
   onClose: () => void;
 }
 
@@ -219,12 +219,13 @@ interface AddWidgetPageProps {
  * Un widget déjà posé ne propose QUE « Retirer » : un « Passer en petit » du
  * même bleu que « Ajouter » se confondait avec lui (retour d'Axel, 2026-10-19).
  */
-const AddWidgetPage = ({ layout, onAdd, onRemove, renderWidget, onClose }: AddWidgetPageProps) => {
+const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, renderWidget, onClose }: AddWidgetPageProps<Id>) => {
   const { t } = useT('orgAdmin');
   const [query, setQuery] = useState('');
-  const [focus, setFocus] = useState<{ id: WidgetId; index: number } | null>(null);
+  const [focus, setFocus] = useState<{ id: Id; index: number } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  const sectionRefs = useRef<Partial<Record<WidgetSize, HTMLElement | null>>>({});
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const scrollRef = useRef<HTMLDivElement>(null);
   const { ref, dialogProps } = useModalA11y<HTMLDivElement>({
     open: true,
     onClose,
@@ -232,20 +233,37 @@ const AddWidgetPage = ({ layout, onAdd, onRemove, renderWidget, onClose }: AddWi
     initialFocusRef: searchRef,
   });
 
+  // Un widget multiple n'est jamais « déjà sur l'aperçu » : on peut toujours en ajouter un.
   const placed = useMemo(() => new Map(layout.map((w) => [w.id, w.size])), [layout]);
-  const name = (id: WidgetId) => t(`apercu.widgets.names.${id}`);
-  const desc = (id: WidgetId) => t(`apercu.widgets.desc.${id}`);
+  const placedSize = (id: Id) => (catalog.defs.find((d) => d.id === id)?.multi ? undefined : placed.get(id));
+  const name = (id: Id) => catalog.name(id);
+  const desc = (id: Id) => catalog.desc(id);
   const sizeName = (size: WidgetSize) => t(`apercu.widgets.sizes.${size}`);
 
   const needle = query.trim().toLocaleLowerCase();
-  const matches = (id: WidgetId) =>
+  const matches = (id: Id) =>
     !needle || `${name(id)} ${desc(id)}`.toLocaleLowerCase().includes(needle);
 
-  const sections = WIDGET_SIZES.map((size) => ({
-    size,
-    defs: WIDGET_DEFS.filter((d) => d.sizes.includes(size) && matches(d.id)),
-  }));
-  const nothing = sections.every((s) => s.defs.length === 0);
+  // Deux façons de ranger la fenêtre : par GROUPE quand le catalogue en
+  // déclare (tableau de bord perso : personnels puis professionnels, chaque
+  // widget une fois, en format moyen), sinon par FORMAT (Aperçu entreprise).
+  const previewSize = (sizes: readonly WidgetSize[]): WidgetSize => (sizes.includes('medium') ? 'medium' : sizes[0]);
+  const sections = catalog.groups
+    ? catalog.groups.map((g) => ({
+      key: g.id,
+      title: g.label,
+      hint: g.hint,
+      items: catalog.defs
+        .filter((d) => d.group === g.id && matches(d.id))
+        .map((d) => ({ id: d.id, size: previewSize(d.sizes) })),
+    }))
+    : WIDGET_SIZES.map((size) => ({
+      key: size as string,
+      title: sizeName(size),
+      hint: t(`apercu.widgets.picker.sectionHint_${size}`),
+      items: catalog.defs.filter((d) => d.sizes.includes(size) && matches(d.id)).map((d) => ({ id: d.id, size })),
+    }));
+  const nothing = sections.every((s) => s.items.length === 0);
 
   return (
     <motion.div
@@ -291,38 +309,46 @@ const AddWidgetPage = ({ layout, onAdd, onRemove, renderWidget, onClose }: AddWi
             />
           </label>
           <nav aria-label={t('apercu.widgets.picker.sectionsNav')} className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-0.5">
-            {sections.map(({ size, defs }) => (
+            {sections.map(({ key, title, items }) => (
               <button
-                key={size}
+                key={key}
                 type="button"
-                onClick={() => sectionRefs.current[size]?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                onClick={() => {
+                  // ⚠️ Jamais `scrollIntoView` : quand la section est la dernière,
+                  // la liste ne peut pas la monter en haut et le navigateur fait
+                  // défiler les ANCESTRES (overflow-hidden compris) — la fenêtre
+                  // partait dans le vide (2026-10-21). On ne fait défiler que la liste.
+                  const list = scrollRef.current;
+                  const section = sectionRefs.current[key];
+                  if (list && section) list.scrollTo({ top: section.offsetTop - 16, behavior: 'smooth' });
+                }}
                 className="shrink-0 min-h-touch inline-flex items-center gap-2 px-4 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm font-semibold text-[rgb(var(--color-text-primary))] hover:border-[rgb(var(--color-accent))]"
               >
-                {sizeName(size)}
-                <span className="text-xs tabular-nums text-[rgb(var(--color-text-muted))]">{defs.length}</span>
+                {title}
+                <span className="text-xs tabular-nums text-[rgb(var(--color-text-muted))]">{items.length}</span>
               </button>
             ))}
           </nav>
         </header>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5 space-y-8">
+        <div ref={scrollRef} className="relative flex-1 overflow-y-auto overscroll-contain px-5 py-5 space-y-8">
           {nothing && (
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('apercu.widgets.picker.searchEmpty', { query })}</p>
           )}
 
-          {sections.map(({ size, defs }) => defs.length > 0 && (
+          {sections.map(({ key, title, hint, items }) => items.length > 0 && (
             <section
-              key={size}
-              ref={(el) => { sectionRefs.current[size] = el; }}
-              aria-labelledby={`widget-section-${size}`}
+              key={key}
+              ref={(el) => { sectionRefs.current[key] = el; }}
+              aria-labelledby={`widget-section-${key}`}
               className="scroll-mt-4"
             >
-              <h2 id={`widget-section-${size}`} className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{sizeName(size)}</h2>
-              <p className="text-sm text-[rgb(var(--color-text-muted))] mb-3">{t(`apercu.widgets.picker.sectionHint_${size}`)}</p>
+              <h2 id={`widget-section-${key}`} className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{title}</h2>
+              {hint && <p className="text-sm text-[rgb(var(--color-text-muted))] mb-3">{hint}</p>}
               <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <AnimatePresence mode="popLayout" initial>
-                  {defs.map(({ id }, i) => {
-                    const current = placed.get(id);
+                  {items.map(({ id, size }, i) => {
+                    const current = placedSize(id);
                     return (
                       <motion.li
                         key={id}
@@ -336,7 +362,7 @@ const AddWidgetPage = ({ layout, onAdd, onRemove, renderWidget, onClose }: AddWi
                         {/* La miniature contient de vrais boutons : elle ne peut pas être
                             elle-même un bouton. Clic souris ici, clavier sur « Formats ». */}
                         <div
-                          onClick={() => setFocus({ id, index: widgetDef(id)?.sizes.indexOf(size) ?? 0 })}
+                          onClick={() => setFocus({ id, index: catalog.defs.find((d) => d.id === id)?.sizes.indexOf(size) ?? 0 })}
                           className="cursor-zoom-in rounded-xl"
                         >
                           <WidgetPreview size={size}>{renderWidget(id, size)}</WidgetPreview>
@@ -345,7 +371,7 @@ const AddWidgetPage = ({ layout, onAdd, onRemove, renderWidget, onClose }: AddWi
                           <p className="flex-1 min-w-0 text-base font-bold text-[rgb(var(--color-text-primary))]">{name(id)}</p>
                           <button
                             type="button"
-                            onClick={() => setFocus({ id, index: widgetDef(id)?.sizes.indexOf(size) ?? 0 })}
+                            onClick={() => setFocus({ id, index: catalog.defs.find((d) => d.id === id)?.sizes.indexOf(size) ?? 0 })}
                             aria-label={t('apercu.widgets.picker.seeFormats', { name: name(id) })}
                             className="shrink-0 min-h-[32px] px-2.5 rounded-lg text-xs font-semibold text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))]"
                           >
@@ -394,10 +420,11 @@ const AddWidgetPage = ({ layout, onAdd, onRemove, renderWidget, onClose }: AddWi
         <AnimatePresence>
           {focus && (
             <FormatCarousel
+              catalog={catalog}
               key={focus.id}
               id={focus.id}
               startIndex={focus.index}
-              placedSize={placed.get(focus.id)}
+              placedSize={placedSize(focus.id)}
               renderWidget={renderWidget}
               onAdd={onAdd}
               onRemove={onRemove}

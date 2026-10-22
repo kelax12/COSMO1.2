@@ -274,6 +274,49 @@ bloc prérendu ne sert qu'aux robots qui n'appliquent pas la CSS.
    nécessaires pour peindre un guide. Gain réseau d'environ 0,7 s, mais c'est l'architecture des
    providers (`AuthProvider` à la racine) qui est en jeu.
 
+#### 🔴 2026-10-21 · la home peint une copie de la landing, plus le texte SEO
+
+Le levier 1 avait un coût que personne n'avait mis en face du gain : sur `/`, le « prérendu
+peint » était le **texte SEO brut**, sans mise en page. Filmé en local (412 et 1 440 px, CPU ×4,
+4G lente) : **mur de texte** de 0 à 1,7 s, puis **squelette gris** (`LandingSkeleton`) jusqu'à
+3,2 s, puis la landing. Signalé par Axel comme un bug « corrigé huit fois » : chaque correctif
+traitait un cas (CSP, personne connectée le 10-16) sans toucher la décision de C-116, qui le
+recréait pour tout visiteur sans session. Trois issues proposées (spinner partout, LCP mobile
+rendu ; copie habillée ; statu quo), **Axel a choisi la copie**.
+
+- `/` et `/en/` peignent `#lp-hero` : le header et le hero **capturés sur le rendu React**
+  (`npm run capture:landing-hero`), avec leur CSS sortie de la feuille buildée et confinée
+  (`scripts/landing-hero-css.mjs`). Calque fixe **hors de `#root`** : `createRoot` ne l'efface pas,
+  l'attente de l'auth et le squelette passent dessous. `PersoTrack` le retire dans un
+  `useLayoutEffect`, sans rejouer les entrées du titre, du header ni le voile de `#track`.
+  Mécanique et sorties : `src/lib/prerender-hero.ts`.
+- **Le LCP aurait régressé sans `font-display: block` sur la copie.** En `swap`, elle se peignait
+  en police système, plus étroite : un bloc de 55 024 px² contre 57 195 pour le même bloc React
+  en Inter, qui **reprenait le LCP** à la relève (412 px, 3 passes : 4,6 à 5,9 s). En `block`
+  (Inter est préchargée) : LCP **1,17 à 1,42 s**, sur la copie, à FCP inchangé (1,0 à 1,2 s).
+- ⚠️ La copie est un **instantané**. `src/prerender-hero.guard.test.ts` compare l'empreinte des
+  sources du header et du hero à celle de la capture : il échoue dès que l'une bouge sans nouvelle
+  capture (vu rouge sur la modification de `LandingPage.tsx` du jour).
+- **Même jour, les autres pages prérendues.** Filmé à 412 px : le guide, le blog, les articles,
+  les `/pour-*`, l'à-propos, les pages légales et la connexion peignaient le texte SEO **sur fond
+  blanc**, puis le `PageLoader` (un autre spinner, sombre, centré dans 60vh), puis la page sombre.
+  L'entreprise, texte blanc puis squelette blanc puis landing noire.
+  - `/entreprise-presentation/` (et `/en/for-companies/`) : même copie que la home, en **deux
+    vues** (bureau 1 440 px, mobile 412 px, media query au seuil de `useIsMobile`) parce que la
+    pile du hero s'y rend autrement. La pile garde son image dans la copie : masquée, React la
+    peignait plus grande et **reprenait le LCP à 6,4 s** ; visible, LCP **0,9 à 1,6 s** sur la copie.
+    `useIsMobile` calcule désormais son état au premier rendu (il rendait la version bureau une
+    image avant de basculer, sur toutes les pages qui l'utilisent).
+  - **Pages de contenu : spinner, arbitré par Axel** (le texte habillé gardait un saut, le vrai
+    prérendu React est un chantier à part). `prerender.mjs` ne leur pose plus `data-prerendered` :
+    spinner de démarrage, puis `BootScreen` (même classe, même CSS, plein écran) jusqu'à la page.
+    Le spinner prend les couleurs **exactes** du thème : `html[data-boot-theme]`, posé par le
+    script inline (thème enregistré) puis par `applyTheme()`.
+  - ⚠️ **Le LCP mobile de ces pages est rendu en connaissance de cause** : il n'est plus un
+    texte peint avant React. Mesuré en local (412 px, CPU ×4, 4G lente) : 2,4 à 3,4 s, **4,8 s sur
+    `/guide/`**, contre 0,6 à 1,2 s pour le texte brut. Moins que redouté, parce que l'app se charge
+    désormais sans attendre une peinture. À relire au prochain Lighthouse CI mobile.
+
 ✅ **Corrigé le même jour, côté mesure** : le résumé CI mobile lisait `.lighthouseci-mobile`, un
 dossier jamais écrit (aucun `lhci upload` mobile), et `upload-artifact` ignorait `.lighthouseci/`
 parce que c'est un dossier caché (`include-hidden-files`). Aucun rapport Lighthouse, desktop ou

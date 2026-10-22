@@ -97,7 +97,8 @@
       "confirm": "Supprimer"
     },
     "collaboratorsTitle": "Collaborateurs",
-    "deleteTitle": "Supprimer"
+    "deleteTitle": "Supprimer",
+    "bookmark": "Favori"
   },
   "collaborative": {
     "shared_one": "{{count}} tâche partagée",
@@ -143,7 +144,16 @@
     "markUndone": "Marquer « {{name}} » comme non terminée",
     "completedToast": "« {{name}} » terminée",
     "sourcePersonal": "Perso",
-    "sourceTeam": "Équipe"
+    "sourceTeam": "Équipe",
+    "overdueBanner_one": "{{count}} tâche en retard",
+    "overdueBanner_many": "{{count}} de tâches en retard",
+    "overdueBanner_other": "{{count}} tâches en retard",
+    "replanAll": "Tout replanifier à aujourd'hui",
+    "plannedCount_one": "{{count}} tâche prévue",
+    "plannedCount_many": "{{count}} de tâches prévues",
+    "plannedCount_other": "{{count}} tâches prévues",
+    "nothingPlanned": "Rien d'autre de prévu aujourd'hui.",
+    "schedule": "Planifier"
   },
   "collab": {
     "removeShare": "Supprimer"
@@ -169,5 +179,82 @@
     "events_many": "{{count}} de rendez-vous",
     "events_other": "{{count}} rendez-vous",
     "at": "Journée bouclée à {{time}}."
+  },
+  "widgets": {
+    "names": {
+      "stats": "Statistiques",
+      "today": "Aujourd'hui",
+      "priorityTasks": "Tâches prioritaires",
+      "collaborativeTasks": "Tâches collaboratives",
+      "okrs": "OKR en cours",
+      "habits": "Habitudes du jour",
+      "agenda": "Agenda du jour",
+      "taskList": "Liste de tâches",
+      "teamTasks": "Mes tâches d'équipe",
+      "review": "À valider"
+    },
+    "desc": {
+      "stats": "Tâches, rendez-vous, habitudes et résultats clés de la période.",
+      "today": "Vos tâches perso et d'équipe du jour, réunies.",
+      "priorityTasks": "Les tâches à faire en premier.",
+      "collaborativeTasks": "Les tâches partagées avec vos amis.",
+      "okrs": "La progression de vos objectifs.",
+      "habits": "Les habitudes à cocher aujourd'hui.",
+      "agenda": "Vos rendez-vous d'aujourd'hui, dans l'ordre.",
+      "taskList": "Une de vos listes, au choix. Posable plusieurs fois.",
+      "teamTasks": "Les tâches d'entreprise qui vous sont attribuées.",
+      "review": "Les tâches terminées par vos collègues, à valider."
+    },
+    "groups": {
+      "perso": "Widgets personnels",
+      "pro": "Widgets professionnels"
+    }
+  },
+  "okrWidget": {
+    "choose": "Objectif affiché",
+    "noKeyResult": "Aucun résultat clé pour cet objectif."
+  },
+  "habitsWidget": {
+    "viewList": "Vue liste",
+    "viewWeek": "Vue semaine",
+    "dayCell": "{{name}}, {{date}}",
+    "done": "fait",
+    "notDone": "pas fait"
+  },
+  "dw": {
+    "agenda": {
+      "count_one": "{{count}} rendez-vous",
+      "count_many": "{{count}} de rendez-vous",
+      "count_other": "{{count}} rendez-vous",
+      "empty": "Aucun rendez-vous aujourd'hui.",
+      "next": "Prochain",
+      "open": "Ouvrir l'agenda"
+    },
+    "list": {
+      "choose": "Liste affichée",
+      "open_one": "{{count}} tâche ouverte",
+      "open_many": "{{count}} de tâches ouvertes",
+      "open_other": "{{count}} tâches ouvertes",
+      "empty": "Aucune tâche ouverte dans cette liste.",
+      "noLists": "Aucune liste pour le moment.",
+      "create": "Créer une liste"
+    },
+    "team": {
+      "open_one": "{{count}} tâche ouverte",
+      "open_many": "{{count}} de tâches ouvertes",
+      "open_other": "{{count}} tâches ouvertes",
+      "empty": "Aucune tâche d'équipe ouverte.",
+      "seeAll": "Tout voir"
+    },
+    "review": {
+      "count_one": "{{count}} tâche à valider",
+      "count_many": "{{count}} de tâches à valider",
+      "count_other": "{{count}} tâches à valider",
+      "empty": "Rien à valider.",
+      "approve": "Valider",
+      "sendBack": "Renvoyer",
+      "approveName": "Valider « {{name}} »",
+      "sendBackName": "Renvoyer « {{name}} »"
+    }
   }
 }
