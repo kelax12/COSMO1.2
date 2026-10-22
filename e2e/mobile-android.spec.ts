@@ -212,7 +212,10 @@ test.describe('C-97 — mode paysage', () => {
     '/dashboard': 0,
     '/habits': 0,
     '/settings': 0,
-    '/agenda': 447,
+    // 447 → 0 le 2026-10-22 : la barre d'outils de l'en-tête (`md:` et plus),
+    // une rangée sans retour à la ligne plus large que sa colonne ; « Nouveau »
+    // était coupé. Elle se replie désormais (`AgendaDesktopHeader`).
+    '/agenda': 0,
     // 619 → 0 le 2026-09-23 : c'était la rangée de puces de listes, un
     // carrousel qui se fait défiler (cf. `horizontalOverflow`), pas une perte.
     '/tasks': 0,
