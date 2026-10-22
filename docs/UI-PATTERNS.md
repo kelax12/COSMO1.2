@@ -12,7 +12,19 @@
 
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → 84 → 86 → 86 → **85 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**)
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → 84 → 86 → 86 → 85 → **85 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → **2026-10-22**)
+
+> ### ⚪ 2026-10-22 · 0 : `AssignRoleDialog` remesuré, la garde vue mordre
+>
+> Le −1 du 2026-10-15 est remboursé depuis le 2026-10-16 ; ce jour le vérifie au lieu de le reprendre.
+> Mesures du 2026-10-22, dépôt à `HEAD` (branche de la PR).
+>
+> | Item | Avant | Après |
+> |---|---|---|
+> | `loading-empty-state` (C-40) sur `AssignRoleDialog` | vert : `isLoading` des deux lectures (`roles`, `assignments`) lu, squelette `aria-busy` tant que l'une manque (`origin/main` à `5eaa8b8c`) | inchangé ; **vu rouge** sur la version fautive remise exprès (`data: roles = []` sans `isLoading`) : la garde nomme `AssignRoleDialog.tsx → roles`. Vert sur la vraie |
+> | Squelette observé | jamais regardé par un parcours | le cas clavier attend la fin d'`aria-busy` avant de mesurer, sur `chromium` et `mobile-safari`. ⚠️ En démo, la lecture répond tout de suite : le squelette n'a pas été vu à l'œil |
+>
+> **85 → 85.**
 
 > ### 🟠 2026-10-20 · −1 : la refonte de l'Aperçu passée sans référence visuelle
 >
