@@ -36,11 +36,25 @@ const CookieBanner: React.FC = () => {
   const light = useLocation().pathname === '/';
   const pick = (onLanding: string, themed: string) => (light ? onLanding : themed);
 
+  // ⚡ Le bandeau attend le PREMIER GESTE, plus un délai de 1,2 s après le montage.
+  // Monté sans geste, il était l'élément LCP de `/en/` (5,9 à 6,0 s en CI le
+  // 2026-10-22) : son premier paragraphe dépasse le titre anglais de la copie
+  // `#lp-hero`, et le couper ne tenait qu'à certaines largeurs. Chrome cesse de
+  // mesurer le LCP au premier geste : affiché après lui, le bandeau ne peut plus
+  // l'être, à aucune largeur. Sans geste, rien n'est déposé (`null` n'est pas une
+  // acceptation). Pas de `scroll` : un défilement programmatique le déclencherait
+  // sans geste (docs/PERFORMANCE.md, section du 2026-10-22).
   useEffect(() => {
     const stored = readConsent();
     if (!stored) {
-      const timer = setTimeout(() => setVisible(true), 1200);
-      return () => clearTimeout(timer);
+      const gestes = ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const;
+      const options: AddEventListenerOptions = { capture: true, passive: true };
+      const montrer = () => {
+        gestes.forEach((g) => window.removeEventListener(g, montrer, options));
+        setVisible(true);
+      };
+      gestes.forEach((g) => window.addEventListener(g, montrer, options));
+      return () => gestes.forEach((g) => window.removeEventListener(g, montrer, options));
     }
     stampLegacyConsent();
     setConsent(stored);
