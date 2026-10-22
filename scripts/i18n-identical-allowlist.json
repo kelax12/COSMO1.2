@@ -77,6 +77,10 @@
       "categorie": "mot-identique",
       "valeur": "Notes"
     },
+    "csv.col.krId": {
+      "categorie": "sigle",
+      "valeur": "KR ID"
+    },
     "csv.col.okrId": {
       "categorie": "sigle",
       "valeur": "OKR ID"

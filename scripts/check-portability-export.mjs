@@ -181,7 +181,44 @@ const EXPORTS = {
       user_id: 'Identifiant interne du compte.',
       created_at: 'Métadonnée technique.',
       updated_at: 'Métadonnée technique.',
-      completed_at: "Non saisi : posé par le produit à la complétion. Le journal `kr_completions` en porte la trace, et il n'est pas exporté (cf. plus bas).",
+      completed_at: "Non saisi : posé par le produit à la complétion. Le journal `kr_completions` en porte chaque occurrence, et il est exporté (cf. plus bas).",
+    },
+  },
+  // Déclaré dans TABLES_NON_EXPORTEES (« discutable, à rouvrir ») jusqu'au
+  // 2026-10-22 : c'est la seule trace de QUAND chaque résultat clé a été atteint.
+  kr_completions: {
+    fonction: 'exportKRCompletionsCSV',
+    exporte: {
+      completed_at: 'completedAt',
+      okr_id: 'okrId',
+      okr_title: 'okrTitle',
+      kr_id: 'krId',
+      kr_title: 'krTitle',
+    },
+    exclu: {
+      id: "Identifiant technique d'une ligne de journal : rien ne la référence, seul son contenu fait foi.",
+      user_id: 'Identifiant interne du compte.',
+      created_at: "Métadonnée technique (écriture de la ligne). L'instant qui compte, `completed_at`, est exporté.",
+    },
+  },
+  // Mig. 219. Déclarée non exportée du 2026-10-15 au 2026-10-22. Le rôle est
+  // décidé par l'organisation, mais il CONCERNE la personne : quels droits, de
+  // quand à quand. ⚠️ La policy SELECT est `is_org_member(org_id)` : le filtre
+  // sur la personne vit dans `getMyAssignments`, pas en base.
+  org_member_roles: {
+    fonction: 'exportOrgRolesCSV',
+    exporte: {
+      org_id: 'organization',
+      role_id: 'role',
+      starts_at: 'startsAt',
+      ends_at: 'endsAt',
+    },
+    exclu: {
+      id: "Identifiant technique de l'attribution. Le rôle et l'organisation, eux, sont exportés.",
+      user_id: "Identifiant interne du compte : toutes les lignes du fichier sont les siennes.",
+      granted_by: "Désigne une AUTRE personne (qui a attribué le rôle) : donnée de tiers.",
+      created_at: "Métadonnée technique. La période effective, `starts_at` et `ends_at`, est exportée.",
+      expiry_notified_at: "Marque technique du job d'expiration (notification envoyée), pas une donnée fournie.",
     },
   },
   categories: {
@@ -224,7 +261,6 @@ const EXPORTS = {
  * plus gros trou possible.
  */
 const TABLES_NON_EXPORTEES = {
-  kr_completions: "Journal des complétions de résultats clés. Il alimente le temps investi (`workTimeCalculator`), qui est DÉRIVÉ et non fourni. ⚠️ Discutable : c'est la trace de QUAND le travail a été fait, et la même question s'était posée pour `completed_at` des tâches, ajoutée le 2026-09-02. À rouvrir si un export doit permettre de reconstituer l'historique.",
   friends: "Identifiants d'AUTRES personnes.",
   friend_requests: "Identifiants et adresses de TIERS.",
   subscriptions: "État d'abonnement, fourni par Stripe et non par la personne. Les pièces comptables relèvent de `payment_records`, conservé.",
@@ -249,9 +285,6 @@ const TABLES_NON_EXPORTEES = {
   org_saved_views: "Combinaisons de filtres nommées (mig. 192) : un réglage d'interface, sans contenu de travail.",
   org_member_capacity: "Capacité hebdomadaire déclarée pour la personne, le plus souvent PAR son responsable (mig. 196) : une donnée de planification de l'organisation. ⚠️ Discutable quand la personne l'a saisie elle-même : à rouvrir si l'export doit restituer les réglages.",
   org_member_secondary_managers: "Lien hiérarchique secondaire décidé par l'organisation (mig. 196), qui désigne une AUTRE personne.",
-  // Mig. 219 (2026-10-12), déclarée le 2026-10-15 : la garde la voyait sans
-  // décision depuis l'application de la migration.
-  org_member_roles: "Rôle personnalisé attribué à la personne PAR l'organisation (détenteur de `role.manage`, mig. 219), pour une durée qu'elle fixe : des droits accordés, pas une donnée fournie. Même raison que `org_member_permissions`, et `granted_by` désigne une AUTRE personne.",
 };
 
 // ── Lecture du schéma ──────────────────────────────────────────────

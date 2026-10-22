@@ -11,6 +11,8 @@ import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
 import { useCategories } from '@/modules/categories';
 import { useLists } from '@/modules/lists';
+import { useKRCompletionsExport } from '@/modules/kr-completions';
+import { useMyOrgRoleAssignments } from '@/modules/organizations/roles.queries';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   exportTasksCSV,
@@ -21,6 +23,8 @@ import {
   exportCategoriesCSV,
   exportListsCSV,
   exportProfileCSV,
+  exportKRCompletionsCSV,
+  exportOrgRolesCSV,
   exportAllCSV,
 } from '@/lib/csv-export';
 import { toast } from '@/lib/toast';
@@ -43,6 +47,10 @@ export function DataTab() {
   const { data: okrs = [] } = useOkrs();
   const { data: categories = [] } = useCategories();
   const { data: lists = [] } = useLists();
+  // Le journal des KR (QUAND chaque résultat clé a été atteint) et les rôles
+  // reçus dans une organisation : déclarés non exportés jusqu'au 2026-10-22.
+  const { data: krCompletions = [] } = useKRCompletionsExport();
+  const { data: orgRoles = [] } = useMyOrgRoleAssignments();
   const { user } = useAuth();
   const localizedPath = useLocalizedPath();
   const [importOpen, setImportOpen] = useState(false);
@@ -68,16 +76,18 @@ export function DataTab() {
     { label: t('data.okrs'), icon: FileSpreadsheet, count: okrs.length, run: () => { exportOKRsCSV(okrs); toast.success(t('data.okrsExported', { count: okrs.length })); } },
     { label: t('data.categories'), icon: FileSpreadsheet, count: categories.length, run: () => { exportCategoriesCSV(categories); toast.success(t('data.categoriesExported', { count: categories.length })); } },
     { label: t('data.lists'), icon: FileSpreadsheet, count: lists.length, run: () => { exportListsCSV(lists); toast.success(t('data.listsExported', { count: lists.length })); } },
+    { label: t('data.krCompletions'), icon: FileSpreadsheet, count: krCompletions.length, run: () => { exportKRCompletionsCSV(krCompletions); toast.success(t('data.krCompletionsExported', { count: krCompletions.length })); } },
+    { label: t('data.orgRoles'), icon: FileSpreadsheet, count: orgRoles.length, run: () => { exportOrgRolesCSV(orgRoles); toast.success(t('data.orgRolesExported', { count: orgRoles.length })); } },
     { label: t('data.profile'), icon: FileSpreadsheet, count: 1, run: () => { exportProfileCSV(profile); toast.success(t('data.profileExported')); } },
   ];
 
   const handleExportAll = () => {
-    exportAllCSV({ tasks, taskDependencies, habits, events, okrs, categories, lists, profile });
+    exportAllCSV({ tasks, taskDependencies, habits, events, okrs, categories, lists, krCompletions, orgRoles, profile });
     toast.success(t('data.exportingAll'), {
       description: t('data.exportingAllHint', {
         count:
           tasks.length + taskDependencies.length + habits.length + events.length + okrs.length
-          + categories.length + lists.length,
+          + categories.length + lists.length + krCompletions.length + orgRoles.length,
       }),
     });
   };
