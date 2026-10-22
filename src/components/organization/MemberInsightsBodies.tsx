@@ -216,11 +216,11 @@ const TaskRow = ({ task, project, canEdit, onEdit, selection }: { task: TeamTask
           </span>
         )}
       </span>
-      <span className={`hidden sm:block text-xs ${overdue ? 'text-red-500 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
+      <span className={`hidden sm:block text-xs ${overdue ? 'text-[rgb(var(--color-danger-text))] font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
         {task.deadline ? format(parseISO(task.deadline), 'd MMM', { locale: getDateLocale() }) : ''}
       </span>
       <span className="text-[10px] font-semibold text-[rgb(var(--color-text-muted))] text-right whitespace-nowrap">
-        {overdue && <span className="sm:hidden text-red-500 mr-1">{tOrgAdmin('insights.overdue')}</span>}
+        {overdue && <span className="sm:hidden text-[rgb(var(--color-danger-text))] mr-1">{tOrgAdmin('insights.overdue')}</span>}
         {priorityLabel(task.priority)}
       </span>
     </>
@@ -401,7 +401,7 @@ const ContributionView = ({ total, done, open, overdue, completionRate, orgRate,
         <div className="rounded-2xl border border-[rgb(var(--color-border))] p-4">
           <p className="text-xs text-[rgb(var(--color-text-muted))]">{tOrgAdmin('insights.inProgressShort')}</p>
           <p className="text-2xl font-bold text-indigo-500">{open}</p>
-          <p className={`text-xs ${overdue > 0 ? 'text-red-500 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
+          <p className={`text-xs ${overdue > 0 ? 'text-[rgb(var(--color-danger-text))] font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
             {t('popups.member.overdueCount', { count: overdue })}
           </p>
         </div>
