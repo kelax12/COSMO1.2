@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
-import { AnimatePresence, motion, useReducedMotion, type PanInfo } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion, type InertiaOptions, type PanInfo } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, LayoutGrid, LayoutTemplate, Pencil, Plus, RotateCcw, Undo2, X } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import {
@@ -39,6 +39,15 @@ const SIZE_LETTER: Record<WidgetSize, 'S' | 'M' | 'L'> = { small: 'S', medium: '
 const SPRING = { type: 'spring', stiffness: 420, damping: 34, mass: 0.9 } as const;
 const POP = { type: 'spring', stiffness: 520, damping: 24 } as const;
 
+/**
+ * Retour instantané d'un bloc lâché, sous mouvement réduit. `dragSnapToOrigin`
+ * anime x/y par `animateMotionValue` SANS consulter `reducedMotion` (lu dans
+ * `VisualElementDragControls`, framer-motion 12.43) : le bloc revenait en
+ * glissant ~400 ms. `{ type: false }` est la transition instantanée de
+ * motion-dom ; elle manque au type `InertiaOptions`, d'où la conversion.
+ */
+const INSTANT_DRAG_SNAP = { type: false } as unknown as InertiaOptions;
+
 /** Délai minimal entre deux permutations pendant un glisser, contre l'oscillation. */
 const SWAP_COOLDOWN_MS = 140;
 
@@ -56,12 +65,17 @@ const SWAP_COOLDOWN_MS = 140;
  * (2026-10-19 à 2026-10-22, « mode ouvert par la personne ») qui faisait
  * vibrer les blocs EN BOUCLE chez qui demande moins d'animation. ❌ Ne pas le
  * remettre : `e2e/reduced-motion-widgets.spec.ts` échoue s'il revient.
- * Sous mouvement réduit, Framer rend instantanés `layout` et les transforms
- * (`{ type: false }`) : les blocs SAUTENT à leur place, le glisser marche
- * toujours (le geste n'est pas une animation). Ce que `type: false` ne règle
- * pas est coupé à la main via `reduce` : la vibration (une boucle instantanée
- * laisserait un `rotate` résiduel), le défilement doux. Aucune position finale
- * ne dépend d'une animation : la grille CSS place, l'animation suit.
+ * Sous mouvement réduit, ce que le `MotionConfig` ne couvre pas est coupé à la
+ * main via `reduce`, trois trous mesurés en CI le 2026-10-22 :
+ *   · `layout` / `layoutId` RETIRÉS : Framer rend l'animation de layout
+ *     instantanée PUIS replace le bloc à son ancienne position pour une frame
+ *     (`mixTargetDelta(0)`), un saut aller-retour de 260 px. Sans `layout`, la
+ *     grille CSS place directement ; le glisser reste corrigé (la
+ *     fonctionnalité `drag` mesure le layout elle-même) ;
+ *   · retour du bloc lâché : `INSTANT_DRAG_SNAP` ;
+ *   · la vibration (une boucle instantanée laisserait un `rotate` résiduel), le
+ *     défilement doux.
+ * Aucune position finale ne dépend d'une animation : la grille CSS place.
  *
  * ⚠️ Un geste n'est jamais le seul chemin (WCAG 2.1.1) : flèches et choix de
  * format restent au clavier. En édition, le contenu des widgets est `inert`.
@@ -187,7 +201,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                   <motion.button
                     key="reset"
                     type="button"
-                    layout
+                    layout={!reduce}
                     initial={{ opacity: 0, y: -10, scale: 0.85 }}
                     animate={{ opacity: 1, y: 0, scale: 1, transition: POP }}
                     exit={{ opacity: 0, y: -10, scale: 0.85 }}
@@ -202,7 +216,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                 roleTemplate && <motion.button
                   key="templates"
                   type="button"
-                  layout
+                  layout={!reduce}
                   initial={{ opacity: 0, y: -10, scale: 0.85 }}
                   animate={{ opacity: 1, y: 0, scale: 1, transition: { ...POP, delay: 0.08 } }}
                   exit={{ opacity: 0, y: -10, scale: 0.85 }}
@@ -217,7 +231,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                 <motion.button
                   key="add"
                   type="button"
-                  layout
+                  layout={!reduce}
                   initial={{ opacity: 0, y: -10, scale: 0.85 }}
                   animate={{ opacity: 1, y: 0, scale: 1, transition: { ...POP, delay: 0.1 } }}
                   exit={{ opacity: 0, y: -10, scale: 0.85 }}
@@ -234,7 +248,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                 <motion.button
                   key="done"
                   type="button"
-                  layout
+                  layout={!reduce}
                   initial={{ opacity: 0, y: -10, scale: 0.85 }}
                   animate={{ opacity: 1, y: 0, scale: 1, transition: { ...POP, delay: 0.15 } }}
                   exit={{ opacity: 0, y: -10, scale: 0.85 }}
@@ -250,7 +264,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
               <motion.button
                 key="edit"
                 type="button"
-                layout
+                layout={!reduce}
                 initial={{ opacity: 0, scale: 0.85 }}
                 animate={{ opacity: 1, scale: 1, transition: POP }}
                 exit={{ opacity: 0, scale: 0.85 }}
@@ -358,13 +372,14 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                   <motion.li
                     key={w.id}
                     data-widget={w.id}
-                    layout
+                    layout={!reduce}
                     transition={SPRING}
                     initial={lit && highlight?.entering ? { opacity: 0, scale: 0.4, y: 60 } : false}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.3, rotate: -6, filter: 'blur(8px)', transition: { duration: 0.38, ease: [0.4, 0, 0.2, 1] } }}
                     drag={editing}
                     dragSnapToOrigin
+                    dragTransition={reduce ? INSTANT_DRAG_SNAP : undefined}
                     dragMomentum={false}
                     dragElastic={0.18}
                     onDragStart={() => setDragged(w.id)}
@@ -467,7 +482,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                                   >
                                     {active && (
                                       <motion.span
-                                        layoutId={`size-pill-${w.id}`}
+                                        layoutId={reduce ? undefined : `size-pill-${w.id}`}
                                         transition={POP}
                                         className="absolute inset-0 rounded-full bg-[rgb(var(--color-accent))]"
                                         aria-hidden="true"
