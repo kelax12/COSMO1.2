@@ -10,7 +10,7 @@
   "src/pages/landing/hero-modules.ts": "72920db3d407f205",
   "src/locales/fr/landing.json": "198eafe8a0ace328",
   "src/locales/en/landing.json": "42ea35ff0c64da86",
-  "src/pages/landing/entreprise/EnterpriseTrack.tsx": "ec207d358b4175b8",
+  "src/pages/landing/entreprise/EnterpriseTrack.tsx": "6ab0325b4b781c7b",
   "src/pages/landing/entreprise/EnterpriseHero.tsx": "89b9eef3cb6a7e46",
   "src/pages/landing/entreprise/HeroStack.tsx": "bb52897f5d370e3f",
   "src/pages/landing/entreprise/free-offer.ts": "67d4b1ee66f8694b",
