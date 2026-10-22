@@ -80,7 +80,32 @@ Sécurité : [`faille.md`](./faille.md) fait foi.
 
 ## Ouvert · le détail de chaque item
 
-### C-121 · Supprimer les comptes inactifs depuis 3 ans · **P3 · M** · ⏳ promesse publiée, traitement absent
+### C-121 · Supprimer les comptes inactifs depuis 3 ans · **P3 · M** · 🟢 **mig. 226 en prod, reste le déploiement des deux fonctions**
+
+> ✅ **2026-10-22 · le traitement existe.** Mig. `226` **appliquée** (ledger `20261021225038`, corps
+> relu au catalogue : filtre `tier_key <> 'free'` présent, `EXECUTE` refusé à `anon` et
+> `authenticated`, RLS active, **0** compte dû ce jour). Preuve jouée AVANT en transaction annulée,
+> `supabase/proofs/226.proof.sql` : **14/14**, dont les deux témoins (un compte connecté hier, un
+> compte vu hier par `last_seen_at` malgré une connexion vieille de 4 ans : jamais visés), un client
+> épargné, un retour après l'avertissement qui annule l'effacement ; annulation vérifiée (ni table,
+> ni fonction, ni compte de test laissés).
+>
+> | Pièce | Rôle |
+> |---|---|
+> | `supabase/functions/inactive-accounts` | avertit (Resend, 50 par jour au plus), trace APRÈS l'envoi, puis demande l'effacement des comptes dus (20 par jour au plus) |
+> | `delete-account`, mode cron | efface par le MÊME chemin que les Réglages, seulement avec `x-cron-secret` ET si `account_inactivity_deletion_due()` le confirme : un secret volé n'efface rien qui ne serait pas dû |
+> | `.github/workflows/inactive-accounts.yml` | tous les jours à 06:37 UTC |
+> | `src/inactive-accounts.guard.test.ts` | texte de l'e-mail, ordre envoi → trace, revérification avant effacement |
+>
+> 🔴 **Ce que la conception a corrigé en route** : `last_sign_in_at` seul aurait visé quelqu'un qui
+> ouvre l'app tous les jours sans se reconnecter (il ne bouge pas au rafraîchissement de session) ;
+> l'activité est `greatest(last_sign_in_at, profiles.last_seen_at, created_at)`. Et
+> `org_subscriptions.status` vaut `active` par défaut **même au palier gratuit** : sans
+> `tier_key <> 'free'`, tout propriétaire d'organisation aurait été tenu pour client.
+>
+> **Reste, et c'est ce qui ferme l'item** : déployer `inactive-accounts` et `delete-account` depuis
+> `main` après fusion (`supabase functions deploy <slug> --use-api`), puis voir le premier run du
+> workflow rendre `200` avec `toWarn: 0`. Jusque-là `Edge deploy drift` est rouge, et c'est juste.
 
 | Item | Constat | Ce qui prouve que c'est fini |
 |---|---|---|
