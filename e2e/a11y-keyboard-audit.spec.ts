@@ -207,11 +207,18 @@ async function measureFocus(
  * passerait un jeu de contrôles plus indulgent que la bibliothèque de
  * référence n'aurait rien prouvé.
  */
-function assertModalTrapsFocus(surface: string, report: FocusReport): void {
+function assertModalTrapsFocus(
+  surface: string,
+  report: FocusReport,
+  // `alertdialog` pour une confirmation destructive (`useModalA11y`, option
+  // `role`). Le rôle attendu est DÉCLARÉ par le cas, jamais deviné : une
+  // surface qui changerait de rôle fait toujours rougir.
+  expectedRole: 'dialog' | 'alertdialog' = 'dialog',
+): void {
   expect(report.focusMovedIn, `${surface}: focus resté sur ${report.focusedOnOpen}`).toBe(true);
   expect(report.trapped, `${surface}: focus sorti sur ${report.firstEscapee}`).toBe(true);
   expect(report.escClosed, `${surface}: Échap ne ferme pas`).toBe(true);
-  expect(report.role, `${surface}: pas de role="dialog"`).toBe('dialog');
+  expect(report.role, `${surface}: pas de role="${expectedRole}"`).toBe(expectedRole);
   expect(report.ariaModal, `${surface}: pas d'aria-modal`).toBe('true');
   // 🔴 `focusReturned` est IMPRIMÉ, jamais assertionné, et ce n'est pas une
   // complaisance : mesuré le 2026-09-05, le TÉMOIN Radix lui-même le rend
@@ -754,11 +761,16 @@ async function ouvrirParRaccourci(page: Page, touche: string, dialog: Locator): 
   }).toPass({ timeout: 30_000 });
 }
 
-async function mesurerSurface(page: Page, surface: string, dialog: Locator): Promise<void> {
+async function mesurerSurface(
+  page: Page,
+  surface: string,
+  dialog: Locator,
+  expectedRole: 'dialog' | 'alertdialog' = 'dialog',
+): Promise<void> {
   await expect(dialog).toBeVisible({ timeout: 20_000 });
   const report = await measureFocus(page, dialog, true);
   console.log(`[a11y-kbd] ${surface}`, JSON.stringify(report));
-  assertModalTrapsFocus(surface, report);
+  assertModalTrapsFocus(surface, report, expectedRole);
 }
 
 test('MESURE · TeamTaskModal (« Nouvelle tâche » d\'équipe)', async ({ demoPage: page }) => {
@@ -784,7 +796,14 @@ test('MESURE · DeleteObjectiveConfirm (suppression d\'un objectif)', async ({ d
     page,
     page.getByRole('button', { name: /^supprimer l'objectif$/i }).filter({ visible: true }).first(),
   );
-  await mesurerSurface(page, 'DeleteObjectiveConfirm', page.getByRole('dialog', { name: /^supprimer l'objectif$/i }));
+  // Confirmation destructive : `role="alertdialog"` (vu en CI le 2026-10-22, le cas
+  // cherchait un `dialog` et expirait sur une surface pourtant ouverte).
+  await mesurerSurface(
+    page,
+    'DeleteObjectiveConfirm',
+    page.getByRole('alertdialog', { name: /^supprimer l'objectif$/i }),
+    'alertdialog',
+  );
 });
 
 test('MESURE · QuickEventCard (création rapide sur un créneau)', async ({ demoPage: page }) => {
@@ -818,7 +837,8 @@ test('MESURE · TodayTasks (confirmation de suppression, tableau de bord)', asyn
   // Les actions d'une ligne sont révélées AU FOCUS (`focus-within`) : Tab les
   // atteint, et c'est ce chemin qu'on emprunte.
   await ouvrirAuClavier(page, page.getByRole('button', { name: /^supprimer : /i }).first());
-  await mesurerSurface(page, 'TodayTasks', page.getByRole('dialog', { name: /^supprimer la tâche$/i }));
+  // Confirmation destructive : `role="alertdialog"`, comme DeleteObjectiveConfirm.
+  await mesurerSurface(page, 'TodayTasks', page.getByRole('alertdialog', { name: /^supprimer la tâche$/i }), 'alertdialog');
 });
 
 test('MESURE · QuickAddBar (touche N)', async ({ demoPage: page }) => {
