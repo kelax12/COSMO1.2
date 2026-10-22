@@ -69,7 +69,7 @@ export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, on
           style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
         <div className="flex items-center gap-2">
           <span className="truncate" title={task.name}>{task.name}</span>
-          <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 shrink-0">
+          <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 shrink-0">
             <UsersRound size={10} aria-hidden="true" /> {t('team.badge')}
           </span>
           <span className="inline-flex items-center gap-1.5 text-caption shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }}>
@@ -100,7 +100,7 @@ export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, on
       </td>
       <td className="px-2 py-4 whitespace-nowrap text-base font-medium">
         {task.deadline
-          ? <span className={overdue ? 'text-red-500 font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</span>
+          ? <span className={overdue ? 'text-[rgb(var(--color-danger-text))] font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</span>
           : <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('card.noDeadline')}</span>}
       </td>
       <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>

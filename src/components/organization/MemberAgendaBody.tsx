@@ -377,7 +377,7 @@ export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) 
                           <Clock size={11} aria-hidden="true" /> {task.estimatedTime && task.estimatedTime > 0 ? `${task.estimatedTime} min` : '1 h'}
                         </span>
                         {task.deadline && (
-                          <span className={`inline-flex items-center gap-1 ${overdue ? 'text-red-500 font-semibold' : ''}`}>
+                          <span className={`inline-flex items-center gap-1 ${overdue ? 'text-[rgb(var(--color-danger-text))] font-semibold' : ''}`}>
                             <CalendarClock size={11} aria-hidden="true" /> {task.deadline}
                           </span>
                         )}
