@@ -1,21 +1,37 @@
 # CLAUDE.md — COSMO 1.2
 
 Guide de travail dans ce dépôt. **Ce fichier est chargé à CHAQUE session : il reste court.**
-
-🔴 **Il a pesé 2 070 lignes et ~43 000 tokens le 2026-09-16**, contre 17,8 ko dix semaines plus tôt.
-Tout son contenu de niche est descendu d un cran, **sans une coupe** : dans le `CLAUDE.md` du
-dossier concerné (chargé seulement quand ce code est touché) ou dans le doc de `docs/` qui fait
-déjà foi. La table ci-dessous dit où.
+Le contenu de niche vit un cran plus bas (table ci-dessous). Plafond tenu par `npm run check:docs`.
 
 ❌ **Ne jamais réécrire un récit d incident ici.** Un incident s écrit **une fois**, dans le doc de
-son domaine. Le `CLAUDE.md` concerné n en garde que l interdit, en une ligne. C est l absence de
-cette règle qui a produit 78 commits sur ce seul fichier en trente jours, et des affirmations
-fausses restées en place pendant des jours parce que le fichier était trop gros pour être relu.
+son domaine ; le `CLAUDE.md` concerné n en garde que l interdit, en une ligne. Pourquoi :
+[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) § AM-1.
 
-✅ Cliquet : `npm run check:docs` refuse ce fichier au-delà de son plafond.
+---
 
-🗺️ **Pour trouver un fichier, une table ou un écran : [`docs/MODULES.md`](./docs/MODULES.md).**
-À ouvrir avant de chercher à l'aveugle.
+## 🪐 COSMO en 30 secondes
+
+**Produit** : app de productivité (tâches, habitudes, agenda, OKR, statistiques), fr/en, en deux mondes :
+
+- **Perso** : un utilisateur, ses données, partage entre amis gratuit. Premium perso coupé
+  (`PREMIUM_ENFORCED = false`).
+- **Entreprise** (`/entreprise/…`, `pages/organization/`) : une organisation, des équipes
+  hiérarchiques, des permissions par membre, facturation par paliers active
+  (`ENTERPRISE_BILLING_ENFORCED = true`). Modules `organizations`, `org-*`, `team-*` : leurs propres
+  tables (`team_tasks`, `team_okrs`…), **jamais** les modules perso réutilisés.
+
+**Deux backends, une interface.** Sans `VITE_SUPABASE_*` (ou via `loginDemo()`), tout tourne en
+**démo** sur `localStorage`. Chaque module expose un `repository.ts` servi par
+`supabase.repository.ts` ou `local.repository.ts` (`src/lib/repository.factory.ts`).
+Une fonctionnalité qui ne marche que dans un des deux modes n'est pas finie.
+
+**Le chemin d'une donnée** : page (`src/pages/`) → hook React Query (`modules/x/hooks.ts`) →
+repository → Supabase, où **la RLS est la vraie frontière**, ou `localStorage`. Côté serveur :
+`supabase/migration/` (SQL numéroté, appliqué à la main en prod), `supabase/functions/` (Edge),
+`api/` (fonctions Vercel).
+
+**Face à une zone inconnue** : [`docs/MODULES.md`](./docs/MODULES.md) (module → fichiers, tables,
+RPC, écran) → `index.ts` du module → son `CLAUDE.md` s'il existe → le code, qui fait foi.
 
 ---
 
@@ -34,6 +50,7 @@ fausses restées en place pendant des jours parce que le fichier était trop gro
 | Catégories, arbre, impact de suppression | [`src/modules/categories/CLAUDE.md`](./src/modules/categories/CLAUDE.md) |
 | Catégories d'ENTREPRISE (table unique, mig. `148`) | [`src/modules/team-categories/CLAUDE.md`](./src/modules/team-categories/CLAUDE.md) |
 | Mode entreprise, permissions, boîte de réception | [`src/modules/organizations/CLAUDE.md`](./src/modules/organizations/CLAUDE.md) |
+| Projets et tâches d'ENTREPRISE, corbeille, lecture par RPC | [`src/modules/team-projects/CLAUDE.md`](./src/modules/team-projects/CLAUDE.md) |
 | Modales a11y, animations, design system mobile, onboarding | [`src/components/CLAUDE.md`](./src/components/CLAUDE.md) |
 | Landing, deux parcours, GSAP, shader | [`src/pages/landing/CLAUDE.md`](./src/pages/landing/CLAUDE.md) |
 | Toasts, échéances, fuseau horaire, `safeParse` | [`src/lib/CLAUDE.md`](./src/lib/CLAUDE.md) |
@@ -125,7 +142,7 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 | Backend / Auth | Supabase 2 |
 | UI | shadcn/ui (Radix UI + Tailwind CSS 3) |
 | Toasts | Sonner |
-| Animations | Framer Motion (app) + GSAP 3 (**landing uniquement**, cf. [règle GSAP](#gsap--landing-page-uniquement)) |
+| Animations | Framer Motion (app) + GSAP 3 (**landing uniquement**, cf. [règle GSAP](#gsap-toasts)) |
 | Graphiques | recharts |
 | PDF | jsPDF (`vendor-pdf`, `import()` au clic sur « Exporter en PDF » seulement) |
 | i18n | **Catalogues JSON maison** (`src/i18n/` + `src/locales/{fr,en}/`) — pas d'i18next |
@@ -142,16 +159,10 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 
 ---
 
-
----
-
 ## Scripts
 
-> ⚠️ **Cette liste ne porte que les commandes du QUOTIDIEN.** Les **34 gardes** (`check:*`,
-> `i18n:*`, `validate:*`) sont descendues dans [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) le
-> 2026-09-21, avec ce que chacune regarde et où est son détail : la racine était à 96,7 % de son
-> plafond et **24 gardes posées le 2026-09-21 n'y figuraient pas**. Cette section a pesé 281 lignes
-> pour 20 commandes.
+> ⚠️ **Commandes du QUOTIDIEN seulement.** Les gardes (`check:*`, `i18n:*`, `validate:*`) sont
+> dans [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) § Inventaire, une ligne chacune.
 
 ```bash
 npm run dev        # Serveur dev local (port 5173)
@@ -167,10 +178,6 @@ npm run test:rls            # Intégration RLS (stack locale)      → docs/TEST
 npm run test:e2e            # Playwright (+ :ui, :report)         → e2e/CLAUDE.md
 npm run cosmo               # CLI données réelles (cf. plus haut)
 ```
-
-> 🛡️ **Les 34 gardes, une ligne chacune** (recomptées dans `package.json` le 2026-10-20) :
-> [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) § Inventaire. Les trois qui attendaient un geste manuel
-> (`C-88`, `C-89`, `C-105`) mesurent toutes depuis le 2026-10-16.
 
 > Le build prod **drope** `console.*` et `debugger` (`vite.config.ts → esbuild.pure/drop`).
 > Les erreurs remontent via Sentry (`VITE_SENTRY_DSN`).
@@ -204,9 +211,6 @@ VITE_SENTRY_DSN=  # public, write-only — si absent, monitoring désactivé
 - `.env.cosmo-cli` (gitignored) : config du CLI agent, distincte de `.env`.
 - `SUPABASE_SECRET_KEY` : **serveur seulement**, lue par `api/collect.ts`, posée sur Vercel par
   l'intégration Supabase (production). ❌ Jamais préfixée `VITE_` → [`api/CLAUDE.md`](./api/CLAUDE.md).
-
----
-
 
 ---
 
@@ -244,14 +248,9 @@ schémas par module. Câblé dans les `mutationFn` create/update.
 ### ESLint
 
 - Config `eslint.config.js`. **0 erreur** avant chaque commit.
-- Ignorés : `dist`, `coverage`, `coverage-tooling`, `src/__test__/**`, `.agents/**`, `.claude/**`, `.worktrees/**`
-  🔴 **Relu dans `eslint.config.js` le 2026-09-21 : cette ligne disait l'inverse.** `e2e/**`,
-  `src/components/showcase/**` et `supabase/functions/**` **ENTRENT** dans ESLint depuis `C-102`
-  (2026-09-20). La dette a été mesurée avant de les faire entrer : 1 erreur, 1 avertissement.
+- Ignorés : `dist`, `coverage`, `coverage-tooling`, `src/__test__/**`, `.agents/**`, `.claude/**`, `.worktrees/**`.
+  `e2e/**`, `src/components/showcase/**` et `supabase/functions/**` **sont** lintés (`C-102`).
 - Warnings tolérés : Fast refresh sur les contextes + fichiers ui shadcn (préexistants)
-
----
-
 
 ---
 ## Déploiement Vercel
@@ -260,9 +259,6 @@ schémas par module. Câblé dans les `mutationFn` create/update.
 `/assets/*`. Variables à configurer sur Vercel : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
 `VITE_STRIPE_PUBLISHABLE_KEY` (quand Stripe sera finalisé), et côté serveur `SUPABASE_SECRET_KEY`
 (intégration Supabase). Runbook : [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
-
----
-
 
 ---
 

@@ -3,7 +3,8 @@
 > Chargé dès qu un fichier de `src/modules/**` est lu ou édité. Chaque module a en plus
 > son propre `CLAUDE.md` : [billing](billing/CLAUDE.md) · [tasks](tasks/CLAUDE.md) ·
 > [habits](habits/CLAUDE.md) · [okrs](okrs/CLAUDE.md) · [categories](categories/CLAUDE.md) ·
-> [team-categories](team-categories/CLAUDE.md) · [organizations](organizations/CLAUDE.md).
+> [team-categories](team-categories/CLAUDE.md) · [organizations](organizations/CLAUDE.md) ·
+> [team-projects](team-projects/CLAUDE.md).
 
 ## Architecture : double mode (démo / production)
 
