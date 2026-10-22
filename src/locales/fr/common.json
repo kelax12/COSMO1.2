@@ -360,6 +360,7 @@
   },
   "showcase": {
     "pause": "Mettre l'animation en pause",
-    "play": "Lancer l'animation"
+    "play": "Lancer l'animation",
+    "habitsTable": "Exemple de suivi d'habitudes"
   }
 }
