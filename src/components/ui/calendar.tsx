@@ -10,6 +10,7 @@ import {
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { getIntlTag } from "@/i18n/format"
 import { Button, buttonVariants } from "@/components/ui/button"
 
 function Calendar({
@@ -40,7 +41,7 @@ function Calendar({
       locale={locale}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString(locale?.code, { month: "short" }),
+          date.toLocaleString(locale?.code ?? getIntlTag(), { month: "short" }),
         ...formatters,
       }}
       classNames={{
