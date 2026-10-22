@@ -691,24 +691,24 @@ Fonctions SECURITY DEFINER clés : `accept_friend_request_v2`, `accept_shared_ta
 - ✅ **État au 2026-09-21** : la mig. **`150`** est **appliquée**, ledger `20260921075529`, et
   vérifiée par le catalogue (table, RLS sans policy, deux fonctions, droits effectifs). Plus aucune
   migration du dépôt ne dort. Le dépôt va de `000` à `150`.
-- ✅ **État au 2026-09-24** : la mig. **`151`** (suppression d équipe, M5) est **appliquée**, ledger
+- ✅ **État au 2026-09-24** : la mig. **`151`** (suppression d'équipe, M5) est **appliquée**, ledger
   `20260924081357`, vérifiée par le catalogue (deux clés en `NO ACTION`, deux RPC `INVOKER`, `anon`
-  sans `EXECUTE`), après une preuve en transaction annulée (8 cas, dont la suppression d organisation
+  sans `EXECUTE`), après une preuve en transaction annulée (8 cas, dont la suppression d'organisation
   qui reste possible).
-- ✅ **La mig. `152`** (corbeille des tâches d équipe, M4) est **appliquée**, ledger `20260924131429`
+- ✅ **La mig. `152`** (corbeille des tâches d'équipe, M4) est **appliquée**, ledger `20260924131429`
   (inscrit à la main après `db query -f`), vérifiée par le catalogue : colonnes, policies SELECT/DELETE,
   six fonctions qui ignorent la corbeille, `task.deleteAny` en défaut manager, droits des cinq RPC,
   job `cosmo-purge-team-task-trash`. Preuve en transaction annulée : 14 cas.
 - ✅ **La mig. `153`** (portefeuille de projets, M2) est **appliquée**, ledger `20260924121637`, AVANT
   la `152`, relue au catalogue après elle : policy `team_projects_update`, plafond, `my_project_edit_perm`
-  intacts. Preuve en transaction annulée : 19 cas. 🔴 `project.edit` n est PAS une clé de `my_org_perm`
-  (que la 152 réécrit en entier) : une fonction dédiée, pour que l ordre d application n efface rien.
+  intacts. Preuve en transaction annulée : 19 cas. 🔴 `project.edit` n'est PAS une clé de `my_org_perm`
+  (que la 152 réécrit en entier) : une fonction dédiée, pour que l'ordre d'application n'efface rien.
 - ✅ **État au 2026-09-25** : `160`, `161`, `162`, `170` (branches gouvernance et annuaire) et
-  `163` (page d équipe) sont **appliquées**, ledger `20260925063127`, `…063147`, `…063202`,
+  `163` (page d'équipe) sont **appliquées**, ledger `20260925063127`, `…063147`, `…063202`,
   `…063218`, `…064540`, relues au catalogue après une preuve en transaction annulée (18 cas pour
   les quatre premières, 8 pour la 163). La 161 a été corrigée AVANT application : elle
   transmettait aussi les tâches à la corbeille (mig. 152).
-- ⚠️ **`164`** (cas limites du mode entreprise : équipes associées, purge d un projet archivé,
+- ⚠️ **`164`** (cas limites du mode entreprise : équipes associées, purge d'un projet archivé,
   mode `transfer` du départ, `release_member_work`) est **écrite, NON appliquée** au 2026-09-26 :
   ses corps de fonctions partent du catalogue relu le 2026-09-25, pas des fichiers `161`/`162`.
 - 🔴 **`194` réconcilie `164` et `190`** (2026-09-26) : écrites en parallèle, elles redéfinissent
@@ -725,14 +725,14 @@ Fonctions SECURITY DEFINER clés : `accept_friend_request_v2`, `accept_shared_ta
   NON prouvées.** Réglages et sécurité, capacité et lien secondaire, statuts et champs par projet,
   automatisations, webhooks. Ordre : après `194`. Preuve prête, jamais jouée :
   `supabase/proofs/195-199.proof.sql`. 🔴 Le lien secondaire (196) ne passe par AUCUNE policy.
-- ⚠️ **`200`** (2026-09-28) retire cycles d OKR (160), capacité et liens secondaires (196), sortis
+- ⚠️ **`200`** (2026-09-28) retire cycles d'OKR (160), capacité et liens secondaires (196), sortis
   du front le même jour. ✅ **Appliquée le 2026-09-28**, ledger `20260928071852`, relue au catalogue.
 - 🔴 **Relu au catalogue le 2026-09-28 : `164`, `190`, `194` et `195`-`199` sont EN PROD sans ligne
   au ledger** (`can_access_team_project` porte déjà la réconciliation de la 194). Les notes
   « non appliquée » ci-dessus sont périmées. ❌ **Ne jamais réappliquer la `164`** : elle retire la
   branche « membre du projet » de la 190. `201` (action « Notifier » des automatisations) est
   appliquée, ledger `20260928071259`.
-- ✅ **`202`** (rapports d activité) : **appliquée** le 2026-09-28, ledger `20260928081805` (inscrit à la main
+- ✅ **`202`** (rapports d'activité) : **appliquée** le 2026-09-28, ledger `20260928081805` (inscrit à la main
   après `db query -f`), relue au catalogue : table sous RLS, colonnes, plafond, droits, job `cosmo-activity-reports`.
   Preuve : `supabase/proofs/202.proof.sql` (7 cas acteur par acteur).
 - ⚠️ **`206`** (2026-09-30) supprime les jalons de projet (table vide en prod, relue le même jour).
@@ -740,7 +740,7 @@ Fonctions SECURITY DEFINER clés : `accept_friend_request_v2`, `accept_shared_ta
 - 🔴 **Relu au catalogue le 2026-09-30, objet par objet** : `164`, `181`, `190`-`195`, `197`-`199`
   sont en prod sans ligne au ledger (les notes « NON appliquée » ci-dessus sont périmées) ; `196` est
   retirée par la `200`. 🔴 **`204` (`team_tasks.health`) n'est PAS en prod**, alors que son commit
-  (`7a9b3db0`) la dit « appliquée » et que le front l écrit : le menu « État » des tâches pro échoue.
+  (`7a9b3db0`) la dit « appliquée » et que le front l'écrit : le menu « État » des tâches pro échoue.
   ⏳ **`207`** (webhooks : cible publique, enfilement par trigger seul) : écrite le 2026-09-30,
   preuve `supabase/proofs/207.proof.sql` verte sur PGlite (10/10, 2026-10-01), **avant** tout redéploiement de
   `org-webhook-dispatch`. Ordre et détail : [`faille.md`](../faille.md) § « Migrations ».
@@ -755,7 +755,7 @@ Fonctions SECURITY DEFINER clés : `accept_friend_request_v2`, `accept_shared_ta
   `proofs/214.proof.sql` jouée avant : 15 sur 15, témoin sans trigger rouge sur 3 cas.
 - ✅ **`215`** (un ami « editor » coche une tâche partagée) : **appliquée** le 2026-10-09, ledger
   `20261009071902`, relue au catalogue. Preuve `proofs/215.proof.sql` : 8 sur 8 ; témoin = la reproduction
-  du défaut (`Task not found` pour l éditeur) jouée avant.
+  du défaut (`Task not found` pour l'éditeur) jouée avant.
 - ✅ **`217`** (source d'acquisition rattachée après une inscription Google) : **appliquée** le
   2026-10-10, ledger `20261010121835`, relue au catalogue (DEFINER, `search_path` vide, `anon` **f**,
   `authenticated` **t**). Preuve `proofs/217.proof.sql` : 8 sur 8, témoin sans la fonction rouge.

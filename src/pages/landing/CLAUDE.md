@@ -1,7 +1,7 @@
 # Landing · règles du dossier
 
 > Repris de `CLAUDE.md` le 2026-09-16, **sans une coupe**. Chargé automatiquement dès
-> qu un fichier de ce dossier est touché. Règles transversales : [`CLAUDE.md`](../../../CLAUDE.md) à la racine.
+> qu'un fichier de ce dossier est touché. Règles transversales : [`CLAUDE.md`](../../../CLAUDE.md) à la racine.
 
 ---
 
@@ -156,9 +156,6 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   décrivaient une limite de sièges qui n'est plus appliquée (`hero.reassurance`,
   `pricing.ctaNote`, `cta.note`, `faq.a4`/`a5`) : tous ont leur variante d'offre. Toute nouvelle
   phrase qui promet « jusqu'à 5 membres » doit en avoir une aussi.
-
----
-
 
 ---
 
