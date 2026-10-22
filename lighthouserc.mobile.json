@@ -85,6 +85,34 @@
           "assertions": {
             "categories:accessibility": ["error", { "minScore": 1 }]
           }
+        },
+        {
+          "_comment": [
+            "Cliquet LCP de la home (2026-10-22) : BLOQUANT, au mesure. Quatre runs",
+            "de main (39797625778, 39810347890, 39834230611, 39843255180) : 1 592 a",
+            "1 666 ms, sur la copie #lp-hero. Plafond a 2 000 ms, 20 % au-dessus du",
+            "pire, pour le bruit du runner. Le 4 500 ms global ne voyait pas un LCP",
+            "multiplie par trois. Un rouge ici veut dire qu un element peint APRES la",
+            "copie est devenu plus grand qu elle (bandeau, releve React) : lire",
+            "l element LCP dans le resume du job, pas relever le plafond",
+            "(docs/PERFORMANCE.md, section du 2026-10-22)."
+          ],
+          "matchingUrlPattern": "^http://localhost(:\\d+)?/$",
+          "assertions": {
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }]
+          }
+        },
+        {
+          "_comment": [
+            "Cliquet LCP de la page entreprise (2026-10-22), meme regle : 2 264 a",
+            "2 435 ms sur les quatre memes runs, plafond a 3 000 ms (23 % au-dessus",
+            "du pire). 1,36 a 1,51 s le 2026-10-16 : le redescendre quand ce sera",
+            "remesure, jamais le monter."
+          ],
+          "matchingUrlPattern": "/entreprise-presentation/$",
+          "assertions": {
+            "largest-contentful-paint": ["error", { "maxNumericValue": 3000 }]
+          }
         }
       ]
     },

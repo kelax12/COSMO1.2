@@ -336,6 +336,62 @@ parce que c'est un dossier caché (`include-hidden-files`). Aucun rapport Lighth
 mobile, n'avait donc jamais été archivé. Le résumé imprime désormais l'élément LCP et ses phases.
 ❌ **Ne pas remonter le seuil de 4 500 ms** : il est dépassé pour une raison nommée.
 
+#### 🔴 2026-10-22 · `/en/` reprise par le bandeau cookies, pages de contenu à 4,5-5,6 s
+
+Lu dans l'**artefact** `lighthouse-mobile` de quatre runs de `main` (`39797625778`,
+`39810347890`, `39834230611`, `39843255180`), pas dans les annotations : GitHub n'en garde que
+dix par étape, et le résumé en écrivait trois par URL. L'élément LCP de `/en/` n'y figurait
+pas. ✅ Une ligne par URL depuis ce jour (`ci.yml`, « Scores mesures (mobile) »).
+
+**`/en/` ne perd pas la copie : le bandeau cookies passe devant.** Sur les quatre runs, l'élément
+LCP est le premier paragraphe du bandeau (`aside.fixed > … > p.text-[13px]`, 346 × 127 px),
+peint 1,2 s après le montage de React (*Render Delay* simulé de 4,9 à 5,5 s). La copie
+`#lp-hero` est bien peinte à 0,9 s (FCP), mais son plus grand bloc est plus petit que ce
+paragraphe. Mesuré sur la production, Chromium headless à 412 px (entrées
+`largest-contentful-paint` et surfaces de texte de la copie servie sans script) :
+
+| 412 px | Plus grand bloc de la copie | 1er paragraphe du bandeau |
+|---|---|---|
+| `/` | **57 195 px²** (titre sur quatre lignes) | 41 628 px² |
+| `/en/` | **28 700 px²** (titre sur deux lignes) | **42 004 px²** |
+
+Le titre anglais tient en deux lignes dès ~400 px, le français en quatre : `/` ne garde son LCP
+que parce que son titre est long. Le 2026-10-18, ce qui se peignait avant React était le texte
+SEO, plus grand que le bandeau : rien ne le montrait. Le 2026-10-21, la mesure locale de
+`3cce0b05` (« LCP 1,17 à 1,42 s ») portait sur `/` seule.
+
+❌ **Couper le paragraphe en trois, sans changer un mot (le geste de `290d6f51`), ne corrige
+pas.** À 412 px, le plus grand morceau (26 872 px²) passe sous le titre (29 157) avec 8 % de
+marge : Lighthouse passerait au vert. Mais la marge tombe à 1 % à 430 px, et le bandeau repasse
+devant de 440 à 639 px. Ce serait faire passer la mesure, pas corriger la page.
+
+**Les options pour `/en/` touchent toutes la surface de recueil du consentement : à arbitrer.**
+
+| Option | LCP `/en/` attendu | Coût |
+|---|---|---|
+| 1. Bandeau **au premier geste** (`pointerdown`, `keydown`, `wheel`, `touchstart`) au lieu de 1,2 s après le montage | la copie, ~1,5 s comme `/` (chiffre CI : PR empilée) | Chrome cesse de mesurer le LCP au premier geste : le bandeau ne peut plus l'être, à aucune largeur. Un visiteur qui ne touche pas la page n'est pas sollicité, et rien n'est déposé (`null` n'est pas une acceptation). Lighthouse n'audite plus le bandeau |
+| 2. Bandeau **peint par le prérendu**, relevé par React | ≈ FCP, ~0,9 s | le bandeau couvre le hero dès la première image ; ses boutons sont inertes jusqu'au montage (4 à 5 s sur mobile lent) ; le script inline doit relire l'expiration à six mois (empreinte CSP) ; une capture et une garde de plus |
+| 3. **Texte plus court**, chaque paragraphe sous ~20 000 px² (trois lignes à 412 px) | la copie, ~1,5 s | relecture juridique de la surface de recueil (A4 de `LEGAL.md`, `LEGAL-JOURNAL.md`) ; reste lié à la longueur du titre |
+| 4. Couper en trois | vert en CI seulement | rejeté ci-dessus |
+
+**Pages de contenu : l'arbitrage de `26a0faac` reposait sur 2,4 à 3,4 s mesurés en local, la CI
+mesure 4,5 à 5,6 s.** Même bridage (412 px, CPU ×4, 4G lente simulée), quatre runs concordants.
+Le spinner fait demander **531 à 720 ko avant le LCP**, contre **84 à 88 ko** quand le texte
+était peint : toute l'application doit arriver avant la première phrase.
+
+| Option | LCP mobile en CI | Ce que voit le visiteur | Coût |
+|---|---|---|---|
+| A. Statu quo, spinner (`26a0faac`) | **4,45 à 5,61 s**, perf 66 à 81, FCP 2,4 à 2,9 s (quatre runs du 10-22) | spinner, puis la page | rien |
+| B. Revenir au texte SEO peint | **1,36 à 1,52 s**, perf 97 à 100, FCP 0,76 s (run `39139204925`, `e69cb729`, 10-18) | texte brut sans mise en page, puis spinner, puis la page : le défaut signalé par Axel | annuler la part « contenu » de `26a0faac` |
+| C. Copie habillée par gabarit, comme la home | non mesuré ; par analogie `/` 1,6 s et entreprise 2,3 à 2,4 s en CI | la page dès la première image | une capture et une garde par gabarit (guide, index du blog, article, `/pour-*`, à-propos, légales). La copie doit égaler le rendu React, sinon React reprend le LCP (6,4 s sur l'entreprise le 10-21) |
+| D. Garder le spinner, alléger ce qui précède le contenu | **estimé 3,4 à 3,8 s** | spinner plus court | estimation : pente de 5,35 ms simulées par ko (20 points, r² 0,86) appliquée au plancher de 318 à 384 ko (document, police, entrée, React, routeur, Query, utilitaires, CSS), sans `vendor-supabase` (55 ko), `vendor-animation` (50), `sentry-client` (49), `vendor-charts` (112, sur `/guide/`). Reste au-dessus de 2,5 s, et c'est l'architecture des providers (leviers 2 et 3 plus haut) |
+
+**Cliquet posé le même jour** (`lighthouserc.mobile.json`) : `largest-contentful-paint` passe en
+`error` sur `/` (2 000 ms, pour 1 592 à 1 666 mesurés) et `/entreprise-presentation/` (3 000 ms,
+pour 2 264 à 2 435). `/en/` suivra son correctif : la poser rouge ferait une gate rouge en
+permanence. Les 4 500 ms globaux restent en `warn` tant que les pages de contenu attendent leur
+arbitrage.
+
 ✅ **2026-10-16 · LCP sous 2,5 s et TBT sous 300 ms sur les trois pages animées, Lighthouse mobile en CI** (artefact `lighthouse-mobile`). Avant, run `38476034238` (`6847bbf3`) : `/` LCP 3,27 s, TBT 878 ms, perf 65 · `/en/` 3,26 s, 949 ms, 64 · `/entreprise-presentation/` 3,26 s, 1 049 ms, 62. Après, run `38899945555` (`65b8c87a`) : `/` **1,37 s, 54 ms, 100** · `/en/` **1,36 s, 77 ms, 100** · `/entreprise-presentation/` **1,51 s, 65 ms, 99** ; les 8 URLs sous 1,52 s et 182 ms. Confirmé au run suivant, `38901051072` (`93f6a035`) : `/` 1,22 s, 66 ms · `/en/` 1,52 s, 66 ms · `/entreprise-presentation/` 1,37 s, 111 ms. Quatre leviers : l'app chargée après la peinture du prérendu (`src/boot.ts`, son JS et sa CSS sortent du chemin du LCP), l'icône du manifeste à sa taille (`logo.png` de 255 ko, téléchargée pendant le chargement, ajoutait 1,3 s au LCP une passe sur deux), la rotation du hero qui ne re-rend plus le parcours (`hero-module-actif.ts`), le bas de la landing monté au premier geste (`BelowFold.tsx`, une tâche de ~1 s à CPU ×4). 🔴 **Les chiffres « entreprise » ci-dessus, et tous ceux de ce document jusqu'à `9dcaf94b`, mesurent le parcours PERSO.** `/entreprise-presentation/` (l'URL de `lighthouserc.mobile.json`, que Vercel sert aussi en 200 sans rediriger) gardait sa barre oblique finale dans `stripLocalePrefix`, et `useLandingTrack` ratait le slug : le prérendu était entreprise, l'hydratation rendait le perso, titre et canonical de l'accueil compris. Vu en production le 2026-10-16, en fr comme sur `/en/for-companies/`. Corrigé dans `normalizePath` (`src/i18n/routes.ts`), témoin `use-landing-track.test.ts`.
 
 📏 **2026-10-16 · première mesure du parcours ENTREPRISE, Lighthouse mobile en CI**, run `38907264016` (`9dcaf94b`), élément LCP vérifié dans l'artefact (H1 « Qui fait quoi. ») : perf **88**, LCP **1,36 s**, TBT **350 ms**, Speed Index 4,9 s, CLS 0,040, a11y **93**. Le LCP tient ; le TBT est le seul au-dessus de la cible des pages animées (300 ms). Fil principal : `styleLayout` 2,4 s, `vendor-react` 966 ms, `vendor-gsap` 936 ms, `vendor-animation` 666 ms ; tâches longues de 70 à 151 ms entre 8,2 et 10,6 s (sections épinglées, shader). Accessibilité : trois audits en échec, absents du parcours perso (`aria-prohibited-attr` sur les `ent-hero-line` du H1, `color-contrast` sur des `text-slate-500/600`, `label-content-name-mismatch` sur deux boutons). Seuils de `lighthouserc.mobile.json` inchangés.
