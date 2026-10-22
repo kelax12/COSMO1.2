@@ -87,6 +87,27 @@ const TARGET = 44;
 const HABIT_WEEK_CELL = '.grid.grid-cols-7 > div > button';
 // ═══════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════
+// LES COMMANDES DEJA TOMBEES SOUS 44 PX, ET QUI DOIVENT ETRE LA (C-57)
+//
+// 🔴 Un balayage « aucune commande sous 44 px » passe aussi quand la commande
+// n est pas rendue. Le 2026-10-03, la refonte de l Apercu avait remis
+// « Valider » a 81 x 36 et « Renvoyer » a 98 x 36 ; le 2026-10-19, l Apercu
+// en widgets a change le modele d arrivee du compte demo, et rien ne disait
+// si ces deux boutons etaient encore a l ecran pendant la mesure.
+// Remesure le 2026-10-22, 375 px, demo : 82 x 44 et 97 x 44, rendus.
+//
+// ⚠️ Ce qui n est PAS ici, et pourquoi : « Voir le detail »
+// (`ActivityDigestCard`) et « Selectionner plusieurs taches » de `MyTasksCard`
+// ne sont plus montes par aucun ecran depuis l Apercu en widgets (composants
+// exportes, jamais importes). Rien a mesurer ; s ils reviennent, ils
+// reviennent avec leur `TAP_AREA_44_Y`.
+const DOIT_ETRE_MESURE: Record<string, RegExp[]> = {
+  '/entreprise': [/^Valider « /, /^Renvoyer « /],
+  '/entreprise/tasks': [/^Filtres$/],
+};
+// ═══════════════════════════════════════════════════════════════════
+
 interface UnderTarget {
   w: number;
   h: number;
@@ -417,6 +438,10 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
     // passe a trouves faux.
     '/agenda',
     '/statistics',
+    // Ajoutee le 2026-10-22 (C-57) : l onglet Taches de l entreprise porte le
+    // bouton « Filtres » partage avec Projets et Membres, mesure 42 x 40 px.
+    // Aucune route du spec ne le rendait.
+    '/entreprise/tasks',
   ]) {
     test(`${route} : aucune commande sous 44 x 44 px`, async ({ demoPage }) => {
       // `goto` direct et pas `navTo` : on mesure une PAGE, pas un parcours de
@@ -424,6 +449,17 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
       await demoPage.goto(route);
       await demoPage.waitForLoadState('networkidle');
       await demoPage.waitForTimeout(1500);
+
+      // Une liste vide ne prouve rien si la commande deja tombee sous 44 px
+      // n est pas RENDUE au moment de la mesure. On attend donc qu elle soit
+      // la avant de mesurer : si elle disparait (donnees de demo, modele
+      // d Apercu, refonte), ce cas rougit au lieu de passer sans la regarder.
+      for (const name of DOIT_ETRE_MESURE[route] ?? []) {
+        await expect(
+          demoPage.getByRole('button', { name }).first(),
+          `${route} : la commande ${name} n est plus rendue, donc plus mesuree`,
+        ).toBeVisible({ timeout: 15_000 });
+      }
 
       const under = await commandsUnderTarget(demoPage, TARGET, HABIT_WEEK_CELL);
       expect(
@@ -584,6 +620,12 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
       await demoPage.keyboard.press('Enter');
     }
     await expect(dialog.first()).toBeVisible({ timeout: 10_000 });
+    // « Suivre cette tache » est tombee a 149 x 36 le 2026-10-01 (C-57) : la
+    // mesure n en dit rien si le bouton n est pas rendu (cf. DOIT_ETRE_MESURE).
+    await expect(
+      dialog.first().getByRole('button', { name: /suivre cette t[aâ]che/i }),
+      'modale de tache d equipe : « Suivre cette tache » n est plus rendue, donc plus mesuree',
+    ).toBeVisible({ timeout: 15_000 });
     await demoPage.waitForTimeout(1200);
 
     const under = await commandsUnderTarget(demoPage, TARGET);
