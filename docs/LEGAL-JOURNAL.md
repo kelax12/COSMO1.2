@@ -260,3 +260,31 @@ conservée (identifiant du jour, lien détruit le lendemain) ; conservation 13 m
 mise en service. ⚠️ **Question ouverte, à trancher par Axel** : un accord donné AVANT ce jour
 couvrait une mesure plus étroite (pages vues et référent). La finalité est identique, mais les
 catégories de données s'élargissent ; redemander le consentement lèverait le doute.
+
+### 2026-10-21 · immatriculation de l'éditeur, section Prospection · **FOND (identification, information)** · **aucun préavis**
+
+| Document | Empreinte |
+|---|---|
+| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `831aab907b40374b` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `7b4ef7f726b92f39` |
+
+**Ce qui a changé** (commits `e2e7679f` et `899f707f`, entrée écrite le 2026-10-22 : les deux
+commits avaient été poussés sans elle, et la garde a tenu `lint-test-build` rouge entre-temps) :
+
+- **Mentions légales**, s1 : « personne physique » devient « entrepreneur individuel (EI), nom
+  commercial COSMO » ; ajout de l'immatriculation (RNE depuis le 20 octobre 2026, SIREN, SIRET, code
+  APE), de la mention « TVA non applicable, article 293 B du CGI » et du **téléphone** de
+  l'éditeur ; code postal de l'adresse corrigé (75116). Ferme `M-05` et `M-72` (LCEN art. 1-1).
+- **CGU**, s1 p3 : même identification de l'éditeur (EI, SIREN, adresse, téléphone, 293 B).
+  Aucune clause ne bouge.
+- **Politique de confidentialité**, s1 : le responsable de traitement porte son statut, son SIREN
+  et son adresse (RGPD art. 13.1.a). **Nouvelle section 7 ter « Prospection commerciale auprès
+  des professionnels »** : données, finalité, base légale (6.1.f RGPD, L34-5 CPCE), destinataires
+  (Supabase, IONOS, Anthropic), durée de trois ans, droit d'opposition et liste d'opposition.
+  Registre : `docs/RGPD-REGISTRE.md` T11.
+- Dates de mise à jour des trois documents portées au 21 octobre 2026.
+
+**Aucun préavis** : aucune condition nouvelle n'est opposée à l'utilisateur. L'identification est
+une information exacte due tout de suite ; la section 7 ter s'adresse à des personnes prospectées,
+qui ne sont pas forcément utilisatrices, et l'article 14 RGPD exige qu'elle soit en ligne AVANT le
+premier envoi.
