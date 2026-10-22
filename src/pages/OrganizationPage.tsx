@@ -329,7 +329,8 @@ const OrganizationPage = () => {
   // règle que `org_seats_allowed()` (dont le repli sans abonnement actif EST
   // `ORG_FREE_SEATS`), pour que le client annonce ce que le serveur appliquera.
   const seatsQuota = effectiveQuota(orgSubscription ?? null);
-  const seatsFull = ENTERPRISE_BILLING_ENFORCED && isQuotaReached(members.length, orgSubscription ?? null);
+  // Démo : pas de facturation réelle, la bannière n'appelle aucune action.
+  const seatsFull = !isDemo && ENTERPRISE_BILLING_ENFORCED && isQuotaReached(members.length, orgSubscription ?? null);
 
   const hasEntityParam = ['task', 'member', 'project', 'okr', 'team'].some((k) => searchParams.has(k));
   const glossaryButton = (

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
   Shield, UserCog, UserRound, MoreVertical, ShieldCheck,
@@ -98,6 +98,13 @@ const MemberDirectoryRow = ({
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
   const primary = () => (selectMode ? onToggleSelect() : onOpen('profile'));
+  // Chaque entrée du menu « … » ouvre une surface modale (fiche, attribution,
+  // droits, rôle). En se refermant, Radix rend le focus à son déclencheur APRÈS
+  // que la modale l'a pris : il restait derrière le voile (mesuré le 2026-10-22
+  // sur `AssignRoleDialog`, `a11y-keyboard-audit`). La modale porte le focus,
+  // et le hook des modales le rendra à ce bouton en se fermant.
+  const surfaceOpened = useRef(false);
+  const opensSurface = (open: () => void) => () => { surfaceOpened.current = true; open(); };
 
   return (
     <div
@@ -224,14 +231,21 @@ const MemberDirectoryRow = ({
           >
             <MoreVertical size={16} aria-hidden="true" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent
+            align="end"
+            className="w-56"
+            onCloseAutoFocus={(e) => {
+              if (surfaceOpened.current) e.preventDefault();
+              surfaceOpened.current = false;
+            }}
+          >
             {/* Icônes SANS classe de couleur : DropdownMenuItem applique déjà
                 `text-muted-foreground` à tout svg qui n'en porte pas. Seul
                 l'item destructeur reste coloré. Attribuer : seulement dans la
                 portée d'assignation de l'appelant (mig. 115). */}
             {rights.isAbove && rights.canAssign && (
               <>
-                <DropdownMenuItem onClick={onAssign}>
+                <DropdownMenuItem onClick={opensSurface(onAssign)}>
                   <ClipboardList size={14} aria-hidden="true" />
                   {tOrgAdmin('directory.assignTask')}
                 </DropdownMenuItem>
@@ -240,15 +254,15 @@ const MemberDirectoryRow = ({
             )}
             {rights.isAbove && (
               <>
-                <DropdownMenuItem onClick={() => onOpen('tasks')}>
+                <DropdownMenuItem onClick={opensSurface(() => onOpen('tasks'))}>
                   <ListTodo size={14} aria-hidden="true" />
                   {tOrgAdmin('directory.seeTasks')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onOpen('agenda')}>
+                <DropdownMenuItem onClick={opensSurface(() => onOpen('agenda'))}>
                   <CalendarDays size={14} aria-hidden="true" />
                   {tOrgAdmin('directory.seeAgenda')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onOpen('contribution')}>
+                <DropdownMenuItem onClick={opensSurface(() => onOpen('contribution'))}>
                   <TrendingUp size={14} aria-hidden="true" />
                   {tOrgAdmin('directory.seeContribution')}
                 </DropdownMenuItem>
@@ -256,13 +270,13 @@ const MemberDirectoryRow = ({
             )}
             {rights.isAbove && (rights.canEditPermissions || (rights.canAssignRole && onAssignRole)) && <DropdownMenuSeparator />}
             {rights.canEditPermissions && (
-              <DropdownMenuItem onClick={onEditPermissions} data-guide-id="member-open-permissions">
+              <DropdownMenuItem onClick={opensSurface(onEditPermissions)} data-guide-id="member-open-permissions">
                 <ShieldCheck size={14} aria-hidden="true" />
                 {t('permissions.menuItem')}
               </DropdownMenuItem>
             )}
             {rights.canAssignRole && onAssignRole && (
-              <DropdownMenuItem onClick={onAssignRole} data-guide-id="member-assign-role">
+              <DropdownMenuItem onClick={opensSurface(onAssignRole)} data-guide-id="member-assign-role">
                 <BadgeCheck size={14} aria-hidden="true" />
                 {tOrgAdmin('customRoles.assign.menuItem')}
               </DropdownMenuItem>

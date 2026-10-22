@@ -45,7 +45,40 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → 81 → 82 → 82 → 82 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → **2026-10-20**)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → 81 → 82 → 82 → 82 → 81 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → **2026-10-22**)
+
+> ### ⚪ 2026-10-22 · 0 : les deux surfaces des rôles MESURÉES au clavier, et un vrai défaut corrigé
+>
+> Le −1 du 2026-10-15 a été remboursé le 2026-10-16 sur une **déclaration** (« dette », `c791eb55`).
+> Ce jour, la dette est payée par une **mesure**. La note ne bouge pas : rien n'était débité.
+> Mesures du 2026-10-22, dépôt à `HEAD` (branche de la PR), Playwright local sur un serveur démo.
+>
+> | Item | Avant (`origin/main` à `5eaa8b8c`) | Après |
+> |---|---|---|
+> | `keyboard-audit-coverage` (C-96) | vert **par déclaration** : `AssignRoleDialog`, `RoleEditorSheet` dans `NON_MESUREES` (« dette ») ; **10** mesurées sur 63 câblées | vert **en mesurant** : les deux dans `MESUREES`, chacune liée à son cas du spec ; **12** sur 63, cliquet relevé de 10 à 12 |
+> | `a11y-keyboard-audit`, trois cas neufs | absents | `MESURE — AssignRoleDialog`, `MESURE — RoleEditorSheet`, `GARDE — AssignRoleDialog : RoleEditorSheet prend le piège, puis le rend` : **6 / 6 verts**, `chromium` et `mobile-safari`. Déclencheurs ouverts au clavier (Entrée, entrée de menu comprise) |
+> | 🔴 Défaut produit trouvé par la mesure | `AssignRoleDialog` ouverte depuis « Actions pour … » : **le focus restait derrière le voile**, sur le bouton du membre (`focusMovedIn: false`, vu rouge). Radix rendait le focus au déclencheur du menu APRÈS que la modale l'avait pris | corrigé : `MemberDirectoryRow` empêche ce retour quand l'entrée ouvre une surface (`onCloseAutoFocus`) ; `useModalA11y` rend le focus au bouton qui a ouvert le menu (`aria-labelledby` du menu), plus à `body`. `focusReturned` (imprimé, non opposable) passe de `false` à `true` |
+> | `loading-empty-state` (C-40) | vert **en mesurant** depuis le 2026-10-16 | inchangé ; vu **rouge** ce jour sur la version fautive remise exprès (`AssignRoleDialog.tsx → roles`), vert sur la vraie |
+>
+> ⚠️ Vu en local seulement : le verdict opposable est la CI de la PR. Le même retour de focus
+> touche les autres entrées du menu d'un membre (fiche, attribution de tâche, droits) : corrigé par
+> le même geste, **mesuré seulement pour `AssignRoleDialog`**.
+>
+> **81 → 81.**
+
+> ### ⚪ 2026-10-22 · 0 : l'Agenda audité vue par vue, un défaut critique trouvé dans la vue Mois mobile et corrigé
+>
+> **Le débit « Agenda : deux violations axe critiques » du 2026-10-01 n'est plus dû** : corrigé par `5564445d` et remboursé le 2026-10-02 (soir), bloc plus bas. Remesuré le 2026-10-22, CI de `main` à `5eaa8b8c` (run `39668103160`) : `a11y-audit › Agenda` vert en chromium **et** mobile-safari, 2 violations non bloquantes, aucune critique ni sérieuse. Le rembourser une seconde fois serait compter deux fois le même correctif.
+>
+> En revanche, le cas ne scannait que la **vue d'arrivée** (Semaine en bureau, Jour en mobile), alors que FullCalendar recrée ses défileurs à chaque changement de vue et que `useFocusableScrollers` y réécrit les rôles de la grille. Il joue désormais chaque vue du sélecteur, même assertion, sans dispense nouvelle (PR #92).
+>
+> | Item | Effet | Mesuré le 2026-10-22, CI de la PR #92 |
+> |---|---|---|
+> | ✅ Le cas mord | 0 | sabotage temporaire (`role="region"` d'avant `5564445d`, commit `942d1992`, retiré ensuite) : `a11y-audit › Agenda` **rouge** en chromium et mobile-safari, 3 essais sur 3, `critical: aria-required-children, aria-required-parent` (run `39761357978`) |
+> | ✅ Bureau, chromium : Jour, Semaine, Mois | 0 | 2 violations par vue, aucune critique ni sérieuse (run `39764999252`) |
+> | 🔴→✅ Mobile, WebKit : vue **Mois** | 0 | `button-name` **critique** (WCAG 4.1.2, niveau A), 3 essais sur 3 : les chevrons « mois précédent / suivant » de l'en-tête mobile n'étaient qu'une icône, sans nom. Invisible tant que seule la vue d'arrivée était auditée. Corrigé dans la même PR (`nav.prevPeriod` / `nav.nextPeriod`, les libellés des mêmes boutons en bureau) ; Jour et 2J à 2 violations, non bloquantes |
+>
+> **81 → 81.** Le défaut Mois est trouvé et corrigé le même jour : il n'est pas débité, et ne se compte vérifié qu'au vert du job `e2e` de la PR.
 
 > ### 🟠 2026-10-20 · −1 : `/dashboard` déborde à 200 % de police
 >
@@ -759,6 +792,14 @@ le détecteur rendrait le fichier **vert**. Et elle a été vue échouer, en ret
 | `TaskActionsSheet` | `/tasks` mobile, « Afficher les actions » | — |
 | `MobileAddToList` | `TaskActionsSheet` → « Ajouter à une liste » | relais de surface, pas empilement |
 | `ShareListSheet` | `/tasks` desktop, liste **manuelle** créée puis survolée | — |
+
+**Ajoutées le 2026-10-22** (`chromium` et `mobile-safari`, déclencheurs ouverts au clavier), ce qui
+porte le compte de la garde `C-96` à **12 mesurées sur 63 câblées** :
+
+| Surface | Chemin mesuré | En plus des cinq détecteurs |
+|---|---|---|
+| `AssignRoleDialog` | `/entreprise/members`, « Actions pour … » d'un membre, « Attribuer un rôle » | mesurée après la fin du squelette (`aria-busy`) |
+| `RoleEditorSheet` | `/entreprise/settings`, rubrique Rôles, « Créer un rôle » ; et depuis `AssignRoleDialog` | prend le piège au parent, le lui rend |
 
 **La 10ᵉ, `BottomSheet`, est mesurée en jsdom, et il faut dire pourquoi.** Aucun geste utilisateur
 ne l'ouvre : son unique consommateur produit est `WeeklyRecapSheet`, monté derrière

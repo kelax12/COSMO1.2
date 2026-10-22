@@ -115,4 +115,11 @@ describe('applyTheme', () => {
     applyTheme(root, 'dark');
     expect([...root.classList]).toEqual(['dark']);
   });
+
+  it('tient data-boot-theme à jour : le spinner des pages publiques en lit les couleurs', () => {
+    applyTheme(root, 'noir');
+    expect(root.getAttribute('data-boot-theme')).toBe('noir');
+    applyTheme(root, 'light');
+    expect(root.getAttribute('data-boot-theme')).toBe('light');
+  });
 });
