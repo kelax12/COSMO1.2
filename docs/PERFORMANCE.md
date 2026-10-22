@@ -396,6 +396,23 @@ arbitrage.
 
 📏 **2026-10-16 · première mesure du parcours ENTREPRISE, Lighthouse mobile en CI**, run `38907264016` (`9dcaf94b`), élément LCP vérifié dans l'artefact (H1 « Qui fait quoi. ») : perf **88**, LCP **1,36 s**, TBT **350 ms**, Speed Index 4,9 s, CLS 0,040, a11y **93**. Le LCP tient ; le TBT est le seul au-dessus de la cible des pages animées (300 ms). Fil principal : `styleLayout` 2,4 s, `vendor-react` 966 ms, `vendor-gsap` 936 ms, `vendor-animation` 666 ms ; tâches longues de 70 à 151 ms entre 8,2 et 10,6 s (sections épinglées, shader). Accessibilité : trois audits en échec, absents du parcours perso (`aria-prohibited-attr` sur les `ent-hero-line` du H1, `color-contrast` sur des `text-slate-500/600`, `label-content-name-mismatch` sur deux boutons). Seuils de `lighthouserc.mobile.json` inchangés.
 
+### ⚡ TBT mobile de `/` : l'amorçage en plusieurs tâches (2026-10-22, PR #103)
+
+**Avant**, Lighthouse CI mobile : `/` à **309 ms** (run `39704928952`, `263154b6`, branche de #91), 282 ms sur `main` à `5eaa8b8c`, 114 ms à `23882c89`. Une passe par URL : au bord du seuil de 300 ms, au gré du runner. Tâches longues du rapport (temps simulé) : `main.js` **221 ms** (171 ms de TBT à elle seule), `vendor-react` 114 et 69, `vendor-animation` 104, 54 et 53, une non attribuée de 60.
+
+**Profil** (`npm run profile:landing`, puis trace CDP par tâche longue, 412 px, CPU ×4, machine saturée donc absolus gonflés) : la tâche `main.js` est l'ÉVALUATION du graphe de l'application d'un bloc (icônes lucide créées par `vendor-utils` ~35 %, code propre de `main` ~35 % dont la première lecture de `localStorage`, supabase ~20 %) ; puis le premier rendu React d'un bloc ; puis l'évaluation du chunk `LandingPage` (130 à 210 ms), dont le bas de page qu'il importait en statique ; puis des frames GSAP / Framer (style et mise en page). Ni le shader (parcours entreprise seulement) ni les entrées CSS du hero n'y figurent.
+
+| Commit | Changement | `/` mobile en CI |
+|---|---|---|
+| `183a88f3` | Bas du parcours perso dans son chunk (`PersoBelowFold`, chargé au premier geste) | **316 ms** : aucun effet sur Lighthouse, qui ne fait aucun geste. Gardé pour l'utilisateur réel : `LandingPage` passe de 68,7 à 38,6 ko bruts |
+| `bb16c86b` | `boot.ts` : sur page prérendue, six chunks vendor importés à part avant `main` ; `main.tsx` : premier rendu sous `startTransition` | **0 ms**, perf 100, TTI 6,0 → 1,7 s, **aucune tâche au-dessus de 25 ms** (run `39823183565`) ; `/entreprise-presentation/` 0 ms, `/guide/` 400 → 106 ms |
+| `cb05329f` | Trois de ces chunks seulement (cf. ci-dessous) | **49 ms**, perf 100, LCP 1,68 s (run `39829118507`) ; `/en/` 58 ms, `/entreprise-presentation/` 37 ms. Octets : `vendor-animation` revenu à 49,2 ko (marge 5,3 %, comme `main`), chemin critique 307,0 ko contre 306,3 sur `main` |
+
+- **Pourquoi ça marche.** Un `import()` lancé à part est évalué dans SA tâche, à l'arrivée de son chunk ; `main` n'évalue plus que le reste. En transition, React rend par tranches et rend la main entre elles. Réservé aux pages prérendues : le visiteur y voit déjà la page, rien n'attend ces tâches. La coquille `app.html` charge et rend comme avant.
+- **Le prix.** `main` part une fois ces chunks évalués : un aller-retour de plus avant le montage, sans effet sur le LCP (la copie prérendue est peinte avant).
+- 🔴 **Un `import()` de paquet coûte des octets.** Vite le réécrit en accès à l'espace de noms du paquet, qui garde TOUTES ses exportations vivantes, déstructuration ou pas. Mesuré contre `main` (`c2959ded`) : `framer-motion` ajoutait **2,4 ko gzip** à `vendor-animation` (marge 5,3 % → 0,8 %), `react-router` 0,3, `react-query` 0,2, `supabase-js` 0,4. Seuls restent `react-dom/client`, `clsx` (qui évalue tout `vendor-utils`) et `supabase-js`. ❌ Ne pas allonger la liste de `boot.ts` sans `npm run check:bundle` avant/après.
+- ⚠️ **Mesurer en local ne tranche rien sur ce poste** : Lighthouse en local (API Node, mêmes réglages que `lighthouserc.mobile.json`) rendait 4 845 à 9 607 ms de TBT, `benchmarkIndex` 573 à 899, et `lhci` échoue sous Windows (`EPERM` au nettoyage de son dossier temporaire). Le verdict est le job `lighthouse` de la PR.
+
 
 > ### 🔴 2026-09-14 (soir) · −2 : une RPC créditée d'un gain de 71× rend un chiffre faux en production
 >
