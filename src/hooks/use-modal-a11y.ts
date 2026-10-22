@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 
 // ═══════════════════════════════════════════════════════════════════
 // C-53 — le piège de focus des surfaces modales MAISON.
@@ -242,15 +242,22 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
     target.focus?.({ preventScroll: true });
   }, [initialFocusRef]);
 
-  useEffect(() => {
+  // 🔴 `useLayoutEffect`, PAS `useEffect` : l'écouteur d'Échap doit être posé
+  // AVANT que la surface ne soit peinte. Un effet passif tourne APRÈS la
+  // peinture, dans une tâche à part : entre les deux, la feuille est à l'écran,
+  // cliquable, et Échap n'y fait RIEN. Mesuré le 2026-10-22 sous WebKit en CI
+  // (`OrgSectionSheet`, chargée en lazy, donc commitée par une relance de
+  // Suspense) : Échap envoyé dès la feuille visible, perdu, la feuille restée
+  // ouverte 10 s avec le focus déjà dedans. Instable 2 fois sur 5 runs.
+  useLayoutEffect(() => {
     if (!open) return;
 
     const id = idRef.current as symbol;
     openStack.push(id);
 
-    // ⚠️ Le noeud est capturé ICI, pas relu dans le nettoyage. Un `useEffect`
-    // est PASSIF : React a deja detache les refs quand son nettoyage tourne, et
-    // `ref.current` y vaut `null`. On perdait donc le test « le focus est-il
+    // ⚠️ Le noeud est capturé ICI, pas relu dans le nettoyage. Écrit quand cet
+    // effet était PASSIF : React avait alors deja detache les refs quand son
+    // nettoyage tournait, et `ref.current` y valait `null`. On perdait donc le test « le focus est-il
     // encore dans la modale ? », donc la restitution au declencheur — mesure du
     // 2026-09-05, `focusReturned: false` sur HabitModal.
     const rootAtOpen = ref.current as HTMLElement | null;

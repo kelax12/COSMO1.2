@@ -10,7 +10,7 @@
 //
 // La mesure E2E équivalente, dans un vrai navigateur, est
 // `e2e/a11y-keyboard-audit.spec.ts`.
-import { useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, cleanup, act } from '@testing-library/react';
 import { useModalA11y } from './use-modal-a11y';
@@ -244,5 +244,63 @@ describe('useModalA11y — modales empilées', () => {
     // Et le focus revient au bouton qui l'avait ouverte, pas au premier
     // focalisable de la modale parente.
     expect(document.activeElement).toBe(opener);
+  });
+});
+
+// ═══ Échap entendu DÈS LE COMMIT, avant toute peinture (2026-10-22) ═══
+//
+// Mesuré sous WebKit en CI : `OrgSectionSheet` (lazy) restait ouverte 10 s
+// après un Échap envoyé dès qu'elle était visible. L'écouteur était posé par
+// un effet PASSIF, qui tourne après la peinture : la feuille était à l'écran,
+// le focus bientôt dedans, et Échap perdu. Instable 2 fois sur 5 runs de main.
+//
+// La mesure est déterministe : un frère rendu APRÈS la modale émet Échap dans
+// son propre `useLayoutEffect`. Les effets de mise en page des frères tournent
+// dans l'ordre, tous avant les effets passifs : c'est exactement la fenêtre
+// « peinte mais sourde ».
+describe('useModalA11y — Échap entendu dès le commit', () => {
+  function EscapeAtCommit() {
+    useLayoutEffect(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    }, []);
+    return null;
+  }
+
+  /** La forme d'avant le 2026-10-22 : même écouteur, posé par un effet passif. */
+  function PassiveModal({ onClose }: { onClose: () => void }) {
+    useEffect(() => {
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+      };
+      document.addEventListener('keydown', onKeyDown, true);
+      return () => document.removeEventListener('keydown', onKeyDown, true);
+    }, [onClose]);
+    return <div role="dialog" aria-label="Sections" />;
+  }
+
+  function Sheet({ passive }: { passive: boolean }) {
+    const [open, setOpen] = useState(true);
+    if (!open) return null;
+    const close = () => setOpen(false);
+    return (
+      <>
+        {passive ? <PassiveModal onClose={close} /> : <TrappedModal onClose={close} />}
+        <EscapeAtCommit />
+      </>
+    );
+  }
+
+  it('un Échap émis avant la peinture ferme la modale', async () => {
+    await act(async () => {
+      render(<Sheet passive={false} />);
+    });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('TÉMOIN — posé par un effet passif, ce même Échap est perdu', async () => {
+    await act(async () => {
+      render(<Sheet passive />);
+    });
+    expect(screen.getByRole('dialog', { name: 'Sections' })).toBeTruthy();
   });
 });

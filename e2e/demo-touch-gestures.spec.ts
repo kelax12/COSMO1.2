@@ -32,10 +32,38 @@ async function firstCardGestureStart(page: import('@playwright/test').Page) {
   // n'atteignait aucun élément (`document.elementFromPoint()` → null), ce qui
   // faisait échouer swipe ET long-press sans erreur explicite.
   await target.scrollIntoViewIfNeeded();
-  const box = await target.boundingBox();
+
+  // 🔴 POSITION STABLE AVANT DE MESURER (2026-10-22). Les deux correctifs de
+  // frame n'ont pas suffi : la PR #94 a rejoué ce cas ×5 sans retry, et le
+  // PREMIER passage du run (page `/tasks` froide, 42,9 s contre 4 s pour les
+  // autres) a encore échoué, compteur inchangé. Une boîte lue pendant que
+  // l'écran se met en place (bandeaux et filtres paresseux au-dessus de la
+  // liste) fait partir le geste à côté de la carte. On attend donc deux
+  // lectures identiques à 250 ms d'écart.
+  let box = await target.boundingBox();
+  await expect
+    .poll(async () => {
+      const next = await target.boundingBox();
+      const stable = !!box && !!next && next.x === box.x && next.y === box.y;
+      box = next;
+      return stable;
+    }, { timeout: 15_000, intervals: [250] })
+    .toBe(true);
   if (!box) throw new Error('case de complétion sans bounding box');
   // ~90 px à droite de la case = milieu du titre, dans la card draggable.
-  return { x: box.x + box.width + 90, y: box.y + box.height / 2, unchecked };
+  const x = box.x + box.width + 90;
+  const y = box.y + box.height / 2;
+
+  // Et le point de départ doit tomber SUR la carte visée, vérifié dans la
+  // page : un geste parti à côté échouait jusqu'ici en silence (« compteur
+  // inchangé »), sans dire ce qu'il avait touché.
+  const card = target.locator('xpath=ancestor::*[@data-testid="task-card"][1]');
+  const pointSurLaCarte = await card.evaluate(
+    (el, [px, py]) => el.contains(document.elementFromPoint(px, py)),
+    [x, y] as const,
+  );
+  expect(pointSurLaCarte, `le geste part de (${x}, ${y}), hors de la carte visée`).toBe(true);
+  return { x, y, unchecked };
 }
 
 // Skip au niveau du describe, PAS dans le corps de chaque test : un
@@ -65,27 +93,30 @@ test('mobile : swipe droit sur une TaskCard la complète', async ({ demoPage: pa
 
   // Swipe droit > 80 px (seuil onDragEnd) — rapide (< 500 ms) pour ne pas
   // déclencher le long-press.
-  const swipe = async () => {
-    await page.mouse.move(x, y);
-    await page.mouse.down();
-    for (let i = 1; i <= 6; i++) {
-      await page.mouse.move(x + (i * 130) / 6, y, { steps: 2 });
-    }
-    await page.mouse.up();
-  };
-  await swipe();
+  //
+  // 🔴 LE GESTE DOIT DURER AU MOINS UNE FRAME, et c'était la cause des
+  // instables WebKit (2026-10-09, 10-20, 10-21 : compteur inchangé, même après
+  // un second glissé). Framer Motion (`PanSession`, v12) ne reconnaît le
+  // glissé qu'à la frame SUIVANT le mouvement (`frame.update(updatePoint)`), et
+  // `pointerup` annule cette frame : si le moteur traite `down`, les 12
+  // `move` et `up` sans rendre une seule frame, ce qui arrive sous WebKit
+  // chargé en CI, `onDragEnd` n'est jamais appelé et le geste compte pour un
+  // simple appui. Un doigt reste au moins une frame sur l'écran : on attend
+  // donc deux frames rendues après le premier mouvement, puis avant de lever.
+  // ❌ Ne pas remettre de « seconde tentative » : la cause est traitée, et une
+  // carte qui ne se complète pas doit échouer du premier coup.
+  const deuxFrames = () =>
+    page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  for (let i = 1; i <= 6; i++) {
+    await page.mouse.move(x + (i * 130) / 6, y, { steps: 2 });
+    if (i === 1) await deuxFrames();
+  }
+  await deuxFrames();
+  await page.mouse.up();
 
   // La complétion passe par isExiting (300 ms) puis la mutation — on poll.
-  // 🔴 UNE seconde tentative de geste, bornée : sous WebKit en CI, le premier
-  // glissé n'était parfois pas reconnu (compteur inchangé à 7 s, instable le
-  // 2026-10-09). Un geste reconnu ne se rejoue PAS (le compteur a bougé, on
-  // ne retente que s'il est resté à `before`), et une carte qui ne se complète
-  // jamais échoue toujours.
-  const completed = await expect
-    .poll(() => unchecked.count(), { timeout: 7_000 })
-    .toBe(before - 1)
-    .then(() => true, () => false);
-  if (!completed && (await unchecked.count()) === before) await swipe();
   await expect.poll(() => unchecked.count(), { timeout: 7_000 }).toBe(before - 1);
   await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
 });
@@ -124,7 +155,22 @@ test('mobile : le bottom-sheet « Plus » s\'ouvre et se ferme au tap backdrop',
   // z-index de 999999999 et NE se ferme PAS tout seul (toast à action). Le tap
   // atterrissait donc sur lui — ni la souris ni `touchscreen.tap()` ne
   // fermaient le sheet. On calcule maintenant la zone libre dynamiquement.
-  const sheetBox = await sheet.boundingBox();
+  //
+  // 🔴 ET LE SHEET DOIT AVOIR FINI D'ARRIVER (2026-10-22, instable sur la PR
+  // #94 sous WebKit). Il monte par un ressort depuis `y: 100%` : une boîte lue
+  // pendant la montée place le point trop bas, sur le sheet une fois posé, et
+  // le tap n'y ferme rien. Deux lectures identiques à 250 ms d'écart, puis le
+  // point est vérifié dans la page : il doit tomber sur le FOND, pas sur le
+  // sheet ni sur un toast arrivé entre-temps.
+  let sheetBox = await sheet.boundingBox();
+  await expect
+    .poll(async () => {
+      const next = await sheet.boundingBox();
+      const stable = !!sheetBox && !!next && next.y === sheetBox.y;
+      sheetBox = next;
+      return stable;
+    }, { timeout: 10_000, intervals: [250] })
+    .toBe(true);
   if (!sheetBox) throw new Error('sheet sans bounding box');
   const toastBottom = await page.evaluate(() =>
     [...document.querySelectorAll('li[data-sonner-toast]')]
@@ -132,8 +178,14 @@ test('mobile : le bottom-sheet « Plus » s\'ouvre et se ferme au tap backdrop',
   );
   const y = (toastBottom + sheetBox.y) / 2;
   expect(y, 'aucune bande libre entre les toasts et le sheet').toBeGreaterThan(toastBottom);
+  const x = vw!.width / 2;
+  const surLeFond = await page.evaluate(
+    ([px, py]) => !!document.elementFromPoint(px, py)?.closest('[data-mobile-more-sheet-backdrop]'),
+    [x, y] as const,
+  );
+  expect(surLeFond, `le tap (${x}, ${y}) ne tombe pas sur le fond du sheet`).toBe(true);
 
-  await page.mouse.click(vw!.width / 2, y);
+  await page.mouse.click(x, y);
   await expect(logout).toBeHidden({ timeout: 5_000 });
 });
 

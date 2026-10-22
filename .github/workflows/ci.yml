@@ -274,7 +274,7 @@ jobs:
       - name: Upload coverage report
         id: coverage-upload
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage
           path: coverage/
@@ -473,7 +473,7 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-report
           path: playwright-report/
@@ -495,7 +495,7 @@ jobs:
           node-version: '22'
           cache: 'npm'
       # `@v1` était une branche, pas un tag — pinné sur le commit de v1.7.1.
-      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
         with:
           version: latest
       - run: npm ci
@@ -806,7 +806,7 @@ jobs:
 
       - name: Upload Lighthouse reports
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: lighthouse
           path: .lighthouseci/
@@ -853,19 +853,24 @@ jobs:
               const r = JSON.parse(fs.readFileSync(d + "/" + f, "utf8"));
               const c = r.categories;
               const n = (k) => (c[k] ? Math.round(c[k].score * 100) : "-");
-              lignes.push(r.finalDisplayedUrl + " perf=" + n("performance") + " a11y=" + n("accessibility") +
-                " bp=" + n("best-practices") + " seo=" + n("seo") +
-                " lcp=" + Math.round(r.audits["largest-contentful-paint"].numericValue) + "ms" +
-                " tbt=" + Math.round(r.audits["total-blocking-time"].numericValue) + "ms" +
-                " cls=" + r.audits["cumulative-layout-shift"].numericValue);
               // L element LCP et ses phases : sans eux, un LCP a 6 s ne dit pas
               // s il attend le reseau, le JS ou une police.
+              // 🔴 UNE ligne par URL, pas trois : GitHub ne garde que DIX
+              // annotations par etape. Le 2026-10-22, 8 URLs x 3 lignes en
+              // perdaient quatorze, dont l element LCP de `/en/` (le bandeau
+              // cookies, lu dans l artefact). « detache » = l element a quitte
+              // le DOM, c est le cas normal de la copie `#lp-hero`.
               const el = r.audits["largest-contentful-paint-element"];
               const items = (el && el.details && el.details.items) || [];
               const noeud = items[0] && items[0].items && items[0].items[0] && items[0].items[0].node;
               const phases = items[1] && items[1].items ? items[1].items.map((p) => p.phase + "=" + Math.round(p.timing) + "ms").join(" ") : "";
-              if (noeud) lignes.push("   element LCP : " + (noeud.snippet || noeud.selector || "?").slice(0, 140));
-              if (phases) lignes.push("   phases : " + phases);
+              lignes.push(r.finalDisplayedUrl + " perf=" + n("performance") + " a11y=" + n("accessibility") +
+                " bp=" + n("best-practices") + " seo=" + n("seo") +
+                " lcp=" + Math.round(r.audits["largest-contentful-paint"].numericValue) + "ms" +
+                " tbt=" + Math.round(r.audits["total-blocking-time"].numericValue) + "ms" +
+                " cls=" + r.audits["cumulative-layout-shift"].numericValue +
+                " | LCP " + (noeud ? (noeud.selector || noeud.snippet || "?").slice(0, 90) : "detache") +
+                (phases ? " | " + phases : ""));
             }
             if (lignes.length === 0) { console.log("::error title=lhci-mobile::dossier present mais aucun lhr-*.json"); process.exit(1); }
             for (const l of lignes) console.log("::notice title=lhci-mobile::" + l);
@@ -893,7 +898,7 @@ jobs:
 
       - name: Upload Lighthouse reports (mobile)
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: lighthouse-mobile
           path: .lighthouseci/

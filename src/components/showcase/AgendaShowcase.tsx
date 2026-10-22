@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Clock, Bookmark, CheckCircle2, Calendar } from 'lucide-react';
-import { useShowcasePalette } from './showcase-theme';
+import { Search, Clock, Bookmark, Calendar } from 'lucide-react';
+import { useShowcasePalette, eventFill } from './showcase-theme';
 import { LARGEUR_BARRE_TACHES } from './agenda-geometrie';
 
 // ─── Static data ────────────────────────────────────────────────────
@@ -159,24 +159,18 @@ const AgendaShowcase: React.FC = () => {
               <div
                 key={task.id}
                 ref={isAnimated ? sourceCardRef : undefined}
+                // Une tâche planifiée n'est plus estompée (opacité 50 % + voile
+                // noir) : son texte tombait à 1,2:1. Le nom barré et « ✓ Déjà
+                // planifiée » le disent déjà (Lighthouse, 2026-10-22).
                 className={`rounded-lg p-2.5 border relative transition-all ${
-                  isPlaced ? 'opacity-50' : ''
-                } ${isAnimated && phase === 'highlight' ? 'ring-2 ring-orange-400/70' : ''}`}
+                  isAnimated && phase === 'highlight' ? 'ring-2 ring-orange-400/70' : ''
+                }`}
                 style={{
                   backgroundColor: P.card,
                   borderColor: P.hairline,
                   borderLeft: `4px solid ${cat.color}`,
                 }}
               >
-                {/* "Placed" overlay */}
-                {isPlaced && (
-                  <div className="absolute inset-0 rounded-lg bg-black/20 flex items-center justify-center">
-                    <div className="bg-slate-800 rounded-full p-1.5 shadow-lg">
-                      <CheckCircle2 size={16} className="text-green-400" />
-                    </div>
-                  </div>
-                )}
-
                 {/* Task name row */}
                 <div className="flex items-center justify-between mb-1.5 gap-1">
                   <div className="flex items-center gap-1.5 min-w-0">
@@ -228,10 +222,10 @@ const AgendaShowcase: React.FC = () => {
 
         {/* Calendar grid */}
         <div className="flex-1 overflow-hidden relative">
-          <div
-            className="h-full overflow-y-auto"
-            style={{ scrollbarWidth: 'none' }}
-          >
+          {/* `overflow-hidden` : rien ne fait défiler cette grille (barre masquée,
+              aucun `scrollTop`). Une zone défilante non focalisable est un échec
+              axe `scrollable-region-focusable` (2026-10-22). */}
+          <div className="h-full overflow-hidden">
             <div
               className="relative"
               style={{ height: HEADER_H + (END_HOUR - START_HOUR) * SLOT_H }}
@@ -328,7 +322,7 @@ const AgendaShowcase: React.FC = () => {
                     top: hourToY(ev.start) + 1,
                     width: `calc((100% - 48px) / 7 - 4px)`,
                     height: durToH(ev.dur) - 2,
-                    backgroundColor: ev.color,
+                    backgroundColor: eventFill(ev.color),
                   }}
                 >
                   {ev.title}
@@ -338,18 +332,21 @@ const AgendaShowcase: React.FC = () => {
               {/* ── Dropped event (appears after drag) ── */}
               <AnimatePresence>
                 {dropVisible && (
+                  // Échelle seule, sans fondu, ici comme sur la sélection et le
+                  // fantôme : un texte saisi à mi-fondu par Lighthouse rendait
+                  // 1,6 à 4:1 (mesure axe du 2026-10-22, quatre thèmes).
                   <motion.div
                     key="drop-event"
-                    initial={{ opacity: 0, scaleY: 0.5 }}
-                    animate={{ opacity: 1, scaleY: 1 }}
-                    exit={{ opacity: 0 }}
+                    initial={{ scaleY: 0.5 }}
+                    animate={{ scaleY: 1 }}
+                    exit={{ scaleY: 0 }}
                     className="absolute z-20 rounded-md px-1.5 py-1 text-white text-[10px] font-semibold overflow-hidden"
                     style={{
                       left: `calc(48px + ${DROP_EVENT.day} * ((100% - 48px) / 7) + 2px)`,
                       top: hourToY(DROP_EVENT.start) + 1,
                       width: `calc((100% - 48px) / 7 - 4px)`,
                       height: durToH(DROP_EVENT.dur) - 2,
-                      backgroundColor: DROP_EVENT.color,
+                      backgroundColor: eventFill(DROP_EVENT.color),
                       transformOrigin: 'top',
                     }}
                   >
@@ -363,9 +360,9 @@ const AgendaShowcase: React.FC = () => {
                 {selVisible && (
                   <motion.div
                     key="selection"
-                    initial={{ opacity: 0, scaleY: 0 }}
-                    animate={{ opacity: 1, scaleY: 1 }}
-                    exit={{ opacity: 0, scaleY: 0 }}
+                    initial={{ scaleY: 0 }}
+                    animate={{ scaleY: 1 }}
+                    exit={{ scaleY: 0 }}
                     transition={{ type: 'tween', duration: 1.1, ease: 'easeOut' }}
                     className="absolute z-30 rounded-md overflow-hidden"
                     style={{
@@ -373,21 +370,19 @@ const AgendaShowcase: React.FC = () => {
                       top: hourToY(SEL_START) + 1,
                       width: `calc((100% - 48px) / 7 - 4px)`,
                       height: durToH(SEL_DUR) - 2,
-                      backgroundColor: 'rgba(59,130,246,0.55)',
+                      // blue-700 presque plein : à 55 % de blue-500, le blanc rendait 2:1.
+                      backgroundColor: 'rgba(29,78,216,0.92)',
                       border: '2px solid #3B82F6',
                       boxShadow: P.selectionShadow,
                       transformOrigin: 'top',
                     }}
                   >
-                    {/* Event label inside the selection */}
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.6, duration: 0.4 }}
-                      className="px-1.5 pt-1 text-white text-[10px] font-semibold truncate"
-                    >
-                      Nouvel événement
-                    </motion.div>
+                    {/* Event label inside the selection, once it is drawn */}
+                    {tooltipVisible && (
+                      <div className="px-1.5 pt-1 text-white text-[10px] font-semibold truncate">
+                        Nouvel événement
+                      </div>
+                    )}
 
                     {/* Tooltip above */}
                     <AnimatePresence>
@@ -419,14 +414,16 @@ const AgendaShowcase: React.FC = () => {
         {ghostVisible && (
           <motion.div
             key="ghost"
-            initial={{ opacity: 0, scale: 1, x: 0, y: 0 }}
+            // Sans fondu : posé pile sur sa carte, il apparaît sans que ça se
+            // voie, et il s'efface quand l'événement déposé prend sa place.
+            initial={{ opacity: 1, scale: 1, x: 0, y: 0 }}
             animate={{
-              opacity: phase === 'highlight' ? 0.85 : 1,
+              opacity: 1,
               scale: phase === 'dragging' ? 1.06 : 1,
               x: ghostX,
               y: ghostY,
             }}
-            exit={{ opacity: 0, scale: 0.9 }}
+            exit={{ opacity: 0, transition: { duration: 0 } }}
             transition={
               phase === 'dragging'
                 ? { type: 'spring', stiffness: 90, damping: 16, mass: 0.8 }
