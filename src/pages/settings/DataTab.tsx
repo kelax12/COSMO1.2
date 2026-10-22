@@ -5,7 +5,7 @@
 import React, { Suspense, lazy, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Download, FileSpreadsheet, FileUp } from 'lucide-react';
-import { useTasks } from '@/modules/tasks';
+import { useTasks, useTaskDependencies } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
@@ -14,6 +14,7 @@ import { useLists } from '@/modules/lists';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   exportTasksCSV,
+  exportTaskDependenciesCSV,
   exportHabitsCSV,
   exportEventsCSV,
   exportOKRsCSV,
@@ -34,6 +35,9 @@ const ImportTasksDialog = lazy(() => import('./ImportTasksDialog'));
 export function DataTab() {
   const { t, tp } = useT('settings');
   const { data: tasks = [] } = useTasks();
+  // Le graphe « bloquée par » (mig. 132) est saisi par la personne : il est dû
+  // au titre de l'article 20 au même titre que les tâches qu'il ordonne.
+  const { data: taskDependencies = [] } = useTaskDependencies();
   const { data: habits = [] } = useHabits();
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
@@ -58,6 +62,7 @@ export function DataTab() {
 
   const exports: { label: string; icon: React.ElementType; count: number; run: () => void }[] = [
     { label: t('data.tasks'), icon: FileSpreadsheet, count: tasks.length, run: () => { exportTasksCSV(tasks); toast.success(t('data.tasksExported', { count: tasks.length })); } },
+    { label: t('data.taskDependencies'), icon: FileSpreadsheet, count: taskDependencies.length, run: () => { exportTaskDependenciesCSV(taskDependencies, tasks); toast.success(t('data.taskDependenciesExported', { count: taskDependencies.length })); } },
     { label: t('data.habits'), icon: FileSpreadsheet, count: habits.length, run: () => { exportHabitsCSV(habits); toast.success(t('data.habitsExported', { count: habits.length })); } },
     { label: t('data.events'), icon: FileSpreadsheet, count: events.length, run: () => { exportEventsCSV(events); toast.success(t('data.eventsExported', { count: events.length })); } },
     { label: t('data.okrs'), icon: FileSpreadsheet, count: okrs.length, run: () => { exportOKRsCSV(okrs); toast.success(t('data.okrsExported', { count: okrs.length })); } },
@@ -67,11 +72,11 @@ export function DataTab() {
   ];
 
   const handleExportAll = () => {
-    exportAllCSV({ tasks, habits, events, okrs, categories, lists, profile });
+    exportAllCSV({ tasks, taskDependencies, habits, events, okrs, categories, lists, profile });
     toast.success(t('data.exportingAll'), {
       description: t('data.exportingAllHint', {
         count:
-          tasks.length + habits.length + events.length + okrs.length
+          tasks.length + taskDependencies.length + habits.length + events.length + okrs.length
           + categories.length + lists.length,
       }),
     });

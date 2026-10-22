@@ -502,7 +502,11 @@ tout consentement à un compte**. Une rétention de 12 mois maximum serait cohé
 ## 4. ✅ Ce qui est en place
 
 - **Droit d'accès et portabilité** : export CSV disponible (`src/lib/csv-export.ts`, onglet
-  Données des Paramètres).
+  Données des Paramètres), huit fichiers depuis le 2026-10-22. Le huitième porte les
+  **dépendances entre tâches personnelles** (`task_dependencies`, mig. `132`) : saisies par la
+  personne, elles manquaient à l'export depuis leur livraison le 2026-08-30, déclarées « dette
+  reconnue » dans `check:portability`. Elles y sont désormais **mesurées** comme table exportée
+  (`task_id`, `depends_on_id`), avec le nom des deux tâches pour la lecture en tableur.
 - **Droit à l'effacement** : suppression de compte en libre-service, exécutée côté serveur —
   sous réserve du §2.
 - **Consentement cookies** : bannière avec choix, l'option la plus protectrice par défaut.
