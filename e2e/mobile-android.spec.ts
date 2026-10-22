@@ -369,6 +369,36 @@ test.describe('C-97 — texte agrandi', () => {
       }
     });
   }
+
+  /*
+   * 🔴 2026-10-22 · LES 13 PX VIVAIENT À 375 PX, PAS À 412.
+   * Remesuré sur `main` (5eaa8b8c) : les trois cas ci-dessus rendaient 0, et
+   * le même `/dashboard` à 375 px de large (iPhone SE, 12 mini) rendait 13 px.
+   * C'était la barre d'onglets mobile, pas un widget : « Entreprise » mesurait
+   * 108 px dans une case de 75, et « Plus » sortait de l'écran. Le Pixel 7 lui
+   * laisse 82 px par case, assez pour ne jamais le voir. La barre est montée
+   * sur toutes les pages, `/dashboard` suffit à la tenir.
+   */
+  test.describe('a 375 px de large', () => {
+    test.use({ viewport: { width: 375, height: 812 } });
+
+    test('/dashboard : a 200 % de police, la barre d onglets tient dans l ecran (0 px)', async ({ demoPage }) => {
+      await demoPage.addStyleTag({ content: AGRANDIR });
+      await demoPage.goto('/dashboard');
+      await demoPage.addStyleTag({ content: AGRANDIR });
+      await demoPage.waitForLoadState('networkidle');
+      await demoPage.waitForTimeout(800);
+      const deborde = await horizontalOverflow(demoPage);
+      if (deborde > 0) {
+        console.log(`::notice title=c97-texte-200-375::/dashboard deborde de ${deborde} px a 375 px`);
+      }
+      expect(
+        deborde,
+        'A 200 % de police et 375 px, un element sort de l ecran : la barre d onglets '
+          + 'mobile a-t-elle perdu son min-w-0 ou son libelle qui passe a la ligne ?',
+      ).toBe(0);
+    });
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════
