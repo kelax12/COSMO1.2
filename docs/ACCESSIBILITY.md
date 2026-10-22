@@ -126,6 +126,21 @@ Conséquences pratiques, à tenir :
 >
 > **81 → 81.**
 
+> ### ⚪ 2026-10-22 · remesure de C-57, note non rejouée (elle se rejoue à la passe d'audit)
+>
+> Le débit « cibles tactiles sous 44 px » des 10-01 et 10-02 (« Valider » 81 × 36, « Renvoyer » 98 × 36, « Voir le détail » 96 × 36, « Sélectionner plusieurs tâches » 106 × 32, « Suivre cette tâche » 149 × 36) est **déjà remboursé** : +1 le 10-02 au soir, +1 le 10-03 (`16fbaae9`). Remesuré à `5eaa8b8c` (origin/main), `touch-targets` en local, mode démo, 375 px : **19/19 verts sur `chromium`, 20/20 sur `mobile-safari`**. Ce que ce vert ne disait pas, et ce que cette passe ajoute :
+>
+> | Commande citée | Mesure du 2026-10-22 | Statut |
+> |---|---|---|
+> | « Valider », « Renvoyer » (widget « En attente de moi », `/entreprise`) | **82 × 44**, **97 × 44** | rendus et mesurés ; la spec exige désormais qu'ils soient À L'ÉCRAN avant de mesurer (`DOIT_ETRE_MESURE`) |
+> | « Suivre cette tâche » (modale de tâche d'équipe) | ≥ 44 de haut (`TAP_AREA_44_Y`) | la spec exige sa présence dans la modale avant la mesure |
+> | « Voir le détail » (`ActivityDigestCard`), « Sélectionner plusieurs tâches » de `MyTasksCard` | non rendus | plus montés par aucun écran depuis l'Aperçu en widgets (exportés, jamais importés) : rien à mesurer |
+> | 🔴 « Filtres » (`MobileFiltersButton`, onglets Tâches, Projets, Membres) | **42 × 40** → **44 × 40, zone 44 × 44** | trouvé en élargissant la mesure à `/entreprise/tasks`, absente de la spec. Corrigé (`min-w-11` + `TAP_AREA_44_Y`) ; route ajoutée ; témoin : rouge sur l'ancien bouton, vert après |
+>
+> Spec modifiée : **20/20 verts sur `chromium`, 21/21 sur `mobile-safari`**, en local. Verdict CI à lire sur la PR.
+>
+> ⚠️ **Non couvert, mesuré ce jour** : `/entreprise/projects` à 375 px est un tableau de bureau qui défile à l'horizontale, **11 commandes sous 44 px** (« Nouveau projet » 39 × 36, « Ouvrir le projet … » 34 de haut, « État du projet … » 32 × 32, « Filtres » corrigé ci-dessus). Pas ajoutée à la spec : elle y serait rouge, et la corriger est une mise en page mobile, pas une classe. Ouvert comme suite.
+
 > ### 🟠 2026-10-20 · −1 : `/dashboard` déborde à 200 % de police
 >
 > **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
