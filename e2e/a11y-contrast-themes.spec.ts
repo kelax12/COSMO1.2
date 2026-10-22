@@ -129,8 +129,10 @@ for (const theme of THEMES) {
         const dessus = await page.evaluate(() =>
           document.elementsFromPoint(innerWidth / 2, innerHeight / 2).slice(0, 4)
             .map((e) => e.outerHTML.slice(0, 160)).join('\n    '));
-        diagnostic = `\n  incomplete : ${incomplete?.nodes.length ?? 0}, motif : `
-          + `${incomplete?.nodes[0]?.any[0]?.message ?? '-'}\n  au centre :\n    ${dessus}`;
+        // Une règle qui LÈVE rend un seul nœud `incomplete` sans motif : on
+        // garde l'objet brut, c'est lui qui porte l'erreur d'axe.
+        diagnostic = `\n  incomplete : ${incomplete?.nodes.length ?? 0}, brut : `
+          + `${JSON.stringify(incomplete ?? null).slice(0, 1500)}\n  au centre :\n    ${dessus}`;
       }
       expect.soft(passes, `${route} · ${theme} : axe n'a mesuré aucun texte${diagnostic}`).toBeGreaterThan(10);
       expect.soft(
