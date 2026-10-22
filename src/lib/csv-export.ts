@@ -7,7 +7,7 @@
  * forcer Excel à reconnaître les caractères accentués).
  */
 
-import { effectiveStatus, type Task } from '@/modules/tasks';
+import { effectiveStatus, type Task, type TaskDependency } from '@/modules/tasks';
 import type { Habit } from '@/modules/habits';
 import type { CalendarEvent } from '@/modules/events';
 import type { OKR } from '@/modules/okrs';
@@ -161,6 +161,32 @@ export function exportTasksCSV(tasks: Task[]): void {
     t.createdAt,
   ]);
   download(fileName('tasks'), rowsToCSV(headers, rows));
+}
+
+/**
+ * Dépendances entre tâches personnelles (mig. 132) — « bloquée par ».
+ *
+ * 🔴 Absentes de l'export du 2026-08-30 (livraison de la mig. 132) au
+ * 2026-10-22, déclarées « dette reconnue » dans `check-portability-export.mjs`.
+ * Le graphe est SAISI par la personne : c'est l'ordre dans lequel elle a
+ * décidé de faire son travail, donc une donnée « fournie » au sens de
+ * l'article 20.
+ *
+ * Une ligne par arête, dans le sens de la table : la tâche BLOQUÉE puis la
+ * tâche BLOQUANTE. Les noms accompagnent les identifiants pour que le fichier
+ * se lise dans un tableur sans recouper le fichier des tâches ; un nom
+ * introuvable reste vide, l'arête n'est jamais omise.
+ */
+export function exportTaskDependenciesCSV(dependencies: TaskDependency[], tasks: Task[]): void {
+  const names = new Map(tasks.map((t) => [t.id, t.name]));
+  const headers = cols('blockedTask', 'blockedTaskName', 'blockingTask', 'blockingTaskName');
+  const rows = dependencies.map((d) => [
+    d.taskId,
+    names.get(d.taskId) ?? '',
+    d.dependsOnId,
+    names.get(d.dependsOnId) ?? '',
+  ]);
+  download(fileName('taskDependencies'), rowsToCSV(headers, rows));
 }
 
 export function exportHabitsCSV(habits: Habit[]): void {
@@ -350,8 +376,9 @@ export function exportListsCSV(lists: TaskList[]): void {
  * Export combiné — déclenche les téléchargements en séquence (Safari refuse
  * souvent plusieurs `.click()` simultanés, on les espace de 150 ms).
  *
- * ⚠️ Sept fichiers depuis le 2026-08-26, contre quatre avant : profil,
- * catégories et listes manquaient. Toute nouvelle donnée SAISIE par
+ * ⚠️ Huit fichiers depuis le 2026-10-22 (dépendances entre tâches), sept
+ * depuis le 2026-08-26, quatre avant : profil, catégories et listes
+ * manquaient. Toute nouvelle donnée SAISIE par
  * l'utilisateur doit rejoindre cette fonction, sinon l'export cesse
  * silencieusement d'être complet et la portabilité devient un mensonge.
  */
@@ -365,6 +392,7 @@ export function exportListsCSV(lists: TaskList[]): void {
  */
 export function exportAllCSV(data: {
   tasks: Task[];
+  taskDependencies: TaskDependency[];
   habits: Habit[];
   events: CalendarEvent[];
   okrs: OKR[];
@@ -379,4 +407,5 @@ export function exportAllCSV(data: {
   setTimeout(() => exportCategoriesCSV(data.categories), 600);
   setTimeout(() => exportListsCSV(data.lists), 750);
   setTimeout(() => exportProfileCSV(data.profile), 900);
+  setTimeout(() => exportTaskDependenciesCSV(data.taskDependencies, data.tasks), 1050);
 }

@@ -89,6 +89,20 @@ const EXPORTS = {
       recurrence_parent_id: "Identifiant technique de la série de récurrence. La règle elle-même, elle, est exportée (`recurrence`).",
     },
   },
+  // Mig. 132. Déclarée « dette reconnue » dans TABLES_NON_EXPORTEES du
+  // 2026-08-30 au 2026-10-22 : l'export rendait les tâches sans le graphe
+  // « bloquée par » que la personne avait saisi.
+  task_dependencies: {
+    fonction: 'exportTaskDependenciesCSV',
+    exporte: {
+      task_id: 'blockedTask',
+      depends_on_id: 'blockingTask',
+    },
+    exclu: {
+      user_id: "Identifiant interne du compte, redérivé par trigger de la tâche bloquée : pas une donnée fournie.",
+      created_at: "Métadonnée technique (date de pose du lien). Le lien lui-même est exporté.",
+    },
+  },
   habits: {
     fonction: 'exportHabitsCSV',
     exporte: {
@@ -211,7 +225,6 @@ const EXPORTS = {
  */
 const TABLES_NON_EXPORTEES = {
   kr_completions: "Journal des complétions de résultats clés. Il alimente le temps investi (`workTimeCalculator`), qui est DÉRIVÉ et non fourni. ⚠️ Discutable : c'est la trace de QUAND le travail a été fait, et la même question s'était posée pour `completed_at` des tâches, ajoutée le 2026-09-02. À rouvrir si un export doit permettre de reconstituer l'historique.",
-  task_dependencies: 'Liens entre tâches, saisis par la personne. ⚠️ Non exportés à ce jour : dette reconnue, pas une exclusion de principe (mig. 132, livrée le 2026-08-30).',
   friends: "Identifiants d'AUTRES personnes.",
   friend_requests: "Identifiants et adresses de TIERS.",
   subscriptions: "État d'abonnement, fourni par Stripe et non par la personne. Les pièces comptables relèvent de `payment_records`, conservé.",

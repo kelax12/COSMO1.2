@@ -10,7 +10,8 @@
     "okrs": "cosmo-okr",
     "profile": "cosmo-profil",
     "categories": "cosmo-categories",
-    "lists": "cosmo-listes"
+    "lists": "cosmo-listes",
+    "taskDependencies": "cosmo-dependances"
   },
   "col": {
     "id": "ID",
@@ -64,6 +65,10 @@
     "icon": "Icône",
     "parent": "Catégorie parente",
     "krDurationMin": "KR Durée (min)",
-    "krWeight": "KR Pondération"
+    "krWeight": "KR Pondération",
+    "blockedTask": "Tâche bloquée (ID)",
+    "blockedTaskName": "Tâche bloquée",
+    "blockingTask": "Bloquée par (ID)",
+    "blockingTaskName": "Bloquée par"
   }
 }
