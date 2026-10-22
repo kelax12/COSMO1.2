@@ -211,6 +211,38 @@ test.describe('a11y audit', () => {
     const violations = await scan(demoPage, 'agenda');
     console.log(`[a11y] Agenda: ${violations.length} violation(s)`);
     assertNoCritical(violations, 'Agenda');
+
+    // 🔴 2026-10-22 · CHAQUE vue, pas seulement la vue d'arrivée. FullCalendar
+    // RECRÉE ses défileurs à chaque changement de vue, et `useFocusableScrollers`
+    // réécrit les rôles de la grille sur ceux qui débordent (C-119, puis la
+    // réparation `aria-required-children` / `aria-required-parent` du
+    // 2026-10-02). Le mois n'a pas la même structure que les grilles horaires :
+    // n'auditer que l'état initial laissait deux vues sur trois sans verdict.
+    // Bureau : Jour / Semaine / Mois. Mobile : Jour / 2J / Mois.
+    const switcher = demoPage
+      .locator('[data-tutorial-id="agenda-view-switcher"], [data-tutorial-id="agenda-mobile-view-switcher"]')
+      .filter({ visible: true })
+      .first();
+    const boutons = switcher.getByRole('button');
+    const nbVues = await boutons.count();
+    expect(nbVues, 'le sélecteur de vue de /agenda doit être visible').toBeGreaterThanOrEqual(3);
+    for (let i = 0; i < nbVues; i++) {
+      const bouton = boutons.nth(i);
+      const nom = ((await bouton.textContent()) ?? '').trim();
+      await bouton.click();
+      // Le rôle des défileurs se pose à la frame qui suit leur dimensionnement.
+      await demoPage.waitForTimeout(800);
+      const vue = await demoPage.evaluate(() => {
+        // Le calendrier de bureau et celui du mobile coexistent dans le DOM.
+        const el = [...document.querySelectorAll<HTMLElement>('.fc-view-harness .fc-view')]
+          .find(v => v.getClientRects().length > 0);
+        return [...(el?.classList ?? [])].find(c => /^fc-.+-view$/.test(c) && c !== 'fc-view') ?? '?';
+      });
+      const label = `agenda-${vue.replace(/^fc-|-view$/g, '')}`;
+      const parVue = await scan(demoPage, label);
+      console.log(`[a11y] Agenda, vue « ${nom} » (${vue}) : ${parVue.length} violation(s)`);
+      assertNoCritical(parVue, `Agenda, vue ${nom}`);
+    }
   });
 
   test('Entreprise (demo)', async ({ demoPage }) => {
