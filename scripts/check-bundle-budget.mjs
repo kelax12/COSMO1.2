@@ -171,6 +171,7 @@ const PLAFONDS_PAR_CHUNK = {
   index: 89_500, // 84 893 o sur 8 barils de modules, chunk d'entrée EXCLU
   'vendor-react': 76_000, // 72 074 o — socle non découpable
   'vendor-supabase': 59_500, // 56 254 o — requis dès la première requête
+  'vendor-pdf': 133_000, // 126 418 o — jsPDF, chargé au seul clic sur « Exporter en PDF » du rapport d'activité (2026-10-19)
   'vendor-gsap': 57_500, // 54 737 o — gsap + plugins, lazy, landing uniquement
   'sentry-client': 52_000, // 49 320 o — chargé APRÈS le premier rendu (C-13 · C-14)
   'vendor-animation': 52_000, // 49 245 o — framer-motion
@@ -190,11 +191,15 @@ const PLAFONDS_PAR_CHUNK = {
   OrganizationPage: 18_000, // 16 686 o
   TeamProjectsTab: 17_000, // 15 992 o
   UseCasePage: 16_500, // 15 591 o
-  legal: 3_000, // 2 693 o sur 2 chunks (2026-10-01 : CGU et confidentialité dans leur propre catalogue)
+  // ⚖️ RELEVÉ SUR ARBITRAGE D'AXEL le 2026-10-22, comme le 2026-10-13 : identification de l'éditeur
+  // (EI, SIREN, téléphone, LCEN art. 1-1, `e2e7679f`). Chargé par la seule page mentions légales.
+  legal: 3_500, // ≈ 3 330 o sur 2 chunks le 2026-10-22 ; 3 000 jusque-là (2 693 o le 2026-10-01)
   // ⚖️ RELEVÉS SUR ARBITRAGE D'AXEL le 2026-10-13, pas pour faire passer la CI : l'audit juridique
   // du jour a ajouté de l'information DUE (RGPD art. 13, C. conso L111-1, L224-25-1). Ces deux
   // catalogues ne sont chargés que par leur page légale, jamais sur le chemin critique.
-  legalPrivacy: 12_200, // 11 637 o sur 2 chunks (5 510 + 6 127) — chargé par la seule page confidentialité ; 9 900 jusqu'au 2026-10-13
+  // Relevé de nouveau sur arbitrage d'Axel le 2026-10-22 : section 7 ter « Prospection » (RGPD art. 14,
+  // `899f707f`) et identification du responsable (art. 13.1.a, `e2e7679f`).
+  legalPrivacy: 13_000, // ≈ 12 760 o sur 2 chunks le 2026-10-22 ; 12 200 du 2026-10-13 au 10-22, 9 900 avant
   legalTerms: 10_300, // 9 824 o sur 2 chunks (4 693 + 5 131) — chargé par la seule page CGU ; 9 700 jusqu'au 2026-10-13
   OKRPage: 15_000, // 14 192 o
   'vendor-router': 14_500, // 13 729 o
@@ -209,7 +214,7 @@ const PLAFONDS_PAR_CHUNK = {
  * Chunks vendor autorisés à dépasser `BUDGETS.page`, avec la raison.
  *
  * ⚠️ « Exempt » NE VEUT PLUS DIRE « sans borne » depuis C-85. Chacun de ces
- * cinq a désormais son plafond dans `PLAFONDS_PAR_CHUNK`, et une exemption
+ * six a désormais son plafond dans `PLAFONDS_PAR_CHUNK`, et une exemption
  * sans plafond est refusée par le contrôle de cohérence plus bas : c'était la
  * porte par laquelle 117 ko pouvaient en devenir 400.
  *
@@ -223,6 +228,7 @@ const EXEMPT = {
   'vendor-gsap': 'gsap + plugins, lazy, landing uniquement',
   'vendor-react': 'react + react-dom, socle non découpable',
   'vendor-supabase': 'client Supabase, requis dès la première requête',
+  'vendor-pdf': 'jsPDF, import() au clic sur « Exporter en PDF » du rapport d activité, jamais au chargement',
 };
 
 const KB = (n) => `${(n / 1000).toFixed(1)} ko`;

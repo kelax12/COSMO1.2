@@ -58,7 +58,22 @@ describe('supabase/config.toml ↔ supabase/functions/', () => {
 
   it.each(slugs)('%s : verify_jwt cohérent avec son mode d authentification', (slug) => {
     const src = source(slug);
-    if (src.includes("req.headers.get('x-cron-secret')")) {
+    const cron = src.includes("req.headers.get('x-cron-secret')");
+    const user = src.includes('auth.getUser()');
+    if (cron && user) {
+      // Double mode (C-121, 2026-10-22) : `delete-account` sert une personne
+      // connectée ET le cron des comptes inactifs. Le chemin utilisateur garde
+      // la passerelle (`verify_jwt = true`) ; son appelant cron n'est donc
+      // jamais la CI nue, c'est `inactive-accounts`, qui DOIT porter un JWT.
+      expect(declared.get(slug), `${slug} sert aussi une personne connectée`).toBe(true);
+      const callers = slugs.filter((s) => s !== slug && source(s).includes(`/functions/v1/${slug}`));
+      expect(callers.length, `${slug} en mode cron sans appelant connu`).toBeGreaterThan(0);
+      for (const c of callers) {
+        expect(source(c), `${c} appelle ${slug} sans JWT : la passerelle le refuserait`).toMatch(
+          /Authorization:\s*`Bearer \$\{SERVICE_ROLE_KEY\}`/,
+        );
+      }
+    } else if (cron) {
       expect(declared.get(slug), `${slug} est appelée par la CI sans JWT`).toBe(false);
     } else if (src.includes('auth.getUser()')) {
       expect(declared.get(slug), `${slug} identifie l appelant par son JWT`).toBe(true);

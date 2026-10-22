@@ -212,6 +212,8 @@ export const TAB_GATE_HOSTS = [
   'pages/LandingPage.tsx',
   // Accueil du premier compte : `onboarding` voyage avec lui (2026-10-03).
   'components/Layout.tsx',
+  // Guide perso (boussole du Layout desktop) : `persoGuide` voyage avec son tiroir (2026-10-19).
+  'components/perso-guide/PersoGuideFab.tsx',
 ];
 
 /** Chemins absolus des modules gatés : routes d'`App.tsx`, onglets déclarants. */

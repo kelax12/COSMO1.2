@@ -1,4 +1,4 @@
-// Mesure d'audience maison (remplace Veske / vesk.dev, mig. 222).
+// Mesure d'audience maison (mig. 222).
 //
 // Envoie trois sortes d'évènements à `/api/collect` (même origine) :
 //   • `view`  à chaque page affichée (arrivée et navigation SPA) ;

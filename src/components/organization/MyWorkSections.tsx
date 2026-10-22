@@ -8,21 +8,32 @@ import {
 } from '@/modules/team-projects';
 import type { TeamOKR } from '@/modules/team-okrs';
 import type { OrgMember, OrgNotification } from '@/modules/organizations';
-import TeamActivityFeed from './TeamActivityFeed';
-import OrgEventsTimeline from './OrgEventsTimeline';
-import { MyKeyResultsCard, MyProjectsCard, MyTasksCard, WaitingForMeCard } from './MyWorkCards';
-import { ActivityDigestCard, WaitingOnOthersCard, WeekLoadCard } from './MyWorkExtraCards';
+import { MyKeyResultsCard, MyProjectsCard, WaitingForMeCard } from './MyWorkCards';
+import { WaitingOnOthersCard, WeekLoadCard } from './MyWorkExtraCards';
 import { buildOrgEvents } from './org-events.helpers';
+import { useNavigate } from 'react-router';
+import type { CalendarEvent } from '@/modules/events';
+import ApercuWidgetGrid from './ApercuWidgetGrid';
+import type { TemplateId } from './apercu-templates';
+import type { PlacedWidget, WidgetId, WidgetSize } from './apercu-widgets';
+import { AgendaCompact, KpiCompact, KpiTiles, TasksCompact } from './MyWorkCompactAction';
+import { KrsCompact, OrgEventsCompact, ProjectsCompact, WaitingOnCompact } from './MyWorkCompactContext';
+import { buildOrgLink } from './deep-link.helpers';
+import { BlockedByMeWidget, DeadlinesWidget } from './MyWorkDeadlineWidgets';
+import { ActivityWidget } from './MyWorkActivityWidget';
+import { recentItems } from './apercu-activity.helpers';
+import { MentionsWidget, NoteWidget } from './MyWorkSocialWidgets';
+import { OkrsWidget, TeamLoadWidget, TeamOverdueWidget } from './MyWorkTeamWidgets';
+import { InvitationsWidget, OrgHealthWidget, RiskProjectsWidget, UnassignedWidget } from './MyWorkAdminWidgets';
+import { isTaskOverdue, myTeam, okrRows, riskyProjects as riskyProjectsOf, teamLoad as teamLoadOf, teamOverdue as teamOverdueOf, unassignedTasks } from './apercu-team.helpers';
 import { KpiStrip } from './MyWorkKpiStrip';
+import { AgendaEventsCard } from './MyWorkAgendaCard';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
 import {
-  activityDigest,
-  buildActivityItems,
   computeBlocking,
   dependencyIdsOf,
   dependentIdsOf,
-  groupByHorizon,
   myKeyResults,
   projectPeople,
   reviewsForMe,
@@ -51,8 +62,8 @@ export interface MyWorkSectionsProps {
   members: OrgMember[];
   hasAny: boolean;
   estimated: number;
-  /** Carte « Mon agenda », construite par `MyWorkTab`. */
-  agenda: ReactNode;
+  /** Mêmes événements que la carte agenda, pour les formats petit et moyen. */
+  agendaEvents: CalendarEvent[];
   overdueCount: number;
   /** Mes tâches terminées sur la fenêtre lue, pour la barre de l'en-tête. */
   doneCount: number;
@@ -61,6 +72,15 @@ export interface MyWorkSectionsProps {
   onOpenTask: (task: TeamTask) => void;
   onApprove: (task: TeamTask) => void;
   onSendBack: (task: TeamTask) => void;
+  /** Reporter d'un jour (widget « Mes échéances »). */
+  onPostpone: (task: TeamTask) => void;
+  /** Tâches ouvertes de l'organisation (widgets d'équipe et d'administration). */
+  teamOpen: TeamTask[];
+  /** Modèle du rôle : recommandé dans le choix des modèles, remis par « Réinitialiser ». */
+  roleTemplate: TemplateId;
+  /** Disposition des widgets, tenue par `MyWorkTab` (préférence par personne). */
+  layout: PlacedWidget[];
+  onLayoutChange: (next: PlacedWidget[]) => void;
 }
 
 /**
@@ -79,8 +99,9 @@ export interface MyWorkSectionsProps {
  */
 const MyWorkSections = ({
   orgId, currentUserId, open, mine, upcoming, createdInReview, delegated,
-  activity, deps, notifications, okrs, projects, members, hasAny, estimated,
-  agenda, overdueCount, doneCount, nextDeadline, onToggle, onOpenTask, onApprove, onSendBack,
+  activity, deps, notifications, okrs, projects, members,
+  overdueCount, doneCount, nextDeadline, onToggle, onOpenTask, onApprove, onSendBack,
+  layout, onLayoutChange, agendaEvents, onPostpone, teamOpen, roleTemplate,
 }: MyWorkSectionsProps) => {
   const me = currentUserId ?? '';
   const activeProjectIds = useMemo(
@@ -88,10 +109,8 @@ const MyWorkSections = ({
     [projects],
   );
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
-  const groups = useMemo(() => groupByHorizon(open), [open]);
   // Actions groupées sur « Mes tâches », comme partout où il y a une liste.
   const bulk = useTeamTasksBulk(orgId, open);
-  const activityItems = useMemo(() => buildActivityItems(activity), [activity]);
   const mentions = useMemo(() => unreadMentions(notifications), [notifications]);
 
   // Tâches à nommer sans les avoir encore : celles qui attendent les miennes,
@@ -108,11 +127,11 @@ const MyWorkSections = ({
     const wanted = new Set([
       ...dependentIdsOf(open, deps),
       ...dependencyIdsOf(open, deps),
-      ...activityItems.map((i) => i.taskId),
+      ...recentItems(activity).map((i) => i.taskId),
       ...mentions.map((n) => n.taskId!),
     ]);
     return [...wanted].filter((id) => !known.has(id)).sort();
-  }, [open, deps, activityItems, mentions, known]);
+  }, [open, deps, activity, mentions, known]);
   const { data: byIds = [] } = useTeamTaskSlice(
     orgId,
     { ids: missingIds, limit: 100 },
@@ -141,10 +160,6 @@ const MyWorkSections = ({
     () => waitingOnOthers(open, deps, [...taskById.values()], delegated, me),
     [open, deps, taskById, delegated, me],
   );
-  const digest = useMemo(
-    () => activityDigest(activity, new Set(mine.map((t) => t.id)), me),
-    [activity, mine, me],
-  );
   // La démo nomme le compte courant « Vous » / « You » : « Bonjour Vous. »
   // ne se dit pas, on retombe alors sur le salut neutre.
   const ownName = members.find((m) => m.userId === me)?.displayName.split(' ')[0] || null;
@@ -157,28 +172,152 @@ const MyWorkSections = ({
     [upcoming, okrs, activeProjectIds, projects],
   );
 
-  return (
-    <>
-      {/* Refonte du 2026-10-02 (choix 1B 2B 3A 4C 5B 6A 7C 8C 9A 10A 11B + N1 N2) :
-          une phrase d'accueil qui absorbe l'ancienne carte de synthèse, puis
-          deux colonnes, l'ACTION à gauche (en attente de moi, mes tâches)
-          et le CONTEXTE à droite (charge, agenda, KR, projets), puis ce qui
-          dépend des autres et la vie de l'équipe en bas.
-          ⚠️ `minmax(0, …)` et `min-w-0` sur les colonnes (maquette 105) : un
-          élément de grille a `min-width: auto` et débordait en 390 px.
-          ⚠️ L'agenda est rendu HORS de toute condition : un nouvel arrivant
-          sans tâche doit aussi voir le sien. */}
-      <KpiStrip
-        firstName={firstName}
-        waiting={reviews.length + mentionRows.length + blocking.length}
-        open={open.length}
-        overdue={overdueCount}
-        done={doneCount}
-        nextDeadline={nextDeadline}
-      />
+  const navigate = useNavigate();
+  const waitingCount = reviews.length + mentionRows.length + blocking.length;
+  const seeTasks = () => navigate(buildOrgLink('tasks'));
+  const myTaskIdSet = useMemo(() => new Set(mine.map((t) => t.id)), [mine]);
 
-      <div className="grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-5 items-start">
-        <div className="min-w-0 space-y-5">
+  // Équipe et administration (modèles chef d'équipe / admin, 2026-10-19).
+  const team = useMemo(() => myTeam(members, me), [members, me]);
+  const teamLoads = useMemo(() => teamLoadOf(team, teamOpen), [team, teamOpen]);
+  const teamLate = useMemo(() => teamOverdueOf(team, teamOpen), [team, teamOpen]);
+  const companyOkrRows = useMemo(() => okrRows(okrs, false), [okrs]);
+  const risky = useMemo(() => riskyProjectsOf(projects, teamOpen), [projects, teamOpen]);
+  const orphans = useMemo(() => unassignedTasks(teamOpen, activeProjectIds), [teamOpen, activeProjectIds]);
+  const orgOverdue = useMemo(() => teamOpen.filter((t) => isTaskOverdue(t)).length, [teamOpen]);
+  const activeProjects = useMemo(() => projects.filter((p) => !p.archivedAt && !p.isTemplate), [projects]);
+  const openOkr = (okrId: string) => navigate(buildOrgLink('okr', { okr: okrId }));
+
+
+  /**
+   * Formats petit et moyen (règle des maquettes du 2026-10-19) : la taille
+   * change la présentation, jamais l'accès. Chaque élément garde son action,
+   * le reste se parcourt avec ‹ 1/N ›. `undefined` = ce widget n'a pas de
+   * rendu compact propre, on retombe sur la carte complète.
+   */
+  const renderCompact = (id: WidgetId, size: 'small' | 'medium'): ReactNode | undefined => {
+    switch (id) {
+      case 'kpi':
+        return (
+          <KpiCompact
+            waiting={waitingCount}
+            overdue={overdueCount}
+            open={open.length}
+            done={doneCount}
+            nextDeadline={nextDeadline}
+            onOpenTask={onOpenTask}
+          />
+        );
+      // « En attente de moi » : petit et moyen reprennent la carte complète (2026-10-20).
+      case 'waiting':
+        return undefined;
+      case 'tasks':
+        return <TasksCompact size={size} open={open} projectById={projectById} onToggle={onToggle} onOpenTask={onOpenTask} onSeeAll={seeTasks} />;
+      case 'agenda':
+        return <AgendaCompact size={size} events={agendaEvents} onSeeAll={() => navigate('/agenda')} />;
+      case 'krs':
+        return <KrsCompact size={size} items={krs} onOpen={(okrId) => navigate(buildOrgLink('okr', { okr: okrId }))} />;
+      case 'projects':
+        return (
+          <ProjectsCompact
+            size={size}
+            summaries={myProjects}
+            onOpen={(projectId) => navigate(buildOrgLink('projects', { project: projectId }))}
+            onSeeAll={() => navigate(buildOrgLink('projects'))}
+          />
+        );
+      case 'waitingOn':
+        return <WaitingOnCompact size={size} entries={waitingOn} members={members} onOpenTask={onOpenTask} />;
+      case 'activity':
+        return <ActivityWidget size={size} activity={activity} myTaskIds={myTaskIdSet} me={me} members={members} taskById={taskById} onOpenTask={onOpenTask} />;
+      case 'orgEvents':
+        return (
+          <OrgEventsCompact
+            size={size}
+            events={orgEvents}
+            onOpen={(e) => {
+              if (e.kind === 'okr') { navigate(buildOrgLink('okr', { okr: e.id.slice(4) })); return; }
+              const task = taskById.get(e.id.slice(5));
+              if (task) onOpenTask(task);
+            }}
+          />
+        );
+      default:
+        return undefined;
+    }
+  };
+
+  // Aperçu en widgets (2026-10-19) : chaque bloc d'avant est un widget que
+  // la personne retire, ajoute, redimensionne et déplace. `null` = rien à
+  // montrer (la grille affiche alors un cadre vide en mode édition).
+  // ⚠️ L'agenda reste rendu sans condition : un nouvel arrivant sans tâche
+  // doit aussi voir le sien.
+  const renderWidget = (id: WidgetId, size: WidgetSize): ReactNode => {
+    if (size !== 'large') {
+      const compact = renderCompact(id, size);
+      if (compact !== undefined) return compact;
+    }
+    switch (id) {
+      case 'orgEvents':
+        return (
+          <OrgEventsCompact
+            size="large"
+            events={orgEvents}
+            onOpen={(e) => {
+              if (e.kind === 'okr') { navigate(buildOrgLink('okr', { okr: e.id.slice(4) })); return; }
+              const task = taskById.get(e.id.slice(5));
+              if (task) onOpenTask(task);
+            }}
+          />
+        );
+      case 'tasks':
+        return <TasksCompact size="large" open={open} projectById={projectById} onToggle={onToggle} onOpenTask={onOpenTask} onSeeAll={seeTasks} />;
+      case 'deadlines':
+        return <DeadlinesWidget size={size} open={open} onToggle={onToggle} onOpenTask={onOpenTask} onPostpone={onPostpone} onSeeAll={seeTasks} />;
+      case 'mentions':
+        return <MentionsWidget size={size} orgId={orgId} mentions={mentionRows} members={members} onOpenTask={onOpenTask} />;
+      case 'blockedByMe':
+        return <BlockedByMeWidget size={size} blocking={blocking} members={members} onToggle={onToggle} onOpenTask={onOpenTask} />;
+      case 'teamLoad':
+        return <TeamLoadWidget size={size} loads={teamLoads} onSeeAll={() => navigate(buildOrgLink('members'))} />;
+      case 'teamOverdue':
+        return <TeamOverdueWidget size={size} groups={teamLate} onOpenTask={onOpenTask} />;
+      case 'companyOkrs':
+        return <OkrsWidget size={size} rows={companyOkrRows} onOpen={openOkr} />;
+      case 'orgHealth':
+        return (
+          <OrgHealthWidget
+            size={size}
+            atRiskProjects={risky.length}
+            struggling={activeProjects.filter((p) => p.health === 'off_track').length}
+            overdue={orgOverdue}
+            blockedTasks={teamOpen.filter((t) => t.status === 'blocked').length}
+            onGo={(section) => navigate(buildOrgLink(section))}
+          />
+        );
+      case 'riskProjects':
+        return <RiskProjectsWidget size={size} rows={risky} onOpen={(projectId) => navigate(buildOrgLink('projects', { project: projectId }))} />;
+      case 'unassigned':
+        return <UnassignedWidget size={size} tasks={orphans} projectName={(id) => projectById.get(id)?.name} onOpenTask={onOpenTask} />;
+      case 'invitations':
+        return <InvitationsWidget size={size} orgId={orgId} onSeeAll={() => navigate(buildOrgLink('members'))} />;
+      case 'note':
+        return <NoteWidget size={size} orgId={orgId} userId={me} />;
+      case 'kpi':
+        return (
+          <KpiStrip
+            firstName={firstName}
+            waiting={waitingCount}
+            open={open.length}
+            overdue={overdueCount}
+            done={doneCount}
+            nextDeadline={nextDeadline}
+          >
+            <KpiTiles waiting={waitingCount} overdue={overdueCount} open={open.length} done={doneCount} />
+          </KpiStrip>
+        );
+      case 'waiting':
+        return (
           <WaitingForMeCard
             reviews={reviews}
             mentions={mentionRows}
@@ -188,62 +327,33 @@ const MyWorkSections = ({
             onApprove={onApprove}
             onSendBack={onSendBack}
           />
-          <MyTasksCard
-            groups={groups}
-            openCount={open.length}
-            hasAny={hasAny}
-            estimated={estimated}
-            projectById={projectById}
-            onToggle={onToggle}
-            onOpenTask={onOpenTask}
-            selection={{
-              active: bulk.selectMode,
-              selectedIds: bulk.selectedIds,
-              onToggle: bulk.toggleSelect,
-              onStart: () => bulk.setSelectMode(true),
-            }}
-          />
-        </div>
-        <div className="min-w-0 space-y-5">
-          <WeekLoadCard load={load} />
-          {agenda}
-          {krs.length > 0 && <MyKeyResultsCard items={krs} />}
-          {myProjects.length > 0 && (
-            <MyProjectsCard summaries={myProjects} orgId={orgId} userId={currentUserId} people={people} members={members} />
-          )}
-        </div>
-      </div>
+        );
+      case 'load':
+        return <WeekLoadCard load={load} />;
+      case 'agenda':
+        return <AgendaEventsCard events={agendaEvents} />;
+      case 'krs':
+        return krs.length > 0 ? <MyKeyResultsCard items={krs} /> : null;
+      case 'projects':
+        return myProjects.length > 0
+          ? <MyProjectsCard summaries={myProjects} orgId={orgId} userId={currentUserId} people={people} members={members} />
+          : null;
+      case 'waitingOn':
+        return <WaitingOnOthersCard entries={waitingOn} members={members} onOpenTask={onOpenTask} />;
+      case 'activity':
+        return <ActivityWidget size={size} activity={activity} myTaskIds={myTaskIdSet} me={me} members={members} taskById={taskById} onOpenTask={onOpenTask} />;
+    }
+  };
+
+  return (
+    <>
+      <ApercuWidgetGrid layout={layout} onChange={onLayoutChange} renderWidget={renderWidget} roleTemplate={roleTemplate} />
 
       {bulk.selectMode && (
         <Suspense fallback={null}>
           <TeamTasksBulkLayer bulk={bulk} members={members} projects={projects} />
         </Suspense>
       )}
-
-      {/* Ce qui dépend des autres, puis la vie de l'équipe : digest des 24 h
-          (fil du journal, mig. 094, replié dessous) et prochains événements de
-          l'entreprise en rail vertical. */}
-      <div className="grid lg:grid-cols-3 gap-5 items-start">
-        <div className="min-w-0">
-          <WaitingOnOthersCard entries={waitingOn} members={members} onOpenTask={onOpenTask} />
-        </div>
-        <div className="min-w-0">
-          <ActivityDigestCard digest={digest}>
-            <TeamActivityFeed
-              bare
-              items={activityItems}
-              taskById={taskById}
-              projects={projects}
-              members={members}
-              currentUserId={currentUserId}
-              onOpenTask={onOpenTask}
-            />
-          </ActivityDigestCard>
-        </div>
-        <div className="min-w-0">
-          <OrgEventsTimeline events={orgEvents} />
-        </div>
-      </div>
     </>
   );
 };

@@ -18,13 +18,15 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
 - **Entreprise** (refait le 2026-10-14) : `/entreprise/onboarding` = `OrgChoice` seul (créer |
   rejoindre). Une création mène droit à `/entreprise`. L'assistant de mise en place (équipe,
   invitations, projet, cap, constellation) est SUPPRIMÉ : ne pas le recréer.
-  `OrgWelcomeVideo` (vidéo `public/videos/onboarding-entreprise.mp4`, sous-titres `.fr.vtt`) s'ouvre
-  au premier passage, créateur comme membre : une fois par entreprise et par appareil, jamais en
-  démo, seulement aux arrivés depuis le 2026-10-03, et SEULEMENT à une arrivée sans paramètre
+  `OrgWelcomeVideo` (vidéo V2 `public/videos/onboarding-entreprise-v2.mp4`, sous-titres `.fr.vtt`) s'ouvre
+  au premier passage, créateur comme membre : une fois par entreprise et par appareil, AUSSI en
+  démo depuis le 2026-10-19 (fixture e2e : drapeau posé), hors démo seulement aux arrivés depuis le 2026-10-03, et SEULEMENT à une arrivée sans paramètre
   (`arrivedBare`, décidé à l'arrivée). Relue à chaque rendu, la garde l'ouvrait après coup sur
   `?tab=`, `?task=` : 8 e2e rouges (10-04). Lecture avec le son, repli muet + « Activer le son ».
-- ❌ **Guide entreprise** : ne jamais renommer ni déplacer un `data-guide-id` sans relancer la garde
-  `src/components/org-guide/guide-scenarios.guard.test.ts`.
+- ❌ **Guides entreprise ET perso** : ne jamais renommer ni déplacer un `data-guide-id` sans relancer la garde
+  `src/components/org-guide/guide-scenarios.guard.test.ts` (elle couvre les deux). Le guide perso
+  (`perso-guide/`, boussole du `Layout` desktop, hors `/entreprise`) partage le moteur `use-guide-demo.tsx` ;
+  pendant une démo, `useTutorial` n'ouvre aucun tutoriel de page (`src/lib/guide-demo-active.ts`).
 - ❌ **Jamais sur une route** pour le perso : une inscription Google ne repasse pas par `SignupPage`.
 - ❌ **Jamais de création différée** : chaque étape crée quand elle est validée, et passer avance
   sans rien créer.
@@ -34,9 +36,21 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
   refermait sur sa propre première création (2026-09-08).
 - 🔴 **Un id de résultat clé est un UUID** : `syncKRsToTable` refuse le reste (`invalid_input`).
   Témoin e2e : le `DELETE` de `key_results`, jamais l'upsert, qui part avant la garde.
-- ⚠️ **DA fixe par parcours** (clair perso, nuit entreprise) : variables de thème redéclarées sur le
-  conteneur (`LIGHT_SCOPE`, `ENT_SCOPE`), sinon les champs globaux suivent le thème de l'app.
+- ⚠️ **DA fixe de l'accueil perso** (clair) : variables de thème redéclarées sur le conteneur
+  (`LIGHT_SCOPE`), sinon les champs globaux suivent le thème de l'app. La vidéo d'accueil
+  entreprise, elle, SUIT le thème choisi (jetons `--color-*`, 2026-10-20) ; `ENT_SCOPE` et
+  `ent-ui.tsx` (DA nuit) sont supprimés, ils n'habillaient plus qu'elle.
 - ⚠️ Sous mouvement réduit, aucun SMIL monté (il ignore le réglage) : le dessin final tient seul.
+
+## Aperçu entreprise en widgets (2026-10-19)
+
+- Registre `organization/apercu-widgets.ts`, modèles par rôle `apercu-templates.ts`, grille
+  `ApercuWidgetGrid`. Disposition en `localStorage` (`cosmo_apercu_layout_v1:<org>:<user>`) :
+  une préférence, jamais une donnée ; la perdre rend le modèle par défaut, jamais un écran vide.
+- Chaque widget passe par `WidgetShell` (`section` nommée par son titre : les e2e la cherchent par
+  `getByRole('region')`). En édition, contenu `inert`, flèches et formats au clavier.
+- ⚠️ Ce qui ne sert qu'en édition (`AddWidgetPage`, `TemplatePicker`) pèse dans le chunk
+  `OrganizationPage`, plafonné : le charger en `lazy`.
 
 ---
 

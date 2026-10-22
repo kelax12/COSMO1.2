@@ -65,6 +65,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: index * 0.05 }}
                   data-tutorial-id={index === 0 ? 'okr-first-card' : undefined}
+                  data-guide-id={index === 0 ? 'perso-okr-first-card' : undefined}
                   // Séparation visuelle entre cartes sur mobile (2026-09-17) :
                   // `.card-plain-mobile` rend fond ET bordure transparents
                   // sous 768px (par design, pour d'autres écrans) — ici on la

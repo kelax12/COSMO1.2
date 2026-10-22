@@ -163,6 +163,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     confirmBulkDelete,
     bulkSetCategory,
     bulkSetDeadline,
+    bulkSetHealth,
   } = useTaskSelection({
     tasks,
     lists: allLists,
@@ -493,6 +494,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         onDelete={() => setShowBulkDeleteConfirm(true)}
         onSetCategory={bulkSetCategory}
         onSetDeadline={bulkSetDeadline}
+        onSetHealth={bulkSetHealth}
         onExit={exitSelectMode}
       />
 

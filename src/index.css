@@ -1957,3 +1957,13 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
     --t-body: calc(0.9375rem + 1px);
   }
 }
+
+/* Aperçu en widgets (2026-10-20) : sur téléphone, toute commande d'un widget
+   offre une cible de 44 x 44 px (WCAG 2.5.5, garde e2e touch-targets). Une
+   seule règle plutôt qu'une classe sur chacun des boutons des widgets. */
+@media (max-width: 767.98px) {
+  .apercu-widget-grid button {
+    min-height: var(--touch-min);
+    min-width: var(--touch-min);
+  }
+}

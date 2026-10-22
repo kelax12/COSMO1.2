@@ -7,17 +7,23 @@ import { describe, expect, it } from 'vitest';
 import fr from '@/locales/fr/orgGuide.json';
 import en from '@/locales/en/orgGuide.json';
 import { ORG_SECTIONS } from '@/components/organization/org-sections';
+import persoFr from '@/locales/fr/persoGuide.json';
+import persoEn from '@/locales/en/persoGuide.json';
+import { PERSO_GUIDE_ACTIONS } from '@/components/perso-guide/scenarios';
 import { GUIDE_ACTIONS } from './scenarios';
+import type { GuideStep } from './guide-types';
 
 /**
- * Garde des scénarios du guide entreprise.
+ * Garde des scénarios des deux guides (entreprise et perso).
  *
  * Chaque cible d'un scénario doit exister comme `data-guide-id` dans `src/`.
- * Trois formes d'ancrage sont reconnues, et aucune autre :
+ * Quatre formes d'ancrage sont reconnues, et aucune autre :
  *  1. littérale : `data-guide-id="x"` ;
  *  2. expression à littéraux : `data-guide-id={cond ? 'x' : 'y'}` donne x et y ;
  *  3. gabarit : `data-guide-id={`prefix-${...}`}` ; le préfixe doit être
- *     déclaré dans `TEMPLATE_SUFFIXES`, qui dit d'où viennent ses suffixes.
+ *     déclaré dans `TEMPLATE_SUFFIXES`, qui dit d'où viennent ses suffixes ;
+ *  4. relais de prop : `data-guide-id={guideId}` (`NavItemLink`) ; chaque
+ *     `guideId="x"` écrit à l'appel est une ancre.
  * Un gabarit au préfixe inconnu fait échouer la garde : on ne devine pas.
  */
 const SRC = join(process.cwd(), 'src');
@@ -43,6 +49,7 @@ const TEMPLATE_SUFFIXES: Record<string, (source: string) => string[]> = {
 };
 
 const LITERAL_RE = /data-guide-id="([A-Za-z0-9-]+)"/g;
+const PROP_RE = /\bguideId="([A-Za-z0-9-]+)"/g;
 const EXPR_START_RE = /data-guide-id=\{/g;
 const TEMPLATE_RE = /^`([a-z0-9-]+)\$\{[^`]*\}`$/;
 
@@ -80,10 +87,12 @@ for (const file of walk(SRC)) {
   const source = readFileSync(file, 'utf8');
   const where = relative(SRC, file);
   for (const m of source.matchAll(LITERAL_RE)) anchors.set(m[1], openingTagAround(source, m.index ?? 0));
+  for (const m of source.matchAll(PROP_RE)) anchors.set(m[1], openingTagAround(source, m.index ?? 0));
   for (const m of source.matchAll(EXPR_START_RE)) {
     const at = m.index ?? 0;
     const expr = braced(source, at + m[0].length - 1).trim();
     const tag = openingTagAround(source, at);
+    if (expr === 'guideId') continue; // relais de prop, cf. forme 4
     const template = TEMPLATE_RE.exec(expr);
     if (template) {
       const suffixes = TEMPLATE_SUFFIXES[template[1]];
@@ -97,8 +106,9 @@ for (const file of walk(SRC)) {
   }
 }
 
-const targets = GUIDE_ACTIONS.flatMap((a) => a.steps.map((s) => (s.kind === 'goto' ? s.via : s.kind === 'handoff' ? null : s.target)))
+const targetsOf = (actions: { steps: GuideStep<string>[] }[]) => actions.flatMap((a) => a.steps.map((s) => (s.kind === 'goto' ? s.via : s.kind === 'handoff' ? null : s.target)))
   .filter((t): t is string => !!t);
+const targets = targetsOf(GUIDE_ACTIONS);
 
 const lookup = (cat: unknown, key: string): unknown =>
   key.split('.').reduce<unknown>((node, part) => (node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined), cat);
@@ -146,6 +156,42 @@ describe('scénarios du guide entreprise', () => {
     const cat = lang === 'fr' ? fr : en;
     const keys = GUIDE_ACTIONS.flatMap((a) => [
       `actions.${a.id}.label`, `actions.${a.id}.synonyms`,
+      ...a.steps.flatMap((s) => [
+        'bubbleKey' in s ? s.bubbleKey : undefined,
+        'emptyKey' in s ? s.emptyKey : undefined,
+      ]),
+    ]).filter((key): key is string => !!key);
+    const missing = keys.filter((key) => typeof lookup(cat, key) !== 'string');
+    expect(missing).toEqual([]);
+  });
+});
+
+describe('scénarios du guide perso', () => {
+  it('ids d\'action uniques', () => {
+    expect(PERSO_GUIDE_ACTIONS).toHaveLength(10);
+    expect(new Set(PERSO_GUIDE_ACTIONS.map((a) => a.id)).size).toBe(PERSO_GUIDE_ACTIONS.length);
+  });
+
+  it('témoin : la garde lit le relais de prop `guideId`', () => {
+    expect(anchors.has('perso-nav-tasks')).toBe(true);
+    expect(anchors.get('perso-nav-tasks')).toMatch(/^<NavItemLink\b/);
+    expect(anchors.has('perso-nav-statistics')).toBe(false);
+  });
+
+  it.each([...new Set(targetsOf(PERSO_GUIDE_ACTIONS))])('l\'ancrage %s existe dans src/', (id) => {
+    expect(anchors.has(id), `data-guide-id="${id}" introuvable`).toBe(true);
+  });
+
+  it('les étapes `click` ne visent pas un id évoquant une écriture', () => {
+    const risky = PERSO_GUIDE_ACTIONS.flatMap((a) => a.steps)
+      .filter((s) => s.kind === 'click' && /(save|submit|confirm|delete|remove|create-confirm)/.test(s.target));
+    expect(risky).toEqual([]);
+  });
+
+  it.each(['fr', 'en'] as const)('toutes les clés existent en %s', (lang) => {
+    const cat = lang === 'fr' ? persoFr : persoEn;
+    const keys = PERSO_GUIDE_ACTIONS.flatMap((a) => [
+      `actions.${a.id}.label`, `actions.${a.id}.synonyms`, `categories.${a.category}`,
       ...a.steps.flatMap((s) => [
         'bubbleKey' in s ? s.bubbleKey : undefined,
         'emptyKey' in s ? s.emptyKey : undefined,
