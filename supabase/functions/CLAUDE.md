@@ -29,7 +29,7 @@ identiques, 12 sondes. Versions : [`faille.md`](../../faille.md) § « Ordre de 
   Avant de déployer : `grep -l "_shared/<module>" supabase/functions/*/index.ts`.
 - ✅ Déploiement sans Docker : `supabase functions deploy <slug> --use-api`, depuis la racine.
 
-## 🔴 Douze fonctions, douze sections, douze sondes (2026-09-30)
+## 🔴 Une fonction, une section, une sonde (2026-09-30 ; treize depuis le 2026-10-22)
 
 - ❌ **Jamais une fonction sans sa section `[functions.<slug>]` dans `supabase/config.toml`.**
   `org-webhook-dispatch` y manquait : déployée en `verify_jwt = true`, elle rendait 401 à la CI
@@ -37,15 +37,18 @@ identiques, 12 sondes. Versions : [`faille.md`](../../faille.md) § « Ordre de 
   l exige, et exige `false` pour une fonction à `x-cron-secret`.
 - ❌ **Jamais un appel sortant vers une URL client sans résoudre le nom** et refuser toute adresse
   non publique (`_shared/org-integrations.ts`, W-2). La contrainte SQL ne voit qu un texte.
-- ❌ **Jamais un e-mail sans plafond de débit** (`_shared/rate-limit.ts`, W-4).
+- ❌ **Jamais un e-mail sans plafond de débit** (`_shared/rate-limit.ts`, W-4 ; plafond par exécution pour un cron).
+- ⚠️ **`delete-account` a deux modes depuis le 2026-10-22 (C-121)** : JWT de la personne, ou
+  `x-cron-secret` + compte désigné, accepté seulement si `account_inactivity_deletion_due()` (mig. `226`)
+  le confirme. ❌ Ne jamais retirer cette revérification : sans elle, le secret seul effacerait n importe qui.
 
 ## ✅ Le code déployé ≠ le comportement déployé (C-91, 2026-09-20)
 
 `check:edge` relit les **sources** en ligne et les compare au dépôt. Il ne dit rien de ce que la
-fonction **fait**. C est `npm run check:edge-smoke` qui touche les premiers mètres : **12 sondes**
+fonction **fait**. C est `npm run check:edge-smoke` qui touche les premiers mètres : **13 sondes** (12 jusqu au 2026-10-22, `inactive-accounts` en plus)
 (8 jusqu au 2026-09-30, A-2), dans `edge-deploy-drift.yml`. Les fonctions cron sont sondées **sans
 jeton**, comme la CI les appelle : c est ce qui voit un `verify_jwt` faux.
-⚠️ Douze sondes ne sont pas douze fonctions vérifiées : elles prouvent qu une fonction répond et
+⚠️ Treize sondes ne sont pas treize fonctions vérifiées : elles prouvent qu une fonction répond et
 comment elle refuse, jamais qu elle fait son travail.
 
 ## Interdits
