@@ -50,6 +50,7 @@ const DemoConversionBanner: React.FC = () => {
         <button
           type="button"
           onClick={() => navigate('/signup')}
+          data-c23-dispense=""
           className="font-semibold text-[rgb(var(--color-accent-solid))] underline underline-offset-2"
         >
           {t('demoBanner.createAccount')}
@@ -63,6 +64,10 @@ const DemoConversionBanner: React.FC = () => {
         <button
           type="button"
           onClick={() => navigate('/signup')}
+          // C-23 : SEULE paire dispensée de l'audit de contraste, et en thème
+          // clair seulement (e2e/a11y-contrast-themes.spec.ts). Cliquet du
+          // ratio : src/theme-contrast.guard.test.ts.
+          data-c23-dispense=""
           className="font-semibold text-[rgb(var(--color-accent-solid))] hover:text-[rgb(var(--color-accent-solid-hover))] underline underline-offset-2 transition-colors"
         >
           {t('demoBanner.createAccount')}

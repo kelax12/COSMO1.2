@@ -141,6 +141,10 @@ export default defineConfig({
         '**/mobile-android.spec.ts',
         // C-95 : project `visual`, cf. son commentaire dans `chromium`.
         '**/visual-regression.spec.ts',
+        // AM-5 : le contraste depend du THEME, pas du moteur. Ses 4 cas
+        // rechargent 7 routes chacun ; les rejouer sous WebKit doublerait ce
+        // cout pour la meme mesure. Joue par `chromium`.
+        '**/a11y-contrast-themes.spec.ts',
         // Son propre prealable : joue par le project `mobile-safari-warmup`,
         // dont celui-ci depend. L'inclure ici le rejouerait en plein milieu.
         '**/_warmup-mobile.spec.ts',
