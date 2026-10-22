@@ -14,6 +14,20 @@
 
 ## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → 75 → 76 → 78 → 78 → **78 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**)
 
+> ### 🟡 2026-10-22 · instables WebKit triés : un produit, deux harnais
+>
+> Les cinq derniers runs `CI` de `main` (`311fa8a3` → `5eaa8b8c`, job `e2e`, logs et rapports Playwright) portent **quatre** cas `mobile-safari` instables, en trois familles. Chacune ouverte à l'écran (capture et instantané d'accessibilité du rapport CI, code du composant), pas lue sur son délai. PR [#94](https://github.com/kelax12/COSMO1.2/pull/94).
+>
+> | Cas | Runs | Verdict | Cause mesurée | Correctif |
+> |---|---|---|---|---|
+> | `expectOrgSectionOffered` (`fixtures.ts`) : `demo-entreprise › Aperçu`, `demo-entreprise-okr-modal › Organigramme` (la « modale OKR » des notes précédentes : c'est la feuille de section qui restait ouverte, pas la modale) | 2 / 5 | **PRODUIT** | `useModalA11y` posait son écouteur d'Échap dans un effet **passif**, qui tourne après la peinture : `OrgSectionSheet` (lazy) était à l'écran, le focus bientôt dedans, et Échap perdu. Instantané CI : bouton de section `expanded`, donc `onClose` jamais appelé | `useLayoutEffect` (les 58 surfaces du hook en profitent). Garde jsdom déterministe dans `use-modal-a11y.guard.test.tsx` : **rouge sous `useEffect`** (12 / 13, mesuré), verte après (13 / 13), avec son témoin |
+> | `demo-touch-gestures › swipe droit` | 1 / 5 (et les 10-09, 10-18, 10-20) | HARNAIS | Framer Motion 12 (`PanSession`) ne reconnaît le glissé qu'à la frame **suivant** le mouvement, et `pointerup` annule cette frame. `down`, 12 `move` et `up` traités par WebKit chargé sans frame rendue comptent pour un appui : le second glissé échouait donc aussi. Un doigt reste au moins une frame sur l'écran | le geste attend deux frames rendues ; la seconde tentative est **retirée** |
+> | `demo-journeys › compléter une tâche` (fixture `demoPage`) | 1 / 5 | HARNAIS | `dispatchEvent` sans délai propre attendait un CTA démo déjà démonté jusqu'au délai du **test** (3 min) ; le retry passait en 2,6 s | attentes bornées, URL relue après 5 s |
+> | `demo-billing-disarmed` | 5 / 5 | hors périmètre | rouge sur `chromium` **et** WebKit, déterministe : PR #87 | — |
+>
+> ⚠️ Aucun écart Safari à déclarer : aucun des trois n'était un comportement propre à Safari, seulement un moteur plus lent qui ouvrait plus grand deux fenêtres de course. Aucune assertion relâchée, aucun retry ajouté.
+> ❌ Rejeu local WebKit **non concluant** (machine à ~600 Mo libres : CTA démo à 30 s dans la fixture). La preuve est la CI de la PR, les quatre cas joués ×5 sans retry.
+
 > ### ⚪ 2026-10-20 · 0 : inchangée
 >
 > Mesures du 2026-10-20 : CI de `main` à `86ea357f` (run `39408311331` : `lint-test-build` et `e2e` rouges, trois jobs verts ; **29 runs rouges de suite** depuis `a9db6f2c`), `Visual` rouge, production (advisors par l'API, catalogue, ledger, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](README.md).
