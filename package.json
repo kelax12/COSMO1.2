@@ -56,6 +56,7 @@
     "check:env": "node scripts/check-env-contract.mjs",
     "check:edge-smoke": "node scripts/check-edge-smoke.mjs",
     "check:supabase-posture": "node scripts/check-supabase-posture.mjs",
+    "check:prod-errors": "node scripts/check-prod-errors.mjs",
     "check:retention": "node scripts/check-retention.mjs",
     "check:db-cost": "node scripts/check-db-cost.mjs",
     "check:stripe-prices": "node scripts/check-stripe-prices.mjs",
