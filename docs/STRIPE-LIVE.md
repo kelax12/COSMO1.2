@@ -173,7 +173,7 @@ sur `bpc_1UAv9vHJLweDSN4F4xssO3OQ`, et la réponse les relit. Le sandbox n'a pas
 > webhook et les 4 prix), `reset_stripe_identifiers(true)` joué (5 customers effacés, journal
 > intact), mig. `224` + `ENTERPRISE_BILLING_ENFORCED = true` + `PRICES_VISIBLE = true`,
 > `stripe-prices.yml` planifié et ajouté à `ci-alert.yml`. Reste : recette réelle (paiement 20 €
-> puis remboursement) et mention 293 B au pied de facture (Dashboard).
+> puis remboursement), geste d'Axel. Mention 293 B : ✅ posée par le code le 2026-10-23 (point 4).
 
 1. ~~**Créer la structure juridique.**~~ ✅ SIREN obtenu (2026-10-20). Encaisser sans
    immatriculation aurait été du travail dissimulé.
@@ -217,6 +217,12 @@ sur `bpc_1UAv9vHJLweDSN4F4xssO3OQ`, et la réponse les relit. Le sandbox n'a pas
    réécrit un identifiant de test. Il se joue DANS la fenêtre de bascule, pas avant.
 4. Mention « TVA non applicable, art. 293 B du CGI » sur les factures tant que la franchise
    en base s'applique.
+   ✅ **Posée par le CODE le 2026-10-23** : `INVOICE_FOOTER` (`_shared/org-billing-contact.ts`) est
+   écrit dans `invoice_settings.footer` de chaque customer d'organisation, à sa création par
+   `stripe-org-checkout` et à chaque passage par le checkout ou le portail. Verrouillé par
+   `org-billing-contact.test.ts`. Relu le même jour sur le compte live : **0 customer**, endpoint
+   `we_1USka0…` toujours à 6 events et API `2024-06-20`. 🔴 À retirer au premier dépassement du
+   seuil de franchise.
 5. `tax_code` des produits : non renseigné (comme en test). À poser avec l'expert-comptable
    avant d'activer Stripe Tax ; il détermine le taux appliqué par pays.
 6. **Ne pas activer la collecte Stripe Tax** tant que la franchise en base s'applique : aucun
