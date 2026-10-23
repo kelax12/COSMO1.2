@@ -113,7 +113,7 @@
     "advancedFeatureHide": "Hide",
     "weight": "Weight (1–10)",
     "weightHint": "How much this KR counts towards overall progress",
-    "needOneKr": "Add at least 1 key result to create the objective.",
+    "needOneKr": "Add at least one key result to create the objective.",
     "cancel": "Cancel",
     "save": "Save",
     "create": "Create"
