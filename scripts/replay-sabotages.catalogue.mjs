@@ -484,6 +484,36 @@ export const CATALOGUE = [
       + 'en ne regardant rien : le défaut trouvé par mutation le 2026-09-04.',
   },
   {
+    id: 'mail-mx-absent-accepte',
+    famille: 'detecteur',
+    garde: 'scripts/check-mail-reception.guard.test.mjs',
+    modifs: [r('scripts/check-mail-reception.mjs', '  if (hotes.length === 0) {', '  if (false) {')],
+    attendu: ['TÉMOIN : un domaine sans MX fait échouer'],
+    pourquoi:
+      'M-53 : `contact@thecosmo.app` est publiée dans les mentions légales. Un domaine '
+      + 'dont les MX ont disparu ne reçoit plus rien, et la garde le dirait « en état ».',
+  },
+  {
+    id: 'mail-rcpt-pousse-jusqu-a-data',
+    famille: 'detecteur',
+    garde: 'scripts/check-mail-reception.guard.test.mjs',
+    modifs: [r('scripts/check-mail-reception.mjs', "      // etape 3 : la réponse à RCPT TO. On s'arrête ICI, jamais de DATA.\n      envoyer('QUIT');", "      // etape 3 : la réponse à RCPT TO. On s'arrête ICI, jamais de DATA.\n      envoyer('DATA');\n      envoyer('QUIT');")],
+    attendu: ['TÉMOIN : une adresse acceptée rend « recoit », et AUCUN DATA n est envoyé'],
+    pourquoi:
+      'Une sonde de réception qui pousse jusqu`à `DATA` ENVOIE un message à chaque passage : '
+      + 'la garde deviendrait une source de courrier dans la boîte qu`elle vérifie.',
+  },
+  {
+    id: 'mail-balayage-aveugle',
+    famille: 'detecteur',
+    garde: 'scripts/check-mail-reception.guard.test.mjs',
+    modifs: [r('scripts/check-mail-reception.mjs', "  'src/locales',\n  'src/pages',\n  'src/components',\n  'src/lib/contact.mjs',\n  'index.html',", "  'src/nexistepas',")],
+    attendu: ['TÉMOIN : le balayage du dépôt voit contact@thecosmo.app et l adresse du JSON-LD'],
+    pourquoi:
+      'Un balayage qui ne voit plus les surfaces publiées ne vérifie plus aucune adresse : '
+      + 'la réception serait déclarée saine sur zéro adresse mesurée.',
+  },
+  {
     id: 'bundle-sans-dist',
     famille: 'detecteur',
     garde: 'scripts/check-bundle-budget.guard.test.mjs',
