@@ -108,12 +108,13 @@ Deno.serve(async (req) => {
 
     let session: Awaited<ReturnType<typeof stripe.billingPortal.sessions.create>>
     try {
-      if (billingContact) {
-        await stripe.customers.update(
-          sub.stripe_customer_id,
-          customerContactFields(billingContact, user.email),
-        )
-      }
+      // Toujours, même sans contact : c'est ce qui pose la mention 293 B sur un
+      // customer créé avant elle (sans contact, l'adresse reste celle du
+      // propriétaire, seul appelant admis ici).
+      await stripe.customers.update(
+        sub.stripe_customer_id,
+        customerContactFields(billingContact ?? null, user.email),
+      )
       session = await stripe.billingPortal.sessions.create({
         customer: sub.stripe_customer_id,
         return_url: `${APP_URL}/entreprise?tab=billing`,
