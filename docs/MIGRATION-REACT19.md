@@ -92,7 +92,8 @@ chemin critique, il en retire 3. `MotionConfig` reste dans `App.tsx`, inchangé.
   régénérées dans une copie jetable de `main`, rejouées contre `main` (20/20, le banc est stable),
   puis contre cette branche (20/20). ❌ Les références suivies n'ont PAS été régénérées : c'est le
   job `Visual` de la PR qui tranche contre elles.
-- Mode démo (`--project=chromium`) et mode Supabase (`--project=supabase-stub`) : suite en cours au moment de ce commit, résultat dans le commit suivant.
+- Mode démo (`--project=chromium`) et mode Supabase (`--project=supabase-stub`) : **155 passés, 3 ignorés, 0 échec, 0 instable**, exit 0 (13,3 min, chauffes comprises).
+  Non joués ici : `mobile-safari` (WebKit absent de la machine), `mobile-chrome` ; la CI les joue.
 
 ### Ce qui reste
 
