@@ -115,6 +115,10 @@ export const ARTEFACTS = {
     requete: INTROSPECTION_SQL,
     produitPar: 'check-migration-coverage.mjs --print-sql',
   },
+  'mutation.yml › mutation-report': {
+    nature: 'sans-prod',
+    raison: 'rapport Stryker : source du dépôt (déjà public), mutants et noms de tests unitaires, aucun secret ni base',
+  },
   'scalability-volume.yml › scalability-volume-log': {
     nature: 'sans-prod',
     raison: 'stack Supabase LOCALE (`supabase start`) remplie de données synthétiques',

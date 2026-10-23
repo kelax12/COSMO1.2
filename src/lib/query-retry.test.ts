@@ -23,6 +23,13 @@ describe('errorCode', () => {
     expect(errorCode(null)).toBeNull();
     expect(errorCode({ code: '' })).toBeNull();
   });
+
+  it('ne lit le code que sur un OBJET : une fonction qui porte `.code` n\'en a pas', () => {
+    // Test de mutation (AM-3) : sans ce cas, retirer la garde `typeof` ne
+    // changeait aucun résultat observé.
+    const fn = Object.assign(() => undefined, { code: '42501' });
+    expect(errorCode(fn)).toBeNull();
+  });
 });
 
 describe('isDefinitiveError — un échec NOMMÉ par le serveur ne se rejoue pas', () => {
