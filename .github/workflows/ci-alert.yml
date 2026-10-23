@@ -49,6 +49,10 @@ on:
       - scalability-volume
       - restore-drill
       - Grille Stripe
+      # `Detection violation` (2026-10-23) : rouge = un signal de violation
+      # possible OU une source non lue. Le signal pousse aussi son propre
+      # message (echeance de 72 h) ; ici, c'est le filet si ce message tombe.
+      - Detection violation
       # ⚠️ `Uptime` n'y est PAS NON PLUS, et ce n'est pas un oubli : il ouvre
       # DÉJÀ sa propre issue, qui se referme seule au retour du vert.
       # L'ajouter ici doublerait chaque panne d'une seconde alerte, et deux
