@@ -267,7 +267,7 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
             type="button"
             onClick={openAndFocus}
             className="flex flex-1 items-center gap-2 min-w-0 h-full text-left"
-            aria-label={t('search.open')}
+            aria-label={`${t('search.open')} : ${searchTerm || t('search.placeholder')}`}
             aria-haspopup="dialog"
           >
             <Search size={18} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-text-muted))]" />
