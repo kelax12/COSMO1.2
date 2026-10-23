@@ -36,7 +36,7 @@
 // `check-tooling-coverage.mjs`). Témoin : `seo-signals.guard.test.mjs`.
 // ═══════════════════════════════════════════════════════════════════
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join, sep } from 'node:path';
 import { createSign } from 'node:crypto';
 
@@ -379,8 +379,15 @@ const estLanceDirectement =
   process.argv[1] && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
 
 if (estLanceDirectement) {
+  // Lecture directe, sans `existsSync` avant : vérifier puis lire laisse une
+  // fenêtre où le fichier change (CodeQL, js/file-system-race). Seul un
+  // fichier ABSENT donne une série vide ; un JSON abîmé fait planter.
   let serie = { points: [] };
-  if (existsSync(SERIE)) serie = JSON.parse(readFileSync(SERIE, 'utf8'));
+  try {
+    serie = JSON.parse(readFileSync(SERIE, 'utf8'));
+  } catch (e) {
+    if (e?.code !== 'ENOENT') throw e;
+  }
   const res = await run({ serie });
   writeFileSync(SERIE, `${JSON.stringify(res.serie, null, 2)}\n`, 'utf8');
   console.log(resume(res));
