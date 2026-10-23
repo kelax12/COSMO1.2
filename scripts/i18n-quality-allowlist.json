@@ -1,0 +1,71 @@
+{
+  "_note": "Exceptions de scripts/i18n-quality.mjs, une par cle, chacune justifiee. La valeur epinglee (fr pour le glossaire, en pour le francais) fait expirer la dispense si la chaine change. Ne jamais y declarer une phrase pour faire taire la garde : on corrige le catalogue.",
+  "glossaire": {
+    "admin.goalUsers": {
+      "termes": [
+        "objectif"
+      ],
+      "fr": "Objectif 1 000 Free",
+      "pourquoi": "objectif = cible chiffree du tableau admin (1 000 comptes Free), pas un objectif OKR : Goal est le mot juste."
+    },
+    "admin.goalChart": {
+      "termes": [
+        "objectif"
+      ],
+      "fr": "Progression vers l'objectif",
+      "pourquoi": "meme cible chiffree que admin.goalUsers (courbe vers 1 000 comptes), pas un objectif OKR."
+    },
+    "okr.modal.keyResultName": {
+      "termes": [
+        "objectif"
+      ],
+      "fr": "Sous-objectif",
+      "pourquoi": "le libelle fr dit Sous-objectif mais designe le champ du resultat cle ; Key result est le concept produit retenu par la relecture M-50 du 2026-10-16."
+    },
+    "portfolio.krExec.value": {
+      "termes": [
+        "objectif"
+      ],
+      "fr": "Valeur (objectif : {{target}} {{unit}})",
+      "pourquoi": "objectif = valeur cible d un resultat cle ({{target}}), pas l objet OKR : target est le terme anglais de cette grandeur."
+    },
+    "statistics.chart.goal": {
+      "termes": [
+        "objectif"
+      ],
+      "fr": "Objectif",
+      "pourquoi": "objectif = cible de temps en minutes sur le graphique des statistiques, pas un objectif OKR : Target."
+    },
+    "statistics.chart.goalValueAria": {
+      "termes": [
+        "objectif"
+      ],
+      "fr": "Objectif, en minutes",
+      "pourquoi": "libelle accessible du champ de la meme cible en minutes que statistics.chart.goal : Target, par coherence."
+    }
+  },
+  "francais": {
+    "guide.tasks.tip": {
+      "indices": [
+        "le",
+        "é"
+      ],
+      "en": "Quick add (**N**) understands the date and four symbols: **#health** for the category, **!!** for the priority (!!! = 1, !! = 2, ! = 3), **~30m** for the duration. The date words are French for now: “Appeler le dentiste jeudi #santé !! ~30m”. Enter creates the task and keeps the field open for the next one.",
+      "pourquoi": "exemple de saisie rapide laisse en francais exprès : l analyseur de dates ne comprend que le francais aujourd hui, et la phrase le dit."
+    },
+    "legal.notice.s1.liAddress": {
+      "indices": [
+        "les"
+      ],
+      "en": "**Address:** 138 avenue Victor Hugo, 75116 Paris, France (registered address provided by Les Tricolores)",
+      "pourquoi": "Les Tricolores est le nom propre de la societe de domiciliation, mentionne tel quel dans les mentions legales."
+    },
+    "legalTerms.terms.s9.p4": {
+      "indices": [
+        "et"
+      ],
+      "en": "**Legal guarantee of conformity.** If you are a consumer, the service must conform to the contract for as long as it is supplied (French Consumer Code, Articles L224-25-1 et seq.). If it does not, you can have it brought into conformity or, failing that, obtain a price reduction or the termination of the contract. This right is exercised free of charge, by writing to [contact@thecosmo.app](mailto:contact@thecosmo.app).",
+      "pourquoi": "et seq. est la locution latine de citation juridique anglaise (Articles L224-25-1 et seq.), pas un mot francais."
+    }
+  }
+}

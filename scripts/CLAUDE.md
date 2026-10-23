@@ -15,7 +15,7 @@
 > datées vivent dans le doc cité en fin de ligne. ❌ Elle ne dit pas qu'une garde est juste : la
 > section suivante existe précisément parce que quatre d'entre elles répondaient sans mesurer.
 >
-> **Compte, relu dans `package.json` le 2026-10-20** : **34** gardes `check:*` / `i18n:*` /
+> **Compte, relu dans `package.json` le 2026-10-22** : **35** gardes `check:*` / `i18n:*` /
 > `validate:*`, plus trois outils de mesure (`analyze:entry`, `profile:landing`, `images:check`).
 > La racine a écrit « 36 » du 09-21 au 09-30. Un total se recompte, il ne se recopie pas.
 
@@ -44,6 +44,7 @@
 | `i18n:identical` | valeurs `en` recopiées du `fr`, cliquet à **0** | `C-21` | `docs/I18N.md` |
 | `i18n:namespaces` | catalogues rendus par le SHELL | | `docs/I18N.md` |
 | `i18n:pages` | **corps** des pages prérendues par locale, pluriels, formats | `C-99` | `docs/I18N.md` |
+| `i18n:quality` | glossaire épinglé (`tâche` → `task`, `objectif` → `objective`…) et français resté dans `en`, exceptions justifiées une par une. 🔴 Ne prouve PAS qu'une phrase dit la même chose | `AM-1` | `docs/I18N.md` |
 | `check:seo` | sitemap ↔ pages réellement prérendues, 4 balises par page | `C-98` | `docs/SEO.md` |
 | `check:acquisition` | une action d'acquisition reliée à son résultat | `C-101` | `docs/ACQUISITION.md` |
 | `check:legal` | tableau de conformité | | `docs/LEGAL.md` |

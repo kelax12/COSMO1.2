@@ -238,6 +238,16 @@ jobs:
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run i18n:identical
 
+      # AM-1 (docs/I18N.md) : les gardes ci-dessus comparent des CLES et des
+      # COPIES. Une traduction fausse mais differente les passe toutes. Celle-ci
+      # tient le glossaire epingle (tache -> task, objectif -> objective...) et
+      # refuse du francais reste dans une valeur en. Elle ne prouve PAS qu une
+      # phrase dit la meme chose : ca reste une relecture humaine (M-50).
+      - name: i18n · glossaire et francais dans en
+        id: i18n-quality
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run i18n:quality
+
       - name: Unit tests + coverage (enforced thresholds)
         id: tests
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
