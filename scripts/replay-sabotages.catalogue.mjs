@@ -1368,6 +1368,75 @@ export const CATALOGUE = [
   },
 
   // ═════════════════════════════════════════════════════════════════
+  // SIGNAUX SEO (SEO.md AM-4, ACQUISITION-BACKLINKS.md AM-1 et AM-2)
+  // ═════════════════════════════════════════════════════════════════
+  {
+    id: 'seo-lien-tout-hote',
+    famille: 'detecteur',
+    garde: 'scripts/seo-signals.guard.test.mjs',
+    modifs: [r(
+      'scripts/seo-signals.mjs',
+      "    if (!/^https?:$/.test(url.protocol) || !estNotreHote(url.hostname)) continue;",
+      "    if (!/^https?:$/.test(url.protocol)) continue;",
+    )],
+    attendu: [
+      'TÉMOIN : une page sans lien vers thecosmo.app ne compte aucun lien',
+      'TÉMOIN : page disparue, page sans lien, page injoignable, source absente : quatre liens PERDUS',
+    ],
+    pourquoi:
+      'Un lien vers N’IMPORTE QUEL site compté comme un backlink : une fiche dont le lien a été '
+      + 'retiré reste « présente », et AM-1 redevient invisible avec un run vert.',
+  },
+  {
+    id: 'seo-marque-comptee',
+    famille: 'detecteur',
+    garde: 'scripts/seo-signals.guard.test.mjs',
+    modifs: [r('scripts/seo-signals.mjs', '    .filter((r) => r.requete && !MARQUE.test(r.requete))', '    .filter((r) => r.requete)')],
+    attendu: ['TÉMOIN : une requête marque renvoyée par le serveur ne compte pas dans le non-marque'],
+    pourquoi:
+      'Les requêtes « cosmo » dans le non-marque : la série montre un trafic éditorial qui '
+      + 'n’existe pas, le défaut exact de la position 15,5 relevée le 2026-08-19.',
+  },
+  {
+    id: 'seo-domaine-perdu-muet',
+    famille: 'detecteur',
+    garde: 'scripts/seo-signals.guard.test.mjs',
+    modifs: [r('scripts/seo-signals.mjs', '    if (perdus.length) rouges.push(', '    if (false) rouges.push(')],
+    attendu: [
+      'TÉMOIN : un domaine référent présent la semaine passée et absent aujourd hui est rouge',
+      'TÉMOIN : un domaine Bing perdu depuis le point précédent fait rougir le relevé entier',
+    ],
+    pourquoi: 'Un domaine référent disparu sans un mot : `M-55`, le backlink perdu invisible.',
+  },
+  {
+    id: 'seo-sans-cle-vert',
+    famille: 'detecteur',
+    garde: 'scripts/seo-signals.guard.test.mjs',
+    modifs: [r(
+      'scripts/seo-signals.mjs',
+      "  if (!cle || !String(cle).trim()) throw new Error('BING_WEBMASTER_API_KEY absent');",
+      "  if (!cle || !String(cle).trim()) return { source: 'bing-webmaster', liens_entrants: 0, domaines_referents: 0, domaines: [], tronque: false };",
+    )],
+    attendu: [
+      'TÉMOIN : sans clé Bing, la mesure échoue au lieu de rendre 0 domaine',
+      'TÉMOIN : sans aucun secret, le relevé est ROUGE, deux fois, et ne touche ni Google ni Bing',
+    ],
+    pourquoi:
+      'Une clé absente qui rend « 0 domaine référent » : la mesure la plus rassurante possible '
+      + 'pour un domaine neuf, et elle serait fausse.',
+  },
+  {
+    id: 'seo-alerte-debranchee',
+    famille: 'produit',
+    garde: 'scripts/seo-signals.guard.test.mjs',
+    modifs: [r('.github/workflows/ci-alert.yml', '      - Signaux SEO\n', '')],
+    attendu: ['est écouté par ci-alert.yml sous son nom exact'],
+    pourquoi:
+      'Un relevé hebdomadaire sans déclencheur humain dont le rouge ne part sur aucun webhook : '
+      + 'un backlink perdu redevient une page que personne n’ouvre.',
+  },
+
+  // ═════════════════════════════════════════════════════════════════
   // LE REJEU LUI-MÊME (C-81) — qui garde la garde des gardes
   // ═════════════════════════════════════════════════════════════════
   ...[
