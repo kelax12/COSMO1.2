@@ -19,6 +19,20 @@ et les **règles durables** tirées des audits.
   ✅ **Relu le 2026-10-23** (passe d'audit, sans nouvelle mesure du catalogue) : `Edge deploy drift` et
   `Deploy SHA drift` verts à `e96b7c90` ; Dependabot ramené à **3** alertes, toutes de développement
   (`@vitest/mocker` ×2, `hono`) après les PR n° 85, 84, 81, 70, 34 et 108 ; CodeQL **0**. Note **87 → 87**.
+  ✅ **Remesuré le 2026-10-23 après-midi** (API Management, `db query --linked`, API Stripe live) :
+  advisors **`14 / 84 / 2 / 1`**, soit **+3 / +2** sur la référence de `Posture` (rouge depuis 09:57).
+  Les cinq objets relus un par un, **tous légitimes** : `account_inactivity_notices` (mig. `226`),
+  `traffic_hits` et `traffic_salts` (mig. `222`), tables fermées au client sans policy ;
+  `get_admin_revenue` (`221`) et `get_admin_traffic` (`222`), gardées par `is_admin()` en tête, `anon`
+  révoqué. Les cinq fonctions de la `226` et `track_hit` sont **absentes** des advisors, comme
+  voulu. Recalage : `--update`, seul geste restant (angle mort [`SECURITY.md`](./docs/SECURITY.md) AM-7).
+  **Mig. `225` APPLIQUÉE** (ledger `20261023142003`), prouvée avant en transaction annulée sous
+  session admin `aal2`, ACL relue après. Stripe live : **0** customer, endpoint `we_1USka0…` à
+  **6** events et API `2024-06-20`. 🟠 **Dérive Edge ouverte** : `stripe-org-checkout` et
+  `stripe-org-portal` portent sur `main` la mention 293 B (`c161de2b`) et ne sont **pas** redéployées
+  (déploiement refusé à l'agent, [`DEPLOYMENT.md`](./docs/DEPLOYMENT.md) AM-6). Journaux 24 h :
+  **0** réponse 5xx, 5 appels non signés au webhook Stripe refusés, détail dans
+  [`docs/OBSERVABILITE.md`](./docs/OBSERVABILITE.md), audit ouvert ce jour. Note **87 → 87**.
   ✅ **Remesuré le 2026-10-19** (`TR-1`) : mig. `223` appliquée (ledger
   `20261019122246`, **173** entrées) et relue au catalogue, advisors **`13 / 84 / 2 / 1`**, sonde
   `anon` sur `track_hit` refusée. Note **86 → 87**.

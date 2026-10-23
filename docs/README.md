@@ -1482,6 +1482,7 @@ chacun, et vérifiés.
 | [ACQUISITION-BACKLINKS.md](./ACQUISITION-BACKLINKS.md) | Aucun suivi des backlinks **perdus**, alors que c'est le seul levier déclaré débloquant |
 | [AUDIT-VOICEOVER-IOS.md](./AUDIT-VOICEOVER-IOS.md) | 🔴 **Il EST un angle mort** : « rien dans ce fichier n'est coché », et son absence ne fait baisser aucune note |
 | [SUPPORT.md](./SUPPORT.md) | Aucune mesure du support : ni volume, ni délai de réponse · et **la réception** de l'adresse publiée n'est testée par rien |
+| [OBSERVABILITE.md](./OBSERVABILITE.md) | 🆕 2026-10-23 · **Les erreurs Sentry, Vercel et Supabase ne sont lues par personne** : la production peut se tromper sans qu'aucun job ni digest ne le dise |
 
 ⚠️ **Quatre documents sont volontairement laissés de côté** : `COSMO-CLI.md` et
 `AGENT-AJOUTER-TACHE.md` (modes d'emploi d'un outil), `DEMO-DATA-EXPORT.md` (un export généré pour
