@@ -62,6 +62,64 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-23 · **les dix points du 10-22 fusionnés : 960 → 962**
+
+Consigne d'Axel : « remet à jour les audits en .md du dossier docs ». **18 fusions** relues depuis
+la passe du 2026-10-22 (`fb83cd60` → `e96b7c90`, puis `e96dd0c6`, références `Visual` régénérées) :
+les dix points de la liste du 10-22 et la pile Dependabot. Même méthode : CI réelle de `main`,
+workflows planifiés, dépôt à `HEAD`. ⚠️ **Aucune nouvelle mesure du catalogue de production** :
+les chiffres de base (advisors, ledger, policies) sont ceux de la passe du 10-22. Même règle : un
+défaut ne se rembourse que corrigé **et vu vert en CI**.
+
+### Ce que la CI dit
+
+| Source | Verdict | Mesuré le 2026-10-23 |
+|---|---|---|
+| `CI` à `e96b7c90` (run `39939337678`) | ✅ cinq jobs verts | 360 fichiers, **4 070** tests ; outillage 30 / 520 ; RLS 8 / 151 ; `e2e` **291 verts, 1 instable** (`demo-entreprise-dependencies`, mobile-safari), 6 sautés, 26,0 min |
+| Bundle | ✅ mais ⚠️ | `AgendaPage` **17,2 / 18,3 ko** (6,2 %), `OrganizationPage` **16,9 / 18,0** (6,4 %) ; `vendor-utils` **31,4 / 33,0** (4,8 %) : la PR n° 113 l'avait porté à 5 %, les montées de dépendances fusionnées après l'ont fait redescendre sous la cible |
+| Lighthouse mobile de `main` | 🟠 | `/` LCP **1,7 s**, TBT **49 ms** (perf 100 ; TBT 309 → 89 ms dans la CI de la PR n° 103) ; `/entreprise-presentation/` 2,4 s. **Inchangé** sur les pages de contenu : `/a-propos/` et `/pour-freelances/` 4,5 s, `/blog/` 5,0 s, article 5,4 s, `/guide/` 5,6 s, **`/en/` 6,0 s** (LCP sur le bandeau cookies, cf. PR n° 116 ouverte) |
+| `Visual` | ✅ après un rouge | rouge sur 3 runs (`cd695a86` à `e96b7c90`) : `/settings` en thème noir, 1 % de pixels. Cause : la PR n° 99 relève `--nav-item-text` du thème noir (3,54:1 → 5,74:1), **voulu**, sans régénérer la référence. Régénérée par `workflow_dispatch` (`regenerer`, run `39964860403`, vert), commit `e96dd0c6` |
+| `Migration coverage` | ✅ quatre runs | vert depuis `c687fb77` (dispense périmée de la mig. `140` retirée), le 10-22 au soir et le 10-23 |
+| `Posture` | 🔴 | toujours la référence du 10-10 jamais recalée (`--update`, geste d'Axel) |
+| Autres planifiés | ✅ | `Edge deploy drift`, `Deploy SHA drift`, `db-backup`, `Uptime`, `inactive-accounts`, `Grille Stripe`, `renewal-notice`, digests |
+| Alertes GitHub | ✅ | CodeQL **0** ; Dependabot **3**, toutes de développement (`@vitest/mocker` ×2, `hono`) ; PR Dependabot : chacune fusionnée ou fermée avec sa raison, sauf n° 117 (groupe dev, axe-core 4.14 trouve de nouvelles violations) |
+| Artefacts | ⚠️ | quota de stockage du compte atteint (11,5 Go, tous des rapports de CI de COSMO) : 1 026 rapports supprimés le 10-23. Aucun workflow ne borne `retention-days` des rapports |
+
+### Les notes
+
+| Audit | 10-22 | **10-23** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 87 | **87** | 0 | Dependabot 4 → 3, toutes de développement ; CodeQL 0 ; aucune mesure nouvelle du catalogue |
+| [Tests / CI](./TESTING.md) | 95 | **96** | **+1** | `Migration coverage` vert quatre runs de suite (+1, débit du 10-22 remboursé). `Visual` rouge trois runs pour une référence non régénérée dans la PR qui changeait les couleurs : réparé dans l'heure, non débité |
+| [Performance](./PERFORMANCE.md) | 95 | **95** | 0 | TBT de `/` 309 → 89 ms (PR n° 103) et marges des chunks rendues (PR n° 113) : jamais débités ; le −2 du LCP mobile reste dû, six URLs sur huit inchangées ; `vendor-utils` déjà repassé sous 5 % de marge |
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | **82** | 0 | `color-contrast` bloquant dans les quatre thèmes (PR n° 99, AM-5 déjà crédité le 10-01) et défauts de jetons corrigés ; **21 surfaces modales mesurées au clavier sur 63** (PR n° 102) : AM-2 reste dû, la majorité n'est toujours pas mesurée |
+| [UI / UX](./UI-PATTERNS.md) | 86 | **86** | 0 | `Visual` vert après régénération ; diagnostic de l'état ERREUR publié (PR n° 101) |
+| [Architecture](./ARCHITECTURE.md) | 93 | **93** | 0 | gardes de structure vertes |
+| [Scalabilité](./SCALABILITY.md) | 91 | **91** | 0 | rien de neuf mesuré |
+| [RGPD](./RGPD.md) | 87 | **87** | 0 | export de portabilité complété (`kr_completions`, rôles attribués, `task_dependencies`, PR n° 106) : jamais débité. T11 : workflow de sauvegarde chiffrée et migration de purge fusionnés dans `cosmo-analytics`, secrets posés, un export **chiffré et relu en mémoire** sur le runner ; mais aucun artefact déposé (quota), aucun déchiffrement local, purge non appliquée en production : le −1 reste |
+| [i18n](./I18N.md) | 88 | **89** | **+1** | `i18n:quality` dans `lint-test-build`, verte (PR n° 105) : glossaire épinglé et français resté dans `en` gardés. AM-1 **réduit, pas fermé** : le sens d'une traduction n'est toujours mesuré par rien (`M-50`) |
+| [SEO](./SEO.md) | 79 | **79** | 0 | le LCP des pages de contenu reste débité en Performance et en Mobile |
+| [Mobile / DA](./MOBILE.md) | 77 | **77** | 0 | LCP mobile inchangé hors `/` ; le −1 reste |
+
+**960 → 962 : +2 remboursés, aucun débit.** Les deux remboursements sont des gardes vues vertes
+en CI. Le reste du travail du 10-22 (TBT de `/`, contraste, clavier, export, chunks) corrige des
+défauts qui n'avaient jamais été débités : il ne fait pas monter les notes, il les rend vraies.
+
+### 📈 Les améliorations au plus gros ROI
+
+| # | Amélioration | Effort | Qui | Ce que ça rapporte |
+|---|---|---|---|---|
+| 1 | **LCP mobile** des pages de contenu et de `/en/` (PR n° 116 ouverte pour `/en/`), puis `largest-contentful-paint` en `error` | ½ à 1 j | code + Axel | **+3** récupérables (Performance 2, Mobile 1) |
+| 2 | **T11 jusqu'au bout** : appliquer la migration de purge à `cosmo-prospection`, relancer `prospection-backup` une fois le quota recalculé, déchiffrer le dump en local | 20 min | Axel + code | rembourse le −1 RGPD |
+| 3 | **`retention-days` sur les rapports de CI** (3 à 7 jours) | 30 min | code | le quota d'artefacts du compte ne se remplit plus ; c'est lui qui a bloqué la sauvegarde T11 |
+| 4 | **Fusionner la PR n° 86** (hook `pre-push`) | 5 min | Axel | inchangé depuis le 10-22 |
+| 5 | **Recaler `Posture`** (`--update`) | 1 commande | Axel | inchangé |
+| 6 | **Médiateur (`M-03`) et bouton de rétractation (E13)** | ½ à 1 j | Axel + code | inchangé, facturation live armée sans eux |
+| 7 | **`vendor-utils`** : retrouver 5 % de marge | ½ j | code | il est repassé à 4,8 % un jour après la PR qui l'en sortait |
+| 8 | **PR n° 117** : corriger les violations qu'axe-core 4.14 trouve sur la landing et l'Agenda | ½ j | code | débloque la montée des dépendances de développement |
+
+---
+
 ## Mise à jour du 2026-10-22 · **`main` de nouveau vert, le LCP mobile perdu en route : 959 → 960**
 
 Consigne d'Axel : « remet à jour tous les audits en .md dans le fichier doc ». **99 commits** relus
