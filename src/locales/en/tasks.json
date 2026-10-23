@@ -166,6 +166,8 @@
     "completedCount_other": "{{count}} tasks completed",
     "addedToList_one": "{{count}} task added to {{list}}",
     "addedToList_other": "{{count}} tasks added to {{list}}",
+    "removedFromList_one": "{{count}} task removed from {{list}}",
+    "removedFromList_other": "{{count}} tasks removed from {{list}}",
     "deletedCount_one": "{{count}} task deleted",
     "deletedCount_other": "{{count}} tasks deleted",
     "leftSharedCount_one": "You left {{count}} shared task",
