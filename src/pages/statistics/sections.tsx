@@ -80,10 +80,8 @@ const HabitStatItem = React.memo<HabitStatItemProps>(({ habit, formatTime }) => 
   prev.habit.relevantDaysCount === next.habit.relevantDaysCount
 ));
 
-// ═══════════════════════════════════════════════════════════════════
-// HEATMAP CALENDRIER — Suivi des habitudes
-// ═══════════════════════════════════════════════════════════════════
-export { HabitHeatmap } from './HabitHeatmap';
+// La heatmap des habitudes vit dans `./HabitHeatmap` et se charge à part
+// (`./lazy-surfaces`) : la ré-exporter d'ici la ramènerait dans le chunk.
 
 // ═══════════════════════════════════════════════════════════════════
 // VUE D'ENSEMBLE

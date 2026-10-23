@@ -966,6 +966,39 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
   ferait du budget une formalité : la marge se regagne en descendant la mesure. Depuis, il n'a
   fait que descendre : 112 000 → 79 000 → 78 000 → 71 000 → **70 500** (2026-10-01).
 
+### 🟢 2026-10-22 : trois chunks au bord du plafond, marge rendue, deux cliquets abaissés
+
+`vendor-utils`, `StatisticsPage` et `AgendaPage` étaient à moins de 2 % de leur cliquet : le
+commit suivant les aurait fait rougir, comme `OrganizationPage` le 2026-10-19. Règle suivie : ne
+sortir en lazy que ce qui sert à l'interaction (modales, menus, surfaces secondaires), jamais un
+plafond relevé. Mesure contre un build de `main` à `b687a683` dans le même worktree (confirmée par le `check:bundle` de la CI, build avec Sentry, sur `main` à `e9ed98f2` puis sur la PR), **tous les
+chunks** comparés par nom de base (octets gzip, comme `check:bundle`). Les deux builds sans
+`VITE_SENTRY_DSN`, pour comparer à l'identique ; aucun des chunks ci-dessous ne dépend de Sentry.
+
+| Chunk | `main` | Après | Plafond | Marge | Levier |
+|---|---|---|---|---|---|
+| `StatisticsPage` | 12 977 | **10 181** | 13 000 → **10 800** | 0,2 % → **5,7 %** | la modale Premium (montée au clic sur un verrou) et la heatmap des habitudes (bas de page, sous la ligne de flottaison) chargées à part, `pages/statistics/lazy-surfaces.tsx` |
+| `AgendaPage` | 18 278 | **17 310** | 18 500 → **18 300** | 1,2 % → **5,4 %** | le tutoriel et ses étapes desktop et mobile (première visite seulement), le panneau de revue de la modale d'édition, le menu de revue d'un créneau passé, dans `pages/agenda/lazy-overlays.tsx` |
+| `vendor-utils` | 32 854 | **31 342** | 33 000 (laissé) | 0,4 % → **5,0 %** | `match` (parseur) et `formatRelative` retirés des locales date-fns `fr` et `en-US` par un plugin de `vite.config.ts` : aucun code n'appelle `parse()`, `isMatch()` ni `formatRelative()`. Cliquet : `src/i18n/date-fns-no-parse.guard.test.ts` |
+| Chemin critique | 305,3 ko | **303,8 ko** | 323,0 ko | | `vendor-utils` est préchargé : le gain vaut pour **tout** visiteur |
+| Entrée (`main`) | 67 085 | 67 123 | 70 500 | | +38 o : en-têtes d'import |
+| Lot `index` (9 barils) | 86,8 ko | **86,8 ko** | 89 500 | | inchangé, aucun effet « Popper » (le piège du 2026-09-24, où un onglet rendu lazy avait sorti Popper vers `index`) : `dropdown-menu` reste à 20,5 ko |
+
+Les deux cliquets abaissés sont posés au nouveau poids avec 5 % de marge, la convention du
+fichier. `vendor-utils` garde 33 000 : l'abaisser ferait passer sa marge sous 5 %.
+
+Nouveaux chunks, tous chargés au geste ou après le premier rendu : `HabitHeatmap` 2,2 ko,
+`PremiumGateModal` 1,8 ko, `SlotReviewMenu` 1,0 ko, `AgendaTutorial` 0,8 ko, `SlotReviewPanel`
+0,6 ko, `use-mounted-after-first-open` 0,15 ko (le crochet, désormais partagé par trois pages).
+Les autres chunks bougent de −49 à +38 o.
+
+⚠️ **`vendor-utils` reste le plus serré des trois** : 5,0 % tout juste. Il porte surtout les icônes
+lucide (190 icônes, ~23 ko gzip sur 31) et chaque icône inédite y ajoute ~120 o, payés par tout
+visiteur. Levier écarté le 2026-10-22 : laisser Rollup placer les icônes à un seul consommateur
+avec celui-ci (50 icônes sur 191, ~5 ko). Il ferait grossir les barils `index` partagés (les
+consommateurs comme `DescriptionField` ou `TaskQuickFilters` y vivent) et une trentaine de chunks
+de page. Avant d'ajouter une icône : réutiliser une icône déjà présente.
+
 ### 🔴 2026-10-01 : `main` rouge sur le budget depuis le 2026-09-24, quatre chunks ramenés
 
 `check:bundle` échouait sur `main` depuis une semaine, sur quatre chunks à la fois, mesurés
