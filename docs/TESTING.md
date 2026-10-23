@@ -1,4 +1,4 @@
-<!-- note-audit: note=95 -->
+<!-- note-audit: note=96 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **95 / 100** au 2026-10-22, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **96 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
