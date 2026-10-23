@@ -1,12 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
-// C-96 — 10 surfaces modales MESURÉES au clavier sur 51
+// C-96 · 23 surfaces modales MESURÉES au clavier sur 63 (10 sur 51 au 2026-09-20)
 // ═══════════════════════════════════════════════════════════════════
 //
 // 🔴 LA DISTINCTION QUI FAIT TOUT L'ITEM. `modal-a11y.guard.test.ts` garantit
 // que chaque surface modale IMPORTE `useModalA11y` : c'est un CÂBLAGE, vérifié
 // statiquement, et c'est déjà beaucoup. Mais câblé n'est pas mesuré.
-// `e2e/a11y-keyboard-audit.spec.ts` ouvre 10 surfaces et vérifie au clavier
-// ce qui s'y passe réellement. Les 41 autres sont câblées, et personne ne les
+// `e2e/a11y-keyboard-audit.spec.ts` ouvre 23 surfaces et vérifie au clavier
+// ce qui s'y passe réellement. Les 40 autres sont câblées, et personne ne les
 // a jamais parcourues à la touche Tab.
 //
 // L'écart était INVISIBLE : deux chiffres dans deux fichiers différents, que
@@ -30,7 +30,7 @@
 //    l'empêche de grandir en silence.
 //
 // ❌ NE JAMAIS ÉCRIRE « les modales sont accessibles au clavier ». Écrire
-//    combien : 10 mesurées sur 51 câblées, au 2026-09-20.
+//    combien : 23 mesurées sur 63 câblées, au 2026-10-22 (AM-2).
 // ═══════════════════════════════════════════════════════════════════
 
 import { describe, it, expect } from 'vitest';
@@ -64,6 +64,20 @@ const MESUREES: Record<string, string> = {
   // empilé (l'éditeur ouvert depuis l'attribution) a sa propre garde.
   'components/organization/AssignRoleDialog.tsx': 'MESURE — AssignRoleDialog',
   'components/organization/RoleEditorSheet.tsx': 'MESURE — RoleEditorSheet',
+  // Mesurée par la garde des frères d'EventModal (entrée du focus, piège, Échap),
+  // les trois détecteurs ; elle restait déclarée « dette » jusqu'au 2026-10-22.
+  'components/ColorSettingsModal.tsx': "surface: 'ColorSettingsModal'",
+  // AM-2 (2026-10-22) : dix surfaces de plus, déclencheur au clavier sauf le créneau d'agenda.
+  'components/organization/TeamTaskModal.tsx': 'MESURE · TeamTaskModal',
+  'components/CompletedOKRsModal.tsx': 'MESURE · CompletedOKRsModal',
+  'pages/okr/DeleteObjectiveConfirm.tsx': 'MESURE · DeleteObjectiveConfirm',
+  'pages/agenda/QuickEventCard.tsx': 'MESURE · QuickEventCard',
+  'components/TodayTasks.tsx': 'MESURE · TodayTasks',
+  'components/QuickAddBar.tsx': 'MESURE · QuickAddBar',
+  'components/CommandPalette.tsx': 'MESURE · CommandPalette',
+  'components/ShortcutsHelp.tsx': 'MESURE · ShortcutsHelp',
+  'components/task-board/MoveTaskSheet.tsx': 'MESURE · MoveTaskSheet',
+  'pages/tasks/CreateListSheet.tsx': 'MESURE · CreateListSheet',
 };
 
 /**
@@ -94,11 +108,6 @@ const NON_MESUREES: Record<string, string> = {
     'dette : atteignable en démo, jamais parcourue au clavier.',
   'components/CollaborativeTasks.tsx':
     'dette : atteignable en démo depuis une tâche partagée.',
-  'components/ColorSettingsModal.tsx': 'dette : atteignable depuis /settings.',
-  'components/CommandPalette.tsx':
-    'dette, et la plus gênante des trois : une palette de commandes EST un '
-    + 'geste clavier. Elle devrait être la première mesurée.',
-  'components/CompletedOKRsModal.tsx': 'dette : atteignable depuis /okr.',
   'components/organization/OrgSectionSheet.tsx':
     'dette : atteignable en démo sur mobile (/entreprise, sélecteur de section ; feuille sortie '
     + 'd OrgSectionSwitcher le 2026-10-15, chargée au premier toucher). '
@@ -113,7 +122,6 @@ const NON_MESUREES: Record<string, string> = {
   'components/PremiumGateModal.tsx':
     'inatteignable : `PREMIUM_ENFORCED` est à false, aucune gate ne s ouvre '
     + '(décision 2026-06-11, le partage est gratuit).',
-  'components/QuickAddBar.tsx': 'dette : atteignable en démo.',
   'components/organization/ProjectEditDialog.tsx':
     'dette : atteignable en démo (/entreprise/projects, page projet, « Modifier le projet »), '
     + 'câblée sur useModalA11y, jamais parcourue au clavier.',
@@ -121,9 +129,6 @@ const NON_MESUREES: Record<string, string> = {
   'components/ShareInviteClaimer.tsx':
     'inatteignable en démo : exige un lien d invitation valide, donc le '
     + 'project `supabase-stub`.',
-  'components/ShortcutsHelp.tsx':
-    'dette, et ironique : l aide des raccourcis clavier n est pas mesurée au clavier.',
-  'components/TodayTasks.tsx': 'dette : atteignable sur /dashboard.',
   'components/WeeklyCheckinModal.tsx':
     'inatteignable : ne s ouvre qu à un moment précis de la semaine.',
   'components/add-to-list/BulkAddToListModal.tsx':
@@ -158,23 +163,12 @@ const NON_MESUREES: Record<string, string> = {
     'mode entreprise, admin seulement, et destructrice (assistant de départ, mig. 161).',
   'components/organization/PyramidPlacementSheet.tsx':
     'mode entreprise : exige une organisation peuplée (fusion de MemberPlacementSheet et AddUnderSheet).',
-  'components/organization/TeamTaskModal.tsx':
-    'mode entreprise. ⚠️ Elle EST mesurée par `touch-targets.spec.ts` (cibles '
-    + 'tactiles), donc atteignable : c est de la dette, pas un obstacle.',
   'components/organization/WeeklyReviewSheet.tsx': 'mode entreprise.',
   'components/task-modal/MobileActionSheet.tsx':
     'variante de `TaskActionsSheet`, mesurée : même primitive, même piège.',
   'components/task-table/ConfirmDeleteSheet.tsx':
     'variante de `DeleteTaskConfirm`, mesurée depuis `EventModal`.',
   'components/ListActionsSheet.tsx': 'dette : atteignable par appui long sur une puce de liste.',
-  'components/task-board/MoveTaskSheet.tsx':
-    'dette : « Déplacer vers… » du Tableau perso (/tasks, vue Tableau, 2026-10-08). Câblée '
-    + 'par `BottomSheet`, jamais parcourue au clavier par le spec.',
-  'pages/agenda/QuickEventCard.tsx': 'dette : atteignable sur /agenda.',
-  'pages/okr/DeleteObjectiveConfirm.tsx':
-    'atteignable, et déjà ouverte par `reduced-motion-sheets.spec.ts` — mais '
-    + 'pour mesurer son ANIMATION, pas son clavier. Dette.',
-  'pages/tasks/CreateListSheet.tsx': 'dette : atteignable sur /tasks.',
   'pages/settings/ImportTasksDialog.tsx':
     'dette : import de tâches (/settings, onglet Données, 2026-10-09). Câblée par '
     + '`BottomSheet`, jamais parcourue au clavier par le spec.',
@@ -259,7 +253,7 @@ describe('C-96 — couverture clavier des surfaces modales', () => {
     expect(muettes).toEqual([]);
   });
 
-  it('L ECART, CHIFFRE — 10 mesurees sur 51 cablees au 2026-09-20', () => {
+  it('L ECART, CHIFFRE · 23 mesurees sur 63 cablees au 2026-10-22', () => {
     // 🔴 Ce cas n'est pas décoratif : il est le seul endroit du dépôt où le
     // chiffre existe. Il change quand le produit change, et c'est voulu — on
     // le relit alors, au lieu de recopier « 10 sur 53 » d'un document plus
@@ -269,11 +263,12 @@ describe('C-96 — couverture clavier des surfaces modales', () => {
     const dette = Object.values(NON_MESUREES).filter((r) => r.includes('dette')).length;
     const total = cablees.length;
     // Un CLIQUET : la couverture ne peut que monter. 10 au 2026-09-20, 12 au
-    // 2026-10-22 (rôles personnalisés mesurés).
+    // 2026-10-22 (rôles personnalisés mesurés), 23 le même jour (AM-2, dix
+    // surfaces de plus et ColorSettingsModal reclassée).
     expect(
       mesurees,
       `Couverture clavier en BAISSE : ${mesurees} surfaces mesurées sur ${total}.`,
-    ).toBeGreaterThanOrEqual(12);
+    ).toBeGreaterThanOrEqual(23);
     // …et le chiffre est imprimé, pour qu'il soit lisible sans ouvrir ce fichier.
     console.log(
       `::notice title=c96::${mesurees} surface(s) modale(s) mesurée(s) au clavier sur `
