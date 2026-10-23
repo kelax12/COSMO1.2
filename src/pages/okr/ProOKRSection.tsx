@@ -77,8 +77,10 @@ const ProOKRSection: React.FC<ProOKRSectionProps> = ({ okrs, orgNames, userId, o
                 {okr.keyResults.map((kr) => {
                   const mine = isMyTeamKR(kr, userId);
                   return (
-                    <li key={kr.id} className={`flex items-center gap-2 text-sm ${mine ? '' : 'opacity-60'}`}>
-                      <span className="flex-1 min-w-0 truncate text-[rgb(var(--color-text-primary))]">{kr.title}</span>
+                    <li key={kr.id} className="flex items-center gap-2 text-sm">
+                      {/* AM-5 : un `opacity-60` effaçait la ligne d'un autre membre à 2,87:1.
+                          L'écart se dit par la teinte du titre, jamais par l'opacité. */}
+                      <span className={`flex-1 min-w-0 truncate ${mine ? 'text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'}`}>{kr.title}</span>
                       {mine && (
                         <span className="text-label text-[rgb(var(--color-text-muted))]">
                           {t('pro.you')}

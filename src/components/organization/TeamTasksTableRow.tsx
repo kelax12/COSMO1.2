@@ -126,7 +126,7 @@ const DeadlineCell = ({ task, disabledReason, onChange }: { task: TeamTask; disa
         className={`${cellBtn} text-base font-medium`}
       >
         {task.deadline
-          ? <span className={overdue ? 'text-red-500 font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</span>
+          ? <span className={overdue ? 'text-[rgb(var(--color-danger-text))] font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</span>
           : <span className="text-xs text-[rgb(var(--color-text-muted))]">{org.t('projects.tasksTabNoDeadline')}</span>}
       </PopoverTrigger>
       <PopoverContent align="start" className={DATE_PANEL_CLASS}>

@@ -195,7 +195,7 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
                     <span className="hidden sm:block text-xs text-[rgb(var(--color-text-muted))]">
                       {task.assigneeIds.length > 0 ? tp('assign.assignees', task.assigneeIds.length) : ''}
                     </span>
-                    <span className={`text-xs inline-flex items-center gap-1 ${overdue ? 'text-red-500 font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
+                    <span className={`text-xs inline-flex items-center gap-1 ${overdue ? 'text-[rgb(var(--color-danger-text))] font-semibold' : 'text-[rgb(var(--color-text-muted))]'}`}>
                       {task.deadline && (
                         <>
                           <CalendarClock size={11} aria-hidden="true" />

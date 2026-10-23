@@ -176,7 +176,7 @@ export const NoteWidget = ({ size, orgId, userId }: { size: WidgetSize; orgId: s
         <button
           type="button"
           onClick={add}
-          className="shrink-0 inline-flex items-center gap-1 h-8 px-2.5 rounded-lg text-sm font-semibold text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent)/0.1)]"
+          className="shrink-0 inline-flex items-center gap-1 h-8 px-2.5 rounded-lg text-sm font-semibold text-[rgb(var(--color-accent-text))] hover:bg-[rgb(var(--color-accent)/0.1)]"
         >
           <Plus size={15} aria-hidden="true" />
           {t('apercu.widgets.n.newNote')}
