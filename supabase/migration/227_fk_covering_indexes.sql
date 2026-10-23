@@ -72,7 +72,17 @@ CREATE INDEX IF NOT EXISTS idx_team_lists_created_by ON public.team_lists (creat
 CREATE INDEX IF NOT EXISTS idx_team_okrs_deleted_by ON public.team_okrs (deleted_by);
 CREATE INDEX IF NOT EXISTS idx_team_project_dependencies_created_by ON public.team_project_dependencies (created_by);
 CREATE INDEX IF NOT EXISTS idx_team_project_members_added_by ON public.team_project_members (added_by);
-CREATE INDEX IF NOT EXISTS idx_team_project_milestones_created_by ON public.team_project_milestones (created_by);
+-- `team_project_milestones` existe en prod jusqu'à la mig. 206 (non appliquée) et
+-- n'existe plus sur une base vierge rejouée jusqu'au bout : l'index est donc
+-- conditionnel. Appliquée avant la 206, la table puis son index partent avec elle.
+DO $milestones$
+BEGIN
+  IF to_regclass('public.team_project_milestones') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS idx_team_project_milestones_created_by
+      ON public.team_project_milestones (created_by);
+  END IF;
+END
+$milestones$;
 CREATE INDEX IF NOT EXISTS idx_team_projects_health_updated_by ON public.team_projects (health_updated_by);
 CREATE INDEX IF NOT EXISTS idx_team_task_dependencies_created_by ON public.team_task_dependencies (created_by);
 CREATE INDEX IF NOT EXISTS idx_team_tasks_deleted_by ON public.team_tasks (deleted_by);
