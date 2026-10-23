@@ -127,6 +127,43 @@ export function comparerAdvisors(reference, mesure) {
   return { ecarts, baisses };
 }
 
+/**
+ * La référence recalée : les COMPTES et les réglages viennent de la mesure,
+ * tout ce qu'un humain a écrit est CONSERVÉ.
+ *
+ * 🔴 `--update` réécrivait le fichier en entier : chaque `_note` (la raison
+ * pour laquelle un objet est légitime, relue au catalogue) disparaissait au
+ * recalage, et c'est précisément ce texte qui rend un recalage défendable.
+ * Sont donc repris de l'ancienne référence : la `_note` de chaque advisor
+ * qui existe encore, et les clés `_*_source` (historique des recalages).
+ * Un advisor NOUVEAU naît sans `_note` : à écrire à la main, après relecture.
+ */
+export function fusionnerReference(ancienne, securite, reglages, date) {
+  const contenu = {
+    _comment: [
+      'C-88 · référence de POSTURE Supabase : advisors de sécurité et réglages',
+      "d'authentification. Se recale par `node scripts/check-supabase-posture.mjs --update`",
+      '(ou par le workflow Posture, entrée `regenerer`), jamais à la main pour les comptes.',
+      '🔴 La garde juge sur un ÉCART à ces valeurs, pas sur un absolu : les fonctions',
+      "SECURITY DEFINER exposées à `authenticated` sont un choix d'architecture (les",
+      'helpers RLS en sont). Ce qui doit alerter est la suivante, ou une policy qui disparaît.',
+      '❌ Ne jamais relever un compte ici pour faire passer la CI : répondre',
+      "d'abord à la question « quel objet est apparu ? ».",
+    ],
+    pose_le: date,
+  };
+  for (const [cle, valeur] of Object.entries(ancienne ?? {})) {
+    if (cle.startsWith('_') && cle !== '_comment') contenu[cle] = valeur;
+  }
+  contenu.securite = {};
+  for (const [nom, m] of Object.entries(securite)) {
+    const note = ancienne?.securite?.[nom]?._note;
+    contenu.securite[nom] = note === undefined ? { ...m } : { ...m, _note: note };
+  }
+  contenu.reglages_auth = reglages;
+  return contenu;
+}
+
 // ── Exécution ──────────────────────────────────────────────────────
 
 const estLanceDirectement =
@@ -160,21 +197,8 @@ if (estLanceDirectement) {
   }
 
   if (process.argv.includes('--update')) {
-    const contenu = {
-      _comment: [
-        'C-88 — référence de POSTURE Supabase : advisors de sécurité et réglages',
-        "d'authentification. Écrite par `node scripts/check-supabase-posture.mjs --update`,",
-        'jamais à la main.',
-        '🔴 La garde juge sur un ÉCART à ces valeurs, pas sur un absolu : les 82',
-        'fonctions SECURITY DEFINER exposées à `authenticated` sont un choix',
-        "d'architecture (les helpers RLS en sont). Ce qui doit alerter est la 83e.",
-        '❌ Ne jamais relever un compte ici pour faire passer la CI : répondre',
-        "d'abord à la question « quel objet est apparu ? ».",
-      ],
-      pose_le: new Date().toISOString().slice(0, 10),
-      securite,
-      reglages_auth: reglages,
-    };
+    const ancienne = existsSync(REFERENCE) ? JSON.parse(readFileSync(REFERENCE, 'utf8')) : {};
+    const contenu = fusionnerReference(ancienne, securite, reglages, new Date().toISOString().slice(0, 10));
     writeFileSync(REFERENCE, `${JSON.stringify(contenu, null, 2)}\n`, 'utf8');
     console.log(`✓ Référence recalée : ${Object.keys(securite).length} advisor(s), ${Object.keys(reglages).length} réglage(s).`);
     process.exit(0);
