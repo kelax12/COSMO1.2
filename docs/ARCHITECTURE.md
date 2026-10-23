@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **93 / 100** au 2026-10-22, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **93 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
 
 # Architecture — invariants, dette et vérification
 

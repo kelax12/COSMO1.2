@@ -16,6 +16,9 @@ et les **règles durables** tirées des audits.
   puis `212`. ✅ **Remesuré le 2026-10-22** (passe d'audit) : advisors **`14 / 84 / 2 / 1`**,
   80 tables toutes sous RLS, 205 policies, ledger **176** (`140`, `224`, `226`), 13 Edge
   Functions, production égale au dépôt (`fb83cd6`). Note **87 → 87**.
+  ✅ **Relu le 2026-10-23** (passe d'audit, sans nouvelle mesure du catalogue) : `Edge deploy drift` et
+  `Deploy SHA drift` verts à `e96b7c90` ; Dependabot ramené à **3** alertes, toutes de développement
+  (`@vitest/mocker` ×2, `hono`) après les PR n° 85, 84, 81, 70, 34 et 108 ; CodeQL **0**. Note **87 → 87**.
   ✅ **Remesuré le 2026-10-19** (`TR-1`) : mig. `223` appliquée (ledger
   `20261019122246`, **173** entrées) et relue au catalogue, advisors **`13 / 84 / 2 / 1`**, sonde
   `anon` sur `track_hit` refusée. Note **86 → 87**.
@@ -57,7 +60,7 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → 86 → 87 → 87 → **87 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → 2026-10-19 → 2026-10-20 → **2026-10-22**)
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → 86 → 87 → 87 → 87 → **87 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → 2026-10-19 → 2026-10-20 → 2026-10-22 → **2026-10-23**)
 
 > ### ⚪ 2026-10-22 · 0 : la bascule live est faite proprement, son chemin d'argent reste à jouer
 >
