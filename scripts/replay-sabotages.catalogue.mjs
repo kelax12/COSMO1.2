@@ -1404,4 +1404,25 @@ export const CATALOGUE = [
   ].map(([id, modif, attendu, pourquoi]) => ({
     id, famille: 'detecteur', garde: 'scripts/replay-sabotages.guard.test.mjs', modifs: [modif], attendu: [attendu], pourquoi,
   })),
+  // AM-6 (2026-10-23) · le selecteur du deploiement continu des Edge Functions.
+  {
+    id: 'edge-deploy-shared-transitif',
+    famille: 'detecteur',
+    garde: 'scripts/edge-deploy-select.guard.test.mjs',
+    modifs: [r('scripts/edge-deploy-select.mjs', 'if (perimetres.get(slug).has(rel) || sources.get(slug).includes(module)) {', 'if (sources.get(slug).includes(module)) {')],
+    attendu: ['selectionne un importeur TRANSITIF d un _shared (W-2)'],
+    pourquoi:
+      'Un selecteur reduit au `grep` de l`import direct oublie la fonction qui embarque '
+      + 'un `_shared` par un autre `_shared` : la derive W-2, deployee en automatique.',
+  },
+  {
+    id: 'edge-deploy-retour-arriere',
+    famille: 'detecteur',
+    garde: 'scripts/edge-deploy-select.guard.test.mjs',
+    modifs: [r('scripts/edge-deploy-select.mjs', "  if (estAncetre(tete, base)) return { mode: 'deja-deploye', changes: [] };", "  // (sabotage) plus de garde anti-retour-arriere")],
+    attendu: ['ne deploie rien quand la tete est deja contenue dans la base'],
+    pourquoi:
+      'Un run ancien qui finit apres un recent redeploierait un code plus vieux '
+      + 'par-dessus celui de `main` : la prod reculerait sur un run vert.',
+  },
 ];

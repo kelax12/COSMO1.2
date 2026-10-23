@@ -40,6 +40,9 @@ on:
     workflows:
       - CI
       - Edge deploy drift
+      # AM-6 (2026-10-23) : le deploiement continu des fonctions. Un rouge ici
+      # est une fonction partie a moitie, ou pas partie du tout.
+      - Edge deploy
       - Migration coverage
       - Deploy SHA drift
       - CodeQL
