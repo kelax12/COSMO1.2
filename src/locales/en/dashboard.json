@@ -12,7 +12,7 @@
   },
   "checkin": {
     "title": "Your week is waiting",
-    "subtitle": "Take stock of your goals, two minutes is enough.",
+    "subtitle": "Take stock of your objectives, two minutes is enough.",
     "cta": "Check in",
     "dismiss": "Skip this week's check-in"
   },
@@ -54,16 +54,16 @@
     "today": "Today"
   },
   "okrs": {
-    "activeGoal_one": "{{count}} active goal",
-    "activeGoal_other": "{{count}} active goals",
+    "activeGoal_one": "{{count}} active objective",
+    "activeGoal_other": "{{count}} active objectives",
     "keyResult_one": "{{count}} key result",
     "keyResult_other": "{{count}} key results",
     "deadline": "Due: {{date}}",
     "timeProgress": "{{current}} / {{target}} min",
     "empty": {
       "title": "Ready to aim higher?",
-      "description": "Set a goal and its key results to track your progress.",
-      "action": "Create your first goal"
+      "description": "Set an objective and its key results to track your progress.",
+      "action": "Create your first objective"
     }
   },
   "todayTasks": {
@@ -172,7 +172,7 @@
       "collaborativeTasks": "Collaborative tasks",
       "okrs": "Active OKRs",
       "habits": "Today's habits",
-      "agenda": "Today's agenda",
+      "agenda": "Today's calendar",
       "taskList": "Task list",
       "teamTasks": "My team tasks",
       "review": "To review"
@@ -211,7 +211,7 @@
       "count_other": "{{count}} events",
       "empty": "No events today.",
       "next": "Next",
-      "open": "Open agenda"
+      "open": "Open calendar"
     },
     "list": {
       "choose": "List shown",

@@ -599,6 +599,16 @@ export const CATALOGUE = [
       + 'ne signalera jamais : il affiche le français, et l`écran a l`air traduit.',
   },
   {
+    id: 'i18n-traduction-fausse',
+    famille: 'produit',
+    garde: { commande: 'scripts/i18n-quality.mjs', args: ['--list'] },
+    modifs: [r('src/locales/en/csv.json', '"subtasks": "Subtasks"', '"subtasks": "Items"')],
+    raison: /csv\.col\.subtasks \[tâche\]/,
+    pourquoi:
+      'Une traduction fausse mais différente passe `i18n:check` et `i18n:identical` : '
+      + 'seul le glossaire épinglé voit que « Sous-tâches » ne dit plus « subtask ».',
+  },
+  {
     id: 'i18n-chaine-en-dur',
     famille: 'produit',
     garde: { commande: 'scripts/i18n-scan.mjs', args: ['--list'] },
