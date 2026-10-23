@@ -14,6 +14,7 @@
 
 **Cibles** : WCAG 2.1 AA (obligation EAA — European Accessibility Act, applicable depuis le 28 juin 2025).
 **Outillage** : `e2e/a11y-audit.spec.ts` (axe-core, 11 routes, dumpe les violations par route)
+**+ `e2e/a11y-contrast-themes.spec.ts`** (AM-5, 2026-10-23) : `color-contrast` **bloquant** dans les quatre thèmes, sept routes de démo, page entière
 **+ Lighthouse CI** (`lighthouserc.json`, job `lighthouse`) sur les 4 routes prérendues.
 **Gates CI** : les violations `impact: 'critical'` sont **bloquantes** (`assertNoCritical`). `serious` / `moderate` / `minor` sont dumpées dans `test-results/a11y/<route>.json` mais non bloquantes. Le score a11y de Lighthouse est **bloquant** sur `/`, `/guide`, `/blog`, `/pour-freelances`, à 0,9, et à **1** sur `/guide/` depuis le 2026-10-22 (`assertMatrix`, desktop et mobile).
 
@@ -45,7 +46,41 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → 81 → 82 → 82 → 82 → 81 → 81 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → 2026-10-22 → **2026-10-22 (passe)**)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → 81 → 82 → 82 → 82 → 81 → 81 → 82 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → 2026-10-22 → 2026-10-22 (passe) → **2026-10-23**)
+
+> ### ⚪ 2026-10-23 · 0 : AM-5 mesuré par axe dans les QUATRE thèmes, et ce que ça a trouvé
+>
+> AM-5 a déjà été remboursé le 2026-10-01, sur `Visual`. Mais `Visual` dit « ça a changé », jamais
+> « c'est illisible ». Depuis la PR n° 99, `e2e/a11y-contrast-themes.spec.ts` joue la règle axe
+> `color-contrast`, **seule et bloquante**, sur sept routes de démo (`/dashboard`, `/tasks`, `/agenda`,
+> `/habits`, `/okr`, `/settings`, `/entreprise`), un cas par thème, page ENTIÈRE. Les défauts qu'il a
+> trouvés sont corrigés dans la même PR : rien n'est débité, rien n'est remboursé deux fois.
+>
+> | Mesure | Avant (CI de la PR, run `39778154897`) | Après |
+> |---|---|---|
+> | Barre latérale, Noir et Gris | `--nav-item-text` à **3,54:1** (Noir) et **3,78:1** (Gris), 49 et 48 nœuds | 5,74:1 et 5,07:1 (jetons) |
+> | Entrée active de la barre, Gris | blanc sur `#388bfd`, **3,34:1** : la valeur que C-25 avait corrigée sur le bouton et oubliée ici | `--nav-item-active-bg` = `--color-accent-solid`, 4,54:1 |
+> | Accent porté en TEXTE sur sa propre teinte (onglet actif de Réglages, « j restants », bouton « Modifier les widgets », Check-in) | **3,09 à 4,48:1** selon le thème | nouveau jeton `--color-accent-text` (5,2:1 et plus). Les fonds pleins et les liens du clair gardent `#2563eb` : C-23 n'est pas rouvert |
+> | Rouge de retard (`--color-error`, `text-red-500` en dur dans huit fichiers) | **3,25 à 4,27:1** | `--color-danger-text` partout ; red-700 en clair (5,73:1 sur le bandeau teinté) |
+> | Texte blanc sur les huit teintes de catégorie (blocs d'agenda, avatars à initiales) | **2,15 à 4,47:1** : le blanc ne tenait sur AUCUNE | texte choisi par luminance (`textOnColor`, `src/lib/category-colors.ts`), testé sur les neuf fonds |
+> | Couleurs en dur ou mauvais jeton (`#1f6feb`, accent plein sous du blanc, `opacity-60`, ambre, émeraude, orange, indigo, violet -500, favoris teintés à 20 %) | 2,25 à 4,46:1 | jeton ou teinte -700 ; favoris à 12 % |
+>
+> 🔴 **`/tasks` n'avait JAMAIS été mesuré**, dans aucun thème, et le témoin du témoin l'a vu : zéro
+> texte. axe LEVAIT (« Element midpoint exceeds the grid bounds ») dès qu'un texte sortait du document,
+> et `<main>` est un conteneur qui défile : tout ce qui est sous la ligne de flottaison en sort. Le cas
+> agrandit donc la fenêtre à la hauteur réelle du contenu ; `/tasks` passe de 0 à plus de 140 textes
+> mesurés. ⚠️ `e2e/a11y-audit.spec.ts` a la même limite (premier écran seulement) et sa dispense
+> `color-contrast` reste : ce n'est pas lui qui garde le contraste.
+>
+> **Témoin vu rouge** : PR brouillon n° 118, même code avec `--nav-item-text` du Noir dégradé à
+> `60 60 60` (job `e2e` 120149437694) : seul le cas `thème noir` échoue, **56 nœuds** par tentative, tous `#3c3c3c` sur `#161616` à 1,64:1 ; clair, sombre et gris restent verts. PR fermée sans fusion. Le même code sans le sabotage (`7a79244c`) a ses cinq jobs verts.
+>
+> ⚠️ Ce que ça ne couvre pas : l'état initial de chaque route (ni modale, ni menu, ni survol), un seul
+> moteur (Chromium, 1 600 px). Les 49 usages de `--color-accent` en FOND sous du texte blanc
+> (`bg-[rgb(var(--color-accent))] text-white`, 3,67:1 en Sombre) vivent surtout en mode édition et en
+> modale : non vus par ce cas, à traiter comme les autres, par `--color-accent-solid`.
+>
+> **82 → 82.**
 
 > ### 🟢 2026-10-22 (passe) · +1 : C-97 refermé et vu vert en CI
 >
@@ -372,7 +407,7 @@ Conséquences pratiques, à tenir :
 | AM-2 | **10 surfaces modales mesurées au clavier sur 53.** Les 43 autres sont **câblées et gardées par un cliquet**, ce qui n'est pas la même chose que mesurées | `e2e/a11y-keyboard-audit.spec.ts` : 19 cas, 10 surfaces. `modal-a11y.guard.test.ts` câble les 53 | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:keyboard-coverage` · **51 surfaces**, 10 mesurées, 41 déclarées non mesurées **une par une avec leur raison** (`C-96`) — 🔴 ne prouve PAS : 🔴 **elle ne mesure AUCUNE accessibilité.** Elle CHIFFRE l'écart et l'empêche de grandir en silence. ⚠️ L'énoncé du 09-16 disait 53 surfaces : le détecteur en compte **51**. ⚠️ La couverture réelle est repassée à **10 sur 51 le 2026-09-22** : les deux cas qui expiraient (`TaskActionsSheet`, `MobileAddToList`) mesurent à nouveau, et par le chemin **clavier** cette fois. ✅ **Rejoué sous WebKit le 2026-10-16** (`C-118`) : les 16 cas de `e2e/a11y-keyboard-audit.spec.ts` jouent sous `mobile-safari` ET `chromium`, donc « 10 » vaut pour les deux moteurs. ⚠️ Pas pour Option+Tab ni VoiceOver, que Playwright n'émule pas |
 | AM-3 | **Aucun test avec un lecteur d'écran.** Ce que NVDA ou VoiceOver annonce réellement n'est vérifié nulle part | aucun outil de ce type dans le dépôt | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-40`** (l'exécution) et **`M-52`** (la date). Ce que VoiceOver ou NVDA **annonce** n'est vérifié nulle part, et aucune garde ne le fera — *(jugé outillable le 09-16 : difficilement : c'est un test manuel daté)* |
 | AM-4 | **WCAG 2.5.5 n'est mesuré que sur 8 routes protégées** (élargi à 8 pages publiques par `C-80`, à revérifier après coup) | `e2e/touch-targets.spec.ts`, cf. l'entrée du 2026-09-14 | ✅ **OUTILLÉ le 2026-09-20** · `C-80` a élargi la boucle à **8 pages publiques** en plus des 8 routes protégées (`C-80`) — 🔴 ne prouve PAS : 🔴 la revérification demandée par cet énoncé est **faite et elle est mauvaise** : le job `e2e` est rouge, 8 défauts de cibles tactiles mesurés (`/settings` 24 × 24 px, `/okr` 36 px, `/habits` 39 × 39 px). C'est `C-111` |
-| AM-5 | **Le contraste n'est vérifié que dans le thème par défaut.** Le dépôt porte quatre thèmes (clair, sombre, gris, noir) ; les runs axe n'en balaient qu'un | `theme-contrast.guard.test.ts` est statique, les runs e2e ne changent pas de thème | ✅ **OUTILLÉ le 2026-09-20** · `e2e/visual-regression.spec.ts` (`C-95`) — 🔴 ne prouve PAS : la première référence fige l'écran défauts compris · 🔎 🔴 **2026-09-22 : repose sur `Visual`, qui n'a jamais produit une référence** (cf. `UI-PATTERNS.md` AM-1) · 🔎 🟠 **2026-09-24 : `Visual` était vert à vide** (aucune référence committée), corrigé, cf. `UI-PATTERNS.md` AM-1 |
+| AM-5 | **Le contraste n'est vérifié que dans le thème par défaut.** Le dépôt porte quatre thèmes (clair, sombre, gris, noir) ; les runs axe n'en balaient qu'un | `theme-contrast.guard.test.ts` est statique, les runs e2e ne changent pas de thème | ✅ **OUTILLÉ le 2026-09-20** · `e2e/visual-regression.spec.ts` (`C-95`) — 🔴 ne prouve PAS : la première référence fige l'écran défauts compris · 🔎 🔴 **2026-09-22 : repose sur `Visual`, qui n'a jamais produit une référence** (cf. `UI-PATTERNS.md` AM-1) · 🔎 🟠 **2026-09-24 : `Visual` était vert à vide** (aucune référence committée), corrigé, cf. `UI-PATTERNS.md` AM-1 · ✅ **2026-10-23 : MESURÉ** par `e2e/a11y-contrast-themes.spec.ts`, axe `color-contrast` bloquant, quatre thèmes, sept routes, page entière ; témoin vu rouge (PR n° 118). Détail : entrée du 2026-10-23 |
 
 
 > ### 🟢 2026-09-15 · +2 : le premier des trois angles morts de couverture est refermé (C-80)
