@@ -836,7 +836,20 @@ test('MESURE · TodayTasks (confirmation de suppression, tableau de bord)', asyn
   await page.setViewportSize({ width: 1280, height: 900 });
   // Les actions d'une ligne sont révélées AU FOCUS (`focus-within`) : Tab les
   // atteint, et c'est ce chemin qu'on emprunte.
-  await ouvrirAuClavier(page, page.getByRole('button', { name: /^supprimer : /i }).first());
+  //
+  // 🔴 La confirmation n'existe QUE pour une tâche COLLABORATIVE
+  // (`handleDeleteClick`) : une tâche perso est supprimée sec, réversible par le
+  // toast « Annuler ». Viser la première ligne (une tâche perso) supprimait la
+  // tâche et laissait ce cas expirer, 3 essais sur 3 sur les deux moteurs (CI du
+  // 2026-10-23). On vise donc la tâche partagée du jeu de démo, `shared-002`
+  // (priorité 2, donc dans « Tâches prioritaires »).
+  const widget = page.getByRole('listitem').filter({
+    has: page.getByRole('heading', { name: /^tâches prioritaires$/i }),
+  });
+  await ouvrirAuClavier(
+    page,
+    widget.getByRole('button', { name: /^supprimer : préparer la réunion de lancement$/i }).first(),
+  );
   // Confirmation destructive : `role="alertdialog"`, comme DeleteObjectiveConfirm.
   await mesurerSurface(page, 'TodayTasks', page.getByRole('alertdialog', { name: /^supprimer la tâche$/i }), 'alertdialog');
 });
