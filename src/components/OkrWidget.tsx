@@ -74,7 +74,8 @@ const OkrWidget = ({ okrId, fallbackIndex, onSelect }: OkrWidgetProps) => {
             ariaLabel={t('okrWidget.choose')}
           />
         </div>
-        <span className="shrink-0 text-sm font-bold tabular-nums" style={{ color }}>{progress} %</span>
+        {/* AM-5 : la couleur de catégorie en texte tombait à 2,53:1 (vert sur blanc) ; elle reste portée par la barre. */}
+        <span className="shrink-0 text-sm font-bold tabular-nums text-[rgb(var(--color-text-primary))]">{progress} %</span>
       </div>
 
       {okr.keyResults.length === 0 ? (

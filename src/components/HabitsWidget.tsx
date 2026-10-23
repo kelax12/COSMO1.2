@@ -100,7 +100,7 @@ const HabitsWidget = ({ view, onViewChange }: HabitsWidgetProps) => {
                   {h.name}
                 </span>
                 <span className="shrink-0 text-xs tabular-nums text-[rgb(var(--color-text-secondary))]">{formatDurationMinutes(h.estimatedTime)}</span>
-                <span className="shrink-0 inline-flex items-center gap-0.5 text-xs tabular-nums text-orange-500" title={tp('habits.streak', habitStreak(h))}>
+                <span className="shrink-0 inline-flex items-center gap-0.5 text-xs tabular-nums text-orange-700 dark:text-orange-400" title={tp('habits.streak', habitStreak(h))}>
                   <Flame size={13} aria-hidden="true" />{habitStreak(h)}
                 </span>
               </li>
@@ -151,7 +151,7 @@ const HabitsWidget = ({ view, onViewChange }: HabitsWidgetProps) => {
                     );
                   })}
                   <td className="pl-2 text-right">
-                    <span className="inline-flex items-center gap-0.5 text-xs tabular-nums text-orange-500" title={tp('habits.streak', habitStreak(h))}>
+                    <span className="inline-flex items-center gap-0.5 text-xs tabular-nums text-orange-700 dark:text-orange-400" title={tp('habits.streak', habitStreak(h))}>
                       <Flame size={13} aria-hidden="true" />{habitStreak(h)}
                     </span>
                   </td>

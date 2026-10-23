@@ -71,7 +71,7 @@ const TaskBoardCard = ({ task, draggable, showStatus = false, onOpen, onRequestM
             </span>
           )}
           {task.deadline && (
-            <span className={overdue ? 'text-red-500 font-semibold inline-flex items-center gap-0.5' : ''}>
+            <span className={overdue ? 'text-[rgb(var(--color-danger-text))] font-semibold inline-flex items-center gap-0.5' : ''}>
               {overdue && <AlertTriangle size={12} aria-hidden="true" />}
               {overdue ? formatOverdueSince(task.deadline) : formatDeadlineSmart(task.deadline)}
             </span>
