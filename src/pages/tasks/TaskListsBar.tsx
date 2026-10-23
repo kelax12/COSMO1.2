@@ -20,7 +20,7 @@ interface TaskListsBarProps {
   isMobile: boolean;
   colorOptions: ColorOption[];
   resolveListColor: (color: string) => string;
-  chipLongPressFired: React.MutableRefObject<boolean>;
+  chipLongPressFired: React.RefObject<boolean>;
   selectedListId: string | null;
   setSelectedListId: React.Dispatch<React.SetStateAction<string | null>>;
   hoveredListId: string | null;
