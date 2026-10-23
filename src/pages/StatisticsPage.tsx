@@ -23,7 +23,7 @@ import type { WorkTimeBucket, WorkTimeRange } from '@/modules/stats';
 import { useVisibilityInterval } from '@/lib/hooks/usePerformance';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useBilling } from '@/modules/billing/billing.context';
-import PremiumGateModal from '@/components/PremiumGateModal';
+import { PremiumGateModal, HabitHeatmap } from './statistics/lazy-surfaces';
 import { formatTime, formatTimeShort } from './statistics/format';
 import PeriodSummaryCard from './statistics/PeriodSummaryCard';
 import StatSectionHeading from './statistics/StatSectionHeading';
@@ -37,7 +37,6 @@ import { useInsightText } from './statistics/insights';
 const DashboardChart = React.lazy(() => import('@/components/DashboardChart'));
 
 import {
-  HabitHeatmap,
   OverviewStatistics,
   TasksStatistics,
   AgendaStatistics,

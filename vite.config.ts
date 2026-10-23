@@ -29,10 +29,49 @@ const emitVersionFile = (release: string) => ({
   },
 });
 
+// Retire des deux locales date-fns livrées, `fr` et `en-US`, les deux parties
+// qu'aucun code n'appelle : le PARSEUR (`match`) et `formatRelative`.
+//
+// POURQUOI : `vendor-utils` est dans le chemin critique (préchargé par
+// `index.html`, donc payé par tout visiteur) et il était à 32,9 ko pour un
+// plafond de 33,0 le 2026-10-22.
+//   • `match` ne sert qu'à `parse()` et `isMatch()`. On ne LIT jamais une date
+//     localisée : on l'écrit (`format`, `formatDistance*`) ou on lit de l'ISO
+//     (`parseISO`, sans locale). Avec `buildMatchFn` et `buildMatchPatternFn`.
+//   • `formatRelative` ne sert qu'à `formatRelative()` de date-fns. Le « il y a
+//     2 h » du dépôt est `formatRelativeTime` (`src/i18n/format.ts`), en `Intl`.
+// Ni `src/` ni react-day-picker n'appellent l'une ou l'autre.
+//
+// La locale garde ses deux clés, qui LÈVENT si on les appelle : un `parse()`
+// ajouté un jour échoue bruyamment au premier essai, au lieu de rendre une
+// `Invalid Date` silencieuse. Cliquet : `src/i18n/date-fns-no-parse.guard.test.ts`.
+//
+// ⚠️ Si une montée de date-fns change la forme de ces fichiers, le build
+// ÉCHOUE ici plutôt que de livrer en silence la locale entière.
+const DATE_FNS_UNUSED_LOCALE_PARTS = ['match', 'formatRelative'] as const;
+const stripDateFnsLocaleParsers = () => ({
+  name: 'cosmo-strip-date-fns-locale-parsers',
+  transform(code: string, id: string) {
+    if (!/[\\/]node_modules[\\/]date-fns[\\/]locale[\\/](fr|en-US)\.mjs$/.test(id)) return null;
+    let out = code;
+    for (const part of DATE_FNS_UNUSED_LOCALE_PARTS) {
+      const importLine = new RegExp(`^import \\{ ${part} \\} from "\\./(fr|en-US)/_lib/${part}\\.mjs";\\r?\\n`, 'm');
+      if (!importLine.test(out) || !out.includes(`  ${part}: ${part},`)) {
+        throw new Error(`cosmo-strip-date-fns-locale-parsers : forme inattendue de ${id} (${part}), plugin à revoir`);
+      }
+      out = out.replace(importLine, `const ${part} = COSMO_RETIRE;\n`);
+    }
+    const stub =
+      'const COSMO_RETIRE = new Proxy(() => {}, { get: () => COSMO_RETIRE, apply: () => {' +
+      ' throw new Error("COSMO : parse() et formatRelative() de date-fns retirés du bundle, cf. vite.config.ts"); } });\n';
+    return { code: stub + out, map: null };
+  },
+});
+
 const APP_RELEASE = (process.env.VERCEL_GIT_COMMIT_SHA ?? '').slice(0, 7) || 'dev';
 
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), emitVersionFile(APP_RELEASE)],
+  plugins: [react(), emitVersionFile(APP_RELEASE), stripDateFnsLocaleParsers()],
   // Release injecté au build pour Sentry (observabilité). Vercel expose
   // VERCEL_GIT_COMMIT_SHA ; fallback 'dev' en local. Statique → tree-shaké.
   define: {
