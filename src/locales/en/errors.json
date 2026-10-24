@@ -31,7 +31,7 @@
     "no_url": "Stripe did not return a payment link. Please try again in a moment.",
     "not_a_friend": "You can only invite your COSMO contacts. Add this person as a friend first.",
     "not_a_member": "You must belong to this company to invite someone to it.",
-    "not_allowed_to_invite": "Only an administrator or a team manager can bring someone into the company.",
+    "not_allowed_to_invite": "Only an administrator or a team lead can bring someone into the company.",
     "not_authenticated": "You must be signed in to perform this action.",
     "not_found": "This item no longer exists.",
     "not_org_admin": "This action is restricted to company administrators.",
