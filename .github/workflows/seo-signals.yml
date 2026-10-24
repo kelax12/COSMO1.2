@@ -1,0 +1,109 @@
+# ══════════════════════════════════════════════════════════════════
+# Signaux SEO · SEO.md AM-4, ACQUISITION-BACKLINKS.md AM-1 et AM-2
+# ══════════════════════════════════════════════════════════════════
+#
+# 🔴 CE QUI MANQUAIT. Les audits SEO mesuraient la conformité, jamais le
+# résultat : la Search Console a été relue UNE fois, à la main, le
+# 2026-08-19. Un backlink retiré était invisible, et l'autorité de domaine,
+# que ACQUISITION-BACKLINKS.md désigne comme le blocage principal, n'était
+# mesurée par rien.
+#
+# Chaque semaine, `scripts/seo-signals.mjs` relève :
+#   · Search Console : requêtes non marque, clics, impressions, position
+#     sur 28 jours (secret `GSC_SERVICE_ACCOUNT_JSON`, propriété
+#     `vars.GSC_SITE_URL`, par défaut `sc-domain:thecosmo.app`) ;
+#   · chaque backlink `fait` d'ACQUISITION-BACKLINKS.md : page source en
+#     ligne, lien vers thecosmo.app, `rel` noté ;
+#   · les domaines référents vus par Bing (`BING_WEBMASTER_API_KEY`).
+# Le point est commité dans `docs/seo-signals-series.json`, puis le verdict
+# tombe. Un rouge part sur le webhook ops par `ci-alert.yml`.
+#
+# 🔴 PAS de `if: secrets.X != ''`. Secret absent = moitié non mesurée =
+# ROUGE. Une garde conditionnelle à son propre secret ne protège rien.
+# ══════════════════════════════════════════════════════════════════
+name: Signaux SEO
+
+on:
+  schedule:
+    # Le lundi, 06:17 UTC : les données GSC de la semaine sont consolidées.
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-signals
+  cancel-in-progress: false
+
+jobs:
+  releve:
+    runs-on: ubuntu-latest
+    permissions:
+      # Une série ne se lit pas sur un point, et un artefact expire : le job
+      # écrit `docs/seo-signals-series.json`, et RIEN d'autre.
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      # Aucune dépendance npm : le script n'utilise que la bibliothèque standard.
+      - name: Relever Search Console, backlinks et autorite
+        id: mesure
+        env:
+          GSC_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+          GSC_SITE_URL: ${{ vars.GSC_SITE_URL }}
+          BING_WEBMASTER_API_KEY: ${{ secrets.BING_WEBMASTER_API_KEY }}
+        run: |
+          set -o pipefail
+          # Le point s'écrit même au rouge : le verdict est rendu à la fin.
+          if node scripts/seo-signals.mjs 2>&1 | tee seo-signals.log; then
+            echo "rouge=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "rouge=true" >> "$GITHUB_OUTPUT"
+          fi
+          {
+            echo '### Signaux SEO'
+            echo ''
+            echo '```'
+            cat seo-signals.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Conserver le journal du releve
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: seo-signals-log
+          path: seo-signals.log
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Enregistrer le point dans la serie
+        if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+        run: |
+          set -euo pipefail
+          # `git status` et non `git diff --quiet` : au premier relevé le
+          # fichier est NON SUIVI, et `git diff` ne voit pas un fichier non suivi.
+          if [ -z "$(git status --porcelain -- docs/seo-signals-series.json)" ]; then
+            echo "Serie inchangee."
+            exit 0
+          fi
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add docs/seo-signals-series.json
+          git commit -m 'chore(seo): point hebdomadaire des signaux SEO (AM-4, AM-1, AM-2)'
+          git pull --rebase --autostash
+          git push
+
+      - name: Verdict
+        if: ${{ !cancelled() }}
+        run: |
+          if [ "${{ steps.mesure.outputs.rouge }}" != "false" ]; then
+            grep -E '^\s+- ' seo-signals.log | while IFS= read -r LIGNE; do
+              echo "::error title=seo-signals::${LIGNE}"
+            done
+            exit 1
+          fi
