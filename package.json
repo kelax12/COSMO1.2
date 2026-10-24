@@ -62,7 +62,10 @@
     "i18n:pages": "node scripts/check-i18n-pages.mjs",
     "check:keyboard-coverage": "vitest run src/keyboard-audit-coverage.guard.test.ts",
     "check:acquisition": "node scripts/check-acquisition.mjs",
-    "check:docs-scored": "node scripts/check-docs-scored.mjs"
+    "check:docs-scored": "node scripts/check-docs-scored.mjs",
+    "check:lecteurs-ecran": "node scripts/check-lecteurs-ecran.mjs",
+    "check:exercice-violation": "node scripts/check-exercice-violation.mjs",
+    "check:peremption-chantiers": "node scripts/check-peremption-chantiers.mjs"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.10",

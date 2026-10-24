@@ -55,6 +55,9 @@
 | `check:stripe-prices` | grille **Stripe** comparée au code | `C-106` | `docs/STRIPE-LIVE.md` |
 | `check:docs` | plafonds et pointeurs des `CLAUDE.md` | | ce fichier |
 | `check:docs-scored` | chaque doc de `docs/` déclare son rapport à une note | `C-109` | `docs/README.md` |
+| `check:lecteurs-ecran` | échéance des séances VoiceOver / NVDA, étapes à attendu | `M-52` | `docs/AUDIT-NVDA-WINDOWS.md` |
+| `check:exercice-violation` | exercice 72 h de moins de 12 mois, liens et gabarits | `M-49` | `docs/RGPD-VIOLATION.md` |
+| `check:peremption-chantiers` | chaque chantier daté (relu 90 j, ou clos) | `AM-2` | `docs/POST-AUDIT-GUIDE.md` |
 | `check:study` | une **étude** décrit encore les versions installées | `C-108` | `docs/MIGRATION-REACT19.md` |
 | `check:mail` | SPF / DKIM / DMARC — **pas une gate** | | `docs/DEPLOYMENT.md` |
 | `images:check` | images non optimisées — **pas une gate** | | `docs/PERFORMANCE.md` |
