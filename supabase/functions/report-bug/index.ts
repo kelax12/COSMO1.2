@@ -176,14 +176,6 @@ Deno.serve(async (req) => {
       limit: REPORT_BUG_LIMITS.perIp.limit,
       window: REPORT_BUG_LIMITS.perIp.window,
     },
-    // SV-3 : APRÈS l'IP, pour qu'un appelant déjà refusé par son seau ne
-    // vide pas celui de tout le monde.
-    {
-      domain: 'report-bug:global',
-      value: 'all',
-      limit: REPORT_BUG_LIMITS.global.limit,
-      window: REPORT_BUG_LIMITS.global.window,
-    },
   ])
   if (!ipVerdict.allowed) {
     // 503 quand c'est NOTRE configuration qui manque, 429 quand c'est un abus :
@@ -302,14 +294,25 @@ Deno.serve(async (req) => {
   // Il s'ajoute au plafond par IP, il ne le remplace pas — un abus depuis
   // plusieurs comptes derrière une même IP reste borné par le premier, et un
   // abus d'un compte derrière plusieurs IP par celui-ci.
-  if (reporterEmail) {
+  //
+  // SV-3 : sans compte (anonyme, ou auteur non résolu), un seau COMMUN à tous
+  // les anonymes, consommé ici, après validation du corps : une requête
+  // invalide ne le vide pas, et un compte connecté n'y puise jamais.
+  {
     const accountVerdict = await consumeRateLimits('report-bug', [
-      {
-        domain: 'report-bug:account',
-        value: reporterEmail,
-        limit: REPORT_BUG_LIMITS.perAccount.limit,
-        window: REPORT_BUG_LIMITS.perAccount.window,
-      },
+      reporterEmail
+        ? {
+            domain: 'report-bug:account',
+            value: reporterEmail,
+            limit: REPORT_BUG_LIMITS.perAccount.limit,
+            window: REPORT_BUG_LIMITS.perAccount.window,
+          }
+        : {
+            domain: 'report-bug:anonymous',
+            value: 'all',
+            limit: REPORT_BUG_LIMITS.anonymous.limit,
+            window: REPORT_BUG_LIMITS.anonymous.window,
+          },
     ])
     if (!accountVerdict.allowed) {
       return accountVerdict.misconfigured

@@ -52,12 +52,14 @@ export const REPORT_BUG_LIMITS = {
   /** 10 par jour et par IP — couvre le cas anonyme, et les IP partagées. */
   perIp: { limit: 10, window: '1 day' },
   /**
-   * 🔴 SV-3 (2026-10-24) : 30 par jour pour TOUTE la fonction. Le commentaire
-   * de `callerIp` promettait un « plafond global » qui n'existait pas : un
-   * appelant anonyme qui changeait d'adresse n'avait plus aucune borne. Atteint,
-   * le client bascule sur son lien mailto, qui existe déjà.
+   * 🔴 SV-3 (2026-10-24) : 30 par jour pour TOUS les appelants ANONYMES
+   * ensemble. Le commentaire de `callerIp` promettait un « plafond global » qui
+   * n'existait pas : un anonyme qui changeait d'adresse n'avait plus aucune
+   * borne. Réservé aux anonymes, et consommé après validation du corps : un
+   * flot anonyme ne bloque jamais un compte connecté, borné par `perAccount`.
+   * Atteint, le client bascule sur son lien mailto, qui existe déjà.
    */
-  global: { limit: 30, window: '1 day' },
+  anonymous: { limit: 30, window: '1 day' },
 } as const
 
 /**
