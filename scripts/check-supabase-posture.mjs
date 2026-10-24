@@ -197,7 +197,14 @@ if (estLanceDirectement) {
   }
 
   if (process.argv.includes('--update')) {
-    const ancienne = existsSync(REFERENCE) ? JSON.parse(readFileSync(REFERENCE, 'utf8')) : {};
+    // Lecture directe, sans `existsSync` avant : un fichier absent est la première
+    // pose, et tester puis lire ouvrirait une course (CodeQL js/file-system-race).
+    let ancienne = {};
+    try {
+      ancienne = JSON.parse(readFileSync(REFERENCE, 'utf8'));
+    } catch (e) {
+      if (e?.code !== 'ENOENT') throw e;
+    }
     const contenu = fusionnerReference(ancienne, securite, reglages, new Date().toISOString().slice(0, 10));
     writeFileSync(REFERENCE, `${JSON.stringify(contenu, null, 2)}\n`, 'utf8');
     console.log(`✓ Référence recalée : ${Object.keys(securite).length} advisor(s), ${Object.keys(reglages).length} réglage(s).`);
