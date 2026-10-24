@@ -599,7 +599,7 @@ test('MESURE · CompletedOKRsModal (« OKR terminés »)', async ({ demoPage: pa
   await navTo(page, /okr/i, /\/okr/);
   await ouvrirAuClavier(
     page,
-    page.getByRole('button', { name: /voir la liste des okr terminés/i }).filter({ visible: true }).first(),
+    page.getByRole('button', { name: /okr terminés/i }).filter({ visible: true }).first(),
   );
   await mesurerSurface(page, 'CompletedOKRsModal', page.getByRole('dialog', { name: /^okr terminés$/i }));
 });
