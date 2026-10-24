@@ -47,7 +47,7 @@ const MobileSortButton: React.FC<Props> = ({ field, direction, onFieldChange, on
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={t('sort.label')}
+        aria-label={`${t('sort.label')} : ${current ? t(current.shortKey) : t('sort.label')}`}
         aria-haspopup="dialog"
         className="md:hidden shrink-0 flex items-center gap-1.5 h-12 max-w-[45%] rounded-full bg-[rgb(var(--color-chip-bg))] px-4 text-[rgb(var(--color-text-secondary))]"
       >
