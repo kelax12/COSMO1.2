@@ -83,7 +83,7 @@
 | AM-1 | 🔴 **Les RÈGLES de sécurité ne sont notées nulle part.** La note de sécurité (88) vit dans [`../faille.md`](../faille.md), qui porte les **findings ouverts**. Ce document porte les **règles** : RLS, migrations, Edge Functions, secrets, CSP. Un finding se ferme et fait monter la note ; une règle qui se périme ici ne coûte rien à personne | `faille.md` porte la note, `SECURITY.md` n'en a aucune | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:docs-scored` (`C-109`) — 🔴 ne prouve PAS : que les notes soient **justes ni fraîches** : `non-note` OUVRE un audit, il ne le remplace pas · 🔎 2026-09-30 : le « (88) » de l'énoncé est la note du matin du 09-16 ; elle valait **83** du 09-16 au 09-30, **78** depuis ([`../faille.md`](../faille.md)). Et la preuve de la limite ci-dessus : ce document n'a pas bougé du 09-24 au 09-30, pendant que le mode entreprise ajoutait 25 tables et 4 Edge Functions |
 | AM-2 | 🔴 **Les réglages du Dashboard Supabase ne sont surveillés par AUCUNE garde.** Protection des mots de passe compromis, expiration des OTP, politiques d'auth : ils se modifient **hors du dépôt**, sans commit, sans revue et sans trace. Un réglage désactivé par erreur ne se voit qu'au prochain audit manuel | aucun workflow ni script ne lit ces réglages ; seul un commentaire contient le mot « dashboard » | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · juge un **écart** à une référence commitée, jamais un absolu (`C-88`) · 🔴 ne prouve PAS : 🔴 rien pour l'instant : `reglages_auth` est à `null`, la référence exige un jeton. **La garde ÉCHOUE tant que ce n'est pas fait, exprès** · c'est **`M-58`** · 🔎 ✅ **2026-10-15 : `M-58` fait le 2026-10-08.** La référence porte huit réglages d'Auth (`password_hibp_enabled`, expiration des OTP, rotation des jetons, MFA, Google…) et `Posture` est vert chaque jour depuis |
 | AM-3 | **La rotation des secrets n'a ni échéance ni rappel.** Le § « Rotation des secrets » dit comment faire, jamais quand, et rien ne mesure l'âge d'un secret | aucune date d'émission stockée, aucun job | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-54`** : le § dit *comment* faire tourner un secret, jamais *quand*, et rien ne mesure l'âge d'un secret. Tant que l'échéance n'est pas décidée, il n'y a rien à outiller — c'est une décision, pas un script — *(jugé outillable le 09-16 : oui : un job planifié qui rappelle l'âge)* |
-| AM-4 | **La checklist « avant tout commit qui touche `supabase/migration/*.sql` » est MANUELLE.** `validate:migrations` et `check:rls` en couvrent une partie ; le reste repose sur la lecture | les deux gardes vérifient des motifs nommés, pas la checklist entière | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** `validate:migrations` et `check:rls` en couvrent une partie ; le reste repose sur la lecture. ⚠️ La preuve en transaction annulée, elle, a servi le 2026-09-21 sur la mig. `150` — mais c'est une discipline, pas une garde — *(jugé outillable le 09-16 : partiellement)* |
+| AM-4 | **La checklist « avant tout commit qui touche `supabase/migration/*.sql` » est MANUELLE.** `validate:migrations` et `check:rls` en couvrent une partie ; le reste repose sur la lecture | les deux gardes vérifient des motifs nommés, pas la checklist entière | ✅ **OUTILLÉ le 2026-10-24** (ouvert du 09-16 au 10-23) · tableau ligne par ligne au § [« Avant tout commit qui touche `supabase/migration/*.sql` »](#avant-tout-commit-qui-touche-supabasemigrationsql) : sur **24** lignes, **16** ont une garde (`validate:migrations` règles 2, 5 et 6 à 16, `check:rls` règles 1 à 3, `check:erasure`), **8** restent **manuel** et le disent. Les onze règles neuves sont un cliquet à partir de la mig. `227`, chacune avec un témoin vu rouge et un sabotage rejoué par `check:sabotages` · 🔴 ne prouve PAS : l'historique `000` à `226` (non jugé, il diverge de la prod), ni qu'une migration fait ce qu'elle dit : la preuve en transaction annulée (mig. `150`, 2026-09-21) reste une discipline, pas une garde |
 | AM-5 | **Les advisors Supabase ne sont lus qu'à la main** (T-7 du tableau de bord). Dans `ci.yml`, le mot « advisor » désigne `npm audit` | aucun workflow n'interroge l'API Management | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · advisors relus par l'API Management (`C-88`) · 🔴 ne prouve PAS : idem AM-2 : elle échoue tant que `M-58` n'est pas fait. ⚠️ Écart **attendu** depuis la mig. `150` : 9 → 10 et 52 → 53 · 🔎 🔴 **2026-10-02 : elle lisait ZÉRO partout depuis sa pose** (une entrée par occurrence dans la réponse de l'API, un `count` absent lu à la place) : corrigée, témoin à la forme réelle de l'API. Écart attendu au premier `--update` : **9 → 11** et **52 → 80**, objets identifiés dans `../faille.md` · 🔎 ✅ **2026-10-15 : remboursé** (+1 à la note de sécurité). Référence posée le 10-08, recalée le 10-10 à **82** (`claim_acquisition_source`, mig. `217`) ; relu par l'API ce jour : `11 / 82 / 2 / 1`, exactement la référence |
 | AM-6 | **Aucune analyse statique de sécurité (SAST).** Les gardes vérifient des invariants **nommés**, jamais des motifs inconnus. Le dépôt est **public**, donc CodeQL y serait gratuit | aucun CodeQL ni Semgrep dans `.github/workflows/` | ✅ **OUTILLÉ le 2026-09-20** · `codeql.yml`, `security-extended`, JS/TS **et** `actions` (`C-89`) · 🔴 ne prouve PAS : 🔴 un job vert. L'item n'est fini que quand **chaque alerte ouverte porte une décision** · c'est **`M-60`** · 🔎 **2026-10-15** : une alerte `high` sans décision depuis le 2026-10-12 (n° 13, `js/double-escaping`, `scripts/capture-og-images.mjs`, triée par lecture dans `../faille.md`, −1). Et la réciproque de l'énoncé s'est vérifiée : dépôt **privé** du 10-13 au 10-14, CodeQL rouge sur quatre pushs (« Code scanning is not enabled »), revenu avec le dépôt public |
 | AM-7 | **Le recalage de `Posture` ne peut être fait que par Axel.** `--update` exige `SUPABASE_ACCESS_TOKEN`, présent dans la CI mais pas sur le poste : `Posture` est rouge depuis le 2026-10-23 09:57 pour cinq objets **légitimes** (mig. `221`, `222`, `226`), relus un par un le 2026-10-23. Une garde rouge pour une raison connue cache la suivante | `posture.yml` : `workflow_dispatch` sans entrée | 🟠 **OUVERT le 2026-10-23** · session dédiée : mode `regenerer` en `workflow_dispatch`, comme `visual.yml` |
@@ -358,24 +358,53 @@ supabase db push  # applique 017_processed_stripe_events.sql
 
 ## Avant tout commit qui touche `supabase/migration/*.sql`
 
-- ✅ Vérifier `WITH CHECK` sur tous les UPDATE
-- ✅ Idempotence : `DROP POLICY IF EXISTS ... CREATE POLICY ...` (la prod a déjà des policies appliquées). `CREATE OR REPLACE FUNCTION` pour les RPCs.
-- ✅ `SET search_path = ''` sur toute fonction `SECURITY DEFINER` (advisor hardening).
-- ✅ Si la table a `user_id`, attacher le trigger `prevent_user_id_change`.
-- ✅ Toute donnée utilisateur recopiée depuis `auth.users.raw_user_meta_data` ou autre source contrôlée par un tiers doit passer par `public.sanitize_display_name()` (migration 026, faille M-2) avant insertion dans une table partagée — `accept_friend_request_v2` est la référence.
-- ⚠️ Le schéma réel de prod peut diverger des migrations (ex. `friend_requests` utilise `sender_id`/`receiver_id`) — vérifier avant d'écrire des policies qui réfèrent à des colonnes.
-- ✅ Toutes les `CREATE POLICY` utilisent des guillemets non-échappés (`"..."`). Ne pas réintroduire de `\"`.
-- ✅ **Toute fonction citée dans un `USING` / `WITH CHECK` doit être `EXECUTE`-able par `authenticated`.** Vérification en une requête, à faire avant de pousser une migration qui crée une policy :
-  ```sql
-  select p.proname, has_function_privilege('authenticated', p.oid, 'EXECUTE')
-    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-   where n.nspname = 'public' and p.proname in (<fonctions citées par la policy>);
-  ```
-  ✅ **Automatisé depuis le 2026-08-24** : `npm run check:rls` rejoue les `GRANT`/`REVOKE` de tout
-  l'historique et refuse toute policy citant une fonction révoquée à `authenticated` (règle 3 du
-  script). La requête ci-dessus reste utile pour vérifier l'**état réel** en prod — le script, lui,
-  ne voit que les migrations.
-- ✅ **Fonction `RETURNS trigger` : `SECURITY INVOKER` (défaut) + `REVOKE ALL … FROM PUBLIC, anon, authenticated`.** Cf. section dédiée plus haut. ✅ **Automatisé depuis le 2026-08-24** : `npm run validate:migrations` (règle 5) échoue si le `REVOKE` manque, et avertit sur tout trigger `SECURITY DEFINER`. Cliquet à partir de la mig. `109` — les deux gardes sont elles-mêmes testées par `scripts/migration-guards.test.mjs`.
+> **Angle mort AM-4, outillé le 2026-10-24.** Chaque ligne de cette checklist (et des interdits de
+> [`supabase/migration/CLAUDE.md`](../supabase/migration/CLAUDE.md)) est rapportée à la garde qui la
+> juge, ou marquée **manuel**. Les règles 6 à 16 de `validate:migrations` sont un **cliquet à partir
+> de la mig. `227`** : l'historique (`000` à `226`) n'est pas jugé, parce que les fichiers divergent
+> de la prod (même raison que `check:rls`). Chaque règle a son témoin dans
+> `scripts/migration-guards.test.mjs`, vu rouge contre le script d'avant elle, et son sabotage de
+> détecteur dans `scripts/replay-sabotages.catalogue.mjs`.
+> ❌ Ne jamais relever le plancher `227` pour faire passer une migration : la corriger.
+
+| # | Ligne de la checklist | Garde | Ce que la garde ne voit pas |
+|---|---|---|---|
+| 1 | `WITH CHECK` sur toute policy `FOR UPDATE` (N1) | `validate:migrations` règle 8 : **erreur** dès `227` (avertissement avant, règle 4) | une policy `FOR ALL` sans `WITH CHECK` (Postgres reprend alors le `USING`) |
+| 2 | Idempotence : `DROP POLICY IF EXISTS` avant `CREATE POLICY`, `CREATE OR REPLACE FUNCTION` | `validate:migrations` règle 6 | un `CREATE TABLE` / `CREATE INDEX` sans `IF NOT EXISTS` |
+| 3 | `SET search_path = ''` sur toute fonction `SECURITY DEFINER` | `validate:migrations` règle 7, attributs lus avant ET après le corps | une fonction INVOKER au `search_path` mutable (l'advisor la voit, `check:supabase-posture`) |
+| 4 | Table à `user_id` : trigger `prevent_user_id_change` | `validate:migrations` règle 15, état final de l'historique | ⚠️ constaté le 2026-10-24 : **aucune** table des mig. `2xx` ne l'attache. Dette antérieure au cliquet, non jugée |
+| 5 | `raw_user_meta_data` recopié : `sanitize_display_name()` (M-2) | `validate:migrations` règle 14, par fonction qui écrit, et hors fonction | une recopie par une Edge Function, ou par une autre source tierce que `raw_user_meta_data` : **manuel** |
+| 6 | Le schéma de prod peut diverger des migrations : vérifier les colonnes avant d'écrire une policy | **manuel** · `check:drift` voit la dérive après coup | tout, avant l'écriture : une colonne se lit au catalogue |
+| 7 | Guillemets non échappés dans `CREATE POLICY` | `validate:migrations` règle 2 | |
+| 8 | Fonction citée par une policy : `EXECUTE`-able par `authenticated` | `check:rls` règle 3 (dont `get_subtree`, `has_subordinates`, `org_admin_count`, révoquées mig. `100`) | l'état réel en prod : requête ci-dessous |
+| 9 | Fonction `RETURNS trigger` : `SECURITY INVOKER` + `REVOKE ALL … FROM PUBLIC, anon, authenticated` | `validate:migrations` règle 5 (REVOKE, dès `109`) et règle 10 (DEFINER = **erreur** quel que soit le nom, dès `227`) | |
+| 10 | `auth.uid()` toujours wrappé en `(select auth.uid())` | `check:rls` règle 1 (dès `043`) | |
+| 11 | Une seule policy PERMISSIVE par rôle et par action | `check:rls` règle 2 (par table et action, donc plus strict que par rôle) | |
+| 12 | `GRANT EXECUTE` : précédé de `REVOKE … FROM PUBLIC, anon` | `validate:migrations` règle 16, pour toute fonction accordée ou `SECURITY DEFINER` ; un `GRANT … TO anon` explicite vaut choix | une fonction INVOKER jamais accordée (elle garde le GRANT par défaut, sans privilège élargi) |
+| 13 | Table créée : `ENABLE ROW LEVEL SECURITY` | `validate:migrations` règle 9, état final (un `DISABLE` ultérieur rougit) | une table créée hors du schéma `public` |
+| 14 | Table à `user_id` : décision d'effacement | `check:erasure`, périmètre dérivé des migrations, sans liste en dur | une table créée hors migration (cf. `C-92`) |
+| 15 | `payment_records` / `payment_closures` : ni policy UPDATE/DELETE, ni purge ; `renewal_notices` : jamais purgée | `validate:migrations` règle 11 : policy, `DELETE`/`TRUNCATE`/`UPDATE`, trigger désarmé, `GRANT` de le faire | une écriture par SQL dynamique (`EXECUTE format(…)`) |
+| 16 | Surface admin gardée par `is_admin()`, jamais `admin_allowlisted()` | `validate:migrations` règle 12, pour les policies | une fonction `SECURITY DEFINER` gardée par `admin_allowlisted()` : **manuel** (l'affichage l'appelle légitimement) |
+| 17 | Auto-référence : `ON DELETE NO ACTION`, ni `CASCADE` ni `RESTRICT` | `validate:migrations` règle 13, `CREATE TABLE` et `ALTER TABLE` | |
+| 18 | Un correctif appliqué se versionne sous son propre numéro, jamais par édition d'un fichier appliqué | **manuel** · vérifiable par `git diff` contre `main`, pas par le texte des fichiers | tout |
+| 19 | Jamais de colonne, GRANT ou policy depuis le Dashboard | **manuel** · `check:drift` voit l'effet après coup | tout, avant |
+| 20 | Lire le ledger AVANT d'appliquer | **manuel** · `check:migration-coverage` le relit après | tout, avant |
+| 21 | Prédicat de policy indépendant d'un argument pris dans la ligne (index) | **manuel** · seul `events` (mig. `128`) a un test dédié | toute autre table : une heuristique sur le texte se tromperait dans les deux sens |
+| 22 | Migration qui crée une dépendance à un chemin de récupération : le parcourir | **manuel** | tout |
+| 23 | Colonne écrite par le front : appliquer AVANT le déploiement du front | **manuel** (ordre de déploiement, pas un texte) | tout |
+| 24 | Se prouver AVANT, en transaction annulée, acteur par acteur | **manuel** · forme de preuve dans `supabase/migration/CLAUDE.md` | tout : aucune vérification statique n'exécute de SQL |
+
+**Requête de la ligne 8, pour l'état réel en prod** (`check:rls` ne voit que les migrations) :
+
+```sql
+select p.proname, has_function_privilege('authenticated', p.oid, 'EXECUTE')
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname = 'public' and p.proname in (<fonctions citées par la policy>);
+```
+
+🔴 **Ce que les règles 6 à 16 ne prouvent PAS** : qu'une migration fait ce qu'elle dit. Elles lisent
+du texte. Les huit lignes **manuel** ci-dessus restent une discipline, et la mig. `143` a mis un
+défaut en production en passant cinq vérifications statiques.
 
 ## Rotation des secrets
 
