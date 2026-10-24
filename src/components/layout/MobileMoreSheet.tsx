@@ -188,8 +188,8 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                   onPointerDown={() => prefetchRoute('/settings')}
                   onClick={() => handleNav('/settings')}
                   className="w-full flex items-center gap-3.5 px-1 min-h-[64px] active:bg-[rgb(var(--color-hover))] transition-colors"
-                  aria-label={t('nav.goToSettings')}
                 >
+                  <span className="sr-only">{t('nav.goToSettings')}</span>
                   {/* Avatar */}
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] flex items-center justify-center shrink-0 overflow-hidden">
                     {user?.avatar ? (
