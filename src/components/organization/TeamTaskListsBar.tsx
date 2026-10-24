@@ -76,6 +76,7 @@ const TeamTaskListsBar = ({ controller: c, selection }: TeamTaskListsBarProps) =
         handleCreateSmartList={c.handleCreateSmartList}
         startChipLongPress={startChipLongPress}
         cancelChipLongPress={cancelChipLongPress}
+        openListActions={setActionSheetListId}
       />
       <ListActionsSheet
         list={c.lists.find((l) => l.id === actionSheetListId) ?? null}

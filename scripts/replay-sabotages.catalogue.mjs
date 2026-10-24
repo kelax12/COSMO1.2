@@ -747,6 +747,17 @@ export const CATALOGUE = [
       + 'progression réelle ne serait plus recalculable depuis le fichier (art. 20).',
   },
 
+  {
+    id: 'soustraitants-catalogue-aveugle',
+    famille: 'detecteur',
+    garde: 'scripts/check-subprocessors.guard.test.mjs',
+    modifs: [r('scripts/check-subprocessors.mjs', 'const catalogueDe = (h) => CATALOGUE.find(', 'const catalogueDe = (h) => [].find(')],
+    attendu: ['un dépôt cohérent dérive les cinq tiers et passe'],
+    pourquoi:
+      'Un catalogue qui ne reconnaît plus aucun hôte dérive zéro tiers : la comparaison au '
+      + 'registre art. 30 passe à vide.',
+  },
+
   // ═════════════════════════════════════════════════════════════════
   // LES GARDES QUI INTERROGENT LA PRODUCTION — leurs fonctions pures
   // (`gardes-posture.guard.test.mjs` : posture, Stripe, conservation,
