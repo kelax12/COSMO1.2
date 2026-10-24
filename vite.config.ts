@@ -241,6 +241,11 @@ export default defineConfig(({ mode }) => ({
           //
           // Mesuré le 2026-08-25 : 117,6 ko gzip préchargés pour rien.
           // Le contrôle qui l'empêche de revenir est `npm run check:bundle`.
+          // 2026-10-24 · SAUF la locale `en-US` (AM-6 de docs/PERFORMANCE.md) : seuls
+          // les visiteurs anglais s'en servent, `loadDateLocale()` (src/i18n/format.ts)
+          // la charge avant le montage. Gardée ici, elle partait chez TOUT visiteur
+          // dans ce chunk du chemin critique, revenu à 4,8 % de son plafond.
+          if (id.includes('node_modules/date-fns/locale/en-US')) return undefined;
           if (id.includes('node_modules/date-fns') ||
               id.includes('node_modules/lucide-react') ||
               id.includes('node_modules/clsx') ||

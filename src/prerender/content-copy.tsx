@@ -19,6 +19,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { ensureNamespaces, type Namespace } from '@/i18n/catalog';
+import { loadDateLocale } from '@/i18n/format';
 import { localeStore } from '@/i18n/store';
 import type { Locale } from '@/i18n/locale';
 import { PrerenderCopyContext } from '@/lib/prerender-copy-context';
@@ -50,8 +51,6 @@ const PAGES: Record<string, { namespaces: readonly Namespace[]; element: React.R
   terms: { namespaces: ['legal', 'legalTerms', 'seo'], element: <CGUPage />, path: (l) => routeSlug('terms', l) },
 };
 
-export const CONTENT_COPY_PAGES = Object.keys(PAGES);
-
 /**
  * Le balisage de la page `page`, servie à `url` (chemin SANS préfixe de
  * locale, `/blog/methode-okr-exemples`), dans `locale`.
@@ -60,7 +59,7 @@ export async function renderContentCopy(page: string, url: string, locale: Local
   const def = PAGES[page];
   if (!def) throw new Error(`content-copy: page inconnue « ${page} »`);
   localeStore.setLocale(locale, { persist: false });
-  await ensureNamespaces(def.namespaces, locale);
+  await Promise.all([ensureNamespaces(def.namespaces, locale), loadDateLocale(locale)]);
   const basename = locale === 'fr' ? '/' : `/${locale}`;
   const entry = basename === '/' ? url : `${basename}${url}`;
   return renderToStaticMarkup(
