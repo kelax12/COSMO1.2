@@ -1,4 +1,4 @@
-<!-- note-audit: note=95 -->
+<!-- note-audit: note=96 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,25 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **95 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **96 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → 97 → 96 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → 97 → 96 → 95 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → **2026-10-22**)
+
+> ### ⚪ 2026-10-22 · 0 : l'horloge figée rembourse, une garde laissée rouge 41 h reprend le point
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-22 : CI de `main` à `d16de29a` (run `39843255180`, cinq jobs verts ; `main` rouge du 10-20 à 22:03 au 10-22 à 14:39, 19 runs), `Visual` vert à `fb83cd60`, production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-22 |
+> |---|---|---|
+> | ✅ Deux verdicts liés au jour de la semaine (−1 le 10-20) | **+1** | `c6e21b06` : `page.clock.install` à une date fixe dans `e2e/visual-regression.spec.ts` et `e2e/mobile-android.spec.ts`, références régénérées sous l'horloge figée (`29bd862d`, puis PR n° 101). `Visual` vert à `d16de29a` et `fb83cd60`, `e2e` vert à `d16de29a` |
+> | 🔴 `Migration coverage` rouge depuis le 2026-10-20 à 22:03 | **−1** | `140_stripe_identifiers_reset` est au ledger depuis la bascule (`20261020204838`) et reste déclarée dans `NON_APPLIQUEES_DELIBEREMENT` (`scripts/check-migration-coverage.mjs`). La garde le dit en clair (« Retirer l'entree »), l'alerte part chaque jour, personne n'a retiré la ligne. Toujours rouge à `HEAD` |
+> | 🟠 Second épisode rouge de `main` | 0 | de `5bf21a50` (10-20, 22:03) à `1234f807` (10-22, 14:39) : **19 runs, 19 commits poussés directement dessus**. Le −1 du 10-20 n'est pas remboursé : le défaut s'est répété. Le hook `pre-push` annoncé contre lui (PR n° 86) **n'est pas fusionné** : `core.hooksPath` vise un `.githooks/` absent, aucun hook ne joue |
+> | ⚠️ Trois rouges qui ne sont pas des défauts | 0 | `rls-integration` ×4 à 18:33 : quota Docker (`toomanyrequests`) ; `Deploy SHA drift` à 18:38 : course, `main` a avancé pendant le run ; `Visual` à `f019249f` : `publique-home` instable (accueil animé pendant la capture) |
+> | Comptes à `HEAD` | 0 | 356 fichiers, **4 032** tests ; outillage 29 / 503 ; RLS 8 / 151 ; `e2e` **265 verts, 1 instable** (`org-guide`, chromium), 6 sautés, 21,2 min ; WebKit sans instable. `demo-billing-disarmed` remplacé par `demo-billing-consent`, vu rouge sur un sabotage du double consentement |
+>
+> **95 → 95.**
 
 > ### 🟠 2026-10-20 · −1 : `main` rouge 29 runs, et deux verdicts qui dépendent de la date
 >
@@ -264,6 +278,7 @@
 | AM-3 | **Un taux de couverture ne dit rien de la force des assertions.** Une ligne exécutée par un test qui n'assure rien compte comme couverte | par construction de la couverture v8 | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte**, et c'est le dernier trou de ce tableau. `C-81` rejoue des témoins, ce qui n'est PAS du test de mutation : un témoin prouve qu'une garde mord, pas qu'une assertion est forte — *(jugé outillable le 09-16 : AM-1 y répond en partie : la mutation mesure ce que la couverture ne voit pas)* |
 | AM-4 | ✅ **COMBLÉ le 2026-09-16, vérifié le 2026-09-20.** Était : « les 105 cas `mobile-safari` ne tournent dans aucun workflow » (item `C-78`) | 🔴 **Périmé le jour même où il a été écrit** : `git show HEAD:.github/workflows/ci.yml` lance `--project=chromium --project=supabase-stub --project=mobile-safari` depuis `af0190bd`, 2026-09-16, et `e2e/_warmup-mobile.spec.ts` est suivi par git | ✅ **FERMÉ le 2026-09-16** · `C-78`, `af0190bd` — `mobile-safari` est joué en CI. 🔴 ne prouve PAS : ni appareil réel, ni Android, ni réseau bridé (`C-97`, `M-25`) |
 | AM-5 | **Aucune garde ne relie un test à sa raison d'être.** Un test supprimé avec le code qu'il gardait ne laisse aucune trace : le total baisse, et un total qui baisse ne fait échouer aucun job | il n'existe pas de plancher sur le nombre de fichiers ni de cas | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:test-floor` (`C-83`) — 🔴 ne prouve PAS : qu'un test teste quelque chose : un plancher interdit la disparition, pas la complaisance. 1ʳᵉ exécution : le plancher était posé **deux trop bas** (deux témoins portent un tiret) |
+| AM-6 | **La montée des dépendances de développement est bloquée et rien ne la mesure.** La PR n° 117 (axe-core 4.14) trouve de nouvelles violations ; trois alertes Dependabot de développement restent ouvertes (`@vitest/mocker` ×2, `hono`) | `gh pr view 117` · alertes Dependabot | ✅ **COMBLÉ le 2026-10-23.** Une seule règle d'axe 4.14 échouait : `label-content-name-mismatch` (WCAG 2.5.3), sur 11 noeuds : logo et CTA démo de la landing, cases du mois de l'Agenda (FullCalendar), recherche, tri et « en retard » des tâches mobiles, ligne profil de « Plus ». Corrigée à la source (nom accessible qui contient le texte visible, `dayCellNameFromContent` pour la grille), aucune règle désactivée. `@axe-core/playwright` ^4.14.0, `vitest` ^4.1.12 (ferme les deux alertes `@vitest/mocker`), `ip-address` relevé ; `npm audit` : 0 ; l'alerte `hono` n'était plus ouverte. PR n° 117 à fermer au profit de celle-ci. Reste : le verdict du job e2e de la CI |
 
 
 > ### 🟡 2026-09-15 · +1 sur les 3 retirés, et le reste attend d'être COMMITÉ
@@ -1283,7 +1298,7 @@ sans E2E : `demo-entreprise-dependencies` (9), `demo-entreprise-tasks-tab` (5),
 | `stubbed/first-run.spec.ts` | 5 | `FirstRunSetup` : la garde s'ouvre sur un compte vide, **chaque étape écrit au moment où elle est validée** (mesuré sur les requêtes parties, pas sur un état React), la première tâche part sans échéance, l'accueil ne revient pas |
 | `demo-calendar.spec.ts` | 7 | Le calendrier COSMO sur ses **six** surfaces, plus `minDate` du report en masse et le focus au clavier dans la grille (défaut React 18 / `forwardRef`) |
 | `demo-task-dependencies.spec.ts` | 2 | Graphe **personnel** (mig. 132) : poser une arête et la relire, refuser un cycle **indirect à trois maillons**, ne jamais se proposer soi-même, retirer ; « Créer et lier » |
-| `demo-billing-armed.spec.ts` | 1 | Facturation armée (2026-10-20) : prix TTC affichés, et **aucun** « Choisir ce palier » tant que les deux consentements de renonciation (S-6) ne sont pas cochés ; aucun remboursement proposé au palier gratuit. Remplace `demo-billing-disarmed.spec.ts`, devenu faux à la bascule live |
+| `demo-billing-consent.spec.ts` | 1 | Facturation armée depuis la bascule live (`5bf21a50`) : prix TTC affichés, et aucun « Choisir ce palier » tant que les DEUX cases de rétractation ne sont pas cochées (S-6, L221-28). S'appelait `demo-billing-disarmed` et vérifiait l'inverse jusqu'au 2026-10-22 |
 
 Les quatre premiers cas ont été **vus rouges avant d'être verts** : différer les
 créations de `FirstRunSetup` à la dernière étape fait tomber le premier ; le

@@ -323,11 +323,11 @@ describe('témoin — coût serveur (C-87)', () => {
 
 // ═══════════════════════════════════════════════════════════════════
 describe('témoin — sondes de fumée des Edge Functions (C-91)', () => {
-  it('les douze fonctions sont sondées, et aucune en écriture', () => {
+  it('les treize fonctions sont sondées, et aucune en écriture', () => {
     // 8 jusqu'au 2026-09-30 : les quatre fonctions du mode entreprise
     // n'étaient sondées par rien (A-2). Une par dossier de supabase/functions/.
-    expect(SONDES).toHaveLength(12);
-    expect(new Set(SONDES.map((s) => s.fonction)).size).toBe(12);
+    expect(SONDES).toHaveLength(13);
+    expect(new Set(SONDES.map((s) => s.fonction)).size).toBe(13);
     for (const s of SONDES) {
       expect(s.prouve.length).toBeGreaterThan(30);
       expect(s.statut.length).toBeGreaterThan(0);
@@ -337,8 +337,8 @@ describe('témoin — sondes de fumée des Edge Functions (C-91)', () => {
     expect(destructrices).toHaveLength(2);
     for (const s of destructrices) expect(s.methode).toBe('GET');
     // Celles qui ENVOIENT (e-mail, webhook) ne sont jamais sondées au-delà d'un refus.
-    const emettrices = SONDES.filter((s) => ['send-org-invite', 'org-digest', 'org-webhook-dispatch'].includes(s.fonction));
-    expect(emettrices).toHaveLength(3);
+    const emettrices = SONDES.filter((s) => ['send-org-invite', 'org-digest', 'org-webhook-dispatch', 'inactive-accounts'].includes(s.fonction));
+    expect(emettrices).toHaveLength(4);
     for (const s of emettrices) expect(s.statut.every((c) => c >= 400)).toBe(true);
   });
 

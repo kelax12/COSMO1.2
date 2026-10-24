@@ -1,7 +1,7 @@
 # Organisations · règles du dossier
 
 > Repris de `CLAUDE.md` le 2026-09-16, **sans une coupe**. Ce fichier est chargé
-> automatiquement dès qu un fichier de ce dossier est lu ou édité, et lui seul.
+> automatiquement dès qu'un fichier de ce dossier est lu ou édité, et lui seul.
 > Règles transversales : [`CLAUDE.md`](../../../CLAUDE.md) à la racine.
 
 ---
@@ -156,11 +156,16 @@ Récit, preuves et règles complètes : [`docs/PERFORMANCE.md`](../../../docs/PE
 
 ---
 
-## ⚙️ Configuration d'entreprise (mig. 195-199, non appliquées)
+## ⚙️ Configuration d'entreprise (mig. 195-199, en prod hors ledger)
 
 Module `org-config`, écrans `components/organization/config/`, via `org-config.lazy.ts`.
 - ❌ `getOrgConfigRepository` hors de `repository.factory` (chunk d'entrée).
 - 🔴 Un lien hiérarchique secondaire ne donne AUCUN droit.
+
+## 🎯 OKR d'entreprise : fermés par défaut (mig. 205, 212)
+
+- 🔴 Un OKR n'est public que si `audience = 'org'` ET sans aucun lien ; un OKR fermé qui perd ses
+  liens se referme. Lier un public passe par la RPC `set_team_okr_links` (droit vérifié avant).
 
 ## 🪟 Popups, confirmations, cas limites (audit 2026-09-24)
 
@@ -170,4 +175,4 @@ Détail : [`docs/UI-PATTERNS.md`](../../../docs/UI-PATTERNS.md) § « Mode entre
 - ❌ `window.confirm` : passer par `OrgConfirmDialog` (garde `org-confirm.guard`).
 - 🔴 Un retrait passe par l'assistant de départ (`useMemberLifecycle`).
 - 🔴 `orgAdmin` : tout chargeur d'un écran qui s'en sert le déclare.
-- ⚠️ Migrations non appliquées : [`supabase/migration/CLAUDE.md`](../../../supabase/migration/CLAUDE.md).
+- ⚠️ État des migrations (lesquelles sont en prod) : [`supabase/migration/CLAUDE.md`](../../../supabase/migration/CLAUDE.md).

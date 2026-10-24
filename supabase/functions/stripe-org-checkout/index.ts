@@ -182,9 +182,11 @@ Deno.serve(async (req) => {
 
     let customerId = sub?.stripe_customer_id ?? null
 
-    if (customerId && billingContact) {
+    if (customerId) {
       // Customer déjà créé (souscription précédente, résiliée) : on lui
-      // reporte le contact actuel avant de le renvoyer au paiement.
+      // reporte le contact actuel ET la mention 293 B avant de le renvoyer au
+      // paiement. Sans contact, l'adresse reste celle du propriétaire, qui est
+      // l'appelant (seul le propriétaire atteint cette ligne).
       await stripe.customers.update(customerId, contactFields)
     }
 

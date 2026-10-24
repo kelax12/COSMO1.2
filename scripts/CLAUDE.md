@@ -15,7 +15,7 @@
 > datées vivent dans le doc cité en fin de ligne. ❌ Elle ne dit pas qu'une garde est juste : la
 > section suivante existe précisément parce que quatre d'entre elles répondaient sans mesurer.
 >
-> **Compte, relu dans `package.json` le 2026-10-20** : **34** gardes `check:*` / `i18n:*` /
+> **Compte, relu dans `package.json` le 2026-10-22** : **36** gardes `check:*` / `i18n:*` /
 > `validate:*`, plus trois outils de mesure (`analyze:entry`, `profile:landing`, `images:check`).
 > La racine a écrit « 36 » du 09-21 au 09-30. Un total se recompte, il ne se recopie pas.
 
@@ -44,14 +44,17 @@
 | `i18n:identical` | valeurs `en` recopiées du `fr`, cliquet à **0** | `C-21` | `docs/I18N.md` |
 | `i18n:namespaces` | catalogues rendus par le SHELL | | `docs/I18N.md` |
 | `i18n:pages` | **corps** des pages prérendues par locale, pluriels, formats | `C-99` | `docs/I18N.md` |
+| `i18n:quality` | glossaire épinglé (`tâche` → `task`, `objectif` → `objective`…) et français resté dans `en`, exceptions justifiées une par une. 🔴 Ne prouve PAS qu'une phrase dit la même chose | `AM-1` | `docs/I18N.md` |
 | `check:seo` | sitemap ↔ pages réellement prérendues, 4 balises par page | `C-98` | `docs/SEO.md` |
 | `check:acquisition` | une action d'acquisition reliée à son résultat | `C-101` | `docs/ACQUISITION.md` |
 | `check:legal` | tableau de conformité | | `docs/LEGAL.md` |
 | `check:legal-journal` | une modification des CGU est un **changement de contrat** | `C-107` | `docs/LEGAL-JOURNAL.md` |
 | `check:retention` | durées de conservation confrontées à la **donnée** | `C-93` | `docs/RGPD-REGISTRE.md` |
+| `check:subprocessors` | tiers recevant des données **dérivés** du code (CSP, hôtes, SDK) vs registre art. 30 et `LEGAL.md` § 6 | `AM-3` | `docs/RGPD-REGISTRE.md` |
 | `check:erasure` | couverture d'effacement, sans liste en dur | `C-92` | `docs/RGPD.md` |
 | `check:portability` | export art. 20 comparé à l'inventaire des colonnes | `C-94` | `docs/RGPD.md` |
 | `check:stripe-prices` | grille **Stripe** comparée au code | `C-106` | `docs/STRIPE-LIVE.md` |
+| `check:secrets-age` | âge des secrets (GitHub, Edge, Vercel) contre `.github/secrets-registry.json` : échu, date inconnue, hors registre, jeton absent | `AM-3` | `docs/SECURITY.md` |
 | `check:docs` | plafonds et pointeurs des `CLAUDE.md` | | ce fichier |
 | `check:docs-scored` | chaque doc de `docs/` déclare son rapport à une note | `C-109` | `docs/README.md` |
 | `check:study` | une **étude** décrit encore les versions installées | `C-108` | `docs/MIGRATION-REACT19.md` |

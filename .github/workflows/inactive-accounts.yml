@@ -1,0 +1,51 @@
+# ═══════════════════════════════════════════════════════════════════
+# Comptes inactifs depuis 3 ans : avertir, puis effacer (C-121, RGPD 5.1.e)
+#
+# Declenche l Edge Function `inactive-accounts`, qui avertit par e-mail les
+# comptes sans activite depuis trois ans, puis fait effacer par
+# `delete-account` ceux avertis depuis 30 jours et restes absents. C est ce
+# que promet la politique de confidentialite (s6.li1).
+#
+# Pourquoi la CI et pas pg_cron : meme raison que `renewal-notice.yml`
+# (pas de pg_net en base).
+#
+# ⚠️ Ne PAS supprimer ce workflow en croyant nettoyer : son absence ne casse
+# rien de visible, elle fait juste que la promesse publiee n est plus tenue.
+# ⚠️ Secret absent = ECHEC, jamais un silence vert (cf. renewal-notice.yml).
+# ═══════════════════════════════════════════════════════════════════
+name: inactive-accounts
+
+on:
+  schedule:
+    # 06:37 UTC, tous les jours. Heure decalee des autres crons du depot.
+    - cron: '37 6 * * *'
+  workflow_dispatch:
+
+# Moindre privilege (A-8) : le job n appelle qu une URL.
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Avertir puis effacer les comptes inactifs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ykeugqfgklejcdbrmawy.supabase.co' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET absent des secrets Actions : aucun compte inactif n est averti ni efface (C-121)."
+            exit 1
+          fi
+          code=$(curl -s -o /tmp/out.json -w '%{http_code}' -X POST \
+            "$SUPABASE_URL/functions/v1/inactive-accounts" \
+            -H "x-cron-secret: $CRON_SECRET")
+          # La reponse ne porte que des compteurs, jamais un e-mail ni un id.
+          echo "HTTP $code"; cat /tmp/out.json; echo
+          # TEMOIN : sans code HTTP a trois chiffres, l appel n a pas eu lieu.
+          case "$code" in
+            [0-9][0-9][0-9]) ;;
+            *) echo "::error::Aucun code HTTP : l appel n a pas eu lieu, la garde n a rien mesure."; exit 1 ;;
+          esac
+          [ "$code" = "200" ]

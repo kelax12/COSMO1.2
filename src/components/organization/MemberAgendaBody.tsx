@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { dayCellNameFromContent } from '@/lib/fullcalendar-a11y';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -30,6 +31,7 @@ import { PRIORITY_META, isTaskOverdue, sortOpenTasks, priorityLabelOf } from './
 import type { OrgMember } from '@/modules/organizations';
 import TeamTaskModal from './TeamTaskModal';
 import { useT } from '@/i18n/useT';
+import { getIntlTag } from '@/i18n/format';
 import type { KeyOf } from '@/i18n/catalog';
 
 interface MemberAgendaBodyProps {
@@ -376,7 +378,7 @@ export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) 
                           <Clock size={11} aria-hidden="true" /> {task.estimatedTime && task.estimatedTime > 0 ? `${task.estimatedTime} min` : '1 h'}
                         </span>
                         {task.deadline && (
-                          <span className={`inline-flex items-center gap-1 ${overdue ? 'text-red-500 font-semibold' : ''}`}>
+                          <span className={`inline-flex items-center gap-1 ${overdue ? 'text-[rgb(var(--color-danger-text))] font-semibold' : ''}`}>
                             <CalendarClock size={11} aria-hidden="true" /> {task.deadline}
                           </span>
                         )}
@@ -405,7 +407,7 @@ export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) 
               dayMaxEvents={false}
               weekends={true}
               height="100%"
-              locale="fr"
+              locale={getIntlTag()}
               firstDay={1}
               slotMinTime="00:00:00"
               slotMaxTime="24:00:00"
@@ -423,6 +425,7 @@ export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) 
               eventResize={handleEventResize}
               eventReceive={handleEventReceive}
               datesSet={handleDatesSet}
+              dayCellDidMount={dayCellNameFromContent}
               unselectAuto={true}
               unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,[data-radix-popper-content-wrapper]"
               eventContent={(eventInfo) => (

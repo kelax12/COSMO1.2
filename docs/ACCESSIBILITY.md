@@ -1,4 +1,4 @@
-<!-- note-audit: note=81 -->
+<!-- note-audit: note=82 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,14 +8,15 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **81 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **82 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
 
 # Accessibilité (a11y) — COSMO
 
 **Cibles** : WCAG 2.1 AA (obligation EAA — European Accessibility Act, applicable depuis le 28 juin 2025).
 **Outillage** : `e2e/a11y-audit.spec.ts` (axe-core, 11 routes, dumpe les violations par route)
+**+ `e2e/a11y-contrast-themes.spec.ts`** (AM-5, 2026-10-23) : `color-contrast` **bloquant** dans les quatre thèmes, sept routes de démo, page entière
 **+ Lighthouse CI** (`lighthouserc.json`, job `lighthouse`) sur les 4 routes prérendues.
-**Gates CI** : les violations `impact: 'critical'` sont **bloquantes** (`assertNoCritical`). `serious` / `moderate` / `minor` sont dumpées dans `test-results/a11y/<route>.json` mais non bloquantes. Le score a11y de Lighthouse est **bloquant** sur `/`, `/guide`, `/blog`, `/pour-freelances`.
+**Gates CI** : les violations `impact: 'critical'` sont **bloquantes** (`assertNoCritical`). `serious` / `moderate` / `minor` sont dumpées dans `test-results/a11y/<route>.json` mais non bloquantes. Le score a11y de Lighthouse est **bloquant** sur `/`, `/guide`, `/blog`, `/pour-freelances`, à 0,9, et à **1** sur `/guide/` depuis le 2026-10-22 (`assertMatrix`, desktop et mobile).
 
 ## 🔎 Ce que nos mesures prouvent, et ce qu'elles ne prouvent pas
 
@@ -45,7 +46,147 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → 81 → 82 → 82 → 82 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → **2026-10-20**)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → 81 → 82 → 82 → 82 → 81 → 81 → 82 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → 2026-10-22 → 2026-10-22 (passe) → **2026-10-23**)
+
+> ### ⚪ 2026-10-23 · 0 : AM-5 mesuré par axe dans les QUATRE thèmes, et ce que ça a trouvé
+>
+> AM-5 a déjà été remboursé le 2026-10-01, sur `Visual`. Mais `Visual` dit « ça a changé », jamais
+> « c'est illisible ». Depuis la PR n° 99, `e2e/a11y-contrast-themes.spec.ts` joue la règle axe
+> `color-contrast`, **seule et bloquante**, sur sept routes de démo (`/dashboard`, `/tasks`, `/agenda`,
+> `/habits`, `/okr`, `/settings`, `/entreprise`), un cas par thème, page ENTIÈRE. Les défauts qu'il a
+> trouvés sont corrigés dans la même PR : rien n'est débité, rien n'est remboursé deux fois.
+>
+> | Mesure | Avant (CI de la PR, run `39778154897`) | Après |
+> |---|---|---|
+> | Barre latérale, Noir et Gris | `--nav-item-text` à **3,54:1** (Noir) et **3,78:1** (Gris), 49 et 48 nœuds | 5,74:1 et 5,07:1 (jetons) |
+> | Entrée active de la barre, Gris | blanc sur `#388bfd`, **3,34:1** : la valeur que C-25 avait corrigée sur le bouton et oubliée ici | `--nav-item-active-bg` = `--color-accent-solid`, 4,54:1 |
+> | Accent porté en TEXTE sur sa propre teinte (onglet actif de Réglages, « j restants », bouton « Modifier les widgets », Check-in) | **3,09 à 4,48:1** selon le thème | nouveau jeton `--color-accent-text` (5,2:1 et plus). Les fonds pleins et les liens du clair gardent `#2563eb` : C-23 n'est pas rouvert |
+> | Rouge de retard (`--color-error`, `text-red-500` en dur dans huit fichiers) | **3,25 à 4,27:1** | `--color-danger-text` partout ; red-700 en clair (5,73:1 sur le bandeau teinté) |
+> | Texte blanc sur les huit teintes de catégorie (blocs d'agenda, avatars à initiales) | **2,15 à 4,47:1** : le blanc ne tenait sur AUCUNE | texte choisi par luminance (`textOnColor`, `src/lib/category-colors.ts`), testé sur les neuf fonds |
+> | Couleurs en dur ou mauvais jeton (`#1f6feb`, accent plein sous du blanc, `opacity-60`, ambre, émeraude, orange, indigo, violet -500, favoris teintés à 20 %) | 2,25 à 4,46:1 | jeton ou teinte -700 ; favoris à 12 % |
+>
+> 🔴 **`/tasks` n'avait JAMAIS été mesuré**, dans aucun thème, et le témoin du témoin l'a vu : zéro
+> texte. axe LEVAIT (« Element midpoint exceeds the grid bounds ») dès qu'un texte sortait du document,
+> et `<main>` est un conteneur qui défile : tout ce qui est sous la ligne de flottaison en sort. Le cas
+> agrandit donc la fenêtre à la hauteur réelle du contenu ; `/tasks` passe de 0 à plus de 140 textes
+> mesurés. ⚠️ `e2e/a11y-audit.spec.ts` a la même limite (premier écran seulement) et sa dispense
+> `color-contrast` reste : ce n'est pas lui qui garde le contraste.
+>
+> **Témoin vu rouge** : PR brouillon n° 118, même code avec `--nav-item-text` du Noir dégradé à
+> `60 60 60` (job `e2e` 120149437694) : seul le cas `thème noir` échoue, **56 nœuds** par tentative, tous `#3c3c3c` sur `#161616` à 1,64:1 ; clair, sombre et gris restent verts. PR fermée sans fusion. Le même code sans le sabotage (`7a79244c`) a ses cinq jobs verts.
+>
+> ⚠️ Ce que ça ne couvre pas : l'état initial de chaque route (ni modale, ni menu, ni survol), un seul
+> moteur (Chromium, 1 600 px). Les 49 usages de `--color-accent` en FOND sous du texte blanc
+> (`bg-[rgb(var(--color-accent))] text-white`, 3,67:1 en Sombre) vivent surtout en mode édition et en
+> modale : non vus par ce cas, à traiter comme les autres, par `--color-accent-solid`.
+>
+> **82 → 82.**
+
+> ### 🟢 2026-10-22 (passe) · +1 : C-97 refermé et vu vert en CI
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-22 : CI de `main` à `d16de29a` (run `39843255180`, cinq jobs verts ; `main` rouge du 10-20 à 22:03 au 10-22 à 14:39, 19 runs), `Visual` vert à `fb83cd60`, production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-22 |
+> |---|---|---|
+> | ✅ `/dashboard` déborde de 13 px à 200 % de police sur `mobile-chrome` (C-97, −1 le 10-20) | **+1** | `071cdad2` (barre d'onglets mobile), PR n° 88 ; `e2e` vert sur `main` à `d16de29a` (`mobile-android.spec.ts`, horloge figée). Agenda en paysage ramené à 0 px dans la même vague (`56e1b976`) |
+> | `/guide/` 92 → 100, widgets sous mouvement réduit, chevrons de l'agenda mobile nommés, `AssignRoleDialog` et `RoleEditorSheet` mesurées au clavier | 0 | voir les blocs du jour ci-dessous : aucun n'était débité. Lighthouse a11y en CI à `d16de29a` : 100 sur `/`, `/guide/`, `/a-propos/`, `/en/` ; 99 sur `/blog/` et `/pour-freelances/` ; **97** sur la page entreprise (bureau), audits à identifier |
+> | ⚠️ `/entreprise/projects` à 375 px : 11 commandes sous 44 px | 0 | trouvé et chiffré par la remesure de C-57 du jour, hors spec ; non débité tant qu'il n'est pas dans une mesure rejouée. Suite ouverte dans [`MOBILE.md`](./MOBILE.md) |
+>
+> **81 → 82.**
+
+> ### ⚪ 2026-10-22 · 0 : les deux surfaces des rôles MESURÉES au clavier, et un vrai défaut corrigé
+>
+> Le −1 du 2026-10-15 a été remboursé le 2026-10-16 sur une **déclaration** (« dette », `c791eb55`).
+> Ce jour, la dette est payée par une **mesure**. La note ne bouge pas : rien n'était débité.
+> Mesures du 2026-10-22, dépôt à `HEAD` (branche de la PR), Playwright local sur un serveur démo.
+>
+> | Item | Avant (`origin/main` à `5eaa8b8c`) | Après |
+> |---|---|---|
+> | `keyboard-audit-coverage` (C-96) | vert **par déclaration** : `AssignRoleDialog`, `RoleEditorSheet` dans `NON_MESUREES` (« dette ») ; **10** mesurées sur 63 câblées | vert **en mesurant** : les deux dans `MESUREES`, chacune liée à son cas du spec ; **12** sur 63, cliquet relevé de 10 à 12 |
+> | `a11y-keyboard-audit`, trois cas neufs | absents | `MESURE — AssignRoleDialog`, `MESURE — RoleEditorSheet`, `GARDE — AssignRoleDialog : RoleEditorSheet prend le piège, puis le rend` : **6 / 6 verts**, `chromium` et `mobile-safari`. Déclencheurs ouverts au clavier (Entrée, entrée de menu comprise) |
+> | 🔴 Défaut produit trouvé par la mesure | `AssignRoleDialog` ouverte depuis « Actions pour … » : **le focus restait derrière le voile**, sur le bouton du membre (`focusMovedIn: false`, vu rouge). Radix rendait le focus au déclencheur du menu APRÈS que la modale l'avait pris | corrigé : `MemberDirectoryRow` empêche ce retour quand l'entrée ouvre une surface (`onCloseAutoFocus`) ; `useModalA11y` rend le focus au bouton qui a ouvert le menu (`aria-labelledby` du menu), plus à `body`. `focusReturned` (imprimé, non opposable) passe de `false` à `true` |
+> | `loading-empty-state` (C-40) | vert **en mesurant** depuis le 2026-10-16 | inchangé ; vu **rouge** ce jour sur la version fautive remise exprès (`AssignRoleDialog.tsx → roles`), vert sur la vraie |
+>
+> ⚠️ Vu en local seulement : le verdict opposable est la CI de la PR. Le même retour de focus
+> touche les autres entrées du menu d'un membre (fiche, attribution de tâche, droits) : corrigé par
+> le même geste, **mesuré seulement pour `AssignRoleDialog`**.
+>
+> **81 → 81.**
+
+> ### ⚪ 2026-10-22 · 0 : l'Agenda audité vue par vue, un défaut critique trouvé dans la vue Mois mobile et corrigé
+>
+> **Le débit « Agenda : deux violations axe critiques » du 2026-10-01 n'est plus dû** : corrigé par `5564445d` et remboursé le 2026-10-02 (soir), bloc plus bas. Remesuré le 2026-10-22, CI de `main` à `5eaa8b8c` (run `39668103160`) : `a11y-audit › Agenda` vert en chromium **et** mobile-safari, 2 violations non bloquantes, aucune critique ni sérieuse. Le rembourser une seconde fois serait compter deux fois le même correctif.
+>
+> En revanche, le cas ne scannait que la **vue d'arrivée** (Semaine en bureau, Jour en mobile), alors que FullCalendar recrée ses défileurs à chaque changement de vue et que `useFocusableScrollers` y réécrit les rôles de la grille. Il joue désormais chaque vue du sélecteur, même assertion, sans dispense nouvelle (PR #92).
+>
+> | Item | Effet | Mesuré le 2026-10-22, CI de la PR #92 |
+> |---|---|---|
+> | ✅ Le cas mord | 0 | sabotage temporaire (`role="region"` d'avant `5564445d`, commit `942d1992`, retiré ensuite) : `a11y-audit › Agenda` **rouge** en chromium et mobile-safari, 3 essais sur 3, `critical: aria-required-children, aria-required-parent` (run `39761357978`) |
+> | ✅ Bureau, chromium : Jour, Semaine, Mois | 0 | 2 violations par vue, aucune critique ni sérieuse (run `39764999252`) |
+> | 🔴→✅ Mobile, WebKit : vue **Mois** | 0 | `button-name` **critique** (WCAG 4.1.2, niveau A), 3 essais sur 3 : les chevrons « mois précédent / suivant » de l'en-tête mobile n'étaient qu'une icône, sans nom. Invisible tant que seule la vue d'arrivée était auditée. Corrigé dans la même PR (`nav.prevPeriod` / `nav.nextPeriod`, les libellés des mêmes boutons en bureau) ; Jour et 2J à 2 violations, non bloquantes |
+>
+> **81 → 81.** Le défaut Mois est trouvé et corrigé le même jour : il n'est pas débité, et ne se compte vérifié qu'au vert du job `e2e` de la PR.
+
+> ### 🟢 2026-10-22 · 0 : les widgets suivent enfin `prefers-reduced-motion`
+>
+> L'arbitrage « à revoir » du 2026-10-20 est soldé. `ApercuWidgetGrid` (Aperçu entreprise **et** tableau de bord perso au bureau, même composant depuis `b7d2ec97`) ne pose plus `MotionConfig reducedMotion="never"` : il suit celui d'`App.tsx` (`"user"`).
+>
+> | Item | Effet | Fait le 2026-10-22 |
+> |---|---|---|
+> | ✅ Vibration en boucle (±0,45°) en édition | 0 | coupée sous mouvement réduit par `useReducedMotion()` : une boucle rendue instantanée par Framer (`{ type: false }`) laisserait un `rotate` **résiduel**, d'où la coupe à la main plutôt que de s'en remettre au `MotionConfig` |
+> | ✅ Réordonnancement (flèches et glisser) | 0 | le `MotionConfig` ne suffisait PAS, deux trous de Framer 12.43 vus par la CI de #89 : (1) une animation `layout` rendue instantanée replace le bloc **une frame à son ancienne position** (`mixTargetDelta(0)`, saut aller-retour de 260 px) ; (2) le retour d'un bloc lâché (`dragSnapToOrigin`) passe par `animateMotionValue` sans consulter `reducedMotion` et glissait ~400 ms. Correctif : sous mouvement réduit, ni `layout` ni `layoutId` (la grille CSS place, la correction du glisser reste assurée par la fonctionnalité `drag`), et `dragTransition` instantanée. Défilement vers un bloc ajouté : `auto` au lieu de `smooth` |
+> | ✅ Garde | 0 | `e2e/reduced-motion-widgets.spec.ts` lit `transform` à chaque frame pendant l'édition, un déplacement au clavier et un glisser à la souris ; il exige aucun transform **et** l'ordre attendu (sans déplacement, « aucun transform » ne dirait rien). Mesuré le 2026-10-22 : 🔴 **rouge en CI sur le composant d'avant** (kelax12/COSMO1.2#90, `never` : 522 frames sur 522 et 180 sur 180 portent un transform) ; 🔴 rouge en CI sur le premier correctif de #89 (les deux trous de Framer ci-dessus, 2 frames et 25 frames) ; ✅ **vert en local** sur le correctif final (`chromium`, 2 cas sur 2). Vert en CI de #89 : à constater sur `5b17e858` ou après |
+> | ⚠️ Reste une exception écrite | 0 | `GuideCursor` (guide entreprise) garde `never` : son trajet EST le contenu de la démo, demande d'Axel du 2026-10-12. C'est désormais le seul |
+>
+> Note inchangée : l'item valait 0 le 2026-10-20 (non débité).
+
+> ### ✅ 2026-10-22 · 0 : `/guide/` passe de 92 à 100 en Lighthouse, audits enfin identifiés
+>
+> Les audits « à identifier » depuis le 2026-10-16 l'ont été, puis corrigés. Mesures du 2026-10-22, sur un build de production local (`npm run build`, `vite preview`, pages prérendues), Lighthouse 12.8.2 réglé comme la CI (preset desktop, mobile 412 px, `--lang=fr-FR`) et axe-core 4.14, celui que Lighthouse embarque. Avant : `src/` remis au commit de départ `5eaa8b8c`. Après : `e3406578`. Les artefacts `lighthouse` et `lighthouse-mobile` de la CI (commit `80588145`) donnaient le même 92 et les mêmes audits.
+>
+> | Mesure | Avant (`5eaa8b8c`) | Après (`e3406578`) |
+> |---|---|---|
+> | Lighthouse a11y `/guide/` mobile | 92 | **100** |
+> | Lighthouse a11y `/guide/` desktop | 92 | **100** |
+> | Lighthouse a11y `/en/guide/` mobile | 92 | **100** |
+> | Lighthouse a11y `/en/guide/` desktop | 92 | **100** |
+> | axe, 16 combinaisons (4 thèmes × fr/en × mobile/desktop), 4 passages chacune | 21 à 62 violations par combinaison | **0** |
+> | Lighthouse a11y `/` et `/en/` (mêmes vitrines, thème clair) | 100 | **100** |
+> | axe sur `/` et `/en/`, mobile et desktop | 36 violations | **28**, aucune nouvelle. Le reste est antérieur et hors de ce chantier : `label-content-name-mismatch`, `region`, et des contrastes dans les vitrines MOBILES de la landing (`MobileShowcases.tsx`, absent du guide : événements d'agenda blancs sur `-500`, « 65J restants » à 2,4:1), même classe de défaut, à reprendre avec `eventFill()` et la même règle de santé. Lighthouse y rend pourtant 100, sans doute parce que ces vitrines ne sont pas montées à l'instant de sa mesure (non vérifié) |
+>
+> | Audit en échec | Élément fautif | Correctif |
+> |---|---|---|
+> | `color-contrast` (poids 7) | **Les vitrines animées**, presque tout le reste : gris `slate-500/600` et orange à 60 % sur cartes sombres (2,1 à 4,4:1), teinte de catégorie `-500` en texte (« Produit », « Hier », valeurs des statistiques, 3,1 à 4,3:1), titres blancs sur des événements d'agenda `-500` (2,1 à 4,2:1), tâche « déjà planifiée » estompée à 50 % sous un voile (1,2:1), textes saisis à mi-fondu (compteurs OKR, tâche glissée, sélection) | re-teintes par thème dans `showcase-light.css` et `showcase-gris-noir.css` (le thème Sombre reçoit ses premières, ses fonds ne bougent pas) ; `tintText` au cran 400 en sombre ; `eventFill()` au cran 700 ; plus d'estompe ; glissement ou échelle sans fondu là où le texte change souvent |
+> | `color-contrast` | Sommaire du guide : section active écrite dans sa teinte (`#94a3b8` sur fond clair, 2,3:1) | texte actif à l'encre, la teinte reste sur le fond et l'icône |
+> | `color-contrast` | « O comme Objectif » en `--color-success` sur blanc (2,27:1) ; « KR » et « ‹ Retour » en accent du thème Sombre (`#3b82f6`, 4,0 et 4,2:1) | `text-green-700` en clair ; `blue-400` en thème Sombre seul (variante `[.dark:not(.gris):not(.noir)_&]`) |
+> | `link-in-text-block` (poids 7) | `mailto:` du pied de page, distingué par la seule couleur (1,1:1 avec le texte voisin) | souligné en permanence |
+> | `image-redundant-alt` (poids 1) | logo `alt="Cosmo"` suivi du mot « Cosmo » | `alt=""` |
+> | `scrollable-region-focusable` (axe seul, hors score Lighthouse) | grille de l'agenda, tableau des habitudes | grille en `overflow-hidden` (rien ne la fait défiler) ; tableau focalisable, `role="region"` nommé (`common.showcase.habitsTable`, fr et en) |
+>
+> 🔴 **Pourquoi personne ne l'avait vu entier** : la CI mesure le mobile en thème **Gris** (le thème par défaut sous 768 px) et le desktop en **Clair**. Sombre et Noir n'étaient mesurés par rien. Le script axe les force par `localStorage.theme` : il en a trouvé autant qu'en Gris.
+>
+> ⚠️ **Ce qui reste fragile, et pourquoi ce n'est pas masqué** : axe calcule le contraste à l'opacité du moment. Un texte qui entre en fondu, saisi à mi-chemin, échoue. La vitrine des tâches garde des fondus brefs et ponctuels, jamais saisis en 64 passages : ils restent. La règle qui en sort : **dans une vitrine, un texte qui change souvent ou qui reste longtemps à l'écran ne s'anime pas en opacité.** Les compteurs OKR repartaient d'une opacité nulle à chaque valeur, donc passaient la plupart du temps sous 4,5:1 : ce n'était pas du bruit de mesure. ❌ Rendre les vitrines `inert` aurait passé l'audit (axe ignore l'inerte) : c'est exactement le masquage refusé, et la vitrine des tâches porte un bouton pause qui doit rester utilisable (C-69).
+>
+> **Cliquet** : `lighthouserc.json` et `lighthouserc.mobile.json` passent en `assertMatrix`. L'entrée globale ne change pas (accessibilité 0,9 partout), une entrée ajoutée exige **1** sur `/guide/`. Vérifié avec `lhci assert` 0.15 sur les rapports CI de `80588145` : rouge sur `/guide/` seul tant qu'il vaut 92, vert à 100, aucune autre page touchée.
+>
+> **Note inchangée** : le 92 n'avait jamais été débité, et rien ne se compte avant d'être vu vert en CI.
+>
+> **81 → 81.**
+
+> ### ⚪ 2026-10-22 · remesure de C-57, note non rejouée (elle se rejoue à la passe d'audit)
+>
+> Le débit « cibles tactiles sous 44 px » des 10-01 et 10-02 (« Valider » 81 × 36, « Renvoyer » 98 × 36, « Voir le détail » 96 × 36, « Sélectionner plusieurs tâches » 106 × 32, « Suivre cette tâche » 149 × 36) est **déjà remboursé** : +1 le 10-02 au soir, +1 le 10-03 (`16fbaae9`). Remesuré à `5eaa8b8c` (origin/main), `touch-targets` en local, mode démo, 375 px : **19/19 verts sur `chromium`, 20/20 sur `mobile-safari`**. Ce que ce vert ne disait pas, et ce que cette passe ajoute :
+>
+> | Commande citée | Mesure du 2026-10-22 | Statut |
+> |---|---|---|
+> | « Valider », « Renvoyer » (widget « En attente de moi », `/entreprise`) | **82 × 44**, **97 × 44** | rendus et mesurés ; la spec exige désormais qu'ils soient À L'ÉCRAN avant de mesurer (`DOIT_ETRE_MESURE`) |
+> | « Suivre cette tâche » (modale de tâche d'équipe) | ≥ 44 de haut (`TAP_AREA_44_Y`) | la spec exige sa présence dans la modale avant la mesure |
+> | « Voir le détail » (`ActivityDigestCard`), « Sélectionner plusieurs tâches » de `MyTasksCard` | non rendus | plus montés par aucun écran depuis l'Aperçu en widgets (exportés, jamais importés) : rien à mesurer |
+> | 🔴 « Filtres » (`MobileFiltersButton`, onglets Tâches, Projets, Membres) | **42 × 40** → **44 × 40, zone 44 × 44** | trouvé en élargissant la mesure à `/entreprise/tasks`, absente de la spec. Corrigé (`min-w-11` + `TAP_AREA_44_Y`) ; route ajoutée ; témoin : rouge sur l'ancien bouton, vert après |
+>
+> Spec modifiée : **20/20 verts sur `chromium`, 21/21 sur `mobile-safari`**, en local. Verdict CI à lire sur la PR.
+>
+> ⚠️ **Non couvert, mesuré ce jour** : `/entreprise/projects` à 375 px est un tableau de bureau qui défile à l'horizontale, **11 commandes sous 44 px** (« Nouveau projet » 39 × 36, « Ouvrir le projet … » 34 de haut, « État du projet … » 32 × 32, « Filtres » corrigé ci-dessus). Pas ajoutée à la spec : elle y serait rouge, et la corriger est une mise en page mobile, pas une classe. Ouvert comme suite.
 
 > ### 🟠 2026-10-20 · −1 : `/dashboard` déborde à 200 % de police
 >
@@ -54,7 +195,7 @@ Conséquences pratiques, à tenir :
 > | Item | Effet | Mesuré le 2026-10-20 |
 > |---|---|---|
 > | 🔴 C-97 · `/dashboard` à 200 % de police, `mobile-chrome` | **−1** | débordement latéral de **13 px**, trois essais sur trois, à chaque run depuis le 2026-10-19 (WCAG 1.4.4 et 1.4.10). N'apparaît que certains jours : la démo date ses données, voir [`TESTING.md`](./TESTING.md) |
-> | ⚠️ Mode édition de l'Aperçu · `MotionConfig reducedMotion="never"` | 0 | vibration en boucle des widgets (±0,45°) **même quand le système demande moins d'animation**. Arbitrage écrit dans `ApercuWidgetGrid.tsx` (mode ouvert par la personne, même choix que `GuideCursor`) : non débité, mais c'est le seul endroit hors guide où la préférence est ignorée. À rouvrir au premier retour |
+> | ⚠️ Mode édition de l'Aperçu · `MotionConfig reducedMotion="never"` | 0 | **soldé le 2026-10-22, voir plus haut.** vibration en boucle des widgets (±0,45°) **même quand le système demande moins d'animation**. Arbitrage écrit dans `ApercuWidgetGrid.tsx` (mode ouvert par la personne, même choix que `GuideCursor`) : non débité, mais c'est le seul endroit hors guide où la préférence est ignorée. À rouvrir au premier retour |
 > | ✅ Widgets | 0 | chaque widget est une `section` nommée (`WidgetShell`), le contenu passe `inert` en édition, flèches et formats au clavier ; C-57 (cibles 44 px) vert sur `/entreprise` après `f0c2a433` |
 >
 > **82 → 81.**
@@ -263,10 +404,10 @@ Conséquences pratiques, à tenir :
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
 | AM-1 | **axe-core ne couvre qu'une PARTIE des critères WCAG, et c'est structurel.** Les critères non automatisables (ordre de lecture, pertinence d'un libellé, sens d'une couleur) sont hors de portée de tout run vert | limite connue de l'outil, jamais écrite ici comme angle mort | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-51`**, et il n'est pas outillable **par nature** : ordre de lecture, pertinence d'un libellé, sens porté par une couleur seule. Aucun run vert ne les atteint — *(jugé outillable le 09-16 : non, par nature : seule une revue humaine datée le comble)* |
-| AM-2 | **10 surfaces modales mesurées au clavier sur 53.** Les 43 autres sont **câblées et gardées par un cliquet**, ce qui n'est pas la même chose que mesurées | `e2e/a11y-keyboard-audit.spec.ts` : 19 cas, 10 surfaces. `modal-a11y.guard.test.ts` câble les 53 | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:keyboard-coverage` · **51 surfaces**, 10 mesurées, 41 déclarées non mesurées **une par une avec leur raison** (`C-96`) — 🔴 ne prouve PAS : 🔴 **elle ne mesure AUCUNE accessibilité.** Elle CHIFFRE l'écart et l'empêche de grandir en silence. ⚠️ L'énoncé du 09-16 disait 53 surfaces : le détecteur en compte **51**. ⚠️ La couverture réelle est repassée à **10 sur 51 le 2026-09-22** : les deux cas qui expiraient (`TaskActionsSheet`, `MobileAddToList`) mesurent à nouveau, et par le chemin **clavier** cette fois. ✅ **Rejoué sous WebKit le 2026-10-16** (`C-118`) : les 16 cas de `e2e/a11y-keyboard-audit.spec.ts` jouent sous `mobile-safari` ET `chromium`, donc « 10 » vaut pour les deux moteurs. ⚠️ Pas pour Option+Tab ni VoiceOver, que Playwright n'émule pas |
+| AM-2 | **10 surfaces modales mesurées au clavier sur 53.** Les 43 autres sont **câblées et gardées par un cliquet**, ce qui n'est pas la même chose que mesurées | `e2e/a11y-keyboard-audit.spec.ts` : 19 cas, 10 surfaces. `modal-a11y.guard.test.ts` câble les 53 | ✅ **2026-10-23 : MESURÉ pour 61 surfaces sur 63** (`e2e/a11y-keyboard-audit-surfaces.spec.ts`, 36 cas en démo, `e2e/stubbed/a11y-keyboard-audit-stubbed.spec.ts`, 2 cas hors démo pour `FirstRunSetup` et `ShareInviteClaimer`). Mêmes trois détecteurs que le témoin Radix (entrée du focus, piège, Échap) plus `role` et `aria-modal`, déclencheur actionné au clavier. 🔴 **Six défauts réels trouvés et corrigés par ces cas** : le focus qu'un menu Radix rendait à son déclencheur derrière la modale ouverte depuis une entrée (`OffboardMemberDialog`, `AssignEventDialog`, `DeleteTeamCategoryConfirm`, correctif central dans `ui/dropdown-menu.tsx`) ; la bulle de premier affichage de `RoleTerm` qui arrachait le focus à `MemberSheet` ; `ShareInviteClaimer` dont le focus n'entrait jamais (hook monté `open: true` avant l'invitation) ; `MobileTaskSearch` qui se fermait au premier Tab (blur) ; `RemoveFriendConfirm` qui portait deux `alertdialog` imbriqués ; `ListActionsSheet` inatteignable au clavier (appui long seul, WCAG 2.1.1), désormais ouverte par la touche Menu ou Maj+F10. 🔴 **Reste non mesuré, déclaré une par une dans la garde** : `PremiumGateModal` (`PREMIUM_ENFORCED = false`, aucune gate ne s'ouvre) et `BottomSheet` (primitive, pas une surface). ⚠️ Écarts déclarés dans les cas : `OrgWelcomeVideo` remet le focus sur un bouton avant Échap (le lecteur natif du navigateur avale toutes les touches), `QuickEventCard` reste ouverte à la souris, `WeeklyReviewSheet` est atteinte par son adresse (section masquée de la navigation). ⚠️ Rejoué en local sous `chromium` seulement : le jeu `mobile-safari` est tranché par la CI. ⚠️ `focusReturned` reste imprimé, jamais assertionné. **Antérieur, 2026-09-20 :** `npm run check:keyboard-coverage` · **51 surfaces**, 10 mesurées, 41 déclarées non mesurées **une par une avec leur raison** (`C-96`) — 🔴 ne prouve PAS : 🔴 **elle ne mesure AUCUNE accessibilité.** Elle CHIFFRE l'écart et l'empêche de grandir en silence. ⚠️ L'énoncé du 09-16 disait 53 surfaces : le détecteur en compte **51**. ⚠️ La couverture réelle est repassée à **10 sur 51 le 2026-09-22** : les deux cas qui expiraient (`TaskActionsSheet`, `MobileAddToList`) mesurent à nouveau, et par le chemin **clavier** cette fois. ✅ **Rejoué sous WebKit le 2026-10-16** (`C-118`) : les 16 cas de `e2e/a11y-keyboard-audit.spec.ts` jouent sous `mobile-safari` ET `chromium`, donc « 10 » vaut pour les deux moteurs. ⚠️ Pas pour Option+Tab ni VoiceOver, que Playwright n'émule pas |
 | AM-3 | **Aucun test avec un lecteur d'écran.** Ce que NVDA ou VoiceOver annonce réellement n'est vérifié nulle part | aucun outil de ce type dans le dépôt | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-40`** (l'exécution) et **`M-52`** (la date). Ce que VoiceOver ou NVDA **annonce** n'est vérifié nulle part, et aucune garde ne le fera — *(jugé outillable le 09-16 : difficilement : c'est un test manuel daté)* |
 | AM-4 | **WCAG 2.5.5 n'est mesuré que sur 8 routes protégées** (élargi à 8 pages publiques par `C-80`, à revérifier après coup) | `e2e/touch-targets.spec.ts`, cf. l'entrée du 2026-09-14 | ✅ **OUTILLÉ le 2026-09-20** · `C-80` a élargi la boucle à **8 pages publiques** en plus des 8 routes protégées (`C-80`) — 🔴 ne prouve PAS : 🔴 la revérification demandée par cet énoncé est **faite et elle est mauvaise** : le job `e2e` est rouge, 8 défauts de cibles tactiles mesurés (`/settings` 24 × 24 px, `/okr` 36 px, `/habits` 39 × 39 px). C'est `C-111` |
-| AM-5 | **Le contraste n'est vérifié que dans le thème par défaut.** Le dépôt porte quatre thèmes (clair, sombre, gris, noir) ; les runs axe n'en balaient qu'un | `theme-contrast.guard.test.ts` est statique, les runs e2e ne changent pas de thème | ✅ **OUTILLÉ le 2026-09-20** · `e2e/visual-regression.spec.ts` (`C-95`) — 🔴 ne prouve PAS : la première référence fige l'écran défauts compris · 🔎 🔴 **2026-09-22 : repose sur `Visual`, qui n'a jamais produit une référence** (cf. `UI-PATTERNS.md` AM-1) · 🔎 🟠 **2026-09-24 : `Visual` était vert à vide** (aucune référence committée), corrigé, cf. `UI-PATTERNS.md` AM-1 |
+| AM-5 | **Le contraste n'est vérifié que dans le thème par défaut.** Le dépôt porte quatre thèmes (clair, sombre, gris, noir) ; les runs axe n'en balaient qu'un | `theme-contrast.guard.test.ts` est statique, les runs e2e ne changent pas de thème | ✅ **OUTILLÉ le 2026-09-20** · `e2e/visual-regression.spec.ts` (`C-95`) — 🔴 ne prouve PAS : la première référence fige l'écran défauts compris · 🔎 🔴 **2026-09-22 : repose sur `Visual`, qui n'a jamais produit une référence** (cf. `UI-PATTERNS.md` AM-1) · 🔎 🟠 **2026-09-24 : `Visual` était vert à vide** (aucune référence committée), corrigé, cf. `UI-PATTERNS.md` AM-1 · ✅ **2026-10-23 : MESURÉ** par `e2e/a11y-contrast-themes.spec.ts`, axe `color-contrast` bloquant, quatre thèmes, sept routes, page entière ; témoin vu rouge (PR n° 118). Détail : entrée du 2026-10-23 |
 
 
 > ### 🟢 2026-09-15 · +2 : le premier des trois angles morts de couverture est refermé (C-80)
@@ -759,6 +900,14 @@ le détecteur rendrait le fichier **vert**. Et elle a été vue échouer, en ret
 | `TaskActionsSheet` | `/tasks` mobile, « Afficher les actions » | — |
 | `MobileAddToList` | `TaskActionsSheet` → « Ajouter à une liste » | relais de surface, pas empilement |
 | `ShareListSheet` | `/tasks` desktop, liste **manuelle** créée puis survolée | — |
+
+**Ajoutées le 2026-10-22** (`chromium` et `mobile-safari`, déclencheurs ouverts au clavier), ce qui
+porte le compte de la garde `C-96` à **12 mesurées sur 63 câblées** :
+
+| Surface | Chemin mesuré | En plus des cinq détecteurs |
+|---|---|---|
+| `AssignRoleDialog` | `/entreprise/members`, « Actions pour … » d'un membre, « Attribuer un rôle » | mesurée après la fin du squelette (`aria-busy`) |
+| `RoleEditorSheet` | `/entreprise/settings`, rubrique Rôles, « Créer un rôle » ; et depuis `AssignRoleDialog` | prend le piège au parent, le lui rend |
 
 **La 10ᵉ, `BottomSheet`, est mesurée en jsdom, et il faut dire pourquoi.** Aucun geste utilisateur
 ne l'ouvre : son unique consommateur produit est `WeeklyRecapSheet`, monté derrière

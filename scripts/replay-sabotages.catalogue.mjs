@@ -599,6 +599,16 @@ export const CATALOGUE = [
       + 'ne signalera jamais : il affiche le français, et l`écran a l`air traduit.',
   },
   {
+    id: 'i18n-traduction-fausse',
+    famille: 'produit',
+    garde: { commande: 'scripts/i18n-quality.mjs', args: ['--list'] },
+    modifs: [r('src/locales/en/csv.json', '"subtasks": "Subtasks"', '"subtasks": "Items"')],
+    raison: /csv\.col\.subtasks \[tâche\]/,
+    pourquoi:
+      'Une traduction fausse mais différente passe `i18n:check` et `i18n:identical` : '
+      + 'seul le glossaire épinglé voit que « Sous-tâches » ne dit plus « subtask ».',
+  },
+  {
     id: 'i18n-chaine-en-dur',
     famille: 'produit',
     garde: { commande: 'scripts/i18n-scan.mjs', args: ['--list'] },
@@ -669,6 +679,17 @@ export const CATALOGUE = [
     pourquoi:
       'La pondération des résultats clés, choisie par la personne, sortie de l`export : la '
       + 'progression réelle ne serait plus recalculable depuis le fichier (art. 20).',
+  },
+
+  {
+    id: 'soustraitants-catalogue-aveugle',
+    famille: 'detecteur',
+    garde: 'scripts/check-subprocessors.guard.test.mjs',
+    modifs: [r('scripts/check-subprocessors.mjs', 'const catalogueDe = (h) => CATALOGUE.find(', 'const catalogueDe = (h) => [].find(')],
+    attendu: ['un dépôt cohérent dérive les cinq tiers et passe'],
+    pourquoi:
+      'Un catalogue qui ne reconnaît plus aucun hôte dérive zéro tiers : la comparaison au '
+      + 'registre art. 30 passe à vide.',
   },
 
   // ═════════════════════════════════════════════════════════════════
@@ -755,7 +776,7 @@ export const CATALOGUE = [
       'un statut inattendu et une panne réseau sont distingués',
       'Une fonction injoignable et une fonction qui répond mal ne se corrigent pas de la même façon : le rapport doit le dire.'],
     ['smoke-destructrice-en-post', 'produit', r('scripts/check-edge-smoke.mjs', "    fonction: 'delete-account',\n    methode: 'GET',", "    fonction: 'delete-account',\n    methode: 'POST',"),
-      'les douze fonctions sont sondées, et aucune en écriture',
+      'les treize fonctions sont sondées, et aucune en écriture',
       "`delete-account` SUPPRIME un compte : sondée en POST chaque jour, la sonde deviendrait l'incident."],
     ['anon-mauvaise-cle', 'detecteur', r('scripts/check-edge-smoke.mjs', "  const anon = Array.isArray(cles) ? cles.find((c) => c.name === 'anon') : null;", '  const anon = Array.isArray(cles) ? cles[0] : null;'),
       'lit la clé nommée « anon » par l API Management',
@@ -953,13 +974,13 @@ export const CATALOGUE = [
     ['mcov-suppression-crue', r('scripts/check-migration-coverage.mjs', '      const survivantes = ciblesSup.filter(([k, n]) => catalogue[k].has(n));', '      const survivantes = [];'),
       'TEMOIN : une suppression dont la CIBLE EST TOUJOURS LA echoue', '« Suppression vérifiée » rendu sans rien vérifier : la cible est toujours en base.'],
     ['mcov-dispense-eternelle', r('scripts/check-migration-coverage.mjs', '      if (auLedger || trouves.length > 0) {', '      if (false) {'),
-      'TEMOIN : une dispense PERIMEE fait echouer la garde', 'Une dispense « non appliquée » qui survit à l`application cesse de décrire la base, et plus rien ne le dit.'],
+      ['TEMOIN : une dispense PERIMEE (objet en base) fait echouer la garde', 'TEMOIN : une dispense PERIMEE (ligne au ledger) fait echouer la garde'], 'Une dispense « non appliquée » qui survit à l`application cesse de décrire la base, et plus rien ne le dit.'],
     ['mcov-ledger-vide', r('scripts/check-migration-coverage.mjs', '  if ((intro.ledger ?? []).length === 0 && (intro.ledger_names ?? []).length === 0) {', '  if (false) {'),
       'TEMOIN : un LEDGER VIDE fait ECHOUER, il ne rend pas un verdict', 'La classe de défaut de `restore-drill.yml` : un contrôle qui ne pouvait pas échouer.'],
     ['mcov-catalogue-vide', r('scripts/check-migration-coverage.mjs', '  if ((intro.tables ?? []).length === 0) {', '  if (false) {'),
       'TEMOIN : un CATALOGUE VIDE fait ECHOUER aussi', 'Un catalogue vide rendrait « ABSENT » partout, ou un vert sur rien selon le ledger : aucun verdict ne vaut sans lecture.'],
   ].map(([id, modif, attendu, pourquoi]) => ({
-    id, famille: 'detecteur', garde: 'scripts/check-migration-coverage.guard.test.mjs', modifs: [modif], attendu: [attendu], pourquoi,
+    id, famille: 'detecteur', garde: 'scripts/check-migration-coverage.guard.test.mjs', modifs: [modif], attendu: [attendu].flat(), pourquoi,
   })),
 
   // ═════════════════════════════════════════════════════════════════

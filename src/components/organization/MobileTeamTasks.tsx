@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronRight, Plus, SlidersHorizontal } from 'lucide-react';
-import { BottomSheet } from '@/components/mobile';
+import { BottomSheet, TAP_AREA_44_Y } from '@/components/mobile';
 import { TeamTaskCardLite } from '@/components/task-table/TeamTaskCardLite';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import { useT } from '@/i18n/useT';
@@ -103,7 +103,10 @@ export const MobileFiltersButton: React.FC<Omit<FiltersProps, 'children' | 'open
       onClick={() => onOpenChange(true)}
       aria-haspopup="dialog"
       aria-label={t('filters.mobileButton')}
-      className="md:hidden shrink-0 inline-flex items-center gap-1.5 h-10 px-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-label font-medium text-[rgb(var(--color-text-secondary))]"
+      // C-57 (2026-10-22) : mesuré 42 x 40 px. `min-w-11` porte la largeur
+      // réelle à 44 ; la hauteur garde ses 40 px, alignée sur le champ de
+      // recherche voisin, et le débord vertical vit dans `TAP_AREA_44_Y`.
+      className={`${TAP_AREA_44_Y} md:hidden shrink-0 inline-flex items-center justify-center gap-1.5 h-10 min-w-11 px-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-label font-medium text-[rgb(var(--color-text-secondary))]`}
     >
       <SlidersHorizontal size={16} aria-hidden="true" />
       {activeCount > 0 && <span className="tabular-nums text-[rgb(var(--color-text-primary))]">{activeCount}</span>}

@@ -10,7 +10,10 @@
     "okrs": "cosmo-okrs",
     "profile": "cosmo-profile",
     "categories": "cosmo-categories",
-    "lists": "cosmo-lists"
+    "lists": "cosmo-lists",
+    "taskDependencies": "cosmo-dependencies",
+    "krCompletions": "cosmo-okr-history",
+    "orgRoles": "cosmo-org-roles"
   },
   "col": {
     "id": "ID",
@@ -64,6 +67,17 @@
     "icon": "Icon",
     "parent": "Parent category",
     "krDurationMin": "KR duration (min)",
-    "krWeight": "KR weight"
+    "krWeight": "KR weight",
+    "blockedTask": "Blocked task (ID)",
+    "blockedTaskName": "Blocked task",
+    "blockingTask": "Blocked by (ID)",
+    "blockingTaskName": "Blocked by",
+    "krId": "KR ID",
+    "organization": "Organization (ID)",
+    "role": "Role (ID)",
+    "roleName": "Role",
+    "permissions": "Granted permissions",
+    "startsAt": "Start",
+    "endsAt": "End"
   }
 }

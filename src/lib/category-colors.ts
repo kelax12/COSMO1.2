@@ -69,6 +69,31 @@ export const displayCategoryColor = (
   categoryColors: ReadonlySet<string>,
 ): string => (color && categoryColors.has(color.toUpperCase()) ? color : NO_CATEGORY_COLOR);
 
-/** Couleur de texte lisible sur un fond de catégorie (blanc, sauf sur le gris clair). */
+const luminance = (hex: string): number | null => {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  const lin = (c: number) => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+};
+
+/**
+ * Texte lisible (WCAG 1.4.3, 4,5:1) sur un aplat de couleur : blanc s'il
+ * tient, sinon gris très sombre, sinon noir.
+ *
+ * 🔴 AM-5 (2026-10-22) : le blanc ne tient sur AUCUNE des huit teintes de
+ * catégorie (2,15:1 sur l'orange, 4,47:1 sur l'indigo), et l'agenda les
+ * peignait toutes en blanc. Un hex non lisible (`rgb(var(...))`) garde le blanc.
+ */
+export const textOnColor = (color: string): string => {
+  const lum = luminance(color);
+  if (lum === null) return '#ffffff';
+  if (1.05 / (lum + 0.05) >= 4.5) return '#ffffff';
+  // #111827 : luminance 0,0103 ; le noir pur ne sert qu'aux teintes moyennes
+  // (violet, indigo) où le gris sombre plafonne sous 4,5.
+  return (lum + 0.05) / 0.0603 >= 4.5 ? '#111827' : '#000000';
+};
+
+/** Couleur de texte lisible sur un fond de catégorie (cf. `textOnColor`). */
 export const textOnCategoryColor = (color: string | null | undefined): string =>
-  !color || color.toUpperCase() === NO_CATEGORY_COLOR ? '#1F2937' : '#ffffff';
+  textOnColor(color || NO_CATEGORY_COLOR);

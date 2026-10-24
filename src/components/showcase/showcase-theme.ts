@@ -87,10 +87,35 @@ const CRAN_700: Record<string, string> = {
   '#EC4899': '#BE185D', // pink
 };
 
+// Teinte `-500` → son `-400`, pour un TEXTE de catégorie sur une carte SOMBRE.
+// Mesure Lighthouse/axe du 2026-10-22 sur /guide/ : la teinte brute y rendait
+// 3,1:1 (`#3B82F6` sur la pastille « Produit » en gris) à 4,3:1 (noir).
+const CRAN_400: Record<string, string> = {
+  '#3B82F6': '#60A5FA',
+  '#EF4444': '#F87171',
+  '#22C55E': '#4ADE80',
+  '#10B981': '#34D399',
+  '#EAB308': '#FACC15',
+  '#F59E0B': '#FBBF24',
+  '#F97316': '#FB923C',
+  '#8B5CF6': '#A78BFA',
+  '#06B6D4': '#22D3EE',
+  '#EC4899': '#F472B6',
+};
+const cran400 = (hex: string) => CRAN_400[hex.toUpperCase()] ?? hex;
+
+/**
+ * Aplat d'un ÉVÉNEMENT d'agenda, qui porte un titre en blanc : le cran 700,
+ * dans tous les thèmes. En `-500`, le blanc y rendait 2,1:1 (ambre) à 4,2:1
+ * (violet), sous les 4,5:1 de WCAG 1.4.3 (Lighthouse, 2026-10-22).
+ */
+export const eventFill = (hex: string): string => CRAN_700[hex.toUpperCase()] ?? hex;
+
 export const SHOWCASE_PALETTES: Record<ShowcaseTheme, ShowcasePalette> = {
   // ⚠️ Chaque valeur SOMBRE est celle qui était écrite en dur dans les vitrines
   // avant le 2026-09-22. Ne pas les « harmoniser » : ce thème-là ne doit pas
-  // changer.
+  // changer. Seules exceptions, le contraste (2026-10-22) : `textMuted`,
+  // `accentText` et `tintText`, qui rendaient 3,1 à 4,1:1 sur les cartes.
   dark: {
     panel: '#132237',
     card: '#1E293B',
@@ -103,8 +128,9 @@ export const SHOWCASE_PALETTES: Record<ShowcaseTheme, ShowcasePalette> = {
     zebra: 'rgba(255,255,255,0.015)',
     textPrimary: '#F1F5F9',
     textSecondary: '#94A3B8',
-    textMuted: '#64748B',
-    accentText: '#3B82F6',
+    textMuted: '#8A99AE',
+    // blue-400 : le blue-500 d'origine rendait 4,1:1 sur la carte (2026-10-22).
+    accentText: '#60A5FA',
     track: 'rgba(255,255,255,0.08)',
     ringTrack: '#334155',
     dragShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(249,115,22,0.3)',
@@ -115,7 +141,7 @@ export const SHOWCASE_PALETTES: Record<ShowcaseTheme, ShowcasePalette> = {
     chartCursor: 'rgba(255,255,255,0.04)',
     iconIdle: '#94a3b8',
     iconActive: '#3b82f6',
-    tintText: (hex) => hex,
+    tintText: cran400,
   },
   // Clair : papier blanc, encre slate-900, filets slate-900 à ~10 %. Les
   // teintes de catégorie ne changent PAS quand elles colorent un aplat ; elles
@@ -132,7 +158,7 @@ export const SHOWCASE_PALETTES: Record<ShowcaseTheme, ShowcasePalette> = {
     zebra: 'rgba(15,23,42,0.02)',
     textPrimary: '#0F172A',
     textSecondary: '#475569',
-    textMuted: '#64748B',
+    textMuted: '#5B6B80',
     accentText: '#1D4ED8',
     track: '#E2E8F0',
     ringTrack: '#E2E8F0',
@@ -159,7 +185,7 @@ export const SHOWCASE_PALETTES: Record<ShowcaseTheme, ShowcasePalette> = {
     zebra: 'rgba(255,255,255,0.015)',
     textPrimary: '#FAFBFC',
     textSecondary: '#ADBAC7',
-    textMuted: '#8F99A4',
+    textMuted: '#9AA5B0',
     accentText: '#58A6FF',
     track: 'rgba(255,255,255,0.08)',
     ringTrack: '#373E47',
@@ -171,7 +197,7 @@ export const SHOWCASE_PALETTES: Record<ShowcaseTheme, ShowcasePalette> = {
     chartCursor: 'rgba(255,255,255,0.04)',
     iconIdle: '#8F99A4',
     iconActive: '#58A6FF',
-    tintText: (hex) => hex,
+    tintText: cran400,
   },
   // Noir : les variables `.noir` de src/index.css (OLED, gris sans teinte).
   // Les teintes de catégorie restent en couleur, comme dans l'app.
@@ -187,7 +213,7 @@ export const SHOWCASE_PALETTES: Record<ShowcaseTheme, ShowcasePalette> = {
     zebra: 'rgba(255,255,255,0.015)',
     textPrimary: '#F2F2F2',
     textSecondary: '#A8A8A8',
-    textMuted: '#808080',
+    textMuted: '#8C8C8C',
     accentText: '#F0F0F0',
     track: 'rgba(255,255,255,0.08)',
     ringTrack: '#2E2E2E',
@@ -199,7 +225,7 @@ export const SHOWCASE_PALETTES: Record<ShowcaseTheme, ShowcasePalette> = {
     chartCursor: 'rgba(255,255,255,0.04)',
     iconIdle: '#808080',
     iconActive: '#F0F0F0',
-    tintText: (hex) => hex,
+    tintText: cran400,
   },
 };
 

@@ -54,7 +54,7 @@ CNIL ou d'un client dans le cadre d'une due diligence.
 |---|---|---|---|
 | AM-1 | 🔴 **Les durées de conservation déclarées ne sont confrontées à AUCUNE donnée réelle.** Dix traitements annoncent une durée ; rien ne vérifie qu'aucune ligne ne la dépasse. C'est pourtant la pièce produite en contrôle CNIL, donc celle où un écart se paie | aucun script ne lit les dates de création par table | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:retention` (`C-93`) — 🔴 ne prouve PAS : que ce registre soit juste : la garde confronte la base à ce qu'il déclare, pas l'inverse |
 | AM-2 | **Un traitement NOUVEAU n'entre pas au registre tout seul.** Une table de données personnelles ajoutée par migration, ou un sous-traitant ajouté par une dépendance, ne déclenche rien | ni `validate:migrations` ni la CI ne testent ce lien | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:erasure` (`C-92`) — 🔴 ne prouve PAS : dérivé des migrations, pas de la base |
-| AM-3 | **La liste des sous-traitants est tenue à la main.** Un service SaaS ajouté au produit (analytics, mail, hébergement d'images) est un sous-traitant au sens de l'art. 28, et rien ne le signale | liste statique dans ce document | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** La liste des sous-traitants reste tenue à la main : un SaaS ajouté au produit est un sous-traitant art. 28, et rien ne le signale. Le geste de collecte est `M-04` — *(jugé outillable le 09-16 : partiellement : croiser avec les origines autorisées par la CSP)* |
+| AM-3 | **La liste des sous-traitants est tenue à la main.** Un service SaaS ajouté au produit (analytics, mail, hébergement d'images) est un sous-traitant au sens de l'art. 28, et rien ne le signale | liste statique dans ce document | ✅ **OUTILLÉ le 2026-10-24** · `npm run check:subprocessors` (étape `ci.yml`, témoin `scripts/check-subprocessors.guard.test.mjs`, vu rouge) : les tiers sont dérivés de la CSP, des hôtes en littéral (`api/`, `supabase/functions/`, `src/`), des SDK et des workflows de sauvegarde, puis comparés au tableau des transferts de ce registre et au § 6 de `LEGAL.md`, dans les deux sens. Première exécution : **écart réel**, Resend, Cloudflare Turnstile, Google et GitHub étaient au registre mais absents de `LEGAL.md` § 6 (corrigé). 🔴 ne prouve PAS : qu'un DPA soit signé (ligne A5), ni les tiers à hôte non littéral (URL de webhook d'organisation, `OPS_ALERT_WEBHOOK_URL`), ni le SMTP et l'OAuth portés par le serveur Supabase ; Anthropic et IONOS (T11) vivent hors dépôt et sont déclarés tels quels dans la garde |
 
 ---
 
@@ -101,7 +101,8 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   d'affichage, avatar, identifiant Google si connexion OAuth, dates de création et de dernière
   connexion.
 - **Tables** : `profiles`, schéma `auth` de Supabase, `email_lookup_global`,
-  `email_lookup_quota`, `demo_devices`.
+  `email_lookup_quota`, `demo_devices`, `account_inactivity_notices` (mig. `226` : date d'un
+  avertissement d'inactivité, aucune adresse stockée).
 - **Destinataires** : Supabase (hébergeur et fournisseur d'authentification), Google
   uniquement si l'utilisateur choisit la connexion Google, **Cloudflare Turnstile** (anti-robot
   des formulaires de connexion et d'inscription, adresse IP et signaux du navigateur) lorsque
@@ -109,6 +110,12 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   le registre le déclare.*
 - **Conservation** : durée de vie du compte, puis suppression définitive sous 90 jours après
   clôture. La suppression est exécutée par la fonction `delete-account`.
+  **Compte inactif** (art. 5.1.e, `C-121`, appliqué le 2026-10-22) : sans activité pendant
+  **3 ans** (dernière connexion ou dernière ouverture de l'application, `profiles.last_seen_at`),
+  un e-mail prévient **30 jours avant** ; sans retour, le compte est supprimé par le même chemin
+  `delete-account`. Jamais un compte qui paie. Job quotidien `inactive-accounts.yml` →
+  Edge Function `inactive-accounts`, sélection en base (mig. `226`, preuve
+  `supabase/proofs/226.proof.sql`).
 - **Sécurité** : mot de passe jamais stocké en clair, RLS, jetons de session à expiration.
 
 ## T2 · Service de productivité personnelle
@@ -119,11 +126,11 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
 - **Données** : contenu librement saisi par la personne. **Ce contenu peut contenir tout ce que
   l'utilisateur y met**, y compris des informations personnelles ou sensibles qu'il choisit
   d'inscrire dans une tâche. COSMO ne l'analyse pas et ne le lit pas.
-- **Tables** : `tasks`, `events`, `habits`, `okrs`, `key_results`, `kr_completions`,
-  `categories`, `lists`, `user_activity_days`.
+- **Tables** : `tasks`, `task_dependencies`, `events`, `habits`, `okrs`, `key_results`,
+  `kr_completions`, `categories`, `lists`, `user_activity_days`.
 - **Destinataires** : Supabase. Aucun autre.
 - **Conservation** : durée de vie du compte. Effacement immédiat à la demande.
-- **Portabilité** : export CSV depuis Paramètres, onglet Mes données (7 fichiers).
+- **Portabilité** : export CSV depuis Paramètres, onglet Mes données (10 fichiers depuis le 2026-10-22, dont les dépendances entre tâches, le journal des résultats clés `kr_completions` et les rôles reçus en entreprise `org_member_roles`).
 
 ## T3 · Collaboration entre particuliers
 
@@ -307,11 +314,33 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   **Anthropic** (classement de chaque réponse par Claude Haiku : objet et texte de la réponse,
   seulement si la clé API est posée). 🔴 DPA Anthropic et IONOS à archiver (ligne A5 de `LEGAL.md`).
 - **Conservation** : **3 ans après le dernier contact** (recommandation CNIL), puis effacement.
-  ⚠️ Au 2026-10-18 cette durée n'est appliquée par **aucun automatisme** ; la purge est à écrire.
-  L'effacement d'un prospect emporte son journal (cascade) ; son inscription en opposition
-  reste, puisque c'est elle qui garantit qu'on ne le recontacte pas.
-- **Sauvegardes** : 🔴 **aucune**. Le projet est en offre gratuite, qui n'en fournit pas de
-  téléchargeable. Un export chiffré hors dépôt reste à mettre en place.
+  Le « dernier contact » est la date la plus récente entre la création de la fiche, le dernier
+  envoi et la dernière réponse reçue. **Appliquée par** la fonction
+  `private.purge_prospects_expires()` du projet `cosmo-prospection`, lancée chaque jour à
+  03:17 UTC par la tâche `pg_cron` `prospection-purge-3-ans` (migration
+  `20261022000001_purge_conservation_3_ans.sql` du dépôt `analytics`). Chaque passage laisse
+  une trace sans donnée personnelle (date, nombre de fiches) dans `private.purge_runs`.
+  L'effacement d'une fiche emporte son journal, ses envois et ses réponses (cascade).
+  **La liste d'opposition n'est jamais purgée** : elle ne garde que l'adresse, le motif et la
+  date, et c'est elle qui garantit qu'on ne recontacte pas la personne (réimport refusé).
+  Preuve en transaction annulée le 2026-10-22 : une fiche à 3 ans et 1 jour est visée et
+  effacée avec son journal ; un envoi d'hier, une réponse d'hier et une fiche créée hier ne le
+  sont pas ; l'opposition d'une fiche purgée reste et bloque le réimport.
+  ⚠️ **Active seulement une fois la migration appliquée en production** (geste d'Axel). Tant
+  que `select * from cron.job where jobname = 'prospection-purge-3-ans'` ne renvoie rien, la
+  durée n'est pas appliquée.
+- **Sauvegardes** : export quotidien (04:41 UTC) par le workflow
+  `.github/workflows/prospection-backup.yml` du dépôt `analytics` (privé). Le dump est
+  **chiffré dans le même flux** (`pg_dump | gpg`, AES-256) : aucun octet en clair n'est écrit
+  sur le disque du runner ni déposé en artefact (leçon de `BK-1`, violation du 2026-10-13).
+  Seul `prospection-AAAA-MM-JJ.dump.gpg` est conservé, en artefact GitHub du dépôt
+  `analytics`, **30 jours**. Une fiche effacée (purge ou demande d'effacement) peut donc
+  survivre au plus 30 jours dans une sauvegarde chiffrée. Phrase de chiffrement propre à ce
+  projet (secret `PROSPECTION_BACKUP_PASSPHRASE`), copie hors dépôt chez Axel ; sans elle le
+  job échoue, jamais de repli en clair.
+  ⚠️ **Aucune sauvegarde n'existe encore** tant que les secrets `PROSPECTION_DB_URL` et
+  `PROSPECTION_BACKUP_PASSPHRASE` ne sont pas posés et qu'un premier passage n'a pas été
+  déchiffré pour vérification.
 
 ---
 

@@ -1,7 +1,7 @@
 # Composants · règles du dossier
 
 > Repris de `CLAUDE.md` le 2026-09-16, **sans une coupe**. Chargé automatiquement dès
-> qu un fichier de ce dossier est touché. Règles transversales : [`CLAUDE.md`](../../CLAUDE.md) à la racine.
+> qu'un fichier de ce dossier est touché. Règles transversales : [`CLAUDE.md`](../../CLAUDE.md) à la racine.
 
 ---
 
@@ -51,9 +51,6 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
   `getByRole('region')`). En édition, contenu `inert`, flèches et formats au clavier.
 - ⚠️ Ce qui ne sert qu'en édition (`AddWidgetPage`, `TemplatePicker`) pèse dans le chunk
   `OrganizationPage`, plafonné : le charger en `lazy`.
-
----
-
 
 ---
 

@@ -61,6 +61,7 @@ export const DUREE_DE_VIE_DU_COMPTE = [
   { table: 'categories', colonne: 'user_id', traitement: 'T2' },
   { table: 'lists', colonne: 'user_id', traitement: 'T2' },
   { table: 'user_activity_days', colonne: 'user_id', traitement: 'T10' },
+  { table: 'account_inactivity_notices', colonne: 'user_id', traitement: 'T1' },
   { table: 'task_dependencies', colonne: 'user_id', traitement: 'T2' },
   { table: 'friends', colonne: 'user_id', traitement: 'T3' },
   // 🔴 C-112 · `friend_requests` n'a PAS de `user_id` : elle porte les DEUX

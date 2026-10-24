@@ -191,7 +191,7 @@ const TeamProjectsKanban = ({
                 <span className="text-xs text-[rgb(var(--color-text-muted))] tabular-nums">
                   {colTasks.length}
                   {overdue > 0 && (
-                    <span className="text-red-500 font-semibold" title={tpf('kanban.overdueTitle', overdue)}>
+                    <span className="text-[rgb(var(--color-danger-text))] font-semibold" title={tpf('kanban.overdueTitle', overdue)}>
                       {' · '}
                       {pf('kanban.overdueBadge', { count: overdue })}
                     </span>

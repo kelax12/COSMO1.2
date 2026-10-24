@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, UserPlus, Check, Bookmark, Calendar, MoreHorizontal, Trash2 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from './ui/avatar';
-import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
+import { Users, UserPlus, Bookmark, Calendar, ListPlus, Trash2 } from 'lucide-react';
+import TaskRow from './TaskRow';
 import TaskModal from './TaskModal';
 import EventModal from './EventModal';
 import AddToListModal from './AddToListModal';
@@ -10,50 +9,40 @@ import AddToListModal from './AddToListModal';
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useTasks, useDeleteTask, useToggleTaskBookmark, Task } from '@/modules/tasks';
+import { useTasks, useDeleteTask, useToggleTaskBookmark, useToggleTaskComplete, Task } from '@/modules/tasks';
 import { useCreateEvent, CreateEventInput } from '@/modules/events';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module categories - (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useCategories } from '@/modules/categories';
 
 import { useAuth } from '@/modules/auth/AuthContext';
-import { useFriends, useSharesByTask } from '@/modules/friends';
 // Fraîcheur d'une tâche partagée (#40) — délégué à `Intl.RelativeTimeFormat`
 // via `@/i18n/format`, qui gère toutes les langues sans table à maintenir.
-import { formatRelativeTime } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { selectCollaborativeTasks } from './collaborative-tasks.helpers';
-import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
-const CollaborativeTasks: React.FC = () => {
+const CollaborativeTasks = ({ compact = false }: { compact?: boolean }) => {
   const { t, tp } = useT('dashboard');
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
   const { data: tasks = [], isLoading } = useTasks();
   const deleteMutation         = useDeleteTask();
+  const toggleCompleteMutation = useToggleTaskComplete();
   const toggleBookmarkMutation = useToggleTaskBookmark();
   const createEventMutation    = useCreateEvent();
 
   // ═══════════════════════════════════════════════════════════════════
   // CATEGORIES - Depuis le module categories (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
-  const { data: categories = [] } = useCategories();
 
   const { user } = useAuth();
-  const { data: friends = [] } = useFriends();
 
   // shared_tasks = source de vérité du partage (colonne `tasks.collaborators`
   // supprimée — migration 028). Map taskId -> friendIds pour compteurs/avatars.
-  const sharesByTask = useSharesByTask();
 
-  const getCategoryColor = (categoryId: string) => {
-    const category = categories.find(cat => cat.id === categoryId);
-    return category?.color || NO_CATEGORY_COLOR;
-  };
 
   // Action modals
   const [taskModalTask, setTaskModalTask]               = useState<Task | null>(null);
@@ -77,9 +66,6 @@ const CollaborativeTasks: React.FC = () => {
   // Exclude tasks assigned by others that haven't been accepted yet (still pending in SocialRequests)
   const collaborativeTasks = selectCollaborativeTasks(tasks, user?.name);
 
-  const isOwner = (task: Task) => {
-    return !task.sharedBy || task.sharedBy === user?.name;
-  };
 
   // C-53 — piege de focus, restitution du focus au declencheur, Echap et
   // semantique ARIA. Cette surface n'en portait aucune.
@@ -108,133 +94,36 @@ const CollaborativeTasks: React.FC = () => {
 
   return (
     <>
-      <div className="card-plain-mobile p-gutter md:p-8 rounded-2xl">
-          <div className="flex items-center justify-between mb-6">
+      <div className="card-plain-mobile p-gutter md:p-6 rounded-2xl">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div>
-                <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{t('sections.collaborativeTasks')}</h2>
+                <h2 className="text-headline sm:text-lg font-bold text-[rgb(var(--color-text-primary))]">{t('sections.collaborativeTasks')}</h2>
                 <p className="text-[rgb(var(--color-text-secondary))] text-sm">{tp('collaborative.shared', collaborativeTasks.length)}</p>
               </div>
             </div>
         </div>
 
-        <div className="space-y-4">
-            {collaborativeTasks.map(task => {
-              const categoryColor = getCategoryColor(task.category);
-              const owner = isOwner(task);
-              const ownerFriend = friends.find(f => f.name === task.sharedBy);
-
-                return (
-                  <div
-                    key={task.id}
-                    className="collaborative-task group p-4 rounded-2xl border transition-all duration-300 hover:shadow-lg hover:scale-[1.01] cursor-pointer"
-                    style={{
-                      backgroundColor: `${categoryColor}25`,
-                      borderColor: `${categoryColor}60`
-                    }}
-                    onClick={() => setTaskModalTask(task)}
-                  >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-bold text-body sm:text-base text-[rgb(var(--color-text-primary))]">{task.name}</h3>
-                      <div className="flex flex-wrap items-center gap-4 mt-1 text-label sm:text-sm text-[rgb(var(--color-text-secondary))]">
-                        <div className="flex items-center gap-1.5">
-                          <Users size={14} />
-                          <span>{t('collaborative.sharedBy', { name: task.sharedBy || t('collaborative.me') })}</span>
-                        </div>
-                        {!owner && (
-                          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium">
-                            <span>Contact : {ownerFriend?.email || `${task.sharedBy?.toLowerCase().replace(' ', '.')}@example.com`}</span>
-                          </div>
-                        )}
-                        <span>{sharesByTask.get(task.id)?.length ?? 0} collaborateurs</span>
-                        {/* Fraîcheur (#40) : dernière modification de la tâche partagée */}
-                        {task.updatedAt && (
-                          <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                            {t('collaborative.modified', { when: formatRelativeTime(task.updatedAt) })}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                
-                  <div className="flex items-center gap-2">
-                    {/* Action icons */}
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleBookmarkMutation.mutate(task.id); }}
-                        className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                        title="Favori"
-                      >
-                        <Bookmark size={15} className={task.bookmarked ? 'text-amber-500 fill-amber-500' : 'text-[rgb(var(--color-text-muted))]'} />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setTaskToEventModal(task); }}
-                        className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                        title={t('collaborative.addToAgenda')}
-                      >
-                        <Calendar size={15} className="text-[rgb(var(--color-text-muted))]" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setAddToListTask(task.id); }}
-                        className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                        title={t('collaborative.addToList')}
-                      >
-                        <MoreHorizontal size={15} className="text-[rgb(var(--color-text-muted))]" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setCollaboratorModalTaskId(task.id); }}
-                        className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-                        title="Collaborateurs"
-                      >
-                        <UserPlus size={15} className="text-[rgb(var(--color-text-muted))]" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setTaskToDelete(task.id); }}
-                        className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
-                        title={t('collab.removeShare')}
-                      >
-                        <Trash2 size={15} className="text-[rgb(var(--color-text-muted))] hover:text-red-500 transition-colors" />
-                      </button>
-                    </div>
-
-                    <AvatarGroup>
-                    {(sharesByTask.get(task.id) ?? []).map((collaborator, index) => {
-                      const hasValidated = task.collaboratorValidations?.[collaborator] ?? false;
-                      const friend = friends.find(f => f.userId === collaborator || f.id === collaborator || f.name === collaborator);
-                      const initials = collaborator.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                      const isEmoji = isEmojiAvatar(friend?.avatar);
-
-                      return (
-                        <div key={index} className="relative" title={t('collaborative.collaboratorStatus', { name: collaborator, status: hasValidated ? t('collaborative.validated') : t('collaborative.notValidated') })}>
-                          <Avatar className="size-9">
-                            {isImageAvatar(friend?.avatar) && (
-                              <AvatarImage src={friend?.avatar} alt={collaborator} />
-                            )}
-                            <AvatarFallback className={
-                              hasValidated
-                                ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white text-xs font-bold shadow-lg shadow-green-500/30'
-                                : 'bg-[rgb(var(--color-active))] text-[rgb(var(--color-text-secondary))] text-xs font-bold'
-                            }>
-                              {isEmoji ? <span className="text-base">{friend?.avatar}</span> : initials}
-                            </AvatarFallback>
-                          </Avatar>
-                          {hasValidated && (
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[rgb(var(--color-surface))] rounded-full flex items-center justify-center shadow-md z-10">
-                              <Check size={10} className="text-green-500" />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    </AvatarGroup>
-                  </div>
-
-              </div>
-            </div>
-          );
-        })}
-
+        <ul className="divide-y divide-[rgb(var(--color-border))]">
+          {collaborativeTasks.map(task => (
+            <TaskRow
+              key={task.id}
+              name={task.name}
+              completeLabel={t('todayTasks.markDone', { name: task.name })}
+              onComplete={() => toggleCompleteMutation.mutate(task.id)}
+              onOpen={() => setTaskModalTask(task)}
+              compact={compact}
+              actions={[
+                { key: 'bookmark', label: t('todayTasks.bookmark'), icon: Bookmark, active: !!task.bookmarked, run: () => toggleBookmarkMutation.mutate(task.id) },
+                { key: 'event', label: t('collaborative.addToAgenda'), icon: Calendar, run: () => setTaskToEventModal(task) },
+                { key: 'list', label: t('collaborative.addToList'), icon: ListPlus, run: () => setAddToListTask(task.id) },
+                { key: 'collab', label: t('todayTasks.collaboratorsTitle'), icon: UserPlus, run: () => setCollaboratorModalTaskId(task.id) },
+                { key: 'delete', label: t('collab.removeShare'), icon: Trash2, danger: true, run: () => setTaskToDelete(task.id) },
+              ]}
+            />
+          ))}
+        </ul>
+        <div>
           {collaborativeTasks.length === 0 && (
             <div className="text-center py-8 text-[rgb(var(--color-text-secondary))]">
               <Users size={48} className="mx-auto mb-4 opacity-30" />

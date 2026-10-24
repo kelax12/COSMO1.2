@@ -32,8 +32,11 @@
 [data-sc-theme='light'] .sc-ink { color: #0f172a; }
 [data-sc-theme='light'] .text-slate-300 { color: #334155; }
 [data-sc-theme='light'] .text-slate-400 { color: #475569; }
-/* `slate-500` reste `slate-500` : 4,76:1 sur blanc, il passe tel quel. */
-[data-sc-theme='light'] .text-slate-600 { color: #64748b; }
+/* `slate-500` (4,76:1 sur blanc) tombait à 4,34:1 sur les champs et les lignes
+   teintées (Lighthouse, 2026-10-22) : un cran plus foncé, l'ordre 400/500/600
+   est conservé. */
+[data-sc-theme='light'] .text-slate-500 { color: #56657a; }
+[data-sc-theme='light'] .text-slate-600 { color: #5b6b80; }
 
 /* ── Surfaces : du plus profond au plus haut ── */
 [data-sc-theme='light'] .bg-slate-950\/40 { background-color: #f8fafc; }
@@ -79,7 +82,8 @@
 [data-sc-theme='light'] .text-red-400,
 [data-sc-theme='light'] .text-red-500\/70 { color: #dc2626; }
 [data-sc-theme='light'] .text-orange-400 { color: #c2410c; }
-[data-sc-theme='light'] .text-orange-400\/60 { color: rgba(194, 65, 12, 0.85); }
+/* Plein et non plus à 85 % : translucide, il rendait 4,05:1 sur blanc. */
+[data-sc-theme='light'] .text-orange-400\/60 { color: #c2410c; }
 [data-sc-theme='light'] .text-purple-400 { color: #7c3aed; }
 [data-sc-theme='light'] .text-yellow-300 { color: #a16207; }
 /* Signets : ce sont des ICÔNES (3:1 suffit) et ils doivent rester jaunes.

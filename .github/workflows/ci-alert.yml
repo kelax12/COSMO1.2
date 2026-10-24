@@ -35,8 +35,8 @@ on:
     # création. Les six ajoutés le 2026-09-20 sont ceux du § 12
     # d'`a-faire-code.md` : ils tournent tous SANS déclencheur humain, donc
     # leur rouge n'a aucun autre chemin pour se faire voir.
-    # ⚠️ `Grille Stripe` n'y est PAS, et c'est cohérent : il n'est pas encore
-    # planifié (cf. son en-tête). Il y entre AVEC la bascule live.
+    # `Grille Stripe` y est entré avec la bascule live du 2026-10-20, le jour
+    # où il a été planifié (cf. son en-tête).
     workflows:
       - CI
       - Edge deploy drift
@@ -49,6 +49,7 @@ on:
       - scalability-volume
       - restore-drill
       - Grille Stripe
+      - Secrets age
       # ⚠️ `Uptime` n'y est PAS NON PLUS, et ce n'est pas un oubli : il ouvre
       # DÉJÀ sa propre issue, qui se referme seule au retour du vert.
       # L'ajouter ici doublerait chaque panne d'une seconde alerte, et deux

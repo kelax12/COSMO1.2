@@ -15,32 +15,16 @@
 # bouton ne marche pas.
 #
 # ══════════════════════════════════════════════════════════════════
-# 🔴 CE WORKFLOW N'EST PAS PLANIFIÉ AUJOURD'HUI, ET C'EST UNE DÉCISION
+# ✅ PLANIFIÉ DEPUIS LA BASCULE LIVE DU 2026-10-20
 # ══════════════════════════════════════════════════════════════════
 #
-# Il exige `STRIPE_SECRET_KEY` en secret Actions, et l'énoncé de C-106 le dit :
-# « à poser avec la bascule, pas avant ». La facturation entreprise est
-# DÉSACTIVÉE (décision 2026-08-24 : pas de micro-entreprise), et la production
-# tourne sur une clé Stripe de TEST.
+# Les trois gestes de la bascule sont faits : `STRIPE_SECRET_KEY` (live) posé
+# dans Settings → Secrets → Actions, bloc `schedule:` décommenté, et
+# `Grille Stripe` ajouté à la liste `workflows:` de `ci-alert.yml`.
+# Il n'était pas planifié avant, exprès : sur un secret absent il aurait été
+# ROUGE chaque jour, et un rouge permanent rend muets les jobs voisins.
 #
-# Le planifier maintenant produirait un job ROUGE chaque jour sur un secret
-# qu'on a choisi de ne pas poser. Un rouge permanent finit ignoré, et il rend
-# muets les jobs voisins — c'est le mécanisme exact que `ci-alert.yml` existe
-# pour combattre, et qui a laissé `rls-integration` rouge pendant des mois.
-#
-# ⚠️ LE JOUR DE LA BASCULE LIVE, DEUX GESTES, PAS UN :
-#
-#   1. poser `STRIPE_SECRET_KEY` dans Settings → Secrets → Actions ;
-#   2. DÉCOMMENTER le bloc `schedule:` ci-dessous ;
-#   3. ajouter `Grille Stripe` à la liste `workflows:` de `ci-alert.yml`.
-#
-# Le deuxième et le troisième sont ceux qu'on oublie. Ils sont écrits ici, et
-# dans `docs/STRIPE-LIVE.md`, pour cette raison — et parce que ce dépôt a déjà
-# payé un correctif ÉCRIT et jamais mis en service (C-76, C-78).
-#
-# En attendant, « Run workflow » permet de jouer le contrôle à la demande,
-# avec une clé de test : il dira alors lui-même qu'il n'a rien mesuré de la
-# grille live.
+# « Run workflow » reste disponible pour un contrôle à la demande.
 # ══════════════════════════════════════════════════════════════════
 name: Grille Stripe
 

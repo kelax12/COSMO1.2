@@ -272,7 +272,9 @@ export const TaskRow = React.memo(({
           ? (selectedForListIds.includes(task.id) ? 'rgba(59, 130, 246, 0.1)' : 'transparent')
           : (activeQuickFilter === 'overdue'
               ? 'rgb(var(--color-error) / 0.3)'
-              : (task.bookmarked ? 'rgba(234, 179, 8, 0.2)' : 'transparent')),
+              // AM-5 : 0,12 et non 0,2. À 20 %, le texte secondaire d'une tâche
+              // favorite tombait à 4,43:1 en thème Gris.
+              : (task.bookmarked ? 'rgba(234, 179, 8, 0.12)' : 'transparent')),
         borderLeft: addToListMode
           ? (selectedForListIds.includes(task.id) ? '4px solid #3B82F6' : '3px solid transparent')
           : (activeQuickFilter === 'overdue'
@@ -463,7 +465,7 @@ export const TaskRow = React.memo(({
           // que la garde visuelle masque (`MASQUES`, e2e/visual-regression.spec.ts).
           ? (task.completedAt ? <time dateTime={task.completedAt}>{formatDeadlineSmart(task.completedAt)}</time> : '—')
           : (task.deadline
-              ? <time dateTime={task.deadline} className={overdue ? 'text-red-500 font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</time>
+              ? <time dateTime={task.deadline} className={overdue ? 'text-[rgb(var(--color-danger-text))] font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</time>
               : <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('card.noDeadline')}</span>)}
       </td>
       <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatDuration(task.estimatedTime)}</td>

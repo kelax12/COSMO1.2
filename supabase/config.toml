@@ -59,6 +59,11 @@ verify_jwt = true
 [functions.org-digest]
 verify_jwt = false
 
+# inactive-accounts (C-121, mig. 226) is called by
+# .github/workflows/inactive-accounts.yml with CRON_SECRET, never by a user.
+[functions.inactive-accounts]
+verify_jwt = false
+
 # org-webhook-dispatch (mig. 199) is called by
 # .github/workflows/org-webhook-dispatch.yml with CRON_SECRET, never by a user.
 # 🔴 A-3 (2026-09-30) : this entry was MISSING, so the function was deployed

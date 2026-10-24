@@ -39,7 +39,7 @@
     "minutes": "min",
     "timeSeries": "Time (min)",
     "weekRange": "{{start}} to {{end}}",
-    "goalValueAria": "Goal, in minutes"
+    "goalValueAria": "Target, in minutes"
   },
   "gate": {
     "title": "Detailed analytics",

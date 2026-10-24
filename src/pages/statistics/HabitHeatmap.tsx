@@ -304,3 +304,6 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
     </div>
   );
 });
+
+// Export par défaut pour `lazy-surfaces.tsx` (heatmap chargée hors du chunk de la page).
+export default HabitHeatmap;

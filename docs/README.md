@@ -17,31 +17,31 @@
 La documentation de travail est organisee en **trois niveaux**, et le niveau decide de ce que ca
 coute en contexte a chaque session :
 
-| Niveau | Repond a | Quand c est charge |
+| Niveau | Repond a | Quand c'est charge |
 |---|---|---|
-| `CLAUDE.md` racine | « qu est-ce que je ne dois pas casser partout ? » et « ou est ecrit le reste ? » | **a chaque session** |
-| `<dossier>/CLAUDE.md` | « qu est-ce que je dois savoir avant de toucher CE code ? » | seulement quand un fichier de ce sous-arbre est lu ou edite |
-| `docs/*.md` | « pourquoi cette regle existe, et qu est-ce qui a ete mesure ? » | sur demande |
+| `CLAUDE.md` racine | « qu'est-ce que je ne dois pas casser partout ? » et « ou est ecrit le reste ? » | **a chaque session** |
+| `<dossier>/CLAUDE.md` | « qu'est-ce que je dois savoir avant de toucher CE code ? » | seulement quand un fichier de ce sous-arbre est lu ou edite |
+| `docs/*.md` | « pourquoi cette regle existe, et qu'est-ce qui a ete mesure ? » | sur demande |
 
 **Pourquoi.** `CLAUDE.md` est le seul fichier qui se paie a chaque message. Le 2026-09-16 il pesait
 2 070 lignes et ~43 000 tokens, contre 17,8 ko dix semaines plus tot, avec 78 commits en trente
-jours. Il avait cesse d etre un guide pour devenir un journal : 146 dates, 114 lignes-marqueurs,
+jours. Il avait cesse d'etre un guide pour devenir un journal : 146 dates, 114 lignes-marqueurs,
 une section `## Scripts` de 281 lignes pour 20 commandes. Et sur dix sujets sondes, huit etaient
 ecrits deux fois, dans `CLAUDE.md` **et** dans le doc qui declare faire foi.
 
-Il a ete ramene a 373 lignes **sans une coupe** : des 1 672 lignes significatives de l ancien
-fichier, une seule reste introuvable dans les `.md` du depot, et c est un artefact de coupure de
+Il a ete ramene a 373 lignes **sans une coupe** : des 1 672 lignes significatives de l'ancien
+fichier, une seule reste introuvable dans les `.md` du depot, et c'est un artefact de coupure de
 ligne. Les 16 `CLAUDE.md` de dossier et les docs de domaine portent tout le reste.
 
-❌ **Ne jamais reecrire un recit d incident dans `CLAUDE.md`.** Un incident s ecrit **une fois**,
-dans le doc de son domaine ; le `CLAUDE.md` concerne n en garde que l interdit, en une ligne.
-C est l absence de cette regle qui a produit la courbe ci-dessus, et des affirmations fausses
+❌ **Ne jamais reecrire un recit d'incident dans `CLAUDE.md`.** Un incident s'ecrit **une fois**,
+dans le doc de son domaine ; le `CLAUDE.md` concerne n'en garde que l'interdit, en une ligne.
+C est l'absence de cette regle qui a produit la courbe ci-dessus, et des affirmations fausses
 restees en place pendant des jours parce que le fichier etait trop gros pour etre relu.
 
 ✅ Cliquet : `npm run check:docs` (gate CI) plafonne le racine et chaque `CLAUDE.md` de dossier,
 **et** verifie que chaque fichier de dossier est cite par le racine. Une regle qui descend dans un
-fichier que personne ne cite est perdue sans qu un octet ne manque : c est le seul risque du
-decoupage, et c est ce que la garde mesure. Temoin : `scripts/check-docs-budget.guard.test.mjs`,
+fichier que personne ne cite est perdue sans qu'un octet ne manque : c'est le seul risque du
+decoupage, et c'est ce que la garde mesure. Temoin : `scripts/check-docs-budget.guard.test.mjs`,
 vu rouge sur cinq sabotages.
 
 ---
@@ -61,6 +61,178 @@ ou se relit dans le dépôt à `HEAD`. Une erreur de report est corrigée au pas
 code de `main` et les dix-neuf commits du jour. Les mesures **contre la production** n'ont pas été
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
+
+## Mise à jour du 2026-10-23 · **les dix points du 10-22 fusionnés : 960 → 962**
+
+Consigne d'Axel : « remet à jour les audits en .md du dossier docs ». **18 fusions** relues depuis
+la passe du 2026-10-22 (`fb83cd60` → `e96b7c90`, puis `e96dd0c6`, références `Visual` régénérées) :
+les dix points de la liste du 10-22 et la pile Dependabot. Même méthode : CI réelle de `main`,
+workflows planifiés, dépôt à `HEAD`. ⚠️ **Aucune nouvelle mesure du catalogue de production** :
+les chiffres de base (advisors, ledger, policies) sont ceux de la passe du 10-22. Même règle : un
+défaut ne se rembourse que corrigé **et vu vert en CI**.
+
+### Ce que la CI dit
+
+| Source | Verdict | Mesuré le 2026-10-23 |
+|---|---|---|
+| `CI` à `e96b7c90` (run `39939337678`) | ✅ cinq jobs verts | 360 fichiers, **4 070** tests ; outillage 30 / 520 ; RLS 8 / 151 ; `e2e` **291 verts, 1 instable** (`demo-entreprise-dependencies`, mobile-safari), 6 sautés, 26,0 min |
+| Bundle | ✅ mais ⚠️ | `AgendaPage` **17,2 / 18,3 ko** (6,2 %), `OrganizationPage` **16,9 / 18,0** (6,4 %) ; `vendor-utils` **31,4 / 33,0** (4,8 %) : la PR n° 113 l'avait porté à 5 %, les montées de dépendances fusionnées après l'ont fait redescendre sous la cible |
+| Lighthouse mobile de `main` | 🟠 | `/` LCP **1,7 s**, TBT **49 ms** (perf 100 ; TBT 309 → 89 ms dans la CI de la PR n° 103) ; `/entreprise-presentation/` 2,4 s. **Inchangé** sur les pages de contenu : `/a-propos/` et `/pour-freelances/` 4,5 s, `/blog/` 5,0 s, article 5,4 s, `/guide/` 5,6 s, **`/en/` 6,0 s** (LCP sur le bandeau cookies, cf. PR n° 116 ouverte) |
+| `Visual` | ✅ après un rouge | rouge sur 3 runs (`cd695a86` à `e96b7c90`) : `/settings` en thème noir, 1 % de pixels. Cause : la PR n° 99 relève `--nav-item-text` du thème noir (3,54:1 → 5,74:1), **voulu**, sans régénérer la référence. Régénérée par `workflow_dispatch` (`regenerer`, run `39964860403`, vert), commit `e96dd0c6` |
+| `Migration coverage` | ✅ quatre runs | vert depuis `c687fb77` (dispense périmée de la mig. `140` retirée), le 10-22 au soir et le 10-23 |
+| `Posture` | 🔴 | toujours la référence du 10-10 jamais recalée (`--update`, geste d'Axel) |
+| Autres planifiés | ✅ | `Edge deploy drift`, `Deploy SHA drift`, `db-backup`, `Uptime`, `inactive-accounts`, `Grille Stripe`, `renewal-notice`, digests |
+| Alertes GitHub | ✅ | CodeQL **0** ; Dependabot **3**, toutes de développement (`@vitest/mocker` ×2, `hono`) ; PR Dependabot : chacune fusionnée ou fermée avec sa raison, sauf n° 117 (groupe dev, axe-core 4.14 trouve de nouvelles violations) |
+| Artefacts | ⚠️ | quota de stockage du compte atteint (11,5 Go, tous des rapports de CI de COSMO) : 1 026 rapports supprimés le 10-23. Aucun workflow ne borne `retention-days` des rapports |
+
+### Les notes
+
+| Audit | 10-22 | **10-23** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 87 | **87** | 0 | Dependabot 4 → 3, toutes de développement ; CodeQL 0 ; aucune mesure nouvelle du catalogue |
+| [Tests / CI](./TESTING.md) | 95 | **96** | **+1** | `Migration coverage` vert quatre runs de suite (+1, débit du 10-22 remboursé). `Visual` rouge trois runs pour une référence non régénérée dans la PR qui changeait les couleurs : réparé dans l'heure, non débité |
+| [Performance](./PERFORMANCE.md) | 95 | **95** | 0 | TBT de `/` 309 → 89 ms (PR n° 103) et marges des chunks rendues (PR n° 113) : jamais débités ; le −2 du LCP mobile reste dû, six URLs sur huit inchangées ; `vendor-utils` déjà repassé sous 5 % de marge |
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | **82** | 0 | `color-contrast` bloquant dans les quatre thèmes (PR n° 99, AM-5 déjà crédité le 10-01) et défauts de jetons corrigés ; **21 surfaces modales mesurées au clavier sur 63** (PR n° 102) : AM-2 reste dû, la majorité n'est toujours pas mesurée |
+| [UI / UX](./UI-PATTERNS.md) | 86 | **86** | 0 | `Visual` vert après régénération ; diagnostic de l'état ERREUR publié (PR n° 101) |
+| [Architecture](./ARCHITECTURE.md) | 93 | **93** | 0 | gardes de structure vertes |
+| [Scalabilité](./SCALABILITY.md) | 91 | **91** | 0 | rien de neuf mesuré |
+| [RGPD](./RGPD.md) | 87 | **87** | 0 | export de portabilité complété (`kr_completions`, rôles attribués, `task_dependencies`, PR n° 106) : jamais débité. T11 : workflow de sauvegarde chiffrée et migration de purge fusionnés dans `cosmo-analytics`, secrets posés, un export **chiffré et relu en mémoire** sur le runner ; mais aucun artefact déposé (quota), aucun déchiffrement local, purge non appliquée en production : le −1 reste |
+| [i18n](./I18N.md) | 88 | **89** | **+1** | `i18n:quality` dans `lint-test-build`, verte (PR n° 105) : glossaire épinglé et français resté dans `en` gardés. AM-1 **réduit, pas fermé** : le sens d'une traduction n'est toujours mesuré par rien (`M-50`) |
+| [SEO](./SEO.md) | 79 | **79** | 0 | le LCP des pages de contenu reste débité en Performance et en Mobile |
+| [Mobile / DA](./MOBILE.md) | 77 | **77** | 0 | LCP mobile inchangé hors `/` ; le −1 reste |
+
+**960 → 962 : +2 remboursés, aucun débit.** Les deux remboursements sont des gardes vues vertes
+en CI. Le reste du travail du 10-22 (TBT de `/`, contraste, clavier, export, chunks) corrige des
+défauts qui n'avaient jamais été débités : il ne fait pas monter les notes, il les rend vraies.
+
+### 📈 Les améliorations au plus gros ROI
+
+| # | Amélioration | Effort | Qui | Ce que ça rapporte |
+|---|---|---|---|---|
+| 1 | **LCP mobile** des pages de contenu et de `/en/` (PR n° 116 ouverte pour `/en/`), puis `largest-contentful-paint` en `error` | ½ à 1 j | code + Axel | **+3** récupérables (Performance 2, Mobile 1) |
+| 2 | **T11 jusqu'au bout** : appliquer la migration de purge à `cosmo-prospection`, relancer `prospection-backup` une fois le quota recalculé, déchiffrer le dump en local | 20 min | Axel + code | rembourse le −1 RGPD |
+| 3 | **`retention-days` sur les rapports de CI** (3 à 7 jours) | 30 min | code | le quota d'artefacts du compte ne se remplit plus ; c'est lui qui a bloqué la sauvegarde T11 |
+| 4 | **Fusionner la PR n° 86** (hook `pre-push`) | 5 min | Axel | inchangé depuis le 10-22 |
+| 5 | **Recaler `Posture`** (`--update`) | 1 commande | Axel | inchangé |
+| 6 | **Médiateur (`M-03`) et bouton de rétractation (E13)** | ½ à 1 j | Axel + code | inchangé, facturation live armée sans eux |
+| 7 | **`vendor-utils`** : retrouver 5 % de marge | ½ j | code | il est repassé à 4,8 % un jour après la PR qui l'en sortait |
+| 8 | **PR n° 117** : corriger les violations qu'axe-core 4.14 trouve sur la landing et l'Agenda | ½ j | code | débloque la montée des dépendances de développement |
+
+---
+
+## Mise à jour du 2026-10-22 · **`main` de nouveau vert, le LCP mobile perdu en route : 959 → 960**
+
+Consigne d'Axel : « remet à jour tous les audits en .md dans le fichier doc ». **99 commits** relus
+depuis la passe du 2026-10-20 (`914a4115` → `fb83cd60`), dont la bascule Stripe live
+(`5bf21a50`), les widgets du tableau de bord perso, la copie de la landing peinte avant React
+(`3cce0b05`, `26a0faac`), l'immatriculation portée aux mentions légales (`e2e7679f`), `C-121`
+(comptes inactifs) et la vague de PR du 10-22 (n° 87 à 107). Même méthode : CI réelle de `main`,
+production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à
+`HEAD`. Même règle : un défaut ne se rembourse que corrigé **et vu vert en CI**.
+
+### Ce que la CI et la production disent
+
+| Source | Verdict | Mesuré le 2026-10-22 |
+|---|---|---|
+| `CI` à `d16de29a` (run `39843255180`) | ✅ cinq jobs verts | 356 fichiers, **4 032** tests ; outillage 29 / 503 ; RLS 8 / 151 ; `e2e` **265 verts, 1 instable** (`org-guide`, chromium), 6 sautés, 21,2 min ; `OrganizationPage` **16,8 / 18,0 ko**. `fb83cd60` (`HEAD`) en cours à l'écriture |
+| Historique `CI` de `main` | 🟠 un second épisode rouge | vert de `c092079d` (10-20, 16:18) à `1e6cc2e7`, puis **rouge de `5bf21a50` (10-20, 22:03) à `5eaa8b8c` (10-21, 20:11) : 19 runs, 19 commits poussés directement dessus**, rendu vert par `1234f807` (PR n° 87, 10-22 à 14:39), soit ~40 h. Ensuite 4 runs rouges à 18:33, tous sur `rls-integration` : quota de tirage d'images Docker (`toomanyrequests`), infrastructure et non produit. Verts depuis `1db47acf` |
+| Hook `pre-push` | 🔴 n'existe pas | `core.hooksPath = .githooks` est posé dans le checkout principal, mais `.githooks/` **n'existe pas sur `main`** : la PR n° 86 qui l'apporte est ouverte depuis le 10-21. Aucun hook ne joue. Le second épisode rouge a commencé après que ce point a été annoncé comme réglé |
+| `Visual` | ✅ puis ⚠️ | vert à `d16de29a` et `fb83cd60` sur les références régénérées (horloge figée `c6e21b06`, widgets PR n° 101) ; **rouge une fois**, à `f019249f` : `publique-home`, « Failed to take two consecutive stable screenshots ». L'accueil n'est pas immobile au moment de la capture |
+| `Posture` | 🔴 cinq matins de suite | advisors **`14 / 84 / 2 / 1`** : `account_inactivity_notices` (mig. `226`, `C-121`, sous RLS sans policy, voulu) s'ajoute aux objets déjà relus. Référence du 10-10 jamais recalée |
+| `Migration coverage` | 🔴 depuis le 10-20 à 22:03 | **une ligne périmée** : `140_stripe_identifiers_reset` reste déclarée « non appliquée délibérément » alors qu'elle est au ledger depuis la bascule (`20261020204838`). La garde a raison, et sonne chaque jour pour une ligne à retirer |
+| `Deploy SHA drift` | ⚠️ un rouge faux | 18:38 : « prod en avance », la production servait `35500352`, fusionné sur `main` **pendant** le run. Le script compare au commit extrait, pas à la pointe de `main`. Course, pas déploiement hors branche. Relu à la main ce soir : `égal`, `fb83cd6` |
+| Autres planifiés | ✅ | `Edge deploy drift`, `db-backup`, `Uptime`, `renewal-notice`, `Daily digest`, `org-digest`, `org-webhook-dispatch` ; `Grille Stripe` (nouveau, vert les 10-21 et 10-22) ; `inactive-accounts` (nouveau, une exécution manuelle verte) |
+| Alertes GitHub | ⚠️ | CodeQL **0** ; Dependabot **4**, toutes de développement (`vite`, une haute et deux moyennes ; `hono`, moyenne ; PR n° 84 et 85 ouvertes) ; secret scanning : la n° 1, connue ; dépôt `public` ; **23** PR ouvertes |
+| Base | | **80** tables toutes sous RLS, **205** policies, ledger **176** (`140` et `224` le 10-20, `226` le 10-21), 13 Edge Functions (`inactive-accounts` v1, échec fermé sans `CRON_SECRET`), **28 Mo**, **0** paiement, **0** abonnement entreprise, 1 organisation sur 5 au-delà de 5 membres |
+| Mesure d'audience | ✅ enfin du réel | `traffic_hits` = **23** lignes, dont 4 de test. Les premières visites réelles : le 10-21 (`/`, `/a-propos/`, `/entreprise-presentation/`) et le 10-22 (`/en/`, dont une arrivée de `google.com`). 4 comptes actifs sur 7 jours, 39 profils |
+| Site | ✅ | `/`, `/en/`, `/entreprise-presentation/`, `/blog/`, `/guide/`, `/mentions-legales/`, `sitemap.xml`, `robots.txt` en 200 ; `/api/collect` en 405 sur GET ; `#lp-hero` servi sur `/` et `/en/` |
+
+### 🔴 Trouvé en chemin : le LCP mobile a quadruplé, et la CI est restée verte
+
+Le 2026-10-18, Lighthouse mobile mesurait un LCP de **1,36 à 1,52 s sur les 8 URLs**. Le
+2026-10-22, quatre runs de `main` (`1234f807`, `c2959ded`, `1db47acf`, `d16de29a`) rendent les
+mêmes valeurs à 0,3 s près :
+
+| URL | LCP mobile au 2026-10-22 |
+|---|---|
+| `/` | **1,6 s** |
+| `/entreprise-presentation/` | **2,3 à 2,4 s** (TBT 30 à 200 ms) |
+| `/pour-freelances/`, `/a-propos/` | **4,5 à 4,6 s** |
+| `/blog/` | **5,0 s** |
+| `/blog/methode-okr-exemples/` | **5,3 à 5,4 s** |
+| `/guide/` | **5,4 à 5,6 s** |
+| `/en/` | **5,9 à 6,0 s** |
+
+**Cause.** `26a0faac` (10-21) remplace le texte peint des pages de contenu par un spinner : arbitré
+par Axel, et annoncé « 2,4 à 3,4 s, 4,8 s sur `/guide/` » d'après une mesure locale. La CI mesure
+**4,5 à 5,6 s**, au-delà du seuil « mauvais » de Google (4 s), sur les pages qui portent le SEO
+(guide, blog, article, `/pour-*`). Et **`/en/` n'est couverte par aucun arbitrage** : elle sert la
+même copie `#lp-hero` que `/`, mais met 6 s là où `/` met 1,6 s.
+
+**Pourquoi rien n'a sonné.** `lighthouserc.mobile.json` ne fait qu'**avertir** sur le LCP, à
+4 500 ms. Cinq URLs sur huit dépassent même ce seuil : l'avertissement s'imprime dans le log,
+personne ne le lit. Débité une fois en Performance, une fois en Mobile, parce que le 10-16 l'avait
+crédité dans les deux.
+
+### 🔴 Trouvé en chemin : la facturation est armée sans deux prérequis écrits
+
+`5bf21a50` (10-20) réarme `ENTERPRISE_BILLING_ENFORCED` sur le compte Stripe **live**.
+[`../a-faire-manuel.md`](../a-faire-manuel.md) et [`LEGAL.md`](./LEGAL.md) posent depuis août :
+« ne jamais réarmer avant E4 (médiateur), E5 (portail de résiliation) et E13 (bouton de
+rétractation) ». Relu ce jour : **E5 est réglé** (portail live configuré, liens juridiques posés
+le 10-20). **E4 et E13 ne le sont pas** : aucun médiateur dans les CGU (aucune occurrence dans
+`legalTerms.json`), aucune fonction de rétractation en ligne (seules existent les deux cases de
+renonciation, L221-28). `M-03` reste ouvert. Aucune note n'est débitée : le droit de la
+consommation n'est noté par aucun audit (`LEGAL.md` est `non-note`). C'est pourtant le point le
+plus coûteux de cette liste au premier client qui paie : 0 abonnement aujourd'hui, et une
+organisation déjà au-delà du palier gratuit. ⚠️ Rien ici n'est un avis juridique.
+
+### Les notes
+
+| Audit | 10-20 | **10-22** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 87 | **87** | 0 | `C-121` en production, fonction en échec fermé ; bascule live faite avec empreintes comparées et `api_version` passée ; le chemin d'argent réel (paiement puis remboursement) n'a encore tourné contre aucun Stripe, angle mort déjà écrit, non redébité ; 4 Dependabot de développement, non débitées |
+| [Tests / CI](./TESTING.md) | 95 | **95** | 0 | horloge figée dans `Visual` et C-97, verts en CI (+1) ; `Migration coverage` rouge 41 h pour une ligne périmée (−1). Second épisode rouge de `main` (~40 h, 19 commits poussés dessus) : le −1 du 10-20 n'est pas remboursé, il se répète |
+| [Performance](./PERFORMANCE.md) | 95 | **95** | 0 | `OrganizationPage` 16,8 / 18,0 ko (+1) ; TBT mobile de la page entreprise 30 à 200 ms après la PR n° 91 (+1) ; LCP mobile de 4,5 à 6,0 s sur six URLs sur huit, `/en/` sans arbitrage, garde en simple avertissement (−2) |
+| [Accessibilité](./ACCESSIBILITY.md) | 81 | **82** | **+1** | C-97 refermé : `/dashboard` sans débordement à 200 % de police, vert en CI (+1) ; `/guide/` à 100 en Lighthouse, widgets sous mouvement réduit, chevrons de l'agenda nommés, deux surfaces des rôles mesurées au clavier : jamais débités (0) |
+| [UI / UX](./UI-PATTERNS.md) | 85 | **86** | **+1** | `Visual` vert sur les références de l'Aperçu en widgets (+1) ; une capture instable de l'accueil (0, une occurrence) |
+| [Architecture](./ARCHITECTURE.md) | 93 | **93** | 0 | hook orphelin `useSharesByTask` retiré dans le même commit que son dernier consommateur ; gardes de structure vertes |
+| [Scalabilité](./SCALABILITY.md) | 91 | **91** | 0 | 28 Mo sur 500, 23 lignes de trafic ; un job quotidien de plus (`inactive-accounts`), sélection en base |
+| [RGPD](./RGPD.md) | 87 | **87** | 0 | `C-121` appliqué en production (jamais débité) ; T11 : section 7 ter publiée, mais la purge n'est pas appliquée (aucune tâche `prospection-purge-3-ans` au catalogue de `cosmo-prospection`), sauvegarde sans ses secrets, DPA Anthropic et IONOS : le −1 reste |
+| [i18n](./I18N.md) | 88 | **88** | 0 | garde des formats de date, 5 défauts corrigés dont FullCalendar en `fr` pour tous : AM-3 déjà crédité le 09-22 |
+| [SEO](./SEO.md) | 79 | **79** | 0 | première visite mesurée venue de Google ; SEO Lighthouse 100 sur 8 / 8 ; le LCP des pages de contenu est débité en Performance et en Mobile |
+| [Mobile / DA](./MOBILE.md) | 78 | **77** | **−1** | LCP mobile : le +1 du 10-16 repris (−1) ; WebKit sans instable au dernier run, agenda en paysage 447 → 0 px, « Filtres » à 44 px : jamais débités (0) |
+
+**959 → 960 : +5 remboursés, −4 débités.** Les remboursements sont tous des rouges du 10-20
+réparés et vus verts. Les débits viennent de deux décisions prises sans leur mesure : un
+arbitrage de LCP chiffré en local et jamais relu en CI, une bascule qui n'a pas retiré sa propre
+déclaration de la garde des migrations.
+
+### 📈 Les améliorations au plus gros ROI
+
+> Classées par **gain ÷ effort**, mesurés ce jour. « Axel » = un geste que le code ne peut pas
+> faire. ⚠️ Rien ici n'est un avis juridique.
+
+| # | Amélioration | Effort | Qui | Ce que ça rapporte |
+|---|---|---|---|---|
+| 1 | **Fusionner la PR n° 86** (hook `pre-push`), ou retirer `core.hooksPath` tant qu'elle ne l'est pas | 5 min | Axel | le seul garde-fou contre la répétition exacte des 10-19 et 10-21 : deux épisodes de ~1 jour, 42 commits poussés sur du rouge |
+| 2 | **Retirer `140_stripe_identifiers_reset` de `NON_APPLIQUEES_DELIBEREMENT`** (`scripts/check-migration-coverage.mjs`) et adapter le cas de `check-migration-coverage.guard.test.mjs` qui s'en sert comme exemple | 15 min | code | +1 en Tests ; une alerte Discord quotidienne de moins, pour une ligne |
+| 3 | **LCP mobile** : trouver pourquoi `/en/` ne garde pas son LCP sur la copie ; passer `largest-contentful-paint` en `error` (2 500 ms sur `/`, `/en/`, page entreprise) ; rouvrir l'arbitrage des pages de contenu avec les chiffres CI (4,5 à 5,6 s, et non 2,4 à 3,4) | ½ à 1 j | code + Axel | **+3** récupérables (Performance 2, Mobile 1) ; les pages qui portent le SEO sortent du « mauvais » |
+| 4 | **Médiateur (`M-03`, E4) et bouton de rétractation (E13)**, ou désarmer la facturation le temps de les poser | `M-03` ½ j hors démarche ; E13 ~1 j | Axel + code | la règle posée en août pour exactement ce moment ; aucun client n'a encore payé, c'est le bon moment |
+| 5 | **Recette réelle Stripe** : un paiement de 20 € puis son remboursement (`M-37b`, `M-37c`), mention 293 B au pied de facture | 30 min | Axel | le chemin qui rend de l'argent n'a jamais tourné contre Stripe, en test comme en live |
+| 6 | **Recaler `Posture`** (`--update`, attendu `14 / 84 / 2 / 1`) | 1 commande | Axel | cinq matins d'alerte pour des objets tous relus |
+| 7 | **T11 avant le premier import** : appliquer la migration de purge au projet `cosmo-prospection`, poser `PROSPECTION_DB_URL` et `PROSPECTION_BACKUP_PASSPHRASE`, déchiffrer un premier dump | 20 min | Axel | rembourse l'essentiel du −1 RGPD ; 0 prospect en base aujourd'hui, donc rien d'urgent tant qu'aucun import n'est fait |
+| 8 | **`M-71`** : ranger la phrase secrète, supprimer `BACKUP_PASSPHRASE.txt` (**toujours présent** le 2026-10-22) | 5 min | Axel | un fichier en clair ouvre toutes les sauvegardes chiffrées |
+| 9 | **`Deploy SHA drift`** : relire la pointe de `main` après la sonde, pas le commit extrait | 30 min | code | supprime le faux « prod en avance » à chaque fusion pendant un run |
+| 10 | **Capture `publique-home`** : figer l'accueil (animations, shader) avant la capture | 30 min | code | `Visual` stable : une référence qui rougit au hasard apprend à relancer sans regarder |
+
+Inchangés depuis le 10-20 : DPA (`M-64`), plan Vercel (`M-74`), préavis des CGU (`M-63`,
+`M-75`), délivrabilité (`M-27`), annuaires (`M-23`, `M-24`). ✅ Sortis de la liste : la page
+entreprise sur mobile (TBT 30 à 200 ms), l'immatriculation, le SIREN et le téléphone aux mentions
+légales (`M-05`, `M-72`, `M-73`), la section « Prospection » de la politique, et « voir une vraie
+visite s'écrire ».
+
+---
 
 ## Mise à jour du 2026-10-20 · **`main` rouge depuis 26 h, 963 → 959**
 
@@ -1310,6 +1482,7 @@ chacun, et vérifiés.
 | [ACQUISITION-BACKLINKS.md](./ACQUISITION-BACKLINKS.md) | Aucun suivi des backlinks **perdus**, alors que c'est le seul levier déclaré débloquant |
 | [AUDIT-VOICEOVER-IOS.md](./AUDIT-VOICEOVER-IOS.md) | 🔴 **Il EST un angle mort** : « rien dans ce fichier n'est coché », et son absence ne fait baisser aucune note |
 | [SUPPORT.md](./SUPPORT.md) | Aucune mesure du support : ni volume, ni délai de réponse · et **la réception** de l'adresse publiée n'est testée par rien |
+| [OBSERVABILITE.md](./OBSERVABILITE.md) | 🆕 2026-10-23 · **Les erreurs Sentry, Vercel et Supabase ne sont lues par personne** : la production peut se tromper sans qu'aucun job ni digest ne le dise |
 
 ⚠️ **Quatre documents sont volontairement laissés de côté** : `COSMO-CLI.md` et
 `AGENT-AJOUTER-TACHE.md` (modes d'emploi d'un outil), `DEMO-DATA-EXPORT.md` (un export généré pour

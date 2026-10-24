@@ -1,7 +1,7 @@
 # `src/` · providers, routing, type User
 
 > Repris de `CLAUDE.md` le 2026-09-16, **sans une coupe**. Chargé automatiquement dès
-> qu un fichier de ce dossier est touché. Règles transversales : [`CLAUDE.md`](../CLAUDE.md) à la racine.
+> qu'un fichier de ce dossier est touché. Règles transversales : [`CLAUDE.md`](../CLAUDE.md) à la racine.
 
 ---
 

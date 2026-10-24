@@ -13,7 +13,6 @@ import type {
   SharedListGrant,
 } from './types';
 import { friendKeys } from './constants';
-import { useAuth } from '@/modules/auth/AuthContext';
 import { translator } from '@/i18n/useT';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -361,38 +360,6 @@ export const usePendingRequestCount = () => {
     () => requests.filter((r: PendingFriendRequest) => r.status === 'pending').length,
     [requests]
   );
-};
-
-/**
- * Map taskId -> friendIds avec qui JE l'ai partagée (badges d'avatars des vues
- * liste), DÉRIVÉE de `useRelatedTaskShares()`.
- *
- * ❌ Ne pas la rebrancher sur `useMyTaskShares()`. Les deux lisent la MÊME
- * table : `related` filtre `shared_by = moi OR friend_id = moi`, donc il
- * contient déjà, en entier, ce que `mine` (`shared_by = moi`) renvoie, et il
- * sélectionne toutes ses colonnes. C'était une seconde requête pour un
- * sous-ensemble de la première, et les deux partaient à chaque ouverture.
- *
- * Effet de bord bienvenu : cette carte suit désormais le canal Realtime, qui
- * n'invalidait que la clé `related` (`useSharedTasksRealtime`).
- *
- * L'identité vient de `useAuth`, jamais d'une prop : un appelant qui oublie de
- * la passer viderait les badges en silence, ce qui ne ressemble pas à un bug.
- */
-export const useSharesByTask = (): Map<string, string[]> => {
-  const { user } = useAuth();
-  const { data: shares = [] } = useRelatedTaskShares();
-  return useMemo(() => {
-    const m = new Map<string, string[]>();
-    if (!user?.id) return m;
-    for (const s of shares) {
-      if (s.sharedBy !== user.id) continue;
-      const arr = m.get(s.taskId) ?? [];
-      arr.push(s.friendId);
-      m.set(s.taskId, arr);
-    }
-    return m;
-  }, [shares, user?.id]);
 };
 
 /**

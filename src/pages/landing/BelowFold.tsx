@@ -1,4 +1,6 @@
-// Le bas du parcours perso, monté au premier geste du visiteur.
+// Le bas d'un parcours de la landing, monté au premier geste du visiteur.
+// Perso depuis le 2026-10-16 ; entreprise depuis le 2026-10-22 (tout ce qui
+// suit `EnterpriseHero`, 1 007 noeuds DOM au chargement ramenés à 266).
 //
 // 🔴 POURQUOI (2026-10-16, TBT mobile). Monter tout le parcours d'un coup
 // coûtait UNE tâche de ~1 s à CPU ×4 : React rendait les cinq vitrines, les
