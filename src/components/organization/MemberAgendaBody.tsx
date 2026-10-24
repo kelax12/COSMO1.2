@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { dayCellNameFromContent } from '@/lib/fullcalendar-a11y';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -424,6 +425,7 @@ export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) 
               eventResize={handleEventResize}
               eventReceive={handleEventReceive}
               datesSet={handleDatesSet}
+              dayCellDidMount={dayCellNameFromContent}
               unselectAuto={true}
               unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,[data-radix-popper-content-wrapper]"
               eventContent={(eventInfo) => (
