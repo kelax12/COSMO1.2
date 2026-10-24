@@ -50,6 +50,7 @@
 | `check:legal` | tableau de conformité | | `docs/LEGAL.md` |
 | `check:legal-journal` | une modification des CGU est un **changement de contrat** | `C-107` | `docs/LEGAL-JOURNAL.md` |
 | `check:retention` | durées de conservation confrontées à la **donnée** | `C-93` | `docs/RGPD-REGISTRE.md` |
+| `check:subprocessors` | tiers recevant des données **dérivés** du code (CSP, hôtes, SDK) vs registre art. 30 et `LEGAL.md` § 6 | `AM-3` | `docs/RGPD-REGISTRE.md` |
 | `check:erasure` | couverture d'effacement, sans liste en dur | `C-92` | `docs/RGPD.md` |
 | `check:portability` | export art. 20 comparé à l'inventaire des colonnes | `C-94` | `docs/RGPD.md` |
 | `check:stripe-prices` | grille **Stripe** comparée au code | `C-106` | `docs/STRIPE-LIVE.md` |
