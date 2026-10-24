@@ -27,6 +27,7 @@ interface Params {
   isDemo: boolean;
   toggleComplete: (taskId: string) => void;
   addTaskToList: (taskId: string, listId: string) => void;
+  removeTaskFromList: (taskId: string, listId: string) => void;
   updateTask: (taskId: string, updates: { category?: string; deadline?: string; health?: TaskHealth | null }) => void;
   deleteTask: (taskId: string) => void;
   restoreTask: (task: Task) => void;
@@ -40,6 +41,7 @@ export function useTaskSelection({
   isDemo,
   toggleComplete,
   addTaskToList,
+  removeTaskFromList,
   updateTask,
   deleteTask,
   restoreTask,
@@ -80,6 +82,14 @@ export function useTaskSelection({
     selectedIds.forEach((taskId) => addTaskToList(taskId, listId));
     const listName = lists.find((l) => l.id === listId)?.name ?? 'la liste';
     toast.success(tp('toast.addedToList', selectedIds.length, { list: listName }));
+    exitSelectMode();
+  };
+
+  // Liste déjà cochée pour TOUTE la sélection : le même geste l'en retire.
+  const bulkRemoveFromList = (listId: string) => {
+    selectedIds.forEach((taskId) => removeTaskFromList(taskId, listId));
+    const listName = lists.find((l) => l.id === listId)?.name ?? 'la liste';
+    toast.success(tp('toast.removedFromList', selectedIds.length, { list: listName }));
     exitSelectMode();
   };
 
@@ -145,6 +155,7 @@ export function useTaskSelection({
     setShowBulkDeleteConfirm,
     bulkComplete,
     bulkAddToList,
+    bulkRemoveFromList,
     confirmBulkDelete,
     bulkSetCategory,
     bulkSetDeadline,
