@@ -84,7 +84,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
             type="button"
             onClick={focusOverdue}
             className="text-[rgb(var(--color-danger-text))] font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:underline"
-            aria-label={tp('header.overdueFilter', overdueCount)}
+            aria-label={`${tp('header.overdueCount', overdueCount)}, ${tp('header.overdueFilter', overdueCount)}`}
           >
             {tp('header.overdueCount', overdueCount)}
           </button>
