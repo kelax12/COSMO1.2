@@ -90,12 +90,16 @@ const ROUTING_FUNCTIONS = [
   'org-webhook-dispatch',
 ] as const;
 
-const SWALLOWED_ANY = /const\s*\{([^}]*)\}\s*=\s*await\s+(?:supabase\w*|admin)\b/g;
-
+/**
+ * Le détecteur d'origine, appliqué aussi au client `admin`.
+ *
+ * ⚠️ Il DÉLÈGUE à `swallowedReads` au lieu d'en recopier le filtre : une
+ * seconde copie n'était pas désarmée par le sabotage `es-erreur-toleree`
+ * (`check:sabotages`), qui cible la ligne du filtre et l'exige unique.
+ * Déléguée, la même mutation désarme les deux détecteurs à la fois.
+ */
 function swallowedReadsAny(code: string): string[] {
-  return [...code.matchAll(SWALLOWED_ANY)]
-    .map((m) => m[1])
-    .filter((binding) => binding.includes('data') && !binding.includes('error'));
+  return swallowedReads(code.replace(/await\s+admin\b/g, 'await supabaseAdmin'));
 }
 
 describe('fonctions de paiement et file de webhooks : aucune lecture n\'avale son erreur (SV-8)', () => {
