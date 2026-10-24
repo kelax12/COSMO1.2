@@ -52,7 +52,6 @@ const ProOKRSection: React.FC<ProOKRSectionProps> = ({ okrs, orgNames, userId, o
               key={okr.id}
               type="button"
               onClick={() => { onSelectOrg(okr.orgId); navigate(buildOrgLink('okr', { okr: okr.id })); }}
-              aria-label={`${okr.title}, ${t('pro.openInOrg')}`}
               className="group text-left rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 hover:bg-[rgb(var(--color-hover))] transition-colors"
             >
               <div className="flex items-start justify-between gap-2 mb-2">
@@ -64,6 +63,9 @@ const ProOKRSection: React.FC<ProOKRSectionProps> = ({ okrs, orgNames, userId, o
                   <h3 className="font-semibold text-[rgb(var(--color-text-primary))] truncate">{okr.title}</h3>
                 </div>
                 <ArrowUpRight size={18} className="shrink-0 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+                {/* Nom tiré du contenu, complété ici : un aria-label qui omettait le
+                    texte visible (organisation, progression) échouait axe-core 4.14. */}
+                <span className="sr-only">{t('pro.openInOrg')}</span>
               </div>
 
               <div className="flex items-center gap-2 mb-3">
