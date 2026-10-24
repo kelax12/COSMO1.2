@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import type { Theme } from '@/lib/theme';
 
 /** Thème posé sur `<html>` par `applyTheme` (classes `dark`, `gris`, `noir`). */
-export function readDocumentTheme(root: HTMLElement = document.documentElement): Theme {
-  const c = root.classList;
+export function readDocumentTheme(root?: HTMLElement): Theme {
+  // Sans document : le rendu serveur de la copie du guide (src/prerender/content-copy.tsx).
+  if (!root && typeof document === 'undefined') return 'light';
+  const c = (root ?? document.documentElement).classList;
   if (c.contains('noir')) return 'noir';
   if (c.contains('gris')) return 'gris';
   if (c.contains('dark')) return 'dark';
