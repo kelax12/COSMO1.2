@@ -51,6 +51,7 @@ on:
       - scalability-volume
       - restore-drill
       - Grille Stripe
+      - Secrets age
       - Signaux SEO
       # ⚠️ `Uptime` n'y est PAS NON PLUS, et ce n'est pas un oubli : il ouvre
       # DÉJÀ sa propre issue, qui se referme seule au retour du vert.
