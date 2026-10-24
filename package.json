@@ -55,6 +55,7 @@
     "check:portability": "node scripts/check-portability-export.mjs",
     "check:env": "node scripts/check-env-contract.mjs",
     "check:edge-smoke": "node scripts/check-edge-smoke.mjs",
+    "check:secrets-age": "node scripts/check-secrets-age.mjs",
     "check:supabase-posture": "node scripts/check-supabase-posture.mjs",
     "check:retention": "node scripts/check-retention.mjs",
     "check:db-cost": "node scripts/check-db-cost.mjs",
