@@ -60,6 +60,13 @@ export const REPORT_BUG_LIMITS = {
    * Atteint, le client bascule sur son lien mailto, qui existe déjà.
    */
   anonymous: { limit: 30, window: '1 day' },
+  /**
+   * Plafond de TOUTE la fonction, que chaque appelant consomme après son
+   * propre seau. Sans lui, des comptes créés en série (aucune confirmation
+   * d'adresse, G-2) multipliaient les « 3 par heure ». Plus large que
+   * `anonymous` : un flot anonyme ne l'atteint jamais seul.
+   */
+  global: { limit: 100, window: '1 day' },
 } as const
 
 /**
