@@ -34,7 +34,7 @@ export const createTaskSchema = z.object({
   health: z.enum(['on_track', 'at_risk', 'off_track']).nullable().optional(),
   isCollaborative: z.boolean().optional(),
   pendingInvites: z.array(z.string()).optional(),
-  collaboratorValidations: z.record(z.boolean()).optional(),
+  collaboratorValidations: z.record(z.string(), z.boolean()).optional(),
   sharedBy: z.string().optional(),
   userId: z.string().optional(),
 });
