@@ -122,6 +122,20 @@ describe('les bornes — on ne rend jamais plus que ce qu on a encaisse', () => 
     }
   });
 
+  it('une periode qui se termine A L INSTANT de la demande ne rend rien', () => {
+    // Borne exacte : `periodEnd === now`, la periode est consommee en entier.
+    for (const interval of ['monthly', 'yearly'] as const) {
+      const d = refundAmount({
+        amountPaidCents: 5000,
+        interval,
+        periodStart: NOW - 30 * DAY,
+        periodEnd: NOW,
+        now: NOW,
+      });
+      expect(d).toEqual({ amountCents: 0, reason: 'nothing_to_refund', monthsRemaining: 0 });
+    }
+  });
+
   it('un essai gratuit (rien encaisse) ne rend rien, sans lever', () => {
     // On resilie quand meme : c'est l'autre moitie du geste.
     for (const amountPaidCents of [0, -1, Number.NaN]) {
