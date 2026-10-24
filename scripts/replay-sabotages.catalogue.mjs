@@ -357,6 +357,72 @@ export const CATALOGUE = [
       + 'mig. 094b) : un détecteur qui le compte déclarerait fermées des fonctions ouvertes.',
   },
 
+  // ── validate:migrations · la checklist AM-4, règles 6 à 16 (cliquet 227) ──
+  {
+    id: 'migration-table-sans-rls',
+    famille: 'produit',
+    garde: { commande: 'scripts/validate-migrations.mjs' },
+    modifs: [c(
+      'supabase/migration/999_sabotage_sans_rls.sql',
+      'CREATE TABLE IF NOT EXISTS public.sabotage_sans_rls (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid()\n);\n',
+    )],
+    raison: /table sabotage_sans_rls creee sans ENABLE ROW LEVEL SECURITY/,
+    pourquoi:
+      'Une table neuve sans RLS est lisible et écrivable par tout rôle qui a le GRANT par '
+      + 'défaut du schéma public : la frontière de sécurité du dépôt, c est la RLS.',
+  },
+  ...[
+    ['search-path', String.raw`if (fn.definer && !/\bSET\s+search_path\s*(?:=|TO)\s*''/i.test(fn.header)) {`, 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur une fonction SECURITY DEFINER sans SET search_path',
+      'Une fonction DEFINER au search_path mutable laisse l appelant substituer ses propres objets à ceux du schéma.'],
+    ['revoke-public', 'if (!fnRevokedPublic.has(key)) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur un GRANT EXECUTE sans REVOKE FROM PUBLIC, anon',
+      'Un GRANT EXECUTE sans REVOKE préalable laisse la fonction ouverte à PUBLIC, donc à tout rôle.'],
+    ['revoke-anon', 'if (!fnRevokedAnon.has(key)) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE si seul PUBLIC est révoqué (anon garde le GRANT par défaut)',
+      'REVOKE FROM PUBLIC ne retire pas le GRANT nommé à anon posé par défaut (leçon de la mig. 094b).'],
+    ['or-replace', 'if (!fn.orReplace) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur un CREATE FUNCTION sans OR REPLACE',
+      'Une migration non rejouable échoue sur une base où la fonction existe déjà : la prod en a.'],
+    ['drop-policy', 'if (!drops.some(', 'if (false && !drops.some(',
+      'TÉMOIN : ÉCHOUE sur un CREATE POLICY sans DROP POLICY IF EXISTS préalable',
+      'La prod a déjà des policies appliquées : un CREATE POLICY sans DROP préalable casse le rejeu.'],
+    ['with-check', "if (p.cmd === 'UPDATE' &&", 'if (false &&',
+      'TÉMOIN : ÉCHOUE sur une policy FOR UPDATE sans WITH CHECK',
+      'Sans WITH CHECK, la ligne modifiée n est pas re-vérifiée : faille N1, un UPDATE déplace une ligne hors de son propriétaire.'],
+    ['rls', 'if (rlsActive.get(table) !== true) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur une table sans ENABLE ROW LEVEL SECURITY',
+      'Un détecteur de RLS aveugle laisse passer une table ouverte à tout rôle qui a le GRANT par défaut.'],
+    ['prevent-user-id', 'if (!tablesPreventUid.has(table)) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur une table à user_id sans trigger prevent_user_id_change',
+      'Sans prevent_user_id_change, un UPDATE peut transférer une ligne à un autre compte (mass-assignment V1).'],
+    ['auto-reference', 'corps.matchAll(autoRef)', '[]',
+      'TÉMOIN : ÉCHOUE sur une auto-référence ON DELETE CASCADE ou RESTRICT',
+      'RESTRICT sur une auto-référence rendait la suppression de compte impossible (RGPD art. 17).'],
+    ['trigger-definer', 'if (fn.trigger && fn.definer &&', 'if (false &&',
+      'TÉMOIN : ÉCHOUE sur une fonction de trigger SECURITY DEFINER, quel que soit son nom',
+      'Un trigger BEFORE en DEFINER s exécute avant le WITH CHECK : ses erreurs deviennent un oracle (B-3).'],
+    ['journal-policy', 'if (INALTERABLES[p.table]?.cmds.includes(p.cmd)) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur une policy UPDATE ou DELETE du journal fiscal',
+      'Le journal fiscal est inaltérable (mig. 125) : une policy de réécriture en ferait un registre modifiable.'],
+    ['journal-purge', 'if (ecrit.test(sql) || desarme.test(sql) || droit.test(sql)) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur une purge du journal fiscal ou des preuves de renouvellement',
+      'Purger payment_records ou renewal_notices détruit une preuve exigible (mig. 125, L215-1).'],
+    ['admin-allowlisted', String.raw`/\badmin_allowlisted\s*\(/i.test(p.body)`, 'false',
+      'TÉMOIN : ÉCHOUE sur une policy gardée par admin_allowlisted()',
+      'admin_allowlisted() ignore le niveau d assurance de la session : la garde admin est is_admin() (mig. 131).'],
+    ['sanitize', 'if (/raw_user_meta_data/i.test(fn.body)', 'if (false && /raw_user_meta_data/i.test(fn.body)',
+      'TÉMOIN : ÉCHOUE sur raw_user_meta_data recopié sans sanitize_display_name()',
+      'raw_user_meta_data est contrôlé par l utilisateur : recopié sans sanitize_display_name(), il porte la faille M-2.'],
+  ].map(([id, chercher, remplacer, attendu, pourquoi]) => ({
+    id: `migration-detecteur-${id}`,
+    famille: 'detecteur',
+    garde: 'scripts/migration-guards.test.mjs',
+    modifs: [r('scripts/validate-migrations.mjs', chercher, remplacer)],
+    attendu: [attendu],
+    pourquoi,
+  })),
+
   // ═════════════════════════════════════════════════════════════════
   // RGPD — effacement, portabilité, conservation
   // ═════════════════════════════════════════════════════════════════
@@ -482,6 +548,36 @@ export const CATALOGUE = [
     pourquoi:
       'Un balayage qui ne trouve plus rien rend toutes les gardes d`architecture vertes '
       + 'en ne regardant rien : le défaut trouvé par mutation le 2026-09-04.',
+  },
+  {
+    id: 'mail-mx-absent-accepte',
+    famille: 'detecteur',
+    garde: 'scripts/check-mail-reception.guard.test.mjs',
+    modifs: [r('scripts/check-mail-reception.mjs', '  if (hotes.length === 0) {', '  if (false) {')],
+    attendu: ['TÉMOIN : un domaine sans MX fait échouer'],
+    pourquoi:
+      'M-53 : `contact@thecosmo.app` est publiée dans les mentions légales. Un domaine '
+      + 'dont les MX ont disparu ne reçoit plus rien, et la garde le dirait « en état ».',
+  },
+  {
+    id: 'mail-rcpt-pousse-jusqu-a-data',
+    famille: 'detecteur',
+    garde: 'scripts/check-mail-reception.guard.test.mjs',
+    modifs: [r('scripts/check-mail-reception.mjs', "      // etape 3 : la réponse à RCPT TO. On s'arrête ICI, jamais de DATA.\n      envoyer('QUIT');", "      // etape 3 : la réponse à RCPT TO. On s'arrête ICI, jamais de DATA.\n      envoyer('DATA');\n      envoyer('QUIT');")],
+    attendu: ['TÉMOIN : une adresse acceptée rend « recoit », et AUCUN DATA n est envoyé'],
+    pourquoi:
+      'Une sonde de réception qui pousse jusqu`à `DATA` ENVOIE un message à chaque passage : '
+      + 'la garde deviendrait une source de courrier dans la boîte qu`elle vérifie.',
+  },
+  {
+    id: 'mail-balayage-aveugle',
+    famille: 'detecteur',
+    garde: 'scripts/check-mail-reception.guard.test.mjs',
+    modifs: [r('scripts/check-mail-reception.mjs', "  'src/locales',\n  'src/pages',\n  'src/components',\n  'src/lib/contact.mjs',\n  'index.html',", "  'src/nexistepas',")],
+    attendu: ['TÉMOIN : le balayage du dépôt voit contact@thecosmo.app et l adresse du JSON-LD'],
+    pourquoi:
+      'Un balayage qui ne voit plus les surfaces publiées ne vérifie plus aucune adresse : '
+      + 'la réception serait déclarée saine sur zéro adresse mesurée.',
   },
   {
     id: 'bundle-sans-dist',
