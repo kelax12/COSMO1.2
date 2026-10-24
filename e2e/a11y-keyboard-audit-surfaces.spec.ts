@@ -330,7 +330,7 @@ test('MESURE · ImportTasksDialog (« Importer », paramètres)', async ({ demoP
 test('MESURE · MobileTaskSearch (recherche ancrée en bas, mobile)', async ({ demoPage: page }) => {
   await passerEnMobile(page);
   await openTasksPage(page);
-  await ouvrirAuClavier(page, visible(page.getByRole('button', { name: /^ouvrir la recherche$/i })));
+  await ouvrirAuClavier(page, visible(page.getByRole('button', { name: /^ouvrir la recherche/i })));
   await mesurerSurface(page, 'MobileTaskSearch', page.getByRole('dialog', { name: /^rechercher une tâche$/i }));
 });
 

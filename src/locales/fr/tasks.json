@@ -290,6 +290,7 @@
     "create": "Créer une liste intelligente"
   },
   "inbox": {
+    "pendingSr": "{{count}} en attente",
     "acceptAll": "Tout accepter",
     "label": "Boîte de réception",
     "allClear": "Tout est à jour",
