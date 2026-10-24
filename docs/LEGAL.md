@@ -620,6 +620,10 @@ le statut est « Enregistrée » ou « Déposée ».
 | Vercel | hébergement front | société américaine, région du projet non vérifiée | ⚠️ **Le DPA publié ne couvre explicitement que les plans Enterprise et Pro** (vérifié 2026-09-14). À vérifier : plan Vercel du projet `cosmo1` — si Hobby, la couverture contractuelle n'est pas acquise. Traite au minimum les adresses IP et les logs, qui sont des données personnelles. |
 | Stripe | paiement | Irlande et États-Unis | DPA. Devient responsable de traitement pour ses propres finalités antifraude. |
 | Sentry | monitoring | société américaine | ❌ **Signature manuelle requise** (vérifié 2026-09-14) : DPA disponible dans Sentry → Legal & Compliance, acceptable uniquement par un membre au rôle Owner/Billing (ou via DocuSign). `beforeSend` retire déjà emails et UUID, à documenter comme mesure de minimisation. |
+| Resend | envoi des e-mails transactionnels (invitations, avis de reconduction, signalements, inactivité) | société américaine | ⚠️ **Écart relevé le 2026-10-24 par `check:subprocessors`** : déclaré au registre (ajout du 2026-09-24) mais absent de ce tableau. DPA **non archivé** (ligne A5). |
+| Cloudflare (Turnstile) | anti-robot des formulaires de connexion et d'inscription | société américaine | ⚠️ **Écart relevé le 2026-10-24** : absent de ce tableau. Reçoit l'adresse IP et des signaux du navigateur, seulement si la clé Turnstile est posée. DPA **non archivé**. |
+| Google | connexion OAuth (choix de l'utilisateur), avatars | Irlande et États-Unis | ⚠️ **Écart relevé le 2026-10-24** : absent de ce tableau. Uniquement si l'utilisateur choisit la connexion Google. |
+| GitHub | sauvegardes chiffrées de la base (artefact de `db-backup.yml`, 30 jours) | États-Unis | ⚠️ **Écart relevé le 2026-10-24** : absent de ce tableau. Dump chiffré, clé hors de GitHub. |
 | Analytics | mesure d'audience | à qualifier | Déterminer si l'exemption CNIL de consentement s'applique, sinon passer derrière le bandeau. |
 
 - ❌ **Ne jamais ajouter un prestataire traitant des données sans archiver son DPA.** C'est la
