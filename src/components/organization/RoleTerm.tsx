@@ -29,6 +29,8 @@ const RoleTerm = ({ term, children, label, className = '' }: {
   const [glossary, setGlossary] = useState(false);
   const [firstSight, setFirstSight] = useState(false);
   const anchor = useRef<HTMLSpanElement>(null);
+  // Vrai dès que la personne ouvre elle-même la définition (clic ou Entrée sur le « ? »).
+  const userOpened = useRef(false);
   useEffect(() => {
     // 🔴 Jamais par-dessus une surface modale qui ne la contient pas. La bulle
     // est en `z-[10001]` (elle doit passer au-dessus des fiches qui l'hébergent) :
@@ -60,7 +62,7 @@ const RoleTerm = ({ term, children, label, className = '' }: {
         <PopoverTrigger asChild>
           <button
             type="button"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => { userOpened.current = true; e.stopPropagation(); }}
             aria-label={t('glossary.termHelp', { term: name })}
             className="max-md:hidden inline-flex items-center justify-center w-4 h-4 rounded-full text-current opacity-60 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
           >
@@ -70,6 +72,10 @@ const RoleTerm = ({ term, children, label, className = '' }: {
         <PopoverContent
           className="z-[10001] w-72 text-xs normal-case tracking-normal font-normal bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))]"
           onClick={(e) => e.stopPropagation()}
+          // La bulle de PREMIER affichage s'ouvre d'elle-même : elle ne doit pas prendre le
+          // focus, sinon elle l'arrache à la fiche ou à la feuille qui l'héberge (le piège
+          // de la modale le perd, AM-2 `MemberSheet`). Ouverte par la personne, elle le prend.
+          onOpenAutoFocus={(e) => { if (!userOpened.current) e.preventDefault(); }}
         >
           <Suspense fallback={<p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{name}</p>}>
             <RoleTermCard term={term} onOpenGlossary={() => { setOpen(false); setGlossary(true); }} />
