@@ -25,6 +25,7 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
+import { pickOrgSuccessor, type SuccessorCandidate } from '../_shared/org-membership.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 
@@ -277,7 +278,7 @@ Deno.serve(async (req) => {
           // jamais deviner que l'organisation est vide.
           const { data: others, error: membersErr } = await supabaseAdmin
             .from('organization_members')
-            .select('user_id, role, joined_at')
+            .select('user_id, role, joined_at, suspended_at, access_expires_at')
             .eq('org_id', orgId)
             .neq('user_id', userId)
             .order('joined_at', { ascending: true })
@@ -286,8 +287,10 @@ Deno.serve(async (req) => {
             failedTables.push('organization_members')
             continue
           }
-          const successor =
-            (others ?? []).find((m) => m.role === 'admin') ?? (others ?? [])[0]
+          // SV-2 : un membre actif d'abord. Un propriétaire ne peut être ni
+          // suspendu ni restreint (mig. 161) : choisir une personne écartée
+          // lui rendait la facturation et le remboursement, sans retour possible.
+          const successor = pickOrgSuccessor((others ?? []) as SuccessorCandidate[], Date.now())
           if (!successor) continue // seul membre → cascade s'en charge
           const successorId = successor.user_id as string
           const { error: transferErr } = await supabaseAdmin
