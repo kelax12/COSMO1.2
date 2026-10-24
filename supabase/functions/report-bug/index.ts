@@ -176,6 +176,14 @@ Deno.serve(async (req) => {
       limit: REPORT_BUG_LIMITS.perIp.limit,
       window: REPORT_BUG_LIMITS.perIp.window,
     },
+    // SV-3 : APRÈS l'IP, pour qu'un appelant déjà refusé par son seau ne
+    // vide pas celui de tout le monde.
+    {
+      domain: 'report-bug:global',
+      value: 'all',
+      limit: REPORT_BUG_LIMITS.global.limit,
+      window: REPORT_BUG_LIMITS.global.window,
+    },
   ])
   if (!ipVerdict.allowed) {
     // 503 quand c'est NOTRE configuration qui manque, 429 quand c'est un abus :

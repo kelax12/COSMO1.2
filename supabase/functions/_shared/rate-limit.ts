@@ -43,12 +43,21 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from './alert.ts'
 
+export { callerIp } from './caller-ip.ts'
+
 /** Plafonds retenus le 2026-09-03 (arbitrage §0 de `a-faire-code.md`). */
 export const REPORT_BUG_LIMITS = {
   /** 3 rapports par heure et par compte. */
   perAccount: { limit: 3, window: '1 hour' },
   /** 10 par jour et par IP — couvre le cas anonyme, et les IP partagées. */
   perIp: { limit: 10, window: '1 day' },
+  /**
+   * 🔴 SV-3 (2026-10-24) : 30 par jour pour TOUTE la fonction. Le commentaire
+   * de `callerIp` promettait un « plafond global » qui n'existait pas : un
+   * appelant anonyme qui changeait d'adresse n'avait plus aucune borne. Atteint,
+   * le client bascule sur son lien mailto, qui existe déjà.
+   */
+  global: { limit: 30, window: '1 day' },
 } as const
 
 /**
@@ -66,20 +75,6 @@ export const SEND_ORG_INVITE_LIMITS = {
   /** 100 e-mails par jour et par organisation : borne une organisation à plusieurs admins. */
   perOrg: { limit: 100, window: '1 day' },
 } as const
-
-/**
- * L'adresse de l'appelant, telle que la voit le gateway Supabase.
- *
- * `x-forwarded-for` peut porter une chaîne de relais : la PREMIÈRE entrée est
- * le client d'origine. Elle est falsifiable par le client, mais le gateway la
- * réécrit en amont — et de toute façon, forger cet en-tête ne fait que changer
- * de seau, ce qui reste borné par le plafond global de la fonction.
- */
-export function callerIp(req: Request): string {
-  const forwarded = req.headers.get('x-forwarded-for') ?? ''
-  const first = forwarded.split(',')[0]?.trim()
-  return first || req.headers.get('cf-connecting-ip') || 'unknown'
-}
 
 /** Hachage salé, tronqué : identifie un seau sans jamais désigner personne. */
 async function bucketKey(domain: string, value: string): Promise<string | null> {
