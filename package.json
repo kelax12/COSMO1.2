@@ -58,6 +58,7 @@
     "check:secrets-age": "node scripts/check-secrets-age.mjs",
     "check:supabase-posture": "node scripts/check-supabase-posture.mjs",
     "check:retention": "node scripts/check-retention.mjs",
+    "check:subprocessors": "node scripts/check-subprocessors.mjs",
     "check:db-cost": "node scripts/check-db-cost.mjs",
     "check:stripe-prices": "node scripts/check-stripe-prices.mjs",
     "i18n:pages": "node scripts/check-i18n-pages.mjs",
