@@ -49,6 +49,7 @@ on:
       - scalability-volume
       - restore-drill
       - Grille Stripe
+      - Secrets age
       # `Detection violation` (2026-10-23) : rouge = un signal de violation
       # possible OU une source non lue. Le signal pousse aussi son propre
       # message (echeance de 72 h) ; ici, c'est le filet si ce message tombe.
