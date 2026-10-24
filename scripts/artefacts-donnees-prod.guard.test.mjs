@@ -65,7 +65,7 @@ export const SECRETS_PROD = {
   STRIPE_SECRET_KEY: 'clients Stripe : noms, adresses email',
   CRON_SECRET: 'déclenche des Edge Functions qui lisent la production',
   VERCEL_TOKEN: 'configuration et journaux du déploiement de production',
-  SENTRY_AUTH_TOKEN: 'lit les issues Sentry de production : titres d'erreurs et événements',
+  SENTRY_AUTH_TOKEN: 'lit les issues Sentry de production : titres d erreurs et événements',
 };
 
 /** Secrets lus par les workflows SANS ouvrir de donnée personnelle. */
@@ -77,6 +77,7 @@ export const SECRETS_SANS_DONNEE = {
   OPS_ALERT_WEBHOOK_URL: "écrit vers le salon d'alerte, ne lit rien",
   VERCEL_PROJECT_ID: 'identifiant, pas un accès',
   VERCEL_TEAM_ID: 'identifiant, pas un accès',
+  SECRETS_AUDIT_TOKEN: 'PAT en lecture seule des secrets Actions : noms et dates, jamais une valeur',
   GITHUB_TOKEN: 'jeton du run, borné par `permissions:`',
 };
 
@@ -131,6 +132,9 @@ export const ARTEFACTS = {
 // `fichiersAffiches` : fichiers écrits par un client SQL que la garde ne
 // sait pas juger seule, affichés en connaissance de cause.
 export const CONTACTS_PROD = {
+  'secrets-age.yml › age › Mesurer l age des secrets': {
+    affiche: "nom, âge et échéance de chaque secret, et les écarts au registre ; aucune valeur (les lecteurs ne gardent que nom et date)",
+  },
   'weekly-digest.yml › digest › Envoyer le résumé': {
     affiche: "l'état de l'envoi seulement ; le message (totaux de prod) part au webhook, jamais au journal",
   },
