@@ -81,7 +81,7 @@ test('démo : créer une tâche l\'ajoute à la liste', async ({ demoPage: page 
   // à cet instant — le test concluait « bureau » et ne cliquait jamais.
   const surTelephone = (page.viewportSize()?.width ?? 1280) < 768;
   if (surTelephone) {
-    await page.getByRole('button', { name: /^ouvrir la recherche$/i }).filter({ visible: true }).first().click({ timeout: 15_000 });
+    await page.getByRole('button', { name: /^ouvrir la recherche/i }).filter({ visible: true }).first().click({ timeout: 15_000 });
   }
   // Bureau : `<input type="text">`, rôle `textbox`. Téléphone : `type="search"`,
   // rôle `searchbox`. Même nom accessible, deux rôles.
