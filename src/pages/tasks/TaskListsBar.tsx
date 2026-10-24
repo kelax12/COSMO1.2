@@ -10,6 +10,7 @@ import type { SmartRulePreset, TaskList } from '@/modules/lists';
 import { VIRTUAL_TODAY_ID } from './task-page-filter';
 import { useT } from '@/i18n/useT';
 import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
+import { chipMenuKeyProps } from './useChipLongPress';
 
 interface ColorOption { value: string; color: string; name: string }
 
@@ -64,11 +65,7 @@ interface TaskListsBarProps {
   handleCreateSmartList: (presetKey: SmartRulePreset) => void;
   startChipLongPress: (listId: string) => void;
   cancelChipLongPress: () => void;
-  /**
-   * Ouvre le menu d'actions d'une liste SANS appui long (mobile) : touche « menu
-   * contextuel » ou `Shift+F10` sur la puce focalisée. Un geste n'est jamais le
-   * seul chemin vers une action (WCAG 2.1.1, cf. `TaskCard`).
-   */
+  /** Chemin clavier du menu d'actions d'une liste (mobile), sans appui long : `chipMenuKeyProps`. */
   openListActions?: (listId: string) => void;
   /**
    * Ouvre le partage de la liste (bottom-sheet ShareListSheet). Absent = pas
@@ -416,17 +413,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 onPointerCancel={cancelChipLongPress}
                                 onPointerLeave={cancelChipLongPress}
                                 onContextMenu={(e) => { if (isMobile) e.preventDefault(); }}
-                                // Chemin CLAVIER (WCAG 2.1.1) : touche « menu contextuel » ou Shift+F10,
-                                // lues en `keydown` (Safari n'émet aucun `contextmenu` au clavier, C-118,
-                                // et `preventDefault` ici évite le menu natif là où il est synthétisé).
-                                onKeyDown={(e) => {
-                                  if (!isMobile || !openListActions) return;
-                                  if (e.key !== 'ContextMenu' && !(e.key === 'F10' && e.shiftKey)) return;
-                                  e.preventDefault();
-                                  cancelChipLongPress();
-                                  openListActions(list.id);
-                                }}
-                                aria-keyshortcuts={isMobile && openListActions ? 'Shift+F10' : undefined}
+                                {...chipMenuKeyProps(isMobile ? openListActions : undefined, cancelChipLongPress, list.id)}
                                 // Chip Spotify — MOBILE UNIQUEMENT : pilule pleine
                                 // sans bordure. La pastille de couleur de la liste
                                 // (juste en dessous) reste — seule exception au
