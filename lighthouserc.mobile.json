@@ -113,6 +113,20 @@
           "assertions": {
             "largest-contentful-paint": ["error", { "maxNumericValue": 3000 }]
           }
+        },
+        {
+          "_comment": [
+            "Cliquet LCP de /en/ (2026-10-22), meme plafond que la home : la meme",
+            "copie #lp-hero. 5 857 a 6 006 ms avant le correctif, l element LCP etant",
+            "le premier paragraphe du bandeau cookies (plus grand que le titre",
+            "anglais, deux lignes a 412 px). Le bandeau attend depuis le premier geste,",
+            "que Lighthouse ne fait jamais. Un rouge ici : lire l element LCP dans le",
+            "resume du job."
+          ],
+          "matchingUrlPattern": "/en/$",
+          "assertions": {
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }]
+          }
         }
       ]
     },

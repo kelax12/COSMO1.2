@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, Suspense, lazy } from 'react';
+import React, { useContext, useEffect, useRef, useState, Suspense, lazy } from 'react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { Link } from 'react-router';
 import {
@@ -36,6 +36,7 @@ import {
 } from './guide/primitives';
 import { useT } from '@/i18n/useT';
 import RichText from '@/components/ui/rich-text';
+import { PrerenderCopyContext } from '@/lib/prerender-copy-context';
 
 const GuidePage: React.FC = () => {
   const { t } = useT('guide');
@@ -48,6 +49,10 @@ const GuidePage: React.FC = () => {
   // Les vitrines suivent le thème de l'app : des captures sombres faisaient
   // des trous dans la page en thème clair.
   const theme = useDocumentTheme();
+  // Copie du prérendu (src/prerender/content-copy.tsx) : la première section
+  // seule. La copie ne montre que le premier écran, et les vitrines qui suivent
+  // (170 ko de balisage) suivent un thème que le build ne connaît pas.
+  const copie = useContext(PrerenderCopyContext);
   const [activeSection, setActiveSection] = useState<SectionId>('demarrage');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -209,6 +214,7 @@ const GuidePage: React.FC = () => {
               </div>
             </section>
 
+            {!copie && (<>
             {/* ══ TÂCHES ═════════════════════════════════════════════════ */}
             <section>
               <SectionHeader
@@ -548,6 +554,7 @@ const GuidePage: React.FC = () => {
                 <ArrowRight size={15} />
               </Link>
             </div>
+            </>)}
 
           </main>
           </ShowcaseTheme>

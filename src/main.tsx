@@ -13,6 +13,7 @@ import { startTrafficMeasurement } from './lib/traffic';
 // alourdirait le chunk d'entrée.
 import { applyRouterBootstrap } from './i18n/apply-bootstrap';
 import { loadCatalogs } from './i18n/catalog';
+import { loadDateLocale } from './i18n/format';
 import { afterFirstPaint } from './lib/after-first-paint';
 import './index.css';
 
@@ -236,7 +237,7 @@ function mount(): void {
 // `lib/after-first-paint.ts`.
 const isPrerendered = document.documentElement.hasAttribute('data-prerendered');
 
-loadCatalogs(activeLocale).catch(() => undefined).then(() => new Promise<void>((resolve) => {
+Promise.all([loadCatalogs(activeLocale), loadDateLocale(activeLocale)]).catch(() => undefined).then(() => new Promise<void>((resolve) => {
   if (isPrerendered) afterFirstPaint(resolve);
   else resolve();
 })).then(() => {
