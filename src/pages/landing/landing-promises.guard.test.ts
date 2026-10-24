@@ -2,7 +2,8 @@
 // ═══════════════════════════════════════════════════════════════════
 // Garde · les promesses de la landing ont une preuve (UI-PATTERNS.md, AM-4).
 //
-// Lit le manifeste `landing-promises.manifest.ts` et le confronte :
+// Lit le manifeste `__test__/landing-promises.manifest.ts` (données de test,
+// hors du scan des chaînes en dur : ce ne sont pas des textes affichés) et le confronte :
 //   1. au texte réellement publié (catalogues, SEO, cas d'usage, prérendu) ;
 //   2. au code (chaque preuve : fichier + motif) ;
 //   3. à des mesures (jeu de démo, droits, grille de paliers, remise annuelle).
@@ -17,7 +18,7 @@ import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { LANDING_PROMISES, type LandingPromise, type PromiseProof } from './landing-promises.manifest';
+import { LANDING_PROMISES, type LandingPromise, type PromiseProof } from '@/pages/landing/__test__/landing-promises.manifest';
 import {
   ENTERPRISE_PRICING_TIERS,
   ENTERPRISE_YEARLY_DISCOUNT,
