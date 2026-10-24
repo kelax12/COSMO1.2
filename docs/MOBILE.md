@@ -1,4 +1,4 @@
-<!-- note-audit: note=78 -->
+<!-- note-audit: note=77 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,54 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **78 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **77 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
 
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → 75 → 76 → 78 → 78 → **78 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**)
+## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → 75 → 76 → 78 → 78 → 78 → **77 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → **2026-10-22**)
+
+> ### 🟠 2026-10-22 (passe) · −1 : le LCP mobile crédité le 10-16 est perdu
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-22 : CI de `main` à `d16de29a` (run `39843255180`, cinq jobs verts ; `main` rouge du 10-20 à 22:03 au 10-22 à 14:39, 19 runs), `Visual` vert à `fb83cd60`, production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-22 |
+> |---|---|---|
+> | 🔴 LCP mobile de 4,5 à 6,0 s sur six URLs sur huit | **−1** | le +1 « LCP mobile » du 2026-10-16 repris : 1,36 à 1,52 s le 10-18, **`/guide/` 5,4 à 5,6 s, `/en/` 5,9 à 6,0 s** le 10-22. Détail et cause dans [`PERFORMANCE.md`](./PERFORMANCE.md), débité là aussi |
+> | ✅ WebKit | 0 | trois instables triés et corrigés (PR n° 94 : un produit, deux harnais) ; **aucun** instable `mobile-safari` au run `39843255180`. Les instables n'avaient pas été débités |
+> | ✅ Agenda en paysage, « Filtres » à 44 px | 0 | 447 → 0 px, plafond abaissé à 0 ; `MobileFiltersButton` 44 × 44. Jamais débités, comme les 11 commandes sous 44 px de `/entreprise/projects`, trouvées ce jour et laissées hors spec |
+>
+> **78 → 77.**
+
+> ### 🟡 2026-10-22 · instables WebKit triés : un produit, deux harnais
+>
+> Les cinq derniers runs `CI` de `main` (`311fa8a3` → `5eaa8b8c`, job `e2e`, logs et rapports Playwright) portent **quatre** cas `mobile-safari` instables, en trois familles. Chacune ouverte à l'écran (capture et instantané d'accessibilité du rapport CI, code du composant), pas lue sur son délai. PR [#94](https://github.com/kelax12/COSMO1.2/pull/94).
+>
+> | Cas | Runs | Verdict | Cause mesurée | Correctif |
+> |---|---|---|---|---|
+> | `expectOrgSectionOffered` (`fixtures.ts`) : `demo-entreprise › Aperçu`, `demo-entreprise-okr-modal › Organigramme` (la « modale OKR » des notes précédentes : c'est la feuille de section qui restait ouverte, pas la modale) | 2 / 5 | **PRODUIT** | `useModalA11y` posait son écouteur d'Échap dans un effet **passif**, qui tourne après la peinture : `OrgSectionSheet` (lazy) était à l'écran, le focus bientôt dedans, et Échap perdu. Instantané CI : bouton de section `expanded`, donc `onClose` jamais appelé | `useLayoutEffect` (les 58 surfaces du hook en profitent). Garde jsdom déterministe dans `use-modal-a11y.guard.test.tsx` : **rouge sous `useEffect`** (12 / 13, mesuré), verte après (13 / 13), avec son témoin |
+> | `demo-touch-gestures › swipe droit` | 1 / 5 (et les 10-09, 10-18, 10-20) | HARNAIS | Framer Motion 12 (`PanSession`) ne reconnaît le glissé qu'à la frame **suivant** le mouvement, et `pointerup` annule cette frame. `down`, 12 `move` et `up` traités par WebKit chargé sans frame rendue comptent pour un appui : le second glissé échouait donc aussi. Un doigt reste au moins une frame sur l'écran | le geste attend deux frames rendues ; la seconde tentative est **retirée** |
+> | `demo-journeys › compléter une tâche` (fixture `demoPage`) | 1 / 5 | HARNAIS | `dispatchEvent` sans délai propre attendait un CTA démo déjà démonté jusqu'au délai du **test** (3 min) ; le retry passait en 2,6 s | attentes bornées, URL relue après 5 s |
+> | `demo-touch-gestures › sheet « Plus », tap sur le fond` | 1, sur la CI de la PR (`e058ee65`) | HARNAIS | même famille que le swipe : la boîte du sheet lue pendant sa montée en ressort plaçait le tap sur le sheet une fois posé | position stable avant mesure, point vérifié sur le fond dans la page |
+> | `demo-billing-disarmed` | 5 / 5 | hors périmètre | rouge sur `chromium` **et** WebKit, déterministe : PR #87 | — |
+>
+> ⚠️ Aucun écart Safari à déclarer : aucun des trois n'était un comportement propre à Safari, seulement un moteur plus lent qui ouvrait plus grand deux fenêtres de course. Aucune assertion relâchée, aucun retry ajouté.
+> ❌ Rejeu local WebKit **non concluant** (machine à ~600 Mo libres : CTA démo à 30 s dans la fixture). La preuve est la CI de la PR, les quatre cas joués ×5 sans retry.
+
+> ### 🔧 2026-10-22 · `/agenda` en paysage : 447 → 0 px (note non touchée)
+>
+> Le dernier cliquet non nul du paysage (`PLAFOND_PAYSAGE`, `e2e/mobile-android.spec.ts`). Mesuré sur `main` à `5eaa8b8c`, Pixel 7 tourné (863 × 360), démo, vues jour, semaine et mois.
+>
+> | | Avant | Après |
+> |---|---|---|
+> | Débordement de page, 863 × 360 (jour / semaine / mois) | **447 / 447 / 445 px** | **0 / 0 / 0 px** |
+> | Ce qui sortait | la barre d'outils de `AgendaDesktopHeader` (en `md:` et plus) : une rangée sans retour à la ligne, ~1 100 px de contenu dans une colonne de 434 px. « Mois » rogné ; flèches, « Récurrences » et « Nouveau » invisibles, sans trace | tout visible, sur 2 rangées (115 px de haut) |
+> | Même barre à 1 024 / 1 280 / 1 600 px de large | **386 / 130 / 0 px** coupés (« Nouveau » perdu sur un portable) | 0 / 0 / 0 px ; 1 600 px inchangé, sur une ligne |
+>
+> Pas la grille FullCalendar : elle tenait déjà dans sa colonne. Correctif : la rangée se replie (`flex-wrap`, groupe central en `contents`, deux `ml-auto` qui rendent l'ancien `justify-between` sur une ligne) ; sous `lg`, « Tâches », « Récurrences » et « Nouveau » passent en icône, le nom restant dans `aria-label`. Plafond `/agenda` abaissé à **0**. La note n'est pas recalculée ici : le remboursement attend la CI verte de la PR, puis la prochaine passe d'audit.
+
+> ### ⚪ 2026-10-22 · remesure de C-57, note non rejouée (elle se rejoue à la passe d'audit)
+>
+> Le −1 « cibles tactiles sous 44 px » des 10-01 et 10-02 est déjà remboursé (+1 le 10-02 au soir, +1 le 10-03). Remesuré à `5eaa8b8c`, mode démo, 375 px : `touch-targets` **19/19 sur `chromium`, 20/20 sur `mobile-safari`** ; « Valider » **82 × 44**, « Renvoyer » **97 × 44**, rendus. Un défaut neuf, même classe, hors de la spec : « Filtres » (`MobileFiltersButton`, onglets Tâches, Projets, Membres de l'entreprise) à **42 × 40**, porté à 44 × 40 avec une zone de 44 × 44 ; `/entreprise/tasks` entre dans la spec. Spec modifiée : 20/20 et 21/21 en local. Reste hors spec : `/entreprise/projects`, tableau de bureau à 375 px, 11 commandes sous 44 px. Détail : [`ACCESSIBILITY.md`](./ACCESSIBILITY.md).
 
 > ### ⚪ 2026-10-20 · 0 : inchangée
 >

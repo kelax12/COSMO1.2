@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — **NON NOTÉ** : état d'un compte externe. Sa grille est gardée par `npm run check:stripe-prices` (C-106), dont le job n'est pas encore planifié — il le sera avec la bascule live.
+> **Note d'audit** — **NON NOTÉ** : état d'un compte externe. Sa grille est gardée par `npm run check:stripe-prices` (C-106), dont le job est planifié chaque jour depuis la bascule live du 2026-10-20.
 
 # Stripe — compte LIVE
 
@@ -46,10 +46,10 @@
 
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **AUCUNE garde ne compare la grille STRIPE au code.** `org-tiers.parity.test.ts` verrouille le Deno sur le TypeScript, donc **deux copies du dépôt l'une contre l'autre** ; rien ne confronte l'une ou l'autre aux prix réellement enregistrés chez Stripe. Or c'est le seul endroit où COSMO **annonce un montant** et où un tiers **en facture un autre** | aucun workflow ne contient `STRIPE_ORG_PRICE` ni d'appel à l'API Stripe | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:stripe-prices` · grille **lue** dans `premium-config.ts` (`C-106`) — 🔴 ne prouve PAS : 🔴 **`stripe-prices.yml` n'est PAS planifié.** Le jour de la bascule : poser `STRIPE_SECRET_KEY`, **décommenter le `schedule:`**, ajouter `Grille Stripe` à `ci-alert.yml`. Les deux derniers sont ceux qu'on oublie |
+| AM-1 | 🔴 **AUCUNE garde ne compare la grille STRIPE au code.** `org-tiers.parity.test.ts` verrouille le Deno sur le TypeScript, donc **deux copies du dépôt l'une contre l'autre** ; rien ne confronte l'une ou l'autre aux prix réellement enregistrés chez Stripe. Or c'est le seul endroit où COSMO **annonce un montant** et où un tiers **en facture un autre** | aucun workflow ne contient `STRIPE_ORG_PRICE` ni d'appel à l'API Stripe | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:stripe-prices` · grille **lue** dans `premium-config.ts` (`C-106`) — ✅ **PLANIFIÉ le 2026-10-20** avec la bascule : secret live posé, `schedule:` décommenté, `Grille Stripe` dans `ci-alert.yml` |
 | AM-2 | **Les 8 prix live ont été vérifiés UNE FOIS, le 2026-08-26.** Un prix désactivé ou dupliqué depuis ne serait vu par personne. La dérivation annuelle refuse d'ailleurs de choisir entre deux candidates (`yearly_unavailable`), donc un doublon **coupe l'encaissement annuel en silence** | vérification datée dans ce document, jamais rejouée | ✅ **OUTILLÉ le 2026-09-20** · doublon de prix et `tax_behavior` vérifiés (`C-106`) — 🔴 ne prouve PAS : idem AM-1 : la garde existe et ne tourne pas encore |
 | AM-3 | **La liste des events du webhook live ne sera vérifiée par rien après enregistrement.** Ils sont **SIX** ; ce dépôt a écrit « 5 » pendant six jours, et en enregistrer 5 couperait le **remboursement** sans aucun signal | recompté dans le code le 2026-09-12 | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:stripe-prices` (`C-106`) — 🔴 ne prouve PAS : idem AM-1 |
-| AM-4 | **Le passage en live n'a pas de répétition à blanc.** La séquence (remettre à zéro les identifiants par la mig. `140`, recréer les prix, réenregistrer le webhook, remplacer trois secrets) n'a jamais été parcourue, et chaque étape manquante échoue **après** encaissement | mig. `140` écrite, **non appliquée**, par construction | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-48`** : la séquence de bascule n'a jamais été parcourue, même à blanc. Elle recoupe `M-43`, `M-06`, `M-07` et `M-08` — la répétition est ce qui transforme quatre lignes espérées en une séquence éprouvée — *(jugé outillable le 09-16 : partiellement : le compte de test permet la répétition)* |
+| AM-4 | **Le passage en live n'a pas de répétition à blanc.** La séquence (remettre à zéro les identifiants par la mig. `140`, recréer les prix, réenregistrer le webhook, remplacer trois secrets) n'a jamais été parcourue, et chaque étape manquante échoue **après** encaissement | mig. `140` écrite, **non appliquée**, par construction | ✅ **PARCOURUE le 2026-10-20** (bascule réelle, cf. « Ce qui reste à faire avant d'encaisser ») · avant : 🟠 ouvert au 2026-09-21 · **`M-48`** : la séquence de bascule n'a jamais été parcourue, même à blanc. Elle recoupe `M-43`, `M-06`, `M-07` et `M-08` — la répétition est ce qui transforme quatre lignes espérées en une séquence éprouvée — *(jugé outillable le 09-16 : partiellement : le compte de test permet la répétition)* |
 
 ---
 
@@ -173,7 +173,7 @@ sur `bpc_1UAv9vHJLweDSN4F4xssO3OQ`, et la réponse les relit. Le sandbox n'a pas
 > webhook et les 4 prix), `reset_stripe_identifiers(true)` joué (5 customers effacés, journal
 > intact), mig. `224` + `ENTERPRISE_BILLING_ENFORCED = true` + `PRICES_VISIBLE = true`,
 > `stripe-prices.yml` planifié et ajouté à `ci-alert.yml`. Reste : recette réelle (paiement 20 €
-> puis remboursement) et mention 293 B au pied de facture (Dashboard).
+> puis remboursement), geste d'Axel. Mention 293 B : ✅ posée par le code le 2026-10-23 (point 4).
 
 1. ~~**Créer la structure juridique.**~~ ✅ SIREN obtenu (2026-10-20). Encaisser sans
    immatriculation aurait été du travail dissimulé.
@@ -217,6 +217,12 @@ sur `bpc_1UAv9vHJLweDSN4F4xssO3OQ`, et la réponse les relit. Le sandbox n'a pas
    réécrit un identifiant de test. Il se joue DANS la fenêtre de bascule, pas avant.
 4. Mention « TVA non applicable, art. 293 B du CGI » sur les factures tant que la franchise
    en base s'applique.
+   ✅ **Posée par le CODE le 2026-10-23** : `INVOICE_FOOTER` (`_shared/org-billing-contact.ts`) est
+   écrit dans `invoice_settings.footer` de chaque customer d'organisation, à sa création par
+   `stripe-org-checkout` et à chaque passage par le checkout ou le portail. Verrouillé par
+   `org-billing-contact.test.ts`. Relu le même jour sur le compte live : **0 customer**, endpoint
+   `we_1USka0…` toujours à 6 events et API `2024-06-20`. 🔴 À retirer au premier dépassement du
+   seuil de franchise.
 5. `tax_code` des produits : non renseigné (comme en test). À poser avec l'expert-comptable
    avant d'activer Stripe Tax ; il détermine le taux appliqué par pays.
 6. **Ne pas activer la collecte Stripe Tax** tant que la franchise en base s'applique : aucun

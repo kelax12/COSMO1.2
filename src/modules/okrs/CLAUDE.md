@@ -1,7 +1,7 @@
 # OKR · règles du dossier
 
 > Repris de `CLAUDE.md` le 2026-09-16, **sans une coupe**. Ce fichier est chargé
-> automatiquement dès qu un fichier de ce dossier est lu ou édité, et lui seul.
+> automatiquement dès qu'un fichier de ce dossier est lu ou édité, et lui seul.
 > Règles transversales : [`CLAUDE.md`](../../../CLAUDE.md) à la racine.
 
 ---

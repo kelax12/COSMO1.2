@@ -128,7 +128,11 @@ const ShareInviteClaimer: React.FC = () => {
   // C-53 — piege de focus, restitution du focus au declencheur, Echap et
   // semantique ARIA. Le nom accessible est celui que la surface portait deja.
   const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
-    open: true,
+    // 🔴 `invite !== null`, pas `true` : le composant est monté en permanence et la
+    // surface n'apparaît qu'avec l'invitation. Le hook posait donc son focus au
+    // montage, quand la surface n'existait pas, et ne le reposait jamais : le focus
+    // restait sur le corps de page (mesuré hors démo le 2026-10-23, AM-2).
+    open: invite !== null,
     // Le voile ferme par closeAfter (« decider plus tard », la tache reste
     // dans la boite de reception). Echap emprunte le MEME chemin.
     onClose: closeAfter,

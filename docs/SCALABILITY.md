@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **91 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **91 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
 
 # Scalabilité — audit mesuré, décisions et runbook
 
@@ -21,7 +21,18 @@ s'est révélée fausse.
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
 
-## Note de scalabilité : 71 → 84 → 86 → 89 → 91 → 87 → 90 → 90 → 90 → 90 → 91 → 91 → **91 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-18 → **2026-10-20**) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
+## Note de scalabilité : 71 → 84 → 86 → 89 → 91 → 87 → 90 → 90 → 90 → 90 → 91 → 91 → 91 → **91 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → **2026-10-22**) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
+
+> ### ⚪ 2026-10-22 · 0 : inchangée
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-22 : CI de `main` à `d16de29a` (run `39843255180`, cinq jobs verts ; `main` rouge du 10-20 à 22:03 au 10-22 à 14:39, 19 runs), `Visual` vert à `fb83cd60`, production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-22 |
+> |---|---|---|
+> | Base | 0 | **28 Mo** sur 500, `traffic_hits` à 23 lignes, 80 tables, 11 tâches `pg_cron` |
+> | `inactive-accounts` | 0 | job quotidien neuf ; la sélection des comptes se fait en base (mig. `226`), pas en boucle côté fonction |
+>
+> **91 → 91.**
 
 > ### ⚪ 2026-10-20 · 0 : le plafond par visiteur tient de nouveau
 >
@@ -192,6 +203,7 @@ Toutes les mesures de ce document sont **reproductibles** : les requêtes sont e
 | AM-2 | **Les invariants de coût de lecture ne sont vérifiés qu'à la main.** Le `Seq Scan` de `tasks` est reconstaté à chaque passe, jamais surveillé entre deux | aucun workflow ne joue d'`EXPLAIN` contre la production | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` (`C-87`) — 🔴 ne prouve PAS : le coût **facturé**, que Supabase n'expose pas |
 | AM-3 | **Aucune alerte sur la CROISSANCE.** Le dépôt sait dire « combien coûte une lecture aujourd'hui », jamais « à quelle vitesse ce coût monte ». Les volumes sont recomptés ponctuellement (749 tâches, 54 abonnements) | aucune série temporelle stockée | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` · série commitée, alerte sur la **pente** (`C-87`) — 🔴 ne prouve PAS : la charge réelle : c'est `scalability-volume`, et il mesure un runner, pas la production |
 | AM-4 | **Le plan Supabase est `free`, et rien ne surveille son changement d'état** (pause pour inactivité, quotas) | `plan: "free"` relu par l'API le 2026-09-15. `uptime.yml` teste la réponse HTTP, pas les quotas | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` · EXPLAIN **sous RLS**, rôle `authenticated`, transaction annulée (`C-87`) — 🔴 ne prouve PAS : le comportement à plusieurs millions de lignes : le plan est relu à chaud, sur le volume du jour |
+| AM-5 | **Les advisors de PERFORMANCE ne sont lus par aucune garde.** `Posture` ne lit que la sécurité. Relevé du 2026-10-23 : **40** clés étrangères sans index couvrant (dont celles que parcourt la suppression d'un compte en cascade) et **35** index jamais utilisés | aucun appel à `advisors/performance` dans `scripts/` | 🟠 **OUVERT le 2026-10-23** · session dédiée : index des FK parcourues par les cascades, référence d'écart sur les advisors de performance |
 
 
 > ### 🟢 2026-09-14 (soir) · note inchangée, mais le « non remesurable ici » de ce matin était trop large

@@ -8,7 +8,7 @@
     "guide": "Guide",
     "login": "Sign in",
     "faq": "FAQ",
-    "backToTop": "Back to top",
+    "backToTop": "Cosmo, back to top",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
   },
@@ -16,7 +16,7 @@
     "line1": "All your productivity,",
     "line2": "in a single app.",
     "subtitle": "Tasks, habits, a calendar with time-blocking and the OKR method, connected in one tool built to move you forward. No friction.",
-    "demoAria": "Try the demo without signing up",
+    "demoAria": "Try the free demo, without signing up",
     "demoCta": "Try the free demo",
     "signupCta": "Create a free account",
     "reassurance": "Demo pre-filled with 100 tasks · nothing to install · ready in 1 click",
@@ -153,7 +153,7 @@
     "professionals": {
       "profile": "Professionals",
       "title": "Peak performance",
-      "description": "Boost your career with productivity tools that change how you work and how you hit your goals.",
+      "description": "Boost your career with productivity tools that change how you work and how you reach your objectives.",
       "f1": "Advanced project management",
       "f2": "OKRs and personal development",
       "f3": "An effective prioritization system"

@@ -46,7 +46,7 @@
     "step2": "Every task gets a priority from **1 (very high)** to **5 (very low)**. Priority 1 shows in red, priority 2 in orange. Sort or filter by priority to focus on what really matters.",
     "step3Title": "Mark it done",
     "step3": "Tick the circle to the left of the task, or on a phone swipe it to the right. It leaves the active view; find it again with the **Done** filter. A recurring task creates its next occurrence the moment you tick it.",
-    "tip": "Quick add (**N**) understands the date and four symbols: **#health** for the category, **!!** for the priority (!!! = 1, !! = 2, ! = 3), **~30m** for the duration. The date words are French for now: « Appeler le dentiste jeudi #santé !! ~30m ». Enter creates the task and keeps the field open for the next one.",
+    "tip": "Quick add (**N**) understands the date and four symbols: **#health** for the category, **!!** for the priority (!!! = 1, !! = 2, ! = 3), **~30m** for the duration. The date words are French for now: “Appeler le dentiste jeudi #santé !! ~30m”. Enter creates the task and keeps the field open for the next one.",
     "featBookmark": "Starred",
     "featBookmarkDesc": "Star an important task: it gets a gold highlight and shows up in the Starred filter.",
     "featDuration": "Duration",
@@ -169,7 +169,7 @@
     "legendOkrDesc": "Progress gained during the period, objective by objective",
     "legendHabits": "Habits",
     "legendHabitsDesc": "Average completion rate of your active habits",
-    "note": "Statistics are computed in real time from your own data. The more regularly you use Cosmo, the more the charts reflect how you actually work."
+    "note": "Statistics are computed in real time from your own data. The more regularly you use Cosmo, the more the charts reflect your real work habits."
   },
   "entreprise": {
     "title": "Company mode",

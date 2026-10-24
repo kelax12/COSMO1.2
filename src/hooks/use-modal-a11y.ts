@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 
 // ═══════════════════════════════════════════════════════════════════
 // C-53 — le piège de focus des surfaces modales MAISON.
@@ -84,6 +84,17 @@ function lastFocusedOutside(root: HTMLElement | null): HTMLElement | null {
     return el;
   }
   return null;
+}
+
+/**
+ * Une modale ouverte depuis l'entrée d'un menu Radix a pour déclencheur cette
+ * entrée, qui disparaît avec le menu. Le vrai déclencheur est le bouton qui a
+ * ouvert le menu : Radix le désigne par l'`aria-labelledby` du menu.
+ */
+function menuTriggerOf(el: HTMLElement | null): HTMLElement | null {
+  const menu = el?.closest('[role="menu"][aria-labelledby]');
+  const id = menu?.getAttribute('aria-labelledby');
+  return (id && document.getElementById(id)) || el;
 }
 
 const FOCUSABLE = [
@@ -231,15 +242,22 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
     target.focus?.({ preventScroll: true });
   }, [initialFocusRef]);
 
-  useEffect(() => {
+  // 🔴 `useLayoutEffect`, PAS `useEffect` : l'écouteur d'Échap doit être posé
+  // AVANT que la surface ne soit peinte. Un effet passif tourne APRÈS la
+  // peinture, dans une tâche à part : entre les deux, la feuille est à l'écran,
+  // cliquable, et Échap n'y fait RIEN. Mesuré le 2026-10-22 sous WebKit en CI
+  // (`OrgSectionSheet`, chargée en lazy, donc commitée par une relance de
+  // Suspense) : Échap envoyé dès la feuille visible, perdu, la feuille restée
+  // ouverte 10 s avec le focus déjà dedans. Instable 2 fois sur 5 runs.
+  useLayoutEffect(() => {
     if (!open) return;
 
     const id = idRef.current as symbol;
     openStack.push(id);
 
-    // ⚠️ Le noeud est capturé ICI, pas relu dans le nettoyage. Un `useEffect`
-    // est PASSIF : React a deja detache les refs quand son nettoyage tourne, et
-    // `ref.current` y vaut `null`. On perdait donc le test « le focus est-il
+    // ⚠️ Le noeud est capturé ICI, pas relu dans le nettoyage. Écrit quand cet
+    // effet était PASSIF : React avait alors deja detache les refs quand son
+    // nettoyage tournait, et `ref.current` y valait `null`. On perdait donc le test « le focus est-il
     // encore dans la modale ? », donc la restitution au declencheur — mesure du
     // 2026-09-05, `focusReturned: false` sur HabitModal.
     const rootAtOpen = ref.current as HTMLElement | null;
@@ -250,7 +268,7 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
     const active = document.activeElement as HTMLElement | null;
     const activeIsOutside =
       !!active && active !== document.body && !(rootAtOpen && rootAtOpen.contains(active));
-    triggerRef.current = activeIsOutside ? active : lastFocusedOutside(rootAtOpen);
+    triggerRef.current = menuTriggerOf(activeIsOutside ? active : lastFocusedOutside(rootAtOpen));
 
     // Après peinture : le contenu de la modale peut n'être monté qu'au frame
     // suivant (AnimatePresence, variantes mobile ou desktop).
@@ -318,9 +336,16 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
         !active ||
         active === document.body ||
         (rootAtOpen ? rootAtOpen.contains(active) : false);
-      const trigger = triggerRef.current;
+      // Un déclencheur DÉMONTÉ (l'entrée d'un menu Radix, refermé en ouvrant
+      // la modale) ne peut plus reprendre le focus : il revient alors au
+      // dernier élément extérieur encore monté, en pratique le bouton qui avait
+      // ouvert ce menu. Sans ce repli, le focus tombait sur `body` (mesuré le
+      // 2026-10-22, `AssignRoleDialog` ouverte depuis « Actions pour … »).
+      const trigger = triggerRef.current?.isConnected
+        ? triggerRef.current
+        : lastFocusedOutside(rootAtOpen);
       triggerRef.current = null;
-      if (focusIsLoose && trigger && trigger.isConnected) {
+      if (focusIsLoose && trigger) {
         trigger.focus?.({ preventScroll: true });
       }
     };

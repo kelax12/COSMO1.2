@@ -5,9 +5,9 @@
 > [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Base de données ».
 > Findings de sécurité ouverts : [`faille.md`](../../faille.md), qui **fait foi**.
 
-## Ce dossier n est PAS géré par la CLI Supabase
+## Ce dossier n'est PAS géré par la CLI Supabase
 
-- La CLI lit `supabase/**migrations**/` (pluriel). Ici c est `supabase/**migration**/`
+- La CLI lit `supabase/**migrations**/` (pluriel). Ici c'est `supabase/**migration**/`
   (singulier) : un changelog SQL **manuel**, appliqué via le SQL editor ou `apply_migration`.
 - Fichiers numérotés `NNN_feature.sql`, pas des versions horodatées.
 - 🔴 **Ne PAS lancer `supabase db push`** contre ce dossier : la CLI ré-appliquerait les
@@ -17,35 +17,37 @@
 
 | Source | Dit quoi | Ne dit PAS |
 |---|---|---|
-| Le dépôt | ce qu on a voulu écrire | ce qui s exécute |
-| Le ledger `schema_migrations` | qu un NOM est passé | qu un `CREATE OR REPLACE` a remplacé le corps vivant |
+| Le dépôt | ce qu'on a voulu écrire | ce qui s'exécute |
+| Le ledger `schema_migrations` | qu'un NOM est passé | qu'un `CREATE OR REPLACE` a remplacé le corps vivant |
 | Le catalogue (`pg_get_functiondef`, `information_schema`) | **ce qui existe réellement** | |
 
-- 🔴 **Une absence au ledger ne prouve rien, et une présence non plus.** 32 fichiers du dépôt n ont
-  aucune entrée (migrations précoces, bel et bien appliquées) et 17 entrées n ont aucun fichier.
-- 🔴 **Une note « ✅ appliquée » sur une fonction SQL ne vaut que si `pg_get_functiondef()` l a
+- 🔴 **Une absence au ledger ne prouve rien, et une présence non plus.** 32 fichiers du dépôt n'ont
+  aucune entrée (migrations précoces, bel et bien appliquées) et 17 entrées n'ont aucun fichier.
+- 🔴 **Une note « ✅ appliquée » sur une fonction SQL ne vaut que si `pg_get_functiondef()` l'a
   vérifiée APRÈS coup.** C est exactement le défaut de la mig. 144 : ligne au ledger, corps jamais
   remplacé, création de sous-catégorie cassée en production pendant quatre jours (rejouée par la 147).
 - ✅ `npm run check:migration-coverage` fait ce travail en CI et rend un VERDICT par fichier.
 
-## 🔴 Commiter n est pas appliquer, et le dépôt l a payé dix-sept jours
+## 🔴 Commiter n'est pas appliquer, et le dépôt l'a payé dix-sept jours
 
 **`C-77`** : la mig. `136` est restée **commitée et dormante du 2026-09-03 au 09-20**. Pendant
 tout ce temps `okrTime` valait **0** sur `/statistics` pour tous les comptes réels, la démo
 affichait juste, et **aucune garde ne pouvait le voir** — le fichier était au dépôt, le produit
 compilait, la suite passait.
 
-- ❌ **Ne jamais écrire « la migration est faite » en parlant d un commit.** Le seul énoncé qui
+- ❌ **Ne jamais écrire « la migration est faite » en parlant d'un commit.** Le seul énoncé qui
   vaut cite une **entrée de ledger** ET une relecture par `pg_get_functiondef` / `information_schema`.
 - ⚠️ **Et citer la bonne entrée** : le numéro publié le 2026-09-20 pour la `136` était
-  `20260920105113`, qui n existe au ledger d **aucune** migration. Le vrai est `20260920104729`,
+  `20260920105113`, qui n'existe au ledger d **aucune** migration. Le vrai est `20260920104729`,
   relu en base le 09-21. Un numéro de ledger se copie depuis la base, jamais depuis une note.
 - ✅ **État au 2026-10-20, relu au ledger et au catalogue** : le dépôt va de `000` à `223`, et
   tout est en prod **sauf `206`** (suppression des jalons : `team_project_milestones` existe
   encore ; à appliquer APRÈS le front qui ne les lit plus). `211` → `223` ont chacune leur ligne
   (ledger **173**, dernière `20261019122246`). `164`, `181`, `190`-`195`, `197`-`199` sont en
   prod **sans** ligne ; `196` est retirée par la `200`. ❌ **Ne jamais réappliquer la `164`** :
-  elle retire la branche « membre du projet » de la `190`. Prochain numéro libre : **`224`**.
+  elle retire la branche « membre du projet » de la `190`. `224` (2026-10-20) et `226` (2026-10-22,
+  ledger `20261021225038`, C-121) sont en prod ; `225` est pris par un fichier d'une autre session.
+  Prochain numéro libre : **`227`**.
   Journal daté de chaque application (`150` → `223`) :
   [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Journal d'application des migrations ».
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
@@ -54,39 +56,39 @@ compilait, la suite passait.
   sont le MÊME identifiant : « duplicate declaration ».
 - ⚠️ **Plusieurs sessions écrivent des migrations en parallèle** : **relire le ledger ET
   `ls supabase/migration` avant de choisir un numéro**, jamais la fin de ce fichier.
-- ✅ **La preuve AVANT a servi à quelque chose, et c est l argument de cette section** : la `150` a
-  été jouée dans une transaction annulée, acteur par acteur, avant d être appliquée — insertion,
+- ✅ **La preuve AVANT a servi à quelque chose, et c'est l'argument de cette section** : la `150` a
+  été jouée dans une transaction annulée, acteur par acteur, avant d'être appliquée — insertion,
   catégorie hors énumération refusée (`23514`), non-admin refusé (`42501`), droits effectifs
-  relevés. Puis l annulation elle-même a été vérifiée : ni table ni fonction laissées derrière.
-  ⚠️ Un `ROLLBACK` qu on ne contrôle pas est une hypothèse comme une autre.
+  relevés. Puis l'annulation elle-même a été vérifiée : ni table ni fonction laissées derrière.
+  ⚠️ Un `ROLLBACK` qu'on ne contrôle pas est une hypothèse comme une autre.
 
 ## Interdits
 
 - 🔴 **Ne jamais ajouter une colonne, un GRANT ou une policy depuis le dashboard Supabase.** C est
-  ce qui a produit la dérive où le dépôt ne décrivait plus la base qu il prétend reconstruire.
-- ❌ **Un correctif appliqué en prod se versionne sous son propre numéro**, jamais par édition d un
+  ce qui a produit la dérive où le dépôt ne décrivait plus la base qu'il prétend reconstruire.
+- ❌ **Un correctif appliqué en prod se versionne sous son propre numéro**, jamais par édition d'un
   fichier déjà appliqué.
-- ⚠️ **Lire le ledger AVANT d appliquer, pas seulement après.** Ce dépôt a plusieurs sessions
-  actives : l état de la prod n est jamais celui qu on a laissé.
+- ⚠️ **Lire le ledger AVANT d'appliquer, pas seulement après.** Ce dépôt a plusieurs sessions
+  actives : l'état de la prod n'est jamais celui qu'on a laissé.
 - ❌ **Une seule policy PERMISSIVE par rôle et par action** (mig. 049). Élargir le `OR` existant,
   jamais en recréer une seconde. `npm run check:rls` est la gate.
-- ❌ **Ne jamais faire dépendre un prédicat de policy d un argument pris dans la ligne** : il est
-  rappelé par ligne et rend l index inutilisable. Couvre `tasks` (085), `team_tasks` /
+- ❌ **Ne jamais faire dépendre un prédicat de policy d'un argument pris dans la ligne** : il est
+  rappelé par ligne et rend l'index inutilisable. Couvre `tasks` (085), `team_tasks` /
   `team_projects` (113), `team_task_dependencies` (117) et `events` (128).
 - ❌ **Ne jamais appeler `get_subtree` / `has_subordinates` / `org_admin_count` depuis une policy** :
-  `EXECUTE` leur est révoqué à `authenticated` (mig. 100), et une policy s évalue avec le rôle
+  `EXECUTE` leur est révoqué à `authenticated` (mig. 100), et une policy s'évalue avec le rôle
   courant. Utiliser `is_above()` ou `i_have_subordinates()`.
-- ❌ **Une fonction de trigger n est jamais `SECURITY DEFINER`.** Un trigger `BEFORE` s exécute
+- ❌ **Une fonction de trigger n'est jamais `SECURITY DEFINER`.** Un trigger `BEFORE` s'exécute
   avant le `WITH CHECK` de la RLS : en DEFINER ses messages deviennent un oracle sur des lignes non
   lisibles.
 - 🔴 **`ON DELETE NO ACTION` sur une auto-référence, ni `CASCADE` ni `RESTRICT`.** `RESTRICT` ne voit
-  pas que l enfant part dans la MÊME requête, et rendait la suppression de compte impossible (RGPD
+  pas que l'enfant part dans la MÊME requête, et rendait la suppression de compte impossible (RGPD
   art. 17).
 - 🔴 **Une migration qui crée une dépendance à un chemin de récupération : PARCOURIR ce chemin avant
-  de l appliquer.** La mig. 131 a rendu `/admin` inaccessible du 2026-08-31 au 09-01, et un seul
-  compte au monde ouvre cette console. Il suffisait d ouvrir l écran une fois.
-- ⚠️ **Une migration qui ajoute une colonne écrite par le front s applique AVANT le déploiement du
+  de l'appliquer.** La mig. 131 a rendu `/admin` inaccessible du 2026-08-31 au 09-01, et un seul
+  compte au monde ouvre cette console. Il suffisait d'ouvrir l'écran une fois.
+- ⚠️ **Une migration qui ajoute une colonne écrite par le front s'applique AVANT le déploiement du
   front** (mig. 113, 146). L inverse casse en usage réel, pas en test.
 - ⚠️ **Se prouver AVANT, en transaction annulée**, acteur par acteur : une policy est une frontière
-  de sécurité, pas un plan d exécution. Cinq vérifications statiques n exécutent aucun SQL, et c est
+  de sécurité, pas un plan d'exécution. Cinq vérifications statiques n'exécutent aucun SQL, et c'est
   ainsi que la mig. 143 a mis un défaut en production.

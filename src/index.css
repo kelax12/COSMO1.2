@@ -121,6 +121,11 @@
     --color-primary: 71 85 105;
     --color-secondary: 100 116 139;
     --color-accent: 37 99 235;
+    /* AM-5 (2026-10-22) : l'accent employé comme TEXTE sur un fond teinté du même
+       accent (pastilles, onglet actif, bouton « Modifier les widgets »). axe le
+       mesurait de 3,94 à 4,48:1 avec 37 99 235. blue-700 : 5,72:1 sur sa teinte à
+       10 %, 4,89 à 20 %. Les fonds pleins et les liens gardent #2563eb (C-23). */
+    --color-accent-text: 29 78 216;
     --color-accent-solid: 37 99 235; /* pas de duo dédié en Clair — repli sur l'accent existant */
     --color-accent-solid-hover: 29 78 216; /* blue-700 — survol des boutons/chips pleins */
     --color-accent-solid-foreground: 255 255 255; /* texte blanc sur les boutons pleins */
@@ -134,7 +139,7 @@
                                    de l'erreur, et un message d'erreur illisible ne
                                    remplit pas sa fonction. Les trois themes sombres
                                    gardent leur valeur : le contraste y est inverse. */
-    --color-danger-text: 220 38 38; /* texte rouge (retard, maquette 146) : red-600, 4,83:1 sur blanc */
+    --color-danger-text: 185 28 28; /* texte rouge (retard, maquette 146) : red-700. AM-5 : red-600 rendait 4,27:1 sur le bandeau teinté de rouge du tableau de bord ; red-700 y vaut 5,73:1, 6,47:1 sur blanc */
     --color-surface: 255 255 255;
     --color-background: 248 250 252;
 
@@ -265,6 +270,7 @@
         --color-primary: 148 163 184;
         --color-secondary: 100 116 139;
         --color-accent: 59 130 246;
+        --color-accent-text: 147 197 253; /* AM-5 : blue-300. 59 130 246 rendait 3,09 à 3,97:1 en texte sur la surface et sur ses teintes */
         /* 🔴 C-25 (2026-09-12) — #3472d8 et non plus #3b82f6. Le blanc sur
            #3b82f6 rendait 3,68:1, sous les 4,5 exigés pour du texte normal :
            le bouton d'action PRINCIPAL de ce thème n'était pas lisible au
@@ -373,6 +379,7 @@
     --color-primary: 173 186 199;      /* #adbac7 texte secondaire */
     --color-secondary: 118 131 144;    /* #768390 texte muted */
     --color-accent: 88 166 255;        /* #58a6ff texte / liens / focus / bordures actives */
+    --color-accent-text: 145 198 255;  /* AM-5 : #58a6ff rendait 3,76 à 4,38:1 sur ses propres teintes ; 5,24:1 et plus */
     /* 🔴 C-25 (2026-09-12) — #2f75d5 et non plus #388bfd. C'était le pire des
        quatre thèmes : blanc sur #388bfd = 3,34:1, mesuré par l'audit A-8 le
        2026-08-24 et laissé en arbitrage de marque pendant dix-neuf jours. La
@@ -386,7 +393,7 @@
     --color-success: 52 211 153;
     --color-warning: 251 191 36;
     --color-error: 239 68 68;
-    --color-danger-text: 244 112 103; /* #f47067 (maquette 146) : 5,1:1 sur le fond, 4,6:1 sur une surface. `--color-error` (239 68 68) mesurait 3,9:1 en 11 px sur /tasks le 2026-10-10 */
+    --color-danger-text: 255 138 128; /* AM-5 (2026-10-22) : #f47067 rendait 4,29:1 sur le bandeau teinté de rouge ; 5,36:1 désormais, 5,76:1 sur une surface. Avant : #f47067 (maquette 146), 5,1:1 sur le fond, 4,6:1 sur une surface. `--color-error` (239 68 68) mesurait 3,9:1 en 11 px sur /tasks le 2026-10-10 */
     --color-surface: 43 49 55;         /* #2b3137 card/surface */
     --color-background: 36 41 46;      /* #24292e canvas */
 
@@ -405,10 +412,10 @@
     /* Navigation specific colors */
     --nav-bg: 36 41 46;
     --nav-border: 55 62 71;
-    --nav-item-text: 118 131 144;
+    --nav-item-text: 143 153 164;      /* AM-5 : #768390 rendait 3,78:1 sur la barre latérale ; aligné sur --color-text-muted, 5,07:1 */
     --nav-item-hover-bg: 47 53 59;
     --nav-item-hover-text: 173 186 199;
-    --nav-item-active-bg: 56 139 253; /* #388bfd — même intensité que --color-accent-solid */
+    --nav-item-active-bg: 47 117 213; /* #2f75d5 = --color-accent-solid. AM-5 : #388bfd laissait le blanc à 3,34:1 sur l'entrée active, la valeur que C-25 avait corrigée sur le bouton et oubliée ici */
     --nav-item-active-text: 255 255 255;
 
     /* Calendar specific colors */
@@ -477,6 +484,7 @@
     --color-primary: 200 200 200;
     --color-secondary: 140 140 140;
     --color-accent: 240 240 240;              /* near-white — texte / liens / focus / bordures actives */
+    --color-accent-text: 240 240 240;         /* AM-5 : l'accent est déjà du texte quasi blanc ici */
     --color-accent-solid: 240 240 240;        /* fonds pleins de boutons/chips actifs */
     --color-accent-solid-hover: 210 210 210;  /* survol — légèrement plus terne */
     --color-accent-solid-foreground: 8 8 8;   /* texte quasi-noir sur bouton quasi-blanc */
@@ -502,7 +510,7 @@
     /* Navigation specific colors */
     --nav-bg: 22 22 22;
     --nav-border: 46 46 46;
-    --nav-item-text: 110 110 110;
+    --nav-item-text: 145 145 145;             /* AM-5 : 110 rendait 3,54:1 sur la barre latérale ; 5,74:1, 5,17:1 au survol */
     --nav-item-hover-bg: 32 32 32;
     --nav-item-hover-text: 210 210 210;
     --nav-item-active-bg: 240 240 240;

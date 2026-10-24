@@ -81,7 +81,7 @@ const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'), ['overlays', 
 const SignupPage = lazyWithRetry(() => import('@/pages/SignupPage'), ['overlays', 'seo']);
 const ForgotPasswordPage = lazyWithRetry(() => import('@/pages/ForgotPasswordPage'), ['seo']);
 const ResetPasswordPage = lazyWithRetry(() => import('@/pages/ResetPasswordPage'), ['seo']);
-const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'), ['dashboard', 'eventModal', 'okr', 'org', 'overlays', 'taskModal', 'tasks']);
+const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'), ['dashboard', 'eventModal', 'okr', 'org', 'orgAdmin', 'overlays', 'taskModal', 'tasks']);
 const TasksPage = lazyWithRetry(() => import('@/pages/TasksPage'), ['eventModal', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
 const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'), ['agenda', 'eventModal', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
 const HabitsPage = lazyWithRetry(() => import('@/pages/HabitsPage'), ['eventModal', 'habits', 'overlays', 'premium', 'tasks', 'tutorials']);

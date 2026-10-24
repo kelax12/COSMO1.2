@@ -6,22 +6,17 @@ import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, useRes
 import { useCategories } from '@/modules/categories';
 import { categoryColorSet } from '@/lib/category-colors';
 import TaskSidebar from '@/components/TaskSidebar';
-import { MobileScheduleSheet, QuickEventCard, RecurringEventsManager } from './agenda/lazy-overlays';
+import { MobileScheduleSheet, QuickEventCard, RecurringEventsManager, AgendaTutorial, SlotReviewPanel, SlotReviewMenu } from './agenda/lazy-overlays';
 import TaskModal from '@/components/TaskModal';
 import EventModal from '@/components/EventModal';
 import ColorSettingsModal from '@/components/ColorSettingsModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
-import { agendaTutorialStepsDesktop } from '@/tutorials/agenda.desktop';
-import { agendaTutorialStepsMobile } from '@/tutorials/agenda.mobile';
 import { buildCalendarEvents, defaultEventsWindow, bufferedWindow } from './agenda/calendar-events';
 import { useExternalTaskDrag } from './agenda/use-external-task-drag';
 import { useTimezonePref, fromDisplayISO } from '@/lib/timezone';
-import SlotReviewMenu from './agenda/SlotReviewMenu';
-import SlotReviewPanel from './agenda/SlotReviewPanel';
 import { useOverdueSlotReview } from './agenda/useOverdueSlotReview';
 import { useTasks, useToggleTaskComplete, useDeleteTask, useRestoreTask } from '@/modules/tasks';
 import { MobileAgendaHeader } from './agenda/MobileAgenda';
@@ -42,7 +37,6 @@ const AgendaPage: React.FC = () => {
   const { t: tCommon } = useT('common');
   const tutorialIsMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const tutorial = useTutorial(tutorialIsMobile ? 'agenda_mobile' : 'agenda_desktop', 800, !tutorialIsMobile);
-  const tutorialSteps = tutorialIsMobile ? agendaTutorialStepsMobile : agendaTutorialStepsDesktop;
   // Pagination serveur de l'agenda : on ne charge que les événements de la
   // fenêtre visible (+ tous les récurrents, cf. window.ts). La fenêtre est
   // affinée par datesSet (desktop + mobile) ; init large pour un 1er paint sans flash.
@@ -515,11 +509,10 @@ const AgendaPage: React.FC = () => {
       )}
 
       {/* Tutoriel page Agenda — variante adaptée au viewport */}
-      <PageTutorial
-        steps={tutorialSteps}
+      <AgendaTutorial
+        isMobile={tutorialIsMobile}
         isOpen={tutorial.isOpen}
         onClose={tutorial.close}
-        accentColor="#EF4444"
       />
     </motion.div>
   );

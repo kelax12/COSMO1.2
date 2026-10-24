@@ -8,17 +8,18 @@ export type WidgetTone = 'neutral' | 'danger' | 'warning' | 'success' | 'accent'
 export const TONE_BADGE: Record<WidgetTone, string> = {
   neutral: 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]',
   danger: 'bg-red-500/15 text-red-700 dark:text-red-300',
-  warning: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+  warning: 'bg-amber-500/15 text-amber-800 dark:text-amber-300', // AM-5 : amber-700 rendait 4,46:1 sur sa teinte
   success: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-  accent: 'bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]',
+  accent: 'bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent-text))]',
 };
 
 export const TONE_TEXT: Record<WidgetTone, string> = {
   neutral: 'text-[rgb(var(--color-text-primary))]',
   danger: 'text-red-600 dark:text-red-400',
-  warning: 'text-amber-600 dark:text-amber-400',
-  success: 'text-emerald-600 dark:text-emerald-400',
-  accent: 'text-[rgb(var(--color-accent))]',
+  // AM-5 : les teintes -600 rendaient 3,2:1 (ambre) et 3,8:1 (émeraude) sur blanc.
+  warning: 'text-amber-700 dark:text-amber-400',
+  success: 'text-emerald-700 dark:text-emerald-400',
+  accent: 'text-[rgb(var(--color-accent-text))]',
 };
 
 /** Pagination locale : `perPage` éléments par page, recalée si la liste rétrécit. */

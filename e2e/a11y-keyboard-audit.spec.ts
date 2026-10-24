@@ -23,8 +23,12 @@
 // donc devenues des assertions, sur les MÊMES détecteurs que le témoin Radix.
 // ═══════════════════════════════════════════════════════════════════
 
-import { test, expect, navTo } from './fixtures';
+import { test, expect, navTo, openOrgSection } from './fixtures';
 import type { Page, Locator } from '@playwright/test';
+import {
+  passerEnMobile, describeFocus, focusInside, markTrigger, measureFocus, assertModalTrapsFocus,
+  firstTabEscapee, openTasksPage, ouvrirEntreprise, ouvrirAuClavier, ouvrirParRaccourci, mesurerSurface,
+} from './keyboard-audit-helpers';
 
 test.describe.configure({ timeout: 180_000 });
 
@@ -105,122 +109,7 @@ async function premierArretDuDocument(page: Page, conteneurId?: string) {
   );
 }
 
-/**
- * Passe en gabarit téléphone ET attend que la barre d'onglets mobile soit
- * montée.
- *
- * 🔴 Sans cette attente, `navTo` cherchait ses liens pendant que la mise en page
- * bureau se démontait encore : sous WebKit, le lien « Tâches » n'était pas
- * encore atteignable, la fixture retombait sur la feuille « Plus », qui ne le
- * porte pas, et le cas expirait sur un élément qui n'existe pas dans cette
- * feuille (échec constant le 2026-10-16, absent sous Chromium).
- */
-async function passerEnMobile(page: Page): Promise<void> {
-  await page.setViewportSize({ width: 375, height: 812 });
-  await expect(page.getByRole('button', { name: /plus d'options/i }).filter({ visible: true }).first())
-    .toBeVisible({ timeout: 20_000 });
-}
 
-interface FocusReport {
-  focusMovedIn: boolean;
-  focusedOnOpen: string;
-  trapped: boolean;
-  firstEscapee: string | null;
-  escClosed: boolean;
-  role: string | null;
-  ariaModal: string | null;
-  focusReturned: boolean | null;
-}
-
-async function describeFocus(page: Page): Promise<string> {
-  return page.evaluate(() => {
-    const el = document.activeElement as HTMLElement | null;
-    if (!el || el === document.body) return 'BODY';
-    const name = el.getAttribute('aria-label') || el.textContent?.trim().slice(0, 40) || '';
-    return `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}[${name}]`;
-  });
-}
-
-async function focusInside(container: Locator): Promise<boolean> {
-  return container.evaluate((node) => node.contains(document.activeElement));
-}
-
-/** Marque l'élément focalisé pour pouvoir vérifier le RETOUR du focus. */
-async function markTrigger(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    document.querySelectorAll('[data-a11y-trigger]').forEach((n) => n.removeAttribute('data-a11y-trigger'));
-    (document.activeElement as HTMLElement | null)?.setAttribute('data-a11y-trigger', '1');
-  });
-}
-
-async function measureFocus(
-  page: Page,
-  container: Locator,
-  checkReturn = false,
-): Promise<FocusReport> {
-  // ⚠️ Attendu jusqu'à 3 s, pas lu une fois : une surface pose son focus JUSTE
-  // APRÈS son affichage, et la lecture immédiate tombait parfois avant
-  // (MobileAddToList, instable en CI le 2026-10-10). Un focus qui n'entre
-  // jamais rend toujours `false`, au bout des 3 s.
-  const focusMovedIn = await expect
-    .poll(() => focusInside(container), { timeout: 3_000 })
-    .toBe(true)
-    .then(() => true, () => false);
-  const focusedOnOpen = await describeFocus(page);
-  const role = await container.getAttribute('role');
-  const ariaModal = await container.getAttribute('aria-modal');
-
-  let firstEscapee: string | null = null;
-  for (let i = 0; i < 15 && firstEscapee === null; i++) {
-    await page.keyboard.press('Tab');
-    if (!(await focusInside(container))) firstEscapee = await describeFocus(page);
-  }
-
-  await page.keyboard.press('Escape');
-  // 5 s et non 2 : sous WebKit, machine chargée ou runner CI, la sortie animée
-  // d'une modale dépasse 2 s (mesuré le 2026-10-16 : le TÉMOIN Radix lui-même
-  // rendait « Échap ne ferme pas » une fois sur trois alors qu'il se fermait).
-  // Le détecteur reste le même : une modale qu'Échap ne ferme JAMAIS échoue
-  // toujours, au bout des 5 s.
-  const escClosed = await container
-    .waitFor({ state: 'hidden', timeout: 5_000 })
-    .then(() => true)
-    .catch(() => false);
-
-  let focusReturned: boolean | null = null;
-  if (escClosed && checkReturn) {
-    // Radix restitue le focus APRÈS le démontage : mesurer trop tôt rendrait
-    // « false » sur une modale conforme, donc un finding faux.
-    await page.waitForTimeout(600);
-    focusReturned = await page.evaluate(
-      () => document.activeElement?.hasAttribute('data-a11y-trigger') ?? false,
-    );
-  }
-
-  return { focusMovedIn, focusedOnOpen, trapped: firstEscapee === null, firstEscapee, escClosed, role, ariaModal, focusReturned };
-}
-
-/**
- * Les trois détecteurs de C-53, appliqués à une surface modale maison.
- *
- * ⚠️ Volontairement les MÊMES que ceux du témoin Radix : une modale maison qui
- * passerait un jeu de contrôles plus indulgent que la bibliothèque de
- * référence n'aurait rien prouvé.
- */
-function assertModalTrapsFocus(surface: string, report: FocusReport): void {
-  expect(report.focusMovedIn, `${surface}: focus resté sur ${report.focusedOnOpen}`).toBe(true);
-  expect(report.trapped, `${surface}: focus sorti sur ${report.firstEscapee}`).toBe(true);
-  expect(report.escClosed, `${surface}: Échap ne ferme pas`).toBe(true);
-  expect(report.role, `${surface}: pas de role="dialog"`).toBe('dialog');
-  expect(report.ariaModal, `${surface}: pas d'aria-modal`).toBe('true');
-  // 🔴 `focusReturned` est IMPRIMÉ, jamais assertionné, et ce n'est pas une
-  // complaisance : mesuré le 2026-09-05, le TÉMOIN Radix lui-même le rend
-  // `false`. Un détecteur que la bibliothèque de référence ne passe pas mesure
-  // le détecteur, pas la modale — en faire une gate tiendrait les surfaces
-  // maison à une barre que Radix ne franchit pas. Les trois détecteurs de
-  // C-53 (`focusMovedIn`, `trapped`, `escClosed`) sont, eux, verts sur le
-  // témoin, donc opposables.
-}
 
 // ── TÉMOIN ────────────────────────────────────────────────────────
 test('TÉMOIN — modale Radix « Créer une tâche »', async ({ demoPage: page }) => {
@@ -286,14 +175,6 @@ test('MESURE — EventModal (/agenda)', async ({ demoPage: page }) => {
 // cible en cours de test sans jamais échouer.
 // ═══════════════════════════════════════════════════════════════════
 
-/** Le focus reste-t-il dans `container` après `n` tabulations ? Sinon, où. */
-async function firstTabEscapee(page: Page, container: Locator, n = 12): Promise<string | null> {
-  for (let i = 0; i < n; i++) {
-    await page.keyboard.press('Tab');
-    if (!(await focusInside(container))) return await describeFocus(page);
-  }
-  return null;
-}
 
 test('GARDE — EventModal : Échap passe par guardedClose, et le piège suit la confirmation', async ({ demoPage: page }) => {
   // Le formulaire desktop est celui qui porte la saisie mesurée ici ; on fixe
@@ -451,18 +332,6 @@ test('MESURE — MobileMoreSheet (feuille mobile)', async ({ demoPage: page }) =
 // sans le refermer, les trois gardes mesurent un écran qu'on ne voit pas.
 // ═══════════════════════════════════════════════════════════════════
 
-/** Ouvre `/tasks`, attend le vrai rendu, et écarte le check-in hebdomadaire. */
-async function openTasksPage(page: Page): Promise<void> {
-  await navTo(page, /to ?do|tâches|tasks/i, /\/tasks/);
-  // 🔴 Attendre un élément DE LA PAGE, pas un délai : l'URL passe à `/tasks`
-  // alors que le chunk lazy n'a pas encore remplacé le dashboard. Trois sondes
-  // successives ont mesuré le tableau de bord en croyant lire la page Tâches.
-  await expect(page.getByRole('button', { name: /^créer une (nouvelle )?tâche$/i }).first())
-    .toBeVisible({ timeout: 30_000 });
-  const skip = page.getByRole('button', { name: /ignorer le check-in/i });
-  if (await skip.isVisible().catch(() => false)) await skip.click();
-  await page.waitForTimeout(400);
-}
 
 /**
  * Ouvre `TaskActionsSheet` depuis une carte de tâche MOBILE, au CLAVIER.
@@ -597,6 +466,243 @@ test('MESURE — ShareListSheet (partage d\'une liste manuelle)', async ({ demoP
   const report = await measureFocus(page, sheet, true);
   console.log('[a11y-kbd] ShareListSheet', JSON.stringify(report));
   assertModalTrapsFocus('ShareListSheet', report);
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Rôles personnalisés (mig. 219, `a6562733`) : `AssignRoleDialog` et
+// `RoleEditorSheet`, déclarées « dette » par C-96 du 2026-10-15 au 2026-10-22.
+//
+// La démo sème « Nova Studio » et deux rôles : les deux surfaces s'atteignent
+// SANS le project `supabase-stub`. Les deux déclencheurs sont ouverts AU
+// CLAVIER (focus puis Entrée, y compris l'entrée de menu Radix) : un déclencheur
+// qu'on n'atteindrait qu'à la souris rendrait la mesure du piège sans objet.
+//
+// ⚠️ `RoleEditorSheet` est AUSSI ouverte depuis `AssignRoleDialog` (« Créer un
+// rôle » au bas du sélecteur), en portail, donc en FRÈRE DOM de son parent : le
+// cas de la pile (`openStack`) que `EventModal` couvre pour ses frères. La garde
+// qui suit mesure l'aller ET le retour du piège, pour la même raison qu'eux.
+// ═══════════════════════════════════════════════════════════════════
+/** Ouvre `AssignRoleDialog` au clavier sur le premier membre qui le propose. */
+async function ouvrirAttribuerUnRole(page: Page): Promise<Locator> {
+  await ouvrirEntreprise(page);
+  await openOrgSection(page, /^membres/i);
+  const triggers = page.getByRole('button', { name: /^actions pour /i }).filter({ visible: true });
+  await expect(triggers.first()).toBeVisible({ timeout: 20_000 });
+  const item = page.locator('[data-guide-id="member-assign-role"]');
+  // Le menu d'un membre ne porte « Attribuer un rôle » que dans la portée de
+  // l'appelant : on prend le premier qui le propose, au lieu de supposer lequel.
+  const n = await triggers.count();
+  for (let i = 0; i < n; i++) {
+    const trigger = triggers.nth(i);
+    await trigger.focus();
+    // Marqué AVANT d'ouvrir : un menu Radix ouvert rend le reste de la page
+    // `aria-hidden`, et `getByRole` ne retrouverait plus ce bouton ensuite.
+    await markTrigger(page);
+    await page.keyboard.press('Enter');
+    const propose = await item.waitFor({ state: 'visible', timeout: 3_000 }).then(() => true, () => false);
+    if (propose) {
+      await item.focus();
+      await page.keyboard.press('Enter');
+      const dialog = page.getByRole('dialog', { name: /^attribuer un rôle à /i });
+      await expect(dialog).toBeVisible({ timeout: 20_000 });
+      // Le squelette (C-40) n'est pas focalisable : mesurer le piège APRÈS la réponse.
+      await expect(dialog.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 20_000 });
+      return dialog;
+    }
+    await page.keyboard.press('Escape');
+  }
+  throw new Error('aucun membre de la démo ne propose « Attribuer un rôle »');
+}
+
+test('MESURE — AssignRoleDialog (attribuer un rôle personnalisé)', async ({ demoPage: page }) => {
+  // Le déclencheur marqué est le bouton « Actions pour … » du membre : c'est
+  // lui qu'on attend au retour (l'entrée de menu, elle, a disparu).
+  const dialog = await ouvrirAttribuerUnRole(page);
+  const report = await measureFocus(page, dialog, true);
+  console.log('[a11y-kbd] AssignRoleDialog', JSON.stringify(report));
+  assertModalTrapsFocus('AssignRoleDialog', report);
+});
+
+test('MESURE — RoleEditorSheet (créer un rôle personnalisé)', async ({ demoPage: page }) => {
+  await ouvrirEntreprise(page);
+  await openOrgSection(page, /^paramètres/i);
+  const panneau = page.locator('[data-guide-id="settings-panel-roles"]').filter({ visible: true }).first();
+  await expect(panneau).toBeVisible({ timeout: 20_000 });
+  await panneau.focus();
+  await page.keyboard.press('Enter');
+  const trigger = page.locator('[data-guide-id="settings-roles-new"]').filter({ visible: true }).first();
+  await expect(trigger).toBeVisible({ timeout: 20_000 });
+  await trigger.focus();
+  await markTrigger(page);
+  await page.keyboard.press('Enter');
+
+  const sheet = page.getByRole('dialog', { name: /^éditeur du rôle/i });
+  await expect(sheet).toBeVisible({ timeout: 20_000 });
+  const report = await measureFocus(page, sheet, true);
+  console.log('[a11y-kbd] RoleEditorSheet', JSON.stringify(report));
+  assertModalTrapsFocus('RoleEditorSheet', report);
+});
+
+test('GARDE — AssignRoleDialog : RoleEditorSheet prend le piège, puis le rend', async ({ demoPage: page }) => {
+  const parent = await ouvrirAttribuerUnRole(page);
+  // « Créer un rôle » au bas du sélecteur, au clavier : Entrée ouvre le menu,
+  // Fin va au dernier item, Entrée le choisit.
+  await parent.locator('#assign-role-select').focus();
+  await page.keyboard.press('Enter');
+  const creer = page.getByRole('menuitem', { name: /^créer un rôle$/i });
+  await expect(creer).toBeVisible({ timeout: 10_000 });
+  await page.keyboard.press('End');
+  await expect(creer).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  const child = page.getByRole('dialog', { name: /^éditeur du rôle/i });
+  await expect(child).toBeVisible({ timeout: 20_000 });
+  await expect.poll(() => focusInside(child), { timeout: 3_000 }).toBe(true);
+  expect(await firstTabEscapee(page, child), 'RoleEditorSheet (enfant) : focus sorti').toBeNull();
+
+  // Échap ne ferme QUE l'enfant : le parent reste, et reprend le piège.
+  await page.keyboard.press('Escape');
+  await expect(child).toBeHidden({ timeout: 5_000 });
+  await expect(parent).toBeVisible();
+  expect(await firstTabEscapee(page, parent), 'AssignRoleDialog (parent rendu) : focus sorti').toBeNull();
+  expect(await focusInside(parent), 'AssignRoleDialog : le focus n est pas revenu au parent').toBe(true);
+
+  await page.keyboard.press('Escape');
+  await expect(parent).toBeHidden({ timeout: 5_000 });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// AM-2 (2026-10-22) · dix surfaces de plus, les plus fréquentées
+//
+// Tâche d'équipe, OKR, agenda, tableau de bord, raccourcis globaux et page
+// Tâches. Avant ce lot, elles étaient câblées sur `useModalA11y` et déclarées
+// « dette » dans `src/keyboard-audit-coverage.guard.test.ts` : jamais
+// parcourues à la touche Tab.
+//
+// Mêmes trois détecteurs que le témoin Radix (`assertModalTrapsFocus`).
+// Le déclencheur est actionné AU CLAVIER partout où il existe un chemin
+// clavier (Entrée sur un bouton focalisé, ou le raccourci global lui-même) :
+// c'est ce chemin que la personne emprunte, et il fait partie de la mesure.
+// Une seule exception, déclarée dans son cas : le créneau de l'agenda.
+// ═══════════════════════════════════════════════════════════════════
+
+
+test('MESURE · TeamTaskModal (« Nouvelle tâche » d\'équipe)', async ({ demoPage: page }) => {
+  await navTo(page, /entreprise/i, /\/entreprise/);
+  await openOrgSection(page, /^tâches/i);
+  await page.waitForURL(/\/entreprise\/tasks/);
+  await ouvrirAuClavier(page, page.getByRole('button', { name: /nouvelle tâche/i }).filter({ visible: true }).first());
+  await mesurerSurface(page, 'TeamTaskModal', page.getByRole('dialog', { name: /nouvelle tâche d'équipe/i }));
+});
+
+test('MESURE · CompletedOKRsModal (« OKR terminés »)', async ({ demoPage: page }) => {
+  await navTo(page, /okr/i, /\/okr/);
+  await ouvrirAuClavier(
+    page,
+    page.getByRole('button', { name: /voir la liste des okr terminés/i }).filter({ visible: true }).first(),
+  );
+  await mesurerSurface(page, 'CompletedOKRsModal', page.getByRole('dialog', { name: /^okr terminés$/i }));
+});
+
+test('MESURE · DeleteObjectiveConfirm (suppression d\'un objectif)', async ({ demoPage: page }) => {
+  await navTo(page, /okr/i, /\/okr/);
+  await ouvrirAuClavier(
+    page,
+    page.getByRole('button', { name: /^supprimer l'objectif$/i }).filter({ visible: true }).first(),
+  );
+  // Confirmation destructive : `role="alertdialog"` (vu en CI le 2026-10-22, le cas
+  // cherchait un `dialog` et expirait sur une surface pourtant ouverte).
+  await mesurerSurface(
+    page,
+    'DeleteObjectiveConfirm',
+    page.getByRole('alertdialog', { name: /^supprimer l'objectif$/i }),
+    'alertdialog',
+  );
+});
+
+test('MESURE · QuickEventCard (création rapide sur un créneau)', async ({ demoPage: page }) => {
+  // ⚠️ SEUL déclencheur à la souris de ce lot, et c'est assumé : un créneau
+  // FullCalendar n'est pas un arrêt de tabulation (C-54 a tranché que le
+  // chemin clavier de l'agenda est « Nouveau », mesuré par EventModal). On
+  // mesure ici la SURFACE, qu'un geste de pointeur ouvre, une fois ouverte.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await navTo(page, /agenda/i, /\/agenda/);
+  const colonne = page.locator('.fc-timegrid-col[data-date]').first();
+  await expect(colonne).toBeVisible({ timeout: 30_000 });
+  // 06:00 : avant les événements du jeu de démo, pour viser un créneau VIDE
+  // (un glisser sur un événement le déplacerait au lieu de sélectionner).
+  const sixHeures = page.locator('td.fc-timegrid-slot-lane[data-time="06:00:00"]');
+  const creneau = (await sixHeures.count()) > 0 ? sixHeures.first() : page.locator('td.fc-timegrid-slot-lane').first();
+  await creneau.scrollIntoViewIfNeeded();
+  const col = await colonne.boundingBox();
+  const lane = await creneau.boundingBox();
+  if (!col || !lane) throw new Error('grille horaire sans géométrie');
+  const x = col.x + col.width / 2;
+  const y = lane.y + lane.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x, y + lane.height * 2, { steps: 5 });
+  await page.mouse.up();
+  await mesurerSurface(page, 'QuickEventCard', page.getByRole('dialog', { name: /création rapide d'un événement/i }));
+});
+
+test('MESURE · TodayTasks (confirmation de suppression, tableau de bord)', async ({ demoPage: page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  // Les actions d'une ligne sont révélées AU FOCUS (`focus-within`) : Tab les
+  // atteint, et c'est ce chemin qu'on emprunte.
+  //
+  // 🔴 La confirmation n'existe QUE pour une tâche COLLABORATIVE
+  // (`handleDeleteClick`) : une tâche perso est supprimée sec, réversible par le
+  // toast « Annuler ». Viser la première ligne (une tâche perso) supprimait la
+  // tâche et laissait ce cas expirer, 3 essais sur 3 sur les deux moteurs (CI du
+  // 2026-10-23). On vise donc la tâche partagée du jeu de démo, `shared-002`
+  // (priorité 2, donc dans « Tâches prioritaires »).
+  const widget = page.getByRole('listitem').filter({
+    has: page.getByRole('heading', { name: /^tâches prioritaires$/i }),
+  });
+  await ouvrirAuClavier(
+    page,
+    widget.getByRole('button', { name: /^supprimer : préparer la réunion de lancement$/i }).first(),
+  );
+  // Confirmation destructive : `role="alertdialog"`, comme DeleteObjectiveConfirm.
+  await mesurerSurface(page, 'TodayTasks', page.getByRole('alertdialog', { name: /^supprimer la tâche$/i }), 'alertdialog');
+});
+
+test('MESURE · QuickAddBar (touche N)', async ({ demoPage: page }) => {
+  await ouvrirParRaccourci(page, 'n', page.getByRole('dialog', { name: /^créer une tâche rapidement$/i }));
+  await mesurerSurface(page, 'QuickAddBar', page.getByRole('dialog', { name: /^créer une tâche rapidement$/i }));
+});
+
+test('MESURE · CommandPalette (Ctrl+K)', async ({ demoPage: page }) => {
+  const palette = page.getByRole('dialog', { name: /rechercher une tâche, une page, une commande/i });
+  await ouvrirParRaccourci(page, 'Control+k', palette);
+  await mesurerSurface(page, 'CommandPalette', palette);
+});
+
+test('MESURE · ShortcutsHelp (touche ?)', async ({ demoPage: page }) => {
+  const aide = page.getByRole('dialog', { name: /^raccourcis clavier$/i });
+  await ouvrirParRaccourci(page, '?', aide);
+  await mesurerSurface(page, 'ShortcutsHelp', aide);
+});
+
+test('MESURE · MoveTaskSheet (« Déplacer vers… », vue Tableau)', async ({ demoPage: page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openTasksPage(page);
+  const vue = page.getByRole('group', { name: /^affichage$/i }).filter({ visible: true }).first();
+  await vue.getByRole('button', { name: /tableau/i }).press('Enter');
+  // Le bouton est révélé au survol ET au focus (`group-focus-within`).
+  await ouvrirAuClavier(page, page.getByRole('button', { name: /^déplacer « /i }).first());
+  await mesurerSurface(page, 'MoveTaskSheet', page.getByRole('dialog', { name: /^déplacer « .+ » vers$/i }));
+});
+
+test('MESURE · CreateListSheet (« Nouvelle liste », mobile)', async ({ demoPage: page }) => {
+  // ⚠️ Viewport MOBILE : sur desktop la création de liste est INLINE (cf.
+  // ShareListSheet plus haut), et le bouton « + » qui ouvre cette feuille est
+  // `sm:hidden`.
+  await passerEnMobile(page);
+  await openTasksPage(page);
+  await ouvrirAuClavier(page, page.getByRole('button', { name: /^nouvelle liste$/i }).filter({ visible: true }).first());
+  await mesurerSurface(page, 'CreateListSheet', page.getByRole('dialog', { name: /^nouvelle liste$/i }));
 });
 
 test('MESURE — DatePicker ancré à un champ (modale OKR)', async ({ demoPage: page }) => {

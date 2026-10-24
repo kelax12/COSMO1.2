@@ -13,7 +13,27 @@ et les **règles durables** tirées des audits.
 - Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-10-02** au soir, et avant elle **2026-10-01** (mig.
   `204`, `207`-`210` appliquées et relues au catalogue, cinq Edge Functions redéployées, `Edge deploy
   drift` vert, audit A-1 des 23 tables `160`-`207` acteur par acteur, § « Surface entreprise »),
-  puis `212`. ✅ **Remesuré le 2026-10-19** (`TR-1`) : mig. `223` appliquée (ledger
+  puis `212`. ✅ **Remesuré le 2026-10-22** (passe d'audit) : advisors **`14 / 84 / 2 / 1`**,
+  80 tables toutes sous RLS, 205 policies, ledger **176** (`140`, `224`, `226`), 13 Edge
+  Functions, production égale au dépôt (`fb83cd6`). Note **87 → 87**.
+  ✅ **Relu le 2026-10-23** (passe d'audit, sans nouvelle mesure du catalogue) : `Edge deploy drift` et
+  `Deploy SHA drift` verts à `e96b7c90` ; Dependabot ramené à **3** alertes, toutes de développement
+  (`@vitest/mocker` ×2, `hono`) après les PR n° 85, 84, 81, 70, 34 et 108 ; CodeQL **0**. Note **87 → 87**.
+  ✅ **Remesuré le 2026-10-23 après-midi** (API Management, `db query --linked`, API Stripe live) :
+  advisors **`14 / 84 / 2 / 1`**, soit **+3 / +2** sur la référence de `Posture` (rouge depuis 09:57).
+  Les cinq objets relus un par un, **tous légitimes** : `account_inactivity_notices` (mig. `226`),
+  `traffic_hits` et `traffic_salts` (mig. `222`), tables fermées au client sans policy ;
+  `get_admin_revenue` (`221`) et `get_admin_traffic` (`222`), gardées par `is_admin()` en tête, `anon`
+  révoqué. Les cinq fonctions de la `226` et `track_hit` sont **absentes** des advisors, comme
+  voulu. Recalage : `--update`, seul geste restant (angle mort [`SECURITY.md`](./docs/SECURITY.md) AM-7).
+  **Mig. `225` APPLIQUÉE** (ledger `20261023142003`), prouvée avant en transaction annulée sous
+  session admin `aal2`, ACL relue après. Stripe live : **0** customer, endpoint `we_1USka0…` à
+  **6** events et API `2024-06-20`. 🟠 **Dérive Edge ouverte** : `stripe-org-checkout` et
+  `stripe-org-portal` portent sur `main` la mention 293 B (`c161de2b`) et ne sont **pas** redéployées
+  (déploiement refusé à l'agent, [`DEPLOYMENT.md`](./docs/DEPLOYMENT.md) AM-6). Journaux 24 h :
+  **0** réponse 5xx, 5 appels non signés au webhook Stripe refusés, détail dans
+  [`docs/OBSERVABILITE.md`](./docs/OBSERVABILITE.md), audit ouvert ce jour. Note **87 → 87**.
+  ✅ **Remesuré le 2026-10-19** (`TR-1`) : mig. `223` appliquée (ledger
   `20261019122246`, **173** entrées) et relue au catalogue, advisors **`13 / 84 / 2 / 1`**, sonde
   `anon` sur `track_hit` refusée. Note **86 → 87**.
   ✅ **Remesuré le 2026-10-18** (dernière passe avant l'acquisition) : advisors
@@ -54,7 +74,21 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → 86 → 87 → **87 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → 2026-10-19 → **2026-10-20**)
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → 86 → 87 → 87 → 87 → **87 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → 2026-10-19 → 2026-10-20 → 2026-10-22 → **2026-10-23**)
+
+> ### ⚪ 2026-10-22 · 0 : la bascule live est faite proprement, son chemin d'argent reste à jouer
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-22 : CI de `main` à `d16de29a` (run `39843255180`, cinq jobs verts ; `main` rouge du 10-20 à 22:03 au 10-22 à 14:39, 19 runs), `Visual` vert à `fb83cd60`, production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./docs/README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-22 |
+> |---|---|---|
+> | `C-121` · fonction `inactive-accounts` (v1, `verify_jwt = false`) | 0 | appelée par `inactive-accounts.yml` avec `CRON_SECRET` ; **échec fermé** sans le secret (503 et alerte), 401 sur un secret faux. Mig. `226` au ledger (`20261021225038`) |
+> | Bascule Stripe live (`5bf21a50`, mig. `140` et `224`) | 0 | secrets live comparés par empreinte SHA-256, endpoint webhook créé avec `api_version` `2024-06-20`, 5 customers de test effacés, journal intact. ⚠️ Le paiement réel et le remboursement (`M-37b`, `M-37c`) n'ont tourné contre aucun Stripe : angle mort déjà écrit plus bas (§ « Audit des Edge Functions Stripe »), non redébité. La ligne `P1` de l'ordre de priorité disait encore la `140` « non appliquée » : corrigée ce jour |
+> | `Posture` | 0 | advisors **`14 / 84 / 2 / 1`** : `account_inactivity_notices` (mig. `226`, sous RLS sans policy, voulu : seule la fonction de service y écrit) s'ajoute aux objets relus le 10-18 et le 10-19. Rouge chaque matin jusqu'au `--update` (Axel) |
+> | Alertes GitHub | 0 | CodeQL **0** ; Dependabot **4**, toutes de développement (`vite` haute et moyennes, `hono` moyenne), PR n° 84 et 85 ouvertes ; job `audit` (production) vert ; secret scanning : la n° 1, connue |
+> | Production | 0 | **80** tables toutes sous RLS, **205** policies, ledger **176**, **13** Edge Functions, `Edge deploy drift` vert ; `check:deploy` : la production sert `fb83cd6`, égal au dépôt |
+>
+> **87 → 87.**
 
 > ### ⚪ 2026-10-20 · 0 : `Posture` toujours en attente de son recalage
 >
@@ -480,6 +514,8 @@ le journal montrerait un encaissement sans son remboursement. Gestes : `a-faire-
    **non appliquée**, à jouer DANS la fenêtre de bascule — jamais avant : tant que la clé est une
    clé de test, chaque checkout réécrit un identifiant de test. Geste suivi en `a-faire-manuel.md`
    **M-43**.
+   ✅ **Fait le 2026-10-20** dans la fenêtre de bascule (ledger `20261020204838`, relu le
+   2026-10-22) : 5 customers de test effacés, journal fiscal intact.
 
    🔴 **« Aujourd'hui `org_subscriptions` est vide, donc le coût est nul » était FAUX d'une table
    sur deux**, et cette phrase portait la décision. Mesuré en prod le 2026-09-04 : `org_subscriptions`
@@ -593,7 +629,7 @@ documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 | # | Migration | État au 2026-09-20 | Preuve |
 |---|---|---|---|
 | **P0** | **`136_work_time_stats_okr_from_completions`** (commitée le 2026-09-03) | ✅ **APPLIQUÉE**, ledger `20260920104729` (🔴 corrigé le 2026-09-30 : `20260920105113`, écrit ici, n'existe au ledger d'aucune migration ; le bon numéro est relu en base, cf. [`supabase/migration/CLAUDE.md`](./supabase/migration/CLAUDE.md)) | `pg_get_functiondef` : la fonction vivante cite `kr_completions` et **plus une seule fois** `history`. `SECURITY INVOKER` conservé, `anon` **f** / `authenticated` **t**, index `idx_kr_completions_user_completed_at` posé. Prouvée **AVANT** en transaction annulée, puis rejouée après : sur un compte réel, `okrTime` passe de `0/0/0/0/0` à `300/180/0/0/0` sur mai→septembre, et `tasksTime`, `eventsTime`, `habitsTime` sont **identiques au chiffre près** (critère 4 de la migration) |
-| **P1** | **`140_reset_stripe_identifiers`** | ⏳ **non appliquée, délibérément** | À jouer **DANS** la fenêtre de bascule live, jamais avant : tant que la clé est une clé de test, chaque checkout réécrit un identifiant de test |
+| **P1** | **`140_reset_stripe_identifiers`** | ✅ **APPLIQUÉE le 2026-10-20**, dans la fenêtre de bascule live, ledger `20261020204838` (relu le 2026-10-22) | `reset_stripe_identifiers(true)` joué : 5 customers de test effacés, journal intact ([`docs/STRIPE-LIVE.md`](./docs/STRIPE-LIVE.md)). 🔴 Sa déclaration « non appliquée » est restée dans `NON_APPLIQUEES_DELIBEREMENT` : `Migration coverage` rouge depuis le 2026-10-20 à 22:03 |
 | **P2** | **`149_admin_stats_excludes_non_users`** | ✅ **COMMITÉE** (`297ddd14`) **puis APPLIQUÉE**, ledger `20260920105522` | `/admin` annonçait **30 utilisateurs, 779 tâches, 454 événements, 32 habitudes** ; il annonce désormais **28 · 658 · 387 · 26**, plus une clé `excluded_accounts = 2`. Un non-admin est toujours refusé en **42501**. Prouvée en transaction annulée avant application, prod remesurée intacte entre les deux |
 
 > ⚠️ **La `149` a été appliquée par le CLI** (`supabase db query --linked -f`, verbatim depuis le

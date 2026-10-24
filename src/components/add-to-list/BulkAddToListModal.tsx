@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Plus, Sparkles } from 'lucide-react';
+import { X, Plus, Sparkles, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLists, useCreateList } from '@/modules/lists';
 import { useTasks } from '@/modules/tasks';
@@ -14,6 +14,10 @@ interface BulkAddToListModalProps {
   count: number;
   /** Ajoute toutes les tâches sélectionnées à la liste (gère toast + sortie du mode sélection). */
   onAddToList: (listId: string) => void;
+  /** Tâches sélectionnées : une liste qui les contient TOUTES s'affiche cochée. */
+  selectedIds: string[];
+  /** Retire toutes les tâches sélectionnées de la liste (liste cochée). */
+  onRemoveFromList: (listId: string) => void;
 }
 
 /**
@@ -24,7 +28,7 @@ interface BulkAddToListModalProps {
  * réaction). Ce modal s'ouvre toujours : il liste les listes manuelles et
  * permet d'en créer une à la volée (puis y ajoute la sélection).
  */
-const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose, count, onAddToList }) => {
+const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose, count, onAddToList, selectedIds, onRemoveFromList }) => {
   const { t, tp } = useT('tasks');
   const { t: tCommon } = useT('common');
   // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
@@ -68,8 +72,12 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
     setCreating(false);
   };
 
-  const handlePick = (listId: string) => {
-    onAddToList(listId);
+  const containsAll = (list: { taskIds: string[] }) =>
+    selectedIds.length > 0 && selectedIds.every((id) => list.taskIds.includes(id));
+
+  const handlePick = (list: { id: string; taskIds: string[] }) => {
+    if (containsAll(list)) onRemoveFromList(list.id);
+    else onAddToList(list.id);
     onClose();
   };
 
@@ -171,11 +179,13 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
                 <div className="border-t border-[rgb(var(--color-border))] mt-2 divide-y divide-[rgb(var(--color-border))]">
                   {manualLists.map((list) => {
                     const color = resolveColor(list.color);
+                    const checked = containsAll(list);
                     return (
                       <button
                         key={list.id}
                         type="button"
-                        onClick={() => handlePick(list.id)}
+                        aria-pressed={checked}
+                        onClick={() => handlePick(list)}
                         className="w-full flex items-center gap-3 px-1 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
                       >
                         <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
@@ -185,6 +195,14 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
                         <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
                           {activeTaskCount(list)} tâche{activeTaskCount(list) !== 1 ? 's' : ''}
                         </span>
+                        {checked && (
+                          <span
+                            className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: color }}
+                          >
+                            <Check size={11} className="text-white" strokeWidth={3} aria-hidden="true" />
+                          </span>
+                        )}
                       </button>
                     );
                   })}

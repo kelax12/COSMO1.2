@@ -8,11 +8,24 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **95 / 100** au 2026-10-20, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **95 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → 96 → 96 → **95 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → **2026-10-20**)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → 96 → 96 → 95 → **95 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → **2026-10-22**)
+
+> ### ⚪ 2026-10-22 · 0 : deux rouges réparés, le LCP mobile perdu sur six URLs
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-22 : CI de `main` à `d16de29a` (run `39843255180`, cinq jobs verts ; `main` rouge du 10-20 à 22:03 au 10-22 à 14:39, 19 runs), `Visual` vert à `fb83cd60`, production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-10-22 |
+> |---|---|---|
+> | ✅ `OrganizationPage` au-dessus de son cliquet (−1 le 10-20) | **+1** | `e4369b70` : ce qui ne sert qu'en mode édition chargé en `lazy`. **16,8 / 18,0 ko** à `d16de29a`, budget vert en CI |
+> | ✅ TBT mobile de la page entreprise (−1 le 2026-10-16 au soir, 350 à 934 ms) | **+1** | PR n° 91 (`263154b6`, bas du parcours monté au premier geste) : **30, 200 et 152 ms** sur les trois runs de `main` qui la portent (`c2959ded`, `1db47acf`, `d16de29a`), **927 ms** au dernier run sans elle (`1234f807`). Perf mobile 95 à 97 |
+> | 🔴 LCP mobile de 4,5 à 6,0 s sur six URLs sur huit | **−2** | **1,36 à 1,52 s sur les 8 URLs** le 2026-10-18 ; le 2026-10-22, quatre runs concordants : `/guide/` 5,4 à 5,6 s, `/blog/` 5,0, article OKR 5,3 à 5,4, `/pour-freelances/` et `/a-propos/` 4,5 à 4,6, **`/en/` 5,9 à 6,0 s** ; `/` 1,6 s, page entreprise 2,3 à 2,4 s. Cause : `26a0faac` remplace le texte peint des pages de contenu par un spinner, arbitré par Axel sur une mesure **locale** (« 2,4 à 3,4 s, 4,8 sur `/guide/` ») que la CI dément. `/en/` n'est couverte par aucun arbitrage : même copie `#lp-hero` que `/`, LCP ×4. La garde ne fait qu'**avertir** (`largest-contentful-paint` en `warn` à 4 500 ms), et cinq URLs dépassent même ce seuil. Le +1 « LCP mobile » du 10-16 est repris ici et dans [`MOBILE.md`](./MOBILE.md) |
+> | Marges serrées | 0 | `vendor-utils` 0,4 % ; la PR n° 113 les rouvre en **allégeant** les chunks (`StatisticsPage`, `AgendaPage`) et en **abaissant** deux cliquets, non fusionnée |
+>
+> **95 → 95.**
 
 > ### 🟠 2026-10-20 · −1 : le cliquet de `OrganizationPage` dépassé depuis 26 h
 >
@@ -229,6 +242,7 @@
 | AM-3 | **Les chunks LAZY n'ont aucun plafond.** Le budget ne couvre que le chemin critique et l'entrée. Une page lazy peut grossir sans limite | `scripts/check-bundle-budget.mjs` : « Les chunks lazy ne sont payés que par ceux qui ouvrent l'écran correspondant ». `BUDGETS` ne porte que `critical` et `entry` | ✅ **OUTILLÉ le 2026-09-20** · **30 plafonds par chunk**, posés au poids du jour (`C-85`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé** : un plafond générique de 70 ko existait ; ce qui manquait était un plafond **par chunk** · 🔎 ✅ **2026-09-22 : il a mordu** : `TasksPage` 37,7 ko > 37,0 à `HEAD`. → `C-117` |
 | AM-4 | **4 URLs mesurées sur les 45 du sitemap** | `lighthouserc.json` : `/`, `/guide/`, `/blog/`, `/pour-freelances/`. `dist/sitemap.xml` en porte **45** | ✅ **OUTILLÉ le 2026-09-20** · passe mobile Lighthouse, 4 → **8 URLs** (`C-84`) — 🔴 ne prouve PAS : la couverture : 8 URLs restent 8 URLs, la proportion s'améliore sans se fermer |
 | AM-5 | **Aucune mesure du coût SERVEUR en continu.** Les plans d'exécution et les temps de RPC sont rejoués à la main, à chaque passe | aucun workflow ne joue d'`EXPLAIN` | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` · EXPLAIN sous RLS, rôle `authenticated`, transaction annulée (`C-87`) — 🔴 ne prouve PAS : le coût **facturé** (Supabase ne l'expose pas) ni la charge réelle (c'est `scalability-volume`) |
+| AM-6 | **`vendor-utils` est repassé sous sa marge cible un jour après la PR qui l'en sortait** (31,4 / 33,0 ko, 4,8 %). La marge n'est pas gardée, seul le plafond l'est | `check:bundle` | 🟠 **OUVERT le 2026-10-23** · session dédiée, avec le LCP mobile des pages de contenu (AM-2) |
 
 ### 🔎 C-116 · pourquoi le LCP mobile est lent (mesuré le 2026-09-24)
 
@@ -323,9 +337,82 @@ parce que c'est un dossier caché (`include-hidden-files`). Aucun rapport Lighth
 mobile, n'avait donc jamais été archivé. Le résumé imprime désormais l'élément LCP et ses phases.
 ❌ **Ne pas remonter le seuil de 4 500 ms** : il est dépassé pour une raison nommée.
 
+#### 🔴 2026-10-22 · `/en/` reprise par le bandeau cookies, pages de contenu à 4,5-5,6 s
+
+Lu dans l'**artefact** `lighthouse-mobile` de quatre runs de `main` (`39797625778`,
+`39810347890`, `39834230611`, `39843255180`), pas dans les annotations : GitHub n'en garde que
+dix par étape, et le résumé en écrivait trois par URL. L'élément LCP de `/en/` n'y figurait
+pas. ✅ Une ligne par URL depuis ce jour (`ci.yml`, « Scores mesures (mobile) »).
+
+**`/en/` ne perd pas la copie : le bandeau cookies passe devant.** Sur les quatre runs, l'élément
+LCP est le premier paragraphe du bandeau (`aside.fixed > … > p.text-[13px]`, 346 × 127 px),
+peint 1,2 s après le montage de React (*Render Delay* simulé de 4,9 à 5,5 s). La copie
+`#lp-hero` est bien peinte à 0,9 s (FCP), mais son plus grand bloc est plus petit que ce
+paragraphe. Mesuré sur la production, Chromium headless à 412 px (entrées
+`largest-contentful-paint` et surfaces de texte de la copie servie sans script) :
+
+| 412 px | Plus grand bloc de la copie | 1er paragraphe du bandeau |
+|---|---|---|
+| `/` | **57 195 px²** (titre sur quatre lignes) | 41 628 px² |
+| `/en/` | **28 700 px²** (titre sur deux lignes) | **42 004 px²** |
+
+Le titre anglais tient en deux lignes dès ~400 px, le français en quatre : `/` ne garde son LCP
+que parce que son titre est long. Le 2026-10-18, ce qui se peignait avant React était le texte
+SEO, plus grand que le bandeau : rien ne le montrait. Le 2026-10-21, la mesure locale de
+`3cce0b05` (« LCP 1,17 à 1,42 s ») portait sur `/` seule.
+
+❌ **Couper le paragraphe en trois, sans changer un mot (le geste de `290d6f51`), ne corrige
+pas.** À 412 px, le plus grand morceau (26 872 px²) passe sous le titre (29 157) avec 8 % de
+marge : Lighthouse passerait au vert. Mais la marge tombe à 1 % à 430 px, et le bandeau repasse
+devant de 440 à 639 px. Ce serait faire passer la mesure, pas corriger la page.
+
+**Les options pour `/en/` touchent toutes la surface de recueil du consentement : à arbitrer.**
+
+| Option | LCP `/en/` attendu | Coût |
+|---|---|---|
+| 1. Bandeau **au premier geste** (`pointerdown`, `keydown`, `wheel`, `touchstart`) au lieu de 1,2 s après le montage | la copie, ~1,5 s comme `/` (chiffre CI : PR empilée) | Chrome cesse de mesurer le LCP au premier geste : le bandeau ne peut plus l'être, à aucune largeur. Un visiteur qui ne touche pas la page n'est pas sollicité, et rien n'est déposé (`null` n'est pas une acceptation). Lighthouse n'audite plus le bandeau |
+| 2. Bandeau **peint par le prérendu**, relevé par React | ≈ FCP, ~0,9 s | le bandeau couvre le hero dès la première image ; ses boutons sont inertes jusqu'au montage (4 à 5 s sur mobile lent) ; le script inline doit relire l'expiration à six mois (empreinte CSP) ; une capture et une garde de plus |
+| 3. **Texte plus court**, chaque paragraphe sous ~20 000 px² (trois lignes à 412 px) | la copie, ~1,5 s | relecture juridique de la surface de recueil (A4 de `LEGAL.md`, `LEGAL-JOURNAL.md`) ; reste lié à la longueur du titre |
+| 4. Couper en trois | vert en CI seulement | rejeté ci-dessus |
+
+**Pages de contenu : l'arbitrage de `26a0faac` reposait sur 2,4 à 3,4 s mesurés en local, la CI
+mesure 4,5 à 5,6 s.** Même bridage (412 px, CPU ×4, 4G lente simulée), quatre runs concordants.
+Le spinner fait demander **531 à 720 ko avant le LCP**, contre **84 à 88 ko** quand le texte
+était peint : toute l'application doit arriver avant la première phrase.
+
+| Option | LCP mobile en CI | Ce que voit le visiteur | Coût |
+|---|---|---|---|
+| A. Statu quo, spinner (`26a0faac`) | **4,45 à 5,61 s**, perf 66 à 81, FCP 2,4 à 2,9 s (quatre runs du 10-22) | spinner, puis la page | rien |
+| B. Revenir au texte SEO peint | **1,36 à 1,52 s**, perf 97 à 100, FCP 0,76 s (run `39139204925`, `e69cb729`, 10-18) | texte brut sans mise en page, puis spinner, puis la page : le défaut signalé par Axel | annuler la part « contenu » de `26a0faac` |
+| C. Copie habillée par gabarit, comme la home | non mesuré ; par analogie `/` 1,6 s et entreprise 2,3 à 2,4 s en CI | la page dès la première image | une capture et une garde par gabarit (guide, index du blog, article, `/pour-*`, à-propos, légales). La copie doit égaler le rendu React, sinon React reprend le LCP (6,4 s sur l'entreprise le 10-21) |
+| D. Garder le spinner, alléger ce qui précède le contenu | **estimé 3,4 à 3,8 s** | spinner plus court | estimation : pente de 5,35 ms simulées par ko (20 points, r² 0,86) appliquée au plancher de 318 à 384 ko (document, police, entrée, React, routeur, Query, utilitaires, CSS), sans `vendor-supabase` (55 ko), `vendor-animation` (50), `sentry-client` (49), `vendor-charts` (112, sur `/guide/`). Reste au-dessus de 2,5 s, et c'est l'architecture des providers (leviers 2 et 3 plus haut) |
+
+**Cliquet posé le même jour** (`lighthouserc.mobile.json`) : `largest-contentful-paint` passe en
+`error` sur `/` (2 000 ms, pour 1 592 à 1 666 mesurés) et `/entreprise-presentation/` (3 000 ms,
+pour 2 264 à 2 435). `/en/` suivra son correctif : la poser rouge ferait une gate rouge en
+permanence. Les 4 500 ms globaux restent en `warn` tant que les pages de contenu attendent leur
+arbitrage.
+
 ✅ **2026-10-16 · LCP sous 2,5 s et TBT sous 300 ms sur les trois pages animées, Lighthouse mobile en CI** (artefact `lighthouse-mobile`). Avant, run `38476034238` (`6847bbf3`) : `/` LCP 3,27 s, TBT 878 ms, perf 65 · `/en/` 3,26 s, 949 ms, 64 · `/entreprise-presentation/` 3,26 s, 1 049 ms, 62. Après, run `38899945555` (`65b8c87a`) : `/` **1,37 s, 54 ms, 100** · `/en/` **1,36 s, 77 ms, 100** · `/entreprise-presentation/` **1,51 s, 65 ms, 99** ; les 8 URLs sous 1,52 s et 182 ms. Confirmé au run suivant, `38901051072` (`93f6a035`) : `/` 1,22 s, 66 ms · `/en/` 1,52 s, 66 ms · `/entreprise-presentation/` 1,37 s, 111 ms. Quatre leviers : l'app chargée après la peinture du prérendu (`src/boot.ts`, son JS et sa CSS sortent du chemin du LCP), l'icône du manifeste à sa taille (`logo.png` de 255 ko, téléchargée pendant le chargement, ajoutait 1,3 s au LCP une passe sur deux), la rotation du hero qui ne re-rend plus le parcours (`hero-module-actif.ts`), le bas de la landing monté au premier geste (`BelowFold.tsx`, une tâche de ~1 s à CPU ×4). 🔴 **Les chiffres « entreprise » ci-dessus, et tous ceux de ce document jusqu'à `9dcaf94b`, mesurent le parcours PERSO.** `/entreprise-presentation/` (l'URL de `lighthouserc.mobile.json`, que Vercel sert aussi en 200 sans rediriger) gardait sa barre oblique finale dans `stripLocalePrefix`, et `useLandingTrack` ratait le slug : le prérendu était entreprise, l'hydratation rendait le perso, titre et canonical de l'accueil compris. Vu en production le 2026-10-16, en fr comme sur `/en/for-companies/`. Corrigé dans `normalizePath` (`src/i18n/routes.ts`), témoin `use-landing-track.test.ts`.
 
 📏 **2026-10-16 · première mesure du parcours ENTREPRISE, Lighthouse mobile en CI**, run `38907264016` (`9dcaf94b`), élément LCP vérifié dans l'artefact (H1 « Qui fait quoi. ») : perf **88**, LCP **1,36 s**, TBT **350 ms**, Speed Index 4,9 s, CLS 0,040, a11y **93**. Le LCP tient ; le TBT est le seul au-dessus de la cible des pages animées (300 ms). Fil principal : `styleLayout` 2,4 s, `vendor-react` 966 ms, `vendor-gsap` 936 ms, `vendor-animation` 666 ms ; tâches longues de 70 à 151 ms entre 8,2 et 10,6 s (sections épinglées, shader). Accessibilité : trois audits en échec, absents du parcours perso (`aria-prohibited-attr` sur les `ent-hero-line` du H1, `color-contrast` sur des `text-slate-500/600`, `label-content-name-mismatch` sur deux boutons). Seuils de `lighthouserc.mobile.json` inchangés.
+
+### ⚡ TBT mobile de `/` : l'amorçage en plusieurs tâches (2026-10-22, PR #103)
+
+**Avant**, Lighthouse CI mobile : `/` à **309 ms** (run `39704928952`, `263154b6`, branche de #91), 282 ms sur `main` à `5eaa8b8c`, 114 ms à `23882c89`. Une passe par URL : au bord du seuil de 300 ms, au gré du runner. Tâches longues du rapport (temps simulé) : `main.js` **221 ms** (171 ms de TBT à elle seule), `vendor-react` 114 et 69, `vendor-animation` 104, 54 et 53, une non attribuée de 60.
+
+**Profil** (`npm run profile:landing`, puis trace CDP par tâche longue, 412 px, CPU ×4, machine saturée donc absolus gonflés) : la tâche `main.js` est l'ÉVALUATION du graphe de l'application d'un bloc (icônes lucide créées par `vendor-utils` ~35 %, code propre de `main` ~35 % dont la première lecture de `localStorage`, supabase ~20 %) ; puis le premier rendu React d'un bloc ; puis l'évaluation du chunk `LandingPage` (130 à 210 ms), dont le bas de page qu'il importait en statique ; puis des frames GSAP / Framer (style et mise en page). Ni le shader (parcours entreprise seulement) ni les entrées CSS du hero n'y figurent.
+
+| Commit | Changement | `/` mobile en CI |
+|---|---|---|
+| `183a88f3` | Bas du parcours perso dans son chunk (`PersoBelowFold`, chargé au premier geste) | **316 ms** : aucun effet sur Lighthouse, qui ne fait aucun geste. Gardé pour l'utilisateur réel : `LandingPage` passe de 68,7 à 38,6 ko bruts |
+| `bb16c86b` | `boot.ts` : sur page prérendue, six chunks vendor importés à part avant `main` ; `main.tsx` : premier rendu sous `startTransition` | **0 ms**, perf 100, TTI 6,0 → 1,7 s, **aucune tâche au-dessus de 25 ms** (run `39823183565`) ; `/entreprise-presentation/` 0 ms, `/guide/` 400 → 106 ms |
+| `cb05329f` | Trois de ces chunks seulement (cf. ci-dessous) | **49 ms**, perf 100, LCP 1,68 s (run `39829118507`) ; `/en/` 58 ms, `/entreprise-presentation/` 37 ms. Octets : `vendor-animation` revenu à 49,2 ko (marge 5,3 %, comme `main`), chemin critique 307,0 ko contre 306,3 sur `main` |
+
+- **Pourquoi ça marche.** Un `import()` lancé à part est évalué dans SA tâche, à l'arrivée de son chunk ; `main` n'évalue plus que le reste. En transition, React rend par tranches et rend la main entre elles. Réservé aux pages prérendues : le visiteur y voit déjà la page, rien n'attend ces tâches. La coquille `app.html` charge et rend comme avant.
+- **Le prix.** `main` part une fois ces chunks évalués : un aller-retour de plus avant le montage, sans effet sur le LCP (la copie prérendue est peinte avant).
+- 🔴 **Un `import()` de paquet coûte des octets.** Vite le réécrit en accès à l'espace de noms du paquet, qui garde TOUTES ses exportations vivantes, déstructuration ou pas. Mesuré contre `main` (`c2959ded`) : `framer-motion` ajoutait **2,4 ko gzip** à `vendor-animation` (marge 5,3 % → 0,8 %), `react-router` 0,3, `react-query` 0,2, `supabase-js` 0,4. Seuls restent `react-dom/client`, `clsx` (qui évalue tout `vendor-utils`) et `supabase-js`. ❌ Ne pas allonger la liste de `boot.ts` sans `npm run check:bundle` avant/après.
+- ⚠️ **Mesurer en local ne tranche rien sur ce poste** : Lighthouse en local (API Node, mêmes réglages que `lighthouserc.mobile.json`) rendait 4 845 à 9 607 ms de TBT, `benchmarkIndex` 573 à 899, et `lhci` échoue sous Windows (`EPERM` au nettoyage de son dossier temporaire). Le verdict est le job `lighthouse` de la PR.
 
 
 > ### 🔴 2026-09-14 (soir) · −2 : une RPC créditée d'un gain de 71× rend un chiffre faux en production
@@ -879,6 +966,39 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
   dépôt, justifiée en commentaire dans `scripts/check-bundle-budget.mjs`. Une seconde remontée
   ferait du budget une formalité : la marge se regagne en descendant la mesure. Depuis, il n'a
   fait que descendre : 112 000 → 79 000 → 78 000 → 71 000 → **70 500** (2026-10-01).
+
+### 🟢 2026-10-22 : trois chunks au bord du plafond, marge rendue, deux cliquets abaissés
+
+`vendor-utils`, `StatisticsPage` et `AgendaPage` étaient à moins de 2 % de leur cliquet : le
+commit suivant les aurait fait rougir, comme `OrganizationPage` le 2026-10-19. Règle suivie : ne
+sortir en lazy que ce qui sert à l'interaction (modales, menus, surfaces secondaires), jamais un
+plafond relevé. Mesure contre un build de `main` à `b687a683` dans le même worktree (confirmée par le `check:bundle` de la CI, build avec Sentry, sur `main` à `e9ed98f2` puis sur la PR), **tous les
+chunks** comparés par nom de base (octets gzip, comme `check:bundle`). Les deux builds sans
+`VITE_SENTRY_DSN`, pour comparer à l'identique ; aucun des chunks ci-dessous ne dépend de Sentry.
+
+| Chunk | `main` | Après | Plafond | Marge | Levier |
+|---|---|---|---|---|---|
+| `StatisticsPage` | 12 977 | **10 181** | 13 000 → **10 800** | 0,2 % → **5,7 %** | la modale Premium (montée au clic sur un verrou) et la heatmap des habitudes (bas de page, sous la ligne de flottaison) chargées à part, `pages/statistics/lazy-surfaces.tsx` |
+| `AgendaPage` | 18 278 | **17 310** | 18 500 → **18 300** | 1,2 % → **5,4 %** | le tutoriel et ses étapes desktop et mobile (première visite seulement), le panneau de revue de la modale d'édition, le menu de revue d'un créneau passé, dans `pages/agenda/lazy-overlays.tsx` |
+| `vendor-utils` | 32 854 | **31 342** | 33 000 (laissé) | 0,4 % → **5,0 %** | `match` (parseur) et `formatRelative` retirés des locales date-fns `fr` et `en-US` par un plugin de `vite.config.ts` : aucun code n'appelle `parse()`, `isMatch()` ni `formatRelative()`. Cliquet : `src/i18n/date-fns-no-parse.guard.test.ts` |
+| Chemin critique | 305,3 ko | **303,8 ko** | 323,0 ko | | `vendor-utils` est préchargé : le gain vaut pour **tout** visiteur |
+| Entrée (`main`) | 67 085 | 67 123 | 70 500 | | +38 o : en-têtes d'import |
+| Lot `index` (9 barils) | 86,8 ko | **86,8 ko** | 89 500 | | inchangé, aucun effet « Popper » (le piège du 2026-09-24, où un onglet rendu lazy avait sorti Popper vers `index`) : `dropdown-menu` reste à 20,5 ko |
+
+Les deux cliquets abaissés sont posés au nouveau poids avec 5 % de marge, la convention du
+fichier. `vendor-utils` garde 33 000 : l'abaisser ferait passer sa marge sous 5 %.
+
+Nouveaux chunks, tous chargés au geste ou après le premier rendu : `HabitHeatmap` 2,2 ko,
+`PremiumGateModal` 1,8 ko, `SlotReviewMenu` 1,0 ko, `AgendaTutorial` 0,8 ko, `SlotReviewPanel`
+0,6 ko, `use-mounted-after-first-open` 0,15 ko (le crochet, désormais partagé par trois pages).
+Les autres chunks bougent de −49 à +38 o.
+
+⚠️ **`vendor-utils` reste le plus serré des trois** : 5,0 % tout juste. Il porte surtout les icônes
+lucide (190 icônes, ~23 ko gzip sur 31) et chaque icône inédite y ajoute ~120 o, payés par tout
+visiteur. Levier écarté le 2026-10-22 : laisser Rollup placer les icônes à un seul consommateur
+avec celui-ci (50 icônes sur 191, ~5 ko). Il ferait grossir les barils `index` partagés (les
+consommateurs comme `DescriptionField` ou `TaskQuickFilters` y vivent) et une trentaine de chunks
+de page. Avant d'ajouter une icône : réutiliser une icône déjà présente.
 
 ### 🔴 2026-10-01 : `main` rouge sur le budget depuis le 2026-09-24, quatre chunks ramenés
 

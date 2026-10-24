@@ -166,8 +166,18 @@ export const test = base.extend<{ demoPage: Page; horlogeFigee: string | null }>
       // Sans ce garde, on relançait un clic sur un bouton déjà disparu, qui
       // n'aboutit jamais et bloque le test jusqu'au timeout (observé : 60 s
       // à 2 min figés au lieu d'un échec net).
-      if (!/\/dashboard/.test(page.url())) {
-        await demoBtn.dispatchEvent('click');
+      // 🔴 Et l'URL se lit APRÈS un court délai, pas à l'instant du rejet :
+      // le clic a pu lancer l'entrée en démo, l'URL est encore `/` et le CTA
+      // déjà démonté. Le 2026-10-21 sous WebKit en CI, `dispatchEvent` (sans
+      // délai propre) a attendu ce bouton disparu jusqu'au délai du TEST
+      // entier, 3 min, au retry suivant le même cas passait en 2,6 s. Les
+      // deux attentes sont donc BORNÉES : un CTA qui n'agit vraiment pas
+      // échoue toujours, sur `waitForURL` ci-dessous.
+      const parti = await page
+        .waitForURL(/\/dashboard/, { timeout: 5_000 })
+        .then(() => true, () => false);
+      if (!parti && (await demoBtn.isVisible().catch(() => false))) {
+        await demoBtn.dispatchEvent('click', undefined, { timeout: 10_000 });
       }
     }
 

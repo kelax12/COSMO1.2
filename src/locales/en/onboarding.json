@@ -17,13 +17,13 @@
       "tasks": "Tasks",
       "agenda": "Calendar",
       "habits": "Habits",
-      "okr": "Goals"
+      "okr": "Objectives"
     },
     "intro": {
       "hello": "Hello {{name}}.",
       "helloAnon": "Hello.",
       "title": "Let's build your <em>system</em>.",
-      "body": "COSMO brings your tasks, calendar, habits and goals together. In four steps you write down what is on your mind, fit it into your week, and pick a habit and a goal. Everything you write is saved.",
+      "body": "COSMO brings your tasks, calendar, habits and objectives together. In four steps you write down what is on your mind, fit it into your week, and pick a habit and an objective. Everything you write is saved.",
       "duration": "Two minutes · everything is optional",
       "cta": "Get started",
       "legendTitle": "The four orbits of COSMO",
@@ -86,19 +86,19 @@
       "alreadyCreated": "Habit added: {{name}}. You can edit it in Habits."
     },
     "okr": {
-      "title": "A goal for the next three months?",
-      "body": "A goal sets the direction. The key result, optional, tells you how you'll know you got there. Link your tasks to it: each one you finish moves the gauge.",
+      "title": "An objective for the next three months?",
+      "body": "An objective sets the direction. The key result, optional, tells you how you'll know you got there. Link your tasks to it: each one you finish moves the gauge.",
       "placeholder": "e.g. Launch v2 of the product",
       "krLabel": "Key result (optional)",
       "krPlaceholder": "e.g. Publish the sales page",
-      "previewFallback": "Your goal",
+      "previewFallback": "Your objective",
       "previewKrFallback": "Your key result",
       "previewPeriod": "Over 90 days",
       "previewCaption": "A linked task gets done, and the gauge moves.",
       "targetLabel": "Target (optional)",
       "targetPlaceholder": "e.g. 10",
       "targetHint": "Without a number, the key result is simply ticked off once reached.",
-      "alreadyCreated": "Goal added: {{name}}. You can flesh it out in Goals."
+      "alreadyCreated": "Objective added: {{name}}. You can flesh it out in OKRs."
     },
     "done": {
       "title": "Your system is <em>up and running</em>.",
@@ -107,7 +107,7 @@
       "recapTasks_one": "{{count}} task in your list",
       "recapTasks_other": "{{count}} tasks in your list",
       "recapHabit": "Habit tracked: {{name}}",
-      "recapOkr": "Goal: {{name}}",
+      "recapOkr": "Objective: {{name}}",
       "recapNothing": "Nothing yet, and that is fine: you can add anything in a few taps from the app.",
       "next": "Each page will walk you through its main features the first time you open it.",
       "cta": "Enter COSMO",
