@@ -286,6 +286,8 @@ const fromCatalog = (routeId) =>
 const ROUTES = [
   {
     path: '/guide',
+    // Copie de la page rendue par React, peinte avant lui (cf. injectContentCopy).
+    copy: 'guide',
     meta: fromCatalog('guide'),
     extraLd: (locale) => [
       { obj: breadcrumb("Guide d'utilisation", '/guide', locale), id: 'guide-breadcrumb' },
@@ -350,6 +352,7 @@ const ROUTES = [
   },
   {
     path: '/a-propos',
+    copy: 'about',
     meta: fromCatalog('about'),
     extraLd: (locale) => [
       { obj: breadcrumb('À propos', '/a-propos', locale), id: 'apropos-breadcrumb' },
@@ -495,6 +498,7 @@ const ROUTES = [
   },
   {
     path: '/blog',
+    copy: 'blog',
     meta: fromCatalog('blog'),
     // Le schéma Blog ne liste QUE les articles écrits dans la langue de la page.
     // Déclarer un BlogPosting anglais qui n'existe pas est une erreur Search
@@ -552,6 +556,7 @@ const ROUTES = [
   // /en/blog/<slug> est la version anglaise du MÊME article.
   ...ARTICLES.map((a) => ({
     path: `/blog/${a.slug}`,
+    copy: 'article',
     // Pas de suffixe de marque : « | Blog Cosmo » coûtait 12 caractères et
     // poussait 6 titres au-delà des ~60 affichés par Google (donc tronqués).
     // Google affiche de toute façon le nom du site sous le titre.
@@ -625,6 +630,7 @@ const ROUTES = [
   // route-slugs.json que l'app. Aucune seconde table de slugs.
   ...USE_CASES.map((u) => ({
     path: `/${routeSlug(u.routeId, DEFAULT_LOCALE)}`,
+    copy: u.routeId,
     meta: byLocale(u, (c) => ({ title: `${c.metaTitle} | Cosmo`, description: c.description })),
     extraLd: (locale) => [
       {
@@ -643,6 +649,7 @@ const ROUTES = [
   })),
   {
     path: '/cgu',
+    copy: 'terms',
     meta: fromCatalog('terms'),
     content: {
       fr: `<h1>Conditions Générales d'Utilisation</h1>
@@ -655,6 +662,7 @@ const ROUTES = [
   },
   {
     path: '/mentions-legales',
+    copy: 'legalNotice',
     meta: fromCatalog('legalNotice'),
     content: {
       fr: `<h1>Mentions légales</h1>
@@ -665,6 +673,7 @@ const ROUTES = [
   },
   {
     path: '/politique-confidentialite',
+    copy: 'privacy',
     meta: fromCatalog('privacy'),
     content: {
       fr: `<h1>Politique de confidentialité</h1>
@@ -996,6 +1005,66 @@ function injectHeroCopy(out, locale, track) {
   return out;
 }
 
+// ── Copie des pages de CONTENU, rendue par React (2026-10-23) ──────────
+// Blog, articles, `/pour-*`, à-propos, pages légales et guide peignaient un
+// spinner jusqu'au premier rendu de React : 4,5 à 5,6 s de LCP mobile en CI
+// (AM-2 de docs/PERFORMANCE.md). Elles peignent désormais leur PROPRE rendu,
+// produit ici par leurs composants (`src/prerender/content-copy.tsx`, chargé
+// par Vite en SSR), dans le même calque `#lp-hero` que la home : hors de
+// #root, relevé par `PublicPageWithSuspense` (App.tsx) dans l'image où la page
+// React se peint. Même CSS que celle de l'app, sortie de la feuille buildée et
+// confinée ; les classes de thème (`dark`, `gris`, `noir`) sont lues sur
+// <html>, où le script inline d'index.html les pose avant la première peinture.
+// Pas de capture à refaire : le balisage est recalculé à chaque build, il ne
+// peut pas diverger de la page.
+let viteSsr = null;
+let contentCopyModule = null;
+async function contentCopy() {
+  if (contentCopyModule) return contentCopyModule;
+  const { createServer } = await import('vite');
+  viteSsr = await createServer({
+    server: { middlewareMode: true, hmr: false },
+    appType: 'custom',
+    logLevel: 'error',
+    // Pas de pré-bundling : le scan des dépendances parcourt toute l'app, et
+    // le rendu serveur n'en a pas besoin.
+    optimizeDeps: { noDiscovery: true, include: [] },
+  });
+  contentCopyModule = await viteSsr.ssrLoadModule('/src/prerender/content-copy.tsx');
+  return contentCopyModule;
+}
+
+const AVERTISSEMENT_SSR = /useLayoutEffect does nothing on the server/;
+async function injectContentCopy(out, locale, page, path) {
+  const { renderContentCopy } = await contentCopy();
+  const prefixe = localizePath('/', locale).replace(//$/, '');
+  const url = path.slice(prefixe.length) || '/';
+  // React prévient qu'un useLayoutEffect ne s'exécute pas côté serveur (celui
+  // du routeur) : c'est attendu, la copie est inerte. Le reste passe.
+  const error = console.error;
+  console.error = (...args) => {
+    if (typeof args[0] === 'string' && AVERTISSEMENT_SSR.test(args[0])) return;
+    error(...args);
+  };
+  let fragment;
+  try {
+    fragment = await renderContentCopy(page, url, locale);
+  } finally {
+    console.error = error;
+  }
+  if (!fragment || fragment.length < 200) {
+    throw new Error(`prerender: copie de ${path} vide ou presque (${fragment?.length ?? 0} o), page introuvable par son routeur ?`);
+  }
+  const css = scopedCssFor(fragment, heroCssSource(), '#lp-hero', { themeSurHtml: true });
+  if (!out.includes('<div id="root">')) throw new Error('prerender: <div id="root"> introuvable, copie de page non posée');
+  out = out.replace(/<html(?![^>]*data-prerendered)/, '<html data-prerendered');
+  out = out.replace('</head>', () => `    <style id="lp-hero-css">${css}</style>
+  </head>`);
+  out = out.replace('<div id="root">', () => `<div id="lp-hero" inert data-locale="${locale}" data-track="contenu">${fragment}</div>
+    <div id="root">`);
+  return out;
+}
+
 // ── Génération ──────────────────────────────────────────────────────────
 let count = 0;
 for (const route of ROUTES) {
@@ -1009,11 +1078,18 @@ for (const route of ROUTES) {
     const dir = join(DIST, path);
     mkdirSync(dir, { recursive: true });
     const page = buildPage(route, locale, alternates);
-    writeFileSync(join(dir, 'index.html'), route.heroTrack ? injectHeroCopy(page, locale, route.heroTrack) : page, 'utf8');
+    let sortie = page;
+    if (route.heroTrack) sortie = injectHeroCopy(page, locale, route.heroTrack);
+    else if (route.copy) sortie = await injectContentCopy(page, locale, route.copy, path);
+    writeFileSync(join(dir, 'index.html'), sortie, 'utf8');
     count++;
     console.log(`  prerendered ${path}/index.html`);
   }
 }
+
+// Le serveur Vite du rendu des copies ne sert plus : sans fermeture, le
+// processus du build ne rendrait pas la main.
+if (viteSsr) await viteSsr.close();
 
 // ── Home : FAQPage JSON-LD statique + contenu visible dans #root ──────────
 // La home est publiée dans chaque locale qui a un corps écrit, et le FAQPage
