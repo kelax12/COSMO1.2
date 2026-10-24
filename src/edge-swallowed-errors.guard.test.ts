@@ -69,3 +69,47 @@ describe('delete-account — aucune lecture n\'avale son erreur (famille S-1 / S
     ).toEqual([]);
   });
 });
+
+// ── Audit serveur du 2026-10-24 (SV-8) ──────────────────────────────────
+//
+// La même famille, dans les fonctions qui OUVRENT un paiement. Dans
+// `stripe-org-checkout`, la lecture de `org_subscriptions` décidait de
+// « déjà abonné » et du customer réutilisé : sur panne, `sub` valait `null`,
+// donc un propriétaire déjà abonné repartait sur un SECOND checkout (double
+// prélèvement possible), avec un nouveau customer qui écrasait le lien du
+// premier. La lecture de `organizations`, elle, rendait un 403 à tort.
+//
+// ⚠️ Le détecteur couvre aussi un client nommé `admin` (org-webhook-dispatch).
+// `org-digest` (réglages d'affichage, sans effet sur l'envoi, écrit tel quel
+// dans son code) et la lecture du nom d'affichage de `send-org-invite`
+// (déstructuration de tableau) sont HORS du motif, par construction.
+const ROUTING_FUNCTIONS = [
+  'stripe-org-checkout',
+  'stripe-org-portal',
+  'stripe-create-checkout',
+  'org-webhook-dispatch',
+] as const;
+
+const SWALLOWED_ANY = /const\s*\{([^}]*)\}\s*=\s*await\s+(?:supabase\w*|admin)\b/g;
+
+function swallowedReadsAny(code: string): string[] {
+  return [...code.matchAll(SWALLOWED_ANY)]
+    .map((m) => m[1])
+    .filter((binding) => binding.includes('data') && !binding.includes('error'));
+}
+
+describe('fonctions de paiement et file de webhooks : aucune lecture n\'avale son erreur (SV-8)', () => {
+  it('TÉMOIN : le détecteur voit les deux noms de client', () => {
+    expect(swallowedReadsAny('const { data: org } = await supabaseAdmin.from(\'organizations\')')).toHaveLength(1);
+    expect(swallowedReadsAny('const { data: w } = await admin.from(\'org_webhooks\')')).toHaveLength(1);
+    expect(swallowedReadsAny('const { data: w, error } = await admin.from(\'org_webhooks\')')).toHaveLength(0);
+  });
+
+  for (const name of ROUTING_FUNCTIONS) {
+    it(`${name} : chaque lecture regarde son \`error\``, () => {
+      const code = readFileSync(path.resolve(process.cwd(), `supabase/functions/${name}/index.ts`), 'utf8');
+      expect(code.length).toBeGreaterThan(1000);
+      expect(swallowedReadsAny(code), `${name} prend \`data\` sans regarder \`error\``).toEqual([]);
+    });
+  }
+});
