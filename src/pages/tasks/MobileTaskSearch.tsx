@@ -177,8 +177,12 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
   // panneau et levé après coup : pendant un appui, le blur ne ferme rien, et
   // c'est le gestionnaire de la ligne qui décide.
   const pointerInPanel = useRef(false);
-  const handleBlur = () => {
+  const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
     if (pointerInPanel.current) return;
+    // Tab vers la croix ou une suggestion : le focus RESTE dans la surface. Fermer ici
+    // rendait ces commandes inatteignables au clavier (mesuré le 2026-10-23, AM-2).
+    const next = event.relatedTarget;
+    if (next instanceof Node && panelRef.current?.contains(next)) return;
     close();
   };
 
@@ -267,7 +271,7 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
             type="button"
             onClick={openAndFocus}
             className="flex flex-1 items-center gap-2 min-w-0 h-full text-left"
-            aria-label={t('search.open')}
+            aria-label={`${t('search.open')} : ${searchTerm || t('search.placeholder')}`}
             aria-haspopup="dialog"
           >
             <Search size={18} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-text-muted))]" />
