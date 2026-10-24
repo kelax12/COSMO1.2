@@ -313,6 +313,14 @@ Deno.serve(async (req) => {
             limit: REPORT_BUG_LIMITS.anonymous.limit,
             window: REPORT_BUG_LIMITS.anonymous.window,
           },
+      // Puis le plafond de toute la fonction, sur les deux chemins : un
+      // appelant déjà refusé par son seau n'y puise pas (refus au premier seau plein).
+      {
+        domain: 'report-bug:global',
+        value: 'all',
+        limit: REPORT_BUG_LIMITS.global.limit,
+        window: REPORT_BUG_LIMITS.global.window,
+      },
     ])
     if (!accountVerdict.allowed) {
       return accountVerdict.misconfigured

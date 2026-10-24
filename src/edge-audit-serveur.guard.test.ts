@@ -106,6 +106,12 @@ describe('SV-3 · le plafond par IP de report-bug ne se contourne pas', () => {
     expect(anon).toBeGreaterThan(code.indexOf('auth.getUser()'));
     // Alternative au seau du compte : un compte connecté n'y puise jamais.
     expect(code.slice(code.indexOf("domain: 'report-bug:account'") - 200, anon)).toMatch(/reporterEmail\s*\?/);
+    // Et un plafond de TOUTE la fonction, après le seau propre, sur les deux
+    // chemins : des comptes créés en série ne le multiplient pas (G-2).
+    expect(helper).toMatch(/global:\s*\{\s*limit:\s*\d+,\s*window:\s*'1 day'\s*\}/);
+    const global = code.indexOf("domain: 'report-bug:global'");
+    expect(global).toBeGreaterThan(anon);
+    expect(code.slice(anon, global)).not.toMatch(/consumeRateLimits\(/);
   });
 });
 
