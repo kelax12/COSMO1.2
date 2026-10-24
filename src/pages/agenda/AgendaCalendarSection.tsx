@@ -47,6 +47,7 @@ import { useT } from '@/i18n/useT';
 import { useOrgMembers, useActiveOrganization } from '@/modules/organizations';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { getInitialScrollTime, shiftEventsForDisplay, type FullCalendarEvent } from './calendar-events';
+import { dayCellNameFromContent } from '@/lib/fullcalendar-a11y';
 import { useTimezonePref, displayNow } from '@/lib/timezone';
 import { textOnColor } from '@/lib/category-colors';
 import { type MobileView, mobileCalendarStyles, MobileDayStrip } from './MobileAgenda';
@@ -433,6 +434,7 @@ const AgendaCalendarSection = ({
             unselectAuto={true}
             unselectCancel={UNSELECT_CANCEL}
             datesSet={onMobileDatesSet}
+            dayCellDidMount={dayCellNameFromContent}
             eventContent={(eventInfo) =>
               renderEventInner(
                 eventInfo.event.title,
@@ -506,6 +508,7 @@ const AgendaCalendarSection = ({
               eventResize={onEventResize}
               eventReceive={onEventReceive}
               datesSet={onDesktopDatesSet}
+              dayCellDidMount={dayCellNameFromContent}
               unselectAuto={true}
               unselectCancel={UNSELECT_CANCEL}
               eventContent={(eventInfo) =>
