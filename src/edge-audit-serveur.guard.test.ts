@@ -93,14 +93,19 @@ describe('SV-3 · le plafond par IP de report-bug ne se contourne pas', () => {
     expect(callerIp(req({}))).toBe('unknown');
   });
 
-  it('report-bug porte un plafond GLOBAL, consommé après celui de l IP', () => {
+  it('report-bug borne les anonymes ENSEMBLE, après validation, sans toucher aux comptes connectés', () => {
     const helper = codeOnly(read('supabase/functions/_shared/rate-limit.ts'));
-    expect(helper).toMatch(/global:\s*\{\s*limit:\s*\d+,\s*window:\s*'1 day'\s*\}/);
+    expect(helper).toMatch(/anonymous:\s*\{\s*limit:\s*\d+,\s*window:\s*'1 day'\s*\}/);
     const code = fn('report-bug');
     const ip = code.indexOf("domain: 'report-bug:ip'");
-    const global = code.indexOf("domain: 'report-bug:global'");
+    const anon = code.indexOf("domain: 'report-bug:anonymous'");
     expect(ip).toBeGreaterThan(0);
-    expect(global).toBeGreaterThan(ip);
+    // Après la validation du corps et la résolution de l'auteur : une requête
+    // invalide ne vide pas le seau commun.
+    expect(anon).toBeGreaterThan(code.lastIndexOf("error: 'invalid_attachment'"));
+    expect(anon).toBeGreaterThan(code.indexOf('auth.getUser()'));
+    // Alternative au seau du compte : un compte connecté n'y puise jamais.
+    expect(code.slice(code.indexOf("domain: 'report-bug:account'") - 200, anon)).toMatch(/reporterEmail\s*\?/);
   });
 });
 
