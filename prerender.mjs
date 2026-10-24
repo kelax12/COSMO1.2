@@ -912,6 +912,8 @@ function buildPage(route, locale, alternates) {
   // gardent désormais le spinner de démarrage, aux couleurs du thème, que
   // `BootScreen` prolonge jusqu'à la page. Arbitré par Axel, LCP mobile de ces
   // pages rendu en connaissance de cause (docs/PERFORMANCE.md).
+  // 2026-10-23 : les pages de CONTENU (`copy`) sont de nouveau peintes, mais par
+  // leur propre rendu React (injectContentCopy, qui pose l'attribut).
   if (route.heroTrack) out = out.replace(/<html(?![^>]*data-prerendered)/, '<html data-prerendered');
 
   out = out.replace(/<title>[\s\S]*?<\/title>/, `<title>${title}</title>`);
@@ -1037,7 +1039,7 @@ async function contentCopy() {
 const AVERTISSEMENT_SSR = /useLayoutEffect does nothing on the server/;
 async function injectContentCopy(out, locale, page, path) {
   const { renderContentCopy } = await contentCopy();
-  const prefixe = localizePath('/', locale).replace(//$/, '');
+  const prefixe = localizePath('/', locale).replace(/\/$/, '');
   const url = path.slice(prefixe.length) || '/';
   // React prévient qu'un useLayoutEffect ne s'exécute pas côté serveur (celui
   // du routeur) : c'est attendu, la copie est inerte. Le reste passe.
