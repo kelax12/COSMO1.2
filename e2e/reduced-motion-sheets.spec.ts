@@ -349,7 +349,7 @@ test.describe('mouvement réduit — les feuilles s’ouvrent réellement', () =
     await page.goto('/okr');
 
     const create = page
-      .getByRole('button', { name: /voir la liste des OKR terminés/i })
+      .getByRole('button', { name: /OKR terminés/i })
       .first();
     await create.waitFor({ state: 'visible', timeout: 15_000 });
     await create.click();
