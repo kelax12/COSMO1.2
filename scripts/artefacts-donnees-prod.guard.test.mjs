@@ -177,6 +177,12 @@ export const CONTACTS_PROD = {
   'posture.yml › supabase › Advisors et reglages d auth': {
     affiche: "advisors et réglages d'auth : noms d'objets et de règles, aucune ligne de table",
   },
+  'posture.yml › recaler-reference › Recaler la reference': {
+    affiche: "nombre d'advisors et de réglages recalés, aucune ligne de table",
+  },
+  'posture.yml › recaler-reference › Rejouer la garde contre la reference recalee': {
+    affiche: "advisors et réglages d'auth : noms d'objets et de règles, aucune ligne de table",
+  },
   'posture.yml › retention › Durees de conservation (RGPD art. 5.1.e)': {
     affiche: 'par table, nombre de lignes orphelines et âge de la plus vieille ligne',
   },
@@ -214,6 +220,9 @@ export const CONTACTS_PROD = {
 
 /** Canaux publics autres que les artefacts, depuis un job au contact de la prod. */
 export const CANAUX_PUBLICS = {
+  'posture.yml › recaler-reference › Commiter la reference': {
+    raison: '`git push` de scripts/supabase-posture.reference.json : comptes et noms d\'advisors, réglages d\'auth, aucune ligne de table',
+  },
   'posture.yml › cout-db › Enregistrer le point dans la serie': {
     raison: '`git push` de docs/db-cost-series.json : un point de coût EXPLAIN par jour, aucune ligne de table',
   },
