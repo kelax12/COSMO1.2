@@ -369,6 +369,7 @@ const TasksPage: React.FC = () => {
                 handleCreateSmartList={handleCreateSmartList}
                 startChipLongPress={startChipLongPress}
                 cancelChipLongPress={cancelChipLongPress}
+                openListActions={setActionSheetListId}
               />
               </div>
               )}
