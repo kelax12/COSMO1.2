@@ -5,15 +5,7 @@
 // propres états locaux de création inline catégorie/liste (propres à cette
 // étape). Tout le reste vient des props.
 import React, { useEffect, useState } from 'react';
-import { X, AlertCircle, Bookmark, List, ChevronDown, Plus, Minus } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { X, AlertCircle, Bookmark, Check, ChevronDown, Plus, Minus } from 'lucide-react';
 import { DatePicker } from '@/components/ui/date-picker';
 import CategoryField from './CategoryField';
 import SubtaskChecklist from './SubtaskChecklist';
@@ -106,71 +98,58 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
         {!isCreating && task
           ? <TaskStateFields taskId={task.id} />
           : <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('tabs.stateAfterCreate')}</p>}
+        {/* Listes affichées d'emblée, trois par ligne : un clic coche ou
+            décoche, sans menu déroulant à ouvrir d'abord. Les listes
+            intelligentes se remplissent seules : elles n'y figurent pas. */}
+        <div>
+          <p className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+            {t('fields.addToList')}
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {lists.filter(l => l.type !== 'smart').map(list => {
+              const listColorHex = listColorOptions.find(c => c.value === list.color)?.color || list.color || '#3B82F6';
+              const checked = selectedListIds.includes(list.id);
+              return (
+                <button
+                  key={list.id}
+                  type="button"
+                  aria-pressed={checked}
+                  onClick={() => {
+                    setSelectedListIds(checked
+                      ? selectedListIds.filter(id => id !== list.id)
+                      : [...selectedListIds, list.id]);
+                    setHasChanges(true);
+                  }}
+                  className={`flex items-center gap-2 min-w-0 px-3 py-2 rounded-lg border text-sm font-medium text-left transition-all ${
+                    checked
+                      ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent-solid))]/10'
+                      : 'border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-border-strong))] bg-[rgb(var(--color-surface))]'
+                  }`}
+                  style={{ color: 'rgb(var(--color-text-primary))' }}
+                >
+                  <span
+                    className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: listColorHex }}
+                  >
+                    {checked && <Check size={10} className="text-white" strokeWidth={3} aria-hidden="true" />}
+                  </span>
+                  <span className="truncate">{list.name}</span>
+                </button>
+              );
+            })}
+            {!showNewListInput && (
+              <button
+                type="button"
+                onClick={() => { setShowNewListInput(true); setNewListName(''); }}
+                className="flex items-center gap-2 min-w-0 px-3 py-2 rounded-lg border border-dashed text-sm font-medium text-blue-600 dark:text-blue-300 border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-border-strong))] hover:bg-[rgb(var(--color-accent-solid))]/10 transition-colors"
+              >
+                <Plus size={15} className="shrink-0" />
+                <span className="truncate">{t('fields.createList')}</span>
+              </button>
+            )}
+          </div>
+        </div>
         <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm font-medium border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-border-strong))] hover:bg-[rgb(var(--color-accent-solid-hover))]/10"
-                            style={{
-                              backgroundColor: 'rgb(var(--color-hover))',
-                              color: 'rgb(var(--color-text-primary))',
-                            }}
-                          >
-                            <List size={16} className="text-blue-500" />
-                            {t('fields.addToList')}
-                            <ChevronDown size={14} className="text-blue-500" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="start"
-                          className="w-56 shadow-xl border"
-                          style={{
-                            backgroundColor: 'rgb(var(--color-surface))',
-                            borderColor: 'rgb(var(--color-border))',
-                            color: 'rgb(var(--color-text-primary))',
-                          }}
-                        >
-                          {lists.map(list => {
-                            const listColorHex = listColorOptions.find(c => c.value === list.color)?.color || list.color || '#3B82F6';
-                            return (
-                            <DropdownMenuCheckboxItem
-                              key={list.id}
-                              checked={selectedListIds.includes(list.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedListIds([...selectedListIds, list.id]);
-                                } else {
-                                  setSelectedListIds(selectedListIds.filter(id => id !== list.id));
-                                }
-                                setHasChanges(true);
-                              }}
-                              className="focus:bg-[rgb(var(--color-accent-solid))]/10"
-                              style={{ color: 'rgb(var(--color-text-primary))' }}
-                            >
-                              <div className="flex items-center gap-2">
-                                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: listColorHex }} />
-                                {list.name}
-                              </div>
-                            </DropdownMenuCheckboxItem>
-                            );
-                          })}
-                          {lists.length > 0 && (
-                            <DropdownMenuSeparator style={{ backgroundColor: 'rgb(var(--color-border))' }} />
-                          )}
-                          <DropdownMenuItem asChild>
-                            <button
-                              type="button"
-                              className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-300 bg-[rgb(var(--color-accent-solid))]/10 hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
-                              onClick={() => { setShowNewListInput(true); setNewListName(''); }}
-                            >
-                              <Plus size={15} />
-                              {t('fields.createList')}
-                            </button>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-
                       {showNewListInput && (
                         <div className="flex items-center gap-2">
                           <button
@@ -246,33 +225,6 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                           </button>
                         </div>
                       )}
-
-
-
-                      <div className="flex flex-wrap gap-2 items-center">
-                                {selectedListIds.map(id => {
-                                  const list = lists.find(l => l.id === id);
-                                  if (!list) return null;
-                                  return (
-                                    <div
-                                      key={id}
-                                      className="flex items-center gap-1.5 text-xs font-medium bg-[rgb(var(--color-accent-solid))]/10 text-blue-400 px-3 py-1.5 rounded-lg border border-[rgb(var(--color-accent-solid))]/20"
-                                    >
-                                      {list.name}
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setSelectedListIds(selectedListIds.filter(lid => lid !== id));
-                                          setHasChanges(true);
-                                        }}
-                                        className="text-blue-500 hover:text-blue-400 transition-colors"
-                                      >
-                                        <X size={14} />
-                                      </button>
-                                    </div>
-                                  );
-                                })}
-                              </div>
         </div>
       </div>
     );
