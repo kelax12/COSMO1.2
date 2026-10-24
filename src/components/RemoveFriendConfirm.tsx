@@ -89,8 +89,6 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
           borderColor: 'rgb(var(--color-border))',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
-        role="alertdialog"
-        aria-label={ov.t('removeFriend.ariaConfirm')}
       >
         {/* 🗑️ C-07 · LA POIGNÉE DE GLISSEMENT EST RETIRÉE, pas câblée.
             Elle dessinait l'affordance d'un geste qui n'existait pas : on

@@ -269,6 +269,7 @@
     "create": "Create a smart list"
   },
   "inbox": {
+    "pendingSr": "{{count}} pending",
     "acceptAll": "Accept all",
     "label": "Inbox",
     "allClear": "All caught up",
