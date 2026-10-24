@@ -738,6 +738,10 @@ export const CATALOGUE = [
     ['retention-duree-inventee', 'detecteur', r('scripts/check-retention.mjs', "    jours: null,\n    traitement: 'T7',", "    jours: 7,\n    traitement: 'T7',"),
       'une durée NON DÉCLARÉE au registre vaut `null`, jamais un chiffre inventé',
       "Un seuil de 7 jours « qui paraît raisonnable » écrirait le registre art. 30 depuis un script : la décision appartient à Axel."],
+    // ── check:subprocessors (AM-3 du registre art. 30)
+    ['soustraitants-catalogue-aveugle', 'detecteur', r('scripts/check-subprocessors.mjs', 'const catalogueDe = (h) => CATALOGUE.find(', 'const catalogueDe = (h) => [].find('),
+      'un dépôt cohérent dérive les cinq tiers et passe',
+      'Un catalogue qui ne reconnaît plus aucun hôte dérive zéro tiers : la comparaison au registre passe à vide.'],
     // ── check:db-cost (C-87)
     ['dbcost-explain-superutilisateur', 'detecteur', r('scripts/check-db-cost.mjs', "    'SET LOCAL ROLE authenticated;',", ''),
       'l EXPLAIN tourne sous `authenticated`, avec des claims, et ROLLBACK',
