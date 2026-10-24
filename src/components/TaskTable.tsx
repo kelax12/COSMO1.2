@@ -41,7 +41,7 @@ import {
 import { usePriorityRange } from '@/modules/ui-states';
 import { getSnoozeOptions } from '@/modules/tasks/snooze';
 import { isTaskOverdue } from './task-table/helpers';
-import { useLists, useAddTaskToList } from '@/modules/lists';
+import { useLists, useAddTaskToList, useRemoveTaskFromList } from '@/modules/lists';
 import { useCategories } from '@/modules/categories';
 import { useFriends, useCollaboratorsByTask, usePendingCollaboratorTaskIds, useUnshareTask } from '@/modules/friends';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -142,6 +142,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const { data: allLists = [] } = useLists();
   const { data: categories = [] } = useCategories();
   const addTaskToListMutation = useAddTaskToList();
+  const removeTaskFromListMutation = useRemoveTaskFromList();
 
   // Sélection multiple (#10) : réutilise le rendu checkbox du mode
   // « ajout à une liste » (addToListMode) pour un mode générique avec barre
@@ -160,6 +161,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     setShowBulkDeleteConfirm,
     bulkComplete,
     bulkAddToList,
+    bulkRemoveFromList,
     confirmBulkDelete,
     bulkSetCategory,
     bulkSetDeadline,
@@ -171,6 +173,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     isDemo,
     toggleComplete: (taskId) => toggleCompleteMutation.mutate(taskId),
     addTaskToList: (taskId, listId) => addTaskToListMutation.mutate({ taskId, listId }),
+    removeTaskFromList: (taskId, listId) => removeTaskFromListMutation.mutate({ taskId, listId }),
     updateTask: (id, updates) => updateMutation.mutate({ id, updates }),
     deleteTask: (id) => deleteMutation.mutate(id),
     restoreTask: (task) => restoreMutation.mutate(task),
@@ -503,7 +506,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
         isOpen={showBulkListModal}
         onClose={() => setShowBulkListModal(false)}
         count={bulkModalCount}
+        selectedIds={selectedIds}
         onAddToList={bulkAddToList}
+        onRemoveFromList={bulkRemoveFromList}
       /></React.Suspense>}
 
       {/* Création directe depuis l'état vide (#45) */}
