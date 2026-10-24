@@ -49,6 +49,7 @@ on:
       - scalability-volume
       - restore-drill
       - Grille Stripe
+      - Secrets age
       # ⚠️ `Uptime` n'y est PAS NON PLUS, et ce n'est pas un oubli : il ouvre
       # DÉJÀ sa propre issue, qui se referme seule au retour du vert.
       # L'ajouter ici doublerait chaque panne d'une seconde alerte, et deux
