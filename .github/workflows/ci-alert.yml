@@ -37,6 +37,8 @@ on:
     # leur rouge n'a aucun autre chemin pour se faire voir.
     # `Grille Stripe` y est entré avec la bascule live du 2026-10-20, le jour
     # où il a été planifié (cf. son en-tête).
+    # `Signaux SEO` (2026-10-23) : hebdomadaire, sans déclencheur humain ; un
+    # backlink perdu ou un secret absent n'a pas d'autre chemin vers un humain.
     workflows:
       - CI
       - Edge deploy drift
@@ -50,6 +52,7 @@ on:
       - restore-drill
       - Grille Stripe
       - Secrets age
+      - Signaux SEO
       # `Mutation` (AM-3, 2026-10-23) : hebdomadaire, sans déclencheur humain.
       - Mutation
       # ⚠️ `Uptime` n'y est PAS NON PLUS, et ce n'est pas un oubli : il ouvre
