@@ -26,10 +26,14 @@
 // — exiger zéro rendrait la garde rouge en permanence, donc ignorée. Ce qui
 // doit alerter est la 53ᵉ, ou une policy qui disparaît.
 //
-// ⚠️ LES ADVISORS DE PERFORMANCE SONT IMPRIMÉS, PAS BLOQUANTS. Ils bougent
-// avec le VOLUME de données (un index « inutilisé » le devient dès qu'une
-// table grossit) : les gater produirait un rouge que personne ne pourrait
-// tenir. La perte de performance, elle, a ses propres gardes (C-87).
+// ⚠️ LES ADVISORS DE PERFORMANCE SONT JUGÉS PAR NATURE (AM-5, 2026-10-23).
+// Ceux qui bougent avec le VOLUME de données (un index « inutilisé » le
+// devient dès qu'une table grossit) restent IMPRIMÉS : les gater produirait
+// un rouge que personne ne pourrait tenir. Ceux qui sont un DÉFAUT DE
+// CONCEPTION, décidé dans une migration (PERF_BLOQUANTS : FK sans index,
+// index doublon, policy mal écrite), BLOQUENT sur un écart à la référence
+// `performance`. Un advisor de performance de NOM NEUF bloque aussi : on ne
+// sait pas ce qu'il est. Le coût mesuré, lui, a ses propres gardes (C-87).
 //
 // ❌ NE JAMAIS RELEVER UN COMPTE DE RÉFÉRENCE POUR FAIRE PASSER LA CI. Un
 //    écart dit qu'un objet est apparu, et la question est ce qu'il est. Le
@@ -94,6 +98,49 @@ export function resumerAdvisors(reponse) {
     out[l.name] = { niveau: l.level, compte: (out[l.name]?.compte ?? 0) + occurrences };
   }
   return out;
+}
+
+/**
+ * Advisors de performance qui BLOQUENT sur une hausse : des défauts de
+ * conception, indépendants du volume de données.
+ */
+export const PERF_BLOQUANTS = new Set([
+  'unindexed_foreign_keys',
+  'duplicate_index',
+  'auth_rls_initplan',
+  'multiple_permissive_policies',
+]);
+
+/**
+ * Compare les advisors de performance à leur référence.
+ * `ecarts` : bloquants (hausse d'un advisor de PERF_BLOQUANTS, ou nom neuf).
+ * `infos` : hausses des autres, non bloquantes, imprimées.
+ * `baisses` : améliorations à enregistrer.
+ */
+export function comparerPerformance(reference, mesure) {
+  const ecarts = [];
+  const infos = [];
+  for (const [nom, m] of Object.entries(mesure)) {
+    const r = reference[nom];
+    if (!r) {
+      ecarts.push(
+        `advisor de performance NOUVEAU : \`${nom}\` (${m.niveau}, ${m.compte} occurrence(s)). `
+          + "Il n'existait pas à la dernière référence.",
+      );
+    } else if (m.compte > r.compte) {
+      const msg = `\`${nom}\` : ${m.compte} occurrence(s) contre ${r.compte} à la référence (+${m.compte - r.compte}).`;
+      if (PERF_BLOQUANTS.has(nom)) ecarts.push(msg);
+      else infos.push(`${msg} Non bloquant : suit le volume de données.`);
+    }
+  }
+  const baisses = [];
+  for (const [nom, r] of Object.entries(reference)) {
+    if (nom.startsWith('_')) continue;
+    const m = mesure[nom];
+    if (!m) baisses.push(`\`${nom}\` a DISPARU (était ${r.compte}) : recaler la référence.`);
+    else if (m.compte < r.compte) baisses.push(`\`${nom}\` : ${m.compte} contre ${r.compte} : recaler la référence.`);
+  }
+  return { ecarts, infos, baisses };
 }
 
 /** Compare deux résumés d'advisors. Rend la liste des écarts. */
@@ -173,6 +220,7 @@ if (estLanceDirectement) {
       ],
       pose_le: new Date().toISOString().slice(0, 10),
       securite,
+      performance,
       reglages_auth: reglages,
     };
     writeFileSync(REFERENCE, `${JSON.stringify(contenu, null, 2)}\n`, 'utf8');
@@ -213,10 +261,27 @@ if (estLanceDirectement) {
     );
   }
 
-  // ── 2. Les advisors de PERFORMANCE, imprimés ────────────────────
-  console.log('\nPosture Supabase · advisors de PERFORMANCE (imprimés, non bloquants)');
+  // ── 2. Les advisors de PERFORMANCE (AM-5) ───────────────────────
+  console.log(`\nPosture Supabase · advisors de PERFORMANCE (bloquants : ${[...PERF_BLOQUANTS].join(', ')})`);
   for (const [nom, m] of Object.entries(performance).sort()) {
-    console.log(`  ${m.niveau.padEnd(5)} ${nom.padEnd(52)} ${String(m.compte).padStart(3)}`);
+    const r = reference.performance?.[nom];
+    const delta = r ? m.compte - r.compte : null;
+    console.log(
+      `  ${m.niveau.padEnd(5)} ${nom.padEnd(52)} ${String(m.compte).padStart(3)}`
+        + (delta === null ? '  (NOUVEAU)' : delta === 0 ? '' : `  (${delta > 0 ? '+' : ''}${delta})`),
+    );
+  }
+  // 🔴 Référence absente = garde aveugle : un échec, jamais un vert.
+  if (!reference.performance) {
+    erreurs.push(
+      'RÉFÉRENCE DES ADVISORS DE PERFORMANCE NON POSÉE : les comptes lus ci-dessus ne sont\n'
+        + '    comparés à rien. La poser par `--update`, puis la COMMITER.',
+    );
+  } else {
+    const p = comparerPerformance(reference.performance, performance);
+    erreurs.push(...p.ecarts);
+    for (const i of p.infos) console.log(`  ℹ ${i}`);
+    baisses.push(...p.baisses);
   }
 
   // ── 3. Les réglages d'authentification ──────────────────────────

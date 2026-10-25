@@ -74,7 +74,7 @@ Sécurité : [`faille.md`](./faille.md) fait foi.
 > | `C-45` | le réglage de console des URL de `loginWithGoogle` | un geste (`M-15`/`M-16`/`M-17`) |
 > | `C-24` | VoiceOver iOS sur un appareil réel | un geste (`M-40`, `M-52`) |
 > | `C-65` + `C-39` | l'épreuve du remboursement contre une vraie carte | un geste (`M-08`) |
-> | `C-58` | React 19 : arbitrage différé, seuil de reprise 283,5 ko | une décision |
+> | `C-58` | React 19 + `react-router` 8 **migrés le 2026-10-23** sur la branche `claude/sleepy-mendel-ganczp` : chemin critique 302,6 ko, aucun plafond touché, seuil de 283,5 ko levé (cf. `docs/MIGRATION-REACT19.md` §0) | la fusion de la PR |
 
 ---
 

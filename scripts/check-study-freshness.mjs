@@ -49,21 +49,23 @@ const RACINE = process.cwd();
 const ETUDES = [
   {
     doc: 'docs/MIGRATION-REACT19.md',
-    ecrite_le: '2026-09-03',
+    // Recalé le 2026-10-23, APRÈS relecture : la migration est faite, le
+    // document porte un §0 qui décrit l'état migré (versions, correctifs,
+    // mesures du bundle). Écrit d'abord contre React 18 / router 7, le
+    // 2026-09-03.
+    ecrite_le: '2026-10-23',
     paquets: {
-      react: 18,
-      'react-dom': 18,
-      'react-router': 7,
-      '@types/react': 18,
-      '@types/react-dom': 18,
+      react: 19,
+      'react-dom': 19,
+      'react-router': 8,
+      '@types/react': 19,
+      '@types/react-dom': 19,
     },
     invalide:
-      "l'étude audite les composants shadcn « ref par ref » CONTRE React 18 et "
-      + '`react-router` 7, chiffre l\'effort de migration depuis ces versions, et '
-      + 'reconstitue une chronologie CVE qui s\'arrête à `react-router@7.18.2`. '
-      + 'Si une de ces majeures a bougé, la migration est faite ou entamée : le '
-      + "document décrit alors un projet qui n'existe plus, et il doit être "
-      + 'archivé (`docs/archive/**`), pas relu comme état courant.',
+      'le §0 décrit la migration vers React 19 et `react-router` 8 : versions '
+      + 'installées, `forwardRef` retirés de `ui/`, mesures du chemin critique. '
+      + 'Si une de ces majeures a bougé, ce § décrit un état qui n\'existe plus : '
+      + 'le relire et le corriger, ou archiver le document (`docs/archive/**`).',
   },
 ];
 
