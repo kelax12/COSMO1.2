@@ -35,6 +35,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
+import { renewalNoticeMail } from '../_shared/renewal-notice-text.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
 /**
@@ -71,36 +72,6 @@ interface DueOrg {
   owner_email: string
   period_end: string
   tier_key: string
-}
-
-function frenchDate(iso: string): string {
-  const [y, m, d] = iso.split('-')
-  return `${d}/${m}/${y}`
-}
-
-function body(org: DueOrg): { text: string; html: string } {
-  const date = frenchDate(org.period_end)
-  const manage = `${APP_URL}/entreprise?tab=billing`
-  const lines = [
-    `Bonjour,`,
-    ``,
-    `Votre abonnement Cosmo Entreprise pour l'organisation « ${org.org_name} » arrive a echeance le ${date}.`,
-    ``,
-    `Conformement a l'article L215-1 du Code de la consommation, nous vous informons que vous pouvez, si vous le souhaitez, NE PAS le reconduire.`,
-    ``,
-    `- Pour ne pas reconduire : resiliez depuis votre espace entreprise, ${manage}. La resiliation prend effet au terme de la periode deja payee, sans frais ni justification.`,
-    `- Pour continuer : vous n'avez rien a faire, l'abonnement se reconduira automatiquement le ${date}.`,
-    ``,
-    `Si vous ne resiliez pas et que vous n'aviez pas recu cette information, la loi vous permettrait de resilier a tout moment apres la reconduction. Nous vous l'adressons donc dans les delais prevus.`,
-    ``,
-    `L'equipe Cosmo`,
-  ]
-  return {
-    text: lines.join('\n'),
-    html: lines
-      .map((l) => (l === '' ? '<br>' : `<p style="margin:0 0 8px">${l}</p>`))
-      .join(''),
-  }
 }
 
 Deno.serve(async (req) => {
@@ -162,14 +133,15 @@ Deno.serve(async (req) => {
 
   for (const org of due) {
     try {
-      const { text, html } = body(org)
+      // SV-5 : le nom d'organisation, écrit par ses admins, est échappé dans le HTML.
+      const { subject, text, html } = renewalNoticeMail(org, APP_URL)
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: MAIL_FROM,
           to: [org.owner_email],
-          subject: `Votre abonnement Cosmo se reconduit le ${frenchDate(org.period_end)}`,
+          subject,
           text,
           html,
         }),

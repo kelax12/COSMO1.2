@@ -64,18 +64,21 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    const { data: org } = await supabaseAdmin
+    // SV-8 : une panne de lecture n'est ni « interdit » ni « jamais souscrit ».
+    const { data: org, error: orgError } = await supabaseAdmin
       .from('organizations')
       .select('id, owner_id')
       .eq('id', orgId)
       .maybeSingle()
+    if (orgError) throw orgError
     if (!org || org.owner_id !== user.id) return json({ error: 'forbidden' }, 403)
 
-    const { data: sub } = await supabaseAdmin
+    const { data: sub, error: subError } = await supabaseAdmin
       .from('org_subscriptions')
       .select('stripe_customer_id')
       .eq('org_id', orgId)
       .maybeSingle()
+    if (subError) throw subError
 
     if (!sub?.stripe_customer_id) {
       // Aucun customer Stripe : l'org n'a jamais souscrit, il n'y a rien à gérer.

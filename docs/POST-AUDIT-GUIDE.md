@@ -17,6 +17,12 @@
 > encore le chemin de réactivation à suivre. Les commandes et références de fichiers ont été
 > revérifiées à cette date.
 
+> 🔴 **Depuis le 2026-10-24 (SV-4), `stripe-create-checkout` refuse tout appel en 403**
+> (`personal_premium_disabled`) : sa constante `PERSONAL_CHECKOUT_ENABLED` suit
+> `PREMIUM_ENFORCED`, et `src/edge-audit-serveur.guard.test.ts` exige qu'elles bougent ensemble.
+> La réactiver suppose d'abord les deux consentements L221-28 que le checkout entreprise exige
+> (S-6) : sans eux, une session particulier s'ouvrirait sans preuve de renonciation.
+
 > ⚠️ **Ce guide ne couvre plus que le premium PARTICULIER.** La plomberie de
 > facturation ENTREPRISE est complète et déployée (Edge Functions org, 4 price IDs
 > en secrets, `org_subscriptions`, webhook au routage `org_id`), mais la
