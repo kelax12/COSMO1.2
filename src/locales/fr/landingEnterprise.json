@@ -188,7 +188,7 @@
       "s4d": "Transfert de propriété, départ d'un membre avec transmission de son travail, suppression de l'organisation : tout se fait en quelques clics, <hl>sans passer par le support</hl>."
     },
     "pricing": {
-      "title": "20 € par mois pour dix personnes.",
+      "title": "70 € par mois pour dix personnes.",
       "promoBadge": "Offre de lancement",
       "promoTitle": "Gratuit pour toute votre organisation.",
       "promoSubtitle": "Cosmo Entreprise ne facture rien aujourd'hui, quel que soit votre effectif. Les tarifs ci-dessous sont ceux qui s'appliqueront <hl>quand l'offre de lancement prendra fin</hl>. Vous serez prévenu avant, et rien ne sera jamais débité sans que vous l'ayez choisi.",
@@ -204,8 +204,8 @@
       "intervalAria": "Périodicité de facturation",
       "intervalMonthly": "Mensuel",
       "intervalYearly": "Annuel",
-      "intervalSave": "−30 %",
-      "intervalYearlyNote": "Tarifs annuels : 30 % de moins que le mensuel, payés une fois par an. Le nombre de sièges reste le même.",
+      "intervalSave": "−25 %",
+      "intervalYearlyNote": "Tarifs annuels : 25 % de moins que le mensuel, payés une fois par an. Le nombre de sièges reste le même.",
       "billedYearly": "soit {{total}} € une fois par an",
       "insteadOfYearly": "au lieu de {{price}} € / mois en annuel",
       "free": "Gratuit",

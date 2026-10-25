@@ -15,5 +15,6 @@ export const ORG_TIER_LABEL_KEYS: Record<OrgTierKey, KeyOf<'common'>> = {
   t10: 'orgTier.t10',
   t20: 'orgTier.t20',
   t50: 'orgTier.t50',
+  t100: 'orgTier.t100',
   tmax: 'orgTier.tmax',
 };
