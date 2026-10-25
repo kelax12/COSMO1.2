@@ -188,7 +188,7 @@
       "s4d": "Ownership transfer, a member's departure with their work handed over, deleting the organization: it all takes a few clicks, <hl>no support ticket needed</hl>."
     },
     "pricing": {
-      "title": "€20 a month for ten people.",
+      "title": "€70 a month for ten people.",
       "promoBadge": "Launch offer",
       "promoTitle": "Free for your whole organization.",
       "promoSubtitle": "Cosmo for Companies charges nothing today, whatever your headcount. The prices below are the ones that will apply <hl>when the launch offer ends</hl>. You will be told beforehand, and nothing is ever charged unless you choose it.",
@@ -204,8 +204,8 @@
       "intervalAria": "Billing period",
       "intervalMonthly": "Monthly",
       "intervalYearly": "Yearly",
-      "intervalSave": "−30%",
-      "intervalYearlyNote": "Yearly pricing: 30% less than monthly, charged once a year. The seat count stays the same.",
+      "intervalSave": "−25%",
+      "intervalYearlyNote": "Yearly pricing: 25% less than monthly, charged once a year. The seat count stays the same.",
       "billedYearly": "that is €{{total}} once a year",
       "insteadOfYearly": "instead of €{{price}} / month on the yearly plan",
       "free": "Free",

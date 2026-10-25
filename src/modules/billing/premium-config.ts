@@ -75,10 +75,11 @@ export const PREMIUM_MONTHLY_EUR = 3.5;
 // `maxMembers: null` = tranche « et plus », pas de plafond.
 export const ENTERPRISE_PRICING_TIERS = [
   { key: 'free', minMembers: 0, maxMembers: 5, priceEurPerMonth: 0 },
-  { key: 't10', minMembers: 5, maxMembers: 10, priceEurPerMonth: 20 },
-  { key: 't20', minMembers: 10, maxMembers: 20, priceEurPerMonth: 50 },
-  { key: 't50', minMembers: 20, maxMembers: 50, priceEurPerMonth: 100 },
-  { key: 'tmax', minMembers: 50, maxMembers: null, priceEurPerMonth: 200 },
+  { key: 't10', minMembers: 5, maxMembers: 10, priceEurPerMonth: 70 },
+  { key: 't20', minMembers: 10, maxMembers: 20, priceEurPerMonth: 150 },
+  { key: 't50', minMembers: 20, maxMembers: 50, priceEurPerMonth: 350 },
+  { key: 't100', minMembers: 50, maxMembers: 100, priceEurPerMonth: 700 },
+  { key: 'tmax', minMembers: 100, maxMembers: null, priceEurPerMonth: 1000 },
 ] as const;
 
 /**
@@ -97,14 +98,14 @@ export type OrgTierKey = (typeof ENTERPRISE_PRICING_TIERS)[number]['key'];
 // `org-tiers.parity.test.ts` entre le front et les Edge Functions.
 export type OrgBillingInterval = 'monthly' | 'yearly';
 
-/** Remise consentie contre un engagement annuel. 0.3 = −30 %. */
-export const ENTERPRISE_YEARLY_DISCOUNT = 0.3;
+/** Remise consentie contre un engagement annuel. 0.25 = −25 %. */
+export const ENTERPRISE_YEARLY_DISCOUNT = 0.25;
 
 /** Arrondi au centime — deux calculs identiques doivent rendre le même nombre. */
 const roundEur = (amount: number): number => Math.round(amount * 100) / 100;
 
 /**
- * Tarif MENSUEL ÉQUIVALENT d'un engagement annuel (le mensuel moins 30 %).
+ * Tarif MENSUEL ÉQUIVALENT d'un engagement annuel (le mensuel moins 25 %).
  *
  * C'est ce montant-là que la grille affiche en gros quand « Annuel » est
  * sélectionné : comparer un prix annuel à un prix mensuel côte à côte ne dit
