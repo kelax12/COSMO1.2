@@ -41,6 +41,21 @@
       "_note": "🔴 La protection contre les mots de passe compromis (HaveIBeenPwned) est DÉSACTIVÉE. Ce n'est pas du code : c'est un interrupteur du Dashboard (Authentication → Attack Protection). Il reste ouvert tant que personne ne le ferme, et cette ligne est ce qui l'empêche d'être oublié."
     }
   },
+  "performance": {
+    "_source": [
+      "Relevé du 2026-10-23 (get_advisors performance, projet ykeugqfgklejcdbrmawy), AM-5.",
+      "unindexed_foreign_keys : 40 avant la mig. 227. Après son application, recaler à 0 par --update : la garde refusera alors toute FK neuve sans index.",
+      "unused_index : 35, imprimé seulement (bouge avec le volume, aucun index retiré)."
+    ],
+    "unindexed_foreign_keys": {
+      "niveau": "INFO",
+      "compte": 40
+    },
+    "unused_index": {
+      "niveau": "INFO",
+      "compte": 35
+    }
+  },
   "_reglages_auth_source": [
     "Posée le 2026-10-08 à partir des valeurs LUES par le run Posture 37773471782",
     "(GET /v1/projects/{ref}/config/auth, même jour), pas inventées.",

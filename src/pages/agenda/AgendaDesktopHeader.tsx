@@ -18,7 +18,7 @@ interface AgendaDesktopHeaderProps {
   zoomDurations: string[];
   handleViewChange: (view: string) => void;
   currentView: string;
-  calendarRef: React.RefObject<FullCalendar>;
+  calendarRef: React.RefObject<FullCalendar | null>;
   setShowRecurringManager: React.Dispatch<React.SetStateAction<boolean>>;
   handleOpenAddModal: () => void;
   /** Le jour courant (aujourd'hui) est déjà dans la plage affichée par le calendrier. */
