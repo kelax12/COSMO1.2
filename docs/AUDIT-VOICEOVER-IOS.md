@@ -10,12 +10,23 @@
 -->
 > **Note d'audit** — Couvert par la note de [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) : c'est une mesure de ce domaine.
 
+<!-- echeance-lecteur-ecran: 2026-12-15 initiale=2026-12-15 -->
+
 # Audit VoiceOver iOS · check-list à jouer d'une traite
 
-**Statut : à jouer. Rien dans ce fichier n'est coché.** C'est le **quatrième** des audits
+**Statut : à jouer, ÉCHÉANCE 2026-12-15. Rien dans ce fichier n'est coché.** C'est le **quatrième** des audits
 d'accessibilité listés par `C-24` (`a-faire-code.md`), et le seul que le 2026-09-03 n'a pas passé.
 Les trois autres (parcours clavier, modales, `/agenda`) l'ont été, sur **Chromium desktop**, avec le
 harnais `e2e/a11y-keyboard-audit.spec.ts`.
+
+> 🕓 **Échéance posée le 2026-10-24 : le 2026-12-15.** Passé ce jour sans ligne « ✅ joué » au
+> [registre des séances](#registre-des-séances) ci-dessous, `npm run check:lecteurs-ecran` échoue en
+> CI (`M-52`). La date ne se repousse que de 30 jours au plus (marqueur `initiale=`) : au-delà,
+> c'est une reconduction, et c'est exactement ce qui s'est passé du 2026-09-03 au 2026-10-24.
+> La garde vérifie aussi que **chacune des 94 étapes numérotées porte son résultat attendu** : la
+> séance se joue pas à pas, une ligne après l'autre, et se consigne avec le gabarit de « Comment
+> consigner ». La séance NVDA et la revue humaine WCAG sont dans
+> [`AUDIT-NVDA-WINDOWS.md`](./AUDIT-NVDA-WINDOWS.md), échéance 2027-01-15.
 
 🔴 **Il ne se simule pas, et il ne se déduit pas.** Playwright interroge le DOM et
 `document.activeElement` : ce qui est prouvé aujourd'hui, c'est le **FOCUS**, jamais l'**ANNONCE**.
@@ -79,9 +90,9 @@ iPhone réel la referme.
 
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **CE DOCUMENT EST LUI-MÊME UN ANGLE MORT.** Il l'écrit en tête : « Statut : à jouer. Rien dans ce fichier n'est coché ». Un audit jamais joué ne peut rien révéler, et il ne fait baisser aucune note : [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) est noté 82 **sans** que ce quatrième audit ait été passé | statut inchangé depuis le 2026-09-03 | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-40`** (jouer la check-list) et **`M-52`** (lui donner une date). ❌ Il ne s'outille pas : `axe-core` voit des attributs, pas ce que VoiceOver prononce — *(jugé outillable le 09-16 : non : il se **joue**, il ne s'outille pas)* |
-| AM-2 | **Le coût de son absence n'est pas nommé dans la note d'accessibilité.** VoiceOver est la seule mesure de ce que le produit **annonce réellement** à une personne aveugle, et c'est aussi AM-3 de [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | ce document n'est cité par aucun point de plafond | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-56`** : tant que le coût d'un angle mort en points n'est pas arbitré, l'absence de ce quatrième audit ne fait baisser **aucune** note — `ACCESSIBILITY.md` est noté 84 sans qu'il ait jamais été passé — *(jugé outillable le 09-16 : oui : le nommer dans le plafond de la note)* |
-| AM-3 | **Aucune échéance.** « À jouer » sans date se reconduit indéfiniment, et c'est exactement ce qui s'est produit depuis le 2026-09-03 | 13 jours | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-52`**, et c'est le seul des trois qui se ferme sans matériel : « à jouer » sans date se reconduit indéfiniment, et c'est ce qui s'est produit depuis le 2026-09-03 — *(jugé outillable le 09-16 : oui)* |
+| AM-1 | 🔴 **CE DOCUMENT EST LUI-MÊME UN ANGLE MORT.** Il l'écrit en tête : « Statut : à jouer. Rien dans ce fichier n'est coché ». Un audit jamais joué ne peut rien révéler, et il ne fait baisser aucune note : [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) est noté 82 **sans** que ce quatrième audit ait été passé | statut inchangé depuis le 2026-09-03 | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-40`** (jouer la check-list) et **`M-52`** (lui donner une date). ❌ Il ne s'outille pas : `axe-core` voit des attributs, pas ce que VoiceOver prononce — *(jugé outillable le 09-16 : non : il se **joue**, il ne s'outille pas)* · 🟡 **2026-10-24 : l'exécution reste humaine (`M-40`), tout le reste est outillé.** Échéance **2026-12-15**, 94 étapes à résultat attendu vérifié, registre des séances, garde `npm run check:lecteurs-ecran` en CI (témoin vu rouge : échéance dépassée, séance absente, attendu vide). 🔴 ne prouve PAS qu'une séance a été bien faite, seulement qu'elle est consignée |
+| AM-2 | **Le coût de son absence n'est pas nommé dans la note d'accessibilité.** VoiceOver est la seule mesure de ce que le produit **annonce réellement** à une personne aveugle, et c'est aussi AM-3 de [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | ce document n'est cité par aucun point de plafond | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-56`** : tant que le coût d'un angle mort en points n'est pas arbitré, l'absence de ce quatrième audit ne fait baisser **aucune** note — `ACCESSIBILITY.md` est noté 84 sans qu'il ait jamais été passé — *(jugé outillable le 09-16 : oui : le nommer dans le plafond de la note)* · ✅ **ARBITRÉ le 2026-10-24** (`M-56`, volet lecteur d'écran) : [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) § « Arbitrage du coût de l'absence de séance lecteur d'écran ». Le coût est écrit, la note est appliquée par la coordination, pas ici |
+| AM-3 | **Aucune échéance.** « À jouer » sans date se reconduit indéfiniment, et c'est exactement ce qui s'est produit depuis le 2026-09-03 | 13 jours | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-52`**, et c'est le seul des trois qui se ferme sans matériel : « à jouer » sans date se reconduit indéfiniment, et c'est ce qui s'est produit depuis le 2026-09-03 — *(jugé outillable le 09-16 : oui)* · ✅ **OUTILLÉ le 2026-10-24** · échéance **2026-12-15** dans le marqueur d'en-tête, `npm run check:lecteurs-ecran` échoue le lendemain sans séance consignée · 🔴 ne prouve PAS que la séance a lieu : elle rend son absence **rouge**, pas impossible |
 
 ---
 
@@ -516,6 +527,18 @@ le prend pour vivant** — et il allongeait précisément la séance que ce docu
 ⚠️ **Les trois premières se rouvrent avec un clavier Bluetooth.** Si tu en branches un, elles
 rentrent dans le périmètre, et il faut le dire dans le compte-rendu : « joué avec clavier externe »
 n'est pas la même mesure que « joué au doigt ».
+
+---
+
+## Registre des séances
+
+Une ligne par séance **réellement jouée**, jamais avant. Statuts : `✅ joué` (les 12 étapes, témoin
+compris), `⚠️ partiel` (à refaire : n'éteint **pas** l'échéance). Le détail des findings va dans
+`a-faire-code.md`, avec le verbatim.
+
+| Date | Appareil (modèle · iOS · Safari) | Statut | Findings |
+|---|---|---|---|
+| _(aucune séance à ce jour)_ | | | |
 
 ---
 

@@ -195,7 +195,7 @@
     "statusAll": "All"
   },
   "health": {
-    "title": "Status",
+    "title": "Health",
     "on_track": "On track",
     "at_risk": "At risk",
     "off_track": "Off track",
@@ -376,8 +376,8 @@
     "more_other": "and {{count}} more"
   },
   "healthMenu": {
-    "taskAria": "Status of task “{{name}}”",
-    "projectAria": "Status of project “{{name}}”",
+    "taskAria": "Health of task “{{name}}”",
+    "projectAria": "Health of project “{{name}}”",
     "denied": "You're not allowed to edit this project."
   }
 }
