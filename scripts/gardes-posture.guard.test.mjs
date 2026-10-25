@@ -19,11 +19,11 @@
 // question-là n'a qu'une réponse, et c'est le job planifié qui la donne.
 
 import { describe, it, expect } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { resumerAdvisors, comparerAdvisors, REGLAGES_SURVEILLES } from './check-supabase-posture.mjs';
+import { resumerAdvisors, comparerAdvisors, comparerPerformance, PERF_BLOQUANTS, REGLAGES_SURVEILLES } from './check-supabase-posture.mjs';
 import { grilleDuCode, palierDe, rapprocher, prixStripe } from './check-stripe-prices.mjs';
 import { sqlOrphelines, sqlAges, DUREE_DE_VIE_DU_COMPTE, DUREES_BORNEES, PREUVES, libelle } from './check-retention.mjs';
 import { sqlExplain, extraire, pente, REQUETES } from './check-db-cost.mjs';
@@ -104,6 +104,46 @@ describe('témoin — posture Supabase (C-88)', () => {
     expect(
       comparerAdvisors({ a: { niveau: 'WARN', compte: 9 } }, { a: { niveau: 'ERROR', compte: 9 } }).ecarts,
     ).toHaveLength(1);
+  });
+
+  it('AM-5 · TEMOIN : une FK neuve sans index fait ROUGIR, un index « inutilisé » de plus non', () => {
+    const ref = {
+      unindexed_foreign_keys: { niveau: 'INFO', compte: 0 },
+      unused_index: { niveau: 'INFO', compte: 35 },
+    };
+    // La forme de l'API Management : une entrée par occurrence.
+    const entree = (name) => ({ name, level: 'INFO', detail: 'x', metadata: {} });
+    const mesure = resumerAdvisors({
+      lints: [entree('unindexed_foreign_keys'), ...Array.from({ length: 40 }, () => entree('unused_index'))],
+    });
+    const { ecarts, infos } = comparerPerformance(ref, mesure);
+    expect(ecarts).toHaveLength(1);
+    expect(ecarts[0]).toContain('unindexed_foreign_keys');
+    expect(ecarts[0]).toContain('+1');
+    // 35 → 40 index inutilisés : imprimé, jamais bloquant (suit le volume).
+    expect(infos).toHaveLength(1);
+    expect(infos[0]).toContain('unused_index');
+    expect(PERF_BLOQUANTS.has('unused_index')).toBe(false);
+  });
+
+  it('AM-5 · un advisor de performance NEUF bloque, une baisse s enregistre sans rougir', () => {
+    const ref = { unindexed_foreign_keys: { niveau: 'INFO', compte: 40 } };
+    const neuf = comparerPerformance(ref, {
+      unindexed_foreign_keys: { niveau: 'INFO', compte: 40 },
+      table_bloat: { niveau: 'WARN', compte: 1 },
+    });
+    expect(neuf.ecarts.some((e) => e.includes('NOUVEAU') && e.includes('table_bloat'))).toBe(true);
+    // La migration 227 : 40 → 0. L'advisor disparaît de la réponse.
+    const apres = comparerPerformance(ref, {});
+    expect(apres.ecarts).toEqual([]);
+    expect(apres.baisses.some((b) => b.includes('DISPARU'))).toBe(true);
+  });
+
+  it('AM-5 · la référence commitée porte les advisors de performance', () => {
+    const ref = JSON.parse(readFileSync(join(process.cwd(), 'scripts', 'supabase-posture.reference.json'), 'utf8'));
+    expect(ref.performance).toBeTruthy();
+    expect(ref.performance.unindexed_foreign_keys.compte).toBeGreaterThanOrEqual(0);
+    expect(ref.performance.unused_index.compte).toBeGreaterThan(0);
   });
 
   it('les réglages surveillés portent tous une raison', () => {
