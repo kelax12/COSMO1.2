@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-// Non-régression (A-6, 2026-09-03) : Input doit accepter un ref
-// (React.forwardRef). Sans lui, React 18 avertit « Function components
-// cannot be given refs » ET — le vrai coût — le ref n'est jamais attaché :
+// Non-régression (A-6, 2026-09-03) : Input doit accepter un ref. Sous React 18
+// il fallait un `forwardRef`, sans lui React avertissait « Function components
+// cannot be given refs » ET, le vrai coût, le ref n'était jamais attaché :
 // AdminMfaGate pose `ref={inputRef}` sur ce composant pour autofocus le champ
-// de code TOTP au montage (`inputRef.current?.focus()`), sans effet tant que
-// `Input` n'est pas un forwardRef. Même classe de bug que `Button` (C-18/C-19).
+// de code TOTP au montage (`inputRef.current?.focus()`). Depuis React 19
+// (2026-10-23) `ref` est une prop ordinaire. Même classe de bug que `Button`.
 import * as React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';

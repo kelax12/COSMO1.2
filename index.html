@@ -67,12 +67,18 @@
          2026-10-21 : il pose aussi `data-boot-theme` depuis le thème enregistré
          (mêmes alias que resolveInitialTheme), pour que le spinner en ait les
          couleurs dès la première image.
+         2026-10-23 : il pose le thème COMPLET, comme applyTheme() : celui
+         enregistré, sinon celui de defaultTheme() (Gris sous 768 px, sinon
+         celui du système), en `data-boot-theme` ET en classes `dark` / `gris`
+         / `noir`. La copie d'une page de contenu à thème (le guide) en lit
+         les variables avant React (prerender.mjs, injectContentCopy). Le
+         stockage seul est dans le try : bloqué, le thème par défaut s'applique.
          Seul <script> inline exécutable du dépôt, autorisé par son empreinte
          sha256 dans `script-src` (vercel.json). ❌ Le modifier d'un octet
          sans recalculer l'empreinte le fait bloquer en prod, en silence :
          `src/boot-screen.test.ts` compare les deux. Une seule ligne exprès :
          des fins de ligne CRLF changeraient l'empreinte. -->
-    <script>(function(){try{var s=localStorage,a=s.getItem('cosmo_demo_active')==='1';for(var i=0;!a&&i<s.length;i++)a=/^sb-.+-auth-token$/.test(s.key(i)||'');var h=document.documentElement,t=s.getItem('theme');if(a)h.removeAttribute('data-prerendered');if(t==='black'||t==='midnight'||t==='monochrome')t='gris';if(/^(light|dark|gris|noir)$/.test(t||''))h.setAttribute('data-boot-theme',t)}catch(e){}})()</script>
+    <script>(function(){var h=document.documentElement,t=null;try{var s=localStorage,a=s.getItem('cosmo_demo_active')==='1';for(var i=0;!a&&i<s.length;i++)a=/^sb-.+-auth-token$/.test(s.key(i)||'');if(a)h.removeAttribute('data-prerendered');t=s.getItem('theme')}catch(e){}if(t==='black'||t==='midnight'||t==='monochrome')t='gris';if(!/^(light|dark|gris|noir)$/.test(t||''))t=innerWidth<768?'gris':matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';h.setAttribute('data-boot-theme',t);if(t!=='light')h.classList.add('dark');if(t==='gris'||t==='noir')h.classList.add(t)})()</script>
 
     <!-- ───────────────────────────────────────────────────────────────────
          Écran de démarrage + contenu SEO. 100 % CSS, AUCUN JS.

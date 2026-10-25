@@ -10,6 +10,20 @@ const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 // Faille N7.
 const ALLOWED_ORIGINS = new Set([APP_URL])
 
+/**
+ * 🔴 SV-4 (audit serveur du 2026-10-24) : le premium PERSONNEL est coupé
+ * (`PREMIUM_ENFORCED = false`, `/premium` redirige vers `/`), et pourtant
+ * cette fonction restait appelable par tout compte, avec la clé Stripe LIVE
+ * depuis le 2026-10-20 : un customer live créé par appel, une ligne
+ * `subscriptions` écrite, et une session ouverte sans les deux consentements
+ * L221-28 que le checkout entreprise exige (S-6). Aucun écran ne l'appelle.
+ *
+ * Suit `PREMIUM_ENFORCED` (`src/modules/billing/premium-config.ts`), vérifié
+ * par `src/edge-audit-serveur.guard.test.ts`. ❌ Ne pas le passer à `true`
+ * sans le parcours de `docs/POST-AUDIT-GUIDE.md`, consentements compris.
+ */
+const PERSONAL_CHECKOUT_ENABLED = false
+
 function corsHeadersFor(req: Request) {
   const origin = req.headers.get('Origin') ?? ''
   const allow = ALLOWED_ORIGINS.has(origin) ? origin : ''
@@ -50,6 +64,13 @@ Deno.serve(async (req) => {
       })
     }
 
+    if (!PERSONAL_CHECKOUT_ENABLED) {
+      return new Response(JSON.stringify({ error: 'personal_premium_disabled' }), {
+        status: 403,
+        headers: { ...cors, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Admin client (service_role) to read/write subscriptions
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -62,11 +83,13 @@ Deno.serve(async (req) => {
     })
 
     // Retrieve or create Stripe customer
-    const { data: sub } = await supabaseAdmin
+    // SV-8 : une panne de lecture n'est pas « jamais abonné » (double checkout).
+    const { data: sub, error: subError } = await supabaseAdmin
       .from('subscriptions')
       .select('stripe_customer_id, stripe_subscription_id')
       .eq('user_id', user.id)
       .maybeSingle()
+    if (subError) throw subError
 
     // If already subscribed (active subscription), return error
     if (sub?.stripe_subscription_id) {
@@ -97,7 +120,7 @@ Deno.serve(async (req) => {
       // no subscriptions row exists yet. The previous UPDATE-only pattern
       // matched 0 rows pre-Provider-insert and silently dropped the new
       // customer id, creating orphan Stripe customers on retry. Faille U1.
-      await supabaseAdmin
+      const { error: linkError } = await supabaseAdmin
         .from('subscriptions')
         .upsert(
           {
@@ -108,6 +131,8 @@ Deno.serve(async (req) => {
           },
           { onConflict: 'user_id' },
         )
+      // Sans ce lien, le webhook ne relie pas le customer au compte (U1).
+      if (linkError) throw linkError
     }
 
     const priceId = Deno.env.get('STRIPE_PRICE_ID') ?? ''

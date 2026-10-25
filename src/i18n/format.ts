@@ -11,7 +11,7 @@
 // ressusciterait la classe de bugs de décalage de fuseau déjà éradiquée
 // (cf. src/i18n/en-ca-guard.test.ts, qui échoue si l'idiome disparaît).
 
-import { enUS, fr } from 'date-fns/locale';
+import { fr } from 'date-fns/locale/fr';
 import type { Locale as DateFnsLocale } from 'date-fns';
 import { BCP47_TAG, DEFAULT_LOCALE, type Locale } from './locale';
 import { localeStore } from './store';
@@ -28,8 +28,24 @@ import { localeStore } from './store';
  */
 const DATE_LOCALES: Partial<Record<Locale, DateFnsLocale>> = {
   fr,
-  en: enUS,
 };
+
+/**
+ * Charge la locale `date-fns` d'une langue servie, AVANT le premier rendu
+ * (`main.tsx`, comme les catalogues). Une locale qui change exige un
+ * rechargement complet (`switchLocale`) : cet appel au démarrage suffit.
+ *
+ * 🔴 2026-10-24 · `en-US` n'est plus importée statiquement (AM-6 de
+ * docs/PERFORMANCE.md) : `vendor-utils` est dans le chemin critique, et elle y
+ * partait chez tout visiteur, français compris. Tant qu'elle n'est pas chargée,
+ * `getDateLocale('en')` rend le français.
+ */
+export function loadDateLocale(locale: Locale): Promise<void> {
+  if (locale !== 'en' || DATE_LOCALES.en) return Promise.resolve();
+  return import('date-fns/locale/en-US').then(({ enUS }) => {
+    DATE_LOCALES.en = enUS;
+  });
+}
 
 /** Locale `date-fns` correspondante. Sans argument : la locale courante. */
 export function getDateLocale(locale?: Locale): DateFnsLocale {

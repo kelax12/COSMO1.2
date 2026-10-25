@@ -42,6 +42,13 @@
       ],
       "fr": "Objectif, en minutes",
       "pourquoi": "libelle accessible du champ de la meme cible en minutes que statistics.chart.goal : Target, par coherence."
+    },
+    "seo.enterprisePresentation.description": {
+      "termes": [
+        "organigramme"
+      ],
+      "fr": "Projets, OKR et rapports d'activité structurés par votre organigramme. Gratuit jusqu'à 5 membres, sans carte bancaire. Chacun garde son Cosmo personnel.",
+      "pourquoi": "meta description SEO : structures par votre organigramme y est rendu par reporting lines, qui dit la meme chose (la structure hierarchique) ; org chart y figure deja dans le titre de la page. Releve par la revue M-50 du 2026-10-23."
     }
   },
   "francais": {
