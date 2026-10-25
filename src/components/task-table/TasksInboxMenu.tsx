@@ -309,7 +309,8 @@ const TasksInboxMenu: React.FC<TasksInboxMenuProps> = ({ variant = 'mobile' }) =
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setOpen((v) => !v)}
-          aria-label={ariaLabel}
+          // Pas d'aria-label ici : le bouton AFFICHE son libellé, donc son nom vient
+          // de son contenu (axe-core 4.14, label-content-name-mismatch, WCAG 2.5.3).
           aria-haspopup="dialog"
           aria-expanded={open}
           data-tutorial-id="tasks-inbox-toggle"
@@ -327,6 +328,7 @@ const TasksInboxMenu: React.FC<TasksInboxMenuProps> = ({ variant = 'mobile' }) =
             aria-hidden="true"
           />
           <span className="hidden sm:inline">{t('inbox.label')}</span>
+          {total > 0 && <span className="sr-only">{t('inbox.pendingSr', { count: total })}</span>}
           {badge}
         </motion.button>
       ) : (
