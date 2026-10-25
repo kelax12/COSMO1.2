@@ -65,6 +65,7 @@ export const SECRETS_PROD = {
   STRIPE_SECRET_KEY: 'clients Stripe : noms, adresses email',
   CRON_SECRET: 'déclenche des Edge Functions qui lisent la production',
   VERCEL_TOKEN: 'configuration et journaux du déploiement de production',
+  SENTRY_AUTH_TOKEN: 'lit les issues Sentry de production : titres d erreurs et événements',
 };
 
 /** Secrets lus par les workflows SANS ouvrir de donnée personnelle. */
@@ -214,6 +215,10 @@ export const CONTACTS_PROD = {
   },
   'org-digest.yml › send › Envoyer les notifications par e-mail': {
     affiche: 'code HTTP et réponse `{mode, recipients, sent, failed}` : compteurs',
+  },
+  'prod-errors.yml › erreurs › Sentry, Vercel et Supabase sur 24 h': {
+    affiche:
+      "comptes d'erreurs par couple chemin+statut, familles de la passerelle, et titres des issues Sentry nouvelles (messages d'erreur déjà purgés d'emails et d'UUID par beforeSend) ; jamais une ligne de table",
   },
   'inactive-accounts.yml › run › Avertir puis effacer les comptes inactifs': {
     affiche: 'code HTTP et réponse `{toWarn, warned, toDelete, deleted, …}` : compteurs, aucun e-mail',
