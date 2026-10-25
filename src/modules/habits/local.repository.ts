@@ -86,7 +86,7 @@ const DEMO_HABITS_EN: Record<string, Partial<Habit>> = {
   h005: { name: 'Drink 2L of water', description: '2 liters of water a day' },
   h006: { name: '5 fruits & veggies', description: 'At least 5 servings a day' },
   h007: { name: 'Pomodoro technique', description: '4 sessions of 25 min focus' },
-  h008: { name: 'Morning agenda review', description: 'Plan the day in 5 min' },
+  h008: { name: 'Morning calendar review', description: 'Plan the day in 5 min' },
   h009: { name: 'Duolingo', description: '15 min of language practice' },
   h010: { name: 'Tech watch', description: 'Read Hacker News + tech Reddit' },
 };

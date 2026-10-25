@@ -93,11 +93,17 @@ const MIGRATION_DIR =
  * qu'on veut appliquer s'applique ; une migration qu'on ne veut pas appliquer
  * se declare ici, avec la raison.
  */
-// ✅ Vide depuis le 2026-10-22. Sa seule entree, `140_stripe_identifiers_reset`
+// Vide du 2026-10-22 au 10-23, puis la 227 (index de FK, AM-5) y est declaree
+// jusqu'a son application. Son ancienne entree, `140_stripe_identifiers_reset`
 // (declaree le 2026-09-15), est tombee : la mig. 140 est appliquee depuis la
 // bascule Stripe live du 2026-10-20 (ledger `20261020204838`), et la garde l'a
 // signale chaque jour comme dispense perimee jusqu'a son retrait.
-const NON_APPLIQUEES_DELIBEREMENT = {};
+const NON_APPLIQUEES_DELIBEREMENT = {
+  '227_fk_covering_indexes':
+    "40 index de FK (AM-5), prouvee le 2026-10-23 en bloc DO annule (40 FK sans index -> 0). "
+    + "A appliquer par la coordinatrice ; retirer cette entree des l'application. "
+    + "Declare le 2026-10-23.",
+};
 
 /**
  * Migrations qui ne creent ni ne suppriment AUCUN objet de catalogue.

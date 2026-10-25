@@ -63,7 +63,10 @@ describe('reportRestoreFailure', () => {
 
     expect(monitoring.captureException).toHaveBeenCalledWith(
       error,
-      expect.objectContaining({ tags: expect.objectContaining({ context: 'restore-undo', restore_entity: 'task' }) }),
+      expect.objectContaining({
+        level: 'error',
+        tags: expect.objectContaining({ context: 'restore-undo', restore_entity: 'task' }),
+      }),
     );
   });
 
