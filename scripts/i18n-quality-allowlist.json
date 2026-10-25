@@ -73,6 +73,31 @@
       ],
       "en": "**Legal guarantee of conformity.** If you are a consumer, the service must conform to the contract for as long as it is supplied (French Consumer Code, Articles L224-25-1 et seq.). If it does not, you can have it brought into conformity or, failing that, obtain a price reduction or the termination of the contract. This right is exercised free of charge, by writing to [contact@thecosmo.app](mailto:contact@thecosmo.app).",
       "pourquoi": "et seq. est la locution latine de citation juridique anglaise (Articles L224-25-1 et seq.), pas un mot francais."
+    },
+    "legal.notice.s5.p2": {
+      "indices": [
+        "é"
+      ],
+      "en": "**Consumer mediator**: Société Médiation Professionnelle, [www.mediateur-consommation-smp.fr](https://www.mediateur-consommation-smp.fr), Alteritae, 5 rue Salvaing, 12000 Rodez, France. How to refer a dispute: section 12 bis of the [Terms of Use](/cgu).",
+      "pourquoi": "Société Médiation Professionnelle est la raison sociale du médiateur de la consommation, imposée telle quelle par son courrier du 2026-10-25 (Conso. art. L616-1). L'adresse (Alteritae, rue Salvaing, Rodez) est un nom propre."
+    },
+    "legalTerms.terms.s12bis.p2": {
+      "indices": [
+        "de",
+        "et",
+        "la",
+        "é",
+        "ô"
+      ],
+      "en": "If no amicable agreement is reached, or if the business does not reply within a reasonable period of one (1) month, a Customer who is a consumer within the meaning of Article L.612-2 of the French Consumer Code may, if a disagreement remains, refer the matter free of charge to the competent mediator listed by the Commission d'évaluation et de contrôle de la médiation de la consommation under Article L.615-1 of the French Consumer Code, namely:",
+      "pourquoi": "« Commission d'évaluation et de contrôle de la médiation de la consommation » est le nom officiel de l'autorité qui agrée les médiateurs (Conso. art. L615-1) : un nom d'institution ne se traduit pas dans un texte contractuel."
+    },
+    "legalTerms.terms.s12bis.p3": {
+      "indices": [
+        "é"
+      ],
+      "en": "Société Médiation Professionnelle, [www.mediateur-consommation-smp.fr](https://www.mediateur-consommation-smp.fr), Alteritae, 5 rue Salvaing, 12000 Rodez, France.",
+      "pourquoi": "Société Médiation Professionnelle est la raison sociale du médiateur de la consommation, imposée telle quelle par son courrier du 2026-10-25 (Conso. art. L616-1)."
     }
   }
 }

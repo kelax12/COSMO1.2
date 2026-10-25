@@ -294,7 +294,7 @@ premier envoi.
 | Document | Empreinte |
 |---|---|
 | `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `56f0531541fd571a` |
-| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `55c4406f95c74347` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `f2b0645e65f7b36a` |
 
 **Ce qui a changé** (commit `bff7f874`, poussé sur `main` sans cette entrée ; écrite le même jour,
 la garde tenait `lint-test-build` rouge entre-temps) :
@@ -306,6 +306,9 @@ la garde tenait `lint-test-build` rouge entre-temps) :
   [`LEGAL.md`](./LEGAL.md).
 - **Mentions légales**, s5 p2 : coordonnées du médiateur et renvoi à l'article 12 bis.
 - Dates de mise à jour des deux documents portées au 25 octobre 2026, en `fr` et en `en`.
+- **Forme**, même jour : dans la version anglaise de l'article 12 bis, l'article français « La » resté
+  devant la raison sociale du médiateur est retiré. Les noms propres (raison sociale, adresse, nom de
+  la Commission d'évaluation et de contrôle de la médiation de la consommation) restent en français.
 
 **Aucun préavis**, décision d'Axel du 2026-10-25 : ces ajouts informent le consommateur d'une voie
 de recours que la loi lui ouvre déjà et que le professionnel doit lui indiquer (Conso. art. L616-1).
