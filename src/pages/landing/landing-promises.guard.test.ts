@@ -244,13 +244,13 @@ describe('mesures : les chiffres de limite tiennent', () => {
     expect(dedoublonne(en)).toBe(dedoublonne(attendu));
   });
 
-  it('« 20 € par mois pour dix personnes » est le palier t10', () => {
+  it('« 70 € par mois pour dix personnes » est le palier t10', () => {
     const t10 = ENTERPRISE_PRICING_TIERS.find((t) => t.key === 't10')!;
-    expect([t10.priceEurPerMonth, t10.maxMembers]).toEqual([20, 10]);
+    expect([t10.priceEurPerMonth, t10.maxMembers]).toEqual([70, 10]);
   });
 
-  it('la remise annuelle écrite (30 %) est celle du produit', () => {
-    expect(ENTERPRISE_YEARLY_DISCOUNT).toBe(0.3);
+  it('la remise annuelle écrite (25 %) est celle du produit', () => {
+    expect(ENTERPRISE_YEARLY_DISCOUNT).toBe(0.25);
   });
 
   it('« 20 fonctionnalités en plus » : vingt cartes, ni dix-neuf ni vingt et une', () => {
