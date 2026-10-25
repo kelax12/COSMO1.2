@@ -811,7 +811,7 @@ export const CATALOGUE = [
       'les réglages surveillés portent tous une raison',
       "L'enrôlement TOTP se coupe en deux clics dans le Dashboard, hors du dépôt : `/admin` (aal2) deviendrait inaccessible sans qu'aucune garde le lise."],
     // ── check:stripe-prices (C-106)
-    ['stripe-grille-modifiee', 'produit', r('src/modules/billing/premium-config.ts', 'export const ENTERPRISE_YEARLY_DISCOUNT = 0.3;', 'export const ENTERPRISE_YEARLY_DISCOUNT = 0.25;'),
+    ['stripe-grille-modifiee', 'produit', r('src/modules/billing/premium-config.ts', 'export const ENTERPRISE_YEARLY_DISCOUNT = 0.25;', 'export const ENTERPRISE_YEARLY_DISCOUNT = 0.2;'),
       'la grille est LUE dans premium-config.ts, pas recopiée',
       'La remise annuelle change dans le code : la grille lue doit le refléter, sinon la garde compare Stripe à une copie.'],
     ['stripe-grille-illisible', 'detecteur', r('scripts/check-stripe-prices.mjs', '  if (!bloc) {', '  if (false) {'),
