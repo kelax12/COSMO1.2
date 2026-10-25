@@ -79,7 +79,7 @@ remise annuelle ramenée de 30 % à 25 %. Aucun abonnement live n'existait ce jo
 | `t100` Grande entreprise | `prod_VVTs7gwGuJIojd` | `price_1UUSvaHJLweDSN4FSDuxVniS` · 700 € | `price_1UUSvcHJLweDSN4F0r3KtHAr` · 6 300 € |
 | `tmax` Illimité (100+) | `prod_V8kw1gh0f4HJx4` | `price_1UUSvdHJLweDSN4FeUJPsa7I` · 1 000 € | `price_1UUSvgHJLweDSN4FZVV0sHjZ` · 9 000 € |
 
-Les 8 prix de la grille du 2026-08-26 (20/50/100/200 €, −30 %) sont **archivés**. Un produit
+⚠️ Relevé du 2026-10-25 : les 8 prix de la grille du 2026-08-26 (20/50/100/200 €, −30 %) **n'existaient plus** dans le compte live (ni actifs ni archivés, `GET /v1/prices`), alors que les secrets pointaient encore sur eux. Seuls les 10 prix ci-dessus existent. Un produit
 ne doit porter qu'UN prix annuel actif : la dérivation refuse de choisir (`ambiguous`).
 
 Montants conformes à `ENTERPRISE_PRICING_TIERS` et à `yearlyTotalEur()`
