@@ -809,6 +809,11 @@ l'est bien quand on fait défiler vers la section, où le graphique s'affiche.
 
 ## Vendor chunks isolés (commenter toute modif)
 
+🔴 **2026-10-23 · un filtre `manualChunks` se termine par `/`.** `id.includes('node_modules/react')`
+rangeait aussi `react-day-picker`, `react-redux`, `react-remove-scroll`… dans `vendor-react`, donc
+dans le chemin critique. Corrigé à la migration React 19 : chemin critique 328,8 → 302,6 ko gzip,
+`vendor-react` 69,2 ko. Mesures : [`MIGRATION-REACT19.md`](./MIGRATION-REACT19.md) §0.
+
 **Tailles réelles, `npm run build` du 2026-08-25** (brut / gzip). Les colonnes précédentes
 gardent les mesures antérieures pour rendre la dérive lisible :
 
