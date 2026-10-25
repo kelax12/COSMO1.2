@@ -72,6 +72,13 @@ describe('nextOccurrenceDeadline (#26)', () => {
         .toBe('2026-07-15');
     });
 
+    it('deadline future : repart de la deadline, pas d\'aujourd\'hui', () => {
+      // Tâche validée en avance (le 8 pour une échéance au 20) : l'occurrence
+      // suivante se cale sur l'échéance, sinon elle tomberait le 9.
+      expect(dayOf(nextOccurrenceDeadline(stored('2026-07-20', pref), 'daily', NOW, pref), pref))
+        .toBe('2026-07-21');
+    });
+
     it("'none' ou deadline vide : null", () => {
       expect(nextOccurrenceDeadline(stored('2026-07-08', pref), 'none', NOW, pref)).toBeNull();
       expect(nextOccurrenceDeadline('', 'daily', NOW, pref)).toBeNull();
@@ -109,6 +116,11 @@ describe('buildNextOccurrence (#26)', () => {
     const next = buildNextOccurrence({ ...baseTask, isCollaborative: true, pendingInvites: ['a@b.c'] }, NOW, manual(2));
     expect(next!.isCollaborative).toBeUndefined();
     expect(next!.pendingInvites).toBeUndefined();
+  });
+
+  it('tâche sans sous-tâches : occurrence sans sous-tâches', () => {
+    const next = buildNextOccurrence({ ...baseTask, subtasks: undefined }, NOW, manual(2));
+    expect(next!.subtasks).toEqual([]);
   });
 
   it('tâche non récurrente : null', () => {

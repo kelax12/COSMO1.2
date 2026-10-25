@@ -69,7 +69,7 @@
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
 | AM-1 | 🔴 **Les points cochés ✅ sont des réglages de DASHBOARD, et rien ne vérifie qu'ils le sont ENCORE.** « Leaked Password Protection », l'index `048` : tout cela vit hors du dépôt, se désactive en deux clics, sans commit et sans trace. Un ✅ daté décrit un instant, pas un état | aucun workflow ne lit les réglages Supabase (cf. [`SECURITY.md`](./SECURITY.md) AM-2) | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` (`C-88`) — 🔴 ne prouve PAS : 🔴 elle échoue tant que la référence n'est pas posée (**`M-58`**). Le volet purement manuel reste `M-15` / `M-16` / `M-17` |
-| AM-2 | **Un guide de chantiers ne dit pas lesquels sont périmés.** Le point 3 a été tranché le 2026-09-03 et exécuté le 09-04 (suppression des jetons, C-04) : ce qui reste ici en décrit le **contexte**, pas l'état | « Point 3 · TRANCHÉE le 2026-09-03 » | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** Un guide de chantiers ne dit toujours pas lesquels sont périmés, et le point 3 en est l'exemple : tranché le 09-03, exécuté le 09-04 — *(jugé outillable le 09-16 : oui : une date de dernière revérification par point)* |
+| AM-2 | **Un guide de chantiers ne dit pas lesquels sont périmés.** Le point 3 a été tranché le 2026-09-03 et exécuté le 09-04 (suppression des jetons, C-04) : ce qui reste ici en décrit le **contexte**, pas l'état | « Point 3 · TRANCHÉE le 2026-09-03 » | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** Un guide de chantiers ne dit toujours pas lesquels sont périmés, et le point 3 en est l'exemple : tranché le 09-03, exécuté le 09-04 — *(jugé outillable le 09-16 : oui : une date de dernière revérification par point)* · ✅ **OUTILLÉ le 2026-10-24** · chaque « Point N » porte un marqueur `<!-- chantier: actif relu=… -->` (péremption à **90 jours**) ou `clos le=…` (exempt, mais daté). `npm run check:peremption-chantiers` en CI, témoin vu rouge. Le relevé du jour a trouvé deux autres chantiers périmés (4 et 5, exécutés) et un ouvert (2). **Point 3 marqué TRANCHÉ/CLOS.** 🔴 ne prouve PAS que la relecture a eu lieu, seulement qu'une date est écrite |
 | AM-3 | **Ce document n'a pas de note et n'entre dans aucun tableau de bord**, alors qu'il porte la séquence de réactivation du premium | absent du tableau de bord de [`README.md`](./README.md) | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:docs-scored` (`C-109`) — 🔴 ne prouve PAS : que les notes soient justes ni fraîches |
 
 ---
@@ -89,6 +89,7 @@ Chaque section est autonome.
 ---
 
 ## Point 1 — Index 048 en prod ✅ DÉJÀ FAIT (guide de vérification)
+<!-- chantier: clos le=2026-06-21 -->
 
 **Statut : appliqué + vérifié le 2026-06-21.** Aucune action requise. Ce qui suit
 documente *pourquoi* et *comment re-vérifier*, car la procédure diffère de ce qui
@@ -118,6 +119,12 @@ Résultat obtenu le 2026-06-21 : présent. ✔
 ---
 
 ## Point 2 — Activer « Leaked Password Protection » (≈ 2 min, dashboard)
+<!-- chantier: actif relu=2026-10-24 -->
+
+> 🔎 **Relu le 2026-10-24 : TOUJOURS OUVERT.** `scripts/supabase-posture.reference.json` porte
+> `password_hibp_enabled = false` comme état mesuré le 2026-10-08, et l'advisor
+> `auth_leaked_password_protection` compte 1. Ce chantier reste actif et doit être relu avant le
+> 2027-01-22 (90 jours).
 
 **Pourquoi** : advisor sécurité `auth_leaked_password_protection` (WARN). Supabase
 Auth peut refuser les mots de passe compromis (vérif HaveIBeenPwned, k-anonymity —
@@ -146,6 +153,10 @@ de config Auth, **pas du code** → rien à committer.
 ---
 
 ## Point 3 — Décision produit Premium · **TRANCHÉE le 2026-09-03, exécutée le 2026-09-04**
+<!-- chantier: clos le=2026-09-04 -->
+
+> ✅ **Chantier CLOS** : décision d'Axel le 2026-09-03, exécutée le 2026-09-04 (`C-04`). Ce qui suit
+> décrit le **contexte** de la décision, pas un état à surveiller.
 
 🟢 **Décision d'Axel** : *« Ce système est une archive du passé, supprime-le afin de ne pas
 complexifier le code avec des choses inutiles. »* Les jetons premium et le mur-pub des Habitudes
@@ -173,6 +184,10 @@ bascule, verdict identique pour chacune.
 ---
 
 ## Point 4 — Harnais de tests RLS d'intégration en CI (filet manquant n°1)
+<!-- chantier: clos le=2026-10-24 -->
+
+> ✅ **Relu le 2026-10-24 : EXÉCUTÉ.** `npm run test:rls` existe (`vitest.integration.config.ts`) et le
+> job `rls-integration` tourne dans `ci.yml`. La suite décrit l'architecture **proposée** à l'époque.
 
 **Pourquoi** : toute la sécurité d'accès repose sur RLS + RPC `SECURITY DEFINER`.
 Ces policies ont déjà cassé la prod (récursion 42P17, mig. 045) et sont **non
@@ -277,6 +292,12 @@ les injecter dans l'env du step `test:rls`.)
 ---
 
 ## Point 5 — Activer la facturation entreprise (Stripe par organisation)
+<!-- chantier: clos le=2026-10-20 -->
+
+> ✅ **Relu le 2026-10-24 : BASCULE FAITE le 2026-10-20.** `ENTERPRISE_BILLING_ENFORCED = true` et
+> `billing_flags.enterprise_seat_limit = true` (mig. `224`), Stripe en compte live. L'encart « dormante »
+> du 2026-08-17 ci-dessous et le bandeau d'en-tête (« désactivée depuis le 2026-08-24 ») sont des
+> **archives de contexte**. État courant : [`STRIPE-LIVE.md`](./STRIPE-LIVE.md).
 
 **Statut au 2026-08-17 : plomberie complète, livrée DORMANTE.** Table, quota serveur, trois
 Edge Functions, onglet Abonnement et coupons sont en place ; aucun euro ne peut être encaissé

@@ -62,6 +62,13 @@ beforeAll(async () => {
   localeStore.setLocale('fr');
 });
 
+// La locale date-fns anglaise se charge au démarrage de l'app (`loadDateLocale`,
+// main.tsx), plus à l'import : un test qui pose `en` doit la trouver chargée.
+beforeAll(async () => {
+  const { loadDateLocale } = await import('@/i18n/format');
+  await loadDateLocale('en');
+});
+
 afterEach(async () => {
   if (typeof document !== 'undefined') {
     const { cleanup } = await import('@testing-library/react');

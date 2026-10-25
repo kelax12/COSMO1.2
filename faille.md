@@ -591,6 +591,8 @@ relit contre la console et contre `docs/ROADMAP-60J.md`, jamais de mémoire.
   La propriété qui rend l'open redirect inexploitable (aucune navigation alimentée par un
   paramètre d'URL) reste **verrouillée par un test**, sans rapport avec la version installée :
   `src/lib/no-open-redirect.test.ts`.
+  ✅ **2026-10-23** : migration faite (React 19.3.1, `react-router` 8.5.0, au-delà des deux
+  plages de l'avis), `npm audit --omit=dev` à 0. Détail : `docs/MIGRATION-REACT19.md` §0.
 - **CVE dev-only** (`vitest`, `eslint`, `vite`, `glob`/`minimatch`) : jamais servies au
   navigateur. `npm audit fix --force` casserait le peer `eslint-plugin-react-hooks` (vérifié en
   `--dry-run`) → mise à jour outillage dédiée, jamais dans une passe sécurité.
