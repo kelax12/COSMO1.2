@@ -19,6 +19,11 @@ describe('customerContactFields', () => {
     expect('name' in fields).toBe(false);
   });
 
+  it('un nom absent (null en base) n efface pas non plus le nom du customer, sans lever', () => {
+    const fields = customerContactFields({ name: null, email: 'compta@acme.fr' }, 'owner@acme.fr');
+    expect(fields).toEqual({ email: 'compta@acme.fr', invoice_settings: { footer: INVOICE_FOOTER } });
+  });
+
   it('🔴 chaque customer porte la mention de franchise en base (CGI art. 293 B)', () => {
     expect(INVOICE_FOOTER).toBe('TVA non applicable, art. 293 B du CGI');
     for (const f of [customerContactFields(null, 'o@a.fr'), customerContactFields({ name: 'X', email: 'c@a.fr' }, 'o@a.fr')]) {

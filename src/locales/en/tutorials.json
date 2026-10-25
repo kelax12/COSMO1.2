@@ -37,7 +37,7 @@
     "step3Title": "Create one in a few clicks",
     "step4Title": "Click ✓ to complete",
     "step1Desc": "Set up things to repeat every day. Cosmo helps you keep your streak going.",
-    "step2Desc": "List: weekly tracking. Board: a grid of the last 30 days. Overall tracking: statistics across all your habits.",
+    "step2Desc": "List: weekly tracking. Table: a grid of the last 30 days. Overall tracking: statistics across all your habits.",
     "step3Desc": "Give it a name and pick a color.",
     "step4Desc": "The button ticks off today's habit and extends your streak. A missed day resets it to zero."
   },
@@ -96,7 +96,7 @@
     "step6Title": "Gesture: swipe right to complete",
     "step1Desc": "This is where you run all your tasks. Swipe a row right to complete it, left for options.",
     "step2Desc": "Your lists (Work, Shopping, Travel…) live here. Tap a list to filter. Swipe the carousel to see them all.",
-    "step3Desc": "Search lives at the bottom of the screen, under your thumb. Leave it empty and it offers its filters: Starred, Done, Overdue, Shared, Select.",
+    "step3Desc": "Search lives at the bottom of the screen, under your thumb. Leave it empty and it offers its filters: Bookmarked, Done, Overdue, Shared, Select.",
     "step4Desc": "This button sets how the list shows up: list or board view, a mini calendar of your due dates, category colors.",
     "step5Desc": "The + at the bottom right creates a task. A name is enough, everything else is optional.",
     "step6Desc": "On a task, swipe your finger to the right. A green “Complete” area appears. Let go: the task is ticked (with a light vibration)."

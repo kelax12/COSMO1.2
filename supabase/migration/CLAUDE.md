@@ -64,6 +64,9 @@ compilait, la suite passait.
 
 ## Interdits
 
+> Laquelle est gardée, et par quelle règle, laquelle reste **manuelle** : tableau de
+> [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Avant tout commit qui touche `supabase/migration/*.sql` » (AM-4).
+
 - 🔴 **Ne jamais ajouter une colonne, un GRANT ou une policy depuis le dashboard Supabase.** C est
   ce qui a produit la dérive où le dépôt ne décrivait plus la base qu'il prétend reconstruire.
 - ❌ **Un correctif appliqué en prod se versionne sous son propre numéro**, jamais par édition d'un
