@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { errorCode, isDefinitiveError, shouldRetryQuery } from './query-retry';
+import { errorCode, isDefinitiveError, shouldRetryMutation, shouldRetryQuery } from './query-retry';
 import { normalizeApiError } from './normalizeApiError';
 import { TimeoutError } from './withTimeout';
 
@@ -90,5 +90,24 @@ describe('shouldRetryQuery', () => {
 
   it('ne retente PAS un abandon du navigateur', () => {
     expect(shouldRetryQuery(0, new DOMException('The operation was aborted.', 'AbortError'))).toBe(false);
+  });
+});
+
+describe('shouldRetryMutation (AM-4 : le 23503 de events_task_id_fkey rejoue 1,3 s plus tard)', () => {
+  it.each(['23503', '23505', '42501', 'seat_limit_reached'])(
+    'ne rejoue jamais un refus nomme %s : il reviendra identique',
+    (code) => {
+      expect(shouldRetryMutation(0, normalizeApiError({ code, message: 'x' }))).toBe(false);
+    },
+  );
+
+  it('ne rejoue pas un depassement de delai : l ecriture a pu aboutir, le rejeu la doublerait', () => {
+    expect(shouldRetryMutation(0, new TimeoutError('Délai dépassé'))).toBe(false);
+  });
+
+  it('retente une fois une coupure reseau', () => {
+    const networkError = normalizeApiError(new Error('Failed to fetch'));
+    expect(shouldRetryMutation(0, networkError)).toBe(true);
+    expect(shouldRetryMutation(1, networkError)).toBe(false);
   });
 });

@@ -81,7 +81,7 @@ export function markScrollers(root: ParentNode, label: string): void {
 }
 
 export function useFocusableScrollers(
-  rootRef: React.RefObject<HTMLElement>,
+  rootRef: React.RefObject<HTMLElement | null>,
   label: string,
   enabled = true,
 ): void {

@@ -113,6 +113,13 @@ appliquée). Un objet EN TROP est un simple avertissement (héritage dashboard).
 
 ---
 
+### Hook `pre-push` : pas de poussée sur un `main` rouge (2026-10-21)
+
+`.githooks/pre-push` lance `scripts/pre-push-main-red.mjs` : une poussée vers `main` est refusée si
+le dernier run `CI` de `main` est rouge. Il s'installe une fois par clone :
+`git config core.hooksPath .githooks`. Le commit qui RÉPARE `main` passe avec
+`COSMO_PUSH_ON_RED=1 git push`, et seulement lui.
+
 ## 2bis. Déployer les Edge Functions
 
 ⚠️ **Vercel ne déploie PAS les Edge Functions.** Un `git push` livre le front ;

@@ -53,13 +53,52 @@ const RACINES = new Set(['html', 'body', ':root']);
 // interactif n'y arrive jamais. Ces règles ne feraient que peser.
 const ETATS_INTERACTIFS = new Set([':hover', ':focus', ':focus-visible', ':focus-within', ':active']);
 
+// 2026-10-23 · Classes de THÈME, posées sur `<html>` par `applyTheme()` et, avant
+// React, par le script inline d'index.html. Une page de contenu à thème (le
+// guide) en dépend ; la copie ne les porte pas, elles vivent au-dessus d'elle.
+const THEMES = new Set(['dark', 'gris', 'noir']);
+
+/**
+ * Extrait d'un sélecteur le composé qui porte une classe de thème (`.dark`,
+ * `.dark:not(.gris):not(.noir)`), avec le combinateur qui le suit, et le rend
+ * en texte. Rend `null` s'il n'y en a pas.
+ */
+function extraireTheme(sel) {
+  let theme = null;
+  sel.walk((node) => {
+    if (theme !== null || node.type !== 'class' || !THEMES.has(node.value)) return;
+    const parent = node.parent;
+    const nodes = parent.nodes;
+    const i = nodes.indexOf(node);
+    let debut = i;
+    while (debut > 0 && nodes[debut - 1].type !== 'combinator') debut--;
+    let fin = i;
+    while (fin < nodes.length - 1 && nodes[fin + 1].type !== 'combinator') fin++;
+    const compose = nodes.slice(debut, fin + 1);
+    theme = compose.map(String).join('').trim();
+    const suivant = nodes[fin + 1];
+    compose.forEach((n) => n.remove());
+    if (suivant?.type === 'combinator') suivant.remove();
+  });
+  return theme;
+}
+
 /**
  * Réécrit un sélecteur sous `scope`, ou rend `null` s'il vise une classe que
  * la copie ne porte pas (ou un id, qui ne peut rien viser dans la copie).
+ * `themeSurHtml` : une classe de thème n'est pas cherchée dans la copie, elle
+ * est remontée sur `html` (`.dark .x` → `html.dark #scope .x`).
  */
-function scoper(selector, classes, scope, tags) {
+function scoper(selector, classes, scope, tags, themeSurHtml = false) {
   let garde = true;
   const ast = selectorParser().astSync(selector);
+  const themes = [];
+  if (themeSurHtml) {
+    ast.each((sel) => {
+      const t = extraireTheme(sel);
+      themes.push(t);
+    });
+  }
   ast.walk((node) => {
     if (node.type === 'class' && !classes.has(node.value)) garde = false;
     if (node.type === 'id') garde = false;
@@ -68,23 +107,31 @@ function scoper(selector, classes, scope, tags) {
   });
   if (!garde) return null;
   const parts = [];
-  ast.each((sel) => {
+  ast.each((sel, i) => {
+    const theme = themes[i] ?? null;
+    const portee = theme ? `html${theme} ${scope}` : scope;
     const first = sel.first;
     const estRacine = first && ((first.type === 'tag' && RACINES.has(first.value)) || (first.type === 'pseudo' && first.value === ':root'));
-    if (estRacine) {
+    if (String(sel).trim() === '') {
+      // `.dark { --color-… }` : le bloc de variables du thème, sur la portée.
+      parts.push(portee);
+    } else if (estRacine) {
       // `html body .x` n'existe pas dans la feuille ; `html` ou `body` seul,
       // éventuellement suivi de pseudo-éléments, devient la portée elle-même.
-      first.replaceWith(selectorParser.string({ value: scope }));
+      first.replaceWith(selectorParser.string({ value: portee }));
       parts.push(String(sel).trim());
     } else {
-      parts.push(`${scope} ${String(sel).trim()}`);
+      parts.push(`${portee} ${String(sel).trim()}`);
     }
   });
   return parts.join(', ');
 }
 
-/** La CSS de `cssText` utile à `html`, confinée sous `scope`. */
-export function scopedCssFor(html, cssText, scope = '#lp-hero') {
+/**
+ * La CSS de `cssText` utile à `html`, confinée sous `scope`.
+ * `themeSurHtml` : voir `scoper` (copie d'une page de contenu à thème).
+ */
+export function scopedCssFor(html, cssText, scope = '#lp-hero', { themeSurHtml = false } = {}) {
   const classes = classesIn(html);
   const tags = tagsIn(html);
   const root = postcss.parse(cssText);
@@ -97,7 +144,7 @@ export function scopedCssFor(html, cssText, scope = '#lp-hero') {
   root.walkRules((rule) => {
     // Les règles internes d'un @keyframes sont déjà parties ; un @font-face
     // n'a pas de règle enfant. Tout le reste passe par le filtre.
-    const gardes = rule.selectors.map((s) => scoper(s, classes, scope, tags)).filter(Boolean);
+    const gardes = rule.selectors.map((s) => scoper(s, classes, scope, tags, themeSurHtml)).filter(Boolean);
     if (gardes.length === 0) rule.remove();
     else rule.selector = gardes.join(', ');
   });

@@ -32,7 +32,7 @@ enchaînerait 8 s + 1 s + 8 s avant d'afficher quoi que ce soit.
 ❌ **Ne jamais identifier une erreur par une sous-chaîne de son message** : il vient du catalogue
 i18n, il est traduit. Le code vit dans `.code`. C'est ce bug-là qui a fait vivre le prédicat
 d'origine sans qu'il puisse matcher une seule fois.
-`retry: 1` ne vaut plus que pour les **mutations**, et `useCancelAndRefundOrg` y met `retry: 0` :
+Les **mutations** passent par `shouldRetryMutation` (une reprise, jamais sur un refus nommé : AM-4 de `docs/OBSERVABILITE.md`), et `useCancelAndRefundOrg` y met `retry: 0` :
 on ne rejoue jamais une mutation qui déplace de l'argent.
 
 **Trois canaux Realtime**, chacun monté **une seule fois** ici et isolé dans son propre

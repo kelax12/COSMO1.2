@@ -950,6 +950,42 @@ export const CATALOGUE = [
   })),
 
   // ═════════════════════════════════════════════════════════════════
+  // LES ERREURS DE PRODUCTION (OBSERVABILITE AM-1 à AM-3)
+  // (`check-prod-errors.guard.test.mjs` : Sentry, Vercel, Supabase)
+  // ═════════════════════════════════════════════════════════════════
+  ...[
+    ['prod-jeton-facultatif', 'detecteur', r('scripts/check-prod-errors.mjs', "  if (!env.VERCEL_TOKEN) manquants.push('VERCEL_TOKEN');", ''),
+      'TEMOIN : chaque jeton absent est NOMMÉ, aucun n est facultatif',
+      'Sans VERCEL_TOKEN, la lecture Vercel planterait en 401 au lieu de dire quel secret manque : le motif « garde conditionnelle à son secret » à un pas.'],
+    ['prod-region-ignoree', 'detecteur', r('scripts/check-prod-errors.mjs', "  const region = hote[2] && hote[2] !== 'us' ? hote[2] : null;", '  const region = null;'),
+      'TEMOIN : le DSN donne la RÉGION, l organisation et le projet',
+      'Le projet Sentry de COSMO est hébergé en `de` : lu sur `sentry.io`, il répondrait 404 chaque matin.'],
+    ['prod-regression-ignoree', 'detecteur', r('scripts/check-prod-errors.mjs', "  { raison: 'regression', query: 'is:unresolved is:regressed lastSeen:-24h' },", ''),
+      'TEMOIN : `lireSentry` lit les DEUX recherches, suit les pages, et refuse une réponse en erreur',
+      'Une régression a un `firstSeen` ancien : un bug corrigé qui revient ne serait jamais vu.'],
+    ['prod-sonde-ignoree', 'detecteur', r('scripts/check-prod-errors.mjs', "  if (sonde && chemin.startsWith('/functions/v1/')) return 'sonde_edge';", ''),
+      'TEMOIN : `classer` range chaque réponse dans SA famille',
+      'Les sondes de `check:edge-smoke` compteraient comme des appels non signés au webhook Stripe : rouge chaque jour, donc ignoré.'],
+    ['prod-fonctions-non-lues', 'detecteur', r('scripts/check-prod-errors.mjs', '  for (const sql of [SQL_SUPABASE.passerelle, SQL_SUPABASE.fonctions]) {', '  for (const sql of [SQL_SUPABASE.passerelle]) {'),
+      'TEMOIN : `lireSupabase` lit les deux sources, sur 24 h, du projet par défaut',
+      '`edge_logs` ne porte AUCUNE requête `/functions/v1/*` : sans `function_edge_logs`, le webhook Stripe serait toujours à zéro.'],
+    ['prod-erreur-sql-lue-vide', 'detecteur', r('scripts/check-prod-errors.mjs', '  if (corps?.error) throw new Error(`Supabase · requête refusée : ${JSON.stringify(corps.error)}`);', ''),
+      'TEMOIN : une erreur SQL rendue dans un 200, ou une réponse tronquée, fait JETER',
+      "L'API rend une erreur SQL dans un 200 : lue comme zéro ligne, une requête qui n'a pas tourné ferait un vert."],
+    ['prod-journal-erreur-ignore', 'detecteur', r('scripts/check-prod-errors.mjs', '    const enErreur = statut >= 500 || (RANG_NIVEAU[pire?.level] ?? 0) >= RANG_NIVEAU.error;', '    const enErreur = statut >= 500;'),
+      'TEMOIN : un 5xx OU un journal `error` est une erreur, un 204 propre non',
+      '`api/collect.ts` répond 204 même quand son écriture échoue : l audience tomberait à zéro sans une seule erreur comptée.'],
+    ['prod-couple-neuf-tolere', 'detecteur', r('scripts/check-prod-errors.mjs', "      } else if (typeof inconnu === 'number' && n > inconnu) {", '      } else if (false) {'),
+      'TEMOIN : une famille, un couple connu ou un couple NOUVEAU au-delà de son plafond rougissent',
+      'Un chemin qui se met à échouer sans figurer dans la référence passerait sous le seul plafond de sa famille.'],
+    ['prod-zero-requete-vert', 'detecteur', r('scripts/check-prod-errors.mjs', '    if (!(m.total_requetes > 0)) {', '    if (false) {'),
+      'TEMOIN : zéro requête lue, ou une référence incomplète, ROUGISSENT au lieu de conclure',
+      'Une source renommée rend zéro ligne : zéro erreur sur zéro requête serait un vert sur rien.'],
+  ].map(([id, famille, modif, attendu, pourquoi]) => ({
+    id, famille, garde: 'scripts/check-prod-errors.guard.test.mjs', modifs: [modif], attendu: [attendu], pourquoi,
+  })),
+
+  // ═════════════════════════════════════════════════════════════════
   // COUVERTURE DE L'OUTILLAGE ET DES EDGE FUNCTIONS (C-82)
   // ═════════════════════════════════════════════════════════════════
   ...[
@@ -1472,6 +1508,52 @@ export const CATALOGUE = [
     pourquoi:
       'Le webhook qui ignore le contrôle : l’issue se tait, Discord sonne quand même des heures '
       + 'après la réparation, et deux canaux qui se contredisent apprennent à en ignorer un.',
+  },
+
+  // ═════════════════════════════════════════════════════════════════
+  // AUDIT SERVEUR DU 2026-10-24 (SV-1, SV-5, SV-6)
+  // ═════════════════════════════════════════════════════════════════
+  {
+    id: 'membre-expire-actif',
+    famille: 'produit',
+    garde: 'src/edge-audit-serveur.guard.test.ts',
+    modifs: [r(
+      'supabase/functions/_shared/org-membership.ts',
+      '  if (m.access_expires_at === null) return true\n',
+      '  return true\n',
+    )],
+    attendu: ['membershipIsActive suit `is_org_member` (mig. 161) : suspendu ou expiré = inactif'],
+    pourquoi:
+      'Un admin dont l accès a expiré enverrait encore des invitations au nom de l organisation '
+      + 'et vérifierait ses domaines (SV-1).',
+  },
+  {
+    id: 'avis-l215-html-brut',
+    famille: 'produit',
+    garde: 'src/edge-audit-serveur.guard.test.ts',
+    modifs: [r(
+      'supabase/functions/_shared/renewal-notice-text.ts',
+      '<p style="margin:0 0 8px">${escapeHtml(l)}</p>',
+      '<p style="margin:0 0 8px">${l}</p>',
+    )],
+    attendu: ['aucune balise du nom n arrive dans le HTML, le texte reste lisible'],
+    pourquoi:
+      'Un admin glisserait un lien dans le nom de l organisation, reçu par le propriétaire dans '
+      + 'un courriel signé par notre domaine (SV-5).',
+  },
+  {
+    id: 'webhook-stripe-secret-muet',
+    famille: 'produit',
+    garde: 'src/edge-audit-serveur.guard.test.ts',
+    modifs: [r(
+      'supabase/functions/stripe-webhook/index.ts',
+      "const WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET')",
+      "const WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? ''",
+    )],
+    attendu: ['503 et alerte avant la vérification de signature'],
+    pourquoi:
+      'Sans secret, chaque event repartirait en 400 comme une requête forgée : aucune alerte, '
+      + 'et des paiements jamais appliqués (SV-6).',
   },
 
   // ═════════════════════════════════════════════════════════════════
