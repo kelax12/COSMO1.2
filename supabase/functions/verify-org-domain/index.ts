@@ -19,6 +19,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { txtMatches } from '../_shared/org-integrations.ts'
+import { membershipIsActive } from '../_shared/org-membership.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
 const ALLOWED_ORIGINS = new Set([APP_URL, 'http://localhost:5173', 'http://localhost:3000'])
@@ -72,13 +73,14 @@ Deno.serve(async (req) => {
 
   const { data: membership, error: memberError } = await admin
     .from('organization_members')
-    .select('role, suspended_at')
+    .select('role, suspended_at, access_expires_at')
     .eq('org_id', row.org_id)
     .eq('user_id', caller.id)
     .maybeSingle()
   if (memberError) return json({ error: 'lookup_failed' }, 503, req)
+  // SV-1 : un admin dont l'accès a expiré n'est plus admin (mig. 161).
   // Même réponse qu'une ligne absente : pas d'oracle sur les domaines d'autrui.
-  if (!membership || membership.suspended_at || membership.role !== 'admin') return json({ error: 'not_found' }, 404, req)
+  if (!membership || !membershipIsActive(membership, Date.now()) || membership.role !== 'admin') return json({ error: 'not_found' }, 404, req)
   if (row.verified_at) return json({ verified: true }, 200, req)
 
   let records: string[][] = []

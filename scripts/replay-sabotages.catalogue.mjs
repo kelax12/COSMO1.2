@@ -1511,6 +1511,52 @@ export const CATALOGUE = [
   },
 
   // ═════════════════════════════════════════════════════════════════
+  // AUDIT SERVEUR DU 2026-10-24 (SV-1, SV-5, SV-6)
+  // ═════════════════════════════════════════════════════════════════
+  {
+    id: 'membre-expire-actif',
+    famille: 'produit',
+    garde: 'src/edge-audit-serveur.guard.test.ts',
+    modifs: [r(
+      'supabase/functions/_shared/org-membership.ts',
+      '  if (m.access_expires_at === null) return true\n',
+      '  return true\n',
+    )],
+    attendu: ['membershipIsActive suit `is_org_member` (mig. 161) : suspendu ou expiré = inactif'],
+    pourquoi:
+      'Un admin dont l accès a expiré enverrait encore des invitations au nom de l organisation '
+      + 'et vérifierait ses domaines (SV-1).',
+  },
+  {
+    id: 'avis-l215-html-brut',
+    famille: 'produit',
+    garde: 'src/edge-audit-serveur.guard.test.ts',
+    modifs: [r(
+      'supabase/functions/_shared/renewal-notice-text.ts',
+      '<p style="margin:0 0 8px">${escapeHtml(l)}</p>',
+      '<p style="margin:0 0 8px">${l}</p>',
+    )],
+    attendu: ['aucune balise du nom n arrive dans le HTML, le texte reste lisible'],
+    pourquoi:
+      'Un admin glisserait un lien dans le nom de l organisation, reçu par le propriétaire dans '
+      + 'un courriel signé par notre domaine (SV-5).',
+  },
+  {
+    id: 'webhook-stripe-secret-muet',
+    famille: 'produit',
+    garde: 'src/edge-audit-serveur.guard.test.ts',
+    modifs: [r(
+      'supabase/functions/stripe-webhook/index.ts',
+      "const WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET')",
+      "const WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? ''",
+    )],
+    attendu: ['503 et alerte avant la vérification de signature'],
+    pourquoi:
+      'Sans secret, chaque event repartirait en 400 comme une requête forgée : aucune alerte, '
+      + 'et des paiements jamais appliqués (SV-6).',
+  },
+
+  // ═════════════════════════════════════════════════════════════════
   // SIGNAUX SEO (SEO.md AM-4, ACQUISITION-BACKLINKS.md AM-1 et AM-2)
   // ═════════════════════════════════════════════════════════════════
   {
