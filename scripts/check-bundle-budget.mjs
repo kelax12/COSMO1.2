@@ -200,7 +200,11 @@ const PLAFONDS_PAR_CHUNK = {
   // Relevé de nouveau sur arbitrage d'Axel le 2026-10-22 : section 7 ter « Prospection » (RGPD art. 14,
   // `899f707f`) et identification du responsable (art. 13.1.a, `e2e7679f`).
   legalPrivacy: 13_000, // ≈ 12 760 o sur 2 chunks le 2026-10-22 ; 12 200 du 2026-10-13 au 10-22, 9 900 avant
-  legalTerms: 10_300, // 9 824 o sur 2 chunks (4 693 + 5 131) — chargé par la seule page CGU ; 9 700 jusqu'au 2026-10-13
+  // 11 000 depuis le 2026-10-25, décision d'Axel : l'article 12 bis (médiation de la consommation,
+  // texte imposé par la Société Médiation Professionnelle, Conso. L616-1) porte le catalogue à
+  // 10,8 ko. Le contenu est un TEXTE LÉGAL OBLIGATOIRE, pas du code à alléger ; chargé par la seule
+  // page CGU. 10 300 du 2026-10-13 au 10-25, 9 700 avant.
+  legalTerms: 11_000,
   OKRPage: 15_000, // 14 192 o
   'vendor-router': 14_500, // 13 729 o
   TeamTaskModal: 12_000, // 11 437 o (2026-10-01 : commentaires et arbre de catégories chargés à la demande)
