@@ -357,6 +357,72 @@ export const CATALOGUE = [
       + 'mig. 094b) : un détecteur qui le compte déclarerait fermées des fonctions ouvertes.',
   },
 
+  // ── validate:migrations · la checklist AM-4, règles 6 à 16 (cliquet 227) ──
+  {
+    id: 'migration-table-sans-rls',
+    famille: 'produit',
+    garde: { commande: 'scripts/validate-migrations.mjs' },
+    modifs: [c(
+      'supabase/migration/999_sabotage_sans_rls.sql',
+      'CREATE TABLE IF NOT EXISTS public.sabotage_sans_rls (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid()\n);\n',
+    )],
+    raison: /table sabotage_sans_rls creee sans ENABLE ROW LEVEL SECURITY/,
+    pourquoi:
+      'Une table neuve sans RLS est lisible et écrivable par tout rôle qui a le GRANT par '
+      + 'défaut du schéma public : la frontière de sécurité du dépôt, c est la RLS.',
+  },
+  ...[
+    ['search-path', String.raw`if (fn.definer && !/\bSET\s+search_path\s*(?:=|TO)\s*''/i.test(fn.header)) {`, 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur une fonction SECURITY DEFINER sans SET search_path',
+      'Une fonction DEFINER au search_path mutable laisse l appelant substituer ses propres objets à ceux du schéma.'],
+    ['revoke-public', 'if (!fnRevokedPublic.has(key)) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur un GRANT EXECUTE sans REVOKE FROM PUBLIC, anon',
+      'Un GRANT EXECUTE sans REVOKE préalable laisse la fonction ouverte à PUBLIC, donc à tout rôle.'],
+    ['revoke-anon', 'if (!fnRevokedAnon.has(key)) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE si seul PUBLIC est révoqué (anon garde le GRANT par défaut)',
+      'REVOKE FROM PUBLIC ne retire pas le GRANT nommé à anon posé par défaut (leçon de la mig. 094b).'],
+    ['or-replace', 'if (!fn.orReplace) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur un CREATE FUNCTION sans OR REPLACE',
+      'Une migration non rejouable échoue sur une base où la fonction existe déjà : la prod en a.'],
+    ['drop-policy', 'if (!drops.some(', 'if (false && !drops.some(',
+      'TÉMOIN : ÉCHOUE sur un CREATE POLICY sans DROP POLICY IF EXISTS préalable',
+      'La prod a déjà des policies appliquées : un CREATE POLICY sans DROP préalable casse le rejeu.'],
+    ['with-check', "if (p.cmd === 'UPDATE' &&", 'if (false &&',
+      'TÉMOIN : ÉCHOUE sur une policy FOR UPDATE sans WITH CHECK',
+      'Sans WITH CHECK, la ligne modifiée n est pas re-vérifiée : faille N1, un UPDATE déplace une ligne hors de son propriétaire.'],
+    ['rls', 'if (rlsActive.get(table) !== true) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur une table sans ENABLE ROW LEVEL SECURITY',
+      'Un détecteur de RLS aveugle laisse passer une table ouverte à tout rôle qui a le GRANT par défaut.'],
+    ['prevent-user-id', 'if (!tablesPreventUid.has(table)) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur une table à user_id sans trigger prevent_user_id_change',
+      'Sans prevent_user_id_change, un UPDATE peut transférer une ligne à un autre compte (mass-assignment V1).'],
+    ['auto-reference', 'corps.matchAll(autoRef)', '[]',
+      'TÉMOIN : ÉCHOUE sur une auto-référence ON DELETE CASCADE ou RESTRICT',
+      'RESTRICT sur une auto-référence rendait la suppression de compte impossible (RGPD art. 17).'],
+    ['trigger-definer', 'if (fn.trigger && fn.definer &&', 'if (false &&',
+      'TÉMOIN : ÉCHOUE sur une fonction de trigger SECURITY DEFINER, quel que soit son nom',
+      'Un trigger BEFORE en DEFINER s exécute avant le WITH CHECK : ses erreurs deviennent un oracle (B-3).'],
+    ['journal-policy', 'if (INALTERABLES[p.table]?.cmds.includes(p.cmd)) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur une policy UPDATE ou DELETE du journal fiscal',
+      'Le journal fiscal est inaltérable (mig. 125) : une policy de réécriture en ferait un registre modifiable.'],
+    ['journal-purge', 'if (ecrit.test(sql) || desarme.test(sql) || droit.test(sql)) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur une purge du journal fiscal ou des preuves de renouvellement',
+      'Purger payment_records ou renewal_notices détruit une preuve exigible (mig. 125, L215-1).'],
+    ['admin-allowlisted', String.raw`/\badmin_allowlisted\s*\(/i.test(p.body)`, 'false',
+      'TÉMOIN : ÉCHOUE sur une policy gardée par admin_allowlisted()',
+      'admin_allowlisted() ignore le niveau d assurance de la session : la garde admin est is_admin() (mig. 131).'],
+    ['sanitize', 'if (/raw_user_meta_data/i.test(fn.body)', 'if (false && /raw_user_meta_data/i.test(fn.body)',
+      'TÉMOIN : ÉCHOUE sur raw_user_meta_data recopié sans sanitize_display_name()',
+      'raw_user_meta_data est contrôlé par l utilisateur : recopié sans sanitize_display_name(), il porte la faille M-2.'],
+  ].map(([id, chercher, remplacer, attendu, pourquoi]) => ({
+    id: `migration-detecteur-${id}`,
+    famille: 'detecteur',
+    garde: 'scripts/migration-guards.test.mjs',
+    modifs: [r('scripts/validate-migrations.mjs', chercher, remplacer)],
+    attendu: [attendu],
+    pourquoi,
+  })),
+
   // ═════════════════════════════════════════════════════════════════
   // RGPD — effacement, portabilité, conservation
   // ═════════════════════════════════════════════════════════════════
@@ -482,6 +548,36 @@ export const CATALOGUE = [
     pourquoi:
       'Un balayage qui ne trouve plus rien rend toutes les gardes d`architecture vertes '
       + 'en ne regardant rien : le défaut trouvé par mutation le 2026-09-04.',
+  },
+  {
+    id: 'mail-mx-absent-accepte',
+    famille: 'detecteur',
+    garde: 'scripts/check-mail-reception.guard.test.mjs',
+    modifs: [r('scripts/check-mail-reception.mjs', '  if (hotes.length === 0) {', '  if (false) {')],
+    attendu: ['TÉMOIN : un domaine sans MX fait échouer'],
+    pourquoi:
+      'M-53 : `contact@thecosmo.app` est publiée dans les mentions légales. Un domaine '
+      + 'dont les MX ont disparu ne reçoit plus rien, et la garde le dirait « en état ».',
+  },
+  {
+    id: 'mail-rcpt-pousse-jusqu-a-data',
+    famille: 'detecteur',
+    garde: 'scripts/check-mail-reception.guard.test.mjs',
+    modifs: [r('scripts/check-mail-reception.mjs', "      // etape 3 : la réponse à RCPT TO. On s'arrête ICI, jamais de DATA.\n      envoyer('QUIT');", "      // etape 3 : la réponse à RCPT TO. On s'arrête ICI, jamais de DATA.\n      envoyer('DATA');\n      envoyer('QUIT');")],
+    attendu: ['TÉMOIN : une adresse acceptée rend « recoit », et AUCUN DATA n est envoyé'],
+    pourquoi:
+      'Une sonde de réception qui pousse jusqu`à `DATA` ENVOIE un message à chaque passage : '
+      + 'la garde deviendrait une source de courrier dans la boîte qu`elle vérifie.',
+  },
+  {
+    id: 'mail-balayage-aveugle',
+    famille: 'detecteur',
+    garde: 'scripts/check-mail-reception.guard.test.mjs',
+    modifs: [r('scripts/check-mail-reception.mjs', "  'src/locales',\n  'src/pages',\n  'src/components',\n  'src/lib/contact.mjs',\n  'index.html',", "  'src/nexistepas',")],
+    attendu: ['TÉMOIN : le balayage du dépôt voit contact@thecosmo.app et l adresse du JSON-LD'],
+    pourquoi:
+      'Un balayage qui ne voit plus les surfaces publiées ne vérifie plus aucune adresse : '
+      + 'la réception serait déclarée saine sur zéro adresse mesurée.',
   },
   {
     id: 'bundle-sans-dist',
@@ -851,6 +947,42 @@ export const CATALOGUE = [
       'Un catalogue mal formé est un rejeu qui ne sait plus ce qu`il prouve.'],
   ].map(([id, famille, modif, attendu, pourquoi]) => ({
     id, famille, garde: 'scripts/gardes-posture.guard.test.mjs', modifs: [modif], attendu: [attendu], pourquoi,
+  })),
+
+  // ═════════════════════════════════════════════════════════════════
+  // LES ERREURS DE PRODUCTION (OBSERVABILITE AM-1 à AM-3)
+  // (`check-prod-errors.guard.test.mjs` : Sentry, Vercel, Supabase)
+  // ═════════════════════════════════════════════════════════════════
+  ...[
+    ['prod-jeton-facultatif', 'detecteur', r('scripts/check-prod-errors.mjs', "  if (!env.VERCEL_TOKEN) manquants.push('VERCEL_TOKEN');", ''),
+      'TEMOIN : chaque jeton absent est NOMMÉ, aucun n est facultatif',
+      'Sans VERCEL_TOKEN, la lecture Vercel planterait en 401 au lieu de dire quel secret manque : le motif « garde conditionnelle à son secret » à un pas.'],
+    ['prod-region-ignoree', 'detecteur', r('scripts/check-prod-errors.mjs', "  const region = hote[2] && hote[2] !== 'us' ? hote[2] : null;", '  const region = null;'),
+      'TEMOIN : le DSN donne la RÉGION, l organisation et le projet',
+      'Le projet Sentry de COSMO est hébergé en `de` : lu sur `sentry.io`, il répondrait 404 chaque matin.'],
+    ['prod-regression-ignoree', 'detecteur', r('scripts/check-prod-errors.mjs', "  { raison: 'regression', query: 'is:unresolved is:regressed lastSeen:-24h' },", ''),
+      'TEMOIN : `lireSentry` lit les DEUX recherches, suit les pages, et refuse une réponse en erreur',
+      'Une régression a un `firstSeen` ancien : un bug corrigé qui revient ne serait jamais vu.'],
+    ['prod-sonde-ignoree', 'detecteur', r('scripts/check-prod-errors.mjs', "  if (sonde && chemin.startsWith('/functions/v1/')) return 'sonde_edge';", ''),
+      'TEMOIN : `classer` range chaque réponse dans SA famille',
+      'Les sondes de `check:edge-smoke` compteraient comme des appels non signés au webhook Stripe : rouge chaque jour, donc ignoré.'],
+    ['prod-fonctions-non-lues', 'detecteur', r('scripts/check-prod-errors.mjs', '  for (const sql of [SQL_SUPABASE.passerelle, SQL_SUPABASE.fonctions]) {', '  for (const sql of [SQL_SUPABASE.passerelle]) {'),
+      'TEMOIN : `lireSupabase` lit les deux sources, sur 24 h, du projet par défaut',
+      '`edge_logs` ne porte AUCUNE requête `/functions/v1/*` : sans `function_edge_logs`, le webhook Stripe serait toujours à zéro.'],
+    ['prod-erreur-sql-lue-vide', 'detecteur', r('scripts/check-prod-errors.mjs', '  if (corps?.error) throw new Error(`Supabase · requête refusée : ${JSON.stringify(corps.error)}`);', ''),
+      'TEMOIN : une erreur SQL rendue dans un 200, ou une réponse tronquée, fait JETER',
+      "L'API rend une erreur SQL dans un 200 : lue comme zéro ligne, une requête qui n'a pas tourné ferait un vert."],
+    ['prod-journal-erreur-ignore', 'detecteur', r('scripts/check-prod-errors.mjs', '    const enErreur = statut >= 500 || (RANG_NIVEAU[pire?.level] ?? 0) >= RANG_NIVEAU.error;', '    const enErreur = statut >= 500;'),
+      'TEMOIN : un 5xx OU un journal `error` est une erreur, un 204 propre non',
+      '`api/collect.ts` répond 204 même quand son écriture échoue : l audience tomberait à zéro sans une seule erreur comptée.'],
+    ['prod-couple-neuf-tolere', 'detecteur', r('scripts/check-prod-errors.mjs', "      } else if (typeof inconnu === 'number' && n > inconnu) {", '      } else if (false) {'),
+      'TEMOIN : une famille, un couple connu ou un couple NOUVEAU au-delà de son plafond rougissent',
+      'Un chemin qui se met à échouer sans figurer dans la référence passerait sous le seul plafond de sa famille.'],
+    ['prod-zero-requete-vert', 'detecteur', r('scripts/check-prod-errors.mjs', '    if (!(m.total_requetes > 0)) {', '    if (false) {'),
+      'TEMOIN : zéro requête lue, ou une référence incomplète, ROUGISSENT au lieu de conclure',
+      'Une source renommée rend zéro ligne : zéro erreur sur zéro requête serait un vert sur rien.'],
+  ].map(([id, famille, modif, attendu, pourquoi]) => ({
+    id, famille, garde: 'scripts/check-prod-errors.guard.test.mjs', modifs: [modif], attendu: [attendu], pourquoi,
   })),
 
   // ═════════════════════════════════════════════════════════════════
@@ -1422,6 +1554,75 @@ export const CATALOGUE = [
     pourquoi:
       'Sans secret, chaque event repartirait en 400 comme une requête forgée : aucune alerte, '
       + 'et des paiements jamais appliqués (SV-6).',
+  },
+
+  // ═════════════════════════════════════════════════════════════════
+  // SIGNAUX SEO (SEO.md AM-4, ACQUISITION-BACKLINKS.md AM-1 et AM-2)
+  // ═════════════════════════════════════════════════════════════════
+  {
+    id: 'seo-lien-tout-hote',
+    famille: 'detecteur',
+    garde: 'scripts/seo-signals.guard.test.mjs',
+    modifs: [r(
+      'scripts/seo-signals.mjs',
+      "    if (!/^https?:$/.test(url.protocol) || !estNotreHote(url.hostname)) continue;",
+      "    if (!/^https?:$/.test(url.protocol)) continue;",
+    )],
+    attendu: [
+      'TÉMOIN : une page sans lien vers thecosmo.app ne compte aucun lien',
+      'TÉMOIN : page disparue, page sans lien, page injoignable, source absente : quatre liens PERDUS',
+    ],
+    pourquoi:
+      'Un lien vers N’IMPORTE QUEL site compté comme un backlink : une fiche dont le lien a été '
+      + 'retiré reste « présente », et AM-1 redevient invisible avec un run vert.',
+  },
+  {
+    id: 'seo-marque-comptee',
+    famille: 'detecteur',
+    garde: 'scripts/seo-signals.guard.test.mjs',
+    modifs: [r('scripts/seo-signals.mjs', '    .filter((r) => r.requete && !MARQUE.test(r.requete))', '    .filter((r) => r.requete)')],
+    attendu: ['TÉMOIN : une requête marque renvoyée par le serveur ne compte pas dans le non-marque'],
+    pourquoi:
+      'Les requêtes « cosmo » dans le non-marque : la série montre un trafic éditorial qui '
+      + 'n’existe pas, le défaut exact de la position 15,5 relevée le 2026-08-19.',
+  },
+  {
+    id: 'seo-domaine-perdu-muet',
+    famille: 'detecteur',
+    garde: 'scripts/seo-signals.guard.test.mjs',
+    modifs: [r('scripts/seo-signals.mjs', '    if (perdus.length) rouges.push(', '    if (false) rouges.push(')],
+    attendu: [
+      'TÉMOIN : un domaine référent présent la semaine passée et absent aujourd hui est rouge',
+      'TÉMOIN : un domaine Bing perdu depuis le point précédent fait rougir le relevé entier',
+    ],
+    pourquoi: 'Un domaine référent disparu sans un mot : `M-55`, le backlink perdu invisible.',
+  },
+  {
+    id: 'seo-sans-cle-vert',
+    famille: 'detecteur',
+    garde: 'scripts/seo-signals.guard.test.mjs',
+    modifs: [r(
+      'scripts/seo-signals.mjs',
+      "  if (!cle || !String(cle).trim()) throw new Error('BING_WEBMASTER_API_KEY absent');",
+      "  if (!cle || !String(cle).trim()) return { source: 'bing-webmaster', liens_entrants: 0, domaines_referents: 0, domaines: [], tronque: false };",
+    )],
+    attendu: [
+      'TÉMOIN : sans clé Bing, la mesure échoue au lieu de rendre 0 domaine',
+      'TÉMOIN : sans aucun secret, le relevé est ROUGE, deux fois, et ne touche ni Google ni Bing',
+    ],
+    pourquoi:
+      'Une clé absente qui rend « 0 domaine référent » : la mesure la plus rassurante possible '
+      + 'pour un domaine neuf, et elle serait fausse.',
+  },
+  {
+    id: 'seo-alerte-debranchee',
+    famille: 'produit',
+    garde: 'scripts/seo-signals.guard.test.mjs',
+    modifs: [r('.github/workflows/ci-alert.yml', '      - Signaux SEO\n', '')],
+    attendu: ['est écouté par ci-alert.yml sous son nom exact'],
+    pourquoi:
+      'Un relevé hebdomadaire sans déclencheur humain dont le rouge ne part sur aucun webhook : '
+      + 'un backlink perdu redevient une page que personne n’ouvre.',
   },
 
   // ═════════════════════════════════════════════════════════════════

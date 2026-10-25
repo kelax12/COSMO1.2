@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   tierForMemberCount,
   effectiveQuota,
@@ -35,6 +35,28 @@ describe('tierForMemberCount', () => {
 
   it('au-delà du dernier plafond → palier sans limite', () => {
     expect(tierForMemberCount(500).key).toBe('tmax');
+  });
+
+  it('grille sans palier illimité : au-delà du dernier plafond → le plus grand palier, jamais undefined', async () => {
+    // La vraie grille finit par `maxMembers: null`, donc ce repli ne sert pas
+    // aujourd'hui. Il est là pour le jour où elle changerait : sans lui, un
+    // effectif hors grille rendrait `undefined` et l'écran de facturation lèverait.
+    vi.resetModules();
+    vi.doMock('./premium-config', async (importOriginal) => ({
+      ...(await importOriginal<typeof import('./premium-config')>()),
+      ENTERPRISE_PRICING_TIERS: [
+        { key: 'free', minMembers: 0, maxMembers: 5, priceEurPerMonth: 0 },
+        { key: 't10', minMembers: 5, maxMembers: 10, priceEurPerMonth: 20 },
+      ],
+    }));
+    try {
+      const logic = await import('./org-billing.logic');
+      expect(logic.tierForMemberCount(11).key).toBe('t10');
+      expect(logic.tierForMemberCount(10).key).toBe('t10');
+    } finally {
+      vi.doUnmock('./premium-config');
+      vi.resetModules();
+    }
   });
 });
 

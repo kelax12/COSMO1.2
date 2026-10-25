@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.22.0"
   },
   "type": "module",
   "scripts": {
@@ -17,6 +17,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:mutation": "stryker run",
     "validate:migrations": "node scripts/validate-migrations.mjs",
     "check:rls": "node scripts/check-rls-advisors.mjs",
     "check:drift": "node scripts/check-prod-drift.mjs",
@@ -57,6 +58,7 @@
     "check:edge-smoke": "node scripts/check-edge-smoke.mjs",
     "check:secrets-age": "node scripts/check-secrets-age.mjs",
     "check:supabase-posture": "node scripts/check-supabase-posture.mjs",
+    "check:prod-errors": "node scripts/check-prod-errors.mjs",
     "check:retention": "node scripts/check-retention.mjs",
     "check:subprocessors": "node scripts/check-subprocessors.mjs",
     "check:db-cost": "node scripts/check-db-cost.mjs",
@@ -64,7 +66,10 @@
     "i18n:pages": "node scripts/check-i18n-pages.mjs",
     "check:keyboard-coverage": "vitest run src/keyboard-audit-coverage.guard.test.ts",
     "check:acquisition": "node scripts/check-acquisition.mjs",
-    "check:docs-scored": "node scripts/check-docs-scored.mjs"
+    "check:docs-scored": "node scripts/check-docs-scored.mjs",
+    "check:lecteurs-ecran": "node scripts/check-lecteurs-ecran.mjs",
+    "check:exercice-violation": "node scripts/check-exercice-violation.mjs",
+    "check:peremption-chantiers": "node scripts/check-peremption-chantiers.mjs"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.10",
@@ -100,10 +105,10 @@
     "jspdf": "^4.2.1",
     "lucide-react": "^0.563.0",
     "ogl": "^1.0.11",
-    "react": "^18.3.1",
+    "react": "^19.3.1",
     "react-day-picker": "^9.14.0",
-    "react-dom": "^18.3.1",
-    "react-router": "^7.18.2",
+    "react-dom": "^19.3.1",
+    "react-router": "^8.5.0",
     "recharts": "^3.8.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
@@ -113,11 +118,13 @@
     "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^9.9.1",
     "@playwright/test": "^1.64.1",
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/vitest-runner": "^10.1.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^20.19.43",
-    "@types/react": "^18.3.5",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "^4.1.12",
     "autoprefixer": "^10.6.1",
