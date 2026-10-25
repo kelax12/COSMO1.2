@@ -110,7 +110,13 @@ mkdirSync(join(ROOT, 'scripts', 'landing-hero'), { recursive: true });
 for (const { track, locale, path, mobile } of PAGES) {
   for (const vue of mobile ? ['bureau', 'mobile'] : ['bureau']) {
     const { width, height, suffixe } = VUES[vue];
-    const ctx = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce' });
+    // `locale` explicite : sans elle Playwright parle `en-US`, et `/` sert la
+    // landing anglaise à la capture `perso-fr` (relevé le 2026-10-23).
+    const ctx = await browser.newContext({
+      viewport: { width, height },
+      reducedMotion: 'reduce',
+      locale: locale === 'fr' ? 'fr-FR' : 'en-US',
+    });
     const page = await ctx.newPage();
     await page.goto(BASE + path);
     await page.waitForSelector('main h1');

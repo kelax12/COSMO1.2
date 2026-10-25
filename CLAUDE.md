@@ -135,9 +135,9 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 
 | Couche | Technologie |
 |---|---|
-| Framework | React 18 + TypeScript 5.5 (strict) |
+| Framework | React 19 + TypeScript 5.5 (strict) |
 | Build | Vite 7 (+ prérendu `prerender.mjs` dans `npm run build`) |
-| Routing | React Router 7 (imports depuis `react-router`) |
+| Routing | React Router 8 (imports depuis `react-router`) |
 | State serveur | TanStack React Query 5 |
 | Backend / Auth | Supabase 2 |
 | UI | shadcn/ui (Radix UI + Tailwind CSS 3) |
