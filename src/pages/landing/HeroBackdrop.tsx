@@ -15,9 +15,9 @@ import React from 'react';
 
 interface Props {
   /** Couche lente : la grille. */
-  gridRef: React.RefObject<HTMLDivElement>;
+  gridRef: React.RefObject<HTMLDivElement | null>;
   /** Couche moyenne : halo et aurores. */
-  auroraRef: React.RefObject<HTMLDivElement>;
+  auroraRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const HeroBackdrop: React.FC<Props> = ({ gridRef, auroraRef }) => (

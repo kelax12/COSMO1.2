@@ -171,12 +171,14 @@ calendrier, deux façons de l'ouvrir, dont les entrées de menu qui n'ont aucun 
 - ❌ **Ne jamais oublier `minDate` sur un report d'échéance** : sans lui on peut reporter une tâche
   en retard **vers hier**.
 
-### ⌨️ `Button` est un `forwardRef`, et le projet est sur React 18
+### ⌨️ `Button` reçoit un `ref`, et ce ref doit être attaché
 
-L'avertissement « Function components cannot be given refs » n'était pas du bruit : la source
-shadcn amont est écrite pour **React 19**, où `ref` est une prop ordinaire. Ici elle ne l'est pas,
-le `ref` n'était donc **jamais attaché**, et le `ref.current?.focus()` de `CalendarDayButton` ne
-faisait rien : **les flèches ne déplaçaient pas le focus dans le calendrier** (WCAG 2.1.1).
+Depuis React 19 (2026-10-23), `ref` est une prop ordinaire : `Button`, `Input` et `DialogOverlay`
+n'ont plus de `forwardRef`, comme la source shadcn amont. Sous React 18 il en fallait un, et
+l'avertissement « Function components cannot be given refs » n'était pas du bruit : le `ref`
+n'était **jamais attaché**, et le `ref.current?.focus()` de `CalendarDayButton` ne faisait rien :
+**les flèches ne déplaçaient pas le focus dans le calendrier** (WCAG 2.1.1). Témoin :
+`ui/button.test.tsx`.
 
 - ❌ **Ne jamais recopier un composant shadcn amont sans vérifier sa cible React.** C'est la classe
   de bug, pas le cas particulier.

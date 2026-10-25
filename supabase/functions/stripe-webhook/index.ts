@@ -14,10 +14,24 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
 )
 
+/**
+ * 🔴 SV-6 (audit serveur du 2026-10-24) : le secret était lu `?? ''`. Absent,
+ * chaque event Stripe repartait en 400 « Invalid signature », exactement comme
+ * une requête forgée : aucune alerte, Stripe qui retente puis désactive
+ * l'endpoint, et des paiements jamais appliqués ni journalisés. On refuse
+ * FERMÉ (rien n'est traité sans signature vérifiable) et BRUYANT.
+ */
+const WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET')
+
 Deno.serve(async (req) => {
   // L-13 — Stripe only POSTs; reject other methods early without parsing.
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
+  }
+
+  if (!WEBHOOK_SECRET) {
+    await opsAlert('stripe-webhook', 'STRIPE_WEBHOOK_SECRET absent : aucun event Stripe ne peut etre verifie ni traite, Stripe va retenter')
+    return new Response('Webhook not configured', { status: 503 })
   }
 
   const signature = req.headers.get('stripe-signature')
@@ -29,7 +43,7 @@ Deno.serve(async (req) => {
     event = await stripe.webhooks.constructEventAsync(
       body,
       signature ?? '',
-      Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '',
+      WEBHOOK_SECRET,
     )
   } catch (err) {
     // Log the full error server-side, but never echo it back to anonymous
