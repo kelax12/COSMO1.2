@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-// Non-régression : DialogOverlay doit accepter un ref (React.forwardRef).
-// Sans forwardRef, Radix Primitive.div.SlotClone passait un ref à une fonction
-// component → warning React "Function components cannot be given refs".
+// Non-régression : DialogOverlay doit accepter un ref. Radix
+// (Primitive.div.SlotClone) lui en passe un. Sous React 18 il fallait un
+// `forwardRef`, sinon warning « Function components cannot be given refs » ;
+// depuis React 19 (2026-10-23) `ref` est une prop ordinaire.
 import * as React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
@@ -9,7 +10,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { DialogOverlay } from './dialog';
 
 describe('DialogOverlay', () => {
-  it('exposes a displayName (forwardRef registered)', () => {
+  it('exposes a displayName', () => {
     // DialogPrimitive.Overlay.displayName is the source of truth.
     expect(DialogOverlay.displayName).toBe(DialogPrimitive.Overlay.displayName);
   });

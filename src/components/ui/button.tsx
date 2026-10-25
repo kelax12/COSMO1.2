@@ -57,27 +57,24 @@ type ButtonProps = React.ComponentProps<"button"> &
 // (vérifié : les seuls <Button> non typés d'un fichier contenant un <form>
 // sont hors de ce <form>). `type` reste surchargeable via les props.
 //
-// `forwardRef` OBLIGATOIRE tant que le projet est sur React 18.
+// `ref` est une prop ordinaire depuis React 19 (migration du 2026-10-23) : la
+// signature reprend celle de la source shadcn amont, sans `forwardRef`.
 //
-// La source shadcn amont est écrite pour React 19, où `ref` est une prop
-// ordinaire d'un composant fonction. En 18 il ne l'est pas : React émettait
-// « Function components cannot be given refs » et — c'est le vrai coût — le
-// ref n'était JAMAIS attaché. `CalendarDayButton` (ui/calendar.tsx) s'en sert
-// pour poser le focus sur le jour survolé au clavier : son
-// `ref.current?.focus()` ne faisait donc rien, et la navigation clavier dans
-// le calendrier ne déplaçait pas le focus. L'avertissement n'était pas du
-// bruit, c'était le symptôme.
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  {
-    className,
-    variant = "default",
-    size = "default",
-    asChild = false,
-    type = "button",
-    ...props
-  },
-  ref
-) {
+// Pourquoi ça compte ici : sous React 18, ce composant DEVAIT être un
+// `forwardRef`, sinon React émettait « Function components cannot be given
+// refs » et le ref n'était JAMAIS attaché. `CalendarDayButton`
+// (ui/calendar.tsx) s'en sert pour poser le focus sur le jour survolé au
+// clavier : sans ref, les flèches ne déplaçaient pas le focus dans le
+// calendrier. Témoin : `button.test.tsx` et `e2e/demo-calendar.spec.ts`.
+function Button({
+  className,
+  variant = "default",
+  size = "default",
+  asChild = false,
+  type = "button",
+  ref,
+  ...props
+}: ButtonProps) {
   const Comp = asChild ? Slot : "button"
 
   return (
@@ -94,7 +91,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       {...props}
     />
   )
-})
+}
 
 export { Button, buttonVariants }
 export type { ButtonProps }

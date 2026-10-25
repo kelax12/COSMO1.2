@@ -4,7 +4,7 @@ import type { PanInfo, MotionValue } from 'framer-motion';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 
 export interface BottomSheetHook {
-  sheetRef: React.RefObject<HTMLDivElement>;
+  sheetRef: React.RefObject<HTMLDivElement | null>;
   backdropOpacity: MotionValue<number>;
   handleBarWidth: MotionValue<number>;
   sheetDragProps: Record<string, unknown>;
