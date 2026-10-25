@@ -65,6 +65,7 @@ export const SECRETS_PROD = {
   STRIPE_SECRET_KEY: 'clients Stripe : noms, adresses email',
   CRON_SECRET: 'déclenche des Edge Functions qui lisent la production',
   VERCEL_TOKEN: 'configuration et journaux du déploiement de production',
+  SENTRY_AUTH_TOKEN: 'lit les issues Sentry de production : titres d erreurs et événements',
 };
 
 /** Secrets lus par les workflows SANS ouvrir de donnée personnelle. */
@@ -78,6 +79,9 @@ export const SECRETS_SANS_DONNEE = {
   VERCEL_TEAM_ID: 'identifiant, pas un accès',
   SECRETS_AUDIT_TOKEN: 'PAT en lecture seule des secrets Actions : noms et dates, jamais une valeur',
   GITHUB_TOKEN: 'jeton du run, borné par `permissions:`',
+  GSC_SERVICE_ACCOUNT_JSON:
+    'Search Console en lecture seule : requêtes agrégées et anonymisées par Google, aucune donnée de compte COSMO',
+  BING_WEBMASTER_API_KEY: 'Bing Webmaster en lecture : liens entrants publics, aucune donnée de compte COSMO',
 };
 
 // ─── 2 · Listes nominatives ─────────────────────────────────────────
@@ -116,9 +120,17 @@ export const ARTEFACTS = {
     requete: INTROSPECTION_SQL,
     produitPar: 'check-migration-coverage.mjs --print-sql',
   },
+  'mutation.yml › mutation-report': {
+    nature: 'sans-prod',
+    raison: 'rapport Stryker : source du dépôt (déjà public), mutants et noms de tests unitaires, aucun secret ni base',
+  },
   'scalability-volume.yml › scalability-volume-log': {
     nature: 'sans-prod',
     raison: 'stack Supabase LOCALE (`supabase start`) remplie de données synthétiques',
+  },
+  'seo-signals.yml › seo-signals-log': {
+    nature: 'sans-prod',
+    raison: 'agrégats Search Console, pages sources des backlinks et domaines référents publics ; aucun secret de production',
   },
   'visual.yml › visual-report': {
     nature: 'sans-prod',
@@ -203,6 +215,10 @@ export const CONTACTS_PROD = {
   },
   'org-digest.yml › send › Envoyer les notifications par e-mail': {
     affiche: 'code HTTP et réponse `{mode, recipients, sent, failed}` : compteurs',
+  },
+  'prod-errors.yml › erreurs › Sentry, Vercel et Supabase sur 24 h': {
+    affiche:
+      "comptes d'erreurs par couple chemin+statut, familles de la passerelle, et titres des issues Sentry nouvelles (messages d'erreur déjà purgés d'emails et d'UUID par beforeSend) ; jamais une ligne de table",
   },
   'inactive-accounts.yml › run › Avertir puis effacer les comptes inactifs': {
     affiche: 'code HTTP et réponse `{toWarn, warned, toDelete, deleted, …}` : compteurs, aucun e-mail',

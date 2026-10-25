@@ -58,7 +58,7 @@ réagir à un incident. À lire avant toute mise en prod.
 | AM-4 | **L'état réel de Turnstile n'est écrit nulle part de vérifiable.** Le code existe (`TurnstileWidget.tsx`, `AuthForm.tsx`) ; son activation dépend d'une variable posée **hors du dépôt**. Ce document le dit « inerte au 2026-08-28 », et rien ne dirait qu'il a changé | 3 fichiers sources le référencent, 0 garde | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:env` (`C-105`) — 🔴 ne prouve PAS : rien de plus qu'AM-3 : même garde, même réserve |
 | AM-5 | **`uptime.yml` mesure qu'une page RÉPOND, jamais qu'elle FONCTIONNE.** Un HTTP 200 sur une coquille SPA vide est vert. C'est le même piège que la garde Lighthouse qui mesurait une 404 (`T-50`, corrigé le 2026-08-29) | `uptime.yml` : `-w '%{http_code}'` sur `/` et `/auth/v1/health` | ✅ **OUTILLÉ le 2026-09-20** · 3 marqueurs **absents de la coquille SPA** + une 2ᵉ page prérendue sondée + le corps de `/auth/v1/health` (`C-104`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé dans l'autre sens** : `uptime.yml` avait un marqueur (`grep -i cosmo`) qui **ne pouvait pas échouer**, la coquille contenant le mot 21 fois |
 | AM-6 | **Le déploiement des Edge Functions est un geste MANUEL.** `check:edge` voit la dérive après coup ; rien ne déploie depuis `main`. Le 2026-10-23, un correctif poussé sur `main` (`c161de2b`, mention 293 B) n'a pas pu être déployé par l'agent : la dérive est ouverte jusqu'au geste suivant | `grep -l "functions deploy" .github/workflows/*` : aucun | 🟠 **OUVERT le 2026-10-23** · session dédiée : déploiement continu des fonctions modifiées après une CI verte, puis `check:edge` |
-| AM-7 | **Les artefacts de CI n'ont aucune durée de rétention.** Le quota du compte (11,5 Go) a été atteint le 2026-10-23 : c'est lui qui a bloqué la sauvegarde T11. Rien ne le borne ni ne le mesure | aucun `retention-days` sur les `upload-artifact` de rapports | 🟠 **OUVERT le 2026-10-23** · session dédiée : `retention-days` partout + garde qui l'exige |
+| AM-7 | **Les artefacts de CI n'ont aucune durée de rétention.** Le quota du compte (11,5 Go) a été atteint le 2026-10-23 : c'est lui qui a bloqué la sauvegarde T11. Rien ne le borne ni ne le mesure | aucun `retention-days` sur les `upload-artifact` de rapports | 🟡 **OUTILLÉ le 2026-10-23** · `scripts/artefacts-retention.guard.test.mjs` (suite outillage) exige un `retention-days` entier de 1 à 30 sur chaque `upload-artifact` / `upload-pages-artifact`. Constat à la pose : les 8 dépôts du dépôt portaient déjà leur durée (7 à 30 jours), donc la garde protège contre une régression, pas un défaut présent. 🔴 Ne prouve PAS le quota : la taille stockée n'est mesurée nulle part ; le plafond de 30 jours est une décision à relire si un artefact doit durer plus |
 
 ---
 
@@ -112,6 +112,13 @@ appliquée). Un objet EN TROP est un simple avertissement (héritage dashboard).
 > était ignoré). Un détecteur jamais lancé ne détecte rien.
 
 ---
+
+### Hook `pre-push` : pas de poussée sur un `main` rouge (2026-10-21)
+
+`.githooks/pre-push` lance `scripts/pre-push-main-red.mjs` : une poussée vers `main` est refusée si
+le dernier run `CI` de `main` est rouge. Il s'installe une fois par clone :
+`git config core.hooksPath .githooks`. Le commit qui RÉPARE `main` passe avec
+`COSMO_PUSH_ON_RED=1 git push`, et seulement lui.
 
 ## 2bis. Déployer les Edge Functions
 

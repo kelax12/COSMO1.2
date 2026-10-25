@@ -37,6 +37,7 @@
 | `check:cycles` | cycles d'imports (`wc -l` n'est pas un proxy de complexité) | `C-103` | `docs/ARCHITECTURE.md` |
 | `check:test-floor` | un test supprimé avec le code qu'il gardait | `C-83` | `docs/TESTING.md` |
 | `check:sabotages` | **rejeu** des témoins : un témoin jamais rejoué ne garde rien | `C-81` | `docs/TESTING.md` |
+| `test:mutation` | **force des assertions** (Stryker) sur le périmètre argent / données, seuil `break` au score mesuré | `AM-3` | `docs/TESTING.md` |
 | `check:tooling-coverage` · `check:edge-coverage` | couverture de l'outillage et des Edge Functions | `C-82` | `docs/TESTING.md` |
 | `check:keyboard-coverage` | surfaces réellement mesurées au clavier | `C-96` | `docs/ACCESSIBILITY.md` |
 | `i18n:check` | parité des clés `fr` ↔ `en` | | `docs/I18N.md` |
@@ -57,9 +58,14 @@
 | `check:secrets-age` | âge des secrets (GitHub, Edge, Vercel) contre `.github/secrets-registry.json` : échu, date inconnue, hors registre, jeton absent | `AM-3` | `docs/SECURITY.md` |
 | `check:docs` | plafonds et pointeurs des `CLAUDE.md` | | ce fichier |
 | `check:docs-scored` | chaque doc de `docs/` déclare son rapport à une note | `C-109` | `docs/README.md` |
+| `check:lecteurs-ecran` | échéance des séances VoiceOver / NVDA, étapes à attendu | `M-52` | `docs/AUDIT-NVDA-WINDOWS.md` |
+| `check:exercice-violation` | exercice 72 h de moins de 12 mois, liens et gabarits | `M-49` | `docs/RGPD-VIOLATION.md` |
+| `check:peremption-chantiers` | chaque chantier daté (relu 90 j, ou clos) | `AM-2` | `docs/POST-AUDIT-GUIDE.md` |
 | `check:study` | une **étude** décrit encore les versions installées | `C-108` | `docs/MIGRATION-REACT19.md` |
 | `check:mail` | SPF / DKIM / DMARC — **pas une gate** | | `docs/DEPLOYMENT.md` |
 | `images:check` | images non optimisées — **pas une gate** | | `docs/PERFORMANCE.md` |
+
+🔒 **Hook `pre-push`** : refuse de pousser sur un `main` rouge → `docs/DEPLOYMENT.md` § 1.
 
 ✅ **Les trois gardes qui attendaient un geste manuel mesurent toutes** (relu le 2026-10-20) :
 `check:supabase-posture` a sa référence d'auth depuis le 2026-10-10 (`C-88`), `check:env` a

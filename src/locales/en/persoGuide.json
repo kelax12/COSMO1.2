@@ -23,8 +23,8 @@
     "openDirect": "Open the screen"
   },
   "empty": {
-    "noHabit": "You need a habit first: start with \"Create a habit\".",
-    "noOkr": "You need an objective first: start with \"Create an objective\"."
+    "noHabit": "You need a habit first: start with “Create a habit”.",
+    "noOkr": "You need an objective first: start with “Create an objective”."
   },
   "actions": {
     "task": {
@@ -89,7 +89,7 @@
         "label": "Create an objective",
         "synonyms": "okr, objective, goal, key result, ambition",
         "b1": "The objective says where you want to go: one clear sentence.",
-        "b2": "The deadline sets when you review it.",
+        "b2": "The due date sets when you review it.",
         "b3": "Key results measure progress: a number to reach, or done / not done."
       },
       "progress": {

@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useLayoutEffect } from 'react';
 import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { Routes, Route, Navigate, useLocation } from 'react-router';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -173,12 +173,26 @@ const LayoutWithSuspense = () => (
   </AppErrorBoundary>
 );
 
+// 2026-10-23 · Relève de la COPIE d'une page de contenu, rendue par ses propres
+// composants au build (src/prerender/content-copy.tsx) et peinte avant React
+// dans le calque `#lp-hero`. Frère de la page DANS la même frontière Suspense :
+// il ne se commite qu'avec elle, donc la copie part dans l'image où la page se
+// peint, sans saut. Sans effet sur une page sans copie (connexion, invitation).
+const ReleveCopie: React.FC = () => {
+  useLayoutEffect(() => {
+    releasePrerenderHero();
+  }, []);
+  return null;
+};
+
 // Page PUBLIQUE : son chunk se charge derrière le spinner de démarrage, rendu
 // par React à l'identique (`BootScreen`) : pas un second spinner différent.
+// Une page de contenu peint sa copie par-dessus jusqu'à ce qu'elle arrive.
 const PublicPageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <AppErrorBoundary>
     <Suspense fallback={<BootScreen />}>
       {children}
+      <ReleveCopie />
     </Suspense>
   </AppErrorBoundary>
 );
