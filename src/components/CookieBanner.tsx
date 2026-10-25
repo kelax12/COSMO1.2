@@ -44,10 +44,16 @@ const CookieBanner: React.FC = () => {
   // l'être, à aucune largeur. Sans geste, rien n'est déposé (`null` n'est pas une
   // acceptation). Pas de `scroll` : un défilement programmatique le déclencherait
   // sans geste (docs/PERFORMANCE.md, section du 2026-10-22).
+  // 🔴 2026-10-25 · Un geste RÉSOLU, jamais son début : `click`, `keydown`,
+  // `wheel`, `touchmove`. Monté au `pointerdown` ou au `touchstart`, le bandeau
+  // glissait sous le doigt AVANT le `click`, qui tombait alors sur lui : le
+  // premier tap sur le CTA de la landing ne menait nulle part (e2e C-97, CPU ×4,
+  // rouge sur trois essais). Un tap émet `click` après coup, un défilement
+  // tactile `touchmove`, sans `click` derrière.
   useEffect(() => {
     const stored = readConsent();
     if (!stored) {
-      const gestes = ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const;
+      const gestes = ['click', 'keydown', 'wheel', 'touchmove'] as const;
       const options: AddEventListenerOptions = { capture: true, passive: true };
       const montrer = () => {
         gestes.forEach((g) => window.removeEventListener(g, montrer, options));
