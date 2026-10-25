@@ -78,3 +78,16 @@ export function shouldRetryQuery(failureCount: number, error: unknown): boolean 
   if (isTimeoutError(error)) return false;
   return !isDefinitiveError(error);
 }
+
+/**
+ * Prédicat `retry` des MUTATIONS (AM-4 de `docs/OBSERVABILITE.md`, 2026-10-23).
+ *
+ * Le `retry: 1` inconditionnel rejouait aussi un refus nommé : un
+ * `events_task_id_fkey` (23503, tâche supprimée entre-temps) revenait 1,3 s
+ * plus tard, identique, et doublait les 409 dans les journaux. Même règle que
+ * pour les lectures, plus un point propre à l'écriture : un dépassement de
+ * délai ne se rejoue pas, l'insertion a pu aboutir et le rejeu la doublerait.
+ */
+export function shouldRetryMutation(failureCount: number, error: unknown): boolean {
+  return shouldRetryQuery(failureCount, error);
+}

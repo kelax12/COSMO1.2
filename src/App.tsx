@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { loadSonner } from '@/lib/toast';
 import { MotionConfig } from 'framer-motion';
 import { installMobileFocusRecovery } from '@/lib/mobileFocus';
-import { shouldRetryQuery } from '@/lib/query-retry';
+import { shouldRetryMutation, shouldRetryQuery } from '@/lib/query-retry';
 import { useLocale } from '@/i18n/store';
 import { routeSlug } from '@/i18n/routes';
 // Extrait de ce fichier vers `@/lib/lazy-with-retry` pour que les onglets de
@@ -140,7 +140,8 @@ const queryClient = new QueryClient({
       networkMode: 'always',
     },
     mutations: {
-      retry: 1,
+      // Une seule reprise, jamais sur un refus nomme (23503, 23505, 42501…).
+      retry: shouldRetryMutation,
       networkMode: 'always',
     },
   },
