@@ -91,7 +91,7 @@
       "keyResult": "Key result",
       "projectStatus": {
         "planned": "Planned",
-        "active": "Active",
+        "active": "In progress",
         "on_hold": "On hold",
         "done": "Done",
         "archived": "Archived"
