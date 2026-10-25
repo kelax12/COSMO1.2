@@ -37,6 +37,7 @@
 | `check:cycles` | cycles d'imports (`wc -l` n'est pas un proxy de complexité) | `C-103` | `docs/ARCHITECTURE.md` |
 | `check:test-floor` | un test supprimé avec le code qu'il gardait | `C-83` | `docs/TESTING.md` |
 | `check:sabotages` | **rejeu** des témoins : un témoin jamais rejoué ne garde rien | `C-81` | `docs/TESTING.md` |
+| `test:mutation` | **force des assertions** (Stryker) sur le périmètre argent / données, seuil `break` au score mesuré | `AM-3` | `docs/TESTING.md` |
 | `check:tooling-coverage` · `check:edge-coverage` | couverture de l'outillage et des Edge Functions | `C-82` | `docs/TESTING.md` |
 | `check:keyboard-coverage` | surfaces réellement mesurées au clavier | `C-96` | `docs/ACCESSIBILITY.md` |
 | `i18n:check` | parité des clés `fr` ↔ `en` | | `docs/I18N.md` |
