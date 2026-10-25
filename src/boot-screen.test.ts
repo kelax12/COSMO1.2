@@ -55,15 +55,24 @@ function runSessionScript(entries: Record<string, string>): boolean {
     documentElement: {
       removeAttribute: (name: string) => { if (name === 'data-prerendered') prerendered = false; },
       setAttribute: (name: string, value: string) => { if (name === 'data-boot-theme') bootTheme = value; },
+      classList: { add: (c: string) => { bootClasses.push(c); } },
     },
   };
   bootTheme = null;
-  new Function('localStorage', 'document', inlineScripts()[0].body)(storage, document);
+  bootClasses = [];
+  const matchMedia = (q: string) => ({ matches: q === '(prefers-color-scheme: dark)' && env.systemDark });
+  new Function('localStorage', 'document', 'innerWidth', 'matchMedia', inlineScripts()[0].body)(
+    storage, document, env.width, matchMedia,
+  );
   return prerendered;
 }
 
 /** Valeur de `data-boot-theme` posée par le DERNIER `runSessionScript`. */
 let bootTheme: string | null = null;
+/** Classes posées sur `<html>` par le DERNIER `runSessionScript`. */
+let bootClasses: string[] = [];
+/** Largeur et thème système vus par le prochain `runSessionScript`. */
+const env = { width: 1440, systemDark: false };
 
 describe('écran de démarrage (index.html)', () => {
   it("n'a qu'UN <script> inline exécutable, et son empreinte est autorisée par la CSP", () => {
@@ -88,8 +97,6 @@ describe('écran de démarrage (index.html)', () => {
   });
 
   it('pose data-boot-theme depuis le thème enregistré, avec les alias de resolveInitialTheme', () => {
-    runSessionScript({});
-    expect(bootTheme).toBeNull();
     for (const t of ['light', 'dark', 'gris', 'noir']) {
       runSessionScript({ theme: t });
       expect(bootTheme).toBe(t);
@@ -98,9 +105,43 @@ describe('écran de démarrage (index.html)', () => {
     expect(bootTheme).toBe('gris');
     runSessionScript({ theme: 'midnight', 'sb-abcd-auth-token': '{}' });
     expect(bootTheme).toBe('gris');
-    // Une valeur inconnue n'est jamais recopiée dans un sélecteur CSS.
+    // Une valeur inconnue n'est jamais recopiée dans un sélecteur CSS : le thème
+    // par défaut la remplace.
     runSessionScript({ theme: 'x"]{}' });
-    expect(bootTheme).toBeNull();
+    expect(bootTheme).toBe('light');
+  });
+
+  it('pose le thème par défaut de defaultTheme() sans thème enregistré, classes comprises (2026-10-23)', () => {
+    // Mêmes classes qu'applyTheme() : la copie du guide lit les variables du thème avant React.
+    const cas: [number, boolean, string, string[]][] = [
+      [1440, false, 'light', []],
+      [1440, true, 'dark', ['dark']],
+      [412, false, 'gris', ['dark', 'gris']],
+      [412, true, 'gris', ['dark', 'gris']],
+    ];
+    for (const [width, systemDark, theme, classes] of cas) {
+      Object.assign(env, { width, systemDark });
+      runSessionScript({});
+      expect(bootTheme).toBe(theme);
+      expect(bootClasses).toEqual(classes);
+    }
+    Object.assign(env, { width: 1440, systemDark: false });
+    runSessionScript({ theme: 'noir' });
+    expect(bootClasses).toEqual(['dark', 'noir']);
+    // Stockage bloqué (navigation privée stricte) : le thème par défaut s'applique quand même.
+    const bloque = {
+      get length(): number { throw new Error('bloqué'); },
+      key: () => { throw new Error('bloqué'); },
+      getItem: () => { throw new Error('bloqué'); },
+    };
+    bootTheme = null;
+    new Function('localStorage', 'document', 'innerWidth', 'matchMedia', inlineScripts()[0].body)(
+      bloque,
+      { documentElement: { removeAttribute: () => {}, setAttribute: (_n: string, v: string) => { bootTheme = v; }, classList: { add: () => {} } } },
+      412,
+      () => ({ matches: false }),
+    );
+    expect(bootTheme).toBe('gris');
     // Et la clé est bien celle de l'app.
     expect(readFileSync(join(ROOT, 'src/lib/theme.ts'), 'utf8')).toContain("export const THEME_STORAGE_KEY = 'theme';");
   });

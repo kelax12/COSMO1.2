@@ -10,6 +10,7 @@ import type { SmartRulePreset, TaskList } from '@/modules/lists';
 import { VIRTUAL_TODAY_ID } from './task-page-filter';
 import { useT } from '@/i18n/useT';
 import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
+import { chipMenuKeyProps } from './useChipLongPress';
 
 interface ColorOption { value: string; color: string; name: string }
 
@@ -20,7 +21,7 @@ interface TaskListsBarProps {
   isMobile: boolean;
   colorOptions: ColorOption[];
   resolveListColor: (color: string) => string;
-  chipLongPressFired: React.MutableRefObject<boolean>;
+  chipLongPressFired: React.RefObject<boolean>;
   selectedListId: string | null;
   setSelectedListId: React.Dispatch<React.SetStateAction<string | null>>;
   hoveredListId: string | null;
@@ -64,6 +65,8 @@ interface TaskListsBarProps {
   handleCreateSmartList: (presetKey: SmartRulePreset) => void;
   startChipLongPress: (listId: string) => void;
   cancelChipLongPress: () => void;
+  /** Chemin clavier du menu d'actions d'une liste (mobile), sans appui long : `chipMenuKeyProps`. */
+  openListActions?: (listId: string) => void;
   /**
    * Ouvre le partage de la liste (bottom-sheet ShareListSheet). Absent = pas
    * de bouton : une liste d'entreprise est déjà partagée par toute l'organisation.
@@ -82,7 +85,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
   createListMutation, deleteListMutation,
   clearListFilter, handleListSelect, startSelectingTasks, confirmAddTasksToList, cancelSelectingTasks,
   startEditList, cancelEditList, submitEditList, handleToggleDefault, handleReorderLists, commitReorderLists,
-  handleCreateSmartList, startChipLongPress, cancelChipLongPress,
+  handleCreateSmartList, startChipLongPress, cancelChipLongPress, openListActions,
   onShareList,
 }) => {
   const { t, tp } = useT('tasks');
@@ -410,6 +413,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 onPointerCancel={cancelChipLongPress}
                                 onPointerLeave={cancelChipLongPress}
                                 onContextMenu={(e) => { if (isMobile) e.preventDefault(); }}
+                                {...chipMenuKeyProps(isMobile ? openListActions : undefined, cancelChipLongPress, list.id)}
                                 // Chip Spotify — MOBILE UNIQUEMENT : pilule pleine
                                 // sans bordure. La pastille de couleur de la liste
                                 // (juste en dessous) reste — seule exception au

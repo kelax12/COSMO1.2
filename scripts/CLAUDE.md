@@ -15,7 +15,7 @@
 > datées vivent dans le doc cité en fin de ligne. ❌ Elle ne dit pas qu'une garde est juste : la
 > section suivante existe précisément parce que quatre d'entre elles répondaient sans mesurer.
 >
-> **Compte, relu dans `package.json` le 2026-10-22** : **35** gardes `check:*` / `i18n:*` /
+> **Compte, relu dans `package.json` le 2026-10-22** : **36** gardes `check:*` / `i18n:*` /
 > `validate:*`, plus trois outils de mesure (`analyze:entry`, `profile:landing`, `images:check`).
 > La racine a écrit « 36 » du 09-21 au 09-30. Un total se recompte, il ne se recopie pas.
 
@@ -37,6 +37,7 @@
 | `check:cycles` | cycles d'imports (`wc -l` n'est pas un proxy de complexité) | `C-103` | `docs/ARCHITECTURE.md` |
 | `check:test-floor` | un test supprimé avec le code qu'il gardait | `C-83` | `docs/TESTING.md` |
 | `check:sabotages` | **rejeu** des témoins : un témoin jamais rejoué ne garde rien | `C-81` | `docs/TESTING.md` |
+| `test:mutation` | **force des assertions** (Stryker) sur le périmètre argent / données, seuil `break` au score mesuré | `AM-3` | `docs/TESTING.md` |
 | `check:tooling-coverage` · `check:edge-coverage` | couverture de l'outillage et des Edge Functions | `C-82` | `docs/TESTING.md` |
 | `check:keyboard-coverage` | surfaces réellement mesurées au clavier | `C-96` | `docs/ACCESSIBILITY.md` |
 | `i18n:check` | parité des clés `fr` ↔ `en` | | `docs/I18N.md` |
@@ -50,14 +51,21 @@
 | `check:legal` | tableau de conformité | | `docs/LEGAL.md` |
 | `check:legal-journal` | une modification des CGU est un **changement de contrat** | `C-107` | `docs/LEGAL-JOURNAL.md` |
 | `check:retention` | durées de conservation confrontées à la **donnée** | `C-93` | `docs/RGPD-REGISTRE.md` |
+| `check:subprocessors` | tiers recevant des données **dérivés** du code (CSP, hôtes, SDK) vs registre art. 30 et `LEGAL.md` § 6 | `AM-3` | `docs/RGPD-REGISTRE.md` |
 | `check:erasure` | couverture d'effacement, sans liste en dur | `C-92` | `docs/RGPD.md` |
 | `check:portability` | export art. 20 comparé à l'inventaire des colonnes | `C-94` | `docs/RGPD.md` |
 | `check:stripe-prices` | grille **Stripe** comparée au code | `C-106` | `docs/STRIPE-LIVE.md` |
+| `check:secrets-age` | âge des secrets (GitHub, Edge, Vercel) contre `.github/secrets-registry.json` : échu, date inconnue, hors registre, jeton absent | `AM-3` | `docs/SECURITY.md` |
 | `check:docs` | plafonds et pointeurs des `CLAUDE.md` | | ce fichier |
 | `check:docs-scored` | chaque doc de `docs/` déclare son rapport à une note | `C-109` | `docs/README.md` |
+| `check:lecteurs-ecran` | échéance des séances VoiceOver / NVDA, étapes à attendu | `M-52` | `docs/AUDIT-NVDA-WINDOWS.md` |
+| `check:exercice-violation` | exercice 72 h de moins de 12 mois, liens et gabarits | `M-49` | `docs/RGPD-VIOLATION.md` |
+| `check:peremption-chantiers` | chaque chantier daté (relu 90 j, ou clos) | `AM-2` | `docs/POST-AUDIT-GUIDE.md` |
 | `check:study` | une **étude** décrit encore les versions installées | `C-108` | `docs/MIGRATION-REACT19.md` |
 | `check:mail` | SPF / DKIM / DMARC — **pas une gate** | | `docs/DEPLOYMENT.md` |
 | `images:check` | images non optimisées — **pas une gate** | | `docs/PERFORMANCE.md` |
+
+🔒 **Hook `pre-push`** : refuse de pousser sur un `main` rouge → `docs/DEPLOYMENT.md` § 1.
 
 ✅ **Les trois gardes qui attendaient un geste manuel mesurent toutes** (relu le 2026-10-20) :
 `check:supabase-posture` a sa référence d'auth depuis le 2026-10-10 (`C-88`), `check:env` a

@@ -13,7 +13,7 @@ export function useExternalTaskDrag({ showTaskSidebar, setShowTaskSidebar, isDra
   setShowTaskSidebar: (v: boolean) => void;
   isDraggingTask: boolean;
   setIsDraggingTask: (v: boolean) => void;
-  sidebarRef: RefObject<HTMLDivElement>;
+  sidebarRef: RefObject<HTMLDivElement | null>;
   categories: Parameters<typeof resolveDraggedTaskEventData>[1];
   events: unknown;
   t: (key: 'event.uncategorized') => string;

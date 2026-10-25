@@ -364,6 +364,178 @@ CREATE POLICY withdrawal_consents_select_owner
   });
 });
 
+// ══════════════════════════════════════════════════════════════════════
+// validate-migrations : la checklist « avant tout commit qui touche
+// supabase/migration/*.sql » devenue des règles (SECURITY.md AM-4)
+//
+// Chaque règle part d'une migration CONFORME (elle doit passer : sans ce
+// premier cas, une règle trop large rougirait sur tout et serait vite
+// contournée), puis d'UN SEUL écart introduit par `saboter()`. Chaque cas
+// `TÉMOIN` a été vu rouge contre le script d'avant ces règles, le 2026-10-24.
+//
+// 🔴 Cliquet à partir de la mig. 227 : la même migration numérotée 226 passe.
+// L'historique n'est pas jugé, il diverge de la prod (cf. check-rls-advisors).
+// ══════════════════════════════════════════════════════════════════════
+describe('validate-migrations : checklist AM-4, cliquet 227', { timeout: 30_000 }, () => {
+  const CONFORME = `
+CREATE TABLE IF NOT EXISTS public.notes (
+  id        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id   uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  parent_id uuid REFERENCES public.notes(id) ON DELETE NO ACTION,
+  titre     text
+);
+ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
+
+DROP TRIGGER IF EXISTS trg_notes_user_id ON public.notes;
+CREATE TRIGGER trg_notes_user_id BEFORE UPDATE ON public.notes
+  FOR EACH ROW EXECUTE FUNCTION public.prevent_user_id_change();
+
+DROP POLICY IF EXISTS "notes_update" ON public.notes;
+CREATE POLICY "notes_update" ON public.notes FOR UPDATE
+  USING (user_id = (select auth.uid()))
+  WITH CHECK (user_id = (select auth.uid()));
+
+CREATE OR REPLACE FUNCTION public.notes_count()
+RETURNS integer
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$ SELECT count(*)::int FROM public.notes WHERE user_id = (select auth.uid()); $$;
+REVOKE EXECUTE ON FUNCTION public.notes_count() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.notes_count() TO authenticated;
+`;
+
+  /** Un seul écart, et la preuve qu'il a bien été introduit. */
+  const saboter = (chercher, remplacer) => {
+    const sql = CONFORME.replace(chercher, remplacer);
+    expect(sql, `le sabotage n a rien remplace : ${chercher}`).not.toBe(CONFORME);
+    return sql;
+  };
+  const rougit = (sql, raison) => {
+    write('227_notes.sql', sql);
+    const { code, out } = run(VALIDATE);
+    expect(out).toMatch(raison);
+    expect(code).toBe(1);
+  };
+
+  it('PASSE sur la migration conforme (aucun faux positif)', () => {
+    write('227_notes.sql', CONFORME);
+    const { code, out } = run(VALIDATE);
+    expect(out).toContain('0 erreur(s)');
+    expect(code).toBe(0);
+  });
+
+  it('TÉMOIN : ÉCHOUE sur une fonction SECURITY DEFINER sans SET search_path', () => {
+    rougit(saboter("SET search_path = ''\n", ''), /notes_count\(\) en SECURITY DEFINER sans SET search_path = ''/);
+  });
+
+  it('TÉMOIN : ÉCHOUE sur un GRANT EXECUTE sans REVOKE FROM PUBLIC, anon', () => {
+    rougit(saboter('REVOKE EXECUTE ON FUNCTION public.notes_count() FROM PUBLIC, anon;\n', ''), /notes_count\(\) jamais REVOKE-ee pour PUBLIC/);
+  });
+
+  it('TÉMOIN : ÉCHOUE si seul PUBLIC est révoqué (anon garde le GRANT par défaut)', () => {
+    rougit(saboter('FROM PUBLIC, anon;', 'FROM PUBLIC;'), /notes_count\(\) jamais REVOKE-ee pour anon/);
+  });
+
+  it('TÉMOIN : ÉCHOUE sur un CREATE FUNCTION sans OR REPLACE', () => {
+    rougit(saboter('CREATE OR REPLACE FUNCTION public.notes_count', 'CREATE FUNCTION public.notes_count'), /notes_count\(\) creee sans OR REPLACE/);
+  });
+
+  it('TÉMOIN : ÉCHOUE sur un CREATE POLICY sans DROP POLICY IF EXISTS préalable', () => {
+    rougit(saboter('DROP POLICY IF EXISTS "notes_update" ON public.notes;\n', ''), /policy "notes_update" sur notes creee sans DROP POLICY IF EXISTS/);
+  });
+
+  it('TÉMOIN : ÉCHOUE sur une policy FOR UPDATE sans WITH CHECK', () => {
+    rougit(saboter('\n  WITH CHECK (user_id = (select auth.uid()))', ''), /policy "notes_update" sur notes : FOR UPDATE sans WITH CHECK/);
+  });
+
+  it('TÉMOIN : ÉCHOUE sur une table sans ENABLE ROW LEVEL SECURITY', () => {
+    rougit(saboter('ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;\n', ''), /table notes creee sans ENABLE ROW LEVEL SECURITY/);
+  });
+
+  it('TÉMOIN : ÉCHOUE sur une table à user_id sans trigger prevent_user_id_change', () => {
+    rougit(saboter('EXECUTE FUNCTION public.prevent_user_id_change()', 'EXECUTE FUNCTION public.touch_updated_at()'), /table notes porte user_id sans trigger prevent_user_id_change/);
+  });
+
+  it('TÉMOIN : ÉCHOUE sur une auto-référence ON DELETE CASCADE ou RESTRICT', () => {
+    rougit(saboter('ON DELETE NO ACTION', 'ON DELETE CASCADE'), /notes\.parent_id reference notes ON DELETE CASCADE/);
+    rougit(saboter('ON DELETE NO ACTION', 'ON DELETE RESTRICT'), /notes\.parent_id reference notes ON DELETE RESTRICT/);
+  });
+
+  it('TÉMOIN : ÉCHOUE sur une fonction de trigger SECURITY DEFINER, quel que soit son nom', () => {
+    rougit(
+      `${CONFORME}
+CREATE OR REPLACE FUNCTION public.notify_notes()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $fn$ BEGIN RETURN NEW; END; $fn$;
+REVOKE ALL ON FUNCTION public.notify_notes() FROM PUBLIC, anon, authenticated;`,
+      /fonction de trigger notify_notes\(\) en SECURITY DEFINER a partir de la mig\. 227/,
+    );
+  });
+
+  it('TÉMOIN : ÉCHOUE sur une policy UPDATE ou DELETE du journal fiscal', () => {
+    rougit(
+      `${CONFORME}
+DROP POLICY IF EXISTS "pr_delete" ON public.payment_records;
+CREATE POLICY "pr_delete" ON public.payment_records FOR DELETE USING (user_id = (select auth.uid()));`,
+      /policy "pr_delete" FOR DELETE sur payment_records/,
+    );
+  });
+
+  it('TÉMOIN : ÉCHOUE sur une purge du journal fiscal ou des preuves de renouvellement', () => {
+    rougit(`${CONFORME}\nDELETE FROM public.payment_closures WHERE true;`, /purge ou reecriture de payment_closures/);
+    rougit(`${CONFORME}\nTRUNCATE public.renewal_notices;`, /purge ou reecriture de renewal_notices/);
+  });
+
+  it('TÉMOIN : ÉCHOUE sur une policy gardée par admin_allowlisted()', () => {
+    rougit(
+      saboter('USING (user_id = (select auth.uid()))', 'USING (public.admin_allowlisted())'),
+      /policy "notes_update" sur notes appelle admin_allowlisted\(\)/,
+    );
+  });
+
+  it('TÉMOIN : ÉCHOUE sur raw_user_meta_data recopié sans sanitize_display_name()', () => {
+    rougit(
+      `${CONFORME}
+CREATE OR REPLACE FUNCTION public.copy_name()
+RETURNS void LANGUAGE plpgsql SECURITY INVOKER SET search_path = ''
+AS $$ BEGIN
+  INSERT INTO public.notes (user_id, titre)
+  SELECT u.id, u.raw_user_meta_data->>'name' FROM auth.users u;
+END; $$;`,
+      /copy_name\(\) recopie raw_user_meta_data sans sanitize_display_name\(\)/,
+    );
+  });
+
+  it('accepte raw_user_meta_data passé par sanitize_display_name()', () => {
+    write(
+      '227_notes.sql',
+      `${CONFORME}
+CREATE OR REPLACE FUNCTION public.copy_name()
+RETURNS void LANGUAGE plpgsql SECURITY INVOKER SET search_path = ''
+AS $$ BEGIN
+  INSERT INTO public.notes (user_id, titre)
+  SELECT u.id, public.sanitize_display_name(u.raw_user_meta_data->>'name') FROM auth.users u;
+END; $$;`,
+    );
+    expect(run(VALIDATE).code).toBe(0);
+  });
+
+  it("ne juge PAS les migrations antérieures au cliquet (226)", () => {
+    write('226_notes.sql', saboter("SET search_path = ''\n", '').replace('ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;\n', ''));
+    expect(run(VALIDATE).code).toBe(0);
+  });
+
+  it('ignore les commentaires : un mot interdit dans un -- ne fait pas rougir', () => {
+    write('227_notes.sql', `${CONFORME}\n-- jamais : DELETE FROM public.payment_records ; SECURITY DEFINER\n`);
+    expect(run(VALIDATE).code).toBe(0);
+  });
+});
+
 // ── Une garde d'arbre ne doit JAMAIS être SECURITY DEFINER (mig. 143) ──
 //
 // Un trigger BEFORE s'exécute avant le WITH CHECK de la RLS : en DEFINER, ses

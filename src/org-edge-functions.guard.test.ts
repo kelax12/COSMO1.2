@@ -87,7 +87,9 @@ describe('verify-org-domain', () => {
   it('l appelant vient du JWT, doit être admin ACTIF, et un domaine d autrui répond comme un absent', () => {
     expect(verify).toContain('asUser.auth.getUser()');
     expect(verify).toMatch(/membership\.role !== 'admin'/);
-    expect(verify).toMatch(/membership\.suspended_at/);
+    // Actif = ni suspendu ni expiré (SV-1, 2026-10-24) : `suspended_at` seul laissait
+    // un admin expiré vérifier les domaines.
+    expect(verify).toMatch(/!membershipIsActive\(membership, Date\.now\(\)\)/);
     expect(verify).toMatch(/pas d'oracle[\s\S]{0,200}not_found/);
   });
 

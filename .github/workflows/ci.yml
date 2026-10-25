@@ -141,6 +141,13 @@ jobs:
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:erasure
 
+      # AM-3 (RGPD-REGISTRE) — les tiers recevant des données sont DÉRIVÉS du
+      # code (CSP, hôtes, SDK) et comparés au registre art. 30 et à LEGAL.md.
+      - name: Sous-traitants (derives du code)
+        id: subprocessors
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:subprocessors
+
       # C-94 — l'export de portabilité (art. 20) confronté au schéma : une
       # colonne ajoutée à une table exportée doit y entrer ou être déclarée
       # exclue. Trois colonnes saisies manquaient à la pose.
@@ -202,6 +209,28 @@ jobs:
         id: docs-scored
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:docs-scored
+
+      # M-52 : une check-list lecteur d'écran sans échéance se reconduit à
+      # l'infini. Rouge quand l'échéance est passée sans séance consignée.
+      - name: Echeances des seances lecteur d ecran
+        id: lecteurs-ecran
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:lecteurs-ecran
+
+      # M-49 : une procedure de violation jamais parcourue est une hypothese.
+      # Rouge si le dernier exercice a plus de 12 mois ou si un lien, une
+      # commande ou un gabarit de la procedure n'existe plus.
+      - name: Exercice de violation RGPD a jour
+        id: exercice-violation
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:exercice-violation
+
+      # POST-AUDIT-GUIDE AM-2 : chaque chantier porte sa date de derniere
+      # relecture (90 jours) ou sa date de cloture.
+      - name: Peremption des chantiers
+        id: peremption-chantiers
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:peremption-chantiers
 
       # C-101 — une liste d'actions manuelles sans colonne d'état ne distingue
       # pas « pas encore tenté » de « tenté sans effet », et les deux appellent
