@@ -23,7 +23,14 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'nod
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { resumerAdvisors, comparerAdvisors, comparerPerformance, PERF_BLOQUANTS, REGLAGES_SURVEILLES } from './check-supabase-posture.mjs';
+import {
+  resumerAdvisors,
+  comparerAdvisors,
+  comparerPerformance,
+  fusionnerReference,
+  PERF_BLOQUANTS,
+  REGLAGES_SURVEILLES,
+} from './check-supabase-posture.mjs';
 import { grilleDuCode, palierDe, rapprocher, prixStripe } from './check-stripe-prices.mjs';
 import { sqlOrphelines, sqlAges, DUREE_DE_VIE_DU_COMPTE, DUREES_BORNEES, PREUVES, libelle } from './check-retention.mjs';
 import { sqlExplain, extraire, pente, REQUETES } from './check-db-cost.mjs';
@@ -104,6 +111,34 @@ describe('témoin — posture Supabase (C-88)', () => {
     expect(
       comparerAdvisors({ a: { niveau: 'WARN', compte: 9 } }, { a: { niveau: 'ERROR', compte: 9 } }).ecarts,
     ).toHaveLength(1);
+  });
+
+  it('TEMOIN (AM-7) : `--update` recale les comptes et CONSERVE les `_note` humaines', () => {
+    // Avant, le recalage réécrivait le fichier en entier : la raison pour
+    // laquelle chaque objet est légitime disparaissait avec le recalage.
+    const ancienne = {
+      _securite_source: ['historique'],
+      securite: {
+        a: { niveau: 'INFO', compte: 11, _note: 'raison relue au catalogue' },
+        disparu: { niveau: 'WARN', compte: 1, _note: 'ira' },
+      },
+      reglages_auth: { x: 1 },
+    };
+    const neuf = fusionnerReference(
+      ancienne,
+      { a: { niveau: 'INFO', compte: 14 }, b: { niveau: 'WARN', compte: 2 } },
+      { x: 2 },
+      '2026-10-24',
+    );
+    expect(neuf.securite.a).toEqual({ niveau: 'INFO', compte: 14, _note: 'raison relue au catalogue' });
+    // Un advisor NOUVEAU naît sans note : elle s'écrit à la main, après relecture.
+    expect(neuf.securite.b).toEqual({ niveau: 'WARN', compte: 2 });
+    expect(neuf.securite.disparu).toBeUndefined();
+    expect(neuf._securite_source).toEqual(['historique']);
+    expect(neuf.reglages_auth).toEqual({ x: 2 });
+    expect(neuf.pose_le).toBe('2026-10-24');
+    // Première pose : pas d'ancienne référence, pas d'exception.
+    expect(fusionnerReference(undefined, { a: { niveau: 'INFO', compte: 1 } }, {}, 'd').securite.a.compte).toBe(1);
   });
 
   it('AM-5 · TEMOIN : une FK neuve sans index fait ROUGIR, un index « inutilisé » de plus non', () => {
