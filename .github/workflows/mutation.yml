@@ -1,0 +1,58 @@
+# ══════════════════════════════════════════════════════════════════
+# AM-3 · TEST DE MUTATION : une ligne couverte n'est pas une ligne vérifiée
+# ══════════════════════════════════════════════════════════════════
+#
+# La couverture v8 compte une ligne exécutée par un test qui n'assure rien.
+# Stryker modifie le code (un `>=` devient `>`, une condition devient `false`)
+# et exige qu'au moins une assertion rougisse. Un mutant qui survit est une
+# régression que la suite laisserait passer.
+#
+# Périmètre ciblé, celui où une erreur coûte de l'argent ou des données
+# (remboursement, contact de facturation, quota de sièges, premium, rejeu des
+# requêtes, restauration, récurrence des tâches) : `stryker.config.mjs`.
+#
+# 🔴 Le seuil `break` est le score MESURÉ après renforcement des tests. Ne
+# jamais le baisser, ni exclure un mutant, pour faire passer ce job : un
+# mutant qui survit se tue par une assertion, pas par une exclusion.
+#
+# Hebdomadaire : moins d'une minute aujourd'hui, mais la question ne change
+# qu'avec les tests du périmètre. Les échecs remontent par `ci-alert.yml`.
+# ══════════════════════════════════════════════════════════════════
+name: Mutation
+
+on:
+  schedule:
+    # Hebdomadaire, le mercredi à 05:37 UTC. Minute décalée des autres crons.
+    - cron: '37 5 * * 3'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stryker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Stryker sur le périmètre argent / données
+        run: npm run test:mutation
+
+      - name: Joindre le rapport
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mutation-report
+          path: reports/mutation/
+          if-no-files-found: warn
+          retention-days: 14

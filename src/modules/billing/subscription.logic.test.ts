@@ -46,6 +46,14 @@ describe('isPremiumSubscription', () => {
     ).toBe(false);
   });
 
+  it('Stripe plan: still premium at the exact instant period_end is reached', () => {
+    // Borne incluse (`>=`) : la période payée court jusqu'à sa fin comprise.
+    const paid: SubscriptionLike = {
+      plan: 'premium', status: 'active', current_period_end: NOW.toISOString(),
+    };
+    expect(isPremiumSubscription(paid, { isDemo: false, now: NOW })).toBe(true);
+  });
+
   // Forme héritée des jetons gagnés par pub, supprimés par C-04 : `premium` +
   // `active` sans fin de période. Mesurée en prod le 2026-09-04 (8 lignes) ;
   // elle reste premium, aucune écriture ne la produit plus.
