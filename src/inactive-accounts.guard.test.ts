@@ -92,6 +92,25 @@ describe('inactive-accounts', () => {
       expect(line).not.toMatch(/row[.]email/);
     }
   });
+
+  it('ne lâche aucun identifiant de compte dans une alerte (SV-9)', () => {
+    // Contrat de `_shared/alert.ts` : ni e-mail ni user_id en clair. L'alerte
+    // part chez un tiers (salon Discord), hors registre art. 30.
+    // L'appel ENTIER, jusqu'à la parenthèse qui finit sa ligne (le dépôt n'a
+    // pas de `;`) : un appel écrit sur plusieurs lignes porte son message sous
+    // la ligne `opsAlert(`.
+    const CALL = /opsAlert[(][\s\S]*?[)]\s*\n/g;
+    const alerts = [...inactive.matchAll(CALL)].map((m) => m[0]);
+    expect(alerts.length).toBeGreaterThan(0);
+    for (const call of alerts) {
+      expect(call).not.toMatch(/user_id|Failed[.]join/);
+    }
+    // TÉMOIN : le motif voit la forme multi-ligne qu'il doit refuser.
+    const sample = ['await opsAlert(', "  'x',", '  `${deleteFailed.join(\', \')}`,', ')'].join('\n');
+    expect([...`${sample}\n`.matchAll(CALL)][0][0]).toMatch(/Failed[.]join/);
+    // Et ne déborde pas sur l'appel suivant.
+    expect(alerts.every((c) => c.split('opsAlert(').length === 2)).toBe(true);
+  });
 });
 
 describe('delete-account · mode cron (C-121)', () => {

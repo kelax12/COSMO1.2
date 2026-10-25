@@ -294,13 +294,32 @@ Deno.serve(async (req) => {
   // Il s'ajoute au plafond par IP, il ne le remplace pas — un abus depuis
   // plusieurs comptes derrière une même IP reste borné par le premier, et un
   // abus d'un compte derrière plusieurs IP par celui-ci.
-  if (reporterEmail) {
+  //
+  // SV-3 : sans compte (anonyme, ou auteur non résolu), un seau COMMUN à tous
+  // les anonymes, consommé ici, après validation du corps : une requête
+  // invalide ne le vide pas, et un compte connecté n'y puise jamais.
+  {
     const accountVerdict = await consumeRateLimits('report-bug', [
+      reporterEmail
+        ? {
+            domain: 'report-bug:account',
+            value: reporterEmail,
+            limit: REPORT_BUG_LIMITS.perAccount.limit,
+            window: REPORT_BUG_LIMITS.perAccount.window,
+          }
+        : {
+            domain: 'report-bug:anonymous',
+            value: 'all',
+            limit: REPORT_BUG_LIMITS.anonymous.limit,
+            window: REPORT_BUG_LIMITS.anonymous.window,
+          },
+      // Puis le plafond de toute la fonction, sur les deux chemins : un
+      // appelant déjà refusé par son seau n'y puise pas (refus au premier seau plein).
       {
-        domain: 'report-bug:account',
-        value: reporterEmail,
-        limit: REPORT_BUG_LIMITS.perAccount.limit,
-        window: REPORT_BUG_LIMITS.perAccount.window,
+        domain: 'report-bug:global',
+        value: 'all',
+        limit: REPORT_BUG_LIMITS.global.limit,
+        window: REPORT_BUG_LIMITS.global.window,
       },
     ])
     if (!accountVerdict.allowed) {

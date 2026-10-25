@@ -165,9 +165,18 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules/react-router')) {
             return 'vendor-router';
           }
-          if (id.includes('node_modules/react') ||
-              id.includes('node_modules/react-dom') ||
-              id.includes('node_modules/scheduler')) {
+          // 🔴 Les trois chemins finissent par `/`, et ce n'est pas du style.
+          // Sans lui, `node_modules/react` attrapait AUSSI `react-day-picker`,
+          // `react-redux` (recharts), `react-remove-scroll`, `react-is`,
+          // `react-style-singleton`, et Rollup y hissait leurs dépendances
+          // (`date-fns` 4 de react-day-picker, `@date-fns/tz`, `use-sidecar`…).
+          // Tout ça partait dans `vendor-react`, donc dans le CHEMIN CRITIQUE,
+          // pour des modules que seuls des écrans lazy utilisent. Mesuré le
+          // 2026-10-23 à la migration React 19 : chemin critique 328,8 → 302,6 ko
+          // gzip, `vendor-react` 95,4 → 69,2 ko, sans toucher un plafond.
+          if (id.includes('node_modules/react/') ||
+              id.includes('node_modules/react-dom/') ||
+              id.includes('node_modules/scheduler/')) {
             return 'vendor-react';
           }
           // ⚠️ PAS de chunk `vendor-radix`, et c'est délibéré.
@@ -241,6 +250,27 @@ export default defineConfig(({ mode }) => ({
           //
           // Mesuré le 2026-08-25 : 117,6 ko gzip préchargés pour rien.
           // Le contrôle qui l'empêche de revenir est `npm run check:bundle`.
+          // 2026-10-24 · SAUF la locale `en-US` (AM-6 de docs/PERFORMANCE.md) : seuls
+          // les visiteurs anglais s'en servent, `loadDateLocale()` (src/i18n/format.ts)
+          // la charge avant le montage. Gardée ici, elle partait chez TOUT visiteur
+          // dans ce chunk du chemin critique, revenu à 4,8 % de son plafond.
+          if (id.includes('node_modules/date-fns/locale/en-US')) return undefined;
+          // Sortis de `vendor-react` (cf. plus haut) : le calendrier et le
+          // verrou de défilement des modales Radix ont chacun leur chunk lazy.
+          // Laissés à Rollup, le second gonflait les barils `index-*` et faisait
+          // passer leur cliquet (90,4 > 89,5 ko).
+          if (id.includes('node_modules/react-day-picker') ||
+              id.includes('node_modules/@date-fns/tz')) {
+            return 'vendor-daypicker';
+          }
+          if (id.includes('node_modules/react-remove-scroll') ||
+              id.includes('node_modules/react-style-singleton') ||
+              id.includes('node_modules/use-callback-ref') ||
+              id.includes('node_modules/use-sidecar') ||
+              id.includes('node_modules/get-nonce') ||
+              id.includes('node_modules/detect-node-es')) {
+            return 'vendor-scroll-lock';
+          }
           if (id.includes('node_modules/date-fns') ||
               id.includes('node_modules/lucide-react') ||
               id.includes('node_modules/clsx') ||
