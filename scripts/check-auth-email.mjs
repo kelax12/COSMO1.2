@@ -27,11 +27,19 @@
 // C'est la règle déjà écrite pour `lighthouse` et pour `check-rls-advisors`.
 // Il se lance à la main, et après toute modification de la zone.
 //
+// RÉCEPTION (M-53, SUPPORT.md AM-2) : depuis le 2026-10-23, le script vérifie
+// aussi l'autre sens. Chaque adresse PUBLIÉE (code, catalogues, JSON-LD) doit
+// appartenir à un domaine à MX valide, et un dialogue SMTP s'arrête à
+// `RCPT TO` sans jamais envoyer `DATA`. Détail : `check-mail-reception.mjs`.
+//
 // Usage :
 //   npm run check:mail
 //   npm run check:mail -- --domain autre.tld --send-subdomain envoi
+//   npm run check:mail -- --doh       # MX lus par DNS-over-HTTPS (résolveur sans MX)
+//   npm run check:mail -- --no-smtp   # sans dialogue SMTP (dit « NON MESURÉ »)
 
 import { promises as dns } from 'node:dns';
+import { verifierReception, mxSysteme, ipsSysteme, mxDoh, ipsDoh } from './check-mail-reception.mjs';
 
 const arg = (name, fallback) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -46,9 +54,20 @@ const SEND = `${arg('send-subdomain', 'send')}.${ROOT}`;
 
 const flat = (records) => records.map((r) => (Array.isArray(r) ? r.join('') : String(r)));
 
+// `--doh` : même questions, posées à DNS-over-HTTPS, pour un runner dont le
+// résolveur ne répond pas aux types TXT / MX / CNAME (cf. check-mail-reception.mjs).
+const parDoh = process.argv.includes('--doh');
+async function doh(name, type, code) {
+  const r = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(name)}&type=${type}`);
+  if (!r.ok) return [];
+  return ((await r.json()).Answer ?? []).filter((a) => a.type === code).map((a) => String(a.data));
+}
+// Une réponse TXT DoH est une suite de chaînes entre guillemets, à recoller.
+const txtDoh = (data) => (data.match(/"((?:[^"\\]|\\.)*)"/g) ?? [data]).map((c) => c.replace(/^"|"$/g, '')).join('');
+
 async function txt(name) {
   try {
-    return flat(await dns.resolveTxt(name));
+    return parDoh ? (await doh(name, 'TXT', 16)).map(txtDoh) : flat(await dns.resolveTxt(name));
   } catch {
     return [];
   }
@@ -56,6 +75,7 @@ async function txt(name) {
 
 async function mx(name) {
   try {
+    if (parDoh) return (await doh(name, 'MX', 15)).map((d) => d.split(/\s+/)[1].replace(/\.$/, '').toLowerCase());
     return (await dns.resolveMx(name)).map((r) => r.exchange.toLowerCase());
   } catch {
     return [];
@@ -65,7 +85,7 @@ async function mx(name) {
 /** Un CNAME est une réponse valable pour DMARC : c'est ce que posent la plupart des hébergeurs. */
 async function cname(name) {
   try {
-    return await dns.resolveCname(name);
+    return parDoh ? (await doh(name, 'CNAME', 5)).map((d) => d.replace(/\.$/, '')) : await dns.resolveCname(name);
   } catch {
     return [];
   }
@@ -153,11 +173,18 @@ if (dmarcValue?.includes('p=none')) {
   check('warn', 'Politique DMARC', false, 'p=none — surveillance seule, rien n’est rejeté. Correct pour démarrer, à durcir plus tard');
 }
 
+// ── La RÉCEPTION : les adresses publiées reçoivent-elles ? ────────────
+results.push(...(await verifierReception({
+  resoudreMx: parDoh ? mxDoh : mxSysteme,
+  compterIps: parDoh ? ipsDoh : ipsSysteme,
+  smtp: !process.argv.includes('--no-smtp'),
+})));
+
 // ── Rapport ───────────────────────────────────────────────────────────
 const pad = (s, n) => (s.length >= n ? s : s + ' '.repeat(n - s.length));
 const width = Math.max(...results.map((r) => r.label.length));
 
-console.log(`\nDélivrabilité des emails Auth — ${ROOT}\n`);
+console.log(`\nDélivrabilité des emails Auth et réception des adresses publiées · ${ROOT}\n`);
 for (const r of results) {
   const mark = r.ok ? '  OK  ' : r.level === 'warn' ? ' WARN ' : ' FAIL ';
   console.log(`[${mark}] ${pad(r.label, width)}  ${r.detail}`);
@@ -170,7 +197,8 @@ console.log('');
 if (failures.length === 0) {
   console.log(`✅ Domaine d’envoi en état de signer${warnings.length ? ` (${warnings.length} avertissement(s))` : ''}.`);
   console.log('   ⚠️  Le DNS ne prouve pas qu’un email ARRIVE. La preuve reste un compte jetable,');
-  console.log('       vérifié sur Gmail ET sur Outlook. Cf. docs/DEPLOYMENT.md §2ter.\n');
+  console.log('       vérifié sur Gmail ET sur Outlook. Cf. docs/DEPLOYMENT.md §2ter.');
+  console.log('   ⚠️  Un 250 sur RCPT TO ne prouve pas qu’un humain LISE la boîte (SUPPORT.md AM-2).\n');
   process.exit(0);
 }
 
