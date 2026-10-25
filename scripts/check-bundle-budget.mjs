@@ -193,7 +193,11 @@ const PLAFONDS_PAR_CHUNK = {
   UseCasePage: 16_500, // 15 591 o
   // ⚖️ RELEVÉ SUR ARBITRAGE D'AXEL le 2026-10-22, comme le 2026-10-13 : identification de l'éditeur
   // (EI, SIREN, téléphone, LCEN art. 1-1, `e2e7679f`). Chargé par la seule page mentions légales.
-  legal: 3_500, // ≈ 3 330 o sur 2 chunks le 2026-10-22 ; 3 000 jusque-là (2 693 o le 2026-10-01)
+  // 3 800 depuis le 2026-10-25, décision d'Axel : les coordonnées du médiateur de la consommation
+  // (mentions légales s5 p2, imposées par la Société Médiation Professionnelle, Conso. L616-1)
+  // portent le catalogue à 3,6 ko. TEXTE LÉGAL OBLIGATOIRE, pas du code à alléger.
+  // 3 500 du 2026-10-22 au 10-25 (≈ 3 330 o), 3 000 avant (2 693 o le 2026-10-01).
+  legal: 3_800,
   // ⚖️ RELEVÉS SUR ARBITRAGE D'AXEL le 2026-10-13, pas pour faire passer la CI : l'audit juridique
   // du jour a ajouté de l'information DUE (RGPD art. 13, C. conso L111-1, L224-25-1). Ces deux
   // catalogues ne sont chargés que par leur page légale, jamais sur le chemin critique.
