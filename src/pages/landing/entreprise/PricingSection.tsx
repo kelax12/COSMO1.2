@@ -8,6 +8,7 @@ import {
 import type { OrgBillingInterval } from '@/modules/billing/premium-config';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { useT } from '@/i18n/useT';
+import { formatPrice } from '@/i18n/format';
 import type { KeyOf } from '@/i18n/catalog';
 import ScrollHighlight from './ScrollHighlight';
 import { ENTERPRISE_FREE_OFFER } from './free-offer';
@@ -240,7 +241,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                         billingInterval === 'yearly'
                           ? 'enterprise.pricing.insteadOfYearly'
                           : 'enterprise.pricing.insteadOf',
-                        { price: activePrice },
+                        { price: formatPrice(activePrice) },
                       )}
                     </s>
                   )}
@@ -248,7 +249,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
               ) : (
                 <div className="flex flex-col items-end">
                   <span className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold tabular-nums text-white">{activePrice}</span>
+                    <span className="text-4xl font-bold tabular-nums text-white">{formatPrice(activePrice)}</span>
                     <span className="text-3xl font-bold text-slate-500">€</span>
                     <span className="ml-1 text-sm text-slate-500">
                       {t('enterprise.pricing.perMonth')}
@@ -302,7 +303,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                     </span>
                     {tier.priceEurPerMonth > 0 && (
                       <s className="mt-1 text-xs text-slate-600 decoration-slate-700">
-                        {t('enterprise.pricing.insteadOfShort', { price })}
+                        {t('enterprise.pricing.insteadOfShort', { price: formatPrice(price) })}
                       </s>
                     )}
                   </>
@@ -310,7 +311,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                   <>
                     <span className="flex items-baseline gap-0.5">
                       <span className={`text-2xl font-bold tabular-nums ${isActive ? 'text-cyan-300' : 'text-white'}`}>
-                        {price}
+                        {formatPrice(price)}
                       </span>
                       <span className="text-xl font-bold text-slate-600">€</span>
                       <span className="ml-1 text-xs text-slate-600">{t('enterprise.pricing.perMonth')}</span>
