@@ -76,6 +76,15 @@ export interface AdminActivation48h extends AdminActivation {
   bySource: Record<string, AdminActivation>;
 }
 
+/**
+ * Activation 48 h des inscrits d'un jour UTC (mig. 225). Même définition que
+ * `activation48h`, découpée par jour d'inscription pour que la console la
+ * somme sur la période choisie au lieu d'afficher un cumul depuis le début.
+ */
+export interface ActivationDailyPoint extends AdminActivation {
+  day: string;
+}
+
 /** Rétention J+7 d'un canal, sur les seules cohortes dont la fenêtre est écoulée. */
 export interface SourceRetention {
   signups: number;
@@ -136,6 +145,8 @@ export interface AdminStats {
   signupsBySource: Record<string, number>;
   signupsBySourceByDay: SourceDailyPoint[];
   activation48h: AdminActivation48h;
+  // ── mig. 225 ── `[]` tant que la clé n'est pas rendue par le serveur.
+  activation48hByDay: ActivationDailyPoint[];
   retentionD7BySource: Record<string, SourceRetention>;
   orgs: AdminOrgs;
   // ── C-110 (mig. 150) — le support, enfin compté ────────────────────

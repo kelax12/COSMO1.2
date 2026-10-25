@@ -5,7 +5,13 @@
 // AdminForbiddenError pour que la page redirige silencieusement.
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
-import type { AdminStats, AdminSupport, DailyPoint, AdminOnboardingFunnel } from './types';
+import type {
+  ActivationDailyPoint,
+  AdminStats,
+  AdminSupport,
+  DailyPoint,
+  AdminOnboardingFunnel,
+} from './types';
 
 /** Signal de routing (compte non admin) — jamais toasté ni affiché. */
 export class AdminForbiddenError extends Error {
@@ -64,6 +70,8 @@ interface RawAdminStats {
     by_source?: Record<string, { activated?: number; total?: number }>;
   };
   retention_d7_by_source?: Record<string, { signups?: number; retained?: number }>;
+  // ── mig. 225 ────────────────────────────────────────────────────────
+  activation_48h_by_day?: Array<{ day?: string; activated?: number; total?: number }>;
   orgs?: {
     total?: number;
     with_3plus_members?: number;
@@ -159,6 +167,13 @@ export async function fetchAdminStats(): Promise<AdminStats> {
         total: v?.total ?? 0,
       })),
     },
+    activation48hByDay: (raw.activation_48h_by_day ?? []).map(
+      (p): ActivationDailyPoint => ({
+        day: p.day ?? '',
+        activated: p.activated ?? 0,
+        total: p.total ?? 0,
+      })
+    ),
     retentionD7BySource: mapRecord(raw.retention_d7_by_source, (v) => ({
       signups: v?.signups ?? 0,
       retained: v?.retained ?? 0,
