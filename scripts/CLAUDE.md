@@ -65,9 +65,7 @@
 | `check:mail` | SPF / DKIM / DMARC — **pas une gate** | | `docs/DEPLOYMENT.md` |
 | `images:check` | images non optimisées — **pas une gate** | | `docs/PERFORMANCE.md` |
 
-🔒 **Hook `pre-push`** (`.githooks/`, 2026-10-21) : refuse une poussée vers `main` si le dernier run
-`CI` de `main` est rouge (`scripts/pre-push-main-red.mjs`). Installation par clone :
-`git config core.hooksPath .githooks`. Le commit qui répare : `COSMO_PUSH_ON_RED=1 git push`.
+🔒 **Hook `pre-push`** : refuse de pousser sur un `main` rouge → `docs/DEPLOYMENT.md` § 1.
 
 ✅ **Les trois gardes qui attendaient un geste manuel mesurent toutes** (relu le 2026-10-20) :
 `check:supabase-posture` a sa référence d'auth depuis le 2026-10-10 (`C-88`), `check:env` a
