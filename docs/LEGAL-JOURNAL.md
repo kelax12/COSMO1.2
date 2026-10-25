@@ -288,3 +288,25 @@ commits avaient été poussés sans elle, et la garde a tenu `lint-test-build` r
 une information exacte due tout de suite ; la section 7 ter s'adresse à des personnes prospectées,
 qui ne sont pas forcément utilisatrices, et l'article 14 RGPD exige qu'elle soit en ligne AVANT le
 premier envoi.
+
+### 2026-10-25 · médiateur de la consommation (SMP) · **FOND (information)** · **aucun préavis**
+
+| Document | Empreinte |
+|---|---|
+| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `56f0531541fd571a` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `55c4406f95c74347` |
+
+**Ce qui a changé** (commit `bff7f874`, poussé sur `main` sans cette entrée ; écrite le même jour,
+la garde tenait `lint-test-build` rouge entre-temps) :
+
+- **CGU**, nouvel article **12 bis « Litige et médiation de la consommation »** : réclamation
+  écrite d'abord (`contact@thecosmo.app`), puis, à défaut d'accord ou de réponse sous un mois,
+  saisine gratuite de la Société Médiation Professionnelle par le consommateur (Conso.
+  art. L612-1 et L612-2). Texte imposé par le médiateur, courrier du 2026-10-25 archivé dans
+  [`LEGAL.md`](./LEGAL.md).
+- **Mentions légales**, s5 p2 : coordonnées du médiateur et renvoi à l'article 12 bis.
+- Dates de mise à jour des deux documents portées au 25 octobre 2026, en `fr` et en `en`.
+
+**Aucun préavis**, décision d'Axel du 2026-10-25 : ces ajouts informent le consommateur d'une voie
+de recours que la loi lui ouvre déjà et que le professionnel doit lui indiquer (Conso. art. L616-1).
+Ils ne créent aucune obligation pour le client et ne lui retirent aucun droit.
