@@ -14,6 +14,9 @@
 --
 -- Aucun abonnement live n'existait au 2026-10-25 (lecture Stripe), donc aucune
 -- ligne à migrer. Prix Stripe live : `docs/STRIPE-LIVE.md`.
+--
+-- ÉTAT au 2026-10-25 : APPLIQUÉE (apply_migration), ledger 20261025183015, relue au
+-- catalogue : CHECK avec `t100`, corps de `get_admin_revenue` aux nouveaux prix, anon f.
 
 ALTER TABLE public.org_subscriptions
   DROP CONSTRAINT IF EXISTS org_subscriptions_tier_key_check;
