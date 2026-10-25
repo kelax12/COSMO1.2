@@ -1,0 +1,49 @@
+{
+  "_comment": [
+    "OBSERVABILITE AM-1 a AM-3 : reference d'ECART des erreurs de production sur 24 h,",
+    "lue par `node scripts/check-prod-errors.mjs` (job `Erreurs de prod`).",
+    "Un plafond est un RECORD NORMAL, pas une tolerance a negocier : un depassement dit qu'il",
+    "s'est passe quelque chose de plus que d'habitude.",
+    "Ne jamais relever un plafond pour faire passer la CI : lire d'abord l'issue, le chemin, le statut,",
+    "corriger ou resoudre a la source (une issue Sentry reglee se resout DANS Sentry), et seulement",
+    "si c'est un nouveau regime normal, recaler ici avec sa raison dans `_notes`."
+  ],
+  "pose_le": "2026-10-23",
+  "_notes": {
+    "mesure": "Supabase lu sur trois fenetres de 24 h (2026-10-20 12:00 UTC au 2026-10-23 matin) par l'API de journaux (dialecte ClickHouse). Vercel et Sentry n'ont PAS pu etre lus depuis l'agent (API Vercel en 403, aucun jeton Sentry) : leur plafond est 0, et le premier run planifie est leur premiere mesure.",
+    "sentry": "0 : toute issue NOUVELLE ou en REGRESSION sur 24 h merite d'etre lue. Une issue connue et acceptee se marque `ignored` ou `resolved` dans Sentry, pas ici.",
+    "vercel": "0 : `api/collect.ts` est la seule fonction, et un echec y fait tomber l'audience a zero sans bruit.",
+    "5xx": "0 mesure sur les trois fenetres.",
+    "sonde_uptime": "`uptime.yml` sonde `/auth/v1/health` et `/rest/v1/` sans `apikey` : 401 attendu. 48 runs par jour, jusqu'a 3 essais chacun (`--retry 2`) : 144 par chemin au maximum, 288 pour les deux. Mesure : 190 a 206.",
+    "sonde_edge": "`check:edge-smoke` (agent `node`) : 12 sondes par run d'`Edge deploy drift`, quotidien PLUS chaque push qui touche `supabase/functions/**`. Mesure : 48 a 60. Plafond = 20 runs par jour.",
+    "refus_auth": "Mesure : 8 a 16 (`/auth/v1/token 400` mot de passe ou code refuse, `/auth/v1/user 403` jeton anonyme presente a `getUser`). Un pic ici est la premiere trace d'un essai de force brute.",
+    "webhook_non_signe": "0 hors sondes. Les 5 appels non signes du releve du 2026-10-23 etaient les sondes de `check:edge-smoke`. Plafond 3 : un scan isole passe, une serie rougit (un tiers essaie le webhook Stripe).",
+    "4xx_metier": "Mesure : 4 a 9 (`/rest/v1/events 409` d'AM-4, 401 sur des RPC a jeton expire).",
+    "rest_events_409": "4 le 2026-10-23, non explique (OBSERVABILITE AM-4, session dediee).",
+    "plafond_couple_inconnu": "Les RPC a jeton expire rendent 1 a 2 x 401 par jour, chacune sous son nom : 3 laisse passer ce bruit et rougit sur un chemin neuf qui se repete."
+  },
+  "sentry": {
+    "plafond_issues": 0
+  },
+  "vercel": {
+    "plafond_erreurs": 0
+  },
+  "supabase": {
+    "plafonds_famille": {
+      "5xx": 0,
+      "sonde_uptime": 288,
+      "sonde_edge": 240,
+      "refus_auth": 30,
+      "webhook_non_signe": 3,
+      "4xx_metier": 15
+    },
+    "plafond_couple_inconnu": 3,
+    "couples": {
+      "/auth/v1/health 401": 144,
+      "/rest/v1/ 401": 144,
+      "/auth/v1/token 400": 25,
+      "/auth/v1/user 403": 15,
+      "/rest/v1/events 409": 8
+    }
+  }
+}
