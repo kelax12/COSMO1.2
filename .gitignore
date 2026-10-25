@@ -142,3 +142,7 @@ coverage-tooling
 
 # Artefacts locaux rangés hors racine (2026-10-11)
 .artifacts/
+
+# Test de mutation (AM-3) : rapport Stryker et bac a sable.
+/reports
+.stryker-tmp

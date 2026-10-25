@@ -328,9 +328,9 @@ const OKRPage: React.FC = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowCompletedModal(true)}
-          // Le libellé CONTIENT le texte visible (« OKR terminés » + le nombre) :
-          // axe-core 4.14, label-content-name-mismatch (WCAG 2.5.3).
-          aria-label={completedCount > 0 ? `${t('page.seeCompleted')} ${completedCount}` : t('page.seeCompleted')}
+          // Pas d'aria-label : le bouton AFFICHE « OKR terminés » et le nombre, son nom
+          // vient de ce contenu. Un libellé qui l'enrobait échouait encore axe-core 4.14
+          // (label-content-name-mismatch, WCAG 2.5.3) selon le rendu du compteur.
           className="shrink-0 flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 dark:hover:bg-emerald-900/20"
         >
           <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" />

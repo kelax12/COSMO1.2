@@ -175,7 +175,7 @@
     "tasksTabSearchAria": "Search for a task",
     "tasksTabSortAria": "Sort by",
     "tasksTabSortPriority": "By priority",
-    "tasksTabSortDeadline": "By deadline",
+    "tasksTabSortDeadline": "By due date",
     "tasksTabSortName": "By name",
     "tasksTabSortDuration": "By duration",
     "tasksTabSortProject": "By project",
@@ -200,10 +200,10 @@
     "tasksTabColName": "TASK NAME",
     "tasksTabColProject": "PROJECT",
     "tasksTabColPriority": "PRIORITY",
-    "tasksTabColDeadline": "DEADLINE",
+    "tasksTabColDeadline": "DUE DATE",
     "tasksTabColDuration": "DURATION",
     "tasksTabColActions": "ACTIONS",
-    "tasksTabNoDeadline": "No deadline",
+    "tasksTabNoDeadline": "No due date",
     "tasksTabActionsAria": "Actions for {{name}}",
     "tasksTabEdit": "Edit",
     "tasksTabColStatus": "STATUS",
@@ -700,7 +700,7 @@
       },
       "member": {
         "invite": "Invite members",
-        "inviteHint": "Generate an invite link to a seat in the org chart."
+        "inviteHint": "Generate an invite link to a position in the org chart."
       },
       "report": {
         "org": "View the company report",

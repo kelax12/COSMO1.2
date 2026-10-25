@@ -66,6 +66,15 @@ export const GLOSSAIRE = [
   { terme: 'catégorie', fr: String.raw`cat[ée]gories?`, en: /categor/i, attendu: 'category' },
   { terme: 'équipe', fr: String.raw`[ée]quipes?`, en: /team/i, attendu: 'team' },
   { terme: 'projet', fr: String.raw`projets?`, en: /project/i, attendu: 'project' },
+  // Ajoutés par la revue M-50 du 2026-10-23 (docs/archive/I18N-REVUE-2026-10-23.md) :
+  // termes vérifiés stables sur tout le catalogue, une seule traduction chacun.
+  { terme: 'série', fr: String.raw`s[ée]ries?`, en: /streak/i, attendu: 'streak' },
+  { terme: 'corbeille', fr: String.raw`corbeilles?`, en: /trash/i, attendu: 'trash' },
+  { terme: "point d'étape", fr: String.raw`points?\s+d['’][ée]tapes?`, en: /check-in/i, attendu: 'check-in' },
+  { terme: 'palier', fr: String.raw`paliers?`, en: /tier/i, attendu: 'tier' },
+  { terme: 'dépendance', fr: String.raw`d[ée]pendances?`, en: /depend/i, attendu: 'dependency' },
+  { terme: 'assigné', fr: String.raw`assign[ée]e?s?`, en: /assign/i, attendu: 'assignee / assigned' },
+  { terme: 'organigramme', fr: String.raw`organigrammes?`, en: /org chart/i, attendu: 'org chart' },
 ].map((g) => ({ ...g, frRe: new RegExp(String.raw`(?<![${L}])(?:${g.fr})(?![${L}])`, 'iu') }));
 
 /** Accents et guillemets français, absents d'un texte anglais ordinaire. */
