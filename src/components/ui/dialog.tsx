@@ -31,22 +31,26 @@ function DialogClose({
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
 }
 
-// forwardRef required: Radix Primitive.div.SlotClone passes a ref to this
-// component, which caused "Function components cannot be given refs" warnings.
-const DialogOverlay = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Overlay
-    ref={ref}
-    data-slot="dialog-overlay"
-    className={cn(
-      "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/30 backdrop-blur-md",
-      className
-    )}
-    {...props}
-  />
-))
+// Radix (Primitive.div.SlotClone) passe un ref à ce composant. Depuis React 19
+// `ref` est une prop ordinaire : plus besoin de `forwardRef` (il en fallait un
+// sous React 18, sinon « Function components cannot be given refs »).
+function DialogOverlay({
+  className,
+  ref,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+  return (
+    <DialogPrimitive.Overlay
+      ref={ref}
+      data-slot="dialog-overlay"
+      className={cn(
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/30 backdrop-blur-md",
+        className
+      )}
+      {...props}
+    />
+  )
+}
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
 function DialogContent({
