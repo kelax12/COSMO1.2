@@ -197,15 +197,16 @@ describe('témoin — posture Supabase (C-88)', () => {
 describe('témoin — grille Stripe (C-106)', () => {
   it('la grille est LUE dans premium-config.ts, pas recopiée', () => {
     const g = grilleDuCode();
-    expect(g.paliers.map((p) => p.key)).toEqual(['free', 't10', 't20', 't50', 'tmax']);
-    expect(g.remiseAnnuelle).toBe(0.3);
+    expect(g.paliers.map((p) => p.key)).toEqual(['free', 't10', 't20', 't50', 't100', 'tmax']);
+    expect(g.remiseAnnuelle).toBe(0.25);
     // La dérivation annuelle : équivalent mensuel ARRONDI, puis ×12. L'ordre
     // compte — dériver du brut donnerait un centime d'écart avec « 12 × le
     // prix affiché », et un client se fie à sa multiplication.
-    expect(g.totalAnnuelEur(20)).toBe(168);
-    expect(g.totalAnnuelEur(50)).toBe(420);
-    expect(g.totalAnnuelEur(100)).toBe(840);
-    expect(g.totalAnnuelEur(200)).toBe(1680);
+    expect(g.totalAnnuelEur(70)).toBe(630);
+    expect(g.totalAnnuelEur(150)).toBe(1350);
+    expect(g.totalAnnuelEur(350)).toBe(3150);
+    expect(g.totalAnnuelEur(700)).toBe(6300);
+    expect(g.totalAnnuelEur(1000)).toBe(9000);
   });
 
   it('une grille illisible fait JETER, pas rendre une liste vide', () => {
