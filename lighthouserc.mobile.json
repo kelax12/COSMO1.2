@@ -65,7 +65,7 @@
             "categories:seo": ["error", { "minScore": 0.92 }],
             "categories:best-practices": ["warn", { "minScore": 0.9 }],
             "categories:performance": ["warn", { "minScore": 0.4 }],
-            "largest-contentful-paint": ["warn", { "maxNumericValue": 4500 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 3000 }],
             "total-blocking-time": ["warn", { "maxNumericValue": 4000 }],
             "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
             "unused-javascript": "off",
@@ -124,6 +124,22 @@
             "resume du job."
           ],
           "matchingUrlPattern": "/en/$",
+          "assertions": {
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }]
+          }
+        },
+        {
+          "_comment": [
+            "Cliquet LCP des pages de CONTENU (2026-10-25), meme plafond que la home.",
+            "Elles peignent depuis ce jour leur propre rendu React, produit au build",
+            "(prerender.mjs, injectContentCopy) : 1 514 a 1 741 ms au run 40099712405",
+            "(66f76355), contre 4 450 a 5 610 ms avec le spinner (runs de main du",
+            "2026-10-22). Plafond a 2 000 ms, 15 % au-dessus du pire. Le global passe",
+            "en error a 3 000 ms, le plafond de l entreprise, la plus lente des pages",
+            "mesurees. Un rouge ici : la copie a diverge de la page, et React a repris",
+            "le LCP (element LCP non detache dans le resume du job). Jamais relever."
+          ],
+          "matchingUrlPattern": "/(guide|blog|blog/[a-z0-9-]+|pour-[a-z]+|a-propos)/$",
           "assertions": {
             "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }]
           }
