@@ -36,7 +36,7 @@ et les **règles durables** tirées des audits.
   ✅ **Relu le 2026-10-25** (passe finale, 29 PR fusionnées du 10-23 au 10-25) : l'audit du code
   serveur à froid (PR n° 141) trouve **SV-1 à SV-12**, détail § « SV » plus bas. Les neuf correctifs
   sont sur `main` et **pas en production** : `Edge deploy drift` rouge depuis le 10-25 12:38
-  (douze fonctions divergent). Mig. `227` (index de FK) commitée, déclarée non appliquée.
+  (douze fonctions divergent). Mig. `227` (index de FK) appliquée le 2026-10-26 (ledger `20261026124018`).
   `zod` 3 → 4 (`GHSA-mrhx-c7xc-m3w5`, haute, PR n° 136) : `npm audit --omit=dev` à **0**. Note **87 → 84**.
   ✅ **Remesuré le 2026-10-19** (`TR-1`) : mig. `223` appliquée (ledger
   `20261019122246`, **173** entrées) et relue au catalogue, advisors **`13 / 84 / 2 / 1`**, sonde

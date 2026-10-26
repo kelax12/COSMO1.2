@@ -51,7 +51,7 @@
   "performance": {
     "_source": [
       "Relevé du 2026-10-23 (get_advisors performance, projet ykeugqfgklejcdbrmawy), AM-5.",
-      "unindexed_foreign_keys : 40 avant la mig. 227. Après son application, recaler à 0 par --update : la garde refusera alors toute FK neuve sans index.",
+      "unindexed_foreign_keys : 40 avant la mig. 227, 0 depuis son application le 2026-10-26 (ledger 20261026124018, advisor relu) : absent de la référence, la garde refuse toute FK neuve sans index.",
       "unused_index : 35, imprimé seulement (bouge avec le volume, aucun index retiré)."
     ],
     "unused_index": {
