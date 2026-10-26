@@ -177,7 +177,8 @@ describe('témoin — posture Supabase (C-88)', () => {
   it('AM-5 · la référence commitée porte les advisors de performance', () => {
     const ref = JSON.parse(readFileSync(join(process.cwd(), 'scripts', 'supabase-posture.reference.json'), 'utf8'));
     expect(ref.performance).toBeTruthy();
-    expect(ref.performance.unindexed_foreign_keys.compte).toBeGreaterThanOrEqual(0);
+    // Depuis la mig. 227 (2026-10-26) l'advisor est absent de la référence : absent = 0.
+    expect(ref.performance.unindexed_foreign_keys?.compte ?? 0).toBe(0);
     expect(ref.performance.unused_index.compte).toBeGreaterThan(0);
   });
 
