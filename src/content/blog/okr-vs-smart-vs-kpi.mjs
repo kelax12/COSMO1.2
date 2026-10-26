@@ -31,7 +31,7 @@ export const article = {
       ],
       html: `
 <p class="lead">Trois acronymes, trois promesses de « mieux atteindre ses objectifs », et beaucoup de confusion. La réalité est plus simple : <strong>OKR, SMART et KPI ne répondent pas à la même question</strong>. SMART formule un objectif, KPI surveille une métrique, OKR organise un cycle d'ambition. Une fois cette distinction posée, savoir lequel utiliser devient évident.</p>
-<figure><img src="/screenshots/okr.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période." /><figcaption>Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période. Capture du mode démo, données fictives.</figcaption></figure>
+<figure><img src="/screenshots/okr.webp" srcset="/screenshots/okr-800.webp 800w, /screenshots/okr.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période." /><figcaption>Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="definitions">Les trois méthodes en une phrase chacune</h2>
 <ul>
@@ -92,7 +92,7 @@ export const article = {
       ],
       html: `
 <p class="lead">Three acronyms, three promises to help you "reach your goals", and a lot of confusion. The reality is simpler: <strong>OKRs, SMART goals and KPIs do not answer the same question</strong>. SMART words a goal, a KPI watches a metric, OKRs organise a cycle of ambition. Once that distinction is clear, knowing which to use becomes obvious.</p>
-<figure><img src="/screenshots/okr.webp" width="1280" height="800" loading="lazy" decoding="async" alt="OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed." /><figcaption>OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed. Screenshot of the demo mode, sample data.</figcaption></figure>
+<figure><img src="/screenshots/okr.webp" srcset="/screenshots/okr-800.webp 800w, /screenshots/okr.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed." /><figcaption>OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="definitions">The three methods, one sentence each</h2>
 <ul>
