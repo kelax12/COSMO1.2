@@ -37,7 +37,7 @@ const monthlyOnly = (name: string): string | undefined =>
 
 const price = (over: Partial<StripePriceLike> & { id: string }): StripePriceLike => ({
   product: 'prod_t20',
-  unit_amount: 42000,
+  unit_amount: 135000,
   currency: 'eur',
   active: true,
   recurring: { interval: 'year', interval_count: 1 },
@@ -61,7 +61,7 @@ function fakeStripe(catalogue: Record<string, StripePriceLike[]>): StripeLike {
 
 const MONTHLY_T20 = price({
   id: 'price_m20',
-  unit_amount: 5000,
+  unit_amount: 15000,
   recurring: { interval: 'month', interval_count: 1 },
 });
 
@@ -69,9 +69,9 @@ beforeEach(() => resetProductIndex());
 
 describe('yearlyUnitAmountCents', () => {
   it('vaut le total annuel de la grille, en centimes', () => {
-    expect(yearlyUnitAmountCents(T20)).toBe(42000); // 50 € → 35 €/mois → 420 €/an
-    expect(yearlyUnitAmountCents(tierByKey('t10')!)).toBe(16800);
-    expect(yearlyUnitAmountCents(tierByKey('tmax')!)).toBe(168000);
+    expect(yearlyUnitAmountCents(T20)).toBe(135000); // 150 € → 112,50 €/mois → 1 350 €/an
+    expect(yearlyUnitAmountCents(tierByKey('t10')!)).toBe(63000);
+    expect(yearlyUnitAmountCents(tierByKey('tmax')!)).toBe(900000);
   });
 });
 
@@ -158,7 +158,7 @@ describe('resolveYearlyPriceId', () => {
         price({
           id: 'price_m50',
           product: 'prod_t50',
-          unit_amount: 10000,
+          unit_amount: 35000,
           recurring: { interval: 'month', interval_count: 1 },
         }),
         // 420 € : le bon montant pour t20, le MAUVAIS pour t50 (840 € attendus).
@@ -293,10 +293,11 @@ describe('index produit → palier : invalidation', () => {
    * TTL courte, donc pas le comportement qu'on veut décrire ici.
    */
   const catalogue = {
-    prod_t10: [monthly('price_m10', 'prod_t10', 2000)],
-    prod_t20: [monthly('price_m20', 'prod_t20', 5000), price({ id: 'price_y20' })],
-    prod_t50: [monthly('price_m50', 'prod_t50', 10000)],
-    prod_tmax: [monthly('price_mmax', 'prod_tmax', 20000)],
+    prod_t10: [monthly('price_m10', 'prod_t10', 7000)],
+    prod_t20: [monthly('price_m20', 'prod_t20', 15000), price({ id: 'price_y20' })],
+    prod_t50: [monthly('price_m50', 'prod_t50', 35000)],
+    prod_t100: [monthly('price_m100', 'prod_t100', 70000)],
+    prod_tmax: [monthly('price_mmax', 'prod_tmax', 100000)],
   };
 
   /** Client Stripe qui compte ses lectures. */
@@ -320,7 +321,7 @@ describe('index produit → palier : invalidation', () => {
     // Compte de TEST : le prix mensuel t20 vit sur `prod_test`.
     const test = fakeStripe({
       prod_test: [
-        price({ id: 'price_m20', product: 'prod_test', unit_amount: 5000, recurring: { interval: 'month', interval_count: 1 } }),
+        price({ id: 'price_m20', product: 'prod_test', unit_amount: 15000, recurring: { interval: 'month', interval_count: 1 } }),
         price({ id: 'price_y20_test', product: 'prod_test' }),
       ],
     });
@@ -333,7 +334,7 @@ describe('index produit → palier : invalidation', () => {
       name === 'STRIPE_ORG_PRICE_T20' ? 'price_m20_live' : undefined;
     const live = fakeStripe({
       prod_live: [
-        price({ id: 'price_m20_live', product: 'prod_live', unit_amount: 5000, recurring: { interval: 'month', interval_count: 1 } }),
+        price({ id: 'price_m20_live', product: 'prod_live', unit_amount: 15000, recurring: { interval: 'month', interval_count: 1 } }),
         price({ id: 'price_y20_live', product: 'prod_live' }),
       ],
     });

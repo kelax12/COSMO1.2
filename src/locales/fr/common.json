@@ -272,6 +272,7 @@
     "t10": "Équipe",
     "t20": "Département",
     "t50": "Entreprise",
+    "t100": "Grande entreprise",
     "tmax": "Illimité"
   },
   "appVersion": {

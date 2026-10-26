@@ -117,6 +117,16 @@ export function formatNumber(
 }
 
 /**
+ * Prix sans symbole, pour un gabarit qui porte déjà « € » : entier tel quel
+ * (« 70 »), décimal au centime (« 52,50 » / « 52.50 »). Un `{price}` brut
+ * écrirait « 52.5 » en français, depuis la remise annuelle de 25 %.
+ */
+export function formatPrice(value: number, locale?: Locale): string {
+  const digits = Number.isInteger(value) ? 0 : 2;
+  return formatNumber(value, { minimumFractionDigits: digits, maximumFractionDigits: digits }, locale);
+}
+
+/**
  * Montant en euros, formaté selon la locale (« 3,50 € » / « €3.50 »).
  *
  * La devise reste l'EUR dans toutes les langues : la facturation est en euros,
