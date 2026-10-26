@@ -92,7 +92,7 @@ vu vert en CI** ; une garde posée mais jamais jouée ne rapporte rien.
 | [Accessibilité](./ACCESSIBILITY.md) | 82 | **84** | **+2** | **61 surfaces modales sur 63** mesurées au clavier (PR n° 132, vert après n° 145) : AM-2 remboursé. VoiceOver et NVDA restent à jouer (échéance datée, PR n° 137) |
 | [UI / UX](./UI-PATTERNS.md) | 86 | **87** | **+1** | manifeste des promesses de la landing et garde des chiffres (PR n° 138, AM-4) |
 | [Architecture](./ARCHITECTURE.md) | 93 | **94** | **+1** | React 19 et `react-router` 8 (PR n° 129) : la dette de version est soldée, `Visual` vert sans régénérer |
-| [Scalabilité](./SCALABILITY.md) | 91 | **91** | 0 | index des 40 FK écrits (mig. `227`) mais **non appliqués** ; advisors de performance lus par `Posture`, encore rouge |
+| [Scalabilité](./SCALABILITY.md) | 91 | **91** | 0 | index des 40 FK appliqués (mig. `227`, 2026-10-26, ledger `20261026124018`) ; advisors de performance lus par `Posture`, recalée le 2026-10-26 |
 | [RGPD](./RGPD.md) | 87 | **88** | **+1** | sous-traitants dérivés du code et confrontés au registre (PR n° 134, `RGPD-REGISTRE.md` AM-3). Détection de violation : PR n° 125 non fusionnée |
 | [i18n](./I18N.md) | 89 | **90** | **+1** | revue de sens des catalogues anglais (PR n° 128, `M-50`) ; le SENS reste mesuré par une revue datée, pas par une garde |
 | [SEO](./SEO.md) | 79 | **79** | 0 | `Signaux SEO` posé (PR n° 131), jamais joué : AM-4 non crédité |
@@ -109,7 +109,7 @@ prod` n'a pas encore tourné, et une note ne se pose qu'après la première mesu
 | 2 | **Entrée du journal légal** pour le médiateur SMP (FOND ou FORME, préavis dû ou non) | Axel | `main` vert, +1 Tests |
 | 3 | `gh workflow run posture.yml -f regenerer=true` | Axel | `Posture` vert |
 | 4 | Poser `SENTRY_AUTH_TOKEN`, `SECURITY_ALERTS_TOKEN`, `GSC_SERVICE_ACCOUNT_JSON`, `BING_WEBMASTER_API_KEY` ; fusionner la PR n° 125 | Axel | ferme `OBSERVABILITE.md` AM-1 à AM-3 et AM-5, `SEO.md` AM-4, `RGPD-VIOLATION.md` AM-2 |
-| 5 | Appliquer la mig. `227` (index de FK) | Axel | Scalabilité AM-5 |
+| 5 | ✅ Mig. `227` appliquée le 2026-10-26 (ledger `20261026124018`) | fait | Scalabilité AM-5 |
 | 6 | Arbitrer le reste de SV-2 ; poser SV-10 avec la rotation des secrets | Axel + code | dernier 🟠 de l'audit serveur |
 | 7 | Jouer VoiceOver et NVDA à l'échéance datée ; recette Stripe réelle (20 €, puis remboursement) | Axel | `AUDIT-VOICEOVER-IOS.md` ; chemin d'argent prouvé |
 | 8 | PITR (plan Pro), `M-71`, mot de passe historique de la base, PR n° 77 et 78 | Axel | inchangés |
