@@ -213,6 +213,15 @@ export const CONTACTS_PROD = {
   'edge-deploy-drift.yml › compare › Sondes de fumee · les fonctions repondent-elles vraiment ?': {
     affiche: 'codes HTTP et verdicts des sondes',
   },
+  'edge-deploy.yml › deploy › Deployer les fonctions selectionnees': {
+    affiche: 'sortie de `supabase functions deploy` : nom, taille du bundle, version',
+  },
+  'edge-deploy.yml › deploy › Comparer le code deploye au depot': {
+    affiche: 'écarts de code source entre fonctions déployées et dépôt',
+  },
+  'edge-deploy.yml › deploy › Sondes de fumee apres deploiement': {
+    affiche: 'codes HTTP et verdicts des sondes',
+  },
   'stripe-prices.yml › grille › Comparer la grille Stripe au code': {
     affiche: 'grille de prix : montants et identifiants de prix, aucun client',
   },
