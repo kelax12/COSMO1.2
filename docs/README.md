@@ -62,6 +62,34 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-26 · **les gardes du 10-23 mesurent enfin : 968 → 969**
+
+Axel a posé les quatre secrets (`SENTRY_AUTH_TOKEN`, `SECURITY_ALERTS_TOKEN`,
+`GSC_SERVICE_ACCOUNT_JSON`, `BING_WEBMASTER_API_KEY`) et remplacé `VERCEL_TOKEN`. Les gardes
+posées le 10-23 ont tourné pour la première fois. Main est vert depuis `ca6ebd22` (PR n° 152 et
+155 réunies : journal légal du médiateur SMP, plafonds `legalTerms` 11 000 o et `legal` 3 800 o
+sur décision d'Axel, copie du hero recapturée après la grille du 10-25).
+
+| Garde | Verdict | Ce qu'elle a vu |
+|---|---|---|
+| `Signaux SEO` | ✅ | 28 j : 374 impressions, 6 clics, position 9,8 ; non-marque 7 impressions, position 16 |
+| `Erreurs de prod` · Sentry | 🔴 voulu | **COSMO-40** « pagination truncated: kr_completions » : un vrai défaut, invisible jusqu'ici |
+| `Erreurs de prod` · Vercel | ✅ | lecture des journaux après remplacement du jeton (403 au premier run) |
+| `Erreurs de prod` · Supabase | 🟡 | 3 112 requêtes, un couple nouveau : 2 × 401 sur `get_my_tasks`, non expliqué |
+| `Detection violation` | ⏳ | secret posé ; le workflow vit dans la PR n° 125, non fusionnée |
+| LCP de l'article de blog | ⏳ | PR n° 161 : captures en 800 px par `srcset`, LCP simulé 1,52 / 1,74 / 1,74 s contre 2,1 à 2,3 s ; en attente de fusion |
+
+| Audit | 10-25 | **10-26** | Δ | Pourquoi |
+|---|---|---|---|---|
+| [SEO](./SEO.md) | 79 | **80** | **+1** | AM-4 : le résultat (position, clics, backlinks) est mesuré par une garde verte, plus à la main |
+| Les dix autres | | inchangés | 0 | `OBSERVABILITE.md` reste non noté : sa garde mesure, mais une note demande un audit du domaine, pas un premier run |
+
+**Reste à faire, et qui** : corriger COSMO-40 (code) ; expliquer les 401 sur `get_my_tasks` (code) ;
+fusionner la PR n° 125 et la n° 161 ; puis la liste du 10-25, inchangée (déploiement des Edge
+Functions ou PR n° 123, recalage de `Posture`, mig. `227`, recette Stripe réelle, lecteurs d'écran).
+
+---
+
 ## Mise à jour du 2026-10-25 · **29 PR fusionnées, angles morts outillés : 962 → 968**
 
 Consigne d'Axel (2026-10-23) : corriger la dette technique et les failles, repérer tous les
