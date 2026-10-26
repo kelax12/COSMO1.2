@@ -69,8 +69,8 @@ export interface IKRCompletionsRepository {
   getFiltered(filters: KRCompletionFilters): Promise<KRCompletion[]>;
   /**
    * Le journal ENTIER de la personne connectée, pour l'export de portabilité
-   * (RGPD art. 20). `getAll()` est borné à 500 lignes pour le tableau de bord :
-   * un export tronqué serait un défaut de conformité.
+   * (RGPD art. 20), filtré explicitement sur `user_id`. `getAll()` pagine aussi
+   * (COSMO-40) mais reste sous le seul périmètre de la RLS.
    */
   getAllForExport(): Promise<KRCompletion[]>;
 
