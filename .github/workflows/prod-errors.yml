@@ -1,0 +1,83 @@
+# ══════════════════════════════════════════════════════════════════
+# ERREURS DE PRODUCTION · Sentry, Vercel, Supabase (OBSERVABILITE AM-1 à AM-3)
+# ══════════════════════════════════════════════════════════════════
+#
+# 🔴 POURQUOI CE JOB EXISTE. Jusqu'au 2026-10-23, trois sources savaient que
+# la production se trompait et rien ne les relisait : les issues Sentry, les
+# erreurs d'exécution de `api/collect.ts` chez Vercel, les journaux de la
+# passerelle Supabase. Une régression vue par cent utilisateurs ne faisait
+# échouer aucun job.
+#
+# CE QU'IL FAIT : `scripts/check-prod-errors.mjs` lit les 24 dernières heures
+# des trois sources et les compare à `scripts/prod-errors.reference.json`. Un
+# dépassement fait échouer le job, et `ci-alert.yml` pousse l'échec sur le
+# webhook ops. Lecture seule partout : aucune écriture en base, chez Vercel
+# ou chez Sentry.
+#
+# 🔴 AUCUNE ÉTAPE N'EST CONDITIONNELLE À LA PRÉSENCE DE SON SECRET. Un jeton
+# absent fait ÉCHOUER le job (le script le nomme), jamais un `::warning::`
+# dans un run vert : le motif retiré d'`uptime.yml` le 2026-09-03.
+#
+# Planifié chaque jour à 05:53 UTC, donc AVANT le résumé quotidien de 06:00 :
+# le rouge arrive sur le canal d'alerte dans la même matinée que le digest.
+# ══════════════════════════════════════════════════════════════════
+name: Erreurs de prod
+
+on:
+  schedule:
+    # Minute décalée des autres crons du dépôt (`posture` 07, `edge-deploy-drift` 41).
+    - cron: '53 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prod-errors
+  cancel-in-progress: false
+
+jobs:
+  erreurs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - name: Sentry, Vercel et Supabase sur 24 h
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -o pipefail
+          if npm run check:prod-errors 2>&1 | tee erreurs.log; then
+            {
+              echo '### Erreurs de production (24 h)'
+              echo ''
+              echo '```'
+              cat erreurs.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo '### ✖ Erreurs de production : ecart a la reference'
+            echo ''
+            echo '```'
+            tail -n 80 erreurs.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # Les LOGS d'un run exigent une authentification même sur un dépôt
+          # public ; les ANNOTATIONS non. C'est la seule forme de diagnostic
+          # qu'un agent sans compte GitHub puisse relire.
+          tail -n 25 erreurs.log | while IFS= read -r LIGNE; do
+            echo "::error title=prod-errors::${LIGNE}"
+          done
+          exit 1

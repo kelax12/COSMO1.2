@@ -109,15 +109,28 @@ describe('copie du hero : visible pour le seul visiteur sans session', () => {
     expect(prerender).toContain('<div id="lp-hero" inert data-locale="${locale}" data-track="${track}">${fragment}</div>');
     expect(prerender).toMatch(/replace\('<div id="root">', \(\) => `<div id="lp-hero"/);
     expect(prerender).toMatch(/let home = injectHeroCopy\(buildPage\(homeRoute/);
-    expect(prerender).toContain('route.heroTrack ? injectHeroCopy(page, locale, route.heroTrack) : page');
+    expect(prerender).toContain('if (route.heroTrack) sortie = injectHeroCopy(page, locale, route.heroTrack);');
+    expect(prerender).toContain('else if (route.copy) sortie = await injectContentCopy(page, locale, route.copy, path);');
+    // Même calque pour la copie des pages de contenu, rendue par React au build.
+    expect(prerender).toContain('<div id="lp-hero" inert data-locale="${locale}" data-track="contenu">${fragment}</div>');
   });
 
-  it('seules la home et l’entreprise sont PEINTES avant React ; les autres pages gardent le spinner', () => {
+  it('home et entreprise peignent leur capture, les pages de contenu leur rendu React ; jamais le texte SEO brut', () => {
     const prerender = read('prerender.mjs');
-    // Le texte SEO brut, sur fond blanc, peint sur le guide, le blog… : arbitré le 2026-10-21.
+    // Le texte SEO brut, sur fond blanc, peint sur le guide, le blog… : retiré le 2026-10-21.
+    // Une page n'est PEINTE avant React que si elle porte une copie (capture ou rendu serveur).
     expect(prerender).toContain("if (route.heroTrack) out = out.replace(/<html(?![^>]*data-prerendered)/, '<html data-prerendered');");
+    expect(prerender).toMatch(/async function injectContentCopy[\s\S]{0,1600}out = out\.replace\(\/<html\(\?!\[\^>\]\*data-prerendered\)\/, '<html data-prerendered'\)/);
     expect((prerender.match(/heroTrack: '/g) ?? []).length).toBe(2);
+    // Guide, à-propos, blog, articles, cas d'usage, trois pages légales.
+    expect((prerender.match(/^\s+copy: (?:'[a-zA-Z]+'|u\.routeId),$/gm) ?? []).length).toBe(8);
     expect(index).toMatch(/html\[data-prerendered\] #lp-hero\[data-track=entreprise\]\{background:#08090C\}/);
+  });
+
+  it('la copie d’une page de contenu est relevée dans la frontière Suspense de la page, pas avant', () => {
+    const app = read('src/App.tsx');
+    expect(app).toMatch(/<Suspense fallback=\{<BootScreen \/>\}>\s*\{children\}\s*<ReleveCopie \/>\s*<\/Suspense>/);
+    expect(app).toMatch(/const ReleveCopie[\s\S]{0,120}useLayoutEffect\(\(\) => \{\s*releasePrerenderHero\(\);/);
   });
 
   it('les routes publiques se chargent derrière BootScreen, le spinner de démarrage à l’identique', () => {
@@ -220,5 +233,36 @@ describe('landing-hero-css : la CSS de la copie, confinée sous #lp-hero', () =>
     expect(out).toContain('@font-face');
     expect(out).toContain('font-display:block');
     expect(out).not.toContain('font-display:swap');
+  });
+});
+
+describe('scopedCssFor, copie d’une page de contenu à thème (2026-10-23)', () => {
+  const html = '<div class="x"><p class="dark:text-y z">t</p></div>';
+  const css = [
+    ':root{--bg:255 255 255}',
+    '.dark{--bg:15 23 42}',
+    '.gris{--bg:36 41 46}',
+    '.dark:not(.gris):not(.noir) .x{color:blue}',
+    String.raw`:is(.dark .dark\:text-y){color:white}`,
+    '.dark .absente{color:red}',
+  ].join('\n');
+  const out: string = scopedCssFor(html, css, '#lp-hero', { themeSurHtml: true });
+
+  it('remonte les classes de thème sur <html>, au-dessus de la portée', () => {
+    expect(out).toContain('#lp-hero{--bg:255 255 255}');
+    expect(out).toContain('html.dark #lp-hero{--bg:15 23 42}');
+    expect(out).toContain('html.gris #lp-hero{--bg:36 41 46}');
+    expect(out).toContain('html.dark:not(.gris):not(.noir) #lp-hero .x{color:blue}');
+    expect(out).toContain(String.raw`html.dark #lp-hero :is(.dark\:text-y){color:white}`);
+  });
+
+  it('jette toujours une classe absente de la copie, thème ou pas', () => {
+    expect(out).not.toContain('absente');
+  });
+
+  it('témoin : sans l’option, la copie de la home ne lit aucun thème', () => {
+    const home: string = scopedCssFor(html, css);
+    expect(home).not.toContain('html.dark');
+    expect(home).not.toContain('--bg:15 23 42');
   });
 });

@@ -29,7 +29,7 @@
   "ci": {
     "collect": {
       "staticDistDir": "dist",
-      "numberOfRuns": 1,
+      "numberOfRuns": 3,
       "url": [
         "http://localhost/",
         "http://localhost/guide/",
@@ -61,13 +61,13 @@
         {
           "matchingUrlPattern": ".*",
           "assertions": {
-            "categories:accessibility": ["error", { "minScore": 0.9 }],
-            "categories:seo": ["error", { "minScore": 0.92 }],
+            "categories:accessibility": ["error", { "minScore": 0.9, "aggregationMethod": "median" }],
+            "categories:seo": ["error", { "minScore": 0.92, "aggregationMethod": "median" }],
             "categories:best-practices": ["warn", { "minScore": 0.9 }],
             "categories:performance": ["warn", { "minScore": 0.4 }],
-            "largest-contentful-paint": ["warn", { "maxNumericValue": 4500 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 3000, "aggregationMethod": "median" }],
             "total-blocking-time": ["warn", { "maxNumericValue": 4000 }],
-            "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+            "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1, "aggregationMethod": "median" }],
             "unused-javascript": "off",
             "uses-long-cache-ttl": "off",
             "csp-xss": "off"
@@ -83,7 +83,7 @@
           ],
           "matchingUrlPattern": "/guide/$",
           "assertions": {
-            "categories:accessibility": ["error", { "minScore": 1 }]
+            "categories:accessibility": ["error", { "minScore": 1, "aggregationMethod": "median" }]
           }
         },
         {
@@ -99,7 +99,7 @@
           ],
           "matchingUrlPattern": "^http://localhost(:\\d+)?/$",
           "assertions": {
-            "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }]
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2000, "aggregationMethod": "median" }]
           }
         },
         {
@@ -111,7 +111,37 @@
           ],
           "matchingUrlPattern": "/entreprise-presentation/$",
           "assertions": {
-            "largest-contentful-paint": ["error", { "maxNumericValue": 3000 }]
+            "largest-contentful-paint": ["error", { "maxNumericValue": 3000, "aggregationMethod": "median" }]
+          }
+        },
+        {
+          "_comment": [
+            "Cliquet LCP de /en/ (2026-10-22), meme plafond que la home : la meme",
+            "copie #lp-hero. 5 857 a 6 006 ms avant le correctif, l element LCP etant",
+            "le premier paragraphe du bandeau cookies (plus grand que le titre",
+            "anglais, deux lignes a 412 px). Le bandeau attend depuis le premier geste,",
+            "que Lighthouse ne fait jamais. Un rouge ici : lire l element LCP dans le",
+            "resume du job."
+          ],
+          "matchingUrlPattern": "/en/$",
+          "assertions": {
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2000, "aggregationMethod": "median" }]
+          }
+        },
+        {
+          "_comment": [
+            "Cliquet LCP des pages de CONTENU (2026-10-25), meme plafond que la home.",
+            "Elles peignent depuis ce jour leur propre rendu React, produit au build",
+            "(prerender.mjs, injectContentCopy) : 1 514 a 1 741 ms au run 40099712405",
+            "(66f76355), contre 4 450 a 5 610 ms avec le spinner (runs de main du",
+            "2026-10-22). Plafond a 2 000 ms, 15 % au-dessus du pire. Le global passe",
+            "en error a 3 000 ms, le plafond de l entreprise, la plus lente des pages",
+            "mesurees. Un rouge ici : la copie a diverge de la page, et React a repris",
+            "le LCP (element LCP non detache dans le resume du job). Jamais relever."
+          ],
+          "matchingUrlPattern": "/(guide|blog|blog/[a-z0-9-]+|pour-[a-z]+|a-propos)/$",
+          "assertions": {
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2000, "aggregationMethod": "median" }]
           }
         }
       ]

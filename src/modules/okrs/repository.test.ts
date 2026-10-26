@@ -10,6 +10,7 @@ import { LocalStorageOKRsRepository } from './repository';
 import { OKRS_STORAGE_KEY } from './constants';
 import { KR_COMPLETIONS_STORAGE_KEY, MAX_REPS_PER_WRITE } from '@/modules/kr-completions/constants';
 import type { OKR, KeyResult } from './types';
+import { localeStore } from '@/i18n/store';
 import type { KRCompletion } from '@/modules/kr-completions/types';
 
 const kr = (over: Partial<KeyResult> = {}): KeyResult => ({
@@ -41,6 +42,20 @@ describe('lecture & seed', () => {
     const all = await repo.getAll();
     expect(all.length).toBeGreaterThan(0);
     expect(localStorage.getItem(OKRS_STORAGE_KEY)).not.toBeNull();
+  });
+
+  it('seed anglais : titres ET unités des résultats clés traduits (revue M-50)', async () => {
+    localeStore.setLocale('en', { persist: false });
+    try {
+      const all = await new LocalStorageOKRsRepository().getAll();
+      const kr1 = all.find((o) => o.id === 'okr-1')?.keyResults.find((k) => k.id === 'kr-1');
+      expect(kr1?.title).toBe('Complete 90 tasks');
+      expect(kr1?.unit).toBe('tasks');
+      const units = all.flatMap((o) => o.keyResults.map((k) => k.unit));
+      expect(units.filter((u) => /[àâçéèêëîïôûù]|jours|semaines|séances|nuits|retours/.test(u))).toEqual([]);
+    } finally {
+      localeStore.setLocale('fr', { persist: false });
+    }
   });
 
   it('migre les anciens IDs de catégorie au chargement', async () => {

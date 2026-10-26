@@ -65,16 +65,22 @@ Deux comptes Stripe existent :
 `STRIPE_SECRET_KEY` en prod est une clé de **test** : les customers des vrais utilisateurs
 vivent dans le compte de test. Le compte live ne contient que la grille tarifaire ci-dessous.
 
-## Grille live — les 8 prix (créés le 2026-08-26)
+## Grille live — les 10 prix (créés le 2026-10-25)
 
-Tous en EUR, `tax_behavior: inclusive` (prix TTC, cf. plus bas).
+Tous en EUR, `tax_behavior: inclusive` (prix TTC, cf. plus bas). Décision d'Axel du
+2026-10-25 : prix de lancement, appelés à bouger. Palier `t100` nouveau (mig. `228`),
+remise annuelle ramenée de 30 % à 25 %. Aucun abonnement live n'existait ce jour-là.
 
-| Palier | Produit | Mensuel | Annuel (−30 %) |
+| Palier | Produit | Mensuel | Annuel (−25 %) |
 |---|---|---|---|
-| `t10` Équipe | `prod_V8kusrLcKpPYrC` | `price_1U8TQpHJLweDSN4FLNaWs3Wk` · 20 € | `price_1U8TRFHJLweDSN4FvGOJqLhz` · 168 € |
-| `t20` Département | `prod_V8kvSx9WNnuzfk` | `price_1U8TRgHJLweDSN4Fifkbi4q9` · 50 € | `price_1U8TS0HJLweDSN4FCtrBhKv7` · 420 € |
-| `t50` Entreprise | `prod_V8kvRAJaEAyuSY` | `price_1U8TSYHJLweDSN4Fqp30vV7b` · 100 € | `price_1U8TSyHJLweDSN4Fgzp7Cf8v` · 840 € |
-| `tmax` Illimité | `prod_V8kw1gh0f4HJx4` | `price_1U8TTEHJLweDSN4FZQe2hUfA` · 200 € | `price_1U8TTVHJLweDSN4FXWk53j5e` · 1 680 € |
+| `t10` Équipe | `prod_V8kusrLcKpPYrC` | `price_1UUSv1HJLweDSN4F1cuaFdAy` · 70 € | `price_1UUSvTHJLweDSN4FAOK6j1ri` · 630 € |
+| `t20` Département | `prod_V8kvSx9WNnuzfk` | `price_1UUSvUHJLweDSN4Fuk2T8ioT` · 150 € | `price_1UUSvVHJLweDSN4FSTO7V1fH` · 1 350 € |
+| `t50` Entreprise | `prod_V8kvRAJaEAyuSY` | `price_1UUSvXHJLweDSN4F22MOazIx` · 350 € | `price_1UUSvZHJLweDSN4FM8RSQbto` · 3 150 € |
+| `t100` Grande entreprise | `prod_VVTs7gwGuJIojd` | `price_1UUSvaHJLweDSN4FSDuxVniS` · 700 € | `price_1UUSvcHJLweDSN4F0r3KtHAr` · 6 300 € |
+| `tmax` Illimité (100+) | `prod_V8kw1gh0f4HJx4` | `price_1UUSvdHJLweDSN4FeUJPsa7I` · 1 000 € | `price_1UUSvgHJLweDSN4FZVV0sHjZ` · 9 000 € |
+
+Les 8 prix de la grille du 2026-08-26 (20/50/100/200 €, −30 %) sont **archivés**. Un produit
+ne doit porter qu'UN prix annuel actif : la dérivation refuse de choisir (`ambiguous`).
 
 Montants conformes à `ENTERPRISE_PRICING_TIERS` et à `yearlyTotalEur()`
 (`src/modules/billing/premium-config.ts`). Le palier est porté par

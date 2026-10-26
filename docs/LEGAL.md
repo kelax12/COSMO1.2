@@ -122,7 +122,7 @@ Détail des clauses : [`LEGAL-JOURNAL.md`](./LEGAL-JOURNAL.md) § 2026-09-24.
 | 5 | Consulter un conseil en propriété industrielle sur **COSMO** | F1, F2 |
 | 6 | Faire relire les CGU (6.3 surtout) et qualifier le **Data Act** | E11, A13, F8 |
 
-**Dormant, à régler avant de réarmer la facturation** : E4 (médiateur), E13 (bouton de
+**Dormant, à régler avant de réarmer la facturation** : E4 (pied de facture Stripe seulement), E13 (bouton de
 rétractation), E5 (portail de résiliation), et tout le bloc B à D. Le lien vers la plateforme
 européenne de règlement en ligne des litiges n'est **plus** exigé : elle a fermé le 20/07/2025.
 
@@ -235,10 +235,10 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
-| E1 | CGV communiquées avant le contrat | 🟡 | Section 5 réécrite le 2026-08-26 : elle décrit enfin **l'offre réellement vendue** (forfaits entreprise et non un « premium » inexistant), l'affichage TTC, la reconduction, la résiliation et le retour au forfait gratuit sans retrait de membre. Section 5 bis ajoutée pour la rétractation. ❌ Reste : les coordonnées du **médiateur** (dépend de E4, adhésion payante non souscrite) et une relecture juridique. |
+| E1 | CGV communiquées avant le contrat | 🟡 | Section 5 réécrite le 2026-08-26 : elle décrit enfin **l'offre réellement vendue** (forfaits entreprise et non un « premium » inexistant), l'affichage TTC, la reconduction, la résiliation et le retour au forfait gratuit sans retrait de membre. Section 5 bis ajoutée pour la rétractation. Coordonnées du médiateur ajoutées le 2026-10-25 (CGU 12 bis, cf. E4). ❌ Reste : une relecture juridique. |
 | E2 | Information précontractuelle | ✅ | Ajoutée le 2026-08-26 au-dessus des cases de consentement, là où le regard se pose avant l'engagement, et non seulement dans des CGU que personne n'ouvre : durée indéterminée, prix TTC, reconduction automatique, résiliation sans motif ni frais. Le montant exact est porté par la carte de palier juste en dessous. |
 | E3 | Rétractation 14 jours et double consentement | ✅ | Implémenté le 2026-08-26 dans `OrgBillingTab` : **deux cases distinctes**, jamais pré-cochées, demande expresse d'exécution immédiate **et** reconnaissance de renonciation. Sans les deux, `onSelect` n'est pas monté, donc aucun paiement ne peut être engagé. Recueilli côté COSMO et non via `consent_collection` de Stripe, qui exige une URL de CGV au Dashboard dont l'absence ferait **échouer** la création de session. CGU alignées (section 5 bis). |
-| E4 | Médiateur de la consommation | ❌ | Adhésion **payante et obligatoire**, coordonnées à publier dans les CGV et sur le site. Oubli classique, sanctionné par la DGCCRF. |
+| E4 | Médiateur de la consommation | 🟡 | **Adhésion faite** : Société Médiation Professionnelle (CPMN), courrier reçu le 2026-10-25 (texte intégral au § Médiateur de la consommation). Publié le 2026-10-25 dans les CGU (article 12 bis, texte imposé repris mot pour mot) et dans les mentions légales (5.p2). ❌ Reste : **le pied de facture Stripe**, action Dashboard d'Axel (Settings → Billing → Invoices → Default footer), sur le compte live. |
 | E5 | Résiliation en ligne (L215-1-1) | ❌ | 🔴 **Dégradé de 🟡 à ❌ le 2026-08-26 après vérification.** `/v1/billing_portal/configurations` renvoie **vide sur les DEUX comptes**, test et live : le portail client n'a jamais été configuré. `stripe-org-portal` ne passe aucun `configuration`, il compte donc sur un défaut inexistant, et Stripe refuse de créer la session tant que les réglages n'ont pas été enregistrés au Dashboard. La fonction porte d'ailleurs déjà l'alerte « customer cannot manage or cancel ». **Le bouton existe, la résiliation ne marche pas.** Correctif : Dashboard Stripe → Settings → Billing → Customer portal, activer l'annulation d'abonnement, enregistrer, sur les deux comptes. Non faisable par API depuis ici. ⚠️ **Dormant depuis le 2026-09-14** (`ENTERPRISE_BILLING_ENFORCED = false`, vérifié en base) : aucun abonnement Stripe n'existe, donc personne ne peut se heurter à ce défaut aujourd'hui. Le défaut lui-même n'a pas été corrigé — voir § État au 2026-09-14. |
 | E6 | Information de reconduction tacite | 🟡 | Construit et **déployé** le 2026-08-26. Mig. 126 appliquée (`renewal_notices`, clé primaire `(org_id, period_end)` qui rend l'envoi idempotent) + Edge Function `renewal-notice` + workflow CI quotidien. Fenêtre J+30 à J+60, dans les bornes légales de 1 à 3 mois. Preuve enregistrée **après** l'envoi, jamais avant. ⚠️ **Passe au vert quand deux secrets sont posés** : `CRON_SECRET` (Supabase et GitHub) et `RESEND_API_KEY`. Sans eux la fonction refuse tout appel, en échec fermé. |
 | E7 | Affichage des prix TTC | ✅ | Les 8 prix live sont en `tax_behavior: inclusive`, et la mention « Tous les prix sont affichés TTC » est rendue sous la grille publique (`PricingSection.tsx`) **et** sous la grille produit (`OrgBillingTab.tsx`), en fr et en en. Corrigé le 2026-08-26. |
@@ -246,7 +246,7 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | E10 | Opposabilité des CGU (C. civ. art. 1119) | ✅ | **2026-10-13** : même trou qu'A11 (inscription Google depuis l'écran de connexion), corrigé le même jour. Les comptes créés ainsi avant cette date n'ont pas vu les CGU : le préavis de `M-63` est l'occasion de les leur présenter. **Corrigé le 2026-09-24.** Les CGU se disaient acceptées « en créant un compte » sans jamais avoir été présentées à l'inscription. Même correctif que A11 : lien sous le bouton de création de compte. |
 | E11 | Clauses abusives (C. conso R212-1, liste noire) | 🟡 | **2026-10-13** : 9.p1 « du fait d'un tiers » restreint au fait imprévisible et insurmontable d'un tiers étranger au service (L221-15) ; 12.p3 « dans la mesure où la loi le permet » (CPC art. 48 : clause attributive entre commerçants seulement). **Réécrites le 2026-09-24**, non relues par un juriste. Le plafond de responsabilité aux sommes versées valait **0 €** pour un utilisateur gratuit (R212-1 6°) : il est réservé aux professionnels. « Décline toute responsabilité » (8) retiré. Suspension « sans préavis » (3.2) remplacée par information préalable, motif et contestation. Modification unilatérale (11) : préavis de 30 jours et droit de partir sans frais. |
 | E12 | Formulaire type de rétractation (L221-5, R221-1) | ✅ | **Ajouté le 2026-09-24** (CGU 5 bis.4), avec la renonciation réécrite selon L221-25 : pour un abonnement continu, le consommateur qui se rétracte doit le prorata, il ne perd son droit qu'à exécution complète. Dormant tant que rien n'est vendu. |
-| E14 | Information précontractuelle du service GRATUIT (directive 2019/2161, C. conso L111-1, L221-5) | 🟡 | **2026-10-13** : le service gratuit est fourni contre des données personnelles, le droit de la consommation à distance s'applique donc sans attendre le premier euro. Ajoutés aux CGU : identité de l'éditeur (1.3), garantie légale de conformité et ses modalités (9.4). ❌ Restent l'adresse et le téléphone (cf. A3) et la qualification d'un **médiateur** pour un service gratuit (E4). |
+| E14 | Information précontractuelle du service GRATUIT (directive 2019/2161, C. conso L111-1, L221-5) | 🟡 | **2026-10-13** : le service gratuit est fourni contre des données personnelles, le droit de la consommation à distance s'applique donc sans attendre le premier euro. Ajoutés aux CGU : identité de l'éditeur (1.3), garantie légale de conformité et ses modalités (9.4). ❌ Restent l'adresse et le téléphone (cf. A3) et la qualification du **médiateur** (adhésion faite le 2026-10-25) pour un service gratuit (E4, `M-76`). |
 | E13 | Fonction de rétractation en ligne (directive 2023/2673) | ❌ | Applicable depuis le 19/06/2026 aux contrats conclus en ligne : un bouton qui permet de se rétracter pendant les 14 jours. Absent. `stripe-org-refund` (C-65) en fait l'essentiel, sans le libellé attendu. ⚠️ Transposition française à vérifier. **Dormant** (`ENTERPRISE_BILLING_ENFORCED = false`, relevé le 2026-09-24). |
 | E9 | Garantie de conformité du service numérique | ✅ | Audit fait le 2026-08-26 sur les 216 chaînes du parcours entreprise. **Bonne nouvelle** : aucune intégration inexistante n'est promise (ni SSO, ni API, ni Slack), et les réponses de la FAQ sur le cloisonnement et le non-retrait de membres sont exactes. **Deux promesses citées comme non tenues à l'époque** : `pricing.i5` « résiliable à tout moment » et `hero.reassurance` « réversible à tout moment », parce que la résiliation Stripe ne fonctionnait pas (E5). ✅ **Repassé au vert le 2026-09-14** : ces deux phrases sont désormais **vraies par construction**, le mode entreprise étant gratuit et sans abonnement (`ENTERPRISE_BILLING_ENFORCED = false` vérifié en base) — il n'y a rien à résilier, donc pas besoin du portail Stripe pour que la promesse tienne. Le jour où la facturation est réarmée, cette ligne redevient 🟡 tant qu'E5 n'est pas corrigé. |
 
@@ -530,7 +530,7 @@ S'applique **à toute l'offre**, par l'effet de la décision structurante.
 |---|---|---|
 | CGV communiquées avant le contrat | Conso. art. L111-1, L221-5 | À faire rédiger. Un modèle générique est un risque, pas une protection. |
 | Droit de rétractation de 14 jours | Conso. art. L221-18, L221-28 | Écartable pour un contenu numérique **seulement** avec accord exprès à l'exécution immédiate **et** renonciation explicite. **Les deux cases, pas une.** |
-| Médiateur de la consommation | Conso. art. L612-1, L616-1 | **Adhésion payante et obligatoire**, coordonnées à publier. Oubli classique, sanctionné par la DGCCRF. |
+| Médiateur de la consommation | Conso. art. L612-1, L616-1 | ✅ Adhésion Société Médiation Professionnelle (2026-10-25), publiée CGU 12 bis + mentions légales. Reste le pied de facture (E4). |
 | Résiliation en ligne | Conso. art. L215-1-1 | ✅ probablement satisfait par `stripe-org-portal`, **à tester réellement**. |
 | Information de reconduction tacite | Conso. art. L215-1 | 🔴 Déclenchée par la facturation **annuelle** livrée le 2026-08-25. À automatiser. |
 | Prix TTC affichés | Conso. art. L112-1 | ✅ cohérent avec `tax_behavior: inclusive`. Reste à afficher la mention. |
@@ -538,6 +538,40 @@ S'applique **à toute l'offre**, par l'effet de la décision structurante.
 | Garantie de conformité du service numérique | Conso. art. L224-25-1 s. | ⚠️ Une fonctionnalité promise sur la landing et non livrée devient un défaut opposable. |
 
 ---
+
+### Médiateur de la consommation · courrier reçu le 2026-10-25
+
+Médiateur désigné : **Société Médiation Professionnelle**, membre de la CPMN (syndicat des
+médiateurs professionnels). Texte fourni par le médiateur, **à reprendre mot pour mot** :
+
+**1. Dans les conditions générales de vente** (rendu : CGU article 12 bis, `terms.s12bis`) :
+
+> LITIGE – MEDIATION DE LA CONSOMMATION
+>
+> En cas de litige entre le Client et l'entreprise, ceux-ci s'efforceront de le résoudre à
+> l'amiable (le Client adressera une réclamation écrite auprès du professionnel ou, le cas
+> échéant, auprès du Service Relations Clientèle du professionnel).
+> A défaut d'accord amiable ou en l'absence de réponse du professionnel dans un délai
+> raisonnable d'un (1) mois, le Client consommateur au sens de l'article L.612-2 du code de la
+> consommation a la possibilité de saisir gratuitement, si un désaccord subsiste, le médiateur
+> compétent inscrit sur la liste des médiateurs établie par la Commission d'évaluation et de
+> contrôle de la médiation de la consommation en application de l'article L.615-1 du code de la
+> consommation, à savoir :
+> La Société Médiation Professionnelle
+> www.mediateur-consommation-smp.fr
+> Alteritae 5 rue Salvaing 12000 Rodez
+
+**2. Sur les factures** :
+
+> Société Médiation Professionnelle
+> www.mediateur-consommation-smp.fr
+> Alteritae 5 rue Salvaing 12000 Rodez
+
+**3. Sur le site internet** : les mêmes informations (rendu : mentions légales 5.p2 + CGU 12 bis).
+
+Seule adaptation : « Service Relations Clientèle » remplacé par l'adresse
+`contact@thecosmo.app`, COSMO n'ayant pas de tel service. Les factures sont émises par Stripe :
+le bloc 2 se pose dans le pied de facture par défaut du Dashboard (action manuelle, E4).
 
 ## 5. Produit, marque et dépendances
 

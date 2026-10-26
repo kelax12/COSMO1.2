@@ -193,14 +193,22 @@ const PLAFONDS_PAR_CHUNK = {
   UseCasePage: 16_500, // 15 591 o
   // ⚖️ RELEVÉ SUR ARBITRAGE D'AXEL le 2026-10-22, comme le 2026-10-13 : identification de l'éditeur
   // (EI, SIREN, téléphone, LCEN art. 1-1, `e2e7679f`). Chargé par la seule page mentions légales.
-  legal: 3_500, // ≈ 3 330 o sur 2 chunks le 2026-10-22 ; 3 000 jusque-là (2 693 o le 2026-10-01)
+  // 3 800 depuis le 2026-10-25, décision d'Axel : les coordonnées du médiateur de la consommation
+  // (mentions légales s5 p2, imposées par la Société Médiation Professionnelle, Conso. L616-1)
+  // portent le catalogue à 3,6 ko. TEXTE LÉGAL OBLIGATOIRE, pas du code à alléger.
+  // 3 500 du 2026-10-22 au 10-25 (≈ 3 330 o), 3 000 avant (2 693 o le 2026-10-01).
+  legal: 3_800,
   // ⚖️ RELEVÉS SUR ARBITRAGE D'AXEL le 2026-10-13, pas pour faire passer la CI : l'audit juridique
   // du jour a ajouté de l'information DUE (RGPD art. 13, C. conso L111-1, L224-25-1). Ces deux
   // catalogues ne sont chargés que par leur page légale, jamais sur le chemin critique.
   // Relevé de nouveau sur arbitrage d'Axel le 2026-10-22 : section 7 ter « Prospection » (RGPD art. 14,
   // `899f707f`) et identification du responsable (art. 13.1.a, `e2e7679f`).
   legalPrivacy: 13_000, // ≈ 12 760 o sur 2 chunks le 2026-10-22 ; 12 200 du 2026-10-13 au 10-22, 9 900 avant
-  legalTerms: 10_300, // 9 824 o sur 2 chunks (4 693 + 5 131) — chargé par la seule page CGU ; 9 700 jusqu'au 2026-10-13
+  // 11 000 depuis le 2026-10-25, décision d'Axel : l'article 12 bis (médiation de la consommation,
+  // texte imposé par la Société Médiation Professionnelle, Conso. L616-1) porte le catalogue à
+  // 10,8 ko. Le contenu est un TEXTE LÉGAL OBLIGATOIRE, pas du code à alléger ; chargé par la seule
+  // page CGU. 10 300 du 2026-10-13 au 10-25, 9 700 avant.
+  legalTerms: 11_000,
   OKRPage: 15_000, // 14 192 o
   'vendor-router': 14_500, // 13 729 o
   TeamTaskModal: 12_000, // 11 437 o (2026-10-01 : commentaires et arbre de catégories chargés à la demande)

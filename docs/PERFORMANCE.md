@@ -1,4 +1,4 @@
-<!-- note-audit: note=95 -->
+<!-- note-audit: note=97 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -238,7 +238,7 @@
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
 | AM-1 | 🔴 **Lighthouse tourne en preset DESKTOP uniquement.** Aucune mesure de performance **mobile** en continu, alors que c'est le terminal du trafic visé et que [`MOBILE.md`](./MOBILE.md) est le document le moins bien noté du dépôt | `lighthouserc.json` : `"preset": "desktop"` | ✅ **OUTILLÉ le 2026-09-20** · `lighthouserc.mobile.json` + passe mobile de `ci.yml` (`C-84`) — 🔴 ne prouve PAS : que les seuils soient justes : **première pose**, prudente faute de Chrome sur le poste, à rabaisser au mesuré dès le 1ᵉʳ run réel · 🔎 🔴 **2026-09-22 : LCP mobile 5,6 à 8,3 s sur 8 URLs sur 8**, en `warn` donc job vert, et le résumé CI écrit « aucun rapport mobile produit » : jamais lu. → `C-116` · 🔎 ✅ **2026-09-24 : cause trouvée**, cf. § « C-116 » juste sous ce tableau. Le résumé lisait un dossier jamais écrit, et l'artefact ignorait un dossier caché : corrigés |
-| AM-2 | **La performance n'est PAS bloquante, et LCP / TBT non plus.** Seuls `accessibility`, `seo` et `cumulative-layout-shift` sont en `error` | `lighthouserc.json` : `"categories:performance": ["warn", …]`, `largest-contentful-paint` et `total-blocking-time` en `warn` | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **arbitrage assumé, non rendu** : rendre `performance`, LCP et TBT bloquants suppose d'accepter que le runner varie. Aucun item ne le porte — *(jugé outillable le 09-16 : arbitrage assumé (le runner varie), mais l'angle mort doit être nommé)* |
+| AM-2 | **La performance n'est PAS bloquante, et LCP / TBT non plus.** Seuls `accessibility`, `seo` et `cumulative-layout-shift` sont en `error` | `lighthouserc.json` : `"categories:performance": ["warn", …]`, `largest-contentful-paint` et `total-blocking-time` en `warn` | ✅ **LCP OUTILLÉ le 2026-10-25** (PR #149) · `largest-contentful-paint` en `error` sur les 8 URLs mobiles : 2 000 ms sur `/`, `/en/` et les pages de contenu, 3 000 ms partout ailleurs (plafond de l'entreprise). Les pages de contenu peignent leur propre rendu React, produit au build (`prerender.mjs`, `injectContentCopy`, `src/prerender/content-copy.tsx`) : CI mobile `/guide/` **5,6 → 1,67 s**, `/blog/` 5,0 → 1,51 s, article 5,4 → 1,74 s, `/pour-freelances/` et `/a-propos/` 4,5 → 1,66 s, `/en/` 6,0 → 1,67 s (run `40099712405`, `66f76355`, contre les runs de `main` du 2026-10-22) · 🔴 ne prouve PAS : TBT et `categories:performance` restent en `warn` (le runner varie, TBT 16 à 202 ms au même run) ; une seule passe par URL · 🔎 **2026-10-25 : TROIS mesures par URL, verdict sur la MÉDIANE** (`numberOfRuns` 1 → 3, `aggregationMethod: "median"` sur les neuf assertions `error`). Une seule mesure laissait le runner trancher : la PR n° 139, qui n'ajoute que des tests, a mesuré 2 268 ms contre un plafond de 2 000 alors que `main` passait. ⚠️ La médiane est posée **explicitement** : l'agrégation par défaut de Lighthouse CI est `optimistic` (la MEILLEURE des trois), qui aurait rendu chaque gate plus indulgente qu'avec une seule mesure. Seuils inchangés |
 | AM-3 | **Les chunks LAZY n'ont aucun plafond.** Le budget ne couvre que le chemin critique et l'entrée. Une page lazy peut grossir sans limite | `scripts/check-bundle-budget.mjs` : « Les chunks lazy ne sont payés que par ceux qui ouvrent l'écran correspondant ». `BUDGETS` ne porte que `critical` et `entry` | ✅ **OUTILLÉ le 2026-09-20** · **30 plafonds par chunk**, posés au poids du jour (`C-85`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé** : un plafond générique de 70 ko existait ; ce qui manquait était un plafond **par chunk** · 🔎 ✅ **2026-09-22 : il a mordu** : `TasksPage` 37,7 ko > 37,0 à `HEAD`. → `C-117` |
 | AM-4 | **4 URLs mesurées sur les 45 du sitemap** | `lighthouserc.json` : `/`, `/guide/`, `/blog/`, `/pour-freelances/`. `dist/sitemap.xml` en porte **45** | ✅ **OUTILLÉ le 2026-09-20** · passe mobile Lighthouse, 4 → **8 URLs** (`C-84`) — 🔴 ne prouve PAS : la couverture : 8 URLs restent 8 URLs, la proportion s'améliore sans se fermer |
 | AM-5 | **Aucune mesure du coût SERVEUR en continu.** Les plans d'exécution et les temps de RPC sont rejoués à la main, à chaque passe | aucun workflow ne joue d'`EXPLAIN` | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` · EXPLAIN sous RLS, rôle `authenticated`, transaction annulée (`C-87`) — 🔴 ne prouve PAS : le coût **facturé** (Supabase ne l'expose pas) ni la charge réelle (c'est `scalability-volume`) |
@@ -374,6 +374,17 @@ devant de 440 à 639 px. Ce serait faire passer la mesure, pas corriger la page.
 | 2. Bandeau **peint par le prérendu**, relevé par React | ≈ FCP, ~0,9 s | le bandeau couvre le hero dès la première image ; ses boutons sont inertes jusqu'au montage (4 à 5 s sur mobile lent) ; le script inline doit relire l'expiration à six mois (empreinte CSP) ; une capture et une garde de plus |
 | 3. **Texte plus court**, chaque paragraphe sous ~20 000 px² (trois lignes à 412 px) | la copie, ~1,5 s | relecture juridique de la surface de recueil (A4 de `LEGAL.md`, `LEGAL-JOURNAL.md`) ; reste lié à la longueur du titre |
 | 4. Couper en trois | vert en CI seulement | rejeté ci-dessus |
+
+**Option 1, appliquée en attendant l'arbitrage** (`CookieBanner.tsx`) : plus de minuterie, le
+bandeau se monte au premier `click`, `keydown`, `wheel` ou `touchmove`. Pas `scroll`, qu'un
+défilement programmatique émet sans geste. 🔴 **Un geste RÉSOLU, jamais son début** (2026-10-25) :
+monté au `pointerdown` ou au `touchstart`, le bandeau glissait sous le doigt avant le `click`, qui
+tombait sur lui, et le premier tap sur le CTA de la landing ne menait nulle part (e2e C-97, CPU ×4,
+rouge sur ses trois essais dans les PR #116 et #149). `largest-contentful-paint` passe en `error` à
+2 000 ms sur `/en/`, comme sur `/`. La garde visuelle des pages publiques émet une touche neutre
+avant de chercher le bandeau. `/en/` : **1 671 ms** en CI mobile (run `40099712405`, `66f76355`),
+élément LCP dans la copie, contre 5 857 à 6 006 ms. Pour revenir à l'option 2 ou 3, retirer aussi
+le cliquet `/en/` le temps de la mesure.
 
 **Pages de contenu : l'arbitrage de `26a0faac` reposait sur 2,4 à 3,4 s mesurés en local, la CI
 mesure 4,5 à 5,6 s.** Même bridage (412 px, CPU ×4, 4G lente simulée), quatre runs concordants.
@@ -801,6 +812,11 @@ l'est bien quand on fait défiler vers la section, où le graphique s'affiche.
 ---
 
 ## Vendor chunks isolés (commenter toute modif)
+
+🔴 **2026-10-23 · un filtre `manualChunks` se termine par `/`.** `id.includes('node_modules/react')`
+rangeait aussi `react-day-picker`, `react-redux`, `react-remove-scroll`… dans `vendor-react`, donc
+dans le chemin critique. Corrigé à la migration React 19 : chemin critique 328,8 → 302,6 ko gzip,
+`vendor-react` 69,2 ko. Mesures : [`MIGRATION-REACT19.md`](./MIGRATION-REACT19.md) §0.
 
 **Tailles réelles, `npm run build` du 2026-08-25** (brut / gzip). Les colonnes précédentes
 gardent les mesures antérieures pour rendre la dérive lisible :

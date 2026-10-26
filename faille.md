@@ -33,6 +33,11 @@ et les **règles durables** tirées des audits.
   (déploiement refusé à l'agent, [`DEPLOYMENT.md`](./docs/DEPLOYMENT.md) AM-6). Journaux 24 h :
   **0** réponse 5xx, 5 appels non signés au webhook Stripe refusés, détail dans
   [`docs/OBSERVABILITE.md`](./docs/OBSERVABILITE.md), audit ouvert ce jour. Note **87 → 87**.
+  ✅ **Relu le 2026-10-25** (passe finale, 29 PR fusionnées du 10-23 au 10-25) : l'audit du code
+  serveur à froid (PR n° 141) trouve **SV-1 à SV-12**, détail § « SV » plus bas. Les neuf correctifs
+  sont sur `main` et **pas en production** : `Edge deploy drift` rouge depuis le 10-25 12:38
+  (douze fonctions divergent). Mig. `227` (index de FK) commitée, déclarée non appliquée.
+  `zod` 3 → 4 (`GHSA-mrhx-c7xc-m3w5`, haute, PR n° 136) : `npm audit --omit=dev` à **0**. Note **87 → 84**.
   ✅ **Remesuré le 2026-10-19** (`TR-1`) : mig. `223` appliquée (ledger
   `20261019122246`, **173** entrées) et relue au catalogue, advisors **`13 / 84 / 2 / 1`**, sonde
   `anon` sur `track_hit` refusée. Note **86 → 87**.
@@ -74,7 +79,7 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → 86 → 87 → 87 → 87 → **87 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → 2026-10-19 → 2026-10-20 → 2026-10-22 → **2026-10-23**)
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → 86 → 87 → 87 → 87 → 87 → **84 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → 2026-10-19 → 2026-10-20 → 2026-10-22 → 2026-10-23 → **2026-10-25**)
 
 > ### ⚪ 2026-10-22 · 0 : la bascule live est faite proprement, son chemin d'argent reste à jouer
 >
@@ -531,6 +536,38 @@ le journal montrerait un encaissement sans son remboursement. Gestes : `a-faire-
 ---
 
 
+## 🟠 SV · audit du code serveur à froid (2026-10-24) · CORRIGÉ DANS LE DÉPÔT, NON DÉPLOYÉ
+
+PR n° 141 (`a9a1d1a8`, fusionnée le 2026-10-25). Périmètre : les 13 Edge Functions et leurs 11
+modules `_shared/`, `api/collect.ts`, les fonctions SQL des mig. `213` à `226`. Droits
+`EXECUTE` et `search_path` des 24 fonctions `DEFINER` de ces migrations relus en production,
+en lecture : égaux au dépôt, **0** fonction `DEFINER` sans `search_path` sur 148.
+
+🔴 **Aucun de ces correctifs ne protège encore personne** : la production exécute l'ancien code
+tant que les douze fonctions ne sont pas redéployées depuis `main` (geste d'Axel, ou fusion de la
+PR n° 123, déploiement continu). ⚠️ **Aucun `deno check`** n'existe ni sur le poste ni en CI : le
+premier déploiement est le premier passage de ces points d'entrée par un compilateur Deno.
+Relancer `npm run check:edge` et `check:edge-smoke` juste après.
+
+| # | Finding | Gravité | État |
+|---|---|---|---|
+| **SV-1** | Un admin dont l'accès a **expiré** envoie encore des invitations et vérifie des domaines (`send-org-invite`, `verify-org-domain` ne testaient que `suspended_at`) | 🟠 | ✅ dépôt (`_shared/org-membership.ts`, même borne que `is_org_member`) · ⏳ non déployé |
+| **SV-2** | Le propriétaire qui efface son compte transmet l'organisation, donc sa facturation, à un membre **suspendu ou expiré** | 🟠 | ✅ dépôt (`pickOrgSuccessor` : admin actif, puis membre actif) · ⏳ non déployé · 🟡 **arbitrage d'Axel** : s'il ne reste QUE des inactifs, l'ancien choix est gardé, sinon `ON DELETE CASCADE` détruit l'organisation et les données des autres |
+| **SV-3** | Le plafond de `report-bug` (seul plafond d'un appelant anonyme) se contournait en forgeant `x-forwarded-for` : e-mails illimités avec la clé anon publique | 🟠 | ✅ dépôt (`cf-connecting-ip`, seau commun des anonymes 30/j, plafond de fonction 100/j) · ⏳ non déployé · ⚠️ **PLAUSIBLE, non rejoué** : à rejouer après déploiement (deux appels, deux en-têtes, même seau) |
+| **SV-4** | `stripe-create-checkout` (premium particulier) appelable avec la clé Stripe **live**, sans les consentements L221-28 | 🟡 | ✅ dépôt (`PERSONAL_CHECKOUT_ENABLED = false`, 403 avant tout appel Stripe, suit `PREMIUM_ENFORCED`) · ⏳ non déployé |
+| **SV-5** | Injection HTML dans l'avis de reconduction L215-1 par le nom de l'organisation | 🟡 | ✅ dépôt (`_shared/renewal-notice-text.ts`, échappement) · ⏳ non déployé |
+| **SV-6** | Sans `STRIPE_WEBHOOK_SECRET`, chaque event repart en 400 comme une requête forgée, sans alerte | 🟡 | ✅ dépôt (503 et `opsAlert` avant la signature) · ⏳ non déployé |
+| **SV-7** | `org-webhook-dispatch` remet le compteur d'échecs à 1 sur panne de lecture : une URL morte n'est jamais coupée | 🟢 | ✅ dépôt · ⏳ non déployé |
+| **SV-8** | `stripe-org-checkout` avalait l'erreur de la lecture « déjà abonné » : sur panne, un abonné part sur un **second checkout** et perd le lien de ses factures | 🟠 | ✅ dépôt (erreurs relancées, 500 et alerte ; garde `edge-swallowed-errors` étendue) · ⏳ non déployé |
+| **SV-9** | `inactive-accounts` envoyait des `user_id` en clair dans le salon d'alerte (tiers hors registre) | 🟡 | ✅ dépôt (codes HTTP seulement) · ⏳ non déployé |
+| **SV-10** | `x-cron-secret` comparé par `!==` (temps non constant) dans cinq fonctions | 🟢 | ⏳ **ouvert** : comparaison à temps constant à poser avec la rotation des secrets |
+| **SV-11** | 7 fonctions `DEFINER` antérieures à `213` en `search_path = public, pg_temp` | ⚪ | information : `authenticated` n'a pas `CREATE` sur `public`, non exploitable |
+| **SV-12** | Le plafond global de `track_hit` se sature depuis un client qui forge `Origin` | ⚪ | information : conséquence assumée de `TR-1` |
+
+**Effet sur la note : −3** (quatre 🟠 ouverts en production, `TR-1` avait coûté −1 pour un seul),
+**+1** (`SECURITY.md` AM-4 : la checklist SQL devient onze règles de `validate:migrations`,
+PR n° 135, verte en CI). Les −3 se remboursent au redéploiement vérifié par `Edge deploy drift` vert.
+
 ## 🔴 Ouvert — bloquant
 
 ### A-9 — Plan Supabase `free` : pas de PITR (drill de restauration ✅ exécuté le 2026-09-01)
@@ -591,6 +628,8 @@ relit contre la console et contre `docs/ROADMAP-60J.md`, jamais de mémoire.
   La propriété qui rend l'open redirect inexploitable (aucune navigation alimentée par un
   paramètre d'URL) reste **verrouillée par un test**, sans rapport avec la version installée :
   `src/lib/no-open-redirect.test.ts`.
+  ✅ **2026-10-23** : migration faite (React 19.3.1, `react-router` 8.5.0, au-delà des deux
+  plages de l'avis), `npm audit --omit=dev` à 0. Détail : `docs/MIGRATION-REACT19.md` §0.
 - **CVE dev-only** (`vitest`, `eslint`, `vite`, `glob`/`minimatch`) : jamais servies au
   navigateur. `npm audit fix --force` casserait le peer `eslint-plugin-react-hooks` (vérifié en
   `--dry-run`) → mise à jour outillage dédiée, jamais dans une passe sécurité.
