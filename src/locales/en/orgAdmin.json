@@ -119,7 +119,7 @@
     "suspend": "Suspend",
     "reactivate": "Reactivate",
     "accessUntil": "Access until…",
-    "exit": "Leave selection",
+    "exit": "Exit selection",
     "suspendTitle_one": "Suspend {{count}} member?",
     "suspendTitle_other": "Suspend {{count}} members?",
     "accessUntilTitle_one": "Limit access for {{count}} member",
@@ -215,7 +215,7 @@
       },
       "member": {
         "invite": "Invite members",
-        "inviteHint": "Generate an invite link to a seat in the org chart."
+        "inviteHint": "Generate an invite link to a position in the org chart."
       },
       "report": {
         "org": "View the company report",
@@ -419,8 +419,8 @@
     "workloadTitle_other": "{{duration}} · {{count}} open",
     "workloadTitleOverdue_one": "{{duration}} · {{count}} open · {{overdue}} overdue",
     "workloadTitleOverdue_other": "{{duration}} · {{count}} open · {{overdue}} overdue",
-    "workloadOpenAria_one": "{{count}} task in progress",
-    "workloadOpenAria_other": "{{count}} tasks in progress",
+    "workloadOpenAria_one": "{{count}} open task",
+    "workloadOpenAria_other": "{{count}} open tasks",
     "workloadOverdueAria_one": "{{count}} overdue task",
     "workloadOverdueAria_other": "{{count}} overdue tasks",
     "dragHint": "Drag {{name}} into the org chart",
@@ -738,8 +738,8 @@
     "intervalLegend": "Billing period",
     "intervalMonthly": "Monthly",
     "intervalYearly": "Yearly",
-    "intervalSave": "−30%",
-    "intervalYearlyHint": "Charged once a year, 30% less than the monthly price. The seat count is identical.",
+    "intervalSave": "−25%",
+    "intervalYearlyHint": "Charged once a year, 25% less than the monthly price. The seat count is identical.",
     "perMonthBilledYearly": "per month, billed {{total}} a year",
     "billedMonthly": "Billed monthly",
     "billedYearly": "Billed yearly",
@@ -761,7 +761,7 @@
     "alreadySubscribed": "This organization already has an active subscription. Use \"Manage subscription\" to change tier.",
     "yearlyUnavailable": "Yearly billing is not available yet. Monthly billing works, and the pricing grid has switched back to it.",
     "error": "Could not reach Stripe. Please try again shortly.",
-    "back": "Workspace",
+    "back": "Company space",
     "planHint": "View and upgrade your plan",
     "planAria": "Subscription: {{plan}}",
     "planNamed": "{{name}} plan",
@@ -926,7 +926,7 @@
     "badgePreviewMore_other": "and {{count}} more",
     "tabLoading": "Loading tab…",
     "managerToast": "You now manage {{names}}: the Statistics and Org chart sections are available.",
-    "launchFree": "COSMO for companies is free",
+    "launchFree": "COSMO for Companies is free",
     "launchFreeRest": " until August 1: enjoy it with your whole team, with no limits.",
     "badgePreviewSection": "Unread in this section",
     "tasksTabLoading": "Loading tasks…"
@@ -981,7 +981,7 @@
     "krAssignTeam": "Assign to a team",
     "krPeople": "Owner and contributors",
     "weightHint": "How much this KR counts towards overall progress",
-    "needOneKr": "Add at least 1 measurable key result.",
+    "needOneKr": "Add at least one measurable key result.",
     "cancel": "Cancel",
     "saving": "Saving…",
     "save": "Save",
@@ -1655,6 +1655,6 @@
       "close": "Close"
     },
     "badgesAria": "Roles: {{names}}",
-    "sheetBanner": "The roles {{names}} override this sheet while they are active. These settings will apply once they end."
+    "sheetBanner": "The roles {{names}} override this form while they are active. These settings will apply once they end."
   }
 }

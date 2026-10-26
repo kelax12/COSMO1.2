@@ -26,6 +26,7 @@ export type {
   DailyPoint,
   SourceDailyPoint,
   AdminActivation48h,
+  ActivationDailyPoint,
   SourceRetention,
   AdminOrgs,
   AdminOnboardingFunnel,

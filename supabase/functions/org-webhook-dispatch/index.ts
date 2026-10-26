@@ -125,7 +125,11 @@ Deno.serve(async (req) => {
 
   // Suivi par webhook : dernier code, et coupure après trop d'échecs.
   for (const [webhookId, { ok, status }] of outcome) {
-    const { data: w } = await admin.from('org_webhooks').select('failure_count').eq('id', webhookId).maybeSingle()
+    // SV-7 : sur panne de lecture, `w` valait `null`, donc le compteur repartait
+    // de 1 et un webhook mort n'était jamais coupé. On ne touche à rien : le
+    // passage suivant relira.
+    const { data: w, error: wError } = await admin.from('org_webhooks').select('failure_count').eq('id', webhookId).maybeSingle()
+    if (wError) continue
     const failures = ok ? 0 : ((w?.failure_count as number | undefined) ?? 0) + 1
     await admin.from('org_webhooks').update({
       last_status: status,

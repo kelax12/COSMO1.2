@@ -111,7 +111,7 @@
   "onboardingOrgTeam": "With a team",
   "onboardingOrgMember": "With a 2nd member",
   "onboardingOrgProject": "With a project",
-  "onboardingOrgOkr": "With a company goal",
+  "onboardingOrgOkr": "With a company objective",
   "onboardingReturn": "Came back between D+7 and D+14: {{all}} of mature sign-ups ({{mature}}), {{withTask}} of those who created a task during onboarding.",
   "onboardingReturnTooEarly": "Return not measurable yet: no sign-up in the period is 14 days old."
 }

@@ -1,4 +1,4 @@
-<!-- note-audit: note=87 -->
+<!-- note-audit: note=88 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter

@@ -33,7 +33,7 @@
 // sortie, pour épingler explicitement un prix annuel qui vivrait ailleurs.
 // ═══════════════════════════════════════════════════════════════════
 
-export type OrgTierKey = 'free' | 't10' | 't20' | 't50' | 'tmax'
+export type OrgTierKey = 'free' | 't10' | 't20' | 't50' | 't100' | 'tmax'
 
 /** Périodicité de facturation. `monthly` est le défaut partout. */
 export type OrgBillingInterval = 'monthly' | 'yearly'
@@ -41,10 +41,10 @@ export type OrgBillingInterval = 'monthly' | 'yearly'
 /**
  * Remise appliquée au tarif mensuel quand la facturation est annuelle.
  *
- * 0.3 = −30 %. Miroir de `ENTERPRISE_YEARLY_DISCOUNT`
+ * 0.25 = −25 %. Miroir de `ENTERPRISE_YEARLY_DISCOUNT`
  * (src/modules/billing/premium-config.ts), verrouillé par la parité.
  */
-export const ENTERPRISE_YEARLY_DISCOUNT = 0.3
+export const ENTERPRISE_YEARLY_DISCOUNT = 0.25
 
 export interface OrgTier {
   key: OrgTierKey
@@ -68,10 +68,11 @@ export type EnvReader = (name: string) => string | undefined
 
 export const ORG_TIERS: readonly OrgTier[] = [
   { key: 'free', minMembers: 0, maxMembers: 5, priceEurPerMonth: 0, priceEnvVarMonthly: null, priceEnvVarYearly: null },
-  { key: 't10', minMembers: 5, maxMembers: 10, priceEurPerMonth: 20, priceEnvVarMonthly: 'STRIPE_ORG_PRICE_T10', priceEnvVarYearly: 'STRIPE_ORG_PRICE_T10_YEARLY' },
-  { key: 't20', minMembers: 10, maxMembers: 20, priceEurPerMonth: 50, priceEnvVarMonthly: 'STRIPE_ORG_PRICE_T20', priceEnvVarYearly: 'STRIPE_ORG_PRICE_T20_YEARLY' },
-  { key: 't50', minMembers: 20, maxMembers: 50, priceEurPerMonth: 100, priceEnvVarMonthly: 'STRIPE_ORG_PRICE_T50', priceEnvVarYearly: 'STRIPE_ORG_PRICE_T50_YEARLY' },
-  { key: 'tmax', minMembers: 50, maxMembers: null, priceEurPerMonth: 200, priceEnvVarMonthly: 'STRIPE_ORG_PRICE_TMAX', priceEnvVarYearly: 'STRIPE_ORG_PRICE_TMAX_YEARLY' },
+  { key: 't10', minMembers: 5, maxMembers: 10, priceEurPerMonth: 70, priceEnvVarMonthly: 'STRIPE_ORG_PRICE_T10', priceEnvVarYearly: 'STRIPE_ORG_PRICE_T10_YEARLY' },
+  { key: 't20', minMembers: 10, maxMembers: 20, priceEurPerMonth: 150, priceEnvVarMonthly: 'STRIPE_ORG_PRICE_T20', priceEnvVarYearly: 'STRIPE_ORG_PRICE_T20_YEARLY' },
+  { key: 't50', minMembers: 20, maxMembers: 50, priceEurPerMonth: 350, priceEnvVarMonthly: 'STRIPE_ORG_PRICE_T50', priceEnvVarYearly: 'STRIPE_ORG_PRICE_T50_YEARLY' },
+  { key: 't100', minMembers: 50, maxMembers: 100, priceEurPerMonth: 700, priceEnvVarMonthly: 'STRIPE_ORG_PRICE_T100', priceEnvVarYearly: 'STRIPE_ORG_PRICE_T100_YEARLY' },
+  { key: 'tmax', minMembers: 100, maxMembers: null, priceEurPerMonth: 1000, priceEnvVarMonthly: 'STRIPE_ORG_PRICE_TMAX', priceEnvVarYearly: 'STRIPE_ORG_PRICE_TMAX_YEARLY' },
 ] as const
 
 /** Quota appliqué à une org sans abonnement actif. */
@@ -82,7 +83,7 @@ function roundEur(amount: number): number {
   return Math.round(amount * 100) / 100
 }
 
-/** Tarif MENSUEL ÉQUIVALENT d'un engagement annuel (mensuel −30 %). */
+/** Tarif MENSUEL ÉQUIVALENT d'un engagement annuel (mensuel −25 %). */
 export function yearlyMonthlyEquivalentEur(priceEurPerMonth: number): number {
   return roundEur(priceEurPerMonth * (1 - ENTERPRISE_YEARLY_DISCOUNT))
 }

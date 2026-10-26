@@ -111,7 +111,9 @@ Deno.serve(async (req) => {
           { onConflict: 'user_id' },
         )
       if (traceError) {
-        await opsAlert('inactive-accounts', `avertissement envoye mais NON enregistre (${row.user_id}) — il repartira demain`)
+        // SV-9 : jamais d'identifiant de compte dans une alerte (contrat de
+        // `_shared/alert.ts`) : le salon d'alerte est un tiers, hors registre.
+        await opsAlert('inactive-accounts', 'un avertissement envoye mais NON enregistre : il repartira demain')
         warnFailed.push(row.user_id)
         continue
       }
@@ -151,18 +153,19 @@ Deno.serve(async (req) => {
         signal: AbortSignal.timeout(60000),
       })
       if (res.ok) deleted++
-      else deleteFailed.push(`${row.user_id}:${res.status}`)
+      else deleteFailed.push(String(res.status))
     } catch (err) {
       console.error('inactive account deletion failed:', err)
-      deleteFailed.push(`${row.user_id}:crash`)
+      deleteFailed.push('crash')
     }
   }
 
   if (warnFailed.length > 0 || deleteFailed.length > 0) {
-    // Identifiants opaques uniquement, aucun e-mail.
+    // Codes HTTP seulement : ni identifiant de compte ni e-mail (SV-9). Les
+    // comptes en échec se retrouvent par `accounts_due_for_inactivity_deletion`.
     await opsAlert(
       'inactive-accounts',
-      `C-121 : ${warnFailed.length} avertissement(s) et ${deleteFailed.length} effacement(s) en echec (${deleteFailed.join(', ')})`,
+      `C-121 : ${warnFailed.length} avertissement(s) et ${deleteFailed.length} effacement(s) en echec (codes : ${[...new Set(deleteFailed)].sort().join(', ')})`,
     )
   }
 
