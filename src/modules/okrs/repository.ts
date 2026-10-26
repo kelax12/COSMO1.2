@@ -136,6 +136,15 @@ const DEMO_OKRS_EN: Record<string, { title: string; description: string; keyResu
   },
 };
 
+// Unités des résultats clés du seed, par id de KR. Sans elles, la démo anglaise
+// affichait « 55 / 90 jours » sous un titre traduit (revue M-50 du 2026-10-23).
+const DEMO_KR_UNITS_EN: Record<string, string> = {
+  'kr-1': 'tasks', 'kr-2': 'weeks', 'kr-3': 'days',
+  'kr-4': 'feedback sessions', 'kr-5': 'features', 'kr-6': 'users',
+  'kr-7': 'sessions', 'kr-8': 'nights', 'kr-9': 'days',
+  'kr-22': 'sessions', 'kr-23': 'pages', 'kr-24': 'days',
+};
+
 /**
  * Titres anglais du seed de démo, pour un couple (OKR, KR).
  *
@@ -170,6 +179,7 @@ function localizeOkrs(okrs: OKR[]): OKR[] {
       keyResults: okr.keyResults.map((kr) => ({
         ...kr,
         title: patch.keyResults[kr.id] ?? kr.title,
+        unit: DEMO_KR_UNITS_EN[kr.id] ?? kr.unit,
       })),
     };
   });

@@ -1,14 +1,13 @@
 {
   "_comment": [
-    "C-88 — référence de POSTURE Supabase : advisors de sécurité et réglages",
-    "d'authentification. Se recale par `node scripts/check-supabase-posture.mjs --update`,",
-    "jamais à la main.",
-    "🔴 La garde juge sur un ÉCART à ces valeurs, pas sur un absolu : les 52",
-    "fonctions SECURITY DEFINER exposées à `authenticated` sont un choix",
-    "🔴 La garde juge sur un ÉCART à ces valeurs, pas sur un absolu : les 82",
-    "est la 53e, ou une policy qui disparaît.",
+    "C-88 · référence de POSTURE Supabase : advisors de sécurité et réglages",
+    "d'authentification. Se recale par `node scripts/check-supabase-posture.mjs --update`",
+    "(ou par le workflow Posture, entrée `regenerer`), jamais à la main pour les comptes.",
+    "🔴 La garde juge sur un ÉCART à ces valeurs, pas sur un absolu : les fonctions",
+    "SECURITY DEFINER exposées à `authenticated` sont un choix d'architecture (les",
+    "helpers RLS en sont). Ce qui doit alerter est la suivante, ou une policy qui disparaît.",
     "❌ Ne jamais relever un compte ici pour faire passer la CI : répondre",
-    "est la 83e, ou une policy qui disparaît."
+    "d'abord à la question « quel objet est apparu ? »."
   ],
   "pose_le": "2026-10-10",
   "_securite_source": [
@@ -23,7 +22,7 @@
     "rls_enabled_no_policy": {
       "niveau": "INFO",
       "compte": 11,
-      "_note": "admin_users, demo_devices, email_lookup_global, email_lookup_quota, org_webhook_deliveries, payment_closures, payment_records, rate_limits, renewal_notices, support_reports, user_activity_days. Tables sans policy VOLONTAIREMENT : jamais lues par un client, seulement par service_role ou par une fonction SECURITY DEFINER. RLS activée sans policy = personne ne passe, ce qui est le réglage voulu. Ajoutées depuis le 2026-09-20 : org_webhook_deliveries (mig. 199, « aucune policy : ni lecture ni écriture depuis le client ») et support_reports (mig. 150, écrite par record_support_report). À compter au prochain --update (geste d'Axel, compte NON recalé ici) : account_inactivity_notices (mig. 226, C-121, 2026-10-22), RLS activée sans policy, GRANT à service_role seul, REVOKE ALL à PUBLIC, anon et authenticated ; aucun e-mail stocké, ON DELETE CASCADE vers auth.users. Écrite par l'Edge Function inactive-accounts après l'envoi de l'avertissement."
+      "_note": "admin_users, demo_devices, email_lookup_global, email_lookup_quota, org_webhook_deliveries, payment_closures, payment_records, rate_limits, renewal_notices, support_reports, user_activity_days. Tables sans policy VOLONTAIREMENT : jamais lues par un client, seulement par service_role ou par une fonction SECURITY DEFINER. RLS activée sans policy = personne ne passe, ce qui est le réglage voulu. Ajoutées depuis le 2026-09-20 : org_webhook_deliveries (mig. 199, « aucune policy : ni lecture ni écriture depuis le client ») et support_reports (mig. 150, écrite par record_support_report). Relues le 2026-10-23, trois tables de plus à compter au recalage (11 → 14), toutes légitimes : account_inactivity_notices (mig. 226, C-121) : RLS activée sans policy, GRANT à service_role seul, aucun e-mail stocké, écrite par l'Edge Function inactive-accounts ; traffic_hits et traffic_salts (mig. 222) : RLS activée sans policy, REVOKE ALL à PUBLIC, anon et authenticated, écrites par la seule fonction track_hit (hits sans donnée directement identifiante, sel journalier tournant) et lues par get_admin_traffic gardée par is_admin()."
     },
     "anon_security_definer_function_executable": {
       "niveau": "WARN",
@@ -33,12 +32,27 @@
     "authenticated_security_definer_function_executable": {
       "niveau": "WARN",
       "compte": 82,
-      "_note": "Les helpers RLS et les RPC métier. 🔴 C'est ce compte qu'il faut surveiller : la 83e fonction exposée est celle qu'on n'a pas décidée. ⚠️ Trois d'entre eux (get_subtree, has_subordinates, org_admin_count) ont eu leur EXECUTE révoqué par la mig. 100 pour fermer une fuite inter-organisations : ils ne doivent PAS réapparaître ici (absents au 2026-10-08). Recalage du 2026-10-08 (52 → 81) : chacune des 81 a été lue au catalogue. 67 testent auth.uid() ou un helper de garde (is_admin, is_org_member, my_org_perm, can_access_team_*…). Les autres délèguent à un helper lié à auth.uid() et NON exécutable par authenticated : get_my_team_* (7) → my_team_project_ids, get_team_trash / restore_team_task → can_restore_team_task, get_team_okr_trash / restore_team_okr → can_restore_team_okr. Deux sont publiques par conception (preview_share_link, record_demo_visit, cf. advisor anon). org_seats_allowed ne lit que des compteurs (quota de sièges), sans donnée de membre. La 81e est get_admin_onboarding_funnel (mig. 213), gardée par is_admin(). La 82e est claim_acquisition_source (mig. 217) : n'écrit que le profil de auth.uid(), compte de moins d'une heure, source jamais écrasée, valeur bornée par une regex, fermée à anon (relue le 2026-10-10). ⚠️ Mig. 226 (C-121, 2026-10-22) : cinq fonctions SECURITY DEFINER (search_path vide) account_has_live_billing, account_activity, accounts_due_for_inactivity_notice, account_inactivity_deletion_due, accounts_due_for_inactivity_deletion, EXECUTE révoqué nommément à PUBLIC, anon et authenticated, accordé à service_role seul : elles ne doivent PAS apparaître ici ni dans l'advisor anon. Si l'une y entre, c'est une régression de la 226, pas un objet à recaler."
+      "_note": "Les helpers RLS et les RPC métier. 🔴 C'est ce compte qu'il faut surveiller : la 83e fonction exposée est celle qu'on n'a pas décidée. ⚠️ Trois d'entre eux (get_subtree, has_subordinates, org_admin_count) ont eu leur EXECUTE révoqué par la mig. 100 pour fermer une fuite inter-organisations : ils ne doivent PAS réapparaître ici (absents au 2026-10-08). Recalage du 2026-10-08 (52 → 81) : chacune des 81 a été lue au catalogue. 67 testent auth.uid() ou un helper de garde (is_admin, is_org_member, my_org_perm, can_access_team_*…). Les autres délèguent à un helper lié à auth.uid() et NON exécutable par authenticated : get_my_team_* (7) → my_team_project_ids, get_team_trash / restore_team_task → can_restore_team_task, get_team_okr_trash / restore_team_okr → can_restore_team_okr. Deux sont publiques par conception (preview_share_link, record_demo_visit, cf. advisor anon). org_seats_allowed ne lit que des compteurs (quota de sièges), sans donnée de membre. La 81e est get_admin_onboarding_funnel (mig. 213), gardée par is_admin(). La 82e est claim_acquisition_source (mig. 217) : n'écrit que le profil de auth.uid(), compte de moins d'une heure, source jamais écrasée, valeur bornée par une regex, fermée à anon (relue le 2026-10-10). ⚠️ Mig. 226 (C-121, 2026-10-22) : cinq fonctions SECURITY DEFINER (search_path vide) account_has_live_billing, account_activity, accounts_due_for_inactivity_notice, account_inactivity_deletion_due, accounts_due_for_inactivity_deletion, EXECUTE révoqué nommément à PUBLIC, anon et authenticated, accordé à service_role seul : elles ne doivent PAS apparaître ici ni dans l'advisor anon. Si l'une y entre, c'est une régression de la 226, pas un objet à recaler. Relues le 2026-10-23, deux fonctions de plus à compter au recalage (82 → 84), légitimes : get_admin_revenue (mig. 221) et get_admin_traffic (mig. 222), lectures seules de totaux agrégés, gardées en PREMIÈRE instruction par is_admin() (allowlist ET session aal2, mig. 131), EXECUTE révoqué à PUBLIC et anon, accordé à authenticated parce que la console /admin appelle depuis la session du navigateur."
     },
     "auth_leaked_password_protection": {
       "niveau": "WARN",
       "compte": 1,
       "_note": "🔴 La protection contre les mots de passe compromis (HaveIBeenPwned) est DÉSACTIVÉE. Ce n'est pas du code : c'est un interrupteur du Dashboard (Authentication → Attack Protection). Il reste ouvert tant que personne ne le ferme, et cette ligne est ce qui l'empêche d'être oublié."
+    }
+  },
+  "performance": {
+    "_source": [
+      "Relevé du 2026-10-23 (get_advisors performance, projet ykeugqfgklejcdbrmawy), AM-5.",
+      "unindexed_foreign_keys : 40 avant la mig. 227. Après son application, recaler à 0 par --update : la garde refusera alors toute FK neuve sans index.",
+      "unused_index : 35, imprimé seulement (bouge avec le volume, aucun index retiré)."
+    ],
+    "unindexed_foreign_keys": {
+      "niveau": "INFO",
+      "compte": 40
+    },
+    "unused_index": {
+      "niveau": "INFO",
+      "compte": 35
     }
   },
   "_reglages_auth_source": [

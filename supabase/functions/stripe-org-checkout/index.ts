@@ -120,11 +120,14 @@ Deno.serve(async (req) => {
     )
 
     // ── Autorisation : propriétaire de l'organisation, et lui seul ──
-    const { data: org } = await supabaseAdmin
+    // SV-8 : l'erreur est LUE, comme dans `stripe-org-refund`. « Pas
+    // d'organisation » et « je n'ai pas pu lire » ne sont pas la même chose.
+    const { data: org, error: orgError } = await supabaseAdmin
       .from('organizations')
       .select('id, owner_id')
       .eq('id', orgId)
       .maybeSingle()
+    if (orgError) throw orgError
 
     // Même réponse pour « org inexistante » et « pas le propriétaire » : ne pas
     // confirmer l'existence d'une organisation dont on connaîtrait l'UUID.
@@ -137,11 +140,16 @@ Deno.serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     })
 
-    const { data: sub } = await supabaseAdmin
+    // 🔴 SV-8 : cette lecture décide de « déjà abonné » et du customer
+    // réutilisé. Avalée, une panne envoyait un abonné actif sur un SECOND
+    // checkout (double prélèvement), avec un nouveau customer qui écrasait le
+    // lien du premier : ses factures n'auraient plus trouvé leur organisation.
+    const { data: sub, error: subError } = await supabaseAdmin
       .from('org_subscriptions')
       .select('stripe_customer_id, stripe_subscription_id')
       .eq('org_id', orgId)
       .maybeSingle()
+    if (subError) throw subError
 
     if (sub?.stripe_subscription_id) {
       // ── C-71 : un identifiant qui ne vit plus dans le compte présenté ──

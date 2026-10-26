@@ -70,7 +70,7 @@ describe('parité ENTERPRISE_PRICING_TIERS ↔ _shared/org-tiers.ts', () => {
 describe('parité de la remise annuelle front ↔ Deno', () => {
   it('même taux de remise des deux côtés', () => {
     expect(SHARED_YEARLY_DISCOUNT).toBe(ENTERPRISE_YEARLY_DISCOUNT);
-    expect(ENTERPRISE_YEARLY_DISCOUNT).toBe(0.3);
+    expect(ENTERPRISE_YEARLY_DISCOUNT).toBe(0.25);
   });
 
   it('même montant annuel dérivé pour chaque palier', () => {
@@ -92,11 +92,12 @@ describe('parité de la remise annuelle front ↔ Deno', () => {
     });
   });
 
-  it('l’annuel coûte bien 30 % de moins que douze mois au tarif mensuel', () => {
-    expect(yearlyTotalEur(20)).toBe(168);
-    expect(yearlyTotalEur(50)).toBe(420);
-    expect(yearlyTotalEur(100)).toBe(840);
-    expect(yearlyTotalEur(200)).toBe(1680);
+  it('l’annuel coûte bien 25 % de moins que douze mois au tarif mensuel', () => {
+    expect(yearlyTotalEur(70)).toBe(630);
+    expect(yearlyTotalEur(150)).toBe(1350);
+    expect(yearlyTotalEur(350)).toBe(3150);
+    expect(yearlyTotalEur(700)).toBe(6300);
+    expect(yearlyTotalEur(1000)).toBe(9000);
   });
 
   it('le palier gratuit reste gratuit dans les deux périodicités', () => {
@@ -111,10 +112,12 @@ describe('résolution des price IDs', () => {
       STRIPE_ORG_PRICE_T10: 'price_t10',
       STRIPE_ORG_PRICE_T20: 'price_t20',
       STRIPE_ORG_PRICE_T50: 'price_t50',
+      STRIPE_ORG_PRICE_T100: 'price_t100',
       STRIPE_ORG_PRICE_TMAX: 'price_tmax',
       STRIPE_ORG_PRICE_T10_YEARLY: 'price_t10_y',
       STRIPE_ORG_PRICE_T20_YEARLY: 'price_t20_y',
       STRIPE_ORG_PRICE_T50_YEARLY: 'price_t50_y',
+      STRIPE_ORG_PRICE_T100_YEARLY: 'price_t100_y',
       STRIPE_ORG_PRICE_TMAX_YEARLY: 'price_tmax_y',
     })[name];
 

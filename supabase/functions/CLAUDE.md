@@ -37,6 +37,10 @@ identiques, 12 sondes. Versions : [`faille.md`](../../faille.md) § « Ordre de 
   l'exige, et exige `false` pour une fonction à `x-cron-secret`.
 - ❌ **Jamais un appel sortant vers une URL client sans résoudre le nom** et refuser toute adresse
   non publique (`_shared/org-integrations.ts`, W-2). La contrainte SQL ne voit qu'un texte.
+- ❌ **Jamais un membre jugé actif sur `suspended_at` seul** : `membershipIsActive` (`_shared/org-membership.ts`),
+  comme `is_org_member` (SV-1, un admin expiré envoyait encore des invitations).
+- ❌ **Jamais l'IP d'appel lue dans la 1re entrée de `x-forwarded-for`** : Cloudflare ajoute, il ne remplace
+  pas. `callerIp` (`_shared/caller-ip.ts`) lit `cf-connecting-ip` (SV-3).
 - ❌ **Jamais un e-mail sans plafond de débit** (`_shared/rate-limit.ts`, W-4 ; plafond par exécution pour un cron).
 - ⚠️ **`delete-account` a deux modes depuis le 2026-10-22 (C-121)** : JWT de la personne, ou
   `x-cron-secret` + compte désigné, accepté seulement si `account_inactivity_deletion_due()` (mig. `226`)

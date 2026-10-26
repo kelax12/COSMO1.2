@@ -131,6 +131,16 @@ const SECTIONS: LegalSection<KeyOf<'legalTerms'>>[] = [
       { kind: 'p', key: 'terms.s12.p3' },
     ],
   },
+  {
+    // Médiation de la consommation (C. conso L612-1, L616-1). Texte fourni par
+    // la Société Médiation Professionnelle le 2026-10-25 : ne pas reformuler.
+    title: 'terms.s12bis.title',
+    blocks: [
+      { kind: 'p', key: 'terms.s12bis.p1' },
+      { kind: 'p', key: 'terms.s12bis.p2' },
+      { kind: 'p', key: 'terms.s12bis.p3' },
+    ],
+  },
   { title: 'terms.s13.title', blocks: [{ kind: 'p', key: 'terms.s13.p1' }] },
   { title: 'terms.s14.title', blocks: [{ kind: 'p', key: 'terms.s14.p1' }] },
 ];

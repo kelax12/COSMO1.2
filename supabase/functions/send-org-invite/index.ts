@@ -27,6 +27,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { SEND_ORG_INVITE_LIMITS, consumeRateLimits } from '../_shared/rate-limit.ts'
+import { membershipIsActive } from '../_shared/org-membership.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
 const MAIL_FROM = Deno.env.get('BUG_REPORT_FROM')
@@ -138,7 +139,7 @@ Deno.serve(async (req) => {
   )
 
   const [{ data: membership, error: memberError }, { data: org, error: orgError }, { data: profile }] = await Promise.all([
-    admin.from('organization_members').select('role, suspended_at')
+    admin.from('organization_members').select('role, suspended_at, access_expires_at')
       .eq('org_id', orgId).eq('user_id', caller.id).maybeSingle(),
     admin.from('organizations').select('name').eq('id', orgId).maybeSingle(),
     admin.from('profiles').select('display_name').eq('id', caller.id).maybeSingle(),
@@ -146,7 +147,9 @@ Deno.serve(async (req) => {
   // Une lecture qui décide d'une autorisation ne se devine pas : en cas de
   // panne, on refuse et on fait réessayer, jamais l'inverse.
   if (memberError || orgError) return json({ error: 'lookup_failed' }, 503, req)
-  if (!membership || membership.suspended_at || !org) return json({ error: 'forbidden' }, 403, req)
+  // SV-1 : suspendu OU expiré, comme `is_org_member` (mig. 161). Un accès
+  // expiré n'envoie plus d'invitation au nom de l'organisation.
+  if (!membership || !membershipIsActive(membership, Date.now()) || !org) return json({ error: 'forbidden' }, 403, req)
   const isAdmin = membership.role === 'admin'
 
   const { data: rows, error: linksError } = await admin

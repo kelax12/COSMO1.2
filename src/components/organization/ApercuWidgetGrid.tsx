@@ -37,6 +37,8 @@ const SIZE_LETTER: Record<WidgetSize, 'S' | 'M' | 'L'> = { small: 'S', medium: '
 
 /** Ressort commun : les blocs glissent à leur nouvelle place sans à-coup. */
 const SPRING = { type: 'spring', stiffness: 420, damping: 34, mass: 0.9 } as const;
+/** Ressort des voisins pendant un glisser : plus souple, sans dépassement. */
+const REFLOW = { type: 'spring', stiffness: 260, damping: 32, mass: 0.8 } as const;
 const POP = { type: 'spring', stiffness: 520, damping: 24 } as const;
 
 /**
@@ -49,7 +51,7 @@ const POP = { type: 'spring', stiffness: 520, damping: 24 } as const;
 const INSTANT_DRAG_SNAP = { type: false } as unknown as InertiaOptions;
 
 /** Délai minimal entre deux permutations pendant un glisser, contre l'oscillation. */
-const SWAP_COOLDOWN_MS = 140;
+const SWAP_COOLDOWN_MS = 90;
 
 /**
  * Aperçu composé de widgets, façon écran d'accueil d'iPhone (2026-10-19).
@@ -124,6 +126,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
   const layoutRef = useRef(layout);
   layoutRef.current = layout;
   const lastSwap = useRef(0);
+  const lastSwapped = useRef<string | null>(null);
 
   const name = (id: Id) => cat.name(id);
   const sizeName = (size: WidgetSize) => t(`apercu.widgets.sizes.${size}`);
@@ -178,12 +181,18 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
     const over = document.elementsFromPoint(x, y)
       .map((el) => el.closest<HTMLElement>('[data-widget]'))
       .find((el) => el && el.dataset.widget !== id);
-    if (!over) return;
+    // Le bloc qui vient de céder sa place glisse SOUS le pointeur : sans cette
+    // garde, il redéclenchait la permutation inverse, d'où l'aller-retour saccadé.
+    // On ne repermute avec lui qu'une fois le pointeur sorti de lui.
+    if (!over) { lastSwapped.current = null; return; }
+    if (over.dataset.widget === lastSwapped.current) return;
+    lastSwapped.current = null;
     const current = layoutRef.current;
     const to = current.findIndex((w) => w.id === over.dataset.widget);
     const from = current.findIndex((w) => w.id === id);
     if (to < 0 || to === from) return;
     lastSwap.current = now;
+    lastSwapped.current = over.dataset.widget ?? null;
     onChange(moveWidget(current, id, to));
   };
 
@@ -373,7 +382,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                     key={w.id}
                     data-widget={w.id}
                     layout={!reduce}
-                    transition={SPRING}
+                    transition={dragged ? REFLOW : SPRING}
                     initial={lit && highlight?.entering ? { opacity: 0, scale: 0.4, y: 60 } : false}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.3, rotate: -6, filter: 'blur(8px)', transition: { duration: 0.38, ease: [0.4, 0, 0.2, 1] } }}
@@ -382,9 +391,9 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                     dragTransition={reduce ? INSTANT_DRAG_SNAP : undefined}
                     dragMomentum={false}
                     dragElastic={0.18}
-                    onDragStart={() => setDragged(w.id)}
+                    onDragStart={() => { lastSwapped.current = null; setDragged(w.id); }}
                     onDrag={(_, info) => onDrag(w.id, info)}
-                    onDragEnd={() => setDragged(null)}
+                    onDragEnd={() => { lastSwapped.current = null; setDragged(null); }}
                     whileDrag={{ scale: 1.06, zIndex: 40, boxShadow: '0 24px 48px -12px rgba(0,0,0,0.45)' }}
                     style={{ zIndex: isDragged ? 40 : undefined, touchAction: editing ? 'none' : undefined }}
                     className={`relative min-w-0 rounded-2xl ${SIZE_SPAN_CLASS[w.size]} ${editing ? (isDragged ? 'cursor-grabbing' : 'cursor-grab') : ''}`}

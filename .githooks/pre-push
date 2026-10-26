@@ -1,0 +1,3 @@
+#!/bin/sh
+# Cf. scripts/pre-push-main-red.mjs : refuse de pousser sur un main rouge.
+exec node scripts/pre-push-main-red.mjs "$@"
