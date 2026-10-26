@@ -57,7 +57,7 @@ réagir à un incident. À lire avant toute mise en prod.
 | AM-3 | **Les variables d'environnement Vercel ne sont comparées à rien.** Une `VITE_*` manquante ou périmée ne se voit qu'à l'exécution. Le cas a déjà mordu : `VITE_SENTRY_DSN` absente changeait la forme du bundle et rendait la garde de budget aveugle à ~45 ko | aucun job ne lit la configuration Vercel | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:env` · contrat statique des 8 `VITE_*` avec l'**effet d'absence** de chacune (`C-105`) — 🔴 ne prouve PAS : les **valeurs** : la moitié Vercel vérifie une présence, jamais un contenu. ⚠️ Et elle dort tant que `VERCEL_TOKEN` / `VERCEL_PROJECT_ID` ne sont pas posés (**`M-59`**) |
 | AM-4 | **L'état réel de Turnstile n'est écrit nulle part de vérifiable.** Le code existe (`TurnstileWidget.tsx`, `AuthForm.tsx`) ; son activation dépend d'une variable posée **hors du dépôt**. Ce document le dit « inerte au 2026-08-28 », et rien ne dirait qu'il a changé | 3 fichiers sources le référencent, 0 garde | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:env` (`C-105`) — 🔴 ne prouve PAS : rien de plus qu'AM-3 : même garde, même réserve |
 | AM-5 | **`uptime.yml` mesure qu'une page RÉPOND, jamais qu'elle FONCTIONNE.** Un HTTP 200 sur une coquille SPA vide est vert. C'est le même piège que la garde Lighthouse qui mesurait une 404 (`T-50`, corrigé le 2026-08-29) | `uptime.yml` : `-w '%{http_code}'` sur `/` et `/auth/v1/health` | ✅ **OUTILLÉ le 2026-09-20** · 3 marqueurs **absents de la coquille SPA** + une 2ᵉ page prérendue sondée + le corps de `/auth/v1/health` (`C-104`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé dans l'autre sens** : `uptime.yml` avait un marqueur (`grep -i cosmo`) qui **ne pouvait pas échouer**, la coquille contenant le mot 21 fois |
-| AM-6 | **Le déploiement des Edge Functions est un geste MANUEL.** `check:edge` voit la dérive après coup ; rien ne déploie depuis `main`. Le 2026-10-23, un correctif poussé sur `main` (`c161de2b`, mention 293 B) n'a pas pu être déployé par l'agent : la dérive est ouverte jusqu'au geste suivant | `grep -l "functions deploy" .github/workflows/*` : aucun | 🟠 **OUVERT le 2026-10-23** · session dédiée : déploiement continu des fonctions modifiées après une CI verte, puis `check:edge` |
+| AM-6 | **Le déploiement des Edge Functions est un geste MANUEL.** `check:edge` voit la dérive après coup ; rien ne déploie depuis `main`. Le 2026-10-23, un correctif poussé sur `main` (`c161de2b`, mention 293 B) n'a pas pu être déployé par l'agent : la dérive est ouverte jusqu'au geste suivant | `grep -l "functions deploy" .github/workflows/*` : aucun | 🟡 **CODE LIVRÉ le 2026-10-23, pas encore exécuté** · `.github/workflows/edge-deploy.yml` : après `CI` verte sur un push de `main`, déploie (`--use-api`) les fonctions modifiées depuis le dernier SHA déployé, importatrices de `_shared/` comprises, puis rejoue `check:edge` et `check:edge-smoke`. Sélection : `scripts/edge-deploy-select.mjs`, témoin `edge-deploy-select.guard.test.mjs` vu rouge sur 3 sabotages. Fermé au premier run vert sur `main` (amorçage : les 13 fonctions) |
 | AM-7 | **Les artefacts de CI n'ont aucune durée de rétention.** Le quota du compte (11,5 Go) a été atteint le 2026-10-23 : c'est lui qui a bloqué la sauvegarde T11. Rien ne le borne ni ne le mesure | aucun `retention-days` sur les `upload-artifact` de rapports | 🟡 **OUTILLÉ le 2026-10-23** · `scripts/artefacts-retention.guard.test.mjs` (suite outillage) exige un `retention-days` entier de 1 à 30 sur chaque `upload-artifact` / `upload-pages-artifact`. Constat à la pose : les 8 dépôts du dépôt portaient déjà leur durée (7 à 30 jours), donc la garde protège contre une régression, pas un défaut présent. 🔴 Ne prouve PAS le quota : la taille stockée n'est mesurée nulle part ; le plafond de 30 jours est une décision à relire si un artefact doit durer plus |
 
 ---
@@ -123,11 +123,27 @@ le dernier run `CI` de `main` est rouge. Il s'installe une fois par clone :
 ## 2bis. Déployer les Edge Functions
 
 ⚠️ **Vercel ne déploie PAS les Edge Functions.** Un `git push` livre le front ;
-les fonctions Deno restent dans leur version précédente jusqu'à un déploiement
-explicite :
+les fonctions Deno, elles, partent par `.github/workflows/edge-deploy.yml` (AM-6,
+2026-10-23) :
+
+- **Quand** : après un run `CI` **vert** issu d'un push sur `main`, sur le SHA que
+  `CI` a validé. Un déploiement à la fois (`concurrency: edge-deploy`).
+- **Quoi** : `scripts/edge-deploy-select.mjs` diffe le dernier SHA déployé (lu
+  dans le titre du dernier run vert) contre ce SHA. Une fonction part si un de
+  ses fichiers change, si un `_shared/` qu'elle embarque change (directement ou
+  par un autre `_shared`), ou si `supabase/config.toml` change (toutes). Une
+  fonction sans section `config.toml` ou sans sonde fait échouer le run.
+- **Puis** : `check:edge` et `check:edge-smoke`. Un rouge sonne par `ci-alert.yml`,
+  et le run suivant repart de la dernière base **verte** : ce qui n'est pas parti
+  repart.
+- **Secret** : `SUPABASE_ACCESS_TOKEN` (le même que `edge-deploy-drift.yml`).
+- ❌ Pas de déclenchement manuel du workflow : il contournerait « CI verte sur ce
+  SHA ». Un run rouge se rejoue par « Re-run ».
+
+Déploiement à la main (secours, depuis la racine, sur `main` à jour) :
 
 ```bash
-supabase functions deploy stripe-webhook stripe-create-checkout delete-account
+supabase functions deploy stripe-webhook --use-api --project-ref ykeugqfgklejcdbrmawy
 ```
 
 La CLI est la voie recommandée : elle résout seule l'arborescence des imports
