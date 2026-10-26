@@ -54,13 +54,9 @@
       "unindexed_foreign_keys : 40 avant la mig. 227. Après son application, recaler à 0 par --update : la garde refusera alors toute FK neuve sans index.",
       "unused_index : 35, imprimé seulement (bouge avec le volume, aucun index retiré)."
     ],
-    "unindexed_foreign_keys": {
-      "niveau": "INFO",
-      "compte": 40
-    },
     "unused_index": {
       "niveau": "INFO",
-      "compte": 35
+      "compte": 75
     }
   },
   "reglages_auth": {
