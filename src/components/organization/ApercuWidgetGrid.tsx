@@ -52,6 +52,8 @@ const INSTANT_DRAG_SNAP = { type: false } as unknown as InertiaOptions;
 
 /** Délai minimal entre deux permutations pendant un glisser, contre l'oscillation. */
 const SWAP_COOLDOWN_MS = 90;
+/** Part de chaque bord du bloc survolé qui ne déclenche pas d'échange. */
+const SWAP_MARGIN = 0.25;
 
 /**
  * Aperçu composé de widgets, façon écran d'accueil d'iPhone (2026-10-19).
@@ -127,6 +129,8 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
   layoutRef.current = layout;
   const lastSwap = useRef(0);
   const lastSwapped = useRef<string | null>(null);
+  /** Hauteur du bloc à la prise : il la garde pendant tout le glisser. */
+  const [dragHeight, setDragHeight] = useState<number | null>(null);
 
   const name = (id: Id) => cat.name(id);
   const sizeName = (size: WidgetSize) => t(`apercu.widgets.sizes.${size}`);
@@ -187,6 +191,12 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
     if (!over) { lastSwapped.current = null; return; }
     if (over.dataset.widget === lastSwapped.current) return;
     lastSwapped.current = null;
+    // Seul le CŒUR du bloc survolé déclenche l'échange : en traversant la
+    // grille, le bloc tenu frôlait chaque voisin et les faisait tous
+    // permuter en cascade (mesuré : zigzags et sauts de 100 px par image).
+    const r = over.getBoundingClientRect();
+    const mx = r.width * SWAP_MARGIN, my = r.height * SWAP_MARGIN;
+    if (x < r.left + mx || x > r.right - mx || y < r.top + my || y > r.bottom - my) return;
     const current = layoutRef.current;
     const to = current.findIndex((w) => w.id === over.dataset.widget);
     const from = current.findIndex((w) => w.id === id);
@@ -391,12 +401,20 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                     dragTransition={reduce ? INSTANT_DRAG_SNAP : undefined}
                     dragMomentum={false}
                     dragElastic={0.18}
-                    onDragStart={() => { lastSwapped.current = null; setDragged(w.id); }}
+                    onDragStart={(e) => {
+                      lastSwapped.current = null;
+                      setDragHeight((e.target as HTMLElement).closest('[data-widget]')?.getBoundingClientRect().height ?? null);
+                      setDragged(w.id);
+                    }}
                     onDrag={(_, info) => onDrag(w.id, info)}
                     onDragEnd={() => { lastSwapped.current = null; setDragged(null); }}
                     whileDrag={{ scale: 1.06, zIndex: 40, boxShadow: '0 24px 48px -12px rgba(0,0,0,0.45)' }}
-                    style={{ zIndex: isDragged ? 40 : undefined, touchAction: editing ? 'none' : undefined }}
-                    className={`relative min-w-0 rounded-2xl ${SIZE_SPAN_CLASS[w.size]} ${editing ? (isDragged ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+                    style={{ zIndex: isDragged ? 40 : undefined, height: isDragged ? dragHeight ?? undefined : undefined, touchAction: editing ? 'none' : undefined }}
+                    // Bloc tenu : `self-start`, il garde SA hauteur. Étiré à la
+                    // hauteur de chaque ligne traversée, il changeait de taille
+                    // d'un coup à chaque échange (177 → 394 px en une image),
+                    // Framer n'animant pas le layout d'un élément en glisser.
+                    className={`relative min-w-0 rounded-2xl ${SIZE_SPAN_CLASS[w.size]} ${editing ? (isDragged ? 'cursor-grabbing self-start' : 'cursor-grab') : ''}`}
                   >
                     {/* La vibration : rotation seule, rythme décalé d'un bloc à l'autre.
                         Coupée sous mouvement réduit : la croix et les flèches
