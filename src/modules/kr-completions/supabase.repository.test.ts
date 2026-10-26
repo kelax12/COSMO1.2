@@ -19,17 +19,32 @@ const row = {
 beforeEach(() => supabaseMock.reset());
 
 describe('SupabaseKRCompletionsRepository', () => {
-  it('getAll: selects *, orders by completed_at desc, caps at 500, maps to camelCase', async () => {
+  it('getAll: selects *, orders by completed_at desc, paginates by range, maps to camelCase', async () => {
     supabaseMock.queueTable('kr_completions', { data: [row] });
     const result = await repo.getAll();
 
     expect(supabaseMock.argsOf('kr_completions', 'select')).toEqual(['*']);
     expect(supabaseMock.argsOf('kr_completions', 'order')).toEqual(['completed_at', { ascending: false }]);
-    expect(supabaseMock.argsOf('kr_completions', 'limit')).toEqual([500]);
+    expect(supabaseMock.argsOf('kr_completions', 'range')).toEqual([0, 999]);
+    expect(supabaseMock.argsOf('kr_completions', 'limit')).toBeUndefined();
     expect(result).toEqual([{
       id: 'c1', krId: 'kr1', okrId: 'o1', userId: 'u1',
       completedAt: row.completed_at, krTitle: 'KR', okrTitle: 'OKR',
     }]);
+  });
+
+  // COSMO-40 : un journal de plus de 500 lignes etait coupe a l'affichage
+  // (graphique « KR realises », historique OKR, statistiques).
+  it('getAll: fetches the next page instead of truncating past 500 rows (COSMO-40)', async () => {
+    const page = (n: number, offset: number) =>
+      Array.from({ length: n }, (_, i) => ({ ...row, id: `c${offset + i}` }));
+    supabaseMock.queueTable('kr_completions', { data: page(1000, 0) });
+    supabaseMock.queueTable('kr_completions', { data: page(120, 1000) });
+
+    const result = await repo.getAll();
+
+    expect(result).toHaveLength(1120);
+    expect(supabaseMock.argsOf('kr_completions', 'range', 1)).toEqual([1000, 1999]);
   });
 
   it('getFiltered: applies every provided filter as eq/gte/lte', async () => {
