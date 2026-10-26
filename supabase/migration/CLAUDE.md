@@ -47,7 +47,8 @@ compilait, la suite passait.
   prod **sans** ligne ; `196` est retirée par la `200`. ❌ **Ne jamais réappliquer la `164`** :
   elle retire la branche « membre du projet » de la `190`. `224` (2026-10-20) et `226` (2026-10-22,
   ledger `20261021225038`, C-121) sont en prod ; `225` est pris par un fichier d'une autre session.
-  Prochain numéro libre : **`227`**.
+  `227` (2026-10-26, ledger `20261026124018`) et `228` (ledger `20261025183015`) sont en prod.
+  Prochain numéro libre : **`229`**.
   Journal daté de chaque application (`150` → `223`) :
   [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Journal d'application des migrations ».
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
