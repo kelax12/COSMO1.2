@@ -1,0 +1,147 @@
+# ──────────────────────────────────────────────────────────────────────
+# Deploiement CONTINU des Edge Functions, apres une CI verte (AM-6).
+#
+# 🔴 POURQUOI
+#
+# Le deploiement des fonctions etait un geste manuel ; `Edge deploy drift`
+# ne voyait l'ecart qu'apres coup. Le 2026-10-23, `stripe-org-checkout` et
+# `stripe-org-portal` portaient sur `main` la mention 293 B (`c161de2b`) que
+# la production n'executait pas. Un correctif committe n'est pas deploye.
+#
+# ── CE QUE CE WORKFLOW FAIT, DANS L'ORDRE ─────────────────────────────
+#
+#   1. il ne part que sur un `CI` VERT, issu d'un PUSH sur `main`, et
+#      deploie le SHA que `CI` a valide (pas la tete de `main` a l'instant
+#      du declenchement, que `workflow_run` met dans `github.sha`) ;
+#   2. `scripts/edge-deploy-select.mjs` choisit les fonctions modifiees
+#      depuis le dernier SHA deploye, y compris toute importatrice d'un
+#      `_shared/` modifie, et refuse une fonction sans section `config.toml`
+#      ou sans sonde ;
+#   3. `supabase functions deploy <slug> --use-api`, sans Docker, depuis la
+#      racine du depot (`supabase/config.toml` porte les `verify_jwt`) ;
+#   4. `check:edge` puis `check:edge-smoke` : le deploiement n'est reussi que
+#      si le code en ligne EST celui du depot, et repond.
+#
+# ── LE DERNIER SHA DEPLOYE EST DANS LE TITRE DU RUN ───────────────────
+#
+# `run-name` porte le SHA valide par `CI`, et SEULEMENT quand ce workflow a
+# quelque chose a faire. Le selecteur lit le titre du dernier run VERT : un
+# run sans SHA (CI rouge, job saute) ne compte jamais comme un deploiement,
+# un run rouge non plus. ❌ Ne jamais renommer ce titre sans le selecteur.
+#
+# ── ECHEC FERME ───────────────────────────────────────────────────────
+#
+# Pas de `continue-on-error`, pas de `if: secrets.X != ''`. Jeton absent,
+# API GitHub illisible, deploiement refuse, derive restante : le run est
+# ROUGE, `ci-alert.yml` sonne, et le run suivant repart de la derniere base
+# VERTE, donc redeploie ce qui n'est pas parti.
+#
+# ⚠️ Pas de `workflow_dispatch` : un deploiement manuel contournerait la
+# condition « CI verte sur ce SHA ». Rejouer un run rouge (Re-run) garde son
+# evenement d'origine, donc sa condition.
+# ──────────────────────────────────────────────────────────────────────
+name: Edge deploy
+run-name: >-
+  ${{ (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+      && format('Edge deploy {0}', github.event.workflow_run.head_sha)
+      || 'Edge deploy (CI non verte ou hors push, rien a faire)' }}
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Un deploiement a la fois. ❌ Jamais `cancel-in-progress: true` : un
+# deploiement coupe entre deux fonctions laisse la prod a moitie migree.
+concurrency:
+  group: edge-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Lecture seule : lister les runs verts de ce workflow (dernier SHA deploye).
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          # L'historique complet : le diff part du dernier SHA deploye.
+          fetch-depth: 0
+
+      - name: Le SHA extrait est celui que la CI a valide
+        env:
+          ATTENDU: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          VU=$(git rev-parse HEAD)
+          if [ "$VU" != "$ATTENDU" ]; then
+            echo "::error title=edge-deploy::extrait $VU, CI verte sur $ATTENDU"
+            exit 1
+          fi
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+
+      # Meme CLI epinglee que `edge-deploy-drift.yml` : la version qui
+      # deploie est celle qui relit.
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.117.0
+
+      - name: Choisir les fonctions a deployer
+        id: select
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: node scripts/edge-deploy-select.mjs
+
+      - name: Deployer les fonctions selectionnees
+        if: ${{ steps.select.outputs.slugs != '' }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SLUGS: ${{ steps.select.outputs.slugs }}
+          PROJECT_REF: ${{ steps.select.outputs.project_ref }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error title=edge-deploy::SUPABASE_ACCESS_TOKEN absent : rien n'a ete deploye."
+            exit 1
+          fi
+          for slug in $SLUGS; do
+            echo "── $slug"
+            supabase functions deploy "$slug" --use-api --project-ref "$PROJECT_REF"
+          done
+
+      # Les deux relectures jouent MEME si un deploiement a echoue : c'est
+      # ce jour-la qu'il faut savoir dans quel etat la prod est restee.
+      - name: Comparer le code deploye au depot
+        if: ${{ !cancelled() && steps.select.outputs.slugs != '' }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: npm run check:edge
+
+      - name: Sondes de fumee apres deploiement
+        if: ${{ !cancelled() && steps.select.outputs.slugs != '' }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: npm run check:edge-smoke
+
+      - name: Temoin · le selecteur selectionne-t-il encore ?
+        if: ${{ always() }}
+        run: npx vitest run scripts/edge-deploy-select.guard.test.mjs
