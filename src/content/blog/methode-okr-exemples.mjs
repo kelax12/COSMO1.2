@@ -31,7 +31,7 @@ export const article = {
       ],
       html: `
 <p class="lead">La méthode OKR (Objectives &amp; Key Results) est le système de définition d'objectifs utilisé par Google, Intel, Netflix ou Spotify. Son principe tient en une phrase : un <strong>objectif</strong> ambitieux et qualitatif, mesuré par 2 à 5 <strong>résultats clés</strong> chiffrés. Ce guide vous explique comment elle fonctionne, comment écrire de bons OKR, et vous donne 15 exemples concrets (personnels et professionnels) à adapter directement.</p>
-<figure><img src="/screenshots/okr.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période." /><figcaption>Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période. Capture du mode démo, données fictives.</figcaption></figure>
+<figure><img src="/screenshots/okr.webp" srcset="/screenshots/okr-800.webp 800w, /screenshots/okr.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période." /><figcaption>Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="definition">Qu'est-ce qu'un OKR ? Définition simple</h2>
 <p>Un OKR se compose de deux éléments :</p>
@@ -147,7 +147,7 @@ export const article = {
       ],
       html: `
 <p class="lead">The OKR method (Objectives &amp; Key Results) is the goal-setting system used by Google, Intel, Netflix and Spotify. Its principle fits in one sentence: an ambitious, qualitative <strong>objective</strong>, measured by 2 to 5 numeric <strong>key results</strong>. This guide explains how it works, how to write good OKRs, and gives you 15 concrete examples, personal and professional, to adapt directly.</p>
-<figure><img src="/screenshots/okr.webp" width="1280" height="800" loading="lazy" decoding="async" alt="OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed." /><figcaption>OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed. Screenshot of the demo mode, sample data.</figcaption></figure>
+<figure><img src="/screenshots/okr.webp" srcset="/screenshots/okr-800.webp 800w, /screenshots/okr.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed." /><figcaption>OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="definition">What is an OKR? A simple definition</h2>
 <p>An OKR has two parts:</p>

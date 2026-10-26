@@ -26,7 +26,7 @@ export const article = {
       readingMinutes: 8,
       html: `
 <p class="lead">Le monde de la productivité adore le jargon. Voici les 20 termes que vous croiserez partout, définis clairement et sans mystique, avec pour chacun ce qu'il faut vraiment en retenir.</p>
-<figure><img src="/screenshots/dashboard.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Le tableau de bord de Cosmo : tâches du jour, événements d'agenda, résultats clés et habitudes réunis sur un seul écran." /><figcaption>Le tableau de bord de Cosmo : tâches du jour, événements d'agenda, résultats clés et habitudes réunis sur un seul écran. Capture du mode démo, données fictives.</figcaption></figure>
+<figure><img src="/screenshots/dashboard.webp" srcset="/screenshots/dashboard-800.webp 800w, /screenshots/dashboard.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Le tableau de bord de Cosmo : tâches du jour, événements d'agenda, résultats clés et habitudes réunis sur un seul écran." /><figcaption>Le tableau de bord de Cosmo : tâches du jour, événements d'agenda, résultats clés et habitudes réunis sur un seul écran. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="objectifs">Objectifs &amp; mesure</h2>
 <h3>OKR (Objectives &amp; Key Results)</h3>
@@ -87,7 +87,7 @@ export const article = {
       readingMinutes: 8,
       html: `
 <p class="lead">Productivity culture loves its jargon. Here are the 20 terms you will run into everywhere, defined plainly and without mystique, each with the part actually worth remembering.</p>
-<figure><img src="/screenshots/dashboard.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's dashboard: today's tasks, calendar events, key results and habits on a single screen." /><figcaption>Cosmo's dashboard: today's tasks, calendar events, key results and habits on a single screen. Screenshot of the demo mode, sample data.</figcaption></figure>
+<figure><img src="/screenshots/dashboard.webp" srcset="/screenshots/dashboard-800.webp 800w, /screenshots/dashboard.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's dashboard: today's tasks, calendar events, key results and habits on a single screen." /><figcaption>Cosmo's dashboard: today's tasks, calendar events, key results and habits on a single screen. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="objectifs">Goals &amp; measurement</h2>
 <h3>OKR (Objectives &amp; Key Results)</h3>

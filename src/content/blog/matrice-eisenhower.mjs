@@ -31,7 +31,7 @@ export const article = {
       ],
       html: `
 <p class="lead">« Ce qui est important est rarement urgent, et ce qui est urgent est rarement important. » La phrase attribuée au président Eisenhower a donné son nom à l'outil de priorisation le plus simple qui existe : deux questions, quatre cases, une décision par tâche. Voici comment l'utiliser correctement, et surtout comment éviter le piège dans lequel tombe la majorité de ses utilisateurs.</p>
-<figure><img src="/screenshots/taches.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Le gestionnaire de tâches de Cosmo : listes d'accès rapide, filtres par priorité et par catégorie, tâches en retard signalées." /><figcaption>Le gestionnaire de tâches de Cosmo : listes d'accès rapide, filtres par priorité et par catégorie, tâches en retard signalées. Capture du mode démo, données fictives.</figcaption></figure>
+<figure><img src="/screenshots/taches.webp" srcset="/screenshots/taches-800.webp 800w, /screenshots/taches.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Le gestionnaire de tâches de Cosmo : listes d'accès rapide, filtres par priorité et par catégorie, tâches en retard signalées." /><figcaption>Le gestionnaire de tâches de Cosmo : listes d'accès rapide, filtres par priorité et par catégorie, tâches en retard signalées. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="principe">Le principe : deux questions, quatre quadrants</h2>
 <p>Pour chaque tâche, posez deux questions : <strong>est-ce urgent ?</strong> (est-ce que ça exige une action immédiate ?) et <strong>est-ce important ?</strong> (est-ce que ça contribue à mes objectifs de fond ?). Les réponses placent la tâche dans l'un des quatre quadrants :</p>
@@ -87,7 +87,7 @@ export const article = {
       ],
       html: `
 <p class="lead">"What is important is seldom urgent, and what is urgent is seldom important." The sentence attributed to President Eisenhower gave its name to the simplest prioritisation tool there is: two questions, four boxes, one decision per task. Here is how to use it properly, and above all how to avoid the trap most of its users fall into.</p>
-<figure><img src="/screenshots/taches.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's task manager: quick-access lists, filters by priority and category, overdue tasks flagged." /><figcaption>Cosmo's task manager: quick-access lists, filters by priority and category, overdue tasks flagged. Screenshot of the demo mode, sample data.</figcaption></figure>
+<figure><img src="/screenshots/taches.webp" srcset="/screenshots/taches-800.webp 800w, /screenshots/taches.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's task manager: quick-access lists, filters by priority and category, overdue tasks flagged." /><figcaption>Cosmo's task manager: quick-access lists, filters by priority and category, overdue tasks flagged. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="principe">The principle: two questions, four quadrants</h2>
 <p>For each task, ask two questions: <strong>is it urgent?</strong> (does it demand immediate action?) and <strong>is it important?</strong> (does it contribute to my underlying goals?). The answers place the task in one of four quadrants:</p>
