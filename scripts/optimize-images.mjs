@@ -69,6 +69,38 @@ if not check:
 print(f"{im.size[0]}x{im.size[1]}\\t{before}\\t{len(data)}")
 `;
 
+/**
+ * Variante MOBILE des captures des articles de blog (2026-10-26).
+ *
+ * Un téléphone affiche la capture sur toute la largeur de la colonne, soit
+ * environ 380 à 410 points CSS, donc 650 à 820 pixels physiques à densité 1,75
+ * à 2. La source 2560 px y était décodée pour être réduite au quart : 120 ko
+ * téléchargés pour un affichage qui n'en demande pas le cinquième. Les articles
+ * la proposent par `srcset`, le navigateur choisit : un écran large garde la
+ * grande image, rien ne change à l'écran.
+ *
+ * 🔴 Ce que ça règle aussi : Lighthouse mobile SIMULE une 4G lente et compte
+ * chaque ressource lancée avant le LCP observé. Sur `/blog/methode-okr-exemples/`,
+ * la capture partait juste avant ou juste après lui selon les runs, d'où un LCP
+ * simulé en deux paquets (1,6 puis 2,1 à 2,3 s) pour une page peinte en 80 ms.
+ */
+const MOBILE_WIDTH = 800;
+
+const PY_SHOT_MOBILE = `
+import sys, io, os
+from PIL import Image
+src, out, width, check = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4] == "1"
+im = Image.open(src)
+height = round(im.size[1] * width / im.size[0])
+im = im.resize((width, height), Image.LANCZOS)
+buf = io.BytesIO()
+im.save(buf, "WEBP", quality=82, method=6)
+data = buf.getvalue()
+if not check:
+    open(out, "wb").write(data)
+print(f"{width}x{height}\\t{len(data)}")
+`;
+
 const PY_LOGO = `
 import sys, io, os
 from PIL import Image
@@ -107,6 +139,19 @@ for (const name of SHOTS) {
     `  ${name.padEnd(12)} ${dims.padStart(10)}  ${KO(Number(b)).padStart(9)} → ${KO(Number(a)).padStart(9)}` +
       `  (−${(((Number(b) - Number(a)) / Number(b)) * 100).toFixed(0)} %)`
   );
+}
+
+console.log(`\nVariantes mobiles des captures (${MOBILE_WIDTH} px de large, proposées par srcset)\n`);
+for (const name of SHOTS) {
+  const src = join(ROOT, `public/screenshots/${name}.png`);
+  if (!existsSync(src)) continue;
+  const [dims, a] = py(PY_SHOT_MOBILE, [
+    src,
+    join(ROOT, `public/screenshots/${name}-${MOBILE_WIDTH}.webp`),
+    String(MOBILE_WIDTH),
+    CHECK ? '1' : '0',
+  ]).split('\t');
+  console.log(`  ${(name + '-' + MOBILE_WIDTH).padEnd(16)} ${dims.padStart(9)}  ${KO(Number(a)).padStart(9)}`);
 }
 
 console.log('\nLogo (les variantes, l’original reste intact pour la PWA et le partage)\n');
