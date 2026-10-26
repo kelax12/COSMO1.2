@@ -2,7 +2,7 @@ import { Check } from 'lucide-react';
 import { ENTERPRISE_PRICING_TIERS, displayedMonthlyEur, yearlyTotalEur } from '@/modules/billing/premium-config';
 import type { OrgBillingInterval, OrgTierKey } from '@/modules/billing/premium-config';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
-import { formatCurrency } from '@/i18n/format';
+import { formatCurrency, formatPrice } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 
 interface Props {
@@ -125,7 +125,7 @@ export function EnterpriseTierGrid({
                     l'offre de lancement, comme sur la landing. */}
                 {isPromo && (
                   <s className="text-xs text-[rgb(var(--color-text-muted))] decoration-[rgb(var(--color-border-strong))]">
-                    {tOrgAdmin('billing.insteadOf', { price: monthlyShown })}
+                    {tOrgAdmin('billing.insteadOf', { price: formatPrice(monthlyShown) })}
                   </s>
                 )}
               </>

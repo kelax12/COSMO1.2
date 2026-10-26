@@ -323,7 +323,12 @@ test.describe('C-95 — pages publiques', () => {
       // contenaient, et l'allongement de son texte (`79c0f0b3`) a rendu les
       // trois pages rouges. Témoin à deux sens : on le voit, puis plus.
       const bandeau = page.getByRole('complementary', { name: /cookie/i });
-      await expect(bandeau, 'le témoin ne trouve pas le bandeau : il ne prouve plus rien').toBeVisible({ timeout: 15_000 });
+      // Le bandeau attend le premier geste depuis le 2026-10-22 (LCP de `/en/`,
+      // docs/PERFORMANCE.md) : une touche neutre le déclenche, sans rien défiler.
+      await expect(async () => {
+        await page.keyboard.press('Shift');
+        await expect(bandeau).toBeVisible({ timeout: 1_000 });
+      }, 'le témoin ne trouve pas le bandeau : il ne prouve plus rien').toPass({ timeout: 15_000 });
       await page.evaluate(() => {
         try {
           localStorage.setItem('cosmo_cookie_consent', 'refused');

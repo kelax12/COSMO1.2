@@ -26,10 +26,14 @@
 // — exiger zéro rendrait la garde rouge en permanence, donc ignorée. Ce qui
 // doit alerter est la 53ᵉ, ou une policy qui disparaît.
 //
-// ⚠️ LES ADVISORS DE PERFORMANCE SONT IMPRIMÉS, PAS BLOQUANTS. Ils bougent
-// avec le VOLUME de données (un index « inutilisé » le devient dès qu'une
-// table grossit) : les gater produirait un rouge que personne ne pourrait
-// tenir. La perte de performance, elle, a ses propres gardes (C-87).
+// ⚠️ LES ADVISORS DE PERFORMANCE SONT JUGÉS PAR NATURE (AM-5, 2026-10-23).
+// Ceux qui bougent avec le VOLUME de données (un index « inutilisé » le
+// devient dès qu'une table grossit) restent IMPRIMÉS : les gater produirait
+// un rouge que personne ne pourrait tenir. Ceux qui sont un DÉFAUT DE
+// CONCEPTION, décidé dans une migration (PERF_BLOQUANTS : FK sans index,
+// index doublon, policy mal écrite), BLOQUENT sur un écart à la référence
+// `performance`. Un advisor de performance de NOM NEUF bloque aussi : on ne
+// sait pas ce qu'il est. Le coût mesuré, lui, a ses propres gardes (C-87).
 //
 // ❌ NE JAMAIS RELEVER UN COMPTE DE RÉFÉRENCE POUR FAIRE PASSER LA CI. Un
 //    écart dit qu'un objet est apparu, et la question est ce qu'il est. Le
@@ -96,6 +100,49 @@ export function resumerAdvisors(reponse) {
   return out;
 }
 
+/**
+ * Advisors de performance qui BLOQUENT sur une hausse : des défauts de
+ * conception, indépendants du volume de données.
+ */
+export const PERF_BLOQUANTS = new Set([
+  'unindexed_foreign_keys',
+  'duplicate_index',
+  'auth_rls_initplan',
+  'multiple_permissive_policies',
+]);
+
+/**
+ * Compare les advisors de performance à leur référence.
+ * `ecarts` : bloquants (hausse d'un advisor de PERF_BLOQUANTS, ou nom neuf).
+ * `infos` : hausses des autres, non bloquantes, imprimées.
+ * `baisses` : améliorations à enregistrer.
+ */
+export function comparerPerformance(reference, mesure) {
+  const ecarts = [];
+  const infos = [];
+  for (const [nom, m] of Object.entries(mesure)) {
+    const r = reference[nom];
+    if (!r) {
+      ecarts.push(
+        `advisor de performance NOUVEAU : \`${nom}\` (${m.niveau}, ${m.compte} occurrence(s)). `
+          + "Il n'existait pas à la dernière référence.",
+      );
+    } else if (m.compte > r.compte) {
+      const msg = `\`${nom}\` : ${m.compte} occurrence(s) contre ${r.compte} à la référence (+${m.compte - r.compte}).`;
+      if (PERF_BLOQUANTS.has(nom)) ecarts.push(msg);
+      else infos.push(`${msg} Non bloquant : suit le volume de données.`);
+    }
+  }
+  const baisses = [];
+  for (const [nom, r] of Object.entries(reference)) {
+    if (nom.startsWith('_')) continue;
+    const m = mesure[nom];
+    if (!m) baisses.push(`\`${nom}\` a DISPARU (était ${r.compte}) : recaler la référence.`);
+    else if (m.compte < r.compte) baisses.push(`\`${nom}\` : ${m.compte} contre ${r.compte} : recaler la référence.`);
+  }
+  return { ecarts, infos, baisses };
+}
+
 /** Compare deux résumés d'advisors. Rend la liste des écarts. */
 export function comparerAdvisors(reference, mesure) {
   const ecarts = [];
@@ -125,6 +172,53 @@ export function comparerAdvisors(reference, mesure) {
     else if (m.compte < r.compte) baisses.push(`\`${nom}\` : ${m.compte} contre ${r.compte} — recaler la référence.`);
   }
   return { ecarts, baisses };
+}
+
+/**
+ * La référence recalée : les COMPTES et les réglages viennent de la mesure,
+ * tout ce qu'un humain a écrit est CONSERVÉ.
+ *
+ * 🔴 `--update` réécrivait le fichier en entier : chaque `_note` (la raison
+ * pour laquelle un objet est légitime, relue au catalogue) disparaissait au
+ * recalage, et c'est précisément ce texte qui rend un recalage défendable.
+ * Sont donc repris de l'ancienne référence : la `_note` de chaque advisor
+ * qui existe encore, et les clés `_*_source` (historique des recalages).
+ * Un advisor NOUVEAU naît sans `_note` : à écrire à la main, après relecture.
+ */
+export function fusionnerReference(ancienne, securite, reglages, date, performance = {}) {
+  const contenu = {
+    _comment: [
+      'C-88 · référence de POSTURE Supabase : advisors de sécurité et réglages',
+      "d'authentification. Se recale par `node scripts/check-supabase-posture.mjs --update`",
+      '(ou par le workflow Posture, entrée `regenerer`), jamais à la main pour les comptes.',
+      '🔴 La garde juge sur un ÉCART à ces valeurs, pas sur un absolu : les fonctions',
+      "SECURITY DEFINER exposées à `authenticated` sont un choix d'architecture (les",
+      'helpers RLS en sont). Ce qui doit alerter est la suivante, ou une policy qui disparaît.',
+      '❌ Ne jamais relever un compte ici pour faire passer la CI : répondre',
+      "d'abord à la question « quel objet est apparu ? ».",
+    ],
+    pose_le: date,
+  };
+  for (const [cle, valeur] of Object.entries(ancienne ?? {})) {
+    if (cle.startsWith('_') && cle !== '_comment') contenu[cle] = valeur;
+  }
+  contenu.securite = {};
+  for (const [nom, m] of Object.entries(securite)) {
+    const note = ancienne?.securite?.[nom]?._note;
+    contenu.securite[nom] = note === undefined ? { ...m } : { ...m, _note: note };
+  }
+  // Les advisors de performance (AM-5) portent le même historique : `_source`
+  // et `_note` sont conservés, les comptes viennent de la mesure.
+  contenu.performance = {};
+  for (const [cle, valeur] of Object.entries(ancienne?.performance ?? {})) {
+    if (cle.startsWith('_')) contenu.performance[cle] = valeur;
+  }
+  for (const [nom, m] of Object.entries(performance)) {
+    const note = ancienne?.performance?.[nom]?._note;
+    contenu.performance[nom] = note === undefined ? { ...m } : { ...m, _note: note };
+  }
+  contenu.reglages_auth = reglages;
+  return contenu;
 }
 
 // ── Exécution ──────────────────────────────────────────────────────
@@ -160,21 +254,21 @@ if (estLanceDirectement) {
   }
 
   if (process.argv.includes('--update')) {
-    const contenu = {
-      _comment: [
-        'C-88 — référence de POSTURE Supabase : advisors de sécurité et réglages',
-        "d'authentification. Écrite par `node scripts/check-supabase-posture.mjs --update`,",
-        'jamais à la main.',
-        '🔴 La garde juge sur un ÉCART à ces valeurs, pas sur un absolu : les 82',
-        'fonctions SECURITY DEFINER exposées à `authenticated` sont un choix',
-        "d'architecture (les helpers RLS en sont). Ce qui doit alerter est la 83e.",
-        '❌ Ne jamais relever un compte ici pour faire passer la CI : répondre',
-        "d'abord à la question « quel objet est apparu ? ».",
-      ],
-      pose_le: new Date().toISOString().slice(0, 10),
+    // Lecture directe, sans `existsSync` avant : un fichier absent est la première
+    // pose, et tester puis lire ouvrirait une course (CodeQL js/file-system-race).
+    let ancienne = {};
+    try {
+      ancienne = JSON.parse(readFileSync(REFERENCE, 'utf8'));
+    } catch (e) {
+      if (e?.code !== 'ENOENT') throw e;
+    }
+    const contenu = fusionnerReference(
+      ancienne,
       securite,
-      reglages_auth: reglages,
-    };
+      reglages,
+      new Date().toISOString().slice(0, 10),
+      performance,
+    );
     writeFileSync(REFERENCE, `${JSON.stringify(contenu, null, 2)}\n`, 'utf8');
     console.log(`✓ Référence recalée : ${Object.keys(securite).length} advisor(s), ${Object.keys(reglages).length} réglage(s).`);
     process.exit(0);
@@ -213,10 +307,27 @@ if (estLanceDirectement) {
     );
   }
 
-  // ── 2. Les advisors de PERFORMANCE, imprimés ────────────────────
-  console.log('\nPosture Supabase · advisors de PERFORMANCE (imprimés, non bloquants)');
+  // ── 2. Les advisors de PERFORMANCE (AM-5) ───────────────────────
+  console.log(`\nPosture Supabase · advisors de PERFORMANCE (bloquants : ${[...PERF_BLOQUANTS].join(', ')})`);
   for (const [nom, m] of Object.entries(performance).sort()) {
-    console.log(`  ${m.niveau.padEnd(5)} ${nom.padEnd(52)} ${String(m.compte).padStart(3)}`);
+    const r = reference.performance?.[nom];
+    const delta = r ? m.compte - r.compte : null;
+    console.log(
+      `  ${m.niveau.padEnd(5)} ${nom.padEnd(52)} ${String(m.compte).padStart(3)}`
+        + (delta === null ? '  (NOUVEAU)' : delta === 0 ? '' : `  (${delta > 0 ? '+' : ''}${delta})`),
+    );
+  }
+  // 🔴 Référence absente = garde aveugle : un échec, jamais un vert.
+  if (!reference.performance) {
+    erreurs.push(
+      'RÉFÉRENCE DES ADVISORS DE PERFORMANCE NON POSÉE : les comptes lus ci-dessus ne sont\n'
+        + '    comparés à rien. La poser par `--update`, puis la COMMITER.',
+    );
+  } else {
+    const p = comparerPerformance(reference.performance, performance);
+    erreurs.push(...p.ecarts);
+    for (const i of p.infos) console.log(`  ℹ ${i}`);
+    baisses.push(...p.baisses);
   }
 
   // ── 3. Les réglages d'authentification ──────────────────────────

@@ -62,6 +62,64 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-10-25 · **29 PR fusionnées, angles morts outillés : 962 → 968**
+
+Consigne d'Axel (2026-10-23) : corriger la dette technique et les failles, repérer tous les
+angles morts des audits, une session par angle mort, puis renoter. **29 PR fusionnées** du 10-23
+au 10-25 (n° 121, 122, 124, 126 à 141, 145 à 150), relues une à une, chacune mise à jour avec
+`main` et entièrement verte avant fusion. Même règle : un défaut ne se rembourse que corrigé **et
+vu vert en CI** ; une garde posée mais jamais jouée ne rapporte rien.
+
+### Ce que la CI et la production disent
+
+| Source | Verdict | Mesuré le 2026-10-25 |
+|---|---|---|
+| `CI` de `main` | 🔴 | vert jusqu'à `4677facc` ; rouge depuis `bff7f874` (commit direct : médiateur SMP dans les CGU) : la nouvelle empreinte de `legalTerms.json` n'est pas au journal (`check:legal-journal`, C-107). L'entrée exige le tri FOND / FORME et la décision de préavis : **geste d'Axel** |
+| `Edge deploy drift` | 🔴 | douze fonctions divergent : SV-1 à SV-9 (PR n° 141) et la mention 293 B sont sur `main`, **pas en production** |
+| `Posture` | 🔴 | mode `regenerer` fusionné (PR n° 147) : `gh workflow run posture.yml -f regenerer=true` le recale |
+| `Detection violation` | 🔴 | attendu : `SECURITY_ALERTS_TOKEN` absent, échec fermé (PR n° 125 non fusionnée) |
+| Lighthouse mobile | ✅ | **trois mesures par URL, verdict sur la médiane** (PR n° 150) : une seule mesure faisait rougir des PR sans effet sur les pages |
+| Nouveaux jobs planifiés | ⏳ | `Mutation`, `Erreurs de prod`, `Secrets age`, `Signaux SEO` : jamais joués, donc **aucun crédit** ; trois attendent un secret (`SENTRY_AUTH_TOKEN`, `GSC_SERVICE_ACCOUNT_JSON`, `BING_WEBMASTER_API_KEY`) |
+| Alertes | ✅ | `npm audit --omit=dev` **0** (`zod` 4, PR n° 136) |
+
+### Les notes
+
+| Audit | 10-23 | **10-25** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 87 | **84** | **−3** | SV-1, SV-2, SV-3, SV-8 (🟠) ouverts en production tant que les fonctions ne sont pas redéployées (−4) ; checklist SQL en onze règles de `validate:migrations`, verte (+1, AM-4) |
+| [Tests / CI](./TESTING.md) | 96 | **96** | 0 | dépendances de dev débloquées, axe-core 4.14 (+1, AM-6) ; `main` rouge sur le journal légal (−1). Stryker posé mais jamais joué : AM-3 non crédité |
+| [Performance](./PERFORMANCE.md) | 95 | **97** | **+2** | LCP mobile des pages de contenu 4,5 à 5,6 s → 1,5 à 1,7 s, rendu bloquant à 2 000 ms (PR n° 149) : le −2 du 10-22 est remboursé |
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | **84** | **+2** | **61 surfaces modales sur 63** mesurées au clavier (PR n° 132, vert après n° 145) : AM-2 remboursé. VoiceOver et NVDA restent à jouer (échéance datée, PR n° 137) |
+| [UI / UX](./UI-PATTERNS.md) | 86 | **87** | **+1** | manifeste des promesses de la landing et garde des chiffres (PR n° 138, AM-4) |
+| [Architecture](./ARCHITECTURE.md) | 93 | **94** | **+1** | React 19 et `react-router` 8 (PR n° 129) : la dette de version est soldée, `Visual` vert sans régénérer |
+| [Scalabilité](./SCALABILITY.md) | 91 | **91** | 0 | index des 40 FK écrits (mig. `227`) mais **non appliqués** ; advisors de performance lus par `Posture`, encore rouge |
+| [RGPD](./RGPD.md) | 87 | **88** | **+1** | sous-traitants dérivés du code et confrontés au registre (PR n° 134, `RGPD-REGISTRE.md` AM-3). Détection de violation : PR n° 125 non fusionnée |
+| [i18n](./I18N.md) | 89 | **90** | **+1** | revue de sens des catalogues anglais (PR n° 128, `M-50`) ; le SENS reste mesuré par une revue datée, pas par une garde |
+| [SEO](./SEO.md) | 79 | **79** | 0 | `Signaux SEO` posé (PR n° 131), jamais joué : AM-4 non crédité |
+| [Mobile / DA](./MOBILE.md) | 77 | **78** | **+1** | LCP mobile des pages de contenu : le −1 est remboursé |
+
+**962 → 968.** [`OBSERVABILITE.md`](./OBSERVABILITE.md) reste **non noté** : son job `Erreurs de
+prod` n'a pas encore tourné, et une note ne se pose qu'après la première mesure.
+
+### Ce qui reste, et qui
+
+| # | Geste | Qui | Ce que ça rapporte |
+|---|---|---|---|
+| 1 | **Redéployer les douze Edge Functions** depuis `main` (ou fusionner la PR n° 123), puis `check:edge` et `check:edge-smoke`, puis rejouer SV-3 | Axel | **+3** Sécurité, et la mention 293 B en production |
+| 2 | **Entrée du journal légal** pour le médiateur SMP (FOND ou FORME, préavis dû ou non) | Axel | `main` vert, +1 Tests |
+| 3 | `gh workflow run posture.yml -f regenerer=true` | Axel | `Posture` vert |
+| 4 | Poser `SENTRY_AUTH_TOKEN`, `SECURITY_ALERTS_TOKEN`, `GSC_SERVICE_ACCOUNT_JSON`, `BING_WEBMASTER_API_KEY` ; fusionner la PR n° 125 | Axel | ferme `OBSERVABILITE.md` AM-1 à AM-3 et AM-5, `SEO.md` AM-4, `RGPD-VIOLATION.md` AM-2 |
+| 5 | Appliquer la mig. `227` (index de FK) | Axel | Scalabilité AM-5 |
+| 6 | Arbitrer le reste de SV-2 ; poser SV-10 avec la rotation des secrets | Axel + code | dernier 🟠 de l'audit serveur |
+| 7 | Jouer VoiceOver et NVDA à l'échéance datée ; recette Stripe réelle (20 €, puis remboursement) | Axel | `AUDIT-VOICEOVER-IOS.md` ; chemin d'argent prouvé |
+| 8 | PITR (plan Pro), `M-71`, mot de passe historique de la base, PR n° 77 et 78 | Axel | inchangés |
+
+🔴 **Les angles morts qui restent ne sont pas des oublis de mesure** : chacun attend un geste
+qu'aucune session ne peut faire (un secret, un déploiement, un lecteur d'écran, une décision
+juridique). Tous ont désormais une garde ou une échéance qui rougit s'ils sont oubliés.
+
+---
+
 ## Mise à jour du 2026-10-23 · **les dix points du 10-22 fusionnés : 960 → 962**
 
 Consigne d'Axel : « remet à jour les audits en .md du dossier docs ». **18 fusions** relues depuis

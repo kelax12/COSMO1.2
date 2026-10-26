@@ -101,7 +101,7 @@
       "alreadyCreated": "Objective added: {{name}}. You can flesh it out in OKRs."
     },
     "done": {
-      "title": "Your system is <em>up and running</em>.",
+      "title": "Your system is <em>in orbit</em>.",
       "body": "Everything you created is already in COSMO. Every task you tick off and every habit you keep feeds your statistics.",
       "recapTitle": "What you just created",
       "recapTasks_one": "{{count}} task in your list",

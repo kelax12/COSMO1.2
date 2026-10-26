@@ -5,7 +5,7 @@
     "seoTitle": "Mentions légales – Cosmo App",
     "seoDescription": "Mentions légales de l'application de productivité Cosmo : éditeur, hébergeur, propriété intellectuelle et responsabilités.",
     "title": "Mentions légales",
-    "updatedAt": "21 octobre 2026",
+    "updatedAt": "25 octobre 2026",
     "s1": {
       "title": "1. Éditeur du site",
       "intro": "Le site et l'application **Cosmo** sont édités par :",
@@ -36,7 +36,8 @@
     },
     "s5": {
       "title": "5. Droit applicable",
-      "p1": "Les présentes mentions légales sont soumises au droit français. Si vous êtes un consommateur, vous conservez le droit de saisir la juridiction du lieu où vous demeurez."
+      "p1": "Les présentes mentions légales sont soumises au droit français. Si vous êtes un consommateur, vous conservez le droit de saisir la juridiction du lieu où vous demeurez.",
+      "p2": "**Médiateur de la consommation** : Société Médiation Professionnelle, [www.mediateur-consommation-smp.fr](https://www.mediateur-consommation-smp.fr), Alteritae, 5 rue Salvaing, 12000 Rodez. Conditions de saisine : article 12 bis des [CGU](/cgu)."
     },
     "s6": {
       "title": "6. Langue de ce document",

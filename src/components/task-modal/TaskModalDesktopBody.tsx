@@ -54,7 +54,7 @@ export interface DesktopBodyProps {
   dTrigger: (missing: string[]) => void;
   dClear: (name: string) => void;
   dInvalid: (name: string) => boolean;
-  collaboratorRef: React.RefObject<HTMLDivElement>;
+  collaboratorRef: React.RefObject<HTMLDivElement | null>;
   validateForm: () => boolean;
   isStep1Valid: () => boolean;
   isFormValid: () => boolean;

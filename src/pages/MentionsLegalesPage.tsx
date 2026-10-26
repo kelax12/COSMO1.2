@@ -56,7 +56,11 @@ const SECTIONS: LegalSection<KeyOf<'legal'>>[] = [
     title: 'notice.s4.title',
     blocks: [{ kind: 'p', key: 'notice.s4.p1' }, { kind: 'p', key: 'notice.s4.p2' }],
   },
-  { title: 'notice.s5.title', blocks: [{ kind: 'p', key: 'notice.s5.p1' }] },
+  {
+    title: 'notice.s5.title',
+    // p2 : médiateur de la consommation, à afficher aussi sur le site (L616-1).
+    blocks: [{ kind: 'p', key: 'notice.s5.p1' }, { kind: 'p', key: 'notice.s5.p2' }],
+  },
   { title: 'notice.s6.title', blocks: [{ kind: 'p', key: 'notice.s6.p1' }] },
   { title: 'notice.s7.title', blocks: [{ kind: 'p', key: 'notice.s7.p1' }] },
 ];
