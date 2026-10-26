@@ -14,6 +14,6 @@
   "src/pages/landing/entreprise/EnterpriseHero.tsx": "89b9eef3cb6a7e46",
   "src/pages/landing/entreprise/HeroStack.tsx": "bb52897f5d370e3f",
   "src/pages/landing/entreprise/free-offer.ts": "67d4b1ee66f8694b",
-  "src/locales/fr/landingEnterprise.json": "58a29f645a99e3e5",
-  "src/locales/en/landingEnterprise.json": "ac1b99443488f11b"
+  "src/locales/fr/landingEnterprise.json": "85db28bdd3735597",
+  "src/locales/en/landingEnterprise.json": "1170c618b7c02f5d"
 }

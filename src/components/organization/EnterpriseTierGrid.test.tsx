@@ -27,23 +27,23 @@ describe('EnterpriseTierGrid — périodicité', () => {
 
   it('en mensuel, affiche le tarif mensuel et « par mois »', () => {
     render(<EnterpriseTierGrid interval="monthly" />);
-    expect(screen.getAllByText('20,00 €').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('par mois').length).toBe(4);
+    expect(screen.getAllByText('70,00 €').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('par mois').length).toBe(5);
   });
 
-  it('en annuel, affiche l’équivalent mensuel remisé de 30 %', () => {
+  it('en annuel, affiche l’équivalent mensuel remisé de 25 %', () => {
     render(<EnterpriseTierGrid interval="yearly" />);
     // 20 → 14, 50 → 35, 100 → 70, 200 → 140.
-    ['14,00 €', '35,00 €', '70,00 €', '140,00 €'].forEach((amount) => {
+    ['52,50 €', '112,50 €', '262,50 €', '525,00 €', '750,00 €'].forEach((amount) => {
       expect(screen.getAllByText(amount).length).toBeGreaterThan(0);
     });
-    expect(screen.queryByText('20,00 €')).toBeNull();
+    expect(screen.queryByText('70,00 €')).toBeNull();
   });
 
   it('en annuel, le débit réel est dit sous chaque prix', () => {
     render(<EnterpriseTierGrid interval="yearly" />);
-    expect(screen.getByText('par mois, facturé 168,00 € par an')).toBeTruthy();
-    expect(screen.getByText('par mois, facturé 1 680,00 € par an')).toBeTruthy();
+    expect(screen.getByText('par mois, facturé 630,00 € par an')).toBeTruthy();
+    expect(screen.getByText('par mois, facturé 9 000,00 € par an')).toBeTruthy();
     // « par mois » nu n'apparaît plus : il laisserait croire à un débit mensuel.
     expect(screen.queryByText('par mois')).toBeNull();
   });
@@ -58,7 +58,7 @@ describe('EnterpriseTierGrid — périodicité', () => {
 
   it('pendant l’offre de lancement, le prix barré suit la périodicité', () => {
     render(<EnterpriseTierGrid interval="yearly" dormant />);
-    expect(screen.getByText('au lieu de 14 €')).toBeTruthy();
-    expect(screen.queryByText('au lieu de 20 €')).toBeNull();
+    expect(screen.getByText('au lieu de 52,50 €')).toBeTruthy();
+    expect(screen.queryByText('au lieu de 70 €')).toBeNull();
   });
 });

@@ -33,10 +33,11 @@ describe('ENTERPRISE_PRICING_TIERS', () => {
   it('grille affichée : clés, bornes et montants', () => {
     expect(ENTERPRISE_PRICING_TIERS.map((t) => [t.key, t.minMembers, t.maxMembers, t.priceEurPerMonth])).toEqual([
       ['free', 0, 5, 0],
-      ['t10', 5, 10, 20],
-      ['t20', 10, 20, 50],
-      ['t50', 20, 50, 100],
-      ['tmax', 50, null, 200],
+      ['t10', 5, 10, 70],
+      ['t20', 10, 20, 150],
+      ['t50', 20, 50, 350],
+      ['t100', 50, 100, 700],
+      ['tmax', 100, null, 1000],
     ]);
   });
 
@@ -64,29 +65,30 @@ describe('ENTERPRISE_PRICING_TIERS', () => {
 });
 
 describe('dérivations annuelles', () => {
-  it('remise annuelle de 30 %', () => {
-    expect(ENTERPRISE_YEARLY_DISCOUNT).toBe(0.3);
+  it('remise annuelle de 25 %', () => {
+    expect(ENTERPRISE_YEARLY_DISCOUNT).toBe(0.25);
   });
 
   it.each([
     [0, 0, 0],
-    [20, 14, 168],
-    [50, 35, 420],
-    [100, 70, 840],
-    [200, 140, 1680],
+    [70, 52.5, 630],
+    [150, 112.5, 1350],
+    [350, 262.5, 3150],
+    [700, 525, 6300],
+    [1000, 750, 9000],
   ])('mensuel %d € : équivalent %d €/mois, %d € par an', (monthly, equivalent, total) => {
     expect(yearlyMonthlyEquivalentEur(monthly)).toBe(equivalent);
     expect(yearlyTotalEur(monthly)).toBe(total);
   });
 
   it('arrondit l’équivalent au centime', () => {
-    // 3,33 × 0,7 = 2,331 → 2,33
-    expect(yearlyMonthlyEquivalentEur(3.33)).toBe(2.33);
+    // 3,33 × 0,75 = 2,4975 → 2,50
+    expect(yearlyMonthlyEquivalentEur(3.33)).toBe(2.5);
   });
 
   it('le total annuel vaut 12 × l’équivalent ARRONDI, au centime près', () => {
-    // 3,33 € : équivalent 2,33 € → 27,96 €, et non 3,33 × 0,7 × 12 = 27,972 → 27,97 €.
-    expect(yearlyTotalEur(3.33)).toBe(27.96);
+    // 3,33 € : équivalent 2,50 € → 30,00 €, et non 3,33 × 0,75 × 12 = 29,97 €.
+    expect(yearlyTotalEur(3.33)).toBe(30);
     for (const tier of ENTERPRISE_PRICING_TIERS) {
       const eq = yearlyMonthlyEquivalentEur(tier.priceEurPerMonth);
       expect(yearlyTotalEur(tier.priceEurPerMonth)).toBe(Math.round(eq * 12 * 100) / 100);
@@ -95,6 +97,6 @@ describe('dérivations annuelles', () => {
 
   it('displayedMonthlyEur : brut au mois, équivalent à l’année', () => {
     expect(displayedMonthlyEur(50, 'monthly')).toBe(50);
-    expect(displayedMonthlyEur(50, 'yearly')).toBe(35);
+    expect(displayedMonthlyEur(50, 'yearly')).toBe(37.5);
   });
 });

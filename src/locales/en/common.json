@@ -268,6 +268,7 @@
     "t10": "Team",
     "t20": "Department",
     "t50": "Business",
+    "t100": "Enterprise",
     "tmax": "Unlimited"
   },
   "appVersion": {
