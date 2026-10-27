@@ -100,7 +100,25 @@ async function connect(env) {
     logger: false,
   });
   await client.connect();
-  return client;
+  return lockClient(client);
+}
+
+/** Seules methodes IMAP joignables. Ni suppression, ni APPEND (brouillon), ni
+ *  renommage : une methode absente de la liste leve, meme si le code l'appelle. */
+export const IMAP_ALLOWED = new Set([
+  'mailboxOpen', 'search', 'fetch', 'fetchOne', 'list', 'mailboxCreate',
+  'messageFlagsAdd', 'messageMove', 'logout',
+]);
+
+export function lockClient(client) {
+  return new Proxy(client, {
+    get(target, prop) {
+      const value = Reflect.get(target, prop);
+      if (typeof value !== 'function') return value;
+      if (!IMAP_ALLOWED.has(prop)) throw new Error(`Methode IMAP interdite : ${String(prop)}`);
+      return value.bind(target);
+    },
+  });
 }
 
 /** Non lus de INBOX : uid + Message-ID, sans rien marquer comme lu. */

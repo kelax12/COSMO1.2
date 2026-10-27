@@ -1,5 +1,25 @@
+import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { actionsFor, buildReport } from './mail.mjs';
+import { actionsFor, buildReport, lockClient } from './mail.mjs';
+
+describe('verrous du client IMAP', () => {
+  const fake = { messageDelete() {}, append() {}, messageFlagsRemove() {}, messageMove() { return 'ok'; } };
+
+  it('leve sur suppression, brouillon, retrait de drapeau', () => {
+    const c = lockClient(fake);
+    expect(() => c.messageDelete).toThrow(/interdite/);
+    expect(() => c.append).toThrow(/interdite/);
+    expect(() => c.messageFlagsRemove).toThrow(/interdite/);
+    expect(c.messageMove()).toBe('ok');
+  });
+
+  it("le script n'importe aucune voie d'envoi", () => {
+    const src = fs.readFileSync(new URL('./mail.mjs', import.meta.url), 'utf8');
+    for (const banned of [/nodemailer/, /smtp/i, /node:net/, /node:tls/, /child_process/, /\.append\(/, /messageDelete/]) {
+      expect(src).not.toMatch(banned);
+    }
+  });
+});
 
 describe('tri de la boite contact', () => {
   it('met en favori sans archiver un urgent, archive un spam sans favori', () => {
