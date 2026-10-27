@@ -74,8 +74,9 @@ CNIL ou d'un client dans le cadre d'une due diligence.
 
 ## Vue d'ensemble
 
-Onze traitements. Les dix premiers vivent sur 47 tables applicatives de COSMO, **toutes protégées
-par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supabase séparé.
+Douze traitements. Les dix premiers vivent sur 47 tables applicatives de COSMO, **toutes protégées
+par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supabase séparé ; le
+douzième (T12, 2026-10-27) dans la boîte email du contact.
 
 | # | Traitement | Base légale | Personnes concernées |
 |---|---|---|---|
@@ -90,6 +91,7 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
 | T9 | Supervision technique | Intérêt légitime | Utilisateurs rencontrant une erreur |
 | T10 | Administration de la plateforme | Intérêt légitime | Tous, sous forme agrégée |
 | T11 | Prospection commerciale B2B par email | Intérêt légitime | Professionnels prospectés |
+| T12 | Tri de la boîte `contact@thecosmo.app` | Intérêt légitime | Toute personne qui écrit au contact |
 
 ---
 
@@ -342,6 +344,23 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   `PROSPECTION_BACKUP_PASSPHRASE` ne sont pas posés et qu'un premier passage n'a pas été
   déchiffré pour vérification.
 
+## T12 · Tri de la boîte `contact@thecosmo.app`
+
+*Ouvert le 2026-10-27.*
+
+- **Finalité** : classer chaque jour les messages reçus au contact (urgent / légal, facturation,
+  prospection entrante, demande utilisateur, partenariat, démarchage, notification, spam), mettre
+  en favori ceux à traiter, archiver le reste, et compter les non lus sur le canal Discord interne.
+- **Base légale** : intérêt légitime (répondre dans les délais, notamment aux demandes RGPD et
+  aux réclamations de consommateurs).
+- **Données** : expéditeur, objet, date et 1 500 premiers caractères du corps, lus par Claude
+  le temps du classement. Seul l'identifiant `Message-ID` et sa catégorie sont conservés, dans un
+  fichier local hors dépôt (`~/.cosmo-mail/state.json`). Le message Discord ne porte **que des
+  totaux**, aucun nom ni objet.
+- **Destinataires** : IONOS (hébergeur de la boîte), **Anthropic** (classement par Claude).
+- **Conservation** : celle de la boîte, qui reste manuelle (cf. T7). Rien n'est supprimé par
+  l'outil (`scripts/mail/mail.mjs`), qui n'envoie aucun mail.
+
 ---
 
 ## Transferts hors Union européenne
@@ -357,8 +376,8 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
 | Cloudflare (Turnstile) | États-Unis | Idem, **non archivé**, seulement si la clé Turnstile est posée. Ajouté le 2026-09-24 |
 | GitHub | États-Unis | Sauvegardes **chiffrées**, clé hors de GitHub. Ajouté le 2026-10-13 |
 | Supabase Inc. | société non européenne | Données en Irlande ; accès possible des équipes pour maintenance et support, encadré par le DPA (clauses types acceptées avec les conditions). Ajouté le 2026-10-13 |
-| Anthropic | États-Unis | T11 seulement : texte des réponses de prospects, pour les classer. Clauses contractuelles types via le DPA du prestataire, **non archivé**. Ajouté le 2026-10-18 |
-| IONOS | Allemagne | T11 : boîtes d'envoi de la prospection. Aucun transfert. Ajouté le 2026-10-18 |
+| Anthropic | États-Unis | T11 et T12 : texte des réponses de prospects et des messages reçus au contact, pour les classer (T12 ajouté le 2026-10-27). Clauses contractuelles types via le DPA du prestataire, **non archivé**. Ajouté le 2026-10-18 |
+| IONOS | Allemagne | T11 : boîtes d'envoi de la prospection. T12 : boîte `contact@`. Aucun transfert. Ajouté le 2026-10-18 |
 
 > ❌ **Ligne A5 de [`LEGAL.md`](./LEGAL.md) : les DPA ne sont pas encore collectés et archivés.**
 > ⚠️ « Ils se signent en tant qu'entreprise » est **faux pour Sentry** (relu le 2026-10-13) : le

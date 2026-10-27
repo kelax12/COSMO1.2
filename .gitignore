@@ -96,6 +96,8 @@ vite.config.ts.timestamp-*
 # publishable du projet Supabase. Volontairement distinct de .env, dont le
 # VITE_SUPABASE_URL vide maintient l'app locale en mode démo.
 .env.cosmo-cli
+# Acces IMAP a contact@thecosmo.app + webhook Discord (scripts/mail/).
+.env.mail
 
 # Deepsec scanner workspace — local-only, contains ANTHROPIC_API_KEY
 .deepsec/
