@@ -139,6 +139,8 @@
     "editOkr": "Modifier l'OKR {{title}}"
   },
   "deadlineReview": {
+    "dueToday": "Échéance aujourd'hui",
+    "overdue": "Échéance dépassée",
     "close": "Fermer",
     "validate": "Valider"
   },
