@@ -111,7 +111,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                   className="mb-2 sm:mb-8"
                   data-tutorial-id="tasks-lists"
                 >
-                  <div className="mb-1 sm:mb-4">
+                  <div className="mb-1 sm:mb-2">
                     {/* Libellé court « Listes » partout, sans marge sous le titre : le
                         `pt-*` des chips suffit (2026-10-01). */}
                     {/* Maquette 142 (2026-10-10) : sur mobile, le titre « Listes »
@@ -320,7 +320,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   {list.type !== 'smart' && onShareList && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); onShareList(list); }}
-                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 shadow-sm transition-colors"
+                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
                                       title={t('lists.share')}
                                       aria-label={t('lists.share')}
                                     >

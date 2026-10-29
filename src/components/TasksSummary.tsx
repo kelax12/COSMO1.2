@@ -39,8 +39,6 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
     ? `${Math.floor(todayMinutes / 60)} h${todayMinutes % 60 ? ` ${String(todayMinutes % 60).padStart(2, '0')}` : ''}`
     : `${todayMinutes} min`;
 
-  const [isHovered, setIsHovered] = useState(false);
-
   if (isLoading) {
     return (
       <div className="card p-6">
@@ -57,13 +55,12 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
   return (
     <>
       <div 
-        className="card p-6 relative transition-all duration-300"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        className="card p-6 relative"
+        // Carte non cliquable : aucun contour ni ombre au survol (2026-10-29).
         style={{
-          borderColor: isHovered ? 'rgb(var(--color-accent))' : 'rgb(var(--color-border))',
-          boxShadow: isHovered ? '0 4px 12px rgba(0,0,0,0.1)' : '0 1px 2px rgba(0,0,0,0.05)',
-          backgroundColor: isHovered ? 'rgb(var(--color-surface)/0.95)' : 'rgb(var(--color-surface))'
+          borderColor: 'rgb(var(--color-border))',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+          backgroundColor: 'rgb(var(--color-surface))'
         }}
       >
         <div className="absolute top-[5px] right-[5px] flex items-center gap-1">

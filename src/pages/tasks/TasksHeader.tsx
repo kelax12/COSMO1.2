@@ -4,8 +4,6 @@ import { CalendarDays } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
 import MobileDisplaySheet from './MobileDisplaySheet';
-import TasksInboxMenu from '@/components/task-table/TasksInboxMenu';
-import InboxMenu from '@/components/InboxMenu';
 import ColorSettingsModal from '@/components/ColorSettingsModal';
 import { useT } from '@/i18n/useT';
 import { OVERDUE_FOCUS_EVENT } from '@/lib/hooks/use-overdue-focus';
@@ -104,14 +102,6 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
             {/* Loupe retirée du header mobile : redondante avec la barre de
                 recherche visible juste en dessous. La recherche globale reste
                 accessible via la palette (Cmd/Ctrl+K) et l'onglet « Plus ». */}
-            {/* Tâches/listes partagées en attente, regroupées ici plutôt
-                qu'en bandeaux inline (cf. TaskTable, masqués sur mobile). */}
-            {/* Maquette 217 (2026-10-10) : la MÊME boîte que l'accueil. La
-                même icône affichait 8 sur l'accueil (`InboxMenu`) et 5 ici
-                (`TasksInboxMenu`, qui n'en voit qu'une partie : tâches et
-                listes partagées). `InboxMenu` les contient aussi. Desktop
-                garde `TasksInboxMenu` dans sa propre barre. */}
-            <InboxMenu />
             {/* Maquette 140 : vue tableau, couleurs et mini-calendrier
                 règlent tous trois la façon dont la liste se montre. Ils
                 quittent l'en-tête (quatre icônes) pour la feuille « Affichage ». */}
@@ -149,12 +139,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
             transition={{ delay: 0.2 }}
             className="flex items-center gap-2 shrink-0"
           >
-            {/* Tâches/listes partagées en attente : plus de bandeaux inline
-                dans le tableau (cf. TaskTable), tout passe par cette boîte de
-                réception — comme sur mobile, avec un déclencheur en pastille
-                assortie au bouton Calendrier. */}
             <ViewModeToggle />
-            <TasksInboxMenu variant="desktop" />
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
