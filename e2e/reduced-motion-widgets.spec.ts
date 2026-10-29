@@ -18,7 +18,11 @@
 //   2. un déplacement au clavier (« Reculer … ») met le bloc à sa place finale
 //      SANS une seule frame de transform (ni ressort `layout`, ni résidu) ;
 //   3. un glisser à la souris réordonne, puis le bloc relâché est à sa place,
-//      sans transform résiduel.
+//      sans transform résiduel. PENDANT le glisser, en revanche, le voisin qui
+//      cède sa place DOIT glisser (FLIP natif, décision d'Axel du 2026-10-29 :
+//      sans lui, les blocs se téléportaient chez qui a coupé les animations
+//      Windows). C'est le seul mouvement admis sous mouvement réduit, et il
+//      est déclenché par le geste de la personne.
 // Le contrôle positif est l'ordre : le déplacement doit AVOIR EU LIEU, sinon
 // « aucun transform » ne dirait rien.
 //
@@ -130,15 +134,27 @@ test.describe('mouvement réduit · widgets du tableau de bord', () => {
     const sy = a.y + a.height * 0.6;
     await page.mouse.move(sx, sy);
     await page.mouse.down();
+    await demarrerEchantillonnage(page);
     const cx = b.x + b.width / 2;
     const cy = b.y + b.height * 0.6;
     for (let i = 1; i <= 15; i++) {
       await page.mouse.move(sx + ((cx - sx) * i) / 15, sy + ((cy - sy) * i) / 15);
       await page.waitForTimeout(30);
     }
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(400);
+    const pendant = await arreterEchantillonnage(page);
     await page.mouse.up();
 
+    // Témoin positif : le voisin qui cède sa place a GLISSÉ (frames de
+    // translation sur un autre bloc que celui qu'on tient).
+    const voisinGlisse = pendant.some((e) => {
+      const [id, li] = e.split('|');
+      return id !== avant[0] && !NEUTRE.has(li);
+    });
+    expect(voisinGlisse, 'Le voisin s’est téléporté : aucun glissement mesuré pendant le glisser.').toBe(true);
+
+    // Laisser finir le glissement, puis rien ne doit plus bouger.
+    await page.waitForTimeout(300);
     await demarrerEchantillonnage(page);
     await page.waitForTimeout(500);
     const echantillons = await arreterEchantillonnage(page);
