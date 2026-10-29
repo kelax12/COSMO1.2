@@ -184,7 +184,7 @@ const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose })
                         </span>
                       )}
                     </span>
-                    <Share2 size={16} className="shrink-0 text-teal-500" aria-hidden="true" />
+                    <Share2 size={16} className="shrink-0 text-blue-500" aria-hidden="true" />
                   </button>
                 ))
               )}

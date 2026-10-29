@@ -12,7 +12,6 @@ import {
   Crown,
   Settings,
   Repeat,
-  Search,
   ChevronLeft,
   ChevronRight,
   Building2,
@@ -62,16 +61,6 @@ const FirstRunSetup = lazyWithRetry(() => import('./onboarding/FirstRunSetup'), 
 // Formulaire « Signaler un bug » — lazy : la très grande majorité des
 // sessions ne l'ouvre jamais, son chunk n'a pas à peser sur le Layout.
 const BugReportModal = lazy(() => import('./BugReportModal'));
-
-// Détection plateforme pour afficher le bon badge de raccourci (⌘K vs Ctrl K).
-const IS_MAC =
-  typeof navigator !== 'undefined' &&
-  /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || '');
-
-// Ouvre la palette de commandes (écoutée dans CommandPalette.tsx).
-const openCommandPalette = () => {
-  window.dispatchEvent(new CustomEvent('open-command-palette'));
-};
 
 // Couleurs du graphique "Répartition du temps"
 const CHART_COLORS = {
@@ -316,12 +305,14 @@ const NavItems = () =>
         onClick={() => setInviteOpen(true)}
         title={tOrg('inviteJoin.navAria')}
         aria-label={tOrg('inviteJoin.navAria')}
-        className={`sidebar-item w-[calc(100%-1rem)] ${isCollapsed ? 'justify-center px-0' : '!ml-1 !py-[0.7rem]'}`}
+        className={`sidebar-item w-[calc(100%-1rem)] ${isCollapsed ? 'flex-col !gap-1 justify-center px-0' : '!ml-1 !py-[0.7rem]'}`}
       >
         <div className="nav-item-icon min-w-[20px] flex items-center justify-center">
           <Plus size={20} aria-hidden="true" />
         </div>
-        {!isCollapsed && <span className="truncate">{tOrg('inviteJoin.navLabel')}</span>}
+        {isCollapsed
+          ? <span className="text-[10px] leading-tight truncate max-w-full">{tOrg('inviteJoin.navLabel')}</span>
+          : <span className="truncate">{tOrg('inviteJoin.navLabel')}</span>}
       </button>
     </>;
 
@@ -488,24 +479,10 @@ const NavItems = () =>
             <Logo showText={!isCollapsed} />
           </div>
 
-            {/* Thème + Recherche : côte à côte quand la nav est ouverte,
-                empilés (repliés au centre) quand elle est réduite. */}
+            {/* Thème seul : la loupe est retirée (2026-10-29), la palette reste
+                ouvrable au clavier (Ctrl/Cmd+K). */}
             <div className={`mt-6 flex items-center gap-3 w-full ${isCollapsed ? 'flex-col' : 'flex-row justify-center'}`}>
               <ThemeToggle />
-              {/* Raccourci Ctrl/Cmd+K : masqué sous `lg`. C'est une affordance
-                  purement clavier — elle n'a aucun sens sur un écran tactile,
-                  où la barre latérale s'affiche encore (entre 768 et 1024 px)
-                  alors qu'il n'y a pas de clavier. La palette reste ouvrable au
-                  clavier partout où un clavier existe. */}
-              <button
-                type="button"
-                onClick={openCommandPalette}
-                aria-label={t('nav.search.ariaLabel', { shortcut: IS_MAC ? 'Cmd+K' : 'Ctrl+K' })}
-                title={t('nav.search.title', { shortcut: IS_MAC ? '⌘K' : 'Ctrl K' })}
-                className="hidden lg:block p-3 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]/40"
-              >
-                <Search size={18} className="text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
-              </button>
             </div>
         </div>
 

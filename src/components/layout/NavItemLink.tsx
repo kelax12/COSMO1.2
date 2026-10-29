@@ -103,7 +103,10 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
       </div>
       {/* Pas de marge propre : l'écart avec l'icône vient du seul `gap` de
           .sidebar-item — un `ml-3` ici s'additionnait au gap (24px cumulés). */}
-      {!collapsed && <span className="truncate">{label}</span>}
+      {/* Réduite : le libellé passe sous l'icône (2026-10-29). */}
+      {collapsed
+        ? <span className="text-[10px] leading-tight truncate max-w-full">{label}</span>
+        : <span className="truncate">{label}</span>}
     </>
   );
 
@@ -117,7 +120,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
           <div
             role="button"
             tabIndex={0}
-            className={`sidebar-item cursor-pointer ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : '!ml-1 !py-[0.7rem]'}`}
+            className={`sidebar-item cursor-pointer ${isActive ? 'active' : ''} ${collapsed ? 'flex-col !gap-1 justify-center px-0' : '!ml-1 !py-[0.7rem]'}`}
             style={groupHovered ? { transform: 'translateX(8px) scale(1.15)' } : undefined}
             onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); prefetchRoute(to); }}
             onMouseLeave={() => { setGroupHovered(false); setIconHovered(false); }}
@@ -139,7 +142,7 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
       end={end}
       data-guide-id={guideId}
       className={({ isActive }) =>
-        `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : '!ml-1 !py-[0.7rem]'}`
+        `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'flex-col !gap-1 justify-center px-0' : '!ml-1 !py-[0.7rem]'}`
       }
       style={groupHovered ? { transform: 'translateX(8px) scale(1.15)' } : undefined}
       onMouseEnter={() => { setGroupHovered(true); onMouseEnterExtra?.(); prefetchRoute(to); }}
