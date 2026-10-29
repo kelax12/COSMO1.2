@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
-import { AnimatePresence, motion, useReducedMotion, type InertiaOptions, type PanInfo } from 'framer-motion';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
+import { AnimatePresence, motion, useReducedMotion, type InertiaOptions } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, LayoutGrid, LayoutTemplate, Pencil, Plus, RotateCcw, Undo2, X } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import {
@@ -18,6 +18,7 @@ import type { WidgetCatalog } from './widget-catalog';
 
 import { TEMPLATES, type TemplateId } from './apercu-templates';
 import type { AddWidgetPageProps } from './AddWidgetPage';
+import { useWidgetDrag } from './use-widget-drag';
 
 const AddWidgetPage = lazy(() => import('./AddWidgetPage')) as unknown as <Id extends string>(props: AddWidgetPageProps<Id>) => ReactNode;
 const TemplatePicker = lazy(() => import('./TemplatePicker'));
@@ -50,11 +51,6 @@ const POP = { type: 'spring', stiffness: 520, damping: 24 } as const;
  */
 const INSTANT_DRAG_SNAP = { type: false } as unknown as InertiaOptions;
 
-/** Délai minimal entre deux permutations pendant un glisser, contre l'oscillation. */
-const SWAP_COOLDOWN_MS = 90;
-/** Part de chaque bord du bloc survolé qui ne déclenche pas d'échange. */
-const SWAP_MARGIN = 0.25;
-
 /**
  * Aperçu composé de widgets, façon écran d'accueil d'iPhone (2026-10-19).
  *
@@ -79,6 +75,8 @@ const SWAP_MARGIN = 0.25;
  *   · retour du bloc lâché : `INSTANT_DRAG_SNAP` ;
  *   · la vibration (une boucle instantanée laisserait un `rotate` résiduel), le
  *     défilement doux.
+ * Seule exception, pendant un glisser à la souris : les voisins glissent par
+ * un FLIP natif (`use-widget-drag.ts`, décision du 2026-10-29).
  * Aucune position finale ne dépend d'une animation : la grille CSS place.
  *
  * ⚠️ Un geste n'est jamais le seul chemin (WCAG 2.1.1) : flèches et choix de
@@ -120,17 +118,13 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
   const startEditing = () => { setCheckpoint(layout); setEditing(true); };
   const finishEditing = () => { setCheckpoint(layout); setEditing(false); };
   const [picking, setPicking] = useState(false);
-  const [dragged, setDragged] = useState<Id | null>(null);
+  const { gridRef, dragged, dragHeight, dragHandlers } = useWidgetDrag<Id, Placed>(
+    layout, reduce, (current, id, to) => onChange(moveWidget(current, id, to)),
+  );
   /** Dernier widget ajouté ou redimensionné : il s'illumine un instant. */
   const [highlight, setHighlight] = useState<{ id: Id; entering: boolean } | null>(null);
   const [removed, setRemoved] = useState<{ widget: Placed; index: number } | null>(null);
 
-  const layoutRef = useRef(layout);
-  layoutRef.current = layout;
-  const lastSwap = useRef(0);
-  const lastSwapped = useRef<string | null>(null);
-  /** Hauteur du bloc à la prise : il la garde pendant tout le glisser. */
-  const [dragHeight, setDragHeight] = useState<number | null>(null);
 
   const name = (id: Id) => cat.name(id);
   const sizeName = (size: WidgetSize) => t(`apercu.widgets.sizes.${size}`);
@@ -174,36 +168,6 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
   const resize = (id: Id, size: WidgetSize) => {
     onChange(resizeWidgetIn(cat.defs, layout, id, size));
     setHighlight({ id, entering: false });
-  };
-
-  /** Pendant le glisser : le bloc survolé cède sa place, les autres glissent. */
-  const onDrag = (id: Id, info: PanInfo) => {
-    const now = performance.now();
-    if (now - lastSwap.current < SWAP_COOLDOWN_MS) return;
-    const x = info.point.x - window.scrollX;
-    const y = info.point.y - window.scrollY;
-    const over = document.elementsFromPoint(x, y)
-      .map((el) => el.closest<HTMLElement>('[data-widget]'))
-      .find((el) => el && el.dataset.widget !== id);
-    // Le bloc qui vient de céder sa place glisse SOUS le pointeur : sans cette
-    // garde, il redéclenchait la permutation inverse, d'où l'aller-retour saccadé.
-    // On ne repermute avec lui qu'une fois le pointeur sorti de lui.
-    if (!over) { lastSwapped.current = null; return; }
-    if (over.dataset.widget === lastSwapped.current) return;
-    lastSwapped.current = null;
-    // Seul le CŒUR du bloc survolé déclenche l'échange : en traversant la
-    // grille, le bloc tenu frôlait chaque voisin et les faisait tous
-    // permuter en cascade (mesuré : zigzags et sauts de 100 px par image).
-    const r = over.getBoundingClientRect();
-    const mx = r.width * SWAP_MARGIN, my = r.height * SWAP_MARGIN;
-    if (x < r.left + mx || x > r.right - mx || y < r.top + my || y > r.bottom - my) return;
-    const current = layoutRef.current;
-    const to = current.findIndex((w) => w.id === over.dataset.widget);
-    const from = current.findIndex((w) => w.id === id);
-    if (to < 0 || to === from) return;
-    lastSwap.current = now;
-    lastSwapped.current = over.dataset.widget ?? null;
-    onChange(moveWidget(current, id, to));
   };
 
   const toolbarButton = 'min-h-touch inline-flex items-center gap-1.5 px-3.5 rounded-xl text-sm font-semibold';
@@ -380,7 +344,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
             </motion.button>
           </motion.div>
         ) : (
-          <ul className="apercu-widget-grid relative z-0 isolate grid grid-cols-1 md:grid-cols-6 gap-5 items-stretch">
+          <ul ref={gridRef} className="apercu-widget-grid relative z-0 isolate grid grid-cols-1 md:grid-cols-6 gap-5 items-stretch">
             <AnimatePresence mode="popLayout" initial={false}>
               {layout.map((w, index) => {
                 const def = findDef(cat.defs, w.id);
@@ -401,13 +365,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                     dragTransition={reduce ? INSTANT_DRAG_SNAP : undefined}
                     dragMomentum={false}
                     dragElastic={0.18}
-                    onDragStart={(e) => {
-                      lastSwapped.current = null;
-                      setDragHeight((e.target as HTMLElement).closest('[data-widget]')?.getBoundingClientRect().height ?? null);
-                      setDragged(w.id);
-                    }}
-                    onDrag={(_, info) => onDrag(w.id, info)}
-                    onDragEnd={() => { lastSwapped.current = null; setDragged(null); }}
+                    {...dragHandlers(w.id)}
                     whileDrag={{ scale: 1.06, zIndex: 40, boxShadow: '0 24px 48px -12px rgba(0,0,0,0.45)' }}
                     style={{ zIndex: isDragged ? 40 : undefined, height: isDragged ? dragHeight ?? undefined : undefined, touchAction: editing ? 'none' : undefined }}
                     // Bloc tenu : `self-start`, il garde SA hauteur. Étiré à la
