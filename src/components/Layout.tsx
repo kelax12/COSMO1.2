@@ -12,8 +12,8 @@ import {
   Crown,
   Settings,
   Repeat,
-  ChevronLeft,
-  ChevronRight,
+  Eye,
+  EyeOff,
   Building2,
   Plus,
   Bug,
@@ -162,8 +162,12 @@ const Layout: React.FC = () => {
   // produite » sur toute l'app authentifiée — et « Rafraîchir la page », seule
   // sortie proposée, relisait la même clé et rendait le même écran.
   // Un repli d'agrément ne doit jamais pouvoir fermer le produit (règle B14).
-  const [isCollapsed, setIsCollapsed] = useState(
-    () => readJson<boolean>('sidebar-collapsed') ?? false,
+  // Depuis le 2026-10-29 la barre reste ÉTROITE : le bouton d'agrandissement
+  // est devenu un œil qui affiche ou masque les libellés sous les icônes.
+  // Œil fermé = la barre réduite d'avant, au pixel près.
+  const isCollapsed = true;
+  const [showLabels, setShowLabels] = useState(
+    () => readJson<boolean>('sidebar-labels') ?? false,
   );
   // « + » de la nav : inviter un ami / rejoindre une entreprise avec un code.
   // Monte dans `globalOverlays`, donc partage par les rendus mobile ET desktop.
@@ -192,16 +196,16 @@ const Layout: React.FC = () => {
   useEffect(() => {
     // Même raison qu'à la lecture : une exception dans un effet remonte elle
     // aussi à la frontière d'erreur, pas dans un `catch` d'appelant.
-    safeSetItem('sidebar-collapsed', JSON.stringify(isCollapsed));
-  }, [isCollapsed]);
+    safeSetItem('sidebar-labels', JSON.stringify(showLabels));
+  }, [showLabels]);
 
-  // Raccourci « [ » : replie/déplie la sidebar (#14) — convention Linear.
+  // Raccourci « [ » : affiche/masque les libellés de la sidebar (#14).
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
       const editable = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable);
       if (e.key === '[' && !e.metaKey && !e.ctrlKey && !e.altKey && !editable) {
-        setIsCollapsed((prev: boolean) => !prev);
+        setShowLabels((prev: boolean) => !prev);
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -234,29 +238,29 @@ const Layout: React.FC = () => {
 const NavItems = () =>
   <>
       <NavItemLink to="/dashboard" label={t('nav.dashboard')} icon={<LayoutDashboard size={20} aria-hidden="true" />}
-        hoverColor="#94a3b8" collapsed={isCollapsed} badge={pendingRequestCount}
+        hoverColor="#94a3b8" collapsed={isCollapsed} showLabel={showLabels} badge={pendingRequestCount}
         badgeAriaLabel={tp('nav.badge.pendingRequest', pendingRequestCount)} end />
 
       <NavItemLink to="/tasks" guideId="perso-nav-tasks" label={t('nav.tasks')} icon={<CheckSquare size={20} aria-hidden="true" />}
-        hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed}
+        hoverColor={CHART_COLORS.tasks} collapsed={isCollapsed} showLabel={showLabels}
         badge={tasksDueTodayCount} badgeVariant="neutral"
         badgeAriaLabel={tp('nav.badge.taskDueToday', tasksDueTodayCount)} />
 
       <NavItemLink to="/agenda" guideId="perso-nav-agenda" label={t('nav.agenda')} icon={<Calendar size={20} aria-hidden="true" />}
-          hoverColor={CHART_COLORS.events} collapsed={isCollapsed} />
+          hoverColor={CHART_COLORS.events} collapsed={isCollapsed} showLabel={showLabels} />
 
       <NavItemLink to="/okr" guideId="perso-nav-okr" label={t('nav.okr')} icon={<Target size={20} aria-hidden="true" />}
-          hoverColor={CHART_COLORS.okrs} collapsed={isCollapsed} />
+          hoverColor={CHART_COLORS.okrs} collapsed={isCollapsed} showLabel={showLabels} />
 
       <NavItemLink to="/habits" guideId="perso-nav-habits" label={t('nav.habits')} icon={<Repeat size={20} aria-hidden="true" />}
-          hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
+          hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} showLabel={showLabels} />
 
       <NavItemLink to="/statistics" label={t('nav.statistics')} icon={<BarChart2 size={20} aria-hidden="true" />}
-          hoverColor="#8b5cf6" collapsed={isCollapsed} />
+          hoverColor="#8b5cf6" collapsed={isCollapsed} showLabel={showLabels} />
 
       {showOrgEntry && (
         <NavItemLink to="/entreprise" label={t('nav.enterprise')} icon={<Building2 size={20} aria-hidden="true" />}
-          hoverColor="#6366f1" collapsed={isCollapsed}
+          hoverColor="#6366f1" collapsed={isCollapsed} showLabel={showLabels}
           badge={orgNotificationCount}
           badgeAriaLabel={tp('nav.badge.orgNotification', orgNotificationCount)}
           // Plusieurs organisations : le clic ouvre le choix au lieu de naviguer
@@ -305,14 +309,14 @@ const NavItems = () =>
         onClick={() => setInviteOpen(true)}
         title={tOrg('inviteJoin.navAria')}
         aria-label={tOrg('inviteJoin.navAria')}
-        className={`sidebar-item w-[calc(100%-1rem)] ${isCollapsed ? 'flex-col !gap-1 justify-center px-0' : '!ml-1 !py-[0.7rem]'}`}
+        className={`sidebar-item w-[calc(100%-1rem)] ${isCollapsed ? `${showLabels ? 'flex-col !gap-1 ' : ''}justify-center px-0` : '!ml-1 !py-[0.7rem]'}`}
       >
         <div className="nav-item-icon min-w-[20px] flex items-center justify-center">
           <Plus size={20} aria-hidden="true" />
         </div>
-        {isCollapsed
-          ? <span className="text-[10px] leading-tight truncate max-w-full">{tOrg('inviteJoin.navLabel')}</span>
-          : <span className="truncate">{tOrg('inviteJoin.navLabel')}</span>}
+        {!isCollapsed
+          ? <span className="truncate">{tOrg('inviteJoin.navLabel')}</span>
+          : showLabels && <span className="text-[10px] leading-tight truncate max-w-full">{tOrg('inviteJoin.navLabel')}</span>}
       </button>
     </>;
 
@@ -323,11 +327,11 @@ const NavItems = () =>
           Lien + page conservés, réapparaissent dès qu'on réactive le flag. */}
       {PREMIUM_ENFORCED && (
         <NavItemLink to="/premium" label={t('nav.premium')} icon={<Crown size={20} aria-hidden="true" />}
-          hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} />
+          hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} showLabel={showLabels} />
       )}
 
       <NavItemLink to="/settings" label={t('nav.settings')} icon={<Settings size={20} aria-hidden="true" />}
-        hoverColor="#94a3b8" collapsed={isCollapsed} />
+        hoverColor="#94a3b8" collapsed={isCollapsed} showLabel={false} />
     </>;
 
   // « Signaler un bug » — plus une entrée de nav pleine largeur : une simple
@@ -460,18 +464,19 @@ const NavItems = () =>
       <SkipLink targetId={MAIN_CONTENT_ID} label={t('nav.skipToContent')} />
       {/* Sidebar */}
       <aside
-        className={`${isCollapsed ? 'w-20' : 'w-[205px]'} relative transition-all duration-300 ease-in-out nav-container border-r flex flex-col group`}>
+        className={`${isCollapsed ? (showLabels ? 'w-[90px]' : 'w-20') : 'w-[205px]'} relative transition-all duration-300 ease-in-out nav-container border-r flex flex-col group`}>
 
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={() => setShowLabels(!showLabels)}
+          aria-pressed={showLabels}
           className="absolute -right-3 top-1/2 -translate-y-1/2 bg-[rgb(var(--color-surface))] border rounded-full shadow-sm hover:shadow-md z-50 md:opacity-40 md:group-hover:opacity-100 opacity-100 hover:text-[rgb(var(--color-accent-solid))] hover:border-[rgb(var(--color-accent-solid-hover))] transition-opacity"
           style={{ borderColor: 'rgb(var(--nav-border))' }}
-          title={t('nav.sidebar.toggleTitle')}
-          aria-label={isCollapsed ? t('nav.sidebar.expand') : t('nav.sidebar.collapse')}
+          title={showLabels ? t('nav.sidebar.hideLabels') : t('nav.sidebar.showLabels')}
+          aria-label={showLabels ? t('nav.sidebar.hideLabels') : t('nav.sidebar.showLabels')}
         >
-          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          {showLabels ? <Eye size={18} /> : <EyeOff size={18} />}
         </Button>
 
         <div className={`p-6 border-b flex flex-col items-center ${isCollapsed ? 'px-2' : ''}`} style={{ borderColor: 'rgb(var(--nav-border))' }}>
