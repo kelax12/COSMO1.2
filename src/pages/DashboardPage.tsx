@@ -99,6 +99,7 @@ const DashboardPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const weeklyCheckin = useWeeklyCheckin();
   const [checkinOpen, setCheckinOpen] = useState(false);
+  const [widgetToolbarSlot, setWidgetToolbarSlot] = useState<HTMLDivElement | null>(null);
   // #31 — plus d'auto-ouverture du modal check-in : une carte inline
   // dismissible invite à le faire volontairement (l'interstitiel d'entrée est
   // l'anti-pattern rétention n°1 — le réflexe devient « fermer sans lire »).
@@ -450,8 +451,10 @@ const DashboardPage: React.FC = () => {
                 Sur mobile elle est désormais dans `MobileHeader.actions`, alignée
                 avec la date (elle occupait sinon la ligne du résumé, plus bas et
                 dépareillée du reste de l'en-tête). */}
-            <div className="hidden md:flex shrink-0 pt-1 items-center gap-2">
+            <div className="hidden md:flex flex-col shrink-0 pt-1 items-end gap-3">
               <InboxMenu />
+              {/* Barre « Modifier les widgets » montée ici par la grille (portail). */}
+              <div ref={setWidgetToolbarSlot} />
             </div>
             </div>
           </motion.div>
@@ -510,6 +513,7 @@ const DashboardPage: React.FC = () => {
               onChange={onLayoutChange}
               renderWidget={renderWidget}
               catalog={catalog}
+              toolbarSlot={widgetToolbarSlot}
             />
           </motion.div>
         )}

@@ -115,9 +115,6 @@ const HabitsPage: React.FC = () => {
           <PageHeading variant="standard" className="mb-2">
             Habitudes
           </PageHeading>
-          <p className="text-sm md:text-base" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            {t('page.subtitle')}
-          </p>
           {habits.length > 0 && (
             <div className="mt-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
               Progression : {getTodayCompletionRate()}% (

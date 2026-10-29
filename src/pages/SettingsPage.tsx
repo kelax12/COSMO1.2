@@ -228,9 +228,6 @@ const SettingsPage: React.FC = () => {
           <PageHeading variant="standard" className="tracking-tight">
             {t('page.title')}
           </PageHeading>
-          <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-            {t('page.subtitle')}
-          </p>
         </div>
 
         {/* mobile nav tabs */}
