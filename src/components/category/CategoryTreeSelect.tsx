@@ -4,8 +4,9 @@
 // ⚠️ Un parent reste SÉLECTIONNABLE : une tâche peut vivre dans « Travail »
 // même si « Travail › SEO » existe. C'est une décision produit, pas un oubli.
 //
-// ❌ Pas de menus en cascade : ils sont impraticables au doigt et au clavier.
-// Un panneau unique, indenté, tient à n'importe quelle profondeur.
+// 🔴 Souris : les enfants s'ouvrent en CASCADE à droite du parent survolé
+// (`CascadeFlyout`, demande 2026-10-29). Au doigt, pas de survol : on garde le
+// panneau unique, indenté, à chevrons, qui tient à n'importe quelle profondeur.
 //
 // 🔴 Seules les RACINES sont visibles par défaut, repliées sur elles-mêmes.
 // État d'expansion LOCAL au composant (pas `useCollapsedCategories`, partagé
@@ -32,6 +33,8 @@ import { buildTree, categoryPath, formatPath } from '@/modules/categories';
 import type { Category, CategoryNode } from '@/modules/categories';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import NoCategoryOption from './NoCategoryOption';
+import { useCanHover } from '@/hooks/use-can-hover';
+import { CascadeFlyout, CascadeLevel } from './CascadeFlyout';
 
 interface CategoryTreeSelectProps {
   value: string;
@@ -72,6 +75,7 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
 }) => {
   const { t } = useT('tasks');
   const [open, setOpen] = useState(false);
+  const canHover = useCanHover();
   // Local, PAS le magasin partagé : identifiants des racines DÉPLIÉES.
   // Absent = replié, l'inverse de `useCollapsedCategories` (qui mémorise le
   // replié) — ici le défaut voulu est justement l'inverse du leur.
@@ -97,6 +101,33 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
   // Le chevron est un bouton séparé du bouton de sélection — un bouton ne
   // peut pas en contenir un autre — pour que déplier ne choisisse jamais la
   // catégorie qu'il déplie.
+  const renderCascadeNode = (node: CategoryNode): React.ReactNode => {
+    const row = (
+      <button
+        type="button"
+        role="option"
+        aria-selected={node.category.id === value}
+        onClick={() => pick(node.category.id)}
+        className="flex w-full min-w-0 items-center gap-2 min-h-10 px-2 rounded-md text-left text-sm text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
+      >
+        <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: node.category.color }} />
+        <span className="truncate">{node.category.name}</span>
+      </button>
+    );
+    if (node.children.length === 0) return <React.Fragment key={node.category.id}>{row}</React.Fragment>;
+    return (
+      <CascadeFlyout
+        key={node.category.id}
+        id={node.category.id}
+        row={row}
+        ariaLabel={node.category.name}
+        panelClassName={panelClassName}
+      >
+        {node.children.map(renderCascadeNode)}
+      </CascadeFlyout>
+    );
+  };
+
   const renderNode = (node: CategoryNode, depth: number): React.ReactNode => {
     const hasChildren = node.children.length > 0;
     const isExpanded = hasChildren && expanded.has(node.category.id);
@@ -176,7 +207,11 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
       >
         <div role="listbox" aria-label={t('fields.category')}>
           <NoCategoryOption selected={!value} onSelect={() => pick('')} />
-          {buildTree(categories).map((node) => renderNode(node, 0))}
+          {canHover ? (
+            <CascadeLevel>{buildTree(categories).map(renderCascadeNode)}</CascadeLevel>
+          ) : (
+            buildTree(categories).map((node) => renderNode(node, 0))
+          )}
         </div>
       </PopoverContent>
     </Popover>
