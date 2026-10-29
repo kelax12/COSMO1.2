@@ -367,6 +367,9 @@
     "namePlaceholderShort": "Nom de la liste…"
   },
   "colorModal": {
+    "reorder": "Modifier l'ordre",
+    "moveUp": "Monter {{name}}",
+    "moveDown": "Descendre {{name}}",
     "nameTooShort": "Chaque nom de catégorie doit contenir au moins 2 caractères",
     "title": "Modifier les catégories",
     "namePlaceholder": "Nom de la catégorie",

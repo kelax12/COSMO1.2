@@ -25,6 +25,11 @@ import { descendantIdSet } from '@/modules/categories/tree';
 import { useReassignCategory } from '@/modules/categories/useReassignCategory';
 import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
 import CategoryTreeRow from '@/components/category/CategoryTreeRow';
+import CategoryManageCascade from '@/components/category/CategoryManageCascade';
+import { useCascadePath } from '@/components/category/use-cascade-path';
+import { draftSnapshot as snapshot, moveAmongSiblings, siblingsOf } from '@/components/category/reorder';
+import { useCanHover } from '@/hooks/use-can-hover';
+import ConfirmDiscardDialog from '@/components/ConfirmDiscardDialog';
 import MoveCategoryDialog from '@/components/category/MoveCategoryDialog';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
 import { useCollapsedCategories } from '@/modules/categories/collapsed.store';
@@ -134,15 +139,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
   const { data: tasks = [] } = useTasks();
   const { data: okrs = [] } = useOkrs();
   const reassignCategory = useReassignCategory();
-  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
-  // C-53 — modale montee par-dessus EventModal / HabitModal, en FRERE de leur
-  // overlay. Le composant n'est monte QUE lorsqu'il est ouvert (cf. le wrapper
-  // en bas de fichier), d'ou `open: true`.
-  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
-    open: true,
-    onClose,
-    label: t('colorModal.title'),
-  });
+
   const sheetMotion = useSheetMotion();
   const { isCollapsed, setCollapsed } = useCollapsedCategories();
   const { data: categories = [] } = useCategories();
@@ -166,7 +163,25 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
   // serait prise puis perdue.
   const [reassignTargets, setReassignTargets] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  // Fermer avec des changements non enregistrés (ordre, noms, couleurs…)
+  // demande confirmation : ils vivent en brouillon jusqu'à « Enregistrer ».
+  const guardedClose = () => (snapshot(localCategories) !== snapshot(categories) ? setConfirmDiscard(true) : onClose());
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(guardedClose);
+  // C-53 — modale montee par-dessus EventModal / HabitModal, en FRERE de leur
+  // overlay. Le composant n'est monte QUE lorsqu'il est ouvert (cf. le wrapper
+  // en bas de fichier), d'ou `open: true`.
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: guardedClose,
+    label: t('colorModal.title'),
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
+  const canHover = useCanHover();
+  const cascade = useCascadePath();
+  const [overlayEl, setOverlayEl] = useState<HTMLDivElement | null>(null);
+  useEffect(() => setOverlayEl(overlayRef.current), [overlayRef]);
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
 
   // Sync local state with fetched categories
   useEffect(() => {
@@ -187,13 +202,41 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
     for (const node of nodes) {
       const hasChildren = node.children.length > 0;
       out.push({ category: node.category, depth, hasChildren });
-      if (hasChildren && !isCollapsed(node.category.id)) {
+      if (hasChildren && !canHover && !isCollapsed(node.category.id)) {
         flattenVisible(node.children, depth + 1, out);
       }
     }
   };
   const visibleRows: Array<{ category: Category; depth: number; hasChildren: boolean }> = [];
   flattenVisible(buildTree(localCategories), 1, visibleRows);
+
+  const renderRow = (category: Category, depth: number, hasChildren: boolean) => {
+    const siblings = siblingsOf(localCategories, category.id);
+    const index = siblings.findIndex((c) => c.id === category.id);
+    const move = (direction: -1 | 1) => setLocalCategories((prev) => moveAmongSiblings(prev, category.id, direction));
+    return (
+      <CategoryTreeRow
+        id={category.id}
+        name={category.name}
+        color={category.color}
+        depth={depth}
+        hasChildren={hasChildren}
+        isExpanded={!isCollapsed(category.id)}
+        cascade={canHover}
+        onToggle={() => setCollapsed(category.id, !isCollapsed(category.id))}
+        onNameChange={(name) => handleUpdateLocal(category.id, { name })}
+        onColorChange={(color) => handleUpdateLocal(category.id, { color })}
+        onAddChild={() => handleAddCategory(category.id)}
+        onMove={() => setCategoryToMove(category.id)}
+        onDelete={() => handleDeleteLocal(category.id)}
+        onStartReorder={() => setReorderingId(category.id)}
+        reorder={reorderingId === category.id
+          ? { canUp: index > 0, canDown: index < siblings.length - 1, onUp: () => move(-1), onDown: () => move(1) }
+          : undefined}
+        atMaxDepth={depth >= CATEGORY_MAX_DEPTH}
+      />
+    );
+  };
 
   const handleAddCategory = (parentId: string | null = null) => {
     const newId = `temp-${Date.now()}`;
@@ -401,7 +444,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="absolute inset-0 bg-black/30 backdrop-blur-md"
-        onClick={onClose}
+        onClick={guardedClose}
       />
 
         <motion.div
@@ -431,7 +474,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
               {isSaving ? '…' : tCommon('actions.confirm')}
             </button>
             <button
-              onClick={onClose}
+              onClick={guardedClose}
               aria-label={tCommon('actions.close')}
               className="hidden sm:flex min-w-11 min-h-11 items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-blue-600 hover:bg-[rgb(var(--color-hover))] transition-colors"
             >
@@ -475,26 +518,14 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
                 {visibleRows.map(({ category, depth, hasChildren }) => (
                   <motion.div
                     key={category.id}
+                    onMouseEnter={canHover ? () => cascade.hover(1, hasChildren ? category.id : null) : undefined}
+                    onMouseLeave={canHover ? cascade.leave : undefined}
                     layout
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                   >
-                    <CategoryTreeRow
-                      id={category.id}
-                      name={category.name}
-                      color={category.color}
-                      depth={depth}
-                      hasChildren={hasChildren}
-                      isExpanded={!isCollapsed(category.id)}
-                      onToggle={() => setCollapsed(category.id, !isCollapsed(category.id))}
-                      onNameChange={(name) => handleUpdateLocal(category.id, { name })}
-                      onColorChange={(color) => handleUpdateLocal(category.id, { color })}
-                      onAddChild={() => handleAddCategory(category.id)}
-                      onMove={() => setCategoryToMove(category.id)}
-                      onDelete={() => handleDeleteLocal(category.id)}
-                      atMaxDepth={depth >= CATEGORY_MAX_DEPTH}
-                    />
+                    {renderRow(category, depth, hasChildren)}
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -533,6 +564,21 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
 
         {/* Rendue en FRÈRE de l'overlay ci-dessus : `useModalA11y` empile les
             surfaces (`openStack`), seule la dernière ouverte réagit à Échap. */}
+        {canHover && (
+          <CategoryManageCascade
+            container={overlayEl}
+            categories={localCategories}
+            cascade={cascade}
+            renderRow={(node, depth) => renderRow(node.category, depth, node.children.length > 0)}
+          />
+        )}
+
+        <ConfirmDiscardDialog
+          isOpen={confirmDiscard}
+          onCancel={() => setConfirmDiscard(false)}
+          onConfirm={() => { setConfirmDiscard(false); onClose(); }}
+        />
+
         <MoveCategoryDialog
           open={!!categoryToMove}
           category={localCategories.find(c => c.id === categoryToMove) ?? null}

@@ -344,6 +344,9 @@
     "namePlaceholderShort": "List name…"
   },
   "colorModal": {
+    "reorder": "Change order",
+    "moveUp": "Move {{name}} up",
+    "moveDown": "Move {{name}} down",
     "nameTooShort": "Every category name must be at least 2 characters long",
     "title": "Edit categories",
     "namePlaceholder": "Category name",
