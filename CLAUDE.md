@@ -169,6 +169,23 @@ Détail : `docs/TESTING.md`.
    d'allowlist pour la même raison. Un dépassement dit qu'un contenu doit bouger, pas que la borne
    est trop basse.
 
+## 🌿 Git : on pousse directement sur `main`
+
+Décision d'Axel du 2026-10-29. Les PR et les E2E locaux coûtaient trop de temps et de tokens.
+
+- 🔴 **Commit + push sur `main`.** ❌ Pas de branche ni de PR, **sauf si Axel le demande
+  explicitement** dans la session.
+- Session ouverte dans un worktree (branche `claude/…`) : on ne pousse pas cette branche.
+  `git fetch origin && git rebase origin/main && git push origin HEAD:main`.
+- Checkout partagé : ne commiter **que ses fichiers** (`git commit -- <paths>`), d'autres
+  sessions y travaillent.
+- ❌ **Pas de `npm run test:e2e` en local** pour une retouche d'UI. La vérification, c'est
+  `lint`, `typecheck`, les tests Vitest des fichiers touchés et un coup d'œil au preview. La
+  CI joue l'E2E après le push. Exceptions : une spec `e2e/` modifiée (on ne lance qu'elle), ou
+  une demande d'Axel.
+- Le hook `pre-push` refuse (CI de `main` rouge) : ❌ ne pas le contourner, ❌ ne pas ouvrir de
+  PR d'office. Commit local gardé, prévenir Axel.
+
 ## Environnement et déploiement
 
 - `.env` (non versionné, copier `.env.example`). Sans `VITE_SUPABASE_URL` ou
