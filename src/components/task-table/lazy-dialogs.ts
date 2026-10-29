@@ -8,4 +8,4 @@ import { lazy } from 'react';
  * `React.Suspense`, et avec `useLazyMount` quand la fenêtre anime sa sortie.
  */
 export const BulkAddToListModal = lazy(() => import('../add-to-list/BulkAddToListModal'));
-export const ScheduleEventModal = lazy(() => import('../ScheduleEventModal'));
+export const TaskToEventModal = lazy(() => import('../TaskToEventModal'));

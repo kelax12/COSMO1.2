@@ -22,7 +22,7 @@ import { toast } from '@/lib/toast';
 import { useT } from '@/i18n/useT';
 import TaskModal from '@/components/TaskModal';
 import AddToListModal from '@/components/AddToListModal';
-import { ScheduleEventModal } from '@/components/task-table/lazy-dialogs';
+import { TaskToEventModal } from '@/components/task-table/lazy-dialogs';
 
 /**
  * Vue « Aujourd'hui » unifiée (item #29) — section du tableau de bord.
@@ -210,11 +210,7 @@ const TodayUnified = ({ compact = false }: TodayUnifiedProps) => {
       {listId && <AddToListModal isOpen onClose={() => setListId(null)} taskId={listId} />}
       {scheduleTask && (
         <React.Suspense fallback={null}>
-          <ScheduleEventModal
-            open
-            onOpenChange={(o) => { if (!o) setScheduleTask(null); }}
-            task={scheduleTask}
-          />
+          <TaskToEventModal task={scheduleTask} onClose={() => setScheduleTask(null)} />
         </React.Suspense>
       )}
     </div>

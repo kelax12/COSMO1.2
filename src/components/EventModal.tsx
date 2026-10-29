@@ -55,7 +55,8 @@ type EventModalProps = {
   isOpen: boolean;
   onClose: () => void;
   mode: EventModalMode;
-  task?: Task | null;
+  /** Une tâche d'équipe (feuille « Planifier » mobile) n'en a qu'une partie. */
+  task?: (Pick<Task, 'id' | 'name'> & Partial<Task>) | null;
   prefilledTimeSlot?: { start: string; end: string };
   event?: CalendarEvent | null;
   onAddEvent?: (event: EventData) => void;

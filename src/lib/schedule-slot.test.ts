@@ -1,6 +1,6 @@
-// Tests des fonctions pures de ScheduleEventModal (pas de rendu React nécessaire).
+// Tests des fonctions pures de schedule-slot (pas de rendu React nécessaire).
 import { describe, it, expect } from 'vitest';
-import { isoToLocalInput, localInputToIso, defaultSlot } from './ScheduleEventModal';
+import { isoToLocalInput, localInputToIso, defaultSlot } from './schedule-slot';
 
 describe('isoToLocalInput', () => {
   it('retourne "" pour une chaîne vide', () => {

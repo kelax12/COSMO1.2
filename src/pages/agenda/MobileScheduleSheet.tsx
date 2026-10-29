@@ -2,8 +2,8 @@ import React, { Suspense, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Search } from 'lucide-react';
 import { BottomSheet } from '@/components/mobile';
-import { ScheduleEventModal } from '@/components/task-table/lazy-dialogs';
-import type { SchedulableTask } from '@/components/ScheduleEventModal';
+import { TaskToEventModal } from '@/components/task-table/lazy-dialogs';
+import type { SchedulableTask } from '@/lib/schedule-slot';
 import { formatDeadlineSmart } from '@/components/task-table/helpers';
 import { myAssignedTasks } from '@/components/organization/team-projects.helpers';
 import { useTasks } from '@/modules/tasks';
@@ -16,7 +16,7 @@ import { usePriorityRange } from '@/modules/ui-states';
 import { formatDurationMinutes } from '@/lib/duration';
 import { useT } from '@/i18n/useT';
 import { useCreateEvent } from '@/modules/events';
-import { localInputToIso } from '@/components/ScheduleEventModal';
+import { localInputToIso } from '@/lib/schedule-slot';
 import { useTaskHoldDrag, type DropSlot } from './use-task-hold-drag';
 import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
@@ -29,9 +29,11 @@ interface Row {
   key: string;
   name: string;
   meta: string;
+  /** Nom de la catégorie (d'équipe pour une tâche d'équipe), proposé dans la modale. */
+  categoryName?: string;
   color: string;
   schedulable: SchedulableTask;
-  /** Tâche d'équipe : l'événement n'est pas lié (cf. `ScheduleEventModal`). */
+  /** Tâche d'équipe : l'événement n'est pas lié (cf. `TaskToEventModal`). */
   team: boolean;
   /** Couleur ÉCRITE dans l'événement créé par glisser : toujours un hex. */
   eventColor: string;
@@ -47,7 +49,7 @@ const DEFAULT_DROP_MINUTES = 60;
  * sélecteurs « Toute: », dates « 13/10/2026 ») et ne s'utilisait qu'en
  * glissant une carte au-dessus d'un calendrier qu'il recouvrait. Ici : des
  * lignes comme sur Tâches, on touche une tâche, on choisit son créneau dans
- * `ScheduleEventModal` (le même que « Planifier » depuis la liste des tâches).
+ * `TaskToEventModal`, la modale d'événement préremplie (la même que « Planifier » depuis la liste des tâches).
  *
  * Mêmes tâches que le panneau desktop (`TaskSidebar`) : perso non terminées
  * dans la plage de priorité, plus les tâches d'équipe qui me sont assignées.
@@ -98,7 +100,8 @@ const MobileScheduleSheet: React.FC<Props> = ({ open, onClose }) => {
           meta: metaOf(cat?.name, task.deadline, task.estimatedTime),
           // Couleur ÉCRITE dans l'événement : un hex, jamais une variable CSS.
           color: cat?.color ?? NO_CATEGORY_COLOR,
-          schedulable: { id: task.id, name: task.name, category: '', deadline: task.deadline ?? '', estimatedTime: task.estimatedTime ?? 0 },
+          categoryName: cat?.name,
+          schedulable: { id: task.id, name: task.name, category: cat?.id ?? '', deadline: task.deadline ?? '', estimatedTime: task.estimatedTime ?? 0 },
           team: true,
           eventColor: cat?.color ?? NO_CATEGORY_COLOR,
         };
@@ -183,16 +186,14 @@ const MobileScheduleSheet: React.FC<Props> = ({ open, onClose }) => {
 
       {picked && (
         <Suspense fallback={null}>
-          <ScheduleEventModal
-            open
-            onOpenChange={(next) => {
-              if (next) return;
+          <TaskToEventModal
+            onClose={() => {
               setPicked(null);
               onClose();
             }}
             task={picked.schedulable}
             linkTask={!picked.team}
-            colorOverride={picked.team ? picked.color : undefined}
+            teamCategory={picked.team && picked.categoryName ? { name: picked.categoryName, color: picked.color } : undefined}
           />
         </Suspense>
       )}
