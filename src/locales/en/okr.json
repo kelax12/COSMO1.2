@@ -133,6 +133,8 @@
     "editOkr": "Edit OKR {{title}}"
   },
   "deadlineReview": {
+    "dueToday": "Due today",
+    "overdue": "Deadline passed",
     "close": "Close",
     "validate": "Complete"
   },

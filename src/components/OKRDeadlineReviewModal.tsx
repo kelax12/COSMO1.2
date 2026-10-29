@@ -218,7 +218,16 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
                   <span>→</span>
                   <span>{formatDate(new Date(draft.endDate), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                 </div>
-                <h3 id="okr-deadline-review-title" className="text-base sm:text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>{draft.title}</h3>
+                <h3 id="okr-deadline-review-title" className="flex flex-wrap items-center gap-2 text-base sm:text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                  <span>{draft.title}</span>
+                  {/* `useDeadlineReview` ouvre dès le JOUR de l'échéance : « aujourd'hui »
+                      ce jour-là, « dépassée » ensuite. */}
+                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-300">
+                    {new Date(draft.endDate).getTime() < new Date().setHours(0, 0, 0, 0)
+                      ? t('deadlineReview.overdue')
+                      : t('deadlineReview.dueToday')}
+                  </span>
+                </h3>
                 <p className="text-xs sm:text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{draft.description}</p>
               </div>
             </div>
