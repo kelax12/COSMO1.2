@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSheetDrag } from '@/components/mobile/mobile-motion';
-import { CheckCircle2, X, Clock } from 'lucide-react';
+import { X, Clock } from 'lucide-react';
 import type { OKR, KeyResult } from '@/modules/okrs';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
@@ -223,33 +223,15 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
               </div>
             </div>
 
-            <div className="mb-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0">
-                <svg className="transform -rotate-90" width="100%" height="100%" viewBox="0 0 80 80">
-                  <circle cx="40" cy="40" r="32" stroke="rgb(var(--color-border-muted))" strokeWidth="8" fill="none" />
-                  <circle
-                    cx="40" cy="40" r="32"
-                    stroke="rgb(var(--color-accent))"
-                    strokeWidth="8"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 32}`}
-                    strokeDashoffset={2 * Math.PI * 32 * (1 - Math.min(progress, 100) / 100)}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg sm:text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
-                </div>
+            {/* Même design que OKRCard (2026-10-29) : plus de cercle, la
+                barre globale agrandie suffit. */}
+            <div className="mb-6 w-full">
+              <div className="flex justify-between items-baseline mb-2">
+                <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.overallProgress')}</span>
+                <span className="text-2xl font-bold tabular-nums" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
               </div>
-
-              <div className="flex-1 w-full">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs sm:text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.overallProgress')}</span>
-                  <span className="text-xs sm:text-sm font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
-                </div>
-                <div className="w-full rounded-full h-2" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
-                  <div className="h-2 rounded-full transition-all duration-500" style={{ backgroundColor: 'rgb(var(--color-accent))', width: `${progress}%` }} />
-                </div>
+              <div className="w-full rounded-full h-3" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
+                <div className="h-3 rounded-full transition-all duration-500" style={{ backgroundColor: 'rgb(var(--color-accent))', width: `${Math.min(progress, 100)}%` }} />
               </div>
             </div>
 
@@ -259,14 +241,12 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
                 const krProgress = keyResult.targetValue > 0 ? (keyResult.currentValue / keyResult.targetValue) * 100 : 0;
                 return (
                   <div key={keyResult.id} className="rounded-lg p-3 transition-all" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-                    <div className="flex justify-between items-center mb-3 gap-2">
+                    <div className="flex items-center mb-3 gap-1.5 min-w-0">
                       <span className="text-xs sm:text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
-                      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                        <span className="text-[10px] sm:text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                          <Clock size={12} />
-                          {keyResult.estimatedTime}min
-                        </span>
-                      </div>
+                      <span className="shrink-0 text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                        <Clock size={12} aria-hidden="true" />
+                        {keyResult.estimatedTime}min
+                      </span>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
@@ -311,13 +291,12 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
           </div>
 
           {/* Footer — bouton Valider seul */}
-          <div className="px-6 pt-3 pb-4 border-t shrink-0" style={{ borderColor: 'rgb(var(--color-border))' }}>
+          <div className="px-6 pt-3 pb-4 border-t shrink-0 flex justify-end" style={{ borderColor: 'rgb(var(--color-border))' }}>
             <button
               onClick={handleValidate}
               disabled={phase !== 'edit'}
-              className="w-full px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 shadow-md shadow-green-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-[rgb(var(--color-accent-solid))] hover:opacity-90 transition-opacity disabled:opacity-60"
             >
-              <CheckCircle2 size={16} />
               {t('deadlineReview.validate')}
             </button>
           </div>
