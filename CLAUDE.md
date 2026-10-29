@@ -70,32 +70,25 @@ RPC, écran) → `index.ts` du module → son `CLAUDE.md` s'il existe → le cod
   **non maintenus**, chacun coiffé d'un bandeau ⚠️. À lire pour le *pourquoi* d'une décision
   passée, **jamais** comme état courant. Le code fait foi contre une archive.
 
-| Doc vivant | Quand la lire |
+**À lire AVANT de toucher la zone :**
+
+| Doc vivant | Déclencheur |
 |---|---|
-| [`docs/README.md`](./docs/README.md) | Carte complète + **tableau de bord des notes d'audit** (avant/après daté) |
-| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Invariants du projet et leur état vérifié (audit 2026-08-14) |
+| [`docs/README.md`](./docs/README.md) | Carte complète (une ligne par doc) + **tableau de bord des notes d'audit** |
 | [`docs/MODULES.md`](./docs/MODULES.md) | **Carte** : module → fichiers, tables, RPC, écran |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Invariants du projet et leur état vérifié |
 | [`docs/SECURITY.md`](./docs/SECURITY.md) | RLS, migrations SQL, repositories Supabase, Edge Functions, Stripe, CSP, secrets |
 | [`docs/MOBILE.md`](./docs/MOBILE.md) | Toute page/composant mobile, bottom-sheets, bug iOS Safari WebKit |
 | [`docs/UI-PATTERNS.md`](./docs/UI-PATTERNS.md) | Listes/SmartListMenu, EventModal, tutoriels, onboarding, shadcn, thèmes |
 | [`docs/PERFORMANCE.md`](./docs/PERFORMANCE.md) | `manualChunks`, lazy loading, pagination, budget bundle |
-| [`docs/SEO.md`](./docs/SEO.md) | Prérendu, sitemap, `robots.txt`, hreflang, ouvrir une langue à l'indexation, `lastmod`, maillage du blog |
-| [`docs/ACQUISITION-BACKLINKS.md`](./docs/ACQUISITION-BACKLINKS.md) | Backlinks : le seul levier qui débloque le SEO aujourd'hui (actions manuelles d'Axel) |
-| [`docs/I18N.md`](./docs/I18N.md) | Qualité des traductions, périmètre réellement bilingue |
-| [`docs/RGPD.md`](./docs/RGPD.md) | Données personnelles, effacement, rétention, conformité B2B |
-| [`docs/LEGAL.md`](./docs/LEGAL.md) | **Obligations légales** : statut juridique, TVA, droit de la consommation, marque, sous-traitants. Tout client est un consommateur (décision 2026-08-26) |
-| [`docs/RGPD-REGISTRE.md`](./docs/RGPD-REGISTRE.md) | **Registre art. 30** : dix traitements, base légale, destinataires, durées. Pièce à produire en contrôle CNIL ou en due diligence |
-| [`docs/RGPD-VIOLATION.md`](./docs/RGPD-VIOLATION.md) | **Procédure 72 h** : qualification, marche à suivre, arbre de notification, registre des violations |
-| [`docs/STRIPE-LIVE.md`](./docs/STRIPE-LIVE.md) | Compte Stripe **live** : les 8 prix, `tax_behavior: inclusive` définitif, ce qui reste avant d'encaisser |
-| [`docs/ACCESSIBILITY.md`](./docs/ACCESSIBILITY.md) | a11y WCAG/EAA, aria, contraste |
 | [`docs/TESTING.md`](./docs/TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** |
 | [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) | Runbook deploy/rollback Vercel + Supabase |
-| [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) | Montée en charge, limites Supabase/localStorage |
-| [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md) | Réactivation du premium perso (`PREMIUM_ENFORCED`) |
-| [`docs/MIGRATION-REACT19.md`](./docs/MIGRATION-REACT19.md) | Étude de faisabilité React 19 + `react-router` 8 : chronologie CVE, composants shadcn ref par ref, chiffrage |
-| [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE.md) | **Mémo court** : ajouter une tâche dans le vrai compte COSMO |
-| [`docs/COSMO-CLI.md`](./docs/COSMO-CLI.md) | CLI d'accès aux données COSMO réelles (`scripts/cosmo/`) |
+| [`docs/LEGAL.md`](./docs/LEGAL.md) | Statut, TVA, conso, marque, sous-traitants. **Tout client est un consommateur** (2026-08-26) |
 | [`faille.md`](./faille.md) | Sécurité : **source de vérité**, findings ouverts + ordre de priorité avant prod |
+
+Autres docs vivantes, décrites dans `docs/README.md` : `SEO`, `ACQUISITION-BACKLINKS`, `I18N`,
+`RGPD`, `RGPD-REGISTRE` (art. 30), `RGPD-VIOLATION` (procédure 72 h), `STRIPE-LIVE`,
+`ACCESSIBILITY`, `SCALABILITY`, `POST-AUDIT-GUIDE` (`PREMIUM_ENFORCED`), `MIGRATION-REACT19`.
 
 > **Sécurité : `faille.md` fait foi.** CLAUDE.md ne duplique pas les statuts de failles.
 > Avant tout déploiement : `faille.md` → « Ordre de priorité avant déploiement prod ».
@@ -133,29 +126,21 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 
 ## Stack technique
 
-| Couche | Technologie |
-|---|---|
-| Framework | React 19 + TypeScript 5.5 (strict) |
-| Build | Vite 7 (+ prérendu `prerender.mjs` dans `npm run build`) |
-| Routing | React Router 8 (imports depuis `react-router`) |
-| State serveur | TanStack React Query 5 |
-| Backend / Auth | Supabase 2 |
-| UI | shadcn/ui (Radix UI + Tailwind CSS 3) |
-| Toasts | Sonner |
-| Animations | Framer Motion (app) + GSAP 3 (**landing uniquement**, cf. [règle GSAP](#gsap-toasts)) |
-| Graphiques | recharts |
-| PDF | jsPDF (`vendor-pdf`, `import()` au clic sur « Exporter en PDF » seulement) |
-| i18n | **Catalogues JSON maison** (`src/i18n/` + `src/locales/{fr,en}/`) — pas d'i18next |
-| Paiement | Stripe **live** depuis le 2026-10-20, facturation entreprise seule. Checkout par redirection serveur (Edge Function), aucun SDK Stripe côté client |
-| Icônes | lucide-react (imports nominaux uniquement) |
-| Dates | date-fns 3 (locale `fr` importée nominalement) |
-| Calendrier | FullCalendar |
-| Virtualisation | `@tanstack/react-virtual` (TaskList mobile > 50 items) |
-| Validation | `zod` (garde UX client — `src/lib/validation/`) |
-| Tests | Vitest (`*.test.ts` à côté du code) + Playwright (`e2e/`) |
-| Monitoring | Sentry (`beforeSend` strip emails/UUIDs) |
-| Hosting | Vercel (`vercel.json` + headers de sécurité + CSP) + fonctions `api/` (runtime edge) |
-| Audience | maison : `src/lib/traffic.ts` → `api/collect.ts` → `traffic_hits` ; Vercel Analytics sous consentement. Aucun script tiers de mesure |
+React 19 + TypeScript 5.5 strict · Vite 7 · React Router 8 (imports depuis `react-router`) ·
+TanStack Query 5 · Supabase 2 · shadcn/ui (Radix + Tailwind 3) · Framer Motion · recharts ·
+FullCalendar · date-fns 3 · zod · Vitest (`*.test.ts` à côté du code) + Playwright (`e2e/`) ·
+Sentry · Vercel. Versions : `package.json`. Ce qu'il ne dit pas :
+
+- `npm run build` = `vite build` + prérendu `prerender.mjs`.
+- i18n : **catalogues JSON maison** (`src/i18n/` + `src/locales/{fr,en}/`), pas d'i18next.
+- jsPDF (`vendor-pdf`) : `import()` au clic sur « Exporter en PDF » seulement.
+- Stripe **live** depuis le 2026-10-20, facturation entreprise seule : checkout par redirection
+  serveur (Edge Function), aucun SDK Stripe côté client.
+- Imports **nominaux** : lucide-react, locale `fr` de date-fns.
+- `@tanstack/react-virtual` : TaskList mobile au-delà de 50 items.
+- Sentry : `beforeSend` retire emails et UUIDs.
+- Audience maison : `src/lib/traffic.ts` → `api/collect.ts` → `traffic_hits` ; Vercel Analytics
+  sous consentement. Aucun script tiers de mesure.
 
 ---
 
@@ -164,20 +149,10 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 > ⚠️ **Commandes du QUOTIDIEN seulement.** Les gardes (`check:*`, `i18n:*`, `validate:*`) sont
 > dans [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) § Inventaire, une ligne chacune.
 
-```bash
-npm run dev        # Serveur dev local (port 5173)
-npm start          # Serveur dev réseau (port 3000) — port utilisé par Playwright
-npm run build      # Build prod → dist/ (vite build + node prerender.mjs)
-npm run preview    # Prévisualiser le build
-npm run lint       # ESLint (doit retourner 0 erreur)
-npm run typecheck  # tsc -b (doit retourner 0 erreur)
-npm test           # Vitest (run once)                          → docs/TESTING.md
-npm run test:watch # Vitest en mode watch
-npm run test:coverage       # + couverture v8, seuils par fichier → docs/TESTING.md
-npm run test:rls            # Intégration RLS (stack locale)      → docs/TESTING.md
-npm run test:e2e            # Playwright (+ :ui, :report)         → e2e/CLAUDE.md
-npm run cosmo               # CLI données réelles (cf. plus haut)
-```
+`dev` (port 5173) · `start` (port 3000, celui de Playwright) · `build` · `preview` ·
+`lint` et `typecheck` (`tsc -b`), **0 erreur** chacun · `test` (Vitest, une passe) ·
+`test:coverage` (seuils par fichier) · `test:rls` (stack locale) · `test:e2e` (→ `e2e/CLAUDE.md`).
+Détail : `docs/TESTING.md`.
 
 > Le build prod **drope** `console.*` et `debugger` (`vite.config.ts → esbuild.pure/drop`).
 > Les erreurs remontent via Sentry (`VITE_SENTRY_DSN`).
@@ -194,23 +169,17 @@ npm run cosmo               # CLI données réelles (cf. plus haut)
    d'allowlist pour la même raison. Un dépassement dit qu'un contenu doit bouger, pas que la borne
    est trop basse.
 
-## Variables d'environnement
+## Environnement et déploiement
 
-```bash
-# .env (non versionné — copier .env.example)
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
-VITE_STRIPE_PUBLISHABLE_KEY=
-VITE_SENTRY_DSN=  # public, write-only — si absent, monitoring désactivé
-```
-
-- `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY` absentes → **mode démo automatique** (localStorage).
-- Toute variable exposée au navigateur doit être préfixée `VITE_`.
-- **Ne jamais** utiliser `VITE_SUPABASE_SERVICE_ROLE_KEY` côté client.
-- **`.env` est gitignored** — vérifier `git status` avant chaque commit.
+- `.env` (non versionné, copier `.env.example`). Sans `VITE_SUPABASE_URL` ou
+  `VITE_SUPABASE_ANON_KEY` → **mode démo automatique** (localStorage).
+- Toute variable exposée au navigateur est préfixée `VITE_`. `VITE_SENTRY_DSN` est public
+  (write-only) ; absent, le monitoring est coupé. `VITE_STRIPE_PUBLISHABLE_KEY` n'est lue nulle part.
 - `.env.cosmo-cli` (gitignored) : config du CLI agent, distincte de `.env`.
 - `SUPABASE_SECRET_KEY` : **serveur seulement**, lue par `api/collect.ts`, posée sur Vercel par
   l'intégration Supabase (production). ❌ Jamais préfixée `VITE_` → [`api/CLAUDE.md`](./api/CLAUDE.md).
+- Vercel : `vercel.json` (SPA rewrite, HSTS, X-Frame-Options, CSP, cache immuable `/assets/*`),
+  fonctions `api/` en runtime edge. Runbook : [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
 
 ---
 
@@ -247,18 +216,9 @@ schémas par module. Câblé dans les `mutationFn` create/update.
 
 ### ESLint
 
-- Config `eslint.config.js`. **0 erreur** avant chaque commit.
-- Ignorés : `dist`, `coverage`, `coverage-tooling`, `src/__test__/**`, `.agents/**`, `.claude/**`, `.worktrees/**`.
+- Config `eslint.config.js` (fait foi pour les ignorés). **0 erreur** avant chaque commit.
   `e2e/**`, `src/components/showcase/**` et `supabase/functions/**` **sont** lintés (`C-102`).
 - Warnings tolérés : Fast refresh sur les contextes + fichiers ui shadcn (préexistants)
-
----
-## Déploiement Vercel
-
-`vercel.json` : SPA rewrite, headers de sécurité (HSTS, X-Frame-Options, CSP…), cache immuable
-`/assets/*`. Variables à configurer sur Vercel : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
-et côté serveur `SUPABASE_SECRET_KEY` (intégration Supabase). `VITE_STRIPE_PUBLISHABLE_KEY` n'est
-lue nulle part (checkout côté serveur). Runbook : [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
 
 ---
 
@@ -272,8 +232,7 @@ lue nulle part (checkout côté serveur). Runbook : [`docs/DEPLOYMENT.md`](./doc
 - ❌ Recréer un contexte/façade global qui agrège plusieurs modules
 - ❌ Importer `useAuth` depuis `@/modules/user`
 - ❌ Appeler `repository.getFriends()` depuis un hook — l'interface expose `getAll()` (B3)
-- ❌ Importer `gsap` directement ou l'utiliser hors landing — passer par `@/lib/gsap`
-- ❌ Appeler `toast` depuis les repositories ou `normalizeApiError`
+- ❌ `gsap` et `toast` hors de leur façade : règles en § Conventions de code
 
 ### Logique métier
 
