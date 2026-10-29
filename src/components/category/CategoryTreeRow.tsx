@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, ChevronDown, Plus, FolderInput, Trash2, MoreHorizontal } from 'lucide-react';
+import { ChevronRight, ChevronDown, ChevronUp, Plus, FolderInput, Trash2, MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import {
   DropdownMenu,
@@ -32,11 +32,22 @@ interface CategoryTreeRowProps {
   onDelete: () => void;
   /** Vrai quand la profondeur maximale est atteinte : « + » est désactivé. */
   atMaxDepth: boolean;
+  /** « Modifier l'ordre » dans le menu d'actions. */
+  onStartReorder?: () => void;
+  /** Fourni = flèches monter/descendre à droite du menu (mode réordonnancement). */
+  reorder?: { canUp: boolean; canDown: boolean; onUp: () => void; onDown: () => void };
+  /**
+   * Mode cascade (souris) : les enfants vivent dans un panneau à droite, pas
+   * sous la ligne. Pas de bouton replier/déplier, un chevron → indique
+   * seulement qu'un panneau existe.
+   */
+  cascade?: boolean;
 }
 
 const CategoryTreeRow: React.FC<CategoryTreeRowProps> = ({
   id, name, color, depth, hasChildren, isExpanded,
   onToggle, onNameChange, onColorChange, onAddChild, onMove, onDelete, atMaxDepth,
+  onStartReorder, reorder, cascade = false,
 }) => {
   const { t } = useT('tasks');
 
@@ -49,9 +60,13 @@ const CategoryTreeRow: React.FC<CategoryTreeRowProps> = ({
       // l'arbre sans dépendre du texte affiché (qui change avec la locale).
       data-category-id={id}
       className="flex items-center gap-2 min-h-11"
-      style={{ paddingInlineStart: `${(depth - 1) * 16}px` }}
+      style={{ paddingInlineStart: cascade ? 0 : `${(depth - 1) * 16}px` }}
     >
-      {hasChildren ? (
+      {cascade ? (
+        <span className="w-6 shrink-0 flex justify-center text-[rgb(var(--color-text-muted))]" aria-hidden="true">
+          {hasChildren && <ChevronRight size={14} />}
+        </span>
+      ) : hasChildren ? (
         <button
           type="button"
           onClick={onToggle}
@@ -110,6 +125,11 @@ const CategoryTreeRow: React.FC<CategoryTreeRowProps> = ({
           <DropdownMenuItem onClick={onMove}>
             <FolderInput size={14} aria-hidden="true" /> {t('colorModal.moveTitle')}
           </DropdownMenuItem>
+          {onStartReorder && (
+            <DropdownMenuItem onClick={onStartReorder}>
+              <ArrowUpDown size={14} aria-hidden="true" /> {t('colorModal.reorder')}
+            </DropdownMenuItem>
+          )}
           {/* !text-red-500 (icône) : même correctif que list.tsx (rowMenu.delete) —
               le sélecteur Tailwind data-[variant=destructive]:*:[svg]:!text-destructive
               de dropdown-menu.tsx ne s'applique pas, l'icône reste grise au
@@ -125,6 +145,29 @@ const CategoryTreeRow: React.FC<CategoryTreeRowProps> = ({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {reorder && (
+        <div className="flex items-center shrink-0">
+          <button
+            type="button"
+            onClick={reorder.onUp}
+            disabled={!reorder.canUp}
+            aria-label={t('colorModal.moveUp', { name })}
+            className="min-w-9 min-h-11 flex items-center justify-center text-blue-600 dark:text-blue-400 disabled:opacity-30"
+          >
+            <ChevronUp size={18} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={reorder.onDown}
+            disabled={!reorder.canDown}
+            aria-label={t('colorModal.moveDown', { name })}
+            className="min-w-9 min-h-11 flex items-center justify-center text-blue-600 dark:text-blue-400 disabled:opacity-30"
+          >
+            <ChevronDown size={18} aria-hidden="true" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
