@@ -460,18 +460,28 @@ test.describe('C-97 — CPU bride', () => {
     // répondrait sans mesurer. On chronomètre donc la MÊME boucle de calcul
     // avec et sans bridage, dans le même contexte.
     await page.goto('/', { timeout: 180_000, waitUntil: 'domcontentloaded' });
+    // ⚠️ Mesure de 2026-10-29 : sur 10 runs, rapport bride/libre entre 1,1 et
+    // 2,8 pour un facteur 4 demandé. La boucle ne durait que ~30 ms et le
+    // passage « libre », joué en premier, payait seul la compilation JIT à
+    // froid : il était gonflé, le rapport écrasé. D'où un échauffement, une
+    // boucle plus longue et la médiane de trois passages. Le seuil ne bouge pas.
     const boucle = () =>
       page.evaluate(() => {
         const t0 = performance.now();
         let x = 0;
-        for (let i = 0; i < 12_000_000; i += 1) x += i % 7;
+        for (let i = 0; i < 48_000_000; i += 1) x += i % 7;
         return { ms: performance.now() - t0, x };
       });
+    const mediane = async () => {
+      const ms = [(await boucle()).ms, (await boucle()).ms, (await boucle()).ms].sort((a, b) => a - b);
+      return ms[1];
+    };
 
-    const libre = (await boucle()).ms;
+    await boucle();
+    const libre = await mediane();
     const cdp = await context.newCDPSession(page);
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: FACTEUR });
-    const bride = (await boucle()).ms;
+    const bride = await mediane();
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
 
     console.log(`::notice title=c97-temoin-cpu::libre ${Math.round(libre)} ms · bride ${Math.round(bride)} ms`);
