@@ -66,7 +66,10 @@ const DeadlineCalendar: React.FC = () => {
     const Comp = (props: React.ComponentProps<typeof CalendarDayButton>) => {
       const colors = dotsByDay.get(dayKey(props.day.date)) ?? [];
       return (
-        <CalendarDayButton {...props}>
+        <CalendarDayButton
+          {...props}
+          className={`${props.className ?? ''} data-[selected-single=true]:bg-blue-600 data-[selected-single=true]:text-white data-[selected-single=true]:data-[today=true]:text-white`}
+        >
           {props.children}
           {colors.length > 0 && (
             <span className="pointer-events-none absolute inset-x-0 bottom-1 flex justify-center gap-0.5 !opacity-100">
