@@ -134,14 +134,18 @@ async function openFirstRowMenu(page: Page): Promise<void> {
 test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
 
-  test('surface 1 — « Planifier dans l’agenda »', async ({ demoPage: page }) => {
+  // « Planifier » ouvre la modale d'événement préremplie depuis le 2026-10-29
+  // (l'ancienne popup « Planifier dans l'agenda » est supprimée).
+  test('surface 1 — « Planifier » (modale d’événement)', async ({ demoPage: page }) => {
     await navTo(page, /to ?do|tâches|tasks/i, /\/tasks/);
     await openFirstRowMenu(page);
     await page.getByRole('menuitem', { name: /^planifier$/i }).click();
 
-    const dialog = page.getByRole('dialog', { name: /planifier dans l'agenda/i });
+    const dialog = page.getByRole('dialog', { name: /ajouter un événement/i });
     await expect(dialog).toBeVisible({ timeout: 10_000 });
-    await dialog.getByRole('button', { name: /date/i }).first().click();
+    // Le champ date affiche la date choisie, pas « date » : on vise le
+    // déclencheur de popover (Radix pose `aria-haspopup="dialog"`).
+    await dialog.locator('button[aria-haspopup="dialog"]').first().click();
     await expectCosmoCalendar(page, dialog);
   });
 

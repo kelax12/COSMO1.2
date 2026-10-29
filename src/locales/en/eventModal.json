@@ -25,15 +25,6 @@
   "delete": "Delete event",
   "repeatDays": "Repeat on",
   "repeatDaysHint": "Pick the days of the week the event repeats on.",
-  "schedule": {
-    "title": "Schedule in the calendar",
-    "description": "Creates an event linked to this task.",
-    "titleLabel": "Title",
-    "date": "Date",
-    "startTime": "Start time",
-    "endTime": "End time",
-    "notes": "Notes"
-  },
   "calendar": {
     "pickDay": "Pick a day",
     "noTask": "No tasks on that day."

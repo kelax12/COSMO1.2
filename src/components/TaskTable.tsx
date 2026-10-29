@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { useLazyMount } from '@/hooks/use-lazy-mount';
-import { BulkAddToListModal, ScheduleEventModal } from './task-table/lazy-dialogs';
+import { BulkAddToListModal, TaskToEventModal } from './task-table/lazy-dialogs';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskModal from './TaskModal';
 import AddToListModal from './AddToListModal';
@@ -536,10 +536,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
       )}
 
       {taskToEventModal && (
-        <React.Suspense fallback={null}><ScheduleEventModal
-          open={true}
-          onOpenChange={(o) => { if (!o) setTaskToEventModal(null); }}
+        <React.Suspense fallback={null}><TaskToEventModal
           task={taskToEventModal}
+          onClose={() => setTaskToEventModal(null)}
         /></React.Suspense>
       )}
 
