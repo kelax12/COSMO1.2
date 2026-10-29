@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import DescriptionField from '@/components/DescriptionField';
 import EventModalDesktopCategoryPicker from './EventModalDesktopCategoryPicker';
+import MenuSelect from '@/components/organization/MenuSelect';
 import type { EventRecurrence } from '@/modules/events';
 import { DAY_LABEL_KEYS, formatEventDuration } from './helpers';
 import type { EventModalFormBodyProps } from './event-modal-form.types';
@@ -69,8 +70,8 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
         className="p-4 md:p-5 overflow-y-auto h-[calc(100%-64px)] md:h-auto md:max-h-[calc(90vh-64px)]"
         style={{ backgroundColor: 'rgb(var(--color-background))' }}
       >
-        <div className="flex flex-col md:grid md:grid-cols-12 gap-5">
-          <div className="md:col-span-7 space-y-3">
+        <div className="flex flex-col gap-5">
+          <div className="space-y-3">
             <div ref={register('title')}>
               <label
                 className="block text-xs font-semibold uppercase tracking-wider mb-2 !whitespace-pre-line"
@@ -289,51 +290,39 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                 </div>
               )}
 
-              {/* Récurrence — sélecteur 3 états discret */}
+              {/* Catégorie + récurrence côte à côte, deux menus déroulants
+                  (modale en une colonne, maquette 3 du 2026-10-29). */}
               <div className="pt-1">
-                <div className="flex items-center justify-between gap-3">
-                  <span
-                    className="text-xs font-semibold uppercase tracking-wider"
-                    style={{ color: "rgb(var(--color-text-secondary))" }}
-                  >
-                    {t('recurrence')}
-                  </span>
-                  <div
-                    className="inline-flex rounded-full p-0.5 border text-[11px]"
-                    style={{
-                      backgroundColor: "rgb(var(--color-chip-bg))",
-                      borderColor: "rgb(var(--color-chip-border))",
-                    }}
-                    role="radiogroup"
-                    aria-label={t('recurrenceAria')}
-                  >
-                    {([
-                      { value: 'none', label: t('form.recurrenceNone') },
-                      { value: 'daily', label: t('form.recurrenceDaily') },
-                      { value: 'weekly', label: t('form.recurrenceWeekly') },
-                      { value: 'custom', label: t('form.recurrenceCustom') },
-                    ] as { value: EventRecurrence; label: string }[]).map((opt) => {
-                      const active = recurrence === opt.value;
-                      return (
-                        <button
-                          type="button"
-                          key={opt.value}
-                          role="radio"
-                          aria-checked={active}
-                          onClick={() => { setRecurrence(opt.value); if (opt.value === 'custom') setShowDaysModal(true); }}
-                          className="px-3 py-1 rounded-full font-medium transition-colors"
-                          style={{
-                            backgroundColor: active ? 'rgb(var(--color-accent))' : 'transparent',
-                            // Jamais de blanc en dur sur --color-accent : en thème Noir cet
-                    // accent vaut 240,240,240 (quasi-blanc), donc la puce active
-                    // devenait illisible. Le duo prévu est accent-solid-foreground.
-                    color: active ? 'rgb(var(--color-accent-solid-foreground))' : 'rgb(var(--color-text-secondary))',
-                          }}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
+                <div className="grid grid-cols-2 gap-3">
+                  <EventModalDesktopCategoryPicker
+                    categories={categories}
+                    color={color}
+                    setColor={setColor}
+                    handleFieldChange={handleFieldChange}
+                    setIsColorSettingsOpen={setIsColorSettingsOpen}
+                  />
+                  <div>
+                    <span
+                      className="block text-xs font-semibold uppercase tracking-wider mb-2"
+                      style={{ color: "rgb(var(--color-text-secondary))" }}
+                    >
+                      {t('recurrence')}
+                    </span>
+                    <MenuSelect
+                      aria-label={t('recurrenceAria')}
+                      value={recurrence}
+                      onChange={(e) => {
+                        const next = e.target.value as EventRecurrence;
+                        setRecurrence(next);
+                        if (next === 'custom') setShowDaysModal(true);
+                      }}
+                      className="w-full min-h-11 rounded-xl border px-3 text-sm border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))]"
+                    >
+                      <option value="none">{t('form.recurrenceNone')}</option>
+                      <option value="daily">{t('form.recurrenceDaily')}</option>
+                      <option value="weekly">{t('form.recurrenceWeekly')}</option>
+                      <option value="custom">{t('form.recurrenceCustom')}</option>
+                    </MenuSelect>
                   </div>
                 </div>
                 {/* Jours personnalisés (récurrence 'custom') */}
@@ -404,13 +393,6 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
             )}
           </div>
 
-          <EventModalDesktopCategoryPicker
-            categories={categories}
-            color={color}
-            setColor={setColor}
-            handleFieldChange={handleFieldChange}
-            setIsColorSettingsOpen={setIsColorSettingsOpen}
-          />
         </div>
 
         {/* Actions — footer fixe en bas à droite de la popup, indépendant de

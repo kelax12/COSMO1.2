@@ -27,7 +27,7 @@ const EventModalForm: React.FC<EventModalFormProps> = (props) => {
       ref={sheetRef}
       {...sheetDragProps}
       {...sheetMotion}
-      className="rounded-t-[28px] md:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] md:shadow-2xl w-full md:max-w-4xl lg:max-w-5xl h-[92vh] md:h-auto md:max-h-[90vh] lg:max-h-[85vh] overflow-hidden flex flex-col"
+      className="rounded-t-[28px] md:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] md:shadow-2xl w-full md:max-w-xl h-[92vh] md:h-auto md:max-h-[90vh] lg:max-h-[85vh] overflow-hidden flex flex-col"
       style={{ backgroundColor: "rgb(var(--color-surface))", paddingBottom: isMobile ? 0 : 'env(safe-area-inset-bottom)' }}
       onClick={(e) => e.stopPropagation()}
     >

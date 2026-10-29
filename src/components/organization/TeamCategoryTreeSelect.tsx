@@ -40,6 +40,8 @@ import { useTeamOKRs } from '@/modules/team-okrs';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { getColorHex } from '@/lib/category-colors';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { useCanHover } from '@/hooks/use-can-hover';
+import { CascadeFlyout, CascadeLevel } from '@/components/category/CascadeFlyout';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -84,6 +86,8 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
 
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+  // Souris : enfants en cascade à droite (2026-10-29) ; doigt : arbre indenté.
+  const canHover = useCanHover();
   const [form, setForm] = useState<PendingForm>(null);
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(TEAM_CATEGORY_COLORS[0]);
@@ -223,99 +227,107 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
     const isMoving = movingId === cat.id;
     const isDeleting = deletingId === cat.id;
 
+    const rowEl = (
+      <div
+        role="option"
+        aria-selected={cat.id === value}
+        style={{ paddingInlineStart: canHover ? '8px' : `${8 + depth * 16}px` }}
+        className="flex w-full items-center gap-1 min-h-11 text-sm text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
+      >
+        {hasChildren && !canHover ? (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); toggleExpanded(cat.id); }}
+            aria-label={isExpanded ? t('teamCategory.collapse') : t('teamCategory.expand')}
+            className="p-1 shrink-0 text-blue-600 dark:text-blue-400"
+          >
+            {isExpanded ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+          </button>
+        ) : canHover ? null : (
+          <span className="w-6 shrink-0" aria-hidden="true" />
+        )}
+
+        {isRenaming ? (
+          <form
+            className="flex flex-1 items-center gap-1.5"
+            onSubmit={(e) => { e.preventDefault(); submitForm(); }}
+          >
+            <input
+              type="color"
+              value={resolveColor(color)}
+              onChange={(e) => setColor(e.target.value)}
+              aria-label={t('teamCategory.colorAria', { color })}
+              className="w-6 h-6 rounded-full shrink-0 cursor-pointer border-0 bg-transparent p-0"
+            />
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Escape') closeForm(); }}
+              autoFocus
+              maxLength={60}
+              className="flex-1 min-w-0 h-8 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            />
+            <button type="submit" disabled={!name.trim() || isPending} className="text-xs font-semibold text-blue-600 dark:text-blue-400 disabled:opacity-40 px-1">
+              {t('teamCategory.save')}
+            </button>
+            <button type="button" onClick={closeForm} aria-label={t('okrCategory.cancel')} className="p-1 text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))]">
+              <X size={13} aria-hidden="true" />
+            </button>
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={() => pick(cat.id)}
+            className="flex flex-1 min-w-0 items-center gap-2 min-h-11 text-left"
+          >
+            <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: resolveColor(cat.color) }} />
+            <span className="truncate">{cat.name}</span>
+          </button>
+        )}
+
+        {canManage && !isRenaming && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                aria-label={t('teamCategory.moreActions', { name: cat.name })}
+                className="min-w-9 min-h-9 flex items-center justify-center shrink-0 text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
+              >
+                <MoreHorizontal size={16} aria-hidden="true" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="z-[10000]">
+              <DropdownMenuItem onClick={() => openRename(cat)}>
+                <Pencil size={14} aria-hidden="true" /> {t('teamCategory.rename')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => openCreateChild(cat.id)}
+                disabled={atMaxDepth(cat.id)}
+                title={atMaxDepth(cat.id) ? t('teamCategory.atMaxDepth') : undefined}
+              >
+                <Plus size={14} aria-hidden="true" /> {t('teamCategory.createSubcategory')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openMove(cat.id)}>
+                <FolderInput size={14} aria-hidden="true" /> {t('teamCategory.moveTitle')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openDelete(cat.id)} variant="destructive">
+                <Trash2 size={14} aria-hidden="true" className="!text-red-500" /> {t('teamCategory.deleteConfirm')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+    );
+
     return (
       <React.Fragment key={cat.id}>
-        <div
-          role="option"
-          aria-selected={cat.id === value}
-          style={{ paddingInlineStart: `${8 + depth * 16}px` }}
-          className="flex w-full items-center gap-1 min-h-11 text-sm text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
-        >
-          {hasChildren ? (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); toggleExpanded(cat.id); }}
-              aria-label={isExpanded ? t('teamCategory.collapse') : t('teamCategory.expand')}
-              className="p-1 shrink-0 text-blue-600 dark:text-blue-400"
-            >
-              {isExpanded ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
-            </button>
-          ) : (
-            <span className="w-6 shrink-0" aria-hidden="true" />
-          )}
-
-          {isRenaming ? (
-            <form
-              className="flex flex-1 items-center gap-1.5"
-              onSubmit={(e) => { e.preventDefault(); submitForm(); }}
-            >
-              <input
-                type="color"
-                value={resolveColor(color)}
-                onChange={(e) => setColor(e.target.value)}
-                aria-label={t('teamCategory.colorAria', { color })}
-                className="w-6 h-6 rounded-full shrink-0 cursor-pointer border-0 bg-transparent p-0"
-              />
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Escape') closeForm(); }}
-                autoFocus
-                maxLength={60}
-                className="flex-1 min-w-0 h-8 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-              />
-              <button type="submit" disabled={!name.trim() || isPending} className="text-xs font-semibold text-blue-600 dark:text-blue-400 disabled:opacity-40 px-1">
-                {t('teamCategory.save')}
-              </button>
-              <button type="button" onClick={closeForm} aria-label={t('okrCategory.cancel')} className="p-1 text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))]">
-                <X size={13} aria-hidden="true" />
-              </button>
-            </form>
-          ) : (
-            <button
-              type="button"
-              onClick={() => pick(cat.id)}
-              className="flex flex-1 min-w-0 items-center gap-2 min-h-11 text-left"
-            >
-              <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: resolveColor(cat.color) }} />
-              <span className="truncate">{cat.name}</span>
-            </button>
-          )}
-
-          {canManage && !isRenaming && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  onClick={(e) => e.stopPropagation()}
-                  aria-label={t('teamCategory.moreActions', { name: cat.name })}
-                  className="min-w-9 min-h-9 flex items-center justify-center shrink-0 text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
-                >
-                  <MoreHorizontal size={16} aria-hidden="true" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="z-[10000]">
-                <DropdownMenuItem onClick={() => openRename(cat)}>
-                  <Pencil size={14} aria-hidden="true" /> {t('teamCategory.rename')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => openCreateChild(cat.id)}
-                  disabled={atMaxDepth(cat.id)}
-                  title={atMaxDepth(cat.id) ? t('teamCategory.atMaxDepth') : undefined}
-                >
-                  <Plus size={14} aria-hidden="true" /> {t('teamCategory.createSubcategory')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => openMove(cat.id)}>
-                  <FolderInput size={14} aria-hidden="true" /> {t('teamCategory.moveTitle')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => openDelete(cat.id)} variant="destructive">
-                  <Trash2 size={14} aria-hidden="true" className="!text-red-500" /> {t('teamCategory.deleteConfirm')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
+        {canHover && hasChildren ? (
+          <CascadeFlyout id={cat.id} row={rowEl} ariaLabel={cat.name} panelClassName="z-[10000]">
+            {node.children.map((child) => renderNode(child, 0))}
+          </CascadeFlyout>
+        ) : rowEl}
 
         {isMoving && (
           <div
@@ -403,7 +415,7 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
           </div>
         )}
 
-        {hasChildren && isExpanded && node.children.map((child) => renderNode(child, depth + 1))}
+        {!canHover && hasChildren && isExpanded && node.children.map((child) => renderNode(child, depth + 1))}
       </React.Fragment>
     );
   };
@@ -432,7 +444,7 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
       >
         <div role="listbox" aria-label={t('teamCategory.picker')}>
           <NoCategoryOption selected={!value} onSelect={() => { onChange(null); close(); }} />
-          {buildTree(categories).map((node) => renderNode(node, 0))}
+          <CascadeLevel>{buildTree(categories).map((node) => renderNode(node, 0))}</CascadeLevel>
         </div>
 
         {canManage && (
