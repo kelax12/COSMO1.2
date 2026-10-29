@@ -9,6 +9,7 @@ import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import BottomSheet from '@/components/mobile/BottomSheet';
 import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface OKRCardProps {
   objective: Objective;
@@ -199,27 +200,15 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                     <h2 className="hidden sm:block text-base sm:text-lg font-semibold mb-4 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h2>
                   </div>
 
-                <div className="mb-3 sm:mb-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-                  {/* Cercle retiré sur mobile (redesign 2026-09-16) : seule la
-                      barre linéaire ci-dessous reste, desktop inchangé. */}
-                  <div className="hidden sm:block relative w-16 h-16 sm:w-20 sm:h-20 shrink-0">
-                    <svg className="transform -rotate-90" width="100%" height="100%" viewBox="0 0 80 80">
-                      <circle cx="40" cy="40" r="32" stroke="rgb(var(--color-border-muted))" strokeWidth="8" fill="none" />
-                      <circle cx="40" cy="40" r="32" stroke="rgb(var(--color-accent))" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray={`${2 * Math.PI * 32}`} strokeDashoffset={2 * Math.PI * 32 * (1 - Math.min(progress, 100) / 100)} />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-lg sm:text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
-                    </div>
+                {/* Cercle retiré partout (2026-10-29) : il doublait la barre
+                    globale, agrandie à la place. */}
+                <div className="mb-3 sm:mb-6 w-full">
+                  <div className="hidden sm:flex justify-between items-baseline mb-2">
+                    <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.overallProgress')}</span>
+                    <span className="text-2xl font-bold tabular-nums" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
                   </div>
-
-                  <div className="flex-1 w-full">
-                    <div className="hidden sm:flex justify-between items-center mb-2">
-                      <span className="text-xs sm:text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.overallProgress')}</span>
-                      <span className="text-xs sm:text-sm font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
-                    </div>
-                    <div className="w-full rounded-full h-1 sm:h-2" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
-                      <div className="h-1 sm:h-2 rounded-full transition-all duration-500" style={{ backgroundColor: 'rgb(var(--color-accent))', width: `${progress}%` }} />
-                    </div>
+                  <div className="w-full rounded-full h-1 sm:h-3" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
+                    <div className="h-1 sm:h-3 rounded-full transition-all duration-500" style={{ backgroundColor: 'rgb(var(--color-accent))', width: `${Math.min(progress, 100)}%` }} />
                   </div>
                 </div>
 
@@ -289,28 +278,12 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                                 ×{keyResult.weight}
                               </span>
                             )}
+                            <span className="shrink-0 text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                              <Clock size={12} aria-hidden="true" />
+                              {keyResult.estimatedTime}min
+                            </span>
                           </span>
                           <div className="hidden sm:flex items-center gap-1 sm:gap-2 shrink-0 self-end sm:self-auto">
-                            <button
-                              onClick={() => {
-                                setSelectedKeyResultForModal({ kr: keyResult, obj: objective });
-                                setShowAddTaskModal(true);
-                              }}
-                              className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 rounded-md transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
-                              title={t('card.createTask')}>
-
-                              <CheckCircle size={14} className="text-[rgb(var(--color-accent-solid))] md:text-blue-500" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedKeyResultForModal({ kr: keyResult, obj: objective });
-                                setShowAddEventModal(true);
-                              }}
-                              className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 rounded-md transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
-                              title={t('card.scheduleEvent')}>
-
-                              <Calendar size={14} style={{ color: 'rgb(var(--color-text-muted))' }} />
-                            </button>
                             {(tasksByKr.get(keyResult.id) ?? 0) > 0 && (
                               <span
                                 className="text-caption sm:text-xs px-1.5 py-0.5 rounded-full bg-[rgb(var(--color-accent-solid))]/10 text-blue-600 dark:text-blue-300 whitespace-nowrap"
@@ -319,10 +292,6 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                                 {tasksByKr.get(keyResult.id)} tâche{(tasksByKr.get(keyResult.id) ?? 0) > 1 ? 's' : ''}
                               </span>
                             )}
-                            <span className="text-caption sm:text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                              <Clock size={12} />
-                              {keyResult.estimatedTime}min
-                            </span>
                           </div>
                         </div>
 
@@ -364,6 +333,26 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                               <div className={`h-1.5 rounded-full transition-all duration-500 bg-[rgb(var(--color-accent-solid))]`} style={{ width: `${Math.min(krProgress, 100)}%` }} />
                             </div>
                             <span className="text-xs font-medium w-8 text-right" style={{ color: 'rgb(var(--color-text-secondary))' }}>{Math.round(krProgress)}%</span>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  aria-label={t('card.krActions', { title: keyResult.title })}
+                                  className="w-7 h-7 rounded-md flex items-center justify-center transition-colors hover:bg-hover"
+                                  style={{ color: 'rgb(var(--color-text-muted))' }}
+                                >
+                                  <MoreHorizontal size={16} />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => { setSelectedKeyResultForModal({ kr: keyResult, obj: objective }); setShowAddTaskModal(true); }}>
+                                  <CheckCircle size={14} aria-hidden="true" />{t('card.addAsTask')}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => { setSelectedKeyResultForModal({ kr: keyResult, obj: objective }); setShowAddEventModal(true); }}>
+                                  <Calendar size={14} aria-hidden="true" />{t('card.addAsEvent')}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
 
