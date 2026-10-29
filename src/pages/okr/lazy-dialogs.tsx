@@ -14,19 +14,8 @@ import React, { Suspense } from 'react';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useMountedAfterFirstOpen } from '@/lib/hooks/use-mounted-after-first-open';
 
-const WeeklyCheckinModalLazy = lazyWithRetry(() => import('@/components/WeeklyCheckinModal'));
 const DeleteObjectiveConfirmLazy = lazyWithRetry(() => import('./DeleteObjectiveConfirm'));
 const OKRModalSheetLazy = lazyWithRetry(() => import('@/components/OKRModalSheet'));
-
-export function WeeklyCheckinModal(props: React.ComponentProps<typeof WeeklyCheckinModalLazy>) {
-  const mounted = useMountedAfterFirstOpen(props.isOpen);
-  if (!mounted) return null;
-  return (
-    <Suspense fallback={null}>
-      <WeeklyCheckinModalLazy {...props} />
-    </Suspense>
-  );
-}
 
 export function DeleteObjectiveConfirm(props: React.ComponentProps<typeof DeleteObjectiveConfirmLazy>) {
   const mounted = useMountedAfterFirstOpen(props.deletingObjective !== null);

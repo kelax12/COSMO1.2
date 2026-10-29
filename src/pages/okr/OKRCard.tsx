@@ -129,6 +129,8 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       <span className="hidden sm:inline">
                         {formatDate(new Date(objective.endDate), { day: 'numeric', month: 'long' })}
                         <span className="hidden sm:inline"> {formatDate(new Date(objective.endDate), { year: 'numeric' })}</span>
+                        {/* Ex-pastille « x% du temps écoulé » (2026-10-29). */}
+                        {totalTime > 0 && <span> ({Math.round(timeProgress)}%)</span>}
                       </span>
                     </div>
 
@@ -167,7 +169,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       sur mobile (redesign 2026-09-19) — l'info « jours restants »
                       vit désormais dans l'en-tête (cf. plus haut). Desktop
                       inchangé. */}
-                  {(remainingDays > 0 || totalTime > 0) && (
+                  {remainingDays > 0 && (
                     <div className="hidden sm:flex sm:mb-4 flex-wrap items-center gap-2">
                       {remainingDays > 0 && (
                         <div
@@ -179,18 +181,6 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                           }}
                         >
                           <span className="whitespace-nowrap">{remainingDays}j restants</span>
-                        </div>
-                      )}
-                      {totalTime > 0 && (
-                        <div
-                          className="px-2.5 py-1 text-caption md:text-[10px] font-bold uppercase tracking-widest rounded-full border shadow-sm w-fit"
-                          style={{
-                            backgroundColor: 'rgb(var(--color-hover))',
-                            borderColor: 'rgb(var(--color-border))',
-                            color: 'rgb(var(--color-text-secondary))'
-                          }}
-                        >
-                          <span className="whitespace-nowrap">{t('card.timeElapsed', { percent: Math.round(timeProgress) })}</span>
                         </div>
                       )}
                     </div>

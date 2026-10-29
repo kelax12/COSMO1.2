@@ -2,7 +2,7 @@ import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
 import TouchTarget from '@/components/mobile/TouchTarget';
-import { Plus, Target, CalendarCheck, CheckCircle2 } from 'lucide-react';
+import { Plus, Target, CheckCircle2 } from 'lucide-react';
 import { getColorHex } from '@/lib/category-colors';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';
@@ -24,7 +24,7 @@ import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { filterObjectivesByCategories, shouldReopenOnDeadlineExtension, type Objective } from './okr/okr-page-logic';
 import OKRCard from './okr/OKRCard';
 import { OKRListSkeleton } from '@/components/skeletons';
-import { WeeklyCheckinModal, DeleteObjectiveConfirm, OKRModalSheet } from './okr/lazy-dialogs';
+import { DeleteObjectiveConfirm, OKRModalSheet } from './okr/lazy-dialogs';
 import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
 import CategoryFilterBar from './okr/CategoryFilterBar';
 import OKRCategorySelect from './okr/OKRCategorySelect';
@@ -52,7 +52,6 @@ const OKRPage: React.FC = () => {
   const location = useLocation();
   // Le check-in hebdo peut aussi être ouvert manuellement (bouton), en plus de
   // l'auto-déclenchement lundi/mardi depuis le Dashboard.
-  const [showCheckin, setShowCheckin] = useState(false);
   // Use new OKR module hooks
   const { data: objectives = [], isLoading: isLoadingOkrs, isError: isOkrsError, error: okrsError, refetch: refetchOkrs } = useOkrs();
   const createOkrMutation = useCreateOkr();
@@ -341,19 +340,6 @@ const OKRPage: React.FC = () => {
       </div>
 
       <div className="hidden sm:flex justify-end mb-8 gap-3">
-        {/* Ouvrir le check-in hebdo manuellement — en plus de l'auto-déclenchement
-            lundi/mardi depuis le Dashboard, disponible en démo ET en production. */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setShowCheckin(true)}
-          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm border border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-text))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-          aria-label={t('page.openCheckinAria')}
-          title={t('page.openCheckinTitle')}
-        >
-          <CalendarCheck size={15} />
-          <span>{t('page.weeklyCheckin')}</span>
-        </motion.button>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -553,7 +539,6 @@ const OKRPage: React.FC = () => {
 
       {/* Check-in hebdo — accessible manuellement en mode démo (en prod il
           s'auto-déclenche lundi/mardi via le Dashboard) */}
-      <WeeklyCheckinModal isOpen={showCheckin} onClose={() => setShowCheckin(false)} />
 
       {/* Popup deadline atteinte : affiché à l'ouverture pour les OKR non
           complétés dont endDate <= aujourd'hui. Au validate, la carte s'anime

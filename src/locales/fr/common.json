@@ -37,6 +37,8 @@
     "premiumActive": "Actif",
     "userFallback": "Utilisateur",
     "sidebar": {
+      "showLabels": "Afficher les libellés ( [ )",
+      "hideLabels": "Masquer les libellés ( [ )",
       "toggleTitle": "Réduire/agrandir ( [ )",
       "expand": "Agrandir la barre latérale",
       "collapse": "Réduire la barre latérale"

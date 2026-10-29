@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Check, ChevronRight } from 'lucide-react';
+import { X, Check, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
@@ -10,6 +10,8 @@ import { useCategories } from '@/modules/categories';
 import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 import { useCreateHabit, useUpdateHabit, Habit } from '@/modules/habits';
 import ColorSettingsModal from './ColorSettingsModal';
+import AddCategoryButton from '@/components/AddCategoryButton';
+import CategoryTreeSelect from '@/components/category/CategoryTreeSelect';
 import ConfirmDiscardDialog from './ConfirmDiscardDialog';
 import { Button } from '@/components/ui/button';
 import { formatDurationMinutes } from '@/lib/duration';
@@ -341,57 +343,24 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     </div>
 
                     <div data-guide-id="perso-habit-form-color">
-                      <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        Couleur
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {favoriteColors.map((favColor, index) => (
-                          <button
-                            key={`${favColor}-${index}`}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, color: favColor })}
-                            className={`w-9 h-9 rounded-lg border-2 transition-all hover:scale-105 ${
-                              formData.color === favColor ? 'scale-110 shadow-lg border-slate-900 dark:border-white' : ''
-                            }`}
-                            style={{
-                              backgroundColor: favColor,
-                              borderColor: formData.color === favColor ? undefined : 'rgb(var(--color-border))',
-                            }}
-                          />
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() => setIsColorSettingsOpen(true)}
-                          className="w-9 h-9 rounded-lg border-2 border-dashed flex items-center justify-center transition-all hover:scale-105 hover:border-[rgb(var(--color-accent))]"
-                          style={{ borderColor: 'rgb(var(--color-border))' }}
-                        >
-                          <Plus className="w-4 h-4 text-blue-500" />
-                        </button>
+                      {/* Menu déroulant commun (cascade au survol) à la place des
+                          pastilles et de la légende, 2026-10-29. L'habitude ne
+                          stocke qu'une COULEUR : on traduit dans les deux sens. */}
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="block text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                          {t('modal.category')}
+                        </span>
+                        <AddCategoryButton onClick={() => setIsColorSettingsOpen(true)} />
                       </div>
-
-                      {categories.length > 0 && (
-                        <div
-                          className="mt-3 p-2.5 rounded-xl border"
-                          style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}
-                        >
-                          <h4
-                            className="text-[10px] font-bold uppercase tracking-widest mb-2"
-                            style={{ color: 'rgb(var(--color-text-muted))' }}
-                          >
-                            {t('modal.legend')}
-                          </h4>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 max-h-[80px] overflow-y-auto">
-                            {categories.map((cat) => (
-                              <div key={cat.id} className="flex items-center gap-1.5">
-                                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
-                                <span className="text-xs truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                                  {cat.name}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                      <CategoryTreeSelect
+                        value={selectedCategory?.id ?? ''}
+                        categories={categories}
+                        onChange={(id) => {
+                          const cat = categories.find((c) => c.id === id);
+                          setCategoryId(cat ? cat.id : '__none');
+                          setFormData({ ...formData, color: cat ? cat.color : NO_CATEGORY_COLOR });
+                        }}
+                      />
                     </div>
                   </form>
 

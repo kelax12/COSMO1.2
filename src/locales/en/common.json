@@ -37,6 +37,8 @@
     "premiumActive": "Active",
     "userFallback": "User",
     "sidebar": {
+      "showLabels": "Show labels ( [ )",
+      "hideLabels": "Hide labels ( [ )",
       "toggleTitle": "Collapse/expand ( [ )",
       "expand": "Expand the sidebar",
       "collapse": "Collapse the sidebar"
