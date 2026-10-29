@@ -317,9 +317,6 @@ const OKRPage: React.FC = () => {
           <PageHeading variant="standard" className="mb-2">
             {t('page.title')}
           </PageHeading>
-          <p className="text-sm sm:text-base" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            {t('page.subtitle')}
-          </p>
         </div>
 
         {/* Bouton "OKR terminés" — cible de l'animation fly-to du popup deadline (pattern Calendrier de TasksPage). Desktop uniquement : équivalent mobile dans `MobileHeader.actions` ci-dessus. */}

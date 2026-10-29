@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion, type InertiaOptions } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, LayoutGrid, LayoutTemplate, Pencil, Plus, RotateCcw, Undo2, X } from 'lucide-react';
 import { useT } from '@/i18n/useT';
@@ -32,6 +33,11 @@ interface ApercuWidgetGridProps<Id extends string> {
   roleTemplate?: TemplateId;
   /** Catalogue des widgets ; absent = celui de l'Aperçu entreprise. */
   catalog?: WidgetCatalog<Id>;
+  /**
+   * Où monter la barre « Modifier les widgets » ; absent = au-dessus de la
+   * grille. Le dashboard perso la place sous la boîte de réception (2026-10-29).
+   */
+  toolbarSlot?: HTMLElement | null;
 }
 
 const SIZE_LETTER: Record<WidgetSize, 'S' | 'M' | 'L'> = { small: 'S', medium: 'M', large: 'L' };
@@ -82,8 +88,9 @@ const INSTANT_DRAG_SNAP = { type: false } as unknown as InertiaOptions;
  * ⚠️ Un geste n'est jamais le seul chemin (WCAG 2.1.1) : flèches et choix de
  * format restent au clavier. En édition, le contenu des widgets est `inert`.
  */
-const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, renderWidget, roleTemplate, catalog }: ApercuWidgetGridProps<Id>) => {
+const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, renderWidget, roleTemplate, catalog, toolbarSlot }: ApercuWidgetGridProps<Id>) => {
   const { t } = useT('orgAdmin');
+  const { t: tCommon } = useT('common');
   const reduce = useReducedMotion() ?? false;
   type Placed = PlacedOf<Id>;
   const cat: WidgetCatalog<Id> = catalog ?? ({
@@ -172,8 +179,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
 
   const toolbarButton = 'min-h-touch inline-flex items-center gap-1.5 px-3.5 rounded-xl text-sm font-semibold';
 
-  return (
-      <section aria-label={t('apercu.widgets.regionLabel')} className="space-y-4">
+  const toolbar = (
         <div className="flex flex-wrap items-center justify-end gap-2 min-h-touch">
           <AnimatePresence mode="popLayout" initial={false}>
             {editing ? (
@@ -255,14 +261,23 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                 whileTap={{ scale: 0.94 }}
                 onClick={startEditing}
                 data-testid="apercu-edit"
-                className={`${toolbarButton} px-4 border border-[rgb(var(--color-accent)/0.4)] bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-accent-text))] hover:bg-[rgb(var(--color-accent)/0.16)]`}
+                className={toolbarSlot
+                  // Dashboard perso : bouton discret (maquette 3, 2026-10-29).
+                  ? `${toolbarButton} px-3 font-medium text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]`
+                  : `${toolbarButton} px-4 border border-[rgb(var(--color-accent)/0.4)] bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-accent-text))] hover:bg-[rgb(var(--color-accent)/0.16)]`}
+                aria-label={toolbarSlot ? t('apercu.widgets.edit') : undefined}
               >
                 <Pencil size={15} aria-hidden="true" />
-                {t('apercu.widgets.edit')}
+                {toolbarSlot ? tCommon('actions.edit') : t('apercu.widgets.edit')}
               </motion.button>
             )}
           </AnimatePresence>
         </div>
+  );
+
+  return (
+      <section aria-label={t('apercu.widgets.regionLabel')} className="space-y-4">
+        {toolbarSlot ? createPortal(toolbar, toolbarSlot) : toolbar}
 
         <AnimatePresence initial={false}>
           {draft && (

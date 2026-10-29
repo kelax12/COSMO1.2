@@ -273,7 +273,6 @@ export default function StatisticsPage() {
 
       <div className="mb-8 hidden md:block">
         <PageHeading variant="standard" className="mb-2">{t('page.title')}</PageHeading>
-        <p style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('page.subtitle')}</p>
       </div>
 
       {/* Insights en langage naturel (#34) — la conclusion avant les graphes */}

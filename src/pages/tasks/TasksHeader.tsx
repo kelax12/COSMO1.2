@@ -141,14 +141,6 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
             <PageHeading as="h1" variant="compact">
               {t('header.title')}
             </PageHeading>
-            <motion.p
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-slate-500 dark:text-slate-400 font-medium text-sm sm:text-base"
-            >
-              {t('header.subtitle')}
-            </motion.p>
           </div>
 
           <motion.div
