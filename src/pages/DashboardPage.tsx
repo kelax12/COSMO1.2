@@ -16,8 +16,15 @@ import { useEvents } from '@/modules/events';
 // dès que SHOW_REPARTITION_CHART repasserait à true. Lazy = recharts payé
 // uniquement si le graphique est réellement rendu (audit perf P-2 / TOP-9).
 const DashboardBarChart = React.lazy(() => import('@/components/DashboardBarChart'));
+// Lazy depuis le 2026-10-29 : la page Tâches ne l'importe plus, il pesait
+// alors tout entier dans le chunk `DashboardPage` (23,2 ko pour 20,5 ko).
+const InboxMenu = React.lazy(() => import('@/components/InboxMenu'));
+const InboxMenuSlot = () => (
+  <Suspense fallback={<span className="inline-block w-11 h-11" aria-hidden="true" />}>
+    <InboxMenu />
+  </Suspense>
+);
 import TodayHabits from '@/components/TodayHabits';
-import InboxMenu from '@/components/InboxMenu';
 import TodayTasks from '@/components/TodayTasks';
 import TodayUnified from '@/components/TodayUnified';
 import TodayMoments from '@/components/TodayMoments';
@@ -334,7 +341,7 @@ const DashboardPage: React.FC = () => {
         // toucher au flux après le header. Contrairement à l'essai précédent
         // (`-mt-4` sur le bloc suivant), rien ici ne chevauche la boîte du
         // header sticky — la marge négative reste interne à sa propre ligne.
-        actions={<div className="-my-1.5"><InboxMenu /></div>}
+        actions={<div className="-my-1.5"><InboxMenuSlot /></div>}
       />
       <motion.div
         // `dashboard-mobile-text-boost` (index.css) : +1px sur tous les
@@ -452,7 +459,7 @@ const DashboardPage: React.FC = () => {
                 avec la date (elle occupait sinon la ligne du résumé, plus bas et
                 dépareillée du reste de l'en-tête). */}
             <div className="hidden md:flex flex-col shrink-0 pt-1 items-end gap-3">
-              <InboxMenu />
+              <InboxMenuSlot />
               {/* Barre « Modifier les widgets » montée ici par la grille (portail). */}
               <div ref={setWidgetToolbarSlot} />
             </div>
