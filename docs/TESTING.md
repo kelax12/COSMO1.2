@@ -1424,7 +1424,9 @@ Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
 1. ✅ `npm run lint` → **0 erreurs** (les warnings préexistants sont OK)
 2. ✅ `npm test` → **tous les tests unitaires Vitest passent** (bloquant CI)
 3. ✅ `npm run build` → succès. Aucun chunk first-paint > **150 kB gzip** (sauf `vendor-charts` lazy attendu).
-4. ✅ `npm run test:e2e` → **190 tests** sur 23 specs et 3 projects (96 chromium,
+4. ✅ `npm run test:e2e` → **joué par la CI après le push, pas en local** (règle du 2026-10-29,
+   `CLAUDE.md` § Git). En local seulement sur demande d'Axel ou pour une spec modifiée.
+   **190 tests** sur 23 specs et 3 projects (96 chromium,
    87 mobile-safari, 7 supabase-stub — mesure du 2026-09-05, cf. § Playwright),
    3 skip attendus (gestes tactiles sur chromium). Ports **3000** (démo) et
    **3210** (`e2e-stub`) — vérifier qu'aucun dev server périmé ne les squatte.
