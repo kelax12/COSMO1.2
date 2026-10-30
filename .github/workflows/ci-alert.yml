@@ -58,6 +58,10 @@ on:
       # métier est de lire la production, son rouge n'a pas d'autre chemin.
       - Erreurs de prod
       - Secrets age
+      # `Detection violation` (2026-10-23) : rouge = un signal de violation
+      # possible OU une source non lue. Le signal pousse aussi son propre
+      # message (echeance de 72 h) ; ici, c'est le filet si ce message tombe.
+      - Detection violation
       - Signaux SEO
       # `Mutation` (AM-3, 2026-10-23) : hebdomadaire, sans déclencheur humain.
       - Mutation

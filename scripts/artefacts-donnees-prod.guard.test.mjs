@@ -25,7 +25,19 @@
 //       affiché alors que son SQL lit autre chose que des comptes ;
 //   D · un autre canal public (`git push`, issue, release, gist) depuis un
 //       job au contact de la prod, hors de `CANAUX_PUBLICS` ;
-//   E · un commentaire qui affirme qu'un artefact n'est pas public.
+//   E · un commentaire qui affirme qu'un artefact n'est pas public ;
+//   F · (2026-10-23) un cache `actions/cache` dans un job au contact de la
+//       prod, un chemin de dump mis en cache, un `cache:` de `setup-*` qui
+//       n'est pas un cache de paquets ;
+//   G · (2026-10-23) un secret de prod imprimé : `echo`/`printf` de la
+//       variable (sous-chaîne, encodage : le masquage ne les reconnaît pas),
+//       `env`/`printenv` dans une étape qui en porte, `${{ secrets.X }}`
+//       écrit dans le texte d'un script ;
+//   H · (2026-10-23) un dossier, un motif ou la racine déposés qui
+//       CONTIENNENT un dump suivi, sans le nommer.
+//
+// ⚠️ Ce fichier lit les WORKFLOWS. Le CONTENU réel des artefacts, lui, est lu
+// chaque jour par `scripts/detection-violation.mjs` (AM-2bis).
 //
 // ⚠️ Dans un dépôt public, le journal d'un run se lit par tous et un
 // artefact se télécharge depuis n'importe quel compte connecté.
@@ -65,6 +77,7 @@ export const SECRETS_PROD = {
   STRIPE_SECRET_KEY: 'clients Stripe : noms, adresses email',
   CRON_SECRET: 'déclenche des Edge Functions qui lisent la production',
   VERCEL_TOKEN: 'configuration et journaux du déploiement de production',
+  SECURITY_ALERTS_TOKEN: 'alertes de secret scanning : la réponse porte la VALEUR du secret fuité',
   SENTRY_AUTH_TOKEN: 'lit les issues Sentry de production : titres d erreurs et événements',
 };
 
@@ -113,6 +126,10 @@ export const ARTEFACTS = {
   'db-backup.yml › db-dump': {
     nature: 'chiffre',
     raison: 'dump COMPLET de la prod, chiffré gpg AES-256 (BACKUP_PASSPHRASE) ; le clair ne quitte pas le runner (BK-1, 8c6a971d)',
+  },
+  'detection-violation.yml › detection-journal': {
+    nature: 'chiffre',
+    raison: 'journal de détection (IP, comptes, numéros d alerte), chiffré gpg AES-256 (BACKUP_PASSPHRASE) ; le clair ne quitte pas le runner',
   },
   'migration-coverage.yml › introspection': {
     nature: 'metadonnees',
@@ -206,6 +223,12 @@ export const CONTACTS_PROD = {
   },
   'posture.yml › cout-db › EXPLAIN de reference, sous RLS': {
     affiche: 'coûts EXPLAIN et pentes par requête de référence',
+  },
+  'detection-violation.yml › detecter › Lire les signaux de detection': {
+    affiche: "statut de chaque source, mesures agrégées et seuils ; IP, comptes et numéros d'alerte ne vont que dans journal.jsonl, chiffré à l'étape suivante, et la valeur d'un secret nulle part",
+  },
+  'detection-violation.yml › detecter › Chiffrer le journal': {
+    affiche: 'premier octet et taille du journal chiffré',
   },
   'edge-deploy-drift.yml › compare › Comparer le code deploye au depot': {
     affiche: 'écarts de code source entre fonctions déployées et dépôt',
@@ -779,8 +802,83 @@ function analyserJob(m, job, decl, v, vus, depots) {
       if (d.nature === 'metadonnees' && (!s || s.genre !== 'requete')) {
         v.push(`${ici} : déclaré « metadonnees » mais n'est pas la sortie d'une requête de ce job`);
       }
+      // ── H · un dossier ou un motif qui ENGLOBE un dump suivi, ou tout l'espace de travail
+      if (touche && RE_RACINE.test(deploye)) v.push(`${ici} : dépose tout l'espace de travail d'un job au contact de la prod`);
+      for (const [f, s2] of suivis) {
+        if (s2.genre === 'dump' && f !== jet && f !== deploye && englobe(deploye, f)) {
+          v.push(`${ici} (\`${deploye}\`) : englobe \`${f}\`, dump de la prod écrit par « ${s2.ecrivain} »`);
+        }
+      }
     }
   }
+
+  // ── F · caches : lisibles par les workflows de PR, y compris de forks
+  for (const e of job.etapes) {
+    if (!e.uses) continue;
+    if (RE_CACHE.test(e.uses)) {
+      const cle = cleEtape(e);
+      if (touche) v.push(`${cle} : cache (\`${e.uses}\`) dans un job au contact de la prod. Un cache se relit depuis une autre branche`);
+      for (const p of String(e.with.path ?? '').split('\n').map((s) => jeton(s)).filter(Boolean)) {
+        if ((RE_EXPORT.test(p) && !EXT_CHIFFRE.test(p)) || [...suivis.keys()].some((f) => englobe(p, f))) {
+          v.push(`${cle} : chemin de cache \`${p}\`, un dump ou un export, mis en cache EN CLAIR`);
+        }
+      }
+    } else if (/^actions\/setup-/.test(e.uses) && e.with.cache != null && !CACHES_PAQUETS.has(String(e.with.cache))) {
+      v.push(`${cleEtape(e)} : \`cache: ${e.with.cache}\` sur \`${e.uses}\`, hors des caches de paquets admis`);
+    }
+  }
+
+  // ── G · un secret imprimé : le masquage de GitHub ne couvre pas une valeur dérivée
+  const varsProd = new Set(
+    Object.entries({ ...(m.doc.env ?? {}), ...job.env })
+      .filter(([, x]) => secretsExpr(String(x)).some((s) => s in SECRETS_PROD))
+      .map(([k]) => k),
+  );
+  for (const e of job.etapes) {
+    if (!e.run) continue;
+    const cle = cleEtape(e);
+    if (/\$\{\{[^}]*\bsecrets\./.test(e.run)) {
+      v.push(`${cle} : \`\${{ secrets.… }}\` écrit dans le texte du script. Passer par \`env:\``);
+    }
+    const vars = new Set(varsProd);
+    for (const [k, x] of Object.entries(e.env)) if (secretsExpr(String(x)).some((s) => s in SECRETS_PROD)) vars.add(k);
+    if (!vars.size) continue;
+    for (const c of commandesEtendues(e.run)) {
+      for (const seg of segmentsDe(c.texte)) {
+        const ms = mots(seg.texte);
+        const { prog, args } = programmeDe(ms);
+        const ici = `${cle} : \`${seg.texte.trim().slice(0, 100)}\``;
+        if ((ms.length === 1 && ms[0] === 'env') || prog === 'printenv' || (prog === 'set' && !args.length) ||
+          ((prog === 'export' || prog === 'declare') && args.some((a) => /^-[a-zA-Z]*[px]/.test(a)))) {
+          v.push(`${ici} : imprime tout l'environnement d'une étape qui porte ${[...vars].join(', ')}`);
+          continue;
+        }
+        if (!c.affiche || (prog !== 'echo' && prog !== 'printf')) continue;
+        // Vers un fichier (la phrase gpg de `db-backup.yml`), pas vers le journal.
+        if (redirections(args).stdout && !seg.tubeApres) continue;
+        for (const nom of vars) {
+          if (new RegExp(`\\$(?:${nom}\\b|\\{(?!#)${nom}\\b)`).test(seg.texte)) {
+            v.push(`${ici} : imprime \`${nom}\`, qui porte un secret de prod. Une sous-chaîne ou un encodage échappe au masquage`);
+          }
+        }
+      }
+    }
+  }
+}
+
+const RE_CACHE = /^actions\/cache(?:\/save|\/restore)?@/;
+/** Caches de paquets de `setup-*` : des dépendances publiques, aucune donnée. */
+const CACHES_PAQUETS = new Set(['npm', 'yarn', 'pnpm', 'pip', 'pipenv', 'poetry', 'gradle', 'maven', 'sbt']);
+const RE_RACINE = /^(?:\.\/?|\*\*?(?:\/\*\*?)*|\$\{\{\s*github\.workspace\s*\}\}\/?|\$GITHUB_WORKSPACE\/?)$/;
+
+/** Le chemin déposé `p` (dossier, motif) contient-il le fichier `f` ? */
+export function englobe(p, f) {
+  const a = p.replace(/^\.\//, '');
+  const b = f.replace(/^\.\//, '');
+  if (!a || RE_RACINE.test(p)) return true;
+  if (!/[*?[]/.test(a)) return a.endsWith('/') ? b.startsWith(a) : b.startsWith(`${a}/`);
+  const re = a.replace(/[.+^${}()|\\]/g, '\\$&').replace(/\*\*\/?/g, '\u0000').replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]').replace(/\u0000/g, '.*');
+  return new RegExp(`^${re}(?:/.*)?$`).test(b);
 }
 
 /** Point d'entrée : toutes les violations, et ce que la garde a vu. */
@@ -1038,5 +1136,98 @@ jobs:
     const v = analyser(wf('q.yml', t), vide).violations;
     expect(v.some((x) => /q\.yml › r : dépôt d'artefact absent/.test(x))).toBe(true);
     expect(v.some((x) => /lue\(s\) par le parseur/.test(x))).toBe(false);
+  });
+});
+
+// ═══ Témoins F, G, H (2026-10-23, RGPD-VIOLATION AM-2bis) ═══════════
+//
+// La garde ne regardait que les dépôts d'artefacts NOMMÉS et les clients
+// SQL. Trois chemins restaient ouverts : un cache (relu depuis une autre
+// branche, y compris une PR de fork), un secret imprimé sous une forme que
+// le masquage de GitHub ne reconnaît pas, et un dossier déposé qui
+// CONTIENT un dump sans le nommer.
+
+const unJob = (etapes, env = 'DB_URL: ${{ secrets.SUPABASE_DB_URL }}') => `
+name: f
+on: workflow_dispatch
+jobs:
+  f:
+    runs-on: ubuntu-latest
+    steps:
+${etapes}
+      - name: Lire
+        env:
+          ${env}
+        run: |
+          echo ok
+`;
+const decl = (extra = {}) => avec({ CONTACTS_PROD: { 'f.yml › f › Lire': { affiche: 'x' }, ...extra } });
+
+describe('témoins F · caches', () => {
+  it('un actions/cache dans un job au contact de la prod rougit ; un chemin de dump aussi, partout', () => {
+    const c = '      - uses: actions/cache@v4\n        with:\n          path: sauvegarde/base.dump\n          key: k\n';
+    const v = analyser(wf('f.yml', unJob(c)), decl()).violations;
+    expect(v.some((x) => /cache \(`actions\/cache@v4`\) dans un job au contact de la prod/.test(x))).toBe(true);
+    expect(v.some((x) => /mis en cache EN CLAIR/.test(x))).toBe(true);
+    const sansProd = analyser(wf('f.yml', unJob(c, 'X: y')), vide).violations;
+    expect(sansProd.some((x) => /mis en cache EN CLAIR/.test(x))).toBe(true);
+  });
+  it('`cache: npm` de setup-node passe ; un cache arbitraire de setup-* rougit', () => {
+    const ok = '      - uses: actions/setup-node@v4\n        with:\n          cache: npm\n';
+    expect(analyser(wf('f.yml', unJob(ok)), decl()).violations).toEqual([]);
+    const ko = ok.replace('cache: npm', 'cache: ./export');
+    expect(analyser(wf('f.yml', unJob(ko)), decl()).violations.some((x) => /hors des caches de paquets/.test(x))).toBe(true);
+  });
+});
+
+describe('témoins G · secrets imprimés', () => {
+  const run = (script) => analyser(
+    wf('f.yml', unJob('').replace('          echo ok', script.split('\n').map((l) => `          ${l}`).join('\n'))),
+    decl(),
+  ).violations;
+  it('echo d une sous-chaîne, d un encodage, de tout l environnement : rouge', () => {
+    expect(run('echo "${DB_URL:0:40}"').some((x) => /imprime `DB_URL`/.test(x))).toBe(true);
+    expect(run('printf "%s" "$DB_URL" | base64').some((x) => /imprime `DB_URL`/.test(x))).toBe(true);
+    expect(run('env').some((x) => /tout l'environnement/.test(x))).toBe(true);
+    expect(run('printenv | sort').some((x) => /tout l'environnement/.test(x))).toBe(true);
+  });
+  it('la longueur, une écriture vers un fichier, une capture affectée : vert', () => {
+    expect(run('echo "longueur ${#DB_URL}"\nprintf "%s" "$DB_URL" > "$PF"\nH=$(echo "$DB_URL" | cut -d@ -f2)')).toEqual([]);
+  });
+  it('${{ secrets.X }} écrit dans le texte d un script rougit', () => {
+    const t = unJob('').replace('echo ok', 'curl -H "Authorization: ${{ secrets.SUPABASE_ACCESS_TOKEN }}" x');
+    expect(analyser(wf('f.yml', t), decl()).violations.some((x) => /écrit dans le texte du script/.test(x))).toBe(true);
+  });
+});
+
+describe('témoins H · un dossier déposé qui contient un dump', () => {
+  const t = `
+name: h
+on: workflow_dispatch
+jobs:
+  h:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exporter
+        env:
+          DB_URL: \${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          pg_dump "$DB_URL" -f sortie/base.bin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rapport
+          path: 'CHEMIN'
+`;
+  const h = (chemin) => analyser(wf('h.yml', t.replace('CHEMIN', chemin)), avec({
+    ARTEFACTS: { 'h.yml › rapport': { nature: 'chiffre', raison: 'x' } },
+    CONTACTS_PROD: { 'h.yml › h › Exporter': { affiche: 'x' } },
+  })).violations;
+  it('le dossier, un motif, la racine : rouge, même sans nom de dump', () => {
+    for (const p of ['sortie/', 'sortie', 'sortie/*.bin', '**/*.bin']) expect(h(p).some((x) => /englobe `sortie\/base\.bin`/.test(x)), p).toBe(true);
+    expect(h('.').some((x) => /tout l'espace de travail/.test(x))).toBe(true);
+  });
+  it('englobe ne confond pas un voisin', () => {
+    expect(englobe('sortie2/', 'sortie/base.bin')).toBe(false);
+    expect(englobe('rapport/*.html', 'sortie/base.bin')).toBe(false);
   });
 });
