@@ -964,7 +964,6 @@
     "category": "Category",
     "descriptionLabel": "Description",
     "visibility": "Visibility",
-    "visibilityTeams": "Visible only to the selected teams and to admins.",
     "keyResults": "Key results",
     "krPlaceholder": "Measurable key result",
     "progress": "Progress",
@@ -989,8 +988,7 @@
     "customOption": "Custom",
     "addTeam": "Add a team",
     "customPeople": "People",
-    "visibilityCustom": "Visible only to the chosen teams and people, their managers and admins.",
-    "visibilityNoneChosen": "No team selected: only admins will see this objective."
+    "visibilityCustom": "Visible only to the chosen teams and people, their managers and admins."
   },
   "settings": {
     "inviteTitle": "Invite",

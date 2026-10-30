@@ -1,9 +1,9 @@
 import { Suspense, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
-  AlertTriangle, ArrowRightLeft, ArrowUpRight, Bell, Building2, Check, ChevronRight, Download, History, KeyRound,
-  Lock, LogOut, Plug, Plus, Receipt, Repeat, ShieldCheck, SlidersHorizontal, Tags, Trash2, UserPlus, Users, Zap,
-  FileText, BadgeCheck,
+  AlertTriangle, ArrowRightLeft, Bell, Building2, Check, ChevronRight, Download, History, KeyRound,
+  Lock, LogOut, Plug, Plus, Receipt, Repeat, ShieldCheck, SlidersHorizontal, Tags, Trash2, UserPlus, Zap,
+  FileText,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -83,6 +83,9 @@ interface NavGroup {
 const CONFIG_PARTS: readonly string[] = ['general', 'security', 'automations', 'integrations'];
 const isConfigPart = (id: PanelId): id is ConfigPart => CONFIG_PARTS.includes(id);
 
+/** Automatisations et Intégrations masquées du menu (2026-10-30) ; `true` les rend. */
+const SHOW_AUTOMATIONS_INTEGRATIONS = false;
+
 const CARD = 'rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4';
 const TITLE = 'text-sm font-bold text-[rgb(var(--color-text-primary))]';
 const HINT = 'text-xs text-[rgb(var(--color-text-muted))] mt-0.5';
@@ -157,16 +160,18 @@ const OrgSettingsSection = ({
     { label: ta('orgSettings.groupAccess'), items: [
       { id: 'invite', icon: UserPlus, label: ta('orgSettings.navInvite') },
       { id: 'myRights', icon: ShieldCheck, label: ta('orgSettings.navMyRights') },
-      ...(isAdmin ? [{ id: 'permissions' as const, icon: KeyRound, label: ta('orgSettings.navPermissions') }] : []),
-      ...(canManageRoles ? [{ id: 'roles' as const, icon: BadgeCheck, label: ta('orgSettings.navRoles') }] : []),
+      // « Rôles » et « Rôles et permissions » fusionnés (2026-10-30) : une rubrique.
+      ...(isAdmin || canManageRoles ? [{ id: 'permissions' as const, icon: KeyRound, label: ta('orgSettings.navPermissions') }] : []),
       ...(isAdmin ? [{ id: 'security' as const, icon: Lock, label: ta('orgSettings.navSecurity') }] : []),
     ] },
     { label: ta('orgSettings.groupWork'), items: [
       ...(canManageCategories ? [{ id: 'categories' as const, icon: Tags, label: ta('orgSettings.navCategories') }] : []),
-      ...(isAdmin ? [{ id: 'automations' as const, icon: Zap, label: ta('orgSettings.navAutomations') }] : []),
+      // Automatisations et Intégrations MASQUÉES (2026-10-30), pas supprimées :
+      // remettre l'entrée suffit à les rouvrir.
+      ...(SHOW_AUTOMATIONS_INTEGRATIONS && isAdmin ? [{ id: 'automations' as const, icon: Zap, label: ta('orgSettings.navAutomations') }] : []),
     ] },
     { label: ta('orgSettings.groupTracking'), items: [
-      { id: 'integrations', icon: Plug, label: ta('orgSettings.navIntegrations') },
+      ...(SHOW_AUTOMATIONS_INTEGRATIONS ? [{ id: 'integrations' as const, icon: Plug, label: ta('orgSettings.navIntegrations') }] : []),
       { id: 'notifications', icon: Bell, label: ta('orgSettings.navNotifications') },
       ...(canReports ? [{ id: 'reports' as const, icon: FileText, label: ta('orgSettings.navReports') }] : []),
       { id: 'export', icon: Download, label: ta('orgSettings.navExport') },
@@ -219,16 +224,6 @@ const OrgSettingsSection = ({
           <div key={g.label} className="contents md:block md:mb-3">
             <p className="hidden md:block px-2.5 mb-1 text-caption font-semibold text-[rgb(var(--color-text-muted))]">{g.label}</p>
             {g.items.map((i) => navButton(i.id, i.icon, i.label))}
-            {g.label === ta('orgSettings.groupAccess') && (
-              <Link
-                to={buildOrgLink('members')}
-                className="shrink-0 md:w-full min-h-9 flex items-center gap-2 px-2.5 rounded-lg text-sm whitespace-nowrap text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-              >
-                <Users size={15} aria-hidden="true" className="shrink-0" />
-                <span className="truncate">{ta('orgSettings.navPeople')}</span>
-                <ArrowUpRight size={13} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-text-muted))]" />
-              </Link>
-            )}
           </div>
         ))}
         <div className="contents md:block md:pt-2 md:border-t md:border-[rgb(var(--color-border))]">
@@ -306,7 +301,7 @@ const OrgSettingsSection = ({
       )}
 
       {/* Rôles personnalisés (mig. 219) : paquets de droits attribués pour une durée. */}
-      {active === 'roles' && canManageRoles && (
+      {active === 'permissions' && canManageRoles && (
         <section className={CARD}>
           <h2 className={TITLE}>{ta('customRoles.title')}</h2>
           <div className="mt-2">

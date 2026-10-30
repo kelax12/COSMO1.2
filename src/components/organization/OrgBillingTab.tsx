@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
 import { toast } from '@/lib/toast';
-import { ArrowLeft, CreditCard } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
 import { ENTERPRISE_BILLING_ENFORCED, PRICES_VISIBLE } from '@/modules/billing/premium-config';
@@ -123,8 +123,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
             <ArrowLeft size={15} aria-hidden /> {tOrgAdmin('billing.back')}
           </button>
         )}
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-[rgb(var(--color-text-primary))]">
-          <CreditCard size={18} aria-hidden />
+        <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">
           {tOrgAdmin('billing.title')}
         </h2>
         <p className="text-sm text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('billing.subtitle')}</p>
@@ -176,7 +175,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
       {/* Qui compte : les sièges nommés, pas seulement leur nombre. Visible
           de tout ce qui atteint cet écran (le propriétaire, cf. la page) :
           l'annuaire les montre déjà à tous les membres. */}
-      <OrgBillingSeats members={members} ownerId={ownerId} quota={quota} />
+      <OrgBillingSeats members={members} ownerId={ownerId} quota={quota} orgId={orgId} currentUserId={user?.id} isAdmin={isOwner || members.some((m) => m.userId === user?.id && m.role === 'admin')} />
 
       {/* Une seule rangée au-dessus de la grille : le statut de l'offre à
           gauche, le sélecteur de périodicité à droite. Les deux commentent le

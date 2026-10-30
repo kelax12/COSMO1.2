@@ -17,7 +17,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Loader2, Eye } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
+import MenuSelect from '@/components/organization/MenuSelect';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import type { OrgMember } from '@/modules/organizations';
@@ -29,14 +30,12 @@ import { useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
 import { useOrgSettings } from '@/modules/org-config';
 import { useTeamCategories } from '@/modules/team-categories';
 import ConfirmProjectAudienceDialog from './ConfirmProjectAudienceDialog';
-import { projectAudience } from './audience.helpers';
 import MemberMultiSelectField from './MemberMultiSelectField';
 import { projectColorFromCategory } from './team-projects.helpers';
 import { PROJECT_STATUSES } from './portfolio.helpers';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
-import MenuSelect from '@/components/organization/MenuSelect';
 
 interface ProjectEditDialogProps {
   /** Projet modifié ; absent = création. */
@@ -68,7 +67,7 @@ const ProjectEditDialog = ({
   project, orgId: orgIdProp, members, teams = [], canChangeOwner, currentUserId, defaultTeamId = '',
   onSubmit, onCreate, onClose,
 }: ProjectEditDialogProps) => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
   const creating = !project;
   const orgId = project?.orgId ?? orgIdProp ?? '';
   const { t: pf } = useT('portfolio');
@@ -77,7 +76,6 @@ const ProjectEditDialog = ({
   const [categoryId, setCategoryId] = useState<string | null>(project?.categoryId ?? null);
   const { data: categories = [] } = useTeamCategories(orgId);
   const [teamId, setTeamId] = useState(project?.teamId ?? defaultTeamId);
-  const [teamTouched, setTeamTouched] = useState(false);
   // Changement d'équipe en modification : confirmé avant d'écrire (M5).
   const [confirmAudience, setConfirmAudience] = useState(false);
   const { data: teamMembers = [] } = useOrgTeamMembers(orgId);
@@ -85,15 +83,12 @@ const ProjectEditDialog = ({
   // équipe du créateur, une seule fois, sans écraser un choix ni une équipe imposée.
   const { data: orgSettings } = useOrgSettings(orgId);
   useEffect(() => {
-    if (!creating || teamTouched || teamId || defaultTeamId) return;
+    if (!creating || teamId || defaultTeamId) return;
     if (orgSettings?.defaultProjectAudience !== 'team') return;
     const mine = teamMembers.find((tm) => tm.userId === currentUserId);
     if (mine) setTeamId(mine.teamId);
-  }, [creating, orgSettings?.defaultProjectAudience, teamMembers, currentUserId, teamTouched, teamId, defaultTeamId]);
-  const audience = projectAudience(
-    members,
-    teamId ? teamMembers.filter((tm) => tm.teamId === teamId).map((tm) => tm.userId) : null,
-  );
+  }, [creating, orgSettings?.defaultProjectAudience, teamMembers, currentUserId, teamId, defaultTeamId]);
+
   // Responsables : `owner_id` en tête, puis les membres du projet au rôle `lead` (mig. 190).
   const { data: projectMembers } = useTeamProjectMembers(orgId);
   const setProjectMember = useSetProjectMember(orgId);
@@ -339,35 +334,6 @@ const ProjectEditDialog = ({
             />
           )}
 
-          {canChangeOwner && (
-            <div data-guide-id="project-form-team">
-              <label htmlFor="project-edit-team" className={labelClass}>{t('project.team')}</label>
-              <MenuSelect
-                id="project-edit-team"
-                value={teamId}
-                onChange={(e) => { setTeamTouched(true); setTeamId(e.target.value); }}
-                className={inputClass}
-              >
-                <option value="">{t('project.wholeOrg')}</option>
-                {teams.map((team) => (
-                  <option key={team.id} value={team.id}>{t('project.teamOption', { name: team.name })}</option>
-                ))}
-              </MenuSelect>
-              <p
-                className={`mt-2 flex items-start gap-1.5 rounded-lg px-2.5 py-2 text-xs ${
-                  audience.wholeOrg ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]'
-                }`}
-                role="status"
-              >
-                <Eye size={13} className="mt-px shrink-0" aria-hidden="true" />
-                <span>
-                  {audience.wholeOrg
-                    ? tp('popups.project.audienceOrg', audience.count)
-                    : tp('popups.project.audienceTeam', audience.count, { team: teams.find((tm) => tm.id === teamId)?.name ?? '' })}
-                </span>
-              </p>
-            </div>
-          )}
           {!creating && <p className="text-xs text-[rgb(var(--color-text-muted))]">{pf('edit.ownerHint')}</p>}
           {/* Soumission au clavier (Entrée dans un champ) : un bouton submit invisible. */}
           <button type="submit" className="sr-only" tabIndex={-1} aria-hidden="true" />

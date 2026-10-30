@@ -64,13 +64,18 @@ const SORTS: PortfolioSort[] = ['recent', 'name', 'dueDate', 'progress', 'status
  * absent, seul « Sélectionner » s'affiche (rendu aussi en Planning, maquette
  * du 2026-09-27, pour ne pas perdre l'accès aux actions groupées).
  */
-export const ProjectsSearchBar = ({ sort, onSortChange, onStartSelect }: {
+export const ProjectsSearchBar = ({ sort, onSortChange, sortDesc = false, onToggleSortDirection, onStartSelect }: {
   sort?: PortfolioSort;
   onSortChange?: (value: PortfolioSort) => void;
+  /** Sens du tri : les flèches l'inversent. */
+  sortDesc?: boolean;
+  onToggleSortDirection?: () => void;
   /** Entre en sélection multiple. Absent : pas de bouton (ex. vue portefeuille, sans tâche). */
   onStartSelect?: () => void;
 }) => {
   const { t: pf } = useT('portfolio');
+  const { t } = useT('org');
+  const dirLabel = sortDesc ? t('projects.tasksTabSortDesc') : t('projects.tasksTabSortAsc');
   return (
     <div className="flex items-center justify-end gap-2 flex-wrap">
       {onStartSelect && (
@@ -85,8 +90,18 @@ export const ProjectsSearchBar = ({ sort, onSortChange, onStartSelect }: {
         </button>
       )}
       {onSortChange && (
-        <label className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-muted))]">
-          <ArrowUpDown size={13} aria-hidden="true" />
+        <div className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-muted))]">
+          <button
+            type="button"
+            onClick={onToggleSortDirection}
+            aria-label={dirLabel}
+            title={dirLabel}
+            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-[rgb(var(--color-hover))] transition-colors"
+            style={{ color: sortDesc ? 'rgb(var(--color-accent))' : undefined }}
+          >
+            <ArrowUpDown size={13} aria-hidden="true" />
+          </button>
+          <label className="inline-flex items-center gap-1.5">
           <span className="sr-only sm:not-sr-only">{pf('sortLabel')}</span>
           <MenuSelect
             value={sort}
@@ -97,7 +112,8 @@ export const ProjectsSearchBar = ({ sort, onSortChange, onStartSelect }: {
               <option key={s} value={s}>{pf(`sort.${s}`)}</option>
             ))}
           </MenuSelect>
-        </label>
+          </label>
+        </div>
       )}
     </div>
   );
