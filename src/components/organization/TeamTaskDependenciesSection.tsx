@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link2, X, Plus, AlertTriangle } from 'lucide-react';
+import { Link2, AlertTriangle } from 'lucide-react';
 import {
   useTeamTaskDependencies,
   useRemoveTaskDependency,
@@ -7,6 +7,8 @@ import {
   type TeamTask,
 } from '@/modules/team-projects';
 import TeamTaskDependencyPicker from './TeamTaskDependencyPicker';
+import TeamTaskDependencyColumns from './TeamTaskDependencyColumns';
+import type { DependencyDirection } from '@/lib/dependency-graph';
 import { useT } from '@/i18n/useT';
 import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
@@ -31,6 +33,7 @@ const TeamTaskDependenciesSection = ({ task, isManager, defaultOpen = false }: T
   const { t, tp } = useT('org');
   const [open, setOpen] = useState(defaultOpen);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerDirection, setPickerDirection] = useState<DependencyDirection>('blockedBy');
 
   const { data: allTasks = [] } = useTeamTasks(task.orgId);
   const { data: dependencies = [] } = useTeamTaskDependencies(task.orgId);
@@ -57,45 +60,6 @@ const TeamTaskDependenciesSection = ({ task, isManager, defaultOpen = false }: T
   );
 
   const unfinishedBlockers = blockedBy.filter((x) => !x.completed).length;
-
-  const row = (item: TeamTask, direction: 'blockedBy' | 'blocks') => (
-    <li
-      key={`${direction}-${item.id}`}
-      className="flex items-center gap-2 py-1"
-    >
-      <span
-        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-          item.completed ? 'bg-emerald-500' : 'bg-[rgb(var(--color-text-muted))]'
-        }`}
-        aria-hidden="true"
-      />
-      <span
-        className={`text-xs flex-1 truncate ${
-          item.completed
-            ? 'text-[rgb(var(--color-text-muted))] line-through'
-            : 'text-[rgb(var(--color-text-primary))]'
-        }`}
-      >
-        {item.name}
-      </span>
-      {isManager && (
-        <button
-          type="button"
-          onClick={() =>
-            removeDependency.mutate(
-              direction === 'blockedBy'
-                ? { taskId: task.id, dependsOnId: item.id }
-                : { taskId: item.id, dependsOnId: task.id },
-            )
-          }
-          aria-label={t('projects.removeDependency')}
-          className="shrink-0 text-[rgb(var(--color-text-muted))] hover:text-red-500 transition-colors"
-        >
-          <X size={12} aria-hidden="true" />
-        </button>
-      )}
-    </li>
-  );
 
   return (
     <div className="pt-3 border-t border-[rgb(var(--color-border))]">
@@ -127,42 +91,19 @@ const TeamTaskDependenciesSection = ({ task, isManager, defaultOpen = false }: T
       </button>
 
       {open && (
-        <div className="mt-2 space-y-3">
-          <div>
-            <p className="text-caption font-semibold text-[rgb(var(--color-text-secondary))] mb-0.5">
-              {t('projects.blockedBy')}
-            </p>
-            {blockedBy.length === 0 ? (
-              <p className="text-xs text-[rgb(var(--color-text-muted))]">
-                {t('projects.noDependencies')}
-              </p>
-            ) : (
-              <ul>{blockedBy.map((x) => row(x, 'blockedBy'))}</ul>
-            )}
-          </div>
-
-          {blocks.length > 0 && (
-            <div>
-              <p className="text-caption font-semibold text-[rgb(var(--color-text-secondary))] mb-0.5">
-                {t('projects.blocks')}
-              </p>
-              <ul>{blocks.map((x) => row(x, 'blocks'))}</ul>
-            </div>
-          )}
-
-          {/* Toujours proposé, même sans autre tâche dans le projet : la
-              popup sait en créer une, et un bouton qui disparaît quand il n'y
-              a « rien à choisir » supprime précisément le chemin dont on a
-              besoin ce jour-là. */}
-          {isManager && (
-            <button
-              type="button"
-              onClick={() => setPickerOpen(true)}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors"
-            >
-              <Plus size={12} aria-hidden="true" /> {t('projects.addDependency')}
-            </button>
-          )}
+        <div className="mt-3">
+          <TeamTaskDependencyColumns
+            blockedBy={blockedBy}
+            blocks={blocks}
+            canEdit={isManager}
+            onAdd={(direction) => { setPickerDirection(direction); setPickerOpen(true); }}
+            onRemove={(item, direction) =>
+              removeDependency.mutate(
+                direction === 'blockedBy'
+                  ? { taskId: task.id, dependsOnId: item.id }
+                  : { taskId: item.id, dependsOnId: task.id },
+              )}
+          />
         </div>
       )}
 
@@ -173,6 +114,7 @@ const TeamTaskDependenciesSection = ({ task, isManager, defaultOpen = false }: T
           task={task}
           tasks={allTasks}
           dependencies={dependencies}
+          initialDirection={pickerDirection}
         />
       )}
     </div>
