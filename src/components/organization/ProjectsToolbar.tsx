@@ -133,23 +133,27 @@ export default ProjectsToolbar;
 /** La seule action créative de la page, seul bouton plein : sur la ligne de la
  *  recherche, alignée à droite (2026-10-01). `PermissionGate` ne rend son
  *  enveloppe QUE si `reason` est défini. */
-export const NewProjectButton = ({ canCreateProject, createDeniedReason, onNewProject }: {
+export const NewProjectButton = ({ canCreateProject, createDeniedReason, onNewProject, label, guideId = 'projects-new' }: {
   canCreateProject: boolean;
   createDeniedReason?: string;
   onNewProject: () => void;
+  /** Libellé : « Nouveau projet » par défaut ; l'onglet Tâches y passe « Nouvelle tâche » (2026-10-30). */
+  label?: string;
+  guideId?: string;
 }) => {
   const { t } = useT('org');
+  const text = label ?? t('projects.newProject');
   return (
     <PermissionGate reason={canCreateProject ? undefined : createDeniedReason}>
       <button
         type="button"
         onClick={onNewProject}
-        data-guide-id="projects-new"
+        data-guide-id={guideId}
         className="inline-flex items-center gap-1.5 h-9 px-3 max-md:rounded-2xl rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
-        aria-label={t('projects.newProject')}
+        aria-label={text}
       >
         <Plus size={15} aria-hidden="true" />
-        <span className="hidden sm:inline">{t('projects.newProject')}</span>
+        <span className="hidden sm:inline">{text}</span>
       </button>
     </PermissionGate>
   );

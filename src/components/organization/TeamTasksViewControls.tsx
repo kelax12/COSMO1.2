@@ -22,7 +22,7 @@ interface TeamTasksViewControlsProps {
   part?: 'view' | 'columns';
 }
 
-const segBase = 'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
+const segBase = 'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
 const segOn = 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm';
 const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
 const segGroup = 'inline-flex rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5 gap-0.5';
@@ -54,11 +54,11 @@ const TeamTasksViewControls = ({
       {part !== 'columns' && (
       <div className={segGroup} role="group" aria-label={t('toolbar.viewLabel')}>
         <button type="button" onClick={() => onViewChange('table')} aria-pressed={view === 'table'} className={`${segBase} ${view === 'table' ? segOn : segOff}`}>
-          <LayoutList size={13} aria-hidden="true" />
+          <LayoutList size={15} aria-hidden="true" />
           {t('toolbar.viewList')}
         </button>
         <button type="button" onClick={() => onViewChange('kanban')} aria-pressed={view === 'kanban'} className={`${segBase} ${view === 'kanban' ? segOn : segOff}`}>
-          <SquareKanban size={13} aria-hidden="true" />
+          <SquareKanban size={15} aria-hidden="true" />
           {t('toolbar.viewKanban')}
         </button>
       </div>

@@ -14,7 +14,8 @@ import TeamTaskModal from './TeamTaskModal';
 import AssignMembersDialog from './AssignMembersDialog';
 import AssignEventDialog from './AssignEventDialog';
 import { TeamTasksSkeleton } from './OrgLoadingSkeletons';
-import TeamTasksToolbar, { TeamTasksSelectRow } from './TeamTasksToolbar';
+import TeamTasksToolbar, { TeamTasksSelectRow, TeamTasksSortControl } from './TeamTasksToolbar';
+import { NewProjectButton } from './ProjectsToolbar';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTaskListsBar from './TeamTaskListsBar';
 import { useTeamTaskLists } from './use-team-task-lists';
@@ -396,10 +397,19 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         currentUserId={currentUserId}
         searchPlaceholder={t('projects.tasksTabSearchPlaceholder')}
         searchAria={t('projects.tasksTabSearchAria')}
-        // Périmètre à côté du tri (2026-09-30) : la recherche reste seule en haut.
         // Mobile (239, 242, 250) : périmètre, tri, préréglages et vue dans une feuille.
-        trailing={isMobile ? <MobileFiltersButton activeCount={hasActiveFilter ? 1 : 0} onOpenChange={setFiltersOpen} /> : undefined}
-        scopeSlot={(scope) => isMobile ? (
+        // Desktop (2026-10-30) : même présentation que l'onglet Projets, le
+        // périmètre suit la recherche et « Nouvelle tâche » ferme la ligne.
+        trailing={isMobile ? <MobileFiltersButton activeCount={hasActiveFilter ? 1 : 0} onOpenChange={setFiltersOpen} /> : (
+          <NewProjectButton
+            canCreateProject={projects.length > 0 && can['task.create']}
+            createDeniedReason={projects.length === 0 ? t('projects.tasksTabNoProject') : hints.deniedReason('task.create')}
+            onNewProject={() => setTaskModal({ mode: 'create' })}
+            label={t('projects.tasksTabNewTask')}
+            guideId="tasks-new"
+          />
+        )}
+        scopeSlot={isMobile ? (scope) => (
           <MobileFiltersSheet open={filtersOpen} onOpenChange={setFiltersOpen}>
             <TeamTasksToolbar
               sortField={sortField}
@@ -414,24 +424,12 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
             <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="open" currentUserId={currentUserId ?? user?.id} />
             <TeamTasksViewControls {...viewControlsProps} part="view" />
           </MobileFiltersSheet>
-        ) : null}
-        // Desktop : tri, périmètre et création sur la ligne de recherche (2026-10-30).
-        afterSearch={isMobile ? undefined : (scope) => (
-          <TeamTasksToolbar
-            sortField={sortField}
-            onSortField={(group) => setFilters({ group })}
-            sortDirection={sortDirection}
-            onToggleSortDirection={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
-            canCreate={projects.length > 0 && can['task.create']}
-            createDeniedReason={projects.length === 0 ? t('projects.tasksTabNoProject') : hints.deniedReason('task.create')}
-            onCreate={() => setTaskModal({ mode: 'create' })}
-            scope={scope}
-          />
-        )}
+        ) : undefined}
       />
 
-      {/* Préréglages, puis la vue ; les colonnes au bout de la ligne (2026-09-30). */}
+      {/* Vue, puis préréglages ; tri et colonnes au bout de la ligne, comme Projets (2026-10-30). */}
       <div className="-mt-2 hidden md:flex items-center gap-2">
+        <div className="shrink-0"><TeamTasksViewControls {...viewControlsProps} part="view" /></div>
         <FilterPresets
           filters={filters} setFilters={setFilters} defaultStatus="open" currentUserId={currentUserId ?? user?.id}
           // « Sélectionner » sur la MÊME ligne que les préréglages, comme sur la page Tâches perso.
@@ -439,8 +437,15 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           onToggleSelect={sortedTasks.length > 0 || bulk.selectMode
             ? () => (bulk.selectMode ? bulk.exitSelectMode() : bulk.setSelectMode(true)) : undefined}
         />
-        <div className="shrink-0"><TeamTasksViewControls {...viewControlsProps} part="view" /></div>
-        <div className="ml-auto shrink-0"><TeamTasksViewControls {...viewControlsProps} part="columns" /></div>
+        <div className="ml-auto shrink-0 flex items-center gap-2">
+          <TeamTasksSortControl
+            sortField={sortField}
+            onSortField={(group) => setFilters({ group })}
+            sortDirection={sortDirection}
+            onToggleSortDirection={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
+          />
+          <TeamTasksViewControls {...viewControlsProps} part="columns" />
+        </div>
       </div>
 
       <TeamTasksSelectRow
