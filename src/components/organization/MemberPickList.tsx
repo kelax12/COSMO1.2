@@ -26,6 +26,8 @@ interface MemberPickListProps {
   lead?: { id: string; onChange: (userId: string) => void };
   /** Recherche affichée quel que soit l'effectif (sinon au-delà du seuil). */
   alwaysSearchable?: boolean;
+  /** Ligne posée entre la recherche et la première personne (OKR : « Ajouter une équipe », 2026-10-30). */
+  afterSearch?: import('react').ReactNode;
 }
 
 /**
@@ -38,7 +40,7 @@ interface MemberPickListProps {
  * sélection : une personne cochée puis masquée reste choisie, et le compte
  * des cochés masqués est dit pour qu'elle ne disparaisse pas en silence.
  */
-const MemberPickList = ({ members, value, onChange, teamGroupsOrgId, currentUserId, label, lead, alwaysSearchable = false }: MemberPickListProps) => {
+const MemberPickList = ({ members, value, onChange, teamGroupsOrgId, currentUserId, label, lead, alwaysSearchable = false, afterSearch }: MemberPickListProps) => {
   const { t, tp } = useT('org');
   const [query, setQuery] = useState('');
   const [limit, setLimit] = useState(MEMBER_PICK_PAGE);
@@ -67,6 +69,7 @@ const MemberPickList = ({ members, value, onChange, teamGroupsOrgId, currentUser
           />
         </label>
       )}
+      {afterSearch}
       {/* Sous une recherche, cocher une équipe cocherait des personnes qu'on ne voit pas. */}
       {teamGroupsOrgId && !query.trim() && (
         <TeamAssigneeGroups orgId={teamGroupsOrgId} value={value} onChange={onChange} />

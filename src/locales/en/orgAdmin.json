@@ -994,6 +994,7 @@
     "weightedProgress": "Weighted progress · {{pct}}%",
     "eyebrow": "Company mode · OKR",
     "customOption": "Custom",
+    "addTeam": "Add a team",
     "customPeople": "People",
     "visibilityCustom": "Visible only to the chosen teams and people, their managers and admins.",
     "visibilityNoneChosen": "No team selected: only admins will see this objective."

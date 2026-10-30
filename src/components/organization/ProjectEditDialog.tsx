@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import type { OrgMember } from '@/modules/organizations';
 import {
-  useSetProjectMember, useTeamProjectMembers,
+  useRemoveProjectMember, useSetProjectMember, useTeamProjectMembers,
   type CreateTeamProjectInput, type TeamProject, type TeamProjectStatus, type UpdateTeamProjectInput,
 } from '@/modules/team-projects';
 import { useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
@@ -52,8 +52,11 @@ interface ProjectEditDialogProps {
   /** Création : équipe présélectionnée (filtre courant) — '' = toute l'entreprise. */
   defaultTeamId?: string;
   onSubmit?: (input: UpdateTeamProjectInput) => Promise<unknown>;
-  /** Création : crée le projet ; `coLeadIds` deviennent co-responsables (mig. 190). */
-  onCreate?: (input: CreateTeamProjectInput, coLeadIds: string[]) => Promise<unknown>;
+  /**
+   * Création : crée le projet ; `coLeadIds` deviennent co-responsables (mig. 190),
+   * `memberIds` des contributeurs ajoutés un par un (2026-10-30).
+   */
+  onCreate?: (input: CreateTeamProjectInput, coLeadIds: string[], memberIds: string[]) => Promise<unknown>;
   onClose: () => void;
 }
 
@@ -94,6 +97,15 @@ const ProjectEditDialog = ({
   // Responsables : `owner_id` en tête, puis les membres du projet au rôle `lead` (mig. 190).
   const { data: projectMembers } = useTeamProjectMembers(orgId);
   const setProjectMember = useSetProjectMember(orgId);
+  const removeProjectMember = useRemoveProjectMember(orgId);
+  // Membres ajoutés individuellement (rôle `contributor`), hors responsables.
+  const initialMembers = useMemo(
+    () => (project ? (projectMembers ?? []).filter((pm) => pm.projectId === project.id && pm.role === 'contributor').map((pm) => pm.userId) : []),
+    [projectMembers, project],
+  );
+  const [memberIds, setMemberIds] = useState<string[]>(initialMembers);
+  const [membersTouched, setMembersTouched] = useState(false);
+  useEffect(() => { if (!membersTouched) setMemberIds(initialMembers); }, [initialMembers, membersTouched]);
   const initialOwners = useMemo(() => {
     if (!project) return currentUserId ? [currentUserId] : [];
     const leads = (projectMembers ?? [])
@@ -140,6 +152,7 @@ const ProjectEditDialog = ({
           dueDate: dueDate || null,
         },
         ownerIds.slice(1),
+        memberIds.filter((id) => !ownerIds.includes(id)),
       );
       onClose();
     } catch {
@@ -179,9 +192,15 @@ const ProjectEditDialog = ({
           ...leadsBefore
             .filter((id) => !leadsAfter.includes(id) && id !== ownerId)
             .map((userId) => ({ userId, role: 'contributor' as const })),
+          ...memberIds
+            .filter((id) => !initialMembers.includes(id) && !ownerIds.includes(id))
+            .map((userId) => ({ userId, role: 'contributor' as const })),
         ]
       : [];
-    if (Object.keys(patch).length === 0 && memberChanges.length === 0) { onClose(); return; }
+    const memberRemovals = canChangeOwner
+      ? initialMembers.filter((id) => !memberIds.includes(id) && !ownerIds.includes(id))
+      : [];
+    if (Object.keys(patch).length === 0 && memberChanges.length === 0 && memberRemovals.length === 0) { onClose(); return; }
     setPending(true);
     setError(null);
     try {
@@ -189,6 +208,7 @@ const ProjectEditDialog = ({
       await Promise.all(
         memberChanges.map(({ userId, role }) => setProjectMember.mutateAsync({ projectId: project.id, userId, role })),
       );
+      await Promise.all(memberRemovals.map((userId) => removeProjectMember.mutateAsync({ projectId: project.id, userId })));
       onClose();
     } catch {
       setPending(false); // déjà notifié par le hook (toast)
@@ -306,6 +326,18 @@ const ProjectEditDialog = ({
               </MenuSelect>
             </div>
           </div>
+
+          {canChangeOwner && (
+            <MemberMultiSelectField
+              label={pf('new.members')}
+              labelClassName={labelClass}
+              members={members.filter((m) => !ownerIds.includes(m.userId))}
+              value={memberIds}
+              onChange={(ids) => { setMembersTouched(true); setMemberIds(ids); }}
+              emptyLabel={pf('new.members')}
+              className="h-11 rounded-lg border-slate-200 dark:border-slate-700"
+            />
+          )}
 
           {canChangeOwner && (
             <div data-guide-id="project-form-team">

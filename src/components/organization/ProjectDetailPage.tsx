@@ -14,7 +14,7 @@ import { useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import {
   Settings2, Copy, LayoutTemplate, Archive, ArchiveRestore, Plus,
-  CalendarRange, UsersRound, UserRound, UserPlus, Bell, BellOff, Check, ChevronDown, ChevronRight, ListChecks,
+  CalendarRange, UsersRound, UserRound, UserPlus, Bell, BellOff, Check, ChevronDown, ChevronRight,
 } from 'lucide-react';
 import { SAVE_AS_TEMPLATE_ENABLED } from './projectTemplatesFlag';
 
@@ -348,12 +348,13 @@ const ProjectDetailPage = ({
               {pf('tasksTitle')} <span className="font-normal text-[rgb(var(--color-text-muted))]">({tasks.length})</span>
             </h3>
             {tasks.length > 0 && !selectable && (
-              <button type="button" onClick={onStartSelect} className="inline-flex items-center gap-1 text-xs font-semibold text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))]">
-                <ListChecks size={13} aria-hidden="true" /> {pf('actions.selectTasks')}
+              <button type="button" onClick={onStartSelect} className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                {pf('actions.selectTasks')}
               </button>
             )}
           </div>
-          {openTasks.map(row)}
+          {/* Trait léger entre les tâches (2026-10-30). */}
+          <div className="divide-y divide-[rgb(var(--color-border))]/60">{openTasks.map(row)}</div>
           {tasks.length === 0 && <p className="px-3 py-3 text-xs text-[rgb(var(--color-text-muted))]">{t('projects.noTask')}</p>}
           {completedTasks.length > 0 && (
             <div>
@@ -366,7 +367,7 @@ const ProjectDetailPage = ({
                 {showCompleted ? <ChevronDown size={13} aria-hidden="true" /> : <ChevronRight size={13} aria-hidden="true" />}
                 {t('project.completed', { count: completedTasks.length })}
               </button>
-              {showCompleted && completedTasks.map(row)}
+              {showCompleted && <div className="divide-y divide-[rgb(var(--color-border))]/60">{completedTasks.map(row)}</div>}
             </div>
           )}
           {!archived && canAddTask && (

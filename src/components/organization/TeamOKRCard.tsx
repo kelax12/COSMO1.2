@@ -90,7 +90,7 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onSetHealth, personOf, onOp
               </span>
             );
           })()}
-          <span data-guide-id="okr-kr-progress" className="ml-auto text-xs max-md:font-sans font-mono tabular-nums text-[rgb(var(--color-text-muted))] shrink-0">
+          <span data-guide-id="okr-kr-progress" className="ml-auto text-xs font-sans tabular-nums text-[rgb(var(--color-text-muted))] shrink-0">
             {measured && taskProgress
               ? pf('krExec.tasksShort', { done: taskProgress.done, total: taskProgress.total })
               : `${liveValue.toLocaleString(locale)}/${kr.targetValue.toLocaleString(locale)}${kr.unit ? ` ${kr.unit}` : ''}`}
@@ -188,11 +188,7 @@ const TeamOKRCard = ({
               {/* Maquette 252 : sur mobile, pas de crayon au repos, le titre ouvre la fiche. */}
               <button type="button" onClick={editDeniedReason ? undefined : onEdit} className="text-left md:pointer-events-none">{okr.title}</button>
             </h3>
-          </div>
-          {okr.description && (
-            <p className="text-sm text-[rgb(var(--color-text-muted))] mt-1">{okr.description}</p>
-          )}
-          <div className="flex flex-wrap items-center gap-1.5 mt-3">
+            {/* Pastilles à la suite du titre (2026-10-30), plus sous la description. */}
             {okr.teamIds.length === 0 && (okr.audience ?? 'org') === 'org' ? (
               <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 max-md:px-0 max-md:py-0 max-md:border-0 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))]">
                 <Building2 size={13} aria-hidden="true" /> {t('common.orgWideBadge')}
@@ -221,6 +217,9 @@ const TeamOKRCard = ({
               </span>
             )}
           </div>
+          {okr.description && (
+            <p className="text-sm text-[rgb(var(--color-text-muted))] mt-1">{okr.description}</p>
+          )}
         </div>
         <div className="text-right shrink-0">
           <span className="text-lg max-md:text-base tabular-nums font-bold text-[rgb(var(--color-accent))]">{avg}%</span>

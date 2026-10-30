@@ -89,6 +89,7 @@
   "new": {
     "owner": "Responsable",
     "owners": "Responsables",
+    "members": "Membres du projet",
     "dueDate": "Fin",
     "color": "Couleur",
     "description": "Description (optionnel)",
