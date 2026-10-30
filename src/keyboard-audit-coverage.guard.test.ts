@@ -138,6 +138,9 @@ const MESUREES: Record<string, string> = {
  *   · NON MESURÉE, SANS OBSTACLE — la dette. Elle est nommée comme telle.
  */
 const NON_MESUREES: Record<string, string> = {
+  'components/organization/TeamTaskListsField.tsx':
+    'dette : popup « Ajouter à une liste » de la fiche de tâche d entreprise (2026-10-30), '
+    + 'câblée par useModalA11y, pas encore couverte par e2e/a11y-keyboard-audit.spec.ts.',
   'components/PremiumGateModal.tsx':
     'inatteignable : `PREMIUM_ENFORCED` est à false, aucune gate ne s ouvre '
     + '(décision 2026-06-11, le partage est gratuit).',
