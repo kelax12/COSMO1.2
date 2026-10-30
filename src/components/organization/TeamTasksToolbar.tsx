@@ -124,6 +124,59 @@ const TeamTasksToolbar = ({
 
 export default TeamTasksToolbar;
 
+/**
+ * Tri compact, au bout de la ligne des préréglages devant « Colonnes » : même
+ * dessin que le tri de l'onglet Projets (`ProjectsSearchBar`, 2026-10-30).
+ */
+export const TeamTasksSortControl = ({ sortField, onSortField, sortDirection, onToggleSortDirection }: Pick<
+  TeamTasksToolbarProps, 'sortField' | 'onSortField' | 'sortDirection' | 'onToggleSortDirection'
+>) => {
+  const { t } = useT('org');
+  const { t: pf } = useT('portfolio');
+  const label: Record<TaskSortCriterion, string> = {
+    priority: t('projects.tasksTabSortPriority'),
+    deadline: t('projects.tasksTabSortDeadline'),
+    project: t('projects.tasksTabSortProject'),
+    assignee: t('projects.tasksTabSortAssignee'),
+    status: t('projects.tasksTabSortStatus'),
+    name: t('projects.tasksTabSortName'),
+    estimatedTime: t('projects.tasksTabSortDuration'),
+  };
+  const grouped = TASK_SORT_CRITERIA.filter((c) => GROUPABLE_SORT_CRITERIA.includes(c));
+  const flat = TASK_SORT_CRITERIA.filter((c) => !GROUPABLE_SORT_CRITERIA.includes(c));
+  const dirLabel = sortDirection === 'asc' ? t('projects.tasksTabSortAsc') : t('projects.tasksTabSortDesc');
+  return (
+    <div className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-muted))]">
+      <button
+        type="button"
+        onClick={onToggleSortDirection}
+        aria-label={dirLabel}
+        title={dirLabel}
+        className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-[rgb(var(--color-hover))] transition-colors"
+        style={{ color: sortDirection === 'desc' ? 'rgb(var(--color-accent))' : undefined }}
+      >
+        <ArrowUpDown size={13} aria-hidden="true" />
+      </button>
+      <label className="inline-flex items-center gap-1.5">
+        <span className="sr-only sm:not-sr-only">{pf('sortLabel')}</span>
+        <MenuSelect
+          value={sortField}
+          onChange={(e) => onSortField(e.target.value as TaskSortCriterion)}
+          aria-label={t('projects.tasksTabSortAria')}
+          className="h-9 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))]"
+        >
+          <optgroup label={t('projects.tasksTabSortGroupedOptgroup')}>
+            {grouped.map((c) => <option key={c} value={c}>{label[c]}</option>)}
+          </optgroup>
+          <optgroup label={t('projects.tasksTabSortFlatOptgroup')}>
+            {flat.map((c) => <option key={c} value={c}>{label[c]}</option>)}
+          </optgroup>
+        </MenuSelect>
+      </label>
+    </div>
+  );
+};
+
 interface TeamTasksSelectRowProps {
   /** Entre en sélection multiple (actions groupées) ; absent si rien à sélectionner. */
   onStartSelect?: () => void;
