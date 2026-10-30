@@ -12,6 +12,7 @@ import {
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import PermissionSwitch from './PermissionSwitch';
+import CustomColorSwatch from '@/components/CustomColorSwatch';
 
 interface RoleEditorSheetProps {
   /** Contenu de départ : un rôle existant, une copie, ou rien (nouveau rôle). */
@@ -159,6 +160,7 @@ const RoleEditorSheet = ({ initial, editing, pending, onSave, onClose }: RoleEdi
                   style={{ backgroundColor: c }}
                 />
               ))}
+              <CustomColorSwatch value={color} palette={ROLE_COLORS} onChange={setColor} className="w-6 h-6 rounded-full" />
             </div>
           </div>
 

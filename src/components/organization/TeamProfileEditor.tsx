@@ -3,6 +3,7 @@ import { useUpdateOrgTeam, type OrgTeam } from '@/modules/org-teams';
 import { TEAM_COLORS } from './CreateTeamModal';
 import { TEAM_DESCRIPTION_MAX } from './team-page.helpers';
 import { useT } from '@/i18n/useT';
+import CustomColorSwatch from '@/components/CustomColorSwatch';
 
 interface TeamProfileEditorProps {
   orgId: string;
@@ -66,6 +67,7 @@ const TeamProfileEditor = ({ orgId, team, onDone }: TeamProfileEditorProps) => {
               style={{ backgroundColor: c.value }}
             />
           ))}
+          <CustomColorSwatch value={color} palette={TEAM_COLORS.map((c) => c.value)} onChange={setColor} className="w-7 h-7 rounded-full" />
         </div>
       </div>
       <div>
