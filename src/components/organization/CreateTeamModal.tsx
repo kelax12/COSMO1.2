@@ -9,6 +9,7 @@ import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { TEAM_DESCRIPTION_MAX } from './team-page.helpers';
+import CustomColorSwatch from '@/components/CustomColorSwatch';
 
 /** Palette d'équipes — valeurs CSS directes (pastilles `backgroundColor`). */
 // Noms de couleur = CLÉS du catalogue : cette constante est évaluée au premier
@@ -159,6 +160,7 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberI
                   <span className="w-5 h-5 rounded-full" style={{ backgroundColor: c.value }} />
                 </button>
               ))}
+              <CustomColorSwatch value={color} palette={TEAM_COLORS.map((c) => c.value)} onChange={setColor} className="w-5 h-5 m-1.5 rounded-full" />
             </div>
           </div>
 
