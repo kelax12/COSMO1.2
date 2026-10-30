@@ -129,8 +129,11 @@ describe('scénarios du guide entreprise', () => {
   });
 
   it('témoin : la garde voit les trois formes d\'ancrage, et seulement elles', () => {
+    // Forme littérale sur un <button>. `projects-new` servait d'exemple ; il est
+    // passé au relais de prop (`guideId="projects-new"` à l'appel) le 2026-10-30.
+    expect(anchors.has('settings-roles-new')).toBe(true);
+    expect(anchors.get('settings-roles-new')).toMatch(/^<button\b/);
     expect(anchors.has('projects-new')).toBe(true);
-    expect(anchors.get('projects-new')).toMatch(/^<button\b/);
     expect(anchors.has('task-detail-subtasks')).toBe(true);
     expect(anchors.has('nav-settings')).toBe(true);
     expect(anchors.has('nav-stats')).toBe(false);
