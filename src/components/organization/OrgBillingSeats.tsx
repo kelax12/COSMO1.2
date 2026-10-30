@@ -1,15 +1,19 @@
 import { useMemo, useState } from 'react';
-import { Users } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
+import { useMemberLifecycle } from './MemberLifecycleActions';
 
 interface Props {
   members: OrgMember[];
   ownerId: string;
   /** `null` = palier sans plafond. */
   quota: number | null;
+  /** Présents : l'admin peut retirer un membre d'ici (assistant de départ, mig. 161). */
+  orgId?: string;
+  currentUserId?: string;
+  isAdmin?: boolean;
 }
 
 /** Au-delà, la liste se replie : une organisation peut compter deux cents membres. */
@@ -25,10 +29,14 @@ const PREVIEW = 8;
  * occupe laissait le propriétaire deviner qui retirer avant de changer de
  * palier.
  */
-export function OrgBillingSeats({ members, ownerId, quota }: Props) {
+export function OrgBillingSeats({ members, ownerId, quota, orgId = '', currentUserId, isAdmin = false }: Props) {
   const { t, tp } = useT('orgAccount');
   const { t: tOrg } = useT('org');
+  const { t: tOrgAdmin } = useT('orgAdmin');
   const [expanded, setExpanded] = useState(false);
+  // Retirer = l'assistant de départ, comme depuis l'annuaire : jamais un retrait nu.
+  const lifecycle = useMemberLifecycle({ orgId, members, ownerId, currentUserId, isAdmin: isAdmin && !!orgId });
+  const canRemove = (m: OrgMember) => isAdmin && !!orgId && m.userId !== currentUserId && m.userId !== ownerId;
 
   // Ordre d'arrivée : c'est l'ordre dans lequel les sièges ont été pris.
   const sorted = useMemo(
@@ -46,7 +54,6 @@ export function OrgBillingSeats({ members, ownerId, quota }: Props) {
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 id="org-billing-seats" className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-          <Users size={15} aria-hidden="true" />
           {t('seatsTitle')}
         </h3>
         <span className="text-xs text-[rgb(var(--color-text-secondary))]">
@@ -98,6 +105,16 @@ export function OrgBillingSeats({ members, ownerId, quota }: Props) {
                 {t('seatsSince', { date: formatDate(new Date(m.joinedAt)) })}
               </p>
             </div>
+            {canRemove(m) && (
+              <button
+                type="button"
+                onClick={() => lifecycle.openDeparture(m, 'remove')}
+                aria-label={`${tOrgAdmin('lifecycle.modeRemove')} : ${m.displayName}`}
+                className="shrink-0 min-h-9 px-2.5 rounded-lg text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors"
+              >
+                {tOrgAdmin('lifecycle.modeRemove')}
+              </button>
+            )}
           </li>
         ))}
       </ul>
@@ -112,6 +129,7 @@ export function OrgBillingSeats({ members, ownerId, quota }: Props) {
           {expanded ? t('seatsShowLess') : tp('seatsShowAll', sorted.length)}
         </button>
       )}
+      {lifecycle.dialogs}
     </section>
   );
 }

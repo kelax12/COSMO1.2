@@ -210,7 +210,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
             ))}
           </ul>
         )}
-        <div className="flex items-end gap-2">
+        <div className="flex flex-col items-end gap-2">
           <textarea
             ref={inputRef}
             value={body}
@@ -224,7 +224,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
             rows={2}
             maxLength={2000}
             placeholder={t('comments.placeholder')}
-            className="flex-1 px-3 py-2 text-sm rounded-xl border resize-none focus:outline-none focus:border-[rgb(var(--color-accent))]"
+            className="w-full px-3 py-2 text-sm rounded-xl border resize-none focus:outline-none focus:border-[rgb(var(--color-accent))]"
             style={{
               borderColor: 'rgb(var(--color-border))',
               backgroundColor: 'rgb(var(--color-surface))',

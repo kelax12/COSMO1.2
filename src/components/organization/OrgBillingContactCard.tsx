@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Mail } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { toast } from '@/lib/toast';
 import { useOrgBillingContact, useSaveOrgBillingContact } from '@/modules/billing/org-billing-account.hooks';
@@ -66,7 +65,6 @@ export function OrgBillingContactCard({ orgId, ownerEmail, userId }: Props) {
       className="rounded-xl border border-[rgb(var(--color-border))] p-4 flex flex-col gap-3"
     >
       <h3 id="org-billing-contact" className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-        <Mail size={15} aria-hidden="true" />
         {t('contactTitle')}
       </h3>
       {!isLoading && recipient && (

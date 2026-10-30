@@ -1,7 +1,7 @@
 import { Suspense, useMemo, useState } from 'react';
 import { format, isPast, isToday, parseISO, subDays } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { CheckCircle2, Circle, ListChecks, Plus } from 'lucide-react';
+import { CheckCircle2, Circle } from 'lucide-react';
 import {
   useTeamTasks, useTeamProjects, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
   type TeamTask, type TeamProject,
@@ -191,21 +191,8 @@ const TaskRow = ({ task, project, canEdit, onEdit, selection }: { task: TeamTask
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
   const overdue = !task.completed && isOverdue(task);
-  if (selection?.active) {
-    return (
-      <li className="flex items-center gap-2.5 p-2.5 rounded-xl border border-[rgb(var(--color-border))] cursor-pointer hover:bg-[rgb(var(--color-hover))]" onClick={() => selection.onToggle(task)}>
-        <TaskSelectCheckbox name={task.name} checked={selection.selectedIds.has(task.id)} onToggle={() => selection.onToggle(task)} />
-        <span className="text-sm flex-1 truncate text-[rgb(var(--color-text-primary))]">{task.name}</span>
-      </li>
-    );
-  }
-  const content = (
+  const columns = (
     <>
-      {task.completed ? (
-        <CheckCircle2 size={16} className="text-green-500 shrink-0" aria-hidden="true" />
-      ) : (
-        <Circle size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-      )}
       <span className={`text-sm truncate ${task.completed ? 'text-[rgb(var(--color-text-muted))] line-through' : 'text-[rgb(var(--color-text-primary))]'}`}>
         {task.name}
       </span>
@@ -225,6 +212,26 @@ const TaskRow = ({ task, project, canEdit, onEdit, selection }: { task: TeamTask
       </span>
     </>
   );
+  const content = (
+    <>
+      {task.completed ? (
+        <CheckCircle2 size={16} className="text-green-500 shrink-0" aria-hidden="true" />
+      ) : (
+        <Circle size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+      )}
+      {columns}
+    </>
+  );
+  // Sélection : même grille, la case remplace le cercle. Les colonnes
+  // disparaissaient et la liste sautait au clic sur « Sélectionner » (2026-10-30).
+  if (selection?.active) {
+    return (
+      <li className={`${ROW_GRID} p-2.5 rounded-xl border border-[rgb(var(--color-border))] cursor-pointer hover:bg-[rgb(var(--color-hover))]`} onClick={() => selection.onToggle(task)}>
+        <TaskSelectCheckbox name={task.name} checked={selection.selectedIds.has(task.id)} onToggle={() => selection.onToggle(task)} />
+        {columns}
+      </li>
+    );
+  }
   if (!canEdit) {
     return (
       <li className={`${ROW_GRID} p-2.5 rounded-xl border border-[rgb(var(--color-border))]`}>
@@ -252,9 +259,9 @@ const AddTaskButton = ({ onAddTask }: { onAddTask: () => void }) => {
     <button
       type="button"
       onClick={onAddTask}
-      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-sm font-semibold text-[rgb(var(--color-text-secondary))]"
+      className="shrink-0 inline-flex items-center py-1.5 px-3 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
     >
-      <Plus size={14} aria-hidden="true" /> {tOrgAdmin('insights.addTask')}
+      {tOrgAdmin('insights.addTask')}
     </button>
   );
 };
@@ -275,7 +282,7 @@ const TasksView = ({
     return (
       <div className="space-y-3">
         <p className="text-sm text-[rgb(var(--color-text-muted))] py-2 text-center">{tOrgAdmin('insights.noTeamTask')}</p>
-        <AddTaskButton onAddTask={onAddTask} />
+        <div className="flex justify-center"><AddTaskButton onAddTask={onAddTask} /></div>
       </div>
     );
   }
@@ -312,9 +319,11 @@ const TasksView = ({
             aria-label={t('projects.selectMultiple')}
             className="shrink-0 inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl border border-[rgb(var(--color-border))] text-sm font-semibold text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
           >
-            <ListChecks size={14} aria-hidden="true" /> {t('projects.selectMode')}
+            {t('projects.selectMode')}
           </button>
         )}
+        {/* « Ajouter » à droite de « Sélectionner », sur la même ligne (2026-10-30). */}
+        <AddTaskButton onAddTask={onAddTask} />
       </div>
       <div className={`${ROW_GRID} hidden sm:grid px-2.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]`} aria-hidden="true">
         <span />
@@ -332,7 +341,6 @@ const TasksView = ({
           ))}
         </ul>
       )}
-      <AddTaskButton onAddTask={onAddTask} />
     </div>
   );
 };

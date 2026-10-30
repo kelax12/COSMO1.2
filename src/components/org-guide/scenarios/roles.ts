@@ -7,7 +7,7 @@ const k = (id: string, b: string) => `actions.${id}.${b}`;
 export const ROLES_ACTIONS: GuideAction[] = [
   { id: 'role.create', category: 'roles', requires: 'role.manage', needsCustomRoles: true, steps: [
     { kind: 'goto', section: 'settings', via: 'nav-settings' },
-    { kind: 'click', target: 'settings-panel-roles' },
+    { kind: 'click', target: 'settings-panel-permissions' },
     { kind: 'click', target: 'settings-roles-new' },
     { kind: 'field', target: 'role-editor-name', bubbleKey: k('role.create', 'b1') },
     { kind: 'field', target: 'role-editor-matrix', bubbleKey: k('role.create', 'b2') },
@@ -16,7 +16,7 @@ export const ROLES_ACTIONS: GuideAction[] = [
   // L'éditeur ne liste pas les membres du rôle : la bulle 2 vise sa note de règles.
   { id: 'role.edit', category: 'roles', requires: 'role.manage', needsCustomRoles: true, steps: [
     { kind: 'goto', section: 'settings', via: 'nav-settings' },
-    { kind: 'click', target: 'settings-panel-roles' },
+    { kind: 'click', target: 'settings-panel-permissions' },
     { kind: 'pick-first', target: 'settings-roles-list', emptyKey: 'empty.noRole' },
     { kind: 'field', target: 'role-editor-matrix', bubbleKey: k('role.edit', 'b1') },
     { kind: 'field', target: 'role-editor-hint', bubbleKey: k('role.edit', 'b2') },

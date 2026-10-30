@@ -96,6 +96,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, canEditDependencies, i
   const { projectMembers, statsById, isLeadOf } = useProjectAccess(orgId, currentUserId); // mig. 190, 191
 
   const { collapsed, showArchived, timelineGroupBy, sort } = prefs;
+  // Sens du tri : les flèches à côté du critère l'inversent.
+  const [sortDesc, setSortDesc] = useState(false);
 
   // ─── Page projet : `?project=<id>` (M2) ─────────────────────────────
   // L'adresse est celle qu'émettent déjà la palette de commandes et le panneau
@@ -157,8 +159,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, canEditDependencies, i
       categoryName: categories.find((c) => c.id === p.categoryId)?.name,
       ownerName: members.find((m) => m.userId === p.ownerId)?.displayName,
     }));
-    return sortProjects(found, sort, allTasks, statsById);
-  }, [activeProjects, query, sort, allTasks, teams, categories, members, filters, statsById]);
+    const sorted = sortProjects(found, sort, allTasks, statsById);
+    return sortDesc ? sorted.reverse() : sorted;
+  }, [activeProjects, query, sort, sortDesc, allTasks, teams, categories, members, filters, statsById]);
 
   // ─── Tâches : celles des projets affichés, sans filtre propre ────────
   // Les filtres trient des projets : un projet retenu montre TOUTES ses tâches.
@@ -375,7 +378,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, canEditDependencies, i
       effectiveView={view}
       onStartSelect={onStartSelect}
       sortControl={showSort ? (
-        <ProjectsSearchBar sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} />
+        <ProjectsSearchBar sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} sortDesc={sortDesc} onToggleSortDirection={() => setSortDesc((d) => !d)} />
       ) : undefined}
     />
   );

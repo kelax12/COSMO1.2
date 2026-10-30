@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Search, X } from 'lucide-react';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
-import { STATUS_META, projectColor } from './team-projects.helpers';
+import { STATUS_META } from './team-projects.helpers';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 
@@ -44,7 +44,7 @@ const ProjectAddTaskPicker = ({ project, tasks, projects, onPick, onCreate, onCl
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-2xl shadow-2xl flex flex-col max-h-[80vh] bg-[rgb(var(--color-surface))]"
+        className="w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[80vh] bg-[rgb(var(--color-surface))]"
       >
         <div className="px-6 pt-6 pb-4 border-b border-[rgb(var(--color-border))] shrink-0 space-y-3">
           <div className="flex items-center justify-between gap-3">
@@ -98,12 +98,7 @@ const ProjectAddTaskPicker = ({ project, tasks, projects, onPick, onCreate, onCl
                       <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_META[task.status].dot}`} aria-hidden="true" />
                       <span className="flex-1 min-w-0">
                         <span className="block truncate text-sm text-[rgb(var(--color-text-primary))]">{task.name}</span>
-                        {from && (
-                          <span className="flex items-center gap-1 text-xs text-[rgb(var(--color-text-muted))]">
-                            <span className={`w-1.5 h-1.5 rounded-full ${projectColor(from.color).dot}`} aria-hidden="true" />
-                            {t('project.addTaskPickerFrom', { project: from.name })}
-                          </span>
-                        )}
+                        {from && <span className="block truncate text-xs text-[rgb(var(--color-text-muted))]">{from.name}</span>}
                       </span>
                     </button>
                   </li>

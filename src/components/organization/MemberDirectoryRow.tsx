@@ -188,12 +188,30 @@ const MemberDirectoryRow = ({
             {/* Le « ? » du terme est À CÔTÉ du bouton, jamais dedans. */}
             {/* Chevron (reco UI n° 23) : sans lui, rien ne dit que la
                 pastille est un menu éditable sur place. */}
+            {/* Le rôle CHOISI (rôle personnalisé) s'affiche ici ; « Membre »
+                n'apparaît qu'à défaut (2026-10-30). */}
             <span className="inline-flex items-center gap-0.5">
-              <RoleBadge kind={role} help={false} />
+              {roleBadges.length > 0 ? (
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] max-w-40">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: roleBadges[0].color }} aria-hidden="true" />
+                  <span className="truncate">{roleBadges.map((r) => r.name).join(', ')}</span>
+                </span>
+              ) : (
+                <RoleBadge kind={role} help={false} />
+              )}
               <ChevronDown size={12} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
             </span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
+            {rights.canAssignRole && onAssignRole && (
+              <>
+                <DropdownMenuItem onClick={opensSurface(onAssignRole)}>
+                  <BadgeCheck size={14} aria-hidden="true" />
+                  {tOrgAdmin('customRoles.assign.menuItem')}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuRadioGroup
               value={m.role}
               onValueChange={(value) => {

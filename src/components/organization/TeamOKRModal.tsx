@@ -255,7 +255,8 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
   // Visibilité : « Équipes » reste ouvert même tant qu'aucune équipe n'est
   // cochée, sinon le segment se refermerait sous le premier clic.
   const [visMode, setVisMode] = useState<TeamOKRAudience>(
-    editingOKR?.audience ?? (teamIds.length > 0 ? 'teams' : 'org'),
+    // « Équipe » retiré (2026-10-30) : « Personnaliser » porte déjà les équipes.
+    editingOKR?.audience === 'teams' || (!editingOKR && teamIds.length > 0) ? 'custom' : editingOKR?.audience ?? 'org',
   );
   // Personnes nommées d'un OKR « Personnaliser » (mig. 205).
   const [memberIds, setMemberIds] = useState<string[]>(editingOKR?.memberIds ?? []);
@@ -335,18 +336,10 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
                   <button type="button" role="radio" aria-checked={visMode === 'org'} onClick={() => chooseVisMode('org')} className={segClass(visMode === 'org')}>
                     <Building2 size={12} className="mr-1 inline" aria-hidden="true" />{tOrgAdmin('okrModal.wholeOrg')}
                   </button>
-                  <button type="button" role="radio" aria-checked={visMode === 'teams'} onClick={() => chooseVisMode('teams')} className={segClass(visMode === 'teams')}>
-                    {tOrgAdmin('okrModal.teamsOption')}
-                  </button>
                   <button type="button" role="radio" aria-checked={visMode === 'custom'} onClick={() => chooseVisMode('custom')} className={segClass(visMode === 'custom')}>
                     {tOrgAdmin('okrModal.customOption')}
                   </button>
                 </div>
-                {visMode === 'teams' && teams.length > 0 && (
-                  <div className="max-h-56 overflow-y-auto rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">
-                    <TeamPickList teams={teams} value={teamIds} onChange={setTeamIds} label={tOrgAdmin('okrModal.teamsOption')} />
-                  </div>
-                )}
                 {/* Personnaliser (2026-10-30) : UNE liste, celle des personnes ; les
                     équipes s'ajoutent depuis « Ajouter une équipe », dont le
                     panneau s'ouvre à droite au survol, comme une sous-catégorie. */}
@@ -386,11 +379,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
                 <p className="text-muted-foreground text-xs">
                   {visMode === 'org'
                     ? tOrgAdmin('okrModal.visibilityWholeOrg')
-                    : visMode === 'custom'
-                      ? tOrgAdmin('okrModal.visibilityCustom')
-                      : teamIds.length > 0
-                        ? tOrgAdmin('okrModal.visibilityTeams')
-                        : tOrgAdmin('okrModal.visibilityNoneChosen')}
+                    : tOrgAdmin('okrModal.visibilityCustom')}
                 </p>
               </div>
             </div>

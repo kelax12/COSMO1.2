@@ -149,7 +149,8 @@ const MemberSheet = ({
     >
       <div
         className={`bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] w-full shadow-2xl flex flex-col rounded-t-[24px] sm:rounded-2xl ${
-          wide ? 'h-[92dvh] sm:h-[90vh] sm:max-w-6xl' : 'max-h-[88vh] sm:max-w-3xl'
+          // Taille FIXE quel que soit l'onglet (2026-10-30) : la fenêtre ne saute plus.
+          wide ? 'h-[92dvh] sm:h-[90vh] sm:max-w-6xl' : 'h-[88vh] sm:h-[min(720px,85vh)] sm:max-w-4xl'
         }`}
         onClick={(e) => e.stopPropagation()}
         ref={modalA11yRef}
@@ -207,7 +208,7 @@ const MemberSheet = ({
           <div
             role="tablist"
             aria-label={ta('member.tabsAria')}
-            className="flex gap-1 px-3 overflow-x-auto border-b border-[rgb(var(--color-border))] shrink-0"
+            className="flex gap-1 px-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-b border-[rgb(var(--color-border))] shrink-0"
           >
             {tabs.map((id) => {
               const { label, Icon } = TAB_META[id];

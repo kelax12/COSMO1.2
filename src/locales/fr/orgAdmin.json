@@ -1035,7 +1035,6 @@
     "category": "Catégorie",
     "descriptionLabel": "Description",
     "visibility": "Visibilité",
-    "visibilityTeams": "Visible uniquement par les équipes sélectionnées et les admins.",
     "keyResults": "Résultats clés",
     "krPlaceholder": "Résultat clé mesurable",
     "progress": "Avancement",
@@ -1060,8 +1059,7 @@
     "customOption": "Personnaliser",
     "addTeam": "Ajouter une équipe",
     "customPeople": "Personnes",
-    "visibilityCustom": "Visible uniquement par les équipes et personnes choisies, leur hiérarchie et les admins.",
-    "visibilityNoneChosen": "Aucune équipe choisie : seuls les admins verront cet objectif."
+    "visibilityCustom": "Visible uniquement par les équipes et personnes choisies, leur hiérarchie et les admins."
   },
   "settings": {
     "inviteTitle": "Inviter",
