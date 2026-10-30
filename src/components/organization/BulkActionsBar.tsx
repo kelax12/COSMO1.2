@@ -1,5 +1,6 @@
 import { Check, RotateCcw, Trash2, X, UserPlus, FolderInput, CircleDot, UserX, Flag, CalendarClock, ListPlus } from 'lucide-react';
-import { resolveListColor } from '@/pages/tasks/list-colors';
+import { Suspense, useState } from 'react';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { addDays, format, nextMonday } from 'date-fns';
 import {
   DropdownMenu,
@@ -14,6 +15,9 @@ import type { TeamProject, TeamTaskStatus } from '@/modules/team-projects';
 import { STATUS_ORDER, STATUS_META, projectColor } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
+
+// Chargée au clic sur « Liste » seulement : la barre monte à chaque sélection.
+const TeamBulkAddToListDialog = lazyWithRetry(() => import('./TeamBulkAddToListDialog'));
 
 interface BulkActionsBarProps {
   count: number;
@@ -47,9 +51,12 @@ interface BulkActionsBarProps {
   onSetPriority?: (priority: number) => void;
   /** Échéance 'YYYY-MM-DD', `''` = la retirer. */
   onSetDeadline?: (deadline: string) => void;
-  /** Listes manuelles de l'organisation (mig. 203), cibles d'un ajout groupé. */
-  lists?: readonly { id: string; name: string; color: string }[];
-  onAddToList?: (listId: string) => void;
+  /**
+   * « Liste » : ouvre la popup d'ajout groupé (même UX que la page Tâches
+   * perso, 2026-10-30). Les deux sont requis pour afficher le bouton.
+   */
+  listsOrgId?: string;
+  selectedTaskIds?: string[];
 }
 
 /** Date locale 'YYYY-MM-DD' — jamais `toISOString`, qui décale d'un jour le soir. */
@@ -72,8 +79,9 @@ const actionClass =
 const BulkActionsBar = ({
   count, hasCompleted, hasOpen, onComplete, onReopen, onDelete, onExit,
   assignableMembers = [], onAssign, projects = [], onMove, onSetStatus, onSetPriority, onSetDeadline, placement = 'floating',
-  lists = [], onAddToList,
+  listsOrgId, selectedTaskIds,
 }: BulkActionsBarProps) => {
+  const [listDialogOpen, setListDialogOpen] = useState(false);
   const inline = placement === 'inline';
   const menuZ = inline ? ' z-[10001]' : '';
   const { t, tp } = useT('org');
@@ -199,21 +207,15 @@ const BulkActionsBar = ({
         </DropdownMenu>
       )}
 
-      {count > 0 && onAddToList && lists.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger className={actionClass}>
-            <ListPlus size={15} aria-hidden="true" /> {t('teamLists.addToListShort')}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="center" className={`w-56 max-h-72 overflow-y-auto${menuZ}`}>
-            <DropdownMenuLabel>{t('teamLists.addToList')}</DropdownMenuLabel>
-            {lists.map((list) => (
-              <DropdownMenuItem key={list.id} onClick={() => onAddToList(list.id)}>
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: resolveListColor(list.color) }} aria-hidden="true" />
-                <span className="truncate">{list.name}</span>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+      {count > 0 && listsOrgId && selectedTaskIds && (
+        <button type="button" onClick={() => setListDialogOpen(true)} className={actionClass}>
+          <ListPlus size={15} aria-hidden="true" /> {t('teamLists.addToListShort')}
+        </button>
+      )}
+      {listDialogOpen && listsOrgId && selectedTaskIds && (
+        <Suspense fallback={null}>
+          <TeamBulkAddToListDialog orgId={listsOrgId} taskIds={selectedTaskIds} onClose={() => setListDialogOpen(false)} />
+        </Suspense>
       )}
 
       {count > 0 && (

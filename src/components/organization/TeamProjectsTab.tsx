@@ -4,7 +4,6 @@ import { useTeamTasksSelection } from './use-team-tasks-selection';
 import { Plus, FolderKanban, ChevronDown, ChevronRight, ArrowLeft } from 'lucide-react';
 import {
   useTeamProjects,
-  useTeamProjectTemplates,
   useTeamTasks,
   useTeamProjectDependencies,
   TEAM_TASKS_READ_LIMIT,
@@ -28,7 +27,7 @@ import TeamProjectCard from './TeamProjectCard';
 // Vues et surfaces à la demande : chargées au premier affichage (budget du chunk).
 import {
   TeamProjectsTimeline, ProjectPortfolioView, ProjectDetailPage,
-  ProjectEditDialog, BulkActionsBar,
+  ProjectEditDialog, BulkActionsBar, ProjectAddTaskPicker,
 } from './team-projects.lazy';
 import ProjectsToolbar, { NewProjectButton } from './ProjectsToolbar';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
@@ -37,7 +36,6 @@ import { MobileFiltersButton, MobileFiltersSheet } from './MobileTeamTasks';
 import { usePermissionHints } from './permission-hints';
 import { useOrgTaskFilters } from './task-filters';
 import { useRememberedTaskFilters } from './remembered-task-filters';
-import ProjectTemplatesSection from './ProjectTemplatesSection';
 import TeamTaskModal from './TeamTaskModal';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTrashDialog from './TeamTrashDialog';
@@ -78,6 +76,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const create = useOrgCreate();
   const [editProjectId, setEditProjectId] = useState<string | null>(null);
   const [taskModal, setTaskModal] = useState<TaskModalState>(null);
+  // « Ajouter une tâche… » d'une carte : sélecteur d'abord, création en option (2026-10-30).
+  const [addTaskProjectId, setAddTaskProjectId] = useState<string | null>(null);
   // Sélection de PROJETS du Portefeuille : distincte de la sélection de tâches.
   const [portfolioSelect, setPortfolioSelect] = useState(false);
   const isMobile = useIsMobile();
@@ -90,7 +90,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const { team: teamFilter, q: query } = filters;
 
   const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
-  const { data: templates = [] } = useTeamProjectTemplates(orgId);
   const { data: allTasks = [] } = useTeamTasks(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
   const { data: categories = [] } = useTeamCategories(orgId);
@@ -125,10 +124,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
 
   // L'équipe filtrée devient l'équipe par défaut du projet ; une équipe créée
   // d'ici devient le filtre : la créer pour ne pas la voir serait un geste à vide.
-  const newProject = (templateId?: string) =>
+  const newProject = () =>
     create.openProject({
       defaultTeamId: teamFilter && teamFilter !== 'org' ? teamFilter : '',
-      templateId,
       onCreated: openProject,
     });
   const newTeam = () => create.openTeam({ onCreated: (team) => setFilters({ team }) });
@@ -224,7 +222,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       members={members}
       teams={teams}
       canEditProject={canEditProjectFor(project)}
-      canChangeTeam={can['project.edit']}
       canCreateProject={can['project.create']}
       canArchiveProject={can['project.delete']}
       onOpenProject={() => openProject(project.id)}
@@ -239,9 +236,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       collapsed={isCollapsed(project.id)}
       onToggleCollapse={() => toggleCollapse(project.id)}
       assigneeFiltered={false}
-      onAddTask={(projectId) =>
-        setTaskModal({ mode: 'create', projectId, assigneeIds: currentUserId ? [currentUserId] : [] })
-      }
+      onAddTask={(projectId) => setAddTaskProjectId(projectId)}
       onToggleComplete={actions.toggleComplete}
       onReassign={actions.setAssignees}
       onDelete={actions.removeWithUndo}
@@ -263,11 +258,27 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         />
       )}
 
+      {addTaskProjectId && allProjects.some((p) => p.id === addTaskProjectId) && (
+        <ProjectAddTaskPicker
+          project={allProjects.find((p) => p.id === addTaskProjectId) as TeamProject}
+          tasks={allTasks}
+          projects={allProjects}
+          onPick={(task) => { actions.updateTaskInput(task, { projectId: addTaskProjectId }); setAddTaskProjectId(null); }}
+          onCreate={() => {
+            setTaskModal({ mode: 'create', projectId: addTaskProjectId, assigneeIds: currentUserId ? [currentUserId] : [] });
+            setAddTaskProjectId(null);
+          }}
+          onClose={() => setAddTaskProjectId(null)}
+        />
+      )}
+
       {selectMode && (
         <BulkActionsBar
           {...bulkBarProps}
           assignableMembers={members.filter((m) => canAssign(m.userId))}
           projects={activeProjects}
+          listsOrgId={orgId}
+          selectedTaskIds={[...selectedIds]}
         />
       )}
 
@@ -494,14 +505,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
             </div>
           )}
 
-          {/* Modèles (M2) : jamais mêlés aux projets en cours. */}
-          <ProjectTemplatesSection
-            templates={templates}
-            canUse={can['project.create']}
-            canRemove={can['project.delete']}
-            onUse={(templateId) => newProject(templateId)}
-            onRemove={actions.archiveTemplate}
-          />
         </>
       )}
       </Suspense>

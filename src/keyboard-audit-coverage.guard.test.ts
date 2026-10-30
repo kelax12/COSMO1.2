@@ -91,6 +91,7 @@ const MESUREES: Record<string, string> = {
   'components/organization/InviteModeDialog.tsx': 'MESURE · InviteModeDialog',
   'components/organization/MemberBulkPicker.tsx': 'MESURE · MemberBulkPicker',
   'components/organization/ProjectEditDialog.tsx': 'MESURE · ProjectEditDialog',
+  'components/organization/ProjectAddTaskPicker.tsx': 'MESURE · ProjectAddTaskPicker',
   'components/organization/AssignEventDialog.tsx': 'MESURE · AssignEventDialog',
   'components/organization/AssignTaskSheet.tsx': 'MESURE · AssignTaskSheet',
   'components/organization/CreateTeamModal.tsx': 'MESURE · CreateTeamModal',
@@ -100,7 +101,6 @@ const MESUREES: Record<string, string> = {
   'components/organization/InviteOrJoinModal.tsx': 'MESURE · InviteOrJoinModal',
   'components/organization/MemberPermissionsSheet.tsx': 'MESURE · MemberPermissionsSheet',
   'components/organization/MemberSheet.tsx': 'MESURE · MemberSheet',
-  'components/organization/NewTeamProjectModal.tsx': 'MESURE · NewTeamProjectModal',
   'components/organization/OffboardMemberDialog.tsx': 'MESURE · OffboardMemberDialog',
   'components/organization/PyramidPlacementSheet.tsx': 'MESURE · PyramidPlacementSheet',
   'components/organization/WeeklyReviewSheet.tsx': 'MESURE · WeeklyReviewSheet',
@@ -138,6 +138,9 @@ const MESUREES: Record<string, string> = {
  *   · NON MESURÉE, SANS OBSTACLE — la dette. Elle est nommée comme telle.
  */
 const NON_MESUREES: Record<string, string> = {
+  'components/organization/TeamBulkAddToListDialog.tsx':
+    'dette : « Liste » de la barre de sélection multiple d entreprise (2026-10-30), '
+    + 'câblée par useModalA11y, pas encore couverte par e2e/a11y-keyboard-audit.spec.ts.',
   'components/organization/TeamTaskListsField.tsx':
     'dette : popup « Ajouter à une liste » de la fiche de tâche d entreprise (2026-10-30), '
     + 'câblée par useModalA11y, pas encore couverte par e2e/a11y-keyboard-audit.spec.ts.',

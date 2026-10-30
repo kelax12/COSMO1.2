@@ -565,8 +565,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
       {bulk.selectMode && !lists.selectingTasksForListId && (
         <Suspense fallback={null}>
           <TeamTasksBulkLayer
-            bulk={bulk} members={members} projects={projects} lists={manualLists}
-            onAddToList={(listId, taskIds) => taskIds.forEach((taskId) => lists.addTaskToList.mutate({ listId, taskId }))}
+            bulk={bulk} members={members} projects={projects} listsOrgId={orgId}
           />
         </Suspense>
       )}

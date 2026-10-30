@@ -178,10 +178,11 @@ test('MESURE · CreateTeamModal (« Nouvelle équipe »)', async ({ demoPage: pa
   await mesurerSurface(page, 'CreateTeamModal', page.getByRole('dialog', { name: /^nouvelle équipe$/i }));
 });
 
-test('MESURE · NewTeamProjectModal (« Nouveau projet »)', async ({ demoPage: page }) => {
+// Création et modification partagent `ProjectEditDialog` depuis le 2026-10-30.
+test('MESURE · ProjectEditDialog en création (« Nouveau projet »)', async ({ demoPage: page }) => {
   await versSection(page, /^projets/i, /\/entreprise\/projects/);
   await ouvrirAuClavier(page, visible(page.getByRole('button', { name: /nouveau projet/i })));
-  await mesurerSurface(page, 'NewTeamProjectModal', page.getByRole('dialog', { name: /^nouveau projet d.équipe$/i }));
+  await mesurerSurface(page, 'ProjectEditDialog (création)', page.getByRole('dialog', { name: /^nouveau projet d.équipe$/i }));
 });
 
 test('MESURE · ProjectEditDialog (« Modifier le projet »)', async ({ demoPage: page }) => {
@@ -194,6 +195,14 @@ test('MESURE · ProjectEditDialog (« Modifier le projet »)', async ({ demoPage
   await item.focus();
   await page.keyboard.press('Enter');
   await mesurerSurface(page, 'ProjectEditDialog', page.getByRole('dialog', { name: /^modifier le projet /i }));
+});
+
+test('MESURE · ProjectAddTaskPicker (« Ajouter une tâche… » d un projet)', async ({ demoPage: page }) => {
+  await versSection(page, /^projets/i, /\/entreprise\/projects/);
+  // Le bouton vit au pied de chaque carte de la vue « Liste » (2026-10-30).
+  await visible(page.getByRole('group', { name: /^vue$/i }).getByRole('button', { name: /^liste$/i })).press('Enter');
+  await ouvrirAuClavier(page, visible(page.getByRole('button', { name: /^ajouter une tâche…$/i })));
+  await mesurerSurface(page, 'ProjectAddTaskPicker', page.getByRole('dialog', { name: /^ajouter une tâche au projet$/i }));
 });
 
 test("MESURE · AssignEventDialog (« Assigner l'événement », tâches d'équipe)", async ({ demoPage: page }) => {

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  Plus, ChevronDown, ChevronRight, UsersRound, MoreHorizontal,
+  Plus, ChevronDown, ChevronRight, MoreHorizontal,
   Pencil, Archive, ArchiveRestore, Clock, ListChecks, Tag,
   ExternalLink, Settings2, Copy, LayoutTemplate, CalendarRange,
 } from 'lucide-react';
@@ -14,9 +14,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
@@ -29,7 +26,6 @@ import {
 import { PROJECT_STATUS_META, isProjectLate } from './portfolio.helpers';
 import MemberAvatar from './MemberAvatar';
 import TeamTaskRow from './TeamTaskRow';
-import ConfirmProjectAudienceDialog from './ConfirmProjectAudienceDialog';
 import { useTeamCategories } from '@/modules/team-categories';
 import { useT } from '@/i18n/useT';
 import TeamColorDot from './TeamColorDot';
@@ -46,12 +42,6 @@ interface TeamProjectCardProps {
    * dont le nom ne disait pas l'action.
    */
   canEditProject: boolean;
-  /**
-   * Changer l'ÉQUIPE (donc l'audience, M5) : `project.edit` seul. Le
-   * responsable pilote son projet sans pouvoir l'ouvrir à d'autres (trigger
-   * `enforce_team_project_edit_scope`).
-   */
-  canChangeTeam: boolean;
   /** Dupliquer / enregistrer comme modèle CRÉENT un projet : `project.create`. */
   canCreateProject: boolean;
   /** Ouvre la page du projet (`?project=<id>`). */
@@ -86,7 +76,7 @@ interface TeamProjectCardProps {
 /** Carte d'un projet : header (couleur, progression, contributeurs, retard, menu) + tâches triées. */
 const TeamProjectCard = ({
   project, tasks, members, teams, canEditProject, canArchiveProject,
-  canChangeTeam, canCreateProject, onOpenProject, onEditProject, onDuplicate, onSaveTemplate, onArchive,
+  canCreateProject, onOpenProject, onEditProject, onDuplicate, onSaveTemplate, onArchive,
   collapsed, onToggleCollapse, assigneeFiltered,
   onAddTask, onToggleComplete, onReassign, onDelete, onOpenTask,
   onUpdateProject, onStartSelect,
@@ -95,14 +85,6 @@ const TeamProjectCard = ({
   const { t, tp } = useT('org');
   const { t: pf } = useT('portfolio');
   const [renaming, setRenaming] = useState(false);
-  // M5 : un changement d'équipe change QUI LIT le projet. Il passe par une
-  // confirmation qui nomme la nouvelle audience, jamais par un clic sec.
-  // `undefined` = rien en attente ; `null` = vers toute l'organisation.
-  const [pendingTeamId, setPendingTeamId] = useState<string | null | undefined>(undefined);
-  const requestTeamChange = (teamId: string | null) => {
-    if (teamId === (project.teamId ?? null)) return;
-    setPendingTeamId(teamId);
-  };
   const [renameValue, setRenameValue] = useState(project.name);
   const [showCompleted, setShowCompleted] = useState(false);
   const { data: categories = [] } = useTeamCategories(project.orgId);
@@ -155,8 +137,8 @@ const TeamProjectCard = ({
     <div className="space-y-3">
     {/* Le nom du projet titre le groupe, au-dessus de la carte (2026-10-01) :
         il n'est plus répété dans l'en-tête, sauf pendant un renommage. */}
-    <h3 className="flex items-center gap-1.5 text-caption font-semibold md:uppercase md:tracking-wide max-md:text-label max-md:text-[rgb(var(--color-text-secondary))] text-[rgb(var(--color-text-muted))] px-1 pt-1">
-      <span className={`w-2 h-2 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
+    <h3 className="flex items-center gap-2 text-base font-semibold text-[rgb(var(--color-text-primary))] px-1 pt-1">
+      <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
       {project.name}
     </h3>
     <section className={`rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] overflow-hidden ${archived ? 'opacity-70' : ''}`}>
@@ -166,7 +148,7 @@ const TeamProjectCard = ({
           type="button"
           onClick={onToggleCollapse}
           aria-expanded={!collapsed}
-          className="flex-1 min-w-0 flex max-md:flex-wrap items-center gap-2 max-md:gap-y-1 px-2 py-1.5 rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
+          className="flex-1 min-w-0 flex max-md:flex-wrap items-center gap-2 max-md:gap-y-1 px-2 py-[11px] rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
         >
           {collapsed ? <ChevronRight size={16} className="shrink-0" aria-hidden="true" /> : <ChevronDown size={16} className="shrink-0" aria-hidden="true" />}
           {renaming && (
@@ -312,46 +294,6 @@ const TeamProjectCard = ({
                   <Pencil size={14} aria-hidden="true" /> {t('project.rename')}
                 </DropdownMenuItem>
               )}
-              {canChangeTeam && teams.length > 0 && (
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <UsersRound size={14} aria-hidden="true" /> {t('project.teamBadge')}
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="w-48">
-                    <DropdownMenuItem onClick={() => requestTeamChange(null)}>
-                      {t('project.wholeOrg')} {!project.teamId && <span className="ml-auto text-xs">✓</span>}
-                    </DropdownMenuItem>
-                    {teams.map((team) => (
-                      <DropdownMenuItem key={team.id} onClick={() => requestTeamChange(team.id)}>
-                        <TeamColorDot color={team.color} />
-                        <span className="truncate">{team.name}</span>
-                        {project.teamId === team.id && <span className="ml-auto text-xs">✓</span>}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              )}
-              {canEditProject && categories.length > 0 && (
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Tag size={14} aria-hidden="true" /> {t('project.category')}
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="w-48">
-                    {/* La catégorie ne touche PLUS à `color` : la réécrire ici
-                        effaçait la couleur choisie par l'équipe (audit 2026-09-24). */}
-                    <DropdownMenuItem onClick={() => onUpdateProject({ categoryId: null })}>
-                      {t('project.noCategory')} {!project.categoryId && <span className="ml-auto text-xs">✓</span>}
-                    </DropdownMenuItem>
-                    {categories.map((c) => (
-                      <DropdownMenuItem key={c.id} onClick={() => onUpdateProject({ categoryId: c.id })}>
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} aria-hidden="true" />
-                        <span className="truncate">{c.name}</span>
-                        {project.categoryId === c.id && <span className="ml-auto text-xs">✓</span>}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              )}
               {canCreateProject && !archived && (
                 <>
                   <DropdownMenuSeparator />
@@ -392,7 +334,8 @@ const TeamProjectCard = ({
 
       {!collapsed && (
         <div className="px-2 pb-2">
-          {/* Tâches ouvertes (deadline ↑ puis priorité ↓) */}
+          {/* Tâches ouvertes (deadline ↑ puis priorité ↓), séparées d'un trait léger (2026-10-30). */}
+          <div className="divide-y divide-[rgb(var(--color-border))]/60">
           {openTasks.map((task) => (
             <TeamTaskRow
               key={task.id}
@@ -407,6 +350,7 @@ const TeamProjectCard = ({
               onOpen={onOpenTask}
             />
           ))}
+          </div>
 
           {tasks.length === 0 && (
             <div className="px-3 py-3 flex items-center gap-3">
@@ -437,7 +381,7 @@ const TeamProjectCard = ({
                 {showCompleted ? <ChevronDown size={13} aria-hidden="true" /> : <ChevronRight size={13} aria-hidden="true" />}
                 {t('project.completed', { count: completedTasks.length })}
               </button>
-              {showCompleted && completedTasks.map((task) => (
+              {showCompleted && <div className="divide-y divide-[rgb(var(--color-border))]/60">{completedTasks.map((task) => (
                 <TeamTaskRow
                   key={task.id}
                   task={task}
@@ -450,7 +394,7 @@ const TeamProjectCard = ({
                   onDelete={onDelete}
                   onOpen={onOpenTask}
                 />
-              ))}
+              ))}</div>}
             </div>
           )}
 
@@ -465,15 +409,6 @@ const TeamProjectCard = ({
             </button>
           )}
         </div>
-      )}
-      {pendingTeamId !== undefined && (
-        <ConfirmProjectAudienceDialog
-          projectName={project.name}
-          targetTeamName={pendingTeamId ? teams.find((team) => team.id === pendingTeamId)?.name ?? null : null}
-          orgMemberCount={members.length}
-          onConfirm={() => { onUpdateProject({ teamId: pendingTeamId }); setPendingTeamId(undefined); }}
-          onCancel={() => setPendingTeamId(undefined)}
-        />
       )}
     </section>
     </div>

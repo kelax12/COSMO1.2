@@ -5,8 +5,6 @@ import {
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import { UserPlus, Plus } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
@@ -119,14 +117,7 @@ const AssigneesPicker = ({ members, value, onChange, disabled, canAssign, reveal
             />
           </div>
         )}
-        {value.length > 0 && (
-          <>
-            <DropdownMenuItem onClick={() => onChange([])}>
-              <span className="text-[rgb(var(--color-text-muted))]">{t('assign.unassignAll')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
+        {/* « Tout désassigner » retiré (2026-10-30) : il prenait la première place pour un geste rare. */}
         {shown.length === 0 && (
           <p className="px-2 py-3 text-xs text-center text-[rgb(var(--color-text-muted))]">{t('assign.noMemberMatch')}</p>
         )}

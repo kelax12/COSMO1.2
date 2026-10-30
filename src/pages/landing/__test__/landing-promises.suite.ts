@@ -47,11 +47,12 @@ export const PROMISES_SUITE: LandingPromise[] = [
     proofs: [{ file: 'src/components/onboarding/enterprise/OrgChoice.tsx', re: 'export' }],
   },
   {
-    id: 'entreprise-modeles-projet',
+    id: 'entreprise-duplication-projet',
     kind: 'produit',
-    claim: 'Modèles de projet (onboarding client, lancement produit, sprint) et duplication.',
-    anchors: [{ key: `${MORE}.f6d`, includes: 'onboarding client, lancement produit, sprint' }],
-    proofs: [{ file: 'src/components/organization/NewTeamProjectModal.tsx', has: 'BUILT_IN_TEMPLATES' }],
+    // Modèles retirés de la création le 2026-10-30 (décision d'Axel) : la promesse aussi.
+    claim: 'Duplication d’un projet avec ses tâches.',
+    anchors: [{ key: `${MORE}.f6d`, includes: 'Dupliquez un projet existant avec ses tâches' }],
+    proofs: [{ file: 'src/components/organization/use-team-projects-actions.ts', has: 'duplicateProject' }],
   },
   {
     id: 'entreprise-projets-dependances',
