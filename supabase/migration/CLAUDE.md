@@ -48,10 +48,10 @@ compilait, la suite passait.
   elle retire la branche « membre du projet » de la `190`. `224` (2026-10-20) et `226` (2026-10-22,
   ledger `20261021225038`, C-121) sont en prod ; `225` est pris par un fichier d'une autre session.
   `227` (2026-10-26, ledger `20261026124018`) et `228` (ledger `20261025183015`) sont en prod.
-  `229` (2026-10-30, fin du rôle « manager ») est au dépôt, prouvée en transaction annulée
-  (`proofs/229.proof.sql`), **PAS appliquée** : à appliquer AVANT le déploiement du front.
-  `230` (rôle par défaut des nouveaux membres) idem (`proofs/230.proof.sql`), **PAS appliquée** :
-  le front lit `org_settings.default_role_id`, l'écran Paramètres casse sans elle.
+  `229` (fin du rôle « manager », ledger `20261030182812`) et `230` (rôle par défaut des
+  nouveaux membres, ledger `20261030182827`) sont en prod depuis le 2026-10-30, relues au
+  catalogue (`my_org_perm` sans `is_org_manager`, CHECK `self`/`everyone`, colonne
+  `default_role_id`, trigger `trg_assign_default_org_role`). Preuves : `proofs/229-230`.
   Prochain numéro libre : **`231`**.
   Journal daté de chaque application (`150` → `223`) :
   [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Journal d'application des migrations ».
