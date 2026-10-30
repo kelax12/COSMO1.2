@@ -109,14 +109,6 @@
       "categorie": "mot-identique",
       "valeur": "Date"
     },
-    "eventModal.schedule.date": {
-      "categorie": "mot-identique",
-      "valeur": "Date"
-    },
-    "eventModal.schedule.notes": {
-      "categorie": "mot-identique",
-      "valeur": "Notes"
-    },
     "guide.agenda.featDrag": {
       "categorie": "anglicisme-fr",
       "valeur": "Drag & drop"
