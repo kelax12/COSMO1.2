@@ -54,6 +54,9 @@ export const useRememberedTaskFilters = (orgId: string | undefined, scope: 'task
       (prev) => {
         const next = new URLSearchParams(prev);
         for (const [key, value] of Object.entries(stored)) {
+          // Projets (2026-10-30) : on arrive toujours sur « Tout ». Le périmètre
+          // (personne, équipe) mémorisé n'est plus restauré, le reste l'est.
+          if (scope === 'projects' && (key === TASK_FILTER_PARAMS.assignee || key === TASK_FILTER_PARAMS.team)) continue;
           if (F_PARAM_NAMES.includes(key) && typeof value === 'string') next.set(key, value);
         }
         return next;

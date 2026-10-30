@@ -12,7 +12,7 @@ import {
   type TimelineZoom, type TimelineMarker, type TimelineSpan,
   projectSpanStart,
 } from './timeline.helpers';
-import { projectColor, PRIORITY_META, formatDuration, priorityLabelOf } from './team-projects.helpers';
+import { projectColor, PRIORITY_META, priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useT } from '@/i18n/useT';
@@ -24,6 +24,8 @@ interface TeamProjectsTimelineProps {
   /** Axe des lignes : par projet (défaut) ou par personne — cf. ProjectsToolbar. */
   groupBy: 'project' | 'assignee';
   onOpenTask: (task: TeamTask) => void;
+  /** Clic sur le nom d'un projet (lignes par projet) : ouvre sa page (2026-10-30). */
+  onOpenProject?: (projectId: string) => void;
   /** Mode sélection (actions groupées) : un clic coche la tâche au lieu de l'ouvrir. */
   selectable?: boolean;
   selectedIds?: Set<string>;
@@ -70,7 +72,7 @@ interface RowDescriptor {
  * date de début sur `TeamTask`, des barres seraient de la donnée inventée.
  */
 const TeamProjectsTimeline = ({
-  projects, tasks, members, groupBy, onOpenTask,
+  projects, tasks, members, groupBy, onOpenTask, onOpenProject,
   selectable = false, selectedIds, onToggleSelect,
 }: TeamProjectsTimelineProps) => {
   const { t } = useT('org');
@@ -90,7 +92,7 @@ const TeamProjectsTimeline = ({
   const orgId = tasks[0]?.orgId;
   const { data: dependencies = [] } = useTeamTaskDependencies(orgId);
 
-  const { criticalIds, criticalMinutes } = useMemo(() => {
+  const { criticalIds } = useMemo(() => {
     const ids = new Set<string>();
     let minutes = 0;
     for (const project of projects) {
@@ -219,30 +221,9 @@ const TeamProjectsTimeline = ({
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
-        <div className="flex items-center gap-3 flex-wrap">
-          <p className="text-xs text-[rgb(var(--color-text-muted))]">
-            {pf('timeline.legend')}
-          </p>
-          {/* Légende montée UNIQUEMENT s'il existe un chemin critique : sans
-              dépendance, l'anneau n'apparaît nulle part et expliquer un
-              symbole absent n'aide personne. */}
-          {criticalIds.size > 0 && (
-            <span
-              title={t('projects.criticalPathHint')}
-              className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-secondary))]"
-            >
-              <span
-                className="w-2.5 h-2.5 rounded-full bg-[rgb(var(--color-text-muted))] ring-2 ring-offset-1 ring-amber-500 ring-offset-[rgb(var(--color-surface))]"
-                aria-hidden="true"
-              />
-              {t('projects.criticalPath')}
-              <span className="text-[rgb(var(--color-text-muted))]">
-                {formatDuration(criticalMinutes)}
-              </span>
-            </span>
-          )}
-        </div>
-
+        {/* Légende et chemin critique retirés de l'en-tête (2026-10-30) : l'anneau
+            reste sur les points, son explication est dans leur card de survol. */}
+        <span />
         {/* Zoom : la fenêtre par défaut est bornée à 8 semaines autour
             d'aujourd'hui (cf. timeline.helpers.ts) — ces boutons l'élargissent.
             Aucun n'est actif tant que rien n'a été choisi : le défaut n'est
@@ -335,9 +316,19 @@ const TeamProjectsTimeline = ({
                           <MemberAvatar avatar={row.avatar ?? undefined} name={row.label} size={20} />
                         )
                       )}
-                      <span className="text-xs text-[rgb(var(--color-text-primary))] truncate">
-                        {row.label}
-                      </span>
+                      {groupBy === 'project' && onOpenProject ? (
+                        <button
+                          type="button"
+                          onClick={() => onOpenProject(row.key)}
+                          className="text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate text-left hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] rounded"
+                        >
+                          {row.label}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-[rgb(var(--color-text-primary))] truncate">
+                          {row.label}
+                        </span>
+                      )}
                     </span>
 
                     {/* Pastille « N sans date » : la vue s'appelle Planning,
@@ -404,7 +395,9 @@ const TeamProjectsTimeline = ({
                     {row.markers.map((marker, i) => {
                       const deadline = parseISO(marker.task.deadline!);
                       const markerProject = projectById.get(marker.task.projectId);
-                      const dotClass = marker.overdue
+                      const dotClass = marker.task.completed
+                        ? 'bg-emerald-500'
+                        : marker.overdue
                         ? 'bg-red-500'
                         : (markerProject ? projectColor(markerProject.color).dot : 'bg-slate-400');
                       const prev = row.markers[i - 1];

@@ -455,6 +455,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           members={members}
           groupBy={timelineGroupBy}
           onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
+          onOpenProject={openProject}
           selectable={selectMode}
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}
