@@ -21,3 +21,4 @@ export const ProjectDetailPage = lazyWithRetry(() => import('./ProjectDetailPage
 export const ProjectEditDialog = lazyWithRetry(() => import('./ProjectEditDialog'));
 export const AssignTaskSheet = lazyWithRetry(() => import('./AssignTaskSheet'));
 export const BulkActionsBar = lazyWithRetry(() => import('./BulkActionsBar'));
+export const ProjectAddTaskPicker = lazyWithRetry(() => import('./ProjectAddTaskPicker'));

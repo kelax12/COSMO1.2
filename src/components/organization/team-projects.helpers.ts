@@ -52,12 +52,34 @@ export const PROJECT_COLOR_HEX: Record<string, string> = {
 export const projectColorHex = (color: string): string =>
   PROJECT_COLOR_HEX[color] ?? PROJECT_COLOR_HEX.blue;
 
-// 🗑️ `projectColorFromCategory` / `nearestProjectColorName` retirés le
-// 2026-09-25 (cohérence globale, axe « Couleurs ») : la couleur d'un projet est
-// celle que l'utilisateur a CHOISIE (`ProjectColorPicker`), jamais dérivée de
-// sa catégorie, qui garde sa propre pastille. `project.color` reste un nom de
-// la palette fixe ci-dessus : Tailwind ne compile que les classes écrites
-// littéralement, un hex libre ne colorerait rien.
+/**
+ * Couleur d'un projet tirée de sa catégorie (décision d'Axel, 2026-10-30 :
+ * on ne choisit plus la couleur d'un projet). Elle annule celle du 2026-09-25,
+ * qui laissait la couleur au choix de l'équipe.
+ *
+ * `project.color` reste un NOM de la palette fixe ci-dessus : Tailwind ne
+ * compile que les classes écrites littéralement, un hex libre ne colorerait
+ * rien. On prend donc le nom le plus proche de l'hex de la catégorie.
+ */
+export const projectColorFromCategory = (hex: string): string => {
+  const rgb = (h: string) => {
+    const m = /^#?([0-9a-f]{6})$/i.exec(h.trim());
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const target = rgb(hex);
+  if (!target) return 'blue';
+  let best = 'blue';
+  let bestDist = Infinity;
+  for (const [name, value] of Object.entries(PROJECT_COLOR_HEX)) {
+    const c = rgb(value);
+    if (!c) continue;
+    const d = (c[0] - target[0]) ** 2 + (c[1] - target[1]) ** 2 + (c[2] - target[2]) ** 2;
+    if (d < bestDist) { bestDist = d; best = name; }
+  }
+  return best;
+};
 
 // ─── Fusion avec la page Tâches perso ─────────────────────────────────
 

@@ -10,12 +10,12 @@ import { useAuth } from '@/modules/auth/AuthContext';
 import { useActiveOrganization, useMyOrgPermissions, useOrgMembers } from '@/modules/organizations';
 import { useCreateTeamWithMembers, useOrgTeams, type CreateTeamFullInput } from '@/modules/org-teams';
 import {
-  useCreateTeamProjectWithTasks, useTeamProjectTemplates,
+  useCreateTeamProjectWithTasks,
   useSetProjectMember,
-  type CreateTeamProjectInput, type DraftProjectTask,
+  type CreateTeamProjectInput,
 } from '@/modules/team-projects';
 import { useT } from '@/i18n/useT';
-import NewTeamProjectModal from './NewTeamProjectModal';
+import ProjectEditDialog from './ProjectEditDialog';
 import CreateTeamModal from './CreateTeamModal';
 import type { OrgCreateRequest } from './org-create.context';
 
@@ -32,7 +32,6 @@ const OrgCreateForms = ({ orgId, request, onClose }: OrgCreateFormsProps) => {
   const { can } = useMyOrgPermissions(orgId);
   const { data: members = [] } = useOrgMembers(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
-  const { data: templates = [] } = useTeamProjectTemplates(request.kind === 'project' ? orgId : undefined);
   const createProject = useCreateTeamProjectWithTasks(orgId);
   const setProjectMember = useSetProjectMember(orgId);
   const createTeamWithMembers = useCreateTeamWithMembers(orgId);
@@ -42,12 +41,9 @@ const OrgCreateForms = ({ orgId, request, onClose }: OrgCreateFormsProps) => {
     // Le serveur refuserait : le bouton qui ouvre ce formulaire est grisé
     // avec son explication (cf. `PermissionHint`), on ne l'ouvre pas pour rien.
     if (!can['project.create']) return null;
-    const submit = async (
-      input: CreateTeamProjectInput,
-      tasks: DraftProjectTask[],
-      coLeadIds: string[],
-    ) => {
-      const projectId = await createProject.mutateAsync({ input, tasks });
+    // Modale unique de projet (2026-10-30) : plus de modèle ni de tâches initiales.
+    const submit = async (input: CreateTeamProjectInput, coLeadIds: string[]) => {
+      const projectId = await createProject.mutateAsync({ input, tasks: [] });
       // Les autres responsables co-pilotent le projet (rôle `lead`, mig. 190).
       // Le projet existe déjà : un échec ici est notifié par le hook, pas rejeté.
       await Promise.allSettled(
@@ -57,15 +53,14 @@ const OrgCreateForms = ({ orgId, request, onClose }: OrgCreateFormsProps) => {
       request.options.onCreated?.(projectId);
     };
     return (
-      <NewTeamProjectModal
+      <ProjectEditDialog
         orgId={orgId}
         teams={teams}
         members={members}
+        canChangeOwner
         currentUserId={user?.id}
         defaultTeamId={request.options.defaultTeamId ?? ''}
-        templates={templates}
-        initialTemplateId={request.options.templateId}
-        onSubmit={submit}
+        onCreate={submit}
         onClose={onClose}
       />
     );

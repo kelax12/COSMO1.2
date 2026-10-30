@@ -13,12 +13,11 @@ interface TeamTasksBulkLayerProps {
   /** Projets actifs, cibles d'un déplacement groupé. */
   projects: TeamProject[];
   placement?: 'floating' | 'inline';
-  /** Listes manuelles de l'organisation (mig. 203) : « Ajouter à une liste ». */
-  lists?: readonly { id: string; name: string; color: string }[];
-  onAddToList?: (listId: string, taskIds: string[]) => void;
+  /** Organisation des listes (mig. 203) : « Liste » ouvre la popup d'ajout groupé. */
+  listsOrgId?: string;
 }
 
-const TeamTasksBulkLayer = ({ bulk, members, projects, placement, lists, onAddToList }: TeamTasksBulkLayerProps) => (
+const TeamTasksBulkLayer = ({ bulk, members, projects, placement, listsOrgId }: TeamTasksBulkLayerProps) => (
   <BulkActionsBar
     count={bulk.selectedTasks.length}
     hasOpen={bulk.selectedTasks.some((t) => !t.completed)}
@@ -35,8 +34,8 @@ const TeamTasksBulkLayer = ({ bulk, members, projects, placement, lists, onAddTo
     onSetPriority={bulk.bulkSetPriority}
     onSetDeadline={bulk.bulkSetDeadline}
     placement={placement}
-    lists={lists}
-    onAddToList={onAddToList ? (listId) => onAddToList(listId, bulk.selectedTasks.map((t) => t.id)) : undefined}
+    listsOrgId={listsOrgId}
+    selectedTaskIds={bulk.selectedTasks.map((t) => t.id)}
   />
 );
 
