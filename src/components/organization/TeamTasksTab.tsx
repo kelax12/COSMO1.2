@@ -48,8 +48,8 @@ interface TeamTasksTabProps {
   members: OrgMember[];
   /** Utilisateur courant — distingue « ma tâche » (toujours supprimable). */
   currentUserId?: string;
-  /** Manager/admin — surfaces HIÉRARCHIQUES uniquement (dépendances de tâches). */
-  isManager: boolean;
+  /** Droit `task.editAny` : modifier les dépendances de tâches (mig. 229). */
+  canEditDependencies: boolean;
   /** Admin : agenda de tout le monde consultable dans « Assigner l'événement » ; sinon soi + son sous-arbre. */
   isAdmin: boolean;
 }
@@ -82,7 +82,7 @@ const TEXT_SORT_FIELDS = new Set(['name', 'project', 'assignee']);
  * (`TeamTasksTable`) est virtualisé, ses colonnes se choisissent et
  * s'exportent.
  */
-const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: TeamTasksTabProps) => {
+const TeamTasksTab = ({ orgId, members, currentUserId, canEditDependencies, isAdmin }: TeamTasksTabProps) => {
   const { can, canAssign } = useMyOrgPermissions(orgId);
   const hints = usePermissionHints(orgId);
   const { t, tp } = useT('org');
@@ -556,7 +556,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           onUpdate={handleUpdate}
           onDelete={removeWithUndo}
           onClose={() => setTaskModal(null)}
-          isManager={isManager}
+          canEditDependencies={canEditDependencies}
         />
       )}
 
