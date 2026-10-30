@@ -77,7 +77,7 @@ const TeamTasksTable = ({
   const show = (c: TaskColumnId) => columns.includes(c);
   const colCount = 4 + columns.length;
 
-  const th = 'px-2 py-3';
+  const th = 'px-2 py-2 whitespace-nowrap';
   const sortable = (field: 'name' | 'priority' | 'deadline' | 'estimatedTime', label: string, className: string, width?: string) => (
     <th className={`cursor-pointer ${className}`} style={width ? { width } : undefined} onClick={() => onSort(field)}
       aria-sort={sortIndicator(field) ? (sortIndicator(field).includes('↑') ? 'ascending' : 'descending') : undefined}>
@@ -87,7 +87,7 @@ const TeamTasksTable = ({
 
   return (
     <div ref={tableRef} data-guide-id="tasks-list" className="table-container shadow-sm overflow-x-auto">
-      <table className="data-table w-full" style={{ minWidth: `${560 + columns.length * 110}px` }} aria-label={pf.t('taskTable.tableAria')} aria-rowcount={lines.length}>
+      <table className="data-table data-table--plain w-full" style={{ minWidth: `${560 + columns.length * 110}px` }} aria-label={pf.t('taskTable.tableAria')} aria-rowcount={lines.length}>
         <thead>
           <tr>
             <th className={th} style={{ width: '40px' }}><span className="sr-only">{t('projects.tasksTabColComplete')}</span></th>
@@ -96,11 +96,11 @@ const TeamTasksTable = ({
             {show('project') && <th className={th} style={{ width: '160px' }}>{t('projects.tasksTabColProject')}</th>}
             {show('status') && <th className={th} style={{ width: '140px' }}>{t('projects.tasksTabColStatus')}</th>}
             {show('assignees') && <th className={th} style={{ width: '150px' }}>{pf.t('taskTable.colAssignees')}</th>}
-            {show('priority') && sortable('priority', t('projects.tasksTabColPriority'), 'text-center px-1 py-3', '80px')}
+            {show('priority') && sortable('priority', t('projects.tasksTabColPriority'), 'text-center px-1 py-2 whitespace-nowrap', '80px')}
             {show('deadline') && sortable('deadline', t('projects.tasksTabColDeadline'), th, '130px')}
-            {show('duration') && sortable('estimatedTime', t('projects.tasksTabColDuration'), 'text-center px-1 py-3', '80px')}
+            {show('duration') && sortable('estimatedTime', t('projects.tasksTabColDuration'), 'text-center px-1 py-2 whitespace-nowrap', '80px')}
             {show('category') && <th className={th} style={{ width: '160px' }}>{pf.t('taskTable.colCategory')}</th>}
-            <th className="text-center px-1 py-3" style={{ width: '70px' }}>{t('projects.tasksTabColActions')}</th>
+            <th className="text-center px-1 py-2 whitespace-nowrap" style={{ width: '70px' }}>{t('projects.tasksTabColActions')}</th>
           </tr>
         </thead>
         <tbody>
@@ -112,7 +112,7 @@ const TeamTasksTable = ({
               const { label, dot } = groupLabel(line.key);
               return (
                 <tr key={line.key} ref={virtualizer.measureElement} data-index={item.index} className="bg-[rgb(var(--color-hover)/0.5)]">
-                  <td colSpan={colCount} className="px-2 py-2">
+                  <td colSpan={colCount} className="px-2 py-[5px]">
                     <button
                       type="button"
                       onClick={() => onToggleGroup(line.key)}

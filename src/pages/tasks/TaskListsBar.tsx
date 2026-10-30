@@ -67,6 +67,8 @@ interface TaskListsBarProps {
   cancelChipLongPress: () => void;
   /** Chemin clavier du menu d'actions d'une liste (mobile), sans appui long : `chipMenuKeyProps`. */
   openListActions?: (listId: string) => void;
+  /** Entreprise (2026-10-30) : moitié moins d'espace entre « Listes » et les pastilles. */
+  compactTop?: boolean;
   /**
    * Ouvre le partage de la liste (bottom-sheet ShareListSheet). Absent = pas
    * de bouton : une liste d'entreprise est déjà partagée par toute l'organisation.
@@ -85,7 +87,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
   createListMutation, deleteListMutation,
   clearListFilter, handleListSelect, startSelectingTasks, confirmAddTasksToList, cancelSelectingTasks,
   startEditList, cancelEditList, submitEditList, handleToggleDefault, handleReorderLists, commitReorderLists,
-  handleCreateSmartList, startChipLongPress, cancelChipLongPress, openListActions,
+  handleCreateSmartList, startChipLongPress, cancelChipLongPress, openListActions, compactTop = false,
   onShareList,
 }) => {
   const { t, tp } = useT('tasks');
@@ -141,7 +143,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         (2026-09-16, gap « Liste » → chips jugé trop grand). */}
                     {/* 🔴 `overflow-y-hidden` + `pb-1` (2026-10-11) : la zone tactile de 44 px
                         débordait de 4 px, la rangée défilait en Y et volait le geste à la page. */}
-                    <div className="flex sm:flex-wrap gap-3 pt-2 pb-1 sm:pt-8 sm:pb-0 overflow-x-auto overflow-y-hidden sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]">
+                    <div className={`flex sm:flex-wrap gap-3 pt-2 pb-1 ${compactTop ? 'sm:pt-3' : 'sm:pt-8'} sm:pb-0 overflow-x-auto overflow-y-hidden sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]`}>
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
