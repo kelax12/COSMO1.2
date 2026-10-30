@@ -22,7 +22,8 @@
 //   anon  client sans session
 //   N     utilisateur authentifié, membre d'AUCUNE organisation
 //   C     membre simple de O (rattaché à M)
-//   M     manager de O : il a un subordonné, C
+//   M     encadrant de O : il a un subordonné, C. Depuis la mig. 229 cela ne lui
+//         donne AUCUN droit d'écriture : la colonne M prouve qu'il n'en a plus.
 //   A     admin de O, et son propriétaire
 //   X     admin d'une AUTRE organisation, O2 (fuite inter-organisations)
 //   E     membre simple de O, ACTEUR DE RIEN : il sert de cible aux insertions
@@ -263,15 +264,15 @@ const SPECS: Spec[] = [
     allowed: { select: ['C', 'M', 'A'], insert: ['C', 'M', 'A'], update: [], delete: ['C', 'M', 'A'] },
   },
   {
-    // SELECT KR visible ET projet visible · INSERT/DELETE okr.create (admin,
-    // manager) ET KR visible (160) · pas d'UPDATE.
+    // SELECT KR visible ET projet visible · INSERT/DELETE okr.create (admin ;
+    // plus de défaut manager depuis la 229) ET KR visible (160) · pas d'UPDATE.
     label: 'team_kr_projects',
     table: 'team_kr_projects',
     keys: ['kr_id', 'project_id'],
     canonical: (d) => ({ kr_id: d.KR, project_id: d.P, org_id: d.O }),
     insertRow: (d) => ({ kr_id: d.KR, project_id: d.P2, org_id: d.O }),
     patch: { added_at: PASSE },
-    allowed: { select: ['C', 'M', 'A'], insert: ['M', 'A'], update: [], delete: ['M', 'A'] },
+    allowed: { select: ['C', 'M', 'A'], insert: ['A'], update: [], delete: ['A'] },
   },
   {
     // SELECT KR visible (160) · écriture par RPC seulement (`post_kr_checkin`).
@@ -308,29 +309,30 @@ const SPECS: Spec[] = [
     allowed: { select: ['C'], insert: ['C', 'M', 'A'], update: [], delete: ['C'] },
   },
   {
-    // SELECT projet visible · INSERT/UPDATE can_edit_team_project (admin,
-    // manager) · DELETE soi-même OU can_edit (190). La ligne est celle de C.
+    // SELECT projet visible · INSERT/UPDATE can_edit_team_project (admin ; plus
+    // de défaut manager, 229) · DELETE soi-même OU can_edit (190). La ligne est celle de C.
     label: 'team_project_members',
     table: 'team_project_members',
     keys: ['project_id', 'user_id'],
     canonical: (d) => ({ project_id: d.P, user_id: d.users.C.id, org_id: d.O, role: 'contributor' }),
     insertRow: (d) => ({ project_id: d.P, user_id: d.users.E.id, org_id: d.O, role: 'contributor' }),
     patch: { role: 'viewer' },
-    allowed: { select: ['C', 'M', 'A'], insert: ['M', 'A'], update: ['M', 'A'], delete: ['C', 'M', 'A'] },
+    allowed: { select: ['C', 'M', 'A'], insert: ['A'], update: ['A'], delete: ['C', 'A'] },
   },
   {
-    // SELECT projet visible · INSERT/DELETE my_project_edit_perm (164) · pas
-    // d'UPDATE, anon révoqué.
+    // SELECT projet visible · INSERT/DELETE my_project_edit_perm (164 ; admin
+    // seul par défaut depuis la 229) · pas d'UPDATE, anon révoqué.
     label: 'team_project_teams',
     table: 'team_project_teams',
     keys: ['project_id', 'team_id'],
     canonical: (d) => ({ project_id: d.P, team_id: d.TM, org_id: d.O, added_by: d.users.A.id }),
     insertRow: (d, a) => ({ project_id: d.P, team_id: d.TM2, org_id: d.O, added_by: a.id }),
     patch: { added_at: PASSE },
-    allowed: { select: ['C', 'M', 'A'], insert: ['M', 'A'], update: [], delete: ['M', 'A'] },
+    allowed: { select: ['C', 'M', 'A'], insert: ['A'], update: [], delete: ['A'] },
   },
   {
-    // SELECT projet visible · écriture can_edit_team_project (197).
+    // SELECT projet visible · écriture can_edit_team_project (197 ; admin seul
+    // par défaut depuis la 229).
     label: 'team_project_statuses',
     table: 'team_project_statuses',
     keys: ['id'],
@@ -340,7 +342,7 @@ const SPECS: Spec[] = [
     fresh: (d) => ({ id: uuid(), org_id: d.O, project_id: d.P, name: 'Cible', maps_to: 'todo' }),
     insertRow: (d) => ({ id: uuid(), org_id: d.O, project_id: d.P, name: 'Forgé', maps_to: 'review' }),
     patch: { name: 'Renommé' },
-    allowed: { select: ['C', 'M', 'A'], insert: ['M', 'A'], update: ['M', 'A'], delete: ['M', 'A'] },
+    allowed: { select: ['C', 'M', 'A'], insert: ['A'], update: ['A'], delete: ['A'] },
   },
   {
     // Automatisation d'ORGANISATION (198) : SELECT is_org_member, écriture
@@ -362,7 +364,8 @@ const SPECS: Spec[] = [
     allowed: { select: ['C', 'M', 'A'], insert: ['A'], update: ['A'], delete: ['A'] },
   },
   {
-    // Automatisation de PROJET (198) : écriture can_edit_team_project.
+    // Automatisation de PROJET (198) : écriture can_edit_team_project (admin
+    // seul par défaut depuis la 229).
     label: 'team_automations (projet)',
     table: 'team_automations',
     keys: ['id'],
@@ -379,19 +382,19 @@ const SPECS: Spec[] = [
       action_kind: 'set_priority', action_value: '1',
     }),
     patch: { name: 'Renommée' },
-    allowed: { select: ['C', 'M', 'A'], insert: ['M', 'A'], update: ['M', 'A'], delete: ['M', 'A'] },
+    allowed: { select: ['C', 'M', 'A'], insert: ['A'], update: ['A'], delete: ['A'] },
   },
   {
     // Audience d'un OKR confidentiel (205, 212 · E-3) : SELECT OKR visible,
-    // INSERT/DELETE can_manage_team_okr_audience (admin, ou manager qui voit
-    // l'OKR). Pas de GRANT UPDATE.
+    // INSERT/DELETE can_manage_team_okr_audience (admin, ou okr.create et voit
+    // l'OKR depuis la 229 ; M ne l'a plus par défaut). Pas de GRANT UPDATE.
     label: 'team_okr_members',
     table: 'team_okr_members',
     keys: ['okr_id', 'user_id'],
     canonical: (d) => ({ okr_id: d.OK, org_id: d.O, user_id: d.users.C.id, added_by: d.users.A.id }),
     insertRow: (d) => ({ okr_id: d.OK, org_id: d.O, user_id: d.users.E.id }),
     patch: { added_at: PASSE },
-    allowed: { select: ['C', 'M', 'A'], insert: ['M', 'A'], update: [], delete: ['M', 'A'] },
+    allowed: { select: ['C', 'M', 'A'], insert: ['A'], update: [], delete: ['A'] },
   },
   {
     // SELECT is_org_member · écriture admin OU role.manage (219).

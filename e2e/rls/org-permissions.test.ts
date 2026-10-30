@@ -135,11 +135,14 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
       // Les deux moitiés du WITH CHECK restent vérifiées séparément juste en
       // dessous : c'est ce qui a permis d'écarter la piste du droit mal dérivé,
       // et ça garde sa valeur le jour où ce test redeviendra rouge.
+      // 🔴 Mig. 229 (2026-10-30, décision d'Axel) : encadrer quelqu'un ne donne
+      // PLUS project.create. Le test prouvait l'inverse ; il prouve désormais
+      // que le défaut « manager » est bien parti de la base.
       const { data: perm } = await chef.client.rpc('my_org_perm', {
         p_org: orgId,
         p_key: 'project.create',
       });
-      expect(perm, '`chef` a un subordonné : la base doit lui accorder project.create').toBe(true);
+      expect(perm, '`chef` a un subordonné, mais la mig. 229 ne lui donne plus project.create').toBe(false);
 
       const { data: session } = await chef.client.auth.getUser();
       expect(session.user?.id, "l'identité du JWT doit être celle qu'on écrit dans created_by").toBe(chef.id);
@@ -149,10 +152,9 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
         .from('team_projects')
         .insert({ id, org_id: orgId, name: 'Projet du chef', created_by: chef.id });
 
-      expect(error).toBeNull();
+      expect(error, 'la policy doit refuser : plus de droit dérivé de la hiérarchie').not.toBeNull();
       const { data: relu } = await admin.from('team_projects').select('id').eq('id', id).maybeSingle();
-      expect(relu?.id, 'la ligne doit exister en base, pas seulement ne pas avoir erreur').toBe(id);
-      await admin.from('team_projects').delete().eq('id', id);
+      expect(relu, 'aucune ligne ne doit avoir été écrite').toBeNull();
     });
 
     it('un membre simple ne crée PAS de projet', async () => {
@@ -312,13 +314,16 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
       await admin.from('org_member_permissions').delete().eq('org_id', orgId);
     });
 
-    it('un manager règle les permissions de son sous-arbre', async () => {
-      const { error } = await chef.client
+    it('un manager ne règle PLUS les permissions de son sous-arbre (mig. 229 : admin seul)', async () => {
+      const { data } = await chef.client
         .from('org_member_permissions')
         .upsert({ org_id: orgId, user_id: stagiaire.id, can_create_task: false })
         .select('user_id');
 
-      expect(error).toBeNull();
+      expect(data ?? []).toEqual([]);
+      const { data: ligne } = await admin.from('org_member_permissions')
+        .select('user_id').eq('org_id', orgId).eq('user_id', stagiaire.id).maybeSingle();
+      expect(ligne, 'aucune fiche ne doit avoir été écrite par le supérieur').toBeNull();
     });
 
     it('un manager ne règle PAS les permissions hors de son sous-arbre', async () => {
