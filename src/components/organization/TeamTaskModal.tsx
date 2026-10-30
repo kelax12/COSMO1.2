@@ -37,7 +37,7 @@ const TaskDetailsExtras = lazyWithRetry(() => import('./TaskDetailsExtras'), ['o
 const TaskCommentsSection = lazyWithRetry(() => import('./TaskCommentsSection'));
 
 
-type TaskTab = 'details' | 'subtasks' | 'dependencies' | 'history';
+type TaskTab = 'details' | 'advanced' | 'subtasks' | 'dependencies' | 'history';
 
 interface TeamTaskModalProps {
   /** Tâche à éditer — absente en création. */
@@ -95,7 +95,7 @@ const TeamTaskModal = ({
 }: TeamTaskModalProps) => {
   const { t } = useT('org');
   const [tab, setTab] = useState<TaskTab>('details');
-  const [status, setStatus] = useState<TeamTaskStatus>(task?.status ?? defaultStatus ?? 'todo');
+  const [status, setStatus] = useState<TeamTaskStatus>(task?.status ?? defaultStatus ?? 'in_progress');
   const [name, setName] = useState(task?.name ?? '');
   const [description, setDescription] = useState(task?.description ?? '');
   // Pas de présélection en création : tant que l'utilisateur n'a pas cliqué
@@ -110,9 +110,11 @@ const TeamTaskModal = ({
   const [projectId, setProjectId] = useState(
     task?.projectId ?? defaultProjectId ?? (requireProjectChoice ? '' : projects[0]?.id ?? ''),
   );
-  // Catégorie (mig. 111) — indépendante du projet : la tâche ne l'hérite
-  // jamais automatiquement, même en changeant de projet.
-  const [categoryId, setCategoryId] = useState<string | null>(task?.categoryId ?? null);
+  // Catégorie (mig. 111) : pré-remplie par celle du projet quand on en choisit
+  // un (2026-10-30), toujours modifiable ensuite.
+  const [categoryId, setCategoryId] = useState<string | null>(
+    () => task?.categoryId ?? (task ? null : projects.find((p) => p.id === (defaultProjectId ?? (requireProjectChoice ? '' : projects[0]?.id)))?.categoryId ?? null),
+  );
   const [assigneeIds, setAssigneeIds] = useState<string[]>(task?.assigneeIds ?? defaultAssigneeIds ?? []);
   const [showAssignees, setShowAssignees] = useState(isCreating ? (defaultAssigneeIds?.length ?? 0) > 0 : (task?.assigneeIds.length ?? 0) > 0);
   const [error, setError] = useState<string | null>(null);
@@ -306,6 +308,7 @@ const TeamTaskModal = ({
 
   const tabs: { id: TaskTab; label: string }[] = [
     { id: 'details', label: t('popups.task.tabDetails') },
+    { id: 'advanced', label: t('popups.task.tabAdvanced') },
     { id: 'subtasks', label: creating && draftSubtasks.length > 0 ? `${t('popups.task.tabSubtasks')} (${draftSubtasks.length})` : t('popups.task.tabSubtasks') },
     { id: 'dependencies', label: creating && draftBlockedBy.length > 0 ? `${t('popups.task.tabDependencies')} (${draftBlockedBy.length})` : t('popups.task.tabDependencies') },
     ...(liveTask ? [{ id: 'history' as const, label: t('popups.task.tabHistory') }] : []),
@@ -433,9 +436,9 @@ const TeamTaskModal = ({
             </div>
           )}
 
-          {tab === 'details' && (
+          {(tab === 'details' || tab === 'advanced') && (
             <>
-              {liveTask && <TeamTaskBlockedNote task={liveTask} onOpen={() => setTab('dependencies')} />}
+              {tab === 'details' && liveTask && <TeamTaskBlockedNote task={liveTask} onOpen={() => setTab('dependencies')} />}
               <TeamTaskFields
                 orgId={orgId}
                 projects={projects}
@@ -458,7 +461,12 @@ const TeamTaskModal = ({
                   </Suspense>
                 }
                 projectId={projectId}
-                onProjectChange={(v) => { setProjectId(v); setDraftBlockedBy([]); }}
+                onProjectChange={(v) => {
+                  setProjectId(v);
+                  setDraftBlockedBy([]);
+                  const projectCategory = projects.find((p) => p.id === v)?.categoryId;
+                  if (projectCategory) setCategoryId(projectCategory);
+                }}
                 priority={priority}
                 onPriorityChange={setPriority}
                 deadline={deadline}
@@ -475,9 +483,10 @@ const TeamTaskModal = ({
                 isWide={isWide}
                 priorityLabelOf={priorityLabelOf}
                 onSubmit={handleSave}
+                section={tab}
               />
               {/* Sous `lg`, les commentaires vivent ici ; au-delà, dans le panneau de droite. */}
-              {!isWide && comments}
+              {tab === 'details' && !isWide && comments}
             </>
           )}
 
@@ -489,7 +498,7 @@ const TeamTaskModal = ({
 
           {/* Sous-tâches, dépendances, historique : chargés à la première
               ouverture de leur onglet (cf. TeamTaskTabPanels). */}
-          {tab !== 'details' && (
+          {tab !== 'details' && tab !== 'advanced' && (
             <Suspense fallback={null}>
               <TeamTaskTabPanels
                 tab={tab}

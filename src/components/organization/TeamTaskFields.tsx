@@ -105,6 +105,8 @@ interface TeamTaskFieldsProps {
 
   priorityLabelOf: (priority: number) => string;
   onSubmit: () => void;
+  /** Onglet rendu : « Détails » (défaut) ou « Avancé » (durée, listes, statut). */
+  section?: 'details' | 'advanced';
 }
 
 const TeamTaskFields = ({
@@ -137,14 +139,60 @@ const TeamTaskFields = ({
   isWide,
   priorityLabelOf,
   onSubmit,
+  section = 'details',
 }: TeamTaskFieldsProps) => {
   const { t } = useT('org');
   const create = useOrgCreate();
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-5">
-      {/* Statut EN TÊTE : c'est la première chose qu'on vient changer sur une
-          tâche existante, et la fiche ne permettait pas de le faire. */}
+      {section === 'advanced' ? (
+        <>
+          {/* Onglet « Avancé » (2026-10-30) : durée, listes, statut. */}
+        <div>
+          <label htmlFor="team-task-time" className={labelClass} style={labelStyle}>{t('taskModal.estimatedTime')}</label>
+          {/* Même design +/- que son homologue en mode personnel
+              (DesktopDetailsStep) : un pas de 5 min de chaque côté du champ,
+              jamais sous 0. */}
+          <div className="flex items-stretch gap-2">
+            <input
+              id="team-task-time"
+              type="number"
+              min={0}
+              max={100000}
+              value={estimatedTime}
+              onChange={(e) => onEstimatedTimeChange(e.target.value)}
+              placeholder={t('taskModal.timePlaceholder')}
+              className={`flex-1 min-w-0 ${inputClass} appearance-none`}
+              style={inputStyle}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const cur = Number(estimatedTime) || 0;
+                onEstimatedTimeChange(String(Math.max(0, cur - 5)));
+              }}
+              className={`w-11 ${inputHeightClass} flex items-center justify-center border rounded-lg hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors shrink-0`}
+              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
+              aria-label={t('taskModal.estimatedTimeDecrease')}
+            >
+              <Minus size={18} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const cur = Number(estimatedTime) || 0;
+                onEstimatedTimeChange(String(cur + 5));
+              }}
+              className={`w-11 ${inputHeightClass} flex items-center justify-center border rounded-lg hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors shrink-0`}
+              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
+              aria-label={t('taskModal.estimatedTimeIncrease')}
+            >
+              <Plus size={18} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      {labelsField}
       <div>
         <span className={labelClass} style={labelStyle}>{t('popups.task.status')}</span>
         <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('popups.task.status')}>
@@ -168,6 +216,9 @@ const TeamTaskFields = ({
         </div>
       </div>
 
+        </>
+      ) : (
+        <>
       <div data-guide-id="task-form-title">
         <label htmlFor="team-task-name" className={labelClass} style={labelStyle}>{t('taskModal.name')}</label>
         <input
@@ -196,17 +247,6 @@ const TeamTaskFields = ({
           style={inputStyle}
         />
       </div>
-
-      {/* Catégorie (mig. 111) — distincte du projet, jamais héritée de
-          lui : une tâche porte sa propre catégorie. */}
-      <div>
-        <span className={labelClass} style={labelStyle}>{t('project.category')}</span>
-        <Suspense fallback={<div aria-hidden="true" className="w-full min-h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]" />}>
-          <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={onCategoryChange} />
-        </Suspense>
-      </div>
-
-      {labelsField}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div data-guide-id="task-form-project">
@@ -270,6 +310,16 @@ const TeamTaskFields = ({
           </div>
         </div>
 
+      </div>
+
+      {/* Catégorie (pré-remplie par le projet, modifiable) et échéance (2026-10-30). */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <span className={labelClass} style={labelStyle}>{t('project.category')}</span>
+          <Suspense fallback={<div aria-hidden="true" className="w-full min-h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]" />}>
+            <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={onCategoryChange} />
+          </Suspense>
+        </div>
         <div>
           <label htmlFor="team-task-deadline" className={labelClass} style={labelStyle}>{t('taskModal.deadline')}</label>
           {/* Calendrier COSMO, jamais le picker natif du navigateur : il
@@ -287,49 +337,6 @@ const TeamTaskFields = ({
           />
         </div>
 
-        <div>
-          <label htmlFor="team-task-time" className={labelClass} style={labelStyle}>{t('taskModal.estimatedTime')}</label>
-          {/* Même design +/- que son homologue en mode personnel
-              (DesktopDetailsStep) : un pas de 5 min de chaque côté du champ,
-              jamais sous 0. */}
-          <div className="flex items-stretch gap-2">
-            <input
-              id="team-task-time"
-              type="number"
-              min={0}
-              max={100000}
-              value={estimatedTime}
-              onChange={(e) => onEstimatedTimeChange(e.target.value)}
-              placeholder={t('taskModal.timePlaceholder')}
-              className={`flex-1 min-w-0 ${inputClass} appearance-none`}
-              style={inputStyle}
-            />
-            <button
-              type="button"
-              onClick={() => {
-                const cur = Number(estimatedTime) || 0;
-                onEstimatedTimeChange(String(Math.max(0, cur - 5)));
-              }}
-              className={`w-11 ${inputHeightClass} flex items-center justify-center border rounded-lg hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors shrink-0`}
-              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
-              aria-label={t('taskModal.estimatedTimeDecrease')}
-            >
-              <Minus size={18} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const cur = Number(estimatedTime) || 0;
-                onEstimatedTimeChange(String(cur + 5));
-              }}
-              className={`w-11 ${inputHeightClass} flex items-center justify-center border rounded-lg hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors shrink-0`}
-              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
-              aria-label={t('taskModal.estimatedTimeIncrease')}
-            >
-              <Plus size={18} aria-hidden="true" />
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Assignés — disclosure mobile/tablette uniquement : à partir de
@@ -367,6 +374,8 @@ const TeamTaskFields = ({
             </div>
           )}
         </div>
+      )}
+        </>
       )}
     </form>
   );

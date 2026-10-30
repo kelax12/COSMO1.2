@@ -572,6 +572,7 @@
     "deleteAria": "Supprimer ce commentaire",
     "mentionAria": "Mentionner un membre",
     "sendAria": "Envoyer le commentaire",
+    "send": "Envoyer",
     "formerMember": "Ancien membre",
     "deleted": "Commentaire supprimé",
     "title": "Commentaires",
@@ -814,6 +815,7 @@
       "noRights": "Vous n'avez pas les droits pour modifier cette tâche.",
       "tabsAria": "Sections de la tâche",
       "tabDetails": "Détails",
+      "tabAdvanced": "Avancé",
       "tabSubtasks": "Sous-tâches",
       "tabDependencies": "Dépendances",
       "tabHistory": "Historique",
@@ -1004,6 +1006,9 @@
     "empty": "Aucune liste dans l'entreprise pour l'instant.",
     "addToList": "Ajouter à une liste",
     "addToListShort": "Liste",
-    "deleted": "Liste supprimée"
+    "deleted": "Liste supprimée",
+    "pickerDone": "Terminer",
+    "pickerCount": "{count} sélectionnée(s)",
+    "removeFromList": "Retirer {name}"
   }
 }
