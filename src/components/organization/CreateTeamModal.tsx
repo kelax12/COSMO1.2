@@ -4,11 +4,11 @@ import { X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { subtreeOf, type OrgMember } from '@/modules/organizations';
 import MemberPickList from './MemberPickList';
-import type { CreateTeamFullInput } from '@/modules/org-teams';
+import { useEditTeamWithMembers, type CreateTeamFullInput, type OrgTeam, type OrgTeamMember } from '@/modules/org-teams';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
-import CustomColorSwatch from '@/components/CustomColorSwatch';
+import { TEAM_DESCRIPTION_MAX } from './team-page.helpers';
 
 /** Palette d'équipes — valeurs CSS directes (pastilles `backgroundColor`). */
 // Noms de couleur = CLÉS du catalogue : cette constante est évaluée au premier
@@ -33,8 +33,14 @@ interface CreateTeamModalProps {
   initialMemberIds?: string[];
   /** Nom pré-rempli. */
   initialName?: string;
-  /** Crée l'équipe, y ajoute les membres, nomme le responsable. Rejette en cas d'échec. */
-  onSubmit: (input: CreateTeamFullInput) => Promise<void>;
+  /**
+   * Modification d'une équipe existante (2026-10-30) : le même formulaire,
+   * pré-rempli, avec la description en plus. Les membres actuels restent
+   * proposés même hors du périmètre d'ajout, pour pouvoir les décocher.
+   */
+  edit?: { color: string; description: string; leadId: string | null };
+  /** Crée (ou modifie) l'équipe, ses membres, son responsable. Rejette en cas d'échec. */
+  onSubmit: (input: CreateTeamFullInput & { description?: string | null }) => Promise<void>;
   onClose: () => void;
 }
 
@@ -52,30 +58,34 @@ const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
  * passe par `MemberPickList` : recherche et affichage par tranches, là où
  * elle rendait mille lignes d'un bloc.
  */
-export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberIds, initialName, onSubmit, onClose, inline = false }: CreateTeamModalProps & {
+export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberIds, initialName, edit, onSubmit, onClose, inline = false }: CreateTeamModalProps & {
   /** Intégré dans une autre surface : pas de défilement propre, bords arrondis. */
   inline?: boolean;
 }) => {
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
   const [name, setName] = useState(initialName ?? '');
-  const [color, setColor] = useState<string>(TEAM_COLORS[0].value);
+  const [color, setColor] = useState<string>(edit?.color ?? TEAM_COLORS[0].value);
+  const [description, setDescription] = useState(edit?.description ?? '');
   const [selected, setSelected] = useState<string[]>(() => {
-    const ids = currentUserId ? [currentUserId] : [];
+    // En modification, l'équipe telle qu'elle est : on ne s'y rajoute pas.
+    const ids = currentUserId && !edit ? [currentUserId] : [];
     for (const id of initialMemberIds ?? []) if (!ids.includes(id)) ids.push(id);
     return ids;
   });
   // Par défaut, celui qui crée l'équipe en répond : c'est le cas courant.
-  const [leadId, setLeadId] = useState(currentUserId ?? '');
+  const [leadId, setLeadId] = useState(edit ? edit.leadId ?? '' : currentUserId ?? '');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  // Membres proposables : admin → tout le monde ; manager → soi + sous-arbre.
+  // Membres proposables : admin → tout le monde ; manager → soi + sous-arbre,
+  // plus les membres déjà présents en modification.
   const addable = useMemo(() => {
     if (isAdmin) return members;
     const mine = currentUserId ? subtreeOf(members, currentUserId) : new Set<string>();
-    return members.filter((m) => m.userId === currentUserId || mine.has(m.userId));
-  }, [members, currentUserId, isAdmin]);
+    const current = new Set(edit ? initialMemberIds : []);
+    return members.filter((m) => m.userId === currentUserId || mine.has(m.userId) || current.has(m.userId));
+  }, [members, currentUserId, isAdmin, edit, initialMemberIds]);
 
   // Couronner quelqu'un l'ajoute aux membres (il le serait de toute façon).
   const pickLead = (userId: string) => {
@@ -95,7 +105,10 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberI
     setPending(true);
     setError(null);
     try {
-      await onSubmit({ name: n, color, memberIds: selected, leadId: leadId || null });
+      await onSubmit({
+        name: n, color, memberIds: selected, leadId: leadId || null,
+        ...(edit ? { description: description.trim() || null } : {}),
+      });
       onClose();
     } catch {
       setPending(false); // erreur déjà notifiée par les hooks (toast)
@@ -146,9 +159,28 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberI
                   <span className="w-5 h-5 rounded-full" style={{ backgroundColor: c.value }} />
                 </button>
               ))}
-              <CustomColorSwatch value={color} palette={TEAM_COLORS.map((c) => c.value)} onChange={setColor} className="w-5 h-5 m-1.5 rounded-full" />
             </div>
           </div>
+
+          {/* Description : elle n'existe qu'en modification (la création reste courte). */}
+          {edit && (
+            <div>
+              <label htmlFor="team-description" className={labelClass} style={labelStyle}>{t('teamPage.descriptionLabel')}</label>
+              <textarea
+                id="team-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                maxLength={TEAM_DESCRIPTION_MAX}
+                rows={3}
+                placeholder={t('teamPage.descriptionPlaceholder')}
+                className="w-full px-[0.875425rem] py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-[0.875425rem] resize-y"
+                style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
+              />
+              <p className="mt-1 text-caption text-right text-[rgb(var(--color-text-muted))]">
+                {description.length}/{TEAM_DESCRIPTION_MAX}
+              </p>
+            </div>
+          )}
 
           {/* Membres */}
           <div data-guide-id="team-form-members">
@@ -203,10 +235,10 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberI
             {pending ? (
               <>
                 <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
-                <span>{t('team.creating')}</span>
+                <span>{edit ? t('teamPage.saving') : t('team.creating')}</span>
               </>
             ) : (
-              t('team.create')
+              edit ? t('teamPage.save') : t('team.create')
             )}
           </Button>
         </div>
@@ -218,13 +250,14 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberI
 const CreateTeamModal = (props: CreateTeamModalProps) => {
   const { t } = useT('org');
   const { onClose } = props;
+  const title = props.edit ? t('teamPage.edit') : t('team.newTeam');
 
   // C-53 — piege de focus, restitution du focus au declencheur, Echap et
   // semantique ARIA. Le nom accessible est celui que la surface portait deja.
   const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
     open: true,
     onClose: onClose,
-    label: t('team.newTeam'),
+    label: title,
   });
 
   return createPortal(
@@ -248,7 +281,7 @@ const CreateTeamModal = (props: CreateTeamModalProps) => {
           style={{ borderColor: 'rgb(var(--color-border))' }}
         >
           <h2 className="text-base sm:text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            {t('team.newTeam')}
+            {title}
           </h2>
           <button
             onClick={onClose}
@@ -264,6 +297,41 @@ const CreateTeamModal = (props: CreateTeamModalProps) => {
       </div>
     </div>,
     document.body,
+  );
+};
+
+interface EditTeamModalProps {
+  orgId: string;
+  team: OrgTeam;
+  members: OrgMember[];
+  /** Appartenances de CETTE équipe. */
+  memberships: OrgTeamMember[];
+  currentUserId?: string;
+  isAdmin: boolean;
+  onClose: () => void;
+}
+
+/**
+ * « Modifier l'équipe » ouvre cette même modale, pré-remplie (2026-10-30) :
+ * nom, couleur, description, membres et responsable au même endroit. Elle
+ * remplace `TeamProfileEditor`, qui ne touchait qu'à la fiche. Rangée ici,
+ * avec le formulaire qu'elle réutilise (garde `org-create.guard.test.ts`).
+ */
+export const EditTeamModal = ({ orgId, team, members, memberships, currentUserId, isAdmin, onClose }: EditTeamModalProps) => {
+  const editTeam = useEditTeamWithMembers(orgId);
+  const memberIds = memberships.map((m) => m.userId);
+  const leadId = memberships.find((m) => m.isLead)?.userId ?? null;
+  return (
+    <CreateTeamModal
+      members={members}
+      currentUserId={currentUserId}
+      isAdmin={isAdmin}
+      initialName={team.name}
+      initialMemberIds={memberIds}
+      edit={{ color: team.color, description: team.description ?? '', leadId }}
+      onSubmit={(input) => editTeam(team.id, { memberIds, leadId }, { ...input, description: input.description ?? null })}
+      onClose={onClose}
+    />
   );
 };
 
