@@ -59,10 +59,26 @@ const pickerDialog = (page: Page) =>
 const openDependenciesTab = (dialog: ReturnType<Page['getByRole']>) =>
   dialog.getByRole('tab', { name: /^dépendances/i }).click();
 
+/**
+ * Le chemin critique n'a plus de légende depuis la vue Planning allégée
+ * (6062fcdb, 2026-10-30) : il ne se lit plus qu'au surlignage ambre des barres.
+ * Sa présence prouve que le graphe seedé a traversé repository → hook →
+ * calcul → rendu. La durée chiffrée n'est plus affichée nulle part.
+ */
+const criticalBars = (page: Page) => page.locator('button.ring-amber-500');
+
+/**
+ * Deux colonnes depuis 66ba1f31 (2026-10-30) : « Bloquée par » a son
+ * « Ajouter un prérequis », « Bloque » son « Ajouter une tâche suivante ».
+ * Le sélecteur, lui, s'appelle toujours « Ajouter une dépendance ».
+ */
+const addBlocker = (dialog: ReturnType<Page['getByRole']>) =>
+  dialog.getByRole('button', { name: /ajouter un prérequis/i });
+
 test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
 
-  test('Planning : le chemin critique est signalé et chiffré', async ({ demoPage: page }) => {
+  test('Planning : le chemin critique est signalé', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
@@ -70,13 +86,7 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
     await page.waitForURL(/\/entreprise\/projects/);
     await switchView(page, 'Planning');
 
-    // La légende n'existe QUE s'il y a un chemin — sa présence prouve déjà que
-    // le graphe seedé a traversé repository → hook → calcul → rendu.
-    const legend = page.getByTitle(/plus longue chaîne de tâches/i);
-    await expect(legend).toBeVisible({ timeout: 15_000 });
-    // Et qu'il est chiffré : un chemin sans durée signalerait un graphe relié
-    // à des tâches sans estimation, donc un calcul qui ne sert à rien.
-    await expect(legend).toContainText(/\d/);
+    await expect(criticalBars(page).first()).toBeVisible({ timeout: 15_000 });
 
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });
@@ -86,7 +96,7 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
     await openOrgSection(page, /^projets/i);
     await page.waitForURL(/\/entreprise\/projects/);
     await switchView(page, 'Planning');
-    await expect(page.getByTitle(/plus longue chaîne de tâches/i)).toBeVisible({ timeout: 15_000 });
+    await expect(criticalBars(page).first()).toBeVisible({ timeout: 15_000 });
 
     const ringed = await page.evaluate(() =>
       [...document.querySelectorAll('button.ring-amber-500')]
@@ -139,8 +149,8 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
     await expect(dialog).toBeVisible({ timeout: 10_000 });
 
     await openDependenciesTab(dialog);
-    await expect(dialog.getByText(/peut démarrer dès maintenant/i)).toBeVisible();
-    await expect(dialog.getByText(/^Bloque$/)).toBeVisible();
+    await expect(dialog.getByText('Aucun prérequis.')).toBeVisible();
+    await expect(dialog.getByRole('region', { name: /^bloque$/i }).getByText('Kit presse')).toBeVisible();
   });
 
   test('Ajout : le sélecteur reste dans le projet, et désactive un lien déjà posé', async ({ demoPage: page }) => {
@@ -152,7 +162,7 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
     await page.getByRole('button', { name: /Modifier la tâche Plan de communication/i }).click();
     const dialog = taskDialog(page);
     await openDependenciesTab(dialog);
-    await dialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
+    await addBlocker(dialog).click();
 
     const picker = pickerDialog(page);
     await expect(picker).toBeVisible();
@@ -184,8 +194,7 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
 
     const readCritical = async () => {
       await switchView(page, 'Planning');
-      const legend = page.getByTitle(/plus longue chaîne de tâches/i);
-      await expect(legend).toBeVisible({ timeout: 15_000 });
+      await expect(criticalBars(page).first()).toBeVisible({ timeout: 15_000 });
       return page.evaluate(() =>
         document.querySelectorAll('button.ring-amber-500').length);
     };
@@ -196,7 +205,7 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
     await page.getByRole('button', { name: /Modifier la tâche Plan de communication/i }).click();
     const dialog = taskDialog(page);
     await openDependenciesTab(dialog);
-    await dialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
+    await addBlocker(dialog).click();
 
     // Le picker est une liste à cocher, pas un menu : on sélectionne, PUIS on
     // confirme. Le bouton de confirmation porte le nombre choisi, ce qui le
