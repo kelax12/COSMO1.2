@@ -38,9 +38,10 @@ const NoCategoryOption: React.FC<NoCategoryOptionProps> = ({ selected, onSelect,
       role="option"
       aria-selected={selected}
       onClick={onSelect}
-      className="flex w-full items-center gap-2 min-h-11 ps-[2.25rem] text-left text-sm text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
+      // 20 % plus petite que les catégories (2026-10-30) : 35 px de haut, texte 11 px.
+      className="flex w-full items-center gap-1.5 min-h-[35px] ps-[2.25rem] text-left text-[11px] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
     >
-      <Ban size={12} className="shrink-0 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+      <Ban size={10} className="shrink-0 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
       <span className="truncate">{label}</span>
     </button>
   );

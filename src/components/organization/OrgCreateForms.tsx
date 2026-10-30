@@ -42,12 +42,15 @@ const OrgCreateForms = ({ orgId, request, onClose }: OrgCreateFormsProps) => {
     // avec son explication (cf. `PermissionHint`), on ne l'ouvre pas pour rien.
     if (!can['project.create']) return null;
     // Modale unique de projet (2026-10-30) : plus de modèle ni de tâches initiales.
-    const submit = async (input: CreateTeamProjectInput, coLeadIds: string[]) => {
+    const submit = async (input: CreateTeamProjectInput, coLeadIds: string[], memberIds: string[]) => {
       const projectId = await createProject.mutateAsync({ input, tasks: [] });
       // Les autres responsables co-pilotent le projet (rôle `lead`, mig. 190).
       // Le projet existe déjà : un échec ici est notifié par le hook, pas rejeté.
       await Promise.allSettled(
-        coLeadIds.map((userId) => setProjectMember.mutateAsync({ projectId, userId, role: 'lead' })),
+        [
+          ...coLeadIds.map((userId) => setProjectMember.mutateAsync({ projectId, userId, role: 'lead' })),
+          ...memberIds.map((userId) => setProjectMember.mutateAsync({ projectId, userId, role: 'contributor' })),
+        ],
       );
       toast.success(tErrors('success.projectCreated'));
       request.options.onCreated?.(projectId);

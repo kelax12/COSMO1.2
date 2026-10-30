@@ -1066,6 +1066,7 @@
     "weightedProgress": "Progression pondérée · {{pct}} %",
     "eyebrow": "Mode entreprise · OKR",
     "customOption": "Personnaliser",
+    "addTeam": "Ajouter une équipe",
     "customPeople": "Personnes",
     "visibilityCustom": "Visible uniquement par les équipes et personnes choisies, leur hiérarchie et les admins.",
     "visibilityNoneChosen": "Aucune équipe choisie : seuls les admins verront cet objectif."

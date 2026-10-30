@@ -219,7 +219,11 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
   // est déjà au niveau maximal (miroir du trigger, mig. 148).
   const atMaxDepth = (parentId: string) => treeDepth(parentId, categories) >= TEAM_CATEGORY_MAX_DEPTH;
 
-  const renderNode = (node: TeamCategoryNode, depth: number): React.ReactNode => {
+  // `siblingsHaveChildren` : une sœur ouvre une cascade, donc porte un chevron
+  // après ses « … ». Les autres lignes réservent la même largeur, pour que
+  // TOUS les boutons d'action d'un niveau restent alignés (2026-10-30). Sans
+  // aucune cascade au niveau, ils restent collés au bord droit.
+  const renderNode = (node: TeamCategoryNode, depth: number, siblingsHaveChildren = false): React.ReactNode => {
     const cat = node.category;
     const hasChildren = node.children.length > 0;
     const isExpanded = hasChildren && expanded.has(cat.id);
@@ -319,6 +323,9 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
             </DropdownMenuContent>
           </DropdownMenu>
         )}
+        {canHover && !hasChildren && siblingsHaveChildren && (
+          <span className="w-[22px] shrink-0" aria-hidden="true" />
+        )}
       </div>
     );
 
@@ -326,7 +333,7 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
       <React.Fragment key={cat.id}>
         {canHover && hasChildren ? (
           <CascadeFlyout id={cat.id} row={rowEl} ariaLabel={cat.name} panelClassName="z-[10000]">
-            {node.children.map((child) => renderNode(child, 0))}
+            {node.children.map((child) => renderNode(child, 0, node.children.some((c) => c.children.length > 0)))}
           </CascadeFlyout>
         ) : rowEl}
 
@@ -446,7 +453,13 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
       >
         <div role="listbox" aria-label={t('teamCategory.picker')}>
           <NoCategoryOption selected={!value} onSelect={() => { onChange(null); close(); }} />
-          <CascadeLevel>{buildTree(categories).map((node) => renderNode(node, 0))}</CascadeLevel>
+          <CascadeLevel>
+            {(() => {
+              const roots = buildTree(categories);
+              const anyCascade = roots.some((n) => n.children.length > 0);
+              return roots.map((node) => renderNode(node, 0, anyCascade));
+            })()}
+          </CascadeLevel>
         </div>
 
         {canManage && (
@@ -487,7 +500,7 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
             <button
               type="button"
               onClick={openCreateRoot}
-              className="mt-1 w-full inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors"
+              className="mt-1 w-full inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:bg-[rgb(var(--color-hover))] transition-colors"
             >
               <Plus size={12} aria-hidden="true" /> {t('okrCategory.new')}
             </button>

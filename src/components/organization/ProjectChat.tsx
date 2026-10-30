@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { MessagesSquare, SendHorizontal, Trash2 } from 'lucide-react';
+import { SendHorizontal, Trash2 } from 'lucide-react';
 import {
   useProjectMessages, useAddProjectMessage, useDeleteProjectMessage,
   type TeamProject, type TeamProjectMember,
@@ -52,7 +52,7 @@ const ProjectChat = ({ project, projectMembers, members, currentUserId, readOnly
       className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] flex flex-col"
     >
       <h3 id={`project-chat-${project.id}`} className="flex items-center gap-1.5 px-4 pt-4 pb-2 text-sm font-bold text-[rgb(var(--color-text-primary))]">
-        <MessagesSquare size={15} aria-hidden="true" /> {pf('chat.title')}
+        {pf('chat.title')}
       </h3>
 
       <div ref={listRef} className="px-4 max-h-[420px] min-h-[120px] overflow-y-auto space-y-3 pb-2" aria-live="polite">

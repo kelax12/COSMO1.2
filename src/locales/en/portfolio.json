@@ -87,6 +87,7 @@
   "new": {
     "owner": "Owner",
     "owners": "Owners",
+    "members": "Project members",
     "dueDate": "End",
     "color": "Color",
     "description": "Description (optional)",

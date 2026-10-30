@@ -36,6 +36,7 @@ import {
   type SyncTeamKRInput,
 } from '@/modules/team-okrs';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
+import { CascadeFlyout, CascadeLevel } from '@/components/category/CascadeFlyout';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -286,7 +287,6 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
     <Sheet open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg md:max-w-[863px] xl:max-w-[971px] rounded-l-2xl border-l-0 overflow-hidden">
         <SheetHeader className="border-b border-[rgb(var(--color-border-muted))]">
-          <span className="font-data text-caption uppercase tracking-[0.08em] text-[rgb(var(--color-text-muted))]">{tOrgAdmin('okrModal.eyebrow')}</span>
           <SheetTitle>{isEdit ? tOrgAdmin('okrModal.edit') : tOrgAdmin('okrModal.new')}</SheetTitle>
           <SheetDescription className="sr-only">{tOrgAdmin('okrModal.description')}</SheetDescription>
         </SheetHeader>
@@ -342,24 +342,45 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
                     {tOrgAdmin('okrModal.customOption')}
                   </button>
                 </div>
-                {visMode !== 'org' && teams.length > 0 && (
-                  <div className="max-h-56 overflow-y-auto rounded-lg border border-[rgb(var(--color-border))]">
+                {visMode === 'teams' && teams.length > 0 && (
+                  <div className="max-h-56 overflow-y-auto rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">
                     <TeamPickList teams={teams} value={teamIds} onChange={setTeamIds} label={tOrgAdmin('okrModal.teamsOption')} />
                   </div>
                 )}
+                {/* Personnaliser (2026-10-30) : UNE liste, celle des personnes ; les
+                    équipes s'ajoutent depuis « Ajouter une équipe », dont le
+                    panneau s'ouvre à droite au survol, comme une sous-catégorie. */}
                 {visMode === 'custom' && (
-                  <div className="grid gap-1.5">
-                    <span className="font-data text-caption uppercase tracking-[0.06em] text-[rgb(var(--color-text-muted))]">{tOrgAdmin('okrModal.customPeople')}</span>
-                    <div className="max-h-56 overflow-y-auto rounded-lg border border-[rgb(var(--color-border))]">
-                      <MemberPickList
-                        members={members}
-                        value={memberIds}
-                        onChange={(next) => setMemberIds(next.slice(0, 50))}
-                        currentUserId={user?.id}
-                        label={tOrgAdmin('okrModal.customPeople')}
-                        alwaysSearchable
-                      />
-                    </div>
+                  <div className="max-h-72 overflow-y-auto rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">
+                    <MemberPickList
+                      members={members}
+                      value={memberIds}
+                      onChange={(next) => setMemberIds(next.slice(0, 50))}
+                      currentUserId={user?.id}
+                      label={tOrgAdmin('okrModal.customPeople')}
+                      alwaysSearchable
+                      afterSearch={teams.length > 0 ? (
+                        <CascadeLevel>
+                          <div className="px-1 py-1 border-b border-[rgb(var(--color-border))]">
+                            <CascadeFlyout
+                              id="okr-custom-teams"
+                              ariaLabel={tOrgAdmin('okrModal.addTeam')}
+                              row={(
+                                <button type="button" className="flex w-full items-center gap-2.5 min-h-11 px-2 text-left text-sm font-medium text-[rgb(var(--color-accent))]">
+                                  <Users size={15} aria-hidden="true" />
+                                  {tOrgAdmin('okrModal.addTeam')}
+                                  {teamIds.length > 0 && (
+                                    <span className="rounded-full bg-[rgb(var(--color-accent)/0.1)] px-1.5 text-xs tabular-nums">{teamIds.length}</span>
+                                  )}
+                                </button>
+                              )}
+                            >
+                              <TeamPickList teams={teams} value={teamIds} onChange={setTeamIds} label={tOrgAdmin('okrModal.teamsOption')} />
+                            </CascadeFlyout>
+                          </div>
+                        </CascadeLevel>
+                      ) : undefined}
+                    />
                   </div>
                 )}
                 <p className="text-muted-foreground text-xs">
@@ -386,10 +407,9 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
                   onClick={() => setKeyResults((p) => (p.length < 10 ? [...p, newKR()] : p))}
                   disabled={keyResults.length >= 10}
-                  className="h-7 border-[rgb(var(--color-accent)/0.35)] text-xs font-semibold text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent)/0.08)]"
+                  className="h-7 border-0 text-xs font-semibold bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))]"
                 >
                   <Plus aria-hidden="true" /> {t('common.add')}
                 </Button>
