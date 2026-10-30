@@ -6,7 +6,6 @@ import type { Category, CreateCategoryInput, UpdateCategoryInput } from './types
 import { categoryKeys, DEFAULT_CATEGORY_COLOR } from './constants';
 import { translator } from '@/i18n/useT';
 import { reportRestoreFailure, splitRestore } from '@/lib/restore-id';
-import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -184,11 +183,6 @@ export const useCategoryLookup = () => {
     const map = new Map(categories.map((c) => [c.id, c]));
     return (id: string) => map.get(id) ?? null;
   }, [categories]);
-};
-
-export const useCategoryColor = (id: string) => {
-  const lookup = useCategoryLookup();
-  return lookup(id)?.color ?? NO_CATEGORY_COLOR;
 };
 
 // ═══════════════════════════════════════════════════════════════════
