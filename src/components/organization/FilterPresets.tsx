@@ -25,6 +25,8 @@ interface FilterPresetsProps {
   showBlocked?: boolean;
   /** Onglet Projets : les préréglages y trient des projets (« Mes projets »). */
   entity?: 'tasks' | 'projects';
+  /** Préréglages masqués (vue Planning : « En retard », « Cette semaine », 2026-10-30). */
+  hiddenKeys?: readonly string[];
   /**
    * Entrée/sortie du mode sélection, rendue comme DERNIÈRE pastille de la
    * rangée (même place que « Sélectionner » sur la page Tâches personnelle).
@@ -110,7 +112,7 @@ const PRESETS: Preset[] = [
  * portée/attributs, pour donner un départ net à chaque fois.
  */
 const FilterPresets = ({
-  filters, setFilters, defaultStatus, currentUserId, showBlocked = true, entity = 'tasks', onToggleSelect, selectMode = false,
+  filters, setFilters, defaultStatus, currentUserId, showBlocked = true, entity = 'tasks', onToggleSelect, selectMode = false, hiddenKeys = [],
 }: FilterPresetsProps) => {
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
@@ -120,6 +122,7 @@ const FilterPresets = ({
   // « Terminées cette semaine » y arrive depuis la barre, onglet Tâches seul.
   const presets = (showBlocked ? PRESETS : PRESETS.filter((p) => p.key !== 'blocked'))
     .filter((p) => p.key !== 'mine')
+    .filter((p) => !hiddenKeys.includes(p.key))
     .filter((p) => entity === 'tasks' || p.key !== 'doneThisWeek');
 
   const togglePreset = (preset: Preset) => {

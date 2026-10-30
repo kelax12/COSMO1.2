@@ -120,7 +120,8 @@ const ProjectsToolbar = ({
       {/* Préréglages appliqués aux PROJETS (project-filters.ts). Bloquées
           exclue : c'est une lecture tâche par tâche. Le Tableau (kanban) est
           passé dans l'onglet Tâches le 2026-09-27. */}
-      <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="all" currentUserId={currentUserId} showBlocked={false} entity="projects" onToggleSelect={onStartSelect} />
+      <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="all" currentUserId={currentUserId} showBlocked={false} entity="projects" onToggleSelect={onStartSelect}
+        hiddenKeys={view === 'timeline' ? ['overdue', 'thisWeek'] : []} />
 
       {/* Tri poussé à droite de la même ligne. */}
       {sortControl && <div className="ml-auto">{sortControl}</div>}
