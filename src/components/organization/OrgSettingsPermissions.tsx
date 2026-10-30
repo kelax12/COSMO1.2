@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import {
-  isManagerOf,
   useMyOrgPermissions,
   useOrgMemberPermissions,
   useSetMemberPermissions,
@@ -51,7 +50,7 @@ const OrgSettingsPermissions = ({ orgId, members, currentUserId, isAdmin }: OrgS
   }, [members, query, onlyCustom, overrideByUser]);
 
   const roleLabel = (m: OrgMember) =>
-    m.role === 'admin' ? t('roles.admin') : isManagerOf(members, m.userId) ? t('roles.manager') : t('roles.member');
+    m.role === 'admin' ? t('roles.admin') : t('roles.member');
 
   return (
     <div className="space-y-3">

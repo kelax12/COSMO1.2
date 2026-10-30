@@ -2,17 +2,17 @@ import { Check, Minus } from 'lucide-react';
 import { ORG_PERMISSION_KEYS, effectivePermissions, type OrgMember } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 
-type Position = 'admin' | 'manager' | 'member';
-const POSITIONS: Position[] = ['admin', 'manager', 'member'];
+type Position = 'admin' | 'member';
+const POSITIONS: Position[] = ['admin', 'member'];
 
-// Défauts par POSITION, lus par `effectivePermissions` elle-même sur trois
+// Défauts par POSITION, lus par `effectivePermissions` elle-même sur deux
 // membres fictifs sans surcharge : la règle reste écrite à un seul endroit
-// (`permissions.ts`), la matrice ne peut pas diverger du serveur.
-const fake = (userId: string, role: OrgMember['role'], managerId: string | null = null): OrgMember =>
-  ({ orgId: '', userId, role, joinedAt: '', displayName: '', managerId });
-const SAMPLE: OrgMember[] = [fake('admin', 'admin'), fake('manager', 'member'), fake('report', 'member', 'manager'), fake('member', 'member')];
+// (`permissions.ts`), la matrice ne peut pas diverger du serveur. Plus de
+// colonne « manager » depuis la mig. 229 : la hiérarchie n'ouvre plus rien.
+const fake = (userId: string, role: OrgMember['role']): OrgMember =>
+  ({ orgId: '', userId, role, joinedAt: '', displayName: '' });
 const DEFAULTS = Object.fromEntries(
-  POSITIONS.map((p) => [p, effectivePermissions({ member: SAMPLE.find((m) => m.userId === p)!, members: SAMPLE })]),
+  POSITIONS.map((p) => [p, effectivePermissions({ member: fake(p, p) })]),
 ) as Record<Position, ReturnType<typeof effectivePermissions>>;
 
 /**

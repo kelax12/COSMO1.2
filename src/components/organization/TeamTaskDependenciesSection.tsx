@@ -14,8 +14,8 @@ import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
 interface TeamTaskDependenciesSectionProps {
   task: TeamTask;
-  /** Seul un gestionnaire modifie le graphe ; tout le monde le lit. */
-  isManager: boolean;
+  /** Droit `task.editAny` pour modifier le graphe ; tout le monde le lit. */
+  canEditDependencies: boolean;
   /** Ouverte d'emblée : dans l'onglet Dépendances de la fiche, la replier n'a pas de sens. */
   defaultOpen?: boolean;
 }
@@ -29,7 +29,7 @@ interface TeamTaskDependenciesSectionProps {
  * retarde si je glisse ? » (bloque). La seconde est celle qu'on oublie, et
  * c'est celle qui coûte cher en réunion.
  */
-const TeamTaskDependenciesSection = ({ task, isManager, defaultOpen = false }: TeamTaskDependenciesSectionProps) => {
+const TeamTaskDependenciesSection = ({ task, canEditDependencies, defaultOpen = false }: TeamTaskDependenciesSectionProps) => {
   const { t, tp } = useT('org');
   const [open, setOpen] = useState(defaultOpen);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -95,7 +95,7 @@ const TeamTaskDependenciesSection = ({ task, isManager, defaultOpen = false }: T
           <TeamTaskDependencyColumns
             blockedBy={blockedBy}
             blocks={blocks}
-            canEdit={isManager}
+            canEdit={canEditDependencies}
             onAdd={(direction) => { setPickerDirection(direction); setPickerOpen(true); }}
             onRemove={(item, direction) =>
               removeDependency.mutate(
@@ -107,7 +107,7 @@ const TeamTaskDependenciesSection = ({ task, isManager, defaultOpen = false }: T
         </div>
       )}
 
-      {isManager && pickerOpen && (
+      {canEditDependencies && pickerOpen && (
         <TeamTaskDependencyPicker
           open={pickerOpen}
           onClose={() => setPickerOpen(false)}

@@ -25,7 +25,6 @@ import { showUndoToast } from '@/lib/undo-toast';
 import { useTeamProjects, useTeamProjectTeams, type TeamProject } from '@/modules/team-projects';
 import { projectsLostOnTeamLeave } from './team-audience.helpers';
 import LeaveTeamConfirm from './LeaveTeamConfirm';
-import TeamBulkAddDialog from './TeamBulkAddDialog';
 
 /**
  * Au-delà, les pastilles se coupent avec un « +N » (audit « passage à
@@ -33,6 +32,14 @@ import TeamBulkAddDialog from './TeamBulkAddDialog';
  * deux cents).
  */
 const TEAM_CHIPS_LIMIT = 24;
+
+/**
+ * « Mettre responsable » et « Retirer de l'équipe » n'apparaissent qu'au
+ * survol de la personne (2026-10-30). Restent visibles au focus clavier, et
+ * toujours sur écran tactile, où le survol n'existe pas.
+ */
+const hoverOnlyClass =
+  '[@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100';
 
 /**
  * Menu « Ajouter » d'une équipe. Au-delà de `MEMBER_SEARCH_THRESHOLD`
@@ -51,13 +58,15 @@ const AddTeamMemberMenu = ({ teamName, addable, currentUserId, onAdd }: {
   const shown = searchable ? filterMembersByQuery(addable, query) : addable;
   return (
     <DropdownMenu onOpenChange={(open) => { if (!open) setQuery(''); }}>
+      {/* Lien bleu à droite du titre (2026-10-30), plus une pastille en bas de liste. */}
       <DropdownMenuTrigger
-        className="inline-flex items-center gap-1 rounded-full border border-dashed border-[rgb(var(--color-chip-border))] min-h-9 px-2.5 text-xs text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors"
+        data-guide-id="team-members-add"
+        className="inline-flex items-center gap-1 min-h-9 text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors"
         aria-label={t('team.addMemberAria', { team: teamName })}
       >
-        <Plus size={11} aria-hidden="true" /> {t('common.add')}
+        <Plus size={14} aria-hidden="true" /> {t('common.add')}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
+      <DropdownMenuContent data-guide-id="team-add-picker" align="end" className="w-56 max-h-72 overflow-y-auto">
         <DropdownMenuLabel>{t('team.addTo', { name: teamName })}</DropdownMenuLabel>
         {searchable && (
           <div className="px-1.5 pb-1.5">
@@ -89,6 +98,9 @@ const AddTeamMemberMenu = ({ teamName, addable, currentUserId, onAdd }: {
 };
 
 interface TeamMembersPanelProps {
+  /** Le titre « Responsables et membres » vit ici : « + Ajouter » s'aligne dessus. */
+  titleId: string;
+  titleClass: string;
   orgId: string;
   team: OrgTeam;
   /** Membres de l'organisation. */
@@ -106,7 +118,7 @@ interface TeamMembersPanelProps {
  * nommer ou révoquer un responsable, retrait, ajout. Sorti de `TeamsSection`
  * quand l'équipe a eu sa page (audit Membres du 2026-09-24).
  */
-const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, isAdmin, canManage }: TeamMembersPanelProps) => {
+const TeamMembersPanel = ({ titleId, titleClass, orgId, team, members, memberships, currentUserId, isAdmin, canManage }: TeamMembersPanelProps) => {
   const { t, tp } = useT('org');
   const addMember = useAddTeamMember(orgId);
   const removeMember = useRemoveTeamMember(orgId);
@@ -170,6 +182,17 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
 
   return (
     <div>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <h3 id={titleId} className={titleClass}>{t('teamPage.peopleTitle')}</h3>
+        {addable.length > 0 && (
+          <AddTeamMemberMenu
+            teamName={team.name}
+            addable={addable}
+            currentUserId={currentUserId}
+            onAdd={addWithUndo}
+          />
+        )}
+      </div>
       {teamMembers.length === 0 && (
         <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">{t('teamPage.noMembers')}</p>
       )}
@@ -180,7 +203,7 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
         return (
           <li
             key={m.userId}
-            className={`flex items-center gap-2.5 rounded-xl border px-2.5 py-2 ${
+            className={`group flex items-center gap-2.5 rounded-xl border px-2.5 py-2 ${
               isLead
                 ? 'border-amber-400 border-[1.5px] bg-amber-400/10'
                 : 'border-[rgb(var(--color-border))]'
@@ -207,7 +230,7 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
                 type="button"
                 onClick={() => toggleLeadWithUndo(m.userId, !isLead)}
                 aria-label={isLead ? t('teams.removeLead') : t('teams.makeLead')}
-                className={`p-1 transition-colors ${
+                className={`p-1 transition-colors ${hoverOnlyClass} ${
                   isLead ? 'text-amber-500 hover:text-amber-600' : 'text-[rgb(var(--color-text-muted))] hover:text-amber-500'
                 }`}
               >
@@ -219,7 +242,7 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
                 type="button"
                 onClick={() => requestRemove(m, isLead)}
                 aria-label={t('team.removeMemberAria', { member: m.displayName, team: team.name })}
-                className="p-1 text-[rgb(var(--color-text-muted))] hover:text-red-500"
+                className={`p-1 text-[rgb(var(--color-text-muted))] hover:text-red-500 ${hoverOnlyClass}`}
               >
                 <UserMinus size={15} aria-hidden="true" />
               </button>
@@ -239,17 +262,6 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
           {expanded ? t('team.fewerMembers') : tp('team.moreMembers', hidden)}
         </button>
       )}
-      {addable.length > 0 && (
-        <AddTeamMemberMenu
-          teamName={team.name}
-          addable={addable}
-          currentUserId={currentUserId}
-          onAdd={addWithUndo}
-        />
-      )}
-      {/* Ajout EN LOT (audit, étape 4 : « configuration en masse ») : au-delà
-          d'une poignée de personnes, le menu un par un ne tient plus. */}
-      {addable.length > 1 && <TeamBulkAddDialog orgId={orgId} team={team} addable={addable} />}
       {leaving && (
         <LeaveTeamConfirm
           orgId={orgId}

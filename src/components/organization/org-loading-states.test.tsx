@@ -76,7 +76,7 @@ describe('onglets entreprise — aucune affirmation pendant le chargement', () =
   });
 
   it('Aperçu : pas d’état vide tant que les requêtes n’ont pas répondu', () => {
-    renderIn(<MyWorkTab orgId="o1" members={MEMBERS} currentUserId="u1" isManager />);
+    renderIn(<MyWorkTab orgId="o1" members={MEMBERS} currentUserId="u1" canEditDependencies />);
 
     expect(screen.queryByText(/Aucune tâche/i)).toBeNull();
     expect(screen.getByRole('status')).toBeTruthy();
@@ -84,7 +84,7 @@ describe('onglets entreprise — aucune affirmation pendant le chargement', () =
 
   it('Aperçu : l’état vide revient une fois le chargement terminé', async () => {
     loading = false;
-    renderIn(<MyWorkTab orgId="o1" members={MEMBERS} currentUserId="u1" isManager />);
+    renderIn(<MyWorkTab orgId="o1" members={MEMBERS} currentUserId="u1" canEditDependencies />);
 
     // Données réellement vides : là, le message est VRAI, il doit s'afficher.
     // `getAllBy` : l'écran vide et la checklist de démarrage le disent tous deux.

@@ -2,7 +2,6 @@ import { useState, type ReactNode } from 'react';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { MobileFiltersButton, MobileFiltersSheet } from './MobileTeamTasks';
 import { Search, X, ChevronDown, CheckSquare, Download } from 'lucide-react';
-import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import { useT } from '@/i18n/useT';
 import {
@@ -20,8 +19,6 @@ interface MemberDirectoryToolbarProps {
   filters: DirectoryFilters;
   onChange: (next: DirectoryFilters) => void;
   teams: OrgTeam[];
-  /** Managers qui ont au moins un direct (filtre « manager direct »). */
-  managers: OrgMember[];
   shown: number;
   total: number;
   /** Le mode sélection a-t-il au moins un geste à offrir ? */
@@ -36,7 +33,6 @@ interface MemberDirectoryToolbarProps {
 
 const ROLE_KEY = {
   admin: 'roles.admin',
-  manager: 'roles.manager',
   member: 'roles.member',
 } as const satisfies Record<DirectoryRole, string>;
 
@@ -104,7 +100,7 @@ const TOOL_BUTTON =
  * d'aucun droit : `canSelect` et `onExport` arrivent déjà tranchés.
  */
 const MemberDirectoryToolbar = ({
-  filters, onChange, teams, managers, shown, total,
+  filters, onChange, teams, shown, total,
   canSelect, selectMode, onToggleSelectMode, onExport, inviteAction,
 }: MemberDirectoryToolbarProps) => {
   const { t } = useT('org');
@@ -115,10 +111,8 @@ const MemberDirectoryToolbar = ({
   const set = (patch: Partial<DirectoryFilters>) => onChange({ ...filters, ...patch });
 
   const teamName = teams.find((x) => x.id === filters.teamId)?.name;
-  const managerName = managers.find((x) => x.userId === filters.managerId)?.displayName;
   const teamActive = filters.teamId && teamName ? tOrgAdmin('directory.filters.chipTeam', { name: teamName }) : null;
   const roleActive = filters.role ? tOrgAdmin('directory.filters.chipRole', { name: t(ROLE_KEY[filters.role]) }) : null;
-  const managerActive = filters.managerId && managerName ? tOrgAdmin('directory.filters.chipManager', { name: managerName }) : null;
   const joinedActive = filters.joined ? tOrgAdmin(JOINED_KEY[filters.joined]) : null;
   const clearAria = (name: string) => tOrgAdmin('directory.filters.removeChip', { name });
 
@@ -201,16 +195,6 @@ const MemberDirectoryToolbar = ({
           anyLabel={tOrgAdmin('directory.filters.any')}
         />
         <FilterPill
-          label={tOrgAdmin('directory.filters.manager')}
-          activeLabel={managerActive}
-          value={filters.managerId ?? ''}
-          onSelect={(v) => set({ managerId: v || null })}
-          onClear={() => set({ managerId: null })}
-          clearAria={clearAria(managerActive ?? '')}
-          options={managers.map((m) => ({ value: m.userId, label: m.displayName }))}
-          anyLabel={tOrgAdmin('directory.filters.any')}
-        />
-        <FilterPill
           label={tOrgAdmin('directory.filters.joined')}
           activeLabel={joinedActive}
           value={filters.joined ?? ''}
@@ -220,14 +204,6 @@ const MemberDirectoryToolbar = ({
           options={JOINED_PERIODS.map((p) => ({ value: p, label: tOrgAdmin(JOINED_KEY[p]) }))}
           anyLabel={tOrgAdmin('directory.filters.any')}
         />
-        <button
-          type="button"
-          onClick={() => set({ unplaced: !filters.unplaced })}
-          aria-pressed={filters.unplaced}
-          className={`${PILL} pr-3 ${filters.unplaced ? PILL_ON : PILL_IDLE}`}
-        >
-          {tOrgAdmin('directory.filters.unplaced')}
-        </button>
         {narrowed && (
           <>
             <span className="text-xs text-[rgb(var(--color-text-muted))] tabular-nums ml-1" aria-live="polite">
@@ -272,16 +248,6 @@ const MemberDirectoryToolbar = ({
           anyLabel={tOrgAdmin('directory.filters.any')}
         />
         <FilterPill
-          label={tOrgAdmin('directory.filters.manager')}
-          activeLabel={managerActive}
-          value={filters.managerId ?? ''}
-          onSelect={(v) => set({ managerId: v || null })}
-          onClear={() => set({ managerId: null })}
-          clearAria={clearAria(managerActive ?? '')}
-          options={managers.map((m) => ({ value: m.userId, label: m.displayName }))}
-          anyLabel={tOrgAdmin('directory.filters.any')}
-        />
-        <FilterPill
           label={tOrgAdmin('directory.filters.joined')}
           activeLabel={joinedActive}
           value={filters.joined ?? ''}
@@ -291,14 +257,6 @@ const MemberDirectoryToolbar = ({
           options={JOINED_PERIODS.map((p) => ({ value: p, label: tOrgAdmin(JOINED_KEY[p]) }))}
           anyLabel={tOrgAdmin('directory.filters.any')}
         />
-        <button
-          type="button"
-          onClick={() => set({ unplaced: !filters.unplaced })}
-          aria-pressed={filters.unplaced}
-          className={`${PILL} pr-3 ${filters.unplaced ? PILL_ON : PILL_IDLE}`}
-        >
-          {tOrgAdmin('directory.filters.unplaced')}
-        </button>
         {narrowed && (
           <>
             <span className="text-xs text-[rgb(var(--color-text-muted))] tabular-nums ml-1" aria-live="polite">

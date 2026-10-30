@@ -118,7 +118,9 @@ describe('scénarios du guide entreprise', () => {
     // 28 et non 30 : « Lier un KR à un projet » n'a plus d'écran, et « Lancer la revue
     // hebdomadaire » vivait dans Statistiques, page masquée (décision du 2026-10-13).
     // 28 tant que « Créer un projet depuis un modèle » est masqué (projectTemplatesFlag).
-    expect(GUIDE_ACTIONS).toHaveLength(SAVE_AS_TEMPLATE_ENABLED ? 28 : 27);
+    // Moins un depuis le 2026-10-30 : « Placer un membre dans l'organigramme » est
+    // retiré avec l'organigramme (mig. 229, décision d'Axel).
+    expect(GUIDE_ACTIONS).toHaveLength(SAVE_AS_TEMPLATE_ENABLED ? 27 : 26);
     expect(new Set(GUIDE_ACTIONS.map((a) => a.id)).size).toBe(GUIDE_ACTIONS.length);
   });
 

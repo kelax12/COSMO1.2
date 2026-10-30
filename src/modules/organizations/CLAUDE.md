@@ -32,8 +32,6 @@ Liste des sections : `org-sections.ts` ; chemins et liens : `deep-link.helpers.t
   La garde C-39 (`org-deletion.guard.test.ts`) suit la zone dangereuse jusque-là.
 - **Épinglés / Récents** du panneau (`org-pins.ts`) : préférence par personne et par appareil,
   donc `localStorage`, jamais la base. Une ouverture `?project=` est notée comme récente.
-- **Toast « Vous encadrez maintenant X »** (`org-page.hooks.ts`) : seul le passage non → oui
-  le déclenche ; la première visite ENREGISTRE l'état sans rien dire.
 
 ## 🏠 Aperçu : lectures CIBLÉES, jamais l'organisation entière (2026-09-24)
 
@@ -46,7 +44,7 @@ récentes, et une lecture par `ids` pour nommer le reste. Le serveur filtre AVAN
   sous le plafond dans une grande organisation.
 - Le fil d'activité lit `team_task_activity` (mig. 094). Le journal ne voit que les UPDATE :
   les créations viennent des tâches récentes. Dérivations pures : `my-work.helpers.ts`.
-- `isManager` vient de la PAGE, comme pour Projets et Tâches (l'Aperçu passait `isAdmin`).
+- `canEditDependencies` vient de la PAGE, comme pour Projets et Tâches.
 - Depuis le 2026-10-19 l'Aperçu est une grille de widgets ([`src/components/CLAUDE.md`](../../components/CLAUDE.md)) :
   les tâches sont lues dans `MyWorkTab` / `MyWorkSections` et passées aux widgets ; un widget peut
   lire une source ÉTROITE (invitations, commentaires d'une tâche), jamais l'ensemble de travail
@@ -61,8 +59,18 @@ Droits `report.org` / `report.allTeams` : défaut admin seulement.
 
 ## 🔐 Permissions entreprise — surcharge, jamais remplacement (mig. 115)
 
-Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `is_org_manager`) et
-**surchargeables par membre** depuis l'annuaire → menu « … » → **Modifier les permissions**.
+Les droits du mode entreprise ont un **défaut** (admin : tout ; membre : `task.create` et
+`task.editAny`) et sont **surchargeables par membre** depuis l'annuaire → menu « … » → **Modifier
+les permissions** (admin seul).
+
+- 🔴 **Plus de « manager » depuis la mig. 229 (2026-10-30, décision d'Axel)** : un seul grade,
+  administrateur ; tout le reste passe par les rôles personnalisés (ou la fiche). Encadrer quelqu'un
+  n'ouvre AUCUN droit, ni défaut, ni invitation, ni fiche d'un subordonné, ni ajout d'équipe limité.
+  L'organigramme est masqué (`org-sections.ts`, `hidden`) ; `manager_id` reste en base, dormant.
+  ❌ Ne jamais réintroduire `is_org_manager` / `isManagerOf` dans un résolveur, une policy ou un
+  écran visible. Les portées d'assignation se réduisent à `self` / `everyone` (contrainte CHECK).
+  ⚠️ Reste hiérarchique, en lecture seule : la visibilité de `can_access_team_project`,
+  `can_access_team_okr`, `my_managed_user_ids`, `get_org_member_last_activity` (7 liens en prod).
 
 - Table `org_member_permissions (org_id, user_id)`, colonnes booléennes **NULLables** :
   `NULL` = suit le défaut dérivé, `true`/`false` = décision explicite. Une organisation sans
@@ -76,12 +84,11 @@ Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `i
   (fonctions pures, miroir du SQL) exposé par `useMyOrgPermissions(orgId)`. Aucun composant ne
   recalcule un droit ; le hook lit l'utilisateur via `useAuth`, jamais via une prop.
 
-- ❌ **Ne jamais gater une création/suppression par `isManager`.** `isManager` ne désigne plus
-  qu'une **position** (onglets Pyramide et Statistiques, dépendances de tâches) ; un droit passe
-  par `can['<clé>']`.
-- ❌ **Ne jamais enregistrer un instantané des onze droits.** La fiche n'écrit que les lignes
-  DÉCIDÉES : figer les droits d'un manager le jour où on ouvre sa fiche ferait qu'un
-  déplacement dans la pyramide ne les lui retirerait plus jamais.
+- ❌ **Ne jamais gater quoi que ce soit par une position hiérarchique.** `isManager` n'existe plus ;
+  les dépendances de tâches suivent `task.editAny` (`canEditDependencies`), tout droit passe par
+  `can['<clé>']`.
+- ❌ **Ne jamais enregistrer un instantané des droits.** La fiche n'écrit que les lignes DÉCIDÉES :
+  un instantané figerait les défauts du jour où on l'ouvre.
 - ❌ **Ne jamais confondre `assign_targets = NULL` (aucune décision → tout le monde) et `{}`
   (personne).** Ce sont deux états opposés.
 - ❌ **Ne jamais poser de ligne sur un admin** : `my_org_perm` court-circuite sur
@@ -129,6 +136,12 @@ Fichiers : `roles.*` ; écrans `OrgRolesSettings`, `RoleEditorSheet` (une modale
 - ❌ Jamais de rôle sur un admin (trigger) ; un membre promu admin garde une ligne inerte.
 - `role.manage` : défaut admin seul, droit de CONFIANCE (aucun plafond sur le contenu d'un rôle).
 - Le départ d'un membre emporte ses attributions (FK composite vers `organization_members`).
+- **Rôle des nouveaux membres** (mig. 230) : `org_settings.default_role_id`, réglé par un admin dans
+  Paramètres › Rôles. Le trigger `assign_default_org_role` (AFTER INSERT sur `organization_members`)
+  pose l'attribution, sans limite, jamais sur un admin, jamais rétroactive. Démo :
+  `assignDefaultRoleOnJoin` (`roles.local.repository.ts`), appelé à l'acceptation d'une demande.
+  ❌ Ne jamais ouvrir un INSERT client sur `organization_members` : le trigger compte sur les
+  quatre fonctions DEFINER d'arrivée pour écrire `org_member_roles` hors RLS.
 
 ### 🧭 Étape 6 (mig. 190-193, 2026-09-25) : rôles de projet, recherche, vues
 

@@ -36,17 +36,11 @@ export const PEOPLE_ACTIONS: GuideAction[] = [
     { kind: 'field', target: 'join-request-first', bubbleKey: k('member.joinRequest', 'b2') },
   ] },
   // L'ajout en lot n'a pas de rôle par personne.
-  { id: 'team.addMembers', category: 'people', requires: 'manager', steps: [
+  { id: 'team.addMembers', category: 'people', requires: 'team.create', steps: [
     { kind: 'goto', section: 'teams', via: 'nav-teams' },
     { kind: 'pick-first', target: 'teams-list', emptyKey: 'empty.noTeam' },
     { kind: 'click', target: 'team-members-add', emptyKey: 'empty.noOneToAdd' },
     { kind: 'field', target: 'team-add-picker', bubbleKey: k('team.addMembers', 'b1') },
-  ] },
-  { id: 'pyramid.place', category: 'people', requires: 'admin', steps: [
-    { kind: 'goto', section: 'pyramid', via: 'nav-pyramid' },
-    { kind: 'pick-first', target: 'pyramid-unplaced', emptyKey: 'empty.noUnplaced' },
-    { kind: 'field', target: 'pyramid-place-manager', bubbleKey: k('pyramid.place', 'b1') },
-    { kind: 'field', target: 'pyramid-place-effect', bubbleKey: k('pyramid.place', 'b2') },
   ] },
   // `pick-first` ouvre le menu « ⋮ » de la première ligne qui en a un (jamais la sienne).
   { id: 'member.offboard', category: 'people', requires: 'admin', steps: [

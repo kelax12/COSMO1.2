@@ -96,7 +96,7 @@ const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings
     else if (notification.projectId) navigate(buildOrgLink('projects', { project: notification.projectId }));
     else if (notification.krId) navigate(buildOrgLink('okr'));
     else if (notification.eventId) navigate('/agenda');
-    else if (notification.kind === 'role_changed') navigate(buildOrgLink('pyramid'));
+    else if (notification.kind === 'role_changed') navigate(buildOrgLink('members'));
   };
 
   return (

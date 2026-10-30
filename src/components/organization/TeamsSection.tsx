@@ -26,7 +26,7 @@ import DeleteTeamDialog from './DeleteTeamDialog';
 import { orgTeamPath } from './deep-link.helpers';
 import { teamProjectsOf, canManageTeam } from './team-page.helpers';
 import TeamAssignMenus from './TeamAssignMenus';
-import TeamProfileEditor from './TeamProfileEditor';
+import { EditTeamModal } from './CreateTeamModal';
 import { normalize } from './pyramid.helpers';
 import { useT } from '@/i18n/useT';
 
@@ -90,6 +90,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
   const shownTeams = showAllTeams || q ? matchingTeams : matchingTeams.slice(0, TEAMS_LIMIT);
   const hiddenTeams = matchingTeams.length - shownTeams.length;
   const memberById = new Map(members.map((m) => [m.userId, m]));
+  const editingTeam = teams.find((tm) => tm.id === editingTeamId);
 
   return (
     <div>
@@ -161,13 +162,6 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                 .join(', ');
               const canManage = canManageTeam(team, teamMemberships, currentUserId, isAdmin);
               const canDelete = isAdmin || team.createdBy === currentUserId;
-              if (editingTeamId === team.id) {
-                return (
-                  <li key={team.id}>
-                    <TeamProfileEditor orgId={orgId} team={team} onDone={() => setEditingTeamId(null)} />
-                  </li>
-                );
-              }
               return (
                 <li
                   key={team.id}
@@ -301,9 +295,20 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
             onCreate={(input) => createTask.mutateAsync(input)}
             onUpdate={(taskId, input) => updateTask.mutateAsync({ taskId, input })}
             onClose={() => setTaskForTeam(null)}
-            isManager={isAdmin}
+            canEditDependencies={isAdmin}
           />
         </Suspense>
+      )}
+      {editingTeam && (
+        <EditTeamModal
+          orgId={orgId}
+          team={editingTeam}
+          members={members}
+          memberships={memberships.filter((m) => m.teamId === editingTeam.id)}
+          currentUserId={currentUserId}
+          isAdmin={isAdmin}
+          onClose={() => setEditingTeamId(null)}
+        />
       )}
       {teamToDelete && (
         <DeleteTeamDialog

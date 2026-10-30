@@ -15,13 +15,13 @@ import { defaultOrgSettings } from './types';
 const repo = new SupabaseOrgConfigRepository();
 const DB_ERROR = { message: 'boom', code: '42P01' };
 
-const SETTINGS_COLUMNS = 'org_id, locale, timezone, week_start, work_days, default_task_priority, default_project_audience, default_guest_days, invite_domain_only, updated_at';
+const SETTINGS_COLUMNS = 'org_id, locale, timezone, week_start, work_days, default_task_priority, default_project_audience, default_guest_days, invite_domain_only, default_role_id, updated_at';
 const STATUS_COLUMNS = 'id, org_id, project_id, name, color, maps_to, position';
 
 const settingsRow = {
   org_id: 'org1', locale: 'en', timezone: 'Europe/London', week_start: 0, work_days: [1, 2, 3],
   default_task_priority: 2, default_project_audience: 'org', default_guest_days: 30,
-  invite_domain_only: true, updated_at: '2026-09-28T10:00:00.000Z',
+  invite_domain_only: true, default_role_id: 'r1', updated_at: '2026-09-28T10:00:00.000Z',
 };
 const domainRow = {
   id: 'd1', org_id: 'org1', domain: 'acme.fr', verification_token: 'tok',
@@ -53,7 +53,7 @@ describe('SupabaseOrgConfigRepository — réglages (mig. 195)', () => {
     expect(s).toEqual({
       orgId: 'org1', locale: 'en', timezone: 'Europe/London', weekStart: 0, workDays: [1, 2, 3],
       defaultTaskPriority: 2, defaultProjectAudience: 'org', defaultGuestDays: 30,
-      inviteDomainOnly: true, updatedAt: '2026-09-28T10:00:00.000Z',
+      inviteDomainOnly: true, defaultRoleId: 'r1', updatedAt: '2026-09-28T10:00:00.000Z',
     });
   });
 
@@ -81,12 +81,12 @@ describe('SupabaseOrgConfigRepository — réglages (mig. 195)', () => {
     supabaseMock.queueTable('org_settings', { data: settingsRow });
     const s = await repo.saveSettings('org1', {
       locale: 'en', timezone: 'UTC', weekStart: 0, workDays: [1], defaultTaskPriority: 5,
-      defaultProjectAudience: 'org', defaultGuestDays: null, inviteDomainOnly: false,
+      defaultProjectAudience: 'org', defaultGuestDays: null, inviteDomainOnly: false, defaultRoleId: null,
     });
     expect(supabaseMock.argsOf('org_settings', 'upsert')?.[0]).toEqual({
       org_id: 'org1', locale: 'en', timezone: 'UTC', week_start: 0, work_days: [1],
       default_task_priority: 5, default_project_audience: 'org', default_guest_days: null,
-      invite_domain_only: false,
+      invite_domain_only: false, default_role_id: null,
     });
     expect(s.orgId).toBe('org1');
   });
