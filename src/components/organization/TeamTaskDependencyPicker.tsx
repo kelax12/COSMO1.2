@@ -33,6 +33,8 @@ interface TeamTaskDependencyPickerProps {
   /** Toutes les tâches de l'organisation (filtrées ici au projet). */
   tasks: TeamTask[];
   dependencies: TeamTaskDependency[];
+  /** Sens présélectionné : la colonne d'où l'on a cliqué « + » (2026-10-30). */
+  initialDirection?: DependencyDirection;
 }
 
 type Mode = 'pick' | 'create';
@@ -59,12 +61,13 @@ const TeamTaskDependencyPicker = ({
   task,
   tasks,
   dependencies,
+  initialDirection = 'blockedBy',
 }: TeamTaskDependencyPickerProps) => {
   const { t, tp } = useT('org');
   const { can } = useMyOrgPermissions(task.orgId);
 
   const [mode, setMode] = useState<Mode>('pick');
-  const [direction, setDirection] = useState<DependencyDirection>('blockedBy');
+  const [direction, setDirection] = useState<DependencyDirection>(initialDirection);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
   const [newName, setNewName] = useState('');
@@ -84,7 +87,7 @@ const TeamTaskDependencyPicker = ({
     setOpenedAt(open);
     if (open) {
       setMode('pick');
-      setDirection('blockedBy');
+      setDirection(initialDirection);
       setQuery('');
       setSelected([]);
       setNewName('');

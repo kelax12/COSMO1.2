@@ -132,6 +132,7 @@ const TeamTaskModal = ({
   // Brouillon des éléments qui ont besoin de l'id (appliqué après création).
   const [draftSubtasks, setDraftSubtasks] = useState<string[]>([]);
   const [draftBlockedBy, setDraftBlockedBy] = useState<string[]>([]);
+  const [draftBlocks, setDraftBlocks] = useState<string[]>([]);
 
   // Bascule assignés/commentaires : panneaux latéraux dès `lg` (1024px), sinon
   // repliés dans le modal. Un SEUL point de montage, jamais un rendu CSS
@@ -235,8 +236,8 @@ const TeamTaskModal = ({
   const createWithDraft = async (): Promise<TeamTask | null> => {
     const created = await onCreate?.({ projectId, ...buildCommon() });
     if (!created) return null;
-    const draft = { subtasks: draftSubtasks, blockedByIds: draftBlockedBy };
-    if (draft.subtasks.length + draft.blockedByIds.length > 0) {
+    const draft = { subtasks: draftSubtasks, blockedByIds: draftBlockedBy, blocksIds: draftBlocks };
+    if (draft.subtasks.length + draft.blockedByIds.length + draft.blocksIds.length > 0) {
       // La tâche existe : un échec partiel est dit par le hook, il n'annule rien.
       await applyDraft.mutateAsync({ taskId: created.id, draft }).catch(() => undefined);
     }
@@ -275,6 +276,7 @@ const TeamTaskModal = ({
         setBaseListIds(listIds);
         setDraftSubtasks([]);
         setDraftBlockedBy([]);
+        setDraftBlocks([]);
       })
       .catch(() => setPendingCommentDraft(null))
       .finally(() => setPending(false));
@@ -310,7 +312,7 @@ const TeamTaskModal = ({
     { id: 'details', label: t('popups.task.tabDetails') },
     { id: 'advanced', label: t('popups.task.tabAdvanced') },
     { id: 'subtasks', label: creating && draftSubtasks.length > 0 ? `${t('popups.task.tabSubtasks')} (${draftSubtasks.length})` : t('popups.task.tabSubtasks') },
-    { id: 'dependencies', label: creating && draftBlockedBy.length > 0 ? `${t('popups.task.tabDependencies')} (${draftBlockedBy.length})` : t('popups.task.tabDependencies') },
+    { id: 'dependencies', label: creating && draftBlockedBy.length + draftBlocks.length > 0 ? `${t('popups.task.tabDependencies')} (${draftBlockedBy.length + draftBlocks.length})` : t('popups.task.tabDependencies') },
     ...(liveTask ? [{ id: 'history' as const, label: t('popups.task.tabHistory') }] : []),
   ];
 
@@ -464,6 +466,7 @@ const TeamTaskModal = ({
                 onProjectChange={(v) => {
                   setProjectId(v);
                   setDraftBlockedBy([]);
+                  setDraftBlocks([]);
                   const projectCategory = projects.find((p) => p.id === v)?.categoryId;
                   if (projectCategory) setCategoryId(projectCategory);
                 }}
@@ -512,6 +515,8 @@ const TeamTaskModal = ({
                 onDraftSubtasksChange={setDraftSubtasks}
                 draftBlockedBy={draftBlockedBy}
                 onDraftBlockedByChange={setDraftBlockedBy}
+                draftBlocks={draftBlocks}
+                onDraftBlocksChange={setDraftBlocks}
               />
             </Suspense>
           )}

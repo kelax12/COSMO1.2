@@ -33,6 +33,8 @@ export interface TeamTaskDraftExtras {
   subtasks: string[];
   /** Tâches qui bloquent la nouvelle (« bloquée par »). */
   blockedByIds: string[];
+  /** Tâches que la nouvelle bloque (« bloque », 2026-10-30). */
+  blocksIds?: string[];
 }
 
 /**
@@ -50,6 +52,7 @@ export const useApplyTeamTaskDraft = (orgId: string) => {
       const results = await Promise.allSettled([
         ...draft.subtasks.map((title, position) => repository.createSubtask({ taskId, title, position })),
         ...draft.blockedByIds.map((dependsOnId) => repository.addTaskDependency(taskId, dependsOnId, orgId)),
+        ...(draft.blocksIds ?? []).map((blockedId) => repository.addTaskDependency(blockedId, taskId, orgId)),
       ]);
       const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
       if (failed) throw failed.reason instanceof Error ? failed.reason : new Error(String(failed.reason));

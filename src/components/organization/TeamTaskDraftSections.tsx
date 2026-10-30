@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Check, Plus, Search, Trash2 } from 'lucide-react';
-import { useTeamTasks } from '@/modules/team-projects';
+import { useTeamTasks, type TeamTask } from '@/modules/team-projects';
+import type { DependencyDirection } from '@/lib/dependency-graph';
+import TeamTaskDependencyColumns from './TeamTaskDependencyColumns';
 import { useT } from '@/i18n/useT';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -77,33 +79,55 @@ interface DraftDependenciesEditorProps {
   projectId: string;
   value: string[];
   onChange: (next: string[]) => void;
+  /** Tâches que la nouvelle bloque (colonne de droite, 2026-10-30). */
+  blocks: string[];
+  onBlocksChange: (next: string[]) => void;
   /** Le graphe ne se modifie que par un gestionnaire, comme en édition. */
   canEdit: boolean;
 }
 
 /**
- * Une tâche neuve n'a aucune arête : elle ne peut être que BLOQUÉE PAR des
- * tâches existantes, jamais former un cycle. Le sens inverse (« elle bloque »)
- * se règle ensuite, depuis la tâche bloquée.
+ * Une tâche neuve n'a aucune arête : elle peut être bloquée par des tâches
+ * existantes ET en bloquer d'autres sans jamais former de cycle, tant qu'une
+ * même tâche n'est pas des deux côtés (exclue de l'autre colonne). Même vue en
+ * deux colonnes qu'en édition (`TeamTaskDependencyColumns`, 2026-10-30).
  */
-export const DraftDependenciesEditor = ({ orgId, projectId, value, onChange, canEdit }: DraftDependenciesEditorProps) => {
+export const DraftDependenciesEditor = ({ orgId, projectId, value, onChange, blocks, onBlocksChange, canEdit }: DraftDependenciesEditorProps) => {
   const { t } = useT('org');
   const [query, setQuery] = useState('');
+  const [adding, setAdding] = useState<DependencyDirection | null>(null);
   // Monté avec l'onglet seulement : la lecture ne part pas à l'ouverture de la fiche.
   const { data: tasks = [] } = useTeamTasks(canEdit && projectId ? orgId : undefined);
   const hasProject = !!projectId;
+  const byId = useMemo(() => new Map(tasks.map((x) => [x.id, x])), [tasks]);
+  const current = adding === 'blocks' ? blocks : value;
+  const other = adding === 'blocks' ? value : blocks;
+  const setCurrent = adding === 'blocks' ? onBlocksChange : onChange;
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const open = tasks.filter((c) => c.projectId === projectId && (!c.completed || value.includes(c.id)));
+    const open = tasks.filter((c) => c.projectId === projectId && !other.includes(c.id) && (!c.completed || current.includes(c.id)));
     return (q ? open.filter((c) => c.name.toLowerCase().includes(q)) : open).slice(0, 50);
-  }, [tasks, projectId, query, value]);
+  }, [tasks, projectId, query, current, other]);
 
   if (!canEdit) return <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('popups.draft.depsReadOnly')}</p>;
   if (!hasProject) return <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('popups.draft.depsNeedProject')}</p>;
 
+  const pick = (ids: string[]) => ids.map((id) => byId.get(id)).filter((x): x is TeamTask => !!x);
+
   return (
+    <div className="space-y-4">
+      <TeamTaskDependencyColumns
+        blockedBy={pick(value)}
+        blocks={pick(blocks)}
+        canEdit
+        onAdd={(direction) => { setAdding((d) => (d === direction ? null : direction)); setQuery(''); }}
+        onRemove={(item, direction) => (direction === 'blocks'
+          ? onBlocksChange(blocks.filter((id) => id !== item.id))
+          : onChange(value.filter((id) => id !== item.id)))}
+      />
+      {adding && (
     <div>
-      <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">{t('popups.draft.depsHint')}</p>
+      <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">{adding === 'blocks' ? t('projects.addBlocked') : t('popups.draft.depsHint')}</p>
       <label className="relative block mb-2">
         <span className="sr-only">{t('popups.draft.depsSearch')}</span>
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
@@ -121,13 +145,13 @@ export const DraftDependenciesEditor = ({ orgId, projectId, value, onChange, can
       ) : (
         <ul className="rounded-xl border border-[rgb(var(--color-border))] max-h-64 overflow-y-auto">
           {shown.map((c) => {
-            const on = value.includes(c.id);
+            const on = current.includes(c.id);
             return (
               <li key={c.id}>
                 <button
                   type="button"
                   aria-pressed={on}
-                  onClick={() => onChange(on ? value.filter((id) => id !== c.id) : [...value, c.id])}
+                  onClick={() => setCurrent(on ? current.filter((id) => id !== c.id) : [...current, c.id])}
                   className="w-full min-h-11 flex items-center gap-2.5 px-3 py-2 text-left hover:bg-[rgb(var(--color-hover))]"
                 >
                   <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{c.name}</span>
@@ -144,6 +168,8 @@ export const DraftDependenciesEditor = ({ orgId, projectId, value, onChange, can
             );
           })}
         </ul>
+      )}
+    </div>
       )}
     </div>
   );

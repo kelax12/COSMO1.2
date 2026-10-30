@@ -25,11 +25,13 @@ interface TeamTaskTabPanelsProps {
   onDraftSubtasksChange: (next: string[]) => void;
   draftBlockedBy: string[];
   onDraftBlockedByChange: (next: string[]) => void;
+  draftBlocks: string[];
+  onDraftBlocksChange: (next: string[]) => void;
 }
 
 const TeamTaskTabPanels = ({
   tab, orgId, liveTask, isManager, projectId, members, projects,
-  draftSubtasks, onDraftSubtasksChange, draftBlockedBy, onDraftBlockedByChange,
+  draftSubtasks, onDraftSubtasksChange, draftBlockedBy, onDraftBlockedByChange, draftBlocks, onDraftBlocksChange,
 }: TeamTaskTabPanelsProps) => {
   if (tab === 'subtasks') {
     return liveTask
@@ -39,7 +41,7 @@ const TeamTaskTabPanels = ({
   if (tab === 'dependencies') {
     return liveTask
       ? <TeamTaskDependenciesSection task={liveTask} isManager={isManager} defaultOpen />
-      : <DraftDependenciesEditor orgId={orgId} projectId={projectId} value={draftBlockedBy} onChange={onDraftBlockedByChange} canEdit={isManager} />;
+      : <DraftDependenciesEditor orgId={orgId} projectId={projectId} value={draftBlockedBy} onChange={onDraftBlockedByChange} blocks={draftBlocks} onBlocksChange={onDraftBlocksChange} canEdit={isManager} />;
   }
   return liveTask ? <TeamTaskHistoryPanel taskId={liveTask.id} members={members} projects={projects} /> : null;
 };
