@@ -8,6 +8,7 @@ import { STATUS_ORDER, STATUS_META } from '../team-projects.helpers';
 import AutomationsEditor from './AutomationsEditor';
 import { CARD, TITLE, HINT, FIELD, BUTTON, ICON_BTN, LABEL } from './config-ui';
 import MenuSelect from '@/components/organization/MenuSelect';
+import CustomColorSwatch from '@/components/CustomColorSwatch';
 
 const COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
 
@@ -86,6 +87,7 @@ const ProjectWorkflowSection = ({ project, members, canEdit }: Props) => {
                     className={`w-5 h-5 rounded-full ${color === c ? 'ring-2 ring-offset-1 ring-[rgb(var(--color-accent))]' : ''}`}
                     style={{ backgroundColor: c }} />
                 ))}
+                <CustomColorSwatch value={color} palette={COLORS} onChange={setColor} className="w-5 h-5 rounded-full" />
               </div>
               <button type="submit" className={BUTTON} disabled={!name.trim() || create.isPending}>{t('statuses.add')}</button>
             </form>

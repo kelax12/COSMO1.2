@@ -32,6 +32,7 @@ import DeleteTeamCategoryConfirm from './DeleteTeamCategoryConfirm';
 import { resolveCategoryColor } from './TeamCategoryFilterBar';
 import { useT } from '@/i18n/useT';
 import MenuSelect from '@/components/organization/MenuSelect';
+import CustomColorSwatch from '@/components/CustomColorSwatch';
 
 /**
  * Gestion de l'arbre des catégories d'entreprise (Paramètres → Catégories).
@@ -96,6 +97,7 @@ const CategoryDraft = ({ onSubmit, onCancel, initialName = '', initialColor = TE
             style={{ backgroundColor: hex }}
           />
         ))}
+        <CustomColorSwatch value={color} palette={TEAM_CATEGORY_COLORS} onChange={setColor} className="h-6 w-6 rounded-full" />
       </div>
     </div>
   );

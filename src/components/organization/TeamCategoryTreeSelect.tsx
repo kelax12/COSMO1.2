@@ -50,6 +50,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import MenuSelect from '@/components/organization/MenuSelect';
 import NoCategoryOption from '@/components/category/NoCategoryOption';
+import CustomColorSwatch from '@/components/CustomColorSwatch';
 
 interface TeamCategoryTreeSelectProps {
   orgId: string;
@@ -405,6 +406,7 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
                   style={{ backgroundColor: swatch }}
                 />
               ))}
+              <CustomColorSwatch value={color} palette={TEAM_CATEGORY_COLORS} onChange={setColor} className="w-5 h-5 rounded-full" />
             </div>
             <button type="button" onClick={submitForm} disabled={!name.trim() || isPending} className="h-8 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] text-xs font-semibold">
               {t('okrCategory.create')}
@@ -472,6 +474,7 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
                     style={{ backgroundColor: swatch }}
                   />
                 ))}
+                <CustomColorSwatch value={color} palette={TEAM_CATEGORY_COLORS} onChange={setColor} className="w-5 h-5 rounded-full" />
               </div>
               <button type="button" onClick={submitForm} disabled={!name.trim() || isPending} className="h-8 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] text-xs font-semibold">
                 {t('okrCategory.create')}

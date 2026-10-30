@@ -292,32 +292,9 @@ const NavItems = () =>
           ) : undefined} />
       )}
 
-      {/* « + » — inviter un ami / rejoindre une entreprise avec un code.
-          Monte INCONDITIONNELLEMENT, que l'entree « Entreprise » ci-dessus
-          soit affichee ou non : c'est justement le point d'entree de
-          quelqu'un qui n'appartient encore a aucune organisation. */}
-      {/* Alignement : memes classes que NavItemLink, plus une largeur explicite.
-          Les autres entrees sont des <a> — elements de bloc qui REMPLISSENT la
-          largeur disponible. Un <button> non : l'UA le reduit a son contenu,
-          et l'icone se retrouvait 8 px a cote de la colonne formee par les
-          autres. `w-full` ne marche pas ici : `.sidebar-item` pose
-          `margin: 0.25rem 0.5rem`, et une marge s'ajoute EN DEHORS de la
-          largeur — le bouton depassait alors de 16 px, decale de 8 px vers la
-          droite. Le `1rem` soustrait est donc exactement ces deux marges. */}
-      <button
-        type="button"
-        onClick={() => setInviteOpen(true)}
-        title={tOrg('inviteJoin.navAria')}
-        aria-label={tOrg('inviteJoin.navAria')}
-        className={`sidebar-item w-[calc(100%-1rem)] ${isCollapsed ? `${showLabels ? 'flex-col !gap-1 ' : ''}justify-center px-0` : '!ml-1 !py-[0.7rem]'}`}
-      >
-        <div className="nav-item-icon min-w-[20px] flex items-center justify-center">
-          <Plus size={20} aria-hidden="true" />
-        </div>
-        {!isCollapsed
-          ? <span className="truncate">{tOrg('inviteJoin.navLabel')}</span>
-          : showLabels && <span className="text-[10px] leading-tight truncate max-w-full">{tOrg('inviteJoin.navLabel')}</span>}
-      </button>
+      {/* Le « + » inviter/rejoindre est retiré de la barre (2026-10-29) :
+          l'icône Entreprise propose déjà créer et rejoindre. La modale reste
+          ouvrable par l'événement `open-invite-join` (feuille « Plus » mobile). */}
     </>;
 
 
@@ -471,7 +448,7 @@ const NavItems = () =>
           size="icon"
           onClick={() => setShowLabels(!showLabels)}
           aria-pressed={showLabels}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 bg-[rgb(var(--color-surface))] border rounded-full shadow-sm hover:shadow-md z-50 md:opacity-40 md:group-hover:opacity-100 opacity-100 hover:text-[rgb(var(--color-accent-solid))] hover:border-[rgb(var(--color-accent-solid-hover))] transition-opacity"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 bg-[rgb(var(--color-surface))] border rounded-full shadow-sm hover:shadow-md z-50 md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto md:focus-visible:opacity-100 md:focus-visible:pointer-events-auto opacity-100 hover:text-[rgb(var(--color-accent-solid))] hover:border-[rgb(var(--color-accent-solid-hover))] transition-opacity"
           style={{ borderColor: 'rgb(var(--nav-border))' }}
           title={showLabels ? t('nav.sidebar.hideLabels') : t('nav.sidebar.showLabels')}
           aria-label={showLabels ? t('nav.sidebar.hideLabels') : t('nav.sidebar.showLabels')}

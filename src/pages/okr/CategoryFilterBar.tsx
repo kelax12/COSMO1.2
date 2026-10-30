@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, Edit2, X, Trash } from 'lucide-react';
+import CustomColorSwatch from '@/components/CustomColorSwatch';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/lib/toast';
 import { useT } from '@/i18n/useT';
@@ -222,6 +223,12 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
               aria-label={t('categories.customColor')}
               tabIndex={-1}
             />
+            <CustomColorSwatch
+              value={resolveColor(editCategoryColor)}
+              palette={colorOptions.map((c) => c.color)}
+              onChange={setEditCategoryColor}
+              className="w-5 h-5 rounded-full"
+            />
             <input
               autoFocus
               type="text"
@@ -389,8 +396,14 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                     setNewCategoryColor(colorOptions[(idx + 1) % colorOptions.length].value);
                   }}
                   className="w-5 h-5 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
-                  style={{ backgroundColor: colorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' }}
+                  style={{ backgroundColor: colorOptions.find(c => c.value === newCategoryColor)?.color || resolveColor(newCategoryColor) }}
                   title={t('categories.changeColor')}
+                />
+                <CustomColorSwatch
+                  value={resolveColor(newCategoryColor)}
+                  palette={colorOptions.map((c) => c.color)}
+                  onChange={setNewCategoryColor}
+                  className="w-5 h-5 rounded-full"
                 />
                 <input
                   autoFocus

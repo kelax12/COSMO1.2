@@ -45,6 +45,11 @@ test('MESURE · BugReportModal (« Signaler un bug », barre latérale)', async 
 });
 
 test('MESURE · InviteOrJoinModal (« Créer ou rejoindre une entreprise »)', async ({ demoPage: page }) => {
+  // Le « + » de la barre latérale desktop est retiré (2026-10-29) : la modale
+  // s'ouvre depuis la feuille « Plus » du mobile.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  await visible(page.getByRole('button', { name: /^plus d'options$/i })).click();
   await ouvrirAuClavier(page, visible(page.getByRole('button', { name: /^créer ou rejoindre une entreprise$/i })));
   await mesurerSurface(
     page,
@@ -258,10 +263,16 @@ test('MESURE · LoginModal (« Se connecter », landing)', async ({ page }) => {
   await mesurerSurface(page, 'LoginModal', page.getByRole('dialog', { name: /^connexion ou inscription$/i }));
 });
 
-test('MESURE · WeeklyCheckinModal (check-in hebdo, page OKR)', async ({ demoPage: page }) => {
-  await navTo(page, /okr/i, /\/okr/);
-  // La page OKR est lazy : son premier rendu peut dépasser les 30 s de `ouvrirAuClavier`.
-  const declencheur = visible(page.getByRole('button', { name: /^ouvrir le check-in hebdo$/i }));
+test('MESURE · WeeklyCheckinModal (check-in hebdo, carte d accueil)', async ({ demoPage: page }) => {
+  // Le bouton « Check-in hebdo » de la page OKR est retiré (2026-10-29) : le
+  // check-in s'ouvre depuis la carte de l'accueil, qui ne paraît que le lundi
+  // et le mardi. On cale l'horloge du navigateur sur le prochain lundi midi.
+  const lundi = new Date();
+  lundi.setDate(lundi.getDate() + ((8 - lundi.getDay()) % 7 || 7));
+  lundi.setHours(12, 0, 0, 0);
+  await page.clock.install({ time: lundi });
+  await page.goto('/dashboard');
+  const declencheur = visible(page.getByRole('button', { name: /^faire le point$/i }));
   await expect(declencheur).toBeVisible({ timeout: 90_000 });
   await ouvrirAuClavier(page, declencheur);
   await mesurerSurface(page, 'WeeklyCheckinModal', page.locator('[role="dialog"][aria-labelledby="weekly-checkin-title"]'));

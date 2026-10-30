@@ -144,6 +144,10 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
       to={to}
       end={end}
       data-guide-id={guideId}
+      // Barre réduite sans libellé visible : le nom passe par aria-label
+      // (axe `link-name`, WCAG 4.1.2), l'infobulle par title.
+      aria-label={collapsed && !showLabel ? label : undefined}
+      title={collapsed && !showLabel ? label : undefined}
       className={({ isActive }) =>
         `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? `${showLabel ? 'flex-col !gap-1 ' : ''}justify-center px-0` : '!ml-1 !py-[0.7rem]'}`
       }

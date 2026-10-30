@@ -261,14 +261,13 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                 whileTap={{ scale: 0.94 }}
                 onClick={startEditing}
                 data-testid="apercu-edit"
-                className={toolbarSlot
-                  // Dashboard perso : bouton discret (maquette 3, 2026-10-29).
-                  ? `${toolbarButton} px-3 font-medium text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]`
-                  : `${toolbarButton} px-4 border border-[rgb(var(--color-accent)/0.4)] bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-accent-text))] hover:bg-[rgb(var(--color-accent)/0.16)]`}
-                aria-label={toolbarSlot ? t('apercu.widgets.edit') : undefined}
+                // Bouton discret, dashboard perso ET Aperçu entreprise (maquette 3,
+                // 2026-10-29 ; même fonctionnalité, même bouton).
+                className={`${toolbarButton} px-3 font-medium text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]`}
+                aria-label={t('apercu.widgets.edit')}
               >
                 <Pencil size={15} aria-hidden="true" />
-                {toolbarSlot ? tCommon('actions.edit') : t('apercu.widgets.edit')}
+                {tCommon('actions.edit')}
               </motion.button>
             )}
           </AnimatePresence>

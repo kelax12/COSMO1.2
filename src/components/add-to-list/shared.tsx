@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useT } from '@/i18n/useT';
+import CustomColorSwatch from '@/components/CustomColorSwatch';
 
 export type AddToListModalProps = {
   isOpen: boolean;
@@ -46,6 +47,7 @@ export const ColorRow: React.FC<{
         }}
       />
     ))}
+    <CustomColorSwatch value={selected} palette={COLOR_PALETTE.map((c) => c.key)} onChange={onChange} />
   </div>
 );
 

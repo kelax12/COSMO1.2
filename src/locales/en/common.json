@@ -1,4 +1,5 @@
 {
+  "customColor": "Custom color",
   "noCategory": "No category",
   "listActions": {
     "removeDefault": "Remove from favorites",
