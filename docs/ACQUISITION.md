@@ -10,7 +10,7 @@
 -->
 > **Note d'audit** — **NON NOTÉ** : aucun audit du domaine acquisition n'a jamais été fait. Ses chiffres sont gardés autrement — `npm run check:acquisition` échoue quand ils dépassent 45 jours (C-101).
 
-<!-- chiffres-remesures: 2026-09-14 -->
+<!-- chiffres-remesures: 2026-10-30 -->
 <!--
   🔴 C-101 · CE MARQUEUR EST LU PAR `npm run check:acquisition`, qui ÉCHOUE
   au-delà de 45 jours. Il porte la date de la dernière REMESURE DES CHIFFRES
@@ -34,6 +34,22 @@ valable comme stratégie — ce document ne le refait pas. Il répond à une aut
 **est-ce que la machine à mesurer fonctionne, et que dit-elle ?**
 
 ---
+
+> ### Remesure du 2026-10-30 · les cinq compteurs de la garde
+>
+> Rejoués en production (`ykeugqfgklejcdbrmawy`) avec la requête `SQL_COMPTEURS` de
+> `scripts/check-acquisition.mjs`, mêmes comptes exclus que `get_admin_stats` (mig. 149) :
+>
+> | Compteur | 2026-10-30 |
+> |---|---|
+> | Utilisateurs (hors comptes exclus) | **46** |
+> | Inscrits sur 30 jours | **18** |
+> | Actifs sur 7 jours (dernière connexion) | **9** |
+> | Inscriptions avec source `?ref=` | **1** |
+> | Organisations | **5** |
+>
+> ⚠️ Seuls ces cinq compteurs ont été rejoués. Le tableau détaillé du 2026-09-14 ci-dessous
+> (démo, conversions, partages, invitations) ne l'a pas été : il reste daté du 09-14.
 
 > ### 🔴 Remesure du 2026-09-14 (soir) · un mois plus tard, la machine marche et le funnel est vide
 >
