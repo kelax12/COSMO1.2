@@ -52,6 +52,9 @@ interface OrgTaskFilterBarProps {
   /** Actions poussées à droite de la ligne de recherche (onglet Projets :
    *  corbeille et « Nouveau projet », 2026-10-01). */
   trailing?: ReactNode;
+  /** Rendu sur la ligne de recherche, juste après le champ (onglet Tâches
+   *  desktop : tri + périmètre, 2026-10-30). */
+  afterSearch?: (scope: ReactNode) => ReactNode;
 }
 
 const segBase = 'h-8 px-2.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
@@ -60,7 +63,7 @@ const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-
 
 const OrgTaskFilterBar = ({
   filters, setFilters, defaultStatus, members, teams, projects = [], currentUserId,
-  searchPlaceholder, searchAria, onCreateTeam, entity = 'tasks', scopeSlot, trailing,
+  searchPlaceholder, searchAria, onCreateTeam, entity = 'tasks', scopeSlot, trailing, afterSearch,
 }: OrgTaskFilterBarProps) => {
   // Catalogue `portfolio`, chargé avec les deux seuls onglets qui montrent cette
   // barre (Tâches, Projets) : `org` est payé par toute visite de /entreprise.
@@ -68,9 +71,8 @@ const OrgTaskFilterBar = ({
   const { team, assignee, project, status, q } = filters;
 
   const scopeIsAll = assignee === null && team === '';
-  const scopeIsMine = !!currentUserId && assignee === currentUserId && team === '';
   const assigneeMember = members.find((m) => m.userId === assignee);
-  const scopeIsMember = !!assignee && assignee !== currentUserId;
+  const scopeIsMember = !!assignee;
   const selectedTeam = teams.find((tm) => tm.id === team);
   const teamLabel = team === 'org' ? t('filters.orgNoTeam') : selectedTeam?.name ?? t('filters.allTeams');
   const statusLabel: Record<TaskStatusFilter, string> = {
@@ -111,16 +113,6 @@ const OrgTaskFilterBar = ({
           >
             {t('filters.scopeAll')}
           </button>
-          {currentUserId && (
-            <button
-              type="button"
-              onClick={() => setFilters({ assignee: currentUserId, team: '' })}
-              aria-pressed={scopeIsMine}
-              className={`${segBase} ${scopeIsMine ? segOn : segOff}`}
-            >
-              {t('filters.scopeMine')}
-            </button>
-          )}
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label={t('filters.filterAssignee')}
@@ -247,6 +239,7 @@ const OrgTaskFilterBar = ({
         </div>
 
         {!scopeSlot && scope}
+        {afterSearch && <div className="flex-1 min-w-0">{afterSearch(scope)}</div>}
 
         {/* Plus de pastilles d'état ici (2026-09-28) : « Terminées cette
             semaine » est un préréglage (`FilterPresets`), « Tout » est retiré. */}

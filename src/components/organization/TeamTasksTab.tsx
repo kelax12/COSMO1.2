@@ -414,7 +414,9 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
             <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="open" currentUserId={currentUserId ?? user?.id} />
             <TeamTasksViewControls {...viewControlsProps} part="view" />
           </MobileFiltersSheet>
-        ) : (
+        ) : null}
+        // Desktop : tri, périmètre et création sur la ligne de recherche (2026-10-30).
+        afterSearch={isMobile ? undefined : (scope) => (
           <TeamTasksToolbar
             sortField={sortField}
             onSortField={(group) => setFilters({ group })}

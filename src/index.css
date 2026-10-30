@@ -1026,6 +1026,15 @@ body {
   background-color: rgb(var(--table-row-odd));
 }
 
+/* Tableau des tâches d'entreprise : pas d'alternance de fond (2026-10-30). */
+.data-table--plain tbody tr:nth-child(n) {
+  background-color: rgb(var(--table-bg));
+}
+
+.data-table--plain tbody tr:hover {
+  background-color: rgb(var(--table-row-hover));
+}
+
 .animate-fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }

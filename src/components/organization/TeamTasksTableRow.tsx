@@ -168,7 +168,7 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
         borderLeft: selected ? '4px solid #3B82F6' : '3px solid transparent',
       } : { borderLeft: overdue ? '4px solid rgb(var(--color-error))' : '3px solid transparent' }}
     >
-      <td className="px-2 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+      <td className="px-2 py-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-5">
         {selectMode && (
           <TaskSelectCheckbox name={task.name} checked={selected} onToggle={() => handlers.toggleSelect(task)} />
@@ -196,12 +196,12 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
           </button>
         </div>
       </td>
-      <td className="px-2 py-3">
+      <td className="px-2 py-2">
         <div className="flex justify-center">
           <span className={`w-4 h-4 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
         </div>
       </td>
-      <td className={`font-medium px-2 py-3 text-base ${task.completed ? 'line-through' : ''}`}
+      <td className={`font-medium px-2 py-2 text-base ${task.completed ? 'line-through' : ''}`}
           style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
         <div className="flex items-center gap-2 min-w-0">
           <span className="truncate" title={task.name}>{task.name}</span>
@@ -228,14 +228,14 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
         </div>
       </td>
       {show('project') && (
-        <td className="px-2 py-3 whitespace-nowrap">
+        <td className="px-2 py-2 whitespace-nowrap">
           <span className="inline-flex items-center gap-2 text-sm truncate" style={{ color: 'rgb(var(--color-text-secondary))' }}>
             {project?.name ?? '—'}
           </span>
         </td>
       )}
       {show('status') && (
-        <td onClick={(e) => e.stopPropagation()} className="px-2 py-3 whitespace-nowrap">
+        <td onClick={(e) => e.stopPropagation()} className="px-2 py-2 whitespace-nowrap">
           <DropdownMenu>
             <DropdownMenuTrigger
               disabled={!!editReason}
@@ -270,12 +270,12 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
         </td>
       )}
       {show('assignees') && (
-        <td className="px-2 py-3 whitespace-nowrap">
+        <td className="px-2 py-2 whitespace-nowrap">
           <AssigneesCell task={task} memberById={memberById} currentUserId={currentUserId} />
         </td>
       )}
       {show('priority') && (
-        <td onClick={(e) => e.stopPropagation()} className="text-center px-1 py-3 whitespace-nowrap">
+        <td onClick={(e) => e.stopPropagation()} className="text-center px-1 py-2 whitespace-nowrap">
           {/* Priorité éditable dans la ligne (le lot le permettait, pas la ligne). */}
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -299,21 +299,21 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
         </td>
       )}
       {show('deadline') && (
-        <td onClick={(e) => e.stopPropagation()} className="px-2 py-3 whitespace-nowrap">
+        <td onClick={(e) => e.stopPropagation()} className="px-2 py-2 whitespace-nowrap">
           <DeadlineCell task={task} disabledReason={editReason} onChange={(d) => handlers.setDeadline(task, d)} />
         </td>
       )}
       {show('duration') && (
-        <td className="text-center px-1 py-3 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
+        <td className="text-center px-1 py-2 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
           {formatDuration(task.estimatedTime ?? 0)}
         </td>
       )}
       {show('category') && (
-        <td className="px-2 py-3 whitespace-nowrap text-sm text-[rgb(var(--color-text-secondary))] max-w-[160px] truncate" title={categoryName}>
+        <td className="px-2 py-2 whitespace-nowrap text-sm text-[rgb(var(--color-text-secondary))] max-w-[160px] truncate" title={categoryName}>
           {categoryName ?? '—'}
         </td>
       )}
-      <td onClick={(e) => e.stopPropagation()} className="px-2 py-3 whitespace-nowrap text-center">
+      <td onClick={(e) => e.stopPropagation()} className="px-2 py-2 whitespace-nowrap text-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
