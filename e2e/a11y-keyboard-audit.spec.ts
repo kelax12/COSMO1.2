@@ -234,11 +234,10 @@ test('GARDE — EventModal : Échap passe par guardedClose, et le piège suit la
 // troisième, est couvert par la garde d'Échap ci-dessus — c'est LUI qu'Échap
 // fait apparaître, le mesurer ailleurs serait le mesurer deux fois.
 const EVENT_MODAL_CHILDREN = [
-  { surface: 'ColorSettingsModal', role: 'button', open: /créer une catégorie/i, dialog: /modifier les catégories/i },
-  // ⚠️ `role="radio"`, pas `button` : la puce de récurrence est un <button> dont
-  // le rôle EXPLICITE écrase le rôle implicite. Cherché comme un bouton, il est
-  // introuvable — et le test expire au lieu d'échouer sur ce qu'il mesure.
-  { surface: 'RecurrenceDaysModal', role: 'radio', open: /^personnaliser$/i, dialog: /répéter les jours/i },
+  { surface: 'ColorSettingsModal', menu: null, role: 'button', open: /créer une catégorie/i, dialog: /modifier les catégories/i },
+  // La récurrence est un menu déroulant depuis le 2026-10-29 (modale en une
+  // colonne) : on ouvre le menu, puis on choisit « Personnaliser ».
+  { surface: 'RecurrenceDaysModal', menu: /^récurrence de l'événement$/i, role: 'menuitem', open: /^personnaliser$/i, dialog: /répéter les jours/i },
 ] as const;
 
 for (const child of EVENT_MODAL_CHILDREN) {
@@ -255,7 +254,9 @@ for (const child of EVENT_MODAL_CHILDREN) {
     const eventModal = page.getByRole('dialog', { name: /ajouter un événement/i });
     await expect(eventModal).toBeVisible({ timeout: 20_000 });
 
-    await eventModal.getByRole(child.role, { name: child.open }).first().click();
+    if (child.menu) await eventModal.getByRole('button', { name: child.menu }).first().click();
+    // Un menu Radix est rendu en portail, hors de la modale.
+    await (child.menu ? page : eventModal).getByRole(child.role, { name: child.open }).first().click();
     const sibling = page.getByRole('dialog', { name: child.dialog });
     await expect(sibling).toBeVisible({ timeout: 10_000 });
 

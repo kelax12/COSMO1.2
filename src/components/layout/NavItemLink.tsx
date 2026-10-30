@@ -109,7 +109,9 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
       {/* Réduite : le libellé passe sous l'icône, seulement œil ouvert. */}
       {!collapsed
         ? <span className="truncate">{label}</span>
-        : showLabel && <span className="text-[10px] leading-tight truncate max-w-full">{label}</span>}
+        : showLabel
+          ? <span className="text-[10px] leading-tight truncate max-w-full">{label}</span>
+          : <span className="sr-only">{label}</span>}
     </>
   );
 
@@ -144,9 +146,9 @@ const NavItemLink: React.FC<NavItemLinkProps> = ({
       to={to}
       end={end}
       data-guide-id={guideId}
-      // Barre réduite sans libellé visible : le nom passe par aria-label
-      // (axe `link-name`, WCAG 4.1.2), l'infobulle par title.
-      aria-label={collapsed && !showLabel ? label : undefined}
+      // Barre réduite sans libellé visible : infobulle par title, nom par un
+      // texte `sr-only` (plus bas). Pas d'aria-label : il cachait le badge
+      // visible (« 4 ») et axe signalait label-content-name-mismatch.
       title={collapsed && !showLabel ? label : undefined}
       className={({ isActive }) =>
         `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? `${showLabel ? 'flex-col !gap-1 ' : ''}justify-center px-0` : '!ml-1 !py-[0.7rem]'}`

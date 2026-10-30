@@ -146,7 +146,12 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
     // Le champ date affiche la date choisie, pas « date » : on vise le
     // déclencheur de popover (Radix pose `aria-haspopup="dialog"`).
     await dialog.locator('button[aria-haspopup="dialog"]').first().click();
-    await expectCosmoCalendar(page, dialog);
+    // ⚠️ Le calendrier de la modale d'événement n'a pas de rangée de
+    // raccourcis, et la modale garde un `input[type=date]` (caché sous `md`,
+    // roue système sur téléphone) : `expectCosmoCalendar` ne s'applique pas.
+    // Une grille DANS le DOM suffit à prouver que ce n'est pas le picker
+    // natif, qui dessine la sienne hors du DOM.
+    await expect(page.getByRole('grid').filter({ visible: true }).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('surface 2 — l’échéance de la popup de dépendances PERSONNELLES', async ({
@@ -243,12 +248,20 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
   test('les flèches déplacent le focus dans la grille (React 18 / forwardRef)', async ({
     demoPage: page,
   }) => {
+    // Passe par la surface 2 (popup de dépendances) : son sélecteur est le
+    // DatePicker COSMO, raccourcis compris. La popup « Planifier » qui servait
+    // ici est supprimée (2026-10-29).
     await navTo(page, /to ?do|tâches|tasks/i, /\/tasks/);
     await openFirstRowMenu(page);
-    await page.getByRole('menuitem', { name: /^planifier$/i }).click();
-
-    const dialog = page.getByRole('dialog', { name: /planifier dans l'agenda/i });
-    await dialog.getByRole('button', { name: /date/i }).first().click();
+    await page.getByRole('menuitem', { name: /^modifier$/i }).click();
+    const taskDialog = page.getByRole('dialog', { name: /modifier la tâche/i });
+    await expect(taskDialog).toBeVisible({ timeout: 10_000 });
+    await taskDialog.getByRole('tab', { name: /^dépendances/i }).click();
+    await taskDialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
+    const picker = page.getByRole('dialog', { name: /ajouter une dépendance/i });
+    await expect(picker).toBeVisible({ timeout: 10_000 });
+    await picker.getByRole('button', { name: /^créer une tâche$/i }).click();
+    await picker.getByRole('button', { name: /échéance|sélectionner une date/i }).first().click();
     await expect(page.getByRole('group', { name: PRESETS })).toBeVisible({ timeout: 10_000 });
 
     // `autoFocus` (et non `initialFocus`, mort depuis react-day-picker 9) doit
