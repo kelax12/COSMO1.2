@@ -113,7 +113,7 @@ les permissions** (admin seul).
   un projet à moitié créé. Duplication et « partir d'un modèle » empruntent la même RPC.
 - ❌ **Un modèle ne contient JAMAIS de vraies tâches** : son contenu est `template_payload`
   (décalages en jours). De vraies tâches remonteraient dans « Mes tâches » et les statistiques.
-  `useTeamProjects` EXCLUT les modèles (`select`) ; ils se lisent par `useTeamProjectTemplates`.
+  `useTeamProjects` EXCLUT les modèles (`select`). Plus aucun écran ne les lit depuis ebf44b2b.
 - ❌ **La catégorie ne réécrit plus `color`.** Elle s'affiche en pastille à sa propre couleur ;
   `projectColorFromCategory` n'a plus d'appelant dans l'onglet Projets.
 - ⚠️ `my_org_perm` de la 153 part du corps de la **152** (`task.deleteAny` = manager) : appliquer

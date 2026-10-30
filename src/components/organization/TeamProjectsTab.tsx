@@ -415,6 +415,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, canEditDependencies, i
               canCreateProject={can['project.create']}
               createDeniedReason={hints.deniedReason('project.create')}
               onNewProject={() => newProject()}
+              guideId="projects-new"
             />
           </>
         )}
