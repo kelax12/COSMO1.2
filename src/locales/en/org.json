@@ -543,6 +543,7 @@
     "deleteAria": "Delete this comment",
     "mentionAria": "Mention a member",
     "sendAria": "Send comment",
+    "send": "Send",
     "formerMember": "Former member",
     "deleted": "Comment deleted",
     "title": "Comments",
@@ -779,6 +780,7 @@
       "noRights": "You don't have permission to edit this task.",
       "tabsAria": "Task sections",
       "tabDetails": "Details",
+      "tabAdvanced": "Advanced",
       "tabSubtasks": "Subtasks",
       "tabDependencies": "Dependencies",
       "tabHistory": "History",
@@ -960,6 +962,9 @@
     "empty": "No lists in the company yet.",
     "addToList": "Add to a list",
     "addToListShort": "List",
-    "deleted": "List deleted"
+    "deleted": "List deleted",
+    "pickerDone": "Done",
+    "pickerCount": "{count} selected",
+    "removeFromList": "Remove {name}"
   }
 }

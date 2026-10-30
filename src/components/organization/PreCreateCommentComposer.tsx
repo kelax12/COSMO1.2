@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { MessageSquarePlus } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 
 interface PreCreateCommentComposerProps {
@@ -55,7 +54,7 @@ const PreCreateCommentComposer = ({ onSubmit, pending, canSubmit }: PreCreateCom
           disabled={!body.trim() || pending || !canSubmit}
           className="self-end inline-flex items-center gap-1.5 min-h-11 px-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-40 bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))] hover:opacity-90"
         >
-          <MessageSquarePlus size={16} aria-hidden="true" /> {t('popups.task.createAndComment')}
+          {t('popups.task.createAndComment')}
         </button>
       </div>
     </div>

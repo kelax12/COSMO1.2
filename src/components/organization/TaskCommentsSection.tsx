@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { Send, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import {
   useTeamTaskComments,
   useAddTeamTaskComment,
@@ -239,9 +239,9 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
             // C-57 — 40 x 40 px avant, 4 px sous la cible. Meme famille de geste
             // que la suppression juste au-dessus, meme composant : les corriger
             // separement aurait laisse la moitie du fil sous la cible.
-            className="shrink-0 min-h-touch min-w-touch rounded-xl flex items-center justify-center transition-colors disabled:opacity-40 bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))] hover:opacity-90"
+            className="shrink-0 min-h-touch min-w-touch px-3 rounded-xl text-sm font-semibold flex items-center justify-center transition-colors disabled:opacity-40 bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))] hover:opacity-90"
           >
-            <Send size={16} aria-hidden="true" />
+            {t('comments.send')}
           </button>
         </div>
       </div>
