@@ -225,7 +225,7 @@
     "tasksTabColStatus": "STATUT",
     "tasksTabStatusUnassigned": "Non attribué",
     "tasksTabStatusAria": "Changer le statut de {{name}}",
-    "tasksTabAssignAction": "Attribuer à quelqu'un",
+    "tasksTabAssignAction": "Attribuer à",
     "tasksTabScheduleAction": "Assigner l'événement",
     "tasksTabLoading": "Chargement des tâches…",
     "tasksTabShowMore_one": "Afficher la suite ({{count}} tâche restante)",

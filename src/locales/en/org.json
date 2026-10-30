@@ -213,7 +213,7 @@
     "tasksTabColStatus": "STATUS",
     "tasksTabStatusUnassigned": "Unassigned",
     "tasksTabStatusAria": "Change status of {{name}}",
-    "tasksTabAssignAction": "Assign to someone",
+    "tasksTabAssignAction": "Assign to",
     "tasksTabScheduleAction": "Schedule event",
     "tasksTabLoading": "Loading tasks…",
     "tasksTabShowMore_one": "Show more ({{count}} task left)",
