@@ -1,4 +1,3 @@
-import { ExternalLink, Receipt } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import type { KeyOf } from '@/i18n/catalog';
@@ -37,7 +36,6 @@ export function OrgBillingHistory({ orgId }: Props) {
       className="rounded-xl border border-[rgb(var(--color-border))] p-4 flex flex-col gap-3"
     >
       <h3 id="org-billing-history" className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-        <Receipt size={15} aria-hidden="true" />
         {t('historyTitle')}
       </h3>
 
@@ -82,7 +80,7 @@ export function OrgBillingHistory({ orgId }: Props) {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-xs font-medium text-[rgb(var(--color-accent))] hover:underline"
                   >
-                    {t('historyInvoice')} <ExternalLink size={12} aria-hidden="true" />
+                    {t('historyInvoice')}
                     <span className="sr-only">{t('historyNewTab')}</span>
                   </a>
                 )}

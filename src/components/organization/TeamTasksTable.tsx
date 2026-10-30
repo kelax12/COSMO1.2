@@ -66,7 +66,7 @@ const TeamTasksTable = ({
 
   const virtualizer = useWindowVirtualizer({
     count: lines.length,
-    estimateSize: (i) => (lines[i]?.kind === 'group' ? 40 : ESTIMATED_ROW),
+    estimateSize: (i) => (lines[i]?.kind === 'group' ? 35 : ESTIMATED_ROW),
     overscan: 8,
     scrollMargin,
     getItemKey: (i) => lines[i]?.key ?? i,
@@ -112,13 +112,14 @@ const TeamTasksTable = ({
               const { label, dot } = groupLabel(line.key);
               return (
                 <tr key={line.key} ref={virtualizer.measureElement} data-index={item.index} className="bg-[rgb(var(--color-hover)/0.5)]">
-                  <td colSpan={colCount} className="px-2 py-[5px]">
+                  {/* `!` : `.data-table td` impose 16 px 24 px et l'emportait (58 px, -40 % le 2026-10-30). */}
+                  <td colSpan={colCount} className="!px-3 !py-[7px]">
                     <button
                       type="button"
                       onClick={() => onToggleGroup(line.key)}
                       aria-expanded={!line.collapsed}
                       aria-label={pf.t('taskTable.groupToggle', { name: label })}
-                      className="inline-flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-text-primary))] rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                      className="flex items-center gap-2 text-sm leading-5 font-semibold text-[rgb(var(--color-text-primary))] rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                     >
                       {line.collapsed ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
                       {dot && <span className={`w-2 h-2 rounded-full ${dot}`} aria-hidden="true" />}

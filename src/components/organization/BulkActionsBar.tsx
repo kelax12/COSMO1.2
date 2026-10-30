@@ -95,7 +95,9 @@ const BulkActionsBar = ({
     <div
       role="toolbar"
       aria-label={count > 0 ? tp('projects.selected', count) : t('projects.selectHint')}
-      className={`${inline ? 'sticky bottom-0 z-10 w-full' : 'fixed left-1/2 -translate-x-1/2 bottom-20 sm:bottom-6 z-40 max-w-[calc(100vw-2rem)]'} flex items-center gap-1 px-2 py-2 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg overflow-x-auto hide-scrollbar`}
+      // En ligne (fiche membre), la barre REVIENT À LA LIGNE : en défilement
+      // horizontal, « Supprimer » et la sortie tombaient hors de la fenêtre (2026-10-30).
+      className={`${inline ? 'sticky bottom-0 z-10 w-full flex-wrap' : 'fixed left-1/2 -translate-x-1/2 bottom-20 sm:bottom-6 z-40 max-w-[calc(100vw-2rem)] overflow-x-auto hide-scrollbar'} flex items-center gap-1 px-2 py-2 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg`}
     >
       <span
         className={`px-2 text-sm whitespace-nowrap tabular-nums ${

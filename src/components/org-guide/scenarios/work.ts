@@ -9,7 +9,6 @@ export const WORK_ACTIONS: GuideAction[] = [
     { kind: 'goto', section: 'projects', via: 'nav-projects' },
     { kind: 'click', target: 'projects-new' },
     { kind: 'field', target: 'project-form-name', bubbleKey: k('project.create', 'b1') },
-    { kind: 'field', target: 'project-form-team', bubbleKey: k('project.create', 'b2') },
     { kind: 'field', target: 'project-form-due', bubbleKey: k('project.create', 'b3') },
   ] },
   // Le modèle se choisit dans une liste en tête du formulaire (pas d'onglet) ;
