@@ -2,19 +2,20 @@
 // Filtres de l'annuaire des membres (/entreprise/members)
 //
 // Audit « passage à l'échelle » du 2026-09-23 : à cent membres, la seule
-// recherche par nom ne suffit plus. On filtre par équipe, rôle, manager
-// direct, « non placé », période d'arrivée, et le filtre vit dans l'URL
-// pour qu'un lien le partage.
+// recherche par nom ne suffit plus. On filtre par équipe, rôle et période
+// d'arrivée, et le filtre vit dans l'URL pour qu'un lien le partage. Les
+// filtres « manager direct » et « non placé » sont partis avec l'organigramme
+// (mig. 229) ; un ancien lien qui les porte est simplement ignoré.
 //
 // Tout ce qui est lu de l'URL passe par `readDirectoryFilters` : une URL est
 // une entrée non fiable, chaque valeur est bornée à un vocabulaire fermé ou à
 // l'alphabet d'un identifiant (même contrat que `readEntityParam`).
 // ═══════════════════════════════════════════════════════════════════
 
-import { buildOrgTree, isManagerOf, type OrgMember } from '@/modules/organizations';
+import type { OrgMember } from '@/modules/organizations';
 import { filterMembersByQuery } from './member-search.helpers';
 
-export const DIRECTORY_ROLES = ['admin', 'manager', 'member'] as const;
+export const DIRECTORY_ROLES = ['admin', 'member'] as const;
 export type DirectoryRole = (typeof DIRECTORY_ROLES)[number];
 
 /** Périodes d'arrivée : « depuis moins de… », plus « depuis plus d'un an ». */
@@ -25,8 +26,6 @@ export interface DirectoryFilters {
   query: string;
   teamId: string | null;
   role: DirectoryRole | null;
-  managerId: string | null;
-  unplaced: boolean;
   joined: JoinedPeriod | null;
 }
 
@@ -34,8 +33,6 @@ export const EMPTY_DIRECTORY_FILTERS: DirectoryFilters = {
   query: '',
   teamId: null,
   role: null,
-  managerId: null,
-  unplaced: false,
   joined: null,
 };
 
@@ -48,8 +45,6 @@ export const DIRECTORY_PARAMS = {
   query: 'dirQ',
   teamId: 'dirTeam',
   role: 'dirRole',
-  managerId: 'dirManager',
-  unplaced: 'dirUnplaced',
   joined: 'dirJoined',
 } as const satisfies Record<keyof DirectoryFilters, string>;
 
@@ -67,8 +62,6 @@ export function readDirectoryFilters(params: URLSearchParams): DirectoryFilters 
     query: (params.get(DIRECTORY_PARAMS.query) ?? '').slice(0, MAX_QUERY),
     teamId: idOrNull(params.get(DIRECTORY_PARAMS.teamId)),
     role: oneOf(DIRECTORY_ROLES, params.get(DIRECTORY_PARAMS.role)),
-    managerId: idOrNull(params.get(DIRECTORY_PARAMS.managerId)),
-    unplaced: params.get(DIRECTORY_PARAMS.unplaced) === '1',
     joined: oneOf(JOINED_PERIODS, params.get(DIRECTORY_PARAMS.joined)),
   };
 }
@@ -83,19 +76,16 @@ export function writeDirectoryFilters(params: URLSearchParams, filters: Director
   set(DIRECTORY_PARAMS.query, filters.query.trim() ? filters.query.slice(0, MAX_QUERY) : null);
   set(DIRECTORY_PARAMS.teamId, filters.teamId);
   set(DIRECTORY_PARAMS.role, filters.role);
-  set(DIRECTORY_PARAMS.managerId, filters.managerId);
-  set(DIRECTORY_PARAMS.unplaced, filters.unplaced ? '1' : null);
   set(DIRECTORY_PARAMS.joined, filters.joined);
   return next;
 }
 
 /** Nombre de filtres actifs HORS recherche (la recherche a son propre champ). */
 export const activeFilterCount = (f: DirectoryFilters): number =>
-  [f.teamId, f.role, f.managerId, f.unplaced || null, f.joined].filter(Boolean).length;
+  [f.teamId, f.role, f.joined].filter(Boolean).length;
 
-/** Rôle AFFICHÉ : `manager` est dérivé de la pyramide, jamais stocké. */
-export const directoryRoleOf = (m: OrgMember, members: OrgMember[]): DirectoryRole =>
-  m.role === 'admin' ? 'admin' : isManagerOf(members, m.userId) ? 'manager' : 'member';
+/** Grade AFFICHÉ : administrateur ou membre. Le reste, ce sont les rôles personnalisés. */
+export const directoryRoleOf = (m: OrgMember): DirectoryRole => (m.role === 'admin' ? 'admin' : 'member');
 
 const DAY = 24 * 60 * 60 * 1000;
 const PERIOD_DAYS: Record<Exclude<JoinedPeriod, 'older'>, number> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
@@ -108,7 +98,6 @@ export function joinedWithin(joinedAt: string, period: JoinedPeriod, now: number
 }
 
 interface ApplyContext {
-  ownerId: string;
   /** Toutes les équipes de l'organisation (une équipe VIDE reste un filtre valide). */
   teamIds: Set<string>;
   /** userId → ids des équipes du membre. */
@@ -117,35 +106,23 @@ interface ApplyContext {
 }
 
 /**
- * Applique filtres ET recherche, dans l'ordre de l'annuaire. « Non placé » a
- * la définition de la pyramide (`buildOrgTree`) : sans manager ni subordonné,
- * propriétaire exclu. Un identifiant d'équipe ou de manager inconnu ne vide
- * pas l'annuaire en silence : il est ignoré, comme une valeur hors vocabulaire.
+ * Applique filtres ET recherche, dans l'ordre de l'annuaire. Un identifiant
+ * d'équipe inconnu ne vide pas l'annuaire en silence : il est ignoré, comme
+ * une valeur hors vocabulaire.
  */
 export function applyDirectoryFilters(
   members: OrgMember[],
   filters: DirectoryFilters,
-  { ownerId, teamIds, teamIdsByUser, now }: ApplyContext,
+  { teamIds, teamIdsByUser, now }: ApplyContext,
 ): OrgMember[] {
-  const unplacedIds = filters.unplaced
-    ? new Set(buildOrgTree(members, ownerId).unplaced.map((m) => m.userId))
-    : null;
-  const knownManager = !!filters.managerId && members.some((m) => m.userId === filters.managerId);
   const knownTeam = !!filters.teamId && teamIds.has(filters.teamId);
 
   const filtered = members.filter((m) => {
     if (filters.teamId && knownTeam && !teamIdsByUser.get(m.userId)?.has(filters.teamId)) return false;
-    if (filters.role && directoryRoleOf(m, members) !== filters.role) return false;
-    if (knownManager && m.managerId !== filters.managerId) return false;
-    if (unplacedIds && !unplacedIds.has(m.userId)) return false;
+    if (filters.role && directoryRoleOf(m) !== filters.role) return false;
     if (filters.joined && !joinedWithin(m.joinedAt, filters.joined, now)) return false;
     return true;
   });
   return filterMembersByQuery(filtered, filters.query);
 }
 
-/** Managers proposés par le filtre « manager direct » : ceux qui ont au moins un direct. */
-export const directManagers = (members: OrgMember[]): OrgMember[] =>
-  members
-    .filter((m) => isManagerOf(members, m.userId))
-    .sort((a, b) => a.displayName.localeCompare(b.displayName));

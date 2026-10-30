@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, Copy, X } from 'lucide-react';
-import { subtreeOf, type OrgMember } from '@/modules/organizations';
-import { useOrgTeams } from '@/modules/org-teams';
+import type { OrgMember } from '@/modules/organizations';
+import { useOrgTeamMembers, useOrgTeams } from '@/modules/org-teams';
 import { useOrgSettings } from '@/modules/org-config';
 import { useInviteByEmail } from '@/modules/organizations/governance.hooks';
 import type { EmailInvitationResult, SendInvitationsResult } from '@/modules/organizations/governance.types';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
-import MemberSelectField from './MemberSelectField';
 import { splitEmails } from './invite-email.helpers';
 import { useT } from '@/i18n/useT';
 import TeamColorDot from './TeamColorDot';
+import { canManageTeam } from './team-page.helpers';
 import MenuSelect from '@/components/organization/MenuSelect';
 
 interface InviteByEmailDialogProps {
@@ -30,19 +30,23 @@ const ACCESS_CHOICES = [null, 7, 30, 90, 180] as const;
  *
  * Le canal par défaut d'une entreprise. Chaque adresse reçoit un lien
  * NOMINATIF (seul le compte de cette adresse peut l'accepter), déjà placé dans
- * la pyramide et dans des équipes, et éventuellement borné dans le temps (un
+ * des équipes (jamais sous un supérieur depuis la mig. 229), et éventuellement borné dans le temps (un
  * prestataire, un stagiaire). Le résultat dit adresse par adresse ce qui s'est
  * passé : un lien créé dont l'e-mail n'est pas parti reste copiable.
  */
-const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, initialEmails = '', onClose }: InviteByEmailDialogProps) => {
+const InviteByEmailDialog = ({ orgId, currentUserId, isAdmin, initialEmails = '', onClose }: InviteByEmailDialogProps) => {
   const { t } = useT('org');
   const { t: ta, tp: tpOrgAdmin } = useT('orgAdmin');
   const invite = useInviteByEmail(orgId);
-  const { data: teams = [] } = useOrgTeams(orgId);
+  const { data: allTeams = [] } = useOrgTeams(orgId);
+  const { data: memberships = [] } = useOrgTeamMembers(orgId);
+  // Une équipe donne de la visibilité : un non-admin n'y fait entrer que dans
+  // celles qu'il gère (miroir de `create_org_email_invitations`, mig. 229).
+  const teams = useMemo(
+    () => allTeams.filter((team) => canManageTeam(team, memberships, currentUserId, isAdmin)),
+    [allTeams, memberships, currentUserId, isAdmin],
+  );
   const [raw, setRaw] = useState(initialEmails);
-  // Un manager ne place que sous lui ou son sous-arbre (même règle que la
-  // policy `org_invite_links_insert`) : il part donc placé sous lui-même.
-  const [managerId, setManagerId] = useState(isAdmin ? '' : currentUserId ?? '');
   const [teamIds, setTeamIds] = useState<string[]>([]);
   const [accessDays, setAccessDays] = useState<number | null>(null);
   // Durée d'accès PROPOSÉE par l'entreprise (mig. 195), appliquée une fois à
@@ -61,15 +65,10 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, initialEm
   });
 
   const emails = useMemo(() => splitEmails(raw), [raw]);
-  const placeable = useMemo(() => {
-    if (isAdmin || !currentUserId) return members;
-    const mine = subtreeOf(members, currentUserId);
-    return members.filter((m) => m.userId === currentUserId || mine.has(m.userId));
-  }, [members, isAdmin, currentUserId]);
 
   const submit = () =>
     invite.mutate(
-      { emails, managerId: managerId || null, teamIds, accessDays },
+      { emails, managerId: null, teamIds, accessDays },
       { onSuccess: setDone },
     );
 
@@ -173,15 +172,6 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, initialEm
               </p>
             </div>
 
-            <MemberSelectField
-              label={ta('invites.placement')}
-              members={placeable}
-              value={managerId}
-              onChange={setManagerId}
-              emptyLabel={isAdmin ? ta('invites.unplaced') : ta('invites.underMe')}
-              hint={ta('invites.placementHint')}
-            />
-
             {teams.length > 0 && (
               <fieldset>
                 <legend className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">{ta('invites.teams')}</legend>
@@ -237,7 +227,7 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, initialEm
               <button
                 type="button"
                 onClick={submit}
-                disabled={invite.isPending || emails.length === 0 || emails.length > 50 || (!isAdmin && !managerId)}
+                disabled={invite.isPending || emails.length === 0 || emails.length > 50}
                 className="min-h-11 px-4 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] disabled:opacity-50"
               >
                 {invite.isPending ? ta('invites.sending') : ta('invites.send', { count: emails.length })}

@@ -11,7 +11,7 @@ import { GUIDE_ACTIONS } from './scenarios';
 import type { GuideViewer } from './guide-types';
 
 const can = (v: boolean) => Object.fromEntries(ORG_PERMISSION_KEYS.map((k) => [k, v])) as Record<OrgPermissionKey, boolean>;
-const member: GuideViewer = { can: can(false), isAdmin: false, isManager: false, isOwner: false, customRolesAvailable: true };
+const member: GuideViewer = { can: can(false), isAdmin: false, isOwner: false, customRolesAvailable: true };
 
 // « Créer un projet » sans attraper « Créer un projet depuis un modèle ».
 const createProject = /^cr[ée]er un projet(?! depuis)|^create a project(?! from)/i;

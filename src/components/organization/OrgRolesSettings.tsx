@@ -19,13 +19,18 @@ import {
   type OrgMember,
   type SaveCustomRoleInput,
 } from '@/modules/organizations';
+import { useOrgSettings, useSaveOrgSettings } from '@/modules/org-config';
 import { useT } from '@/i18n/useT';
+import { toast } from '@/lib/toast';
+import MenuSelect from '@/components/organization/MenuSelect';
 import OrgConfirmDialog from './OrgConfirmDialog';
 import RoleEditorSheet from './RoleEditorSheet';
 
 interface OrgRolesSettingsProps {
   orgId: string;
   members: OrgMember[];
+  /** Le rôle des nouveaux membres est un réglage d'organisation : admin seul (mig. 230). */
+  isAdmin: boolean;
 }
 
 type EditorState = { roleId?: string; initial: SaveCustomRoleInput | null } | null;
@@ -45,9 +50,15 @@ const toInput = (role: OrgCustomRole): SaveCustomRoleInput => ({
  * dupliquer, supprimer. La garde d'affichage (`isAdmin || can['role.manage']`)
  * est posée par `OrgSettingsSection` ; la vraie garde est la RLS.
  */
-const OrgRolesSettings = ({ orgId, members }: OrgRolesSettingsProps) => {
+const OrgRolesSettings = ({ orgId, members, isAdmin }: OrgRolesSettingsProps) => {
   const { t: ta, tp } = useT('orgAdmin');
   const { data: roles = [], isLoading } = useOrgRoles(orgId);
+  const { data: settings } = useOrgSettings(orgId);
+  const saveSettings = useSaveOrgSettings(orgId);
+  // Un réglage qui pointe un rôle supprimé se lit « aucun » (ON DELETE SET NULL).
+  const defaultRoleId = settings?.defaultRoleId && roles.some((r) => r.id === settings.defaultRoleId)
+    ? settings.defaultRoleId
+    : '';
   const { data: assignments = [] } = useOrgRoleAssignments(orgId);
   const saveRole = useSaveOrgRole();
   const deleteRole = useDeleteOrgRole();
@@ -81,6 +92,28 @@ const OrgRolesSettings = ({ orgId, members }: OrgRolesSettingsProps) => {
 
   return (
     <div className="space-y-3">
+      <div className="rounded-xl border border-[rgb(var(--color-border))] p-3">
+        <label htmlFor="org-default-role" className="block text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+          {ta('customRoles.defaultTitle')}
+        </label>
+        <p className="mt-0.5 text-xs text-[rgb(var(--color-text-muted))]">
+          {ta('customRoles.defaultHint')}{isAdmin ? '' : ` ${ta('customRoles.defaultAdminOnly')}`}
+        </p>
+        <MenuSelect
+          id="org-default-role"
+          className="mt-2 w-full sm:w-72"
+          disabled={!isAdmin || !settings || saveSettings.isPending}
+          value={defaultRoleId}
+          onChange={(e) => saveSettings.mutate(
+            { defaultRoleId: e.target.value || null },
+            { onSuccess: () => toast.success(ta('customRoles.defaultSaved')) },
+          )}
+        >
+          <option value="">{ta('customRoles.defaultNone')}</option>
+          {roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}
+        </MenuSelect>
+      </div>
+
       <div className="flex flex-wrap items-start justify-between gap-3">
         <p className="text-sm text-[rgb(var(--color-text-secondary))] max-w-prose">{ta('customRoles.intro')}</p>
         <button

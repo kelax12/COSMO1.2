@@ -6,7 +6,7 @@ import WorkSummaryCard, { ProgressRing } from './WorkSummaryCard';
 import { startOfWeek } from 'date-fns';
 import { useTeamTaskWorkingSet, useTeamProjects, TEAM_TASKS_READ_LIMIT } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
-import { isManagerOf, type OrgMember } from '@/modules/organizations';
+import type { OrgMember } from '@/modules/organizations';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import { projectColor } from './team-projects.helpers';
 import { Download, ClipboardCheck } from 'lucide-react';
@@ -120,10 +120,10 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   const [chosenScope, setChosenScope] = useState<StatsScope | null>(null);
   const scope = chosenScope ?? defaultScope(teams, scopeCtx);
 
-  // Revue hebdomadaire (#26) : elle sert a arbitrer la charge d'AUTRES
-  // personnes. Un membre sans subordonne n'a rien a y arbitrer — le bouton ne
-  // lui est donc pas propose.
-  const canReview = isAdmin || (!!currentUserId && isManagerOf(members, currentUserId));
+  // Revue hebdomadaire (#26) : elle sert à arbitrer la charge d'AUTRES
+  // personnes. Réservée à l'admin depuis que la hiérarchie n'ouvre plus rien
+  // (mig. 229).
+  const canReview = isAdmin;
 
   // Membres et tâches du périmètre choisi (règles : stats-scope.helpers.ts).
   const scopedMembers = useMemo(() => scopeMembers(scope, scopeCtx, allTasks), [scope, scopeCtx, allTasks]);

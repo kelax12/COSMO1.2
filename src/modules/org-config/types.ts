@@ -29,6 +29,11 @@ export interface OrgSettings {
   defaultGuestDays: number | null;
   /** Invitations nominatives limitées aux domaines vérifiés. */
   inviteDomainOnly: boolean;
+  /**
+   * Rôle personnalisé posé à l'arrivée d'un nouveau membre (mig. 230), sans
+   * limite de durée. `null` = aucun : droits de base de membre.
+   */
+  defaultRoleId: string | null;
   updatedAt?: string | null;
 }
 
@@ -44,6 +49,7 @@ export const defaultOrgSettings = (orgId: string): OrgSettings => ({
   defaultProjectAudience: 'team',
   defaultGuestDays: null,
   inviteDomainOnly: false,
+  defaultRoleId: null,
   updatedAt: null,
 });
 

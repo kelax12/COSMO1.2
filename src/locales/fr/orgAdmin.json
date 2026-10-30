@@ -271,7 +271,7 @@
     "adminHint": "Administrateur : tous les droits, sans exception. Aucune surcharge ne s'applique à un admin.",
     "sourceAdmin": "Administrateur",
     "sourceOverride": "Décidé pour vous",
-    "sourceManager": "Défaut de manager",
+    "sourceRole": "Votre rôle",
     "sourceMember": "Défaut de membre",
     "allowed": "autorisé",
     "denied": "refusé",
@@ -360,14 +360,6 @@
     "ownTasks_many": "{{count}} de tâches ouvertes qui lui sont assignées",
     "ownTasks_other": "{{count}} tâches ouvertes qui lui sont assignées",
     "confirm": "Retirer de l'équipe"
-  },
-  "teamBulk": {
-    "addSeveral": "Ajouter plusieurs",
-    "title": "Ajouter à {{team}}",
-    "description": "Cochez les personnes à ajouter : elles verront aussitôt les projets de l'équipe.",
-    "submit_one": "Ajouter {{count}} personne",
-    "submit_many": "Ajouter {{count}} de personnes",
-    "submit_other": "Ajouter {{count}} personnes"
   },
   "teamUndo": {
     "added": "Ajouté à {{team}}",
@@ -1680,6 +1672,11 @@
   "customRoles": {
     "title": "Rôles",
     "intro": "Un rôle regroupe des permissions. Le modifier change les droits de tous ceux qui l'ont.",
+    "defaultTitle": "Rôle des nouveaux membres",
+    "defaultHint": "Attribué sans limite de durée à chaque personne qui rejoint l'entreprise. Les membres déjà présents ne changent pas.",
+    "defaultNone": "Aucun rôle (droits de base)",
+    "defaultSaved": "Rôle des nouveaux membres enregistré",
+    "defaultAdminOnly": "Seul un administrateur peut le changer.",
     "create": "Créer un rôle",
     "emptyTitle": "Créez votre premier rôle",
     "emptyBody": "Un rôle donne le même ensemble de droits à plusieurs personnes, pour une durée choisie.",

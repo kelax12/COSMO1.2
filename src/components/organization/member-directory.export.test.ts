@@ -10,8 +10,8 @@ const mk = (userId: string, over: Partial<OrgMember> = {}): OrgMember => ({
 const team = (id: string, name: string): OrgTeam => ({ id, orgId: 'o', name, color: '#000', createdBy: null, createdAt: '' });
 
 const LABELS: DirectoryCsvLabels = {
-  headers: { name: 'Nom', email: 'E-mail', role: 'Rôle', manager: 'Manager', teams: 'Équipes', joinedAt: 'Arrivée' },
-  roles: { admin: 'Admin', manager: 'Manager', member: 'Membre' },
+  headers: { name: 'Nom', email: 'E-mail', role: 'Rôle', teams: 'Équipes', joinedAt: 'Arrivée' },
+  roles: { admin: 'Admin', member: 'Membre' },
 };
 
 const MEMBERS = [
@@ -20,22 +20,21 @@ const MEMBERS = [
 ];
 
 describe('buildDirectoryCsv', () => {
-  it('six colonnes fermées, rôle dérivé, manager par son NOM, équipes triées', () => {
+  it('cinq colonnes fermées, grade, équipes triées ; plus de colonne manager (mig. 229)', () => {
     const teams = new Map([['ann', [team('b', 'Ventes'), team('a', 'Achats')]]]);
-    const out = buildDirectoryCsv(MEMBERS, MEMBERS, teams, LABELS);
-    expect(out.headers).toEqual(['Nom', 'E-mail', 'Rôle', 'Manager', 'Équipes', 'Arrivée']);
-    expect(out.rows[0]).toEqual(['Alice', 'alice@acme.io', 'Admin', '', '', '2026-03-05']);
-    expect(out.rows[1]).toEqual(['=HYPERLINK("x")', '', 'Membre', 'Alice', 'Achats | Ventes', '2026-03-05']);
+    const out = buildDirectoryCsv(MEMBERS, teams, LABELS);
+    expect(out.headers).toEqual(['Nom', 'E-mail', 'Rôle', 'Équipes', 'Arrivée']);
+    expect(out.rows[0]).toEqual(['Alice', 'alice@acme.io', 'Admin', '', '2026-03-05']);
+    expect(out.rows[1]).toEqual(['=HYPERLINK("x")', '', 'Membre', 'Achats | Ventes', '2026-03-05']);
   });
 
-  it('n exporte QUE les lignes passées (le résultat filtré), mais résout les managers sur tout l annuaire', () => {
-    const out = buildDirectoryCsv([MEMBERS[1]], MEMBERS, new Map(), LABELS);
+  it('n exporte QUE les lignes passées (le résultat filtré)', () => {
+    const out = buildDirectoryCsv([MEMBERS[1]], new Map(), LABELS);
     expect(out.rows).toHaveLength(1);
-    expect(out.rows[0][3]).toBe('Alice');
   });
 
   it('un nom qui commence par = est neutralisé par l échappement commun (N11)', () => {
-    const out = buildDirectoryCsv(MEMBERS, MEMBERS, new Map(), LABELS);
+    const out = buildDirectoryCsv(MEMBERS, new Map(), LABELS);
     expect(rowsToCSV(out.headers, out.rows)).toContain(`"'=HYPERLINK(""x"")"`);
   });
 });

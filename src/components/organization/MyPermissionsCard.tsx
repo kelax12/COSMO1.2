@@ -2,9 +2,7 @@ import { useMemo } from 'react';
 import { Check, Minus } from 'lucide-react';
 import {
   ORG_PERMISSION_KEYS,
-  effectiveAssignTargets,
-  effectivePermissions,
-  isManagerOf,
+  useMyOrgPermissions,
   useOrgMemberPermissions,
   type OrgMember,
   type OrgPermissionKey,
@@ -21,39 +19,35 @@ interface MyPermissionsCardProps {
 /**
  * « Mes droits » (audit du 2026-09-24, cas « permissions contradictoires »).
  *
- * La règle était claire — une surcharge l'emporte, sinon le défaut de la
- * position, et l'admin court-circuite — mais INVISIBLE pour la personne : elle
- * découvrait un droit en voyant un bouton manquer. Chaque ligne dit ici le droit
- * effectif ET d'où il vient.
+ * La règle : l'admin court-circuite, puis un rôle actif, puis la fiche, sinon
+ * le défaut de membre. Elle était INVISIBLE pour la personne : elle découvrait
+ * un droit en voyant un bouton manquer. Chaque ligne dit ici le droit effectif
+ * ET d'où il vient.
  *
- * Même calcul que partout ailleurs (`effectivePermissions`, miroir du SQL) :
+ * Même calcul que partout ailleurs (`useMyOrgPermissions`, miroir du SQL) :
  * cette carte n'invente aucune règle.
  */
 const MyPermissionsCard = ({ orgId, members, currentUserId }: MyPermissionsCardProps) => {
   const { t: ta } = useT('orgAdmin');
   const { data: overrides = [] } = useOrgMemberPermissions(orgId);
+  // Droits résolus AVEC les rôles personnalisés : un rôle actif écrase la fiche
+  // et le défaut (mig. 219), la carte le calculait sans eux.
+  const { can, assignTargets: targets, activeRoles } = useMyOrgPermissions(orgId);
   const me = members.find((m) => m.userId === currentUserId);
 
   const rows = useMemo(() => {
     if (!me) return [];
     const mine = overrides.find((o) => o.userId === me.userId) ?? null;
-    const effective = effectivePermissions({ member: me, members, overrides: mine });
     return ORG_PERMISSION_KEYS.map((key: OrgPermissionKey) => {
       const decided = mine?.overrides?.[key];
       const source: KeyOf<'orgAdmin'> = me.role === 'admin'
         ? 'myRights.sourceAdmin'
-        : decided === true || decided === false
-          ? 'myRights.sourceOverride'
-          : isManagerOf(members, me.userId) ? 'myRights.sourceManager' : 'myRights.sourceMember';
-      return { key, allowed: effective[key], source };
+        : activeRoles.length > 0
+          ? 'myRights.sourceRole'
+          : decided === true || decided === false ? 'myRights.sourceOverride' : 'myRights.sourceMember';
+      return { key, allowed: can[key], source };
     });
-  }, [me, members, overrides]);
-
-  const targets = useMemo(() => {
-    if (!me) return [];
-    const mine = overrides.find((o) => o.userId === me.userId) ?? null;
-    return effectiveAssignTargets({ member: me, overrides: mine });
-  }, [me, overrides]);
+  }, [me, overrides, can, activeRoles]);
 
   if (!me) return null;
 

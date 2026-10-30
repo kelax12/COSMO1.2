@@ -29,7 +29,7 @@ const assignmentRow = (over: Record<string, unknown> = {}) => ({
   starts_at: '2026-10-01T00:00:00Z', ends_at: null, granted_by: 'admin', created_at: '2026-10-01T00:00:00Z', ...over,
 });
 const input: SaveCustomRoleInput = {
-  name: '  Pilote  ', color: '#3b82f6', grantedKeys: ['task.create', 'okr.create'], assignTargets: ['peers'],
+  name: '  Pilote  ', color: '#3b82f6', grantedKeys: ['task.create', 'okr.create'], assignTargets: ['self'],
 };
 
 beforeEach(() => supabaseMock.reset());
@@ -149,7 +149,7 @@ describe('createRole / updateRole / deleteRole', () => {
         method: 'insert',
         args: [{
           org_id: 'org1', name: 'Pilote', color: '#3b82f6',
-          granted_keys: ['task.create', 'okr.create'], assign_targets: ['peers'],
+          granted_keys: ['task.create', 'okr.create'], assign_targets: ['self'],
         }],
       },
       { method: 'select', args: [ROLE_COLUMNS] },
@@ -177,7 +177,7 @@ describe('createRole / updateRole / deleteRole', () => {
   it('updateRole : sans org_id (figé par trigger), filtre sur id', async () => {
     await repo.updateRole('r1', input);
     expect(supabaseMock.callsFor('org_roles')).toEqual([
-      { method: 'update', args: [{ name: 'Pilote', color: '#3b82f6', granted_keys: ['task.create', 'okr.create'], assign_targets: ['peers'] }] },
+      { method: 'update', args: [{ name: 'Pilote', color: '#3b82f6', granted_keys: ['task.create', 'okr.create'], assign_targets: ['self'] }] },
       { method: 'eq', args: ['id', 'r1'] },
     ]);
   });

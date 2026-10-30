@@ -23,9 +23,10 @@ const member = (userId: string, over: Partial<OrgMember> = {}): OrgMember => ({
   ...over,
 });
 
-// Pyramide de référence :
+// Pyramide de référence (dormante depuis la mig. 229 : elle n'ouvre plus rien,
+// les tests prouvent justement qu'encadrer quelqu'un ne change aucun droit) :
 //   admin ── boss ── alice
-//                 └─ bob        (alice et bob sont pairs)
+//                 └─ bob
 //   solo (non placé)
 const ADMIN = member('admin', { role: 'admin' });
 const BOSS = member('boss');
@@ -33,7 +34,6 @@ const ALICE = member('alice', { managerId: 'boss' });
 const BOB = member('bob', { managerId: 'boss' });
 const CARL = member('carl', { managerId: 'alice' });
 const SOLO = member('solo');
-const MEMBERS = [ADMIN, BOSS, ALICE, BOB, CARL, SOLO];
 
 const overrides = (
   userId: string,
@@ -48,13 +48,13 @@ const overrides = (
 
 describe('effectivePermissions — les défauts (mig. 115, puis 152)', () => {
   it('un membre simple crée et modifie des tâches, ne supprime que les siennes (M4)', () => {
-    const p = effectivePermissions({ member: CARL, members: MEMBERS });
+    const p = effectivePermissions({ member: CARL });
     expect(p['task.create']).toBe(true);
     expect(p['task.editAny']).toBe(true);
-    // mig. 152 : supprimer la tâche d'un autre devient un droit de manager.
+    // mig. 152 : supprimer la tâche d'un autre n'est pas un droit par défaut.
     expect(p['task.deleteAny']).toBe(false);
     expect(p['project.create']).toBe(false);
-    // Mig. 153 : modifier un projet est un droit à part, défaut manager.
+    // Mig. 153 : modifier un projet est un droit à part, refusé par défaut.
     expect(p['project.edit']).toBe(false);
     expect(p['okr.create']).toBe(false);
     expect(p['category.manage']).toBe(false);
@@ -62,27 +62,24 @@ describe('effectivePermissions — les défauts (mig. 115, puis 152)', () => {
     expect(p['member.invite']).toBe(false);
   });
 
-  it('un manager (≥ 1 subordonné) a tout, comme is_org_manager(), sauf les rapports et role.manage (admin seul)', () => {
-    const p = effectivePermissions({ member: ALICE, members: MEMBERS });
-    for (const key of ORG_PERMISSION_KEYS) {
-      expect(p[key]).toBe(!key.startsWith('report.') && key !== 'role.manage');
-    }
+  it('encadrer quelqu’un ne donne plus rien (mig. 229) : mêmes droits qu’un membre simple', () => {
+    expect(effectivePermissions({ member: BOSS })).toEqual(effectivePermissions({ member: CARL }));
+    expect(effectivePermissions({ member: ALICE })['project.create']).toBe(false);
   });
 
   it('rapports (mig. 202) : défaut admin seulement, réglables par surcharge', () => {
-    expect(effectivePermissions({ member: CARL, members: MEMBERS })['report.org']).toBe(false);
-    expect(effectivePermissions({ member: ALICE, members: MEMBERS })['report.allTeams']).toBe(false);
+    expect(effectivePermissions({ member: CARL })['report.org']).toBe(false);
+    expect(effectivePermissions({ member: ALICE })['report.allTeams']).toBe(false);
     const p = effectivePermissions({
       member: CARL,
-      members: MEMBERS,
       overrides: overrides('carl', { overrides: { 'report.allTeams': true } }),
     });
     expect(p['report.allTeams']).toBe(true);
     expect(p['report.org']).toBe(false);
   });
 
-  it('un membre non placé n’est pas manager', () => {
-    expect(effectivePermissions({ member: SOLO, members: MEMBERS })['project.create']).toBe(false);
+  it('un membre non placé a les mêmes défauts', () => {
+    expect(effectivePermissions({ member: SOLO })['project.create']).toBe(false);
   });
 });
 
@@ -90,7 +87,6 @@ describe('project.edit (mig. 153)', () => {
   it('se règle indépendamment de project.create', () => {
     const p = effectivePermissions({
       member: CARL,
-      members: MEMBERS,
       overrides: overrides('carl', { overrides: { 'project.edit': true } }),
     });
     expect(p['project.edit']).toBe(true);
@@ -99,30 +95,27 @@ describe('project.edit (mig. 153)', () => {
 });
 
 describe('effectivePermissions — surcharges', () => {
-  it('accorde un droit de manager à un membre simple', () => {
+  it('accorde un droit au-delà des défauts à un membre simple', () => {
     const p = effectivePermissions({
       member: CARL,
-      members: MEMBERS,
       overrides: overrides('carl', { overrides: { 'project.create': true } }),
     });
     expect(p['project.create']).toBe(true);
     expect(p['okr.create']).toBe(false);
   });
 
-  it('retire un droit à un manager', () => {
+  it('retire un droit par défaut à un membre', () => {
     const p = effectivePermissions({
       member: ALICE,
-      members: MEMBERS,
-      overrides: overrides('alice', { overrides: { 'project.delete': false } }),
+      overrides: overrides('alice', { overrides: { 'task.editAny': false, 'project.create': true } }),
     });
-    expect(p['project.delete']).toBe(false);
+    expect(p['task.editAny']).toBe(false);
     expect(p['project.create']).toBe(true);
   });
 
   it('null = pas de décision, on retombe sur le défaut', () => {
     const p = effectivePermissions({
       member: CARL,
-      members: MEMBERS,
       overrides: overrides('carl', { overrides: { 'project.create': null } }),
     });
     expect(p['project.create']).toBe(false);
@@ -131,7 +124,6 @@ describe('effectivePermissions — surcharges', () => {
   it('un admin garde TOUT même surchargé à false — sinon l’org se bloque', () => {
     const p = effectivePermissions({
       member: ADMIN,
-      members: MEMBERS,
       overrides: overrides('admin', {
         overrides: { 'project.create': false, 'task.create': false },
       }),
@@ -160,7 +152,7 @@ describe('effectiveAssignTargets', () => {
 
 describe('canAssignTo', () => {
   const assign = (actor: OrgMember, target: OrgMember, targets: Parameters<typeof canAssignTo>[0]['targets']) =>
-    canAssignTo({ actor, target, members: MEMBERS, targets });
+    canAssignTo({ actor, target, targets });
 
   it('« personne » ne laisse passer personne, pas même soi', () => {
     expect(assign(ALICE, ALICE, [])).toBe(false);
@@ -172,67 +164,45 @@ describe('canAssignTo', () => {
     expect(assign(ALICE, BOB, ['self'])).toBe(false);
   });
 
-  it('« même niveau » = même supérieur direct, jamais soi-même', () => {
-    expect(assign(ALICE, BOB, ['peers'])).toBe(true);
-    expect(assign(ALICE, ALICE, ['peers'])).toBe(false);
-    expect(assign(ALICE, BOSS, ['peers'])).toBe(false);
-  });
-
-  it('deux membres non placés ne sont PAS des pairs', () => {
-    expect(assign(SOLO, BOSS, ['peers'])).toBe(false);
-  });
-
-  it('« manager direct » ne remonte que d’un cran', () => {
-    expect(assign(CARL, ALICE, ['manager'])).toBe(true);
-    expect(assign(CARL, BOSS, ['manager'])).toBe(false);
-  });
-
-  it('« subordonnés » couvre tout le sous-arbre, pas seulement les directs', () => {
-    expect(assign(BOSS, ALICE, ['subordinates'])).toBe(true);
-    expect(assign(BOSS, CARL, ['subordinates'])).toBe(true);
-    expect(assign(ALICE, BOSS, ['subordinates'])).toBe(false);
-  });
-
   it('« tout le monde » court-circuite le reste', () => {
     expect(assign(CARL, BOSS, ['everyone'])).toBe(true);
   });
 
-  it('les cibles se cumulent', () => {
-    expect(assign(CARL, CARL, ['self', 'manager'])).toBe(true);
-    expect(assign(CARL, ALICE, ['self', 'manager'])).toBe(true);
-    expect(assign(CARL, BOB, ['self', 'manager'])).toBe(false);
+  it('le supérieur direct n’est pas une cible à part (mig. 229)', () => {
+    expect(assign(CARL, ALICE, ['self'])).toBe(false);
+    expect(assign(CARL, ALICE, ['self', 'everyone'])).toBe(true);
   });
 });
 
 describe('canGrant — plafond du délégant', () => {
-  it('un manager n’accorde pas un droit qu’il n’a pas', () => {
-    const carlPerms = effectivePermissions({ member: CARL, members: MEMBERS });
+  it('un non-admin n’accorde pas un droit qu’il n’a pas', () => {
+    const carlPerms = effectivePermissions({ member: CARL });
     expect(canGrant(carlPerms, false, 'project.create')).toBe(false);
     expect(canGrant(carlPerms, false, 'task.create')).toBe(true);
   });
 
   it('un admin n’est plafonné par rien', () => {
-    const carlPerms = effectivePermissions({ member: CARL, members: MEMBERS });
+    const carlPerms = effectivePermissions({ member: CARL });
     expect(canGrant(carlPerms, true, 'project.create')).toBe(true);
   });
 });
 
 describe('canEditPermissionsOf', () => {
   it('un admin édite n’importe quel non-admin', () => {
-    expect(canEditPermissionsOf({ actorId: 'admin', actorIsAdmin: true, target: SOLO, members: MEMBERS })).toBe(true);
+    expect(canEditPermissionsOf({ actorId: 'admin', actorIsAdmin: true, target: SOLO })).toBe(true);
   });
 
   it('personne n’édite un admin — il détient tout par construction', () => {
-    expect(canEditPermissionsOf({ actorId: 'boss', actorIsAdmin: true, target: ADMIN, members: MEMBERS })).toBe(false);
+    expect(canEditPermissionsOf({ actorId: 'boss', actorIsAdmin: true, target: ADMIN })).toBe(false);
   });
 
-  it('un manager édite son sous-arbre, pas au-delà', () => {
-    expect(canEditPermissionsOf({ actorId: 'boss', actorIsAdmin: false, target: CARL, members: MEMBERS })).toBe(true);
-    expect(canEditPermissionsOf({ actorId: 'alice', actorIsAdmin: false, target: BOB, members: MEMBERS })).toBe(false);
+  it('un supérieur hiérarchique n’édite plus la fiche de son sous-arbre (mig. 229)', () => {
+    expect(canEditPermissionsOf({ actorId: 'boss', actorIsAdmin: false, target: CARL })).toBe(false);
+    expect(canEditPermissionsOf({ actorId: 'boss', actorIsAdmin: false, target: BOB })).toBe(false);
   });
 
   it('jamais sur soi-même', () => {
-    expect(canEditPermissionsOf({ actorId: 'boss', actorIsAdmin: true, target: BOSS, members: MEMBERS })).toBe(false);
+    expect(canEditPermissionsOf({ actorId: 'boss', actorIsAdmin: true, target: BOSS })).toBe(false);
   });
 });
 
@@ -260,19 +230,19 @@ describe('canEditTeamTask / canDeleteTeamTask', () => {
 
 describe('rôles personnalisés (mig. 219) : le rôle écrase tout, les rôles s’additionnent', () => {
   const STAGIAIRE = { grantedKeys: ['okr.create'] as const, assignTargets: ['self'] as const };
-  const CHEF = { grantedKeys: ['project.create', 'report.org'] as const, assignTargets: ['subordinates'] as const };
+  const CHEF = { grantedKeys: ['project.create', 'report.org'] as const, assignTargets: ['everyone'] as const };
 
   it('role.manage : défaut admin seulement, réglable par surcharge', () => {
-    expect(effectivePermissions({ member: BOSS, members: MEMBERS })['role.manage']).toBe(false);
-    expect(effectivePermissions({ member: ADMIN, members: MEMBERS })['role.manage']).toBe(true);
+    expect(effectivePermissions({ member: BOSS })['role.manage']).toBe(false);
+    expect(effectivePermissions({ member: ADMIN })['role.manage']).toBe(true);
     const granted = effectivePermissions({
-      member: CARL, members: MEMBERS, overrides: overrides('carl', { overrides: { 'role.manage': true } }),
+      member: CARL, overrides: overrides('carl', { overrides: { 'role.manage': true } }),
     });
     expect(granted['role.manage']).toBe(true);
   });
 
   it('un rôle actif retire même un droit par défaut de membre', () => {
-    const p = effectivePermissions({ member: CARL, members: MEMBERS, roles: [STAGIAIRE] });
+    const p = effectivePermissions({ member: CARL, roles: [STAGIAIRE] });
     expect(p['task.create']).toBe(false);
     expect(p['task.editAny']).toBe(false);
     expect(p['okr.create']).toBe(true);
@@ -280,7 +250,7 @@ describe('rôles personnalisés (mig. 219) : le rôle écrase tout, les rôles s
 
   it('un rôle actif prime sur la surcharge individuelle', () => {
     const p = effectivePermissions({
-      member: CARL, members: MEMBERS,
+      member: CARL,
       overrides: overrides('carl', { overrides: { 'project.create': true } }),
       roles: [STAGIAIRE],
     });
@@ -288,7 +258,7 @@ describe('rôles personnalisés (mig. 219) : le rôle écrase tout, les rôles s
   });
 
   it('deux rôles : un droit accordé par l’un suffit', () => {
-    const p = effectivePermissions({ member: CARL, members: MEMBERS, roles: [STAGIAIRE, CHEF] });
+    const p = effectivePermissions({ member: CARL, roles: [STAGIAIRE, CHEF] });
     expect(p['okr.create']).toBe(true);
     expect(p['project.create']).toBe(true);
     expect(p['report.org']).toBe(true);
@@ -296,12 +266,12 @@ describe('rôles personnalisés (mig. 219) : le rôle écrase tout, les rôles s
   });
 
   it('sans rôle actif, rien ne change (liste vide)', () => {
-    expect(effectivePermissions({ member: CARL, members: MEMBERS, roles: [] }))
-      .toEqual(effectivePermissions({ member: CARL, members: MEMBERS }));
+    expect(effectivePermissions({ member: CARL, roles: [] }))
+      .toEqual(effectivePermissions({ member: CARL }));
   });
 
   it('un admin reste insensible à un rôle', () => {
-    const p = effectivePermissions({ member: ADMIN, members: MEMBERS, roles: [STAGIAIRE] });
+    const p = effectivePermissions({ member: ADMIN, roles: [STAGIAIRE] });
     for (const key of ORG_PERMISSION_KEYS) expect(p[key]).toBe(true);
     expect(effectiveAssignTargets({ member: ADMIN, roles: [STAGIAIRE] })).toEqual(['everyone']);
   });
@@ -309,9 +279,9 @@ describe('rôles personnalisés (mig. 219) : le rôle écrase tout, les rôles s
   it('portée : union des rôles actifs, prioritaire sur la surcharge', () => {
     expect(effectiveAssignTargets({
       member: CARL,
-      overrides: overrides('carl', { assignTargets: ['everyone'] }),
+      overrides: overrides('carl', { assignTargets: [] }),
       roles: [STAGIAIRE, CHEF],
-    })).toEqual(['self', 'subordinates']);
+    })).toEqual(['self', 'everyone']);
   });
 
   it('un rôle à la portée vide ne laisse assigner à personne', () => {

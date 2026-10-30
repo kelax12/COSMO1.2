@@ -48,7 +48,11 @@ compilait, la suite passait.
   elle retire la branche « membre du projet » de la `190`. `224` (2026-10-20) et `226` (2026-10-22,
   ledger `20261021225038`, C-121) sont en prod ; `225` est pris par un fichier d'une autre session.
   `227` (2026-10-26, ledger `20261026124018`) et `228` (ledger `20261025183015`) sont en prod.
-  Prochain numéro libre : **`229`**.
+  `229` (2026-10-30, fin du rôle « manager ») est au dépôt, prouvée en transaction annulée
+  (`proofs/229.proof.sql`), **PAS appliquée** : à appliquer AVANT le déploiement du front.
+  `230` (rôle par défaut des nouveaux membres) idem (`proofs/230.proof.sql`), **PAS appliquée** :
+  le front lit `org_settings.default_role_id`, l'écran Paramètres casse sans elle.
+  Prochain numéro libre : **`231`**.
   Journal daté de chaque application (`150` → `223`) :
   [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Journal d'application des migrations ».
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`

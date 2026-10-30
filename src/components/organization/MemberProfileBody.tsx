@@ -1,11 +1,9 @@
 import { formatDistanceToNow } from 'date-fns';
-import { Mail, Users, Move, UserRoundPlus, Network, Clock } from 'lucide-react';
-import { subtreeOf, type MemberLastActivity, type OrgMember } from '@/modules/organizations';
+import { Mail, Move, UserRoundPlus, Clock } from 'lucide-react';
+import type { MemberLastActivity, OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import { getDateLocale } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
-import { Link } from 'react-router';
-import { orgSectionPath } from './deep-link.helpers';
 
 const SOURCE_KEY = {
   activity: 'directory.activity.sourceActivity',
@@ -45,15 +43,12 @@ interface MemberProfileBodyProps {
  * même écran tant que tous les appelants n'ont pas migré.
  */
 export const MemberProfileBody = ({
-  member, members, teams, currentUserId, lastActivity, canMove, canAddUnder, onClose, onMove, onAddUnder,
+  member, teams, lastActivity, canMove, canAddUnder, onClose, onMove, onAddUnder,
 }: MemberProfileBodyProps) => {
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
-  const { t: ta, tp: tpa } = useT('orgAdmin');
+  const { t: ta } = useT('orgAdmin');
   const m = member;
-  const managerMember = m.managerId ? members.find((x) => x.userId === m.managerId) : null;
-  const directs = members.filter((x) => x.managerId === m.userId).length;
-  const total = directs > 0 ? subtreeOf(members, m.userId).size : 0;
 
   return (
     <>
@@ -91,44 +86,22 @@ export const MemberProfileBody = ({
 
         <section className={CARD}>
           <h3 className={CARD_TITLE}>{t('popups.member.attachment')}</h3>
-          <dl className="space-y-3">
-            <div className="flex items-center gap-2.5 text-sm">
-              <Network size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-              <dd className="text-[rgb(var(--color-text-secondary))]">
-                {managerMember
-                  ? <><span className="max-md:hidden">{ta('member.attachedTo')} </span><span className="md:hidden">{ta('member.managerLabel')} : </span><strong className="text-[rgb(var(--color-text-primary))]">{managerMember.userId === currentUserId ? ta('member.you') : managerMember.displayName}</strong></>
-                  : ta('member.noManager')}
-              </dd>
+          {/* Plus de supérieur ni de directs (organigramme masqué, mig. 229) : le
+              rattachement d'une personne, ce sont ses équipes. */}
+          {teams.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {teams.map((team) => (
+                <span
+                  key={team.id}
+                  className="inline-flex items-center gap-1.5 rounded-full border max-md:border-0 border-[rgb(var(--color-border))] px-2 max-md:px-0 max-md:mr-2 py-0.5 text-caption max-md:text-label font-medium text-[rgb(var(--color-text-secondary))]"
+                >
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: team.color }} aria-hidden="true" />
+                  {team.name}
+                </span>
+              ))}
             </div>
-            <div className="flex items-center gap-2.5 text-sm">
-              <Users size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-              <dd className="text-[rgb(var(--color-text-secondary))]">
-                {directs === 0
-                  ? ta('member.noDirectReport')
-                  : (
-                    // Maquette 311 : « 4 directs » mène à l'organigramme.
-                    <Link to={orgSectionPath('pyramid')} onClick={onClose} className="max-md:text-[rgb(var(--color-accent))]">
-                      {tpa('pyramid.directCount', directs) + (total > directs ? ta('pyramid.totalSuffix', { count: total }) : '')}
-                    </Link>
-                  )}
-              </dd>
-            </div>
-          </dl>
-          {teams.length > 0 && (
-            <>
-              <h3 className={`${CARD_TITLE} mt-4`}>{ta('member.crossTeams')}</h3>
-              <div className="flex flex-wrap gap-1.5">
-                {teams.map((team) => (
-                  <span
-                    key={team.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border max-md:border-0 border-[rgb(var(--color-border))] px-2 max-md:px-0 max-md:mr-2 py-0.5 text-caption max-md:text-label font-medium text-[rgb(var(--color-text-secondary))]"
-                  >
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: team.color }} aria-hidden="true" />
-                    {team.name}
-                  </span>
-                ))}
-              </div>
-            </>
+          ) : (
+            <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('popups.member.noTeam')}</p>
           )}
         </section>
       </div>

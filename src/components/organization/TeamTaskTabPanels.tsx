@@ -17,7 +17,7 @@ interface TeamTaskTabPanelsProps {
   orgId: string;
   /** La tâche enregistrée ; absente en création, on édite alors un brouillon. */
   liveTask: TeamTask | null | undefined;
-  isManager: boolean;
+  canEditDependencies: boolean;
   projectId: string;
   members: OrgMember[];
   projects: TeamProject[];
@@ -30,7 +30,7 @@ interface TeamTaskTabPanelsProps {
 }
 
 const TeamTaskTabPanels = ({
-  tab, orgId, liveTask, isManager, projectId, members, projects,
+  tab, orgId, liveTask, canEditDependencies, projectId, members, projects,
   draftSubtasks, onDraftSubtasksChange, draftBlockedBy, onDraftBlockedByChange, draftBlocks, onDraftBlocksChange,
 }: TeamTaskTabPanelsProps) => {
   if (tab === 'subtasks') {
@@ -40,8 +40,8 @@ const TeamTaskTabPanels = ({
   }
   if (tab === 'dependencies') {
     return liveTask
-      ? <TeamTaskDependenciesSection task={liveTask} isManager={isManager} defaultOpen />
-      : <DraftDependenciesEditor orgId={orgId} projectId={projectId} value={draftBlockedBy} onChange={onDraftBlockedByChange} blocks={draftBlocks} onBlocksChange={onDraftBlocksChange} canEdit={isManager} />;
+      ? <TeamTaskDependenciesSection task={liveTask} canEditDependencies={canEditDependencies} defaultOpen />
+      : <DraftDependenciesEditor orgId={orgId} projectId={projectId} value={draftBlockedBy} onChange={onDraftBlockedByChange} blocks={draftBlocks} onBlocksChange={onDraftBlocksChange} canEdit={canEditDependencies} />;
   }
   return liveTask ? <TeamTaskHistoryPanel taskId={liveTask.id} members={members} projects={projects} /> : null;
 };

@@ -6,10 +6,9 @@ import CreateOrJoinOrganization from './CreateOrJoinOrganization';
 import { useT } from '@/i18n/useT';
 import { buildOrgLink } from './deep-link.helpers';
 
-/** Clé de libellé par rôle stocké — « manager » est dérivé, jamais stocké. */
+/** Clé de libellé par grade stocké : administrateur ou membre (mig. 229). */
 const ROLE_KEYS = {
   admin: 'roles.admin',
-  manager: 'roles.manager',
   member: 'roles.member',
 } as const;
 

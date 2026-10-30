@@ -64,11 +64,11 @@ interface TeamTaskModalProps {
   onDelete?: (task: TeamTask) => void;
   onClose: () => void;
   /**
-   * Manager/admin — conditionne l'édition du graphe de dépendances.
+   * Droit `task.editAny` (mig. 229) : conditionne l'édition du graphe de dépendances.
    * Défaut `false` : un appelant qui l'oublie masque un bouton plutôt que
    * d'exposer une action qui renverrait 403.
    */
-  isManager?: boolean;
+  canEditDependencies?: boolean;
 }
 
 const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
@@ -91,7 +91,7 @@ const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((
 const TeamTaskModal = ({
   task, isCreating = false, projects, members,
   defaultProjectId, defaultAssigneeIds, defaultStatus, defaultListIds, requireProjectChoice = false,
-  onCreate, onUpdate, onDelete, onClose, isManager = false,
+  onCreate, onUpdate, onDelete, onClose, canEditDependencies = false,
 }: TeamTaskModalProps) => {
   const { t } = useT('org');
   const [tab, setTab] = useState<TaskTab>('details');
@@ -507,7 +507,7 @@ const TeamTaskModal = ({
                 tab={tab}
                 orgId={orgId}
                 liveTask={liveTask}
-                isManager={isManager}
+                canEditDependencies={canEditDependencies}
                 projectId={projectId}
                 members={members}
                 projects={projects}

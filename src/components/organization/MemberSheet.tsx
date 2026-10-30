@@ -5,7 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from '@/lib/toast';
-import { isManagerOf, useOrgMemberLastActivity, type OrgMember } from '@/modules/organizations';
+import { useOrgMemberLastActivity, type OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
@@ -113,7 +113,7 @@ const MemberSheet = ({
    * sécurisée) : on ne prétend pas avoir copié dans ce cas.
    */
   const copyProfileLink = async () => {
-    const path = buildOrgLink('pyramid', { member: member.userId }, { [MEMBER_TAB_PARAM]: tab });
+    const path = buildOrgLink('members', { member: member.userId }, { [MEMBER_TAB_PARAM]: tab });
     try {
       await navigator.clipboard.writeText(`${window.location.origin}${path}`);
       toast.success(ta('member.copyLinkDone'));
@@ -124,7 +124,7 @@ const MemberSheet = ({
 
   const isMe = member.userId === currentUserId;
   // Mêmes mots que l'annuaire et le glossaire (cohérence globale, 2026-09-25).
-  const roleTerm = member.role === 'admin' ? 'admin' : isManagerOf(members, member.userId) ? 'manager' : 'member';
+  const roleTerm = member.role === 'admin' ? 'admin' : 'member';
   const roleLabel = <RoleTerm term={roleTerm}>{t(`roles.${roleTerm}`)}</RoleTerm>;
 
   // L'agenda est un calendrier plein écran, pas une carte : FullCalendar ne

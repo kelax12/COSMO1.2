@@ -14,20 +14,15 @@ interface OrgInviteLinkCardProps {
    * de comprendre pourquoi ni d'y remédier.
    */
   seatsFull?: boolean;
-  /**
-   * auth.users.id sous lequel la nouvelle personne sera rattachée (l'utilisateur
-   * courant). La policy INSERT org_invite_links autorise « sous soi ».
-   */
-  managerId?: string;
 }
 
 /**
  * Ligne « Lien d'invitation » de la rubrique Inviter, pendant du code
  * (OrgJoinCodeCard). Génère un lien à usage unique (7 j) qui fait entrer un
- * NOUVEAU directement dans l'entreprise, rattaché à l'utilisateur courant (le
- * lien vaut approbation — pas de validation admin).
+ * NOUVEAU directement dans l'entreprise, sans supérieur (mig. 229 : la
+ * hiérarchie n'ouvre plus rien). Le lien vaut approbation, pas de validation admin.
  */
-const OrgInviteLinkCard = ({ orgId, managerId, seatsFull = false }: OrgInviteLinkCardProps) => {
+const OrgInviteLinkCard = ({ orgId, seatsFull = false }: OrgInviteLinkCardProps) => {
   const { t } = useT('org');
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -35,7 +30,7 @@ const OrgInviteLinkCard = ({ orgId, managerId, seatsFull = false }: OrgInviteLin
 
   const generateLink = () => {
     createLink.mutate(
-      { orgId, managerId: managerId ?? null },
+      { orgId, managerId: null },
       {
         onSuccess: (link) => {
           setInviteUrl(`${window.location.origin}/org-invite/${link.id}`);

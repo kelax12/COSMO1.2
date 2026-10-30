@@ -30,10 +30,10 @@ interface MyWorkTabProps {
   members: OrgMember[];
   currentUserId?: string;
   /**
-   * Dérivé par la PAGE, comme pour Projets et Tâches. Transmis tel quel à la
-   * modale de tâche : c'est ce qui y ouvre les dépendances.
+   * Droit `task.editAny`, dérivé par la PAGE comme pour Projets et Tâches.
+   * Transmis tel quel à la modale de tâche : il y ouvre les dépendances.
    */
-  isManager: boolean;
+  canEditDependencies: boolean;
 }
 
 
@@ -68,7 +68,7 @@ const TEAM_TASK_WIDGETS = new Set<PlacedWidget['id']>(['teamLoad', 'teamOverdue'
 /** Fenêtre du fil d'activité : 14 jours, comme avant le passage au journal. */
 const ACTIVITY_DAYS = 14;
 
-const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps) => {
+const MyWorkTab = ({ orgId, members, currentUserId, canEditDependencies }: MyWorkTabProps) => {
   const { t: tOrgAdmin } = useT('orgAdmin');
   const me = currentUserId ?? '';
   const { data: projects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
@@ -81,7 +81,7 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
   // l'une ou l'autre change (la session peut arriver après le premier rendu).
   // Sans disposition enregistrée : le modèle du rôle (admin, chef d'équipe, membre).
   const roleIsAdmin = members.find((m) => m.userId === currentUserId)?.role === 'admin';
-  const roleTemplateId = templateForRole(roleIsAdmin, isManager);
+  const roleTemplateId = templateForRole(roleIsAdmin);
   const roleTemplate = TEMPLATES[roleTemplateId];
   const [layout, setLayout] = useState<PlacedWidget[]>(() => loadLayout(orgId, me, roleTemplate));
   useEffect(() => { setLayout(loadLayout(orgId, me, roleTemplate)); }, [orgId, me, roleTemplate]);
@@ -115,8 +115,8 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
   // Prochaines échéances de l'ENTREPRISE (frise) : les 30 plus proches.
   // Tâches ouvertes de l'organisation (ce que la RLS me laisse voir), pour les
   // widgets d'équipe et d'administration. Lues seulement si l'un d'eux est
-  // posé, ou pour qui encadre : un membre ne paie pas cette lecture.
-  const needsTeamTasks = roleIsAdmin || isManager
+  // posé, ou pour un admin : un membre ne paie pas cette lecture.
+  const needsTeamTasks = roleIsAdmin
     || layout.some((w) => TEAM_TASK_WIDGETS.has(w.id));
   const { data: teamOpen = [] } = useTeamTaskSlice(
     orgId,
@@ -167,7 +167,6 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
     { id: 'invite', label: tOrgAdmin('myWork.stepInvite'), done: members.length > 1, tab: 'members' },
     { id: 'team', label: tOrgAdmin('myWork.stepTeam'), done: teams.length > 0, tab: 'members' },
     { id: 'project', label: tOrgAdmin('myWork.stepProject'), done: activeProjects.length > 0, tab: 'projects' },
-    { id: 'pyramid', label: tOrgAdmin('myWork.stepPyramid'), done: members.some((m) => !!m.managerId), tab: 'pyramid' },
     { id: 'okr', label: tOrgAdmin('myWork.stepOkr'), done: okrs.length > 0, tab: 'okr' },
   ], [activeProjects.length, members, okrs.length, teams.length, tOrgAdmin]);
   const showChecklist = isAdmin && startSteps.some((s) => !s.done);
@@ -245,9 +244,7 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
           members={members}
           onUpdate={modalUpdate}
           // Même valeur que Projets et Tâches : c'est la PAGE qui la dérive.
-          // Elle recevait `isAdmin` ici, donc un manager non admin perdait sur
-          // l'Aperçu des droits qu'il avait sur les autres écrans.
-          isManager={isManager}
+          canEditDependencies={canEditDependencies}
           onClose={() => setEditingTask(null)}
         />
       )}

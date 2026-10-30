@@ -334,6 +334,9 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
           avatar: req.requesterAvatar,
         });
         writeJsonOrThrow(ORG_MEMBERS_STORAGE_KEY, members);
+        // Rôle par défaut (mig. 230). Import différé : roles.local importe ce fichier.
+        const { assignDefaultRoleOnJoin } = await import('./roles.local.repository');
+        assignDefaultRoleOnJoin(req.orgId, req.userId);
       }
     }
   }

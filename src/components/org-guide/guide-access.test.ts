@@ -7,7 +7,7 @@ const allCan = (value: boolean) =>
   Object.fromEntries(ORG_PERMISSION_KEYS.map((k) => [k, value])) as Record<OrgPermissionKey, boolean>;
 
 const viewer = (over: Partial<GuideViewer> = {}): GuideViewer => ({
-  can: allCan(false), isAdmin: false, isManager: false, isOwner: false, customRolesAvailable: true, ...over,
+  can: allCan(false), isAdmin: false, isOwner: false, customRolesAvailable: true, ...over,
 });
 const action = (over: Partial<GuideAction> = {}): GuideAction => ({ id: 'x', category: 'work', steps: [], ...over });
 
@@ -20,9 +20,9 @@ describe('guideAccess', () => {
     expect(guideAccess(a, viewer())).toBe('denied');
     expect(guideAccess(a, viewer({ can: { ...allCan(false), 'project.create': true } }))).toBe('allowed');
   });
-  it('admin, manager et propriétaire', () => {
-    expect(guideAccess(action({ requires: 'admin' }), viewer({ isManager: true }))).toBe('denied');
-    expect(guideAccess(action({ requires: 'manager' }), viewer({ isAdmin: true }))).toBe('allowed');
+  it('admin et propriétaire (plus d’exigence « manager », mig. 229)', () => {
+    expect(guideAccess(action({ requires: 'admin' }), viewer())).toBe('denied');
+    expect(guideAccess(action({ requires: 'admin' }), viewer({ isAdmin: true }))).toBe('allowed');
     expect(guideAccess(action({ requires: 'owner' }), viewer({ isAdmin: true }))).toBe('denied');
     expect(guideAccess(action({ requires: 'owner' }), viewer({ isOwner: true }))).toBe('allowed');
   });

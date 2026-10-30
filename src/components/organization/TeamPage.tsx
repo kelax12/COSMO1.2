@@ -3,7 +3,6 @@ import { Link } from 'react-router';
 import { CalendarPlus, Pencil, Trash2, FolderKanban, Target, ChevronRight, ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { startOfDay, subDays } from 'date-fns';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
 import { useTeamProjects, useTeamTaskWorkingSet } from '@/modules/team-projects';
@@ -11,7 +10,8 @@ import { useTeamOKRs } from '@/modules/team-okrs';
 import { OrgBreadcrumb } from './OrgPagePrimitives';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import TeamMembersPanel from './TeamMembersPanel';
-import TeamProfileEditor from './TeamProfileEditor';
+import { EditTeamModal } from './CreateTeamModal';
+import TeamTasksSection from './TeamTasksSection';
 import TeamWorkloadSection from './TeamWorkloadSection';
 import DeleteTeamDialog from './DeleteTeamDialog';
 import { OrgTabSkeleton } from './OrgLoadingSkeletons';
@@ -39,10 +39,12 @@ interface TeamPageProps {
 const TeamEventDialog = lazyWithRetry(() => import('./TeamEventDialog'));
 
 const cardClass = 'rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]';
-const headingClass = 'text-base font-bold text-[rgb(var(--color-text-primary))] mb-4';
+const headingClass = 'text-base font-bold text-[rgb(var(--color-text-primary))]';
 const sectionLabelClass =
   'flex items-center gap-2 px-5 pt-6 pb-2 text-sm font-semibold text-[rgb(var(--color-text-secondary))]';
 const rowClass = 'flex items-center gap-3 px-5 py-3 min-h-12 hover:bg-[rgb(var(--color-hover))]';
+/** Un trait entre deux projets, deux OKR (2026-10-30). */
+const listClass = 'divide-y divide-[rgb(var(--color-border))] border-y border-[rgb(var(--color-border))]';
 
 /** Chiffre en ligne : valeur puis libellé. */
 const StatInline = ({ label, value, tone }: { label: string; value: string; tone?: 'danger' }) => (
@@ -154,7 +156,7 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
                   ) : (
                     <>
                     <p className="max-md:hidden mt-3 text-sm italic text-[rgb(var(--color-text-muted))]">
-                      {canManage ? t('teamPage.noDescriptionManager') : t('teamPage.noDescription')}
+                      {t('teamPage.noDescription')}
                     </p>
                     {/* Maquette 292 : une invitation, plus une phrase en italique. */}
                     {canManage && (
@@ -230,6 +232,14 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
               </section>
             </header>
 
+          <TeamTasksSection
+            tasks={tasks}
+            projects={activeProjects}
+            members={members}
+            sectionLabelClass={sectionLabelClass}
+            rowClass={rowClass}
+          />
+
           <section aria-labelledby="team-projects-title">
             <h3 id="team-projects-title" className={sectionLabelClass}>
               <FolderKanban size={16} aria-hidden="true" />
@@ -238,7 +248,7 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
             {activeProjects.length === 0 ? (
               <p className="px-5 py-3 text-sm text-[rgb(var(--color-text-muted))]">{t('teamPage.projectsEmpty')}</p>
             ) : (
-              <ul>
+              <ul className={listClass}>
                 {activeProjects.map((p) => (
                   <li key={p.id}>
                     <Link to={buildOrgLink('projects', { project: p.id })} className={rowClass}>
@@ -268,7 +278,7 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
             {teamOkrs.length === 0 ? (
               <p className="px-5 py-3 text-sm text-[rgb(var(--color-text-muted))]">{t('teamPage.okrEmpty')}</p>
             ) : (
-              <ul>
+              <ul className={listClass}>
                 {teamOkrs.map((o) => {
                   const pct = Math.round(okrProgress(o) * 100);
                   const open = openKrs.has(o.id);
@@ -295,9 +305,9 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
                           onClick={() => toggleKrs(o.id)}
                           aria-expanded={open}
                           aria-controls={krListId}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-[rgb(var(--color-border))] px-3 py-1.5 min-h-10 text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
+                          className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--color-border))] px-2 py-0.5 min-h-7 text-xs font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
                         >
-                          {open ? <ChevronUp size={15} aria-hidden="true" /> : <ChevronDown size={15} aria-hidden="true" />}
+                          {open ? <ChevronUp size={12} aria-hidden="true" /> : <ChevronDown size={12} aria-hidden="true" />}
                           {open ? t('teamPage.hideKrs') : t('teamPage.showKrs')}
                         </button>
                       </div>
@@ -340,8 +350,9 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
         </div>
 
         <aside className={`${cardClass} p-6`} aria-labelledby="team-people-title">
-          <h3 id="team-people-title" className={headingClass}>{t('teamPage.peopleTitle')}</h3>
           <TeamMembersPanel
+            titleId="team-people-title"
+            titleClass={headingClass}
             orgId={orgId}
             team={team}
             members={members}
@@ -357,12 +368,17 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
         <TeamWorkloadSection orgId={orgId} tasks={tasks} projectIds={projectIds} members={teamMembers} currentUserId={currentUserId} />
       )}
 
-      <Dialog open={editing} onOpenChange={setEditing}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogTitle>{t('teamPage.edit')}</DialogTitle>
-          {editing && <TeamProfileEditor orgId={orgId} team={team} onDone={() => setEditing(false)} />}
-        </DialogContent>
-      </Dialog>
+      {editing && (
+        <EditTeamModal
+          orgId={orgId}
+          team={team}
+          members={members}
+          memberships={teamMemberships}
+          currentUserId={currentUserId}
+          isAdmin={isAdmin}
+          onClose={() => setEditing(false)}
+        />
+      )}
 
       {planning && (
         <Suspense fallback={null}>

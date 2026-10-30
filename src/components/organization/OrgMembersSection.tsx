@@ -27,19 +27,17 @@ interface OrgMembersSectionProps {
   members: OrgMember[];
   currentUserId?: string;
   isAdmin: boolean;
-  /** A au moins un subordonné (ou admin). */
-  isManager: boolean;
   canInvite: boolean;
   seatsFull: boolean;
 }
 
-const OrgMembersSection = ({ org, members, currentUserId, isAdmin, isManager, canInvite, seatsFull }: OrgMembersSectionProps) => {
+const OrgMembersSection = ({ org, members, currentUserId, isAdmin, canInvite, seatsFull }: OrgMembersSectionProps) => {
   const { t: tOrgAdmin } = useT('orgAdmin');
   const [choosingMode, setChoosingMode] = useState(false);
   const [invitingByEmail, setInvitingByEmail] = useState(false);
   const [quickEmails, setQuickEmails] = useState('');
-  // Miroir de `create_org_email_invitations` (mig. 161).
-  const canInviteByEmail = isAdmin || (canInvite && isManager);
+  // Miroir de `create_org_email_invitations` (mig. 229) : admin, ou droit `member.invite`.
+  const canInviteByEmail = isAdmin || canInvite;
 
   return (
     <div className="space-y-3">

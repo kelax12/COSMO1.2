@@ -47,9 +47,8 @@ interface TeamProjectsTabProps {
   orgId: string;
   members: OrgMember[];
   currentUserId?: string;
-  /** Manager/admin — sert encore aux surfaces HIÉRARCHIQUES (dépendances de
-   *  tâches), jamais aux droits de création : ceux-ci viennent de la mig. 115. */
-  isManager: boolean;
+  /** Droit `task.editAny` : modifier les dépendances de tâches (mig. 229). */
+  canEditDependencies: boolean;
   /** Admin : rôles de projet et purge de la corbeille (mig. 190, 193). */
   isAdmin: boolean;
 }
@@ -65,7 +64,7 @@ type TaskModalState =
   | { mode: 'edit'; task: TeamTask }
   | null;
 
-const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: TeamProjectsTabProps) => {
+const TeamProjectsTab = ({ orgId, members, currentUserId, canEditDependencies, isAdmin }: TeamProjectsTabProps) => {
   const { can, canAssign } = useMyOrgPermissions(orgId);
   const hints = usePermissionHints(orgId);
   const { t, tp } = useT('org');
@@ -294,7 +293,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           onCreate={modalCreate}
           onUpdate={modalUpdate}
           onDelete={actions.removeWithUndo}
-          isManager={isManager}
+          canEditDependencies={canEditDependencies}
           onClose={() => setTaskModal(null)}
         />
       )}

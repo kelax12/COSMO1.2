@@ -18,7 +18,7 @@ interface OrgPageOverlaysProps {
     members: OrgMember[];
     currentUserId?: string;
     isAdmin: boolean;
-    isManager: boolean;
+    canEditDependencies: boolean;
   } | null;
 }
 

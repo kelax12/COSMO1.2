@@ -2,7 +2,8 @@
 // Rôles personnalisés en démo (mig. 219) : les règles de la base qui se
 // voient à l'écran, rejouées sur localStorage.
 import { beforeEach, describe, expect, it } from 'vitest';
-import { LocalStorageOrgRolesRepository } from './roles.local.repository';
+import { LocalStorageOrgRolesRepository, assignDefaultRoleOnJoin } from './roles.local.repository';
+import { ORG_CONFIG_STORAGE_KEYS } from '@/modules/org-config/constants';
 import { DEMO_ORG_ID } from './local.repository';
 import type { SaveCustomRoleInput } from './roles.types';
 
@@ -25,6 +26,24 @@ describe('LocalStorageOrgRolesRepository', () => {
     expect(created.name).toBe('Support');
     expect(created.grantedKeys).toEqual(['okr.create']);
     await expect(repo.createRole(DEMO_ORG_ID, input('support'))).rejects.toMatchObject({ code: '23505' });
+  });
+
+  it('rôle par défaut (mig. 230) : posé à l’arrivée, sans limite ; rien si absent ou supprimé', async () => {
+    const repo = new LocalStorageOrgRolesRepository();
+    const role = await repo.createRole(DEMO_ORG_ID, input('Arrivée'));
+    assignDefaultRoleOnJoin(DEMO_ORG_ID, 'newbie');
+    expect((await repo.getAssignments(DEMO_ORG_ID)).some((a) => a.userId === 'newbie')).toBe(false);
+
+    localStorage.setItem(ORG_CONFIG_STORAGE_KEYS.settings, JSON.stringify([{ orgId: DEMO_ORG_ID, defaultRoleId: role.id }]));
+    assignDefaultRoleOnJoin(DEMO_ORG_ID, 'newbie');
+    assignDefaultRoleOnJoin(DEMO_ORG_ID, 'newbie');
+    const mine = (await repo.getAssignments(DEMO_ORG_ID)).filter((a) => a.userId === 'newbie');
+    expect(mine).toHaveLength(1);
+    expect(mine[0]).toMatchObject({ roleId: role.id, endsAt: null });
+
+    await repo.deleteRole(role.id);
+    assignDefaultRoleOnJoin(DEMO_ORG_ID, 'other');
+    expect((await repo.getAssignments(DEMO_ORG_ID)).some((a) => a.userId === 'other')).toBe(false);
   });
 
   it('attribuer deux fois le même rôle prolonge la même ligne', async () => {

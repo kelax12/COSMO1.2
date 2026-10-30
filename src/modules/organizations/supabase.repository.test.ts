@@ -443,7 +443,7 @@ describe('SupabaseOrganizationsRepository — permissions par membre (mig. 115)'
       // Une clé inconnue soumise par un appelant négligent ne doit pas
       // atteindre PostgREST : on part des clés connues, jamais de l'objet reçu.
       overrides: { 'project.create': true, 'task.create': false } as never,
-      assignTargets: ['self', 'manager'],
+      assignTargets: ['self', 'everyone'],
     });
 
     const upserted = supabaseMock.argsOf('org_member_permissions', 'upsert')?.[0] as Record<string, unknown>;
@@ -464,7 +464,7 @@ describe('SupabaseOrganizationsRepository — permissions par membre (mig. 115)'
       can_view_org_report: null,
       can_view_all_team_reports: null,
       can_manage_roles: null,
-      assign_targets: ['self', 'manager'],
+      assign_targets: ['self', 'everyone'],
     });
     expect(supabaseMock.argsOf('org_member_permissions', 'upsert')?.[1]).toEqual({
       onConflict: 'org_id,user_id',

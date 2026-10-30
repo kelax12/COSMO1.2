@@ -64,7 +64,7 @@ describe('getMemberPermissions', () => {
         // Valeur non booléenne : jamais lue comme une décision.
         can_delete_task: 'false',
         // Colonne absente (mig. 219 pas appliquée) : can_manage_roles.
-        assign_targets: ['self', 'peers'],
+        assign_targets: ['self', 'everyone'],
       }],
     });
     const [row] = await getMemberPermissions('org1');
@@ -72,7 +72,7 @@ describe('getMemberPermissions', () => {
       orgId: 'org1',
       userId: 'u1',
       overrides: { ...allNull(), 'task.create': false, 'project.edit': true },
-      assignTargets: ['self', 'peers'],
+      assignTargets: ['self', 'everyone'],
     });
   });
 
@@ -113,10 +113,10 @@ describe('setMemberPermissions', () => {
   it('upsert de la ligne COMPLÈTE sur (org_id, user_id) : clés absentes → null', async () => {
     await setMemberPermissions('org1', 'u1', {
       overrides: { 'task.create': false, 'role.manage': true },
-      assignTargets: ['subordinates'],
+      assignTargets: ['everyone'],
     });
     const upsert = supabaseMock.argsOf('org_member_permissions', 'upsert');
-    const expected: Record<string, unknown> = { org_id: 'org1', user_id: 'u1', assign_targets: ['subordinates'] };
+    const expected: Record<string, unknown> = { org_id: 'org1', user_id: 'u1', assign_targets: ['everyone'] };
     for (const key of ORG_PERMISSION_KEYS) expected[COLUMNS[key]] = null;
     expected.can_create_task = false;
     expected.can_manage_roles = true;

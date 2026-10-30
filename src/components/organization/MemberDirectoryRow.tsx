@@ -1,7 +1,7 @@
 import { useRef, type ReactNode } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
-  Shield, UserCog, UserRound, MoreVertical, ShieldCheck,
+  Shield, UserRound, MoreVertical, ShieldCheck,
   ListTodo, CalendarDays, TrendingUp, ClipboardList, ChevronDown, BadgeCheck } from 'lucide-react';
 import {
   DropdownMenu,
@@ -21,12 +21,10 @@ import MemberAccessBadge from './MemberAccessBadge';
 import type { MemberTab } from './member-sheet.helpers';
 import type { DirectoryRole } from './member-directory.filters';
 
-// « Manager » n'est pas un rôle stocké : il est dérivé de la pyramide (a ≥ 1
-// subordonné). Le badge est purement informatif — la position ne se modifie
-// QUE depuis la pyramide (#1 : plus de changement de rôle depuis l'annuaire).
+// Un seul grade, administrateur ou membre (mig. 229) : tout le reste, ce sont
+// les rôles personnalisés, affichés en pastilles à côté.
 const BADGE_META = {
   admin: { labelKey: 'roles.adminShort', Icon: Shield, className: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10' },
-  manager: { labelKey: 'roles.manager', Icon: UserCog, className: 'text-blue-600 dark:text-blue-400 bg-[rgb(var(--color-accent-solid))]/10' },
   member: { labelKey: 'roles.member', Icon: UserRound, className: 'text-slate-600 dark:text-slate-400 bg-slate-500/10' },
 } as const;
 
@@ -44,7 +42,7 @@ export interface MemberRowRights {
   isSelf: boolean;
   /** Admin et pas soi : le badge devient le menu de rôle. */
   canChangeRole: boolean;
-  /** Supérieur hiérarchique : menu « … ». */
+  /** Admin, cible autre que soi : menu « … » (plus de supérieur hiérarchique, mig. 229). */
   isAbove: boolean;
   canAssign: boolean;
   canEditPermissions: boolean;

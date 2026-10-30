@@ -9,6 +9,7 @@
 import { readJsonArray, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import { localizeSeed } from '@/lib/seed-i18n';
+import { ORG_CONFIG_STORAGE_KEYS } from '@/modules/org-config/constants';
 import { DEMO_ORG_ID, LocalStorageOrganizationsRepository } from './local.repository';
 import type { IOrgRolesRepository } from './roles.repository';
 import type { AssignRoleInput, MyOrgRoleAssignment, OrgCustomRole, OrgRoleAssignment, SaveCustomRoleInput } from './roles.types';
@@ -24,7 +25,7 @@ const seedRoles = (): OrgCustomRole[] => {
     {
       id: 'role-demo-lead', orgId: DEMO_ORG_ID, name: 'Chef de projet', color: '#6366f1',
       grantedKeys: ['task.create', 'task.editAny', 'project.create', 'project.edit', 'okr.create'],
-      assignTargets: ['self', 'peers', 'subordinates'], createdBy: DEMO_USER_ID, createdAt: now, updatedAt: now,
+      assignTargets: ['everyone'], createdBy: DEMO_USER_ID, createdAt: now, updatedAt: now,
     },
     {
       id: 'role-demo-intern', orgId: DEMO_ORG_ID, name: 'Stagiaire', color: '#14b8a6',
@@ -59,6 +60,24 @@ const readOrSeed = <T>(key: string, seed: () => T[]): T[] => {
   const initial = seed();
   writeJsonOrThrow(key, initial);
   return initial;
+};
+
+/**
+ * Miroir démo du trigger `assign_default_org_role` (mig. 230) : un membre qui
+ * arrive reçoit le rôle par défaut de l'organisation, sans limite de durée.
+ * Un réglage qui pointe un rôle supprimé ne fait rien (ON DELETE SET NULL).
+ */
+export const assignDefaultRoleOnJoin = (orgId: string, userId: string): void => {
+  const settings = readJsonArray<{ orgId: string; defaultRoleId?: string | null }>(ORG_CONFIG_STORAGE_KEYS.settings) ?? [];
+  const roleId = settings.find((x) => x.orgId === orgId)?.defaultRoleId;
+  if (!roleId) return;
+  if (!readOrSeed(ORG_ROLES_STORAGE_KEY, seedRoles).some((r) => r.id === roleId && r.orgId === orgId)) return;
+  const all = readOrSeed(ORG_MEMBER_ROLES_STORAGE_KEY, seedAssignments);
+  if (all.some((a) => a.roleId === roleId && a.userId === userId)) return;
+  const now = new Date().toISOString();
+  writeJsonOrThrow(ORG_MEMBER_ROLES_STORAGE_KEY, [...all, {
+    id: crypto.randomUUID(), orgId, roleId, userId, startsAt: now, endsAt: null, grantedBy: DEMO_USER_ID, createdAt: now,
+  }]);
 };
 
 export class LocalStorageOrgRolesRepository implements IOrgRolesRepository {

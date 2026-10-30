@@ -21,9 +21,9 @@ describe('modèles', () => {
     for (const id of TEMPLATE_IDS) expect(sanitizeLayout(TEMPLATES[id])).toEqual(TEMPLATES[id]);
   });
   it('choisit le modèle selon le rôle', () => {
-    expect(templateForRole(true, true)).toBe('admin');
-    expect(templateForRole(false, true)).toBe('manager');
-    expect(templateForRole(false, false)).toBe('member');
+    expect(templateForRole(true)).toBe('admin');
+    // Encadrer quelqu'un ne choisit plus de modèle (mig. 229).
+    expect(templateForRole(false)).toBe('member');
   });
 });
 

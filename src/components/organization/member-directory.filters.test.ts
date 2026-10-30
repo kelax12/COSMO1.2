@@ -4,7 +4,6 @@ import {
   EMPTY_DIRECTORY_FILTERS,
   activeFilterCount,
   applyDirectoryFilters,
-  directManagers,
   directoryRoleOf,
   joinedWithin,
   readDirectoryFilters,
@@ -19,7 +18,8 @@ const mk = (userId: string, over: Partial<OrgMember> = {}): OrgMember => ({
   orgId: 'o', userId, role: 'member', joinedAt: daysAgo(10), displayName: userId, email: `${userId}@acme.io`, managerId: null, ...over,
 });
 
-// owner (admin) ─ boss ─ ann, bob ; zoe non placée ; carl admin non placé
+// owner (admin) ─ boss ─ ann, bob ; zoe non placée ; carl admin non placé.
+// La pyramide est dormante depuis la mig. 229 : elle ne doit plus rien changer.
 const MEMBERS: OrgMember[] = [
   mk('owner', { role: 'admin', joinedAt: daysAgo(800) }),
   mk('boss', { managerId: 'owner', joinedAt: daysAgo(200) }),
@@ -30,7 +30,6 @@ const MEMBERS: OrgMember[] = [
 ];
 
 const CTX = {
-  ownerId: 'owner',
   teamIds: new Set(['t1', 't-empty']),
   teamIdsByUser: new Map([['ann', new Set(['t1'])], ['zoe', new Set(['t1'])]]),
   now: NOW,
@@ -41,14 +40,17 @@ const ids = (f: Partial<DirectoryFilters>) =>
 
 describe('readDirectoryFilters · une URL est une entrée non fiable', () => {
   it('lit un filtre complet', () => {
-    const p = new URLSearchParams('dirQ=bob&dirTeam=t1&dirRole=manager&dirManager=boss&dirUnplaced=1&dirJoined=30d');
-    expect(readDirectoryFilters(p)).toEqual({
-      query: 'bob', teamId: 't1', role: 'manager', managerId: 'boss', unplaced: true, joined: '30d',
-    });
+    const p = new URLSearchParams('dirQ=bob&dirTeam=t1&dirRole=admin&dirJoined=30d');
+    expect(readDirectoryFilters(p)).toEqual({ query: 'bob', teamId: 't1', role: 'admin', joined: '30d' });
+  });
+
+  it('un ancien lien « manager direct » / « non placé » / rôle manager est ignoré (mig. 229)', () => {
+    const p = new URLSearchParams('dirRole=manager&dirManager=boss&dirUnplaced=1');
+    expect(readDirectoryFilters(p)).toEqual(EMPTY_DIRECTORY_FILTERS);
   });
 
   it('ignore toute valeur hors vocabulaire ou hors alphabet', () => {
-    const p = new URLSearchParams('dirTeam=<script>&dirRole=owner&dirManager=a b&dirUnplaced=true&dirJoined=2y');
+    const p = new URLSearchParams('dirTeam=<script>&dirRole=owner&dirJoined=2y');
     expect(readDirectoryFilters(p)).toEqual(EMPTY_DIRECTORY_FILTERS);
   });
 
@@ -59,7 +61,7 @@ describe('readDirectoryFilters · une URL est une entrée non fiable', () => {
 
 describe('writeDirectoryFilters', () => {
   it('aller-retour sans perte, et garde les paramètres étrangers', () => {
-    const f: DirectoryFilters = { query: 'bob', teamId: 't1', role: 'admin', managerId: 'boss', unplaced: true, joined: '1y' };
+    const f: DirectoryFilters = { query: 'bob', teamId: 't1', role: 'admin', joined: '1y' };
     const out = writeDirectoryFilters(new URLSearchParams('member=ann'), f);
     expect(out.get('member')).toBe('ann');
     expect(readDirectoryFilters(out)).toEqual(f);
@@ -76,10 +78,9 @@ describe('applyDirectoryFilters', () => {
     expect(ids({})).toEqual(MEMBERS.map((m) => m.userId));
   });
 
-  it('rôle : admin stocké, manager DÉRIVÉ de la pyramide, membre sinon', () => {
+  it('grade : admin stocké, membre sinon ; encadrer quelqu’un ne fait pas un grade (mig. 229)', () => {
     expect(ids({ role: 'admin' })).toEqual(['owner', 'carl']);
-    expect(ids({ role: 'manager' })).toEqual(['boss']);
-    expect(ids({ role: 'member' })).toEqual(['ann', 'bob', 'zoe']);
+    expect(ids({ role: 'member' })).toEqual(['boss', 'ann', 'bob', 'zoe']);
   });
 
   it('équipe, et une équipe VIDE vide la liste au lieu d être ignorée', () => {
@@ -87,18 +88,8 @@ describe('applyDirectoryFilters', () => {
     expect(ids({ teamId: 't-empty' })).toEqual([]);
   });
 
-  it('un id d équipe ou de manager inconnu est ignoré, pas appliqué', () => {
+  it('un id d équipe inconnu est ignoré, pas appliqué', () => {
     expect(ids({ teamId: 'ghost' })).toHaveLength(MEMBERS.length);
-    expect(ids({ managerId: 'ghost' })).toHaveLength(MEMBERS.length);
-  });
-
-  it('manager direct : les DIRECTS seulement, pas tout le sous-arbre', () => {
-    expect(ids({ managerId: 'owner' })).toEqual(['boss']);
-    expect(ids({ managerId: 'boss' })).toEqual(['ann', 'bob']);
-  });
-
-  it('non placé : définition de la pyramide, propriétaire exclu', () => {
-    expect(ids({ unplaced: true })).toEqual(['zoe', 'carl']);
   });
 
   it('période d arrivée', () => {
@@ -108,7 +99,7 @@ describe('applyDirectoryFilters', () => {
   });
 
   it('filtres ET recherche se combinent (recherche sans accents)', () => {
-    expect(ids({ managerId: 'boss', query: 'eric' })).toEqual(['bob']);
+    expect(ids({ role: 'member', query: 'eric' })).toEqual(['bob']);
     expect(ids({ teamId: 't1', role: 'member', joined: '7d' })).toEqual(['ann']);
   });
 });
@@ -116,7 +107,7 @@ describe('applyDirectoryFilters', () => {
 describe('petits utilitaires', () => {
   it('activeFilterCount ne compte pas la recherche', () => {
     expect(activeFilterCount({ ...EMPTY_DIRECTORY_FILTERS, query: 'x' })).toBe(0);
-    expect(activeFilterCount({ ...EMPTY_DIRECTORY_FILTERS, role: 'admin', unplaced: true, joined: '7d' })).toBe(3);
+    expect(activeFilterCount({ ...EMPTY_DIRECTORY_FILTERS, role: 'admin', teamId: 't1', joined: '7d' })).toBe(3);
   });
 
   it('joinedWithin refuse une date illisible au lieu de la classer', () => {
@@ -124,8 +115,8 @@ describe('petits utilitaires', () => {
     expect(joinedWithin('pas une date', 'older', NOW)).toBe(false);
   });
 
-  it('directManagers : ceux qui ont au moins un direct, triés', () => {
-    expect(directManagers(MEMBERS).map((m) => m.userId)).toEqual(['boss', 'owner']);
-    expect(directoryRoleOf(MEMBERS[1], MEMBERS)).toBe('manager');
+  it('directoryRoleOf : un encadrant reste « membre »', () => {
+    expect(directoryRoleOf(MEMBERS[1])).toBe('member');
+    expect(directoryRoleOf(MEMBERS[0])).toBe('admin');
   });
 });

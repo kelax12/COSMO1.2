@@ -53,6 +53,9 @@ export const TEMPLATES: Record<TemplateId, readonly PlacedWidget[]> = {
   ],
 };
 
-/** Le modèle d'arrivée : admin d'abord, puis qui encadre quelqu'un, sinon membre. */
-export const templateForRole = (isAdmin: boolean, isManager: boolean): TemplateId =>
-  isAdmin ? 'admin' : isManager ? 'manager' : 'member';
+/**
+ * Le modèle d'arrivée : admin, sinon membre. Encadrer quelqu'un ne choisit plus
+ * de modèle (mig. 229) ; « manager » reste proposé dans le choix des modèles.
+ */
+export const templateForRole = (isAdmin: boolean): TemplateId =>
+  isAdmin ? 'admin' : 'member';

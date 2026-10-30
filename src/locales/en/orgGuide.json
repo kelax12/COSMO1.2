@@ -62,7 +62,6 @@
     "noOkr": "You need an OKR first.",
     "noReport": "No report yet: the first one is generated at midnight.",
     "noRequest": "No pending requests.",
-    "noUnplaced": "Everyone is already placed.",
     "noTrash": "The trash is empty: nothing to restore for now.",
     "noOneToAdd": "Every member is already in this team: nobody left to add.",
     "noProjectTeam": "This project belongs to no team: the whole company already sees it.",
@@ -177,14 +176,6 @@
         "synonyms": "permissions, override, individual rights, exception, member",
         "b1": "An override replaces the default right for this one member only.",
         "b2": "\"Reset everything to default\" gives this member the rights of their role back."
-      }
-    },
-    "pyramid": {
-      "place": {
-        "label": "Place a member in the org chart",
-        "synonyms": "org chart, pyramid, hierarchy, manager, reports to",
-        "b1": "The chosen superior becomes the person's direct manager.",
-        "b2": "This choice decides who can see this person's tasks and work."
       }
     },
     "role": {
