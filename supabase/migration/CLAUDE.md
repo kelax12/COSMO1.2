@@ -52,7 +52,9 @@ compilait, la suite passait.
   nouveaux membres, ledger `20261030182827`) sont en prod depuis le 2026-10-30, relues au
   catalogue (`my_org_perm` sans `is_org_manager`, CHECK `self`/`everyone`, colonne
   `default_role_id`, trigger `trg_assign_default_org_role`). Preuves : `proofs/229-230`.
-  Prochain numéro libre : **`231`**.
+  `231` (`can_manage_team` exige un membre actif, revue de sécurité de la 229) en prod,
+  ledger `20261030190926`. Prochain numéro libre : **`232`**.
+
   Journal daté de chaque application (`150` → `223`) :
   [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Journal d'application des migrations ».
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
