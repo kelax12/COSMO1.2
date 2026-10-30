@@ -134,7 +134,7 @@ export default ProjectsToolbar;
 /** La seule action créative de la page, seul bouton plein : sur la ligne de la
  *  recherche, alignée à droite (2026-10-01). `PermissionGate` ne rend son
  *  enveloppe QUE si `reason` est défini. */
-export const NewProjectButton = ({ canCreateProject, createDeniedReason, onNewProject, label, guideId = 'projects-new' }: {
+export const NewProjectButton = ({ canCreateProject, createDeniedReason, onNewProject, label, guideId }: {
   canCreateProject: boolean;
   createDeniedReason?: string;
   onNewProject: () => void;

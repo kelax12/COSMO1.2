@@ -428,7 +428,7 @@
     "addTaskPickerSearch": "Filter by name",
     "addTaskPickerCreate": "Create a task",
     "addTaskPickerEmpty": "No task to add.",
-    "addTaskPickerFrom": "From {project}",
+    "addTaskPickerFrom": "From {{project}}",
     "addTaskToList": "Add the task to the list",
     "creating": "Creating...",
     "create": "Create the project",
@@ -974,7 +974,7 @@
     "addToListShort": "List",
     "deleted": "List deleted",
     "pickerDone": "Done",
-    "pickerCount": "{count} selected",
-    "removeFromList": "Remove {name}"
+    "pickerCount": "{{count}} selected",
+    "removeFromList": "Remove {{name}}"
   }
 }

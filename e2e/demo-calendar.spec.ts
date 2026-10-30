@@ -236,7 +236,8 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
     // Les dépendances sont un ONGLET de la fiche depuis l'audit des popups du
     // 2026-09-25 (f3a49583), plus un bouton de section repliable.
     await taskDialog.getByRole('tab', { name: /^dépendances/i }).click();
-    await taskDialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
+    // Deux colonnes depuis 66ba1f31 : le déclencheur est « Ajouter un prérequis ».
+    await taskDialog.getByRole('button', { name: /ajouter un prérequis/i }).click();
 
     const picker = page.getByRole('dialog', { name: /ajouter une dépendance/i });
     await expect(picker).toBeVisible({ timeout: 10_000 });

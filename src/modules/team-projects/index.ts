@@ -54,7 +54,6 @@ export { SupabaseTeamProjectsRepository } from './supabase.repository';
 
 export {
   useTeamProjects,
-  useTeamProjectTemplates,
   useTeamTasks,
   useTeamTaskWorkingSet,
   useTeamTaskSlice,

@@ -21,8 +21,8 @@ const useRepo = () => getTeamProjectsRepository();
  *
  * Un modèle est une ligne de `team_projects` : sans ce filtre, il apparaîtrait
  * dans chaque sélecteur de projet, chaque statistique et la palette de
- * commandes comme un projet en cours. Les modèles se lisent par
- * `useTeamProjectTemplates`, sur la MÊME clé de cache (une seule requête).
+ * commandes comme un projet en cours. (Le lecteur des modèles a été retiré
+ * avec la modale de création qui l'appelait, ebf44b2b.)
  */
 export const useTeamProjects = (orgId: string | undefined) => {
   const repository = useRepo();
@@ -38,19 +38,6 @@ export const useTeamProjects = (orgId: string | undefined) => {
 };
 
 const selectRealProjects = (projects: TeamProject[]) => projects.filter((p) => !p.isTemplate);
-const selectTemplates = (projects: TeamProject[]) => projects.filter((p) => p.isTemplate && !p.archivedAt);
-
-/** Modèles de projet de l'organisation (mig. 153), hors archivés. */
-export const useTeamProjectTemplates = (orgId: string | undefined) => {
-  const repository = useRepo();
-  return useQuery({
-    queryKey: teamProjectKeys.projects(orgId ?? ''),
-    queryFn: () => repository.getProjects(orgId as string),
-    enabled: !!orgId,
-    staleTime: 1000 * 60 * 5,
-    select: selectTemplates,
-  });
-};
 
 /**
  * Tâches d'équipe de l'organisation.
