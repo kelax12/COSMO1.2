@@ -62,7 +62,6 @@
     "noOkr": "Il te faut d'abord un OKR.",
     "noReport": "Aucun rapport pour l'instant : le premier est généré à minuit.",
     "noRequest": "Aucune demande en attente.",
-    "noUnplaced": "Tout le monde est déjà placé.",
     "noTrash": "La corbeille est vide : rien à restaurer pour l'instant.",
     "noOneToAdd": "Tous les membres sont déjà dans cette équipe : personne à ajouter.",
     "noProjectTeam": "Ce projet n'appartient à aucune équipe : il est déjà visible par toute l'entreprise.",
@@ -177,14 +176,6 @@
         "synonyms": "permissions, surcharge, droits individuels, exception, membre",
         "b1": "Une surcharge remplace le droit par défaut pour ce seul membre.",
         "b2": "« Tout remettre par défaut » rend à ce membre les droits de son rôle."
-      }
-    },
-    "pyramid": {
-      "place": {
-        "label": "Placer un membre dans l'organigramme",
-        "synonyms": "organigramme, pyramide, hiérarchie, supérieur, manager",
-        "b1": "Le supérieur choisi devient le manager direct de la personne.",
-        "b2": "Ce choix décide qui voit les tâches et le travail de cette personne."
       }
     },
     "role": {

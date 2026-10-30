@@ -251,7 +251,7 @@
     "adminHint": "Administrator: every right, no exception. No override applies to an admin.",
     "sourceAdmin": "Administrator",
     "sourceOverride": "Set for you",
-    "sourceManager": "Manager default",
+    "sourceRole": "Your role",
     "sourceMember": "Member default",
     "allowed": "allowed",
     "denied": "denied",
@@ -331,13 +331,6 @@
     "ownTasks_one": "{{count}} open task assigned to them",
     "ownTasks_other": "{{count}} open tasks assigned to them",
     "confirm": "Remove from team"
-  },
-  "teamBulk": {
-    "addSeveral": "Add several",
-    "title": "Add to {{team}}",
-    "description": "Tick the people to add: they will see the team's projects straight away.",
-    "submit_one": "Add {{count}} person",
-    "submit_other": "Add {{count}} people"
   },
   "teamUndo": {
     "added": "Added to {{team}}",
@@ -1588,6 +1581,11 @@
   "customRoles": {
     "title": "Roles",
     "intro": "A role groups permissions. Editing it changes the rights of everyone who holds it.",
+    "defaultTitle": "Role for new members",
+    "defaultHint": "Given with no time limit to everyone who joins the company. Existing members are not affected.",
+    "defaultNone": "No role (base rights)",
+    "defaultSaved": "Role for new members saved",
+    "defaultAdminOnly": "Only an admin can change it.",
     "create": "Create a role",
     "emptyTitle": "Create your first role",
     "emptyBody": "A role gives the same set of rights to several people, for a period you choose.",

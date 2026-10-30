@@ -2,7 +2,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
 import { BookOpen, Building2, Pencil } from 'lucide-react';
-import { useManagerSectionsToast, useOrgShortcuts } from '@/components/organization/org-page.hooks';
+import { useOrgShortcuts } from '@/components/organization/org-page.hooks';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
@@ -10,7 +10,6 @@ import {
   useMyOrgPermissions,
   useOrgNotifications,
   useOrgRoles,
-  isManagerOf,
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
 import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
@@ -62,7 +61,6 @@ import type { KeyOf } from '@/i18n/catalog';
 // que `lazy-namespaces.guard.test.ts` contrôle comme une route (`TAB_GATE_HOSTS`
 // dans `scripts/i18n-shell-namespaces.mjs`). La liste doit alors couvrir TOUT
 // son sous-arbre, `org` compris.
-const PyramidTab = lazyWithRetry(() => import('@/components/organization/PyramidTab'), ['eventModal', 'org', 'orgAdmin', 'overlays', 'tasks']);
 // `portfolio` (M2) n'est payé que par qui ouvre Projets : dans `org`, il pesait
 // 4,7 ko gzip sur chaque visite de /entreprise.
 const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
@@ -195,9 +193,8 @@ const OrganizationPage = () => {
     return () => markOrgSeen(orgId);
   }, [myOrg?.id]);
   // `live` : c'est LA page où l'on attend de voir un membre arriver.
-  const { data: members = [], isLoading: membersLoading } = useOrgMembers(myOrg?.id, { live: true });
+  const { data: members = [] } = useOrgMembers(myOrg?.id, { live: true });
   // Appelés avant les early returns, comme tous les hooks de la page.
-  useManagerSectionsToast(myOrg?.id, user?.id, members, !membersLoading && members.length > 0, myOrg?.myRole === 'admin');
   const { shortcuts, togglePin } = useOrgShortcuts(myOrg?.id, user?.id, urlTab, searchParams);
   // Droits explicites de l'utilisateur courant (mig. 115). Monté ici parce que
   // plusieurs onglets s'en servent — le hook ne déclenche qu'une requête,
@@ -248,16 +245,14 @@ const OrganizationPage = () => {
 
   const isOwner = user?.id === myOrg.ownerId;
   const isAdmin = myOrg.myRole === 'admin';
-  // « Manager » est dérivé de la pyramide : a ≥ 1 subordonné direct (v2).
-  const isManager = isAdmin || (user?.id ? isManagerOf(members, user.id) : false);
-  // Droits explicites (mig. 115). `isManager` reste la clé des surfaces
-  // HIÉRARCHIQUES (onglets Pyramide et Statistiques) : voir l'équipe qu'on
-  // encadre n'est pas une permission réglable, c'est une position.
+  // Un seul grade, administrateur ; tout le reste passe par les rôles
+  // personnalisés et la fiche (mig. 229). Encadrer quelqu'un n'ouvre plus rien.
   const canInvite = myPermissions.can['member.invite'];
+  // Le graphe de dépendances d'une tâche suit le droit de modifier les tâches.
+  const canEditDependencies = myPermissions.can['task.editAny'];
   const guideViewer: GuideViewer = {
     can: myPermissions.can,
     isAdmin,
-    isManager,
     isOwner,
     customRolesAvailable: !rolesUnavailable,
   };
@@ -270,11 +265,11 @@ const OrganizationPage = () => {
     || canSeeReports(reportAccess(myPermissions.can, teams, teamMembers, user?.id));
   const canStats = teamsLoading || canSeeStats(teams, { members, teamMembers, currentUserId: user?.id, isAdmin });
   // Un membre qui arrive sur `/entreprise/billing` (lien partagé, ancien
-  // favori) ou sur `pyramid` / `stats` (favori d'un ancien manager, lien
-  // copié) sans en avoir le droit ne voit pas un écran vide : il retombe sur
-  // l'aperçu.
+  // favori) ou sur `stats` sans en avoir le droit ne voit pas un écran vide :
+  // il retombe sur l'aperçu. L'organigramme est masqué pour tous depuis le
+  // 2026-10-30 (mig. 229) : `pyramid` y renvoie aussi.
   const tab: OrgTab =
-    (urlTab === 'billing' && !isOwner) || (urlTab === 'pyramid' && !isManager) || (urlTab === 'stats' && !canStats)
+    (urlTab === 'billing' && !isOwner) || urlTab === 'pyramid' || (urlTab === 'stats' && !canStats)
       ? 'overview'
       : urlTab === 'reports' ? 'settings' : urlTab;
 
@@ -291,7 +286,7 @@ const OrganizationPage = () => {
     if (id === 'members') return { count: badges.members, items: badges.memberItems };
     return { count: extra?.count ?? 0, items: extraItems };
   };
-  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => !item.hidden).filter((item) => (item.id === 'stats' ? canStats : !item.managerOnly || isManager)).map(
+  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => !item.hidden).filter((item) => (item.id === 'stats' ? canStats : !item.managerOnly || isAdmin)).map(
     ({ id, labelKey, Icon, group }) => {
       const { count: badgeCount, items } = badgeOf(id);
       const badgeAriaLabel = badgeCount > 0 ? tpOrgAdmin('page.badgeCount', badgeCount) : undefined;
@@ -437,26 +432,16 @@ const OrganizationPage = () => {
           forme qui n'est pas celle qui arrive. */}
       <Suspense fallback={tabFallback(tab, tOrgAdmin)}>
       {tab === 'overview' && (
-        <MyWorkTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} />
+        <MyWorkTab orgId={myOrg.id} members={members} currentUserId={user?.id} canEditDependencies={canEditDependencies} />
       )}
       {tab === 'stats' && canStats && (
         <TeamOverviewTab orgId={myOrg.id} members={members} isAdmin={isAdmin} currentUserId={user?.id} />
       )}
-      {tab === 'pyramid' && isManager && (
-        <PyramidTab
-          orgId={myOrg.id}
-          ownerId={myOrg.ownerId}
-          members={members}
-          currentUserId={user?.id}
-          isAdmin={isAdmin}
-          loading={membersLoading}
-        />
-      )}
       {tab === 'tasks' && (
-        <TeamTasksTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} isAdmin={isAdmin} />
+        <TeamTasksTab orgId={myOrg.id} members={members} currentUserId={user?.id} canEditDependencies={canEditDependencies} isAdmin={isAdmin} />
       )}
       {tab === 'projects' && (
-        <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} isAdmin={isAdmin} />
+        <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} canEditDependencies={canEditDependencies} isAdmin={isAdmin} />
       )}
       {tab === 'okr' && <TeamOKRTab orgId={myOrg.id} />}
       {tab === 'billing' && (
@@ -473,7 +458,6 @@ const OrganizationPage = () => {
           members={members}
           currentUserId={user?.id}
           isAdmin={isAdmin}
-          isManager={isManager}
           canInvite={canInvite}
           seatsFull={seatsFull}
         />
@@ -496,7 +480,6 @@ const OrganizationPage = () => {
           currentUserId={user?.id}
           isOwner={isOwner}
           isAdmin={isAdmin}
-          isManager={isManager}
           canInvite={canInvite}
           seatsFull={seatsFull}
           seatsQuota={seatsQuota}
@@ -558,7 +541,7 @@ const OrganizationPage = () => {
             glossaryOpen={glossary}
             onCloseGlossary={() => setGlossary(false)}
             deepLink={hasEntityParam
-              ? { orgId: myOrg.id, section: teamId ? 'teams' : tab, members, currentUserId: user?.id, isAdmin, isManager }
+              ? { orgId: myOrg.id, section: teamId ? 'teams' : tab, members, currentUserId: user?.id, isAdmin, canEditDependencies }
               : null}
           />
         </Suspense>

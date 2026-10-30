@@ -15,7 +15,7 @@ interface DeepTaskModalProps {
   orgId: string;
   taskId: string;
   members: OrgMember[];
-  isManager: boolean;
+  canEditDependencies: boolean;
   onClose: () => void;
 }
 
@@ -24,7 +24,7 @@ interface DeepTaskModalProps {
  * s'affiche ; une tâche introuvable (supprimée, hors de mon périmètre) ne
  * laisse pas un modal vide : le paramètre est retiré.
  */
-const DeepTaskModal = ({ orgId, taskId, members, isManager, onClose }: DeepTaskModalProps) => {
+const DeepTaskModal = ({ orgId, taskId, members, canEditDependencies, onClose }: DeepTaskModalProps) => {
   const { t } = useT('org');
   const { data: tasks, isFetched } = useTeamTasks(orgId, undefined, { background: true });
   const { data: projects = [] } = useTeamProjects(orgId);
@@ -52,7 +52,7 @@ const DeepTaskModal = ({ orgId, taskId, members, isManager, onClose }: DeepTaskM
       members={members}
       onUpdate={(id: string, input: UpdateTeamTaskInput) => updateTask.mutateAsync({ taskId: id, input })}
       onDelete={remove}
-      isManager={isManager}
+      canEditDependencies={canEditDependencies}
       onClose={onClose}
     />
   );

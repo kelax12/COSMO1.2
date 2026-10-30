@@ -41,7 +41,7 @@ const HINT = 'text-xs text-[rgb(var(--color-text-muted))] mt-0.5';
  * réponse. Personnes et Équipes restent atteignables par la barre latérale.
  */
 const OrgInviteSection = ({
-  org, currentUserId, isAdmin, canInvite, canInviteByEmail, seatsFull, seatsQuota, memberCount, isOwner, onInviteByEmail,
+  org, isAdmin, canInvite, canInviteByEmail, seatsFull, seatsQuota, memberCount, isOwner, onInviteByEmail,
 }: OrgInviteSectionProps) => {
   const { t, tp } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
@@ -181,7 +181,7 @@ const OrgInviteSection = ({
             <Suspense fallback={null}>
               <div className="divide-y divide-[rgb(var(--color-border))] rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">
                 <OrgJoinCodeCard code={org.joinCode ?? ''} orgId={org.id} isAdmin={isAdmin} seatsFull={seatsFull} />
-                {canInvite && <OrgInviteLinkCard orgId={org.id} managerId={currentUserId} seatsFull={seatsFull} />}
+                {canInvite && <OrgInviteLinkCard orgId={org.id} seatsFull={seatsFull} />}
                 {isAdmin && (
                   <div>
                     <div className="flex items-center gap-3 px-4 py-3">

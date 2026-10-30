@@ -61,8 +61,6 @@ interface OrgSettingsSectionProps {
   currentUserId?: string;
   isOwner: boolean;
   isAdmin: boolean;
-  /** A au moins un subordonné (ou admin) : condition d'une invitation placée. */
-  isManager: boolean;
   canInvite: boolean;
   seatsFull: boolean;
   /** Places du forfait en vigueur (`effectiveQuota`), `null` = illimité. */
@@ -105,7 +103,6 @@ const OrgSettingsSection = ({
   currentUserId,
   isOwner,
   isAdmin,
-  isManager,
   canInvite,
   seatsFull,
   seatsQuota,
@@ -144,9 +141,9 @@ const OrgSettingsSection = ({
     navigate('/dashboard', { replace: true });
   });
 
-  // Miroir de `create_org_email_invitations` (mig. 161) : un admin, ou un
-  // manager qui a le droit `member.invite` (il place alors sous lui-même).
-  const canInviteByEmail = isAdmin || (canInvite && isManager);
+  // Miroir de `create_org_email_invitations` (mig. 229) : admin, ou droit
+  // `member.invite` (le nouveau arrive alors sans supérieur).
+  const canInviteByEmail = isAdmin || canInvite;
 
   // Barre latérale (maquette du 2026-09-27) : une rubrique à la fois. Chaque
   // entrée porte la MÊME garde que le bloc qu'elle ouvre : une rubrique
@@ -314,7 +311,7 @@ const OrgSettingsSection = ({
           <h2 className={TITLE}>{ta('customRoles.title')}</h2>
           <div className="mt-2">
             <Suspense fallback={null}>
-              <OrgRolesSettings orgId={org.id} members={members} />
+              <OrgRolesSettings orgId={org.id} members={members} isAdmin={isAdmin} />
             </Suspense>
           </div>
         </section>

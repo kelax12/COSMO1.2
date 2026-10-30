@@ -409,10 +409,65 @@
       "Skill(impeccable)",
       "Skill(impeccable:*)",
       "Bash(awk '/^### C-27/,/^### C-28/' a-faire-code.md)",
-      "Bash(cd \"C:\\\\Users\\\\Axel\\\\Documents\\\\COSMO1.1\" && cat -A /dev/null; grep -n \"transform\\\\|will-change\\\\|perspective\\\\|filter:\" src/index.css | head -80)"
+      "Bash(cd \"C:\\\\Users\\\\Axel\\\\Documents\\\\COSMO1.1\" && cat -A /dev/null; grep -n \"transform\\\\|will-change\\\\|perspective\\\\|filter:\" src/index.css | head -80)",
+      "Bash(git show *)",
+      "Bash(timeout 120 gh pr merge 88 --merge)",
+      "Bash(timeout 60 gh pr view 88 --json state,mergeCommit --jq '\"#88 \"+.state+\" \"+\\(.mergeCommit.oid // \"\"\\)[0:8]')",
+      "Bash(timeout 60 gh pr ready 92)",
+      "Bash(timeout 120 gh pr merge 92 --merge)",
+      "Bash(timeout 60 gh pr view 92 --json state,mergeCommit --jq '\"#92 \"+.state+\" \"+\\(.mergeCommit.oid // \"\"\\)[0:8]')",
+      "Bash(timeout 60 gh pr view 98 --json mergeable,mergeStateStatus --jq '\"#98 \"+.mergeable+\" \"+.mergeStateStatus')",
+      "Bash(timeout 120 gh pr merge 97 --merge)",
+      "Bash(timeout 60 gh pr view 97 --json state,mergeCommit --jq '\"#97 \"+.state+\" \"+\\(.mergeCommit.oid // \"\"\\)[0:8]')",
+      "Bash(timeout 60 gh run list --workflow CI --limit 15 --json databaseId,headBranch,status,conclusion,createdAt,headSha --jq '.[] | \"\\\\\\(.databaseId\\) \\\\\\(.headBranch[0:28]\\) \\\\\\(.headSha[0:8]\\) \\\\\\(.status\\) \\\\\\(.conclusion\\) \\\\\\(.createdAt\\)\"')",
+      "Bash(timeout 90 gh pr update-branch 95)",
+      "Bash(timeout 60 gh pr diff 95 --name-only)",
+      "PowerShell($j = \"C:\\\\Users\\\\Axel\\\\Documents\\\\COSMO1.1\\\\.claude\\\\worktrees\\\\nifty-heisenberg-3b075d\\\\node_modules\"; [System.IO.Directory]::Delete\\($j, $false\\); \"jonction presente: \" + \\(Test-Path $j\\); \"cible intacte: \" + \\(Test-Path \"C:\\\\Users\\\\Axel\\\\Documents\\\\COSMO1.1\\\\node_modules\\\\vite\\\\package.json\"\\) + \" / .bin: \" + \\(Test-Path \"C:\\\\Users\\\\Axel\\\\Documents\\\\COSMO1.1\\\\node_modules\\\\.bin\"\\))",
+      "PowerShell(\"node_modules partage intact: \" + \\(Test-Path \"C:\\\\Users\\\\Axel\\\\Documents\\\\COSMO1.1\\\\node_modules\\\\vite\\\\package.json\"\\) + \" / .bin: \" + \\(Test-Path \"C:\\\\Users\\\\Axel\\\\Documents\\\\COSMO1.1\\\\node_modules\\\\.bin\\\\vite.cmd\"\\) + \" / @babel: \" + \\(Test-Path \"C:\\\\Users\\\\Axel\\\\Documents\\\\COSMO1.1\\\\node_modules\\\\@babel\"\\))",
+      "Bash(curl -s https://www.githubstatus.com/api/v2/components.json)",
+      "Bash(node -e \"let s='';process.stdin.on\\('data',d=>s+=d\\).on\\('end',\\(\\)=>{const j=JSON.parse\\(s\\);for\\(const c of j.components\\) if\\(/Actions|Git Operations|API/.test\\(c.name\\)\\) console.log\\(c.name, c.status\\)}\\)\")",
+      "Bash(curl -s https://www.githubstatus.com/api/v2/incidents/unresolved.json)",
+      "Bash(node -e \"let s='';process.stdin.on\\('data',d=>s+=d\\).on\\('end',\\(\\)=>{const j=JSON.parse\\(s\\);for\\(const i of j.incidents\\) console.log\\(i.name,'|',i.status,'|',i.created_at\\)}\\)\")",
+      "Bash(timeout 90 gh pr close 90 --comment \"Témoin de #89 \\(remet volontairement le défaut pour prouver que le test le détecte\\). Fermé sans fusion sur décision d'Axel, la preuve a servi.\")",
+      "Bash(timeout 60 gh pr view 90 --json state --jq .state)",
+      "Bash(gh run *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(gh pr *)",
+      "Bash(find /c/Users/Axel/AppData/Local/Temp/claude /c/Users/Axel/Documents/COSMO1.1/.claude -name \"dependabot-decisions-2026-10-22.md\" 2>/dev/null | head)",
+      "Bash(timeout 60 find /c/Users/Axel -maxdepth 6 -name \"dependabot-decisions-2026-10-22.md\" 2>/dev/null | head)",
+      "Bash(git ls-tree *)",
+      "Bash(gh workflow *)",
+      "Bash(PYTHONIOENCODING=utf-8 python \"C:/Users/Axel/AppData/Local/Temp/claude/C--Users-Axel-Documents-COSMO1-1/d1b45b4f-c7c6-40f0-bf91-013c3efec400/scratchpad/close_refused.py\")",
+      "Bash(sed -i 's/\\\\[\"gh\", \"pr\", \"close\", n, \"--comment\", body\\\\]/[\"gh\", \"pr\", \"comment\", n, \"--body\", body]/' \"C:/Users/Axel/AppData/Local/Temp/claude/C--Users-Axel-Documents-COSMO1-1/d1b45b4f-c7c6-40f0-bf91-013c3efec400/scratchpad/close_refused.py\")",
+      "Bash(sed -i 's/for m in re.finditer/ONLY={\"29\",\"30\",\"46\",\"80\",\"82\"}\\\\nfor m in re.finditer/; s/    n, body = m.group\\(1\\), m.group\\(2\\).strip\\(\\)/    n, body = m.group\\(1\\), m.group\\(2\\).strip\\(\\)\\\\n    if n not in ONLY: continue/' \"C:/Users/Axel/AppData/Local/Temp/claude/C--Users-Axel-Documents-COSMO1-1/d1b45b4f-c7c6-40f0-bf91-013c3efec400/scratchpad/close_refused.py\")",
+      "Bash(awk -F'\\\\t' '/lint-test-build|e2e|rls-integration|lighthouse|audit/{printf \"%s=%s \",$1,$2}')",
+      "Bash(gh secret *)",
+      "Bash(awk -F'\\\\t' '$2!=\"db-dump\" && $2!=\"introspection\" && $2!=\"scalability-volume-log\" {if \\($3 < \"2026-10-21\"\\) {o+=$1;no++} else {r+=$1;nr++}} END{printf \"avant 21/10: %d artefacts, %.1f Go\\\\ndepuis 21/10: %d artefacts, %.1f Go\\\\n\", no, o/1073741824, nr, r/1073741824}')",
+      "Bash(sed -n 65,178p /tmp/r.md)",
+      "Bash(MSYS_NO_PATHCONV=1 git show origin/main:.github/workflows/visual.yml)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('.claude/settings.local.json','utf8'\\)\\);console.log\\('json ok'\\)\")"
+    ],
+    "deny": [
+      "Read(**/.env.mail)",
+      "Edit(**/.env.mail)"
     ]
   },
   "enabledMcpjsonServers": [
     "shadcn"
-  ]
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Read|Edit|Write|Grep|Glob|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/Axel/.claude/hooks/block-mail-send.mjs\"",
+            "timeout": 10,
+            "onFailure": "block"
+          }
+        ]
+      }
+    ]
+  }
 }

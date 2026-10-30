@@ -37,10 +37,10 @@ interface OrgDeepLinkHostProps {
   members: OrgMember[];
   currentUserId?: string;
   isAdmin: boolean;
-  isManager: boolean;
+  canEditDependencies: boolean;
 }
 
-const OrgDeepLinkHost = ({ orgId, section, members, currentUserId, isAdmin, isManager }: OrgDeepLinkHostProps) => {
+const OrgDeepLinkHost = ({ orgId, section, members, currentUserId, isAdmin, canEditDependencies }: OrgDeepLinkHostProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   // `safeRedirectPath` comme toute destination lue dans l'URL, même construite
   // ici depuis une liste fermée (cf. no-open-redirect.test.ts).
@@ -69,7 +69,7 @@ const OrgDeepLinkHost = ({ orgId, section, members, currentUserId, isAdmin, isMa
           orgId={orgId}
           taskId={taskId}
           members={members}
-          isManager={isManager}
+          canEditDependencies={canEditDependencies}
           onClose={() => clear('task')}
         />
       )}

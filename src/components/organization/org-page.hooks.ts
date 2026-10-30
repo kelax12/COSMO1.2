@@ -2,56 +2,11 @@
 // Effets de la page /entreprise sortis d'`OrganizationPage` (audit 2026-09-24)
 // ═══════════════════════════════════════════════════════════════════
 import { useEffect, useMemo } from 'react';
-import { toast } from '@/lib/toast';
-import { useT } from '@/i18n/useT';
-import type { OrgMember } from '@/modules/organizations';
 import { useTeamProjects } from '@/modules/team-projects';
 import { buildOrgLink, readEntityParam } from './deep-link.helpers';
 import { projectColor } from './team-projects.helpers';
 import { recordRecent, useOrgPins } from './org-pins';
 import type { OrgShortcutGroup } from './org-sections';
-
-const managerSeenKey = (orgId: string, userId: string) => `cosmo_org_manager_seen_${orgId}_${userId}`;
-
-/**
- * « Vous encadrez maintenant X » : un toast, UNE fois, quand Statistiques et
- * Pyramide apparaissent dans la navigation parce qu'on vient de recevoir un
- * subordonné. Sans lui, le menu changeait sous les yeux sans explication.
- *
- * Le dernier état connu est gardé par organisation et par personne. La
- * première visite ENREGISTRE l'état sans rien dire : un manager de longue date
- * ne doit pas être félicité le jour où cette fonction est livrée. Seul le
- * passage de « non » à « oui » déclenche le message. Les admins voient ces
- * sections depuis toujours : rien à annoncer.
- */
-export const useManagerSectionsToast = (
-  orgId: string | undefined,
-  userId: string | undefined,
-  members: OrgMember[],
-  membersLoaded: boolean,
-  isAdmin: boolean,
-) => {
-  const { t } = useT('org');
-  const { t: tOrgAdmin } = useT('orgAdmin');
-  const reports = useMemo(
-    () => (userId ? members.filter((m) => m.managerId === userId) : []),
-    [members, userId],
-  );
-  const managesSomeone = reports.length > 0;
-  useEffect(() => {
-    if (!orgId || !userId || !membersLoaded || isAdmin) return;
-    const key = managerSeenKey(orgId, userId);
-    let previous: string | null = null;
-    try { previous = localStorage.getItem(key); } catch { return; }
-    const now = managesSomeone ? '1' : '0';
-    if (previous === now) return;
-    try { localStorage.setItem(key, now); } catch { /* sans stockage : pas de toast */ return; }
-    if (previous === '0' && managesSomeone) {
-      const names = reports.slice(0, 2).map((m) => m.displayName).join(', ');
-      toast.info(tOrgAdmin('page.managerToast', { names: reports.length > 2 ? `${names}…` : names }));
-    }
-  }, [orgId, userId, membersLoaded, isAdmin, managesSomeone, reports, t, tOrgAdmin]);
-};
 
 /**
  * Groupe « Épinglés » (ou « Récents » tant que rien n'est épinglé) du panneau

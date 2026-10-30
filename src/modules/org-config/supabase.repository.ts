@@ -28,12 +28,13 @@ const client = () => {
 interface SettingsRow {
   org_id: string; locale: 'fr' | 'en'; timezone: string; week_start: number; work_days: number[];
   default_task_priority: number; default_project_audience: 'org' | 'team'; default_guest_days: number | null;
-  invite_domain_only: boolean; updated_at: string | null;
+  invite_domain_only: boolean; default_role_id: string | null; updated_at: string | null;
 }
 const mapSettings = (r: SettingsRow): OrgSettings => ({
   orgId: r.org_id, locale: r.locale, timezone: r.timezone, weekStart: r.week_start, workDays: r.work_days,
   defaultTaskPriority: r.default_task_priority, defaultProjectAudience: r.default_project_audience,
-  defaultGuestDays: r.default_guest_days, inviteDomainOnly: r.invite_domain_only, updatedAt: r.updated_at,
+  defaultGuestDays: r.default_guest_days, inviteDomainOnly: r.invite_domain_only,
+  defaultRoleId: r.default_role_id ?? null, updatedAt: r.updated_at,
 });
 
 interface DomainRow {
@@ -70,7 +71,7 @@ const mapWebhook = (r: WebhookRow): OrgWebhook => ({
   enabled: r.enabled, lastStatus: r.last_status, lastDeliveryAt: r.last_delivery_at, failureCount: r.failure_count,
 });
 
-const SETTINGS_COLUMNS = 'org_id, locale, timezone, week_start, work_days, default_task_priority, default_project_audience, default_guest_days, invite_domain_only, updated_at';
+const SETTINGS_COLUMNS = 'org_id, locale, timezone, week_start, work_days, default_task_priority, default_project_audience, default_guest_days, invite_domain_only, default_role_id, updated_at';
 
 export class SupabaseOrgConfigRepository implements IOrgConfigRepository {
   // ── 195 ──
@@ -90,6 +91,7 @@ export class SupabaseOrgConfigRepository implements IOrgConfigRepository {
     if (patch.defaultProjectAudience !== undefined) row.default_project_audience = patch.defaultProjectAudience;
     if (patch.defaultGuestDays !== undefined) row.default_guest_days = patch.defaultGuestDays;
     if (patch.inviteDomainOnly !== undefined) row.invite_domain_only = patch.inviteDomainOnly;
+    if (patch.defaultRoleId !== undefined) row.default_role_id = patch.defaultRoleId;
     const { data, error } = await client().from('org_settings').upsert(row, { onConflict: 'org_id' }).select(SETTINGS_COLUMNS).single();
     if (error) throw normalizeApiError(error);
     return mapSettings(data as SettingsRow);

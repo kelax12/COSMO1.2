@@ -32,7 +32,7 @@ interface InviteModeDialogProps {
  * onglet n'apparaît qu'à qui a le droit correspondant, avec les mêmes règles
  * que la rubrique Inviter de Paramètres (`OrgInviteSection`).
  */
-const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, onChooseEmail, onClose }: InviteModeDialogProps) => {
+const InviteModeDialog = ({ org, isAdmin, canInvite, seatsFull, onChooseEmail, onClose }: InviteModeDialogProps) => {
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
   const { ref, dialogProps } = useModalA11y<HTMLDivElement>({ open: true, onClose, label: tOrgAdmin('settings.inviteTitle') });
@@ -45,9 +45,9 @@ const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, o
   const sendInvite = () => {
     const address = email.trim().toLowerCase();
     if (!address || invite.isPending || seatsFull) return;
-    // Un manager ne place que sous lui (policy `org_invite_links_insert`).
+    // Personne n'est placé sous un supérieur (mig. 229).
     invite.mutate(
-      { emails: [address], managerId: isAdmin ? null : currentUserId ?? null },
+      { emails: [address], managerId: null },
       {
         onSuccess: ({ results, sending }) => {
           const r = results[0];
@@ -178,7 +178,7 @@ const InviteModeDialog = ({ org, currentUserId, isAdmin, canInvite, seatsFull, o
             {mode !== 'email' && (
               <div className="rounded-2xl border border-[rgb(var(--color-border))]">
                 {mode === 'code' && <OrgJoinCodeCard code={org.joinCode ?? ''} orgId={org.id} isAdmin={isAdmin} seatsFull={seatsFull} />}
-                {mode === 'link' && <OrgInviteLinkCard orgId={org.id} managerId={currentUserId} seatsFull={seatsFull} />}
+                {mode === 'link' && <OrgInviteLinkCard orgId={org.id} seatsFull={seatsFull} />}
                 {mode === 'contacts' && (
                   <div className="p-4">
                     <InviteFriendsToOrg orgId={org.id} variant="inline" />

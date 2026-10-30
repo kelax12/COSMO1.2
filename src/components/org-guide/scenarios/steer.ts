@@ -26,7 +26,7 @@ export const STEER_ACTIONS: GuideAction[] = [
     { kind: 'field', target: 'report-period', emptyKey: 'empty.noReport', bubbleKey: k('report.view', 'b1') },
     { kind: 'field', target: 'report-scope', bubbleKey: k('report.view', 'b2') },
   ] },
-  { id: 'team.workload', category: 'steer', requires: 'manager', steps: [
+  { id: 'team.workload', category: 'steer', requires: 'admin', steps: [
     { kind: 'goto', section: 'teams', via: 'nav-teams' },
     { kind: 'pick-first', target: 'teams-list', emptyKey: 'empty.noTeam' },
     { kind: 'field', target: 'team-workload-members', emptyKey: 'empty.noTeamProject', bubbleKey: k('team.workload', 'b1') },

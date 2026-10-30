@@ -94,13 +94,13 @@ export const useMyOrgPermissions = (orgId: string | undefined): MyOrgPermissions
     // « Actif » est jugé au rendu : un rôle qui finit pendant la visite tombe
     // au prochain rendu. Le serveur, lui, le refuse à la seconde.
     const activeRoles = activeRolesOf(roles, roleAssignments, me.userId, new Date());
-    const can = effectivePermissions({ member: me, members, overrides: mine, roles: activeRoles });
+    const can = effectivePermissions({ member: me, overrides: mine, roles: activeRoles });
     const assignTargets = effectiveAssignTargets({ member: me, overrides: mine, roles: activeRoles });
 
     const canAssign = (targetUserId: string) => {
       const target = members.find((m) => m.userId === targetUserId);
       if (!target) return false;
-      return canAssignTo({ actor: me, target, members, targets: assignTargets });
+      return canAssignTo({ actor: me, target, targets: assignTargets });
     };
 
     return {
@@ -108,7 +108,7 @@ export const useMyOrgPermissions = (orgId: string | undefined): MyOrgPermissions
       assignTargets,
       canAssign,
       assignableMembers: members.filter((m) =>
-        canAssignTo({ actor: me, target: m, members, targets: assignTargets }),
+        canAssignTo({ actor: me, target: m, targets: assignTargets }),
       ),
       canEditTask: (task: TaskOwnership) => canEditTeamTask(can, me.userId, task),
       canDeleteTask: (task: TaskOwnership) => canDeleteTeamTask(can, me.userId, task),

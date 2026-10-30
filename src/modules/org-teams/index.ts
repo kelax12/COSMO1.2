@@ -22,6 +22,8 @@ export {
   useCreateOrgTeam,
   useCreateTeamWithMembers,
   type CreateTeamFullInput,
+  useEditTeamWithMembers,
+  type EditTeamFullInput,
   useUpdateOrgTeam,
   useDeleteOrgTeam,
   useTeamDeletionImpact,

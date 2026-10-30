@@ -63,6 +63,47 @@ export const useCreateTeamWithMembers = (orgId: string) => {
   };
 };
 
+/** Ce que rend le même formulaire ouvert en modification. */
+export interface EditTeamFullInput extends CreateTeamFullInput {
+  description: string | null;
+}
+
+/**
+ * Modification d'une équipe par le formulaire de création (2026-10-30) : fiche,
+ * puis écart de membres, puis responsable. Les ajouts et la nouvelle couronne
+ * passent AVANT les retraits : un responsable qui se retire la couronne en
+ * premier perdrait le droit d'appliquer le reste (`can_manage_team`, mig. 107).
+ *
+ * Le formulaire ne porte qu'une couronne : seul le responsable affiché
+ * (`previousLeadId`) est remplacé, les autres responsables restent nommés.
+ */
+export const useEditTeamWithMembers = (orgId: string) => {
+  const updateTeam = useUpdateOrgTeam(orgId);
+  const addTeamMember = useAddTeamMember(orgId);
+  const removeTeamMember = useRemoveTeamMember(orgId);
+  const setTeamLead = useSetTeamLead(orgId);
+  return async (
+    teamId: string,
+    previous: { memberIds: string[]; leadId: string | null },
+    { name, color, description, memberIds, leadId }: EditTeamFullInput,
+  ) => {
+    await updateTeam.mutateAsync({ teamId, input: { name, color, description } });
+    const ids = leadId && !memberIds.includes(leadId) ? [...memberIds, leadId] : memberIds;
+    for (const userId of ids.filter((id) => !previous.memberIds.includes(id))) {
+      await addTeamMember.mutateAsync({ teamId, userId });
+    }
+    if (leadId && leadId !== previous.leadId) {
+      await setTeamLead.mutateAsync({ teamId, userId: leadId, isLead: true });
+    }
+    for (const userId of previous.memberIds.filter((id) => !ids.includes(id))) {
+      await removeTeamMember.mutateAsync({ teamId, userId });
+    }
+    if (previous.leadId && previous.leadId !== leadId && ids.includes(previous.leadId)) {
+      await setTeamLead.mutateAsync({ teamId, userId: previous.leadId, isLead: false });
+    }
+  };
+};
+
 /** Fiche d'une équipe : nom, couleur, description (mig. 163). */
 export const useUpdateOrgTeam = (orgId: string) => {
   const queryClient = useQueryClient();

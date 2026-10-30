@@ -11,7 +11,6 @@ import {
   activeAssignmentsOf,
   canEditPermissionsOf,
   effectivePermissions,
-  subtreeOf,
   type OrgMember,
 } from '@/modules/organizations';
 import { useOrgTeams, useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
@@ -39,7 +38,6 @@ import MemberBulkPicker from './MemberBulkPicker';
 import { useMemberBulkActions } from './use-member-bulk-actions';
 import {
   applyDirectoryFilters,
-  directManagers,
   directoryRoleOf,
   readDirectoryFilters,
   writeDirectoryFilters,
@@ -138,15 +136,8 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
 
   const openMember = (member: OrgMember, tab: MemberTab) => setSheet({ member, tab });
 
-  // Périmètre hiérarchique de l'utilisateur courant (miroir de la pyramide).
-  const mySubtree = useMemo(
-    () => (currentUserId ? subtreeOf(members, currentUserId) : new Set<string>()),
-    [members, currentUserId],
-  );
-
-  /** Supérieur hiérarchique de `m` ? (admin partout ; manager sur son sous-arbre, jamais soi-même). */
-  const isAbove = (m: OrgMember) =>
-    m.userId !== currentUserId && (isAdmin || mySubtree.has(m.userId));
+  /** Regard sur le travail de `m` : l'admin seul, jamais sur soi (la hiérarchie n'ouvre plus rien, mig. 229). */
+  const isAbove = (m: OrgMember) => m.userId !== currentUserId && isAdmin;
 
   // Droits effectifs de l'utilisateur courant : ils PLAFONNENT ce qu'il peut
   // accorder (miroir de `enforce_org_permission_ceiling`, mig. 115).
@@ -154,7 +145,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
     const me = currentUserId ? members.find((m) => m.userId === currentUserId) : undefined;
     if (!me) return null;
     const mine = orgPermissions.find((o) => o.userId === me.userId) ?? null;
-    return effectivePermissions({ member: me, members, overrides: mine });
+    return effectivePermissions({ member: me, overrides: mine });
   }, [members, orgPermissions, currentUserId]);
 
   const teamsByUser = useMemo(() => {
@@ -175,19 +166,17 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
       [...teamsByUser].map(([uid, teams]) => [uid, new Set(teams.map((team) => team.id))]),
     );
     return applyDirectoryFilters(members, filters, {
-      ownerId,
       teamIds: new Set(orgTeams.map((team) => team.id)),
       teamIdsByUser,
       now: Date.now(),
     });
-  }, [members, filters, ownerId, orgTeams, teamsByUser]);
+  }, [members, filters, orgTeams, teamsByUser]);
 
-  const managers = useMemo(() => directManagers(members), [members]);
 
-  // Dernière activité : seulement si l'appelant a quelqu'un à voir (admin, ou
-  // manager d'au moins une personne). Le serveur borne de toute façon.
+  // Dernière activité : l'admin seul a quelqu'un à voir (mig. 229). Le serveur
+  // borne de toute façon.
   const { data: lastActivity = [] } = useOrgMemberLastActivity(orgId, {
-    enabled: isAdmin || mySubtree.size > 0,
+    enabled: isAdmin,
     members,
     viewerId: currentUserId,
   });
@@ -204,16 +193,15 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
   });
 
   const exportCsv = () => {
-    const { headers, rows } = buildDirectoryCsv(filteredMembers, members, teamsByUser, {
+    const { headers, rows } = buildDirectoryCsv(filteredMembers, teamsByUser, {
       headers: {
         name: tOrgAdmin('directory.export.colName'),
         email: tOrgAdmin('directory.export.colEmail'),
         role: tOrgAdmin('directory.export.colRole'),
-        manager: tOrgAdmin('directory.export.colManager'),
         teams: tOrgAdmin('directory.export.colTeams'),
         joinedAt: tOrgAdmin('directory.export.colJoinedAt'),
       },
-      roles: { admin: t('roles.admin'), manager: t('roles.manager'), member: t('roles.member') },
+      roles: { admin: t('roles.admin'), member: t('roles.member') },
     });
     downloadCSV(tOrgAdmin('directory.export.fileName'), headers, rows);
   };
@@ -262,7 +250,6 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
           filters={filters}
           onChange={setFilters}
           teams={orgTeams}
-          managers={managers}
           shown={filteredMembers.length}
           total={members.length}
           canSelect={bulk.canSelect}
@@ -287,7 +274,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
             <li key={m.userId}>
               <MemberDirectoryRow
                 member={m}
-                role={directoryRoleOf(m, members)}
+                role={directoryRoleOf(m)}
                 rights={{
                   isSelf: m.userId === currentUserId,
                   canChangeRole: isAdmin && m.userId !== currentUserId,
@@ -295,7 +282,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
                   // Attribuer : seulement dans la portée d'assignation (mig.
                   // 115), sinon le sheet s'ouvrirait pour finir en erreur RLS.
                   canAssign: myPermissions.canAssign(m.userId),
-                  canEditPermissions: canEditPermissionsOf({ actorId: currentUserId, actorIsAdmin: isAdmin, target: m, members }),
+                  canEditPermissions: canEditPermissionsOf({ actorId: currentUserId, actorIsAdmin: isAdmin, target: m }),
                   // Mig. 219 : jamais sur un admin (il détient tout, la base refuse).
                   canAssignRole: canManageRoles && m.role !== 'admin',
                 }}

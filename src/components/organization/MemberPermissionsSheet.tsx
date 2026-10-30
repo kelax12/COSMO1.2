@@ -118,21 +118,21 @@ const MemberPermissionsSheet = ({
   // Ce que vaut chaque droit AUJOURD'HUI pour ce membre, surcharges comprises :
   // c'est l'état affiché par les interrupteurs.
   const effective = useMemo(
-    () => effectivePermissions({ member, members, overrides: { orgId: member.orgId, userId: member.userId, overrides, assignTargets: targets } }),
-    [member, members, overrides, targets],
+    () => effectivePermissions({ member, overrides: { orgId: member.orgId, userId: member.userId, overrides, assignTargets: targets } }),
+    [member, overrides, targets],
   );
 
-  // Le défaut dérivé seul (sans aucune surcharge) — sert à libeller « Par
+  // Le défaut seul (sans aucune surcharge) — sert à libeller « Par
   // défaut : autorisé / refusé » et à savoir si une ligne a été décidée.
   const inherited = useMemo(
-    () => effectivePermissions({ member, members, overrides: null }),
-    [member, members],
+    () => effectivePermissions({ member, overrides: null }),
+    [member],
   );
 
   const effectiveTargets = useMemo(() => targets ?? [...DEFAULT_ASSIGN_TARGETS], [targets]);
   const targetsDecided = targets !== null;
   const assignableCount = useMemo(
-    () => members.filter((target) => canAssignTo({ actor: member, target, members, targets: effectiveTargets })).length,
+    () => members.filter((target) => canAssignTo({ actor: member, target, targets: effectiveTargets })).length,
     [member, members, effectiveTargets],
   );
 

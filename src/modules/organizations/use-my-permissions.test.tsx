@@ -113,19 +113,20 @@ describe('useMyOrgPermissions · chargement et identité', () => {
 });
 
 describe('useMyOrgPermissions · résolution', () => {
-  it('membre sans fiche : défauts dérivés (manager car il encadre sub)', async () => {
+  it('membre sans fiche qui encadre sub : défauts de membre seulement (mig. 229)', async () => {
     const result = await renderLoaded(ORG);
     const { can } = result.current;
     expect(can['task.create']).toBe(true);
     expect(can['task.editAny']).toBe(true);
-    expect(can['project.create']).toBe(true);
-    // Défaut ADMIN seulement, encadrer ne suffit pas.
+    // Encadrer quelqu'un n'ouvre plus aucun droit.
+    expect(can['project.create']).toBe(false);
+    expect(can['member.invite']).toBe(false);
     expect(can['report.org']).toBe(false);
     expect(can['role.manage']).toBe(false);
     expect(result.current.assignTargets).toEqual(['everyone']);
   });
 
-  it('membre sans subordonné : pas les droits de manager', async () => {
+  it('membre sans subordonné : mêmes défauts', async () => {
     auth.user = { id: 'peer' };
     const { can } = (await renderLoaded(ORG)).current;
     expect(can['task.create']).toBe(true);
@@ -146,24 +147,24 @@ describe('useMyOrgPermissions · résolution', () => {
   it('fiche individuelle : ses décisions priment sur le défaut ; seule MA ligne est lue', async () => {
     orgRepo.getMemberPermissions.mockResolvedValue([
       override({ userId: 'peer', overrides: { 'task.create': false } }),
-      override({ overrides: { 'project.create': false, 'report.org': true }, assignTargets: ['self'] }),
+      override({ overrides: { 'project.create': true, 'report.org': true }, assignTargets: ['self'] }),
     ]);
     const result = await renderLoaded(ORG);
     expect(result.current.can['task.create']).toBe(true);
-    expect(result.current.can['project.create']).toBe(false);
+    expect(result.current.can['project.create']).toBe(true);
     expect(result.current.can['report.org']).toBe(true);
     expect(result.current.assignTargets).toEqual(['self']);
   });
 
   it('rôle actif : écrase fiche et défaut, une clé absente est refusée', async () => {
     orgRepo.getMemberPermissions.mockResolvedValue([override({ overrides: { 'task.create': true } })]);
-    rolesRepo.getRoles.mockResolvedValue([role('r1', { grantedKeys: ['okr.create'], assignTargets: ['peers'] })]);
+    rolesRepo.getRoles.mockResolvedValue([role('r1', { grantedKeys: ['okr.create'], assignTargets: ['self'] })]);
     rolesRepo.getAssignments.mockResolvedValue([assign('r1')]);
     const result = await renderLoaded(ORG);
     expect(result.current.activeRoles.map((r) => r.id)).toEqual(['r1']);
     expect(result.current.can['okr.create']).toBe(true);
     expect(result.current.can['task.create']).toBe(false);
-    expect(result.current.assignTargets).toEqual(['peers']);
+    expect(result.current.assignTargets).toEqual(['self']);
   });
 
   it('rôle échu, futur, ou attribué à un autre : ignoré', async () => {
@@ -189,14 +190,13 @@ describe('useMyOrgPermissions · résolution', () => {
 });
 
 describe('useMyOrgPermissions · assignation et tâches', () => {
-  it('portée self + subordinates : canAssign et assignableMembers concordent', async () => {
-    orgRepo.getMemberPermissions.mockResolvedValue([override({ assignTargets: ['self', 'subordinates'] })]);
+  it('portée self : canAssign et assignableMembers concordent, le subordonné n’est pas une cible (mig. 229)', async () => {
+    orgRepo.getMemberPermissions.mockResolvedValue([override({ assignTargets: ['self'] })]);
     const result = await renderLoaded(ORG);
     expect(result.current.canAssign('me')).toBe(true);
-    expect(result.current.canAssign('sub')).toBe(true);
-    expect(result.current.canAssign('peer')).toBe(false);
+    expect(result.current.canAssign('sub')).toBe(false);
     expect(result.current.canAssign('boss')).toBe(false);
-    expect(result.current.assignableMembers.map((m) => m.userId)).toEqual(['me', 'sub']);
+    expect(result.current.assignableMembers.map((m) => m.userId)).toEqual(['me']);
   });
 
   it('portée [] (personne) : personne, pas même soi', async () => {

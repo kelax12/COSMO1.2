@@ -4,7 +4,7 @@ import type { OrgPermissionKey } from '@/modules/organizations/permissions';
 export type GuideCategory = 'work' | 'people' | 'roles' | 'steer';
 
 /** Droit exigé : une clé de `ORG_PERMISSION_KEYS`, ou un statut sans clé dédiée. */
-export type GuideRequirement = OrgPermissionKey | 'admin' | 'manager' | 'owner';
+export type GuideRequirement = OrgPermissionKey | 'admin' | 'owner';
 
 /**
  * Une étape ne SAISIT jamais rien et ne cible jamais un bouton qui écrit :
@@ -37,7 +37,6 @@ export type GuideAccess = 'allowed' | 'denied' | 'hidden';
 export interface GuideViewer {
   can: Record<OrgPermissionKey, boolean>;
   isAdmin: boolean;
-  isManager: boolean;
   isOwner: boolean;
   customRolesAvailable: boolean;
 }
