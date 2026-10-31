@@ -72,6 +72,10 @@ les permissions** (admin seul).
   ⚠️ Reste hiérarchique, en lecture seule : la visibilité de `can_access_team_project`,
   `can_access_team_okr`, `my_managed_user_ids`, `get_org_member_last_activity` (7 liens en prod).
 
+- **Défaut d'un membre réglable** (mig. 232) : `org_settings.member_default_perms`, coché par un
+  admin dans la colonne « Membre » de `PermissionsMatrix` (Paramètres › Permissions). `NULL` = défaut
+  historique, `[]` = rien. Lu par `org_member_default_perm` (dernier cran des quatre résolveurs) et,
+  côté client, par `useOrgMemberDefaults` passé à `effectivePermissions({ memberDefaults })`.
 - Table `org_member_permissions (org_id, user_id)`, colonnes booléennes **NULLables** :
   `NULL` = suit le défaut dérivé, `true`/`false` = décision explicite. Une organisation sans
   aucune ligne se comporte **exactement** comme avant la mig. 115 — c'est ce qui rend le

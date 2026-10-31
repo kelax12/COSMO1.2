@@ -83,6 +83,30 @@ describe('effectivePermissions — les défauts (mig. 115, puis 152)', () => {
   });
 });
 
+describe('défauts réglés par l’organisation (mig. 232)', () => {
+  it('remplacent le défaut historique, la fiche et le rôle passent toujours avant', () => {
+    const memberDefaults = ['project.create', 'okr.create'];
+    const p = effectivePermissions({ member: CARL, memberDefaults });
+    expect(p['project.create']).toBe(true);
+    expect(p['okr.create']).toBe(true);
+    expect(p['task.create']).toBe(false);
+    const withSheet = effectivePermissions({
+      member: CARL,
+      memberDefaults,
+      overrides: overrides('carl', { overrides: { 'project.create': false } }),
+    });
+    expect(withSheet['project.create']).toBe(false);
+    const withRole = effectivePermissions({ member: CARL, memberDefaults, roles: [{ grantedKeys: ['task.create'], assignTargets: [] }] });
+    expect(withRole['project.create']).toBe(false);
+  });
+
+  it('null = défaut historique ; [] = rien ; un admin garde tout', () => {
+    expect(effectivePermissions({ member: CARL, memberDefaults: null })).toEqual(effectivePermissions({ member: CARL }));
+    expect(Object.values(effectivePermissions({ member: CARL, memberDefaults: [] })).some(Boolean)).toBe(false);
+    expect(Object.values(effectivePermissions({ member: ADMIN, memberDefaults: [] })).every(Boolean)).toBe(true);
+  });
+});
+
 describe('project.edit (mig. 153)', () => {
   it('se règle indépendamment de project.create', () => {
     const p = effectivePermissions({

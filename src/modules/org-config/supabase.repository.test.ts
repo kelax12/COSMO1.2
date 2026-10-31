@@ -15,7 +15,7 @@ import { defaultOrgSettings } from './types';
 const repo = new SupabaseOrgConfigRepository();
 const DB_ERROR = { message: 'boom', code: '42P01' };
 
-const SETTINGS_COLUMNS = 'org_id, locale, timezone, week_start, work_days, default_task_priority, default_project_audience, default_guest_days, invite_domain_only, default_role_id, updated_at';
+const SETTINGS_COLUMNS = 'org_id, locale, timezone, week_start, work_days, default_task_priority, default_project_audience, default_guest_days, invite_domain_only, default_role_id, member_default_perms, updated_at';
 const STATUS_COLUMNS = 'id, org_id, project_id, name, color, maps_to, position';
 
 const settingsRow = {
@@ -53,7 +53,7 @@ describe('SupabaseOrgConfigRepository — réglages (mig. 195)', () => {
     expect(s).toEqual({
       orgId: 'org1', locale: 'en', timezone: 'Europe/London', weekStart: 0, workDays: [1, 2, 3],
       defaultTaskPriority: 2, defaultProjectAudience: 'org', defaultGuestDays: 30,
-      inviteDomainOnly: true, defaultRoleId: 'r1', updatedAt: '2026-09-28T10:00:00.000Z',
+      inviteDomainOnly: true, defaultRoleId: 'r1', memberDefaultPerms: null, updatedAt: '2026-09-28T10:00:00.000Z',
     });
   });
 
