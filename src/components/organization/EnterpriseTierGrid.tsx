@@ -3,6 +3,7 @@ import { ENTERPRISE_PRICING_TIERS, displayedMonthlyEur, yearlyTotalEur } from '@
 import type { OrgBillingInterval, OrgTierKey } from '@/modules/billing/premium-config';
 import { formatCurrency, formatPrice } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 
 interface Props {
   /** Palier actuellement actif — mis en avant. */
@@ -49,6 +50,7 @@ export function EnterpriseTierGrid({
   interval = 'monthly',
 }: Props) {
   const { t: tOrgAdmin } = useT('orgAdmin');
+  const { t: tc } = useT('common');
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -84,7 +86,10 @@ export function EnterpriseTierGrid({
               <div className="flex flex-col">
                 {/* Plus de nom de palier (« Équipe », « Département »…) depuis le
                     2026-10-31 : l'effectif EST le titre. */}
-                <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{range}</span>
+                <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+                  {/* Dernier palier, sans plafond : « Illimité » plutôt que « à partir de N ». */}
+                  {tier.maxMembers === null ? tc(ORG_TIER_LABEL_KEYS[tier.key]) : range}
+                </span>
               </div>
 
               {/* Coin droit de l'en-tête : réservé au palier actif — le prix
