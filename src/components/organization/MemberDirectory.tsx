@@ -10,6 +10,8 @@ import {
   useOrgRoleAssignments,
   activeAssignmentsOf,
   isAssignmentActive,
+  useAssignOrgRole,
+  useRevokeOrgRole,
   canEditPermissionsOf,
   effectivePermissions,
   type OrgMember,
@@ -104,12 +106,14 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
   // fiche individuelle. « Actif » se juge au rendu, comme côté serveur.
   const { data: customRoles = [] } = useOrgRoles(orgId);
   const { data: roleAssignments = [] } = useOrgRoleAssignments(orgId);
+  const assignRole = useAssignOrgRole();
+  const revokeRole = useRevokeOrgRole();
   const canManageRoles = isAdmin || myPermissions.can['role.manage'];
   const roleBadgesOf = (userId: string) => {
     const byId = new Map(customRoles.map((r) => [r.id, r]));
     return activeAssignmentsOf(roleAssignments, userId, new Date()).flatMap((a) => {
       const r = byId.get(a.roleId);
-      return r ? [{ id: r.id, name: r.name, color: r.color, endsAt: a.endsAt }] : [];
+      return r ? [{ id: r.id, name: r.name, color: r.color, endsAt: a.endsAt, assignmentId: a.id }] : [];
     });
   };
 
@@ -293,6 +297,10 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
                   canAssignRole: canManageRoles && m.role !== 'admin',
                 }}
                 roleBadges={roleBadgesOf(m.userId)}
+                roleOptions={customRoles}
+                onToggleCustomRole={(roleId, held) => (held
+                  ? revokeRole.mutate(held.assignmentId)
+                  : assignRole.mutate({ orgId, roleId, userId: m.userId, endsAt: null }))}
                 lastActivity={activityByUser.get(m.userId)}
                 selectMode={bulk.selectMode}
                 selected={bulk.selectedIds.has(m.userId)}
