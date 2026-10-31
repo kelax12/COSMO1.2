@@ -526,6 +526,7 @@ export function clearDemoStorage(): void {
     'cosmo_cookie_consent_at',
     'cosmo_demo_device_id',
     'cosmo_first_touch',
+    'cosmo_aff',
     'cosmo_demo_bridge_snooze',
     LOCALE_STORAGE_KEY,
   ]);
