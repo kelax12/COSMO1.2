@@ -1,5 +1,4 @@
 {
-  "seatsTitle": "Qui compte",
   "seatsGaugeAria": "Sièges occupés",
   "seatsGaugeFull": "Tous les sièges de ce palier sont occupés.",
   "seatsGaugeOver_one": "{{count}} membre au-delà de ce palier",
@@ -11,7 +10,6 @@
   "seatsCountUnlimited_one": "{{count}} siège occupé",
   "seatsCountUnlimited_many": "{{count}} de sièges occupés",
   "seatsCountUnlimited_other": "{{count}} sièges occupés",
-  "seatsRule": "Chaque membre occupe un siège, administrateurs et propriétaire compris. Une invitation en attente n'en occupe aucun tant qu'elle n'est pas acceptée.",
   "seatsOwner": "Propriétaire",
   "seatsSince": "depuis le {{date}}",
   "seatsShowAll_one": "Voir le membre",

@@ -207,27 +207,6 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
         </p>
       )}
 
-      {/* Double consentement — monté seulement quand un paiement est réellement
-          possible. Inutile d'imposer des cases à qui ne peut pas payer. */}
-      {canPay && (
-        <fieldset className="flex flex-col gap-2 rounded-lg border border-[rgb(var(--color-border))] p-3">
-          <legend className="px-1 text-xs font-semibold text-[rgb(var(--color-text-secondary))]">
-            {tOrgAdmin('billing.withdrawalLegend')}
-          </legend>
-          {/* Information precontractuelle (Conso. art. L111-1) — les
-              caracteristiques essentielles doivent etre portees a la
-              connaissance du consommateur AVANT qu il ne s engage, pas
-              seulement dans les CGU qu il n ouvrira pas. Trois faits
-              suffisent ici et ce sont ceux qui surprennent : le prix est
-              TTC, l abonnement se reconduit seul, et il se resilie sans
-              motif. Le montant exact, lui, est affiche par la carte que
-              l utilisateur choisit juste en dessous. */}
-          <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-            {tOrgAdmin('billing.precontractual')}
-          </p>
-        </fieldset>
-      )}
-
       {showPrices && (
       <EnterpriseTierGrid
         currentTier={subscription?.tierKey}
@@ -256,19 +235,6 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
         dormant={!ENTERPRISE_BILLING_ENFORCED}
         interval={billingInterval}
       />
-      )}
-
-      {/* Affichage TTC — obligation d'affichage au consommateur (Code de la
-          consommation art. L112-1). Rien ne vérifie qu'un acheteur est un
-          professionnel, donc tout acheteur peut en être un et la règle
-          s'applique à toute l'offre. La mention vit ICI et non dans
-          `EnterpriseTierGrid` : elle porte sur la grille entière, pas sur une
-          carte, et la grille est un conteneur de mise en page dont la racine ne
-          doit pas gagner de frère. Voir docs/LEGAL.md ligne E7. */}
-      {showPrices && (
-      <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-        {tOrgAdmin('billing.vatIncluded')}
-      </p>
       )}
 
       {canPay && subscription && (

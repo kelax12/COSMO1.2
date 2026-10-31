@@ -133,7 +133,10 @@ export function EnterpriseTierGrid({
               <>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">
-                    {formatCurrency(monthlyShown)}
+                    {formatCurrency(monthlyShown)}{' '}
+                    <span className="text-sm font-medium text-[rgb(var(--color-text-secondary))]">
+                      {tOrgAdmin('billing.vatSuffix')}
+                    </span>
                   </span>
                   {/* Répétée dans chaque carte, pas seulement dans le
                       sélecteur : au moment où le regard est sur LE prix d'un
@@ -150,7 +153,7 @@ export function EnterpriseTierGrid({
                 <div className="text-xs text-[rgb(var(--color-text-secondary))]">
                   {interval === 'yearly'
                     ? tOrgAdmin('billing.perMonthBilledYearly', {
-                        total: formatCurrency(yearlyTotalEur(tier.priceEurPerMonth)),
+                        total: `${formatCurrency(yearlyTotalEur(tier.priceEurPerMonth))} ${tOrgAdmin('billing.vatSuffix')}`,
                       })
                     : tOrgAdmin('billing.perMonth')}
                 </div>

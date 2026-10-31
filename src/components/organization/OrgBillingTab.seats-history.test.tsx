@@ -81,7 +81,7 @@ describe('Facturation entreprise : sièges, historique, contact', () => {
 
   it('nomme les sièges consommés, le propriétaire en premier, et replie au-delà de huit', () => {
     renderTab();
-    const seats = screen.getByRole('region', { name: /qui compte/i });
+    const seats = screen.getByRole('region', { name: /sièges occupés/i });
     expect(within(seats).getByText('Personne 0')).toBeTruthy();
     expect(within(seats).getByText('Propriétaire')).toBeTruthy();
     expect(within(seats).queryByText('Personne 9')).toBeNull();
