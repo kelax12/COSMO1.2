@@ -126,10 +126,10 @@ const MyWorkTab = ({ orgId, members, currentUserId, canEditDependencies }: MyWor
   const { data: upcoming = [] } = useTeamTaskSlice(orgId, {
     completed: false, deadlineFrom: bounds.today, orderBy: 'deadline', limit: 30,
   });
-  // Ce que j'ai confié et qui revient en revue.
+  // Ce que je dois valider (mig. 233).
   const { data: createdInReview = [] } = useTeamTaskSlice(
     orgId,
-    { createdBy: me, status: 'review', limit: 50 },
+    { validatorId: me, status: 'review', limit: 50 },
     { enabled: !!me },
   );
   // Ce que j'ai confié et qui reste ouvert (« J'attends quelqu'un ») : la

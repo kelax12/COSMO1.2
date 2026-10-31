@@ -89,7 +89,7 @@ export const ReviewWidget = ({ orgId }: { orgId: string }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const me = user?.id ?? '';
-  const { data: inReview = [], isLoading } = useTeamTaskSlice(orgId, { createdBy: me, status: 'review', limit: 50 }, { enabled: !!me });
+  const { data: inReview = [], isLoading } = useTeamTaskSlice(orgId, { validatorId: me, status: 'review', limit: 50 }, { enabled: !!me });
   const update = useUpdateTeamTask(orgId);
   const projects = useProjectNames(orgId);
   const reviews = useMemo(() => reviewsForMe(inReview, me), [inReview, me]);

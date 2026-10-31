@@ -325,6 +325,11 @@
     "timePlaceholder": "Ex : 45",
     "hasDescription": "Contient une description",
     "assignTask": "Assigner la tâche",
+    "validation": {
+      "required": "Nécessite une validation",
+      "validator": "Validée par",
+      "hint": "Terminée par quelqu'un d'autre, la tâche lui reviendra à valider."
+    },
     "nameRequired": "Le nom de la tâche est requis",
     "projectRequired": "Choisissez un projet",
     "createProjectAria": "Créer un projet",
