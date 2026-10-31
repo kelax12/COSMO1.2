@@ -54,7 +54,7 @@ compilait, la suite passait.
   `default_role_id`, trigger `trg_assign_default_org_role`). Preuves : `proofs/229-230`.
   `231` (`can_manage_team` exige un membre actif, revue de sécurité de la 229) en prod,
   ledger `20261030190926`. `232` (droits par défaut d'un membre réglables, 2026-10-31) est
-  ÉCRITE, **pas appliquée** : à appliquer AVANT le front qui lit `member_default_perms`.
+  en prod, ledger `20261031191036`, relue au catalogue (colonne, quatre résolveurs sur `org_member_default_perm`, EXECUTE refusé à `authenticated`).
   Prochain numéro libre : **`233`**.
 
   Journal daté de chaque application (`150` → `223`) :
