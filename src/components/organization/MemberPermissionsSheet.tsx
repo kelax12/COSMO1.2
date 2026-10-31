@@ -14,6 +14,7 @@ import {
   type OrgMemberPermissions,
   type OrgPermissionKey,
   type SetOrgPermissionsInput,
+  useOrgMemberDefaults,
 } from '@/modules/organizations';
 import { useTeamProjects } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
@@ -117,16 +118,17 @@ const MemberPermissionsSheet = ({
 
   // Ce que vaut chaque droit AUJOURD'HUI pour ce membre, surcharges comprises :
   // c'est l'état affiché par les interrupteurs.
+  const { memberDefaults } = useOrgMemberDefaults(member.orgId);
   const effective = useMemo(
-    () => effectivePermissions({ member, overrides: { orgId: member.orgId, userId: member.userId, overrides, assignTargets: targets } }),
-    [member, overrides, targets],
+    () => effectivePermissions({ member, overrides: { orgId: member.orgId, userId: member.userId, overrides, assignTargets: targets }, memberDefaults }),
+    [member, overrides, targets, memberDefaults],
   );
 
   // Le défaut seul (sans aucune surcharge) — sert à libeller « Par
   // défaut : autorisé / refusé » et à savoir si une ligne a été décidée.
   const inherited = useMemo(
-    () => effectivePermissions({ member, overrides: null }),
-    [member],
+    () => effectivePermissions({ member, overrides: null, memberDefaults }),
+    [member, memberDefaults],
   );
 
   const effectiveTargets = useMemo(() => targets ?? [...DEFAULT_ASSIGN_TARGETS], [targets]);

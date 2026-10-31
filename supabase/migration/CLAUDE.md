@@ -53,7 +53,9 @@ compilait, la suite passait.
   catalogue (`my_org_perm` sans `is_org_manager`, CHECK `self`/`everyone`, colonne
   `default_role_id`, trigger `trg_assign_default_org_role`). Preuves : `proofs/229-230`.
   `231` (`can_manage_team` exige un membre actif, revue de sécurité de la 229) en prod,
-  ledger `20261030190926`. Prochain numéro libre : **`232`**.
+  ledger `20261030190926`. `232` (droits par défaut d'un membre réglables, 2026-10-31) est
+  ÉCRITE, **pas appliquée** : à appliquer AVANT le front qui lit `member_default_perms`.
+  Prochain numéro libre : **`233`**.
 
   Journal daté de chaque application (`150` → `223`) :
   [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Journal d'application des migrations ».

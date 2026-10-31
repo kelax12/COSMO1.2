@@ -13,6 +13,7 @@ import { useOrgMemberPermissions } from './hooks';
 import { useOrgMembers } from './hooks';
 import { useOrgRoleAssignments, useOrgRoles } from './roles.queries';
 import { activeRolesOf } from './roles.helpers';
+import { useOrgMemberDefaults } from './use-member-defaults';
 import type { OrgCustomRole } from './roles.types';
 import {
   DEFAULT_ASSIGN_TARGETS,
@@ -70,7 +71,10 @@ export const useMyOrgPermissions = (orgId: string | undefined): MyOrgPermissions
   const { data: roles = [], isLoading: rolesLoading } = useOrgRoles(orgId);
   const { data: roleAssignments = [], isLoading: assignmentsLoading } = useOrgRoleAssignments(orgId);
 
-  const isLoading = membersLoading || permsLoading || rolesLoading || assignmentsLoading;
+  // Mig. 232 : le défaut d'un membre est un réglage d'organisation.
+  const { memberDefaults, isLoading: defaultsLoading } = useOrgMemberDefaults(orgId);
+
+  const isLoading = membersLoading || permsLoading || rolesLoading || assignmentsLoading || defaultsLoading;
 
   return useMemo(() => {
     const me = currentUserId ? members.find((m) => m.userId === currentUserId) : undefined;
@@ -94,7 +98,7 @@ export const useMyOrgPermissions = (orgId: string | undefined): MyOrgPermissions
     // « Actif » est jugé au rendu : un rôle qui finit pendant la visite tombe
     // au prochain rendu. Le serveur, lui, le refuse à la seconde.
     const activeRoles = activeRolesOf(roles, roleAssignments, me.userId, new Date());
-    const can = effectivePermissions({ member: me, overrides: mine, roles: activeRoles });
+    const can = effectivePermissions({ member: me, overrides: mine, roles: activeRoles, memberDefaults });
     const assignTargets = effectiveAssignTargets({ member: me, overrides: mine, roles: activeRoles });
 
     const canAssign = (targetUserId: string) => {
@@ -115,5 +119,5 @@ export const useMyOrgPermissions = (orgId: string | undefined): MyOrgPermissions
       activeRoles,
       isLoading,
     };
-  }, [members, overrides, roles, roleAssignments, currentUserId, isLoading]);
+  }, [members, overrides, roles, roleAssignments, memberDefaults, currentUserId, isLoading]);
 };

@@ -139,3 +139,4 @@ export { useOrgInbox, useOrgBadgeTasks } from './inbox';
 export { useOrgMemberLastActivity, lastActivityScope } from './member-activity';
 export type { MemberLastActivity, MemberActivitySource } from './member-activity.types';
 export { mapOrgInbox, type OrgInboxRow } from './inbox.repository';
+export { useOrgMemberDefaults } from './use-member-defaults';

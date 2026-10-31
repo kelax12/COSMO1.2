@@ -1,6 +1,8 @@
 import { Check, Minus } from 'lucide-react';
-import { ORG_PERMISSION_KEYS, effectivePermissions, type OrgMember } from '@/modules/organizations';
+import { ORG_PERMISSION_KEYS, effectivePermissions, useOrgMemberDefaults, type OrgMember } from '@/modules/organizations';
+import { useSaveOrgSettings } from '@/modules/org-config';
 import { useT } from '@/i18n/useT';
+import { toast } from '@/lib/toast';
 
 type Position = 'admin' | 'member';
 const POSITIONS: Position[] = ['admin', 'member'];
@@ -11,20 +13,33 @@ const POSITIONS: Position[] = ['admin', 'member'];
 // colonne « manager » depuis la mig. 229 : la hiérarchie n'ouvre plus rien.
 const fake = (userId: string, role: OrgMember['role']): OrgMember =>
   ({ orgId: '', userId, role, joinedAt: '', displayName: '' });
-const DEFAULTS = Object.fromEntries(
-  POSITIONS.map((p) => [p, effectivePermissions({ member: fake(p, p) })]),
-) as Record<Position, ReturnType<typeof effectivePermissions>>;
+
+interface PermissionsMatrixProps {
+  orgId: string;
+  /** Un admin coche la colonne « Membre » : c'est le défaut de l'organisation (mig. 232). */
+  isAdmin: boolean;
+}
 
 /**
  * Matrice des droits PAR DÉFAUT, rôle par rôle (reco UI n° 42).
  *
- * Lecture seule, et c'est voulu : un droit ne se règle jamais pour un rôle
- * entier, seulement par personne (mig. 115, surcharge jamais remplacement).
- * La matrice dit d'où l'on part ; la liste en dessous dit qui s'en écarte.
+ * La colonne « Membre » est le défaut de l'organisation (mig. 232) : un admin
+ * la coche, et tout membre sans rôle ni fiche suit. La colonne « Admin » reste
+ * en lecture seule, un admin détient tout. La liste en dessous dit qui s'en écarte.
  */
-const PermissionsMatrix = () => {
+const PermissionsMatrix = ({ orgId, isAdmin }: PermissionsMatrixProps) => {
   const { t } = useT('org');
   const { t: ta } = useT('orgAdmin');
+  const { memberDefaults, isLoading } = useOrgMemberDefaults(orgId);
+  const save = useSaveOrgSettings(orgId);
+  const defaults = {
+    admin: effectivePermissions({ member: fake('admin', 'admin') }),
+    member: effectivePermissions({ member: fake('member', 'member'), memberDefaults }),
+  } as Record<Position, ReturnType<typeof effectivePermissions>>;
+  const toggle = (key: (typeof ORG_PERMISSION_KEYS)[number]) => {
+    const next = ORG_PERMISSION_KEYS.filter((k) => (k === key ? !defaults.member[k] : defaults.member[k]));
+    save.mutate({ memberDefaultPerms: next }, { onSuccess: () => toast.success(ta('ui.matrix.saved')) });
+  };
   return (
     <details className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">
       <summary className="cursor-pointer select-none px-3 py-2.5 text-sm font-semibold text-[rgb(var(--color-text-primary))]">
@@ -48,7 +63,21 @@ const PermissionsMatrix = () => {
                   {t(`permissions.key.${key}`)}
                 </th>
                 {POSITIONS.map((p) => {
-                  const on = DEFAULTS[p][key];
+                  const on = defaults[p][key];
+                  if (p === 'member' && isAdmin) {
+                    return (
+                      <td key={p} className="py-2 px-2 text-center">
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          disabled={isLoading || save.isPending}
+                          onChange={() => toggle(key)}
+                          aria-label={ta('ui.matrix.memberToggle', { right: t(`permissions.key.${key}`) })}
+                          className="w-4 h-4 accent-indigo-600 cursor-pointer disabled:cursor-default"
+                        />
+                      </td>
+                    );
+                  }
                   return (
                     <td key={p} className="py-2 px-2 text-center">
                       {on
@@ -61,7 +90,7 @@ const PermissionsMatrix = () => {
             ))}
           </tbody>
         </table>
-        <p className="mt-2 text-xs text-[rgb(var(--color-text-muted))]">{ta('ui.matrix.help')}</p>
+        <p className="mt-2 text-xs text-[rgb(var(--color-text-muted))]">{ta(isAdmin ? 'ui.matrix.helpAdmin' : 'ui.matrix.help')}</p>
       </div>
     </details>
   );

@@ -34,6 +34,12 @@ export interface OrgSettings {
    * limite de durée. `null` = aucun : droits de base de membre.
    */
   defaultRoleId: string | null;
+  /**
+   * Droits d'un membre sans rôle ni fiche (mig. 232), clés de
+   * `ORG_PERMISSION_KEYS`. `null` = défaut historique (`task.create`,
+   * `task.editAny`) ; un tableau, même vide, est une décision d'admin.
+   */
+  memberDefaultPerms: string[] | null;
   updatedAt?: string | null;
 }
 
@@ -50,6 +56,7 @@ export const defaultOrgSettings = (orgId: string): OrgSettings => ({
   defaultGuestDays: null,
   inviteDomainOnly: false,
   defaultRoleId: null,
+  memberDefaultPerms: null,
   updatedAt: null,
 });
 
