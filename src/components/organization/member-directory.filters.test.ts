@@ -61,7 +61,7 @@ describe('readDirectoryFilters · une URL est une entrée non fiable', () => {
 
 describe('writeDirectoryFilters', () => {
   it('aller-retour sans perte, et garde les paramètres étrangers', () => {
-    const f: DirectoryFilters = { query: 'bob', teamId: 't1', role: 'admin', joined: '1y' };
+    const f: DirectoryFilters = { query: 'bob', teamId: 't1', role: 'admin', customRoleId: null, joined: '1y' };
     const out = writeDirectoryFilters(new URLSearchParams('member=ann'), f);
     expect(out.get('member')).toBe('ann');
     expect(readDirectoryFilters(out)).toEqual(f);

@@ -3,6 +3,7 @@ import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { MobileFiltersButton, MobileFiltersSheet } from './MobileTeamTasks';
 import { Search, X, ChevronDown, CheckSquare, Download } from 'lucide-react';
 import type { OrgTeam } from '@/modules/org-teams';
+import type { OrgCustomRole } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 import {
   DIRECTORY_ROLES,
@@ -19,6 +20,8 @@ interface MemberDirectoryToolbarProps {
   filters: DirectoryFilters;
   onChange: (next: DirectoryFilters) => void;
   teams: OrgTeam[];
+  /** Rôles personnalisés : proposés dans la même puce que le grade. */
+  customRoles: OrgCustomRole[];
   shown: number;
   total: number;
   /** Le mode sélection a-t-il au moins un geste à offrir ? */
@@ -43,6 +46,9 @@ const JOINED_KEY = {
   '1y': 'directory.filters.joined1y',
   older: 'directory.filters.joinedOlder',
 } as const satisfies Record<JoinedPeriod, string>;
+
+/** Une seule puce Rôle : grade (`admin`, `member`) ou rôle personnalisé (`role:<id>`). */
+const CUSTOM_PREFIX = 'role:';
 
 const PILL =
   'relative inline-flex items-center gap-1 h-8 pl-3 pr-2 rounded-full text-xs font-medium border transition-colors whitespace-nowrap focus-within:ring-2 focus-within:ring-indigo-400/60';
@@ -100,7 +106,7 @@ const TOOL_BUTTON =
  * d'aucun droit : `canSelect` et `onExport` arrivent déjà tranchés.
  */
 const MemberDirectoryToolbar = ({
-  filters, onChange, teams, shown, total,
+  filters, onChange, teams, customRoles, shown, total,
   canSelect, selectMode, onToggleSelectMode, onExport, inviteAction,
 }: MemberDirectoryToolbarProps) => {
   const { t } = useT('org');
@@ -112,7 +118,18 @@ const MemberDirectoryToolbar = ({
 
   const teamName = teams.find((x) => x.id === filters.teamId)?.name;
   const teamActive = filters.teamId && teamName ? tOrgAdmin('directory.filters.chipTeam', { name: teamName }) : null;
-  const roleActive = filters.role ? tOrgAdmin('directory.filters.chipRole', { name: t(ROLE_KEY[filters.role]) }) : null;
+  const customRoleName = customRoles.find((r) => r.id === filters.customRoleId)?.name;
+  const roleName = filters.role ? t(ROLE_KEY[filters.role]) : customRoleName;
+  const roleActive = roleName ? tOrgAdmin('directory.filters.chipRole', { name: roleName }) : null;
+  const roleValue = filters.role ?? (filters.customRoleId ? `${CUSTOM_PREFIX}${filters.customRoleId}` : '');
+  const roleOptions = [
+    ...DIRECTORY_ROLES.map((r) => ({ value: r, label: t(ROLE_KEY[r]) })),
+    ...customRoles.map((r) => ({ value: `${CUSTOM_PREFIX}${r.id}`, label: r.name })),
+  ];
+  const selectRole = (v: string) =>
+    v.startsWith(CUSTOM_PREFIX)
+      ? set({ role: null, customRoleId: v.slice(CUSTOM_PREFIX.length) })
+      : set({ role: (v || null) as DirectoryRole | null, customRoleId: null });
   const joinedActive = filters.joined ? tOrgAdmin(JOINED_KEY[filters.joined]) : null;
   const clearAria = (name: string) => tOrgAdmin('directory.filters.removeChip', { name });
 
@@ -187,11 +204,11 @@ const MemberDirectoryToolbar = ({
         <FilterPill
           label={tOrgAdmin('directory.filters.role')}
           activeLabel={roleActive}
-          value={filters.role ?? ''}
-          onSelect={(v) => set({ role: (v || null) as DirectoryRole | null })}
-          onClear={() => set({ role: null })}
+          value={roleValue}
+          onSelect={selectRole}
+          onClear={() => set({ role: null, customRoleId: null })}
           clearAria={clearAria(roleActive ?? '')}
-          options={DIRECTORY_ROLES.map((r) => ({ value: r, label: t(ROLE_KEY[r]) }))}
+          options={roleOptions}
           anyLabel={tOrgAdmin('directory.filters.any')}
         />
         <FilterPill
@@ -240,11 +257,11 @@ const MemberDirectoryToolbar = ({
         <FilterPill
           label={tOrgAdmin('directory.filters.role')}
           activeLabel={roleActive}
-          value={filters.role ?? ''}
-          onSelect={(v) => set({ role: (v || null) as DirectoryRole | null })}
-          onClear={() => set({ role: null })}
+          value={roleValue}
+          onSelect={selectRole}
+          onClear={() => set({ role: null, customRoleId: null })}
           clearAria={clearAria(roleActive ?? '')}
-          options={DIRECTORY_ROLES.map((r) => ({ value: r, label: t(ROLE_KEY[r]) }))}
+          options={roleOptions}
           anyLabel={tOrgAdmin('directory.filters.any')}
         />
         <FilterPill
