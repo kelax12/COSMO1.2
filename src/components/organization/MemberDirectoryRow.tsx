@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import type { MemberLastActivity, OrgMember, OrgRole } from '@/modules/organizations';
 import { getDateLocale } from '@/i18n/format';
@@ -56,6 +57,15 @@ export interface MemberRoleBadge {
   name: string;
   color: string;
   endsAt: string | null;
+  /** Attribution qui porte ce rôle : la décocher la révoque. */
+  assignmentId: string;
+}
+
+/** Un rôle personnalisé de l'organisation, proposé dans le menu de rôle. */
+export interface MemberRoleOption {
+  id: string;
+  name: string;
+  color: string;
 }
 
 interface MemberDirectoryRowProps {
@@ -74,6 +84,9 @@ interface MemberDirectoryRowProps {
   onAssignRole?: () => void;
   /** Rôles personnalisés actifs : une pastille chacun à côté du nom. */
   roleBadges?: MemberRoleBadge[];
+  /** Rôles de l'organisation, cochables dans le menu de rôle (sans limite de durée). */
+  roleOptions?: MemberRoleOption[];
+  onToggleCustomRole?: (roleId: string, held: MemberRoleBadge | undefined) => void;
   /**
    * Gestes de cycle de vie (`useMemberLifecycle`, mig. 161) : accès et départ.
    * `null` quand l'appelant n'y a pas droit. Ils REMPLACENT l'ancien retrait
@@ -91,7 +104,7 @@ interface MemberDirectoryRowProps {
  */
 const MemberDirectoryRow = ({
   member: m, role, rights, lastActivity, selectMode, selected,
-  onToggleSelect, onOpen, onSetRole, onAssign, onEditPermissions, onAssignRole, roleBadges = [], lifecycleItems,
+  onToggleSelect, onOpen, onSetRole, onAssign, onEditPermissions, onAssignRole, roleBadges = [], roleOptions = [], onToggleCustomRole, lifecycleItems,
 }: MemberDirectoryRowProps) => {
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
@@ -221,6 +234,26 @@ const MemberDirectoryRow = ({
               <DropdownMenuRadioItem value="admin">{t('roles.admin')}</DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="member">{t('roles.member')}</DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
+            {/* Rôles personnalisés : cocher attribue (sans limite), décocher retire.
+                Jamais sur un admin, la base le refuse (mig. 219). */}
+            {rights.canAssignRole && onToggleCustomRole && roleOptions.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                {roleOptions.map((r) => {
+                  const held = roleBadges.find((b) => b.id === r.id);
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={r.id}
+                      checked={!!held}
+                      onCheckedChange={() => onToggleCustomRole(r.id, held)}
+                    >
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: r.color }} aria-hidden="true" />
+                      <span className="truncate">{r.name}</span>
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+              </>
+            )}
             {rights.canEditPermissions && (
               <>
                 <DropdownMenuSeparator />

@@ -32,6 +32,7 @@ const MEMBERS: OrgMember[] = [
 const CTX = {
   teamIds: new Set(['t1', 't-empty']),
   teamIdsByUser: new Map([['ann', new Set(['t1'])], ['zoe', new Set(['t1'])]]),
+  customRoleHolders: new Map([['r1', new Set(['bob', 'zoe'])], ['r-empty', new Set<string>()]]),
   now: NOW,
 };
 
@@ -41,7 +42,7 @@ const ids = (f: Partial<DirectoryFilters>) =>
 describe('readDirectoryFilters · une URL est une entrée non fiable', () => {
   it('lit un filtre complet', () => {
     const p = new URLSearchParams('dirQ=bob&dirTeam=t1&dirRole=admin&dirJoined=30d');
-    expect(readDirectoryFilters(p)).toEqual({ query: 'bob', teamId: 't1', role: 'admin', joined: '30d' });
+    expect(readDirectoryFilters(p)).toEqual({ query: 'bob', teamId: 't1', role: 'admin', customRoleId: null, joined: '30d' });
   });
 
   it('un ancien lien « manager direct » / « non placé » / rôle manager est ignoré (mig. 229)', () => {
@@ -90,6 +91,12 @@ describe('applyDirectoryFilters', () => {
 
   it('un id d équipe inconnu est ignoré, pas appliqué', () => {
     expect(ids({ teamId: 'ghost' })).toHaveLength(MEMBERS.length);
+  });
+
+  it('rôle personnalisé : ses seuls détenteurs actifs ; un rôle supprimé est ignoré', () => {
+    expect(ids({ customRoleId: 'r1' })).toEqual(['bob', 'zoe']);
+    expect(ids({ customRoleId: 'r-empty' })).toEqual([]);
+    expect(ids({ customRoleId: 'ghost' })).toHaveLength(MEMBERS.length);
   });
 
   it('période d arrivée', () => {
