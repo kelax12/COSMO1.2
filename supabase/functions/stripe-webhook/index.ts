@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { tierFromPriceId, FREE_TIER_MAX_MEMBERS } from '../_shared/org-tiers.ts'
 import { resolveTierMatch } from '../_shared/org-stripe-prices.ts'
+import { payerToRecord } from '../_shared/org-payer.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
   apiVersion: '2024-06-20',
@@ -593,6 +594,28 @@ async function handleOrgCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   await applyOrgSubscription(orgId, subscription, session.customer as string, discountCode)
+
+  await recordOrgPayer(orgId, session.metadata)
+}
+
+// Affiliation (B4) : qui a payé l'organisation, posé une seule fois. Le
+// `.is('purchased_by', null)` double la décision pure côté base : deux
+// webhooks concurrents ne peuvent pas s'écraser.
+async function recordOrgPayer(orgId: string, metadata: Stripe.Metadata | null) {
+  const { data: row, error: readErr } = await supabaseAdmin
+    .from('org_subscriptions')
+    .select('purchased_by')
+    .eq('org_id', orgId)
+    .maybeSingle()
+  if (readErr) throw readErr
+  const payer = payerToRecord(metadata, row?.purchased_by ?? null)
+  if (!payer) return
+  const { error } = await supabaseAdmin
+    .from('org_subscriptions')
+    .update({ purchased_by: payer })
+    .eq('org_id', orgId)
+    .is('purchased_by', null)
+  if (error) throw error
 }
 
 async function handleOrgSubscriptionUpdated(subscription: Stripe.Subscription) {

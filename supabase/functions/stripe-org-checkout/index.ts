@@ -266,9 +266,9 @@ Deno.serve(async (req) => {
         allow_promotion_codes: true,
         success_url: `${APP_URL}/entreprise?tab=billing&checkout=success`,
         cancel_url: `${APP_URL}/entreprise?tab=billing&checkout=cancelled`,
-        metadata: { org_id: orgId, tier_key: tier.key, billing_interval: billingInterval },
+        metadata: { org_id: orgId, tier_key: tier.key, billing_interval: billingInterval, payer_uid: user.id },
         subscription_data: {
-          metadata: { org_id: orgId, tier_key: tier.key, billing_interval: billingInterval },
+          metadata: { org_id: orgId, tier_key: tier.key, billing_interval: billingInterval, payer_uid: user.id },
         },
         // ── Bouton de commande sans ambiguïté (Code de la consommation
         // art. L221-14) ────────────────────────────────────────────────
