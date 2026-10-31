@@ -52,8 +52,6 @@ const httpError = (body: unknown) => ({
 const checkoutInput = {
   orgId: 'org-1',
   tierKey: 'team' as never,
-  immediateExecution: true,
-  waivesWithdrawal: true,
 };
 
 let hrefSet: ReturnType<typeof vi.fn<(url: string) => void>>;
@@ -83,7 +81,7 @@ describe('useStartOrgCheckout', () => {
 
     expect(invoke).toHaveBeenCalledWith('stripe-org-checkout', {
       headers: { Authorization: 'Bearer tok' },
-      body: { orgId: 'org-1', tierKey: 'team', interval: 'year', immediateExecution: true, waivesWithdrawal: true },
+      body: { orgId: 'org-1', tierKey: 'team', interval: 'year' },
     });
     expect(hrefSet).toHaveBeenCalledWith('https://checkout.stripe.com/x');
   });

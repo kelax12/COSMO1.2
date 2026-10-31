@@ -62,10 +62,9 @@ Elles ne partagent aucune colonne. Le client ne peut écrire ni l'une ni l'autre
   mélangée aux appels Stripe elle n'est exécutable par aucun test.
   ⚠️ Un remboursement `pending` compte comme rendu, un `failed` ou `canceled` ne compte pas.
   ❌ Ne jamais l'écrire par exclusion (`status !== 'succeeded'`) : `pending` serait ignoré.
-- ❌ **Ne JAMAIS ouvrir une session de paiement sans la preuve de renonciation** (S-6).
-  `immediateExecution` ET `waivesWithdrawal` strictement à `true`, puis une ligne dans
-  `withdrawal_consents` **avant** de créer la session : l'ordre est la preuve. Les deux drapeaux
-  sont exigés séparément, l'art. L221-28, 13° demandant deux manifestations distinctes.
+- 🟢 **Aucune renonciation au droit de rétractation n'est recueillie** (décision d'Axel du
+  2026-10-30) : le client garde ses 14 jours, remboursement intégral. `withdrawal_consents` n'est
+  plus écrite ; ❌ ne jamais purger ses lignes passées (preuve append-only, mig. 135/138).
 - ❌ **Ne jamais laisser un event d'organisation retomber sur la branche particulier.**
 - ⚠️ Les **noms** des paliers vivent dans le namespace `common` (`orgTier.*`), pas dans `org` :
   la landing et le produit doivent dire le même mot pour le même palier.
