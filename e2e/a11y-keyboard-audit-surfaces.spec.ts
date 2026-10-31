@@ -245,11 +245,9 @@ test('MESURE · InviteByEmailDialog (« Inviter par e-mail »)', async ({ demoPa
   await mesurerSurface(page, 'InviteByEmailDialog', page.getByRole('dialog', { name: /^inviter par e-mail$/i }));
 });
 
-test('MESURE · PyramidPlacementSheet (« Placer », organigramme)', async ({ demoPage: page }) => {
-  await versSection(page, /^organigramme/i, /\/entreprise\/pyramid/);
-  await ouvrirAuClavier(page, visible(page.getByRole('button', { name: /^placer$/i })));
-  await mesurerSurface(page, 'PyramidPlacementSheet', page.getByRole('dialog').last());
-});
+// `PyramidPlacementSheet` n'est plus mesurée : l'organigramme est retiré de
+// l'espace entreprise depuis la mig. 229 (2026-10-30). `OrganizationPage`
+// renvoie `/entreprise/pyramid` sur l'Aperçu et ne monte plus `PyramidTab`.
 
 // ── Surfaces perso ──────────────────────────────────────────────────
 

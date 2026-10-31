@@ -108,8 +108,8 @@ const subscriptionRow = ({
 });
 
 const CTA = /résilier et être remboursé de la période en cours/i;
-/** Ancre de la vue : cette mention porte sur la grille entière. */
-const BILLING_ANCHOR = /tous les prix sont affichés ttc/i;
+/** Ancre de la vue : le titre de la vue Abonnement (la mention TTC globale est retirée le 2026-10-31). */
+const BILLING_ANCHOR = /^abonnement de l.organisation$/i;
 /** Phrase propre au STATUT résilié — le toast de succès en dit une autre. */
 const CANCELLED_STATE = /les membres actuels gardent tous leurs accès/i;
 
@@ -119,7 +119,7 @@ async function openBilling(
     ownerId?: string;
     subscription?: ReturnType<typeof subscriptionRow>;
     /**
-     * Ce qu'on attend pour dire « la vue est là ». Par défaut la mention TTC,
+     * Ce qu'on attend pour dire « la vue est là ». Par défaut le titre de la vue,
      * qui n'apparaît que dans la vue Abonnement — donc jamais chez un
      * non-propriétaire, qui doit passer son propre repère.
      */
@@ -146,7 +146,7 @@ async function openBilling(
   // Les trois pieges du serveur de developpement (aucun `load`, un
   // `domcontentloaded` avale par la re-optimisation, un import de route qui
   // echoue pendant celle-ci) sont absorbes une fois pour toutes par
-  // `gotoStubbed`. L'ancre par defaut est la mention TTC, qui n'existe que dans
+  // `gotoStubbed`. L'ancre par defaut est le titre de la vue Abonnement, qui n'existe que dans
   // la vue Abonnement — donc jamais chez un non-proprietaire, qui passe la
   // sienne.
   await gotoStubbed(
@@ -308,7 +308,7 @@ test.describe('C-27 / C-65 — résilier et être remboursé', () => {
     // répond `403` à qui n'est pas propriétaire.
     // Ancre : on attend que l'espace entreprise soit peint avant de conclure à
     // une absence. Une assertion négative sur un écran vide est vraie pour tout
-    // le monde. Le repère ne peut pas être la mention TTC ici : c'est
+    // le monde. Le repère ne peut pas être le titre de la vue ici : c'est
     // précisément ce dont on vérifie l'absence.
     const stub = await openBilling(page, {
       ownerId: OTHER_USER_ID,

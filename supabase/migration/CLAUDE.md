@@ -58,7 +58,9 @@ compilait, la suite passait.
   `233` (validateur de tâche d'entreprise, 2026-10-31) en prod, ledger `20261031200520`, relue au
   catalogue (colonne `validator_id`, trigger `trg_team_task_validation_gate` INVOKER, prouvée en 5 cas).
   `234` (porte de la 233 sûre face à un `created_by` NULL) en prod, ledger `20261031200845`.
-  Prochain numéro libre : **`235`**.
+  🔴 `235` (`REVOKE` de `team_task_validation_gate()` pour `authenticated`, oublié par la 233) :
+  **commitée, PAS appliquée** au 2026-10-31. Relu au catalogue ce jour-là : `authenticated` garde
+  `EXECUTE`. Prochain numéro libre : **`236`**.
 
   Journal daté de chaque application (`150` → `223`) :
   [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Journal d'application des migrations ».

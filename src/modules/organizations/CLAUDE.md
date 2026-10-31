@@ -80,10 +80,8 @@ les permissions** (admin seul).
   `NULL` = suit le défaut dérivé, `true`/`false` = décision explicite. Une organisation sans
   aucune ligne se comporte **exactement** comme avant la mig. 115 — c'est ce qui rend le
   déploiement réversible.
-- Treize droits (`task.create` · `task.editAny` · `task.deleteAny` · `project.create` ·
-  `project.edit` · `project.delete` · `okr.create` · `okr.delete` · `category.manage` · `team.create` ·
-  `member.invite`) + une portée d'assignation cumulable
-  (`self` · `peers` · `manager` · `subordinates` · `everyone`, `{}` = personne).
+- Quatorze droits (`ORG_PERMISSION_KEYS` de `permissions.ts` fait foi) + une portée d'assignation
+  cumulable `self` · `everyone` (`{}` = personne, mig. 229).
 - Côté client, **une seule source de vérité** : `src/modules/organizations/permissions.ts`
   (fonctions pures, miroir du SQL) exposé par `useMyOrgPermissions(orgId)`. Aucun composant ne
   recalcule un droit ; le hook lit l'utilisateur via `useAuth`, jamais via une prop.
@@ -147,17 +145,10 @@ Fichiers : `roles.*` ; écrans `OrgRolesSettings`, `RoleEditorSheet` (une modale
   ❌ Ne jamais ouvrir un INSERT client sur `organization_members` : le trigger compte sur les
   quatre fonctions DEFINER d'arrivée pour écrire `org_member_roles` hors RLS.
 
-### 🧭 Étape 6 (mig. 190-193, 2026-09-25) : rôles de projet, recherche, vues
+### 🧭 Étape 6 (mig. 190-193) : rôles de projet, recherche, vues
 
-En prod **sans ligne au ledger** (relu au catalogue le 2026-09-30, cf. `supabase/migration/CLAUDE.md`).
-
-- 🔴 `team_project_members` : `lead`/`contributor`/`viewer`. Le lecteur est refusé par TRIGGER
-  (une policy PERMISSIVE ne retire rien) ; un admin n'est jamais restreint ; tout helper exige un
-  membre ACTIF. Preuve : `supabase/proofs/190-193.proof.sql` (55 cas).
-- ❌ Ne pas recalculer un avancement ou une charge sur `useTeamTasks` : `useTeamProjectTaskStats`
-  / `useTeamMemberWorkload` comptent en base, sur TOUTES les tâches.
-- La palette lit `search_org` par `search.hooks.ts` : ❌ jamais `governance.hooks` depuis l'entrée.
-- Une vue enregistrée ne DONNE rien : ses filtres se relisent sous la RLS, et se valident (URL).
+Détail : [`docs/UI-PATTERNS.md`](../../../docs/UI-PATTERNS.md) § « Étape 6 ». ❌ Un lecteur de projet se refuse par
+TRIGGER, jamais par policy ; ❌ jamais d'avancement recalculé sur `useTeamTasks`.
 
 ### 📬 Boîte de réception (mig. 129) et pastille (mig. 142)
 
