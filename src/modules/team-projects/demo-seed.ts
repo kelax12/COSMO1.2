@@ -129,6 +129,9 @@ const t = (
     estimatedTime: 30 + (seq % 4) * 15,
     assigneeIds,
     createdBy: DEMO_USER_ID,
+    // « À valider » filtre sur le validateur depuis la mig. 233 : sans lui,
+    // la démo n'avait plus une seule tâche à valider dans l'Aperçu.
+    validatorId: !completed && status === 'review' ? DEMO_USER_ID : null,
     completed,
     completedAt: completed ? iso(-2) : null,
     createdAt: iso(-30 + seq),

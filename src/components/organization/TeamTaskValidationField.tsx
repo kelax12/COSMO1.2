@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { isMemberActive, type OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
 import { useT } from '@/i18n/useT';
+import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
 interface Props {
   members: OrgMember[];
@@ -32,7 +33,9 @@ const TeamTaskValidationField = ({ members: all, task, me, value, onChange }: Pr
 
   return (
     <div className="mt-4 rounded-lg border p-3" style={{ borderColor: 'rgb(var(--color-border))' }}>
-      <label htmlFor={checkId} className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: 'rgb(var(--color-text-primary))' }}>
+      {/* 20 px de haut pour 317 de large : la zone d'appui déborde dans le
+          rembourrage du cadre (C-57, `touch-targets.spec.ts`). */}
+      <label htmlFor={checkId} className={`flex items-center gap-2 text-sm cursor-pointer ${TAP_AREA_44_Y}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
         <input
           id={checkId}
           type="checkbox"
