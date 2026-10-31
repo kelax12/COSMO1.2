@@ -5,10 +5,9 @@ import { test, expect, navTo, openOrgSection } from './fixtures';
  * Régression des correctifs mode entreprise livrés en session (2026-08-24) :
  *   1. Description en grand (TeamTaskModal) — invisible derrière la modale
  *      custom (z-[9999]) avant le fix du z-index de DescriptionField.
- *   2. Format de charge x/y dans la Pyramide (x = non en retard, y = en retard).
+ *   2. (retiré le 2026-10-31 avec l'organigramme, mig. 229)
  *   3. « Assigner l'événement » (table Tâches) ne montre QUE la tâche ciblée
- *      dans la sidebar de l'agenda — sans toucher au flux Pyramide → « Voir
- *      l'agenda », qui doit rester inchangé (toutes les tâches du membre).
+ *      dans la sidebar de l'agenda.
  *   4. Bouton « Exporter CSV » masqué dans l'onglet Statistiques (la
  *      fonctionnalité reste en place, seul le bouton disparaît).
  *
@@ -16,8 +15,6 @@ import { test, expect, navTo, openOrgSection } from './fixtures';
  * DÉBUT du libellé (le badge de nouveautés entre dans le nom accessible).
  */
 
-// « Pyramide » s'appelle « Organigramme » depuis le 2026-09-28 (93a4ad91,
-// décision produit) ; la route reste `/entreprise/pyramid`.
 
 /**
  * La liste de tâches de l'agenda d'un membre est REPLIÉE par défaut sous
@@ -78,23 +75,9 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });
 
-  test('Organigramme : la charge par membre s\'affiche (en cours, en retard)', async ({ demoPage: page }) => {
-    await navTo(page, /entreprise/i, /\/entreprise/);
-    await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
-
-    await openOrgSection(page, /^organigramme/i);
-    await page.waitForURL(/\/entreprise\/pyramid/);
-
-    await page.getByRole('button', { name: /afficher la charge/i }).click();
-
-    // Le format « x/y » a été remplacé le 2026-09-27 par DEUX pastilles, en
-    // cours et en retard (8898416e, décision produit) : chacune porte son
-    // nombre dans son nom. Au moins un membre de la démo a les deux.
-    await expect(page.getByLabel(/^\d+ tâches? en cours$/).first()).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByLabel(/^\d+ tâches? en retard$/).first()).toBeVisible();
-
-    await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
-  });
+  // Les deux cas de l'organigramme (charge par membre, « Voir son agenda »
+  // depuis la pyramide) sont retirés le 2026-10-31 : l'organigramme n'est
+  // plus monté depuis la mig. 229, `/entreprise/pyramid` renvoie à l'Aperçu.
 
   test('Assigner l\'événement : la sidebar ne montre que la tâche ciblée', async ({ demoPage: page }) => {
     // Mesure le TABLEAU des tâches : largeur d'ordinateur, la refonte mobile
@@ -118,32 +101,6 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
     const sidebarItems = page.locator('#member-external-events .member-external-event');
     await expect(sidebarItems).toHaveCount(1, { timeout: 10_000 });
     await expect(sidebarItems.first()).toContainText(taskName);
-
-    await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
-  });
-
-  test('Pyramide → Voir l\'agenda : la sidebar reste inchangée (toutes les tâches du membre)', async ({ demoPage: page }) => {
-    await navTo(page, /entreprise/i, /\/entreprise/);
-    await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
-
-    await openOrgSection(page, /^organigramme/i);
-    await page.waitForURL(/\/entreprise\/pyramid/);
-
-    // Menu « Actions pour X » → « Voir son agenda » (pyramid.tsx,
-    // onOpenMember(m, 'agenda')) — c'est le chemin réel de la fonctionnalité,
-    // pas un clic sur la carte (qui replie/déplie l'équipe).
-    await page.getByRole('button', { name: /^Actions pour Jean Martin/ }).click();
-    await page.getByRole('menuitem', { name: /voir son agenda/i }).click();
-    await page.getByRole('tab', { name: /^agenda$/i }).click();
-    await ouvrirListeDesTachesSiRepliee(page);
-
-    const sidebarItems = page.locator('#member-external-events .member-external-event');
-    await expect(sidebarItems.first()).toBeVisible({ timeout: 10_000 });
-    // Toutes les tâches du membre (pas une seule) : contrairement au flux
-    // « Assigner l'événement », ce chemin n'a pas de `onlyTaskId`.
-    await expect(async () => {
-      expect(await sidebarItems.count()).toBeGreaterThan(1);
-    }).toPass({ timeout: 10_000 });
 
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });

@@ -48,9 +48,11 @@ vi.mock('@/modules/organizations/ActiveOrgContext', () => ({
 }));
 
 const isDemo = vi.fn(() => false);
+// `subscribe` est requis : org-config/repository.instance.ts s'abonne au
+// store à l'import (chaîne use-my-permissions → use-member-defaults, mig. 232).
 vi.mock('@/lib/app-mode.store', () => ({
   useIsDemo: () => isDemo(),
-  appModeStore: { get isDemo() { return isDemo(); }, setDemo: vi.fn() },
+  appModeStore: { get isDemo() { return isDemo(); }, setDemo: vi.fn(), subscribe: vi.fn(() => () => {}) },
 }));
 
 import { useOrgBadges } from './use-org-notifications';

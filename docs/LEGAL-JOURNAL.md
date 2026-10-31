@@ -313,3 +313,25 @@ la garde tenait `lint-test-build` rouge entre-temps) :
 **Aucun préavis**, décision d'Axel du 2026-10-25 : ces ajouts informent le consommateur d'une voie
 de recours que la loi lui ouvre déjà et que le professionnel doit lui indiquer (Conso. art. L616-1).
 Ils ne créent aucune obligation pour le client et ne lui retirent aucun droit.
+
+### 2026-10-31 · droit de rétractation conservé, plus aucune renonciation · **FOND (plus favorable au client)** · **aucun préavis**
+
+| Document | Empreinte |
+|---|---|
+| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `c1a5029251c4427d` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `ded70bf87e8370c5` |
+
+**Ce qui a changé** (commit `7aceb36f`, poussé sur `main` sans cette entrée ; écrite le même jour,
+la garde tenait `lint-test-build` rouge entre-temps) :
+
+- **CGU**, article **5 bis** p2 et p3, en `fr` et en `en` : les deux confirmations demandées avant
+  paiement (demande expresse d'exécution immédiate, reconnaissance de la perte du droit) sont
+  retirées, avec les cases de l'onglet Abonnement et leur exigence dans `stripe-org-checkout`. Le
+  client garde ses quatorze jours entiers et, s'il se rétracte, la période en cours lui est
+  remboursée en entier, sans retenue au prorata du service fourni.
+- Les lignes passées de `withdrawal_consents` restent (preuve des souscriptions antérieures).
+
+**Aucun préavis** : la clause ne retire aucun droit et n'ajoute aucune obligation, elle supprime
+une renonciation et une retenue. Le préavis de l'art. 11 protège le client contre une modification
+qu'il subit ; celle-ci ne peut que lui profiter. ⚠️ Qualification posée par la session de nettoyage
+du 2026-10-31, **à confirmer par Axel**.

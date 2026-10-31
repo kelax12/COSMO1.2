@@ -112,6 +112,10 @@ function fauxSmtp(reponseRcpt) {
   const ferme = new Promise((resolve) => { fermeture = resolve; });
   const serveur = net.createServer((socket) => {
     socket.on('close', fermeture);
+    // Le client ferme juste après `QUIT` : sous Windows la pile répond par un
+    // RST, et ce `ECONNRESET` côté serveur remontait en erreur non gérée
+    // (exit 1 avec 18 cas verts). La fermeture reste observée par `close`.
+    socket.on('error', () => {});
     socket.write('220 faux.tld ESMTP\r\n');
     let tampon = '';
     socket.on('data', (d) => {

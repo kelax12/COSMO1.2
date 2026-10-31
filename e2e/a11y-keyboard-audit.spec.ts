@@ -527,7 +527,9 @@ test('MESURE — AssignRoleDialog (attribuer un rôle personnalisé)', async ({ 
 test('MESURE — RoleEditorSheet (créer un rôle personnalisé)', async ({ demoPage: page }) => {
   await ouvrirEntreprise(page);
   await openOrgSection(page, /^paramètres/i);
-  const panneau = page.locator('[data-guide-id="settings-panel-roles"]').filter({ visible: true }).first();
+  // Le panneau « Rôles » est fondu dans « Permissions » depuis 8c73d773
+  // (2026-10-30) ; le scénario du guide (`org-guide/scenarios/roles.ts`) y passe aussi.
+  const panneau = page.locator('[data-guide-id="settings-panel-permissions"]').filter({ visible: true }).first();
   await expect(panneau).toBeVisible({ timeout: 20_000 });
   await panneau.focus();
   await page.keyboard.press('Enter');
