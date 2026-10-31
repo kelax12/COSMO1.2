@@ -1,10 +1,16 @@
-import { Download } from 'lucide-react';
+import { Suspense, useState } from 'react';
+import { Download, FileUp } from 'lucide-react';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import type { OrgMember } from '@/modules/organizations';
 import { useTeamProjects, useTeamTaskPages } from '@/modules/team-projects';
 import { useTeamCategories, categoryPath, formatPath } from '@/modules/team-categories';
 import { useT } from '@/i18n/useT';
 import { taskDisplayStatus } from './team-projects.helpers';
 import { buildTasksCsv } from './team-tasks-table.helpers';
+
+// Import CSV (Todoist, TickTick, Notion) vers un projet de l'entreprise (2026-10-31) :
+// la même fenêtre que le perso, chargée au clic avec son catalogue.
+const ImportTasksDialog = lazyWithRetry(() => import('@/pages/settings/ImportTasksDialog'), ['settings']);
 
 interface OrgTasksExportSectionProps {
   orgId: string;
@@ -24,6 +30,7 @@ const OrgTasksExportSection = ({ orgId, members }: OrgTasksExportSectionProps) =
   const { data: categories = [] } = useTeamCategories(orgId);
   const { data: taskPages, isLoading } = useTeamTaskPages(orgId, null);
   const tasks = taskPages?.pages.flat() ?? [];
+  const [importOpen, setImportOpen] = useState(false);
 
   const exportCsv = async () => {
     const { downloadCSV } = await import('@/lib/csv-export');
@@ -60,6 +67,23 @@ const OrgTasksExportSection = ({ orgId, members }: OrgTasksExportSectionProps) =
         <Download size={14} aria-hidden="true" />
         {pf.t('taskTable.export')}
       </button>
+      <button
+        type="button"
+        onClick={() => setImportOpen(true)}
+        className="ms-2 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] text-sm font-semibold text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
+      >
+        <FileUp size={14} aria-hidden="true" />
+        {t('dataImport.open')}
+      </button>
+      {importOpen && (
+        <Suspense fallback={null}>
+          <ImportTasksDialog
+            open
+            onClose={() => setImportOpen(false)}
+            org={{ orgId, projects: projects.filter((p) => !p.archivedAt).map((p) => ({ id: p.id, name: p.name })) }}
+          />
+        </Suspense>
+      )}
     </section>
   );
 };

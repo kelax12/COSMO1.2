@@ -189,6 +189,8 @@
     "cardHint": "One or more CSV files. Projects become categories, subtasks stay subtasks.",
     "open": "Import",
     "title": "Import tasks",
+    "targetProject": "Destination project",
+    "noProject": "Create a project first",
     "close": "Close",
     "pick": "Choose CSV files",
     "drop": "or drop them here",

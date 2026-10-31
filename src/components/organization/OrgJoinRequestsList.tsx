@@ -1,6 +1,7 @@
 import { useOrgJoinRequests, useRespondJoinRequest } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 import { INVITE_GHOST_BTN } from './invite-ui';
+import MemberAvatar from './MemberAvatar';
 
 interface OrgJoinRequestsListProps {
   orgId: string;
@@ -27,9 +28,8 @@ const OrgJoinRequestsList = ({ orgId }: OrgJoinRequestsListProps) => {
           const name = r.requesterName || r.requesterEmail || '?';
           return (
             <li key={r.id} data-guide-id={i === 0 ? 'join-request-first' : undefined} className="flex items-center gap-2.5 px-3 py-2.5">
-              <span className="w-8 h-8 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden">
-                {r.requesterAvatar ? <img src={r.requesterAvatar} alt="" className="w-full h-full object-cover" /> : name.slice(0, 1).toUpperCase()}
-              </span>
+              {/* Image, emoji (démo) ou initiales : un emoji en <img src> rendait une image cassée. */}
+              <MemberAvatar avatar={r.requesterAvatar} name={name} size={32} />
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">{name}</span>
                 <span className="block text-xs text-[rgb(var(--color-text-muted))]">{t('invite.requestVia')}</span>

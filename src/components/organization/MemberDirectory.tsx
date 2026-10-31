@@ -325,10 +325,8 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
           visibleCount={filteredMembers.length}
           allVisibleSelected={bulk.allVisibleSelected}
           canAddToTeam={bulk.canAddToTeam || canCreateTeam}
-          canChangeManager={bulk.canChangeManager}
           onToggleAll={bulk.toggleAll}
           onAddToTeam={() => bulk.setPicker('team')}
-          onChangeManager={() => bulk.setPicker('manager')}
           canRestrictAccess={isAdmin}
           accessPending={accessRun.pending}
           onSuspend={() => setAccessInBulk(true)}

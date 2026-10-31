@@ -381,7 +381,6 @@
       "noProjectToAssign": "Aucun autre projet",
       "noTaskToAssign": "Aucune autre tâche ouverte",
       "needProject": "L'équipe n'a pas encore de projet",
-      "moveTo": "Dans le projet",
       "projectAssigned": "Projet assigné à {{team}}",
       "taskAssigned": "Tâche déplacée dans {{project}}",
       "delete": "Supprimer l'équipe"
@@ -807,8 +806,10 @@
     "loadMore_many": "+{{count}} d'autres",
     "loadMore_other": "+{{count}} autres"
   },
+  "dataImport": {
+    "open": "Importer des tâches"
+  },
   "glossary": {
-    "open": "Glossaire",
     "termHelp": "Définition : {{term}}"
   },
   "picker": {
