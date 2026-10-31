@@ -6,7 +6,6 @@ import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { claimFirstSight, releaseFirstSight, type OrgTerm } from './org-glossary';
 
 const RoleTermCard = lazyWithRetry(() => import('./RoleTermCard'), ['org', 'orgAccount']);
-const OrgGlossarySheet = lazyWithRetry(() => import('./OrgGlossarySheet'), ['org', 'orgAccount']);
 
 /**
  * Un rôle (ou un objet) nommé à l'écran, avec sa définition à portée de clic.
@@ -26,7 +25,6 @@ const RoleTerm = ({ term, children, label, className = '' }: {
   const { t } = useT('org');
   const [open, setOpen] = useState(false);
   // « Voir tout le glossaire » : la feuille s'ouvre d'ici, sur ce terme.
-  const [glossary, setGlossary] = useState(false);
   const [firstSight, setFirstSight] = useState(false);
   const anchor = useRef<HTMLSpanElement>(null);
   // Vrai dès que la personne ouvre elle-même la définition (clic ou Entrée sur le « ? »).
@@ -78,15 +76,10 @@ const RoleTerm = ({ term, children, label, className = '' }: {
           onOpenAutoFocus={(e) => { if (!userOpened.current) e.preventDefault(); }}
         >
           <Suspense fallback={<p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{name}</p>}>
-            <RoleTermCard term={term} onOpenGlossary={() => { setOpen(false); setGlossary(true); }} />
+            <RoleTermCard term={term} />
           </Suspense>
         </PopoverContent>
       </Popover>
-      {glossary && (
-        <Suspense fallback={null}>
-          <OrgGlossarySheet focusTerm={term} onClose={() => setGlossary(false)} />
-        </Suspense>
-      )}
     </span>
   );
 };

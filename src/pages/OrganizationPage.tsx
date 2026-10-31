@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
-import { BookOpen, Building2, Pencil } from 'lucide-react';
+import { Building2, Pencil } from 'lucide-react';
 import { useOrgShortcuts } from '@/components/organization/org-page.hooks';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
@@ -79,7 +79,7 @@ const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/
 const TeamsSection = lazyWithRetry(() => import('@/components/organization/TeamsSection'));
 const TeamPage = lazyWithRetry(() => import('@/components/organization/TeamPage'));
 // Rapports d'activité (mig. 202) : un chunk à part, payé par qui l'ouvre.
-const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['csv', 'okr', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
+const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['csv', 'okr', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'portfolio', 'settings', 'tasks']);
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
@@ -141,7 +141,6 @@ const OrganizationPage = () => {
   const setTab = (id: OrgTab) => navigate(orgSectionPath(id));
   // Glossaire (cohérence globale) : ouvert par le bouton d'en-tête. Les
   // info-bulles de rôle l'ouvrent elles-mêmes, sur leur terme (`RoleTerm`).
-  const [glossary, setGlossary] = useState(false);
   const isDemo = useIsDemo();
   // Fermé pendant cette visite ; le drapeau, lui, est posé par entreprise.
   const [welcomeClosed, setWelcomeClosed] = useState(false);
@@ -328,16 +327,6 @@ const OrganizationPage = () => {
   const seatsFull = !isDemo && ENTERPRISE_BILLING_ENFORCED && isQuotaReached(members.length, orgSubscription ?? null);
 
   const hasEntityParam = ['task', 'member', 'project', 'okr', 'team'].some((k) => searchParams.has(k));
-  const glossaryButton = (
-    <button
-      type="button"
-      onClick={() => setGlossary(true)}
-      aria-label={t('glossary.open')}
-      className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
-    >
-      <BookOpen size={18} />
-    </button>
-  );
 
   return (
     // `md:pr-[232px]` = carte (208) + ses deux marges (12 + 12). La transition
@@ -359,7 +348,7 @@ const OrganizationPage = () => {
         subtitle={`${tpOrgAdmin('page.memberCount', members.length)}${myOrg.industry ? ` · ${myOrg.industry}` : ''}`}
         // Maquette 236 (2026-10-10) : une seule icône, la cloche. Le crayon
         // menait à Paramètres, qui est une section ; le glossaire passe dans
-        // la feuille des sections (`OrgSectionSwitcher`, `onGlossary`).
+        // la feuille des sections (`OrgSectionSwitcher`).
         actions={<OrgNotificationsBell orgId={myOrg.id} members={members} />}
       />
 
@@ -401,8 +390,6 @@ const OrganizationPage = () => {
             ordinaire, donc accessible en desktop comme en mobile. */}
         {/* Les triggers de la mig. 095 et le job pg_cron de la 096 ecrivaient
             dans `org_notifications` sans qu'aucun ecran ne les lise. */}
-        {/* Glossaire (cohérence globale) : les mots du mode entreprise, définis. */}
-        {glossaryButton}
         <OrgNotificationsBell orgId={myOrg.id} members={members} />
       </header>
 
@@ -422,7 +409,7 @@ const OrganizationPage = () => {
           Desktop : la navigation vit à droite, dans `OrgSideNav`. */}
       <OrgSectionSwitcher
         fallbackActive={(() => { const s = ORG_SECTIONS.find((x) => x.id === tab); return s ? { label: t(s.labelKey), Icon: s.Icon } : undefined; })()}
-        items={navItems} activeId={tab} shortcuts={shortcuts} onSearch={openSearch} onGlossary={() => setGlossary(true)} />
+        items={navItems} activeId={tab} shortcuts={shortcuts} onSearch={openSearch} />
 
       {/* Contenu */}
       {/* Une seule frontière Suspense pour tout le contenu : les onglets sont
@@ -535,14 +522,10 @@ const OrganizationPage = () => {
 
       {/* Liens profonds : `?task=`, `?member=`, `?project=`, `?okr=`, `?team=`
           ouvrent leur fiche quelle que soit la section affichée. */}
-      {(glossary || hasEntityParam) && (
+      {hasEntityParam && (
         <Suspense fallback={null}>
           <OrgPageOverlays
-            glossaryOpen={glossary}
-            onCloseGlossary={() => setGlossary(false)}
-            deepLink={hasEntityParam
-              ? { orgId: myOrg.id, section: teamId ? 'teams' : tab, members, currentUserId: user?.id, isAdmin, canEditDependencies }
-              : null}
+            deepLink={{ orgId: myOrg.id, section: teamId ? 'teams' : tab, members, currentUserId: user?.id, isAdmin, canEditDependencies }}
           />
         </Suspense>
       )}

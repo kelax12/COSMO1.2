@@ -88,7 +88,7 @@ const AddTeamMemberMenu = ({ teamName, addable, currentUserId, onAdd }: {
         )}
         {shown.map((m) => (
           <DropdownMenuItem key={m.userId} onClick={() => onAdd(m.userId)}>
-            <MemberAvatar avatar={m.avatar} size={20} />
+            <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
             <span className="truncate">{m.userId === currentUserId ? t('common.youBadge') : m.displayName}</span>
           </DropdownMenuItem>
         ))}

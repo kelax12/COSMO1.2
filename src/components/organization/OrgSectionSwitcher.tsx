@@ -17,7 +17,6 @@ interface Props {
   shortcuts?: OrgShortcutGroup;
   onSearch?: () => void;
   /** Glossaire : il a quitté l'en-tête mobile (maquette 236). */
-  onGlossary?: () => void;
   /** Section courante absente de `items` (section masquée, ex. Statistiques) :
    *  sans elle, le bouton s'affichait VIDE (maquette 275). */
   fallbackActive?: Pick<OrgNavItem, 'label' | 'Icon'>;
@@ -34,7 +33,7 @@ interface Props {
  *
  * La feuille (`OrgSectionSheet`) arrive en lazy au premier toucher.
  */
-const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId, shortcuts, onSearch, onGlossary, fallbackActive }) => {
+const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId, shortcuts, onSearch, fallbackActive }) => {
   const { t: tOrgAdmin } = useT('orgAdmin');
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -79,7 +78,6 @@ const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId, shortcuts, onSea
                 navigate(href);
               }}
               onSearch={onSearch ? () => { setOpen(false); onSearch(); } : undefined}
-              onGlossary={onGlossary ? () => { setOpen(false); onGlossary(); } : undefined}
             />
           </Suspense>
         )}

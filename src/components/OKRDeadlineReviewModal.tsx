@@ -252,10 +252,13 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
                   <div key={keyResult.id} className="rounded-lg p-3 transition-all" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
                     <div className="flex items-center mb-3 gap-1.5 min-w-0">
                       <span className="text-xs sm:text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
-                      <span className="shrink-0 text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                        <Clock size={12} aria-hidden="true" />
-                        {keyResult.estimatedTime}min
-                      </span>
+                      {/* Sans temps de réalisation défini, rien à afficher (pas de « 0min »). */}
+                      {keyResult.estimatedTime > 0 && (
+                        <span className="shrink-0 text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                          <Clock size={12} aria-hidden="true" />
+                          {keyResult.estimatedTime}min
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">

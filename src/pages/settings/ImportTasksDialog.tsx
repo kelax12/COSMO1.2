@@ -10,7 +10,7 @@
 // l'import, la fenêtre refuse de se fermer, Échap compris : une fermeture en
 // plein vol laisserait un import à moitié fait sans bouton pour l'annuler.
 // ═══════════════════════════════════════════════════════════════════
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { FileUp, Loader2 } from 'lucide-react';
 import { BottomSheet } from '@/components/mobile';
@@ -22,12 +22,22 @@ const btnPrimary = 'min-h-11 px-4 rounded-xl text-sm font-semibold bg-[rgb(var(-
 const btnGhost = 'min-h-11 px-4 rounded-xl text-sm font-semibold text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]';
 const muted = 'text-xs text-[rgb(var(--color-text-muted))]';
 
-const ImportTasksDialog = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
+interface ImportTasksDialogProps {
+  open: boolean;
+  onClose: () => void;
+  /** Mode entreprise : les tâches vont dans un projet choisi ici (2026-10-31). */
+  org?: { orgId: string; projects: { id: string; name: string }[] };
+}
+
+const ImportTasksDialog = ({ open, onClose, org }: ImportTasksDialogProps) => {
   const { t, tp } = useT('settings');
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
-  const imp = useTaskImport();
+  const [projectId, setProjectId] = useState(org?.projects[0]?.id ?? '');
+  const target = useMemo(() => (org && projectId ? { orgId: org.orgId, projectId } : undefined), [org, projectId]);
+  const imp = useTaskImport(target);
+  const missingProject = !!org && !target;
   const busy = imp.step === 'running' || imp.undo.state === 'running';
 
   const close = () => { if (busy) return; imp.reset(); onClose(); };
@@ -41,14 +51,27 @@ const ImportTasksDialog = ({ open, onClose }: { open: boolean; onClose: () => vo
 
         {imp.step === 'files' && (
           <>
+            {org && (
+              <label className="block text-sm">
+                <span className="block mb-1 font-medium text-[rgb(var(--color-text-primary))]">{t('import.targetProject')}</span>
+                <select
+                  value={projectId}
+                  onChange={(e) => setProjectId(e.target.value)}
+                  className="w-full min-h-11 px-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))]"
+                >
+                  {org.projects.length === 0 && <option value="">{t('import.noProject')}</option>}
+                  {org.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </label>
+            )}
             <div
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
-              onDrop={(e) => { e.preventDefault(); setDragging(false); void imp.addFiles(e.dataTransfer.files); }}
+              onDrop={(e) => { e.preventDefault(); setDragging(false); if (!missingProject) void imp.addFiles(e.dataTransfer.files); }}
               className={`flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed p-6 text-center ${dragging ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]/5' : 'border-[rgb(var(--color-border))]'}`}
             >
               <FileUp size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-              <button type="button" onClick={() => inputRef.current?.click()} className={btnPrimary}>{t('import.pick')}</button>
+              <button type="button" disabled={missingProject} onClick={() => inputRef.current?.click()} className={btnPrimary}>{t('import.pick')}</button>
               <span className={muted}>{t('import.drop')}</span>
               <input
                 ref={inputRef}
@@ -173,7 +196,7 @@ const ImportTasksDialog = ({ open, onClose }: { open: boolean; onClose: () => vo
                   {imp.undo.state === 'running' ? t('import.undoing') : t('import.undo')}
                 </button>
               )}
-              <button type="button" disabled={busy} onClick={() => { close(); navigate('/tasks'); }} className={btnPrimary}>{t('import.seeTasks')}</button>
+              <button type="button" disabled={busy} onClick={() => { close(); if (!org) navigate('/tasks'); }} className={btnPrimary}>{t('import.seeTasks')}</button>
             </div>
           </div>
         )}

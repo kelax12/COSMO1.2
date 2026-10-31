@@ -278,7 +278,7 @@ const OrgSettingsSection = ({
       {/* Catégories (M13) : elles classent projets, tâches ET objectifs de
           toute l'organisation ; leur gestion vivait sous l'onglet OKR. */}
       {active === 'categories' && canManageCategories && (
-        <section className={CARD}>
+        <section className={`${CARD} relative`}>
           <h2 className={TITLE}>{ta('settings.tab_categories')}</h2>
           <p className={`${HINT} mb-3`}>{ta('settings.categoriesIntro')}</p>
           <Suspense fallback={null}>

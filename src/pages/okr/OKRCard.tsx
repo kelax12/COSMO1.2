@@ -268,10 +268,13 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                                 ×{keyResult.weight}
                               </span>
                             )}
-                            <span className="shrink-0 text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                              <Clock size={12} aria-hidden="true" />
-                              {keyResult.estimatedTime}min
-                            </span>
+                            {/* Sans temps de réalisation défini, rien à afficher (pas de « 0min »). */}
+                            {keyResult.estimatedTime > 0 && (
+                              <span className="shrink-0 text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                                <Clock size={12} aria-hidden="true" />
+                                {keyResult.estimatedTime}min
+                              </span>
+                            )}
                           </span>
                           <div className="hidden sm:flex items-center gap-1 sm:gap-2 shrink-0 self-end sm:self-auto">
                             {(tasksByKr.get(keyResult.id) ?? 0) > 0 && (

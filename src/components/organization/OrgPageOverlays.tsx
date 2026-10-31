@@ -2,15 +2,11 @@
 // chaque `import()` de la page ajoute son nom de fichier et ses dépendances à la
 // table de préchargement du chunk `OrganizationPage`, qui a un cliquet.
 //
-//   · le glossaire (bouton d'en-tête) ;
 //   · les liens profonds (`?task=`, `?member=`, `?project=`, `?okr=`, `?team=`).
 import type { OrgMember } from '@/modules/organizations';
 import OrgDeepLinkHost from './OrgDeepLinkHost';
-import OrgGlossarySheet from './OrgGlossarySheet';
 
 interface OrgPageOverlaysProps {
-  glossaryOpen: boolean;
-  onCloseGlossary: () => void;
   /** Présent seulement quand l'URL adresse un objet. */
   deepLink: {
     orgId: string;
@@ -22,9 +18,8 @@ interface OrgPageOverlaysProps {
   } | null;
 }
 
-const OrgPageOverlays = ({ glossaryOpen, onCloseGlossary, deepLink }: OrgPageOverlaysProps) => (
+const OrgPageOverlays = ({ deepLink }: OrgPageOverlaysProps) => (
   <>
-    {glossaryOpen && <OrgGlossarySheet onClose={onCloseGlossary} />}
     {deepLink && <OrgDeepLinkHost {...deepLink} />}
   </>
 );

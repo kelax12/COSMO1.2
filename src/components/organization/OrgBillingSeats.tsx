@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
@@ -106,9 +107,9 @@ export function OrgBillingSeats({ members, ownerId, quota, orgId = '', currentUs
                 type="button"
                 onClick={() => lifecycle.openDeparture(m, 'remove')}
                 aria-label={`${tOrgAdmin('lifecycle.modeRemove')} : ${m.displayName}`}
-                className="shrink-0 min-h-9 px-2.5 rounded-lg text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors"
+                className="shrink-0 min-w-9 min-h-9 rounded-lg flex items-center justify-center text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors"
               >
-                {tOrgAdmin('lifecycle.modeRemove')}
+                <Trash2 size={16} aria-hidden="true" />
               </button>
             )}
           </li>
