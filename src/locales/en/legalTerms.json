@@ -48,8 +48,8 @@
     "s5bis": {
       "title": "5 bis. Right of withdrawal",
       "p1": "If you subscribe as a consumer, you have **fourteen days** from the date of subscription to withdraw, without having to give a reason.",
-      "p2": "As the subscription covers a digital service supplied immediately, the checkout asks you, before paying, for two separate confirmations: your **express request** that the service start before the end of the withdrawal period, and your **acknowledgement** that you lose that right once the service has been fully performed before the end of the period. Neither box is ever pre-ticked, and payment cannot be started without both. If you withdraw within the fourteen days, you only owe the amount corresponding to the service supplied up to your withdrawal, in proportion to the total price. In practice, the refund guarantee in section 5 refunds the current period in full, which is more favourable to you.",
-      "p3": "If you do not give these confirmations, you keep your full fourteen-day period. To withdraw, simply write to us at [contact@thecosmo.app](mailto:contact@thecosmo.app) stating your request. Any refund is made within fourteen days of our receiving it at the latest.",
+      "p2": "The subscription starts as soon as you pay, and you keep your right of withdrawal for the full fourteen days: you are not asked to waive it. If you withdraw within that period, the current period is refunded in full, with no deduction for the service already supplied.",
+      "p3": "To withdraw, simply write to us at [contact@thecosmo.app](mailto:contact@thecosmo.app) stating your request. Any refund is made within fourteen days of our receiving it at the latest.",
       "p4": "You may use the following template, but you are not required to: \"To Cosmo, contact@thecosmo.app. I hereby give notice that I withdraw from the contract for the subscription below. Plan subscribed on: [date]. Name: [your name]. Account email address: [address]. Date: [date].\""
     },
     "s6": {

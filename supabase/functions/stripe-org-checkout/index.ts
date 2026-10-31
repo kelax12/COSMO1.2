@@ -13,20 +13,9 @@
 // dashboard Stripe ; COSMO n'en valide aucun et n'en recalcule aucun montant,
 // donc aucune surface de brute-force n'est ouverte de notre côté.
 //
-// 🔴 ORDRE DE DÉPLOIEMENT — LIRE AVANT DE DÉPLOYER CETTE FONCTION
-//
-//   1. appliquer `supabase/migration/135_withdrawal_consents.sql` ;
-//   2. seulement ensuite, `supabase functions deploy stripe-org-checkout`.
-//
-// Cette fonction refuse TOUTE session de paiement tant que la table
-// `withdrawal_consents` n'existe pas (finding S-6 : la preuve de renonciation
-// s'écrit AVANT la session, et son échec est bloquant). C'est le bon sens de
-// l'échec — on n'encaisse pas sans pouvoir prouver — mais déployée dans le
-// mauvais ordre, elle coupe l'encaissement en silence côté client : une erreur
-// 500 générique, et rien dans l'écran qui dise pourquoi.
-//
-// L'alerte ops émise dans ce cas NOMME la migration, pour que le diagnostic
-// tienne en une lecture de log plutôt qu'en une enquête.
+// RÉTRACTATION : depuis le 2026-10-30, aucune renonciation n'est recueillie
+// ni exigée ; le client garde ses 14 jours. `withdrawal_consents` n'est plus
+// écrite (les lignes passées restent, preuve append-only).
 // ═══════════════════════════════════════════════════════════════════
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -75,31 +64,16 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
     if (authError || !user) return json({ error: 'Unauthorized' }, 401)
 
-    const { orgId, tierKey, interval, immediateExecution, waivesWithdrawal } =
+    const { orgId, tierKey, interval } =
       await req.json().catch(() => ({}))
     if (typeof orgId !== 'string' || typeof tierKey !== 'string') {
       return json({ error: 'bad_request' }, 400)
     }
 
-    // ── S-6 : la renonciation au droit de rétractation est EXIGÉE ────
-    //
-    // Art. L221-28, 13° : le délai de quatorze jours ne tombe que si le
-    // consommateur a donné DEUX manifestations distinctes — accord exprès à
-    // l'exécution immédiate, et reconnaissance de perdre son droit une fois le
-    // service pleinement fourni.
-    //
-    // `OrgBillingTab` les recueillait déjà, mais elles ne quittaient pas le
-    // navigateur : elles gardaient un bouton. Un appel direct à cette fonction
-    // ouvrait donc une session de paiement sans aucun consentement, alors que
-    // les CGU affirment « le paiement ne peut être engagé sans elles ».
-    //
-    // ⚠️ On exige les DEUX séparément, et strictement `true`. Accepter une
-    // valeur « truthy » reviendrait à accepter `"false"`, et fondre les deux en
-    // un seul drapeau ferait exactement ce que le texte interdit : un accord
-    // global à la place de deux accords distincts.
-    if (immediateExecution !== true || waivesWithdrawal !== true) {
-      return json({ error: 'withdrawal_consent_required' }, 400)
-    }
+    // Rétractation (décision du 2026-10-30) : plus aucune renonciation n'est
+    // demandée. Le client garde ses 14 jours entiers et se fait rembourser
+    // intégralement s'il se rétracte (`stripe-org-refund`). Les anciennes
+    // lignes de `withdrawal_consents` restent : c'est une preuve append-only.
 
     // Périodicité : le client n'envoie qu'un mot d'une liste fermée, jamais un
     // montant ni un price ID. Absente = mensuel, pour que les appels écrits
@@ -280,42 +254,6 @@ Deno.serve(async (req) => {
         `price id manquant pour le palier ${tier.key} (${billingInterval})`,
       )
       return json({ error: 'tier_unavailable' }, 500)
-    }
-
-    // ── S-6 : la preuve s'écrit AVANT le paiement ───────────────────
-    //
-    // L'ordre EST la preuve : le consentement précède la session, jamais
-    // l'inverse. Une ligne sans paiement derrière est inoffensive (un accord
-    // donné, un achat abandonné) ; un paiement sans ligne serait le trou qu'on
-    // ferme.
-    //
-    // ⚠️ L'échec est BLOQUANT. C'est le même raisonnement que le lien customer
-    // plus haut : ouvrir une page de paiement en sachant qu'on ne pourra rien
-    // produire en cas de litige, c'est encaisser sans preuve. `renewal_notices`
-    // suit la règle inverse (envoyer d'abord, tracer ensuite) parce qu'un avis
-    // parti sans trace vaut mieux qu'un avis jamais parti — ici, rien n'est
-    // encore engagé, donc renoncer ne coûte rien.
-    const { error: consentError } = await supabaseAdmin.from('withdrawal_consents').insert({
-      org_id: orgId,
-      user_id: user.id,
-      tier_key: tier.key,
-      billing_interval: billingInterval,
-      immediate_execution: true,
-      waives_withdrawal: true,
-    })
-    if (consentError) {
-      console.error('withdrawal_consents insert error:', consentError)
-      // Le message NOMME la cause la plus probable : la table n'existe pas
-      // parce que la fonction a ete deployee avant la migration 135. Une
-      // alerte qui dit seulement « echec » fait recommencer l'enquete.
-      const missingTable = (consentError as { code?: string }).code === '42P01'
-      await opsAlert(
-        'stripe-org-checkout',
-        missingTable
-          ? 'table withdrawal_consents ABSENTE — appliquer supabase/migration/135_withdrawal_consents.sql, la fonction a ete deployee avant sa migration. Aucun paiement ne peut aboutir d ici la.'
-          : 'preuve de renonciation au droit de retractation NON enregistree — session de paiement refusee',
-      )
-      return json({ error: 'Internal server error' }, 500)
     }
 
     const dayKey = new Date().toISOString().slice(0, 10)

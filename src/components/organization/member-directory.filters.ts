@@ -26,6 +26,8 @@ export interface DirectoryFilters {
   query: string;
   teamId: string | null;
   role: DirectoryRole | null;
+  /** Rôle personnalisé (mig. 219) : seuls ses détenteurs ACTIFS restent. */
+  customRoleId: string | null;
   joined: JoinedPeriod | null;
 }
 
@@ -33,6 +35,7 @@ export const EMPTY_DIRECTORY_FILTERS: DirectoryFilters = {
   query: '',
   teamId: null,
   role: null,
+  customRoleId: null,
   joined: null,
 };
 
@@ -45,6 +48,7 @@ export const DIRECTORY_PARAMS = {
   query: 'dirQ',
   teamId: 'dirTeam',
   role: 'dirRole',
+  customRoleId: 'dirCRole',
   joined: 'dirJoined',
 } as const satisfies Record<keyof DirectoryFilters, string>;
 
@@ -62,6 +66,7 @@ export function readDirectoryFilters(params: URLSearchParams): DirectoryFilters 
     query: (params.get(DIRECTORY_PARAMS.query) ?? '').slice(0, MAX_QUERY),
     teamId: idOrNull(params.get(DIRECTORY_PARAMS.teamId)),
     role: oneOf(DIRECTORY_ROLES, params.get(DIRECTORY_PARAMS.role)),
+    customRoleId: idOrNull(params.get(DIRECTORY_PARAMS.customRoleId)),
     joined: oneOf(JOINED_PERIODS, params.get(DIRECTORY_PARAMS.joined)),
   };
 }
@@ -76,13 +81,14 @@ export function writeDirectoryFilters(params: URLSearchParams, filters: Director
   set(DIRECTORY_PARAMS.query, filters.query.trim() ? filters.query.slice(0, MAX_QUERY) : null);
   set(DIRECTORY_PARAMS.teamId, filters.teamId);
   set(DIRECTORY_PARAMS.role, filters.role);
+  set(DIRECTORY_PARAMS.customRoleId, filters.customRoleId);
   set(DIRECTORY_PARAMS.joined, filters.joined);
   return next;
 }
 
 /** Nombre de filtres actifs HORS recherche (la recherche a son propre champ). */
 export const activeFilterCount = (f: DirectoryFilters): number =>
-  [f.teamId, f.role, f.joined].filter(Boolean).length;
+  [f.teamId, f.role, f.customRoleId, f.joined].filter(Boolean).length;
 
 /** Grade AFFICHÉ : administrateur ou membre. Le reste, ce sont les rôles personnalisés. */
 export const directoryRoleOf = (m: OrgMember): DirectoryRole => (m.role === 'admin' ? 'admin' : 'member');
@@ -102,6 +108,8 @@ interface ApplyContext {
   teamIds: Set<string>;
   /** userId → ids des équipes du membre. */
   teamIdsByUser: Map<string, Set<string>>;
+  /** roleId → détenteurs actifs. Un rôle absent (supprimé) est ignoré, comme une équipe inconnue. */
+  customRoleHolders?: Map<string, Set<string>>;
   now: number;
 }
 
@@ -113,13 +121,16 @@ interface ApplyContext {
 export function applyDirectoryFilters(
   members: OrgMember[],
   filters: DirectoryFilters,
-  { teamIds, teamIdsByUser, now }: ApplyContext,
+  { teamIds, teamIdsByUser, customRoleHolders, now }: ApplyContext,
 ): OrgMember[] {
   const knownTeam = !!filters.teamId && teamIds.has(filters.teamId);
+
+  const holders = filters.customRoleId ? customRoleHolders?.get(filters.customRoleId) : undefined;
 
   const filtered = members.filter((m) => {
     if (filters.teamId && knownTeam && !teamIdsByUser.get(m.userId)?.has(filters.teamId)) return false;
     if (filters.role && directoryRoleOf(m) !== filters.role) return false;
+    if (holders && !holders.has(m.userId)) return false;
     if (filters.joined && !joinedWithin(m.joinedAt, filters.joined, now)) return false;
     return true;
   });

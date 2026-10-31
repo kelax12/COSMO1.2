@@ -381,12 +381,11 @@ Garde-fous propres à cette zone :
   que la borne serveur existe pour absorber. Le bloc est par ailleurs conditionné à
   `effectiveTierKey(subscription)`, pas à `subscription.tierKey` — un abonnement résilié retombe à
   « Gratuit », il n'y a plus rien à y résilier.
-- ❌ **Ne JAMAIS ouvrir une session de paiement sans la preuve de renonciation** (finding S-6).
-  `stripe-org-checkout` exige `immediateExecution` ET `waivesWithdrawal` strictement à `true`, puis
-  écrit une ligne dans `withdrawal_consents` (mig. `135`) **avant** de créer la session : l'ordre
-  est la preuve. Les deux drapeaux sont exigés SÉPARÉMENT — l'art. L221-28, 13° demande deux
-  manifestations distinctes, pas un accord global. La table est append-only, immuable par trigger,
-  et se lit comme `renewal_notices` : **c'est une pièce à produire, jamais un cache.**
+- 🟢 **Plus aucune renonciation au droit de rétractation n'est recueillie** (décision d'Axel du
+  2026-10-30). `stripe-org-checkout` n'exige plus `immediateExecution` ni `waivesWithdrawal` et
+  n'écrit plus dans `withdrawal_consents`. Le client garde ses 14 jours et est remboursé en entier
+  s'il se rétracte. Les lignes passées de la table (mig. `135`) restent : append-only, immuables
+  par trigger, **une pièce à produire, jamais un cache.**
 - 🔴 **Le passage en compte live doit remettre à zéro les identifiants Stripe en base.**
   `stripe-org-checkout` et `stripe-org-portal` réutilisent `stripe_customer_id` et
   `stripe_subscription_id` tels quels ; un identifiant du compte de TEST présenté à une clé live

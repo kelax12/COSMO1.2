@@ -9,6 +9,7 @@ import {
   useOrgRoles,
   useOrgRoleAssignments,
   activeAssignmentsOf,
+  isAssignmentActive,
   canEditPermissionsOf,
   effectivePermissions,
   type OrgMember,
@@ -168,9 +169,13 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
     return applyDirectoryFilters(members, filters, {
       teamIds: new Set(orgTeams.map((team) => team.id)),
       teamIdsByUser,
+      customRoleHolders: new Map(customRoles.map((r) => [
+        r.id,
+        new Set(roleAssignments.filter((a) => a.roleId === r.id && isAssignmentActive(a, new Date())).map((a) => a.userId)),
+      ])),
       now: Date.now(),
     });
-  }, [members, filters, orgTeams, teamsByUser]);
+  }, [members, filters, orgTeams, teamsByUser, customRoles, roleAssignments]);
 
 
   // Dernière activité : l'admin seul a quelqu'un à voir (mig. 229). Le serveur
@@ -250,6 +255,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
           filters={filters}
           onChange={setFilters}
           teams={orgTeams}
+          customRoles={customRoles}
           shown={filteredMembers.length}
           total={members.length}
           canSelect={bulk.canSelect}
