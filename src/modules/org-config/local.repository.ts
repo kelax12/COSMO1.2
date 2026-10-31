@@ -34,7 +34,9 @@ const DOMAIN_RE = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 export class LocalStorageOrgConfigRepository implements IOrgConfigRepository {
   // ── 195 ──
   async getSettings(orgId: string): Promise<OrgSettings> {
-    return read<OrgSettings[]>(K.settings, []).find((s) => s.orgId === orgId) ?? defaultOrgSettings(orgId);
+    // Une ligne écrite avant la mig. 232 n'a pas le champ : défaut historique.
+    const found = read<OrgSettings[]>(K.settings, []).find((s) => s.orgId === orgId);
+    return found ? { ...defaultOrgSettings(orgId), ...found } : defaultOrgSettings(orgId);
   }
 
   async saveSettings(orgId: string, patch: OrgSettingsPatch): Promise<OrgSettings> {

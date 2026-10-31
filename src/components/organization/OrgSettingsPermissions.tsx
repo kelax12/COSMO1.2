@@ -55,7 +55,7 @@ const OrgSettingsPermissions = ({ orgId, members, currentUserId, isAdmin }: OrgS
   return (
     <div className="space-y-3">
       <p className="text-sm text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('settings.permissionsIntro')}</p>
-      <PermissionsMatrix />
+      <PermissionsMatrix orgId={orgId} isAdmin={isAdmin} />
       <div className="flex flex-wrap items-center gap-2">
         <input
           type="search"

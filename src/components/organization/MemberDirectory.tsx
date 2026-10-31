@@ -12,6 +12,7 @@ import {
   isAssignmentActive,
   useAssignOrgRole,
   useRevokeOrgRole,
+  useOrgMemberDefaults,
   canEditPermissionsOf,
   effectivePermissions,
   type OrgMember,
@@ -144,14 +145,15 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
   /** Regard sur le travail de `m` : l'admin seul, jamais sur soi (la hiérarchie n'ouvre plus rien, mig. 229). */
   const isAbove = (m: OrgMember) => m.userId !== currentUserId && isAdmin;
 
+  const { memberDefaults } = useOrgMemberDefaults(orgId);
   // Droits effectifs de l'utilisateur courant : ils PLAFONNENT ce qu'il peut
   // accorder (miroir de `enforce_org_permission_ceiling`, mig. 115).
   const myEffective = useMemo(() => {
     const me = currentUserId ? members.find((m) => m.userId === currentUserId) : undefined;
     if (!me) return null;
     const mine = orgPermissions.find((o) => o.userId === me.userId) ?? null;
-    return effectivePermissions({ member: me, overrides: mine });
-  }, [members, orgPermissions, currentUserId]);
+    return effectivePermissions({ member: me, overrides: mine, memberDefaults });
+  }, [members, orgPermissions, currentUserId, memberDefaults]);
 
   const teamsByUser = useMemo(() => {
     const byId = new Map(orgTeams.map((team) => [team.id, team]));

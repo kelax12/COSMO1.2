@@ -44,7 +44,8 @@ export type OrgPermissionKey = (typeof ORG_PERMISSION_KEYS)[number];
 /**
  * Droits dont le défaut est « tout membre ». Tous les autres sont refusés à un
  * non-admin tant qu'un rôle ou sa fiche ne les donne pas (mig. 229 : encadrer
- * quelqu'un ne donne plus rien). Miroir exact de `my_org_perm`.
+ * quelqu'un ne donne plus rien). Miroir exact de `org_member_default_perm` quand
+ * l'organisation n'a rien réglé (mig. 232 : `member_default_perms` NULL).
  *
  * ❌ `task.deleteAny` n'y est PLUS (mig. 152, M4) : par défaut un membre ne
  * supprime que les tâches qu'il a créées.
@@ -116,6 +117,11 @@ interface EffectiveInput {
   overrides?: OrgMemberPermissions | null;
   /** Ses rôles personnalisés ACTIFS (mig. 219). Vide = aucun. */
   roles?: readonly ActiveRoleGrant[];
+  /**
+   * Droits par défaut d'un membre réglés par l'organisation (mig. 232).
+   * `null`/absent = défaut historique ({@link MEMBER_DEFAULT_KEYS}).
+   */
+  memberDefaults?: readonly string[] | null;
 }
 
 /**
@@ -133,8 +139,10 @@ export const effectivePermissions = ({
   member,
   overrides,
   roles = [],
+  memberDefaults,
 }: EffectiveInput): EffectiveOrgPermissions => {
   const isAdmin = member.role === 'admin';
+  const defaults: ReadonlySet<string> = memberDefaults ? new Set(memberDefaults) : MEMBER_DEFAULT_KEYS;
 
   const out = {} as EffectiveOrgPermissions;
   for (const key of ORG_PERMISSION_KEYS) {
@@ -147,7 +155,7 @@ export const effectivePermissions = ({
       continue;
     }
     const override = overrides?.overrides?.[key];
-    out[key] = override ?? MEMBER_DEFAULT_KEYS.has(key);
+    out[key] = override ?? defaults.has(key);
   }
   return out;
 };

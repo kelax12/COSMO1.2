@@ -612,7 +612,10 @@
       "right": "Right",
       "yes": "Allowed",
       "no": "Not allowed",
-      "help": "These are the starting rights. You change them person by person, in the list below."
+      "help": "These are the starting rights. You change them person by person, in the list below.",
+      "helpAdmin": "Tick what a member can do without a role or individual setting. A role or an individual setting takes precedence, and an admin always has everything.",
+      "memberToggle": "Default member right: {{right}}",
+      "saved": "Default member rights saved"
     },
     "confirmName": "Type “{{name}}” to confirm",
     "empty": {

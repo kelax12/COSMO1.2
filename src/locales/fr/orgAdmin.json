@@ -665,7 +665,10 @@
       "right": "Droit",
       "yes": "Autorisé",
       "no": "Non autorisé",
-      "help": "Ce sont les droits de départ. Ils se modifient personne par personne, dans la liste ci-dessous."
+      "help": "Ce sont les droits de départ. Ils se modifient personne par personne, dans la liste ci-dessous.",
+      "helpAdmin": "Cochez ce qu'un membre peut faire sans rôle ni réglage individuel. Un rôle ou une fiche individuelle passe avant, et un admin a toujours tout.",
+      "memberToggle": "Droit par défaut des membres : {{right}}",
+      "saved": "Droits par défaut des membres enregistrés"
     },
     "confirmName": "Tapez « {{name}} » pour confirmer",
     "empty": {
